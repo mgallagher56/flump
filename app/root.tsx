@@ -3,9 +3,18 @@ import React, { useContext, useEffect } from 'react';
 import { Box, ChakraProvider, Heading } from '@chakra-ui/react';
 import { withEmotionCache } from '@emotion/react';
 import type { LinksFunction, V2_MetaFunction } from '@remix-run/node';
-import { Links, LiveReload, Meta, Outlet, Scripts, ScrollRestoration, useCatch } from '@remix-run/react';
+import { Links, LiveReload, Meta, Outlet, Scripts, ScrollRestoration, useCatch, useLoaderData } from '@remix-run/react';
 
 import { ClientStyleContext, ServerStyleContext } from './context';
+
+export const loader = () => {
+  return {
+    env: {
+      SUPABASE_URL: process.env.SUPABASE_URL,
+      SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY
+    }
+  };
+};
 
 export const meta: V2_MetaFunction = () => [
   {
@@ -33,6 +42,7 @@ interface DocumentProps {
 const Document = withEmotionCache(({ children }: DocumentProps, emotionCache) => {
   const serverStyleData = useContext(ServerStyleContext);
   const clientStyleData = useContext(ClientStyleContext);
+  const { env } = useLoaderData();
 
   // Only executed on client
   useEffect(() => {
@@ -59,6 +69,11 @@ const Document = withEmotionCache(({ children }: DocumentProps, emotionCache) =>
         ))}
       </head>
       <body>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `window.env = ${JSON.stringify(env)}`
+          }}
+        />
         {children}
         <ScrollRestoration />
         <Scripts />
