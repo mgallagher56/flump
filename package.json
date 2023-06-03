@@ -8,7 +8,7 @@
     "build:server": "esbuild --platform=node --format=cjs ./server.ts --outdir=build --bundle",
     "commit": "git-cz",
     "dev": "run-p dev:*",
-    "dev:build": "cross-env NODE_ENV=development npm run build:server -- --watch",
+    "dev:build": "cross-env NODE_ENV=development pnpm run build:server -- --watch",
     "dev:remix": "cross-env NODE_ENV=development remix watch",
     "dev:server": "cross-env NODE_ENV=development node --inspect --require ./node_modules/dotenv/config --require ./mocks ./build/server.js",
     "docker": "docker-compose up -d",
@@ -21,9 +21,9 @@
     "supabase:stop": "supabase stop",
     "test": "vitest",
     "test:e2e:dev": "start-server-and-test dev http://localhost:3000 \"npx cypress open\"",
-    "pretest:e2e:run": "npm run build",
+    "pretest:e2e:run": "pnpm run build",
     "test:e2e:run": "cross-env PORT=8811 start-server-and-test start:mocks http://localhost:8811 \"npx cypress run\"",
-    "typecheck": "tsc && tsc -p cypress",
+    "ts-coverage": "type-coverage",
     "validate": "run-p \"test -- --run\" lint typecheck test:e2e:run"
   },
   "eslintIgnore": [
@@ -104,6 +104,7 @@
     "start-server-and-test": "^2.0.0",
     "ts-node": "^10.9.1",
     "tsconfig-paths": "^4.2.0",
+    "type-coverage": "^2.26.0",
     "typescript": "^5.0.4",
     "vite": "^4.2.1",
     "vite-tsconfig-paths": "^3.6.0",
