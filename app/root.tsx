@@ -7,11 +7,13 @@ import { Links, LiveReload, Meta, Outlet, Scripts, ScrollRestoration, useCatch, 
 
 import { ClientStyleContext, ServerStyleContext } from './context';
 
+const MODE = process.env.NODE_ENV;
+
 export const loader = () => {
   return {
     env: {
-      SUPABASE_URL: process.env.SUPABASE_URL,
-      SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY
+      SUPABASE_URL: MODE === 'test' ? process.env.SUPABASE_URL_STAGING : process.env.SUPABASE_URL,
+      SUPABASE_ANON_KEY: MODE === 'test' ? process.env.SUPABASE_ANON_KEY_STAGING : process.env.SUPABASE_ANON_KEY
     }
   };
 };

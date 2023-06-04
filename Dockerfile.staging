@@ -8,7 +8,7 @@ RUN npm install --global pnpm \
     && source /root/.bashrc
 
 # set for base and all layer that inherit from it
-ENV NODE_ENV production
+ENV NODE_ENV test
 
 # Install all node_modules, including dev dependencies
 FROM base as deps
