@@ -24,8 +24,8 @@ export default function Index() {
           </FLPButtonGroup>
         {posts.map((post) => (
           <FLPBox key={post.id}>
-            <h3>{post.title}</h3>
-            <p>{post.content}</p>
+            <h3>{post.name}</h3>
+            <p>{post.department}</p>
           </FLPBox>
         ))}
       </FLPBox>
@@ -34,6 +34,6 @@ export default function Index() {
 }
 
 export const loader = async () => {
-  const { data: posts } = await supabase.from('posts').select('*');
+  const { data: posts } = await supabase.from('employees').select('*');
   return { posts };
 };

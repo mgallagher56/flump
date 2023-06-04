@@ -14,6 +14,8 @@
     "docker": "docker-compose up -d",
     "format": "prettier --write .",
     "lint": "eslint --fix --cache --cache-location ./node_modules/.cache/eslint .",
+    "start:staging": "cross-env NODE_ENV=staging node ./build/server.js",
+    "start:mocks:staging": "cross-env NODE_ENV=staging node --require ./mocks --require dotenv/config ./build/server.js",
     "start": "cross-env NODE_ENV=production node ./build/server.js",
     "start:mocks": "cross-env NODE_ENV=production node --require ./mocks --require dotenv/config ./build/server.js",
     "supabase:start": "supabase start",
