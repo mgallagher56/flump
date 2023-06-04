@@ -1,52 +1,51 @@
 # base node image
-FROM node:16-bullseye-slim as base
+FROM node:16-bullseye as base
+
+SHELL ["/bin/bash", "-c"]
+
+RUN npm install --global pnpm \
+    && SHELL=bash pnpm setup \
+    && source /root/.bashrc
 
 # set for base and all layer that inherit from it
 ENV NODE_ENV production
 
-# Install openssl for Prisma
-RUN apt-get update && apt-get install -y openssl
-
 # Install all node_modules, including dev dependencies
 FROM base as deps
 
-WORKDIR /myapp
+WORKDIR /app
 
-ADD package.json package-lock.json .npmrc ./
-RUN npm install --production=false
+ADD package.json pnpm-lock.yaml .node-version ./
+RUN pnpm install --production=false
 
 # Setup production node_modules
 FROM base as production-deps
 
-WORKDIR /myapp
+WORKDIR /app
 
-COPY --from=deps /myapp/node_modules /myapp/node_modules
-ADD package.json package-lock.json .npmrc ./
-RUN npm prune --production
+COPY --from=deps /app/node_modules /app/node_modules
+ADD package.json pnpm-lock.yaml .node-version ./
+RUN pnpm prune --prod
 
 # Build the app
 FROM base as build
 
-WORKDIR /myapp
+WORKDIR /app
 
-COPY --from=deps /myapp/node_modules /myapp/node_modules
-
-ADD prisma .
-RUN npx prisma generate
+COPY --from=deps /app/node_modules /app/node_modules
 
 ADD . .
-RUN npm run build
+RUN pnpm run build
 
 # Finally, build the production image with minimal footprint
 FROM base
 
-WORKDIR /myapp
+WORKDIR /app
 
-COPY --from=production-deps /myapp/node_modules /myapp/node_modules
-COPY --from=build /myapp/node_modules/.prisma /myapp/node_modules/.prisma
+COPY --from=production-deps /app/node_modules /app/node_modules
 
-COPY --from=build /myapp/build /myapp/build
-COPY --from=build /myapp/public /myapp/public
+COPY --from=build /app/build /app/build
+COPY --from=build /app/public /app/public
 ADD . .
 
-CMD ["npm", "start"]
+CMD ["pnpm", "start"]

@@ -1,55 +1,49 @@
+# fly.toml file generated for flump-f955 on 2023-06-04T17:26:05+01:00
+
 app = "flump-f955"
 kill_signal = "SIGINT"
 kill_timeout = 5
-processes = [ ]
-
-[env]
-PORT = "8080"
-METRICS_PORT = "8081"
-
-[metrics]
-port = 8_081
-path = "/metrics"
+primary_region = "lhr"
 
 [deploy]
-release_command = "bash ./scripts/migrate.sh"
+  release_command = "bash ./scripts/migrate.sh"
 
-[experimental]
-allowed_public_ports = [ ]
-auto_rollback = true
+[env]
+  METRICS_PORT = "8081"
+  PORT = "8080"
+
+[metrics]
+  port = 8081
+  path = "/metrics"
 
 [[services]]
-internal_port = 8_080
-processes = [ "app" ]
-protocol = "tcp"
-script_checks = [ ]
+  protocol = "tcp"
+  internal_port = 8080
+  processes = ["app"]
 
+  [[services.ports]]
+    port = 80
+    handlers = ["http"]
+    force_https = true
+
+  [[services.ports]]
+    port = 443
+    handlers = ["tls", "http"]
   [services.concurrency]
-  hard_limit = 25
-  soft_limit = 20
-  type = "connections"
-
-  [[services.ports]]
-  handlers = [ "http" ]
-  port = 80
-  force_https = true
-
-  [[services.ports]]
-  handlers = [ "tls", "http" ]
-  port = 443
+    type = "connections"
+    hard_limit = 25
+    soft_limit = 20
 
   [[services.tcp_checks]]
-  grace_period = "1s"
-  interval = "15s"
-  restart_limit = 0
-  timeout = "2s"
+    interval = "15s"
+    timeout = "2s"
+    grace_period = "1s"
+    restart_limit = 3
 
   [[services.http_checks]]
-  interval = "10s"
-  grace_period = "5s"
-  method = "get"
-  path = "/healthcheck"
-  protocol = "http"
-  timeout = "2s"
-  tls_skip_verify = false
-  headers = { }
+    interval = "10s"
+    timeout = "2s"
+    grace_period = "5s"
+    restart_limit = 0
+    method = "get"
+    protocol = "http"
