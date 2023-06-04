@@ -8,21 +8,22 @@
     "build:server": "esbuild --platform=node --format=cjs ./server.ts --outdir=build --bundle",
     "commit": "git-cz",
     "dev": "run-p dev:*",
-    "dev:build": "cross-env NODE_ENV=development pnpm run build:server -- --watch",
+    "dev:build": "cross-env NODE_ENV=development pnpm run build:server --watch",
     "dev:remix": "cross-env NODE_ENV=development remix watch",
     "dev:server": "cross-env NODE_ENV=development node --inspect --require ./node_modules/dotenv/config --require ./mocks ./build/server.js",
     "docker": "docker-compose up -d",
     "format": "prettier --write .",
     "lint": "eslint --fix --cache --cache-location ./node_modules/.cache/eslint .",
-    "setup": "prisma generate && prisma migrate deploy && prisma db seed",
+    "start:staging": "cross-env NODE_ENV=staging node ./build/server.js",
+    "start:mocks:staging": "cross-env NODE_ENV=staging node --require ./mocks --require dotenv/config ./build/server.js",
     "start": "cross-env NODE_ENV=production node ./build/server.js",
     "start:mocks": "cross-env NODE_ENV=production node --require ./mocks --require dotenv/config ./build/server.js",
     "supabase:start": "supabase start",
     "supabase:stop": "supabase stop",
     "test": "vitest",
-    "test:e2e:dev": "start-server-and-test dev http://localhost:3000 \"npx cypress open\"",
+    "test:e2e:dev": "start-server-and-test dev http://localhost:3000 \"pnpx cypress open\"",
     "pretest:e2e:run": "pnpm run build",
-    "test:e2e:run": "cross-env PORT=8811 start-server-and-test start:mocks http://localhost:8811 \"npx cypress run\"",
+    "test:e2e:run": "cross-env PORT=8811 start-server-and-test start:mocks http://localhost:8811 \"pnpx cypress run\"",
     "ts-coverage": "type-coverage",
     "validate": "run-p \"test -- --run\" lint typecheck test:e2e:run"
   },
@@ -39,7 +40,6 @@
     "@emotion/server": "^11.11.0",
     "@emotion/styled": "^11.11.0",
     "@isaacs/express-prometheus-middleware": "^1.2.1",
-    "@prisma/client": "^4.12.0",
     "@remix-run/css-bundle": "^1.16.0",
     "@remix-run/express": "^1.16.0",
     "@remix-run/node": "^1.16.0",
@@ -100,7 +100,6 @@
     "npm-run-all": "^4.1.5",
     "postcss": "^8.4.22",
     "prettier": "^2.8.7",
-    "prisma": "^4.12.0",
     "start-server-and-test": "^2.0.0",
     "ts-node": "^10.9.1",
     "tsconfig-paths": "^4.2.0",
@@ -112,8 +111,5 @@
   },
   "engines": {
     "node": ">=14"
-  },
-  "prisma": {
-    "seed": "ts-node --compiler-options {\"module\":\"CommonJS\"} --require tsconfig-paths/register prisma/seed.ts"
   }
 }
