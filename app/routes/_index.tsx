@@ -9,7 +9,7 @@ import supabase from '../utils/supabase';
 export const meta: V2_MetaFunction = () => [{ title: 'Remix Notes' }];
 
 export default function Index() {
-  const { posts } = useLoaderData();
+  const { employees } = useLoaderData();
 
   return (
     <main>
@@ -22,10 +22,10 @@ export default function Index() {
               Log in
             </FLPLinkButton>
           </FLPButtonGroup>
-        {posts.map((post) => (
-          <FLPBox key={post.id}>
-            <h3>{post.name}</h3>
-            <p>{post.department}</p>
+        {employees.map((employee) => (
+          <FLPBox key={employee.id}>
+            <h3>{employee.name}</h3>
+            <p>{employee.department}</p>
           </FLPBox>
         ))}
       </FLPBox>
@@ -34,6 +34,6 @@ export default function Index() {
 }
 
 export const loader = async () => {
-  const { data: posts } = await supabase.from('employees').select('*');
-  return { posts };
+  const { data: employees } = await supabase.from('employees').select('*');
+  return { employees };
 };
