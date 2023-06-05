@@ -7,6 +7,8 @@ declare global {
       NODE_ENV: string;
       SUPABASE_URL: string;
       SUPABASE_ANON_KEY: string;
+      SUPABASE_URL_STAGING: string;
+      SUPABASE_ANON_KEY_STAGING: string;
     };
   }
 }
