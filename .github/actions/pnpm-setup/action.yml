@@ -1,9 +1,5 @@
 name: 'Setup pnpm'
 description: 'Setup node, pnpm and install packages'
-inputs:
-  token:
-    description: 'Token for npm package repository'
-    required: true
 runs:
   using: 'composite'
   steps:

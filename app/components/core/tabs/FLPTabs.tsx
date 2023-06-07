@@ -1,12 +1,15 @@
+import type { PropsWithChildren } from 'react';
 import React from 'react';
 
-import type { TabsProps } from '@chakra-ui/react';
 import { Tabs } from '@chakra-ui/react';
 
-export const FLPTabs: React.FC<TabsProps> = (props) => {
-  return (
-    <Tabs {...props}>
-      {props.children}
-    </Tabs>
-  );
+interface FLPTabsProps extends React.HTMLAttributes<HTMLElement> {
+  orientation?: 'horizontal' | 'vertical';
+  onChange?: any;
+}
+
+const FLPTabs: React.FC<PropsWithChildren<FLPTabsProps>> = (props) => {
+  return <Tabs {...props}>{props.children}</Tabs>;
 };
+
+export default FLPTabs;

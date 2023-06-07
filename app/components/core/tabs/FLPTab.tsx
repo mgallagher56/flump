@@ -1,12 +1,19 @@
 import React from 'react';
 
-import type { TabProps } from '@chakra-ui/react';
-import { Tab } from '@chakra-ui/react';
+import { Box, Button, useMultiStyleConfig } from '@chakra-ui/react';
 
-export const FLPTab: React.FC<TabProps> = (props) => {
+const FLPTab: React.FC<any> = (props) => {
+  const isSelected = !!props['aria-selected'];
+
+  const styles = useMultiStyleConfig('Tabs', { props });
+
   return (
-    <Tab onClick={props.onClick} {...props}>
+    <Button __css={styles.tab} {...props} width="max-content">
+      <Box as="span" mr="2">
+        {isSelected ? '😎' : '😐'}
+      </Box>
       {props.children}
-    </Tab>
+    </Button>
   );
 };
+export default FLPTab;

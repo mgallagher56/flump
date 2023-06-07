@@ -23,7 +23,7 @@ export const meta: V2_MetaFunction = () => [
     name: 'viewport',
     content: 'width=device-width,initial-scale=1'
   },
-  { title: 'New Remix App' }
+  { title: 'flump' }
 ];
 
 export const links: LinksFunction = () => {
