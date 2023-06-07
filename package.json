@@ -105,7 +105,7 @@
     "tsconfig-paths": "4.2.0",
     "type-coverage": "2.26.0",
     "typescript": "5.0.4",
-    "vite": "4.2.1",
+    "vite": "4.2.3",
     "vite-plugin-checker": "0.6.0",
     "vite-tsconfig-paths": "3.6.0",
     "vitest": "0.30.1"
