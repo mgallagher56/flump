@@ -1,8 +1,8 @@
 import React from 'react';
 
-import type { TabPanelProps } from '@chakra-ui/react';
-import { TabPanel } from '@chakra-ui/react';
 
-export const FLPTabPanel: React.FC<TabPanelProps> = (props) => {
-  return <TabPanel {...props}>{props.children}</TabPanel>;
+const FLPTabPanel: React.FC<React.HTMLAttributes<HTMLElement>> = (props) => {
+  return <div {...props}>{props.children}</div>;
 };
+
+export default FLPTabPanel;
