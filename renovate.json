@@ -5,7 +5,7 @@
     ":semanticCommits",
     ":pinAllExceptPeerDependencies",
     "npm:unpublishSafe",
-    "schedule:earlyThursdays"
+    "schedule:earlyMondays"
   ],
   "baseBranches": ["dev"],
   "labels": ["dependencies"],
