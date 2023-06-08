@@ -14,6 +14,7 @@
     "docker": "docker-compose up -d",
     "format": "prettier --write .",
     "lint": "eslint --fix --cache --cache-location ./node_modules/.cache/eslint .",
+    "lint:staged": "TZ=UTC lint-staged",
     "start": "cross-env NODE_ENV=production node ./build/server.js",
     "start:mocks": "cross-env NODE_ENV=production node --require ./mocks --require dotenv/config ./build/server.js",
     "supabase:start": "supabase start",
@@ -24,6 +25,19 @@
     "test:e2e:run": "cross-env PORT=8811 start-server-and-test start:mocks http://localhost:8811 \"pnpx cypress run\"",
     "ts-coverage": "type-coverage",
     "validate": "run-p \"test -- --run\" lint typecheck test:e2e:run"
+  },
+  "lint-staged": {
+    "app/**/*.{js,jsx,ts,tsx,json,css,md}": "prettier --write",
+    "app/**/*.{j,t}s?(x)": [
+      "eslint --cache --fix",
+      "vitest related --run"
+    ]
+  },
+  "typeCoverage": {
+    "atLeast": "98.00",
+    "ignoreFiles": [
+      "src/**/*.config.{js,ts,jsx,tsx}"
+    ]
   },
   "eslintIgnore": [
     "/node_modules",
@@ -80,6 +94,8 @@
     "@types/node": "18.15.11",
     "@types/react": "18.0.37",
     "@types/react-dom": "18.0.11",
+    "@typescript-eslint/eslint-plugin": "5.59.6",
+    "@typescript-eslint/parser": "5.59.6",
     "@vitejs/plugin-react": "4.0.0",
     "@vitest/coverage-c8": "0.30.1",
     "autoprefixer": "10.4.14",
@@ -90,12 +106,14 @@
     "esbuild": "0.17.17",
     "eslint": "8.38.0",
     "eslint-config-prettier": "8.8.0",
+    "eslint-config-react-app": "7.0.1",
     "eslint-plugin-cypress": "2.13.2",
     "eslint-plugin-no-relative-import-paths": "1.5.2",
     "eslint-plugin-sonarjs": "0.19.0",
     "happy-dom": "9.8.0",
     "husky": "8.0.3",
     "install": "0.13.0",
+    "lint-staged": "^13.2.2",
     "msw": "1.2.1",
     "npm-run-all": "4.1.5",
     "postcss": "8.4.22",
@@ -111,7 +129,6 @@
     "vitest": "0.30.1"
   },
   "engines": {
-    "node": ">=14"
-  },
-  "version": "1.0.0"
+    "node": ">=18"
+  }
 }
