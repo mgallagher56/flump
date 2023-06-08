@@ -1,6 +1,0 @@
-projectKey=flump
-serverUrl=http://localhost:9000
-serverVersion=9.9.0.65466
-dashboardUrl=http://localhost:9000/dashboard?id=flump
-ceTaskId=AYicGuvPX5ksRdVgbBau
-ceTaskUrl=http://localhost:9000/api/ce/task?id=AYicGuvPX5ksRdVgbBau
