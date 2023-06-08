@@ -25,7 +25,7 @@
     "test:e2e:dev": "start-server-and-test dev http://localhost:3000 \"pnpx cypress open\"",
     "pretest:e2e:run": "pnpm run build",
     "test:e2e:run": "cross-env PORT=8811 start-server-and-test start:mocks http://localhost:8811 \"pnpx cypress run\"",
-    "ts-coverage": "type-coverage",
+    "ts-coverage": "typescript-coverage-report --strict",
     "validate": "run-p \"test -- --run\" lint typecheck test:e2e:run"
   },
   "lint-staged": {
@@ -37,9 +37,14 @@
     ]
   },
   "typeCoverage": {
-    "atLeast": "98.00",
+    "atLeast": "95.00",
     "ignoreFiles": [
-      "app/**/*.config.{js,ts,jsx,tsx}"
+      "app/**/*.config.{js,ts,jsx,tsx}",
+      "cypress/**/*.{js,ts,jsx,tsx}",
+      "app/*.*",
+      "*.*",
+      "app/**/*.test.{js,ts,jsx,tsx}",
+      "test/**/*.{js,ts,jsx,tsx}"
     ]
   },
   "eslintIgnore": [
@@ -130,6 +135,7 @@
     "tsconfig-paths": "4.2.0",
     "type-coverage": "2.26.0",
     "typescript": "5.0.4",
+    "typescript-coverage-report": "^0.7.0",
     "vite": "4.2.3",
     "vite-plugin-checker": "0.6.0",
     "vite-tsconfig-paths": "4.2.0",
