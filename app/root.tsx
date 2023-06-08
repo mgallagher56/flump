@@ -1,4 +1,4 @@
-import React, { useContext, useEffect } from 'react';
+import React, { StrictMode, useContext, useEffect } from 'react';
 
 import { Box, ChakraProvider, Heading } from '@chakra-ui/react';
 import { withEmotionCache } from '@emotion/react';
@@ -87,11 +87,13 @@ const Document = withEmotionCache(({ children }: DocumentProps, emotionCache) =>
 
 export default function App() {
   return (
-    <Document>
-      <ChakraProvider>
-        <Outlet />
-      </ChakraProvider>
-    </Document>
+    <StrictMode>
+      <Document>
+        <ChakraProvider>
+          <Outlet />
+        </ChakraProvider>
+      </Document>
+    </StrictMode>
   );
 }
 
