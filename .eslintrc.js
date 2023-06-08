@@ -33,49 +33,18 @@ module.exports = {
     }
   },
   rules: {
-    '@typescript-eslint/explicit-function-return-type': 'off',
-    '@typescript-eslint/explicit-module-boundary-types': 'off',
+    '@typescript-eslint/explicit-function-return-type': 'warn',
     '@typescript-eslint/no-duplicate-imports': 'error',
     '@typescript-eslint/no-empty-function': 'error',
     '@typescript-eslint/no-empty-interface': 'error',
-    '@typescript-eslint/no-explicit-any': 'off',
     '@typescript-eslint/no-unnecessary-type-assertion': 'error',
-    '@typescript-eslint/no-unused-expressions': 'off',
-    '@typescript-eslint/no-unused-vars': ['error', { ignoreRestSiblings: true }],
-    '@typescript-eslint/no-use-before-define': 'off',
-    '@typescript-eslint/no-useless-escape': 'off',
-    'array-callback-return': 'warn',
     complexity: ['warn', 15],
     eqeqeq: ['warn', 'smart'],
     'no-console': 'off',
     'no-debugger': 'error',
     'no-duplicate-imports': 0,
-    'no-nested-ternary': 'warn',
     'no-relative-import-paths/no-relative-import-paths': ['error', { allowSameFolder: true, rootDir: 'src' }],
-    'no-restricted-imports': [
-      'error',
-      {
-        paths: [
-          {
-            name: '@mui/icons-material',
-            message: 'Please use Foo from @mui/icons-material/Foo instead.'
-          }
-        ]
-      }
-    ],
     'no-unneeded-ternary': 'warn',
-    'no-unused-vars': 'off',
-    'sonarjs/cognitive-complexity': ['warn', 15],
-    'sonarjs/no-collapsible-if': 'warn',
-    'sonarjs/no-duplicated-branches': 'warn',
-    'sonarjs/no-duplicate-string': 'warn',
-    'sonarjs/no-ignored-return': 'off',
-    'sonarjs/no-nested-template-literals': 'warn',
-    'sonarjs/no-redundant-boolean': 'warn',
-    'sonarjs/no-redundant-jump': 'warn',
-    'sonarjs/no-small-switch': 'warn',
-    'sonarjs/no-unused-collection': 'warn',
-    'sonarjs/prefer-single-boolean-return': 'warn',
     'react-hooks/exhaustive-deps': 'error',
     'react/display-name': 0,
     'react/jsx-no-useless-fragment': ['error', { allowExpressions: true }],
