@@ -64,7 +64,7 @@
   "devDependencies": {
     "@commitlint/cli": "17.6.3",
     "@commitlint/config-conventional": "17.6.3",
-    "@faker-js/faker": "7.6.0",
+    "@faker-js/faker": "8.0.2",
     "@remix-run/dev": "1.16.0",
     "@remix-run/eslint-config": "1.16.0",
     "@testing-library/cypress": "9.0.0",
