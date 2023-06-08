@@ -17,6 +17,7 @@ jobs:
         with:
           release-type: node
           package-name: release-please-action
+          changelog-types: '[{"type":"feat","section":"Features ✨","hidden":false},{"type":"fix","section":"Bug Fixes 🪲","hidden":false}, {"type":"build","section":"Build 🛠️","hidden":false}, {"type":"ci","section":"CI 🤖","hidden":false}, {"type":"doc","section":"Documentation 📙","hidden":false}, {"type":"perf","section":"Performance ⚡️","hidden":false}, {"type":"refactor","section":"Refactor 🔥","hidden":false}, {"type":"test","section":"Tests 🧪","hidden":false}, {"type":"chore","section":"Miscellaneous 🙃","hidden":false}]'
 
   deploy:
     name: 🚀 Deploy
