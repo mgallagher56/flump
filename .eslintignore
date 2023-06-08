@@ -10,3 +10,5 @@ cypress
 cypress.config.ts
 mocks
 remix.init
+/build
+/public
