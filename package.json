@@ -39,7 +39,7 @@
   "typeCoverage": {
     "atLeast": "98.00",
     "ignoreFiles": [
-      "src/**/*.config.{js,ts,jsx,tsx}"
+      "app/**/*.config.{js,ts,jsx,tsx}"
     ]
   },
   "eslintIgnore": [
