@@ -34,7 +34,7 @@ export default defineConfig(({ mode }) => ({
       include: ['app/**/*.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
       lines: 8.17,
       provider: 'v8',
-      reporter: ['text', 'html', 'lcov', 'clover', 'json-summary'],
+      reporter: ['text', 'html', 'lcov', 'clover', 'json', 'json-summary'],
       statements: 8.17,
       thresholdAutoUpdate: true,
     },

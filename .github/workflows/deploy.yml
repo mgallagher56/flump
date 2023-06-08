@@ -17,6 +17,7 @@ concurrency:
 permissions:
   actions: write
   contents: read
+  pull-requests: write
 
 jobs:
   lint:
@@ -58,7 +59,11 @@ jobs:
       - uses: ./.github/actions/pnpm-setup
 
       - name: ⚡ Run vitest
-        run: pnpm run test -- --coverage
+        run: pnpm run test
+
+      - name: 'Report Coverage'
+        if: always()
+        uses:  davelosert/vitest-coverage-report-action@v1
 
   # cypress:
   #   name: ⚫️ Cypress
