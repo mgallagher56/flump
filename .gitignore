@@ -3,7 +3,6 @@ node_modules
 /build
 /public/build
 .env
-.DS_Store
 
 /cypress/screenshots
 /cypress/videos
@@ -12,27 +11,3 @@ node_modules
 /.scannerwork
 /.eslintcache
 /coverage-ts/
-
-// starlight docs
-/starlight/.vscode
-# build output
-/starlight/dist/
-# generated types
-/starlight/.astro/
-
-# dependencies
-/starlight/node_modules/
-
-# logs
-/starlight/npm-debug.log*
-/starlight/yarn-debug.log*
-/starlight/yarn-error.log*
-/starlight/pnpm-debug.log*
-
-
-# environment variables
-/starlight/.env
-/starlight/.env.production
-
-# macOS-specific files
-/starlight/.DS_Store
