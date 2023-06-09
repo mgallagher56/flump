@@ -11,11 +11,22 @@ permissions:
   pages: write
 
 jobs:
+  printJob:
+    name: Print event
+    runs-on: ubuntu-latest
+    steps:
+      - name: Dump GitHub context
+        env:
+          GITHUB_CONTEXT: ${{ toJson(github) }}
+        run: |
+          echo "$GITHUB_CONTEXT"
+
   release:
     runs-on: ubuntu-latest
     steps:
       - id: release
         uses: google-github-actions/release-please-action@v3
+
         with:
           release-type: node
           package-name: release-please-action
