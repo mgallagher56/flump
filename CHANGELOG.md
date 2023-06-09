@@ -22,6 +22,67 @@
 ## [1.1.0](https://github.com/mgallagher56/flump/compare/v1.0.0...v1.1.0) (2023-06-09)
 
 
+### Refactor 🔥
+
+* remove sonarqube bits ([29ae2a0](https://github.com/mgallagher56/flump/commit/29ae2a0a9e7f39ba588208dc7429faeb67026f3d))
+
+
+### CI 🤖
+
+* add additional types for release please docs ([bf976d9](https://github.com/mgallagher56/flump/commit/bf976d91610bf2eb0cb1952f106a6c718112f01e))
+* add release pipeline for dev branch ([0a42c5d](https://github.com/mgallagher56/flump/commit/0a42c5d808613631c65c4c699516edd9266900de))
+* add typecheck on commit ([019800c](https://github.com/mgallagher56/flump/commit/019800c541467437cad3024a8425696e3c4834e7))
+* remove eslint cache ([6ca8145](https://github.com/mgallagher56/flump/commit/6ca81459a70243a123cf79f4d340c898d439b8e3))
+
+
+### Tests 🧪
+
+* fix sonarQube reporting. ci: add vitest gh action report ([d57ab69](https://github.com/mgallagher56/flump/commit/d57ab69634824a5d87b2efc4c06040951eff7237))
+
+
+### Features ✨
+
+* add coverage for typescript ([8385c98](https://github.com/mgallagher56/flump/commit/8385c9864a3b8536db1f394ff6defb4aeba0dc8c))
+* add gh action for vitest coverage ([34a7c08](https://github.com/mgallagher56/flump/commit/34a7c0839bbf33254fb3e4fef94eb13cc21f58e2))
+* add npmrc with peer deps true ([1042259](https://github.com/mgallagher56/flump/commit/1042259e0bbec87dc583952df992638cdf071e94))
+* add package manager to docs release ([bdd7c3e](https://github.com/mgallagher56/flump/commit/bdd7c3ee2496343d26f084ce0c3f63a6bb5584ed))
+* add pre-commit checks. fix: eslint errors. feat: add ts coverage level ([05d63fc](https://github.com/mgallagher56/flump/commit/05d63fc955afb06724e1d9b2bb2c376bc81d21aa))
+* add react strict mode ([a8e3143](https://github.com/mgallagher56/flump/commit/a8e3143d2595473ce592d2a54607f45c4fdc207c))
+* add sonarqube config. update eslint rules ([7e9edfb](https://github.com/mgallagher56/flump/commit/7e9edfbdb4216c30986b588df714ab347bed9f15))
+* add vitest v8 coverage. feat:vitest ui. chore: update vitest ([b40591f](https://github.com/mgallagher56/flump/commit/b40591f7f3e86764a3b1545a00ffa7e479706822))
+* added gh workflow for starlight ([ab58f87](https://github.com/mgallagher56/flump/commit/ab58f87425d5f0ca4c2954617b19f31ebc4fb0e4))
+* change dev release to pr release only ([df31606](https://github.com/mgallagher56/flump/commit/df316065428c1051e4c53ae2657be796e4209b27))
+* fix links in docs ([e01c36e](https://github.com/mgallagher56/flump/commit/e01c36e68ee9e6a8c14e133a0a19a1da1999b08d))
+* update install peer deps value ([a455506](https://github.com/mgallagher56/flump/commit/a45550644fdf69d7688c50599e3903dc1ef17a38))
+* update install peer deps value ([e5846cb](https://github.com/mgallagher56/flump/commit/e5846cbeb44c49433a4fcd08553cf522b52c02d4))
+* update install peer deps value ([fc971ba](https://github.com/mgallagher56/flump/commit/fc971ba436ce7c5e75e07111d69b231fcda7cf4e))
+* update install peer deps value ([ad56c5e](https://github.com/mgallagher56/flump/commit/ad56c5e3a23a14fc449a511de36b6415b2e2cbea))
+* update install peer deps value ([7bf7101](https://github.com/mgallagher56/flump/commit/7bf710188152e01fc8c2572bd5e88c66b402e188))
+* update install peer deps value ([141d15a](https://github.com/mgallagher56/flump/commit/141d15afec530d7b39c785a0095afe542ad33eb5))
+* update install peer deps value ([2597c54](https://github.com/mgallagher56/flump/commit/2597c5480762d78b343949e02e4dad52756f42e5))
+
+
+### Bug Fixes 🪲
+
+* **deps:** pin dependencies ([6ab76f4](https://github.com/mgallagher56/flump/commit/6ab76f4ba90dbcb83a54a65d764aaf9327d12031))
+* **deps:** update dependency framer-motion to v10 ([4af6c7b](https://github.com/mgallagher56/flump/commit/4af6c7b576a02a139e008abc4966ae0899ce0e40))
+
+
+### Miscellaneous 🙃
+
+* **deps:** update actions/deploy-pages action to v2 ([dae01f7](https://github.com/mgallagher56/flump/commit/dae01f7158157c9ea97bd01f6e32455dc80ef94f))
+* **deps:** update dependency @faker-js/faker to v8 ([103f017](https://github.com/mgallagher56/flump/commit/103f0176e9308ca516447a65108a653a2a2e3a58))
+* **deps:** update dependency @vitejs/plugin-react to v4 ([1725a90](https://github.com/mgallagher56/flump/commit/1725a90e537eccaf77811aa583a4e1ef1640fd1c))
+* **deps:** update dependency vite to v4.2.3 [security] ([1666e0b](https://github.com/mgallagher56/flump/commit/1666e0b59b4af9b007a965b2b0b4b9fe3ba9564a))
+* **deps:** update dependency vite-tsconfig-paths to v4 ([0bd1f8a](https://github.com/mgallagher56/flump/commit/0bd1f8aa24fb5bdc40fdd455a6f0ca23af60394f))
+* **deps:** update node.js to v20 ([77d7167](https://github.com/mgallagher56/flump/commit/77d71677ff01d7083220fb8ece5ef07da786db6b))
+* **dev:** release 1.0.0 ([3330446](https://github.com/mgallagher56/flump/commit/333044600ecdb01bc05c3250dbfc7b4c43d6aaeb))
+* **dev:** release 1.1.0 ([11bb4c5](https://github.com/mgallagher56/flump/commit/11bb4c53caa60fbe26dfe09ea008169cbe750d4e))
+* update eslint ignore files ([a0e1371](https://github.com/mgallagher56/flump/commit/a0e13715e3b4b5b916c616cf26a29c8cfab4c0b8))
+
+## [1.1.0](https://github.com/mgallagher56/flump/compare/v1.0.0...v1.1.0) (2023-06-09)
+
+
 ### Bug Fixes 🪲
 
 * **deps:** update dependency framer-motion to v10 ([d38b3b0](https://github.com/mgallagher56/flump/commit/d38b3b0076476afb03b5dfdaf7440de8113ef629))
