@@ -26,7 +26,7 @@ jobs:
     name: 🚀 Deploy
     runs-on: ubuntu-latest
     needs: [release]
-    if: github.event.head_commit.author.name == 'github-actions[bot]'
+    if: github.event.commits[0].author.username == 'github-actions[bot]'
 
     steps:
       - name: ⬇️ Checkout repo
@@ -50,7 +50,7 @@ jobs:
     name: 🛠️ Build Docs
     runs-on: ubuntu-latest
     needs: [release]
-    if: github.event.head_commit.author.name == 'github-actions[bot]'
+    if: github.event.commits[0].author.username == 'github-actions[bot]'
     steps:
       - name: Checkout your repository using git
         uses: actions/checkout@v3
@@ -64,7 +64,7 @@ jobs:
     name: 🚀 Deploy Docs
     runs-on: ubuntu-latest
     needs: build-docs
-    if: github.event.head_commit.author.name == 'github-actions[bot]'
+    if: github.event.commits[0].author.username == 'github-actions[bot]'
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
