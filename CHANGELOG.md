@@ -5,6 +5,49 @@
 
 ### Bug Fixes 🪲
 
+* **deps:** update dependency framer-motion to v10 ([d38b3b0](https://github.com/mgallagher56/flump/commit/d38b3b0076476afb03b5dfdaf7440de8113ef629))
+
+
+### Refactor 🔥
+
+* remove sonarqube bits ([cb31b2b](https://github.com/mgallagher56/flump/commit/cb31b2be729ccf4674387c7e1a6d6a1944ccbf3c))
+
+
+### CI 🤖
+
+* add additional types for release please docs ([33115aa](https://github.com/mgallagher56/flump/commit/33115aa1f1446a87c032cbf021429af51fbb5e39))
+* add release pipeline for dev branch ([9c1a261](https://github.com/mgallagher56/flump/commit/9c1a2615d8bcb49cef156d334fcc1b2e4069e45a))
+* add typecheck on commit ([9ab5454](https://github.com/mgallagher56/flump/commit/9ab545466f6f55f64c8bb5eca50e2b8c4b8ee4bd))
+* remove eslint cache ([8acb262](https://github.com/mgallagher56/flump/commit/8acb2620bab926345e9c0c5f8651c36d40716eaa))
+
+
+### Features ✨
+
+* add coverage for typescript ([56ee515](https://github.com/mgallagher56/flump/commit/56ee515edb54aa9cc02944fdb5152cad903b47a9))
+* add gh action for vitest coverage ([ca37daf](https://github.com/mgallagher56/flump/commit/ca37daf140baed088025e41fd813e70a0b7128a1))
+* add pre-commit checks. fix: eslint errors. feat: add ts coverage level ([bf2eff9](https://github.com/mgallagher56/flump/commit/bf2eff9f677850c7bf6ba0e17a91fc6fc9f4c6dc))
+* add react strict mode ([a69ff41](https://github.com/mgallagher56/flump/commit/a69ff411a209da1ad176dd14faab86d142c2167e))
+* add sonarqube config. update eslint rules ([896195e](https://github.com/mgallagher56/flump/commit/896195ebbde47a479340747e9fdc9c20edca4aed))
+* add vitest v8 coverage. feat:vitest ui. chore: update vitest ([de6fe79](https://github.com/mgallagher56/flump/commit/de6fe79becbd85b0a6c9ead63226950c9e8b6246))
+* change dev release to pr release only ([2ed0bef](https://github.com/mgallagher56/flump/commit/2ed0bef18a9d4e082974d7456434d2939051a8ac))
+
+
+### Miscellaneous 🙃
+
+* **deps:** update dependency @faker-js/faker to v8 ([fc356ae](https://github.com/mgallagher56/flump/commit/fc356ae085145020dd85f0a4741d18f588dfb1d4))
+* **deps:** update dependency @vitejs/plugin-react to v4 ([a87f969](https://github.com/mgallagher56/flump/commit/a87f969e841d06a7a363be470867ec2fd0ab35bd))
+* **deps:** update dependency vite to v4.2.3 [security] ([2ca0541](https://github.com/mgallagher56/flump/commit/2ca05411b7516e8c517c741688b8ec7fa432cb09))
+* **deps:** update dependency vite-tsconfig-paths to v4 ([69a8a80](https://github.com/mgallagher56/flump/commit/69a8a8002b634cf6a50e1cc403f38af8970631dc))
+* **deps:** update node.js to v20 ([024f8f0](https://github.com/mgallagher56/flump/commit/024f8f0d86f6e1d000cc023eef23dd157a584d93))
+* **dev:** release 1.0.0 ([ad2b2bc](https://github.com/mgallagher56/flump/commit/ad2b2bcbfdccc52932c31a5cd4fb09e7534fc3ae))
+* **dev:** release 1.1.0 ([d867ed9](https://github.com/mgallagher56/flump/commit/d867ed9daeb3a04c201cc67aed0a5485ae79b95d))
+* update eslint ignore files ([dc8a4db](https://github.com/mgallagher56/flump/commit/dc8a4dba00c7f6b7719fd01372b8a99dab703d4b))
+
+## [1.1.0](https://github.com/mgallagher56/flump/compare/v1.0.0...v1.1.0) (2023-06-09)
+
+
+### Bug Fixes 🪲
+
 * client/server css mismatch ([523d49c](https://github.com/mgallagher56/flump/commit/523d49c83dd53a37874f8b3aa104e47d51d05eac))
 * correct renovate config error ([51e712f](https://github.com/mgallagher56/flump/commit/51e712f156c5066e520c57978f6daa5db53a5355))
 * correct staging fly api token and read name from fly.toml ([e9ca756](https://github.com/mgallagher56/flump/commit/e9ca756da2de1b6929e8900dee205d5bc207075c))
