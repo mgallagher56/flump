@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.1](https://github.com/mgallagher56/flump/compare/v1.3.0...v1.3.1) (2023-06-09)
+
+
+### CI 🤖
+
+* update deployments to only run on release-please pr merge ([0c902a2](https://github.com/mgallagher56/flump/commit/0c902a2033df1909e80e6148d1798eea502f7259))
+
 ## [1.4.0](https://github.com/mgallagher56/flump/compare/v1.3.0...v1.4.0) (2023-06-09)
 
 
