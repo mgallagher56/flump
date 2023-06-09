@@ -1,5 +1,24 @@
 # Changelog
 
+## [1.3.0](https://github.com/mgallagher56/flump/compare/v1.2.0...v1.3.0) (2023-06-09)
+
+
+### Tests 🧪
+
+* fix sonarQube reporting. ci: add vitest gh action report ([239e2d0](https://github.com/mgallagher56/flump/commit/239e2d0391f5d8608350cbfc4e596cb5a1c3056f))
+
+
+### Features ✨
+
+* add npmrc with peer deps true ([62aaecb](https://github.com/mgallagher56/flump/commit/62aaecb6d35231cfde62e006129a4f6a51476f92))
+* add package manager to docs release ([ab5097c](https://github.com/mgallagher56/flump/commit/ab5097c103e5e8a33e0b1e853149e06b43ddbced))
+* added gh workflow for starlight ([a77c812](https://github.com/mgallagher56/flump/commit/a77c8121a3eef4a686b37e19b624cc7372d934cf))
+
+
+### Bug Fixes 🪲
+
+* dev deployment ([6a42c1b](https://github.com/mgallagher56/flump/commit/6a42c1b52ba34b5d53dbb2bfcd5da38622911dd9))
+
 ## [1.2.0](https://github.com/mgallagher56/flump/compare/v1.1.0...v1.2.0) (2023-06-09)
 
 
