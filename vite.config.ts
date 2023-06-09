@@ -29,7 +29,7 @@ export default defineConfig(({ mode }) => ({
       all: true,
       branches: 16.66,
       enabled: true,
-      exclude: ['app/**/*.test.{js,ts,jsx,tsx}', 'app/*.*', 'app/**/*.config.{js,ts,jsx,tsx}', 'app/routes/*.*', 'starlight/**/*.*'],
+      exclude: ['app/**/*.test.{js,ts,jsx,tsx}', 'app/*.*', 'app/**/*.config.{js,ts,jsx,tsx}', 'app/routes/*.*'],
       functions: 5.55,
       include: ['app/**/*.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
       lines: 8.17,
@@ -44,6 +44,6 @@ export default defineConfig(({ mode }) => ({
     logHeapUsage: true,
     setupFiles: ['./test/setup-test-env.ts', './test/vitest.setup.ts'],
     useAtomics: true,
-    watchExclude: ['.*\\/node_modules\\/.*', '.*\\/build\\/.*', '.*\\/postgres-data\\/.*','.*\\/starlight\\/.*'],
+    watchExclude: ['.*\\/node_modules\\/.*', '.*\\/build\\/.*', '.*\\/postgres-data\\/.*']
   }
 }));
