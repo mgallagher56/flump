@@ -26,6 +26,7 @@
     "pretest:e2e:run": "pnpm run build",
     "test:e2e:run": "cross-env PORT=8811 start-server-and-test start:mocks http://localhost:8811 \"pnpx cypress run\"",
     "ts-coverage": "typescript-coverage-report --strict",
+    "ts-coverage:ui": "typescript-coverage-report && pnpx vite preview --outDir ./coverage-ts/",
     "validate": "run-p \"test -- --run\" lint typecheck test:e2e:run"
   },
   "lint-staged": {
@@ -44,14 +45,17 @@
       "app/*.*",
       "*.*",
       "app/**/*.test.{js,ts,jsx,tsx}",
-      "test/**/*.{js,ts,jsx,tsx}"
+      "test/**/*.{js,ts,jsx,tsx}",
+      "starlight/**/*.*",
+      "starlight/.astro/**/*.*"
     ]
   },
   "eslintIgnore": [
     "/node_modules",
     "/build",
     "/public/build",
-    "/postgres-data"
+    "/postgres-data",
+    "/starlight"
   ],
   "dependencies": {
     "@chakra-ui/react": "2.6.1",
