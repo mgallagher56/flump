@@ -1,5 +1,84 @@
 # Changelog
 
+## [1.3.0](https://github.com/mgallagher56/flump/compare/v1.2.0...v1.3.0) (2023-06-09)
+
+
+### Refactor 🔥
+
+* remove sonarqube bits ([cb31b2b](https://github.com/mgallagher56/flump/commit/cb31b2be729ccf4674387c7e1a6d6a1944ccbf3c))
+
+
+### CI 🤖
+
+* add additional types for release please docs ([33115aa](https://github.com/mgallagher56/flump/commit/33115aa1f1446a87c032cbf021429af51fbb5e39))
+* add release pipeline for dev branch ([9c1a261](https://github.com/mgallagher56/flump/commit/9c1a2615d8bcb49cef156d334fcc1b2e4069e45a))
+* add release-please for main deployments ([0705f24](https://github.com/mgallagher56/flump/commit/0705f24c231a3db552fe87f4876e5757d2feb86b))
+* add typecheck on commit ([9ab5454](https://github.com/mgallagher56/flump/commit/9ab545466f6f55f64c8bb5eca50e2b8c4b8ee4bd))
+* remove eslint cache ([8acb262](https://github.com/mgallagher56/flump/commit/8acb2620bab926345e9c0c5f8651c36d40716eaa))
+* update gitignore ([22913c8](https://github.com/mgallagher56/flump/commit/22913c8b01506cae6ad44e9d767182d47cb2d225))
+* update workflow ([d4ed139](https://github.com/mgallagher56/flump/commit/d4ed13927ec255ff1f22ac3cbda17908d61470ab))
+
+
+### Tests 🧪
+
+* fix sonarQube reporting. ci: add vitest gh action report ([cece1c5](https://github.com/mgallagher56/flump/commit/cece1c5021475c4f61186d5ec56bc970fc30f916))
+
+
+### Bug Fixes 🪲
+
+* change conditions of release ([841e2bf](https://github.com/mgallagher56/flump/commit/841e2bfc2f5981e91a721353f17d77074146adef))
+* client/server css mismatch ([c3f7dda](https://github.com/mgallagher56/flump/commit/c3f7dda84c6f7cdbbf37dae651c60749a286fffe))
+* correct renovate config error ([51e712f](https://github.com/mgallagher56/flump/commit/51e712f156c5066e520c57978f6daa5db53a5355))
+* correct staging fly api token and read name from fly.toml ([e9ca756](https://github.com/mgallagher56/flump/commit/e9ca756da2de1b6929e8900dee205d5bc207075c))
+* **deps:** pin dependencies ([c11e1db](https://github.com/mgallagher56/flump/commit/c11e1db700124b5a5870054b9868eed0b50b93ad))
+* **deps:** update dependency framer-motion to v10 ([d38b3b0](https://github.com/mgallagher56/flump/commit/d38b3b0076476afb03b5dfdaf7440de8113ef629))
+* dev deployment ([5adb368](https://github.com/mgallagher56/flump/commit/5adb368a8d978409e3b19930965896f29f8c338f))
+* supabase env variables ([78d352f](https://github.com/mgallagher56/flump/commit/78d352fab4b492dc30b3214ea8231b71e5dbe740))
+* supabase env variables ([bf88c18](https://github.com/mgallagher56/flump/commit/bf88c18eb375ae38bef5ed2746bf35897103d28b))
+* window error ([2f5557c](https://github.com/mgallagher56/flump/commit/2f5557c171147d922b0f9cd7d9b2b645b49f8c0b))
+* window error ([da15a6e](https://github.com/mgallagher56/flump/commit/da15a6eae8fdaae98dd64916957457f12dbe2191))
+
+
+### Miscellaneous 🙃
+
+* **deps:** update dependency @faker-js/faker to v8 ([fc356ae](https://github.com/mgallagher56/flump/commit/fc356ae085145020dd85f0a4741d18f588dfb1d4))
+* **deps:** update dependency @vitejs/plugin-react to v4 ([a87f969](https://github.com/mgallagher56/flump/commit/a87f969e841d06a7a363be470867ec2fd0ab35bd))
+* **deps:** update dependency vite to v4.2.3 [security] ([2ca0541](https://github.com/mgallagher56/flump/commit/2ca05411b7516e8c517c741688b8ec7fa432cb09))
+* **deps:** update dependency vite-tsconfig-paths to v4 ([69a8a80](https://github.com/mgallagher56/flump/commit/69a8a8002b634cf6a50e1cc403f38af8970631dc))
+* **deps:** update node.js to v20 ([024f8f0](https://github.com/mgallagher56/flump/commit/024f8f0d86f6e1d000cc023eef23dd157a584d93))
+* **dev:** release 1.0.0 ([ad2b2bc](https://github.com/mgallagher56/flump/commit/ad2b2bcbfdccc52932c31a5cd4fb09e7534fc3ae))
+* **dev:** release 1.1.0 ([d867ed9](https://github.com/mgallagher56/flump/commit/d867ed9daeb3a04c201cc67aed0a5485ae79b95d))
+* **dev:** release 1.2.0 ([81bbf87](https://github.com/mgallagher56/flump/commit/81bbf878412f0a60faa9779f8477d88859120a65))
+* **main:** release 1.0.0 ([1ae1f5a](https://github.com/mgallagher56/flump/commit/1ae1f5a26d008bb78dd10dd2ed9c8414c74e83b9))
+* **main:** release 1.1.0 ([91457ce](https://github.com/mgallagher56/flump/commit/91457ce2c59e797c028d95f75b0560641ab2ad14))
+* update eslint ignore files ([dc8a4db](https://github.com/mgallagher56/flump/commit/dc8a4dba00c7f6b7719fd01372b8a99dab703d4b))
+
+
+### Features ✨
+
+* add config for renovate ([93d0f1a](https://github.com/mgallagher56/flump/commit/93d0f1a8877a156f80d52ec5b86d61b3e0961e7f))
+* add coverage for typescript ([56ee515](https://github.com/mgallagher56/flump/commit/56ee515edb54aa9cc02944fdb5152cad903b47a9))
+* add gh action for vitest coverage ([ca37daf](https://github.com/mgallagher56/flump/commit/ca37daf140baed088025e41fd813e70a0b7128a1))
+* add npmrc with peer deps true ([d23d227](https://github.com/mgallagher56/flump/commit/d23d227dc7871665958c7a8444f3b5859498040b))
+* add package manager to docs release ([a38b985](https://github.com/mgallagher56/flump/commit/a38b985adc001a9db7cab07e2e7bacc18a6db692))
+* add pre-commit checks. fix: eslint errors. feat: add ts coverage level ([bf2eff9](https://github.com/mgallagher56/flump/commit/bf2eff9f677850c7bf6ba0e17a91fc6fc9f4c6dc))
+* add react strict mode ([a69ff41](https://github.com/mgallagher56/flump/commit/a69ff411a209da1ad176dd14faab86d142c2167e))
+* add sonarqube config. update eslint rules ([896195e](https://github.com/mgallagher56/flump/commit/896195ebbde47a479340747e9fdc9c20edca4aed))
+* add vitest v8 coverage. feat:vitest ui. chore: update vitest ([de6fe79](https://github.com/mgallagher56/flump/commit/de6fe79becbd85b0a6c9ead63226950c9e8b6246))
+* added gh workflow for starlight ([e90c05e](https://github.com/mgallagher56/flump/commit/e90c05e604a23b0189d6635e3ebf7b505bcb4d6f))
+* change dev release to pr release only ([2ed0bef](https://github.com/mgallagher56/flump/commit/2ed0bef18a9d4e082974d7456434d2939051a8ac))
+* initial commit ([c24e704](https://github.com/mgallagher56/flump/commit/c24e7049875a64fb217f63cd1d8aa66672fac64e))
+* install commitlint ([97fe4bb](https://github.com/mgallagher56/flump/commit/97fe4bbd8d03c88934ee42815b29e10f42f0de6d))
+* local deployment and CI  working ([d667e9a](https://github.com/mgallagher56/flump/commit/d667e9a90f5230561798a9ef1ad9e5b93e2d18d9))
+* local deployment and CI  working ([f61af0a](https://github.com/mgallagher56/flump/commit/f61af0a4662b050e17125fa3695a8097c22fe7c5))
+* local deployment working ([6350499](https://github.com/mgallagher56/flump/commit/63504997d63684bf3d254faafec37ed899963fb3))
+* move docs deployment to main ([84d92ad](https://github.com/mgallagher56/flump/commit/84d92ad270d3f3d21eda7aaae11941376923e012))
+* supabase and base component wrappers ([33c64cf](https://github.com/mgallagher56/flump/commit/33c64cf85d350380fb08d5704c7149a8cbea87c9))
+* test gh event output ([da0383c](https://github.com/mgallagher56/flump/commit/da0383c6640b5bd2619a15f5aa1ea40501201a96))
+* test release please ([5604792](https://github.com/mgallagher56/flump/commit/56047924b984a53fc3f1a0cf1f23e54f978bd671))
+* test release-please ([9b652b8](https://github.com/mgallagher56/flump/commit/9b652b81f2994975066d82d44167030e967a53e3))
+* wrap omponents in zag machines ([7126f08](https://github.com/mgallagher56/flump/commit/7126f0852102b3f701229dc47a2649d74059a18b))
+
 ## [1.2.0](https://github.com/mgallagher56/flump/compare/v1.1.0...v1.2.0) (2023-06-09)
 
 
