@@ -11,17 +11,18 @@ permissions:
   pages: write
 
 jobs:
-  printJob:
-    name: Print event
-    runs-on: ubuntu-latest
-    steps:
-      - name: Dump GitHub context
-        env:
-          GITHUB_CONTEXT: ${{ toJson(github) }}
-        run: |
-          echo "$GITHUB_CONTEXT"
+  # printJob:
+  #   name: Print event
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Dump GitHub context
+  #       env:
+  #         GITHUB_CONTEXT: ${{ toJson(github) }}
+  #       run: |
+  #         echo "$GITHUB_CONTEXT"
 
   release:
+    name: 📦 Release PR
     runs-on: ubuntu-latest
     steps:
       - id: release
@@ -39,7 +40,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [release]
     # only build/deploy dev branch on pushes
-    if: github.event.sender == 'github-actions[bot]'
+    if: github.event.head_commit.author.name == 'github-actions[bot]'
 
     steps:
       - name: ⬇️ Checkout repo

@@ -12,6 +12,7 @@ permissions:
 
 jobs:
   release:
+    name: 📦 Release
     runs-on: ubuntu-latest
     steps:
       - id: release
@@ -25,7 +26,7 @@ jobs:
     name: 🚀 Deploy
     runs-on: ubuntu-latest
     needs: [release]
-    if: github.event.pusher == 'github-actions[bot]'
+    if: github.event.head_commit.author.name == 'github-actions[bot]'
 
     steps:
       - name: ⬇️ Checkout repo
@@ -49,7 +50,7 @@ jobs:
     name: 🛠️ Build Docs
     runs-on: ubuntu-latest
     needs: [release]
-    if: github.event.pusher == 'github-actions[bot]'
+    if: github.event.head_commit.author.name == 'github-actions[bot]'
     steps:
       - name: Checkout your repository using git
         uses: actions/checkout@v3
@@ -63,7 +64,7 @@ jobs:
     name: 🚀 Deploy Docs
     runs-on: ubuntu-latest
     needs: build-docs
-    if: github.event.sender == 'github-actions[bot]'
+    if: github.event.head_commit.author.name == 'github-actions[bot]'
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
