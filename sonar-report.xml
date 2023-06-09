@@ -1,0 +1,6 @@
+<testExecutions version="1">
+  <file path="app/utils/utils.test.ts">
+    <testCase name="validateEmail returns false for non-emails" duration="1" />
+    <testCase name="validateEmail returns true for emails" duration="0" />
+  </file>
+</testExecutions>
