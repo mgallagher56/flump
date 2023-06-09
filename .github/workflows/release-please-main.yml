@@ -18,8 +18,7 @@ jobs:
         with:
           release-type: node
           package-name: release-please-action
-          changelog-types: '[{"type":"feat","section":"Features ✨","hidden":false},{"type":"fix","section":"Bug Fixes 🪲","hidden":false}, {"type":"build","section":"Build 🛠️","hidden":false}, {"type":"ci","section":"CI 🤖","hidden":false}, {"type":"docs","section":"Documentation 📙","hidden":false}, {"type":"perf","section":"Performance ⚡️","hidden":false}, {"type":"refactor","section":"Refactor 🔥","hidden":false}, {"type":"test","section":"Tests 🧪","hidden":false}, {"type":"chore","section":"Miscellaneous 🙃","hidden":false}]'
-
+          changelog-types: '[{"type":"feat","section":"Features ✨","hidden":false},{"type":"fix","section":"Bug Fixes 🪲","hidden":false}, {"type":"build","section":"Build 🛠️","hidden":false}, {"type":"ci","section":"CI 🤖","hidden":false}, {"type":"doc","section":"Documentation 📙","hidden":false}, {"type":"perf","section":"Performance ⚡️","hidden":false}, {"type":"refactor","section":"Refactor 🔥","hidden":false}, {"type":"test","section":"Tests 🧪","hidden":false}, {"type":"chore","section":"Miscellaneous 🙃","hidden":false}]'
 
   deploy:
     name: 🚀 Deploy
@@ -37,7 +36,7 @@ jobs:
           field: app
 
       - name: 🚀 Deploy Production
-        if: ${{ github.ref == 'refs/heads/main'}} && ${{ steps.release.outputs.releases_created }}
+        if: ${{ github.ref == 'refs/heads/main' }}
         uses: superfly/flyctl-actions@v1.4
         with:
           args: deploy --remote-only --build-arg COMMIT_SHA=${{ github.sha }} --app ${{ steps.app_name.outputs.value }}
