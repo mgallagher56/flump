@@ -1,0 +1,44 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`FLPTab > renders correctly 1`] = `
+<div>
+  <div
+    class="chakra-tabs css-0"
+  >
+    <button
+      aria-selected="true"
+      class="chakra-button css-cf3le8"
+      type="button"
+    >
+      <span
+        class="css-1qkvt8e"
+      >
+        😎
+      </span>
+      Tab 1
+    </button>
+    <button
+      class="chakra-button css-cf3le8"
+      type="button"
+    >
+      <span
+        class="css-1qkvt8e"
+      >
+        😐
+      </span>
+      Tab 2
+    </button>
+    <button
+      class="chakra-button css-cf3le8"
+      type="button"
+    >
+      <span
+        class="css-1qkvt8e"
+      >
+        😐
+      </span>
+      Tab 3
+    </button>
+  </div>
+</div>
+`;

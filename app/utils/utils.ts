@@ -14,7 +14,7 @@ const DEFAULT_REDIRECT = '/';
 export function safeRedirect(
   to: FormDataEntryValue | string | null | undefined,
   defaultRedirect: string = DEFAULT_REDIRECT
-) {
+): string {
   if (!to || typeof to !== 'string') {
     return defaultRedirect;
   }
@@ -35,7 +35,7 @@ export function safeRedirect(
 export function useMatchesData(id: string): Record<string, unknown> | undefined {
   const matchingRoutes = useMatches();
   const route = useMemo(() => matchingRoutes.find((route) => route.id === id), [matchingRoutes, id]);
-  return route?.data;
+  return route?.data as Record<string, unknown>;
 }
 
 export function validateEmail(email: unknown): email is string {

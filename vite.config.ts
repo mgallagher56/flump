@@ -1,5 +1,6 @@
 /// <reference types="vitest" />
 /// <reference types="vite/client" />
+
 import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
 import checker from 'vite-plugin-checker';
@@ -26,23 +27,33 @@ export default defineConfig(({ mode }) => ({
     tsconfigPaths()
   ],
   test: {
+    onConsoleLog: (message: string): false | void => {
+      if (
+        message.includes(
+          'Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?'
+        )
+      ) {
+        return false;
+      }
+    },
     coverage: {
       all: true,
-      branches: 16.66,
+      branches: 100,
       enabled: true,
       exclude: [
         'app/**/*.test.{js,ts,jsx,tsx}',
         'app/*.*',
         'app/**/*.config.{js,ts,jsx,tsx}',
         'app/routes/*.*',
-        'starlight/**/*.*'
+        'starlight/**/*.*',
+        'app/**/types.ts',
       ],
-      functions: 5.55,
+      functions: 100,
       include: ['app/**/*.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
-      lines: 8.17,
+      lines: 100,
       provider: 'v8',
       reporter: ['text', 'html', 'lcov', 'clover', 'json', 'json-summary'],
-      statements: 8.17,
+      statements: 100,
       thresholdAutoUpdate: true
     },
     environment: 'happy-dom',

@@ -1,0 +1,25 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`FLPLinkButton > renders as expected 1`] = `
+<div>
+  <div>
+    Button
+  </div>
+</div>
+`;
+
+exports[`FLPLinkButton > renders as expected with a custom class 1`] = `
+<div>
+  <div>
+    Button
+  </div>
+</div>
+`;
+
+exports[`FLPLinkButton > renders as expected with a variant 1`] = `
+<div>
+  <div>
+    Button
+  </div>
+</div>
+`;
