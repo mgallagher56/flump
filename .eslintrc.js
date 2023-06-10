@@ -38,8 +38,6 @@ module.exports = {
     '@typescript-eslint/no-empty-function': 'error',
     '@typescript-eslint/no-empty-interface': 'error',
     '@typescript-eslint/no-unnecessary-type-assertion': 'error',
-    complexity: ['warn', 15],
-    eqeqeq: ['warn', 'smart'],
     'no-console': 'off',
     'no-debugger': 'error',
     'no-duplicate-imports': 0,
@@ -49,6 +47,9 @@ module.exports = {
     'react/display-name': 0,
     'react/jsx-no-useless-fragment': ['error', { allowExpressions: true }],
     'react/prop-types': 0,
-    'require-await': 'warn'
+    'require-await': 'warn',
+    'testing-library/prefer-user-event': ['error', { allowedMethods: ['click', 'change'] }],
+    complexity: ['warn', 15],
+    eqeqeq: ['warn', 'smart']
   }
 };

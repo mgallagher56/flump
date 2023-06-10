@@ -28,7 +28,7 @@ export default defineConfig(({ mode }) => ({
   test: {
     coverage: {
       all: true,
-      branches: 16.66,
+      branches: 61.76,
       enabled: true,
       exclude: [
         'app/**/*.test.{js,ts,jsx,tsx}',
@@ -37,12 +37,12 @@ export default defineConfig(({ mode }) => ({
         'app/routes/*.*',
         'starlight/**/*.*'
       ],
-      functions: 5.55,
+      functions: 31.57,
       include: ['app/**/*.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
-      lines: 8.17,
+      lines: 29.93,
       provider: 'v8',
       reporter: ['text', 'html', 'lcov', 'clover', 'json', 'json-summary'],
-      statements: 8.17,
+      statements: 29.93,
       thresholdAutoUpdate: true
     },
     environment: 'happy-dom',
