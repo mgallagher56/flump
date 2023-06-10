@@ -74,7 +74,52 @@
 
 ### CI 🤖
 
-* update deployments to only run on release-please pr merge ([0c902a2](https://github.com/mgallagher56/flump/commit/0c902a2033df1909e80e6148d1798eea502f7259))
+* add additional types for release please docs ([33115aa](https://github.com/mgallagher56/flump/commit/33115aa1f1446a87c032cbf021429af51fbb5e39))
+* add release pipeline for dev branch ([9c1a261](https://github.com/mgallagher56/flump/commit/9c1a2615d8bcb49cef156d334fcc1b2e4069e45a))
+* add release-please for main deployments ([0705f24](https://github.com/mgallagher56/flump/commit/0705f24c231a3db552fe87f4876e5757d2feb86b))
+* add typecheck on commit ([9ab5454](https://github.com/mgallagher56/flump/commit/9ab545466f6f55f64c8bb5eca50e2b8c4b8ee4bd))
+* remove eslint cache ([8acb262](https://github.com/mgallagher56/flump/commit/8acb2620bab926345e9c0c5f8651c36d40716eaa))
+* update deployments to only run on release-please pr merge ([f12adec](https://github.com/mgallagher56/flump/commit/f12adec1d8224924c27ee64dd538c2aa9b70c738))
+* update gitignore ([22913c8](https://github.com/mgallagher56/flump/commit/22913c8b01506cae6ad44e9d767182d47cb2d225))
+* update workflow ([d4ed139](https://github.com/mgallagher56/flump/commit/d4ed13927ec255ff1f22ac3cbda17908d61470ab))
+
+
+### Tests 🧪
+
+* add suabase, utils and flp button tests ([839e2de](https://github.com/mgallagher56/flump/commit/839e2defe08784e1d8d33867b419f8650d411cf7))
+* fix sonarQube reporting. ci: add vitest gh action report ([239e2d0](https://github.com/mgallagher56/flump/commit/239e2d0391f5d8608350cbfc4e596cb5a1c3056f))
+* fix sonarQube reporting. ci: add vitest gh action report ([3e58258](https://github.com/mgallagher56/flump/commit/3e5825881243550d4a08ee9bf1e2d949c8b73092))
+* increase test and typescript coverage to 100% ([4d35aea](https://github.com/mgallagher56/flump/commit/4d35aea6b85642d7ea8e7869f6c611cef467c44d))
+
+
+### Miscellaneous 🙃
+
+* **deps:** update dependency @faker-js/faker to v8 ([fc356ae](https://github.com/mgallagher56/flump/commit/fc356ae085145020dd85f0a4741d18f588dfb1d4))
+* **deps:** update dependency @vitejs/plugin-react to v4 ([a87f969](https://github.com/mgallagher56/flump/commit/a87f969e841d06a7a363be470867ec2fd0ab35bd))
+* **deps:** update dependency vite to v4.2.3 [security] ([2ca0541](https://github.com/mgallagher56/flump/commit/2ca05411b7516e8c517c741688b8ec7fa432cb09))
+* **deps:** update dependency vite-tsconfig-paths to v4 ([69a8a80](https://github.com/mgallagher56/flump/commit/69a8a8002b634cf6a50e1cc403f38af8970631dc))
+* **deps:** update node.js to v20 ([024f8f0](https://github.com/mgallagher56/flump/commit/024f8f0d86f6e1d000cc023eef23dd157a584d93))
+* **dev:** release 1.0.0 ([ad2b2bc](https://github.com/mgallagher56/flump/commit/ad2b2bcbfdccc52932c31a5cd4fb09e7534fc3ae))
+* **dev:** release 1.1.0 ([d867ed9](https://github.com/mgallagher56/flump/commit/d867ed9daeb3a04c201cc67aed0a5485ae79b95d))
+* **dev:** release 1.3.1 ([0275160](https://github.com/mgallagher56/flump/commit/0275160d02891aa3565acf50e2ede128eeb2c933))
+* **main:** release 1.0.0 ([1ae1f5a](https://github.com/mgallagher56/flump/commit/1ae1f5a26d008bb78dd10dd2ed9c8414c74e83b9))
+* **main:** release 1.1.0 ([91457ce](https://github.com/mgallagher56/flump/commit/91457ce2c59e797c028d95f75b0560641ab2ad14))
+* **main:** release 1.2.0 ([7d1ba4b](https://github.com/mgallagher56/flump/commit/7d1ba4bb7a5fc30c16ecb3f9f234772661b712ab))
+* **main:** release 1.3.0 ([6b66b77](https://github.com/mgallagher56/flump/commit/6b66b77e523b1976a4b2d619213589e408e1c048))
+* update eslint ignore files ([dc8a4db](https://github.com/mgallagher56/flump/commit/dc8a4dba00c7f6b7719fd01372b8a99dab703d4b))
+
+## [1.3.1](https://github.com/mgallagher56/flump/compare/v1.3.0...v1.3.1) (2023-06-11)
+
+
+### CI 🤖
+
+* update deployments to only run on release-please pr merge ([f12adec](https://github.com/mgallagher56/flump/commit/f12adec1d8224924c27ee64dd538c2aa9b70c738))
+
+
+### Tests 🧪
+
+* add suabase, utils and flp button tests ([839e2de](https://github.com/mgallagher56/flump/commit/839e2defe08784e1d8d33867b419f8650d411cf7))
+* increase test and typescript coverage to 100% ([4d35aea](https://github.com/mgallagher56/flump/commit/4d35aea6b85642d7ea8e7869f6c611cef467c44d))
 
 ## [1.4.0](https://github.com/mgallagher56/flump/compare/v1.3.0...v1.4.0) (2023-06-09)
 
