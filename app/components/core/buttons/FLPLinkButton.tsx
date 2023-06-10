@@ -11,7 +11,6 @@ interface FLPLinkButtonProps extends ButtonProps {
   preventFocusOnPress?: boolean;
   to: string;
   onPress?: (e: PressEvent) => void;
-  onLongPress?: (e: PressEvent) => void;
 }
 
 const FLPLinkButton: React.FC<React.PropsWithChildren<FLPLinkButtonProps>> = ({
@@ -19,16 +18,11 @@ const FLPLinkButton: React.FC<React.PropsWithChildren<FLPLinkButtonProps>> = ({
   colorScheme = 'blue',
   isDisabled,
   preventFocusOnPress,
-  to,
-  variant = 'link',
-  onPress,
-  onLongPress
+  to
 }) => {
   const [state, send] = useMachine(
     pressable.machine({
       id: 'pressableBaseButton',
-      onPress,
-      onLongPress,
       disabled: isDisabled,
       preventFocusOnPress: preventFocusOnPress ?? true
     })
@@ -37,8 +31,8 @@ const FLPLinkButton: React.FC<React.PropsWithChildren<FLPLinkButtonProps>> = ({
   const api = pressable.connect(state, send, normalizeProps);
 
   return (
-    <Button colorScheme={colorScheme} as={Link} to={to} variant={variant} {...api.pressableProps}>
-      {api.isPressed ? 'Pressed' : children}
+    <Button colorScheme={colorScheme} as={Link} to={to} variant="link" {...api.pressableProps}>
+      {children}
     </Button>
   );
 };

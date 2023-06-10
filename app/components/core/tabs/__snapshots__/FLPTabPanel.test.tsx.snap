@@ -1,0 +1,25 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`FLPTabPanel > renders correctly 1`] = `
+<div>
+  <div
+    class="chakra-tabs css-0"
+  >
+    <div>
+      <div>
+        Tab content 1
+      </div>
+    </div>
+    <div>
+      <div>
+        Tab content 2
+      </div>
+    </div>
+    <div>
+      <div>
+        Tab content 3
+      </div>
+    </div>
+  </div>
+</div>
+`;

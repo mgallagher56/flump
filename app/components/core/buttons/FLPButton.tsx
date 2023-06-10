@@ -9,7 +9,6 @@ import { normalizeProps, useMachine } from '@zag-js/react';
 interface FLPButtonProps extends ButtonProps {
   preventFocusOnPress?: boolean;
   onPress?: (e: PressEvent) => void;
-  onLongPress?: (e: PressEvent) => void;
 }
 
 const FLPButton: React.FC<React.PropsWithChildren<FLPButtonProps>> = ({
@@ -18,7 +17,6 @@ const FLPButton: React.FC<React.PropsWithChildren<FLPButtonProps>> = ({
   isDisabled,
   preventFocusOnPress,
   variant = 'solid',
-  onLongPress,
   onPress,
   isLoading
 }) => {
@@ -26,7 +24,6 @@ const FLPButton: React.FC<React.PropsWithChildren<FLPButtonProps>> = ({
     pressable.machine({
       id: 'pressableBaseButton',
       onPress,
-      onLongPress,
       disabled: isDisabled,
       preventFocusOnPress
     })

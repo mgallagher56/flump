@@ -1,0 +1,48 @@
+{
+  "exclude": [
+    "./cypress",
+    "./cypress.config.ts",
+    "./starlight"
+  ],
+  "include": [
+    "remix.env.d.ts",
+    "**/*.ts",
+    "**/*.tsx"
+  ],
+  "compilerOptions": {
+    "lib": [
+      "DOM",
+      "DOM.Iterable",
+      "ESNext"
+    ],
+    "types": [
+      "vitest/globals",
+      "vite/client"
+    ],
+    "isolatedModules": true,
+    "esModuleInterop": true,
+    "jsx": "react-jsx",
+    "module": "esnext",
+    "moduleResolution": "node",
+    "resolveJsonModule": true,
+    "target": "ESNext",
+    "strict": true,
+    "allowJs": true,
+    "forceConsistentCasingInFileNames": true,
+    "baseUrl": ".",
+    "paths": {
+      "~/*": [
+        "./app/*"
+      ]
+    },
+    "noFallthroughCasesInSwitch": true,
+    "strictNullChecks": false,
+    "noImplicitAny": false,
+    "skipLibCheck": true,
+    "allowSyntheticDefaultImports": true,
+    "incremental": true,
+    "noEmit": true,
+    "emitDeclarationOnly": false,
+    "tsBuildInfoFile": "/Users/marcgallagher/Library/pnpm/store/v3/tmp/dlx-13375/node_modules/.pnpm/vitest@0.32.0/node_modules/vitest/dist/tsconfig.tmp.tsbuildinfo"
+  }
+}

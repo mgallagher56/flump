@@ -12,6 +12,7 @@ node_modules
 /.scannerwork
 /.eslintcache
 /coverage-ts/
+sonar-report.xml
 
 // starlight docs
 /starlight/.vscode

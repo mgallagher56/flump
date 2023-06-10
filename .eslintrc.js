@@ -8,7 +8,6 @@ module.exports = {
   extends: [
     '@remix-run/eslint-config',
     '@remix-run/eslint-config/node',
-    '@remix-run/eslint-config/jest-testing-library',
     'prettier',
     'plugin:@typescript-eslint/recommended',
     'eslint:recommended',
@@ -38,17 +37,15 @@ module.exports = {
     '@typescript-eslint/no-empty-function': 'error',
     '@typescript-eslint/no-empty-interface': 'error',
     '@typescript-eslint/no-unnecessary-type-assertion': 'error',
-    complexity: ['warn', 15],
-    eqeqeq: ['warn', 'smart'],
     'no-console': 'off',
     'no-debugger': 'error',
     'no-duplicate-imports': 0,
     'no-relative-import-paths/no-relative-import-paths': ['error', { allowSameFolder: true, rootDir: 'src' }],
-    'no-unneeded-ternary': 'warn',
     'react-hooks/exhaustive-deps': 'error',
     'react/display-name': 0,
     'react/jsx-no-useless-fragment': ['error', { allowExpressions: true }],
-    'react/prop-types': 0,
-    'require-await': 'warn'
+    'require-await': 'warn',
+    complexity: ['warn', 15],
+    eqeqeq: ['warn', 'smart']
   }
 };
