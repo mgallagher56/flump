@@ -1,0 +1,45 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`FLPButton > should render correctly 1`] = `
+<div>
+  <button
+    class="chakra-button css-4xx2wk"
+    id="pressable:pressableBaseButton"
+    type="button"
+  >
+    FLPButton
+  </button>
+</div>
+`;
+
+exports[`FLPButton > should render correctly with props 1`] = `
+<div>
+  <button
+    class="chakra-button css-4xx2wk"
+    data-disabled=""
+    data-loading=""
+    disabled=""
+    id="pressable:pressableBaseButton"
+    type="button"
+  >
+    <div
+      class="chakra-button__spinner chakra-button__spinner--start css-1vsp78f"
+    >
+      <div
+        class="chakra-spinner css-1plzyg6"
+      >
+        <span
+          class="css-8b45rq"
+        >
+          Loading...
+        </span>
+      </div>
+    </div>
+    <span
+      class="css-q7lffx"
+    >
+      FLPButton
+    </span>
+  </button>
+</div>
+`;
