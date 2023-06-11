@@ -16,7 +16,7 @@ const handleRequest = (
   responseStatusCode: number,
   responseHeaders: Headers,
   remixContext: EntryContext
-) =>
+): Promise<unknown> =>
   isbot(request.headers.get('user-agent'))
     ? handleBotRequest(request, responseStatusCode, responseHeaders, remixContext)
     : handleBrowserRequest(request, responseStatusCode, responseHeaders, remixContext);
@@ -27,7 +27,7 @@ const handleBotRequest = (
   responseStatusCode: number,
   responseHeaders: Headers,
   remixContext: EntryContext
-) =>
+): Promise<unknown> =>
   new Promise((resolve, reject) => {
     let didError = false;
     const emotionCache = createEmotionCache();
@@ -74,7 +74,7 @@ const handleBrowserRequest = (
   responseStatusCode: number,
   responseHeaders: Headers,
   remixContext: EntryContext
-) =>
+): Promise<unknown> =>
   new Promise((resolve, reject) => {
     let didError = false;
     const emotionCache = createEmotionCache();

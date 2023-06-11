@@ -77,7 +77,7 @@ app.all(
   '*',
   MODE === 'production'
     ? createRequestHandler({ build: require(BUILD_DIR) })
-    : (...args) => {
+    : (...args): Promise<void> => {
         purgeRequireCache();
         const requestHandler = createRequestHandler({
           build: require(BUILD_DIR),
@@ -101,7 +101,7 @@ metricsApp.listen(metricsPort, () => {
   console.log(`✅ metrics ready: http://localhost:${metricsPort}/metrics`);
 });
 
-function purgeRequireCache() {
+function purgeRequireCache(): void {
   // purge require cache on requests for "server side HMR" this won't let
   // you have in-memory objects between requests in development,
   // alternatively you can set up nodemon/pm2-dev to restart the server on

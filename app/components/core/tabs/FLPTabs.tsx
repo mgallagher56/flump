@@ -3,9 +3,8 @@ import React from 'react';
 
 import { Tabs } from '@chakra-ui/react';
 
-interface FLPTabsProps extends React.HTMLAttributes<HTMLElement> {
+interface FLPTabsProps {
   orientation?: 'horizontal' | 'vertical';
-  onChange?: any;
 }
 
 const FLPTabs: React.FC<PropsWithChildren<FLPTabsProps>> = (props) => {

@@ -16,10 +16,10 @@ interface ClientCacheProviderProps {
   children: React.ReactNode;
 }
 
-function ClientCacheProvider({ children }: ClientCacheProviderProps) {
+function ClientCacheProvider({ children }: ClientCacheProviderProps): React.ReactElement {
   const [cache, setCache] = useState(defaultCache);
 
-  function reset() {
+  function reset(): void {
     setCache(createEmotionCache());
   }
 

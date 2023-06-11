@@ -1,0 +1,41 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`FLPHeading > render only number of lines 1`] = `
+<div>
+  <h1
+    class="chakra-heading css-zvlevn"
+  >
+    Lorem, ipsum dolor sit amet consectetur adipisicing elit. Nemo quaerat repellendus numquam et esse ut labore molestias nihil optio expedita atque, quas eligendi corrupti quasi impedit suscipit sunt.
+  </h1>
+</div>
+`;
+
+exports[`FLPHeading > renders as expected 1`] = `
+<div>
+  <h1
+    class="chakra-heading css-0"
+  >
+    Lorem, ipsum dolor sit amet consectetur adipisicing elit. Nemo quaerat repellendus numquam et esse ut labore molestias nihil optio expedita atque, quas eligendi corrupti quasi impedit suscipit sunt.
+  </h1>
+</div>
+`;
+
+exports[`FLPHeading > renders as expected with a color 1`] = `
+<div>
+  <h2
+    class="chakra-heading css-0"
+  >
+    Lorem, ipsum dolor sit amet consectetur adipisicing elit. Nemo quaerat repellendus numquam et esse ut labore molestias nihil optio expedita atque, quas eligendi corrupti quasi impedit suscipit sunt.
+  </h2>
+</div>
+`;
+
+exports[`FLPHeading > renders as expected with a size 1`] = `
+<div>
+  <h2
+    class="chakra-heading css-0"
+  >
+    Lorem, ipsum dolor sit amet consectetur adipisicing elit. Nemo quaerat repellendus numquam et esse ut labore molestias nihil optio expedita atque, quas eligendi corrupti quasi impedit suscipit sunt.
+  </h2>
+</div>
+`;

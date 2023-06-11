@@ -1,0 +1,25 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`FLPTabList > renders correctly 1`] = `
+<div>
+  <div
+    class="chakra-tabs css-0"
+  >
+    <div
+      aria-orientation="horizontal"
+      class="chakra-tabs__tablist css-k008qs"
+      role="tablist"
+    >
+      <div>
+        Tab 1
+      </div>
+      <div>
+        Tab 2
+      </div>
+      <div>
+        Tab 3
+      </div>
+    </div>
+  </div>
+</div>
+`;
