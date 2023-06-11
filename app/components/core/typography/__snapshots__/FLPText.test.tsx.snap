@@ -1,0 +1,51 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`FLPText > renders as expected 1`] = `
+<div>
+  <p
+    class="chakra-text css-km77ca"
+  >
+    Lorem, ipsum dolor sit amet consectetur adipisicing elit. Nemo quaerat repellendus numquam et esse ut labore molestias nihil optio expedita atque, quas eligendi corrupti quasi impedit suscipit sunt.
+  </p>
+</div>
+`;
+
+exports[`FLPText > renders as expected with a fontSiez 1`] = `
+<div>
+  <p
+    class="chakra-text css-ujtdc1"
+  >
+    Lorem, ipsum dolor sit amet consectetur adipisicing elit. Nemo quaerat repellendus numquam et esse ut labore molestias nihil optio expedita atque, quas eligendi corrupti quasi impedit suscipit sunt.
+  </p>
+</div>
+`;
+
+exports[`FLPText > renders as expected with a fontWeight 1`] = `
+<div>
+  <p
+    class="chakra-text css-hmjgxl"
+  >
+    Lorem, ipsum dolor sit amet consectetur adipisicing elit. Nemo quaerat repellendus numquam et esse ut labore molestias nihil optio expedita atque, quas eligendi corrupti quasi impedit suscipit sunt.
+  </p>
+</div>
+`;
+
+exports[`FLPText > renders as expected with a letterSpacing 1`] = `
+<div>
+  <p
+    class="chakra-text css-w04h5u"
+  >
+    Lorem, ipsum dolor sit amet consectetur adipisicing elit. Nemo quaerat repellendus numquam et esse ut labore molestias nihil optio expedita atque, quas eligendi corrupti quasi impedit suscipit sunt.
+  </p>
+</div>
+`;
+
+exports[`FLPText > renders as expected with a lineHeight 1`] = `
+<div>
+  <p
+    class="chakra-text css-dxclju"
+  >
+    Lorem, ipsum dolor sit amet consectetur adipisicing elit. Nemo quaerat repellendus numquam et esse ut labore molestias nihil optio expedita atque, quas eligendi corrupti quasi impedit suscipit sunt.
+  </p>
+</div>
+`;

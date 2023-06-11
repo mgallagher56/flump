@@ -25,20 +25,23 @@
     "test:e2e:dev": "start-server-and-test dev http://localhost:3000 \"pnpx cypress open\"",
     "pretest:e2e:run": "pnpm run build",
     "test:e2e:run": "cross-env PORT=8811 start-server-and-test start:mocks http://localhost:8811 \"pnpx cypress run\"",
-    "ts-coverage": "typescript-coverage-report --strict",
+    "ts-coverage": "typescript-coverage-report",
     "ts-coverage:ui": "typescript-coverage-report && pnpx vite preview --outDir ./coverage-ts/",
     "validate": "run-p \"test -- --run\" lint typecheck test:e2e:run"
   },
   "lint-staged": {
     "app/**/*.{js,jsx,ts,tsx,json,css,md}": "prettier --write",
-    "**/*.ts": "tsc-files --noEmit",
-    "app/**/*.{j,t}s?(x)": [
+    "**/*.ts": [
+      "tsc-files --noEmit",
+      "typescript-coverage-report"
+    ],
+    "**/**/*.{js,mjs,cjs,ts,mts,cts,jsx,tsx}": [
       "eslint --cache --fix",
       "vitest related --run"
     ]
   },
   "typeCoverage": {
-    "atLeast": "95.00",
+    "atLeast": "100.00",
     "ignoreFiles": [
       "app/**/*.config.{js,ts,jsx,tsx}",
       "cypress/**/*.{js,ts,jsx,tsx}",
@@ -47,7 +50,9 @@
       "app/**/*.test.{js,ts,jsx,tsx}",
       "test/**/*.{js,ts,jsx,tsx}",
       "starlight/**/*.*",
-      "starlight/.astro/**/*.*"
+      "starlight/.astro/**/*.*",
+      "app/utils/utils.ts",
+      "app/utils/supabase.ts"
     ]
   },
   "eslintIgnore": [

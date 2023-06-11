@@ -1,0 +1,13 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`FLPBox > renders 1`] = `
+<div>
+  <div
+    class="css-0"
+  >
+    <div>
+      FLPBox
+    </div>
+  </div>
+</div>
+`;

@@ -1,0 +1,43 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`FLPSpinner > renders as expected 1`] = `
+<div>
+  <div
+    class="chakra-spinner css-1y7joxr"
+  >
+    <span
+      class="css-8b45rq"
+    >
+      Loading...
+    </span>
+  </div>
+</div>
+`;
+
+exports[`FLPSpinner > renders as expected with a label 1`] = `
+<div>
+  <div
+    class="chakra-spinner css-1y7joxr"
+  >
+    <span
+      class="css-8b45rq"
+    >
+      Processing...
+    </span>
+  </div>
+</div>
+`;
+
+exports[`FLPSpinner > renders as expected with a size 1`] = `
+<div>
+  <div
+    class="chakra-spinner css-1y7joxr"
+  >
+    <span
+      class="css-8b45rq"
+    >
+      Loading...
+    </span>
+  </div>
+</div>
+`;

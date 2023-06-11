@@ -1,15 +1,28 @@
 import React, { StrictMode, useContext, useEffect } from 'react';
 
 import { Box, ChakraProvider, Heading } from '@chakra-ui/react';
-import { withEmotionCache } from '@emotion/react';
+import { EmotionCache, withEmotionCache } from '@emotion/react';
 import type { LinksFunction, V2_MetaFunction } from '@remix-run/node';
-import { Links, LiveReload, Meta, Outlet, Scripts, ScrollRestoration, useCatch, useLoaderData } from '@remix-run/react';
+import {
+  isRouteErrorResponse,
+  Links,
+  LiveReload,
+  Meta,
+  Outlet,
+  Scripts,
+  ScrollRestoration,
+  useLoaderData,
+  useRouteError
+} from '@remix-run/react';
 
 import { ClientStyleContext, ServerStyleContext } from './context';
 
-const MODE = process.env.NODE_ENV;
-
-export const loader = () => {
+export const loader = (): {
+  env: {
+    SUPABASE_URL: string;
+    SUPABASE_ANON_KEY: string;
+  };
+} => {
   return {
     env: {
       SUPABASE_URL: process.env.SUPABASE_URL,
@@ -18,7 +31,7 @@ export const loader = () => {
   };
 };
 
-export const meta: V2_MetaFunction = () => [
+export const meta: V2_MetaFunction = (): { name?: string; content?: string; title?: string }[] => [
   {
     name: 'viewport',
     content: 'width=device-width,initial-scale=1'
@@ -26,7 +39,10 @@ export const meta: V2_MetaFunction = () => [
   { title: 'flump' }
 ];
 
-export const links: LinksFunction = () => {
+export const links: LinksFunction = (): {
+  rel: string;
+  href: string;
+}[] => {
   return [
     { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
     { rel: 'preconnect', href: 'https://fonts.gstatic.com' },
@@ -41,7 +57,7 @@ interface DocumentProps {
   children: React.ReactNode;
 }
 
-const Document = withEmotionCache(({ children }: DocumentProps, emotionCache) => {
+const Document = withEmotionCache(({ children }: DocumentProps, emotionCache: EmotionCache): React.ReactElement => {
   const serverStyleData = useContext(ServerStyleContext);
   const clientStyleData = useContext(ClientStyleContext);
   const { env } = useLoaderData();
@@ -85,7 +101,7 @@ const Document = withEmotionCache(({ children }: DocumentProps, emotionCache) =>
   );
 });
 
-export default function App() {
+export default function App(): React.ReactElement {
   return (
     <StrictMode>
       <Document>
@@ -97,30 +113,38 @@ export default function App() {
   );
 }
 
-export function CatchBoundary() {
-  const caught = useCatch();
-
-  return (
-    <Document>
-      <ChakraProvider>
-        <Box>
-          <Heading as="h1" bg="purple.600">
-            [CatchBoundary]: {caught.status} {caught.statusText}
-          </Heading>
-        </Box>
-      </ChakraProvider>
-    </Document>
-  );
-}
-
 // How ChakraProvider should be used on ErrorBoundary
-export function ErrorBoundary({ error }: { error: Error }) {
+export function ErrorBoundary(): React.ReactElement {
+  const error = useRouteError() as {
+    status: number;
+    data: {
+      message: string;
+    };
+  };
+  if (isRouteErrorResponse(error)) {
+    return (
+      <Document>
+        <ChakraProvider>
+          <Box>
+            <Heading as="h1" bg="blue.500">
+              <h1>Oops</h1>
+              <p>Status: {error.status}</p>
+              <p>{error.data.message}</p>
+            </Heading>
+          </Box>
+        </ChakraProvider>
+      </Document>
+    );
+  }
+
   return (
     <Document>
       <ChakraProvider>
         <Box>
           <Heading as="h1" bg="blue.500">
-            [ErrorBoundary]: There was an error: {error.message}
+            <h1>Uh oh ...</h1>
+            <p>Something went wrong.</p>
+            <pre>{error?.data?.message ?? 'Something went wrong'}</pre>{' '}
           </Heading>
         </Box>
       </ChakraProvider>

@@ -1,0 +1,141 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`TabsContainer > renders correctly 1`] = `
+<div>
+  <div
+    class="chakra-tabs css-0"
+    data-orientation="horizontal"
+    data-part="root"
+    data-scope="tabs"
+    dir="ltr"
+    id="tabs::r0:"
+  >
+    <div
+      aria-orientation="horizontal"
+      class="chakra-tabs__tablist css-k008qs"
+      data-orientation="horizontal"
+      data-part="tablist"
+      data-scope="tabs"
+      id="tabs::r0::list"
+      role="tablist"
+    >
+      <button
+        aria-controls="tabs::r0::content-tab1"
+        aria-selected="true"
+        class="chakra-button css-cf3le8"
+        data-orientation="horizontal"
+        data-ownedby="tabs::r0::list"
+        data-part="trigger"
+        data-scope="tabs"
+        data-selected=""
+        data-value="tab1"
+        id="tabs::r0::trigger-tab1"
+        role="tab"
+        tabindex="0"
+        type="button"
+      >
+        <span
+          class="css-1qkvt8e"
+        >
+          😎
+        </span>
+        Tab 1
+      </button>
+      <button
+        aria-controls="tabs::r0::content-tab2"
+        aria-selected="false"
+        class="chakra-button css-cf3le8"
+        data-orientation="horizontal"
+        data-ownedby="tabs::r0::list"
+        data-part="trigger"
+        data-scope="tabs"
+        data-value="tab2"
+        id="tabs::r0::trigger-tab2"
+        role="tab"
+        tabindex="1"
+        type="button"
+      >
+        <span
+          class="css-1qkvt8e"
+        >
+          😐
+        </span>
+        Tab 2
+      </button>
+      <button
+        aria-controls="tabs::r0::content-tab3"
+        aria-selected="false"
+        class="chakra-button css-cf3le8"
+        data-orientation="horizontal"
+        data-ownedby="tabs::r0::list"
+        data-part="trigger"
+        data-scope="tabs"
+        data-value="tab3"
+        id="tabs::r0::trigger-tab3"
+        role="tab"
+        tabindex="2"
+        type="button"
+      >
+        <span
+          class="css-1qkvt8e"
+        >
+          😐
+        </span>
+        Tab 3
+      </button>
+      <div
+        data-orientation="horizontal"
+        data-part="indicator"
+        data-scope="tabs"
+        id="tabs::r0::indicator"
+        style="--transition-duration: 150ms; --transition-property: left, right, top, bottom, width, height; position: absolute; will-change: var(--transition-property); transition-property: var(--transition-property); transition-duration: 0ms; transition-timing-function: var(--transition-timing-function); left: 0px; top: 0px; width: 0px; height: 0px;"
+      />
+    </div>
+    <div
+      class="chakra-tabs__tab-panels css-8atqhb"
+    >
+      <div
+        aria-labelledby="tabs::r0::trigger-tab1"
+        data-ownedby="tabs::r0::list"
+        data-part="content"
+        data-scope="tabs"
+        id="tabs::r0::content-tab1"
+        role="tabpanel"
+        tabindex="0"
+      >
+        <div>
+          Tab content 1
+        </div>
+      </div>
+      <div
+        aria-labelledby="tabs::r0::trigger-tab2"
+        data-ownedby="tabs::r0::list"
+        data-part="content"
+        data-scope="tabs"
+        hidden=""
+        id="tabs::r0::content-tab2"
+        role="tabpanel"
+        tabindex="1"
+      >
+        <div>
+          Tab content 2
+        </div>
+      </div>
+      <div
+        aria-labelledby="tabs::r0::trigger-tab3"
+        data-ownedby="tabs::r0::list"
+        data-part="content"
+        data-scope="tabs"
+        hidden=""
+        id="tabs::r0::content-tab3"
+        role="tabpanel"
+        tabindex="2"
+      >
+        <div>
+          Tab content 3
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+`;

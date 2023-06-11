@@ -1,0 +1,26 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`FLPButtonGroup > renders as expected 1`] = `
+<div>
+  <div
+    class="chakra-button__group css-1ind3v2"
+    data-orientation="horizontal"
+    role="group"
+  >
+    <button
+      class="chakra-button css-1fysbuj"
+      id="pressable:pressableBaseButton"
+      type="button"
+    >
+      Button 1
+    </button>
+    <button
+      class="chakra-button css-1fysbuj"
+      id="pressable:pressableBaseButton"
+      type="button"
+    >
+      Button 2
+    </button>
+  </div>
+</div>
+`;

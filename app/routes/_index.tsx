@@ -1,18 +1,26 @@
+import type { ReactElement } from 'react';
 import { useMemo } from 'react';
 
-import type { V2_MetaFunction } from '@remix-run/node';
+import type { SerializeFrom, V2_MetaFunction } from '@remix-run/node';
 import { useLoaderData } from '@remix-run/react';
 import FLPButtonGroup from '~/components/core/buttons/FLPButtonGroup';
 import FLPLinkButton from '~/components/core/buttons/FLPLinkButton';
 import FLPBox from '~/components/core/structure/FLPBox';
+import type { TabData } from '~/components/core/tabs/types';
 import FLPHeading from '~/components/core/typography/FLPHeading';
 import TabsContainer from '~/containers/TabsContainer';
 
 import supabase from '../utils/supabase';
 
-export const meta: V2_MetaFunction = () => [{ title: 'flump' }];
+interface Employee {
+  id?: string;
+  name?: string;
+  department?: string;
+}
 
-const getTabsData = (employees: any) => [
+export const meta: V2_MetaFunction = (): { title: string }[] => [{ title: 'flump' }];
+
+const getTabsData = (employees: Employee[]): TabData[] => [
   {
     label: 'Home',
     value: 'flp-home',
@@ -23,12 +31,14 @@ const getTabsData = (employees: any) => [
             <FLPLinkButton to="/join">Sign up</FLPLinkButton>
             <FLPLinkButton to="/login">Log in</FLPLinkButton>
           </FLPButtonGroup>
-          {employees.map((employee) => (
-            <FLPBox key={employee.id}>
-              <h3>{employee.name}</h3>
-              <p>{employee.department}</p>
-            </FLPBox>
-          ))}
+          {employees.map(
+            (employee): ReactElement => (
+              <FLPBox key={employee.id}>
+                <h3>{employee.name}</h3>
+                <p>{employee.department}</p>
+              </FLPBox>
+            )
+          )}
         </FLPBox>
       </main>
     )
@@ -57,14 +67,24 @@ const getTabsData = (employees: any) => [
   }
 ];
 
-export default function Index() {
-  const { employees } = useLoaderData();
+export default function Index(): ReactElement {
+  const {
+    employees
+  }: SerializeFrom<{
+    employees: Employee[];
+  }> = useLoaderData();
   const tabsData = useMemo(() => getTabsData(employees), [employees]);
 
   return <TabsContainer orientation="vertical" data={tabsData} />;
 }
 
-export const loader = async () => {
-  const { data: employees } = await supabase.from('employees').select('*');
+export const loader = async (): Promise<{
+  employees: Employee[];
+}> => {
+  const {
+    data: employees
+  }: {
+    data: Employee[];
+  } = await supabase.from('employees').select('*');
   return { employees };
 };
