@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.3.1](https://github.com/mgallagher56/flump/compare/v1.3.0...v1.3.1) (2023-06-11)
+
+
+### CI 🤖
+
+* update deployments to only run on release-please pr merge ([f12adec](https://github.com/mgallagher56/flump/commit/f12adec1d8224924c27ee64dd538c2aa9b70c738))
+
+
+### Tests 🧪
+
+* add suabase, utils and flp button tests ([839e2de](https://github.com/mgallagher56/flump/commit/839e2defe08784e1d8d33867b419f8650d411cf7))
+* increase test and typescript coverage to 100% ([4d35aea](https://github.com/mgallagher56/flump/commit/4d35aea6b85642d7ea8e7869f6c611cef467c44d))
+
 ## [1.4.0](https://github.com/mgallagher56/flump/compare/v1.3.0...v1.4.0) (2023-06-09)
 
 
