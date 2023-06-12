@@ -1,5 +1,27 @@
 # Changelog
 
+## [1.3.2](https://github.com/mgallagher56/flump/compare/v1.3.1...v1.3.2) (2023-06-12)
+
+
+### Tests 🧪
+
+* increase test and typescript coverage to 100% ([b85b640](https://github.com/mgallagher56/flump/commit/b85b640116ba20ef6f254fde7af15673778df50e))
+
+
+### Documentation 📙
+
+* basic readme ([0d3528c](https://github.com/mgallagher56/flump/commit/0d3528c7fd30a5214416716277ca3911756961f1))
+
+
+### Miscellaneous 🙃
+
+* **deps:** pin dependencies ([5043cea](https://github.com/mgallagher56/flump/commit/5043cead595df229a1b763b0582e357cfcda2795))
+
+
+### CI 🤖
+
+* remove dev docs deployment ([053d39e](https://github.com/mgallagher56/flump/commit/053d39e4585ff8afd3ea093457af6472ae106d5e))
+
 ## [1.6.0](https://github.com/mgallagher56/flump/compare/v1.5.0...v1.6.0) (2023-06-12)
 
 
