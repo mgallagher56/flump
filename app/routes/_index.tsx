@@ -3,6 +3,8 @@ import { useMemo } from 'react';
 
 import type { SerializeFrom, V2_MetaFunction } from '@remix-run/node';
 import { useLoaderData } from '@remix-run/react';
+import type { TFunction } from 'i18next';
+import { useTranslation } from 'react-i18next';
 import FLPButtonGroup from '~/components/core/buttons/FLPButtonGroup';
 import FLPLinkButton from '~/components/core/buttons/FLPLinkButton';
 import FLPBox from '~/components/core/structure/FLPBox';
@@ -20,9 +22,13 @@ interface Employee {
 
 export const meta: V2_MetaFunction = (): { title: string }[] => [{ title: 'flump' }];
 
-const getTabsData = (employees: Employee[]): TabData[] => [
+export const handle = {
+  i18n: ['common', 'home']
+};
+
+const getTabsData = (employees: Employee[], t: TFunction): TabData[] => [
   {
-    label: 'Home',
+    label: t('home'),
     value: 'flp-home',
     content: (
       <main>
@@ -44,7 +50,7 @@ const getTabsData = (employees: Employee[]): TabData[] => [
     )
   },
   {
-    label: 'Accounts',
+    label: t('accounts'),
     value: 'flp-about',
     content: (
       <main>
@@ -55,7 +61,7 @@ const getTabsData = (employees: Employee[]): TabData[] => [
     )
   },
   {
-    label: 'Contact',
+    label: t('contact'),
     value: 'flp-contact',
     content: (
       <main>
@@ -68,12 +74,13 @@ const getTabsData = (employees: Employee[]): TabData[] => [
 ];
 
 export default function Index(): ReactElement {
+  const { t } = useTranslation();
   const {
     employees
   }: SerializeFrom<{
     employees: Employee[];
   }> = useLoaderData();
-  const tabsData = useMemo(() => getTabsData(employees), [employees]);
+  const tabsData = useMemo(() => getTabsData(employees, t), [employees, t]);
 
   return <TabsContainer orientation="vertical" data={tabsData} />;
 }

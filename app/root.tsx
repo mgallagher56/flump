@@ -2,7 +2,7 @@ import React, { StrictMode, useContext, useEffect } from 'react';
 
 import { Box, ChakraProvider, Heading } from '@chakra-ui/react';
 import { EmotionCache, withEmotionCache } from '@emotion/react';
-import type { LinksFunction, V2_MetaFunction } from '@remix-run/node';
+import { json, LinksFunction, V2_MetaFunction } from '@remix-run/node';
 import {
   isRouteErrorResponse,
   Links,
@@ -14,21 +14,35 @@ import {
   useLoaderData,
   useRouteError
 } from '@remix-run/react';
+import { useTranslation } from 'react-i18next';
+import { useChangeLanguage } from 'remix-i18next';
 
 import { ClientStyleContext, ServerStyleContext } from './context';
+import i18next from './i18n.server';
 
-export const loader = (): {
+export const loader = async ({
+  request
+}: {
+  request: Request;
+}): Promise<{
   env: {
     SUPABASE_URL: string;
     SUPABASE_ANON_KEY: string;
   };
-} => {
+  locale: string;
+}> => {
+  const locale = await i18next.getLocale(request);
   return {
+    locale,
     env: {
       SUPABASE_URL: process.env.SUPABASE_URL,
       SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY
     }
   };
+};
+
+export const handle = {
+  i18n: ['common']
 };
 
 export const meta: V2_MetaFunction = (): { name?: string; content?: string; title?: string }[] => [
@@ -60,7 +74,11 @@ interface DocumentProps {
 const Document = withEmotionCache(({ children }: DocumentProps, emotionCache: EmotionCache): React.ReactElement => {
   const serverStyleData = useContext(ServerStyleContext);
   const clientStyleData = useContext(ClientStyleContext);
-  const { env } = useLoaderData();
+  const { env, locale } = useLoaderData<typeof loader>();
+
+  const { i18n } = useTranslation();
+
+  useChangeLanguage(locale);
 
   // Only executed on client
   useEffect(() => {
@@ -77,7 +95,7 @@ const Document = withEmotionCache(({ children }: DocumentProps, emotionCache: Em
   }, []);
 
   return (
-    <html lang="en">
+    <html lang={locale} dir={i18n.dir()}>
       <head>
         <meta charSet="utf-8" />
         <Meta />
