@@ -96,11 +96,11 @@ dependencies:
     specifier: 18.2.0
     version: 18.2.0(react@18.2.0)
   react-i18next:
-    specifier: ^12.3.1
-    version: 12.3.1(i18next@22.5.1)(react-dom@18.2.0)(react@18.2.0)
+    specifier: ^13.0.0
+    version: 13.0.0(i18next@22.5.1)(react-dom@18.2.0)(react@18.2.0)
   remix-i18next:
     specifier: ^5.1.1
-    version: 5.1.1(@remix-run/react@1.17.0)(@remix-run/server-runtime@1.17.0)(i18next@22.5.1)(react-i18next@12.3.1)(react@18.2.0)
+    version: 5.1.1(@remix-run/react@1.17.0)(@remix-run/server-runtime@1.17.0)(i18next@22.5.1)(react-i18next@13.0.0)(react@18.2.0)
   supabase:
     specifier: 1.64.8
     version: 1.64.8
@@ -11218,10 +11218,10 @@ packages:
       use-sidecar: 1.1.2(@types/react@18.2.9)(react@18.2.0)
     dev: false
 
-  /react-i18next@12.3.1(i18next@22.5.1)(react-dom@18.2.0)(react@18.2.0):
-    resolution: {integrity: sha512-5v8E2XjZDFzK7K87eSwC7AJcAkcLt5xYZ4+yTPDAW1i7C93oOY1dnr4BaQM7un4Hm+GmghuiPvevWwlca5PwDA==}
+  /react-i18next@13.0.0(i18next@22.5.1)(react-dom@18.2.0)(react@18.2.0):
+    resolution: {integrity: sha512-qRFbrSgynsBSjfnSTb/Um3mw9uPjOfDi4Iq2rMCuzfsRsYGdkEdyCr0i+T0bR0bG6xwULvK4k1oRVLLd7ZDBVw==}
     peerDependencies:
-      i18next: '>= 19.0.0'
+      i18next: '>= 23.0.1'
       react: '>= 16.8.0'
       react-dom: '*'
       react-native: '*'
@@ -11557,7 +11557,7 @@ packages:
       mdast-util-to-hast: 11.3.0
       unified: 10.1.2
 
-  /remix-i18next@5.1.1(@remix-run/react@1.17.0)(@remix-run/server-runtime@1.17.0)(i18next@22.5.1)(react-i18next@12.3.1)(react@18.2.0):
+  /remix-i18next@5.1.1(@remix-run/react@1.17.0)(@remix-run/server-runtime@1.17.0)(i18next@22.5.1)(react-i18next@13.0.0)(react@18.2.0):
     resolution: {integrity: sha512-2a9YnbTtF4Povyo396AvK+1pwP+FFclwkOeJtpFENIX+D/nBggoUy17ARq5q8maza7zplfdHWNODwNBEyMIEzg==}
     peerDependencies:
       '@remix-run/react': ^1.0.0
@@ -11573,7 +11573,7 @@ packages:
       intl-parse-accept-language: 1.0.0
       lru-cache: 7.18.3
       react: 18.2.0
-      react-i18next: 12.3.1(i18next@22.5.1)(react-dom@18.2.0)(react@18.2.0)
+      react-i18next: 13.0.0(i18next@22.5.1)(react-dom@18.2.0)(react@18.2.0)
       use-consistent-value: 1.0.0(react@18.2.0)
     dev: false
 
