@@ -5,7 +5,7 @@ import FLPBox from '~/components/core/structure/FLPBox';
 const NavMenu = () => {
   return (
     <FLPBox>
-      <FLPButtonGroup>
+      <FLPButtonGroup gap={4}>
         <FLPLinkButton to="/">Home</FLPLinkButton>
         <FLPLinkButton to="/about">About</FLPLinkButton>
         <FLPLinkButton to="/contact">Contact</FLPLinkButton>
