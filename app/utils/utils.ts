@@ -41,3 +41,10 @@ export function useMatchesData(id: string): Record<string, unknown> | undefined 
 export function validateEmail(email: unknown): email is string {
   return typeof email === 'string' && email.length > 3 && email.includes('@');
 }
+
+// eslint-disable-next-line @typescript-eslint/no-empty-function
+export const noop = () => {};
+
+export enum FallbackEnums {
+  NA = 'N/A'
+}

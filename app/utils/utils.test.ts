@@ -1,6 +1,6 @@
 import { describe, expect, test, vi } from 'vitest';
 
-import { safeRedirect, useMatchesData, validateEmail } from './utils';
+import { noop, safeRedirect, useMatchesData, validateEmail } from './utils';
 
 // vi mock useMatches
 vi.mock('@remix-run/react', () => {
@@ -72,4 +72,8 @@ describe('useMatchesData', () => {
     const data = { foo: 'bar' };
     expect(useMatchesData('home')).toEqual(data);
   });
+});
+
+describe('noop()', () => {
+  test('noop returns undefined', () => expect(noop()).toBe(undefined));
 });

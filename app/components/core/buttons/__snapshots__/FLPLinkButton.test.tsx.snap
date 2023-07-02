@@ -2,24 +2,18 @@
 
 exports[`FLPLinkButton > renders as expected 1`] = `
 <div>
-  <div>
-    Button
-  </div>
+  Button
 </div>
 `;
 
 exports[`FLPLinkButton > renders as expected with a custom class 1`] = `
 <div>
-  <div>
-    Button
-  </div>
+  Button
 </div>
 `;
 
 exports[`FLPLinkButton > renders as expected with a variant 1`] = `
 <div>
-  <div>
-    Button
-  </div>
+  Button
 </div>
 `;

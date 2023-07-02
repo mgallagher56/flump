@@ -19,10 +19,7 @@ module.exports = {
     browser: true,
     amd: true
   },
-  plugins: ['cypress', 'react-hooks', 'sonarjs', 'no-relative-import-paths'],
-  // We're using vitest which has a very similar API to jest
-  // (so the linting plugins work nicely), but we have to
-  // set the jest version explicitly.
+  plugins: ['cypress', 'react-hooks', 'sonarjs', "@typescript-eslint", 'no-relative-import-paths'],
   settings: {
     jest: {
       version: 28
@@ -32,7 +29,8 @@ module.exports = {
     }
   },
   rules: {
-    '@typescript-eslint/explicit-function-return-type': 'warn',
+    "@typescript-eslint/no-unused-vars": "error",
+    '@typescript-eslint/explicit-function-return-type': 'off',
     '@typescript-eslint/no-duplicate-imports': 'error',
     '@typescript-eslint/no-empty-function': 'error',
     '@typescript-eslint/no-empty-interface': 'error',
@@ -41,6 +39,7 @@ module.exports = {
     'no-debugger': 'error',
     'no-duplicate-imports': 0,
     'no-relative-import-paths/no-relative-import-paths': ['error', { allowSameFolder: true, rootDir: 'src' }],
+    'no-unused-vars': 'off',
     'react-hooks/exhaustive-deps': 'error',
     'react/display-name': 0,
     'react/jsx-no-useless-fragment': ['error', { allowExpressions: true }],

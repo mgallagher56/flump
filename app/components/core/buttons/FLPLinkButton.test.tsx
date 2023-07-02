@@ -1,14 +1,7 @@
-import React from 'react';
-
-import type { LinkProps } from '@remix-run/react';
 import { render } from '@testing-library/react';
-import { describe, expect, test, vi } from 'vitest';
+import { describe, expect, test } from 'vitest';
 
 import FLPLinkButton from './FLPLinkButton';
-
-vi.mock('@remix-run/react', () => ({
-  Link: (props: LinkProps): React.ReactNode => <div>{props.children}</div>
-}));
 
 describe('FLPLinkButton', () => {
   test('renders as expected', () => {

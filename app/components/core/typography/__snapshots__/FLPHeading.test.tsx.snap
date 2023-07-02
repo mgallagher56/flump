@@ -3,7 +3,7 @@
 exports[`FLPHeading > render only number of lines 1`] = `
 <div>
   <h1
-    class="chakra-heading css-zvlevn"
+    class="chakra-heading css-5bia5c"
   >
     Lorem, ipsum dolor sit amet consectetur adipisicing elit. Nemo quaerat repellendus numquam et esse ut labore molestias nihil optio expedita atque, quas eligendi corrupti quasi impedit suscipit sunt.
   </h1>
@@ -13,7 +13,7 @@ exports[`FLPHeading > render only number of lines 1`] = `
 exports[`FLPHeading > renders as expected 1`] = `
 <div>
   <h1
-    class="chakra-heading css-0"
+    class="chakra-heading css-1e3tj"
   >
     Lorem, ipsum dolor sit amet consectetur adipisicing elit. Nemo quaerat repellendus numquam et esse ut labore molestias nihil optio expedita atque, quas eligendi corrupti quasi impedit suscipit sunt.
   </h1>
@@ -23,7 +23,7 @@ exports[`FLPHeading > renders as expected 1`] = `
 exports[`FLPHeading > renders as expected with a color 1`] = `
 <div>
   <h2
-    class="chakra-heading css-0"
+    class="chakra-heading css-1e3tj"
   >
     Lorem, ipsum dolor sit amet consectetur adipisicing elit. Nemo quaerat repellendus numquam et esse ut labore molestias nihil optio expedita atque, quas eligendi corrupti quasi impedit suscipit sunt.
   </h2>
@@ -33,7 +33,7 @@ exports[`FLPHeading > renders as expected with a color 1`] = `
 exports[`FLPHeading > renders as expected with a size 1`] = `
 <div>
   <h2
-    class="chakra-heading css-0"
+    class="chakra-heading css-1e3tj"
   >
     Lorem, ipsum dolor sit amet consectetur adipisicing elit. Nemo quaerat repellendus numquam et esse ut labore molestias nihil optio expedita atque, quas eligendi corrupti quasi impedit suscipit sunt.
   </h2>

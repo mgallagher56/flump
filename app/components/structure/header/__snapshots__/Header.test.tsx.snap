@@ -1,0 +1,59 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`<Header /> > renders as expected 1`] = `
+<body>
+  <div>
+    <header
+      class="css-0"
+    >
+      <nav
+        class="css-tud33"
+      >
+        <div
+          class="home-logo"
+        >
+          <img
+            alt="flump logo"
+            height="50"
+            src="/public/images/flump_logo.png"
+            width="50"
+          />
+        </div>
+        <div
+          class="css-0"
+        >
+          <div
+            class="chakra-button__group css-1ind3v2"
+            data-orientation="horizontal"
+            role="group"
+          >
+            Home
+            About
+            Contact
+          </div>
+        </div>
+        <div
+          class="chakra-button__group css-1ind3v2"
+          data-orientation="horizontal"
+          role="group"
+        >
+          <button
+            class="chakra-button css-1fysbuj"
+            id="pressable:pressableBaseButton"
+            type="button"
+          >
+            signUp
+          </button>
+          <button
+            class="chakra-button css-1fysbuj"
+            id="pressable:pressableBaseButton"
+            type="button"
+          >
+            logIn
+          </button>
+        </div>
+      </nav>
+    </header>
+  </div>
+</body>
+`;
