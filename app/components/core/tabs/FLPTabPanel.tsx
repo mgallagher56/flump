@@ -1,7 +1,6 @@
-import React from 'react';
+import type { FC, HTMLAttributes } from 'react';
 
-
-const FLPTabPanel: React.FC<React.HTMLAttributes<HTMLElement>> = (props) => {
+const FLPTabPanel: FC<HTMLAttributes<HTMLElement>> = (props) => {
   return <div {...props}>{props.children}</div>;
 };
 

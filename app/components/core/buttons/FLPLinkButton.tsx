@@ -1,4 +1,4 @@
-import React from 'react';
+import type { FC, PropsWithChildren } from 'react';
 
 import type { ButtonProps } from '@chakra-ui/react';
 import { Button } from '@chakra-ui/react';
@@ -13,7 +13,7 @@ interface FLPLinkButtonProps extends ButtonProps {
   onPress?: (e: PressEvent) => void;
 }
 
-const FLPLinkButton: React.FC<React.PropsWithChildren<FLPLinkButtonProps>> = ({
+const FLPLinkButton: FC<PropsWithChildren<FLPLinkButtonProps>> = ({
   children,
   colorScheme = 'blue',
   isDisabled,
