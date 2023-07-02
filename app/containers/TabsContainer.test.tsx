@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { render, screen } from '@testing-library/react';
 import { describe, expect, test } from 'vitest';
 import type { TabData } from '~/components/core/tabs/types';

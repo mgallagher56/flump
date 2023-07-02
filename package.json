@@ -19,6 +19,7 @@
     "start:mocks": "cross-env NODE_ENV=production node --require ./mocks --require dotenv/config ./build/server.js",
     "supabase:start": "supabase start",
     "supabase:stop": "supabase stop",
+    "supabase:types": "supabase gen types typescript --local > ./db_types.ts",
     "test": "vitest",
     "test:ui": "vitest --ui",
     "test:preview": "pnpx vite preview --outDir ./html",

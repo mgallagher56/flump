@@ -1,9 +1,9 @@
-import React from 'react';
+import type { FC } from 'react';
 
 import type { TextProps } from '@chakra-ui/react';
 import { Text } from '@chakra-ui/react';
 
-const FLPText: React.FC<TextProps> = ({
+const FLPText: FC<TextProps> = ({
   fontSize = 'md',
   fontWeight = 'normal',
   lineHeight = 'base',
