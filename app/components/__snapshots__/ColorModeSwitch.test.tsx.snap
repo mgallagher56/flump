@@ -1,0 +1,29 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`<ColorModeSwitch /> > should render as expected when colormode is dark 1`] = `
+<body>
+  <div>
+    <button
+      class="chakra-button css-p7mkev"
+      id="pressable:pressableBaseButton"
+      type="button"
+    >
+      🌚
+    </button>
+  </div>
+</body>
+`;
+
+exports[`<ColorModeSwitch /> > should render as expected when colormode is light 1`] = `
+<body>
+  <div>
+    <button
+      class="chakra-button css-p7mkev"
+      id="pressable:pressableBaseButton"
+      type="button"
+    >
+      🌚
+    </button>
+  </div>
+</body>
+`;

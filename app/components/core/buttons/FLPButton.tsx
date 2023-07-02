@@ -7,18 +7,19 @@ import type { PressEvent } from '@zag-js/pressable/dist/pressable.types';
 import { normalizeProps, useMachine } from '@zag-js/react';
 
 interface FLPButtonProps extends ButtonProps {
+  isLoading?: boolean;
   preventFocusOnPress?: boolean;
+  padding?: number;
   onPress?: (e: PressEvent) => void;
 }
 
 const FLPButton: FC<PropsWithChildren<FLPButtonProps>> = ({
-  children,
   colorScheme = 'blue',
   isDisabled,
   preventFocusOnPress,
   variant = 'solid',
   onPress,
-  isLoading
+  ...props
 }) => {
   const [state, send] = useMachine(
     pressable.machine({
@@ -32,8 +33,8 @@ const FLPButton: FC<PropsWithChildren<FLPButtonProps>> = ({
   const api = pressable.connect(state, send, normalizeProps);
 
   return (
-    <Button {...api.pressableProps} variant={variant} colorScheme={colorScheme} isLoading={isLoading}>
-      {children}
+    <Button {...api.pressableProps} {...props} variant={variant} colorScheme={colorScheme}>
+      {props.children}
     </Button>
   );
 };
