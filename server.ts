@@ -90,13 +90,16 @@ app.all(
       }
 );
 
-const server = https.createServer(
-  {
-    key: fs.readFileSync('.cert/key.pem'),
-    cert: fs.readFileSync('.cert/cert.pem')
-  },
-  app
-);
+const server =
+  MODE === 'production'
+    ? app
+    : https.createServer(
+        {
+          key: fs.readFileSync('.cert/key.pem'),
+          cert: fs.readFileSync('.cert/cert.pem')
+        },
+        app
+      );
 const port = process.env.PORT || 3000;
 
 server.listen(port, () => {
