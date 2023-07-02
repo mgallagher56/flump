@@ -1,9 +1,9 @@
-import React from 'react';
+import type { FC } from 'react';
 
 import type { SpinnerProps } from '@chakra-ui/react';
 import { Spinner } from '@chakra-ui/react';
 
-const FLPSpinner: React.FC<SpinnerProps> = (props) => {
+const FLPSpinner: FC<SpinnerProps> = (props) => {
   return <Spinner {...props} />;
 };
 

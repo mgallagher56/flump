@@ -1,6 +1,6 @@
-import React, { StrictMode, useContext, useEffect } from 'react';
+import { ReactElement, ReactNode, StrictMode, useContext, useEffect } from 'react';
 
-import { Box, ChakraProvider, Heading } from '@chakra-ui/react';
+import { Box, ChakraProvider, Container, Heading } from '@chakra-ui/react';
 import { EmotionCache, withEmotionCache } from '@emotion/react';
 import { json, LinksFunction, V2_MetaFunction } from '@remix-run/node';
 import {
@@ -17,6 +17,8 @@ import {
 import { useTranslation } from 'react-i18next';
 import { useChangeLanguage } from 'remix-i18next';
 
+import FLPBox from './components/core/structure/FLPBox';
+import Header from './components/structure/header/Header';
 import { ClientStyleContext, ServerStyleContext } from './context';
 import i18next from './i18n.server';
 
@@ -68,10 +70,10 @@ export const links: LinksFunction = (): {
 };
 
 interface DocumentProps {
-  children: React.ReactNode;
+  children: ReactNode;
 }
 
-const Document = withEmotionCache(({ children }: DocumentProps, emotionCache: EmotionCache): React.ReactElement => {
+const Document = withEmotionCache(({ children }: DocumentProps, emotionCache: EmotionCache): ReactElement => {
   const serverStyleData = useContext(ServerStyleContext);
   const clientStyleData = useContext(ClientStyleContext);
   const { env, locale } = useLoaderData<typeof loader>();
@@ -119,12 +121,15 @@ const Document = withEmotionCache(({ children }: DocumentProps, emotionCache: Em
   );
 });
 
-export default function App(): React.ReactElement {
+export default function App(): ReactElement {
   return (
     <StrictMode>
       <Document>
         <ChakraProvider>
-          <Outlet />
+          <Container maxW={'container.xl'}>
+            <Header />
+            <Outlet />
+          </Container>
         </ChakraProvider>
       </Document>
     </StrictMode>
@@ -132,7 +137,7 @@ export default function App(): React.ReactElement {
 }
 
 // How ChakraProvider should be used on ErrorBoundary
-export function ErrorBoundary(): React.ReactElement {
+export function ErrorBoundary(): ReactElement {
   const error = useRouteError() as {
     status: number;
     data: {

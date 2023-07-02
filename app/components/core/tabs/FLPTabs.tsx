@@ -1,5 +1,4 @@
-import type { PropsWithChildren } from 'react';
-import React from 'react';
+import type { FC, PropsWithChildren } from 'react';
 
 import { Tabs } from '@chakra-ui/react';
 
@@ -7,7 +6,7 @@ interface FLPTabsProps {
   orientation?: 'horizontal' | 'vertical';
 }
 
-const FLPTabs: React.FC<PropsWithChildren<FLPTabsProps>> = (props) => {
+const FLPTabs: FC<PropsWithChildren<FLPTabsProps>> = (props) => {
   return <Tabs {...props}>{props.children}</Tabs>;
 };
 

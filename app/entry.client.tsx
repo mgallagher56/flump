@@ -3,27 +3,27 @@
  * You are free to delete this file if you'd like to, but if you ever want it revealed again, you can run `npx remix reveal` ✨
  * For more information, see https://remix.run/docs/en/main/file-conventions/entry.client
  */
-import React, { startTransition, StrictMode, useState } from 'react';
+import type { ReactElement, ReactNode } from 'react';
+import { startTransition, StrictMode, useState } from 'react';
 
 import { CacheProvider } from '@emotion/react';
 import { RemixBrowser } from '@remix-run/react';
-import { hydrateRoot } from 'react-dom/client';
-import { I18nextProvider, initReactI18next } from 'react-i18next';
-import { getInitialNamespaces } from 'remix-i18next';
-
 import i18next from 'i18next';
 import LanguageDetector from 'i18next-browser-languagedetector';
 import Backend from 'i18next-http-backend';
+import { hydrateRoot } from 'react-dom/client';
+import { I18nextProvider, initReactI18next } from 'react-i18next';
+import { getInitialNamespaces } from 'remix-i18next';
 
 import { ClientStyleContext } from './context';
 import createEmotionCache, { defaultCache } from './createEmotionCache';
 import i18n from './i18n';
 
 interface ClientCacheProviderProps {
-  children: React.ReactNode;
+  children: ReactNode;
 }
 
-function ClientCacheProvider({ children }: ClientCacheProviderProps): React.ReactElement {
+function ClientCacheProvider({ children }: ClientCacheProviderProps): ReactElement {
   const [cache, setCache] = useState(defaultCache);
 
   function reset(): void {

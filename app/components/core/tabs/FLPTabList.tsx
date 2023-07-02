@@ -1,9 +1,9 @@
-import React from 'react';
+import type { FC } from 'react';
 
 import type { TabListProps } from '@chakra-ui/react';
 import { TabList } from '@chakra-ui/react';
 
-const FLPTabList: React.FC<TabListProps> = (props) => {
+const FLPTabList: FC<TabListProps> = (props) => {
   return <TabList {...props}>{props.children}</TabList>;
 };
 

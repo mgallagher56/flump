@@ -1,5 +1,9 @@
 {
-  "home": "Home",
+  "about": "About",
   "accounts": "Accounts",
-  "contact": "Contact"
+  "contact": "Contact",
+  "featureNum": "Feature {{num}}",
+  "home": "Home",
+  "signUp": "Sign Up",
+  "logIn": "Log In"
 }
