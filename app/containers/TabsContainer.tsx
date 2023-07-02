@@ -1,5 +1,5 @@
-import type { PropsWithChildren } from 'react';
-import React, { useId } from 'react';
+import type { FC, PropsWithChildren } from 'react';
+import { useId } from 'react';
 
 import { normalizeProps, useMachine } from '@zag-js/react';
 import * as tabs from '@zag-js/tabs';
@@ -16,7 +16,7 @@ interface TabsContainerProps {
   orientation?: 'horizontal' | 'vertical';
 }
 
-const TabsContainer: React.FC<PropsWithChildren<TabsContainerProps>> = ({ data, orientation }) => {
+const TabsContainer: FC<PropsWithChildren<TabsContainerProps>> = ({ data, orientation }) => {
   const FLPOrientation = orientation ?? 'horizontal';
   const [state, send] = useMachine(tabs.machine({ id: useId(), value: data[0].value, orientation: FLPOrientation }));
 

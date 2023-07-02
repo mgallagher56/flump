@@ -1,0 +1,21 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`<NavMenu /> > renders as expected 1`] = `
+<body>
+  <div>
+    <div
+      class="css-0"
+    >
+      <div
+        class="chakra-button__group css-1ind3v2"
+        data-orientation="horizontal"
+        role="group"
+      >
+        Home
+        About
+        Contact
+      </div>
+    </div>
+  </div>
+</body>
+`;

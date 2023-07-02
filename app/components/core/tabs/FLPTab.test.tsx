@@ -1,4 +1,4 @@
-import React from 'react';
+import type { ReactElement, ReactNode } from 'react';
 
 import { Tabs } from '@chakra-ui/react';
 import { render } from '@testing-library/react';
@@ -6,7 +6,7 @@ import { describe, expect, test } from 'vitest';
 
 import FLPTab from './FLPTab';
 
-const tabWrapper = (children: React.ReactNode): React.ReactElement => <Tabs>{children}</Tabs>;
+const tabWrapper = (children: ReactNode): ReactElement => <Tabs>{children}</Tabs>;
 
 describe('FLPTab', () => {
   test('renders correctly', () => {

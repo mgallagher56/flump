@@ -1,0 +1,28 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`<UserLogin /> > renders as expected 1`] = `
+<body>
+  <div>
+    <div
+      class="chakra-button__group css-1ind3v2"
+      data-orientation="horizontal"
+      role="group"
+    >
+      <button
+        class="chakra-button css-1fysbuj"
+        id="pressable:pressableBaseButton"
+        type="button"
+      >
+        signUp
+      </button>
+      <button
+        class="chakra-button css-1fysbuj"
+        id="pressable:pressableBaseButton"
+        type="button"
+      >
+        logIn
+      </button>
+    </div>
+  </div>
+</body>
+`;
