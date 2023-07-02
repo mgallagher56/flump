@@ -17,11 +17,7 @@ exports[`getTabsData > should have a label, value, and content 1`] = `
       }
     >
       <h3>
-        \`$
-        N/A
-         - $
-        IT
-        \`
+        N/A - IT
       </h3>
     </FLPBox>
     <FLPBox
@@ -33,11 +29,7 @@ exports[`getTabsData > should have a label, value, and content 1`] = `
       }
     >
       <h3>
-        \`$
-        Jane Doe
-         - $
-        N/A
-        \`
+        Jane Doe - N/A
       </h3>
     </FLPBox>
   </FLPBox>
