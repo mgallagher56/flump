@@ -21,9 +21,7 @@ export const getTabsData = (employees: Partial<Employee>[], t: TFunction): TabDa
           {employees.map(
             (employee, index): ReactElement => (
               <FLPBox style={{ display: 'flex', gap: '.5rem' }} key={employee.id ?? index}>
-                <h3>
-                  `${employee.name ?? NA} - ${employee.department ?? NA}`
-                </h3>
+                <h3>{`${employee.name ?? NA} - ${employee.department ?? NA}`}</h3>
               </FLPBox>
             )
           )}
