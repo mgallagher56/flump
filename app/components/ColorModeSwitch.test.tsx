@@ -6,12 +6,12 @@ import { describe, expect, it, vi } from 'vitest';
 import ColorModeSwitch from './ColorModeSwitch';
 
 describe('<ColorModeSwitch />', () => {
-  it('should render as expected when colormode is light', () => {
+  it('should render as expected when colormode is dark', () => {
     const { baseElement } = render(<ColorModeSwitch />);
     expect(baseElement).toMatchSnapshot();
     vi.restoreAllMocks();
   });
-  it('should render as expected when colormode is dark', () => {
+  it('should render as expected when colormode is light', () => {
     vi.mock('@chakra-ui/react', async () => {
       const actual: Record<string, ReactNode> = await vi.importActual('@chakra-ui/react');
       return {
