@@ -1,8 +1,16 @@
-import { ReactElement, ReactNode, StrictMode, useContext, useEffect } from 'react';
+import { ReactElement, ReactNode, StrictMode, useContext, useEffect, useMemo } from 'react';
 
-import { Box, ChakraProvider, Container, Heading } from '@chakra-ui/react';
+import {
+  Box,
+  ChakraProvider,
+  ColorModeScript,
+  Container,
+  cookieStorageManagerSSR,
+  Heading,
+  theme
+} from '@chakra-ui/react';
 import { EmotionCache, withEmotionCache } from '@emotion/react';
-import { json, LinksFunction, V2_MetaFunction } from '@remix-run/node';
+import { json, LinksFunction, LoaderFunction, V2_MetaFunction } from '@remix-run/node';
 import {
   isRouteErrorResponse,
   Links,
@@ -22,7 +30,15 @@ import Header from './components/structure/header/Header';
 import { ClientStyleContext, ServerStyleContext } from './context';
 import i18next from './i18n.server';
 
-export const loader = async ({
+const DEFAULT_COLOR_MODE: 'dark' | 'light' | null = 'dark';
+const CHAKRA_COOKIE_COLOR_KEY = 'chakra-ui-color-mode';
+
+function getColorMode(cookies: string) {
+  const match = cookies?.match(new RegExp(`(^| )${CHAKRA_COOKIE_COLOR_KEY}=([^;]+)`));
+  return match == null ? void 0 : match[2];
+}
+
+export const loader: LoaderFunction = async ({
   request
 }: {
   request: Request;
@@ -32,6 +48,7 @@ export const loader = async ({
     SUPABASE_ANON_KEY: string;
   };
   locale: string;
+  cookies: string | null;
 }> => {
   const locale = await i18next.getLocale(request);
   return {
@@ -39,7 +56,8 @@ export const loader = async ({
     env: {
       SUPABASE_URL: process.env.SUPABASE_URL,
       SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY
-    }
+    },
+    cookies: request.headers.get('Cookie') ?? ''
   };
 };
 
@@ -76,9 +94,24 @@ interface DocumentProps {
 const Document = withEmotionCache(({ children }: DocumentProps, emotionCache: EmotionCache): ReactElement => {
   const serverStyleData = useContext(ServerStyleContext);
   const clientStyleData = useContext(ClientStyleContext);
-  const { env, locale } = useLoaderData<typeof loader>();
+  let { cookies = '', env, locale } = useLoaderData<typeof loader>();
 
   const { i18n } = useTranslation();
+
+  if (typeof document !== 'undefined') {
+    cookies = document.cookie;
+  }
+
+  let colorMode = useMemo(() => {
+    let color = getColorMode(cookies);
+
+    if (!color && DEFAULT_COLOR_MODE) {
+      cookies += ` ${CHAKRA_COOKIE_COLOR_KEY}=${DEFAULT_COLOR_MODE}`;
+      color = DEFAULT_COLOR_MODE;
+    }
+
+    return color;
+  }, [cookies]);
 
   useChangeLanguage(locale);
 
@@ -97,7 +130,14 @@ const Document = withEmotionCache(({ children }: DocumentProps, emotionCache: Em
   }, []);
 
   return (
-    <html lang={locale} dir={i18n.dir()}>
+    <html
+      lang={locale}
+      dir={i18n.dir()}
+      {...(colorMode && {
+        'data-theme': colorMode,
+        style: { colorScheme: colorMode }
+      })}
+    >
       <head>
         <meta charSet="utf-8" />
         <Meta />
@@ -106,13 +146,20 @@ const Document = withEmotionCache(({ children }: DocumentProps, emotionCache: Em
           <style key={key} data-emotion={`${key} ${ids.join(' ')}`} dangerouslySetInnerHTML={{ __html: css }} />
         ))}
       </head>
-      <body>
+      <body
+        {...(colorMode && {
+          className: `chakra-ui-${colorMode}`
+        })}
+      >
+        <ColorModeScript initialColorMode={theme.config.initialColorMode} />
         <script
           dangerouslySetInnerHTML={{
             __html: `window.env = ${JSON.stringify(env)}`
           }}
         />
-        {children}
+        <ChakraProvider colorModeManager={cookieStorageManagerSSR(cookies)} theme={theme}>
+          {children}
+        </ChakraProvider>
         <ScrollRestoration />
         <Scripts />
         <LiveReload />
@@ -125,12 +172,10 @@ export default function App(): ReactElement {
   return (
     <StrictMode>
       <Document>
-        <ChakraProvider>
-          <Container maxW={'container.xl'}>
-            <Header />
-            <Outlet />
-          </Container>
-        </ChakraProvider>
+        <Container maxW={'container.xl'}>
+          <Header />
+          <Outlet />
+        </Container>
       </Document>
     </StrictMode>
   );
@@ -147,30 +192,26 @@ export function ErrorBoundary(): ReactElement {
   if (isRouteErrorResponse(error)) {
     return (
       <Document>
-        <ChakraProvider>
-          <Box>
-            <Heading as="h1" bg="blue.500">
-              <h1>Oops</h1>
-              <p>Status: {error.status}</p>
-              <p>{error.data.message}</p>
-            </Heading>
-          </Box>
-        </ChakraProvider>
+        <Box>
+          <Heading as="h1" bg="blue.500">
+            <h1>Oops</h1>
+            <p>Status: {error.status}</p>
+            <p>{error.data.message}</p>
+          </Heading>
+        </Box>
       </Document>
     );
   }
 
   return (
     <Document>
-      <ChakraProvider>
-        <Box>
-          <Heading as="h1" bg="blue.500">
-            <h1>Uh oh ...</h1>
-            <p>Something went wrong.</p>
-            <pre>{error?.data?.message ?? 'Something went wrong'}</pre>{' '}
-          </Heading>
-        </Box>
-      </ChakraProvider>
+      <Box>
+        <Heading as="h1" bg="blue.500">
+          <h1>Uh oh ...</h1>
+          <p>Something went wrong.</p>
+          <pre>{error?.data?.message ?? 'Something went wrong'}</pre>{' '}
+        </Heading>
+      </Box>
     </Document>
   );
 }

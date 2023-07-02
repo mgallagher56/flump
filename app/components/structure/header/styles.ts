@@ -10,3 +10,17 @@ export const navStyles = css`
   width: 100%;
   padding: ${theme.space[4]} ${theme.space[2]};
 `;
+
+export const menuStyles = css`
+  display: flex;
+  gap: ${theme.space[10]};
+  align-items: center;
+  justify-content: start;
+`;
+
+export const loginStyles = css`
+  display: flex;
+  gap: ${theme.space[2]};
+  align-items: center;
+  justify-content: end;
+`;
