@@ -25,16 +25,16 @@ import {
 import { useTranslation } from 'react-i18next';
 import { useChangeLanguage } from 'remix-i18next';
 
-import FLPBox from './components/core/structure/FLPBox';
 import Header from './components/structure/header/Header';
 import { ClientStyleContext, ServerStyleContext } from './context';
 import i18next from './i18n.server';
+import styles from './index.css';
 
 const DEFAULT_COLOR_MODE: 'dark' | 'light' | null = 'dark';
 const CHAKRA_COOKIE_COLOR_KEY = 'chakra-ui-color-mode';
 
-function getColorMode(cookies: string) {
-  const match = cookies?.match(new RegExp(`(^| )${CHAKRA_COOKIE_COLOR_KEY}=([^;]+)`));
+function getColorMode(cookie: string) {
+  const match = cookie?.match(new RegExp(`(^| )${CHAKRA_COOKIE_COLOR_KEY}=([^;]+)`));
   return match == null ? void 0 : match[2];
 }
 
@@ -48,7 +48,7 @@ export const loader: LoaderFunction = async ({
     SUPABASE_ANON_KEY: string;
   };
   locale: string;
-  cookies: string | null;
+  cookie: string | null;
 }> => {
   const locale = await i18next.getLocale(request);
   return {
@@ -57,7 +57,7 @@ export const loader: LoaderFunction = async ({
       SUPABASE_URL: process.env.SUPABASE_URL,
       SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY
     },
-    cookies: request.headers.get('Cookie') ?? ''
+    cookie: request?.headers?.get('Cookie') ?? ''
   };
 };
 
@@ -83,7 +83,8 @@ export const links: LinksFunction = (): {
     {
       rel: 'stylesheet',
       href: 'https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,300;1,400;1,500;1,600;1,700;1,800&display=swap'
-    }
+    },
+    { rel: 'stylesheet', href: styles }
   ];
 };
 
@@ -94,24 +95,24 @@ interface DocumentProps {
 const Document = withEmotionCache(({ children }: DocumentProps, emotionCache: EmotionCache): ReactElement => {
   const serverStyleData = useContext(ServerStyleContext);
   const clientStyleData = useContext(ClientStyleContext);
-  let { cookies = '', env, locale } = useLoaderData<typeof loader>();
+  let { cookie = '', env, locale } = useLoaderData<typeof loader>();
 
   const { i18n } = useTranslation();
 
   if (typeof document !== 'undefined') {
-    cookies = document.cookie;
+    cookie = document.cookie;
   }
 
   let colorMode = useMemo(() => {
-    let color = getColorMode(cookies);
+    let color = getColorMode(cookie);
 
     if (!color && DEFAULT_COLOR_MODE) {
-      cookies += ` ${CHAKRA_COOKIE_COLOR_KEY}=${DEFAULT_COLOR_MODE}`;
+      cookie += ` ${CHAKRA_COOKIE_COLOR_KEY}=${DEFAULT_COLOR_MODE}`;
       color = DEFAULT_COLOR_MODE;
     }
 
     return color;
-  }, [cookies]);
+  }, [cookie]);
 
   useChangeLanguage(locale);
 
@@ -157,7 +158,7 @@ const Document = withEmotionCache(({ children }: DocumentProps, emotionCache: Em
             __html: `window.env = ${JSON.stringify(env)}`
           }}
         />
-        <ChakraProvider colorModeManager={cookieStorageManagerSSR(cookies)} theme={theme}>
+        <ChakraProvider colorModeManager={cookieStorageManagerSSR(cookie)} theme={theme}>
           {children}
         </ChakraProvider>
         <ScrollRestoration />
