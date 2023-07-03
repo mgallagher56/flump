@@ -1,6 +1,5 @@
 /// <reference types="vitest" />
 /// <reference types="vite/client" />
-
 import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
 import checker from 'vite-plugin-checker';
@@ -46,7 +45,7 @@ export default defineConfig(({ mode }) => ({
         'app/**/*.config.{js,ts,jsx,tsx}',
         'app/routes/*.*',
         'starlight/**/*.*',
-        'app/**/types.ts',
+        'app/**/types.ts'
       ],
       functions: 100,
       include: ['app/**/*.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
