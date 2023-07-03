@@ -7,10 +7,10 @@ exports[`<Header /> > renders as expected 1`] = `
       class="css-0"
     >
       <nav
-        class="css-tud33"
+        class="d_flex border-bottom-width_2px border-b_blue.500 border-bottom-style_solid items_center justify_space-between w_100% py_4 px_2 css-k008qs"
       >
         <div
-          class="css-15xcd0z"
+          class="d_flex gap_2 items_center justify_start css-0"
         >
           <div
             class="home-logo"
@@ -37,7 +37,7 @@ exports[`<Header /> > renders as expected 1`] = `
           </div>
         </div>
         <div
-          class="css-njyo75"
+          class="d_flex gap_2 items_center justify_end css-0"
         >
           <div
             class="chakra-button__group css-1ind3v2"
@@ -59,13 +59,9 @@ exports[`<Header /> > renders as expected 1`] = `
               logIn
             </button>
           </div>
-          <button
-            class="chakra-button css-p7mkev"
-            id="pressable:pressableBaseButton"
-            type="button"
-          >
-            ☀️
-          </button>
+          <div>
+            ColorModeSwitch
+          </div>
         </div>
       </nav>
     </header>
