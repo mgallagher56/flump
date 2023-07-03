@@ -90,6 +90,7 @@ app.all(
       }
 );
 
+// enable https locally
 const server =
   MODE === 'production'
     ? app
@@ -100,6 +101,7 @@ const server =
         },
         app
       );
+
 const port = process.env.PORT || 3000;
 
 server.listen(port, () => {
@@ -112,7 +114,7 @@ server.listen(port, () => {
   }
 });
 
-const metricsPort = process.env.METRICS_PORT || 3001;
+const metricsPort = process.env.METRICS_PORT || 3002;
 
 metricsApp.listen(metricsPort, () => {
   console.log(`✅ metrics ready: http://localhost:${metricsPort}/metrics`);

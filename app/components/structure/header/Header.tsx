@@ -12,12 +12,12 @@ import { loginStyles, menuStyles, navStyles } from './styles';
 const Header: FC = (): ReactElement => {
   return (
     <FLPBox as="header">
-      <Flex as="nav" css={navStyles}>
-        <FLPBox css={menuStyles}>
+      <Flex as="nav" className={navStyles}>
+        <FLPBox className={menuStyles}>
           <HomeLogo />
           <NavMenu />
         </FLPBox>
-        <FLPBox css={loginStyles}>
+        <FLPBox className={loginStyles}>
           <UserLogin />
           <ColorModeSwitch />
         </FLPBox>
