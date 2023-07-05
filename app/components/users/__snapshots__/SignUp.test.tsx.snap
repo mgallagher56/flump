@@ -1,0 +1,95 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`<SignUp /> > should render as expected 1`] = `
+<div>
+  <form>
+    <div
+      class="css-1gnc3qn"
+    >
+      <div
+        class="d_flex flex_column gap_2"
+        data-part="root"
+        data-scope="editable"
+        id="editable::r0:"
+      >
+        <label
+          data-part="label"
+          data-scope="editable"
+          for="editable::r0::input"
+          id="editable::r0::label"
+        >
+          Email:
+        </label>
+        <div
+          data-part="area"
+          data-placeholder-shown=""
+          data-scope="editable"
+          id="editable::r0::area"
+        >
+          <div
+            class="css-3a3hw0"
+          >
+            <input
+              aria-label="editable input"
+              class="chakra-input css-0"
+              data-part="input"
+              data-scope="editable"
+              id="editable::r0::input"
+              name="email"
+              type="email"
+              value=""
+            />
+          </div>
+        </div>
+      </div>
+      <div
+        class="d_flex flex_column gap_2"
+        data-part="root"
+        data-scope="editable"
+        id="editable::r1:"
+      >
+        <label
+          data-part="label"
+          data-scope="editable"
+          for="editable::r1::input"
+          id="editable::r1::label"
+        >
+          Password:
+        </label>
+        <div
+          data-part="area"
+          data-placeholder-shown=""
+          data-scope="editable"
+          id="editable::r1::area"
+        >
+          <div
+            class="css-3a3hw0"
+          >
+            <input
+              aria-label="editable input"
+              class="chakra-input css-0"
+              data-part="input"
+              data-scope="editable"
+              id="editable::r1::input"
+              name="password"
+              type="password"
+              value=""
+            />
+          </div>
+        </div>
+      </div>
+      <div
+        class="css-w98boq"
+      >
+        <button
+          class="chakra-button css-4xx2wk"
+          id="pressable::r2:"
+          type="submit"
+        >
+          signUp
+        </button>
+      </div>
+    </div>
+  </form>
+</div>
+`;

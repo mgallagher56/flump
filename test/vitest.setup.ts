@@ -11,9 +11,13 @@ Object.defineProperty(window, 'env', {
   }
 });
 
-vi.mock('@remix-run/react', () => ({
-  Link: (props: LinkProps): ReactNode => props.children
-}));
+vi.mock('@remix-run/react', async () => {
+  const actual: Record<string, unknown> = await vi.importActual('@remix-run/react');
+  return {
+    ...actual,
+    Link: (props: LinkProps): ReactNode => props.children
+  };
+});
 
 vi.mock('react-i18next', () => ({
   Trans: ({ children }) => children,
@@ -28,3 +32,9 @@ vi.mock('react-i18next', () => ({
 }));
 
 configure({ testIdAttribute: 'id' });
+
+afterEach(() => {
+  vi.clearAllMocks();
+});
+
+vi.mock('zustand');

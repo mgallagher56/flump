@@ -18,44 +18,45 @@ describe('FLPButton', () => {
     expect(container).toMatchSnapshot();
   });
 
-  it('should call onPress when clicked', () => {
-    const onPress = vi.fn();
-    render(<FLPButton onPress={onPress}>FLPButton</FLPButton>);
+  it('should call onClick when clicked', () => {
+    const onClick = vi.fn();
+    render(<FLPButton onClick={onClick}>FLPButton</FLPButton>);
     fireEvent.click(screen.getByText('FLPButton'));
 
-    expect(onPress).toHaveBeenCalled();
+    expect(onClick).toHaveBeenCalled();
   });
 
-  it('should not call onPress when clicked and isDisabled is true', () => {
-    const onPress = vi.fn();
+  it('should not call onClick when clicked and isDisabled is true', () => {
+    const onClick = vi.fn();
+    const { baseElement } = render(
+      <FLPButton isDisabled onClick={onClick}>
+        FLPButton
+      </FLPButton>
+    );
+    expect(baseElement).toMatchSnapshot();
+    fireEvent.click(screen.getByText('FLPButton'));
+    expect(onClick).not.toHaveBeenCalled();
+  });
+
+  it('should not call onClick when clicked and preventFocusOnPress is true', () => {
+    const onClick = vi.fn();
     render(
-      <FLPButton onPress={onPress} isDisabled>
+      <FLPButton onClick={onClick} preventFocusOnPress>
         FLPButton
       </FLPButton>
     );
     fireEvent.click(screen.getByText('FLPButton'));
-    expect(onPress).not.toHaveBeenCalled();
+    expect(onClick).toHaveBeenCalled();
   });
 
-  it('should not call onPress when clicked and preventFocusOnPress is true', () => {
-    const onPress = vi.fn();
+  it('should not call onClick when clicked and isLoading is true', () => {
+    const onClick = vi.fn();
     render(
-      <FLPButton onPress={onPress} preventFocusOnPress>
+      <FLPButton onClick={onClick} isLoading>
         FLPButton
       </FLPButton>
     );
     fireEvent.click(screen.getByText('FLPButton'));
-    expect(onPress).toHaveBeenCalled();
-  });
-
-  it('should not call onPress when clicked and isLoading is true', () => {
-    const onPress = vi.fn();
-    render(
-      <FLPButton onPress={onPress} isLoading>
-        FLPButton
-      </FLPButton>
-    );
-    fireEvent.click(screen.getByText('FLPButton'));
-    expect(onPress).not.toHaveBeenCalled();
+    expect(onClick).not.toHaveBeenCalled();
   });
 });

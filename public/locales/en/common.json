@@ -5,5 +5,8 @@
   "featureNum": "Feature {{num}}",
   "home": "Home",
   "signUp": "Sign up",
-  "logIn": "Log in"
+  "logIn": "Log in",
+  "logOut": "Log out",
+  "clickAgainToLogIn": "Click again to log in",
+  "launchApp": "Launch app"
 }
