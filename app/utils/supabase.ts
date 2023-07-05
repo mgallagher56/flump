@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js';
+import { createBrowserClient, createServerClient } from '@supabase/auth-helpers-remix';
 
 import type { Database } from 'db_types';
 
@@ -9,6 +9,9 @@ export const getSupaBaseUrl = (isServer: boolean): string =>
 export const getSupabaseAnonKey = (isServer: boolean): string =>
   isServer ? process.env.SUPABASE_ANON_KEY : window?.env?.SUPABASE_ANON_KEY;
 
-const client = createClient<Database>(getSupaBaseUrl(isServer), getSupabaseAnonKey(isServer));
+const supabase = createBrowserClient<Database>(getSupaBaseUrl(isServer), getSupabaseAnonKey(isServer));
 
-export default client;
+export const createSupaBaseServerClient = ({ request, response }: { request: Request; response: Response }) =>
+  createServerClient<Database>(getSupaBaseUrl(isServer), getSupabaseAnonKey(isServer), { request, response });
+
+export default supabase;

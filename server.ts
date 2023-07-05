@@ -4,8 +4,8 @@ import { broadcastDevReady } from '@remix-run/node';
 import compression from 'compression';
 import express from 'express';
 import morgan from 'morgan';
-import fs from 'node:fs';
-import https from 'node:https';
+// import fs from 'node:fs';
+// import https from 'node:https';
 import path from 'path';
 
 const app = express();
@@ -91,26 +91,26 @@ app.all(
 );
 
 // enable https locally
-const server =
-  MODE === 'production'
-    ? app
-    : https.createServer(
-        {
-          key: fs.readFileSync('.cert/key.pem'),
-          cert: fs.readFileSync('.cert/cert.pem')
-        },
-        app
-      );
+// const server =
+//   MODE === 'production'
+//     ? app
+//     : https.createServer(
+//         {
+//           key: fs.readFileSync('.cert/key.pem'),
+//           cert: fs.readFileSync('.cert/cert.pem')
+//         },
+//         app
+//       );
 
 const port = process.env.PORT || 3000;
 
-server.listen(port, () => {
+app.listen(port, () => {
   // require the built app so we're ready when the first request comes in
   require(BUILD_DIR);
-  console.log(`✅ app ready: https://localhost:${port}`);
+  console.log(`✅ app ready: http://localhost:${port}`);
   if (process.env.NODE_ENV === 'development') {
     // eslint-disable-next-line @typescript-eslint/no-var-requires
-    broadcastDevReady(require(BUILD_DIR), 'https://localhost:3000');
+    broadcastDevReady(require(BUILD_DIR), 'http://localhost:3000');
   }
 });
 

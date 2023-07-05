@@ -1,7 +1,7 @@
 import type { ReactElement } from 'react';
 import { useMemo } from 'react';
 
-import type { LoaderArgs, V2_MetaFunction } from '@remix-run/node';
+import { json, type V2_MetaFunction } from '@remix-run/node';
 import { useLoaderData } from '@remix-run/react';
 import { useTranslation } from 'react-i18next';
 import FLPBox from '~/components/core/structure/FLPBox';
@@ -9,6 +9,8 @@ import FLPHeading from '~/components/core/typography/FLPHeading';
 import UserLogin from '~/components/navigation/UserLogin';
 import TabsContainer from '~/containers/TabsContainer';
 import { getTabsData } from '~/utils/index.utils';
+
+import type { Database } from 'db_types';
 
 import supabase from '../utils/supabase';
 
@@ -18,11 +20,12 @@ export const handle = {
   i18n: ['common', 'home']
 };
 
-export type Employee = Awaited<ReturnType<typeof loader>>['employees'][0];
+export type Employee = Database['public']['Tables']['employees']['Row'];
 
-export const loader = async ({ ...args }: LoaderArgs) => {
+export const loader = async ({ request }) => {
+  const response = new Response();
   const { data } = await supabase.from('employees').select('*');
-  return { employees: data };
+  return json({ employees: data }, { headers: response.headers });
 };
 
 const Index = (): ReactElement => {

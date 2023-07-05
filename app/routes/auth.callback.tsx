@@ -1,8 +1,6 @@
 import { redirect } from '@remix-run/node';
 import type { LoaderArgs, TypedResponse } from '@remix-run/node';
-import { createServerClient } from '@supabase/auth-helpers-remix';
-
-import type { Database } from 'db_types';
+import { createSupaBaseServerClient } from '~/utils/supabase';
 
 export const loader = async ({ request }: LoaderArgs): Promise<TypedResponse<never>> => {
   const response = new Response();
@@ -10,14 +8,12 @@ export const loader = async ({ request }: LoaderArgs): Promise<TypedResponse<nev
   const code = url.searchParams.get('code');
 
   if (code) {
-    const supabaseClient = createServerClient<Database>(process.env.SUPABASE_URL!, process.env.SUPABASE_ANON_KEY!, {
+    const supabaseClient = createSupaBaseServerClient({
       request,
       response
     });
     await supabaseClient.auth.exchangeCodeForSession(code);
   }
 
-  return redirect('/', {
-    headers: response.headers
-  });
+  return redirect('/', { headers: response.headers });
 };

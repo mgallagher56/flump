@@ -76,6 +76,7 @@
     "@remix-run/server-runtime": "1.18.1",
     "@supabase/auth-helpers-remix": "0.2.1",
     "@supabase/supabase-js": "2.26.0",
+    "@zag-js/editable": "^0.10.3",
     "@zag-js/pressable": "0.10.3",
     "@zag-js/react": "0.10.3",
     "@zag-js/tabs": "0.10.3",
