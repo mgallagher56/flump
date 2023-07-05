@@ -48,3 +48,7 @@ export const noop = () => {};
 export enum FallbackEnums {
   NA = 'N/A'
 }
+
+export enum AuthErrorEnums {
+  USER_ALREADY_REGISTERED = 'User already registered'
+}

@@ -1,16 +1,14 @@
-import type { FC, PropsWithChildren } from 'react';
+import { type FC, type PropsWithChildren, useId } from 'react';
 
 import type { ButtonProps } from '@chakra-ui/react';
 import { Button } from '@chakra-ui/react';
 import * as pressable from '@zag-js/pressable';
-import type { PressEvent } from '@zag-js/pressable/dist/pressable.types';
-import { normalizeProps, useMachine } from '@zag-js/react';
+import { mergeProps, normalizeProps, useMachine } from '@zag-js/react';
 
 interface FLPButtonProps extends ButtonProps {
   isLoading?: boolean;
   preventFocusOnPress?: boolean;
   padding?: number;
-  onPress?: (e: PressEvent) => void;
 }
 
 const FLPButton: FC<PropsWithChildren<FLPButtonProps>> = ({
@@ -18,25 +16,24 @@ const FLPButton: FC<PropsWithChildren<FLPButtonProps>> = ({
   isDisabled,
   preventFocusOnPress,
   variant = 'solid',
-  onPress,
+  onClick,
   ...props
 }) => {
   const [state, send] = useMachine(
     pressable.machine({
-      id: 'pressableBaseButton',
-      onPress,
+      id: useId(),
       disabled: isDisabled,
       preventFocusOnPress
     })
   );
 
   const api = pressable.connect(state, send, normalizeProps);
-
-  return (
-    <Button {...api.pressableProps} {...props} variant={variant} colorScheme={colorScheme}>
-      {props.children}
-    </Button>
+  const buttonProps: ButtonProps = mergeProps(
+    { ...api.pressableProps },
+    { ...props, isDisabled, onClick, variant, colorScheme }
   );
+
+  return <Button {...buttonProps}>{props.children}</Button>;
 };
 
 export default FLPButton;
