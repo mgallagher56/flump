@@ -9,7 +9,11 @@ import UserLogin from '~/components/navigation/UserLogin';
 import HomeLogo from '../../navigation/HomeLogo';
 import { loginStyles, menuStyles, navStyles } from './styles';
 
-const Header: FC = (): ReactElement => {
+interface HeaderProps {
+  showSignIn?: boolean;
+}
+
+const Header: FC<HeaderProps> = ({ showSignIn = true }): ReactElement => {
   return (
     <FLPBox as="header">
       <Flex as="nav" className={navStyles}>
@@ -18,7 +22,7 @@ const Header: FC = (): ReactElement => {
           <NavMenu />
         </FLPBox>
         <FLPBox className={loginStyles}>
-          <UserLogin />
+          {showSignIn && <UserLogin />}
           <ColorModeSwitch />
         </FLPBox>
       </Flex>

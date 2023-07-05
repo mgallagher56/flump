@@ -1,14 +1,30 @@
+import type { FC } from 'react';
+
 import { useTranslation } from 'react-i18next';
+import useUserStore from '~/store';
 
-import FLPButton from '../core/buttons/FLPButton';
 import FLPButtonGroup from '../core/buttons/FLPButtonGroup';
+import FLPLinkButton from '../core/buttons/FLPLinkButton';
+import SignOut from '../users/SignOut';
 
-const UserLogin = () => {
+const UserLogin: FC = () => {
   const { t } = useTranslation();
+  const user = useUserStore((state) => state.user);
+
   return (
     <FLPButtonGroup>
-      <FLPButton>{t('signUp')}</FLPButton>
-      <FLPButton>{t('logIn')}</FLPButton>
+      {user ? (
+        <SignOut />
+      ) : (
+        <>
+          <FLPLinkButton to="/signUp" variant="solid">
+            {t('signUp')}
+          </FLPLinkButton>
+          <FLPLinkButton to="/login" variant="outline">
+            {t('logIn')}
+          </FLPLinkButton>
+        </>
+      )}
     </FLPButtonGroup>
   );
 };

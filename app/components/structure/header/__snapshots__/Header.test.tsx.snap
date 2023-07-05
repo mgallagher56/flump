@@ -44,20 +44,8 @@ exports[`<Header /> > renders as expected 1`] = `
             data-orientation="horizontal"
             role="group"
           >
-            <button
-              class="chakra-button css-1fysbuj"
-              id="pressable:pressableBaseButton"
-              type="button"
-            >
-              signUp
-            </button>
-            <button
-              class="chakra-button css-1fysbuj"
-              id="pressable:pressableBaseButton"
-              type="button"
-            >
-              logIn
-            </button>
+            signUp
+            logIn
           </div>
           <div>
             ColorModeSwitch

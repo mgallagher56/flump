@@ -1,10 +1,10 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`FLPButtonGroup > renders as expected 1`] = `
+exports[`<Login /> > should render as expected 1`] = `
 <div>
   <div
-    class="chakra-button__group css-1ind3v2"
-    data-orientation="horizontal"
+    class="chakra-button__group css-5ja68r"
+    data-orientation="vertical"
     role="group"
   >
     <button
@@ -12,14 +12,14 @@ exports[`FLPButtonGroup > renders as expected 1`] = `
       id="pressable::r0:"
       type="button"
     >
-      Button 1
+      logIn
     </button>
     <button
       class="chakra-button css-1fysbuj"
       id="pressable::r1:"
       type="button"
     >
-      Button 2
+      logOut
     </button>
   </div>
 </div>

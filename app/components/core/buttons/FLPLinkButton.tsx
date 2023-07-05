@@ -1,16 +1,14 @@
-import type { FC, PropsWithChildren } from 'react';
+import { type FC, type PropsWithChildren, useId } from 'react';
 
 import type { ButtonProps } from '@chakra-ui/react';
 import { Button } from '@chakra-ui/react';
 import { Link } from '@remix-run/react';
 import * as pressable from '@zag-js/pressable';
-import type { PressEvent } from '@zag-js/pressable/dist/pressable.types';
 import { normalizeProps, useMachine } from '@zag-js/react';
 
 interface FLPLinkButtonProps extends ButtonProps {
   preventFocusOnPress?: boolean;
   to: string;
-  onPress?: (e: PressEvent) => void;
 }
 
 const FLPLinkButton: FC<PropsWithChildren<FLPLinkButtonProps>> = ({
@@ -18,11 +16,12 @@ const FLPLinkButton: FC<PropsWithChildren<FLPLinkButtonProps>> = ({
   colorScheme = 'blue',
   isDisabled,
   preventFocusOnPress,
+  variant = 'link',
   to
 }) => {
   const [state, send] = useMachine(
     pressable.machine({
-      id: 'pressableBaseButton',
+      id: useId(),
       disabled: isDisabled,
       preventFocusOnPress: preventFocusOnPress ?? true
     })
@@ -31,7 +30,7 @@ const FLPLinkButton: FC<PropsWithChildren<FLPLinkButtonProps>> = ({
   const api = pressable.connect(state, send, normalizeProps);
 
   return (
-    <Button colorScheme={colorScheme} as={Link} to={to} variant="link" {...api.pressableProps}>
+    <Button colorScheme={colorScheme} as={Link} to={to} variant={variant} {...api.pressableProps}>
       {children}
     </Button>
   );

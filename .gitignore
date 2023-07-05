@@ -13,7 +13,7 @@ node_modules
 /.eslintcache
 /coverage-ts/
 sonar-report.xml
-/.cert
+/.cert/
 
 // starlight docs
 /starlight/.vscode

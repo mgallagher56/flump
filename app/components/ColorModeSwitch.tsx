@@ -7,7 +7,7 @@ import FLPButton from './core/buttons/FLPButton';
 const ColorModeSwitch: FC = () => {
   const { colorMode, toggleColorMode } = useColorMode();
   return (
-    <FLPButton id={'colorModeSwitch'} padding={0} variant="outline" onPress={toggleColorMode}>
+    <FLPButton id={'colorModeSwitch'} padding={0} variant="outline" onClick={toggleColorMode}>
       {colorMode === 'light' ? '🌚' : '☀️'}
     </FLPButton>
   );

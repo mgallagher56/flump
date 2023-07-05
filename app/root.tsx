@@ -1,4 +1,4 @@
-import { ReactElement, ReactNode, StrictMode, useContext, useEffect, useMemo } from 'react';
+import { ReactElement, ReactNode, StrictMode, useContext, useEffect, useMemo, useState } from 'react';
 
 import {
   Box,
@@ -10,7 +10,7 @@ import {
   theme
 } from '@chakra-ui/react';
 import { EmotionCache, withEmotionCache } from '@emotion/react';
-import { json, LinksFunction, LoaderFunction, V2_MetaFunction } from '@remix-run/node';
+import { json, LinksFunction, LoaderFunction, TypedResponse, V2_MetaFunction } from '@remix-run/node';
 import {
   isRouteErrorResponse,
   Links,
@@ -20,15 +20,21 @@ import {
   Scripts,
   ScrollRestoration,
   useLoaderData,
+  useRevalidator,
   useRouteError
 } from '@remix-run/react';
+import { Session } from '@supabase/supabase-js';
 import { useTranslation } from 'react-i18next';
 import { useChangeLanguage } from 'remix-i18next';
+
+import { Database } from 'db_types';
 
 import Header from './components/structure/header/Header';
 import { ClientStyleContext, ServerStyleContext } from './context';
 import i18next from './i18n.server';
 import styles from './index.css';
+import useUserStore from './store';
+import supabase, { createSupaBaseServerClient } from './utils/supabase';
 
 const DEFAULT_COLOR_MODE: 'dark' | 'light' | null = 'dark';
 const CHAKRA_COOKIE_COLOR_KEY = 'chakra-ui-color-mode';
@@ -38,27 +44,45 @@ function getColorMode(cookie: string) {
   return match == null ? void 0 : match[2];
 }
 
-export const loader: LoaderFunction = async ({
+export const loader = async ({
   request
 }: {
   request: Request;
-}): Promise<{
-  env: {
-    SUPABASE_URL: string;
-    SUPABASE_ANON_KEY: string;
-  };
-  locale: string;
-  cookie: string | null;
-}> => {
-  const locale = await i18next.getLocale(request);
-  return {
-    locale,
+}): Promise<
+  TypedResponse<{
     env: {
-      SUPABASE_URL: process.env.SUPABASE_URL,
-      SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY
-    },
-    cookie: request?.headers?.get('Cookie') ?? ''
+      SUPABASE_URL: string;
+      SUPABASE_ANON_KEY: string;
+    };
+    locale: string;
+    session: Session | null;
+    cookie: string | null;
+  }>
+> => {
+  const locale = await i18next.getLocale(request);
+  const env = {
+    SUPABASE_URL: process.env.SUPABASE_URL,
+    SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY
   };
+
+  const response = new Response();
+  const supabase = createSupaBaseServerClient({ request, response });
+
+  const {
+    data: { session }
+  } = await supabase.auth.getSession();
+
+  return json(
+    {
+      locale,
+      env,
+      session,
+      cookie: request?.headers?.get('Cookie') ?? ''
+    },
+    {
+      headers: response.headers
+    }
+  );
 };
 
 export const handle = {
@@ -90,14 +114,80 @@ export const links: LinksFunction = (): {
 
 interface DocumentProps {
   children: ReactNode;
+  locale?: string;
+  colorMode?: string;
+  env?: {
+    SUPABASE_URL?: string;
+    SUPABASE_ANON_KEY?: string;
+  };
+  cookie?: string;
 }
 
-const Document = withEmotionCache(({ children }: DocumentProps, emotionCache: EmotionCache): ReactElement => {
-  const serverStyleData = useContext(ServerStyleContext);
-  const clientStyleData = useContext(ClientStyleContext);
-  let { cookie = '', env, locale } = useLoaderData<typeof loader>();
+const Document = withEmotionCache(
+  ({ children, cookie, colorMode, env, locale }: DocumentProps, emotionCache: EmotionCache): ReactElement => {
+    const serverStyleData = useContext(ServerStyleContext);
+    const clientStyleData = useContext(ClientStyleContext);
+    const { i18n } = useTranslation();
 
-  const { i18n } = useTranslation();
+    // Only executed on client
+    useEffect(() => {
+      // re-link sheet container
+      emotionCache.sheet.container = document.head;
+      // re-inject tags
+      const tags = emotionCache.sheet.tags;
+      emotionCache.sheet.flush();
+      tags.forEach((tag) => {
+        (emotionCache.sheet as any)._insertTag(tag);
+      });
+      // reset cache to reapply global styles
+      clientStyleData?.reset();
+    }, []);
+
+    return (
+      <html
+        lang={locale}
+        dir={i18n.dir()}
+        {...(colorMode && {
+          'data-theme': colorMode,
+          style: { colorScheme: colorMode }
+        })}
+      >
+        <head>
+          <meta charSet="utf-8" />
+          <Meta />
+          <Links />
+          {serverStyleData?.map(({ key, ids, css }) => (
+            <style key={key} data-emotion={`${key} ${ids.join(' ')}`} dangerouslySetInnerHTML={{ __html: css }} />
+          ))}
+        </head>
+        <body
+          {...(colorMode && {
+            className: `chakra-ui-${colorMode}`
+          })}
+        >
+          <ColorModeScript initialColorMode={theme.config.initialColorMode} />
+          <script
+            dangerouslySetInnerHTML={{
+              __html: `window.env = ${JSON.stringify(env)}`
+            }}
+          />
+          <ChakraProvider colorModeManager={cookieStorageManagerSSR(cookie)} theme={theme}>
+            {children}
+          </ChakraProvider>
+          <ScrollRestoration />
+          <Scripts />
+          <LiveReload />
+        </body>
+      </html>
+    );
+  }
+);
+
+export default function App(): ReactElement {
+  const { revalidate } = useRevalidator();
+  let { cookie = '', env, locale, session } = useLoaderData<typeof loader>();
+  const serverAccessToken = session?.access_token;
+  const setUser = useUserStore((state) => state.setUser);
 
   if (typeof document !== 'undefined') {
     cookie = document.cookie;
@@ -116,63 +206,25 @@ const Document = withEmotionCache(({ children }: DocumentProps, emotionCache: Em
 
   useChangeLanguage(locale);
 
-  // Only executed on client
   useEffect(() => {
-    // re-link sheet container
-    emotionCache.sheet.container = document.head;
-    // re-inject tags
-    const tags = emotionCache.sheet.tags;
-    emotionCache.sheet.flush();
-    tags.forEach((tag) => {
-      (emotionCache.sheet as any)._insertTag(tag);
+    const {
+      data: { subscription }
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event !== 'INITIAL_SESSION' && session?.access_token !== serverAccessToken) {
+        setUser(session?.user ?? null);
+        // server and client are out of sync
+        revalidate();
+      }
     });
-    // reset cache to reapply global styles
-    clientStyleData?.reset();
-  }, []);
 
-  return (
-    <html
-      lang={locale}
-      dir={i18n.dir()}
-      {...(colorMode && {
-        'data-theme': colorMode,
-        style: { colorScheme: colorMode }
-      })}
-    >
-      <head>
-        <meta charSet="utf-8" />
-        <Meta />
-        <Links />
-        {serverStyleData?.map(({ key, ids, css }) => (
-          <style key={key} data-emotion={`${key} ${ids.join(' ')}`} dangerouslySetInnerHTML={{ __html: css }} />
-        ))}
-      </head>
-      <body
-        {...(colorMode && {
-          className: `chakra-ui-${colorMode}`
-        })}
-      >
-        <ColorModeScript initialColorMode={theme.config.initialColorMode} />
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `window.env = ${JSON.stringify(env)}`
-          }}
-        />
-        <ChakraProvider colorModeManager={cookieStorageManagerSSR(cookie)} theme={theme}>
-          {children}
-        </ChakraProvider>
-        <ScrollRestoration />
-        <Scripts />
-        <LiveReload />
-      </body>
-    </html>
-  );
-});
+    return () => {
+      subscription?.unsubscribe();
+    };
+  }, [serverAccessToken]);
 
-export default function App(): ReactElement {
   return (
     <StrictMode>
-      <Document>
+      <Document locale={locale} colorMode={colorMode} env={env} cookie={cookie}>
         <Container maxW={'container.xl'}>
           <Header />
           <Outlet />
@@ -182,7 +234,6 @@ export default function App(): ReactElement {
   );
 }
 
-// How ChakraProvider should be used on ErrorBoundary
 export function ErrorBoundary(): ReactElement {
   const error = useRouteError() as {
     status: number;
@@ -193,6 +244,7 @@ export function ErrorBoundary(): ReactElement {
   if (isRouteErrorResponse(error)) {
     return (
       <Document>
+        <Header showSignIn={false} />
         <Box>
           <Heading as="h1" bg="blue.500">
             <h1>Oops</h1>
@@ -209,7 +261,6 @@ export function ErrorBoundary(): ReactElement {
       <Box>
         <Heading as="h1" bg="blue.500">
           <h1>Uh oh ...</h1>
-          <p>Something went wrong.</p>
           <pre>{error?.data?.message ?? 'Something went wrong'}</pre>{' '}
         </Heading>
       </Box>
