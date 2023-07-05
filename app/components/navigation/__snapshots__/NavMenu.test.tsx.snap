@@ -19,3 +19,45 @@ exports[`<NavMenu /> > renders as expected 1`] = `
   </div>
 </body>
 `;
+
+exports[`<NavMenu /> > renders as expected when logged in 1`] = `
+<body>
+  <div />
+  <div>
+    <div
+      class="css-0"
+    >
+      <div
+        class="chakra-button__group css-qul7w4"
+        data-orientation="horizontal"
+        role="group"
+      >
+        Home
+        About
+        Contact
+        launchApp
+      </div>
+    </div>
+  </div>
+</body>
+`;
+
+exports[`<NavMenu /> > renders as expected when not logged in 1`] = `
+<body>
+  <div>
+    <div
+      class="css-0"
+    >
+      <div
+        class="chakra-button__group css-qul7w4"
+        data-orientation="horizontal"
+        role="group"
+      >
+        Home
+        About
+        Contact
+      </div>
+    </div>
+  </div>
+</body>
+`;

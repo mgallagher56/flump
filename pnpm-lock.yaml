@@ -38,12 +38,18 @@ dependencies:
   '@remix-run/server-runtime':
     specifier: 1.18.1
     version: 1.18.1
+  '@remix-run/testing':
+    specifier: 1.18.1
+    version: 1.18.1(react-dom@18.2.0)(react@18.2.0)
   '@supabase/auth-helpers-remix':
     specifier: 0.2.1
     version: 0.2.1(@supabase/supabase-js@2.26.0)
   '@supabase/supabase-js':
     specifier: 2.26.0
     version: 2.26.0
+  '@zag-js/editable':
+    specifier: ^0.10.3
+    version: 0.10.3
   '@zag-js/pressable':
     specifier: 0.10.3
     version: 0.10.3
@@ -107,6 +113,9 @@ dependencies:
   tiny-invariant:
     specifier: 1.3.1
     version: 1.3.1
+  zustand:
+    specifier: ^4.3.9
+    version: 4.3.9(react@18.2.0)
 
 devDependencies:
   '@babel/core':
@@ -4771,6 +4780,21 @@ packages:
       set-cookie-parser: 2.6.0
       source-map: 0.7.4
 
+  /@remix-run/testing@1.18.1(react-dom@18.2.0)(react@18.2.0):
+    resolution: {integrity: sha512-hvbXKKGk2nWU4vag7cTQHhho2V387NvmKYEZrXzFz+Qm82lKFqn0rn8qTaxrB65NMDQlDhj25F47zdJ/o3QjVg==}
+    engines: {node: '>=14.0.0'}
+    peerDependencies:
+      react: ^17.0.0 || ^18.0.0
+    dependencies:
+      '@remix-run/node': 1.18.1
+      '@remix-run/react': 1.18.1(react-dom@18.2.0)(react@18.2.0)
+      '@remix-run/router': 1.7.1
+      react: 18.2.0
+      react-router-dom: 6.14.1(react-dom@18.2.0)(react@18.2.0)
+    transitivePeerDependencies:
+      - react-dom
+    dev: false
+
   /@remix-run/web-blob@3.0.4:
     resolution: {integrity: sha512-AfegzZvSSDc+LwnXV+SwROTrDtoLiPxeFW+jxgvtDAnkuCX1rrzmVJ6CzqZ1Ai0bVfmJadkG5GxtAfYclpPmgw==}
     dependencies:
@@ -6236,6 +6260,19 @@ packages:
       '@zag-js/utils': 0.10.2
     dev: true
 
+  /@zag-js/editable@0.10.3:
+    resolution: {integrity: sha512-gqibFfxtm9ZI9IJhtPMtPFKum5s2cmaGesA1jBa3aOGFBuv1Kz9zQxWdoBMEVBS4shwStKmToPCJmvbW+2N94w==}
+    dependencies:
+      '@zag-js/anatomy': 0.10.3
+      '@zag-js/core': 0.10.3
+      '@zag-js/dom-event': 0.10.3
+      '@zag-js/dom-query': 0.10.3
+      '@zag-js/form-utils': 0.10.3
+      '@zag-js/interact-outside': 0.10.3
+      '@zag-js/types': 0.10.3
+      '@zag-js/utils': 0.10.3
+    dev: false
+
   /@zag-js/element-rect@0.10.2:
     resolution: {integrity: sha512-7r7tFqH04JbshAaYExn3RjW0+uScImNpWBa87s3vfohar6lfCPLX7MvUZ+WiaA2KgLFGVnE4rrYXCnDkOeW5/A==}
     dev: true
@@ -6262,6 +6299,12 @@ packages:
       '@zag-js/mutation-observer': 0.10.2
     dev: true
 
+  /@zag-js/form-utils@0.10.3:
+    resolution: {integrity: sha512-tI2cAC2KWQUyytnQ1EUM7lvJr+ZHjbllJo21t6GHeRwfkAAVQsExOBBOFGzXSNmzhIPFFuOPv0lDAHU5O+kXxg==}
+    dependencies:
+      '@zag-js/mutation-observer': 0.10.3
+    dev: false
+
   /@zag-js/hover-card@0.10.2:
     resolution: {integrity: sha512-myiq3y+WFMTxkAtr0jqjmbqS7g9PGD/+FvA+fduCcqv7+3xutrpAOzLG524Me2Wcc+yXtTndiTjZMNpvaCkOPA==}
     dependencies:
@@ -6282,6 +6325,15 @@ packages:
       '@zag-js/tabbable': 0.10.2
       '@zag-js/utils': 0.10.2
     dev: true
+
+  /@zag-js/interact-outside@0.10.3:
+    resolution: {integrity: sha512-2sh2pEQlA04wX5uvJZRoqqYtH1KPOsYlF0eVPZRI6f5fsoo351XCxuq6Hlsb54DPpaQtpZa6Y4pvCnf8oIlP8g==}
+    dependencies:
+      '@zag-js/dom-event': 0.10.3
+      '@zag-js/dom-query': 0.10.3
+      '@zag-js/tabbable': 0.10.3
+      '@zag-js/utils': 0.10.3
+    dev: false
 
   /@zag-js/live-region@0.10.2:
     resolution: {integrity: sha512-rULwxLqPAyiJPaEpqDyh6T45GF/D/eQWHNHJSpPzCk+Dkn6qAnMAEMT4HalazgUSsViURVhyDXaPBt7dsT5Lkw==}
@@ -6306,6 +6358,10 @@ packages:
   /@zag-js/mutation-observer@0.10.2:
     resolution: {integrity: sha512-D2nCn8m7LexaPjVLLvlKzGLxJidH6LlMrhEyQt8BmUtpQf/u9dF21c+L72SrrLleiDv1Ke7us6HYj4xhSA/aTg==}
     dev: true
+
+  /@zag-js/mutation-observer@0.10.3:
+    resolution: {integrity: sha512-BsAI2y9K2WKXRvkX8NULCNSj0ie8fcqJLnCEXvEOErydGQdPzO39zInQ0t+6iqPHjcNVoyNV151dfX+3wyUSVg==}
+    dev: false
 
   /@zag-js/number-input@0.10.2:
     resolution: {integrity: sha512-Vl/aWemrdjTvyRxhsl40oUTxgnS0jrNyTKQRSkyhqI2Bp1afXrmoexReKQ2HrhtZMEE6Q9hAMzUISDYBAl7n8Q==}
@@ -16089,6 +16145,14 @@ packages:
       tslib: 2.5.0
     dev: false
 
+  /use-sync-external-store@1.2.0(react@18.2.0):
+    resolution: {integrity: sha512-eEgnFxGQ1Ife9bzYs6VLi8/4X6CObHMw9Qr9tPY43iKwsPw8xE8+EFsf/2cFZ5S3esXgpWgtSCtLNS41F+sKPA==}
+    peerDependencies:
+      react: ^16.8.0 || ^17.0.0 || ^18.0.0
+    dependencies:
+      react: 18.2.0
+    dev: false
+
   /utf-8-validate@5.0.10:
     resolution: {integrity: sha512-Z6czzLq4u8fPOyx7TU6X3dvUZVvoJmxSQ+IcrlmagKhilxlhZgxPK6C5Jqbkw1IDUmFTM+cz9QDnnLTwDz/2gQ==}
     engines: {node: '>=6.14.2'}
@@ -16993,6 +17057,22 @@ packages:
   /zod@3.21.4:
     resolution: {integrity: sha512-m46AKbrzKVzOzs/DZgVnG5H55N1sv1M8qZU3A8RIKbs3mrACDNeIOeilDymVb2HdmP8uwshOCF4uJ8uM9rCqJw==}
     dev: true
+
+  /zustand@4.3.9(react@18.2.0):
+    resolution: {integrity: sha512-Tat5r8jOMG1Vcsj8uldMyqYKC5IZvQif8zetmLHs9WoZlntTHmIoNM8TpLRY31ExncuUvUOXehd0kvahkuHjDw==}
+    engines: {node: '>=12.7.0'}
+    peerDependencies:
+      immer: '>=9.0'
+      react: '>=16.8'
+    peerDependenciesMeta:
+      immer:
+        optional: true
+      react:
+        optional: true
+    dependencies:
+      react: 18.2.0
+      use-sync-external-store: 1.2.0(react@18.2.0)
+    dev: false
 
   /zwitch@2.0.4:
     resolution: {integrity: sha512-bXE4cR/kVZhKZX/RjPEflHaKVhUVl85noU3v6b8apfQEc1x4A+zBxjZ4lN8LqGd6WZ3dl98pY4o717VFmoPp+A==}
