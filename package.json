@@ -11,8 +11,7 @@
     "docker": "docker-compose up -d",
     "format": "prettier --write .",
     "lint": "eslint --fix --cache --cache-location ./node_modules/.cache/eslint .",
-    "lint:staged": "TZ=UTC lint-staged",
-    "prepare": "panda codegen",
+    "lint:staged": "panda codegen && lint-staged",
     "start": "cross-env NODE_ENV=production node ./build/server.js",
     "start:mocks": "cross-env NODE_ENV=production node --require ./mocks --require dotenv/config ./build/server.js",
     "supabase:start": "supabase start",
@@ -26,6 +25,7 @@
     "test:e2e:run": "cross-env PORT=8811 start-server-and-test start:mocks http://localhost:8811 \"pnpx cypress run\"",
     "ts-coverage": "typescript-coverage-report",
     "ts-coverage:ui": "pnpx vite preview --outDir ./coverage-ts/",
+    "panda:prepare": "panda codegen",
     "validate": "run-p \"test -- --run\" lint typecheck test:e2e:run"
   },
   "lint-staged": {
