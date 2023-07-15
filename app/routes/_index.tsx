@@ -11,7 +11,7 @@ import { getTabsData } from '~/utils/index.utils';
 
 import type { Database } from 'db_types';
 
-import supabase from '../utils/supabase';
+import { createSupaBaseServerClient } from '../utils/supabase';
 
 export const meta: V2_MetaFunction = (): { title: string }[] => [{ title: 'flump' }];
 
@@ -23,6 +23,7 @@ export type Employee = Database['public']['Tables']['employees']['Row'];
 
 export const loader = async ({ request }: { request: Request }) => {
   const response = new Response();
+  const supabase = createSupaBaseServerClient({ request, response });
   const { data } = await supabase.from('employees').select('*');
   return json({ employees: data }, { headers: response.headers });
 };
