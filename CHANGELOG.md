@@ -1,5 +1,52 @@
 # Changelog
 
+## [1.4.0](https://github.com/mgallagher56/flump/compare/v1.3.2...v1.4.0) (2023-07-15)
+
+
+### Tests 🧪
+
+* increase test and typescript coverage to 100% ([ac59056](https://github.com/mgallagher56/flump/commit/ac59056ab35d98ab28f16a850244aa5bc3c4d713))
+
+
+### Documentation 📙
+
+* basic readme ([d9731dd](https://github.com/mgallagher56/flump/commit/d9731dd1594a343a4265632f7d850fd93db522d1))
+
+
+### Features ✨
+
+* add dark mode ([7f207cd](https://github.com/mgallagher56/flump/commit/7f207cda50afbbac33cee35fff006749f70c1c45))
+* add header components + tests ([51b2e07](https://github.com/mgallagher56/flump/commit/51b2e07ae90626f6681c5fe99775a8f1594b95d1))
+* add i18n ([1eb23fe](https://github.com/mgallagher56/flump/commit/1eb23fe3a88faa83a5b980d98c9f8d7b64798200))
+* add panda css. fix: dev server ([ec4d460](https://github.com/mgallagher56/flump/commit/ec4d460af7335894a3c83c6a7f5e974dfdd922ac))
+* add supabase auth login/logout. feat: add zustand state mgmt ([356c939](https://github.com/mgallagher56/flump/commit/356c939aa44f88a5eb73614dea1e4ba0522efa6e))
+
+
+### Bug Fixes 🪲
+
+* bump remix to fix refresh loop. add https for dev server ([3b9cc82](https://github.com/mgallagher56/flump/commit/3b9cc824b93fed6205d641a2365fc8dfa32c95f1))
+* deployment fix ([6bbc7e7](https://github.com/mgallagher56/flump/commit/6bbc7e7828e836c138258d06f473cd264a95c6a7))
+* **deps:** update all non-major third-party dependencies ([ded5c4f](https://github.com/mgallagher56/flump/commit/ded5c4f3e402bad8fc74269c7a96f942820bcd13))
+* **deps:** update all non-major third-party dependencies ([0b21683](https://github.com/mgallagher56/flump/commit/0b216832e54e58007d71f31dd64e1c107dbe664c))
+* **deps:** update dependency i18next to v23 ([b7aceef](https://github.com/mgallagher56/flump/commit/b7aceef19192cc94f6c50e514d8693a94aee984a))
+* **deps:** update dependency react-i18next to v13 ([15ef066](https://github.com/mgallagher56/flump/commit/15ef0663f4d94b91667540708480b312fd7c9419))
+* tabs template literals ([775dd30](https://github.com/mgallagher56/flump/commit/775dd300243a92594199bf20fcba0c3fec60d5a4))
+
+
+### Miscellaneous 🙃
+
+* **deps:** pin dependencies ([a06e5be](https://github.com/mgallagher56/flump/commit/a06e5be2831c9e242553dc53acd677f9750074a8))
+* **deps:** pin dependencies ([8849932](https://github.com/mgallagher56/flump/commit/88499324d9154832e7f927997c9de911c9dddf4e))
+* **deps:** update dependency c8 to v8 ([e2e256f](https://github.com/mgallagher56/flump/commit/e2e256f4c331227f37f0a844c7f23bf45715a5d8))
+* **deps:** update dependency happy-dom to v10 ([f9d63b7](https://github.com/mgallagher56/flump/commit/f9d63b7ec85d97a5361a212774a016e37dac0729))
+* update pnpm-lock. chore: add v2 flag for headers ([8b714ea](https://github.com/mgallagher56/flump/commit/8b714eac5bf9414d2364c43766ce06f17b7c397b))
+* update zag/editable  to latest version ([e4bd9be](https://github.com/mgallagher56/flump/commit/e4bd9bea67b77a97120cdbddb7f25dd83e43fb27))
+
+
+### CI 🤖
+
+* remove panda codegen during build ([63c6068](https://github.com/mgallagher56/flump/commit/63c6068510e0a007fc5f0187dea92255d275b900))
+
 ## [1.11.0](https://github.com/mgallagher56/flump/compare/v1.10.0...v1.11.0) (2023-07-15)
 
 
