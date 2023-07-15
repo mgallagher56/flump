@@ -12,7 +12,7 @@
     "format": "prettier --write .",
     "lint": "eslint --fix --cache --cache-location ./node_modules/.cache/eslint .",
     "lint:staged": "TZ=UTC lint-staged",
-    "prepare": "panda init -p && panda codegen",
+    "prepare": "panda codegen",
     "start": "cross-env NODE_ENV=production node ./build/server.js",
     "start:mocks": "cross-env NODE_ENV=production node --require ./mocks --require dotenv/config ./build/server.js",
     "supabase:start": "supabase start",
