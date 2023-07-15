@@ -24,7 +24,7 @@ FROM base as production-deps
 WORKDIR /app
 
 COPY --from=deps /app/node_modules /app/node_modules
-ADD package.json pnpm-lock.yaml .node-version ./
+ADD package.json pnpm-lock.yaml panda.config.ts .node-version ./
 RUN pnpm prune --prod
 
 # Build the app
