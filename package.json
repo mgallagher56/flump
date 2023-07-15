@@ -4,7 +4,7 @@
   "sideEffects": false,
   "scripts": {
     "build": "run-s build:*",
-    "build:remix": "remix build",
+    "build:remix": "pnpm panda init && remix build",
     "build:server": "esbuild --platform=node --format=cjs ./server.ts --outdir=build --bundle",
     "commit": "git-cz",
     "dev": "remix dev -c 'node --inspect --require ./node_modules/dotenv/config ./build/server.js'",
