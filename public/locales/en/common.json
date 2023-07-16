@@ -8,5 +8,9 @@
   "logIn": "Log in",
   "logOut": "Log out",
   "clickAgainToLogIn": "Click again to log in",
-  "launchApp": "Launch app"
+  "launchApp": "Launch app",
+  "confirmEmailMsg": "Please confirm your email address by clicking on the link in the email we sent you",
+  "loginWithPassword": "Log in with password",
+  "loginWithMagicLink": "Log in with magic link",
+  "sendMagicLink": "Send magic link"
 }

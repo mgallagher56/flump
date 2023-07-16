@@ -1,7 +1,7 @@
 import { act, render, renderHook } from '@testing-library/react';
 import { describe, expect, test } from 'vitest';
 import NavMenu from '~/components/navigation/NavMenu';
-import useUserStore from '~/store';
+import { useUserStore } from '~/store';
 
 import { mockUser } from '__mocks__/user';
 

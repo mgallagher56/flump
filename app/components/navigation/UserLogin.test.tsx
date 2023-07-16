@@ -2,7 +2,7 @@ import { render, renderHook } from '@testing-library/react';
 import { act } from 'react-dom/test-utils';
 import { describe, expect, test, vi } from 'vitest';
 import UserLogin from '~/components/navigation/UserLogin';
-import useUserStore from '~/store';
+import { useUserStore } from '~/store';
 
 import { mockUser } from '__mocks__/user';
 
