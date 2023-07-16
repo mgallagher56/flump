@@ -1,13 +1,13 @@
-import type { User } from '@supabase/supabase-js';
+import type { SupabaseClient, User } from '@supabase/supabase-js';
 import { create } from 'zustand';
 import { devtools, persist } from 'zustand/middleware';
 
-interface State {
+interface UserState {
   user: User;
   setUser: (user: User) => void;
 }
 
-const useUserStore = create<State>()(
+export const useUserStore = create<UserState>()(
   devtools(
     persist(
       (set) => ({
@@ -21,4 +21,21 @@ const useUserStore = create<State>()(
   )
 );
 
-export default useUserStore;
+interface SupabaseState {
+  supabase: SupabaseClient;
+  setSupabase: (supabase: SupabaseClient) => void;
+}
+
+export const useSupabaseStore = create<SupabaseState>()(
+  devtools(
+    persist(
+      (set) => ({
+        supabase: null,
+        setSupabase: (supabase: SupabaseClient) => set(() => ({ supabase }))
+      }),
+      {
+        name: 'supabase-storage'
+      }
+    )
+  )
+);

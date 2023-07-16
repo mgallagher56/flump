@@ -31,8 +31,8 @@
   "lint-staged": {
     "app/**/*.{js,jsx,ts,tsx,json,css,md}": "prettier --write",
     "**/*.ts": [
-      "tsc-files --noEmit",
-      "typescript-coverage-report"
+      "typescript-coverage-report",
+      "tsc-files --noEmit"
     ],
     "**/**/*.{js,mjs,cjs,ts,mts,cts,jsx,tsx}": [
       "eslint --cache --fix",
@@ -51,8 +51,7 @@
       "test/**/*.{js,ts,jsx,tsx}",
       "starlight/**/*.*",
       "starlight/.astro/**/*.*",
-      "app/utils/utils.ts",
-      "app/utils/supabase.ts"
+      "app/utils/utils.ts"
     ]
   },
   "eslintIgnore": [

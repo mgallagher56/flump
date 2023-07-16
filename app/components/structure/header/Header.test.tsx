@@ -11,4 +11,9 @@ describe('<Header />', () => {
     const { baseElement } = render(<Header />);
     expect(baseElement).toMatchSnapshot();
   });
+
+  test('renders without ColorModeSwitch', () => {
+    const { baseElement } = render(<Header showColorModeSwitch={false} />);
+    expect(baseElement).toMatchSnapshot();
+  });
 });

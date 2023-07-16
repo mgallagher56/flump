@@ -1,7 +1,7 @@
 import type { FC } from 'react';
 
 import { useTranslation } from 'react-i18next';
-import useUserStore from '~/store';
+import { useUserStore } from '~/store';
 
 import FLPButtonGroup from '../core/buttons/FLPButtonGroup';
 import FLPLinkButton from '../core/buttons/FLPLinkButton';
@@ -17,7 +17,7 @@ const UserLogin: FC = () => {
         <SignOut />
       ) : (
         <>
-          <FLPLinkButton to="/signUp" variant="solid">
+          <FLPLinkButton to="/signup" variant="solid">
             {t('signUp')}
           </FLPLinkButton>
           <FLPLinkButton to="/login" variant="outline">

@@ -10,10 +10,10 @@ import HomeLogo from '../../navigation/HomeLogo';
 import { loginStyles, menuStyles, navStyles } from './styles';
 
 interface HeaderProps {
-  showSignIn?: boolean;
+  showColorModeSwitch?: boolean;
 }
 
-const Header: FC<HeaderProps> = ({ showSignIn = true }): ReactElement => {
+const Header: FC<HeaderProps> = ({ showColorModeSwitch = true }): ReactElement => {
   return (
     <FLPBox as="header">
       <Flex as="nav" className={navStyles}>
@@ -22,8 +22,8 @@ const Header: FC<HeaderProps> = ({ showSignIn = true }): ReactElement => {
           <NavMenu />
         </FLPBox>
         <FLPBox className={loginStyles}>
-          {showSignIn && <UserLogin />}
-          <ColorModeSwitch />
+          <UserLogin />
+          {showColorModeSwitch && <ColorModeSwitch />}
         </FLPBox>
       </Flex>
     </FLPBox>

@@ -1,4 +1,4 @@
-import { ReactElement, ReactNode, StrictMode, useContext, useEffect, useMemo, useState } from 'react';
+import { ReactElement, ReactNode, StrictMode, Suspense, useContext, useEffect, useMemo, useState } from 'react';
 
 import {
   Box,
@@ -7,6 +7,7 @@ import {
   Container,
   cookieStorageManagerSSR,
   Heading,
+  localStorageManager,
   theme
 } from '@chakra-ui/react';
 import { EmotionCache, withEmotionCache } from '@emotion/react';
@@ -19,21 +20,21 @@ import {
   Outlet,
   Scripts,
   ScrollRestoration,
+  useCatch,
   useLoaderData,
   useRevalidator,
   useRouteError
 } from '@remix-run/react';
+import { createBrowserClient } from '@supabase/auth-helpers-remix';
 import { Session } from '@supabase/supabase-js';
 import { useTranslation } from 'react-i18next';
 import { useChangeLanguage } from 'remix-i18next';
-
-import { Database } from 'db_types';
 
 import Header from './components/structure/header/Header';
 import { ClientStyleContext, ServerStyleContext } from './context';
 import i18next from './i18n.server';
 import styles from './index.css';
-import useUserStore from './store';
+import { useUserStore } from './store';
 import supabase, { createSupaBaseServerClient } from './utils/supabase';
 
 const DEFAULT_COLOR_MODE: 'dark' | 'light' | null = 'dark';
@@ -244,11 +245,11 @@ export function ErrorBoundary(): ReactElement {
   if (isRouteErrorResponse(error)) {
     return (
       <Document>
-        <Header showSignIn={false} />
-        <Box>
-          <Heading as="h1" bg="blue.500">
-            <h1>Oops</h1>
-            <p>Status: {error.status}</p>
+        <Header showColorModeSwitch={false} />
+        <Box display="flex" justifyContent="center" textAlign="center">
+          <Heading as="h1">
+            Oops! Something went wrong
+            <p> Status: {error.status}</p>
             <p>{error.data.message}</p>
           </Heading>
         </Box>
@@ -258,6 +259,7 @@ export function ErrorBoundary(): ReactElement {
 
   return (
     <Document>
+      <Header showColorModeSwitch={false} />
       <Box>
         <Heading as="h1" bg="blue.500">
           <h1>Uh oh ...</h1>
