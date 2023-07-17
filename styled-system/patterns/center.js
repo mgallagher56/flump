@@ -1,18 +1,17 @@
-import { css } from '../css/index.js';
 import { mapObject } from '../helpers.js';
+import { css } from '../css/index.js';
 
 const centerConfig = {
-  transform(props) {
-    const { inline, ...rest } = props;
-    return {
-      display: inline ? 'inline-flex' : 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      ...rest
-    };
-  }
-};
+transform(props) {
+  const { inline, ...rest } = props;
+  return {
+    display: inline ? "inline-flex" : "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    ...rest
+  };
+}}
 
-export const getCenterStyle = (styles = {}) => centerConfig.transform(styles, { map: mapObject });
+export const getCenterStyle = (styles = {}) => centerConfig.transform(styles, { map: mapObject })
 
-export const center = (styles) => css(getCenterStyle(styles));
+export const center = (styles) => css(getCenterStyle(styles))

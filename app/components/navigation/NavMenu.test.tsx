@@ -5,15 +5,32 @@ import { useUserStore } from '~/store';
 
 import { mockUser } from '__mocks__/user';
 
+const mockRoutes = [
+  {
+    key: 'Home',
+    route: '/'
+  },
+  {
+    key: 'Accounts',
+    route: '/accounts'
+  }
+];
+
 describe('<NavMenu />', () => {
   test('renders as expected when not logged in', () => {
-    const { baseElement } = render(<NavMenu />);
+    const { baseElement } = render(<NavMenu routes={mockRoutes} />);
     expect(baseElement).toMatchSnapshot();
   });
-  test('renders as expected when logged in', () => {
+  test('renders as expected when logged in and showAppLink is true', () => {
     const { setUser } = renderHook(() => useUserStore()).result.current;
     act(() => setUser(mockUser));
-    const { baseElement } = render(<NavMenu />);
+    const { baseElement } = render(<NavMenu routes={mockRoutes} />);
+    expect(baseElement).toMatchSnapshot();
+  });
+  test('renders as expected when logged in and showAppLink is false', () => {
+    const { setUser } = renderHook(() => useUserStore()).result.current;
+    act(() => setUser(mockUser));
+    const { baseElement } = render(<NavMenu routes={mockRoutes} showAppLink={false} />);
     expect(baseElement).toMatchSnapshot();
   });
 });
