@@ -6,17 +6,25 @@ import FLPLinkButton from '~/components/core/buttons/FLPLinkButton';
 import FLPBox from '~/components/core/structure/FLPBox';
 import { useUserStore } from '~/store';
 
-const NavMenu: FC = () => {
+interface NavMenuProps {
+  routes?: { key: string; route: string }[];
+  showAppLink?: boolean;
+}
+
+const NavMenu: FC<NavMenuProps> = ({ routes, showAppLink = true }) => {
   const { t } = useTranslation();
   const user = useUserStore((state) => state.user);
+  const showApp = !!user && showAppLink;
 
   return (
     <FLPBox>
       <FLPButtonGroup gap={4}>
-        <FLPLinkButton to="/">{t('home')}</FLPLinkButton>
-        <FLPLinkButton to="/about">{t('about')}</FLPLinkButton>
-        <FLPLinkButton to="/contact">{t('contact')}</FLPLinkButton>
-        {!!user && (
+        {routes?.map((route) => (
+          <FLPLinkButton key={route.key} to={route.route}>
+            {t(route.key)}
+          </FLPLinkButton>
+        ))}
+        {showApp && (
           <FLPLinkButton variant="outline" to="/app">
             {t('launchApp')}
           </FLPLinkButton>

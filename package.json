@@ -29,7 +29,7 @@
     "validate": "run-p \"test -- --run\" lint typecheck test:e2e:run"
   },
   "lint-staged": {
-    "app/**/*.{js,jsx,ts,tsx,json,css,md}": "prettier --write .",
+    "app/**/*.{js,jsx,ts,tsx,json,css,md}": "prettier --write",
     "**/*.ts": [
       "typescript-coverage-report",
       "tsc-files --noEmit"

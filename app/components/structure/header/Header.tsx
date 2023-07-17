@@ -1,4 +1,4 @@
-import type { FC, ReactElement } from 'react';
+import { useState, type FC, type ReactElement, useEffect } from 'react';
 
 import { Flex } from '@chakra-ui/react';
 import ColorModeSwitch from '~/components/ColorModeSwitch';
@@ -14,12 +14,33 @@ interface HeaderProps {
 }
 
 const Header: FC<HeaderProps> = ({ showColorModeSwitch = true }): ReactElement => {
+  const [isApp, setIsApp] = useState(false);
+  useEffect(() => {
+    setIsApp(!!window.location.pathname.includes('/app'));
+  }, []);
+
   return (
     <FLPBox as="header">
       <Flex as="nav" className={navStyles}>
         <FLPBox className={menuStyles}>
           <HomeLogo />
-          <NavMenu />
+          {isApp ? (
+            <NavMenu
+              routes={[
+                { key: 'dashboard', route: '/app' },
+                { key: 'accounts', route: '/app/accounts' }
+              ]}
+              showAppLink={false}
+            />
+          ) : (
+            <NavMenu
+              routes={[
+                { key: 'home', route: '/' },
+                { key: 'about', route: '/about' },
+                { key: 'contact', route: '/contact' }
+              ]}
+            />
+          )}
         </FLPBox>
         <FLPBox className={loginStyles}>
           <UserLogin />
