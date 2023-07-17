@@ -1,4 +1,4 @@
-import { useState, type FC, type ReactElement, useEffect } from 'react';
+import { type FC, type ReactElement, useEffect, useState } from 'react';
 
 import { Flex } from '@chakra-ui/react';
 import ColorModeSwitch from '~/components/ColorModeSwitch';

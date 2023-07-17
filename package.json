@@ -9,7 +9,7 @@
     "commit": "git-cz",
     "dev": "remix dev -c 'node --inspect --require ./node_modules/dotenv/config ./build/server.js'",
     "docker": "docker-compose up -d",
-    "format": "prettier --write .",
+    "format": "prettier --write ./app",
     "lint": "eslint --fix --cache --cache-location ./node_modules/.cache/eslint .",
     "lint:staged": "panda codegen && lint-staged",
     "start": "cross-env NODE_ENV=production node ./build/server.js",
