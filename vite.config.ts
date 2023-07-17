@@ -47,7 +47,7 @@ export default defineConfig(({ mode }) => ({
         'starlight/**/*.*',
         'app/**/types.ts',
         'app/utils/supabase.ts',
-        'app/store.ts',
+        'app/store.ts'
       ],
       functions: 100,
       include: ['app/**/*.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],

@@ -2,20 +2,21 @@
 
 Finance dashboard project based on [Remix JS](https://remix.run/) Blues stack using:
 
- - [supabase](https://supabase.io/) - postgresql database
- - [vite](https://vitejs.dev/) - build tool
- - [vitest](https://vitest.dev/) - unit/integration testing
- - [cypress](https://www.cypress.io/) - e2e testing
- - [eslint](https://eslint.org/) - linting
- - [prettier](https://prettier.io/) - formatting
- - [fly.io](https://fly.io/) - hosting
- - [github actions](https://docs.github.com/en/actions) - ci/cd
- - [starlight](https://starlight.astro.build/) - documentation
+- [supabase](https://supabase.io/) - postgresql database
+- [vite](https://vitejs.dev/) - build tool
+- [vitest](https://vitest.dev/) - unit/integration testing
+- [cypress](https://www.cypress.io/) - e2e testing
+- [eslint](https://eslint.org/) - linting
+- [prettier](https://prettier.io/) - formatting
+- [fly.io](https://fly.io/) - hosting
+- [github actions](https://docs.github.com/en/actions) - ci/cd
+- [starlight](https://starlight.astro.build/) - documentation
 
 ## Development
 
 - Install [Node.js](https://nodejs.org/en/) and [pnpm](https://pnpm.io/).
 - Set up supabase locally [docs](https://supabase.io/docs/guides/local-development)
+
   - [Docker Desktop](https://docs.docker.com/desktop/)
   - [Supabase CLI](https://supabase.com/docs/guides/cli)
   - [Git](https://github.com/git-guides/install-git)
@@ -36,14 +37,14 @@ Finance dashboard project based on [Remix JS](https://remix.run/) Blues stack us
   ```
 
 - Start Supabase services
-Initialize Supabase to set up the configuration for developing your project locally:
+  Initialize Supabase to set up the configuration for developing your project locally:
 
 ```sh
 supabase init
 ```
 
 - Make sure Docker is running. The start command uses Docker to start the Supabase services.
-This command may take a while to run if this is the first time using the CLI.
+  This command may take a while to run if this is the first time using the CLI.
 
 ```sh
 supabase start

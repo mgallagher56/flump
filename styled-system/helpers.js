@@ -1,21 +1,17 @@
 // src/assert.ts
 function isObject(value) {
-  return typeof value === "object" && value != null && !Array.isArray(value);
+  return typeof value === 'object' && value != null && !Array.isArray(value);
 }
 
 // src/astish.ts
 var newRule = /(?:([\u0080-\uFFFF\w-%@]+) *:? *([^{;]+?);|([^;}{]*?) *{)|(}\s*)/g;
 var ruleClean = /\/\*[^]*?\*\/|\s\s+|\n/g;
 var astish = (val, tree = [{}]) => {
-  const block = newRule.exec((val ?? "").replace(ruleClean, ""));
-  if (!block)
-    return tree[0];
-  if (block[4])
-    tree.shift();
-  else if (block[3])
-    tree.unshift(tree[0][block[3]] = tree[0][block[3]] || {});
-  else
-    tree[0][block[1]] = block[2];
+  const block = newRule.exec((val ?? '').replace(ruleClean, ''));
+  if (!block) return tree[0];
+  if (block[4]) tree.shift();
+  else if (block[3]) tree.unshift((tree[0][block[3]] = tree[0][block[3]] || {}));
+  else tree[0][block[1]] = block[2];
   return astish(val, tree);
 };
 
@@ -25,7 +21,7 @@ function compact(value) {
 }
 
 // src/condition.ts
-var isBaseCondition = (v) => v === "base";
+var isBaseCondition = (v) => v === 'base';
 function filterBaseConditions(c) {
   return c.slice().filter((v) => !isBaseCondition(v));
 }
@@ -33,13 +29,13 @@ function filterBaseConditions(c) {
 // src/css-important.ts
 var importantRegex = /!(important)?$/;
 function isImportant(value) {
-  return typeof value === "string" ? importantRegex.test(value) : false;
+  return typeof value === 'string' ? importantRegex.test(value) : false;
 }
 function withoutImportant(value) {
-  return typeof value === "string" ? value.replace(importantRegex, "").trim() : value;
+  return typeof value === 'string' ? value.replace(importantRegex, '').trim() : value;
 }
 function withoutSpace(str) {
-  return typeof str === "string" ? str.replaceAll(" ", "_") : str;
+  return typeof str === 'string' ? str.replaceAll(' ', '_') : str;
 }
 
 // src/hash.ts
@@ -47,16 +43,14 @@ function toChar(code) {
   return String.fromCharCode(code + (code > 25 ? 39 : 97));
 }
 function toName(code) {
-  let name = "";
+  let name = '';
   let x;
-  for (x = Math.abs(code); x > 52; x = x / 52 | 0)
-    name = toChar(x % 52) + name;
+  for (x = Math.abs(code); x > 52; x = (x / 52) | 0) name = toChar(x % 52) + name;
   return toChar(x % 52) + name;
 }
 function toPhash(h, x) {
   let i = x.length;
-  while (i)
-    h = h * 33 ^ x.charCodeAt(--i);
+  while (i) h = (h * 33) ^ x.charCodeAt(--i);
   return h;
 }
 function toHash(value) {
@@ -103,8 +97,7 @@ function walkObject(target, predicate, options = {}) {
   return inner(target);
 }
 function mapObject(obj, fn) {
-  if (!isObject(obj))
-    return fn(obj);
+  if (!isObject(obj)) return fn(obj);
   return walkObject(obj, (value) => fn(value));
 }
 
@@ -149,18 +142,18 @@ var fallbackCondition = {
   finalize: (v) => v,
   breakpoints: { keys: [] }
 };
-var sanitize = (value) => typeof value === "string" ? value.replaceAll(/[\n\s]+/g, " ") : value;
+var sanitize = (value) => (typeof value === 'string' ? value.replaceAll(/[\n\s]+/g, ' ') : value);
 function createCss(context) {
   const { utility, hash, conditions: conds = fallbackCondition } = context;
-  const formatClassName = (str) => [utility.prefix, str].filter(Boolean).join("-");
+  const formatClassName = (str) => [utility.prefix, str].filter(Boolean).join('-');
   const hashFn = (conditions, className) => {
     let result;
     if (hash) {
       const baseArray = [...conds.finalize(conditions), className];
-      result = formatClassName(toHash(baseArray.join(":")));
+      result = formatClassName(toHash(baseArray.join(':')));
     } else {
       const baseArray = [...conds.finalize(conditions), formatClassName(className)];
-      result = baseArray.join(":");
+      result = baseArray.join(':');
     }
     return result;
   };
@@ -169,17 +162,15 @@ function createCss(context) {
     const classNames = /* @__PURE__ */ new Set();
     walkObject(normalizedObject, (value, paths) => {
       const important = isImportant(value);
-      if (value == null)
-        return;
+      if (value == null) return;
       const [prop, ...allConditions] = conds.shift(paths);
       const conditions = filterBaseConditions(allConditions);
       const transformed = utility.transform(prop, withoutImportant(sanitize(value)));
       let className = hashFn(conditions, transformed.className);
-      if (important)
-        className = `${className}!`;
+      if (important) className = `${className}!`;
       classNames.add(className);
     });
-    return Array.from(classNames).join(" ");
+    return Array.from(classNames).join(' ');
   };
 }
 function compactStyles(...styles) {
@@ -188,8 +179,7 @@ function compactStyles(...styles) {
 function createMergeCss(context) {
   function resolve(styles) {
     const allStyles = compactStyles(...styles);
-    if (allStyles.length === 1)
-      return allStyles;
+    if (allStyles.length === 1) return allStyles;
     return allStyles.map((style) => normalizeShorthand(style, context));
   }
   function mergeCss(...styles) {
@@ -220,15 +210,14 @@ var memo = (fn) => {
 var wordRegex = /([A-Z])/g;
 var msRegex = /^ms-/;
 var hypenateProperty = memo((property) => {
-  if (property.startsWith("--"))
-    return property;
-  return property.replace(wordRegex, "-$1").replace(msRegex, "-ms-").toLowerCase();
+  if (property.startsWith('--')) return property;
+  return property.replace(wordRegex, '-$1').replace(msRegex, '-ms-').toLowerCase();
 });
 
 // src/normalize-html.ts
-var htmlProps = ["htmlSize", "htmlTranslate", "htmlWidth", "htmlHeight"];
+var htmlProps = ['htmlSize', 'htmlTranslate', 'htmlWidth', 'htmlHeight'];
 function convert(key) {
-  return htmlProps.includes(key) ? key.replace("html", "").toLowerCase() : key;
+  return htmlProps.includes(key) ? key.replace('html', '').toLowerCase() : key;
 }
 function normalizeHTMLProps(props) {
   return Object.fromEntries(Object.entries(props).map(([key, value]) => [convert(key), value]));
@@ -271,11 +260,10 @@ export {
   withoutSpace
 };
 
-
-export function __spreadValues(a, b){
-  return { ...a, ...b }
+export function __spreadValues(a, b) {
+  return { ...a, ...b };
 }
 
-export function __objRest(source, exclude){
-  return Object.fromEntries(Object.entries(source).filter(([key]) => !exclude.includes(key)))
+export function __objRest(source, exclude) {
+  return Object.fromEntries(Object.entries(source).filter(([key]) => !exclude.includes(key)));
 }
