@@ -166,7 +166,7 @@ const Document = withEmotionCache(
             className: `chakra-ui-${colorMode}`
           })}
         >
-          <ColorModeScript initialColorMode={theme.config.initialColorMode} />
+          <ColorModeScript initialColorMode={theme.config.initialColorMode} type={'cookie'} />
           <script
             dangerouslySetInnerHTML={{
               __html: `window.env = ${JSON.stringify(env)}`
