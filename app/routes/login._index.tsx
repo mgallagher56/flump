@@ -4,8 +4,8 @@ import { Container } from '@chakra-ui/react';
 import { json } from '@remix-run/node';
 import { redirect } from '@remix-run/server-runtime';
 import SignUp from '~/components/users/SignUp';
-import { createSupaBaseServerClient } from '~/utils/supabase';
 import { SignUpActionEnum } from '~/components/users/utils';
+import { createSupaBaseServerClient } from '~/utils/supabase';
 
 export const loader = async ({ request }: { request: Request }) => {
   const response = new Response();

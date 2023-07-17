@@ -1,14 +1,14 @@
 /* eslint-disable */
-import type { CompositionStyleObject } from './system-types'
+import type { CompositionStyleObject } from './system-types';
 
 type Recursive<T> = {
-  [key: string]: Recursive<T> | T
-}
+  [key: string]: Recursive<T> | T;
+};
 
 export type Token<Value = any> = {
-  value: Value
-  description?: string
-}
+  value: Value;
+  description?: string;
+};
 
 /* -----------------------------------------------------------------------------
  * Text styles
@@ -42,11 +42,11 @@ type TextStyleProperty =
   | 'hyphenateCharacter'
   | 'textOrientation'
   | 'textOverflow'
-  | 'textRendering'
+  | 'textRendering';
 
-export type TextStyle = CompositionStyleObject<TextStyleProperty>
+export type TextStyle = CompositionStyleObject<TextStyleProperty>;
 
-export type TextStyles = Recursive<Token<TextStyle>>
+export type TextStyles = Recursive<Token<TextStyle>>;
 
 /* -----------------------------------------------------------------------------
  * Layer styles
@@ -62,13 +62,13 @@ type Placement =
   | 'InlineStart'
   | 'InlineEnd'
   | 'BlockStart'
-  | 'BlockEnd'
+  | 'BlockEnd';
 
 type Radius =
   | `Top${'Right' | 'Left'}`
   | `Bottom${'Right' | 'Left'}`
   | `Start${'Start' | 'End'}`
-  | `End${'Start' | 'End'}`
+  | `End${'Start' | 'End'}`;
 
 type LayerStyleProperty =
   | 'background'
@@ -99,13 +99,13 @@ type LayerStyleProperty =
   | `border${Placement}Color`
   | `border${Placement}Style`
   | 'padding'
-  | `padding${Placement}`
+  | `padding${Placement}`;
 
-export type LayerStyle = CompositionStyleObject<LayerStyleProperty>
+export type LayerStyle = CompositionStyleObject<LayerStyleProperty>;
 
-export type LayerStyles = Recursive<Token<LayerStyle>>
+export type LayerStyles = Recursive<Token<LayerStyle>>;
 
 export type CompositionStyles = {
-  textStyles: TextStyles
-  layerStyles: LayerStyles
-}
+  textStyles: TextStyles;
+  layerStyles: LayerStyles;
+};

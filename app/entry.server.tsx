@@ -3,14 +3,13 @@ import createEmotionServer from '@emotion/server/create-instance';
 import type { EntryContext } from '@remix-run/node';
 import { Response } from '@remix-run/node';
 import { RemixServer } from '@remix-run/react';
+import { createInstance } from 'i18next';
+import Backend from 'i18next-fs-backend';
 import isbot from 'isbot';
 import { resolve } from 'node:path';
 import { renderToPipeableStream } from 'react-dom/server';
 import { I18nextProvider, initReactI18next } from 'react-i18next';
 import { PassThrough } from 'stream';
-
-import { createInstance } from 'i18next';
-import Backend from 'i18next-fs-backend';
 
 import createEmotionCache from './createEmotionCache';
 import i18n from './i18n';

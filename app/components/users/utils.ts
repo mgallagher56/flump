@@ -24,9 +24,12 @@ export const getSubmitUserAuthAction = async ({
   formInput: { email: string; password: string };
 }) => {
   if (isMagicLink)
-    return await supabaseClient.auth.signInWithOtp({ email: formInput.email, options:{
-      emailRedirectTo: window.location.origin + '/auth/callback'
-    } });
+    return await supabaseClient.auth.signInWithOtp({
+      email: formInput.email,
+      options: {
+        emailRedirectTo: window.location.origin + '/auth/callback'
+      }
+    });
   if (isShowLogin) return await supabaseClient.auth.signInWithPassword(formInput);
   return await supabaseClient.auth.signUp(formInput);
 };
