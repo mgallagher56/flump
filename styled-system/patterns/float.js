@@ -42,4 +42,3 @@ transform(props, { map }) {
 export const getFloatStyle = (styles = {}) => floatConfig.transform(styles, { map: mapObject })
 
 export const float = (styles) => css(getFloatStyle(styles))
-float.raw = (styles) => styles

@@ -1,0 +1,1114 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`<EditAccountDialogBtn > should render edit account dialog when trigger button is clicked 1`] = `
+<body
+  data-zag-scroll-lock=""
+  style="overflow: hidden; padding-right: 1024px;"
+>
+  <div
+    aria-hidden="true"
+    data-aria-hidden="true"
+  >
+    <button
+      aria-controls="dialog::r0::content"
+      aria-expanded="true"
+      aria-haspopup="dialog"
+      aria-hidden="true"
+      class="chakra-button css-4xx2wk"
+      data-part="trigger"
+      data-scope="dialog"
+      id="dialog::r0::trigger"
+      type="button"
+    >
+      edit
+    </button>
+  </div>
+  <div
+    class="chakra-portal"
+  >
+    <div
+      aria-hidden="true"
+      class="chakra-modal__overlay css-13d1tkw"
+      data-aria-hidden="true"
+      data-part="backdrop"
+      data-scope="dialog"
+      id="dialog::r0::backdrop"
+      style="opacity: 0.6258591813093517;"
+    />
+    <div
+      class="css-0"
+      data-part="container"
+      data-scope="dialog"
+      id="dialog::r0::container"
+    >
+      <div
+        aria-hidden="true"
+        data-aria-hidden="true"
+        data-focus-guard="true"
+        style="width: 1px; height: 0px; padding: 0px; overflow: hidden; position: fixed; top: 1px; left: 1px;"
+        tabindex="0"
+      />
+      <div
+        data-focus-lock-disabled="false"
+      >
+        <div
+          class="chakra-modal__content-container css-1oxhx2p"
+          tabindex="-1"
+        >
+          <section
+            aria-describedby="chakra-modal--body-:r2:"
+            aria-labelledby="chakra-modal--header-:r2:"
+            aria-modal="true"
+            class="chakra-modal__content css-6yiygt"
+            data-part="content"
+            data-scope="dialog"
+            id="chakra-modal-:r2:"
+            role="dialog"
+            style="opacity: 0.6194469735200983; transform: scale(0.9809723486760049) translateZ(0);"
+            tabindex="-1"
+          >
+            <header
+              class="chakra-modal__header css-72fd9l"
+              data-part="title"
+              data-scope="dialog"
+              id="dialog::r0::title"
+            >
+              addAccount
+            </header>
+            <button
+              aria-label="Close"
+              class="chakra-modal__close-btn css-6sdaxy"
+              data-part="close-trigger"
+              data-scope="dialog"
+              id="dialog::r0::close"
+              type="button"
+            >
+              <svg
+                aria-hidden="true"
+                class="chakra-icon css-onkibi"
+                focusable="false"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  d="M.439,21.44a1.5,1.5,0,0,0,2.122,2.121L11.823,14.3a.25.25,0,0,1,.354,0l9.262,9.263a1.5,1.5,0,1,0,2.122-2.121L14.3,12.177a.25.25,0,0,1,0-.354l9.263-9.262A1.5,1.5,0,0,0,21.439.44L12.177,9.7a.25.25,0,0,1-.354,0L2.561.44A1.5,1.5,0,0,0,.439,2.561L9.7,11.823a.25.25,0,0,1,0,.354Z"
+                  fill="currentColor"
+                />
+              </svg>
+            </button>
+            <div
+              class="chakra-modal__body css-0"
+              data-part="description"
+              data-scope="dialog"
+              id="dialog::r0::description"
+            >
+              <form
+                name="<input data-scope=\\"editable\\" data-part=\\"input\\" aria-label=\\"editable input\\" name=\\"name\\" placeholder=\\"accountName\\" id=\\"editable::r5::input\\" class=\\"chakra-input css-0\\" value=\\"\\">"
+              >
+                <div
+                  class="css-1kkt86i"
+                >
+                  <div
+                    class="d_flex flex_column gap_2"
+                    data-part="root"
+                    data-scope="editable"
+                    id="editable::r5:"
+                  >
+                    <label
+                      data-part="label"
+                      data-scope="editable"
+                      for="editable::r5::input"
+                      id="editable::r5::label"
+                    >
+                      Name
+                    </label>
+                    <div
+                      data-part="area"
+                      data-placeholder-shown=""
+                      data-scope="editable"
+                      id="editable::r5::area"
+                    >
+                      <div
+                        class="css-3a3hw0"
+                      >
+                        <input
+                          aria-label="editable input"
+                          class="chakra-input css-0"
+                          data-part="input"
+                          data-scope="editable"
+                          id="editable::r5::input"
+                          name="name"
+                          placeholder="accountName"
+                          value=""
+                        />
+                      </div>
+                    </div>
+                  </div>
+                  <div
+                    class="d_flex flex_column gap_2"
+                    data-part="root"
+                    data-scope="editable"
+                    id="editable::r6:"
+                  >
+                    <label
+                      data-part="label"
+                      data-scope="editable"
+                      for="editable::r6::input"
+                      id="editable::r6::label"
+                    >
+                      Account Type
+                    </label>
+                    <div
+                      data-part="area"
+                      data-placeholder-shown=""
+                      data-scope="editable"
+                      id="editable::r6::area"
+                    >
+                      <div
+                        class="css-3a3hw0"
+                      >
+                        <input
+                          aria-label="editable input"
+                          class="chakra-input css-0"
+                          data-part="input"
+                          data-scope="editable"
+                          id="editable::r6::input"
+                          name="type"
+                          placeholder="accountType"
+                          value=""
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </form>
+            </div>
+            <footer
+              class="chakra-modal__footer css-192qrng"
+            >
+              <div
+                class="chakra-button__group css-1ind3v2"
+                data-orientation="horizontal"
+                role="group"
+              >
+                <button
+                  class="chakra-button css-1fysbuj"
+                  data-part="close-trigger"
+                  data-scope="dialog"
+                  id="dialog::r0::close"
+                  type="button"
+                >
+                  close
+                </button>
+                <button
+                  class="chakra-button css-1fysbuj"
+                  id="pressable::r8:"
+                  type="button"
+                >
+                  save
+                </button>
+              </div>
+            </footer>
+          </section>
+        </div>
+      </div>
+      <div
+        aria-hidden="true"
+        data-aria-hidden="true"
+        data-focus-guard="true"
+        style="width: 1px; height: 0px; padding: 0px; overflow: hidden; position: fixed; top: 1px; left: 1px;"
+        tabindex="0"
+      />
+    </div>
+  </div>
+</body>
+`;
+
+exports[`<EditAccountDialogBtn > should render edit account dialog when trigger button is clicked 2`] = `
+<body
+  data-zag-scroll-lock=""
+  style="overflow: hidden; padding-right: 1024px;"
+>
+  <div
+    aria-hidden="true"
+    data-aria-hidden="true"
+  >
+    <button
+      aria-controls="dialog::r0::content"
+      aria-expanded="true"
+      aria-haspopup="dialog"
+      aria-hidden="true"
+      class="chakra-button css-4xx2wk"
+      data-part="trigger"
+      data-scope="dialog"
+      id="dialog::r0::trigger"
+      type="button"
+    >
+      edit
+    </button>
+  </div>
+  <div
+    class="chakra-portal"
+  >
+    <div
+      aria-hidden="true"
+      class="chakra-modal__overlay css-13d1tkw"
+      data-aria-hidden="true"
+      data-part="backdrop"
+      data-scope="dialog"
+      id="dialog::r0::backdrop"
+      style="opacity: 0.8879566783143673;"
+    />
+    <div
+      class="css-0"
+      data-part="container"
+      data-scope="dialog"
+      id="dialog::r0::container"
+    >
+      <div
+        aria-hidden="true"
+        data-aria-hidden="true"
+        data-focus-guard="true"
+        style="width: 1px; height: 0px; padding: 0px; overflow: hidden; position: fixed; top: 1px; left: 1px;"
+        tabindex="0"
+      />
+      <div
+        data-focus-lock-disabled="false"
+      >
+        <div
+          class="chakra-modal__content-container css-1oxhx2p"
+          tabindex="-1"
+        >
+          <section
+            aria-describedby="chakra-modal--body-:r2:"
+            aria-labelledby="chakra-modal--header-:r2:"
+            aria-modal="true"
+            class="chakra-modal__content css-6yiygt"
+            data-part="content"
+            data-scope="dialog"
+            id="chakra-modal-:r2:"
+            role="dialog"
+            style="opacity: 0.8879566783143673; transform: scale(0.9942521684351959) translateZ(0);"
+            tabindex="-1"
+          >
+            <header
+              class="chakra-modal__header css-72fd9l"
+              data-part="title"
+              data-scope="dialog"
+              id="dialog::r0::title"
+            >
+              addAccount
+            </header>
+            <button
+              aria-label="Close"
+              class="chakra-modal__close-btn css-6sdaxy"
+              data-part="close-trigger"
+              data-scope="dialog"
+              id="dialog::r0::close"
+              type="button"
+            >
+              <svg
+                aria-hidden="true"
+                class="chakra-icon css-onkibi"
+                focusable="false"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  d="M.439,21.44a1.5,1.5,0,0,0,2.122,2.121L11.823,14.3a.25.25,0,0,1,.354,0l9.262,9.263a1.5,1.5,0,1,0,2.122-2.121L14.3,12.177a.25.25,0,0,1,0-.354l9.263-9.262A1.5,1.5,0,0,0,21.439.44L12.177,9.7a.25.25,0,0,1-.354,0L2.561.44A1.5,1.5,0,0,0,.439,2.561L9.7,11.823a.25.25,0,0,1,0,.354Z"
+                  fill="currentColor"
+                />
+              </svg>
+            </button>
+            <div
+              class="chakra-modal__body css-0"
+              data-part="description"
+              data-scope="dialog"
+              id="dialog::r0::description"
+            >
+              <form
+                name="<input data-scope=\\"editable\\" data-part=\\"input\\" aria-label=\\"editable input\\" name=\\"name\\" placeholder=\\"accountName\\" id=\\"editable::r5::input\\" class=\\"chakra-input css-0\\" value=\\"\\">"
+              >
+                <div
+                  class="css-1kkt86i"
+                >
+                  <div
+                    class="d_flex flex_column gap_2"
+                    data-part="root"
+                    data-scope="editable"
+                    id="editable::r5:"
+                  >
+                    <label
+                      data-part="label"
+                      data-scope="editable"
+                      for="editable::r5::input"
+                      id="editable::r5::label"
+                    >
+                      Name
+                    </label>
+                    <div
+                      data-part="area"
+                      data-placeholder-shown=""
+                      data-scope="editable"
+                      id="editable::r5::area"
+                    >
+                      <div
+                        class="css-3a3hw0"
+                      >
+                        <input
+                          aria-label="editable input"
+                          class="chakra-input css-0"
+                          data-part="input"
+                          data-scope="editable"
+                          id="editable::r5::input"
+                          name="name"
+                          placeholder="accountName"
+                          value=""
+                        />
+                      </div>
+                    </div>
+                  </div>
+                  <div
+                    class="d_flex flex_column gap_2"
+                    data-part="root"
+                    data-scope="editable"
+                    id="editable::r6:"
+                  >
+                    <label
+                      data-part="label"
+                      data-scope="editable"
+                      for="editable::r6::input"
+                      id="editable::r6::label"
+                    >
+                      Account Type
+                    </label>
+                    <div
+                      data-part="area"
+                      data-placeholder-shown=""
+                      data-scope="editable"
+                      id="editable::r6::area"
+                    >
+                      <div
+                        class="css-3a3hw0"
+                      >
+                        <input
+                          aria-label="editable input"
+                          class="chakra-input css-0"
+                          data-part="input"
+                          data-scope="editable"
+                          id="editable::r6::input"
+                          name="type"
+                          placeholder="accountType"
+                          value=""
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </form>
+            </div>
+            <footer
+              class="chakra-modal__footer css-192qrng"
+            >
+              <div
+                class="chakra-button__group css-1ind3v2"
+                data-orientation="horizontal"
+                role="group"
+              >
+                <button
+                  class="chakra-button css-1fysbuj"
+                  data-part="close-trigger"
+                  data-scope="dialog"
+                  id="dialog::r0::close"
+                  type="button"
+                >
+                  close
+                </button>
+                <button
+                  class="chakra-button css-1fysbuj"
+                  id="pressable::r8:"
+                  type="button"
+                >
+                  save
+                </button>
+              </div>
+            </footer>
+          </section>
+        </div>
+      </div>
+      <div
+        aria-hidden="true"
+        data-aria-hidden="true"
+        data-focus-guard="true"
+        style="width: 1px; height: 0px; padding: 0px; overflow: hidden; position: fixed; top: 1px; left: 1px;"
+        tabindex="0"
+      />
+    </div>
+  </div>
+</body>
+`;
+
+exports[`<EditAccountDialogBtn > should render edit account dialog when trigger button is clicked 3`] = `
+<body
+  data-zag-scroll-lock=""
+  style="overflow: hidden; padding-right: 1024px;"
+>
+  <div
+    aria-hidden="true"
+    data-aria-hidden="true"
+  >
+    <button
+      aria-controls="dialog::r0::content"
+      aria-expanded="true"
+      aria-haspopup="dialog"
+      class="chakra-button css-4xx2wk"
+      data-part="trigger"
+      data-scope="dialog"
+      id="dialog::r0::trigger"
+      type="button"
+    >
+      edit
+    </button>
+  </div>
+  <div
+    class="chakra-portal"
+  >
+    <div
+      aria-hidden="true"
+      class="chakra-modal__overlay css-13d1tkw"
+      data-aria-hidden="true"
+      data-part="backdrop"
+      data-scope="dialog"
+      id="dialog::r0::backdrop"
+      style="opacity: 0.9991582277289126;"
+    />
+    <div
+      class="css-0"
+      data-part="container"
+      data-scope="dialog"
+      id="dialog::r0::container"
+    >
+      <div
+        aria-hidden="true"
+        data-aria-hidden="true"
+        data-focus-guard="true"
+        style="width: 1px; height: 0px; padding: 0px; overflow: hidden; position: fixed; top: 1px; left: 1px;"
+        tabindex="0"
+      />
+      <div
+        data-focus-lock-disabled="false"
+      >
+        <div
+          class="chakra-modal__content-container css-1oxhx2p"
+          tabindex="-1"
+        >
+          <section
+            aria-describedby="chakra-modal--body-:r2:"
+            aria-labelledby="chakra-modal--header-:r2:"
+            aria-modal="true"
+            class="chakra-modal__content css-6yiygt"
+            data-part="content"
+            data-scope="dialog"
+            id="chakra-modal-:r2:"
+            role="dialog"
+            style="opacity: 0.99895309904241; transform: scale(0.9999476549521205) translateZ(0);"
+            tabindex="-1"
+          >
+            <header
+              class="chakra-modal__header css-72fd9l"
+              data-part="title"
+              data-scope="dialog"
+              id="dialog::r0::title"
+            >
+              addAccount
+            </header>
+            <button
+              aria-label="Close"
+              class="chakra-modal__close-btn css-6sdaxy"
+              data-part="close-trigger"
+              data-scope="dialog"
+              id="dialog::r0::close"
+              type="button"
+            >
+              <svg
+                aria-hidden="true"
+                class="chakra-icon css-onkibi"
+                focusable="false"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  d="M.439,21.44a1.5,1.5,0,0,0,2.122,2.121L11.823,14.3a.25.25,0,0,1,.354,0l9.262,9.263a1.5,1.5,0,1,0,2.122-2.121L14.3,12.177a.25.25,0,0,1,0-.354l9.263-9.262A1.5,1.5,0,0,0,21.439.44L12.177,9.7a.25.25,0,0,1-.354,0L2.561.44A1.5,1.5,0,0,0,.439,2.561L9.7,11.823a.25.25,0,0,1,0,.354Z"
+                  fill="currentColor"
+                />
+              </svg>
+            </button>
+            <div
+              class="chakra-modal__body css-0"
+              data-part="description"
+              data-scope="dialog"
+              id="dialog::r0::description"
+            >
+              <form
+                name="<input data-scope=\\"editable\\" data-part=\\"input\\" aria-label=\\"editable input\\" name=\\"name\\" placeholder=\\"accountName\\" id=\\"editable::r5::input\\" class=\\"chakra-input css-0\\" value=\\"\\">"
+              >
+                <div
+                  class="css-1kkt86i"
+                >
+                  <div
+                    class="d_flex flex_column gap_2"
+                    data-part="root"
+                    data-scope="editable"
+                    id="editable::r5:"
+                  >
+                    <label
+                      data-part="label"
+                      data-scope="editable"
+                      for="editable::r5::input"
+                      id="editable::r5::label"
+                    >
+                      Name
+                    </label>
+                    <div
+                      data-part="area"
+                      data-placeholder-shown=""
+                      data-scope="editable"
+                      id="editable::r5::area"
+                    >
+                      <div
+                        class="css-3a3hw0"
+                      >
+                        <input
+                          aria-label="editable input"
+                          class="chakra-input css-0"
+                          data-part="input"
+                          data-scope="editable"
+                          id="editable::r5::input"
+                          name="name"
+                          placeholder="accountName"
+                          value=""
+                        />
+                      </div>
+                    </div>
+                  </div>
+                  <div
+                    class="d_flex flex_column gap_2"
+                    data-part="root"
+                    data-scope="editable"
+                    id="editable::r6:"
+                  >
+                    <label
+                      data-part="label"
+                      data-scope="editable"
+                      for="editable::r6::input"
+                      id="editable::r6::label"
+                    >
+                      Account Type
+                    </label>
+                    <div
+                      data-part="area"
+                      data-placeholder-shown=""
+                      data-scope="editable"
+                      id="editable::r6::area"
+                    >
+                      <div
+                        class="css-3a3hw0"
+                      >
+                        <input
+                          aria-label="editable input"
+                          class="chakra-input css-0"
+                          data-part="input"
+                          data-scope="editable"
+                          id="editable::r6::input"
+                          name="type"
+                          placeholder="accountType"
+                          value=""
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </form>
+            </div>
+            <footer
+              class="chakra-modal__footer css-192qrng"
+            >
+              <div
+                class="chakra-button__group css-1ind3v2"
+                data-orientation="horizontal"
+                role="group"
+              >
+                <button
+                  class="chakra-button css-1fysbuj"
+                  data-part="close-trigger"
+                  data-scope="dialog"
+                  id="dialog::r0::close"
+                  type="button"
+                >
+                  close
+                </button>
+                <button
+                  class="chakra-button css-1fysbuj"
+                  id="pressable::r8:"
+                  type="button"
+                >
+                  save
+                </button>
+              </div>
+            </footer>
+          </section>
+        </div>
+      </div>
+      <div
+        aria-hidden="true"
+        data-aria-hidden="true"
+        data-focus-guard="true"
+        style="width: 1px; height: 0px; padding: 0px; overflow: hidden; position: fixed; top: 1px; left: 1px;"
+        tabindex="0"
+      />
+    </div>
+  </div>
+</body>
+`;
+
+exports[`<EditAccountDialogBtn > should render edit account dialog when trigger button is clicked 4`] = `
+<body
+  data-zag-scroll-lock=""
+  style="overflow: hidden; padding-right: 1024px;"
+>
+  <div
+    aria-hidden="true"
+    data-aria-hidden="true"
+  >
+    <button
+      aria-controls="dialog::r0::content"
+      aria-expanded="true"
+      aria-haspopup="dialog"
+      class="chakra-button css-4xx2wk"
+      data-part="trigger"
+      data-scope="dialog"
+      id="dialog::r0::trigger"
+      type="button"
+    >
+      edit
+    </button>
+  </div>
+  <div
+    class="chakra-portal"
+  >
+    <div
+      aria-hidden="true"
+      class="chakra-modal__overlay css-13d1tkw"
+      data-aria-hidden="true"
+      data-part="backdrop"
+      data-scope="dialog"
+      id="dialog::r0::backdrop"
+      style="opacity: 1;"
+    />
+    <div
+      class="css-0"
+      data-part="container"
+      data-scope="dialog"
+      id="dialog::r0::container"
+    >
+      <div
+        aria-hidden="true"
+        data-aria-hidden="true"
+        data-focus-guard="true"
+        style="width: 1px; height: 0px; padding: 0px; overflow: hidden; position: fixed; top: 1px; left: 1px;"
+        tabindex="0"
+      />
+      <div
+        data-focus-lock-disabled="false"
+      >
+        <div
+          class="chakra-modal__content-container css-1oxhx2p"
+          tabindex="-1"
+        >
+          <section
+            aria-describedby="chakra-modal--body-:r2:"
+            aria-labelledby="chakra-modal--header-:r2:"
+            aria-modal="true"
+            class="chakra-modal__content css-6yiygt"
+            data-part="content"
+            data-scope="dialog"
+            id="chakra-modal-:r2:"
+            role="dialog"
+            style="opacity: 1; transform: none;"
+            tabindex="-1"
+          >
+            <header
+              class="chakra-modal__header css-72fd9l"
+              data-part="title"
+              data-scope="dialog"
+              id="dialog::r0::title"
+            >
+              addAccount
+            </header>
+            <button
+              aria-label="Close"
+              class="chakra-modal__close-btn css-6sdaxy"
+              data-part="close-trigger"
+              data-scope="dialog"
+              id="dialog::r0::close"
+              type="button"
+            >
+              <svg
+                aria-hidden="true"
+                class="chakra-icon css-onkibi"
+                focusable="false"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  d="M.439,21.44a1.5,1.5,0,0,0,2.122,2.121L11.823,14.3a.25.25,0,0,1,.354,0l9.262,9.263a1.5,1.5,0,1,0,2.122-2.121L14.3,12.177a.25.25,0,0,1,0-.354l9.263-9.262A1.5,1.5,0,0,0,21.439.44L12.177,9.7a.25.25,0,0,1-.354,0L2.561.44A1.5,1.5,0,0,0,.439,2.561L9.7,11.823a.25.25,0,0,1,0,.354Z"
+                  fill="currentColor"
+                />
+              </svg>
+            </button>
+            <div
+              class="chakra-modal__body css-0"
+              data-part="description"
+              data-scope="dialog"
+              id="dialog::r0::description"
+            >
+              <form
+                name="<input data-scope=\\"editable\\" data-part=\\"input\\" aria-label=\\"editable input\\" name=\\"name\\" placeholder=\\"accountName\\" id=\\"editable::r5::input\\" class=\\"chakra-input css-0\\" value=\\"\\">"
+              >
+                <div
+                  class="css-1kkt86i"
+                >
+                  <div
+                    class="d_flex flex_column gap_2"
+                    data-part="root"
+                    data-scope="editable"
+                    id="editable::r5:"
+                  >
+                    <label
+                      data-part="label"
+                      data-scope="editable"
+                      for="editable::r5::input"
+                      id="editable::r5::label"
+                    >
+                      Name
+                    </label>
+                    <div
+                      data-part="area"
+                      data-placeholder-shown=""
+                      data-scope="editable"
+                      id="editable::r5::area"
+                    >
+                      <div
+                        class="css-3a3hw0"
+                      >
+                        <input
+                          aria-label="editable input"
+                          class="chakra-input css-0"
+                          data-part="input"
+                          data-scope="editable"
+                          id="editable::r5::input"
+                          name="name"
+                          placeholder="accountName"
+                          value=""
+                        />
+                      </div>
+                    </div>
+                  </div>
+                  <div
+                    class="d_flex flex_column gap_2"
+                    data-part="root"
+                    data-scope="editable"
+                    id="editable::r6:"
+                  >
+                    <label
+                      data-part="label"
+                      data-scope="editable"
+                      for="editable::r6::input"
+                      id="editable::r6::label"
+                    >
+                      Account Type
+                    </label>
+                    <div
+                      data-part="area"
+                      data-placeholder-shown=""
+                      data-scope="editable"
+                      id="editable::r6::area"
+                    >
+                      <div
+                        class="css-3a3hw0"
+                      >
+                        <input
+                          aria-label="editable input"
+                          class="chakra-input css-0"
+                          data-part="input"
+                          data-scope="editable"
+                          id="editable::r6::input"
+                          name="type"
+                          placeholder="accountType"
+                          value=""
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </form>
+            </div>
+            <footer
+              class="chakra-modal__footer css-192qrng"
+            >
+              <div
+                class="chakra-button__group css-1ind3v2"
+                data-orientation="horizontal"
+                role="group"
+              >
+                <button
+                  class="chakra-button css-1fysbuj"
+                  data-part="close-trigger"
+                  data-scope="dialog"
+                  id="dialog::r0::close"
+                  type="button"
+                >
+                  close
+                </button>
+                <button
+                  class="chakra-button css-1fysbuj"
+                  id="pressable::r8:"
+                  type="button"
+                >
+                  save
+                </button>
+              </div>
+            </footer>
+          </section>
+        </div>
+      </div>
+      <div
+        aria-hidden="true"
+        data-aria-hidden="true"
+        data-focus-guard="true"
+        style="width: 1px; height: 0px; padding: 0px; overflow: hidden; position: fixed; top: 1px; left: 1px;"
+        tabindex="0"
+      />
+    </div>
+  </div>
+</body>
+`;
+
+exports[`<EditAccountDialogBtn > should render edit account dialog when trigger button is clicked 5`] = `
+<body
+  data-zag-scroll-lock=""
+  style="overflow: hidden; padding-right: 1024px;"
+>
+  <div
+    aria-hidden="true"
+    data-aria-hidden="true"
+  >
+    <button
+      aria-controls="dialog::r0::content"
+      aria-expanded="true"
+      aria-haspopup="dialog"
+      aria-hidden="true"
+      class="chakra-button css-4xx2wk"
+      data-part="trigger"
+      data-scope="dialog"
+      id="dialog::r0::trigger"
+      type="button"
+    >
+      edit
+    </button>
+  </div>
+  <div
+    class="chakra-portal"
+  >
+    <div
+      aria-hidden="true"
+      class="chakra-modal__overlay css-13d1tkw"
+      data-aria-hidden="true"
+      data-part="backdrop"
+      data-scope="dialog"
+      id="dialog::r0::backdrop"
+      style="opacity: 1;"
+    />
+    <div
+      class="css-0"
+      data-part="container"
+      data-scope="dialog"
+      id="dialog::r0::container"
+    >
+      <div
+        aria-hidden="true"
+        data-aria-hidden="true"
+        data-focus-guard="true"
+        style="width: 1px; height: 0px; padding: 0px; overflow: hidden; position: fixed; top: 1px; left: 1px;"
+        tabindex="0"
+      />
+      <div
+        data-focus-lock-disabled="false"
+      >
+        <div
+          class="chakra-modal__content-container css-1oxhx2p"
+          tabindex="-1"
+        >
+          <section
+            aria-describedby="chakra-modal--body-:r2:"
+            aria-labelledby="chakra-modal--header-:r2:"
+            aria-modal="true"
+            class="chakra-modal__content css-6yiygt"
+            data-part="content"
+            data-scope="dialog"
+            id="chakra-modal-:r2:"
+            role="dialog"
+            style="opacity: 1; transform: none;"
+            tabindex="-1"
+          >
+            <header
+              class="chakra-modal__header css-72fd9l"
+              data-part="title"
+              data-scope="dialog"
+              id="dialog::r0::title"
+            >
+              addAccount
+            </header>
+            <button
+              aria-label="Close"
+              class="chakra-modal__close-btn css-6sdaxy"
+              data-part="close-trigger"
+              data-scope="dialog"
+              id="dialog::r0::close"
+              type="button"
+            >
+              <svg
+                aria-hidden="true"
+                class="chakra-icon css-onkibi"
+                focusable="false"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  d="M.439,21.44a1.5,1.5,0,0,0,2.122,2.121L11.823,14.3a.25.25,0,0,1,.354,0l9.262,9.263a1.5,1.5,0,1,0,2.122-2.121L14.3,12.177a.25.25,0,0,1,0-.354l9.263-9.262A1.5,1.5,0,0,0,21.439.44L12.177,9.7a.25.25,0,0,1-.354,0L2.561.44A1.5,1.5,0,0,0,.439,2.561L9.7,11.823a.25.25,0,0,1,0,.354Z"
+                  fill="currentColor"
+                />
+              </svg>
+            </button>
+            <div
+              class="chakra-modal__body css-0"
+              data-part="description"
+              data-scope="dialog"
+              id="dialog::r0::description"
+            >
+              <form
+                name="<input data-scope=\\"editable\\" data-part=\\"input\\" aria-label=\\"editable input\\" name=\\"name\\" placeholder=\\"accountName\\" id=\\"editable::r5::input\\" class=\\"chakra-input css-0\\" value=\\"\\">"
+              >
+                <div
+                  class="css-1kkt86i"
+                >
+                  <div
+                    class="d_flex flex_column gap_2"
+                    data-part="root"
+                    data-scope="editable"
+                    id="editable::r5:"
+                  >
+                    <label
+                      data-part="label"
+                      data-scope="editable"
+                      for="editable::r5::input"
+                      id="editable::r5::label"
+                    >
+                      Name
+                    </label>
+                    <div
+                      data-part="area"
+                      data-placeholder-shown=""
+                      data-scope="editable"
+                      id="editable::r5::area"
+                    >
+                      <div
+                        class="css-3a3hw0"
+                      >
+                        <input
+                          aria-label="editable input"
+                          class="chakra-input css-0"
+                          data-part="input"
+                          data-scope="editable"
+                          id="editable::r5::input"
+                          name="name"
+                          placeholder="accountName"
+                          value=""
+                        />
+                      </div>
+                    </div>
+                  </div>
+                  <div
+                    class="d_flex flex_column gap_2"
+                    data-part="root"
+                    data-scope="editable"
+                    id="editable::r6:"
+                  >
+                    <label
+                      data-part="label"
+                      data-scope="editable"
+                      for="editable::r6::input"
+                      id="editable::r6::label"
+                    >
+                      Account Type
+                    </label>
+                    <div
+                      data-part="area"
+                      data-placeholder-shown=""
+                      data-scope="editable"
+                      id="editable::r6::area"
+                    >
+                      <div
+                        class="css-3a3hw0"
+                      >
+                        <input
+                          aria-label="editable input"
+                          class="chakra-input css-0"
+                          data-part="input"
+                          data-scope="editable"
+                          id="editable::r6::input"
+                          name="type"
+                          placeholder="accountType"
+                          value=""
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </form>
+            </div>
+            <footer
+              class="chakra-modal__footer css-192qrng"
+            >
+              <div
+                class="chakra-button__group css-1ind3v2"
+                data-orientation="horizontal"
+                role="group"
+              >
+                <button
+                  class="chakra-button css-1fysbuj"
+                  data-part="close-trigger"
+                  data-scope="dialog"
+                  id="dialog::r0::close"
+                  type="button"
+                >
+                  close
+                </button>
+                <button
+                  class="chakra-button css-1fysbuj"
+                  id="pressable::r8:"
+                  type="button"
+                >
+                  save
+                </button>
+              </div>
+            </footer>
+          </section>
+        </div>
+      </div>
+      <div
+        aria-hidden="true"
+        data-aria-hidden="true"
+        data-focus-guard="true"
+        style="width: 1px; height: 0px; padding: 0px; overflow: hidden; position: fixed; top: 1px; left: 1px;"
+        tabindex="0"
+      />
+    </div>
+  </div>
+</body>
+`;

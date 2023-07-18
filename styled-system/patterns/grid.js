@@ -17,4 +17,3 @@ transform(props, { map }) {
 export const getGridStyle = (styles = {}) => gridConfig.transform(styles, { map: mapObject })
 
 export const grid = (styles) => css(getGridStyle(styles))
-grid.raw = (styles) => styles

@@ -14,10 +14,5 @@ export type StackProperties = {
 
 type StackOptions = StackProperties & Omit<SystemStyleObject, keyof StackProperties >
 
-interface StackPatternFn {
-  (options?: StackOptions): string
-  raw: (options: StackOptions) => StackOptions
-}
 
-
-export declare const stack: StackPatternFn;
+export declare function stack(options?: StackOptions): string

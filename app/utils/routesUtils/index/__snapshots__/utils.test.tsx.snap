@@ -1,0 +1,61 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`getTabsData > should have a label, value, and content 1`] = `
+<main>
+  <FLPBox>
+    <FLPHeading
+      as="h1"
+    >
+      featureNum
+    </FLPHeading>
+    <FLPBox
+      style={
+        {
+          "display": "flex",
+          "gap": ".5rem",
+        }
+      }
+    >
+      <h3>
+        N/A - IT
+      </h3>
+    </FLPBox>
+    <FLPBox
+      style={
+        {
+          "display": "flex",
+          "gap": ".5rem",
+        }
+      }
+    >
+      <h3>
+        Jane Doe - N/A
+      </h3>
+    </FLPBox>
+  </FLPBox>
+</main>
+`;
+
+exports[`getTabsData > should have a label, value, and content 2`] = `
+<main>
+  <FLPBox>
+    <FLPHeading
+      as="h1"
+    >
+      featureNum
+    </FLPHeading>
+  </FLPBox>
+</main>
+`;
+
+exports[`getTabsData > should have a label, value, and content 3`] = `
+<main>
+  <FLPBox>
+    <FLPHeading
+      as="h1"
+    >
+      featureNum
+    </FLPHeading>
+  </FLPBox>
+</main>
+`;

@@ -1,0 +1,8 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`<FlpCard /> > it renders a ChakraUI Card component with title as expected 1`] = `
+<div
+  class="chakra-card css-2dlz7"
+  title="FLPCard"
+/>
+`;

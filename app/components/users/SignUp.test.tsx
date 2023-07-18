@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 
 import { act, fireEvent, render, waitFor } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import {  vi } from 'vitest';
 import { AuthErrorEnums } from '~/utils/utils';
 
 import SignUp from './SignUp';
@@ -51,7 +51,7 @@ const mockEmail = 'test@test.com';
 const mockPassword = 'password';
 
 describe('<SignUp />', () => {
-  it('should render as expected', () => {
+  test('should render as expected', () => {
     const { container } = render(<SignUp />);
     expect(container).toMatchSnapshot();
   });
@@ -71,7 +71,7 @@ describe('<SignUp />', () => {
     return { baseElement, getByLabelText, getByText, passwordInput };
   };
 
-  it('should submit the form after typing and pressing enter. Should change to login button when user is already registered', async () => {
+  test('should submit the form after typing and pressing enter. Should change to login button when user is already registered', async () => {
     const { getByText, passwordInput } = await renderAndType({ action: SignUpActionEnum.SIGNUP });
 
     fireEvent.keyUp(passwordInput, { key: 'Enter', code: 'Enter' });
@@ -82,7 +82,7 @@ describe('<SignUp />', () => {
     });
   });
 
-  it('should submit the form and call login function after typing and clicking the button', async () => {
+  test('should submit the form and call login function after typing and clicking the button', async () => {
     const { getByText } = await renderAndType({ action: SignUpActionEnum.LOGIN });
 
     const submitButton = getByText('logIn') as HTMLButtonElement;
@@ -93,7 +93,7 @@ describe('<SignUp />', () => {
     });
   });
 
-  it('should show email confirmation message when userdata contains confirmation_sent_at param', async () => {
+  test('should show email confirmation message when userdata contains confirmation_sent_at param', async () => {
     const { getByText } = await renderAndType({ action: SignUpActionEnum.LOGIN });
     const magicLinkBtn = getByText('loginWithMagicLink') as HTMLButtonElement;
     const submitButton = getByText('logIn') as HTMLButtonElement;

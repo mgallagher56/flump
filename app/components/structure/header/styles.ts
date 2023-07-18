@@ -14,7 +14,7 @@ export const navStyles = css({
 
 export const menuStyles = css({
   display: 'flex',
-  gap: '2',
+  gap: '4',
   alignItems: 'center',
   justifyContent: 'start'
 });

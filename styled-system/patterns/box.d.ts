@@ -11,10 +11,5 @@ export type BoxProperties = {
 
 type BoxOptions = BoxProperties & Omit<SystemStyleObject, keyof BoxProperties >
 
-interface BoxPatternFn {
-  (options?: BoxOptions): string
-  raw: (options: BoxOptions) => BoxOptions
-}
 
-
-export declare const box: BoxPatternFn;
+export declare function box(options?: BoxOptions): string

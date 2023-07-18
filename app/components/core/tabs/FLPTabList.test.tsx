@@ -2,7 +2,6 @@ import type { ReactElement, ReactNode } from 'react';
 
 import { Tabs } from '@chakra-ui/react';
 import { render } from '@testing-library/react';
-import { describe, expect, test } from 'vitest';
 
 import FLPTabList from './FLPTabList';
 

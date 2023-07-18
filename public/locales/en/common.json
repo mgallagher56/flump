@@ -1,7 +1,10 @@
 {
   "about": "About",
   "dashboard": "Dashboard",
+  "account": "account",
   "accounts": "Accounts",
+  "accountName": "Account name",
+  "accountType": "Account type",
   "contact": "Contact",
   "featureNum": "Feature {{num}}",
   "home": "Home",
@@ -9,9 +12,16 @@
   "logIn": "Log in",
   "logOut": "Log out",
   "clickAgainToLogIn": "Click again to log in",
-  "launchApp": "Launch app",
+  "app": "App",
   "confirmEmailMsg": "Please confirm your email address by clicking on the link in the email we sent you",
   "loginWithPassword": "Log in with password",
   "loginWithMagicLink": "Log in with magic link",
-  "sendMagicLink": "Send magic link"
+  "sendMagicLink": "Send magic link",
+  "addAccount": "Add account",
+  "editAccount": "Edit account",
+  "edit": "Edit",
+  "remove": "Remove",
+  "close": "Close",
+  "confirm": "Confirm",
+  "save": "Save"
 }

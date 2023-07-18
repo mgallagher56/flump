@@ -1,5 +1,5 @@
 import { render } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { vi } from 'vitest';
 
 import ColorModeSwitch from './ColorModeSwitch';
 
@@ -16,11 +16,11 @@ describe('<ColorModeSwitch />', async () => {
     .fn()
     .mockReturnValueOnce({ ...chakra.useColorMode, colorMode: 'dark' })
     .mockReturnValueOnce({ ...chakra.useColorMode, colorMode: 'light' });
-  it('should render as expected when colormode is dark', () => {
+  test('should render as expected when colormode is dark', () => {
     const { baseElement } = render(<ColorModeSwitch />);
     expect(baseElement).toMatchSnapshot();
   });
-  it('should render as expected when colormode is light', () => {
+  test('should render as expected when colormode is light', () => {
     const { baseElement } = render(<ColorModeSwitch />);
     expect(baseElement).toMatchSnapshot();
   });

@@ -1,7 +1,8 @@
-import type { ReactElement } from 'react';
+import { type ReactElement } from 'react';
 
 import { json } from '@remix-run/node';
 import { redirect } from '@remix-run/server-runtime';
+import AccountsContainer from '~/containers/accounts/AccountsContainer';
 import { createSupaBaseServerClient } from '~/utils/supabase';
 
 export const loader = async ({ request }: { request: Request }) => {
@@ -11,11 +12,16 @@ export const loader = async ({ request }: { request: Request }) => {
     data: { user }
   } = await supabase.auth.getUser();
 
+  const { data: accounts } = await supabase
+    .from('accounts')
+    .select('*')
+    .eq('user_id', user?.id);
+
   if (!user) return redirect('/');
-  return json({ ok: true });
+  return json({ accounts, user });
 };
 
 const Accounts = (): ReactElement => {
-  return <div>Accounts</div>;
+  return <AccountsContainer />;
 };
 export default Accounts;

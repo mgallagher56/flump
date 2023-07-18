@@ -51,7 +51,8 @@
       "test/**/*.{js,ts,jsx,tsx}",
       "starlight/**/*.*",
       "starlight/.astro/**/*.*",
-      "app/utils/utils.ts"
+      "app/utils/utils.ts",
+      "app/**/*.d.ts"
     ]
   },
   "eslintIgnore": [

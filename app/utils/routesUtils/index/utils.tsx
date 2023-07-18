@@ -6,7 +6,7 @@ import type { TabData } from '~/components/core/tabs/types';
 import FLPHeading from '~/components/core/typography/FLPHeading';
 import type { Employee } from '~/routes/_index';
 
-import { FallbackEnums } from './utils';
+import { FallbackEnums } from '../../utils';
 
 const { NA } = FallbackEnums;
 

@@ -11,10 +11,5 @@ export type ContainerProperties = {
 
 type ContainerOptions = ContainerProperties & Omit<SystemStyleObject, keyof ContainerProperties >
 
-interface ContainerPatternFn {
-  (options?: ContainerOptions): string
-  raw: (options: ContainerOptions) => ContainerOptions
-}
 
-
-export declare const container: ContainerPatternFn;
+export declare function container(options?: ContainerOptions): string

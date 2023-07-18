@@ -1,4 +1,5 @@
-import { ReactElement, ReactNode, StrictMode, Suspense, useContext, useEffect, useMemo, useState } from 'react';
+import type { ReactElement, ReactNode } from 'react';
+import { StrictMode, useContext, useEffect } from 'react';
 
 import {
   Box,
@@ -7,11 +8,12 @@ import {
   Container,
   cookieStorageManagerSSR,
   Heading,
-  localStorageManager,
   theme
 } from '@chakra-ui/react';
-import { EmotionCache, withEmotionCache } from '@emotion/react';
-import { json, LinksFunction, LoaderFunction, TypedResponse, V2_MetaFunction } from '@remix-run/node';
+import type { EmotionCache } from '@emotion/react';
+import { withEmotionCache } from '@emotion/react';
+import type { LinksFunction, TypedResponse, V2_MetaFunction } from '@remix-run/node';
+import { json } from '@remix-run/node';
 import {
   isRouteErrorResponse,
   Links,
@@ -20,13 +22,13 @@ import {
   Outlet,
   Scripts,
   ScrollRestoration,
-  useCatch,
   useLoaderData,
+  useMatch,
+  useMatches,
   useRevalidator,
   useRouteError
 } from '@remix-run/react';
-import { createBrowserClient } from '@supabase/auth-helpers-remix';
-import { Session } from '@supabase/supabase-js';
+import type { Session } from '@supabase/supabase-js';
 import { useTranslation } from 'react-i18next';
 import { useChangeLanguage } from 'remix-i18next';
 
@@ -34,7 +36,6 @@ import Header from './components/structure/header/Header';
 import { ClientStyleContext, ServerStyleContext } from './context';
 import i18next from './i18n.server';
 import styles from './index.css';
-import { useUserStore } from './store';
 import supabase, { createSupaBaseServerClient } from './utils/supabase';
 
 const DEFAULT_COLOR_MODE: 'dark' | 'light' | null = 'dark';
@@ -57,6 +58,7 @@ export const loader = async ({
     };
     locale: string;
     session: Session | null;
+    user: Session['user'] | null;
     cookie: string | null;
   }>
 > => {
@@ -78,6 +80,7 @@ export const loader = async ({
       locale,
       env,
       session,
+      user: session?.user ?? null,
       cookie: request?.headers?.get('Cookie') ?? ''
     },
     {
@@ -142,7 +145,7 @@ const Document = withEmotionCache(
       });
       // reset cache to reapply global styles
       clientStyleData?.reset();
-    }, []);
+    }, [clientStyleData]);
 
     return (
       <html
@@ -186,15 +189,16 @@ const Document = withEmotionCache(
 
 export default function App(): ReactElement {
   const { revalidate } = useRevalidator();
-  let { cookie = '', env, locale, session } = useLoaderData<typeof loader>();
+  const loaderData = useLoaderData<typeof loader>();
+  let { cookie = '' } = loaderData;
+  const { env, session, locale } = loaderData;
   const serverAccessToken = session?.access_token;
-  const setUser = useUserStore((state) => state.setUser);
 
   if (typeof document !== 'undefined') {
     cookie = document.cookie;
   }
 
-  let colorMode = useMemo(() => {
+  const colorMode = () => {
     let color = getColorMode(cookie);
 
     if (!color && DEFAULT_COLOR_MODE) {
@@ -203,7 +207,7 @@ export default function App(): ReactElement {
     }
 
     return color;
-  }, [cookie]);
+  };
 
   useChangeLanguage(locale);
 
@@ -212,7 +216,6 @@ export default function App(): ReactElement {
       data: { subscription }
     } = supabase.auth.onAuthStateChange((event, session) => {
       if (event !== 'INITIAL_SESSION' && session?.access_token !== serverAccessToken) {
-        setUser(session?.user ?? null);
         // server and client are out of sync
         revalidate();
       }
@@ -221,11 +224,11 @@ export default function App(): ReactElement {
     return () => {
       subscription?.unsubscribe();
     };
-  }, [serverAccessToken]);
+  }, [revalidate, serverAccessToken]);
 
   return (
     <StrictMode>
-      <Document locale={locale} colorMode={colorMode} env={env} cookie={cookie}>
+      <Document locale={locale} colorMode={colorMode()} env={env} cookie={cookie}>
         <Container maxW={'container.xl'}>
           <Header />
           <Outlet />
