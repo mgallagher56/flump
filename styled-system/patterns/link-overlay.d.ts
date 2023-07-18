@@ -11,10 +11,5 @@ export type LinkOverlayProperties = {
 
 type LinkOverlayOptions = LinkOverlayProperties & Omit<SystemStyleObject, keyof LinkOverlayProperties >
 
-interface LinkOverlayPatternFn {
-  (options?: LinkOverlayOptions): string
-  raw: (options: LinkOverlayOptions) => LinkOverlayOptions
-}
 
-
-export declare const linkOverlay: LinkOverlayPatternFn;
+export declare function linkOverlay(options?: LinkOverlayOptions): string

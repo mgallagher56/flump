@@ -5,7 +5,6 @@ import type { Tokens } from '../tokens'
 
 type PropertyValueTypes  = {
 	aspectRatio: "auto" | "square" | "landscape" | "portrait" | "wide" | "ultrawide" | "golden";
-	zIndex: Tokens["zIndex"];
 	top: Tokens["spacing"];
 	left: Tokens["spacing"];
 	insetInline: Tokens["spacing"];
@@ -151,7 +150,7 @@ type PropertyValueTypes  = {
 	transitionTimingFunction: Tokens["easings"];
 	transitionDelay: Tokens["durations"];
 	transitionDuration: Tokens["durations"];
-	transition: "all" | "common" | "background" | "colors" | "opacity" | "shadow" | "transform";
+	transitionProperty: "all" | "none" | "opacity" | "shadow" | "transform" | "base" | "background" | "colors";
 	animation: Tokens["animations"];
 	animationDelay: Tokens["durations"];
 	scale: "auto" | CssProperties["scale"];

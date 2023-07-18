@@ -15,4 +15,3 @@ transform(props, { map }) {
 export const getSpacerStyle = (styles = {}) => spacerConfig.transform(styles, { map: mapObject })
 
 export const spacer = (styles) => css(getSpacerStyle(styles))
-spacer.raw = (styles) => styles

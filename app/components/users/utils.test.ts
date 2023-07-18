@@ -1,5 +1,5 @@
 import type { TFunction } from 'i18next';
-import { describe, expect, it, vi } from 'vitest';
+import { vi } from 'vitest';
 import supabase from '~/utils/supabase';
 
 import { getSignUpButtonText, getSubmitUserAuthAction, SignUpActionEnum } from './utils';
@@ -23,7 +23,7 @@ vi.mock('app/utils/supabase', () => ({
 const mockTFunction = (key: string) => key;
 
 describe('getSignUpButtonText()', () => {
-  it('should return the correct text for the sign up button', () => {
+  test('should return the correct text for the sign up button', () => {
     expect(getSignUpButtonText(mockTFunction as TFunction, true, false)).toBe(SignUpActionEnum.LOGIN);
     expect(getSignUpButtonText(mockTFunction as TFunction, false, false)).toBe(SignUpActionEnum.SIGNUP);
     expect(getSignUpButtonText(mockTFunction as TFunction, false, true)).toBe('sendMagicLink');
@@ -32,7 +32,7 @@ describe('getSignUpButtonText()', () => {
 });
 
 describe('getSubmitUserAuthAction()', () => {
-  it('should call the correct function depending on the arguments', async () => {
+  test('should call the correct function depending on the arguments', async () => {
     const supabaseClient = supabase;
     const formInput = { email: 'test@test.com', password: 'test' };
     await getSubmitUserAuthAction({

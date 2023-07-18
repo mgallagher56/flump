@@ -79,7 +79,7 @@ export type Conditions = {
 	"_light": string
 	"_osDark": string
 	"_osLight": string
-	"_highContrast": string
+	"_highConstrast": string
 	"_lessContrast": string
 	"_moreContrast": string
 	"_ltr": string

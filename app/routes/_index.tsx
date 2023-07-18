@@ -7,7 +7,7 @@ import { useTranslation } from 'react-i18next';
 import FLPBox from '~/components/core/structure/FLPBox';
 import FLPHeading from '~/components/core/typography/FLPHeading';
 import TabsContainer from '~/containers/TabsContainer';
-import { getTabsData } from '~/utils/index.utils';
+import { getTabsData } from '~/utils/routesUtils/index/utils';
 
 import type { Database } from 'db_types';
 

@@ -1,8 +1,7 @@
 import { renderHook } from '@testing-library/react';
 import { useTranslation } from 'react-i18next';
-import { describe, expect, test } from 'vitest';
 
-import { getTabsData } from './index.utils';
+import { getTabsData } from './utils';
 
 describe('getTabsData', () => {
   const { t } = renderHook(() => useTranslation()).result.current;

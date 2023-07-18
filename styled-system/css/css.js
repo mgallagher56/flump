@@ -210,8 +210,7 @@ const classNameMap = {
   "transitionTimingFunction": "ease",
   "transitionDelay": "delay",
   "transitionDuration": "duration",
-  "transitionProperty": "transition-prop",
-  "transition": "transition",
+  "transitionProperty": "transition",
   "animation": "animation",
   "animationDelay": "animation-delay",
   "transformOrigin": "origin",
@@ -393,6 +392,5 @@ const context = {
 }
 
 export const css = createCss(context)
-css.raw = (styles) => styles
 
 export const { mergeCss, assignCss } = createMergeCss(context)
