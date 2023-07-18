@@ -1,4 +1,4 @@
-import { ReactElement, ReactNode, StrictMode, Suspense, useContext, useEffect, useMemo, useState } from 'react';
+import { ReactElement, ReactNode, StrictMode, useContext, useEffect, useMemo } from 'react';
 
 import {
   Box,
@@ -7,11 +7,10 @@ import {
   Container,
   cookieStorageManagerSSR,
   Heading,
-  localStorageManager,
   theme
 } from '@chakra-ui/react';
 import { EmotionCache, withEmotionCache } from '@emotion/react';
-import { json, LinksFunction, LoaderFunction, TypedResponse, V2_MetaFunction } from '@remix-run/node';
+import { json, LinksFunction, TypedResponse, V2_MetaFunction } from '@remix-run/node';
 import {
   isRouteErrorResponse,
   Links,
@@ -20,12 +19,10 @@ import {
   Outlet,
   Scripts,
   ScrollRestoration,
-  useCatch,
   useLoaderData,
   useRevalidator,
   useRouteError
 } from '@remix-run/react';
-import { createBrowserClient } from '@supabase/auth-helpers-remix';
 import { Session } from '@supabase/supabase-js';
 import { useTranslation } from 'react-i18next';
 import { useChangeLanguage } from 'remix-i18next';

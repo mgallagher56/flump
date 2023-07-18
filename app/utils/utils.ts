@@ -43,7 +43,7 @@ export function validateEmail(email: unknown): email is string {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-empty-function
-export const noop = () => {};
+export const noop = () => {}; //nosonar
 
 export enum FallbackEnums {
   NA = 'N/A'

@@ -4,7 +4,7 @@
  * For more information, see https://remix.run/docs/en/main/file-conventions/entry.client
  */
 import type { ReactElement, ReactNode } from 'react';
-import { startTransition, StrictMode, useState } from 'react';
+import { startTransition, StrictMode, useMemo, useState } from 'react';
 
 import { CacheProvider } from '@emotion/react';
 import { RemixBrowser } from '@remix-run/react';
@@ -30,8 +30,10 @@ function ClientCacheProvider({ children }: ClientCacheProviderProps): ReactEleme
     setCache(createEmotionCache());
   }
 
+  const value = useMemo(() => ({ reset }), []);
+
   return (
-    <ClientStyleContext.Provider value={{ reset }}>
+    <ClientStyleContext.Provider value={value}>
       <CacheProvider value={cache}>{children}</CacheProvider>
     </ClientStyleContext.Provider>
   );
