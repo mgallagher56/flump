@@ -1,5 +1,5 @@
 import type { ChangeEvent, FC, KeyboardEvent } from 'react';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import { Form } from '@remix-run/react';
 import type { User } from '@supabase/supabase-js';
@@ -25,11 +25,16 @@ const SignUp: FC<SignUpProps> = ({ action = SignUpActionEnum.SIGNUP }) => {
   const [userData, setUserData] = useState<User>(null);
   const [error, setError] = useState<string | null>(null);
   const [sendMagicLink, setSendMagicLink] = useState<boolean>(false);
+  const [isSubmitDisabled, setIsSubmitdisabled] = useState<boolean>(false);
   const [formInput, setFormInput] = useState({ email: '', password: '' });
   const isUserRegistered = error === USER_ALREADY_REGISTERED;
   const isShowLogin = action === SignUpActionEnum.LOGIN || isUserRegistered;
 
   const submitButtonText = getSignUpButtonText(t, isShowLogin, sendMagicLink);
+
+  useEffect(() => {
+    setIsSubmitdisabled(sendMagicLink ? !formInput.email : !formInput.email || !formInput.password);
+  }, [sendMagicLink, formInput]);
 
   const handleChangeFormInput = useCallback((e: ChangeEvent<HTMLInputElement>): void => {
     setFormInput((prev) => ({ ...prev, [e.target.name]: e.target.value }));
@@ -64,7 +69,14 @@ const SignUp: FC<SignUpProps> = ({ action = SignUpActionEnum.SIGNUP }) => {
   ) : (
     <Form defaultValue={''} onSubmit={(e) => e.preventDefault()}>
       <FLPBox display="flex" flexDirection="column" gap={5} onKeyUp={handleEnter}>
-        <FLPInput label={'Email:'} name="email" type="email" value={formInput.email} onChange={handleChangeFormInput} />
+        <FLPInput
+          label={'Email:'}
+          name="email"
+          type="email"
+          value={formInput.email}
+          error={sendMagicLink && error}
+          onChange={handleChangeFormInput}
+        />
         {!sendMagicLink && (
           <FLPInput
             label={'Password:'}
@@ -77,7 +89,7 @@ const SignUp: FC<SignUpProps> = ({ action = SignUpActionEnum.SIGNUP }) => {
         )}
         <FLPBox display="flex" flexDirection="column" justifyContent="center" alignItems="center" gap={4}>
           {isUserRegistered ? <FLPText>{t('clickAgainToLogIn')}</FLPText> : null}
-          <FLPButton onClick={handleSubmit} type="submit">
+          <FLPButton onClick={handleSubmit} type="submit" isDisabled={isSubmitDisabled}>
             {submitButtonText}
           </FLPButton>
           {isShowLogin && (
