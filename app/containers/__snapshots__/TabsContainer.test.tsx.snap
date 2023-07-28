@@ -99,6 +99,7 @@ exports[`TabsContainer > renders correctly 1`] = `
         data-ownedby="tabs::r0::list"
         data-part="content"
         data-scope="tabs"
+        data-selected=""
         id="tabs::r0::content-tab1"
         role="tabpanel"
         tabindex="0"
