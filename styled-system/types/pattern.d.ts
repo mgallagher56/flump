@@ -40,14 +40,7 @@ export type PatternConfig<T extends PatternProperties = PatternProperties> = {
   /**
    * The jsx element name this pattern will generate.
    */
-  jsxName?: string
-  /**
-   * The jsx elements to track for this pattern. Can be string or Regexp.
-   *
-   * @default capitalize(pattern.name)
-   * @example ['Button', 'Link', /Button$/]
-   */
-  jsx?: Array<string | RegExp>
+  jsx?: string
   /**
    * Whether to only generate types for the specified properties.
    * This will disallow css properties
