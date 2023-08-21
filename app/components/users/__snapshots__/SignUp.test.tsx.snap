@@ -83,7 +83,6 @@ exports[`<SignUp /> > should render as expected 1`] = `
       >
         <button
           class="chakra-button css-4xx2wk"
-          id="pressable::r2:"
           type="submit"
         >
           signUp

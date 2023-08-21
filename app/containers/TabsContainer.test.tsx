@@ -25,8 +25,7 @@ const mockTabData: TabData[] = [
   }
 ];
 
-const ariaSelectedValue = (tab: HTMLElement): string => tab['_attributes']['aria-selected'].value;
-
+const ariaSelectedValue = (tab: HTMLElement): string => tab['attributes']?.['aria-selected']?.value;
 describe('TabsContainer', () => {
   test('renders correctly', () => {
     const { container } = render(<TabsContainer data={mockTabData} />);
