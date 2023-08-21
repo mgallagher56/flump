@@ -54,6 +54,7 @@ export default defineConfig(({ mode }) => ({
       lines: 100,
       provider: 'v8',
       reporter: ['text', 'html', 'lcov', 'clover', 'json', 'json-summary'],
+      reportOnFailure: true,
       statements: 100,
       thresholdAutoUpdate: true
     },

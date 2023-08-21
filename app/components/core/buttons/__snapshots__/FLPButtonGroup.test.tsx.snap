@@ -9,14 +9,12 @@ exports[`FLPButtonGroup > renders as expected 1`] = `
   >
     <button
       class="chakra-button css-1fysbuj"
-      id="pressable::r0:"
       type="button"
     >
       Button 1
     </button>
     <button
       class="chakra-button css-1fysbuj"
-      id="pressable::r1:"
       type="button"
     >
       Button 2
