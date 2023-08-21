@@ -16,5 +16,3 @@ export * from './wrap.js';
 export * from './container.js';
 export * from './divider.js';
 export * from './float.js';
-export * from './bleed.js';
-export * from './visually-hidden.js';
