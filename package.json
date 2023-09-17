@@ -141,7 +141,7 @@
     "eslint-plugin-no-relative-import-paths": "1.5.2",
     "eslint": "8.48.0",
     "eslint-plugin-sonarjs": "0.21.0",
-    "happy-dom": "10.11.0",
+    "happy-dom": "11.2.0",
     "husky": "8.0.3",
     "install": "0.13.0",
     "lint-staged": "14.0.1",
