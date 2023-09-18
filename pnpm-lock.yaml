@@ -146,8 +146,8 @@ devDependencies:
     specifier: 1.19.3
     version: 1.19.3(eslint@8.48.0)(react@18.2.0)(typescript@5.2.2)
   '@testing-library/cypress':
-    specifier: 9.0.0
-    version: 9.0.0(cypress@12.17.4)
+    specifier: 10.0.1
+    version: 10.0.1(cypress@12.17.4)
   '@testing-library/dom':
     specifier: 9.3.1
     version: 9.3.1
@@ -5243,14 +5243,14 @@ packages:
       defer-to-connect: 2.0.1
     dev: true
 
-  /@testing-library/cypress@9.0.0(cypress@12.17.4):
-    resolution: {integrity: sha512-c1XiCGeHGGTWn0LAU12sFUfoX3qfId5gcSE2yHode+vsyHDWraxDPALjVnHd4/Fa3j4KBcc5k++Ccy6A9qnkMA==}
+  /@testing-library/cypress@10.0.1(cypress@12.17.4):
+    resolution: {integrity: sha512-e8uswjTZIBhaIXjzEcrQQ8nHRWHgZH7XBxKuIWxZ/T7FxfWhCR48nFhUX5nfPizjVOKSThEfOSv67jquc1ASkw==}
     engines: {node: '>=12', npm: '>=6'}
     peerDependencies:
-      cypress: ^12.0.0
+      cypress: ^12.0.0 || ^13.0.0
     dependencies:
-      '@babel/runtime': 7.21.5
-      '@testing-library/dom': 8.20.0
+      '@babel/runtime': 7.22.5
+      '@testing-library/dom': 9.3.1
       cypress: 12.17.4
     dev: true
 
