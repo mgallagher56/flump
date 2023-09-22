@@ -17,6 +17,7 @@ exports[`<AccountsContainer /> > should render as expected when accounts exist 1
       class="chakra-button css-4xx2wk"
       data-part="trigger"
       data-scope="dialog"
+      data-state="closed"
       id="dialog::r2::trigger"
       type="button"
     >
@@ -96,6 +97,7 @@ exports[`<AccountsContainer /> > should render as expected when no accounts exis
       class="chakra-button css-4xx2wk"
       data-part="trigger"
       data-scope="dialog"
+      data-state="closed"
       id="dialog::r0::trigger"
       type="button"
     >

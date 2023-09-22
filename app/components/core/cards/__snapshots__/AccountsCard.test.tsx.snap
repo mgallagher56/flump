@@ -34,6 +34,7 @@ exports[`<AccountsCard /> > it renders an AccountsCard component with title as e
           class="chakra-button css-1fysbuj"
           data-part="trigger"
           data-scope="dialog"
+          data-state="closed"
           id="dialog::r0::trigger"
           type="button"
         >
@@ -41,7 +42,6 @@ exports[`<AccountsCard /> > it renders an AccountsCard component with title as e
         </button>
         <button
           class="chakra-button css-1fysbuj"
-          id="pressable::r2:"
           type="button"
         >
           remove
