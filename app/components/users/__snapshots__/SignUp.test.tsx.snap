@@ -83,6 +83,7 @@ exports[`<SignUp /> > should render as expected 1`] = `
       >
         <button
           class="chakra-button css-4xx2wk"
+          disabled=""
           type="submit"
         >
           signUp
