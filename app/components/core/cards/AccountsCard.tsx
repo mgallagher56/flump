@@ -5,6 +5,7 @@ import { useLoaderData } from '@remix-run/react';
 import { useTranslation } from 'react-i18next';
 import type { AccountTypeEnum } from '~/containers/accounts/utils';
 import AddEditAccountsDialogBtn from '~/containers/dialogs/addEditAccountsDialog.tsx/AddEditAccountsDialog';
+import type { loader } from '~/root';
 import supabase from '~/utils/supabase';
 
 import FLPButton from '../buttons/FLPButton';
@@ -21,14 +22,10 @@ interface AccountsCardProp extends Omit<CardProps, 'title'> {
 
 const AccountsCard: FC<AccountsCardProp> = ({ accountId, name, type }) => {
   const { t } = useTranslation();
-  const { user } = useLoaderData();
+  const { user } = useLoaderData<typeof loader>();
 
   const handleRemoveAccount = useCallback(async () => {
-    await supabase
-      .from('accounts')
-      .delete()
-      .eq('user_id', user.id)
-      .eq('id', accountId);
+    await supabase.from('accounts').delete().eq('user_id', user.id).eq('id', accountId);
   }, [accountId, user.id]);
 
   return (

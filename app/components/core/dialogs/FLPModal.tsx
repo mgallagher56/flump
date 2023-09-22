@@ -1,5 +1,5 @@
 import { cloneElement, useCallback, useId } from 'react';
-import type { FC, ReactElement } from 'react';
+import type { FC, MouseEvent, MouseEventHandler, ReactElement } from 'react';
 
 import {
   Modal,
@@ -28,7 +28,7 @@ interface FLPModalProps {
   content: ReactElement;
   isDisabled?: boolean;
   title: string;
-  onConfirm: (e) => Promise<void>;
+  onConfirm: (e: unknown) => Promise<void>;
 }
 
 const FLPModal: FC<FLPModalProps> = ({
@@ -57,10 +57,10 @@ const FLPModal: FC<FLPModalProps> = ({
   });
 
   const handleOnConfirm = useCallback(
-    (event) => {
+    (event: MouseEventHandler<HTMLButtonElement>) => {
       onConfirm(event);
       send('CONFIRM');
-      mergedProps.closeTriggerProps.onClick(event);
+      mergedProps.closeTriggerProps.onClick(event as MouseEvent<HTMLButtonElement, MouseEvent>);
     },
     [mergedProps.closeTriggerProps, onConfirm, send]
   );

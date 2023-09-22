@@ -6,7 +6,7 @@ import FLPButton from '~/components/core/buttons/FLPButton';
 import FLPModal from '~/components/core/dialogs/FLPModal';
 import FLPInput from '~/components/core/input/FLPInput';
 import FLPBox from '~/components/core/structure/FLPBox';
-import type { loader } from '~/routes/app.accounts';
+import type { loader } from '~/root';
 import supabase from '~/utils/supabase';
 
 interface AddEditAccountsDialogBtnProp {
@@ -17,10 +17,18 @@ interface AddEditAccountsDialogBtnProp {
 const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({ accountId, isEditAccount }) => {
   const { user } = useLoaderData<typeof loader>();
   const { t } = useTranslation();
-  const [formInput, setFormInput] = useState({ name: '', type: '' });
+  const [formInput, setFormInput] = useState<{
+    name: string;
+    type: string;
+  }>({ name: '', type: '' });
 
   const onChangeFormInput = useCallback(
-    (event) => {
+    (event: {
+      target: {
+        name: string;
+        value: string;
+      };
+    }) => {
       const { name, value } = event.target;
       setFormInput((prevState) => ({ ...prevState, [name]: value }));
     },
@@ -28,7 +36,7 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({ accountId,
   );
 
   const onAddAccount = useCallback(
-    async (e) => {
+    async (e: { preventDefault: () => void }) => {
       e.preventDefault();
       const { name, type } = formInput;
       const { data } = await supabase.from('accounts').insert([{ name, type, user_id: user?.id }]);
@@ -38,7 +46,7 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({ accountId,
   );
 
   const onEditAccount = useCallback(
-    async (e) => {
+    async (e: { preventDefault: () => void }) => {
       e.preventDefault();
       const newName = formInput.name;
       const newType = formInput.type;
