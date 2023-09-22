@@ -1,7 +1,8 @@
 /* eslint-disable */
 import type { SystemStyleObject, ConditionalValue } from '../types'
-import type { PropertyValue } from '../types/prop-type'
 import type { Properties } from '../types/csstype'
+import type { PropertyValue } from '../types/prop-type'
+import type { DistributiveOmit } from '../types/system-types'
 import type { Tokens } from '../tokens'
 
 export type FlexProperties = {
@@ -15,7 +16,12 @@ export type FlexProperties = {
 }
 
 
-type FlexOptions = FlexProperties & Omit<SystemStyleObject, keyof FlexProperties >
+type FlexStyles = FlexProperties & DistributiveOmit<SystemStyleObject, keyof FlexProperties >
+
+interface FlexPatternFn {
+  (styles?: FlexStyles): string
+  raw: (styles: FlexStyles) => SystemStyleObject
+}
 
 
-export declare function flex(options?: FlexOptions): string
+export declare const flex: FlexPatternFn;
