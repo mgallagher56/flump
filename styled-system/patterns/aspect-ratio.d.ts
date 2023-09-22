@@ -1,7 +1,8 @@
 /* eslint-disable */
 import type { SystemStyleObject, ConditionalValue } from '../types'
-import type { PropertyValue } from '../types/prop-type'
 import type { Properties } from '../types/csstype'
+import type { PropertyValue } from '../types/prop-type'
+import type { DistributiveOmit } from '../types/system-types'
 import type { Tokens } from '../tokens'
 
 export type AspectRatioProperties = {
@@ -9,7 +10,12 @@ export type AspectRatioProperties = {
 }
 
 
-type AspectRatioOptions = AspectRatioProperties & Omit<SystemStyleObject, keyof AspectRatioProperties | 'aspectRatio'>
+type AspectRatioStyles = AspectRatioProperties & DistributiveOmit<SystemStyleObject, keyof AspectRatioProperties | 'aspectRatio'>
+
+interface AspectRatioPatternFn {
+  (styles?: AspectRatioStyles): string
+  raw: (styles: AspectRatioStyles) => SystemStyleObject
+}
 
 
-export declare function aspectRatio(options?: AspectRatioOptions): string
+export declare const aspectRatio: AspectRatioPatternFn;
