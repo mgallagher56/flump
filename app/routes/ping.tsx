@@ -14,7 +14,7 @@ const pingServer = async () => {
   }
 };
 
-export async function loader() {
+export function loader() {
   return new Response(null, {
     status: 200,
     headers: {
@@ -22,7 +22,7 @@ export async function loader() {
     }
   });
 }
-export async function action() {
+export function action() {
   return {
     title: 'Ping Test',
     component: <Index />
