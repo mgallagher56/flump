@@ -43,7 +43,6 @@ describe('<AddAccountDialogBtn', () => {
   expect(triggerBtn).toBeDefined();
   fireEvent.click(triggerBtn);
   test('should render add account dialog when trigger button is clicked', async () => {
-    await waitFor(() => expect(baseElement).toMatchSnapshot(), { timeout: 1000 });
     await waitFor(() => {
       const nameInput = getByLabelText('Name');
       const accountTypeInput = getByLabelText('Account Type');
@@ -60,5 +59,6 @@ describe('<AddAccountDialogBtn', () => {
       fireEvent.click(addAccountBtn);
       expect(mocks.mockFrom).toBeCalled();
     });
+    expect(baseElement).toMatchSnapshot();
   });
 });
