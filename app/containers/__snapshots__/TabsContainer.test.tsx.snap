@@ -3,7 +3,7 @@
 exports[`TabsContainer > renders correctly 1`] = `
 <div>
   <div
-    class="chakra-tabs css-0"
+    class="chakra-tabs css-79elbk"
     data-orientation="horizontal"
     data-part="root"
     data-scope="tabs"
@@ -16,6 +16,7 @@ exports[`TabsContainer > renders correctly 1`] = `
       data-orientation="horizontal"
       data-part="list"
       data-scope="tabs"
+      dir="ltr"
       id="tabs::r0::list"
       role="tablist"
     >
@@ -29,6 +30,7 @@ exports[`TabsContainer > renders correctly 1`] = `
         data-scope="tabs"
         data-selected=""
         data-value="tab1"
+        dir="ltr"
         id="tabs::r0::trigger-tab1"
         role="tab"
         tabindex="0"
@@ -50,6 +52,7 @@ exports[`TabsContainer > renders correctly 1`] = `
         data-part="trigger"
         data-scope="tabs"
         data-value="tab2"
+        dir="ltr"
         id="tabs::r0::trigger-tab2"
         role="tab"
         tabindex="1"
@@ -71,6 +74,7 @@ exports[`TabsContainer > renders correctly 1`] = `
         data-part="trigger"
         data-scope="tabs"
         data-value="tab3"
+        dir="ltr"
         id="tabs::r0::trigger-tab3"
         role="tab"
         tabindex="2"
@@ -96,10 +100,12 @@ exports[`TabsContainer > renders correctly 1`] = `
     >
       <div
         aria-labelledby="tabs::r0::trigger-tab1"
+        data-orientation="horizontal"
         data-ownedby="tabs::r0::list"
         data-part="content"
         data-scope="tabs"
         data-selected=""
+        dir="ltr"
         id="tabs::r0::content-tab1"
         role="tabpanel"
         tabindex="0"
@@ -110,9 +116,11 @@ exports[`TabsContainer > renders correctly 1`] = `
       </div>
       <div
         aria-labelledby="tabs::r0::trigger-tab2"
+        data-orientation="horizontal"
         data-ownedby="tabs::r0::list"
         data-part="content"
         data-scope="tabs"
+        dir="ltr"
         hidden=""
         id="tabs::r0::content-tab2"
         role="tabpanel"
@@ -124,9 +132,11 @@ exports[`TabsContainer > renders correctly 1`] = `
       </div>
       <div
         aria-labelledby="tabs::r0::trigger-tab3"
+        data-orientation="horizontal"
         data-ownedby="tabs::r0::list"
         data-part="content"
         data-scope="tabs"
+        dir="ltr"
         hidden=""
         id="tabs::r0::content-tab3"
         role="tabpanel"

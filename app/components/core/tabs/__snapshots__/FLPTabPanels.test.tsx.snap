@@ -3,7 +3,7 @@
 exports[`FLPTabList > renders correctly 1`] = `
 <div>
   <div
-    class="chakra-tabs css-0"
+    class="chakra-tabs css-79elbk"
   >
     <div
       class="chakra-tabs__tab-panels css-8atqhb"
