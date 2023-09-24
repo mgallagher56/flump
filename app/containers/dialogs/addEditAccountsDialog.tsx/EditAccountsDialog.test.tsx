@@ -43,11 +43,11 @@ describe('<EditAccountDialogBtn', () => {
   expect(triggerBtn).toBeDefined();
   fireEvent.click(triggerBtn);
   test('should render edit account dialog when trigger button is clicked', async () => {
-    await waitFor(() => expect(baseElement).toMatchSnapshot(), { timeout: 1000 });
     await waitFor(() => {
       const addAccountBtn = getAllByText('save')[0];
       fireEvent.click(addAccountBtn);
       expect(mocks.mockFrom).toBeCalled();
     });
+    expect(baseElement).toMatchSnapshot();
   });
 });

@@ -25,11 +25,11 @@ describe('<FLPModal />', () => {
   const triggerBtn = getByText('Trigger');
   fireEvent.click(triggerBtn);
   it('renders by default as expected', async () => {
-    await waitFor(() => expect(baseElement).toMatchSnapshot());
     await waitFor(() => {
       const confirmButton = getByText('Confirm');
       fireEvent.click(confirmButton);
       expect(mocks.mockOnConfirm).toHaveBeenCalled();
     });
+    expect(baseElement).toMatchSnapshot();
   });
 });
