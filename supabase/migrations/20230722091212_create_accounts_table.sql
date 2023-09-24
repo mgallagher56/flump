@@ -3,6 +3,6 @@ create table accounts (
   created_at timestamp with time zone not null default now(),
   name varchar(50) not null,
   type varchar(50) not null,
-  user_id uuid not null references users(id) on delete cascade,
+  user_id uuid not null references auth.users(id) on delete cascade,
   primary key (id)
 )
