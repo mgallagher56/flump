@@ -77,7 +77,7 @@
     "@remix-run/testing": "1.19.3",
     "@supabase/auth-helpers-remix": "0.2.2",
     "@supabase/supabase-js": "2.36.0",
-    "@zag-js/dialog": "0.16.0",
+    "@zag-js/dialog": "0.21.0",
     "@zag-js/editable": "0.21.0",
     "@zag-js/pressable": "0.21.0",
     "@zag-js/react": "0.21.0",
