@@ -55,7 +55,7 @@ jobs:
       - name: Checkout your repository using git
         uses: actions/checkout@v4
       - name: Install, build, and upload your site output
-        uses: withastro/action@v0
+        uses: withastro/action@v1
         with:
           path: ./starlight
           package-manager: pnpm
