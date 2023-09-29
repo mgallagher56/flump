@@ -1,7 +1,7 @@
 import { CacheProvider as EmotionCacheProvider } from '@emotion/react';
 import createEmotionServer from '@emotion/server/create-instance';
 import type { EntryContext } from '@remix-run/node';
-import { Response } from '@remix-run/node';
+import { createReadableStreamFromReadable } from '@remix-run/node';
 import { RemixServer } from '@remix-run/react';
 import { createInstance } from 'i18next';
 import Backend from 'i18next-fs-backend';
@@ -54,13 +54,13 @@ export default async function handleRequest(
           const reactBody = new PassThrough();
           const emotionServer = createEmotionServer(emotionCache);
 
-          const bodyWithStyles = emotionServer.renderStylesToNodeStream();
+          const bodyWithStyles = emotionServer.renderStylesToNodeStream() as PassThrough;
           reactBody.pipe(bodyWithStyles);
 
           responseHeaders.set('Content-Type', 'text/html');
 
           resolve(
-            new Response(bodyWithStyles, {
+            new Response(createReadableStreamFromReadable(bodyWithStyles), {
               headers: responseHeaders,
               status: didError ? 500 : responseStatusCode
             })
