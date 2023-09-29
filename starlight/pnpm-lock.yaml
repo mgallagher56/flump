@@ -9,8 +9,8 @@ dependencies:
     specifier: 3.0.2
     version: 3.0.2(@types/react-dom@18.2.7)(@types/react@18.2.22)(react-dom@18.2.0)(react@18.2.0)
   '@astrojs/starlight':
-    specifier: 0.10.1
-    version: 0.10.1(astro@3.1.4)
+    specifier: 0.10.2
+    version: 0.10.2(astro@3.1.4)
   '@types/react':
     specifier: 18.2.22
     version: 18.2.22
@@ -129,8 +129,8 @@ packages:
       zod: 3.21.1
     dev: false
 
-  /@astrojs/starlight@0.10.1(astro@3.1.4):
-    resolution: {integrity: sha512-2Li88ysd2ZD5p6MzmhGuL8JDd5tEWylUNGgTIWFqWhov64KmBKB2JrS07GQ1zkpV3FXF6IXm34v+lKU3sxe/Rg==}
+  /@astrojs/starlight@0.10.2(astro@3.1.4):
+    resolution: {integrity: sha512-MQRsJlFTYMDvSlDMO5FlyOZGZI6EYoXBxMVV8+bIFyLuds+CyiE5uA16kynViHXaLZoV+iM/0cxTWN13xbZ8eQ==}
     peerDependencies:
       astro: ^3.0.0
     dependencies:
@@ -990,7 +990,7 @@ packages:
   /@types/hast@2.3.4:
     resolution: {integrity: sha512-wLEm0QvaoawEDoTRwzTXp4b4jpwiJDvR5KMnFnVodm3scufTlBOWRD6N1OBf9TZMhjlNsSfcO5V+7AF4+Vy+9g==}
     dependencies:
-      '@types/unist': 2.0.6
+      '@types/unist': 3.0.0
     dev: false
 
   /@types/json5@0.0.30:
@@ -1000,7 +1000,7 @@ packages:
   /@types/mdast@3.0.11:
     resolution: {integrity: sha512-Y/uImid8aAwrEA24/1tcRZwpxX3pIFTSilcNDKSPn+Y2iDywSEachzRuvgAYYLR3wpGXAsMbv5lvKLDZLeYPAw==}
     dependencies:
-      '@types/unist': 2.0.6
+      '@types/unist': 3.0.0
     dev: false
 
   /@types/mdast@4.0.0:
@@ -1020,7 +1020,7 @@ packages:
   /@types/nlcst@1.0.0:
     resolution: {integrity: sha512-3TGCfOcy8R8mMQ4CNSNOe3PG66HttvjcLzCoOpvXvDtfWOTi+uT/rxeOKm/qEwbM4SNe1O/PjdiBK2YcTjU4OQ==}
     dependencies:
-      '@types/unist': 2.0.6
+      '@types/unist': 3.0.0
     dev: false
 
   /@types/node@17.0.45:
@@ -3376,14 +3376,6 @@ packages:
       unified: 10.1.2
     dev: false
 
-  /rehype-stringify@9.0.3:
-    resolution: {integrity: sha512-kWiZ1bgyWlgOxpqD5HnxShKAdXtb2IUljn3hQAhySeak6IOQPPt6DeGnsIh4ixm7yKJWzm8TXFuC/lPfcWHJqw==}
-    dependencies:
-      '@types/hast': 2.3.4
-      hast-util-to-html: 8.0.4
-      unified: 10.1.2
-    dev: false
-
   /rehype-stringify@9.0.4:
     resolution: {integrity: sha512-Uk5xu1YKdqobe5XpSskwPvo1XeHUUucWEQSl8hTrXt5selvca1e8K1EZ37E6YoZ4BT8BCqCdVfQW7OfHfthtVQ==}
     dependencies:
@@ -3397,7 +3389,7 @@ packages:
     dependencies:
       '@types/hast': 2.3.4
       rehype-parse: 8.0.4
-      rehype-stringify: 9.0.3
+      rehype-stringify: 9.0.4
       unified: 10.1.2
     dev: false
 
