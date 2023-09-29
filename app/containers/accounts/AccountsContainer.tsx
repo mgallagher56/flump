@@ -36,7 +36,7 @@ const AccountsContainer: FC = () => {
             )}
             <FLPBox display="flex" flexWrap="wrap" gap={5}>
               {accounts.map(
-                ({ name, id, type }) =>
+                ({ name, id, type }: { name?: string; id?: string; type?: string }) =>
                   type === accountType && <AccountsCard key={id} accountId={id} name={name} type={type} />
               )}
             </FLPBox>
