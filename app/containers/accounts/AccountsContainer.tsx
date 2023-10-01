@@ -11,12 +11,12 @@ import type { loader } from '~/routes/app.accounts';
 import AddEditAccountsDialogBtn from '../dialogs/addEditAccountsDialog.tsx/AddEditAccountsDialog';
 import { AccountTypeEnum, isAccountTypeValid } from './utils';
 
-const { CURRENT, SAVING, MORTGAGE, LOAN, OWED } = AccountTypeEnum;
+const { CURRENT, SAVING, MORTGAGE, CREDIT_CARD, LOAN, OWED } = AccountTypeEnum;
 
 const AccountsContainer: FC = () => {
   const { t } = useTranslation();
   const { accounts } = useLoaderData<typeof loader>();
-  const accountTypeArr = useMemo(() => [CURRENT, SAVING, MORTGAGE, LOAN, OWED], []);
+  const accountTypeArr = useMemo(() => [CURRENT, SAVING, CREDIT_CARD, MORTGAGE, LOAN, OWED], []);
 
   return (
     <>
@@ -36,7 +36,7 @@ const AccountsContainer: FC = () => {
             )}
             <FLPBox display="flex" flexWrap="wrap" gap={5}>
               {accounts.map(
-                ({ name, id, type }: { name?: string; id?: string; type?: string }) =>
+                ({ name, id, type }: { name?: string; id?: string; type?: AccountTypeEnum | string }) =>
                   type === accountType && <AccountsCard key={id} accountId={id} name={name} type={type} />
               )}
             </FLPBox>

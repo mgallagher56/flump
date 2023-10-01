@@ -9,6 +9,7 @@ import AddEditAccountsDialogBtn from './AddEditAccountsDialog';
 
 const mocks = vi.hoisted(() => ({
   mockUseLoaderData: vi.fn(),
+  mockUseRevalidator: vi.fn(() => ({revalidate: vi.fn()})),
   mockFrom: vi.fn(() => ({
     insert: () => ({
       eq: () => ({
@@ -23,6 +24,7 @@ vi.mock('@remix-run/react', async () => {
   return {
     ...actual,
     useLoaderData: mocks.mockUseLoaderData,
+    useRevalidator: mocks.mockUseRevalidator,
     Form: ({ children }: { children: ReactNode }) => <form>{children}</form>,
     useSubmit: () => ({ onSubmit: vi.fn() })
   };

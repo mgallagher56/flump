@@ -8,7 +8,8 @@ import mockAccounts from '__mocks__/accounts';
 import AccountsContainer from './AccountsContainer';
 
 const mocks = vi.hoisted(() => ({
-  mockUseLoaderData: vi.fn()
+  mockUseLoaderData: vi.fn(),
+  mockUseRevalidator: vi.fn(() => ({revalidate: vi.fn()})),
 }));
 
 vi.mock('@remix-run/react', async () => {
@@ -16,6 +17,7 @@ vi.mock('@remix-run/react', async () => {
   return {
     ...actual,
     useLoaderData: mocks.mockUseLoaderData,
+    useRevalidator: mocks.mockUseRevalidator,
     Form: ({ children }: { children: ReactNode }) => <form>{children}</form>,
     useSubmit: () => ({ onSubmit: vi.fn() })
   };

@@ -1,4 +1,4 @@
-import { cloneElement, type FC, type ReactElement, useCallback } from 'react';
+import { type FC, type ReactElement, useCallback } from 'react';
 
 import type { ModalProps } from '@chakra-ui/react';
 import {
@@ -8,40 +8,46 @@ import {
   ModalContent,
   ModalFooter,
   ModalHeader,
-  ModalOverlay,
-  useDisclosure
+  ModalOverlay
 } from '@chakra-ui/react';
 import { useTranslation } from 'react-i18next';
 
 import FLPButton from '../buttons/FLPButton';
 import FLPButtonGroup from '../buttons/FLPButtonGroup';
 
-interface FLPModalProps extends Omit<ModalProps, 'isOpen' | 'onClose'> {
+interface FLPModalProps extends ModalProps {
   triggerBtn: ReactElement;
   confirmButton?: {
     text: string;
     colorScheme?: string;
     variant?: string;
+    id?: string;
   };
   disabled?: boolean;
   title: string;
   onConfirm: () => Promise<void>;
 }
 
-const FLPModal: FC<FLPModalProps> = ({ triggerBtn, confirmButton, disabled, title, onConfirm, ...props }) => {
+const FLPModal: FC<FLPModalProps> = ({
+  triggerBtn,
+  confirmButton,
+  disabled,
+  title,
+  isOpen,
+  onClose,
+  onConfirm,
+  ...props
+}) => {
   const { t } = useTranslation();
-  const { isOpen, onOpen, onClose } = useDisclosure();
 
   const handleOnConfirm = useCallback(() => {
     onConfirm();
     onClose();
   }, [onClose, onConfirm]);
 
-  const triggerBtnClone = cloneElement(triggerBtn, { onClick: onOpen });
-
   return (
     <>
-      {triggerBtnClone}
+      {triggerBtn}
       <Modal isOpen={isOpen} onClose={onClose} isCentered>
         <ModalOverlay />
         <ModalContent>
@@ -57,6 +63,8 @@ const FLPModal: FC<FLPModalProps> = ({ triggerBtn, confirmButton, disabled, titl
                 <FLPButton
                   colorScheme={confirmButton?.colorScheme}
                   disabled={disabled}
+                  form={confirmButton?.id}
+                  type="submit"
                   variant={confirmButton?.variant}
                   onClick={handleOnConfirm}
                 >

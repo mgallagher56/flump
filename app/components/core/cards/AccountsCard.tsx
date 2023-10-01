@@ -1,7 +1,7 @@
 import { type FC, useCallback } from 'react';
 
 import type { CardProps } from '@chakra-ui/react';
-import { useLoaderData } from '@remix-run/react';
+import { useLoaderData, useRevalidator } from '@remix-run/react';
 import { useTranslation } from 'react-i18next';
 import type { AccountTypeEnum } from '~/containers/accounts/utils';
 import AddEditAccountsDialogBtn from '~/containers/dialogs/addEditAccountsDialog.tsx/AddEditAccountsDialog';
@@ -23,10 +23,12 @@ interface AccountsCardProp extends Omit<CardProps, 'title'> {
 const AccountsCard: FC<AccountsCardProp> = ({ accountId, name, type }) => {
   const { t } = useTranslation();
   const { user } = useLoaderData<typeof loader>();
+  const { revalidate } = useRevalidator();
 
   const handleRemoveAccount = useCallback(async () => {
     await supabase.from('accounts').delete().eq('user_id', user.id).eq('id', accountId);
-  }, [accountId, user.id]);
+    revalidate();
+  }, [accountId, revalidate, user.id]);
 
   return (
     <FLPCard

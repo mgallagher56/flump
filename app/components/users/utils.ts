@@ -12,6 +12,12 @@ export const getSignUpButtonText = (t: TFunction, isShowLogin: boolean, isMagicL
   return t(SignUpActionEnum.SIGNUP);
 };
 
+export const getInfoMessage = (t: TFunction, isUserRegistered: boolean, isMagicLink: boolean) => {
+  if (isMagicLink) return t('magicLinkSent');
+  if (isUserRegistered) return t('clickAgainToLogIn');
+  return null;
+}
+
 export const getSubmitUserAuthAction = async ({
   supabaseClient,
   isShowLogin,

@@ -1,4 +1,4 @@
-import type { ChangeEvent, FC, KeyboardEvent } from 'react';
+import type { ChangeEvent, FC } from 'react';
 import { useCallback, useEffect, useState } from 'react';
 
 import { Form } from '@remix-run/react';
@@ -11,7 +11,7 @@ import FLPButton from '../core/buttons/FLPButton';
 import FLPInput from '../core/inputs/input/FLPInput';
 import FLPBox from '../core/structure/FLPBox';
 import FLPText from '../core/typography/FLPText';
-import { getSignUpButtonText, getSubmitUserAuthAction, SignUpActionEnum } from './utils';
+import { getInfoMessage, getSignUpButtonText, getSubmitUserAuthAction, SignUpActionEnum } from './utils';
 
 const { USER_ALREADY_REGISTERED } = AuthErrorEnums;
 
@@ -23,11 +23,12 @@ const SignUp: FC<SignUpProps> = ({ action = SignUpActionEnum.SIGNUP }) => {
   const { t } = useTranslation();
 
   const [userData, setUserData] = useState<User>(null);
+  const [infoMessage, setInfoMessage] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [sendMagicLink, setSendMagicLink] = useState<boolean>(false);
   const [isSubmitDisabled, setIsSubmitdisabled] = useState<boolean>(false);
   const [formInput, setFormInput] = useState({ email: '', password: '' });
-  const isUserRegistered = error === USER_ALREADY_REGISTERED;
+  const [isUserRegistered, setIsUserRegistered] = useState<boolean>(false);
   const isShowLogin = action === SignUpActionEnum.LOGIN || isUserRegistered;
 
   const submitButtonText = getSignUpButtonText(t, isShowLogin, sendMagicLink);
@@ -50,25 +51,18 @@ const SignUp: FC<SignUpProps> = ({ action = SignUpActionEnum.SIGNUP }) => {
     const { data, error } = await submitAction;
     setUserData(data?.user);
     setError(error?.message);
+    setIsUserRegistered(error?.message === USER_ALREADY_REGISTERED);
+    setInfoMessage(getInfoMessage(t, error?.message === USER_ALREADY_REGISTERED, sendMagicLink));
     console.log({ data, error });
-  }, [sendMagicLink, formInput, isShowLogin]);
-
-  const handleEnter = useCallback(
-    (event: KeyboardEvent<HTMLDivElement>) => {
-      if (event.key === 'Enter') {
-        handleSubmit();
-      }
-    },
-    [handleSubmit]
-  );
+  }, [formInput, isShowLogin, sendMagicLink, t]);
 
   return userData?.confirmation_sent_at ? (
     <FLPBox display="flex" flexDirection="column" gap={5}>
       <FLPText>{t('confirmEmailMsg')}</FLPText>
     </FLPBox>
   ) : (
-    <Form defaultValue={''} onSubmit={(e) => e.preventDefault()}>
-      <FLPBox display="flex" flexDirection="column" gap={5} onKeyUp={handleEnter}>
+    <Form defaultValue={''} onSubmit={handleSubmit}>
+      <FLPBox display="flex" flexDirection="column" gap={5}>
         <FLPInput
           label={'Email:'}
           name="email"
@@ -88,12 +82,19 @@ const SignUp: FC<SignUpProps> = ({ action = SignUpActionEnum.SIGNUP }) => {
           />
         )}
         <FLPBox display="flex" flexDirection="column" justifyContent="center" alignItems="center" gap={4}>
-          {isUserRegistered ? <FLPText>{t('clickAgainToLogIn')}</FLPText> : null}
+          {infoMessage}
           <FLPButton onClick={handleSubmit} type="submit" disabled={isSubmitDisabled}>
             {submitButtonText}
           </FLPButton>
           {isShowLogin && (
-            <FLPButton variant="ghost" onClick={() => setSendMagicLink((prev) => !prev)}>
+            <FLPButton
+              variant="ghost"
+              onClick={() => {
+                setError('');
+                setInfoMessage('');
+                setSendMagicLink((prev) => !prev);
+              }}
+            >
               {t(sendMagicLink ? 'loginWithPassword' : 'loginWithMagicLink')}
             </FLPButton>
           )}
