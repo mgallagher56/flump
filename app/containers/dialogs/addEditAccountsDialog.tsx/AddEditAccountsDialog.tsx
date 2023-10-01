@@ -19,8 +19,11 @@ interface AddEditAccountsDialogBtnProp {
 const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({ accountId, isEditAccount }) => {
   const { accounts = [], user } = useLoaderData<typeof loader>();
   const { t } = useTranslation();
-  const selectedAccount = useMemo(
-    () => accounts?.find((account) => account.id === accountId),
+  const selectedAccount: {
+    name?: string;
+    type?: string;
+  } = useMemo(
+    () => accounts?.find((account: { id?: string; name?: string; type?: string }) => account.id === accountId),
     [accounts, accountId]
   ) ?? { name: '', type: '' };
   const [formInput, setFormInput] = useState<{
