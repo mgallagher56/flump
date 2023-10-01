@@ -93,13 +93,7 @@ export const handle = {
   i18n: ['common']
 };
 
-export const meta: MetaFunction = (): { name?: string; content?: string; title?: string }[] => [
-  {
-    name: 'viewport',
-    content: 'width=device-width,initial-scale=1'
-  },
-  { title: 'flump' }
-];
+export const meta: MetaFunction = (): { name?: string; content?: string; title?: string }[] => [{ title: 'Flump' }];
 
 export const links: LinksFunction = (): {
   rel: string;
@@ -131,6 +125,7 @@ const Document = withEmotionCache(
   ({ children, cookie, colorMode, env, locale }: DocumentProps, emotionCache: EmotionCache): ReactElement => {
     const serverStyleData = useContext(ServerStyleContext);
     const clientStyleData = useContext(ClientStyleContext);
+    const { revalidate } = useRevalidator();
     const { i18n } = useTranslation();
 
     // Only executed on client
@@ -145,6 +140,7 @@ const Document = withEmotionCache(
       });
       // reset cache to reapply global styles
       clientStyleData?.reset();
+      revalidate();
     }, [clientStyleData]);
 
     return (
@@ -158,6 +154,7 @@ const Document = withEmotionCache(
       >
         <head>
           <meta charSet="utf-8" />
+          <meta name="viewport" content="width=device-width,initial-scale=1" />
           <Meta />
           <Links />
           {serverStyleData?.map(({ key, ids, css }) => (
