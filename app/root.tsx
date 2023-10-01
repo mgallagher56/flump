@@ -12,7 +12,7 @@ import {
 } from '@chakra-ui/react';
 import type { EmotionCache } from '@emotion/react';
 import { withEmotionCache } from '@emotion/react';
-import type { LinksFunction, TypedResponse, V2_MetaFunction } from '@remix-run/node';
+import type { LinksFunction, MetaFunction, TypedResponse } from '@remix-run/node';
 import { json } from '@remix-run/node';
 import {
   isRouteErrorResponse,
@@ -93,7 +93,7 @@ export const handle = {
   i18n: ['common']
 };
 
-export const meta: V2_MetaFunction = (): { name?: string; content?: string; title?: string }[] => [
+export const meta: MetaFunction = (): { name?: string; content?: string; title?: string }[] => [
   {
     name: 'viewport',
     content: 'width=device-width,initial-scale=1'

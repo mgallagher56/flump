@@ -28,14 +28,7 @@ exports[`<AccountsCard /> > it renders an AccountsCard component with title as e
         role="group"
       >
         <button
-          aria-controls="dialog::r0::content"
-          aria-expanded="false"
-          aria-haspopup="dialog"
           class="chakra-button css-1fysbuj"
-          data-part="trigger"
-          data-scope="dialog"
-          data-state="closed"
-          id="dialog::r0::trigger"
           type="button"
         >
           edit

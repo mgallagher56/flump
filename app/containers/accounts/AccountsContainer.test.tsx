@@ -38,12 +38,12 @@ describe('<AccountsContainer />', () => {
   });
 
   it('should call supabase functions to add an account', async () => {
-    const { getByText } = render(<AccountsContainer />);
-    const addAccountModalBtn = getByText('addAccount');
+    const { getAllByText } = render(<AccountsContainer />);
+    const addAccountModalBtn = getAllByText('addAccount')[0];
     expect(addAccountModalBtn).toBeDefined();
     fireEvent.click(addAccountModalBtn);
     await waitFor(() => {
-      expect(getByText('addAccount')).toBeDefined();
+      expect(getAllByText('addAccount')[0]).toBeDefined();
     });
   });
 });

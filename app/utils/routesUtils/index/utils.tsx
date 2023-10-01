@@ -14,7 +14,7 @@ export const getTabsData = (employees: Partial<Employee>[], t: TFunction): TabDa
   {
     label: t('featureNum', { num: 1 }),
     value: 'feature-1',
-    content: (
+    children: (
       <main>
         <FLPBox>
           <FLPHeading as="h1">{t('featureNum', { num: 1 })}</FLPHeading>
@@ -32,7 +32,7 @@ export const getTabsData = (employees: Partial<Employee>[], t: TFunction): TabDa
   {
     label: t('featureNum', { num: 2 }),
     value: 'feature 2',
-    content: (
+    children: (
       <main>
         <FLPBox>
           <FLPHeading as="h1">{t('featureNum', { num: 2 })}</FLPHeading>
@@ -43,7 +43,7 @@ export const getTabsData = (employees: Partial<Employee>[], t: TFunction): TabDa
   {
     label: t('featureNum', { num: 3 }),
     value: 'feature-3',
-    content: (
+    children: (
       <main>
         <FLPBox>
           <FLPHeading as="h1">{t('featureNum', { num: 3 })}</FLPHeading>

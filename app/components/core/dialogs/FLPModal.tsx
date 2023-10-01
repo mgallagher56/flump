@@ -1,6 +1,6 @@
-import { cloneElement, useCallback, useId } from 'react';
-import type { FC, MouseEvent, MouseEventHandler, ReactElement } from 'react';
+import { cloneElement, type FC, type ReactElement, useCallback } from 'react';
 
+import type { ModalProps } from '@chakra-ui/react';
 import {
   Modal,
   ModalBody,
@@ -8,105 +8,65 @@ import {
   ModalContent,
   ModalFooter,
   ModalHeader,
-  ModalOverlay
+  ModalOverlay,
+  useDisclosure
 } from '@chakra-ui/react';
-import * as dialog from '@zag-js/dialog';
-import { mergeProps, normalizeProps, useMachine } from '@zag-js/react';
 import { useTranslation } from 'react-i18next';
 
 import FLPButton from '../buttons/FLPButton';
 import FLPButtonGroup from '../buttons/FLPButtonGroup';
-import FLPBox from '../structure/FLPBox';
 
-interface FLPModalProps {
+interface FLPModalProps extends Omit<ModalProps, 'isOpen' | 'onClose'> {
   triggerBtn: ReactElement;
   confirmButton?: {
     text: string;
     colorScheme?: string;
     variant?: string;
   };
-  content: ReactElement;
-  isDisabled?: boolean;
+  disabled?: boolean;
   title: string;
-  onConfirm: (e: unknown) => Promise<void>;
+  onConfirm: () => Promise<void>;
 }
 
-const FLPModal: FC<FLPModalProps> = ({
-  triggerBtn,
-  confirmButton,
-  content,
-  isDisabled,
-  title,
-  onConfirm,
-  ...props
-}) => {
+const FLPModal: FC<FLPModalProps> = ({ triggerBtn, confirmButton, disabled, title, onConfirm, ...props }) => {
   const { t } = useTranslation();
-  const [state, send] = useMachine(dialog.machine({ id: useId() }));
+  const { isOpen, onOpen, onClose } = useDisclosure();
 
-  const api = dialog.connect(state, send, normalizeProps);
-  const mergedProps = mergeProps({
-    ...api,
-    ...props,
-    backdropProps: {
-      ...api.backdropProps,
-      onDrag: undefined,
-      onDragEnd: undefined,
-      onDragStart: undefined,
-      onAnimationStart: undefined
-    }
-  });
+  const handleOnConfirm = useCallback(() => {
+    onConfirm();
+    onClose();
+  }, [onClose, onConfirm]);
 
-  const handleOnConfirm = useCallback(
-    (event: MouseEventHandler<HTMLButtonElement>) => {
-      onConfirm(event);
-      send('CONFIRM');
-      mergedProps.closeTriggerProps.onClick(event as MouseEvent<HTMLButtonElement, MouseEvent>);
-    },
-    [mergedProps.closeTriggerProps, onConfirm, send]
-  );
-
-  const triggerButtonClone = cloneElement(triggerBtn, {
-    ...api.triggerProps
-  });
+  const triggerBtnClone = cloneElement(triggerBtn, { onClick: onOpen });
 
   return (
     <>
-      {triggerButtonClone}
-      {mergedProps.isOpen && (
-        <Modal isOpen={mergedProps.isOpen} onClose={mergedProps.close} isCentered>
-          <ModalOverlay
-            {...mergedProps.backdropProps}
-            onDrag={undefined}
-            onDragEnd={undefined}
-            onDragStart={undefined}
-            onAnimationStart={undefined}
-          />
-          <FLPBox {...mergedProps.containerProps}>
-            <ModalContent {...mergedProps.contentProps}>
-              <ModalHeader {...mergedProps.titleProps}>{title}</ModalHeader>
-              <ModalCloseButton {...mergedProps.closeTriggerProps} />
-              <ModalBody {...mergedProps.descriptionProps}>{content}</ModalBody>
-              <ModalFooter>
-                <FLPButtonGroup>
-                  <FLPButton variant="outline" {...mergedProps.closeTriggerProps}>
-                    {t('close')}
-                  </FLPButton>
-                  {onConfirm && (
-                    <FLPButton
-                      colorScheme={confirmButton?.colorScheme}
-                      isDisabled={isDisabled}
-                      variant={confirmButton?.variant}
-                      onClick={handleOnConfirm}
-                    >
-                      {confirmButton.text}
-                    </FLPButton>
-                  )}
-                </FLPButtonGroup>
-              </ModalFooter>
-            </ModalContent>
-          </FLPBox>
-        </Modal>
-      )}
+      {triggerBtnClone}
+      <Modal isOpen={isOpen} onClose={onClose} isCentered>
+        <ModalOverlay />
+        <ModalContent>
+          <ModalHeader>{title}</ModalHeader>
+          <ModalCloseButton />
+          <ModalBody>{props.children}</ModalBody>
+          <ModalFooter>
+            <FLPButtonGroup>
+              <FLPButton variant="outline" onClick={onClose}>
+                {t('close')}
+              </FLPButton>
+              {onConfirm && (
+                <FLPButton
+                  colorScheme={confirmButton?.colorScheme}
+                  disabled={disabled}
+                  variant={confirmButton?.variant}
+                  onClick={handleOnConfirm}
+                >
+                  {confirmButton.text}
+                </FLPButton>
+              )}
+            </FLPButtonGroup>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
     </>
   );
 };

@@ -1,6 +1,6 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`getTabsData > should have a label, value, and content 1`] = `
+exports[`getTabsData > should have a label, value, and children 1`] = `
 <main>
   <FLPBox>
     <FLPHeading
@@ -36,7 +36,7 @@ exports[`getTabsData > should have a label, value, and content 1`] = `
 </main>
 `;
 
-exports[`getTabsData > should have a label, value, and content 2`] = `
+exports[`getTabsData > should have a label, value, and children 2`] = `
 <main>
   <FLPBox>
     <FLPHeading
@@ -48,7 +48,7 @@ exports[`getTabsData > should have a label, value, and content 2`] = `
 </main>
 `;
 
-exports[`getTabsData > should have a label, value, and content 3`] = `
+exports[`getTabsData > should have a label, value, and children 3`] = `
 <main>
   <FLPBox>
     <FLPHeading

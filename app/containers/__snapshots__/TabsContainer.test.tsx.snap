@@ -1,112 +1,83 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`TabsContainer > renders correctly 1`] = `
+exports[`FLPTabs > renders correctly 1`] = `
 <div>
   <div
     class="chakra-tabs css-79elbk"
-    data-orientation="horizontal"
-    data-part="root"
-    data-scope="tabs"
-    dir="ltr"
-    id="tabs::r0:"
   >
     <div
       aria-orientation="horizontal"
       class="chakra-tabs__tablist css-k008qs"
-      data-orientation="horizontal"
-      data-part="list"
-      data-scope="tabs"
-      dir="ltr"
-      id="tabs::r0::list"
       role="tablist"
     >
       <button
-        aria-controls="tabs::r0::content-tab1"
+        aria-controls="tabs-:r0:--tabpanel-0"
+        aria-disabled="false"
         aria-selected="true"
-        class="chakra-button css-cf3le8"
-        data-orientation="horizontal"
-        data-ownedby="tabs::r0::list"
-        data-part="trigger"
-        data-scope="tabs"
-        data-selected=""
-        data-value="tab1"
-        dir="ltr"
-        id="tabs::r0::trigger-tab1"
+        class="chakra-tabs__tab css-5wl5ud"
+        data-index="0"
+        id="tabs-:r0:--tab-0"
         role="tab"
         tabindex="0"
         type="button"
+        value="tab1"
       >
         <span
           class="css-1qkvt8e"
         >
+
           😎
         </span>
         Tab 1
       </button>
       <button
-        aria-controls="tabs::r0::content-tab2"
+        aria-controls="tabs-:r0:--tabpanel-1"
+        aria-disabled="false"
         aria-selected="false"
-        class="chakra-button css-cf3le8"
-        data-orientation="horizontal"
-        data-ownedby="tabs::r0::list"
-        data-part="trigger"
-        data-scope="tabs"
-        data-value="tab2"
-        dir="ltr"
-        id="tabs::r0::trigger-tab2"
+        class="chakra-tabs__tab css-5wl5ud"
+        data-index="1"
+        id="tabs-:r0:--tab-1"
         role="tab"
-        tabindex="1"
+        tabindex="-1"
         type="button"
+        value="tab2"
       >
         <span
           class="css-1qkvt8e"
         >
+
           😐
         </span>
         Tab 2
       </button>
       <button
-        aria-controls="tabs::r0::content-tab3"
+        aria-controls="tabs-:r0:--tabpanel-2"
+        aria-disabled="false"
         aria-selected="false"
-        class="chakra-button css-cf3le8"
-        data-orientation="horizontal"
-        data-ownedby="tabs::r0::list"
-        data-part="trigger"
-        data-scope="tabs"
-        data-value="tab3"
-        dir="ltr"
-        id="tabs::r0::trigger-tab3"
+        class="chakra-tabs__tab css-5wl5ud"
+        data-index="2"
+        id="tabs-:r0:--tab-2"
         role="tab"
-        tabindex="2"
+        tabindex="-1"
         type="button"
+        value="tab3"
       >
         <span
           class="css-1qkvt8e"
         >
+
           😐
         </span>
         Tab 3
       </button>
-      <div
-        data-orientation="horizontal"
-        data-part="indicator"
-        data-scope="tabs"
-        id="tabs::r0::indicator"
-        style="--transition-duration: 150ms; --transition-property: left, right, top, bottom, width, height; position: absolute; will-change: var(--transition-property); transition-property: var(--transition-property); transition-duration: 0ms; transition-timing-function: var(--transition-timing-function); left: 0px; top: 0px; width: 0px; height: 0px;"
-      />
     </div>
     <div
       class="chakra-tabs__tab-panels css-8atqhb"
     >
       <div
-        aria-labelledby="tabs::r0::trigger-tab1"
-        data-orientation="horizontal"
-        data-ownedby="tabs::r0::list"
-        data-part="content"
-        data-scope="tabs"
-        data-selected=""
-        dir="ltr"
-        id="tabs::r0::content-tab1"
+        aria-labelledby="tabs-:r0:--tab-0"
+        class="chakra-tabs__tab-panel css-sjt5nk"
+        id="tabs-:r0:--tabpanel-0"
         role="tabpanel"
         tabindex="0"
       >
@@ -115,14 +86,10 @@ exports[`TabsContainer > renders correctly 1`] = `
         </div>
       </div>
       <div
-        aria-labelledby="tabs::r0::trigger-tab2"
-        data-orientation="horizontal"
-        data-ownedby="tabs::r0::list"
-        data-part="content"
-        data-scope="tabs"
-        dir="ltr"
+        aria-labelledby="tabs-:r0:--tab-1"
+        class="chakra-tabs__tab-panel css-sjt5nk"
         hidden=""
-        id="tabs::r0::content-tab2"
+        id="tabs-:r0:--tabpanel-1"
         role="tabpanel"
         tabindex="1"
       >
@@ -131,14 +98,10 @@ exports[`TabsContainer > renders correctly 1`] = `
         </div>
       </div>
       <div
-        aria-labelledby="tabs::r0::trigger-tab3"
-        data-orientation="horizontal"
-        data-ownedby="tabs::r0::list"
-        data-part="content"
-        data-scope="tabs"
-        dir="ltr"
+        aria-labelledby="tabs-:r0:--tab-2"
+        class="chakra-tabs__tab-panel css-sjt5nk"
         hidden=""
-        id="tabs::r0::content-tab3"
+        id="tabs-:r0:--tabpanel-2"
         role="tabpanel"
         tabindex="2"
       >

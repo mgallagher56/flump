@@ -3,39 +3,40 @@ import { vi } from 'vitest';
 
 import FLPInput from './FLPInput';
 
+const onChangeMock = vi.fn();
+
 describe('<FLPInput />', () => {
   test('should render as expected', () => {
-    const { container } = render(<FLPInput label="Test" />);
+    const { container } = render(<FLPInput label="Test" onChange={onChangeMock} />);
     expect(container).toMatchSnapshot();
   });
   test('should render as expected with error', () => {
-    const { container } = render(<FLPInput label="Test" error="Error" />);
+    const { container } = render(<FLPInput label="Test" error="Error" onChange={onChangeMock} />);
     expect(container).toMatchSnapshot();
   });
   test('should render as expected with value', () => {
-    const { container } = render(<FLPInput label="Test" value="Value" />);
+    const { container } = render(<FLPInput label="Test" value="Value" onChange={onChangeMock} />);
     expect(container).toMatchSnapshot();
   });
   test('should render as expected with value and error', () => {
-    const { container } = render(<FLPInput label="Test" value="Value" error="Error" />);
+    const { container } = render(<FLPInput label="Test" value="Value" error="Error" onChange={onChangeMock} />);
     expect(container).toMatchSnapshot();
   });
   test('should render as expected without a label', () => {
-    const { container } = render(<FLPInput label="Test" isLabelHidden />);
+    const { container } = render(<FLPInput label="Test" isLabelHidden onChange={onChangeMock} />);
     expect(container).toMatchSnapshot();
   });
 
   test('should render elements as a row', () => {
-    const { container } = render(<FLPInput label="Test" flexDirection="row" />);
+    const { container } = render(<FLPInput label="Test" flexDirection="row" onChange={onChangeMock} />);
     expect(container).toMatchSnapshot();
   });
 
   test('should change the value when typing', () => {
-    const onChange = vi.fn();
-    const { getByLabelText } = render(<FLPInput onChange={onChange} label="Test" />);
+    const { getByLabelText } = render(<FLPInput label="Test" onChange={onChangeMock} />);
     const input = getByLabelText('Test') as HTMLInputElement;
     fireEvent.change(input, { target: { value: 'Test' } });
-    expect(onChange).toHaveBeenCalled();
+    expect(onChangeMock).toHaveBeenCalled();
     expect(input.value).toBe('Test');
   });
 });
