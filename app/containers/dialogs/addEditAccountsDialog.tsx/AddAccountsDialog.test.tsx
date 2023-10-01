@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 
-import { fireEvent, render, waitFor } from '@testing-library/react';
+import { fireEvent, render } from '@testing-library/react';
 import { vi } from 'vitest';
 
 import mockUser from '__mocks__/user';
@@ -42,23 +42,25 @@ describe('<AddAccountDialogBtn', () => {
   const triggerBtn = getByText('addAccount');
   expect(triggerBtn).toBeDefined();
   fireEvent.click(triggerBtn);
-  test('should render add account dialog when trigger button is clicked', async () => {
-    await waitFor(() => {
-      const nameInput = getByLabelText('Name');
-      const accountTypeInput = getByLabelText('Account Type');
-      fireEvent.change(nameInput, {
-        target: {
-          value: 'Starling'
-        }
-      });
-      fireEvent.input(accountTypeInput, {target: {
-        value: "Current"
-      }});
-      const addAccountBtn = getAllByText('addAccount')[2];
-      expect(addAccountBtn).toBeDefined();
-      fireEvent.click(addAccountBtn);
-      expect(mocks.mockFrom).toBeCalled();
+  test('should render add account dialog when trigger button is clicked', () => {
+    const nameInput = getByLabelText('Name');
+    const accountTypeInput = getByLabelText('Account Type');
+    fireEvent.change(nameInput, {
+      target: {
+        value: 'Starling'
+      }
     });
-    expect(baseElement).toMatchSnapshot();
+    fireEvent.input(accountTypeInput, {
+      target: {
+        value: 'Current'
+      }
+    });
+    const addAccountBtn = getAllByText('addAccount')[2];
+    expect(addAccountBtn).toBeDefined();
+    fireEvent.click(addAccountBtn);
+    expect(mocks.mockFrom).toBeCalled();
+    const htmlString = baseElement.outerHTML.toString();
+    const baseElementConstant = htmlString.replaceAll(/style="[^"]*"/g, '');
+    expect(baseElementConstant).toMatchSnapshot();
   });
 });

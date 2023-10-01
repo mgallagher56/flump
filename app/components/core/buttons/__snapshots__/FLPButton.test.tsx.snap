@@ -1,11 +1,10 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`FLPButton > should not call onClick when clicked and isDisabled is true 1`] = `
+exports[`FLPButton > should not call onClick when clicked and disabled is true 1`] = `
 <body>
   <div>
     <button
       class="chakra-button css-4xx2wk"
-      data-disabled=""
       disabled=""
       type="button"
     >
@@ -30,7 +29,6 @@ exports[`FLPButton > should render correctly with props 1`] = `
 <div>
   <button
     class="chakra-button css-4xx2wk"
-    data-disabled=""
     data-loading=""
     disabled=""
     type="button"

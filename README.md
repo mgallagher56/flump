@@ -128,9 +128,6 @@ This starts your app in development mode, rebuilding assets on file changes.
    <li><strong>@remix-run/server-runtime</strong>: Server runtime for Remix Run framework.</li>
    <li><strong>@supabase/auth-helpers-remix</strong>: Remix-specific authentication helpers for Supabase.</li>
    <li><strong>@supabase/supabase-js</strong>: JavaScript client library for Supabase.</li>
-   <li><strong>@zag-js/pressable</strong>: Pressable component for handling mouse and touch interactions.</li>
-   <li><strong>@zag-js/react</strong>: React components for Zag UI library.</li>
-   <li><strong>@zag-js/tabs</strong>: Tab component for managing tabbed content.</li>
    <li><strong>bcryptjs</strong>: Library for hashing passwords using bcrypt algorithm.</li>
    <li><strong>compression</strong>: Compression middleware for Express.js.</li>
    <li><strong>cross-env</strong>: Cross-platform environment variable setting package.</li>
