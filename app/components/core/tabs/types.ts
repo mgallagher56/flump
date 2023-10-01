@@ -1,8 +1,8 @@
 import type { ReactNode } from 'react';
 
 export interface TabData {
-  content: ReactNode;
-  isDisabled?: boolean;
+  children: ReactNode;
+  disabled?: boolean;
   label: string;
   value: string;
 }

@@ -1,19 +1,19 @@
 import type { ReactElement } from 'react';
 import { useMemo } from 'react';
 
-import { json, type V2_MetaFunction } from '@remix-run/node';
+import { json, type MetaFunction } from '@remix-run/node';
 import { useLoaderData } from '@remix-run/react';
 import { useTranslation } from 'react-i18next';
 import FLPBox from '~/components/core/structure/FLPBox';
+import FLPTabs from '~/components/core/tabs/FLPTabs';
 import FLPHeading from '~/components/core/typography/FLPHeading';
-import TabsContainer from '~/containers/TabsContainer';
 import { getTabsData } from '~/utils/routesUtils/index/utils';
 
 import type { Database } from 'db_types';
 
 import { createSupaBaseServerClient } from '../utils/supabase';
 
-export const meta: V2_MetaFunction = (): { title: string }[] => [{ title: 'flump' }];
+export const meta: MetaFunction = (): { title: string }[] => [{ title: 'flump' }];
 
 export const handle = {
   i18n: ['common', 'home']
@@ -38,7 +38,7 @@ const Index = (): ReactElement => {
       <FLPHeading>Hero</FLPHeading>
       <FLPHeading>About</FLPHeading>
       <FLPHeading>Features</FLPHeading>
-      <TabsContainer data={tabsData} />
+      <FLPTabs data={tabsData} />
     </FLPBox>
   );
 };

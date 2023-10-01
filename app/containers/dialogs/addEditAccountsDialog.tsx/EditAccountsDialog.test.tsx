@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 
-import { fireEvent, render, waitFor } from '@testing-library/react';
+import { fireEvent, render } from '@testing-library/react';
 import { vi } from 'vitest';
 
 import mockUser from '__mocks__/user';
@@ -42,12 +42,12 @@ describe('<EditAccountDialogBtn', () => {
   const triggerBtn = getByText('edit');
   expect(triggerBtn).toBeDefined();
   fireEvent.click(triggerBtn);
-  test('should render edit account dialog when trigger button is clicked', async () => {
-    await waitFor(() => {
-      const addAccountBtn = getAllByText('save')[0];
-      fireEvent.click(addAccountBtn);
-      expect(mocks.mockFrom).toBeCalled();
-    });
-    expect(baseElement).toMatchSnapshot();
+  test('should render edit account dialog when trigger button is clicked', () => {
+    const addAccountBtn = getAllByText('save')[0];
+    fireEvent.click(addAccountBtn);
+    expect(mocks.mockFrom).toBeCalled();
+    const htmlString = baseElement.outerHTML.toString();
+    const baseElementConstant = htmlString.replaceAll(/style="[^"]*"/g, '');
+    expect(baseElementConstant).toMatchSnapshot();
   });
 });

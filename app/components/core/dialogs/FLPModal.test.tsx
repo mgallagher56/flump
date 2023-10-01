@@ -1,4 +1,4 @@
-import { fireEvent, render, waitFor } from '@testing-library/react';
+import { fireEvent, render } from '@testing-library/react';
 import { vi } from 'vitest';
 
 import FLPButton from '../buttons/FLPButton';
@@ -11,7 +11,7 @@ const mocks = vi.hoisted(() => ({
 describe('<FLPModal />', () => {
   const { baseElement, getByText } = render(
     <FLPModal
-      content={<div>Modal Content</div>}
+      children={<div>Modal Content</div>}
       confirmButton={{
         text: 'Confirm',
         colorScheme: 'blue',
@@ -24,12 +24,12 @@ describe('<FLPModal />', () => {
   );
   const triggerBtn = getByText('Trigger');
   fireEvent.click(triggerBtn);
-  it('renders by default as expected', async () => {
-    await waitFor(() => {
-      const confirmButton = getByText('Confirm');
-      fireEvent.click(confirmButton);
-      expect(mocks.mockOnConfirm).toHaveBeenCalled();
-    });
-    expect(baseElement).toMatchSnapshot();
+  it('renders by default as expected', () => {
+    const confirmButton = getByText('Confirm');
+    fireEvent.click(confirmButton);
+    expect(mocks.mockOnConfirm).toHaveBeenCalled();
+    const htmlString = baseElement.outerHTML.toString();
+    const baseElementConstant = htmlString.replaceAll(/style="[^"]*"/g, '');
+    expect(baseElementConstant).toMatchSnapshot();
   });
 });

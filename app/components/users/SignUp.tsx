@@ -8,7 +8,7 @@ import supabase from '~/utils/supabase';
 import { AuthErrorEnums } from '~/utils/utils';
 
 import FLPButton from '../core/buttons/FLPButton';
-import FLPInput from '../core/input/FLPInput';
+import FLPInput from '../core/inputs/input/FLPInput';
 import FLPBox from '../core/structure/FLPBox';
 import FLPText from '../core/typography/FLPText';
 import { getSignUpButtonText, getSubmitUserAuthAction, SignUpActionEnum } from './utils';
@@ -89,7 +89,7 @@ const SignUp: FC<SignUpProps> = ({ action = SignUpActionEnum.SIGNUP }) => {
         )}
         <FLPBox display="flex" flexDirection="column" justifyContent="center" alignItems="center" gap={4}>
           {isUserRegistered ? <FLPText>{t('clickAgainToLogIn')}</FLPText> : null}
-          <FLPButton onClick={handleSubmit} type="submit" isDisabled={isSubmitDisabled}>
+          <FLPButton onClick={handleSubmit} type="submit" disabled={isSubmitDisabled}>
             {submitButtonText}
           </FLPButton>
           {isShowLogin && (

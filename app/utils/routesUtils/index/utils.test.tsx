@@ -20,21 +20,21 @@ describe('getTabsData', () => {
       {
         label: 'featureNum',
         value: 'feature-1',
-        content: expect.any(Object)
+        children: expect.any(Object)
       },
       {
         label: 'featureNum',
         value: 'feature 2',
-        content: expect.any(Object)
+        children: expect.any(Object)
       },
       {
         label: 'featureNum',
         value: 'feature-3',
-        content: expect.any(Object)
+        children: expect.any(Object)
       }
     ]);
   });
-  test.each(result)('should have a label, value, and content', (tab) => {
-    expect(tab.content).toMatchSnapshot();
+  test.each(result)('should have a label, value, and children', (tab) => {
+    expect(tab.children).toMatchSnapshot();
   });
 });
