@@ -40,6 +40,9 @@ exports[`<AccountsContainer /> > should render as expected when accounts exist 1
     AccountsCard
     AccountsCard
   </div>
+  <div
+    class="css-1terknm"
+  />
   <h2
     class="chakra-heading css-1e3tj"
   >
@@ -90,6 +93,9 @@ exports[`<AccountsContainer /> > should render as expected when no accounts exis
       addAccount
     </button>
   </div>
+  <div
+    class="css-1terknm"
+  />
   <div
     class="css-1terknm"
   />

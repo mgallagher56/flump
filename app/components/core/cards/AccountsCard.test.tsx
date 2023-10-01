@@ -8,6 +8,7 @@ import AccountsCard from './AccountsCard';
 
 const mocks = vi.hoisted(() => ({
   mockUseLoaderData: vi.fn(),
+  mockUseRevalidator: vi.fn(() => ({revalidate: vi.fn()})),
   mockFrom: vi.fn(() => ({
     delete: () => ({
       eq: () => ({
@@ -21,7 +22,8 @@ vi.mock('@remix-run/react', async () => {
   const actual: Record<string, unknown> = await vi.importActual('@remix-run/react');
   return {
     ...actual,
-    useLoaderData: mocks.mockUseLoaderData
+    useLoaderData: mocks.mockUseLoaderData,
+    useRevalidator: mocks.mockUseRevalidator
   };
 });
 

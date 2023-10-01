@@ -8,6 +8,7 @@ import SignUp from './SignUp';
 import { SignUpActionEnum } from './utils';
 
 const mocks = vi.hoisted(() => ({
+  mockUseRevalidator: vi.fn(() => ({revalidate: vi.fn()})),
   signUpSpy: vi.fn(() => ({
     data: { message: 'sign up success' },
     error: { message: AuthErrorEnums.USER_ALREADY_REGISTERED }
@@ -43,7 +44,8 @@ vi.mock('@remix-run/react', async () => {
   return {
     ...actual,
     Form: ({ children, onSubmit }: { children: ReactNode; onSubmit }) => <form onSubmit={onSubmit}>{children}</form>,
-    useRouteData: () => ({})
+    useRouteData: () => ({}),
+    useRevalidator: mocks.mockUseRevalidator
   };
 });
 
@@ -71,11 +73,11 @@ describe('<SignUp />', () => {
     return { baseElement, getByLabelText, getByText, passwordInput };
   };
 
-  test('should submit the form after typing and pressing enter. Should change to login button when user is already registered', async () => {
-    const { getByText, passwordInput } = await renderAndType({ action: SignUpActionEnum.SIGNUP });
+  test('should submit the form after typing and clicking the button. Should change to login button when user is already registered', async () => {
+    const { getByText } = await renderAndType({ action: SignUpActionEnum.SIGNUP });
 
-    fireEvent.keyUp(passwordInput, { key: 'Enter', code: 'Enter' });
-
+    const submitButton = getByText('signUp') as HTMLButtonElement;
+    fireEvent.click(submitButton);
     await waitFor(() => {
       expect(mocks.signUpSpy).toHaveBeenCalled();
       expect(getByText('clickAgainToLogIn')).toBeDefined();

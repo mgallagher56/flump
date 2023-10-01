@@ -11,6 +11,8 @@ const mocks = vi.hoisted(() => ({
 describe('<FLPModal />', () => {
   const { baseElement, getByText } = render(
     <FLPModal
+      isOpen={true}
+      onClose={vi.fn()}
       children={<div>Modal Content</div>}
       confirmButton={{
         text: 'Confirm',
