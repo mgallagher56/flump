@@ -22,7 +22,7 @@ dependencies:
     version: 11.11.0(@emotion/react@11.11.1)(@types/react@18.2.28)(react@18.2.0)
   '@isaacs/express-prometheus-middleware':
     specifier: 1.2.1
-    version: 1.2.1(express@4.18.2)(prom-client@14.2.0)
+    version: 1.2.1(express@4.18.2)(prom-client@15.0.0)
   '@remix-run/css-bundle':
     specifier: 2.0.1
     version: 2.0.1
@@ -81,8 +81,8 @@ dependencies:
     specifier: 1.10.0
     version: 1.10.0
   prom-client:
-    specifier: 14.2.0
-    version: 14.2.0
+    specifier: 15.0.0
+    version: 15.0.0
   react:
     specifier: 18.2.0
     version: 18.2.0
@@ -4362,14 +4362,14 @@ packages:
       wrap-ansi-cjs: /wrap-ansi@7.0.0
     dev: true
 
-  /@isaacs/express-prometheus-middleware@1.2.1(express@4.18.2)(prom-client@14.2.0):
+  /@isaacs/express-prometheus-middleware@1.2.1(express@4.18.2)(prom-client@15.0.0):
     resolution: {integrity: sha512-l+5S2vC6DvOhrFBwsTr4U4lhLESivDhg56DaDscdu5mtL+xfk/hdNoYOIhBO9Z8Q9dpUtnGyU5dchG44nrQBQA==}
     peerDependencies:
       express: 4.x
       prom-client: '>= 10.x <= 13.x'
     dependencies:
       express: 4.18.2
-      prom-client: 14.2.0
+      prom-client: 15.0.0
       response-time: 2.3.2
       url-value-parser: 2.2.0
     dev: false
@@ -4559,6 +4559,11 @@ packages:
   /@open-draft/until@1.0.3:
     resolution: {integrity: sha512-Aq58f5HiWdyDlFffbbSjAlv596h/cOnt2DO1w3DOC7OJ5EHs0hd/nycJfiu9RJbT6Yk6F1knnRRXNSpxoIVZ9Q==}
     dev: true
+
+  /@opentelemetry/api@1.6.0:
+    resolution: {integrity: sha512-OWlrQAnWn9577PhVgqjUvMr1pg57Bc4jv0iL4w0PRuOSRvq67rvHW9Ie/dZVMvCzhSCB+UxhcY/PmCmFj33Q+g==}
+    engines: {node: '>=8.0.0'}
+    dev: false
 
   /@pandacss/config@0.15.5:
     resolution: {integrity: sha512-LotMXXW96v4t5vcealTO4cwlDUFMDcHAOQWkp4lulTWFnEJanqD01ioHfhn0eWrdEdRg0ssDMrbgDi0WpvVjsQ==}
@@ -13883,10 +13888,11 @@ packages:
     engines: {node: '>=0.4.0'}
     dev: true
 
-  /prom-client@14.2.0:
-    resolution: {integrity: sha512-sF308EhTenb/pDRPakm+WgiN+VdM/T1RaHj1x+MvAuT8UiQP8JmOEbxVqtkbfR4LrvOg5n7ic01kRBDGXjYikA==}
-    engines: {node: '>=10'}
+  /prom-client@15.0.0:
+    resolution: {integrity: sha512-UocpgIrKyA2TKLVZDSfm8rGkL13C19YrQBAiG3xo3aDFWcHedxRxI3z+cIcucoxpSO0h5lff5iv/SXoxyeopeA==}
+    engines: {node: ^16 || ^18 || >=20}
     dependencies:
+      '@opentelemetry/api': 1.6.0
       tdigest: 0.1.2
     dev: false
 
