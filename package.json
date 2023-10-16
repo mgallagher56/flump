@@ -88,7 +88,7 @@
     "i18next-http-backend": "2.2.2",
     "isbot": "3.7.0",
     "morgan": "1.10.0",
-    "prom-client": "14.2.0",
+    "prom-client": "15.0.0",
     "react": "18.2.0",
     "react-dom": "18.2.0",
     "react-i18next": "13.3.0",
