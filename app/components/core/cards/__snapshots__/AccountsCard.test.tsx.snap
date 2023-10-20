@@ -4,7 +4,7 @@ exports[`<AccountsCard /> > it renders an AccountsCard component with title as e
 <body>
   <div>
     <div
-      class="chakra-card css-1r1arwj"
+      class="chakra-card pos_relative transition_all_0.3s_ease-in-out border_1px_solid_token(colors.gray.500)! [&:hover]:shadow_2px_5px_8px_0px_token(colors.gray.500)! [&:hover]:transform_translate3d(-2px,_-5px,_-5px) [&:hover]:cursor_pointer css-1r1arwj"
       id="123456"
       title="My curent account"
     >
@@ -23,7 +23,7 @@ exports[`<AccountsCard /> > it renders an AccountsCard component with title as e
         </p>
       </div>
       <div
-        class="chakra-button__group css-1iksuyw"
+        class="chakra-button__group css-vhnxbm"
         data-orientation="horizontal"
         role="group"
       >

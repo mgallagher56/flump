@@ -2,7 +2,7 @@
 
 exports[`<FlpCard /> > it renders a ChakraUI Card component with title as expected 1`] = `
 <div
-  class="chakra-card css-2dlz7"
+  class="chakra-card pos_relative transition_all_0.3s_ease-in-out border_1px_solid_token(colors.gray.500)! [&:hover]:shadow_2px_5px_8px_0px_token(colors.gray.500)! [&:hover]:transform_translate3d(-2px,_-5px,_-5px) [&:hover]:cursor_pointer css-2dlz7"
   title="FLPCard"
 />
 `;

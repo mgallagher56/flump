@@ -8,7 +8,7 @@ import FLPInput from '~/components/core/inputs/input/FLPInput';
 import FLPSelect from '~/components/core/inputs/select/FLPSelect';
 import FLPBox from '~/components/core/structure/FLPBox';
 import { type AccountType, AccountTypeEnum } from '~/containers/accounts/utils';
-import type { loader } from '~/routes/app.accounts';
+import type { loader } from '~/routes/app.accounts._index';
 import supabase from '~/utils/supabase';
 
 const { CURRENT, SAVING, MORTGAGE, LOAN, OWED } = AccountTypeEnum;
@@ -27,7 +27,8 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({ accountId,
   const { revalidate } = useRevalidator();
   const [modalOpen, setModalOpen] = useState(false);
 
-  const handleOpenModal = useCallback(() => {
+  const handleOpenModal = useCallback((e) => {
+    e.stopPropagation();
     setModalOpen(true);
   }, [setModalOpen]);
 
