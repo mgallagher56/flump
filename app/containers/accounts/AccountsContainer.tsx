@@ -6,7 +6,7 @@ import { useTranslation } from 'react-i18next';
 import AccountsCard from '~/components/core/cards/AccountsCard';
 import FLPBox from '~/components/core/structure/FLPBox';
 import FLPHeading from '~/components/core/typography/FLPHeading';
-import type { loader } from '~/routes/app.accounts';
+import type { loader } from '~/routes/app.accounts._index';
 
 import AddEditAccountsDialogBtn from '../dialogs/addEditAccountsDialog.tsx/AddEditAccountsDialog';
 import { AccountTypeEnum, isAccountTypeValid } from './utils';

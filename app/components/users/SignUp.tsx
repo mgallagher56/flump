@@ -41,27 +41,31 @@ const SignUp: FC<SignUpProps> = ({ action = SignUpActionEnum.SIGNUP }) => {
     setFormInput((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   }, []);
 
-  const handleSubmit = useCallback(async (): Promise<void> => {
-    const submitAction = getSubmitUserAuthAction({
-      supabaseClient: supabase,
-      formInput,
-      isShowLogin,
-      isMagicLink: sendMagicLink
-    });
-    const { data, error } = await submitAction;
-    setUserData(data?.user);
-    setError(error?.message);
-    setIsUserRegistered(error?.message === USER_ALREADY_REGISTERED);
-    setInfoMessage(getInfoMessage(t, error?.message === USER_ALREADY_REGISTERED, sendMagicLink));
-    console.log({ data, error });
-  }, [formInput, isShowLogin, sendMagicLink, t]);
+  const handleSubmit = useCallback(
+    async (e): Promise<void> => {
+      e.preventDefault();
+      const submitAction = getSubmitUserAuthAction({
+        supabaseClient: supabase,
+        formInput,
+        isShowLogin,
+        isMagicLink: sendMagicLink
+      });
+      const { data, error } = await submitAction;
+      setUserData(data?.user);
+      setError(error?.message);
+      setIsUserRegistered(error?.message === USER_ALREADY_REGISTERED);
+      setInfoMessage(getInfoMessage(t, error?.message === USER_ALREADY_REGISTERED, sendMagicLink));
+      console.log({ data, error });
+    },
+    [formInput, isShowLogin, sendMagicLink, t]
+  );
 
   return userData?.confirmation_sent_at ? (
     <FLPBox display="flex" flexDirection="column" gap={5}>
       <FLPText>{t('confirmEmailMsg')}</FLPText>
     </FLPBox>
   ) : (
-    <Form defaultValue={''} onSubmit={handleSubmit}>
+    <Form defaultValue={''} onSubmit={handleSubmit} method="GET" action="">
       <FLPBox display="flex" flexDirection="column" gap={5}>
         <FLPInput
           label={'Email:'}

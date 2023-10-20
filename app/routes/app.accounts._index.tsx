@@ -12,13 +12,13 @@ export const loader = async ({ request }: { request: Request }) => {
     data: { user }
   } = await supabase.auth.getUser();
 
-  const { data: accounts } = await supabase
+  const { data } = await supabase
     .from('accounts')
     .select('*')
     .eq('user_id', user?.id);
 
   if (!user) return redirect('/');
-  return json({ accounts, user });
+  return json({ accounts: data, user }, { headers: response.headers });
 };
 
 const Accounts = (): ReactElement => {
