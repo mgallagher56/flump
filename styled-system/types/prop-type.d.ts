@@ -213,7 +213,7 @@ interface PropertyValueTypes {
   type Shorthand<T> = T extends keyof PropertyValueTypes ? PropertyValueTypes[T] | CssValue<T> : CssValue<T>
 
   export interface PropertyTypes extends PropertyValueTypes {
-  
+
 	pos: Shorthand<"position">;
 	insetEnd: Shorthand<"insetInlineEnd">;
 	end: Shorthand<"insetInlineEnd">;

@@ -30,6 +30,8 @@ const FLPButton: FC<PropsWithChildren<FLPButtonProps>> = ({
       {buttonProps.children}
     </Button>
   );
+
+  return <Button {...buttonProps}>{props.children}</Button>;
 };
 
 export default FLPButton;

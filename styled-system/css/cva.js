@@ -19,7 +19,6 @@ export function cva(config) {
   function cvaFn(props) {
     return css(resolve(props))
   }
-
   const variantKeys = Object.keys(variants)
 
   function splitVariantProps(props) {
