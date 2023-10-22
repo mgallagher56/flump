@@ -16,7 +16,6 @@ Finance dashboard project based on [Remix JS](https://remix.run/) Blues stack us
 
 - Install [Node.js](https://nodejs.org/en/) and [pnpm](https://pnpm.io/).
 - Set up supabase locally [docs](https://supabase.io/docs/guides/local-development)
-
   - [Docker Desktop](https://docs.docker.com/desktop/)
   - [Supabase CLI](https://supabase.com/docs/guides/cli)
   - [Git](https://github.com/git-guides/install-git)

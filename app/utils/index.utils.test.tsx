@@ -1,0 +1,41 @@
+import { renderHook } from '@testing-library/react';
+import { useTranslation } from 'react-i18next';
+import { describe, expect, test } from 'vitest';
+
+import { getTabsData } from './index.utils';
+
+describe('getTabsData', () => {
+  const { t } = renderHook(() => useTranslation()).result.current;
+  const employees = [
+    {
+      department: 'IT'
+    },
+    {
+      id: 2,
+      name: 'Jane Doe'
+    }
+  ];
+  const result = getTabsData(employees, t);
+  test('should return an array of objects', () => {
+    expect(result).toEqual([
+      {
+        label: 'featureNum',
+        value: 'feature-1',
+        content: expect.any(Object)
+      },
+      {
+        label: 'featureNum',
+        value: 'feature 2',
+        content: expect.any(Object)
+      },
+      {
+        label: 'featureNum',
+        value: 'feature-3',
+        content: expect.any(Object)
+      }
+    ]);
+  });
+  test.each(result)('should have a label, value, and content', (tab) => {
+    expect(tab.content).toMatchSnapshot();
+  });
+});
