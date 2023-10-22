@@ -14,6 +14,7 @@ const AccountDetailContainer: FC = () => {
   const { t } = useTranslation();
   const { revalidate } = useRevalidator();
   const { account, accountDetails } = useLoaderData<typeof loader>();
+  const [isLoading, setIsLoading] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [editedValues, setEditedValues] = useState<{ [key: string]: { [key: string]: string } }>(emptyObject);
 
@@ -23,10 +24,7 @@ const AccountDetailContainer: FC = () => {
   const handleInputChange = useCallback(
     (event: {
       target: {
-        dataset: {
-          year: string;
-          month: string;
-        };
+        dataset: DOMStringMap;
         value: string;
       };
     }) => {
@@ -42,23 +40,27 @@ const AccountDetailContainer: FC = () => {
   );
 
   const handleAddNewYear = useCallback(
-    async (selectedYear: number, prevNext: 'prev' | 'next') => {
-      const nextYear = selectedYear + (prevNext === 'prev' ? -1 : 1);
+    async (selectedYear: number, yearToAdd: 'current' | 'prev' | 'next') => {
+      setIsLoading(true);
+      const nextYear = selectedYear + (yearToAdd === 'prev' ? -1 : 1);
+      const currentYear = new Date().getFullYear();
       const yearWithMonths = Array.from({ length: 12 }, (_, i) => i + 1).map((value) => ({
         account_id: account.id,
         month: value,
-        year: nextYear,
+        year: yearToAdd === 'current' ? currentYear : nextYear,
         value: 0
       }));
 
       await supabase.from('account_details').insert(yearWithMonths);
       revalidate();
+      setIsLoading(false);
     },
     [account.id, revalidate]
   );
 
   const handleSaveValues = useCallback(
     (event: { preventDefault: () => void }) => {
+      setIsLoading(true);
       event.preventDefault();
       const updatedValues = Object.entries(editedValues)
         .map(([year, values]) =>
@@ -83,6 +85,7 @@ const AccountDetailContainer: FC = () => {
       handleToggleEditMode();
       setEditedValues(emptyObject);
       revalidate();
+      setIsLoading(false);
     },
     [account.id, editedValues, handleToggleEditMode, revalidate]
   );
@@ -99,7 +102,12 @@ const AccountDetailContainer: FC = () => {
           </FLPHeading>
         </StackItem>
         <StackItem>
-          <FLPButton variant="outline" onClick={isEditMode ? handleSaveValues : handleToggleEditMode}>
+          <FLPButton
+            disabled={isLoading}
+            isLoading={isLoading}
+            variant="outline"
+            onClick={isEditMode ? handleSaveValues : handleToggleEditMode}
+          >
             {isEditMode ? t('save') : t('edit')}
           </FLPButton>
         </StackItem>
@@ -107,10 +115,41 @@ const AccountDetailContainer: FC = () => {
       <AccountDetails onInputChange={handleInputChange} editedValues={editedValues} isEditMode={isEditMode} />
 
       <Stack flexDirection="row">
-        <FLPButton onClick={() => handleAddNewYear(availableYears?.[availableYears.length - 1], 'prev')}>
-          {t('addPrevYear')}
-        </FLPButton>
-        <FLPButton onClick={() => handleAddNewYear(availableYears?.[0], 'next')}>{t('addNextYear')}</FLPButton>
+        {availableYears?.length ? (
+          <>
+            <FLPButton
+              colorScheme="green"
+              disabled={isLoading}
+              isLoading={isLoading}
+              size="sm"
+              variant="outline"
+              onClick={() => handleAddNewYear(availableYears?.[availableYears.length - 1], 'prev')}
+            >
+              {t('addPrevYear')}
+            </FLPButton>
+            <FLPButton
+              colorScheme="green"
+              disabled={isLoading}
+              isLoading={isLoading}
+              size="sm"
+              variant="outline"
+              onClick={() => handleAddNewYear(availableYears?.[0], 'next')}
+            >
+              {t('addNextYear')}
+            </FLPButton>
+          </>
+        ) : (
+          <FLPButton
+            colorScheme="green"
+            disabled={isLoading}
+            isLoading={isLoading}
+            size="sm"
+            variant="outline"
+            onClick={() => handleAddNewYear(new Date().getFullYear(), 'current')}
+          >
+            {t('addCurrentYear')}
+          </FLPButton>
+        )}
       </Stack>
     </Stack>
   );

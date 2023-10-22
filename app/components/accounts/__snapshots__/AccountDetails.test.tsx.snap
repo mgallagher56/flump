@@ -1,15 +1,25 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`<AccountDetails /> > should render 1`] = `
+exports[`<AccountDetails /> > should remove year when delete button is clicked 1`] = `
 <div>
   <div
     class="chakra-stack css-nn57su"
   >
-    <h3
-      class="chakra-heading css-1e3tj"
+    <div
+      class="chakra-stack css-1y3f6ad"
     >
-      2021
-    </h3>
+      <h3
+        class="chakra-heading css-1e3tj"
+      >
+        2021
+      </h3>
+      <button
+        class="chakra-button css-1ltlu47"
+        type="button"
+      >
+        deleteYear
+      </button>
+    </div>
     <div
       class="d_flex flex_row gap_5"
     >
@@ -158,11 +168,356 @@ exports[`<AccountDetails /> > should render 1`] = `
         </p>
       </div>
     </div>
-    <h3
-      class="chakra-heading css-1e3tj"
+    <div
+      class="chakra-stack css-1y3f6ad"
     >
-      2023
-    </h3>
+      <h3
+        class="chakra-heading css-1e3tj"
+      >
+        2023
+      </h3>
+      <button
+        class="chakra-button css-1ltlu47"
+        type="button"
+      >
+        deleteYear
+      </button>
+    </div>
+    <div
+      class="d_flex flex_row gap_5"
+    >
+      <div>
+        <p
+          class="chakra-text css-km77ca"
+        >
+          January
+        </p>
+        <p
+          class="chakra-text css-km77ca"
+        >
+          £1,000
+        </p>
+      </div>
+      <div>
+        <p
+          class="chakra-text css-km77ca"
+        >
+          February
+        </p>
+        <p
+          class="chakra-text css-km77ca"
+        >
+          £1,000
+        </p>
+      </div>
+      <div>
+        <p
+          class="chakra-text css-km77ca"
+        >
+          March
+        </p>
+        <p
+          class="chakra-text css-km77ca"
+        >
+          £1,000
+        </p>
+      </div>
+      <div>
+        <p
+          class="chakra-text css-km77ca"
+        >
+          April
+        </p>
+        <p
+          class="chakra-text css-km77ca"
+        >
+          £1,000
+        </p>
+      </div>
+      <div>
+        <p
+          class="chakra-text css-km77ca"
+        >
+          May
+        </p>
+        <p
+          class="chakra-text css-km77ca"
+        >
+          £1,000
+        </p>
+      </div>
+      <div>
+        <p
+          class="chakra-text css-km77ca"
+        >
+          June
+        </p>
+        <p
+          class="chakra-text css-km77ca"
+        >
+          £1,000
+        </p>
+      </div>
+      <div>
+        <p
+          class="chakra-text css-km77ca"
+        >
+          July
+        </p>
+        <p
+          class="chakra-text css-km77ca"
+        >
+          £1,000
+        </p>
+      </div>
+      <div>
+        <p
+          class="chakra-text css-km77ca"
+        >
+          August
+        </p>
+        <p
+          class="chakra-text css-km77ca"
+        >
+          £1,000
+        </p>
+      </div>
+      <div>
+        <p
+          class="chakra-text css-km77ca"
+        >
+          September
+        </p>
+        <p
+          class="chakra-text css-km77ca"
+        >
+          £1,000
+        </p>
+      </div>
+      <div>
+        <p
+          class="chakra-text css-km77ca"
+        >
+          October
+        </p>
+        <p
+          class="chakra-text css-km77ca"
+        >
+          £1,000
+        </p>
+      </div>
+      <div>
+        <p
+          class="chakra-text css-km77ca"
+        >
+          November
+        </p>
+        <p
+          class="chakra-text css-km77ca"
+        >
+          £1,000
+        </p>
+      </div>
+      <div>
+        <p
+          class="chakra-text css-km77ca"
+        >
+          December
+        </p>
+        <p
+          class="chakra-text css-km77ca"
+        >
+          £1,000
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+`;
+
+exports[`<AccountDetails /> > should render 1`] = `
+<div>
+  <div
+    class="chakra-stack css-nn57su"
+  >
+    <div
+      class="chakra-stack css-1y3f6ad"
+    >
+      <h3
+        class="chakra-heading css-1e3tj"
+      >
+        2021
+      </h3>
+      <button
+        class="chakra-button css-1ltlu47"
+        type="button"
+      >
+        deleteYear
+      </button>
+    </div>
+    <div
+      class="d_flex flex_row gap_5"
+    >
+      <div>
+        <p
+          class="chakra-text css-km77ca"
+        >
+          January
+        </p>
+        <p
+          class="chakra-text css-km77ca"
+        >
+          £1,000
+        </p>
+      </div>
+      <div>
+        <p
+          class="chakra-text css-km77ca"
+        >
+          February
+        </p>
+        <p
+          class="chakra-text css-km77ca"
+        >
+          £1,000
+        </p>
+      </div>
+      <div>
+        <p
+          class="chakra-text css-km77ca"
+        >
+          March
+        </p>
+        <p
+          class="chakra-text css-km77ca"
+        >
+          £1,000
+        </p>
+      </div>
+      <div>
+        <p
+          class="chakra-text css-km77ca"
+        >
+          April
+        </p>
+        <p
+          class="chakra-text css-km77ca"
+        >
+          £1,000
+        </p>
+      </div>
+      <div>
+        <p
+          class="chakra-text css-km77ca"
+        >
+          May
+        </p>
+        <p
+          class="chakra-text css-km77ca"
+        >
+          £1,000
+        </p>
+      </div>
+      <div>
+        <p
+          class="chakra-text css-km77ca"
+        >
+          June
+        </p>
+        <p
+          class="chakra-text css-km77ca"
+        >
+          £1,000
+        </p>
+      </div>
+      <div>
+        <p
+          class="chakra-text css-km77ca"
+        >
+          July
+        </p>
+        <p
+          class="chakra-text css-km77ca"
+        >
+          £1,000
+        </p>
+      </div>
+      <div>
+        <p
+          class="chakra-text css-km77ca"
+        >
+          August
+        </p>
+        <p
+          class="chakra-text css-km77ca"
+        >
+          £1,000
+        </p>
+      </div>
+      <div>
+        <p
+          class="chakra-text css-km77ca"
+        >
+          September
+        </p>
+        <p
+          class="chakra-text css-km77ca"
+        >
+          £1,000
+        </p>
+      </div>
+      <div>
+        <p
+          class="chakra-text css-km77ca"
+        >
+          October
+        </p>
+        <p
+          class="chakra-text css-km77ca"
+        >
+          £1,000
+        </p>
+      </div>
+      <div>
+        <p
+          class="chakra-text css-km77ca"
+        >
+          November
+        </p>
+        <p
+          class="chakra-text css-km77ca"
+        >
+          £1,000
+        </p>
+      </div>
+      <div>
+        <p
+          class="chakra-text css-km77ca"
+        >
+          December
+        </p>
+        <p
+          class="chakra-text css-km77ca"
+        >
+          £1,000
+        </p>
+      </div>
+    </div>
+    <div
+      class="chakra-stack css-1y3f6ad"
+    >
+      <h3
+        class="chakra-heading css-1e3tj"
+      >
+        2023
+      </h3>
+      <button
+        class="chakra-button css-1ltlu47"
+        type="button"
+      >
+        deleteYear
+      </button>
+    </div>
     <div
       class="d_flex flex_row gap_5"
     >
@@ -320,11 +675,21 @@ exports[`<AccountDetails /> > should render in edit mode 1`] = `
   <div
     class="chakra-stack css-nn57su"
   >
-    <h3
-      class="chakra-heading css-1e3tj"
+    <div
+      class="chakra-stack css-1y3f6ad"
     >
-      2021
-    </h3>
+      <h3
+        class="chakra-heading css-1e3tj"
+      >
+        2021
+      </h3>
+      <button
+        class="chakra-button css-1ltlu47"
+        type="button"
+      >
+        deleteYear
+      </button>
+    </div>
     <div
       class="d_flex flex_row gap_5"
     >
@@ -725,11 +1090,21 @@ exports[`<AccountDetails /> > should render in edit mode 1`] = `
         </div>
       </div>
     </div>
-    <h3
-      class="chakra-heading css-1e3tj"
+    <div
+      class="chakra-stack css-1y3f6ad"
     >
-      2023
-    </h3>
+      <h3
+        class="chakra-heading css-1e3tj"
+      >
+        2023
+      </h3>
+      <button
+        class="chakra-button css-1ltlu47"
+        type="button"
+      >
+        deleteYear
+      </button>
+    </div>
     <div
       class="d_flex flex_row gap_5"
     >

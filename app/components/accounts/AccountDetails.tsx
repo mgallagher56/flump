@@ -1,10 +1,13 @@
-import { Fragment } from 'react';
+import { Fragment, useCallback } from 'react';
 import type { ChangeEvent, FC } from 'react';
 
 import { Stack } from '@chakra-ui/react';
-import { useLoaderData } from '@remix-run/react';
+import { useLoaderData, useRevalidator } from '@remix-run/react';
+import { useTranslation } from 'react-i18next';
 import type { loader } from '~/routes/app.accounts.$account';
+import supabase from '~/utils/supabase';
 
+import FLPButton from '../core/buttons/FLPButton';
 import FLPInput from '../core/inputs/input/FLPInput';
 import FLPHeading from '../core/typography/FLPHeading';
 import FLPText from '../core/typography/FLPText';
@@ -17,7 +20,17 @@ interface AccountDetailsProps {
 }
 
 const AccountDetails: FC<AccountDetailsProps> = ({ onInputChange, editedValues, isEditMode }) => {
-  const { accountDetails } = useLoaderData<typeof loader>();
+  const { t } = useTranslation();
+  const { account, accountDetails } = useLoaderData<typeof loader>();
+  const { revalidate } = useRevalidator();
+
+  const onRemoveYear = useCallback(
+    async (year: number) => {
+      await supabase.from('account_details').delete().eq('account_id', account.id).eq('year', year);
+      revalidate();
+    },
+    [account.id, revalidate]
+  );
 
   return (
     <Stack flexDirection="column" gap={5} overflow="auto">
@@ -34,9 +47,14 @@ const AccountDetails: FC<AccountDetailsProps> = ({ onInputChange, editedValues, 
         )
         .map((year: number) => (
           <Fragment key={year}>
-            <FLPHeading as="h3" size="lg">
-              {year}
-            </FLPHeading>
+            <Stack flexDirection="row" alignItems="center" justifyContent='space-between'>
+              <FLPHeading as="h3" size="lg">
+                {year}
+              </FLPHeading>
+              <FLPButton size="xs" onClick={() => onRemoveYear(year)} variant="outline" colorScheme='red'>
+                {t('deleteYear')}
+              </FLPButton>
+            </Stack>
             <div className={accountDetailDisplayStyles}>
               {accountDetails.map(
                 ({ month, year: currentYear, value }: { month?: number; year?: number; value?: number }) => {
