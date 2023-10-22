@@ -47,13 +47,14 @@ export default defineConfig(({ mode }) => ({
         'starlight/**/*.*',
         'app/**/types.ts',
         'app/utils/supabase.ts',
-        'app/store.ts',
+        'app/**/*.d.ts'
       ],
       functions: 100,
       include: ['app/**/*.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
       lines: 100,
       provider: 'v8',
       reporter: ['text', 'html', 'lcov', 'clover', 'json', 'json-summary'],
+      reportOnFailure: true,
       statements: 100,
       thresholdAutoUpdate: true
     },

@@ -1,11 +1,10 @@
-/* eslint-disable no-unused-vars */
 export type Json =
-| string
-| number
-| boolean
-| null
-| { [key: string]: Json }
-| Json[]
+  | string
+  | number
+  | boolean
+  | null
+  | { [key: string]: Json | undefined }
+  | Json[]
 
 export interface Database {
   graphql_public: {
@@ -35,6 +34,71 @@ export interface Database {
   }
   public: {
     Tables: {
+      account_details: {
+        Row: {
+          account_id: string
+          created_at: string | null
+          id: number
+          month: number
+          value: number
+          year: number
+        }
+        Insert: {
+          account_id: string
+          created_at?: string | null
+          id?: never
+          month: number
+          value: number
+          year: number
+        }
+        Update: {
+          account_id?: string
+          created_at?: string | null
+          id?: never
+          month?: number
+          value?: number
+          year?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "account_details_account_id_fkey"
+            columns: ["account_id"]
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      accounts: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          type: Database["public"]["Enums"]["account_type_enum"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          type: Database["public"]["Enums"]["account_type_enum"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          type?: Database["public"]["Enums"]["account_type_enum"]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "accounts_user_id_fkey"
+            columns: ["user_id"]
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
       employees: {
         Row: {
           created_at: string | null
@@ -57,6 +121,7 @@ export interface Database {
           id?: never
           name?: string | null
         }
+        Relationships: []
       }
     }
     Views: {
@@ -66,7 +131,13 @@ export interface Database {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      account_type_enum:
+        | "Current"
+        | "Saving"
+        | "Mortgage"
+        | "Loan"
+        | "Credit Card"
+        | "Owed"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -108,6 +179,14 @@ export interface Database {
           public?: boolean | null
           updated_at?: string | null
         }
+        Relationships: [
+          {
+            foreignKeyName: "buckets_owner_fkey"
+            columns: ["owner"]
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
+        ]
       }
       migrations: {
         Row: {
@@ -128,6 +207,7 @@ export interface Database {
           id?: number
           name?: string
         }
+        Relationships: []
       }
       objects: {
         Row: {
@@ -166,6 +246,20 @@ export interface Database {
           updated_at?: string | null
           version?: string | null
         }
+        Relationships: [
+          {
+            foreignKeyName: "objects_bucketId_fkey"
+            columns: ["bucket_id"]
+            referencedRelation: "buckets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "objects_owner_fkey"
+            columns: ["owner"]
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
+        ]
       }
     }
     Views: {
@@ -197,7 +291,7 @@ export interface Database {
         Args: {
           name: string
         }
-        Returns: string[]
+        Returns: unknown
       }
       get_size_by_bucket: {
         Args: Record<PropertyKey, never>

@@ -4,23 +4,22 @@ import { useTranslation } from 'react-i18next';
 import FLPButtonGroup from '~/components/core/buttons/FLPButtonGroup';
 import FLPLinkButton from '~/components/core/buttons/FLPLinkButton';
 import FLPBox from '~/components/core/structure/FLPBox';
-import useUserStore from '~/store';
 
-const NavMenu: FC = () => {
+interface NavMenuProps {
+  routes?: { key: string; route: string }[];
+}
+
+const NavMenu: FC<NavMenuProps> = ({ routes }) => {
   const { t } = useTranslation();
-  const user = useUserStore((state) => state.user);
 
   return (
     <FLPBox>
       <FLPButtonGroup gap={4}>
-        <FLPLinkButton to="/">Home</FLPLinkButton>
-        <FLPLinkButton to="/about">About</FLPLinkButton>
-        <FLPLinkButton to="/contact">Contact</FLPLinkButton>
-        {!!user && (
-          <FLPLinkButton variant="outline" to="/app">
-            {t('launchApp')}
+        {routes?.map((route) => (
+          <FLPLinkButton key={route.key} to={route.route}>
+            {t(route.key)}
           </FLPLinkButton>
-        )}
+        ))}
       </FLPButtonGroup>
     </FLPBox>
   );

@@ -1,6 +1,6 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`<UserLogin /> > renders as expected 1`] = `
+exports[`<UserLogin /> > renders as expected when user not logged in 1`] = `
 <body>
   <div>
     <div
@@ -8,8 +8,12 @@ exports[`<UserLogin /> > renders as expected 1`] = `
       data-orientation="horizontal"
       role="group"
     >
-      signUp
-      logIn
+      <div>
+        signUp
+      </div>
+      <div>
+        logIn
+      </div>
     </div>
   </div>
 </body>

@@ -9,7 +9,7 @@ module.exports = {
     '@remix-run/eslint-config',
     '@remix-run/eslint-config/node',
     'prettier',
-    'plugin:@typescript-eslint/recommended',
+
     'eslint:recommended',
     'plugin:sonarjs/recommended'
   ],
@@ -19,7 +19,7 @@ module.exports = {
     browser: true,
     amd: true
   },
-  plugins: ['cypress', 'react-hooks', 'sonarjs', "@typescript-eslint", 'no-relative-import-paths'],
+  plugins: ['cypress', 'react-hooks', 'sonarjs', 'no-relative-import-paths'],
   settings: {
     jest: {
       version: 28
@@ -29,7 +29,7 @@ module.exports = {
     }
   },
   rules: {
-    "@typescript-eslint/no-unused-vars": "error",
+    '@typescript-eslint/no-unused-vars': 'error',
     '@typescript-eslint/explicit-function-return-type': 'off',
     '@typescript-eslint/no-duplicate-imports': 'error',
     '@typescript-eslint/no-empty-function': 'error',

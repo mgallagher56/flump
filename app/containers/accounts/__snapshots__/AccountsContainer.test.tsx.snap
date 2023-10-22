@@ -1,0 +1,115 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`<AccountsContainer /> > should render as expected when accounts exist 1`] = `
+<div>
+  <div
+    class="css-1qtey63"
+  >
+    <h1
+      class="chakra-heading css-1e3tj"
+    >
+      accounts
+    </h1>
+    <button
+      class="chakra-button css-4xx2wk"
+      type="button"
+    >
+      addAccount
+    </button>
+  </div>
+  <h2
+    class="chakra-heading css-1e3tj"
+  >
+    Current
+  </h2>
+  <div
+    class="css-1terknm"
+  >
+    AccountsCard
+    AccountsCard
+  </div>
+  <h2
+    class="chakra-heading css-1e3tj"
+  >
+    Saving
+  </h2>
+  <div
+    class="css-1terknm"
+  >
+    AccountsCard
+    AccountsCard
+    AccountsCard
+  </div>
+  <div
+    class="css-1terknm"
+  />
+  <h2
+    class="chakra-heading css-1e3tj"
+  >
+    Mortgage
+  </h2>
+  <div
+    class="css-1terknm"
+  >
+    AccountsCard
+  </div>
+  <h2
+    class="chakra-heading css-1e3tj"
+  >
+    Loan
+  </h2>
+  <div
+    class="css-1terknm"
+  >
+    AccountsCard
+  </div>
+  <h2
+    class="chakra-heading css-1e3tj"
+  >
+    Owed
+  </h2>
+  <div
+    class="css-1terknm"
+  >
+    AccountsCard
+  </div>
+</div>
+`;
+
+exports[`<AccountsContainer /> > should render as expected when no accounts exist 1`] = `
+<div>
+  <div
+    class="css-1qtey63"
+  >
+    <h1
+      class="chakra-heading css-1e3tj"
+    >
+      accounts
+    </h1>
+    <button
+      class="chakra-button css-4xx2wk"
+      type="button"
+    >
+      addAccount
+    </button>
+  </div>
+  <div
+    class="css-1terknm"
+  />
+  <div
+    class="css-1terknm"
+  />
+  <div
+    class="css-1terknm"
+  />
+  <div
+    class="css-1terknm"
+  />
+  <div
+    class="css-1terknm"
+  />
+  <div
+    class="css-1terknm"
+  />
+</div>
+`;

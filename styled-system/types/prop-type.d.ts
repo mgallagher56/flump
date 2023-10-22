@@ -1,10 +1,11 @@
 /* eslint-disable */
 import type { ConditionalValue } from './conditions';
-import type { CssProperties } from './system-types'
-import type { Tokens } from '../tokens'
+import type { CssProperties } from './system-types';
+import type { Tokens } from '../tokens/index';
 
-type PropertyValueTypes  = {
+interface PropertyValueTypes {
 	aspectRatio: "auto" | "square" | "landscape" | "portrait" | "wide" | "ultrawide" | "golden";
+	zIndex: Tokens["zIndex"];
 	top: Tokens["spacing"];
 	left: Tokens["spacing"];
 	insetInline: Tokens["spacing"];
@@ -124,10 +125,12 @@ type PropertyValueTypes  = {
 	borderLeft: Tokens["borders"];
 	borderLeftColor: Tokens["colors"];
 	borderInlineStart: Tokens["borders"];
+	borderInlineStartWidth: Tokens["borderWidths"];
 	borderInlineStartColor: Tokens["colors"];
 	borderRight: Tokens["borders"];
 	borderRightColor: Tokens["colors"];
 	borderInlineEnd: Tokens["borders"];
+	borderInlineEndWidth: Tokens["borderWidths"];
 	borderInlineEndColor: Tokens["colors"];
 	borderTop: Tokens["borders"];
 	borderTopColor: Tokens["colors"];
@@ -137,6 +140,7 @@ type PropertyValueTypes  = {
 	borderBlockEndColor: Tokens["colors"];
 	borderBlockStart: Tokens["borders"];
 	borderBlockStartColor: Tokens["colors"];
+	opacity: Tokens["opacity"];
 	boxShadow: Tokens["shadows"];
 	boxShadowColor: Tokens["colors"];
 	filter: "auto";
@@ -150,8 +154,9 @@ type PropertyValueTypes  = {
 	transitionTimingFunction: Tokens["easings"];
 	transitionDelay: Tokens["durations"];
 	transitionDuration: Tokens["durations"];
-	transitionProperty: "all" | "none" | "opacity" | "shadow" | "transform" | "base" | "background" | "colors";
+	transition: "all" | "common" | "background" | "colors" | "opacity" | "shadow" | "transform";
 	animation: Tokens["animations"];
+	animationName: Tokens["animationName"];
 	animationDelay: Tokens["durations"];
 	scale: "auto" | CssProperties["scale"];
 	translate: "auto" | CssProperties["translate"];
@@ -207,7 +212,7 @@ type PropertyValueTypes  = {
 
   type Shorthand<T> = T extends keyof PropertyValueTypes ? PropertyValueTypes[T] | CssValue<T> : CssValue<T>
 
-  export type PropertyTypes = PropertyValueTypes & {
+  export interface PropertyTypes extends PropertyValueTypes {
   
 	pos: Shorthand<"position">;
 	insetEnd: Shorthand<"insetInlineEnd">;
@@ -286,8 +291,10 @@ type PropertyValueTypes  = {
 	borderYWidth: Shorthand<"borderBlockWidth">;
 	borderYColor: Shorthand<"borderBlockColor">;
 	borderStart: Shorthand<"borderInlineStart">;
+	borderStartWidth: Shorthand<"borderInlineStartWidth">;
 	borderStartColor: Shorthand<"borderInlineStartColor">;
 	borderEnd: Shorthand<"borderInlineEnd">;
+	borderEndWidth: Shorthand<"borderInlineEndWidth">;
 	borderEndColor: Shorthand<"borderInlineEndColor">;
 	shadow: Shorthand<"boxShadow">;
 	shadowColor: Shorthand<"boxShadowColor">;
@@ -296,7 +303,7 @@ type PropertyValueTypes  = {
 }
 
 export type PropertyValue<T extends string> = T extends keyof PropertyTypes
-  ? ConditionalValue<PropertyTypes[T] | CssValue<T>>
+  ? ConditionalValue<PropertyTypes[T] | CssValue<T> | (string & {})>
   : T extends keyof CssProperties
-  ? ConditionalValue<CssProperties[T]>
+  ? ConditionalValue<CssProperties[T] | (string & {})>
   : ConditionalValue<string | number>

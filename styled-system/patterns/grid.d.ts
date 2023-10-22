@@ -1,10 +1,11 @@
 /* eslint-disable */
-import type { SystemStyleObject, ConditionalValue } from '../types'
-import type { PropertyValue } from '../types/prop-type'
-import type { Properties } from '../types/csstype'
-import type { Tokens } from '../tokens'
+import type { SystemStyleObject, ConditionalValue } from '../types/index';
+import type { Properties } from '../types/csstype';
+import type { PropertyValue } from '../types/prop-type';
+import type { DistributiveOmit } from '../types/system-types';
+import type { Tokens } from '../tokens/index';
 
-export type GridProperties = {
+export interface GridProperties {
    gap?: PropertyValue<'gap'>
 	columnGap?: PropertyValue<'gap'>
 	rowGap?: PropertyValue<'gap'>
@@ -13,7 +14,12 @@ export type GridProperties = {
 }
 
 
-type GridOptions = GridProperties & Omit<SystemStyleObject, keyof GridProperties >
+interface GridStyles extends GridProperties, DistributiveOmit<SystemStyleObject, keyof GridProperties > {}
+
+interface GridPatternFn {
+  (styles?: GridStyles): string
+  raw: (styles?: GridStyles) => SystemStyleObject
+}
 
 
-export declare function grid(options?: GridOptions): string
+export declare const grid: GridPatternFn;

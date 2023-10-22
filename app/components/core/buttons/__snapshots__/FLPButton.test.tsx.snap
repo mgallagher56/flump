@@ -1,13 +1,11 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`FLPButton > should not call onClick when clicked and isDisabled is true 1`] = `
+exports[`FLPButton > should not call onClick when clicked and disabled is true 1`] = `
 <body>
   <div>
     <button
-      class="chakra-button css-4xx2wk"
-      data-disabled=""
+      class="chakra-button css-1ltlu47"
       disabled=""
-      id="pressable::r3:"
       type="button"
     >
       FLPButton
@@ -19,8 +17,7 @@ exports[`FLPButton > should not call onClick when clicked and isDisabled is true
 exports[`FLPButton > should render correctly 1`] = `
 <div>
   <button
-    class="chakra-button css-4xx2wk"
-    id="pressable::r0:"
+    class="chakra-button css-1ltlu47"
     type="button"
   >
     FLPButton
@@ -31,11 +28,9 @@ exports[`FLPButton > should render correctly 1`] = `
 exports[`FLPButton > should render correctly with props 1`] = `
 <div>
   <button
-    class="chakra-button css-4xx2wk"
-    data-disabled=""
+    class="chakra-button css-1ltlu47"
     data-loading=""
     disabled=""
-    id="pressable::r1:"
     type="button"
   >
     <div

@@ -4,21 +4,21 @@ import { vi } from 'vitest';
 import FLPButton from './FLPButton';
 
 describe('FLPButton', () => {
-  it('should render correctly', () => {
+  test('should render correctly', () => {
     const { container } = render(<FLPButton>FLPButton</FLPButton>);
     expect(container).toMatchSnapshot();
   });
 
-  it('should render correctly with props', () => {
+  test('should render correctly with props', () => {
     const { container } = render(
-      <FLPButton colorScheme="green" isDisabled preventFocusOnPress variant="outline" isLoading>
+      <FLPButton colorScheme="green" disabled variant="outline" isLoading>
         FLPButton
       </FLPButton>
     );
     expect(container).toMatchSnapshot();
   });
 
-  it('should call onClick when clicked', () => {
+  test('should call onClick when clicked', () => {
     const onClick = vi.fn();
     render(<FLPButton onClick={onClick}>FLPButton</FLPButton>);
     fireEvent.click(screen.getByText('FLPButton'));
@@ -26,10 +26,10 @@ describe('FLPButton', () => {
     expect(onClick).toHaveBeenCalled();
   });
 
-  it('should not call onClick when clicked and isDisabled is true', () => {
+  test('should not call onClick when clicked and disabled is true', () => {
     const onClick = vi.fn();
     const { baseElement } = render(
-      <FLPButton isDisabled onClick={onClick}>
+      <FLPButton disabled onClick={onClick}>
         FLPButton
       </FLPButton>
     );
@@ -38,10 +38,10 @@ describe('FLPButton', () => {
     expect(onClick).not.toHaveBeenCalled();
   });
 
-  it('should not call onClick when clicked and preventFocusOnPress is true', () => {
+  test('should not call onClick when clicked and  is true', () => {
     const onClick = vi.fn();
     render(
-      <FLPButton onClick={onClick} preventFocusOnPress>
+      <FLPButton onClick={onClick} >
         FLPButton
       </FLPButton>
     );
@@ -49,7 +49,7 @@ describe('FLPButton', () => {
     expect(onClick).toHaveBeenCalled();
   });
 
-  it('should not call onClick when clicked and isLoading is true', () => {
+  test('should not call onClick when clicked and isLoading is true', () => {
     const onClick = vi.fn();
     render(
       <FLPButton onClick={onClick} isLoading>

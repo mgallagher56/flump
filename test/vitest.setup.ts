@@ -36,5 +36,3 @@ configure({ testIdAttribute: 'id' });
 afterEach(() => {
   vi.clearAllMocks();
 });
-
-vi.mock('zustand');

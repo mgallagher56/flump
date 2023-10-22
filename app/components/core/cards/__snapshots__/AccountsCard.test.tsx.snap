@@ -1,0 +1,52 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`<AccountsCard /> > it renders an AccountsCard component with title as expected 1`] = `
+<body>
+  <div>
+    <div
+      class="chakra-card pos_relative transition_all_0.3s_ease-in-out border_1px_solid_token(colors.gray.500)! [&:hover]:shadow_2px_5px_8px_0px_token(colors.gray.500)! [&:hover]:transform_translate3d(-2px,_-5px,_-5px) [&:hover]:cursor_pointer css-1r1arwj"
+      id="123456"
+      title="My curent account"
+    >
+      <div
+        class="css-5ivlx4"
+      >
+        <h5
+          class="chakra-heading css-1e3tj"
+        >
+          Current account
+        </h5>
+        <p
+          class="chakra-text css-hmjgxl"
+        >
+          My curent account
+        </p>
+        <p
+          class="chakra-text css-km77ca"
+        >
+          balance: £1,000
+      
+        </p>
+      </div>
+      <div
+        class="chakra-button__group css-vhnxbm"
+        data-orientation="horizontal"
+        role="group"
+      >
+        <button
+          class="chakra-button css-kn8t1u"
+          type="button"
+        >
+          edit
+        </button>
+        <button
+          class="chakra-button css-kn8t1u"
+          type="button"
+        >
+          remove
+        </button>
+      </div>
+    </div>
+  </div>
+</body>
+`;

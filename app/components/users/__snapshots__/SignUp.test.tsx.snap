@@ -8,33 +8,19 @@ exports[`<SignUp /> > should render as expected 1`] = `
     >
       <div
         class="d_flex flex_column gap_2"
-        data-part="root"
-        data-scope="editable"
-        id="editable::r0:"
       >
         <label
-          data-part="label"
-          data-scope="editable"
-          for="editable::r0::input"
-          id="editable::r0::label"
+          for="Email:"
         >
           Email:
         </label>
-        <div
-          data-part="area"
-          data-placeholder-shown=""
-          data-scope="editable"
-          id="editable::r0::area"
-        >
+        <div>
           <div
             class="css-3a3hw0"
           >
             <input
-              aria-label="editable input"
               class="chakra-input css-0"
-              data-part="input"
-              data-scope="editable"
-              id="editable::r0::input"
+              id="Email:"
               name="email"
               type="email"
               value=""
@@ -44,33 +30,19 @@ exports[`<SignUp /> > should render as expected 1`] = `
       </div>
       <div
         class="d_flex flex_column gap_2"
-        data-part="root"
-        data-scope="editable"
-        id="editable::r1:"
       >
         <label
-          data-part="label"
-          data-scope="editable"
-          for="editable::r1::input"
-          id="editable::r1::label"
+          for="Password:"
         >
           Password:
         </label>
-        <div
-          data-part="area"
-          data-placeholder-shown=""
-          data-scope="editable"
-          id="editable::r1::area"
-        >
+        <div>
           <div
             class="css-3a3hw0"
           >
             <input
-              aria-label="editable input"
               class="chakra-input css-0"
-              data-part="input"
-              data-scope="editable"
-              id="editable::r1::input"
+              id="Password:"
               name="password"
               type="password"
               value=""
@@ -82,8 +54,8 @@ exports[`<SignUp /> > should render as expected 1`] = `
         class="css-w98boq"
       >
         <button
-          class="chakra-button css-4xx2wk"
-          id="pressable::r2:"
+          class="chakra-button css-1ltlu47"
+          disabled=""
           type="submit"
         >
           signUp

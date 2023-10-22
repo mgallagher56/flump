@@ -2,15 +2,15 @@
 
 Finance dashboard project based on [Remix JS](https://remix.run/) Blues stack using:
 
- - [supabase](https://supabase.io/) - postgresql database
- - [vite](https://vitejs.dev/) - build tool
- - [vitest](https://vitest.dev/) - unit/integration testing
- - [cypress](https://www.cypress.io/) - e2e testing
- - [eslint](https://eslint.org/) - linting
- - [prettier](https://prettier.io/) - formatting
- - [fly.io](https://fly.io/) - hosting
- - [github actions](https://docs.github.com/en/actions) - ci/cd
- - [starlight](https://starlight.astro.build/) - documentation
+- [supabase](https://supabase.io/) - postgresql database
+- [vite](https://vitejs.dev/) - build tool
+- [vitest](https://vitest.dev/) - unit/integration testing
+- [cypress](https://www.cypress.io/) - e2e testing
+- [eslint](https://eslint.org/) - linting
+- [prettier](https://prettier.io/) - formatting
+- [fly.io](https://fly.io/) - hosting
+- [github actions](https://docs.github.com/en/actions) - ci/cd
+- [starlight](https://starlight.astro.build/) - documentation
 
 ## Development
 
@@ -36,14 +36,14 @@ Finance dashboard project based on [Remix JS](https://remix.run/) Blues stack us
   ```
 
 - Start Supabase services
-Initialize Supabase to set up the configuration for developing your project locally:
+  Initialize Supabase to set up the configuration for developing your project locally:
 
 ```sh
 supabase init
 ```
 
 - Make sure Docker is running. The start command uses Docker to start the Supabase services.
-This command may take a while to run if this is the first time using the CLI.
+  This command may take a while to run if this is the first time using the CLI.
 
 ```sh
 supabase start
@@ -127,9 +127,6 @@ This starts your app in development mode, rebuilding assets on file changes.
    <li><strong>@remix-run/server-runtime</strong>: Server runtime for Remix Run framework.</li>
    <li><strong>@supabase/auth-helpers-remix</strong>: Remix-specific authentication helpers for Supabase.</li>
    <li><strong>@supabase/supabase-js</strong>: JavaScript client library for Supabase.</li>
-   <li><strong>@zag-js/pressable</strong>: Pressable component for handling mouse and touch interactions.</li>
-   <li><strong>@zag-js/react</strong>: React components for Zag UI library.</li>
-   <li><strong>@zag-js/tabs</strong>: Tab component for managing tabbed content.</li>
    <li><strong>bcryptjs</strong>: Library for hashing passwords using bcrypt algorithm.</li>
    <li><strong>compression</strong>: Compression middleware for Express.js.</li>
    <li><strong>cross-env</strong>: Cross-platform environment variable setting package.</li>

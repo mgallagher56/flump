@@ -1,7 +1,8 @@
 import type { FC } from 'react';
 
+import { useLoaderData } from '@remix-run/react';
 import { useTranslation } from 'react-i18next';
-import useUserStore from '~/store';
+import type { loader } from '~/root';
 
 import FLPButtonGroup from '../core/buttons/FLPButtonGroup';
 import FLPLinkButton from '../core/buttons/FLPLinkButton';
@@ -9,7 +10,7 @@ import SignOut from '../users/SignOut';
 
 const UserLogin: FC = () => {
   const { t } = useTranslation();
-  const user = useUserStore((state) => state.user);
+  const { user } = useLoaderData<typeof loader>();
 
   return (
     <FLPButtonGroup>
@@ -17,7 +18,7 @@ const UserLogin: FC = () => {
         <SignOut />
       ) : (
         <>
-          <FLPLinkButton to="/signUp" variant="solid">
+          <FLPLinkButton to="/signup" variant="solid">
             {t('signUp')}
           </FLPLinkButton>
           <FLPLinkButton to="/login" variant="outline">

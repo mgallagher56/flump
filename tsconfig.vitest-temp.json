@@ -1,24 +1,9 @@
 {
-  "exclude": [
-    "./cypress",
-    "./cypress.config.ts",
-    "./starlight"
-  ],
-  "include": [
-    "remix.env.d.ts",
-    "**/*.ts",
-    "**/*.tsx"
-  ],
+  "exclude": ["./cypress", "./cypress.config.ts", "./starlight"],
+  "include": ["remix.env.d.ts", "**/*.ts", "**/*.tsx"],
   "compilerOptions": {
-    "lib": [
-      "DOM",
-      "DOM.Iterable",
-      "ESNext"
-    ],
-    "types": [
-      "vitest/globals",
-      "vite/client"
-    ],
+    "lib": ["DOM", "DOM.Iterable", "ESNext"],
+    "types": ["vitest/globals", "vite/client"],
     "isolatedModules": true,
     "esModuleInterop": true,
     "jsx": "react-jsx",
@@ -31,9 +16,7 @@
     "forceConsistentCasingInFileNames": true,
     "baseUrl": ".",
     "paths": {
-      "~/*": [
-        "./app/*"
-      ]
+      "~/*": ["./app/*"]
     },
     "noFallthroughCasesInSwitch": true,
     "strictNullChecks": false,

@@ -1,6 +1,6 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`<NavMenu /> > renders as expected 1`] = `
+exports[`<NavMenu /> > renders as expected when logged in and showAppLink is true 1`] = `
 <body>
   <div>
     <div
@@ -12,30 +12,7 @@ exports[`<NavMenu /> > renders as expected 1`] = `
         role="group"
       >
         Home
-        About
-        Contact
-      </div>
-    </div>
-  </div>
-</body>
-`;
-
-exports[`<NavMenu /> > renders as expected when logged in 1`] = `
-<body>
-  <div />
-  <div>
-    <div
-      class="css-0"
-    >
-      <div
-        class="chakra-button__group css-qul7w4"
-        data-orientation="horizontal"
-        role="group"
-      >
-        Home
-        About
-        Contact
-        launchApp
+        Accounts
       </div>
     </div>
   </div>
@@ -54,8 +31,7 @@ exports[`<NavMenu /> > renders as expected when not logged in 1`] = `
         role="group"
       >
         Home
-        About
-        Contact
+        Accounts
       </div>
     </div>
   </div>
