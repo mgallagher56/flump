@@ -36,7 +36,10 @@ vi.mock('app/utils/supabase', () => ({
 }));
 
 describe('<AccountsCard />', () => {
-  mocks.mockUseLoaderData.mockReturnValue({ user: mockUser });
+  mocks.mockUseLoaderData.mockReturnValue({
+    user: mockUser,
+    accountBalances: [{ account_id: '123456', value: 1000 }]
+  });
 
   test('it renders an AccountsCard component with title as expected', () => {
     const { baseElement } = render(

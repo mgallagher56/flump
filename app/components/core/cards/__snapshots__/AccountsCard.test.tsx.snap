@@ -11,6 +11,11 @@ exports[`<AccountsCard /> > it renders an AccountsCard component with title as e
       <div
         class="css-5ivlx4"
       >
+        <h5
+          class="chakra-heading css-1e3tj"
+        >
+          Current account
+        </h5>
         <p
           class="chakra-text css-hmjgxl"
         >
@@ -19,7 +24,8 @@ exports[`<AccountsCard /> > it renders an AccountsCard component with title as e
         <p
           class="chakra-text css-km77ca"
         >
-          Current account
+          balance: £1,000
+      
         </p>
       </div>
       <div
@@ -28,13 +34,13 @@ exports[`<AccountsCard /> > it renders an AccountsCard component with title as e
         role="group"
       >
         <button
-          class="chakra-button css-1fysbuj"
+          class="chakra-button css-kn8t1u"
           type="button"
         >
           edit
         </button>
         <button
-          class="chakra-button css-1fysbuj"
+          class="chakra-button css-kn8t1u"
           type="button"
         >
           remove
