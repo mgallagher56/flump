@@ -24,6 +24,7 @@ const FLPButton: FC<PropsWithChildren<FLPButtonProps>> = ({
       padding={padding}
       variant={variant}
       onClick={onClick}
+      width={'max-content'}
       {...buttonProps}
     >
       {buttonProps.children}

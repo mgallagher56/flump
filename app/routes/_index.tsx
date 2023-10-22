@@ -1,13 +1,8 @@
 import type { ReactElement } from 'react';
-import { useMemo } from 'react';
 
 import { json, type MetaFunction } from '@remix-run/node';
-import { useLoaderData } from '@remix-run/react';
-import { useTranslation } from 'react-i18next';
 import FLPBox from '~/components/core/structure/FLPBox';
-import FLPTabs from '~/components/core/tabs/FLPTabs';
 import FLPHeading from '~/components/core/typography/FLPHeading';
-import { getTabsData } from '~/utils/routesUtils/index/utils';
 
 import type { Database } from 'db_types';
 
@@ -29,16 +24,9 @@ export const loader = async ({ request }: { request: Request }) => {
 };
 
 const Index = (): ReactElement => {
-  const { t } = useTranslation();
-  const { employees } = useLoaderData<typeof loader>();
-  const tabsData = useMemo(() => getTabsData(employees, t), [employees, t]);
-
   return (
     <FLPBox as="main">
-      <FLPHeading>Hero</FLPHeading>
-      <FLPHeading>About</FLPHeading>
-      <FLPHeading>Features</FLPHeading>
-      <FLPTabs data={tabsData} />
+      <FLPHeading>Home Page</FLPHeading>
     </FLPBox>
   );
 };

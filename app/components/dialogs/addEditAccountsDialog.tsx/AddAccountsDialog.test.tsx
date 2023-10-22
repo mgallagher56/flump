@@ -9,12 +9,15 @@ import AddEditAccountsDialogBtn from './AddEditAccountsDialog';
 
 const mocks = vi.hoisted(() => ({
   mockUseLoaderData: vi.fn(),
-  mockUseRevalidator: vi.fn(() => ({revalidate: vi.fn()})),
+  mockUseRevalidator: vi.fn(() => ({ revalidate: vi.fn() })),
   mockFrom: vi.fn(() => ({
     insert: () => ({
       eq: () => ({
         eq: () => ({})
-      })
+      }),
+      select: vi.fn(() => ({
+        data: [{ id: '123456' }]
+      }))
     })
   }))
 }));

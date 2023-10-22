@@ -27,10 +27,13 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({ accountId,
   const { revalidate } = useRevalidator();
   const [modalOpen, setModalOpen] = useState(false);
 
-  const handleOpenModal = useCallback((e) => {
-    e.stopPropagation();
-    setModalOpen(true);
-  }, [setModalOpen]);
+  const handleOpenModal = useCallback(
+    (e: { stopPropagation: () => void }) => {
+      e.stopPropagation();
+      setModalOpen(true);
+    },
+    [setModalOpen]
+  );
 
   const handleCloseModal = useCallback(() => {
     setModalOpen(false);
@@ -64,10 +67,22 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({ accountId,
 
   const onAddAccount = useCallback(async () => {
     const { name, type } = formInput;
-    const { data } = await supabase.from('accounts').insert([{ name, type, user_id: user?.id }]);
+    const { data } = await supabase
+      .from('accounts')
+      .insert([{ name, type, user_id: user?.id }])
+      .select();
+
+    const year = new Date().getFullYear();
+    const currentYearValues = Array.from({ length: 12 }, (_, i) => ({
+      month: i + 1,
+      year,
+      value: 0,
+      account_id: data[0].id
+    }));
+
+    await supabase.from('account_details').insert(currentYearValues);
     handleCloseModal();
     revalidate();
-    console.log(data);
   }, [formInput, handleCloseModal, revalidate, user?.id]);
 
   const onEditAccount = useCallback(async () => {
@@ -120,7 +135,7 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({ accountId,
           </FLPBox>
         </Form>
       }
-      title={t('addAccount')}
+      title={t(isEditAccount ? 'editAccount' : 'addAccount')}
       isOpen={modalOpen}
       onClose={() => setModalOpen(false)}
       onConfirm={submitAction}

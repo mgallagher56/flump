@@ -4,7 +4,7 @@ exports[`FLPButton > should not call onClick when clicked and disabled is true 1
 <body>
   <div>
     <button
-      class="chakra-button css-4xx2wk"
+      class="chakra-button css-1ltlu47"
       disabled=""
       type="button"
     >
@@ -17,7 +17,7 @@ exports[`FLPButton > should not call onClick when clicked and disabled is true 1
 exports[`FLPButton > should render correctly 1`] = `
 <div>
   <button
-    class="chakra-button css-4xx2wk"
+    class="chakra-button css-1ltlu47"
     type="button"
   >
     FLPButton
@@ -28,7 +28,7 @@ exports[`FLPButton > should render correctly 1`] = `
 exports[`FLPButton > should render correctly with props 1`] = `
 <div>
   <button
-    class="chakra-button css-4xx2wk"
+    class="chakra-button css-1ltlu47"
     data-loading=""
     disabled=""
     type="button"

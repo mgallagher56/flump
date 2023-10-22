@@ -1,16 +1,17 @@
-import { type FC, useCallback } from 'react';
+import { type FC, useCallback, useMemo } from 'react';
 
 import type { CardProps } from '@chakra-ui/react';
 import { useLoaderData, useNavigate, useRevalidator } from '@remix-run/react';
 import { useTranslation } from 'react-i18next';
+import AddEditAccountsDialogBtn from '~/components/dialogs/addEditAccountsDialog.tsx/AddEditAccountsDialog';
 import type { AccountTypeEnum } from '~/containers/accounts/utils';
-import AddEditAccountsDialogBtn from '~/containers/dialogs/addEditAccountsDialog.tsx/AddEditAccountsDialog';
-import type { loader } from '~/root';
+import type { loader } from '~/routes/app.accounts._index';
 import supabase from '~/utils/supabase';
 
 import FLPButton from '../buttons/FLPButton';
 import FLPButtonGroup from '../buttons/FLPButtonGroup';
 import FLPBox from '../structure/FLPBox';
+import FLPHeading from '../typography/FLPHeading';
 import FLPText from '../typography/FLPText';
 import FLPCard from './FLPCard';
 
@@ -23,11 +24,18 @@ interface AccountsCardProp extends Omit<CardProps, 'title'> {
 const AccountsCard: FC<AccountsCardProp> = ({ accountId, name, type }) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { user } = useLoaderData<typeof loader>();
+  const { user, accountBalances = [] } = useLoaderData<typeof loader>();
   const { revalidate } = useRevalidator();
 
+  const accountBalance = useMemo(
+    () =>
+      accountBalances.find((account: { account_id?: string; value?: number }) => account.account_id === accountId)
+        .value,
+    [accountBalances, accountId]
+  );
+
   const handleRemoveAccount = useCallback(
-    async (e) => {
+    async (e: { stopPropagation: () => void }) => {
       e.stopPropagation();
       await supabase.from('accounts').delete().eq('user_id', user.id).eq('id', accountId);
       revalidate();
@@ -52,8 +60,12 @@ const AccountsCard: FC<AccountsCardProp> = ({ accountId, name, type }) => {
       onClick={onCardClick}
     >
       <FLPBox display="flex" gap="3" flexDirection="column">
+        <FLPHeading as="h5" size="xs">{`${type} ${t('account')}`}</FLPHeading>
         <FLPText fontWeight="bold">{name}</FLPText>
-        <FLPText>{`${type} ${t('account')}`}</FLPText>
+        <FLPText>{`${t('balance')}: ${Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP' })
+          .format(accountBalance)
+          .slice(0, -3)}
+      `}</FLPText>
       </FLPBox>
       <FLPButtonGroup justifyContent="flex-end" zIndex="10">
         <AddEditAccountsDialogBtn accountId={accountId} isEditAccount={true} />

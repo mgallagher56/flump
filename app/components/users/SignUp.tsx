@@ -42,7 +42,7 @@ const SignUp: FC<SignUpProps> = ({ action = SignUpActionEnum.SIGNUP }) => {
   }, []);
 
   const handleSubmit = useCallback(
-    async (e): Promise<void> => {
+    async (e: { preventDefault: () => void }): Promise<void> => {
       e.preventDefault();
       const submitAction = getSubmitUserAuthAction({
         supabaseClient: supabase,
@@ -55,7 +55,6 @@ const SignUp: FC<SignUpProps> = ({ action = SignUpActionEnum.SIGNUP }) => {
       setError(error?.message);
       setIsUserRegistered(error?.message === USER_ALREADY_REGISTERED);
       setInfoMessage(getInfoMessage(t, error?.message === USER_ALREADY_REGISTERED, sendMagicLink));
-      console.log({ data, error });
     },
     [formInput, isShowLogin, sendMagicLink, t]
   );

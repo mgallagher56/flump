@@ -1,0 +1,1600 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`<AccountDetailContainer /> > should add new years when buttons are clicked > with new years added 1`] = `
+<body>
+  <div>
+    <div
+      class="chakra-stack css-bco1gb"
+    >
+      <div
+        class="chakra-stack css-1y3f6ad"
+      >
+        <div
+          class="chakra-stack__item css-1n5hzb0"
+        >
+          <h2
+            class="chakra-heading css-1e3tj"
+          >
+            CURRENT
+          </h2>
+          <h1
+            class="chakra-heading css-1e3tj"
+          >
+            My current account
+          </h1>
+        </div>
+        <div
+          class="chakra-stack__item css-1qy82gu"
+        >
+          <button
+            class="chakra-button css-1ltlu47"
+            type="button"
+          >
+            edit
+          </button>
+        </div>
+      </div>
+      <div
+        class="chakra-stack css-nn57su"
+      >
+        <h3
+          class="chakra-heading css-1e3tj"
+        >
+          2021
+        </h3>
+        <div
+          class="d_flex flex_row gap_5"
+        >
+          <div>
+            <p
+              class="chakra-text css-km77ca"
+            >
+              January
+            </p>
+            <p
+              class="chakra-text css-km77ca"
+            >
+              £1,000
+            </p>
+          </div>
+          <div>
+            <p
+              class="chakra-text css-km77ca"
+            >
+              February
+            </p>
+            <p
+              class="chakra-text css-km77ca"
+            >
+              £1,000
+            </p>
+          </div>
+          <div>
+            <p
+              class="chakra-text css-km77ca"
+            >
+              March
+            </p>
+            <p
+              class="chakra-text css-km77ca"
+            >
+              £1,000
+            </p>
+          </div>
+          <div>
+            <p
+              class="chakra-text css-km77ca"
+            >
+              April
+            </p>
+            <p
+              class="chakra-text css-km77ca"
+            >
+              £1,000
+            </p>
+          </div>
+          <div>
+            <p
+              class="chakra-text css-km77ca"
+            >
+              May
+            </p>
+            <p
+              class="chakra-text css-km77ca"
+            >
+              £1,000
+            </p>
+          </div>
+          <div>
+            <p
+              class="chakra-text css-km77ca"
+            >
+              June
+            </p>
+            <p
+              class="chakra-text css-km77ca"
+            >
+              £1,000
+            </p>
+          </div>
+          <div>
+            <p
+              class="chakra-text css-km77ca"
+            >
+              July
+            </p>
+            <p
+              class="chakra-text css-km77ca"
+            >
+              £1,000
+            </p>
+          </div>
+          <div>
+            <p
+              class="chakra-text css-km77ca"
+            >
+              August
+            </p>
+            <p
+              class="chakra-text css-km77ca"
+            >
+              £1,000
+            </p>
+          </div>
+          <div>
+            <p
+              class="chakra-text css-km77ca"
+            >
+              September
+            </p>
+            <p
+              class="chakra-text css-km77ca"
+            >
+              £1,000
+            </p>
+          </div>
+          <div>
+            <p
+              class="chakra-text css-km77ca"
+            >
+              October
+            </p>
+            <p
+              class="chakra-text css-km77ca"
+            >
+              £1,000
+            </p>
+          </div>
+          <div>
+            <p
+              class="chakra-text css-km77ca"
+            >
+              November
+            </p>
+            <p
+              class="chakra-text css-km77ca"
+            >
+              £1,000
+            </p>
+          </div>
+          <div>
+            <p
+              class="chakra-text css-km77ca"
+            >
+              December
+            </p>
+            <p
+              class="chakra-text css-km77ca"
+            >
+              £1,000
+            </p>
+          </div>
+        </div>
+        <h3
+          class="chakra-heading css-1e3tj"
+        >
+          2023
+        </h3>
+        <div
+          class="d_flex flex_row gap_5"
+        >
+          <div>
+            <p
+              class="chakra-text css-km77ca"
+            >
+              January
+            </p>
+            <p
+              class="chakra-text css-km77ca"
+            >
+              £1,000
+            </p>
+          </div>
+          <div>
+            <p
+              class="chakra-text css-km77ca"
+            >
+              February
+            </p>
+            <p
+              class="chakra-text css-km77ca"
+            >
+              £1,000
+            </p>
+          </div>
+          <div>
+            <p
+              class="chakra-text css-km77ca"
+            >
+              March
+            </p>
+            <p
+              class="chakra-text css-km77ca"
+            >
+              £1,000
+            </p>
+          </div>
+          <div>
+            <p
+              class="chakra-text css-km77ca"
+            >
+              April
+            </p>
+            <p
+              class="chakra-text css-km77ca"
+            >
+              £1,000
+            </p>
+          </div>
+          <div>
+            <p
+              class="chakra-text css-km77ca"
+            >
+              May
+            </p>
+            <p
+              class="chakra-text css-km77ca"
+            >
+              £1,000
+            </p>
+          </div>
+          <div>
+            <p
+              class="chakra-text css-km77ca"
+            >
+              June
+            </p>
+            <p
+              class="chakra-text css-km77ca"
+            >
+              £1,000
+            </p>
+          </div>
+          <div>
+            <p
+              class="chakra-text css-km77ca"
+            >
+              July
+            </p>
+            <p
+              class="chakra-text css-km77ca"
+            >
+              £1,000
+            </p>
+          </div>
+          <div>
+            <p
+              class="chakra-text css-km77ca"
+            >
+              August
+            </p>
+            <p
+              class="chakra-text css-km77ca"
+            >
+              £1,000
+            </p>
+          </div>
+          <div>
+            <p
+              class="chakra-text css-km77ca"
+            >
+              September
+            </p>
+            <p
+              class="chakra-text css-km77ca"
+            >
+              £1,000
+            </p>
+          </div>
+          <div>
+            <p
+              class="chakra-text css-km77ca"
+            >
+              October
+            </p>
+            <p
+              class="chakra-text css-km77ca"
+            >
+              £1,000
+            </p>
+          </div>
+          <div>
+            <p
+              class="chakra-text css-km77ca"
+            >
+              November
+            </p>
+            <p
+              class="chakra-text css-km77ca"
+            >
+              £1,000
+            </p>
+          </div>
+          <div>
+            <p
+              class="chakra-text css-km77ca"
+            >
+              December
+            </p>
+            <p
+              class="chakra-text css-km77ca"
+            >
+              £1,000
+            </p>
+          </div>
+        </div>
+      </div>
+      <div
+        class="chakra-stack css-1f0wxn3"
+      >
+        <button
+          class="chakra-button css-1ltlu47"
+          type="button"
+        >
+          addPrevYear
+        </button>
+        <button
+          class="chakra-button css-1ltlu47"
+          type="button"
+        >
+          addNextYear
+        </button>
+      </div>
+    </div>
+  </div>
+</body>
+`;
+
+exports[`<AccountDetailContainer /> > should render 1`] = `
+<body>
+  <div>
+    <div
+      class="chakra-stack css-bco1gb"
+    >
+      <div
+        class="chakra-stack css-1y3f6ad"
+      >
+        <div
+          class="chakra-stack__item css-1n5hzb0"
+        >
+          <h2
+            class="chakra-heading css-1e3tj"
+          >
+            CURRENT
+          </h2>
+          <h1
+            class="chakra-heading css-1e3tj"
+          >
+            My current account
+          </h1>
+        </div>
+        <div
+          class="chakra-stack__item css-1qy82gu"
+        >
+          <button
+            class="chakra-button css-1ltlu47"
+            type="button"
+          >
+            edit
+          </button>
+        </div>
+      </div>
+      <div
+        class="chakra-stack css-nn57su"
+      >
+        <h3
+          class="chakra-heading css-1e3tj"
+        >
+          2021
+        </h3>
+        <div
+          class="d_flex flex_row gap_5"
+        >
+          <div>
+            <p
+              class="chakra-text css-km77ca"
+            >
+              January
+            </p>
+            <p
+              class="chakra-text css-km77ca"
+            >
+              £1,000
+            </p>
+          </div>
+          <div>
+            <p
+              class="chakra-text css-km77ca"
+            >
+              February
+            </p>
+            <p
+              class="chakra-text css-km77ca"
+            >
+              £1,000
+            </p>
+          </div>
+          <div>
+            <p
+              class="chakra-text css-km77ca"
+            >
+              March
+            </p>
+            <p
+              class="chakra-text css-km77ca"
+            >
+              £1,000
+            </p>
+          </div>
+          <div>
+            <p
+              class="chakra-text css-km77ca"
+            >
+              April
+            </p>
+            <p
+              class="chakra-text css-km77ca"
+            >
+              £1,000
+            </p>
+          </div>
+          <div>
+            <p
+              class="chakra-text css-km77ca"
+            >
+              May
+            </p>
+            <p
+              class="chakra-text css-km77ca"
+            >
+              £1,000
+            </p>
+          </div>
+          <div>
+            <p
+              class="chakra-text css-km77ca"
+            >
+              June
+            </p>
+            <p
+              class="chakra-text css-km77ca"
+            >
+              £1,000
+            </p>
+          </div>
+          <div>
+            <p
+              class="chakra-text css-km77ca"
+            >
+              July
+            </p>
+            <p
+              class="chakra-text css-km77ca"
+            >
+              £1,000
+            </p>
+          </div>
+          <div>
+            <p
+              class="chakra-text css-km77ca"
+            >
+              August
+            </p>
+            <p
+              class="chakra-text css-km77ca"
+            >
+              £1,000
+            </p>
+          </div>
+          <div>
+            <p
+              class="chakra-text css-km77ca"
+            >
+              September
+            </p>
+            <p
+              class="chakra-text css-km77ca"
+            >
+              £1,000
+            </p>
+          </div>
+          <div>
+            <p
+              class="chakra-text css-km77ca"
+            >
+              October
+            </p>
+            <p
+              class="chakra-text css-km77ca"
+            >
+              £1,000
+            </p>
+          </div>
+          <div>
+            <p
+              class="chakra-text css-km77ca"
+            >
+              November
+            </p>
+            <p
+              class="chakra-text css-km77ca"
+            >
+              £1,000
+            </p>
+          </div>
+          <div>
+            <p
+              class="chakra-text css-km77ca"
+            >
+              December
+            </p>
+            <p
+              class="chakra-text css-km77ca"
+            >
+              £1,000
+            </p>
+          </div>
+        </div>
+        <h3
+          class="chakra-heading css-1e3tj"
+        >
+          2023
+        </h3>
+        <div
+          class="d_flex flex_row gap_5"
+        >
+          <div>
+            <p
+              class="chakra-text css-km77ca"
+            >
+              January
+            </p>
+            <p
+              class="chakra-text css-km77ca"
+            >
+              £1,000
+            </p>
+          </div>
+          <div>
+            <p
+              class="chakra-text css-km77ca"
+            >
+              February
+            </p>
+            <p
+              class="chakra-text css-km77ca"
+            >
+              £1,000
+            </p>
+          </div>
+          <div>
+            <p
+              class="chakra-text css-km77ca"
+            >
+              March
+            </p>
+            <p
+              class="chakra-text css-km77ca"
+            >
+              £1,000
+            </p>
+          </div>
+          <div>
+            <p
+              class="chakra-text css-km77ca"
+            >
+              April
+            </p>
+            <p
+              class="chakra-text css-km77ca"
+            >
+              £1,000
+            </p>
+          </div>
+          <div>
+            <p
+              class="chakra-text css-km77ca"
+            >
+              May
+            </p>
+            <p
+              class="chakra-text css-km77ca"
+            >
+              £1,000
+            </p>
+          </div>
+          <div>
+            <p
+              class="chakra-text css-km77ca"
+            >
+              June
+            </p>
+            <p
+              class="chakra-text css-km77ca"
+            >
+              £1,000
+            </p>
+          </div>
+          <div>
+            <p
+              class="chakra-text css-km77ca"
+            >
+              July
+            </p>
+            <p
+              class="chakra-text css-km77ca"
+            >
+              £1,000
+            </p>
+          </div>
+          <div>
+            <p
+              class="chakra-text css-km77ca"
+            >
+              August
+            </p>
+            <p
+              class="chakra-text css-km77ca"
+            >
+              £1,000
+            </p>
+          </div>
+          <div>
+            <p
+              class="chakra-text css-km77ca"
+            >
+              September
+            </p>
+            <p
+              class="chakra-text css-km77ca"
+            >
+              £1,000
+            </p>
+          </div>
+          <div>
+            <p
+              class="chakra-text css-km77ca"
+            >
+              October
+            </p>
+            <p
+              class="chakra-text css-km77ca"
+            >
+              £1,000
+            </p>
+          </div>
+          <div>
+            <p
+              class="chakra-text css-km77ca"
+            >
+              November
+            </p>
+            <p
+              class="chakra-text css-km77ca"
+            >
+              £1,000
+            </p>
+          </div>
+          <div>
+            <p
+              class="chakra-text css-km77ca"
+            >
+              December
+            </p>
+            <p
+              class="chakra-text css-km77ca"
+            >
+              £1,000
+            </p>
+          </div>
+        </div>
+      </div>
+      <div
+        class="chakra-stack css-1f0wxn3"
+      >
+        <button
+          class="chakra-button css-1ltlu47"
+          type="button"
+        >
+          addPrevYear
+        </button>
+        <button
+          class="chakra-button css-1ltlu47"
+          type="button"
+        >
+          addNextYear
+        </button>
+      </div>
+    </div>
+  </div>
+</body>
+`;
+
+exports[`<AccountDetailContainer /> > should toggle edit mode when button is clicked, changed value and save new value > with edit mode enabled 1`] = `
+<body>
+  <div>
+    <div
+      class="chakra-stack css-bco1gb"
+    >
+      <div
+        class="chakra-stack css-1y3f6ad"
+      >
+        <div
+          class="chakra-stack__item css-1n5hzb0"
+        >
+          <h2
+            class="chakra-heading css-1e3tj"
+          >
+            CURRENT
+          </h2>
+          <h1
+            class="chakra-heading css-1e3tj"
+          >
+            My current account
+          </h1>
+        </div>
+        <div
+          class="chakra-stack__item css-1qy82gu"
+        >
+          <button
+            class="chakra-button css-1ltlu47"
+            type="button"
+          >
+            save
+          </button>
+        </div>
+      </div>
+      <div
+        class="chakra-stack css-nn57su"
+      >
+        <h3
+          class="chakra-heading css-1e3tj"
+        >
+          2021
+        </h3>
+        <div
+          class="d_flex flex_row gap_5"
+        >
+          <div>
+            <p
+              class="chakra-text css-km77ca"
+            >
+              January
+            </p>
+            <div
+              class="d_flex flex_column gap_2"
+            >
+              <label
+                for="2021-January"
+                hidden=""
+              >
+                2021-January
+              </label>
+              <div>
+                <div
+                  class="css-3a3hw0"
+                >
+                  <input
+                    class="chakra-input css-v7v99c"
+                    data-month="1"
+                    data-year="2021"
+                    id="2021-January"
+                    name="amount"
+                    placeholder="0.00"
+                    type="number"
+                    value="1000"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+          <div>
+            <p
+              class="chakra-text css-km77ca"
+            >
+              February
+            </p>
+            <div
+              class="d_flex flex_column gap_2"
+            >
+              <label
+                for="2021-February"
+                hidden=""
+              >
+                2021-February
+              </label>
+              <div>
+                <div
+                  class="css-3a3hw0"
+                >
+                  <input
+                    class="chakra-input css-v7v99c"
+                    data-month="2"
+                    data-year="2021"
+                    id="2021-February"
+                    name="amount"
+                    placeholder="0.00"
+                    type="number"
+                    value="1000"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+          <div>
+            <p
+              class="chakra-text css-km77ca"
+            >
+              March
+            </p>
+            <div
+              class="d_flex flex_column gap_2"
+            >
+              <label
+                for="2021-March"
+                hidden=""
+              >
+                2021-March
+              </label>
+              <div>
+                <div
+                  class="css-3a3hw0"
+                >
+                  <input
+                    class="chakra-input css-v7v99c"
+                    data-month="3"
+                    data-year="2021"
+                    id="2021-March"
+                    name="amount"
+                    placeholder="0.00"
+                    type="number"
+                    value="1000"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+          <div>
+            <p
+              class="chakra-text css-km77ca"
+            >
+              April
+            </p>
+            <div
+              class="d_flex flex_column gap_2"
+            >
+              <label
+                for="2021-April"
+                hidden=""
+              >
+                2021-April
+              </label>
+              <div>
+                <div
+                  class="css-3a3hw0"
+                >
+                  <input
+                    class="chakra-input css-v7v99c"
+                    data-month="4"
+                    data-year="2021"
+                    id="2021-April"
+                    name="amount"
+                    placeholder="0.00"
+                    type="number"
+                    value="1000"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+          <div>
+            <p
+              class="chakra-text css-km77ca"
+            >
+              May
+            </p>
+            <div
+              class="d_flex flex_column gap_2"
+            >
+              <label
+                for="2021-May"
+                hidden=""
+              >
+                2021-May
+              </label>
+              <div>
+                <div
+                  class="css-3a3hw0"
+                >
+                  <input
+                    class="chakra-input css-v7v99c"
+                    data-month="5"
+                    data-year="2021"
+                    id="2021-May"
+                    name="amount"
+                    placeholder="0.00"
+                    type="number"
+                    value="1000"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+          <div>
+            <p
+              class="chakra-text css-km77ca"
+            >
+              June
+            </p>
+            <div
+              class="d_flex flex_column gap_2"
+            >
+              <label
+                for="2021-June"
+                hidden=""
+              >
+                2021-June
+              </label>
+              <div>
+                <div
+                  class="css-3a3hw0"
+                >
+                  <input
+                    class="chakra-input css-v7v99c"
+                    data-month="6"
+                    data-year="2021"
+                    id="2021-June"
+                    name="amount"
+                    placeholder="0.00"
+                    type="number"
+                    value="1000"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+          <div>
+            <p
+              class="chakra-text css-km77ca"
+            >
+              July
+            </p>
+            <div
+              class="d_flex flex_column gap_2"
+            >
+              <label
+                for="2021-July"
+                hidden=""
+              >
+                2021-July
+              </label>
+              <div>
+                <div
+                  class="css-3a3hw0"
+                >
+                  <input
+                    class="chakra-input css-v7v99c"
+                    data-month="7"
+                    data-year="2021"
+                    id="2021-July"
+                    name="amount"
+                    placeholder="0.00"
+                    type="number"
+                    value="1000"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+          <div>
+            <p
+              class="chakra-text css-km77ca"
+            >
+              August
+            </p>
+            <div
+              class="d_flex flex_column gap_2"
+            >
+              <label
+                for="2021-August"
+                hidden=""
+              >
+                2021-August
+              </label>
+              <div>
+                <div
+                  class="css-3a3hw0"
+                >
+                  <input
+                    class="chakra-input css-v7v99c"
+                    data-month="8"
+                    data-year="2021"
+                    id="2021-August"
+                    name="amount"
+                    placeholder="0.00"
+                    type="number"
+                    value="1000"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+          <div>
+            <p
+              class="chakra-text css-km77ca"
+            >
+              September
+            </p>
+            <div
+              class="d_flex flex_column gap_2"
+            >
+              <label
+                for="2021-September"
+                hidden=""
+              >
+                2021-September
+              </label>
+              <div>
+                <div
+                  class="css-3a3hw0"
+                >
+                  <input
+                    class="chakra-input css-v7v99c"
+                    data-month="9"
+                    data-year="2021"
+                    id="2021-September"
+                    name="amount"
+                    placeholder="0.00"
+                    type="number"
+                    value="1000"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+          <div>
+            <p
+              class="chakra-text css-km77ca"
+            >
+              October
+            </p>
+            <div
+              class="d_flex flex_column gap_2"
+            >
+              <label
+                for="2021-October"
+                hidden=""
+              >
+                2021-October
+              </label>
+              <div>
+                <div
+                  class="css-3a3hw0"
+                >
+                  <input
+                    class="chakra-input css-v7v99c"
+                    data-month="10"
+                    data-year="2021"
+                    id="2021-October"
+                    name="amount"
+                    placeholder="0.00"
+                    type="number"
+                    value="1000"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+          <div>
+            <p
+              class="chakra-text css-km77ca"
+            >
+              November
+            </p>
+            <div
+              class="d_flex flex_column gap_2"
+            >
+              <label
+                for="2021-November"
+                hidden=""
+              >
+                2021-November
+              </label>
+              <div>
+                <div
+                  class="css-3a3hw0"
+                >
+                  <input
+                    class="chakra-input css-v7v99c"
+                    data-month="11"
+                    data-year="2021"
+                    id="2021-November"
+                    name="amount"
+                    placeholder="0.00"
+                    type="number"
+                    value="1000"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+          <div>
+            <p
+              class="chakra-text css-km77ca"
+            >
+              December
+            </p>
+            <div
+              class="d_flex flex_column gap_2"
+            >
+              <label
+                for="2021-December"
+                hidden=""
+              >
+                2021-December
+              </label>
+              <div>
+                <div
+                  class="css-3a3hw0"
+                >
+                  <input
+                    class="chakra-input css-v7v99c"
+                    data-month="12"
+                    data-year="2021"
+                    id="2021-December"
+                    name="amount"
+                    placeholder="0.00"
+                    type="number"
+                    value="1000"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <h3
+          class="chakra-heading css-1e3tj"
+        >
+          2023
+        </h3>
+        <div
+          class="d_flex flex_row gap_5"
+        >
+          <div>
+            <p
+              class="chakra-text css-km77ca"
+            >
+              January
+            </p>
+            <div
+              class="d_flex flex_column gap_2"
+            >
+              <label
+                for="2023-January"
+                hidden=""
+              >
+                2023-January
+              </label>
+              <div>
+                <div
+                  class="css-3a3hw0"
+                >
+                  <input
+                    class="chakra-input css-v7v99c"
+                    data-month="1"
+                    data-year="2023"
+                    id="2023-January"
+                    name="amount"
+                    placeholder="0.00"
+                    type="number"
+                    value="1000"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+          <div>
+            <p
+              class="chakra-text css-km77ca"
+            >
+              February
+            </p>
+            <div
+              class="d_flex flex_column gap_2"
+            >
+              <label
+                for="2023-February"
+                hidden=""
+              >
+                2023-February
+              </label>
+              <div>
+                <div
+                  class="css-3a3hw0"
+                >
+                  <input
+                    class="chakra-input css-v7v99c"
+                    data-month="2"
+                    data-year="2023"
+                    id="2023-February"
+                    name="amount"
+                    placeholder="0.00"
+                    type="number"
+                    value="1000"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+          <div>
+            <p
+              class="chakra-text css-km77ca"
+            >
+              March
+            </p>
+            <div
+              class="d_flex flex_column gap_2"
+            >
+              <label
+                for="2023-March"
+                hidden=""
+              >
+                2023-March
+              </label>
+              <div>
+                <div
+                  class="css-3a3hw0"
+                >
+                  <input
+                    class="chakra-input css-v7v99c"
+                    data-month="3"
+                    data-year="2023"
+                    id="2023-March"
+                    name="amount"
+                    placeholder="0.00"
+                    type="number"
+                    value="1000"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+          <div>
+            <p
+              class="chakra-text css-km77ca"
+            >
+              April
+            </p>
+            <div
+              class="d_flex flex_column gap_2"
+            >
+              <label
+                for="2023-April"
+                hidden=""
+              >
+                2023-April
+              </label>
+              <div>
+                <div
+                  class="css-3a3hw0"
+                >
+                  <input
+                    class="chakra-input css-v7v99c"
+                    data-month="4"
+                    data-year="2023"
+                    id="2023-April"
+                    name="amount"
+                    placeholder="0.00"
+                    type="number"
+                    value="1000"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+          <div>
+            <p
+              class="chakra-text css-km77ca"
+            >
+              May
+            </p>
+            <div
+              class="d_flex flex_column gap_2"
+            >
+              <label
+                for="2023-May"
+                hidden=""
+              >
+                2023-May
+              </label>
+              <div>
+                <div
+                  class="css-3a3hw0"
+                >
+                  <input
+                    class="chakra-input css-v7v99c"
+                    data-month="5"
+                    data-year="2023"
+                    id="2023-May"
+                    name="amount"
+                    placeholder="0.00"
+                    type="number"
+                    value="1000"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+          <div>
+            <p
+              class="chakra-text css-km77ca"
+            >
+              June
+            </p>
+            <div
+              class="d_flex flex_column gap_2"
+            >
+              <label
+                for="2023-June"
+                hidden=""
+              >
+                2023-June
+              </label>
+              <div>
+                <div
+                  class="css-3a3hw0"
+                >
+                  <input
+                    class="chakra-input css-v7v99c"
+                    data-month="6"
+                    data-year="2023"
+                    id="2023-June"
+                    name="amount"
+                    placeholder="0.00"
+                    type="number"
+                    value="1000"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+          <div>
+            <p
+              class="chakra-text css-km77ca"
+            >
+              July
+            </p>
+            <div
+              class="d_flex flex_column gap_2"
+            >
+              <label
+                for="2023-July"
+                hidden=""
+              >
+                2023-July
+              </label>
+              <div>
+                <div
+                  class="css-3a3hw0"
+                >
+                  <input
+                    class="chakra-input css-v7v99c"
+                    data-month="7"
+                    data-year="2023"
+                    id="2023-July"
+                    name="amount"
+                    placeholder="0.00"
+                    type="number"
+                    value="1000"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+          <div>
+            <p
+              class="chakra-text css-km77ca"
+            >
+              August
+            </p>
+            <div
+              class="d_flex flex_column gap_2"
+            >
+              <label
+                for="2023-August"
+                hidden=""
+              >
+                2023-August
+              </label>
+              <div>
+                <div
+                  class="css-3a3hw0"
+                >
+                  <input
+                    class="chakra-input css-v7v99c"
+                    data-month="8"
+                    data-year="2023"
+                    id="2023-August"
+                    name="amount"
+                    placeholder="0.00"
+                    type="number"
+                    value="1000"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+          <div>
+            <p
+              class="chakra-text css-km77ca"
+            >
+              September
+            </p>
+            <div
+              class="d_flex flex_column gap_2"
+            >
+              <label
+                for="2023-September"
+                hidden=""
+              >
+                2023-September
+              </label>
+              <div>
+                <div
+                  class="css-3a3hw0"
+                >
+                  <input
+                    class="chakra-input css-v7v99c"
+                    data-month="9"
+                    data-year="2023"
+                    id="2023-September"
+                    name="amount"
+                    placeholder="0.00"
+                    type="number"
+                    value="1000"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+          <div>
+            <p
+              class="chakra-text css-km77ca"
+            >
+              October
+            </p>
+            <div
+              class="d_flex flex_column gap_2"
+            >
+              <label
+                for="2023-October"
+                hidden=""
+              >
+                2023-October
+              </label>
+              <div>
+                <div
+                  class="css-3a3hw0"
+                >
+                  <input
+                    class="chakra-input css-v7v99c"
+                    data-month="10"
+                    data-year="2023"
+                    id="2023-October"
+                    name="amount"
+                    placeholder="0.00"
+                    type="number"
+                    value="1000"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+          <div>
+            <p
+              class="chakra-text css-km77ca"
+            >
+              November
+            </p>
+            <div
+              class="d_flex flex_column gap_2"
+            >
+              <label
+                for="2023-November"
+                hidden=""
+              >
+                2023-November
+              </label>
+              <div>
+                <div
+                  class="css-3a3hw0"
+                >
+                  <input
+                    class="chakra-input css-v7v99c"
+                    data-month="11"
+                    data-year="2023"
+                    id="2023-November"
+                    name="amount"
+                    placeholder="0.00"
+                    type="number"
+                    value="1000"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+          <div>
+            <p
+              class="chakra-text css-km77ca"
+            >
+              December
+            </p>
+            <div
+              class="d_flex flex_column gap_2"
+            >
+              <label
+                for="2023-December"
+                hidden=""
+              >
+                2023-December
+              </label>
+              <div>
+                <div
+                  class="css-3a3hw0"
+                >
+                  <input
+                    class="chakra-input css-v7v99c"
+                    data-month="12"
+                    data-year="2023"
+                    id="2023-December"
+                    name="amount"
+                    placeholder="0.00"
+                    type="number"
+                    value="1000"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div
+        class="chakra-stack css-1f0wxn3"
+      >
+        <button
+          class="chakra-button css-1ltlu47"
+          type="button"
+        >
+          addPrevYear
+        </button>
+        <button
+          class="chakra-button css-1ltlu47"
+          type="button"
+        >
+          addNextYear
+        </button>
+      </div>
+    </div>
+  </div>
+</body>
+`;
