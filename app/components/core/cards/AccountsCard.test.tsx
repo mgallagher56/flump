@@ -36,18 +36,21 @@ vi.mock('app/utils/supabase', () => ({
 }));
 
 describe('<AccountsCard />', () => {
-  mocks.mockUseLoaderData.mockReturnValue({
-    user: mockUser,
-    accountBalances: [{ account_id: '123456', value: 1000 }]
-  });
-
   test('it renders an AccountsCard component with title as expected', () => {
+    mocks.mockUseLoaderData.mockReturnValue({
+      user: mockUser,
+      accountBalances: [{ account_id: '123456', value: 1000 }]
+    });
     const { baseElement } = render(
       <AccountsCard accountId={'123456'} name="My curent account" type={AccountTypeEnum.CURRENT} />
     );
     expect(baseElement).toMatchSnapshot();
   });
   test('it calls supabase.delete when delete button is clicked', () => {
+    mocks.mockUseLoaderData.mockReturnValueOnce({
+      user: mockUser
+    });
+
     const { getByText } = render(
       <AccountsCard accountId={'123456'} name="My curent account" type={AccountTypeEnum.CURRENT} />
     );

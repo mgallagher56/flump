@@ -27,10 +27,10 @@ const AccountsCard: FC<AccountsCardProp> = ({ accountId, name, type }) => {
   const { user, accountBalances = [] } = useLoaderData<typeof loader>();
   const { revalidate } = useRevalidator();
 
-  const accountBalance = useMemo(
+  const accountBalance: number = useMemo(
     () =>
       accountBalances.find((account: { account_id?: string; value?: number }) => account.account_id === accountId)
-        .value,
+        ?.value ?? 0,
     [accountBalances, accountId]
   );
 
