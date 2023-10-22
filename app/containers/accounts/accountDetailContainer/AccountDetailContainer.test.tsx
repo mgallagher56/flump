@@ -1,4 +1,4 @@
-import { fireEvent, render } from '@testing-library/react';
+import { act, fireEvent, render } from '@testing-library/react';
 import { vi } from 'vitest';
 
 import AccountDetailContainer from './AccountDetailContainer';
@@ -173,9 +173,10 @@ describe('<AccountDetailContainer />', () => {
 
     const addNextYearButton = getByText('addNextYear');
     const addPrevYearButton = getByText('addPrevYear');
-
-    fireEvent.click(addNextYearButton);
-    fireEvent.click(addPrevYearButton);
+    act(() => {
+      fireEvent.click(addNextYearButton);
+      fireEvent.click(addPrevYearButton);
+    });
 
     expect(mocks.mockFrom).toHaveBeenCalledTimes(2);
     expect(baseElement).toMatchSnapshot('with new years added');
@@ -184,15 +185,42 @@ describe('<AccountDetailContainer />', () => {
   test('should toggle edit mode when button is clicked, changed value and save new value', () => {
     const { baseElement, getByText, getAllByDisplayValue } = render(<AccountDetailContainer />);
     const editButton = getByText('edit');
-    fireEvent.click(editButton);
+    act(() => {
+      fireEvent.click(editButton);
+    });
     expect(baseElement).toMatchSnapshot('with edit mode enabled');
 
     const firstInput = getAllByDisplayValue('1000')[0];
-    fireEvent.change(firstInput, { target: { value: '2000' } });
+    act(() => {
+      fireEvent.change(firstInput, { target: { value: '2000' } });
+    });
 
     const saveButton = getByText('save');
-    fireEvent.click(saveButton);
+    act(() => {
+      fireEvent.click(saveButton);
+    });
+
     expect(mocks.mockFrom).toHaveBeenCalledWith('account_details');
     expect(mocks.mockFrom).toHaveBeenCalledTimes(1);
+  });
+
+  test('should render add current year button and add current year when clicked', () => {
+    mocks.mockUseLoaderData.mockReturnValueOnce({
+      account: {
+        id: '123456',
+        name: 'My current account',
+        type: 'CURRENT',
+        balance: 1000
+      },
+      accountDetails: []
+    });
+
+    const { baseElement, getByText } = render(<AccountDetailContainer />);
+    const addCurrentYearButton = getByText('addCurrentYear');
+    act(() => {
+      fireEvent.click(addCurrentYearButton);
+    });
+    expect(mocks.mockFrom).toHaveBeenCalledTimes(1);
+    expect(baseElement).toMatchSnapshot('with current year added');
   });
 });
