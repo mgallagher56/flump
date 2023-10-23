@@ -54,3 +54,6 @@ export enum FallbackEnums {
 export enum AuthErrorEnums {
   USER_ALREADY_REGISTERED = 'User already registered'
 }
+
+export const currentYear = new Date().getFullYear();
+export const currentMonth = new Date().getMonth() + 1;

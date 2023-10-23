@@ -1,6 +1,7 @@
 import { fireEvent, render } from '@testing-library/react';
 import { vi } from 'vitest';
 import { AccountTypeEnum } from '~/containers/accounts/utils';
+import { currentYear } from '~/utils/utils';
 
 import mockUser from '__mocks__/user';
 
@@ -39,8 +40,15 @@ describe('<AccountsCard />', () => {
   test('it renders an AccountsCard component with title as expected', () => {
     mocks.mockUseLoaderData.mockReturnValue({
       user: mockUser,
-      accountBalances: [{ account_id: '123456', value: 1000 }]
+      accountDetails: Array.from({ length: 12 }, (_, i) => ({
+        id: i,
+        account_id: '123456',
+        month: i + 1,
+        year: currentYear,
+        value: `${i}000`
+      }))
     });
+
     const { baseElement } = render(
       <AccountsCard accountId={'123456'} name="My curent account" type={AccountTypeEnum.CURRENT} />
     );
@@ -54,7 +62,7 @@ describe('<AccountsCard />', () => {
     const { getByText } = render(
       <AccountsCard accountId={'123456'} name="My curent account" type={AccountTypeEnum.CURRENT} />
     );
-    const deleteButton = getByText('remove');
+    const deleteButton = getByText('delete');
     fireEvent.click(deleteButton);
     expect(mocks.mockFrom).toBeCalledWith('accounts');
   });
