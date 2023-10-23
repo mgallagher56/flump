@@ -1,19 +1,32 @@
 import { type FC, useCallback, useMemo } from 'react';
 
-import type { CardProps } from '@chakra-ui/react';
+import {
+  CardBody,
+  CardFooter,
+  CardHeader,
+  type CardProps,
+  Stack,
+  Stat,
+  StatArrow,
+  StatHelpText,
+  StatLabel,
+  StatNumber
+} from '@chakra-ui/react';
 import { useLoaderData, useNavigate, useRevalidator } from '@remix-run/react';
 import { useTranslation } from 'react-i18next';
+import AccountDetailChart from '~/components/charts/AccountDetailChart';
 import AddEditAccountsDialogBtn from '~/components/dialogs/addEditAccountsDialog.tsx/AddEditAccountsDialog';
 import type { AccountTypeEnum } from '~/containers/accounts/utils';
 import type { loader } from '~/routes/app.accounts._index';
+import { monthYearSort } from '~/utils/accounts';
 import supabase from '~/utils/supabase';
+import { currentMonth, currentYear } from '~/utils/utils';
 
 import FLPButton from '../buttons/FLPButton';
 import FLPButtonGroup from '../buttons/FLPButtonGroup';
-import FLPBox from '../structure/FLPBox';
 import FLPHeading from '../typography/FLPHeading';
-import FLPText from '../typography/FLPText';
 import FLPCard from './FLPCard';
+import { AccountDetail } from '~/containers/accounts/types';
 
 interface AccountsCardProp extends Omit<CardProps, 'title'> {
   accountId: string;
@@ -26,19 +39,30 @@ const AccountsCard: FC<AccountsCardProp> = ({ accountId, name, type }) => {
   const navigate = useNavigate();
   const {
     user,
-    accountBalances = []
+    accountDetails = []
   }: {
     user?: { id?: string };
-    accountBalances?: { account_id?: string; value?: number }[];
+    accountDetails?: AccountDetail[];
   } = useLoaderData<typeof loader>();
   const { revalidate } = useRevalidator();
 
-  const accountBalance: number = useMemo(
-    () =>
-      accountBalances.find((account: { account_id?: string; value?: number }) => account.account_id === accountId)
-        ?.value ?? 0,
-    [accountBalances, accountId]
+  const sortedAccountDetails = useMemo(() => {
+    return accountDetails.filter((account) => account.account_id === accountId).sort(monthYearSort);
+  }, [accountDetails, accountId]);
+
+  const currentMonthIndex = sortedAccountDetails.findIndex(
+    (account) => account.month === currentMonth && account.year === currentYear
   );
+
+  const accountDetailYear = useMemo(() => {
+    if (sortedAccountDetails.length === 12) return sortedAccountDetails;
+
+    return sortedAccountDetails.slice(currentMonthIndex - 11, currentMonthIndex + 1);
+  }, [currentMonthIndex, sortedAccountDetails]);
+
+  const accountBalance = accountDetailYear[11]?.value;
+  const prevAccountBalance = accountDetailYear[10]?.value;
+  const secondPreviousAccountBalance = accountDetailYear[9]?.value;
 
   const handleRemoveAccount = useCallback(
     async (e: { stopPropagation: () => void }) => {
@@ -58,27 +82,72 @@ const AccountsCard: FC<AccountsCardProp> = ({ accountId, name, type }) => {
       padding={5}
       marginY={5}
       width="250px"
-      height="300px"
+      height="325px"
       display="flex"
       direction="column"
       justifyContent="space-between"
-      gap={2}
+      gap={3}
       onClick={onCardClick}
     >
-      <FLPBox display="flex" gap="3" flexDirection="column">
-        <FLPHeading as="h5" size="xs">{`${type} ${t('account')}`}</FLPHeading>
-        <FLPText fontWeight="bold">{name}</FLPText>
-        <FLPText>{`${t('balance')}: ${Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP' })
-          .format(accountBalance)
-          .slice(0, -3)}
-      `}</FLPText>
-      </FLPBox>
-      <FLPButtonGroup justifyContent="flex-end" zIndex="10">
-        <AddEditAccountsDialogBtn accountId={accountId} isEditAccount={true} />
-        <FLPButton colorScheme="red" onClick={handleRemoveAccount}>
-          {t('remove')}
-        </FLPButton>
-      </FLPButtonGroup>
+      <CardHeader display="flex" gap={1} flexDirection="column" padding={0}>
+        <FLPHeading color="grey.500" as="h5" size="xs">{`${type} ${t('account')}`}</FLPHeading>
+        <FLPHeading color="blue.500" as="h4" size="lg" fontWeight="bold">
+          {name}
+        </FLPHeading>
+      </CardHeader>
+      <Stack display="flex" direction="row" justifyContent="space-between" alignItems="center">
+        {!!prevAccountBalance && (
+          <Stat size="xs">
+            <StatLabel>{`${t('previous')}:`}</StatLabel>
+            <StatNumber>
+              {Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP', maximumFractionDigits: 0 }).format(
+                prevAccountBalance
+              )}
+            </StatNumber>
+            {!!secondPreviousAccountBalance && (
+              <StatHelpText>
+                {secondPreviousAccountBalance > prevAccountBalance ? (
+                  <StatArrow type="decrease" />
+                ) : (
+                  <StatArrow type="increase" />
+                )}
+                {`${Math.round(
+                  ((prevAccountBalance - secondPreviousAccountBalance) / secondPreviousAccountBalance) * 100
+                )}%`}
+              </StatHelpText>
+            )}
+          </Stat>
+        )}
+        {!!accountBalance && (
+          <Stat size="xs">
+            <StatLabel>{`${t('current')}:`}</StatLabel>
+            <StatNumber>
+              {Intl.NumberFormat('en-GB', {
+                style: 'currency',
+                currency: 'GBP',
+                maximumFractionDigits: 0
+              }).format(accountBalance)}
+            </StatNumber>
+            {!!prevAccountBalance && (
+              <StatHelpText>
+                {prevAccountBalance > accountBalance ? <StatArrow type="decrease" /> : <StatArrow type="increase" />}
+                {`${Math.round(((accountBalance - prevAccountBalance) / prevAccountBalance) * 100)}%`}
+              </StatHelpText>
+            )}
+          </Stat>
+        )}
+      </Stack>
+      <CardBody padding={0} justifyContent="flex-end">
+        {!!accountDetailYear.length && <AccountDetailChart accountDetails={accountDetailYear} />}
+      </CardBody>
+      <CardFooter justifyContent="flex-end" padding={0}>
+        <FLPButtonGroup justifyContent="flex-end" zIndex="10">
+          <AddEditAccountsDialogBtn btnSize="sm" accountId={accountId} isEditAccount={true} />
+          <FLPButton size="sm" colorScheme="red" onClick={handleRemoveAccount}>
+            {t('delete')}
+          </FLPButton>
+        </FLPButtonGroup>
+      </CardFooter>
     </FLPCard>
   );
 };

@@ -17,6 +17,7 @@
   "confirm": "Confirm",
   "confirmEmailMsg": "Please confirm your email address by clicking on the link in the email we sent you",
   "contact": "Contact",
+  "current": "Current",
   "dashboard": "Dashboard",
   "delete": "Delete",
   "deleteYear": "Delete year",
@@ -29,8 +30,11 @@
   "loginWithMagicLink": "Log in with magic link",
   "loginWithPassword": "Log in with password",
   "logOut": "Log out",
+  "previous": "Previous",
   "remove": "Remove",
   "save": "Save",
   "sendMagicLink": "Send magic link",
-  "signUp": "Sign up"
+  "signUp": "Sign up",
+  "time": "Time",
+  "value": "Value"
 }

@@ -6,7 +6,7 @@ exports[`<AccountDetails /> > should remove year when delete button is clicked 1
     class="chakra-stack css-nn57su"
   >
     <div
-      class="chakra-stack css-1y3f6ad"
+      class="chakra-stack css-1igwmid"
     >
       <h3
         class="chakra-heading css-1e3tj"
@@ -169,7 +169,7 @@ exports[`<AccountDetails /> > should remove year when delete button is clicked 1
       </div>
     </div>
     <div
-      class="chakra-stack css-1y3f6ad"
+      class="chakra-stack css-1igwmid"
     >
       <h3
         class="chakra-heading css-1e3tj"
@@ -341,7 +341,7 @@ exports[`<AccountDetails /> > should render 1`] = `
     class="chakra-stack css-nn57su"
   >
     <div
-      class="chakra-stack css-1y3f6ad"
+      class="chakra-stack css-1igwmid"
     >
       <h3
         class="chakra-heading css-1e3tj"
@@ -504,7 +504,7 @@ exports[`<AccountDetails /> > should render 1`] = `
       </div>
     </div>
     <div
-      class="chakra-stack css-1y3f6ad"
+      class="chakra-stack css-1igwmid"
     >
       <h3
         class="chakra-heading css-1e3tj"
@@ -676,7 +676,7 @@ exports[`<AccountDetails /> > should render in edit mode 1`] = `
     class="chakra-stack css-nn57su"
   >
     <div
-      class="chakra-stack css-1y3f6ad"
+      class="chakra-stack css-1igwmid"
     >
       <h3
         class="chakra-heading css-1e3tj"
@@ -1091,7 +1091,7 @@ exports[`<AccountDetails /> > should render in edit mode 1`] = `
       </div>
     </div>
     <div
-      class="chakra-stack css-1y3f6ad"
+      class="chakra-stack css-1igwmid"
     >
       <h3
         class="chakra-heading css-1e3tj"

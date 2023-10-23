@@ -8,7 +8,7 @@ import FLPButton from '~/components/core/buttons/FLPButton';
 import FLPHeading from '~/components/core/typography/FLPHeading';
 import type { loader } from '~/routes/app.accounts.$account';
 import supabase from '~/utils/supabase';
-import { emptyObject } from '~/utils/utils';
+import { currentYear, emptyObject } from '~/utils/utils';
 
 const AccountDetailContainer: FC = () => {
   const { t } = useTranslation();
@@ -43,7 +43,6 @@ const AccountDetailContainer: FC = () => {
     async (selectedYear: number, yearToAdd: 'current' | 'prev' | 'next') => {
       setIsLoading(true);
       const nextYear = selectedYear + (yearToAdd === 'prev' ? -1 : 1);
-      const currentYear = new Date().getFullYear();
       const yearWithMonths = Array.from({ length: 12 }, (_, i) => i + 1).map((value) => ({
         account_id: account.id,
         month: value,

@@ -1,5 +1,6 @@
 import { type FC, useCallback, useMemo, useState } from 'react';
 
+import type { ButtonProps } from '@chakra-ui/react';
 import { Form, useLoaderData, useRevalidator } from '@remix-run/react';
 import { useTranslation } from 'react-i18next';
 import FLPButton from '~/components/core/buttons/FLPButton';
@@ -17,8 +18,7 @@ const accountTypeArray = [CURRENT, SAVING, MORTGAGE, LOAN, OWED];
 interface AddEditAccountsDialogBtnProp {
   accountId?: string;
   isEditAccount?: boolean;
-  name?: string;
-  type?: string;
+  btnSize?: ButtonProps['size'];
 }
 
 const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({ accountId, isEditAccount }) => {
@@ -110,7 +110,7 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({ accountId,
   return (
     <FLPModal
       triggerBtn={
-        <FLPButton colorScheme="green" variant={'outline'} onClick={handleOpenModal}>
+        <FLPButton size={btnSize} colorScheme="green" variant={'outline'} onClick={handleOpenModal}>
           {t(isEditAccount ? 'edit' : 'addAccount')}
         </FLPButton>
       }

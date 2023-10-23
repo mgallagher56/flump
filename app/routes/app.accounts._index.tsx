@@ -7,26 +7,20 @@ import { createSupaBaseServerClient } from '~/utils/supabase';
 
 export const loader = async ({ request }: { request: Request }) => {
   const response = new Response();
-  const currentYear = new Date().getFullYear();
-  const currentMonth = new Date().getMonth() + 1;
   const supabase = createSupaBaseServerClient({ request, response });
   const {
     data: { user }
   } = await supabase.auth.getUser();
 
-  const { data } = await supabase
+  const { data: accounts } = await supabase
     .from('accounts')
-    .select('*')
+    .select()
     .eq('user_id', user?.id);
 
-  const { data: accountBalances } = await supabase
-    .from('account_details')
-    .select('account_id, value')
-    .eq('year', currentYear)
-    .eq('month', currentMonth);
+  const { data: accountDetails } = await supabase.from('account_details').select();
 
   if (!user) return redirect('/');
-  return json({ accounts: data, accountBalances, user }, { headers: response.headers });
+  return json({ accounts, accountDetails, user }, { headers: response.headers });
 };
 
 const Accounts = (): ReactElement => {

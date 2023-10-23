@@ -47,7 +47,7 @@ const AccountDetails: FC<AccountDetailsProps> = ({ onInputChange, editedValues, 
         )
         .map((year: number) => (
           <Fragment key={year}>
-            <Stack flexDirection="row" alignItems="center" justifyContent='space-between'>
+            <Stack flexDirection="row" alignItems="center">
               <FLPHeading as="h3" size="lg">
                 {year}
               </FLPHeading>
