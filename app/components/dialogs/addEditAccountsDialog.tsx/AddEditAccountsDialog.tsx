@@ -22,7 +22,13 @@ interface AddEditAccountsDialogBtnProp {
 }
 
 const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({ accountId, isEditAccount }) => {
-  const { accounts = [], user } = useLoaderData<typeof loader>();
+  const {
+    accounts = [],
+    user
+  }: {
+    accounts?: { id?: string; name?: string; type?: AccountType }[];
+    user?: { id?: string };
+  } = useLoaderData<typeof loader>();
   const { t } = useTranslation();
   const { revalidate } = useRevalidator();
   const [modalOpen, setModalOpen] = useState(false);
@@ -66,7 +72,7 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({ accountId,
   );
 
   const onAddAccount = useCallback(async () => {
-    const { name, type } = formInput;
+    const { name, type } = formInput as { name: string; type: AccountTypeEnum };
     const { data } = await supabase
       .from('accounts')
       .insert([{ name, type, user_id: user?.id }])
@@ -87,7 +93,7 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({ accountId,
 
   const onEditAccount = useCallback(async () => {
     const newName = formInput.name;
-    const newType = formInput.type;
+    const newType = formInput.type as AccountTypeEnum;
     await supabase
       .from('accounts')
       .update({ name: newName, type: newType })
