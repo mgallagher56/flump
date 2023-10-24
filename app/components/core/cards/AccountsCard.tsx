@@ -24,7 +24,13 @@ interface AccountsCardProp extends Omit<CardProps, 'title'> {
 const AccountsCard: FC<AccountsCardProp> = ({ accountId, name, type }) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { user, accountBalances = [] } = useLoaderData<typeof loader>();
+  const {
+    user,
+    accountBalances = []
+  }: {
+    user?: { id?: string };
+    accountBalances?: { account_id?: string; value?: number }[];
+  } = useLoaderData<typeof loader>();
   const { revalidate } = useRevalidator();
 
   const accountBalance: number = useMemo(
