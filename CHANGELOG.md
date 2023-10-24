@@ -5,6 +5,36 @@
 
 ### Features ✨
 
+* add charts for account cards ([dd91775](https://github.com/mgallagher56/flump/commit/dd9177567d3fd689f346f1d1fcabbf6df0043d65))
+
+
+### Bug Fixes 🪲
+
+* **deps:** update all non-major third-party dependencies ([86b1060](https://github.com/mgallagher56/flump/commit/86b1060c689c36732ea56b8793f6520701aadf2e))
+
+
+### CI 🤖
+
+* add correct permissions for deploy dev workflow ([71e1a0b](https://github.com/mgallagher56/flump/commit/71e1a0b701f61ceec342e17a838abf7da3c222ae))
+* add correct permissions for deploy dev workflow ([c37747b](https://github.com/mgallagher56/flump/commit/c37747b102a83099aebd02423546dedf1556e3c9))
+
+
+### Tests 🧪
+
+* update tests for account cards ([a78ca5e](https://github.com/mgallagher56/flump/commit/a78ca5e8074ce8d2438e02e6d3e7dfbfd4ffb342))
+
+
+### Miscellaneous 🙃
+
+* add additional types for coverage ([a253c98](https://github.com/mgallagher56/flump/commit/a253c98954b5880caef74b39131d985e4f6a0c0c))
+* **deps:** update actions/checkout action to v4 ([0c321e2](https://github.com/mgallagher56/flump/commit/0c321e2fcc988fadfaa00c63a256fc05f5a0b434))
+* **dev:** release 1.18.0 ([02af183](https://github.com/mgallagher56/flump/commit/02af1835f93a181917e78801ea4681d2ce7fb3d5))
+
+## [1.18.0](https://github.com/mgallagher56/flump/compare/v1.17.0...v1.18.0) (2023-10-24)
+
+
+### Features ✨
+
 * add account details table migration ([80e337b](https://github.com/mgallagher56/flump/commit/80e337ba84d133135ca840ca5d9a140251e1728f))
 * add accounts page ([496791f](https://github.com/mgallagher56/flump/commit/496791fcadc0bd4e6d5c1c90ed9776cab6cd6a0b))
 * add base nav & routes for app ([9bffe02](https://github.com/mgallagher56/flump/commit/9bffe0253e7a16263def3380a43a79ade3a58dca))
