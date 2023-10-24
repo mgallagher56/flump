@@ -21,7 +21,7 @@ interface AddEditAccountsDialogBtnProp {
   btnSize?: ButtonProps['size'];
 }
 
-const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({ accountId, isEditAccount }) => {
+const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({ accountId, btnSize, isEditAccount }) => {
   const {
     accounts = [],
     user
