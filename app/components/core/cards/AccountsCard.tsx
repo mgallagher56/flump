@@ -16,6 +16,7 @@ import { useLoaderData, useNavigate, useRevalidator } from '@remix-run/react';
 import { useTranslation } from 'react-i18next';
 import AccountDetailChart from '~/components/charts/AccountDetailChart';
 import AddEditAccountsDialogBtn from '~/components/dialogs/addEditAccountsDialog.tsx/AddEditAccountsDialog';
+import type { AccountDetail } from '~/containers/accounts/types';
 import type { AccountTypeEnum } from '~/containers/accounts/utils';
 import type { loader } from '~/routes/app.accounts._index';
 import { monthYearSort } from '~/utils/accounts';
@@ -26,7 +27,6 @@ import FLPButton from '../buttons/FLPButton';
 import FLPButtonGroup from '../buttons/FLPButtonGroup';
 import FLPHeading from '../typography/FLPHeading';
 import FLPCard from './FLPCard';
-import { AccountDetail } from '~/containers/accounts/types';
 
 interface AccountsCardProp extends Omit<CardProps, 'title'> {
   accountId: string;

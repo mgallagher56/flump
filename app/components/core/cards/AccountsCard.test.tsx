@@ -1,7 +1,7 @@
 import { fireEvent, render } from '@testing-library/react';
 import { vi } from 'vitest';
 import { AccountTypeEnum } from '~/containers/accounts/utils';
-import { currentYear } from '~/utils/utils';
+import { currentMonth, currentYear } from '~/utils/utils';
 
 import mockUser from '__mocks__/user';
 
@@ -36,17 +36,31 @@ vi.mock('app/utils/supabase', () => ({
   }
 }));
 
+vi.mock('app/utils/utils', () => ({
+  currentMonth: 12,
+  currentYear: 2023
+}));
+
+const getAdjustedValue = (index: number) => {
+  if (currentMonth - 1 === index) return `${index - 2}000`;
+  if (currentMonth - 3 === index) return `${index + 5}000`;
+
+  return `${index}000`;
+};
+
 describe('<AccountsCard />', () => {
   test('it renders an AccountsCard component with title as expected', () => {
     mocks.mockUseLoaderData.mockReturnValue({
       user: mockUser,
-      accountDetails: Array.from({ length: 12 }, (_, i) => ({
-        id: i,
-        account_id: '123456',
-        month: i + 1,
-        year: currentYear,
-        value: `${i}000`
-      }))
+      accountDetails: Array.from({ length: 12 }, (_, i) => {
+        return {
+          id: i,
+          account_id: '123456',
+          month: i + 1,
+          year: currentYear,
+          value: parseInt(`${i + 1}000}`)
+        };
+      })
     });
 
     const { baseElement } = render(
@@ -54,16 +68,29 @@ describe('<AccountsCard />', () => {
     );
     expect(baseElement).toMatchSnapshot();
   });
+});
+
+describe('<AccountsCard with increasing values', () => {
   test('it calls supabase.delete when delete button is clicked', () => {
     mocks.mockUseLoaderData.mockReturnValueOnce({
-      user: mockUser
+      user: mockUser,
+      accountDetails: Array.from({ length: 13 }, (_, i) => {
+        return {
+          id: i,
+          account_id: '123456',
+          month: i + 1,
+          year: currentYear,
+          value: parseInt(getAdjustedValue(i))
+        };
+      })
     });
 
-    const { getByText } = render(
+    const { baseElement, getByText } = render(
       <AccountsCard accountId={'123456'} name="My curent account" type={AccountTypeEnum.CURRENT} />
     );
     const deleteButton = getByText('delete');
     fireEvent.click(deleteButton);
     expect(mocks.mockFrom).toBeCalledWith('accounts');
+    expect(baseElement).toMatchSnapshot();
   });
 });
