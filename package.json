@@ -92,7 +92,7 @@
     "prom-client": "15.1.0",
     "react": "18.2.0",
     "react-dom": "18.2.0",
-    "react-i18next": "13.5.0",
+    "react-i18next": "14.1.0",
     "recharts": "2.12.2",
     "remix-i18next": "5.5.0",
     "supabase": "1.148.6",
