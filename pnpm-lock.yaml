@@ -230,8 +230,8 @@ devDependencies:
     specifier: 0.24.0
     version: 0.24.0(eslint@8.57.0)
   happy-dom:
-    specifier: 12.10.3
-    version: 12.10.3
+    specifier: 13.8.2
+    version: 13.8.2
   husky:
     specifier: 8.0.3
     version: 8.0.3
@@ -285,7 +285,7 @@ devDependencies:
     version: 4.3.1(typescript@5.4.2)(vite@4.5.2)
   vitest:
     specifier: 0.34.6
-    version: 0.34.6(@vitest/ui@0.34.7)(happy-dom@12.10.3)(webdriverio@8.33.1)
+    version: 0.34.6(@vitest/ui@0.34.7)(happy-dom@13.8.2)(webdriverio@8.33.1)
   vitest-github-actions-reporter:
     specifier: 0.11.1
     version: 0.11.1(vitest@0.34.6)
@@ -4989,7 +4989,7 @@ packages:
       dom-accessibility-api: 0.6.3
       lodash: 4.17.21
       redent: 3.0.0
-      vitest: 0.34.6(@vitest/ui@0.34.7)(happy-dom@12.10.3)(webdriverio@8.33.1)
+      vitest: 0.34.6(@vitest/ui@0.34.7)(happy-dom@13.8.2)(webdriverio@8.33.1)
     dev: true
 
   /@testing-library/react@14.2.1(react-dom@18.2.0)(react@18.2.0):
@@ -5822,7 +5822,7 @@ packages:
       std-env: 3.3.3
       test-exclude: 6.0.0
       v8-to-istanbul: 9.1.0
-      vitest: 0.34.6(@vitest/ui@0.34.7)(happy-dom@12.10.3)(webdriverio@8.33.1)
+      vitest: 0.34.6(@vitest/ui@0.34.7)(happy-dom@13.8.2)(webdriverio@8.33.1)
     transitivePeerDependencies:
       - supports-color
     dev: true
@@ -5869,7 +5869,7 @@ packages:
       pathe: 1.1.1
       picocolors: 1.0.0
       sirv: 2.0.3
-      vitest: 0.34.6(@vitest/ui@0.34.7)(happy-dom@12.10.3)(webdriverio@8.33.1)
+      vitest: 0.34.6(@vitest/ui@0.34.7)(happy-dom@13.8.2)(webdriverio@8.33.1)
     dev: true
 
   /@vitest/utils@0.34.6:
@@ -9605,14 +9605,12 @@ packages:
       through2: 2.0.5
     dev: true
 
-  /happy-dom@12.10.3:
-    resolution: {integrity: sha512-JzUXOh0wdNGY54oKng5hliuBkq/+aT1V3YpTM+lrN/GoLQTANZsMaIvmHiHe612rauHvPJnDZkZ+5GZR++1Abg==}
+  /happy-dom@13.8.2:
+    resolution: {integrity: sha512-u9KxyeQNIzkJDR2iCitKeS5Uy0YUv5eOntpO8e7ZzbDVv4kP5Y77Zo2LnZitwMrss/1pY2Uc2e5qOVGkiKE5Gg==}
+    engines: {node: '>=16.0.0'}
     dependencies:
-      css.escape: 1.5.1
       entities: 4.5.0
-      iconv-lite: 0.6.3
       webidl-conversions: 7.0.0
-      whatwg-encoding: 2.0.0
       whatwg-mimetype: 3.0.0
     dev: true
 
@@ -9864,13 +9862,6 @@ packages:
     engines: {node: '>=0.10.0'}
     dependencies:
       safer-buffer: 2.1.2
-
-  /iconv-lite@0.6.3:
-    resolution: {integrity: sha512-4fCk79wshMdzMp2rH06qWrJE4iolqLhCUH+OiuIgU++RB0+94NlDL81atO7GX55uUKueo0txHNtvEyI6D7WdMw==}
-    engines: {node: '>=0.10.0'}
-    dependencies:
-      safer-buffer: 2.1.2
-    dev: true
 
   /icss-utils@5.1.0(postcss@8.4.35):
     resolution: {integrity: sha512-soFhflCVWLfRNOPU3iv5Z9VUdT44xFRbzjLsEzSr5AQmgqPMTHdU3PMT1Cf1ssx8fLNJDA1juftYl+PUcv3MqA==}
@@ -14950,7 +14941,7 @@ packages:
       vitest: '>=0.28.5'
     dependencies:
       '@actions/core': 1.10.0
-      vitest: 0.34.6(@vitest/ui@0.34.7)(happy-dom@12.10.3)(webdriverio@8.33.1)
+      vitest: 0.34.6(@vitest/ui@0.34.7)(happy-dom@13.8.2)(webdriverio@8.33.1)
     dev: true
 
   /vitest-sonar-reporter@0.5.0(vitest@0.34.6):
@@ -14959,10 +14950,10 @@ packages:
     peerDependencies:
       vitest: '>=0.18.0'
     dependencies:
-      vitest: 0.34.6(@vitest/ui@0.34.7)(happy-dom@12.10.3)(webdriverio@8.33.1)
+      vitest: 0.34.6(@vitest/ui@0.34.7)(happy-dom@13.8.2)(webdriverio@8.33.1)
     dev: true
 
-  /vitest@0.34.6(@vitest/ui@0.34.7)(happy-dom@12.10.3)(webdriverio@8.33.1):
+  /vitest@0.34.6(@vitest/ui@0.34.7)(happy-dom@13.8.2)(webdriverio@8.33.1):
     resolution: {integrity: sha512-+5CALsOvbNKnS+ZHMXtuUC7nL8/7F1F2DnHGjSsszX8zCjWSSviphCb/NuS9Nzf4Q03KyyDRBAXhF/8lffME4Q==}
     engines: {node: '>=v14.18.0'}
     hasBin: true
@@ -15007,7 +14998,7 @@ packages:
       cac: 6.7.14
       chai: 4.3.10
       debug: 4.3.4(supports-color@8.1.1)
-      happy-dom: 12.10.3
+      happy-dom: 13.8.2
       local-pkg: 0.4.3
       magic-string: 0.30.3
       pathe: 1.1.1
@@ -15192,13 +15183,6 @@ packages:
   /webidl-conversions@7.0.0:
     resolution: {integrity: sha512-VwddBukDzu71offAQR975unBIGqfKZpM+8ZX6ySk8nYhVoo5CYaZyzt3YBvYtRtO+aoGlqxPg/B87NGVZ/fu6g==}
     engines: {node: '>=12'}
-    dev: true
-
-  /whatwg-encoding@2.0.0:
-    resolution: {integrity: sha512-p41ogyeMUrw3jWclHWTQg1k05DSVXPLcVxRTYsXUk+ZooOCZLcoYgPZ/HL/D/N+uQPOtcp1me1WhBEaX02mhWg==}
-    engines: {node: '>=12'}
-    dependencies:
-      iconv-lite: 0.6.3
     dev: true
 
   /whatwg-mimetype@3.0.0:
