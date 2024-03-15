@@ -290,8 +290,8 @@ devDependencies:
     specifier: 0.11.1
     version: 0.11.1(vitest@0.34.6)
   vitest-sonar-reporter:
-    specifier: 0.5.0
-    version: 0.5.0(vitest@0.34.6)
+    specifier: 2.0.0
+    version: 2.0.0(vitest@0.34.6)
   webdriverio:
     specifier: 8.33.1
     version: 8.33.1(typescript@5.4.2)
@@ -15161,11 +15161,11 @@ packages:
       vitest: 0.34.6(@vitest/ui@0.34.7)(happy-dom@13.8.2)(webdriverio@8.33.1)
     dev: true
 
-  /vitest-sonar-reporter@0.5.0(vitest@0.34.6):
-    resolution: {integrity: sha512-6BQlx89502l/Z1NVWxN13ir0jCmC8e4/dit5YhoP6U+rX2Cs+CHt3vHnDDSrBwJTVc8QaAaC/hi9XnIH5I28AA==}
+  /vitest-sonar-reporter@2.0.0(vitest@0.34.6):
+    resolution: {integrity: sha512-LorC3NnmrBrryx4+l3BEsNQjD0Y7wfmrD1y/+tHDuZUuVj7w8nOxRXCBSppDfmgfpToOhwchh0JcL4IGMKUKDA==}
     engines: {node: ^12.20.0 || ^14.13.1 || >=16.0.0}
     peerDependencies:
-      vitest: '>=0.18.0'
+      vitest: '>=1'
     dependencies:
       vitest: 0.34.6(@vitest/ui@0.34.7)(happy-dom@13.8.2)(webdriverio@8.33.1)
     dev: true
