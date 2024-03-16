@@ -1,4 +1,4 @@
-import { mapObject } from '../helpers.js';
+import { getPatternStyles, patternFns } from '../helpers.js';
 import { css } from '../css/index.js';
 
 const containerConfig = {
@@ -12,7 +12,10 @@ transform(props) {
   };
 }}
 
-export const getContainerStyle = (styles = {}) => containerConfig.transform(styles, { map: mapObject })
+export const getContainerStyle = (styles = {}) => {
+  const _styles = getPatternStyles(containerConfig, styles)
+  return containerConfig.transform(_styles, patternFns)
+}
 
 export const container = (styles) => css(getContainerStyle(styles))
 container.raw = getContainerStyle

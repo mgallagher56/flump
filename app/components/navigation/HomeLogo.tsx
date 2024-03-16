@@ -1,6 +1,6 @@
 import { Link } from '@remix-run/react';
 
-import logo from 'public/images/flump_logo.png';
+import logo from '/images/flump_logo.png';
 
 const HomeLogo = () => {
   return (

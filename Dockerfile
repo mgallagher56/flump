@@ -44,8 +44,9 @@ WORKDIR /app
 
 COPY --from=production-deps /app/node_modules /app/node_modules
 
-COPY --from=build /app/build /app/build
-COPY --from=build /app/public /app/public
+COPY --from=build /myapp/build/server /myapp/build/server
+COPY --from=build /myapp/build/client /myapp/build/client
+
 ADD . .
 
 CMD ["pnpm", "start"]

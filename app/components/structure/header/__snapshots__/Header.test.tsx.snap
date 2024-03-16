@@ -7,7 +7,7 @@ exports[`<Header /> > renders as expected by default 1`] = `
       class="css-0"
     >
       <nav
-        class="d_flex border-bottom-width_2px border-b_blue.500 border-bottom-style_solid items_center justify_space-between w_100% py_4 px_2 css-k008qs"
+        class="d_flex border-bw_2px border-b_blue.500 border-bottom-style_solid items_center justify_space-between w_100% py_4 px_2 css-k008qs"
       >
         <div
           class="d_flex gap_4 items_center justify_start css-0"
@@ -42,7 +42,7 @@ exports[`<Header /> > renders correctly when user logged in 1`] = `
       class="css-0"
     >
       <nav
-        class="d_flex border-bottom-width_2px border-b_blue.500 border-bottom-style_solid items_center justify_space-between w_100% py_4 px_2 css-k008qs"
+        class="d_flex border-bw_2px border-b_blue.500 border-bottom-style_solid items_center justify_space-between w_100% py_4 px_2 css-k008qs"
       >
         <div
           class="d_flex gap_4 items_center justify_start css-0"
@@ -83,7 +83,7 @@ exports[`<Header /> > renders without ColorModeSwitch 1`] = `
       class="css-0"
     >
       <nav
-        class="d_flex border-bottom-width_2px border-b_blue.500 border-bottom-style_solid items_center justify_space-between w_100% py_4 px_2 css-k008qs"
+        class="d_flex border-bw_2px border-b_blue.500 border-bottom-style_solid items_center justify_space-between w_100% py_4 px_2 css-k008qs"
       >
         <div
           class="d_flex gap_4 items_center justify_start css-0"

@@ -5,7 +5,7 @@ import { createReadableStreamFromReadable } from '@remix-run/node';
 import { RemixServer } from '@remix-run/react';
 import { createInstance } from 'i18next';
 import Backend from 'i18next-fs-backend';
-import isbot from 'isbot';
+import { isbot } from 'isbot';
 import { resolve } from 'node:path';
 import { renderToPipeableStream } from 'react-dom/server';
 import { I18nextProvider, initReactI18next } from 'react-i18next';
