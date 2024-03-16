@@ -9,7 +9,7 @@ exports[`<HomeLogo /> > renders as expected 1`] = `
       <img
         alt="flump logo"
         height="50"
-        src="/public/images/flump_logo.png"
+        src="/images/flump_logo.png"
         width="50"
       />
     </div>

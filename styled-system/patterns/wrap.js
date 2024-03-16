@@ -1,4 +1,4 @@
-import { mapObject } from '../helpers.js';
+import { getPatternStyles, patternFns } from '../helpers.js';
 import { css } from '../css/index.js';
 
 const wrapConfig = {
@@ -16,7 +16,10 @@ transform(props) {
   };
 }}
 
-export const getWrapStyle = (styles = {}) => wrapConfig.transform(styles, { map: mapObject })
+export const getWrapStyle = (styles = {}) => {
+  const _styles = getPatternStyles(wrapConfig, styles)
+  return wrapConfig.transform(_styles, patternFns)
+}
 
 export const wrap = (styles) => css(getWrapStyle(styles))
 wrap.raw = getWrapStyle

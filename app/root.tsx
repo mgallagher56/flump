@@ -17,7 +17,6 @@ import { json } from '@remix-run/node';
 import {
   isRouteErrorResponse,
   Links,
-  LiveReload,
   Meta,
   Outlet,
   Scripts,
@@ -30,12 +29,12 @@ import {
 } from '@remix-run/react';
 import type { Session } from '@supabase/supabase-js';
 import { useTranslation } from 'react-i18next';
-import { useChangeLanguage } from 'remix-i18next';
+import { useChangeLanguage } from "remix-i18next/react";
 
 import Header from './components/structure/header/Header';
 import { ClientStyleContext, ServerStyleContext } from './context';
 import i18next from './i18n.server';
-import styles from './index.css';
+import styles from './index.css?url';
 import supabase, { createSupaBaseServerClient } from './utils/supabase';
 
 const DEFAULT_COLOR_MODE: 'dark' | 'light' | null = 'dark';
@@ -177,7 +176,6 @@ const Document = withEmotionCache(
           </ChakraProvider>
           <ScrollRestoration />
           <Scripts />
-          <LiveReload />
         </body>
       </html>
     );

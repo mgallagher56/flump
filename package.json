@@ -3,17 +3,15 @@
   "private": true,
   "sideEffects": false,
   "scripts": {
-    "build": "run-s build:*",
-    "build:remix": "remix build",
-    "build:server": "esbuild --platform=node --format=cjs ./server.ts --outdir=build --bundle",
+    "dev": "remix vite:dev",
+    "build": "remix vite:build",
+    "start": "remix-serve ./build/server/index.js",
     "commit": "git-cz",
-    "dev": "remix dev -c 'node --inspect --require ./node_modules/dotenv/config ./build/server.js'",
     "docker": "docker-compose up -d",
     "format": "prettier --write ./app",
     "lint": "eslint --fix --cache --cache-location ./node_modules/.cache/eslint .",
     "lint:staged": "panda codegen && lint-staged",
-    "start": "cross-env NODE_ENV=production node ./build/server.js",
-    "start:mocks": "cross-env NODE_ENV=production node --require ./mocks --require dotenv/config ./build/server.js",
+    "start:mocks": "cross-env NODE_ENV=production node --require ./mocks --require dotenv/config ./build/server/index.js",
     "supabase:start": "supabase start",
     "supabase:stop": "supabase stop",
     "supabase:types": "supabase gen types typescript --local > ./db_types.ts",
@@ -69,7 +67,6 @@
     "@emotion/server": "11.11.0",
     "@emotion/styled": "11.11.0",
     "@isaacs/express-prometheus-middleware": "1.2.1",
-    "@remix-run/css-bundle": "2.8.1",
     "@remix-run/express": "2.8.1",
     "@remix-run/node": "2.8.1",
     "@remix-run/react": "2.8.1",
@@ -90,8 +87,8 @@
     "isbot": "5.1.1",
     "morgan": "1.10.0",
     "prom-client": "15.1.0",
-    "react": "18.2.0",
-    "react-dom": "18.2.0",
+    "react": "18.3.0-canary-a870b2d54-20240314",
+    "react-dom": "18.3.0-canary-a870b2d54-20240314",
     "react-i18next": "14.1.0",
     "recharts": "2.12.3",
     "remix-i18next": "6.0.1",
@@ -147,6 +144,7 @@
     "npm-run-all2": "6.1.2",
     "postcss": "8.4.35",
     "prettier": "3.2.5",
+    "rollup-plugin-visualizer": "^5.12.0",
     "start-server-and-test": "2.0.3",
     "ts-node": "10.9.2",
     "tsc-files": "1.1.4",
@@ -165,5 +163,9 @@
   "engines": {
     "node": ">=18"
   },
-  "version": "1.18.0"
+  "version": "1.18.0",
+  "overrides": {
+    "react": "18.3.0-canary-a870b2d54-20240314",
+    "react-dom": "18.3.0-canarya870b2d54-20240314"
+  }
 }

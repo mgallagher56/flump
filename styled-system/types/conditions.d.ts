@@ -102,9 +102,9 @@ export interface Conditions {
 	"_groupExpanded": string
 	/** `.group:invalid &` */
 	"_groupInvalid": string
-	/** `&:is(:indeterminate, [data-indeterminate], [aria-checked=mixed], [data-state="indeterminate")` */
+	/** `&:is(:indeterminate, [data-indeterminate], [aria-checked=mixed], [data-state="indeterminate"])` */
 	"_indeterminate": string
-	/** `&:required` */
+	/** `&:is(:required, [data-required], [aria-required=true])` */
 	"_required": string
 	/** `&:is(:valid, [data-valid])` */
 	"_valid": string
@@ -116,9 +116,9 @@ export interface Conditions {
 	"_inRange": string
 	/** `&:out-of-range` */
 	"_outOfRange": string
-	/** `&::placeholder` */
+	/** `&::placeholder, &[data-placeholder]` */
 	"_placeholder": string
-	/** `&:placeholder-shown` */
+	/** `&:is(:placeholder-shown, [data-placeholder-shown])` */
 	"_placeholderShown": string
 	/** `&:is([aria-pressed=true], [data-pressed])` */
 	"_pressed": string
@@ -130,6 +130,8 @@ export interface Conditions {
 	"_optional": string
 	/** `&:is([open], [data-open], [data-state="open"])` */
 	"_open": string
+	/** `&:is([closed], [data-closed], [data-state="closed"])` */
+	"_closed": string
 	/** `&:fullscreen` */
 	"_fullscreen": string
 	/** `&:is([data-loading], [aria-busy=true])` */
@@ -176,56 +178,80 @@ export interface Conditions {
 	"_horizontal": string
 	/** `&[data-orientation=vertical]` */
 	"_vertical": string
-	/** `@media screen and (min-width: 40em)` */
+	/** `@media screen and (min-width: 40rem)` */
 	"sm": string
-	/** `@media screen and (min-width: 40em) and (max-width: 47.996875em)` */
+	/** `@media screen and (min-width: 40rem) and (max-width: 47.9975rem)` */
 	"smOnly": string
-	/** `@media screen and (max-width: 40em)` */
+	/** `@media screen and (max-width: 39.9975rem)` */
 	"smDown": string
-	/** `@media screen and (min-width: 48em)` */
+	/** `@media screen and (min-width: 48rem)` */
 	"md": string
-	/** `@media screen and (min-width: 48em) and (max-width: 63.996875em)` */
+	/** `@media screen and (min-width: 48rem) and (max-width: 63.9975rem)` */
 	"mdOnly": string
-	/** `@media screen and (max-width: 48em)` */
+	/** `@media screen and (max-width: 47.9975rem)` */
 	"mdDown": string
-	/** `@media screen and (min-width: 64em)` */
+	/** `@media screen and (min-width: 64rem)` */
 	"lg": string
-	/** `@media screen and (min-width: 64em) and (max-width: 79.996875em)` */
+	/** `@media screen and (min-width: 64rem) and (max-width: 79.9975rem)` */
 	"lgOnly": string
-	/** `@media screen and (max-width: 64em)` */
+	/** `@media screen and (max-width: 63.9975rem)` */
 	"lgDown": string
-	/** `@media screen and (min-width: 80em)` */
+	/** `@media screen and (min-width: 80rem)` */
 	"xl": string
-	/** `@media screen and (min-width: 80em) and (max-width: 95.996875em)` */
+	/** `@media screen and (min-width: 80rem) and (max-width: 95.9975rem)` */
 	"xlOnly": string
-	/** `@media screen and (max-width: 80em)` */
+	/** `@media screen and (max-width: 79.9975rem)` */
 	"xlDown": string
-	/** `@media screen and (min-width: 96em)` */
+	/** `@media screen and (min-width: 96rem)` */
 	"2xl": string
-	/** `@media screen and (min-width: 96em)` */
+	/** `@media screen and (min-width: 96rem)` */
 	"2xlOnly": string
-	/** `@media screen and (max-width: 96em)` */
+	/** `@media screen and (max-width: 95.9975rem)` */
 	"2xlDown": string
-	/** `@media screen and (min-width: 40em) and (max-width: 47.996875em)` */
+	/** `@media screen and (min-width: 40rem) and (max-width: 47.9975rem)` */
 	"smToMd": string
-	/** `@media screen and (min-width: 40em) and (max-width: 63.996875em)` */
+	/** `@media screen and (min-width: 40rem) and (max-width: 63.9975rem)` */
 	"smToLg": string
-	/** `@media screen and (min-width: 40em) and (max-width: 79.996875em)` */
+	/** `@media screen and (min-width: 40rem) and (max-width: 79.9975rem)` */
 	"smToXl": string
-	/** `@media screen and (min-width: 40em) and (max-width: 95.996875em)` */
+	/** `@media screen and (min-width: 40rem) and (max-width: 95.9975rem)` */
 	"smTo2xl": string
-	/** `@media screen and (min-width: 48em) and (max-width: 63.996875em)` */
+	/** `@media screen and (min-width: 48rem) and (max-width: 63.9975rem)` */
 	"mdToLg": string
-	/** `@media screen and (min-width: 48em) and (max-width: 79.996875em)` */
+	/** `@media screen and (min-width: 48rem) and (max-width: 79.9975rem)` */
 	"mdToXl": string
-	/** `@media screen and (min-width: 48em) and (max-width: 95.996875em)` */
+	/** `@media screen and (min-width: 48rem) and (max-width: 95.9975rem)` */
 	"mdTo2xl": string
-	/** `@media screen and (min-width: 64em) and (max-width: 79.996875em)` */
+	/** `@media screen and (min-width: 64rem) and (max-width: 79.9975rem)` */
 	"lgToXl": string
-	/** `@media screen and (min-width: 64em) and (max-width: 95.996875em)` */
+	/** `@media screen and (min-width: 64rem) and (max-width: 95.9975rem)` */
 	"lgTo2xl": string
-	/** `@media screen and (min-width: 80em) and (max-width: 95.996875em)` */
+	/** `@media screen and (min-width: 80rem) and (max-width: 95.9975rem)` */
 	"xlTo2xl": string
+	/** `@container  (min-width: 20rem)` */
+	"@/xs": string
+	/** `@container  (min-width: 24rem)` */
+	"@/sm": string
+	/** `@container  (min-width: 28rem)` */
+	"@/md": string
+	/** `@container  (min-width: 32rem)` */
+	"@/lg": string
+	/** `@container  (min-width: 36rem)` */
+	"@/xl": string
+	/** `@container  (min-width: 42rem)` */
+	"@/2xl": string
+	/** `@container  (min-width: 48rem)` */
+	"@/3xl": string
+	/** `@container  (min-width: 56rem)` */
+	"@/4xl": string
+	/** `@container  (min-width: 64rem)` */
+	"@/5xl": string
+	/** `@container  (min-width: 72rem)` */
+	"@/6xl": string
+	/** `@container  (min-width: 80rem)` */
+	"@/7xl": string
+	/** `@container  (min-width: 90rem)` */
+	"@/8xl": string
 	/** The base (=no conditions) styles to apply  */
 	"base": string
 }
