@@ -1,4 +1,4 @@
-import { mapObject } from '../helpers.js';
+import { getPatternStyles, patternFns } from '../helpers.js';
 import { css } from '../css/index.js';
 
 const linkOverlayConfig = {
@@ -18,7 +18,10 @@ transform(props) {
   };
 }}
 
-export const getLinkOverlayStyle = (styles = {}) => linkOverlayConfig.transform(styles, { map: mapObject })
+export const getLinkOverlayStyle = (styles = {}) => {
+  const _styles = getPatternStyles(linkOverlayConfig, styles)
+  return linkOverlayConfig.transform(_styles, patternFns)
+}
 
 export const linkOverlay = (styles) => css(getLinkOverlayStyle(styles))
 linkOverlay.raw = getLinkOverlayStyle

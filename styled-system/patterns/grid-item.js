@@ -1,4 +1,4 @@
-import { mapObject } from '../helpers.js';
+import { getPatternStyles, patternFns } from '../helpers.js';
 import { css } from '../css/index.js';
 
 const gridItemConfig = {
@@ -16,7 +16,10 @@ transform(props, { map }) {
   };
 }}
 
-export const getGridItemStyle = (styles = {}) => gridItemConfig.transform(styles, { map: mapObject })
+export const getGridItemStyle = (styles = {}) => {
+  const _styles = getPatternStyles(gridItemConfig, styles)
+  return gridItemConfig.transform(_styles, patternFns)
+}
 
 export const gridItem = (styles) => css(getGridItemStyle(styles))
 gridItem.raw = getGridItemStyle

@@ -1,14 +1,28 @@
 /// <reference types="vitest" />
 /// <reference types="vite/client" />
+import { vitePlugin as remix } from '@remix-run/dev';
+import { installGlobals } from '@remix-run/node';
 import react from '@vitejs/plugin-react';
-import { defineConfig } from 'vite';
+import { visualizer } from 'rollup-plugin-visualizer';
+import { defineConfig, loadEnv } from 'vite';
 import checker from 'vite-plugin-checker';
 import tsconfigPaths from 'vite-tsconfig-paths';
 import GithubActionsReporter from 'vitest-github-actions-reporter';
 
+installGlobals();
+
 export default defineConfig(({ mode }) => ({
+  server: {
+    port: 3000
+  },
   plugins: [
-    react(),
+    !process.env.VITEST
+      ? remix({
+          ignoredRouteFiles: ['**/.*', '**/*.test.{js,jsx,ts,tsx}'],
+          serverModuleFormat: 'cjs'
+        })
+      : react(),
+    visualizer({ emitFile: true }),
     ...(mode === 'development'
       ? [
           checker({
@@ -25,6 +39,9 @@ export default defineConfig(({ mode }) => ({
       : []),
     tsconfigPaths()
   ],
+  ssr: {
+		noExternal: ["remix-i18next"],
+	},
   test: {
     onConsoleLog: (message: string): false | void => {
       if (
@@ -59,6 +76,8 @@ export default defineConfig(({ mode }) => ({
       thresholdAutoUpdate: true
     },
     environment: 'happy-dom',
+    env: loadEnv('test', process.cwd(), ''),
+
     globals: true,
     include: ['./app/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
     logHeapUsage: true,

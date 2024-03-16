@@ -1,4 +1,4 @@
-import { mapObject } from '../helpers.js';
+import { getPatternStyles, patternFns } from '../helpers.js';
 import { css } from '../css/index.js';
 
 const visuallyHiddenConfig = {
@@ -9,7 +9,10 @@ transform(props) {
   };
 }}
 
-export const getVisuallyHiddenStyle = (styles = {}) => visuallyHiddenConfig.transform(styles, { map: mapObject })
+export const getVisuallyHiddenStyle = (styles = {}) => {
+  const _styles = getPatternStyles(visuallyHiddenConfig, styles)
+  return visuallyHiddenConfig.transform(_styles, patternFns)
+}
 
 export const visuallyHidden = (styles) => css(getVisuallyHiddenStyle(styles))
 visuallyHidden.raw = getVisuallyHiddenStyle
