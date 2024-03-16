@@ -20,6 +20,7 @@ export default {
   identities: [
     {
       id: id,
+      identity_id: id,
       user_id: id,
       identity_data: {
         email: 'mgrdevuk@gmail.com',

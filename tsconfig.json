@@ -1,6 +1,6 @@
 {
   "exclude": ["./cypress", "./cypress.config.ts", "./starlight"],
-  "include": ["remix.env.d.ts", "**/*.ts", "**/*.tsx"],
+  "include": ["env.d.ts", "**/*.ts", "**/*.tsx", "app/i18n.ts", "app/i18n.server.ts", "app/root.tsx"],
   "compilerOptions": {
     "lib": ["DOM", "DOM.Iterable", "ESNext"],
     "types": ["vitest/globals", "vite/client"],
@@ -8,7 +8,7 @@
     "esModuleInterop": true,
     "jsx": "react-jsx",
     "module": "esnext",
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "resolveJsonModule": true,
     "target": "ESNext",
     "strict": true,
