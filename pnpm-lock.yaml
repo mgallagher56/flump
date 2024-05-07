@@ -227,8 +227,8 @@ devDependencies:
     specifier: 0.24.0
     version: 0.24.0(eslint@8.57.0)
   happy-dom:
-    specifier: 13.8.6
-    version: 13.8.6
+    specifier: 14.7.1
+    version: 14.7.1
   husky:
     specifier: 9.0.11
     version: 9.0.11
@@ -285,7 +285,7 @@ devDependencies:
     version: 4.3.2(typescript@5.4.2)(vite@5.1.6)
   vitest:
     specifier: 1.4.0
-    version: 1.4.0(@types/node@20.11.28)(@vitest/ui@1.4.0)(happy-dom@13.8.6)
+    version: 1.4.0(@types/node@20.11.28)(@vitest/ui@1.4.0)(happy-dom@14.7.1)
   vitest-github-actions-reporter:
     specifier: 0.11.1
     version: 0.11.1(vitest@1.4.0)
@@ -5306,7 +5306,7 @@ packages:
       dom-accessibility-api: 0.6.3
       lodash: 4.17.21
       redent: 3.0.0
-      vitest: 1.4.0(@types/node@20.11.28)(@vitest/ui@1.4.0)(happy-dom@13.8.6)
+      vitest: 1.4.0(@types/node@20.11.28)(@vitest/ui@1.4.0)(happy-dom@14.7.1)
     dev: true
 
   /@testing-library/react@15.0.6(@types/react@18.2.66)(react-dom@18.3.0-canary-a870b2d54-20240314)(react@18.3.0-canary-a870b2d54-20240314):
@@ -6139,7 +6139,7 @@ packages:
       strip-literal: 2.0.0
       test-exclude: 6.0.0
       v8-to-istanbul: 9.2.0
-      vitest: 1.4.0(@types/node@20.11.28)(@vitest/ui@1.4.0)(happy-dom@13.8.6)
+      vitest: 1.4.0(@types/node@20.11.28)(@vitest/ui@1.4.0)(happy-dom@14.7.1)
     transitivePeerDependencies:
       - supports-color
     dev: true
@@ -6186,7 +6186,7 @@ packages:
       pathe: 1.1.2
       picocolors: 1.0.0
       sirv: 2.0.4
-      vitest: 1.4.0(@types/node@20.11.28)(@vitest/ui@1.4.0)(happy-dom@13.8.6)
+      vitest: 1.4.0(@types/node@20.11.28)(@vitest/ui@1.4.0)(happy-dom@14.7.1)
     dev: true
 
   /@vitest/utils@1.4.0:
@@ -9909,8 +9909,8 @@ packages:
       through2: 2.0.5
     dev: true
 
-  /happy-dom@13.8.6:
-    resolution: {integrity: sha512-Urcv2jvNel19QirWimOwYTW3slpEYGS8PLtzEwAlpTWpnKycXF8s0I7xUBK9fPvWAIc8uZf/CnV2cIwWE8jptw==}
+  /happy-dom@14.7.1:
+    resolution: {integrity: sha512-v60Q0evZ4clvMcrAh5/F8EdxDdfHdFrtffz/CNe10jKD+nFweZVxM91tW+UyY2L4AtpgIaXdZ7TQmiO1pfcwbg==}
     engines: {node: '>=16.0.0'}
     dependencies:
       entities: 4.5.0
@@ -15175,7 +15175,7 @@ packages:
       vitest: '>=0.28.5'
     dependencies:
       '@actions/core': 1.10.0
-      vitest: 1.4.0(@types/node@20.11.28)(@vitest/ui@1.4.0)(happy-dom@13.8.6)
+      vitest: 1.4.0(@types/node@20.11.28)(@vitest/ui@1.4.0)(happy-dom@14.7.1)
     dev: true
 
   /vitest-sonar-reporter@2.0.0(vitest@1.4.0):
@@ -15184,10 +15184,10 @@ packages:
     peerDependencies:
       vitest: '>=1'
     dependencies:
-      vitest: 1.4.0(@types/node@20.11.28)(@vitest/ui@1.4.0)(happy-dom@13.8.6)
+      vitest: 1.4.0(@types/node@20.11.28)(@vitest/ui@1.4.0)(happy-dom@14.7.1)
     dev: true
 
-  /vitest@1.4.0(@types/node@20.11.28)(@vitest/ui@1.4.0)(happy-dom@13.8.6):
+  /vitest@1.4.0(@types/node@20.11.28)(@vitest/ui@1.4.0)(happy-dom@14.7.1):
     resolution: {integrity: sha512-gujzn0g7fmwf83/WzrDTnncZt2UiXP41mHuFYFrdwaLRVQ6JYQEiME2IfEjU3vcFL3VKa75XhI3lFgn+hfVsQw==}
     engines: {node: ^18.0.0 || >=20.0.0}
     hasBin: true
@@ -15223,7 +15223,7 @@ packages:
       chai: 4.3.10
       debug: 4.3.4(supports-color@8.1.1)
       execa: 8.0.1
-      happy-dom: 13.8.6
+      happy-dom: 14.7.1
       local-pkg: 0.5.0
       magic-string: 0.30.7
       pathe: 1.1.2
