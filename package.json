@@ -161,8 +161,9 @@
     "webdriverio": "8.36.1"
   },
   "engines": {
-    "node": ">=18"
-  },
+    "node": ">=20",
+    "pnpm": ">=9"
+    },
   "version": "1.18.0",
   "overrides": {
     "react": "18.3.1",
