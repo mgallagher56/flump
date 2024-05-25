@@ -1,0 +1,158 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`<FLPInput /> > should render as expected 1`] = `
+<div>
+  <div
+    class="d_flex flex_column gap_2"
+  >
+    <label
+      for="Test"
+    >
+      Test
+    </label>
+    <div>
+      <div
+        class="css-3a3hw0"
+      >
+        <input
+          class="chakra-input css-0"
+          id="Test"
+        />
+      </div>
+    </div>
+  </div>
+</div>
+`;
+
+exports[`<FLPInput /> > should render as expected with error 1`] = `
+<div>
+  <div
+    class="d_flex flex_column gap_2"
+  >
+    <label
+      for="Test"
+    >
+      Test
+    </label>
+    <div>
+      <div
+        class="css-3a3hw0"
+      >
+        <input
+          class="chakra-input css-0"
+          id="Test"
+        />
+        <span
+          class="text_red.500 fw_bold"
+        >
+          Error
+        </span>
+      </div>
+    </div>
+  </div>
+</div>
+`;
+
+exports[`<FLPInput /> > should render as expected with value 1`] = `
+<div>
+  <div
+    class="d_flex flex_column gap_2"
+  >
+    <label
+      for="Test"
+    >
+      Test
+    </label>
+    <div>
+      <div
+        class="css-3a3hw0"
+      >
+        <input
+          class="chakra-input css-0"
+          id="Test"
+          value="Value"
+        />
+      </div>
+    </div>
+  </div>
+</div>
+`;
+
+exports[`<FLPInput /> > should render as expected with value and error 1`] = `
+<div>
+  <div
+    class="d_flex flex_column gap_2"
+  >
+    <label
+      for="Test"
+    >
+      Test
+    </label>
+    <div>
+      <div
+        class="css-3a3hw0"
+      >
+        <input
+          class="chakra-input css-0"
+          id="Test"
+          value="Value"
+        />
+        <span
+          class="text_red.500 fw_bold"
+        >
+          Error
+        </span>
+      </div>
+    </div>
+  </div>
+</div>
+`;
+
+exports[`<FLPInput /> > should render as expected without a label 1`] = `
+<div>
+  <div
+    class="d_flex flex_column gap_2"
+  >
+    <label
+      for="Test"
+      hidden=""
+    >
+      Test
+    </label>
+    <div>
+      <div
+        class="css-3a3hw0"
+      >
+        <input
+          class="chakra-input css-0"
+          id="Test"
+        />
+      </div>
+    </div>
+  </div>
+</div>
+`;
+
+exports[`<FLPInput /> > should render elements as a row 1`] = `
+<div>
+  <div
+    class="d_flex flex_row items_center gap_4"
+  >
+    <label
+      for="Test"
+    >
+      Test
+    </label>
+    <div>
+      <div
+        class="css-3a3hw0"
+      >
+        <input
+          class="chakra-input css-0"
+          id="Test"
+        />
+      </div>
+    </div>
+  </div>
+</div>
+`;
