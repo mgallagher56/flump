@@ -1,0 +1,27 @@
+{
+  "$schema": "https://turbo.build/schema.json",
+  "globalEnv": [
+    "FLY_REGION",
+    "GITHUB_ACTIONS",
+    "METRICS_PORT",
+    "NODE_ENV",
+    "PORT",
+    "PRIMARY_REGION",
+    "SESSION_SECRET",
+    "SUPABASE_ANON_KEY",
+    "SUPABASE_URL",
+    "VITEST"
+  ],
+  "pipeline": {
+    "build": {
+      "dependsOn": [ "lint", "^build"],
+      "outputs": [
+        "dist/**",
+        "public/build/**",
+        "build/**",
+        ".cache"
+      ]
+    },
+    "lint": {}
+  }
+}

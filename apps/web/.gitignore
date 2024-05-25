@@ -1,0 +1,16 @@
+node_modules
+
+/build
+/public/build
+.env
+.DS_Store
+
+/postgres-data
+/coverage
+/.scannerwork
+/.eslintcache
+/coverage-ts/
+sonar-report.xml
+/.cert/
+
+.turbo

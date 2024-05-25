@@ -1,17 +1,19 @@
+# dependencies
 node_modules
+.pnp
+.pnp.js
+.pnpm-store
 
-/build
-/public/build
-.env
+# misc
 .DS_Store
+*.pem
 
-/cypress/screenshots
-/cypress/videos
-/postgres-data
-/coverage
-/.scannerwork
-/.eslintcache
-/coverage-ts/
-sonar-report.xml
-/.cert/
+# turbo
+.turbo
 
+# intellij idea
+.idea/
+
+# cache files
+tsconfig.tsbuildinfo
+.eslintcache
