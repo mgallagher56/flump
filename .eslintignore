@@ -12,7 +12,6 @@ mocks
 remix.init
 /build
 /public
-/starlight
 /coverage
 /coverage-ts
 postcss.config.cjs
