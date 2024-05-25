@@ -26,14 +26,6 @@ runs:
         restore-keys: |
           ${{ runner.os }}-pnpm-store-
 
-    - name: Cache Cypress binary
-      uses: actions/cache@v4
-      with:
-        path: /home/runner/.cache/Cypress
-        key: cypress-${{ runner.os }}-cypress-${{ github.ref }}-${{ hashFiles('**/pnpm-lock.yaml') }}
-        restore-keys: |
-          cypress-${{ runner.os }}-cypress-${{ github.ref }}-${{ hashFiles('**/pnpm-lock.yaml') }}
-
     - name: Install dependencies
       shell: bash
       run: pnpm install --frozen-lockfile --strict-peer-dependencies --ignore-scripts
