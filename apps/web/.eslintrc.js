@@ -3,7 +3,7 @@ module.exports = {
   root: true,
   parser: '@typescript-eslint/parser',
   parserOptions: {
-    project: ['/Users/marcgallagher/personal/flump/apps/web/tsconfig.json']
+    project: ['tsconfig.json']
   },
   extends: [
     '@remix-run/eslint-config',
@@ -11,7 +11,7 @@ module.exports = {
     'prettier',
     'eslint:recommended',
     'plugin:sonarjs/recommended',
-    "plugin:vitest-globals/recommended",
+    'plugin:vitest-globals/recommended',
     'turbo'
   ],
   env: {
@@ -44,13 +44,12 @@ module.exports = {
     complexity: ['warn', 15],
     eqeqeq: ['warn', 'smart'],
     'turbo/no-undeclared-env-vars': 'error'
-
   },
   overrides: [
     {
-      files: ["**/*.test.{j,t}s?(x)"],
+      files: ['**/*.test.{j,t}s?(x)'],
       env: {
-        "vitest-globals/env": true
+        'vitest-globals/env': true
       }
     }
   ]
