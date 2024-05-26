@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.20.0](https://github.com/mgallagher56/flump/compare/flump/web-v1.19.0...flump/web-v1.20.0) (2024-05-26)
+
+
+### Miscellaneous Chores
+
+* **web:** release 1.20.0 ([1f2a83d](https://github.com/mgallagher56/flump/commit/1f2a83d1b3f1b2470283e3dc60bd627a7444f34e))
+
 ## [1.19.0](https://github.com/mgallagher56/flump/compare/flump/web-v1.19.0...flump/web-v1.19.0) (2024-05-26)
 
 
