@@ -1,5 +1,5 @@
 {
-  "exclude": ["node_modules", ".eslintrc.js"],
+  "exclude": ["node_modules", ".eslintrc.cjs"],
   "include": [
     "env.d.ts",
     "**/*.ts",
@@ -8,7 +8,11 @@
     "**/**/*.tsx",
     "app/i18n.ts",
     "app/i18n.server.ts",
-    "app/root.tsx"
+    "app/root.tsx",
+    "**/.server/**/*.ts",
+    "**/.server/**/*.tsx",
+    "**/.client/**/*.ts",
+    "**/.client/**/*.tsx"
   ],
   "compilerOptions": {
     "allowJs": true,

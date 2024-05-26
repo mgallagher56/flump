@@ -1,8 +1,7 @@
 import type { ReactElement } from 'react';
 
 import { Container } from '@chakra-ui/react';
-import { json } from '@remix-run/node';
-import { redirect } from '@remix-run/server-runtime';
+import { json, redirect } from '@remix-run/node';
 import SignUp from '~/components/users/SignUp';
 import { SignUpActionEnum } from '~/components/users/utils';
 import { createSupaBaseServerClient } from '~/utils/supabase';
