@@ -20,15 +20,12 @@ jobs:
     if: github.event.commits[0].author.username != 'github-actions[bot]'
     steps:
       - id: release
-        uses: google-github-actions/release-please-action@v4
+        uses: googleapis/release-please-action@v4
 
         with:
           release-type: node
-          package-name: release-please-action
-          default-branch: dev
-          command: release-pr
-          skip-labeling: true
-          changelog-types: '[{"type":"feat","section":"Features ✨","hidden":false},{"type":"fix","section":"Bug Fixes 🪲","hidden":false}, {"type":"build","section":"Build 🛠️","hidden":false}, {"type":"ci","section":"CI 🤖","hidden":false}, {"type":"docs","section":"Documentation 📙","hidden":false}, {"type":"perf","section":"Performance ⚡️","hidden":false}, {"type":"refactor","section":"Refactor 🔥","hidden":false}, {"type":"test","section":"Tests 🧪","hidden":false}, {"type":"chore","section":"Miscellaneous 🙃","hidden":false}]'
+          target-branch: ${{ github.ref_name }}
+          skip-github-release: true
 
       - name: "[Debug] release-please outputs"
         env:

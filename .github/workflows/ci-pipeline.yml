@@ -68,6 +68,7 @@ jobs:
 
       - name: ⚡ Run vitest
         run: pnpm run test
+        working-directory: "apps/web"
 
       - name: 'Report Coverage'
         if: always()
