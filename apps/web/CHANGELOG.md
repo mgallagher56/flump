@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.21.1](https://github.com/mgallagher56/flump/compare/flump/web-v1.21.0...flump/web-v1.21.1) (2024-05-26)
+
+
+### Bug Fixes
+
+* fly deploy ([84548b0](https://github.com/mgallagher56/flump/commit/84548b0fbcd87d214ad53d9a2f091d83c14869de))
+* fly deploy ([ae010b5](https://github.com/mgallagher56/flump/commit/ae010b5fa5562e3bb4aa62a4b0cd3b56647983f2))
+
 ## [1.21.0](https://github.com/mgallagher56/flump/compare/flump/web-v1.20.0...flump/web-v1.21.0) (2024-05-26)
 
 
