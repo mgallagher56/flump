@@ -6,7 +6,7 @@
     "node": ">=20",
     "pnpm": ">=9"
   },
-  "version": "1.18.0",
+  "version": "1.0.0",
   "scripts": {
     "dev": "remix vite:dev",
     "build": "remix vite:build",
