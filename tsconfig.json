@@ -1,6 +1,3 @@
 {
-  "extends": "apps/web/tsconfig.json",
-  "compilerOptions": {
-    "rootDir": ".",
-  }
+  "extends": "./apps/web/tsconfig.json"
 }
