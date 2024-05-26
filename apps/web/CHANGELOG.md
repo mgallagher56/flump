@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.0.0 (2024-05-26)
+
+
+### Features
+
+* turborepo migration ([f54ed55](https://github.com/mgallagher56/flump/commit/f54ed550cf5e93671321935ebba0c2f16828bd85))
+
+
+### Bug Fixes
+
+* release please gh action ([4a942a2](https://github.com/mgallagher56/flump/commit/4a942a23da321f7b768657199d2d1140446458d0))
+
 ## [1.18.0](https://github.com/mgallagher56/flump/compare/v1.17.0...v1.18.0) (2024-01-20)
 
 
