@@ -12,14 +12,10 @@ import GithubActionsReporter from 'vitest-github-actions-reporter';
 installGlobals();
 
 export default defineConfig(({ mode }) => ({
-  server: {
-    port: 3000
-  },
   plugins: [
     !process.env.VITEST
       ? remix({
-          ignoredRouteFiles: ['**/.*', '**/*.test.{js,jsx,ts,tsx}'],
-          serverModuleFormat: 'cjs'
+          ignoredRouteFiles: ['**/.*', '**/*.test.{js,jsx,ts,tsx}']
         })
       : react(),
     visualizer({ emitFile: true }),
@@ -40,8 +36,8 @@ export default defineConfig(({ mode }) => ({
     tsconfigPaths()
   ],
   ssr: {
-		noExternal: ["remix-i18next"],
-	},
+    noExternal: ['remix-i18next']
+  },
   test: {
     onConsoleLog: (message: string): false | void => {
       if (

@@ -71,7 +71,6 @@ export const loader = async ({
   const {
     data: { session }
   } = await supabase.auth.getSession();
-  console.log({ session });
 
   return json(
     {

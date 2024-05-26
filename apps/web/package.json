@@ -2,6 +2,7 @@
   "name": "@flump/web",
   "private": true,
   "sideEffects": false,
+  "type": "module",
   "engines": {
     "node": ">=20",
     "pnpm": ">=9"
@@ -14,11 +15,9 @@
     "@emotion/server": "11.11.0",
     "@emotion/styled": "11.11.5",
     "@isaacs/express-prometheus-middleware": "1.2.1",
-    "@remix-run/express": "2.9.2",
     "@remix-run/node": "2.9.2",
     "@remix-run/react": "2.9.2",
-    "@remix-run/server-runtime": "2.9.2",
-    "@remix-run/testing": "2.9.2",
+    "@remix-run/serve": "^2.9.2",
     "@supabase/auth-helpers-remix": "0.4.0",
     "@supabase/supabase-js": "2.43.2",
     "bcryptjs": "2.4.3",
