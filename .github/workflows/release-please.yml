@@ -56,7 +56,7 @@ jobs:
       - name: 🚀 Deploy ${{ steps.app_name.outputs.value }}
         uses: superfly/flyctl-actions@1.5
         with:
-          working-directory: ${{ matrix.path }}
+          entrypoint: ${{ matrix.path }}
           args: deploy --remote-only --build-arg COMMIT_SHA=${{ github.sha }} --app ${{ steps.app_name.outputs.value }}${{github.ref == 'refs/heads/dev' && '-staging' || ''}}
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
