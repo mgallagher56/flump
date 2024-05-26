@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.20.1](https://github.com/mgallagher56/flump/compare/flump/web-v1.20.0...flump/web-v1.20.1) (2024-05-26)
+
+
+### Bug Fixes
+
+* **web:** package json ([ad0b9f6](https://github.com/mgallagher56/flump/commit/ad0b9f68e00fa96d418a6db37b3ff27656e7e26b))
+
 ## [1.20.0](https://github.com/mgallagher56/flump/compare/flump/web-v1.19.0...flump/web-v1.20.0) (2024-05-26)
 
 

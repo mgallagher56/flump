@@ -6,7 +6,7 @@
     "node": ">=20",
     "pnpm": ">=9"
   },
-  "version": "1.20.0",
+  "version": "1.20.1",
   "dependencies": {
     "@chakra-ui/react": "2.8.2",
     "@emotion/cache": "11.11.0",
