@@ -70,21 +70,15 @@ importers:
       '@isaacs/express-prometheus-middleware':
         specifier: 1.2.1
         version: 1.2.1(express@4.19.2)(prom-client@15.1.2)
-      '@remix-run/express':
-        specifier: 2.9.2
-        version: 2.9.2(express@4.19.2)(typescript@5.4.5)
       '@remix-run/node':
         specifier: 2.9.2
         version: 2.9.2(typescript@5.4.5)
       '@remix-run/react':
         specifier: 2.9.2
         version: 2.9.2(react-dom@18.3.0(react@18.3.1))(react@18.3.1)(typescript@5.4.5)
-      '@remix-run/server-runtime':
-        specifier: 2.9.2
+      '@remix-run/serve':
+        specifier: ^2.9.2
         version: 2.9.2(typescript@5.4.5)
-      '@remix-run/testing':
-        specifier: 2.9.2
-        version: 2.9.2(react-dom@18.3.0(react@18.3.1))(react@18.3.1)(typescript@5.4.5)
       '@supabase/auth-helpers-remix':
         specifier: 0.4.0
         version: 0.4.0(@supabase/supabase-js@2.43.2)
@@ -172,7 +166,7 @@ importers:
         version: 0.39.1(typescript@5.4.5)
       '@remix-run/dev':
         specifier: 2.9.2
-        version: 2.9.2(@remix-run/react@2.9.2(react-dom@18.3.0(react@18.3.1))(react@18.3.1)(typescript@5.4.5))(@types/node@20.12.12)(babel-plugin-macros@3.1.0)(lightningcss@1.23.0)(ts-node@10.9.2(@types/node@20.12.12)(typescript@5.4.5))(typescript@5.4.5)(vite@5.2.11(@types/node@20.12.12)(lightningcss@1.23.0))
+        version: 2.9.2(@remix-run/react@2.9.2(react-dom@18.3.0(react@18.3.1))(react@18.3.1)(typescript@5.4.5))(@remix-run/serve@2.9.2(typescript@5.4.5))(@types/node@20.12.12)(babel-plugin-macros@3.1.0)(lightningcss@1.23.0)(ts-node@10.9.2(@types/node@20.12.12)(typescript@5.4.5))(typescript@5.4.5)(vite@5.2.11(@types/node@20.12.12)(lightningcss@1.23.0))
       '@remix-run/eslint-config':
         specifier: 2.9.2
         version: 2.9.2(eslint@8.57.0)(react@18.3.1)(typescript@5.4.5)
@@ -2423,20 +2417,15 @@ packages:
     resolution: {integrity: sha512-es2g3dq6Nb07iFxGk5GuHN20RwBZOsuDQN7izWIisUcv9r+d2C5jQxqmgkdebXgReWfiyUabcki6Fg77mSNrig==}
     engines: {node: '>=14.0.0'}
 
+  '@remix-run/serve@2.9.2':
+    resolution: {integrity: sha512-wA3mjQcIkkzmr2798mMDDCkVmVraVwFgLiZ0ManlU5mOWZhI0W+b55fxHltJ4gkAMGYaxrk7vq/s8s/r+L3cTQ==}
+    engines: {node: '>=18.0.0'}
+    hasBin: true
+
   '@remix-run/server-runtime@2.9.2':
     resolution: {integrity: sha512-dX37FEeMVVg7KUbpRhX4hD0nUY0Sscz/qAjU4lYCdd6IzwJGariTmz+bQTXKCjploZuXj09OQZHSOS/ydkUVDA==}
     engines: {node: '>=18.0.0'}
     peerDependencies:
-      typescript: ^5.1.0
-    peerDependenciesMeta:
-      typescript:
-        optional: true
-
-  '@remix-run/testing@2.9.2':
-    resolution: {integrity: sha512-zJz/D1zCMnPr7EVTRqOqUR9DkJXRBOgsyniJu+zM5yO3r2rULaYy+D7d9AlxMuUDxprpgRfk734BlZh4lFEdrQ==}
-    engines: {node: '>=18.0.0'}
-    peerDependencies:
-      react: 18.3.1
       typescript: ^5.1.0
     peerDependenciesMeta:
       typescript:
@@ -10372,7 +10361,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@remix-run/dev@2.9.2(@remix-run/react@2.9.2(react-dom@18.3.0(react@18.3.1))(react@18.3.1)(typescript@5.4.5))(@types/node@20.12.12)(babel-plugin-macros@3.1.0)(lightningcss@1.23.0)(ts-node@10.9.2(@types/node@20.12.12)(typescript@5.4.5))(typescript@5.4.5)(vite@5.2.11(@types/node@20.12.12)(lightningcss@1.23.0))':
+  '@remix-run/dev@2.9.2(@remix-run/react@2.9.2(react-dom@18.3.0(react@18.3.1))(react@18.3.1)(typescript@5.4.5))(@remix-run/serve@2.9.2(typescript@5.4.5))(@types/node@20.12.12)(babel-plugin-macros@3.1.0)(lightningcss@1.23.0)(ts-node@10.9.2(@types/node@20.12.12)(typescript@5.4.5))(typescript@5.4.5)(vite@5.2.11(@types/node@20.12.12)(lightningcss@1.23.0))':
     dependencies:
       '@babel/core': 7.24.5
       '@babel/generator': 7.24.6
@@ -10429,6 +10418,7 @@ snapshots:
       tsconfig-paths: 4.2.0
       ws: 7.5.9
     optionalDependencies:
+      '@remix-run/serve': 2.9.2(typescript@5.4.5)
       typescript: 5.4.5
       vite: 5.2.11(@types/node@20.12.12)(lightningcss@1.23.0)
     transitivePeerDependencies:
@@ -10506,6 +10496,20 @@ snapshots:
 
   '@remix-run/router@1.16.1': {}
 
+  '@remix-run/serve@2.9.2(typescript@5.4.5)':
+    dependencies:
+      '@remix-run/express': 2.9.2(express@4.19.2)(typescript@5.4.5)
+      '@remix-run/node': 2.9.2(typescript@5.4.5)
+      chokidar: 3.6.0
+      compression: 1.7.4
+      express: 4.19.2
+      get-port: 5.1.1
+      morgan: 1.10.0
+      source-map-support: 0.5.21
+    transitivePeerDependencies:
+      - supports-color
+      - typescript
+
   '@remix-run/server-runtime@2.9.2(typescript@5.4.5)':
     dependencies:
       '@remix-run/router': 1.16.1
@@ -10517,18 +10521,6 @@ snapshots:
       turbo-stream: 2.0.1
     optionalDependencies:
       typescript: 5.4.5
-
-  '@remix-run/testing@2.9.2(react-dom@18.3.0(react@18.3.1))(react@18.3.1)(typescript@5.4.5)':
-    dependencies:
-      '@remix-run/node': 2.9.2(typescript@5.4.5)
-      '@remix-run/react': 2.9.2(react-dom@18.3.0(react@18.3.1))(react@18.3.1)(typescript@5.4.5)
-      '@remix-run/router': 1.16.1
-      react: 18.3.1
-      react-router-dom: 6.23.1(react-dom@18.3.0(react@18.3.1))(react@18.3.1)
-    optionalDependencies:
-      typescript: 5.4.5
-    transitivePeerDependencies:
-      - react-dom
 
   '@remix-run/web-blob@3.1.0':
     dependencies:

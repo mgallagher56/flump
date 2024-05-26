@@ -15,7 +15,7 @@ FROM base as deps
 
 WORKDIR /app
 
-ADD package.json pnpm-lock.yaml .node-version ./
+ADD package.json .node-version ./
 RUN pnpm install --production=false
 
 # Setup production node_modules
@@ -24,7 +24,7 @@ FROM base as production-deps
 WORKDIR /app
 
 COPY --from=deps /app/node_modules /app/node_modules
-ADD package.json pnpm-lock.yaml .node-version ./
+ADD package.json .node-version ./
 RUN pnpm prune --prod
 
 # Build the app
@@ -44,8 +44,8 @@ WORKDIR /app
 
 COPY --from=production-deps /app/node_modules /app/node_modules
 
-COPY --from=build /myapp/build/server /myapp/build/server
-COPY --from=build /myapp/build/client /myapp/build/client
+COPY --from=build /app/build/server /app/build/server
+COPY --from=build /app/build/client /app/build/client
 
 ADD . .
 

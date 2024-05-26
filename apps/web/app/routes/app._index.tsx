@@ -1,7 +1,7 @@
 import type { ReactElement } from 'react';
 
-import { json } from '@remix-run/node';
-import { redirect } from '@remix-run/server-runtime';
+import { json, redirect } from '@remix-run/node';
+
 import FLPHeading from '~/components/core/typography/FLPHeading';
 import { createSupaBaseServerClient } from '~/utils/supabase';
 
