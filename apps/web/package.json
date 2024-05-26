@@ -2,6 +2,11 @@
   "name": "@flump/web",
   "private": true,
   "sideEffects": false,
+  "engines": {
+    "node": ">=20",
+    "pnpm": ">=9"
+  },
+  "version": "1.18.0",
   "scripts": {
     "dev": "remix vite:dev",
     "build": "remix vite:build",
@@ -25,36 +30,6 @@
     "panda:prepare": "panda codegen",
     "validate": "run-p \"test -- --run\" lint typecheck test:e2e:run"
   },
-  "lint-staged": {
-    "**/*.{js,jsx,ts,tsx,json,css,md}": "prettier --write",
-    "**/*.ts": [
-      "typescript-coverage-report",
-      "tsc-files --noEmit"
-    ],
-    "**/*.{js,mjs,cjs,ts,mts,cts,jsx,tsx}": [
-      "eslint --cache --fix",
-      "vitest --run"
-    ]
-  },
-  "typeCoverage": {
-    "atLeast": "100.00",
-    "ignoreFiles": [
-      "app/**/*.config.{js,ts,jsx,tsx}",
-      "app/*.*",
-      "*.*",
-      "app/**/*.test.{js,ts,jsx,tsx}",
-      "styled-system/**/*.*",
-      "test/**/*.{js,ts,jsx,tsx}",
-      "app/utils/utils.ts",
-      "app/**/*.d.ts"
-    ]
-  },
-  "eslintIgnore": [
-    "/node_modules",
-    "/build",
-    "/public/build",
-    "/postgres-data"
-  ],
   "dependencies": {
     "@chakra-ui/react": "2.8.2",
     "@emotion/cache": "11.11.0",
@@ -145,9 +120,28 @@
     "vitest-sonar-reporter": "2.0.0",
     "webdriverio": "8.36.1"
   },
-  "engines": {
-    "node": ">=20",
-    "pnpm": ">=9"
+  "lint-staged": {
+    "**/*.{js,jsx,ts,tsx,json,css,md}": "prettier --write",
+    "**/*.ts": [
+      "typescript-coverage-report",
+      "tsc-files --noEmit"
+    ],
+    "**/*.{js,mjs,cjs,ts,mts,cts,jsx,tsx}": [
+      "eslint --cache --fix",
+      "vitest --run"
+    ]
   },
-  "version": "1.18.0"
+  "typeCoverage": {
+    "atLeast": "100.00",
+    "ignoreFiles": [
+      "app/**/*.config.{js,ts,jsx,tsx}",
+      "app/*.*",
+      "*.*",
+      "app/**/*.test.{js,ts,jsx,tsx}",
+      "styled-system/**/*.*",
+      "test/**/*.{js,ts,jsx,tsx}",
+      "app/utils/utils.ts",
+      "app/**/*.d.ts"
+    ]
+  }
 }
