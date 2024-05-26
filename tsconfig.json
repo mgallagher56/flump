@@ -1,3 +1,8 @@
 {
-  "extends": "./apps/web/tsconfig.json"
+  "extends": "./apps/web/tsconfig.json",
+  "references": [
+    {
+      "path": "./apps/web"
+    }
+  ]
 }
