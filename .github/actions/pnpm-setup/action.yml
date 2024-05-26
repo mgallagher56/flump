@@ -1,8 +1,27 @@
 name: 'Setup pnpm'
 description: 'Setup node, pnpm and install packages'
+inputs:
+  turbo:
+    description: "Whether to use github local turbo cache"
+    required: false
+    default: "false"
+  ghToken:
+    description: "Github Repo token for Turborepo"
+    required: true
+  turboToken:
+    description: "Token to match TURBO_TOKEN env"
+    required: true
+
 runs:
   using: 'composite'
   steps:
+    - name: TurboRepo local server
+      if: ${{ inputs.turbo == 'true' }}
+      uses: felixmosh/turborepo-gh-artifacts@v3
+      with:
+        repo-token: ${{ inputs.ghToken }}
+        server-token: ${{ inputs.turboToken }}
+
     - uses: actions/setup-node@v4
       with:
         node-version-file: .node-version
