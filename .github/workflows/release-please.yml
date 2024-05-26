@@ -1,0 +1,60 @@
+name: release-please
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+  pull-requests: write
+  id-token: write
+  pages: write
+
+jobs:
+  release:
+    name: 📦 Release
+    runs-on: ubuntu-latest
+    outputs:
+      paths_released: ${{ steps.release.outputs.paths_released }}
+      releases_created: ${{ steps.release.outputs.releases_created }}
+    steps:
+      - id: release
+        uses: googleapis/release-please-action@v3
+        with:
+          release-type: node
+          default-branch: ${{ github.ref_name }}
+          command: manifest
+          changelog-types: '[{"type":"feat","section":"Features ✨","hidden":false},{"type":"fix","section":"Bug Fixes 🪲","hidden":false}, {"type":"build","section":"Build 🛠️","hidden":false}, {"type":"ci","section":"CI 🤖","hidden":false}, {"type":"docs","section":"Documentation 📙","hidden":false}, {"type":"perf","section":"Performance ⚡️","hidden":false}, {"type":"refactor","section":"Refactor 🔥","hidden":false}, {"type":"test","section":"Tests 🧪","hidden":false}, {"type":"chore","section":"Miscellaneous 🙃","hidden":false}]'
+
+      - name: "[Debug] release-please outputs"
+        env:
+          RELEASE_PLEASE_CONTEXT: ${{ toJson(steps.release.outputs) }}
+        run: echo "$RELEASE_PLEASE_CONTEXT"
+
+  deploy-separate:
+    name: 🚀 Deploy ${{ matrix.package.path }}
+    needs: release
+    runs-on: ubuntu-latest
+    if: ${{ needs.release.outputs.releases_created }}
+    strategy:
+      fail-fast: false
+      matrix:
+        path: ${{fromJson(needs.release.outputs.paths_released)}}
+
+    steps:
+      - name: ⬇️ Checkout repo
+        uses: actions/checkout@v4
+
+      - name: 👀 Read app name
+        uses: SebRollen/toml-action@v1.2.0
+        id: app_name
+        with:
+          file: fly.toml
+          field: app
+
+      - name: 🚀 Deploy
+        uses: superfly/flyctl-actions@1.5
+        with:
+          args: deploy --remote-only --build-arg COMMIT_SHA=${{ github.sha }} --app ${{ steps.app_name.outputs.value }}${{github.ref == 'refs/heads/dev' && '-staging' || ''}}
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
