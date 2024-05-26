@@ -1,5 +1,24 @@
 # Changelog
 
+## [1.20.0](https://github.com/mgallagher56/flump/compare/flump/web-v1.20.1...flump/web-v1.20.0) (2024-05-26)
+
+
+### Features
+
+* turborepo migration ([f54ed55](https://github.com/mgallagher56/flump/commit/f54ed550cf5e93671321935ebba0c2f16828bd85))
+
+
+### Bug Fixes
+
+* release please gh action ([4a942a2](https://github.com/mgallagher56/flump/commit/4a942a23da321f7b768657199d2d1140446458d0))
+* **web:** package json ([ad0b9f6](https://github.com/mgallagher56/flump/commit/ad0b9f68e00fa96d418a6db37b3ff27656e7e26b))
+
+
+### Miscellaneous Chores
+
+* **web:** release 1.19.0 ([36a7935](https://github.com/mgallagher56/flump/commit/36a79358c331c4743dd8eff57bd7b71e45709278))
+* **web:** release 1.20.0 ([1f2a83d](https://github.com/mgallagher56/flump/commit/1f2a83d1b3f1b2470283e3dc60bd627a7444f34e))
+
 ## [1.20.1](https://github.com/mgallagher56/flump/compare/flump/web-v1.20.0...flump/web-v1.20.1) (2024-05-26)
 
 
