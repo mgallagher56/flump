@@ -14,6 +14,7 @@
     "test:e2e": "turbo run test:e2e",
     "lint": "turbo run lint",
     "format": "turbo run format",
+    "ts-coverage": "turbo run ts-coverage",
     "prepare": "husky install || npx -y husky install",
     "publish": "turbo run publish"
   },
