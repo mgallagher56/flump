@@ -1,8 +1,7 @@
 import { type ReactElement } from 'react';
 
-import { json } from '@remix-run/node';
+import { json, redirect } from '@remix-run/node';
 import { type Params } from '@remix-run/react';
-import { redirect } from '@remix-run/server-runtime';
 import AccountDetailContainer from '~/containers/accounts/accountDetailContainer/AccountDetailContainer';
 import { createSupaBaseServerClient } from '~/utils/supabase';
 
