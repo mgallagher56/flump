@@ -7,7 +7,7 @@
     "packages/*"
   ],
   "scripts": {
-    "build": "turbo run build",
+    "build": "turbo run build --cache-dir=.TURBO",
     "dev": "turbo run dev --parallel",
     "test": "turbo run test",
     "test:ui": "turbo run test:ui",
