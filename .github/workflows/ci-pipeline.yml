@@ -27,6 +27,10 @@ jobs:
   lint:
     name: ⬣ Lint
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        path: [apps/web]
+
     steps:
       - name: ⬇️ Checkout repo
         uses: actions/checkout@v4
@@ -38,11 +42,15 @@ jobs:
           turboToken: ${{ env.TURBO_TOKEN }}
 
       - name: 🔬 Lint
+        working-directory: ${{ matrix.path }}
         run: pnpm run lint
 
   TSCoverage:
     name: Typescript Coverage
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        path: [apps/web]
 
     steps:
       - name: Checkout
@@ -53,11 +61,16 @@ jobs:
       - uses: ./.github/actions/pnpm-setup
 
       - name: 🔎 Type check
+        working-directory: ${{ matrix.path }}
         run: 'pnpm run ts-coverage'
 
   vitest:
     name: ⚡ Vitest
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        path: [apps/web]
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -67,8 +80,8 @@ jobs:
       - uses: ./.github/actions/pnpm-setup
 
       - name: ⚡ Run vitest
-        run: pnpm run test
         working-directory: "apps/web"
+        run: pnpm run test
 
       - name: 'Report Coverage'
         if: always()
@@ -79,6 +92,10 @@ jobs:
   build:
     name: 🏗️ Build
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        path: [apps/web]
+
     steps:
       - name: ⬇️ Checkout repo
         uses: actions/checkout@v4
@@ -90,4 +107,5 @@ jobs:
           turboToken: ${{ env.TURBO_TOKEN }}
 
       - name: 🏗️ Build
+        working-directory: ${{ matrix.path }}
         run: pnpm run build
