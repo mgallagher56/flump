@@ -20,7 +20,7 @@ jobs:
       releases_created: ${{ steps.release.outputs.releases_created }}
     steps:
       - id: release
-        uses: googleapis/release-please-action@v3
+        uses: googleapis/release-please-action@v4
         with:
           release-type: node
           default-branch: ${{ github.ref_name }}
