@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.21.4](https://github.com/mgallagher56/flump/compare/flump/web-v1.21.3...flump/web-v1.21.4) (2024-08-26)
+
+
+### Bug Fixes
+
+* **deps:** update dependency react-i18next to v15 ([f96b206](https://github.com/mgallagher56/flump/commit/f96b2069d7465349a78da2da647e1fa62a915c20))
+* husky updates ([d34a2d7](https://github.com/mgallagher56/flump/commit/d34a2d72c20eefedb9fb8e8ff1a7255506e588de))
+
 ## [1.21.3](https://github.com/mgallagher56/flump/compare/flump/web-v1.21.2...flump/web-v1.21.3) (2024-05-29)
 
 
