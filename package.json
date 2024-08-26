@@ -15,7 +15,7 @@
     "lint": "turbo run lint",
     "format": "turbo run format",
     "ts-coverage": "turbo run ts-coverage",
-    "prepare": "husky install || npx -y husky install",
+    "prepare": "husky || npx -y husky",
     "publish": "turbo run publish"
   },
   "dependencies": {
