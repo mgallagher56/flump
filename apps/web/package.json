@@ -14,6 +14,7 @@
     "@emotion/react": "11.13.3",
     "@emotion/server": "11.11.0",
     "@emotion/styled": "11.13.0",
+    "@emotion/utils": "^1.4.0",
     "@isaacs/express-prometheus-middleware": "1.2.1",
     "@remix-run/node": "2.11.2",
     "@remix-run/react": "2.11.2",
