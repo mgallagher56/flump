@@ -1,4 +1,6 @@
 import { CacheProvider as EmotionCacheProvider } from '@emotion/react';
+import { EmotionCache } from '@emotion/utils'
+
 import createEmotionServer from '@emotion/server/create-instance';
 import type { EntryContext } from '@remix-run/node';
 import { createReadableStreamFromReadable } from '@remix-run/node';
@@ -52,7 +54,7 @@ export default async function handleRequest(
       {
         [callbackName]: () => {
           const reactBody = new PassThrough();
-          const emotionServer = createEmotionServer(emotionCache);
+          const emotionServer = createEmotionServer(emotionCache as EmotionCache);
 
           const bodyWithStyles = emotionServer.renderStylesToNodeStream() as PassThrough;
           reactBody.pipe(bodyWithStyles);
