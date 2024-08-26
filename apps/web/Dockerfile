@@ -1,5 +1,5 @@
 # base node image
-FROM node:20.13.1-bullseye as base
+FROM node:20.17.0-bullseye as base
 
 SHELL ["/bin/bash", "-c"]
 
