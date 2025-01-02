@@ -14,26 +14,23 @@ exports[`<FLPSelect /> > should render as expected 1`] = `
       <div
         class="chakra-select__wrapper css-42b2qy"
       >
-        <select
-          class="chakra-select css-1ik61og"
-          id="label"
-        >
-          <option
+        bound HTMLSelectElement {
+          "0": <option
             value="1"
           >
             1
-          </option>
-          <option
+          </option>,
+          "1": <option
             value="2"
           >
             2
-          </option>
-          <option
+          </option>,
+          "2": <option
             value="3"
           >
             3
-          </option>
-        </select>
+          </option>,
+        }
         <div
           class="chakra-select__icon-wrapper css-162mkon"
         >
@@ -71,26 +68,23 @@ exports[`<FLPSelect /> > should render as expected as row 1`] = `
       <div
         class="chakra-select__wrapper css-42b2qy"
       >
-        <select
-          class="chakra-select css-1ik61og"
-          id="label"
-        >
-          <option
+        bound HTMLSelectElement {
+          "0": <option
             value="1"
           >
             1
-          </option>
-          <option
+          </option>,
+          "1": <option
             value="2"
           >
             2
-          </option>
-          <option
+          </option>,
+          "2": <option
             value="3"
           >
             3
-          </option>
-        </select>
+          </option>,
+        }
         <div
           class="chakra-select__icon-wrapper css-162mkon"
         >
