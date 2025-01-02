@@ -20,7 +20,7 @@
   },
   "dependencies": {
     "env-cmd": "10.1.0",
-    "turbo": "1.13.4"
+    "turbo": "2.3.3"
   },
   "devDependencies": {
     "@commitlint/cli": "19.6.1",
