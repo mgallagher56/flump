@@ -10,7 +10,7 @@ exports[`<AccountDetailContainer /> > should add new years when buttons are clic
         class="chakra-stack css-1y3f6ad"
       >
         <div
-          class="chakra-stack__item css-1n5hzb0"
+          class="chakra-stack css-8g8ihq"
         >
           <h2
             class="chakra-heading css-1e3tj"
@@ -24,7 +24,7 @@ exports[`<AccountDetailContainer /> > should add new years when buttons are clic
           </h1>
         </div>
         <div
-          class="chakra-stack__item css-1qy82gu"
+          class="chakra-stack css-8g8ihq"
         >
           <button
             class="chakra-button css-1ltlu47"
@@ -452,7 +452,7 @@ exports[`<AccountDetailContainer /> > should render 1`] = `
         class="chakra-stack css-1y3f6ad"
       >
         <div
-          class="chakra-stack__item css-1n5hzb0"
+          class="chakra-stack css-8g8ihq"
         >
           <h2
             class="chakra-heading css-1e3tj"
@@ -466,7 +466,7 @@ exports[`<AccountDetailContainer /> > should render 1`] = `
           </h1>
         </div>
         <div
-          class="chakra-stack__item css-1qy82gu"
+          class="chakra-stack css-8g8ihq"
         >
           <button
             class="chakra-button css-1ltlu47"
@@ -837,7 +837,7 @@ exports[`<AccountDetailContainer /> > should render add current year button and 
         class="chakra-stack css-1y3f6ad"
       >
         <div
-          class="chakra-stack__item css-1n5hzb0"
+          class="chakra-stack css-8g8ihq"
         >
           <h2
             class="chakra-heading css-1e3tj"
@@ -851,7 +851,7 @@ exports[`<AccountDetailContainer /> > should render add current year button and 
           </h1>
         </div>
         <div
-          class="chakra-stack__item css-1qy82gu"
+          class="chakra-stack css-8g8ihq"
         >
           <button
             class="chakra-button css-1ltlu47"
@@ -1279,7 +1279,7 @@ exports[`<AccountDetailContainer /> > should toggle edit mode when button is cli
         class="chakra-stack css-1y3f6ad"
       >
         <div
-          class="chakra-stack__item css-1n5hzb0"
+          class="chakra-stack css-8g8ihq"
         >
           <h2
             class="chakra-heading css-1e3tj"
@@ -1293,7 +1293,7 @@ exports[`<AccountDetailContainer /> > should toggle edit mode when button is cli
           </h1>
         </div>
         <div
-          class="chakra-stack__item css-1qy82gu"
+          class="chakra-stack css-8g8ihq"
         >
           <button
             class="chakra-button css-1ltlu47"
