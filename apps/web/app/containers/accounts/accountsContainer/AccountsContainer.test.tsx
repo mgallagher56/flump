@@ -27,19 +27,19 @@ vi.mock('app/components/core/cards/AccountsCard', () => ({ default: () => 'Accou
 vi.mock('app/components/core/input/FLPInput', () => ({ default: () => 'FLPInput' }));
 
 describe('<AccountsContainer />', () => {
-  it('should render as expected when no accounts exist', () => {
+  test('should render as expected when no accounts exist', () => {
     mocks.mockUseLoaderData.mockReturnValue({ accounts: [] });
     const { container } = render(<AccountsContainer />);
     expect(container).toMatchSnapshot();
   });
 
-  it('should render as expected when accounts exist', () => {
+  test('should render as expected when accounts exist', () => {
     mocks.mockUseLoaderData.mockReturnValue({ accounts: mockAccounts });
     const { container } = render(<AccountsContainer />);
     expect(container).toMatchSnapshot();
   });
 
-  it('should call supabase functions to add an account', async () => {
+  test('should call supabase functions to add an account', async () => {
     const { getAllByText } = render(<AccountsContainer />);
     const addAccountModalBtn = getAllByText('addAccount')[0];
     expect(addAccountModalBtn).toBeDefined();

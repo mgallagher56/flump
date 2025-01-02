@@ -11,22 +11,23 @@ const mocks = vi.hoisted(() => ({
 describe('<FLPModal />', () => {
   const { baseElement, getByText } = render(
     <FLPModal
-      isOpen={true}
-      onClose={vi.fn()}
-      children={<div>Modal Content</div>}
       confirmButton={{
         text: 'Confirm',
         colorScheme: 'blue',
         variant: 'solid'
       }}
+      isOpen={true}
       title="Modal Title"
       triggerBtn={<FLPButton>Trigger</FLPButton>}
+      onClose={vi.fn()}
       onConfirm={mocks.mockOnConfirm}
-    />
+    >
+      <div>Modal Content</div>
+    </FLPModal>
   );
   const triggerBtn = getByText('Trigger');
   fireEvent.click(triggerBtn);
-  it('renders by default as expected', () => {
+  test('renders by default as expected', () => {
     const confirmButton = getByText('Confirm');
     fireEvent.click(confirmButton);
     expect(mocks.mockOnConfirm).toHaveBeenCalled();

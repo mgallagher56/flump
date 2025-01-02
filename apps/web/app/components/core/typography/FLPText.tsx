@@ -11,7 +11,7 @@ const FLPText: FC<TextProps> = ({
   ...props
 }) => {
   return (
-    <Text fontSize={fontSize} fontWeight={fontWeight} lineHeight={lineHeight} letterSpacing={letterSpacing} {...props}>
+    <Text fontSize={fontSize} fontWeight={fontWeight} letterSpacing={letterSpacing} lineHeight={lineHeight} {...props}>
       {props.children}
     </Text>
   );

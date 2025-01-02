@@ -47,7 +47,7 @@ const FLPModal: FC<FLPModalProps> = ({
   return (
     <>
       {triggerBtn}
-      <Modal isOpen={isOpen} onClose={onClose} isCentered>
+      <Modal isCentered isOpen={isOpen} onClose={onClose}>
         <ModalOverlay />
         <ModalContent>
           <ModalHeader>{title}</ModalHeader>
