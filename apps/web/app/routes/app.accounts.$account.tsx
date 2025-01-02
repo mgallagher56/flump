@@ -11,7 +11,6 @@ export const loader = async ({ params, request }: { params: Params; request: Req
   const {
     data: { user }
   } = await supabase.auth.getUser();
-  console.log({ user });
 
   const { data: accountData } = await supabase
     .from('accounts')

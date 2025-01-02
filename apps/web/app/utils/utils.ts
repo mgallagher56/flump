@@ -42,7 +42,6 @@ export function validateEmail(email: unknown): email is string {
   return typeof email === 'string' && email.length > 3 && email.includes('@');
 }
 
-// eslint-disable-next-line @typescript-eslint/no-empty-function
 export const noop = () => {}; //nosonar
 export const emptyObject = {};
 export const emptyArray = [];

@@ -19,8 +19,8 @@ const AccountsContainer: FC = () => {
 
   return (
     <>
-      <FLPBox mb={5} display="flex" flexDirection="row" justifyContent="space-between">
-        <FLPHeading size="xl" as="h1">
+      <FLPBox display="flex" flexDirection="row" justifyContent="space-between" mb={5}>
+        <FLPHeading as="h1" size="xl">
           {t('accounts')}
         </FLPHeading>
         <AddEditAccountsDialogBtn />

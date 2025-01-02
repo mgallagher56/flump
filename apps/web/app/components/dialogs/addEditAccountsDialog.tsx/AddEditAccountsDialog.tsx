@@ -109,43 +109,42 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({ accountId,
 
   return (
     <FLPModal
+      confirmButton={{ id: accountId, text: t(isEditAccount ? 'save' : 'addAccount') }}
+      isOpen={modalOpen}
+      title={t(isEditAccount ? 'editAccount' : 'addAccount')}
       triggerBtn={
-        <FLPButton size={btnSize} colorScheme="green" variant={'outline'} onClick={handleOpenModal}>
+        <FLPButton colorScheme="green" size={btnSize} variant={'outline'} onClick={handleOpenModal}>
           {t(isEditAccount ? 'edit' : 'addAccount')}
         </FLPButton>
       }
-      confirmButton={{ id: accountId, text: t(isEditAccount ? 'save' : 'addAccount') }}
-      children={
-        <Form id={accountId} defaultValue={''} onSubmit={submitAction}>
-          <FLPBox display="flex" flexDirection="column" gap={4}>
-            <FLPInput
-              label="Name"
-              name="name"
-              placeholder={t('accountName')}
-              value={formInput.name}
-              onChange={onChangeFormInput}
-            />
-            <FLPSelect
-              label="Account Type"
-              name="type"
-              defaultValue={accountTypeArray[0]}
-              value={formInput.type}
-              onChange={onChangeFormInput}
-            >
-              {accountTypeArray.map((type) => (
-                <option key={type} value={type}>
-                  {type}
-                </option>
-              ))}
-            </FLPSelect>
-          </FLPBox>
-        </Form>
-      }
-      title={t(isEditAccount ? 'editAccount' : 'addAccount')}
-      isOpen={modalOpen}
       onClose={() => setModalOpen(false)}
       onConfirm={submitAction}
-    />
+    >
+      <Form defaultValue={''} id={accountId} onSubmit={submitAction}>
+        <FLPBox display="flex" flexDirection="column" gap={4}>
+          <FLPInput
+            label="Name"
+            name="name"
+            placeholder={t('accountName')}
+            value={formInput.name}
+            onChange={onChangeFormInput}
+          />
+          <FLPSelect
+            defaultValue={accountTypeArray[0]}
+            label="Account Type"
+            name="type"
+            value={formInput.type}
+            onChange={onChangeFormInput}
+          >
+            {accountTypeArray.map((type) => (
+              <option key={type} value={type}>
+                {type}
+              </option>
+            ))}
+          </FLPSelect>
+        </FLPBox>
+      </Form>
+    </FLPModal>
   );
 };
 

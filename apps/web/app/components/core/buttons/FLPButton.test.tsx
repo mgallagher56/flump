@@ -11,7 +11,7 @@ describe('FLPButton', () => {
 
   test('should render correctly with props', () => {
     const { container } = render(
-      <FLPButton colorScheme="green" disabled variant="outline" isLoading>
+      <FLPButton disabled isLoading colorScheme="green" variant="outline">
         FLPButton
       </FLPButton>
     );
@@ -48,7 +48,7 @@ describe('FLPButton', () => {
   test('should not call onClick when clicked and isLoading is true', () => {
     const onClick = vi.fn();
     render(
-      <FLPButton onClick={onClick} isLoading>
+      <FLPButton isLoading onClick={onClick}>
         FLPButton
       </FLPButton>
     );

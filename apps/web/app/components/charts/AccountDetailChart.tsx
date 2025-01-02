@@ -31,18 +31,18 @@ const AccountDetailChart: FC<AccountDetailChartProps> = ({ accountDetails }) => 
           bottom: 5
         }}
       >
-        <XAxis height={5} tick={false} dataKey="Name" />
-        <YAxis width={1} tick={false} />
+        <XAxis dataKey="Name" height={5} tick={false} />
+        <YAxis tick={false} width={1} />
         <Tooltip
+          itemStyle={{
+            color: '#000'
+          }}
           labelStyle={{
             color: '#000',
             fontWeight: 'bold'
           }}
-          itemStyle={{
-            color: '#000'
-          }}
         />
-        <Line type={curve} dot={false} dataKey="Value" stroke="#8884d8" />
+        <Line dataKey="Value" dot={false} stroke="#8884d8" type={curve} />
       </LineChart>
     </ResponsiveContainer>
   );

@@ -143,8 +143,8 @@ const Document = withEmotionCache(
 
     return (
       <html
-        lang={locale}
         dir={i18n.dir()}
+        lang={locale}
         {...(colorMode && {
           'data-theme': colorMode,
           style: { colorScheme: colorMode }
@@ -152,11 +152,11 @@ const Document = withEmotionCache(
       >
         <head>
           <meta charSet="utf-8" />
-          <meta name="viewport" content="width=device-width,initial-scale=1" />
+          <meta content="width=device-width,initial-scale=1" name="viewport" />
           <Meta />
           <Links />
           {serverStyleData?.map(({ key, ids, css }) => (
-            <style key={key} data-emotion={`${key} ${ids.join(' ')}`} dangerouslySetInnerHTML={{ __html: css }} />
+            <style key={key} dangerouslySetInnerHTML={{ __html: css }} data-emotion={`${key} ${ids.join(' ')}`} />
           ))}
         </head>
         <body
@@ -222,7 +222,7 @@ export default function App(): ReactElement {
 
   return (
     <StrictMode>
-      <Document locale={locale} colorMode={colorMode()} env={env} cookie={cookie}>
+      <Document colorMode={colorMode()} cookie={cookie} env={env} locale={locale}>
         <Container maxW={'container.xl'}>
           <Header />
           <Outlet />

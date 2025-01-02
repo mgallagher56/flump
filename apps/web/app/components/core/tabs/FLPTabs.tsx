@@ -16,14 +16,14 @@ const FLPTabs: FC<PropsWithChildren<FLPTabsProps>> = ({ data, orientation }) => 
     <Tabs orientation={FLPOrientation}>
       <TabList>
         {data.map((item, index) => (
-          <Tab value={item.value} tabIndex={index} key={item.value}>
+          <Tab key={item.value} tabIndex={index} value={item.value}>
             {item.label}
           </Tab>
         ))}
       </TabList>
       <TabPanels>
         {data.map((item, index) => (
-          <TabPanel tabIndex={index} key={item.value}>
+          <TabPanel key={item.value} tabIndex={index}>
             {item.children}
           </TabPanel>
         ))}
