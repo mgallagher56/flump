@@ -4,7 +4,7 @@ exports[`<AccountsCard /> > it renders an AccountsCard component with title as e
 <body>
   <div>
     <div
-      class="chakra-card pos_relative transition_all_0.3s_ease-in-out border_1px_solid_token(colors.gray.500)! [&:hover]:shadow_2px_5px_8px_0px_token(colors.gray.500)! [&:hover]:transform_translate3d(-2px,_-5px,_-5px) [&:hover]:cursor_pointer css-kt1dpu"
+      class="chakra-card pos_relative trs_all_0.3s_ease-in-out bd_1px_solid_token(colors.gray.500)! [&:hover]:bx-sh_2px_5px_8px_0px_token(colors.gray.500)! [&:hover]:trf_translate3d(-2px,_-5px,_-5px) [&:hover]:cursor_pointer css-kt1dpu"
       id="123456"
       title="My curent account"
     >
@@ -139,7 +139,7 @@ exports[`<AccountsCard with increasing values > it calls supabase.delete when de
 <body>
   <div>
     <div
-      class="chakra-card pos_relative transition_all_0.3s_ease-in-out border_1px_solid_token(colors.gray.500)! [&:hover]:shadow_2px_5px_8px_0px_token(colors.gray.500)! [&:hover]:transform_translate3d(-2px,_-5px,_-5px) [&:hover]:cursor_pointer css-kt1dpu"
+      class="chakra-card pos_relative trs_all_0.3s_ease-in-out bd_1px_solid_token(colors.gray.500)! [&:hover]:bx-sh_2px_5px_8px_0px_token(colors.gray.500)! [&:hover]:trf_translate3d(-2px,_-5px,_-5px) [&:hover]:cursor_pointer css-kt1dpu"
       id="123456"
       title="My curent account"
     >
