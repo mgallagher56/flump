@@ -152,31 +152,31 @@ vi.mock('app/utils/supabase', () => ({
 }));
 
 describe('<AccountDetails />', () => {
-  it('should render', () => {
+  test('should render', () => {
     const { container } = render(
-      <AccountDetails onInputChange={vi.fn()} isEditMode={false} editedValues={emptyObject} />
+      <AccountDetails editedValues={emptyObject} isEditMode={false} onInputChange={vi.fn()} />
     );
     expect(container).toMatchSnapshot();
   });
 
-  it('should render in edit mode', () => {
+  test('should render in edit mode', () => {
     const { container } = render(
       <AccountDetails
-        onInputChange={vi.fn()}
-        isEditMode={true}
         editedValues={{
           2023: {
             1: '1000'
           }
         }}
+        isEditMode={true}
+        onInputChange={vi.fn()}
       />
     );
     expect(container).toMatchSnapshot();
   });
 
-  it('should remove year when delete button is clicked', () => {
+  test('should remove year when delete button is clicked', () => {
     const { container, getAllByText } = render(
-      <AccountDetails onInputChange={vi.fn()} isEditMode={false} editedValues={emptyObject} />
+      <AccountDetails editedValues={emptyObject} isEditMode={false} onInputChange={vi.fn()} />
     );
     const deleteBtn = getAllByText('deleteYear')[0];
     fireEvent.click(deleteBtn);

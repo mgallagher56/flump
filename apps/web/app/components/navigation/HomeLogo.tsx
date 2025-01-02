@@ -6,7 +6,7 @@ const HomeLogo = () => {
   return (
     <div className="home-logo">
       <Link to="/">
-        <img src={logo} alt="flump logo" height={50} width={50} />
+        <img alt="flump logo" height={50} src={logo} width={50} />
       </Link>
     </div>
   );
