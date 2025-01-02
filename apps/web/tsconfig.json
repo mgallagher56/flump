@@ -1,5 +1,5 @@
 {
-  "exclude": ["node_modules", ".eslintrc.cjs"],
+  "exclude": ["node_modules", "**/**/.eslintrc.cjs"],
   "include": [
     "env.d.ts",
     "**/*.ts",
@@ -9,6 +9,7 @@
     "app/i18n.ts",
     "app/i18n.server.ts",
     "app/root.tsx",
+    "apps/web/app/**/*",
     "**/.server/**/*.ts",
     "**/.server/**/*.tsx",
     "**/.client/**/*.ts",
@@ -38,6 +39,6 @@
     "types": ["vite/client", "vitest/globals"],
     "paths": {
       "~/*": ["./app/*"]
-    }
-  }
+    },
+  },
 }
