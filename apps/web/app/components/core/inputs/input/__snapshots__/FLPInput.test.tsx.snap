@@ -3,7 +3,7 @@
 exports[`<FLPInput /> > should render as expected 1`] = `
 <div>
   <div
-    class="d_flex flex_column gap_2"
+    class="d_flex flex-d_column gap_2"
   >
     <label
       for="Test"
@@ -27,7 +27,7 @@ exports[`<FLPInput /> > should render as expected 1`] = `
 exports[`<FLPInput /> > should render as expected with error 1`] = `
 <div>
   <div
-    class="d_flex flex_column gap_2"
+    class="d_flex flex-d_column gap_2"
   >
     <label
       for="Test"
@@ -43,7 +43,7 @@ exports[`<FLPInput /> > should render as expected with error 1`] = `
           id="Test"
         />
         <span
-          class="text_red.500 fw_bold"
+          class="c_red.500 fw_bold"
         >
           Error
         </span>
@@ -56,7 +56,7 @@ exports[`<FLPInput /> > should render as expected with error 1`] = `
 exports[`<FLPInput /> > should render as expected with value 1`] = `
 <div>
   <div
-    class="d_flex flex_column gap_2"
+    class="d_flex flex-d_column gap_2"
   >
     <label
       for="Test"
@@ -81,7 +81,7 @@ exports[`<FLPInput /> > should render as expected with value 1`] = `
 exports[`<FLPInput /> > should render as expected with value and error 1`] = `
 <div>
   <div
-    class="d_flex flex_column gap_2"
+    class="d_flex flex-d_column gap_2"
   >
     <label
       for="Test"
@@ -98,7 +98,7 @@ exports[`<FLPInput /> > should render as expected with value and error 1`] = `
           value="Value"
         />
         <span
-          class="text_red.500 fw_bold"
+          class="c_red.500 fw_bold"
         >
           Error
         </span>
@@ -111,7 +111,7 @@ exports[`<FLPInput /> > should render as expected with value and error 1`] = `
 exports[`<FLPInput /> > should render as expected without a label 1`] = `
 <div>
   <div
-    class="d_flex flex_column gap_2"
+    class="d_flex flex-d_column gap_2"
   >
     <label
       for="Test"
@@ -136,7 +136,7 @@ exports[`<FLPInput /> > should render as expected without a label 1`] = `
 exports[`<FLPInput /> > should render elements as a row 1`] = `
 <div>
   <div
-    class="d_flex flex_row items_center gap_4"
+    class="d_flex flex-d_row ai_center gap_4"
   >
     <label
       for="Test"

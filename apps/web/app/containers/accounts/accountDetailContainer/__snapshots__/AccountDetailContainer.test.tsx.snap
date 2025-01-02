@@ -72,7 +72,7 @@ exports[`<AccountDetailContainer /> > should add new years when buttons are clic
           </button>
         </div>
         <div
-          class="d_flex flex_row gap_5"
+          class="d_flex flex-d_row gap_5"
         >
           <div>
             <p
@@ -235,7 +235,7 @@ exports[`<AccountDetailContainer /> > should add new years when buttons are clic
           </button>
         </div>
         <div
-          class="d_flex flex_row gap_5"
+          class="d_flex flex-d_row gap_5"
         >
           <div>
             <p
@@ -495,7 +495,7 @@ exports[`<AccountDetailContainer /> > should render 1`] = `
           </button>
         </div>
         <div
-          class="d_flex flex_row gap_5"
+          class="d_flex flex-d_row gap_5"
         >
           <div>
             <p
@@ -658,7 +658,7 @@ exports[`<AccountDetailContainer /> > should render 1`] = `
           </button>
         </div>
         <div
-          class="d_flex flex_row gap_5"
+          class="d_flex flex-d_row gap_5"
         >
           <div>
             <p
@@ -899,7 +899,7 @@ exports[`<AccountDetailContainer /> > should render add current year button and 
           </button>
         </div>
         <div
-          class="d_flex flex_row gap_5"
+          class="d_flex flex-d_row gap_5"
         >
           <div>
             <p
@@ -1062,7 +1062,7 @@ exports[`<AccountDetailContainer /> > should render add current year button and 
           </button>
         </div>
         <div
-          class="d_flex flex_row gap_5"
+          class="d_flex flex-d_row gap_5"
         >
           <div>
             <p
@@ -1322,7 +1322,7 @@ exports[`<AccountDetailContainer /> > should toggle edit mode when button is cli
           </button>
         </div>
         <div
-          class="d_flex flex_row gap_5"
+          class="d_flex flex-d_row gap_5"
         >
           <div>
             <p
@@ -1331,7 +1331,7 @@ exports[`<AccountDetailContainer /> > should toggle edit mode when button is cli
               January
             </p>
             <div
-              class="d_flex flex_column gap_2"
+              class="d_flex flex-d_column gap_2"
             >
               <label
                 for="2021-January"
@@ -1364,7 +1364,7 @@ exports[`<AccountDetailContainer /> > should toggle edit mode when button is cli
               February
             </p>
             <div
-              class="d_flex flex_column gap_2"
+              class="d_flex flex-d_column gap_2"
             >
               <label
                 for="2021-February"
@@ -1397,7 +1397,7 @@ exports[`<AccountDetailContainer /> > should toggle edit mode when button is cli
               March
             </p>
             <div
-              class="d_flex flex_column gap_2"
+              class="d_flex flex-d_column gap_2"
             >
               <label
                 for="2021-March"
@@ -1430,7 +1430,7 @@ exports[`<AccountDetailContainer /> > should toggle edit mode when button is cli
               April
             </p>
             <div
-              class="d_flex flex_column gap_2"
+              class="d_flex flex-d_column gap_2"
             >
               <label
                 for="2021-April"
@@ -1463,7 +1463,7 @@ exports[`<AccountDetailContainer /> > should toggle edit mode when button is cli
               May
             </p>
             <div
-              class="d_flex flex_column gap_2"
+              class="d_flex flex-d_column gap_2"
             >
               <label
                 for="2021-May"
@@ -1496,7 +1496,7 @@ exports[`<AccountDetailContainer /> > should toggle edit mode when button is cli
               June
             </p>
             <div
-              class="d_flex flex_column gap_2"
+              class="d_flex flex-d_column gap_2"
             >
               <label
                 for="2021-June"
@@ -1529,7 +1529,7 @@ exports[`<AccountDetailContainer /> > should toggle edit mode when button is cli
               July
             </p>
             <div
-              class="d_flex flex_column gap_2"
+              class="d_flex flex-d_column gap_2"
             >
               <label
                 for="2021-July"
@@ -1562,7 +1562,7 @@ exports[`<AccountDetailContainer /> > should toggle edit mode when button is cli
               August
             </p>
             <div
-              class="d_flex flex_column gap_2"
+              class="d_flex flex-d_column gap_2"
             >
               <label
                 for="2021-August"
@@ -1595,7 +1595,7 @@ exports[`<AccountDetailContainer /> > should toggle edit mode when button is cli
               September
             </p>
             <div
-              class="d_flex flex_column gap_2"
+              class="d_flex flex-d_column gap_2"
             >
               <label
                 for="2021-September"
@@ -1628,7 +1628,7 @@ exports[`<AccountDetailContainer /> > should toggle edit mode when button is cli
               October
             </p>
             <div
-              class="d_flex flex_column gap_2"
+              class="d_flex flex-d_column gap_2"
             >
               <label
                 for="2021-October"
@@ -1661,7 +1661,7 @@ exports[`<AccountDetailContainer /> > should toggle edit mode when button is cli
               November
             </p>
             <div
-              class="d_flex flex_column gap_2"
+              class="d_flex flex-d_column gap_2"
             >
               <label
                 for="2021-November"
@@ -1694,7 +1694,7 @@ exports[`<AccountDetailContainer /> > should toggle edit mode when button is cli
               December
             </p>
             <div
-              class="d_flex flex_column gap_2"
+              class="d_flex flex-d_column gap_2"
             >
               <label
                 for="2021-December"
@@ -1737,7 +1737,7 @@ exports[`<AccountDetailContainer /> > should toggle edit mode when button is cli
           </button>
         </div>
         <div
-          class="d_flex flex_row gap_5"
+          class="d_flex flex-d_row gap_5"
         >
           <div>
             <p
@@ -1746,7 +1746,7 @@ exports[`<AccountDetailContainer /> > should toggle edit mode when button is cli
               January
             </p>
             <div
-              class="d_flex flex_column gap_2"
+              class="d_flex flex-d_column gap_2"
             >
               <label
                 for="2023-January"
@@ -1779,7 +1779,7 @@ exports[`<AccountDetailContainer /> > should toggle edit mode when button is cli
               February
             </p>
             <div
-              class="d_flex flex_column gap_2"
+              class="d_flex flex-d_column gap_2"
             >
               <label
                 for="2023-February"
@@ -1812,7 +1812,7 @@ exports[`<AccountDetailContainer /> > should toggle edit mode when button is cli
               March
             </p>
             <div
-              class="d_flex flex_column gap_2"
+              class="d_flex flex-d_column gap_2"
             >
               <label
                 for="2023-March"
@@ -1845,7 +1845,7 @@ exports[`<AccountDetailContainer /> > should toggle edit mode when button is cli
               April
             </p>
             <div
-              class="d_flex flex_column gap_2"
+              class="d_flex flex-d_column gap_2"
             >
               <label
                 for="2023-April"
@@ -1878,7 +1878,7 @@ exports[`<AccountDetailContainer /> > should toggle edit mode when button is cli
               May
             </p>
             <div
-              class="d_flex flex_column gap_2"
+              class="d_flex flex-d_column gap_2"
             >
               <label
                 for="2023-May"
@@ -1911,7 +1911,7 @@ exports[`<AccountDetailContainer /> > should toggle edit mode when button is cli
               June
             </p>
             <div
-              class="d_flex flex_column gap_2"
+              class="d_flex flex-d_column gap_2"
             >
               <label
                 for="2023-June"
@@ -1944,7 +1944,7 @@ exports[`<AccountDetailContainer /> > should toggle edit mode when button is cli
               July
             </p>
             <div
-              class="d_flex flex_column gap_2"
+              class="d_flex flex-d_column gap_2"
             >
               <label
                 for="2023-July"
@@ -1977,7 +1977,7 @@ exports[`<AccountDetailContainer /> > should toggle edit mode when button is cli
               August
             </p>
             <div
-              class="d_flex flex_column gap_2"
+              class="d_flex flex-d_column gap_2"
             >
               <label
                 for="2023-August"
@@ -2010,7 +2010,7 @@ exports[`<AccountDetailContainer /> > should toggle edit mode when button is cli
               September
             </p>
             <div
-              class="d_flex flex_column gap_2"
+              class="d_flex flex-d_column gap_2"
             >
               <label
                 for="2023-September"
@@ -2043,7 +2043,7 @@ exports[`<AccountDetailContainer /> > should toggle edit mode when button is cli
               October
             </p>
             <div
-              class="d_flex flex_column gap_2"
+              class="d_flex flex-d_column gap_2"
             >
               <label
                 for="2023-October"
@@ -2076,7 +2076,7 @@ exports[`<AccountDetailContainer /> > should toggle edit mode when button is cli
               November
             </p>
             <div
-              class="d_flex flex_column gap_2"
+              class="d_flex flex-d_column gap_2"
             >
               <label
                 for="2023-November"
@@ -2109,7 +2109,7 @@ exports[`<AccountDetailContainer /> > should toggle edit mode when button is cli
               December
             </p>
             <div
-              class="d_flex flex_column gap_2"
+              class="d_flex flex-d_column gap_2"
             >
               <label
                 for="2023-December"
