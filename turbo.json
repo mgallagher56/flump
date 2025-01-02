@@ -12,15 +12,22 @@
     "SUPABASE_URL",
     "VITEST"
   ],
-  "pipeline": {
+  "tasks": {
     "build": {
-      "dependsOn": [ "lint", "^build"],
+      "dependsOn": [
+        "lint",
+        "^build"
+      ],
       "outputs": [
         "dist/**",
         "public/build/**",
         "build/**",
         ".cache"
       ]
+    },
+    "dev": {
+      "cache": false,
+      "persistent": true
     },
     "lint": {},
     "ts-coverage": {},
