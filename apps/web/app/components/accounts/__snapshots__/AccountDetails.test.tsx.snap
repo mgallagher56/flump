@@ -21,7 +21,7 @@ exports[`<AccountDetails /> > should remove year when delete button is clicked 1
       </button>
     </div>
     <div
-      class="d_flex flex_row gap_5"
+      class="d_flex flex-d_row gap_5"
     >
       <div>
         <p
@@ -184,7 +184,7 @@ exports[`<AccountDetails /> > should remove year when delete button is clicked 1
       </button>
     </div>
     <div
-      class="d_flex flex_row gap_5"
+      class="d_flex flex-d_row gap_5"
     >
       <div>
         <p
@@ -356,7 +356,7 @@ exports[`<AccountDetails /> > should render 1`] = `
       </button>
     </div>
     <div
-      class="d_flex flex_row gap_5"
+      class="d_flex flex-d_row gap_5"
     >
       <div>
         <p
@@ -519,7 +519,7 @@ exports[`<AccountDetails /> > should render 1`] = `
       </button>
     </div>
     <div
-      class="d_flex flex_row gap_5"
+      class="d_flex flex-d_row gap_5"
     >
       <div>
         <p
@@ -691,7 +691,7 @@ exports[`<AccountDetails /> > should render in edit mode 1`] = `
       </button>
     </div>
     <div
-      class="d_flex flex_row gap_5"
+      class="d_flex flex-d_row gap_5"
     >
       <div>
         <p
@@ -700,7 +700,7 @@ exports[`<AccountDetails /> > should render in edit mode 1`] = `
           January
         </p>
         <div
-          class="d_flex flex_column gap_2"
+          class="d_flex flex-d_column gap_2"
         >
           <label
             for="2021-January"
@@ -733,7 +733,7 @@ exports[`<AccountDetails /> > should render in edit mode 1`] = `
           February
         </p>
         <div
-          class="d_flex flex_column gap_2"
+          class="d_flex flex-d_column gap_2"
         >
           <label
             for="2021-February"
@@ -766,7 +766,7 @@ exports[`<AccountDetails /> > should render in edit mode 1`] = `
           March
         </p>
         <div
-          class="d_flex flex_column gap_2"
+          class="d_flex flex-d_column gap_2"
         >
           <label
             for="2021-March"
@@ -799,7 +799,7 @@ exports[`<AccountDetails /> > should render in edit mode 1`] = `
           April
         </p>
         <div
-          class="d_flex flex_column gap_2"
+          class="d_flex flex-d_column gap_2"
         >
           <label
             for="2021-April"
@@ -832,7 +832,7 @@ exports[`<AccountDetails /> > should render in edit mode 1`] = `
           May
         </p>
         <div
-          class="d_flex flex_column gap_2"
+          class="d_flex flex-d_column gap_2"
         >
           <label
             for="2021-May"
@@ -865,7 +865,7 @@ exports[`<AccountDetails /> > should render in edit mode 1`] = `
           June
         </p>
         <div
-          class="d_flex flex_column gap_2"
+          class="d_flex flex-d_column gap_2"
         >
           <label
             for="2021-June"
@@ -898,7 +898,7 @@ exports[`<AccountDetails /> > should render in edit mode 1`] = `
           July
         </p>
         <div
-          class="d_flex flex_column gap_2"
+          class="d_flex flex-d_column gap_2"
         >
           <label
             for="2021-July"
@@ -931,7 +931,7 @@ exports[`<AccountDetails /> > should render in edit mode 1`] = `
           August
         </p>
         <div
-          class="d_flex flex_column gap_2"
+          class="d_flex flex-d_column gap_2"
         >
           <label
             for="2021-August"
@@ -964,7 +964,7 @@ exports[`<AccountDetails /> > should render in edit mode 1`] = `
           September
         </p>
         <div
-          class="d_flex flex_column gap_2"
+          class="d_flex flex-d_column gap_2"
         >
           <label
             for="2021-September"
@@ -997,7 +997,7 @@ exports[`<AccountDetails /> > should render in edit mode 1`] = `
           October
         </p>
         <div
-          class="d_flex flex_column gap_2"
+          class="d_flex flex-d_column gap_2"
         >
           <label
             for="2021-October"
@@ -1030,7 +1030,7 @@ exports[`<AccountDetails /> > should render in edit mode 1`] = `
           November
         </p>
         <div
-          class="d_flex flex_column gap_2"
+          class="d_flex flex-d_column gap_2"
         >
           <label
             for="2021-November"
@@ -1063,7 +1063,7 @@ exports[`<AccountDetails /> > should render in edit mode 1`] = `
           December
         </p>
         <div
-          class="d_flex flex_column gap_2"
+          class="d_flex flex-d_column gap_2"
         >
           <label
             for="2021-December"
@@ -1106,7 +1106,7 @@ exports[`<AccountDetails /> > should render in edit mode 1`] = `
       </button>
     </div>
     <div
-      class="d_flex flex_row gap_5"
+      class="d_flex flex-d_row gap_5"
     >
       <div>
         <p
@@ -1115,7 +1115,7 @@ exports[`<AccountDetails /> > should render in edit mode 1`] = `
           January
         </p>
         <div
-          class="d_flex flex_column gap_2"
+          class="d_flex flex-d_column gap_2"
         >
           <label
             for="2023-January"
@@ -1148,7 +1148,7 @@ exports[`<AccountDetails /> > should render in edit mode 1`] = `
           February
         </p>
         <div
-          class="d_flex flex_column gap_2"
+          class="d_flex flex-d_column gap_2"
         >
           <label
             for="2023-February"
@@ -1181,7 +1181,7 @@ exports[`<AccountDetails /> > should render in edit mode 1`] = `
           March
         </p>
         <div
-          class="d_flex flex_column gap_2"
+          class="d_flex flex-d_column gap_2"
         >
           <label
             for="2023-March"
@@ -1214,7 +1214,7 @@ exports[`<AccountDetails /> > should render in edit mode 1`] = `
           April
         </p>
         <div
-          class="d_flex flex_column gap_2"
+          class="d_flex flex-d_column gap_2"
         >
           <label
             for="2023-April"
@@ -1247,7 +1247,7 @@ exports[`<AccountDetails /> > should render in edit mode 1`] = `
           May
         </p>
         <div
-          class="d_flex flex_column gap_2"
+          class="d_flex flex-d_column gap_2"
         >
           <label
             for="2023-May"
@@ -1280,7 +1280,7 @@ exports[`<AccountDetails /> > should render in edit mode 1`] = `
           June
         </p>
         <div
-          class="d_flex flex_column gap_2"
+          class="d_flex flex-d_column gap_2"
         >
           <label
             for="2023-June"
@@ -1313,7 +1313,7 @@ exports[`<AccountDetails /> > should render in edit mode 1`] = `
           July
         </p>
         <div
-          class="d_flex flex_column gap_2"
+          class="d_flex flex-d_column gap_2"
         >
           <label
             for="2023-July"
@@ -1346,7 +1346,7 @@ exports[`<AccountDetails /> > should render in edit mode 1`] = `
           August
         </p>
         <div
-          class="d_flex flex_column gap_2"
+          class="d_flex flex-d_column gap_2"
         >
           <label
             for="2023-August"
@@ -1379,7 +1379,7 @@ exports[`<AccountDetails /> > should render in edit mode 1`] = `
           September
         </p>
         <div
-          class="d_flex flex_column gap_2"
+          class="d_flex flex-d_column gap_2"
         >
           <label
             for="2023-September"
@@ -1412,7 +1412,7 @@ exports[`<AccountDetails /> > should render in edit mode 1`] = `
           October
         </p>
         <div
-          class="d_flex flex_column gap_2"
+          class="d_flex flex-d_column gap_2"
         >
           <label
             for="2023-October"
@@ -1445,7 +1445,7 @@ exports[`<AccountDetails /> > should render in edit mode 1`] = `
           November
         </p>
         <div
-          class="d_flex flex_column gap_2"
+          class="d_flex flex-d_column gap_2"
         >
           <label
             for="2023-November"
@@ -1478,7 +1478,7 @@ exports[`<AccountDetails /> > should render in edit mode 1`] = `
           December
         </p>
         <div
-          class="d_flex flex_column gap_2"
+          class="d_flex flex-d_column gap_2"
         >
           <label
             for="2023-December"

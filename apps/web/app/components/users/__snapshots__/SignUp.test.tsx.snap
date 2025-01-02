@@ -7,7 +7,7 @@ exports[`<SignUp /> > should render as expected 1`] = `
       class="css-1gnc3qn"
     >
       <div
-        class="d_flex flex_column gap_2"
+        class="d_flex flex-d_column gap_2"
       >
         <label
           for="Email:"
@@ -29,7 +29,7 @@ exports[`<SignUp /> > should render as expected 1`] = `
         </div>
       </div>
       <div
-        class="d_flex flex_column gap_2"
+        class="d_flex flex-d_column gap_2"
       >
         <label
           for="Password:"
