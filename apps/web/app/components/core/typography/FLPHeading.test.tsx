@@ -20,7 +20,7 @@ describe('FLPHeading', () => {
   });
   test('render only number of lines', () => {
     const { container } = render(
-      <FLPHeading as="h1" size="4xl" noOfLines={1}>
+      <FLPHeading as="h1" noOfLines={1} size="4xl">
         {sampleText}
       </FLPHeading>
     );

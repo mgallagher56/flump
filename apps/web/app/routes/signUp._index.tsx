@@ -18,7 +18,7 @@ export const loader = async ({ request }: { request: Request }) => {
 
 const Index = (): ReactElement => {
   return (
-    <Container maxW={'xs'} display="flex" justifyContent="center" alignItems="center">
+    <Container alignItems="center" display="flex" justifyContent="center" maxW={'xs'}>
       <SignUp />
     </Container>
   );

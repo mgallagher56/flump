@@ -77,25 +77,25 @@ const AccountsCard: FC<AccountsCardProp> = ({ accountId, name, type }) => {
 
   return (
     <FLPCard
-      id={accountId}
-      title={name}
-      padding={5}
-      marginY={5}
-      width="250px"
-      height="325px"
-      display="flex"
       direction="column"
-      justifyContent="space-between"
+      display="flex"
       gap={3}
+      height="325px"
+      id={accountId}
+      justifyContent="space-between"
+      marginY={5}
+      padding={5}
+      title={name}
+      width="250px"
       onClick={onCardClick}
     >
-      <CardHeader display="flex" gap={1} flexDirection="column" padding={0}>
-        <FLPHeading color="grey.500" as="h5" size="xs">{`${type} ${t('account')}`}</FLPHeading>
-        <FLPHeading color="blue.500" as="h4" size="lg" fontWeight="bold">
+      <CardHeader display="flex" flexDirection="column" gap={1} padding={0}>
+        <FLPHeading as="h5" color="grey.500" size="xs">{`${type} ${t('account')}`}</FLPHeading>
+        <FLPHeading as="h4" color="blue.500" fontWeight="bold" size="lg">
           {name}
         </FLPHeading>
       </CardHeader>
-      <Stack display="flex" direction="row" justifyContent="space-between" alignItems="center">
+      <Stack alignItems="center" direction="row" display="flex" justifyContent="space-between">
         {!!prevAccountBalance && (
           <Stat size="xs">
             <StatLabel>{`${t('previous')}:`}</StatLabel>
@@ -137,13 +137,13 @@ const AccountsCard: FC<AccountsCardProp> = ({ accountId, name, type }) => {
           </Stat>
         )}
       </Stack>
-      <CardBody padding={0} justifyContent="flex-end">
+      <CardBody justifyContent="flex-end" padding={0}>
         {!!accountDetailYear.length && <AccountDetailChart accountDetails={accountDetailYear} />}
       </CardBody>
       <CardFooter justifyContent="flex-end" padding={0}>
         <FLPButtonGroup justifyContent="flex-end" zIndex="10">
-          <AddEditAccountsDialogBtn btnSize="sm" accountId={accountId} isEditAccount={true} />
-          <FLPButton size="sm" colorScheme="red" onClick={handleRemoveAccount}>
+          <AddEditAccountsDialogBtn accountId={accountId} btnSize="sm" isEditAccount={true} />
+          <FLPButton colorScheme="red" size="sm" onClick={handleRemoveAccount}>
             {t('delete')}
           </FLPButton>
         </FLPButtonGroup>

@@ -11,7 +11,7 @@ describe('<FLPInput />', () => {
     expect(container).toMatchSnapshot();
   });
   test('should render as expected with error', () => {
-    const { container } = render(<FLPInput label="Test" error="Error" onChange={onChangeMock} />);
+    const { container } = render(<FLPInput error="Error" label="Test" onChange={onChangeMock} />);
     expect(container).toMatchSnapshot();
   });
   test('should render as expected with value', () => {
@@ -19,16 +19,16 @@ describe('<FLPInput />', () => {
     expect(container).toMatchSnapshot();
   });
   test('should render as expected with value and error', () => {
-    const { container } = render(<FLPInput label="Test" value="Value" error="Error" onChange={onChangeMock} />);
+    const { container } = render(<FLPInput error="Error" label="Test" value="Value" onChange={onChangeMock} />);
     expect(container).toMatchSnapshot();
   });
   test('should render as expected without a label', () => {
-    const { container } = render(<FLPInput label="Test" isLabelHidden onChange={onChangeMock} />);
+    const { container } = render(<FLPInput isLabelHidden label="Test" onChange={onChangeMock} />);
     expect(container).toMatchSnapshot();
   });
 
   test('should render elements as a row', () => {
-    const { container } = render(<FLPInput label="Test" flexDirection="row" onChange={onChangeMock} />);
+    const { container } = render(<FLPInput flexDirection="row" label="Test" onChange={onChangeMock} />);
     expect(container).toMatchSnapshot();
   });
 

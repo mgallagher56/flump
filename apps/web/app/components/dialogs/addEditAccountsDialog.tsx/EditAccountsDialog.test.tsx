@@ -39,7 +39,7 @@ vi.mock('app/utils/supabase', () => ({
 describe('<EditAccountDialogBtn', () => {
   mocks.mockUseLoaderData.mockReturnValue({ user: mockUser });
   const { baseElement, getByText, getAllByText } = render(
-    <AddEditAccountsDialogBtn accountId="123456" isEditAccount />
+    <AddEditAccountsDialogBtn isEditAccount accountId="123456" />
   );
   const triggerBtn = getByText('edit');
   expect(triggerBtn).toBeDefined();

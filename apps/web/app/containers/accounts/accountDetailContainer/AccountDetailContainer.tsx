@@ -91,7 +91,7 @@ const AccountDetailContainer: FC = () => {
 
   return (
     <Stack flexDirection="column" gap={10}>
-      <Stack flexDirection="row" alignItems="center" justifyContent="space-between">
+      <Stack alignItems="center" flexDirection="row" justifyContent="space-between">
         <Stack flexDirection="column">
           <FLPHeading as="h2" size="sm">
             {account.type}
@@ -111,7 +111,7 @@ const AccountDetailContainer: FC = () => {
           </FLPButton>
         </Stack>
       </Stack>
-      <AccountDetails onInputChange={handleInputChange} editedValues={editedValues} isEditMode={isEditMode} />
+      <AccountDetails editedValues={editedValues} isEditMode={isEditMode} onInputChange={handleInputChange} />
 
       <Stack flexDirection="row">
         {availableYears?.length ? (

@@ -17,7 +17,7 @@ const FLPLinkButton: FC<PropsWithChildren<FLPLinkButtonProps>> = ({
   ...rest
 }) => {
   return (
-    <Button colorScheme={colorScheme} as={Link} to={to} variant={variant} disabled={disabled} {...rest}>
+    <Button as={Link} colorScheme={colorScheme} disabled={disabled} to={to} variant={variant} {...rest}>
       {children}
     </Button>
   );
