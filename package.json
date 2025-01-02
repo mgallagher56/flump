@@ -2,6 +2,7 @@
   "name": "flump",
   "version": "1.18.0",
   "private": true,
+  "packageManager": "pnpm@9.15.2",
   "workspaces": [
     "apps/*",
     "packages/*"
