@@ -11,7 +11,7 @@ import GithubActionsReporter from 'vitest-github-actions-reporter';
 
 installGlobals();
 
-export default defineConfig(({ mode }) => ({
+export default defineConfig(({ mode, isSsrBuild }) => ({
   plugins: [
     !process.env.VITEST
       ? remix({
@@ -35,6 +35,12 @@ export default defineConfig(({ mode }) => ({
       : []),
     tsconfigPaths()
   ],
+  build: { target: "esnext" },
+  optimizeDeps: {
+    esbuildOptions: {
+      target: 'esnext'
+    }
+  },
   ssr: {
     noExternal: ['remix-i18next']
   },
