@@ -1,6 +1,6 @@
 import { type FC, useCallback, useMemo, useState } from 'react';
 
-import { Stack, StackItem } from '@chakra-ui/react';
+import { Stack } from '@chakra-ui/react/stack';
 import { useLoaderData, useRevalidator } from '@remix-run/react';
 import { useTranslation } from 'react-i18next';
 import AccountDetails from '~/components/accounts/AccountDetails';
@@ -92,15 +92,15 @@ const AccountDetailContainer: FC = () => {
   return (
     <Stack flexDirection="column" gap={10}>
       <Stack flexDirection="row" alignItems="center" justifyContent="space-between">
-        <StackItem flexDirection="column">
+        <Stack flexDirection="column">
           <FLPHeading as="h2" size="sm">
             {account.type}
           </FLPHeading>
           <FLPHeading as="h1" size="xl">
             {account.name}
           </FLPHeading>
-        </StackItem>
-        <StackItem>
+        </Stack>
+        <Stack>
           <FLPButton
             disabled={isLoading}
             isLoading={isLoading}
@@ -109,7 +109,7 @@ const AccountDetailContainer: FC = () => {
           >
             {isEditMode ? t('save') : t('edit')}
           </FLPButton>
-        </StackItem>
+        </Stack>
       </Stack>
       <AccountDetails onInputChange={handleInputChange} editedValues={editedValues} isEditMode={isEditMode} />
 
