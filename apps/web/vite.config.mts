@@ -47,7 +47,6 @@ export default defineConfig(({ mode }) => ({
     }
   },
   ssr: {
-    noExternal: ['remix-i18next'],
     external: ['path-browserify']
   },
   test: {
