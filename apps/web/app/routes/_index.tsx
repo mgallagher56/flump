@@ -1,11 +1,10 @@
 import type { ReactElement } from 'react';
 
-import { json, type MetaFunction } from '@remix-run/node';
+import { data, type MetaFunction } from 'react-router';
+import type { Database } from 'db_types';
 import FLPBox from '~/components/core/structure/FLPBox';
 import FLPHeading from '~/components/core/typography/FLPHeading';
 import { createSupaBaseServerClient } from '~/utils/supabase';
-
-import type { Database } from 'db_types';
 
 export const meta: MetaFunction = (): { title: string }[] => [{ title: 'flump' }];
 
@@ -18,8 +17,8 @@ export type Employee = Database['public']['Tables']['employees']['Row'];
 export const loader = async ({ request }: { request: Request }) => {
   const response = new Response();
   const supabase = createSupaBaseServerClient({ request, response });
-  const { data } = await supabase.from('employees').select('*');
-  return json({ employees: data }, { headers: response.headers });
+  const { data: employees } = await supabase.from('employees').select('*');
+  return data({ employees }, { headers: response.headers });
 };
 
 const Index = (): ReactElement => {

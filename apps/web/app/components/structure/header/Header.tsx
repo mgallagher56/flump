@@ -1,7 +1,7 @@
 import { type FC, type ReactElement } from 'react';
 
 import { Flex } from '@chakra-ui/react';
-import { useLoaderData } from '@remix-run/react';
+import { useLoaderData } from 'react-router';
 import ColorModeSwitch from '~/components/ColorModeSwitch';
 import FLPBox from '~/components/core/structure/FLPBox';
 import HomeLogo from '~/components/navigation/HomeLogo';

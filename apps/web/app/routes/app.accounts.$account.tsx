@@ -1,11 +1,20 @@
+import { type User } from '@supabase/supabase-js';
 import { type ReactElement } from 'react';
 
-import { json, redirect } from '@remix-run/node';
-import { type Params } from '@remix-run/react';
+import { data, type Params, redirect, type RedirectFunction, type UNSAFE_DataWithResponseInit } from 'react-router';
 import AccountDetailContainer from '~/containers/accounts/accountDetailContainer/AccountDetailContainer';
+import { type Account, type AccountDetail } from '~/containers/accounts/types';
 import { createSupaBaseServerClient } from '~/utils/supabase';
 
-export const loader = async ({ params, request }: { params: Params; request: Request }) => {
+export const loader = async ({
+  params,
+  request
+}: {
+  params: Params;
+  request: Request;
+}): Promise<
+  ReturnType<RedirectFunction> | UNSAFE_DataWithResponseInit<{ account: Account; accountDetails: AccountDetail[]; user: User }>
+> => {
   const response = new Response();
   const supabase = createSupaBaseServerClient({ request, response });
   const {
@@ -26,11 +35,11 @@ export const loader = async ({ params, request }: { params: Params; request: Req
     .order('month', { ascending: true });
 
   if (!user) return redirect('/');
-  return json({ account: accountData?.[0], accountDetails, user }, { headers: response.headers });
+  return data({ account: accountData?.[0], accountDetails, user }, { headers: response.headers });
 };
 
-const AccountDetail = (): ReactElement => {
+const AccountDetailComponent = (): ReactElement => {
   return <AccountDetailContainer />;
 };
 
-export default AccountDetail;
+export default AccountDetailComponent;

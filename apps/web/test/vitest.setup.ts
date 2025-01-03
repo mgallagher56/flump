@@ -11,7 +11,7 @@ Object.defineProperty(window, 'env', {
   }
 });
 
-vi.mock('@remix-run/react', async () => {
+vi.mock('react-router', async () => {
   const actual: Record<string, unknown> = await vi.importActual('@remix-run/react');
   return {
     ...actual,
