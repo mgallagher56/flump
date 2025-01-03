@@ -273,8 +273,8 @@ importers:
         specifier: ^15.14.0
         version: 15.14.0
       happy-dom:
-        specifier: 15.10.2
-        version: 15.10.2
+        specifier: 16.2.4
+        version: 16.2.4
       install:
         specifier: 0.13.0
         version: 0.13.0
@@ -319,7 +319,7 @@ importers:
         version: 5.1.4(typescript@5.7.2)(vite@5.4.11(@types/node@20.17.10)(lightningcss@1.25.1))
       vitest:
         specifier: 2.1.8
-        version: 2.1.8(@types/node@20.17.10)(@vitest/ui@2.1.8)(happy-dom@15.10.2)(lightningcss@1.25.1)(msw@2.7.0(@types/node@20.17.10)(typescript@5.7.2))
+        version: 2.1.8(@types/node@20.17.10)(@vitest/ui@2.1.8)(happy-dom@16.2.4)(lightningcss@1.25.1)(msw@2.7.0(@types/node@20.17.10)(typescript@5.7.2))
       vitest-github-actions-reporter:
         specifier: 0.11.1
         version: 0.11.1(vitest@2.1.8)
@@ -4489,8 +4489,8 @@ packages:
     resolution: {integrity: sha512-4haO1M4mLO91PW57BMsDFf75UmwoRX0GkdD+Faw+Lr+r/OZrOCS0pIBwOL1xCKQqnQzbNFGgK2V2CpBUPeFNTw==}
     hasBin: true
 
-  happy-dom@15.10.2:
-    resolution: {integrity: sha512-NbA5XrSovenJIIcfixCREX3ZnV7yHP4phhbfuxxf4CPn+LZpz/jIM9EqJ2DrPwgVDSMoAKH3pZwQvkbsSiCrUw==}
+  happy-dom@16.2.4:
+    resolution: {integrity: sha512-GvfqU6vf3ORbGr2m5M6JOAf0H8S2yokBzt8nQE0j0bApA2kk8hYO60hxc0OMCowmjx88ydy931kSqYKXoLpb7g==}
     engines: {node: '>=18.0.0'}
 
   has-bigints@1.0.2:
@@ -10515,7 +10515,7 @@ snapshots:
       std-env: 3.8.0
       test-exclude: 7.0.1
       tinyrainbow: 1.2.0
-      vitest: 2.1.8(@types/node@20.17.10)(@vitest/ui@2.1.8)(happy-dom@15.10.2)(lightningcss@1.25.1)(msw@2.7.0(@types/node@20.17.10)(typescript@5.7.2))
+      vitest: 2.1.8(@types/node@20.17.10)(@vitest/ui@2.1.8)(happy-dom@16.2.4)(lightningcss@1.25.1)(msw@2.7.0(@types/node@20.17.10)(typescript@5.7.2))
     transitivePeerDependencies:
       - supports-color
 
@@ -10525,7 +10525,7 @@ snapshots:
       eslint: 9.17.0(jiti@2.4.2)
     optionalDependencies:
       typescript: 5.7.2
-      vitest: 2.1.8(@types/node@20.17.10)(@vitest/ui@2.1.8)(happy-dom@15.10.2)(lightningcss@1.25.1)(msw@2.7.0(@types/node@20.17.10)(typescript@5.7.2))
+      vitest: 2.1.8(@types/node@20.17.10)(@vitest/ui@2.1.8)(happy-dom@16.2.4)(lightningcss@1.25.1)(msw@2.7.0(@types/node@20.17.10)(typescript@5.7.2))
 
   '@vitest/expect@2.1.8':
     dependencies:
@@ -10571,7 +10571,7 @@ snapshots:
       sirv: 3.0.0
       tinyglobby: 0.2.10
       tinyrainbow: 1.2.0
-      vitest: 2.1.8(@types/node@20.17.10)(@vitest/ui@2.1.8)(happy-dom@15.10.2)(lightningcss@1.25.1)(msw@2.7.0(@types/node@20.17.10)(typescript@5.7.2))
+      vitest: 2.1.8(@types/node@20.17.10)(@vitest/ui@2.1.8)(happy-dom@16.2.4)(lightningcss@1.25.1)(msw@2.7.0(@types/node@20.17.10)(typescript@5.7.2))
 
   '@vitest/utils@2.1.8':
     dependencies:
@@ -12792,9 +12792,8 @@ snapshots:
       pumpify: 1.5.1
       through2: 2.0.5
 
-  happy-dom@15.10.2:
+  happy-dom@16.2.4:
     dependencies:
-      entities: 4.5.0
       webidl-conversions: 7.0.0
       whatwg-mimetype: 3.0.0
 
@@ -16167,13 +16166,13 @@ snapshots:
   vitest-github-actions-reporter@0.11.1(vitest@2.1.8):
     dependencies:
       '@actions/core': 1.10.1
-      vitest: 2.1.8(@types/node@20.17.10)(@vitest/ui@2.1.8)(happy-dom@15.10.2)(lightningcss@1.25.1)(msw@2.7.0(@types/node@20.17.10)(typescript@5.7.2))
+      vitest: 2.1.8(@types/node@20.17.10)(@vitest/ui@2.1.8)(happy-dom@16.2.4)(lightningcss@1.25.1)(msw@2.7.0(@types/node@20.17.10)(typescript@5.7.2))
 
   vitest-sonar-reporter@2.0.0(vitest@2.1.8):
     dependencies:
-      vitest: 2.1.8(@types/node@20.17.10)(@vitest/ui@2.1.8)(happy-dom@15.10.2)(lightningcss@1.25.1)(msw@2.7.0(@types/node@20.17.10)(typescript@5.7.2))
+      vitest: 2.1.8(@types/node@20.17.10)(@vitest/ui@2.1.8)(happy-dom@16.2.4)(lightningcss@1.25.1)(msw@2.7.0(@types/node@20.17.10)(typescript@5.7.2))
 
-  vitest@2.1.8(@types/node@20.17.10)(@vitest/ui@2.1.8)(happy-dom@15.10.2)(lightningcss@1.25.1)(msw@2.7.0(@types/node@20.17.10)(typescript@5.7.2)):
+  vitest@2.1.8(@types/node@20.17.10)(@vitest/ui@2.1.8)(happy-dom@16.2.4)(lightningcss@1.25.1)(msw@2.7.0(@types/node@20.17.10)(typescript@5.7.2)):
     dependencies:
       '@vitest/expect': 2.1.8
       '@vitest/mocker': 2.1.8(msw@2.7.0(@types/node@20.17.10)(typescript@5.7.2))(vite@5.4.11(@types/node@20.17.10)(lightningcss@1.25.1))
@@ -16198,7 +16197,7 @@ snapshots:
     optionalDependencies:
       '@types/node': 20.17.10
       '@vitest/ui': 2.1.8(vitest@2.1.8)
-      happy-dom: 15.10.2
+      happy-dom: 16.2.4
     transitivePeerDependencies:
       - less
       - lightningcss
