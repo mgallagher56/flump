@@ -1,8 +1,8 @@
-import { redirect } from '@remix-run/node';
-import type { TypedResponse } from '@remix-run/node';
+import { redirect } from 'react-router';
+import type { RedirectFunction } from 'react-router';
 import { createSupaBaseServerClient } from '~/utils/supabase';
 
-export const loader = async ({ request }: { request: Request }): Promise<TypedResponse<never>> => {
+export const loader = async ({ request }: { request: Request }): Promise<ReturnType<RedirectFunction>> => {
   const response = new Response();
   const url = new URL(request.url);
   const code = url.searchParams.get('code');

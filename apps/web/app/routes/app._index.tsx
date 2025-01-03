@@ -1,10 +1,19 @@
 import type { ReactElement } from 'react';
 
-import { json, redirect } from '@remix-run/node';
+import { redirect, type RedirectFunction } from 'react-router';
 import FLPHeading from '~/components/core/typography/FLPHeading';
 import { createSupaBaseServerClient } from '~/utils/supabase';
 
-export const loader = async ({ request }: { request: Request }) => {
+export const loader = async ({
+  request
+}: {
+  request: Request;
+}): Promise<
+  | ReturnType<RedirectFunction>
+  | {
+      ok: boolean;
+    }
+> => {
   const response = new Response();
   const supabase = createSupaBaseServerClient({ request, response });
   const {
@@ -12,7 +21,7 @@ export const loader = async ({ request }: { request: Request }) => {
   } = await supabase.auth.getUser();
 
   if (!user) return redirect('/');
-  return json({ ok: true });
+  return { ok: true };
 };
 
 const App = (): ReactElement => {

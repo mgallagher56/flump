@@ -1,33 +1,35 @@
 import { CacheProvider as EmotionCacheProvider } from '@emotion/react';
 import createEmotionServer from '@emotion/server/create-instance';
-import type { EntryContext } from '@remix-run/node';
-import { createReadableStreamFromReadable } from '@remix-run/node';
-import { RemixServer } from '@remix-run/react';
-import { createInstance } from 'i18next';
-import Backend from 'i18next-fs-backend';
+import type { EntryContext } from 'react-router';
+import { createReadableStreamFromReadable } from '@react-router/node';
+import { ServerRouter } from 'react-router';
 import { isbot } from 'isbot';
 import { resolve } from 'node:path';
 import { renderToPipeableStream } from 'react-dom/server';
 import { I18nextProvider, initReactI18next } from 'react-i18next';
 import { PassThrough } from 'stream';
 
+import { createInstance } from 'i18next';
+import Backend from 'i18next-fs-backend';
+
 import createEmotionCache from './createEmotionCache';
 import i18n from './i18n';
 import i18next from './i18n.server';
 
-const ABORT_DELAY = 5000;
+// Reject/cancel all pending promises after 5 seconds
+export const streamTimeout = 5000;
 
 export default async function handleRequest(
   request: Request,
   responseStatusCode: number,
   responseHeaders: Headers,
-  remixContext: EntryContext
+  reactRouterContext: EntryContext
 ): Promise<unknown> {
   const callbackName = isbot(request.headers.get('user-agent')) ? 'onAllReady' : 'onShellReady';
 
   const instance = createInstance();
   const lng = await i18next.getLocale(request);
-  const ns = i18next.getRouteNamespaces(remixContext);
+  const ns = i18next.getRouteNamespaces(reactRouterContext);
 
   await instance
     .use(initReactI18next)
@@ -46,7 +48,7 @@ export default async function handleRequest(
     const { pipe, abort } = renderToPipeableStream(
       <I18nextProvider i18n={instance}>
         <EmotionCacheProvider value={emotionCache}>
-          <RemixServer context={remixContext} url={request.url} />
+          <ServerRouter context={reactRouterContext} url={request.url} />
         </EmotionCacheProvider>
       </I18nextProvider>,
       {
@@ -79,6 +81,8 @@ export default async function handleRequest(
       }
     );
 
-    setTimeout(abort, ABORT_DELAY);
+    // Automatically timeout the React renderer after 6 seconds, which ensures
+    // React has enough time to flush down the rejected boundary contents
+    setTimeout(abort, streamTimeout + 1000);
   });
 }

@@ -1,6 +1,6 @@
 import type { FC } from 'react';
 
-import { useLoaderData } from '@remix-run/react';
+import { useLoaderData } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import FLPButtonGroup from '~/components/core/buttons/FLPButtonGroup';
 import FLPLinkButton from '~/components/core/buttons/FLPLinkButton';
