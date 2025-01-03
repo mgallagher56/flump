@@ -15,11 +15,7 @@ const NavMenu: FC<NavMenuProps> = ({ routes }) => {
   return (
     <FLPBox>
       <FLPButtonGroup gap={4}>
-        {routes?.map((route) => (
-          <FLPLinkButton key={route.key} to={route.route}>
-            {t(route.key)}
-          </FLPLinkButton>
-        ))}
+        {routes?.map((route) => <FLPLinkButton key={route.key} text={t(route.key)} to={route.route} />)}
       </FLPButtonGroup>
     </FLPBox>
   );

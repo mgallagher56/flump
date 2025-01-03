@@ -1,16 +1,26 @@
 import { type FC } from 'react';
 
-import type { SelectProps } from '@chakra-ui/react';
-import { Select } from '@chakra-ui/react';
+import { SelectRoot, type SelectRootProps } from '@chakra-ui/react';
+import { SelectContent, SelectItem, SelectLabel, SelectTrigger, SelectValueText } from '~/components/ui/select';
 
 import { css } from 'styled-system/css';
 
-interface FLPSelectProps extends SelectProps {
+interface FLPSelectProps extends SelectRootProps {
   label: string;
   isLabelHidden?: boolean;
+  portalRef?: React.RefObject<HTMLDivElement>;
 }
 
-const FLPSelect: FC<FLPSelectProps> = ({ flexDirection, isLabelHidden, label, gap, ...props }) => {
+const FLPSelect: FC<FLPSelectProps> = ({
+  collection,
+  flexDirection,
+  gap,
+  isLabelHidden,
+  label,
+  portalRef,
+  value,
+  onValueChange
+}) => {
   const columnStyles = css({
     display: 'flex',
     flexDirection: 'column',
@@ -26,10 +36,21 @@ const FLPSelect: FC<FLPSelectProps> = ({ flexDirection, isLabelHidden, label, ga
 
   return (
     <div className={flexDirection === 'row' ? rowStyles : columnStyles}>
-      <label hidden={isLabelHidden} htmlFor={label}>
-        {label}
-      </label>
-      <Select id={label} {...props} />
+      <SelectRoot collection={collection} size="sm" value={value} width="320px" onValueChange={onValueChange}>
+        <SelectLabel hidden={isLabelHidden} htmlFor={label}>
+          {label}
+        </SelectLabel>
+        <SelectTrigger>
+          <SelectValueText />
+        </SelectTrigger>
+        <SelectContent portalRef={portalRef}>
+          {collection.items.map(({ id, name }) => (
+            <SelectItem key={id} item={name}>
+              {name}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </SelectRoot>
     </div>
   );
 };

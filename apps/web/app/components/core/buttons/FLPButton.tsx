@@ -1,16 +1,15 @@
 import { type FC, type PropsWithChildren } from 'react';
 
-import type { ButtonProps } from '@chakra-ui/react';
-import { Button } from '@chakra-ui/react';
+import { Button, type ButtonProps } from '~/components/ui/button';
 
 interface FLPButtonProps extends ButtonProps {
   padding?: number;
 }
 
 const FLPButton: FC<PropsWithChildren<FLPButtonProps>> = ({
-  colorScheme = 'blue',
+  colorPalette = 'blue',
   disabled,
-  isLoading,
+  loading,
   padding,
   variant = 'solid',
   onClick,
@@ -18,9 +17,9 @@ const FLPButton: FC<PropsWithChildren<FLPButtonProps>> = ({
 }) => {
   return (
     <Button
-      colorScheme={colorScheme}
-      isDisabled={disabled}
-      isLoading={isLoading}
+      colorPalette={colorPalette}
+      disabled={disabled}
+      loading={loading}
       padding={padding}
       variant={variant}
       width={'max-content'}

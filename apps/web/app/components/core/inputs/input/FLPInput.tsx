@@ -1,7 +1,6 @@
 import { type FC } from 'react';
 
-import type { InputProps } from '@chakra-ui/react';
-import { Input } from '@chakra-ui/react';
+import { Input, type InputProps } from '@chakra-ui/react';
 import FLPBox from '~/components/core/structure/FLPBox';
 
 import { css } from 'styled-system/css';

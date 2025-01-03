@@ -51,7 +51,7 @@ const AccountDetails: FC<AccountDetailsProps> = ({ onInputChange, editedValues, 
               <FLPHeading as="h3" size="lg">
                 {year}
               </FLPHeading>
-              <FLPButton colorScheme="red" size="xs" variant="outline" onClick={() => onRemoveYear(year)}>
+              <FLPButton colorPalette="red" size="xs" variant="outline" onClick={() => onRemoveYear(year)}>
                 {t('deleteYear')}
               </FLPButton>
             </Stack>

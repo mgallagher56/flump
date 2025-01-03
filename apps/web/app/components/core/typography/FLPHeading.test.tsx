@@ -15,12 +15,12 @@ describe('FLPHeading', () => {
     expect(container).toMatchSnapshot();
   });
   test('renders as expected with a color', () => {
-    const { container } = render(<FLPHeading colorScheme="blue">{sampleText}</FLPHeading>);
+    const { container } = render(<FLPHeading colorPalette="blue">{sampleText}</FLPHeading>);
     expect(container).toMatchSnapshot();
   });
   test('render only number of lines', () => {
     const { container } = render(
-      <FLPHeading as="h1" noOfLines={1} size="4xl">
+      <FLPHeading as="h1" size="4xl">
         {sampleText}
       </FLPHeading>
     );

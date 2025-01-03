@@ -1,41 +1,46 @@
 import { type FC, type ReactElement, useCallback } from 'react';
 
-import type { ModalProps } from '@chakra-ui/react';
-import {
-  Modal,
-  ModalBody,
-  ModalCloseButton,
-  ModalContent,
-  ModalFooter,
-  ModalHeader,
-  ModalOverlay
-} from '@chakra-ui/react';
+import { type DialogRootProps } from '@chakra-ui/react';
 import { useTranslation } from 'react-i18next';
 import FLPButton from '~/components/core/buttons/FLPButton';
 import FLPButtonGroup from '~/components/core/buttons/FLPButtonGroup';
+import {
+  DialogBackdrop,
+  DialogBody,
+  DialogCloseTrigger,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogRoot,
+  DialogTitle,
+  DialogTrigger
+} from '~/components/ui/dialog';
 
-interface FLPModalProps extends ModalProps {
+interface FLPModalProps extends DialogRootProps {
   triggerBtn: ReactElement;
   confirmButton?: {
     text: string;
-    colorScheme?: string;
-    variant?: string;
+    colorPalette?: string;
     id?: string;
   };
+  contentRef?: React.RefObject<HTMLDivElement>;
   disabled?: boolean;
+  open: boolean;
   title: string;
   onConfirm: () => Promise<void>;
+  onClose: () => void;
 }
 
 const FLPModal: FC<FLPModalProps> = ({
-  triggerBtn,
+  children,
   confirmButton,
+  contentRef,
   disabled,
+  open,
   title,
-  isOpen,
+  triggerBtn,
   onClose,
-  onConfirm,
-  ...props
+  onConfirm
 }) => {
   const { t } = useTranslation();
 
@@ -45,36 +50,42 @@ const FLPModal: FC<FLPModalProps> = ({
   }, [onClose, onConfirm]);
 
   return (
-    <>
-      {triggerBtn}
-      <Modal isCentered isOpen={isOpen} onClose={onClose}>
-        <ModalOverlay />
-        <ModalContent>
-          <ModalHeader>{title}</ModalHeader>
-          <ModalCloseButton />
-          <ModalBody>{props.children}</ModalBody>
-          <ModalFooter>
-            <FLPButtonGroup>
-              <FLPButton variant="outline" onClick={onClose}>
-                {t('close')}
+    <DialogRoot
+      closeOnEscape
+      unmountOnExit
+      motionPreset="slide-in-bottom"
+      open={open}
+      placement="center"
+      onOpenChange={onClose}
+    >
+      <DialogBackdrop />
+      <DialogTrigger>{triggerBtn}</DialogTrigger>
+      <DialogContent ref={contentRef}>
+        <DialogHeader>
+          <DialogTitle>{title}</DialogTitle>
+        </DialogHeader>
+        <DialogBody>{children}</DialogBody>
+        <DialogFooter>
+          <FLPButtonGroup>
+            <FLPButton variant="outline" onClick={onClose}>
+              {t('close')}
+            </FLPButton>
+            {onConfirm && (
+              <FLPButton
+                colorPalette={confirmButton?.colorPalette}
+                disabled={disabled}
+                form={confirmButton?.id}
+                type="submit"
+                onClick={handleOnConfirm}
+              >
+                {confirmButton.text}
               </FLPButton>
-              {onConfirm && (
-                <FLPButton
-                  colorScheme={confirmButton?.colorScheme}
-                  disabled={disabled}
-                  form={confirmButton?.id}
-                  type="submit"
-                  variant={confirmButton?.variant}
-                  onClick={handleOnConfirm}
-                >
-                  {confirmButton.text}
-                </FLPButton>
-              )}
-            </FLPButtonGroup>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
-    </>
+            )}
+          </FLPButtonGroup>
+          <DialogCloseTrigger />
+        </DialogFooter>
+      </DialogContent>
+    </DialogRoot>
   );
 };
 

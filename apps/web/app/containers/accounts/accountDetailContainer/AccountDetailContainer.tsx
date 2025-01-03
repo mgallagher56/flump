@@ -1,5 +1,6 @@
 import { type FC, useCallback, useMemo, useState } from 'react';
 
+import { Box } from '@chakra-ui/react/box';
 import { Stack } from '@chakra-ui/react/stack';
 import { useTranslation } from 'react-i18next';
 import { useLoaderData, useRevalidator } from 'react-router';
@@ -92,24 +93,24 @@ const AccountDetailContainer: FC = () => {
   return (
     <Stack flexDirection="column" gap={10}>
       <Stack alignItems="center" flexDirection="row" justifyContent="space-between">
-        <Stack flexDirection="column">
+        <Box flexDirection="column">
           <FLPHeading as="h2" size="sm">
             {account.type}
           </FLPHeading>
           <FLPHeading as="h1" size="xl">
             {account.name}
           </FLPHeading>
-        </Stack>
-        <Stack>
+        </Box>
+        <Box>
           <FLPButton
             disabled={isLoading}
-            isLoading={isLoading}
+            loading={isLoading}
             variant="outline"
             onClick={isEditMode ? handleSaveValues : handleToggleEditMode}
           >
             {isEditMode ? t('save') : t('edit')}
           </FLPButton>
-        </Stack>
+        </Box>
       </Stack>
       <AccountDetails editedValues={editedValues} isEditMode={isEditMode} onInputChange={handleInputChange} />
 
@@ -117,9 +118,9 @@ const AccountDetailContainer: FC = () => {
         {availableYears?.length ? (
           <>
             <FLPButton
-              colorScheme="green"
+              colorPalette="green"
               disabled={isLoading}
-              isLoading={isLoading}
+              loading={isLoading}
               size="sm"
               variant="outline"
               onClick={() => handleAddNewYear(availableYears?.[availableYears.length - 1], 'prev')}
@@ -127,9 +128,9 @@ const AccountDetailContainer: FC = () => {
               {t('addPrevYear')}
             </FLPButton>
             <FLPButton
-              colorScheme="green"
+              colorPalette="green"
               disabled={isLoading}
-              isLoading={isLoading}
+              loading={isLoading}
               size="sm"
               variant="outline"
               onClick={() => handleAddNewYear(availableYears?.[0], 'next')}
@@ -139,9 +140,9 @@ const AccountDetailContainer: FC = () => {
           </>
         ) : (
           <FLPButton
-            colorScheme="green"
+          colorPalette="green"
             disabled={isLoading}
-            isLoading={isLoading}
+            loading={isLoading}
             size="sm"
             variant="outline"
             onClick={() => handleAddNewYear(new Date().getFullYear(), 'current')}

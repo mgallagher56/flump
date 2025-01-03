@@ -4,7 +4,7 @@ import type { Database } from 'db_types';
 
 declare global {
   interface Window {
-    env: {
+    ENV: {
       SUPABASE_URL: string;
       SUPABASE_ANON_KEY: string;
     };
@@ -14,9 +14,9 @@ declare global {
 const isServer = typeof window === 'undefined';
 
 export const getSupaBaseUrl = (isServer: boolean): string =>
-  isServer ? process.env.SUPABASE_URL : window?.env?.SUPABASE_URL;
+  isServer ? process.env.SUPABASE_URL : window?.ENV?.SUPABASE_URL;
 export const getSupabaseAnonKey = (isServer: boolean): string =>
-  isServer ? process.env.SUPABASE_ANON_KEY : window?.env?.SUPABASE_ANON_KEY;
+  isServer ? process.env.SUPABASE_ANON_KEY : window?.ENV?.SUPABASE_ANON_KEY;
 
 const supabase = createBrowserClient<Database>(getSupaBaseUrl(isServer), getSupabaseAnonKey(isServer));
 

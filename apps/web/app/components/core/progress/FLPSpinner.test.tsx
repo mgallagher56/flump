@@ -1,4 +1,5 @@
 import { render } from '@testing-library/react';
+import FLPText from '~/components/core/typography/FLPText';
 
 import FLPSpinner from './FLPSpinner';
 
@@ -12,7 +13,11 @@ describe('FLPSpinner', () => {
     expect(container).toMatchSnapshot();
   });
   test('renders as expected with a label', () => {
-    const { container } = render(<FLPSpinner label="Processing..." />);
+    const { container } = render(
+      <FLPSpinner>
+        <FLPText>Processing...</FLPText>
+      </FLPSpinner>
+    );
     expect(container).toMatchSnapshot();
   });
 });
