@@ -1,18 +1,24 @@
 /// <reference types="vitest" />
 /// <reference types="vite/client" />
+import pandacss from '@pandacss/dev/postcss';
 import react from '@vitejs/plugin-react';
 import { visualizer } from 'rollup-plugin-visualizer';
 import { defineConfig, loadEnv } from 'vite';
 import checker from 'vite-plugin-checker';
-import nodePolyfills from 'vite-plugin-node-stdlib-browser';
 import tsconfigPaths from 'vite-tsconfig-paths';
 import GithubActionsReporter from 'vitest-github-actions-reporter';
+import autoprefixer from "autoprefixer";
 
 import { reactRouter } from '@react-router/dev/vite';
 
 export default defineConfig(({ mode }) => ({
   server: {
     port: 3000
+  },
+  css: {
+    postcss: {
+      plugins: [pandacss, autoprefixer]
+    }
   },
   plugins: [
     !process.env.VITEST ? reactRouter() : react(),
@@ -23,6 +29,7 @@ export default defineConfig(({ mode }) => ({
             typescript: true,
             eslint: {
               lintCommand: 'eslint --cache .',
+              useFlatConfig: true,
               dev: {
                 logLevel: ['error']
               }
@@ -31,8 +38,7 @@ export default defineConfig(({ mode }) => ({
           })
         ]
       : []),
-    tsconfigPaths(),
-    nodePolyfills()
+    tsconfigPaths()
   ],
   build: { target: 'esnext' },
   optimizeDeps: {
@@ -41,7 +47,8 @@ export default defineConfig(({ mode }) => ({
     }
   },
   ssr: {
-    noExternal: ['remix-i18next']
+    noExternal: ['remix-i18next'],
+    external: ['path-browserify']
   },
   test: {
     onConsoleLog: (message: string): false | void => {

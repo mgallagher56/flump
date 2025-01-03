@@ -15,8 +15,6 @@ import turbo from "eslint-plugin-turbo";
 import unusedImports from 'eslint-plugin-unused-imports';
 import vitest from '@vitest/eslint-plugin';
 
-
-
 export default [
   reactPlugin.configs.flat.recommended,
   eslintJs.configs.recommended,
