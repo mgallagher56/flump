@@ -8,7 +8,9 @@ const mocks = vi.hoisted(() => ({
   mockFrom: vi.fn(() => ({
     delete: vi.fn(() => ({
       eq: vi.fn(() => ({
-        eq: vi.fn(() => ({}))
+        eq: vi.fn(() => ({
+          select: vi.fn()
+        }))
       }))
     }))
   })),
