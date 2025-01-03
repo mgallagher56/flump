@@ -12,7 +12,7 @@ import {
 } from '@chakra-ui/react';
 import type { EmotionCache } from '@emotion/react';
 import { withEmotionCache } from '@emotion/react';
-import type { User } from '@supabase/supabase-js';
+import type { Session, User, UserResponse } from '@supabase/supabase-js';
 import { useTranslation } from 'react-i18next';
 import type { LinksFunction, MetaFunction, UNSAFE_DataWithResponseInit } from 'react-router';
 import {
@@ -54,7 +54,7 @@ export const loader = async ({
       SUPABASE_ANON_KEY: string;
     };
     locale: string;
-    access_token: string;
+    access_token: string | null;
     user: User | null;
     cookie: string | null;
   }>
@@ -69,21 +69,19 @@ export const loader = async ({
   const supabase = createSupaBaseServerClient(request);
 
   const {
-    data: {
-      session: { access_token }
-    }
+    data: { session }
   } = await supabase.auth.getSession();
 
   const {
-    data: { user }
+    data: userData
   } = await supabase.auth.getUser();
 
   return data(
     {
       locale,
       env,
-      access_token,
-      user: user ?? null,
+      access_token: session?.access_token ?? null,
+      user: userData?.user ?? null,
       cookie: request?.headers?.get('Cookie') ?? ''
     },
     {
@@ -192,7 +190,6 @@ export default function App(): ReactElement {
   const loaderData = useLoaderData<typeof loader>();
   let { cookie = '' } = loaderData;
   const { env, access_token, locale } = loaderData;
-  const serverAccessToken = access_token;
 
   if (typeof document !== 'undefined') {
     cookie = document.cookie;
@@ -215,7 +212,7 @@ export default function App(): ReactElement {
     const {
       data: { subscription }
     } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event !== 'INITIAL_SESSION' && session?.access_token !== serverAccessToken) {
+      if (event !== 'INITIAL_SESSION' && session?.access_token !== access_token) {
         // server and client are out of sync
         revalidate();
       }
@@ -224,7 +221,7 @@ export default function App(): ReactElement {
     return () => {
       subscription?.unsubscribe();
     };
-  }, [revalidate, serverAccessToken]);
+  }, [revalidate, access_token]);
 
   return (
     <StrictMode>
