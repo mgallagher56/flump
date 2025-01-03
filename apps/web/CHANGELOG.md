@@ -1,5 +1,33 @@
 # Changelog
 
+## [1.22.0](https://github.com/mgallagher56/flump/compare/flump/web-v1.21.3...flump/web-v1.22.0) (2025-01-03)
+
+
+### Features
+
+* update chakra ([5495d95](https://github.com/mgallagher56/flump/commit/5495d953a9d81ab6bcd16fe1e738854aa07c73f6))
+* update eslint v9. add new rules, run eslint fix and prettier ([e88a932](https://github.com/mgallagher56/flump/commit/e88a9328679fc6bdf4e8e7301a323bf04a071625))
+* upgrade supabase WIP ([76e5435](https://github.com/mgallagher56/flump/commit/76e543577aac02323af169edd681630d61256de6))
+* upgrade to react router v7 ([2d76de1](https://github.com/mgallagher56/flump/commit/2d76de1813fce5f7c9df5a77cd45b95848383797))
+
+
+### Bug Fixes
+
+* adjust ts-coverage ([40feec6](https://github.com/mgallagher56/flump/commit/40feec639bce2038b7ec5f12415f053420da46ac))
+* build styles ([a616d96](https://github.com/mgallagher56/flump/commit/a616d9637b2515e713015da08f23cfff69ca9981))
+* bunch of fixes ([0733b98](https://github.com/mgallagher56/flump/commit/0733b986c7e7fa1086781c5706519df9274ba99f))
+* **deps:** update all non-major third-party dependencies ([3ee1e3d](https://github.com/mgallagher56/flump/commit/3ee1e3ddf657ba9531d55b9de804791fa4311bc8))
+* **deps:** update all non-major third-party dependencies ([4d81f1a](https://github.com/mgallagher56/flump/commit/4d81f1a4bc36bfbae272844b0808abb357d34d1b))
+* **deps:** update all non-major third-party dependencies ([727b153](https://github.com/mgallagher56/flump/commit/727b153a7e550012d205739b9bbfb6d1890abc52))
+* **deps:** update dependency @chakra-ui/react to v3 ([e891aa4](https://github.com/mgallagher56/flump/commit/e891aa4977eccd9534903cbda85cbfad2f6da3bc))
+* **deps:** update dependency express to v4.20.0 [security] ([5c66fb5](https://github.com/mgallagher56/flump/commit/5c66fb5ffeea7a1393d883ff1ccca7001d7094c5))
+* **deps:** update dependency i18next-http-backend to v3 ([7d21ba5](https://github.com/mgallagher56/flump/commit/7d21ba51498179ef9b17a480e1c1e52d257938b2))
+* **deps:** update dependency react-i18next to v15 ([f96b206](https://github.com/mgallagher56/flump/commit/f96b2069d7465349a78da2da647e1fa62a915c20))
+* emotion server / client mismatch classnames ([ce7f0db](https://github.com/mgallagher56/flump/commit/ce7f0db5db1f4adb4ecd08b91a7f82a7a5532aa7))
+* husky updates ([d34a2d7](https://github.com/mgallagher56/flump/commit/d34a2d72c20eefedb9fb8e8ff1a7255506e588de))
+* supabse issue with user auth ([e49306e](https://github.com/mgallagher56/flump/commit/e49306e290f0ac7b5996dc34f7483cf17a502787))
+* top level await issue ([500ee97](https://github.com/mgallagher56/flump/commit/500ee97a0aa9075cd4a41755d73a377237a104a3))
+
 ## [1.21.3](https://github.com/mgallagher56/flump/compare/flump/web-v1.21.2...flump/web-v1.21.3) (2024-05-29)
 
 
