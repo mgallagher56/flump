@@ -3,7 +3,10 @@
       "node_modules"
   ],
   "include": [
-      "app"
+      "app",
+      "__mocks__",
+      "mocks",
+      "db_types.ts",
   ],
   "compilerOptions": {
       "allowJs": true,

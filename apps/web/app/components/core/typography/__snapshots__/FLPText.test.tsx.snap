@@ -3,7 +3,7 @@
 exports[`FLPText > renders as expected 1`] = `
 <div>
   <p
-    class="chakra-text css-km77ca"
+    class="chakra-text css-au19fy"
   >
     Lorem, ipsum dolor sit amet consectetur adipisicing elit. Nemo quaerat repellendus numquam et esse ut labore molestias nihil optio expedita atque, quas eligendi corrupti quasi impedit suscipit sunt.
   </p>
@@ -13,7 +13,7 @@ exports[`FLPText > renders as expected 1`] = `
 exports[`FLPText > renders as expected with a fontSiez 1`] = `
 <div>
   <p
-    class="chakra-text css-ujtdc1"
+    class="chakra-text css-gjwspf"
   >
     Lorem, ipsum dolor sit amet consectetur adipisicing elit. Nemo quaerat repellendus numquam et esse ut labore molestias nihil optio expedita atque, quas eligendi corrupti quasi impedit suscipit sunt.
   </p>
@@ -23,7 +23,7 @@ exports[`FLPText > renders as expected with a fontSiez 1`] = `
 exports[`FLPText > renders as expected with a fontWeight 1`] = `
 <div>
   <p
-    class="chakra-text css-hmjgxl"
+    class="chakra-text css-18lx95u"
   >
     Lorem, ipsum dolor sit amet consectetur adipisicing elit. Nemo quaerat repellendus numquam et esse ut labore molestias nihil optio expedita atque, quas eligendi corrupti quasi impedit suscipit sunt.
   </p>
@@ -33,7 +33,7 @@ exports[`FLPText > renders as expected with a fontWeight 1`] = `
 exports[`FLPText > renders as expected with a letterSpacing 1`] = `
 <div>
   <p
-    class="chakra-text css-w04h5u"
+    class="chakra-text css-1rf05do"
   >
     Lorem, ipsum dolor sit amet consectetur adipisicing elit. Nemo quaerat repellendus numquam et esse ut labore molestias nihil optio expedita atque, quas eligendi corrupti quasi impedit suscipit sunt.
   </p>
@@ -43,7 +43,7 @@ exports[`FLPText > renders as expected with a letterSpacing 1`] = `
 exports[`FLPText > renders as expected with a lineHeight 1`] = `
 <div>
   <p
-    class="chakra-text css-dxclju"
+    class="chakra-text css-uy92jq"
   >
     Lorem, ipsum dolor sit amet consectetur adipisicing elit. Nemo quaerat repellendus numquam et esse ut labore molestias nihil optio expedita atque, quas eligendi corrupti quasi impedit suscipit sunt.
   </p>
