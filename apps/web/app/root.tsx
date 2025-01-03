@@ -12,7 +12,7 @@ import {
 } from '@chakra-ui/react';
 import type { EmotionCache } from '@emotion/react';
 import { withEmotionCache } from '@emotion/react';
-import type { Session, User, UserResponse } from '@supabase/supabase-js';
+import type { User } from '@supabase/supabase-js';
 import { useTranslation } from 'react-i18next';
 import type { LinksFunction, MetaFunction, UNSAFE_DataWithResponseInit } from 'react-router';
 import {
