@@ -1,5 +1,38 @@
 # Changelog
 
+## [1.19.0](https://github.com/mgallagher56/flump/compare/flump/web-v1.21.3...flump/web-v1.19.0) (2025-01-03)
+
+
+### Features
+
+* turborepo migration ([eb73e16](https://github.com/mgallagher56/flump/commit/eb73e166e66bbd220542a2ced58bef193dea3783))
+* update eslint v9. add new rules, run eslint fix and prettier ([aa3de26](https://github.com/mgallagher56/flump/commit/aa3de267abd9359224a0b10fa6a068e86c696c00))
+* upgrade supabase WIP ([4e7be41](https://github.com/mgallagher56/flump/commit/4e7be41cf267509ec84ae1d04090600cddcf8296))
+* upgrade to react router v7 ([7ecf2bc](https://github.com/mgallagher56/flump/commit/7ecf2bc2a23bc84f7ddcde42cb6a393ba5eccda2))
+
+
+### Bug Fixes
+
+* build styles ([cf9cbc6](https://github.com/mgallagher56/flump/commit/cf9cbc69c319e93d0ef0285db20445cc08e9f1e2))
+* **deps:** update all non-major third-party dependencies ([9b292ca](https://github.com/mgallagher56/flump/commit/9b292cabf3abc09bc5406c6e4ee0f076ef8ac5a9))
+* **deps:** update all non-major third-party dependencies ([d4e04b1](https://github.com/mgallagher56/flump/commit/d4e04b15a065179dfbee2a512736532d7579871f))
+* **deps:** update all non-major third-party dependencies ([7f1b98b](https://github.com/mgallagher56/flump/commit/7f1b98b8edda2c422edd6b27a3b31bec12c60333))
+* **deps:** update dependency express to v4.20.0 [security] ([2b31089](https://github.com/mgallagher56/flump/commit/2b31089537e1f106ea5075e9bb59a599bf2c2e0d))
+* **deps:** update dependency i18next-http-backend to v3 ([e2e34fe](https://github.com/mgallagher56/flump/commit/e2e34fee27582e81c5632acaef3ea15f9ac02937))
+* **deps:** update dependency react-i18next to v15 ([df39f0a](https://github.com/mgallagher56/flump/commit/df39f0aeaea20b152b7e18a299d4b54cbec3d8fd))
+* fly deploy ([4a1e667](https://github.com/mgallagher56/flump/commit/4a1e667724f698958b59d7e065b34b641a99b33a))
+* fly deploy ([a183aee](https://github.com/mgallagher56/flump/commit/a183aee1f033ac2801c2e3c8bd294776ab99384a))
+* husky updates ([db78eef](https://github.com/mgallagher56/flump/commit/db78eeff8307ad7eaed6947e8c1e466d49ee5bcb))
+* release please gh action ([3f5329d](https://github.com/mgallagher56/flump/commit/3f5329d0d1c64d16cd99493bf8e0823175370377))
+* supabse issue with user auth ([c988afe](https://github.com/mgallagher56/flump/commit/c988afe04946d8bb8145abc02d7c559da1f88a2a))
+* top level await issue ([a03af0f](https://github.com/mgallagher56/flump/commit/a03af0f76c4f881506c714753718843e5a9c61b4))
+* **web:** package json ([2397dd8](https://github.com/mgallagher56/flump/commit/2397dd8cb37536eba38429b1ebede7934afac64d))
+
+
+### Miscellaneous Chores
+
+* **web:** release 1.19.0 ([24ac467](https://github.com/mgallagher56/flump/commit/24ac467e0777c14125f6dc01c088037f4ee63563))
+
 ## [1.21.3](https://github.com/mgallagher56/flump/compare/flump/web-v1.21.2...flump/web-v1.21.3) (2024-05-29)
 
 
