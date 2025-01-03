@@ -1,12 +1,14 @@
 /// <reference types="vitest" />
 /// <reference types="vite/client" />
-import { reactRouter } from "@react-router/dev/vite";
 import react from '@vitejs/plugin-react';
 import { visualizer } from 'rollup-plugin-visualizer';
 import { defineConfig, loadEnv } from 'vite';
 import checker from 'vite-plugin-checker';
+import nodePolyfills from 'vite-plugin-node-stdlib-browser';
 import tsconfigPaths from 'vite-tsconfig-paths';
 import GithubActionsReporter from 'vitest-github-actions-reporter';
+
+import { reactRouter } from '@react-router/dev/vite';
 
 export default defineConfig(({ mode }) => ({
   server: {
@@ -29,7 +31,8 @@ export default defineConfig(({ mode }) => ({
           })
         ]
       : []),
-    tsconfigPaths()
+    tsconfigPaths(),
+    nodePolyfills()
   ],
   build: { target: 'esnext' },
   optimizeDeps: {
