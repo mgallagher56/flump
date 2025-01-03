@@ -12,8 +12,8 @@ const mocks = vi.hoisted(() => ({
   mockUseRevalidator: vi.fn(() => ({ revalidate: vi.fn() }))
 }));
 
-vi.mock('@remix-run/react', async () => {
-  const actual: Record<string, unknown> = await vi.importActual('@remix-run/react');
+vi.mock('react-router', async () => {
+  const actual: Record<string, unknown> = await vi.importActual('react-router');
   return {
     ...actual,
     useLoaderData: mocks.mockUseLoaderData,

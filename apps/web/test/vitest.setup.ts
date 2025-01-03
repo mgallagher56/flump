@@ -11,8 +11,8 @@ Object.defineProperty(window, 'env', {
   }
 });
 
-vi.mock('@remix-run/react', async () => {
-  const actual: Record<string, unknown> = await vi.importActual('@remix-run/react');
+vi.mock('react-router', async () => {
+  const actual: Record<string, unknown> = await vi.importActual('react-router');
   return {
     ...actual,
     Link: (props: LinkProps): ReactNode => props.children

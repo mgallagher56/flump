@@ -3,7 +3,7 @@ import { vi } from 'vitest';
 import { noop, safeRedirect, useMatchesData, validateEmail } from './utils';
 
 // vi mock useMatches
-vi.mock('@remix-run/react', () => {
+vi.mock('react-router', () => {
   return {
     useMatches: (): { id: string; data: { foo: string } }[] => [
       {

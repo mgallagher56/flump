@@ -39,8 +39,8 @@ vi.mock('app/utils/supabase', () => ({
   }
 }));
 
-vi.mock('@remix-run/react', async () => {
-  const actual: Record<string, unknown> = await vi.importActual('@remix-run/react');
+vi.mock('react-router', async () => {
+  const actual: Record<string, unknown> = await vi.importActual('react-router');
   return {
     ...actual,
     Form: ({ children, onSubmit }: { children: ReactNode; onSubmit }) => <form onSubmit={onSubmit}>{children}</form>,
