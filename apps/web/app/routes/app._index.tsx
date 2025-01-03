@@ -14,8 +14,7 @@ export const loader = async ({
       ok: boolean;
     }
 > => {
-  const response = new Response();
-  const supabase = createSupaBaseServerClient({ request, response });
+  const supabase = createSupaBaseServerClient(request);
   const {
     data: { user }
   } = await supabase.auth.getUser();

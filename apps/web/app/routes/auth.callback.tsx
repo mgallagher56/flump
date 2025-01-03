@@ -8,10 +8,7 @@ export const loader = async ({ request }: { request: Request }): Promise<ReturnT
   const code = url.searchParams.get('code');
 
   if (code) {
-    const supabaseClient = createSupaBaseServerClient({
-      request,
-      response
-    });
+    const supabaseClient = createSupaBaseServerClient(request);
     await supabaseClient.auth.exchangeCodeForSession(code);
   }
 

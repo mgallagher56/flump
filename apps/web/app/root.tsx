@@ -12,7 +12,7 @@ import {
 } from '@chakra-ui/react';
 import type { EmotionCache } from '@emotion/react';
 import { withEmotionCache } from '@emotion/react';
-import type { Session, User, UserResponse } from '@supabase/supabase-js';
+import type { User } from '@supabase/supabase-js';
 import { useTranslation } from 'react-i18next';
 import type { LinksFunction, MetaFunction, UNSAFE_DataWithResponseInit } from 'react-router';
 import {
@@ -66,13 +66,17 @@ export const loader = async ({
   };
 
   const response = new Response();
-  const supabase = createSupaBaseServerClient({ request, response });
+  const supabase = createSupaBaseServerClient(request);
 
   const {
-    data: { session: { access_token} }
+    data: {
+      session: { access_token }
+    }
   } = await supabase.auth.getSession();
 
-  const {data: {user}} = await supabase.auth.getUser();
+  const {
+    data: { user }
+  } = await supabase.auth.getUser();
 
   return data(
     {
