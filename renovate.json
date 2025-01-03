@@ -1,7 +1,7 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
-    "config:base",
+    "config:recommended",
     ":semanticCommits",
     ":pinAllExceptPeerDependencies",
     "npm:unpublishSafe",
@@ -12,14 +12,14 @@
   "timezone": "Europe/London",
   "packageRules": [
     {
-      "matchPackagePatterns": ["*"],
       "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
       "groupName": "all non-major third-party dependencies",
-      "automerge": "false"
+      "automerge": false,
+      "matchPackageNames": ["*"]
     },
     {
       "matchUpdateTypes": ["major"],
-      "automerge": "false"
+      "automerge": false
     }
   ]
 }
