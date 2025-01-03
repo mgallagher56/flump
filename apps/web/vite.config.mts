@@ -1,7 +1,6 @@
 /// <reference types="vitest" />
 /// <reference types="vite/client" />
-import { vitePlugin as remix } from '@remix-run/dev';
-import { installGlobals } from '@remix-run/node';
+import { reactRouter } from "@react-router/dev/vite";
 import react from '@vitejs/plugin-react';
 import { visualizer } from 'rollup-plugin-visualizer';
 import { defineConfig, loadEnv } from 'vite';
@@ -9,22 +8,19 @@ import checker from 'vite-plugin-checker';
 import tsconfigPaths from 'vite-tsconfig-paths';
 import GithubActionsReporter from 'vitest-github-actions-reporter';
 
-installGlobals();
-
-export default defineConfig(({ mode, isSsrBuild }) => ({
+export default defineConfig(({ mode }) => ({
+  server: {
+    port: 3000
+  },
   plugins: [
-    !process.env.VITEST
-      ? remix({
-          ignoredRouteFiles: ['**/.*', '**/*.test.{js,jsx,ts,tsx}']
-        })
-      : react(),
+    !process.env.VITEST ? reactRouter() : react(),
     visualizer({ emitFile: true }),
     ...(mode === 'development'
       ? [
           checker({
             typescript: true,
             eslint: {
-              lintCommand: 'eslint app --cache',
+              lintCommand: 'eslint --cache .',
               dev: {
                 logLevel: ['error']
               }
@@ -35,7 +31,7 @@ export default defineConfig(({ mode, isSsrBuild }) => ({
       : []),
     tsconfigPaths()
   ],
-  build: { target: "esnext" },
+  build: { target: 'esnext' },
   optimizeDeps: {
     esbuildOptions: {
       target: 'esnext'

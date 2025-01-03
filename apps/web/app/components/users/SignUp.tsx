@@ -1,7 +1,7 @@
 import type { ChangeEvent, FC } from 'react';
 import { useCallback, useEffect, useState } from 'react';
 
-import { Form } from '@remix-run/react';
+import { Form } from 'react-router';
 import type { User } from '@supabase/supabase-js';
 import { useTranslation } from 'react-i18next';
 import FLPButton from '~/components/core/buttons/FLPButton';
