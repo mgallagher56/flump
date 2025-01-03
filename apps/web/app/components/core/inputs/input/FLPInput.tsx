@@ -2,9 +2,8 @@ import { type FC } from 'react';
 
 import type { InputProps } from '@chakra-ui/react';
 import { Input } from '@chakra-ui/react';
-import FLPBox from '~/components/core/structure/FLPBox';
-
 import { css } from 'styled-system/css';
+import FLPBox from '~/components/core/structure/FLPBox';
 
 interface FLPInputProps extends InputProps {
   error?: string;
@@ -13,7 +12,6 @@ interface FLPInputProps extends InputProps {
 }
 
 const FLPInput: FC<FLPInputProps> = ({
-  colorScheme,
   error,
   flexDirection,
   isLabelHidden,
@@ -42,12 +40,12 @@ const FLPInput: FC<FLPInputProps> = ({
 
   return (
     <div className={flexDirection === 'row' ? rowStyles : columnStyles}>
-      <label htmlFor={label} hidden={isLabelHidden}>
+      <label hidden={isLabelHidden} htmlFor={label}>
         {label}
       </label>
       <div>
         <FLPBox display="flex" flexDirection="column" gap={props.gap ?? 2}>
-          <Input id={label} hidden={false} variant={variant || 'outline'} onChange={onChange} {...props} />
+          <Input hidden={false} id={label} variant={variant || 'outline'} onChange={onChange} {...props} />
           {error && <span className={errorStyles}>{error}</span>}
         </FLPBox>
       </div>

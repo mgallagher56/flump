@@ -1,5 +1,4 @@
 import { CacheProvider as EmotionCacheProvider } from '@emotion/react';
-
 import createEmotionServer from '@emotion/server/create-instance';
 import type { EntryContext } from '@remix-run/node';
 import { createReadableStreamFromReadable } from '@remix-run/node';

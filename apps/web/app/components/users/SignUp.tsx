@@ -64,29 +64,29 @@ const SignUp: FC<SignUpProps> = ({ action = SignUpActionEnum.SIGNUP }) => {
       <FLPText>{t('confirmEmailMsg')}</FLPText>
     </FLPBox>
   ) : (
-    <Form defaultValue={''} onSubmit={handleSubmit} method="GET" action="">
+    <Form action="" defaultValue={''} method="GET" onSubmit={handleSubmit}>
       <FLPBox display="flex" flexDirection="column" gap={5}>
         <FLPInput
+          error={sendMagicLink && error}
           label={'Email:'}
           name="email"
           type="email"
           value={formInput.email}
-          error={sendMagicLink && error}
           onChange={handleChangeFormInput}
         />
         {!sendMagicLink && (
           <FLPInput
+            error={error}
             label={'Password:'}
             name="password"
-            error={error}
             type="password"
             value={formInput.password}
             onChange={handleChangeFormInput}
           />
         )}
-        <FLPBox display="flex" flexDirection="column" justifyContent="center" alignItems="center" gap={4}>
+        <FLPBox alignItems="center" display="flex" flexDirection="column" gap={4} justifyContent="center">
           {infoMessage}
-          <FLPButton onClick={handleSubmit} type="submit" disabled={isSubmitDisabled}>
+          <FLPButton disabled={isSubmitDisabled} type="submit" onClick={handleSubmit}>
             {submitButtonText}
           </FLPButton>
           {isShowLogin && (

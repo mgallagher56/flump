@@ -1,6 +1,6 @@
-import { ReactNode } from 'react';
+import { type ReactNode } from 'react';
 
-import { LinkProps } from '@chakra-ui/react';
+import { type LinkProps } from '@chakra-ui/react';
 import { configure } from '@testing-library/react';
 
 if (!global.window) global.window = {} as any;

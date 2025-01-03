@@ -47,11 +47,11 @@ const AccountDetails: FC<AccountDetailsProps> = ({ onInputChange, editedValues, 
         )
         .map((year: number) => (
           <Fragment key={year}>
-            <Stack flexDirection="row" alignItems="center">
+            <Stack alignItems="center" flexDirection="row">
               <FLPHeading as="h3" size="lg">
                 {year}
               </FLPHeading>
-              <FLPButton size="xs" onClick={() => onRemoveYear(year)} variant="outline" colorScheme="red">
+              <FLPButton colorScheme="red" size="xs" variant="outline" onClick={() => onRemoveYear(year)}>
                 {t('deleteYear')}
               </FLPButton>
             </Stack>
@@ -65,16 +65,16 @@ const AccountDetails: FC<AccountDetailsProps> = ({ onInputChange, editedValues, 
                       <FLPText>{monthName}</FLPText>
                       {isEditMode ? (
                         <FLPInput
+                          isLabelHidden
                           data-month={month}
                           data-year={year}
-                          isLabelHidden
                           label={`${year}-${monthName}`}
                           name="amount"
-                          onChange={onInputChange}
                           placeholder="0.00"
                           type="number"
                           value={editedValues?.[year]?.[month] ?? value}
                           width={100}
+                          onChange={onInputChange}
                         />
                       ) : (
                         <FLPText>

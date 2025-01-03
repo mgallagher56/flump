@@ -20,7 +20,7 @@ describe('FLPLinkButton', () => {
 
   test('renders as expected with a variant', () => {
     const { container, getByText } = render(
-      <FLPLinkButton variant="solid" to="/test">
+      <FLPLinkButton to="/test" variant="solid">
         Button
       </FLPLinkButton>
     );

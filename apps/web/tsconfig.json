@@ -1,44 +1,46 @@
 {
-  "exclude": ["node_modules", "**/**/.eslintrc.cjs"],
+  "exclude": [
+      "node_modules"
+  ],
   "include": [
-    "env.d.ts",
-    "**/*.ts",
-    "**/*.tsx",
-    "**/**/*.ts",
-    "**/**/*.tsx",
-    "app/i18n.ts",
-    "app/i18n.server.ts",
-    "app/root.tsx",
-    "apps/web/app/**/*",
-    "**/.server/**/*.ts",
-    "**/.server/**/*.tsx",
-    "**/.client/**/*.ts",
-    "**/.client/**/*.tsx"
+      "app",
+      "__mocks__",
+      "mocks",
+      "db_types.ts",
   ],
   "compilerOptions": {
-    "allowJs": true,
-    "allowSyntheticDefaultImports": true,
-    "baseUrl": ".",
-    "composite": true,
-    "esModuleInterop": true,
-    "forceConsistentCasingInFileNames": true,
-    "incremental": true,
-    "isolatedModules": true,
-    "jsx": "react-jsx",
-    "lib": ["DOM", "DOM.Iterable", "ESNext"],
-    "module": "esnext",
-    "moduleResolution": "bundler",
-    "noEmit": true,
-    "noFallthroughCasesInSwitch": true,
-    "noImplicitAny": false,
-    "resolveJsonModule": true,
-    "skipLibCheck": true,
-    "strict": true,
-    "strictNullChecks": false,
-    "target": "ESNext",
-    "types": ["vite/client", "vitest/globals"],
-    "paths": {
-      "~/*": ["./app/*"]
-    },
-  },
+      "allowJs": true,
+      "allowSyntheticDefaultImports": true,
+      "baseUrl": ".",
+      "composite": true,
+      "esModuleInterop": true,
+      "forceConsistentCasingInFileNames": true,
+      "incremental": true,
+      "isolatedModules": true,
+      "jsx": "react-jsx",
+      "lib": [
+          "DOM",
+          "DOM.Iterable",
+          "ESNext"
+      ],
+      "module": "esnext",
+      "moduleResolution": "bundler",
+      "noEmit": true,
+      "noFallthroughCasesInSwitch": true,
+      "noImplicitAny": false,
+      "resolveJsonModule": true,
+      "skipLibCheck": true,
+      "strict": true,
+      "strictNullChecks": false,
+      "target": "ESNext",
+      "types": [
+          "vite/client",
+          "vitest/globals"
+      ],
+      "paths": {
+          "~/*": [
+              "./app/*"
+          ]
+      }
+  }
 }

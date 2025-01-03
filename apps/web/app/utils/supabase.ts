@@ -1,5 +1,14 @@
 import { createBrowserClient, createServerClient } from '@supabase/auth-helpers-remix';
 
+declare global {
+  interface Window {
+    env: {
+      SUPABASE_URL: string;
+      SUPABASE_ANON_KEY: string;
+    };
+  }
+}
+
 import type { Database } from 'db_types';
 
 const isServer = typeof window === 'undefined';

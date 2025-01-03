@@ -4,12 +4,12 @@ exports[`<AccountsCard /> > it renders an AccountsCard component with title as e
 <body>
   <div>
     <div
-      class="chakra-card pos_relative trs_all_0.3s_ease-in-out bd_1px_solid_token(colors.gray.500)! [&:hover]:bx-sh_2px_5px_8px_0px_token(colors.gray.500)! [&:hover]:trf_translate3d(-2px,_-5px,_-5px) [&:hover]:cursor_pointer css-kt1dpu"
+      class="chakra-card pos_relative trs_all_0.3s_ease-in-out bd_1px_solid_token(colors.gray.500)! [&:hover]:bx-sh_2px_5px_8px_0px_token(colors.gray.500)! [&:hover]:trf_translate3d(-2px,_-5px,_-5px) [&:hover]:cursor_pointer css-11joc2e"
       id="123456"
       title="My curent account"
     >
       <div
-        class="chakra-card__header css-ow5hyh"
+        class="chakra-card__header css-m9wzl5"
       >
         <h5
           class="chakra-heading css-khlt38"
@@ -101,7 +101,7 @@ exports[`<AccountsCard /> > it renders an AccountsCard component with title as e
         </div>
       </div>
       <div
-        class="chakra-card__body css-1xhs45e"
+        class="chakra-card__body css-ttziis"
       >
         <div
           class="recharts-responsive-container"
@@ -139,12 +139,12 @@ exports[`<AccountsCard with increasing values > it calls supabase.delete when de
 <body>
   <div>
     <div
-      class="chakra-card pos_relative trs_all_0.3s_ease-in-out bd_1px_solid_token(colors.gray.500)! [&:hover]:bx-sh_2px_5px_8px_0px_token(colors.gray.500)! [&:hover]:trf_translate3d(-2px,_-5px,_-5px) [&:hover]:cursor_pointer css-kt1dpu"
+      class="chakra-card pos_relative trs_all_0.3s_ease-in-out bd_1px_solid_token(colors.gray.500)! [&:hover]:bx-sh_2px_5px_8px_0px_token(colors.gray.500)! [&:hover]:trf_translate3d(-2px,_-5px,_-5px) [&:hover]:cursor_pointer css-11joc2e"
       id="123456"
       title="My curent account"
     >
       <div
-        class="chakra-card__header css-ow5hyh"
+        class="chakra-card__header css-m9wzl5"
       >
         <h5
           class="chakra-heading css-khlt38"
@@ -236,7 +236,7 @@ exports[`<AccountsCard with increasing values > it calls supabase.delete when de
         </div>
       </div>
       <div
-        class="chakra-card__body css-1xhs45e"
+        class="chakra-card__body css-ttziis"
       >
         <div
           class="recharts-responsive-container"
