@@ -1,0 +1,109 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`<Header /> > renders as expected by default 1`] = `
+<body>
+  <div>
+    <header
+      class="css-0"
+    >
+      <nav
+        class="d_flex bd-b-w_2px bd-b-c_blue.500 border-bottom-style_solid ai_center jc_space-between w_100% py_4 px_2 css-k008qs"
+      >
+        <div
+          class="d_flex gap_4 ai_center jc_start css-0"
+        >
+          <div>
+            HomeLogo
+          </div>
+          <div>
+            home
+          </div>
+        </div>
+        <div
+          class="d_flex gap_2 ai_center jc_end css-0"
+        >
+          <div>
+            UserLogin
+          </div>
+          <div>
+            ColorModeSwitch
+          </div>
+        </div>
+      </nav>
+    </header>
+  </div>
+</body>
+`;
+
+exports[`<Header /> > renders correctly when user logged in 1`] = `
+<body>
+  <div>
+    <header
+      class="css-0"
+    >
+      <nav
+        class="d_flex bd-b-w_2px bd-b-c_blue.500 border-bottom-style_solid ai_center jc_space-between w_100% py_4 px_2 css-k008qs"
+      >
+        <div
+          class="d_flex gap_4 ai_center jc_start css-0"
+        >
+          <div>
+            HomeLogo
+          </div>
+          <div>
+            home
+          </div>
+          <div>
+            dashboard
+          </div>
+          <div>
+            accounts
+          </div>
+        </div>
+        <div
+          class="d_flex gap_2 ai_center jc_end css-0"
+        >
+          <div>
+            UserLogin
+          </div>
+          <div>
+            ColorModeSwitch
+          </div>
+        </div>
+      </nav>
+    </header>
+  </div>
+</body>
+`;
+
+exports[`<Header /> > renders without ColorModeSwitch 1`] = `
+<body>
+  <div>
+    <header
+      class="css-0"
+    >
+      <nav
+        class="d_flex bd-b-w_2px bd-b-c_blue.500 border-bottom-style_solid ai_center jc_space-between w_100% py_4 px_2 css-k008qs"
+      >
+        <div
+          class="d_flex gap_4 ai_center jc_start css-0"
+        >
+          <div>
+            HomeLogo
+          </div>
+          <div>
+            home
+          </div>
+        </div>
+        <div
+          class="d_flex gap_2 ai_center jc_end css-0"
+        >
+          <div>
+            UserLogin
+          </div>
+        </div>
+      </nav>
+    </header>
+  </div>
+</body>
+`;

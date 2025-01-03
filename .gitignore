@@ -1,40 +1,19 @@
-node_modules
-
-/build
-/public/build
-.env
-.DS_Store
-
-/cypress/screenshots
-/cypress/videos
-/postgres-data
-/coverage
-/.scannerwork
-/.eslintcache
-/coverage-ts/
-sonar-report.xml
-/.cert/
-
-// starlight docs
-/starlight/.vscode
-# build output
-/starlight/dist/
-# generated types
-/starlight/.astro/
-
 # dependencies
-/starlight/node_modules/
+node_modules
+.pnp
+.pnp.js
+.pnpm-store
 
-# logs
-/starlight/npm-debug.log*
-/starlight/yarn-debug.log*
-/starlight/yarn-error.log*
-/starlight/pnpm-debug.log*
+# misc
+.DS_Store
+*.pem
 
+# turbo
+.turbo
 
-# environment variables
-/starlight/.env
-/starlight/.env.production
+# intellij idea
+.idea/
 
-# macOS-specific files
-/starlight/.DS_Store
+# cache files
+tsconfig.tsbuildinfo
+.eslintcache

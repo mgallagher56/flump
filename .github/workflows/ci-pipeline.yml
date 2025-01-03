@@ -10,6 +10,10 @@ on:
       - main
       - dev
 
+env:
+  TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
+  TURBO_TEAM: ${{ vars.TURBO_TEAM }}
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -21,20 +25,32 @@ permissions:
 
 jobs:
   lint:
-    name: ⬣ ESLint
+    name: ⬣ Lint
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        path: [apps/web]
+
     steps:
       - name: ⬇️ Checkout repo
         uses: actions/checkout@v4
 
       - uses: ./.github/actions/pnpm-setup
+        with:
+          turbo: true
+          ghToken: ${{ secrets.GITHUB_TOKEN }}
+          turboToken: ${{ env.TURBO_TOKEN }}
 
       - name: 🔬 Lint
+        working-directory: ${{ matrix.path }}
         run: pnpm run lint
 
   TSCoverage:
     name: Typescript Coverage
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        path: [apps/web]
 
     steps:
       - name: Checkout
@@ -45,11 +61,16 @@ jobs:
       - uses: ./.github/actions/pnpm-setup
 
       - name: 🔎 Type check
+        working-directory: ${{ matrix.path }}
         run: 'pnpm run ts-coverage'
 
   vitest:
     name: ⚡ Vitest
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        path: [apps/web]
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -59,41 +80,32 @@ jobs:
       - uses: ./.github/actions/pnpm-setup
 
       - name: ⚡ Run vitest
+        working-directory: "apps/web"
         run: pnpm run test
 
       - name: 'Report Coverage'
         if: always()
         uses: davelosert/vitest-coverage-report-action@v2
+        with:
+          working-directory: "apps/web"
 
-  # cypress:
-  #   name: ⚫️ Cypress
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: Checkout
-  #       uses: actions/checkout@v3
-  #       with:
-  #         fetch-depth: 0
+  build:
+    name: 🏗️ Build
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        path: [apps/web]
 
-  #     - name: 🏄 Copy test env vars
-  #       run: cp .env.example .env
+    steps:
+      - name: ⬇️ Checkout repo
+        uses: actions/checkout@v4
 
-  #     - uses: ./.github/actions/pnpm-setup
+      - uses: ./.github/actions/pnpm-setup
+        with:
+          turbo: true
+          ghToken: ${{ secrets.GITHUB_TOKEN }}
+          turboToken: ${{ env.TURBO_TOKEN }}
 
-  #     - name: 🐳 Docker compose
-  #       # the sleep is just there to give time for postgres to get started
-  #       run: docker-compose up -d && sleep 3
-  #       env:
-  #         DATABASE_URL: 'postgresql://postgres:postgres@localhost:5432/postgres'
-
-  #     - name: ⚙️ Build
-  #       run: pnpm run build
-
-  #     - name: 🌳 Cypress run
-  #       uses: cypress-io/github-action@v5
-  #       with:
-  #         start: pnpm run start:mocks
-  #         wait-on: http://localhost:8811
-  #       env:
-  #         PORT: 8811
-  #         SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-  #         SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+      - name: 🏗️ Build
+        working-directory: ${{ matrix.path }}
+        run: pnpm run build

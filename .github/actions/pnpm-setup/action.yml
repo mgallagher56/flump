@@ -1,15 +1,33 @@
 name: 'Setup pnpm'
 description: 'Setup node, pnpm and install packages'
+inputs:
+  turbo:
+    description: "Whether to use github local turbo cache"
+    required: false
+    default: "false"
+  ghToken:
+    description: "Github Repo token for Turborepo"
+    required: true
+  turboToken:
+    description: "Token to match TURBO_TOKEN env"
+    required: true
+
 runs:
   using: 'composite'
   steps:
-    - uses: actions/setup-node@v3
+    - name: TurboRepo local server
+      if: ${{ inputs.turbo == 'true' }}
+      uses: felixmosh/turborepo-gh-artifacts@v3
+      with:
+        repo-token: ${{ inputs.ghToken }}
+        server-token: ${{ inputs.turboToken }}
+
+    - uses: actions/setup-node@v4
       with:
         node-version-file: .node-version
 
-    - uses: pnpm/action-setup@v2.4.0
+    - uses: pnpm/action-setup@v4.0.0
       with:
-        version: 8
         run_install: false
 
     - name: Get pnpm store directory
@@ -18,21 +36,13 @@ runs:
       run: |
         echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_OUTPUT
 
-    - uses: actions/cache@v3
+    - uses: actions/cache@v4
       name: Setup pnpm cache
       with:
         path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
         key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
         restore-keys: |
           ${{ runner.os }}-pnpm-store-
-
-    - name: Cache Cypress binary
-      uses: actions/cache@v3
-      with:
-        path: /home/runner/.cache/Cypress
-        key: cypress-${{ runner.os }}-cypress-${{ github.ref }}-${{ hashFiles('**/pnpm-lock.yaml') }}
-        restore-keys: |
-          cypress-${{ runner.os }}-cypress-${{ github.ref }}-${{ hashFiles('**/pnpm-lock.yaml') }}
 
     - name: Install dependencies
       shell: bash
