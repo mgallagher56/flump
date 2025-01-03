@@ -46,4 +46,4 @@ runs:
 
     - name: Install dependencies
       shell: bash
-      run: pnpm install --frozen-lockfile --strict-peer-dependencies --ignore-scripts
+      run: pnpm install --frozen-lockfile --strict-peer-dependencies

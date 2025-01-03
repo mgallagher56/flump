@@ -60,9 +60,6 @@ jobs:
 
       - uses: ./.github/actions/pnpm-setup
 
-      - name: Build
-        run: "pnpm run build"
-
       - name: 🔎 Type check
         working-directory: ${{ matrix.path }}
         run: 'pnpm run ts-coverage'
@@ -81,9 +78,6 @@ jobs:
           fetch-depth: 0
 
       - uses: ./.github/actions/pnpm-setup
-
-      - name: Build
-        run: "pnpm run build"
 
       - name: ⚡ Run vitest
         working-directory: "apps/web"
