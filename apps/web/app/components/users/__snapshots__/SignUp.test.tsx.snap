@@ -2,28 +2,66 @@
 
 exports[`<SignUp /> > should render as expected 1`] = `
 <div>
-  bound HTMLFormElement {
-    "0": <input
-      class="chakra-input css-0"
-      id="Email:"
-      name="email"
-      type="email"
-      value=""
-    />,
-    "1": <input
-      class="chakra-input css-0"
-      id="Password:"
-      name="password"
-      type="password"
-      value=""
-    />,
-    "2": <button
-      class="chakra-button css-1ltlu47"
-      disabled=""
-      type="submit"
+  <form>
+    <div
+      class="css-1gnc3qn"
     >
-      signUp
-    </button>,
-  }
+      <div
+        class="d_flex flex-d_column gap_2"
+      >
+        <label
+          for="Email:"
+        >
+          Email:
+        </label>
+        <div>
+          <div
+            class="css-3a3hw0"
+          >
+            <input
+              class="chakra-input css-0"
+              id="Email:"
+              name="email"
+              type="email"
+              value=""
+            />
+          </div>
+        </div>
+      </div>
+      <div
+        class="d_flex flex-d_column gap_2"
+      >
+        <label
+          for="Password:"
+        >
+          Password:
+        </label>
+        <div>
+          <div
+            class="css-3a3hw0"
+          >
+            <input
+              class="chakra-input css-0"
+              id="Password:"
+              name="password"
+              type="password"
+              value=""
+            />
+          </div>
+        </div>
+      </div>
+      <div
+        class="css-uav12g"
+      >
+        <button
+          class="chakra-button css-1ltlu47"
+          disabled=""
+          type="submit"
+        >
+          signUp
+        </button>
+      </div>
+    </div>
+  </form>
 </div>
 `;
