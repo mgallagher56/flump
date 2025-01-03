@@ -7,6 +7,7 @@
     "npm:unpublishSafe",
     "schedule:earlyMondays"
   ],
+  "ignoreDeps": ["typescript-coverage-report"],
   "baseBranches": ["dev"],
   "labels": ["dependencies"],
   "timezone": "Europe/London",
