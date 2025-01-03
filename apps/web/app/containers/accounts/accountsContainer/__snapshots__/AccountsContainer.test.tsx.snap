@@ -3,7 +3,7 @@
 exports[`<AccountsContainer /> > should render as expected when accounts exist 1`] = `
 <div>
   <div
-    class="css-1qtey63"
+    class="css-1nj7hzp"
   >
     <h1
       class="chakra-heading css-1e3tj"
@@ -79,7 +79,7 @@ exports[`<AccountsContainer /> > should render as expected when accounts exist 1
 exports[`<AccountsContainer /> > should render as expected when no accounts exist 1`] = `
 <div>
   <div
-    class="css-1qtey63"
+    class="css-1nj7hzp"
   >
     <h1
       class="chakra-heading css-1e3tj"
