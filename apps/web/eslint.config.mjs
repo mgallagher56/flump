@@ -139,7 +139,7 @@ export default [
   },
   {
     ignores: [
-      '__mocks__',
+      '__mocks__/',
       ".prettierrc.js",
       "*.config.*",
       "*.d.ts",
@@ -153,7 +153,7 @@ export default [
       "coverage-ts/**",
       "coverage/**",
       "db_types.ts",
-      "mocks",
+      "mocks/",
       "postcss.config.cjs",
       "remix.init",
       "root.tsx",
