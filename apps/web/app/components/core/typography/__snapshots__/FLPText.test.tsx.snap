@@ -2,8 +2,16 @@
 
 exports[`FLPText > renders as expected 1`] = `
 <div>
+  <script
+    nonce=""
+  >
+    ((e,r,s,u,d,m,l,h)=&gt;
+    {let c=document.documentElement,v=["light","dark"];function p(i){(Array.isArray(e)?e:[e]).forEach(y=&gt;
+    {let k=y==="class",S=k&&m?d.map(f=&gt;
+    m[f]||f):d;k?(c.classList.remove(...S),c.classList.add(i)):c.setAttribute(y,i)}),R(i)}function R(i){h&&v.includes(i)&&(c.style.colorScheme=i)}function a(){return window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"}if(u)p(u);else try{let i=localStorage.getItem(r)||s,y=l&&i==="system"?a():i;p(y)}catch(i){}})("class","theme","system",null,["light","dark"],null,true,true)
+  </script>
   <p
-    class="chakra-text css-au19fy"
+    class="css-gyi3bv"
   >
     Lorem, ipsum dolor sit amet consectetur adipisicing elit. Nemo quaerat repellendus numquam et esse ut labore molestias nihil optio expedita atque, quas eligendi corrupti quasi impedit suscipit sunt.
   </p>
@@ -12,8 +20,16 @@ exports[`FLPText > renders as expected 1`] = `
 
 exports[`FLPText > renders as expected with a fontSiez 1`] = `
 <div>
+  <script
+    nonce=""
+  >
+    ((e,r,s,u,d,m,l,h)=&gt;
+    {let c=document.documentElement,v=["light","dark"];function p(i){(Array.isArray(e)?e:[e]).forEach(y=&gt;
+    {let k=y==="class",S=k&&m?d.map(f=&gt;
+    m[f]||f):d;k?(c.classList.remove(...S),c.classList.add(i)):c.setAttribute(y,i)}),R(i)}function R(i){h&&v.includes(i)&&(c.style.colorScheme=i)}function a(){return window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"}if(u)p(u);else try{let i=localStorage.getItem(r)||s,y=l&&i==="system"?a():i;p(y)}catch(i){}})("class","theme","system",null,["light","dark"],null,true,true)
+  </script>
   <p
-    class="chakra-text css-gjwspf"
+    class="css-1u0r0wi"
   >
     Lorem, ipsum dolor sit amet consectetur adipisicing elit. Nemo quaerat repellendus numquam et esse ut labore molestias nihil optio expedita atque, quas eligendi corrupti quasi impedit suscipit sunt.
   </p>
@@ -22,8 +38,16 @@ exports[`FLPText > renders as expected with a fontSiez 1`] = `
 
 exports[`FLPText > renders as expected with a fontWeight 1`] = `
 <div>
+  <script
+    nonce=""
+  >
+    ((e,r,s,u,d,m,l,h)=&gt;
+    {let c=document.documentElement,v=["light","dark"];function p(i){(Array.isArray(e)?e:[e]).forEach(y=&gt;
+    {let k=y==="class",S=k&&m?d.map(f=&gt;
+    m[f]||f):d;k?(c.classList.remove(...S),c.classList.add(i)):c.setAttribute(y,i)}),R(i)}function R(i){h&&v.includes(i)&&(c.style.colorScheme=i)}function a(){return window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"}if(u)p(u);else try{let i=localStorage.getItem(r)||s,y=l&&i==="system"?a():i;p(y)}catch(i){}})("class","theme","system",null,["light","dark"],null,true,true)
+  </script>
   <p
-    class="chakra-text css-18lx95u"
+    class="css-mqzk5b"
   >
     Lorem, ipsum dolor sit amet consectetur adipisicing elit. Nemo quaerat repellendus numquam et esse ut labore molestias nihil optio expedita atque, quas eligendi corrupti quasi impedit suscipit sunt.
   </p>
@@ -32,8 +56,16 @@ exports[`FLPText > renders as expected with a fontWeight 1`] = `
 
 exports[`FLPText > renders as expected with a letterSpacing 1`] = `
 <div>
+  <script
+    nonce=""
+  >
+    ((e,r,s,u,d,m,l,h)=&gt;
+    {let c=document.documentElement,v=["light","dark"];function p(i){(Array.isArray(e)?e:[e]).forEach(y=&gt;
+    {let k=y==="class",S=k&&m?d.map(f=&gt;
+    m[f]||f):d;k?(c.classList.remove(...S),c.classList.add(i)):c.setAttribute(y,i)}),R(i)}function R(i){h&&v.includes(i)&&(c.style.colorScheme=i)}function a(){return window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"}if(u)p(u);else try{let i=localStorage.getItem(r)||s,y=l&&i==="system"?a():i;p(y)}catch(i){}})("class","theme","system",null,["light","dark"],null,true,true)
+  </script>
   <p
-    class="chakra-text css-1rf05do"
+    class="css-iw8qyk"
   >
     Lorem, ipsum dolor sit amet consectetur adipisicing elit. Nemo quaerat repellendus numquam et esse ut labore molestias nihil optio expedita atque, quas eligendi corrupti quasi impedit suscipit sunt.
   </p>
@@ -42,8 +74,16 @@ exports[`FLPText > renders as expected with a letterSpacing 1`] = `
 
 exports[`FLPText > renders as expected with a lineHeight 1`] = `
 <div>
+  <script
+    nonce=""
+  >
+    ((e,r,s,u,d,m,l,h)=&gt;
+    {let c=document.documentElement,v=["light","dark"];function p(i){(Array.isArray(e)?e:[e]).forEach(y=&gt;
+    {let k=y==="class",S=k&&m?d.map(f=&gt;
+    m[f]||f):d;k?(c.classList.remove(...S),c.classList.add(i)):c.setAttribute(y,i)}),R(i)}function R(i){h&&v.includes(i)&&(c.style.colorScheme=i)}function a(){return window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"}if(u)p(u);else try{let i=localStorage.getItem(r)||s,y=l&&i==="system"?a():i;p(y)}catch(i){}})("class","theme","system",null,["light","dark"],null,true,true)
+  </script>
   <p
-    class="chakra-text css-uy92jq"
+    class="css-1lh75k3"
   >
     Lorem, ipsum dolor sit amet consectetur adipisicing elit. Nemo quaerat repellendus numquam et esse ut labore molestias nihil optio expedita atque, quas eligendi corrupti quasi impedit suscipit sunt.
   </p>

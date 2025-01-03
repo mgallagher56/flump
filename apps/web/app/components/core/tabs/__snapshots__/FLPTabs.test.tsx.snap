@@ -2,94 +2,141 @@
 
 exports[`FLPTabs > renders correctly 1`] = `
 <div>
+  <script
+    nonce=""
+  >
+    ((e,r,s,u,d,m,l,h)=&gt;
+    {let c=document.documentElement,v=["light","dark"];function p(i){(Array.isArray(e)?e:[e]).forEach(y=&gt;
+    {let k=y==="class",S=k&&m?d.map(f=&gt;
+    m[f]||f):d;k?(c.classList.remove(...S),c.classList.add(i)):c.setAttribute(y,i)}),R(i)}function R(i){h&&v.includes(i)&&(c.style.colorScheme=i)}function a(){return window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"}if(u)p(u);else try{let i=localStorage.getItem(r)||s,y=l&&i==="system"?a():i;p(y)}catch(i){}})("class","theme","system",null,["light","dark"],null,true,true)
+  </script>
   <div
-    class="chakra-tabs css-79elbk"
+    class="chakra-tabs__root css-upaspd"
+    data-orientation="horizontal"
+    data-part="root"
+    data-scope="tabs"
+    dir="ltr"
+    id="tabs::r0:"
   >
     <div
       aria-orientation="horizontal"
-      class="chakra-tabs__tablist css-k008qs"
+      class="chakra-tabs__list css-yamsmp"
+      data-orientation="horizontal"
+      data-part="list"
+      data-scope="tabs"
+      dir="ltr"
+      id="tabs::r0::list"
       role="tablist"
     >
       <button
-        aria-controls="tabs-:r0:--tabpanel-0"
+        aria-controls="tabs::r0::content-tab1"
         aria-disabled="false"
         aria-selected="true"
-        class="chakra-tabs__tab css-5wl5ud"
-        data-index="0"
-        id="tabs-:r0:--tab-0"
+        class="chakra-tabs__trigger css-19t98pl"
+        data-focus=""
+        data-orientation="horizontal"
+        data-ownedby="tabs::r0::list"
+        data-part="trigger"
+        data-scope="tabs"
+        data-selected=""
+        data-value="tab1"
+        dir="ltr"
+        id="tabs::r0::trigger-tab1"
         role="tab"
         tabindex="0"
         type="button"
-        value="tab1"
       >
         Tab 1
       </button>
       <button
-        aria-controls="tabs-:r0:--tabpanel-1"
         aria-disabled="false"
         aria-selected="false"
-        class="chakra-tabs__tab css-5wl5ud"
-        data-index="1"
-        id="tabs-:r0:--tab-1"
+        class="chakra-tabs__trigger css-19t98pl"
+        data-orientation="horizontal"
+        data-ownedby="tabs::r0::list"
+        data-part="trigger"
+        data-scope="tabs"
+        data-value="tab2"
+        dir="ltr"
+        id="tabs::r0::trigger-tab2"
         role="tab"
         tabindex="-1"
         type="button"
-        value="tab2"
       >
         Tab 2
       </button>
       <button
-        aria-controls="tabs-:r0:--tabpanel-2"
-        aria-disabled="false"
+        aria-disabled="true"
         aria-selected="false"
-        class="chakra-tabs__tab css-5wl5ud"
-        data-index="2"
-        id="tabs-:r0:--tab-2"
+        class="chakra-tabs__trigger css-19t98pl"
+        data-disabled=""
+        data-orientation="horizontal"
+        data-ownedby="tabs::r0::list"
+        data-part="trigger"
+        data-scope="tabs"
+        data-value="tab3"
+        dir="ltr"
+        disabled=""
+        id="tabs::r0::trigger-tab3"
         role="tab"
         tabindex="-1"
         type="button"
-        value="tab3"
       >
         Tab 3
       </button>
     </div>
     <div
-      class="chakra-tabs__tab-panels css-8atqhb"
+      aria-labelledby="tabs::r0::trigger-tab1"
+      class="chakra-tabs__content css-1q2huf1"
+      data-orientation="horizontal"
+      data-ownedby="tabs::r0::list"
+      data-part="content"
+      data-scope="tabs"
+      data-selected=""
+      data-state="open"
+      dir="ltr"
+      id="tabs::r0::content-tab1"
+      role="tabpanel"
+      tabindex="0"
     >
-      <div
-        aria-labelledby="tabs-:r0:--tab-0"
-        class="chakra-tabs__tab-panel css-sjt5nk"
-        id="tabs-:r0:--tabpanel-0"
-        role="tabpanel"
-        tabindex="0"
-      >
-        <div>
-          Tab content 1
-        </div>
+      <div>
+        Tab content 1
       </div>
-      <div
-        aria-labelledby="tabs-:r0:--tab-1"
-        class="chakra-tabs__tab-panel css-sjt5nk"
-        hidden=""
-        id="tabs-:r0:--tabpanel-1"
-        role="tabpanel"
-        tabindex="1"
-      >
-        <div>
-          Tab content 2
-        </div>
+    </div>
+    <div
+      aria-labelledby="tabs::r0::trigger-tab2"
+      class="chakra-tabs__content css-1q2huf1"
+      data-orientation="horizontal"
+      data-ownedby="tabs::r0::list"
+      data-part="content"
+      data-scope="tabs"
+      data-state="closed"
+      dir="ltr"
+      hidden=""
+      id="tabs::r0::content-tab2"
+      role="tabpanel"
+      tabindex="0"
+    >
+      <div>
+        Tab content 2
       </div>
-      <div
-        aria-labelledby="tabs-:r0:--tab-2"
-        class="chakra-tabs__tab-panel css-sjt5nk"
-        hidden=""
-        id="tabs-:r0:--tabpanel-2"
-        role="tabpanel"
-        tabindex="2"
-      >
-        <div>
-          Tab content 3
-        </div>
+    </div>
+    <div
+      aria-labelledby="tabs::r0::trigger-tab3"
+      class="chakra-tabs__content css-1q2huf1"
+      data-orientation="horizontal"
+      data-ownedby="tabs::r0::list"
+      data-part="content"
+      data-scope="tabs"
+      data-state="closed"
+      dir="ltr"
+      hidden=""
+      id="tabs::r0::content-tab3"
+      role="tabpanel"
+      tabindex="0"
+    >
+      <div>
+        Tab content 3
       </div>
     </div>
   </div>

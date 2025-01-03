@@ -1,12 +1,12 @@
-import { render } from '@testing-library/react';
 import { test } from 'vitest';
+import customRender from '~/testUtils/customRender';
 
 import FLPButton from './FLPButton';
 import FLPButtonGroup from './FLPButtonGroup';
 
 describe('FLPButtonGroup', () => {
   test('renders as expected', () => {
-    const { container, getByText } = render(
+    const { container, getByText } = customRender(
       <FLPButtonGroup>
         <FLPButton>Button 1</FLPButton>
         <FLPButton>Button 2</FLPButton>

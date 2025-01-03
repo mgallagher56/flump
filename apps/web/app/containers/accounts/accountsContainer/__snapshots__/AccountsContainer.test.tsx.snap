@@ -2,114 +2,160 @@
 
 exports[`<AccountsContainer /> > should render as expected when accounts exist 1`] = `
 <div>
+  <script
+    nonce=""
+  >
+    ((e,r,s,u,d,m,l,h)=&gt;
+    {let c=document.documentElement,v=["light","dark"];function p(i){(Array.isArray(e)?e:[e]).forEach(y=&gt;
+    {let k=y==="class",S=k&&m?d.map(f=&gt;
+    m[f]||f):d;k?(c.classList.remove(...S),c.classList.add(i)):c.setAttribute(y,i)}),R(i)}function R(i){h&&v.includes(i)&&(c.style.colorScheme=i)}function a(){return window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"}if(u)p(u);else try{let i=localStorage.getItem(r)||s,y=l&&i==="system"?a():i;p(y)}catch(i){}})("class","theme","system",null,["light","dark"],null,true,true)
+  </script>
   <div
-    class="css-1nj7hzp"
+    class="css-u7ajzs"
   >
     <h1
-      class="chakra-heading css-1e3tj"
+      class="chakra-heading css-mytsjf"
     >
       accounts
     </h1>
     <button
-      class="chakra-button css-1ltlu47"
+      aria-expanded="false"
+      aria-haspopup="dialog"
+      class="chakra-dialog__trigger css-0"
+      data-part="trigger"
+      data-scope="dialog"
+      data-state="closed"
+      dir="ltr"
+      id="dialog::r1::trigger"
       type="button"
     >
-      addAccount
+      <button
+        class="chakra-button css-teolye"
+        type="button"
+      >
+        addAccount
+      </button>
     </button>
   </div>
-  <h2
-    class="chakra-heading css-1e3tj"
-  >
-    Current
-  </h2>
   <div
-    class="css-1terknm"
+    class="css-1jswdmc"
   >
-    AccountsCard
-    AccountsCard
-  </div>
-  <h2
-    class="chakra-heading css-1e3tj"
-  >
-    Saving
-  </h2>
-  <div
-    class="css-1terknm"
-  >
-    AccountsCard
-    AccountsCard
-    AccountsCard
-  </div>
-  <div
-    class="css-1terknm"
-  />
-  <h2
-    class="chakra-heading css-1e3tj"
-  >
-    Mortgage
-  </h2>
-  <div
-    class="css-1terknm"
-  >
-    AccountsCard
-  </div>
-  <h2
-    class="chakra-heading css-1e3tj"
-  >
-    Loan
-  </h2>
-  <div
-    class="css-1terknm"
-  >
-    AccountsCard
-  </div>
-  <h2
-    class="chakra-heading css-1e3tj"
-  >
-    Owed
-  </h2>
-  <div
-    class="css-1terknm"
-  >
-    AccountsCard
+    <div
+      class="css-0"
+    >
+      <h2
+        class="chakra-heading css-e8b6d6"
+      >
+        Current
+      </h2>
+      <div
+        class="css-15fx9a5"
+      >
+        AccountsCard
+        AccountsCard
+      </div>
+    </div>
+    <div
+      class="css-0"
+    >
+      <h2
+        class="chakra-heading css-e8b6d6"
+      >
+        Saving
+      </h2>
+      <div
+        class="css-15fx9a5"
+      >
+        AccountsCard
+        AccountsCard
+        AccountsCard
+      </div>
+    </div>
+    <div
+      class="css-0"
+    >
+      <h2
+        class="chakra-heading css-e8b6d6"
+      >
+        Mortgage
+      </h2>
+      <div
+        class="css-15fx9a5"
+      >
+        AccountsCard
+      </div>
+    </div>
+    <div
+      class="css-0"
+    >
+      <h2
+        class="chakra-heading css-e8b6d6"
+      >
+        Loan
+      </h2>
+      <div
+        class="css-15fx9a5"
+      >
+        AccountsCard
+      </div>
+    </div>
+    <div
+      class="css-0"
+    >
+      <h2
+        class="chakra-heading css-e8b6d6"
+      >
+        Owed
+      </h2>
+      <div
+        class="css-15fx9a5"
+      >
+        AccountsCard
+      </div>
+    </div>
   </div>
 </div>
 `;
 
 exports[`<AccountsContainer /> > should render as expected when no accounts exist 1`] = `
 <div>
+  <script
+    nonce=""
+  >
+    ((e,r,s,u,d,m,l,h)=&gt;
+    {let c=document.documentElement,v=["light","dark"];function p(i){(Array.isArray(e)?e:[e]).forEach(y=&gt;
+    {let k=y==="class",S=k&&m?d.map(f=&gt;
+    m[f]||f):d;k?(c.classList.remove(...S),c.classList.add(i)):c.setAttribute(y,i)}),R(i)}function R(i){h&&v.includes(i)&&(c.style.colorScheme=i)}function a(){return window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"}if(u)p(u);else try{let i=localStorage.getItem(r)||s,y=l&&i==="system"?a():i;p(y)}catch(i){}})("class","theme","system",null,["light","dark"],null,true,true)
+  </script>
   <div
-    class="css-1nj7hzp"
+    class="css-u7ajzs"
   >
     <h1
-      class="chakra-heading css-1e3tj"
+      class="chakra-heading css-mytsjf"
     >
       accounts
     </h1>
     <button
-      class="chakra-button css-1ltlu47"
+      aria-expanded="false"
+      aria-haspopup="dialog"
+      class="chakra-dialog__trigger css-0"
+      data-part="trigger"
+      data-scope="dialog"
+      data-state="closed"
+      dir="ltr"
+      id="dialog::r0::trigger"
       type="button"
     >
-      addAccount
+      <button
+        class="chakra-button css-teolye"
+        type="button"
+      >
+        addAccount
+      </button>
     </button>
   </div>
   <div
-    class="css-1terknm"
-  />
-  <div
-    class="css-1terknm"
-  />
-  <div
-    class="css-1terknm"
-  />
-  <div
-    class="css-1terknm"
-  />
-  <div
-    class="css-1terknm"
-  />
-  <div
-    class="css-1terknm"
+    class="css-1jswdmc"
   />
 </div>
 `;

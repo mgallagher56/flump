@@ -2,9 +2,17 @@
 
 exports[`<SignUp /> > should render as expected 1`] = `
 <div>
+  <script
+    nonce=""
+  >
+    ((e,r,s,u,d,m,l,h)=&gt;
+    {let c=document.documentElement,v=["light","dark"];function p(i){(Array.isArray(e)?e:[e]).forEach(y=&gt;
+    {let k=y==="class",S=k&&m?d.map(f=&gt;
+    m[f]||f):d;k?(c.classList.remove(...S),c.classList.add(i)):c.setAttribute(y,i)}),R(i)}function R(i){h&&v.includes(i)&&(c.style.colorScheme=i)}function a(){return window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"}if(u)p(u);else try{let i=localStorage.getItem(r)||s,y=l&&i==="system"?a():i;p(y)}catch(i){}})("class","theme","system",null,["light","dark"],null,true,true)
+  </script>
   <form>
     <div
-      class="css-1gnc3qn"
+      class="css-fybcnu"
     >
       <div
         class="d_flex flex-d_column gap_2"
@@ -16,10 +24,10 @@ exports[`<SignUp /> > should render as expected 1`] = `
         </label>
         <div>
           <div
-            class="css-3a3hw0"
+            class="css-1op6ogi"
           >
             <input
-              class="chakra-input css-0"
+              class="chakra-input css-1145hk9"
               id="Email:"
               name="email"
               type="email"
@@ -38,10 +46,10 @@ exports[`<SignUp /> > should render as expected 1`] = `
         </label>
         <div>
           <div
-            class="css-3a3hw0"
+            class="css-1op6ogi"
           >
             <input
-              class="chakra-input css-0"
+              class="chakra-input css-1145hk9"
               id="Password:"
               name="password"
               type="password"
@@ -51,10 +59,10 @@ exports[`<SignUp /> > should render as expected 1`] = `
         </div>
       </div>
       <div
-        class="css-uav12g"
+        class="css-fosw76"
       >
         <button
-          class="chakra-button css-1ltlu47"
+          class="chakra-button css-1fwa16t"
           disabled=""
           type="submit"
         >

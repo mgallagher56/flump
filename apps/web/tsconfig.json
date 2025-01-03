@@ -1,6 +1,6 @@
 {
   "exclude": ["node_modules"],
-  "include": ["app", "__mocks__", "mocks", "db_types.ts", ".react-router/types/**/*"],
+  "include": ["app", "__mocks__", "mocks", "db_types.ts", ".react-router/types/**/*", "test"],
   "compilerOptions": {
     "allowJs": true,
     "allowSyntheticDefaultImports": true,

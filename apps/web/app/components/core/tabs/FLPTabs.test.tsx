@@ -1,4 +1,5 @@
-import { render, screen } from '@testing-library/react';
+import { screen } from '@testing-library/react';
+import customRender from '~/testUtils/customRender';
 
 import FLPTabs from './FLPTabs';
 import type { TabData } from './types';
@@ -27,7 +28,7 @@ const mockTabData: TabData[] = [
 const ariaSelectedValue = (tab: HTMLElement): string => tab['attributes']?.['aria-selected']?.value;
 describe('FLPTabs', () => {
   test('renders correctly', () => {
-    const { container } = render(<FLPTabs data={mockTabData} />);
+    const { container } = customRender(<FLPTabs data={mockTabData} />);
     expect(container).toMatchSnapshot();
     const tab1 = screen.getByText('Tab 1');
     const tab2 = screen.getByText('Tab 2');

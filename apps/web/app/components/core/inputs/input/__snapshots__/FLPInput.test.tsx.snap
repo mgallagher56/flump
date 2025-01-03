@@ -2,6 +2,14 @@
 
 exports[`<FLPInput /> > should render as expected 1`] = `
 <div>
+  <script
+    nonce=""
+  >
+    ((e,r,s,u,d,m,l,h)=&gt;
+    {let c=document.documentElement,v=["light","dark"];function p(i){(Array.isArray(e)?e:[e]).forEach(y=&gt;
+    {let k=y==="class",S=k&&m?d.map(f=&gt;
+    m[f]||f):d;k?(c.classList.remove(...S),c.classList.add(i)):c.setAttribute(y,i)}),R(i)}function R(i){h&&v.includes(i)&&(c.style.colorScheme=i)}function a(){return window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"}if(u)p(u);else try{let i=localStorage.getItem(r)||s,y=l&&i==="system"?a():i;p(y)}catch(i){}})("class","theme","system",null,["light","dark"],null,true,true)
+  </script>
   <div
     class="d_flex flex-d_column gap_2"
   >
@@ -12,10 +20,10 @@ exports[`<FLPInput /> > should render as expected 1`] = `
     </label>
     <div>
       <div
-        class="css-3a3hw0"
+        class="css-1op6ogi"
       >
         <input
-          class="chakra-input css-0"
+          class="chakra-input css-1145hk9"
           id="Test"
         />
       </div>
@@ -26,6 +34,14 @@ exports[`<FLPInput /> > should render as expected 1`] = `
 
 exports[`<FLPInput /> > should render as expected with error 1`] = `
 <div>
+  <script
+    nonce=""
+  >
+    ((e,r,s,u,d,m,l,h)=&gt;
+    {let c=document.documentElement,v=["light","dark"];function p(i){(Array.isArray(e)?e:[e]).forEach(y=&gt;
+    {let k=y==="class",S=k&&m?d.map(f=&gt;
+    m[f]||f):d;k?(c.classList.remove(...S),c.classList.add(i)):c.setAttribute(y,i)}),R(i)}function R(i){h&&v.includes(i)&&(c.style.colorScheme=i)}function a(){return window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"}if(u)p(u);else try{let i=localStorage.getItem(r)||s,y=l&&i==="system"?a():i;p(y)}catch(i){}})("class","theme","system",null,["light","dark"],null,true,true)
+  </script>
   <div
     class="d_flex flex-d_column gap_2"
   >
@@ -36,10 +52,10 @@ exports[`<FLPInput /> > should render as expected with error 1`] = `
     </label>
     <div>
       <div
-        class="css-3a3hw0"
+        class="css-1op6ogi"
       >
         <input
-          class="chakra-input css-0"
+          class="chakra-input css-1145hk9"
           id="Test"
         />
         <span
@@ -55,6 +71,14 @@ exports[`<FLPInput /> > should render as expected with error 1`] = `
 
 exports[`<FLPInput /> > should render as expected with value 1`] = `
 <div>
+  <script
+    nonce=""
+  >
+    ((e,r,s,u,d,m,l,h)=&gt;
+    {let c=document.documentElement,v=["light","dark"];function p(i){(Array.isArray(e)?e:[e]).forEach(y=&gt;
+    {let k=y==="class",S=k&&m?d.map(f=&gt;
+    m[f]||f):d;k?(c.classList.remove(...S),c.classList.add(i)):c.setAttribute(y,i)}),R(i)}function R(i){h&&v.includes(i)&&(c.style.colorScheme=i)}function a(){return window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"}if(u)p(u);else try{let i=localStorage.getItem(r)||s,y=l&&i==="system"?a():i;p(y)}catch(i){}})("class","theme","system",null,["light","dark"],null,true,true)
+  </script>
   <div
     class="d_flex flex-d_column gap_2"
   >
@@ -65,10 +89,10 @@ exports[`<FLPInput /> > should render as expected with value 1`] = `
     </label>
     <div>
       <div
-        class="css-3a3hw0"
+        class="css-1op6ogi"
       >
         <input
-          class="chakra-input css-0"
+          class="chakra-input css-1145hk9"
           id="Test"
           value="Value"
         />
@@ -80,6 +104,14 @@ exports[`<FLPInput /> > should render as expected with value 1`] = `
 
 exports[`<FLPInput /> > should render as expected with value and error 1`] = `
 <div>
+  <script
+    nonce=""
+  >
+    ((e,r,s,u,d,m,l,h)=&gt;
+    {let c=document.documentElement,v=["light","dark"];function p(i){(Array.isArray(e)?e:[e]).forEach(y=&gt;
+    {let k=y==="class",S=k&&m?d.map(f=&gt;
+    m[f]||f):d;k?(c.classList.remove(...S),c.classList.add(i)):c.setAttribute(y,i)}),R(i)}function R(i){h&&v.includes(i)&&(c.style.colorScheme=i)}function a(){return window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"}if(u)p(u);else try{let i=localStorage.getItem(r)||s,y=l&&i==="system"?a():i;p(y)}catch(i){}})("class","theme","system",null,["light","dark"],null,true,true)
+  </script>
   <div
     class="d_flex flex-d_column gap_2"
   >
@@ -90,10 +122,10 @@ exports[`<FLPInput /> > should render as expected with value and error 1`] = `
     </label>
     <div>
       <div
-        class="css-3a3hw0"
+        class="css-1op6ogi"
       >
         <input
-          class="chakra-input css-0"
+          class="chakra-input css-1145hk9"
           id="Test"
           value="Value"
         />
@@ -110,6 +142,14 @@ exports[`<FLPInput /> > should render as expected with value and error 1`] = `
 
 exports[`<FLPInput /> > should render as expected without a label 1`] = `
 <div>
+  <script
+    nonce=""
+  >
+    ((e,r,s,u,d,m,l,h)=&gt;
+    {let c=document.documentElement,v=["light","dark"];function p(i){(Array.isArray(e)?e:[e]).forEach(y=&gt;
+    {let k=y==="class",S=k&&m?d.map(f=&gt;
+    m[f]||f):d;k?(c.classList.remove(...S),c.classList.add(i)):c.setAttribute(y,i)}),R(i)}function R(i){h&&v.includes(i)&&(c.style.colorScheme=i)}function a(){return window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"}if(u)p(u);else try{let i=localStorage.getItem(r)||s,y=l&&i==="system"?a():i;p(y)}catch(i){}})("class","theme","system",null,["light","dark"],null,true,true)
+  </script>
   <div
     class="d_flex flex-d_column gap_2"
   >
@@ -121,10 +161,10 @@ exports[`<FLPInput /> > should render as expected without a label 1`] = `
     </label>
     <div>
       <div
-        class="css-3a3hw0"
+        class="css-1op6ogi"
       >
         <input
-          class="chakra-input css-0"
+          class="chakra-input css-1145hk9"
           id="Test"
         />
       </div>
@@ -135,6 +175,14 @@ exports[`<FLPInput /> > should render as expected without a label 1`] = `
 
 exports[`<FLPInput /> > should render elements as a row 1`] = `
 <div>
+  <script
+    nonce=""
+  >
+    ((e,r,s,u,d,m,l,h)=&gt;
+    {let c=document.documentElement,v=["light","dark"];function p(i){(Array.isArray(e)?e:[e]).forEach(y=&gt;
+    {let k=y==="class",S=k&&m?d.map(f=&gt;
+    m[f]||f):d;k?(c.classList.remove(...S),c.classList.add(i)):c.setAttribute(y,i)}),R(i)}function R(i){h&&v.includes(i)&&(c.style.colorScheme=i)}function a(){return window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"}if(u)p(u);else try{let i=localStorage.getItem(r)||s,y=l&&i==="system"?a():i;p(y)}catch(i){}})("class","theme","system",null,["light","dark"],null,true,true)
+  </script>
   <div
     class="d_flex flex-d_row ai_center gap_4"
   >
@@ -145,10 +193,10 @@ exports[`<FLPInput /> > should render elements as a row 1`] = `
     </label>
     <div>
       <div
-        class="css-3a3hw0"
+        class="css-1op6ogi"
       >
         <input
-          class="chakra-input css-0"
+          class="chakra-input css-1145hk9"
           id="Test"
         />
       </div>

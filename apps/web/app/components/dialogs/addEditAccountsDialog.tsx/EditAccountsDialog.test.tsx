@@ -1,7 +1,8 @@
 import type { ReactNode } from 'react';
 
-import { fireEvent, render } from '@testing-library/react';
+import { fireEvent } from '@testing-library/react';
 import { vi } from 'vitest';
+import customRender from '~/testUtils/customRender';
 
 import mockUser from '__mocks__/user';
 
@@ -38,7 +39,7 @@ vi.mock('app/utils/supabase', () => ({
 
 describe('<EditAccountDialogBtn', () => {
   mocks.mockUseLoaderData.mockReturnValue({ user: mockUser });
-  const { baseElement, getByText, getAllByText } = render(
+  const { baseElement, getByText, getAllByText } = customRender(
     <AddEditAccountsDialogBtn isEditAccount accountId="123456" />
   );
   const triggerBtn = getByText('edit');

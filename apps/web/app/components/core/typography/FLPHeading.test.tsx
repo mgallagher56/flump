@@ -1,4 +1,5 @@
-import { render } from '@testing-library/react';
+import customRender from '~/testUtils/customRender';
+
 
 import FLPHeading from './FLPHeading';
 
@@ -7,19 +8,19 @@ const sampleText =
 
 describe('FLPHeading', () => {
   test('renders as expected', () => {
-    const { container } = render(<FLPHeading as="h1">{sampleText}</FLPHeading>);
+    const { container } =customRender(<FLPHeading as="h1">{sampleText}</FLPHeading>);
     expect(container).toMatchSnapshot();
   });
   test('renders as expected with a size', () => {
-    const { container } = render(<FLPHeading size="lg">{sampleText}</FLPHeading>);
+    const { container } =customRender(<FLPHeading size="lg">{sampleText}</FLPHeading>);
     expect(container).toMatchSnapshot();
   });
   test('renders as expected with a color', () => {
-    const { container } = render(<FLPHeading colorPalette="blue">{sampleText}</FLPHeading>);
+    const { container } =customRender(<FLPHeading colorPalette="blue">{sampleText}</FLPHeading>);
     expect(container).toMatchSnapshot();
   });
   test('render only number of lines', () => {
-    const { container } = render(
+    const { container } =customRender(
       <FLPHeading as="h1" size="4xl">
         {sampleText}
       </FLPHeading>

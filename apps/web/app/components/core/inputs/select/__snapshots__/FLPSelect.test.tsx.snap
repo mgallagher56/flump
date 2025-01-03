@@ -3,51 +3,195 @@
 exports[`<FLPSelect /> > should render as expected 1`] = `
 <body>
   <div>
+    <script
+      nonce=""
+    >
+      ((e,r,s,u,d,m,l,h)=&gt;
+      {let c=document.documentElement,v=["light","dark"];function p(i){(Array.isArray(e)?e:[e]).forEach(y=&gt;
+      {let k=y==="class",S=k&&m?d.map(f=&gt;
+      m[f]||f):d;k?(c.classList.remove(...S),c.classList.add(i)):c.setAttribute(y,i)}),R(i)}function R(i){h&&v.includes(i)&&(c.style.colorScheme=i)}function a(){return window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"}if(u)p(u);else try{let i=localStorage.getItem(r)||s,y=l&&i==="system"?a():i;p(y)}catch(i){}})("class","theme","system",null,["light","dark"],null,true,true)
+    </script>
     <div
       class="d_flex flex-d_column gap_2"
     >
-      <label
-        for="label"
-      >
-        label
-      </label>
       <div
-        class="chakra-select__wrapper css-42b2qy"
+        class="chakra-select__root css-1tw36de"
+        data-part="root"
+        data-scope="select"
+        dir="ltr"
+        id="select::r0:"
       >
-        <select
-          class="chakra-select css-1ik61og"
-          id="label"
+        <label
+          class="chakra-select__label css-p3rj3s"
+          data-part="label"
+          data-scope="select"
+          dir="ltr"
+          for="label"
+          id="select::r0::label"
         >
-          <option
-            value="1"
-          >
-            1
-          </option>
-          <option
-            value="2"
-          >
-            2
-          </option>
-          <option
-            value="3"
-          >
-            3
-          </option>
-        </select>
+          label
+        </label>
         <div
-          class="chakra-select__icon-wrapper css-162mkon"
+          class="chakra-select__control css-17j1053"
+          data-part="control"
+          data-scope="select"
+          data-state="closed"
+          dir="ltr"
+          id="select::r0::control"
+        >
+          <button
+            aria-controls="select::r0::content"
+            aria-expanded="false"
+            aria-haspopup="listbox"
+            aria-labelledby="select::r0::label"
+            class="chakra-select__trigger css-1ilznyv"
+            data-part="trigger"
+            data-scope="select"
+            data-state="closed"
+            dir="ltr"
+            id="select::r0::trigger"
+            role="combobox"
+            type="button"
+          >
+            <span
+              class="chakra-select__valueText css-176t9sc"
+              data-part="value-text"
+              data-scope="select"
+              dir="ltr"
+            >
+              1
+            </span>
+          </button>
+          <div
+            class="chakra-select__indicatorGroup css-1xvjckd"
+          >
+            <div
+              aria-hidden="true"
+              class="chakra-select__indicator css-1atg1ut"
+              data-part="indicator"
+              data-scope="select"
+              data-state="closed"
+              dir="ltr"
+            >
+              <svg
+                class="css-s3mb0o"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  d="m6 9 6 6 6-6"
+                />
+              </svg>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div
+    class="chakra-select__positioner css-0"
+    data-part="positioner"
+    data-scope="select"
+    dir="ltr"
+    id="select::r0::positioner"
+    style="position: absolute; isolation: isolate; min-width: max-content; top: 0px; left: 0px; transform: translate3d(0, -100vh, 0); z-index: var(--z-index);"
+  >
+    <div
+      aria-labelledby="select::r0::label"
+      class="chakra-select__content css-1ag9z1i"
+      data-part="content"
+      data-scope="select"
+      data-state="closed"
+      dir="ltr"
+      hidden=""
+      id="select::r0::content"
+      role="listbox"
+      tabindex="0"
+    >
+      <div
+        aria-selected="true"
+        class="chakra-select__item css-5sbkxs"
+        data-part="item"
+        data-scope="select"
+        data-state="checked"
+        data-value="1"
+        dir="ltr"
+        id="select::r0::option:1"
+        role="option"
+      >
+        1
+        <div
+          aria-hidden="true"
+          class="chakra-select__itemIndicator css-0"
+          data-part="item-indicator"
+          data-scope="select"
+          data-state="checked"
         >
           <svg
-            aria-hidden="true"
-            class="chakra-select__icon"
-            focusable="false"
-            role="presentation"
-            style="width: 1em; height: 1em; color: currentcolor;"
+            class="css-s3mb0o"
             viewBox="0 0 24 24"
           >
             <path
-              d="M16.59 8.59L12 13.17 7.41 8.59 6 10l6 6 6-6z"
-              fill="currentColor"
+              d="M20 6 9 17l-5-5"
+            />
+          </svg>
+        </div>
+      </div>
+      <div
+        aria-selected="false"
+        class="chakra-select__item css-5sbkxs"
+        data-part="item"
+        data-scope="select"
+        data-state="unchecked"
+        data-value="2"
+        dir="ltr"
+        id="select::r0::option:2"
+        role="option"
+      >
+        2
+        <div
+          aria-hidden="true"
+          class="chakra-select__itemIndicator css-0"
+          data-part="item-indicator"
+          data-scope="select"
+          data-state="unchecked"
+          hidden=""
+        >
+          <svg
+            class="css-s3mb0o"
+            viewBox="0 0 24 24"
+          >
+            <path
+              d="M20 6 9 17l-5-5"
+            />
+          </svg>
+        </div>
+      </div>
+      <div
+        aria-selected="false"
+        class="chakra-select__item css-5sbkxs"
+        data-part="item"
+        data-scope="select"
+        data-state="unchecked"
+        data-value="3"
+        dir="ltr"
+        id="select::r0::option:3"
+        role="option"
+      >
+        3
+        <div
+          aria-hidden="true"
+          class="chakra-select__itemIndicator css-0"
+          data-part="item-indicator"
+          data-scope="select"
+          data-state="unchecked"
+          hidden=""
+        >
+          <svg
+            class="css-s3mb0o"
+            viewBox="0 0 24 24"
+          >
+            <path
+              d="M20 6 9 17l-5-5"
             />
           </svg>
         </div>
@@ -60,51 +204,195 @@ exports[`<FLPSelect /> > should render as expected 1`] = `
 exports[`<FLPSelect /> > should render as expected as row 1`] = `
 <body>
   <div>
+    <script
+      nonce=""
+    >
+      ((e,r,s,u,d,m,l,h)=&gt;
+      {let c=document.documentElement,v=["light","dark"];function p(i){(Array.isArray(e)?e:[e]).forEach(y=&gt;
+      {let k=y==="class",S=k&&m?d.map(f=&gt;
+      m[f]||f):d;k?(c.classList.remove(...S),c.classList.add(i)):c.setAttribute(y,i)}),R(i)}function R(i){h&&v.includes(i)&&(c.style.colorScheme=i)}function a(){return window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"}if(u)p(u);else try{let i=localStorage.getItem(r)||s,y=l&&i==="system"?a():i;p(y)}catch(i){}})("class","theme","system",null,["light","dark"],null,true,true)
+    </script>
     <div
       class="d_flex flex-d_row ai_center gap_4"
     >
-      <label
-        for="label"
-      >
-        label
-      </label>
       <div
-        class="chakra-select__wrapper css-42b2qy"
+        class="chakra-select__root css-1tw36de"
+        data-part="root"
+        data-scope="select"
+        dir="ltr"
+        id="select::r1:"
       >
-        <select
-          class="chakra-select css-1ik61og"
-          id="label"
+        <label
+          class="chakra-select__label css-p3rj3s"
+          data-part="label"
+          data-scope="select"
+          dir="ltr"
+          for="label"
+          id="select::r1::label"
         >
-          <option
-            value="1"
-          >
-            1
-          </option>
-          <option
-            value="2"
-          >
-            2
-          </option>
-          <option
-            value="3"
-          >
-            3
-          </option>
-        </select>
+          label
+        </label>
         <div
-          class="chakra-select__icon-wrapper css-162mkon"
+          class="chakra-select__control css-17j1053"
+          data-part="control"
+          data-scope="select"
+          data-state="closed"
+          dir="ltr"
+          id="select::r1::control"
+        >
+          <button
+            aria-controls="select::r1::content"
+            aria-expanded="false"
+            aria-haspopup="listbox"
+            aria-labelledby="select::r1::label"
+            class="chakra-select__trigger css-1ilznyv"
+            data-part="trigger"
+            data-scope="select"
+            data-state="closed"
+            dir="ltr"
+            id="select::r1::trigger"
+            role="combobox"
+            type="button"
+          >
+            <span
+              class="chakra-select__valueText css-176t9sc"
+              data-part="value-text"
+              data-scope="select"
+              dir="ltr"
+            >
+              1
+            </span>
+          </button>
+          <div
+            class="chakra-select__indicatorGroup css-1xvjckd"
+          >
+            <div
+              aria-hidden="true"
+              class="chakra-select__indicator css-1atg1ut"
+              data-part="indicator"
+              data-scope="select"
+              data-state="closed"
+              dir="ltr"
+            >
+              <svg
+                class="css-s3mb0o"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  d="m6 9 6 6 6-6"
+                />
+              </svg>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div
+    class="chakra-select__positioner css-0"
+    data-part="positioner"
+    data-scope="select"
+    dir="ltr"
+    id="select::r1::positioner"
+    style="position: absolute; isolation: isolate; min-width: max-content; top: 0px; left: 0px; transform: translate3d(0, -100vh, 0); z-index: var(--z-index);"
+  >
+    <div
+      aria-labelledby="select::r1::label"
+      class="chakra-select__content css-1ag9z1i"
+      data-part="content"
+      data-scope="select"
+      data-state="closed"
+      dir="ltr"
+      hidden=""
+      id="select::r1::content"
+      role="listbox"
+      tabindex="0"
+    >
+      <div
+        aria-selected="true"
+        class="chakra-select__item css-5sbkxs"
+        data-part="item"
+        data-scope="select"
+        data-state="checked"
+        data-value="1"
+        dir="ltr"
+        id="select::r1::option:1"
+        role="option"
+      >
+        1
+        <div
+          aria-hidden="true"
+          class="chakra-select__itemIndicator css-0"
+          data-part="item-indicator"
+          data-scope="select"
+          data-state="checked"
         >
           <svg
-            aria-hidden="true"
-            class="chakra-select__icon"
-            focusable="false"
-            role="presentation"
-            style="width: 1em; height: 1em; color: currentcolor;"
+            class="css-s3mb0o"
             viewBox="0 0 24 24"
           >
             <path
-              d="M16.59 8.59L12 13.17 7.41 8.59 6 10l6 6 6-6z"
-              fill="currentColor"
+              d="M20 6 9 17l-5-5"
+            />
+          </svg>
+        </div>
+      </div>
+      <div
+        aria-selected="false"
+        class="chakra-select__item css-5sbkxs"
+        data-part="item"
+        data-scope="select"
+        data-state="unchecked"
+        data-value="2"
+        dir="ltr"
+        id="select::r1::option:2"
+        role="option"
+      >
+        2
+        <div
+          aria-hidden="true"
+          class="chakra-select__itemIndicator css-0"
+          data-part="item-indicator"
+          data-scope="select"
+          data-state="unchecked"
+          hidden=""
+        >
+          <svg
+            class="css-s3mb0o"
+            viewBox="0 0 24 24"
+          >
+            <path
+              d="M20 6 9 17l-5-5"
+            />
+          </svg>
+        </div>
+      </div>
+      <div
+        aria-selected="false"
+        class="chakra-select__item css-5sbkxs"
+        data-part="item"
+        data-scope="select"
+        data-state="unchecked"
+        data-value="3"
+        dir="ltr"
+        id="select::r1::option:3"
+        role="option"
+      >
+        3
+        <div
+          aria-hidden="true"
+          class="chakra-select__itemIndicator css-0"
+          data-part="item-indicator"
+          data-scope="select"
+          data-state="unchecked"
+          hidden=""
+        >
+          <svg
+            class="css-s3mb0o"
+            viewBox="0 0 24 24"
+          >
+            <path
+              d="M20 6 9 17l-5-5"
             />
           </svg>
         </div>

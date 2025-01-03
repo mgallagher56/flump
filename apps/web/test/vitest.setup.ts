@@ -4,7 +4,7 @@ import { type LinkProps } from '@chakra-ui/react';
 import { configure } from '@testing-library/react';
 
 if (!global.window) global.window = {} as any;
-Object.defineProperty(window, 'env', {
+Object.defineProperty(window, 'ENV', {
   value: {
     SUPABASE_URL: 'http://localhost:8000',
     SUPABASE_ANON_KEY: 'anon-key'
