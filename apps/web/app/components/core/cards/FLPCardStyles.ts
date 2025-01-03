@@ -6,7 +6,6 @@ export const FLPCardStyles = css({
   border: '1px solid token(colors.gray.500)!',
   '&:hover': {
     boxShadow: '2px 5px 8px 0px token(colors.gray.500) !important',
-    transform: 'translate3d(-2px, -5px, -5px)',
-    cursor: 'pointer'
+    transform: 'translate3d(-2px, -5px, -5px)'
   }
 });

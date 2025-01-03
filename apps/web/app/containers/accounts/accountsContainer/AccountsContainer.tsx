@@ -19,29 +19,33 @@ const AccountsContainer: FC = () => {
 
   return (
     <>
-      <FLPBox display="flex" flexDirection="row" justifyContent="space-between" mb={5}>
+      <FLPBox display="flex" flexDirection="row" justifyContent="space-between" my={5}>
         <FLPHeading as="h1" size="xl">
           {t('accounts')}
         </FLPHeading>
         <AddEditAccountsDialogBtn />
       </FLPBox>
-      {accountTypeArr.map((accountType) => {
-        return (
-          <Fragment key={accountType}>
-            {isAccountTypeValid(accountType, accounts) && (
-              <FLPHeading as="h2" size="lg">
-                {accountType}
-              </FLPHeading>
-            )}
-            <FLPBox display="flex" flexWrap="wrap" gap={5}>
-              {accounts.map(
-                ({ name, id, type }: { name?: string; id?: string; type?: AccountTypeEnum | string }) =>
-                  type === accountType && <AccountsCard key={id} accountId={id} name={name} type={type} />
-              )}
-            </FLPBox>
-          </Fragment>
-        );
-      })}
+      <FLPBox display="flex" flexWrap="wrap" gap={10}>
+        {accountTypeArr.map((accountType) => {
+          return (
+            isAccountTypeValid(accountType, accounts) && (
+              <Fragment key={accountType}>
+                <FLPBox>
+                  <FLPHeading as="h2" size="lg">
+                    {accountType}
+                  </FLPHeading>
+                  <FLPBox display="flex" flexWrap="wrap" gap={5}>
+                    {accounts.map(
+                      ({ name, id, type }: { name?: string; id?: string; type?: AccountTypeEnum | string }) =>
+                        type === accountType && <AccountsCard key={id} accountId={id} name={name} type={type} />
+                    )}
+                  </FLPBox>
+                </FLPBox>
+              </Fragment>
+            )
+          );
+        })}
+      </FLPBox>
     </>
   );
 };

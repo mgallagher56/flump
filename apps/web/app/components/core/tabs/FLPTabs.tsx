@@ -1,11 +1,10 @@
 import { type FC, type PropsWithChildren } from 'react';
 
-import type { TabsProps } from '@chakra-ui/react';
-import { Tab, TabList, TabPanel, TabPanels, Tabs } from '@chakra-ui/react';
+import { Tabs, type TabsRootProps } from '@chakra-ui/react/tabs';
 
 import type { TabData } from './types';
 
-interface FLPTabsProps extends Omit<TabsProps, 'children'> {
+interface FLPTabsProps extends Omit<TabsRootProps, 'children'> {
   data: TabData[];
   orientation?: 'horizontal' | 'vertical';
 }
@@ -13,22 +12,20 @@ interface FLPTabsProps extends Omit<TabsProps, 'children'> {
 const FLPTabs: FC<PropsWithChildren<FLPTabsProps>> = ({ data, orientation }) => {
   const FLPOrientation = orientation ?? 'horizontal';
   return (
-    <Tabs orientation={FLPOrientation}>
-      <TabList>
-        {data.map((item, index) => (
-          <Tab key={item.value} tabIndex={index} value={item.value}>
+    <Tabs.Root orientation={FLPOrientation}>
+      <Tabs.List>
+        {data.map((item) => (
+          <Tabs.Trigger key={item.value} value={item.value}>
             {item.label}
-          </Tab>
+          </Tabs.Trigger>
         ))}
-      </TabList>
-      <TabPanels>
-        {data.map((item, index) => (
-          <TabPanel key={item.value} tabIndex={index}>
-            {item.children}
-          </TabPanel>
-        ))}
-      </TabPanels>
-    </Tabs>
+      </Tabs.List>
+      {data.map((item) => (
+        <Tabs.Content key={item.value} value={item.value}>
+          {item.children}
+        </Tabs.Content>
+      ))}
+    </Tabs.Root>
   );
 };
 

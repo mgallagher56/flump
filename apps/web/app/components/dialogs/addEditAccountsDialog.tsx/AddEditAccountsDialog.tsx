@@ -1,6 +1,6 @@
-import { type FC, useCallback, useMemo, useState } from 'react';
+import { type FC, useCallback, useMemo, useRef, useState } from 'react';
 
-import type { ButtonProps } from '@chakra-ui/react';
+import { type ButtonProps, createListCollection } from '@chakra-ui/react';
 import { useTranslation } from 'react-i18next';
 import { Form, useLoaderData, useRevalidator } from 'react-router';
 import FLPButton from '~/components/core/buttons/FLPButton';
@@ -14,6 +14,11 @@ import supabase from '~/utils/supabase';
 
 const { CURRENT, SAVING, MORTGAGE, LOAN, OWED } = AccountTypeEnum;
 const accountTypeArray = [CURRENT, SAVING, MORTGAGE, LOAN, OWED];
+const accountTypes = createListCollection({
+  items: accountTypeArray.map((type) => ({ id: type, name: type })),
+  itemToString: (item) => item.name,
+  itemToValue: (item) => item.id
+});
 
 interface AddEditAccountsDialogBtnProp {
   accountId?: string;
@@ -31,6 +36,7 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({ accountId,
   } = useLoaderData<typeof loader>();
   const { t } = useTranslation();
   const { revalidate } = useRevalidator();
+  const contentRef = useRef<HTMLDivElement>(null);
   const [modalOpen, setModalOpen] = useState(false);
 
   const handleOpenModal = useCallback(
@@ -55,27 +61,34 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({ accountId,
 
   const [formInput, setFormInput] = useState<{
     name: string;
-    type: AccountType;
-  }>({ name: selectedAccount.name, type: selectedAccount.type });
+    type: AccountType[];
+  }>({ name: selectedAccount.name, type: [selectedAccount.type] });
 
-  const onChangeFormInput = useCallback(
+  const onChangeNameInput = useCallback(
     (event: {
       target: {
         name: string;
         value: AccountType | string;
       };
     }) => {
-      const { name, value } = event.target;
-      setFormInput((prevState) => ({ ...prevState, [name]: value }));
+      const { value } = event.target;
+      setFormInput((prevState) => ({ ...prevState, name: value }));
+    },
+    [setFormInput]
+  );
+
+  const onChangeTypeInput = useCallback(
+    (e: { value: string[] }) => {
+      setFormInput((prevState) => ({ ...prevState, type: e.value }));
     },
     [setFormInput]
   );
 
   const onAddAccount = useCallback(async () => {
-    const { name, type } = formInput as { name: string; type: AccountTypeEnum };
+    const { name, type } = formInput as { name: string; type: AccountTypeEnum[] };
     const { data } = await supabase
       .from('accounts')
-      .insert([{ name, type, user_id: user?.id }])
+      .insert([{ name, type: type?.[0], user_id: user?.id }])
       .select();
 
     const year = new Date().getFullYear();
@@ -93,7 +106,7 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({ accountId,
 
   const onEditAccount = useCallback(async () => {
     const newName = formInput.name;
-    const newType = formInput.type as AccountTypeEnum;
+    const newType = formInput.type[0] as AccountTypeEnum;
     await supabase
       .from('accounts')
       .update({ name: newName, type: newType })
@@ -110,10 +123,11 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({ accountId,
   return (
     <FLPModal
       confirmButton={{ id: accountId, text: t(isEditAccount ? 'save' : 'addAccount') }}
-      isOpen={modalOpen}
+      contentRef={contentRef}
+      open={modalOpen}
       title={t(isEditAccount ? 'editAccount' : 'addAccount')}
       triggerBtn={
-        <FLPButton colorScheme="green" size={btnSize} variant={'outline'} onClick={handleOpenModal}>
+        <FLPButton colorPalette="green" size={btnSize} variant={'outline'} onClick={handleOpenModal}>
           {t(isEditAccount ? 'edit' : 'addAccount')}
         </FLPButton>
       }
@@ -127,21 +141,16 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({ accountId,
             name="name"
             placeholder={t('accountName')}
             value={formInput.name}
-            onChange={onChangeFormInput}
+            onChange={onChangeNameInput}
           />
           <FLPSelect
-            defaultValue={accountTypeArray[0]}
+            collection={accountTypes}
             label="Account Type"
             name="type"
+            portalRef={contentRef}
             value={formInput.type}
-            onChange={onChangeFormInput}
-          >
-            {accountTypeArray.map((type) => (
-              <option key={type} value={type}>
-                {type}
-              </option>
-            ))}
-          </FLPSelect>
+            onValueChange={onChangeTypeInput}
+          />
         </FLPBox>
       </Form>
     </FLPModal>

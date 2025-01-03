@@ -147,6 +147,7 @@ export default [
       "app/entry.client.tsx",
       "app/root.tsx",
       "app/routes/ping.tsx",
+      "app/components/ui/**",
       "build/**",
       "coverage-ts/**",
       "coverage/**",

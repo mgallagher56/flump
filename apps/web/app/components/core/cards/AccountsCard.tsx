@@ -1,17 +1,6 @@
 import { type FC, useCallback, useMemo } from 'react';
 
-import {
-  CardBody,
-  CardFooter,
-  CardHeader,
-  type CardProps,
-  Stack,
-  Stat,
-  StatArrow,
-  StatHelpText,
-  StatLabel,
-  StatNumber
-} from '@chakra-ui/react';
+import { CardBody, CardFooter, CardHeader, type CardRootProps, Stack, StatHelpText } from '@chakra-ui/react';
 import { useTranslation } from 'react-i18next';
 import { useLoaderData, useNavigate, useRevalidator } from 'react-router';
 import AccountDetailChart from '~/components/charts/AccountDetailChart';
@@ -19,6 +8,7 @@ import FLPButton from '~/components/core/buttons/FLPButton';
 import FLPButtonGroup from '~/components/core/buttons/FLPButtonGroup';
 import FLPHeading from '~/components/core/typography/FLPHeading';
 import AddEditAccountsDialogBtn from '~/components/dialogs/addEditAccountsDialog.tsx/AddEditAccountsDialog';
+import { StatDownTrend, StatLabel, StatRoot, StatUpTrend, StatValueText } from '~/components/ui/stat';
 import type { AccountDetail } from '~/containers/accounts/types';
 import type { AccountTypeEnum } from '~/containers/accounts/utils';
 import type { loader } from '~/routes/app.accounts._index';
@@ -28,7 +18,7 @@ import { currentMonth, currentYear } from '~/utils/utils';
 
 import FLPCard from './FLPCard';
 
-interface AccountsCardProp extends Omit<CardProps, 'title'> {
+interface AccountsCardProp extends Omit<CardRootProps, 'title'> {
   accountId: string;
   name: string;
   type: AccountTypeEnum;
@@ -63,6 +53,10 @@ const AccountsCard: FC<AccountsCardProp> = ({ accountId, name, type }) => {
   const accountBalance = accountDetailYear[11]?.value;
   const prevAccountBalance = accountDetailYear[10]?.value;
   const secondPreviousAccountBalance = accountDetailYear[9]?.value;
+  const prevPercentageChangeValue = Math.round(
+    ((prevAccountBalance - secondPreviousAccountBalance) / secondPreviousAccountBalance) * 100
+  );
+  const currentPercentageChangeValue = Math.round(((accountBalance - prevAccountBalance) / prevAccountBalance) * 100);
 
   const handleRemoveAccount = useCallback(
     async (e: { stopPropagation: () => void }) => {
@@ -87,63 +81,62 @@ const AccountsCard: FC<AccountsCardProp> = ({ accountId, name, type }) => {
       padding={5}
       title={name}
       width="250px"
-      onClick={onCardClick}
     >
-      <CardHeader display="flex" flexDirection="column" gap={1} padding={0}>
+      <CardHeader display="flex" flexDirection="column" gap={1} padding={0} onClick={onCardClick}>
         <FLPHeading as="h5" color="grey.500" size="xs">{`${type} ${t('account')}`}</FLPHeading>
         <FLPHeading as="h4" color="blue.500" fontWeight="bold" size="lg">
           {name}
         </FLPHeading>
       </CardHeader>
+      <CardBody justifyContent="flex-end" padding={0} onClick={onCardClick}>
       <Stack alignItems="center" direction="row" display="flex" justifyContent="space-between">
         {!!prevAccountBalance && (
-          <Stat size="xs">
+            <StatRoot size="sm">
             <StatLabel>{`${t('previous')}:`}</StatLabel>
-            <StatNumber>
+              <StatValueText>
               {Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP', maximumFractionDigits: 0 }).format(
                 prevAccountBalance
               )}
-            </StatNumber>
+              </StatValueText>
             {!!secondPreviousAccountBalance && (
               <StatHelpText>
                 {secondPreviousAccountBalance > prevAccountBalance ? (
-                  <StatArrow type="decrease" />
+                    <StatDownTrend variant="plain">{prevPercentageChangeValue}%</StatDownTrend>
                 ) : (
-                  <StatArrow type="increase" />
+                    <StatUpTrend variant="plain">{prevPercentageChangeValue}%</StatUpTrend>
                 )}
-                {`${Math.round(
-                  ((prevAccountBalance - secondPreviousAccountBalance) / secondPreviousAccountBalance) * 100
-                )}%`}
               </StatHelpText>
             )}
-          </Stat>
+            </StatRoot>
         )}
         {!!accountBalance && (
-          <Stat size="xs">
+            <StatRoot size="sm">
             <StatLabel>{`${t('current')}:`}</StatLabel>
-            <StatNumber>
+              <StatValueText>
               {Intl.NumberFormat('en-GB', {
                 style: 'currency',
                 currency: 'GBP',
                 maximumFractionDigits: 0
               }).format(accountBalance)}
-            </StatNumber>
+              </StatValueText>
             {!!prevAccountBalance && (
               <StatHelpText>
-                {prevAccountBalance > accountBalance ? <StatArrow type="decrease" /> : <StatArrow type="increase" />}
-                {`${Math.round(((accountBalance - prevAccountBalance) / prevAccountBalance) * 100)}%`}
+                  {prevAccountBalance > accountBalance ? (
+                    <StatDownTrend variant="plain">{currentPercentageChangeValue}%</StatDownTrend>
+                  ) : (
+                    <StatUpTrend variant="plain">{currentPercentageChangeValue}%</StatUpTrend>
+                  )}
               </StatHelpText>
             )}
-          </Stat>
+            </StatRoot>
         )}
       </Stack>
-      <CardBody justifyContent="flex-end" padding={0}>
         {!!accountDetailYear.length && <AccountDetailChart accountDetails={accountDetailYear} />}
       </CardBody>
       <CardFooter justifyContent="flex-end" padding={0}>
         <FLPButtonGroup justifyContent="flex-end" zIndex="10">
           <AddEditAccountsDialogBtn accountId={accountId} btnSize="sm" isEditAccount={true} />
-          <FLPButton colorScheme="red" size="sm" onClick={handleRemoveAccount}>
+          <FLPButton colorPalette="red" size="sm" onClick={handleRemoveAccount}>
             {t('delete')}
           </FLPButton>
         </FLPButtonGroup>

@@ -13,10 +13,9 @@ describe('<FLPModal />', () => {
     <FLPModal
       confirmButton={{
         text: 'Confirm',
-        colorScheme: 'blue',
-        variant: 'solid'
+        colorPalette: 'blue'
       }}
-      isOpen={true}
+      open={true}
       title="Modal Title"
       triggerBtn={<FLPButton>Trigger</FLPButton>}
       onClose={vi.fn()}

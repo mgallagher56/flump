@@ -2,20 +2,16 @@ import { type FC, type ReactElement } from 'react';
 
 import { Flex } from '@chakra-ui/react';
 import { useLoaderData } from 'react-router';
-import ColorModeSwitch from '~/components/ColorModeSwitch';
 import FLPBox from '~/components/core/structure/FLPBox';
 import HomeLogo from '~/components/navigation/HomeLogo';
 import NavMenu from '~/components/navigation/NavMenu';
 import UserLogin from '~/components/navigation/UserLogin';
+import { ColorModeButton } from '~/components/ui/color-mode';
 import type { loader } from '~/root';
 
 import { loginStyles, menuStyles, navStyles } from './styles';
 
-interface HeaderProps {
-  showColorModeSwitch?: boolean;
-}
-
-const Header: FC<HeaderProps> = ({ showColorModeSwitch = true }): ReactElement => {
+const Header: FC = (): ReactElement => {
   const { user } = useLoaderData<typeof loader>();
   return (
     <FLPBox as="header">
@@ -40,7 +36,7 @@ const Header: FC<HeaderProps> = ({ showColorModeSwitch = true }): ReactElement =
         </FLPBox>
         <FLPBox className={loginStyles}>
           <UserLogin />
-          {showColorModeSwitch && <ColorModeSwitch />}
+          <ColorModeButton />
         </FLPBox>
       </Flex>
     </FLPBox>

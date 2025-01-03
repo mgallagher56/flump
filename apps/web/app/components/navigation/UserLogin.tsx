@@ -18,12 +18,8 @@ const UserLogin: FC = () => {
         <SignOut />
       ) : (
         <>
-          <FLPLinkButton to="/signup" variant="solid">
-            {t('signUp')}
-          </FLPLinkButton>
-          <FLPLinkButton to="/login" variant="outline">
-            {t('logIn')}
-          </FLPLinkButton>
+          <FLPLinkButton text={t('signUp')} to="/signup" />
+          <FLPLinkButton text={t('logIn')} to="/login" />
         </>
       )}
     </FLPButtonGroup>
