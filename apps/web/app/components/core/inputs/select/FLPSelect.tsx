@@ -44,7 +44,7 @@ const FLPSelect: FC<FLPSelectProps> = ({
           <SelectValueText />
         </SelectTrigger>
         <SelectContent portalRef={portalRef}>
-          {collection.items.map(({ id, name }) => (
+          {collection.items.map(({ id, name }: { id: string; name: string }) => (
             <SelectItem key={id} item={name}>
               {name}
             </SelectItem>

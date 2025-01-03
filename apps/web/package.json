@@ -126,6 +126,7 @@
     "ignoreFiles": [
       "app/**/*.config.{js,ts,jsx,tsx}",
       "app/*.*",
+      "app/components/ui/*.*",
       "*.*",
       "app/**/*.test.{js,ts,jsx,tsx}",
       "styled-system/**/*.*",
