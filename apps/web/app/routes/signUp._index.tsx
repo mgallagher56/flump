@@ -10,8 +10,7 @@ import type { Route } from './+types/signUp._index';
 export const loader = async ({
   request
 }: Route.LoaderArgs): Promise<ReturnType<RedirectFunction> | { ok: boolean }> => {
-  const response = new Response();
-  const supabase = createSupaBaseServerClient({ request, response });
+  const supabase = createSupaBaseServerClient(request);
   const {
     data: { user }
   } = await supabase.auth.getUser();
