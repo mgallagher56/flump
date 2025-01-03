@@ -8,7 +8,7 @@
   },
   "version": "1.21.3",
   "dependencies": {
-    "@chakra-ui/react": "2.10.4",
+    "@chakra-ui/react": "3.2.4",
     "@emotion/cache": "11.14.0",
     "@emotion/react": "11.14.0",
     "@emotion/server": "11.11.0",
