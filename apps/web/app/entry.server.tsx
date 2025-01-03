@@ -1,16 +1,16 @@
 import { CacheProvider as EmotionCacheProvider } from '@emotion/react';
 import createEmotionServer from '@emotion/server/create-instance';
-import type { EntryContext } from 'react-router';
-import { createReadableStreamFromReadable } from '@react-router/node';
-import { ServerRouter } from 'react-router';
+import { createInstance } from 'i18next';
+import Backend from 'i18next-fs-backend';
 import { isbot } from 'isbot';
 import { resolve } from 'node:path';
 import { renderToPipeableStream } from 'react-dom/server';
 import { I18nextProvider, initReactI18next } from 'react-i18next';
+import type { EntryContext } from 'react-router';
+import { ServerRouter } from 'react-router';
 import { PassThrough } from 'stream';
 
-import { createInstance } from 'i18next';
-import Backend from 'i18next-fs-backend';
+import { createReadableStreamFromReadable } from '@react-router/node';
 
 import createEmotionCache from './createEmotionCache';
 import i18n from './i18n';
