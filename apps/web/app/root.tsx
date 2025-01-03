@@ -72,9 +72,7 @@ export const loader = async ({
     data: { session }
   } = await supabase.auth.getSession();
 
-  const {
-    data: userData
-  } = await supabase.auth.getUser();
+  const { data: userData } = await supabase.auth.getUser();
 
   return data(
     {

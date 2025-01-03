@@ -2,8 +2,9 @@ import { type FC } from 'react';
 
 import type { InputProps } from '@chakra-ui/react';
 import { Input } from '@chakra-ui/react';
-import { css } from 'styled-system/css';
 import FLPBox from '~/components/core/structure/FLPBox';
+
+import { css } from 'styled-system/css';
 
 interface FLPInputProps extends InputProps {
   error?: string;
@@ -11,15 +12,7 @@ interface FLPInputProps extends InputProps {
   isLabelHidden?: boolean;
 }
 
-const FLPInput: FC<FLPInputProps> = ({
-  error,
-  flexDirection,
-  isLabelHidden,
-  label,
-  variant,
-  onChange,
-  ...props
-}) => {
+const FLPInput: FC<FLPInputProps> = ({ error, flexDirection, isLabelHidden, label, variant, onChange, ...props }) => {
   const columnStyles = css({
     display: 'flex',
     flexDirection: 'column',

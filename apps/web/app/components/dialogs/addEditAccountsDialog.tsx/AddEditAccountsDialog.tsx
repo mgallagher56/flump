@@ -1,8 +1,8 @@
 import { type FC, useCallback, useMemo, useState } from 'react';
 
 import type { ButtonProps } from '@chakra-ui/react';
-import { Form, useLoaderData, useRevalidator } from 'react-router';
 import { useTranslation } from 'react-i18next';
+import { Form, useLoaderData, useRevalidator } from 'react-router';
 import FLPButton from '~/components/core/buttons/FLPButton';
 import FLPModal from '~/components/core/dialogs/FLPModal';
 import FLPInput from '~/components/core/inputs/input/FLPInput';

@@ -1,6 +1,6 @@
-import { type User } from '@supabase/supabase-js';
 import { type ReactElement } from 'react';
 
+import { type User } from '@supabase/supabase-js';
 import { data, redirect, type RedirectFunction, type UNSAFE_DataWithResponseInit } from 'react-router';
 import AccountsContainer from '~/containers/accounts/accountsContainer/AccountsContainer';
 import { type Account, type AccountDetail } from '~/containers/accounts/types';

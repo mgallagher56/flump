@@ -31,6 +31,10 @@
     },
     "lint": {},
     "ts-coverage": {},
-    "test": {}
+    "test": {
+      "dependsOn": [
+        "build"
+      ]
+    }
   }
 }

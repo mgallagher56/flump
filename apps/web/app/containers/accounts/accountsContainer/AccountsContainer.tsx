@@ -1,8 +1,8 @@
 import type { FC } from 'react';
 import { Fragment, useMemo } from 'react';
 
-import { useLoaderData } from 'react-router';
 import { useTranslation } from 'react-i18next';
+import { useLoaderData } from 'react-router';
 import AccountsCard from '~/components/core/cards/AccountsCard';
 import FLPBox from '~/components/core/structure/FLPBox';
 import FLPHeading from '~/components/core/typography/FLPHeading';

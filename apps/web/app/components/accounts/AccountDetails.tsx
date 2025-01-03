@@ -2,8 +2,8 @@ import { Fragment, useCallback } from 'react';
 import type { ChangeEvent, FC } from 'react';
 
 import { Stack } from '@chakra-ui/react';
-import { useLoaderData, useRevalidator } from 'react-router';
 import { useTranslation } from 'react-i18next';
+import { useLoaderData, useRevalidator } from 'react-router';
 import FLPButton from '~/components/core/buttons/FLPButton';
 import FLPInput from '~/components/core/inputs/input/FLPInput';
 import FLPHeading from '~/components/core/typography/FLPHeading';

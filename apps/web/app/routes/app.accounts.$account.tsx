@@ -1,6 +1,6 @@
-import { type User } from '@supabase/supabase-js';
 import { type ReactElement } from 'react';
 
+import { type User } from '@supabase/supabase-js';
 import { data, type Params, redirect, type RedirectFunction, type UNSAFE_DataWithResponseInit } from 'react-router';
 import AccountDetailContainer from '~/containers/accounts/accountDetailContainer/AccountDetailContainer';
 import { type Account, type AccountDetail } from '~/containers/accounts/types';
@@ -13,7 +13,8 @@ export const loader = async ({
   params: Params;
   request: Request;
 }): Promise<
-  ReturnType<RedirectFunction> | UNSAFE_DataWithResponseInit<{ account: Account; accountDetails: AccountDetail[]; user: User }>
+  | ReturnType<RedirectFunction>
+  | UNSAFE_DataWithResponseInit<{ account: Account; accountDetails: AccountDetail[]; user: User }>
 > => {
   const response = new Response();
   const supabase = createSupaBaseServerClient(request);
