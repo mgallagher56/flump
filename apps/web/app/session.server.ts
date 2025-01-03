@@ -1,5 +1,5 @@
-import type { Session, TypedResponse } from '@remix-run/node';
-import { createCookieSessionStorage, redirect } from '@remix-run/node';
+import type { RedirectFunction, Session } from 'react-router';
+import { createCookieSessionStorage, redirect } from 'react-router';
 import invariant from 'tiny-invariant';
 
 invariant(process.env.SESSION_SECRET, 'SESSION_SECRET must be set');
@@ -32,7 +32,7 @@ export async function createUserSession({
   userId: string;
   remember: boolean;
   redirectTo: string;
-}): Promise<TypedResponse> {
+}): Promise<ReturnType<RedirectFunction>> {
   const session = await getSession(request);
   session.set(USER_SESSION_KEY, userId);
   return redirect(redirectTo, {
@@ -46,7 +46,7 @@ export async function createUserSession({
   });
 }
 
-export async function logout(request: Request): Promise<TypedResponse> {
+export async function logout(request: Request): Promise<ReturnType<RedirectFunction>> {
   const session = await getSession(request);
   return redirect('/', {
     headers: {

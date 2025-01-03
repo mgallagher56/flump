@@ -1,11 +1,15 @@
 import type { ReactElement } from 'react';
 
 import { Container } from '@chakra-ui/react';
-import { json, redirect } from '@remix-run/node';
+import { redirect, type RedirectFunction } from 'react-router';
 import SignUp from '~/components/users/SignUp';
 import { createSupaBaseServerClient } from '~/utils/supabase';
 
-export const loader = async ({ request }: { request: Request }) => {
+import type { Route } from './+types/signUp._index';
+
+export const loader = async ({
+  request
+}: Route.LoaderArgs): Promise<ReturnType<RedirectFunction> | { ok: boolean }> => {
   const response = new Response();
   const supabase = createSupaBaseServerClient({ request, response });
   const {
@@ -13,7 +17,7 @@ export const loader = async ({ request }: { request: Request }) => {
   } = await supabase.auth.getUser();
 
   if (user) return redirect('/');
-  return json({ ok: true });
+  return { ok: true };
 };
 
 const Index = (): ReactElement => {

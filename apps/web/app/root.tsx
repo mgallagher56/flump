@@ -12,9 +12,11 @@ import {
 } from '@chakra-ui/react';
 import type { EmotionCache } from '@emotion/react';
 import { withEmotionCache } from '@emotion/react';
-import type { LinksFunction, MetaFunction, TypedResponse } from '@remix-run/node';
-import { json } from '@remix-run/node';
+import type { Session, User, UserResponse } from '@supabase/supabase-js';
+import { useTranslation } from 'react-i18next';
+import type { LinksFunction, MetaFunction, UNSAFE_DataWithResponseInit } from 'react-router';
 import {
+  data,
   isRouteErrorResponse,
   Links,
   Meta,
@@ -24,9 +26,7 @@ import {
   useLoaderData,
   useRevalidator,
   useRouteError
-} from '@remix-run/react';
-import type { Session } from '@supabase/supabase-js';
-import { useTranslation } from 'react-i18next';
+} from 'react-router';
 import { useChangeLanguage } from 'remix-i18next/react';
 
 import Header from './components/structure/header/Header';
@@ -48,14 +48,14 @@ export const loader = async ({
 }: {
   request: Request;
 }): Promise<
-  TypedResponse<{
+  UNSAFE_DataWithResponseInit<{
     env: {
       SUPABASE_URL: string;
       SUPABASE_ANON_KEY: string;
     };
     locale: string;
-    session: Session | null;
-    user: Session['user'] | null;
+    access_token: string;
+    user: User | null;
     cookie: string | null;
   }>
 > => {
@@ -69,15 +69,17 @@ export const loader = async ({
   const supabase = createSupaBaseServerClient({ request, response });
 
   const {
-    data: { session }
+    data: { session: { access_token} }
   } = await supabase.auth.getSession();
 
-  return json(
+  const {data: {user}} = await supabase.auth.getUser();
+
+  return data(
     {
       locale,
       env,
-      session,
-      user: session?.user ?? null,
+      access_token,
+      user: user ?? null,
       cookie: request?.headers?.get('Cookie') ?? ''
     },
     {
@@ -185,8 +187,8 @@ export default function App(): ReactElement {
   const { revalidate } = useRevalidator();
   const loaderData = useLoaderData<typeof loader>();
   let { cookie = '' } = loaderData;
-  const { env, session, locale } = loaderData;
-  const serverAccessToken = session?.access_token;
+  const { env, access_token, locale } = loaderData;
+  const serverAccessToken = access_token;
 
   if (typeof document !== 'undefined') {
     cookie = document.cookie;

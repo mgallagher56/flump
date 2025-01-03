@@ -12,7 +12,7 @@ import {
   StatLabel,
   StatNumber
 } from '@chakra-ui/react';
-import { useLoaderData, useNavigate, useRevalidator } from '@remix-run/react';
+import { useLoaderData, useNavigate, useRevalidator } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import AccountDetailChart from '~/components/charts/AccountDetailChart';
 import FLPButton from '~/components/core/buttons/FLPButton';

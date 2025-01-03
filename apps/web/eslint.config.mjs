@@ -155,7 +155,7 @@ export default [
       "db_types.ts",
       "mocks/",
       "postcss.config.cjs",
-      "remix.init",
+      ".react-router/",
       "root.tsx",
       "styled-system/**",
       "test",

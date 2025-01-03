@@ -2,7 +2,7 @@ import { type FC, type PropsWithChildren } from 'react';
 
 import type { ButtonProps } from '@chakra-ui/react';
 import { Button } from '@chakra-ui/react';
-import { Link } from '@remix-run/react';
+import { Link } from 'react-router';
 
 interface FLPLinkButtonProps extends ButtonProps {
   to: string;
