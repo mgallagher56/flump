@@ -26,7 +26,7 @@ const AccountDetails: FC<AccountDetailsProps> = ({ onInputChange, editedValues, 
 
   const onRemoveYear = useCallback(
     async (year: number) => {
-      await supabase.from('account_details').delete().eq('account_id', account.id).eq('year', year);
+      await supabase.from('account_details').delete().eq('account_id', account.id).eq('year', year).select();
       revalidate();
     },
     [account.id, revalidate]
