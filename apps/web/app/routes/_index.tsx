@@ -16,7 +16,7 @@ export type Employee = Database['public']['Tables']['employees']['Row'];
 
 export const loader = async ({ request }: { request: Request }) => {
   const response = new Response();
-  const supabase = createSupaBaseServerClient({ request, response });
+  const supabase = createSupaBaseServerClient(request);
   const { data: employees } = await supabase.from('employees').select('*');
   return data({ employees }, { headers: response.headers });
 };

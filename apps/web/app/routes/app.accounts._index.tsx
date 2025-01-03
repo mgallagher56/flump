@@ -19,12 +19,12 @@ export const loader = async ({
     }>
 > => {
   const response = new Response();
-  const supabase = createSupaBaseServerClient({ request, response });
+  const supabase = createSupaBaseServerClient(request);
   const {
     data: { user }
   } = await supabase.auth.getUser();
 
-  const { data: accounts } = await supabase.from('accounts').select().eq('user_id', user?.id);
+  const { data: accounts } = await supabase.from('accounts').select().eq('user_id', user?.id).select();
 
   const { data: accountDetails } = await supabase.from('account_details').select();
 

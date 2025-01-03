@@ -16,7 +16,7 @@ export const loader = async ({
   ReturnType<RedirectFunction> | UNSAFE_DataWithResponseInit<{ account: Account; accountDetails: AccountDetail[]; user: User }>
 > => {
   const response = new Response();
-  const supabase = createSupaBaseServerClient({ request, response });
+  const supabase = createSupaBaseServerClient(request);
   const {
     data: { user }
   } = await supabase.auth.getUser();
@@ -25,14 +25,16 @@ export const loader = async ({
     .from('accounts')
     .select('*')
     .eq('user_id', user?.id)
-    .eq('id', params.account);
+    .eq('id', params.account)
+    .select();
 
   const { data: accountDetails } = await supabase
     .from('account_details')
     .select('*')
     .eq('account_id', params.account)
     .order('year', { ascending: false })
-    .order('month', { ascending: true });
+    .order('month', { ascending: true })
+    .select();
 
   if (!user) return redirect('/');
   return data({ account: accountData?.[0], accountDetails, user }, { headers: response.headers });
