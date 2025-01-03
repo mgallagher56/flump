@@ -233,8 +233,8 @@ importers:
         specifier: 15.14.0
         version: 15.14.0
       happy-dom:
-        specifier: 16.2.6
-        version: 16.2.6
+        specifier: 16.2.9
+        version: 16.2.9
       msw:
         specifier: 2.7.0
         version: 2.7.0(@types/node@22.10.2)(typescript@5.7.2)
@@ -257,7 +257,7 @@ importers:
         specifier: 1.0.0
         version: 1.0.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.7.2)
       typescript-eslint:
-        specifier: ^8.19.0
+        specifier: 8.19.0
         version: 8.19.0(eslint@9.17.0(jiti@2.4.2))(typescript@5.7.2)
       vite:
         specifier: 6.0.6
@@ -270,7 +270,7 @@ importers:
         version: 5.1.4(typescript@5.7.2)(vite@6.0.6(@types/node@22.10.2)(jiti@2.4.2)(lightningcss@1.25.1)(yaml@2.7.0))
       vitest:
         specifier: 2.1.8
-        version: 2.1.8(@types/node@22.10.2)(@vitest/ui@2.1.8)(happy-dom@16.2.6)(jiti@2.4.2)(lightningcss@1.25.1)(msw@2.7.0(@types/node@22.10.2)(typescript@5.7.2))(yaml@2.7.0)
+        version: 2.1.8(@types/node@22.10.2)(@vitest/ui@2.1.8)(happy-dom@16.2.9)(jiti@2.4.2)(lightningcss@1.25.1)(msw@2.7.0(@types/node@22.10.2)(typescript@5.7.2))(yaml@2.7.0)
       vitest-github-actions-reporter:
         specifier: 0.11.1
         version: 0.11.1(vitest@2.1.8)
@@ -3904,8 +3904,8 @@ packages:
     resolution: {integrity: sha512-4haO1M4mLO91PW57BMsDFf75UmwoRX0GkdD+Faw+Lr+r/OZrOCS0pIBwOL1xCKQqnQzbNFGgK2V2CpBUPeFNTw==}
     hasBin: true
 
-  happy-dom@16.2.6:
-    resolution: {integrity: sha512-pl9wpbvThd2BGptDW/DbeZgCVjjFJAe1+rGJ4SdXd1nLhGngaklpGohKlX6bSJwLH8vSi4VDhQsC2Mqa6eiyhg==}
+  happy-dom@16.2.9:
+    resolution: {integrity: sha512-WlBDENS5IsffAY+ROmKId2Exgyo92oD+c26xodHftmU+5FPx/DqdL0T30RROewtE8Us5EN5qvVuHUieVuK7t8Q==}
     engines: {node: '>=18.0.0'}
 
   has-bigints@1.1.0:
@@ -9179,7 +9179,7 @@ snapshots:
       std-env: 3.8.0
       test-exclude: 7.0.1
       tinyrainbow: 1.2.0
-      vitest: 2.1.8(@types/node@22.10.2)(@vitest/ui@2.1.8)(happy-dom@16.2.6)(jiti@2.4.2)(lightningcss@1.25.1)(msw@2.7.0(@types/node@22.10.2)(typescript@5.7.2))(yaml@2.7.0)
+      vitest: 2.1.8(@types/node@22.10.2)(@vitest/ui@2.1.8)(happy-dom@16.2.9)(jiti@2.4.2)(lightningcss@1.25.1)(msw@2.7.0(@types/node@22.10.2)(typescript@5.7.2))(yaml@2.7.0)
     transitivePeerDependencies:
       - supports-color
 
@@ -9189,7 +9189,7 @@ snapshots:
       eslint: 9.17.0(jiti@2.4.2)
     optionalDependencies:
       typescript: 5.7.2
-      vitest: 2.1.8(@types/node@22.10.2)(@vitest/ui@2.1.8)(happy-dom@16.2.6)(jiti@2.4.2)(lightningcss@1.25.1)(msw@2.7.0(@types/node@22.10.2)(typescript@5.7.2))(yaml@2.7.0)
+      vitest: 2.1.8(@types/node@22.10.2)(@vitest/ui@2.1.8)(happy-dom@16.2.9)(jiti@2.4.2)(lightningcss@1.25.1)(msw@2.7.0(@types/node@22.10.2)(typescript@5.7.2))(yaml@2.7.0)
 
   '@vitest/expect@2.1.8':
     dependencies:
@@ -9235,7 +9235,7 @@ snapshots:
       sirv: 3.0.0
       tinyglobby: 0.2.10
       tinyrainbow: 1.2.0
-      vitest: 2.1.8(@types/node@22.10.2)(@vitest/ui@2.1.8)(happy-dom@16.2.6)(jiti@2.4.2)(lightningcss@1.25.1)(msw@2.7.0(@types/node@22.10.2)(typescript@5.7.2))(yaml@2.7.0)
+      vitest: 2.1.8(@types/node@22.10.2)(@vitest/ui@2.1.8)(happy-dom@16.2.9)(jiti@2.4.2)(lightningcss@1.25.1)(msw@2.7.0(@types/node@22.10.2)(typescript@5.7.2))(yaml@2.7.0)
 
   '@vitest/utils@2.1.8':
     dependencies:
@@ -11400,7 +11400,7 @@ snapshots:
       pumpify: 1.5.1
       through2: 2.0.5
 
-  happy-dom@16.2.6:
+  happy-dom@16.2.9:
     dependencies:
       webidl-conversions: 7.0.0
       whatwg-mimetype: 3.0.0
@@ -14277,13 +14277,13 @@ snapshots:
   vitest-github-actions-reporter@0.11.1(vitest@2.1.8):
     dependencies:
       '@actions/core': 1.11.1
-      vitest: 2.1.8(@types/node@22.10.2)(@vitest/ui@2.1.8)(happy-dom@16.2.6)(jiti@2.4.2)(lightningcss@1.25.1)(msw@2.7.0(@types/node@22.10.2)(typescript@5.7.2))(yaml@2.7.0)
+      vitest: 2.1.8(@types/node@22.10.2)(@vitest/ui@2.1.8)(happy-dom@16.2.9)(jiti@2.4.2)(lightningcss@1.25.1)(msw@2.7.0(@types/node@22.10.2)(typescript@5.7.2))(yaml@2.7.0)
 
   vitest-sonar-reporter@2.0.0(vitest@2.1.8):
     dependencies:
-      vitest: 2.1.8(@types/node@22.10.2)(@vitest/ui@2.1.8)(happy-dom@16.2.6)(jiti@2.4.2)(lightningcss@1.25.1)(msw@2.7.0(@types/node@22.10.2)(typescript@5.7.2))(yaml@2.7.0)
+      vitest: 2.1.8(@types/node@22.10.2)(@vitest/ui@2.1.8)(happy-dom@16.2.9)(jiti@2.4.2)(lightningcss@1.25.1)(msw@2.7.0(@types/node@22.10.2)(typescript@5.7.2))(yaml@2.7.0)
 
-  vitest@2.1.8(@types/node@22.10.2)(@vitest/ui@2.1.8)(happy-dom@16.2.6)(jiti@2.4.2)(lightningcss@1.25.1)(msw@2.7.0(@types/node@22.10.2)(typescript@5.7.2))(yaml@2.7.0):
+  vitest@2.1.8(@types/node@22.10.2)(@vitest/ui@2.1.8)(happy-dom@16.2.9)(jiti@2.4.2)(lightningcss@1.25.1)(msw@2.7.0(@types/node@22.10.2)(typescript@5.7.2))(yaml@2.7.0):
     dependencies:
       '@vitest/expect': 2.1.8
       '@vitest/mocker': 2.1.8(msw@2.7.0(@types/node@22.10.2)(typescript@5.7.2))(vite@6.0.6(@types/node@22.10.2)(jiti@2.4.2)(lightningcss@1.25.1)(yaml@2.7.0))
@@ -14308,7 +14308,7 @@ snapshots:
     optionalDependencies:
       '@types/node': 22.10.2
       '@vitest/ui': 2.1.8(vitest@2.1.8)
-      happy-dom: 16.2.6
+      happy-dom: 16.2.9
     transitivePeerDependencies:
       - jiti
       - less
