@@ -3,127 +3,154 @@
 exports[`<AccountsCard /> > it renders an AccountsCard component with title as expected 1`] = `
 <body>
   <div>
+    <script
+      nonce=""
+    >
+      ((e,r,s,u,d,m,l,h)=&gt;
+      {let c=document.documentElement,v=["light","dark"];function p(i){(Array.isArray(e)?e:[e]).forEach(y=&gt;
+      {let k=y==="class",S=k&&m?d.map(f=&gt;
+      m[f]||f):d;k?(c.classList.remove(...S),c.classList.add(i)):c.setAttribute(y,i)}),R(i)}function R(i){h&&v.includes(i)&&(c.style.colorScheme=i)}function a(){return window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"}if(u)p(u);else try{let i=localStorage.getItem(r)||s,y=l&&i==="system"?a():i;p(y)}catch(i){}})("class","theme","system",null,["light","dark"],null,true,true)
+    </script>
     <div
-      class="chakra-card pos_relative trs_all_0.3s_ease-in-out bd_1px_solid_token(colors.gray.500)! [&:hover]:bx-sh_2px_5px_8px_0px_token(colors.gray.500)! [&:hover]:trf_translate3d(-2px,_-5px,_-5px) [&:hover]:cursor_pointer css-11joc2e"
+      class="pos_relative trs_all_0.3s_ease-in-out bd_1px_solid_token(colors.gray.500)! [&:hover]:bx-sh_2px_5px_8px_0px_token(colors.gray.500)! [&:hover]:trf_translate3d(-2px,_-5px,_-5px) chakra-card__root css-af7wrq"
       id="123456"
       title="My curent account"
     >
       <div
-        class="chakra-card__header css-m9wzl5"
+        class="chakra-card__header css-svbf1u"
       >
         <h5
-          class="chakra-heading css-khlt38"
+          class="chakra-heading css-gl11ui"
         >
           Current account
         </h5>
         <h4
-          class="chakra-heading css-svk9li"
+          class="chakra-heading css-21g0wk"
         >
           My curent account
         </h4>
       </div>
       <div
-        class="chakra-stack css-1y3f6ad"
+        class="chakra-card__body css-k5tkvr"
       >
         <div
-          class="chakra-stat css-1mbo1ls"
+          class="chakra-stack css-1y3f6ad"
         >
-          <dl>
+          <dl
+            class="chakra-stat__root css-7kqs0d"
+          >
             <dt
-              class="chakra-stat__label css-0"
+              class="chakra-stat__label css-lx24hk"
             >
               previous:
             </dt>
             <dd
-              class="chakra-stat__number css-fvxuh5"
+              class="chakra-stat__valueText css-1e5w1gw"
             >
               £11,000
             </dd>
-            <dd
-              class="chakra-stat__help-text css-0"
+            <span
+              class="chakra-stat__helpText css-1p340iu"
             >
               <span
-                class="css-8b45rq"
+                class="chakra-badge css-1onytod"
               >
-                increased by
+                <span
+                  class="chakra-stat__indicator css-zaoojb"
+                  data-type="up"
+                >
+                  <svg
+                    class="css-1tn7tyl"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      d="m5 12 7-7 7 7"
+                    />
+                    <path
+                      d="M12 19V5"
+                    />
+                  </svg>
+                </span>
+                10
+                %
               </span>
-              <svg
-                aria-hidden="true"
-                class="chakra-icon css-m17ft2"
-                focusable="false"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  d="M12.8,5.4c-0.377-0.504-1.223-0.504-1.6,0l-9,12c-0.228,0.303-0.264,0.708-0.095,1.047 C2.275,18.786,2.621,19,3,19h18c0.379,0,0.725-0.214,0.895-0.553c0.169-0.339,0.133-0.744-0.095-1.047L12.8,5.4z"
-                  fill="currentColor"
-                />
-              </svg>
-              10%
-            </dd>
+            </span>
           </dl>
-        </div>
-        <div
-          class="chakra-stat css-1mbo1ls"
-        >
-          <dl>
+          <dl
+            class="chakra-stat__root css-7kqs0d"
+          >
             <dt
-              class="chakra-stat__label css-0"
+              class="chakra-stat__label css-lx24hk"
             >
               current:
             </dt>
             <dd
-              class="chakra-stat__number css-fvxuh5"
+              class="chakra-stat__valueText css-1e5w1gw"
             >
               £12,000
             </dd>
-            <dd
-              class="chakra-stat__help-text css-0"
+            <span
+              class="chakra-stat__helpText css-1p340iu"
             >
               <span
-                class="css-8b45rq"
+                class="chakra-badge css-1onytod"
               >
-                increased by
+                <span
+                  class="chakra-stat__indicator css-zaoojb"
+                  data-type="up"
+                >
+                  <svg
+                    class="css-1tn7tyl"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      d="m5 12 7-7 7 7"
+                    />
+                    <path
+                      d="M12 19V5"
+                    />
+                  </svg>
+                </span>
+                9
+                %
               </span>
-              <svg
-                aria-hidden="true"
-                class="chakra-icon css-m17ft2"
-                focusable="false"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  d="M12.8,5.4c-0.377-0.504-1.223-0.504-1.6,0l-9,12c-0.228,0.303-0.264,0.708-0.095,1.047 C2.275,18.786,2.621,19,3,19h18c0.379,0,0.725-0.214,0.895-0.553c0.169-0.339,0.133-0.744-0.095-1.047L12.8,5.4z"
-                  fill="currentColor"
-                />
-              </svg>
-              9%
-            </dd>
+            </span>
           </dl>
         </div>
-      </div>
-      <div
-        class="chakra-card__body css-ttziis"
-      >
         <div
           class="recharts-responsive-container"
           style="width: 100%; height: 95%; min-width: 0;"
         />
       </div>
       <div
-        class="chakra-card__footer css-eldtq0"
+        class="chakra-card__footer css-whgv0v"
       >
         <div
-          class="chakra-button__group css-vhnxbm"
-          data-orientation="horizontal"
-          role="group"
+          class="css-zzxe7y"
         >
           <button
-            class="chakra-button css-kn8t1u"
+            aria-expanded="false"
+            aria-haspopup="dialog"
+            class="chakra-dialog__trigger css-0"
+            data-part="trigger"
+            data-scope="dialog"
+            data-state="closed"
+            dir="ltr"
+            id="dialog::r0::trigger"
             type="button"
           >
-            edit
+            <button
+              class="chakra-button css-tx3yv8"
+              type="button"
+            >
+              edit
+            </button>
           </button>
           <button
-            class="chakra-button css-kn8t1u"
+            class="chakra-button css-f5hpgl"
+            data-group-item=""
+            data-last=""
+            style="--group-count: 2; --group-index: 1;"
             type="button"
           >
             delete
@@ -138,127 +165,154 @@ exports[`<AccountsCard /> > it renders an AccountsCard component with title as e
 exports[`<AccountsCard with increasing values > it calls supabase.delete when delete button is clicked 1`] = `
 <body>
   <div>
+    <script
+      nonce=""
+    >
+      ((e,r,s,u,d,m,l,h)=&gt;
+      {let c=document.documentElement,v=["light","dark"];function p(i){(Array.isArray(e)?e:[e]).forEach(y=&gt;
+      {let k=y==="class",S=k&&m?d.map(f=&gt;
+      m[f]||f):d;k?(c.classList.remove(...S),c.classList.add(i)):c.setAttribute(y,i)}),R(i)}function R(i){h&&v.includes(i)&&(c.style.colorScheme=i)}function a(){return window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"}if(u)p(u);else try{let i=localStorage.getItem(r)||s,y=l&&i==="system"?a():i;p(y)}catch(i){}})("class","theme","system",null,["light","dark"],null,true,true)
+    </script>
     <div
-      class="chakra-card pos_relative trs_all_0.3s_ease-in-out bd_1px_solid_token(colors.gray.500)! [&:hover]:bx-sh_2px_5px_8px_0px_token(colors.gray.500)! [&:hover]:trf_translate3d(-2px,_-5px,_-5px) [&:hover]:cursor_pointer css-11joc2e"
+      class="pos_relative trs_all_0.3s_ease-in-out bd_1px_solid_token(colors.gray.500)! [&:hover]:bx-sh_2px_5px_8px_0px_token(colors.gray.500)! [&:hover]:trf_translate3d(-2px,_-5px,_-5px) chakra-card__root css-af7wrq"
       id="123456"
       title="My curent account"
     >
       <div
-        class="chakra-card__header css-m9wzl5"
+        class="chakra-card__header css-svbf1u"
       >
         <h5
-          class="chakra-heading css-khlt38"
+          class="chakra-heading css-gl11ui"
         >
           Current account
         </h5>
         <h4
-          class="chakra-heading css-svk9li"
+          class="chakra-heading css-21g0wk"
         >
           My curent account
         </h4>
       </div>
       <div
-        class="chakra-stack css-1y3f6ad"
+        class="chakra-card__body css-k5tkvr"
       >
         <div
-          class="chakra-stat css-1mbo1ls"
+          class="chakra-stack css-1y3f6ad"
         >
-          <dl>
+          <dl
+            class="chakra-stat__root css-7kqs0d"
+          >
             <dt
-              class="chakra-stat__label css-0"
+              class="chakra-stat__label css-lx24hk"
             >
               previous:
             </dt>
             <dd
-              class="chakra-stat__number css-fvxuh5"
+              class="chakra-stat__valueText css-1e5w1gw"
             >
               £10,000
             </dd>
-            <dd
-              class="chakra-stat__help-text css-0"
+            <span
+              class="chakra-stat__helpText css-1p340iu"
             >
               <span
-                class="css-8b45rq"
+                class="chakra-badge css-14yyetd"
               >
-                decreased by
+                <span
+                  class="chakra-stat__indicator css-zaoojb"
+                  data-type="down"
+                >
+                  <svg
+                    class="css-1tn7tyl"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      d="M12 5v14"
+                    />
+                    <path
+                      d="m19 12-7 7-7-7"
+                    />
+                  </svg>
+                </span>
+                -29
+                %
               </span>
-              <svg
-                aria-hidden="true"
-                class="chakra-icon css-19fbr80"
-                focusable="false"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  d="M21,5H3C2.621,5,2.275,5.214,2.105,5.553C1.937,5.892,1.973,6.297,2.2,6.6l9,12 c0.188,0.252,0.485,0.4,0.8,0.4s0.611-0.148,0.8-0.4l9-12c0.228-0.303,0.264-0.708,0.095-1.047C21.725,5.214,21.379,5,21,5z"
-                  fill="currentColor"
-                />
-              </svg>
-              -29%
-            </dd>
+            </span>
           </dl>
-        </div>
-        <div
-          class="chakra-stat css-1mbo1ls"
-        >
-          <dl>
+          <dl
+            class="chakra-stat__root css-7kqs0d"
+          >
             <dt
-              class="chakra-stat__label css-0"
+              class="chakra-stat__label css-lx24hk"
             >
               current:
             </dt>
             <dd
-              class="chakra-stat__number css-fvxuh5"
+              class="chakra-stat__valueText css-1e5w1gw"
             >
               £9,000
             </dd>
-            <dd
-              class="chakra-stat__help-text css-0"
+            <span
+              class="chakra-stat__helpText css-1p340iu"
             >
               <span
-                class="css-8b45rq"
+                class="chakra-badge css-14yyetd"
               >
-                decreased by
+                <span
+                  class="chakra-stat__indicator css-zaoojb"
+                  data-type="down"
+                >
+                  <svg
+                    class="css-1tn7tyl"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      d="M12 5v14"
+                    />
+                    <path
+                      d="m19 12-7 7-7-7"
+                    />
+                  </svg>
+                </span>
+                -10
+                %
               </span>
-              <svg
-                aria-hidden="true"
-                class="chakra-icon css-19fbr80"
-                focusable="false"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  d="M21,5H3C2.621,5,2.275,5.214,2.105,5.553C1.937,5.892,1.973,6.297,2.2,6.6l9,12 c0.188,0.252,0.485,0.4,0.8,0.4s0.611-0.148,0.8-0.4l9-12c0.228-0.303,0.264-0.708,0.095-1.047C21.725,5.214,21.379,5,21,5z"
-                  fill="currentColor"
-                />
-              </svg>
-              -10%
-            </dd>
+            </span>
           </dl>
         </div>
-      </div>
-      <div
-        class="chakra-card__body css-ttziis"
-      >
         <div
           class="recharts-responsive-container"
           style="width: 100%; height: 95%; min-width: 0;"
         />
       </div>
       <div
-        class="chakra-card__footer css-eldtq0"
+        class="chakra-card__footer css-whgv0v"
       >
         <div
-          class="chakra-button__group css-vhnxbm"
-          data-orientation="horizontal"
-          role="group"
+          class="css-zzxe7y"
         >
           <button
-            class="chakra-button css-kn8t1u"
+            aria-expanded="false"
+            aria-haspopup="dialog"
+            class="chakra-dialog__trigger css-0"
+            data-part="trigger"
+            data-scope="dialog"
+            data-state="closed"
+            dir="ltr"
+            id="dialog::r1::trigger"
             type="button"
           >
-            edit
+            <button
+              class="chakra-button css-tx3yv8"
+              type="button"
+            >
+              edit
+            </button>
           </button>
           <button
-            class="chakra-button css-kn8t1u"
+            class="chakra-button css-f5hpgl"
+            data-group-item=""
+            data-last=""
+            style="--group-count: 2; --group-index: 1;"
             type="button"
           >
             delete

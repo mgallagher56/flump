@@ -3,8 +3,16 @@
 exports[`FLPButton > should not call onClick when clicked and disabled is true 1`] = `
 <body>
   <div>
+    <script
+      nonce=""
+    >
+      ((e,r,s,u,d,m,l,h)=&gt;
+      {let c=document.documentElement,v=["light","dark"];function p(i){(Array.isArray(e)?e:[e]).forEach(y=&gt;
+      {let k=y==="class",S=k&&m?d.map(f=&gt;
+      m[f]||f):d;k?(c.classList.remove(...S),c.classList.add(i)):c.setAttribute(y,i)}),R(i)}function R(i){h&&v.includes(i)&&(c.style.colorScheme=i)}function a(){return window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"}if(u)p(u);else try{let i=localStorage.getItem(r)||s,y=l&&i==="system"?a():i;p(y)}catch(i){}})("class","theme","system",null,["light","dark"],null,true,true)
+    </script>
     <button
-      class="chakra-button css-1ltlu47"
+      class="chakra-button css-1fwa16t"
       disabled=""
       type="button"
     >
@@ -16,8 +24,16 @@ exports[`FLPButton > should not call onClick when clicked and disabled is true 1
 
 exports[`FLPButton > should render correctly 1`] = `
 <div>
+  <script
+    nonce=""
+  >
+    ((e,r,s,u,d,m,l,h)=&gt;
+    {let c=document.documentElement,v=["light","dark"];function p(i){(Array.isArray(e)?e:[e]).forEach(y=&gt;
+    {let k=y==="class",S=k&&m?d.map(f=&gt;
+    m[f]||f):d;k?(c.classList.remove(...S),c.classList.add(i)):c.setAttribute(y,i)}),R(i)}function R(i){h&&v.includes(i)&&(c.style.colorScheme=i)}function a(){return window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"}if(u)p(u);else try{let i=localStorage.getItem(r)||s,y=l&&i==="system"?a():i;p(y)}catch(i){}})("class","theme","system",null,["light","dark"],null,true,true)
+  </script>
   <button
-    class="chakra-button css-1ltlu47"
+    class="chakra-button css-1fwa16t"
     type="button"
   >
     FLPButton
@@ -27,24 +43,25 @@ exports[`FLPButton > should render correctly 1`] = `
 
 exports[`FLPButton > should render correctly with props 1`] = `
 <div>
+  <script
+    nonce=""
+  >
+    ((e,r,s,u,d,m,l,h)=&gt;
+    {let c=document.documentElement,v=["light","dark"];function p(i){(Array.isArray(e)?e:[e]).forEach(y=&gt;
+    {let k=y==="class",S=k&&m?d.map(f=&gt;
+    m[f]||f):d;k?(c.classList.remove(...S),c.classList.add(i)):c.setAttribute(y,i)}),R(i)}function R(i){h&&v.includes(i)&&(c.style.colorScheme=i)}function a(){return window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"}if(u)p(u);else try{let i=localStorage.getItem(r)||s,y=l&&i==="system"?a():i;p(y)}catch(i){}})("class","theme","system",null,["light","dark"],null,true,true)
+  </script>
   <button
-    class="chakra-button css-1ltlu47"
-    data-loading=""
+    class="chakra-button css-teolye"
     disabled=""
     type="button"
   >
     <div
-      class="chakra-button__spinner chakra-button__spinner--start css-1vsp78f"
+      class="css-uoihn2"
     >
-      <div
-        class="chakra-spinner css-1plzyg6"
-      >
-        <span
-          class="css-8b45rq"
-        >
-          Loading...
-        </span>
-      </div>
+      <span
+        class="chakra-spinner css-12xlz0b"
+      />
     </div>
     <span
       class="css-q7lffx"

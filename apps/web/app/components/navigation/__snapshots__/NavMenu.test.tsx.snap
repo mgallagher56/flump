@@ -3,13 +3,19 @@
 exports[`<NavMenu /> > renders as expected when logged in and showAppLink is true 1`] = `
 <body>
   <div>
+    <script
+      nonce=""
+    >
+      ((e,r,s,u,d,m,l,h)=&gt;
+      {let c=document.documentElement,v=["light","dark"];function p(i){(Array.isArray(e)?e:[e]).forEach(y=&gt;
+      {let k=y==="class",S=k&&m?d.map(f=&gt;
+      m[f]||f):d;k?(c.classList.remove(...S),c.classList.add(i)):c.setAttribute(y,i)}),R(i)}function R(i){h&&v.includes(i)&&(c.style.colorScheme=i)}function a(){return window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"}if(u)p(u);else try{let i=localStorage.getItem(r)||s,y=l&&i==="system"?a():i;p(y)}catch(i){}})("class","theme","system",null,["light","dark"],null,true,true)
+    </script>
     <div
       class="css-0"
     >
       <div
-        class="chakra-button__group css-qul7w4"
-        data-orientation="horizontal"
-        role="group"
+        class="css-1adapka"
       >
         Home
         Accounts
@@ -22,13 +28,19 @@ exports[`<NavMenu /> > renders as expected when logged in and showAppLink is tru
 exports[`<NavMenu /> > renders as expected when not logged in 1`] = `
 <body>
   <div>
+    <script
+      nonce=""
+    >
+      ((e,r,s,u,d,m,l,h)=&gt;
+      {let c=document.documentElement,v=["light","dark"];function p(i){(Array.isArray(e)?e:[e]).forEach(y=&gt;
+      {let k=y==="class",S=k&&m?d.map(f=&gt;
+      m[f]||f):d;k?(c.classList.remove(...S),c.classList.add(i)):c.setAttribute(y,i)}),R(i)}function R(i){h&&v.includes(i)&&(c.style.colorScheme=i)}function a(){return window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"}if(u)p(u);else try{let i=localStorage.getItem(r)||s,y=l&&i==="system"?a():i;p(y)}catch(i){}})("class","theme","system",null,["light","dark"],null,true,true)
+    </script>
     <div
       class="css-0"
     >
       <div
-        class="chakra-button__group css-qul7w4"
-        data-orientation="horizontal"
-        role="group"
+        class="css-1adapka"
       >
         Home
         Accounts

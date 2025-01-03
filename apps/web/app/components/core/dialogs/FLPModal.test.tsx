@@ -1,6 +1,7 @@
-import { fireEvent, render } from '@testing-library/react';
+import { fireEvent } from '@testing-library/react';
 import { vi } from 'vitest';
 import FLPButton from '~/components/core/buttons/FLPButton';
+import customRender from '~/testUtils/customRender';
 
 import FLPModal from './FLPModal';
 
@@ -9,7 +10,7 @@ const mocks = vi.hoisted(() => ({
 }));
 
 describe('<FLPModal />', () => {
-  const { baseElement, getByText } = render(
+  const { baseElement, getByText } = customRender(
     <FLPModal
       confirmButton={{
         text: 'Confirm',

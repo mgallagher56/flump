@@ -1,5 +1,6 @@
-import { act, fireEvent, render } from '@testing-library/react';
+import { act, fireEvent } from '@testing-library/react';
 import { vi } from 'vitest';
+import customRender from '~/testUtils/customRender';
 
 import AccountDetailContainer from './AccountDetailContainer';
 
@@ -165,11 +166,11 @@ vi.mock('app/utils/supabase', () => ({
 
 describe('<AccountDetailContainer />', () => {
   test('should render', () => {
-    const { baseElement } = render(<AccountDetailContainer />);
+    const { baseElement } = customRender(<AccountDetailContainer />);
     expect(baseElement).toMatchSnapshot();
   });
   test('should add new years when buttons are clicked', () => {
-    const { baseElement, getByText } = render(<AccountDetailContainer />);
+    const { baseElement, getByText } = customRender(<AccountDetailContainer />);
 
     const addNextYearButton = getByText('addNextYear');
     const addPrevYearButton = getByText('addPrevYear');
@@ -183,7 +184,7 @@ describe('<AccountDetailContainer />', () => {
   });
 
   test('should toggle edit mode when button is clicked, changed value and save new value', () => {
-    const { baseElement, getByText, getAllByDisplayValue } = render(<AccountDetailContainer />);
+    const { baseElement, getByText, getAllByDisplayValue } = customRender(<AccountDetailContainer />);
     const editButton = getByText('edit');
     act(() => {
       fireEvent.click(editButton);
@@ -215,7 +216,7 @@ describe('<AccountDetailContainer />', () => {
       accountDetails: []
     });
 
-    const { baseElement, getByText } = render(<AccountDetailContainer />);
+    const { baseElement, getByText } = customRender(<AccountDetailContainer />);
     const addCurrentYearButton = getByText('addCurrentYear');
     act(() => {
       fireEvent.click(addCurrentYearButton);

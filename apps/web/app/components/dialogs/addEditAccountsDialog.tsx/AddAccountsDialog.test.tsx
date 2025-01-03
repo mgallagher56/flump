@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 
-import { fireEvent, render } from '@testing-library/react';
 import { vi } from 'vitest';
+import customRender from '~/testUtils/customRender';
 
 import mockUser from '__mocks__/user';
 
@@ -40,29 +40,27 @@ vi.mock('app/utils/supabase', () => ({
 }));
 
 describe('<AddAccountDialogBtn', () => {
-  mocks.mockUseLoaderData.mockReturnValue({ user: mockUser });
-  const { baseElement, getByText, getAllByText, getByLabelText } = render(
-    <AddEditAccountsDialogBtn accountId="123456" />
-  );
-  const triggerBtn = getByText('addAccount');
-  expect(triggerBtn).toBeDefined();
-  fireEvent.click(triggerBtn);
-  test('should render add account dialog when trigger button is clicked', () => {
-    const nameInput = getByLabelText('Name');
-    const accountTypeInput = getByLabelText('Account Type');
-    fireEvent.change(nameInput, {
-      target: {
-        value: 'Starling'
-      }
-    });
-    fireEvent.input(accountTypeInput, {
-      target: {
-        value: 'Current'
-      }
-    });
+  test('should render add account dialog when trigger button is clicked', async () => {
+    mocks.mockUseLoaderData.mockReturnValue({ user: mockUser });
+    const { baseElement, getByText, getAllByText, user } = customRender(
+      <AddEditAccountsDialogBtn accountId="123456" />
+    );
+    const triggerBtn = getByText('addAccount');
+    expect(triggerBtn).toBeDefined();
+    await user.click(triggerBtn);
+
+    const nameInput = getByText('Name');
+    expect(nameInput).toBeDefined();
+    const accountTypeInput = getByText('Account Type');
+    expect(accountTypeInput).toBeDefined();
+
+    await user.type(nameInput, 'Starling');
+
+    await user.type(accountTypeInput, 'Saving');
+
     const addAccountBtn = getAllByText('addAccount')[2];
     expect(addAccountBtn).toBeDefined();
-    fireEvent.click(addAccountBtn);
+    await user.click(addAccountBtn);
     expect(mocks.mockFrom).toBeCalled();
     const htmlString = baseElement.outerHTML.toString();
     const baseElementConstant = htmlString.replaceAll(/style="[^"]*"/g, '');

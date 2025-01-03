@@ -3,47 +3,48 @@
 exports[`<AccountDetailContainer /> > should add new years when buttons are clicked > with new years added 1`] = `
 <body>
   <div>
+    <script
+      nonce=""
+    >
+      ((e,r,s,u,d,m,l,h)=&gt;
+      {let c=document.documentElement,v=["light","dark"];function p(i){(Array.isArray(e)?e:[e]).forEach(y=&gt;
+      {let k=y==="class",S=k&&m?d.map(f=&gt;
+      m[f]||f):d;k?(c.classList.remove(...S),c.classList.add(i)):c.setAttribute(y,i)}),R(i)}function R(i){h&&v.includes(i)&&(c.style.colorScheme=i)}function a(){return window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"}if(u)p(u);else try{let i=localStorage.getItem(r)||s,y=l&&i==="system"?a():i;p(y)}catch(i){}})("class","theme","system",null,["light","dark"],null,true,true)
+    </script>
     <div
-      class="chakra-stack css-bco1gb"
+      class="chakra-stack css-1uphe7b"
     >
       <div
         class="chakra-stack css-1y3f6ad"
       >
         <div
-          class="chakra-stack css-8g8ihq"
+          class="css-cgq59l"
         >
           <h2
-            class="chakra-heading css-1e3tj"
+            class="chakra-heading css-1je2o1s"
           >
             CURRENT
           </h2>
           <h1
-            class="chakra-heading css-1e3tj"
+            class="chakra-heading css-mytsjf"
           >
             My current account
           </h1>
         </div>
         <div
-          class="chakra-stack css-8g8ihq"
+          class="css-0"
         >
           <button
-            class="chakra-button css-1ltlu47"
-            data-loading=""
+            class="chakra-button css-1wffpj8"
             disabled=""
             type="button"
           >
             <div
-              class="chakra-button__spinner chakra-button__spinner--start css-1vsp78f"
+              class="css-uoihn2"
             >
-              <div
-                class="chakra-spinner css-1plzyg6"
-              >
-                <span
-                  class="css-8b45rq"
-                >
-                  Loading...
-                </span>
-              </div>
+              <span
+                class="chakra-spinner css-12xlz0b"
+              />
             </div>
             <span
               class="css-q7lffx"
@@ -54,18 +55,18 @@ exports[`<AccountDetailContainer /> > should add new years when buttons are clic
         </div>
       </div>
       <div
-        class="chakra-stack css-nn57su"
+        class="chakra-stack css-ox2yq"
       >
         <div
           class="chakra-stack css-1igwmid"
         >
           <h3
-            class="chakra-heading css-1e3tj"
+            class="chakra-heading css-e8b6d6"
           >
             2021
           </h3>
           <button
-            class="chakra-button css-1ltlu47"
+            class="chakra-button css-mow6mt"
             type="button"
           >
             deleteYear
@@ -76,144 +77,144 @@ exports[`<AccountDetailContainer /> > should add new years when buttons are clic
         >
           <div>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               January
             </p>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               £1,000
             </p>
           </div>
           <div>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               February
             </p>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               £1,000
             </p>
           </div>
           <div>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               March
             </p>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               £1,000
             </p>
           </div>
           <div>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               April
             </p>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               £1,000
             </p>
           </div>
           <div>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               May
             </p>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               £1,000
             </p>
           </div>
           <div>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               June
             </p>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               £1,000
             </p>
           </div>
           <div>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               July
             </p>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               £1,000
             </p>
           </div>
           <div>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               August
             </p>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               £1,000
             </p>
           </div>
           <div>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               September
             </p>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               £1,000
             </p>
           </div>
           <div>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               October
             </p>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               £1,000
             </p>
           </div>
           <div>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               November
             </p>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               £1,000
             </p>
           </div>
           <div>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               December
             </p>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               £1,000
             </p>
@@ -223,12 +224,12 @@ exports[`<AccountDetailContainer /> > should add new years when buttons are clic
           class="chakra-stack css-1igwmid"
         >
           <h3
-            class="chakra-heading css-1e3tj"
+            class="chakra-heading css-e8b6d6"
           >
             2023
           </h3>
           <button
-            class="chakra-button css-1ltlu47"
+            class="chakra-button css-mow6mt"
             type="button"
           >
             deleteYear
@@ -239,144 +240,144 @@ exports[`<AccountDetailContainer /> > should add new years when buttons are clic
         >
           <div>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               January
             </p>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               £1,000
             </p>
           </div>
           <div>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               February
             </p>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               £1,000
             </p>
           </div>
           <div>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               March
             </p>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               £1,000
             </p>
           </div>
           <div>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               April
             </p>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               £1,000
             </p>
           </div>
           <div>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               May
             </p>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               £1,000
             </p>
           </div>
           <div>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               June
             </p>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               £1,000
             </p>
           </div>
           <div>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               July
             </p>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               £1,000
             </p>
           </div>
           <div>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               August
             </p>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               £1,000
             </p>
           </div>
           <div>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               September
             </p>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               £1,000
             </p>
           </div>
           <div>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               October
             </p>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               £1,000
             </p>
           </div>
           <div>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               November
             </p>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               £1,000
             </p>
           </div>
           <div>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               December
             </p>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               £1,000
             </p>
@@ -387,23 +388,16 @@ exports[`<AccountDetailContainer /> > should add new years when buttons are clic
         class="chakra-stack css-1f0wxn3"
       >
         <button
-          class="chakra-button css-1ltlu47"
-          data-loading=""
+          class="chakra-button css-tx3yv8"
           disabled=""
           type="button"
         >
           <div
-            class="chakra-button__spinner chakra-button__spinner--start css-1vsp78f"
+            class="css-uoihn2"
           >
-            <div
-              class="chakra-spinner css-1plzyg6"
-            >
-              <span
-                class="css-8b45rq"
-              >
-                Loading...
-              </span>
-            </div>
+            <span
+              class="chakra-spinner css-12xlz0b"
+            />
           </div>
           <span
             class="css-q7lffx"
@@ -412,23 +406,16 @@ exports[`<AccountDetailContainer /> > should add new years when buttons are clic
           </span>
         </button>
         <button
-          class="chakra-button css-1ltlu47"
-          data-loading=""
+          class="chakra-button css-tx3yv8"
           disabled=""
           type="button"
         >
           <div
-            class="chakra-button__spinner chakra-button__spinner--start css-1vsp78f"
+            class="css-uoihn2"
           >
-            <div
-              class="chakra-spinner css-1plzyg6"
-            >
-              <span
-                class="css-8b45rq"
-              >
-                Loading...
-              </span>
-            </div>
+            <span
+              class="chakra-spinner css-12xlz0b"
+            />
           </div>
           <span
             class="css-q7lffx"
@@ -445,31 +432,39 @@ exports[`<AccountDetailContainer /> > should add new years when buttons are clic
 exports[`<AccountDetailContainer /> > should render 1`] = `
 <body>
   <div>
+    <script
+      nonce=""
+    >
+      ((e,r,s,u,d,m,l,h)=&gt;
+      {let c=document.documentElement,v=["light","dark"];function p(i){(Array.isArray(e)?e:[e]).forEach(y=&gt;
+      {let k=y==="class",S=k&&m?d.map(f=&gt;
+      m[f]||f):d;k?(c.classList.remove(...S),c.classList.add(i)):c.setAttribute(y,i)}),R(i)}function R(i){h&&v.includes(i)&&(c.style.colorScheme=i)}function a(){return window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"}if(u)p(u);else try{let i=localStorage.getItem(r)||s,y=l&&i==="system"?a():i;p(y)}catch(i){}})("class","theme","system",null,["light","dark"],null,true,true)
+    </script>
     <div
-      class="chakra-stack css-bco1gb"
+      class="chakra-stack css-1uphe7b"
     >
       <div
         class="chakra-stack css-1y3f6ad"
       >
         <div
-          class="chakra-stack css-8g8ihq"
+          class="css-cgq59l"
         >
           <h2
-            class="chakra-heading css-1e3tj"
+            class="chakra-heading css-1je2o1s"
           >
             CURRENT
           </h2>
           <h1
-            class="chakra-heading css-1e3tj"
+            class="chakra-heading css-mytsjf"
           >
             My current account
           </h1>
         </div>
         <div
-          class="chakra-stack css-8g8ihq"
+          class="css-0"
         >
           <button
-            class="chakra-button css-1ltlu47"
+            class="chakra-button css-1wffpj8"
             type="button"
           >
             edit
@@ -477,18 +472,18 @@ exports[`<AccountDetailContainer /> > should render 1`] = `
         </div>
       </div>
       <div
-        class="chakra-stack css-nn57su"
+        class="chakra-stack css-ox2yq"
       >
         <div
           class="chakra-stack css-1igwmid"
         >
           <h3
-            class="chakra-heading css-1e3tj"
+            class="chakra-heading css-e8b6d6"
           >
             2021
           </h3>
           <button
-            class="chakra-button css-1ltlu47"
+            class="chakra-button css-mow6mt"
             type="button"
           >
             deleteYear
@@ -499,144 +494,144 @@ exports[`<AccountDetailContainer /> > should render 1`] = `
         >
           <div>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               January
             </p>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               £1,000
             </p>
           </div>
           <div>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               February
             </p>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               £1,000
             </p>
           </div>
           <div>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               March
             </p>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               £1,000
             </p>
           </div>
           <div>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               April
             </p>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               £1,000
             </p>
           </div>
           <div>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               May
             </p>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               £1,000
             </p>
           </div>
           <div>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               June
             </p>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               £1,000
             </p>
           </div>
           <div>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               July
             </p>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               £1,000
             </p>
           </div>
           <div>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               August
             </p>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               £1,000
             </p>
           </div>
           <div>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               September
             </p>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               £1,000
             </p>
           </div>
           <div>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               October
             </p>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               £1,000
             </p>
           </div>
           <div>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               November
             </p>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               £1,000
             </p>
           </div>
           <div>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               December
             </p>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               £1,000
             </p>
@@ -646,12 +641,12 @@ exports[`<AccountDetailContainer /> > should render 1`] = `
           class="chakra-stack css-1igwmid"
         >
           <h3
-            class="chakra-heading css-1e3tj"
+            class="chakra-heading css-e8b6d6"
           >
             2023
           </h3>
           <button
-            class="chakra-button css-1ltlu47"
+            class="chakra-button css-mow6mt"
             type="button"
           >
             deleteYear
@@ -662,144 +657,144 @@ exports[`<AccountDetailContainer /> > should render 1`] = `
         >
           <div>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               January
             </p>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               £1,000
             </p>
           </div>
           <div>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               February
             </p>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               £1,000
             </p>
           </div>
           <div>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               March
             </p>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               £1,000
             </p>
           </div>
           <div>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               April
             </p>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               £1,000
             </p>
           </div>
           <div>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               May
             </p>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               £1,000
             </p>
           </div>
           <div>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               June
             </p>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               £1,000
             </p>
           </div>
           <div>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               July
             </p>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               £1,000
             </p>
           </div>
           <div>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               August
             </p>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               £1,000
             </p>
           </div>
           <div>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               September
             </p>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               £1,000
             </p>
           </div>
           <div>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               October
             </p>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               £1,000
             </p>
           </div>
           <div>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               November
             </p>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               £1,000
             </p>
           </div>
           <div>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               December
             </p>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               £1,000
             </p>
@@ -810,13 +805,13 @@ exports[`<AccountDetailContainer /> > should render 1`] = `
         class="chakra-stack css-1f0wxn3"
       >
         <button
-          class="chakra-button css-1ltlu47"
+          class="chakra-button css-tx3yv8"
           type="button"
         >
           addPrevYear
         </button>
         <button
-          class="chakra-button css-1ltlu47"
+          class="chakra-button css-tx3yv8"
           type="button"
         >
           addNextYear
@@ -830,47 +825,48 @@ exports[`<AccountDetailContainer /> > should render 1`] = `
 exports[`<AccountDetailContainer /> > should render add current year button and add current year when clicked > with current year added 1`] = `
 <body>
   <div>
+    <script
+      nonce=""
+    >
+      ((e,r,s,u,d,m,l,h)=&gt;
+      {let c=document.documentElement,v=["light","dark"];function p(i){(Array.isArray(e)?e:[e]).forEach(y=&gt;
+      {let k=y==="class",S=k&&m?d.map(f=&gt;
+      m[f]||f):d;k?(c.classList.remove(...S),c.classList.add(i)):c.setAttribute(y,i)}),R(i)}function R(i){h&&v.includes(i)&&(c.style.colorScheme=i)}function a(){return window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"}if(u)p(u);else try{let i=localStorage.getItem(r)||s,y=l&&i==="system"?a():i;p(y)}catch(i){}})("class","theme","system",null,["light","dark"],null,true,true)
+    </script>
     <div
-      class="chakra-stack css-bco1gb"
+      class="chakra-stack css-1uphe7b"
     >
       <div
         class="chakra-stack css-1y3f6ad"
       >
         <div
-          class="chakra-stack css-8g8ihq"
+          class="css-cgq59l"
         >
           <h2
-            class="chakra-heading css-1e3tj"
+            class="chakra-heading css-1je2o1s"
           >
             CURRENT
           </h2>
           <h1
-            class="chakra-heading css-1e3tj"
+            class="chakra-heading css-mytsjf"
           >
             My current account
           </h1>
         </div>
         <div
-          class="chakra-stack css-8g8ihq"
+          class="css-0"
         >
           <button
-            class="chakra-button css-1ltlu47"
-            data-loading=""
+            class="chakra-button css-1wffpj8"
             disabled=""
             type="button"
           >
             <div
-              class="chakra-button__spinner chakra-button__spinner--start css-1vsp78f"
+              class="css-uoihn2"
             >
-              <div
-                class="chakra-spinner css-1plzyg6"
-              >
-                <span
-                  class="css-8b45rq"
-                >
-                  Loading...
-                </span>
-              </div>
+              <span
+                class="chakra-spinner css-12xlz0b"
+              />
             </div>
             <span
               class="css-q7lffx"
@@ -881,18 +877,18 @@ exports[`<AccountDetailContainer /> > should render add current year button and 
         </div>
       </div>
       <div
-        class="chakra-stack css-nn57su"
+        class="chakra-stack css-ox2yq"
       >
         <div
           class="chakra-stack css-1igwmid"
         >
           <h3
-            class="chakra-heading css-1e3tj"
+            class="chakra-heading css-e8b6d6"
           >
             2021
           </h3>
           <button
-            class="chakra-button css-1ltlu47"
+            class="chakra-button css-mow6mt"
             type="button"
           >
             deleteYear
@@ -903,144 +899,144 @@ exports[`<AccountDetailContainer /> > should render add current year button and 
         >
           <div>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               January
             </p>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               £1,000
             </p>
           </div>
           <div>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               February
             </p>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               £1,000
             </p>
           </div>
           <div>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               March
             </p>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               £1,000
             </p>
           </div>
           <div>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               April
             </p>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               £1,000
             </p>
           </div>
           <div>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               May
             </p>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               £1,000
             </p>
           </div>
           <div>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               June
             </p>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               £1,000
             </p>
           </div>
           <div>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               July
             </p>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               £1,000
             </p>
           </div>
           <div>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               August
             </p>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               £1,000
             </p>
           </div>
           <div>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               September
             </p>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               £1,000
             </p>
           </div>
           <div>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               October
             </p>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               £1,000
             </p>
           </div>
           <div>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               November
             </p>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               £1,000
             </p>
           </div>
           <div>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               December
             </p>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               £1,000
             </p>
@@ -1050,12 +1046,12 @@ exports[`<AccountDetailContainer /> > should render add current year button and 
           class="chakra-stack css-1igwmid"
         >
           <h3
-            class="chakra-heading css-1e3tj"
+            class="chakra-heading css-e8b6d6"
           >
             2023
           </h3>
           <button
-            class="chakra-button css-1ltlu47"
+            class="chakra-button css-mow6mt"
             type="button"
           >
             deleteYear
@@ -1066,144 +1062,144 @@ exports[`<AccountDetailContainer /> > should render add current year button and 
         >
           <div>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               January
             </p>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               £1,000
             </p>
           </div>
           <div>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               February
             </p>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               £1,000
             </p>
           </div>
           <div>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               March
             </p>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               £1,000
             </p>
           </div>
           <div>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               April
             </p>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               £1,000
             </p>
           </div>
           <div>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               May
             </p>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               £1,000
             </p>
           </div>
           <div>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               June
             </p>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               £1,000
             </p>
           </div>
           <div>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               July
             </p>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               £1,000
             </p>
           </div>
           <div>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               August
             </p>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               £1,000
             </p>
           </div>
           <div>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               September
             </p>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               £1,000
             </p>
           </div>
           <div>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               October
             </p>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               £1,000
             </p>
           </div>
           <div>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               November
             </p>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               £1,000
             </p>
           </div>
           <div>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               December
             </p>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               £1,000
             </p>
@@ -1214,23 +1210,16 @@ exports[`<AccountDetailContainer /> > should render add current year button and 
         class="chakra-stack css-1f0wxn3"
       >
         <button
-          class="chakra-button css-1ltlu47"
-          data-loading=""
+          class="chakra-button css-tx3yv8"
           disabled=""
           type="button"
         >
           <div
-            class="chakra-button__spinner chakra-button__spinner--start css-1vsp78f"
+            class="css-uoihn2"
           >
-            <div
-              class="chakra-spinner css-1plzyg6"
-            >
-              <span
-                class="css-8b45rq"
-              >
-                Loading...
-              </span>
-            </div>
+            <span
+              class="chakra-spinner css-12xlz0b"
+            />
           </div>
           <span
             class="css-q7lffx"
@@ -1239,23 +1228,16 @@ exports[`<AccountDetailContainer /> > should render add current year button and 
           </span>
         </button>
         <button
-          class="chakra-button css-1ltlu47"
-          data-loading=""
+          class="chakra-button css-tx3yv8"
           disabled=""
           type="button"
         >
           <div
-            class="chakra-button__spinner chakra-button__spinner--start css-1vsp78f"
+            class="css-uoihn2"
           >
-            <div
-              class="chakra-spinner css-1plzyg6"
-            >
-              <span
-                class="css-8b45rq"
-              >
-                Loading...
-              </span>
-            </div>
+            <span
+              class="chakra-spinner css-12xlz0b"
+            />
           </div>
           <span
             class="css-q7lffx"
@@ -1272,31 +1254,39 @@ exports[`<AccountDetailContainer /> > should render add current year button and 
 exports[`<AccountDetailContainer /> > should toggle edit mode when button is clicked, changed value and save new value > with edit mode enabled 1`] = `
 <body>
   <div>
+    <script
+      nonce=""
+    >
+      ((e,r,s,u,d,m,l,h)=&gt;
+      {let c=document.documentElement,v=["light","dark"];function p(i){(Array.isArray(e)?e:[e]).forEach(y=&gt;
+      {let k=y==="class",S=k&&m?d.map(f=&gt;
+      m[f]||f):d;k?(c.classList.remove(...S),c.classList.add(i)):c.setAttribute(y,i)}),R(i)}function R(i){h&&v.includes(i)&&(c.style.colorScheme=i)}function a(){return window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"}if(u)p(u);else try{let i=localStorage.getItem(r)||s,y=l&&i==="system"?a():i;p(y)}catch(i){}})("class","theme","system",null,["light","dark"],null,true,true)
+    </script>
     <div
-      class="chakra-stack css-bco1gb"
+      class="chakra-stack css-1uphe7b"
     >
       <div
         class="chakra-stack css-1y3f6ad"
       >
         <div
-          class="chakra-stack css-8g8ihq"
+          class="css-cgq59l"
         >
           <h2
-            class="chakra-heading css-1e3tj"
+            class="chakra-heading css-1je2o1s"
           >
             CURRENT
           </h2>
           <h1
-            class="chakra-heading css-1e3tj"
+            class="chakra-heading css-mytsjf"
           >
             My current account
           </h1>
         </div>
         <div
-          class="chakra-stack css-8g8ihq"
+          class="css-0"
         >
           <button
-            class="chakra-button css-1ltlu47"
+            class="chakra-button css-1wffpj8"
             type="button"
           >
             save
@@ -1304,18 +1294,18 @@ exports[`<AccountDetailContainer /> > should toggle edit mode when button is cli
         </div>
       </div>
       <div
-        class="chakra-stack css-nn57su"
+        class="chakra-stack css-ox2yq"
       >
         <div
           class="chakra-stack css-1igwmid"
         >
           <h3
-            class="chakra-heading css-1e3tj"
+            class="chakra-heading css-e8b6d6"
           >
             2021
           </h3>
           <button
-            class="chakra-button css-1ltlu47"
+            class="chakra-button css-mow6mt"
             type="button"
           >
             deleteYear
@@ -1326,7 +1316,7 @@ exports[`<AccountDetailContainer /> > should toggle edit mode when button is cli
         >
           <div>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               January
             </p>
@@ -1341,10 +1331,10 @@ exports[`<AccountDetailContainer /> > should toggle edit mode when button is cli
               </label>
               <div>
                 <div
-                  class="css-3a3hw0"
+                  class="css-1op6ogi"
                 >
                   <input
-                    class="chakra-input css-v7v99c"
+                    class="chakra-input css-1ajgvgj"
                     data-month="1"
                     data-year="2021"
                     id="2021-January"
@@ -1359,7 +1349,7 @@ exports[`<AccountDetailContainer /> > should toggle edit mode when button is cli
           </div>
           <div>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               February
             </p>
@@ -1374,10 +1364,10 @@ exports[`<AccountDetailContainer /> > should toggle edit mode when button is cli
               </label>
               <div>
                 <div
-                  class="css-3a3hw0"
+                  class="css-1op6ogi"
                 >
                   <input
-                    class="chakra-input css-v7v99c"
+                    class="chakra-input css-1ajgvgj"
                     data-month="2"
                     data-year="2021"
                     id="2021-February"
@@ -1392,7 +1382,7 @@ exports[`<AccountDetailContainer /> > should toggle edit mode when button is cli
           </div>
           <div>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               March
             </p>
@@ -1407,10 +1397,10 @@ exports[`<AccountDetailContainer /> > should toggle edit mode when button is cli
               </label>
               <div>
                 <div
-                  class="css-3a3hw0"
+                  class="css-1op6ogi"
                 >
                   <input
-                    class="chakra-input css-v7v99c"
+                    class="chakra-input css-1ajgvgj"
                     data-month="3"
                     data-year="2021"
                     id="2021-March"
@@ -1425,7 +1415,7 @@ exports[`<AccountDetailContainer /> > should toggle edit mode when button is cli
           </div>
           <div>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               April
             </p>
@@ -1440,10 +1430,10 @@ exports[`<AccountDetailContainer /> > should toggle edit mode when button is cli
               </label>
               <div>
                 <div
-                  class="css-3a3hw0"
+                  class="css-1op6ogi"
                 >
                   <input
-                    class="chakra-input css-v7v99c"
+                    class="chakra-input css-1ajgvgj"
                     data-month="4"
                     data-year="2021"
                     id="2021-April"
@@ -1458,7 +1448,7 @@ exports[`<AccountDetailContainer /> > should toggle edit mode when button is cli
           </div>
           <div>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               May
             </p>
@@ -1473,10 +1463,10 @@ exports[`<AccountDetailContainer /> > should toggle edit mode when button is cli
               </label>
               <div>
                 <div
-                  class="css-3a3hw0"
+                  class="css-1op6ogi"
                 >
                   <input
-                    class="chakra-input css-v7v99c"
+                    class="chakra-input css-1ajgvgj"
                     data-month="5"
                     data-year="2021"
                     id="2021-May"
@@ -1491,7 +1481,7 @@ exports[`<AccountDetailContainer /> > should toggle edit mode when button is cli
           </div>
           <div>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               June
             </p>
@@ -1506,10 +1496,10 @@ exports[`<AccountDetailContainer /> > should toggle edit mode when button is cli
               </label>
               <div>
                 <div
-                  class="css-3a3hw0"
+                  class="css-1op6ogi"
                 >
                   <input
-                    class="chakra-input css-v7v99c"
+                    class="chakra-input css-1ajgvgj"
                     data-month="6"
                     data-year="2021"
                     id="2021-June"
@@ -1524,7 +1514,7 @@ exports[`<AccountDetailContainer /> > should toggle edit mode when button is cli
           </div>
           <div>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               July
             </p>
@@ -1539,10 +1529,10 @@ exports[`<AccountDetailContainer /> > should toggle edit mode when button is cli
               </label>
               <div>
                 <div
-                  class="css-3a3hw0"
+                  class="css-1op6ogi"
                 >
                   <input
-                    class="chakra-input css-v7v99c"
+                    class="chakra-input css-1ajgvgj"
                     data-month="7"
                     data-year="2021"
                     id="2021-July"
@@ -1557,7 +1547,7 @@ exports[`<AccountDetailContainer /> > should toggle edit mode when button is cli
           </div>
           <div>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               August
             </p>
@@ -1572,10 +1562,10 @@ exports[`<AccountDetailContainer /> > should toggle edit mode when button is cli
               </label>
               <div>
                 <div
-                  class="css-3a3hw0"
+                  class="css-1op6ogi"
                 >
                   <input
-                    class="chakra-input css-v7v99c"
+                    class="chakra-input css-1ajgvgj"
                     data-month="8"
                     data-year="2021"
                     id="2021-August"
@@ -1590,7 +1580,7 @@ exports[`<AccountDetailContainer /> > should toggle edit mode when button is cli
           </div>
           <div>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               September
             </p>
@@ -1605,10 +1595,10 @@ exports[`<AccountDetailContainer /> > should toggle edit mode when button is cli
               </label>
               <div>
                 <div
-                  class="css-3a3hw0"
+                  class="css-1op6ogi"
                 >
                   <input
-                    class="chakra-input css-v7v99c"
+                    class="chakra-input css-1ajgvgj"
                     data-month="9"
                     data-year="2021"
                     id="2021-September"
@@ -1623,7 +1613,7 @@ exports[`<AccountDetailContainer /> > should toggle edit mode when button is cli
           </div>
           <div>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               October
             </p>
@@ -1638,10 +1628,10 @@ exports[`<AccountDetailContainer /> > should toggle edit mode when button is cli
               </label>
               <div>
                 <div
-                  class="css-3a3hw0"
+                  class="css-1op6ogi"
                 >
                   <input
-                    class="chakra-input css-v7v99c"
+                    class="chakra-input css-1ajgvgj"
                     data-month="10"
                     data-year="2021"
                     id="2021-October"
@@ -1656,7 +1646,7 @@ exports[`<AccountDetailContainer /> > should toggle edit mode when button is cli
           </div>
           <div>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               November
             </p>
@@ -1671,10 +1661,10 @@ exports[`<AccountDetailContainer /> > should toggle edit mode when button is cli
               </label>
               <div>
                 <div
-                  class="css-3a3hw0"
+                  class="css-1op6ogi"
                 >
                   <input
-                    class="chakra-input css-v7v99c"
+                    class="chakra-input css-1ajgvgj"
                     data-month="11"
                     data-year="2021"
                     id="2021-November"
@@ -1689,7 +1679,7 @@ exports[`<AccountDetailContainer /> > should toggle edit mode when button is cli
           </div>
           <div>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               December
             </p>
@@ -1704,10 +1694,10 @@ exports[`<AccountDetailContainer /> > should toggle edit mode when button is cli
               </label>
               <div>
                 <div
-                  class="css-3a3hw0"
+                  class="css-1op6ogi"
                 >
                   <input
-                    class="chakra-input css-v7v99c"
+                    class="chakra-input css-1ajgvgj"
                     data-month="12"
                     data-year="2021"
                     id="2021-December"
@@ -1725,12 +1715,12 @@ exports[`<AccountDetailContainer /> > should toggle edit mode when button is cli
           class="chakra-stack css-1igwmid"
         >
           <h3
-            class="chakra-heading css-1e3tj"
+            class="chakra-heading css-e8b6d6"
           >
             2023
           </h3>
           <button
-            class="chakra-button css-1ltlu47"
+            class="chakra-button css-mow6mt"
             type="button"
           >
             deleteYear
@@ -1741,7 +1731,7 @@ exports[`<AccountDetailContainer /> > should toggle edit mode when button is cli
         >
           <div>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               January
             </p>
@@ -1756,10 +1746,10 @@ exports[`<AccountDetailContainer /> > should toggle edit mode when button is cli
               </label>
               <div>
                 <div
-                  class="css-3a3hw0"
+                  class="css-1op6ogi"
                 >
                   <input
-                    class="chakra-input css-v7v99c"
+                    class="chakra-input css-1ajgvgj"
                     data-month="1"
                     data-year="2023"
                     id="2023-January"
@@ -1774,7 +1764,7 @@ exports[`<AccountDetailContainer /> > should toggle edit mode when button is cli
           </div>
           <div>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               February
             </p>
@@ -1789,10 +1779,10 @@ exports[`<AccountDetailContainer /> > should toggle edit mode when button is cli
               </label>
               <div>
                 <div
-                  class="css-3a3hw0"
+                  class="css-1op6ogi"
                 >
                   <input
-                    class="chakra-input css-v7v99c"
+                    class="chakra-input css-1ajgvgj"
                     data-month="2"
                     data-year="2023"
                     id="2023-February"
@@ -1807,7 +1797,7 @@ exports[`<AccountDetailContainer /> > should toggle edit mode when button is cli
           </div>
           <div>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               March
             </p>
@@ -1822,10 +1812,10 @@ exports[`<AccountDetailContainer /> > should toggle edit mode when button is cli
               </label>
               <div>
                 <div
-                  class="css-3a3hw0"
+                  class="css-1op6ogi"
                 >
                   <input
-                    class="chakra-input css-v7v99c"
+                    class="chakra-input css-1ajgvgj"
                     data-month="3"
                     data-year="2023"
                     id="2023-March"
@@ -1840,7 +1830,7 @@ exports[`<AccountDetailContainer /> > should toggle edit mode when button is cli
           </div>
           <div>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               April
             </p>
@@ -1855,10 +1845,10 @@ exports[`<AccountDetailContainer /> > should toggle edit mode when button is cli
               </label>
               <div>
                 <div
-                  class="css-3a3hw0"
+                  class="css-1op6ogi"
                 >
                   <input
-                    class="chakra-input css-v7v99c"
+                    class="chakra-input css-1ajgvgj"
                     data-month="4"
                     data-year="2023"
                     id="2023-April"
@@ -1873,7 +1863,7 @@ exports[`<AccountDetailContainer /> > should toggle edit mode when button is cli
           </div>
           <div>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               May
             </p>
@@ -1888,10 +1878,10 @@ exports[`<AccountDetailContainer /> > should toggle edit mode when button is cli
               </label>
               <div>
                 <div
-                  class="css-3a3hw0"
+                  class="css-1op6ogi"
                 >
                   <input
-                    class="chakra-input css-v7v99c"
+                    class="chakra-input css-1ajgvgj"
                     data-month="5"
                     data-year="2023"
                     id="2023-May"
@@ -1906,7 +1896,7 @@ exports[`<AccountDetailContainer /> > should toggle edit mode when button is cli
           </div>
           <div>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               June
             </p>
@@ -1921,10 +1911,10 @@ exports[`<AccountDetailContainer /> > should toggle edit mode when button is cli
               </label>
               <div>
                 <div
-                  class="css-3a3hw0"
+                  class="css-1op6ogi"
                 >
                   <input
-                    class="chakra-input css-v7v99c"
+                    class="chakra-input css-1ajgvgj"
                     data-month="6"
                     data-year="2023"
                     id="2023-June"
@@ -1939,7 +1929,7 @@ exports[`<AccountDetailContainer /> > should toggle edit mode when button is cli
           </div>
           <div>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               July
             </p>
@@ -1954,10 +1944,10 @@ exports[`<AccountDetailContainer /> > should toggle edit mode when button is cli
               </label>
               <div>
                 <div
-                  class="css-3a3hw0"
+                  class="css-1op6ogi"
                 >
                   <input
-                    class="chakra-input css-v7v99c"
+                    class="chakra-input css-1ajgvgj"
                     data-month="7"
                     data-year="2023"
                     id="2023-July"
@@ -1972,7 +1962,7 @@ exports[`<AccountDetailContainer /> > should toggle edit mode when button is cli
           </div>
           <div>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               August
             </p>
@@ -1987,10 +1977,10 @@ exports[`<AccountDetailContainer /> > should toggle edit mode when button is cli
               </label>
               <div>
                 <div
-                  class="css-3a3hw0"
+                  class="css-1op6ogi"
                 >
                   <input
-                    class="chakra-input css-v7v99c"
+                    class="chakra-input css-1ajgvgj"
                     data-month="8"
                     data-year="2023"
                     id="2023-August"
@@ -2005,7 +1995,7 @@ exports[`<AccountDetailContainer /> > should toggle edit mode when button is cli
           </div>
           <div>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               September
             </p>
@@ -2020,10 +2010,10 @@ exports[`<AccountDetailContainer /> > should toggle edit mode when button is cli
               </label>
               <div>
                 <div
-                  class="css-3a3hw0"
+                  class="css-1op6ogi"
                 >
                   <input
-                    class="chakra-input css-v7v99c"
+                    class="chakra-input css-1ajgvgj"
                     data-month="9"
                     data-year="2023"
                     id="2023-September"
@@ -2038,7 +2028,7 @@ exports[`<AccountDetailContainer /> > should toggle edit mode when button is cli
           </div>
           <div>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               October
             </p>
@@ -2053,10 +2043,10 @@ exports[`<AccountDetailContainer /> > should toggle edit mode when button is cli
               </label>
               <div>
                 <div
-                  class="css-3a3hw0"
+                  class="css-1op6ogi"
                 >
                   <input
-                    class="chakra-input css-v7v99c"
+                    class="chakra-input css-1ajgvgj"
                     data-month="10"
                     data-year="2023"
                     id="2023-October"
@@ -2071,7 +2061,7 @@ exports[`<AccountDetailContainer /> > should toggle edit mode when button is cli
           </div>
           <div>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               November
             </p>
@@ -2086,10 +2076,10 @@ exports[`<AccountDetailContainer /> > should toggle edit mode when button is cli
               </label>
               <div>
                 <div
-                  class="css-3a3hw0"
+                  class="css-1op6ogi"
                 >
                   <input
-                    class="chakra-input css-v7v99c"
+                    class="chakra-input css-1ajgvgj"
                     data-month="11"
                     data-year="2023"
                     id="2023-November"
@@ -2104,7 +2094,7 @@ exports[`<AccountDetailContainer /> > should toggle edit mode when button is cli
           </div>
           <div>
             <p
-              class="chakra-text css-au19fy"
+              class="css-gyi3bv"
             >
               December
             </p>
@@ -2119,10 +2109,10 @@ exports[`<AccountDetailContainer /> > should toggle edit mode when button is cli
               </label>
               <div>
                 <div
-                  class="css-3a3hw0"
+                  class="css-1op6ogi"
                 >
                   <input
-                    class="chakra-input css-v7v99c"
+                    class="chakra-input css-1ajgvgj"
                     data-month="12"
                     data-year="2023"
                     id="2023-December"
@@ -2141,13 +2131,13 @@ exports[`<AccountDetailContainer /> > should toggle edit mode when button is cli
         class="chakra-stack css-1f0wxn3"
       >
         <button
-          class="chakra-button css-1ltlu47"
+          class="chakra-button css-tx3yv8"
           type="button"
         >
           addPrevYear
         </button>
         <button
-          class="chakra-button css-1ltlu47"
+          class="chakra-button css-tx3yv8"
           type="button"
         >
           addNextYear

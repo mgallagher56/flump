@@ -1,7 +1,8 @@
 import type { ReactNode } from 'react';
 
-import { act, fireEvent, render, waitFor } from '@testing-library/react';
+import { act, fireEvent, waitFor } from '@testing-library/react';
 import { vi } from 'vitest';
+import customRender from '~/testUtils/customRender';
 import { AuthErrorEnums } from '~/utils/utils';
 
 import SignUp from './SignUp';
@@ -54,12 +55,12 @@ const mockPassword = 'password';
 
 describe('<SignUp />', () => {
   test('should render as expected', () => {
-    const { container } = render(<SignUp />);
+    const { container } = customRender(<SignUp />);
     expect(container).toMatchSnapshot();
   });
 
   const renderAndType = async ({ action }: { action: SignUpActionEnum }) => {
-    const { getByLabelText, getByText, baseElement } = render(<SignUp action={action} />);
+    const { getByLabelText, getByText, baseElement } = customRender(<SignUp action={action} />);
     const emailInput = getByLabelText('Email:') as HTMLInputElement;
     const passwordInput = getByLabelText('Password:') as HTMLInputElement;
     fireEvent.change(emailInput, { target: { value: mockEmail } });

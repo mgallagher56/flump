@@ -163,7 +163,7 @@ export default [
     ]
   },
   {
-    files: ['**/*.test.{j,t}s?(x)'],
+    files: ['**/*.test.{j,t}s?(x)', "test/**"],
     ...testingLibrary.configs['flat/react'],
     plugins: {
       vitest,

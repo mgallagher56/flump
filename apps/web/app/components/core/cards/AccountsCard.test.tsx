@@ -1,4 +1,4 @@
-import { fireEvent, render } from '@testing-library/react';
+import { fireEvent } from '@testing-library/react';
 import { vi } from 'vitest';
 import { AccountTypeEnum } from '~/containers/accounts/utils';
 import { currentMonth, currentYear } from '~/utils/utils';
@@ -6,6 +6,7 @@ import { currentMonth, currentYear } from '~/utils/utils';
 import mockUser from '__mocks__/user';
 
 import AccountsCard from './AccountsCard';
+import customRender from '~/testUtils/customRender';
 
 const mocks = vi.hoisted(() => ({
   mockUseLoaderData: vi.fn(),
@@ -63,7 +64,7 @@ describe('<AccountsCard />', () => {
       })
     });
 
-    const { baseElement } = render(
+    const { baseElement } =customRender(
       <AccountsCard accountId={'123456'} name="My curent account" type={AccountTypeEnum.CURRENT} />
     );
     expect(baseElement).toMatchSnapshot();
@@ -85,7 +86,7 @@ describe('<AccountsCard with increasing values', () => {
       })
     });
 
-    const { baseElement, getByText } = render(
+    const { baseElement, getByText } =customRender(
       <AccountsCard accountId={'123456'} name="My curent account" type={AccountTypeEnum.CURRENT} />
     );
     const deleteButton = getByText('delete');

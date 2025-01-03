@@ -1,5 +1,6 @@
 import { createListCollection } from '@chakra-ui/react';
-import { render } from '@testing-library/react';
+import customRender from '~/testUtils/customRender';
+
 import { vi } from 'vitest';
 
 import FLPSelect from './FLPSelect';
@@ -12,13 +13,13 @@ const mockSelectioOptions = createListCollection({
 
 describe('<FLPSelect />', () => {
   test('should render as expected', () => {
-    const { baseElement } = render(
+    const { baseElement } =customRender(
       <FLPSelect collection={mockSelectioOptions} label="label" value={['1']} onChange={vi.fn()} />
     );
     expect(baseElement).toMatchSnapshot();
   });
   test('should render as expected as row', () => {
-    const { baseElement } = render(
+    const { baseElement } =customRender(
       <FLPSelect collection={mockSelectioOptions} flexDirection="row" label="label" value={['1']} onChange={vi.fn()} />
     );
     expect(baseElement).toMatchSnapshot();

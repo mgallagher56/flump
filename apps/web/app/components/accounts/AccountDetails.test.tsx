@@ -1,5 +1,6 @@
-import { fireEvent, render } from '@testing-library/react';
+import { fireEvent } from '@testing-library/react';
 import { vi } from 'vitest';
+import customRender from '~/testUtils/customRender';
 import { emptyObject } from '~/utils/utils';
 
 import AccountDetails from './AccountDetails';
@@ -155,14 +156,14 @@ vi.mock('app/utils/supabase', () => ({
 
 describe('<AccountDetails />', () => {
   test('should render', () => {
-    const { container } = render(
+    const { container } = customRender(
       <AccountDetails editedValues={emptyObject} isEditMode={false} onInputChange={vi.fn()} />
     );
     expect(container).toMatchSnapshot();
   });
 
   test('should render in edit mode', () => {
-    const { container } = render(
+    const { container } = customRender(
       <AccountDetails
         editedValues={{
           2023: {
@@ -177,7 +178,7 @@ describe('<AccountDetails />', () => {
   });
 
   test('should remove year when delete button is clicked', () => {
-    const { container, getAllByText } = render(
+    const { container, getAllByText } = customRender(
       <AccountDetails editedValues={emptyObject} isEditMode={false} onInputChange={vi.fn()} />
     );
     const deleteBtn = getAllByText('deleteYear')[0];

@@ -2,19 +2,31 @@
 
 exports[`FLPButtonGroup > renders as expected 1`] = `
 <div>
+  <script
+    nonce=""
+  >
+    ((e,r,s,u,d,m,l,h)=&gt;
+    {let c=document.documentElement,v=["light","dark"];function p(i){(Array.isArray(e)?e:[e]).forEach(y=&gt;
+    {let k=y==="class",S=k&&m?d.map(f=&gt;
+    m[f]||f):d;k?(c.classList.remove(...S),c.classList.add(i)):c.setAttribute(y,i)}),R(i)}function R(i){h&&v.includes(i)&&(c.style.colorScheme=i)}function a(){return window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"}if(u)p(u);else try{let i=localStorage.getItem(r)||s,y=l&&i==="system"?a():i;p(y)}catch(i){}})("class","theme","system",null,["light","dark"],null,true,true)
+  </script>
   <div
-    class="chakra-button__group css-1ind3v2"
-    data-orientation="horizontal"
-    role="group"
+    class="css-6l0f26"
   >
     <button
-      class="chakra-button css-kn8t1u"
+      class="chakra-button css-1fwa16t"
+      data-first=""
+      data-group-item=""
+      style="--group-count: 2; --group-index: 0;"
       type="button"
     >
       Button 1
     </button>
     <button
-      class="chakra-button css-kn8t1u"
+      class="chakra-button css-1fwa16t"
+      data-group-item=""
+      data-last=""
+      style="--group-count: 2; --group-index: 1;"
       type="button"
     >
       Button 2

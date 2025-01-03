@@ -2,12 +2,12 @@
 /// <reference types="vite/client" />
 import pandacss from '@pandacss/dev/postcss';
 import react from '@vitejs/plugin-react';
+import autoprefixer from 'autoprefixer';
 import { visualizer } from 'rollup-plugin-visualizer';
 import { defineConfig, loadEnv } from 'vite';
 import checker from 'vite-plugin-checker';
 import tsconfigPaths from 'vite-tsconfig-paths';
 import GithubActionsReporter from 'vitest-github-actions-reporter';
-import autoprefixer from "autoprefixer";
 
 import { reactRouter } from '@react-router/dev/vite';
 
@@ -70,7 +70,8 @@ export default defineConfig(({ mode }) => ({
         'app/routes/*.*',
         'app/**/types.ts',
         'app/utils/supabase.ts',
-        'app/**/*.d.ts'
+        'app/**/*.d.ts',
+        'app/components/ui/**/*.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'
       ],
       functions: 100,
       include: ['app/**/*.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],

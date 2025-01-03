@@ -100,7 +100,6 @@ const Document = withEmotionCache(({ children }: { children: ReactNode }, emotio
   const clientStyleData = useContext(ClientStyleContext);
   const loaderData = useLoaderData<typeof loader>();
   const { ENV, locale } = loaderData;
-  console.log({ loaderData });
   const { revalidate } = useRevalidator();
   const { i18n } = useTranslation();
 

@@ -1,4 +1,5 @@
-import { render } from '@testing-library/react';
+import customRender from '~/testUtils/customRender';
+
 
 import FLPText from './FLPText';
 
@@ -7,23 +8,23 @@ const sampleText =
 
 describe('FLPText', () => {
   test('renders as expected', () => {
-    const { container } = render(<FLPText>{sampleText}</FLPText>);
+    const { container } =customRender(<FLPText>{sampleText}</FLPText>);
     expect(container).toMatchSnapshot();
   });
   test('renders as expected with a fontSiez', () => {
-    const { container } = render(<FLPText fontSize="20">{sampleText}</FLPText>);
+    const { container } =customRender(<FLPText fontSize="20">{sampleText}</FLPText>);
     expect(container).toMatchSnapshot();
   });
   test('renders as expected with a fontWeight', () => {
-    const { container } = render(<FLPText fontWeight="bold">{sampleText}</FLPText>);
+    const { container } =customRender(<FLPText fontWeight="bold">{sampleText}</FLPText>);
     expect(container).toMatchSnapshot();
   });
   test('renders as expected with a lineHeight', () => {
-    const { container } = render(<FLPText lineHeight={40}>{sampleText}</FLPText>);
+    const { container } =customRender(<FLPText lineHeight={40}>{sampleText}</FLPText>);
     expect(container).toMatchSnapshot();
   });
   test('renders as expected with a letterSpacing', () => {
-    const { container } = render(<FLPText letterSpacing="widest">{sampleText}</FLPText>);
+    const { container } =customRender(<FLPText letterSpacing="widest">{sampleText}</FLPText>);
     expect(container).toMatchSnapshot();
   });
 });

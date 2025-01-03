@@ -1,10 +1,11 @@
-import { render } from '@testing-library/react';
+import customRender from '~/testUtils/customRender';
+
 
 import FLPBox from './FLPBox';
 
 describe('FLPBox', () => {
   test('renders', () => {
-    const { container, getByText } = render(
+    const { container, getByText } =customRender(
       <FLPBox>
         <div>FLPBox</div>
       </FLPBox>

@@ -2,42 +2,54 @@
 
 exports[`FLPSpinner > renders as expected 1`] = `
 <div>
-  <div
-    class="chakra-spinner css-1y7joxr"
+  <script
+    nonce=""
   >
-    <span
-      class="css-8b45rq"
-    >
-      Loading...
-    </span>
-  </div>
+    ((e,r,s,u,d,m,l,h)=&gt;
+    {let c=document.documentElement,v=["light","dark"];function p(i){(Array.isArray(e)?e:[e]).forEach(y=&gt;
+    {let k=y==="class",S=k&&m?d.map(f=&gt;
+    m[f]||f):d;k?(c.classList.remove(...S),c.classList.add(i)):c.setAttribute(y,i)}),R(i)}function R(i){h&&v.includes(i)&&(c.style.colorScheme=i)}function a(){return window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"}if(u)p(u);else try{let i=localStorage.getItem(r)||s,y=l&&i==="system"?a():i;p(y)}catch(i){}})("class","theme","system",null,["light","dark"],null,true,true)
+  </script>
+  <span
+    class="chakra-spinner css-11t4vt7"
+  />
 </div>
 `;
 
 exports[`FLPSpinner > renders as expected with a label 1`] = `
 <div>
-  <div
-    class="chakra-spinner css-1y7joxr"
+  <script
+    nonce=""
   >
-    <span
-      class="css-8b45rq"
+    ((e,r,s,u,d,m,l,h)=&gt;
+    {let c=document.documentElement,v=["light","dark"];function p(i){(Array.isArray(e)?e:[e]).forEach(y=&gt;
+    {let k=y==="class",S=k&&m?d.map(f=&gt;
+    m[f]||f):d;k?(c.classList.remove(...S),c.classList.add(i)):c.setAttribute(y,i)}),R(i)}function R(i){h&&v.includes(i)&&(c.style.colorScheme=i)}function a(){return window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"}if(u)p(u);else try{let i=localStorage.getItem(r)||s,y=l&&i==="system"?a():i;p(y)}catch(i){}})("class","theme","system",null,["light","dark"],null,true,true)
+  </script>
+  <span
+    class="chakra-spinner css-11t4vt7"
+  >
+    <p
+      class="css-gyi3bv"
     >
       Processing...
-    </span>
-  </div>
+    </p>
+  </span>
 </div>
 `;
 
 exports[`FLPSpinner > renders as expected with a size 1`] = `
 <div>
-  <div
-    class="chakra-spinner css-1y7joxr"
+  <script
+    nonce=""
   >
-    <span
-      class="css-8b45rq"
-    >
-      Loading...
-    </span>
-  </div>
+    ((e,r,s,u,d,m,l,h)=&gt;
+    {let c=document.documentElement,v=["light","dark"];function p(i){(Array.isArray(e)?e:[e]).forEach(y=&gt;
+    {let k=y==="class",S=k&&m?d.map(f=&gt;
+    m[f]||f):d;k?(c.classList.remove(...S),c.classList.add(i)):c.setAttribute(y,i)}),R(i)}function R(i){h&&v.includes(i)&&(c.style.colorScheme=i)}function a(){return window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"}if(u)p(u);else try{let i=localStorage.getItem(r)||s,y=l&&i==="system"?a():i;p(y)}catch(i){}})("class","theme","system",null,["light","dark"],null,true,true)
+  </script>
+  <span
+    class="chakra-spinner css-1x6hz8j"
+  />
 </div>
 `;

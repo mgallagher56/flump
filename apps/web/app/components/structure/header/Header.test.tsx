@@ -1,4 +1,5 @@
-import { render } from '@testing-library/react';
+import customRender from '~/testUtils/customRender';
+
 import { vi } from 'vitest';
 
 import mockUser from '__mocks__/user';
@@ -36,17 +37,17 @@ vi.mock('app/components/navigation/HomeLogo', () => ({
 describe('<Header />', () => {
   test('renders as expected by default', () => {
     mocks.mockUseLoaderData.mockReturnValue({ user: undefined });
-    const { baseElement } = render(<Header />);
+    const { baseElement } =customRender(<Header />);
     expect(baseElement).toMatchSnapshot();
   });
   test('renders without ColorModeSwitch', () => {
-    const { baseElement } = render(<Header />);
+    const { baseElement } =customRender(<Header />);
     expect(baseElement).toMatchSnapshot();
   });
 
   test('renders correctly when user logged in', () => {
     mocks.mockUseLoaderData.mockReturnValue({ user: mockUser });
-    const { baseElement } = render(<Header />);
+    const { baseElement } =customRender(<Header />);
     expect(baseElement).toMatchSnapshot();
   });
 });

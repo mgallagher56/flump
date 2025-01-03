@@ -1,4 +1,5 @@
-import { render } from '@testing-library/react';
+import customRender from '~/testUtils/customRender';
+
 import { vi } from 'vitest';
 
 import SignOut from './SignOut';
@@ -17,7 +18,7 @@ vi.mock('app/utils/supabase', () => ({
 
 describe('<SignOut />', () => {
   test('should call signOut when clicking the button', () => {
-    const { getByText } = render(<SignOut />);
+    const { getByText } =customRender(<SignOut />);
     const logoutButton = getByText('logOut') as HTMLButtonElement;
     logoutButton.click();
     expect(mocks.signOut).toHaveBeenCalled();

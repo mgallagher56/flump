@@ -12,10 +12,10 @@ interface FLPTabsProps extends Omit<TabsRootProps, 'children'> {
 const FLPTabs: FC<PropsWithChildren<FLPTabsProps>> = ({ data, orientation }) => {
   const FLPOrientation = orientation ?? 'horizontal';
   return (
-    <Tabs.Root orientation={FLPOrientation}>
+    <Tabs.Root defaultValue={data[0].value} orientation={FLPOrientation}>
       <Tabs.List>
         {data.map((item) => (
-          <Tabs.Trigger key={item.value} value={item.value}>
+          <Tabs.Trigger key={item.value} disabled={item.disabled} value={item.value}>
             {item.label}
           </Tabs.Trigger>
         ))}
