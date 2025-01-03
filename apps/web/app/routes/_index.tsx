@@ -1,10 +1,11 @@
 import type { ReactElement } from 'react';
 
 import { data, type MetaFunction } from 'react-router';
-import type { Database } from 'db_types';
 import FLPBox from '~/components/core/structure/FLPBox';
 import FLPHeading from '~/components/core/typography/FLPHeading';
 import { createSupaBaseServerClient } from '~/utils/supabase';
+
+import type { Database } from 'db_types';
 
 export const meta: MetaFunction = (): { title: string }[] => [{ title: 'flump' }];
 

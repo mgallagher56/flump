@@ -1,8 +1,8 @@
 import { type FC, useCallback, useMemo, useState } from 'react';
 
 import { Stack } from '@chakra-ui/react/stack';
-import { useLoaderData, useRevalidator } from 'react-router';
 import { useTranslation } from 'react-i18next';
+import { useLoaderData, useRevalidator } from 'react-router';
 import AccountDetails from '~/components/accounts/AccountDetails';
 import FLPButton from '~/components/core/buttons/FLPButton';
 import FLPHeading from '~/components/core/typography/FLPHeading';

@@ -2,6 +2,7 @@ import { type FC } from 'react';
 
 import type { SelectProps } from '@chakra-ui/react';
 import { Select } from '@chakra-ui/react';
+
 import { css } from 'styled-system/css';
 
 interface FLPSelectProps extends SelectProps {

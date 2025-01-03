@@ -1,7 +1,7 @@
 import type { FC } from 'react';
 
-import { useLoaderData } from 'react-router';
 import { useTranslation } from 'react-i18next';
+import { useLoaderData } from 'react-router';
 import FLPButtonGroup from '~/components/core/buttons/FLPButtonGroup';
 import FLPLinkButton from '~/components/core/buttons/FLPLinkButton';
 import SignOut from '~/components/users/SignOut';

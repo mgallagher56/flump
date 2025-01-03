@@ -1,4 +1,5 @@
 import { createBrowserClient, createServerClient, parseCookieHeader, serializeCookieHeader } from '@supabase/ssr';
+
 import type { Database } from 'db_types';
 
 declare global {
