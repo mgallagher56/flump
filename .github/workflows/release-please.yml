@@ -31,7 +31,7 @@ jobs:
     name: 🚀 Deploy
     needs: release
     runs-on: ubuntu-latest
-    if: ${{ needs.release.outputs.releases_created }}
+    if: ${{ needs.release.outputs.releases_created == 'true' }}
     strategy:
       fail-fast: false
       matrix:
