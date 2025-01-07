@@ -1,7 +1,6 @@
-import { fireEvent } from '@testing-library/react';
 import { vi } from 'vitest';
 import { AccountTypeEnum } from '~/containers/accounts/utils';
-import { currentMonth, currentYear } from '~/utils/utils';
+import { currentYear } from '~/utils/utils';
 
 import mockUser from '__mocks__/user';
 

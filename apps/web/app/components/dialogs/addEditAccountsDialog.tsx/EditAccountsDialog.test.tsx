@@ -1,6 +1,5 @@
 import type { ReactNode } from 'react';
 
-import { fireEvent } from '@testing-library/react';
 import { vi } from 'vitest';
 import customRender from '~/testUtils/customRender';
 
@@ -65,7 +64,7 @@ describe('<EditAccountDialogBtn', () => {
 
   test('should render edit account dialog and call supabase.delete when delete button is clicked', async () => {
     mocks.mockUseLoaderData.mockReturnValue({ user: mockUser });
-    const { baseElement, getByText, getAllByText, user } = customRender(
+    const { baseElement, getByText, user } = customRender(
       <AddEditAccountsDialogBtn isEditAccount accountId="123456" />
     );
 
