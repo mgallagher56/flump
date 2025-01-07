@@ -1,16 +1,23 @@
 import { vi } from 'vitest';
 import { AccountTypeEnum } from '~/containers/accounts/utils';
-import { currentYear } from '~/utils/utils';
+import customRender from '~/testUtils/customRender';
+import { currentMonth, currentYear } from '~/utils/utils';
 
 import mockUser from '__mocks__/user';
 
 import AccountsCard from './AccountsCard';
-import customRender from '~/testUtils/customRender';
 
 const mocks = vi.hoisted(() => ({
   mockUseLoaderData: vi.fn(),
   mockUseRevalidator: vi.fn(() => ({ revalidate: vi.fn() })),
   mockUseNavigate: () => vi.fn(),
+  mockFrom: vi.fn(() => ({
+    delete: () => ({
+      eq: () => ({
+        eq: () => ({})
+      })
+    })
+  }))
 }));
 
 vi.mock('react-router', async () => {
@@ -23,10 +30,23 @@ vi.mock('react-router', async () => {
   };
 });
 
+vi.mock('app/utils/supabase', () => ({
+  default: {
+    from: mocks.mockFrom
+  }
+}));
+
 vi.mock('app/utils/utils', () => ({
   currentMonth: 12,
   currentYear: 2023
 }));
+
+const getAdjustedValue = (index: number) => {
+  if (currentMonth - 1 === index) return `${index - 2}000`;
+  if (currentMonth - 3 === index) return `${index + 5}000`;
+
+  return `${index}000`;
+};
 
 describe('<AccountsCard />', () => {
   test('it renders an AccountsCard component with title as expected', () => {
@@ -43,9 +63,32 @@ describe('<AccountsCard />', () => {
       })
     });
 
-    const { baseElement } =customRender(
+    const { baseElement } = customRender(
       <AccountsCard accountId={'123456'} name="My curent account" type={AccountTypeEnum.CURRENT} />
     );
+    expect(baseElement).toMatchSnapshot();
+  });
+});
+
+describe('<AccountsCard with increasing values', () => {
+  test('should match snapshot for account with increasing values', () => {
+    mocks.mockUseLoaderData.mockReturnValueOnce({
+      user: mockUser,
+      accountDetails: Array.from({ length: 13 }, (_, i) => {
+        return {
+          id: i,
+          account_id: '123456',
+          month: i + 1,
+          year: currentYear,
+          value: parseInt(getAdjustedValue(i))
+        };
+      })
+    });
+
+    const { baseElement } = customRender(
+      <AccountsCard accountId={'123456'} name="My curent account" type={AccountTypeEnum.CURRENT} />
+    );
+
     expect(baseElement).toMatchSnapshot();
   });
 });
