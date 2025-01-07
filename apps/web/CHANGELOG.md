@@ -1,5 +1,78 @@
 # Changelog
 
+## [1.22.0](https://github.com/mgallagher56/flump/compare/flump/web-v1.21.3...flump/web-v1.22.0) (2025-01-07)
+
+
+### Features ✨
+
+* update addEditAccount card. update snaps ([7d9b52f](https://github.com/mgallagher56/flump/commit/7d9b52f42b04fb1c17322d740218486c34675edb))
+* update chakra ([5495d95](https://github.com/mgallagher56/flump/commit/5495d953a9d81ab6bcd16fe1e738854aa07c73f6))
+* update eslint v9. add new rules, run eslint fix and prettier ([e88a932](https://github.com/mgallagher56/flump/commit/e88a9328679fc6bdf4e8e7301a323bf04a071625))
+* upgrade supabase WIP ([76e5435](https://github.com/mgallagher56/flump/commit/76e543577aac02323af169edd681630d61256de6))
+* upgrade to react router v7 ([2d76de1](https://github.com/mgallagher56/flump/commit/2d76de1813fce5f7c9df5a77cd45b95848383797))
+
+
+### Bug Fixes 🪲
+
+* adjust ts-coverage ([40feec6](https://github.com/mgallagher56/flump/commit/40feec639bce2038b7ec5f12415f053420da46ac))
+* build styles ([a616d96](https://github.com/mgallagher56/flump/commit/a616d9637b2515e713015da08f23cfff69ca9981))
+* bunch of fixes ([0733b98](https://github.com/mgallagher56/flump/commit/0733b986c7e7fa1086781c5706519df9274ba99f))
+* **deps:** update all non-major third-party dependencies ([3ee1e3d](https://github.com/mgallagher56/flump/commit/3ee1e3ddf657ba9531d55b9de804791fa4311bc8))
+* **deps:** update all non-major third-party dependencies ([4d81f1a](https://github.com/mgallagher56/flump/commit/4d81f1a4bc36bfbae272844b0808abb357d34d1b))
+* **deps:** update all non-major third-party dependencies ([727b153](https://github.com/mgallagher56/flump/commit/727b153a7e550012d205739b9bbfb6d1890abc52))
+* **deps:** update dependency @chakra-ui/react to v3 ([e891aa4](https://github.com/mgallagher56/flump/commit/e891aa4977eccd9534903cbda85cbfad2f6da3bc))
+* **deps:** update dependency express to v4.20.0 [security] ([5c66fb5](https://github.com/mgallagher56/flump/commit/5c66fb5ffeea7a1393d883ff1ccca7001d7094c5))
+* **deps:** update dependency i18next-http-backend to v3 ([7d21ba5](https://github.com/mgallagher56/flump/commit/7d21ba51498179ef9b17a480e1c1e52d257938b2))
+* **deps:** update dependency react-i18next to v15 ([f96b206](https://github.com/mgallagher56/flump/commit/f96b2069d7465349a78da2da647e1fa62a915c20))
+* **deps:** update react monorepo to v19 ([aaaf2ac](https://github.com/mgallagher56/flump/commit/aaaf2acae59864120182c671ad9f380c00c4936a))
+* emotion server / client mismatch classnames ([ce7f0db](https://github.com/mgallagher56/flump/commit/ce7f0db5db1f4adb4ecd08b91a7f82a7a5532aa7))
+* husky updates ([d34a2d7](https://github.com/mgallagher56/flump/commit/d34a2d72c20eefedb9fb8e8ff1a7255506e588de))
+* supabse issue with user auth ([e49306e](https://github.com/mgallagher56/flump/commit/e49306e290f0ac7b5996dc34f7483cf17a502787))
+* top level await issue ([500ee97](https://github.com/mgallagher56/flump/commit/500ee97a0aa9075cd4a41755d73a377237a104a3))
+* ts issues ([c359969](https://github.com/mgallagher56/flump/commit/c35996977cb69acd6cb6113636e9c2c6b92e5773))
+
+
+### Tests 🧪
+
+* add custom render and fix tests ([19ca22c](https://github.com/mgallagher56/flump/commit/19ca22ca3c26f24f015d8a8724ecbf50621f3c9e))
+* fix test ([8f31bbc](https://github.com/mgallagher56/flump/commit/8f31bbcea44e2d67bc3f78278204628b8d6d6a5e))
+* react router v7 tests ([5e22b83](https://github.com/mgallagher56/flump/commit/5e22b83ee92f4b4addba8ac370131831ef7ba64d))
+* restore test ([3c66f3b](https://github.com/mgallagher56/flump/commit/3c66f3bc04e0a2e5b9fae2ad581259fa28c6f434))
+* update snaps ([2bae1b7](https://github.com/mgallagher56/flump/commit/2bae1b7fde9b019f6e06f4cbfe2899556444433d))
+* update snaps ([2875449](https://github.com/mgallagher56/flump/commit/287544957f82c398945e2bbbcbaf89295d0b173a))
+* update snaps and types ([2ed7fe6](https://github.com/mgallagher56/flump/commit/2ed7fe665a50cafb349f8ec19f3e2a2e20455796))
+* update snaps with styles ([2e01701](https://github.com/mgallagher56/flump/commit/2e017011a85048936fb66344c0e469c1c372fa62))
+* update test mock ([beef25b](https://github.com/mgallagher56/flump/commit/beef25b93fcbd63b7efefd5649985e0351d81cca))
+
+
+### Miscellaneous 🙃
+
+* add node polyfills ([e0a23fb](https://github.com/mgallagher56/flump/commit/e0a23fb39effc8e70d6c9756c9361680c667b504))
+* **deps:** update all non-major third-party dependencies ([c481803](https://github.com/mgallagher56/flump/commit/c4818037b79b09ecea444912ef06e221a98accb1))
+* **deps:** update all non-major third-party dependencies ([a8788a3](https://github.com/mgallagher56/flump/commit/a8788a3055e1fdbc6b051e3c7744a2c159998718))
+* **deps:** update dependency @faker-js/faker to v9 ([d7f667d](https://github.com/mgallagher56/flump/commit/d7f667d23c7ea9b48fe9548200ef89e5d4310c48))
+* **deps:** update dependency @testing-library/react to v16 ([3ada01b](https://github.com/mgallagher56/flump/commit/3ada01bfcda2b8b07aac4715ce44aa2df08979e8))
+* **deps:** update dependency @trivago/prettier-plugin-sort-imports to v5 ([21ceaf5](https://github.com/mgallagher56/flump/commit/21ceaf5073e5e248bf0e27e48fde7e508b6398b5))
+* **deps:** update dependency @types/eslint to v9 ([9c01b0b](https://github.com/mgallagher56/flump/commit/9c01b0b434d2173d7d5918f241663b08fa29c03a))
+* **deps:** update dependency @types/express to v5 ([2d3f961](https://github.com/mgallagher56/flump/commit/2d3f961573fdcd1f3aff3a6aa8527cd229ced2d3))
+* **deps:** update dependency c8 to v10 ([6db368d](https://github.com/mgallagher56/flump/commit/6db368d7f6bce22c3c836a9035ed9c0b894cfd1e))
+* **deps:** update dependency cookie to v0.7.0 [security] ([627ade2](https://github.com/mgallagher56/flump/commit/627ade22cdca2b67dcfae7f163ccc5cbc63051c7))
+* **deps:** update dependency cookie to v1 ([206f0b8](https://github.com/mgallagher56/flump/commit/206f0b82282e23fe4f4a895a58042d2ce8c6be3d))
+* **deps:** update dependency eslint to v9 ([74ad039](https://github.com/mgallagher56/flump/commit/74ad039c63b9c097a1d94d17dc9d2dab535e6b8b))
+* **deps:** update dependency eslint-config-turbo to v2 ([2410238](https://github.com/mgallagher56/flump/commit/24102384eb5fcd0b971f9a2823f6ada771de1050))
+* **deps:** update dependency happy-dom to v15 [security] ([dbb91fc](https://github.com/mgallagher56/flump/commit/dbb91fc7db9078989b577bbe1d87cddfdf41ec59))
+* **deps:** update dependency happy-dom to v16 ([2f8814f](https://github.com/mgallagher56/flump/commit/2f8814f74839b6950a4a4b4272096e0140d76d38))
+* **deps:** update dependency npm-run-all2 to v7 ([9d84e0d](https://github.com/mgallagher56/flump/commit/9d84e0d19014dcee78a720eb2e17308973d42add))
+* **deps:** update dependency vite to v6 ([fd39084](https://github.com/mgallagher56/flump/commit/fd39084be08cfca0610a18089075dc55b186851b))
+* **deps:** update dependency vite-tsconfig-paths to v5 ([1c976e7](https://github.com/mgallagher56/flump/commit/1c976e7b6835f4195c2e518cec5f2e584a62b5ce))
+* **deps:** update dependency webdriverio to v9 ([1d71052](https://github.com/mgallagher56/flump/commit/1d710521dee744e0886ae13ecf1c7e89e3736173))
+* **deps:** update node.js to v22 ([d852e5f](https://github.com/mgallagher56/flump/commit/d852e5f7cc430e7444e51169b941e90dc599a368))
+* **deps:** update vitest monorepo to v2 ([3866cb0](https://github.com/mgallagher56/flump/commit/3866cb038a7765918f3a4c4e12ff489f67030479))
+* exclude ts-coverage from updates ([b956a3f](https://github.com/mgallagher56/flump/commit/b956a3f9189c76eb34538d7fefafaaba807e09a5))
+* fix emotion cache ts issue ([aac2016](https://github.com/mgallagher56/flump/commit/aac20162cbc400804d1a157422ed5b055e18f8ab))
+* remove unused faker lib ([231f413](https://github.com/mgallagher56/flump/commit/231f4135134d833138d3b9243846eb8910aff4aa))
+* tidy deps ([73f6155](https://github.com/mgallagher56/flump/commit/73f61554c2d1651bdd55e511188146a5b840965d))
+
 ## [1.21.3](https://github.com/mgallagher56/flump/compare/flump/web-v1.21.2...flump/web-v1.21.3) (2024-05-29)
 
 
