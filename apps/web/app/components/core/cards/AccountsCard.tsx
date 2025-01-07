@@ -2,7 +2,7 @@ import { type FC, useCallback, useMemo } from 'react';
 
 import { CardBody, CardFooter, CardHeader, type CardRootProps, Stack, StatHelpText } from '@chakra-ui/react';
 import { useTranslation } from 'react-i18next';
-import { useLoaderData, useNavigate, useRevalidator } from 'react-router';
+import { useLoaderData, useNavigate } from 'react-router';
 import AccountDetailChart from '~/components/charts/AccountDetailChart';
 import FLPButton from '~/components/core/buttons/FLPButton';
 import FLPButtonGroup from '~/components/core/buttons/FLPButtonGroup';
@@ -13,7 +13,6 @@ import type { AccountDetail } from '~/containers/accounts/types';
 import type { AccountTypeEnum } from '~/containers/accounts/utils';
 import type { loader } from '~/routes/app.accounts._index';
 import { monthYearSort } from '~/utils/accounts';
-import supabase from '~/utils/supabase';
 import { currentMonth, currentYear } from '~/utils/utils';
 
 import FLPCard from './FLPCard';
@@ -28,13 +27,10 @@ const AccountsCard: FC<AccountsCardProp> = ({ accountId, name, type }) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const {
-    user,
     accountDetails = []
   }: {
-    user?: { id?: string };
     accountDetails?: AccountDetail[];
   } = useLoaderData<typeof loader>();
-  const { revalidate } = useRevalidator();
 
   const sortedAccountDetails = useMemo(() => {
     return accountDetails.filter((account) => account.account_id === accountId).sort(monthYearSort);
@@ -74,13 +70,13 @@ const AccountsCard: FC<AccountsCardProp> = ({ accountId, name, type }) => {
       width="250px"
     >
       <CardHeader
-        style={{
-          cursor: 'pointer'
-        }}
         display="flex"
         flexDirection="column"
         gap={1}
         padding={0}
+        style={{
+          cursor: 'pointer'
+        }}
         onClick={onViewClick}
       >
         <FLPHeading as="h5" color="grey.500" size="xs">{`${type} ${t('account')}`}</FLPHeading>
@@ -89,11 +85,11 @@ const AccountsCard: FC<AccountsCardProp> = ({ accountId, name, type }) => {
         </FLPHeading>
       </CardHeader>
       <CardBody
+        justifyContent="flex-end"
+        padding={0}
         style={{
           cursor: 'pointer'
         }}
-        justifyContent="flex-end"
-        padding={0}
         onClick={onViewClick}
       >
         <Stack alignItems="center" direction="row" display="flex" justifyContent="space-between">
@@ -141,8 +137,8 @@ const AccountsCard: FC<AccountsCardProp> = ({ accountId, name, type }) => {
         {!!accountDetailYear.length && <AccountDetailChart accountDetails={accountDetailYear} />}
       </CardBody>
       <CardFooter justifyContent="flex-end" padding={0}>
-        <FLPButtonGroup justifyContent="flex-end" zIndex="10" gap={4}>
-          <FLPButton variant="subtle" size="sm" onClick={onViewClick}>
+        <FLPButtonGroup gap={4} justifyContent="flex-end" zIndex="10">
+          <FLPButton size="sm" variant="subtle" onClick={onViewClick}>
             {t('view')}
           </FLPButton>
           <AddEditAccountsDialogBtn accountId={accountId} btnSize="sm" isEditAccount={true} />
