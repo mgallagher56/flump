@@ -6,6 +6,7 @@ import customRender from '~/testUtils/customRender';
 import mockUser from '__mocks__/user';
 
 import AddEditAccountsDialogBtn from './AddEditAccountsDialog';
+import { cleanup } from '@testing-library/react';
 
 const mocks = vi.hoisted(() => ({
   mockUseLoaderData: vi.fn(),
@@ -43,6 +44,9 @@ vi.mock('app/utils/supabase', () => ({
 }));
 
 describe('<EditAccountDialogBtn', () => {
+  beforeAll(() => {
+    cleanup();
+  });
   test('should render edit account dialog when trigger button is clicked', async () => {
     mocks.mockUseLoaderData.mockReturnValue({ user: mockUser });
     const { baseElement, getByText, getAllByText, user } = customRender(

@@ -12,8 +12,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogRoot,
-  DialogTitle,
-  DialogTrigger
+  DialogTitle
 } from '~/components/ui/dialog';
 
 interface FLPModalProps extends DialogRootProps {
@@ -61,7 +60,7 @@ const FLPModal: FC<FLPModalProps> = ({
       onOpenChange={onClose}
     >
       <DialogBackdrop />
-      <DialogTrigger>{triggerBtn}</DialogTrigger>
+      {triggerBtn}
       <DialogContent ref={contentRef}>
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>

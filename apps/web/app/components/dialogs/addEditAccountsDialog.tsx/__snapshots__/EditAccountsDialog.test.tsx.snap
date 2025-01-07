@@ -27,23 +27,10 @@ exports[`<EditAccountDialogBtn > should render edit account dialog and call supa
       id="dialog::r2::backdrop"
     />
     <button
-      aria-controls="dialog::r2::content"
-      aria-expanded="true"
-      aria-haspopup="dialog"
-      class="chakra-dialog__trigger css-0"
-      data-part="trigger"
-      data-scope="dialog"
-      data-state="open"
-      dir="ltr"
-      id="dialog::r2::trigger"
+      class="chakra-button css-guww8o"
       type="button"
     >
-      <button
-        class="chakra-button css-guww8o"
-        type="button"
-      >
-        edit
-      </button>
+      edit
     </button>
   </div>
   <div
@@ -441,4 +428,4 @@ exports[`<EditAccountDialogBtn > should render edit account dialog and call supa
 </body>
 `;
 
-exports[`<EditAccountDialogBtn > should render edit account dialog when trigger button is clicked 1`] = `"<body><div><script nonce="">((e,r,s,u,d,m,l,h)=>{let c=document.documentElement,v=["light","dark"];function p(i){(Array.isArray(e)?e:[e]).forEach(y=>{let k=y==="class",S=k&&m?d.map(f=>m[f]||f):d;k?(c.classList.remove(...S),c.classList.add(i)):c.setAttribute(y,i)}),R(i)}function R(i){h&&v.includes(i)&&(c.style.colorScheme=i)}function a(){return window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"}if(u)p(u);else try{let i=localStorage.getItem(r)||s,y=l&&i==="system"?a():i;p(y)}catch(i){}})("class","theme","system",null,["light","dark"],null,true,true)</script><button data-scope="dialog" data-part="trigger" dir="ltr" id="dialog::r0::trigger" aria-haspopup="dialog" type="button" aria-expanded="false" data-state="closed" class="chakra-dialog__trigger css-0"><button type="button" class="chakra-button css-guww8o">edit</button></button></div></body>"`;
+exports[`<EditAccountDialogBtn > should render edit account dialog when trigger button is clicked 1`] = `"<body><div><script nonce="">((e,r,s,u,d,m,l,h)=>{let c=document.documentElement,v=["light","dark"];function p(i){(Array.isArray(e)?e:[e]).forEach(y=>{let k=y==="class",S=k&&m?d.map(f=>m[f]||f):d;k?(c.classList.remove(...S),c.classList.add(i)):c.setAttribute(y,i)}),R(i)}function R(i){h&&v.includes(i)&&(c.style.colorScheme=i)}function a(){return window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"}if(u)p(u);else try{let i=localStorage.getItem(r)||s,y=l&&i==="system"?a():i;p(y)}catch(i){}})("class","theme","system",null,["light","dark"],null,true,true)</script><button type="button" class="chakra-button css-guww8o">edit</button></div></body>"`;

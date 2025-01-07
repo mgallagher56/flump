@@ -19,22 +19,10 @@ exports[`<AccountsContainer /> > should render as expected when accounts exist 1
       accounts
     </h1>
     <button
-      aria-expanded="false"
-      aria-haspopup="dialog"
-      class="chakra-dialog__trigger css-0"
-      data-part="trigger"
-      data-scope="dialog"
-      data-state="closed"
-      dir="ltr"
-      id="dialog::r1::trigger"
+      class="chakra-button css-guww8o"
       type="button"
     >
-      <button
-        class="chakra-button css-guww8o"
-        type="button"
-      >
-        addAccount
-      </button>
+      addAccount
     </button>
   </div>
   <div
@@ -136,22 +124,10 @@ exports[`<AccountsContainer /> > should render as expected when no accounts exis
       accounts
     </h1>
     <button
-      aria-expanded="false"
-      aria-haspopup="dialog"
-      class="chakra-dialog__trigger css-0"
-      data-part="trigger"
-      data-scope="dialog"
-      data-state="closed"
-      dir="ltr"
-      id="dialog::r0::trigger"
+      class="chakra-button css-guww8o"
       type="button"
     >
-      <button
-        class="chakra-button css-guww8o"
-        type="button"
-      >
-        addAccount
-      </button>
+      addAccount
     </button>
   </div>
   <div
