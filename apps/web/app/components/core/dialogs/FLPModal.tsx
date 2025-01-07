@@ -17,13 +17,14 @@ import {
 } from '~/components/ui/dialog';
 
 interface FLPModalProps extends DialogRootProps {
-  triggerBtn: ReactElement;
+  additionalActionBtns?: ReactElement<ReactElement>;
+  triggerBtn: ReactElement<ReactElement>;
   confirmButton?: {
     text: string;
     colorPalette?: string;
     id?: string;
   };
-  contentRef?: React.RefObject<HTMLDivElement>;
+  contentRef?: React.RefObject<HTMLDivElement | null>;
   disabled?: boolean;
   open: boolean;
   title: string;
@@ -32,6 +33,7 @@ interface FLPModalProps extends DialogRootProps {
 }
 
 const FLPModal: FC<FLPModalProps> = ({
+  additionalActionBtns,
   children,
   confirmButton,
   contentRef,
@@ -65,7 +67,8 @@ const FLPModal: FC<FLPModalProps> = ({
           <DialogTitle>{title}</DialogTitle>
         </DialogHeader>
         <DialogBody>{children}</DialogBody>
-        <DialogFooter>
+        <DialogFooter justifyContent="space-between">
+          {additionalActionBtns}
           <FLPButtonGroup>
             <FLPButton variant="outline" onClick={onClose}>
               {t('close')}

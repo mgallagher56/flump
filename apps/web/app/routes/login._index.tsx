@@ -20,7 +20,7 @@ export const loader = async ({
   return { ok: true };
 };
 
-const Index = (): ReactElement => {
+const Index = (): ReactElement<ReactElement> => {
   return (
     <Container alignItems="center" display="flex" justifyContent="center" maxW={'xs'}>
       <SignUp action={SignUpActionEnum.LOGIN} />

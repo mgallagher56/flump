@@ -8,7 +8,7 @@ import { css } from 'styled-system/css';
 interface FLPSelectProps extends SelectRootProps {
   label: string;
   isLabelHidden?: boolean;
-  portalRef?: React.RefObject<HTMLDivElement>;
+  portalRef?: React.RefObject<HTMLDivElement | null>;
 }
 
 const FLPSelect: FC<FLPSelectProps> = ({

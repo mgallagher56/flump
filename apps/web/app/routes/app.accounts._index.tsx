@@ -32,7 +32,7 @@ export const loader = async ({
   return data({ accounts, accountDetails, user }, { headers: response.headers });
 };
 
-const Accounts = (): ReactElement => {
+const Accounts = (): ReactElement<ReactElement> => {
   return <AccountsContainer />;
 };
 export default Accounts;

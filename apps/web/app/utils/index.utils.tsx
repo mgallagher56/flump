@@ -19,7 +19,7 @@ export const getTabsData = (employees: Partial<Employee>[], t: TFunction): TabDa
         <FLPBox>
           <FLPHeading as="h1">{t('featureNum', { num: 1 })}</FLPHeading>
           {employees.map(
-            (employee, index): ReactElement => (
+            (employee, index): ReactElement<ReactElement> => (
               <FLPBox key={employee.id ?? index} style={{ display: 'flex', gap: '.5rem' }}>
                 <h3>{`${employee.name ?? NA} - ${employee.department ?? NA}`}</h3>
               </FLPBox>

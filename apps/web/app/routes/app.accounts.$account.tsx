@@ -41,7 +41,7 @@ export const loader = async ({
   return data({ account: accountData?.[0], accountDetails, user }, { headers: response.headers });
 };
 
-const AccountDetailComponent = (): ReactElement => {
+const AccountDetailComponent = (): ReactElement<ReactElement> => {
   return <AccountDetailContainer />;
 };
 

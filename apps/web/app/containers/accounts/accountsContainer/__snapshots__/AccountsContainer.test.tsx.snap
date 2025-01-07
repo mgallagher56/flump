@@ -30,7 +30,7 @@ exports[`<AccountsContainer /> > should render as expected when accounts exist 1
       type="button"
     >
       <button
-        class="chakra-button css-teolye"
+        class="chakra-button css-guww8o"
         type="button"
       >
         addAccount
@@ -147,7 +147,7 @@ exports[`<AccountsContainer /> > should render as expected when no accounts exis
       type="button"
     >
       <button
-        class="chakra-button css-teolye"
+        class="chakra-button css-guww8o"
         type="button"
       >
         addAccount

@@ -58,16 +58,7 @@ const AccountsCard: FC<AccountsCardProp> = ({ accountId, name, type }) => {
   );
   const currentPercentageChangeValue = Math.round(((accountBalance - prevAccountBalance) / prevAccountBalance) * 100);
 
-  const handleRemoveAccount = useCallback(
-    async (e: { stopPropagation: () => void }) => {
-      e.stopPropagation();
-      await supabase.from('accounts').delete().eq('user_id', user.id).eq('id', accountId);
-      revalidate();
-    },
-    [accountId, revalidate, user.id]
-  );
-
-  const onCardClick = useCallback(() => navigate(`/app/accounts/${accountId}`), [accountId, navigate]);
+  const onViewClick = useCallback(() => navigate(`/app/accounts/${accountId}`), [accountId, navigate]);
 
   return (
     <FLPCard
@@ -82,63 +73,79 @@ const AccountsCard: FC<AccountsCardProp> = ({ accountId, name, type }) => {
       title={name}
       width="250px"
     >
-      <CardHeader display="flex" flexDirection="column" gap={1} padding={0} onClick={onCardClick}>
+      <CardHeader
+        style={{
+          cursor: 'pointer'
+        }}
+        display="flex"
+        flexDirection="column"
+        gap={1}
+        padding={0}
+        onClick={onViewClick}
+      >
         <FLPHeading as="h5" color="grey.500" size="xs">{`${type} ${t('account')}`}</FLPHeading>
         <FLPHeading as="h4" color="blue.500" fontWeight="bold" size="lg">
           {name}
         </FLPHeading>
       </CardHeader>
-      <CardBody justifyContent="flex-end" padding={0} onClick={onCardClick}>
-      <Stack alignItems="center" direction="row" display="flex" justifyContent="space-between">
-        {!!prevAccountBalance && (
+      <CardBody
+        style={{
+          cursor: 'pointer'
+        }}
+        justifyContent="flex-end"
+        padding={0}
+        onClick={onViewClick}
+      >
+        <Stack alignItems="center" direction="row" display="flex" justifyContent="space-between">
+          {!!prevAccountBalance && (
             <StatRoot size="sm">
-            <StatLabel>{`${t('previous')}:`}</StatLabel>
+              <StatLabel>{`${t('previous')}:`}</StatLabel>
               <StatValueText>
-              {Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP', maximumFractionDigits: 0 }).format(
-                prevAccountBalance
-              )}
-              </StatValueText>
-            {!!secondPreviousAccountBalance && (
-              <StatHelpText>
-                {secondPreviousAccountBalance > prevAccountBalance ? (
-                    <StatDownTrend variant="plain">{prevPercentageChangeValue}%</StatDownTrend>
-                ) : (
-                    <StatUpTrend variant="plain">{prevPercentageChangeValue}%</StatUpTrend>
+                {Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP', maximumFractionDigits: 0 }).format(
+                  prevAccountBalance
                 )}
-              </StatHelpText>
-            )}
-            </StatRoot>
-        )}
-        {!!accountBalance && (
-            <StatRoot size="sm">
-            <StatLabel>{`${t('current')}:`}</StatLabel>
-              <StatValueText>
-              {Intl.NumberFormat('en-GB', {
-                style: 'currency',
-                currency: 'GBP',
-                maximumFractionDigits: 0
-              }).format(accountBalance)}
               </StatValueText>
-            {!!prevAccountBalance && (
-              <StatHelpText>
+              {!!secondPreviousAccountBalance && (
+                <StatHelpText>
+                  {secondPreviousAccountBalance > prevAccountBalance ? (
+                    <StatDownTrend variant="plain">{prevPercentageChangeValue}%</StatDownTrend>
+                  ) : (
+                    <StatUpTrend variant="plain">{prevPercentageChangeValue}%</StatUpTrend>
+                  )}
+                </StatHelpText>
+              )}
+            </StatRoot>
+          )}
+          {!!accountBalance && (
+            <StatRoot size="sm">
+              <StatLabel>{`${t('current')}:`}</StatLabel>
+              <StatValueText>
+                {Intl.NumberFormat('en-GB', {
+                  style: 'currency',
+                  currency: 'GBP',
+                  maximumFractionDigits: 0
+                }).format(accountBalance)}
+              </StatValueText>
+              {!!prevAccountBalance && (
+                <StatHelpText>
                   {prevAccountBalance > accountBalance ? (
                     <StatDownTrend variant="plain">{currentPercentageChangeValue}%</StatDownTrend>
                   ) : (
                     <StatUpTrend variant="plain">{currentPercentageChangeValue}%</StatUpTrend>
                   )}
-              </StatHelpText>
-            )}
+                </StatHelpText>
+              )}
             </StatRoot>
-        )}
-      </Stack>
+          )}
+        </Stack>
         {!!accountDetailYear.length && <AccountDetailChart accountDetails={accountDetailYear} />}
       </CardBody>
       <CardFooter justifyContent="flex-end" padding={0}>
-        <FLPButtonGroup justifyContent="flex-end" zIndex="10">
-          <AddEditAccountsDialogBtn accountId={accountId} btnSize="sm" isEditAccount={true} />
-          <FLPButton colorPalette="red" size="sm" onClick={handleRemoveAccount}>
-            {t('delete')}
+        <FLPButtonGroup justifyContent="flex-end" zIndex="10" gap={4}>
+          <FLPButton variant="subtle" size="sm" onClick={onViewClick}>
+            {t('view')}
           </FLPButton>
+          <AddEditAccountsDialogBtn accountId={accountId} btnSize="sm" isEditAccount={true} />
         </FLPButtonGroup>
       </CardFooter>
     </FLPCard>

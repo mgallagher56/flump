@@ -1,4 +1,4 @@
-import type { ReactChildren, ReactElement, ReactNode } from 'react';
+import type { ReactElement, ReactNode } from 'react';
 import { StrictMode, useContext, useEffect, useMemo } from 'react';
 
 import { Box, Container, Heading } from '@chakra-ui/react';
@@ -95,7 +95,7 @@ export const links: LinksFunction = (): {
   ];
 };
 
-const Document = withEmotionCache(({ children }: { children: ReactNode }, emotionCache: EmotionCache): ReactElement => {
+const Document = withEmotionCache(({ children }: { children: ReactNode }, emotionCache: EmotionCache): ReactElement<ReactElement> => {
   const serverStyleData = useContext(ServerStyleContext);
   const clientStyleData = useContext(ClientStyleContext);
   const loaderData = useLoaderData<typeof loader>();
@@ -142,7 +142,7 @@ const Document = withEmotionCache(({ children }: { children: ReactNode }, emotio
   );
 });
 
-export default function App(): ReactElement {
+export default function App(): ReactElement<ReactElement> {
   const { revalidate } = useRevalidator();
   return (
     <StrictMode>
@@ -156,7 +156,7 @@ export default function App(): ReactElement {
   );
 }
 
-export function ErrorBoundary(): ReactElement {
+export function ErrorBoundary(): ReactElement<ReactElement> {
   const error = useRouteError() as {
     status: number;
     data: {

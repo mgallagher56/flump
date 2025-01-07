@@ -14,6 +14,7 @@ import tsEslintParser from '@typescript-eslint/parser';
 import turbo from "eslint-plugin-turbo";
 import unusedImports from 'eslint-plugin-unused-imports';
 import vitest from '@vitest/eslint-plugin';
+import reactCompiler from 'eslint-plugin-react-compiler';
 
 export default [
   reactPlugin.configs.flat.recommended,
@@ -29,6 +30,7 @@ export default [
       'react-hooks': reactHooks,
       'react-refresh': reactRefresh,
       'unused-imports': unusedImports,
+      'react-compiler': reactCompiler,
       sonarjs,
     },
     settings: {
@@ -95,6 +97,7 @@ export default [
       "no-duplicate-imports": 0,
       "no-nested-ternary": "warn",
       "no-unneeded-ternary": "warn",
+      'react-compiler/react-compiler': 'error',
       "react-hooks/rules-of-hooks": "error",
       "react-refresh/only-export-components": "off",
       "react/jsx-uses-react": "error",
