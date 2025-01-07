@@ -23,7 +23,7 @@ export const loader = async ({
   return { ok: true };
 };
 
-const App = (): ReactElement => {
+const App = (): ReactElement<ReactElement> => {
   return <FLPHeading>Dashboard</FLPHeading>;
 };
 export default App;

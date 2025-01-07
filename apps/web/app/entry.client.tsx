@@ -23,7 +23,7 @@ interface ClientCacheProviderProps {
   children: ReactNode;
 }
 
-function ClientCacheProvider({ children }: ClientCacheProviderProps): ReactElement {
+function ClientCacheProvider({ children }: ClientCacheProviderProps): ReactElement<ReactElement> {
   const [cache, setCache] = useState(defaultCache);
 
   function reset(): void {

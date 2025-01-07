@@ -18,6 +18,11 @@ const mocks = vi.hoisted(() => ({
       select: vi.fn(() => ({
         data: [{ id: '123456' }]
       }))
+    }),
+    delete: () => ({
+      eq: () => ({
+        eq: () => ({})
+      })
     })
   }))
 }));

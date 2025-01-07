@@ -4,6 +4,7 @@ import { type ButtonProps, createListCollection } from '@chakra-ui/react';
 import { useTranslation } from 'react-i18next';
 import { Form, useLoaderData, useRevalidator } from 'react-router';
 import FLPButton from '~/components/core/buttons/FLPButton';
+import FLPButtonGroup from '~/components/core/buttons/FLPButtonGroup';
 import FLPModal from '~/components/core/dialogs/FLPModal';
 import FLPInput from '~/components/core/inputs/input/FLPInput';
 import FLPSelect from '~/components/core/inputs/select/FLPSelect';
@@ -116,18 +117,36 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({ accountId,
     revalidate();
   }, [accountId, formInput.name, formInput.type, handleCloseModal, revalidate, user?.id]);
 
+  const handleRemoveAccount = useCallback(
+    async (e: { stopPropagation: () => void }) => {
+      e.stopPropagation();
+      await supabase.from('accounts').delete().eq('user_id', user?.id).eq('id', accountId);
+      revalidate();
+    },
+    [accountId, revalidate, user?.id]
+  );
+
   const submitAction = useMemo(() => {
     return isEditAccount ? onEditAccount : onAddAccount;
   }, [isEditAccount, onAddAccount, onEditAccount]);
 
   return (
     <FLPModal
+      additionalActionBtns={
+        isEditAccount ? (
+          <FLPButtonGroup>
+            <FLPButton colorPalette="red" size="sm" onClick={handleRemoveAccount}>
+              {t('delete')}
+            </FLPButton>
+          </FLPButtonGroup>
+        ) : undefined
+      }
       confirmButton={{ id: accountId, text: t(isEditAccount ? 'save' : 'addAccount') }}
       contentRef={contentRef}
       open={modalOpen}
       title={t(isEditAccount ? 'editAccount' : 'addAccount')}
       triggerBtn={
-        <FLPButton colorPalette="green" size={btnSize} variant={'outline'} onClick={handleOpenModal}>
+        <FLPButton size={btnSize} variant={'subtle'} onClick={handleOpenModal}>
           {t(isEditAccount ? 'edit' : 'addAccount')}
         </FLPButton>
       }

@@ -11,7 +11,7 @@ import type { loader } from '~/root';
 
 import { loginStyles, menuStyles, navStyles } from './styles';
 
-const Header: FC = (): ReactElement => {
+const Header: FC = (): ReactElement<FC> => {
   const { user } = useLoaderData<typeof loader>();
   return (
     <FLPBox as="header">

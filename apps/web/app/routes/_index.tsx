@@ -22,7 +22,7 @@ export const loader = async ({ request }: { request: Request }) => {
   return data({ employees }, { headers: response.headers });
 };
 
-const Index = (): ReactElement => {
+const Index = (): ReactElement<ReactElement> => {
   return (
     <FLPBox as="main">
       <FLPHeading>Home Page</FLPHeading>
