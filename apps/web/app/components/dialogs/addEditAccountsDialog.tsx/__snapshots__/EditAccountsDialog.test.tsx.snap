@@ -7,8 +7,8 @@ exports[`<EditAccountDialogBtn > should render edit account dialog and call supa
   style="overflow: hidden; padding-right: 1024px; pointer-events: none;"
 >
   <div
-    aria-hidden="true"
-    data-aria-hidden="true"
+    aria-hidden=""
+    data-aria-hidden=""
   >
     <script
       nonce=""
@@ -34,9 +34,9 @@ exports[`<EditAccountDialogBtn > should render edit account dialog and call supa
     </button>
   </div>
   <div
-    aria-hidden="true"
+    aria-hidden=""
     class="chakra-dialog__backdrop css-1yl0dyg"
-    data-aria-hidden="true"
+    data-aria-hidden=""
     data-part="backdrop"
     data-scope="dialog"
     data-state="open"
