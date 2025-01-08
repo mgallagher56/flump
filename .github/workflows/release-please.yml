@@ -5,6 +5,10 @@ on:
       - main
       - dev
 
+env:
+  TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
+  TURBO_TEAM: ${{ vars.TURBO_TEAM }}
+
 permissions:
   contents: write
   pull-requests: write
@@ -40,6 +44,12 @@ jobs:
     steps:
       - name: ⬇️ Checkout repo
         uses: actions/checkout@v4
+
+      - uses: ./.github/actions/pnpm-setup
+        with:
+          turbo: true
+          ghToken: ${{ secrets.GITHUB_TOKEN }}
+          turboToken: ${{ env.TURBO_TOKEN }}
 
       - name: 👀 Read app name
         uses: SebRollen/toml-action@v1.2.0
