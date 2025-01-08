@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.22.2](https://github.com/mgallagher56/flump/compare/flump/web-v1.22.1...flump/web-v1.22.2) (2025-01-08)
+
+
+### Bug Fixes 🪲
+
+* deploy fix attempt ([2ccdf31](https://github.com/mgallagher56/flump/commit/2ccdf31453452e4d3e15602e346132f0162f7131))
+
 ## [1.22.1](https://github.com/mgallagher56/flump/compare/flump/web-v1.22.0...flump/web-v1.22.1) (2025-01-08)
 
 
