@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.22.1](https://github.com/mgallagher56/flump/compare/flump/web-v1.22.0...flump/web-v1.22.1) (2025-01-08)
+
+
+### Bug Fixes 🪲
+
+* **deps:** update all non-major third-party dependencies ([8434067](https://github.com/mgallagher56/flump/commit/8434067badbc5c1cefdbdd9c750d121b0e0be6eb))
+
+
+### Tests 🧪
+
+* updates snaps ([427d8dd](https://github.com/mgallagher56/flump/commit/427d8dd151676259d9533edc3eb3526d9604bd52))
+
 ## [1.22.0](https://github.com/mgallagher56/flump/compare/flump/web-v1.21.3...flump/web-v1.22.0) (2025-01-07)
 
 
