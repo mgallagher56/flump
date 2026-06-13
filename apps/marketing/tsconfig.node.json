@@ -1,0 +1,21 @@
+{
+  "extends": "../../packages/typescript-config/base.json",
+  "compilerOptions": {
+    "target": "ES2023",
+    "lib": ["ES2023"],
+    "module": "ESNext",
+    "types": ["node"],
+    "skipLibCheck": true,
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "verbatimModuleSyntax": true,
+    "moduleDetection": "force",
+    "noEmit": true,
+    "strict": true,
+    "paths": {
+      "@repo/ui/*": ["../../packages/ui/*"],
+      "@repo/app-shell/*": ["../../packages/app-shell/src/*"]
+    }
+  },
+  "include": ["server.ts", "vite.config.ts"]
+}

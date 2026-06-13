@@ -1,11 +1,10 @@
-import { vi } from 'vitest';
-import { AccountTypeEnum } from '~/containers/accounts/utils';
-import customRender from '~/testUtils/customRender';
-import { currentMonth, currentYear } from '~/utils/utils';
+import mockUser from "__mocks__/user";
+import { vi } from "vitest";
+import { AccountTypeEnum } from "~/containers/accounts/utils";
+import customRender from "~/testUtils/customRender";
+import { currentMonth, currentYear } from "~/utils/utils";
 
-import mockUser from '__mocks__/user';
-
-import AccountsCard from './AccountsCard';
+import AccountsCard from "./AccountsCard";
 
 const mocks = vi.hoisted(() => ({
   mockUseLoaderData: vi.fn(),
@@ -14,31 +13,31 @@ const mocks = vi.hoisted(() => ({
   mockFrom: vi.fn(() => ({
     delete: () => ({
       eq: () => ({
-        eq: () => ({})
-      })
-    })
-  }))
+        eq: () => ({}),
+      }),
+    }),
+  })),
 }));
 
-vi.mock('react-router', async () => {
-  const actual: Record<string, unknown> = await vi.importActual('react-router');
+vi.mock("react-router", async () => {
+  const actual: Record<string, unknown> = await vi.importActual("react-router");
   return {
     ...actual,
     useLoaderData: mocks.mockUseLoaderData,
     useRevalidator: mocks.mockUseRevalidator,
-    useNavigate: mocks.mockUseNavigate
+    useNavigate: mocks.mockUseNavigate,
   };
 });
 
-vi.mock('app/utils/supabase', () => ({
+vi.mock("app/utils/supabase", () => ({
   default: {
-    from: mocks.mockFrom
-  }
+    from: mocks.mockFrom,
+  },
 }));
 
-vi.mock('app/utils/utils', () => ({
+vi.mock("app/utils/utils", () => ({
   currentMonth: 12,
-  currentYear: 2023
+  currentYear: 2023,
 }));
 
 const getAdjustedValue = (index: number) => {
@@ -48,45 +47,45 @@ const getAdjustedValue = (index: number) => {
   return `${index}000`;
 };
 
-describe('<AccountsCard />', () => {
-  test('it renders an AccountsCard component with title as expected', () => {
+describe("<AccountsCard />", () => {
+  test("it renders an AccountsCard component with title as expected", () => {
     mocks.mockUseLoaderData.mockReturnValue({
       user: mockUser,
       accountDetails: Array.from({ length: 12 }, (_, i) => {
         return {
           id: i,
-          account_id: '123456',
+          account_id: "123456",
           month: i + 1,
           year: currentYear,
-          value: parseInt(`${i + 1}000}`)
+          value: parseInt(`${i + 1}000}`, 10),
         };
-      })
+      }),
     });
 
     const { baseElement } = customRender(
-      <AccountsCard accountId={'123456'} name="My curent account" type={AccountTypeEnum.CURRENT} />
+      <AccountsCard accountId={"123456"} name="My curent account" type={AccountTypeEnum.CURRENT} />,
     );
     expect(baseElement).toMatchSnapshot();
   });
 });
 
-describe('<AccountsCard with increasing values', () => {
-  test('should match snapshot for account with increasing values', () => {
+describe("<AccountsCard with increasing values", () => {
+  test("should match snapshot for account with increasing values", () => {
     mocks.mockUseLoaderData.mockReturnValueOnce({
       user: mockUser,
       accountDetails: Array.from({ length: 13 }, (_, i) => {
         return {
           id: i,
-          account_id: '123456',
+          account_id: "123456",
           month: i + 1,
           year: currentYear,
-          value: parseInt(getAdjustedValue(i))
+          value: parseInt(getAdjustedValue(i), 10),
         };
-      })
+      }),
     });
 
     const { baseElement } = customRender(
-      <AccountsCard accountId={'123456'} name="My curent account" type={AccountTypeEnum.CURRENT} />
+      <AccountsCard accountId={"123456"} name="My curent account" type={AccountTypeEnum.CURRENT} />,
     );
 
     expect(baseElement).toMatchSnapshot();

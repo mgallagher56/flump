@@ -6,10 +6,10 @@ exports[`<AccountsCard /> > it renders an AccountsCard component with title as e
     <script
       nonce=""
     >
-      ((e,r,s,u,d,m,l,h)=&gt;
-      {let c=document.documentElement,v=["light","dark"];function p(i){(Array.isArray(e)?e:[e]).forEach(y=&gt;
-      {let k=y==="class",S=k&&m?d.map(f=&gt;
-      m[f]||f):d;k?(c.classList.remove(...S),c.classList.add(i)):c.setAttribute(y,i)}),R(i)}function R(i){h&&v.includes(i)&&(c.style.colorScheme=i)}function a(){return window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"}if(u)p(u);else try{let i=localStorage.getItem(r)||s,y=l&&i==="system"?a():i;p(y)}catch(i){}})("class","theme","system",null,["light","dark"],null,true,true)
+      ((e,i,s,u,m,a,l,h)=&gt;
+      {let d=document.documentElement,w=["light","dark"];function p(n){(Array.isArray(e)?e:[e]).forEach(y=&gt;
+      {let k=y==="class",S=k&&a?m.map(f=&gt;
+      a[f]||f):m;k?(d.classList.remove(...S),d.classList.add(a&&a[n]?a[n]:n)):d.setAttribute(y,n)}),R(n)}function R(n){h&&w.includes(n)&&(d.style.colorScheme=n)}function c(){return window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"}if(u)p(u);else try{let n=localStorage.getItem(i)||s,y=l&&n==="system"?c():n;p(y)}catch(n){}})("class","theme","system",null,["light","dark"],null,true,true)
     </script>
     <div
       class="pos_relative trs_all_0.3s_ease-in-out bd_1px_solid_token(colors.gray.500)! [&:hover]:bx-sh_2px_5px_8px_0px_token(colors.gray.500)! [&:hover]:trf_translate3d(-2px,_-5px,_-5px) chakra-card__root css-af7wrq"
@@ -55,7 +55,7 @@ exports[`<AccountsCard /> > it renders an AccountsCard component with title as e
               class="chakra-stat__helpText css-1p340iu"
             >
               <span
-                class="chakra-badge css-1onytod"
+                class="chakra-badge css-qpj65r"
               >
                 <span
                   class="chakra-stat__indicator css-zaoojb"
@@ -95,7 +95,7 @@ exports[`<AccountsCard /> > it renders an AccountsCard component with title as e
               class="chakra-stat__helpText css-1p340iu"
             >
               <span
-                class="chakra-badge css-1onytod"
+                class="chakra-badge css-qpj65r"
               >
                 <span
                   class="chakra-stat__indicator css-zaoojb"
@@ -122,16 +122,20 @@ exports[`<AccountsCard /> > it renders an AccountsCard component with title as e
         <div
           class="recharts-responsive-container"
           style="width: 100%; height: 95%; min-width: 0;"
-        />
+        >
+          <div
+            style="width: 0px; height: 0px; overflow: visible;"
+          />
+        </div>
       </div>
       <div
         class="chakra-card__footer css-whgv0v"
       >
         <div
-          class="css-ou285t"
+          class="chakra-group css-gjsy4q"
         >
           <button
-            class="chakra-button css-1ym3vem"
+            class="chakra-button css-11vqng1"
             data-first=""
             data-group-item=""
             style="--group-count: 2; --group-index: 0;"
@@ -140,7 +144,7 @@ exports[`<AccountsCard /> > it renders an AccountsCard component with title as e
             view
           </button>
           <button
-            class="chakra-button css-1ym3vem"
+            class="chakra-button css-11vqng1"
             type="button"
           >
             edit
@@ -158,10 +162,10 @@ exports[`<AccountsCard with increasing values > should match snapshot for accoun
     <script
       nonce=""
     >
-      ((e,r,s,u,d,m,l,h)=&gt;
-      {let c=document.documentElement,v=["light","dark"];function p(i){(Array.isArray(e)?e:[e]).forEach(y=&gt;
-      {let k=y==="class",S=k&&m?d.map(f=&gt;
-      m[f]||f):d;k?(c.classList.remove(...S),c.classList.add(i)):c.setAttribute(y,i)}),R(i)}function R(i){h&&v.includes(i)&&(c.style.colorScheme=i)}function a(){return window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"}if(u)p(u);else try{let i=localStorage.getItem(r)||s,y=l&&i==="system"?a():i;p(y)}catch(i){}})("class","theme","system",null,["light","dark"],null,true,true)
+      ((e,i,s,u,m,a,l,h)=&gt;
+      {let d=document.documentElement,w=["light","dark"];function p(n){(Array.isArray(e)?e:[e]).forEach(y=&gt;
+      {let k=y==="class",S=k&&a?m.map(f=&gt;
+      a[f]||f):m;k?(d.classList.remove(...S),d.classList.add(a&&a[n]?a[n]:n)):d.setAttribute(y,n)}),R(n)}function R(n){h&&w.includes(n)&&(d.style.colorScheme=n)}function c(){return window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"}if(u)p(u);else try{let n=localStorage.getItem(i)||s,y=l&&n==="system"?c():n;p(y)}catch(n){}})("class","theme","system",null,["light","dark"],null,true,true)
     </script>
     <div
       class="pos_relative trs_all_0.3s_ease-in-out bd_1px_solid_token(colors.gray.500)! [&:hover]:bx-sh_2px_5px_8px_0px_token(colors.gray.500)! [&:hover]:trf_translate3d(-2px,_-5px,_-5px) chakra-card__root css-af7wrq"
@@ -207,7 +211,7 @@ exports[`<AccountsCard with increasing values > should match snapshot for accoun
               class="chakra-stat__helpText css-1p340iu"
             >
               <span
-                class="chakra-badge css-14yyetd"
+                class="chakra-badge css-11y24gn"
               >
                 <span
                   class="chakra-stat__indicator css-zaoojb"
@@ -247,7 +251,7 @@ exports[`<AccountsCard with increasing values > should match snapshot for accoun
               class="chakra-stat__helpText css-1p340iu"
             >
               <span
-                class="chakra-badge css-14yyetd"
+                class="chakra-badge css-11y24gn"
               >
                 <span
                   class="chakra-stat__indicator css-zaoojb"
@@ -274,16 +278,20 @@ exports[`<AccountsCard with increasing values > should match snapshot for accoun
         <div
           class="recharts-responsive-container"
           style="width: 100%; height: 95%; min-width: 0;"
-        />
+        >
+          <div
+            style="width: 0px; height: 0px; overflow: visible;"
+          />
+        </div>
       </div>
       <div
         class="chakra-card__footer css-whgv0v"
       >
         <div
-          class="css-ou285t"
+          class="chakra-group css-gjsy4q"
         >
           <button
-            class="chakra-button css-1ym3vem"
+            class="chakra-button css-11vqng1"
             data-first=""
             data-group-item=""
             style="--group-count: 2; --group-index: 0;"
@@ -292,7 +300,7 @@ exports[`<AccountsCard with increasing values > should match snapshot for accoun
             view
           </button>
           <button
-            class="chakra-button css-1ym3vem"
+            class="chakra-button css-11vqng1"
             type="button"
           >
             edit

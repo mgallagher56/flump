@@ -1,0 +1,39 @@
+{
+  "name": "marketing",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "bun server.ts",
+    "start": "NODE_ENV=production bun server.ts",
+    "build": "bun run build:client && bun run build:server",
+    "build:client": "vite build --outDir dist/client",
+    "build:server": "vite build --ssr src/entry-server.tsx --outDir dist/server",
+    "lint": "biome check .",
+    "format": "biome check --write .",
+    "check-types": "tsc -b"
+  },
+  "dependencies": {
+    "@repo/app-shell": "workspace:*",
+    "@repo/common": "workspace:*",
+    "@repo/ui": "workspace:*",
+    "compression": "^1.7.4",
+    "express": "^4.18.2",
+    "react": "^19.2.3",
+    "react-dom": "^19.2.3",
+    "react-helmet-async": "^2.0.5",
+    "react-router-dom": "^7.11.0",
+    "sirv": "^2.0.4"
+  },
+  "devDependencies": {
+    "@pandacss/dev": "^1.7.2",
+    "@types/compression": "^1.7.5",
+    "@types/express": "^4.17.21",
+    "@types/node": "^20.10.5",
+    "@types/react": "^19.2.3",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^4.3.4",
+    "typescript": "5.9.2",
+    "vite": "^7.3.0"
+  }
+}

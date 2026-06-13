@@ -1,35 +1,27 @@
-import { type ReactElement } from 'react';
+import type { ReactElement } from "react";
 
-import { type User } from '@supabase/supabase-js';
-import { data, redirect, type RedirectFunction, type UNSAFE_DataWithResponseInit } from 'react-router';
-import AccountsContainer from '~/containers/accounts/accountsContainer/AccountsContainer';
-import { type Account, type AccountDetail } from '~/containers/accounts/types';
-import { createSupaBaseServerClient } from '~/utils/supabase';
+import { data, redirect } from "react-router";
+import AccountsContainer from "~/containers/accounts/accountsContainer/AccountsContainer";
+import { createSupaBaseServerClient } from "~/utils/supabase";
 
-export const loader = async ({
-  request
-}: {
-  request: Request;
-}): Promise<
-  | ReturnType<RedirectFunction>
-  | UNSAFE_DataWithResponseInit<{
-      accounts: Account[];
-      accountDetails: AccountDetail[];
-      user: User;
-    }>
-> => {
-  const response = new Response();
-  const supabase = createSupaBaseServerClient(request);
+export const loader = async ({ request }: { request: Request }) => {
+  const responseHeaders = new Headers();
+  const supabase = createSupaBaseServerClient(request, responseHeaders);
   const {
-    data: { user }
+    data: { user },
   } = await supabase.auth.getUser();
 
-  const { data: accounts } = await supabase.from('accounts').select().eq('user_id', user?.id).select();
+  if (!user) return redirect("/", { headers: responseHeaders });
 
-  const { data: accountDetails } = await supabase.from('account_details').select();
+  const { data: accounts } = await supabase
+    .from("accounts")
+    .select()
+    .eq("user_id", user.id)
+    .select();
 
-  if (!user) return redirect('/');
-  return data({ accounts, accountDetails, user }, { headers: response.headers });
+  const { data: accountDetails } = await supabase.from("account_details").select();
+
+  return data({ accounts, accountDetails, user }, { headers: responseHeaders });
 };
 
 const Accounts = (): ReactElement<ReactElement> => {

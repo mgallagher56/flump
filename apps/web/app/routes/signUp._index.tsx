@@ -1,27 +1,26 @@
-import type { ReactElement } from 'react';
+import { Container } from "@chakra-ui/react";
+import type { ReactElement } from "react";
+import { type RedirectFunction, redirect } from "react-router";
+import SignUp from "~/components/users/SignUp";
+import { createSupaBaseServerClient } from "~/utils/supabase";
 
-import { Container } from '@chakra-ui/react';
-import { redirect, type RedirectFunction } from 'react-router';
-import SignUp from '~/components/users/SignUp';
-import { createSupaBaseServerClient } from '~/utils/supabase';
-
-import type { Route } from './+types/signUp._index';
+import type { Route } from "./+types/signUp._index";
 
 export const loader = async ({
-  request
+  request,
 }: Route.LoaderArgs): Promise<ReturnType<RedirectFunction> | { ok: boolean }> => {
   const supabase = createSupaBaseServerClient(request);
   const {
-    data: { user }
+    data: { user },
   } = await supabase.auth.getUser();
 
-  if (user) return redirect('/');
+  if (user) return redirect("/");
   return { ok: true };
 };
 
 const Index = (): ReactElement<ReactElement> => {
   return (
-    <Container alignItems="center" display="flex" justifyContent="center" maxW={'xs'}>
+    <Container alignItems="center" display="flex" justifyContent="center" maxW={"xs"}>
       <SignUp />
     </Container>
   );

@@ -1,0 +1,42 @@
+{
+  "name": "@repo/app-shell",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./client": {
+      "import": "./dist/entry-client.js",
+      "types": "./dist/entry-client.d.ts"
+    },
+    "./server": {
+      "import": "./dist/entry-server.js",
+      "types": "./dist/entry-server.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "check-types": "tsc --noEmit"
+  },
+  "dependencies": {
+    "react-helmet-async": "^2.0.5"
+  },
+  "devDependencies": {
+    "@repo/typescript-config": "workspace:*",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.2",
+    "typescript": "^5.6.2",
+    "vite": "^7.3.1"
+  },
+  "peerDependencies": {
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "react-router": "^7.11.0",
+    "react-router-dom": "^7.11.0"
+  }
+}

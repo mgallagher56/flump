@@ -5,6 +5,7 @@
     "allowJs": true,
     "allowSyntheticDefaultImports": true,
     "baseUrl": ".",
+    "ignoreDeprecations": "6.0",
     "composite": true,
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,

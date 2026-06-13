@@ -1,24 +1,24 @@
-const { readdirSync } = require('node:fs');
-const { baseUrl } = require('./tsconfig.json').compilerOptions;
+const { readdirSync } = require("node:fs");
+const { baseUrl } = require("./tsconfig.json").compilerOptions;
 
 const baseUrlSubdirectories = readdirSync(`${__dirname}/${baseUrl}`, {
-  withFileTypes: true
+  withFileTypes: true,
 })
   .filter((entry) => entry.isDirectory() || entry.isFile())
-  .map((entry) => entry.name.replace('.ts', ''));
-const baseUrlSubdirectoryRegex = `^(${baseUrlSubdirectories.join('|')})`;
+  .map((entry) => entry.name.replace(".ts", ""));
+const baseUrlSubdirectoryRegex = `^(${baseUrlSubdirectories.join("|")})`;
 
 module.exports = {
-  endOfLine: 'auto',
+  endOfLine: "auto",
   semi: true,
   bracketSpacing: true,
-  trailingComma: 'none',
+  trailingComma: "none",
   singleQuote: true,
   printWidth: 120,
   tabWidth: 2,
-  importOrder: ['^react$', '<THIRD_PARTY_MODULES>', baseUrlSubdirectoryRegex, '^[./]'],
+  importOrder: ["^react$", "<THIRD_PARTY_MODULES>", baseUrlSubdirectoryRegex, "^[./]"],
   importOrderCaseInsensitive: true,
   importOrderSeparation: true,
   importOrderSortSpecifiers: true,
-  plugins: ['@trivago/prettier-plugin-sort-imports']
+  plugins: ["@trivago/prettier-plugin-sort-imports"],
 };

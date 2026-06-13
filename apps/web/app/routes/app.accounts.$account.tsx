@@ -1,44 +1,34 @@
-import { type ReactElement } from 'react';
+import type { ReactElement } from "react";
 
-import { type User } from '@supabase/supabase-js';
-import { data, type Params, redirect, type RedirectFunction, type UNSAFE_DataWithResponseInit } from 'react-router';
-import AccountDetailContainer from '~/containers/accounts/accountDetailContainer/AccountDetailContainer';
-import { type Account, type AccountDetail } from '~/containers/accounts/types';
-import { createSupaBaseServerClient } from '~/utils/supabase';
+import { data, type Params, redirect } from "react-router";
+import AccountDetailContainer from "~/containers/accounts/accountDetailContainer/AccountDetailContainer";
+import { createSupaBaseServerClient } from "~/utils/supabase";
 
-export const loader = async ({
-  params,
-  request
-}: {
-  params: Params;
-  request: Request;
-}): Promise<
-  | ReturnType<RedirectFunction>
-  | UNSAFE_DataWithResponseInit<{ account: Account; accountDetails: AccountDetail[]; user: User }>
-> => {
-  const response = new Response();
-  const supabase = createSupaBaseServerClient(request);
+export const loader = async ({ params, request }: { params: Params; request: Request }) => {
+  const responseHeaders = new Headers();
+  const supabase = createSupaBaseServerClient(request, responseHeaders);
   const {
-    data: { user }
+    data: { user },
   } = await supabase.auth.getUser();
 
+  if (!user) return redirect("/", { headers: responseHeaders });
+
   const { data: accountData } = await supabase
-    .from('accounts')
-    .select('*')
-    .eq('user_id', user?.id)
-    .eq('id', params.account)
+    .from("accounts")
+    .select("*")
+    .eq("user_id", user.id)
+    .eq("id", params.account)
     .select();
 
   const { data: accountDetails } = await supabase
-    .from('account_details')
-    .select('*')
-    .eq('account_id', params.account)
-    .order('year', { ascending: false })
-    .order('month', { ascending: true })
+    .from("account_details")
+    .select("*")
+    .eq("account_id", params.account)
+    .order("year", { ascending: false })
+    .order("month", { ascending: true })
     .select();
 
-  if (!user) return redirect('/');
-  return data({ account: accountData?.[0], accountDetails, user }, { headers: response.headers });
+  return data({ account: accountData?.[0], accountDetails, user }, { headers: responseHeaders });
 };
 
 const AccountDetailComponent = (): ReactElement<ReactElement> => {

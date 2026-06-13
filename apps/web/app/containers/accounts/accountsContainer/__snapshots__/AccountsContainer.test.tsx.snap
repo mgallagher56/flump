@@ -5,13 +5,13 @@ exports[`<AccountsContainer /> > should render as expected when accounts exist 1
   <script
     nonce=""
   >
-    ((e,r,s,u,d,m,l,h)=&gt;
-    {let c=document.documentElement,v=["light","dark"];function p(i){(Array.isArray(e)?e:[e]).forEach(y=&gt;
-    {let k=y==="class",S=k&&m?d.map(f=&gt;
-    m[f]||f):d;k?(c.classList.remove(...S),c.classList.add(i)):c.setAttribute(y,i)}),R(i)}function R(i){h&&v.includes(i)&&(c.style.colorScheme=i)}function a(){return window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"}if(u)p(u);else try{let i=localStorage.getItem(r)||s,y=l&&i==="system"?a():i;p(y)}catch(i){}})("class","theme","system",null,["light","dark"],null,true,true)
+    ((e,i,s,u,m,a,l,h)=&gt;
+    {let d=document.documentElement,w=["light","dark"];function p(n){(Array.isArray(e)?e:[e]).forEach(y=&gt;
+    {let k=y==="class",S=k&&a?m.map(f=&gt;
+    a[f]||f):m;k?(d.classList.remove(...S),d.classList.add(a&&a[n]?a[n]:n)):d.setAttribute(y,n)}),R(n)}function R(n){h&&w.includes(n)&&(d.style.colorScheme=n)}function c(){return window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"}if(u)p(u);else try{let n=localStorage.getItem(i)||s,y=l&&n==="system"?c():n;p(y)}catch(n){}})("class","theme","system",null,["light","dark"],null,true,true)
   </script>
   <div
-    class="css-u7ajzs"
+    class="css-1b6hzwq"
   >
     <h1
       class="chakra-heading css-mytsjf"
@@ -19,20 +19,66 @@ exports[`<AccountsContainer /> > should render as expected when accounts exist 1
       accounts
     </h1>
     <button
-      class="chakra-button css-guww8o"
+      class="chakra-button css-1hbeh4x"
       type="button"
     >
       addAccount
     </button>
   </div>
   <div
-    class="css-1jswdmc"
+    class="css-64eh94"
   >
     <div
-      class="css-0"
+      class="css-uqvmb9"
+    >
+      <p
+        class="css-23kn1y"
+      >
+        Net Worth
+      </p>
+      <h2
+        class="chakra-heading css-mz3cgo"
+      >
+        £1,300
+      </h2>
+    </div>
+    <div
+      class="css-mnx6qw"
+    >
+      <p
+        class="css-23kn1y"
+      >
+        Total Assets
+      </p>
+      <h2
+        class="chakra-heading css-v5zr7v"
+      >
+        £1,800
+      </h2>
+    </div>
+    <div
+      class="css-o53z0y"
+    >
+      <p
+        class="css-23kn1y"
+      >
+        Total Liabilities
+      </p>
+      <h2
+        class="chakra-heading css-vpgg7p"
+      >
+        £500
+      </h2>
+    </div>
+  </div>
+  <div
+    class="css-1uphe7b"
+  >
+    <div
+      class="css-1p3i3l9"
     >
       <h2
-        class="chakra-heading css-e8b6d6"
+        class="chakra-heading css-12uwiey"
       >
         Current
       </h2>
@@ -44,10 +90,10 @@ exports[`<AccountsContainer /> > should render as expected when accounts exist 1
       </div>
     </div>
     <div
-      class="css-0"
+      class="css-1p3i3l9"
     >
       <h2
-        class="chakra-heading css-e8b6d6"
+        class="chakra-heading css-12uwiey"
       >
         Saving
       </h2>
@@ -60,10 +106,10 @@ exports[`<AccountsContainer /> > should render as expected when accounts exist 1
       </div>
     </div>
     <div
-      class="css-0"
+      class="css-1p3i3l9"
     >
       <h2
-        class="chakra-heading css-e8b6d6"
+        class="chakra-heading css-12uwiey"
       >
         Mortgage
       </h2>
@@ -74,10 +120,10 @@ exports[`<AccountsContainer /> > should render as expected when accounts exist 1
       </div>
     </div>
     <div
-      class="css-0"
+      class="css-1p3i3l9"
     >
       <h2
-        class="chakra-heading css-e8b6d6"
+        class="chakra-heading css-12uwiey"
       >
         Loan
       </h2>
@@ -88,10 +134,10 @@ exports[`<AccountsContainer /> > should render as expected when accounts exist 1
       </div>
     </div>
     <div
-      class="css-0"
+      class="css-1p3i3l9"
     >
       <h2
-        class="chakra-heading css-e8b6d6"
+        class="chakra-heading css-12uwiey"
       >
         Owed
       </h2>
@@ -110,13 +156,13 @@ exports[`<AccountsContainer /> > should render as expected when no accounts exis
   <script
     nonce=""
   >
-    ((e,r,s,u,d,m,l,h)=&gt;
-    {let c=document.documentElement,v=["light","dark"];function p(i){(Array.isArray(e)?e:[e]).forEach(y=&gt;
-    {let k=y==="class",S=k&&m?d.map(f=&gt;
-    m[f]||f):d;k?(c.classList.remove(...S),c.classList.add(i)):c.setAttribute(y,i)}),R(i)}function R(i){h&&v.includes(i)&&(c.style.colorScheme=i)}function a(){return window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"}if(u)p(u);else try{let i=localStorage.getItem(r)||s,y=l&&i==="system"?a():i;p(y)}catch(i){}})("class","theme","system",null,["light","dark"],null,true,true)
+    ((e,i,s,u,m,a,l,h)=&gt;
+    {let d=document.documentElement,w=["light","dark"];function p(n){(Array.isArray(e)?e:[e]).forEach(y=&gt;
+    {let k=y==="class",S=k&&a?m.map(f=&gt;
+    a[f]||f):m;k?(d.classList.remove(...S),d.classList.add(a&&a[n]?a[n]:n)):d.setAttribute(y,n)}),R(n)}function R(n){h&&w.includes(n)&&(d.style.colorScheme=n)}function c(){return window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"}if(u)p(u);else try{let n=localStorage.getItem(i)||s,y=l&&n==="system"?c():n;p(y)}catch(n){}})("class","theme","system",null,["light","dark"],null,true,true)
   </script>
   <div
-    class="css-u7ajzs"
+    class="css-1b6hzwq"
   >
     <h1
       class="chakra-heading css-mytsjf"
@@ -124,14 +170,14 @@ exports[`<AccountsContainer /> > should render as expected when no accounts exis
       accounts
     </h1>
     <button
-      class="chakra-button css-guww8o"
+      class="chakra-button css-1hbeh4x"
       type="button"
     >
       addAccount
     </button>
   </div>
   <div
-    class="css-1jswdmc"
+    class="css-1uphe7b"
   />
 </div>
 `;

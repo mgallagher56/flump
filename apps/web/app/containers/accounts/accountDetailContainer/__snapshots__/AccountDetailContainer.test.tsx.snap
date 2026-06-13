@@ -6,10 +6,10 @@ exports[`<AccountDetailContainer /> > should add new years when buttons are clic
     <script
       nonce=""
     >
-      ((e,r,s,u,d,m,l,h)=&gt;
-      {let c=document.documentElement,v=["light","dark"];function p(i){(Array.isArray(e)?e:[e]).forEach(y=&gt;
-      {let k=y==="class",S=k&&m?d.map(f=&gt;
-      m[f]||f):d;k?(c.classList.remove(...S),c.classList.add(i)):c.setAttribute(y,i)}),R(i)}function R(i){h&&v.includes(i)&&(c.style.colorScheme=i)}function a(){return window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"}if(u)p(u);else try{let i=localStorage.getItem(r)||s,y=l&&i==="system"?a():i;p(y)}catch(i){}})("class","theme","system",null,["light","dark"],null,true,true)
+      ((e,i,s,u,m,a,l,h)=&gt;
+      {let d=document.documentElement,w=["light","dark"];function p(n){(Array.isArray(e)?e:[e]).forEach(y=&gt;
+      {let k=y==="class",S=k&&a?m.map(f=&gt;
+      a[f]||f):m;k?(d.classList.remove(...S),d.classList.add(a&&a[n]?a[n]:n)):d.setAttribute(y,n)}),R(n)}function R(n){h&&w.includes(n)&&(d.style.colorScheme=n)}function c(){return window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"}if(u)p(u);else try{let n=localStorage.getItem(i)||s,y=l&&n==="system"?c():n;p(y)}catch(n){}})("class","theme","system",null,["light","dark"],null,true,true)
     </script>
     <div
       class="chakra-stack css-1uphe7b"
@@ -31,16 +31,14 @@ exports[`<AccountDetailContainer /> > should add new years when buttons are clic
             My current account
           </h1>
         </div>
-        <div
-          class="css-0"
-        >
+        <div>
           <button
-            class="chakra-button css-1wffpj8"
+            class="chakra-button css-146beeq"
             disabled=""
             type="button"
           >
             <div
-              class="css-uoihn2"
+              class="css-1z0d954"
             >
               <span
                 class="chakra-spinner css-12xlz0b"
@@ -66,7 +64,7 @@ exports[`<AccountDetailContainer /> > should add new years when buttons are clic
             2021
           </h3>
           <button
-            class="chakra-button css-mow6mt"
+            class="chakra-button css-474cae"
             type="button"
           >
             deleteYear
@@ -229,7 +227,7 @@ exports[`<AccountDetailContainer /> > should add new years when buttons are clic
             2023
           </h3>
           <button
-            class="chakra-button css-mow6mt"
+            class="chakra-button css-474cae"
             type="button"
           >
             deleteYear
@@ -388,12 +386,12 @@ exports[`<AccountDetailContainer /> > should add new years when buttons are clic
         class="chakra-stack css-1f0wxn3"
       >
         <button
-          class="chakra-button css-tx3yv8"
+          class="chakra-button css-1jzglmp"
           disabled=""
           type="button"
         >
           <div
-            class="css-uoihn2"
+            class="css-1z0d954"
           >
             <span
               class="chakra-spinner css-12xlz0b"
@@ -406,12 +404,12 @@ exports[`<AccountDetailContainer /> > should add new years when buttons are clic
           </span>
         </button>
         <button
-          class="chakra-button css-tx3yv8"
+          class="chakra-button css-1jzglmp"
           disabled=""
           type="button"
         >
           <div
-            class="css-uoihn2"
+            class="css-1z0d954"
           >
             <span
               class="chakra-spinner css-12xlz0b"
@@ -435,10 +433,10 @@ exports[`<AccountDetailContainer /> > should render 1`] = `
     <script
       nonce=""
     >
-      ((e,r,s,u,d,m,l,h)=&gt;
-      {let c=document.documentElement,v=["light","dark"];function p(i){(Array.isArray(e)?e:[e]).forEach(y=&gt;
-      {let k=y==="class",S=k&&m?d.map(f=&gt;
-      m[f]||f):d;k?(c.classList.remove(...S),c.classList.add(i)):c.setAttribute(y,i)}),R(i)}function R(i){h&&v.includes(i)&&(c.style.colorScheme=i)}function a(){return window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"}if(u)p(u);else try{let i=localStorage.getItem(r)||s,y=l&&i==="system"?a():i;p(y)}catch(i){}})("class","theme","system",null,["light","dark"],null,true,true)
+      ((e,i,s,u,m,a,l,h)=&gt;
+      {let d=document.documentElement,w=["light","dark"];function p(n){(Array.isArray(e)?e:[e]).forEach(y=&gt;
+      {let k=y==="class",S=k&&a?m.map(f=&gt;
+      a[f]||f):m;k?(d.classList.remove(...S),d.classList.add(a&&a[n]?a[n]:n)):d.setAttribute(y,n)}),R(n)}function R(n){h&&w.includes(n)&&(d.style.colorScheme=n)}function c(){return window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"}if(u)p(u);else try{let n=localStorage.getItem(i)||s,y=l&&n==="system"?c():n;p(y)}catch(n){}})("class","theme","system",null,["light","dark"],null,true,true)
     </script>
     <div
       class="chakra-stack css-1uphe7b"
@@ -460,11 +458,9 @@ exports[`<AccountDetailContainer /> > should render 1`] = `
             My current account
           </h1>
         </div>
-        <div
-          class="css-0"
-        >
+        <div>
           <button
-            class="chakra-button css-1wffpj8"
+            class="chakra-button css-146beeq"
             type="button"
           >
             edit
@@ -483,7 +479,7 @@ exports[`<AccountDetailContainer /> > should render 1`] = `
             2021
           </h3>
           <button
-            class="chakra-button css-mow6mt"
+            class="chakra-button css-474cae"
             type="button"
           >
             deleteYear
@@ -646,7 +642,7 @@ exports[`<AccountDetailContainer /> > should render 1`] = `
             2023
           </h3>
           <button
-            class="chakra-button css-mow6mt"
+            class="chakra-button css-474cae"
             type="button"
           >
             deleteYear
@@ -805,13 +801,13 @@ exports[`<AccountDetailContainer /> > should render 1`] = `
         class="chakra-stack css-1f0wxn3"
       >
         <button
-          class="chakra-button css-tx3yv8"
+          class="chakra-button css-1jzglmp"
           type="button"
         >
           addPrevYear
         </button>
         <button
-          class="chakra-button css-tx3yv8"
+          class="chakra-button css-1jzglmp"
           type="button"
         >
           addNextYear
@@ -828,10 +824,10 @@ exports[`<AccountDetailContainer /> > should render add current year button and 
     <script
       nonce=""
     >
-      ((e,r,s,u,d,m,l,h)=&gt;
-      {let c=document.documentElement,v=["light","dark"];function p(i){(Array.isArray(e)?e:[e]).forEach(y=&gt;
-      {let k=y==="class",S=k&&m?d.map(f=&gt;
-      m[f]||f):d;k?(c.classList.remove(...S),c.classList.add(i)):c.setAttribute(y,i)}),R(i)}function R(i){h&&v.includes(i)&&(c.style.colorScheme=i)}function a(){return window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"}if(u)p(u);else try{let i=localStorage.getItem(r)||s,y=l&&i==="system"?a():i;p(y)}catch(i){}})("class","theme","system",null,["light","dark"],null,true,true)
+      ((e,i,s,u,m,a,l,h)=&gt;
+      {let d=document.documentElement,w=["light","dark"];function p(n){(Array.isArray(e)?e:[e]).forEach(y=&gt;
+      {let k=y==="class",S=k&&a?m.map(f=&gt;
+      a[f]||f):m;k?(d.classList.remove(...S),d.classList.add(a&&a[n]?a[n]:n)):d.setAttribute(y,n)}),R(n)}function R(n){h&&w.includes(n)&&(d.style.colorScheme=n)}function c(){return window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"}if(u)p(u);else try{let n=localStorage.getItem(i)||s,y=l&&n==="system"?c():n;p(y)}catch(n){}})("class","theme","system",null,["light","dark"],null,true,true)
     </script>
     <div
       class="chakra-stack css-1uphe7b"
@@ -853,16 +849,14 @@ exports[`<AccountDetailContainer /> > should render add current year button and 
             My current account
           </h1>
         </div>
-        <div
-          class="css-0"
-        >
+        <div>
           <button
-            class="chakra-button css-1wffpj8"
+            class="chakra-button css-146beeq"
             disabled=""
             type="button"
           >
             <div
-              class="css-uoihn2"
+              class="css-1z0d954"
             >
               <span
                 class="chakra-spinner css-12xlz0b"
@@ -888,7 +882,7 @@ exports[`<AccountDetailContainer /> > should render add current year button and 
             2021
           </h3>
           <button
-            class="chakra-button css-mow6mt"
+            class="chakra-button css-474cae"
             type="button"
           >
             deleteYear
@@ -1051,7 +1045,7 @@ exports[`<AccountDetailContainer /> > should render add current year button and 
             2023
           </h3>
           <button
-            class="chakra-button css-mow6mt"
+            class="chakra-button css-474cae"
             type="button"
           >
             deleteYear
@@ -1210,12 +1204,12 @@ exports[`<AccountDetailContainer /> > should render add current year button and 
         class="chakra-stack css-1f0wxn3"
       >
         <button
-          class="chakra-button css-tx3yv8"
+          class="chakra-button css-1jzglmp"
           disabled=""
           type="button"
         >
           <div
-            class="css-uoihn2"
+            class="css-1z0d954"
           >
             <span
               class="chakra-spinner css-12xlz0b"
@@ -1228,12 +1222,12 @@ exports[`<AccountDetailContainer /> > should render add current year button and 
           </span>
         </button>
         <button
-          class="chakra-button css-tx3yv8"
+          class="chakra-button css-1jzglmp"
           disabled=""
           type="button"
         >
           <div
-            class="css-uoihn2"
+            class="css-1z0d954"
           >
             <span
               class="chakra-spinner css-12xlz0b"
@@ -1257,10 +1251,10 @@ exports[`<AccountDetailContainer /> > should toggle edit mode when button is cli
     <script
       nonce=""
     >
-      ((e,r,s,u,d,m,l,h)=&gt;
-      {let c=document.documentElement,v=["light","dark"];function p(i){(Array.isArray(e)?e:[e]).forEach(y=&gt;
-      {let k=y==="class",S=k&&m?d.map(f=&gt;
-      m[f]||f):d;k?(c.classList.remove(...S),c.classList.add(i)):c.setAttribute(y,i)}),R(i)}function R(i){h&&v.includes(i)&&(c.style.colorScheme=i)}function a(){return window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"}if(u)p(u);else try{let i=localStorage.getItem(r)||s,y=l&&i==="system"?a():i;p(y)}catch(i){}})("class","theme","system",null,["light","dark"],null,true,true)
+      ((e,i,s,u,m,a,l,h)=&gt;
+      {let d=document.documentElement,w=["light","dark"];function p(n){(Array.isArray(e)?e:[e]).forEach(y=&gt;
+      {let k=y==="class",S=k&&a?m.map(f=&gt;
+      a[f]||f):m;k?(d.classList.remove(...S),d.classList.add(a&&a[n]?a[n]:n)):d.setAttribute(y,n)}),R(n)}function R(n){h&&w.includes(n)&&(d.style.colorScheme=n)}function c(){return window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"}if(u)p(u);else try{let n=localStorage.getItem(i)||s,y=l&&n==="system"?c():n;p(y)}catch(n){}})("class","theme","system",null,["light","dark"],null,true,true)
     </script>
     <div
       class="chakra-stack css-1uphe7b"
@@ -1282,11 +1276,9 @@ exports[`<AccountDetailContainer /> > should toggle edit mode when button is cli
             My current account
           </h1>
         </div>
-        <div
-          class="css-0"
-        >
+        <div>
           <button
-            class="chakra-button css-1wffpj8"
+            class="chakra-button css-146beeq"
             type="button"
           >
             save
@@ -1305,7 +1297,7 @@ exports[`<AccountDetailContainer /> > should toggle edit mode when button is cli
             2021
           </h3>
           <button
-            class="chakra-button css-mow6mt"
+            class="chakra-button css-474cae"
             type="button"
           >
             deleteYear
@@ -1334,7 +1326,7 @@ exports[`<AccountDetailContainer /> > should toggle edit mode when button is cli
                   class="css-1op6ogi"
                 >
                   <input
-                    class="chakra-input css-1ajgvgj"
+                    class="chakra-input css-1hnmrmz"
                     data-month="1"
                     data-year="2021"
                     id="2021-January"
@@ -1367,7 +1359,7 @@ exports[`<AccountDetailContainer /> > should toggle edit mode when button is cli
                   class="css-1op6ogi"
                 >
                   <input
-                    class="chakra-input css-1ajgvgj"
+                    class="chakra-input css-1hnmrmz"
                     data-month="2"
                     data-year="2021"
                     id="2021-February"
@@ -1400,7 +1392,7 @@ exports[`<AccountDetailContainer /> > should toggle edit mode when button is cli
                   class="css-1op6ogi"
                 >
                   <input
-                    class="chakra-input css-1ajgvgj"
+                    class="chakra-input css-1hnmrmz"
                     data-month="3"
                     data-year="2021"
                     id="2021-March"
@@ -1433,7 +1425,7 @@ exports[`<AccountDetailContainer /> > should toggle edit mode when button is cli
                   class="css-1op6ogi"
                 >
                   <input
-                    class="chakra-input css-1ajgvgj"
+                    class="chakra-input css-1hnmrmz"
                     data-month="4"
                     data-year="2021"
                     id="2021-April"
@@ -1466,7 +1458,7 @@ exports[`<AccountDetailContainer /> > should toggle edit mode when button is cli
                   class="css-1op6ogi"
                 >
                   <input
-                    class="chakra-input css-1ajgvgj"
+                    class="chakra-input css-1hnmrmz"
                     data-month="5"
                     data-year="2021"
                     id="2021-May"
@@ -1499,7 +1491,7 @@ exports[`<AccountDetailContainer /> > should toggle edit mode when button is cli
                   class="css-1op6ogi"
                 >
                   <input
-                    class="chakra-input css-1ajgvgj"
+                    class="chakra-input css-1hnmrmz"
                     data-month="6"
                     data-year="2021"
                     id="2021-June"
@@ -1532,7 +1524,7 @@ exports[`<AccountDetailContainer /> > should toggle edit mode when button is cli
                   class="css-1op6ogi"
                 >
                   <input
-                    class="chakra-input css-1ajgvgj"
+                    class="chakra-input css-1hnmrmz"
                     data-month="7"
                     data-year="2021"
                     id="2021-July"
@@ -1565,7 +1557,7 @@ exports[`<AccountDetailContainer /> > should toggle edit mode when button is cli
                   class="css-1op6ogi"
                 >
                   <input
-                    class="chakra-input css-1ajgvgj"
+                    class="chakra-input css-1hnmrmz"
                     data-month="8"
                     data-year="2021"
                     id="2021-August"
@@ -1598,7 +1590,7 @@ exports[`<AccountDetailContainer /> > should toggle edit mode when button is cli
                   class="css-1op6ogi"
                 >
                   <input
-                    class="chakra-input css-1ajgvgj"
+                    class="chakra-input css-1hnmrmz"
                     data-month="9"
                     data-year="2021"
                     id="2021-September"
@@ -1631,7 +1623,7 @@ exports[`<AccountDetailContainer /> > should toggle edit mode when button is cli
                   class="css-1op6ogi"
                 >
                   <input
-                    class="chakra-input css-1ajgvgj"
+                    class="chakra-input css-1hnmrmz"
                     data-month="10"
                     data-year="2021"
                     id="2021-October"
@@ -1664,7 +1656,7 @@ exports[`<AccountDetailContainer /> > should toggle edit mode when button is cli
                   class="css-1op6ogi"
                 >
                   <input
-                    class="chakra-input css-1ajgvgj"
+                    class="chakra-input css-1hnmrmz"
                     data-month="11"
                     data-year="2021"
                     id="2021-November"
@@ -1697,7 +1689,7 @@ exports[`<AccountDetailContainer /> > should toggle edit mode when button is cli
                   class="css-1op6ogi"
                 >
                   <input
-                    class="chakra-input css-1ajgvgj"
+                    class="chakra-input css-1hnmrmz"
                     data-month="12"
                     data-year="2021"
                     id="2021-December"
@@ -1720,7 +1712,7 @@ exports[`<AccountDetailContainer /> > should toggle edit mode when button is cli
             2023
           </h3>
           <button
-            class="chakra-button css-mow6mt"
+            class="chakra-button css-474cae"
             type="button"
           >
             deleteYear
@@ -1749,7 +1741,7 @@ exports[`<AccountDetailContainer /> > should toggle edit mode when button is cli
                   class="css-1op6ogi"
                 >
                   <input
-                    class="chakra-input css-1ajgvgj"
+                    class="chakra-input css-1hnmrmz"
                     data-month="1"
                     data-year="2023"
                     id="2023-January"
@@ -1782,7 +1774,7 @@ exports[`<AccountDetailContainer /> > should toggle edit mode when button is cli
                   class="css-1op6ogi"
                 >
                   <input
-                    class="chakra-input css-1ajgvgj"
+                    class="chakra-input css-1hnmrmz"
                     data-month="2"
                     data-year="2023"
                     id="2023-February"
@@ -1815,7 +1807,7 @@ exports[`<AccountDetailContainer /> > should toggle edit mode when button is cli
                   class="css-1op6ogi"
                 >
                   <input
-                    class="chakra-input css-1ajgvgj"
+                    class="chakra-input css-1hnmrmz"
                     data-month="3"
                     data-year="2023"
                     id="2023-March"
@@ -1848,7 +1840,7 @@ exports[`<AccountDetailContainer /> > should toggle edit mode when button is cli
                   class="css-1op6ogi"
                 >
                   <input
-                    class="chakra-input css-1ajgvgj"
+                    class="chakra-input css-1hnmrmz"
                     data-month="4"
                     data-year="2023"
                     id="2023-April"
@@ -1881,7 +1873,7 @@ exports[`<AccountDetailContainer /> > should toggle edit mode when button is cli
                   class="css-1op6ogi"
                 >
                   <input
-                    class="chakra-input css-1ajgvgj"
+                    class="chakra-input css-1hnmrmz"
                     data-month="5"
                     data-year="2023"
                     id="2023-May"
@@ -1914,7 +1906,7 @@ exports[`<AccountDetailContainer /> > should toggle edit mode when button is cli
                   class="css-1op6ogi"
                 >
                   <input
-                    class="chakra-input css-1ajgvgj"
+                    class="chakra-input css-1hnmrmz"
                     data-month="6"
                     data-year="2023"
                     id="2023-June"
@@ -1947,7 +1939,7 @@ exports[`<AccountDetailContainer /> > should toggle edit mode when button is cli
                   class="css-1op6ogi"
                 >
                   <input
-                    class="chakra-input css-1ajgvgj"
+                    class="chakra-input css-1hnmrmz"
                     data-month="7"
                     data-year="2023"
                     id="2023-July"
@@ -1980,7 +1972,7 @@ exports[`<AccountDetailContainer /> > should toggle edit mode when button is cli
                   class="css-1op6ogi"
                 >
                   <input
-                    class="chakra-input css-1ajgvgj"
+                    class="chakra-input css-1hnmrmz"
                     data-month="8"
                     data-year="2023"
                     id="2023-August"
@@ -2013,7 +2005,7 @@ exports[`<AccountDetailContainer /> > should toggle edit mode when button is cli
                   class="css-1op6ogi"
                 >
                   <input
-                    class="chakra-input css-1ajgvgj"
+                    class="chakra-input css-1hnmrmz"
                     data-month="9"
                     data-year="2023"
                     id="2023-September"
@@ -2046,7 +2038,7 @@ exports[`<AccountDetailContainer /> > should toggle edit mode when button is cli
                   class="css-1op6ogi"
                 >
                   <input
-                    class="chakra-input css-1ajgvgj"
+                    class="chakra-input css-1hnmrmz"
                     data-month="10"
                     data-year="2023"
                     id="2023-October"
@@ -2079,7 +2071,7 @@ exports[`<AccountDetailContainer /> > should toggle edit mode when button is cli
                   class="css-1op6ogi"
                 >
                   <input
-                    class="chakra-input css-1ajgvgj"
+                    class="chakra-input css-1hnmrmz"
                     data-month="11"
                     data-year="2023"
                     id="2023-November"
@@ -2112,7 +2104,7 @@ exports[`<AccountDetailContainer /> > should toggle edit mode when button is cli
                   class="css-1op6ogi"
                 >
                   <input
-                    class="chakra-input css-1ajgvgj"
+                    class="chakra-input css-1hnmrmz"
                     data-month="12"
                     data-year="2023"
                     id="2023-December"
@@ -2131,13 +2123,13 @@ exports[`<AccountDetailContainer /> > should toggle edit mode when button is cli
         class="chakra-stack css-1f0wxn3"
       >
         <button
-          class="chakra-button css-tx3yv8"
+          class="chakra-button css-1jzglmp"
           type="button"
         >
           addPrevYear
         </button>
         <button
-          class="chakra-button css-tx3yv8"
+          class="chakra-button css-1jzglmp"
           type="button"
         >
           addNextYear

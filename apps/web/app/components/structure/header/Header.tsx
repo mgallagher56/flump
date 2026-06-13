@@ -1,15 +1,14 @@
-import { type FC, type ReactElement } from 'react';
+import { Flex } from "@chakra-ui/react";
+import type { FC, ReactElement } from "react";
+import { useLoaderData } from "react-router";
+import FLPBox from "~/components/core/structure/FLPBox";
+import HomeLogo from "~/components/navigation/HomeLogo";
+import NavMenu from "~/components/navigation/NavMenu";
+import UserLogin from "~/components/navigation/UserLogin";
+import { ColorModeButton } from "~/components/ui/color-mode";
+import type { loader } from "~/root";
 
-import { Flex } from '@chakra-ui/react';
-import { useLoaderData } from 'react-router';
-import FLPBox from '~/components/core/structure/FLPBox';
-import HomeLogo from '~/components/navigation/HomeLogo';
-import NavMenu from '~/components/navigation/NavMenu';
-import UserLogin from '~/components/navigation/UserLogin';
-import { ColorModeButton } from '~/components/ui/color-mode';
-import type { loader } from '~/root';
-
-import { loginStyles, menuStyles, navStyles } from './styles';
+import { loginStyles, menuStyles, navStyles } from "./styles";
 
 const Header: FC = (): ReactElement<FC> => {
   const { user } = useLoaderData<typeof loader>();
@@ -20,7 +19,7 @@ const Header: FC = (): ReactElement<FC> => {
           <HomeLogo />
           <NavMenu
             routes={[
-              { key: 'home', route: '/' }
+              { key: "home", route: "/" },
               // { key: 'about', route: '/about' },
               // { key: 'contact', route: '/contact' }
             ]}
@@ -28,8 +27,8 @@ const Header: FC = (): ReactElement<FC> => {
           {!!user && (
             <NavMenu
               routes={[
-                { key: 'dashboard', route: '/app' },
-                { key: 'accounts', route: '/app/accounts' }
+                { key: "dashboard", route: "/app" },
+                { key: "accounts", route: "/app/accounts" },
               ]}
             />
           )}

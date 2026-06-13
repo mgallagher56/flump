@@ -1,17 +1,16 @@
-import { Fragment, useCallback } from 'react';
-import type { ChangeEvent, FC } from 'react';
+import { Stack } from "@chakra-ui/react";
+import type { ChangeEvent, FC } from "react";
+import { Fragment, useCallback } from "react";
+import { useTranslation } from "react-i18next";
+import { useLoaderData, useRevalidator } from "react-router";
+import FLPButton from "~/components/core/buttons/FLPButton";
+import FLPInput from "~/components/core/inputs/input/FLPInput";
+import FLPHeading from "~/components/core/typography/FLPHeading";
+import FLPText from "~/components/core/typography/FLPText";
+import type { loader } from "~/routes/app.accounts.$account";
+import supabase from "~/utils/supabase";
 
-import { Stack } from '@chakra-ui/react';
-import { useTranslation } from 'react-i18next';
-import { useLoaderData, useRevalidator } from 'react-router';
-import FLPButton from '~/components/core/buttons/FLPButton';
-import FLPInput from '~/components/core/inputs/input/FLPInput';
-import FLPHeading from '~/components/core/typography/FLPHeading';
-import FLPText from '~/components/core/typography/FLPText';
-import type { loader } from '~/routes/app.accounts.$account';
-import supabase from '~/utils/supabase';
-
-import { accountDetailDisplayStyles } from './AccountDetailsStyles';
+import { accountDetailDisplayStyles } from "./AccountDetailsStyles";
 
 interface AccountDetailsProps {
   onInputChange: (event: ChangeEvent<HTMLInputElement>) => void;
@@ -26,10 +25,15 @@ const AccountDetails: FC<AccountDetailsProps> = ({ onInputChange, editedValues, 
 
   const onRemoveYear = useCallback(
     async (year: number) => {
-      await supabase.from('account_details').delete().eq('account_id', account.id).eq('year', year).select();
+      await supabase
+        .from("account_details")
+        .delete()
+        .eq("account_id", account.id)
+        .eq("year", year)
+        .select();
       revalidate();
     },
-    [account.id, revalidate]
+    [account.id, revalidate],
   );
 
   return (
@@ -42,8 +46,8 @@ const AccountDetails: FC<AccountDetailsProps> = ({ onInputChange, editedValues, 
             index: number,
             self: {
               indexOf: (arg0: number) => number;
-            }
-          ) => self.indexOf(value) === index
+            },
+          ) => self.indexOf(value) === index,
         )
         .map((year: number) => (
           <Fragment key={year}>
@@ -51,15 +55,30 @@ const AccountDetails: FC<AccountDetailsProps> = ({ onInputChange, editedValues, 
               <FLPHeading as="h3" size="lg">
                 {year}
               </FLPHeading>
-              <FLPButton colorPalette="red" size="xs" variant="outline" onClick={() => onRemoveYear(year)}>
-                {t('deleteYear')}
+              <FLPButton
+                colorPalette="red"
+                size="xs"
+                variant="outline"
+                onClick={() => onRemoveYear(year)}
+              >
+                {t("deleteYear")}
               </FLPButton>
             </Stack>
             <div className={accountDetailDisplayStyles}>
               {accountDetails.map(
-                ({ month, year: currentYear, value }: { month?: number; year?: number; value?: number }) => {
+                ({
+                  month,
+                  year: currentYear,
+                  value,
+                }: {
+                  month?: number;
+                  year?: number;
+                  value?: number;
+                }) => {
                   if (year !== currentYear) return null;
-                  const monthName = new Date(0, month - 1).toLocaleString('default', { month: 'long' });
+                  const monthName = new Date(0, month - 1).toLocaleString("default", {
+                    month: "long",
+                  });
                   return (
                     <div key={`${year}-${month}`}>
                       <FLPText>{monthName}</FLPText>
@@ -78,14 +97,14 @@ const AccountDetails: FC<AccountDetailsProps> = ({ onInputChange, editedValues, 
                         />
                       ) : (
                         <FLPText>
-                          {Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP' })
+                          {Intl.NumberFormat("en-GB", { style: "currency", currency: "GBP" })
                             .format(value)
                             .slice(0, -3)}
                         </FLPText>
                       )}
                     </div>
                   );
-                }
+                },
               )}
             </div>
           </Fragment>

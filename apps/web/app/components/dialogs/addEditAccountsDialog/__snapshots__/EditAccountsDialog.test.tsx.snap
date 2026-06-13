@@ -1,0 +1,431 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`<EditAccountDialogBtn > should render edit account dialog and call supabase.delete when delete button is clicked 1`] = `
+<body
+  data-inert=""
+  data-scroll-lock=""
+  style="overflow: hidden; padding-right: 1024px; pointer-events: none;"
+>
+  <div
+    aria-hidden="true"
+    data-aria-hidden=""
+  >
+    <script
+      nonce=""
+    >
+      ((e,i,s,u,m,a,l,h)=&gt;
+      {let d=document.documentElement,w=["light","dark"];function p(n){(Array.isArray(e)?e:[e]).forEach(y=&gt;
+      {let k=y==="class",S=k&&a?m.map(f=&gt;
+      a[f]||f):m;k?(d.classList.remove(...S),d.classList.add(a&&a[n]?a[n]:n)):d.setAttribute(y,n)}),R(n)}function R(n){h&&w.includes(n)&&(d.style.colorScheme=n)}function c(){return window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"}if(u)p(u);else try{let n=localStorage.getItem(i)||s,y=l&&n==="system"?c():n;p(y)}catch(n){}})("class","theme","system",null,["light","dark"],null,true,true)
+    </script>
+    <div
+      class="chakra-dialog__backdrop css-1cnmm3c"
+      data-part="backdrop"
+      data-scope="dialog"
+      data-state="open"
+      dir="ltr"
+      id="dialog:_r_2_:backdrop"
+      style="--layer-index: 0; --nested-layer-count: 0;"
+    />
+    <button
+      class="chakra-button css-1hbeh4x"
+      type="button"
+    >
+      edit
+    </button>
+  </div>
+  <div
+    aria-hidden="true"
+    class="chakra-dialog__backdrop css-1cnmm3c"
+    data-aria-hidden=""
+    data-part="backdrop"
+    data-scope="dialog"
+    data-state="open"
+    dir="ltr"
+    id="dialog:_r_2_:backdrop"
+  />
+  <div
+    class="chakra-dialog__positioner css-h34q7s"
+    data-part="positioner"
+    data-scope="dialog"
+    dir="ltr"
+    id="dialog:_r_2_:positioner"
+    style="--layer-index: 0; --nested-layer-count: 0;"
+  >
+    <div
+      aria-labelledby="dialog:_r_2_:title"
+      aria-modal="true"
+      class="chakra-dialog__content css-o08j2d"
+      data-part="content"
+      data-scope="dialog"
+      data-state="open"
+      dir="ltr"
+      id="dialog:_r_2_:content"
+      role="dialog"
+      style="--layer-index: 0; --nested-layer-count: 0; pointer-events: auto;"
+      tabindex="-1"
+    >
+      <div
+        class="chakra-dialog__header css-10gvpny"
+      >
+        <h2
+          class="chakra-dialog__title css-1ka0vat"
+          data-part="title"
+          data-scope="dialog"
+          dir="ltr"
+          id="dialog:_r_2_:title"
+        >
+          editAccount
+        </h2>
+      </div>
+      <div
+        class="chakra-dialog__body css-aphhdw"
+      >
+        <form>
+          <div
+            class="css-1nkdwiq"
+          >
+            <div
+              class="d_flex flex-d_column gap_2"
+            >
+              <label
+                for="Name"
+              >
+                Name
+              </label>
+              <div>
+                <div
+                  class="css-1op6ogi"
+                >
+                  <input
+                    class="chakra-input css-ee9xfg"
+                    id="Name"
+                    name="name"
+                    placeholder="accountName"
+                    value=""
+                  />
+                </div>
+              </div>
+            </div>
+            <div
+              class="d_flex flex-d_column gap_2"
+            >
+              <div
+                class="chakra-select__root css-1tw36de"
+                data-part="root"
+                data-scope="select"
+                dir="ltr"
+                id="select:_r_3_"
+              >
+                <label
+                  class="chakra-select__label css-p3rj3s"
+                  data-part="label"
+                  data-scope="select"
+                  dir="ltr"
+                  for="Account Type"
+                  id="select:_r_3_:label"
+                >
+                  Account Type
+                </label>
+                <div
+                  class="chakra-select__control css-17j1053"
+                  data-part="control"
+                  data-scope="select"
+                  data-state="closed"
+                  dir="ltr"
+                  id="select:_r_3_:control"
+                >
+                  <button
+                    aria-controls="select:_r_3_:content"
+                    aria-expanded="false"
+                    aria-haspopup="listbox"
+                    aria-invalid="false"
+                    aria-labelledby="select:_r_3_:label"
+                    aria-required="false"
+                    class="chakra-select__trigger css-qah0cw"
+                    data-part="trigger"
+                    data-scope="select"
+                    data-state="closed"
+                    dir="ltr"
+                    id="select:_r_3_:trigger"
+                    role="combobox"
+                    type="button"
+                  >
+                    <span
+                      class="chakra-select__valueText css-176t9sc"
+                      data-part="value-text"
+                      data-scope="select"
+                      dir="ltr"
+                    >
+                      Current
+                    </span>
+                  </button>
+                  <div
+                    class="chakra-select__indicatorGroup css-1fx1ifu"
+                  >
+                    <div
+                      aria-hidden="true"
+                      class="chakra-select__indicator css-1atg1ut"
+                      data-part="indicator"
+                      data-scope="select"
+                      data-state="closed"
+                      dir="ltr"
+                    >
+                      <svg
+                        class="css-s3mb0o"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          d="m6 9 6 6 6-6"
+                        />
+                      </svg>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+      <div
+        class="chakra-dialog__footer css-1heqefg"
+      >
+        <div
+          class="chakra-group css-1bfmi0f"
+        >
+          <button
+            class="chakra-button css-9wqinr"
+            type="button"
+          >
+            delete
+          </button>
+        </div>
+        <div
+          class="chakra-group css-1bfmi0f"
+        >
+          <button
+            class="chakra-button css-146beeq"
+            data-first=""
+            data-group-item=""
+            style="--group-count: 2; --group-index: 0;"
+            type="button"
+          >
+            close
+          </button>
+          <button
+            class="chakra-button css-1g8q6pp"
+            data-group-item=""
+            data-last=""
+            form="123456"
+            style="--group-count: 2; --group-index: 1;"
+            type="submit"
+          >
+            save
+          </button>
+        </div>
+        <button
+          aria-label="Close"
+          class="chakra-button chakra-dialog__closeTrigger css-v4yspd"
+          data-part="close-trigger"
+          data-scope="dialog"
+          dir="ltr"
+          id="dialog:_r_2_:close"
+          type="button"
+        >
+          <svg
+            fill="none"
+            height="1em"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            viewBox="0 0 24 24"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M18 6 6 18"
+            />
+            <path
+              d="m6 6 12 12"
+            />
+          </svg>
+        </button>
+      </div>
+      <div
+        class="chakra-select__positioner"
+        data-part="positioner"
+        data-scope="select"
+        dir="ltr"
+        id="select:_r_3_:positioner"
+        style="position: absolute; isolation: isolate; width: var(--reference-width); pointer-events: none; top: 0px; left: 0px; transform: translate3d(0, -100vh, 0); z-index: var(--z-index);"
+      >
+        <div
+          aria-labelledby="select:_r_3_:label"
+          class="chakra-select__content css-14wowjj"
+          data-part="content"
+          data-scope="select"
+          data-state="closed"
+          dir="ltr"
+          hidden=""
+          id="select:_r_3_:content"
+          role="listbox"
+          tabindex="0"
+        >
+          <div
+            aria-selected="true"
+            class="chakra-select__item css-1bq1bjd"
+            data-part="item"
+            data-scope="select"
+            data-state="checked"
+            data-value="Current"
+            dir="ltr"
+            id="select:_r_3_:option:Current"
+            role="option"
+          >
+            Current
+            <div
+              aria-hidden="true"
+              class="chakra-select__itemIndicator"
+              data-part="item-indicator"
+              data-scope="select"
+              data-state="checked"
+            >
+              <svg
+                class="css-s3mb0o"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  d="M20 6 9 17l-5-5"
+                />
+              </svg>
+            </div>
+          </div>
+          <div
+            aria-selected="false"
+            class="chakra-select__item css-1bq1bjd"
+            data-part="item"
+            data-scope="select"
+            data-state="unchecked"
+            data-value="Saving"
+            dir="ltr"
+            id="select:_r_3_:option:Saving"
+            role="option"
+          >
+            Saving
+            <div
+              aria-hidden="true"
+              class="chakra-select__itemIndicator"
+              data-part="item-indicator"
+              data-scope="select"
+              data-state="unchecked"
+              hidden=""
+            >
+              <svg
+                class="css-s3mb0o"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  d="M20 6 9 17l-5-5"
+                />
+              </svg>
+            </div>
+          </div>
+          <div
+            aria-selected="false"
+            class="chakra-select__item css-1bq1bjd"
+            data-part="item"
+            data-scope="select"
+            data-state="unchecked"
+            data-value="Mortgage"
+            dir="ltr"
+            id="select:_r_3_:option:Mortgage"
+            role="option"
+          >
+            Mortgage
+            <div
+              aria-hidden="true"
+              class="chakra-select__itemIndicator"
+              data-part="item-indicator"
+              data-scope="select"
+              data-state="unchecked"
+              hidden=""
+            >
+              <svg
+                class="css-s3mb0o"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  d="M20 6 9 17l-5-5"
+                />
+              </svg>
+            </div>
+          </div>
+          <div
+            aria-selected="false"
+            class="chakra-select__item css-1bq1bjd"
+            data-part="item"
+            data-scope="select"
+            data-state="unchecked"
+            data-value="Loan"
+            dir="ltr"
+            id="select:_r_3_:option:Loan"
+            role="option"
+          >
+            Loan
+            <div
+              aria-hidden="true"
+              class="chakra-select__itemIndicator"
+              data-part="item-indicator"
+              data-scope="select"
+              data-state="unchecked"
+              hidden=""
+            >
+              <svg
+                class="css-s3mb0o"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  d="M20 6 9 17l-5-5"
+                />
+              </svg>
+            </div>
+          </div>
+          <div
+            aria-selected="false"
+            class="chakra-select__item css-1bq1bjd"
+            data-part="item"
+            data-scope="select"
+            data-state="unchecked"
+            data-value="Owed"
+            dir="ltr"
+            id="select:_r_3_:option:Owed"
+            role="option"
+          >
+            Owed
+            <div
+              aria-hidden="true"
+              class="chakra-select__itemIndicator"
+              data-part="item-indicator"
+              data-scope="select"
+              data-state="unchecked"
+              hidden=""
+            >
+              <svg
+                class="css-s3mb0o"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  d="M20 6 9 17l-5-5"
+                />
+              </svg>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+`;
+
+exports[`<EditAccountDialogBtn > should render edit account dialog when trigger button is clicked 1`] = `"<body><div><script nonce="">((e,i,s,u,m,a,l,h)=>{let d=document.documentElement,w=["light","dark"];function p(n){(Array.isArray(e)?e:[e]).forEach(y=>{let k=y==="class",S=k&&a?m.map(f=>a[f]||f):m;k?(d.classList.remove(...S),d.classList.add(a&&a[n]?a[n]:n)):d.setAttribute(y,n)}),R(n)}function R(n){h&&w.includes(n)&&(d.style.colorScheme=n)}function c(){return window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"}if(u)p(u);else try{let n=localStorage.getItem(i)||s,y=l&&n==="system"?c():n;p(y)}catch(n){}})("class","theme","system",null,["light","dark"],null,true,true)</script><button type="button" class="chakra-button css-1hbeh4x">edit</button></div></body>"`;

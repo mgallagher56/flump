@@ -1,5 +1,5 @@
-import { useMediaQuery } from '@chakra-ui/react';
+import { useMediaQuery } from "@chakra-ui/react";
 
-const useIsMobile = (ssr = true) => !useMediaQuery(['(min-width: 768px)'], { ssr });
+const useIsMobile = (ssr = true) => !useMediaQuery(["(min-width: 768px)"], { ssr });
 
 export default useIsMobile;

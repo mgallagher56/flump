@@ -3,21 +3,21 @@
  * You are free to delete this file if you'd like to, but if you ever want it revealed again, you can run `npx remix reveal` ✨
  * For more information, see https://remix.run/docs/en/main/file-conventions/entry.client
  */
-import type { ReactElement, ReactNode } from 'react';
-import { startTransition, StrictMode, useMemo, useState } from 'react';
 
-import { CacheProvider } from '@emotion/react';
-import i18next from 'i18next';
-import LanguageDetector from 'i18next-browser-languagedetector';
-import Backend from 'i18next-http-backend';
-import { hydrateRoot } from 'react-dom/client';
-import { I18nextProvider, initReactI18next } from 'react-i18next';
-import { HydratedRouter } from 'react-router/dom';
-import { getInitialNamespaces } from 'remix-i18next/client';
+import { CacheProvider } from "@emotion/react";
+import i18next from "i18next";
+import LanguageDetector from "i18next-browser-languagedetector";
+import Backend from "i18next-http-backend";
+import type { ReactElement, ReactNode } from "react";
+import { StrictMode, startTransition, useMemo, useState } from "react";
+import { hydrateRoot } from "react-dom/client";
+import { I18nextProvider, initReactI18next } from "react-i18next";
+import { HydratedRouter } from "react-router/dom";
+import { getInitialNamespaces } from "remix-i18next/client";
 
-import { ClientStyleContext } from './context';
-import createEmotionCache, { defaultCache } from './createEmotionCache';
-import i18n from './i18n';
+import { ClientStyleContext } from "./context";
+import createEmotionCache, { defaultCache } from "./createEmotionCache";
+import i18n from "./i18n";
 
 interface ClientCacheProviderProps {
   children: ReactNode;
@@ -30,7 +30,7 @@ function ClientCacheProvider({ children }: ClientCacheProviderProps): ReactEleme
     setCache(createEmotionCache());
   }
 
-  const value = useMemo(() => ({ reset }), []);
+  const value = useMemo(() => ({ reset }), [reset]);
 
   return (
     <ClientStyleContext.Provider value={value}>
@@ -48,11 +48,11 @@ async function hydrate(): Promise<void> {
       .init({
         ...i18n,
         ns: getInitialNamespaces(),
-        backend: { loadPath: '/locales/{{lng}}/{{ns}}.json' },
+        backend: { loadPath: "/locales/{{lng}}/{{ns}}.json" },
         detection: {
-          order: ['htmlTag'],
-          caches: []
-        }
+          order: ["htmlTag"],
+          caches: [],
+        },
       });
 
   startTransition(() => {
@@ -64,7 +64,7 @@ async function hydrate(): Promise<void> {
             <HydratedRouter />
           </ClientCacheProvider>
         </StrictMode>
-      </I18nextProvider>
+      </I18nextProvider>,
     );
   });
 }

@@ -1,9 +1,8 @@
-import { type FC, type ReactElement, useCallback } from 'react';
-
-import { type DialogRootProps } from '@chakra-ui/react';
-import { useTranslation } from 'react-i18next';
-import FLPButton from '~/components/core/buttons/FLPButton';
-import FLPButtonGroup from '~/components/core/buttons/FLPButtonGroup';
+import type { DialogRootProps } from "@chakra-ui/react";
+import { type FC, type ReactElement, useCallback } from "react";
+import { useTranslation } from "react-i18next";
+import FLPButton from "~/components/core/buttons/FLPButton";
+import FLPButtonGroup from "~/components/core/buttons/FLPButtonGroup";
 import {
   DialogBackdrop,
   DialogBody,
@@ -12,8 +11,8 @@ import {
   DialogFooter,
   DialogHeader,
   DialogRoot,
-  DialogTitle
-} from '~/components/ui/dialog';
+  DialogTitle,
+} from "~/components/ui/dialog";
 
 interface FLPModalProps extends DialogRootProps {
   additionalActionBtns?: ReactElement<ReactElement>;
@@ -41,7 +40,7 @@ const FLPModal: FC<FLPModalProps> = ({
   title,
   triggerBtn,
   onClose,
-  onConfirm
+  onConfirm,
 }) => {
   const { t } = useTranslation();
 
@@ -70,7 +69,7 @@ const FLPModal: FC<FLPModalProps> = ({
           {additionalActionBtns}
           <FLPButtonGroup>
             <FLPButton variant="outline" onClick={onClose}>
-              {t('close')}
+              {t("close")}
             </FLPButton>
             {onConfirm && (
               <FLPButton

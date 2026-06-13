@@ -1,20 +1,19 @@
-import { CacheProvider as EmotionCacheProvider } from '@emotion/react';
-import createEmotionServer from '@emotion/server/create-instance';
-import { createInstance } from 'i18next';
-import Backend from 'i18next-fs-backend';
-import { isbot } from 'isbot';
-import { resolve } from 'node:path';
-import { renderToPipeableStream } from 'react-dom/server';
-import { I18nextProvider, initReactI18next } from 'react-i18next';
-import type { EntryContext } from 'react-router';
-import { ServerRouter } from 'react-router';
-import { PassThrough } from 'stream';
+import { resolve } from "node:path";
+import { PassThrough } from "node:stream";
+import { CacheProvider as EmotionCacheProvider } from "@emotion/react";
+import createEmotionServer from "@emotion/server/create-instance";
+import { createReadableStreamFromReadable } from "@react-router/node";
+import { createInstance } from "i18next";
+import Backend from "i18next-fs-backend";
+import { isbot } from "isbot";
+import { renderToPipeableStream } from "react-dom/server";
+import { I18nextProvider, initReactI18next } from "react-i18next";
+import type { EntryContext } from "react-router";
+import { ServerRouter } from "react-router";
 
-import { createReadableStreamFromReadable } from '@react-router/node';
-
-import createEmotionCache from './createEmotionCache';
-import i18n from './i18n';
-import i18next from './i18n.server';
+import createEmotionCache from "./createEmotionCache";
+import i18n from "./i18n";
+import i18next from "./i18n.server";
 
 // Reject/cancel all pending promises after 5 seconds
 export const streamTimeout = 5000;
@@ -23,9 +22,9 @@ export default async function handleRequest(
   request: Request,
   responseStatusCode: number,
   responseHeaders: Headers,
-  reactRouterContext: EntryContext
+  reactRouterContext: EntryContext,
 ): Promise<unknown> {
-  const callbackName = isbot(request.headers.get('user-agent')) ? 'onAllReady' : 'onShellReady';
+  const callbackName = isbot(request.headers.get("user-agent")) ? "onAllReady" : "onShellReady";
 
   const instance = createInstance();
   const lng = await i18next.getLocale(request);
@@ -38,7 +37,7 @@ export default async function handleRequest(
       ...i18n,
       lng,
       ns,
-      backend: { loadPath: resolve('./public/locales/{{lng}}/{{ns}}.json') }
+      backend: { loadPath: resolve("./public/locales/{{lng}}/{{ns}}.json") },
     });
 
   return new Promise((resolve, reject) => {
@@ -59,13 +58,13 @@ export default async function handleRequest(
           const bodyWithStyles = emotionServer.renderStylesToNodeStream() as PassThrough;
           reactBody.pipe(bodyWithStyles);
 
-          responseHeaders.set('Content-Type', 'text/html');
+          responseHeaders.set("Content-Type", "text/html");
 
           resolve(
             new Response(createReadableStreamFromReadable(bodyWithStyles), {
               headers: responseHeaders,
-              status: didError ? 500 : responseStatusCode
-            })
+              status: didError ? 500 : responseStatusCode,
+            }),
           );
 
           pipe(reactBody);
@@ -77,8 +76,8 @@ export default async function handleRequest(
           didError = true;
 
           console.error(error);
-        }
-      }
+        },
+      },
     );
 
     // Automatically timeout the React renderer after 6 seconds, which ensures

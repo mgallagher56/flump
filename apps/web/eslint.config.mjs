@@ -1,20 +1,20 @@
+import eslintJs from "@eslint/js";
+import tsEslintParser from "@typescript-eslint/parser";
+import vitest from "@vitest/eslint-plugin";
 import eslintConfigPrettier from "eslint-config-prettier";
-import eslintJs from '@eslint/js';
-import globals from 'globals';
-import importPlugin from 'eslint-plugin-import';
-import jsxA11y from 'eslint-plugin-jsx-a11y';
-import noRelativeImportPaths from 'eslint-plugin-no-relative-import-paths';
-import reactHooks from 'eslint-plugin-react-hooks';
+import importPlugin from "eslint-plugin-import";
+import jsxA11y from "eslint-plugin-jsx-a11y";
+import noRelativeImportPaths from "eslint-plugin-no-relative-import-paths";
 import reactPlugin from "eslint-plugin-react";
-import reactRefresh from 'eslint-plugin-react-refresh';
-import sonarjs from 'eslint-plugin-sonarjs';
-import testingLibrary from 'eslint-plugin-testing-library';
-import tsEslint from 'typescript-eslint';
-import tsEslintParser from '@typescript-eslint/parser';
+import reactCompiler from "eslint-plugin-react-compiler";
+import reactHooks from "eslint-plugin-react-hooks";
+import reactRefresh from "eslint-plugin-react-refresh";
+import sonarjs from "eslint-plugin-sonarjs";
+import testingLibrary from "eslint-plugin-testing-library";
 import turbo from "eslint-plugin-turbo";
-import unusedImports from 'eslint-plugin-unused-imports';
-import vitest from '@vitest/eslint-plugin';
-import reactCompiler from 'eslint-plugin-react-compiler';
+import unusedImports from "eslint-plugin-unused-imports";
+import globals from "globals";
+import tsEslint from "typescript-eslint";
 
 export default [
   reactPlugin.configs.flat.recommended,
@@ -25,22 +25,22 @@ export default [
   ...tsEslint.configs.recommended,
   {
     plugins: {
-      'jsx-a11y': jsxA11y,
-      'no-relative-import-paths': noRelativeImportPaths,
-      'react-hooks': reactHooks,
-      'react-refresh': reactRefresh,
-      'unused-imports': unusedImports,
-      'react-compiler': reactCompiler,
+      "jsx-a11y": jsxA11y,
+      "no-relative-import-paths": noRelativeImportPaths,
+      "react-hooks": reactHooks,
+      "react-refresh": reactRefresh,
+      "unused-imports": unusedImports,
+      "react-compiler": reactCompiler,
       sonarjs,
     },
     settings: {
       react: {
-        version: 'detect'
+        version: "detect",
       },
-      'import/resolver': {
+      "import/resolver": {
         node: {
-          paths: ['app'],
-          extensions: ['.js', '.jsx', '.ts', '.tsx'],
+          paths: ["app"],
+          extensions: [".js", ".jsx", ".ts", ".tsx"],
         },
       },
     },
@@ -48,11 +48,11 @@ export default [
       parser: tsEslintParser,
       globals: { ...globals.browser, ...globals.node, ...globals.es2025, React: true, JSX: true },
       parserOptions: {
-        project: ['tsconfig.json'],
-        ecmaVersion: 'latest',
-        sourceType: 'module',
+        project: ["tsconfig.json"],
+        ecmaVersion: "latest",
+        sourceType: "module",
         ecmaFeatures: {
-          jsx: true
+          jsx: true,
         },
       },
     },
@@ -61,19 +61,21 @@ export default [
         "error",
         {
           prefer: "type-imports",
-          fixStyle: "inline-type-imports"
+          fixStyle: "inline-type-imports",
         },
       ],
-      '@typescript-eslint/explicit-function-return-type': 'off',
-      '@typescript-eslint/no-empty-interface': 'error',
-      '@typescript-eslint/no-unnecessary-type-assertion': 'error',
-      '@typescript-eslint/no-unused-vars': 'off',
-      'no-relative-import-paths/no-relative-import-paths': ['error', { allowSameFolder: true, rootDir: 'app' }],
-      'no-unused-vars': 'off',
-      'react-hooks/exhaustive-deps': 'error',
-      'react/display-name': 0,
-      'react/jsx-no-useless-fragment': ['error', { allowExpressions: true }],
-      'require-await': 'warn',
+      "@typescript-eslint/explicit-function-return-type": "off",
+      "@typescript-eslint/no-unnecessary-type-assertion": "error",
+      "@typescript-eslint/no-unused-vars": "off",
+      "no-relative-import-paths/no-relative-import-paths": [
+        "error",
+        { allowSameFolder: true, rootDir: "app" },
+      ],
+      "no-unused-vars": "off",
+      "react-hooks/exhaustive-deps": "error",
+      "react/display-name": 0,
+      "react/jsx-no-useless-fragment": ["error", { allowExpressions: true }],
+      "require-await": "warn",
       "@typescript-eslint/explicit-module-boundary-types": "off",
       "@typescript-eslint/no-empty-interface": "error",
       "@typescript-eslint/no-explicit-any": "warn",
@@ -81,8 +83,8 @@ export default [
       "@typescript-eslint/no-use-before-define": "off",
       "@typescript-eslint/no-useless-escape": "off",
       "array-callback-return": "warn",
-      "complexity": ['warn', 15],
-      "eqeqeq": ["warn", "smart"],
+      complexity: ["warn", 15],
+      eqeqeq: ["warn", "smart"],
       "import/named": "off",
       "import/no-duplicates": "error",
       "import/no-named-as-default-member": "off",
@@ -97,7 +99,7 @@ export default [
       "no-duplicate-imports": 0,
       "no-nested-ternary": "warn",
       "no-unneeded-ternary": "warn",
-      'react-compiler/react-compiler': 'error',
+      "react-compiler/react-compiler": "error",
       "react-hooks/rules-of-hooks": "error",
       "react-refresh/only-export-components": "off",
       "react/jsx-uses-react": "error",
@@ -140,7 +142,7 @@ export default [
   },
   {
     ignores: [
-      '__mocks__/',
+      "__mocks__/",
       ".prettierrc.js",
       "*.config.*",
       "*.d.ts",
@@ -162,12 +164,11 @@ export default [
       "styled-system/**",
       "test",
       "theme.ts",
-
-    ]
+    ],
   },
   {
-    files: ['**/*.test.{j,t}s?(x)', "test/**"],
-    ...testingLibrary.configs['flat/react'],
+    files: ["**/*.test.{j,t}s?(x)", "test/**"],
+    ...testingLibrary.configs["flat/react"],
     plugins: {
       vitest,
     },
@@ -178,8 +179,9 @@ export default [
     },
     rules: {
       ...vitest.configs.recommended.rules,
-      'vitest/consistent-test-it': ['error', { fn: 'test', withinDescribe: 'test' }],
-      'vitest/prefer-called-with': ['off'],
+      "vitest/consistent-test-it": ["error", { fn: "test", withinDescribe: "test" }],
+      "vitest/prefer-called-with": ["off"],
+      "vitest/no-mocks-import": ["off"],
     },
-  }
+  },
 ];

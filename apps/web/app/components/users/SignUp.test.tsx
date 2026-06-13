@@ -1,68 +1,69 @@
-import type { ReactNode } from 'react';
+import { act, fireEvent, waitFor } from "@testing-library/react";
+import type { ReactNode } from "react";
+import { vi } from "vitest";
+import customRender from "~/testUtils/customRender";
+import { AuthErrorEnums } from "~/utils/utils";
 
-import { act, fireEvent, waitFor } from '@testing-library/react';
-import { vi } from 'vitest';
-import customRender from '~/testUtils/customRender';
-import { AuthErrorEnums } from '~/utils/utils';
-
-import SignUp from './SignUp';
-import { SignUpActionEnum } from './utils';
+import SignUp from "./SignUp";
+import { SignUpActionEnum } from "./utils";
 
 const mocks = vi.hoisted(() => ({
   mockUseRevalidator: vi.fn(() => ({ revalidate: vi.fn() })),
   signUpSpy: vi.fn(() => ({
-    data: { message: 'sign up success' },
-    error: { message: AuthErrorEnums.USER_ALREADY_REGISTERED }
+    data: { message: "sign up success" },
+    error: { message: AuthErrorEnums.USER_ALREADY_REGISTERED },
   })),
   signOutSpy: vi.fn(),
   signInWithPasswordSpy: vi.fn(() => ({
-    data: { message: 'sign in success' },
-    error: { message: 'sign in error' }
+    data: { message: "sign in success" },
+    error: { message: "sign in error" },
   })),
   signInWithOtp: vi.fn(() => ({
     data: {
       user: {
-        confirmation_sent_at: '2021-10-10T10:10:10.000Z'
-      }
+        confirmation_sent_at: "2021-10-10T10:10:10.000Z",
+      },
     },
-    error: {}
-  }))
+    error: {},
+  })),
 }));
 
-vi.mock('app/utils/supabase', () => ({
+vi.mock("app/utils/supabase", () => ({
   default: {
     auth: {
       signUp: mocks.signUpSpy,
       signInWithPassword: mocks.signInWithPasswordSpy,
       signOut: mocks.signOutSpy,
-      signInWithOtp: mocks.signInWithOtp
-    }
-  }
+      signInWithOtp: mocks.signInWithOtp,
+    },
+  },
 }));
 
-vi.mock('react-router', async () => {
-  const actual: Record<string, unknown> = await vi.importActual('react-router');
+vi.mock("react-router", async () => {
+  const actual: Record<string, unknown> = await vi.importActual("react-router");
   return {
     ...actual,
-    Form: ({ children, onSubmit }: { children: ReactNode; onSubmit }) => <form onSubmit={onSubmit}>{children}</form>,
+    Form: ({ children, onSubmit }: { children: ReactNode; onSubmit }) => (
+      <form onSubmit={onSubmit}>{children}</form>
+    ),
     useRouteData: () => ({}),
-    useRevalidator: mocks.mockUseRevalidator
+    useRevalidator: mocks.mockUseRevalidator,
   };
 });
 
-const mockEmail = 'test@test.com';
-const mockPassword = 'password';
+const mockEmail = "test@test.com";
+const mockPassword = "password";
 
-describe('<SignUp />', () => {
-  test('should render as expected', () => {
+describe("<SignUp />", () => {
+  test("should render as expected", () => {
     const { container } = customRender(<SignUp />);
     expect(container).toMatchSnapshot();
   });
 
   const renderAndType = async ({ action }: { action: SignUpActionEnum }) => {
     const { getByLabelText, getByText, baseElement } = customRender(<SignUp action={action} />);
-    const emailInput = getByLabelText('Email:') as HTMLInputElement;
-    const passwordInput = getByLabelText('Password:') as HTMLInputElement;
+    const emailInput = getByLabelText("Email:") as HTMLInputElement;
+    const passwordInput = getByLabelText("Password:") as HTMLInputElement;
     fireEvent.change(emailInput, { target: { value: mockEmail } });
     fireEvent.change(passwordInput, { target: { value: mockPassword } });
 
@@ -74,21 +75,21 @@ describe('<SignUp />', () => {
     return { baseElement, getByLabelText, getByText, passwordInput };
   };
 
-  test('should submit the form after typing and clicking the button. Should change to login button when user is already registered', async () => {
+  test("should submit the form after typing and clicking the button. Should change to login button when user is already registered", async () => {
     const { getByText } = await renderAndType({ action: SignUpActionEnum.SIGNUP });
 
-    const submitButton = getByText('signUp') as HTMLButtonElement;
+    const submitButton = getByText("signUp") as HTMLButtonElement;
     fireEvent.click(submitButton);
     await waitFor(() => {
       expect(mocks.signUpSpy).toHaveBeenCalled();
-      expect(getByText('clickAgainToLogIn')).toBeDefined();
+      expect(getByText("clickAgainToLogIn")).toBeDefined();
     });
   });
 
-  test('should submit the form and call login function after typing and clicking the button', async () => {
+  test("should submit the form and call login function after typing and clicking the button", async () => {
     const { getByText } = await renderAndType({ action: SignUpActionEnum.LOGIN });
 
-    const submitButton = getByText('logIn') as HTMLButtonElement;
+    const submitButton = getByText("logIn") as HTMLButtonElement;
     fireEvent.click(submitButton);
 
     await waitFor(() => {
@@ -96,10 +97,10 @@ describe('<SignUp />', () => {
     });
   });
 
-  test('should show email confirmation message when userdata contains confirmation_sent_at param', async () => {
+  test("should show email confirmation message when userdata contains confirmation_sent_at param", async () => {
     const { getByText } = await renderAndType({ action: SignUpActionEnum.LOGIN });
-    const magicLinkBtn = getByText('loginWithMagicLink') as HTMLButtonElement;
-    const submitButton = getByText('logIn') as HTMLButtonElement;
+    const magicLinkBtn = getByText("loginWithMagicLink") as HTMLButtonElement;
+    const submitButton = getByText("logIn") as HTMLButtonElement;
 
     act(() => {
       magicLinkBtn.click();
@@ -111,7 +112,7 @@ describe('<SignUp />', () => {
 
     await waitFor(() => {
       expect(mocks.signInWithOtp).toHaveBeenCalled();
-      expect(getByText('confirmEmailMsg')).toBeDefined();
+      expect(getByText("confirmEmailMsg")).toBeDefined();
     });
   });
 });

@@ -1,8 +1,8 @@
-import { useMemo } from 'react';
+import { useMemo } from "react";
 
-import { useMatches } from 'react-router';
+import { useMatches } from "react-router";
 
-const DEFAULT_REDIRECT = '/';
+const DEFAULT_REDIRECT = "/";
 
 /**
  * This should be used any time the redirect path is user-provided
@@ -13,13 +13,13 @@ const DEFAULT_REDIRECT = '/';
  */
 export function safeRedirect(
   to: FormDataEntryValue | string | null | undefined,
-  defaultRedirect: string = DEFAULT_REDIRECT
+  defaultRedirect: string = DEFAULT_REDIRECT,
 ): string {
-  if (!to || typeof to !== 'string') {
+  if (!to || typeof to !== "string") {
     return defaultRedirect;
   }
 
-  if (!to.startsWith('/') || to.startsWith('//')) {
+  if (!to.startsWith("/") || to.startsWith("//")) {
     return defaultRedirect;
   }
 
@@ -34,12 +34,15 @@ export function safeRedirect(
  */
 export function useMatchesData(id: string): Record<string, unknown> | undefined {
   const matchingRoutes = useMatches();
-  const route = useMemo(() => matchingRoutes.find((route) => route.id === id), [matchingRoutes, id]);
+  const route = useMemo(
+    () => matchingRoutes.find((route) => route.id === id),
+    [matchingRoutes, id],
+  );
   return route?.data as Record<string, unknown>;
 }
 
 export function validateEmail(email: unknown): email is string {
-  return typeof email === 'string' && email.length > 3 && email.includes('@');
+  return typeof email === "string" && email.length > 3 && email.includes("@");
 }
 
 export const noop = () => {}; //nosonar
@@ -47,11 +50,11 @@ export const emptyObject = {};
 export const emptyArray = [];
 
 export enum FallbackEnums {
-  NA = 'N/A'
+  NA = "N/A",
 }
 
 export enum AuthErrorEnums {
-  USER_ALREADY_REGISTERED = 'User already registered'
+  USER_ALREADY_REGISTERED = "User already registered",
 }
 
 export const currentYear = new Date().getFullYear();

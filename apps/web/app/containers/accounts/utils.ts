@@ -1,12 +1,12 @@
-import type { Account } from './types';
+import type { Account } from "./types";
 
 export enum AccountTypeEnum {
-  CURRENT = 'Current',
-  SAVING = 'Saving',
-  MORTGAGE = 'Mortgage',
-  LOAN = 'Loan',
-  CREDIT_CARD = 'Credit Card',
-  OWED = 'Owed'
+  CURRENT = "Current",
+  SAVING = "Saving",
+  MORTGAGE = "Mortgage",
+  LOAN = "Loan",
+  CREDIT_CARD = "Credit Card",
+  OWED = "Owed",
 }
 
 export type AccountType = `${AccountTypeEnum}` | string;

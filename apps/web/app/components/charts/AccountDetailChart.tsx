@@ -1,8 +1,7 @@
-import { type ComponentProps, type FC, useMemo } from 'react';
-
-import { curveCardinal } from 'd3-shape';
-import { Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
-import type { AccountDetail } from '~/containers/accounts/types';
+import { curveCardinal } from "d3-shape";
+import { type ComponentProps, type FC, useMemo } from "react";
+import { Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import type { AccountDetail } from "~/containers/accounts/types";
 
 interface AccountDetailChartProps extends ComponentProps<typeof LineChart> {
   accountDetails: AccountDetail[];
@@ -15,9 +14,9 @@ const AccountDetailChart: FC<AccountDetailChartProps> = ({ accountDetails }) => 
     () =>
       accountDetails.map((accountDetail) => ({
         Name: `${accountDetail.month}/${accountDetail.year.toString().slice(-2)}`,
-        Value: accountDetail.value
+        Value: accountDetail.value,
       })),
-    [accountDetails]
+    [accountDetails],
   );
 
   return (
@@ -28,18 +27,18 @@ const AccountDetailChart: FC<AccountDetailChartProps> = ({ accountDetails }) => 
           top: 5,
           right: 0,
           left: 0,
-          bottom: 5
+          bottom: 5,
         }}
       >
         <XAxis dataKey="Name" height={5} tick={false} />
         <YAxis tick={false} width={1} />
         <Tooltip
           itemStyle={{
-            color: '#000'
+            color: "#000",
           }}
           labelStyle={{
-            color: '#000',
-            fontWeight: 'bold'
+            color: "#000",
+            fontWeight: "bold",
           }}
         />
         <Line dataKey="Value" dot={false} stroke="#8884d8" type={curve} />

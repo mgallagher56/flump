@@ -1,23 +1,35 @@
-import { type FC, useCallback, useMemo } from 'react';
+import {
+  CardBody,
+  CardFooter,
+  CardHeader,
+  type CardRootProps,
+  Stack,
+  StatHelpText,
+} from "@chakra-ui/react";
+import { type FC, useCallback, useMemo } from "react";
+import { useTranslation } from "react-i18next";
+import { useLoaderData, useNavigate } from "react-router";
+import AccountDetailChart from "~/components/charts/AccountDetailChart";
+import FLPButton from "~/components/core/buttons/FLPButton";
+import FLPButtonGroup from "~/components/core/buttons/FLPButtonGroup";
+import FLPHeading from "~/components/core/typography/FLPHeading";
+import AddEditAccountsDialogBtn from "~/components/dialogs/addEditAccountsDialog/AddEditAccountsDialog";
+import {
+  StatDownTrend,
+  StatLabel,
+  StatRoot,
+  StatUpTrend,
+  StatValueText,
+} from "~/components/ui/stat";
+import type { AccountDetail } from "~/containers/accounts/types";
+import type { AccountTypeEnum } from "~/containers/accounts/utils";
+import type { loader } from "~/routes/app.accounts._index";
+import { monthYearSort } from "~/utils/accounts";
+import { currentMonth, currentYear } from "~/utils/utils";
 
-import { CardBody, CardFooter, CardHeader, type CardRootProps, Stack, StatHelpText } from '@chakra-ui/react';
-import { useTranslation } from 'react-i18next';
-import { useLoaderData, useNavigate } from 'react-router';
-import AccountDetailChart from '~/components/charts/AccountDetailChart';
-import FLPButton from '~/components/core/buttons/FLPButton';
-import FLPButtonGroup from '~/components/core/buttons/FLPButtonGroup';
-import FLPHeading from '~/components/core/typography/FLPHeading';
-import AddEditAccountsDialogBtn from '~/components/dialogs/addEditAccountsDialog.tsx/AddEditAccountsDialog';
-import { StatDownTrend, StatLabel, StatRoot, StatUpTrend, StatValueText } from '~/components/ui/stat';
-import type { AccountDetail } from '~/containers/accounts/types';
-import type { AccountTypeEnum } from '~/containers/accounts/utils';
-import type { loader } from '~/routes/app.accounts._index';
-import { monthYearSort } from '~/utils/accounts';
-import { currentMonth, currentYear } from '~/utils/utils';
+import FLPCard from "./FLPCard";
 
-import FLPCard from './FLPCard';
-
-interface AccountsCardProp extends Omit<CardRootProps, 'title'> {
+interface AccountsCardProp extends Omit<CardRootProps, "title"> {
   accountId: string;
   name: string;
   type: AccountTypeEnum;
@@ -27,7 +39,7 @@ const AccountsCard: FC<AccountsCardProp> = ({ accountId, name, type }) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const {
-    accountDetails = []
+    accountDetails = [],
   }: {
     accountDetails?: AccountDetail[];
   } = useLoaderData<typeof loader>();
@@ -37,7 +49,7 @@ const AccountsCard: FC<AccountsCardProp> = ({ accountId, name, type }) => {
   }, [accountDetails, accountId]);
 
   const currentMonthIndex = sortedAccountDetails.findIndex(
-    (account) => account.month === currentMonth && account.year === currentYear
+    (account) => account.month === currentMonth && account.year === currentYear,
   );
 
   const accountDetailYear = useMemo(() => {
@@ -50,11 +62,16 @@ const AccountsCard: FC<AccountsCardProp> = ({ accountId, name, type }) => {
   const prevAccountBalance = accountDetailYear[10]?.value;
   const secondPreviousAccountBalance = accountDetailYear[9]?.value;
   const prevPercentageChangeValue = Math.round(
-    ((prevAccountBalance - secondPreviousAccountBalance) / secondPreviousAccountBalance) * 100
+    ((prevAccountBalance - secondPreviousAccountBalance) / secondPreviousAccountBalance) * 100,
   );
-  const currentPercentageChangeValue = Math.round(((accountBalance - prevAccountBalance) / prevAccountBalance) * 100);
+  const currentPercentageChangeValue = Math.round(
+    ((accountBalance - prevAccountBalance) / prevAccountBalance) * 100,
+  );
 
-  const onViewClick = useCallback(() => navigate(`/app/accounts/${accountId}`), [accountId, navigate]);
+  const onViewClick = useCallback(
+    () => navigate(`/app/accounts/${accountId}`),
+    [accountId, navigate],
+  );
 
   return (
     <FLPCard
@@ -75,11 +92,11 @@ const AccountsCard: FC<AccountsCardProp> = ({ accountId, name, type }) => {
         gap={1}
         padding={0}
         style={{
-          cursor: 'pointer'
+          cursor: "pointer",
         }}
         onClick={onViewClick}
       >
-        <FLPHeading as="h5" color="grey.500" size="xs">{`${type} ${t('account')}`}</FLPHeading>
+        <FLPHeading as="h5" color="grey.500" size="xs">{`${type} ${t("account")}`}</FLPHeading>
         <FLPHeading as="h4" color="blue.500" fontWeight="bold" size="lg">
           {name}
         </FLPHeading>
@@ -88,18 +105,20 @@ const AccountsCard: FC<AccountsCardProp> = ({ accountId, name, type }) => {
         justifyContent="flex-end"
         padding={0}
         style={{
-          cursor: 'pointer'
+          cursor: "pointer",
         }}
         onClick={onViewClick}
       >
         <Stack alignItems="center" direction="row" display="flex" justifyContent="space-between">
           {!!prevAccountBalance && (
             <StatRoot size="sm">
-              <StatLabel>{`${t('previous')}:`}</StatLabel>
+              <StatLabel>{`${t("previous")}:`}</StatLabel>
               <StatValueText>
-                {Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP', maximumFractionDigits: 0 }).format(
-                  prevAccountBalance
-                )}
+                {Intl.NumberFormat("en-GB", {
+                  style: "currency",
+                  currency: "GBP",
+                  maximumFractionDigits: 0,
+                }).format(prevAccountBalance)}
               </StatValueText>
               {!!secondPreviousAccountBalance && (
                 <StatHelpText>
@@ -114,12 +133,12 @@ const AccountsCard: FC<AccountsCardProp> = ({ accountId, name, type }) => {
           )}
           {!!accountBalance && (
             <StatRoot size="sm">
-              <StatLabel>{`${t('current')}:`}</StatLabel>
+              <StatLabel>{`${t("current")}:`}</StatLabel>
               <StatValueText>
-                {Intl.NumberFormat('en-GB', {
-                  style: 'currency',
-                  currency: 'GBP',
-                  maximumFractionDigits: 0
+                {Intl.NumberFormat("en-GB", {
+                  style: "currency",
+                  currency: "GBP",
+                  maximumFractionDigits: 0,
                 }).format(accountBalance)}
               </StatValueText>
               {!!prevAccountBalance && (
@@ -139,7 +158,7 @@ const AccountsCard: FC<AccountsCardProp> = ({ accountId, name, type }) => {
       <CardFooter justifyContent="flex-end" padding={0}>
         <FLPButtonGroup gap={4} justifyContent="flex-end" zIndex="10">
           <FLPButton size="sm" variant="subtle" onClick={onViewClick}>
-            {t('view')}
+            {t("view")}
           </FLPButton>
           <AddEditAccountsDialogBtn accountId={accountId} btnSize="sm" isEditAccount={true} />
         </FLPButtonGroup>

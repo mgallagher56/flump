@@ -1,15 +1,14 @@
-import { type FC, useCallback, useMemo, useState } from 'react';
-
-import { Box } from '@chakra-ui/react/box';
-import { Stack } from '@chakra-ui/react/stack';
-import { useTranslation } from 'react-i18next';
-import { useLoaderData, useRevalidator } from 'react-router';
-import AccountDetails from '~/components/accounts/AccountDetails';
-import FLPButton from '~/components/core/buttons/FLPButton';
-import FLPHeading from '~/components/core/typography/FLPHeading';
-import type { loader } from '~/routes/app.accounts.$account';
-import supabase from '~/utils/supabase';
-import { currentYear, emptyObject } from '~/utils/utils';
+import { Box } from "@chakra-ui/react/box";
+import { Stack } from "@chakra-ui/react/stack";
+import { type FC, useCallback, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { useLoaderData, useRevalidator } from "react-router";
+import AccountDetails from "~/components/accounts/AccountDetails";
+import FLPButton from "~/components/core/buttons/FLPButton";
+import FLPHeading from "~/components/core/typography/FLPHeading";
+import type { loader } from "~/routes/app.accounts.$account";
+import supabase from "~/utils/supabase";
+import { currentYear, emptyObject } from "~/utils/utils";
 
 const AccountDetailContainer: FC = () => {
   const { t } = useTranslation();
@@ -17,9 +16,14 @@ const AccountDetailContainer: FC = () => {
   const { account, accountDetails } = useLoaderData<typeof loader>();
   const [isLoading, setIsLoading] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
-  const [editedValues, setEditedValues] = useState<{ [key: string]: { [key: string]: string } }>(emptyObject);
+  const [editedValues, setEditedValues] = useState<{ [key: string]: { [key: string]: string } }>(
+    emptyObject,
+  );
 
-  const availableYears = useMemo(() => accountDetails?.map(({ year }: { year?: number }) => year), [accountDetails]);
+  const availableYears = useMemo(
+    () => accountDetails?.map(({ year }: { year?: number }) => year),
+    [accountDetails],
+  );
 
   const handleToggleEditMode = useCallback(() => setIsEditMode((prev) => !prev), []);
   const handleInputChange = useCallback(
@@ -33,61 +37,61 @@ const AccountDetailContainer: FC = () => {
         ...prev,
         [event.target.dataset.year]: {
           ...(prev?.[event.target.dataset.year] ?? emptyObject),
-          [event.target.dataset.month]: event.target.value
-        }
+          [event.target.dataset.month]: event.target.value,
+        },
       }));
     },
-    []
+    [],
   );
 
   const handleAddNewYear = useCallback(
-    async (selectedYear: number, yearToAdd: 'current' | 'prev' | 'next') => {
+    async (selectedYear: number, yearToAdd: "current" | "prev" | "next") => {
       setIsLoading(true);
-      const nextYear = selectedYear + (yearToAdd === 'prev' ? -1 : 1);
+      const nextYear = selectedYear + (yearToAdd === "prev" ? -1 : 1);
       const yearWithMonths = Array.from({ length: 12 }, (_, i) => i + 1).map((value) => ({
         account_id: account.id,
         month: value,
-        year: yearToAdd === 'current' ? currentYear : nextYear,
-        value: 0
+        year: yearToAdd === "current" ? currentYear : nextYear,
+        value: 0,
       }));
 
-      await supabase.from('account_details').insert(yearWithMonths);
+      await supabase.from("account_details").insert(yearWithMonths);
       revalidate();
       setIsLoading(false);
     },
-    [account.id, revalidate]
+    [account.id, revalidate],
   );
 
   const handleSaveValues = useCallback(
-    (event: { preventDefault: () => void }) => {
+    async (event: { preventDefault: () => void }) => {
       setIsLoading(true);
       event.preventDefault();
-      const updatedValues = Object.entries(editedValues)
-        .map(([year, values]) =>
-          Object.entries(values).map(([month, value]) => ({
-            account_id: account.id,
-            month: parseInt(month),
-            year: parseInt(year),
-            value: parseInt(value)
-          }))
-        )
-        .flat();
+      const updatedValues = Object.entries(editedValues).flatMap(([year, values]) =>
+        Object.entries(values).map(([month, value]) => ({
+          account_id: account.id,
+          month: parseInt(month, 10),
+          year: parseInt(year, 10),
+          value: parseInt(value, 10),
+        })),
+      );
 
-      updatedValues.forEach(async (value) => {
-        await supabase
-          .from('account_details')
-          .update(value)
-          .eq('account_id', account.id)
-          .eq('month', value.month)
-          .eq('year', value.year);
-      });
+      await Promise.all(
+        updatedValues.map(async (value) => {
+          await supabase
+            .from("account_details")
+            .update(value)
+            .eq("account_id", account.id)
+            .eq("month", value.month)
+            .eq("year", value.year);
+        }),
+      );
 
       handleToggleEditMode();
       setEditedValues(emptyObject);
       revalidate();
       setIsLoading(false);
     },
-    [account.id, editedValues, handleToggleEditMode, revalidate]
+    [account.id, editedValues, handleToggleEditMode, revalidate],
   );
 
   return (
@@ -108,11 +112,15 @@ const AccountDetailContainer: FC = () => {
             variant="outline"
             onClick={isEditMode ? handleSaveValues : handleToggleEditMode}
           >
-            {isEditMode ? t('save') : t('edit')}
+            {isEditMode ? t("save") : t("edit")}
           </FLPButton>
         </Box>
       </Stack>
-      <AccountDetails editedValues={editedValues} isEditMode={isEditMode} onInputChange={handleInputChange} />
+      <AccountDetails
+        editedValues={editedValues}
+        isEditMode={isEditMode}
+        onInputChange={handleInputChange}
+      />
 
       <Stack flexDirection="row">
         {availableYears?.length ? (
@@ -123,9 +131,9 @@ const AccountDetailContainer: FC = () => {
               loading={isLoading}
               size="sm"
               variant="outline"
-              onClick={() => handleAddNewYear(availableYears?.[availableYears.length - 1], 'prev')}
+              onClick={() => handleAddNewYear(availableYears?.[availableYears.length - 1], "prev")}
             >
-              {t('addPrevYear')}
+              {t("addPrevYear")}
             </FLPButton>
             <FLPButton
               colorPalette="green"
@@ -133,21 +141,21 @@ const AccountDetailContainer: FC = () => {
               loading={isLoading}
               size="sm"
               variant="outline"
-              onClick={() => handleAddNewYear(availableYears?.[0], 'next')}
+              onClick={() => handleAddNewYear(availableYears?.[0], "next")}
             >
-              {t('addNextYear')}
+              {t("addNextYear")}
             </FLPButton>
           </>
         ) : (
           <FLPButton
-          colorPalette="green"
+            colorPalette="green"
             disabled={isLoading}
             loading={isLoading}
             size="sm"
             variant="outline"
-            onClick={() => handleAddNewYear(new Date().getFullYear(), 'current')}
+            onClick={() => handleAddNewYear(new Date().getFullYear(), "current")}
           >
-            {t('addCurrentYear')}
+            {t("addCurrentYear")}
           </FLPButton>
         )}
       </Stack>

@@ -1,147 +1,61 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
 exports[`getTabsData > should have a label, value, and children 1`] = `
-{
-  "$$typeof": Symbol(react.transitional.element),
-  "_owner": null,
-  "_store": {},
-  "key": null,
-  "props": {
-    "children": {
-      "$$typeof": Symbol(react.transitional.element),
-      "_owner": null,
-      "_store": {},
-      "key": null,
-      "props": {
-        "children": [
-          {
-            "$$typeof": Symbol(react.transitional.element),
-            "_owner": null,
-            "_store": {},
-            "key": null,
-            "props": {
-              "as": "h1",
-              "children": "featureNum",
-            },
-            "type": [Function],
-          },
-          [
-            {
-              "$$typeof": Symbol(react.transitional.element),
-              "_owner": null,
-              "_store": {},
-              "key": "0",
-              "props": {
-                "children": {
-                  "$$typeof": Symbol(react.transitional.element),
-                  "_owner": null,
-                  "_store": {},
-                  "key": null,
-                  "props": {
-                    "children": "N/A - IT",
-                  },
-                  "type": "h3",
-                },
-                "style": {
-                  "display": "flex",
-                  "gap": ".5rem",
-                },
-              },
-              "type": [Function],
-            },
-            {
-              "$$typeof": Symbol(react.transitional.element),
-              "_owner": null,
-              "_store": {},
-              "key": "2",
-              "props": {
-                "children": {
-                  "$$typeof": Symbol(react.transitional.element),
-                  "_owner": null,
-                  "_store": {},
-                  "key": null,
-                  "props": {
-                    "children": "Jane Doe - N/A",
-                  },
-                  "type": "h3",
-                },
-                "style": {
-                  "display": "flex",
-                  "gap": ".5rem",
-                },
-              },
-              "type": [Function],
-            },
-          ],
-        ],
-      },
-      "type": [Function],
-    },
-  },
-  "type": "main",
-}
+<main>
+  <FLPBox>
+    <FLPHeading
+      as="h1"
+    >
+      featureNum
+    </FLPHeading>
+    <FLPBox
+      style={
+        {
+          "display": "flex",
+          "gap": ".5rem",
+        }
+      }
+    >
+      <h3>
+        N/A - IT
+      </h3>
+    </FLPBox>
+    <FLPBox
+      style={
+        {
+          "display": "flex",
+          "gap": ".5rem",
+        }
+      }
+    >
+      <h3>
+        Jane Doe - N/A
+      </h3>
+    </FLPBox>
+  </FLPBox>
+</main>
 `;
 
 exports[`getTabsData > should have a label, value, and children 2`] = `
-{
-  "$$typeof": Symbol(react.transitional.element),
-  "_owner": null,
-  "_store": {},
-  "key": null,
-  "props": {
-    "children": {
-      "$$typeof": Symbol(react.transitional.element),
-      "_owner": null,
-      "_store": {},
-      "key": null,
-      "props": {
-        "children": {
-          "$$typeof": Symbol(react.transitional.element),
-          "_owner": null,
-          "_store": {},
-          "key": null,
-          "props": {
-            "as": "h1",
-            "children": "featureNum",
-          },
-          "type": [Function],
-        },
-      },
-      "type": [Function],
-    },
-  },
-  "type": "main",
-}
+<main>
+  <FLPBox>
+    <FLPHeading
+      as="h1"
+    >
+      featureNum
+    </FLPHeading>
+  </FLPBox>
+</main>
 `;
 
 exports[`getTabsData > should have a label, value, and children 3`] = `
-{
-  "$$typeof": Symbol(react.transitional.element),
-  "_owner": null,
-  "_store": {},
-  "key": null,
-  "props": {
-    "children": {
-      "$$typeof": Symbol(react.transitional.element),
-      "_owner": null,
-      "_store": {},
-      "key": null,
-      "props": {
-        "children": {
-          "$$typeof": Symbol(react.transitional.element),
-          "_owner": null,
-          "_store": {},
-          "key": null,
-          "props": {
-            "as": "h1",
-            "children": "featureNum",
-          },
-          "type": [Function],
-        },
-      },
-      "type": [Function],
-    },
-  },
-  "type": "main",
-}
+<main>
+  <FLPBox>
+    <FLPHeading
+      as="h1"
+    >
+      featureNum
+    </FLPHeading>
+  </FLPBox>
+</main>
 `;

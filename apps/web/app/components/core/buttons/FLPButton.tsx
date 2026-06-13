@@ -1,17 +1,17 @@
-import { type FC, type PropsWithChildren } from 'react';
+import type { FC, PropsWithChildren } from "react";
 
-import { Button, type ButtonProps } from '~/components/ui/button';
+import { Button, type ButtonProps } from "~/components/ui/button";
 
 interface FLPButtonProps extends ButtonProps {
   padding?: number;
 }
 
 const FLPButton: FC<PropsWithChildren<FLPButtonProps>> = ({
-  colorPalette = 'blue',
+  colorPalette = "blue",
   disabled,
   loading,
   padding,
-  variant = 'solid',
+  variant = "solid",
   onClick,
   ...buttonProps
 }) => {
@@ -22,7 +22,7 @@ const FLPButton: FC<PropsWithChildren<FLPButtonProps>> = ({
       loading={loading}
       padding={padding}
       variant={variant}
-      width={'max-content'}
+      width={"max-content"}
       onClick={onClick}
       {...buttonProps}
     >

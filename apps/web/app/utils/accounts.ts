@@ -6,7 +6,7 @@ export const monthYearSort = (
   b: {
     month?: number;
     year?: number;
-  }
+  },
 ) => {
   if (a.year === b.year) {
     return a.month - b.month;

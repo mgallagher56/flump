@@ -1,16 +1,16 @@
-import { useState } from 'react';
+import { useState } from "react";
 
 const pingServer = async () => {
   try {
-    const startTime = new Date().getTime();
-    await fetch('/ping');
-    const endTime = new Date().getTime();
+    const startTime = Date.now();
+    await fetch("/ping");
+    const endTime = Date.now();
     const responseTime = endTime - startTime;
 
     return `Server responded in ${responseTime}ms`;
   } catch (error) {
-    console.error('Ping failed:', error);
-    return 'Ping failed';
+    console.error("Ping failed:", error);
+    return "Ping failed";
   }
 };
 
@@ -18,24 +18,24 @@ export function loader() {
   return new Response(null, {
     status: 200,
     headers: {
-      'Cache-Control': 'no-store'
-    }
+      "Cache-Control": "no-store",
+    },
   });
 }
 export function action() {
   return {
-    title: 'Ping Test',
-    component: <Index />
+    title: "Ping Test",
+    component: <Index />,
   };
 }
 
 export default function Index() {
-  const [message, setMessage] = useState('');
+  const [message, setMessage] = useState("");
   return (
     <div>
       <h1>Ping Test</h1>
       <button
-        disabled={message !== ''}
+        disabled={message !== ""}
         onClick={() => {
           setInterval(async () => {
             setMessage(await pingServer());

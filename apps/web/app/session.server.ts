@@ -1,24 +1,24 @@
-import type { RedirectFunction, Session } from 'react-router';
-import { createCookieSessionStorage, redirect } from 'react-router';
-import invariant from 'tiny-invariant';
+import type { RedirectFunction, Session } from "react-router";
+import { createCookieSessionStorage, redirect } from "react-router";
+import invariant from "tiny-invariant";
 
-invariant(process.env.SESSION_SECRET, 'SESSION_SECRET must be set');
+invariant(process.env.SESSION_SECRET, "SESSION_SECRET must be set");
 
 export const sessionStorage = createCookieSessionStorage({
   cookie: {
-    name: '__session',
+    name: "__session",
     httpOnly: true,
-    path: '/',
-    sameSite: 'lax',
+    path: "/",
+    sameSite: "lax",
     secrets: [process.env.SESSION_SECRET],
-    secure: process.env.NODE_ENV === 'production'
-  }
+    secure: process.env.NODE_ENV === "production",
+  },
 });
 
-const USER_SESSION_KEY = 'userId';
+const USER_SESSION_KEY = "userId";
 
 export async function getSession(request: Request): Promise<Session> {
-  const cookie = request.headers.get('Cookie');
+  const cookie = request.headers.get("Cookie");
   return await sessionStorage.getSession(cookie);
 }
 
@@ -26,7 +26,7 @@ export async function createUserSession({
   request,
   userId,
   remember,
-  redirectTo
+  redirectTo,
 }: {
   request: Request;
   userId: string;
@@ -37,20 +37,20 @@ export async function createUserSession({
   session.set(USER_SESSION_KEY, userId);
   return redirect(redirectTo, {
     headers: {
-      'Set-Cookie': await sessionStorage.commitSession(session, {
+      "Set-Cookie": await sessionStorage.commitSession(session, {
         maxAge: remember
           ? 60 * 60 * 24 * 7 // 7 days
-          : undefined
-      })
-    }
+          : undefined,
+      }),
+    },
   });
 }
 
 export async function logout(request: Request): Promise<ReturnType<RedirectFunction>> {
   const session = await getSession(request);
-  return redirect('/', {
+  return redirect("/", {
     headers: {
-      'Set-Cookie': await sessionStorage.destroySession(session)
-    }
+      "Set-Cookie": await sessionStorage.destroySession(session),
+    },
   });
 }
