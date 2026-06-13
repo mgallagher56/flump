@@ -236,8 +236,8 @@ importers:
         specifier: 15.14.0
         version: 15.14.0
       happy-dom:
-        specifier: 16.3.0
-        version: 16.3.0
+        specifier: 20.0.0
+        version: 20.0.0
       msw:
         specifier: 2.7.0
         version: 2.7.0(@types/node@22.10.5)(typescript@5.7.2)
@@ -273,7 +273,7 @@ importers:
         version: 5.1.4(typescript@5.7.2)(vite@6.0.7(@types/node@22.10.5)(jiti@2.4.2)(lightningcss@1.25.1)(yaml@2.7.0))
       vitest:
         specifier: 2.1.8
-        version: 2.1.8(@types/node@22.10.5)(@vitest/ui@2.1.8)(happy-dom@16.3.0)(jiti@2.4.2)(lightningcss@1.25.1)(msw@2.7.0(@types/node@22.10.5)(typescript@5.7.2))(yaml@2.7.0)
+        version: 2.1.8(@types/node@22.10.5)(@vitest/ui@2.1.8)(happy-dom@20.0.0)(jiti@2.4.2)(lightningcss@1.25.1)(msw@2.7.0(@types/node@22.10.5)(typescript@5.7.2))(yaml@2.7.0)
       vitest-github-actions-reporter:
         specifier: 0.11.1
         version: 0.11.1(vitest@2.1.8)
@@ -2167,6 +2167,9 @@ packages:
   '@types/node@17.0.45':
     resolution: {integrity: sha512-w+tIMs3rq2afQdsPJlODhoUEKzFP1ayaoyl1CcnwtIlsVe7K7bA1NGm4s3PraqTLlXnbIN84zuBlxBWo1u9BLw==}
 
+  '@types/node@20.19.43':
+    resolution: {integrity: sha512-6oYBAi5ikg4Pl+kGsoYtawUMBT2zZMCvPNF7pVLnHZfd1zf38DRiWn/gT01RYCdUqkv7Fhr+C9ot4/tb+2sVvA==}
+
   '@types/node@22.10.5':
     resolution: {integrity: sha512-F8Q+SeGimwOo86fiovQh8qiXfFEh2/ocYv7tU5pJ3EXMSSxk1Joj5wefpFK2fHTf/N6HKGSxIDBT9f3gCxXPkQ==}
 
@@ -2192,6 +2195,9 @@ packages:
 
   '@types/unist@2.0.11':
     resolution: {integrity: sha512-CmBKiL6NNo/OqgmMn95Fk9Whlp2mtvIv+KNpQKN2F4SjvrEesubTRWGYSg+BnWZOnlCaSTU1sMpsBOzgbYhnsA==}
+
+  '@types/whatwg-mimetype@3.0.2':
+    resolution: {integrity: sha512-c2AKvDT8ToxLIOUlN51gTiHXflsfIFisS4pO7pDPoKouJCESkhZnEy623gwP9laCy5lnLDAw1vAzu2vM2YLOrA==}
 
   '@types/ws@8.5.13':
     resolution: {integrity: sha512-osM/gWBTPKgHV8XkTunnegTRIsvF6owmf5w+JtAfOw472dptdm0dlGv4xCt6GwQRcC2XVOvvRE/0bAoQcL2QkA==}
@@ -3869,6 +3875,7 @@ packages:
   git-raw-commits@4.0.0:
     resolution: {integrity: sha512-ICsMM1Wk8xSGMowkOmPrzo2Fgmfo4bMHLNX6ytHjajRJUqvHOw/TFapQ+QG75c3X/tTDDhOSRPGC52dDbNM8FQ==}
     engines: {node: '>=16'}
+    deprecated: This package is no longer maintained. For the JavaScript API, please use @conventional-changelog/git-client instead.
     hasBin: true
 
   glob-parent@5.1.2:
@@ -3881,11 +3888,12 @@ packages:
 
   glob@10.4.5:
     resolution: {integrity: sha512-7Bv8RF0k6xjo7d4A/PxYLbUCfb6c+Vpd2/mB2yRDlew7Jb5hEXiCD9ibfO7wpk8i4sevK6DFny9h7EYbM3/sHg==}
+    deprecated: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
     hasBin: true
 
   glob@7.2.3:
     resolution: {integrity: sha512-nFR0zLpU2YCaRxwoCJvL6UvCH2JFyFVIvwTLsIf21AuHlMskA1hhTdk+LlYJtOlYt9v6dvszD2BGRqBL+iQK9Q==}
-    deprecated: Glob versions prior to v9 are no longer supported
+    deprecated: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
 
   global-directory@4.0.1:
     resolution: {integrity: sha512-wHTUcDUoZ1H5/0iVqEudYW4/kAlN5cZ3j/bXn0Dpbizl9iaUVeWSHqiOjsgk6OW2bkLclbBjzewBz6weQ1zA2Q==}
@@ -3931,9 +3939,9 @@ packages:
     resolution: {integrity: sha512-4haO1M4mLO91PW57BMsDFf75UmwoRX0GkdD+Faw+Lr+r/OZrOCS0pIBwOL1xCKQqnQzbNFGgK2V2CpBUPeFNTw==}
     hasBin: true
 
-  happy-dom@16.3.0:
-    resolution: {integrity: sha512-Q71RaIhyS21vhW17Tpa5W36yqQXIlE1TZ0A0Gguts8PShUSQE/7fBgxYGxgm3+5y0gF6afdlAVHLQqgrIcfRzg==}
-    engines: {node: '>=18.0.0'}
+  happy-dom@20.0.0:
+    resolution: {integrity: sha512-GkWnwIFxVGCf2raNrxImLo397RdGhLapj5cT3R2PT7FwL62Ze1DROhzmYW7+J3p9105DYMVenEejEbnq5wA37w==}
+    engines: {node: '>=20.0.0'}
 
   has-bigints@1.1.0:
     resolution: {integrity: sha512-R3pbpkcIqv2Pm3dUwgjclDRVmWpTJW2DcMzcIhEXEx1oh/CEMObMm3KLmRJOdvhM7o4uQBnwr8pzRK2sJWIqfg==}
@@ -4926,6 +4934,7 @@ packages:
   node-domexception@1.0.0:
     resolution: {integrity: sha512-/jKZoMpw0F8GRwl4/eLROPA3cfcXtLApP0QzLmUT/HuPCZWyB7IY9ZrMeKw2O/nFIqPQB3PVM9aYm0F312AXDQ==}
     engines: {node: '>=10.5.0'}
+    deprecated: Use your platform's native DOMException instead
 
   node-eval@2.0.0:
     resolution: {integrity: sha512-Ap+L9HznXAVeJj3TJ1op6M6bg5xtTq8L5CU/PJxtkhea/DrIxdTknGKIECKd/v/Lgql95iuMAYvIzBNd0pmcMg==}
@@ -5526,6 +5535,7 @@ packages:
   recharts@2.15.0:
     resolution: {integrity: sha512-cIvMxDfpAmqAmVgc4yb7pgm/O1tmmkl/CjrvXuW+62/+7jj/iF9Ykm+hb/UJt42TREHMyd3gb+pkgoa2MxgDIw==}
     engines: {node: '>=14'}
+    deprecated: 1.x and 2.x branches are no longer active. Bump to Recharts v3 to receive latest features and bugfixes. See https://github.com/recharts/recharts/wiki/3.0-migration-guide
     peerDependencies:
       react: 19.0.0
       react-dom: 19.0.0
@@ -6004,10 +6014,12 @@ packages:
   tar@6.2.1:
     resolution: {integrity: sha512-DZ4yORTwrbTj/7MZYq2w+/ZFdI6OZ/f9SFHR+71gIVUZhOQPHzVCLpvRnPgyaMpfWxxk/4ONva3GQSyNIKRv6A==}
     engines: {node: '>=10'}
+    deprecated: Old versions of tar are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
 
   tar@7.4.3:
     resolution: {integrity: sha512-5S7Va8hKfV7W5U6g3aYxXmlPoZVAwUMy9AOKyF2fVuZa2UD3qZjg578OrLRt8PcNN1PleVaL/5/yYATNL0ICUw==}
     engines: {node: '>=18'}
+    deprecated: Old versions of tar are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
 
   test-exclude@7.0.1:
     resolution: {integrity: sha512-pFYqmTw68LXVjeWJMST4+borgQP2AyMNbg1BpZh9LbyhUeNkeaPF9gzfPGUAnSMV3qPYdWUwDIjjCLiSDOl7vg==}
@@ -6287,6 +6299,9 @@ packages:
 
   undici-types@6.20.0:
     resolution: {integrity: sha512-Ny6QZ2Nju20vw1SRHe3d9jVu6gJ+4e3+MMpqu7pqE5HT6WsTSlce++GQmK5UXS8mzV8DSYHrQH+Xrf2jVcuKNg==}
+
+  undici-types@6.21.0:
+    resolution: {integrity: sha512-iwDZqg0QAGrg9Rav5H4n0M64c3mkR59cJ6wQp+7C4nI0gsmExaedaYLNO44eT4AtBBwjbTiGPMlt2Md0T9H9JQ==}
 
   undici@5.28.4:
     resolution: {integrity: sha512-72RFADWFqKmUb2hmmvNODKL3p9hcB6Gt2DOQMis1SEBaV6a4MH8soBvzg+95CYhCKPFedut2JY9bMfrDl9D23g==}
@@ -6605,10 +6620,6 @@ packages:
 
   webidl-conversions@3.0.1:
     resolution: {integrity: sha512-2JAn3z8AR6rjK8Sm8orRC0h/bcl/DqL7tRPdGZ4I1CjdF+EaMLmYxBHyXuKL849eucPFhvBoxMsflfOb8kxaeQ==}
-
-  webidl-conversions@7.0.0:
-    resolution: {integrity: sha512-VwddBukDzu71offAQR975unBIGqfKZpM+8ZX6ySk8nYhVoo5CYaZyzt3YBvYtRtO+aoGlqxPg/B87NGVZ/fu6g==}
-    engines: {node: '>=12'}
 
   whatwg-mimetype@3.0.0:
     resolution: {integrity: sha512-nt+N2dzIutVRxARx1nghPKGv1xHikU7HKdfafKkLNLindmPU/ch3U31NOCGGA/dmPcmb1VlofO0vnKAcsm0o/Q==}
@@ -9037,6 +9048,10 @@ snapshots:
 
   '@types/node@17.0.45': {}
 
+  '@types/node@20.19.43':
+    dependencies:
+      undici-types: 6.21.0
+
   '@types/node@22.10.5':
     dependencies:
       undici-types: 6.20.0
@@ -9058,6 +9073,8 @@ snapshots:
   '@types/tough-cookie@4.0.5': {}
 
   '@types/unist@2.0.11': {}
+
+  '@types/whatwg-mimetype@3.0.2': {}
 
   '@types/ws@8.5.13':
     dependencies:
@@ -9220,7 +9237,7 @@ snapshots:
       std-env: 3.8.0
       test-exclude: 7.0.1
       tinyrainbow: 1.2.0
-      vitest: 2.1.8(@types/node@22.10.5)(@vitest/ui@2.1.8)(happy-dom@16.3.0)(jiti@2.4.2)(lightningcss@1.25.1)(msw@2.7.0(@types/node@22.10.5)(typescript@5.7.2))(yaml@2.7.0)
+      vitest: 2.1.8(@types/node@22.10.5)(@vitest/ui@2.1.8)(happy-dom@20.0.0)(jiti@2.4.2)(lightningcss@1.25.1)(msw@2.7.0(@types/node@22.10.5)(typescript@5.7.2))(yaml@2.7.0)
     transitivePeerDependencies:
       - supports-color
 
@@ -9230,7 +9247,7 @@ snapshots:
       eslint: 9.17.0(jiti@2.4.2)
     optionalDependencies:
       typescript: 5.7.2
-      vitest: 2.1.8(@types/node@22.10.5)(@vitest/ui@2.1.8)(happy-dom@16.3.0)(jiti@2.4.2)(lightningcss@1.25.1)(msw@2.7.0(@types/node@22.10.5)(typescript@5.7.2))(yaml@2.7.0)
+      vitest: 2.1.8(@types/node@22.10.5)(@vitest/ui@2.1.8)(happy-dom@20.0.0)(jiti@2.4.2)(lightningcss@1.25.1)(msw@2.7.0(@types/node@22.10.5)(typescript@5.7.2))(yaml@2.7.0)
 
   '@vitest/expect@2.1.8':
     dependencies:
@@ -9276,7 +9293,7 @@ snapshots:
       sirv: 3.0.0
       tinyglobby: 0.2.10
       tinyrainbow: 1.2.0
-      vitest: 2.1.8(@types/node@22.10.5)(@vitest/ui@2.1.8)(happy-dom@16.3.0)(jiti@2.4.2)(lightningcss@1.25.1)(msw@2.7.0(@types/node@22.10.5)(typescript@5.7.2))(yaml@2.7.0)
+      vitest: 2.1.8(@types/node@22.10.5)(@vitest/ui@2.1.8)(happy-dom@20.0.0)(jiti@2.4.2)(lightningcss@1.25.1)(msw@2.7.0(@types/node@22.10.5)(typescript@5.7.2))(yaml@2.7.0)
 
   '@vitest/utils@2.1.8':
     dependencies:
@@ -11473,9 +11490,10 @@ snapshots:
       pumpify: 1.5.1
       through2: 2.0.5
 
-  happy-dom@16.3.0:
+  happy-dom@20.0.0:
     dependencies:
-      webidl-conversions: 7.0.0
+      '@types/node': 20.19.43
+      '@types/whatwg-mimetype': 3.0.2
       whatwg-mimetype: 3.0.0
 
   has-bigints@1.1.0: {}
@@ -14066,6 +14084,8 @@ snapshots:
 
   undici-types@6.20.0: {}
 
+  undici-types@6.21.0: {}
+
   undici@5.28.4:
     dependencies:
       '@fastify/busboy': 2.1.1
@@ -14347,13 +14367,13 @@ snapshots:
   vitest-github-actions-reporter@0.11.1(vitest@2.1.8):
     dependencies:
       '@actions/core': 1.11.1
-      vitest: 2.1.8(@types/node@22.10.5)(@vitest/ui@2.1.8)(happy-dom@16.3.0)(jiti@2.4.2)(lightningcss@1.25.1)(msw@2.7.0(@types/node@22.10.5)(typescript@5.7.2))(yaml@2.7.0)
+      vitest: 2.1.8(@types/node@22.10.5)(@vitest/ui@2.1.8)(happy-dom@20.0.0)(jiti@2.4.2)(lightningcss@1.25.1)(msw@2.7.0(@types/node@22.10.5)(typescript@5.7.2))(yaml@2.7.0)
 
   vitest-sonar-reporter@2.0.0(vitest@2.1.8):
     dependencies:
-      vitest: 2.1.8(@types/node@22.10.5)(@vitest/ui@2.1.8)(happy-dom@16.3.0)(jiti@2.4.2)(lightningcss@1.25.1)(msw@2.7.0(@types/node@22.10.5)(typescript@5.7.2))(yaml@2.7.0)
+      vitest: 2.1.8(@types/node@22.10.5)(@vitest/ui@2.1.8)(happy-dom@20.0.0)(jiti@2.4.2)(lightningcss@1.25.1)(msw@2.7.0(@types/node@22.10.5)(typescript@5.7.2))(yaml@2.7.0)
 
-  vitest@2.1.8(@types/node@22.10.5)(@vitest/ui@2.1.8)(happy-dom@16.3.0)(jiti@2.4.2)(lightningcss@1.25.1)(msw@2.7.0(@types/node@22.10.5)(typescript@5.7.2))(yaml@2.7.0):
+  vitest@2.1.8(@types/node@22.10.5)(@vitest/ui@2.1.8)(happy-dom@20.0.0)(jiti@2.4.2)(lightningcss@1.25.1)(msw@2.7.0(@types/node@22.10.5)(typescript@5.7.2))(yaml@2.7.0):
     dependencies:
       '@vitest/expect': 2.1.8
       '@vitest/mocker': 2.1.8(msw@2.7.0(@types/node@22.10.5)(typescript@5.7.2))(vite@6.0.7(@types/node@22.10.5)(jiti@2.4.2)(lightningcss@1.25.1)(yaml@2.7.0))
@@ -14378,7 +14398,7 @@ snapshots:
     optionalDependencies:
       '@types/node': 22.10.5
       '@vitest/ui': 2.1.8(vitest@2.1.8)
-      happy-dom: 16.3.0
+      happy-dom: 20.0.0
     transitivePeerDependencies:
       - jiti
       - less
@@ -14435,8 +14455,6 @@ snapshots:
   web-streams-polyfill@3.3.3: {}
 
   webidl-conversions@3.0.1: {}
-
-  webidl-conversions@7.0.0: {}
 
   whatwg-mimetype@3.0.0: {}
 
