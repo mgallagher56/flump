@@ -8,7 +8,8 @@
     "ios": "expo start --ios",
     "web": "expo start --web",
     "lint": "biome check .",
-    "format": "biome check --write ."
+    "format": "biome check --write .",
+    "check-types": "tsc --noEmit"
   },
   "dependencies": {
     "@react-navigation/native": "^7.1.26",

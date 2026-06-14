@@ -1,9 +1,61 @@
-import type { BoxProps } from "@chakra-ui/react";
-import { Box } from "@chakra-ui/react";
-import type { FC, PropsWithChildren } from "react";
+import { css } from "@repo/ui/styled-system/css";
+import type { FC, HTMLAttributes } from "react";
 
-const FLPBox: FC<PropsWithChildren<BoxProps>> = (props) => {
-  return <Box {...props}>{props.children}</Box>;
+interface FLPBoxProps extends HTMLAttributes<HTMLDivElement> {
+  display?: string;
+  flexDirection?: "row" | "column" | "row-reverse" | "column-reverse";
+  alignItems?: string;
+  justifyContent?: string;
+  gap?: number | string;
+  my?: number | string;
+  mb?: number | string;
+  mt?: number | string;
+  pb?: number | string;
+  pt?: number | string;
+  flexWrap?: "wrap" | "nowrap" | "wrap-reverse";
+  borderBottom?: string;
+  borderColor?: string | any;
+}
+
+const FLPBox: FC<FLPBoxProps> = ({
+  display,
+  flexDirection,
+  alignItems,
+  justifyContent,
+  gap,
+  my,
+  mb,
+  mt,
+  pb,
+  pt,
+  flexWrap,
+  borderBottom,
+  borderColor,
+  style,
+  className,
+  children,
+  ...props
+}) => {
+  const boxStyle = css({
+    display: display as any,
+    flexDirection: flexDirection as any,
+    alignItems: alignItems as any,
+    justifyContent: justifyContent as any,
+    gap: gap as any,
+    marginTop: (my || mt) as any,
+    marginBottom: (my || mb) as any,
+    paddingBottom: pb as any,
+    paddingTop: pt as any,
+    flexWrap: flexWrap as any,
+    borderBottom: borderBottom as any,
+    borderColor: borderColor as any,
+  });
+
+  return (
+    <div className={`${boxStyle} ${className || ""}`} style={style} {...props}>
+      {children}
+    </div>
+  );
 };
 
 export default FLPBox;

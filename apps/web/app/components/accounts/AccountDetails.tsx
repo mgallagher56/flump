@@ -1,14 +1,13 @@
-import { Stack } from "@chakra-ui/react";
+import { css } from "@repo/ui/styled-system/css";
 import type { ChangeEvent, FC } from "react";
 import { Fragment, useCallback } from "react";
 import { useTranslation } from "react-i18next";
-import { useLoaderData, useRevalidator } from "react-router";
+import { useFetcher, useLoaderData } from "react-router";
 import FLPButton from "~/components/core/buttons/FLPButton";
 import FLPInput from "~/components/core/inputs/input/FLPInput";
 import FLPHeading from "~/components/core/typography/FLPHeading";
 import FLPText from "~/components/core/typography/FLPText";
 import type { loader } from "~/routes/app.accounts.$account";
-import supabase from "~/utils/supabase";
 
 import { accountDetailDisplayStyles } from "./AccountDetailsStyles";
 
@@ -21,23 +20,37 @@ interface AccountDetailsProps {
 const AccountDetails: FC<AccountDetailsProps> = ({ onInputChange, editedValues, isEditMode }) => {
   const { t } = useTranslation();
   const { account, accountDetails } = useLoaderData<typeof loader>();
-  const { revalidate } = useRevalidator();
+  const fetcher = useFetcher();
 
   const onRemoveYear = useCallback(
-    async (year: number) => {
-      await supabase
-        .from("account_details")
-        .delete()
-        .eq("account_id", account.id)
-        .eq("year", year)
-        .select();
-      revalidate();
+    (year: number) => {
+      fetcher.submit(
+        {
+          intent: "deleteYear",
+          year: year.toString(),
+        },
+        { method: "POST" },
+      );
     },
-    [account.id, revalidate],
+    [fetcher],
   );
 
+  const containerStyle = css({
+    display: "flex",
+    flexDirection: "column",
+    gap: "20px",
+    overflow: "auto",
+  });
+
+  const headerStyle = css({
+    display: "flex",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: "12px",
+  });
+
   return (
-    <Stack flexDirection="column" gap={5} overflow="auto">
+    <div className={containerStyle}>
       {accountDetails
         .map(({ year }: { year?: number }) => year)
         .filter(
@@ -51,19 +64,14 @@ const AccountDetails: FC<AccountDetailsProps> = ({ onInputChange, editedValues, 
         )
         .map((year: number) => (
           <Fragment key={year}>
-            <Stack alignItems="center" flexDirection="row">
+            <div className={headerStyle}>
               <FLPHeading as="h3" size="lg">
                 {year}
               </FLPHeading>
-              <FLPButton
-                colorPalette="red"
-                size="xs"
-                variant="outline"
-                onClick={() => onRemoveYear(year)}
-              >
+              <FLPButton size="sm" variant="ghost" onClick={() => onRemoveYear(year)}>
                 {t("deleteYear")}
               </FLPButton>
-            </Stack>
+            </div>
             <div className={accountDetailDisplayStyles}>
               {accountDetails.map(
                 ({
@@ -92,7 +100,6 @@ const AccountDetails: FC<AccountDetailsProps> = ({ onInputChange, editedValues, 
                           placeholder="0.00"
                           type="number"
                           value={editedValues?.[year]?.[month] ?? value}
-                          width={100}
                           onChange={onInputChange}
                         />
                       ) : (
@@ -109,7 +116,7 @@ const AccountDetails: FC<AccountDetailsProps> = ({ onInputChange, editedValues, 
             </div>
           </Fragment>
         ))}
-    </Stack>
+    </div>
   );
 };
 

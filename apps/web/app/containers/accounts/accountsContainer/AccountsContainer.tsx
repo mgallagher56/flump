@@ -1,4 +1,4 @@
-import { Box, Grid } from "@chakra-ui/react";
+import { css } from "@repo/ui/styled-system/css";
 import type { FC } from "react";
 import { Fragment, useMemo } from "react";
 import { useTranslation } from "react-i18next";
@@ -67,34 +67,69 @@ const AccountsContainer: FC = () => {
     }).format(val);
   };
 
+  const gridStyle = css({
+    display: "grid",
+    gridTemplateColumns: { base: "1fr", md: "repeat(3, 1fr)" },
+    gap: "24px",
+    marginBottom: "32px",
+  });
+
+  const summaryCardStyle = css({
+    backgroundColor: "surface",
+    border: "1px solid",
+    borderColor: "border",
+    borderRadius: "xl",
+    padding: "20px",
+    boxShadow: "sm",
+  });
+
+  const netWorthCardStyle = css({
+    backgroundColor: "rgba(99, 99, 241, 0.1)",
+    border: "1px solid",
+    borderColor: "primary",
+    borderRadius: "xl",
+    padding: "20px",
+    boxShadow: "sm",
+  });
+
+  const headerStyle = css({
+    display: "flex",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginTop: "20px",
+    marginBottom: "20px",
+  });
+
+  const categoryRowStyle = css({
+    borderBottom: "1px solid",
+    borderColor: "border",
+    paddingBottom: "24px",
+    marginBottom: "40px",
+  });
+
+  const cardListStyle = css({
+    display: "flex",
+    flexWrap: "wrap",
+    gap: "20px",
+    marginTop: "16px",
+  });
+
   return (
     <>
       {/* Title & Actions */}
-      <FLPBox
-        alignItems="center"
-        display="flex"
-        flexDirection="row"
-        justifyContent="space-between"
-        my={5}
-      >
+      <div className={headerStyle}>
         <FLPHeading as="h1" color="blue.500" size="xl">
           {t("accounts")}
         </FLPHeading>
         <AddEditAccountsDialogBtn />
-      </FLPBox>
+      </div>
 
       {/* Summary Stats Header */}
       {accounts.length > 0 && (
-        <Grid gap={6} mb={8} templateColumns={{ base: "1fr", md: "repeat(3, 1fr)" }}>
+        <div className={gridStyle}>
           {/* Net Worth Card */}
-          <Box
-            bg={{ base: "blue.50", _dark: "gray.900" }}
-            border="1px solid"
-            borderColor={{ base: "blue.105", _dark: "blue.900" }}
-            borderRadius="xl"
-            boxShadow="sm"
-            padding={5}
-          >
+          <div className={netWorthCardStyle}>
             <FLPText color="gray.500" fontSize="xs" fontWeight="semibold" textTransform="uppercase">
               Net Worth
             </FLPText>
@@ -106,42 +141,28 @@ const AccountsContainer: FC = () => {
             >
               {formatCurrency(stats.netWorth)}
             </FLPHeading>
-          </Box>
+          </div>
 
           {/* Assets Card */}
-          <Box
-            bg={{ base: "white", _dark: "gray.900" }}
-            border="1px solid"
-            borderColor={{ base: "gray.200", _dark: "gray.850" }}
-            borderRadius="xl"
-            boxShadow="sm"
-            padding={5}
-          >
+          <div className={summaryCardStyle}>
             <FLPText color="gray.500" fontSize="xs" fontWeight="semibold" textTransform="uppercase">
               Total Assets
             </FLPText>
             <FLPHeading as="h2" color="green.500" mt={1} size="xl">
               {formatCurrency(stats.assets)}
             </FLPHeading>
-          </Box>
+          </div>
 
           {/* Liabilities Card */}
-          <Box
-            bg={{ base: "white", _dark: "gray.900" }}
-            border="1px solid"
-            borderColor={{ base: "gray.200", _dark: "gray.855" }}
-            borderRadius="xl"
-            boxShadow="sm"
-            padding={5}
-          >
+          <div className={summaryCardStyle}>
             <FLPText color="gray.500" fontSize="xs" fontWeight="semibold" textTransform="uppercase">
               Total Liabilities
             </FLPText>
             <FLPHeading as="h2" color="red.500" mt={1} size="xl">
               {formatCurrency(stats.liabilities)}
             </FLPHeading>
-          </Box>
-        </Grid>
+          </div>
+        </div>
       )}
 
       {/* Account Categories */}
@@ -150,15 +171,11 @@ const AccountsContainer: FC = () => {
           return (
             isAccountTypeValid(accountType, accounts) && (
               <Fragment key={accountType}>
-                <FLPBox
-                  borderBottom="1px solid"
-                  borderColor={{ base: "gray.100", _dark: "gray.800" }}
-                  pb={6}
-                >
+                <div className={categoryRowStyle}>
                   <FLPHeading as="h2" color="gray.600" mb={4} size="lg">
                     {accountType}
                   </FLPHeading>
-                  <FLPBox display="flex" flexWrap="wrap" gap={5}>
+                  <div className={cardListStyle}>
                     {accounts.map(
                       ({ name, id, type }) =>
                         type === accountType && (
@@ -170,8 +187,8 @@ const AccountsContainer: FC = () => {
                           />
                         ),
                     )}
-                  </FLPBox>
-                </FLPBox>
+                  </div>
+                </div>
               </Fragment>
             )
           );

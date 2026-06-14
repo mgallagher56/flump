@@ -1,21 +1,21 @@
-import { Link, type LinkProps } from "@chakra-ui/react";
-import type { FC, PropsWithChildren } from "react";
+import { buttonVariants } from "@repo/ui";
+import type { FC } from "react";
 import { Link as RouterLink } from "react-router";
 
-interface FLPLinkButtonProps extends LinkProps {
+interface FLPLinkButtonProps {
   to: string;
   text: string;
+  className?: string;
 }
 
-const FLPLinkButton: FC<PropsWithChildren<FLPLinkButtonProps>> = ({
-  colorPalette = "blue",
-  text,
-  to,
-}) => {
+const FLPLinkButton: FC<FLPLinkButtonProps> = ({ text, to, className }) => {
   return (
-    <Link asChild colorPalette={colorPalette}>
-      <RouterLink to={to}>{text}</RouterLink>
-    </Link>
+    <RouterLink
+      className={`${buttonVariants({ variant: "link" })} ${className || ""}`.trim()}
+      to={to}
+    >
+      {text}
+    </RouterLink>
   );
 };
 

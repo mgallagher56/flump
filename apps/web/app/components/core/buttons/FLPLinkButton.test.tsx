@@ -15,12 +15,4 @@ describe("FLPLinkButton", () => {
     expect(container).toMatchSnapshot();
     expect(getByText("Button")).toBeDefined();
   });
-
-  test("renders as expected with a colorPalette", () => {
-    const { container, getByText } = customRender(
-      <FLPLinkButton colorPalette="red" text={"Button"} to="/test" />,
-    );
-    expect(container).toMatchSnapshot();
-    expect(getByText("Button")).toBeDefined();
-  });
 });

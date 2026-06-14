@@ -2,19 +2,10 @@ import { fireEvent } from "@testing-library/react";
 import { vi } from "vitest";
 import customRender from "~/testUtils/customRender";
 import { emptyObject } from "~/utils/utils";
-
 import AccountDetails from "./AccountDetails";
 
 const mocks = vi.hoisted(() => ({
-  mockFrom: vi.fn(() => ({
-    delete: vi.fn(() => ({
-      eq: vi.fn(() => ({
-        eq: vi.fn(() => ({
-          select: vi.fn(),
-        })),
-      })),
-    })),
-  })),
+  mockFetcherSubmit: vi.fn(),
   mockAccountDetails: [
     {
       month: 1,
@@ -145,14 +136,14 @@ vi.mock("react-router", async () => {
     ...actual,
     useLoaderData: () => ({ accountDetails: mocks.mockAccountDetails, account: { id: "123456" } }),
     useRevalidator: () => ({ revalidate: vi.fn() }),
+    useFetcher: () => ({
+      submit: mocks.mockFetcherSubmit,
+      state: "idle",
+      data: null,
+      Form: "form",
+    }),
   };
 });
-
-vi.mock("app/utils/supabase", () => ({
-  default: {
-    from: mocks.mockFrom,
-  },
-}));
 
 describe("<AccountDetails />", () => {
   test("should render", () => {
@@ -183,7 +174,13 @@ describe("<AccountDetails />", () => {
     );
     const deleteBtn = getAllByText("deleteYear")[0];
     fireEvent.click(deleteBtn);
-    expect(mocks.mockFrom).toHaveBeenCalledWith("account_details");
+    expect(mocks.mockFetcherSubmit).toHaveBeenCalledWith(
+      {
+        intent: "deleteYear",
+        year: "2021",
+      },
+      { method: "POST" },
+    );
     expect(container).toMatchSnapshot();
   });
 });

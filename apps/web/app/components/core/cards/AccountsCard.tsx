@@ -1,11 +1,4 @@
-import {
-  CardBody,
-  CardFooter,
-  CardHeader,
-  type CardRootProps,
-  Stack,
-  StatHelpText,
-} from "@chakra-ui/react";
+import { css } from "@repo/ui/styled-system/css";
 import { type FC, useCallback, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { useLoaderData, useNavigate } from "react-router";
@@ -14,22 +7,14 @@ import FLPButton from "~/components/core/buttons/FLPButton";
 import FLPButtonGroup from "~/components/core/buttons/FLPButtonGroup";
 import FLPHeading from "~/components/core/typography/FLPHeading";
 import AddEditAccountsDialogBtn from "~/components/dialogs/addEditAccountsDialog/AddEditAccountsDialog";
-import {
-  StatDownTrend,
-  StatLabel,
-  StatRoot,
-  StatUpTrend,
-  StatValueText,
-} from "~/components/ui/stat";
 import type { AccountDetail } from "~/containers/accounts/types";
 import type { AccountTypeEnum } from "~/containers/accounts/utils";
 import type { loader } from "~/routes/app.accounts._index";
 import { monthYearSort } from "~/utils/accounts";
 import { currentMonth, currentYear } from "~/utils/utils";
-
 import FLPCard from "./FLPCard";
 
-interface AccountsCardProp extends Omit<CardRootProps, "title"> {
+interface AccountsCardProp {
   accountId: string;
   name: string;
   type: AccountTypeEnum;
@@ -54,7 +39,7 @@ const AccountsCard: FC<AccountsCardProp> = ({ accountId, name, type }) => {
 
   const accountDetailYear = useMemo(() => {
     if (sortedAccountDetails.length === 12) return sortedAccountDetails;
-
+    if (currentMonthIndex === -1) return sortedAccountDetails.slice(-12);
     return sortedAccountDetails.slice(currentMonthIndex - 11, currentMonthIndex + 1);
   }, [currentMonthIndex, sortedAccountDetails]);
 
@@ -73,96 +58,148 @@ const AccountsCard: FC<AccountsCardProp> = ({ accountId, name, type }) => {
     [accountId, navigate],
   );
 
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        onViewClick();
+      }
+    },
+    [onViewClick],
+  );
+
+  const headerStyle = css({
+    display: "flex",
+    flexDirection: "column",
+    gap: "4px",
+    cursor: "pointer",
+  });
+
+  const bodyStyle = css({
+    flex: 1,
+    display: "flex",
+    flexDirection: "column",
+    justifyContent: "flex-end",
+    cursor: "pointer",
+    marginTop: "16px",
+    marginBottom: "16px",
+  });
+
+  const rowStyle = css({
+    display: "flex",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: "12px",
+  });
+
+  const statRootStyle = css({
+    display: "flex",
+    flexDirection: "column",
+  });
+
+  const statLabelStyle = css({
+    fontSize: "10px",
+    textTransform: "uppercase",
+    color: "text.muted",
+  });
+
+  const statValueStyle = css({
+    fontSize: "md",
+    fontWeight: "bold",
+    color: "text.primary",
+  });
+
+  const trendStyle = (isUp: boolean) =>
+    css({
+      fontSize: "10px",
+      fontWeight: "semibold",
+      color: isUp ? "emerald.500" : "destructive",
+      marginTop: "2px",
+    });
+
+  const footerStyle = css({
+    display: "flex",
+    justifyContent: "flex-end",
+  });
+
+  const cardStyle = css({
+    height: "325px",
+    width: "250px",
+    display: "flex",
+    flexDirection: "column",
+    justifyContent: "space-between",
+  });
+
   return (
-    <FLPCard
-      direction="column"
-      display="flex"
-      gap={3}
-      height="325px"
-      id={accountId}
-      justifyContent="space-between"
-      marginY={5}
-      padding={5}
-      title={name}
-      width="250px"
-    >
-      <CardHeader
-        display="flex"
-        flexDirection="column"
-        gap={1}
-        padding={0}
-        style={{
-          cursor: "pointer",
-        }}
+    <FLPCard className={cardStyle} id={accountId}>
+      {/* biome-ignore lint/a11y/useSemanticElements: using div for layout styling */}
+      <div
+        className={headerStyle}
         onClick={onViewClick}
+        onKeyDown={handleKeyDown}
+        role="button"
+        tabIndex={0}
       >
-        <FLPHeading as="h5" color="grey.500" size="xs">{`${type} ${t("account")}`}</FLPHeading>
-        <FLPHeading as="h4" color="blue.500" fontWeight="bold" size="lg">
+        <FLPHeading as="h5" color="gray.500" size="xs">{`${type} ${t("account")}`}</FLPHeading>
+        <FLPHeading as="h4" color="blue.500" size="lg">
           {name}
         </FLPHeading>
-      </CardHeader>
-      <CardBody
-        justifyContent="flex-end"
-        padding={0}
-        style={{
-          cursor: "pointer",
-        }}
+      </div>
+      {/* biome-ignore lint/a11y/useSemanticElements: using div for layout styling */}
+      <div
+        className={bodyStyle}
         onClick={onViewClick}
+        onKeyDown={handleKeyDown}
+        role="button"
+        tabIndex={0}
       >
-        <Stack alignItems="center" direction="row" display="flex" justifyContent="space-between">
+        <div className={rowStyle}>
           {!!prevAccountBalance && (
-            <StatRoot size="sm">
-              <StatLabel>{`${t("previous")}:`}</StatLabel>
-              <StatValueText>
+            <div className={statRootStyle}>
+              <span className={statLabelStyle}>{`${t("previous")}:`}</span>
+              <span className={statValueStyle}>
                 {Intl.NumberFormat("en-GB", {
                   style: "currency",
                   currency: "GBP",
                   maximumFractionDigits: 0,
                 }).format(prevAccountBalance)}
-              </StatValueText>
+              </span>
               {!!secondPreviousAccountBalance && (
-                <StatHelpText>
-                  {secondPreviousAccountBalance > prevAccountBalance ? (
-                    <StatDownTrend variant="plain">{prevPercentageChangeValue}%</StatDownTrend>
-                  ) : (
-                    <StatUpTrend variant="plain">{prevPercentageChangeValue}%</StatUpTrend>
-                  )}
-                </StatHelpText>
+                <span className={trendStyle(secondPreviousAccountBalance <= prevAccountBalance)}>
+                  {prevPercentageChangeValue}%
+                </span>
               )}
-            </StatRoot>
+            </div>
           )}
           {!!accountBalance && (
-            <StatRoot size="sm">
-              <StatLabel>{`${t("current")}:`}</StatLabel>
-              <StatValueText>
+            <div className={statRootStyle}>
+              <span className={statLabelStyle}>{`${t("current")}:`}</span>
+              <span className={statValueStyle}>
                 {Intl.NumberFormat("en-GB", {
                   style: "currency",
                   currency: "GBP",
                   maximumFractionDigits: 0,
                 }).format(accountBalance)}
-              </StatValueText>
+              </span>
               {!!prevAccountBalance && (
-                <StatHelpText>
-                  {prevAccountBalance > accountBalance ? (
-                    <StatDownTrend variant="plain">{currentPercentageChangeValue}%</StatDownTrend>
-                  ) : (
-                    <StatUpTrend variant="plain">{currentPercentageChangeValue}%</StatUpTrend>
-                  )}
-                </StatHelpText>
+                <span className={trendStyle(prevAccountBalance <= accountBalance)}>
+                  {currentPercentageChangeValue}%
+                </span>
               )}
-            </StatRoot>
+            </div>
           )}
-        </Stack>
+        </div>
         {!!accountDetailYear.length && <AccountDetailChart accountDetails={accountDetailYear} />}
-      </CardBody>
-      <CardFooter justifyContent="flex-end" padding={0}>
-        <FLPButtonGroup gap={4} justifyContent="flex-end" zIndex="10">
-          <FLPButton size="sm" variant="subtle" onClick={onViewClick}>
+      </div>
+      <div className={footerStyle}>
+        <FLPButtonGroup gap={4} attached={false}>
+          <FLPButton size="sm" variant="outline" onClick={onViewClick}>
             {t("view")}
           </FLPButton>
           <AddEditAccountsDialogBtn accountId={accountId} btnSize="sm" isEditAccount={true} />
         </FLPButtonGroup>
-      </CardFooter>
+      </div>
     </FLPCard>
   );
 };

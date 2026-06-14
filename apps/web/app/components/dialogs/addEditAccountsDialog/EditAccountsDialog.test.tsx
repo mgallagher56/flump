@@ -8,16 +8,7 @@ import AddEditAccountsDialogBtn from "./AddEditAccountsDialog";
 const mocks = vi.hoisted(() => ({
   mockUseLoaderData: vi.fn(),
   mockUseRevalidator: vi.fn(() => ({ revalidate: vi.fn() })),
-  update: vi.fn(() => ({
-    eq: () => ({
-      eq: () => ({}),
-    }),
-  })),
-  delete: vi.fn(() => ({
-    eq: () => ({
-      eq: () => ({}),
-    }),
-  })),
+  mockFetcherSubmit: vi.fn(),
 }));
 
 vi.mock("react-router", async () => {
@@ -26,19 +17,16 @@ vi.mock("react-router", async () => {
     ...actual,
     useLoaderData: mocks.mockUseLoaderData,
     useRevalidator: mocks.mockUseRevalidator,
+    useFetcher: () => ({
+      submit: mocks.mockFetcherSubmit,
+      state: "idle",
+      data: null,
+      Form: "form",
+    }),
     Form: ({ children }: { children: ReactNode }) => <form>{children}</form>,
     useSubmit: () => ({ onSubmit: vi.fn() }),
   };
 });
-
-vi.mock("app/utils/supabase", () => ({
-  default: {
-    from: () => ({
-      update: mocks.update,
-      delete: mocks.delete,
-    }),
-  },
-}));
 
 describe("<EditAccountDialogBtn", () => {
   beforeAll(() => {
@@ -54,16 +42,22 @@ describe("<EditAccountDialogBtn", () => {
     expect(triggerBtn).toBeDefined();
     await user.click(triggerBtn);
 
-    const addAccountBtn = getAllByText("save")[0];
-    await user.click(addAccountBtn);
-    expect(mocks.update).toBeCalled();
+    const saveBtn = getAllByText("save")[0];
+    await user.click(saveBtn);
+    expect(mocks.mockFetcherSubmit).toHaveBeenCalledWith(
+      expect.objectContaining({
+        intent: "update",
+        accountId: "123456",
+      }),
+      expect.anything(),
+    );
 
     const htmlString = baseElement.outerHTML.toString();
     const baseElementConstant = htmlString.replaceAll(/style="[^"]*"/g, "");
     expect(baseElementConstant).toMatchSnapshot();
   });
 
-  test("should render edit account dialog and call supabase.delete when delete button is clicked", async () => {
+  test("should render edit account dialog and call fetcher.submit when delete button is clicked", async () => {
     mocks.mockUseLoaderData.mockReturnValue({ user: mockUser });
     const { baseElement, getByText, user } = customRender(
       <AddEditAccountsDialogBtn isEditAccount accountId="123456" />,
@@ -79,6 +73,12 @@ describe("<EditAccountDialogBtn", () => {
     expect(deleteBtn).toBeDefined();
     await user.click(deleteBtn);
 
-    expect(mocks.delete).toBeCalled();
+    expect(mocks.mockFetcherSubmit).toHaveBeenCalledWith(
+      expect.objectContaining({
+        intent: "delete",
+        accountId: "123456",
+      }),
+      expect.anything(),
+    );
   });
 });

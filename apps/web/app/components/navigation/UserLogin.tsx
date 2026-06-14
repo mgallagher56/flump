@@ -4,7 +4,6 @@ import { useTranslation } from "react-i18next";
 import { useLoaderData } from "react-router";
 import FLPButtonGroup from "~/components/core/buttons/FLPButtonGroup";
 import FLPLinkButton from "~/components/core/buttons/FLPLinkButton";
-import SignOut from "~/components/users/SignOut";
 import type { loader } from "~/root";
 
 const UserLogin: FC = () => {
@@ -15,7 +14,7 @@ const UserLogin: FC = () => {
   return (
     <FLPButtonGroup>
       {user ? (
-        <SignOut />
+        <FLPLinkButton text={t("logOut")} to="/logout" />
       ) : (
         <>
           <FLPLinkButton text={t("signUp")} to="/signup" />

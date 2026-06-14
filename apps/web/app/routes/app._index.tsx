@@ -1,21 +1,15 @@
-import type { ReactElement } from "react";
-
-import { data, redirect } from "react-router";
+import { data, type LoaderFunctionArgs } from "react-router";
 import FLPHeading from "~/components/core/typography/FLPHeading";
-import { createSupaBaseServerClient } from "~/utils/supabase";
+import { getAuthSession } from "~/utils/utils";
 
-export const loader = async ({ request }: { request: Request }) => {
-  const responseHeaders = new Headers();
-  const supabase = createSupaBaseServerClient(request, responseHeaders);
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) return redirect("/", { headers: responseHeaders });
-  return data({ ok: true }, { headers: responseHeaders });
+export const loader = async (args: LoaderFunctionArgs) => {
+  const { user } = await getAuthSession(args, {
+    ensureSignedIn: true,
+  });
+  return data({ ok: true, user });
 };
 
-const App = (): ReactElement<ReactElement> => {
+const App = () => {
   return <FLPHeading>Dashboard</FLPHeading>;
 };
 export default App;

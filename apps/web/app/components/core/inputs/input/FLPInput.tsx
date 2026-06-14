@@ -1,57 +1,83 @@
-import { Input, type InputProps } from "@chakra-ui/react";
-import type { FC } from "react";
-import { css } from "styled-system/css";
-import FLPBox from "~/components/core/structure/FLPBox";
+import { css } from "@repo/ui/styled-system/css";
+import type { FC, InputHTMLAttributes } from "react";
 
-interface FLPInputProps extends InputProps {
+interface FLPInputProps extends InputHTMLAttributes<HTMLInputElement> {
   error?: string;
   label: string;
   isLabelHidden?: boolean;
+  flexDirection?: "row" | "column";
+  gap?: number | string;
 }
 
 const FLPInput: FC<FLPInputProps> = ({
   error,
-  flexDirection,
+  flexDirection = "column",
   isLabelHidden,
   label,
-  variant,
   onChange,
+  gap,
+  style,
+  className,
   ...props
 }) => {
-  const columnStyles = css({
+  const containerStyle = css({
     display: "flex",
-    flexDirection: "column",
-    gap: props.gap || 2,
+    flexDirection: flexDirection as any,
+    alignItems: flexDirection === "row" ? "center" : "stretch",
+    gap: (gap || (flexDirection === "row" ? "16px" : "8px")) as any,
+    width: "100%",
   });
 
-  const rowStyles = css({
-    display: "flex",
-    flexDirection: "row",
-    alignItems: "center",
-    gap: props.gap || 4,
+  const labelStyle = css({
+    fontSize: "sm",
+    fontWeight: "medium",
+    color: "text.primary",
   });
 
-  const errorStyles = css({
-    color: "red.500",
-    fontWeight: "bold",
+  const inputStyle = css({
+    width: "100%",
+    padding: "10px 14px",
+    fontSize: "sm",
+    borderRadius: "sm",
+    border: "1px solid",
+    borderColor: "border",
+    backgroundColor: "transparent",
+    color: "text.primary",
+    outline: "none",
+    transition: "all 0.2s",
+    _focus: {
+      borderColor: "primary",
+      boxShadow: "0 0 0 1px token(colors.primary)",
+    },
+    _disabled: {
+      opacity: 0.5,
+      cursor: "not-allowed",
+    },
+  });
+
+  const errorStyle = css({
+    color: "destructive",
+    fontSize: "xs",
+    fontWeight: "medium",
+    marginTop: "4px",
   });
 
   return (
-    <div className={flexDirection === "row" ? rowStyles : columnStyles}>
-      <label hidden={isLabelHidden} htmlFor={label}>
-        {label}
-      </label>
-      <div>
-        <FLPBox display="flex" flexDirection="column" gap={props.gap ?? 2}>
-          <Input
-            hidden={false}
-            id={label}
-            variant={variant || "outline"}
-            onChange={onChange}
-            {...props}
-          />
-          {error && <span className={errorStyles}>{error}</span>}
-        </FLPBox>
+    <div className={containerStyle}>
+      {!isLabelHidden && (
+        <label className={labelStyle} htmlFor={label}>
+          {label}
+        </label>
+      )}
+      <div style={{ flex: 1 }}>
+        <input
+          id={label}
+          className={`${inputStyle} ${className || ""}`}
+          style={style}
+          onChange={onChange}
+          {...props}
+        />
+        {error && <span className={errorStyle}>{error}</span>}
       </div>
     </div>
   );

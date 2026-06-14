@@ -1,32 +1,44 @@
-import type { FC, PropsWithChildren } from "react";
+import { Button } from "@repo/ui";
+import type { ButtonHTMLAttributes, FC } from "react";
 
-import { Button, type ButtonProps } from "~/components/ui/button";
-
-interface FLPButtonProps extends ButtonProps {
-  padding?: number;
+interface FLPButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
+  variant?: "primary" | "secondary" | "outline" | "ghost" | "link" | "destructive";
+  size?: "sm" | "md" | "lg" | "icon";
+  loading?: boolean;
+  disabled?: boolean;
+  colorPalette?: string;
+  padding?: number | string;
 }
 
-const FLPButton: FC<PropsWithChildren<FLPButtonProps>> = ({
-  colorPalette = "blue",
-  disabled,
+const FLPButton: FC<FLPButtonProps> = ({
+  variant = "primary",
+  size = "md",
   loading,
+  disabled,
+  colorPalette,
   padding,
-  variant = "solid",
-  onClick,
-  ...buttonProps
+  children,
+  ...props
 }) => {
+  // Map "ghost" and "outline" and "solid" variants to @repo/ui Button variants
+  const mappedVariant =
+    variant === "ghost"
+      ? "ghost"
+      : variant === "outline"
+        ? "outline"
+        : variant === "link"
+          ? "link"
+          : "primary";
+
   return (
     <Button
-      colorPalette={colorPalette}
-      disabled={disabled}
-      loading={loading}
-      padding={padding}
-      variant={variant}
-      width={"max-content"}
-      onClick={onClick}
-      {...buttonProps}
+      disabled={disabled || loading}
+      size={size as any}
+      style={{ padding }}
+      variant={mappedVariant as any}
+      {...props}
     >
-      {buttonProps.children}
+      {children}
     </Button>
   );
 };

@@ -1,24 +1,41 @@
-import type { TextProps } from "@chakra-ui/react";
-import { Text } from "@chakra-ui/react";
-import type { FC } from "react";
+import { css } from "@repo/ui/styled-system/css";
+import type { FC, HTMLAttributes } from "react";
 
-const FLPText: FC<TextProps> = ({
+interface FLPTextProps extends HTMLAttributes<HTMLParagraphElement> {
+  fontSize?: string;
+  fontWeight?: string;
+  lineHeight?: string;
+  letterSpacing?: string;
+  color?: string;
+  textTransform?: "uppercase" | "lowercase" | "capitalize" | "none";
+}
+
+const FLPText: FC<FLPTextProps> = ({
   fontSize = "md",
   fontWeight = "normal",
-  lineHeight = "base",
+  lineHeight = "normal",
   letterSpacing = "normal",
+  color,
+  textTransform,
+  style,
+  className,
+  children,
   ...props
 }) => {
+  const textStyle = css({
+    fontSize: fontSize as any,
+    fontWeight: fontWeight as any,
+    lineHeight: lineHeight as any,
+    letterSpacing: letterSpacing as any,
+    color: color as any,
+    textTransform: textTransform as any,
+    margin: 0,
+  });
+
   return (
-    <Text
-      fontSize={fontSize}
-      fontWeight={fontWeight}
-      letterSpacing={letterSpacing}
-      lineHeight={lineHeight}
-      {...props}
-    >
-      {props.children}
-    </Text>
+    <p className={`${textStyle} ${className || ""}`} style={style} {...props}>
+      {children}
+    </p>
   );
 };
 

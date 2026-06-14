@@ -1,11 +1,12 @@
 {
+  "extends": "../../packages/typescript-config/react-library.json",
   "exclude": ["node_modules"],
   "include": ["app", "__mocks__", "mocks", "db_types.ts", ".react-router/types/**/*", "test"],
   "compilerOptions": {
     "allowJs": true,
     "allowSyntheticDefaultImports": true,
     "baseUrl": ".",
-    "ignoreDeprecations": "6.0",
+    "ignoreDeprecations": "5.0",
     "composite": true,
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
@@ -26,7 +27,9 @@
     "target": "ESNext",
     "types": ["vite/client", "vitest/globals", "@react-router/node"],
     "paths": {
-      "~/*": ["./app/*"]
+      "~/*": ["./app/*"],
+      "@repo/ui/styled-system/*": ["./styled-system/*"],
+      "styled-system/*": ["./styled-system/*"]
     }
   }
 }

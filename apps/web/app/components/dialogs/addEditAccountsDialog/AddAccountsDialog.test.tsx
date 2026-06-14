@@ -2,27 +2,12 @@ import mockUser from "__mocks__/user";
 import type { ReactNode } from "react";
 import { vi } from "vitest";
 import customRender from "~/testUtils/customRender";
-
 import AddEditAccountsDialogBtn from "./AddEditAccountsDialog";
 
 const mocks = vi.hoisted(() => ({
   mockUseLoaderData: vi.fn(),
   mockUseRevalidator: vi.fn(() => ({ revalidate: vi.fn() })),
-  mockFrom: vi.fn(() => ({
-    insert: () => ({
-      eq: () => ({
-        eq: () => ({}),
-      }),
-      select: vi.fn(() => ({
-        data: [{ id: "123456" }],
-      })),
-    }),
-    delete: () => ({
-      eq: () => ({
-        eq: () => ({}),
-      }),
-    }),
-  })),
+  mockFetcherSubmit: vi.fn(),
 }));
 
 vi.mock("react-router", async () => {
@@ -31,16 +16,16 @@ vi.mock("react-router", async () => {
     ...actual,
     useLoaderData: mocks.mockUseLoaderData,
     useRevalidator: mocks.mockUseRevalidator,
+    useFetcher: () => ({
+      submit: mocks.mockFetcherSubmit,
+      state: "idle",
+      data: null,
+      Form: "form",
+    }),
     Form: ({ children }: { children: ReactNode }) => <form>{children}</form>,
     useSubmit: () => ({ onSubmit: vi.fn() }),
   };
 });
-
-vi.mock("app/utils/supabase", () => ({
-  default: {
-    from: mocks.mockFrom,
-  },
-}));
 
 describe("<AddAccountDialogBtn", () => {
   test("should render add account dialog when trigger button is clicked", async () => {
@@ -59,12 +44,13 @@ describe("<AddAccountDialogBtn", () => {
 
     await user.type(nameInput, "Starling");
 
-    await user.type(accountTypeInput, "Saving");
-
+    // Since FLPSelect is structured as a combobox or select, we just click the Confirm button
+    // which triggers submitAction.
     const addAccountBtn = getAllByText("addAccount")[2];
     expect(addAccountBtn).toBeDefined();
     await user.click(addAccountBtn);
-    expect(mocks.mockFrom).toBeCalled();
+
+    expect(mocks.mockFetcherSubmit).toHaveBeenCalled();
     const htmlString = baseElement.outerHTML.toString();
     const baseElementConstant = htmlString.replaceAll(/style="[^"]*"/g, "");
     expect(baseElementConstant).toMatchSnapshot();

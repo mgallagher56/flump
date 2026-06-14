@@ -2,103 +2,98 @@
 
 exports[`<AccountsContainer /> > should render as expected when accounts exist 1`] = `
 <div>
-  <script
-    nonce=""
-  >
-    ((e,i,s,u,m,a,l,h)=&gt;
-    {let d=document.documentElement,w=["light","dark"];function p(n){(Array.isArray(e)?e:[e]).forEach(y=&gt;
-    {let k=y==="class",S=k&&a?m.map(f=&gt;
-    a[f]||f):m;k?(d.classList.remove(...S),d.classList.add(a&&a[n]?a[n]:n)):d.setAttribute(y,n)}),R(n)}function R(n){h&&w.includes(n)&&(d.style.colorScheme=n)}function c(){return window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"}if(u)p(u);else try{let n=localStorage.getItem(i)||s,y=l&&n==="system"?c():n;p(y)}catch(n){}})("class","theme","system",null,["light","dark"],null,true,true)
-  </script>
   <div
-    class="css-1b6hzwq"
+    class="d_flex flex-d_row ai_center jc_space-between mt_20px mb_20px"
   >
     <h1
-      class="chakra-heading css-mytsjf"
+      class="c_primary fs_1.5rem fw_bold lh_tight m_0 "
     >
       accounts
     </h1>
     <button
-      class="chakra-button css-1hbeh4x"
+      aria-expanded="false"
+      aria-haspopup="dialog"
+      class="d_inline-flex ai_center jc_center bdr_full fw_medium trs_all_0.2s cursor_pointer px_6 py_3 fs_sm lh_1 disabled:op_0.5 disabled:cursor_not-allowed focusVisible:ring_2px_solid focusVisible:ring-c_primary focusVisible:ring-o_2px bg_background c_text.primary bd_1px_solid bd-c_border hover:bg_accent hover:c_accent.foreground"
+      data-state="closed"
       type="button"
     >
       addAccount
     </button>
   </div>
   <div
-    class="css-64eh94"
+    class="d_grid grid-tc_1fr md:grid-tc_repeat(3,_1fr) gap_24px mb_32px"
   >
     <div
-      class="css-uqvmb9"
+      class="bg-c_rgba(99,_99,_241,_0.1) bd_1px_solid bd-c_primary bdr_xl p_20px bx-sh_sm"
     >
       <p
-        class="css-23kn1y"
+        class="fs_xs fw_semibold lh_normal ls_normal c_gray.500 tt_uppercase m_0 "
       >
         Net Worth
       </p>
       <h2
-        class="chakra-heading css-mz3cgo"
+        class="c_emerald.500 fs_1.875rem fw_bold mt_1 lh_tight m_0 "
       >
         £1,300
       </h2>
     </div>
     <div
-      class="css-mnx6qw"
+      class="bg-c_surface bd_1px_solid bd-c_border bdr_xl p_20px bx-sh_sm"
     >
       <p
-        class="css-23kn1y"
+        class="fs_xs fw_semibold lh_normal ls_normal c_gray.500 tt_uppercase m_0 "
       >
         Total Assets
       </p>
       <h2
-        class="chakra-heading css-v5zr7v"
+        class="c_green.500 fs_1.5rem fw_bold mt_1 lh_tight m_0 "
       >
         £1,800
       </h2>
     </div>
     <div
-      class="css-o53z0y"
+      class="bg-c_surface bd_1px_solid bd-c_border bdr_xl p_20px bx-sh_sm"
     >
       <p
-        class="css-23kn1y"
+        class="fs_xs fw_semibold lh_normal ls_normal c_gray.500 tt_uppercase m_0 "
       >
         Total Liabilities
       </p>
       <h2
-        class="chakra-heading css-vpgg7p"
+        class="c_red.500 fs_1.5rem fw_bold mt_1 lh_tight m_0 "
       >
         £500
       </h2>
     </div>
   </div>
   <div
-    class="css-1uphe7b"
+    class="d_flex flex-d_column gap_10 "
   >
     <div
-      class="css-1p3i3l9"
+      class="bd-b_1px_solid bd-c_border pb_24px mb_40px"
     >
       <h2
-        class="chakra-heading css-12uwiey"
+        class="c_gray.600 fs_1.25rem fw_bold mb_4 lh_tight m_0 "
       >
         Current
       </h2>
       <div
-        class="css-15fx9a5"
+        class="d_flex flex-wrap_wrap gap_20px mt_16px"
       >
         AccountsCard
         AccountsCard
       </div>
     </div>
     <div
-      class="css-1p3i3l9"
+      class="bd-b_1px_solid bd-c_border pb_24px mb_40px"
     >
       <h2
-        class="chakra-heading css-12uwiey"
+        class="c_gray.600 fs_1.25rem fw_bold mb_4 lh_tight m_0 "
       >
         Saving
       </h2>
       <div
-        class="css-15fx9a5"
+        class="d_flex flex-wrap_wrap gap_20px mt_16px"
       >
         AccountsCard
         AccountsCard
@@ -106,43 +101,43 @@ exports[`<AccountsContainer /> > should render as expected when accounts exist 1
       </div>
     </div>
     <div
-      class="css-1p3i3l9"
+      class="bd-b_1px_solid bd-c_border pb_24px mb_40px"
     >
       <h2
-        class="chakra-heading css-12uwiey"
+        class="c_gray.600 fs_1.25rem fw_bold mb_4 lh_tight m_0 "
       >
         Mortgage
       </h2>
       <div
-        class="css-15fx9a5"
+        class="d_flex flex-wrap_wrap gap_20px mt_16px"
       >
         AccountsCard
       </div>
     </div>
     <div
-      class="css-1p3i3l9"
+      class="bd-b_1px_solid bd-c_border pb_24px mb_40px"
     >
       <h2
-        class="chakra-heading css-12uwiey"
+        class="c_gray.600 fs_1.25rem fw_bold mb_4 lh_tight m_0 "
       >
         Loan
       </h2>
       <div
-        class="css-15fx9a5"
+        class="d_flex flex-wrap_wrap gap_20px mt_16px"
       >
         AccountsCard
       </div>
     </div>
     <div
-      class="css-1p3i3l9"
+      class="bd-b_1px_solid bd-c_border pb_24px mb_40px"
     >
       <h2
-        class="chakra-heading css-12uwiey"
+        class="c_gray.600 fs_1.25rem fw_bold mb_4 lh_tight m_0 "
       >
         Owed
       </h2>
       <div
-        class="css-15fx9a5"
+        class="d_flex flex-wrap_wrap gap_20px mt_16px"
       >
         AccountsCard
       </div>
@@ -153,31 +148,26 @@ exports[`<AccountsContainer /> > should render as expected when accounts exist 1
 
 exports[`<AccountsContainer /> > should render as expected when no accounts exist 1`] = `
 <div>
-  <script
-    nonce=""
-  >
-    ((e,i,s,u,m,a,l,h)=&gt;
-    {let d=document.documentElement,w=["light","dark"];function p(n){(Array.isArray(e)?e:[e]).forEach(y=&gt;
-    {let k=y==="class",S=k&&a?m.map(f=&gt;
-    a[f]||f):m;k?(d.classList.remove(...S),d.classList.add(a&&a[n]?a[n]:n)):d.setAttribute(y,n)}),R(n)}function R(n){h&&w.includes(n)&&(d.style.colorScheme=n)}function c(){return window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"}if(u)p(u);else try{let n=localStorage.getItem(i)||s,y=l&&n==="system"?c():n;p(y)}catch(n){}})("class","theme","system",null,["light","dark"],null,true,true)
-  </script>
   <div
-    class="css-1b6hzwq"
+    class="d_flex flex-d_row ai_center jc_space-between mt_20px mb_20px"
   >
     <h1
-      class="chakra-heading css-mytsjf"
+      class="c_primary fs_1.5rem fw_bold lh_tight m_0 "
     >
       accounts
     </h1>
     <button
-      class="chakra-button css-1hbeh4x"
+      aria-expanded="false"
+      aria-haspopup="dialog"
+      class="d_inline-flex ai_center jc_center bdr_full fw_medium trs_all_0.2s cursor_pointer px_6 py_3 fs_sm lh_1 disabled:op_0.5 disabled:cursor_not-allowed focusVisible:ring_2px_solid focusVisible:ring-c_primary focusVisible:ring-o_2px bg_background c_text.primary bd_1px_solid bd-c_border hover:bg_accent hover:c_accent.foreground"
+      data-state="closed"
       type="button"
     >
       addAccount
     </button>
   </div>
   <div
-    class="css-1uphe7b"
+    class="d_flex flex-d_column gap_10 "
   />
 </div>
 `;

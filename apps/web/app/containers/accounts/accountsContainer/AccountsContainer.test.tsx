@@ -20,6 +20,12 @@ vi.mock("react-router", async () => {
     useRevalidator: mocks.mockUseRevalidator,
     Form: ({ children }: { children: ReactNode }) => <form>{children}</form>,
     useSubmit: () => ({ onSubmit: vi.fn() }),
+    useFetcher: () => ({
+      submit: vi.fn(),
+      state: "idle",
+      data: null,
+      Form: "form",
+    }),
   };
 });
 

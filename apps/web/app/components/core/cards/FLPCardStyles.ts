@@ -1,11 +1,18 @@
-import { css } from "styled-system/css";
+import { css } from "@repo/ui/styled-system/css";
 
 export const FLPCardStyles = css({
   position: "relative",
   transition: "all 0.3s ease-in-out",
-  border: "1px solid token(colors.gray.500)!",
+  border: "1px solid",
+  borderColor: "border",
+  borderRadius: "lg",
+  backgroundColor: "card",
+  color: "card.foreground",
+  padding: "5",
+  display: "flex",
+  flexDirection: "column",
   "&:hover": {
-    boxShadow: "2px 5px 8px 0px token(colors.gray.500) !important",
-    transform: "translate3d(-2px, -5px, -5px)",
+    boxShadow: "0 10px 20px rgba(0, 0, 0, 0.15) !important",
+    transform: "translate3d(-2px, -4px, 0)",
   },
 });

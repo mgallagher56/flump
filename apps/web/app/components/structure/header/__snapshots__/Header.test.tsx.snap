@@ -3,20 +3,12 @@
 exports[`<Header /> > renders as expected by default 1`] = `
 <body>
   <div>
-    <script
-      nonce=""
-    >
-      ((e,i,s,u,m,a,l,h)=&gt;
-      {let d=document.documentElement,w=["light","dark"];function p(n){(Array.isArray(e)?e:[e]).forEach(y=&gt;
-      {let k=y==="class",S=k&&a?m.map(f=&gt;
-      a[f]||f):m;k?(d.classList.remove(...S),d.classList.add(a&&a[n]?a[n]:n)):d.setAttribute(y,n)}),R(n)}function R(n){h&&w.includes(n)&&(d.style.colorScheme=n)}function c(){return window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"}if(u)p(u);else try{let n=localStorage.getItem(i)||s,y=l&&n==="system"?c():n;p(y)}catch(n){}})("class","theme","system",null,["light","dark"],null,true,true)
-    </script>
     <header>
       <nav
-        class="d_flex bd-b-w_2px bd-b-c_blue.500 border-bottom-style_solid ai_center jc_space-between w_100% py_4 px_2 css-k008qs"
+        class="d_flex bd-b-w_2px bd-b-c_blue.500 border-bottom-style_solid ai_center jc_space-between w_100% py_4 px_2"
       >
         <div
-          class="d_flex gap_4 ai_center jc_start"
+          class=" d_flex gap_4 ai_center jc_start"
         >
           <div>
             HomeLogo
@@ -26,58 +18,11 @@ exports[`<Header /> > renders as expected by default 1`] = `
           </div>
         </div>
         <div
-          class="d_flex gap_2 ai_center jc_end"
+          class=" d_flex gap_2 ai_center jc_end"
         >
           <div>
             UserLogin
           </div>
-          <button
-            aria-label="Toggle color mode"
-            class="chakra-button css-frz056"
-            type="button"
-          >
-            <svg
-              fill="none"
-              height="1em"
-              stroke="currentColor"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              viewBox="0 0 24 24"
-              width="1em"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <circle
-                cx="12"
-                cy="12"
-                r="4"
-              />
-              <path
-                d="M12 2v2"
-              />
-              <path
-                d="M12 20v2"
-              />
-              <path
-                d="m4.93 4.93 1.41 1.41"
-              />
-              <path
-                d="m17.66 17.66 1.41 1.41"
-              />
-              <path
-                d="M2 12h2"
-              />
-              <path
-                d="M20 12h2"
-              />
-              <path
-                d="m6.34 17.66-1.41 1.41"
-              />
-              <path
-                d="m19.07 4.93-1.41 1.41"
-              />
-            </svg>
-          </button>
         </div>
       </nav>
     </header>
@@ -88,20 +33,12 @@ exports[`<Header /> > renders as expected by default 1`] = `
 exports[`<Header /> > renders correctly when user logged in 1`] = `
 <body>
   <div>
-    <script
-      nonce=""
-    >
-      ((e,i,s,u,m,a,l,h)=&gt;
-      {let d=document.documentElement,w=["light","dark"];function p(n){(Array.isArray(e)?e:[e]).forEach(y=&gt;
-      {let k=y==="class",S=k&&a?m.map(f=&gt;
-      a[f]||f):m;k?(d.classList.remove(...S),d.classList.add(a&&a[n]?a[n]:n)):d.setAttribute(y,n)}),R(n)}function R(n){h&&w.includes(n)&&(d.style.colorScheme=n)}function c(){return window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"}if(u)p(u);else try{let n=localStorage.getItem(i)||s,y=l&&n==="system"?c():n;p(y)}catch(n){}})("class","theme","system",null,["light","dark"],null,true,true)
-    </script>
     <header>
       <nav
-        class="d_flex bd-b-w_2px bd-b-c_blue.500 border-bottom-style_solid ai_center jc_space-between w_100% py_4 px_2 css-k008qs"
+        class="d_flex bd-b-w_2px bd-b-c_blue.500 border-bottom-style_solid ai_center jc_space-between w_100% py_4 px_2"
       >
         <div
-          class="d_flex gap_4 ai_center jc_start"
+          class=" d_flex gap_4 ai_center jc_start"
         >
           <div>
             HomeLogo
@@ -117,58 +54,11 @@ exports[`<Header /> > renders correctly when user logged in 1`] = `
           </div>
         </div>
         <div
-          class="d_flex gap_2 ai_center jc_end"
+          class=" d_flex gap_2 ai_center jc_end"
         >
           <div>
             UserLogin
           </div>
-          <button
-            aria-label="Toggle color mode"
-            class="chakra-button css-frz056"
-            type="button"
-          >
-            <svg
-              fill="none"
-              height="1em"
-              stroke="currentColor"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              viewBox="0 0 24 24"
-              width="1em"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <circle
-                cx="12"
-                cy="12"
-                r="4"
-              />
-              <path
-                d="M12 2v2"
-              />
-              <path
-                d="M12 20v2"
-              />
-              <path
-                d="m4.93 4.93 1.41 1.41"
-              />
-              <path
-                d="m17.66 17.66 1.41 1.41"
-              />
-              <path
-                d="M2 12h2"
-              />
-              <path
-                d="M20 12h2"
-              />
-              <path
-                d="m6.34 17.66-1.41 1.41"
-              />
-              <path
-                d="m19.07 4.93-1.41 1.41"
-              />
-            </svg>
-          </button>
         </div>
       </nav>
     </header>
@@ -179,20 +69,12 @@ exports[`<Header /> > renders correctly when user logged in 1`] = `
 exports[`<Header /> > renders without ColorModeSwitch 1`] = `
 <body>
   <div>
-    <script
-      nonce=""
-    >
-      ((e,i,s,u,m,a,l,h)=&gt;
-      {let d=document.documentElement,w=["light","dark"];function p(n){(Array.isArray(e)?e:[e]).forEach(y=&gt;
-      {let k=y==="class",S=k&&a?m.map(f=&gt;
-      a[f]||f):m;k?(d.classList.remove(...S),d.classList.add(a&&a[n]?a[n]:n)):d.setAttribute(y,n)}),R(n)}function R(n){h&&w.includes(n)&&(d.style.colorScheme=n)}function c(){return window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"}if(u)p(u);else try{let n=localStorage.getItem(i)||s,y=l&&n==="system"?c():n;p(y)}catch(n){}})("class","theme","system",null,["light","dark"],null,true,true)
-    </script>
     <header>
       <nav
-        class="d_flex bd-b-w_2px bd-b-c_blue.500 border-bottom-style_solid ai_center jc_space-between w_100% py_4 px_2 css-k008qs"
+        class="d_flex bd-b-w_2px bd-b-c_blue.500 border-bottom-style_solid ai_center jc_space-between w_100% py_4 px_2"
       >
         <div
-          class="d_flex gap_4 ai_center jc_start"
+          class=" d_flex gap_4 ai_center jc_start"
         >
           <div>
             HomeLogo
@@ -202,58 +84,11 @@ exports[`<Header /> > renders without ColorModeSwitch 1`] = `
           </div>
         </div>
         <div
-          class="d_flex gap_2 ai_center jc_end"
+          class=" d_flex gap_2 ai_center jc_end"
         >
           <div>
             UserLogin
           </div>
-          <button
-            aria-label="Toggle color mode"
-            class="chakra-button css-frz056"
-            type="button"
-          >
-            <svg
-              fill="none"
-              height="1em"
-              stroke="currentColor"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              viewBox="0 0 24 24"
-              width="1em"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <circle
-                cx="12"
-                cy="12"
-                r="4"
-              />
-              <path
-                d="M12 2v2"
-              />
-              <path
-                d="M12 20v2"
-              />
-              <path
-                d="m4.93 4.93 1.41 1.41"
-              />
-              <path
-                d="m17.66 17.66 1.41 1.41"
-              />
-              <path
-                d="M2 12h2"
-              />
-              <path
-                d="M20 12h2"
-              />
-              <path
-                d="m6.34 17.66-1.41 1.41"
-              />
-              <path
-                d="m19.07 4.93-1.41 1.41"
-              />
-            </svg>
-          </button>
         </div>
       </nav>
     </header>

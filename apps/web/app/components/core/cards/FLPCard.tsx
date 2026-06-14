@@ -1,14 +1,14 @@
-import type { CardRootProps } from "@chakra-ui/react";
-import { CardRoot } from "@chakra-ui/react";
-import type { FC } from "react";
-
+import type { FC, HTMLAttributes } from "react";
 import { FLPCardStyles } from "./FLPCardStyles";
 
-const FLPCard: FC<CardRootProps> = (props) => {
+interface FLPCardProps extends HTMLAttributes<HTMLDivElement> {}
+
+const FLPCard: FC<FLPCardProps> = ({ children, className, ...props }) => {
   return (
-    <CardRoot className={FLPCardStyles} {...props}>
-      {props.children}
-    </CardRoot>
+    <div className={`${FLPCardStyles} ${className || ""}`} {...props}>
+      {children}
+    </div>
   );
 };
+
 export default FLPCard;

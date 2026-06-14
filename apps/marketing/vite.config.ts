@@ -7,8 +7,7 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
-      "@repo/ui/styles.css": path.resolve(__dirname, "../../packages/ui/dist/styles.css"),
-      "@repo/ui/styled-system": path.resolve(__dirname, "../../packages/ui/styled-system"),
+      "@repo/ui/styled-system": path.resolve(__dirname, "./styled-system"),
       "@repo/ui": path.resolve(__dirname, "../../packages/ui/src/index.tsx"),
       "@repo/app-shell/server": path.resolve(
         __dirname,

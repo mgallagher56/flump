@@ -3,200 +3,41 @@
 exports[`<FLPSelect /> > should render as expected 1`] = `
 <body>
   <div>
-    <script
-      nonce=""
-    >
-      ((e,i,s,u,m,a,l,h)=&gt;
-      {let d=document.documentElement,w=["light","dark"];function p(n){(Array.isArray(e)?e:[e]).forEach(y=&gt;
-      {let k=y==="class",S=k&&a?m.map(f=&gt;
-      a[f]||f):m;k?(d.classList.remove(...S),d.classList.add(a&&a[n]?a[n]:n)):d.setAttribute(y,n)}),R(n)}function R(n){h&&w.includes(n)&&(d.style.colorScheme=n)}function c(){return window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"}if(u)p(u);else try{let n=localStorage.getItem(i)||s,y=l&&n==="system"?c():n;p(y)}catch(n){}})("class","theme","system",null,["light","dark"],null,true,true)
-    </script>
     <div
-      class="d_flex flex-d_column gap_2"
+      class="d_flex flex-d_column ai_stretch gap_8px w_100%"
     >
-      <div
-        class="chakra-select__root css-1tw36de"
-        data-part="root"
-        data-scope="select"
-        dir="ltr"
-        id="select:_r_0_"
+      <label
+        class="fs_sm fw_medium c_text.primary"
+        for="label"
       >
-        <label
-          class="chakra-select__label css-p3rj3s"
-          data-part="label"
-          data-scope="select"
-          dir="ltr"
-          for="label"
-          id="select:_r_0_:label"
-        >
-          label
-        </label>
-        <div
-          class="chakra-select__control css-17j1053"
-          data-part="control"
-          data-scope="select"
-          data-state="closed"
-          dir="ltr"
-          id="select:_r_0_:control"
-        >
-          <button
-            aria-controls="select:_r_0_:content"
-            aria-expanded="false"
-            aria-haspopup="listbox"
-            aria-invalid="false"
-            aria-labelledby="select:_r_0_:label"
-            aria-required="false"
-            class="chakra-select__trigger css-qah0cw"
-            data-part="trigger"
-            data-scope="select"
-            data-state="closed"
-            dir="ltr"
-            id="select:_r_0_:trigger"
-            role="combobox"
-            type="button"
-          >
-            <span
-              class="chakra-select__valueText css-176t9sc"
-              data-part="value-text"
-              data-scope="select"
-              dir="ltr"
-            >
-              1
-            </span>
-          </button>
-          <div
-            class="chakra-select__indicatorGroup css-1fx1ifu"
-          >
-            <div
-              aria-hidden="true"
-              class="chakra-select__indicator css-1atg1ut"
-              data-part="indicator"
-              data-scope="select"
-              data-state="closed"
-              dir="ltr"
-            >
-              <svg
-                class="css-s3mb0o"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  d="m6 9 6 6 6-6"
-                />
-              </svg>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-  <div
-    class="chakra-select__positioner"
-    data-part="positioner"
-    data-scope="select"
-    dir="ltr"
-    id="select:_r_0_:positioner"
-    style="position: absolute; isolation: isolate; width: var(--reference-width); pointer-events: none; top: 0px; left: 0px; transform: translate3d(0, -100vh, 0); z-index: var(--z-index);"
-  >
-    <div
-      aria-labelledby="select:_r_0_:label"
-      class="chakra-select__content css-14wowjj"
-      data-part="content"
-      data-scope="select"
-      data-state="closed"
-      dir="ltr"
-      hidden=""
-      id="select:_r_0_:content"
-      role="listbox"
-      tabindex="0"
-    >
+        label
+      </label>
       <div
-        aria-selected="true"
-        class="chakra-select__item css-1bq1bjd"
-        data-part="item"
-        data-scope="select"
-        data-state="checked"
-        data-value="1"
-        dir="ltr"
-        id="select:_r_0_:option:1"
-        role="option"
+        style="flex-grow: 1; flex-shrink: 1; flex-basis: 0%;"
       >
-        1
-        <div
-          aria-hidden="true"
-          class="chakra-select__itemIndicator"
-          data-part="item-indicator"
-          data-scope="select"
-          data-state="checked"
+        <select
+          class="w_100% p_10px_14px fs_sm bdr_sm bd_1px_solid bd-c_border bg-c_#20222D c_text.primary ring_none trs_all_0.2s cursor_pointer focus:bd-c_primary focus:bx-sh_0_0_0_1px_token(colors.primary) "
+          id="label"
         >
-          <svg
-            class="css-s3mb0o"
-            viewBox="0 0 24 24"
+          <option
+            style="background-color: #20222D; color: #ffffff;"
+            value="1"
           >
-            <path
-              d="M20 6 9 17l-5-5"
-            />
-          </svg>
-        </div>
-      </div>
-      <div
-        aria-selected="false"
-        class="chakra-select__item css-1bq1bjd"
-        data-part="item"
-        data-scope="select"
-        data-state="unchecked"
-        data-value="2"
-        dir="ltr"
-        id="select:_r_0_:option:2"
-        role="option"
-      >
-        2
-        <div
-          aria-hidden="true"
-          class="chakra-select__itemIndicator"
-          data-part="item-indicator"
-          data-scope="select"
-          data-state="unchecked"
-          hidden=""
-        >
-          <svg
-            class="css-s3mb0o"
-            viewBox="0 0 24 24"
+            1
+          </option>
+          <option
+            style="background-color: #20222D; color: #ffffff;"
+            value="2"
           >
-            <path
-              d="M20 6 9 17l-5-5"
-            />
-          </svg>
-        </div>
-      </div>
-      <div
-        aria-selected="false"
-        class="chakra-select__item css-1bq1bjd"
-        data-part="item"
-        data-scope="select"
-        data-state="unchecked"
-        data-value="3"
-        dir="ltr"
-        id="select:_r_0_:option:3"
-        role="option"
-      >
-        3
-        <div
-          aria-hidden="true"
-          class="chakra-select__itemIndicator"
-          data-part="item-indicator"
-          data-scope="select"
-          data-state="unchecked"
-          hidden=""
-        >
-          <svg
-            class="css-s3mb0o"
-            viewBox="0 0 24 24"
+            2
+          </option>
+          <option
+            style="background-color: #20222D; color: #ffffff;"
+            value="3"
           >
-            <path
-              d="M20 6 9 17l-5-5"
-            />
-          </svg>
-        </div>
+            3
+          </option>
+        </select>
       </div>
     </div>
   </div>
@@ -206,200 +47,41 @@ exports[`<FLPSelect /> > should render as expected 1`] = `
 exports[`<FLPSelect /> > should render as expected as row 1`] = `
 <body>
   <div>
-    <script
-      nonce=""
-    >
-      ((e,i,s,u,m,a,l,h)=&gt;
-      {let d=document.documentElement,w=["light","dark"];function p(n){(Array.isArray(e)?e:[e]).forEach(y=&gt;
-      {let k=y==="class",S=k&&a?m.map(f=&gt;
-      a[f]||f):m;k?(d.classList.remove(...S),d.classList.add(a&&a[n]?a[n]:n)):d.setAttribute(y,n)}),R(n)}function R(n){h&&w.includes(n)&&(d.style.colorScheme=n)}function c(){return window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"}if(u)p(u);else try{let n=localStorage.getItem(i)||s,y=l&&n==="system"?c():n;p(y)}catch(n){}})("class","theme","system",null,["light","dark"],null,true,true)
-    </script>
     <div
-      class="d_flex flex-d_row ai_center gap_4"
+      class="d_flex flex-d_row ai_center gap_16px w_100%"
     >
-      <div
-        class="chakra-select__root css-1tw36de"
-        data-part="root"
-        data-scope="select"
-        dir="ltr"
-        id="select:_r_1_"
+      <label
+        class="fs_sm fw_medium c_text.primary"
+        for="label"
       >
-        <label
-          class="chakra-select__label css-p3rj3s"
-          data-part="label"
-          data-scope="select"
-          dir="ltr"
-          for="label"
-          id="select:_r_1_:label"
-        >
-          label
-        </label>
-        <div
-          class="chakra-select__control css-17j1053"
-          data-part="control"
-          data-scope="select"
-          data-state="closed"
-          dir="ltr"
-          id="select:_r_1_:control"
-        >
-          <button
-            aria-controls="select:_r_1_:content"
-            aria-expanded="false"
-            aria-haspopup="listbox"
-            aria-invalid="false"
-            aria-labelledby="select:_r_1_:label"
-            aria-required="false"
-            class="chakra-select__trigger css-qah0cw"
-            data-part="trigger"
-            data-scope="select"
-            data-state="closed"
-            dir="ltr"
-            id="select:_r_1_:trigger"
-            role="combobox"
-            type="button"
-          >
-            <span
-              class="chakra-select__valueText css-176t9sc"
-              data-part="value-text"
-              data-scope="select"
-              dir="ltr"
-            >
-              1
-            </span>
-          </button>
-          <div
-            class="chakra-select__indicatorGroup css-1fx1ifu"
-          >
-            <div
-              aria-hidden="true"
-              class="chakra-select__indicator css-1atg1ut"
-              data-part="indicator"
-              data-scope="select"
-              data-state="closed"
-              dir="ltr"
-            >
-              <svg
-                class="css-s3mb0o"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  d="m6 9 6 6 6-6"
-                />
-              </svg>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-  <div
-    class="chakra-select__positioner"
-    data-part="positioner"
-    data-scope="select"
-    dir="ltr"
-    id="select:_r_1_:positioner"
-    style="position: absolute; isolation: isolate; width: var(--reference-width); pointer-events: none; top: 0px; left: 0px; transform: translate3d(0, -100vh, 0); z-index: var(--z-index);"
-  >
-    <div
-      aria-labelledby="select:_r_1_:label"
-      class="chakra-select__content css-14wowjj"
-      data-part="content"
-      data-scope="select"
-      data-state="closed"
-      dir="ltr"
-      hidden=""
-      id="select:_r_1_:content"
-      role="listbox"
-      tabindex="0"
-    >
+        label
+      </label>
       <div
-        aria-selected="true"
-        class="chakra-select__item css-1bq1bjd"
-        data-part="item"
-        data-scope="select"
-        data-state="checked"
-        data-value="1"
-        dir="ltr"
-        id="select:_r_1_:option:1"
-        role="option"
+        style="flex-grow: 1; flex-shrink: 1; flex-basis: 0%;"
       >
-        1
-        <div
-          aria-hidden="true"
-          class="chakra-select__itemIndicator"
-          data-part="item-indicator"
-          data-scope="select"
-          data-state="checked"
+        <select
+          class="w_100% p_10px_14px fs_sm bdr_sm bd_1px_solid bd-c_border bg-c_#20222D c_text.primary ring_none trs_all_0.2s cursor_pointer focus:bd-c_primary focus:bx-sh_0_0_0_1px_token(colors.primary) "
+          id="label"
         >
-          <svg
-            class="css-s3mb0o"
-            viewBox="0 0 24 24"
+          <option
+            style="background-color: #20222D; color: #ffffff;"
+            value="1"
           >
-            <path
-              d="M20 6 9 17l-5-5"
-            />
-          </svg>
-        </div>
-      </div>
-      <div
-        aria-selected="false"
-        class="chakra-select__item css-1bq1bjd"
-        data-part="item"
-        data-scope="select"
-        data-state="unchecked"
-        data-value="2"
-        dir="ltr"
-        id="select:_r_1_:option:2"
-        role="option"
-      >
-        2
-        <div
-          aria-hidden="true"
-          class="chakra-select__itemIndicator"
-          data-part="item-indicator"
-          data-scope="select"
-          data-state="unchecked"
-          hidden=""
-        >
-          <svg
-            class="css-s3mb0o"
-            viewBox="0 0 24 24"
+            1
+          </option>
+          <option
+            style="background-color: #20222D; color: #ffffff;"
+            value="2"
           >
-            <path
-              d="M20 6 9 17l-5-5"
-            />
-          </svg>
-        </div>
-      </div>
-      <div
-        aria-selected="false"
-        class="chakra-select__item css-1bq1bjd"
-        data-part="item"
-        data-scope="select"
-        data-state="unchecked"
-        data-value="3"
-        dir="ltr"
-        id="select:_r_1_:option:3"
-        role="option"
-      >
-        3
-        <div
-          aria-hidden="true"
-          class="chakra-select__itemIndicator"
-          data-part="item-indicator"
-          data-scope="select"
-          data-state="unchecked"
-          hidden=""
-        >
-          <svg
-            class="css-s3mb0o"
-            viewBox="0 0 24 24"
+            2
+          </option>
+          <option
+            style="background-color: #20222D; color: #ffffff;"
+            value="3"
           >
-            <path
-              d="M20 6 9 17l-5-5"
-            />
-          </svg>
-        </div>
+            3
+          </option>
+        </select>
       </div>
     </div>
   </div>

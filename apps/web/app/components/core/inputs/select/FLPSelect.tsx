@@ -1,66 +1,90 @@
-import { SelectRoot, type SelectRootProps } from "@chakra-ui/react";
-import type { FC } from "react";
-import { css } from "styled-system/css";
-import {
-  SelectContent,
-  SelectItem,
-  SelectLabel,
-  SelectTrigger,
-  SelectValueText,
-} from "~/components/ui/select";
+import { css } from "@repo/ui/styled-system/css";
+import type { FC, SelectHTMLAttributes } from "react";
 
-interface FLPSelectProps extends SelectRootProps {
+interface FLPSelectProps
+  extends Omit<SelectHTMLAttributes<HTMLSelectElement>, "value" | "onChange"> {
   label: string;
   isLabelHidden?: boolean;
-  portalRef?: React.RefObject<HTMLDivElement | null>;
+  flexDirection?: "row" | "column";
+  gap?: number | string;
+  collection: {
+    items: { id: string; name: string }[];
+  };
+  value: string[];
+  onValueChange: (e: { value: string[] }) => void;
 }
 
 const FLPSelect: FC<FLPSelectProps> = ({
   collection,
-  flexDirection,
+  flexDirection = "column",
   gap,
   isLabelHidden,
   label,
-  portalRef,
   value,
   onValueChange,
+  className,
+  style,
+  ...props
 }) => {
-  const columnStyles = css({
+  const containerStyle = css({
     display: "flex",
-    flexDirection: "column",
-    gap: gap || 2,
+    flexDirection: flexDirection as any,
+    alignItems: flexDirection === "row" ? "center" : "stretch",
+    gap: (gap || (flexDirection === "row" ? "16px" : "8px")) as any,
+    width: "100%",
   });
 
-  const rowStyles = css({
-    display: "flex",
-    flexDirection: "row",
-    alignItems: "center",
-    gap: gap || 4,
+  const labelStyle = css({
+    fontSize: "sm",
+    fontWeight: "medium",
+    color: "text.primary",
+  });
+
+  const selectStyle = css({
+    width: "100%",
+    padding: "10px 14px",
+    fontSize: "sm",
+    borderRadius: "sm",
+    border: "1px solid",
+    borderColor: "border",
+    backgroundColor: "#20222D", // Matches card/dialog surface
+    color: "text.primary",
+    outline: "none",
+    transition: "all 0.2s",
+    cursor: "pointer",
+    _focus: {
+      borderColor: "primary",
+      boxShadow: "0 0 0 1px token(colors.primary)",
+    },
   });
 
   return (
-    <div className={flexDirection === "row" ? rowStyles : columnStyles}>
-      <SelectRoot
-        collection={collection}
-        size="sm"
-        value={value}
-        width="320px"
-        onValueChange={onValueChange}
-      >
-        <SelectLabel hidden={isLabelHidden} htmlFor={label}>
+    <div className={containerStyle}>
+      {!isLabelHidden && (
+        <label className={labelStyle} htmlFor={label}>
           {label}
-        </SelectLabel>
-        <SelectTrigger>
-          <SelectValueText />
-        </SelectTrigger>
-        <SelectContent portalRef={portalRef}>
-          {collection.items.map(({ id, name }: { id: string; name: string }) => (
-            <SelectItem key={id} item={name}>
-              {name}
-            </SelectItem>
+        </label>
+      )}
+      <div style={{ flex: 1 }}>
+        <select
+          id={label}
+          className={`${selectStyle} ${className || ""}`}
+          style={style}
+          value={value?.[0] || ""}
+          onChange={(e) => onValueChange({ value: [e.target.value] })}
+          {...props}
+        >
+          {collection.items.map((item) => (
+            <option
+              key={item.id}
+              style={{ backgroundColor: "#20222D", color: "#ffffff" }}
+              value={item.id}
+            >
+              {item.name}
+            </option>
           ))}
-        </SelectContent>
-      </SelectRoot>
+        </select>
+      </div>
     </div>
   );
 };

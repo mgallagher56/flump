@@ -1,34 +1,27 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`<EditAccountDialogBtn > should render edit account dialog and call supabase.delete when delete button is clicked 1`] = `
+exports[`<EditAccountDialogBtn > should render edit account dialog and call fetcher.submit when delete button is clicked 1`] = `
 <body
-  data-inert=""
-  data-scroll-lock=""
-  style="overflow: hidden; padding-right: 1024px; pointer-events: none;"
+  data-scroll-locked="1"
+  style="pointer-events: none;"
 >
+  <span
+    aria-hidden="true"
+    data-aria-hidden="true"
+    data-radix-focus-guard=""
+    style="opacity: 0; position: fixed; pointer-events: none; outline-color: none; outline-style: none; outline-width: initial;"
+    tabindex="0"
+  />
   <div
     aria-hidden="true"
-    data-aria-hidden=""
+    data-aria-hidden="true"
   >
-    <script
-      nonce=""
-    >
-      ((e,i,s,u,m,a,l,h)=&gt;
-      {let d=document.documentElement,w=["light","dark"];function p(n){(Array.isArray(e)?e:[e]).forEach(y=&gt;
-      {let k=y==="class",S=k&&a?m.map(f=&gt;
-      a[f]||f):m;k?(d.classList.remove(...S),d.classList.add(a&&a[n]?a[n]:n)):d.setAttribute(y,n)}),R(n)}function R(n){h&&w.includes(n)&&(d.style.colorScheme=n)}function c(){return window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"}if(u)p(u);else try{let n=localStorage.getItem(i)||s,y=l&&n==="system"?c():n;p(y)}catch(n){}})("class","theme","system",null,["light","dark"],null,true,true)
-    </script>
-    <div
-      class="chakra-dialog__backdrop css-1cnmm3c"
-      data-part="backdrop"
-      data-scope="dialog"
-      data-state="open"
-      dir="ltr"
-      id="dialog:_r_2_:backdrop"
-      style="--layer-index: 0; --nested-layer-count: 0;"
-    />
     <button
-      class="chakra-button css-1hbeh4x"
+      aria-controls="radix-_r_3_"
+      aria-expanded="true"
+      aria-haspopup="dialog"
+      class="d_inline-flex ai_center jc_center bdr_full fw_medium trs_all_0.2s cursor_pointer px_6 py_3 fs_sm lh_1 disabled:op_0.5 disabled:cursor_not-allowed focusVisible:ring_2px_solid focusVisible:ring-c_primary focusVisible:ring-o_2px bg_background c_text.primary bd_1px_solid bd-c_border hover:bg_accent hover:c_accent.foreground"
+      data-state="open"
       type="button"
     >
       edit
@@ -36,396 +29,154 @@ exports[`<EditAccountDialogBtn > should render edit account dialog and call supa
   </div>
   <div
     aria-hidden="true"
-    class="chakra-dialog__backdrop css-1cnmm3c"
-    data-aria-hidden=""
-    data-part="backdrop"
-    data-scope="dialog"
+    class="pos_fixed inset_0 bg-c_rgba(0,_0,_0,_0.6) bkdp_blur(4px) z_50"
+    data-aria-hidden="true"
     data-state="open"
-    dir="ltr"
-    id="dialog:_r_2_:backdrop"
+    style="pointer-events: auto;"
   />
   <div
-    class="chakra-dialog__positioner css-h34q7s"
-    data-part="positioner"
-    data-scope="dialog"
-    dir="ltr"
-    id="dialog:_r_2_:positioner"
-    style="--layer-index: 0; --nested-layer-count: 0;"
+    aria-describedby="radix-_r_5_"
+    aria-labelledby="radix-_r_4_"
+    class="pos_fixed top_50% left_50% trf_translate(-50%,_-50%) bg-c_surface bd_1px_solid bd-c_border bdr_lg bx-sh_0_20px_25px_-5px_rgba(0,_0,_0,_0.3),_0_10px_10px_-5px_rgba(0,_0,_0,_0.2) p_24px w_90vw max-w_480px z_50 ring_none c_text.primary"
+    data-state="open"
+    id="radix-_r_3_"
+    role="dialog"
+    style="pointer-events: auto;"
+    tabindex="-1"
   >
     <div
-      aria-labelledby="dialog:_r_2_:title"
-      aria-modal="true"
-      class="chakra-dialog__content css-o08j2d"
-      data-part="content"
-      data-scope="dialog"
-      data-state="open"
-      dir="ltr"
-      id="dialog:_r_2_:content"
-      role="dialog"
-      style="--layer-index: 0; --nested-layer-count: 0; pointer-events: auto;"
-      tabindex="-1"
+      class="mb_20px"
     >
-      <div
-        class="chakra-dialog__header css-10gvpny"
+      <h2
+        class="fs_xl fw_bold c_text.primary m_0"
+        id="radix-_r_4_"
       >
-        <h2
-          class="chakra-dialog__title css-1ka0vat"
-          data-part="title"
-          data-scope="dialog"
-          dir="ltr"
-          id="dialog:_r_2_:title"
-        >
-          editAccount
-        </h2>
-      </div>
-      <div
-        class="chakra-dialog__body css-aphhdw"
-      >
-        <form>
-          <div
-            class="css-1nkdwiq"
-          >
-            <div
-              class="d_flex flex-d_column gap_2"
-            >
-              <label
-                for="Name"
-              >
-                Name
-              </label>
-              <div>
-                <div
-                  class="css-1op6ogi"
-                >
-                  <input
-                    class="chakra-input css-ee9xfg"
-                    id="Name"
-                    name="name"
-                    placeholder="accountName"
-                    value=""
-                  />
-                </div>
-              </div>
-            </div>
-            <div
-              class="d_flex flex-d_column gap_2"
-            >
-              <div
-                class="chakra-select__root css-1tw36de"
-                data-part="root"
-                data-scope="select"
-                dir="ltr"
-                id="select:_r_3_"
-              >
-                <label
-                  class="chakra-select__label css-p3rj3s"
-                  data-part="label"
-                  data-scope="select"
-                  dir="ltr"
-                  for="Account Type"
-                  id="select:_r_3_:label"
-                >
-                  Account Type
-                </label>
-                <div
-                  class="chakra-select__control css-17j1053"
-                  data-part="control"
-                  data-scope="select"
-                  data-state="closed"
-                  dir="ltr"
-                  id="select:_r_3_:control"
-                >
-                  <button
-                    aria-controls="select:_r_3_:content"
-                    aria-expanded="false"
-                    aria-haspopup="listbox"
-                    aria-invalid="false"
-                    aria-labelledby="select:_r_3_:label"
-                    aria-required="false"
-                    class="chakra-select__trigger css-qah0cw"
-                    data-part="trigger"
-                    data-scope="select"
-                    data-state="closed"
-                    dir="ltr"
-                    id="select:_r_3_:trigger"
-                    role="combobox"
-                    type="button"
-                  >
-                    <span
-                      class="chakra-select__valueText css-176t9sc"
-                      data-part="value-text"
-                      data-scope="select"
-                      dir="ltr"
-                    >
-                      Current
-                    </span>
-                  </button>
-                  <div
-                    class="chakra-select__indicatorGroup css-1fx1ifu"
-                  >
-                    <div
-                      aria-hidden="true"
-                      class="chakra-select__indicator css-1atg1ut"
-                      data-part="indicator"
-                      data-scope="select"
-                      data-state="closed"
-                      dir="ltr"
-                    >
-                      <svg
-                        class="css-s3mb0o"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          d="m6 9 6 6 6-6"
-                        />
-                      </svg>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </form>
-      </div>
-      <div
-        class="chakra-dialog__footer css-1heqefg"
+        editAccount
+      </h2>
+    </div>
+    <div
+      class="mb_24px"
+    >
+      <form
+        id="123456"
       >
         <div
-          class="chakra-group css-1bfmi0f"
+          class="d_flex flex-d_column gap_4 "
+        >
+          <div
+            class="d_flex flex-d_column ai_stretch gap_8px w_100%"
+          >
+            <label
+              class="fs_sm fw_medium c_text.primary"
+              for="Name"
+            >
+              Name
+            </label>
+            <div
+              style="flex-grow: 1; flex-shrink: 1; flex-basis: 0%;"
+            >
+              <input
+                class="w_100% p_10px_14px fs_sm bdr_sm bd_1px_solid bd-c_border bg-c_transparent c_text.primary ring_none trs_all_0.2s focus:bd-c_primary focus:bx-sh_0_0_0_1px_token(colors.primary) disabled:op_0.5 disabled:cursor_not-allowed "
+                id="Name"
+                name="name"
+                placeholder="accountName"
+                value=""
+              />
+            </div>
+          </div>
+          <div
+            class="d_flex flex-d_column ai_stretch gap_8px w_100%"
+          >
+            <label
+              class="fs_sm fw_medium c_text.primary"
+              for="Account Type"
+            >
+              Account Type
+            </label>
+            <div
+              style="flex-grow: 1; flex-shrink: 1; flex-basis: 0%;"
+            >
+              <select
+                class="w_100% p_10px_14px fs_sm bdr_sm bd_1px_solid bd-c_border bg-c_#20222D c_text.primary ring_none trs_all_0.2s cursor_pointer focus:bd-c_primary focus:bx-sh_0_0_0_1px_token(colors.primary) "
+                id="Account Type"
+                name="type"
+              >
+                <option
+                  style="background-color: #20222D; color: #ffffff;"
+                  value="Current"
+                >
+                  Current
+                </option>
+                <option
+                  style="background-color: #20222D; color: #ffffff;"
+                  value="Saving"
+                >
+                  Saving
+                </option>
+                <option
+                  style="background-color: #20222D; color: #ffffff;"
+                  value="Mortgage"
+                >
+                  Mortgage
+                </option>
+                <option
+                  style="background-color: #20222D; color: #ffffff;"
+                  value="Loan"
+                >
+                  Loan
+                </option>
+                <option
+                  style="background-color: #20222D; color: #ffffff;"
+                  value="Owed"
+                >
+                  Owed
+                </option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </form>
+    </div>
+    <div
+      class="d_flex jc_space-between ai_center mt_24px gap_16px"
+    >
+      <div>
+        <div
+          class="d_flex flex-d_row ai_center gap_8px "
         >
           <button
-            class="chakra-button css-9wqinr"
-            type="button"
+            class="d_inline-flex ai_center jc_center bdr_full fw_medium trs_all_0.2s cursor_pointer px_6 py_3 fs_sm lh_1 disabled:op_0.5 disabled:cursor_not-allowed focusVisible:ring_2px_solid focusVisible:ring-c_primary focusVisible:ring-o_2px bg_primary c_primary.foreground hover:bg_primary.hover"
           >
             delete
           </button>
         </div>
-        <div
-          class="chakra-group css-1bfmi0f"
-        >
-          <button
-            class="chakra-button css-146beeq"
-            data-first=""
-            data-group-item=""
-            style="--group-count: 2; --group-index: 0;"
-            type="button"
-          >
-            close
-          </button>
-          <button
-            class="chakra-button css-1g8q6pp"
-            data-group-item=""
-            data-last=""
-            form="123456"
-            style="--group-count: 2; --group-index: 1;"
-            type="submit"
-          >
-            save
-          </button>
-        </div>
-        <button
-          aria-label="Close"
-          class="chakra-button chakra-dialog__closeTrigger css-v4yspd"
-          data-part="close-trigger"
-          data-scope="dialog"
-          dir="ltr"
-          id="dialog:_r_2_:close"
-          type="button"
-        >
-          <svg
-            fill="none"
-            height="1em"
-            stroke="currentColor"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            viewBox="0 0 24 24"
-            width="1em"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path
-              d="M18 6 6 18"
-            />
-            <path
-              d="m6 6 12 12"
-            />
-          </svg>
-        </button>
       </div>
       <div
-        class="chakra-select__positioner"
-        data-part="positioner"
-        data-scope="select"
-        dir="ltr"
-        id="select:_r_3_:positioner"
-        style="position: absolute; isolation: isolate; width: var(--reference-width); pointer-events: none; top: 0px; left: 0px; transform: translate3d(0, -100vh, 0); z-index: var(--z-index);"
+        class="d_flex flex-d_row ai_center gap_8px "
       >
-        <div
-          aria-labelledby="select:_r_3_:label"
-          class="chakra-select__content css-14wowjj"
-          data-part="content"
-          data-scope="select"
-          data-state="closed"
-          dir="ltr"
-          hidden=""
-          id="select:_r_3_:content"
-          role="listbox"
-          tabindex="0"
+        <button
+          class="d_inline-flex ai_center jc_center bdr_full fw_medium trs_all_0.2s cursor_pointer px_6 py_3 fs_sm lh_1 disabled:op_0.5 disabled:cursor_not-allowed focusVisible:ring_2px_solid focusVisible:ring-c_primary focusVisible:ring-o_2px bg_background c_text.primary bd_1px_solid bd-c_border hover:bg_accent hover:c_accent.foreground"
         >
-          <div
-            aria-selected="true"
-            class="chakra-select__item css-1bq1bjd"
-            data-part="item"
-            data-scope="select"
-            data-state="checked"
-            data-value="Current"
-            dir="ltr"
-            id="select:_r_3_:option:Current"
-            role="option"
-          >
-            Current
-            <div
-              aria-hidden="true"
-              class="chakra-select__itemIndicator"
-              data-part="item-indicator"
-              data-scope="select"
-              data-state="checked"
-            >
-              <svg
-                class="css-s3mb0o"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  d="M20 6 9 17l-5-5"
-                />
-              </svg>
-            </div>
-          </div>
-          <div
-            aria-selected="false"
-            class="chakra-select__item css-1bq1bjd"
-            data-part="item"
-            data-scope="select"
-            data-state="unchecked"
-            data-value="Saving"
-            dir="ltr"
-            id="select:_r_3_:option:Saving"
-            role="option"
-          >
-            Saving
-            <div
-              aria-hidden="true"
-              class="chakra-select__itemIndicator"
-              data-part="item-indicator"
-              data-scope="select"
-              data-state="unchecked"
-              hidden=""
-            >
-              <svg
-                class="css-s3mb0o"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  d="M20 6 9 17l-5-5"
-                />
-              </svg>
-            </div>
-          </div>
-          <div
-            aria-selected="false"
-            class="chakra-select__item css-1bq1bjd"
-            data-part="item"
-            data-scope="select"
-            data-state="unchecked"
-            data-value="Mortgage"
-            dir="ltr"
-            id="select:_r_3_:option:Mortgage"
-            role="option"
-          >
-            Mortgage
-            <div
-              aria-hidden="true"
-              class="chakra-select__itemIndicator"
-              data-part="item-indicator"
-              data-scope="select"
-              data-state="unchecked"
-              hidden=""
-            >
-              <svg
-                class="css-s3mb0o"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  d="M20 6 9 17l-5-5"
-                />
-              </svg>
-            </div>
-          </div>
-          <div
-            aria-selected="false"
-            class="chakra-select__item css-1bq1bjd"
-            data-part="item"
-            data-scope="select"
-            data-state="unchecked"
-            data-value="Loan"
-            dir="ltr"
-            id="select:_r_3_:option:Loan"
-            role="option"
-          >
-            Loan
-            <div
-              aria-hidden="true"
-              class="chakra-select__itemIndicator"
-              data-part="item-indicator"
-              data-scope="select"
-              data-state="unchecked"
-              hidden=""
-            >
-              <svg
-                class="css-s3mb0o"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  d="M20 6 9 17l-5-5"
-                />
-              </svg>
-            </div>
-          </div>
-          <div
-            aria-selected="false"
-            class="chakra-select__item css-1bq1bjd"
-            data-part="item"
-            data-scope="select"
-            data-state="unchecked"
-            data-value="Owed"
-            dir="ltr"
-            id="select:_r_3_:option:Owed"
-            role="option"
-          >
-            Owed
-            <div
-              aria-hidden="true"
-              class="chakra-select__itemIndicator"
-              data-part="item-indicator"
-              data-scope="select"
-              data-state="unchecked"
-              hidden=""
-            >
-              <svg
-                class="css-s3mb0o"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  d="M20 6 9 17l-5-5"
-                />
-              </svg>
-            </div>
-          </div>
-        </div>
+          close
+        </button>
+        <button
+          class="d_inline-flex ai_center jc_center bdr_full fw_medium trs_all_0.2s cursor_pointer px_6 py_3 fs_sm lh_1 disabled:op_0.5 disabled:cursor_not-allowed focusVisible:ring_2px_solid focusVisible:ring-c_primary focusVisible:ring-o_2px bg_primary c_primary.foreground hover:bg_primary.hover"
+          form="123456"
+          type="submit"
+        >
+          save
+        </button>
       </div>
     </div>
   </div>
+  <span
+    aria-hidden="true"
+    data-aria-hidden="true"
+    data-radix-focus-guard=""
+    style="opacity: 0; position: fixed; pointer-events: none; outline-color: none; outline-style: none; outline-width: initial;"
+    tabindex="0"
+  />
 </body>
 `;
 
-exports[`<EditAccountDialogBtn > should render edit account dialog when trigger button is clicked 1`] = `"<body><div><script nonce="">((e,i,s,u,m,a,l,h)=>{let d=document.documentElement,w=["light","dark"];function p(n){(Array.isArray(e)?e:[e]).forEach(y=>{let k=y==="class",S=k&&a?m.map(f=>a[f]||f):m;k?(d.classList.remove(...S),d.classList.add(a&&a[n]?a[n]:n)):d.setAttribute(y,n)}),R(n)}function R(n){h&&w.includes(n)&&(d.style.colorScheme=n)}function c(){return window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"}if(u)p(u);else try{let n=localStorage.getItem(i)||s,y=l&&n==="system"?c():n;p(y)}catch(n){}})("class","theme","system",null,["light","dark"],null,true,true)</script><button type="button" class="chakra-button css-1hbeh4x">edit</button></div></body>"`;
+exports[`<EditAccountDialogBtn > should render edit account dialog when trigger button is clicked 1`] = `"<body><div><button class="d_inline-flex ai_center jc_center bdr_full fw_medium trs_all_0.2s cursor_pointer px_6 py_3 fs_sm lh_1 disabled:op_0.5 disabled:cursor_not-allowed focusVisible:ring_2px_solid focusVisible:ring-c_primary focusVisible:ring-o_2px bg_background c_text.primary bd_1px_solid bd-c_border hover:bg_accent hover:c_accent.foreground" type="button" aria-haspopup="dialog" aria-expanded="false" data-state="closed">edit</button></div></body>"`;

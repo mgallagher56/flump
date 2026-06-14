@@ -15,7 +15,7 @@ describe("FLPHeading", () => {
     expect(container).toMatchSnapshot();
   });
   test("renders as expected with a color", () => {
-    const { container } = customRender(<FLPHeading colorPalette="blue">{sampleText}</FLPHeading>);
+    const { container } = customRender(<FLPHeading color="blue.500">{sampleText}</FLPHeading>);
     expect(container).toMatchSnapshot();
   });
   test("render only number of lines", () => {

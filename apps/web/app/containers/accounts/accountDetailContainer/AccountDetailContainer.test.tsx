@@ -1,21 +1,10 @@
 import { act, fireEvent } from "@testing-library/react";
 import { vi } from "vitest";
 import customRender from "~/testUtils/customRender";
-
 import AccountDetailContainer from "./AccountDetailContainer";
 
 const mocks = vi.hoisted(() => ({
-  mockUseRevalidator: vi.fn(() => ({ revalidate: vi.fn() })),
-  mockFrom: vi.fn(() => ({
-    insert: vi.fn(),
-    update: vi.fn(() => ({
-      eq: vi.fn(() => ({
-        eq: vi.fn(() => ({
-          eq: vi.fn(),
-        })),
-      })),
-    })),
-  })),
+  mockFetcherSubmit: vi.fn(),
   mockUseLoaderData: vi.fn(() => ({
     account: {
       id: "123456",
@@ -153,16 +142,15 @@ vi.mock("react-router", async () => {
   return {
     ...actual,
     useLoaderData: mocks.mockUseLoaderData,
-    useRevalidator: mocks.mockUseRevalidator,
+    useRevalidator: () => ({ revalidate: vi.fn() }),
+    useFetcher: () => ({
+      submit: mocks.mockFetcherSubmit,
+      state: "idle",
+      data: null,
+      Form: "form",
+    }),
   };
 });
-
-vi.mock("app/utils/supabase", () => ({
-  default: {
-    from: mocks.mockFrom,
-    update: mocks.mockFrom,
-  },
-}));
 
 describe("<AccountDetailContainer />", () => {
   test("should render", () => {
@@ -179,7 +167,7 @@ describe("<AccountDetailContainer />", () => {
       fireEvent.click(addPrevYearButton);
     });
 
-    expect(mocks.mockFrom).toHaveBeenCalledTimes(2);
+    expect(mocks.mockFetcherSubmit).toHaveBeenCalledTimes(2);
     expect(baseElement).toMatchSnapshot("with new years added");
   });
 
@@ -203,8 +191,12 @@ describe("<AccountDetailContainer />", () => {
       fireEvent.click(saveButton);
     });
 
-    expect(mocks.mockFrom).toHaveBeenCalledWith("account_details");
-    expect(mocks.mockFrom).toHaveBeenCalledTimes(1);
+    expect(mocks.mockFetcherSubmit).toHaveBeenCalledWith(
+      expect.objectContaining({
+        intent: "updateValues",
+      }),
+      expect.anything(),
+    );
   });
 
   test("should render add current year button and add current year when clicked", () => {
@@ -223,7 +215,7 @@ describe("<AccountDetailContainer />", () => {
     act(() => {
       fireEvent.click(addCurrentYearButton);
     });
-    expect(mocks.mockFrom).toHaveBeenCalledTimes(1);
+    expect(mocks.mockFetcherSubmit).toHaveBeenCalledTimes(1);
     expect(baseElement).toMatchSnapshot("with current year added");
   });
 });

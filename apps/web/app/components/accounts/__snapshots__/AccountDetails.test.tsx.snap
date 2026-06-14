@@ -2,28 +2,19 @@
 
 exports[`<AccountDetails /> > should remove year when delete button is clicked 1`] = `
 <div>
-  <script
-    nonce=""
-  >
-    ((e,i,s,u,m,a,l,h)=&gt;
-    {let d=document.documentElement,w=["light","dark"];function p(n){(Array.isArray(e)?e:[e]).forEach(y=&gt;
-    {let k=y==="class",S=k&&a?m.map(f=&gt;
-    a[f]||f):m;k?(d.classList.remove(...S),d.classList.add(a&&a[n]?a[n]:n)):d.setAttribute(y,n)}),R(n)}function R(n){h&&w.includes(n)&&(d.style.colorScheme=n)}function c(){return window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"}if(u)p(u);else try{let n=localStorage.getItem(i)||s,y=l&&n==="system"?c():n;p(y)}catch(n){}})("class","theme","system",null,["light","dark"],null,true,true)
-  </script>
   <div
-    class="chakra-stack css-ox2yq"
+    class="d_flex flex-d_column gap_20px ov_auto"
   >
     <div
-      class="chakra-stack css-1igwmid"
+      class="d_flex flex-d_row ai_center gap_12px"
     >
       <h3
-        class="chakra-heading css-e8b6d6"
+        class="c_primary fs_1.25rem fw_bold lh_tight m_0 "
       >
         2021
       </h3>
       <button
-        class="chakra-button css-474cae"
-        type="button"
+        class="d_inline-flex ai_center jc_center bdr_full fw_medium trs_all_0.2s cursor_pointer px_4 py_2 fs_xs lh_1 disabled:op_0.5 disabled:cursor_not-allowed focusVisible:ring_2px_solid focusVisible:ring-c_primary focusVisible:ring-o_2px bg_transparent c_text.primary hover:bg_accent hover:c_accent.foreground"
       >
         deleteYear
       </button>
@@ -33,160 +24,159 @@ exports[`<AccountDetails /> > should remove year when delete button is clicked 1
     >
       <div>
         <p
-          class="css-gyi3bv"
+          class="fs_md fw_normal lh_normal ls_normal m_0 "
         >
           January
         </p>
         <p
-          class="css-gyi3bv"
+          class="fs_md fw_normal lh_normal ls_normal m_0 "
         >
           £1,000
         </p>
       </div>
       <div>
         <p
-          class="css-gyi3bv"
+          class="fs_md fw_normal lh_normal ls_normal m_0 "
         >
           February
         </p>
         <p
-          class="css-gyi3bv"
+          class="fs_md fw_normal lh_normal ls_normal m_0 "
         >
           £1,000
         </p>
       </div>
       <div>
         <p
-          class="css-gyi3bv"
+          class="fs_md fw_normal lh_normal ls_normal m_0 "
         >
           March
         </p>
         <p
-          class="css-gyi3bv"
+          class="fs_md fw_normal lh_normal ls_normal m_0 "
         >
           £1,000
         </p>
       </div>
       <div>
         <p
-          class="css-gyi3bv"
+          class="fs_md fw_normal lh_normal ls_normal m_0 "
         >
           April
         </p>
         <p
-          class="css-gyi3bv"
+          class="fs_md fw_normal lh_normal ls_normal m_0 "
         >
           £1,000
         </p>
       </div>
       <div>
         <p
-          class="css-gyi3bv"
+          class="fs_md fw_normal lh_normal ls_normal m_0 "
         >
           May
         </p>
         <p
-          class="css-gyi3bv"
+          class="fs_md fw_normal lh_normal ls_normal m_0 "
         >
           £1,000
         </p>
       </div>
       <div>
         <p
-          class="css-gyi3bv"
+          class="fs_md fw_normal lh_normal ls_normal m_0 "
         >
           June
         </p>
         <p
-          class="css-gyi3bv"
+          class="fs_md fw_normal lh_normal ls_normal m_0 "
         >
           £1,000
         </p>
       </div>
       <div>
         <p
-          class="css-gyi3bv"
+          class="fs_md fw_normal lh_normal ls_normal m_0 "
         >
           July
         </p>
         <p
-          class="css-gyi3bv"
+          class="fs_md fw_normal lh_normal ls_normal m_0 "
         >
           £1,000
         </p>
       </div>
       <div>
         <p
-          class="css-gyi3bv"
+          class="fs_md fw_normal lh_normal ls_normal m_0 "
         >
           August
         </p>
         <p
-          class="css-gyi3bv"
+          class="fs_md fw_normal lh_normal ls_normal m_0 "
         >
           £1,000
         </p>
       </div>
       <div>
         <p
-          class="css-gyi3bv"
+          class="fs_md fw_normal lh_normal ls_normal m_0 "
         >
           September
         </p>
         <p
-          class="css-gyi3bv"
+          class="fs_md fw_normal lh_normal ls_normal m_0 "
         >
           £1,000
         </p>
       </div>
       <div>
         <p
-          class="css-gyi3bv"
+          class="fs_md fw_normal lh_normal ls_normal m_0 "
         >
           October
         </p>
         <p
-          class="css-gyi3bv"
+          class="fs_md fw_normal lh_normal ls_normal m_0 "
         >
           £1,000
         </p>
       </div>
       <div>
         <p
-          class="css-gyi3bv"
+          class="fs_md fw_normal lh_normal ls_normal m_0 "
         >
           November
         </p>
         <p
-          class="css-gyi3bv"
+          class="fs_md fw_normal lh_normal ls_normal m_0 "
         >
           £1,000
         </p>
       </div>
       <div>
         <p
-          class="css-gyi3bv"
+          class="fs_md fw_normal lh_normal ls_normal m_0 "
         >
           December
         </p>
         <p
-          class="css-gyi3bv"
+          class="fs_md fw_normal lh_normal ls_normal m_0 "
         >
           £1,000
         </p>
       </div>
     </div>
     <div
-      class="chakra-stack css-1igwmid"
+      class="d_flex flex-d_row ai_center gap_12px"
     >
       <h3
-        class="chakra-heading css-e8b6d6"
+        class="c_primary fs_1.25rem fw_bold lh_tight m_0 "
       >
         2023
       </h3>
       <button
-        class="chakra-button css-474cae"
-        type="button"
+        class="d_inline-flex ai_center jc_center bdr_full fw_medium trs_all_0.2s cursor_pointer px_4 py_2 fs_xs lh_1 disabled:op_0.5 disabled:cursor_not-allowed focusVisible:ring_2px_solid focusVisible:ring-c_primary focusVisible:ring-o_2px bg_transparent c_text.primary hover:bg_accent hover:c_accent.foreground"
       >
         deleteYear
       </button>
@@ -196,144 +186,144 @@ exports[`<AccountDetails /> > should remove year when delete button is clicked 1
     >
       <div>
         <p
-          class="css-gyi3bv"
+          class="fs_md fw_normal lh_normal ls_normal m_0 "
         >
           January
         </p>
         <p
-          class="css-gyi3bv"
+          class="fs_md fw_normal lh_normal ls_normal m_0 "
         >
           £1,000
         </p>
       </div>
       <div>
         <p
-          class="css-gyi3bv"
+          class="fs_md fw_normal lh_normal ls_normal m_0 "
         >
           February
         </p>
         <p
-          class="css-gyi3bv"
+          class="fs_md fw_normal lh_normal ls_normal m_0 "
         >
           £1,000
         </p>
       </div>
       <div>
         <p
-          class="css-gyi3bv"
+          class="fs_md fw_normal lh_normal ls_normal m_0 "
         >
           March
         </p>
         <p
-          class="css-gyi3bv"
+          class="fs_md fw_normal lh_normal ls_normal m_0 "
         >
           £1,000
         </p>
       </div>
       <div>
         <p
-          class="css-gyi3bv"
+          class="fs_md fw_normal lh_normal ls_normal m_0 "
         >
           April
         </p>
         <p
-          class="css-gyi3bv"
+          class="fs_md fw_normal lh_normal ls_normal m_0 "
         >
           £1,000
         </p>
       </div>
       <div>
         <p
-          class="css-gyi3bv"
+          class="fs_md fw_normal lh_normal ls_normal m_0 "
         >
           May
         </p>
         <p
-          class="css-gyi3bv"
+          class="fs_md fw_normal lh_normal ls_normal m_0 "
         >
           £1,000
         </p>
       </div>
       <div>
         <p
-          class="css-gyi3bv"
+          class="fs_md fw_normal lh_normal ls_normal m_0 "
         >
           June
         </p>
         <p
-          class="css-gyi3bv"
+          class="fs_md fw_normal lh_normal ls_normal m_0 "
         >
           £1,000
         </p>
       </div>
       <div>
         <p
-          class="css-gyi3bv"
+          class="fs_md fw_normal lh_normal ls_normal m_0 "
         >
           July
         </p>
         <p
-          class="css-gyi3bv"
+          class="fs_md fw_normal lh_normal ls_normal m_0 "
         >
           £1,000
         </p>
       </div>
       <div>
         <p
-          class="css-gyi3bv"
+          class="fs_md fw_normal lh_normal ls_normal m_0 "
         >
           August
         </p>
         <p
-          class="css-gyi3bv"
+          class="fs_md fw_normal lh_normal ls_normal m_0 "
         >
           £1,000
         </p>
       </div>
       <div>
         <p
-          class="css-gyi3bv"
+          class="fs_md fw_normal lh_normal ls_normal m_0 "
         >
           September
         </p>
         <p
-          class="css-gyi3bv"
+          class="fs_md fw_normal lh_normal ls_normal m_0 "
         >
           £1,000
         </p>
       </div>
       <div>
         <p
-          class="css-gyi3bv"
+          class="fs_md fw_normal lh_normal ls_normal m_0 "
         >
           October
         </p>
         <p
-          class="css-gyi3bv"
+          class="fs_md fw_normal lh_normal ls_normal m_0 "
         >
           £1,000
         </p>
       </div>
       <div>
         <p
-          class="css-gyi3bv"
+          class="fs_md fw_normal lh_normal ls_normal m_0 "
         >
           November
         </p>
         <p
-          class="css-gyi3bv"
+          class="fs_md fw_normal lh_normal ls_normal m_0 "
         >
           £1,000
         </p>
       </div>
       <div>
         <p
-          class="css-gyi3bv"
+          class="fs_md fw_normal lh_normal ls_normal m_0 "
         >
           December
         </p>
         <p
-          class="css-gyi3bv"
+          class="fs_md fw_normal lh_normal ls_normal m_0 "
         >
           £1,000
         </p>
@@ -345,28 +335,19 @@ exports[`<AccountDetails /> > should remove year when delete button is clicked 1
 
 exports[`<AccountDetails /> > should render 1`] = `
 <div>
-  <script
-    nonce=""
-  >
-    ((e,i,s,u,m,a,l,h)=&gt;
-    {let d=document.documentElement,w=["light","dark"];function p(n){(Array.isArray(e)?e:[e]).forEach(y=&gt;
-    {let k=y==="class",S=k&&a?m.map(f=&gt;
-    a[f]||f):m;k?(d.classList.remove(...S),d.classList.add(a&&a[n]?a[n]:n)):d.setAttribute(y,n)}),R(n)}function R(n){h&&w.includes(n)&&(d.style.colorScheme=n)}function c(){return window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"}if(u)p(u);else try{let n=localStorage.getItem(i)||s,y=l&&n==="system"?c():n;p(y)}catch(n){}})("class","theme","system",null,["light","dark"],null,true,true)
-  </script>
   <div
-    class="chakra-stack css-ox2yq"
+    class="d_flex flex-d_column gap_20px ov_auto"
   >
     <div
-      class="chakra-stack css-1igwmid"
+      class="d_flex flex-d_row ai_center gap_12px"
     >
       <h3
-        class="chakra-heading css-e8b6d6"
+        class="c_primary fs_1.25rem fw_bold lh_tight m_0 "
       >
         2021
       </h3>
       <button
-        class="chakra-button css-474cae"
-        type="button"
+        class="d_inline-flex ai_center jc_center bdr_full fw_medium trs_all_0.2s cursor_pointer px_4 py_2 fs_xs lh_1 disabled:op_0.5 disabled:cursor_not-allowed focusVisible:ring_2px_solid focusVisible:ring-c_primary focusVisible:ring-o_2px bg_transparent c_text.primary hover:bg_accent hover:c_accent.foreground"
       >
         deleteYear
       </button>
@@ -376,160 +357,159 @@ exports[`<AccountDetails /> > should render 1`] = `
     >
       <div>
         <p
-          class="css-gyi3bv"
+          class="fs_md fw_normal lh_normal ls_normal m_0 "
         >
           January
         </p>
         <p
-          class="css-gyi3bv"
+          class="fs_md fw_normal lh_normal ls_normal m_0 "
         >
           £1,000
         </p>
       </div>
       <div>
         <p
-          class="css-gyi3bv"
+          class="fs_md fw_normal lh_normal ls_normal m_0 "
         >
           February
         </p>
         <p
-          class="css-gyi3bv"
+          class="fs_md fw_normal lh_normal ls_normal m_0 "
         >
           £1,000
         </p>
       </div>
       <div>
         <p
-          class="css-gyi3bv"
+          class="fs_md fw_normal lh_normal ls_normal m_0 "
         >
           March
         </p>
         <p
-          class="css-gyi3bv"
+          class="fs_md fw_normal lh_normal ls_normal m_0 "
         >
           £1,000
         </p>
       </div>
       <div>
         <p
-          class="css-gyi3bv"
+          class="fs_md fw_normal lh_normal ls_normal m_0 "
         >
           April
         </p>
         <p
-          class="css-gyi3bv"
+          class="fs_md fw_normal lh_normal ls_normal m_0 "
         >
           £1,000
         </p>
       </div>
       <div>
         <p
-          class="css-gyi3bv"
+          class="fs_md fw_normal lh_normal ls_normal m_0 "
         >
           May
         </p>
         <p
-          class="css-gyi3bv"
+          class="fs_md fw_normal lh_normal ls_normal m_0 "
         >
           £1,000
         </p>
       </div>
       <div>
         <p
-          class="css-gyi3bv"
+          class="fs_md fw_normal lh_normal ls_normal m_0 "
         >
           June
         </p>
         <p
-          class="css-gyi3bv"
+          class="fs_md fw_normal lh_normal ls_normal m_0 "
         >
           £1,000
         </p>
       </div>
       <div>
         <p
-          class="css-gyi3bv"
+          class="fs_md fw_normal lh_normal ls_normal m_0 "
         >
           July
         </p>
         <p
-          class="css-gyi3bv"
+          class="fs_md fw_normal lh_normal ls_normal m_0 "
         >
           £1,000
         </p>
       </div>
       <div>
         <p
-          class="css-gyi3bv"
+          class="fs_md fw_normal lh_normal ls_normal m_0 "
         >
           August
         </p>
         <p
-          class="css-gyi3bv"
+          class="fs_md fw_normal lh_normal ls_normal m_0 "
         >
           £1,000
         </p>
       </div>
       <div>
         <p
-          class="css-gyi3bv"
+          class="fs_md fw_normal lh_normal ls_normal m_0 "
         >
           September
         </p>
         <p
-          class="css-gyi3bv"
+          class="fs_md fw_normal lh_normal ls_normal m_0 "
         >
           £1,000
         </p>
       </div>
       <div>
         <p
-          class="css-gyi3bv"
+          class="fs_md fw_normal lh_normal ls_normal m_0 "
         >
           October
         </p>
         <p
-          class="css-gyi3bv"
+          class="fs_md fw_normal lh_normal ls_normal m_0 "
         >
           £1,000
         </p>
       </div>
       <div>
         <p
-          class="css-gyi3bv"
+          class="fs_md fw_normal lh_normal ls_normal m_0 "
         >
           November
         </p>
         <p
-          class="css-gyi3bv"
+          class="fs_md fw_normal lh_normal ls_normal m_0 "
         >
           £1,000
         </p>
       </div>
       <div>
         <p
-          class="css-gyi3bv"
+          class="fs_md fw_normal lh_normal ls_normal m_0 "
         >
           December
         </p>
         <p
-          class="css-gyi3bv"
+          class="fs_md fw_normal lh_normal ls_normal m_0 "
         >
           £1,000
         </p>
       </div>
     </div>
     <div
-      class="chakra-stack css-1igwmid"
+      class="d_flex flex-d_row ai_center gap_12px"
     >
       <h3
-        class="chakra-heading css-e8b6d6"
+        class="c_primary fs_1.25rem fw_bold lh_tight m_0 "
       >
         2023
       </h3>
       <button
-        class="chakra-button css-474cae"
-        type="button"
+        class="d_inline-flex ai_center jc_center bdr_full fw_medium trs_all_0.2s cursor_pointer px_4 py_2 fs_xs lh_1 disabled:op_0.5 disabled:cursor_not-allowed focusVisible:ring_2px_solid focusVisible:ring-c_primary focusVisible:ring-o_2px bg_transparent c_text.primary hover:bg_accent hover:c_accent.foreground"
       >
         deleteYear
       </button>
@@ -539,144 +519,144 @@ exports[`<AccountDetails /> > should render 1`] = `
     >
       <div>
         <p
-          class="css-gyi3bv"
+          class="fs_md fw_normal lh_normal ls_normal m_0 "
         >
           January
         </p>
         <p
-          class="css-gyi3bv"
+          class="fs_md fw_normal lh_normal ls_normal m_0 "
         >
           £1,000
         </p>
       </div>
       <div>
         <p
-          class="css-gyi3bv"
+          class="fs_md fw_normal lh_normal ls_normal m_0 "
         >
           February
         </p>
         <p
-          class="css-gyi3bv"
+          class="fs_md fw_normal lh_normal ls_normal m_0 "
         >
           £1,000
         </p>
       </div>
       <div>
         <p
-          class="css-gyi3bv"
+          class="fs_md fw_normal lh_normal ls_normal m_0 "
         >
           March
         </p>
         <p
-          class="css-gyi3bv"
+          class="fs_md fw_normal lh_normal ls_normal m_0 "
         >
           £1,000
         </p>
       </div>
       <div>
         <p
-          class="css-gyi3bv"
+          class="fs_md fw_normal lh_normal ls_normal m_0 "
         >
           April
         </p>
         <p
-          class="css-gyi3bv"
+          class="fs_md fw_normal lh_normal ls_normal m_0 "
         >
           £1,000
         </p>
       </div>
       <div>
         <p
-          class="css-gyi3bv"
+          class="fs_md fw_normal lh_normal ls_normal m_0 "
         >
           May
         </p>
         <p
-          class="css-gyi3bv"
+          class="fs_md fw_normal lh_normal ls_normal m_0 "
         >
           £1,000
         </p>
       </div>
       <div>
         <p
-          class="css-gyi3bv"
+          class="fs_md fw_normal lh_normal ls_normal m_0 "
         >
           June
         </p>
         <p
-          class="css-gyi3bv"
+          class="fs_md fw_normal lh_normal ls_normal m_0 "
         >
           £1,000
         </p>
       </div>
       <div>
         <p
-          class="css-gyi3bv"
+          class="fs_md fw_normal lh_normal ls_normal m_0 "
         >
           July
         </p>
         <p
-          class="css-gyi3bv"
+          class="fs_md fw_normal lh_normal ls_normal m_0 "
         >
           £1,000
         </p>
       </div>
       <div>
         <p
-          class="css-gyi3bv"
+          class="fs_md fw_normal lh_normal ls_normal m_0 "
         >
           August
         </p>
         <p
-          class="css-gyi3bv"
+          class="fs_md fw_normal lh_normal ls_normal m_0 "
         >
           £1,000
         </p>
       </div>
       <div>
         <p
-          class="css-gyi3bv"
+          class="fs_md fw_normal lh_normal ls_normal m_0 "
         >
           September
         </p>
         <p
-          class="css-gyi3bv"
+          class="fs_md fw_normal lh_normal ls_normal m_0 "
         >
           £1,000
         </p>
       </div>
       <div>
         <p
-          class="css-gyi3bv"
+          class="fs_md fw_normal lh_normal ls_normal m_0 "
         >
           October
         </p>
         <p
-          class="css-gyi3bv"
+          class="fs_md fw_normal lh_normal ls_normal m_0 "
         >
           £1,000
         </p>
       </div>
       <div>
         <p
-          class="css-gyi3bv"
+          class="fs_md fw_normal lh_normal ls_normal m_0 "
         >
           November
         </p>
         <p
-          class="css-gyi3bv"
+          class="fs_md fw_normal lh_normal ls_normal m_0 "
         >
           £1,000
         </p>
       </div>
       <div>
         <p
-          class="css-gyi3bv"
+          class="fs_md fw_normal lh_normal ls_normal m_0 "
         >
           December
         </p>
         <p
-          class="css-gyi3bv"
+          class="fs_md fw_normal lh_normal ls_normal m_0 "
         >
           £1,000
         </p>
@@ -688,28 +668,19 @@ exports[`<AccountDetails /> > should render 1`] = `
 
 exports[`<AccountDetails /> > should render in edit mode 1`] = `
 <div>
-  <script
-    nonce=""
-  >
-    ((e,i,s,u,m,a,l,h)=&gt;
-    {let d=document.documentElement,w=["light","dark"];function p(n){(Array.isArray(e)?e:[e]).forEach(y=&gt;
-    {let k=y==="class",S=k&&a?m.map(f=&gt;
-    a[f]||f):m;k?(d.classList.remove(...S),d.classList.add(a&&a[n]?a[n]:n)):d.setAttribute(y,n)}),R(n)}function R(n){h&&w.includes(n)&&(d.style.colorScheme=n)}function c(){return window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"}if(u)p(u);else try{let n=localStorage.getItem(i)||s,y=l&&n==="system"?c():n;p(y)}catch(n){}})("class","theme","system",null,["light","dark"],null,true,true)
-  </script>
   <div
-    class="chakra-stack css-ox2yq"
+    class="d_flex flex-d_column gap_20px ov_auto"
   >
     <div
-      class="chakra-stack css-1igwmid"
+      class="d_flex flex-d_row ai_center gap_12px"
     >
       <h3
-        class="chakra-heading css-e8b6d6"
+        class="c_primary fs_1.25rem fw_bold lh_tight m_0 "
       >
         2021
       </h3>
       <button
-        class="chakra-button css-474cae"
-        type="button"
+        class="d_inline-flex ai_center jc_center bdr_full fw_medium trs_all_0.2s cursor_pointer px_4 py_2 fs_xs lh_1 disabled:op_0.5 disabled:cursor_not-allowed focusVisible:ring_2px_solid focusVisible:ring-c_primary focusVisible:ring-o_2px bg_transparent c_text.primary hover:bg_accent hover:c_accent.foreground"
       >
         deleteYear
       </button>
@@ -719,412 +690,315 @@ exports[`<AccountDetails /> > should render in edit mode 1`] = `
     >
       <div>
         <p
-          class="css-gyi3bv"
+          class="fs_md fw_normal lh_normal ls_normal m_0 "
         >
           January
         </p>
         <div
-          class="d_flex flex-d_column gap_2"
+          class="d_flex flex-d_column ai_stretch gap_8px w_100%"
         >
-          <label
-            for="2021-January"
-            hidden=""
+          <div
+            style="flex-grow: 1; flex-shrink: 1; flex-basis: 0%;"
           >
-            2021-January
-          </label>
-          <div>
-            <div
-              class="css-1op6ogi"
-            >
-              <input
-                class="chakra-input css-1hnmrmz"
-                data-month="1"
-                data-year="2021"
-                id="2021-January"
-                name="amount"
-                placeholder="0.00"
-                type="number"
-                value="1000"
-              />
-            </div>
+            <input
+              class="w_100% p_10px_14px fs_sm bdr_sm bd_1px_solid bd-c_border bg-c_transparent c_text.primary ring_none trs_all_0.2s focus:bd-c_primary focus:bx-sh_0_0_0_1px_token(colors.primary) disabled:op_0.5 disabled:cursor_not-allowed "
+              data-month="1"
+              data-year="2021"
+              id="2021-January"
+              name="amount"
+              placeholder="0.00"
+              type="number"
+              value="1000"
+            />
           </div>
         </div>
       </div>
       <div>
         <p
-          class="css-gyi3bv"
+          class="fs_md fw_normal lh_normal ls_normal m_0 "
         >
           February
         </p>
         <div
-          class="d_flex flex-d_column gap_2"
+          class="d_flex flex-d_column ai_stretch gap_8px w_100%"
         >
-          <label
-            for="2021-February"
-            hidden=""
+          <div
+            style="flex-grow: 1; flex-shrink: 1; flex-basis: 0%;"
           >
-            2021-February
-          </label>
-          <div>
-            <div
-              class="css-1op6ogi"
-            >
-              <input
-                class="chakra-input css-1hnmrmz"
-                data-month="2"
-                data-year="2021"
-                id="2021-February"
-                name="amount"
-                placeholder="0.00"
-                type="number"
-                value="1000"
-              />
-            </div>
+            <input
+              class="w_100% p_10px_14px fs_sm bdr_sm bd_1px_solid bd-c_border bg-c_transparent c_text.primary ring_none trs_all_0.2s focus:bd-c_primary focus:bx-sh_0_0_0_1px_token(colors.primary) disabled:op_0.5 disabled:cursor_not-allowed "
+              data-month="2"
+              data-year="2021"
+              id="2021-February"
+              name="amount"
+              placeholder="0.00"
+              type="number"
+              value="1000"
+            />
           </div>
         </div>
       </div>
       <div>
         <p
-          class="css-gyi3bv"
+          class="fs_md fw_normal lh_normal ls_normal m_0 "
         >
           March
         </p>
         <div
-          class="d_flex flex-d_column gap_2"
+          class="d_flex flex-d_column ai_stretch gap_8px w_100%"
         >
-          <label
-            for="2021-March"
-            hidden=""
+          <div
+            style="flex-grow: 1; flex-shrink: 1; flex-basis: 0%;"
           >
-            2021-March
-          </label>
-          <div>
-            <div
-              class="css-1op6ogi"
-            >
-              <input
-                class="chakra-input css-1hnmrmz"
-                data-month="3"
-                data-year="2021"
-                id="2021-March"
-                name="amount"
-                placeholder="0.00"
-                type="number"
-                value="1000"
-              />
-            </div>
+            <input
+              class="w_100% p_10px_14px fs_sm bdr_sm bd_1px_solid bd-c_border bg-c_transparent c_text.primary ring_none trs_all_0.2s focus:bd-c_primary focus:bx-sh_0_0_0_1px_token(colors.primary) disabled:op_0.5 disabled:cursor_not-allowed "
+              data-month="3"
+              data-year="2021"
+              id="2021-March"
+              name="amount"
+              placeholder="0.00"
+              type="number"
+              value="1000"
+            />
           </div>
         </div>
       </div>
       <div>
         <p
-          class="css-gyi3bv"
+          class="fs_md fw_normal lh_normal ls_normal m_0 "
         >
           April
         </p>
         <div
-          class="d_flex flex-d_column gap_2"
+          class="d_flex flex-d_column ai_stretch gap_8px w_100%"
         >
-          <label
-            for="2021-April"
-            hidden=""
+          <div
+            style="flex-grow: 1; flex-shrink: 1; flex-basis: 0%;"
           >
-            2021-April
-          </label>
-          <div>
-            <div
-              class="css-1op6ogi"
-            >
-              <input
-                class="chakra-input css-1hnmrmz"
-                data-month="4"
-                data-year="2021"
-                id="2021-April"
-                name="amount"
-                placeholder="0.00"
-                type="number"
-                value="1000"
-              />
-            </div>
+            <input
+              class="w_100% p_10px_14px fs_sm bdr_sm bd_1px_solid bd-c_border bg-c_transparent c_text.primary ring_none trs_all_0.2s focus:bd-c_primary focus:bx-sh_0_0_0_1px_token(colors.primary) disabled:op_0.5 disabled:cursor_not-allowed "
+              data-month="4"
+              data-year="2021"
+              id="2021-April"
+              name="amount"
+              placeholder="0.00"
+              type="number"
+              value="1000"
+            />
           </div>
         </div>
       </div>
       <div>
         <p
-          class="css-gyi3bv"
+          class="fs_md fw_normal lh_normal ls_normal m_0 "
         >
           May
         </p>
         <div
-          class="d_flex flex-d_column gap_2"
+          class="d_flex flex-d_column ai_stretch gap_8px w_100%"
         >
-          <label
-            for="2021-May"
-            hidden=""
+          <div
+            style="flex-grow: 1; flex-shrink: 1; flex-basis: 0%;"
           >
-            2021-May
-          </label>
-          <div>
-            <div
-              class="css-1op6ogi"
-            >
-              <input
-                class="chakra-input css-1hnmrmz"
-                data-month="5"
-                data-year="2021"
-                id="2021-May"
-                name="amount"
-                placeholder="0.00"
-                type="number"
-                value="1000"
-              />
-            </div>
+            <input
+              class="w_100% p_10px_14px fs_sm bdr_sm bd_1px_solid bd-c_border bg-c_transparent c_text.primary ring_none trs_all_0.2s focus:bd-c_primary focus:bx-sh_0_0_0_1px_token(colors.primary) disabled:op_0.5 disabled:cursor_not-allowed "
+              data-month="5"
+              data-year="2021"
+              id="2021-May"
+              name="amount"
+              placeholder="0.00"
+              type="number"
+              value="1000"
+            />
           </div>
         </div>
       </div>
       <div>
         <p
-          class="css-gyi3bv"
+          class="fs_md fw_normal lh_normal ls_normal m_0 "
         >
           June
         </p>
         <div
-          class="d_flex flex-d_column gap_2"
+          class="d_flex flex-d_column ai_stretch gap_8px w_100%"
         >
-          <label
-            for="2021-June"
-            hidden=""
+          <div
+            style="flex-grow: 1; flex-shrink: 1; flex-basis: 0%;"
           >
-            2021-June
-          </label>
-          <div>
-            <div
-              class="css-1op6ogi"
-            >
-              <input
-                class="chakra-input css-1hnmrmz"
-                data-month="6"
-                data-year="2021"
-                id="2021-June"
-                name="amount"
-                placeholder="0.00"
-                type="number"
-                value="1000"
-              />
-            </div>
+            <input
+              class="w_100% p_10px_14px fs_sm bdr_sm bd_1px_solid bd-c_border bg-c_transparent c_text.primary ring_none trs_all_0.2s focus:bd-c_primary focus:bx-sh_0_0_0_1px_token(colors.primary) disabled:op_0.5 disabled:cursor_not-allowed "
+              data-month="6"
+              data-year="2021"
+              id="2021-June"
+              name="amount"
+              placeholder="0.00"
+              type="number"
+              value="1000"
+            />
           </div>
         </div>
       </div>
       <div>
         <p
-          class="css-gyi3bv"
+          class="fs_md fw_normal lh_normal ls_normal m_0 "
         >
           July
         </p>
         <div
-          class="d_flex flex-d_column gap_2"
+          class="d_flex flex-d_column ai_stretch gap_8px w_100%"
         >
-          <label
-            for="2021-July"
-            hidden=""
+          <div
+            style="flex-grow: 1; flex-shrink: 1; flex-basis: 0%;"
           >
-            2021-July
-          </label>
-          <div>
-            <div
-              class="css-1op6ogi"
-            >
-              <input
-                class="chakra-input css-1hnmrmz"
-                data-month="7"
-                data-year="2021"
-                id="2021-July"
-                name="amount"
-                placeholder="0.00"
-                type="number"
-                value="1000"
-              />
-            </div>
+            <input
+              class="w_100% p_10px_14px fs_sm bdr_sm bd_1px_solid bd-c_border bg-c_transparent c_text.primary ring_none trs_all_0.2s focus:bd-c_primary focus:bx-sh_0_0_0_1px_token(colors.primary) disabled:op_0.5 disabled:cursor_not-allowed "
+              data-month="7"
+              data-year="2021"
+              id="2021-July"
+              name="amount"
+              placeholder="0.00"
+              type="number"
+              value="1000"
+            />
           </div>
         </div>
       </div>
       <div>
         <p
-          class="css-gyi3bv"
+          class="fs_md fw_normal lh_normal ls_normal m_0 "
         >
           August
         </p>
         <div
-          class="d_flex flex-d_column gap_2"
+          class="d_flex flex-d_column ai_stretch gap_8px w_100%"
         >
-          <label
-            for="2021-August"
-            hidden=""
+          <div
+            style="flex-grow: 1; flex-shrink: 1; flex-basis: 0%;"
           >
-            2021-August
-          </label>
-          <div>
-            <div
-              class="css-1op6ogi"
-            >
-              <input
-                class="chakra-input css-1hnmrmz"
-                data-month="8"
-                data-year="2021"
-                id="2021-August"
-                name="amount"
-                placeholder="0.00"
-                type="number"
-                value="1000"
-              />
-            </div>
+            <input
+              class="w_100% p_10px_14px fs_sm bdr_sm bd_1px_solid bd-c_border bg-c_transparent c_text.primary ring_none trs_all_0.2s focus:bd-c_primary focus:bx-sh_0_0_0_1px_token(colors.primary) disabled:op_0.5 disabled:cursor_not-allowed "
+              data-month="8"
+              data-year="2021"
+              id="2021-August"
+              name="amount"
+              placeholder="0.00"
+              type="number"
+              value="1000"
+            />
           </div>
         </div>
       </div>
       <div>
         <p
-          class="css-gyi3bv"
+          class="fs_md fw_normal lh_normal ls_normal m_0 "
         >
           September
         </p>
         <div
-          class="d_flex flex-d_column gap_2"
+          class="d_flex flex-d_column ai_stretch gap_8px w_100%"
         >
-          <label
-            for="2021-September"
-            hidden=""
+          <div
+            style="flex-grow: 1; flex-shrink: 1; flex-basis: 0%;"
           >
-            2021-September
-          </label>
-          <div>
-            <div
-              class="css-1op6ogi"
-            >
-              <input
-                class="chakra-input css-1hnmrmz"
-                data-month="9"
-                data-year="2021"
-                id="2021-September"
-                name="amount"
-                placeholder="0.00"
-                type="number"
-                value="1000"
-              />
-            </div>
+            <input
+              class="w_100% p_10px_14px fs_sm bdr_sm bd_1px_solid bd-c_border bg-c_transparent c_text.primary ring_none trs_all_0.2s focus:bd-c_primary focus:bx-sh_0_0_0_1px_token(colors.primary) disabled:op_0.5 disabled:cursor_not-allowed "
+              data-month="9"
+              data-year="2021"
+              id="2021-September"
+              name="amount"
+              placeholder="0.00"
+              type="number"
+              value="1000"
+            />
           </div>
         </div>
       </div>
       <div>
         <p
-          class="css-gyi3bv"
+          class="fs_md fw_normal lh_normal ls_normal m_0 "
         >
           October
         </p>
         <div
-          class="d_flex flex-d_column gap_2"
+          class="d_flex flex-d_column ai_stretch gap_8px w_100%"
         >
-          <label
-            for="2021-October"
-            hidden=""
+          <div
+            style="flex-grow: 1; flex-shrink: 1; flex-basis: 0%;"
           >
-            2021-October
-          </label>
-          <div>
-            <div
-              class="css-1op6ogi"
-            >
-              <input
-                class="chakra-input css-1hnmrmz"
-                data-month="10"
-                data-year="2021"
-                id="2021-October"
-                name="amount"
-                placeholder="0.00"
-                type="number"
-                value="1000"
-              />
-            </div>
+            <input
+              class="w_100% p_10px_14px fs_sm bdr_sm bd_1px_solid bd-c_border bg-c_transparent c_text.primary ring_none trs_all_0.2s focus:bd-c_primary focus:bx-sh_0_0_0_1px_token(colors.primary) disabled:op_0.5 disabled:cursor_not-allowed "
+              data-month="10"
+              data-year="2021"
+              id="2021-October"
+              name="amount"
+              placeholder="0.00"
+              type="number"
+              value="1000"
+            />
           </div>
         </div>
       </div>
       <div>
         <p
-          class="css-gyi3bv"
+          class="fs_md fw_normal lh_normal ls_normal m_0 "
         >
           November
         </p>
         <div
-          class="d_flex flex-d_column gap_2"
+          class="d_flex flex-d_column ai_stretch gap_8px w_100%"
         >
-          <label
-            for="2021-November"
-            hidden=""
+          <div
+            style="flex-grow: 1; flex-shrink: 1; flex-basis: 0%;"
           >
-            2021-November
-          </label>
-          <div>
-            <div
-              class="css-1op6ogi"
-            >
-              <input
-                class="chakra-input css-1hnmrmz"
-                data-month="11"
-                data-year="2021"
-                id="2021-November"
-                name="amount"
-                placeholder="0.00"
-                type="number"
-                value="1000"
-              />
-            </div>
+            <input
+              class="w_100% p_10px_14px fs_sm bdr_sm bd_1px_solid bd-c_border bg-c_transparent c_text.primary ring_none trs_all_0.2s focus:bd-c_primary focus:bx-sh_0_0_0_1px_token(colors.primary) disabled:op_0.5 disabled:cursor_not-allowed "
+              data-month="11"
+              data-year="2021"
+              id="2021-November"
+              name="amount"
+              placeholder="0.00"
+              type="number"
+              value="1000"
+            />
           </div>
         </div>
       </div>
       <div>
         <p
-          class="css-gyi3bv"
+          class="fs_md fw_normal lh_normal ls_normal m_0 "
         >
           December
         </p>
         <div
-          class="d_flex flex-d_column gap_2"
+          class="d_flex flex-d_column ai_stretch gap_8px w_100%"
         >
-          <label
-            for="2021-December"
-            hidden=""
+          <div
+            style="flex-grow: 1; flex-shrink: 1; flex-basis: 0%;"
           >
-            2021-December
-          </label>
-          <div>
-            <div
-              class="css-1op6ogi"
-            >
-              <input
-                class="chakra-input css-1hnmrmz"
-                data-month="12"
-                data-year="2021"
-                id="2021-December"
-                name="amount"
-                placeholder="0.00"
-                type="number"
-                value="1000"
-              />
-            </div>
+            <input
+              class="w_100% p_10px_14px fs_sm bdr_sm bd_1px_solid bd-c_border bg-c_transparent c_text.primary ring_none trs_all_0.2s focus:bd-c_primary focus:bx-sh_0_0_0_1px_token(colors.primary) disabled:op_0.5 disabled:cursor_not-allowed "
+              data-month="12"
+              data-year="2021"
+              id="2021-December"
+              name="amount"
+              placeholder="0.00"
+              type="number"
+              value="1000"
+            />
           </div>
         </div>
       </div>
     </div>
     <div
-      class="chakra-stack css-1igwmid"
+      class="d_flex flex-d_row ai_center gap_12px"
     >
       <h3
-        class="chakra-heading css-e8b6d6"
+        class="c_primary fs_1.25rem fw_bold lh_tight m_0 "
       >
         2023
       </h3>
       <button
-        class="chakra-button css-474cae"
-        type="button"
+        class="d_inline-flex ai_center jc_center bdr_full fw_medium trs_all_0.2s cursor_pointer px_4 py_2 fs_xs lh_1 disabled:op_0.5 disabled:cursor_not-allowed focusVisible:ring_2px_solid focusVisible:ring-c_primary focusVisible:ring-o_2px bg_transparent c_text.primary hover:bg_accent hover:c_accent.foreground"
       >
         deleteYear
       </button>
@@ -1134,397 +1008,301 @@ exports[`<AccountDetails /> > should render in edit mode 1`] = `
     >
       <div>
         <p
-          class="css-gyi3bv"
+          class="fs_md fw_normal lh_normal ls_normal m_0 "
         >
           January
         </p>
         <div
-          class="d_flex flex-d_column gap_2"
+          class="d_flex flex-d_column ai_stretch gap_8px w_100%"
         >
-          <label
-            for="2023-January"
-            hidden=""
+          <div
+            style="flex-grow: 1; flex-shrink: 1; flex-basis: 0%;"
           >
-            2023-January
-          </label>
-          <div>
-            <div
-              class="css-1op6ogi"
-            >
-              <input
-                class="chakra-input css-1hnmrmz"
-                data-month="1"
-                data-year="2023"
-                id="2023-January"
-                name="amount"
-                placeholder="0.00"
-                type="number"
-                value="1000"
-              />
-            </div>
+            <input
+              class="w_100% p_10px_14px fs_sm bdr_sm bd_1px_solid bd-c_border bg-c_transparent c_text.primary ring_none trs_all_0.2s focus:bd-c_primary focus:bx-sh_0_0_0_1px_token(colors.primary) disabled:op_0.5 disabled:cursor_not-allowed "
+              data-month="1"
+              data-year="2023"
+              id="2023-January"
+              name="amount"
+              placeholder="0.00"
+              type="number"
+              value="1000"
+            />
           </div>
         </div>
       </div>
       <div>
         <p
-          class="css-gyi3bv"
+          class="fs_md fw_normal lh_normal ls_normal m_0 "
         >
           February
         </p>
         <div
-          class="d_flex flex-d_column gap_2"
+          class="d_flex flex-d_column ai_stretch gap_8px w_100%"
         >
-          <label
-            for="2023-February"
-            hidden=""
+          <div
+            style="flex-grow: 1; flex-shrink: 1; flex-basis: 0%;"
           >
-            2023-February
-          </label>
-          <div>
-            <div
-              class="css-1op6ogi"
-            >
-              <input
-                class="chakra-input css-1hnmrmz"
-                data-month="2"
-                data-year="2023"
-                id="2023-February"
-                name="amount"
-                placeholder="0.00"
-                type="number"
-                value="1000"
-              />
-            </div>
+            <input
+              class="w_100% p_10px_14px fs_sm bdr_sm bd_1px_solid bd-c_border bg-c_transparent c_text.primary ring_none trs_all_0.2s focus:bd-c_primary focus:bx-sh_0_0_0_1px_token(colors.primary) disabled:op_0.5 disabled:cursor_not-allowed "
+              data-month="2"
+              data-year="2023"
+              id="2023-February"
+              name="amount"
+              placeholder="0.00"
+              type="number"
+              value="1000"
+            />
           </div>
         </div>
       </div>
       <div>
         <p
-          class="css-gyi3bv"
+          class="fs_md fw_normal lh_normal ls_normal m_0 "
         >
           March
         </p>
         <div
-          class="d_flex flex-d_column gap_2"
+          class="d_flex flex-d_column ai_stretch gap_8px w_100%"
         >
-          <label
-            for="2023-March"
-            hidden=""
+          <div
+            style="flex-grow: 1; flex-shrink: 1; flex-basis: 0%;"
           >
-            2023-March
-          </label>
-          <div>
-            <div
-              class="css-1op6ogi"
-            >
-              <input
-                class="chakra-input css-1hnmrmz"
-                data-month="3"
-                data-year="2023"
-                id="2023-March"
-                name="amount"
-                placeholder="0.00"
-                type="number"
-                value="1000"
-              />
-            </div>
+            <input
+              class="w_100% p_10px_14px fs_sm bdr_sm bd_1px_solid bd-c_border bg-c_transparent c_text.primary ring_none trs_all_0.2s focus:bd-c_primary focus:bx-sh_0_0_0_1px_token(colors.primary) disabled:op_0.5 disabled:cursor_not-allowed "
+              data-month="3"
+              data-year="2023"
+              id="2023-March"
+              name="amount"
+              placeholder="0.00"
+              type="number"
+              value="1000"
+            />
           </div>
         </div>
       </div>
       <div>
         <p
-          class="css-gyi3bv"
+          class="fs_md fw_normal lh_normal ls_normal m_0 "
         >
           April
         </p>
         <div
-          class="d_flex flex-d_column gap_2"
+          class="d_flex flex-d_column ai_stretch gap_8px w_100%"
         >
-          <label
-            for="2023-April"
-            hidden=""
+          <div
+            style="flex-grow: 1; flex-shrink: 1; flex-basis: 0%;"
           >
-            2023-April
-          </label>
-          <div>
-            <div
-              class="css-1op6ogi"
-            >
-              <input
-                class="chakra-input css-1hnmrmz"
-                data-month="4"
-                data-year="2023"
-                id="2023-April"
-                name="amount"
-                placeholder="0.00"
-                type="number"
-                value="1000"
-              />
-            </div>
+            <input
+              class="w_100% p_10px_14px fs_sm bdr_sm bd_1px_solid bd-c_border bg-c_transparent c_text.primary ring_none trs_all_0.2s focus:bd-c_primary focus:bx-sh_0_0_0_1px_token(colors.primary) disabled:op_0.5 disabled:cursor_not-allowed "
+              data-month="4"
+              data-year="2023"
+              id="2023-April"
+              name="amount"
+              placeholder="0.00"
+              type="number"
+              value="1000"
+            />
           </div>
         </div>
       </div>
       <div>
         <p
-          class="css-gyi3bv"
+          class="fs_md fw_normal lh_normal ls_normal m_0 "
         >
           May
         </p>
         <div
-          class="d_flex flex-d_column gap_2"
+          class="d_flex flex-d_column ai_stretch gap_8px w_100%"
         >
-          <label
-            for="2023-May"
-            hidden=""
+          <div
+            style="flex-grow: 1; flex-shrink: 1; flex-basis: 0%;"
           >
-            2023-May
-          </label>
-          <div>
-            <div
-              class="css-1op6ogi"
-            >
-              <input
-                class="chakra-input css-1hnmrmz"
-                data-month="5"
-                data-year="2023"
-                id="2023-May"
-                name="amount"
-                placeholder="0.00"
-                type="number"
-                value="1000"
-              />
-            </div>
+            <input
+              class="w_100% p_10px_14px fs_sm bdr_sm bd_1px_solid bd-c_border bg-c_transparent c_text.primary ring_none trs_all_0.2s focus:bd-c_primary focus:bx-sh_0_0_0_1px_token(colors.primary) disabled:op_0.5 disabled:cursor_not-allowed "
+              data-month="5"
+              data-year="2023"
+              id="2023-May"
+              name="amount"
+              placeholder="0.00"
+              type="number"
+              value="1000"
+            />
           </div>
         </div>
       </div>
       <div>
         <p
-          class="css-gyi3bv"
+          class="fs_md fw_normal lh_normal ls_normal m_0 "
         >
           June
         </p>
         <div
-          class="d_flex flex-d_column gap_2"
+          class="d_flex flex-d_column ai_stretch gap_8px w_100%"
         >
-          <label
-            for="2023-June"
-            hidden=""
+          <div
+            style="flex-grow: 1; flex-shrink: 1; flex-basis: 0%;"
           >
-            2023-June
-          </label>
-          <div>
-            <div
-              class="css-1op6ogi"
-            >
-              <input
-                class="chakra-input css-1hnmrmz"
-                data-month="6"
-                data-year="2023"
-                id="2023-June"
-                name="amount"
-                placeholder="0.00"
-                type="number"
-                value="1000"
-              />
-            </div>
+            <input
+              class="w_100% p_10px_14px fs_sm bdr_sm bd_1px_solid bd-c_border bg-c_transparent c_text.primary ring_none trs_all_0.2s focus:bd-c_primary focus:bx-sh_0_0_0_1px_token(colors.primary) disabled:op_0.5 disabled:cursor_not-allowed "
+              data-month="6"
+              data-year="2023"
+              id="2023-June"
+              name="amount"
+              placeholder="0.00"
+              type="number"
+              value="1000"
+            />
           </div>
         </div>
       </div>
       <div>
         <p
-          class="css-gyi3bv"
+          class="fs_md fw_normal lh_normal ls_normal m_0 "
         >
           July
         </p>
         <div
-          class="d_flex flex-d_column gap_2"
+          class="d_flex flex-d_column ai_stretch gap_8px w_100%"
         >
-          <label
-            for="2023-July"
-            hidden=""
+          <div
+            style="flex-grow: 1; flex-shrink: 1; flex-basis: 0%;"
           >
-            2023-July
-          </label>
-          <div>
-            <div
-              class="css-1op6ogi"
-            >
-              <input
-                class="chakra-input css-1hnmrmz"
-                data-month="7"
-                data-year="2023"
-                id="2023-July"
-                name="amount"
-                placeholder="0.00"
-                type="number"
-                value="1000"
-              />
-            </div>
+            <input
+              class="w_100% p_10px_14px fs_sm bdr_sm bd_1px_solid bd-c_border bg-c_transparent c_text.primary ring_none trs_all_0.2s focus:bd-c_primary focus:bx-sh_0_0_0_1px_token(colors.primary) disabled:op_0.5 disabled:cursor_not-allowed "
+              data-month="7"
+              data-year="2023"
+              id="2023-July"
+              name="amount"
+              placeholder="0.00"
+              type="number"
+              value="1000"
+            />
           </div>
         </div>
       </div>
       <div>
         <p
-          class="css-gyi3bv"
+          class="fs_md fw_normal lh_normal ls_normal m_0 "
         >
           August
         </p>
         <div
-          class="d_flex flex-d_column gap_2"
+          class="d_flex flex-d_column ai_stretch gap_8px w_100%"
         >
-          <label
-            for="2023-August"
-            hidden=""
+          <div
+            style="flex-grow: 1; flex-shrink: 1; flex-basis: 0%;"
           >
-            2023-August
-          </label>
-          <div>
-            <div
-              class="css-1op6ogi"
-            >
-              <input
-                class="chakra-input css-1hnmrmz"
-                data-month="8"
-                data-year="2023"
-                id="2023-August"
-                name="amount"
-                placeholder="0.00"
-                type="number"
-                value="1000"
-              />
-            </div>
+            <input
+              class="w_100% p_10px_14px fs_sm bdr_sm bd_1px_solid bd-c_border bg-c_transparent c_text.primary ring_none trs_all_0.2s focus:bd-c_primary focus:bx-sh_0_0_0_1px_token(colors.primary) disabled:op_0.5 disabled:cursor_not-allowed "
+              data-month="8"
+              data-year="2023"
+              id="2023-August"
+              name="amount"
+              placeholder="0.00"
+              type="number"
+              value="1000"
+            />
           </div>
         </div>
       </div>
       <div>
         <p
-          class="css-gyi3bv"
+          class="fs_md fw_normal lh_normal ls_normal m_0 "
         >
           September
         </p>
         <div
-          class="d_flex flex-d_column gap_2"
+          class="d_flex flex-d_column ai_stretch gap_8px w_100%"
         >
-          <label
-            for="2023-September"
-            hidden=""
+          <div
+            style="flex-grow: 1; flex-shrink: 1; flex-basis: 0%;"
           >
-            2023-September
-          </label>
-          <div>
-            <div
-              class="css-1op6ogi"
-            >
-              <input
-                class="chakra-input css-1hnmrmz"
-                data-month="9"
-                data-year="2023"
-                id="2023-September"
-                name="amount"
-                placeholder="0.00"
-                type="number"
-                value="1000"
-              />
-            </div>
+            <input
+              class="w_100% p_10px_14px fs_sm bdr_sm bd_1px_solid bd-c_border bg-c_transparent c_text.primary ring_none trs_all_0.2s focus:bd-c_primary focus:bx-sh_0_0_0_1px_token(colors.primary) disabled:op_0.5 disabled:cursor_not-allowed "
+              data-month="9"
+              data-year="2023"
+              id="2023-September"
+              name="amount"
+              placeholder="0.00"
+              type="number"
+              value="1000"
+            />
           </div>
         </div>
       </div>
       <div>
         <p
-          class="css-gyi3bv"
+          class="fs_md fw_normal lh_normal ls_normal m_0 "
         >
           October
         </p>
         <div
-          class="d_flex flex-d_column gap_2"
+          class="d_flex flex-d_column ai_stretch gap_8px w_100%"
         >
-          <label
-            for="2023-October"
-            hidden=""
+          <div
+            style="flex-grow: 1; flex-shrink: 1; flex-basis: 0%;"
           >
-            2023-October
-          </label>
-          <div>
-            <div
-              class="css-1op6ogi"
-            >
-              <input
-                class="chakra-input css-1hnmrmz"
-                data-month="10"
-                data-year="2023"
-                id="2023-October"
-                name="amount"
-                placeholder="0.00"
-                type="number"
-                value="1000"
-              />
-            </div>
+            <input
+              class="w_100% p_10px_14px fs_sm bdr_sm bd_1px_solid bd-c_border bg-c_transparent c_text.primary ring_none trs_all_0.2s focus:bd-c_primary focus:bx-sh_0_0_0_1px_token(colors.primary) disabled:op_0.5 disabled:cursor_not-allowed "
+              data-month="10"
+              data-year="2023"
+              id="2023-October"
+              name="amount"
+              placeholder="0.00"
+              type="number"
+              value="1000"
+            />
           </div>
         </div>
       </div>
       <div>
         <p
-          class="css-gyi3bv"
+          class="fs_md fw_normal lh_normal ls_normal m_0 "
         >
           November
         </p>
         <div
-          class="d_flex flex-d_column gap_2"
+          class="d_flex flex-d_column ai_stretch gap_8px w_100%"
         >
-          <label
-            for="2023-November"
-            hidden=""
+          <div
+            style="flex-grow: 1; flex-shrink: 1; flex-basis: 0%;"
           >
-            2023-November
-          </label>
-          <div>
-            <div
-              class="css-1op6ogi"
-            >
-              <input
-                class="chakra-input css-1hnmrmz"
-                data-month="11"
-                data-year="2023"
-                id="2023-November"
-                name="amount"
-                placeholder="0.00"
-                type="number"
-                value="1000"
-              />
-            </div>
+            <input
+              class="w_100% p_10px_14px fs_sm bdr_sm bd_1px_solid bd-c_border bg-c_transparent c_text.primary ring_none trs_all_0.2s focus:bd-c_primary focus:bx-sh_0_0_0_1px_token(colors.primary) disabled:op_0.5 disabled:cursor_not-allowed "
+              data-month="11"
+              data-year="2023"
+              id="2023-November"
+              name="amount"
+              placeholder="0.00"
+              type="number"
+              value="1000"
+            />
           </div>
         </div>
       </div>
       <div>
         <p
-          class="css-gyi3bv"
+          class="fs_md fw_normal lh_normal ls_normal m_0 "
         >
           December
         </p>
         <div
-          class="d_flex flex-d_column gap_2"
+          class="d_flex flex-d_column ai_stretch gap_8px w_100%"
         >
-          <label
-            for="2023-December"
-            hidden=""
+          <div
+            style="flex-grow: 1; flex-shrink: 1; flex-basis: 0%;"
           >
-            2023-December
-          </label>
-          <div>
-            <div
-              class="css-1op6ogi"
-            >
-              <input
-                class="chakra-input css-1hnmrmz"
-                data-month="12"
-                data-year="2023"
-                id="2023-December"
-                name="amount"
-                placeholder="0.00"
-                type="number"
-                value="1000"
-              />
-            </div>
+            <input
+              class="w_100% p_10px_14px fs_sm bdr_sm bd_1px_solid bd-c_border bg-c_transparent c_text.primary ring_none trs_all_0.2s focus:bd-c_primary focus:bx-sh_0_0_0_1px_token(colors.primary) disabled:op_0.5 disabled:cursor_not-allowed "
+              data-month="12"
+              data-year="2023"
+              id="2023-December"
+              name="amount"
+              placeholder="0.00"
+              type="number"
+              value="1000"
+            />
           </div>
         </div>
       </div>

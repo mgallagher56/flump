@@ -35,6 +35,7 @@ export default function Index() {
     <div>
       <h1>Ping Test</h1>
       <button
+        type="button"
         disabled={message !== ""}
         onClick={() => {
           setInterval(async () => {

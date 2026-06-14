@@ -3,6 +3,10 @@ import { ConfigModule, ConfigService } from "@nestjs/config";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { AppController } from "./app.controller";
 import { AppService } from "./app.service";
+import { Account } from "./entities/account.entity";
+import { AccountDetail } from "./entities/account-detail.entity";
+import { Transaction } from "./entities/transaction.entity";
+import { FinanceController } from "./finance.controller";
 
 @Module({
   imports: [
@@ -15,7 +19,7 @@ import { AppService } from "./app.service";
           return {
             type: "postgres",
             url,
-            entities: [],
+            entities: [Account, Transaction, AccountDetail],
             synchronize: true,
             ssl: { rejectUnauthorized: false },
           };
@@ -25,16 +29,17 @@ import { AppService } from "./app.service";
           host: configService.get<string>("DB_HOST", "localhost"),
           port: configService.get<number>("DB_PORT", 5432),
           username: configService.get<string>("DB_USER", "postgres"),
-          password: configService.get<string>("DB_PASSWORD", "password"),
-          database: configService.get<string>("DB_NAME", "flump"),
-          entities: [],
+          password: configService.get<string>("DB_PASSWORD", "postgres"),
+          database: configService.get<string>("DB_NAME", "postgres"),
+          entities: [Account, Transaction, AccountDetail],
           synchronize: true,
         };
       },
       inject: [ConfigService],
     }),
+    TypeOrmModule.forFeature([Account, Transaction, AccountDetail]),
   ],
-  controllers: [AppController],
+  controllers: [AppController, FinanceController],
   providers: [AppService],
 })
 export class AppModule {}

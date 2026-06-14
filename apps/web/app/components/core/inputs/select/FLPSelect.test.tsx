@@ -1,19 +1,21 @@
-import { createListCollection } from "@chakra-ui/react";
 import { vi } from "vitest";
 import customRender from "~/testUtils/customRender";
 
 import FLPSelect from "./FLPSelect";
 
-const mockSelectioOptions = createListCollection({
+const mockSelectioOptions = {
   items: ["1", "2", "3"].map((item) => ({ id: item, name: item })),
-  itemToString: (item) => item.name,
-  itemToValue: (item) => item.id,
-});
+};
 
 describe("<FLPSelect />", () => {
   test("should render as expected", () => {
     const { baseElement } = customRender(
-      <FLPSelect collection={mockSelectioOptions} label="label" value={["1"]} onChange={vi.fn()} />,
+      <FLPSelect
+        collection={mockSelectioOptions}
+        label="label"
+        value={["1"]}
+        onValueChange={vi.fn()}
+      />,
     );
     expect(baseElement).toMatchSnapshot();
   });
@@ -24,7 +26,7 @@ describe("<FLPSelect />", () => {
         flexDirection="row"
         label="label"
         value={["1"]}
-        onChange={vi.fn()}
+        onValueChange={vi.fn()}
       />,
     );
     expect(baseElement).toMatchSnapshot();

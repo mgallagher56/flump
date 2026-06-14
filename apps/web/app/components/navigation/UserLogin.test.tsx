@@ -17,12 +17,8 @@ vi.mock("react-router", async () => {
   };
 });
 
-vi.mock("app/components/users/SignOut", () => ({
-  default: () => <div>logOut</div>,
-}));
-
 vi.mock("app/components/core/buttons/FLPLinkButton", () => ({
-  default: (props) => <div>{props.children}</div>,
+  default: (props: any) => <div>{props.text}</div>,
 }));
 
 describe("<UserLogin />", () => {

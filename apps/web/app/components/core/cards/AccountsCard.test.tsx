@@ -26,14 +26,14 @@ vi.mock("react-router", async () => {
     useLoaderData: mocks.mockUseLoaderData,
     useRevalidator: mocks.mockUseRevalidator,
     useNavigate: mocks.mockUseNavigate,
+    useFetcher: () => ({
+      submit: vi.fn(),
+      state: "idle",
+      data: null,
+      Form: "form",
+    }),
   };
 });
-
-vi.mock("app/utils/supabase", () => ({
-  default: {
-    from: mocks.mockFrom,
-  },
-}));
 
 vi.mock("app/utils/utils", () => ({
   currentMonth: 12,

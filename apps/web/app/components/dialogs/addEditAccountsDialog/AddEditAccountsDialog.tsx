@@ -1,7 +1,6 @@
-import { type ButtonProps, createListCollection } from "@chakra-ui/react";
 import { type FC, useCallback, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Form, useLoaderData, useRevalidator } from "react-router";
+import { useFetcher, useLoaderData } from "react-router";
 import FLPButton from "~/components/core/buttons/FLPButton";
 import FLPButtonGroup from "~/components/core/buttons/FLPButtonGroup";
 import FLPModal from "~/components/core/dialogs/FLPModal";
@@ -10,36 +9,31 @@ import FLPSelect from "~/components/core/inputs/select/FLPSelect";
 import FLPBox from "~/components/core/structure/FLPBox";
 import { type AccountType, AccountTypeEnum } from "~/containers/accounts/utils";
 import type { loader } from "~/routes/app.accounts._index";
-import supabase from "~/utils/supabase";
 
 const { CURRENT, SAVING, MORTGAGE, LOAN, OWED } = AccountTypeEnum;
 const accountTypeArray = [CURRENT, SAVING, MORTGAGE, LOAN, OWED];
-const accountTypes = createListCollection({
+const accountTypes = {
   items: accountTypeArray.map((type) => ({ id: type, name: type })),
-  itemToString: (item) => item.name,
-  itemToValue: (item) => item.id,
-});
+};
 
 interface AddEditAccountsDialogBtnProp {
   accountId?: string;
   isEditAccount?: boolean;
-  btnSize?: ButtonProps["size"];
+  btnSize?: "sm" | "md" | "lg" | "icon";
 }
 
 const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
   accountId,
-  btnSize,
+  btnSize = "md",
   isEditAccount,
 }) => {
   const {
     accounts = [],
-    user,
   }: {
     accounts?: { id?: string; name?: string; type?: AccountType }[];
-    user?: { id?: string };
   } = useLoaderData<typeof loader>();
   const { t } = useTranslation();
-  const { revalidate } = useRevalidator();
+  const fetcher = useFetcher();
   const contentRef = useRef<HTMLDivElement>(null);
   const [modalOpen, setModalOpen] = useState(false);
 
@@ -52,10 +46,7 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
     setModalOpen(false);
   }, []);
 
-  const selectedAccount: {
-    name?: string;
-    type?: AccountType;
-  } = useMemo(
+  const selectedAccount = useMemo(
     () =>
       accounts?.find(
         (account: { id?: string; name?: string; type?: AccountType }) => account.id === accountId,
@@ -66,66 +57,57 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
   const [formInput, setFormInput] = useState<{
     name: string;
     type: AccountType[];
-  }>({ name: selectedAccount.name, type: [selectedAccount.type] });
+  }>({ name: selectedAccount.name || "", type: [selectedAccount.type || accountTypeArray[0]] });
 
-  const onChangeNameInput = useCallback(
-    (event: {
-      target: {
-        name: string;
-        value: AccountType | string;
-      };
-    }) => {
-      const { value } = event.target;
-      setFormInput((prevState) => ({ ...prevState, name: value }));
-    },
-    [],
-  );
-
-  const onChangeTypeInput = useCallback((e: { value: string[] }) => {
-    setFormInput((prevState) => ({ ...prevState, type: e.value }));
+  const onChangeNameInput = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+    const { value } = event.target;
+    setFormInput((prevState) => ({ ...prevState, name: value }));
   }, []);
 
-  const onAddAccount = useCallback(async () => {
-    const { name, type } = formInput as { name: string; type: AccountTypeEnum[] };
-    const { data } = await supabase
-      .from("accounts")
-      .insert([{ name, type: type?.[0], user_id: user?.id }])
-      .select();
+  const onChangeTypeInput = useCallback((e: { value: string[] }) => {
+    setFormInput((prevState) => ({ ...prevState, type: e.value as AccountType[] }));
+  }, []);
 
-    if (data && data.length > 0) {
-      const year = new Date().getFullYear();
-      const currentYearValues = Array.from({ length: 12 }, (_, i) => ({
-        month: i + 1,
-        year,
-        value: 0,
-        account_id: data[0].id,
-      }));
-
-      await supabase.from("account_details").insert(currentYearValues);
-    }
+  const onAddAccount = useCallback(() => {
+    const { name, type } = formInput;
+    fetcher.submit(
+      {
+        intent: "create",
+        name,
+        type: type?.[0] || "",
+      },
+      { method: "POST" },
+    );
     handleCloseModal();
-    revalidate();
-  }, [formInput, handleCloseModal, revalidate, user?.id]);
+  }, [formInput, fetcher, handleCloseModal]);
 
-  const onEditAccount = useCallback(async () => {
-    const newName = formInput.name;
-    const newType = formInput.type[0] as AccountTypeEnum;
-    await supabase
-      .from("accounts")
-      .update({ name: newName, type: newType })
-      .eq("user_id", user?.id)
-      .eq("id", accountId);
+  const onEditAccount = useCallback(() => {
+    const { name, type } = formInput;
+    fetcher.submit(
+      {
+        intent: "update",
+        accountId: accountId || "",
+        name,
+        type: type?.[0] || "",
+      },
+      { method: "POST" },
+    );
     handleCloseModal();
-    revalidate();
-  }, [accountId, formInput.name, formInput.type, handleCloseModal, revalidate, user?.id]);
+  }, [accountId, formInput, fetcher, handleCloseModal]);
 
   const handleRemoveAccount = useCallback(
-    async (e: { stopPropagation: () => void }) => {
+    (e: React.MouseEvent) => {
       e.stopPropagation();
-      await supabase.from("accounts").delete().eq("user_id", user?.id).eq("id", accountId);
-      revalidate();
+      fetcher.submit(
+        {
+          intent: "delete",
+          accountId: accountId || "",
+        },
+        { method: "POST" },
+      );
+      handleCloseModal();
     },
-    [accountId, revalidate, user?.id],
+    [accountId, fetcher, handleCloseModal],
   );
 
   const submitAction = useMemo(() => {
@@ -137,7 +119,7 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
       additionalActionBtns={
         isEditAccount ? (
           <FLPButtonGroup>
-            <FLPButton colorPalette="red" size="sm" onClick={handleRemoveAccount}>
+            <FLPButton variant="destructive" onClick={handleRemoveAccount}>
               {t("delete")}
             </FLPButton>
           </FLPButtonGroup>
@@ -148,14 +130,14 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
       open={modalOpen}
       title={t(isEditAccount ? "editAccount" : "addAccount")}
       triggerBtn={
-        <FLPButton size={btnSize} variant={"subtle"} onClick={handleOpenModal}>
+        <FLPButton size={btnSize} variant="outline" onClick={handleOpenModal}>
           {t(isEditAccount ? "edit" : "addAccount")}
         </FLPButton>
       }
       onClose={() => setModalOpen(false)}
       onConfirm={submitAction}
     >
-      <Form defaultValue={""} id={accountId} onSubmit={submitAction}>
+      <form id={accountId} onSubmit={(e) => e.preventDefault()}>
         <FLPBox display="flex" flexDirection="column" gap={4}>
           <FLPInput
             label="Name"
@@ -168,12 +150,11 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
             collection={accountTypes}
             label="Account Type"
             name="type"
-            portalRef={contentRef}
             value={formInput.type}
             onValueChange={onChangeTypeInput}
           />
         </FLPBox>
-      </Form>
+      </form>
     </FLPModal>
   );
 };

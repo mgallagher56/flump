@@ -19,7 +19,7 @@ describe("FLPText", () => {
     expect(container).toMatchSnapshot();
   });
   test("renders as expected with a lineHeight", () => {
-    const { container } = customRender(<FLPText lineHeight={40}>{sampleText}</FLPText>);
+    const { container } = customRender(<FLPText lineHeight="40px">{sampleText}</FLPText>);
     expect(container).toMatchSnapshot();
   });
   test("renders as expected with a letterSpacing", () => {

@@ -15,6 +15,7 @@
     "strict": true,
     "paths": {
       "@/*": ["./src/*"],
+      "@repo/ui/styled-system/*": ["./styled-system/*"],
       "@repo/ui/*": ["../../packages/ui/*"],
       "@repo/app-shell/*": ["../../packages/app-shell/src/*"]
     }

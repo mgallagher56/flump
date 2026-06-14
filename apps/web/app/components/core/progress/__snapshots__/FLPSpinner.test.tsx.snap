@@ -2,54 +2,65 @@
 
 exports[`FLPSpinner > renders as expected 1`] = `
 <div>
-  <script
-    nonce=""
+  <div
+    class="d_inline-flex ai_center gap_8px"
   >
-    ((e,i,s,u,m,a,l,h)=&gt;
-    {let d=document.documentElement,w=["light","dark"];function p(n){(Array.isArray(e)?e:[e]).forEach(y=&gt;
-    {let k=y==="class",S=k&&a?m.map(f=&gt;
-    a[f]||f):m;k?(d.classList.remove(...S),d.classList.add(a&&a[n]?a[n]:n)):d.setAttribute(y,n)}),R(n)}function R(n){h&&w.includes(n)&&(d.style.colorScheme=n)}function c(){return window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"}if(u)p(u);else try{let n=localStorage.getItem(i)||s,y=l&&n==="system"?c():n;p(y)}catch(n){}})("class","theme","system",null,["light","dark"],null,true,true)
-  </script>
-  <span
-    class="chakra-spinner css-11t4vt7"
-  />
+    <style>
+      
+        @keyframes spin {
+          to { transform: rotate(360deg); }
+        }
+      
+    </style>
+    <div
+      class="d_inline-block w_24px h_24px bd_2px_solid_rgba(255,_255,_255,_0.2) bd-t-c_primary bdr_50% anim_spin_0.8s_linear_infinite"
+      data-testid="flp-spinner"
+    />
+  </div>
 </div>
 `;
 
 exports[`FLPSpinner > renders as expected with a label 1`] = `
 <div>
-  <script
-    nonce=""
+  <div
+    class="d_inline-flex ai_center gap_8px"
   >
-    ((e,i,s,u,m,a,l,h)=&gt;
-    {let d=document.documentElement,w=["light","dark"];function p(n){(Array.isArray(e)?e:[e]).forEach(y=&gt;
-    {let k=y==="class",S=k&&a?m.map(f=&gt;
-    a[f]||f):m;k?(d.classList.remove(...S),d.classList.add(a&&a[n]?a[n]:n)):d.setAttribute(y,n)}),R(n)}function R(n){h&&w.includes(n)&&(d.style.colorScheme=n)}function c(){return window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"}if(u)p(u);else try{let n=localStorage.getItem(i)||s,y=l&&n==="system"?c():n;p(y)}catch(n){}})("class","theme","system",null,["light","dark"],null,true,true)
-  </script>
-  <span
-    class="chakra-spinner css-11t4vt7"
-  >
+    <style>
+      
+        @keyframes spin {
+          to { transform: rotate(360deg); }
+        }
+      
+    </style>
+    <div
+      class="d_inline-block w_24px h_24px bd_2px_solid_rgba(255,_255,_255,_0.2) bd-t-c_primary bdr_50% anim_spin_0.8s_linear_infinite"
+      data-testid="flp-spinner"
+    />
     <p
-      class="css-gyi3bv"
+      class="fs_md fw_normal lh_normal ls_normal m_0 "
     >
       Processing...
     </p>
-  </span>
+  </div>
 </div>
 `;
 
 exports[`FLPSpinner > renders as expected with a size 1`] = `
 <div>
-  <script
-    nonce=""
+  <div
+    class="d_inline-flex ai_center gap_8px"
   >
-    ((e,i,s,u,m,a,l,h)=&gt;
-    {let d=document.documentElement,w=["light","dark"];function p(n){(Array.isArray(e)?e:[e]).forEach(y=&gt;
-    {let k=y==="class",S=k&&a?m.map(f=&gt;
-    a[f]||f):m;k?(d.classList.remove(...S),d.classList.add(a&&a[n]?a[n]:n)):d.setAttribute(y,n)}),R(n)}function R(n){h&&w.includes(n)&&(d.style.colorScheme=n)}function c(){return window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"}if(u)p(u);else try{let n=localStorage.getItem(i)||s,y=l&&n==="system"?c():n;p(y)}catch(n){}})("class","theme","system",null,["light","dark"],null,true,true)
-  </script>
-  <span
-    class="chakra-spinner css-1x6hz8j"
-  />
+    <style>
+      
+        @keyframes spin {
+          to { transform: rotate(360deg); }
+        }
+      
+    </style>
+    <div
+      class="d_inline-block w_48px h_48px bd_2px_solid_rgba(255,_255,_255,_0.2) bd-t-c_primary bdr_50% anim_spin_0.8s_linear_infinite"
+      data-testid="flp-spinner"
+    />
+  </div>
 </div>
 `;

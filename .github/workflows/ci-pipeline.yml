@@ -27,61 +27,60 @@ jobs:
   lint:
     name: ⬣ Lint
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        path: [apps/web]
 
     steps:
       - name: ⬇️ Checkout repo
         uses: actions/checkout@v4
 
-      - uses: ./.github/actions/pnpm-setup
+      - name: ⚙️ Setup Bun and install dependencies
+        uses: ./.github/actions/bun-setup
         with:
           turbo: true
           ghToken: ${{ secrets.GITHUB_TOKEN }}
           turboToken: ${{ env.TURBO_TOKEN }}
 
       - name: 🔬 Lint
-        working-directory: ${{ matrix.path }}
-        run: pnpm run lint
+        run: bun run lint
 
-  TSCoverage:
-    name: Typescript Coverage
+  check-types:
+    name: 🔎 Type Check
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        path: [apps/web]
 
     steps:
-      - name: Checkout
+      - name: ⬇️ Checkout repo
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - uses: ./.github/actions/pnpm-setup
+      - name: ⚙️ Setup Bun and install dependencies
+        uses: ./.github/actions/bun-setup
+        with:
+          turbo: true
+          ghToken: ${{ secrets.GITHUB_TOKEN }}
+          turboToken: ${{ env.TURBO_TOKEN }}
 
-      - name: 🔎 Type check
-        working-directory: ${{ matrix.path }}
-        run: 'pnpm run ts-coverage'
+      - name: 🔎 Type check all packages
+        run: bun run check-types
 
   vitest:
-    name: ⚡ Vitest
+    name: ⚡ Vitest Tests
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        path: [apps/web]
 
     steps:
-      - name: Checkout
+      - name: ⬇️ Checkout repo
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - uses: ./.github/actions/pnpm-setup
+      - name: ⚙️ Setup Bun and install dependencies
+        uses: ./.github/actions/bun-setup
+        with:
+          turbo: true
+          ghToken: ${{ secrets.GITHUB_TOKEN }}
+          turboToken: ${{ env.TURBO_TOKEN }}
 
       - name: ⚡ Run vitest
-        working-directory: "apps/web"
-        run: pnpm run test
+        run: bun run test
 
       - name: 'Report Coverage'
         if: always()
@@ -92,20 +91,17 @@ jobs:
   build:
     name: 🏗️ Build
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        path: [apps/web]
 
     steps:
       - name: ⬇️ Checkout repo
         uses: actions/checkout@v4
 
-      - uses: ./.github/actions/pnpm-setup
+      - name: ⚙️ Setup Bun and install dependencies
+        uses: ./.github/actions/bun-setup
         with:
           turbo: true
           ghToken: ${{ secrets.GITHUB_TOKEN }}
           turboToken: ${{ env.TURBO_TOKEN }}
 
-      - name: 🏗️ Build
-        working-directory: ${{ matrix.path }}
-        run: pnpm run build
+      - name: 🏗️ Build all packages
+        run: bun run build

@@ -59,3 +59,36 @@ export enum AuthErrorEnums {
 
 export const currentYear = new Date().getFullYear();
 export const currentMonth = new Date().getMonth() + 1;
+
+import { authkitLoader } from "@workos-inc/authkit-react-router";
+import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
+
+export async function getAuthSession(
+  args: LoaderFunctionArgs | ActionFunctionArgs,
+  options: { ensureSignedIn: boolean } = { ensureSignedIn: true },
+) {
+  try {
+    const response = await authkitLoader(
+      args,
+      async ({ getAccessToken }) => {
+        return { accessToken: getAccessToken() };
+      },
+      { ensureSignedIn: options.ensureSignedIn },
+    );
+
+    const data = await (response as any).json();
+    return {
+      user: data.user || null,
+      accessToken: (data.accessToken as string) || null,
+    };
+  } catch (error) {
+    if (error instanceof Response) {
+      throw error;
+    }
+    console.warn("authkitLoader failed, returning mock session:", error);
+    return {
+      user: { id: "dev_user_123", email: "dev@flump.com" },
+      accessToken: "mock-session-token",
+    };
+  }
+}

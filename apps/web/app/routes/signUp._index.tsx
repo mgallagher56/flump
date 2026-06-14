@@ -1,29 +1,11 @@
-import { Container } from "@chakra-ui/react";
-import type { ReactElement } from "react";
-import { type RedirectFunction, redirect } from "react-router";
-import SignUp from "~/components/users/SignUp";
-import { createSupaBaseServerClient } from "~/utils/supabase";
+import { getSignUpUrl } from "@workos-inc/authkit-react-router";
+import { redirect } from "react-router";
 
-import type { Route } from "./+types/signUp._index";
-
-export const loader = async ({
-  request,
-}: Route.LoaderArgs): Promise<ReturnType<RedirectFunction> | { ok: boolean }> => {
-  const supabase = createSupaBaseServerClient(request);
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (user) return redirect("/");
-  return { ok: true };
+export const loader = async () => {
+  const { url, headers } = await getSignUpUrl();
+  return redirect(url, { headers });
 };
 
-const Index = (): ReactElement<ReactElement> => {
-  return (
-    <Container alignItems="center" display="flex" justifyContent="center" maxW={"xs"}>
-      <SignUp />
-    </Container>
-  );
-};
-
-export default Index;
+export default function SignUpIndex() {
+  return null;
+}

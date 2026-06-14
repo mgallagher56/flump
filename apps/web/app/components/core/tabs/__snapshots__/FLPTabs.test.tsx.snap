@@ -2,65 +2,40 @@
 
 exports[`FLPTabs > renders correctly 1`] = `
 <div>
-  <script
-    nonce=""
-  >
-    ((e,i,s,u,m,a,l,h)=&gt;
-    {let d=document.documentElement,w=["light","dark"];function p(n){(Array.isArray(e)?e:[e]).forEach(y=&gt;
-    {let k=y==="class",S=k&&a?m.map(f=&gt;
-    a[f]||f):m;k?(d.classList.remove(...S),d.classList.add(a&&a[n]?a[n]:n)):d.setAttribute(y,n)}),R(n)}function R(n){h&&w.includes(n)&&(d.style.colorScheme=n)}function c(){return window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"}if(u)p(u);else try{let n=localStorage.getItem(i)||s,y=l&&n==="system"?c():n;p(y)}catch(n){}})("class","theme","system",null,["light","dark"],null,true,true)
-  </script>
   <div
-    class="chakra-tabs__root css-1v2o4tv"
     data-orientation="horizontal"
-    data-part="root"
-    data-scope="tabs"
     dir="ltr"
-    id="tabs:_r_0_"
   >
     <div
       aria-orientation="horizontal"
-      class="chakra-tabs__list css-yq3aop"
+      class="d_flex bd-b_1px_solid bd-r_none bd-c_border gap_16px mb_16px flex-d_row"
       data-orientation="horizontal"
-      data-part="list"
-      data-scope="tabs"
-      dir="ltr"
-      id="tabs:_r_0_:list"
       role="tablist"
+      style="outline-color: none; outline-style: none; outline-width: initial;"
+      tabindex="0"
     >
       <button
-        aria-controls="tabs:_r_0_:content-tab1"
-        aria-disabled="false"
+        aria-controls="radix-_r_0_-content-tab1"
         aria-selected="true"
-        class="chakra-tabs__trigger css-19t98pl"
-        data-focus=""
+        class="p_8px_16px fs_sm fw_medium c_text.muted bg-c_transparent bd_none cursor_pointer trs_color_0.2s,_border-color_0.2s bd-b_2px_solid_transparent bd-r_none [&[data-state='active']]:c_primary [&[data-state='active']]:bd-c_primary hover:c_text.primary"
         data-orientation="horizontal"
-        data-ownedby="tabs:_r_0_:list"
-        data-part="trigger"
-        data-scope="tabs"
-        data-selected=""
-        data-ssr=""
-        data-value="tab1"
-        dir="ltr"
-        id="tabs:_r_0_:trigger-tab1"
+        data-radix-collection-item=""
+        data-state="active"
+        id="radix-_r_0_-trigger-tab1"
         role="tab"
-        tabindex="0"
+        tabindex="-1"
         type="button"
       >
         Tab 1
       </button>
       <button
-        aria-disabled="false"
+        aria-controls="radix-_r_0_-content-tab2"
         aria-selected="false"
-        class="chakra-tabs__trigger css-19t98pl"
+        class="p_8px_16px fs_sm fw_medium c_text.muted bg-c_transparent bd_none cursor_pointer trs_color_0.2s,_border-color_0.2s bd-b_2px_solid_transparent bd-r_none [&[data-state='active']]:c_primary [&[data-state='active']]:bd-c_primary hover:c_text.primary"
         data-orientation="horizontal"
-        data-ownedby="tabs:_r_0_:list"
-        data-part="trigger"
-        data-scope="tabs"
-        data-ssr=""
-        data-value="tab2"
-        dir="ltr"
-        id="tabs:_r_0_:trigger-tab2"
+        data-radix-collection-item=""
+        data-state="inactive"
+        id="radix-_r_0_-trigger-tab2"
         role="tab"
         tabindex="-1"
         type="button"
@@ -68,19 +43,15 @@ exports[`FLPTabs > renders correctly 1`] = `
         Tab 2
       </button>
       <button
-        aria-disabled="true"
+        aria-controls="radix-_r_0_-content-tab3"
         aria-selected="false"
-        class="chakra-tabs__trigger css-19t98pl"
+        class="p_8px_16px fs_sm fw_medium c_text.muted bg-c_transparent bd_none cursor_pointer trs_color_0.2s,_border-color_0.2s bd-b_2px_solid_transparent bd-r_none [&[data-state='active']]:c_primary [&[data-state='active']]:bd-c_primary hover:c_text.primary"
         data-disabled=""
         data-orientation="horizontal"
-        data-ownedby="tabs:_r_0_:list"
-        data-part="trigger"
-        data-scope="tabs"
-        data-ssr=""
-        data-value="tab3"
-        dir="ltr"
+        data-radix-collection-item=""
+        data-state="inactive"
         disabled=""
-        id="tabs:_r_0_:trigger-tab3"
+        id="radix-_r_0_-trigger-tab3"
         role="tab"
         tabindex="-1"
         type="button"
@@ -89,17 +60,13 @@ exports[`FLPTabs > renders correctly 1`] = `
       </button>
     </div>
     <div
-      aria-labelledby="tabs:_r_0_:trigger-tab1"
-      class="chakra-tabs__content css-1q2huf1"
+      aria-labelledby="radix-_r_0_-trigger-tab1"
+      class="ring_none"
       data-orientation="horizontal"
-      data-ownedby="tabs:_r_0_:list"
-      data-part="content"
-      data-scope="tabs"
-      data-selected=""
-      data-state="open"
-      dir="ltr"
-      id="tabs:_r_0_:content-tab1"
+      data-state="active"
+      id="radix-_r_0_-content-tab1"
       role="tabpanel"
+      style="animation-duration: 0s;"
       tabindex="0"
     >
       <div>
@@ -107,41 +74,25 @@ exports[`FLPTabs > renders correctly 1`] = `
       </div>
     </div>
     <div
-      aria-labelledby="tabs:_r_0_:trigger-tab2"
-      class="chakra-tabs__content css-1q2huf1"
+      aria-labelledby="radix-_r_0_-trigger-tab2"
+      class="ring_none"
       data-orientation="horizontal"
-      data-ownedby="tabs:_r_0_:list"
-      data-part="content"
-      data-scope="tabs"
-      data-state="closed"
-      dir="ltr"
+      data-state="inactive"
       hidden=""
-      id="tabs:_r_0_:content-tab2"
+      id="radix-_r_0_-content-tab2"
       role="tabpanel"
       tabindex="0"
-    >
-      <div>
-        Tab content 2
-      </div>
-    </div>
+    />
     <div
-      aria-labelledby="tabs:_r_0_:trigger-tab3"
-      class="chakra-tabs__content css-1q2huf1"
+      aria-labelledby="radix-_r_0_-trigger-tab3"
+      class="ring_none"
       data-orientation="horizontal"
-      data-ownedby="tabs:_r_0_:list"
-      data-part="content"
-      data-scope="tabs"
-      data-state="closed"
-      dir="ltr"
+      data-state="inactive"
       hidden=""
-      id="tabs:_r_0_:content-tab3"
+      id="radix-_r_0_-content-tab3"
       role="tabpanel"
       tabindex="0"
-    >
-      <div>
-        Tab content 3
-      </div>
-    </div>
+    />
   </div>
 </div>
 `;

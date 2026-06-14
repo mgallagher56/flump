@@ -1,19 +1,17 @@
-import { Box } from "@chakra-ui/react/box";
-import { Stack } from "@chakra-ui/react/stack";
+import { css } from "@repo/ui/styled-system/css";
 import { type FC, useCallback, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useLoaderData, useRevalidator } from "react-router";
+import { useFetcher, useLoaderData } from "react-router";
 import AccountDetails from "~/components/accounts/AccountDetails";
 import FLPButton from "~/components/core/buttons/FLPButton";
 import FLPHeading from "~/components/core/typography/FLPHeading";
 import type { loader } from "~/routes/app.accounts.$account";
-import supabase from "~/utils/supabase";
 import { currentYear, emptyObject } from "~/utils/utils";
 
 const AccountDetailContainer: FC = () => {
   const { t } = useTranslation();
-  const { revalidate } = useRevalidator();
   const { account, accountDetails } = useLoaderData<typeof loader>();
+  const fetcher = useFetcher();
   const [isLoading, setIsLoading] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [editedValues, setEditedValues] = useState<{ [key: string]: { [key: string]: string } }>(
@@ -26,109 +24,115 @@ const AccountDetailContainer: FC = () => {
   );
 
   const handleToggleEditMode = useCallback(() => setIsEditMode((prev) => !prev), []);
-  const handleInputChange = useCallback(
-    (event: {
-      target: {
-        dataset: DOMStringMap;
-        value: string;
-      };
-    }) => {
-      setEditedValues((prev) => ({
-        ...prev,
-        [event.target.dataset.year]: {
-          ...(prev?.[event.target.dataset.year] ?? emptyObject),
-          [event.target.dataset.month]: event.target.value,
-        },
-      }));
-    },
-    [],
-  );
+  const handleInputChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+    const { value } = event.target;
+    const { month, year } = event.target.dataset;
+    setEditedValues((prev) => ({
+      ...prev,
+      [year as string]: {
+        ...(prev?.[year as string] ?? emptyObject),
+        [month as string]: value,
+      },
+    }));
+  }, []);
 
   const handleAddNewYear = useCallback(
-    async (selectedYear: number, yearToAdd: "current" | "prev" | "next") => {
-      setIsLoading(true);
+    (selectedYear: number, yearToAdd: "current" | "prev" | "next") => {
       const nextYear = selectedYear + (yearToAdd === "prev" ? -1 : 1);
-      const yearWithMonths = Array.from({ length: 12 }, (_, i) => i + 1).map((value) => ({
-        account_id: account.id,
-        month: value,
-        year: yearToAdd === "current" ? currentYear : nextYear,
-        value: 0,
-      }));
+      const targetYear = yearToAdd === "current" ? currentYear : nextYear;
 
-      await supabase.from("account_details").insert(yearWithMonths);
-      revalidate();
-      setIsLoading(false);
+      fetcher.submit(
+        {
+          intent: "addYear",
+          year: targetYear.toString(),
+        },
+        { method: "POST" },
+      );
     },
-    [account.id, revalidate],
+    [fetcher],
   );
 
   const handleSaveValues = useCallback(
-    async (event: { preventDefault: () => void }) => {
-      setIsLoading(true);
+    (event: { preventDefault: () => void }) => {
       event.preventDefault();
       const updatedValues = Object.entries(editedValues).flatMap(([year, values]) =>
         Object.entries(values).map(([month, value]) => ({
-          account_id: account.id,
           month: parseInt(month, 10),
           year: parseInt(year, 10),
-          value: parseInt(value, 10),
+          value: parseFloat(value),
         })),
       );
 
-      await Promise.all(
-        updatedValues.map(async (value) => {
-          await supabase
-            .from("account_details")
-            .update(value)
-            .eq("account_id", account.id)
-            .eq("month", value.month)
-            .eq("year", value.year);
-        }),
+      fetcher.submit(
+        {
+          intent: "updateValues",
+          values: JSON.stringify(updatedValues),
+        },
+        { method: "POST" },
       );
 
       handleToggleEditMode();
       setEditedValues(emptyObject);
-      revalidate();
-      setIsLoading(false);
     },
-    [account.id, editedValues, handleToggleEditMode, revalidate],
+    [editedValues, fetcher, handleToggleEditMode],
   );
 
+  const containerStyle = css({
+    display: "flex",
+    flexDirection: "column",
+    gap: "40px",
+  });
+
+  const headerStyle = css({
+    display: "flex",
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  });
+
+  const titleGroupStyle = css({
+    display: "flex",
+    flexDirection: "column",
+  });
+
+  const actionsStyle = css({
+    display: "flex",
+    flexDirection: "row",
+    gap: "12px",
+  });
+
   return (
-    <Stack flexDirection="column" gap={10}>
-      <Stack alignItems="center" flexDirection="row" justifyContent="space-between">
-        <Box flexDirection="column">
+    <div className={containerStyle}>
+      <div className={headerStyle}>
+        <div className={titleGroupStyle}>
           <FLPHeading as="h2" size="sm">
             {account.type}
           </FLPHeading>
           <FLPHeading as="h1" size="xl">
             {account.name}
           </FLPHeading>
-        </Box>
-        <Box>
+        </div>
+        <div>
           <FLPButton
             disabled={isLoading}
-            loading={isLoading}
             variant="outline"
             onClick={isEditMode ? handleSaveValues : handleToggleEditMode}
           >
             {isEditMode ? t("save") : t("edit")}
           </FLPButton>
-        </Box>
-      </Stack>
+        </div>
+      </div>
       <AccountDetails
         editedValues={editedValues}
         isEditMode={isEditMode}
         onInputChange={handleInputChange}
       />
 
-      <Stack flexDirection="row">
+      <div className={actionsStyle}>
         {availableYears?.length ? (
           <>
             <FLPButton
-              colorPalette="green"
               disabled={isLoading}
-              loading={isLoading}
               size="sm"
               variant="outline"
               onClick={() => handleAddNewYear(availableYears?.[availableYears.length - 1], "prev")}
@@ -136,9 +140,7 @@ const AccountDetailContainer: FC = () => {
               {t("addPrevYear")}
             </FLPButton>
             <FLPButton
-              colorPalette="green"
               disabled={isLoading}
-              loading={isLoading}
               size="sm"
               variant="outline"
               onClick={() => handleAddNewYear(availableYears?.[0], "next")}
@@ -148,9 +150,7 @@ const AccountDetailContainer: FC = () => {
           </>
         ) : (
           <FLPButton
-            colorPalette="green"
             disabled={isLoading}
-            loading={isLoading}
             size="sm"
             variant="outline"
             onClick={() => handleAddNewYear(new Date().getFullYear(), "current")}
@@ -158,8 +158,8 @@ const AccountDetailContainer: FC = () => {
             {t("addCurrentYear")}
           </FLPButton>
         )}
-      </Stack>
-    </Stack>
+      </div>
+    </div>
   );
 };
 

@@ -1,6 +1,6 @@
 import { Slot } from "@radix-ui/react-slot";
+import { cva, cx, type RecipeVariantProps } from "@repo/ui/styled-system/css";
 import type { ComponentProps } from "react";
-import { cva, cx, type RecipeVariantProps } from "../../../styled-system/css";
 
 const buttonRecipe = cva({
   base: {

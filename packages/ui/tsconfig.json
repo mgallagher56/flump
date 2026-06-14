@@ -5,7 +5,10 @@
     "rootDir": ".",
     "module": "ESNext",
     "moduleResolution": "bundler",
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "paths": {
+      "@repo/ui/styled-system/*": ["./styled-system/*"]
+    }
   },
   "include": ["src", "styled-system"],
   "exclude": [

@@ -1,52 +1,66 @@
-# base node image
-FROM node:22.12.0-bullseye as base
+# Use official Bun image as base
+FROM oven-sh/bun:1.3.5-slim AS base
+WORKDIR /app
 
-SHELL ["/bin/bash", "-c"]
+# Stage 1: Install all dependencies (development + production)
+FROM base AS deps
+COPY package.json bun.lock ./
+COPY apps/web/package.json ./apps/web/
+COPY apps/backend/package.json ./apps/backend/
+COPY apps/marketing/package.json ./apps/marketing/
+COPY apps/mobile-companion/package.json ./apps/mobile-companion/
+COPY packages/app-shell/package.json ./packages/app-shell/
+COPY packages/common/package.json ./packages/common/
+COPY packages/typescript-config/package.json ./packages/typescript-config/
+COPY packages/ui/package.json ./packages/ui/
+RUN bun install --frozen-lockfile
 
-RUN npm install --global pnpm \
-    && SHELL=bash pnpm setup \
-    && source /root/.bashrc
+# Stage 2: Install only production dependencies
+FROM base AS production-deps
+COPY package.json bun.lock ./
+COPY apps/web/package.json ./apps/web/
+COPY apps/backend/package.json ./apps/backend/
+COPY apps/marketing/package.json ./apps/marketing/
+COPY apps/mobile-companion/package.json ./apps/mobile-companion/
+COPY packages/app-shell/package.json ./packages/app-shell/
+COPY packages/common/package.json ./packages/common/
+COPY packages/typescript-config/package.json ./packages/typescript-config/
+COPY packages/ui/package.json ./packages/ui/
+RUN bun install --frozen-lockfile --production
 
-# set for base and all layer that inherit from it
+# Stage 3: Build the application
+FROM base AS build
+COPY --from=deps /app/node_modules ./node_modules
+COPY --from=deps /app/apps/web/node_modules ./apps/web/node_modules
+COPY --from=deps /app/apps/backend/node_modules ./apps/backend/node_modules
+COPY --from=deps /app/apps/marketing/node_modules ./apps/marketing/node_modules
+COPY --from=deps /app/apps/mobile-companion/node_modules ./apps/mobile-companion/node_modules
+COPY --from=deps /app/packages/app-shell/node_modules ./packages/app-shell/node_modules
+COPY --from=deps /app/packages/common/node_modules ./packages/common/node_modules
+COPY --from=deps /app/packages/typescript-config/node_modules ./packages/typescript-config/node_modules
+COPY --from=deps /app/packages/ui/node_modules ./packages/ui/node_modules
+
+COPY . .
+
+# Build all workspaces
+ENV NODE_ENV production
+RUN bun run build
+
+# Stage 4: Create final production image
+FROM base AS runner
 ENV NODE_ENV production
 
-# Install all node_modules, including dev dependencies
-FROM base as deps
+# Copy only production node_modules and built web app assets
+COPY --from=production-deps /app/node_modules ./node_modules
+COPY --from=production-deps /app/apps/web/node_modules ./apps/web/node_modules
+COPY --from=production-deps /app/packages/app-shell/node_modules ./packages/app-shell/node_modules
+COPY --from=production-deps /app/packages/common/node_modules ./packages/common/node_modules
+COPY --from=production-deps /app/packages/ui/node_modules ./packages/ui/node_modules
 
-WORKDIR /app
+COPY --from=build /app/apps/web/build ./apps/web/build
+COPY --from=build /app/apps/web/package.json ./apps/web/package.json
 
-ADD package.json .node-version ./
-RUN pnpm install --production=false
+WORKDIR /app/apps/web
+EXPOSE 3000
 
-# Setup production node_modules
-FROM base as production-deps
-
-WORKDIR /app
-
-COPY --from=deps /app/node_modules /app/node_modules
-ADD package.json .node-version ./
-RUN pnpm prune --prod
-
-# Build the app
-FROM base as build
-
-WORKDIR /app
-
-COPY --from=deps /app/node_modules /app/node_modules
-
-ADD . .
-RUN pnpm run build
-
-# Finally, build the production image with minimal footprint
-FROM base
-
-WORKDIR /app
-
-COPY --from=production-deps /app/node_modules /app/node_modules
-
-COPY --from=build /app/build/server /app/build/server
-COPY --from=build /app/build/client /app/build/client
-
-ADD . .
-
-CMD ["pnpm", "start"]
+CMD ["bun", "run", "start"]

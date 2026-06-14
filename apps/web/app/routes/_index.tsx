@@ -1,14 +1,14 @@
-import { Badge, Box, Flex, Grid, Stack } from "@chakra-ui/react";
-import type { Database } from "db_types";
+import { css } from "@repo/ui/styled-system/css";
 import type { ReactElement } from "react";
 import { useTranslation } from "react-i18next";
 import { FiDatabase, FiLock, FiPieChart, FiTrendingUp } from "react-icons/fi";
-import { data, type MetaFunction, Link as RouterLink, useLoaderData } from "react-router";
+import type { LoaderFunctionArgs } from "react-router";
+import { type MetaFunction, Link as RouterLink, useLoaderData } from "react-router";
 import FLPButton from "~/components/core/buttons/FLPButton";
 import FLPBox from "~/components/core/structure/FLPBox";
 import FLPHeading from "~/components/core/typography/FLPHeading";
 import FLPText from "~/components/core/typography/FLPText";
-import { createSupaBaseServerClient } from "~/utils/supabase";
+import { getAuthSession } from "~/utils/utils";
 
 export const meta: MetaFunction = (): { title: string }[] => [
   { title: "Flump | Smart Personal Finance & Asset Tracker" },
@@ -18,219 +18,206 @@ export const handle = {
   i18n: ["common", "home"],
 };
 
-export type Employee = Database["public"]["Tables"]["employees"]["Row"];
-
-export const loader = async ({ request }: { request: Request }) => {
-  const responseHeaders = new Headers();
-  const supabase = createSupaBaseServerClient(request, responseHeaders);
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  return data({ user }, { headers: responseHeaders });
+export const loader = async (args: LoaderFunctionArgs) => {
+  const { user } = await getAuthSession(args, { ensureSignedIn: false });
+  return { user };
 };
 
 const Index = (): ReactElement => {
   const { t } = useTranslation();
   const { user } = useLoaderData<typeof loader>();
 
+  const heroStyle = css({
+    display: "flex",
+    alignItems: "center",
+    flexDirection: "column",
+    gap: "24px",
+    justifyContent: "center",
+    marginLeft: "auto",
+    marginRight: "auto",
+    maxWidth: "3xl",
+    marginBottom: "80px",
+    paddingLeft: "16px",
+    paddingRight: "16px",
+    textAlign: "center",
+  });
+
+  const badgeStyle = css({
+    borderRadius: "full",
+    backgroundColor: "rgba(99, 99, 241, 0.15)",
+    color: "primary",
+    padding: "6px 12px",
+    fontSize: "xs",
+    fontWeight: "semibold",
+  });
+
+  const stackStyle = css({
+    display: "flex",
+    flexDirection: { base: "column", sm: "row" },
+    gap: "16px",
+    marginTop: "16px",
+  });
+
+  const featuresHeaderStyle = css({
+    display: "flex",
+    flexDirection: "column",
+    gap: "8px",
+    marginBottom: "48px",
+    textAlign: "center",
+  });
+
+  const gridStyle = css({
+    display: "grid",
+    gap: "32px",
+    gridTemplateColumns: { base: "1fr", md: "repeat(2, 1fr)", lg: "repeat(4, 1fr)" },
+  });
+
+  const cardStyle = css({
+    backgroundColor: "surface",
+    border: "1px solid",
+    borderColor: "border",
+    borderRadius: "xl",
+    padding: "24px",
+    boxShadow: "sm",
+    transition: "all 0.3s ease",
+    _hover: {
+      transform: "translateY(-5px)",
+      boxShadow: "md",
+      borderColor: "primary",
+    },
+  });
+
+  const iconWrapperStyle = (color: "blue" | "green" | "purple" | "red") => {
+    const bgMap = {
+      blue: "rgba(59, 130, 246, 0.1)",
+      green: "rgba(16, 185, 129, 0.1)",
+      purple: "rgba(139, 92, 246, 0.1)",
+      red: "rgba(239, 68, 68, 0.1)",
+    };
+    const textMap = {
+      blue: "rgb(59, 130, 246)",
+      green: "rgb(16, 185, 129)",
+      purple: "rgb(139, 92, 246)",
+      red: "rgb(239, 68, 68)",
+    };
+    return css({
+      display: "flex",
+      alignItems: "center",
+      backgroundColor: bgMap[color],
+      color: textMap[color],
+      borderRadius: "lg",
+      width: "48px",
+      height: "48px",
+      fontSize: "24px",
+      justifyContent: "center",
+      marginBottom: "16px",
+    });
+  };
+
   return (
-    <FLPBox as="main" paddingY={{ base: 8, md: 16 }}>
+    <FLPBox style={{ paddingTop: "32px", paddingBottom: "64px" }}>
       {/* Hero Section */}
-      <Flex
-        alignItems="center"
-        direction="column"
-        gap={6}
-        justifyContent="center"
-        marginX="auto"
-        maxW="3xl"
-        mb={20}
-        paddingX={4}
-        textAlign="center"
-      >
-        <Badge borderRadius="full" colorPalette="blue" px={3} py={1} size="lg" variant="subtle">
-          ✨ Introducing Flump 1.22
-        </Badge>
-        <FLPHeading as="h1" color="blue.500" lineHeight="tight" size="3xl">
+      <div className={heroStyle}>
+        <span className={badgeStyle}>✨ Introducing Flump 1.22</span>
+        <FLPHeading as="h1" color="blue.500" size="4xl">
           Your entire financial universe, simplified.
         </FLPHeading>
-        <FLPText color={{ base: "gray.600", _dark: "gray.300" }} fontSize="lg" maxW="2xl">
+        <FLPText color="text.muted" fontSize="lg">
           Aggregate your current accounts, savings, credit cards, mortgages, and loans in one
           unified dashboard. Track monthly changes, visualize trends, and reach your goals.
         </FLPText>
-        <Stack direction={{ base: "column", sm: "row" }} gap={4} mt={4}>
+        <div className={stackStyle}>
           {user ? (
-            <FLPButton asChild colorPalette="blue" size="lg">
-              <RouterLink to="/app/accounts">{t("dashboard")}</RouterLink>
+            <FLPButton size="lg">
+              <RouterLink style={{ color: "inherit", textDecoration: "none" }} to="/app/accounts">
+                {t("dashboard")}
+              </RouterLink>
             </FLPButton>
           ) : (
             <>
-              <FLPButton asChild colorPalette="blue" size="lg">
-                <RouterLink to="/signup">{t("signUp")}</RouterLink>
+              <FLPButton size="lg">
+                <RouterLink style={{ color: "inherit", textDecoration: "none" }} to="/login">
+                  {t("signUp")}
+                </RouterLink>
               </FLPButton>
-              <FLPButton asChild colorPalette="gray" size="lg" variant="outline">
-                <RouterLink to="/login">{t("logIn")}</RouterLink>
+              <FLPButton size="lg" variant="outline">
+                <RouterLink style={{ color: "inherit", textDecoration: "none" }} to="/login">
+                  {t("logIn")}
+                </RouterLink>
               </FLPButton>
             </>
           )}
-        </Stack>
-      </Flex>
+        </div>
+      </div>
 
       {/* Feature Grid */}
-      <FLPBox mb={20} paddingX={4}>
-        <Flex direction="column" gap={2} mb={12} textAlign="center">
+      <FLPBox style={{ marginBottom: "80px", paddingLeft: "16px", paddingRight: "16px" }}>
+        <div className={featuresHeaderStyle}>
           <FLPHeading as="h2" color="blue.500" size="xl">
             Everything you need to master your money
           </FLPHeading>
-          <FLPText color="gray.500" fontSize="md">
+          <FLPText color="text.muted" fontSize="md">
             Features built to give you total clarity and control over your net worth.
           </FLPText>
-        </Flex>
+        </div>
 
-        <Grid gap={8} templateColumns={{ base: "1fr", md: "repeat(2, 1fr)", lg: "repeat(4, 1fr)" }}>
+        <div className={gridStyle}>
           {/* Card 1 */}
-          <Box
-            _hover={{
-              transform: "translateY(-5px)",
-              boxShadow: "md",
-              borderColor: { base: "blue.400", _dark: "blue.600" },
-            }}
-            bg={{ base: "white", _dark: "gray.900" }}
-            border="1px solid"
-            borderColor={{ base: "gray.200", _dark: "gray.800" }}
-            borderRadius="xl"
-            boxShadow="sm"
-            padding={6}
-            transition="all 0.3s ease"
-          >
-            <Flex
-              alignItems="center"
-              bg="blue.50"
-              borderRadius="lg"
-              boxSize={12}
-              color="blue.500"
-              fontSize="2xl"
-              justifyContent="center"
-              mb={4}
-            >
+          <div className={cardStyle}>
+            <div className={iconWrapperStyle("blue")}>
               <FiDatabase />
-            </Flex>
+            </div>
             <FLPHeading as="h3" color="blue.500" mb={2} size="md">
               Wealth Aggregation
             </FLPHeading>
-            <FLPText color={{ base: "gray.600", _dark: "gray.400" }} fontSize="sm">
+            <FLPText color="text.muted" fontSize="sm">
               Current accounts, savings, debts, and investments. View all of your assets and
               liabilities in one place.
             </FLPText>
-          </Box>
+          </div>
 
           {/* Card 2 */}
-          <Box
-            _hover={{
-              transform: "translateY(-5px)",
-              boxShadow: "md",
-              borderColor: { base: "blue.400", _dark: "blue.600" },
-            }}
-            bg={{ base: "white", _dark: "gray.900" }}
-            border="1px solid"
-            borderColor={{ base: "gray.200", _dark: "gray.800" }}
-            borderRadius="xl"
-            boxShadow="sm"
-            padding={6}
-            transition="all 0.3s ease"
-          >
-            <Flex
-              alignItems="center"
-              bg="green.50"
-              borderRadius="lg"
-              boxSize={12}
-              color="green.500"
-              fontSize="2xl"
-              justifyContent="center"
-              mb={4}
-            >
+          <div className={cardStyle}>
+            <div className={iconWrapperStyle("green")}>
               <FiTrendingUp />
-            </Flex>
+            </div>
             <FLPHeading as="h3" color="green.500" mb={2} size="md">
               Interactive Analytics
             </FLPHeading>
-            <FLPText color={{ base: "gray.600", _dark: "gray.400" }} fontSize="sm">
+            <FLPText color="text.muted" fontSize="sm">
               Beautiful historical data charts showing month-over-month progress and account balance
               changes over time.
             </FLPText>
-          </Box>
+          </div>
 
           {/* Card 3 */}
-          <Box
-            _hover={{
-              transform: "translateY(-5px)",
-              boxShadow: "md",
-              borderColor: { base: "blue.400", _dark: "blue.600" },
-            }}
-            bg={{ base: "white", _dark: "gray.900" }}
-            border="1px solid"
-            borderColor={{ base: "gray.200", _dark: "gray.800" }}
-            borderRadius="xl"
-            boxShadow="sm"
-            padding={6}
-            transition="all 0.3s ease"
-          >
-            <Flex
-              alignItems="center"
-              bg="purple.50"
-              borderRadius="lg"
-              boxSize={12}
-              color="purple.500"
-              fontSize="2xl"
-              justifyContent="center"
-              mb={4}
-            >
+          <div className={cardStyle}>
+            <div className={iconWrapperStyle("purple")}>
               <FiPieChart />
-            </Flex>
+            </div>
             <FLPHeading as="h3" color="purple.500" mb={2} size="md">
               Net Worth Tracking
             </FLPHeading>
-            <FLPText color={{ base: "gray.600", _dark: "gray.400" }} fontSize="sm">
+            <FLPText color="text.muted" fontSize="sm">
               Calculate your overall net worth automatically by subtracting your loans and mortgages
               from your cash assets.
             </FLPText>
-          </Box>
+          </div>
 
           {/* Card 4 */}
-          <Box
-            _hover={{
-              transform: "translateY(-5px)",
-              boxShadow: "md",
-              borderColor: { base: "blue.400", _dark: "blue.600" },
-            }}
-            bg={{ base: "white", _dark: "gray.900" }}
-            border="1px solid"
-            borderColor={{ base: "gray.200", _dark: "gray.800" }}
-            borderRadius="xl"
-            boxShadow="sm"
-            padding={6}
-            transition="all 0.3s ease"
-          >
-            <Flex
-              alignItems="center"
-              bg="red.50"
-              borderRadius="lg"
-              boxSize={12}
-              color="red.500"
-              fontSize="2xl"
-              justifyContent="center"
-              mb={4}
-            >
+          <div className={cardStyle}>
+            <div className={iconWrapperStyle("red")}>
               <FiLock />
-            </Flex>
+            </div>
             <FLPHeading as="h3" color="red.500" mb={2} size="md">
               Secure Auth
             </FLPHeading>
-            <FLPText color={{ base: "gray.600", _dark: "gray.400" }} fontSize="sm">
-              Powered by Supabase Security. Log in instantly with email magic links or standard
-              password credentials.
+            <FLPText color="text.muted" fontSize="sm">
+              Powered by WorkOS AuthKit. Log in instantly with enterprise-grade SSO, social logins,
+              or passwordless email codes.
             </FLPText>
-          </Box>
-        </Grid>
+          </div>
+        </div>
       </FLPBox>
     </FLPBox>
   );
