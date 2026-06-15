@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.23.0](https://github.com/mgallagher56/flump/compare/flump/web-v1.22.2...flump/web-v1.23.0) (2026-06-15)
+
+
+### Features ✨
+
+* centralize tax rules in shared package, implement mobile TaxScreen and redesigned bottom bar navigation ([6318b56](https://github.com/mgallagher56/flump/commit/6318b56fb1d6d00c34b0a9f981458c54b6d1c514))
+
+
+### Miscellaneous 🙃
+
+* re-architect monorepo with bun, nestjs, react 19, and radix ([6e143b1](https://github.com/mgallagher56/flump/commit/6e143b19a7f307c88af390e3207f9f8f1285ae09))
+* run lint and typescript checks and fix violations ([b5975fb](https://github.com/mgallagher56/flump/commit/b5975fb7d62aa7aa70aa281b43b11cdbf5d8d9c7))
+* stop tracking environmental configurations and build artifacts ([6bd773a](https://github.com/mgallagher56/flump/commit/6bd773a1db81c0972c2afb07e9a18e8ebd2bb42a))
+
 ## [1.22.2](https://github.com/mgallagher56/flump/compare/flump/web-v1.22.1...flump/web-v1.22.2) (2025-01-08)
 
 
