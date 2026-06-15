@@ -1,3 +1,4 @@
+import type { TaxRecord } from "@repo/common";
 import { Platform } from "react-native";
 import type {
   Account,
@@ -115,12 +116,106 @@ let mockUserProfile: UserProfile = {
   hasRentalIncome: false,
   rentalIncomeMonthly: null,
   hasMortgage: true,
+  propertyOwnershipShare: 100,
   pensionPercent: 5,
   isSalarySacrifice: true,
   setupChecklistCompletedSteps: ["accounts"],
   createdAt: new Date().toISOString(),
   updatedAt: new Date().toISOString(),
 };
+
+let mockTaxRecords: TaxRecord[] = [
+  {
+    id: "tr-1",
+    userId: "dev_user_123",
+    type: "income",
+    source: "rental",
+    category: "rental_income",
+    name: "Poplar Rent (2024/25)",
+    amount: 1450.0,
+    frequency: "monthly",
+    date: "2024-04-01",
+    endDate: "2025-03-31",
+    notes: "Direct debit",
+    receiptFilename: null,
+    receiptMimeType: null,
+    receiptData: null,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    id: "tr-2",
+    userId: "dev_user_123",
+    type: "expense",
+    source: "rental",
+    category: "mortgage_interest",
+    name: "Mortgage Interest (2024/25)",
+    amount: 350.0,
+    frequency: "monthly",
+    date: "2024-04-01",
+    endDate: "2025-03-31",
+    notes: "Interest portion of payment",
+    receiptFilename: null,
+    receiptMimeType: null,
+    receiptData: null,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    id: "tr-3",
+    userId: "dev_user_123",
+    type: "expense",
+    source: "rental",
+    category: "rent_rates_insurance",
+    name: "Curo Service Charge (2024/25)",
+    amount: 45.0,
+    frequency: "monthly",
+    date: "2024-04-01",
+    endDate: "2025-03-31",
+    notes: null,
+    receiptFilename: null,
+    receiptMimeType: null,
+    receiptData: null,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    id: "tr-4",
+    userId: "dev_user_123",
+    type: "income",
+    source: "self-employed",
+    category: "self_employed_income",
+    name: "Contract Consulting Work",
+    amount: 5000.0,
+    frequency: "one-off",
+    date: "2024-06-15",
+    endDate: null,
+    notes: "Invoice #1024",
+    receiptFilename: null,
+    receiptMimeType: null,
+    receiptData: null,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    id: "tr-5",
+    userId: "dev_user_123",
+    type: "expense",
+    source: "self-employed",
+    category: "office_costs",
+    name: "New Office Desk & Chair",
+    amount: 280.0,
+    frequency: "one-off",
+    date: "2024-06-20",
+    endDate: null,
+    notes: "Ergonomic furniture",
+    receiptFilename: null,
+    receiptMimeType: null,
+    receiptData: null,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+];
 
 const mockBudgetEntries: BudgetEntry[] = [
   {
@@ -491,6 +586,75 @@ export const api = {
       return await apiFetch<BudgetEntry[]>("budget-entries");
     } catch {
       return mockBudgetEntries;
+    }
+  },
+
+  async getTaxRecords(): Promise<TaxRecord[]> {
+    try {
+      return await apiFetch<TaxRecord[]>("tax-records");
+    } catch {
+      return mockTaxRecords;
+    }
+  },
+
+  async createTaxRecord(body: Partial<TaxRecord>): Promise<TaxRecord> {
+    try {
+      return await apiFetch<TaxRecord>("tax-records", {
+        method: "POST",
+        body: JSON.stringify(body),
+      });
+    } catch {
+      const newRecord: TaxRecord = {
+        id: `tr-manual-${Date.now()}`,
+        userId: "dev_user_123",
+        type: body.type || "income",
+        source: body.source || "rental",
+        category: body.category || "",
+        name: body.name || "",
+        amount: body.amount || 0,
+        frequency: body.frequency || "one-off",
+        date: body.date || new Date().toISOString().substring(0, 10),
+        endDate: body.endDate || null,
+        notes: body.notes || null,
+        receiptFilename: body.receiptFilename || null,
+        receiptMimeType: body.receiptMimeType || null,
+        receiptData: body.receiptData || null,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+      mockTaxRecords.push(newRecord);
+      return newRecord;
+    }
+  },
+
+  async updateTaxRecord(id: string, body: Partial<TaxRecord>): Promise<TaxRecord> {
+    try {
+      return await apiFetch<TaxRecord>(`tax-records/${id}`, {
+        method: "PATCH",
+        body: JSON.stringify(body),
+      });
+    } catch {
+      const idx = mockTaxRecords.findIndex((r) => r.id === id);
+      if (idx !== -1) {
+        mockTaxRecords[idx] = {
+          ...mockTaxRecords[idx],
+          ...body,
+          updatedAt: new Date().toISOString(),
+        } as TaxRecord;
+        return mockTaxRecords[idx];
+      }
+      throw new Error("Tax record not found");
+    }
+  },
+
+  async deleteTaxRecord(id: string): Promise<{ success: boolean }> {
+    try {
+      return await apiFetch<{ success: boolean }>(`tax-records/${id}`, {
+        method: "DELETE",
+      });
+    } catch {
+      mockTaxRecords = mockTaxRecords.filter((r) => r.id !== id);
+      return { success: true };
     }
   },
 };

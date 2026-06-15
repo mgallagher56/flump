@@ -1,3 +1,4 @@
+import { calculateUKEWNITakeHome, getCurrentUKTaxYear, UK_STUDENT_LOANS } from "@repo/common";
 import { css } from "@repo/ui/styled-system/css";
 import { type FC, useEffect, useMemo, useState } from "react";
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
@@ -8,7 +9,6 @@ import FLPHeading from "~/components/core/typography/FLPHeading";
 import FLPText from "~/components/core/typography/FLPText";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
 import { useUserProfile } from "~/hooks/useUserProfile";
-import { calculateUKEWNITakeHome, getCurrentUKTaxYear, UK_STUDENT_LOANS } from "~/utils/taxRules";
 
 interface UKTaxCalculatorProps {
   initialSalary?: number | null;

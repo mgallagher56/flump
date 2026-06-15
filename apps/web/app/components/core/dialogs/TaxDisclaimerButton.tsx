@@ -5,12 +5,12 @@
  * Used on all tax calculation surfaces in the application.
  */
 import * as Dialog from "@radix-ui/react-dialog";
+import { TAX_DISCLAIMER } from "@repo/common";
 import { css } from "@repo/ui/styled-system/css";
 import { type FC, useState } from "react";
 import { FaInfoCircle, FaTimes } from "react-icons/fa";
 import FLPButton from "~/components/core/buttons/FLPButton";
 import FLPText from "~/components/core/typography/FLPText";
-import { TAX_DISCLAIMER } from "~/utils/taxRules";
 
 interface TaxDisclaimerButtonProps {
   /** If true, also render the short summary text next to the icon. Default: false */

@@ -81,6 +81,7 @@ export interface UserProfile {
   hasRentalIncome: boolean;
   rentalIncomeMonthly: number | null;
   hasMortgage: boolean;
+  propertyOwnershipShare: number | null;
   pensionPercent: number;
   isSalarySacrifice: boolean;
   setupChecklistCompletedSteps: string[];

@@ -1,3 +1,9 @@
+import {
+  calculateIrishTakeHome,
+  calculateUKEWNITakeHome,
+  getCurrentIrishTaxYear,
+  getCurrentUKTaxYear,
+} from "@repo/common";
 import { css } from "@repo/ui/styled-system/css";
 import { type FC, useState } from "react";
 import { FaBriefcase, FaCheckCircle, FaGlobe, FaHome, FaUser } from "react-icons/fa";
@@ -7,12 +13,6 @@ import TaxDisclaimerButton from "~/components/core/dialogs/TaxDisclaimerButton";
 import FLPHeading from "~/components/core/typography/FLPHeading";
 import FLPText from "~/components/core/typography/FLPText";
 import { type UserProfile, type UserProfileUpdate, useUserProfile } from "~/hooks/useUserProfile";
-import {
-  calculateIrishTakeHome,
-  calculateUKEWNITakeHome,
-  getCurrentIrishTaxYear,
-  getCurrentUKTaxYear,
-} from "~/utils/taxRules";
 
 interface UserProfilePanelProps {
   initialProfile: UserProfile;
