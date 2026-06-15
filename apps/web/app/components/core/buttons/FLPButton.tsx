@@ -6,7 +6,6 @@ interface FLPButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   size?: "sm" | "md" | "lg" | "icon";
   loading?: boolean;
   disabled?: boolean;
-  colorPalette?: string;
   padding?: number | string;
 }
 
@@ -15,7 +14,6 @@ const FLPButton: FC<FLPButtonProps> = ({
   size = "md",
   loading,
   disabled,
-  colorPalette,
   padding,
   children,
   ...props
@@ -33,9 +31,9 @@ const FLPButton: FC<FLPButtonProps> = ({
   return (
     <Button
       disabled={disabled || loading}
-      size={size as any}
+      size={size}
       style={{ padding }}
-      variant={mappedVariant as any}
+      variant={mappedVariant}
       {...props}
     >
       {children}

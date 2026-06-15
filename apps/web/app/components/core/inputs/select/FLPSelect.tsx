@@ -28,9 +28,9 @@ const FLPSelect: FC<FLPSelectProps> = ({
 }) => {
   const containerStyle = css({
     display: "flex",
-    flexDirection: flexDirection as any,
+    flexDirection,
     alignItems: flexDirection === "row" ? "center" : "stretch",
-    gap: (gap || (flexDirection === "row" ? "16px" : "8px")) as any,
+    gap: gap || (flexDirection === "row" ? "16px" : "8px"),
     width: "100%",
   });
 
@@ -47,7 +47,7 @@ const FLPSelect: FC<FLPSelectProps> = ({
     borderRadius: "sm",
     border: "1px solid",
     borderColor: "border",
-    backgroundColor: "#20222D", // Matches card/dialog surface
+    backgroundColor: "surface", // Matches card/dialog surface
     color: "text.primary",
     outline: "none",
     transition: "all 0.2s",
@@ -67,8 +67,8 @@ const FLPSelect: FC<FLPSelectProps> = ({
       )}
       <div style={{ flex: 1 }}>
         <select
-          id={label}
           className={`${selectStyle} ${className || ""}`}
+          id={label}
           style={style}
           value={value?.[0] || ""}
           onChange={(e) => onValueChange({ value: [e.target.value] })}
@@ -77,7 +77,10 @@ const FLPSelect: FC<FLPSelectProps> = ({
           {collection.items.map((item) => (
             <option
               key={item.id}
-              style={{ backgroundColor: "#20222D", color: "#ffffff" }}
+              style={{
+                backgroundColor: "var(--colors-surface)",
+                color: "var(--colors-text-primary)",
+              }}
               value={item.id}
             >
               {item.name}

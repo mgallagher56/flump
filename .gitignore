@@ -15,7 +15,6 @@ node_modules
 .idea/
 
 tsconfig.tsbuildinfo
-.eslintcache
 
 # env files
 .env

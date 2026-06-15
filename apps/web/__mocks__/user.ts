@@ -1,5 +1,3 @@
-import type { User } from "@supabase/supabase-js";
-
 const id = "93bc29a3-0200-4ccb-b72c-ef54902c4d33";
 
 export default {
@@ -34,4 +32,4 @@ export default {
   ],
   created_at: "2023-07-15T08:11:44.851944Z",
   updated_at: "2023-07-15T11:38:06.655469Z",
-} as User;
+} as any;

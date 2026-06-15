@@ -18,7 +18,7 @@ const FLPButtonGroup: FC<FLPButtonGroupProps> = ({
     display: "flex",
     flexDirection: "row",
     alignItems: "center",
-    gap: attached ? "0" : (gap as any),
+    gap: attached ? "0" : gap,
     "& button": attached
       ? {
           borderRadius: "0",

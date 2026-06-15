@@ -42,6 +42,36 @@
           }
         }
       }
+    },
+    {
+      "includes": ["apps/web/app/**"],
+      "linter": {
+        "rules": {
+          "suspicious": {
+            "noConsole": {
+              "level": "error",
+              "options": {
+                "allow": ["warn", "error"]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": [
+        "apps/web/app/**/*.stories.tsx",
+        "apps/web/app/**/*.stories.ts",
+        "apps/web/app/**/*.test.tsx",
+        "apps/web/app/**/*.test.ts"
+      ],
+      "linter": {
+        "rules": {
+          "suspicious": {
+            "noConsole": "off"
+          }
+        }
+      }
     }
   ],
   "formatter": {
@@ -74,7 +104,9 @@
         "useValidAriaRole": "error",
         "noSvgWithoutTitle": "warn",
         "useAnchorContent": "error",
-        "useFocusableInteractive": "warn"
+        "useFocusableInteractive": "warn",
+        "noStaticElementInteractions": "warn",
+        "useSemanticElements": "warn"
       }
     }
   },

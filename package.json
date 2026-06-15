@@ -7,6 +7,9 @@
     "apps/*",
     "packages/*"
   ],
+  "overrides": {
+    "zod-validation-error": "^4.0.0"
+  },
   "scripts": {
     "build": "turbo run build",
     "dev": "turbo run dev",
@@ -29,7 +32,8 @@
     "lint-staged": "15.2.10",
     "turbo": "^2.7.1",
     "typescript": "5.9.2",
-    "vitest": "^4.0.16"
+    "vitest": "^4.0.16",
+    "zod-validation-error": "^4.0.0"
   },
   "lint-staged": {
     "*.{ts,tsx,js,jsx,json,md}": [

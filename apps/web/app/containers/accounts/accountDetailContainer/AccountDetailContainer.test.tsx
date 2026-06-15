@@ -149,6 +149,7 @@ vi.mock("react-router", async () => {
       data: null,
       Form: "form",
     }),
+    useNavigate: () => vi.fn(),
   };
 });
 

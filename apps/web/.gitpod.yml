@@ -51,5 +51,4 @@ tasks:
 vscode:
   extensions:
     - ms-azuretools.vscode-docker
-    - esbenp.prettier-vscode
-    - dbaeumer.vscode-eslint
+    - biomejs.biome

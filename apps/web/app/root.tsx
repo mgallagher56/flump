@@ -1,8 +1,10 @@
 import type { LoaderFunctionArgs } from "react-router";
 import { Links, Meta, Outlet, Scripts, ScrollRestoration, useLoaderData } from "react-router";
 import Header from "./components/structure/header/Header";
+import { useTheme } from "./hooks/useTheme";
 import i18next from "./i18n.server";
 import styles from "./index.css?url";
+import { ThemeContext } from "./ThemeContext";
 import { getAuthSession } from "./utils/utils";
 
 export const links = () => [
@@ -26,28 +28,51 @@ export const loader = async (args: LoaderFunctionArgs) => {
 
 export default function App() {
   const { locale } = useLoaderData<typeof loader>();
+  const { theme, toggleTheme } = useTheme();
+
   return (
-    <html lang={locale}>
+    <html className={theme === "dark" ? "dark" : ""} data-theme={theme} lang={locale}>
       <head>
         <meta charSet="utf-8" />
         <meta content="width=device-width,initial-scale=1" name="viewport" />
         <Meta />
         <Links />
+        {/* Prevent flash of wrong theme by applying class synchronously */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                try {
+                  var stored = localStorage.getItem('flump-theme');
+                  var theme = (stored === 'light' || stored === 'dark')
+                    ? stored
+                    : (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+                  document.documentElement.classList.toggle('dark', theme === 'dark');
+                  document.documentElement.setAttribute('data-theme', theme);
+                } catch(e) {}
+              })();
+            `,
+          }}
+        />
       </head>
       <body
         style={{
-          backgroundColor: "#16181D",
-          color: "#ffffff",
+          backgroundColor: "var(--colors-background)",
+          color: "var(--colors-text-primary)",
           fontFamily: "Poppins, sans-serif",
           margin: 0,
+          minHeight: "100vh",
+          transition: "background-color 0.2s ease, color 0.2s ease",
         }}
       >
-        <div style={{ maxWidth: "1280px", margin: "0 auto", padding: "0 24px" }}>
-          <Header />
-          <main>
-            <Outlet />
-          </main>
-        </div>
+        <ThemeContext.Provider value={{ theme, toggleTheme }}>
+          <div style={{ maxWidth: "1280px", margin: "0 auto", padding: "0 24px" }}>
+            <Header />
+            <main>
+              <Outlet />
+            </main>
+          </div>
+        </ThemeContext.Provider>
         <ScrollRestoration />
         <Scripts />
       </body>
@@ -65,8 +90,8 @@ export function ErrorBoundary() {
       </head>
       <body
         style={{
-          backgroundColor: "#16181D",
-          color: "#ffffff",
+          backgroundColor: "var(--colors-background)",
+          color: "var(--colors-text-primary)",
           fontFamily: "Poppins, sans-serif",
           padding: "50px",
           textAlign: "center",

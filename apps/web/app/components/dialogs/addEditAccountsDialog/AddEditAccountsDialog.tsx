@@ -1,5 +1,6 @@
 import { type FC, useCallback, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { FaPencilAlt } from "react-icons/fa";
 import { useFetcher, useLoaderData } from "react-router";
 import FLPButton from "~/components/core/buttons/FLPButton";
 import FLPButtonGroup from "~/components/core/buttons/FLPButtonGroup";
@@ -10,8 +11,8 @@ import FLPBox from "~/components/core/structure/FLPBox";
 import { type AccountType, AccountTypeEnum } from "~/containers/accounts/utils";
 import type { loader } from "~/routes/app.accounts._index";
 
-const { CURRENT, SAVING, MORTGAGE, LOAN, OWED } = AccountTypeEnum;
-const accountTypeArray = [CURRENT, SAVING, MORTGAGE, LOAN, OWED];
+const { CURRENT, SAVING, MORTGAGE, CREDIT_CARD, LOAN, OWED, INVESTMENT } = AccountTypeEnum;
+const accountTypeArray = [CURRENT, SAVING, INVESTMENT, CREDIT_CARD, MORTGAGE, LOAN, OWED];
 const accountTypes = {
   items: accountTypeArray.map((type) => ({ id: type, name: type })),
 };
@@ -20,12 +21,14 @@ interface AddEditAccountsDialogBtnProp {
   accountId?: string;
   isEditAccount?: boolean;
   btnSize?: "sm" | "md" | "lg" | "icon";
+  isIconButton?: boolean;
 }
 
 const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
   accountId,
   btnSize = "md",
   isEditAccount,
+  isIconButton = false,
 }) => {
   const {
     accounts = [],
@@ -130,9 +133,20 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
       open={modalOpen}
       title={t(isEditAccount ? "editAccount" : "addAccount")}
       triggerBtn={
-        <FLPButton size={btnSize} variant="outline" onClick={handleOpenModal}>
-          {t(isEditAccount ? "edit" : "addAccount")}
-        </FLPButton>
+        isIconButton ? (
+          <FLPButton
+            size="icon"
+            variant="ghost"
+            onClick={handleOpenModal}
+            style={{ borderRadius: "50%", width: "32px", height: "32px", padding: 0 }}
+          >
+            <FaPencilAlt size={12} />
+          </FLPButton>
+        ) : (
+          <FLPButton size={btnSize} variant="outline" onClick={handleOpenModal}>
+            {t(isEditAccount ? "edit" : "addAccount")}
+          </FLPButton>
+        )
       }
       onClose={() => setModalOpen(false)}
       onConfirm={submitAction}

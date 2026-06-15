@@ -1,6 +1,8 @@
 export const colors = {
   // Core Brand
   indigo: {
+    300: { value: "#c7d2fe" },
+    400: { value: "#a5b4fc" },
     500: { value: "#818cf8" }, // Accessible in Dark Mode
     600: { value: "#6363F1" }, // Primary WorkOS Indigo
     700: { value: "#5656D6" }, // Hover state
@@ -10,9 +12,12 @@ export const colors = {
     50: { value: "#f8fafc" },
     100: { value: "#f1f5f9" },
     200: { value: "#e2e8f0" }, // Light border
+    300: { value: "#cbd5e1" },
     400: { value: "#94a3b8" }, // Accessible Muted Text (Dark)
     500: { value: "#64748b" }, // Muted text
+    700: { value: "#334155" },
     800: { value: "#1e293b" },
+    850: { value: "#151e2e" },
     900: { value: "#0f172a" },
     950: { value: "#020617" },
   },
@@ -21,6 +26,31 @@ export const colors = {
     bg: { value: "#16181D" },
     surface: { value: "#20222D" },
     border: { value: "#2B333B" },
+  },
+  // Shared Semantic Colors
+  success: {
+    300: { value: "#6ee7b7" },
+    400: { value: "#34d399" },
+    500: { value: "#10b981" },
+    600: { value: "#059669" },
+  },
+  warning: {
+    300: { value: "#fde047" },
+    400: { value: "#facc15" },
+    500: { value: "#f59e0b" },
+    600: { value: "#d97706" },
+  },
+  info: {
+    300: { value: "#7dd3fc" },
+    400: { value: "#38bdf8" },
+    500: { value: "#0ea5e9" },
+    600: { value: "#0284c7" },
+  },
+  destructive: {
+    300: { value: "#fca5a5" },
+    400: { value: "#f87171" },
+    500: { value: "#ef4444" },
+    600: { value: "#dc2626" },
   },
 } as const;
 
@@ -72,9 +102,24 @@ export const semanticTokens = {
       hover: { value: { base: "{colors.slate.200}", _dark: "{colors.slate.700}" } },
     },
     destructive: {
-      DEFAULT: { value: { base: "#ef4444", _dark: "#f87171" } },
+      DEFAULT: { value: { base: "{colors.destructive.500}", _dark: "{colors.destructive.400}" } },
       foreground: { value: "#ffffff" },
-      hover: { value: { base: "#dc2626", _dark: "#ef4444" } },
+      hover: { value: { base: "{colors.destructive.600}", _dark: "{colors.destructive.500}" } },
+    },
+    success: {
+      DEFAULT: { value: { base: "{colors.success.500}", _dark: "{colors.success.400}" } },
+      foreground: { value: "#ffffff" },
+      hover: { value: { base: "{colors.success.600}", _dark: "{colors.success.500}" } },
+    },
+    warning: {
+      DEFAULT: { value: { base: "{colors.warning.500}", _dark: "{colors.warning.400}" } },
+      foreground: { value: "#ffffff" },
+      hover: { value: { base: "{colors.warning.600}", _dark: "{colors.warning.500}" } },
+    },
+    info: {
+      DEFAULT: { value: { base: "{colors.info.500}", _dark: "{colors.info.400}" } },
+      foreground: { value: "#ffffff" },
+      hover: { value: { base: "{colors.info.600}", _dark: "{colors.info.500}" } },
     },
     muted: {
       DEFAULT: { value: { base: "{colors.slate.100}", _dark: "{colors.slate.800}" } },

@@ -1,5 +1,10 @@
 {
   "home": "Hogar",
   "accounts": "Cuentas",
-  "Contact": "Contacto"
+  "Contact": "Contacto",
+  "forecast": "Pronóstico",
+  "mortgage": "Hipoteca",
+  "budget": "Presupuesto",
+  "profile": "Perfil",
+  "tax": "Impuestos"
 }

@@ -4,26 +4,65 @@ exports[`<AccountDetailContainer /> > should add new years when buttons are clic
 <body>
   <div>
     <div
-      class="d_flex flex-d_column gap_40px"
+      class="d_flex flex-d_column gap_32px pb_48px"
     >
       <div
-        class="d_flex flex-d_row jc_space-between ai_center"
+        class="d_inline-flex ai_center gap_8px c_text.muted fs_sm fw_medium cursor_pointer my_4 w_fit-content [&:hover]:c_primary"
       >
-        <div
-          class="d_flex flex-d_column"
+        <svg
+          fill="currentColor"
+          height="12"
+          stroke="currentColor"
+          stroke-width="0"
+          viewBox="0 0 448 512"
+          width="12"
+          xmlns="http://www.w3.org/2000/svg"
         >
-          <h2
-            class="c_primary fs_0.875rem fw_bold lh_tight m_0 "
+          <path
+            d="M257.5 445.1l-22.2 22.2c-9.4 9.4-24.6 9.4-33.9 0L7 273c-9.4-9.4-9.4-24.6 0-33.9L201.4 44.7c9.4-9.4 24.6-9.4 33.9 0l22.2 22.2c9.5 9.5 9.3 25-.4 34.3L136.6 216H424c13.3 0 24 10.7 24 24v32c0 13.3-10.7 24-24 24H136.6l120.5 114.8c9.8 9.3 10 24.8.4 34.3z"
+          />
+        </svg>
+        Back to Accounts
+      </div>
+      <div
+        class="p_24px bdr_lg bg-c_card bd_1px_solid bd-c_border d_flex flex-d_column md:flex-d_row jc_space-between ai_flex-start md:ai_center gap_20px"
+      >
+        <div>
+          <div
+            class="d_flex ai_center gap_2 "
           >
-            CURRENT
-          </h2>
+            <span
+              class="fs_10px fw_bold tt_uppercase bg-c_rgba(99,_99,_241,_0.1) c_primary p_2px_8px bdr_full"
+            >
+              CURRENT
+            </span>
+          </div>
           <h1
-            class="c_primary fs_1.5rem fw_bold lh_tight m_0 "
+            class="c_primary fs_1.5rem fw_bold mt_1 lh_tight m_0 "
           >
             My current account
           </h1>
+          <div
+            class="d_flex ai_baseline gap_12px mt_8px"
+          >
+            <h2
+              class="c_text.primary fs_1.875rem fw_bold lh_tight m_0 "
+            >
+              £1,000
+            </h2>
+            <span
+              class="fs_xs fw_bold p_2px_8px bdr_full bg-c_rgba(16,_185,_129,_0.1) c_success.500 d_inline-flex ai_center gap_2px"
+            >
+              ↑
+               
+              +0
+              %
+            </span>
+          </div>
         </div>
-        <div>
+        <div
+          class="d_flex gap_3 "
+        >
           <button
             class="d_inline-flex ai_center jc_center bdr_full fw_medium trs_all_0.2s cursor_pointer px_6 py_3 fs_sm lh_1 disabled:op_0.5 disabled:cursor_not-allowed focusVisible:ring_2px_solid focusVisible:ring-c_primary focusVisible:ring-o_2px bg_background c_text.primary bd_1px_solid bd-c_border hover:bg_accent hover:c_accent.foreground"
           >
@@ -32,344 +71,102 @@ exports[`<AccountDetailContainer /> > should add new years when buttons are clic
         </div>
       </div>
       <div
-        class="d_flex flex-d_column gap_20px ov_auto"
+        class="d_flex gap_16px bd-b_1px_solid bd-c_border pb_8px"
+      >
+        <button
+          class="d_flex ai_center gap_8px p_8px_16px fs_sm fw_semibold c_primary cursor_pointer bd-b_2px_solid bd-b-c_primary mb_-10px trs_all_0.2s [&:hover]:c_primary"
+          type="button"
+        >
+          <svg
+            fill="currentColor"
+            height="14"
+            stroke="currentColor"
+            stroke-width="0"
+            viewBox="0 0 512 512"
+            width="14"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M500 384c6.6 0 12 5.4 12 12v40c0 6.6-5.4 12-12 12H12c-6.6 0-12-5.4-12-12V76c0-6.6 5.4-12 12-12h40c6.6 0 12 5.4 12 12v308h436zM372.7 159.5L288 216l-85.3-113.7c-5.1-6.8-15.5-6.3-19.9 1L96 248v104h384l-89.9-187.8c-3.2-6.5-11.4-8.7-17.4-4.7z"
+            />
+          </svg>
+          History Trend
+        </button>
+        <button
+          class="d_flex ai_center gap_8px p_8px_16px fs_sm fw_semibold c_text.muted cursor_pointer bd-b_2px_solid bd-b-c_transparent mb_-10px trs_all_0.2s [&:hover]:c_primary"
+          type="button"
+        >
+          <svg
+            fill="currentColor"
+            height="14"
+            stroke="currentColor"
+            stroke-width="0"
+            viewBox="0 0 512 512"
+            width="14"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M464 32H48C21.49 32 0 53.49 0 80v352c0 26.51 21.49 48 48 48h416c26.51 0 48-21.49 48-48V80c0-26.51-21.49-48-48-48zM224 416H64v-96h160v96zm0-160H64v-96h160v96zm224 160H288v-96h160v96zm0-160H288v-96h160v96z"
+            />
+          </svg>
+          Values Table
+        </button>
+      </div>
+      <div
+        class="pos_relative trs_all_0.3s_ease-in-out bd_1px_solid bd-c_border bdr_lg bg-c_card c_card.foreground p_5 d_flex flex-d_column [&:hover]:bx-sh_0_10px_20px_rgba(0,_0,_0,_0.15)! [&:hover]:trf_translate3d(-2px,_-4px,_0) "
       >
         <div
-          class="d_flex flex-d_row ai_center gap_12px"
+          class="h_350px w_100% pt_16px"
         >
-          <h3
-            class="c_primary fs_1.25rem fw_bold lh_tight m_0 "
+          <div
+            class="recharts-responsive-container"
+            style="width: 100%; height: 100%; min-width: 0;"
           >
-            2021
-          </h3>
-          <button
-            class="d_inline-flex ai_center jc_center bdr_full fw_medium trs_all_0.2s cursor_pointer px_4 py_2 fs_xs lh_1 disabled:op_0.5 disabled:cursor_not-allowed focusVisible:ring_2px_solid focusVisible:ring-c_primary focusVisible:ring-o_2px bg_transparent c_text.primary hover:bg_accent hover:c_accent.foreground"
-          >
-            deleteYear
-          </button>
-        </div>
-        <div
-          class="d_flex flex-d_row gap_5"
-        >
-          <div>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              January
-            </p>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              £1,000
-            </p>
-          </div>
-          <div>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              February
-            </p>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              £1,000
-            </p>
-          </div>
-          <div>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              March
-            </p>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              £1,000
-            </p>
-          </div>
-          <div>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              April
-            </p>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              £1,000
-            </p>
-          </div>
-          <div>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              May
-            </p>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              £1,000
-            </p>
-          </div>
-          <div>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              June
-            </p>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              £1,000
-            </p>
-          </div>
-          <div>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              July
-            </p>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              £1,000
-            </p>
-          </div>
-          <div>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              August
-            </p>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              £1,000
-            </p>
-          </div>
-          <div>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              September
-            </p>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              £1,000
-            </p>
-          </div>
-          <div>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              October
-            </p>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              £1,000
-            </p>
-          </div>
-          <div>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              November
-            </p>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              £1,000
-            </p>
-          </div>
-          <div>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              December
-            </p>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              £1,000
-            </p>
-          </div>
-        </div>
-        <div
-          class="d_flex flex-d_row ai_center gap_12px"
-        >
-          <h3
-            class="c_primary fs_1.25rem fw_bold lh_tight m_0 "
-          >
-            2023
-          </h3>
-          <button
-            class="d_inline-flex ai_center jc_center bdr_full fw_medium trs_all_0.2s cursor_pointer px_4 py_2 fs_xs lh_1 disabled:op_0.5 disabled:cursor_not-allowed focusVisible:ring_2px_solid focusVisible:ring-c_primary focusVisible:ring-o_2px bg_transparent c_text.primary hover:bg_accent hover:c_accent.foreground"
-          >
-            deleteYear
-          </button>
-        </div>
-        <div
-          class="d_flex flex-d_row gap_5"
-        >
-          <div>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              January
-            </p>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              £1,000
-            </p>
-          </div>
-          <div>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              February
-            </p>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              £1,000
-            </p>
-          </div>
-          <div>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              March
-            </p>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              £1,000
-            </p>
-          </div>
-          <div>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              April
-            </p>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              £1,000
-            </p>
-          </div>
-          <div>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              May
-            </p>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              £1,000
-            </p>
-          </div>
-          <div>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              June
-            </p>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              £1,000
-            </p>
-          </div>
-          <div>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              July
-            </p>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              £1,000
-            </p>
-          </div>
-          <div>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              August
-            </p>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              £1,000
-            </p>
-          </div>
-          <div>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              September
-            </p>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              £1,000
-            </p>
-          </div>
-          <div>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              October
-            </p>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              £1,000
-            </p>
-          </div>
-          <div>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              November
-            </p>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              £1,000
-            </p>
-          </div>
-          <div>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              December
-            </p>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              £1,000
-            </p>
+            <div
+              style="width: 0px; height: 0px; overflow: visible;"
+            />
           </div>
         </div>
       </div>
       <div
-        class="d_flex flex-d_row gap_12px"
+        class="d_flex flex-d_row flex-wrap_wrap gap_12px mt_16px"
       >
         <button
           class="d_inline-flex ai_center jc_center bdr_full fw_medium trs_all_0.2s cursor_pointer px_4 py_2 fs_xs lh_1 disabled:op_0.5 disabled:cursor_not-allowed focusVisible:ring_2px_solid focusVisible:ring-c_primary focusVisible:ring-o_2px bg_background c_text.primary bd_1px_solid bd-c_border hover:bg_accent hover:c_accent.foreground"
         >
+          <svg
+            fill="currentColor"
+            height="1em"
+            stroke="currentColor"
+            stroke-width="0"
+            style="margin-right: 6px;"
+            viewBox="0 0 448 512"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M436 160H12c-6.6 0-12-5.4-12-12v-36c0-26.5 21.5-48 48-48h48V12c0-6.6 5.4-12 12-12h40c6.6 0 12 5.4 12 12v52h128V12c0-6.6 5.4-12 12-12h40c6.6 0 12 5.4 12 12v52h48c26.5 0 48 21.5 48 48v36c0 6.6-5.4 12-12 12zM12 192h424c6.6 0 12 5.4 12 12v260c0 26.5-21.5 48-48 48H48c-26.5 0-48-21.5-48-48V204c0-6.6 5.4-12 12-12zm316 140c0-6.6-5.4-12-12-12h-60v-60c0-6.6-5.4-12-12-12h-40c-6.6 0-12 5.4-12 12v60h-60c-6.6 0-12 5.4-12 12v40c0 6.6 5.4 12 12 12h60v60c0 6.6 5.4 12 12 12h40c6.6 0 12-5.4 12-12v-60h60c6.6 0 12-5.4 12-12v-40z"
+            />
+          </svg>
           addPrevYear
         </button>
         <button
           class="d_inline-flex ai_center jc_center bdr_full fw_medium trs_all_0.2s cursor_pointer px_4 py_2 fs_xs lh_1 disabled:op_0.5 disabled:cursor_not-allowed focusVisible:ring_2px_solid focusVisible:ring-c_primary focusVisible:ring-o_2px bg_background c_text.primary bd_1px_solid bd-c_border hover:bg_accent hover:c_accent.foreground"
         >
+          <svg
+            fill="currentColor"
+            height="1em"
+            stroke="currentColor"
+            stroke-width="0"
+            style="margin-right: 6px;"
+            viewBox="0 0 448 512"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M436 160H12c-6.6 0-12-5.4-12-12v-36c0-26.5 21.5-48 48-48h48V12c0-6.6 5.4-12 12-12h40c6.6 0 12 5.4 12 12v52h128V12c0-6.6 5.4-12 12-12h40c6.6 0 12 5.4 12 12v52h48c26.5 0 48 21.5 48 48v36c0 6.6-5.4 12-12 12zM12 192h424c6.6 0 12 5.4 12 12v260c0 26.5-21.5 48-48 48H48c-26.5 0-48-21.5-48-48V204c0-6.6 5.4-12 12-12zm316 140c0-6.6-5.4-12-12-12h-60v-60c0-6.6-5.4-12-12-12h-40c-6.6 0-12 5.4-12 12v60h-60c-6.6 0-12 5.4-12 12v40c0 6.6 5.4 12 12 12h60v60c0 6.6 5.4 12 12 12h40c6.6 0 12-5.4 12-12v-60h60c6.6 0 12-5.4 12-12v-40z"
+            />
+          </svg>
           addNextYear
         </button>
       </div>
@@ -382,26 +179,65 @@ exports[`<AccountDetailContainer /> > should render 1`] = `
 <body>
   <div>
     <div
-      class="d_flex flex-d_column gap_40px"
+      class="d_flex flex-d_column gap_32px pb_48px"
     >
       <div
-        class="d_flex flex-d_row jc_space-between ai_center"
+        class="d_inline-flex ai_center gap_8px c_text.muted fs_sm fw_medium cursor_pointer my_4 w_fit-content [&:hover]:c_primary"
       >
-        <div
-          class="d_flex flex-d_column"
+        <svg
+          fill="currentColor"
+          height="12"
+          stroke="currentColor"
+          stroke-width="0"
+          viewBox="0 0 448 512"
+          width="12"
+          xmlns="http://www.w3.org/2000/svg"
         >
-          <h2
-            class="c_primary fs_0.875rem fw_bold lh_tight m_0 "
+          <path
+            d="M257.5 445.1l-22.2 22.2c-9.4 9.4-24.6 9.4-33.9 0L7 273c-9.4-9.4-9.4-24.6 0-33.9L201.4 44.7c9.4-9.4 24.6-9.4 33.9 0l22.2 22.2c9.5 9.5 9.3 25-.4 34.3L136.6 216H424c13.3 0 24 10.7 24 24v32c0 13.3-10.7 24-24 24H136.6l120.5 114.8c9.8 9.3 10 24.8.4 34.3z"
+          />
+        </svg>
+        Back to Accounts
+      </div>
+      <div
+        class="p_24px bdr_lg bg-c_card bd_1px_solid bd-c_border d_flex flex-d_column md:flex-d_row jc_space-between ai_flex-start md:ai_center gap_20px"
+      >
+        <div>
+          <div
+            class="d_flex ai_center gap_2 "
           >
-            CURRENT
-          </h2>
+            <span
+              class="fs_10px fw_bold tt_uppercase bg-c_rgba(99,_99,_241,_0.1) c_primary p_2px_8px bdr_full"
+            >
+              CURRENT
+            </span>
+          </div>
           <h1
-            class="c_primary fs_1.5rem fw_bold lh_tight m_0 "
+            class="c_primary fs_1.5rem fw_bold mt_1 lh_tight m_0 "
           >
             My current account
           </h1>
+          <div
+            class="d_flex ai_baseline gap_12px mt_8px"
+          >
+            <h2
+              class="c_text.primary fs_1.875rem fw_bold lh_tight m_0 "
+            >
+              £1,000
+            </h2>
+            <span
+              class="fs_xs fw_bold p_2px_8px bdr_full bg-c_rgba(16,_185,_129,_0.1) c_success.500 d_inline-flex ai_center gap_2px"
+            >
+              ↑
+               
+              +0
+              %
+            </span>
+          </div>
         </div>
-        <div>
+        <div
+          class="d_flex gap_3 "
+        >
           <button
             class="d_inline-flex ai_center jc_center bdr_full fw_medium trs_all_0.2s cursor_pointer px_6 py_3 fs_sm lh_1 disabled:op_0.5 disabled:cursor_not-allowed focusVisible:ring_2px_solid focusVisible:ring-c_primary focusVisible:ring-o_2px bg_background c_text.primary bd_1px_solid bd-c_border hover:bg_accent hover:c_accent.foreground"
           >
@@ -410,344 +246,102 @@ exports[`<AccountDetailContainer /> > should render 1`] = `
         </div>
       </div>
       <div
-        class="d_flex flex-d_column gap_20px ov_auto"
+        class="d_flex gap_16px bd-b_1px_solid bd-c_border pb_8px"
+      >
+        <button
+          class="d_flex ai_center gap_8px p_8px_16px fs_sm fw_semibold c_primary cursor_pointer bd-b_2px_solid bd-b-c_primary mb_-10px trs_all_0.2s [&:hover]:c_primary"
+          type="button"
+        >
+          <svg
+            fill="currentColor"
+            height="14"
+            stroke="currentColor"
+            stroke-width="0"
+            viewBox="0 0 512 512"
+            width="14"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M500 384c6.6 0 12 5.4 12 12v40c0 6.6-5.4 12-12 12H12c-6.6 0-12-5.4-12-12V76c0-6.6 5.4-12 12-12h40c6.6 0 12 5.4 12 12v308h436zM372.7 159.5L288 216l-85.3-113.7c-5.1-6.8-15.5-6.3-19.9 1L96 248v104h384l-89.9-187.8c-3.2-6.5-11.4-8.7-17.4-4.7z"
+            />
+          </svg>
+          History Trend
+        </button>
+        <button
+          class="d_flex ai_center gap_8px p_8px_16px fs_sm fw_semibold c_text.muted cursor_pointer bd-b_2px_solid bd-b-c_transparent mb_-10px trs_all_0.2s [&:hover]:c_primary"
+          type="button"
+        >
+          <svg
+            fill="currentColor"
+            height="14"
+            stroke="currentColor"
+            stroke-width="0"
+            viewBox="0 0 512 512"
+            width="14"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M464 32H48C21.49 32 0 53.49 0 80v352c0 26.51 21.49 48 48 48h416c26.51 0 48-21.49 48-48V80c0-26.51-21.49-48-48-48zM224 416H64v-96h160v96zm0-160H64v-96h160v96zm224 160H288v-96h160v96zm0-160H288v-96h160v96z"
+            />
+          </svg>
+          Values Table
+        </button>
+      </div>
+      <div
+        class="pos_relative trs_all_0.3s_ease-in-out bd_1px_solid bd-c_border bdr_lg bg-c_card c_card.foreground p_5 d_flex flex-d_column [&:hover]:bx-sh_0_10px_20px_rgba(0,_0,_0,_0.15)! [&:hover]:trf_translate3d(-2px,_-4px,_0) "
       >
         <div
-          class="d_flex flex-d_row ai_center gap_12px"
+          class="h_350px w_100% pt_16px"
         >
-          <h3
-            class="c_primary fs_1.25rem fw_bold lh_tight m_0 "
+          <div
+            class="recharts-responsive-container"
+            style="width: 100%; height: 100%; min-width: 0;"
           >
-            2021
-          </h3>
-          <button
-            class="d_inline-flex ai_center jc_center bdr_full fw_medium trs_all_0.2s cursor_pointer px_4 py_2 fs_xs lh_1 disabled:op_0.5 disabled:cursor_not-allowed focusVisible:ring_2px_solid focusVisible:ring-c_primary focusVisible:ring-o_2px bg_transparent c_text.primary hover:bg_accent hover:c_accent.foreground"
-          >
-            deleteYear
-          </button>
-        </div>
-        <div
-          class="d_flex flex-d_row gap_5"
-        >
-          <div>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              January
-            </p>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              £1,000
-            </p>
-          </div>
-          <div>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              February
-            </p>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              £1,000
-            </p>
-          </div>
-          <div>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              March
-            </p>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              £1,000
-            </p>
-          </div>
-          <div>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              April
-            </p>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              £1,000
-            </p>
-          </div>
-          <div>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              May
-            </p>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              £1,000
-            </p>
-          </div>
-          <div>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              June
-            </p>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              £1,000
-            </p>
-          </div>
-          <div>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              July
-            </p>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              £1,000
-            </p>
-          </div>
-          <div>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              August
-            </p>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              £1,000
-            </p>
-          </div>
-          <div>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              September
-            </p>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              £1,000
-            </p>
-          </div>
-          <div>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              October
-            </p>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              £1,000
-            </p>
-          </div>
-          <div>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              November
-            </p>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              £1,000
-            </p>
-          </div>
-          <div>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              December
-            </p>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              £1,000
-            </p>
-          </div>
-        </div>
-        <div
-          class="d_flex flex-d_row ai_center gap_12px"
-        >
-          <h3
-            class="c_primary fs_1.25rem fw_bold lh_tight m_0 "
-          >
-            2023
-          </h3>
-          <button
-            class="d_inline-flex ai_center jc_center bdr_full fw_medium trs_all_0.2s cursor_pointer px_4 py_2 fs_xs lh_1 disabled:op_0.5 disabled:cursor_not-allowed focusVisible:ring_2px_solid focusVisible:ring-c_primary focusVisible:ring-o_2px bg_transparent c_text.primary hover:bg_accent hover:c_accent.foreground"
-          >
-            deleteYear
-          </button>
-        </div>
-        <div
-          class="d_flex flex-d_row gap_5"
-        >
-          <div>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              January
-            </p>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              £1,000
-            </p>
-          </div>
-          <div>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              February
-            </p>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              £1,000
-            </p>
-          </div>
-          <div>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              March
-            </p>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              £1,000
-            </p>
-          </div>
-          <div>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              April
-            </p>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              £1,000
-            </p>
-          </div>
-          <div>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              May
-            </p>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              £1,000
-            </p>
-          </div>
-          <div>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              June
-            </p>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              £1,000
-            </p>
-          </div>
-          <div>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              July
-            </p>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              £1,000
-            </p>
-          </div>
-          <div>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              August
-            </p>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              £1,000
-            </p>
-          </div>
-          <div>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              September
-            </p>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              £1,000
-            </p>
-          </div>
-          <div>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              October
-            </p>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              £1,000
-            </p>
-          </div>
-          <div>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              November
-            </p>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              £1,000
-            </p>
-          </div>
-          <div>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              December
-            </p>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              £1,000
-            </p>
+            <div
+              style="width: 0px; height: 0px; overflow: visible;"
+            />
           </div>
         </div>
       </div>
       <div
-        class="d_flex flex-d_row gap_12px"
+        class="d_flex flex-d_row flex-wrap_wrap gap_12px mt_16px"
       >
         <button
           class="d_inline-flex ai_center jc_center bdr_full fw_medium trs_all_0.2s cursor_pointer px_4 py_2 fs_xs lh_1 disabled:op_0.5 disabled:cursor_not-allowed focusVisible:ring_2px_solid focusVisible:ring-c_primary focusVisible:ring-o_2px bg_background c_text.primary bd_1px_solid bd-c_border hover:bg_accent hover:c_accent.foreground"
         >
+          <svg
+            fill="currentColor"
+            height="1em"
+            stroke="currentColor"
+            stroke-width="0"
+            style="margin-right: 6px;"
+            viewBox="0 0 448 512"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M436 160H12c-6.6 0-12-5.4-12-12v-36c0-26.5 21.5-48 48-48h48V12c0-6.6 5.4-12 12-12h40c6.6 0 12 5.4 12 12v52h128V12c0-6.6 5.4-12 12-12h40c6.6 0 12 5.4 12 12v52h48c26.5 0 48 21.5 48 48v36c0 6.6-5.4 12-12 12zM12 192h424c6.6 0 12 5.4 12 12v260c0 26.5-21.5 48-48 48H48c-26.5 0-48-21.5-48-48V204c0-6.6 5.4-12 12-12zm316 140c0-6.6-5.4-12-12-12h-60v-60c0-6.6-5.4-12-12-12h-40c-6.6 0-12 5.4-12 12v60h-60c-6.6 0-12 5.4-12 12v40c0 6.6 5.4 12 12 12h60v60c0 6.6 5.4 12 12 12h40c6.6 0 12-5.4 12-12v-60h60c6.6 0 12-5.4 12-12v-40z"
+            />
+          </svg>
           addPrevYear
         </button>
         <button
           class="d_inline-flex ai_center jc_center bdr_full fw_medium trs_all_0.2s cursor_pointer px_4 py_2 fs_xs lh_1 disabled:op_0.5 disabled:cursor_not-allowed focusVisible:ring_2px_solid focusVisible:ring-c_primary focusVisible:ring-o_2px bg_background c_text.primary bd_1px_solid bd-c_border hover:bg_accent hover:c_accent.foreground"
         >
+          <svg
+            fill="currentColor"
+            height="1em"
+            stroke="currentColor"
+            stroke-width="0"
+            style="margin-right: 6px;"
+            viewBox="0 0 448 512"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M436 160H12c-6.6 0-12-5.4-12-12v-36c0-26.5 21.5-48 48-48h48V12c0-6.6 5.4-12 12-12h40c6.6 0 12 5.4 12 12v52h128V12c0-6.6 5.4-12 12-12h40c6.6 0 12 5.4 12 12v52h48c26.5 0 48 21.5 48 48v36c0 6.6-5.4 12-12 12zM12 192h424c6.6 0 12 5.4 12 12v260c0 26.5-21.5 48-48 48H48c-26.5 0-48-21.5-48-48V204c0-6.6 5.4-12 12-12zm316 140c0-6.6-5.4-12-12-12h-60v-60c0-6.6-5.4-12-12-12h-40c-6.6 0-12 5.4-12 12v60h-60c-6.6 0-12 5.4-12 12v40c0 6.6 5.4 12 12 12h60v60c0 6.6 5.4 12 12 12h40c6.6 0 12-5.4 12-12v-60h60c6.6 0 12-5.4 12-12v-40z"
+            />
+          </svg>
           addNextYear
         </button>
       </div>
@@ -760,26 +354,57 @@ exports[`<AccountDetailContainer /> > should render add current year button and 
 <body>
   <div>
     <div
-      class="d_flex flex-d_column gap_40px"
+      class="d_flex flex-d_column gap_32px pb_48px"
     >
       <div
-        class="d_flex flex-d_row jc_space-between ai_center"
+        class="d_inline-flex ai_center gap_8px c_text.muted fs_sm fw_medium cursor_pointer my_4 w_fit-content [&:hover]:c_primary"
       >
-        <div
-          class="d_flex flex-d_column"
+        <svg
+          fill="currentColor"
+          height="12"
+          stroke="currentColor"
+          stroke-width="0"
+          viewBox="0 0 448 512"
+          width="12"
+          xmlns="http://www.w3.org/2000/svg"
         >
-          <h2
-            class="c_primary fs_0.875rem fw_bold lh_tight m_0 "
+          <path
+            d="M257.5 445.1l-22.2 22.2c-9.4 9.4-24.6 9.4-33.9 0L7 273c-9.4-9.4-9.4-24.6 0-33.9L201.4 44.7c9.4-9.4 24.6-9.4 33.9 0l22.2 22.2c9.5 9.5 9.3 25-.4 34.3L136.6 216H424c13.3 0 24 10.7 24 24v32c0 13.3-10.7 24-24 24H136.6l120.5 114.8c9.8 9.3 10 24.8.4 34.3z"
+          />
+        </svg>
+        Back to Accounts
+      </div>
+      <div
+        class="p_24px bdr_lg bg-c_card bd_1px_solid bd-c_border d_flex flex-d_column md:flex-d_row jc_space-between ai_flex-start md:ai_center gap_20px"
+      >
+        <div>
+          <div
+            class="d_flex ai_center gap_2 "
           >
-            CURRENT
-          </h2>
+            <span
+              class="fs_10px fw_bold tt_uppercase bg-c_rgba(99,_99,_241,_0.1) c_primary p_2px_8px bdr_full"
+            >
+              CURRENT
+            </span>
+          </div>
           <h1
-            class="c_primary fs_1.5rem fw_bold lh_tight m_0 "
+            class="c_primary fs_1.5rem fw_bold mt_1 lh_tight m_0 "
           >
             My current account
           </h1>
+          <div
+            class="d_flex ai_baseline gap_12px mt_8px"
+          >
+            <h2
+              class="c_text.primary fs_1.875rem fw_bold lh_tight m_0 "
+            >
+              £1,000
+            </h2>
+          </div>
         </div>
-        <div>
+        <div
+          class="d_flex gap_3 "
+        >
           <button
             class="d_inline-flex ai_center jc_center bdr_full fw_medium trs_all_0.2s cursor_pointer px_6 py_3 fs_sm lh_1 disabled:op_0.5 disabled:cursor_not-allowed focusVisible:ring_2px_solid focusVisible:ring-c_primary focusVisible:ring-o_2px bg_background c_text.primary bd_1px_solid bd-c_border hover:bg_accent hover:c_accent.foreground"
           >
@@ -788,339 +413,83 @@ exports[`<AccountDetailContainer /> > should render add current year button and 
         </div>
       </div>
       <div
-        class="d_flex flex-d_column gap_20px ov_auto"
+        class="d_flex gap_16px bd-b_1px_solid bd-c_border pb_8px"
+      >
+        <button
+          class="d_flex ai_center gap_8px p_8px_16px fs_sm fw_semibold c_primary cursor_pointer bd-b_2px_solid bd-b-c_primary mb_-10px trs_all_0.2s [&:hover]:c_primary"
+          type="button"
+        >
+          <svg
+            fill="currentColor"
+            height="14"
+            stroke="currentColor"
+            stroke-width="0"
+            viewBox="0 0 512 512"
+            width="14"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M500 384c6.6 0 12 5.4 12 12v40c0 6.6-5.4 12-12 12H12c-6.6 0-12-5.4-12-12V76c0-6.6 5.4-12 12-12h40c6.6 0 12 5.4 12 12v308h436zM372.7 159.5L288 216l-85.3-113.7c-5.1-6.8-15.5-6.3-19.9 1L96 248v104h384l-89.9-187.8c-3.2-6.5-11.4-8.7-17.4-4.7z"
+            />
+          </svg>
+          History Trend
+        </button>
+        <button
+          class="d_flex ai_center gap_8px p_8px_16px fs_sm fw_semibold c_text.muted cursor_pointer bd-b_2px_solid bd-b-c_transparent mb_-10px trs_all_0.2s [&:hover]:c_primary"
+          type="button"
+        >
+          <svg
+            fill="currentColor"
+            height="14"
+            stroke="currentColor"
+            stroke-width="0"
+            viewBox="0 0 512 512"
+            width="14"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M464 32H48C21.49 32 0 53.49 0 80v352c0 26.51 21.49 48 48 48h416c26.51 0 48-21.49 48-48V80c0-26.51-21.49-48-48-48zM224 416H64v-96h160v96zm0-160H64v-96h160v96zm224 160H288v-96h160v96zm0-160H288v-96h160v96z"
+            />
+          </svg>
+          Values Table
+        </button>
+      </div>
+      <div
+        class="pos_relative trs_all_0.3s_ease-in-out bd_1px_solid bd-c_border bdr_lg bg-c_card c_card.foreground p_5 d_flex flex-d_column [&:hover]:bx-sh_0_10px_20px_rgba(0,_0,_0,_0.15)! [&:hover]:trf_translate3d(-2px,_-4px,_0) "
       >
         <div
-          class="d_flex flex-d_row ai_center gap_12px"
+          class="h_350px w_100% pt_16px"
         >
-          <h3
-            class="c_primary fs_1.25rem fw_bold lh_tight m_0 "
+          <div
+            class="recharts-responsive-container"
+            style="width: 100%; height: 100%; min-width: 0;"
           >
-            2021
-          </h3>
-          <button
-            class="d_inline-flex ai_center jc_center bdr_full fw_medium trs_all_0.2s cursor_pointer px_4 py_2 fs_xs lh_1 disabled:op_0.5 disabled:cursor_not-allowed focusVisible:ring_2px_solid focusVisible:ring-c_primary focusVisible:ring-o_2px bg_transparent c_text.primary hover:bg_accent hover:c_accent.foreground"
-          >
-            deleteYear
-          </button>
-        </div>
-        <div
-          class="d_flex flex-d_row gap_5"
-        >
-          <div>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              January
-            </p>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              £1,000
-            </p>
-          </div>
-          <div>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              February
-            </p>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              £1,000
-            </p>
-          </div>
-          <div>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              March
-            </p>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              £1,000
-            </p>
-          </div>
-          <div>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              April
-            </p>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              £1,000
-            </p>
-          </div>
-          <div>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              May
-            </p>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              £1,000
-            </p>
-          </div>
-          <div>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              June
-            </p>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              £1,000
-            </p>
-          </div>
-          <div>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              July
-            </p>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              £1,000
-            </p>
-          </div>
-          <div>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              August
-            </p>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              £1,000
-            </p>
-          </div>
-          <div>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              September
-            </p>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              £1,000
-            </p>
-          </div>
-          <div>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              October
-            </p>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              £1,000
-            </p>
-          </div>
-          <div>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              November
-            </p>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              £1,000
-            </p>
-          </div>
-          <div>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              December
-            </p>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              £1,000
-            </p>
-          </div>
-        </div>
-        <div
-          class="d_flex flex-d_row ai_center gap_12px"
-        >
-          <h3
-            class="c_primary fs_1.25rem fw_bold lh_tight m_0 "
-          >
-            2023
-          </h3>
-          <button
-            class="d_inline-flex ai_center jc_center bdr_full fw_medium trs_all_0.2s cursor_pointer px_4 py_2 fs_xs lh_1 disabled:op_0.5 disabled:cursor_not-allowed focusVisible:ring_2px_solid focusVisible:ring-c_primary focusVisible:ring-o_2px bg_transparent c_text.primary hover:bg_accent hover:c_accent.foreground"
-          >
-            deleteYear
-          </button>
-        </div>
-        <div
-          class="d_flex flex-d_row gap_5"
-        >
-          <div>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              January
-            </p>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              £1,000
-            </p>
-          </div>
-          <div>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              February
-            </p>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              £1,000
-            </p>
-          </div>
-          <div>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              March
-            </p>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              £1,000
-            </p>
-          </div>
-          <div>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              April
-            </p>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              £1,000
-            </p>
-          </div>
-          <div>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              May
-            </p>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              £1,000
-            </p>
-          </div>
-          <div>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              June
-            </p>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              £1,000
-            </p>
-          </div>
-          <div>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              July
-            </p>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              £1,000
-            </p>
-          </div>
-          <div>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              August
-            </p>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              £1,000
-            </p>
-          </div>
-          <div>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              September
-            </p>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              £1,000
-            </p>
-          </div>
-          <div>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              October
-            </p>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              £1,000
-            </p>
-          </div>
-          <div>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              November
-            </p>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              £1,000
-            </p>
-          </div>
-          <div>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              December
-            </p>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              £1,000
-            </p>
+            <div
+              style="width: 0px; height: 0px; overflow: visible;"
+            />
           </div>
         </div>
       </div>
       <div
-        class="d_flex flex-d_row gap_12px"
+        class="d_flex flex-d_row flex-wrap_wrap gap_12px mt_16px"
       >
         <button
           class="d_inline-flex ai_center jc_center bdr_full fw_medium trs_all_0.2s cursor_pointer px_4 py_2 fs_xs lh_1 disabled:op_0.5 disabled:cursor_not-allowed focusVisible:ring_2px_solid focusVisible:ring-c_primary focusVisible:ring-o_2px bg_background c_text.primary bd_1px_solid bd-c_border hover:bg_accent hover:c_accent.foreground"
         >
+          <svg
+            fill="currentColor"
+            height="1em"
+            stroke="currentColor"
+            stroke-width="0"
+            style="margin-right: 6px;"
+            viewBox="0 0 448 512"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M436 160H12c-6.6 0-12-5.4-12-12v-36c0-26.5 21.5-48 48-48h48V12c0-6.6 5.4-12 12-12h40c6.6 0 12 5.4 12 12v52h128V12c0-6.6 5.4-12 12-12h40c6.6 0 12 5.4 12 12v52h48c26.5 0 48 21.5 48 48v36c0 6.6-5.4 12-12 12zM12 192h424c6.6 0 12 5.4 12 12v260c0 26.5-21.5 48-48 48H48c-26.5 0-48-21.5-48-48V204c0-6.6 5.4-12 12-12zm316 140c0-6.6-5.4-12-12-12h-60v-60c0-6.6-5.4-12-12-12h-40c-6.6 0-12 5.4-12 12v60h-60c-6.6 0-12 5.4-12 12v40c0 6.6 5.4 12 12 12h60v60c0 6.6 5.4 12 12 12h40c6.6 0 12-5.4 12-12v-60h60c6.6 0 12-5.4 12-12v-40z"
+            />
+          </svg>
           addCurrentYear
         </button>
       </div>
@@ -1133,686 +502,531 @@ exports[`<AccountDetailContainer /> > should toggle edit mode when button is cli
 <body>
   <div>
     <div
-      class="d_flex flex-d_column gap_40px"
+      class="d_flex flex-d_column gap_32px pb_48px"
     >
       <div
-        class="d_flex flex-d_row jc_space-between ai_center"
+        class="d_inline-flex ai_center gap_8px c_text.muted fs_sm fw_medium cursor_pointer my_4 w_fit-content [&:hover]:c_primary"
       >
-        <div
-          class="d_flex flex-d_column"
+        <svg
+          fill="currentColor"
+          height="12"
+          stroke="currentColor"
+          stroke-width="0"
+          viewBox="0 0 448 512"
+          width="12"
+          xmlns="http://www.w3.org/2000/svg"
         >
-          <h2
-            class="c_primary fs_0.875rem fw_bold lh_tight m_0 "
+          <path
+            d="M257.5 445.1l-22.2 22.2c-9.4 9.4-24.6 9.4-33.9 0L7 273c-9.4-9.4-9.4-24.6 0-33.9L201.4 44.7c9.4-9.4 24.6-9.4 33.9 0l22.2 22.2c9.5 9.5 9.3 25-.4 34.3L136.6 216H424c13.3 0 24 10.7 24 24v32c0 13.3-10.7 24-24 24H136.6l120.5 114.8c9.8 9.3 10 24.8.4 34.3z"
+          />
+        </svg>
+        Back to Accounts
+      </div>
+      <div
+        class="p_24px bdr_lg bg-c_card bd_1px_solid bd-c_border d_flex flex-d_column md:flex-d_row jc_space-between ai_flex-start md:ai_center gap_20px"
+      >
+        <div>
+          <div
+            class="d_flex ai_center gap_2 "
           >
-            CURRENT
-          </h2>
+            <span
+              class="fs_10px fw_bold tt_uppercase bg-c_rgba(99,_99,_241,_0.1) c_primary p_2px_8px bdr_full"
+            >
+              CURRENT
+            </span>
+          </div>
           <h1
-            class="c_primary fs_1.5rem fw_bold lh_tight m_0 "
+            class="c_primary fs_1.5rem fw_bold mt_1 lh_tight m_0 "
           >
             My current account
           </h1>
+          <div
+            class="d_flex ai_baseline gap_12px mt_8px"
+          >
+            <h2
+              class="c_text.primary fs_1.875rem fw_bold lh_tight m_0 "
+            >
+              £1,000
+            </h2>
+            <span
+              class="fs_xs fw_bold p_2px_8px bdr_full bg-c_rgba(16,_185,_129,_0.1) c_success.500 d_inline-flex ai_center gap_2px"
+            >
+              ↑
+               
+              +0
+              %
+            </span>
+          </div>
         </div>
-        <div>
+        <div
+          class="d_flex gap_3 "
+        >
           <button
             class="d_inline-flex ai_center jc_center bdr_full fw_medium trs_all_0.2s cursor_pointer px_6 py_3 fs_sm lh_1 disabled:op_0.5 disabled:cursor_not-allowed focusVisible:ring_2px_solid focusVisible:ring-c_primary focusVisible:ring-o_2px bg_background c_text.primary bd_1px_solid bd-c_border hover:bg_accent hover:c_accent.foreground"
+          >
+            Cancel
+          </button>
+          <button
+            class="d_inline-flex ai_center jc_center bdr_full fw_medium trs_all_0.2s cursor_pointer px_6 py_3 fs_sm lh_1 disabled:op_0.5 disabled:cursor_not-allowed focusVisible:ring_2px_solid focusVisible:ring-c_primary focusVisible:ring-o_2px bg_primary c_primary.foreground hover:bg_primary.hover"
           >
             save
           </button>
         </div>
       </div>
       <div
-        class="d_flex flex-d_column gap_20px ov_auto"
+        class="pos_relative trs_all_0.3s_ease-in-out bd_1px_solid bd-c_border bdr_lg bg-c_card c_card.foreground p_5 d_flex flex-d_column [&:hover]:bx-sh_0_10px_20px_rgba(0,_0,_0,_0.15)! [&:hover]:trf_translate3d(-2px,_-4px,_0) "
       >
         <div
-          class="d_flex flex-d_row ai_center gap_12px"
+          class="w_100% ov-x_auto"
         >
-          <h3
-            class="c_primary fs_1.25rem fw_bold lh_tight m_0 "
+          <table
+            class="w_100% bd-cl_collapse mt_8px fs_sm"
           >
-            2021
-          </h3>
-          <button
-            class="d_inline-flex ai_center jc_center bdr_full fw_medium trs_all_0.2s cursor_pointer px_4 py_2 fs_xs lh_1 disabled:op_0.5 disabled:cursor_not-allowed focusVisible:ring_2px_solid focusVisible:ring-c_primary focusVisible:ring-o_2px bg_transparent c_text.primary hover:bg_accent hover:c_accent.foreground"
-          >
-            deleteYear
-          </button>
+            <thead>
+              <tr>
+                <th
+                  class="p_16px fw_bold ta_right bd-b_2px_solid bd-b-c_border c_text.primary va_middle [&:first-child]:ta_left [&:first-child]:w_160px"
+                >
+                  Month
+                </th>
+                <th
+                  class="p_16px fw_bold ta_right bd-b_2px_solid bd-b-c_border c_text.primary va_middle [&:first-child]:ta_left [&:first-child]:w_160px"
+                >
+                  <div
+                    style="display: flex; align-items: center; justify-content: flex-end; gap: 8px;"
+                  >
+                    <span>
+                      2023
+                    </span>
+                  </div>
+                </th>
+                <th
+                  class="p_16px fw_bold ta_right bd-b_2px_solid bd-b-c_border c_text.primary va_middle [&:first-child]:ta_left [&:first-child]:w_160px"
+                >
+                  <div
+                    style="display: flex; align-items: center; justify-content: flex-end; gap: 8px;"
+                  >
+                    <span>
+                      2021
+                    </span>
+                  </div>
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td
+                  class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+                >
+                  December
+                </td>
+                <td
+                  class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+                >
+                  <input
+                    class="w_100% max-w_140px p_8px_12px bdr_sm bd_1px_solid bd-c_border ta_right fs_sm bg-c_background c_text.primary [&:focus]:bd-c_primary [&:focus]:ring_none [&:focus]:bx-sh_0_0_0_2px_rgba(99,_99,_241,_0.15)"
+                    data-month="12"
+                    data-year="2023"
+                    step="any"
+                    type="number"
+                    value="1000"
+                  />
+                </td>
+                <td
+                  class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+                >
+                  <input
+                    class="w_100% max-w_140px p_8px_12px bdr_sm bd_1px_solid bd-c_border ta_right fs_sm bg-c_background c_text.primary [&:focus]:bd-c_primary [&:focus]:ring_none [&:focus]:bx-sh_0_0_0_2px_rgba(99,_99,_241,_0.15)"
+                    data-month="12"
+                    data-year="2021"
+                    step="any"
+                    type="number"
+                    value="1000"
+                  />
+                </td>
+              </tr>
+              <tr>
+                <td
+                  class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+                >
+                  November
+                </td>
+                <td
+                  class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+                >
+                  <input
+                    class="w_100% max-w_140px p_8px_12px bdr_sm bd_1px_solid bd-c_border ta_right fs_sm bg-c_background c_text.primary [&:focus]:bd-c_primary [&:focus]:ring_none [&:focus]:bx-sh_0_0_0_2px_rgba(99,_99,_241,_0.15)"
+                    data-month="11"
+                    data-year="2023"
+                    step="any"
+                    type="number"
+                    value="1000"
+                  />
+                </td>
+                <td
+                  class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+                >
+                  <input
+                    class="w_100% max-w_140px p_8px_12px bdr_sm bd_1px_solid bd-c_border ta_right fs_sm bg-c_background c_text.primary [&:focus]:bd-c_primary [&:focus]:ring_none [&:focus]:bx-sh_0_0_0_2px_rgba(99,_99,_241,_0.15)"
+                    data-month="11"
+                    data-year="2021"
+                    step="any"
+                    type="number"
+                    value="1000"
+                  />
+                </td>
+              </tr>
+              <tr>
+                <td
+                  class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+                >
+                  October
+                </td>
+                <td
+                  class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+                >
+                  <input
+                    class="w_100% max-w_140px p_8px_12px bdr_sm bd_1px_solid bd-c_border ta_right fs_sm bg-c_background c_text.primary [&:focus]:bd-c_primary [&:focus]:ring_none [&:focus]:bx-sh_0_0_0_2px_rgba(99,_99,_241,_0.15)"
+                    data-month="10"
+                    data-year="2023"
+                    step="any"
+                    type="number"
+                    value="1000"
+                  />
+                </td>
+                <td
+                  class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+                >
+                  <input
+                    class="w_100% max-w_140px p_8px_12px bdr_sm bd_1px_solid bd-c_border ta_right fs_sm bg-c_background c_text.primary [&:focus]:bd-c_primary [&:focus]:ring_none [&:focus]:bx-sh_0_0_0_2px_rgba(99,_99,_241,_0.15)"
+                    data-month="10"
+                    data-year="2021"
+                    step="any"
+                    type="number"
+                    value="1000"
+                  />
+                </td>
+              </tr>
+              <tr>
+                <td
+                  class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+                >
+                  September
+                </td>
+                <td
+                  class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+                >
+                  <input
+                    class="w_100% max-w_140px p_8px_12px bdr_sm bd_1px_solid bd-c_border ta_right fs_sm bg-c_background c_text.primary [&:focus]:bd-c_primary [&:focus]:ring_none [&:focus]:bx-sh_0_0_0_2px_rgba(99,_99,_241,_0.15)"
+                    data-month="9"
+                    data-year="2023"
+                    step="any"
+                    type="number"
+                    value="1000"
+                  />
+                </td>
+                <td
+                  class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+                >
+                  <input
+                    class="w_100% max-w_140px p_8px_12px bdr_sm bd_1px_solid bd-c_border ta_right fs_sm bg-c_background c_text.primary [&:focus]:bd-c_primary [&:focus]:ring_none [&:focus]:bx-sh_0_0_0_2px_rgba(99,_99,_241,_0.15)"
+                    data-month="9"
+                    data-year="2021"
+                    step="any"
+                    type="number"
+                    value="1000"
+                  />
+                </td>
+              </tr>
+              <tr>
+                <td
+                  class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+                >
+                  August
+                </td>
+                <td
+                  class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+                >
+                  <input
+                    class="w_100% max-w_140px p_8px_12px bdr_sm bd_1px_solid bd-c_border ta_right fs_sm bg-c_background c_text.primary [&:focus]:bd-c_primary [&:focus]:ring_none [&:focus]:bx-sh_0_0_0_2px_rgba(99,_99,_241,_0.15)"
+                    data-month="8"
+                    data-year="2023"
+                    step="any"
+                    type="number"
+                    value="1000"
+                  />
+                </td>
+                <td
+                  class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+                >
+                  <input
+                    class="w_100% max-w_140px p_8px_12px bdr_sm bd_1px_solid bd-c_border ta_right fs_sm bg-c_background c_text.primary [&:focus]:bd-c_primary [&:focus]:ring_none [&:focus]:bx-sh_0_0_0_2px_rgba(99,_99,_241,_0.15)"
+                    data-month="8"
+                    data-year="2021"
+                    step="any"
+                    type="number"
+                    value="1000"
+                  />
+                </td>
+              </tr>
+              <tr>
+                <td
+                  class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+                >
+                  July
+                </td>
+                <td
+                  class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+                >
+                  <input
+                    class="w_100% max-w_140px p_8px_12px bdr_sm bd_1px_solid bd-c_border ta_right fs_sm bg-c_background c_text.primary [&:focus]:bd-c_primary [&:focus]:ring_none [&:focus]:bx-sh_0_0_0_2px_rgba(99,_99,_241,_0.15)"
+                    data-month="7"
+                    data-year="2023"
+                    step="any"
+                    type="number"
+                    value="1000"
+                  />
+                </td>
+                <td
+                  class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+                >
+                  <input
+                    class="w_100% max-w_140px p_8px_12px bdr_sm bd_1px_solid bd-c_border ta_right fs_sm bg-c_background c_text.primary [&:focus]:bd-c_primary [&:focus]:ring_none [&:focus]:bx-sh_0_0_0_2px_rgba(99,_99,_241,_0.15)"
+                    data-month="7"
+                    data-year="2021"
+                    step="any"
+                    type="number"
+                    value="1000"
+                  />
+                </td>
+              </tr>
+              <tr>
+                <td
+                  class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+                >
+                  June
+                </td>
+                <td
+                  class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+                >
+                  <input
+                    class="w_100% max-w_140px p_8px_12px bdr_sm bd_1px_solid bd-c_border ta_right fs_sm bg-c_background c_text.primary [&:focus]:bd-c_primary [&:focus]:ring_none [&:focus]:bx-sh_0_0_0_2px_rgba(99,_99,_241,_0.15)"
+                    data-month="6"
+                    data-year="2023"
+                    step="any"
+                    type="number"
+                    value="1000"
+                  />
+                </td>
+                <td
+                  class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+                >
+                  <input
+                    class="w_100% max-w_140px p_8px_12px bdr_sm bd_1px_solid bd-c_border ta_right fs_sm bg-c_background c_text.primary [&:focus]:bd-c_primary [&:focus]:ring_none [&:focus]:bx-sh_0_0_0_2px_rgba(99,_99,_241,_0.15)"
+                    data-month="6"
+                    data-year="2021"
+                    step="any"
+                    type="number"
+                    value="1000"
+                  />
+                </td>
+              </tr>
+              <tr>
+                <td
+                  class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+                >
+                  May
+                </td>
+                <td
+                  class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+                >
+                  <input
+                    class="w_100% max-w_140px p_8px_12px bdr_sm bd_1px_solid bd-c_border ta_right fs_sm bg-c_background c_text.primary [&:focus]:bd-c_primary [&:focus]:ring_none [&:focus]:bx-sh_0_0_0_2px_rgba(99,_99,_241,_0.15)"
+                    data-month="5"
+                    data-year="2023"
+                    step="any"
+                    type="number"
+                    value="1000"
+                  />
+                </td>
+                <td
+                  class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+                >
+                  <input
+                    class="w_100% max-w_140px p_8px_12px bdr_sm bd_1px_solid bd-c_border ta_right fs_sm bg-c_background c_text.primary [&:focus]:bd-c_primary [&:focus]:ring_none [&:focus]:bx-sh_0_0_0_2px_rgba(99,_99,_241,_0.15)"
+                    data-month="5"
+                    data-year="2021"
+                    step="any"
+                    type="number"
+                    value="1000"
+                  />
+                </td>
+              </tr>
+              <tr>
+                <td
+                  class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+                >
+                  April
+                </td>
+                <td
+                  class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+                >
+                  <input
+                    class="w_100% max-w_140px p_8px_12px bdr_sm bd_1px_solid bd-c_border ta_right fs_sm bg-c_background c_text.primary [&:focus]:bd-c_primary [&:focus]:ring_none [&:focus]:bx-sh_0_0_0_2px_rgba(99,_99,_241,_0.15)"
+                    data-month="4"
+                    data-year="2023"
+                    step="any"
+                    type="number"
+                    value="1000"
+                  />
+                </td>
+                <td
+                  class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+                >
+                  <input
+                    class="w_100% max-w_140px p_8px_12px bdr_sm bd_1px_solid bd-c_border ta_right fs_sm bg-c_background c_text.primary [&:focus]:bd-c_primary [&:focus]:ring_none [&:focus]:bx-sh_0_0_0_2px_rgba(99,_99,_241,_0.15)"
+                    data-month="4"
+                    data-year="2021"
+                    step="any"
+                    type="number"
+                    value="1000"
+                  />
+                </td>
+              </tr>
+              <tr>
+                <td
+                  class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+                >
+                  March
+                </td>
+                <td
+                  class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+                >
+                  <input
+                    class="w_100% max-w_140px p_8px_12px bdr_sm bd_1px_solid bd-c_border ta_right fs_sm bg-c_background c_text.primary [&:focus]:bd-c_primary [&:focus]:ring_none [&:focus]:bx-sh_0_0_0_2px_rgba(99,_99,_241,_0.15)"
+                    data-month="3"
+                    data-year="2023"
+                    step="any"
+                    type="number"
+                    value="1000"
+                  />
+                </td>
+                <td
+                  class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+                >
+                  <input
+                    class="w_100% max-w_140px p_8px_12px bdr_sm bd_1px_solid bd-c_border ta_right fs_sm bg-c_background c_text.primary [&:focus]:bd-c_primary [&:focus]:ring_none [&:focus]:bx-sh_0_0_0_2px_rgba(99,_99,_241,_0.15)"
+                    data-month="3"
+                    data-year="2021"
+                    step="any"
+                    type="number"
+                    value="1000"
+                  />
+                </td>
+              </tr>
+              <tr>
+                <td
+                  class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+                >
+                  February
+                </td>
+                <td
+                  class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+                >
+                  <input
+                    class="w_100% max-w_140px p_8px_12px bdr_sm bd_1px_solid bd-c_border ta_right fs_sm bg-c_background c_text.primary [&:focus]:bd-c_primary [&:focus]:ring_none [&:focus]:bx-sh_0_0_0_2px_rgba(99,_99,_241,_0.15)"
+                    data-month="2"
+                    data-year="2023"
+                    step="any"
+                    type="number"
+                    value="1000"
+                  />
+                </td>
+                <td
+                  class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+                >
+                  <input
+                    class="w_100% max-w_140px p_8px_12px bdr_sm bd_1px_solid bd-c_border ta_right fs_sm bg-c_background c_text.primary [&:focus]:bd-c_primary [&:focus]:ring_none [&:focus]:bx-sh_0_0_0_2px_rgba(99,_99,_241,_0.15)"
+                    data-month="2"
+                    data-year="2021"
+                    step="any"
+                    type="number"
+                    value="1000"
+                  />
+                </td>
+              </tr>
+              <tr>
+                <td
+                  class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+                >
+                  January
+                </td>
+                <td
+                  class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+                >
+                  <input
+                    class="w_100% max-w_140px p_8px_12px bdr_sm bd_1px_solid bd-c_border ta_right fs_sm bg-c_background c_text.primary [&:focus]:bd-c_primary [&:focus]:ring_none [&:focus]:bx-sh_0_0_0_2px_rgba(99,_99,_241,_0.15)"
+                    data-month="1"
+                    data-year="2023"
+                    step="any"
+                    type="number"
+                    value="1000"
+                  />
+                </td>
+                <td
+                  class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+                >
+                  <input
+                    class="w_100% max-w_140px p_8px_12px bdr_sm bd_1px_solid bd-c_border ta_right fs_sm bg-c_background c_text.primary [&:focus]:bd-c_primary [&:focus]:ring_none [&:focus]:bx-sh_0_0_0_2px_rgba(99,_99,_241,_0.15)"
+                    data-month="1"
+                    data-year="2021"
+                    step="any"
+                    type="number"
+                    value="1000"
+                  />
+                </td>
+              </tr>
+              <tr
+                class="bg-c_surface fw_bold bd-t_2px_solid bd-t-c_border [&_td]:c_text.primary [&_td]:p_16px"
+              >
+                <td
+                  class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+                >
+                  Annual Total
+                </td>
+                <td
+                  class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+                >
+                  £12,000
+                </td>
+                <td
+                  class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+                >
+                  £12,000
+                </td>
+              </tr>
+              <tr
+                class="bg-c_surface fw_bold bd-t_2px_solid bd-t-c_border [&_td]:c_text.primary [&_td]:p_16px"
+              >
+                <td
+                  class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+                >
+                  Monthly Average
+                </td>
+                <td
+                  class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+                >
+                  £1,000
+                </td>
+                <td
+                  class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+                >
+                  £1,000
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
-        <div
-          class="d_flex flex-d_row gap_5"
-        >
-          <div>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              January
-            </p>
-            <div
-              class="d_flex flex-d_column ai_stretch gap_8px w_100%"
-            >
-              <div
-                style="flex-grow: 1; flex-shrink: 1; flex-basis: 0%;"
-              >
-                <input
-                  class="w_100% p_10px_14px fs_sm bdr_sm bd_1px_solid bd-c_border bg-c_transparent c_text.primary ring_none trs_all_0.2s focus:bd-c_primary focus:bx-sh_0_0_0_1px_token(colors.primary) disabled:op_0.5 disabled:cursor_not-allowed "
-                  data-month="1"
-                  data-year="2021"
-                  id="2021-January"
-                  name="amount"
-                  placeholder="0.00"
-                  type="number"
-                  value="1000"
-                />
-              </div>
-            </div>
-          </div>
-          <div>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              February
-            </p>
-            <div
-              class="d_flex flex-d_column ai_stretch gap_8px w_100%"
-            >
-              <div
-                style="flex-grow: 1; flex-shrink: 1; flex-basis: 0%;"
-              >
-                <input
-                  class="w_100% p_10px_14px fs_sm bdr_sm bd_1px_solid bd-c_border bg-c_transparent c_text.primary ring_none trs_all_0.2s focus:bd-c_primary focus:bx-sh_0_0_0_1px_token(colors.primary) disabled:op_0.5 disabled:cursor_not-allowed "
-                  data-month="2"
-                  data-year="2021"
-                  id="2021-February"
-                  name="amount"
-                  placeholder="0.00"
-                  type="number"
-                  value="1000"
-                />
-              </div>
-            </div>
-          </div>
-          <div>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              March
-            </p>
-            <div
-              class="d_flex flex-d_column ai_stretch gap_8px w_100%"
-            >
-              <div
-                style="flex-grow: 1; flex-shrink: 1; flex-basis: 0%;"
-              >
-                <input
-                  class="w_100% p_10px_14px fs_sm bdr_sm bd_1px_solid bd-c_border bg-c_transparent c_text.primary ring_none trs_all_0.2s focus:bd-c_primary focus:bx-sh_0_0_0_1px_token(colors.primary) disabled:op_0.5 disabled:cursor_not-allowed "
-                  data-month="3"
-                  data-year="2021"
-                  id="2021-March"
-                  name="amount"
-                  placeholder="0.00"
-                  type="number"
-                  value="1000"
-                />
-              </div>
-            </div>
-          </div>
-          <div>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              April
-            </p>
-            <div
-              class="d_flex flex-d_column ai_stretch gap_8px w_100%"
-            >
-              <div
-                style="flex-grow: 1; flex-shrink: 1; flex-basis: 0%;"
-              >
-                <input
-                  class="w_100% p_10px_14px fs_sm bdr_sm bd_1px_solid bd-c_border bg-c_transparent c_text.primary ring_none trs_all_0.2s focus:bd-c_primary focus:bx-sh_0_0_0_1px_token(colors.primary) disabled:op_0.5 disabled:cursor_not-allowed "
-                  data-month="4"
-                  data-year="2021"
-                  id="2021-April"
-                  name="amount"
-                  placeholder="0.00"
-                  type="number"
-                  value="1000"
-                />
-              </div>
-            </div>
-          </div>
-          <div>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              May
-            </p>
-            <div
-              class="d_flex flex-d_column ai_stretch gap_8px w_100%"
-            >
-              <div
-                style="flex-grow: 1; flex-shrink: 1; flex-basis: 0%;"
-              >
-                <input
-                  class="w_100% p_10px_14px fs_sm bdr_sm bd_1px_solid bd-c_border bg-c_transparent c_text.primary ring_none trs_all_0.2s focus:bd-c_primary focus:bx-sh_0_0_0_1px_token(colors.primary) disabled:op_0.5 disabled:cursor_not-allowed "
-                  data-month="5"
-                  data-year="2021"
-                  id="2021-May"
-                  name="amount"
-                  placeholder="0.00"
-                  type="number"
-                  value="1000"
-                />
-              </div>
-            </div>
-          </div>
-          <div>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              June
-            </p>
-            <div
-              class="d_flex flex-d_column ai_stretch gap_8px w_100%"
-            >
-              <div
-                style="flex-grow: 1; flex-shrink: 1; flex-basis: 0%;"
-              >
-                <input
-                  class="w_100% p_10px_14px fs_sm bdr_sm bd_1px_solid bd-c_border bg-c_transparent c_text.primary ring_none trs_all_0.2s focus:bd-c_primary focus:bx-sh_0_0_0_1px_token(colors.primary) disabled:op_0.5 disabled:cursor_not-allowed "
-                  data-month="6"
-                  data-year="2021"
-                  id="2021-June"
-                  name="amount"
-                  placeholder="0.00"
-                  type="number"
-                  value="1000"
-                />
-              </div>
-            </div>
-          </div>
-          <div>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              July
-            </p>
-            <div
-              class="d_flex flex-d_column ai_stretch gap_8px w_100%"
-            >
-              <div
-                style="flex-grow: 1; flex-shrink: 1; flex-basis: 0%;"
-              >
-                <input
-                  class="w_100% p_10px_14px fs_sm bdr_sm bd_1px_solid bd-c_border bg-c_transparent c_text.primary ring_none trs_all_0.2s focus:bd-c_primary focus:bx-sh_0_0_0_1px_token(colors.primary) disabled:op_0.5 disabled:cursor_not-allowed "
-                  data-month="7"
-                  data-year="2021"
-                  id="2021-July"
-                  name="amount"
-                  placeholder="0.00"
-                  type="number"
-                  value="1000"
-                />
-              </div>
-            </div>
-          </div>
-          <div>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              August
-            </p>
-            <div
-              class="d_flex flex-d_column ai_stretch gap_8px w_100%"
-            >
-              <div
-                style="flex-grow: 1; flex-shrink: 1; flex-basis: 0%;"
-              >
-                <input
-                  class="w_100% p_10px_14px fs_sm bdr_sm bd_1px_solid bd-c_border bg-c_transparent c_text.primary ring_none trs_all_0.2s focus:bd-c_primary focus:bx-sh_0_0_0_1px_token(colors.primary) disabled:op_0.5 disabled:cursor_not-allowed "
-                  data-month="8"
-                  data-year="2021"
-                  id="2021-August"
-                  name="amount"
-                  placeholder="0.00"
-                  type="number"
-                  value="1000"
-                />
-              </div>
-            </div>
-          </div>
-          <div>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              September
-            </p>
-            <div
-              class="d_flex flex-d_column ai_stretch gap_8px w_100%"
-            >
-              <div
-                style="flex-grow: 1; flex-shrink: 1; flex-basis: 0%;"
-              >
-                <input
-                  class="w_100% p_10px_14px fs_sm bdr_sm bd_1px_solid bd-c_border bg-c_transparent c_text.primary ring_none trs_all_0.2s focus:bd-c_primary focus:bx-sh_0_0_0_1px_token(colors.primary) disabled:op_0.5 disabled:cursor_not-allowed "
-                  data-month="9"
-                  data-year="2021"
-                  id="2021-September"
-                  name="amount"
-                  placeholder="0.00"
-                  type="number"
-                  value="1000"
-                />
-              </div>
-            </div>
-          </div>
-          <div>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              October
-            </p>
-            <div
-              class="d_flex flex-d_column ai_stretch gap_8px w_100%"
-            >
-              <div
-                style="flex-grow: 1; flex-shrink: 1; flex-basis: 0%;"
-              >
-                <input
-                  class="w_100% p_10px_14px fs_sm bdr_sm bd_1px_solid bd-c_border bg-c_transparent c_text.primary ring_none trs_all_0.2s focus:bd-c_primary focus:bx-sh_0_0_0_1px_token(colors.primary) disabled:op_0.5 disabled:cursor_not-allowed "
-                  data-month="10"
-                  data-year="2021"
-                  id="2021-October"
-                  name="amount"
-                  placeholder="0.00"
-                  type="number"
-                  value="1000"
-                />
-              </div>
-            </div>
-          </div>
-          <div>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              November
-            </p>
-            <div
-              class="d_flex flex-d_column ai_stretch gap_8px w_100%"
-            >
-              <div
-                style="flex-grow: 1; flex-shrink: 1; flex-basis: 0%;"
-              >
-                <input
-                  class="w_100% p_10px_14px fs_sm bdr_sm bd_1px_solid bd-c_border bg-c_transparent c_text.primary ring_none trs_all_0.2s focus:bd-c_primary focus:bx-sh_0_0_0_1px_token(colors.primary) disabled:op_0.5 disabled:cursor_not-allowed "
-                  data-month="11"
-                  data-year="2021"
-                  id="2021-November"
-                  name="amount"
-                  placeholder="0.00"
-                  type="number"
-                  value="1000"
-                />
-              </div>
-            </div>
-          </div>
-          <div>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              December
-            </p>
-            <div
-              class="d_flex flex-d_column ai_stretch gap_8px w_100%"
-            >
-              <div
-                style="flex-grow: 1; flex-shrink: 1; flex-basis: 0%;"
-              >
-                <input
-                  class="w_100% p_10px_14px fs_sm bdr_sm bd_1px_solid bd-c_border bg-c_transparent c_text.primary ring_none trs_all_0.2s focus:bd-c_primary focus:bx-sh_0_0_0_1px_token(colors.primary) disabled:op_0.5 disabled:cursor_not-allowed "
-                  data-month="12"
-                  data-year="2021"
-                  id="2021-December"
-                  name="amount"
-                  placeholder="0.00"
-                  type="number"
-                  value="1000"
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-        <div
-          class="d_flex flex-d_row ai_center gap_12px"
-        >
-          <h3
-            class="c_primary fs_1.25rem fw_bold lh_tight m_0 "
-          >
-            2023
-          </h3>
-          <button
-            class="d_inline-flex ai_center jc_center bdr_full fw_medium trs_all_0.2s cursor_pointer px_4 py_2 fs_xs lh_1 disabled:op_0.5 disabled:cursor_not-allowed focusVisible:ring_2px_solid focusVisible:ring-c_primary focusVisible:ring-o_2px bg_transparent c_text.primary hover:bg_accent hover:c_accent.foreground"
-          >
-            deleteYear
-          </button>
-        </div>
-        <div
-          class="d_flex flex-d_row gap_5"
-        >
-          <div>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              January
-            </p>
-            <div
-              class="d_flex flex-d_column ai_stretch gap_8px w_100%"
-            >
-              <div
-                style="flex-grow: 1; flex-shrink: 1; flex-basis: 0%;"
-              >
-                <input
-                  class="w_100% p_10px_14px fs_sm bdr_sm bd_1px_solid bd-c_border bg-c_transparent c_text.primary ring_none trs_all_0.2s focus:bd-c_primary focus:bx-sh_0_0_0_1px_token(colors.primary) disabled:op_0.5 disabled:cursor_not-allowed "
-                  data-month="1"
-                  data-year="2023"
-                  id="2023-January"
-                  name="amount"
-                  placeholder="0.00"
-                  type="number"
-                  value="1000"
-                />
-              </div>
-            </div>
-          </div>
-          <div>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              February
-            </p>
-            <div
-              class="d_flex flex-d_column ai_stretch gap_8px w_100%"
-            >
-              <div
-                style="flex-grow: 1; flex-shrink: 1; flex-basis: 0%;"
-              >
-                <input
-                  class="w_100% p_10px_14px fs_sm bdr_sm bd_1px_solid bd-c_border bg-c_transparent c_text.primary ring_none trs_all_0.2s focus:bd-c_primary focus:bx-sh_0_0_0_1px_token(colors.primary) disabled:op_0.5 disabled:cursor_not-allowed "
-                  data-month="2"
-                  data-year="2023"
-                  id="2023-February"
-                  name="amount"
-                  placeholder="0.00"
-                  type="number"
-                  value="1000"
-                />
-              </div>
-            </div>
-          </div>
-          <div>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              March
-            </p>
-            <div
-              class="d_flex flex-d_column ai_stretch gap_8px w_100%"
-            >
-              <div
-                style="flex-grow: 1; flex-shrink: 1; flex-basis: 0%;"
-              >
-                <input
-                  class="w_100% p_10px_14px fs_sm bdr_sm bd_1px_solid bd-c_border bg-c_transparent c_text.primary ring_none trs_all_0.2s focus:bd-c_primary focus:bx-sh_0_0_0_1px_token(colors.primary) disabled:op_0.5 disabled:cursor_not-allowed "
-                  data-month="3"
-                  data-year="2023"
-                  id="2023-March"
-                  name="amount"
-                  placeholder="0.00"
-                  type="number"
-                  value="1000"
-                />
-              </div>
-            </div>
-          </div>
-          <div>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              April
-            </p>
-            <div
-              class="d_flex flex-d_column ai_stretch gap_8px w_100%"
-            >
-              <div
-                style="flex-grow: 1; flex-shrink: 1; flex-basis: 0%;"
-              >
-                <input
-                  class="w_100% p_10px_14px fs_sm bdr_sm bd_1px_solid bd-c_border bg-c_transparent c_text.primary ring_none trs_all_0.2s focus:bd-c_primary focus:bx-sh_0_0_0_1px_token(colors.primary) disabled:op_0.5 disabled:cursor_not-allowed "
-                  data-month="4"
-                  data-year="2023"
-                  id="2023-April"
-                  name="amount"
-                  placeholder="0.00"
-                  type="number"
-                  value="1000"
-                />
-              </div>
-            </div>
-          </div>
-          <div>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              May
-            </p>
-            <div
-              class="d_flex flex-d_column ai_stretch gap_8px w_100%"
-            >
-              <div
-                style="flex-grow: 1; flex-shrink: 1; flex-basis: 0%;"
-              >
-                <input
-                  class="w_100% p_10px_14px fs_sm bdr_sm bd_1px_solid bd-c_border bg-c_transparent c_text.primary ring_none trs_all_0.2s focus:bd-c_primary focus:bx-sh_0_0_0_1px_token(colors.primary) disabled:op_0.5 disabled:cursor_not-allowed "
-                  data-month="5"
-                  data-year="2023"
-                  id="2023-May"
-                  name="amount"
-                  placeholder="0.00"
-                  type="number"
-                  value="1000"
-                />
-              </div>
-            </div>
-          </div>
-          <div>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              June
-            </p>
-            <div
-              class="d_flex flex-d_column ai_stretch gap_8px w_100%"
-            >
-              <div
-                style="flex-grow: 1; flex-shrink: 1; flex-basis: 0%;"
-              >
-                <input
-                  class="w_100% p_10px_14px fs_sm bdr_sm bd_1px_solid bd-c_border bg-c_transparent c_text.primary ring_none trs_all_0.2s focus:bd-c_primary focus:bx-sh_0_0_0_1px_token(colors.primary) disabled:op_0.5 disabled:cursor_not-allowed "
-                  data-month="6"
-                  data-year="2023"
-                  id="2023-June"
-                  name="amount"
-                  placeholder="0.00"
-                  type="number"
-                  value="1000"
-                />
-              </div>
-            </div>
-          </div>
-          <div>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              July
-            </p>
-            <div
-              class="d_flex flex-d_column ai_stretch gap_8px w_100%"
-            >
-              <div
-                style="flex-grow: 1; flex-shrink: 1; flex-basis: 0%;"
-              >
-                <input
-                  class="w_100% p_10px_14px fs_sm bdr_sm bd_1px_solid bd-c_border bg-c_transparent c_text.primary ring_none trs_all_0.2s focus:bd-c_primary focus:bx-sh_0_0_0_1px_token(colors.primary) disabled:op_0.5 disabled:cursor_not-allowed "
-                  data-month="7"
-                  data-year="2023"
-                  id="2023-July"
-                  name="amount"
-                  placeholder="0.00"
-                  type="number"
-                  value="1000"
-                />
-              </div>
-            </div>
-          </div>
-          <div>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              August
-            </p>
-            <div
-              class="d_flex flex-d_column ai_stretch gap_8px w_100%"
-            >
-              <div
-                style="flex-grow: 1; flex-shrink: 1; flex-basis: 0%;"
-              >
-                <input
-                  class="w_100% p_10px_14px fs_sm bdr_sm bd_1px_solid bd-c_border bg-c_transparent c_text.primary ring_none trs_all_0.2s focus:bd-c_primary focus:bx-sh_0_0_0_1px_token(colors.primary) disabled:op_0.5 disabled:cursor_not-allowed "
-                  data-month="8"
-                  data-year="2023"
-                  id="2023-August"
-                  name="amount"
-                  placeholder="0.00"
-                  type="number"
-                  value="1000"
-                />
-              </div>
-            </div>
-          </div>
-          <div>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              September
-            </p>
-            <div
-              class="d_flex flex-d_column ai_stretch gap_8px w_100%"
-            >
-              <div
-                style="flex-grow: 1; flex-shrink: 1; flex-basis: 0%;"
-              >
-                <input
-                  class="w_100% p_10px_14px fs_sm bdr_sm bd_1px_solid bd-c_border bg-c_transparent c_text.primary ring_none trs_all_0.2s focus:bd-c_primary focus:bx-sh_0_0_0_1px_token(colors.primary) disabled:op_0.5 disabled:cursor_not-allowed "
-                  data-month="9"
-                  data-year="2023"
-                  id="2023-September"
-                  name="amount"
-                  placeholder="0.00"
-                  type="number"
-                  value="1000"
-                />
-              </div>
-            </div>
-          </div>
-          <div>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              October
-            </p>
-            <div
-              class="d_flex flex-d_column ai_stretch gap_8px w_100%"
-            >
-              <div
-                style="flex-grow: 1; flex-shrink: 1; flex-basis: 0%;"
-              >
-                <input
-                  class="w_100% p_10px_14px fs_sm bdr_sm bd_1px_solid bd-c_border bg-c_transparent c_text.primary ring_none trs_all_0.2s focus:bd-c_primary focus:bx-sh_0_0_0_1px_token(colors.primary) disabled:op_0.5 disabled:cursor_not-allowed "
-                  data-month="10"
-                  data-year="2023"
-                  id="2023-October"
-                  name="amount"
-                  placeholder="0.00"
-                  type="number"
-                  value="1000"
-                />
-              </div>
-            </div>
-          </div>
-          <div>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              November
-            </p>
-            <div
-              class="d_flex flex-d_column ai_stretch gap_8px w_100%"
-            >
-              <div
-                style="flex-grow: 1; flex-shrink: 1; flex-basis: 0%;"
-              >
-                <input
-                  class="w_100% p_10px_14px fs_sm bdr_sm bd_1px_solid bd-c_border bg-c_transparent c_text.primary ring_none trs_all_0.2s focus:bd-c_primary focus:bx-sh_0_0_0_1px_token(colors.primary) disabled:op_0.5 disabled:cursor_not-allowed "
-                  data-month="11"
-                  data-year="2023"
-                  id="2023-November"
-                  name="amount"
-                  placeholder="0.00"
-                  type="number"
-                  value="1000"
-                />
-              </div>
-            </div>
-          </div>
-          <div>
-            <p
-              class="fs_md fw_normal lh_normal ls_normal m_0 "
-            >
-              December
-            </p>
-            <div
-              class="d_flex flex-d_column ai_stretch gap_8px w_100%"
-            >
-              <div
-                style="flex-grow: 1; flex-shrink: 1; flex-basis: 0%;"
-              >
-                <input
-                  class="w_100% p_10px_14px fs_sm bdr_sm bd_1px_solid bd-c_border bg-c_transparent c_text.primary ring_none trs_all_0.2s focus:bd-c_primary focus:bx-sh_0_0_0_1px_token(colors.primary) disabled:op_0.5 disabled:cursor_not-allowed "
-                  data-month="12"
-                  data-year="2023"
-                  id="2023-December"
-                  name="amount"
-                  placeholder="0.00"
-                  type="number"
-                  value="1000"
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div
-        class="d_flex flex-d_row gap_12px"
-      >
-        <button
-          class="d_inline-flex ai_center jc_center bdr_full fw_medium trs_all_0.2s cursor_pointer px_4 py_2 fs_xs lh_1 disabled:op_0.5 disabled:cursor_not-allowed focusVisible:ring_2px_solid focusVisible:ring-c_primary focusVisible:ring-o_2px bg_background c_text.primary bd_1px_solid bd-c_border hover:bg_accent hover:c_accent.foreground"
-        >
-          addPrevYear
-        </button>
-        <button
-          class="d_inline-flex ai_center jc_center bdr_full fw_medium trs_all_0.2s cursor_pointer px_4 py_2 fs_xs lh_1 disabled:op_0.5 disabled:cursor_not-allowed focusVisible:ring_2px_solid focusVisible:ring-c_primary focusVisible:ring-o_2px bg_background c_text.primary bd_1px_solid bd-c_border hover:bg_accent hover:c_accent.foreground"
-        >
-          addNextYear
-        </button>
       </div>
     </div>
   </div>

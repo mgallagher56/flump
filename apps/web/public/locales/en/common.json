@@ -19,6 +19,7 @@
   "contact": "Contact",
   "current": "Current",
   "dashboard": "Dashboard",
+  "forecast": "Forecast",
   "delete": "Delete",
   "deleteYear": "Delete year",
   "edit": "Edit",
@@ -37,5 +38,9 @@
   "signUp": "Sign up",
   "time": "Time",
   "value": "Value",
-  "view": "View"
+  "view": "View",
+  "mortgage": "Mortgage",
+  "budget": "Budget",
+  "profile": "Profile",
+  "tax": "Tax"
 }

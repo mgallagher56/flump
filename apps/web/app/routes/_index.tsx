@@ -2,8 +2,12 @@ import { css } from "@repo/ui/styled-system/css";
 import type { ReactElement } from "react";
 import { useTranslation } from "react-i18next";
 import { FiDatabase, FiLock, FiPieChart, FiTrendingUp } from "react-icons/fi";
-import type { LoaderFunctionArgs } from "react-router";
-import { type MetaFunction, Link as RouterLink, useLoaderData } from "react-router";
+import {
+  type LoaderFunctionArgs,
+  type MetaFunction,
+  Link as RouterLink,
+  useLoaderData,
+} from "react-router";
 import FLPButton from "~/components/core/buttons/FLPButton";
 import FLPBox from "~/components/core/structure/FLPBox";
 import FLPHeading from "~/components/core/typography/FLPHeading";
@@ -209,7 +213,7 @@ const Index = (): ReactElement => {
             <div className={iconWrapperStyle("red")}>
               <FiLock />
             </div>
-            <FLPHeading as="h3" color="red.500" mb={2} size="md">
+            <FLPHeading as="h3" color="destructive.500" mb={2} size="md">
               Secure Auth
             </FLPHeading>
             <FLPText color="text.muted" fontSize="sm">

@@ -12,7 +12,7 @@ import GithubActionsReporter from "vitest-github-actions-reporter";
 
 export default defineConfig(({ mode }) => ({
   server: {
-    port: 3000,
+    port: 5173,
   },
   css: {
     postcss: {
@@ -20,18 +20,14 @@ export default defineConfig(({ mode }) => ({
     },
   },
   plugins: [
-    !process.env.VITEST ? reactRouter() : react(),
+    !process.env.VITEST && !process.env.STORYBOOK ? reactRouter() : react(),
     visualizer({ emitFile: true }),
     ...(mode === "development"
       ? [
           checker({
             typescript: true,
-            eslint: {
-              lintCommand: "eslint --cache .",
-              useFlatConfig: true,
-              dev: {
-                logLevel: ["error"],
-              },
+            biome: {
+              command: "check",
             },
             enableBuild: false,
           }),
@@ -68,7 +64,6 @@ export default defineConfig(({ mode }) => ({
         "app/**/*.config.{js,ts,jsx,tsx}",
         "app/routes/*.*",
         "app/**/types.ts",
-        "app/utils/supabase.ts",
         "app/**/*.d.ts",
         "app/components/ui/**/*.{js,mjs,cjs,ts,mts,cts,jsx,tsx}",
       ],

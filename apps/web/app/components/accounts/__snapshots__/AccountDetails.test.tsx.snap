@@ -3,332 +3,584 @@
 exports[`<AccountDetails /> > should remove year when delete button is clicked 1`] = `
 <div>
   <div
-    class="d_flex flex-d_column gap_20px ov_auto"
+    class="w_100% ov-x_auto"
   >
-    <div
-      class="d_flex flex-d_row ai_center gap_12px"
+    <table
+      class="w_100% bd-cl_collapse mt_8px fs_sm"
     >
-      <h3
-        class="c_primary fs_1.25rem fw_bold lh_tight m_0 "
-      >
-        2021
-      </h3>
-      <button
-        class="d_inline-flex ai_center jc_center bdr_full fw_medium trs_all_0.2s cursor_pointer px_4 py_2 fs_xs lh_1 disabled:op_0.5 disabled:cursor_not-allowed focusVisible:ring_2px_solid focusVisible:ring-c_primary focusVisible:ring-o_2px bg_transparent c_text.primary hover:bg_accent hover:c_accent.foreground"
-      >
-        deleteYear
-      </button>
-    </div>
-    <div
-      class="d_flex flex-d_row gap_5"
-    >
-      <div>
-        <p
-          class="fs_md fw_normal lh_normal ls_normal m_0 "
+      <thead>
+        <tr>
+          <th
+            class="p_16px fw_bold ta_right bd-b_2px_solid bd-b-c_border c_text.primary va_middle [&:first-child]:ta_left [&:first-child]:w_160px"
+          >
+            Month
+          </th>
+          <th
+            class="p_16px fw_bold ta_right bd-b_2px_solid bd-b-c_border c_text.primary va_middle [&:first-child]:ta_left [&:first-child]:w_160px"
+          >
+            <div
+              style="display: flex; align-items: center; justify-content: flex-end; gap: 8px;"
+            >
+              <span>
+                2023
+              </span>
+              <button
+                class="c_destructive cursor_pointer p_4px_8px bdr_md d_inline-flex ai_center jc_center ml_8px trs_background_0.2s [&:hover]:bg-c_rgba(239,_68,_68,_0.08)"
+                title="Delete 2023"
+                type="button"
+              >
+                <svg
+                  fill="currentColor"
+                  height="12"
+                  stroke="currentColor"
+                  stroke-width="0"
+                  style="margin-right: 4px;"
+                  viewBox="0 0 448 512"
+                  width="12"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M32 464a48 48 0 0 0 48 48h288a48 48 0 0 0 48-48V128H32zm272-256a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zm-96 0a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zm-96 0a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zM432 32H312l-9.4-18.7A24 24 0 0 0 281.1 0H166.8a23.72 23.72 0 0 0-21.4 13.3L136 32H16A16 16 0 0 0 0 48v32a16 16 0 0 0 16 16h416a16 16 0 0 0 16-16V48a16 16 0 0 0-16-16z"
+                  />
+                </svg>
+                deleteYear
+              </button>
+            </div>
+          </th>
+          <th
+            class="p_16px fw_bold ta_right bd-b_2px_solid bd-b-c_border c_text.primary va_middle [&:first-child]:ta_left [&:first-child]:w_160px"
+          >
+            <div
+              style="display: flex; align-items: center; justify-content: flex-end; gap: 8px;"
+            >
+              <span>
+                2021
+              </span>
+              <button
+                class="c_destructive cursor_pointer p_4px_8px bdr_md d_inline-flex ai_center jc_center ml_8px trs_background_0.2s [&:hover]:bg-c_rgba(239,_68,_68,_0.08)"
+                title="Delete 2021"
+                type="button"
+              >
+                <svg
+                  fill="currentColor"
+                  height="12"
+                  stroke="currentColor"
+                  stroke-width="0"
+                  style="margin-right: 4px;"
+                  viewBox="0 0 448 512"
+                  width="12"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M32 464a48 48 0 0 0 48 48h288a48 48 0 0 0 48-48V128H32zm272-256a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zm-96 0a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zm-96 0a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zM432 32H312l-9.4-18.7A24 24 0 0 0 281.1 0H166.8a23.72 23.72 0 0 0-21.4 13.3L136 32H16A16 16 0 0 0 0 48v32a16 16 0 0 0 16 16h416a16 16 0 0 0 16-16V48a16 16 0 0 0-16-16z"
+                  />
+                </svg>
+                deleteYear
+              </button>
+            </div>
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td
+            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+          >
+            December
+          </td>
+          <td
+            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+          >
+            <span>
+              £1,000
+            </span>
+            <span
+              class="fs_10px d_block mt_4px fw_medium c_text.muted"
+            >
+              +£0
+               
+              (
+              0
+              %)
+            </span>
+          </td>
+          <td
+            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+          >
+            <span>
+              £1,000
+            </span>
+            <span
+              class="fs_10px d_block mt_4px fw_medium c_text.muted"
+            >
+              +£0
+               
+              (
+              0
+              %)
+            </span>
+          </td>
+        </tr>
+        <tr>
+          <td
+            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+          >
+            November
+          </td>
+          <td
+            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+          >
+            <span>
+              £1,000
+            </span>
+            <span
+              class="fs_10px d_block mt_4px fw_medium c_text.muted"
+            >
+              +£0
+               
+              (
+              0
+              %)
+            </span>
+          </td>
+          <td
+            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+          >
+            <span>
+              £1,000
+            </span>
+            <span
+              class="fs_10px d_block mt_4px fw_medium c_text.muted"
+            >
+              +£0
+               
+              (
+              0
+              %)
+            </span>
+          </td>
+        </tr>
+        <tr>
+          <td
+            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+          >
+            October
+          </td>
+          <td
+            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+          >
+            <span>
+              £1,000
+            </span>
+            <span
+              class="fs_10px d_block mt_4px fw_medium c_text.muted"
+            >
+              +£0
+               
+              (
+              0
+              %)
+            </span>
+          </td>
+          <td
+            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+          >
+            <span>
+              £1,000
+            </span>
+            <span
+              class="fs_10px d_block mt_4px fw_medium c_text.muted"
+            >
+              +£0
+               
+              (
+              0
+              %)
+            </span>
+          </td>
+        </tr>
+        <tr>
+          <td
+            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+          >
+            September
+          </td>
+          <td
+            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+          >
+            <span>
+              £1,000
+            </span>
+            <span
+              class="fs_10px d_block mt_4px fw_medium c_text.muted"
+            >
+              +£0
+               
+              (
+              0
+              %)
+            </span>
+          </td>
+          <td
+            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+          >
+            <span>
+              £1,000
+            </span>
+            <span
+              class="fs_10px d_block mt_4px fw_medium c_text.muted"
+            >
+              +£0
+               
+              (
+              0
+              %)
+            </span>
+          </td>
+        </tr>
+        <tr>
+          <td
+            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+          >
+            August
+          </td>
+          <td
+            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+          >
+            <span>
+              £1,000
+            </span>
+            <span
+              class="fs_10px d_block mt_4px fw_medium c_text.muted"
+            >
+              +£0
+               
+              (
+              0
+              %)
+            </span>
+          </td>
+          <td
+            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+          >
+            <span>
+              £1,000
+            </span>
+            <span
+              class="fs_10px d_block mt_4px fw_medium c_text.muted"
+            >
+              +£0
+               
+              (
+              0
+              %)
+            </span>
+          </td>
+        </tr>
+        <tr>
+          <td
+            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+          >
+            July
+          </td>
+          <td
+            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+          >
+            <span>
+              £1,000
+            </span>
+            <span
+              class="fs_10px d_block mt_4px fw_medium c_text.muted"
+            >
+              +£0
+               
+              (
+              0
+              %)
+            </span>
+          </td>
+          <td
+            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+          >
+            <span>
+              £1,000
+            </span>
+            <span
+              class="fs_10px d_block mt_4px fw_medium c_text.muted"
+            >
+              +£0
+               
+              (
+              0
+              %)
+            </span>
+          </td>
+        </tr>
+        <tr>
+          <td
+            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+          >
+            June
+          </td>
+          <td
+            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+          >
+            <span>
+              £1,000
+            </span>
+            <span
+              class="fs_10px d_block mt_4px fw_medium c_text.muted"
+            >
+              +£0
+               
+              (
+              0
+              %)
+            </span>
+          </td>
+          <td
+            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+          >
+            <span>
+              £1,000
+            </span>
+            <span
+              class="fs_10px d_block mt_4px fw_medium c_text.muted"
+            >
+              +£0
+               
+              (
+              0
+              %)
+            </span>
+          </td>
+        </tr>
+        <tr>
+          <td
+            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+          >
+            May
+          </td>
+          <td
+            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+          >
+            <span>
+              £1,000
+            </span>
+            <span
+              class="fs_10px d_block mt_4px fw_medium c_text.muted"
+            >
+              +£0
+               
+              (
+              0
+              %)
+            </span>
+          </td>
+          <td
+            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+          >
+            <span>
+              £1,000
+            </span>
+            <span
+              class="fs_10px d_block mt_4px fw_medium c_text.muted"
+            >
+              +£0
+               
+              (
+              0
+              %)
+            </span>
+          </td>
+        </tr>
+        <tr>
+          <td
+            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+          >
+            April
+          </td>
+          <td
+            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+          >
+            <span>
+              £1,000
+            </span>
+            <span
+              class="fs_10px d_block mt_4px fw_medium c_text.muted"
+            >
+              +£0
+               
+              (
+              0
+              %)
+            </span>
+          </td>
+          <td
+            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+          >
+            <span>
+              £1,000
+            </span>
+            <span
+              class="fs_10px d_block mt_4px fw_medium c_text.muted"
+            >
+              +£0
+               
+              (
+              0
+              %)
+            </span>
+          </td>
+        </tr>
+        <tr>
+          <td
+            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+          >
+            March
+          </td>
+          <td
+            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+          >
+            <span>
+              £1,000
+            </span>
+            <span
+              class="fs_10px d_block mt_4px fw_medium c_text.muted"
+            >
+              +£0
+               
+              (
+              0
+              %)
+            </span>
+          </td>
+          <td
+            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+          >
+            <span>
+              £1,000
+            </span>
+            <span
+              class="fs_10px d_block mt_4px fw_medium c_text.muted"
+            >
+              +£0
+               
+              (
+              0
+              %)
+            </span>
+          </td>
+        </tr>
+        <tr>
+          <td
+            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+          >
+            February
+          </td>
+          <td
+            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+          >
+            <span>
+              £1,000
+            </span>
+            <span
+              class="fs_10px d_block mt_4px fw_medium c_text.muted"
+            >
+              +£0
+               
+              (
+              0
+              %)
+            </span>
+          </td>
+          <td
+            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+          >
+            <span>
+              £1,000
+            </span>
+            <span
+              class="fs_10px d_block mt_4px fw_medium c_text.muted"
+            >
+              +£0
+               
+              (
+              0
+              %)
+            </span>
+          </td>
+        </tr>
+        <tr>
+          <td
+            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+          >
+            January
+          </td>
+          <td
+            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+          >
+            <span>
+              £1,000
+            </span>
+            <span
+              class="fs_10px d_block mt_4px fw_medium c_text.muted"
+            >
+              +£0
+               
+              (
+              0
+              %)
+            </span>
+          </td>
+          <td
+            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+          >
+            <span>
+              £1,000
+            </span>
+          </td>
+        </tr>
+        <tr
+          class="bg-c_surface fw_bold bd-t_2px_solid bd-t-c_border [&_td]:c_text.primary [&_td]:p_16px"
         >
-          January
-        </p>
-        <p
-          class="fs_md fw_normal lh_normal ls_normal m_0 "
+          <td
+            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+          >
+            Annual Total
+          </td>
+          <td
+            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+          >
+            £12,000
+          </td>
+          <td
+            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+          >
+            £12,000
+          </td>
+        </tr>
+        <tr
+          class="bg-c_surface fw_bold bd-t_2px_solid bd-t-c_border [&_td]:c_text.primary [&_td]:p_16px"
         >
-          £1,000
-        </p>
-      </div>
-      <div>
-        <p
-          class="fs_md fw_normal lh_normal ls_normal m_0 "
-        >
-          February
-        </p>
-        <p
-          class="fs_md fw_normal lh_normal ls_normal m_0 "
-        >
-          £1,000
-        </p>
-      </div>
-      <div>
-        <p
-          class="fs_md fw_normal lh_normal ls_normal m_0 "
-        >
-          March
-        </p>
-        <p
-          class="fs_md fw_normal lh_normal ls_normal m_0 "
-        >
-          £1,000
-        </p>
-      </div>
-      <div>
-        <p
-          class="fs_md fw_normal lh_normal ls_normal m_0 "
-        >
-          April
-        </p>
-        <p
-          class="fs_md fw_normal lh_normal ls_normal m_0 "
-        >
-          £1,000
-        </p>
-      </div>
-      <div>
-        <p
-          class="fs_md fw_normal lh_normal ls_normal m_0 "
-        >
-          May
-        </p>
-        <p
-          class="fs_md fw_normal lh_normal ls_normal m_0 "
-        >
-          £1,000
-        </p>
-      </div>
-      <div>
-        <p
-          class="fs_md fw_normal lh_normal ls_normal m_0 "
-        >
-          June
-        </p>
-        <p
-          class="fs_md fw_normal lh_normal ls_normal m_0 "
-        >
-          £1,000
-        </p>
-      </div>
-      <div>
-        <p
-          class="fs_md fw_normal lh_normal ls_normal m_0 "
-        >
-          July
-        </p>
-        <p
-          class="fs_md fw_normal lh_normal ls_normal m_0 "
-        >
-          £1,000
-        </p>
-      </div>
-      <div>
-        <p
-          class="fs_md fw_normal lh_normal ls_normal m_0 "
-        >
-          August
-        </p>
-        <p
-          class="fs_md fw_normal lh_normal ls_normal m_0 "
-        >
-          £1,000
-        </p>
-      </div>
-      <div>
-        <p
-          class="fs_md fw_normal lh_normal ls_normal m_0 "
-        >
-          September
-        </p>
-        <p
-          class="fs_md fw_normal lh_normal ls_normal m_0 "
-        >
-          £1,000
-        </p>
-      </div>
-      <div>
-        <p
-          class="fs_md fw_normal lh_normal ls_normal m_0 "
-        >
-          October
-        </p>
-        <p
-          class="fs_md fw_normal lh_normal ls_normal m_0 "
-        >
-          £1,000
-        </p>
-      </div>
-      <div>
-        <p
-          class="fs_md fw_normal lh_normal ls_normal m_0 "
-        >
-          November
-        </p>
-        <p
-          class="fs_md fw_normal lh_normal ls_normal m_0 "
-        >
-          £1,000
-        </p>
-      </div>
-      <div>
-        <p
-          class="fs_md fw_normal lh_normal ls_normal m_0 "
-        >
-          December
-        </p>
-        <p
-          class="fs_md fw_normal lh_normal ls_normal m_0 "
-        >
-          £1,000
-        </p>
-      </div>
-    </div>
-    <div
-      class="d_flex flex-d_row ai_center gap_12px"
-    >
-      <h3
-        class="c_primary fs_1.25rem fw_bold lh_tight m_0 "
-      >
-        2023
-      </h3>
-      <button
-        class="d_inline-flex ai_center jc_center bdr_full fw_medium trs_all_0.2s cursor_pointer px_4 py_2 fs_xs lh_1 disabled:op_0.5 disabled:cursor_not-allowed focusVisible:ring_2px_solid focusVisible:ring-c_primary focusVisible:ring-o_2px bg_transparent c_text.primary hover:bg_accent hover:c_accent.foreground"
-      >
-        deleteYear
-      </button>
-    </div>
-    <div
-      class="d_flex flex-d_row gap_5"
-    >
-      <div>
-        <p
-          class="fs_md fw_normal lh_normal ls_normal m_0 "
-        >
-          January
-        </p>
-        <p
-          class="fs_md fw_normal lh_normal ls_normal m_0 "
-        >
-          £1,000
-        </p>
-      </div>
-      <div>
-        <p
-          class="fs_md fw_normal lh_normal ls_normal m_0 "
-        >
-          February
-        </p>
-        <p
-          class="fs_md fw_normal lh_normal ls_normal m_0 "
-        >
-          £1,000
-        </p>
-      </div>
-      <div>
-        <p
-          class="fs_md fw_normal lh_normal ls_normal m_0 "
-        >
-          March
-        </p>
-        <p
-          class="fs_md fw_normal lh_normal ls_normal m_0 "
-        >
-          £1,000
-        </p>
-      </div>
-      <div>
-        <p
-          class="fs_md fw_normal lh_normal ls_normal m_0 "
-        >
-          April
-        </p>
-        <p
-          class="fs_md fw_normal lh_normal ls_normal m_0 "
-        >
-          £1,000
-        </p>
-      </div>
-      <div>
-        <p
-          class="fs_md fw_normal lh_normal ls_normal m_0 "
-        >
-          May
-        </p>
-        <p
-          class="fs_md fw_normal lh_normal ls_normal m_0 "
-        >
-          £1,000
-        </p>
-      </div>
-      <div>
-        <p
-          class="fs_md fw_normal lh_normal ls_normal m_0 "
-        >
-          June
-        </p>
-        <p
-          class="fs_md fw_normal lh_normal ls_normal m_0 "
-        >
-          £1,000
-        </p>
-      </div>
-      <div>
-        <p
-          class="fs_md fw_normal lh_normal ls_normal m_0 "
-        >
-          July
-        </p>
-        <p
-          class="fs_md fw_normal lh_normal ls_normal m_0 "
-        >
-          £1,000
-        </p>
-      </div>
-      <div>
-        <p
-          class="fs_md fw_normal lh_normal ls_normal m_0 "
-        >
-          August
-        </p>
-        <p
-          class="fs_md fw_normal lh_normal ls_normal m_0 "
-        >
-          £1,000
-        </p>
-      </div>
-      <div>
-        <p
-          class="fs_md fw_normal lh_normal ls_normal m_0 "
-        >
-          September
-        </p>
-        <p
-          class="fs_md fw_normal lh_normal ls_normal m_0 "
-        >
-          £1,000
-        </p>
-      </div>
-      <div>
-        <p
-          class="fs_md fw_normal lh_normal ls_normal m_0 "
-        >
-          October
-        </p>
-        <p
-          class="fs_md fw_normal lh_normal ls_normal m_0 "
-        >
-          £1,000
-        </p>
-      </div>
-      <div>
-        <p
-          class="fs_md fw_normal lh_normal ls_normal m_0 "
-        >
-          November
-        </p>
-        <p
-          class="fs_md fw_normal lh_normal ls_normal m_0 "
-        >
-          £1,000
-        </p>
-      </div>
-      <div>
-        <p
-          class="fs_md fw_normal lh_normal ls_normal m_0 "
-        >
-          December
-        </p>
-        <p
-          class="fs_md fw_normal lh_normal ls_normal m_0 "
-        >
-          £1,000
-        </p>
-      </div>
-    </div>
+          <td
+            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+          >
+            Monthly Average
+          </td>
+          <td
+            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+          >
+            £1,000
+          </td>
+          <td
+            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+          >
+            £1,000
+          </td>
+        </tr>
+      </tbody>
+    </table>
   </div>
 </div>
 `;
@@ -336,332 +588,584 @@ exports[`<AccountDetails /> > should remove year when delete button is clicked 1
 exports[`<AccountDetails /> > should render 1`] = `
 <div>
   <div
-    class="d_flex flex-d_column gap_20px ov_auto"
+    class="w_100% ov-x_auto"
   >
-    <div
-      class="d_flex flex-d_row ai_center gap_12px"
+    <table
+      class="w_100% bd-cl_collapse mt_8px fs_sm"
     >
-      <h3
-        class="c_primary fs_1.25rem fw_bold lh_tight m_0 "
-      >
-        2021
-      </h3>
-      <button
-        class="d_inline-flex ai_center jc_center bdr_full fw_medium trs_all_0.2s cursor_pointer px_4 py_2 fs_xs lh_1 disabled:op_0.5 disabled:cursor_not-allowed focusVisible:ring_2px_solid focusVisible:ring-c_primary focusVisible:ring-o_2px bg_transparent c_text.primary hover:bg_accent hover:c_accent.foreground"
-      >
-        deleteYear
-      </button>
-    </div>
-    <div
-      class="d_flex flex-d_row gap_5"
-    >
-      <div>
-        <p
-          class="fs_md fw_normal lh_normal ls_normal m_0 "
+      <thead>
+        <tr>
+          <th
+            class="p_16px fw_bold ta_right bd-b_2px_solid bd-b-c_border c_text.primary va_middle [&:first-child]:ta_left [&:first-child]:w_160px"
+          >
+            Month
+          </th>
+          <th
+            class="p_16px fw_bold ta_right bd-b_2px_solid bd-b-c_border c_text.primary va_middle [&:first-child]:ta_left [&:first-child]:w_160px"
+          >
+            <div
+              style="display: flex; align-items: center; justify-content: flex-end; gap: 8px;"
+            >
+              <span>
+                2023
+              </span>
+              <button
+                class="c_destructive cursor_pointer p_4px_8px bdr_md d_inline-flex ai_center jc_center ml_8px trs_background_0.2s [&:hover]:bg-c_rgba(239,_68,_68,_0.08)"
+                title="Delete 2023"
+                type="button"
+              >
+                <svg
+                  fill="currentColor"
+                  height="12"
+                  stroke="currentColor"
+                  stroke-width="0"
+                  style="margin-right: 4px;"
+                  viewBox="0 0 448 512"
+                  width="12"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M32 464a48 48 0 0 0 48 48h288a48 48 0 0 0 48-48V128H32zm272-256a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zm-96 0a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zm-96 0a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zM432 32H312l-9.4-18.7A24 24 0 0 0 281.1 0H166.8a23.72 23.72 0 0 0-21.4 13.3L136 32H16A16 16 0 0 0 0 48v32a16 16 0 0 0 16 16h416a16 16 0 0 0 16-16V48a16 16 0 0 0-16-16z"
+                  />
+                </svg>
+                deleteYear
+              </button>
+            </div>
+          </th>
+          <th
+            class="p_16px fw_bold ta_right bd-b_2px_solid bd-b-c_border c_text.primary va_middle [&:first-child]:ta_left [&:first-child]:w_160px"
+          >
+            <div
+              style="display: flex; align-items: center; justify-content: flex-end; gap: 8px;"
+            >
+              <span>
+                2021
+              </span>
+              <button
+                class="c_destructive cursor_pointer p_4px_8px bdr_md d_inline-flex ai_center jc_center ml_8px trs_background_0.2s [&:hover]:bg-c_rgba(239,_68,_68,_0.08)"
+                title="Delete 2021"
+                type="button"
+              >
+                <svg
+                  fill="currentColor"
+                  height="12"
+                  stroke="currentColor"
+                  stroke-width="0"
+                  style="margin-right: 4px;"
+                  viewBox="0 0 448 512"
+                  width="12"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M32 464a48 48 0 0 0 48 48h288a48 48 0 0 0 48-48V128H32zm272-256a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zm-96 0a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zm-96 0a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zM432 32H312l-9.4-18.7A24 24 0 0 0 281.1 0H166.8a23.72 23.72 0 0 0-21.4 13.3L136 32H16A16 16 0 0 0 0 48v32a16 16 0 0 0 16 16h416a16 16 0 0 0 16-16V48a16 16 0 0 0-16-16z"
+                  />
+                </svg>
+                deleteYear
+              </button>
+            </div>
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td
+            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+          >
+            December
+          </td>
+          <td
+            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+          >
+            <span>
+              £1,000
+            </span>
+            <span
+              class="fs_10px d_block mt_4px fw_medium c_text.muted"
+            >
+              +£0
+               
+              (
+              0
+              %)
+            </span>
+          </td>
+          <td
+            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+          >
+            <span>
+              £1,000
+            </span>
+            <span
+              class="fs_10px d_block mt_4px fw_medium c_text.muted"
+            >
+              +£0
+               
+              (
+              0
+              %)
+            </span>
+          </td>
+        </tr>
+        <tr>
+          <td
+            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+          >
+            November
+          </td>
+          <td
+            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+          >
+            <span>
+              £1,000
+            </span>
+            <span
+              class="fs_10px d_block mt_4px fw_medium c_text.muted"
+            >
+              +£0
+               
+              (
+              0
+              %)
+            </span>
+          </td>
+          <td
+            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+          >
+            <span>
+              £1,000
+            </span>
+            <span
+              class="fs_10px d_block mt_4px fw_medium c_text.muted"
+            >
+              +£0
+               
+              (
+              0
+              %)
+            </span>
+          </td>
+        </tr>
+        <tr>
+          <td
+            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+          >
+            October
+          </td>
+          <td
+            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+          >
+            <span>
+              £1,000
+            </span>
+            <span
+              class="fs_10px d_block mt_4px fw_medium c_text.muted"
+            >
+              +£0
+               
+              (
+              0
+              %)
+            </span>
+          </td>
+          <td
+            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+          >
+            <span>
+              £1,000
+            </span>
+            <span
+              class="fs_10px d_block mt_4px fw_medium c_text.muted"
+            >
+              +£0
+               
+              (
+              0
+              %)
+            </span>
+          </td>
+        </tr>
+        <tr>
+          <td
+            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+          >
+            September
+          </td>
+          <td
+            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+          >
+            <span>
+              £1,000
+            </span>
+            <span
+              class="fs_10px d_block mt_4px fw_medium c_text.muted"
+            >
+              +£0
+               
+              (
+              0
+              %)
+            </span>
+          </td>
+          <td
+            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+          >
+            <span>
+              £1,000
+            </span>
+            <span
+              class="fs_10px d_block mt_4px fw_medium c_text.muted"
+            >
+              +£0
+               
+              (
+              0
+              %)
+            </span>
+          </td>
+        </tr>
+        <tr>
+          <td
+            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+          >
+            August
+          </td>
+          <td
+            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+          >
+            <span>
+              £1,000
+            </span>
+            <span
+              class="fs_10px d_block mt_4px fw_medium c_text.muted"
+            >
+              +£0
+               
+              (
+              0
+              %)
+            </span>
+          </td>
+          <td
+            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+          >
+            <span>
+              £1,000
+            </span>
+            <span
+              class="fs_10px d_block mt_4px fw_medium c_text.muted"
+            >
+              +£0
+               
+              (
+              0
+              %)
+            </span>
+          </td>
+        </tr>
+        <tr>
+          <td
+            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+          >
+            July
+          </td>
+          <td
+            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+          >
+            <span>
+              £1,000
+            </span>
+            <span
+              class="fs_10px d_block mt_4px fw_medium c_text.muted"
+            >
+              +£0
+               
+              (
+              0
+              %)
+            </span>
+          </td>
+          <td
+            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+          >
+            <span>
+              £1,000
+            </span>
+            <span
+              class="fs_10px d_block mt_4px fw_medium c_text.muted"
+            >
+              +£0
+               
+              (
+              0
+              %)
+            </span>
+          </td>
+        </tr>
+        <tr>
+          <td
+            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+          >
+            June
+          </td>
+          <td
+            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+          >
+            <span>
+              £1,000
+            </span>
+            <span
+              class="fs_10px d_block mt_4px fw_medium c_text.muted"
+            >
+              +£0
+               
+              (
+              0
+              %)
+            </span>
+          </td>
+          <td
+            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+          >
+            <span>
+              £1,000
+            </span>
+            <span
+              class="fs_10px d_block mt_4px fw_medium c_text.muted"
+            >
+              +£0
+               
+              (
+              0
+              %)
+            </span>
+          </td>
+        </tr>
+        <tr>
+          <td
+            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+          >
+            May
+          </td>
+          <td
+            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+          >
+            <span>
+              £1,000
+            </span>
+            <span
+              class="fs_10px d_block mt_4px fw_medium c_text.muted"
+            >
+              +£0
+               
+              (
+              0
+              %)
+            </span>
+          </td>
+          <td
+            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+          >
+            <span>
+              £1,000
+            </span>
+            <span
+              class="fs_10px d_block mt_4px fw_medium c_text.muted"
+            >
+              +£0
+               
+              (
+              0
+              %)
+            </span>
+          </td>
+        </tr>
+        <tr>
+          <td
+            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+          >
+            April
+          </td>
+          <td
+            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+          >
+            <span>
+              £1,000
+            </span>
+            <span
+              class="fs_10px d_block mt_4px fw_medium c_text.muted"
+            >
+              +£0
+               
+              (
+              0
+              %)
+            </span>
+          </td>
+          <td
+            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+          >
+            <span>
+              £1,000
+            </span>
+            <span
+              class="fs_10px d_block mt_4px fw_medium c_text.muted"
+            >
+              +£0
+               
+              (
+              0
+              %)
+            </span>
+          </td>
+        </tr>
+        <tr>
+          <td
+            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+          >
+            March
+          </td>
+          <td
+            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+          >
+            <span>
+              £1,000
+            </span>
+            <span
+              class="fs_10px d_block mt_4px fw_medium c_text.muted"
+            >
+              +£0
+               
+              (
+              0
+              %)
+            </span>
+          </td>
+          <td
+            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+          >
+            <span>
+              £1,000
+            </span>
+            <span
+              class="fs_10px d_block mt_4px fw_medium c_text.muted"
+            >
+              +£0
+               
+              (
+              0
+              %)
+            </span>
+          </td>
+        </tr>
+        <tr>
+          <td
+            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+          >
+            February
+          </td>
+          <td
+            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+          >
+            <span>
+              £1,000
+            </span>
+            <span
+              class="fs_10px d_block mt_4px fw_medium c_text.muted"
+            >
+              +£0
+               
+              (
+              0
+              %)
+            </span>
+          </td>
+          <td
+            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+          >
+            <span>
+              £1,000
+            </span>
+            <span
+              class="fs_10px d_block mt_4px fw_medium c_text.muted"
+            >
+              +£0
+               
+              (
+              0
+              %)
+            </span>
+          </td>
+        </tr>
+        <tr>
+          <td
+            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+          >
+            January
+          </td>
+          <td
+            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+          >
+            <span>
+              £1,000
+            </span>
+            <span
+              class="fs_10px d_block mt_4px fw_medium c_text.muted"
+            >
+              +£0
+               
+              (
+              0
+              %)
+            </span>
+          </td>
+          <td
+            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+          >
+            <span>
+              £1,000
+            </span>
+          </td>
+        </tr>
+        <tr
+          class="bg-c_surface fw_bold bd-t_2px_solid bd-t-c_border [&_td]:c_text.primary [&_td]:p_16px"
         >
-          January
-        </p>
-        <p
-          class="fs_md fw_normal lh_normal ls_normal m_0 "
+          <td
+            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+          >
+            Annual Total
+          </td>
+          <td
+            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+          >
+            £12,000
+          </td>
+          <td
+            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+          >
+            £12,000
+          </td>
+        </tr>
+        <tr
+          class="bg-c_surface fw_bold bd-t_2px_solid bd-t-c_border [&_td]:c_text.primary [&_td]:p_16px"
         >
-          £1,000
-        </p>
-      </div>
-      <div>
-        <p
-          class="fs_md fw_normal lh_normal ls_normal m_0 "
-        >
-          February
-        </p>
-        <p
-          class="fs_md fw_normal lh_normal ls_normal m_0 "
-        >
-          £1,000
-        </p>
-      </div>
-      <div>
-        <p
-          class="fs_md fw_normal lh_normal ls_normal m_0 "
-        >
-          March
-        </p>
-        <p
-          class="fs_md fw_normal lh_normal ls_normal m_0 "
-        >
-          £1,000
-        </p>
-      </div>
-      <div>
-        <p
-          class="fs_md fw_normal lh_normal ls_normal m_0 "
-        >
-          April
-        </p>
-        <p
-          class="fs_md fw_normal lh_normal ls_normal m_0 "
-        >
-          £1,000
-        </p>
-      </div>
-      <div>
-        <p
-          class="fs_md fw_normal lh_normal ls_normal m_0 "
-        >
-          May
-        </p>
-        <p
-          class="fs_md fw_normal lh_normal ls_normal m_0 "
-        >
-          £1,000
-        </p>
-      </div>
-      <div>
-        <p
-          class="fs_md fw_normal lh_normal ls_normal m_0 "
-        >
-          June
-        </p>
-        <p
-          class="fs_md fw_normal lh_normal ls_normal m_0 "
-        >
-          £1,000
-        </p>
-      </div>
-      <div>
-        <p
-          class="fs_md fw_normal lh_normal ls_normal m_0 "
-        >
-          July
-        </p>
-        <p
-          class="fs_md fw_normal lh_normal ls_normal m_0 "
-        >
-          £1,000
-        </p>
-      </div>
-      <div>
-        <p
-          class="fs_md fw_normal lh_normal ls_normal m_0 "
-        >
-          August
-        </p>
-        <p
-          class="fs_md fw_normal lh_normal ls_normal m_0 "
-        >
-          £1,000
-        </p>
-      </div>
-      <div>
-        <p
-          class="fs_md fw_normal lh_normal ls_normal m_0 "
-        >
-          September
-        </p>
-        <p
-          class="fs_md fw_normal lh_normal ls_normal m_0 "
-        >
-          £1,000
-        </p>
-      </div>
-      <div>
-        <p
-          class="fs_md fw_normal lh_normal ls_normal m_0 "
-        >
-          October
-        </p>
-        <p
-          class="fs_md fw_normal lh_normal ls_normal m_0 "
-        >
-          £1,000
-        </p>
-      </div>
-      <div>
-        <p
-          class="fs_md fw_normal lh_normal ls_normal m_0 "
-        >
-          November
-        </p>
-        <p
-          class="fs_md fw_normal lh_normal ls_normal m_0 "
-        >
-          £1,000
-        </p>
-      </div>
-      <div>
-        <p
-          class="fs_md fw_normal lh_normal ls_normal m_0 "
-        >
-          December
-        </p>
-        <p
-          class="fs_md fw_normal lh_normal ls_normal m_0 "
-        >
-          £1,000
-        </p>
-      </div>
-    </div>
-    <div
-      class="d_flex flex-d_row ai_center gap_12px"
-    >
-      <h3
-        class="c_primary fs_1.25rem fw_bold lh_tight m_0 "
-      >
-        2023
-      </h3>
-      <button
-        class="d_inline-flex ai_center jc_center bdr_full fw_medium trs_all_0.2s cursor_pointer px_4 py_2 fs_xs lh_1 disabled:op_0.5 disabled:cursor_not-allowed focusVisible:ring_2px_solid focusVisible:ring-c_primary focusVisible:ring-o_2px bg_transparent c_text.primary hover:bg_accent hover:c_accent.foreground"
-      >
-        deleteYear
-      </button>
-    </div>
-    <div
-      class="d_flex flex-d_row gap_5"
-    >
-      <div>
-        <p
-          class="fs_md fw_normal lh_normal ls_normal m_0 "
-        >
-          January
-        </p>
-        <p
-          class="fs_md fw_normal lh_normal ls_normal m_0 "
-        >
-          £1,000
-        </p>
-      </div>
-      <div>
-        <p
-          class="fs_md fw_normal lh_normal ls_normal m_0 "
-        >
-          February
-        </p>
-        <p
-          class="fs_md fw_normal lh_normal ls_normal m_0 "
-        >
-          £1,000
-        </p>
-      </div>
-      <div>
-        <p
-          class="fs_md fw_normal lh_normal ls_normal m_0 "
-        >
-          March
-        </p>
-        <p
-          class="fs_md fw_normal lh_normal ls_normal m_0 "
-        >
-          £1,000
-        </p>
-      </div>
-      <div>
-        <p
-          class="fs_md fw_normal lh_normal ls_normal m_0 "
-        >
-          April
-        </p>
-        <p
-          class="fs_md fw_normal lh_normal ls_normal m_0 "
-        >
-          £1,000
-        </p>
-      </div>
-      <div>
-        <p
-          class="fs_md fw_normal lh_normal ls_normal m_0 "
-        >
-          May
-        </p>
-        <p
-          class="fs_md fw_normal lh_normal ls_normal m_0 "
-        >
-          £1,000
-        </p>
-      </div>
-      <div>
-        <p
-          class="fs_md fw_normal lh_normal ls_normal m_0 "
-        >
-          June
-        </p>
-        <p
-          class="fs_md fw_normal lh_normal ls_normal m_0 "
-        >
-          £1,000
-        </p>
-      </div>
-      <div>
-        <p
-          class="fs_md fw_normal lh_normal ls_normal m_0 "
-        >
-          July
-        </p>
-        <p
-          class="fs_md fw_normal lh_normal ls_normal m_0 "
-        >
-          £1,000
-        </p>
-      </div>
-      <div>
-        <p
-          class="fs_md fw_normal lh_normal ls_normal m_0 "
-        >
-          August
-        </p>
-        <p
-          class="fs_md fw_normal lh_normal ls_normal m_0 "
-        >
-          £1,000
-        </p>
-      </div>
-      <div>
-        <p
-          class="fs_md fw_normal lh_normal ls_normal m_0 "
-        >
-          September
-        </p>
-        <p
-          class="fs_md fw_normal lh_normal ls_normal m_0 "
-        >
-          £1,000
-        </p>
-      </div>
-      <div>
-        <p
-          class="fs_md fw_normal lh_normal ls_normal m_0 "
-        >
-          October
-        </p>
-        <p
-          class="fs_md fw_normal lh_normal ls_normal m_0 "
-        >
-          £1,000
-        </p>
-      </div>
-      <div>
-        <p
-          class="fs_md fw_normal lh_normal ls_normal m_0 "
-        >
-          November
-        </p>
-        <p
-          class="fs_md fw_normal lh_normal ls_normal m_0 "
-        >
-          £1,000
-        </p>
-      </div>
-      <div>
-        <p
-          class="fs_md fw_normal lh_normal ls_normal m_0 "
-        >
-          December
-        </p>
-        <p
-          class="fs_md fw_normal lh_normal ls_normal m_0 "
-        >
-          £1,000
-        </p>
-      </div>
-    </div>
+          <td
+            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+          >
+            Monthly Average
+          </td>
+          <td
+            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+          >
+            £1,000
+          </td>
+          <td
+            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+          >
+            £1,000
+          </td>
+        </tr>
+      </tbody>
+    </table>
   </div>
 </div>
 `;
@@ -669,644 +1173,455 @@ exports[`<AccountDetails /> > should render 1`] = `
 exports[`<AccountDetails /> > should render in edit mode 1`] = `
 <div>
   <div
-    class="d_flex flex-d_column gap_20px ov_auto"
+    class="w_100% ov-x_auto"
   >
-    <div
-      class="d_flex flex-d_row ai_center gap_12px"
+    <table
+      class="w_100% bd-cl_collapse mt_8px fs_sm"
     >
-      <h3
-        class="c_primary fs_1.25rem fw_bold lh_tight m_0 "
-      >
-        2021
-      </h3>
-      <button
-        class="d_inline-flex ai_center jc_center bdr_full fw_medium trs_all_0.2s cursor_pointer px_4 py_2 fs_xs lh_1 disabled:op_0.5 disabled:cursor_not-allowed focusVisible:ring_2px_solid focusVisible:ring-c_primary focusVisible:ring-o_2px bg_transparent c_text.primary hover:bg_accent hover:c_accent.foreground"
-      >
-        deleteYear
-      </button>
-    </div>
-    <div
-      class="d_flex flex-d_row gap_5"
-    >
-      <div>
-        <p
-          class="fs_md fw_normal lh_normal ls_normal m_0 "
-        >
-          January
-        </p>
-        <div
-          class="d_flex flex-d_column ai_stretch gap_8px w_100%"
-        >
-          <div
-            style="flex-grow: 1; flex-shrink: 1; flex-basis: 0%;"
+      <thead>
+        <tr>
+          <th
+            class="p_16px fw_bold ta_right bd-b_2px_solid bd-b-c_border c_text.primary va_middle [&:first-child]:ta_left [&:first-child]:w_160px"
+          >
+            Month
+          </th>
+          <th
+            class="p_16px fw_bold ta_right bd-b_2px_solid bd-b-c_border c_text.primary va_middle [&:first-child]:ta_left [&:first-child]:w_160px"
+          >
+            <div
+              style="display: flex; align-items: center; justify-content: flex-end; gap: 8px;"
+            >
+              <span>
+                2023
+              </span>
+            </div>
+          </th>
+          <th
+            class="p_16px fw_bold ta_right bd-b_2px_solid bd-b-c_border c_text.primary va_middle [&:first-child]:ta_left [&:first-child]:w_160px"
+          >
+            <div
+              style="display: flex; align-items: center; justify-content: flex-end; gap: 8px;"
+            >
+              <span>
+                2021
+              </span>
+            </div>
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td
+            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+          >
+            December
+          </td>
+          <td
+            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
           >
             <input
-              class="w_100% p_10px_14px fs_sm bdr_sm bd_1px_solid bd-c_border bg-c_transparent c_text.primary ring_none trs_all_0.2s focus:bd-c_primary focus:bx-sh_0_0_0_1px_token(colors.primary) disabled:op_0.5 disabled:cursor_not-allowed "
-              data-month="1"
-              data-year="2021"
-              id="2021-January"
-              name="amount"
-              placeholder="0.00"
-              type="number"
-              value="1000"
-            />
-          </div>
-        </div>
-      </div>
-      <div>
-        <p
-          class="fs_md fw_normal lh_normal ls_normal m_0 "
-        >
-          February
-        </p>
-        <div
-          class="d_flex flex-d_column ai_stretch gap_8px w_100%"
-        >
-          <div
-            style="flex-grow: 1; flex-shrink: 1; flex-basis: 0%;"
-          >
-            <input
-              class="w_100% p_10px_14px fs_sm bdr_sm bd_1px_solid bd-c_border bg-c_transparent c_text.primary ring_none trs_all_0.2s focus:bd-c_primary focus:bx-sh_0_0_0_1px_token(colors.primary) disabled:op_0.5 disabled:cursor_not-allowed "
-              data-month="2"
-              data-year="2021"
-              id="2021-February"
-              name="amount"
-              placeholder="0.00"
-              type="number"
-              value="1000"
-            />
-          </div>
-        </div>
-      </div>
-      <div>
-        <p
-          class="fs_md fw_normal lh_normal ls_normal m_0 "
-        >
-          March
-        </p>
-        <div
-          class="d_flex flex-d_column ai_stretch gap_8px w_100%"
-        >
-          <div
-            style="flex-grow: 1; flex-shrink: 1; flex-basis: 0%;"
-          >
-            <input
-              class="w_100% p_10px_14px fs_sm bdr_sm bd_1px_solid bd-c_border bg-c_transparent c_text.primary ring_none trs_all_0.2s focus:bd-c_primary focus:bx-sh_0_0_0_1px_token(colors.primary) disabled:op_0.5 disabled:cursor_not-allowed "
-              data-month="3"
-              data-year="2021"
-              id="2021-March"
-              name="amount"
-              placeholder="0.00"
-              type="number"
-              value="1000"
-            />
-          </div>
-        </div>
-      </div>
-      <div>
-        <p
-          class="fs_md fw_normal lh_normal ls_normal m_0 "
-        >
-          April
-        </p>
-        <div
-          class="d_flex flex-d_column ai_stretch gap_8px w_100%"
-        >
-          <div
-            style="flex-grow: 1; flex-shrink: 1; flex-basis: 0%;"
-          >
-            <input
-              class="w_100% p_10px_14px fs_sm bdr_sm bd_1px_solid bd-c_border bg-c_transparent c_text.primary ring_none trs_all_0.2s focus:bd-c_primary focus:bx-sh_0_0_0_1px_token(colors.primary) disabled:op_0.5 disabled:cursor_not-allowed "
-              data-month="4"
-              data-year="2021"
-              id="2021-April"
-              name="amount"
-              placeholder="0.00"
-              type="number"
-              value="1000"
-            />
-          </div>
-        </div>
-      </div>
-      <div>
-        <p
-          class="fs_md fw_normal lh_normal ls_normal m_0 "
-        >
-          May
-        </p>
-        <div
-          class="d_flex flex-d_column ai_stretch gap_8px w_100%"
-        >
-          <div
-            style="flex-grow: 1; flex-shrink: 1; flex-basis: 0%;"
-          >
-            <input
-              class="w_100% p_10px_14px fs_sm bdr_sm bd_1px_solid bd-c_border bg-c_transparent c_text.primary ring_none trs_all_0.2s focus:bd-c_primary focus:bx-sh_0_0_0_1px_token(colors.primary) disabled:op_0.5 disabled:cursor_not-allowed "
-              data-month="5"
-              data-year="2021"
-              id="2021-May"
-              name="amount"
-              placeholder="0.00"
-              type="number"
-              value="1000"
-            />
-          </div>
-        </div>
-      </div>
-      <div>
-        <p
-          class="fs_md fw_normal lh_normal ls_normal m_0 "
-        >
-          June
-        </p>
-        <div
-          class="d_flex flex-d_column ai_stretch gap_8px w_100%"
-        >
-          <div
-            style="flex-grow: 1; flex-shrink: 1; flex-basis: 0%;"
-          >
-            <input
-              class="w_100% p_10px_14px fs_sm bdr_sm bd_1px_solid bd-c_border bg-c_transparent c_text.primary ring_none trs_all_0.2s focus:bd-c_primary focus:bx-sh_0_0_0_1px_token(colors.primary) disabled:op_0.5 disabled:cursor_not-allowed "
-              data-month="6"
-              data-year="2021"
-              id="2021-June"
-              name="amount"
-              placeholder="0.00"
-              type="number"
-              value="1000"
-            />
-          </div>
-        </div>
-      </div>
-      <div>
-        <p
-          class="fs_md fw_normal lh_normal ls_normal m_0 "
-        >
-          July
-        </p>
-        <div
-          class="d_flex flex-d_column ai_stretch gap_8px w_100%"
-        >
-          <div
-            style="flex-grow: 1; flex-shrink: 1; flex-basis: 0%;"
-          >
-            <input
-              class="w_100% p_10px_14px fs_sm bdr_sm bd_1px_solid bd-c_border bg-c_transparent c_text.primary ring_none trs_all_0.2s focus:bd-c_primary focus:bx-sh_0_0_0_1px_token(colors.primary) disabled:op_0.5 disabled:cursor_not-allowed "
-              data-month="7"
-              data-year="2021"
-              id="2021-July"
-              name="amount"
-              placeholder="0.00"
-              type="number"
-              value="1000"
-            />
-          </div>
-        </div>
-      </div>
-      <div>
-        <p
-          class="fs_md fw_normal lh_normal ls_normal m_0 "
-        >
-          August
-        </p>
-        <div
-          class="d_flex flex-d_column ai_stretch gap_8px w_100%"
-        >
-          <div
-            style="flex-grow: 1; flex-shrink: 1; flex-basis: 0%;"
-          >
-            <input
-              class="w_100% p_10px_14px fs_sm bdr_sm bd_1px_solid bd-c_border bg-c_transparent c_text.primary ring_none trs_all_0.2s focus:bd-c_primary focus:bx-sh_0_0_0_1px_token(colors.primary) disabled:op_0.5 disabled:cursor_not-allowed "
-              data-month="8"
-              data-year="2021"
-              id="2021-August"
-              name="amount"
-              placeholder="0.00"
-              type="number"
-              value="1000"
-            />
-          </div>
-        </div>
-      </div>
-      <div>
-        <p
-          class="fs_md fw_normal lh_normal ls_normal m_0 "
-        >
-          September
-        </p>
-        <div
-          class="d_flex flex-d_column ai_stretch gap_8px w_100%"
-        >
-          <div
-            style="flex-grow: 1; flex-shrink: 1; flex-basis: 0%;"
-          >
-            <input
-              class="w_100% p_10px_14px fs_sm bdr_sm bd_1px_solid bd-c_border bg-c_transparent c_text.primary ring_none trs_all_0.2s focus:bd-c_primary focus:bx-sh_0_0_0_1px_token(colors.primary) disabled:op_0.5 disabled:cursor_not-allowed "
-              data-month="9"
-              data-year="2021"
-              id="2021-September"
-              name="amount"
-              placeholder="0.00"
-              type="number"
-              value="1000"
-            />
-          </div>
-        </div>
-      </div>
-      <div>
-        <p
-          class="fs_md fw_normal lh_normal ls_normal m_0 "
-        >
-          October
-        </p>
-        <div
-          class="d_flex flex-d_column ai_stretch gap_8px w_100%"
-        >
-          <div
-            style="flex-grow: 1; flex-shrink: 1; flex-basis: 0%;"
-          >
-            <input
-              class="w_100% p_10px_14px fs_sm bdr_sm bd_1px_solid bd-c_border bg-c_transparent c_text.primary ring_none trs_all_0.2s focus:bd-c_primary focus:bx-sh_0_0_0_1px_token(colors.primary) disabled:op_0.5 disabled:cursor_not-allowed "
-              data-month="10"
-              data-year="2021"
-              id="2021-October"
-              name="amount"
-              placeholder="0.00"
-              type="number"
-              value="1000"
-            />
-          </div>
-        </div>
-      </div>
-      <div>
-        <p
-          class="fs_md fw_normal lh_normal ls_normal m_0 "
-        >
-          November
-        </p>
-        <div
-          class="d_flex flex-d_column ai_stretch gap_8px w_100%"
-        >
-          <div
-            style="flex-grow: 1; flex-shrink: 1; flex-basis: 0%;"
-          >
-            <input
-              class="w_100% p_10px_14px fs_sm bdr_sm bd_1px_solid bd-c_border bg-c_transparent c_text.primary ring_none trs_all_0.2s focus:bd-c_primary focus:bx-sh_0_0_0_1px_token(colors.primary) disabled:op_0.5 disabled:cursor_not-allowed "
-              data-month="11"
-              data-year="2021"
-              id="2021-November"
-              name="amount"
-              placeholder="0.00"
-              type="number"
-              value="1000"
-            />
-          </div>
-        </div>
-      </div>
-      <div>
-        <p
-          class="fs_md fw_normal lh_normal ls_normal m_0 "
-        >
-          December
-        </p>
-        <div
-          class="d_flex flex-d_column ai_stretch gap_8px w_100%"
-        >
-          <div
-            style="flex-grow: 1; flex-shrink: 1; flex-basis: 0%;"
-          >
-            <input
-              class="w_100% p_10px_14px fs_sm bdr_sm bd_1px_solid bd-c_border bg-c_transparent c_text.primary ring_none trs_all_0.2s focus:bd-c_primary focus:bx-sh_0_0_0_1px_token(colors.primary) disabled:op_0.5 disabled:cursor_not-allowed "
-              data-month="12"
-              data-year="2021"
-              id="2021-December"
-              name="amount"
-              placeholder="0.00"
-              type="number"
-              value="1000"
-            />
-          </div>
-        </div>
-      </div>
-    </div>
-    <div
-      class="d_flex flex-d_row ai_center gap_12px"
-    >
-      <h3
-        class="c_primary fs_1.25rem fw_bold lh_tight m_0 "
-      >
-        2023
-      </h3>
-      <button
-        class="d_inline-flex ai_center jc_center bdr_full fw_medium trs_all_0.2s cursor_pointer px_4 py_2 fs_xs lh_1 disabled:op_0.5 disabled:cursor_not-allowed focusVisible:ring_2px_solid focusVisible:ring-c_primary focusVisible:ring-o_2px bg_transparent c_text.primary hover:bg_accent hover:c_accent.foreground"
-      >
-        deleteYear
-      </button>
-    </div>
-    <div
-      class="d_flex flex-d_row gap_5"
-    >
-      <div>
-        <p
-          class="fs_md fw_normal lh_normal ls_normal m_0 "
-        >
-          January
-        </p>
-        <div
-          class="d_flex flex-d_column ai_stretch gap_8px w_100%"
-        >
-          <div
-            style="flex-grow: 1; flex-shrink: 1; flex-basis: 0%;"
-          >
-            <input
-              class="w_100% p_10px_14px fs_sm bdr_sm bd_1px_solid bd-c_border bg-c_transparent c_text.primary ring_none trs_all_0.2s focus:bd-c_primary focus:bx-sh_0_0_0_1px_token(colors.primary) disabled:op_0.5 disabled:cursor_not-allowed "
-              data-month="1"
-              data-year="2023"
-              id="2023-January"
-              name="amount"
-              placeholder="0.00"
-              type="number"
-              value="1000"
-            />
-          </div>
-        </div>
-      </div>
-      <div>
-        <p
-          class="fs_md fw_normal lh_normal ls_normal m_0 "
-        >
-          February
-        </p>
-        <div
-          class="d_flex flex-d_column ai_stretch gap_8px w_100%"
-        >
-          <div
-            style="flex-grow: 1; flex-shrink: 1; flex-basis: 0%;"
-          >
-            <input
-              class="w_100% p_10px_14px fs_sm bdr_sm bd_1px_solid bd-c_border bg-c_transparent c_text.primary ring_none trs_all_0.2s focus:bd-c_primary focus:bx-sh_0_0_0_1px_token(colors.primary) disabled:op_0.5 disabled:cursor_not-allowed "
-              data-month="2"
-              data-year="2023"
-              id="2023-February"
-              name="amount"
-              placeholder="0.00"
-              type="number"
-              value="1000"
-            />
-          </div>
-        </div>
-      </div>
-      <div>
-        <p
-          class="fs_md fw_normal lh_normal ls_normal m_0 "
-        >
-          March
-        </p>
-        <div
-          class="d_flex flex-d_column ai_stretch gap_8px w_100%"
-        >
-          <div
-            style="flex-grow: 1; flex-shrink: 1; flex-basis: 0%;"
-          >
-            <input
-              class="w_100% p_10px_14px fs_sm bdr_sm bd_1px_solid bd-c_border bg-c_transparent c_text.primary ring_none trs_all_0.2s focus:bd-c_primary focus:bx-sh_0_0_0_1px_token(colors.primary) disabled:op_0.5 disabled:cursor_not-allowed "
-              data-month="3"
-              data-year="2023"
-              id="2023-March"
-              name="amount"
-              placeholder="0.00"
-              type="number"
-              value="1000"
-            />
-          </div>
-        </div>
-      </div>
-      <div>
-        <p
-          class="fs_md fw_normal lh_normal ls_normal m_0 "
-        >
-          April
-        </p>
-        <div
-          class="d_flex flex-d_column ai_stretch gap_8px w_100%"
-        >
-          <div
-            style="flex-grow: 1; flex-shrink: 1; flex-basis: 0%;"
-          >
-            <input
-              class="w_100% p_10px_14px fs_sm bdr_sm bd_1px_solid bd-c_border bg-c_transparent c_text.primary ring_none trs_all_0.2s focus:bd-c_primary focus:bx-sh_0_0_0_1px_token(colors.primary) disabled:op_0.5 disabled:cursor_not-allowed "
-              data-month="4"
-              data-year="2023"
-              id="2023-April"
-              name="amount"
-              placeholder="0.00"
-              type="number"
-              value="1000"
-            />
-          </div>
-        </div>
-      </div>
-      <div>
-        <p
-          class="fs_md fw_normal lh_normal ls_normal m_0 "
-        >
-          May
-        </p>
-        <div
-          class="d_flex flex-d_column ai_stretch gap_8px w_100%"
-        >
-          <div
-            style="flex-grow: 1; flex-shrink: 1; flex-basis: 0%;"
-          >
-            <input
-              class="w_100% p_10px_14px fs_sm bdr_sm bd_1px_solid bd-c_border bg-c_transparent c_text.primary ring_none trs_all_0.2s focus:bd-c_primary focus:bx-sh_0_0_0_1px_token(colors.primary) disabled:op_0.5 disabled:cursor_not-allowed "
-              data-month="5"
-              data-year="2023"
-              id="2023-May"
-              name="amount"
-              placeholder="0.00"
-              type="number"
-              value="1000"
-            />
-          </div>
-        </div>
-      </div>
-      <div>
-        <p
-          class="fs_md fw_normal lh_normal ls_normal m_0 "
-        >
-          June
-        </p>
-        <div
-          class="d_flex flex-d_column ai_stretch gap_8px w_100%"
-        >
-          <div
-            style="flex-grow: 1; flex-shrink: 1; flex-basis: 0%;"
-          >
-            <input
-              class="w_100% p_10px_14px fs_sm bdr_sm bd_1px_solid bd-c_border bg-c_transparent c_text.primary ring_none trs_all_0.2s focus:bd-c_primary focus:bx-sh_0_0_0_1px_token(colors.primary) disabled:op_0.5 disabled:cursor_not-allowed "
-              data-month="6"
-              data-year="2023"
-              id="2023-June"
-              name="amount"
-              placeholder="0.00"
-              type="number"
-              value="1000"
-            />
-          </div>
-        </div>
-      </div>
-      <div>
-        <p
-          class="fs_md fw_normal lh_normal ls_normal m_0 "
-        >
-          July
-        </p>
-        <div
-          class="d_flex flex-d_column ai_stretch gap_8px w_100%"
-        >
-          <div
-            style="flex-grow: 1; flex-shrink: 1; flex-basis: 0%;"
-          >
-            <input
-              class="w_100% p_10px_14px fs_sm bdr_sm bd_1px_solid bd-c_border bg-c_transparent c_text.primary ring_none trs_all_0.2s focus:bd-c_primary focus:bx-sh_0_0_0_1px_token(colors.primary) disabled:op_0.5 disabled:cursor_not-allowed "
-              data-month="7"
-              data-year="2023"
-              id="2023-July"
-              name="amount"
-              placeholder="0.00"
-              type="number"
-              value="1000"
-            />
-          </div>
-        </div>
-      </div>
-      <div>
-        <p
-          class="fs_md fw_normal lh_normal ls_normal m_0 "
-        >
-          August
-        </p>
-        <div
-          class="d_flex flex-d_column ai_stretch gap_8px w_100%"
-        >
-          <div
-            style="flex-grow: 1; flex-shrink: 1; flex-basis: 0%;"
-          >
-            <input
-              class="w_100% p_10px_14px fs_sm bdr_sm bd_1px_solid bd-c_border bg-c_transparent c_text.primary ring_none trs_all_0.2s focus:bd-c_primary focus:bx-sh_0_0_0_1px_token(colors.primary) disabled:op_0.5 disabled:cursor_not-allowed "
-              data-month="8"
-              data-year="2023"
-              id="2023-August"
-              name="amount"
-              placeholder="0.00"
-              type="number"
-              value="1000"
-            />
-          </div>
-        </div>
-      </div>
-      <div>
-        <p
-          class="fs_md fw_normal lh_normal ls_normal m_0 "
-        >
-          September
-        </p>
-        <div
-          class="d_flex flex-d_column ai_stretch gap_8px w_100%"
-        >
-          <div
-            style="flex-grow: 1; flex-shrink: 1; flex-basis: 0%;"
-          >
-            <input
-              class="w_100% p_10px_14px fs_sm bdr_sm bd_1px_solid bd-c_border bg-c_transparent c_text.primary ring_none trs_all_0.2s focus:bd-c_primary focus:bx-sh_0_0_0_1px_token(colors.primary) disabled:op_0.5 disabled:cursor_not-allowed "
-              data-month="9"
-              data-year="2023"
-              id="2023-September"
-              name="amount"
-              placeholder="0.00"
-              type="number"
-              value="1000"
-            />
-          </div>
-        </div>
-      </div>
-      <div>
-        <p
-          class="fs_md fw_normal lh_normal ls_normal m_0 "
-        >
-          October
-        </p>
-        <div
-          class="d_flex flex-d_column ai_stretch gap_8px w_100%"
-        >
-          <div
-            style="flex-grow: 1; flex-shrink: 1; flex-basis: 0%;"
-          >
-            <input
-              class="w_100% p_10px_14px fs_sm bdr_sm bd_1px_solid bd-c_border bg-c_transparent c_text.primary ring_none trs_all_0.2s focus:bd-c_primary focus:bx-sh_0_0_0_1px_token(colors.primary) disabled:op_0.5 disabled:cursor_not-allowed "
-              data-month="10"
-              data-year="2023"
-              id="2023-October"
-              name="amount"
-              placeholder="0.00"
-              type="number"
-              value="1000"
-            />
-          </div>
-        </div>
-      </div>
-      <div>
-        <p
-          class="fs_md fw_normal lh_normal ls_normal m_0 "
-        >
-          November
-        </p>
-        <div
-          class="d_flex flex-d_column ai_stretch gap_8px w_100%"
-        >
-          <div
-            style="flex-grow: 1; flex-shrink: 1; flex-basis: 0%;"
-          >
-            <input
-              class="w_100% p_10px_14px fs_sm bdr_sm bd_1px_solid bd-c_border bg-c_transparent c_text.primary ring_none trs_all_0.2s focus:bd-c_primary focus:bx-sh_0_0_0_1px_token(colors.primary) disabled:op_0.5 disabled:cursor_not-allowed "
-              data-month="11"
-              data-year="2023"
-              id="2023-November"
-              name="amount"
-              placeholder="0.00"
-              type="number"
-              value="1000"
-            />
-          </div>
-        </div>
-      </div>
-      <div>
-        <p
-          class="fs_md fw_normal lh_normal ls_normal m_0 "
-        >
-          December
-        </p>
-        <div
-          class="d_flex flex-d_column ai_stretch gap_8px w_100%"
-        >
-          <div
-            style="flex-grow: 1; flex-shrink: 1; flex-basis: 0%;"
-          >
-            <input
-              class="w_100% p_10px_14px fs_sm bdr_sm bd_1px_solid bd-c_border bg-c_transparent c_text.primary ring_none trs_all_0.2s focus:bd-c_primary focus:bx-sh_0_0_0_1px_token(colors.primary) disabled:op_0.5 disabled:cursor_not-allowed "
+              class="w_100% max-w_140px p_8px_12px bdr_sm bd_1px_solid bd-c_border ta_right fs_sm bg-c_background c_text.primary [&:focus]:bd-c_primary [&:focus]:ring_none [&:focus]:bx-sh_0_0_0_2px_rgba(99,_99,_241,_0.15)"
               data-month="12"
               data-year="2023"
-              id="2023-December"
-              name="amount"
-              placeholder="0.00"
+              step="any"
               type="number"
               value="1000"
             />
-          </div>
-        </div>
-      </div>
-    </div>
+          </td>
+          <td
+            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+          >
+            <input
+              class="w_100% max-w_140px p_8px_12px bdr_sm bd_1px_solid bd-c_border ta_right fs_sm bg-c_background c_text.primary [&:focus]:bd-c_primary [&:focus]:ring_none [&:focus]:bx-sh_0_0_0_2px_rgba(99,_99,_241,_0.15)"
+              data-month="12"
+              data-year="2021"
+              step="any"
+              type="number"
+              value="1000"
+            />
+          </td>
+        </tr>
+        <tr>
+          <td
+            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+          >
+            November
+          </td>
+          <td
+            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+          >
+            <input
+              class="w_100% max-w_140px p_8px_12px bdr_sm bd_1px_solid bd-c_border ta_right fs_sm bg-c_background c_text.primary [&:focus]:bd-c_primary [&:focus]:ring_none [&:focus]:bx-sh_0_0_0_2px_rgba(99,_99,_241,_0.15)"
+              data-month="11"
+              data-year="2023"
+              step="any"
+              type="number"
+              value="1000"
+            />
+          </td>
+          <td
+            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+          >
+            <input
+              class="w_100% max-w_140px p_8px_12px bdr_sm bd_1px_solid bd-c_border ta_right fs_sm bg-c_background c_text.primary [&:focus]:bd-c_primary [&:focus]:ring_none [&:focus]:bx-sh_0_0_0_2px_rgba(99,_99,_241,_0.15)"
+              data-month="11"
+              data-year="2021"
+              step="any"
+              type="number"
+              value="1000"
+            />
+          </td>
+        </tr>
+        <tr>
+          <td
+            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+          >
+            October
+          </td>
+          <td
+            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+          >
+            <input
+              class="w_100% max-w_140px p_8px_12px bdr_sm bd_1px_solid bd-c_border ta_right fs_sm bg-c_background c_text.primary [&:focus]:bd-c_primary [&:focus]:ring_none [&:focus]:bx-sh_0_0_0_2px_rgba(99,_99,_241,_0.15)"
+              data-month="10"
+              data-year="2023"
+              step="any"
+              type="number"
+              value="1000"
+            />
+          </td>
+          <td
+            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+          >
+            <input
+              class="w_100% max-w_140px p_8px_12px bdr_sm bd_1px_solid bd-c_border ta_right fs_sm bg-c_background c_text.primary [&:focus]:bd-c_primary [&:focus]:ring_none [&:focus]:bx-sh_0_0_0_2px_rgba(99,_99,_241,_0.15)"
+              data-month="10"
+              data-year="2021"
+              step="any"
+              type="number"
+              value="1000"
+            />
+          </td>
+        </tr>
+        <tr>
+          <td
+            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+          >
+            September
+          </td>
+          <td
+            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+          >
+            <input
+              class="w_100% max-w_140px p_8px_12px bdr_sm bd_1px_solid bd-c_border ta_right fs_sm bg-c_background c_text.primary [&:focus]:bd-c_primary [&:focus]:ring_none [&:focus]:bx-sh_0_0_0_2px_rgba(99,_99,_241,_0.15)"
+              data-month="9"
+              data-year="2023"
+              step="any"
+              type="number"
+              value="1000"
+            />
+          </td>
+          <td
+            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+          >
+            <input
+              class="w_100% max-w_140px p_8px_12px bdr_sm bd_1px_solid bd-c_border ta_right fs_sm bg-c_background c_text.primary [&:focus]:bd-c_primary [&:focus]:ring_none [&:focus]:bx-sh_0_0_0_2px_rgba(99,_99,_241,_0.15)"
+              data-month="9"
+              data-year="2021"
+              step="any"
+              type="number"
+              value="1000"
+            />
+          </td>
+        </tr>
+        <tr>
+          <td
+            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+          >
+            August
+          </td>
+          <td
+            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+          >
+            <input
+              class="w_100% max-w_140px p_8px_12px bdr_sm bd_1px_solid bd-c_border ta_right fs_sm bg-c_background c_text.primary [&:focus]:bd-c_primary [&:focus]:ring_none [&:focus]:bx-sh_0_0_0_2px_rgba(99,_99,_241,_0.15)"
+              data-month="8"
+              data-year="2023"
+              step="any"
+              type="number"
+              value="1000"
+            />
+          </td>
+          <td
+            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+          >
+            <input
+              class="w_100% max-w_140px p_8px_12px bdr_sm bd_1px_solid bd-c_border ta_right fs_sm bg-c_background c_text.primary [&:focus]:bd-c_primary [&:focus]:ring_none [&:focus]:bx-sh_0_0_0_2px_rgba(99,_99,_241,_0.15)"
+              data-month="8"
+              data-year="2021"
+              step="any"
+              type="number"
+              value="1000"
+            />
+          </td>
+        </tr>
+        <tr>
+          <td
+            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+          >
+            July
+          </td>
+          <td
+            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+          >
+            <input
+              class="w_100% max-w_140px p_8px_12px bdr_sm bd_1px_solid bd-c_border ta_right fs_sm bg-c_background c_text.primary [&:focus]:bd-c_primary [&:focus]:ring_none [&:focus]:bx-sh_0_0_0_2px_rgba(99,_99,_241,_0.15)"
+              data-month="7"
+              data-year="2023"
+              step="any"
+              type="number"
+              value="1000"
+            />
+          </td>
+          <td
+            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+          >
+            <input
+              class="w_100% max-w_140px p_8px_12px bdr_sm bd_1px_solid bd-c_border ta_right fs_sm bg-c_background c_text.primary [&:focus]:bd-c_primary [&:focus]:ring_none [&:focus]:bx-sh_0_0_0_2px_rgba(99,_99,_241,_0.15)"
+              data-month="7"
+              data-year="2021"
+              step="any"
+              type="number"
+              value="1000"
+            />
+          </td>
+        </tr>
+        <tr>
+          <td
+            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+          >
+            June
+          </td>
+          <td
+            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+          >
+            <input
+              class="w_100% max-w_140px p_8px_12px bdr_sm bd_1px_solid bd-c_border ta_right fs_sm bg-c_background c_text.primary [&:focus]:bd-c_primary [&:focus]:ring_none [&:focus]:bx-sh_0_0_0_2px_rgba(99,_99,_241,_0.15)"
+              data-month="6"
+              data-year="2023"
+              step="any"
+              type="number"
+              value="1000"
+            />
+          </td>
+          <td
+            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+          >
+            <input
+              class="w_100% max-w_140px p_8px_12px bdr_sm bd_1px_solid bd-c_border ta_right fs_sm bg-c_background c_text.primary [&:focus]:bd-c_primary [&:focus]:ring_none [&:focus]:bx-sh_0_0_0_2px_rgba(99,_99,_241,_0.15)"
+              data-month="6"
+              data-year="2021"
+              step="any"
+              type="number"
+              value="1000"
+            />
+          </td>
+        </tr>
+        <tr>
+          <td
+            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+          >
+            May
+          </td>
+          <td
+            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+          >
+            <input
+              class="w_100% max-w_140px p_8px_12px bdr_sm bd_1px_solid bd-c_border ta_right fs_sm bg-c_background c_text.primary [&:focus]:bd-c_primary [&:focus]:ring_none [&:focus]:bx-sh_0_0_0_2px_rgba(99,_99,_241,_0.15)"
+              data-month="5"
+              data-year="2023"
+              step="any"
+              type="number"
+              value="1000"
+            />
+          </td>
+          <td
+            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+          >
+            <input
+              class="w_100% max-w_140px p_8px_12px bdr_sm bd_1px_solid bd-c_border ta_right fs_sm bg-c_background c_text.primary [&:focus]:bd-c_primary [&:focus]:ring_none [&:focus]:bx-sh_0_0_0_2px_rgba(99,_99,_241,_0.15)"
+              data-month="5"
+              data-year="2021"
+              step="any"
+              type="number"
+              value="1000"
+            />
+          </td>
+        </tr>
+        <tr>
+          <td
+            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+          >
+            April
+          </td>
+          <td
+            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+          >
+            <input
+              class="w_100% max-w_140px p_8px_12px bdr_sm bd_1px_solid bd-c_border ta_right fs_sm bg-c_background c_text.primary [&:focus]:bd-c_primary [&:focus]:ring_none [&:focus]:bx-sh_0_0_0_2px_rgba(99,_99,_241,_0.15)"
+              data-month="4"
+              data-year="2023"
+              step="any"
+              type="number"
+              value="1000"
+            />
+          </td>
+          <td
+            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+          >
+            <input
+              class="w_100% max-w_140px p_8px_12px bdr_sm bd_1px_solid bd-c_border ta_right fs_sm bg-c_background c_text.primary [&:focus]:bd-c_primary [&:focus]:ring_none [&:focus]:bx-sh_0_0_0_2px_rgba(99,_99,_241,_0.15)"
+              data-month="4"
+              data-year="2021"
+              step="any"
+              type="number"
+              value="1000"
+            />
+          </td>
+        </tr>
+        <tr>
+          <td
+            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+          >
+            March
+          </td>
+          <td
+            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+          >
+            <input
+              class="w_100% max-w_140px p_8px_12px bdr_sm bd_1px_solid bd-c_border ta_right fs_sm bg-c_background c_text.primary [&:focus]:bd-c_primary [&:focus]:ring_none [&:focus]:bx-sh_0_0_0_2px_rgba(99,_99,_241,_0.15)"
+              data-month="3"
+              data-year="2023"
+              step="any"
+              type="number"
+              value="1000"
+            />
+          </td>
+          <td
+            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+          >
+            <input
+              class="w_100% max-w_140px p_8px_12px bdr_sm bd_1px_solid bd-c_border ta_right fs_sm bg-c_background c_text.primary [&:focus]:bd-c_primary [&:focus]:ring_none [&:focus]:bx-sh_0_0_0_2px_rgba(99,_99,_241,_0.15)"
+              data-month="3"
+              data-year="2021"
+              step="any"
+              type="number"
+              value="1000"
+            />
+          </td>
+        </tr>
+        <tr>
+          <td
+            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+          >
+            February
+          </td>
+          <td
+            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+          >
+            <input
+              class="w_100% max-w_140px p_8px_12px bdr_sm bd_1px_solid bd-c_border ta_right fs_sm bg-c_background c_text.primary [&:focus]:bd-c_primary [&:focus]:ring_none [&:focus]:bx-sh_0_0_0_2px_rgba(99,_99,_241,_0.15)"
+              data-month="2"
+              data-year="2023"
+              step="any"
+              type="number"
+              value="1000"
+            />
+          </td>
+          <td
+            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+          >
+            <input
+              class="w_100% max-w_140px p_8px_12px bdr_sm bd_1px_solid bd-c_border ta_right fs_sm bg-c_background c_text.primary [&:focus]:bd-c_primary [&:focus]:ring_none [&:focus]:bx-sh_0_0_0_2px_rgba(99,_99,_241,_0.15)"
+              data-month="2"
+              data-year="2021"
+              step="any"
+              type="number"
+              value="1000"
+            />
+          </td>
+        </tr>
+        <tr>
+          <td
+            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+          >
+            January
+          </td>
+          <td
+            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+          >
+            <input
+              class="w_100% max-w_140px p_8px_12px bdr_sm bd_1px_solid bd-c_border ta_right fs_sm bg-c_background c_text.primary [&:focus]:bd-c_primary [&:focus]:ring_none [&:focus]:bx-sh_0_0_0_2px_rgba(99,_99,_241,_0.15)"
+              data-month="1"
+              data-year="2023"
+              step="any"
+              type="number"
+              value="1000"
+            />
+          </td>
+          <td
+            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+          >
+            <input
+              class="w_100% max-w_140px p_8px_12px bdr_sm bd_1px_solid bd-c_border ta_right fs_sm bg-c_background c_text.primary [&:focus]:bd-c_primary [&:focus]:ring_none [&:focus]:bx-sh_0_0_0_2px_rgba(99,_99,_241,_0.15)"
+              data-month="1"
+              data-year="2021"
+              step="any"
+              type="number"
+              value="1000"
+            />
+          </td>
+        </tr>
+        <tr
+          class="bg-c_surface fw_bold bd-t_2px_solid bd-t-c_border [&_td]:c_text.primary [&_td]:p_16px"
+        >
+          <td
+            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+          >
+            Annual Total
+          </td>
+          <td
+            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+          >
+            £12,000
+          </td>
+          <td
+            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+          >
+            £12,000
+          </td>
+        </tr>
+        <tr
+          class="bg-c_surface fw_bold bd-t_2px_solid bd-t-c_border [&_td]:c_text.primary [&_td]:p_16px"
+        >
+          <td
+            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+          >
+            Monthly Average
+          </td>
+          <td
+            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+          >
+            £1,000
+          </td>
+          <td
+            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+          >
+            £1,000
+          </td>
+        </tr>
+      </tbody>
+    </table>
   </div>
 </div>
 `;

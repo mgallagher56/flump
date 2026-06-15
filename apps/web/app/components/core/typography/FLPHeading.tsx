@@ -32,11 +32,11 @@ const FLPHeading: FC<FLPHeadingProps> = ({
   };
 
   const headingStyle = css({
-    color: color === "blue.500" ? "primary" : (color as any),
-    fontSize: sizeMap[size] as any,
+    color: color === "blue.500" ? "primary" : color,
+    fontSize: sizeMap[size],
     fontWeight: "bold",
-    marginTop: mt as any,
-    marginBottom: mb as any,
+    marginTop: mt,
+    marginBottom: mb,
     lineHeight: "tight",
     margin: 0,
   });

@@ -22,9 +22,9 @@ const FLPInput: FC<FLPInputProps> = ({
 }) => {
   const containerStyle = css({
     display: "flex",
-    flexDirection: flexDirection as any,
+    flexDirection,
     alignItems: flexDirection === "row" ? "center" : "stretch",
-    gap: (gap || (flexDirection === "row" ? "16px" : "8px")) as any,
+    gap: gap || (flexDirection === "row" ? "16px" : "8px"),
     width: "100%",
   });
 
@@ -71,8 +71,8 @@ const FLPInput: FC<FLPInputProps> = ({
       )}
       <div style={{ flex: 1 }}>
         <input
-          id={label}
           className={`${inputStyle} ${className || ""}`}
+          id={label}
           style={style}
           onChange={onChange}
           {...props}

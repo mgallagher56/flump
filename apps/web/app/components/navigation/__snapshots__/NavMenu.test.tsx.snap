@@ -9,8 +9,18 @@ exports[`<NavMenu /> > renders as expected when logged in and showAppLink is tru
       <div
         class="d_flex flex-d_row ai_center gap_4 "
       >
-        Home
-        Accounts
+        <a
+          class="d_inline-flex ai_center jc_center bdr_full fw_medium trs_all_0.2s cursor_pointer px_6 py_3 fs_sm lh_1 disabled:op_0.5 disabled:cursor_not-allowed focusVisible:ring_2px_solid focusVisible:ring-c_primary focusVisible:ring-o_2px bg_transparent c_text.primary hover:bg_accent hover:c_accent.foreground"
+          href="/"
+        >
+          Home
+        </a>
+        <a
+          class="d_inline-flex ai_center jc_center bdr_full fw_medium trs_all_0.2s cursor_pointer px_6 py_3 fs_sm lh_1 disabled:op_0.5 disabled:cursor_not-allowed focusVisible:ring_2px_solid focusVisible:ring-c_primary focusVisible:ring-o_2px bg_transparent c_text.primary hover:bg_accent hover:c_accent.foreground"
+          href="/accounts"
+        >
+          Accounts
+        </a>
       </div>
     </div>
   </div>
@@ -26,8 +36,18 @@ exports[`<NavMenu /> > renders as expected when not logged in 1`] = `
       <div
         class="d_flex flex-d_row ai_center gap_4 "
       >
-        Home
-        Accounts
+        <a
+          class="d_inline-flex ai_center jc_center bdr_full fw_medium trs_all_0.2s cursor_pointer px_6 py_3 fs_sm lh_1 disabled:op_0.5 disabled:cursor_not-allowed focusVisible:ring_2px_solid focusVisible:ring-c_primary focusVisible:ring-o_2px bg_transparent c_text.primary hover:bg_accent hover:c_accent.foreground"
+          href="/"
+        >
+          Home
+        </a>
+        <a
+          class="d_inline-flex ai_center jc_center bdr_full fw_medium trs_all_0.2s cursor_pointer px_6 py_3 fs_sm lh_1 disabled:op_0.5 disabled:cursor_not-allowed focusVisible:ring_2px_solid focusVisible:ring-c_primary focusVisible:ring-o_2px bg_transparent c_text.primary hover:bg_accent hover:c_accent.foreground"
+          href="/accounts"
+        >
+          Accounts
+        </a>
       </div>
     </div>
   </div>

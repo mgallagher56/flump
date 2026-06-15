@@ -5,10 +5,19 @@ Finance dashboard project based on [Remix JS](https://remix.run/) Blues stack us
 - [supabase](https://supabase.io/) - postgresql database
 - [vite](https://vitejs.dev/) - build tool
 - [vitest](https://vitest.dev/) - unit/integration testing
-- [eslint](https://eslint.org/) - linting
-- [prettier](https://prettier.io/) - formatting
+- [biome](https://biomejs.dev/) - linting & formatting
 - [fly.io](https://fly.io/) - hosting
 - [github actions](https://docs.github.com/en/actions) - ci/cd
+
+## Features
+
+- **Finance Dashboard**: Monitor overall net worth, total assets, and track transactions.
+- **Multi-Account Sync**: Support for Current, Savings, Credit Card, Investment, Loan, and Mortgage accounts.
+- **Forecast & Tax Tools**: Estimate UK take-home pay and forecast future savings growth with compound interest.
+- **Mortgage tracking & Optimizations** (New):
+  - Track payments, remaining term, and amortization details.
+  - Simulate monthly overpayment scenarios to calculate interest and time saved.
+  - Compare mortgage overpayment vs. saving in an ISA / savings account (factoring in UK tax brackets).
 
 ## Development
 

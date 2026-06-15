@@ -1,7 +1,7 @@
 import type { FC, HTMLAttributes } from "react";
 import { FLPCardStyles } from "./FLPCardStyles";
 
-interface FLPCardProps extends HTMLAttributes<HTMLDivElement> {}
+type FLPCardProps = HTMLAttributes<HTMLDivElement>;
 
 const FLPCard: FC<FLPCardProps> = ({ children, className, ...props }) => {
   return (

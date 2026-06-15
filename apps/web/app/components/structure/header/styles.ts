@@ -3,7 +3,7 @@ import { css } from "styled-system/css";
 export const navStyles = css({
   display: "flex",
   borderBottomWidth: "2px",
-  borderBottomColor: "blue.500",
+  borderBottomColor: "border",
   borderBottomStyle: "solid",
   alignItems: "center",
   justifyContent: "space-between",

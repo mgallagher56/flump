@@ -14,7 +14,7 @@ interface FLPBoxProps extends HTMLAttributes<HTMLDivElement> {
   pt?: number | string;
   flexWrap?: "wrap" | "nowrap" | "wrap-reverse";
   borderBottom?: string;
-  borderColor?: string | any;
+  borderColor?: string;
 }
 
 const FLPBox: FC<FLPBoxProps> = ({
@@ -37,18 +37,18 @@ const FLPBox: FC<FLPBoxProps> = ({
   ...props
 }) => {
   const boxStyle = css({
-    display: display as any,
-    flexDirection: flexDirection as any,
-    alignItems: alignItems as any,
-    justifyContent: justifyContent as any,
-    gap: gap as any,
-    marginTop: (my || mt) as any,
-    marginBottom: (my || mb) as any,
-    paddingBottom: pb as any,
-    paddingTop: pt as any,
-    flexWrap: flexWrap as any,
-    borderBottom: borderBottom as any,
-    borderColor: borderColor as any,
+    display,
+    flexDirection,
+    alignItems,
+    justifyContent,
+    gap,
+    marginTop: my || mt,
+    marginBottom: my || mb,
+    paddingBottom: pb,
+    paddingTop: pt,
+    flexWrap,
+    borderBottom,
+    borderColor,
   });
 
   return (

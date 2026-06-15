@@ -1,5 +1,5 @@
 import { configure } from "@testing-library/react";
-import type { ReactNode } from "react";
+import React, { type ReactNode } from "react";
 
 if (!global.window) global.window = {} as any;
 
@@ -26,6 +26,13 @@ vi.mock("react-router", async () => {
   return {
     ...actual,
     Link: (props: any): ReactNode => props.children,
+    NavLink: (props: any): ReactNode => {
+      const className =
+        typeof props.className === "function"
+          ? props.className({ isActive: false, isPending: false })
+          : props.className;
+      return React.createElement("a", { className, href: props.to }, props.children);
+    },
     Form: ({ children }: any) => children,
     useSubmit: () => mockSubmit,
     useFetcher: () => ({

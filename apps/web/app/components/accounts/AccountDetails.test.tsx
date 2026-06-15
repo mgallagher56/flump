@@ -177,7 +177,7 @@ describe("<AccountDetails />", () => {
     expect(mocks.mockFetcherSubmit).toHaveBeenCalledWith(
       {
         intent: "deleteYear",
-        year: "2021",
+        year: "2023",
       },
       { method: "POST" },
     );

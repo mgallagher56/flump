@@ -3,12 +3,11 @@ import { type FC, useCallback, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { useLoaderData, useNavigate } from "react-router";
 import AccountDetailChart from "~/components/charts/AccountDetailChart";
-import FLPButton from "~/components/core/buttons/FLPButton";
-import FLPButtonGroup from "~/components/core/buttons/FLPButtonGroup";
 import FLPHeading from "~/components/core/typography/FLPHeading";
 import AddEditAccountsDialogBtn from "~/components/dialogs/addEditAccountsDialog/AddEditAccountsDialog";
 import type { AccountDetail } from "~/containers/accounts/types";
 import type { AccountTypeEnum } from "~/containers/accounts/utils";
+import { useFormatCurrency } from "~/hooks/useFormatCurrency";
 import type { loader } from "~/routes/app.accounts._index";
 import { monthYearSort } from "~/utils/accounts";
 import { currentMonth, currentYear } from "~/utils/utils";
@@ -21,6 +20,7 @@ interface AccountsCardProp {
 }
 
 const AccountsCard: FC<AccountsCardProp> = ({ accountId, name, type }) => {
+  const { formatCurrency } = useFormatCurrency();
   const { t } = useTranslation();
   const navigate = useNavigate();
   const {
@@ -68,137 +68,135 @@ const AccountsCard: FC<AccountsCardProp> = ({ accountId, name, type }) => {
     [onViewClick],
   );
 
-  const headerStyle = css({
+  const headerWrapperStyle = css({
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+    marginBottom: "12px",
+  });
+
+  const headerTextStyle = css({
     display: "flex",
     flexDirection: "column",
-    gap: "4px",
+    gap: "2px",
     cursor: "pointer",
+    flex: 1,
   });
 
   const bodyStyle = css({
     flex: 1,
     display: "flex",
     flexDirection: "column",
-    justifyContent: "flex-end",
+    justifyContent: "space-between",
     cursor: "pointer",
-    marginTop: "16px",
+    marginTop: "8px",
+  });
+
+  const balanceRowStyle = css({
+    display: "flex",
+    alignItems: "baseline",
+    gap: "8px",
     marginBottom: "16px",
   });
 
-  const rowStyle = css({
-    display: "flex",
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: "12px",
-  });
-
-  const statRootStyle = css({
-    display: "flex",
-    flexDirection: "column",
-  });
-
-  const statLabelStyle = css({
-    fontSize: "10px",
-    textTransform: "uppercase",
-    color: "text.muted",
-  });
-
-  const statValueStyle = css({
-    fontSize: "md",
+  const balanceValStyle = css({
+    fontSize: "22px",
     fontWeight: "bold",
     color: "text.primary",
   });
 
-  const trendStyle = (isUp: boolean) =>
+  const percentBadgeStyle = (isUp: boolean) =>
     css({
-      fontSize: "10px",
-      fontWeight: "semibold",
-      color: isUp ? "emerald.500" : "destructive",
-      marginTop: "2px",
+      fontSize: "11px",
+      fontWeight: "bold",
+      padding: "2px 8px",
+      borderRadius: "full",
+      backgroundColor: isUp ? "rgba(16, 185, 129, 0.1)" : "rgba(239, 68, 68, 0.1)",
+      color: isUp ? "success.500" : "destructive",
+      display: "inline-flex",
+      alignItems: "center",
+      gap: "2px",
     });
 
-  const footerStyle = css({
-    display: "flex",
-    justifyContent: "flex-end",
+  const chartContainerStyle = css({
+    flex: 1,
+    height: "100%",
+    minHeight: "100px",
+    marginTop: "auto",
+    marginLeft: "-20px",
+    marginRight: "-20px",
+    marginBottom: "-20px",
+    overflow: "hidden",
+    borderBottomLeftRadius: "lg",
+    borderBottomRightRadius: "lg",
   });
 
   const cardStyle = css({
-    height: "325px",
-    width: "250px",
+    height: "280px",
     display: "flex",
     flexDirection: "column",
     justifyContent: "space-between",
+    padding: "20px",
+    position: "relative",
+    overflow: "hidden",
+    transition: "transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease",
+    "&:hover": {
+      transform: "translateY(-4px)",
+      boxShadow: "md",
+      borderColor: "primary",
+    },
   });
+
+  const isUp = prevAccountBalance <= accountBalance;
+  const trendLabel =
+    currentPercentageChangeValue >= 0
+      ? `+${currentPercentageChangeValue}%`
+      : `${currentPercentageChangeValue}%`;
 
   return (
     <FLPCard className={cardStyle} id={accountId}>
-      {/* biome-ignore lint/a11y/useSemanticElements: using div for layout styling */}
-      <div
-        className={headerStyle}
-        onClick={onViewClick}
-        onKeyDown={handleKeyDown}
-        role="button"
-        tabIndex={0}
-      >
-        <FLPHeading as="h5" color="gray.500" size="xs">{`${type} ${t("account")}`}</FLPHeading>
-        <FLPHeading as="h4" color="blue.500" size="lg">
-          {name}
-        </FLPHeading>
+      <div className={headerWrapperStyle}>
+        <div
+          className={headerTextStyle}
+          role="button"
+          tabIndex={0}
+          onClick={onViewClick}
+          onKeyDown={handleKeyDown}
+        >
+          <FLPHeading as="h5" color="text.muted" size="xs">
+            {`${type} ${t("account")}`}
+          </FLPHeading>
+          <FLPHeading as="h4" color="blue.500" size="md">
+            {name}
+          </FLPHeading>
+        </div>
+        <AddEditAccountsDialogBtn accountId={accountId} isEditAccount={true} isIconButton={true} />
       </div>
-      {/* biome-ignore lint/a11y/useSemanticElements: using div for layout styling */}
+
       <div
         className={bodyStyle}
-        onClick={onViewClick}
-        onKeyDown={handleKeyDown}
         role="button"
         tabIndex={0}
+        onClick={onViewClick}
+        onKeyDown={handleKeyDown}
       >
-        <div className={rowStyle}>
-          {!!prevAccountBalance && (
-            <div className={statRootStyle}>
-              <span className={statLabelStyle}>{`${t("previous")}:`}</span>
-              <span className={statValueStyle}>
-                {Intl.NumberFormat("en-GB", {
-                  style: "currency",
-                  currency: "GBP",
-                  maximumFractionDigits: 0,
-                }).format(prevAccountBalance)}
-              </span>
-              {!!secondPreviousAccountBalance && (
-                <span className={trendStyle(secondPreviousAccountBalance <= prevAccountBalance)}>
-                  {prevPercentageChangeValue}%
-                </span>
-              )}
-            </div>
-          )}
+        <div className={balanceRowStyle}>
           {!!accountBalance && (
-            <div className={statRootStyle}>
-              <span className={statLabelStyle}>{`${t("current")}:`}</span>
-              <span className={statValueStyle}>
-                {Intl.NumberFormat("en-GB", {
-                  style: "currency",
-                  currency: "GBP",
-                  maximumFractionDigits: 0,
-                }).format(accountBalance)}
-              </span>
+            <>
+              <span className={balanceValStyle}>{formatCurrency(accountBalance)}</span>
               {!!prevAccountBalance && (
-                <span className={trendStyle(prevAccountBalance <= accountBalance)}>
-                  {currentPercentageChangeValue}%
+                <span className={percentBadgeStyle(isUp)}>
+                  {isUp ? "↑" : "↓"} {trendLabel}
                 </span>
               )}
-            </div>
+            </>
           )}
         </div>
-        {!!accountDetailYear.length && <AccountDetailChart accountDetails={accountDetailYear} />}
-      </div>
-      <div className={footerStyle}>
-        <FLPButtonGroup gap={4} attached={false}>
-          <FLPButton size="sm" variant="outline" onClick={onViewClick}>
-            {t("view")}
-          </FLPButton>
-          <AddEditAccountsDialogBtn accountId={accountId} btnSize="sm" isEditAccount={true} />
-        </FLPButtonGroup>
+        {!!accountDetailYear.length && (
+          <div className={chartContainerStyle}>
+            <AccountDetailChart accountDetails={accountDetailYear} />
+          </div>
+        )}
       </div>
     </FLPCard>
   );

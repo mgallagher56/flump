@@ -17,6 +17,8 @@
     "**/*.test.tsx",
     "**/*.spec.tsx",
     "**/*.test.ts",
-    "**/*.spec.ts"
+    "**/*.spec.ts",
+    "**/*.stories.tsx",
+    "**/*.stories.ts"
   ]
 }

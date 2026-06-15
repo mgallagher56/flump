@@ -8,7 +8,6 @@ node_modules
 /postgres-data
 /coverage
 /.scannerwork
-/.eslintcache
 /coverage-ts/
 sonar-report.xml
 /.cert/
@@ -16,3 +15,6 @@ sonar-report.xml
 .turbo
 styled-system/
 .react-router/
+
+*storybook.log
+storybook-static

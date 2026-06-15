@@ -95,7 +95,7 @@ const FLPModal: FC<FLPModalProps> = ({
       <Dialog.Trigger asChild>{triggerBtn}</Dialog.Trigger>
       <Dialog.Portal>
         <Dialog.Overlay className={overlayStyle} />
-        <Dialog.Content className={contentStyle} ref={contentRef as any}>
+        <Dialog.Content ref={contentRef} className={contentStyle}>
           <div className={headerStyle}>
             <Dialog.Title className={titleStyle}>{title}</Dialog.Title>
           </div>

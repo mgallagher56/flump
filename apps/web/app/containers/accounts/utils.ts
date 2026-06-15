@@ -7,6 +7,7 @@ export enum AccountTypeEnum {
   LOAN = "Loan",
   CREDIT_CARD = "Credit Card",
   OWED = "Owed",
+  INVESTMENT = "Investment",
 }
 
 export type AccountType = `${AccountTypeEnum}` | string;

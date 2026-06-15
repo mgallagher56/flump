@@ -12,7 +12,7 @@ describe("FLPButton", () => {
 
   test("should render correctly with props", () => {
     const { container } = customRender(
-      <FLPButton disabled loading colorPalette="green" variant="outline">
+      <FLPButton disabled loading variant="outline">
         FLPButton
       </FLPButton>,
     );

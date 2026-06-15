@@ -23,12 +23,12 @@ const FLPText: FC<FLPTextProps> = ({
   ...props
 }) => {
   const textStyle = css({
-    fontSize: fontSize as any,
-    fontWeight: fontWeight as any,
-    lineHeight: lineHeight as any,
-    letterSpacing: letterSpacing as any,
-    color: color as any,
-    textTransform: textTransform as any,
+    fontSize,
+    fontWeight,
+    lineHeight,
+    letterSpacing,
+    color,
+    textTransform,
     margin: 0,
   });
 

@@ -70,7 +70,7 @@ describe("<AccountsContainer />", () => {
     expect(container).toMatchSnapshot();
   });
 
-  test("should call supabase functions to add an account", async () => {
+  test("should open modal to add an account", async () => {
     mocks.mockUseLoaderData.mockReturnValue({ accounts: mockAccounts });
     const { getAllByText } = customRender(<AccountsContainer />);
     const addAccountModalBtn = getAllByText("addAccount")[0];

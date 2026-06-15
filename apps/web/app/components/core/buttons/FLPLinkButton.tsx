@@ -1,6 +1,6 @@
 import { buttonVariants } from "@repo/ui";
 import type { FC } from "react";
-import { Link as RouterLink } from "react-router";
+import { NavLink as RouterNavLink } from "react-router";
 
 interface FLPLinkButtonProps {
   to: string;
@@ -10,12 +10,15 @@ interface FLPLinkButtonProps {
 
 const FLPLinkButton: FC<FLPLinkButtonProps> = ({ text, to, className }) => {
   return (
-    <RouterLink
-      className={`${buttonVariants({ variant: "link" })} ${className || ""}`.trim()}
+    <RouterNavLink
+      className={({ isActive }) =>
+        `${buttonVariants({ variant: isActive ? "secondary" : "ghost" })} ${className || ""}`.trim()
+      }
       to={to}
+      end={to === "/app" || to === "/"}
     >
       {text}
-    </RouterLink>
+    </RouterNavLink>
   );
 };
 

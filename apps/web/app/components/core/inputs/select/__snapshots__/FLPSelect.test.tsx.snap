@@ -16,23 +16,23 @@ exports[`<FLPSelect /> > should render as expected 1`] = `
         style="flex-grow: 1; flex-shrink: 1; flex-basis: 0%;"
       >
         <select
-          class="w_100% p_10px_14px fs_sm bdr_sm bd_1px_solid bd-c_border bg-c_#20222D c_text.primary ring_none trs_all_0.2s cursor_pointer focus:bd-c_primary focus:bx-sh_0_0_0_1px_token(colors.primary) "
+          class="w_100% p_10px_14px fs_sm bdr_sm bd_1px_solid bd-c_border bg-c_surface c_text.primary ring_none trs_all_0.2s cursor_pointer focus:bd-c_primary focus:bx-sh_0_0_0_1px_token(colors.primary) "
           id="label"
         >
           <option
-            style="background-color: #20222D; color: #ffffff;"
+            style="background-color: var(--colors-surface); color: var(--colors-text-primary);"
             value="1"
           >
             1
           </option>
           <option
-            style="background-color: #20222D; color: #ffffff;"
+            style="background-color: var(--colors-surface); color: var(--colors-text-primary);"
             value="2"
           >
             2
           </option>
           <option
-            style="background-color: #20222D; color: #ffffff;"
+            style="background-color: var(--colors-surface); color: var(--colors-text-primary);"
             value="3"
           >
             3
@@ -60,23 +60,23 @@ exports[`<FLPSelect /> > should render as expected as row 1`] = `
         style="flex-grow: 1; flex-shrink: 1; flex-basis: 0%;"
       >
         <select
-          class="w_100% p_10px_14px fs_sm bdr_sm bd_1px_solid bd-c_border bg-c_#20222D c_text.primary ring_none trs_all_0.2s cursor_pointer focus:bd-c_primary focus:bx-sh_0_0_0_1px_token(colors.primary) "
+          class="w_100% p_10px_14px fs_sm bdr_sm bd_1px_solid bd-c_border bg-c_surface c_text.primary ring_none trs_all_0.2s cursor_pointer focus:bd-c_primary focus:bx-sh_0_0_0_1px_token(colors.primary) "
           id="label"
         >
           <option
-            style="background-color: #20222D; color: #ffffff;"
+            style="background-color: var(--colors-surface); color: var(--colors-text-primary);"
             value="1"
           >
             1
           </option>
           <option
-            style="background-color: #20222D; color: #ffffff;"
+            style="background-color: var(--colors-surface); color: var(--colors-text-primary);"
             value="2"
           >
             2
           </option>
           <option
-            style="background-color: #20222D; color: #ffffff;"
+            style="background-color: var(--colors-surface); color: var(--colors-text-primary);"
             value="3"
           >
             3
