@@ -30,7 +30,7 @@
     "@pandacss/dev": "^1.7.2",
     "@types/compression": "^1.7.5",
     "@types/express": "^4.17.21",
-    "@types/node": "^20.10.5",
+    "@types/node": "^25.0.0",
     "@types/react": "^19.2.3",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^4.3.4",
