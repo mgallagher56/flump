@@ -30,7 +30,7 @@ jobs:
 
     steps:
       - name: ⬇️ Checkout repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4.4.0
 
       - name: ⚙️ Setup Bun and install dependencies
         uses: ./.github/actions/bun-setup
@@ -48,7 +48,7 @@ jobs:
 
     steps:
       - name: ⬇️ Checkout repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4.4.0
         with:
           fetch-depth: 0
 
@@ -68,7 +68,7 @@ jobs:
 
     steps:
       - name: ⬇️ Checkout repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4.4.0
         with:
           fetch-depth: 0
 
@@ -84,7 +84,7 @@ jobs:
 
       - name: 'Report Coverage'
         if: always()
-        uses: davelosert/vitest-coverage-report-action@v2
+        uses: davelosert/vitest-coverage-report-action@v2.13.0
         with:
           working-directory: "apps/web"
 
@@ -94,7 +94,7 @@ jobs:
 
     steps:
       - name: ⬇️ Checkout repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4.4.0
 
       - name: ⚙️ Setup Bun and install dependencies
         uses: ./.github/actions/bun-setup
