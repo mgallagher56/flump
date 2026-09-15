@@ -31,7 +31,7 @@
     "husky": "^9.1.7",
     "lint-staged": "15.2.10",
     "turbo": "^2.7.1",
-    "typescript": "5.9.2",
+    "typescript": "7.0.2",
     "vitest": "^4.0.16",
     "zod-validation-error": "^4.0.0"
   },
