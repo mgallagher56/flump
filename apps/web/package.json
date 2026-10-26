@@ -38,7 +38,7 @@
   },
   "devDependencies": {
     "@chromatic-com/storybook": "^5.2.1",
-    "@pandacss/dev": "1.11.3",
+    "@pandacss/dev": "2.4.0",
     "@react-router/dev": "7.17.0",
     "@react-router/fs-routes": "7.17.0",
     "@react-router/remix-routes-option-adapter": "7.17.0",
