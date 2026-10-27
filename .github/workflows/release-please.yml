@@ -24,7 +24,7 @@ jobs:
       releases_created: ${{ steps.release.outputs.releases_created }}
     steps:
       - id: release
-        uses: googleapis/release-please-action@v4
+        uses: googleapis/release-please-action@v4.4.1
 
       - name: "[Debug] release-please outputs"
         env:
@@ -43,7 +43,7 @@ jobs:
 
     steps:
       - name: ⬇️ Checkout repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4.4.0
 
       - name: ⚙️ Setup Bun and install dependencies
         uses: ./.github/actions/bun-setup
