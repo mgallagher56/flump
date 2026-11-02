@@ -1,13 +1,23 @@
 import { Button } from "@repo/ui";
+import { css } from "@repo/ui/styled-system/css";
 import type { ButtonHTMLAttributes, FC } from "react";
+import { useResponsive } from "~/context/ResponsiveContext";
 
-interface FLPButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
+export interface FLPButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: "primary" | "secondary" | "outline" | "ghost" | "link" | "destructive";
   size?: "sm" | "md" | "lg" | "icon";
   loading?: boolean;
   disabled?: boolean;
   padding?: number | string;
+  isMobile?: boolean;
+  fullWidthOnMobile?: boolean;
 }
+
+const mobileBtnStyle = (fullWidth?: boolean) =>
+  css({
+    minHeight: "44px",
+    width: fullWidth ? "100%" : undefined,
+  });
 
 const FLPButton: FC<FLPButtonProps> = ({
   variant = "primary",
@@ -15,9 +25,15 @@ const FLPButton: FC<FLPButtonProps> = ({
   loading,
   disabled,
   padding,
+  isMobile: propIsMobile,
+  fullWidthOnMobile,
+  className,
   children,
   ...props
 }) => {
+  const { isMobile: contextIsMobile } = useResponsive();
+  const isMobileVariant = propIsMobile ?? contextIsMobile;
+
   // Map "ghost" and "outline" and "solid" variants to @repo/ui Button variants
   const mappedVariant =
     variant === "ghost"
@@ -28,8 +44,17 @@ const FLPButton: FC<FLPButtonProps> = ({
           ? "link"
           : "primary";
 
+  const combinedClassName = [
+    isMobileVariant ? mobileBtnStyle(fullWidthOnMobile) : "",
+    className || "",
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .trim();
+
   return (
     <Button
+      className={combinedClassName || undefined}
       disabled={disabled || loading}
       size={size}
       style={{ padding }}

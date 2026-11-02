@@ -1,11 +1,28 @@
 import type { FC, HTMLAttributes } from "react";
-import { FLPCardStyles } from "./FLPCardStyles";
+import { useResponsive } from "~/context/ResponsiveContext";
+import { FLPCardMobileStyles, FLPCardStyles } from "./FLPCardStyles";
 
-type FLPCardProps = HTMLAttributes<HTMLDivElement>;
+export interface FLPCardProps extends HTMLAttributes<HTMLDivElement> {
+  isMobile?: boolean;
+  variant?: "desktop" | "mobile";
+}
 
-const FLPCard: FC<FLPCardProps> = ({ children, className, ...props }) => {
+const FLPCard: FC<FLPCardProps> = ({
+  children,
+  className,
+  isMobile: propIsMobile,
+  variant = "desktop",
+  ...props
+}) => {
+  const { isMobile: contextIsMobile } = useResponsive();
+  const isMobileVariant = propIsMobile ?? (variant === "mobile" ? true : contextIsMobile);
+
   return (
-    <div className={`${FLPCardStyles} ${className || ""}`} {...props}>
+    <div
+      className={`${FLPCardStyles} ${isMobileVariant ? FLPCardMobileStyles : ""} ${className || ""}`.trim()}
+      data-variant={isMobileVariant ? "mobile" : "desktop"}
+      {...props}
+    >
       {children}
     </div>
   );

@@ -1,18 +1,28 @@
 import { css } from "@repo/ui/styled-system/css";
 import { type FC, useState } from "react";
-import { FaArrowLeft, FaArrowRight, FaCheckCircle, FaRegCircle } from "react-icons/fa";
+import {
+  FaArrowLeft,
+  FaArrowRight,
+  FaCheckCircle,
+  FaPiggyBank,
+  FaPlus,
+  FaRegCircle,
+  FaTrash,
+} from "react-icons/fa";
+import { Link } from "react-router";
 import FLPButton from "~/components/core/buttons/FLPButton";
 import FLPHeading from "~/components/core/typography/FLPHeading";
 import FLPText from "~/components/core/typography/FLPText";
-import type { BudgetEntry } from "~/types/budget";
+import type { BudgetCategory, BudgetEntry } from "~/types/budget";
 import { CATEGORY_ICONS, toMonthly } from "~/types/budget";
 
 interface BudgetSetupWizardProps {
   entries: BudgetEntry[];
   onUpdateEntry: (id: string, update: Partial<BudgetEntry>) => Promise<void>;
-  onAddEntry?: (
+  onAddEntry: (
     entry: Omit<BudgetEntry, "id" | "userId" | "createdAt" | "updatedAt">,
   ) => Promise<void>;
+  onDeleteEntry: (id: string) => Promise<void>;
   onComplete: () => void;
   onCancel: () => void;
   /** Pre-filled monthly take-home from user profile */
@@ -71,13 +81,15 @@ const inputStyle = css({
 interface EntryRowProps {
   entry: BudgetEntry;
   onUpdate: (id: string, update: Partial<BudgetEntry>) => void;
+  onDelete: (id: string) => void;
+  deleting?: boolean;
 }
 
-const EntryRow: FC<EntryRowProps> = ({ entry, onUpdate }) => (
+const EntryRow: FC<EntryRowProps> = ({ entry, onUpdate, onDelete, deleting }) => (
   <div
     className={css({
       display: "grid",
-      gridTemplateColumns: "1fr auto",
+      gridTemplateColumns: "1fr auto auto",
       gap: "12px",
       alignItems: "center",
       padding: "10px 0",
@@ -85,37 +97,68 @@ const EntryRow: FC<EntryRowProps> = ({ entry, onUpdate }) => (
       borderColor: "border",
     })}
   >
-    <div>
-      <FLPText fontSize="sm" fontWeight="medium">
+    <div style={{ minWidth: 0 }}>
+      <FLPText
+        fontSize="sm"
+        fontWeight="medium"
+        style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
+      >
         {entry.name}
       </FLPText>
-      {!entry.isEssential && (
+      {!entry.isEssential && !entry.isIncome && (
         <FLPText color="text.muted" fontSize="xs">
           discretionary
         </FLPText>
       )}
     </div>
-    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+    <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
       <span style={{ color: "var(--colors-text-muted)", fontSize: "14px" }}>£</span>
       <input
         className={inputStyle}
         min="0"
         step="1"
-        style={{ width: "100px", textAlign: "right" }}
+        style={{ width: "90px", textAlign: "right" }}
         type="number"
-        value={entry.amount}
-        onChange={(e) => onUpdate(entry.id, { amount: Number(e.target.value) })}
+        value={Number.isFinite(Number(entry.amount)) ? Number(entry.amount) : 0}
+        onChange={(e) => onUpdate(entry.id, { amount: Number(e.target.value) || 0 })}
       />
-      <FLPText color="text.muted" fontSize="xs" style={{ width: "28px" }}>
+      <FLPText color="text.muted" fontSize="xs" style={{ width: "24px" }}>
         /mo
       </FLPText>
     </div>
+    <button
+      type="button"
+      disabled={deleting}
+      title={`Remove ${entry.name}`}
+      onClick={() => onDelete(entry.id)}
+      className={css({
+        display: "inline-flex",
+        alignItems: "center",
+        justifyContent: "center",
+        width: "32px",
+        height: "32px",
+        borderRadius: "md",
+        border: "none",
+        backgroundColor: "transparent",
+        color: "text.muted",
+        cursor: "pointer",
+        transition: "all 0.15s ease",
+        _hover: {
+          color: "destructive",
+          backgroundColor: "rgba(239, 68, 68, 0.1)",
+        },
+      })}
+    >
+      <FaTrash size={12} />
+    </button>
   </div>
 );
 
 const BudgetSetupWizard: FC<BudgetSetupWizardProps> = ({
   entries,
   onUpdateEntry,
+  onAddEntry,
+  onDeleteEntry,
   onComplete,
   onCancel,
   monthlyTakeHome,
@@ -123,6 +166,62 @@ const BudgetSetupWizard: FC<BudgetSetupWizardProps> = ({
   const [currentStep, setCurrentStep] = useState<WizardStep>("welcome");
   const [localUpdates, setLocalUpdates] = useState<Record<string, Partial<BudgetEntry>>>({});
   const [saving, setSaving] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  // Inline add item form state
+  const [isAdding, setIsAdding] = useState(false);
+  const [newName, setNewName] = useState("");
+  const [newAmount, setNewAmount] = useState("");
+  const [newIsEssential, setNewIsEssential] = useState(true);
+  const [adding, setAdding] = useState(false);
+
+  const resetAddForm = () => {
+    setIsAdding(false);
+    setNewName("");
+    setNewAmount("");
+    setNewIsEssential(true);
+  };
+
+  const handleAddItem = async () => {
+    if (!newName.trim()) return;
+    setAdding(true);
+    try {
+      const isIncome = currentStep === "income";
+      const amt = Number(newAmount) || 0;
+      await onAddEntry({
+        category: currentStep as BudgetCategory,
+        name: newName.trim(),
+        amount: amt,
+        frequency: "monthly",
+        isIncome,
+        isPrimaryIncome: false,
+        isEssential: isIncome ? true : newIsEssential,
+        notes: null,
+        isDefault: false,
+      });
+      resetAddForm();
+    } catch (err) {
+      console.error("Failed to add entry in wizard:", err);
+    } finally {
+      setAdding(false);
+    }
+  };
+
+  const handleDeleteItem = async (id: string) => {
+    setDeletingId(id);
+    try {
+      await onDeleteEntry(id);
+      setLocalUpdates((prev) => {
+        const next = { ...prev };
+        delete next[id];
+        return next;
+      });
+    } catch (err) {
+      console.error("Failed to delete entry in wizard:", err);
+    } finally {
+      setDeletingId(null);
+    }
+  };
 
   const stepIndex = STEPS.indexOf(currentStep);
   const isFirst = stepIndex === 0;
@@ -141,12 +240,19 @@ const BudgetSetupWizard: FC<BudgetSetupWizardProps> = ({
     entries.filter((e) => e.category === cat).map(getEffectiveEntry);
 
   const saveAllAndProceed = async () => {
+    resetAddForm();
     setSaving(true);
     try {
-      await Promise.all(
-        Object.entries(localUpdates).map(([id, update]) => onUpdateEntry(id, update)),
-      );
-      setLocalUpdates({});
+      const updateEntries = Object.entries(localUpdates);
+      if (updateEntries.length > 0) {
+        await Promise.all(updateEntries.map(([id, update]) => onUpdateEntry(id, update)));
+        setLocalUpdates({});
+      }
+      const next = STEPS[stepIndex + 1];
+      if (next) setCurrentStep(next);
+    } catch (err) {
+      console.error("Failed to save budget entries during wizard step:", err);
+      // Advance to next step even if saving had an error so wizard is not stuck
       const next = STEPS[stepIndex + 1];
       if (next) setCurrentStep(next);
     } finally {
@@ -155,6 +261,7 @@ const BudgetSetupWizard: FC<BudgetSetupWizardProps> = ({
   };
 
   const goBack = () => {
+    resetAddForm();
     const prev = STEPS[stepIndex - 1];
     if (prev) setCurrentStep(prev);
   };
@@ -167,11 +274,167 @@ const BudgetSetupWizard: FC<BudgetSetupWizardProps> = ({
     .reduce((s, e) => s + toMonthly(e), 0);
   const surplus = totalIncome - totalExpenses;
 
-  const fmt = (n: number) =>
-    `£${Math.abs(n).toLocaleString("en-GB", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
+  const fmt = (n: number | string | null | undefined) => {
+    const val = Number(n);
+    if (!Number.isFinite(val)) return "£0";
+    return `£${Math.abs(val).toLocaleString("en-GB", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
+  };
 
   // Progress bar
   const progressPct = (stepIndex / (STEPS.length - 1)) * 100;
+
+  const renderAddSection = () => {
+    if (isAdding) {
+      return (
+        <div
+          className={css({
+            display: "flex",
+            flexDirection: "column",
+            gap: "12px",
+            padding: "14px",
+            borderRadius: "md",
+            backgroundColor: "background",
+            border: "1px dashed",
+            borderColor: "primary",
+            marginTop: "10px",
+          })}
+        >
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <FLPText color="primary" fontSize="xs" fontWeight="semibold">
+              Add New {STEP_LABELS[currentStep]} Item
+            </FLPText>
+            <button
+              className={css({
+                background: "none",
+                border: "none",
+                color: "text.muted",
+                cursor: "pointer",
+                fontSize: "xs",
+                "&:hover": { color: "text.primary" },
+              })}
+              type="button"
+              onClick={resetAddForm}
+            >
+              Cancel
+            </button>
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 120px", gap: "10px" }}>
+            <input
+              className={inputStyle}
+              placeholder={
+                currentStep === "income"
+                  ? "e.g. Side Gig, Freelance"
+                  : currentStep === "housing"
+                    ? "e.g. Service Charge, Parking"
+                    : currentStep === "bills"
+                      ? "e.g. TV Licence, Streaming"
+                      : currentStep === "savings"
+                        ? "e.g. Holiday Fund, Sinking Fund"
+                        : "e.g. Gym, Subscriptions"
+              }
+              type="text"
+              value={newName}
+              onChange={(e) => setNewName(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") handleAddItem();
+                if (e.key === "Escape") resetAddForm();
+              }}
+            />
+            <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+              <span style={{ color: "var(--colors-text-muted)", fontSize: "14px" }}>£</span>
+              <input
+                className={inputStyle}
+                min="0"
+                placeholder="0"
+                step="1"
+                style={{ textAlign: "right" }}
+                type="number"
+                value={newAmount}
+                onChange={(e) => setNewAmount(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") handleAddItem();
+                  if (e.key === "Escape") resetAddForm();
+                }}
+              />
+              <FLPText color="text.muted" fontSize="xs" style={{ width: "24px" }}>
+                /mo
+              </FLPText>
+            </div>
+          </div>
+          {currentStep !== "income" && (
+            <label style={{ display: "flex", alignItems: "center", gap: "8px", cursor: "pointer" }}>
+              <input
+                checked={newIsEssential}
+                type="checkbox"
+                onChange={(e) => setNewIsEssential(e.target.checked)}
+              />
+              <FLPText color="text.muted" fontSize="xs">
+                Essential expense (uncheck if discretionary / nice-to-have)
+              </FLPText>
+            </label>
+          )}
+          <div
+            style={{ display: "flex", justifyContent: "flex-end", gap: "8px", marginTop: "4px" }}
+          >
+            <FLPButton
+              disabled={adding}
+              size="sm"
+              type="button"
+              variant="outline"
+              onClick={resetAddForm}
+            >
+              Cancel
+            </FLPButton>
+            <FLPButton
+              disabled={adding || !newName.trim()}
+              size="sm"
+              type="button"
+              variant="primary"
+              onClick={handleAddItem}
+            >
+              {adding ? "Adding..." : "Add Item"}
+            </FLPButton>
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <button
+        className={css({
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: "6px",
+          padding: "10px",
+          marginTop: "10px",
+          borderRadius: "md",
+          border: "1px dashed",
+          borderColor: "border",
+          backgroundColor: "transparent",
+          color: "text.muted",
+          fontSize: "xs",
+          fontWeight: "medium",
+          cursor: "pointer",
+          transition: "all 0.15s ease",
+          _hover: {
+            borderColor: "primary",
+            color: "primary",
+            backgroundColor: "rgba(99, 99, 241, 0.04)",
+          },
+        })}
+        type="button"
+        onClick={() => {
+          setIsAdding(true);
+          setNewName("");
+          setNewAmount("");
+          setNewIsEssential(currentStep !== "expenses");
+        }}
+      >
+        <FaPlus size={11} /> Add {STEP_LABELS[currentStep]} item
+      </button>
+    );
+  };
 
   return (
     <div
@@ -302,15 +565,29 @@ const BudgetSetupWizard: FC<BudgetSetupWizardProps> = ({
                   marginBottom: "8px",
                 })}
               >
-                <FLPText fontSize="xs" color="success.500">
+                <FLPText color="success.500" fontSize="xs">
                   💡 Your profile has a monthly take-home of <strong>{fmt(monthlyTakeHome)}</strong>
                   . Update the salary entry below to match.
                 </FLPText>
               </div>
             )}
             {getCategoryEntries("income").map((e) => (
-              <EntryRow key={e.id} entry={e} onUpdate={localUpdate} />
+              <EntryRow
+                key={e.id}
+                deleting={deletingId === e.id}
+                entry={e}
+                onDelete={handleDeleteItem}
+                onUpdate={localUpdate}
+              />
             ))}
+            {getCategoryEntries("income").length === 0 && (
+              <div style={{ padding: "16px 0", textAlign: "center" }}>
+                <FLPText color="text.muted" fontSize="xs">
+                  No income items yet. Add your salary or other earnings below.
+                </FLPText>
+              </div>
+            )}
+            {renderAddSection()}
           </div>
         )}
 
@@ -320,8 +597,53 @@ const BudgetSetupWizard: FC<BudgetSetupWizardProps> = ({
           currentStep === "savings") && (
           <div className={css({ display: "flex", flexDirection: "column", gap: "4px" })}>
             {getCategoryEntries(currentStep).map((e) => (
-              <EntryRow key={e.id} entry={e} onUpdate={localUpdate} />
+              <EntryRow
+                key={e.id}
+                deleting={deletingId === e.id}
+                entry={e}
+                onDelete={handleDeleteItem}
+                onUpdate={localUpdate}
+              />
             ))}
+            {getCategoryEntries(currentStep).length === 0 && (
+              <div style={{ padding: "16px 0", textAlign: "center" }}>
+                <FLPText color="text.muted" fontSize="xs">
+                  No items in this category. Click below to add one.
+                </FLPText>
+              </div>
+            )}
+            {renderAddSection()}
+            {currentStep === "savings" && (
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "10px",
+                  padding: "12px 16px",
+                  borderRadius: "8px",
+                  backgroundColor: "rgba(16, 185, 129, 0.08)",
+                  border: "1px solid rgba(16, 185, 129, 0.2)",
+                  marginTop: "16px",
+                }}
+              >
+                <FaPiggyBank style={{ color: "#10b981", fontSize: "18px", flexShrink: 0 }} />
+                <FLPText fontSize="xs">
+                  Tip: Want to track specific savings pots, APY rates, and compound growth? You can
+                  manage and forecast multi-account savings anytime in the{" "}
+                  <Link
+                    to="/app/savings"
+                    style={{
+                      color: "var(--colors-primary)",
+                      fontWeight: "bold",
+                      textDecoration: "underline",
+                    }}
+                  >
+                    Savings Hub
+                  </Link>
+                  .
+                </FLPText>
+              </div>
+            )}
           </div>
         )}
 
@@ -386,7 +708,7 @@ const BudgetSetupWizard: FC<BudgetSetupWizardProps> = ({
           backgroundColor: "background",
         })}
       >
-        <FLPButton variant="outline" onClick={isFirst ? onCancel : goBack}>
+        <FLPButton type="button" variant="outline" onClick={isFirst ? onCancel : goBack}>
           {isFirst ? (
             "Cancel"
           ) : (
@@ -400,6 +722,7 @@ const BudgetSetupWizard: FC<BudgetSetupWizardProps> = ({
             Step {stepIndex + 1} of {STEPS.length}
           </FLPText>
           <FLPButton
+            type="button"
             disabled={saving}
             variant="primary"
             onClick={isLast ? onComplete : saveAllAndProceed}

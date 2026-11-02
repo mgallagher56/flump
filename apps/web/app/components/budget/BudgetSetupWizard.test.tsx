@@ -1,0 +1,147 @@
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { describe, expect, it, vi } from "vitest";
+import type { BudgetEntry } from "~/types/budget";
+import BudgetSetupWizard from "./BudgetSetupWizard";
+
+const mockEntries: BudgetEntry[] = [
+  {
+    id: "entry-1",
+    userId: "user-1",
+    category: "income",
+    name: "Salary",
+    amount: 3000,
+    frequency: "monthly",
+    isIncome: true,
+    isPrimaryIncome: true,
+    isEssential: true,
+    notes: null,
+    isDefault: false,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    id: "entry-2",
+    userId: "user-1",
+    category: "housing",
+    name: "Rent",
+    amount: 1000,
+    frequency: "monthly",
+    isIncome: false,
+    isPrimaryIncome: false,
+    isEssential: true,
+    notes: null,
+    isDefault: false,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+];
+
+describe("BudgetSetupWizard", () => {
+  it("renders the welcome step and advances to income step", async () => {
+    const onUpdateEntry = vi.fn().mockResolvedValue(undefined);
+    const onAddEntry = vi.fn().mockResolvedValue(undefined);
+    const onDeleteEntry = vi.fn().mockResolvedValue(undefined);
+    const onComplete = vi.fn();
+    const onCancel = vi.fn();
+
+    render(
+      <BudgetSetupWizard
+        entries={mockEntries}
+        monthlyTakeHome={3000}
+        onAddEntry={onAddEntry}
+        onCancel={onCancel}
+        onComplete={onComplete}
+        onDeleteEntry={onDeleteEntry}
+        onUpdateEntry={onUpdateEntry}
+      />,
+    );
+
+    expect(screen.getByText("Welcome to Budget Setup")).toBeDefined();
+
+    // Click Next to go to Income step
+    fireEvent.click(screen.getByRole("button", { name: /next/i }));
+
+    expect(await screen.findByText("Salary")).toBeDefined();
+    expect(screen.getByText("Add Income item")).toBeDefined();
+  });
+
+  it("allows removing an item", async () => {
+    const onUpdateEntry = vi.fn().mockResolvedValue(undefined);
+    const onAddEntry = vi.fn().mockResolvedValue(undefined);
+    const onDeleteEntry = vi.fn().mockResolvedValue(undefined);
+    const onComplete = vi.fn();
+    const onCancel = vi.fn();
+
+    render(
+      <BudgetSetupWizard
+        entries={mockEntries}
+        monthlyTakeHome={3000}
+        onAddEntry={onAddEntry}
+        onCancel={onCancel}
+        onComplete={onComplete}
+        onDeleteEntry={onDeleteEntry}
+        onUpdateEntry={onUpdateEntry}
+      />,
+    );
+
+    // Advance to Income step
+    fireEvent.click(screen.getByRole("button", { name: /next/i }));
+    await screen.findByText("Salary");
+
+    // Click the delete button for Salary
+    const deleteButton = screen.getByTitle("Remove Salary");
+    fireEvent.click(deleteButton);
+
+    await waitFor(() => {
+      expect(onDeleteEntry).toHaveBeenCalledWith("entry-1");
+    });
+  });
+
+  it("allows adding a new item", async () => {
+    const onUpdateEntry = vi.fn().mockResolvedValue(undefined);
+    const onAddEntry = vi.fn().mockResolvedValue(undefined);
+    const onDeleteEntry = vi.fn().mockResolvedValue(undefined);
+    const onComplete = vi.fn();
+    const onCancel = vi.fn();
+
+    render(
+      <BudgetSetupWizard
+        entries={mockEntries}
+        monthlyTakeHome={3000}
+        onAddEntry={onAddEntry}
+        onCancel={onCancel}
+        onComplete={onComplete}
+        onDeleteEntry={onDeleteEntry}
+        onUpdateEntry={onUpdateEntry}
+      />,
+    );
+
+    // Advance to Income step
+    fireEvent.click(screen.getByRole("button", { name: /next/i }));
+    await screen.findByText("Salary");
+
+    // Click Add item button
+    fireEvent.click(screen.getByText("Add Income item"));
+
+    // Fill in new item form
+    const nameInput = screen.getByPlaceholderText("e.g. Side Gig, Freelance");
+    fireEvent.change(nameInput, { target: { value: "Freelance" } });
+
+    const amountInput = screen.getByPlaceholderText("0");
+    fireEvent.change(amountInput, { target: { value: "500" } });
+
+    // Submit
+    fireEvent.click(screen.getByRole("button", { name: /add item/i }));
+
+    await waitFor(() => {
+      expect(onAddEntry).toHaveBeenCalledWith(
+        expect.objectContaining({
+          category: "income",
+          name: "Freelance",
+          amount: 500,
+          isIncome: true,
+        }),
+      );
+    });
+  });
+});

@@ -12,8 +12,51 @@ export class UserProfileController {
     private readonly userProfileRepository: Repository<UserProfile>,
   ) {}
 
+  private formatProfile(profile: UserProfile): any {
+    return {
+      ...profile,
+      annualSalary:
+        profile.annualSalary !== null && profile.annualSalary !== undefined
+          ? Number(profile.annualSalary)
+          : null,
+      monthlyTakeHome:
+        profile.monthlyTakeHome !== null && profile.monthlyTakeHome !== undefined
+          ? Number(profile.monthlyTakeHome)
+          : null,
+      secondIncomeMonthly:
+        profile.secondIncomeMonthly !== null && profile.secondIncomeMonthly !== undefined
+          ? Number(profile.secondIncomeMonthly)
+          : null,
+      rentalIncomeMonthly:
+        profile.rentalIncomeMonthly !== null && profile.rentalIncomeMonthly !== undefined
+          ? Number(profile.rentalIncomeMonthly)
+          : null,
+      propertyOwnershipShare:
+        profile.propertyOwnershipShare !== null && profile.propertyOwnershipShare !== undefined
+          ? Number(profile.propertyOwnershipShare)
+          : 100.0,
+      pensionPercent:
+        profile.pensionPercent !== null && profile.pensionPercent !== undefined
+          ? Number(profile.pensionPercent)
+          : 5.0,
+      pensionEmployerPercent:
+        profile.pensionEmployerPercent !== null && profile.pensionEmployerPercent !== undefined
+          ? Number(profile.pensionEmployerPercent)
+          : 3.0,
+      monthlySavingsTarget:
+        profile.monthlySavingsTarget !== null && profile.monthlySavingsTarget !== undefined
+          ? Number(profile.monthlySavingsTarget)
+          : null,
+      savingsDefaultInterestRate:
+        profile.savingsDefaultInterestRate !== null &&
+        profile.savingsDefaultInterestRate !== undefined
+          ? Number(profile.savingsDefaultInterestRate)
+          : 5.0,
+    };
+  }
+
   @Get("user-profile")
-  async getUserProfile(@Req() req: any): Promise<UserProfile> {
+  async getUserProfile(@Req() req: any): Promise<any> {
     const userId = req.user.id;
     let profile = await this.userProfileRepository.findOne({ where: { userId } });
 
@@ -34,13 +77,17 @@ export class UserProfileController {
           hasMortgage: false,
           propertyOwnershipShare: 100.0,
           pensionPercent: 5.0,
+          pensionEmployerPercent: 3.0,
           isSalarySacrifice: true,
+          monthlySavingsTarget: null,
+          savingsAllocationMode: "per_account",
+          savingsDefaultInterestRate: 5.0,
           setupChecklistCompletedSteps: [],
         }),
       );
     }
 
-    return profile;
+    return this.formatProfile(profile);
   }
 
   @Patch("user-profile")
@@ -61,14 +108,39 @@ export class UserProfileController {
       hasMortgage?: boolean;
       propertyOwnershipShare?: number;
       pensionPercent?: number;
+      pensionEmployerPercent?: number;
       isSalarySacrifice?: boolean;
+      monthlySavingsTarget?: number | null;
+      savingsAllocationMode?: "total" | "per_account";
+      savingsDefaultInterestRate?: number;
     },
-  ): Promise<UserProfile> {
+  ): Promise<any> {
     const userId = req.user.id;
-    const profile = await this.userProfileRepository.findOne({ where: { userId } });
+    let profile = await this.userProfileRepository.findOne({ where: { userId } });
 
     if (!profile) {
-      throw new NotFoundException("User profile not found");
+      profile = this.userProfileRepository.create({
+        userId,
+        displayName: null,
+        currency: "GBP",
+        country: "GB",
+        employmentType: null,
+        annualSalary: null,
+        monthlyTakeHome: null,
+        hasSecondIncome: false,
+        secondIncomeMonthly: null,
+        hasRentalIncome: false,
+        rentalIncomeMonthly: null,
+        hasMortgage: false,
+        propertyOwnershipShare: 100.0,
+        pensionPercent: 5.0,
+        pensionEmployerPercent: 3.0,
+        isSalarySacrifice: true,
+        monthlySavingsTarget: null,
+        savingsAllocationMode: "per_account",
+        savingsDefaultInterestRate: 5.0,
+        setupChecklistCompletedSteps: [],
+      });
     }
 
     if (body.displayName !== undefined) profile.displayName = body.displayName ?? null;
@@ -87,21 +159,51 @@ export class UserProfileController {
     if (body.propertyOwnershipShare !== undefined)
       profile.propertyOwnershipShare = body.propertyOwnershipShare;
     if (body.pensionPercent !== undefined) profile.pensionPercent = body.pensionPercent;
+    if (body.pensionEmployerPercent !== undefined)
+      profile.pensionEmployerPercent = body.pensionEmployerPercent;
     if (body.isSalarySacrifice !== undefined) profile.isSalarySacrifice = body.isSalarySacrifice;
+    if (body.monthlySavingsTarget !== undefined)
+      profile.monthlySavingsTarget = body.monthlySavingsTarget ?? null;
+    if (body.savingsAllocationMode !== undefined)
+      profile.savingsAllocationMode = body.savingsAllocationMode;
+    if (body.savingsDefaultInterestRate !== undefined)
+      profile.savingsDefaultInterestRate = body.savingsDefaultInterestRate;
 
-    return this.userProfileRepository.save(profile);
+    const saved = await this.userProfileRepository.save(profile);
+    return this.formatProfile(saved);
   }
 
   @Patch("user-profile/checklist")
   async updateChecklist(
     @Req() req: any,
     @Body() body: { step: string; completed: boolean },
-  ): Promise<UserProfile> {
+  ): Promise<any> {
     const userId = req.user.id;
-    const profile = await this.userProfileRepository.findOne({ where: { userId } });
+    let profile = await this.userProfileRepository.findOne({ where: { userId } });
 
     if (!profile) {
-      throw new NotFoundException("User profile not found");
+      profile = this.userProfileRepository.create({
+        userId,
+        displayName: null,
+        currency: "GBP",
+        country: "GB",
+        employmentType: null,
+        annualSalary: null,
+        monthlyTakeHome: null,
+        hasSecondIncome: false,
+        secondIncomeMonthly: null,
+        hasRentalIncome: false,
+        rentalIncomeMonthly: null,
+        hasMortgage: false,
+        propertyOwnershipShare: 100.0,
+        pensionPercent: 5.0,
+        pensionEmployerPercent: 3.0,
+        isSalarySacrifice: true,
+        monthlySavingsTarget: null,
+        savingsAllocationMode: "per_account",
+        savingsDefaultInterestRate: 5.0,
+        setupChecklistCompletedSteps: [],
+      });
     }
 
     const steps = Array.isArray(profile.setupChecklistCompletedSteps)
@@ -120,6 +222,7 @@ export class UserProfileController {
     }
 
     profile.setupChecklistCompletedSteps = steps;
-    return this.userProfileRepository.save(profile);
+    const saved = await this.userProfileRepository.save(profile);
+    return this.formatProfile(saved);
   }
 }

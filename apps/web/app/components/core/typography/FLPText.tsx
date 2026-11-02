@@ -1,13 +1,16 @@
 import { css } from "@repo/ui/styled-system/css";
 import type { FC, HTMLAttributes } from "react";
+import { useResponsive } from "~/context/ResponsiveContext";
 
-interface FLPTextProps extends HTMLAttributes<HTMLParagraphElement> {
+export interface FLPTextProps extends HTMLAttributes<HTMLParagraphElement> {
   fontSize?: string;
   fontWeight?: string;
   lineHeight?: string;
   letterSpacing?: string;
   color?: string;
   textTransform?: "uppercase" | "lowercase" | "capitalize" | "none";
+  isMobile?: boolean;
+  variant?: "desktop" | "mobile";
 }
 
 const FLPText: FC<FLPTextProps> = ({
@@ -19,11 +22,16 @@ const FLPText: FC<FLPTextProps> = ({
   textTransform,
   style,
   className,
+  isMobile: propIsMobile,
+  variant = "desktop",
   children,
   ...props
 }) => {
+  const { isMobile: contextIsMobile } = useResponsive();
+  const isMobileVariant = propIsMobile ?? (variant === "mobile" ? true : contextIsMobile);
+
   const textStyle = css({
-    fontSize,
+    fontSize: isMobileVariant && fontSize === "lg" ? "md" : fontSize,
     fontWeight,
     lineHeight,
     letterSpacing,

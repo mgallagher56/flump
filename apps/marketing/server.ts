@@ -78,7 +78,7 @@ async function createServer() {
     );
   }
 
-  app.use("*", async (req, res) => {
+  app.use(async (req, res) => {
     const url = req.originalUrl;
 
     try {

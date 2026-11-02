@@ -1,26 +1,42 @@
 import * as Tabs from "@radix-ui/react-tabs";
 import { css } from "@repo/ui/styled-system/css";
 import type { FC } from "react";
+import { useResponsive } from "~/context/ResponsiveContext";
 import type { TabData } from "./types";
 
-interface FLPTabsProps {
+export interface FLPTabsProps {
   data: TabData[];
   orientation?: "horizontal" | "vertical";
+  isMobile?: boolean;
+  variant?: "default" | "mobile" | "segmented";
 }
 
-const FLPTabs: FC<FLPTabsProps> = ({ data, orientation = "horizontal" }) => {
+const FLPTabs: FC<FLPTabsProps> = ({
+  data,
+  orientation = "horizontal",
+  isMobile: propIsMobile,
+  variant = "default",
+}) => {
+  const { isMobile: contextIsMobile } = useResponsive();
+  const isMobileVariant =
+    propIsMobile ?? (variant === "mobile" || variant === "segmented" ? true : contextIsMobile);
+
   const listStyle = css({
     display: "flex",
     borderBottom: orientation === "horizontal" ? "1px solid" : "none",
     borderRight: orientation === "vertical" ? "1px solid" : "none",
     borderColor: "border",
-    gap: "16px",
+    gap: isMobileVariant ? "8px" : "16px",
     marginBottom: orientation === "horizontal" ? "16px" : "0",
     flexDirection: orientation === "vertical" ? "column" : "row",
+    overflowX: isMobileVariant && orientation === "horizontal" ? "auto" : undefined,
+    scrollbarWidth: isMobileVariant ? "none" : undefined,
   });
 
   const triggerStyle = css({
-    padding: "8px 16px",
+    padding: isMobileVariant ? "10px 16px" : "8px 16px",
+    minHeight: isMobileVariant ? "44px" : undefined,
+    whiteSpace: isMobileVariant ? "nowrap" : undefined,
     fontSize: "sm",
     fontWeight: "medium",
     color: "text.muted",
@@ -44,7 +60,11 @@ const FLPTabs: FC<FLPTabsProps> = ({ data, orientation = "horizontal" }) => {
   });
 
   return (
-    <Tabs.Root defaultValue={data[0].value} orientation={orientation}>
+    <Tabs.Root
+      data-variant={isMobileVariant ? "mobile" : "desktop"}
+      defaultValue={data[0].value}
+      orientation={orientation}
+    >
       <Tabs.List className={listStyle}>
         {data.map((item) => (
           <Tabs.Trigger

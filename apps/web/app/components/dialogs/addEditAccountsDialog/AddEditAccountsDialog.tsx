@@ -11,8 +11,8 @@ import FLPBox from "~/components/core/structure/FLPBox";
 import { type AccountType, AccountTypeEnum } from "~/containers/accounts/utils";
 import type { loader } from "~/routes/app.accounts._index";
 
-const { CURRENT, SAVING, MORTGAGE, CREDIT_CARD, LOAN, OWED, INVESTMENT } = AccountTypeEnum;
-const accountTypeArray = [CURRENT, SAVING, INVESTMENT, CREDIT_CARD, MORTGAGE, LOAN, OWED];
+const { CURRENT, SAVING, MORTGAGE, CREDIT_CARD, LOAN, OWED, INVESTMENT, PENSION } = AccountTypeEnum;
+const accountTypeArray = [CURRENT, SAVING, INVESTMENT, PENSION, CREDIT_CARD, MORTGAGE, LOAN, OWED];
 const accountTypes = {
   items: accountTypeArray.map((type) => ({ id: type, name: type })),
 };

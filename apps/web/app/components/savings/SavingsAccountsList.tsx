@@ -1,0 +1,773 @@
+import { css } from "@repo/ui/styled-system/css";
+import { type FC, useMemo, useState } from "react";
+import {
+  FaChartLine,
+  FaCheck,
+  FaEdit,
+  FaExternalLinkAlt,
+  FaPiggyBank,
+  FaPlus,
+  FaTimes,
+  FaTrash,
+} from "react-icons/fa";
+import { useFetcher, useNavigate } from "react-router";
+import FLPButton from "~/components/core/buttons/FLPButton";
+import FLPCard from "~/components/core/cards/FLPCard";
+import FLPHeading from "~/components/core/typography/FLPHeading";
+import FLPText from "~/components/core/typography/FLPText";
+import type { Account } from "~/containers/accounts/types";
+import { useResponsive } from "~/context/ResponsiveContext";
+import { useFormatCurrency } from "~/hooks/useFormatCurrency";
+import AddSavingsAccountDialog from "./AddSavingsAccountDialog";
+
+export interface SavingsAccountsListProps {
+  accounts: Account[];
+  onOpenAddModal: () => void;
+  isMobile?: boolean;
+  variant?: "desktop" | "mobile";
+}
+
+export function calculateOneYearCompoundInterest(
+  balance: number,
+  rate: number,
+  monthly: number,
+): number {
+  if (rate <= 0) return 0;
+  const monthlyRate = rate / 100 / 12;
+  let b = balance;
+  for (let m = 0; m < 12; m++) {
+    b = b * (1 + monthlyRate) + monthly;
+  }
+  return Math.max(0, b - balance - monthly * 12);
+}
+
+const cardStyle = css({
+  padding: "24px",
+  borderRadius: "xl",
+  border: "1px solid",
+  borderColor: "border",
+  backgroundColor: "surface",
+  display: "flex",
+  flexDirection: "column",
+  gap: "20px",
+});
+
+const headerRowStyle = css({
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "center",
+  flexWrap: "wrap",
+  gap: "12px",
+});
+
+const tableContainerStyle = css({
+  overflowX: "auto",
+  width: "100%",
+});
+
+const tableStyle = css({
+  width: "100%",
+  borderCollapse: "collapse",
+  textAlign: "left",
+  fontSize: "sm",
+});
+
+const thStyle = css({
+  padding: "12px 16px",
+  fontWeight: "semibold",
+  color: "text.muted",
+  borderBottom: "1px solid",
+  borderColor: "border",
+  whiteSpace: "nowrap",
+});
+
+const trStyle = css({
+  borderBottom: "1px solid",
+  borderColor: "border",
+  transition: "background-color 0.15s ease",
+  _hover: {
+    backgroundColor: "rgba(99, 99, 241, 0.03)",
+  },
+});
+
+const tdStyle = css({
+  padding: "16px",
+  verticalAlign: "middle",
+  whiteSpace: "nowrap",
+});
+
+const badgeStyle = (type: string) =>
+  css({
+    display: "inline-flex",
+    alignItems: "center",
+    gap: "4px",
+    padding: "3px 8px",
+    borderRadius: "full",
+    fontSize: "xs",
+    fontWeight: "medium",
+    backgroundColor:
+      type === "Investment" ? "rgba(139, 92, 246, 0.12)" : "rgba(16, 185, 129, 0.12)",
+    color: type === "Investment" ? "#8b5cf6" : "#10b981",
+  });
+
+const actionBtnStyle = css({
+  background: "none",
+  border: "none",
+  color: "text.muted",
+  cursor: "pointer",
+  padding: "6px",
+  borderRadius: "md",
+  transition: "all 0.15s ease",
+  _hover: {
+    color: "primary",
+    backgroundColor: "rgba(99, 99, 241, 0.08)",
+  },
+});
+
+const deleteBtnStyle = css({
+  background: "none",
+  border: "none",
+  color: "text.muted",
+  cursor: "pointer",
+  padding: "6px",
+  borderRadius: "md",
+  transition: "all 0.15s ease",
+  _hover: {
+    color: "destructive",
+    backgroundColor: "rgba(239, 68, 68, 0.08)",
+  },
+});
+
+const inlineInputStyle = css({
+  width: "90px",
+  padding: "4px 8px",
+  fontSize: "sm",
+  textAlign: "right",
+  borderRadius: "md",
+  border: "1px solid",
+  borderColor: "primary",
+  backgroundColor: "surface",
+  color: "text.primary",
+  outline: "none",
+});
+
+const editableCellStyle = css({
+  cursor: "pointer",
+  borderRadius: "sm",
+  padding: "2px 6px",
+  margin: "-2px -6px",
+  transition: "background-color 0.15s ease",
+  _hover: {
+    backgroundColor: "rgba(99, 99, 241, 0.08)",
+  },
+});
+
+const tfootRowStyle = css({
+  borderTop: "2px solid",
+  borderColor: "border",
+  backgroundColor: "rgba(99, 99, 241, 0.03)",
+  fontWeight: "semibold",
+});
+
+export const SavingsAccountsList: FC<SavingsAccountsListProps> = ({
+  accounts,
+  onOpenAddModal,
+  isMobile: propIsMobile,
+  variant = "desktop",
+}) => {
+  const { formatCurrency } = useFormatCurrency();
+  const { isMobile: contextIsMobile } = useResponsive();
+  const isMobileVariant = propIsMobile ?? (variant === "mobile" ? true : contextIsMobile);
+  const fetcher = useFetcher();
+  const navigate = useNavigate();
+  const [editingAccount, setEditingAccount] = useState<Account | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [inlineEdit, setInlineEdit] = useState<{
+    accountId: string;
+    field: "balance" | "interestRate" | "monthlyContribution";
+    value: string;
+  } | null>(null);
+
+  const handleConfirmDelete = (accountId: string) => {
+    fetcher.submit(
+      {
+        intent: "deleteAccount",
+        accountId,
+      },
+      { method: "POST", action: "/app/savings" },
+    );
+    setConfirmDeleteId(null);
+  };
+
+  const commitInlineEdit = () => {
+    if (!inlineEdit) return;
+    const numericVal = Number(inlineEdit.value);
+    const safeVal = Number.isFinite(numericVal) && numericVal >= 0 ? numericVal : 0;
+
+    fetcher.submit(
+      {
+        intent: "updateSavingsAccount",
+        accountId: inlineEdit.accountId,
+        [inlineEdit.field]: String(safeVal),
+      },
+      { method: "POST", action: "/app/savings" },
+    );
+    setInlineEdit(null);
+  };
+
+  const summaryTotals = useMemo(() => {
+    let totalBal = 0;
+    let weightedSum = 0;
+    let totalMonthly = 0;
+    let totalAnnualInt = 0;
+
+    accounts.forEach((acc) => {
+      const bal = Number(acc.balance) || 0;
+      const rate = Number(acc.interestRate) || 0;
+      const monthly = Number(acc.monthlyContribution) || 0;
+      totalBal += bal;
+      weightedSum += bal * rate;
+      totalMonthly += monthly;
+      totalAnnualInt += calculateOneYearCompoundInterest(bal, rate, monthly);
+    });
+
+    const weightedApy =
+      totalBal > 0
+        ? weightedSum / totalBal
+        : accounts.length > 0
+          ? accounts.reduce((s, a) => s + (Number(a.interestRate) || 0), 0) / accounts.length
+          : 0;
+
+    return {
+      totalBal,
+      weightedApy,
+      totalMonthly,
+      totalAnnualInt,
+    };
+  }, [accounts]);
+
+  return (
+    <>
+      <FLPCard className={cardStyle}>
+        <div className={headerRowStyle}>
+          <div>
+            <FLPHeading as="h4" size="md">
+              Savings & Investment Accounts
+            </FLPHeading>
+            <FLPText color="text.muted" fontSize="sm">
+              Manage your accounts, or click any balance, APY, or monthly savings value to
+              quick-edit inline.
+            </FLPText>
+          </div>
+          <FLPButton size="sm" variant="primary" onClick={onOpenAddModal}>
+            <FaPlus style={{ marginRight: "6px" }} /> Add Account
+          </FLPButton>
+        </div>
+
+        {accounts.length === 0 ? (
+          <div
+            style={{
+              padding: "48px 20px",
+              textAlign: "center",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: "12px",
+            }}
+          >
+            <FaPiggyBank size={40} style={{ color: "var(--colors-text-muted)", opacity: 0.5 }} />
+            <FLPHeading as="h5" size="sm">
+              No savings accounts found
+            </FLPHeading>
+            <FLPText color="text.muted" fontSize="sm" style={{ maxWidth: "400px" }}>
+              Add your savings accounts or investments to track their balances, set monthly deposit
+              goals, and forecast your compound growth.
+            </FLPText>
+            <FLPButton
+              size="sm"
+              style={{ marginTop: "8px" }}
+              variant="primary"
+              onClick={onOpenAddModal}
+            >
+              <FaPlus style={{ marginRight: "6px" }} /> Add Your First Savings Account
+            </FLPButton>
+          </div>
+        ) : isMobileVariant ? (
+          <div
+            data-testid="savings-accounts-mobile-list"
+            style={{ display: "flex", flexDirection: "column", gap: "12px" }}
+          >
+            {accounts.map((acc) => {
+              const bal = Number(acc.balance) || 0;
+              const rate = Number(acc.interestRate) || 0;
+              const monthly = Number(acc.monthlyContribution) || 0;
+              const annualInterest = calculateOneYearCompoundInterest(bal, rate, monthly);
+
+              return (
+                <div
+                  key={acc.id}
+                  className={css({
+                    padding: "14px",
+                    borderRadius: "lg",
+                    border: "1px solid",
+                    borderColor: "border",
+                    backgroundColor: "background",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "12px",
+                  })}
+                >
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "flex-start",
+                    }}
+                  >
+                    <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                      <button
+                        style={{
+                          background: "none",
+                          border: "none",
+                          padding: 0,
+                          cursor: "pointer",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "6px",
+                          color: "var(--colors-text-primary)",
+                          textAlign: "left",
+                        }}
+                        type="button"
+                        onClick={() => acc.id && navigate(`/app/accounts/${acc.id}`)}
+                      >
+                        <FLPText fontSize="sm" fontWeight="bold">
+                          {acc.name}
+                        </FLPText>
+                        <FaExternalLinkAlt
+                          size={11}
+                          style={{ color: "var(--colors-text-muted)" }}
+                        />
+                      </button>
+                      <div>
+                        <span className={badgeStyle(acc.type || "Saving")}>
+                          {acc.type || "Saving"}
+                        </span>
+                      </div>
+                    </div>
+                    <FLPHeading
+                      as="h5"
+                      isMobile
+                      size="md"
+                      style={{ color: "var(--colors-text-primary)" }}
+                    >
+                      {formatCurrency(bal)}
+                    </FLPHeading>
+                  </div>
+
+                  <div
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "repeat(3, 1fr)",
+                      gap: "8px",
+                      padding: "10px",
+                      borderRadius: "8px",
+                      backgroundColor: "var(--colors-surface)",
+                    }}
+                  >
+                    <div>
+                      <FLPText color="text.muted" fontSize="xs">
+                        APY
+                      </FLPText>
+                      <FLPText fontSize="xs" fontWeight="semibold">
+                        {rate.toFixed(2)}%
+                      </FLPText>
+                    </div>
+                    <div>
+                      <FLPText color="text.muted" fontSize="xs">
+                        Monthly
+                      </FLPText>
+                      <FLPText fontSize="xs" fontWeight="semibold" style={{ color: "#6363f1" }}>
+                        +{formatCurrency(monthly)}
+                      </FLPText>
+                    </div>
+                    <div>
+                      <FLPText color="text.muted" fontSize="xs">
+                        Est. Interest
+                      </FLPText>
+                      <FLPText fontSize="xs" fontWeight="semibold" style={{ color: "#10b981" }}>
+                        ~{formatCurrency(Math.round(annualInterest))}/yr
+                      </FLPText>
+                    </div>
+                  </div>
+
+                  <div style={{ display: "flex", justifyContent: "flex-end", gap: "8px" }}>
+                    <button
+                      aria-label={`Edit ${acc.name}`}
+                      className={actionBtnStyle}
+                      type="button"
+                      onClick={() => setEditingAccount(acc)}
+                    >
+                      <FaEdit size={14} />
+                    </button>
+                    <button
+                      aria-label={`Delete ${acc.name}`}
+                      className={deleteBtnStyle}
+                      type="button"
+                      onClick={() => acc.id && handleConfirmDelete(acc.id)}
+                    >
+                      <FaTrash size={13} />
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <div className={tableContainerStyle}>
+            <table className={tableStyle}>
+              <thead>
+                <tr>
+                  <th className={thStyle}>Account</th>
+                  <th className={thStyle}>Type</th>
+                  <th className={thStyle} style={{ textAlign: "right" }}>
+                    Current Balance
+                  </th>
+                  <th className={thStyle} style={{ textAlign: "right" }}>
+                    Interest Rate (APY)
+                  </th>
+                  <th className={thStyle} style={{ textAlign: "right" }}>
+                    Monthly Savings
+                  </th>
+                  <th className={thStyle} style={{ textAlign: "right" }}>
+                    Est. Annual Interest
+                  </th>
+                  <th className={thStyle} style={{ textAlign: "center", width: "110px" }}>
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {accounts.map((acc) => {
+                  const bal = Number(acc.balance) || 0;
+                  const rate = Number(acc.interestRate) || 0;
+                  const monthly = Number(acc.monthlyContribution) || 0;
+                  const annualInterest = calculateOneYearCompoundInterest(bal, rate, monthly);
+
+                  const isEditingBal =
+                    inlineEdit?.accountId === acc.id && inlineEdit?.field === "balance";
+                  const isEditingRate =
+                    inlineEdit?.accountId === acc.id && inlineEdit?.field === "interestRate";
+                  const isEditingMonthly =
+                    inlineEdit?.accountId === acc.id && inlineEdit?.field === "monthlyContribution";
+
+                  return (
+                    <tr key={acc.id} className={trStyle}>
+                      <td className={tdStyle}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                          {acc.type === "Investment" ? (
+                            <FaChartLine style={{ color: "#8b5cf6", fontSize: "16px" }} />
+                          ) : (
+                            <FaPiggyBank style={{ color: "#10b981", fontSize: "16px" }} />
+                          )}
+                          <button
+                            style={{
+                              background: "none",
+                              border: "none",
+                              padding: 0,
+                              cursor: "pointer",
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: "6px",
+                              color: "var(--colors-text-primary)",
+                            }}
+                            title="View monthly balance history"
+                            type="button"
+                            onClick={() => acc.id && navigate(`/app/accounts/${acc.id}`)}
+                          >
+                            <FLPText fontSize="sm" fontWeight="semibold">
+                              {acc.name}
+                            </FLPText>
+                            <FaExternalLinkAlt
+                              size={10}
+                              style={{ color: "var(--colors-text-muted)", opacity: 0.6 }}
+                            />
+                          </button>
+                        </div>
+                      </td>
+                      <td className={tdStyle}>
+                        <span className={badgeStyle(acc.type || "Saving")}>
+                          {acc.type === "Investment" ? "Investment" : "Saving"}
+                        </span>
+                      </td>
+                      <td className={tdStyle} style={{ textAlign: "right", fontWeight: "medium" }}>
+                        {isEditingBal ? (
+                          <input
+                            ref={(el) => el?.focus()}
+                            className={inlineInputStyle}
+                            min="0"
+                            step="any"
+                            type="number"
+                            value={inlineEdit.value}
+                            onBlur={commitInlineEdit}
+                            onChange={(e) =>
+                              setInlineEdit({ ...inlineEdit, value: e.target.value })
+                            }
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") commitInlineEdit();
+                              if (e.key === "Escape") setInlineEdit(null);
+                            }}
+                          />
+                        ) : (
+                          <span
+                            className={editableCellStyle}
+                            title="Click to quick-edit balance"
+                            onClick={() =>
+                              acc.id &&
+                              setInlineEdit({
+                                accountId: acc.id,
+                                field: "balance",
+                                value: String(bal),
+                              })
+                            }
+                          >
+                            {formatCurrency(bal)}
+                          </span>
+                        )}
+                      </td>
+                      <td className={tdStyle} style={{ textAlign: "right" }}>
+                        {isEditingRate ? (
+                          <input
+                            ref={(el) => el?.focus()}
+                            className={inlineInputStyle}
+                            max="100"
+                            min="0"
+                            step="0.05"
+                            type="number"
+                            value={inlineEdit.value}
+                            onBlur={commitInlineEdit}
+                            onChange={(e) =>
+                              setInlineEdit({ ...inlineEdit, value: e.target.value })
+                            }
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") commitInlineEdit();
+                              if (e.key === "Escape") setInlineEdit(null);
+                            }}
+                          />
+                        ) : (
+                          <span
+                            className={editableCellStyle}
+                            title="Click to quick-edit APY %"
+                            onClick={() =>
+                              acc.id &&
+                              setInlineEdit({
+                                accountId: acc.id,
+                                field: "interestRate",
+                                value: String(rate),
+                              })
+                            }
+                          >
+                            {rate > 0 ? (
+                              <span
+                                style={{
+                                  color: "var(--colors-text-primary)",
+                                  fontWeight: "medium",
+                                }}
+                              >
+                                {rate.toFixed(2)}%
+                              </span>
+                            ) : (
+                              <span style={{ color: "var(--colors-text-muted)" }}>0.00%</span>
+                            )}
+                          </span>
+                        )}
+                      </td>
+                      <td className={tdStyle} style={{ textAlign: "right" }}>
+                        {isEditingMonthly ? (
+                          <input
+                            ref={(el) => el?.focus()}
+                            className={inlineInputStyle}
+                            min="0"
+                            step="10"
+                            type="number"
+                            value={inlineEdit.value}
+                            onBlur={commitInlineEdit}
+                            onChange={(e) =>
+                              setInlineEdit({ ...inlineEdit, value: e.target.value })
+                            }
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") commitInlineEdit();
+                              if (e.key === "Escape") setInlineEdit(null);
+                            }}
+                          />
+                        ) : (
+                          <span
+                            className={editableCellStyle}
+                            title="Click to quick-edit monthly contribution"
+                            onClick={() =>
+                              acc.id &&
+                              setInlineEdit({
+                                accountId: acc.id,
+                                field: "monthlyContribution",
+                                value: String(monthly),
+                              })
+                            }
+                          >
+                            {monthly > 0 ? (
+                              <span
+                                style={{ color: "var(--colors-primary)", fontWeight: "medium" }}
+                              >
+                                +{formatCurrency(monthly)}
+                                <span
+                                  style={{ fontSize: "11px", color: "var(--colors-text-muted)" }}
+                                >
+                                  /mo
+                                </span>
+                              </span>
+                            ) : (
+                              <span style={{ color: "var(--colors-text-muted)" }}>
+                                {formatCurrency(0)}/mo
+                              </span>
+                            )}
+                          </span>
+                        )}
+                      </td>
+                      <td
+                        className={tdStyle}
+                        style={{ textAlign: "right", color: "var(--colors-text-muted)" }}
+                      >
+                        ~{formatCurrency(Math.round(annualInterest))}/yr
+                      </td>
+                      <td className={tdStyle}>
+                        {confirmDeleteId === acc.id ? (
+                          <div
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              gap: "4px",
+                            }}
+                          >
+                            <button
+                              aria-label={`Confirm delete ${acc.name}`}
+                              style={{
+                                background: "#ef4444",
+                                color: "#fff",
+                                border: "none",
+                                borderRadius: "4px",
+                                padding: "4px 6px",
+                                fontSize: "11px",
+                                cursor: "pointer",
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: "3px",
+                              }}
+                              title="Confirm Delete"
+                              type="button"
+                              onClick={() => acc.id && handleConfirmDelete(acc.id)}
+                            >
+                              <FaCheck size={10} /> Delete
+                            </button>
+                            <button
+                              aria-label="Cancel delete"
+                              className={actionBtnStyle}
+                              title="Cancel"
+                              type="button"
+                              onClick={() => setConfirmDeleteId(null)}
+                            >
+                              <FaTimes size={12} />
+                            </button>
+                          </div>
+                        ) : (
+                          <div
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              gap: "6px",
+                            }}
+                          >
+                            <button
+                              aria-label={`Edit ${acc.name}`}
+                              className={actionBtnStyle}
+                              title="Edit Account"
+                              type="button"
+                              onClick={() => setEditingAccount(acc)}
+                            >
+                              <FaEdit size={14} />
+                            </button>
+                            <button
+                              aria-label={`Delete ${acc.name}`}
+                              className={deleteBtnStyle}
+                              title="Delete Account"
+                              type="button"
+                              onClick={() => setConfirmDeleteId(acc.id || null)}
+                            >
+                              <FaTrash size={13} />
+                            </button>
+                          </div>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+              {accounts.length > 1 && (
+                <tfoot>
+                  <tr className={tfootRowStyle}>
+                    <td className={tdStyle} colSpan={2}>
+                      Total ({accounts.length} accounts)
+                    </td>
+                    <td className={tdStyle} style={{ textAlign: "right" }}>
+                      {formatCurrency(summaryTotals.totalBal)}
+                    </td>
+                    <td className={tdStyle} style={{ textAlign: "right" }}>
+                      {summaryTotals.weightedApy.toFixed(2)}%{" "}
+                      <span
+                        style={{
+                          fontSize: "11px",
+                          color: "var(--colors-text-muted)",
+                          fontWeight: "normal",
+                        }}
+                      >
+                        avg
+                      </span>
+                    </td>
+                    <td
+                      className={tdStyle}
+                      style={{ textAlign: "right", color: "var(--colors-primary)" }}
+                    >
+                      +{formatCurrency(summaryTotals.totalMonthly)}
+                      <span
+                        style={{
+                          fontSize: "11px",
+                          color: "var(--colors-text-muted)",
+                          fontWeight: "normal",
+                        }}
+                      >
+                        /mo
+                      </span>
+                    </td>
+                    <td className={tdStyle} style={{ textAlign: "right", color: "#10b981" }}>
+                      ~{formatCurrency(Math.round(summaryTotals.totalAnnualInt))}/yr
+                    </td>
+                    <td className={tdStyle} />
+                  </tr>
+                </tfoot>
+              )}
+            </table>
+          </div>
+        )}
+      </FLPCard>
+
+      {editingAccount && (
+        <AddSavingsAccountDialog
+          accountToEdit={editingAccount}
+          isOpen={true}
+          onClose={() => setEditingAccount(null)}
+        />
+      )}
+    </>
+  );
+};
+
+export default SavingsAccountsList;

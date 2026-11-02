@@ -41,6 +41,8 @@
   "view": "View",
   "mortgage": "Mortgage",
   "budget": "Budget",
+  "savings": "Savings",
+  "pension": "Pension",
   "profile": "Profile",
   "tax": "Tax"
 }

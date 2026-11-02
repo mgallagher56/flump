@@ -209,7 +209,10 @@ export class BudgetController {
       entries = await this.seedDefaults(userId);
     }
 
-    return entries;
+    return entries.map((entry) => ({
+      ...entry,
+      amount: Number(entry.amount) || 0,
+    })) as BudgetEntry[];
   }
 
   @Post("budget-entries")
@@ -239,7 +242,11 @@ export class BudgetController {
       notes: body.notes ?? null,
       isDefault: false,
     });
-    return this.budgetEntryRepository.save(entry);
+    const saved = await this.budgetEntryRepository.save(entry);
+    return {
+      ...saved,
+      amount: Number(saved.amount) || 0,
+    } as BudgetEntry;
   }
 
   @Patch("budget-entries/:id")
@@ -272,7 +279,11 @@ export class BudgetController {
     if (body.isEssential !== undefined) entry.isEssential = body.isEssential;
     if (body.notes !== undefined) entry.notes = body.notes ?? null;
 
-    return this.budgetEntryRepository.save(entry);
+    const saved = await this.budgetEntryRepository.save(entry);
+    return {
+      ...saved,
+      amount: Number(saved.amount) || 0,
+    } as BudgetEntry;
   }
 
   @Delete("budget-entries/:id")

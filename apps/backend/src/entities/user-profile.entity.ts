@@ -78,10 +78,44 @@ export class UserProfile {
   pensionPercent: number;
 
   @Column({
+    name: "pension_employer_percent",
+    type: "decimal",
+    precision: 5,
+    scale: 2,
+    default: 3.0,
+  })
+  pensionEmployerPercent: number;
+
+  @Column({
     name: "is_salary_sacrifice",
     default: true,
   })
   isSalarySacrifice: boolean;
+
+  @Column({
+    name: "monthly_savings_target",
+    type: "decimal",
+    precision: 12,
+    scale: 2,
+    nullable: true,
+  })
+  monthlySavingsTarget: number | null;
+
+  @Column({
+    name: "savings_allocation_mode",
+    type: "varchar",
+    default: "per_account",
+  })
+  savingsAllocationMode: "total" | "per_account";
+
+  @Column({
+    name: "savings_default_interest_rate",
+    type: "decimal",
+    precision: 5,
+    scale: 2,
+    default: 5.0,
+  })
+  savingsDefaultInterestRate: number;
 
   @Column({ name: "setup_checklist_completed_steps", type: "simple-array", default: "" })
   setupChecklistCompletedSteps: string[];

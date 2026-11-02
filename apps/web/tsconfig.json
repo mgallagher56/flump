@@ -13,7 +13,6 @@
   "compilerOptions": {
     "allowJs": true,
     "allowSyntheticDefaultImports": true,
-    "baseUrl": ".",
     "ignoreDeprecations": "5.0",
     "composite": true,
     "esModuleInterop": true,
@@ -35,6 +34,7 @@
     "target": "ESNext",
     "types": ["vite/client", "vitest/globals", "@react-router/node", "node"],
     "paths": {
+      "*": ["./*"],
       "~/*": ["./app/*"],
       "@repo/ui/styled-system/*": ["./styled-system/*"],
       "styled-system/*": ["./styled-system/*"]

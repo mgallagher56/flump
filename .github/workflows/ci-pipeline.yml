@@ -82,7 +82,7 @@ jobs:
       - name: ⚡ Run vitest
         run: bun run test
 
-      - name: 'Report Coverage'
+      - name: "Report Coverage"
         if: always()
         uses: davelosert/vitest-coverage-report-action@v2
         with:

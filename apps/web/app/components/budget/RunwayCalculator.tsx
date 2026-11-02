@@ -89,8 +89,11 @@ const knobStyle = (active: boolean) => ({
   boxShadow: "0 1px 3px rgba(0,0,0,0.3)",
 });
 
-const fmt = (n: number) =>
-  `£${Math.abs(n).toLocaleString("en-GB", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
+const fmt = (n: number | string | null | undefined) => {
+  const val = Number(n);
+  if (!Number.isFinite(val)) return "£0";
+  return `£${Math.abs(val).toLocaleString("en-GB", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
+};
 
 const RunwayCalculator: FC<RunwayCalculatorProps> = ({
   entries,
@@ -112,7 +115,8 @@ const RunwayCalculator: FC<RunwayCalculatorProps> = ({
     const details = accountDetails
       .filter((d) => d.account_id === accountId)
       .sort((a, b) => (a.year !== b.year ? b.year - a.year : b.month - a.month));
-    return details.length > 0 ? details[0].value : fallback;
+    const val = details.length > 0 ? details[0].value : fallback;
+    return Number(val) || 0;
   };
 
   const totalSavings = useMemo(

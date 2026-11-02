@@ -20,7 +20,15 @@ export class BudgetEntry {
   @Column()
   name: string;
 
-  @Column({ type: "decimal", precision: 12, scale: 2 })
+  @Column({
+    type: "decimal",
+    precision: 12,
+    scale: 2,
+    transformer: {
+      to: (value: number) => value,
+      from: (value: string | number) => (value !== null && value !== undefined ? Number(value) : 0),
+    },
+  })
   amount: number;
 
   @Column({ type: "varchar", default: "monthly" })

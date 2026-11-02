@@ -76,13 +76,25 @@ export async function getAuthSession(
       { ensureSignedIn: options.ensureSignedIn },
     );
 
-    const data = await (response as any).json();
+    let data: any;
+    if (response && typeof response === "object" && "data" in response) {
+      data = (response as any).data;
+    } else if (typeof (response as any)?.json === "function") {
+      data = await (response as any).json();
+    } else {
+      data = response;
+    }
+
     return {
-      user: data.user || null,
-      accessToken: (data.accessToken as string) || null,
+      user: data?.user || null,
+      accessToken: (data?.accessToken as string) || null,
+      headers: (response as any)?.init?.headers || (response as any)?.headers,
     };
   } catch (error) {
     if (error instanceof Response) {
+      throw error;
+    }
+    if (error && typeof error === "object" && ("status" in error || "headers" in error)) {
       throw error;
     }
     console.warn("authkitLoader failed, returning mock session:", error);

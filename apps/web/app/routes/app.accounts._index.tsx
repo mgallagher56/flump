@@ -60,6 +60,23 @@ export const action = async (args: ActionFunctionArgs) => {
         },
       });
       if (!res.ok) throw new Error("Failed to disconnect bank connection");
+    } else if (intent === "connectBank") {
+      const institutionId = formData.get("institutionId");
+      const token = formData.get("token");
+      const res = await fetch(`${apiUrl}/bank-connections`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken || "mock-session-token"}`,
+        },
+        body: JSON.stringify({
+          institutionId,
+          token: token ? String(token) : undefined,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Failed to connect bank");
+      return data;
     }
     return data({ success: true });
   } catch (error) {

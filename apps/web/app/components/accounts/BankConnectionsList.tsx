@@ -12,6 +12,7 @@ import FLPButton from "~/components/core/buttons/FLPButton";
 import FLPHeading from "~/components/core/typography/FLPHeading";
 import FLPText from "~/components/core/typography/FLPText";
 import ConnectBankWizard from "~/components/dialogs/connectBankWizard/ConnectBankWizard";
+import { useResponsive } from "~/context/ResponsiveContext";
 
 interface BankConnection {
   id: string;
@@ -22,8 +23,10 @@ interface BankConnection {
   createdAt: string;
 }
 
-interface BankConnectionsListProps {
+export interface BankConnectionsListProps {
   connections: BankConnection[];
+  isMobile?: boolean;
+  variant?: "desktop" | "mobile";
 }
 
 const INSTITUTION_COLORS: { [key: string]: string } = {
@@ -36,8 +39,14 @@ const INSTITUTION_COLORS: { [key: string]: string } = {
   vanguard: "#a8201a",
 };
 
-const BankConnectionsList: FC<BankConnectionsListProps> = ({ connections = [] }) => {
+const BankConnectionsList: FC<BankConnectionsListProps> = ({
+  connections = [],
+  isMobile: propIsMobile,
+  variant = "desktop",
+}) => {
   const fetcher = useFetcher();
+  const { isMobile: contextIsMobile } = useResponsive();
+  const isMobileVariant = propIsMobile ?? (variant === "mobile" ? true : contextIsMobile);
 
   const handleSync = (connectionId: string) => {
     fetcher.submit({ intent: "syncConnection", connectionId }, { method: "POST" });
@@ -83,16 +92,17 @@ const BankConnectionsList: FC<BankConnectionsListProps> = ({ connections = [] })
 
   const rowStyle = css({
     display: "flex",
-    alignItems: "center",
+    flexDirection: isMobileVariant ? "column" : "row",
+    alignItems: isMobileVariant ? "stretch" : "center",
     justifyContent: "space-between",
-    padding: "20px",
+    padding: isMobileVariant ? "14px" : "20px",
     borderRadius: "lg",
     backgroundColor: "card",
     border: "1px solid",
     borderColor: "border",
     boxShadow: "xs",
     flexWrap: { base: "wrap", sm: "nowrap" },
-    gap: "16px",
+    gap: isMobileVariant ? "12px" : "16px",
   });
 
   const infoColStyle = css({
@@ -175,7 +185,7 @@ const BankConnectionsList: FC<BankConnectionsListProps> = ({ connections = [] })
             Manage your connected bank credentials and balance feeds.
           </FLPText>
         </div>
-        <ConnectBankWizard onSuccess={() => {}} />
+        <ConnectBankWizard onSuccess={() => window.location.reload()} />
       </div>
 
       {connections.length > 0 ? (
@@ -265,7 +275,7 @@ const BankConnectionsList: FC<BankConnectionsListProps> = ({ connections = [] })
             </FLPText>
           </div>
           <div style={{ marginTop: "8px" }}>
-            <ConnectBankWizard onSuccess={() => {}} />
+            <ConnectBankWizard onSuccess={() => window.location.reload()} />
           </div>
         </div>
       )}

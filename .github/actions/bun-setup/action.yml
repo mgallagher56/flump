@@ -1,5 +1,5 @@
-name: 'Setup Bun'
-description: 'Setup Bun environment, install packages and configure Turborepo caching'
+name: "Setup Bun"
+description: "Setup Bun environment, install packages and configure Turborepo caching"
 inputs:
   turbo:
     description: "Whether to use github local turbo cache"
@@ -13,7 +13,7 @@ inputs:
     required: false
 
 runs:
-  using: 'composite'
+  using: "composite"
   steps:
     - name: TurboRepo local server
       if: ${{ inputs.turbo == 'true' }}

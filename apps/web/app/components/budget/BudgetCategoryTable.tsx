@@ -4,15 +4,18 @@ import { FaEdit, FaPlus, FaSave, FaTimes, FaTrash } from "react-icons/fa";
 import FLPButton from "~/components/core/buttons/FLPButton";
 import FLPHeading from "~/components/core/typography/FLPHeading";
 import FLPText from "~/components/core/typography/FLPText";
+import { useResponsive } from "~/context/ResponsiveContext";
 import type { BudgetCategory, BudgetEntry } from "~/types/budget";
 import { CATEGORY_COLOURS, CATEGORY_ICONS, CATEGORY_LABELS, toMonthly } from "~/types/budget";
 
-interface BudgetCategoryTableProps {
+export interface BudgetCategoryTableProps {
   category: BudgetCategory;
   entries: BudgetEntry[];
   onAdd: (entry: Omit<BudgetEntry, "id" | "userId" | "createdAt" | "updatedAt">) => Promise<void>;
   onUpdate: (id: string, update: Partial<BudgetEntry>) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
+  isMobile?: boolean;
+  variant?: "desktop" | "mobile";
 }
 
 interface EditRow {
@@ -33,35 +36,39 @@ const EMPTY_ROW: EditRow = {
   isEssential: true,
 };
 
-const inputStyle = css({
-  width: "100%",
-  padding: "6px 10px",
-  fontSize: "sm",
-  borderRadius: "sm",
-  border: "1px solid",
-  borderColor: "border",
-  backgroundColor: "transparent",
-  color: "text.primary",
-  outline: "none",
-  transition: "all 0.2s",
-  _focus: {
-    borderColor: "primary",
-    boxShadow: "0 0 0 1px token(colors.primary)",
-  },
-});
+const inputStyle = (isMobile?: boolean) =>
+  css({
+    width: "100%",
+    padding: isMobile ? "10px 12px" : "6px 10px",
+    fontSize: isMobile ? "16px" : "sm",
+    minHeight: isMobile ? "44px" : undefined,
+    borderRadius: "sm",
+    border: "1px solid",
+    borderColor: "border",
+    backgroundColor: "transparent",
+    color: "text.primary",
+    outline: "none",
+    transition: "all 0.2s",
+    _focus: {
+      borderColor: "primary",
+      boxShadow: "0 0 0 1px token(colors.primary)",
+    },
+  });
 
-const selectStyle = css({
-  padding: "6px 10px",
-  fontSize: "sm",
-  borderRadius: "sm",
-  border: "1px solid",
-  borderColor: "border",
-  backgroundColor: "surface",
-  color: "text.primary",
-  outline: "none",
-  cursor: "pointer",
-  transition: "all 0.2s",
-});
+const selectStyle = (isMobile?: boolean) =>
+  css({
+    padding: isMobile ? "10px 12px" : "6px 10px",
+    fontSize: isMobile ? "16px" : "sm",
+    minHeight: isMobile ? "44px" : undefined,
+    borderRadius: "sm",
+    border: "1px solid",
+    borderColor: "border",
+    backgroundColor: "surface",
+    color: "text.primary",
+    outline: "none",
+    cursor: "pointer",
+    transition: "all 0.2s",
+  });
 
 const BudgetCategoryTable: FC<BudgetCategoryTableProps> = ({
   category,
@@ -69,7 +76,12 @@ const BudgetCategoryTable: FC<BudgetCategoryTableProps> = ({
   onAdd,
   onUpdate,
   onDelete,
+  isMobile: propIsMobile,
+  variant = "desktop",
 }) => {
+  const { isMobile: contextIsMobile } = useResponsive();
+  const isMobileVariant = propIsMobile ?? (variant === "mobile" ? true : contextIsMobile);
+
   const [editingRow, setEditingRow] = useState<EditRow | null>(null);
   const [saving, setSaving] = useState(false);
 
@@ -95,7 +107,7 @@ const BudgetCategoryTable: FC<BudgetCategoryTableProps> = ({
   const cancelEdit = () => setEditingRow(null);
 
   const saveRow = async () => {
-    if (!editingRow || !editingRow.name.trim() || !editingRow.amount) return;
+    if (!editingRow?.name.trim() || !editingRow.amount) return;
     setSaving(true);
     try {
       if (editingRow.id) {
@@ -148,6 +160,7 @@ const BudgetCategoryTable: FC<BudgetCategoryTableProps> = ({
         borderColor: "border",
         overflow: "hidden",
       })}
+      data-variant={isMobileVariant ? "mobile" : "desktop"}
     >
       {/* Header */}
       <div
@@ -155,7 +168,7 @@ const BudgetCategoryTable: FC<BudgetCategoryTableProps> = ({
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
-          padding: "16px 20px",
+          padding: isMobileVariant ? "12px 14px" : "16px 20px",
           backgroundColor: "surface",
           borderBottom: "1px solid",
           borderColor: "border",
@@ -171,7 +184,7 @@ const BudgetCategoryTable: FC<BudgetCategoryTableProps> = ({
               {entries.length} items · Total{" "}
               <strong style={{ color: isIncome ? "#10b981" : "inherit" }}>
                 £
-                {total.toLocaleString("en-GB", {
+                {(Number.isFinite(total) ? total : 0).toLocaleString("en-GB", {
                   minimumFractionDigits: 0,
                   maximumFractionDigits: 0,
                 })}
@@ -180,13 +193,13 @@ const BudgetCategoryTable: FC<BudgetCategoryTableProps> = ({
             </FLPText>
           </div>
         </div>
-        <FLPButton size="sm" variant="outline" onClick={startNew}>
+        <FLPButton isMobile={isMobileVariant} size="sm" variant="outline" onClick={startNew}>
           <FaPlus style={{ marginRight: "6px" }} />
           Add
         </FLPButton>
       </div>
 
-      {/* Table */}
+      {/* Table / Mobile Card Stack */}
       <div className={css({ backgroundColor: "background" })}>
         {entries.length === 0 && !editingRow && (
           <div
@@ -220,11 +233,12 @@ const BudgetCategoryTable: FC<BudgetCategoryTableProps> = ({
             <div
               key={entry.id}
               className={css({
-                display: "grid",
-                gridTemplateColumns: "1fr auto auto auto",
-                alignItems: "center",
-                gap: "12px",
-                padding: "12px 20px",
+                display: isMobileVariant ? "flex" : "grid",
+                flexDirection: isMobileVariant ? "column" : undefined,
+                gridTemplateColumns: isMobileVariant ? undefined : "1fr auto auto auto",
+                alignItems: isMobileVariant ? "stretch" : "center",
+                gap: isMobileVariant ? "8px" : "12px",
+                padding: isMobileVariant ? "14px" : "12px 20px",
                 borderBottom: "1px solid",
                 borderColor: "border",
                 transition: "background-color 0.15s",
@@ -236,20 +250,20 @@ const BudgetCategoryTable: FC<BudgetCategoryTableProps> = ({
                   <div
                     className={css({
                       display: "grid",
-                      gridTemplateColumns: "2fr 1fr 1fr",
+                      gridTemplateColumns: isMobileVariant ? "1fr" : "2fr 1fr 1fr",
                       gap: "8px",
                       alignItems: "center",
                     })}
                   >
                     <input
-                      className={inputStyle}
+                      className={inputStyle(isMobileVariant)}
                       placeholder="Name"
                       type="text"
                       value={editingRow.name}
                       onChange={(e) => setEditingRow((r) => r && { ...r, name: e.target.value })}
                     />
                     <input
-                      className={inputStyle}
+                      className={inputStyle(isMobileVariant)}
                       min="0"
                       placeholder="Amount"
                       step="0.01"
@@ -258,7 +272,7 @@ const BudgetCategoryTable: FC<BudgetCategoryTableProps> = ({
                       onChange={(e) => setEditingRow((r) => r && { ...r, amount: e.target.value })}
                     />
                     <select
-                      className={selectStyle}
+                      className={selectStyle(isMobileVariant)}
                       value={editingRow.frequency}
                       onChange={(e) =>
                         setEditingRow(
@@ -275,14 +289,153 @@ const BudgetCategoryTable: FC<BudgetCategoryTableProps> = ({
                       <option value="weekly">Weekly</option>
                     </select>
                   </div>
-                  <FLPButton disabled={saving} size="sm" variant="primary" onClick={saveRow}>
-                    <FaSave />
-                  </FLPButton>
-                  <FLPButton size="sm" variant="outline" onClick={cancelEdit}>
-                    <FaTimes />
-                  </FLPButton>
-                  <div />
+                  {isMobileVariant ? (
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
+                      <FLPButton
+                        disabled={saving}
+                        isMobile
+                        size="sm"
+                        variant="primary"
+                        onClick={saveRow}
+                      >
+                        <FaSave style={{ marginRight: "6px" }} /> Save
+                      </FLPButton>
+                      <FLPButton isMobile size="sm" variant="outline" onClick={cancelEdit}>
+                        <FaTimes style={{ marginRight: "6px" }} /> Cancel
+                      </FLPButton>
+                    </div>
+                  ) : (
+                    <>
+                      <FLPButton disabled={saving} size="sm" variant="primary" onClick={saveRow}>
+                        <FaSave />
+                      </FLPButton>
+                      <FLPButton size="sm" variant="outline" onClick={cancelEdit}>
+                        <FaTimes />
+                      </FLPButton>
+                      <div />
+                    </>
+                  )}
                 </>
+              ) : isMobileVariant ? (
+                <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                    }}
+                  >
+                    <FLPText fontSize="sm" fontWeight="medium">
+                      {entry.name}
+                    </FLPText>
+                    <FLPText
+                      fontSize="sm"
+                      fontWeight="semibold"
+                      style={{ color: isIncome ? "#10b981" : undefined }}
+                    >
+                      {formatAmount(entry)}
+                    </FLPText>
+                  </div>
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                    }}
+                  >
+                    <div
+                      style={{
+                        display: "flex",
+                        gap: "6px",
+                        alignItems: "center",
+                        flexWrap: "wrap",
+                      }}
+                    >
+                      <FLPText color="text.muted" fontSize="xs">
+                        {entry.frequency}
+                      </FLPText>
+                      {entry.isEssential ? (
+                        <span
+                          style={{
+                            fontSize: "10px",
+                            padding: "1px 6px",
+                            borderRadius: "4px",
+                            backgroundColor: "rgba(16, 185, 129, 0.1)",
+                            color: "#10b981",
+                            fontWeight: 600,
+                          }}
+                        >
+                          essential
+                        </span>
+                      ) : (
+                        <span
+                          style={{
+                            fontSize: "10px",
+                            padding: "1px 6px",
+                            borderRadius: "4px",
+                            backgroundColor: "rgba(156, 163, 175, 0.15)",
+                            color: "#9ca3af",
+                            fontWeight: 600,
+                          }}
+                        >
+                          discretionary
+                        </span>
+                      )}
+                      {entry.isPrimaryIncome && (
+                        <span
+                          style={{
+                            fontSize: "10px",
+                            padding: "1px 6px",
+                            borderRadius: "4px",
+                            backgroundColor: "rgba(59, 130, 246, 0.1)",
+                            color: "#3b82f6",
+                            fontWeight: 600,
+                          }}
+                        >
+                          primary
+                        </span>
+                      )}
+                    </div>
+                    <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+                      <button
+                        className={css({
+                          color: "text.muted",
+                          background: "surface",
+                          border: "1px solid",
+                          borderColor: "border",
+                          cursor: "pointer",
+                          padding: "8px",
+                          borderRadius: "md",
+                          _hover: { color: "primary" },
+                        })}
+                        title="Edit"
+                        type="button"
+                        onClick={() => startEdit(entry)}
+                      >
+                        <FaEdit size={14} />
+                      </button>
+                      {!entry.isPrimaryIncome && (
+                        <button
+                          className={css({
+                            color: "text.muted",
+                            background: "surface",
+                            border: "1px solid",
+                            borderColor: "border",
+                            cursor: "pointer",
+                            padding: "8px",
+                            borderRadius: "md",
+                            _hover: { color: "destructive" },
+                          })}
+                          title="Delete"
+                          type="button"
+                          onClick={() => handleDelete(entry.id)}
+                        >
+                          <FaTrash size={14} />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
               ) : (
                 <>
                   <div>
@@ -344,8 +497,8 @@ const BudgetCategoryTable: FC<BudgetCategoryTableProps> = ({
                     </div>
                   </div>
                   <FLPText
-                    fontWeight="semibold"
                     fontSize="sm"
+                    fontWeight="semibold"
                     style={{ color: isIncome ? "#10b981" : undefined, textAlign: "right" }}
                   >
                     {formatAmount(entry)}
@@ -397,11 +550,12 @@ const BudgetCategoryTable: FC<BudgetCategoryTableProps> = ({
         {editingRow && editingRow.id === null && (
           <div
             className={css({
-              display: "grid",
-              gridTemplateColumns: "1fr auto auto auto",
-              alignItems: "center",
+              display: isMobileVariant ? "flex" : "grid",
+              flexDirection: isMobileVariant ? "column" : undefined,
+              gridTemplateColumns: isMobileVariant ? undefined : "1fr auto auto auto",
+              alignItems: isMobileVariant ? "stretch" : "center",
               gap: "12px",
-              padding: "12px 20px",
+              padding: isMobileVariant ? "14px" : "12px 20px",
               backgroundColor: "rgba(99, 99, 241, 0.04)",
               borderTop: "1px solid",
               borderColor: "border",
@@ -410,7 +564,7 @@ const BudgetCategoryTable: FC<BudgetCategoryTableProps> = ({
             <div
               className={css({
                 display: "grid",
-                gridTemplateColumns: "2fr 1fr 1fr",
+                gridTemplateColumns: isMobileVariant ? "1fr" : "2fr 1fr 1fr",
                 gap: "8px",
                 alignItems: "center",
               })}
@@ -418,14 +572,14 @@ const BudgetCategoryTable: FC<BudgetCategoryTableProps> = ({
               <input
                 // biome-ignore lint/a11y/noAutofocus: intentional for new row UX
                 autoFocus
-                className={inputStyle}
+                className={inputStyle(isMobileVariant)}
                 placeholder="Name (e.g. Netflix)"
                 type="text"
                 value={editingRow.name}
                 onChange={(e) => setEditingRow((r) => r && { ...r, name: e.target.value })}
               />
               <input
-                className={inputStyle}
+                className={inputStyle(isMobileVariant)}
                 min="0"
                 placeholder="Amount £"
                 step="0.01"
@@ -434,7 +588,7 @@ const BudgetCategoryTable: FC<BudgetCategoryTableProps> = ({
                 onChange={(e) => setEditingRow((r) => r && { ...r, amount: e.target.value })}
               />
               <select
-                className={selectStyle}
+                className={selectStyle(isMobileVariant)}
                 value={editingRow.frequency}
                 onChange={(e) =>
                   setEditingRow(
@@ -451,18 +605,32 @@ const BudgetCategoryTable: FC<BudgetCategoryTableProps> = ({
                 <option value="weekly">Weekly</option>
               </select>
             </div>
-            <FLPButton
-              disabled={saving || !editingRow.name || !editingRow.amount}
-              size="sm"
-              variant="primary"
-              onClick={saveRow}
+            <div
+              style={
+                isMobileVariant
+                  ? { display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }
+                  : { display: "contents" }
+              }
             >
-              <FaSave style={{ marginRight: "4px" }} /> Save
-            </FLPButton>
-            <FLPButton size="sm" variant="outline" onClick={cancelEdit}>
-              Cancel
-            </FLPButton>
-            <div />
+              <FLPButton
+                disabled={saving || !editingRow.name || !editingRow.amount}
+                isMobile={isMobileVariant}
+                size="sm"
+                variant="primary"
+                onClick={saveRow}
+              >
+                <FaSave style={{ marginRight: "4px" }} /> Save
+              </FLPButton>
+              <FLPButton
+                isMobile={isMobileVariant}
+                size="sm"
+                variant="outline"
+                onClick={cancelEdit}
+              >
+                Cancel
+              </FLPButton>
+            </div>
+            {!isMobileVariant && <div />}
           </div>
         )}
       </div>

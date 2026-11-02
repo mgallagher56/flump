@@ -2,7 +2,7 @@ import {
   buildLegacyUKConfig,
   getAvailableUKTaxYears,
   type UKLegacyTaxYearConfig,
-} from "./taxRules";
+} from "./taxRules.js";
 
 export interface TaxRecord {
   id: string;
@@ -52,7 +52,7 @@ export type TaxYearConfig = UKLegacyTaxYearConfig;
  * This record is rebuilt lazily on first access and cached.
  */
 export const TAX_YEARS: Record<string, TaxYearConfig> = Object.fromEntries(
-  getAvailableUKTaxYears().map((year) => [year, buildLegacyUKConfig(year)]),
+  getAvailableUKTaxYears().map((year: string) => [year, buildLegacyUKConfig(year)]),
 );
 
 export const RENTAL_CATEGORIES = [

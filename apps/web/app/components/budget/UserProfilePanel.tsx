@@ -246,6 +246,7 @@ const UserProfilePanel: FC<UserProfilePanelProps> = ({ initialProfile }) => {
     rentalIncomeMonthly: effectiveProfile.rentalIncomeMonthly,
     hasMortgage: effectiveProfile.hasMortgage,
     pensionPercent: effectiveProfile.pensionPercent ?? 5.0,
+    pensionEmployerPercent: effectiveProfile.pensionEmployerPercent ?? 3.0,
     isSalarySacrifice: effectiveProfile.isSalarySacrifice ?? true,
   });
 
@@ -749,81 +750,130 @@ const UserProfilePanel: FC<UserProfilePanelProps> = ({ initialProfile }) => {
 
             {form.country === "GB" &&
               (form.employmentType === "employed" || form.employmentType === "self-employed") && (
-                <div
-                  className={css({
-                    borderTop: "1px solid",
-                    borderColor: "border",
-                    paddingTop: "16px",
-                    marginTop: "16px",
-                    display: "grid",
-                    gridTemplateColumns: "1fr 1fr",
-                    gap: "16px",
-                  })}
-                >
-                  <div className={fieldGroupStyle}>
-                    <label className={labelStyle} htmlFor="pension-percent">
-                      Pension Contribution (%)
-                    </label>
-                    <input
-                      className={inputStyle}
-                      id="pension-percent"
-                      min="0"
-                      max="100"
-                      placeholder="e.g. 5"
-                      type="number"
-                      value={form.pensionPercent ?? ""}
-                      onChange={(e) => {
-                        const pct = e.target.value ? Number(e.target.value) : 0;
-                        setForm((p) => {
-                          const updated = {
-                            ...p,
-                            pensionPercent: pct,
-                          };
-                          if (p.annualSalary !== null && p.annualSalary !== undefined) {
-                            updated.monthlyTakeHome = calculateNetTakeHome(
-                              p.annualSalary,
-                              p.employmentType,
-                              pct,
-                              p.isSalarySacrifice ?? true,
-                              p.country || "GB",
-                            ).monthlyTakeHome;
-                          }
-                          return updated;
-                        });
-                      }}
-                    />
-                  </div>
-                  <div className={fieldGroupStyle}>
-                    <span className={labelStyle}>Salary Sacrifice Pension</span>
-                    <div className={css({ display: "flex", alignItems: "center", height: "40px" })}>
-                      <button
-                        className={toggleBtnStyle(form.isSalarySacrifice ?? true)}
-                        type="button"
-                        onClick={() => {
+                <>
+                  <div
+                    className={css({
+                      borderTop: "1px solid",
+                      borderColor: "border",
+                      paddingTop: "16px",
+                      marginTop: "16px",
+                      display: "grid",
+                      gridTemplateColumns: { base: "1fr", sm: "1fr 1fr 1fr" },
+                      gap: "16px",
+                    })}
+                  >
+                    <div className={fieldGroupStyle}>
+                      <label className={labelStyle} htmlFor="pension-percent">
+                        Employee Contribution (%)
+                      </label>
+                      <input
+                        className={inputStyle}
+                        id="pension-percent"
+                        min="0"
+                        max="100"
+                        placeholder="e.g. 5"
+                        type="number"
+                        value={form.pensionPercent ?? ""}
+                        onChange={(e) => {
+                          const pct = e.target.value ? Number(e.target.value) : 0;
                           setForm((p) => {
-                            const val = !(p.isSalarySacrifice ?? true);
                             const updated = {
                               ...p,
-                              isSalarySacrifice: val,
+                              pensionPercent: pct,
                             };
                             if (p.annualSalary !== null && p.annualSalary !== undefined) {
                               updated.monthlyTakeHome = calculateNetTakeHome(
                                 p.annualSalary,
                                 p.employmentType,
-                                p.pensionPercent ?? 5,
-                                val,
+                                pct,
+                                p.isSalarySacrifice ?? true,
                                 p.country || "GB",
                               ).monthlyTakeHome;
                             }
                             return updated;
                           });
                         }}
+                      />
+                    </div>
+                    <div className={fieldGroupStyle}>
+                      <label className={labelStyle} htmlFor="pension-employer-percent">
+                        Employer Contribution (%)
+                      </label>
+                      <input
+                        className={inputStyle}
+                        id="pension-employer-percent"
+                        min="0"
+                        max="100"
+                        placeholder="e.g. 3"
+                        type="number"
+                        value={form.pensionEmployerPercent ?? ""}
+                        onChange={(e) => {
+                          const pct = e.target.value ? Number(e.target.value) : 0;
+                          setForm((p) => ({
+                            ...p,
+                            pensionEmployerPercent: pct,
+                          }));
+                        }}
+                      />
+                    </div>
+                    <div className={fieldGroupStyle}>
+                      <span className={labelStyle}>Salary Sacrifice Pension</span>
+                      <div
+                        className={css({ display: "flex", alignItems: "center", height: "40px" })}
                       >
-                        <div style={toggleKnobStyle(form.isSalarySacrifice ?? true)} />
-                      </button>
+                        <button
+                          className={toggleBtnStyle(form.isSalarySacrifice ?? true)}
+                          type="button"
+                          onClick={() => {
+                            setForm((p) => {
+                              const val = !(p.isSalarySacrifice ?? true);
+                              const updated = {
+                                ...p,
+                                isSalarySacrifice: val,
+                              };
+                              if (p.annualSalary !== null && p.annualSalary !== undefined) {
+                                updated.monthlyTakeHome = calculateNetTakeHome(
+                                  p.annualSalary,
+                                  p.employmentType,
+                                  p.pensionPercent ?? 5,
+                                  val,
+                                  p.country || "GB",
+                                ).monthlyTakeHome;
+                              }
+                              return updated;
+                            });
+                          }}
+                        >
+                          <div style={toggleKnobStyle(form.isSalarySacrifice ?? true)} />
+                        </button>
+                      </div>
                     </div>
                   </div>
-                </div>
+                  <div
+                    className={css({
+                      fontSize: "xs",
+                      color: "text.muted",
+                      marginTop: "-8px",
+                      display: "flex",
+                      justifyContent: "space-between",
+                      flexWrap: "wrap",
+                      gap: "8px",
+                    })}
+                  >
+                    <span>
+                      UK auto-enrolment standard: 5% employee + 3% employer (
+                      {(Number(form.pensionPercent) || 0) +
+                        (Number(form.pensionEmployerPercent) || 0)}
+                      % total).
+                    </span>
+                    <a
+                      href="/app/pension"
+                      style={{ color: "#6363f1", textDecoration: "none", fontWeight: 500 }}
+                    >
+                      Manage pots & forecast retirement in Pension Tracker →
+                    </a>
+                  </div>
+                </>
               )}
 
             {/* Tax disclaimer */}
@@ -1025,6 +1075,11 @@ const UserProfilePanel: FC<UserProfilePanelProps> = ({ initialProfile }) => {
                   ? "Rental income included"
                   : "Primary income only",
                 desc: "Unemployment planning",
+              },
+              {
+                label: "Pension Tracker",
+                value: `${syncedProfile.pensionPercent ?? 5}% + ${syncedProfile.pensionEmployerPercent ?? 3}%`,
+                desc: "Pre-fills retirement forecast",
               },
             ].map((item) => (
               <div

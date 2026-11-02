@@ -24,10 +24,17 @@ export const loader = async (args: LoaderFunctionArgs) => {
       profileRes.ok ? profileRes.json() : null,
     ]);
 
-    return data({ accounts, accountDetails, budgetEntries, userProfile, user });
+    return data({ accounts, accountDetails, budgetEntries, userProfile, user, accessToken });
   } catch (error) {
     console.error("Budget route loader error:", error);
-    return data({ accounts: [], accountDetails: [], budgetEntries: [], userProfile: null, user });
+    return data({
+      accounts: [],
+      accountDetails: [],
+      budgetEntries: [],
+      userProfile: null,
+      user,
+      accessToken: null,
+    });
   }
 };
 

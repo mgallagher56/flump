@@ -31,6 +31,7 @@ const BudgetContainer: FC = () => {
     accountDetails = [],
     budgetEntries = [],
     userProfile,
+    accessToken,
   } = useLoaderData<typeof loader>();
 
   const navigate = useNavigate();
@@ -53,20 +54,22 @@ const BudgetContainer: FC = () => {
         .sort((a: { year: number; month: number }, b: { year: number; month: number }) =>
           a.year !== b.year ? b.year - a.year : b.month - a.month,
         );
-      const bal = details.length > 0 ? details[0].value : acc.balance;
+      const rawBal = details.length > 0 ? details[0].value : acc.balance;
+      const bal = Number(rawBal) || 0;
       return sum + (bal > 0 ? bal : 0);
     }, 0);
 
   const mortgageBalance = Math.abs(
     accounts
       .filter((a: { type: string }) => a.type === "Mortgage")
-      .reduce((sum: number, acc: { balance: number }) => sum + (acc.balance || 0), 0),
+      .reduce((sum: number, acc: { balance: number }) => sum + (Number(acc.balance) || 0), 0),
   );
 
   const apiUrl =
+    (typeof import.meta !== "undefined" && (import.meta as any).env?.VITE_API_URL) ??
     (window as Window & { ENV?: { VITE_API_URL?: string } }).ENV?.VITE_API_URL ??
     "http://localhost:4000";
-  const authHeader = { Authorization: "Bearer mock-session-token" };
+  const authHeader = { Authorization: `Bearer ${accessToken || "mock-session-token"}` };
 
   const addEntry = async (
     entry: Omit<BudgetEntry, "id" | "userId" | "createdAt" | "updatedAt">,
@@ -223,6 +226,7 @@ const BudgetContainer: FC = () => {
           entries={entries}
           monthlyTakeHome={userProfile?.monthlyTakeHome ?? null}
           onAddEntry={addEntry}
+          onDeleteEntry={deleteEntry}
           onCancel={() => setActiveTab("dashboard")}
           onComplete={handleWizardComplete}
           onUpdateEntry={updateEntry}

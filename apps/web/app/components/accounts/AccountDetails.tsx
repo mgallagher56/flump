@@ -6,14 +6,17 @@ import { FaTrashAlt } from "react-icons/fa";
 import { useFetcher, useLoaderData } from "react-router";
 import AccountDetailChart from "~/components/charts/AccountDetailChart";
 import FLPText from "~/components/core/typography/FLPText";
+import { useResponsive } from "~/context/ResponsiveContext";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
 import type { loader } from "~/routes/app.accounts.$account";
 
-interface AccountDetailsProps {
+export interface AccountDetailsProps {
   onInputChange: (event: ChangeEvent<HTMLInputElement>) => void;
   editedValues: { [key: string]: { [key: string]: string } };
   isEditMode: boolean;
   activeTab?: "chart" | "table";
+  isMobile?: boolean;
+  variant?: "desktop" | "mobile";
 }
 
 const AccountDetails: FC<AccountDetailsProps> = ({
@@ -21,8 +24,12 @@ const AccountDetails: FC<AccountDetailsProps> = ({
   editedValues,
   isEditMode,
   activeTab = "table",
+  isMobile: propIsMobile,
+  variant = "desktop",
 }) => {
   const { t } = useTranslation();
+  const { isMobile: contextIsMobile } = useResponsive();
+  const isMobileVariant = propIsMobile ?? (variant === "mobile" ? true : contextIsMobile);
   const { accountDetails = [] } = useLoaderData<typeof loader>();
   const fetcher = useFetcher();
 
@@ -116,7 +123,7 @@ const AccountDetails: FC<AccountDetailsProps> = ({
   });
 
   const chartContainerStyle = css({
-    height: "350px",
+    height: isMobileVariant ? "240px" : "350px",
     width: "100%",
     paddingTop: "16px",
   });
@@ -125,11 +132,11 @@ const AccountDetails: FC<AccountDetailsProps> = ({
     width: "100%",
     borderCollapse: "collapse",
     marginTop: "8px",
-    fontSize: "sm",
+    fontSize: isMobileVariant ? "xs" : "sm",
   });
 
   const thStyle = css({
-    padding: "16px",
+    padding: isMobileVariant ? "10px 8px" : "16px",
     fontWeight: "bold",
     textAlign: "right",
     borderBottom: "2px solid",
@@ -138,12 +145,15 @@ const AccountDetails: FC<AccountDetailsProps> = ({
     verticalAlign: "middle",
     "&:first-child": {
       textAlign: "left",
-      width: "160px",
+      width: isMobileVariant ? "100px" : "160px",
+      position: isMobileVariant ? "sticky" : undefined,
+      left: isMobileVariant ? 0 : undefined,
+      backgroundColor: isMobileVariant ? "surface" : undefined,
     },
   });
 
   const tdStyle = css({
-    padding: "12px 16px",
+    padding: isMobileVariant ? "10px 8px" : "12px 16px",
     borderBottom: "1px solid",
     borderBottomColor: "border",
     textAlign: "right",
@@ -152,18 +162,21 @@ const AccountDetails: FC<AccountDetailsProps> = ({
       textAlign: "left",
       fontWeight: "semibold",
       color: "text.primary",
+      position: isMobileVariant ? "sticky" : undefined,
+      left: isMobileVariant ? 0 : undefined,
+      backgroundColor: isMobileVariant ? "surface" : undefined,
     },
   });
 
   const inputStyle = css({
     width: "100%",
     maxWidth: "140px",
-    padding: "8px 12px",
+    padding: isMobileVariant ? "10px" : "8px 12px",
     borderRadius: "sm",
     border: "1px solid",
     borderColor: "border",
     textAlign: "right",
-    fontSize: "sm",
+    fontSize: isMobileVariant ? "16px" : "sm",
     backgroundColor: "background",
     color: "text.primary",
     "&:focus": {

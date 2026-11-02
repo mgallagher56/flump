@@ -3,9 +3,11 @@
 exports[`<Header /> > renders as expected by default 1`] = `
 <body>
   <div>
-    <header>
+    <header
+      class="pos_sticky top_0 z_50 w_100% bg-c_rgba(255,_255,_255,_0.85) dark:bg-c_rgba(22,_24,_29,_0.85) bkdp_blur(12px) trs_background-color_0.2s_ease,_border-color_0.2s_ease"
+    >
       <nav
-        class="d_flex bd-b-w_2px bd-b-c_border border-bottom-style_solid ai_center jc_space-between w_100% py_4 px_2"
+        class="pos_sticky top_0 z_50 d_flex bd-b-w_2px bd-b-c_border border-bottom-style_solid ai_center jc_space-between w_100% py_4 px_2"
       >
         <div
           class=" d_flex gap_4 ai_center jc_start"
@@ -54,9 +56,11 @@ exports[`<Header /> > renders as expected by default 1`] = `
 exports[`<Header /> > renders correctly when user logged in 1`] = `
 <body>
   <div>
-    <header>
+    <header
+      class="pos_sticky top_0 z_50 w_100% bg-c_rgba(255,_255,_255,_0.85) dark:bg-c_rgba(22,_24,_29,_0.85) bkdp_blur(12px) trs_background-color_0.2s_ease,_border-color_0.2s_ease"
+    >
       <nav
-        class="d_flex bd-b-w_2px bd-b-c_border border-bottom-style_solid ai_center jc_space-between w_100% py_4 px_2"
+        class="pos_sticky top_0 z_50 d_flex bd-b-w_2px bd-b-c_border border-bottom-style_solid ai_center jc_space-between w_100% py_4 px_2"
       >
         <div
           class=" d_flex gap_4 ai_center jc_start"
@@ -68,7 +72,13 @@ exports[`<Header /> > renders correctly when user logged in 1`] = `
             home
           </div>
           <div>
-            dashboard
+            budget
+          </div>
+          <div>
+            savings
+          </div>
+          <div>
+            pension
           </div>
           <div>
             accounts
@@ -78,9 +88,6 @@ exports[`<Header /> > renders correctly when user logged in 1`] = `
           </div>
           <div>
             mortgage
-          </div>
-          <div>
-            budget
           </div>
           <div>
             tax
@@ -140,9 +147,11 @@ exports[`<Header /> > renders correctly when user logged in 1`] = `
 exports[`<Header /> > renders without ColorModeSwitch 1`] = `
 <body>
   <div>
-    <header>
+    <header
+      class="pos_sticky top_0 z_50 w_100% bg-c_rgba(255,_255,_255,_0.85) dark:bg-c_rgba(22,_24,_29,_0.85) bkdp_blur(12px) trs_background-color_0.2s_ease,_border-color_0.2s_ease"
+    >
       <nav
-        class="d_flex bd-b-w_2px bd-b-c_border border-bottom-style_solid ai_center jc_space-between w_100% py_4 px_2"
+        class="pos_sticky top_0 z_50 d_flex bd-b-w_2px bd-b-c_border border-bottom-style_solid ai_center jc_space-between w_100% py_4 px_2"
       >
         <div
           class=" d_flex gap_4 ai_center jc_start"

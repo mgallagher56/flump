@@ -14,6 +14,14 @@ vi.mock("react-router", () => {
   };
 });
 
+vi.mock("react", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("react")>();
+  return {
+    ...actual,
+    useMemo: vi.fn((fn) => fn()),
+  };
+});
+
 describe("validateEmail", () => {
   test("validateEmail returns false for non-emails", () => {
     expect(validateEmail(undefined)).toBe(false);
@@ -56,14 +64,6 @@ describe("safeRedirect", () => {
 });
 
 describe("useMatchesData", () => {
-  beforeEach(() => {
-    // vi mock useMemo
-    vi.mock("react", () => {
-      return {
-        useMemo: vi.fn((fn) => fn()),
-      };
-    });
-  });
   test("useMatchesData returns undefined if no matching routes", () => {
     expect(useMatchesData("not-a-route")).toBe(undefined);
   });

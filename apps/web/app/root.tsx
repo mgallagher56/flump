@@ -1,6 +1,9 @@
+import { css } from "@repo/ui/styled-system/css";
 import type { LoaderFunctionArgs } from "react-router";
 import { Links, Meta, Outlet, Scripts, ScrollRestoration, useLoaderData } from "react-router";
+import MobileBottomBar from "./components/navigation/MobileBottomBar";
 import Header from "./components/structure/header/Header";
+import { ResponsiveProvider } from "./context/ResponsiveContext";
 import { useTheme } from "./hooks/useTheme";
 import i18next from "./i18n.server";
 import styles from "./index.css?url";
@@ -19,22 +22,23 @@ export const links = () => [
 
 export const loader = async (args: LoaderFunctionArgs) => {
   const locale = await i18next.getLocale(args.request);
-  const { user } = await getAuthSession(args, { ensureSignedIn: false });
+  const { user, accessToken } = await getAuthSession(args, { ensureSignedIn: false });
   return {
     locale,
     user,
+    accessToken,
   };
 };
 
 export default function App() {
-  const { locale } = useLoaderData<typeof loader>();
+  const { locale, user } = useLoaderData<typeof loader>();
   const { theme, toggleTheme } = useTheme();
 
   return (
     <html className={theme === "dark" ? "dark" : ""} data-theme={theme} lang={locale}>
       <head>
         <meta charSet="utf-8" />
-        <meta content="width=device-width,initial-scale=1" name="viewport" />
+        <meta content="width=device-width,initial-scale=1,viewport-fit=cover" name="viewport" />
         <Meta />
         <Links />
         {/* Prevent flash of wrong theme by applying class synchronously */}
@@ -66,12 +70,22 @@ export default function App() {
         }}
       >
         <ThemeContext.Provider value={{ theme, toggleTheme }}>
-          <div style={{ maxWidth: "1280px", margin: "0 auto", padding: "0 24px" }}>
-            <Header />
-            <main>
-              <Outlet />
-            </main>
-          </div>
+          <ResponsiveProvider>
+            <div
+              className={css({
+                maxWidth: "1280px",
+                margin: "0 auto",
+                paddingX: { base: "12px", md: "24px" },
+                paddingBottom: user ? { base: "80px", md: "0" } : "0",
+              })}
+            >
+              <Header />
+              <main>
+                <Outlet />
+              </main>
+            </div>
+            <MobileBottomBar user={user} />
+          </ResponsiveProvider>
         </ThemeContext.Provider>
         <ScrollRestoration />
         <Scripts />

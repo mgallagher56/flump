@@ -6,6 +6,7 @@ import FLPButton from "~/components/core/buttons/FLPButton";
 import FLPCard from "~/components/core/cards/FLPCard";
 import FLPHeading from "~/components/core/typography/FLPHeading";
 import FLPText from "~/components/core/typography/FLPText";
+import { useResponsive } from "~/context/ResponsiveContext";
 import type { BudgetCategory, BudgetEntry } from "~/types/budget";
 import { CATEGORY_COLOURS, CATEGORY_ICONS, CATEGORY_LABELS, toMonthly } from "~/types/budget";
 
@@ -23,7 +24,7 @@ interface AccountDetail {
   value: number;
 }
 
-interface BudgetDashboardProps {
+export interface BudgetDashboardProps {
   entries: BudgetEntry[];
   accounts: Account[];
   accountDetails: AccountDetail[];
@@ -31,6 +32,8 @@ interface BudgetDashboardProps {
   mortgageBalance: number;
   onNavigateToCategory: (cat: BudgetCategory) => void;
   onNavigateToRunway: () => void;
+  isMobile?: boolean;
+  variant?: "desktop" | "mobile";
 }
 
 const EXPENSE_CATEGORIES: BudgetCategory[] = ["housing", "bills", "expenses", "savings"];
@@ -38,10 +41,13 @@ const EXPENSE_CATEGORIES: BudgetCategory[] = ["housing", "bills", "expenses", "s
 const BudgetDashboard: FC<BudgetDashboardProps> = ({
   entries,
   savingsBalance,
-  mortgageBalance,
   onNavigateToCategory,
   onNavigateToRunway,
+  isMobile: propIsMobile,
+  variant = "desktop",
 }) => {
+  const { isMobile: contextIsMobile } = useResponsive();
+  const isMobileVariant = propIsMobile ?? (variant === "mobile" ? true : contextIsMobile);
   const totals = useMemo(() => {
     const income = entries.filter((e) => e.isIncome).reduce((s, e) => s + toMonthly(e), 0);
     const expenses = entries.filter((e) => !e.isIncome).reduce((s, e) => s + toMonthly(e), 0);
@@ -65,8 +71,11 @@ const BudgetDashboard: FC<BudgetDashboardProps> = ({
     .filter((e) => e.category === "savings")
     .reduce((s, e) => s + toMonthly(e), 0);
 
-  const fmt = (n: number) =>
-    `£${Math.abs(n).toLocaleString("en-GB", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
+  const fmt = (n: number | string | null | undefined) => {
+    const val = Number(n);
+    if (!Number.isFinite(val)) return "£0";
+    return `£${Math.abs(val).toLocaleString("en-GB", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
+  };
 
   const surplusColour = totals.surplus >= 0 ? "#10b981" : "#ef4444";
 
@@ -74,7 +83,7 @@ const BudgetDashboard: FC<BudgetDashboardProps> = ({
     display: "flex",
     flexDirection: "column",
     gap: "4px",
-    padding: "20px",
+    padding: isMobileVariant ? "14px" : "20px",
     borderRadius: "lg",
     border: "1px solid",
     borderColor: "border",
@@ -82,13 +91,20 @@ const BudgetDashboard: FC<BudgetDashboardProps> = ({
   });
 
   return (
-    <div className={css({ display: "flex", flexDirection: "column", gap: "24px" })}>
+    <div
+      className={css({
+        display: "flex",
+        flexDirection: "column",
+        gap: isMobileVariant ? "16px" : "24px",
+      })}
+      data-variant={isMobileVariant ? "mobile" : "desktop"}
+    >
       {/* Top KPI row */}
       <div
         className={css({
           display: "grid",
-          gridTemplateColumns: "repeat(3, 1fr)",
-          gap: "16px",
+          gridTemplateColumns: isMobileVariant ? "1fr" : { base: "1fr", md: "repeat(3, 1fr)" },
+          gap: isMobileVariant ? "10px" : "16px",
         })}
       >
         {/* Monthly Income */}
@@ -158,7 +174,7 @@ const BudgetDashboard: FC<BudgetDashboardProps> = ({
       <div
         className={css({
           display: "grid",
-          gridTemplateColumns: "1fr 1fr",
+          gridTemplateColumns: isMobileVariant ? "1fr" : { base: "1fr", md: "1fr 1fr" },
           gap: "16px",
         })}
       >
@@ -295,7 +311,13 @@ const BudgetDashboard: FC<BudgetDashboardProps> = ({
       </div>
 
       {/* Insights row */}
-      <div className={css({ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" })}>
+      <div
+        className={css({
+          display: "grid",
+          gridTemplateColumns: isMobileVariant ? "1fr" : { base: "1fr", md: "1fr 1fr" },
+          gap: "16px",
+        })}
+      >
         {/* Savings comparison */}
         <FLPCard>
           <FLPHeading as="h3" size="sm" style={{ marginBottom: "12px" }}>

@@ -1,12 +1,15 @@
 import { css } from "@repo/ui/styled-system/css";
 import type { FC, InputHTMLAttributes } from "react";
+import { useResponsive } from "~/context/ResponsiveContext";
 
-interface FLPInputProps extends InputHTMLAttributes<HTMLInputElement> {
+export interface FLPInputProps extends InputHTMLAttributes<HTMLInputElement> {
   error?: string;
   label: string;
   isLabelHidden?: boolean;
   flexDirection?: "row" | "column";
   gap?: number | string;
+  isMobile?: boolean;
+  variant?: "desktop" | "mobile";
 }
 
 const FLPInput: FC<FLPInputProps> = ({
@@ -18,13 +21,19 @@ const FLPInput: FC<FLPInputProps> = ({
   gap,
   style,
   className,
+  isMobile: propIsMobile,
+  variant = "desktop",
   ...props
 }) => {
+  const { isMobile: contextIsMobile } = useResponsive();
+  const isMobileVariant = propIsMobile ?? (variant === "mobile" ? true : contextIsMobile);
+  const resolvedDirection = isMobileVariant ? "column" : flexDirection;
+
   const containerStyle = css({
     display: "flex",
-    flexDirection,
-    alignItems: flexDirection === "row" ? "center" : "stretch",
-    gap: gap || (flexDirection === "row" ? "16px" : "8px"),
+    flexDirection: resolvedDirection,
+    alignItems: resolvedDirection === "row" ? "center" : "stretch",
+    gap: gap || (resolvedDirection === "row" ? "16px" : "8px"),
     width: "100%",
   });
 
@@ -36,8 +45,9 @@ const FLPInput: FC<FLPInputProps> = ({
 
   const inputStyle = css({
     width: "100%",
-    padding: "10px 14px",
-    fontSize: "sm",
+    padding: isMobileVariant ? "12px 14px" : "10px 14px",
+    minHeight: isMobileVariant ? "44px" : undefined,
+    fontSize: isMobileVariant ? "16px" : "sm",
     borderRadius: "sm",
     border: "1px solid",
     borderColor: "border",
@@ -63,7 +73,7 @@ const FLPInput: FC<FLPInputProps> = ({
   });
 
   return (
-    <div className={containerStyle}>
+    <div className={containerStyle} data-variant={isMobileVariant ? "mobile" : "desktop"}>
       {!isLabelHidden && (
         <label className={labelStyle} htmlFor={label}>
           {label}

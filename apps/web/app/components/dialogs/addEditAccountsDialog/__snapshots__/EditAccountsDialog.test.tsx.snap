@@ -35,7 +35,6 @@ exports[`<EditAccountDialogBtn > should render edit account dialog and call fetc
     style="pointer-events: auto;"
   />
   <div
-    aria-describedby="radix-_r_5_"
     aria-labelledby="radix-_r_4_"
     class="pos_fixed top_50% left_50% trf_translate(-50%,_-50%) bg-c_surface bd_1px_solid bd-c_border bdr_lg bx-sh_0_20px_25px_-5px_rgba(0,_0,_0,_0.3),_0_10px_10px_-5px_rgba(0,_0,_0,_0.2) p_24px w_90vw max-w_480px z_50 ring_none c_text.primary"
     data-state="open"

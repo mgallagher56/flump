@@ -63,6 +63,8 @@ export class FinanceController {
           type: "Saving" as const,
           balance: 15800.0,
           currency: "GBP",
+          interestRate: 4.5,
+          monthlyContribution: 250.0,
         },
         {
           userId,
@@ -70,6 +72,8 @@ export class FinanceController {
           type: "Saving" as const,
           balance: 42100.5,
           currency: "GBP",
+          interestRate: 7.0,
+          monthlyContribution: 300.0,
         },
       ];
 
@@ -77,7 +81,18 @@ export class FinanceController {
       accounts = seeded;
     }
 
-    return accounts;
+    return accounts.map((acc) => ({
+      ...acc,
+      balance: Number(acc.balance),
+      interestRate:
+        acc.interestRate !== null && acc.interestRate !== undefined
+          ? Number(acc.interestRate)
+          : null,
+      monthlyContribution:
+        acc.monthlyContribution !== null && acc.monthlyContribution !== undefined
+          ? Number(acc.monthlyContribution)
+          : null,
+    }));
   }
 
   @Get("accounts/:id")
@@ -87,7 +102,18 @@ export class FinanceController {
     if (!account) {
       throw new NotFoundException("Account not found");
     }
-    return account;
+    return {
+      ...account,
+      balance: Number(account.balance),
+      interestRate:
+        account.interestRate !== null && account.interestRate !== undefined
+          ? Number(account.interestRate)
+          : null,
+      monthlyContribution:
+        account.monthlyContribution !== null && account.monthlyContribution !== undefined
+          ? Number(account.monthlyContribution)
+          : null,
+    };
   }
 
   @Get("accounts/:id/details")
@@ -97,10 +123,16 @@ export class FinanceController {
     if (!account) {
       throw new NotFoundException("Account not found");
     }
-    return this.accountDetailRepository.find({
+    const details = await this.accountDetailRepository.find({
       where: { accountId: id },
       order: { year: "DESC", month: "ASC" },
     });
+    return details.map((d) => ({
+      ...d,
+      accountId: d.accountId,
+      account_id: d.accountId,
+      value: Number(d.value),
+    }));
   }
 
   @Get("account-details")
@@ -145,46 +177,129 @@ export class FinanceController {
       details = await this.accountDetailRepository.save(defaultDetails);
     }
 
-    return details;
+    return details.map((d) => ({
+      ...d,
+      accountId: d.accountId,
+      account_id: d.accountId,
+      value: Number(d.value),
+    }));
   }
 
   @Post("accounts")
-  async createAccount(@Req() req: any, @Body() body: { name: string; type: any }) {
+  async createAccount(
+    @Req() req: any,
+    @Body()
+    body: {
+      name: string;
+      type: any;
+      balance?: number;
+      interestRate?: number | null;
+      monthlyContribution?: number | null;
+    },
+  ) {
     const userId = req.user.id;
+    const initialBalance =
+      body.balance !== undefined && body.balance !== null ? Number(body.balance) : 0;
     const account = await this.accountRepository.save({
       userId,
       name: body.name,
       type: body.type,
-      balance: 0,
+      balance: initialBalance,
+      interestRate:
+        body.interestRate !== undefined && body.interestRate !== null
+          ? Number(body.interestRate)
+          : null,
+      monthlyContribution:
+        body.monthlyContribution !== undefined && body.monthlyContribution !== null
+          ? Number(body.monthlyContribution)
+          : null,
       currency: "GBP",
     });
 
-    // Seed 12 months of empty details for the new account
+    // Seed 12 months of details for the new account
     const year = new Date().getFullYear();
     const currentYearValues = Array.from({ length: 12 }, (_, i) => ({
       month: i + 1,
       year,
-      value: 0,
+      value: initialBalance,
       accountId: account.id,
     }));
     await this.accountDetailRepository.save(currentYearValues);
-    return account;
+    return {
+      ...account,
+      balance: Number(account.balance),
+      interestRate:
+        account.interestRate !== null && account.interestRate !== undefined
+          ? Number(account.interestRate)
+          : null,
+      monthlyContribution:
+        account.monthlyContribution !== null && account.monthlyContribution !== undefined
+          ? Number(account.monthlyContribution)
+          : null,
+    };
   }
 
   @Patch("accounts/:id")
   async updateAccount(
     @Req() req: any,
     @Param("id") id: string,
-    @Body() body: { name?: string; type?: any },
+    @Body()
+    body: {
+      name?: string;
+      type?: any;
+      balance?: number;
+      interestRate?: number | null;
+      monthlyContribution?: number | null;
+    },
   ) {
     const userId = req.user.id;
     const account = await this.accountRepository.findOne({ where: { id, userId } });
     if (!account) {
       throw new NotFoundException("Account not found");
     }
-    if (body.name) account.name = body.name;
-    if (body.type) account.type = body.type;
-    return this.accountRepository.save(account);
+    if (body.name !== undefined) account.name = body.name;
+    if (body.type !== undefined) account.type = body.type;
+    if (body.balance !== undefined && body.balance !== null) {
+      const numBal = Number(body.balance);
+      account.balance = numBal;
+
+      const currentYear = new Date().getFullYear();
+      const currentMonth = new Date().getMonth() + 1;
+      const detail = await this.accountDetailRepository.findOne({
+        where: { accountId: id, month: currentMonth, year: currentYear },
+      });
+      if (detail) {
+        detail.value = numBal;
+        await this.accountDetailRepository.save(detail);
+      } else {
+        await this.accountDetailRepository.save({
+          accountId: id,
+          month: currentMonth,
+          year: currentYear,
+          value: numBal,
+        });
+      }
+    }
+    if (body.interestRate !== undefined) {
+      account.interestRate = body.interestRate !== null ? Number(body.interestRate) : null;
+    }
+    if (body.monthlyContribution !== undefined) {
+      account.monthlyContribution =
+        body.monthlyContribution !== null ? Number(body.monthlyContribution) : null;
+    }
+    const saved = await this.accountRepository.save(account);
+    return {
+      ...saved,
+      balance: Number(saved.balance),
+      interestRate:
+        saved.interestRate !== null && saved.interestRate !== undefined
+          ? Number(saved.interestRate)
+          : null,
+      monthlyContribution:
+        saved.monthlyContribution !== null && saved.monthlyContribution !== undefined
+          ? Number(saved.monthlyContribution)
+          : null,
+    };
   }
 
   @Delete("accounts/:id")
@@ -241,6 +356,17 @@ export class FinanceController {
       }
       await this.accountDetailRepository.save(detail);
     }
+
+    // Sync account.balance with the most recent detail value
+    const latestDetails = await this.accountDetailRepository.find({
+      where: { accountId: id },
+      order: { year: "DESC", month: "DESC" },
+    });
+    if (latestDetails.length > 0) {
+      account.balance = Number(latestDetails[0].value);
+      await this.accountRepository.save(account);
+    }
+
     return { success: true };
   }
 

@@ -4,9 +4,10 @@ import { FaCalendarAlt, FaHome, FaInfoCircle, FaPercentage } from "react-icons/f
 import FLPCard from "~/components/core/cards/FLPCard";
 import FLPHeading from "~/components/core/typography/FLPHeading";
 import FLPText from "~/components/core/typography/FLPText";
+import { useResponsive } from "~/context/ResponsiveContext";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
 
-interface MortgageTrackerProps {
+export interface MortgageTrackerProps {
   loanAmount: number;
   interestRate: number;
   remainingTerm: number;
@@ -16,6 +17,8 @@ interface MortgageTrackerProps {
   mortgageAccounts: any[];
   selectedAccountId: string | null;
   onSelectAccount: (id: string | null) => void;
+  isMobile?: boolean;
+  variant?: "desktop" | "mobile";
 }
 
 const MortgageTracker: FC<MortgageTrackerProps> = ({
@@ -28,8 +31,12 @@ const MortgageTracker: FC<MortgageTrackerProps> = ({
   mortgageAccounts,
   selectedAccountId,
   onSelectAccount,
+  isMobile: propIsMobile,
+  variant = "desktop",
 }) => {
   const { formatCurrency } = useFormatCurrency();
+  const { isMobile: contextIsMobile } = useResponsive();
+  const isMobileVariant = propIsMobile ?? (variant === "mobile" ? true : contextIsMobile);
   // Monthly Payment calculation
   // M = P [ i(1+i)^n ] / [ (1+i)^n - 1 ]
   const monthlyPayment = (() => {

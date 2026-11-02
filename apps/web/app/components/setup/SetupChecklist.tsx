@@ -7,7 +7,9 @@ import {
   FaChevronDown,
   FaChevronUp,
   FaHome,
+  FaPiggyBank,
   FaRegCircle,
+  FaShieldAlt,
   FaTimes,
   FaUniversity,
   FaUser,
@@ -16,6 +18,7 @@ import {
 import { useNavigate } from "react-router";
 import FLPHeading from "~/components/core/typography/FLPHeading";
 import FLPText from "~/components/core/typography/FLPText";
+import { useResponsive } from "~/context/ResponsiveContext";
 
 export interface ChecklistStep {
   key: string;
@@ -27,15 +30,19 @@ export interface ChecklistStep {
   onAction: () => void;
 }
 
-interface SetupChecklistProps {
+export interface SetupChecklistProps {
   hasAccounts: boolean;
   hasProfile: boolean;
   hasBudget: boolean;
+  hasSavings?: boolean;
+  hasPension?: boolean;
   hasMortgageAccount: boolean;
   hasRunForecast: boolean;
   completedSteps: string[];
-  onOpenConnectBank: () => void;
-  onOpenBudgetWizard: () => void;
+  onOpenConnectBank?: () => void;
+  onOpenBudgetWizard?: () => void;
+  isMobile?: boolean;
+  variant?: "desktop" | "mobile";
 }
 
 const STEP_DEFINITIONS = (props: SetupChecklistProps, navigate: ReturnType<typeof useNavigate>) => [
@@ -46,16 +53,27 @@ const STEP_DEFINITIONS = (props: SetupChecklistProps, navigate: ReturnType<typeo
     icon: <FaUniversity style={{ color: "#6363f1" }} />,
     isComplete: props.hasAccounts || props.completedSteps.includes("accounts"),
     actionLabel: "Connect Bank",
-    onAction: props.onOpenConnectBank,
+    onAction: props.onOpenConnectBank || (() => navigate("/app/accounts")),
   },
   {
-    key: "profile",
-    label: "Set up your financial profile",
-    description: "Enter your salary, employment type, and income sources. Used across all tools.",
-    icon: <FaUser style={{ color: "#8b5cf6" }} />,
-    isComplete: props.hasProfile || props.completedSteps.includes("profile"),
-    actionLabel: "Open Profile",
-    onAction: () => navigate("/app/profile"),
+    key: "savings",
+    label: "Track savings & forecast growth",
+    description:
+      "Track your savings accounts, set monthly regular contributions, and forecast compound growth.",
+    icon: <FaPiggyBank style={{ color: "#10b981" }} />,
+    isComplete: !!props.hasSavings || props.completedSteps.includes("savings"),
+    actionLabel: "Track Savings",
+    onAction: () => navigate("/app/savings"),
+  },
+  {
+    key: "pension",
+    label: "Track pension & retirement",
+    description:
+      "Track your pension pots, set contribution percentages (UK standard 5% + 3%), and forecast retirement growth.",
+    icon: <FaShieldAlt style={{ color: "#8b5cf6" }} />,
+    isComplete: !!props.hasPension || props.completedSteps.includes("pension"),
+    actionLabel: "Track Pension",
+    onAction: () => navigate("/app/pension"),
   },
   {
     key: "budget",
@@ -65,7 +83,16 @@ const STEP_DEFINITIONS = (props: SetupChecklistProps, navigate: ReturnType<typeo
     icon: <FaWallet style={{ color: "#f59e0b" }} />,
     isComplete: props.hasBudget || props.completedSteps.includes("budget"),
     actionLabel: "Set Up Budget",
-    onAction: () => navigate("/app/budget"),
+    onAction: props.onOpenBudgetWizard || (() => navigate("/app/budget")),
+  },
+  {
+    key: "profile",
+    label: "Set up your financial profile",
+    description: "Enter your salary, employment type, and income sources. Used across all tools.",
+    icon: <FaUser style={{ color: "#8b5cf6" }} />,
+    isComplete: props.hasProfile || props.completedSteps.includes("profile"),
+    actionLabel: "Open Profile",
+    onAction: () => navigate("/app/profile"),
   },
   {
     key: "runway",
@@ -121,7 +148,7 @@ const SetupChecklist: FC<SetupChecklistProps> = (props) => {
         borderColor: "primary",
         backgroundColor: "rgba(99,99,241,0.04)",
         overflow: "hidden",
-        marginBottom: "8px",
+        marginBottom: "24px",
         transition: "all 0.3s ease",
       })}
     >
@@ -129,49 +156,31 @@ const SetupChecklist: FC<SetupChecklistProps> = (props) => {
       <div
         className={css({
           display: "flex",
-          alignItems: "center",
           justifyContent: "space-between",
+          alignItems: "center",
           padding: "16px 20px",
           cursor: "pointer",
+          userSelect: "none",
           borderBottom: expanded ? "1px solid" : "none",
           borderColor: "border",
+          _hover: { backgroundColor: "rgba(99,99,241,0.07)" },
         })}
-        role="button"
-        tabIndex={0}
-        onClick={() => setExpanded((p) => !p)}
-        onKeyDown={(e) => {
-          if (e.key === "Enter" || e.key === " ") setExpanded((p) => !p);
-        }}
+        onClick={() => setExpanded(!expanded)}
       >
-        <div style={{ display: "flex", alignItems: "center", gap: "12px", flex: 1 }}>
-          <div
-            className={css({
-              width: "36px",
-              height: "36px",
-              borderRadius: "full",
-              backgroundColor: "rgba(99,99,241,0.12)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontSize: "16px",
-              flexShrink: 0,
-            })}
-          >
-            🚀
-          </div>
-          <div style={{ flex: 1 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-              <FLPHeading as="h3" size="sm">
-                Get started with Flump
+        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+          <div>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <FLPHeading as="h4" size="sm">
+                Getting Started with Flump
               </FLPHeading>
               <span
                 className={css({
                   fontSize: "xs",
                   fontWeight: "bold",
+                  color: "primary",
+                  backgroundColor: "rgba(99,99,241,0.12)",
                   padding: "2px 8px",
                   borderRadius: "full",
-                  backgroundColor: "rgba(99,99,241,0.12)",
-                  color: "primary",
                 })}
               >
                 {completedCount} / {steps.length}
@@ -233,11 +242,11 @@ const SetupChecklist: FC<SetupChecklistProps> = (props) => {
         <div
           className={css({
             display: "grid",
-            gridTemplateColumns: "repeat(2, 1fr)",
+            gridTemplateColumns: isMobileVariant ? "1fr" : { base: "1fr", md: "repeat(2, 1fr)" },
             gap: "0",
           })}
         >
-          {steps.map((step, idx) => (
+          {steps.map((step) => (
             <div
               key={step.key}
               className={css({
@@ -245,8 +254,7 @@ const SetupChecklist: FC<SetupChecklistProps> = (props) => {
                 alignItems: "flex-start",
                 gap: "12px",
                 padding: "16px 20px",
-                borderBottom: idx < steps.length - 2 ? "1px solid" : "none",
-                borderRight: idx % 2 === 0 ? "1px solid" : "none",
+                borderBottom: "1px solid",
                 borderColor: "border",
                 backgroundColor: step.isComplete ? "rgba(16,185,129,0.03)" : "transparent",
                 transition: "background-color 0.2s",

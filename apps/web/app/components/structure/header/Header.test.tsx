@@ -1,3 +1,4 @@
+import { fireEvent, screen } from "@testing-library/react";
 import mockUser from "__mocks__/user";
 
 import { vi } from "vitest";
@@ -41,6 +42,7 @@ describe("<Header />", () => {
     expect(baseElement).toMatchSnapshot();
   });
   test("renders without ColorModeSwitch", () => {
+    mocks.mockUseLoaderData.mockReturnValue({ user: undefined });
     const { baseElement } = customRender(<Header />);
     expect(baseElement).toMatchSnapshot();
   });
@@ -49,5 +51,30 @@ describe("<Header />", () => {
     mocks.mockUseLoaderData.mockReturnValue({ user: mockUser });
     const { baseElement } = customRender(<Header />);
     expect(baseElement).toMatchSnapshot();
+  });
+
+  test("applies sticky navigation styles", () => {
+    mocks.mockUseLoaderData.mockReturnValue({ user: undefined });
+    const { container } = customRender(<Header />);
+    const header = container.querySelector("header");
+    const nav = container.querySelector("nav");
+    expect(header).not.toBeNull();
+    expect(nav).not.toBeNull();
+    expect(header?.className).toContain("pos_sticky");
+    expect(nav?.className).toContain("pos_sticky");
+  });
+
+  test("renders mobile variant and opens/closes mobile navigation drawer", () => {
+    mocks.mockUseLoaderData.mockReturnValue({ user: mockUser });
+    customRender(<Header isMobile variant="mobile" />);
+    const toggleBtn = screen.getByTestId("mobile-menu-toggle");
+    expect(toggleBtn).not.toBeNull();
+
+    fireEvent.click(toggleBtn);
+    expect(screen.getByTestId("mobile-nav-drawer")).not.toBeNull();
+
+    const closeBtn = screen.getByLabelText("Close navigation menu");
+    fireEvent.click(closeBtn);
+    expect(screen.queryByTestId("mobile-nav-drawer")).toBeNull();
   });
 });

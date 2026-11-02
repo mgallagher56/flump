@@ -14,10 +14,24 @@ export class Account {
   @Column({
     type: "varchar",
   })
-  type: "Current" | "Saving" | "Mortgage" | "Loan" | "Credit Card" | "Owed" | "Investment";
+  type:
+    | "Current"
+    | "Saving"
+    | "Mortgage"
+    | "Loan"
+    | "Credit Card"
+    | "Owed"
+    | "Investment"
+    | "Pension";
 
   @Column("decimal", { precision: 12, scale: 2 })
   balance: number;
+
+  @Column("decimal", { name: "interest_rate", precision: 5, scale: 2, nullable: true })
+  interestRate: number | null;
+
+  @Column("decimal", { name: "monthly_contribution", precision: 12, scale: 2, nullable: true })
+  monthlyContribution: number | null;
 
   @Column()
   currency: string;

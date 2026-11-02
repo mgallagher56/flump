@@ -9,6 +9,7 @@ import {
   FaHandHoldingUsd,
   FaHome,
   FaPiggyBank,
+  FaShieldAlt,
   FaUserFriends,
   FaWallet,
 } from "react-icons/fa";
@@ -27,7 +28,7 @@ import type { loader } from "~/routes/app.accounts._index";
 import { monthYearSort } from "~/utils/accounts";
 import { currentMonth, currentYear } from "~/utils/utils";
 
-const { CURRENT, SAVING, MORTGAGE, CREDIT_CARD, LOAN, OWED, INVESTMENT } = AccountTypeEnum;
+const { CURRENT, SAVING, MORTGAGE, CREDIT_CARD, LOAN, OWED, INVESTMENT, PENSION } = AccountTypeEnum;
 
 const AccountsContainer: FC = () => {
   const { formatCurrency } = useFormatCurrency();
@@ -38,7 +39,7 @@ const AccountsContainer: FC = () => {
     bankConnections = [],
   } = useLoaderData<typeof loader>();
   const accountTypeArr = useMemo(
-    () => [CURRENT, SAVING, INVESTMENT, CREDIT_CARD, MORTGAGE, LOAN, OWED],
+    () => [CURRENT, SAVING, INVESTMENT, PENSION, CREDIT_CARD, MORTGAGE, LOAN, OWED],
     [],
   );
 
@@ -49,23 +50,24 @@ const AccountsContainer: FC = () => {
 
     accounts.forEach((acc: Account) => {
       const accDetails = accountDetails
-        .filter((detail: AccountDetail) => detail.account_id === acc.id)
+        .filter((detail: any) => (detail.account_id || detail.accountId) === acc.id)
         .sort(monthYearSort);
 
-      if (accDetails.length === 0) return;
-
-      const curIndex = accDetails.findIndex(
-        (detail: AccountDetail) => detail.month === currentMonth && detail.year === currentYear,
-      );
-
-      let balance = 0;
-      if (curIndex !== -1) {
-        balance = accDetails[curIndex]?.value ?? 0;
-      } else {
-        balance = accDetails[accDetails.length - 1]?.value ?? 0;
+      let balance = Number(acc.balance) || 0;
+      if (accDetails.length > 0) {
+        const curIndex = accDetails.findIndex(
+          (detail: any) => detail.month === currentMonth && detail.year === currentYear,
+        );
+        if (curIndex !== -1) {
+          balance = Number(accDetails[curIndex]?.value) ?? balance;
+        } else {
+          balance = Number(accDetails[accDetails.length - 1]?.value) ?? balance;
+        }
       }
 
-      const isAsset = [CURRENT, SAVING, OWED, INVESTMENT].includes(acc.type as AccountTypeEnum);
+      const isAsset = [CURRENT, SAVING, OWED, INVESTMENT, PENSION].includes(
+        acc.type as AccountTypeEnum,
+      );
       if (isAsset) {
         totalAssets += balance;
       } else {
@@ -87,23 +89,25 @@ const AccountsContainer: FC = () => {
 
     accounts.forEach((acc: Account) => {
       const accDetails = accountDetails
-        .filter((detail: AccountDetail) => detail.account_id === acc.id)
+        .filter((detail: any) => (detail.account_id || detail.accountId) === acc.id)
         .sort(monthYearSort);
 
-      let balance = 0;
+      let balance = Number(acc.balance) || 0;
       if (accDetails.length > 0) {
         const curIndex = accDetails.findIndex(
-          (detail: AccountDetail) => detail.month === currentMonth && detail.year === currentYear,
+          (detail: any) => detail.month === currentMonth && detail.year === currentYear,
         );
         balance =
           curIndex !== -1
-            ? (accDetails[curIndex]?.value ?? 0)
-            : (accDetails[accDetails.length - 1]?.value ?? 0);
+            ? (Number(accDetails[curIndex]?.value) ?? balance)
+            : (Number(accDetails[accDetails.length - 1]?.value) ?? balance);
       } else {
-        balance = acc.balance ?? 0;
+        balance = Number(acc.balance) ?? 0;
       }
 
-      const isAsset = [CURRENT, SAVING, OWED, INVESTMENT].includes(acc.type as AccountTypeEnum);
+      const isAsset = [CURRENT, SAVING, OWED, INVESTMENT, PENSION].includes(
+        acc.type as AccountTypeEnum,
+      );
       if (isAsset && balance > 0) {
         totalAssets += balance;
         typeTotals[acc.type] = (typeTotals[acc.type] || 0) + balance;
@@ -114,6 +118,7 @@ const AccountsContainer: FC = () => {
       [CURRENT]: "#6363F1",
       [SAVING]: "#10B981",
       [INVESTMENT]: "#F59E0B",
+      [PENSION]: "#8B5CF6",
       [OWED]: "#64748b",
     };
 
@@ -143,6 +148,8 @@ const AccountsContainer: FC = () => {
         return <FaPiggyBank className={iconStyle} style={{ color: "#10b981" }} />;
       case INVESTMENT:
         return <FaChartLine className={iconStyle} style={{ color: "#f59e0b" }} />;
+      case PENSION:
+        return <FaShieldAlt className={iconStyle} style={{ color: "#8B5CF6" }} />;
       case CREDIT_CARD:
         return <FaCreditCard className={iconStyle} style={{ color: "#ec4899" }} />;
       case MORTGAGE:
@@ -405,13 +412,14 @@ const AccountsContainer: FC = () => {
                             </div>
                             <div className={cardListStyle}>
                               {accounts.map(
-                                ({ name, id, type }) =>
+                                ({ name, id, type, balance }) =>
                                   type === accountType && (
                                     <AccountsCard
                                       key={id}
                                       accountId={id}
                                       name={name}
                                       type={type as AccountTypeEnum}
+                                      balance={balance !== undefined ? Number(balance) : undefined}
                                     />
                                   ),
                               )}

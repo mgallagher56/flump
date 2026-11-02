@@ -26,6 +26,10 @@ import { UserProfileController } from "./user-profile.controller";
       useFactory: (configService: ConfigService) => {
         const url = configService.get<string>("DATABASE_URL");
         if (url) {
+          const isLocal =
+            url.includes("localhost") ||
+            url.includes("127.0.0.1") ||
+            configService.get<string>("DB_SSL") === "false";
           return {
             type: "postgres",
             url,
@@ -39,7 +43,7 @@ import { UserProfileController } from "./user-profile.controller";
               TaxRecord,
             ],
             synchronize: true,
-            ssl: { rejectUnauthorized: false },
+            ssl: isLocal ? false : { rejectUnauthorized: false },
           };
         }
         return {

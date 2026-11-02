@@ -1,3 +1,4 @@
+import * as net from "node:net";
 import { ConfigService } from "@nestjs/config";
 import { NestFactory } from "@nestjs/core";
 import { AppModule } from "./app.module";
@@ -27,6 +28,22 @@ async function bootstrap() {
     origin: corsOrigins,
     credentials: true,
   });
-  await app.listen(configService.get("PORT") ?? 3000);
+  const port = Number(configService.get("PORT") ?? 4000);
+  await app.listen(port);
+
+  // If running on port 4000, forward port 3000 as well to support existing frontend sessions
+  if (port === 4000) {
+    const proxy = net.createServer((socket) => {
+      const client = net.createConnection({ port: 4000 });
+      socket.pipe(client);
+      client.pipe(socket);
+      socket.on("error", () => client.destroy());
+      client.on("error", () => socket.destroy());
+    });
+    proxy.listen(3000, () => {
+      console.log("Port 3000 proxy forwarding to 4000");
+    });
+    proxy.on("error", () => {});
+  }
 }
 bootstrap();

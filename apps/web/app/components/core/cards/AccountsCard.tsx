@@ -7,30 +7,45 @@ import FLPHeading from "~/components/core/typography/FLPHeading";
 import AddEditAccountsDialogBtn from "~/components/dialogs/addEditAccountsDialog/AddEditAccountsDialog";
 import type { AccountDetail } from "~/containers/accounts/types";
 import type { AccountTypeEnum } from "~/containers/accounts/utils";
+import { useResponsive } from "~/context/ResponsiveContext";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
 import type { loader } from "~/routes/app.accounts._index";
 import { monthYearSort } from "~/utils/accounts";
 import { currentMonth, currentYear } from "~/utils/utils";
 import FLPCard from "./FLPCard";
 
-interface AccountsCardProp {
+export interface AccountsCardProp {
   accountId: string;
   name: string;
   type: AccountTypeEnum;
+  balance?: number;
+  isMobile?: boolean;
+  variant?: "desktop" | "mobile";
 }
 
-const AccountsCard: FC<AccountsCardProp> = ({ accountId, name, type }) => {
+const AccountsCard: FC<AccountsCardProp> = ({
+  accountId,
+  name,
+  type,
+  balance,
+  isMobile: propIsMobile,
+  variant = "desktop",
+}) => {
   const { formatCurrency } = useFormatCurrency();
+  const { isMobile: contextIsMobile } = useResponsive();
+  const isMobileVariant = propIsMobile ?? (variant === "mobile" ? true : contextIsMobile);
   const { t } = useTranslation();
   const navigate = useNavigate();
   const {
     accountDetails = [],
   }: {
-    accountDetails?: AccountDetail[];
+    accountDetails?: (AccountDetail & { accountId?: string })[];
   } = useLoaderData<typeof loader>();
 
   const sortedAccountDetails = useMemo(() => {
-    return accountDetails.filter((account) => account.account_id === accountId).sort(monthYearSort);
+    return accountDetails
+      .filter((account) => (account.account_id || (account as any).accountId) === accountId)
+      .sort(monthYearSort);
   }, [accountDetails, accountId]);
 
   const currentMonthIndex = sortedAccountDetails.findIndex(
@@ -38,20 +53,51 @@ const AccountsCard: FC<AccountsCardProp> = ({ accountId, name, type }) => {
   );
 
   const accountDetailYear = useMemo(() => {
-    if (sortedAccountDetails.length === 12) return sortedAccountDetails;
+    if (sortedAccountDetails.length <= 12) return sortedAccountDetails;
     if (currentMonthIndex === -1) return sortedAccountDetails.slice(-12);
-    return sortedAccountDetails.slice(currentMonthIndex - 11, currentMonthIndex + 1);
+    return sortedAccountDetails.slice(Math.max(0, currentMonthIndex - 11), currentMonthIndex + 1);
   }, [currentMonthIndex, sortedAccountDetails]);
 
-  const accountBalance = accountDetailYear[11]?.value;
-  const prevAccountBalance = accountDetailYear[10]?.value;
-  const secondPreviousAccountBalance = accountDetailYear[9]?.value;
-  const prevPercentageChangeValue = Math.round(
-    ((prevAccountBalance - secondPreviousAccountBalance) / secondPreviousAccountBalance) * 100,
-  );
-  const currentPercentageChangeValue = Math.round(
-    ((accountBalance - prevAccountBalance) / prevAccountBalance) * 100,
-  );
+  const latestDetail =
+    currentMonthIndex !== -1
+      ? sortedAccountDetails[currentMonthIndex]
+      : sortedAccountDetails[sortedAccountDetails.length - 1];
+
+  const currentBalance =
+    balance !== undefined
+      ? Number(balance)
+      : latestDetail?.value !== undefined
+        ? Number(latestDetail.value)
+        : undefined;
+
+  const prevDetail =
+    currentMonthIndex > 0
+      ? sortedAccountDetails[currentMonthIndex - 1]
+      : sortedAccountDetails.length > 1
+        ? sortedAccountDetails[sortedAccountDetails.length - 2]
+        : undefined;
+
+  const prevAccountBalance = prevDetail?.value !== undefined ? Number(prevDetail.value) : undefined;
+  const secondPreviousDetail =
+    currentMonthIndex > 1
+      ? sortedAccountDetails[currentMonthIndex - 2]
+      : sortedAccountDetails.length > 2
+        ? sortedAccountDetails[sortedAccountDetails.length - 3]
+        : undefined;
+  const secondPreviousAccountBalance =
+    secondPreviousDetail?.value !== undefined ? Number(secondPreviousDetail.value) : undefined;
+
+  const prevPercentageChangeValue =
+    prevAccountBalance !== undefined && secondPreviousAccountBalance
+      ? Math.round(
+          ((prevAccountBalance - secondPreviousAccountBalance) / secondPreviousAccountBalance) *
+            100,
+        )
+      : 0;
+  const currentPercentageChangeValue =
+    currentBalance !== undefined && prevAccountBalance
+      ? Math.round(((currentBalance - prevAccountBalance) / prevAccountBalance) * 100)
+      : 0;
 
   const onViewClick = useCallback(
     () => navigate(`/app/accounts/${accountId}`),
@@ -132,11 +178,11 @@ const AccountsCard: FC<AccountsCardProp> = ({ accountId, name, type }) => {
   });
 
   const cardStyle = css({
-    height: "280px",
+    height: isMobileVariant ? "220px" : "280px",
     display: "flex",
     flexDirection: "column",
     justifyContent: "space-between",
-    padding: "20px",
+    padding: isMobileVariant ? "14px" : "20px",
     position: "relative",
     overflow: "hidden",
     transition: "transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease",
@@ -147,14 +193,17 @@ const AccountsCard: FC<AccountsCardProp> = ({ accountId, name, type }) => {
     },
   });
 
-  const isUp = prevAccountBalance <= accountBalance;
+  const isUp =
+    prevAccountBalance !== undefined && currentBalance !== undefined
+      ? prevAccountBalance <= currentBalance
+      : true;
   const trendLabel =
     currentPercentageChangeValue >= 0
       ? `+${currentPercentageChangeValue}%`
       : `${currentPercentageChangeValue}%`;
 
   return (
-    <FLPCard className={cardStyle} id={accountId}>
+    <FLPCard className={cardStyle} id={accountId} isMobile={isMobileVariant}>
       <div className={headerWrapperStyle}>
         <div
           className={headerTextStyle}
@@ -181,10 +230,10 @@ const AccountsCard: FC<AccountsCardProp> = ({ accountId, name, type }) => {
         onKeyDown={handleKeyDown}
       >
         <div className={balanceRowStyle}>
-          {!!accountBalance && (
+          {currentBalance !== undefined && (
             <>
-              <span className={balanceValStyle}>{formatCurrency(accountBalance)}</span>
-              {!!prevAccountBalance && (
+              <span className={balanceValStyle}>{formatCurrency(currentBalance)}</span>
+              {prevAccountBalance !== undefined && (
                 <span className={percentBadgeStyle(isUp)}>
                   {isUp ? "↑" : "↓"} {trendLabel}
                 </span>

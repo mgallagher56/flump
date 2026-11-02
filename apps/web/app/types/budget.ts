@@ -18,13 +18,15 @@ export type BudgetCategory = BudgetEntry["category"];
 
 /** Normalise any entry to a monthly amount */
 export function toMonthly(entry: BudgetEntry): number {
+  const amount = Number(entry.amount);
+  const safeAmount = Number.isFinite(amount) ? amount : 0;
   switch (entry.frequency) {
     case "annual":
-      return entry.amount / 12;
+      return safeAmount / 12;
     case "weekly":
-      return entry.amount * (52 / 12);
+      return safeAmount * (52 / 12);
     default:
-      return entry.amount;
+      return safeAmount;
   }
 }
 

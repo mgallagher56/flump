@@ -16,3 +16,11 @@ export const FLPCardStyles = css({
     transform: "translate3d(-2px, -4px, 0)",
   },
 });
+
+export const FLPCardMobileStyles = css({
+  padding: "3",
+  borderRadius: "md",
+  "&:hover": {
+    transform: "none",
+  },
+});

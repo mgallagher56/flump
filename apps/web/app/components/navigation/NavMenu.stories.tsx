@@ -14,7 +14,6 @@ export const Default: Story = {
   args: {
     routes: [
       { key: "home", route: "/" },
-      { key: "dashboard", route: "/app" },
       { key: "accounts", route: "/app/accounts" },
     ],
   },

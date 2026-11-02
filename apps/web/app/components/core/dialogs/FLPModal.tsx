@@ -4,8 +4,9 @@ import { type FC, type ReactElement, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import FLPButton from "~/components/core/buttons/FLPButton";
 import FLPButtonGroup from "~/components/core/buttons/FLPButtonGroup";
+import { useResponsive } from "~/context/ResponsiveContext";
 
-interface FLPModalProps {
+export interface FLPModalProps {
   additionalActionBtns?: ReactElement<ReactElement>;
   triggerBtn: ReactElement<ReactElement>;
   confirmButton?: {
@@ -20,6 +21,8 @@ interface FLPModalProps {
   onConfirm: () => void;
   onClose: () => void;
   children: React.ReactNode;
+  isMobile?: boolean;
+  variant?: "default" | "bottomSheet" | "mobile";
 }
 
 const FLPModal: FC<FLPModalProps> = ({
@@ -33,8 +36,13 @@ const FLPModal: FC<FLPModalProps> = ({
   triggerBtn,
   onClose,
   onConfirm,
+  isMobile: propIsMobile,
+  variant = "default",
 }) => {
   const { t } = useTranslation();
+  const { isMobile: contextIsMobile } = useResponsive();
+  const isMobileVariant =
+    propIsMobile ?? (variant === "bottomSheet" || variant === "mobile" ? true : contextIsMobile);
 
   const handleOnConfirm = useCallback(() => {
     onConfirm();
@@ -49,7 +57,7 @@ const FLPModal: FC<FLPModalProps> = ({
     zIndex: 50,
   });
 
-  const contentStyle = css({
+  const desktopContentStyle = css({
     position: "fixed",
     top: "50%",
     left: "50%",
@@ -65,6 +73,34 @@ const FLPModal: FC<FLPModalProps> = ({
     zIndex: 50,
     outline: "none",
     color: "text.primary",
+  });
+
+  const mobileBottomSheetStyle = css({
+    position: "fixed",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: "surface",
+    borderTop: "1px solid",
+    borderColor: "border",
+    borderTopLeftRadius: "16px",
+    borderTopRightRadius: "16px",
+    boxShadow: "0 -10px 30px rgba(0, 0, 0, 0.35)",
+    padding: "16px 16px calc(24px + env(safe-area-inset-bottom, 0px))",
+    width: "100%",
+    maxHeight: "88vh",
+    overflowY: "auto",
+    zIndex: 60,
+    outline: "none",
+    color: "text.primary",
+  });
+
+  const dragHandleStyle = css({
+    width: "40px",
+    height: "4px",
+    borderRadius: "full",
+    backgroundColor: "border",
+    margin: "0 auto 14px auto",
   });
 
   const headerStyle = css({
@@ -88,6 +124,7 @@ const FLPModal: FC<FLPModalProps> = ({
     alignItems: "center",
     marginTop: "24px",
     gap: "16px",
+    flexWrap: "wrap",
   });
 
   return (
@@ -95,7 +132,12 @@ const FLPModal: FC<FLPModalProps> = ({
       <Dialog.Trigger asChild>{triggerBtn}</Dialog.Trigger>
       <Dialog.Portal>
         <Dialog.Overlay className={overlayStyle} />
-        <Dialog.Content ref={contentRef} className={contentStyle}>
+        <Dialog.Content
+          ref={contentRef}
+          className={isMobileVariant ? mobileBottomSheetStyle : desktopContentStyle}
+          data-variant={isMobileVariant ? "mobile" : "desktop"}
+        >
+          {isMobileVariant && <div className={dragHandleStyle} data-testid="modal-drag-handle" />}
           <div className={headerStyle}>
             <Dialog.Title className={titleStyle}>{title}</Dialog.Title>
           </div>
@@ -103,13 +145,14 @@ const FLPModal: FC<FLPModalProps> = ({
           <div className={footerStyle}>
             <div>{additionalActionBtns}</div>
             <FLPButtonGroup>
-              <FLPButton variant="outline" onClick={onClose}>
+              <FLPButton isMobile={isMobileVariant} variant="outline" onClick={onClose}>
                 {t("close")}
               </FLPButton>
               {onConfirm && (
                 <FLPButton
                   disabled={disabled}
                   form={confirmButton?.id}
+                  isMobile={isMobileVariant}
                   type="submit"
                   onClick={handleOnConfirm}
                 >

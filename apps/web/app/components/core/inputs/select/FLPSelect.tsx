@@ -1,7 +1,8 @@
 import { css } from "@repo/ui/styled-system/css";
 import type { FC, SelectHTMLAttributes } from "react";
+import { useResponsive } from "~/context/ResponsiveContext";
 
-interface FLPSelectProps
+export interface FLPSelectProps
   extends Omit<SelectHTMLAttributes<HTMLSelectElement>, "value" | "onChange"> {
   label: string;
   isLabelHidden?: boolean;
@@ -12,6 +13,8 @@ interface FLPSelectProps
   };
   value: string[];
   onValueChange: (e: { value: string[] }) => void;
+  isMobile?: boolean;
+  variant?: "desktop" | "mobile";
 }
 
 const FLPSelect: FC<FLPSelectProps> = ({
@@ -24,13 +27,19 @@ const FLPSelect: FC<FLPSelectProps> = ({
   onValueChange,
   className,
   style,
+  isMobile: propIsMobile,
+  variant = "desktop",
   ...props
 }) => {
+  const { isMobile: contextIsMobile } = useResponsive();
+  const isMobileVariant = propIsMobile ?? (variant === "mobile" ? true : contextIsMobile);
+  const resolvedDirection = isMobileVariant ? "column" : flexDirection;
+
   const containerStyle = css({
     display: "flex",
-    flexDirection,
-    alignItems: flexDirection === "row" ? "center" : "stretch",
-    gap: gap || (flexDirection === "row" ? "16px" : "8px"),
+    flexDirection: resolvedDirection,
+    alignItems: resolvedDirection === "row" ? "center" : "stretch",
+    gap: gap || (resolvedDirection === "row" ? "16px" : "8px"),
     width: "100%",
   });
 
@@ -42,12 +51,13 @@ const FLPSelect: FC<FLPSelectProps> = ({
 
   const selectStyle = css({
     width: "100%",
-    padding: "10px 14px",
-    fontSize: "sm",
+    padding: isMobileVariant ? "12px 14px" : "10px 14px",
+    minHeight: isMobileVariant ? "44px" : undefined,
+    fontSize: isMobileVariant ? "16px" : "sm",
     borderRadius: "sm",
     border: "1px solid",
     borderColor: "border",
-    backgroundColor: "surface", // Matches card/dialog surface
+    backgroundColor: "surface",
     color: "text.primary",
     outline: "none",
     transition: "all 0.2s",
@@ -59,7 +69,7 @@ const FLPSelect: FC<FLPSelectProps> = ({
   });
 
   return (
-    <div className={containerStyle}>
+    <div className={containerStyle} data-variant={isMobileVariant ? "mobile" : "desktop"}>
       {!isLabelHidden && (
         <label className={labelStyle} htmlFor={label}>
           {label}

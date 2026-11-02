@@ -150,28 +150,22 @@ const ConnectBankWizard: FC<ConnectBankWizardProps> = ({ onSuccess }) => {
     if (!selectedBank || !tokenInput.trim()) return;
     setStep("syncing");
 
-    const apiUrl = (window as any).ENV?.VITE_API_URL || "http://localhost:4000";
-    const sessionToken = "mock-session-token";
-
     try {
-      const res = await fetch(`${apiUrl}/bank-connections`, {
+      const formData = new FormData();
+      formData.append("intent", "connectBank");
+      formData.append("institutionId", selectedBank.id);
+      formData.append("token", tokenInput.trim());
+
+      const res = await fetch("/app/accounts", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${sessionToken}`,
-        },
-        body: JSON.stringify({
-          institutionId: selectedBank.id,
-          token: tokenInput.trim(),
-        }),
+        body: formData,
       });
 
       const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.message || "Failed to authenticate Token");
+      if (!res.ok || data.error) {
+        throw new Error(data.error || data.message || "Failed to authenticate Token");
       }
 
-      // Sync success
       setImportedCount(2); // starling standard imported accounts
       setStep("success");
       onSuccess?.();
@@ -185,34 +179,26 @@ const ConnectBankWizard: FC<ConnectBankWizardProps> = ({ onSuccess }) => {
     if (!selectedBank) return;
     setStep("syncing");
 
-    const apiUrl = (window as any).ENV?.VITE_API_URL || "http://localhost:4000";
-    const sessionToken = "mock-session-token";
-
     try {
-      const res = await fetch(`${apiUrl}/bank-connections`, {
+      const formData = new FormData();
+      formData.append("intent", "connectBank");
+      formData.append("institutionId", selectedBank.id);
+
+      const res = await fetch("/app/accounts", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${sessionToken}`,
-        },
-        body: JSON.stringify({
-          institutionId: selectedBank.id,
-          // note: token connection handled by handleConnectWithToken
-        }),
+        body: formData,
       });
 
       const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.message || "Sync request failed");
+      if (!res.ok || data.error) {
+        throw new Error(data.error || data.message || "Sync request failed");
       }
 
-      // Check if server resolved real OAuth redirect url
       if (data.oauth && data.redirectUrl) {
         window.location.href = data.redirectUrl;
         return;
       }
 
-      // If mock connection succeeded
       setImportedCount(selectedBank.accounts.length);
       setStep("success");
       onSuccess?.();
