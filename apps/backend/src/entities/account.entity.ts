@@ -33,6 +33,9 @@ export class Account {
   @Column("decimal", { name: "monthly_contribution", precision: 12, scale: 2, nullable: true })
   monthlyContribution: number | null;
 
+  @Column({ name: "is_current", type: "boolean", default: true, nullable: true })
+  isCurrent: boolean;
+
   @Column()
   currency: string;
 

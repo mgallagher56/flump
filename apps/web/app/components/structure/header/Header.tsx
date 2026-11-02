@@ -107,57 +107,59 @@ const Header: FC<HeaderProps> = ({ isMobile: propIsMobile, variant }): ReactElem
   };
 
   return (
-    <header className={headerStyles}>
-      <nav className={navStyles}>
-        <FLPBox className={menuStyles}>
-          <HomeLogo />
-          {!isMobileVariant && (
-            <div className={desktopMenuLinksStyles}>
-              <NavMenu routes={[{ key: "home", route: "/" }]} />
-              {!!user && <NavMenu routes={AUTH_DESKTOP_NAV_ROUTES} />}
-            </div>
-          )}
-        </FLPBox>
-        <FLPBox className={loginStyles}>
-          <ThemeToggle />
-          {!!user && (
-            <Link
-              aria-label="User Profile"
-              className={css({
-                display: "inline-flex",
-                alignItems: "center",
-                justifyContent: "center",
-                borderRadius: "full",
-                outline: "none",
-                transition: "transform 0.2s, box-shadow 0.2s",
-                "&:hover": { transform: "scale(1.05)" },
-                "&:focus-visible": {
-                  boxShadow: "0 0 0 2px token(colors.primary)",
-                },
-              })}
-              title="User Profile"
-              to="/app/profile"
+    <>
+      <header className={headerStyles}>
+        <nav className={navStyles}>
+          <FLPBox className={menuStyles}>
+            <HomeLogo />
+            {!isMobileVariant && (
+              <div className={desktopMenuLinksStyles}>
+                <NavMenu routes={[{ key: "home", route: "/" }]} />
+                {!!user && <NavMenu routes={AUTH_DESKTOP_NAV_ROUTES} />}
+              </div>
+            )}
+          </FLPBox>
+          <FLPBox className={loginStyles}>
+            <ThemeToggle />
+            {!!user && (
+              <Link
+                aria-label="User Profile"
+                className={css({
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  borderRadius: "full",
+                  outline: "none",
+                  transition: "transform 0.2s, box-shadow 0.2s",
+                  "&:hover": { transform: "scale(1.05)" },
+                  "&:focus-visible": {
+                    boxShadow: "0 0 0 2px token(colors.primary)",
+                  },
+                })}
+                title="User Profile"
+                to="/app/profile"
+              >
+                <UserAvatar bordered size={26} user={user} />
+              </Link>
+            )}
+            {!isMobileVariant && <UserLogin />}
+            <button
+              aria-expanded={drawerOpen}
+              aria-label="Open navigation menu"
+              className={mobileMenuButtonStyles}
+              data-testid="mobile-menu-toggle"
+              id="mobile-menu-toggle"
+              style={isMobileVariant ? { display: "inline-flex" } : undefined}
+              type="button"
+              onClick={handleToggleDrawer}
             >
-              <UserAvatar bordered size={26} user={user} />
-            </Link>
-          )}
-          {!isMobileVariant && <UserLogin />}
-          <button
-            aria-expanded={drawerOpen}
-            aria-label="Open navigation menu"
-            className={mobileMenuButtonStyles}
-            data-testid="mobile-menu-toggle"
-            id="mobile-menu-toggle"
-            style={isMobileVariant ? { display: "inline-flex" } : undefined}
-            type="button"
-            onClick={handleToggleDrawer}
-          >
-            <FaBars size={18} />
-          </button>
-        </FLPBox>
-      </nav>
+              <FaBars size={18} />
+            </button>
+          </FLPBox>
+        </nav>
+      </header>
       <MobileNavDrawer isOpen={drawerOpen} user={user} onClose={handleCloseDrawer} />
-    </header>
+    </>
   );
 };
 

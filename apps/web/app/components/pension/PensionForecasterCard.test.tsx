@@ -43,7 +43,30 @@ describe("PensionForecasterCard", () => {
     expect(screen.getByText(/UK Qualifying Earnings/i)).toBeDefined();
     expect(screen.getByText(/Adjust for Inflation/i)).toBeDefined();
     expect(screen.getByText(/Include UK State Pension/i)).toBeDefined();
+    expect(screen.getByText(/Salary Sacrifice/i)).toBeDefined();
+    expect(screen.getByText(/Pass on Employer NI/i)).toBeDefined();
     expect(screen.getByText(/UK Retirement Living Standard Benchmark/i)).toBeDefined();
+  });
+
+  it("toggles employer NI pass-through and calls onSyncToProfile", () => {
+    const onSync = vi.fn();
+    render(
+      <PensionForecasterCard
+        currentPotTotal={20000}
+        initialEmployeePercent={5.0}
+        initialEmployerPercent={3.0}
+        initialSalary={50000}
+        onSyncToProfile={onSync}
+      />,
+    );
+
+    const employerNiBtn = screen.getByRole("button", { name: /Pass on Employer NI/i });
+    expect(employerNiBtn).toBeDefined();
+    fireEvent.click(employerNiBtn);
+
+    const syncBtn = screen.getByRole("button", { name: /Sync Rates to Profile/i });
+    fireEvent.click(syncBtn);
+    expect(onSync).toHaveBeenCalledWith(5.0, 3.0, 50000, true, true);
   });
 
   it("shows UK £100k tax trap detector when salary is in the taper zone", () => {

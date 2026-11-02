@@ -1,4 +1,8 @@
-import { calculateUKEWNITakeHome, getCurrentUKTaxYear } from "@repo/common";
+import {
+  calculateEmployerNISavings,
+  calculateUKEWNITakeHome,
+  getCurrentUKTaxYear,
+} from "@repo/common";
 import { css } from "@repo/ui/styled-system/css";
 import { type FC, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -40,7 +44,7 @@ const headerContainerStyle = css({
 
 const inlineEditGridStyle = css({
   display: "grid",
-  gridTemplateColumns: { base: "1fr", sm: "1fr 1fr 1fr 1fr" },
+  gridTemplateColumns: { base: "1fr", sm: "repeat(3, 1fr) 1.5fr" },
   gap: "12px",
   padding: "14px",
   borderRadius: "lg",
@@ -102,6 +106,7 @@ export const PensionContainer: FC = () => {
           balance = Number(details[details.length - 1].value);
         }
 
+        const isCurrent = acc.isCurrent !== false;
         return {
           ...acc,
           balance,
@@ -109,8 +114,9 @@ export const PensionContainer: FC = () => {
             acc.interestRate !== undefined && acc.interestRate !== null
               ? Number(acc.interestRate)
               : 5.0,
+          isCurrent,
           monthlyContribution:
-            acc.monthlyContribution !== undefined && acc.monthlyContribution !== null
+            isCurrent && acc.monthlyContribution !== undefined && acc.monthlyContribution !== null
               ? Number(acc.monthlyContribution)
               : 0,
         };
@@ -122,9 +128,11 @@ export const PensionContainer: FC = () => {
     return pensionAccounts.reduce((sum, acc) => sum + (acc.balance || 0), 0);
   }, [pensionAccounts]);
 
-  // Direct monthly contributions set on individual pension pots
+  // Direct monthly contributions set on individual pension pots (current pots only)
   const directMonthlyContrib = useMemo(() => {
-    return pensionAccounts.reduce((sum, acc) => sum + (Number(acc.monthlyContribution) || 0), 0);
+    return pensionAccounts
+      .filter((acc) => acc.isCurrent !== false)
+      .reduce((sum, acc) => sum + (Number(acc.monthlyContribution) || 0), 0);
   }, [pensionAccounts]);
 
   // Portfolio balance-weighted average return rate
@@ -150,10 +158,22 @@ export const PensionContainer: FC = () => {
   const employerPercent =
     profile.pensionEmployerPercent ?? userProfile?.pensionEmployerPercent ?? 3.0;
   const isSalarySacrifice = profile.isSalarySacrifice ?? userProfile?.isSalarySacrifice ?? true;
+  const isSalarySacrificeEmployerNi =
+    profile.isSalarySacrificeEmployerNi ?? userProfile?.isSalarySacrificeEmployerNi ?? false;
   const employmentType = profile.employmentType ?? userProfile?.employmentType ?? "employed";
 
   const monthlyEmployeeContrib = (annualSalary * (employeePercent / 100)) / 12;
-  const monthlyEmployerContrib = (annualSalary * (employerPercent / 100)) / 12;
+  const standardMonthlyEmployerContrib = (annualSalary * (employerPercent / 100)) / 12;
+  const annualEmployerNiSavings =
+    isSalarySacrifice && isSalarySacrificeEmployerNi
+      ? calculateEmployerNISavings(
+          annualSalary,
+          annualSalary * (employeePercent / 100),
+          getCurrentUKTaxYear(),
+        )
+      : 0;
+  const monthlyEmployerNiContrib = annualEmployerNiSavings / 12;
+  const monthlyEmployerContrib = standardMonthlyEmployerContrib + monthlyEmployerNiContrib;
 
   // UK Tax & NI relief calculation for employee pension contribution
   const { netMonthlyCost, taxReliefMonthly } = useMemo(() => {
@@ -190,6 +210,9 @@ export const PensionContainer: FC = () => {
   const [editEmployeePct, setEditEmployeePct] = useState(employeePercent);
   const [editEmployerPct, setEditEmployerPct] = useState(employerPercent);
   const [editSalarySacrifice, setEditSalarySacrifice] = useState(isSalarySacrifice);
+  const [editSalarySacrificeEmployerNi, setEditSalarySacrificeEmployerNi] = useState(
+    isSalarySacrificeEmployerNi,
+  );
   const [isSavingRates, setIsSavingRates] = useState(false);
 
   useEffect(() => {
@@ -197,7 +220,14 @@ export const PensionContainer: FC = () => {
     setEditEmployeePct(employeePercent);
     setEditEmployerPct(employerPercent);
     setEditSalarySacrifice(isSalarySacrifice);
-  }, [annualSalary, employeePercent, employerPercent, isSalarySacrifice]);
+    setEditSalarySacrificeEmployerNi(isSalarySacrificeEmployerNi);
+  }, [
+    annualSalary,
+    employeePercent,
+    employerPercent,
+    isSalarySacrifice,
+    isSalarySacrificeEmployerNi,
+  ]);
 
   // Open wizard by default only if user has no pension accounts and hasn't dismissed/completed it
   useEffect(() => {
@@ -225,12 +255,16 @@ export const PensionContainer: FC = () => {
     newEmployeePct: number,
     newEmployerPct: number,
     newSalary?: number,
+    newSalarySacrifice?: boolean,
+    newEmployerNi?: boolean,
   ) => {
     try {
       await updateProfile({
         pensionPercent: newEmployeePct,
         pensionEmployerPercent: newEmployerPct,
         ...(newSalary ? { annualSalary: newSalary } : {}),
+        ...(newSalarySacrifice !== undefined ? { isSalarySacrifice: newSalarySacrifice } : {}),
+        ...(newEmployerNi !== undefined ? { isSalarySacrificeEmployerNi: newEmployerNi } : {}),
       });
     } catch (err) {
       console.error("Failed to sync pension rates to profile:", err);
@@ -245,6 +279,7 @@ export const PensionContainer: FC = () => {
         pensionPercent: editEmployeePct,
         pensionEmployerPercent: editEmployerPct,
         isSalarySacrifice: editSalarySacrifice,
+        isSalarySacrificeEmployerNi: editSalarySacrifice && editSalarySacrificeEmployerNi,
       });
       setIsEditingRates(false);
     } catch (err) {
@@ -318,6 +353,7 @@ export const PensionContainer: FC = () => {
         employerPercent={employerPercent}
         monthlyEmployeeContrib={monthlyEmployeeContrib}
         monthlyEmployerContrib={monthlyEmployerContrib}
+        monthlyEmployerNiContrib={monthlyEmployerNiContrib}
         netMonthlyCost={netMonthlyCost}
         potsCount={pensionAccounts.length}
         taxReliefMonthly={taxReliefMonthly}
@@ -439,8 +475,9 @@ export const PensionContainer: FC = () => {
               style={{
                 display: "flex",
                 flexDirection: "column",
+                gap: "8px",
                 justifyContent: "center",
-                marginTop: "18px",
+                marginTop: "8px",
               }}
             >
               <FLPCheckbox
@@ -448,7 +485,25 @@ export const PensionContainer: FC = () => {
                 id="pension-salary-sacrifice-checkbox"
                 label="Salary Sacrifice (saves NI)"
                 size="sm"
-                onChange={(e) => setEditSalarySacrifice(e.target.checked)}
+                onChange={(e) => {
+                  setEditSalarySacrifice(e.target.checked);
+                  if (!e.target.checked) {
+                    setEditSalarySacrificeEmployerNi(false);
+                  }
+                }}
+              />
+              <FLPCheckbox
+                checked={editSalarySacrifice && editSalarySacrificeEmployerNi}
+                disabled={!editSalarySacrifice}
+                id="pension-employer-ni-checkbox"
+                label="Pass on Employer NI"
+                description={
+                  editSalarySacrifice
+                    ? "Employer reinvests their NI saving into your pot"
+                    : "Requires salary sacrifice"
+                }
+                size="sm"
+                onChange={(e) => setEditSalarySacrificeEmployerNi(e.target.checked)}
               />
             </div>
           </div>
@@ -518,13 +573,24 @@ export const PensionContainer: FC = () => {
                 }}
               />
               <strong>Employer:</strong> {employerPercent}% (
-              {formatCurrency(monthlyEmployerContrib)}/mo)
+              {formatCurrency(standardMonthlyEmployerContrib)}/mo
+              {monthlyEmployerNiContrib > 0 && (
+                <span style={{ color: "#10b981", marginLeft: "4px" }}>
+                  + {formatCurrency(monthlyEmployerNiContrib)}/mo NI
+                </span>
+              )}
+              )
             </span>
           </div>
 
           <FLPText color="text.muted" fontSize="xs">
             Salary: <strong>{formatCurrency(annualSalary)}/yr</strong> ·{" "}
-            {isSalarySacrifice ? "Salary Sacrifice" : "Net Pay"} · Synced with User Profile
+            {isSalarySacrifice
+              ? isSalarySacrificeEmployerNi
+                ? "Salary Sacrifice + Employer NI"
+                : "Salary Sacrifice"
+              : "Net Pay"}{" "}
+            · Synced with User Profile
           </FLPText>
         </div>
       </FLPCard>
@@ -542,7 +608,9 @@ export const PensionContainer: FC = () => {
         directMonthlyContrib={directMonthlyContrib}
         initialEmployeePercent={employeePercent}
         initialEmployerPercent={employerPercent}
+        initialEmployerNiPassThrough={isSalarySacrificeEmployerNi}
         initialSalary={annualSalary}
+        initialSalarySacrifice={isSalarySacrifice}
         portfolioReturnRate={weightedReturnRate}
         onSyncToProfile={handleSyncContributions}
       />

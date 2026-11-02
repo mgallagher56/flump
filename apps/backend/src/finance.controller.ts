@@ -92,6 +92,7 @@ export class FinanceController {
         acc.monthlyContribution !== null && acc.monthlyContribution !== undefined
           ? Number(acc.monthlyContribution)
           : null,
+      isCurrent: acc.isCurrent !== false,
     }));
   }
 
@@ -113,6 +114,7 @@ export class FinanceController {
         account.monthlyContribution !== null && account.monthlyContribution !== undefined
           ? Number(account.monthlyContribution)
           : null,
+      isCurrent: account.isCurrent !== false,
     };
   }
 
@@ -195,11 +197,13 @@ export class FinanceController {
       balance?: number;
       interestRate?: number | null;
       monthlyContribution?: number | null;
+      isCurrent?: boolean;
     },
   ) {
     const userId = req.user.id;
     const initialBalance =
       body.balance !== undefined && body.balance !== null ? Number(body.balance) : 0;
+    const isCurrent = body.isCurrent !== undefined ? Boolean(body.isCurrent) : true;
     const account = await this.accountRepository.save({
       userId,
       name: body.name,
@@ -210,9 +214,10 @@ export class FinanceController {
           ? Number(body.interestRate)
           : null,
       monthlyContribution:
-        body.monthlyContribution !== undefined && body.monthlyContribution !== null
+        isCurrent && body.monthlyContribution !== undefined && body.monthlyContribution !== null
           ? Number(body.monthlyContribution)
           : null,
+      isCurrent,
       currency: "GBP",
     });
 
@@ -236,6 +241,7 @@ export class FinanceController {
         account.monthlyContribution !== null && account.monthlyContribution !== undefined
           ? Number(account.monthlyContribution)
           : null,
+      isCurrent: account.isCurrent !== false,
     };
   }
 
@@ -250,6 +256,7 @@ export class FinanceController {
       balance?: number;
       interestRate?: number | null;
       monthlyContribution?: number | null;
+      isCurrent?: boolean;
     },
   ) {
     const userId = req.user.id;
@@ -283,9 +290,15 @@ export class FinanceController {
     if (body.interestRate !== undefined) {
       account.interestRate = body.interestRate !== null ? Number(body.interestRate) : null;
     }
+    if (body.isCurrent !== undefined) {
+      account.isCurrent = Boolean(body.isCurrent);
+    }
     if (body.monthlyContribution !== undefined) {
       account.monthlyContribution =
         body.monthlyContribution !== null ? Number(body.monthlyContribution) : null;
+    }
+    if (account.isCurrent === false) {
+      account.monthlyContribution = null;
     }
     const saved = await this.accountRepository.save(account);
     return {
@@ -299,6 +312,7 @@ export class FinanceController {
         saved.monthlyContribution !== null && saved.monthlyContribution !== undefined
           ? Number(saved.monthlyContribution)
           : null,
+      isCurrent: saved.isCurrent !== false,
     };
   }
 

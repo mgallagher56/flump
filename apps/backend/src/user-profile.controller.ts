@@ -80,6 +80,7 @@ export class UserProfileController {
           pensionPercent: 5.0,
           pensionEmployerPercent: 3.0,
           isSalarySacrifice: true,
+          isSalarySacrificeEmployerNi: false,
           monthlySavingsTarget: null,
           savingsAllocationMode: "per_account",
           savingsDefaultInterestRate: 5.0,
@@ -112,6 +113,7 @@ export class UserProfileController {
       pensionPercent?: number;
       pensionEmployerPercent?: number;
       isSalarySacrifice?: boolean;
+      isSalarySacrificeEmployerNi?: boolean;
       monthlySavingsTarget?: number | null;
       savingsAllocationMode?: "total" | "per_account";
       savingsDefaultInterestRate?: number;
@@ -139,6 +141,7 @@ export class UserProfileController {
         pensionPercent: 5.0,
         pensionEmployerPercent: 3.0,
         isSalarySacrifice: true,
+        isSalarySacrificeEmployerNi: false,
         monthlySavingsTarget: null,
         savingsAllocationMode: "per_account",
         savingsDefaultInterestRate: 5.0,
@@ -166,6 +169,8 @@ export class UserProfileController {
     if (body.pensionEmployerPercent !== undefined)
       profile.pensionEmployerPercent = body.pensionEmployerPercent;
     if (body.isSalarySacrifice !== undefined) profile.isSalarySacrifice = body.isSalarySacrifice;
+    if (body.isSalarySacrificeEmployerNi !== undefined)
+      profile.isSalarySacrificeEmployerNi = body.isSalarySacrificeEmployerNi;
     if (body.monthlySavingsTarget !== undefined)
       profile.monthlySavingsTarget = body.monthlySavingsTarget ?? null;
     if (body.savingsAllocationMode !== undefined)

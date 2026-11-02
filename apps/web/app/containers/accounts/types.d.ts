@@ -6,5 +6,6 @@ export type Account = Omit<Partial<Database["public"]["Tables"]["accounts"]["Row
   balance?: number;
   interestRate?: number | null;
   monthlyContribution?: number | null;
+  isCurrent?: boolean;
 };
 export type AccountDetail = Partial<Database["public"]["Tables"]["account_details"]["Row"]>;

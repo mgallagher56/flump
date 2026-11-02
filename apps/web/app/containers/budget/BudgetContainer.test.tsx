@@ -11,10 +11,13 @@ vi.mock("react-router", () => ({
   useNavigate: () => vi.fn(),
 }));
 
-vi.mock("~/hooks/useUserProfile", () => ({
-  useUserProfile: () => ({ setProfile: vi.fn(), markChecklistStep: vi.fn() }),
-  DEFAULT_PROFILE: {},
-}));
+vi.mock("~/hooks/useUserProfile", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("~/hooks/useUserProfile")>();
+  return {
+    ...actual,
+    useUserProfile: () => ({ setProfile: vi.fn(), markChecklistStep: vi.fn() }),
+  };
+});
 
 vi.mock("~/utils/utils", () => ({
   currentMonth: 6,

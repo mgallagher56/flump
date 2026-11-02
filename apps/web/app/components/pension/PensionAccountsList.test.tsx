@@ -34,6 +34,7 @@ describe("PensionAccountsList", () => {
         balance: 3000,
         interestRate: 5.0,
         monthlyContribution: 0,
+        isCurrent: true,
       },
       {
         id: "p2",
@@ -41,7 +42,8 @@ describe("PensionAccountsList", () => {
         type: "Pension",
         balance: 27000,
         interestRate: 6.0,
-        monthlyContribution: 100,
+        monthlyContribution: 0,
+        isCurrent: false,
       },
     ];
 
@@ -55,5 +57,10 @@ describe("PensionAccountsList", () => {
     expect(screen.getByText("6.0% p.a.")).toBeDefined();
     expect(screen.getByText("Pot Allocation Breakdown")).toBeDefined();
     expect(screen.getByText(/Consolidation Tip:/i)).toBeDefined();
+
+    // Check badges and contributions
+    expect(screen.getByText("Current Pot")).toBeDefined();
+    expect(screen.getByText("Past Pot")).toBeDefined();
+    expect(screen.getByText("None (Past Pot)")).toBeDefined();
   });
 });

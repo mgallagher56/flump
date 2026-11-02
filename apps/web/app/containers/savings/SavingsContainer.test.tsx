@@ -38,19 +38,22 @@ vi.mock("react-router", () => ({
   }),
 }));
 
-vi.mock("~/hooks/useUserProfile", () => ({
-  useUserProfile: () => ({
-    profile: {
-      savingsAllocationMode: "per_account",
-      monthlySavingsTarget: 550,
-      savingsDefaultInterestRate: 5.0,
-      setupChecklistCompletedSteps: [],
-    },
-    setProfile: vi.fn(),
-    markChecklistStep: vi.fn().mockResolvedValue({}),
-  }),
-  DEFAULT_PROFILE: {},
-}));
+vi.mock("~/hooks/useUserProfile", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("~/hooks/useUserProfile")>();
+  return {
+    ...actual,
+    useUserProfile: () => ({
+      profile: {
+        savingsAllocationMode: "per_account",
+        monthlySavingsTarget: 550,
+        savingsDefaultInterestRate: 5.0,
+        setupChecklistCompletedSteps: [],
+      },
+      setProfile: vi.fn(),
+      markChecklistStep: vi.fn().mockResolvedValue({}),
+    }),
+  };
+});
 
 vi.mock("~/utils/utils", () => ({
   currentMonth: 6,

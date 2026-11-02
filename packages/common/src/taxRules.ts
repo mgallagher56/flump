@@ -293,6 +293,45 @@ export const UK_SCOTLAND_INCOME_TAX: Record<string, UKScotlandIncomeTaxYear> = {
 // NI is set UK-wide — applies to both EWNI and Scotland.
 // ---------------------------------------------------------------------------
 
+export interface UKEmployerNIRate {
+  /** Earnings threshold above which employer pays secondary NI */
+  secondaryThreshold: number;
+  /** Secondary Class 1 NI rate */
+  rate: number;
+}
+
+/**
+ * UK Employer (Secondary Class 1) National Insurance rates & thresholds.
+ * In the Autumn Budget 2024, the secondary threshold was reduced to £5,000/yr
+ * and the rate increased from 13.8% to 15.0% starting April 2025 (2025/26 tax year).
+ */
+export const UK_EMPLOYER_NI_RATES: Record<string, UKEmployerNIRate> = {
+  "2020/21": { secondaryThreshold: 8788, rate: 0.138 },
+  "2021/22": { secondaryThreshold: 8840, rate: 0.138 },
+  "2022/23": { secondaryThreshold: 9100, rate: 0.1453 }, // blended 15.05% / 13.8%
+  "2023/24": { secondaryThreshold: 9100, rate: 0.138 },
+  "2024/25": { secondaryThreshold: 9100, rate: 0.138 },
+  "2025/26": { secondaryThreshold: 5000, rate: 0.15 },
+  "2026/27": { secondaryThreshold: 5000, rate: 0.15 },
+};
+
+/**
+ * Calculates annual employer National Insurance savings on salary sacrificed for pension contributions.
+ * Under UK salary sacrifice rules, the employer saves Class 1 Secondary NI on earnings above the secondary threshold.
+ * Many employers pass this saving on as an additional employer pension contribution.
+ */
+export function calculateEmployerNISavings(
+  gross: number,
+  pensionSacrificeAmount: number,
+  taxYear: string = getCurrentUKTaxYear(),
+): number {
+  if (gross <= 0 || pensionSacrificeAmount <= 0) return 0;
+  const config = UK_EMPLOYER_NI_RATES[taxYear] ?? UK_EMPLOYER_NI_RATES["2026/27"];
+  const earningsAboveSecondary = Math.max(0, gross - config.secondaryThreshold);
+  const eligibleAmount = Math.min(pensionSacrificeAmount, earningsAboveSecondary);
+  return Math.round(eligibleAmount * config.rate);
+}
+
 export interface UKNationalInsuranceYear {
   description: string;
   /** Class 1 Primary (employees) */

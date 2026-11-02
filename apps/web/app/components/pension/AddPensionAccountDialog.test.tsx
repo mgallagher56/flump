@@ -45,4 +45,47 @@ describe("AddPensionAccountDialog", () => {
     const balanceInput = screen.getByLabelText("Current Value (£)") as HTMLInputElement;
     expect(balanceInput.value).toBe("15000");
   });
+
+  it("disables direct contribution input when Past Pot is selected", async () => {
+    const { fireEvent } = await import("@testing-library/react");
+    render(<AddPensionAccountDialog isOpen={true} onClose={vi.fn()} />);
+
+    const pastPotRadio = screen.getByRole("radio", { name: /Past Pot/i });
+    const directContribInput = screen.getByLabelText(
+      "Specific Direct Contribution (£/month, optional)",
+    ) as HTMLInputElement;
+
+    expect(directContribInput.disabled).toBe(false);
+
+    fireEvent.click(pastPotRadio);
+
+    expect(directContribInput.disabled).toBe(true);
+    expect(directContribInput.value).toBe("");
+  });
+
+  it("populates past pot correctly with disabled direct contribution", () => {
+    const existingPastPot = {
+      id: "pot-past",
+      name: "Old Employer Pension",
+      balance: 12000,
+      interestRate: 4.5,
+      monthlyContribution: null,
+      isCurrent: false,
+      type: "Pension",
+    };
+
+    render(
+      <AddPensionAccountDialog
+        accountToEdit={existingPastPot as any}
+        isOpen={true}
+        onClose={vi.fn()}
+      />,
+    );
+
+    const directContribInput = screen.getByLabelText(
+      "Specific Direct Contribution (£/month, optional)",
+    ) as HTMLInputElement;
+    expect(directContribInput.disabled).toBe(true);
+    expect(directContribInput.value).toBe("");
+  });
 });

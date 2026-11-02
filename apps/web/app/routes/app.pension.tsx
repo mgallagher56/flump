@@ -25,6 +25,8 @@ export const action = async (args: ActionFunctionArgs) => {
       const balance = formData.get("balance");
       const interestRate = formData.get("interestRate");
       const monthlyContribution = formData.get("monthlyContribution");
+      const isCurrent = formData.get("isCurrent");
+      const isCurrentBool = isCurrent !== null ? isCurrent === "true" : true;
 
       const res = await fetch(`${apiUrl}/accounts`, {
         method: "POST",
@@ -38,9 +40,10 @@ export const action = async (args: ActionFunctionArgs) => {
           balance: balance ? Number(balance) : 0,
           interestRate: interestRate !== null && interestRate !== "" ? Number(interestRate) : 5.0,
           monthlyContribution:
-            monthlyContribution !== null && monthlyContribution !== ""
+            isCurrentBool && monthlyContribution !== null && monthlyContribution !== ""
               ? Number(monthlyContribution)
               : null,
+          isCurrent: isCurrentBool,
         }),
       });
 
@@ -50,6 +53,7 @@ export const action = async (args: ActionFunctionArgs) => {
       const balance = formData.get("balance");
       const interestRate = formData.get("interestRate");
       const monthlyContribution = formData.get("monthlyContribution");
+      const isCurrent = formData.get("isCurrent");
 
       const updatePayload: Record<string, any> = {};
       if (name !== null && name !== undefined) updatePayload.name = name;
@@ -57,9 +61,15 @@ export const action = async (args: ActionFunctionArgs) => {
       if (interestRate !== null && interestRate !== undefined) {
         updatePayload.interestRate = interestRate !== "" ? Number(interestRate) : null;
       }
+      if (isCurrent !== null && isCurrent !== undefined) {
+        updatePayload.isCurrent = isCurrent === "true";
+      }
       if (monthlyContribution !== null && monthlyContribution !== undefined) {
         updatePayload.monthlyContribution =
           monthlyContribution !== "" ? Number(monthlyContribution) : null;
+      }
+      if (updatePayload.isCurrent === false) {
+        updatePayload.monthlyContribution = null;
       }
 
       const res = await fetch(`${apiUrl}/accounts/${accountId}`, {
@@ -85,6 +95,8 @@ export const action = async (args: ActionFunctionArgs) => {
       const pensionPercent = formData.get("pensionPercent");
       const pensionEmployerPercent = formData.get("pensionEmployerPercent");
       const annualSalary = formData.get("annualSalary");
+      const isSalarySacrifice = formData.get("isSalarySacrifice");
+      const isSalarySacrificeEmployerNi = formData.get("isSalarySacrificeEmployerNi");
 
       const res = await fetch(`${apiUrl}/user-profile`, {
         method: "PATCH",
@@ -98,6 +110,12 @@ export const action = async (args: ActionFunctionArgs) => {
             ? { pensionEmployerPercent: Number(pensionEmployerPercent) }
             : {}),
           ...(annualSalary !== null ? { annualSalary: Number(annualSalary) } : {}),
+          ...(isSalarySacrifice !== null
+            ? { isSalarySacrifice: isSalarySacrifice === "true" }
+            : {}),
+          ...(isSalarySacrificeEmployerNi !== null
+            ? { isSalarySacrificeEmployerNi: isSalarySacrificeEmployerNi === "true" }
+            : {}),
         }),
       });
 
@@ -110,6 +128,8 @@ export const action = async (args: ActionFunctionArgs) => {
       const annualSalary = formData.get("annualSalary");
       const pensionPercent = formData.get("pensionPercent");
       const pensionEmployerPercent = formData.get("pensionEmployerPercent");
+      const isSalarySacrifice = formData.get("isSalarySacrifice");
+      const isSalarySacrificeEmployerNi = formData.get("isSalarySacrificeEmployerNi");
 
       // 1. Create initial pot
       const accountRes = await fetch(`${apiUrl}/accounts`, {
@@ -141,6 +161,12 @@ export const action = async (args: ActionFunctionArgs) => {
           ...(pensionPercent ? { pensionPercent: Number(pensionPercent) } : {}),
           ...(pensionEmployerPercent
             ? { pensionEmployerPercent: Number(pensionEmployerPercent) }
+            : {}),
+          ...(isSalarySacrifice !== null
+            ? { isSalarySacrifice: isSalarySacrifice === "true" }
+            : {}),
+          ...(isSalarySacrificeEmployerNi !== null
+            ? { isSalarySacrificeEmployerNi: isSalarySacrificeEmployerNi === "true" }
             : {}),
         }),
       });

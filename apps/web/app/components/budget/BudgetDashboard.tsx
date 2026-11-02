@@ -10,6 +10,7 @@ import { useResponsive } from "~/context/ResponsiveContext";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
 import type { BudgetCategory, BudgetEntry } from "~/types/budget";
 import { CATEGORY_COLOURS, CATEGORY_ICONS, CATEGORY_LABELS, toMonthly } from "~/types/budget";
+import { loadRunwaySettings, type RunwaySavedSettings } from "~/utils/runwayStorage";
 
 interface Account {
   id: string;
@@ -33,6 +34,7 @@ export interface BudgetDashboardProps {
   mortgageBalance: number;
   onNavigateToCategory: (cat: BudgetCategory) => void;
   onNavigateToRunway: () => void;
+  runwaySettings?: RunwaySavedSettings | null;
   isMobile?: boolean;
   variant?: "desktop" | "mobile";
 }
@@ -41,9 +43,12 @@ const EXPENSE_CATEGORIES: BudgetCategory[] = ["housing", "bills", "expenses", "s
 
 const BudgetDashboard: FC<BudgetDashboardProps> = ({
   entries,
+  accounts,
+  accountDetails,
   savingsBalance,
   onNavigateToCategory,
   onNavigateToRunway,
+  runwaySettings,
   isMobile: propIsMobile,
   variant = "desktop",
 }) => {
@@ -80,6 +85,96 @@ const BudgetDashboard: FC<BudgetDashboardProps> = ({
   };
 
   const surplusColour = totals.surplus >= 0 ? "#10b981" : "#ef4444";
+
+  const runwayStats = useMemo(() => {
+    const activeSettings =
+      runwaySettings ?? (typeof window !== "undefined" ? loadRunwaySettings() : null);
+
+    let pool = savingsBalance;
+    if (activeSettings?.includedAccounts && accounts && accounts.length > 0) {
+      pool =
+        accounts
+          .filter((a) => {
+            const t = a.type?.toLowerCase().trim();
+            const isLiquid =
+              t === "current" ||
+              t === "saving" ||
+              t === "savings" ||
+              t === "investment" ||
+              t === "investments";
+            if (!isLiquid) return false;
+            return activeSettings.includedAccounts[a.id] !== false;
+          })
+          .reduce((sum, a) => {
+            const details = (accountDetails || [])
+              .filter((d: any) => (d.account_id || d.accountId) === a.id)
+              .sort((x, y) => (x.year !== y.year ? y.year - x.year : y.month - x.month));
+            const latestVal = details.length > 0 ? Number(details[0].value) : 0;
+            const bal =
+              Number.isFinite(latestVal) && latestVal > 0 ? latestVal : Number(a.balance) || 0;
+            return sum + bal;
+          }, 0) + (activeSettings.severanceLump || 0);
+    }
+
+    const nonPrimaryIncome = entries
+      .filter((e) => {
+        if (!e.isIncome || e.isPrimaryIncome) return false;
+        if (activeSettings?.keptIncome) {
+          return activeSettings.keptIncome[e.id] !== false;
+        }
+        return true;
+      })
+      .reduce((s, e) => s + toMonthly(e), 0);
+
+    const expenses = entries
+      .filter((e) => {
+        if (e.isIncome) return false;
+        if (activeSettings?.keptExpenses) {
+          return !!activeSettings.keptExpenses[e.id];
+        }
+        return e.isEssential;
+      })
+      .reduce((s, e) => s + toMonthly(e), 0);
+
+    const extraCut = activeSettings?.extraMonthlyCut || 0;
+    const monthlyBurn = Math.max(0, expenses - nonPrimaryIncome - extraCut);
+    const runwayMonths = monthlyBurn > 0 ? pool / monthlyBurn : Number.POSITIVE_INFINITY;
+
+    const years = Math.floor(runwayMonths / 12);
+    const months = Math.floor(runwayMonths % 12);
+    const runwayLabel =
+      monthlyBurn === 0
+        ? "Infinite (No burn)"
+        : runwayMonths > 120
+          ? `${Math.floor(runwayMonths / 12)}+ years`
+          : years > 0
+            ? `${years} yr${years !== 1 ? "s" : ""} ${months} mo${months !== 1 ? "s" : ""}`
+            : `${Math.floor(runwayMonths)} months`;
+
+    const getStatus = (m: number) => {
+      if (m < 3)
+        return { colour: "#ef4444", bg: "rgba(239, 68, 68, 0.1)", label: "Critical", emoji: "🔴" };
+      if (m < 6)
+        return { colour: "#f59e0b", bg: "rgba(245, 158, 11, 0.1)", label: "Caution", emoji: "🟡" };
+      if (m < 12)
+        return { colour: "#f97316", bg: "rgba(249, 115, 22, 0.1)", label: "Moderate", emoji: "🟠" };
+      return { colour: "#10b981", bg: "rgba(16, 185, 129, 0.1)", label: "Healthy", emoji: "🟢" };
+    };
+
+    const status = monthlyBurn === 0 ? getStatus(999) : getStatus(runwayMonths);
+    const displayMax = 24;
+    const barPct = Math.min((runwayMonths / displayMax) * 100, 100);
+
+    return {
+      monthlyBurn,
+      runwayMonths,
+      runwayLabel,
+      status,
+      barPct,
+      displayMax,
+      pool,
+    };
+  }, [entries, savingsBalance, accounts, accountDetails, runwaySettings]);
 
   const cardBase = css({
     display: "flex",
@@ -371,19 +466,99 @@ const BudgetDashboard: FC<BudgetDashboardProps> = ({
           </div>
         </FLPCard>
 
-        {/* Runway CTA */}
+        {/* Condensed Unemployment Runway Card */}
         <FLPCard>
-          <FLPHeading as="h3" size="sm" style={{ marginBottom: "8px" }}>
-            ⏱️ Unemployment Runway
-          </FLPHeading>
-          <FLPText
-            color="text.muted"
-            fontSize="sm"
-            style={{ lineHeight: "1.5", marginBottom: "16px" }}
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "flex-start",
+              marginBottom: "10px",
+              flexWrap: "wrap",
+              gap: "8px",
+            }}
           >
-            Find out how long your savings would last if you lost your primary income. Choose which
-            expenses to keep and which income to retain.
-          </FLPText>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <span style={{ fontSize: "18px" }}>⏱️</span>
+              <FLPHeading as="h3" size="sm">
+                Unemployment Runway
+              </FLPHeading>
+            </div>
+            <span
+              style={{
+                fontSize: "11px",
+                fontWeight: 700,
+                padding: "2px 8px",
+                borderRadius: "999px",
+                backgroundColor: runwayStats.status.bg,
+                color: runwayStats.status.colour,
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "4px",
+              }}
+            >
+              <span>{runwayStats.status.emoji}</span>
+              {runwayStats.status.label}
+            </span>
+          </div>
+
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "baseline",
+              marginBottom: "12px",
+            }}
+          >
+            <FLPHeading as="h4" size="xl" style={{ color: runwayStats.status.colour, margin: 0 }}>
+              {runwayStats.runwayLabel}
+            </FLPHeading>
+            <FLPText color="text.muted" fontSize="xs">
+              Burn:{" "}
+              <strong style={{ color: "var(--colors-text-primary)" }}>
+                {fmt(runwayStats.monthlyBurn)}/mo
+              </strong>
+            </FLPText>
+          </div>
+
+          {/* Condensed Timeline Bar Chart */}
+          <div style={{ marginBottom: "16px" }}>
+            <div
+              style={{
+                height: "10px",
+                borderRadius: "999px",
+                backgroundColor: "var(--colors-border)",
+                overflow: "hidden",
+                position: "relative",
+                marginBottom: "6px",
+              }}
+            >
+              <div
+                style={{
+                  height: "100%",
+                  width: `${runwayStats.barPct}%`,
+                  backgroundColor: runwayStats.status.colour,
+                  borderRadius: "999px",
+                  transition: "width 0.4s ease",
+                }}
+              />
+            </div>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                fontSize: "10px",
+                color: "var(--colors-text-muted)",
+              }}
+            >
+              <span>0 mo</span>
+              <span style={{ color: "#ef4444" }}>3 mo</span>
+              <span style={{ color: "#f59e0b" }}>6 mo</span>
+              <span style={{ color: "#10b981" }}>12 mo</span>
+              <span>24+ mo</span>
+            </div>
+          </div>
+
           <FLPButton
             variant="outline"
             size="sm"
@@ -391,7 +566,7 @@ const BudgetDashboard: FC<BudgetDashboardProps> = ({
             style={{ width: "100%" }}
           >
             <FaBalanceScale style={{ marginRight: "8px" }} />
-            Calculate Runway
+            Open Runway Calculator
           </FLPButton>
         </FLPCard>
       </div>

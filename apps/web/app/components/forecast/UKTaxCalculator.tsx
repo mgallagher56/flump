@@ -1,10 +1,16 @@
-import { calculateUKEWNITakeHome, getCurrentUKTaxYear, UK_STUDENT_LOANS } from "@repo/common";
+import {
+  calculateEmployerNISavings,
+  calculateUKEWNITakeHome,
+  getCurrentUKTaxYear,
+  UK_STUDENT_LOANS,
+} from "@repo/common";
 import { css } from "@repo/ui/styled-system/css";
 import { type FC, useEffect, useMemo, useState } from "react";
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
 import FLPButton from "~/components/core/buttons/FLPButton";
 import FLPCard from "~/components/core/cards/FLPCard";
 import TaxDisclaimerButton from "~/components/core/dialogs/TaxDisclaimerButton";
+import FLPCheckbox from "~/components/core/inputs/checkbox/FLPCheckbox";
 import FLPHeading from "~/components/core/typography/FLPHeading";
 import FLPText from "~/components/core/typography/FLPText";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
@@ -20,6 +26,12 @@ const UKTaxCalculator: FC<UKTaxCalculatorProps> = ({ initialSalary, onApplyIncre
   const { formatCurrency, formatCurrencyDecimal } = useFormatCurrency();
   const [grossSalary, setGrossSalary] = useState<number>(initialSalary ?? 45000);
   const [pensionPercent, setPensionPercent] = useState<number>(5);
+  const [isSalarySacrifice, setIsSalarySacrifice] = useState<boolean>(
+    profile?.isSalarySacrifice ?? true,
+  );
+  const [isSalarySacrificeEmployerNi, setIsSalarySacrificeEmployerNi] = useState<boolean>(
+    profile?.isSalarySacrificeEmployerNi ?? false,
+  );
   const [studentLoanPlan, setStudentLoanPlan] = useState<string>("none");
   const [salaryIncrease, setSalaryIncrease] = useState<number>(5000);
 
@@ -35,13 +47,42 @@ const UKTaxCalculator: FC<UKTaxCalculatorProps> = ({ initialSalary, onApplyIncre
 
   // Compute UK Taxes for standard gross salary
   const taxResults = useMemo(() => {
-    return calculateUKTax(grossSalary, pensionPercent, studentLoanPlan, taxYear);
-  }, [grossSalary, pensionPercent, studentLoanPlan, taxYear]);
+    return calculateUKTax(
+      grossSalary,
+      pensionPercent,
+      studentLoanPlan,
+      taxYear,
+      isSalarySacrifice,
+      isSalarySacrificeEmployerNi,
+    );
+  }, [
+    grossSalary,
+    pensionPercent,
+    studentLoanPlan,
+    taxYear,
+    isSalarySacrifice,
+    isSalarySacrificeEmployerNi,
+  ]);
 
   // Compute UK Taxes for hypothetical salary with raise
   const raiseResults = useMemo(() => {
-    return calculateUKTax(grossSalary + salaryIncrease, pensionPercent, studentLoanPlan, taxYear);
-  }, [grossSalary, salaryIncrease, pensionPercent, studentLoanPlan, taxYear]);
+    return calculateUKTax(
+      grossSalary + salaryIncrease,
+      pensionPercent,
+      studentLoanPlan,
+      taxYear,
+      isSalarySacrifice,
+      isSalarySacrificeEmployerNi,
+    );
+  }, [
+    grossSalary,
+    salaryIncrease,
+    pensionPercent,
+    studentLoanPlan,
+    taxYear,
+    isSalarySacrifice,
+    isSalarySacrificeEmployerNi,
+  ]);
 
   const monthlyIncrease = useMemo(() => {
     const netCurrent = taxResults.netPay / 12;
@@ -288,6 +329,31 @@ const UKTaxCalculator: FC<UKTaxCalculatorProps> = ({ initialSalary, onApplyIncre
               value={pensionPercent}
               onChange={(e) => setPensionPercent(Number(e.target.value))}
             />
+            <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginTop: "8px" }}>
+              <FLPCheckbox
+                checked={isSalarySacrifice}
+                id="forecast-salary-sacrifice-checkbox"
+                label="Salary Sacrifice (saves NI)"
+                size="sm"
+                onChange={(e) => {
+                  setIsSalarySacrifice(e.target.checked);
+                  if (!e.target.checked) setIsSalarySacrificeEmployerNi(false);
+                }}
+              />
+              <FLPCheckbox
+                checked={isSalarySacrifice && isSalarySacrificeEmployerNi}
+                disabled={!isSalarySacrifice}
+                id="forecast-employer-ni-checkbox"
+                label="Pass on Employer NI"
+                description={
+                  isSalarySacrifice
+                    ? "Employer reinvests their 15% NI saving into your pot"
+                    : "Requires salary sacrifice"
+                }
+                size="sm"
+                onChange={(e) => setIsSalarySacrificeEmployerNi(e.target.checked)}
+              />
+            </div>
           </div>
 
           <FLPHeading as="h3" size="md">
@@ -445,10 +511,21 @@ const UKTaxCalculator: FC<UKTaxCalculatorProps> = ({ initialSalary, onApplyIncre
                   {taxResults.pension > 0 && (
                     <tr>
                       <td className={tdStyle} style={{ color: "#8b5cf6" }}>
-                        Pension (Sacrifice)
+                        Pension {isSalarySacrifice ? "(Sacrifice)" : "(Relief at source)"}
                       </td>
                       <td className={tdStyle}>-{formatCurrency(taxResults.pension)}</td>
                       <td className={tdStyle}>-{formatCurrency(taxResults.pension / 12)}</td>
+                    </tr>
+                  )}
+                  {taxResults.employerNiSaving > 0 && (
+                    <tr>
+                      <td className={tdStyle} style={{ color: "#10b981" }}>
+                        + Employer NI to Pension
+                      </td>
+                      <td className={tdStyle}>+{formatCurrency(taxResults.employerNiSaving)}</td>
+                      <td className={tdStyle}>
+                        +{formatCurrency(taxResults.employerNiSaving / 12)}
+                      </td>
                     </tr>
                   )}
                   {taxResults.incomeTax > 0 && (
@@ -619,6 +696,8 @@ export const calculateUKTax = (
   pensionPercent: number,
   studentLoanPlan: string,
   taxYear?: string,
+  isSalarySacrifice: boolean = true,
+  isEmployerNi: boolean = false,
 ) => {
   const year = taxYear ?? getCurrentUKTaxYear();
   const planKey =
@@ -630,13 +709,18 @@ export const calculateUKTax = (
     gross,
     "employed", // this calculator is for employed/PAYE context
     pensionPercent,
-    true, // salary sacrifice assumed for the forecast calculator
+    isSalarySacrifice,
     year,
     planKey,
   );
 
+  const employerNiSaving =
+    isSalarySacrifice && isEmployerNi ? calculateEmployerNISavings(gross, result.pension, year) : 0;
+
   return {
     pension: result.pension,
+    employerNiSaving,
+    totalPension: result.pension + employerNiSaving,
     incomeTax: result.incomeTax,
     ni: result.ni,
     studentLoan: result.studentLoan,

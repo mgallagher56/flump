@@ -36,6 +36,34 @@ const inputStyle = css({
     borderColor: "primary",
     boxShadow: "0 0 0 1px token(colors.primary)",
   },
+  _disabled: {
+    opacity: 0.6,
+    cursor: "not-allowed",
+    backgroundColor: "background",
+  },
+});
+
+const potTypeBtnStyle = css({
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "flex-start",
+  padding: "10px 14px",
+  borderRadius: "lg",
+  border: "1.5px solid",
+  borderColor: "border",
+  backgroundColor: "surface",
+  cursor: "pointer",
+  transition: "all 0.15s ease",
+  textAlign: "left",
+  width: "100%",
+  _hover: {
+    borderColor: "primary",
+  },
+});
+
+const potTypeBtnActiveStyle = css({
+  borderColor: "primary",
+  backgroundColor: "rgba(139, 92, 246, 0.08)",
 });
 
 const rowTwoColStyle = css({
@@ -77,8 +105,11 @@ export const AddPensionAccountDialog: FC<AddPensionAccountDialogProps> = ({
       ? String(accountToEdit.interestRate)
       : "5.0",
   );
+  const [isCurrent, setIsCurrent] = useState<boolean>(accountToEdit?.isCurrent !== false);
   const [monthlyContribution, setMonthlyContribution] = useState<string>(
-    accountToEdit?.monthlyContribution !== undefined && accountToEdit.monthlyContribution !== null
+    accountToEdit?.isCurrent !== false &&
+      accountToEdit?.monthlyContribution !== undefined &&
+      accountToEdit.monthlyContribution !== null
       ? String(accountToEdit.monthlyContribution)
       : "",
   );
@@ -96,8 +127,11 @@ export const AddPensionAccountDialog: FC<AddPensionAccountDialogProps> = ({
           ? String(accountToEdit.interestRate)
           : "5.0",
       );
+      const isCurr = accountToEdit.isCurrent !== false;
+      setIsCurrent(isCurr);
       setMonthlyContribution(
-        accountToEdit.monthlyContribution !== undefined &&
+        isCurr &&
+          accountToEdit.monthlyContribution !== undefined &&
           accountToEdit.monthlyContribution !== null
           ? String(accountToEdit.monthlyContribution)
           : "",
@@ -106,6 +140,7 @@ export const AddPensionAccountDialog: FC<AddPensionAccountDialogProps> = ({
       setName("");
       setBalance("");
       setInterestRate("5.0");
+      setIsCurrent(true);
       setMonthlyContribution("");
     }
   }, [isOpen, accountToEdit]);
@@ -121,7 +156,8 @@ export const AddPensionAccountDialog: FC<AddPensionAccountDialogProps> = ({
           name: name.trim(),
           balance: balance.trim(),
           interestRate: interestRate.trim(),
-          monthlyContribution: monthlyContribution.trim(),
+          isCurrent: String(isCurrent),
+          monthlyContribution: isCurrent ? monthlyContribution.trim() : "",
         },
         { method: "POST", action: "/app/pension" },
       );
@@ -132,7 +168,8 @@ export const AddPensionAccountDialog: FC<AddPensionAccountDialogProps> = ({
           name: name.trim(),
           balance: balance.trim() || "0",
           interestRate: interestRate.trim() || "5.0",
-          monthlyContribution: monthlyContribution.trim(),
+          isCurrent: String(isCurrent),
+          monthlyContribution: isCurrent ? monthlyContribution.trim() : "",
         },
         { method: "POST", action: "/app/pension" },
       );
@@ -144,6 +181,7 @@ export const AddPensionAccountDialog: FC<AddPensionAccountDialogProps> = ({
     accountToEdit,
     balance,
     interestRate,
+    isCurrent,
     monthlyContribution,
     fetcher,
     onClose,
@@ -194,6 +232,69 @@ export const AddPensionAccountDialog: FC<AddPensionAccountDialogProps> = ({
           </FLPText>
         </div>
 
+        <div className={formGroupStyle}>
+          <div id="pot-status-label">
+            <FLPText fontSize="sm" fontWeight="medium">
+              Pot Status
+            </FLPText>
+          </div>
+          <div
+            aria-labelledby="pot-status-label"
+            role="radiogroup"
+            style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}
+          >
+            <label
+              className={`${potTypeBtnStyle} ${isCurrent ? potTypeBtnActiveStyle : ""}`}
+              style={{ cursor: "pointer", position: "relative" }}
+            >
+              <input
+                type="radio"
+                name="pot-status"
+                value="current"
+                checked={isCurrent}
+                onChange={() => setIsCurrent(true)}
+                style={{ position: "absolute", opacity: 0, pointerEvents: "none" }}
+              />
+              <FLPText
+                color={isCurrent ? "primary" : "text.primary"}
+                fontSize="sm"
+                fontWeight="bold"
+              >
+                Current Pot
+              </FLPText>
+              <FLPText color="text.muted" fontSize="xs">
+                Active workplace or active SIPP
+              </FLPText>
+            </label>
+            <label
+              className={`${potTypeBtnStyle} ${!isCurrent ? potTypeBtnActiveStyle : ""}`}
+              style={{ cursor: "pointer", position: "relative" }}
+            >
+              <input
+                type="radio"
+                name="pot-status"
+                value="past"
+                checked={!isCurrent}
+                onChange={() => {
+                  setIsCurrent(false);
+                  setMonthlyContribution("");
+                }}
+                style={{ position: "absolute", opacity: 0, pointerEvents: "none" }}
+              />
+              <FLPText
+                color={!isCurrent ? "primary" : "text.primary"}
+                fontSize="sm"
+                fontWeight="bold"
+              >
+                Past Pot
+              </FLPText>
+              <FLPText color="text.muted" fontSize="xs">
+                Previous employer / frozen pot
+              </FLPText>
+            </label>
+          </div>
+        </div>
+
         <div className={rowTwoColStyle}>
           <div className={formGroupStyle}>
             <label htmlFor="pension-balance">
@@ -236,23 +337,33 @@ export const AddPensionAccountDialog: FC<AddPensionAccountDialogProps> = ({
 
         <div className={formGroupStyle}>
           <label htmlFor="pension-monthly-contrib">
-            <FLPText fontSize="sm" fontWeight="medium">
+            <FLPText
+              color={!isCurrent ? "text.muted" : undefined}
+              fontSize="sm"
+              fontWeight="medium"
+            >
               Specific Direct Contribution (£/month, optional)
             </FLPText>
           </label>
           <input
             className={inputStyle}
+            disabled={!isCurrent}
             id="pension-monthly-contrib"
             min="0"
-            placeholder="Leave blank to use salary percentage"
+            placeholder={
+              !isCurrent
+                ? "No direct contributions for past pots"
+                : "Leave blank to use salary percentage"
+            }
             step="any"
             type="number"
-            value={monthlyContribution}
+            value={!isCurrent ? "" : monthlyContribution}
             onChange={(e) => setMonthlyContribution(e.target.value)}
           />
           <FLPText color="text.muted" fontSize="xs">
-            If you pay a fixed regular sum into this specific pot (e.g., SIPP direct debit), enter
-            it here.
+            {!isCurrent
+              ? "Past pots from previous employers have no direct or regular contributions. They continue to grow through investment returns."
+              : "If you pay a fixed regular sum into this specific pot (e.g., SIPP direct debit), enter it here."}
           </FLPText>
         </div>
       </div>

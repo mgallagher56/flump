@@ -32,6 +32,10 @@ describe("PensionQuickStartWizard", () => {
     // Step 1: Salary & Contributions
     expect(screen.getByText("Confirm your salary & contribution rates")).toBeDefined();
     expect(screen.getByLabelText("Annual Salary (£)")).toBeDefined();
+    expect(screen.getByLabelText(/Salary Sacrifice/i)).toBeDefined();
+    const employerNiCheckbox = screen.getByLabelText(/Pass on Employer NI/i);
+    expect(employerNiCheckbox).toBeDefined();
+    fireEvent.click(employerNiCheckbox);
 
     // Click Next -> Step 2: Add Existing Pot
     fireEvent.click(screen.getByText(/Next/i));

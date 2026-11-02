@@ -96,6 +96,12 @@ export class UserProfile {
   isSalarySacrifice: boolean;
 
   @Column({
+    name: "is_salary_sacrifice_employer_ni",
+    default: false,
+  })
+  isSalarySacrificeEmployerNi: boolean;
+
+  @Column({
     name: "monthly_savings_target",
     type: "decimal",
     precision: 12,

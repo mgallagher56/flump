@@ -1,5 +1,5 @@
 import { css } from "@repo/ui/styled-system/css";
-import { type FC, useEffect, useState } from "react";
+import { type FC, useEffect, useMemo, useState } from "react";
 import { FaBalanceScale, FaChartBar, FaRocket } from "react-icons/fa";
 import { useLoaderData, useNavigate } from "react-router";
 import BudgetCategoryTable from "~/components/budget/BudgetCategoryTable";
@@ -12,6 +12,11 @@ import { useUserProfile } from "~/hooks/useUserProfile";
 import type { loader } from "~/routes/app.budget";
 import type { BudgetCategory, BudgetEntry } from "~/types/budget";
 import { CATEGORY_ICONS, CATEGORY_LABELS } from "~/types/budget";
+import {
+  loadRunwaySettings,
+  type RunwaySavedSettings,
+  saveRunwaySettings,
+} from "~/utils/runwayStorage";
 
 type BudgetTab =
   | "dashboard"
@@ -44,25 +49,68 @@ const BudgetContainer: FC = () => {
 
   const [activeTab, setActiveTab] = useState<BudgetTab>("dashboard");
   const [entries, setEntries] = useState<BudgetEntry[]>(budgetEntries);
+  const [runwaySettings, setRunwaySettings] = useState<RunwaySavedSettings | null>(() =>
+    loadRunwaySettings(),
+  );
 
-  // Calculate savings balance from accounts
-  const savingsBalance = accounts
-    .filter((a: { type: string }) => ["Current", "Saving"].includes(a.type))
-    .reduce((sum: number, acc: { id: string; balance: number }) => {
-      const details = accountDetails
-        .filter((d: { account_id: string }) => d.account_id === acc.id)
-        .sort((a: { year: number; month: number }, b: { year: number; month: number }) =>
-          a.year !== b.year ? b.year - a.year : b.month - a.month,
-        );
-      const rawBal = details.length > 0 ? details[0].value : acc.balance;
-      const bal = Number(rawBal) || 0;
-      return sum + (bal > 0 ? bal : 0);
-    }, 0);
+  const handleUpdateRunwaySettings = (updated: RunwaySavedSettings) => {
+    setRunwaySettings(updated);
+    saveRunwaySettings(updated);
+  };
+
+  const isSavingsOrInvestment = (type?: string) => {
+    if (!type) return false;
+    const t = type.toLowerCase().trim();
+    return (
+      t === "current" ||
+      t === "saving" ||
+      t === "savings" ||
+      t === "investment" ||
+      t === "investments"
+    );
+  };
+
+  // Normalize accountDetails to support both snake_case and camelCase
+  const normalizedAccountDetails = useMemo(() => {
+    return accountDetails.map((d: any) => ({
+      ...d,
+      account_id: d.account_id || d.accountId,
+      month: Number(d.month) || 0,
+      year: Number(d.year) || 0,
+      value: Number(d.value ?? d.balance ?? 0),
+    }));
+  }, [accountDetails]);
+
+  // Sync current balance for all accounts from latest accountDetails or direct balance
+  const accountsWithBalances = useMemo(() => {
+    return accounts.map((acc: any) => {
+      const details = normalizedAccountDetails
+        .filter((d: any) => d.account_id === acc.id)
+        .sort((a: any, b: any) => (a.year !== b.year ? b.year - a.year : b.month - a.month));
+
+      let bal = Number(acc.balance ?? acc.value);
+      if (details.length > 0) {
+        const detailVal = Number(details[0].value);
+        if (Number.isFinite(detailVal) && (detailVal > 0 || !Number.isFinite(bal) || bal === 0)) {
+          bal = detailVal;
+        }
+      }
+      return {
+        ...acc,
+        balance: Number.isFinite(bal) ? bal : 0,
+      };
+    });
+  }, [accounts, normalizedAccountDetails]);
+
+  // Calculate savings balance from accounts (includes Current, Saving, and Investment accounts)
+  const savingsBalance = accountsWithBalances
+    .filter((a: any) => isSavingsOrInvestment(a.type))
+    .reduce((sum: number, acc: any) => sum + Math.max(acc.balance, 0), 0);
 
   const mortgageBalance = Math.abs(
-    accounts
-      .filter((a: { type: string }) => a.type === "Mortgage")
-      .reduce((sum: number, acc: { balance: number }) => sum + (Number(acc.balance) || 0), 0),
+    accountsWithBalances
+      .filter((a: any) => a.type === "Mortgage")
+      .reduce((sum: number, acc: any) => sum + (Number(acc.balance) || 0), 0),
   );
 
   const apiUrl =
@@ -240,11 +288,12 @@ const BudgetContainer: FC = () => {
 
       {activeTab === "dashboard" && (
         <BudgetDashboard
-          accounts={accounts}
-          accountDetails={accountDetails}
+          accounts={accountsWithBalances}
+          accountDetails={normalizedAccountDetails}
           entries={entries}
           mortgageBalance={mortgageBalance}
           savingsBalance={savingsBalance}
+          runwaySettings={runwaySettings}
           onNavigateToCategory={(cat) => setActiveTab(cat)}
           onNavigateToRunway={handleOpenRunway}
         />
@@ -262,16 +311,11 @@ const BudgetContainer: FC = () => {
 
       {activeTab === "runway" && (
         <RunwayCalculator
-          accountDetails={accountDetails.map(
-            (d: { account_id: string; month: number; year: number; value: number }) => ({
-              account_id: d.account_id,
-              month: d.month,
-              year: d.year,
-              value: d.value,
-            }),
-          )}
-          accounts={accounts}
+          accountDetails={normalizedAccountDetails}
+          accounts={accountsWithBalances}
           entries={entries}
+          savedSettings={runwaySettings}
+          onSaveSettings={handleUpdateRunwaySettings}
           onNavigateToForecast={() => navigate("/app/forecast")}
         />
       )}

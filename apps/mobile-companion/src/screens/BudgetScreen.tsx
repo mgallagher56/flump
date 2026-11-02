@@ -49,7 +49,7 @@ export default function BudgetScreen() {
       // Initialize runway toggles
       const initialSavings: { [key: string]: boolean } = {};
       accountsData.forEach((a) => {
-        if (["Current", "Saving"].includes(a.type)) {
+        if (["Current", "Saving", "Investment"].includes(a.type)) {
           initialSavings[a.id] = true;
         }
       });
@@ -422,7 +422,7 @@ export default function BudgetScreen() {
           {/* Savings Toggles */}
           <Text style={styles.sectionTitle}>Include in Savings Pool</Text>
           {accounts
-            .filter((acc) => ["Current", "Saving"].includes(acc.type))
+            .filter((acc) => ["Current", "Saving", "Investment"].includes(acc.type))
             .map((acc) => (
               <TouchableOpacity
                 key={acc.id}

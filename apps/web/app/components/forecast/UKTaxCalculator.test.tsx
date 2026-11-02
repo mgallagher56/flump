@@ -19,6 +19,8 @@ describe("<UKTaxCalculator />", () => {
     expect(container).toBeDefined();
     // Default gross £45,000 is rendered multiple times (inputs and breakdown)
     expect(getAllByText("£45,000").length).toBeGreaterThan(0);
+    expect(container.textContent).toContain("Salary Sacrifice (saves NI)");
+    expect(container.textContent).toContain("Pass on Employer NI");
   });
   describe("calculateUKTax logic helper", () => {
     test("calculates correct net pay for £45,000 with 5% pension (sacrifice)", () => {
@@ -49,6 +51,15 @@ describe("<UKTaxCalculator />", () => {
       // Excess: 3,100. Repayment (9%): 279.00.
       const result = calculateUKTax(30000, 0, "plan1");
       expect(result.studentLoan).toBeCloseTo(279.0, 1);
+    });
+
+    test("calculates employer NI savings when employer NI pass-through is enabled", () => {
+      // £45,000 gross with 5% pension = £2,250 sacrifice
+      // In 2026/27, employer NI rate is 15.0% on earnings above £5,000.
+      // £2,250 * 0.15 = £338 (rounded)
+      const result = calculateUKTax(45000, 5, "none", "2026/27", true, true);
+      expect(result.employerNiSaving).toBe(338);
+      expect(result.totalPension).toBe(2250 + 338);
     });
   });
 });

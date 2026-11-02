@@ -14,6 +14,7 @@ export interface PensionSummaryCardsProps {
   employerPercent: number;
   monthlyEmployeeContrib: number;
   monthlyEmployerContrib: number;
+  monthlyEmployerNiContrib?: number;
   directMonthlyContrib?: number;
   netMonthlyCost?: number;
   taxReliefMonthly?: number;
@@ -75,6 +76,7 @@ export const PensionSummaryCards: FC<PensionSummaryCardsProps> = ({
   employerPercent,
   monthlyEmployeeContrib,
   monthlyEmployerContrib,
+  monthlyEmployerNiContrib = 0,
   directMonthlyContrib = 0,
   netMonthlyCost,
   taxReliefMonthly,
@@ -194,7 +196,9 @@ export const PensionSummaryCards: FC<PensionSummaryCardsProps> = ({
             </span>
           </FLPHeading>
           <FLPText color="text.muted" fontSize="xs" style={{ marginTop: "4px" }}>
-            {formatCurrency(monthlyEmployerContrib * 12)}/year paid by your employer
+            {monthlyEmployerNiContrib > 0
+              ? `${formatCurrency(monthlyEmployerContrib * 12)}/year (incl. ${formatCurrency(monthlyEmployerNiContrib)}/mo employer NI)`
+              : `${formatCurrency(monthlyEmployerContrib * 12)}/year paid by your employer`}
           </FLPText>
         </div>
       </FLPCard>

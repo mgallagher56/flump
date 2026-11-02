@@ -1,9 +1,11 @@
+import { calculateEmployerNISavings } from "@repo/common";
 import { css } from "@repo/ui/styled-system/css";
 import { type FC, useState } from "react";
 import { FaArrowLeft, FaArrowRight, FaCheckCircle, FaRocket } from "react-icons/fa";
 import { useFetcher } from "react-router";
 import FLPButton from "~/components/core/buttons/FLPButton";
 import FLPCard from "~/components/core/cards/FLPCard";
+import FLPCheckbox from "~/components/core/inputs/checkbox/FLPCheckbox";
 import FLPHeading from "~/components/core/typography/FLPHeading";
 import FLPText from "~/components/core/typography/FLPText";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
@@ -93,6 +95,8 @@ export const PensionQuickStartWizard: FC<PensionQuickStartWizardProps> = ({
   const [salary, setSalary] = useState(String(initialSalary || 45000));
   const [employeePercent, setEmployeePercent] = useState(String(initialEmployeePercent || 5.0));
   const [employerPercent, setEmployerPercent] = useState(String(initialEmployerPercent || 3.0));
+  const [isSalarySacrifice, setIsSalarySacrifice] = useState(true);
+  const [isSalarySacrificeEmployerNi, setIsSalarySacrificeEmployerNi] = useState(false);
 
   // Step 2: Existing Pot
   const [potName, setPotName] = useState("Nest Workplace Pension");
@@ -106,7 +110,12 @@ export const PensionQuickStartWizard: FC<PensionQuickStartWizardProps> = ({
   const numGrowthRate = Number(growthRate) || 5.0;
 
   const monthlyEmployee = (numSalary * (numEmployeePct / 100)) / 12;
-  const monthlyEmployer = (numSalary * (numEmployerPct / 100)) / 12;
+  const standardMonthlyEmployer = (numSalary * (numEmployerPct / 100)) / 12;
+  const annualEmployerNiSavings =
+    isSalarySacrifice && isSalarySacrificeEmployerNi
+      ? calculateEmployerNISavings(numSalary, numSalary * (numEmployeePct / 100))
+      : 0;
+  const monthlyEmployer = standardMonthlyEmployer + annualEmployerNiSavings / 12;
   const totalMonthly = monthlyEmployee + monthlyEmployer;
 
   // Simple 25-year projection for step 3
@@ -129,6 +138,8 @@ export const PensionQuickStartWizard: FC<PensionQuickStartWizardProps> = ({
         annualSalary: String(numSalary),
         pensionPercent: String(numEmployeePct),
         pensionEmployerPercent: String(numEmployerPct),
+        isSalarySacrifice: String(isSalarySacrifice),
+        isSalarySacrificeEmployerNi: String(isSalarySacrifice && isSalarySacrificeEmployerNi),
       },
       { method: "POST", action: "/app/pension" },
     );
@@ -270,6 +281,42 @@ export const PensionQuickStartWizard: FC<PensionQuickStartWizardProps> = ({
                 onChange={(e) => setEmployerPercent(e.target.value)}
               />
             </div>
+          </div>
+
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: "8px",
+              padding: "12px 14px",
+              borderRadius: "lg",
+              backgroundColor: "rgba(99, 99, 241, 0.04)",
+              border: "1px solid rgba(99, 99, 241, 0.15)",
+            }}
+          >
+            <FLPCheckbox
+              checked={isSalarySacrifice}
+              id="wizard-salary-sacrifice-checkbox"
+              label="Salary Sacrifice (saves employee National Insurance)"
+              size="sm"
+              onChange={(e) => {
+                setIsSalarySacrifice(e.target.checked);
+                if (!e.target.checked) setIsSalarySacrificeEmployerNi(false);
+              }}
+            />
+            <FLPCheckbox
+              checked={isSalarySacrifice && isSalarySacrificeEmployerNi}
+              disabled={!isSalarySacrifice}
+              id="wizard-employer-ni-checkbox"
+              label="Pass on Employer NI savings"
+              description={
+                isSalarySacrifice
+                  ? "Employer contributes their NI savings (15%) into your pension pot"
+                  : "Requires salary sacrifice"
+              }
+              size="sm"
+              onChange={(e) => setIsSalarySacrificeEmployerNi(e.target.checked)}
+            />
           </div>
 
           <div

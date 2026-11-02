@@ -1,13 +1,6 @@
 import { css } from "@repo/ui/styled-system/css";
-import { type FC, useMemo, useState } from "react";
-import {
-  FaArrowRight,
-  FaCheckCircle,
-  FaInfoCircle,
-  FaMinus,
-  FaPlus,
-  FaTimesCircle,
-} from "react-icons/fa";
+import { type FC, useEffect, useMemo, useState } from "react";
+import { FaArrowRight, FaCheckCircle, FaInfoCircle, FaTimesCircle, FaUndo } from "react-icons/fa";
 import FLPButton from "~/components/core/buttons/FLPButton";
 import FLPCard from "~/components/core/cards/FLPCard";
 import FLPHeading from "~/components/core/typography/FLPHeading";
@@ -16,6 +9,11 @@ import { useResponsive } from "~/context/ResponsiveContext";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
 import type { BudgetEntry } from "~/types/budget";
 import { CATEGORY_ICONS, CATEGORY_LABELS, toMonthly } from "~/types/budget";
+import {
+  loadRunwaySettings,
+  type RunwaySavedSettings,
+  saveRunwaySettings,
+} from "~/utils/runwayStorage";
 
 interface Account {
   id: string;
@@ -37,6 +35,8 @@ interface RunwayCalculatorProps {
   accounts: Account[];
   accountDetails: AccountDetail[];
   onNavigateToForecast: () => void;
+  savedSettings?: RunwaySavedSettings | null;
+  onSaveSettings?: (settings: RunwaySavedSettings) => void;
 }
 
 const EXPENSE_CATEGORIES: BudgetEntry["category"][] = ["housing", "bills", "expenses", "savings"];
@@ -66,18 +66,16 @@ const THRESHOLDS = [
   { months: 12, label: "12 mo", colour: "#10b981" },
 ];
 
-const toggleBtnStyle = (active: boolean, colour?: string) =>
-  css({
-    width: "40px",
-    height: "22px",
-    borderRadius: "full",
-    backgroundColor: active ? (colour ?? "primary") : "border",
-    border: "none",
-    cursor: "pointer",
-    position: "relative",
-    transition: "all 0.2s ease",
-    flexShrink: 0,
-  });
+const toggleBtnStyle = css({
+  width: "40px",
+  height: "22px",
+  borderRadius: "full",
+  border: "none",
+  cursor: "pointer",
+  position: "relative",
+  transition: "all 0.2s ease",
+  flexShrink: 0,
+});
 
 const knobStyle = (active: boolean) => ({
   position: "absolute" as const,
@@ -91,11 +89,30 @@ const knobStyle = (active: boolean) => ({
   boxShadow: "0 1px 3px rgba(0,0,0,0.3)",
 });
 
+const smallInputStyle = css({
+  width: "100%",
+  padding: "5px 10px",
+  borderRadius: "md",
+  border: "1px solid",
+  borderColor: "border",
+  backgroundColor: "surface",
+  color: "text.primary",
+  fontSize: "13px",
+  outline: "none",
+  transition: "border-color 0.15s ease, box-shadow 0.15s ease",
+  _focus: {
+    borderColor: "primary",
+    boxShadow: "0 0 0 2px rgba(99, 99, 241, 0.2)",
+  },
+});
+
 const RunwayCalculator: FC<RunwayCalculatorProps> = ({
   entries,
   accounts,
   accountDetails,
   onNavigateToForecast,
+  savedSettings,
+  onSaveSettings,
 }) => {
   const { isMobile } = useResponsive();
   const { formatCurrency } = useFormatCurrency();
@@ -105,22 +122,223 @@ const RunwayCalculator: FC<RunwayCalculatorProps> = ({
     if (!Number.isFinite(val)) return formatCurrency(0);
     return formatCurrency(Math.abs(val));
   };
-  // ── Savings pool ────────────────────────────────────────────────────────
-  const savingsAccounts = useMemo(
-    () => accounts.filter((a) => ["Current", "Saving"].includes(a.type) && a.balance > 0),
-    [accounts],
-  );
 
-  const [includedAccounts, setIncludedAccounts] = useState<Record<string, boolean>>(() =>
-    Object.fromEntries(savingsAccounts.map((a) => [a.id, true])),
-  );
+  const isSavingsOrInvestmentAccount = (type?: string) => {
+    if (!type) return false;
+    const t = type.toLowerCase().trim();
+    return (
+      t === "current" ||
+      t === "saving" ||
+      t === "savings" ||
+      t === "investment" ||
+      t === "investments"
+    );
+  };
 
   const getLatestBalance = (accountId: string, fallback: number): number => {
     const details = accountDetails
-      .filter((d) => d.account_id === accountId)
+      .filter((d: any) => (d.account_id || d.accountId) === accountId)
       .sort((a, b) => (a.year !== b.year ? b.year - a.year : b.month - a.month));
-    const val = details.length > 0 ? details[0].value : fallback;
-    return Number(val) || 0;
+    if (details.length > 0) {
+      const val = Number(details[0].value);
+      if (Number.isFinite(val) && val > 0) return val;
+    }
+    const bal = Number(fallback);
+    if (Number.isFinite(bal) && bal > 0) return bal;
+    if (details.length > 0) return Number(details[0].value) || 0;
+    return bal || 0;
+  };
+
+  // ── Savings pool (includes Current, Saving, and Investment accounts) ─────
+  const savingsAccounts = useMemo(
+    () => accounts.filter((a) => isSavingsOrInvestmentAccount(a.type)),
+    [accounts],
+  );
+
+  const nonPrimaryIncome = useMemo(
+    () => entries.filter((e) => e.isIncome && !e.isPrimaryIncome),
+    [entries],
+  );
+
+  const expenseEntries = useMemo(() => entries.filter((e) => !e.isIncome), [entries]);
+
+  // Initial settings from props or localStorage
+  const initialSettings = useMemo(() => {
+    return savedSettings ?? loadRunwaySettings();
+  }, [savedSettings]);
+
+  const [includedAccounts, setIncludedAccounts] = useState<Record<string, boolean>>(() => {
+    const stored = initialSettings?.includedAccounts;
+    const initial: Record<string, boolean> = {};
+    for (const a of savingsAccounts) {
+      initial[a.id] = stored && stored[a.id] !== undefined ? !!stored[a.id] : true;
+    }
+    return initial;
+  });
+
+  const [keptIncome, setKeptIncome] = useState<Record<string, boolean>>(() => {
+    const stored = initialSettings?.keptIncome;
+    const initial: Record<string, boolean> = {};
+    for (const e of nonPrimaryIncome) {
+      initial[e.id] = stored && stored[e.id] !== undefined ? !!stored[e.id] : true;
+    }
+    return initial;
+  });
+
+  const [keptExpenses, setKeptExpenses] = useState<Record<string, boolean>>(() => {
+    const stored = initialSettings?.keptExpenses;
+    const initial: Record<string, boolean> = {};
+    for (const e of expenseEntries) {
+      initial[e.id] = stored && stored[e.id] !== undefined ? !!stored[e.id] : e.isEssential;
+    }
+    return initial;
+  });
+
+  const [severanceLump, setSeveranceLump] = useState<number>(
+    () => initialSettings?.severanceLump ?? 0,
+  );
+  const [extraMonthlyCut, setExtraMonthlyCut] = useState<number>(
+    () => initialSettings?.extraMonthlyCut ?? 0,
+  );
+
+  // Sync state if new accounts/entries are added
+  useEffect(() => {
+    setIncludedAccounts((prev) => {
+      let changed = false;
+      const next = { ...prev };
+      savingsAccounts.forEach((a) => {
+        if (next[a.id] === undefined) {
+          next[a.id] = true;
+          changed = true;
+        }
+      });
+      return changed ? next : prev;
+    });
+  }, [savingsAccounts]);
+
+  useEffect(() => {
+    setKeptIncome((prev) => {
+      let changed = false;
+      const next = { ...prev };
+      nonPrimaryIncome.forEach((e) => {
+        if (next[e.id] === undefined) {
+          next[e.id] = true;
+          changed = true;
+        }
+      });
+      return changed ? next : prev;
+    });
+  }, [nonPrimaryIncome]);
+
+  useEffect(() => {
+    setKeptExpenses((prev) => {
+      let changed = false;
+      const next = { ...prev };
+      expenseEntries.forEach((e) => {
+        if (next[e.id] === undefined) {
+          next[e.id] = e.isEssential;
+          changed = true;
+        }
+      });
+      return changed ? next : prev;
+    });
+  }, [expenseEntries]);
+
+  // Persist helper
+  const persistSettings = (
+    newAccounts: Record<string, boolean>,
+    newIncome: Record<string, boolean>,
+    newExpenses: Record<string, boolean>,
+    newSeverance: number,
+    newExtraCut: number,
+  ) => {
+    const payload: RunwaySavedSettings = {
+      includedAccounts: newAccounts,
+      keptIncome: newIncome,
+      keptExpenses: newExpenses,
+      severanceLump: newSeverance,
+      extraMonthlyCut: newExtraCut,
+    };
+    saveRunwaySettings(payload);
+    onSaveSettings?.(payload);
+  };
+
+  // Toggle & change handlers
+  const toggleAccount = (accId: string) => {
+    setIncludedAccounts((prev) => {
+      const next = { ...prev, [accId]: !prev[accId] };
+      persistSettings(next, keptIncome, keptExpenses, severanceLump, extraMonthlyCut);
+      return next;
+    });
+  };
+
+  const setAllAccounts = (included: boolean) => {
+    const next = Object.fromEntries(savingsAccounts.map((a) => [a.id, included]));
+    setIncludedAccounts(next);
+    persistSettings(next, keptIncome, keptExpenses, severanceLump, extraMonthlyCut);
+  };
+
+  const toggleIncome = (incomeId: string) => {
+    setKeptIncome((prev) => {
+      const next = { ...prev, [incomeId]: !prev[incomeId] };
+      persistSettings(includedAccounts, next, keptExpenses, severanceLump, extraMonthlyCut);
+      return next;
+    });
+  };
+
+  const setAllIncome = (kept: boolean) => {
+    const next = Object.fromEntries(nonPrimaryIncome.map((e) => [e.id, kept]));
+    setKeptIncome(next);
+    persistSettings(includedAccounts, next, keptExpenses, severanceLump, extraMonthlyCut);
+  };
+
+  const toggleExpense = (expenseId: string) => {
+    setKeptExpenses((prev) => {
+      const next = { ...prev, [expenseId]: !prev[expenseId] };
+      persistSettings(includedAccounts, keptIncome, next, severanceLump, extraMonthlyCut);
+      return next;
+    });
+  };
+
+  const setCategoryExpenses = (catEntries: BudgetEntry[], kept: boolean) => {
+    setKeptExpenses((prev) => {
+      const next = {
+        ...prev,
+        ...Object.fromEntries(catEntries.map((e) => [e.id, kept])),
+      };
+      persistSettings(includedAccounts, keptIncome, next, severanceLump, extraMonthlyCut);
+      return next;
+    });
+  };
+
+  const handleSeveranceChange = (val: number) => {
+    const clamped = Math.max(0, Math.min(100000, val));
+    setSeveranceLump(clamped);
+    persistSettings(includedAccounts, keptIncome, keptExpenses, clamped, extraMonthlyCut);
+  };
+
+  const handleExtraCutChange = (val: number) => {
+    const clamped = Math.max(0, val);
+    setExtraMonthlyCut(clamped);
+    persistSettings(includedAccounts, keptIncome, keptExpenses, severanceLump, clamped);
+  };
+
+  const handleClearWhatIf = () => {
+    setSeveranceLump(0);
+    setExtraMonthlyCut(0);
+    persistSettings(includedAccounts, keptIncome, keptExpenses, 0, 0);
+  };
+
+  const handleResetToDefaults = () => {
+    const defaultAccounts = Object.fromEntries(savingsAccounts.map((a) => [a.id, true]));
+    const defaultIncome = Object.fromEntries(nonPrimaryIncome.map((e) => [e.id, true]));
+    const defaultExpenses = Object.fromEntries(expenseEntries.map((e) => [e.id, e.isEssential]));
+    setIncludedAccounts(defaultAccounts);
+    setKeptIncome(defaultIncome);
+    setKeptExpenses(defaultExpenses);
+    setSeveranceLump(0);
+    setExtraMonthlyCut(0);
+    persistSettings(defaultAccounts, defaultIncome, defaultExpenses, 0, 0);
   };
 
   const totalSavings = useMemo(
@@ -131,31 +349,15 @@ const RunwayCalculator: FC<RunwayCalculatorProps> = ({
     [savingsAccounts, includedAccounts, accountDetails],
   );
 
-  // ── Income toggles (non-primary) ────────────────────────────────────────
-  const nonPrimaryIncome = entries.filter((e) => e.isIncome && !e.isPrimaryIncome);
-  const [keptIncome, setKeptIncome] = useState<Record<string, boolean>>(() =>
-    Object.fromEntries(nonPrimaryIncome.map((e) => [e.id, true])),
-  );
-
   const totalKeptIncome = useMemo(
     () => nonPrimaryIncome.filter((e) => keptIncome[e.id]).reduce((s, e) => s + toMonthly(e), 0),
     [nonPrimaryIncome, keptIncome],
-  );
-
-  // ── Expense toggles ──────────────────────────────────────────────────────
-  const expenseEntries = entries.filter((e) => !e.isIncome);
-  const [keptExpenses, setKeptExpenses] = useState<Record<string, boolean>>(() =>
-    Object.fromEntries(expenseEntries.map((e) => [e.id, e.isEssential])),
   );
 
   const totalSelectedExpenses = useMemo(
     () => expenseEntries.filter((e) => keptExpenses[e.id]).reduce((s, e) => s + toMonthly(e), 0),
     [expenseEntries, keptExpenses],
   );
-
-  // ── What-if sliders ──────────────────────────────────────────────────────
-  const [severanceLump, setSeveranceLump] = useState(0);
-  const [extraMonthlyCut, setExtraMonthlyCut] = useState(0);
 
   // ── Calculation ──────────────────────────────────────────────────────────
   const pool = totalSavings + severanceLump;
@@ -189,23 +391,67 @@ const RunwayCalculator: FC<RunwayCalculatorProps> = ({
 
   return (
     <div className={css({ display: "flex", flexDirection: "column", gap: "24px" })}>
-      {/* Header info */}
+      {/* Header info & persistence bar */}
       <div
         className={css({
-          padding: "16px",
+          padding: "16px 20px",
           borderRadius: "lg",
           backgroundColor: "rgba(99,99,241,0.06)",
           border: "1px solid rgba(99,99,241,0.2)",
           display: "flex",
+          flexDirection: isMobile ? "column" : "row",
           gap: "12px",
-          alignItems: "flex-start",
+          alignItems: isMobile ? "flex-start" : "center",
+          justifyContent: "space-between",
         })}
       >
-        <FaInfoCircle style={{ color: "#6363f1", marginTop: "2px", flexShrink: 0 }} />
-        <FLPText fontSize="sm" color="text.muted" style={{ lineHeight: "1.6" }}>
-          Toggle the accounts you'd use, income you'd keep, and expenses you'd cut. The runway
-          updates instantly. Your primary salary is excluded — that's the whole point.
-        </FLPText>
+        <div style={{ display: "flex", gap: "12px", alignItems: "flex-start" }}>
+          <FaInfoCircle style={{ color: "#6363f1", marginTop: "3px", flexShrink: 0 }} />
+          <FLPText fontSize="sm" color="text.muted" style={{ lineHeight: "1.6" }}>
+            Toggle the accounts you'd use, income you'd keep, and expenses you'd cut. All options
+            are auto-saved so your custom runway scenario stays preserved. Primary salary is
+            excluded.
+          </FLPText>
+        </div>
+        <div style={{ display: "flex", alignItems: "center", gap: "10px", flexShrink: 0 }}>
+          <span
+            style={{
+              fontSize: "12px",
+              color: "#10b981",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "5px",
+              fontWeight: 500,
+              padding: "4px 8px",
+              borderRadius: "6px",
+              backgroundColor: "rgba(16,185,129,0.1)",
+            }}
+          >
+            <FaCheckCircle size={12} /> Auto-saved
+          </span>
+          <button
+            type="button"
+            onClick={handleResetToDefaults}
+            title="Reset what-if scenario to default settings"
+            className={css({
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "5px",
+              fontSize: "12px",
+              padding: "4px 10px",
+              borderRadius: "md",
+              border: "1px solid",
+              borderColor: "border",
+              backgroundColor: "surface",
+              cursor: "pointer",
+              color: "text.muted",
+              transition: "all 0.2s",
+              _hover: { borderColor: "primary", color: "primary" },
+            })}
+          >
+            <FaUndo size={10} /> Reset
+          </button>
+        </div>
       </div>
 
       {/* Main 2-col layout */}
@@ -221,17 +467,79 @@ const RunwayCalculator: FC<RunwayCalculatorProps> = ({
         <div className={css({ display: "flex", flexDirection: "column", gap: "16px" })}>
           {/* Savings pool */}
           <FLPCard>
-            <FLPHeading as="h3" size="sm" style={{ marginBottom: "14px" }}>
-              💰 Savings Pool
-            </FLPHeading>
+            <div
+              className={css({
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                marginBottom: "14px",
+              })}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                <FLPHeading as="h3" size="sm">
+                  💰 Savings Pool
+                </FLPHeading>
+                <span
+                  style={{
+                    fontSize: "11px",
+                    padding: "2px 8px",
+                    borderRadius: "12px",
+                    backgroundColor: "rgba(99,99,241,0.1)",
+                    color: "#6363f1",
+                    fontWeight: 600,
+                  }}
+                >
+                  {fmt(totalSavings)}
+                </span>
+              </div>
+              {savingsAccounts.length > 0 && (
+                <div style={{ display: "flex", gap: "6px" }}>
+                  <button
+                    className={css({
+                      fontSize: "10px",
+                      padding: "3px 8px",
+                      borderRadius: "sm",
+                      border: "1px solid",
+                      borderColor: "border",
+                      backgroundColor: "background",
+                      cursor: "pointer",
+                      color: "text.muted",
+                      _hover: { borderColor: "primary", color: "primary" },
+                    })}
+                    type="button"
+                    onClick={() => setAllAccounts(true)}
+                  >
+                    All
+                  </button>
+                  <button
+                    className={css({
+                      fontSize: "10px",
+                      padding: "3px 8px",
+                      borderRadius: "sm",
+                      border: "1px solid",
+                      borderColor: "border",
+                      backgroundColor: "background",
+                      cursor: "pointer",
+                      color: "text.muted",
+                      _hover: { borderColor: "destructive", color: "destructive" },
+                    })}
+                    type="button"
+                    onClick={() => setAllAccounts(false)}
+                  >
+                    None
+                  </button>
+                </div>
+              )}
+            </div>
             {savingsAccounts.length === 0 ? (
               <FLPText color="text.muted" fontSize="sm">
-                No saving/current accounts found. Connect accounts or add them manually.
+                No saving/current/investment accounts found. Connect accounts or add them manually.
               </FLPText>
             ) : (
               <div className={css({ display: "flex", flexDirection: "column", gap: "8px" })}>
                 {savingsAccounts.map((acc) => {
                   const bal = getLatestBalance(acc.id, acc.balance);
+                  const isIncluded = !!includedAccounts[acc.id];
                   return (
                     <div
                       key={acc.id}
@@ -241,40 +549,54 @@ const RunwayCalculator: FC<RunwayCalculatorProps> = ({
                         justifyContent: "space-between",
                         padding: "10px 12px",
                         borderRadius: "md",
-                        backgroundColor: includedAccounts[acc.id]
-                          ? "rgba(99,99,241,0.05)"
-                          : "background",
+                        backgroundColor: isIncluded ? "rgba(99,99,241,0.06)" : "background",
                         border: "1px solid",
-                        borderColor: includedAccounts[acc.id] ? "primary" : "border",
+                        borderColor: isIncluded ? "rgba(99,99,241,0.4)" : "border",
                         transition: "all 0.2s",
                       })}
                     >
-                      <div>
-                        <FLPText fontSize="sm" fontWeight="medium">
-                          {acc.name}
-                        </FLPText>
-                        <FLPText color="text.muted" fontSize="xs">
-                          {acc.type}
-                        </FLPText>
+                      <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                        {isIncluded ? (
+                          <FaCheckCircle
+                            style={{ color: "#6363f1", fontSize: "14px", flexShrink: 0 }}
+                          />
+                        ) : (
+                          <FaTimesCircle
+                            style={{ color: "#a1a1aa", fontSize: "14px", flexShrink: 0 }}
+                          />
+                        )}
+                        <div>
+                          <FLPText fontSize="sm" fontWeight={isIncluded ? "semibold" : "medium"}>
+                            {acc.name}
+                          </FLPText>
+                          <FLPText color="text.muted" fontSize="xs">
+                            <span>{acc.type}</span> ·{" "}
+                            <span style={{ color: isIncluded ? "#6363f1" : "inherit" }}>
+                              {isIncluded ? "included" : "excluded"}
+                            </span>
+                          </FLPText>
+                        </div>
                       </div>
                       <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                        <FLPText fontSize="sm" fontWeight="semibold" style={{ color: "#10b981" }}>
+                        <FLPText
+                          fontSize="sm"
+                          fontWeight="semibold"
+                          style={{ color: isIncluded ? "#10b981" : "var(--colors-text-muted)" }}
+                        >
                           {fmt(bal)}
                         </FLPText>
                         <button
-                          aria-checked={!!includedAccounts[acc.id]}
+                          aria-checked={isIncluded}
                           aria-label={`Include ${acc.name} in savings pool`}
-                          className={toggleBtnStyle(includedAccounts[acc.id], "#6363f1")}
+                          className={toggleBtnStyle}
+                          style={{
+                            backgroundColor: isIncluded ? "#6363f1" : "rgba(161, 161, 170, 0.35)",
+                          }}
                           role="switch"
                           type="button"
-                          onClick={() =>
-                            setIncludedAccounts((prev) => ({
-                              ...prev,
-                              [acc.id]: !prev[acc.id],
-                            }))
-                          }
+                          onClick={() => toggleAccount(acc.id)}
                         >
-                          <div style={knobStyle(includedAccounts[acc.id])} />
+                          <div style={knobStyle(isIncluded)} />
                         </button>
                       </div>
                     </div>
@@ -304,44 +626,133 @@ const RunwayCalculator: FC<RunwayCalculatorProps> = ({
           {/* Income toggles */}
           {nonPrimaryIncome.length > 0 && (
             <FLPCard>
-              <FLPHeading as="h3" size="sm" style={{ marginBottom: "14px" }}>
-                💼 Income I'd Keep
-              </FLPHeading>
-              <div className={css({ display: "flex", flexDirection: "column", gap: "8px" })}>
-                {nonPrimaryIncome.map((e) => (
-                  <div
-                    key={e.id}
+              <div
+                className={css({
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  marginBottom: "14px",
+                })}
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                  <FLPHeading as="h3" size="sm">
+                    💼 Income I'd Keep
+                  </FLPHeading>
+                  <span
+                    style={{
+                      fontSize: "11px",
+                      padding: "2px 8px",
+                      borderRadius: "12px",
+                      backgroundColor: "rgba(16,185,129,0.12)",
+                      color: "#10b981",
+                      fontWeight: 600,
+                    }}
+                  >
+                    +{fmt(totalKeptIncome)}/mo
+                  </span>
+                </div>
+                <div style={{ display: "flex", gap: "6px" }}>
+                  <button
                     className={css({
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                      padding: "8px 12px",
-                      borderRadius: "md",
-                      backgroundColor: "background",
+                      fontSize: "10px",
+                      padding: "3px 8px",
+                      borderRadius: "sm",
                       border: "1px solid",
                       borderColor: "border",
+                      backgroundColor: "background",
+                      cursor: "pointer",
+                      color: "text.muted",
+                      _hover: { borderColor: "#10b981", color: "#10b981" },
                     })}
+                    type="button"
+                    onClick={() => setAllIncome(true)}
                   >
-                    <div>
-                      <FLPText fontSize="sm" fontWeight="medium">
-                        {e.name}
-                      </FLPText>
-                      <FLPText fontSize="xs" color="text.muted">
-                        {fmt(toMonthly(e))}/mo
-                      </FLPText>
-                    </div>
-                    <button
-                      aria-checked={!!keptIncome[e.id]}
-                      aria-label={`Keep ${e.name} income`}
-                      className={toggleBtnStyle(keptIncome[e.id], "#10b981")}
-                      role="switch"
-                      type="button"
-                      onClick={() => setKeptIncome((prev) => ({ ...prev, [e.id]: !prev[e.id] }))}
+                    All
+                  </button>
+                  <button
+                    className={css({
+                      fontSize: "10px",
+                      padding: "3px 8px",
+                      borderRadius: "sm",
+                      border: "1px solid",
+                      borderColor: "border",
+                      backgroundColor: "background",
+                      cursor: "pointer",
+                      color: "text.muted",
+                      _hover: { borderColor: "destructive", color: "destructive" },
+                    })}
+                    type="button"
+                    onClick={() => setAllIncome(false)}
+                  >
+                    None
+                  </button>
+                </div>
+              </div>
+
+              <div className={css({ display: "flex", flexDirection: "column", gap: "8px" })}>
+                {nonPrimaryIncome.map((e) => {
+                  const isKept = !!keptIncome[e.id];
+                  return (
+                    <div
+                      key={e.id}
+                      className={css({
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        padding: "8px 12px",
+                        borderRadius: "md",
+                        backgroundColor: isKept ? "rgba(16,185,129,0.06)" : "background",
+                        border: "1px solid",
+                        borderColor: isKept ? "rgba(16,185,129,0.35)" : "border",
+                        transition: "all 0.2s",
+                      })}
                     >
-                      <div style={knobStyle(keptIncome[e.id])} />
-                    </button>
-                  </div>
-                ))}
+                      <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                        {isKept ? (
+                          <FaCheckCircle
+                            style={{ color: "#10b981", fontSize: "14px", flexShrink: 0 }}
+                          />
+                        ) : (
+                          <FaTimesCircle
+                            style={{ color: "#a1a1aa", fontSize: "14px", flexShrink: 0 }}
+                          />
+                        )}
+                        <div>
+                          <FLPText fontSize="sm" fontWeight={isKept ? "semibold" : "normal"}>
+                            {e.name}
+                          </FLPText>
+                          <FLPText fontSize="xs" color="text.muted">
+                            <span
+                              style={{
+                                color: isKept ? "#10b981" : "inherit",
+                                fontWeight: isKept ? 600 : 400,
+                              }}
+                            >
+                              +{fmt(toMonthly(e))}/mo
+                            </span>{" "}
+                            ·{" "}
+                            <span style={{ color: isKept ? "#10b981" : "inherit" }}>
+                              {isKept ? "kept" : "excluded"}
+                            </span>
+                          </FLPText>
+                        </div>
+                      </div>
+                      <button
+                        aria-checked={isKept}
+                        aria-label={`Keep ${e.name} income`}
+                        className={toggleBtnStyle}
+                        style={{
+                          backgroundColor: isKept ? "#10b981" : "rgba(161, 161, 170, 0.35)",
+                        }}
+                        role="switch"
+                        type="button"
+                        onClick={() => toggleIncome(e.id)}
+                      >
+                        <div style={knobStyle(isKept)} />
+                      </button>
+                    </div>
+                  );
+                })}
               </div>
             </FLPCard>
           )}
@@ -374,12 +785,7 @@ const RunwayCalculator: FC<RunwayCalculatorProps> = ({
                       _hover: { borderColor: "primary", color: "primary" },
                     })}
                     type="button"
-                    onClick={() =>
-                      setKeptExpenses((prev) => ({
-                        ...prev,
-                        ...Object.fromEntries(catEntries.map((e) => [e.id, true])),
-                      }))
-                    }
+                    onClick={() => setCategoryExpenses(catEntries, true)}
                   >
                     All
                   </button>
@@ -396,12 +802,7 @@ const RunwayCalculator: FC<RunwayCalculatorProps> = ({
                       _hover: { borderColor: "destructive", color: "destructive" },
                     })}
                     type="button"
-                    onClick={() =>
-                      setKeptExpenses((prev) => ({
-                        ...prev,
-                        ...Object.fromEntries(catEntries.map((e) => [e.id, false])),
-                      }))
-                    }
+                    onClick={() => setCategoryExpenses(catEntries, false)}
                   >
                     None
                   </button>
@@ -449,11 +850,16 @@ const RunwayCalculator: FC<RunwayCalculatorProps> = ({
                     <button
                       aria-checked={!!keptExpenses[e.id]}
                       aria-label={`Keep ${e.name} expense`}
-                      className={toggleBtnStyle(keptExpenses[e.id], "#ef4444")}
+                      className={toggleBtnStyle}
+                      style={{
+                        backgroundColor: keptExpenses[e.id]
+                          ? "#ef4444"
+                          : "rgba(161, 161, 170, 0.35)",
+                      }}
                       role="switch"
                       type="button"
                       title={keptExpenses[e.id] ? "I'd keep this" : "I'd cut this"}
-                      onClick={() => setKeptExpenses((prev) => ({ ...prev, [e.id]: !prev[e.id] }))}
+                      onClick={() => toggleExpense(e.id)}
                     >
                       <div style={knobStyle(keptExpenses[e.id])} />
                     </button>
@@ -628,126 +1034,158 @@ const RunwayCalculator: FC<RunwayCalculatorProps> = ({
                 borderTop: "1px solid var(--colors-border)",
               }}
             >
-              <FLPText
-                fontSize="xs"
-                fontWeight="semibold"
-                textTransform="uppercase"
-                color="text.muted"
-                style={{ marginBottom: "14px" }}
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  marginBottom: "14px",
+                }}
               >
-                What-if Scenarios
-              </FLPText>
-
-              {/* Severance lump */}
-              <div style={{ marginBottom: "14px" }}>
-                <div
-                  style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px" }}
+                <FLPText
+                  fontSize="xs"
+                  fontWeight="bold"
+                  textTransform="uppercase"
+                  color="text.muted"
                 >
-                  <FLPText fontSize="sm">Severance / lump sum</FLPText>
-                  <FLPText fontSize="sm" fontWeight="semibold" style={{ color: "#10b981" }}>
-                    +{fmt(severanceLump)}
-                  </FLPText>
-                </div>
-                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                  What-If Scenarios
+                </FLPText>
+                {(severanceLump > 0 || extraMonthlyCut > 0) && (
                   <button
-                    className={css({
-                      padding: "4px 8px",
-                      borderRadius: "sm",
-                      border: "1px solid",
-                      borderColor: "border",
-                      backgroundColor: "surface",
-                      cursor: "pointer",
-                      color: "text.muted",
-                      _hover: { borderColor: "primary", color: "primary" },
-                    })}
                     type="button"
-                    onClick={() => setSeveranceLump((p) => Math.max(0, p - 1000))}
-                  >
-                    <FaMinus size={10} />
-                  </button>
-                  <input
-                    style={{
-                      flex: 1,
-                      accentColor: "#6363f1",
-                    }}
-                    max={100000}
-                    min={0}
-                    step={500}
-                    type="range"
-                    value={severanceLump}
-                    onChange={(e) => setSeveranceLump(Number(e.target.value))}
-                  />
-                  <button
+                    onClick={handleClearWhatIf}
                     className={css({
-                      padding: "4px 8px",
-                      borderRadius: "sm",
-                      border: "1px solid",
-                      borderColor: "border",
-                      backgroundColor: "surface",
-                      cursor: "pointer",
+                      fontSize: "11px",
                       color: "text.muted",
-                      _hover: { borderColor: "primary", color: "primary" },
+                      background: "none",
+                      border: "none",
+                      cursor: "pointer",
+                      padding: "2px 6px",
+                      borderRadius: "sm",
+                      _hover: { color: "primary" },
                     })}
-                    type="button"
-                    onClick={() => setSeveranceLump((p) => Math.min(100000, p + 1000))}
                   >
-                    <FaPlus size={10} />
+                    Clear scenarios
                   </button>
-                </div>
+                )}
               </div>
 
-              {/* Monthly burn reduction */}
-              <div>
+              <div className={css({ display: "flex", flexDirection: "column", gap: "10px" })}>
+                {/* Severance lump input */}
                 <div
-                  style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px" }}
+                  className={css({
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    gap: "12px",
+                  })}
                 >
-                  <FLPText fontSize="sm">Extra monthly cut</FLPText>
-                  <FLPText fontSize="sm" fontWeight="semibold" style={{ color: "#10b981" }}>
-                    -{fmt(extraMonthlyCut)}/mo
-                  </FLPText>
+                  <label
+                    htmlFor="runway-severance-input"
+                    style={{ fontSize: "13px", fontWeight: 500, cursor: "pointer", flexShrink: 0 }}
+                  >
+                    Severance / lump sum
+                  </label>
+                  <div
+                    style={{
+                      position: "relative",
+                      display: "flex",
+                      alignItems: "center",
+                      width: "130px",
+                    }}
+                  >
+                    <span
+                      style={{
+                        position: "absolute",
+                        left: "9px",
+                        color: "var(--colors-text-muted)",
+                        fontWeight: "bold",
+                        fontSize: "12px",
+                        pointerEvents: "none",
+                      }}
+                    >
+                      £
+                    </span>
+                    <input
+                      id="runway-severance-input"
+                      aria-label="Severance or lump sum"
+                      className={smallInputStyle}
+                      style={{ paddingLeft: "22px", textAlign: "right", paddingRight: "8px" }}
+                      type="number"
+                      min="0"
+                      step="500"
+                      placeholder="0"
+                      value={severanceLump === 0 ? "" : severanceLump}
+                      onChange={(e) => {
+                        const val = e.target.value === "" ? 0 : Number(e.target.value);
+                        handleSeveranceChange(val);
+                      }}
+                    />
+                  </div>
                 </div>
-                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                  <button
-                    className={css({
-                      padding: "4px 8px",
-                      borderRadius: "sm",
-                      border: "1px solid",
-                      borderColor: "border",
-                      backgroundColor: "surface",
-                      cursor: "pointer",
-                      color: "text.muted",
-                      _hover: { borderColor: "primary", color: "primary" },
-                    })}
-                    type="button"
-                    onClick={() => setExtraMonthlyCut((p) => Math.max(0, p - 50))}
+
+                {/* Extra monthly cut input */}
+                <div
+                  className={css({
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    gap: "12px",
+                  })}
+                >
+                  <label
+                    htmlFor="runway-extra-cut-input"
+                    style={{ fontSize: "13px", fontWeight: 500, cursor: "pointer", flexShrink: 0 }}
                   >
-                    <FaMinus size={10} />
-                  </button>
-                  <input
-                    style={{ flex: 1, accentColor: "#6363f1" }}
-                    max={5000}
-                    min={0}
-                    step={50}
-                    type="range"
-                    value={extraMonthlyCut}
-                    onChange={(e) => setExtraMonthlyCut(Number(e.target.value))}
-                  />
-                  <button
-                    className={css({
-                      padding: "4px 8px",
-                      borderRadius: "sm",
-                      border: "1px solid",
-                      borderColor: "border",
-                      backgroundColor: "surface",
-                      cursor: "pointer",
-                      color: "text.muted",
-                      _hover: { borderColor: "primary", color: "primary" },
-                    })}
-                    type="button"
-                    onClick={() => setExtraMonthlyCut((p) => Math.min(5000, p + 50))}
+                    Extra monthly cut
+                  </label>
+                  <div
+                    style={{
+                      position: "relative",
+                      display: "flex",
+                      alignItems: "center",
+                      width: "130px",
+                    }}
                   >
-                    <FaPlus size={10} />
-                  </button>
+                    <span
+                      style={{
+                        position: "absolute",
+                        left: "9px",
+                        color: "var(--colors-text-muted)",
+                        fontWeight: "bold",
+                        fontSize: "12px",
+                        pointerEvents: "none",
+                      }}
+                    >
+                      £
+                    </span>
+                    <input
+                      id="runway-extra-cut-input"
+                      aria-label="Extra monthly spending cut"
+                      className={smallInputStyle}
+                      style={{ paddingLeft: "22px", textAlign: "right", paddingRight: "32px" }}
+                      type="number"
+                      min="0"
+                      step="50"
+                      placeholder="0"
+                      value={extraMonthlyCut === 0 ? "" : extraMonthlyCut}
+                      onChange={(e) => {
+                        const val = e.target.value === "" ? 0 : Number(e.target.value);
+                        handleExtraCutChange(val);
+                      }}
+                    />
+                    <span
+                      style={{
+                        position: "absolute",
+                        right: "8px",
+                        color: "var(--colors-text-muted)",
+                        fontSize: "11px",
+                        pointerEvents: "none",
+                      }}
+                    >
+                      /mo
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>

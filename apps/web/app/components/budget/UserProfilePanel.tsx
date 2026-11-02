@@ -260,6 +260,7 @@ const UserProfilePanel: FC<UserProfilePanelProps> = ({ initialProfile, user }) =
     pensionPercent: effectiveProfile.pensionPercent ?? 5.0,
     pensionEmployerPercent: effectiveProfile.pensionEmployerPercent ?? 3.0,
     isSalarySacrifice: effectiveProfile.isSalarySacrifice ?? true,
+    isSalarySacrificeEmployerNi: effectiveProfile.isSalarySacrificeEmployerNi ?? false,
   });
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -920,7 +921,11 @@ const UserProfilePanel: FC<UserProfilePanelProps> = ({ initialProfile, user }) =
                       paddingTop: "16px",
                       marginTop: "16px",
                       display: "grid",
-                      gridTemplateColumns: { base: "1fr", sm: "1fr 1fr 1fr" },
+                      gridTemplateColumns: {
+                        base: "1fr",
+                        sm: "repeat(2, 1fr)",
+                        md: "repeat(4, 1fr)",
+                      },
                       gap: "16px",
                     })}
                   >
@@ -979,7 +984,7 @@ const UserProfilePanel: FC<UserProfilePanelProps> = ({ initialProfile, user }) =
                       />
                     </div>
                     <div className={fieldGroupStyle}>
-                      <span className={labelStyle}>Salary Sacrifice Pension</span>
+                      <span className={labelStyle}>Salary Sacrifice</span>
                       <div
                         className={css({ display: "flex", alignItems: "center", height: "40px" })}
                       >
@@ -992,6 +997,7 @@ const UserProfilePanel: FC<UserProfilePanelProps> = ({ initialProfile, user }) =
                               const updated = {
                                 ...p,
                                 isSalarySacrifice: val,
+                                ...(val ? {} : { isSalarySacrificeEmployerNi: false }),
                               };
                               if (p.annualSalary !== null && p.annualSalary !== undefined) {
                                 updated.monthlyTakeHome = calculateNetTakeHome(
@@ -1007,6 +1013,41 @@ const UserProfilePanel: FC<UserProfilePanelProps> = ({ initialProfile, user }) =
                           }}
                         >
                           <div style={toggleKnobStyle(form.isSalarySacrifice ?? true)} />
+                        </button>
+                      </div>
+                    </div>
+                    <div className={fieldGroupStyle}>
+                      <span className={labelStyle}>Pass on Employer NI</span>
+                      <div
+                        className={css({ display: "flex", alignItems: "center", height: "40px" })}
+                      >
+                        <button
+                          className={toggleBtnStyle(
+                            Boolean(
+                              (form.isSalarySacrifice ?? true) && form.isSalarySacrificeEmployerNi,
+                            ),
+                          )}
+                          disabled={!(form.isSalarySacrifice ?? true)}
+                          style={{
+                            opacity: (form.isSalarySacrifice ?? true) ? 1 : 0.4,
+                            cursor: (form.isSalarySacrifice ?? true) ? "pointer" : "not-allowed",
+                          }}
+                          type="button"
+                          onClick={() => {
+                            setForm((p) => ({
+                              ...p,
+                              isSalarySacrificeEmployerNi: !p.isSalarySacrificeEmployerNi,
+                            }));
+                          }}
+                        >
+                          <div
+                            style={toggleKnobStyle(
+                              Boolean(
+                                (form.isSalarySacrifice ?? true) &&
+                                  form.isSalarySacrificeEmployerNi,
+                              ),
+                            )}
+                          />
                         </button>
                       </div>
                     </div>
@@ -1240,7 +1281,13 @@ const UserProfilePanel: FC<UserProfilePanelProps> = ({ initialProfile, user }) =
               },
               {
                 label: "Pension Tracker",
-                value: `${syncedProfile.pensionPercent ?? 5}% + ${syncedProfile.pensionEmployerPercent ?? 3}%`,
+                value: `${syncedProfile.pensionPercent ?? 5}% + ${syncedProfile.pensionEmployerPercent ?? 3}%${
+                  syncedProfile.isSalarySacrifice
+                    ? syncedProfile.isSalarySacrificeEmployerNi
+                      ? " (Salary Sacrifice + Employer NI)"
+                      : " (Salary Sacrifice)"
+                    : " (Net Pay)"
+                }`,
                 desc: "Pre-fills retirement forecast",
               },
             ].map((item) => (

@@ -21,6 +21,7 @@ export interface UserProfile {
   pensionPercent: number;
   pensionEmployerPercent: number;
   isSalarySacrifice: boolean;
+  isSalarySacrificeEmployerNi: boolean;
   monthlySavingsTarget: number | null;
   savingsAllocationMode: "total" | "per_account";
   savingsDefaultInterestRate: number;
@@ -52,6 +53,7 @@ export const DEFAULT_PROFILE: UserProfile = {
   pensionPercent: 5.0,
   pensionEmployerPercent: 3.0,
   isSalarySacrifice: true,
+  isSalarySacrificeEmployerNi: false,
   monthlySavingsTarget: null,
   savingsAllocationMode: "per_account",
   savingsDefaultInterestRate: 5.0,
@@ -88,6 +90,9 @@ export const normalizeProfile = (p: Partial<UserProfile>): UserProfile => ({
     p.pensionEmployerPercent !== null && p.pensionEmployerPercent !== undefined
       ? Number(p.pensionEmployerPercent)
       : 3.0,
+  isSalarySacrifice: p.isSalarySacrifice !== undefined ? Boolean(p.isSalarySacrifice) : true,
+  isSalarySacrificeEmployerNi:
+    p.isSalarySacrificeEmployerNi !== undefined ? Boolean(p.isSalarySacrificeEmployerNi) : false,
   monthlySavingsTarget:
     p.monthlySavingsTarget !== null && p.monthlySavingsTarget !== undefined
       ? Number(p.monthlySavingsTarget)

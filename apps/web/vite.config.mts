@@ -25,9 +25,13 @@ export default defineConfig(({ mode }) => ({
     ...(mode === "development"
       ? [
           checker({
-            typescript: true,
             biome: {
               command: "check",
+              watchPath: "./app",
+              dev: {
+                logLevel: ["error"],
+                debounceMs: 500,
+              },
             },
             enableBuild: false,
           }),

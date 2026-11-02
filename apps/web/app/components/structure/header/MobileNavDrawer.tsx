@@ -1,5 +1,6 @@
 import { css } from "@repo/ui/styled-system/css";
-import type { FC } from "react";
+import { type FC, useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import {
   FaBuilding,
   FaChartLine,
@@ -37,6 +38,8 @@ const drawerStyle = css({
   top: 0,
   right: 0,
   bottom: 0,
+  height: "100vh",
+  maxHeight: "100dvh",
   width: "85%",
   maxWidth: "320px",
   backgroundColor: "surface",
@@ -111,6 +114,12 @@ const profileLinkStyle = css({
 });
 
 const MobileNavDrawer: FC<MobileNavDrawerProps> = ({ isOpen, onClose, user }) => {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   if (!isOpen) return null;
 
   const baseRoutes: NavRouteItem[] = [{ key: "home", route: "/", icon: <FaHome size={18} /> }];
@@ -137,7 +146,7 @@ const MobileNavDrawer: FC<MobileNavDrawerProps> = ({ isOpen, onClose, user }) =>
       ]
     : [];
 
-  return (
+  const drawerContent = (
     <>
       <div
         aria-hidden="true"
@@ -194,6 +203,12 @@ const MobileNavDrawer: FC<MobileNavDrawerProps> = ({ isOpen, onClose, user }) =>
       </aside>
     </>
   );
+
+  if (mounted && typeof document !== "undefined") {
+    return createPortal(drawerContent, document.body);
+  }
+
+  return drawerContent;
 };
 
 export default MobileNavDrawer;

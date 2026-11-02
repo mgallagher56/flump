@@ -169,7 +169,7 @@ export default function DashboardScreen({ setActiveTab }: DashboardScreenProps) 
     // Savings Pool
     let totalSavings = 0;
     accounts.forEach((acc) => {
-      if (["Current", "Saving"].includes(acc.type)) {
+      if (["Current", "Saving", "Investment"].includes(acc.type)) {
         const details = accountDetails.filter((d) => d.accountId === acc.id);
         const bal = details.length > 0 ? details[details.length - 1].value : acc.balance;
         totalSavings += Math.max(0, bal);

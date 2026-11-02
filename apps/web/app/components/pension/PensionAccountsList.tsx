@@ -84,7 +84,7 @@ const tdStyle = css({
   whiteSpace: "nowrap",
 });
 
-const badgeStyle = css({
+const currentBadgeStyle = css({
   display: "inline-flex",
   alignItems: "center",
   gap: "4px",
@@ -94,6 +94,18 @@ const badgeStyle = css({
   fontWeight: "medium",
   backgroundColor: "rgba(139, 92, 246, 0.12)",
   color: "#8b5cf6",
+});
+
+const pastBadgeStyle = css({
+  display: "inline-flex",
+  alignItems: "center",
+  gap: "4px",
+  padding: "3px 8px",
+  borderRadius: "full",
+  fontSize: "xs",
+  fontWeight: "medium",
+  backgroundColor: "rgba(100, 116, 139, 0.12)",
+  color: "text.muted",
 });
 
 const actionBtnStyle = css({
@@ -152,6 +164,16 @@ export const PensionAccountsList: FC<PensionAccountsListProps> = ({
             return bal > 0 && bal < 5000;
           }).length
         : 0,
+    [accounts],
+  );
+
+  const currentPotsCount = useMemo(
+    () => accounts.filter((acc) => acc.isCurrent !== false).length,
+    [accounts],
+  );
+
+  const pastPotsCount = useMemo(
+    () => accounts.filter((acc) => acc.isCurrent === false).length,
     [accounts],
   );
 
@@ -220,7 +242,9 @@ export const PensionAccountsList: FC<PensionAccountsListProps> = ({
                 Pot Allocation Breakdown
               </FLPText>
               <FLPText color="text.muted" fontSize="xs">
-                {accounts.length} pots · {formatCurrency(totalBalance)} total
+                {accounts.length} pots ({currentPotsCount} current
+                {pastPotsCount > 0 ? `, ${pastPotsCount} past` : ""}) ·{" "}
+                {formatCurrency(totalBalance)} total
               </FLPText>
             </div>
             <div
@@ -276,7 +300,7 @@ export const PensionAccountsList: FC<PensionAccountsListProps> = ({
                 );
               })}
             </div>
-            {smallPotsCount > 0 && (
+            {(smallPotsCount > 0 || pastPotsCount > 0) && (
               <div
                 style={{
                   display: "flex",
@@ -289,10 +313,10 @@ export const PensionAccountsList: FC<PensionAccountsListProps> = ({
               >
                 <FaInfoCircle style={{ flexShrink: 0 }} />
                 <span>
-                  <strong>Consolidation Tip:</strong> You have {smallPotsCount}{" "}
-                  {smallPotsCount === 1 ? "pot" : "pots"} under £5,000. Combining legacy employer
-                  pots into a single pension or SIPP can simplify management and lower annual
-                  platform fees.
+                  <strong>Consolidation Tip:</strong>{" "}
+                  {pastPotsCount > 0
+                    ? `You have ${pastPotsCount} past pension ${pastPotsCount === 1 ? "pot" : "pots"}. Combining legacy employer pots into your active scheme or SIPP can simplify tracking and avoid duplicate fees.`
+                    : `You have ${smallPotsCount} ${smallPotsCount === 1 ? "pot" : "pots"} under £5,000. Combining legacy employer pots into a single pension or SIPP can simplify management and lower annual platform fees.`}
                 </span>
               </div>
             )}
@@ -359,7 +383,8 @@ export const PensionAccountsList: FC<PensionAccountsListProps> = ({
                 acc.interestRate !== undefined && acc.interestRate !== null
                   ? Number(acc.interestRate)
                   : 7;
-              const directMonthly = Number(acc.monthlyContribution) || 0;
+              const isCurrent = acc.isCurrent !== false;
+              const directMonthly = isCurrent ? Number(acc.monthlyContribution) || 0 : 0;
               const sharePct = totalBalance > 0 ? (bal / totalBalance) * 100 : 0;
               const potColor = POT_COLORS[idx % POT_COLORS.length];
 
@@ -382,21 +407,27 @@ export const PensionAccountsList: FC<PensionAccountsListProps> = ({
                       display: "flex",
                       justifyContent: "space-between",
                       alignItems: "flex-start",
+                      gap: "8px",
                     }}
                   >
-                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                      <span
-                        style={{
-                          width: "10px",
-                          height: "10px",
-                          borderRadius: "50%",
-                          backgroundColor: potColor,
-                          flexShrink: 0,
-                        }}
-                      />
-                      <FLPText fontSize="sm" fontWeight="bold">
-                        {acc.name}
-                      </FLPText>
+                    <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                        <span
+                          style={{
+                            width: "10px",
+                            height: "10px",
+                            borderRadius: "50%",
+                            backgroundColor: potColor,
+                            flexShrink: 0,
+                          }}
+                        />
+                        <FLPText fontSize="sm" fontWeight="bold">
+                          {acc.name}
+                        </FLPText>
+                      </div>
+                      <span className={isCurrent ? currentBadgeStyle : pastBadgeStyle}>
+                        {isCurrent ? "Current Pot" : "Past Pot"}
+                      </span>
                     </div>
                     <FLPHeading as="h5" isMobile size="md" style={{ color: "#8b5cf6" }}>
                       {formatCurrency(bal)}
@@ -433,8 +464,16 @@ export const PensionAccountsList: FC<PensionAccountsListProps> = ({
                       <FLPText color="text.muted" fontSize="xs">
                         Direct Inflow
                       </FLPText>
-                      <FLPText fontSize="xs" fontWeight="semibold">
-                        {directMonthly > 0 ? `+${formatCurrency(directMonthly)}/mo` : "Salary %"}
+                      <FLPText
+                        color={!isCurrent ? "text.muted" : undefined}
+                        fontSize="xs"
+                        fontWeight="semibold"
+                      >
+                        {!isCurrent
+                          ? "None (Past)"
+                          : directMonthly > 0
+                            ? `+${formatCurrency(directMonthly)}/mo`
+                            : "Salary %"}
                       </FLPText>
                     </div>
                   </div>
@@ -468,7 +507,7 @@ export const PensionAccountsList: FC<PensionAccountsListProps> = ({
               <thead>
                 <tr>
                   <th className={thStyle}>Pot Name</th>
-                  <th className={thStyle}>Type</th>
+                  <th className={thStyle}>Status</th>
                   <th className={thStyle}>Current Balance</th>
                   <th className={thStyle}>Share</th>
                   <th className={thStyle}>Expected Return</th>
@@ -486,10 +525,12 @@ export const PensionAccountsList: FC<PensionAccountsListProps> = ({
                     acc.interestRate !== undefined && acc.interestRate !== null
                       ? Number(acc.interestRate)
                       : 5.0;
-                  const directMonthly =
-                    acc.monthlyContribution !== undefined && acc.monthlyContribution !== null
+                  const isCurrent = acc.isCurrent !== false;
+                  const directMonthly = isCurrent
+                    ? acc.monthlyContribution !== undefined && acc.monthlyContribution !== null
                       ? Number(acc.monthlyContribution)
-                      : 0;
+                      : 0
+                    : 0;
                   const dotColor = POT_COLORS[idx % POT_COLORS.length];
 
                   return (
@@ -520,7 +561,9 @@ export const PensionAccountsList: FC<PensionAccountsListProps> = ({
                         </div>
                       </td>
                       <td className={tdStyle}>
-                        <span className={badgeStyle}>Pension</span>
+                        <span className={isCurrent ? currentBadgeStyle : pastBadgeStyle}>
+                          {isCurrent ? "Current Pot" : "Past Pot"}
+                        </span>
                       </td>
                       <td className={tdStyle}>
                         <span style={{ fontWeight: 700, fontSize: "15px" }}>
@@ -541,12 +584,16 @@ export const PensionAccountsList: FC<PensionAccountsListProps> = ({
                         <span
                           style={{
                             color:
-                              directMonthly > 0
-                                ? "var(--colors-text-primary)"
-                                : "var(--colors-text-muted)",
+                              !isCurrent || directMonthly <= 0
+                                ? "var(--colors-text-muted)"
+                                : "var(--colors-text-primary)",
                           }}
                         >
-                          {directMonthly > 0 ? `${formatCurrency(directMonthly)}/mo` : "Salary %"}
+                          {!isCurrent
+                            ? "None (Past Pot)"
+                            : directMonthly > 0
+                              ? `${formatCurrency(directMonthly)}/mo`
+                              : "Salary %"}
                         </span>
                       </td>
                       <td className={tdStyle} style={{ textAlign: "right" }}>
