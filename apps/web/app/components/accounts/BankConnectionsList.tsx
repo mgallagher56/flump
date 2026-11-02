@@ -7,7 +7,7 @@ import {
   FaTrashAlt,
   FaUniversity,
 } from "react-icons/fa";
-import { useFetcher } from "react-router";
+import { useFetcher, useRevalidator } from "react-router";
 import FLPButton from "~/components/core/buttons/FLPButton";
 import FLPHeading from "~/components/core/typography/FLPHeading";
 import FLPText from "~/components/core/typography/FLPText";
@@ -45,6 +45,7 @@ const BankConnectionsList: FC<BankConnectionsListProps> = ({
   variant = "desktop",
 }) => {
   const fetcher = useFetcher();
+  const revalidator = useRevalidator();
   const { isMobile: contextIsMobile } = useResponsive();
   const isMobileVariant = propIsMobile ?? (variant === "mobile" ? true : contextIsMobile);
 
@@ -185,7 +186,7 @@ const BankConnectionsList: FC<BankConnectionsListProps> = ({
             Manage your connected bank credentials and balance feeds.
           </FLPText>
         </div>
-        <ConnectBankWizard onSuccess={() => window.location.reload()} />
+        <ConnectBankWizard onSuccess={() => revalidator.revalidate()} />
       </div>
 
       {connections.length > 0 ? (
@@ -275,7 +276,7 @@ const BankConnectionsList: FC<BankConnectionsListProps> = ({
             </FLPText>
           </div>
           <div style={{ marginTop: "8px" }}>
-            <ConnectBankWizard onSuccess={() => window.location.reload()} />
+            <ConnectBankWizard onSuccess={() => revalidator.revalidate()} />
           </div>
         </div>
       )}

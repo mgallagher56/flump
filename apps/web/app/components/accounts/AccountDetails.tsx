@@ -9,6 +9,7 @@ import FLPText from "~/components/core/typography/FLPText";
 import { useResponsive } from "~/context/ResponsiveContext";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
 import type { loader } from "~/routes/app.accounts.$account";
+import { isFutureMonth } from "~/utils/accounts";
 
 export interface AccountDetailsProps {
   onInputChange: (event: ChangeEvent<HTMLInputElement>) => void;
@@ -95,19 +96,27 @@ const AccountDetails: FC<AccountDetailsProps> = ({
 
   // Calculate annual stats
   const annualStats = useMemo(() => {
-    const statsMap: { [year: number]: { total: number; average: number } } = {};
+    const statsMap: { [year: number]: { yearEnd: number; netChange: number; average: number } } =
+      {};
 
     uniqueYears.forEach((year) => {
       let sum = 0;
       let count = 0;
+      let firstVal: number | null = null;
+      let lastVal = 0;
       for (let m = 1; m <= 12; m++) {
-        const val = balanceMap[year]?.[m] ?? 0;
-        sum += val;
-        if (val !== 0) count++;
+        const val = balanceMap[year]?.[m];
+        if (val !== undefined && val !== 0) {
+          sum += val;
+          count++;
+          if (firstVal === null) firstVal = val;
+          lastVal = val;
+        }
       }
       statsMap[year] = {
-        total: sum,
-        average: count > 0 ? sum / 12 : 0,
+        yearEnd: lastVal,
+        netChange: firstVal !== null ? lastVal - firstVal : 0,
+        average: count > 0 ? sum / count : 0,
       };
     });
 
@@ -233,10 +242,11 @@ const AccountDetails: FC<AccountDetailsProps> = ({
 
   // Render Chart Tab
   if (activeTab === "chart" && !isEditMode) {
+    const chartDetails = sortedDetails.filter((d: any) => !isFutureMonth(d.month, d.year));
     return (
       <div className={chartContainerStyle}>
-        {sortedDetails.length > 0 ? (
-          <AccountDetailChart accountDetails={sortedDetails} showAxes={true} />
+        {chartDetails.length > 0 ? (
+          <AccountDetailChart accountDetails={chartDetails} showAxes={true} />
         ) : (
           <div
             style={{
@@ -330,12 +340,12 @@ const AccountDetails: FC<AccountDetailsProps> = ({
               })}
             </tr>
           ))}
-          {/* Annual Total */}
+          {/* Year-End Balance */}
           <tr className={footerRowStyle}>
-            <td className={tdStyle}>Annual Total</td>
+            <td className={tdStyle}>Year-End Balance</td>
             {uniqueYears.map((year: number) => (
               <td key={`total-${year}`} className={tdStyle}>
-                {formatCurrency(annualStats[year]?.total ?? 0)}
+                {formatCurrency(annualStats[year]?.yearEnd ?? 0)}
               </td>
             ))}
           </tr>

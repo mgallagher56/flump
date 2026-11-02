@@ -14,6 +14,7 @@ import FLPButton from "~/components/core/buttons/FLPButton";
 import FLPCheckbox from "~/components/core/inputs/checkbox/FLPCheckbox";
 import FLPHeading from "~/components/core/typography/FLPHeading";
 import FLPText from "~/components/core/typography/FLPText";
+import { useFormatCurrency } from "~/hooks/useFormatCurrency";
 import type { BudgetCategory, BudgetEntry } from "~/types/budget";
 import { CATEGORY_ICONS, toMonthly } from "~/types/budget";
 
@@ -81,12 +82,13 @@ const inputStyle = css({
 
 interface EntryRowProps {
   entry: BudgetEntry;
+  symbol: string;
   onUpdate: (id: string, update: Partial<BudgetEntry>) => void;
   onDelete: (id: string) => void;
   deleting?: boolean;
 }
 
-const EntryRow: FC<EntryRowProps> = ({ entry, onUpdate, onDelete, deleting }) => (
+const EntryRow: FC<EntryRowProps> = ({ entry, symbol, onUpdate, onDelete, deleting }) => (
   <div
     className={css({
       display: "grid",
@@ -106,14 +108,28 @@ const EntryRow: FC<EntryRowProps> = ({ entry, onUpdate, onDelete, deleting }) =>
       >
         {entry.name}
       </FLPText>
-      {!entry.isEssential && !entry.isIncome && (
-        <FLPText color="text.muted" fontSize="xs">
-          discretionary
-        </FLPText>
+      {!entry.isIncome && (
+        <button
+          type="button"
+          onClick={() => onUpdate(entry.id, { isEssential: !entry.isEssential })}
+          className={css({
+            background: "none",
+            border: "none",
+            padding: 0,
+            cursor: "pointer",
+            fontSize: "10px",
+            fontWeight: "semibold",
+            color: entry.isEssential ? "success.500" : "text.muted",
+            _hover: { textDecoration: "underline" },
+          })}
+          title="Click to toggle essential vs discretionary"
+        >
+          {entry.isEssential ? "essential" : "discretionary"}
+        </button>
       )}
     </div>
     <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-      <span style={{ color: "var(--colors-text-muted)", fontSize: "14px" }}>£</span>
+      <span style={{ color: "var(--colors-text-muted)", fontSize: "14px" }}>{symbol}</span>
       <input
         className={inputStyle}
         min="0"
@@ -123,9 +139,27 @@ const EntryRow: FC<EntryRowProps> = ({ entry, onUpdate, onDelete, deleting }) =>
         value={Number.isFinite(Number(entry.amount)) ? Number(entry.amount) : 0}
         onChange={(e) => onUpdate(entry.id, { amount: Number(e.target.value) || 0 })}
       />
-      <FLPText color="text.muted" fontSize="xs" style={{ width: "24px" }}>
-        /mo
-      </FLPText>
+      <select
+        aria-label={`Frequency for ${entry.name}`}
+        className={css({
+          padding: "8px 6px",
+          fontSize: "xs",
+          borderRadius: "sm",
+          border: "1px solid",
+          borderColor: "border",
+          backgroundColor: "surface",
+          color: "text.muted",
+          cursor: "pointer",
+        })}
+        value={entry.frequency}
+        onChange={(e) =>
+          onUpdate(entry.id, { frequency: e.target.value as BudgetEntry["frequency"] })
+        }
+      >
+        <option value="monthly">/mo</option>
+        <option value="annual">/yr</option>
+        <option value="weekly">/wk</option>
+      </select>
     </div>
     <button
       type="button"
@@ -164,6 +198,7 @@ const BudgetSetupWizard: FC<BudgetSetupWizardProps> = ({
   onCancel,
   monthlyTakeHome,
 }) => {
+  const { formatCurrency, symbol } = useFormatCurrency();
   const [currentStep, setCurrentStep] = useState<WizardStep>("welcome");
   const [localUpdates, setLocalUpdates] = useState<Record<string, Partial<BudgetEntry>>>({});
   const [saving, setSaving] = useState(false);
@@ -277,8 +312,8 @@ const BudgetSetupWizard: FC<BudgetSetupWizardProps> = ({
 
   const fmt = (n: number | string | null | undefined) => {
     const val = Number(n);
-    if (!Number.isFinite(val)) return "£0";
-    return `£${Math.abs(val).toLocaleString("en-GB", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
+    if (!Number.isFinite(val)) return formatCurrency(0);
+    return formatCurrency(Math.abs(val));
   };
 
   // Progress bar
@@ -342,7 +377,7 @@ const BudgetSetupWizard: FC<BudgetSetupWizardProps> = ({
               }}
             />
             <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-              <span style={{ color: "var(--colors-text-muted)", fontSize: "14px" }}>£</span>
+              <span style={{ color: "var(--colors-text-muted)", fontSize: "14px" }}>{symbol}</span>
               <input
                 className={inputStyle}
                 min="0"
@@ -565,12 +600,46 @@ const BudgetSetupWizard: FC<BudgetSetupWizardProps> = ({
                   backgroundColor: "rgba(16, 185, 129, 0.08)",
                   border: "1px solid rgba(16, 185, 129, 0.25)",
                   marginBottom: "8px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  gap: "12px",
+                  flexWrap: "wrap",
                 })}
               >
                 <FLPText color="success.500" fontSize="xs">
                   💡 Your profile has a monthly take-home of <strong>{fmt(monthlyTakeHome)}</strong>
                   . Update the salary entry below to match.
                 </FLPText>
+                {getCategoryEntries("income").length > 0 && (
+                  <button
+                    type="button"
+                    className={css({
+                      fontSize: "xs",
+                      fontWeight: "semibold",
+                      color: "success.500",
+                      backgroundColor: "surface",
+                      border: "1px solid rgba(16, 185, 129, 0.4)",
+                      borderRadius: "sm",
+                      padding: "4px 10px",
+                      cursor: "pointer",
+                      _hover: { backgroundColor: "rgba(16, 185, 129, 0.15)" },
+                    })}
+                    onClick={() => {
+                      const primary =
+                        getCategoryEntries("income").find((e) => e.isPrimaryIncome) ??
+                        getCategoryEntries("income")[0];
+                      if (primary) {
+                        localUpdate(primary.id, {
+                          amount: monthlyTakeHome,
+                          frequency: "monthly",
+                        });
+                      }
+                    }}
+                  >
+                    Apply {fmt(monthlyTakeHome)}
+                  </button>
+                )}
               </div>
             )}
             {getCategoryEntries("income").map((e) => (
@@ -578,6 +647,7 @@ const BudgetSetupWizard: FC<BudgetSetupWizardProps> = ({
                 key={e.id}
                 deleting={deletingId === e.id}
                 entry={e}
+                symbol={symbol}
                 onDelete={handleDeleteItem}
                 onUpdate={localUpdate}
               />
@@ -603,6 +673,7 @@ const BudgetSetupWizard: FC<BudgetSetupWizardProps> = ({
                 key={e.id}
                 deleting={deletingId === e.id}
                 entry={e}
+                symbol={symbol}
                 onDelete={handleDeleteItem}
                 onUpdate={localUpdate}
               />

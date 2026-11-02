@@ -2,9 +2,11 @@ import { css } from "@repo/ui/styled-system/css";
 import { type FC, useState } from "react";
 import { FaEdit, FaPlus, FaSave, FaTimes, FaTrash } from "react-icons/fa";
 import FLPButton from "~/components/core/buttons/FLPButton";
+import FLPCheckbox from "~/components/core/inputs/checkbox/FLPCheckbox";
 import FLPHeading from "~/components/core/typography/FLPHeading";
 import FLPText from "~/components/core/typography/FLPText";
 import { useResponsive } from "~/context/ResponsiveContext";
+import { useFormatCurrency } from "~/hooks/useFormatCurrency";
 import type { BudgetCategory, BudgetEntry } from "~/types/budget";
 import { CATEGORY_COLOURS, CATEGORY_ICONS, CATEGORY_LABELS, toMonthly } from "~/types/budget";
 
@@ -80,6 +82,7 @@ const BudgetCategoryTable: FC<BudgetCategoryTableProps> = ({
   variant = "desktop",
 }) => {
   const { isMobile: contextIsMobile } = useResponsive();
+  const { formatCurrency, symbol } = useFormatCurrency();
   const isMobileVariant = propIsMobile ?? (variant === "mobile" ? true : contextIsMobile);
 
   const [editingRow, setEditingRow] = useState<EditRow | null>(null);
@@ -145,8 +148,17 @@ const BudgetCategoryTable: FC<BudgetCategoryTableProps> = ({
   const formatAmount = (entry: BudgetEntry) => {
     const monthly = toMonthly(entry);
     const prefix = isIncome ? "+" : "-";
-    const symbol = "£";
-    return `${prefix}${symbol}${monthly.toLocaleString("en-GB", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}/mo`;
+    return `${prefix}${formatCurrency(Math.abs(monthly))}/mo`;
+  };
+
+  const formatFrequencyDetail = (entry: BudgetEntry) => {
+    if (entry.frequency === "annual") {
+      return `annual (${formatCurrency(Number(entry.amount) || 0)}/yr)`;
+    }
+    if (entry.frequency === "weekly") {
+      return `weekly (${formatCurrency(Number(entry.amount) || 0)}/wk)`;
+    }
+    return entry.frequency;
   };
 
   return (
@@ -183,11 +195,7 @@ const BudgetCategoryTable: FC<BudgetCategoryTableProps> = ({
             <FLPText color="text.muted" fontSize="xs">
               {entries.length} items · Total{" "}
               <strong style={{ color: isIncome ? "#10b981" : "inherit" }}>
-                £
-                {(Number.isFinite(total) ? total : 0).toLocaleString("en-GB", {
-                  minimumFractionDigits: 0,
-                  maximumFractionDigits: 0,
-                })}
+                {formatCurrency(Number.isFinite(total) ? total : 0)}
                 /mo
               </strong>
             </FLPText>
@@ -247,47 +255,82 @@ const BudgetCategoryTable: FC<BudgetCategoryTableProps> = ({
             >
               {isEditing ? (
                 <>
-                  <div
-                    className={css({
-                      display: "grid",
-                      gridTemplateColumns: isMobileVariant ? "1fr" : "2fr 1fr 1fr",
-                      gap: "8px",
-                      alignItems: "center",
-                    })}
-                  >
-                    <input
-                      className={inputStyle(isMobileVariant)}
-                      placeholder="Name"
-                      type="text"
-                      value={editingRow.name}
-                      onChange={(e) => setEditingRow((r) => r && { ...r, name: e.target.value })}
-                    />
-                    <input
-                      className={inputStyle(isMobileVariant)}
-                      min="0"
-                      placeholder="Amount"
-                      step="0.01"
-                      type="number"
-                      value={editingRow.amount}
-                      onChange={(e) => setEditingRow((r) => r && { ...r, amount: e.target.value })}
-                    />
-                    <select
-                      className={selectStyle(isMobileVariant)}
-                      value={editingRow.frequency}
-                      onChange={(e) =>
-                        setEditingRow(
-                          (r) =>
-                            r && {
-                              ...r,
-                              frequency: e.target.value as BudgetEntry["frequency"],
-                            },
-                        )
-                      }
+                  <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                    <div
+                      className={css({
+                        display: "grid",
+                        gridTemplateColumns: isMobileVariant ? "1fr" : "2fr 1fr 1fr",
+                        gap: "8px",
+                        alignItems: "center",
+                      })}
                     >
-                      <option value="monthly">Monthly</option>
-                      <option value="annual">Annual</option>
-                      <option value="weekly">Weekly</option>
-                    </select>
+                      <input
+                        className={inputStyle(isMobileVariant)}
+                        placeholder="Name"
+                        type="text"
+                        value={editingRow.name}
+                        onChange={(e) => setEditingRow((r) => r && { ...r, name: e.target.value })}
+                      />
+                      <input
+                        className={inputStyle(isMobileVariant)}
+                        min="0"
+                        placeholder={`Amount (${symbol})`}
+                        step="0.01"
+                        type="number"
+                        value={editingRow.amount}
+                        onChange={(e) =>
+                          setEditingRow((r) => r && { ...r, amount: e.target.value })
+                        }
+                      />
+                      <select
+                        className={selectStyle(isMobileVariant)}
+                        value={editingRow.frequency}
+                        onChange={(e) =>
+                          setEditingRow(
+                            (r) =>
+                              r && {
+                                ...r,
+                                frequency: e.target.value as BudgetEntry["frequency"],
+                              },
+                          )
+                        }
+                      >
+                        <option value="monthly">Monthly</option>
+                        <option value="annual">Annual</option>
+                        <option value="weekly">Weekly</option>
+                      </select>
+                    </div>
+                    <div
+                      className={css({
+                        display: "grid",
+                        gridTemplateColumns: isMobileVariant || isIncome ? "1fr" : "1fr auto",
+                        gap: "12px",
+                        alignItems: "center",
+                      })}
+                    >
+                      <input
+                        className={inputStyle(isMobileVariant)}
+                        placeholder="Notes (optional)"
+                        type="text"
+                        value={editingRow.notes}
+                        onChange={(e) => setEditingRow((r) => r && { ...r, notes: e.target.value })}
+                      />
+                      {!isIncome && (
+                        <FLPCheckbox
+                          checked={editingRow.isEssential}
+                          id={`edit-essential-${entry.id}`}
+                          label={
+                            <FLPText color="text.muted" fontSize="xs">
+                              Essential expense
+                            </FLPText>
+                          }
+                          size="sm"
+                          onChange={(e) =>
+                            setEditingRow((r) => r && { ...r, isEssential: e.target.checked })
+                          }
+                        />
+                      )}
+                    </div>
                   </div>
                   {isMobileVariant ? (
                     <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
@@ -352,7 +395,7 @@ const BudgetCategoryTable: FC<BudgetCategoryTableProps> = ({
                       }}
                     >
                       <FLPText color="text.muted" fontSize="xs">
-                        {entry.frequency}
+                        {formatFrequencyDetail(entry)}
                       </FLPText>
                       {entry.isEssential ? (
                         <span
@@ -451,7 +494,7 @@ const BudgetCategoryTable: FC<BudgetCategoryTableProps> = ({
                       }}
                     >
                       <FLPText color="text.muted" fontSize="xs">
-                        {entry.frequency}
+                        {formatFrequencyDetail(entry)}
                       </FLPText>
                       {entry.isEssential ? (
                         <span
@@ -493,6 +536,11 @@ const BudgetCategoryTable: FC<BudgetCategoryTableProps> = ({
                         >
                           primary
                         </span>
+                      )}
+                      {entry.notes && (
+                        <FLPText color="text.muted" fontSize="xs">
+                          · {entry.notes}
+                        </FLPText>
                       )}
                     </div>
                   </div>
@@ -561,49 +609,82 @@ const BudgetCategoryTable: FC<BudgetCategoryTableProps> = ({
               borderColor: "border",
             })}
           >
-            <div
-              className={css({
-                display: "grid",
-                gridTemplateColumns: isMobileVariant ? "1fr" : "2fr 1fr 1fr",
-                gap: "8px",
-                alignItems: "center",
-              })}
-            >
-              <input
-                // biome-ignore lint/a11y/noAutofocus: intentional for new row UX
-                autoFocus
-                className={inputStyle(isMobileVariant)}
-                placeholder="Name (e.g. Netflix)"
-                type="text"
-                value={editingRow.name}
-                onChange={(e) => setEditingRow((r) => r && { ...r, name: e.target.value })}
-              />
-              <input
-                className={inputStyle(isMobileVariant)}
-                min="0"
-                placeholder="Amount £"
-                step="0.01"
-                type="number"
-                value={editingRow.amount}
-                onChange={(e) => setEditingRow((r) => r && { ...r, amount: e.target.value })}
-              />
-              <select
-                className={selectStyle(isMobileVariant)}
-                value={editingRow.frequency}
-                onChange={(e) =>
-                  setEditingRow(
-                    (r) =>
-                      r && {
-                        ...r,
-                        frequency: e.target.value as BudgetEntry["frequency"],
-                      },
-                  )
-                }
+            <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+              <div
+                className={css({
+                  display: "grid",
+                  gridTemplateColumns: isMobileVariant ? "1fr" : "2fr 1fr 1fr",
+                  gap: "8px",
+                  alignItems: "center",
+                })}
               >
-                <option value="monthly">Monthly</option>
-                <option value="annual">Annual</option>
-                <option value="weekly">Weekly</option>
-              </select>
+                <input
+                  // biome-ignore lint/a11y/noAutofocus: intentional for new row UX
+                  autoFocus
+                  className={inputStyle(isMobileVariant)}
+                  placeholder="Name (e.g. Netflix)"
+                  type="text"
+                  value={editingRow.name}
+                  onChange={(e) => setEditingRow((r) => r && { ...r, name: e.target.value })}
+                />
+                <input
+                  className={inputStyle(isMobileVariant)}
+                  min="0"
+                  placeholder={`Amount ${symbol}`}
+                  step="0.01"
+                  type="number"
+                  value={editingRow.amount}
+                  onChange={(e) => setEditingRow((r) => r && { ...r, amount: e.target.value })}
+                />
+                <select
+                  className={selectStyle(isMobileVariant)}
+                  value={editingRow.frequency}
+                  onChange={(e) =>
+                    setEditingRow(
+                      (r) =>
+                        r && {
+                          ...r,
+                          frequency: e.target.value as BudgetEntry["frequency"],
+                        },
+                    )
+                  }
+                >
+                  <option value="monthly">Monthly</option>
+                  <option value="annual">Annual</option>
+                  <option value="weekly">Weekly</option>
+                </select>
+              </div>
+              <div
+                className={css({
+                  display: "grid",
+                  gridTemplateColumns: isMobileVariant || isIncome ? "1fr" : "1fr auto",
+                  gap: "12px",
+                  alignItems: "center",
+                })}
+              >
+                <input
+                  className={inputStyle(isMobileVariant)}
+                  placeholder="Notes (optional)"
+                  type="text"
+                  value={editingRow.notes}
+                  onChange={(e) => setEditingRow((r) => r && { ...r, notes: e.target.value })}
+                />
+                {!isIncome && (
+                  <FLPCheckbox
+                    checked={editingRow.isEssential}
+                    id="new-row-essential-checkbox"
+                    label={
+                      <FLPText color="text.muted" fontSize="xs">
+                        Essential expense
+                      </FLPText>
+                    }
+                    size="sm"
+                    onChange={(e) =>
+                      setEditingRow((r) => r && { ...r, isEssential: e.target.checked })
+                    }
+                  />
+                )}
+              </div>
             </div>
             <div
               style={

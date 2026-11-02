@@ -12,6 +12,11 @@ export const action = async (args: ActionFunctionArgs) => {
   const connectionId = formData.get("connectionId");
   const name = formData.get("name");
   const type = formData.get("type");
+  const rawBalance = formData.get("balance");
+  const balance =
+    rawBalance !== null && rawBalance !== "" && Number.isFinite(Number(rawBalance))
+      ? Number(rawBalance)
+      : undefined;
 
   const apiUrl = process.env.VITE_API_URL || "http://localhost:4000";
 
@@ -23,7 +28,7 @@ export const action = async (args: ActionFunctionArgs) => {
           "Content-Type": "application/json",
           Authorization: `Bearer ${accessToken || "mock-session-token"}`,
         },
-        body: JSON.stringify({ name, type }),
+        body: JSON.stringify({ name, type, ...(balance !== undefined ? { balance } : {}) }),
       });
       if (!res.ok) throw new Error("Failed to create account");
     } else if (intent === "update") {
@@ -33,7 +38,7 @@ export const action = async (args: ActionFunctionArgs) => {
           "Content-Type": "application/json",
           Authorization: `Bearer ${accessToken || "mock-session-token"}`,
         },
-        body: JSON.stringify({ name, type }),
+        body: JSON.stringify({ name, type, ...(balance !== undefined ? { balance } : {}) }),
       });
       if (!res.ok) throw new Error("Failed to update account");
     } else if (intent === "delete") {

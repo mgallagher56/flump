@@ -9,13 +9,13 @@ import {
   FaPiggyBank,
   FaTimes,
   FaUniversity,
-  FaUserCircle,
   FaWallet,
 } from "react-icons/fa";
 import { Link } from "react-router";
 import HomeLogo from "~/components/navigation/HomeLogo";
 import NavMenu, { type NavRouteItem } from "~/components/navigation/NavMenu";
 import ThemeToggle from "~/components/navigation/ThemeToggle";
+import UserAvatar from "~/components/navigation/UserAvatar";
 import UserLogin from "~/components/navigation/UserLogin";
 
 export interface MobileNavDrawerProps {
@@ -175,7 +175,7 @@ const MobileNavDrawer: FC<MobileNavDrawerProps> = ({ isOpen, onClose, user }) =>
         <div className={footerStyle}>
           {!!user && (
             <Link className={profileLinkStyle} to="/app/profile" onClick={onClose}>
-              <FaUserCircle size={20} />
+              <UserAvatar bordered size={24} user={user} />
               <span>User Profile</span>
             </Link>
           )}

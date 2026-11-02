@@ -31,6 +31,11 @@ vi.mock("react-router", async () => {
 
 vi.mock("app/components/core/cards/AccountsCard", () => ({ default: () => "AccountsCard" }));
 vi.mock("app/components/core/input/FLPInput", () => ({ default: () => "FLPInput" }));
+vi.mock("~/hooks/useFormatCurrency", () => ({
+  useFormatCurrency: () => ({
+    formatCurrency: (val: number) => `£${val?.toLocaleString()}`,
+  }),
+}));
 
 describe("<AccountsContainer />", () => {
   test("should render as expected when no accounts exist", () => {

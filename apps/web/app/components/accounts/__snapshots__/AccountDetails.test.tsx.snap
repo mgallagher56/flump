@@ -97,7 +97,7 @@ exports[`<AccountDetails /> > should remove year when delete button is clicked 1
             <span
               class="fs_10px d_block mt_4px fw_medium c_text.muted"
             >
-              +£0
+              £0
                
               (
               0
@@ -113,7 +113,7 @@ exports[`<AccountDetails /> > should remove year when delete button is clicked 1
             <span
               class="fs_10px d_block mt_4px fw_medium c_text.muted"
             >
-              +£0
+              £0
                
               (
               0
@@ -136,7 +136,7 @@ exports[`<AccountDetails /> > should remove year when delete button is clicked 1
             <span
               class="fs_10px d_block mt_4px fw_medium c_text.muted"
             >
-              +£0
+              £0
                
               (
               0
@@ -152,7 +152,7 @@ exports[`<AccountDetails /> > should remove year when delete button is clicked 1
             <span
               class="fs_10px d_block mt_4px fw_medium c_text.muted"
             >
-              +£0
+              £0
                
               (
               0
@@ -175,7 +175,7 @@ exports[`<AccountDetails /> > should remove year when delete button is clicked 1
             <span
               class="fs_10px d_block mt_4px fw_medium c_text.muted"
             >
-              +£0
+              £0
                
               (
               0
@@ -191,7 +191,7 @@ exports[`<AccountDetails /> > should remove year when delete button is clicked 1
             <span
               class="fs_10px d_block mt_4px fw_medium c_text.muted"
             >
-              +£0
+              £0
                
               (
               0
@@ -214,7 +214,7 @@ exports[`<AccountDetails /> > should remove year when delete button is clicked 1
             <span
               class="fs_10px d_block mt_4px fw_medium c_text.muted"
             >
-              +£0
+              £0
                
               (
               0
@@ -230,7 +230,7 @@ exports[`<AccountDetails /> > should remove year when delete button is clicked 1
             <span
               class="fs_10px d_block mt_4px fw_medium c_text.muted"
             >
-              +£0
+              £0
                
               (
               0
@@ -253,7 +253,7 @@ exports[`<AccountDetails /> > should remove year when delete button is clicked 1
             <span
               class="fs_10px d_block mt_4px fw_medium c_text.muted"
             >
-              +£0
+              £0
                
               (
               0
@@ -269,7 +269,7 @@ exports[`<AccountDetails /> > should remove year when delete button is clicked 1
             <span
               class="fs_10px d_block mt_4px fw_medium c_text.muted"
             >
-              +£0
+              £0
                
               (
               0
@@ -292,7 +292,7 @@ exports[`<AccountDetails /> > should remove year when delete button is clicked 1
             <span
               class="fs_10px d_block mt_4px fw_medium c_text.muted"
             >
-              +£0
+              £0
                
               (
               0
@@ -308,7 +308,7 @@ exports[`<AccountDetails /> > should remove year when delete button is clicked 1
             <span
               class="fs_10px d_block mt_4px fw_medium c_text.muted"
             >
-              +£0
+              £0
                
               (
               0
@@ -331,7 +331,7 @@ exports[`<AccountDetails /> > should remove year when delete button is clicked 1
             <span
               class="fs_10px d_block mt_4px fw_medium c_text.muted"
             >
-              +£0
+              £0
                
               (
               0
@@ -347,7 +347,7 @@ exports[`<AccountDetails /> > should remove year when delete button is clicked 1
             <span
               class="fs_10px d_block mt_4px fw_medium c_text.muted"
             >
-              +£0
+              £0
                
               (
               0
@@ -370,7 +370,7 @@ exports[`<AccountDetails /> > should remove year when delete button is clicked 1
             <span
               class="fs_10px d_block mt_4px fw_medium c_text.muted"
             >
-              +£0
+              £0
                
               (
               0
@@ -386,7 +386,7 @@ exports[`<AccountDetails /> > should remove year when delete button is clicked 1
             <span
               class="fs_10px d_block mt_4px fw_medium c_text.muted"
             >
-              +£0
+              £0
                
               (
               0
@@ -409,7 +409,7 @@ exports[`<AccountDetails /> > should remove year when delete button is clicked 1
             <span
               class="fs_10px d_block mt_4px fw_medium c_text.muted"
             >
-              +£0
+              £0
                
               (
               0
@@ -425,7 +425,7 @@ exports[`<AccountDetails /> > should remove year when delete button is clicked 1
             <span
               class="fs_10px d_block mt_4px fw_medium c_text.muted"
             >
-              +£0
+              £0
                
               (
               0
@@ -448,7 +448,7 @@ exports[`<AccountDetails /> > should remove year when delete button is clicked 1
             <span
               class="fs_10px d_block mt_4px fw_medium c_text.muted"
             >
-              +£0
+              £0
                
               (
               0
@@ -464,7 +464,7 @@ exports[`<AccountDetails /> > should remove year when delete button is clicked 1
             <span
               class="fs_10px d_block mt_4px fw_medium c_text.muted"
             >
-              +£0
+              £0
                
               (
               0
@@ -487,7 +487,7 @@ exports[`<AccountDetails /> > should remove year when delete button is clicked 1
             <span
               class="fs_10px d_block mt_4px fw_medium c_text.muted"
             >
-              +£0
+              £0
                
               (
               0
@@ -503,7 +503,7 @@ exports[`<AccountDetails /> > should remove year when delete button is clicked 1
             <span
               class="fs_10px d_block mt_4px fw_medium c_text.muted"
             >
-              +£0
+              £0
                
               (
               0
@@ -526,7 +526,7 @@ exports[`<AccountDetails /> > should remove year when delete button is clicked 1
             <span
               class="fs_10px d_block mt_4px fw_medium c_text.muted"
             >
-              +£0
+              £0
                
               (
               0
@@ -547,17 +547,17 @@ exports[`<AccountDetails /> > should remove year when delete button is clicked 1
           <td
             class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
           >
-            Annual Total
+            Year-End Balance
           </td>
           <td
             class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
           >
-            £12,000
+            £1,000
           </td>
           <td
             class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
           >
-            £12,000
+            £1,000
           </td>
         </tr>
         <tr
@@ -682,7 +682,7 @@ exports[`<AccountDetails /> > should render 1`] = `
             <span
               class="fs_10px d_block mt_4px fw_medium c_text.muted"
             >
-              +£0
+              £0
                
               (
               0
@@ -698,7 +698,7 @@ exports[`<AccountDetails /> > should render 1`] = `
             <span
               class="fs_10px d_block mt_4px fw_medium c_text.muted"
             >
-              +£0
+              £0
                
               (
               0
@@ -721,7 +721,7 @@ exports[`<AccountDetails /> > should render 1`] = `
             <span
               class="fs_10px d_block mt_4px fw_medium c_text.muted"
             >
-              +£0
+              £0
                
               (
               0
@@ -737,7 +737,7 @@ exports[`<AccountDetails /> > should render 1`] = `
             <span
               class="fs_10px d_block mt_4px fw_medium c_text.muted"
             >
-              +£0
+              £0
                
               (
               0
@@ -760,7 +760,7 @@ exports[`<AccountDetails /> > should render 1`] = `
             <span
               class="fs_10px d_block mt_4px fw_medium c_text.muted"
             >
-              +£0
+              £0
                
               (
               0
@@ -776,7 +776,7 @@ exports[`<AccountDetails /> > should render 1`] = `
             <span
               class="fs_10px d_block mt_4px fw_medium c_text.muted"
             >
-              +£0
+              £0
                
               (
               0
@@ -799,7 +799,7 @@ exports[`<AccountDetails /> > should render 1`] = `
             <span
               class="fs_10px d_block mt_4px fw_medium c_text.muted"
             >
-              +£0
+              £0
                
               (
               0
@@ -815,7 +815,7 @@ exports[`<AccountDetails /> > should render 1`] = `
             <span
               class="fs_10px d_block mt_4px fw_medium c_text.muted"
             >
-              +£0
+              £0
                
               (
               0
@@ -838,7 +838,7 @@ exports[`<AccountDetails /> > should render 1`] = `
             <span
               class="fs_10px d_block mt_4px fw_medium c_text.muted"
             >
-              +£0
+              £0
                
               (
               0
@@ -854,7 +854,7 @@ exports[`<AccountDetails /> > should render 1`] = `
             <span
               class="fs_10px d_block mt_4px fw_medium c_text.muted"
             >
-              +£0
+              £0
                
               (
               0
@@ -877,7 +877,7 @@ exports[`<AccountDetails /> > should render 1`] = `
             <span
               class="fs_10px d_block mt_4px fw_medium c_text.muted"
             >
-              +£0
+              £0
                
               (
               0
@@ -893,7 +893,7 @@ exports[`<AccountDetails /> > should render 1`] = `
             <span
               class="fs_10px d_block mt_4px fw_medium c_text.muted"
             >
-              +£0
+              £0
                
               (
               0
@@ -916,7 +916,7 @@ exports[`<AccountDetails /> > should render 1`] = `
             <span
               class="fs_10px d_block mt_4px fw_medium c_text.muted"
             >
-              +£0
+              £0
                
               (
               0
@@ -932,7 +932,7 @@ exports[`<AccountDetails /> > should render 1`] = `
             <span
               class="fs_10px d_block mt_4px fw_medium c_text.muted"
             >
-              +£0
+              £0
                
               (
               0
@@ -955,7 +955,7 @@ exports[`<AccountDetails /> > should render 1`] = `
             <span
               class="fs_10px d_block mt_4px fw_medium c_text.muted"
             >
-              +£0
+              £0
                
               (
               0
@@ -971,7 +971,7 @@ exports[`<AccountDetails /> > should render 1`] = `
             <span
               class="fs_10px d_block mt_4px fw_medium c_text.muted"
             >
-              +£0
+              £0
                
               (
               0
@@ -994,7 +994,7 @@ exports[`<AccountDetails /> > should render 1`] = `
             <span
               class="fs_10px d_block mt_4px fw_medium c_text.muted"
             >
-              +£0
+              £0
                
               (
               0
@@ -1010,7 +1010,7 @@ exports[`<AccountDetails /> > should render 1`] = `
             <span
               class="fs_10px d_block mt_4px fw_medium c_text.muted"
             >
-              +£0
+              £0
                
               (
               0
@@ -1033,7 +1033,7 @@ exports[`<AccountDetails /> > should render 1`] = `
             <span
               class="fs_10px d_block mt_4px fw_medium c_text.muted"
             >
-              +£0
+              £0
                
               (
               0
@@ -1049,7 +1049,7 @@ exports[`<AccountDetails /> > should render 1`] = `
             <span
               class="fs_10px d_block mt_4px fw_medium c_text.muted"
             >
-              +£0
+              £0
                
               (
               0
@@ -1072,7 +1072,7 @@ exports[`<AccountDetails /> > should render 1`] = `
             <span
               class="fs_10px d_block mt_4px fw_medium c_text.muted"
             >
-              +£0
+              £0
                
               (
               0
@@ -1088,7 +1088,7 @@ exports[`<AccountDetails /> > should render 1`] = `
             <span
               class="fs_10px d_block mt_4px fw_medium c_text.muted"
             >
-              +£0
+              £0
                
               (
               0
@@ -1111,7 +1111,7 @@ exports[`<AccountDetails /> > should render 1`] = `
             <span
               class="fs_10px d_block mt_4px fw_medium c_text.muted"
             >
-              +£0
+              £0
                
               (
               0
@@ -1132,17 +1132,17 @@ exports[`<AccountDetails /> > should render 1`] = `
           <td
             class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
           >
-            Annual Total
+            Year-End Balance
           </td>
           <td
             class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
           >
-            £12,000
+            £1,000
           </td>
           <td
             class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
           >
-            £12,000
+            £1,000
           </td>
         </tr>
         <tr
@@ -1588,17 +1588,17 @@ exports[`<AccountDetails /> > should render in edit mode 1`] = `
           <td
             class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
           >
-            Annual Total
+            Year-End Balance
           </td>
           <td
             class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
           >
-            £12,000
+            £1,000
           </td>
           <td
             class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
           >
-            £12,000
+            £1,000
           </td>
         </tr>
         <tr

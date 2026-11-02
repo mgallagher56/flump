@@ -153,6 +153,12 @@ vi.mock("react-router", async () => {
   };
 });
 
+vi.mock("~/hooks/useFormatCurrency", () => ({
+  useFormatCurrency: () => ({
+    formatCurrency: (val: number) => `£${val?.toLocaleString()}`,
+  }),
+}));
+
 describe("<AccountDetailContainer />", () => {
   test("should render", () => {
     const { baseElement } = customRender(<AccountDetailContainer />);

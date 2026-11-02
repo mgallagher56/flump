@@ -5,17 +5,28 @@ import {
   getCurrentUKTaxYear,
 } from "@repo/common";
 import { css } from "@repo/ui/styled-system/css";
-import { type FC, useState } from "react";
-import { FaBriefcase, FaCheckCircle, FaGlobe, FaHome, FaUser } from "react-icons/fa";
+import { type FC, useRef, useState } from "react";
+import {
+  FaBriefcase,
+  FaCamera,
+  FaCheckCircle,
+  FaGlobe,
+  FaHome,
+  FaTrash,
+  FaUser,
+} from "react-icons/fa";
 import FLPButton from "~/components/core/buttons/FLPButton";
 import FLPCard from "~/components/core/cards/FLPCard";
 import TaxDisclaimerButton from "~/components/core/dialogs/TaxDisclaimerButton";
 import FLPHeading from "~/components/core/typography/FLPHeading";
 import FLPText from "~/components/core/typography/FLPText";
+import UserAvatar from "~/components/navigation/UserAvatar";
 import { type UserProfile, type UserProfileUpdate, useUserProfile } from "~/hooks/useUserProfile";
+import { processImageFile } from "~/utils/avatar";
 
 interface UserProfilePanelProps {
   initialProfile: UserProfile;
+  user?: any;
 }
 
 const EMPLOYMENT_TYPES = [
@@ -229,12 +240,13 @@ export function calculateNetTakeHome(
   return defaultResult;
 }
 
-const UserProfilePanel: FC<UserProfilePanelProps> = ({ initialProfile }) => {
+const UserProfilePanel: FC<UserProfilePanelProps> = ({ initialProfile, user }) => {
   const { profile, setProfile, updateProfile } = useUserProfile();
   const effectiveProfile = profile.id ? profile : initialProfile;
 
   const [form, setForm] = useState<UserProfileUpdate>({
     displayName: effectiveProfile.displayName,
+    avatarUrl: effectiveProfile.avatarUrl,
     country: effectiveProfile.country || "GB",
     currency: effectiveProfile.currency,
     employmentType: effectiveProfile.employmentType,
@@ -249,6 +261,50 @@ const UserProfilePanel: FC<UserProfilePanelProps> = ({ initialProfile }) => {
     pensionEmployerPercent: effectiveProfile.pensionEmployerPercent ?? 3.0,
     isSalarySacrifice: effectiveProfile.isSalarySacrifice ?? true,
   });
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [imageUploadError, setImageUploadError] = useState<string | null>(null);
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadingImage(true);
+    setImageUploadError(null);
+    try {
+      const dataUrl = await processImageFile(file, 512);
+      setForm((prev) => ({ ...prev, avatarUrl: dataUrl }));
+      await updateProfile({ avatarUrl: dataUrl });
+      setSaved(true);
+      setTimeout(() => setSaved(false), 3000);
+    } catch (err: any) {
+      setImageUploadError(err?.message || "Failed to process image. Please try again.");
+    } finally {
+      setUploadingImage(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    }
+  };
+
+  const handleRemoveImage = async () => {
+    setUploadingImage(true);
+    setImageUploadError(null);
+    try {
+      setForm((prev) => ({ ...prev, avatarUrl: null }));
+      await updateProfile({ avatarUrl: null });
+      setSaved(true);
+      setTimeout(() => setSaved(false), 3000);
+    } catch {
+      setImageUploadError("Failed to remove profile picture.");
+    } finally {
+      setUploadingImage(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    }
+  };
 
   const [warningDismissed, setWarningDismissed] = useState(false);
 
@@ -383,6 +439,112 @@ const UserProfilePanel: FC<UserProfilePanelProps> = ({ initialProfile }) => {
             <FLPHeading as="h3" size="md">
               Personal Details
             </FLPHeading>
+          </div>
+
+          {/* Profile Picture & Thumbnail Section */}
+          <div
+            className={css({
+              display: "flex",
+              alignItems: "center",
+              gap: "20px",
+              padding: "16px",
+              borderRadius: "md",
+              backgroundColor: "surface.muted",
+              border: "1px solid",
+              borderColor: "border",
+              marginBottom: "24px",
+              flexWrap: { base: "wrap", sm: "nowrap" },
+            })}
+          >
+            <UserAvatar
+              bordered
+              profile={{
+                ...effectiveProfile,
+                displayName: form.displayName,
+                avatarUrl: form.avatarUrl,
+              }}
+              size={72}
+              user={user}
+            />
+            <div
+              className={css({
+                display: "flex",
+                flexDirection: "column",
+                gap: "6px",
+                flex: 1,
+              })}
+            >
+              <div
+                className={css({
+                  fontWeight: "semibold",
+                  fontSize: "sm",
+                  color: "text.primary",
+                })}
+              >
+                Profile Picture & Thumbnail
+              </div>
+              <div className={css({ fontSize: "xs", color: "text.muted" })}>
+                {form.avatarUrl
+                  ? "Your custom profile picture is active and used as your thumbnail."
+                  : "Your initials are currently used as your thumbnail. Upload an image to personalize your profile picture."}
+              </div>
+              <div
+                className={css({
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "10px",
+                  marginTop: "6px",
+                  flexWrap: "wrap",
+                })}
+              >
+                <input
+                  ref={fileInputRef}
+                  accept="image/png,image/jpeg,image/webp,image/gif"
+                  aria-label="Upload profile picture"
+                  data-testid="profile-picture-input"
+                  id="profile-picture-input"
+                  style={{ display: "none" }}
+                  type="file"
+                  onChange={handleImageUpload}
+                />
+                <FLPButton
+                  data-testid="upload-picture-button"
+                  disabled={uploadingImage}
+                  id="upload-picture-button"
+                  size="sm"
+                  variant="primary"
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  <FaCamera style={{ marginRight: "6px" }} />
+                  {uploadingImage
+                    ? "Processing..."
+                    : form.avatarUrl
+                      ? "Change Picture"
+                      : "Upload Picture"}
+                </FLPButton>
+                {form.avatarUrl && (
+                  <FLPButton
+                    data-testid="remove-picture-button"
+                    disabled={uploadingImage}
+                    id="remove-picture-button"
+                    size="sm"
+                    variant="outline"
+                    onClick={handleRemoveImage}
+                  >
+                    <FaTrash style={{ marginRight: "6px" }} />
+                    Remove
+                  </FLPButton>
+                )}
+              </div>
+              {imageUploadError && (
+                <div
+                  className={css({ color: "error", fontSize: "xs", marginTop: "4px" })}
+                  data-testid="profile-upload-error"
+                >
+                  {imageUploadError}
+                </div>
+              )}
+            </div>
           </div>
 
           <div

@@ -7,6 +7,7 @@ import FLPCard from "~/components/core/cards/FLPCard";
 import FLPHeading from "~/components/core/typography/FLPHeading";
 import FLPText from "~/components/core/typography/FLPText";
 import { useResponsive } from "~/context/ResponsiveContext";
+import { useFormatCurrency } from "~/hooks/useFormatCurrency";
 import type { BudgetCategory, BudgetEntry } from "~/types/budget";
 import { CATEGORY_COLOURS, CATEGORY_ICONS, CATEGORY_LABELS, toMonthly } from "~/types/budget";
 
@@ -47,6 +48,7 @@ const BudgetDashboard: FC<BudgetDashboardProps> = ({
   variant = "desktop",
 }) => {
   const { isMobile: contextIsMobile } = useResponsive();
+  const { formatCurrency } = useFormatCurrency();
   const isMobileVariant = propIsMobile ?? (variant === "mobile" ? true : contextIsMobile);
   const totals = useMemo(() => {
     const income = entries.filter((e) => e.isIncome).reduce((s, e) => s + toMonthly(e), 0);
@@ -73,8 +75,8 @@ const BudgetDashboard: FC<BudgetDashboardProps> = ({
 
   const fmt = (n: number | string | null | undefined) => {
     const val = Number(n);
-    if (!Number.isFinite(val)) return "£0";
-    return `£${Math.abs(val).toLocaleString("en-GB", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
+    if (!Number.isFinite(val)) return formatCurrency(0);
+    return formatCurrency(Math.abs(val));
   };
 
   const surplusColour = totals.surplus >= 0 ? "#10b981" : "#ef4444";
@@ -211,7 +213,7 @@ const BudgetDashboard: FC<BudgetDashboardProps> = ({
                       borderRadius: "8px",
                       color: "var(--colors-text-primary)",
                     }}
-                    formatter={(value: any) => [`£${Number(value).toFixed(0)}/mo`, ""]}
+                    formatter={(value: any) => [`${fmt(value)}/mo`, ""]}
                   />
                 </PieChart>
               </ResponsiveContainer>

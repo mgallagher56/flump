@@ -6,6 +6,7 @@ export interface UserProfile {
   id: string;
   userId: string;
   displayName: string | null;
+  avatarUrl: string | null;
   currency: string;
   country: string;
   employmentType: "employed" | "self-employed" | "other" | null;
@@ -36,6 +37,7 @@ export const DEFAULT_PROFILE: UserProfile = {
   id: "",
   userId: "",
   displayName: null,
+  avatarUrl: null,
   currency: "GBP",
   country: "GB",
   employmentType: null,
@@ -61,6 +63,7 @@ export const DEFAULT_PROFILE: UserProfile = {
 export const normalizeProfile = (p: Partial<UserProfile>): UserProfile => ({
   ...DEFAULT_PROFILE,
   ...p,
+  avatarUrl: p.avatarUrl !== undefined ? p.avatarUrl : DEFAULT_PROFILE.avatarUrl,
   annualSalary:
     p.annualSalary !== null && p.annualSalary !== undefined ? Number(p.annualSalary) : null,
   monthlyTakeHome:

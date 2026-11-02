@@ -4,6 +4,7 @@ exports[`FLPTabs > renders correctly 1`] = `
 <div>
   <div
     data-orientation="horizontal"
+    data-variant="desktop"
     dir="ltr"
   >
     <div

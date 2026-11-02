@@ -1,7 +1,7 @@
 import { css } from "@repo/ui/styled-system/css";
 import type { ReactElement } from "react";
 import { useTranslation } from "react-i18next";
-import { FiDatabase, FiLock, FiPieChart, FiTrendingUp } from "react-icons/fi";
+import { FiArrowRight, FiDatabase, FiLock, FiPieChart, FiTrendingUp } from "react-icons/fi";
 import {
   type LoaderFunctionArgs,
   type MetaFunction,
@@ -13,6 +13,8 @@ import FLPBox from "~/components/core/structure/FLPBox";
 import FLPHeading from "~/components/core/typography/FLPHeading";
 import FLPText from "~/components/core/typography/FLPText";
 import SetupChecklist from "~/components/setup/SetupChecklist";
+import { useFormatCurrency } from "~/hooks/useFormatCurrency";
+import { toMonthly } from "~/types/budget";
 import { getAuthSession } from "~/utils/utils";
 
 export const meta: MetaFunction = (): { title: string }[] => [
@@ -37,6 +39,7 @@ export const loader = async (args: LoaderFunctionArgs) => {
       hasProfile: false,
       hasRunForecast: false,
       completedSteps: [] as string[],
+      summary: null,
     };
   }
 
@@ -53,22 +56,54 @@ export const loader = async (args: LoaderFunctionArgs) => {
     const accounts = accountsRes.ok ? await accountsRes.json() : [];
     const userProfile = profileRes.ok ? await profileRes.json() : null;
     const budgetEntries = budgetRes.ok ? await budgetRes.json() : [];
+    const completedSteps = (userProfile?.setupChecklistCompletedSteps as string[]) ?? [];
+
+    const assetTypes = ["Current", "Saving", "Investment", "Pension", "Owed"];
+    const totalAssets = Array.isArray(accounts)
+      ? accounts
+          .filter((a: any) => assetTypes.includes(a.type))
+          .reduce((sum: number, a: any) => sum + (Number(a.balance) || 0), 0)
+      : 0;
+    const totalLiabilities = Array.isArray(accounts)
+      ? accounts
+          .filter((a: any) => !assetTypes.includes(a.type))
+          .reduce((sum: number, a: any) => sum + Math.abs(Number(a.balance) || 0), 0)
+      : 0;
+    const monthlyIncome = Array.isArray(budgetEntries)
+      ? budgetEntries
+          .filter((e: any) => e.isIncome)
+          .reduce((sum: number, e: any) => sum + toMonthly(e), 0)
+      : 0;
+    const monthlyExpenses = Array.isArray(budgetEntries)
+      ? budgetEntries
+          .filter((e: any) => !e.isIncome)
+          .reduce((sum: number, e: any) => sum + toMonthly(e), 0)
+      : 0;
 
     return {
       user,
       hasAccounts: Array.isArray(accounts) && accounts.length > 0,
-      hasBudget: Array.isArray(budgetEntries) && budgetEntries.length > 0,
+      hasBudget:
+        completedSteps.includes("budget") ||
+        (Array.isArray(budgetEntries) && budgetEntries.some((e: any) => !e.isDefault)),
       hasSavings:
         Array.isArray(accounts) &&
         accounts.some((a: any) => a.type === "Saving" || a.type === "Investment"),
       hasPension:
         (Array.isArray(accounts) && accounts.some((a: any) => a.type === "Pension")) ||
-        ((userProfile?.setupChecklistCompletedSteps as string[]) ?? []).includes("pension"),
+        completedSteps.includes("pension"),
       hasMortgageAccount:
         Array.isArray(accounts) && accounts.some((a: any) => a.type === "Mortgage"),
       hasProfile: !!userProfile?.annualSalary,
-      hasRunForecast: false,
-      completedSteps: (userProfile?.setupChecklistCompletedSteps as string[]) ?? [],
+      hasRunForecast: completedSteps.includes("forecast"),
+      completedSteps,
+      summary: {
+        netWorth: totalAssets - totalLiabilities,
+        totalAssets,
+        totalLiabilities,
+        monthlySurplus: monthlyIncome - monthlyExpenses,
+        accountsCount: Array.isArray(accounts) ? accounts.length : 0,
+      },
     };
   } catch (error) {
     console.error("Home loader error:", error);
@@ -82,12 +117,14 @@ export const loader = async (args: LoaderFunctionArgs) => {
       hasProfile: false,
       hasRunForecast: false,
       completedSteps: [] as string[],
+      summary: null,
     };
   }
 };
 
 const Index = (): ReactElement => {
   const { t } = useTranslation();
+  const { formatCurrency } = useFormatCurrency();
   const {
     user,
     hasAccounts,
@@ -98,6 +135,7 @@ const Index = (): ReactElement => {
     hasProfile,
     hasRunForecast,
     completedSteps,
+    summary,
   } = useLoaderData<typeof loader>();
 
   const heroStyle = css({
@@ -197,9 +235,142 @@ const Index = (): ReactElement => {
             marginRight: "auto",
             paddingLeft: "16px",
             paddingRight: "16px",
-            marginBottom: "32px",
+            marginBottom: "40px",
+            display: "flex",
+            flexDirection: "column",
+            gap: "24px",
           })}
         >
+          {summary && (
+            <div
+              className={css({
+                display: "grid",
+                gridTemplateColumns: { base: "1fr", md: "repeat(3, 1fr)" },
+                gap: "16px",
+              })}
+            >
+              <RouterLink
+                to="/app/accounts"
+                className={css({
+                  textDecoration: "none",
+                  padding: "20px",
+                  borderRadius: "xl",
+                  border: "1px solid",
+                  borderColor: "primary",
+                  backgroundColor: "rgba(99, 99, 241, 0.06)",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "6px",
+                  transition: "transform 0.2s ease",
+                  _hover: { transform: "translateY(-2px)" },
+                })}
+              >
+                <FLPText
+                  color="text.muted"
+                  fontSize="xs"
+                  fontWeight="semibold"
+                  textTransform="uppercase"
+                >
+                  Net Worth ({summary.accountsCount} accounts)
+                </FLPText>
+                <FLPHeading
+                  as="h2"
+                  color={summary.netWorth >= 0 ? "success.500" : "destructive.500"}
+                  size="2xl"
+                >
+                  {formatCurrency(summary.netWorth)}
+                </FLPHeading>
+                <FLPText
+                  color="primary"
+                  fontSize="xs"
+                  fontWeight="semibold"
+                  style={{ display: "flex", alignItems: "center", gap: "4px", marginTop: "4px" }}
+                >
+                  View Accounts <FiArrowRight />
+                </FLPText>
+              </RouterLink>
+
+              <RouterLink
+                to="/app/budget"
+                className={css({
+                  textDecoration: "none",
+                  padding: "20px",
+                  borderRadius: "xl",
+                  border: "1px solid",
+                  borderColor: "border",
+                  backgroundColor: "surface",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "6px",
+                  transition: "all 0.2s ease",
+                  _hover: { transform: "translateY(-2px)", borderColor: "primary" },
+                })}
+              >
+                <FLPText
+                  color="text.muted"
+                  fontSize="xs"
+                  fontWeight="semibold"
+                  textTransform="uppercase"
+                >
+                  {summary.monthlySurplus >= 0 ? "Monthly Surplus" : "Monthly Deficit"}
+                </FLPText>
+                <FLPHeading
+                  as="h2"
+                  color={summary.monthlySurplus >= 0 ? "success.500" : "destructive.500"}
+                  size="2xl"
+                >
+                  {summary.monthlySurplus >= 0 ? "+" : "-"}
+                  {formatCurrency(Math.abs(summary.monthlySurplus))}/mo
+                </FLPHeading>
+                <FLPText
+                  color="primary"
+                  fontSize="xs"
+                  fontWeight="semibold"
+                  style={{ display: "flex", alignItems: "center", gap: "4px", marginTop: "4px" }}
+                >
+                  Open Budget Planner <FiArrowRight />
+                </FLPText>
+              </RouterLink>
+
+              <RouterLink
+                to="/app/forecast"
+                className={css({
+                  textDecoration: "none",
+                  padding: "20px",
+                  borderRadius: "xl",
+                  border: "1px solid",
+                  borderColor: "border",
+                  backgroundColor: "surface",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "6px",
+                  transition: "all 0.2s ease",
+                  _hover: { transform: "translateY(-2px)", borderColor: "primary" },
+                })}
+              >
+                <FLPText
+                  color="text.muted"
+                  fontSize="xs"
+                  fontWeight="semibold"
+                  textTransform="uppercase"
+                >
+                  Total Assets
+                </FLPText>
+                <FLPHeading as="h2" color="blue.500" size="2xl">
+                  {formatCurrency(summary.totalAssets)}
+                </FLPHeading>
+                <FLPText
+                  color="primary"
+                  fontSize="xs"
+                  fontWeight="semibold"
+                  style={{ display: "flex", alignItems: "center", gap: "4px", marginTop: "4px" }}
+                >
+                  Forecast Growth <FiArrowRight />
+                </FLPText>
+              </RouterLink>
+            </div>
+          )}
+
           <SetupChecklist
             completedSteps={completedSteps}
             hasAccounts={hasAccounts}
@@ -225,15 +396,22 @@ const Index = (): ReactElement => {
         </FLPText>
         <div className={stackStyle}>
           {user ? (
-            <FLPButton size="lg">
-              <RouterLink style={{ color: "inherit", textDecoration: "none" }} to="/app/accounts">
-                {t("accounts")}
-              </RouterLink>
-            </FLPButton>
+            <>
+              <FLPButton size="lg">
+                <RouterLink style={{ color: "inherit", textDecoration: "none" }} to="/app/accounts">
+                  {t("accounts")}
+                </RouterLink>
+              </FLPButton>
+              <FLPButton size="lg" variant="outline">
+                <RouterLink style={{ color: "inherit", textDecoration: "none" }} to="/app/budget">
+                  Budget Planner
+                </RouterLink>
+              </FLPButton>
+            </>
           ) : (
             <>
               <FLPButton size="lg">
-                <RouterLink style={{ color: "inherit", textDecoration: "none" }} to="/login">
+                <RouterLink style={{ color: "inherit", textDecoration: "none" }} to="/signUp">
                   {t("signUp")}
                 </RouterLink>
               </FLPButton>

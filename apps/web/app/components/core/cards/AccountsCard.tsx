@@ -10,7 +10,7 @@ import type { AccountTypeEnum } from "~/containers/accounts/utils";
 import { useResponsive } from "~/context/ResponsiveContext";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
 import type { loader } from "~/routes/app.accounts._index";
-import { monthYearSort } from "~/utils/accounts";
+import { isFutureMonth, monthYearSort } from "~/utils/accounts";
 import { currentMonth, currentYear } from "~/utils/utils";
 import FLPCard from "./FLPCard";
 
@@ -45,6 +45,7 @@ const AccountsCard: FC<AccountsCardProp> = ({
   const sortedAccountDetails = useMemo(() => {
     return accountDetails
       .filter((account) => (account.account_id || (account as any).accountId) === accountId)
+      .filter((account) => !isFutureMonth(account.month, account.year))
       .sort(monthYearSort);
   }, [accountDetails, accountId]);
 
@@ -53,10 +54,8 @@ const AccountsCard: FC<AccountsCardProp> = ({
   );
 
   const accountDetailYear = useMemo(() => {
-    if (sortedAccountDetails.length <= 12) return sortedAccountDetails;
-    if (currentMonthIndex === -1) return sortedAccountDetails.slice(-12);
-    return sortedAccountDetails.slice(Math.max(0, currentMonthIndex - 11), currentMonthIndex + 1);
-  }, [currentMonthIndex, sortedAccountDetails]);
+    return sortedAccountDetails.slice(-12);
+  }, [sortedAccountDetails]);
 
   const latestDetail =
     currentMonthIndex !== -1
@@ -64,10 +63,10 @@ const AccountsCard: FC<AccountsCardProp> = ({
       : sortedAccountDetails[sortedAccountDetails.length - 1];
 
   const currentBalance =
-    balance !== undefined
-      ? Number(balance)
-      : latestDetail?.value !== undefined
-        ? Number(latestDetail.value)
+    latestDetail?.value !== undefined
+      ? Number(latestDetail.value)
+      : balance !== undefined
+        ? Number(balance)
         : undefined;
 
   const prevDetail =
@@ -197,6 +196,13 @@ const AccountsCard: FC<AccountsCardProp> = ({
     prevAccountBalance !== undefined && currentBalance !== undefined
       ? prevAccountBalance <= currentBalance
       : true;
+  const isLiability = ["Mortgage", "Loan", "Credit Card"].includes(type);
+  const isFavorable =
+    prevAccountBalance !== undefined && currentBalance !== undefined
+      ? isLiability
+        ? currentBalance <= prevAccountBalance
+        : isUp
+      : true;
   const trendLabel =
     currentPercentageChangeValue >= 0
       ? `+${currentPercentageChangeValue}%`
@@ -234,7 +240,7 @@ const AccountsCard: FC<AccountsCardProp> = ({
             <>
               <span className={balanceValStyle}>{formatCurrency(currentBalance)}</span>
               {prevAccountBalance !== undefined && (
-                <span className={percentBadgeStyle(isUp)}>
+                <span className={percentBadgeStyle(isFavorable)}>
                   {isUp ? "↑" : "↓"} {trendLabel}
                 </span>
               )}

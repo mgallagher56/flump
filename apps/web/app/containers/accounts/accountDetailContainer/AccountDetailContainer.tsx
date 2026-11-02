@@ -11,6 +11,7 @@ import FLPHeading from "~/components/core/typography/FLPHeading";
 import FLPText from "~/components/core/typography/FLPText";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
 import type { loader } from "~/routes/app.accounts.$account";
+import { isFutureMonth } from "~/utils/accounts";
 import { currentYear, emptyObject } from "~/utils/utils";
 
 const AccountDetailContainer: FC = () => {
@@ -36,10 +37,12 @@ const AccountDetailContainer: FC = () => {
 
   // Calculate Latest Balance & Change
   const balanceStats = useMemo(() => {
-    const sorted = [...(accountDetails || [])].sort((a: any, b: any) => {
-      if (a.year !== b.year) return a.year - b.year;
-      return a.month - b.month;
-    });
+    const sorted = [...(accountDetails || [])]
+      .filter((d: any) => !isFutureMonth(d.month, d.year))
+      .sort((a: any, b: any) => {
+        if (a.year !== b.year) return a.year - b.year;
+        return a.month - b.month;
+      });
 
     if (sorted.length === 0) {
       return { current: account?.balance ?? 0, prev: 0, percentChange: 0, isUp: true };
@@ -53,12 +56,16 @@ const AccountDetailContainer: FC = () => {
 
     const percentChange =
       prevBalance !== 0 ? Math.round(((currentBalance - prevBalance) / prevBalance) * 100) : 0;
+    const isUp = currentBalance >= prevBalance;
+    const isLiability = ["Mortgage", "Loan", "Credit Card"].includes(account?.type ?? "");
+    const isFavorable = isLiability ? currentBalance <= prevBalance : isUp;
 
     return {
       current: currentBalance,
       prev: prevBalance,
       percentChange,
-      isUp: currentBalance >= prevBalance,
+      isUp,
+      isFavorable,
     };
   }, [account, accountDetails]);
 
@@ -259,7 +266,7 @@ const AccountDetailContainer: FC = () => {
               {formatCurrency(balanceStats.current)}
             </FLPHeading>
             {balanceStats.prev !== 0 && (
-              <span className={percentBadgeStyle(balanceStats.isUp)}>
+              <span className={percentBadgeStyle(balanceStats.isFavorable ?? balanceStats.isUp)}>
                 {balanceStats.isUp ? "↑" : "↓"}{" "}
                 {balanceStats.percentChange >= 0
                   ? `+${balanceStats.percentChange}`

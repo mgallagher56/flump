@@ -131,7 +131,12 @@ const SetupChecklist: FC<SetupChecklistProps> = (props) => {
   const { isMobile: contextIsMobile } = useResponsive();
   const isMobileVariant = props.isMobile ?? (props.variant === "mobile" ? true : contextIsMobile);
   const [expanded, setExpanded] = useState(true);
-  const [dismissed, setDismissed] = useState(false);
+  const [dismissed, setDismissed] = useState(() => {
+    if (typeof window !== "undefined") {
+      return window.localStorage.getItem("flump_setup_checklist_dismissed") === "true";
+    }
+    return false;
+  });
 
   const steps = STEP_DEFINITIONS(props, navigate);
   const completedCount = steps.filter((s) => s.isComplete).length;
@@ -229,6 +234,9 @@ const SetupChecklist: FC<SetupChecklistProps> = (props) => {
             onClick={(e) => {
               e.stopPropagation();
               setDismissed(true);
+              if (typeof window !== "undefined") {
+                window.localStorage.setItem("flump_setup_checklist_dismissed", "true");
+              }
             }}
           >
             <FaTimes />

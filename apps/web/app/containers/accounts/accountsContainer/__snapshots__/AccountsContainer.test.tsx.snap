@@ -136,6 +136,7 @@ exports[`<AccountsContainer /> > should render as expected when accounts exist 1
   >
     <div
       data-orientation="horizontal"
+      data-variant="desktop"
       dir="ltr"
     >
       <div
@@ -398,6 +399,7 @@ exports[`<AccountsContainer /> > should render as expected when no accounts exis
   >
     <div
       data-orientation="horizontal"
+      data-variant="desktop"
       dir="ltr"
     >
       <div

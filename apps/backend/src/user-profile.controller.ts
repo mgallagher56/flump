@@ -1,4 +1,4 @@
-import { Body, Controller, Get, NotFoundException, Patch, Req, UseGuards } from "@nestjs/common";
+import { Body, Controller, Get, Patch, Req, UseGuards } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
 import { AuthGuard } from "./auth/auth.guard";
@@ -65,6 +65,7 @@ export class UserProfileController {
         this.userProfileRepository.create({
           userId,
           displayName: null,
+          avatarUrl: null,
           currency: "GBP",
           country: "GB",
           employmentType: null,
@@ -96,6 +97,7 @@ export class UserProfileController {
     @Body()
     body: {
       displayName?: string | null;
+      avatarUrl?: string | null;
       currency?: string;
       country?: string;
       employmentType?: "employed" | "self-employed" | "other" | null;
@@ -122,6 +124,7 @@ export class UserProfileController {
       profile = this.userProfileRepository.create({
         userId,
         displayName: null,
+        avatarUrl: null,
         currency: "GBP",
         country: "GB",
         employmentType: null,
@@ -144,6 +147,7 @@ export class UserProfileController {
     }
 
     if (body.displayName !== undefined) profile.displayName = body.displayName ?? null;
+    if (body.avatarUrl !== undefined) profile.avatarUrl = body.avatarUrl ?? null;
     if (body.currency !== undefined) profile.currency = body.currency;
     if (body.country !== undefined) profile.country = body.country;
     if (body.employmentType !== undefined) profile.employmentType = body.employmentType ?? null;

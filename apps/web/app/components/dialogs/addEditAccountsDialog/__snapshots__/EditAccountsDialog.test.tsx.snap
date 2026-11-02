@@ -38,6 +38,7 @@ exports[`<EditAccountDialogBtn > should render edit account dialog and call fetc
     aria-labelledby="radix-_r_4_"
     class="pos_fixed top_50% left_50% trf_translate(-50%,_-50%) bg-c_surface bd_1px_solid bd-c_border bdr_lg bx-sh_0_20px_25px_-5px_rgba(0,_0,_0,_0.3),_0_10px_10px_-5px_rgba(0,_0,_0,_0.2) p_24px w_90vw max-w_480px z_50 ring_none c_text.primary"
     data-state="open"
+    data-variant="desktop"
     id="radix-_r_3_"
     role="dialog"
     style="pointer-events: auto;"
@@ -64,6 +65,7 @@ exports[`<EditAccountDialogBtn > should render edit account dialog and call fetc
         >
           <div
             class="d_flex flex-d_column ai_stretch gap_8px w_100%"
+            data-variant="desktop"
           >
             <label
               class="fs_sm fw_medium c_text.primary"
@@ -75,7 +77,7 @@ exports[`<EditAccountDialogBtn > should render edit account dialog and call fetc
               style="flex-grow: 1; flex-shrink: 1; flex-basis: 0%;"
             >
               <input
-                class="w_100% p_10px_14px fs_sm bdr_sm bd_1px_solid bd-c_border bg-c_transparent c_text.primary ring_none trs_all_0.2s focus:bd-c_primary focus:bx-sh_0_0_0_1px_token(colors.primary) disabled:op_0.5 disabled:cursor_not-allowed "
+                class="w_100% p_10px_14px fs_sm bdr_sm bd_1px_solid bd-c_border bg-c_transparent c_text.primary ring_none trs_all_0.2s focus:bd-c_primary focus:bx-sh_0_0_0_1px_token(colors.primary) disabled:op_0.5 disabled:cursor_not-allowed [&[type='number']]:ap_textfield [&[type='number']]:[&::-webkit-outer-spin-button,_&::-webkit-inner-spin-button]:-webkit-appearance_none [&[type='number']]:[&::-webkit-outer-spin-button,_&::-webkit-inner-spin-button]:m_0 "
                 id="Name"
                 name="name"
                 placeholder="accountName"
@@ -85,6 +87,7 @@ exports[`<EditAccountDialogBtn > should render edit account dialog and call fetc
           </div>
           <div
             class="d_flex flex-d_column ai_stretch gap_8px w_100%"
+            data-variant="desktop"
           >
             <label
               class="fs_sm fw_medium c_text.primary"
@@ -120,6 +123,12 @@ exports[`<EditAccountDialogBtn > should render edit account dialog and call fetc
                 </option>
                 <option
                   style="background-color: var(--colors-surface); color: var(--colors-text-primary);"
+                  value="Pension"
+                >
+                  Pension
+                </option>
+                <option
+                  style="background-color: var(--colors-surface); color: var(--colors-text-primary);"
                   value="Credit Card"
                 >
                   Credit Card
@@ -145,11 +154,34 @@ exports[`<EditAccountDialogBtn > should render edit account dialog and call fetc
               </select>
             </div>
           </div>
+          <div
+            class="d_flex flex-d_column ai_stretch gap_8px w_100%"
+            data-variant="desktop"
+          >
+            <label
+              class="fs_sm fw_medium c_text.primary"
+              for="Balance"
+            >
+              Balance
+            </label>
+            <div
+              style="flex-grow: 1; flex-shrink: 1; flex-basis: 0%;"
+            >
+              <input
+                class="w_100% p_10px_14px fs_sm bdr_sm bd_1px_solid bd-c_border bg-c_transparent c_text.primary ring_none trs_all_0.2s focus:bd-c_primary focus:bx-sh_0_0_0_1px_token(colors.primary) disabled:op_0.5 disabled:cursor_not-allowed [&[type='number']]:ap_textfield [&[type='number']]:[&::-webkit-outer-spin-button,_&::-webkit-inner-spin-button]:-webkit-appearance_none [&[type='number']]:[&::-webkit-outer-spin-button,_&::-webkit-inner-spin-button]:m_0 "
+                id="Balance"
+                name="balance"
+                placeholder="0.00"
+                type="number"
+                value=""
+              />
+            </div>
+          </div>
         </div>
       </form>
     </div>
     <div
-      class="d_flex jc_space-between ai_center mt_24px gap_16px"
+      class="d_flex jc_space-between ai_center mt_24px gap_16px flex-wrap_wrap"
     >
       <div>
         <div

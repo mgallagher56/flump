@@ -35,6 +35,21 @@ vi.mock("react-router", async () => {
   };
 });
 
+vi.mock("~/hooks/useFormatCurrency", () => ({
+  useFormatCurrency: () => ({
+    formatCurrency: (val: number) => `£${val?.toLocaleString()}`,
+  }),
+}));
+
+vi.mock("~/utils/utils", async () => {
+  const actual: any = await vi.importActual("~/utils/utils");
+  return {
+    ...actual,
+    currentMonth: 12,
+    currentYear: 2023,
+  };
+});
+
 vi.mock("app/utils/utils", () => ({
   currentMonth: 12,
   currentYear: 2023,
@@ -89,5 +104,22 @@ describe("<AccountsCard with increasing values", () => {
     );
 
     expect(baseElement).toMatchSnapshot();
+  });
+
+  test("should not display future months in the account details chart or balance calculation", () => {
+    mocks.mockUseLoaderData.mockReturnValueOnce({
+      user: mockUser,
+      accountDetails: [
+        { id: 1, account_id: "inv-1", month: 11, year: 2023, value: 13000 },
+        { id: 2, account_id: "inv-1", month: 12, year: 2023, value: 13216 },
+        { id: 3, account_id: "inv-1", month: 1, year: 2024, value: 0 },
+      ],
+    });
+
+    const { getByText } = customRender(
+      <AccountsCard accountId={"inv-1"} name="Trading 212" type={AccountTypeEnum.INVESTMENT} />,
+    );
+
+    expect(getByText("£13,216")).toBeDefined();
   });
 });

@@ -5,6 +5,7 @@ exports[`<FLPSelect /> > should render as expected 1`] = `
   <div>
     <div
       class="d_flex flex-d_column ai_stretch gap_8px w_100%"
+      data-variant="desktop"
     >
       <label
         class="fs_sm fw_medium c_text.primary"
@@ -49,6 +50,7 @@ exports[`<FLPSelect /> > should render as expected as row 1`] = `
   <div>
     <div
       class="d_flex flex-d_row ai_center gap_16px w_100%"
+      data-variant="desktop"
     >
       <label
         class="fs_sm fw_medium c_text.primary"

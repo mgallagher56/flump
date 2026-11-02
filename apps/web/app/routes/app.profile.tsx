@@ -24,7 +24,7 @@ export const loader = async (args: LoaderFunctionArgs) => {
 };
 
 const ProfileRoute = (): ReactElement => {
-  const { userProfile } = useLoaderData<typeof loader>();
+  const { userProfile, user } = useLoaderData<typeof loader>();
   const { setProfile } = useUserProfile();
 
   // Seed the Jotai atom so other features get the current profile
@@ -32,7 +32,7 @@ const ProfileRoute = (): ReactElement => {
     if (userProfile) setProfile(userProfile);
   }, [userProfile, setProfile]);
 
-  return <UserProfilePanel initialProfile={userProfile} />;
+  return <UserProfilePanel initialProfile={userProfile} user={user} />;
 };
 
 export default ProfileRoute;

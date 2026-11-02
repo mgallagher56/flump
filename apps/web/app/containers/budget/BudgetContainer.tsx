@@ -108,6 +108,11 @@ const BudgetContainer: FC = () => {
     setActiveTab("dashboard");
   };
 
+  const handleOpenRunway = () => {
+    setActiveTab("runway");
+    markChecklistStep("runway", true).catch(() => {});
+  };
+
   const tabStyle = (active: boolean) =>
     css({
       display: "flex",
@@ -213,7 +218,7 @@ const BudgetContainer: FC = () => {
           <button
             className={tabStyle(activeTab === "runway")}
             type="button"
-            onClick={() => setActiveTab("runway")}
+            onClick={handleOpenRunway}
           >
             <FaBalanceScale size={13} /> Runway
           </button>
@@ -241,7 +246,7 @@ const BudgetContainer: FC = () => {
           mortgageBalance={mortgageBalance}
           savingsBalance={savingsBalance}
           onNavigateToCategory={(cat) => setActiveTab(cat)}
-          onNavigateToRunway={() => setActiveTab("runway")}
+          onNavigateToRunway={handleOpenRunway}
         />
       )}
 

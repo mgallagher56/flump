@@ -33,38 +33,60 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
   const {
     accounts = [],
   }: {
-    accounts?: { id?: string; name?: string; type?: AccountType }[];
+    accounts?: { id?: string; name?: string; type?: AccountType; balance?: number }[];
   } = useLoaderData<typeof loader>();
   const { t } = useTranslation();
   const fetcher = useFetcher();
   const contentRef = useRef<HTMLDivElement>(null);
   const [modalOpen, setModalOpen] = useState(false);
 
-  const handleOpenModal = useCallback((e: { stopPropagation: () => void }) => {
-    e.stopPropagation();
-    setModalOpen(true);
-  }, []);
+  const selectedAccount = useMemo(
+    () =>
+      accounts?.find(
+        (account: { id?: string; name?: string; type?: AccountType; balance?: number }) =>
+          account.id === accountId,
+      ),
+    [accounts, accountId],
+  ) ?? { name: "", type: accountTypeArray[0], balance: undefined };
+
+  const [formInput, setFormInput] = useState<{
+    name: string;
+    type: AccountType[];
+    balance: string;
+  }>({
+    name: selectedAccount.name || "",
+    type: [selectedAccount.type || accountTypeArray[0]],
+    balance: selectedAccount.balance !== undefined ? String(selectedAccount.balance) : "",
+  });
+
+  const handleOpenModal = useCallback(
+    (e: { stopPropagation: () => void }) => {
+      e.stopPropagation();
+      setFormInput({
+        name: isEditAccount ? selectedAccount.name || "" : "",
+        type: [isEditAccount ? selectedAccount.type || accountTypeArray[0] : accountTypeArray[0]],
+        balance:
+          isEditAccount && selectedAccount.balance !== undefined
+            ? String(selectedAccount.balance)
+            : "",
+      });
+      setModalOpen(true);
+    },
+    [isEditAccount, selectedAccount.balance, selectedAccount.name, selectedAccount.type],
+  );
 
   const handleCloseModal = useCallback(() => {
     setModalOpen(false);
   }, []);
 
-  const selectedAccount = useMemo(
-    () =>
-      accounts?.find(
-        (account: { id?: string; name?: string; type?: AccountType }) => account.id === accountId,
-      ),
-    [accounts, accountId],
-  ) ?? { name: "", type: accountTypeArray[0] };
-
-  const [formInput, setFormInput] = useState<{
-    name: string;
-    type: AccountType[];
-  }>({ name: selectedAccount.name || "", type: [selectedAccount.type || accountTypeArray[0]] });
-
   const onChangeNameInput = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     const { value } = event.target;
     setFormInput((prevState) => ({ ...prevState, name: value }));
+  }, []);
+
+  const onChangeBalanceInput = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+    const { value } = event.target;
+    setFormInput((prevState) => ({ ...prevState, balance: value }));
   }, []);
 
   const onChangeTypeInput = useCallback((e: { value: string[] }) => {
@@ -72,12 +94,13 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
   }, []);
 
   const onAddAccount = useCallback(() => {
-    const { name, type } = formInput;
+    const { name, type, balance } = formInput;
     fetcher.submit(
       {
         intent: "create",
         name,
         type: type?.[0] || "",
+        ...(balance !== "" ? { balance } : {}),
       },
       { method: "POST" },
     );
@@ -85,13 +108,14 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
   }, [formInput, fetcher, handleCloseModal]);
 
   const onEditAccount = useCallback(() => {
-    const { name, type } = formInput;
+    const { name, type, balance } = formInput;
     fetcher.submit(
       {
         intent: "update",
         accountId: accountId || "",
         name,
         type: type?.[0] || "",
+        ...(balance !== "" ? { balance } : {}),
       },
       { method: "POST" },
     );
@@ -166,6 +190,14 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
             name="type"
             value={formInput.type}
             onValueChange={onChangeTypeInput}
+          />
+          <FLPInput
+            label="Balance"
+            name="balance"
+            placeholder="0.00"
+            type="number"
+            value={formInput.balance}
+            onChange={onChangeBalanceInput}
           />
         </FLPBox>
       </form>

@@ -16,12 +16,17 @@ const ForecastContainer: FC = () => {
   const { accounts = [], accountDetails = [], userProfile } = useLoaderData<typeof loader>();
   const [activeTab, setActiveTab] = useState<"forecaster" | "calculator">("forecaster");
 
-  const { profile, setProfile } = useUserProfile();
+  const { profile, setProfile, markChecklistStep } = useUserProfile();
 
   // Sync profile from loader into atom
   useEffect(() => {
-    if (userProfile) setProfile(userProfile);
-  }, [userProfile, setProfile]);
+    if (userProfile) {
+      setProfile(userProfile);
+      if (!userProfile.setupChecklistCompletedSteps?.includes("forecast")) {
+        markChecklistStep?.("forecast", true)?.catch?.(() => {});
+      }
+    }
+  }, [userProfile, setProfile, markChecklistStep]);
 
   // Calculate total current savings assets
   const totalAssets = useMemo(() => {

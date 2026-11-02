@@ -25,7 +25,7 @@ import type { Account, AccountDetail } from "~/containers/accounts/types";
 import { AccountTypeEnum, isAccountTypeValid } from "~/containers/accounts/utils";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
 import type { loader } from "~/routes/app.accounts._index";
-import { monthYearSort } from "~/utils/accounts";
+import { isFutureMonth, monthYearSort } from "~/utils/accounts";
 import { currentMonth, currentYear } from "~/utils/utils";
 
 const { CURRENT, SAVING, MORTGAGE, CREDIT_CARD, LOAN, OWED, INVESTMENT, PENSION } = AccountTypeEnum;
@@ -51,6 +51,7 @@ const AccountsContainer: FC = () => {
     accounts.forEach((acc: Account) => {
       const accDetails = accountDetails
         .filter((detail: any) => (detail.account_id || detail.accountId) === acc.id)
+        .filter((detail: any) => !isFutureMonth(detail.month, detail.year))
         .sort(monthYearSort);
 
       let balance = Number(acc.balance) || 0;
@@ -90,6 +91,7 @@ const AccountsContainer: FC = () => {
     accounts.forEach((acc: Account) => {
       const accDetails = accountDetails
         .filter((detail: any) => (detail.account_id || detail.accountId) === acc.id)
+        .filter((detail: any) => !isFutureMonth(detail.month, detail.year))
         .sort(monthYearSort);
 
       let balance = Number(acc.balance) || 0;

@@ -1,10 +1,13 @@
 import { css } from "@repo/ui/styled-system/css";
+import { useEffect } from "react";
 import type { LoaderFunctionArgs } from "react-router";
 import { Links, Meta, Outlet, Scripts, ScrollRestoration, useLoaderData } from "react-router";
 import MobileBottomBar from "./components/navigation/MobileBottomBar";
 import Header from "./components/structure/header/Header";
 import { ResponsiveProvider } from "./context/ResponsiveContext";
 import { useTheme } from "./hooks/useTheme";
+import type { UserProfile } from "./hooks/useUserProfile";
+import { useUserProfile } from "./hooks/useUserProfile";
 import i18next from "./i18n.server";
 import styles from "./index.css?url";
 import { ThemeContext } from "./ThemeContext";
@@ -23,16 +26,40 @@ export const links = () => [
 export const loader = async (args: LoaderFunctionArgs) => {
   const locale = await i18next.getLocale(args.request);
   const { user, accessToken } = await getAuthSession(args, { ensureSignedIn: false });
+  let userProfile: UserProfile | null = null;
+
+  if (user) {
+    try {
+      const apiUrl = process.env.VITE_API_URL || "http://localhost:4000";
+      const res = await fetch(`${apiUrl}/user-profile`, {
+        headers: { Authorization: `Bearer ${accessToken || "mock-session-token"}` },
+      });
+      if (res.ok) {
+        userProfile = await res.json();
+      }
+    } catch {
+      // Gracefully continue without profile if API is unreachable
+    }
+  }
+
   return {
     locale,
     user,
+    userProfile,
     accessToken,
   };
 };
 
 export default function App() {
-  const { locale, user } = useLoaderData<typeof loader>();
+  const { locale, user, userProfile } = useLoaderData<typeof loader>();
   const { theme, toggleTheme } = useTheme();
+  const { setProfile } = useUserProfile();
+
+  useEffect(() => {
+    if (userProfile) {
+      setProfile(userProfile);
+    }
+  }, [userProfile, setProfile]);
 
   return (
     <html className={theme === "dark" ? "dark" : ""} data-theme={theme} lang={locale}>

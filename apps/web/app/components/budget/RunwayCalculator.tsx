@@ -12,6 +12,8 @@ import FLPButton from "~/components/core/buttons/FLPButton";
 import FLPCard from "~/components/core/cards/FLPCard";
 import FLPHeading from "~/components/core/typography/FLPHeading";
 import FLPText from "~/components/core/typography/FLPText";
+import { useResponsive } from "~/context/ResponsiveContext";
+import { useFormatCurrency } from "~/hooks/useFormatCurrency";
 import type { BudgetEntry } from "~/types/budget";
 import { CATEGORY_ICONS, CATEGORY_LABELS, toMonthly } from "~/types/budget";
 
@@ -89,18 +91,20 @@ const knobStyle = (active: boolean) => ({
   boxShadow: "0 1px 3px rgba(0,0,0,0.3)",
 });
 
-const fmt = (n: number | string | null | undefined) => {
-  const val = Number(n);
-  if (!Number.isFinite(val)) return "£0";
-  return `£${Math.abs(val).toLocaleString("en-GB", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
-};
-
 const RunwayCalculator: FC<RunwayCalculatorProps> = ({
   entries,
   accounts,
   accountDetails,
   onNavigateToForecast,
 }) => {
+  const { isMobile } = useResponsive();
+  const { formatCurrency } = useFormatCurrency();
+
+  const fmt = (n: number | string | null | undefined) => {
+    const val = Number(n);
+    if (!Number.isFinite(val)) return formatCurrency(0);
+    return formatCurrency(Math.abs(val));
+  };
   // ── Savings pool ────────────────────────────────────────────────────────
   const savingsAccounts = useMemo(
     () => accounts.filter((a) => ["Current", "Saving"].includes(a.type) && a.balance > 0),
@@ -208,7 +212,7 @@ const RunwayCalculator: FC<RunwayCalculatorProps> = ({
       <div
         className={css({
           display: "grid",
-          gridTemplateColumns: "1fr 1fr",
+          gridTemplateColumns: isMobile ? "1fr" : { base: "1fr", lg: "1fr 1fr" },
           gap: "20px",
           alignItems: "start",
         })}
@@ -258,7 +262,10 @@ const RunwayCalculator: FC<RunwayCalculatorProps> = ({
                           {fmt(bal)}
                         </FLPText>
                         <button
+                          aria-checked={!!includedAccounts[acc.id]}
+                          aria-label={`Include ${acc.name} in savings pool`}
                           className={toggleBtnStyle(includedAccounts[acc.id], "#6363f1")}
+                          role="switch"
                           type="button"
                           onClick={() =>
                             setIncludedAccounts((prev) => ({
@@ -324,7 +331,10 @@ const RunwayCalculator: FC<RunwayCalculatorProps> = ({
                       </FLPText>
                     </div>
                     <button
+                      aria-checked={!!keptIncome[e.id]}
+                      aria-label={`Keep ${e.name} income`}
                       className={toggleBtnStyle(keptIncome[e.id], "#10b981")}
+                      role="switch"
                       type="button"
                       onClick={() => setKeptIncome((prev) => ({ ...prev, [e.id]: !prev[e.id] }))}
                     >
@@ -437,7 +447,10 @@ const RunwayCalculator: FC<RunwayCalculatorProps> = ({
                       </div>
                     </div>
                     <button
+                      aria-checked={!!keptExpenses[e.id]}
+                      aria-label={`Keep ${e.name} expense`}
                       className={toggleBtnStyle(keptExpenses[e.id], "#ef4444")}
+                      role="switch"
                       type="button"
                       title={keptExpenses[e.id] ? "I'd keep this" : "I'd cut this"}
                       onClick={() => setKeptExpenses((prev) => ({ ...prev, [e.id]: !prev[e.id] }))}
@@ -451,8 +464,8 @@ const RunwayCalculator: FC<RunwayCalculatorProps> = ({
           ))}
         </div>
 
-        {/* Right col — result panel (sticky) */}
-        <div style={{ position: "sticky", top: "24px" }}>
+        {/* Right col — result panel (sticky on desktop) */}
+        <div style={isMobile ? undefined : { position: "sticky", top: "24px" }}>
           <div
             className={css({
               borderRadius: "xl",

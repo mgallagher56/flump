@@ -17,6 +17,9 @@ export class UserProfile {
   @Column({ name: "display_name", type: "varchar", nullable: true })
   displayName: string | null;
 
+  @Column({ name: "avatar_url", type: "text", nullable: true })
+  avatarUrl: string | null;
+
   @Column({ default: "GBP" })
   currency: string;
 

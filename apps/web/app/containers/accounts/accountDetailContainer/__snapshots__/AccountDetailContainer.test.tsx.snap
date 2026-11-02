@@ -113,7 +113,8 @@ exports[`<AccountDetailContainer /> > should add new years when buttons are clic
         </button>
       </div>
       <div
-        class="pos_relative trs_all_0.3s_ease-in-out bd_1px_solid bd-c_border bdr_lg bg-c_card c_card.foreground p_5 d_flex flex-d_column [&:hover]:bx-sh_0_10px_20px_rgba(0,_0,_0,_0.15)! [&:hover]:trf_translate3d(-2px,_-4px,_0) "
+        class="pos_relative trs_all_0.3s_ease-in-out bd_1px_solid bd-c_border bdr_lg bg-c_card c_card.foreground p_5 d_flex flex-d_column [&:hover]:bx-sh_0_10px_20px_rgba(0,_0,_0,_0.15)! [&:hover]:trf_translate3d(-2px,_-4px,_0)"
+        data-variant="desktop"
       >
         <div
           class="h_350px w_100% pt_16px"
@@ -288,7 +289,8 @@ exports[`<AccountDetailContainer /> > should render 1`] = `
         </button>
       </div>
       <div
-        class="pos_relative trs_all_0.3s_ease-in-out bd_1px_solid bd-c_border bdr_lg bg-c_card c_card.foreground p_5 d_flex flex-d_column [&:hover]:bx-sh_0_10px_20px_rgba(0,_0,_0,_0.15)! [&:hover]:trf_translate3d(-2px,_-4px,_0) "
+        class="pos_relative trs_all_0.3s_ease-in-out bd_1px_solid bd-c_border bdr_lg bg-c_card c_card.foreground p_5 d_flex flex-d_column [&:hover]:bx-sh_0_10px_20px_rgba(0,_0,_0,_0.15)! [&:hover]:trf_translate3d(-2px,_-4px,_0)"
+        data-variant="desktop"
       >
         <div
           class="h_350px w_100% pt_16px"
@@ -455,7 +457,8 @@ exports[`<AccountDetailContainer /> > should render add current year button and 
         </button>
       </div>
       <div
-        class="pos_relative trs_all_0.3s_ease-in-out bd_1px_solid bd-c_border bdr_lg bg-c_card c_card.foreground p_5 d_flex flex-d_column [&:hover]:bx-sh_0_10px_20px_rgba(0,_0,_0,_0.15)! [&:hover]:trf_translate3d(-2px,_-4px,_0) "
+        class="pos_relative trs_all_0.3s_ease-in-out bd_1px_solid bd-c_border bdr_lg bg-c_card c_card.foreground p_5 d_flex flex-d_column [&:hover]:bx-sh_0_10px_20px_rgba(0,_0,_0,_0.15)! [&:hover]:trf_translate3d(-2px,_-4px,_0)"
+        data-variant="desktop"
       >
         <div
           class="h_350px w_100% pt_16px"
@@ -574,7 +577,8 @@ exports[`<AccountDetailContainer /> > should toggle edit mode when button is cli
         </div>
       </div>
       <div
-        class="pos_relative trs_all_0.3s_ease-in-out bd_1px_solid bd-c_border bdr_lg bg-c_card c_card.foreground p_5 d_flex flex-d_column [&:hover]:bx-sh_0_10px_20px_rgba(0,_0,_0,_0.15)! [&:hover]:trf_translate3d(-2px,_-4px,_0) "
+        class="pos_relative trs_all_0.3s_ease-in-out bd_1px_solid bd-c_border bdr_lg bg-c_card c_card.foreground p_5 d_flex flex-d_column [&:hover]:bx-sh_0_10px_20px_rgba(0,_0,_0,_0.15)! [&:hover]:trf_translate3d(-2px,_-4px,_0)"
+        data-variant="desktop"
       >
         <div
           class="w_100% ov-x_auto"
@@ -992,17 +996,17 @@ exports[`<AccountDetailContainer /> > should toggle edit mode when button is cli
                 <td
                   class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
                 >
-                  Annual Total
+                  Year-End Balance
                 </td>
                 <td
                   class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
                 >
-                  £12,000
+                  £1,000
                 </td>
                 <td
                   class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
                 >
-                  £12,000
+                  £1,000
                 </td>
               </tr>
               <tr

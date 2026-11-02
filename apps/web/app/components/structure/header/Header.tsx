@@ -7,13 +7,13 @@ import {
   FaFileInvoiceDollar,
   FaPiggyBank,
   FaShieldAlt,
-  FaUserCircle,
 } from "react-icons/fa";
 import { Link, useLoaderData } from "react-router";
 import FLPBox from "~/components/core/structure/FLPBox";
 import HomeLogo from "~/components/navigation/HomeLogo";
 import NavMenu, { type NavRouteItem } from "~/components/navigation/NavMenu";
 import ThemeToggle from "~/components/navigation/ThemeToggle";
+import UserAvatar from "~/components/navigation/UserAvatar";
 import UserLogin from "~/components/navigation/UserLogin";
 import { useResponsive } from "~/context/ResponsiveContext";
 import type { loader } from "~/root";
@@ -122,18 +122,23 @@ const Header: FC<HeaderProps> = ({ isMobile: propIsMobile, variant }): ReactElem
           <ThemeToggle />
           {!!user && (
             <Link
-              to="/app/profile"
+              aria-label="User Profile"
               className={css({
-                display: "flex",
+                display: "inline-flex",
                 alignItems: "center",
                 justifyContent: "center",
-                color: "text.muted",
-                transition: "color 0.2s",
-                "&:hover": { color: "primary" },
+                borderRadius: "full",
+                outline: "none",
+                transition: "transform 0.2s, box-shadow 0.2s",
+                "&:hover": { transform: "scale(1.05)" },
+                "&:focus-visible": {
+                  boxShadow: "0 0 0 2px token(colors.primary)",
+                },
               })}
               title="User Profile"
+              to="/app/profile"
             >
-              <FaUserCircle size={22} />
+              <UserAvatar bordered size={26} user={user} />
             </Link>
           )}
           {!isMobileVariant && <UserLogin />}
