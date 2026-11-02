@@ -107,7 +107,13 @@ export const userProfileAtom = atom<UserProfile>(DEFAULT_PROFILE);
  */
 export function useUserProfile() {
   const [profile, rawSetProfile] = useAtom(userProfileAtom);
-  const rootData = useRouteLoaderData<{ accessToken?: string | null }>("root");
+  let rootData: { accessToken?: string | null } | undefined;
+  try {
+    // biome-ignore lint/correctness/useHookAtTopLevel: fallback when rendered outside DataRouter in unit tests
+    rootData = useRouteLoaderData<{ accessToken?: string | null }>("root");
+  } catch {
+    rootData = undefined;
+  }
   const accessToken = rootData?.accessToken;
   const authHeader = `Bearer ${accessToken || "mock-session-token"}`;
 

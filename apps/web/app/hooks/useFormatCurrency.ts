@@ -1,4 +1,5 @@
-import { useUserProfile } from "./useUserProfile";
+import { useAtomValue } from "jotai";
+import { userProfileAtom } from "./useUserProfile";
 
 export function getCurrencySymbol(curr: string): string {
   switch (curr) {
@@ -24,7 +25,7 @@ export function getCurrencySymbol(curr: string): string {
 }
 
 export function useFormatCurrency() {
-  const { profile } = useUserProfile();
+  const profile = useAtomValue(userProfileAtom);
   const currency = profile?.currency || "GBP";
 
   const getLocale = (curr: string) => {
