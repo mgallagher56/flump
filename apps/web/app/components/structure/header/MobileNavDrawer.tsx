@@ -118,12 +118,22 @@ const MobileNavDrawer: FC<MobileNavDrawerProps> = ({ isOpen, onClose, user }) =>
   const authRoutes: NavRouteItem[] = user
     ? [
         { key: "budget", route: "/app/budget", icon: <FaWallet size={18} /> },
-        { key: "savings", route: "/app/savings", icon: <FaPiggyBank size={18} /> },
-        { key: "pension", route: "/app/pension", icon: <FaCoins size={18} /> },
         { key: "accounts", route: "/app/accounts", icon: <FaUniversity size={18} /> },
-        { key: "forecast", route: "/app/forecast", icon: <FaChartLine size={18} /> },
-        { key: "mortgage", route: "/app/mortgage", icon: <FaBuilding size={18} /> },
-        { key: "tax", route: "/app/tax", icon: <FaFileInvoiceDollar size={18} /> },
+        {
+          key: "wealth",
+          children: [
+            { key: "savings", route: "/app/savings", icon: <FaPiggyBank size={18} /> },
+            { key: "pension", route: "/app/pension", icon: <FaCoins size={18} /> },
+            { key: "mortgage", route: "/app/mortgage", icon: <FaBuilding size={18} /> },
+          ],
+        },
+        {
+          key: "planning",
+          children: [
+            { key: "forecast", route: "/app/forecast", icon: <FaChartLine size={18} /> },
+            { key: "tax", route: "/app/tax", icon: <FaFileInvoiceDollar size={18} /> },
+          ],
+        },
       ]
     : [];
 
@@ -133,12 +143,14 @@ const MobileNavDrawer: FC<MobileNavDrawerProps> = ({ isOpen, onClose, user }) =>
         aria-hidden="true"
         className={backdropStyle}
         data-testid="mobile-drawer-backdrop"
+        id="mobile-drawer-backdrop"
         onClick={onClose}
       />
       <aside
         aria-label="Mobile Navigation Drawer"
         className={drawerStyle}
         data-testid="mobile-nav-drawer"
+        id="mobile-nav-drawer"
       >
         <div>
           <div className={drawerHeaderStyle}>

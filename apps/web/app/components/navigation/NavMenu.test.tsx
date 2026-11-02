@@ -1,25 +1,95 @@
+import { fireEvent, screen } from "@testing-library/react";
+import { describe, expect, it, vi } from "vitest";
 import customRender from "~/testUtils/customRender";
+import NavMenu, { type NavRouteItem } from "./NavMenu";
 
-import NavMenu from "./NavMenu";
+const mocks = vi.hoisted(() => ({
+  pathname: "/app/pension",
+}));
 
-const mockRoutes = [
-  {
-    key: "Home",
-    route: "/",
-  },
-  {
-    key: "Accounts",
-    route: "/accounts",
-  },
-];
+vi.mock("react-router", async () => {
+  const actual: Record<string, unknown> = await vi.importActual("react-router");
+  return {
+    ...actual,
+    useLocation: () => ({ pathname: mocks.pathname }),
+    NavLink: ({ children, to, className, onClick }: any) => {
+      const resolvedClass =
+        typeof className === "function"
+          ? className({ isActive: mocks.pathname === to })
+          : className;
+      return (
+        <a className={resolvedClass} href={to} onClick={onClick}>
+          {children}
+        </a>
+      );
+    },
+  };
+});
 
 describe("<NavMenu />", () => {
-  test("renders as expected when not logged in", () => {
-    const { baseElement } = customRender(<NavMenu routes={mockRoutes} />);
-    expect(baseElement).toMatchSnapshot();
+  const groupedRoutes: NavRouteItem[] = [
+    { key: "budget", route: "/app/budget" },
+    {
+      key: "wealth",
+      children: [
+        {
+          key: "savings",
+          route: "/app/savings",
+          description: "High-yield accounts",
+        },
+        {
+          key: "pension",
+          route: "/app/pension",
+          description: "Workplace pots",
+        },
+      ],
+    },
+    {
+      key: "planning",
+      children: [
+        {
+          key: "forecast",
+          route: "/app/forecast",
+          description: "Multi-year cashflow",
+        },
+      ],
+    },
+  ];
+
+  it("renders direct links and grouped dropdown triggers on desktop", () => {
+    customRender(<NavMenu routes={groupedRoutes} />);
+
+    expect(screen.getByText("budget")).toBeDefined();
+    const wealthTrigger = screen.getByTestId("nav-dropdown-trigger-wealth");
+    const planningTrigger = screen.getByTestId("nav-dropdown-trigger-planning");
+    expect(wealthTrigger).toBeDefined();
+    expect(planningTrigger).toBeDefined();
+    expect(wealthTrigger.getAttribute("aria-expanded")).toBe("false");
   });
-  test("renders as expected when logged in and showAppLink is true", () => {
-    const { baseElement } = customRender(<NavMenu routes={mockRoutes} />);
-    expect(baseElement).toMatchSnapshot();
+
+  it("opens grouped flyout on click, displays child descriptions, and closes on Escape", () => {
+    customRender(<NavMenu routes={groupedRoutes} />);
+
+    const wealthTrigger = screen.getByTestId("nav-dropdown-trigger-wealth");
+    fireEvent.click(wealthTrigger);
+
+    expect(wealthTrigger.getAttribute("aria-expanded")).toBe("true");
+    expect(screen.getByTestId("nav-dropdown-panel-wealth")).toBeDefined();
+    expect(screen.getByText("savings")).toBeDefined();
+    expect(screen.getByText("High-yield accounts")).toBeDefined();
+    expect(screen.getByText("pension")).toBeDefined();
+    expect(screen.getByText("Workplace pots")).toBeDefined();
+
+    fireEvent.keyDown(document, { key: "Escape" });
+    expect(screen.queryByTestId("nav-dropdown-panel-wealth")).toBeNull();
+  });
+
+  it("renders grouped section headings in mobile variant", () => {
+    customRender(<NavMenu isMobile routes={groupedRoutes} variant="mobile" />);
+
+    expect(screen.getByTestId("nav-menu-mobile")).toBeDefined();
+    expect(screen.getByText("wealth")).toBeDefined();
+    expect(screen.getByText("savings")).toBeDefined();
+    expect(screen.getByText("pension")).toBeDefined();
   });
 });

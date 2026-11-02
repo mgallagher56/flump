@@ -1,10 +1,18 @@
 import { css } from "@repo/ui/styled-system/css";
 import { type FC, type ReactElement, useState } from "react";
-import { FaBars, FaUserCircle } from "react-icons/fa";
+import {
+  FaBars,
+  FaBuilding,
+  FaChartLine,
+  FaFileInvoiceDollar,
+  FaPiggyBank,
+  FaShieldAlt,
+  FaUserCircle,
+} from "react-icons/fa";
 import { Link, useLoaderData } from "react-router";
 import FLPBox from "~/components/core/structure/FLPBox";
 import HomeLogo from "~/components/navigation/HomeLogo";
-import NavMenu from "~/components/navigation/NavMenu";
+import NavMenu, { type NavRouteItem } from "~/components/navigation/NavMenu";
 import ThemeToggle from "~/components/navigation/ThemeToggle";
 import UserLogin from "~/components/navigation/UserLogin";
 import { useResponsive } from "~/context/ResponsiveContext";
@@ -24,6 +32,56 @@ export interface HeaderProps {
   isMobile?: boolean;
   variant?: "desktop" | "mobile";
 }
+
+export const AUTH_DESKTOP_NAV_ROUTES: NavRouteItem[] = [
+  { key: "budget", route: "/app/budget" },
+  { key: "accounts", route: "/app/accounts" },
+  {
+    key: "wealth",
+    children: [
+      {
+        key: "savings",
+        route: "/app/savings",
+        description: "navSavingsDesc",
+        icon: <FaPiggyBank size={15} />,
+        badgeColor: "#10b981",
+      },
+      {
+        key: "pension",
+        route: "/app/pension",
+        description: "navPensionDesc",
+        icon: <FaShieldAlt size={15} />,
+        badgeColor: "#8b5cf6",
+      },
+      {
+        key: "mortgage",
+        route: "/app/mortgage",
+        description: "navMortgageDesc",
+        icon: <FaBuilding size={15} />,
+        badgeColor: "#f59e0b",
+      },
+    ],
+  },
+  {
+    key: "planning",
+    children: [
+      {
+        key: "forecast",
+        route: "/app/forecast",
+        description: "navForecastDesc",
+        icon: <FaChartLine size={15} />,
+        badgeColor: "#6363f1",
+      },
+      {
+        key: "tax",
+        route: "/app/tax",
+        description: "navTaxDesc",
+        icon: <FaFileInvoiceDollar size={15} />,
+        badgeColor: "#3b82f6",
+      },
+    ],
+  },
+];
 
 const Header: FC<HeaderProps> = ({ isMobile: propIsMobile, variant }): ReactElement<FC> => {
   const { user } = useLoaderData<typeof loader>();
@@ -56,19 +114,7 @@ const Header: FC<HeaderProps> = ({ isMobile: propIsMobile, variant }): ReactElem
           {!isMobileVariant && (
             <div className={desktopMenuLinksStyles}>
               <NavMenu routes={[{ key: "home", route: "/" }]} />
-              {!!user && (
-                <NavMenu
-                  routes={[
-                    { key: "budget", route: "/app/budget" },
-                    { key: "savings", route: "/app/savings" },
-                    { key: "pension", route: "/app/pension" },
-                    { key: "accounts", route: "/app/accounts" },
-                    { key: "forecast", route: "/app/forecast" },
-                    { key: "mortgage", route: "/app/mortgage" },
-                    { key: "tax", route: "/app/tax" },
-                  ]}
-                />
-              )}
+              {!!user && <NavMenu routes={AUTH_DESKTOP_NAV_ROUTES} />}
             </div>
           )}
         </FLPBox>
@@ -96,6 +142,7 @@ const Header: FC<HeaderProps> = ({ isMobile: propIsMobile, variant }): ReactElem
             aria-label="Open navigation menu"
             className={mobileMenuButtonStyles}
             data-testid="mobile-menu-toggle"
+            id="mobile-menu-toggle"
             style={isMobileVariant ? { display: "inline-flex" } : undefined}
             type="button"
             onClick={handleToggleDrawer}

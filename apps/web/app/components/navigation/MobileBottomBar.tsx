@@ -106,6 +106,7 @@ const MobileBottomBar: FC<MobileBottomBarProps> = ({ user, isMobile, onMoreClick
       aria-label="Mobile Bottom Navigation"
       className={barStyle(isMobile)}
       data-testid="mobile-bottom-bar"
+      id="mobile-bottom-bar"
     >
       {tabs.map((tab) => (
         <NavLink
@@ -125,6 +126,7 @@ const MobileBottomBar: FC<MobileBottomBarProps> = ({ user, isMobile, onMoreClick
         aria-label="More navigation options"
         className={`${tabItemBaseStyle} ${isMobileDrawerOpen ? activeTabStyle : ""}`.trim()}
         data-testid="mobile-bottom-bar-more"
+        id="mobile-bottom-bar-more"
         type="button"
         onClick={handleMore}
       >

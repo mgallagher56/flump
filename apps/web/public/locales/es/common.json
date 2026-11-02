@@ -7,6 +7,13 @@
   "budget": "Presupuesto",
   "savings": "Ahorros",
   "pension": "Pensión",
+  "wealth": "Patrimonio",
+  "planning": "Planificación",
   "profile": "Perfil",
-  "tax": "Impuestos"
+  "tax": "Impuestos",
+  "navSavingsDesc": "Cuentas de ahorro, interés compuesto y metas",
+  "navPensionDesc": "Fondos de pensión, aportaciones y jubilación",
+  "navMortgageDesc": "Hipoteca, capital y pagos anticipados",
+  "navForecastDesc": "Proyecciones financieras a largo plazo",
+  "navTaxDesc": "Calculadora de impuestos y sueldo neto"
 }

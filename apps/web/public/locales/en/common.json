@@ -43,6 +43,13 @@
   "budget": "Budget",
   "savings": "Savings",
   "pension": "Pension",
+  "wealth": "Wealth",
+  "planning": "Planning",
   "profile": "Profile",
-  "tax": "Tax"
+  "tax": "Tax",
+  "navSavingsDesc": "High-yield accounts, APY & compound interest",
+  "navPensionDesc": "Workplace pots, contributions & retirement",
+  "navMortgageDesc": "Amortization, equity & overpayment modelling",
+  "navForecastDesc": "Multi-year cashflow & net worth projections",
+  "navTaxDesc": "UK & Irish income tax, NI & take-home pay"
 }

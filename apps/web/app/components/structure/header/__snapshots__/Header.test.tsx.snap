@@ -7,7 +7,7 @@ exports[`<Header /> > renders as expected by default 1`] = `
       class="pos_sticky top_0 z_50 w_100% bg-c_rgba(255,_255,_255,_0.85) dark:bg-c_rgba(22,_24,_29,_0.85) bkdp_blur(12px) trs_background-color_0.2s_ease,_border-color_0.2s_ease"
     >
       <nav
-        class="pos_sticky top_0 z_50 d_flex bd-b-w_2px bd-b-c_border border-bottom-style_solid ai_center jc_space-between w_100% py_4 px_2"
+        class="pos_sticky top_0 z_50 d_flex bd-b-w_2px bd-b-c_border border-bottom-style_solid ai_center jc_space-between w_100% py_3 md:py_4 px_2"
       >
         <div
           class=" d_flex gap_4 ai_center jc_start"
@@ -15,8 +15,12 @@ exports[`<Header /> > renders as expected by default 1`] = `
           <div>
             HomeLogo
           </div>
-          <div>
-            home
+          <div
+            class="d_none md:d_flex gap_4 ai_center"
+          >
+            <div>
+              home
+            </div>
           </div>
         </div>
         <div
@@ -46,6 +50,28 @@ exports[`<Header /> > renders as expected by default 1`] = `
           <div>
             UserLogin
           </div>
+          <button
+            aria-expanded="false"
+            aria-label="Open navigation menu"
+            class="d_inline-flex md:d_none ai_center jc_center w_40px h_40px bdr_lg bd_1px_solid bd-c_border bg-c_surface c_text.primary cursor_pointer trs_all_0.2s_ease hover:bd-c_primary hover:c_primary"
+            data-testid="mobile-menu-toggle"
+            id="mobile-menu-toggle"
+            type="button"
+          >
+            <svg
+              fill="currentColor"
+              height="18"
+              stroke="currentColor"
+              stroke-width="0"
+              viewBox="0 0 448 512"
+              width="18"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M16 132h416c8.837 0 16-7.163 16-16V76c0-8.837-7.163-16-16-16H16C7.163 60 0 67.163 0 76v40c0 8.837 7.163 16 16 16zm0 160h416c8.837 0 16-7.163 16-16v-40c0-8.837-7.163-16-16-16H16c-8.837 0-16 7.163-16 16v40c0 8.837 7.163 16 16 16zm0 160h416c8.837 0 16-7.163 16-16v-40c0-8.837-7.163-16-16-16H16c-8.837 0-16 7.163-16 16v40c0 8.837 7.163 16 16 16z"
+              />
+            </svg>
+          </button>
         </div>
       </nav>
     </header>
@@ -60,7 +86,7 @@ exports[`<Header /> > renders correctly when user logged in 1`] = `
       class="pos_sticky top_0 z_50 w_100% bg-c_rgba(255,_255,_255,_0.85) dark:bg-c_rgba(22,_24,_29,_0.85) bkdp_blur(12px) trs_background-color_0.2s_ease,_border-color_0.2s_ease"
     >
       <nav
-        class="pos_sticky top_0 z_50 d_flex bd-b-w_2px bd-b-c_border border-bottom-style_solid ai_center jc_space-between w_100% py_4 px_2"
+        class="pos_sticky top_0 z_50 d_flex bd-b-w_2px bd-b-c_border border-bottom-style_solid ai_center jc_space-between w_100% py_3 md:py_4 px_2"
       >
         <div
           class=" d_flex gap_4 ai_center jc_start"
@@ -68,29 +94,24 @@ exports[`<Header /> > renders correctly when user logged in 1`] = `
           <div>
             HomeLogo
           </div>
-          <div>
-            home
-          </div>
-          <div>
-            budget
-          </div>
-          <div>
-            savings
-          </div>
-          <div>
-            pension
-          </div>
-          <div>
-            accounts
-          </div>
-          <div>
-            forecast
-          </div>
-          <div>
-            mortgage
-          </div>
-          <div>
-            tax
+          <div
+            class="d_none md:d_flex gap_4 ai_center"
+          >
+            <div>
+              home
+            </div>
+            <div>
+              budget
+            </div>
+            <div>
+              accounts
+            </div>
+            <div>
+              wealth
+            </div>
+            <div>
+              planning
+            </div>
           </div>
         </div>
         <div
@@ -137,6 +158,28 @@ exports[`<Header /> > renders correctly when user logged in 1`] = `
           <div>
             UserLogin
           </div>
+          <button
+            aria-expanded="false"
+            aria-label="Open navigation menu"
+            class="d_inline-flex md:d_none ai_center jc_center w_40px h_40px bdr_lg bd_1px_solid bd-c_border bg-c_surface c_text.primary cursor_pointer trs_all_0.2s_ease hover:bd-c_primary hover:c_primary"
+            data-testid="mobile-menu-toggle"
+            id="mobile-menu-toggle"
+            type="button"
+          >
+            <svg
+              fill="currentColor"
+              height="18"
+              stroke="currentColor"
+              stroke-width="0"
+              viewBox="0 0 448 512"
+              width="18"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M16 132h416c8.837 0 16-7.163 16-16V76c0-8.837-7.163-16-16-16H16C7.163 60 0 67.163 0 76v40c0 8.837 7.163 16 16 16zm0 160h416c8.837 0 16-7.163 16-16v-40c0-8.837-7.163-16-16-16H16c-8.837 0-16 7.163-16 16v40c0 8.837 7.163 16 16 16zm0 160h416c8.837 0 16-7.163 16-16v-40c0-8.837-7.163-16-16-16H16c-8.837 0-16 7.163-16 16v40c0 8.837 7.163 16 16 16z"
+              />
+            </svg>
+          </button>
         </div>
       </nav>
     </header>
@@ -151,7 +194,7 @@ exports[`<Header /> > renders without ColorModeSwitch 1`] = `
       class="pos_sticky top_0 z_50 w_100% bg-c_rgba(255,_255,_255,_0.85) dark:bg-c_rgba(22,_24,_29,_0.85) bkdp_blur(12px) trs_background-color_0.2s_ease,_border-color_0.2s_ease"
     >
       <nav
-        class="pos_sticky top_0 z_50 d_flex bd-b-w_2px bd-b-c_border border-bottom-style_solid ai_center jc_space-between w_100% py_4 px_2"
+        class="pos_sticky top_0 z_50 d_flex bd-b-w_2px bd-b-c_border border-bottom-style_solid ai_center jc_space-between w_100% py_3 md:py_4 px_2"
       >
         <div
           class=" d_flex gap_4 ai_center jc_start"
@@ -159,8 +202,12 @@ exports[`<Header /> > renders without ColorModeSwitch 1`] = `
           <div>
             HomeLogo
           </div>
-          <div>
-            home
+          <div
+            class="d_none md:d_flex gap_4 ai_center"
+          >
+            <div>
+              home
+            </div>
           </div>
         </div>
         <div
@@ -190,6 +237,28 @@ exports[`<Header /> > renders without ColorModeSwitch 1`] = `
           <div>
             UserLogin
           </div>
+          <button
+            aria-expanded="false"
+            aria-label="Open navigation menu"
+            class="d_inline-flex md:d_none ai_center jc_center w_40px h_40px bdr_lg bd_1px_solid bd-c_border bg-c_surface c_text.primary cursor_pointer trs_all_0.2s_ease hover:bd-c_primary hover:c_primary"
+            data-testid="mobile-menu-toggle"
+            id="mobile-menu-toggle"
+            type="button"
+          >
+            <svg
+              fill="currentColor"
+              height="18"
+              stroke="currentColor"
+              stroke-width="0"
+              viewBox="0 0 448 512"
+              width="18"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M16 132h416c8.837 0 16-7.163 16-16V76c0-8.837-7.163-16-16-16H16C7.163 60 0 67.163 0 76v40c0 8.837 7.163 16 16 16zm0 160h416c8.837 0 16-7.163 16-16v-40c0-8.837-7.163-16-16-16H16c-8.837 0-16 7.163-16 16v40c0 8.837 7.163 16 16 16zm0 160h416c8.837 0 16-7.163 16-16v-40c0-8.837-7.163-16-16-16H16c-8.837 0-16 7.163-16 16v40c0 8.837 7.163 16 16 16z"
+              />
+            </svg>
+          </button>
         </div>
       </nav>
     </header>
