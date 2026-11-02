@@ -63,6 +63,13 @@ const FLPInput: FC<FLPInputProps> = ({
       opacity: 0.5,
       cursor: "not-allowed",
     },
+    "&[type='number']": {
+      appearance: "textfield",
+      "&::-webkit-outer-spin-button, &::-webkit-inner-spin-button": {
+        WebkitAppearance: "none",
+        margin: 0,
+      },
+    },
   });
 
   const errorStyle = css({

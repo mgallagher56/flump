@@ -450,7 +450,8 @@ export const PensionAccountsList: FC<PensionAccountsListProps> = ({
                     </button>
                     <button
                       aria-label={`Delete ${acc.name}`}
-                      className={deleteBtnStyle}
+                      className={actionBtnStyle}
+                      style={{ color: "#ef4444" }}
                       type="button"
                       onClick={() => setAccountToDelete(acc)}
                     >

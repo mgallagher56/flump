@@ -12,6 +12,7 @@ import {
   YAxis,
 } from "recharts";
 import FLPCard from "~/components/core/cards/FLPCard";
+import FLPCheckbox from "~/components/core/inputs/checkbox/FLPCheckbox";
 import FLPHeading from "~/components/core/typography/FLPHeading";
 import FLPText from "~/components/core/typography/FLPText";
 import type { Account } from "~/containers/accounts/types";
@@ -260,6 +261,8 @@ export const SavingsForecasterCard: FC<SavingsForecasterCardProps> = ({
                   backgroundColor: "var(--colors-surface)",
                   color: "var(--colors-primary)",
                   outline: "none",
+                  MozAppearance: "textfield",
+                  appearance: "textfield",
                 }}
                 type="number"
                 value={interestRate}
@@ -307,26 +310,14 @@ export const SavingsForecasterCard: FC<SavingsForecasterCardProps> = ({
             )}
           </div>
 
-          <label
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "5px",
-              fontSize: "12px",
-              color: "var(--colors-text-muted)",
-              cursor: "pointer",
-              userSelect: "none",
-            }}
+          <FLPCheckbox
+            checked={adjustForInflation}
+            id="forecast-inflation-toggle"
+            label="Real terms (-2.5% inflation)"
+            size="sm"
             title="Discount projected growth by 2.5% annual inflation to show real purchasing power"
-          >
-            <input
-              checked={adjustForInflation}
-              style={{ accentColor: "var(--colors-primary)", cursor: "pointer" }}
-              type="checkbox"
-              onChange={(e) => setAdjustForInflation(e.target.checked)}
-            />
-            Real terms (-2.5% inflation)
-          </label>
+            onChange={(e) => setAdjustForInflation(e.target.checked)}
+          />
 
           <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
             <label
@@ -491,6 +482,8 @@ export const SavingsForecasterCard: FC<SavingsForecasterCardProps> = ({
                 backgroundColor: "var(--colors-surface)",
                 color: "var(--colors-text-primary)",
                 outline: "none",
+                MozAppearance: "textfield",
+                appearance: "textfield",
               }}
               type="number"
               value={customGoalInput}

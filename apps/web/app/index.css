@@ -1,1 +1,64 @@
 @layer reset, base, tokens, recipes, utilities;
+
+@layer base {
+  /* Number inputs: hide increment/decrement spin button arrows across all browsers */
+  input[type="number"]::-webkit-outer-spin-button,
+  input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+
+  input[type="number"] {
+    -moz-appearance: textfield;
+    appearance: textfield;
+  }
+
+  /* Standard HTML checkboxes: custom styled so they match the site theme */
+  input[type="checkbox"]:not([data-flp-checkbox]) {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 16px;
+    height: 16px;
+    margin: 0;
+    border-radius: 4px;
+    border: 1.5px solid var(--colors-border, #cbd5e1);
+    background-color: var(--colors-surface, #ffffff);
+    cursor: pointer;
+    display: inline-grid;
+    place-content: center;
+    vertical-align: middle;
+    transition: all 0.15s ease-in-out;
+    outline: none;
+    flex-shrink: 0;
+    position: relative;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  }
+
+  input[type="checkbox"]:not([data-flp-checkbox]):hover:not(:disabled) {
+    border-color: var(--colors-primary, #6363f1);
+  }
+
+  input[type="checkbox"]:not([data-flp-checkbox]):focus-visible {
+    border-color: var(--colors-primary, #6363f1);
+    box-shadow: 0 0 0 2px rgba(99, 99, 241, 0.35);
+  }
+
+  input[type="checkbox"]:not([data-flp-checkbox]):checked {
+    background-color: var(--colors-primary, #6363f1);
+    border-color: var(--colors-primary, #6363f1);
+  }
+
+  input[type="checkbox"]:not([data-flp-checkbox]):checked::before {
+    content: "";
+    width: 9px;
+    height: 5px;
+    border-left: 2px solid #ffffff;
+    border-bottom: 2px solid #ffffff;
+    transform: rotate(-45deg) translate(0.5px, -0.5px);
+  }
+
+  input[type="checkbox"]:not([data-flp-checkbox]):disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}

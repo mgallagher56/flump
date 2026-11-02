@@ -6,6 +6,7 @@ import { FaCheck, FaEdit, FaMagic, FaPlus, FaShieldAlt, FaTimes } from "react-ic
 import { useLoaderData } from "react-router";
 import FLPButton from "~/components/core/buttons/FLPButton";
 import FLPCard from "~/components/core/cards/FLPCard";
+import FLPCheckbox from "~/components/core/inputs/checkbox/FLPCheckbox";
 import FLPHeading from "~/components/core/typography/FLPHeading";
 import FLPText from "~/components/core/typography/FLPText";
 import AddPensionAccountDialog from "~/components/pension/AddPensionAccountDialog";
@@ -434,25 +435,21 @@ export const PensionContainer: FC = () => {
                 onChange={(e) => setEditEmployerPct(Number(e.target.value) || 0)}
               />
             </div>
-            <div style={{ display: "flex", flexDirection: "column", justifyContent: "center" }}>
-              <label
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "8px",
-                  fontSize: "12px",
-                  fontWeight: 600,
-                  cursor: "pointer",
-                  marginTop: "18px",
-                }}
-              >
-                <input
-                  checked={editSalarySacrifice}
-                  type="checkbox"
-                  onChange={(e) => setEditSalarySacrifice(e.target.checked)}
-                />
-                Salary Sacrifice (saves NI)
-              </label>
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "center",
+                marginTop: "18px",
+              }}
+            >
+              <FLPCheckbox
+                checked={editSalarySacrifice}
+                id="pension-salary-sacrifice-checkbox"
+                label="Salary Sacrifice (saves NI)"
+                size="sm"
+                onChange={(e) => setEditSalarySacrifice(e.target.checked)}
+              />
             </div>
           </div>
         )}

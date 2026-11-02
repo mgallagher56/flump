@@ -11,6 +11,7 @@ import {
 } from "react-icons/fa";
 import { Link } from "react-router";
 import FLPButton from "~/components/core/buttons/FLPButton";
+import FLPCheckbox from "~/components/core/inputs/checkbox/FLPCheckbox";
 import FLPHeading from "~/components/core/typography/FLPHeading";
 import FLPText from "~/components/core/typography/FLPText";
 import type { BudgetCategory, BudgetEntry } from "~/types/budget";
@@ -362,16 +363,17 @@ const BudgetSetupWizard: FC<BudgetSetupWizardProps> = ({
             </div>
           </div>
           {currentStep !== "income" && (
-            <label style={{ display: "flex", alignItems: "center", gap: "8px", cursor: "pointer" }}>
-              <input
-                checked={newIsEssential}
-                type="checkbox"
-                onChange={(e) => setNewIsEssential(e.target.checked)}
-              />
-              <FLPText color="text.muted" fontSize="xs">
-                Essential expense (uncheck if discretionary / nice-to-have)
-              </FLPText>
-            </label>
+            <FLPCheckbox
+              checked={newIsEssential}
+              id="budget-essential-expense-checkbox"
+              label={
+                <FLPText color="text.muted" fontSize="xs">
+                  Essential expense (uncheck if discretionary / nice-to-have)
+                </FLPText>
+              }
+              size="sm"
+              onChange={(e) => setNewIsEssential(e.target.checked)}
+            />
           )}
           <div
             style={{ display: "flex", justifyContent: "flex-end", gap: "8px", marginTop: "4px" }}

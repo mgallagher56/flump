@@ -128,6 +128,8 @@ const STEP_DEFINITIONS = (props: SetupChecklistProps, navigate: ReturnType<typeo
 
 const SetupChecklist: FC<SetupChecklistProps> = (props) => {
   const navigate = useNavigate();
+  const { isMobile: contextIsMobile } = useResponsive();
+  const isMobileVariant = props.isMobile ?? (props.variant === "mobile" ? true : contextIsMobile);
   const [expanded, setExpanded] = useState(true);
   const [dismissed, setDismissed] = useState(false);
 
