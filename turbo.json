@@ -18,10 +18,12 @@
       "dependsOn": ["^build", "^check-types", "generate", "^generate"]
     },
     "test": {
-      "dependsOn": ["^build", "^test", "generate", "^generate"]
+      "dependsOn": ["^build", "^test", "generate", "^generate"],
+      "outputs": ["coverage/**", "sonar-report.xml"]
     },
     "test:coverage": {
-      "dependsOn": ["^build", "^test:coverage", "generate", "^generate"]
+      "dependsOn": ["^build", "^test:coverage", "generate", "^generate"],
+      "outputs": ["coverage/**", "sonar-report.xml"]
     },
     "verify": {
       "dependsOn": ["^build"]
