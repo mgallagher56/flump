@@ -8,6 +8,7 @@ import {
   TAX_DISCLAIMER,
   type TaxCalculationResult,
   type TaxRecord,
+  type TaxSource,
   type UserProfile,
 } from "@repo/common";
 import { type FC, useCallback, useMemo, useState } from "react";
@@ -155,7 +156,7 @@ const TaxScreen: FC = () => {
   const onOpenEditModal = (record: TaxRecord) => {
     setEditingRecord(record);
     setFormName(record.name);
-    setFormSource(record.source);
+    setFormSource(record.source === "self-employed" ? "self-employed" : "rental");
     setFormType(record.type);
     setFormCategory(record.category);
     setFormAmount(record.amount.toString());
@@ -222,7 +223,7 @@ const TaxScreen: FC = () => {
     ]);
   };
 
-  const getCategoryName = (catId: string, source: "self-employed" | "rental") => {
+  const getCategoryName = (catId: string, source: TaxSource) => {
     const list = source === "rental" ? RENTAL_CATEGORIES : SELF_EMPLOYED_CATEGORIES;
     return list.find((c) => c.id === catId)?.name || catId;
   };
