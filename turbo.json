@@ -15,13 +15,13 @@
       "dependsOn": ["^lint"]
     },
     "check-types": {
-      "dependsOn": ["^check-types", "generate", "^generate"]
+      "dependsOn": ["^build", "^check-types", "generate", "^generate"]
     },
     "test": {
-      "dependsOn": ["^test", "generate", "^generate"]
+      "dependsOn": ["^build", "^test", "generate", "^generate"]
     },
     "test:coverage": {
-      "dependsOn": ["^test:coverage", "generate", "^generate"]
+      "dependsOn": ["^build", "^test:coverage", "generate", "^generate"]
     },
     "verify": {
       "dependsOn": ["^build"]
