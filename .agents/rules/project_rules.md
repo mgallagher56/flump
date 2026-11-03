@@ -33,7 +33,8 @@ Flump is a monorepo managed with Turborepo (`turbo`) and Bun.
 ### 1. Development Velocity
 
 - **Type Generation**: Run `bun run typecheck` or `bun turbo run check-types` to ensure types are generated and checked. For React Router v7 routes, always rely on the auto-generated types (`./+types/route-name`) for loaders, actions, and component props instead of manually typing them.
-- **Selective Verification**: When making changes, prioritize running tests for the specific package or file you modified rather than testing the whole workspace (e.g., `bun vitest run apps/web/app/containers/dashboard/DashboardContainer.test.tsx`).
+- **Selective Verification**: When running tests for a specific package, always scope execution with `--cwd` (e.g., `bun --cwd apps/web test ./app/containers/dashboard/DashboardContainer.test.tsx` or `bun --cwd apps/backend test`). Do not run `vitest` from the monorepo root directly against `apps/web/`, as it bypasses package-level Vite `~/` path alias resolution. Update snapshots with `-u` when modifying shared structural layouts like headers or navigation.
+- **Vitest Runner**: Do not run `bun test` at the repository root, as Bun's native runner will collide with Vitest. Run test suites via `cd apps/web && bun x vitest run <path>`.
 - **Workspace Dependencies**: When referencing other packages, use workspace imports (e.g., `@repo/ui`, `@repo/common`). Do not use relative paths to step outside of a package's directory.
 
 ### 2. Code Quality & Clean Architecture
@@ -66,6 +67,16 @@ Flump is a monorepo managed with Turborepo (`turbo`) and Bun.
 
 - **Radix UI & Semantic Elements**: Never attach `onClick` handlers directly to static HTML tags like `div` or `span` for core user actions. Use `@repo/ui` component wrapper primitives (which wrap Radix UI and are keyboard-accessible by default).
 - **Keyboard Fallbacks**: If custom interactive elements are absolutely necessary, you must include a corresponding key event listener (`onKeyDown`/`onKeyUp`) and appropriate `role` and `tabIndex` attributes.
+- **No `autoFocus` Attributes**: Do not use the `autoFocus` prop on `<input>` or other elements, as Biome enforces `lint/a11y/noAutofocus` and will block pre-commit git hooks. Use callback refs (e.g. `ref={(el) => el?.focus()}`) or Radix Dialog focus management instead.
+- **Hover & Flyout Menus**: For flyout/dropdown hover triggers, do not place `onMouseEnter`/`onMouseLeave` on static `div` containers if they trigger Biome warnings; attach event listeners cleanly via `useEffect` and container `ref` with a short leave timer (~140ms) to ensure smooth diagonal mouse movement.
+
+### 5.1 Primary Navigation & Domain Pillars
+
+- **Navigation Scalability**: The desktop header must not exceed 5 top-level interactive items to avoid layout breaking on 1024px–1440px viewports.
+- **Grouped Domain Pillars**: Keep primary high-frequency links direct (`Budget`, `Accounts`), and organize specialized tools into grouped dropdown pillars:
+  - **Wealth**: Savings (`/app/savings`), Pension (`/app/pension`), Mortgage (`/app/mortgage`).
+  - **Planning**: Forecast (`/app/forecast`), Tax (`/app/tax`).
+- **Multi-platform Sync**: When adding or re-organizing tools, ensure `AUTH_DESKTOP_NAV_ROUTES` in `Header.tsx`, `MobileNavDrawer.tsx`, and `MobileBottomBar.tsx` are updated in sync, including localization keys in `en/common.json` and `es/common.json`.
 
 ### 6. Type-Safe API Client
 
@@ -75,12 +86,14 @@ Flump is a monorepo managed with Turborepo (`turbo`) and Bun.
 ### 7. Database & Migration Safety
 
 - **No Production Synchronization**: Never allow `synchronize: true` in production database environments. Database schema changes must be versioned via TypeORM migrations (`supabase migration` or NestJS TypeORM migrations) and verified locally before deployment.
+- **PostgreSQL Decimal Coercion**: PostgreSQL `numeric` / `decimal` columns are serialized as string primitives by `pg` and TypeORM. Any API endpoint returning decimal fields (e.g., interest rates, balances, contribution targets, ownership shares) must normalize/cast them to `number` in the controller/service (`Number(val) || 0`). Frontend state hooks must also enforce defense-in-depth normalization before invoking methods like `.toFixed()`.
 
 ### 8. Test-Driven Development (TDD)
 
 - **TDD Requirement**: Prefer writing tests _before_ writing the implementation (Red-Green-Refactor). Define the expected behavior via unit or integration tests, run the tests to confirm they fail, write code to make them pass, and then refactor.
 - **Test Coverage**: All new files, components, utilities, and services must have corresponding test files (`.test.ts`/`.test.tsx`).
 - **Interactive Verification**: Use Vitest's watch mode (`vitest`) for instant feedback during feature development.
+- **Mock Integrity for Hooks & Atoms**: When mocking modules that export both React hooks and Jotai atoms (e.g. `~/hooks/useUserProfile`), always use `await importOriginal()` to preserve atom exports and prevent sibling test failures. Always include setter mocks (such as `setProfile: vi.fn()`) in custom hook mock returns.
 - **UI Tests**: Test visual elements for correct states, accessibility roles, and user interactions utilizing React Testing Library and user-event simulation.
 
 ### 9. Modern Design Choices & Visual Taste
@@ -115,7 +128,7 @@ Flump is a monorepo managed with Turborepo (`turbo`) and Bun.
 
 ### 13. Setup Checklist Maintenance
 
-- **Checklist Currency**: Whenever a new user-facing feature is added (a new page, tool, or capability), the Setup Checklist component (`app/components/dashboard/SetupChecklist.tsx`) must be updated to include a corresponding onboarding step for that feature.
+- **Checklist Currency**: Whenever a new user-facing feature is added (a new page, tool, or capability), the Setup Checklist component (`app/components/setup/SetupChecklist.tsx`) must be updated to include a corresponding onboarding step for that feature.
 - **Checklist Steps**: Each new step should have:
   - A clear action label describing what the user should do
   - A completion condition (how we detect the step is done)
@@ -158,6 +171,36 @@ Flump is a monorepo managed with Turborepo (`turbo`) and Bun.
     - Display points earned vs maximum points (`{earned} / {max} pts`).
     - Clearly document what boosts score (✓) vs what hurts score (✗).
     - Provide actionable improvement advice with deep-links to the relevant pages.
+
+### 17. TypeScript 7 & Native Compiler Tooling
+
+- **Native CLI Compilation**: TypeScript 7.0 is compiled with Go and does not export Node programmatic compiler APIs. Framework CLIs that depend on Node compiler internals (such as Nest CLI's `nest build`) must be bypassed in favor of native `tsc` scripts (`"build": "tsc"`, `"dev": "tsc --watch"`).
+- **TypeScript 6 Compatibility Bridge**: When programmatic compiler APIs are strictly required by third-party tooling, ensure `@typescript/typescript6` is installed.
+- **Modern tsconfig Flags**: Do not use legacy compiler options removed in TS 7 (`moduleResolution: node10` or bare `baseUrl`). Use `"module": "NodeNext"` and `"moduleResolution": "NodeNext"` with `"rootDir": "./src"`.
+
+### 18. Express 5 Routing & Catch-All Middleware
+
+- **No Bare String Wildcards**: Express 5 uses `path-to-regexp` v8, which disallows `app.use("*", ...)`.
+- **Catch-All Syntax**: Catch-all fallback handlers for SSR rendering or SPA fallbacks must omit the route path argument (`app.use(async (req, res) => ...)`) or use named parameters (e.g. `app.use("{*path}", ...)`).
+
+### 19. WorkOS AuthKit & React Router v7 Authentication
+
+- **`DataWithResponseInit` Handling**: In React Router v7, `authkitLoader` returns a `DataWithResponseInit` object rather than a web `Response`. Unpack `response.data` or conditionally check `typeof response.json === 'function'` before attempting JSON deserialization.
+- **Callback Route Alignment**: Ensure `apps/web/app/routes/callback.tsx` exists and matches `WORKOS_REDIRECT_URI=http://localhost:5173/callback`. Also retain `auth.callback.tsx` to handle `/auth/callback`.
+- **No Naked Resource Route Loaders**: Callback routes must check for `?code=` query parameters and redirect to `/login` if missing to avoid `Response.json(undefined)` errors. Always include a default React export (`export default function CallbackRoute() { return null; }`).
+- **Pass Request to Auth URLs**: Always pass the incoming `request` and target pathname to `getSignInUrl("/app", request)` and `getSignUpUrl("/app", request)` to ensure PKCE cookies and HTTPS/HTTP flags match the client environment.
+
+### 20. Monorepo Package ESM & NodeNext Invariants
+
+- **Explicit Package Type**: All internal workspace packages (such as `@repo/common`, `@repo/ui`, `@repo/app-shell`) must declare `"type": "module"` in their `package.json` to be consumable by Vite SSR without CommonJS evaluation failures.
+- **Explicit File Extensions in Source**: When using `NodeNext` module resolution, relative imports in TypeScript source files must use explicit `.js` extensions (e.g. `import { foo } from "./foo.js"`).
+
+### 21. Financial Domain Invariants (Pensions & Accounts)
+
+- **Current vs. Past Pension Pots**:
+  - Pension accounts must distinguish between active pots (`isCurrent: true`) and legacy/past employer pots (`isCurrent: false`).
+  - Past pots **must never** have direct or workplace monthly contributions (`monthlyContribution = null` / `0`). Direct regular contributions must be stripped at the API layer and excluded from total monthly inflow calculations.
+  - Highlight consolidation guidance whenever users have multiple pots or past employer schemes.
 
 ---
 
