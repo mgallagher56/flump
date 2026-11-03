@@ -1,3 +1,4 @@
+import "reflect-metadata";
 import * as net from "node:net";
 import { ConfigService } from "@nestjs/config";
 import { NestFactory } from "@nestjs/core";

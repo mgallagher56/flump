@@ -266,6 +266,9 @@
     },
   },
   "overrides": {
+    "@nestjs/common": "^11.2.8",
+    "@nestjs/core": "^11.2.8",
+    "@nestjs/platform-express": "^11.2.8",
     "zod-validation-error": "^5.0.0",
   },
   "packages": {

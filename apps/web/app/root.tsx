@@ -47,11 +47,14 @@ export const loader = async (args: LoaderFunctionArgs) => {
     user,
     userProfile,
     accessToken,
+    ENV: {
+      VITE_API_URL: process.env.VITE_API_URL || "http://localhost:4000",
+    },
   };
 };
 
 export default function App() {
-  const { locale, user, userProfile } = useLoaderData<typeof loader>();
+  const { locale, user, userProfile, ENV } = useLoaderData<typeof loader>();
   const { theme, toggleTheme } = useTheme();
   const { setProfile } = useUserProfile();
 
@@ -68,6 +71,11 @@ export default function App() {
         <meta content="width=device-width,initial-scale=1,viewport-fit=cover" name="viewport" />
         <Meta />
         <Links />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `window.ENV = ${JSON.stringify(ENV)};`,
+          }}
+        />
         {/* Prevent flash of wrong theme by applying class synchronously */}
         <script
           dangerouslySetInnerHTML={{
