@@ -89,7 +89,7 @@ flump/
 │   ├── app-shell/          # Shared layout & SSR hydration utilities
 │   └── typescript-config/  # Shared tsconfig bases across the monorepo
 │
-├── supabase/               # Local Supabase config, schema migrations, and seed scripts
+├── docker-compose.yml      # Local PostgreSQL container service
 └── docs/                   # Product specifications and business logic documentation
 ```
 
@@ -106,7 +106,7 @@ flump/
 | :----------------------- | :------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Monorepo & Build**     | [Bun](https://bun.sh/) (Workspace package manager), [Turborepo](https://turbo.build/repo) (Task orchestration)                               |
 | **Frontend Web**         | [React 19](https://react.dev/), [React Router 7](https://reactrouter.com/), [Panda CSS](https://panda-css.com/), [Jotai](https://jotai.org/) |
-| **Backend & API**        | [NestJS](https://nestjs.com/), [TypeORM](https://typeorm.io/), [PostgreSQL](https://www.postgresql.org/) / [Supabase](https://supabase.com/) |
+| **Backend & API**        | [NestJS](https://nestjs.com/), [TypeORM](https://typeorm.io/), [PostgreSQL](https://www.postgresql.org/)                                     |
 | **Mobile App**           | [Expo](https://expo.dev/) (SDK 58), [React Native](https://reactnative.dev/), Expo Local Authentication                                      |
 | **Authentication**       | [WorkOS AuthKit](https://workos.com/authkit)                                                                                                 |
 | **Charts & Visuals**     | [Recharts](https://recharts.org/), [D3 Shape](https://d3js.org/)                                                                             |
@@ -122,8 +122,7 @@ flump/
 
 - [Bun](https://bun.sh/) (`>= 1.4.0`)
 - [Node.js](https://nodejs.org/) (`>= 20.0.0`)
-- [Docker Desktop](https://www.docker.com/products/docker-desktop/) (for local PostgreSQL / Supabase)
-- [Supabase CLI](https://supabase.com/docs/guides/cli) (optional, for local database container)
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/) (for local PostgreSQL database)
 
 ### 1. Clone & Install Dependencies
 
@@ -151,14 +150,11 @@ Key environment configurations:
 - `VITE_API_URL`: Backend API endpoint (default: `http://localhost:3000`).
 - `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`: PostgreSQL credentials.
 
-### 3. Start Local Database (Supabase)
+### 3. Start Local Database (PostgreSQL)
 
 ```bash
-# Start local Supabase container (PostgreSQL, Auth, Storage)
-supabase start
-
-# Apply database migrations
-supabase db reset
+# Start local PostgreSQL container
+docker compose up -d
 ```
 
 ### 4. Run Development Servers
