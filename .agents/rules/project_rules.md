@@ -92,6 +92,7 @@ Flump is a monorepo managed with Turborepo (`turbo`) and Bun.
 - **Micro-Animations**: All interactive elements (hover, focus, active states) must have smooth CSS transitions (e.g., `transition: all 0.2s ease`).
 - **UI States**: Always design and style complete layouts including hover, focus-visible, active, disabled, loading skeletons, and empty states.
 - **Responsive & Dynamic Layouts**: Ensure layouts are fluid and look beautiful on all screen sizes using responsive container queries or grid layouts.
+- **FLPText Responsive Typography**: `FLPTextProps.fontSize` only accepts scalar strings (`string`). To apply responsive typography (e.g. `{ base: "xs", md: "sm" }`), pass responsive font sizes via `className={css({ fontSize: { base: "xs", md: "sm" } })}` rather than directly on the `fontSize` prop.
 
 ### 10. Unified Feature Delivery & Monorepo Synchronization
 
@@ -120,6 +121,43 @@ Flump is a monorepo managed with Turborepo (`turbo`) and Bun.
   - A completion condition (how we detect the step is done)
   - A navigation target or dialog trigger to initiate setup
 - **Backend Tracking**: If the new feature has setup state that should persist across sessions, add the step key to the `UserProfile.setupChecklistCompletedSteps` enum or array.
+
+### 14. Financial Calculators & Interactive Controls
+
+- **Inputs Over Sliders**: Prefer compact numeric input fields with clear unit adornments (`£`, `%`, `years`, `/mo`) rather than range sliders or slider cards for user adjustments.
+- **Single-Row Compact Layout**: In calculator cards, scenario forms, and what-if controls, place the title/label and its input on a single horizontal row (`display: flex; justify-content: space-between; align-items: center;`) rather than stacking multi-line cards or wrapping with redundant buttons.
+- **Scenario State Persistence**:
+  - All interactive options (scenario what-if inputs, category toggles, account inclusion/exclusion) must persist across tab changes, route transitions, and browser refreshes using `localStorage` (or global atoms).
+  - Provide immediate visual confirmation of persistence (e.g., auto-saved status indicator) and an explicit reset/clear action.
+  - In unit and component tests, ensure `localStorage.clear()` is called in `beforeEach` to prevent cross-test state pollution.
+- **Consistent Colored Toggle Feedback**:
+  - In toggle lists where items can be kept, excluded, or selected across categories (e.g., savings pools, retained income, variable expenses), ensure consistent visual state treatment across all categories:
+    - Active / kept items: matching category color theme (tinted background, colored border, status icon, kept badge, colored switch).
+    - Inactive / excluded items: muted grayscale background, line-through or muted text, and neutral switch state.
+
+### 15. Overlay & Mobile Drawer Stacking Contexts
+
+- **CSS Containing Block Traps**: Never place `position: fixed` overlays, mobile navigation drawers, or modal backdrops inside DOM ancestors styled with `backdrop-filter`, `filter`, `perspective`, or CSS `transform`. These properties create a new containing block and viewport context that breaks full-screen positioning (`100vh`/`100dvh`).
+- **Portal Requirement**: Mount all full-screen dialogs, bottom sheets, and mobile drawers directly into `document.body` or use Radix UI's `<Dialog.Portal>` / `<Drawer.Portal>` primitives to ensure proper viewport pinning.
+
+### 16. Dashboard Widgets & Customization Architecture
+
+- **Independent Row Heights in Grid**:
+  - In 2-column dashboard grids with cards of varying heights, do **not** use `gridAutoRows: "1fr"`. Omit `gridAutoRows` so each row calculates its height naturally (`auto`) based on the items in that row.
+  - Retain `alignItems: "stretch"` so side-by-side widgets in the _same row_ match each other's height cleanly without forcing preceding or subsequent rows to expand.
+- **Widget Customization & Disabled Widgets Tray**:
+  - In customizable dashboard interfaces with hideable widgets, always render an explicit "Disabled Widgets" section when customize mode (`editMode`) is active.
+  - Each disabled widget must have an individual "Add / Enable" button.
+  - When a disabled widget is re-enabled, it must be appended to the **bottom of the active widget order** (`dashboardWidgetOrder`).
+- **Summary & Aggregation Widgets**:
+  - **No Open Button**: Widgets that summarize data across multiple tools (e.g., Financial Health Summary) must not render an "Open →" route button in their card header.
+  - **Collapsible Breakdown by Default**: Comprehensive multi-tab breakdowns inside summary cards must be collapsible and **collapsed by default** with a clean trigger button (`[ View Breakdown & Tips ▼ ]`).
+  - **Settings Modal Controls**: Provide configuration options in the widget settings modal to completely hide tabbed sections or toggle collapsibility.
+  - **Scoring Transparency**: Any health or financial score must provide full transparency into how points are awarded:
+    - Only evaluate modules active in the user's profile (`enabledPages`).
+    - Display points earned vs maximum points (`{earned} / {max} pts`).
+    - Clearly document what boosts score (✓) vs what hurts score (✗).
+    - Provide actionable improvement advice with deep-links to the relevant pages.
 
 ---
 
