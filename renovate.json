@@ -4,11 +4,13 @@
     "config:recommended",
     ":semanticCommits",
     ":pinAllExceptPeerDependencies",
-    "npm:unpublishSafe",
+    "security:minimumReleaseAgeNpm",
     "schedule:earlyMondays"
   ],
   "ignoreDeps": ["typescript-coverage-report"],
-  "baseBranches": ["dev"],
+  "baseBranchPatterns": [
+    "dev"
+  ],
   "labels": ["dependencies"],
   "timezone": "Europe/London",
   "packageRules": [
