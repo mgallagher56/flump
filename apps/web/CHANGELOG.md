@@ -1,5 +1,27 @@
 # Changelog
 
+## [1.23.0](https://github.com/mgallagher56/flump/compare/flump/web-v1.22.2...flump/web-v1.23.0) (2026-11-03)
+
+
+### Features ✨
+
+* add custom FLPCheckbox component and hide number input spinner buttons ([40e40ef](https://github.com/mgallagher56/flump/commit/40e40ef003ec0b16410e1539170dc410dd0821bb))
+* add pension and savings pages, compound forecasters, UK auto-enrolment rules, and onboarding wizards ([fcae1cb](https://github.com/mgallagher56/flump/commit/fcae1cb654048091caa53443e4af4887baed5403))
+* add user initials thumbnail and profile picture upload support ([6612d56](https://github.com/mgallagher56/flump/commit/6612d56a088a0613e91dbed272798afa01995657))
+* centralize tax rules in shared package, implement mobile TaxScreen and redesigned bottom bar navigation ([6318b56](https://github.com/mgallagher56/flump/commit/6318b56fb1d6d00c34b0a9f981458c54b6d1c514))
+* group primary desktop navigation into Wealth and Planning dropdown pillars ([8a2dfa5](https://github.com/mgallagher56/flump/commit/8a2dfa5c24162aecae8cadb2ffbe844b3524fd6e))
+* improve Home, Budgets, and Accounts functionality, UI, and UX ([759ac12](https://github.com/mgallagher56/flump/commit/759ac12cc6423b98b70d21774dee29c3a2b7363e))
+* improve tax planner, profile settings, budget customization, and dashboard UX ([134de6f](https://github.com/mgallagher56/flump/commit/134de6fb7ddef2b8d3be5abdf18ff5e8e8b12288))
+* simplify pension forecaster UI, fix mobile nav height, and improve runway calculator ([8abe89f](https://github.com/mgallagher56/flump/commit/8abe89fe4bb9848d8d7725385842411aafa193dd))
+
+
+### Miscellaneous 🙃
+
+* re-architect monorepo with bun, nestjs, react 19, and radix ([6e143b1](https://github.com/mgallagher56/flump/commit/6e143b19a7f307c88af390e3207f9f8f1285ae09))
+* run lint and typescript checks and fix violations ([b5975fb](https://github.com/mgallagher56/flump/commit/b5975fb7d62aa7aa70aa281b43b11cdbf5d8d9c7))
+* stop tracking environmental configurations and build artifacts ([6bd773a](https://github.com/mgallagher56/flump/commit/6bd773a1db81c0972c2afb07e9a18e8ebd2bb42a))
+* **web:** update base bun docker image and add dockerignore ([520e943](https://github.com/mgallagher56/flump/commit/520e9434ef1e5454e944b01db6d69ce7dd157bda))
+
 ## [1.22.2](https://github.com/mgallagher56/flump/compare/flump/web-v1.22.1...flump/web-v1.22.2) (2025-01-08)
 
 ### Bug Fixes 🪲

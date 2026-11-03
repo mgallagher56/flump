@@ -6,7 +6,7 @@
     "node": ">=20",
     "pnpm": ">=9"
   },
-  "version": "1.22.2",
+  "version": "1.23.0",
   "dependencies": {
     "@emotion/cache": "^11.14.0",
     "@emotion/react": "^11.14.0",
