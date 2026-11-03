@@ -2,12 +2,18 @@
   "name": "@repo/ui",
   "version": "0.0.0",
   "private": true,
+  "type": "module",
   "sideEffects": [
     "**/*.css"
   ],
   "exports": {
     ".": "./src/index.tsx",
     "./styles.css": "./dist/styles.css",
+    "./styled-system/css": "./styled-system/css/index.js",
+    "./styled-system/jsx": "./styled-system/jsx/index.js",
+    "./styled-system/patterns": "./styled-system/patterns/index.js",
+    "./styled-system/recipes": "./styled-system/recipes/index.js",
+    "./styled-system/tokens": "./styled-system/tokens/index.js",
     "./styled-system/*": "./styled-system/*",
     "./preset": "./panda.preset.ts",
     "./*": "./src/*.tsx"

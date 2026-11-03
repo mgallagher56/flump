@@ -1,7 +1,7 @@
-export * from "@repo/ui/styled-system/css";
-export * from "@repo/ui/styled-system/jsx";
-export { styled } from "@repo/ui/styled-system/jsx";
-export * from "@repo/ui/styled-system/patterns";
+export * from "../styled-system/css";
+export * from "../styled-system/jsx";
+export { styled } from "../styled-system/jsx";
+export * from "../styled-system/patterns";
 
 // Forms
 export * from "./components/forms/Button";

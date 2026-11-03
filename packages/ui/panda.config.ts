@@ -2,6 +2,9 @@ import { defineConfig } from "@pandacss/dev";
 import { flumpPreset } from "./panda.preset";
 
 export default defineConfig({
+  // File extension for generated javascript files
+  outExtension: "js",
+
   // Whether to use css reset
   preflight: true,
 
