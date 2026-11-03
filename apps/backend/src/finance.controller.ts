@@ -21,6 +21,7 @@ import { Account } from "./entities/account.entity";
 import { AccountDetail } from "./entities/account-detail.entity";
 import { BankConnection } from "./entities/bank-connection.entity";
 import { Transaction } from "./entities/transaction.entity";
+import { UserProfile } from "./entities/user-profile.entity";
 import { BankProviderRegistry } from "./providers/provider.registry";
 
 @Controller()
@@ -35,6 +36,8 @@ export class FinanceController {
     private readonly accountDetailRepository: Repository<AccountDetail>,
     @InjectRepository(BankConnection)
     private readonly bankConnectionRepository: Repository<BankConnection>,
+    @InjectRepository(UserProfile)
+    private readonly userProfileRepository: Repository<UserProfile>,
     private readonly providerRegistry: BankProviderRegistry,
     private readonly configService: ConfigService,
   ) {}
@@ -47,8 +50,10 @@ export class FinanceController {
       order: { createdAt: "ASC" },
     });
 
-    // Auto-seed some mock data for development if the user has no accounts yet
-    if (accounts.length === 0) {
+    const profile = await this.userProfileRepository.findOne({ where: { userId } });
+
+    // Auto-seed some mock data for development if the user has no accounts yet and has not reset data
+    if (accounts.length === 0 && !profile?.hasResetFinancialData) {
       const defaultAccounts = [
         {
           userId,

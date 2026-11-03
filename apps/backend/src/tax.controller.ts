@@ -14,6 +14,7 @@ import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
 import { AuthGuard } from "./auth/auth.guard";
 import { TaxRecord } from "./entities/tax-record.entity";
+import { UserProfile } from "./entities/user-profile.entity";
 
 @Controller("tax-records")
 @UseGuards(AuthGuard)
@@ -21,6 +22,8 @@ export class TaxController {
   constructor(
     @InjectRepository(TaxRecord)
     private readonly taxRecordRepository: Repository<TaxRecord>,
+    @InjectRepository(UserProfile)
+    private readonly userProfileRepository: Repository<UserProfile>,
   ) {}
 
   @Get()
@@ -31,7 +34,9 @@ export class TaxController {
       order: { date: "DESC" },
     });
 
-    if (records.length === 0) {
+    const profile = await this.userProfileRepository.findOne({ where: { userId } });
+
+    if (records.length === 0 && !profile?.hasResetFinancialData) {
       // Seed historical Poplar P&L data for rental property, plus some mock self-employed data
       const defaultRecords: Partial<TaxRecord>[] = [
         // --- 2020/21 Fiscal Year Seeding ---
@@ -673,6 +678,40 @@ export class TaxController {
           frequency: "monthly",
           date: "2024-07-01",
         },
+
+        // --- Savings & Dividends Seeding ---
+        {
+          userId,
+          type: "income",
+          source: "savings",
+          category: "savings_interest",
+          name: "Marcus High-Yield Savings Interest (2024/25)",
+          amount: 65.0,
+          frequency: "monthly",
+          date: "2024-04-01",
+          endDate: "2025-03-31",
+        },
+        {
+          userId,
+          type: "income",
+          source: "savings",
+          category: "dividend_income",
+          name: "Vanguard Global All-Cap Dividends (2024/25)",
+          amount: 480.0,
+          frequency: "annual",
+          date: "2024-10-15",
+        },
+        {
+          userId,
+          type: "income",
+          source: "savings",
+          category: "isa_interest",
+          name: "Trading 212 Cash ISA Returns",
+          amount: 45.0,
+          frequency: "monthly",
+          date: "2024-04-01",
+          notes: "Tax-free ISA returns",
+        },
       ];
 
       const created = this.taxRecordRepository.create(
@@ -697,6 +736,38 @@ export class TaxController {
       throw new NotFoundException("Tax record not found");
     }
     return record;
+  }
+
+  @Post("bulk")
+  async createBulkTaxRecords(
+    @Req() req: any,
+    @Body()
+    body: {
+      records: Partial<TaxRecord>[];
+      capPreviousRecordIds?: { id: string; endDate: string }[];
+    },
+  ): Promise<TaxRecord[]> {
+    const userId = req.user.id;
+
+    if (body.capPreviousRecordIds && Array.isArray(body.capPreviousRecordIds)) {
+      for (const item of body.capPreviousRecordIds) {
+        if (item.id && item.endDate) {
+          await this.taxRecordRepository.update({ id: item.id, userId }, { endDate: item.endDate });
+        }
+      }
+    }
+
+    if (!body.records || !Array.isArray(body.records) || body.records.length === 0) {
+      return [];
+    }
+
+    const created = this.taxRecordRepository.create(
+      body.records.map((r) => ({
+        ...r,
+        userId,
+      })),
+    );
+    return this.taxRecordRepository.save(created);
   }
 
   @Post()

@@ -1,16 +1,21 @@
 import { css } from "@repo/ui/styled-system/css";
-import { type FC, useCallback, useMemo, useState } from "react";
+import { type FC, useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
+  FaBriefcase,
   FaCalculator,
   FaCamera,
+  FaCoins,
+  FaCopy,
   FaFileAlt,
   FaFileImage,
-  FaFileInvoiceDollar,
   FaFilePdf,
+  FaHome,
   FaInfoCircle,
+  FaLaptopCode,
   FaList,
   FaPercent,
+  FaPiggyBank,
   FaPlus,
   FaSave,
   FaTrash,
@@ -26,27 +31,43 @@ import FLPSelect from "~/components/core/inputs/select/FLPSelect";
 import FLPBox from "~/components/core/structure/FLPBox";
 import FLPHeading from "~/components/core/typography/FLPHeading";
 import FLPText from "~/components/core/typography/FLPText";
+import CopyTaxYearModal from "~/components/tax/CopyTaxYearModal";
+import TaxIncomeSectionCard from "~/components/tax/TaxIncomeSectionCard";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
 import type { loader } from "~/routes/app.tax";
 import {
   calculateUKTax,
-  getRecordValueForMonth,
+  getCategoriesForSource,
+  getCurrentUKTaxYear,
+  getPreviousTaxYear,
+  getRecordAnnualTotalForTaxYear,
   getTaxYearForDate,
+  isRecordActiveInTaxYear,
+  PAYE_CATEGORIES,
   RENTAL_CATEGORIES,
+  SAVINGS_CATEGORIES,
   SELF_EMPLOYED_CATEGORIES,
   TAX_YEARS,
   type TaxCalculationResult,
   type TaxRecord,
+  type TaxSource,
 } from "./TaxCalculator";
 
 const TaxContainer: FC = () => {
   const { t } = useTranslation();
   const fetcher = useFetcher();
-  const { records: initialRecords = [], userProfile } = useLoaderData<typeof loader>();
+  const {
+    records: initialRecords = [],
+    userProfile,
+    accounts = [],
+  } = useLoaderData<typeof loader>();
+
+  // Current UK Tax Year
+  const currentTaxYear = getCurrentUKTaxYear();
 
   // Page state
   const [activeTab, setActiveTab] = useState<"summary" | "detailed">("summary");
-  const [selectedTaxYear, setSelectedTaxYear] = useState<string>("2024/25");
+  const [selectedTaxYear, setSelectedTaxYear] = useState<string>(() => getCurrentUKTaxYear());
 
   // User input overrides for salary & property ownership share (synced with profile)
   const profileSalary = userProfile?.annualSalary
@@ -65,9 +86,31 @@ const TaxContainer: FC = () => {
   const [propertyOwnershipShare, setPropertyOwnershipShare] = useState<number>(profileShare);
   const [isProfileSaving, setIsProfileSaving] = useState<boolean>(false);
 
+  // Available Tax Years: current tax year only by default, plus any years with records
+  const availableYears = useMemo(() => {
+    const fromRecords = initialRecords.map((r) => getTaxYearForDate(r.date));
+    const set = new Set([currentTaxYear, ...fromRecords]);
+    return Array.from(set).sort();
+  }, [currentTaxYear, initialRecords]);
+
+  // Keep selectedTaxYear in sync if availableYears changes
+  useEffect(() => {
+    if (!availableYears.includes(selectedTaxYear)) {
+      setSelectedTaxYear(
+        availableYears.includes(currentTaxYear)
+          ? currentTaxYear
+          : availableYears[availableYears.length - 1],
+      );
+    }
+  }, [availableYears, selectedTaxYear, currentTaxYear]);
+
+  // Copy Tax Year modal state
+  const [isCopyModalOpen, setIsCopyModalOpen] = useState<boolean>(false);
+  const [copyModalScope, setCopyModalScope] = useState<TaxSource | "all">("all");
+
   // Filters for detailed view
   const [filterTaxYear, setFilterTaxYear] = useState<string>("all");
-  const [filterSource, setFilterSource] = useState<"all" | "self-employed" | "rental">("all");
+  const [filterSource, setFilterSource] = useState<"all" | TaxSource>("all");
   const [filterType, setFilterType] = useState<"all" | "income" | "expense">("all");
 
   // Add/Edit transaction modal state
@@ -76,7 +119,7 @@ const TaxContainer: FC = () => {
 
   // Form inputs
   const [formName, setFormName] = useState<string>("");
-  const [formSource, setFormSource] = useState<"self-employed" | "rental">("rental");
+  const [formSource, setFormSource] = useState<TaxSource>("rental");
   const [formType, setFormType] = useState<"income" | "expense">("expense");
   const [formCategory, setFormCategory] = useState<string>("");
   const [formAmount, setFormAmount] = useState<string>("");
@@ -95,19 +138,26 @@ const TaxContainer: FC = () => {
 
   // Auto-fill category when source or type changes
   const availableCategories = useMemo(() => {
-    const cats = formSource === "rental" ? RENTAL_CATEGORIES : SELF_EMPLOYED_CATEGORIES;
-    return cats.filter((c) => c.type === formType);
+    return getCategoriesForSource(formSource, formType);
   }, [formSource, formType]);
 
-  const onOpenAddModal = () => {
+  const onOpenAddModal = (
+    defaultSource: TaxSource = "rental",
+    defaultType: "income" | "expense" = "expense",
+  ) => {
     setEditingRecord(null);
     setFormName("");
-    setFormSource("rental");
-    setFormType("expense");
-    setFormCategory(RENTAL_CATEGORIES[1].id); // default to Curo service charge or expense
+    setFormSource(defaultSource);
+    setFormType(defaultType);
+    const cats = getCategoriesForSource(defaultSource, defaultType);
+    setFormCategory(cats[0]?.id || "");
     setFormAmount("");
-    setFormDate(new Date().toISOString().substring(0, 10));
-    setFormFrequency("one-off");
+
+    // Set date to April 1st of selectedTaxYear
+    const startYr = selectedTaxYear.split("/")[0] || new Date().getFullYear().toString();
+    setFormDate(`${startYr}-04-01`);
+
+    setFormFrequency("monthly");
     setFormEndDate("");
     setFormNotes("");
     setReceiptFilename(null);
@@ -133,6 +183,36 @@ const TaxContainer: FC = () => {
     setIsModalOpen(true);
   };
 
+  const handleOpenCopyModal = (scope: TaxSource | "all" = "all") => {
+    setCopyModalScope(scope);
+    setIsCopyModalOpen(true);
+  };
+
+  // Quick Add handler from collapsible cards
+  const handleQuickAdd = (record: {
+    name: string;
+    source: TaxSource;
+    type: "income" | "expense";
+    category: string;
+    amount: number;
+    frequency: "one-off" | "monthly" | "annual";
+    date: string;
+  }) => {
+    fetcher.submit(
+      {
+        intent: "create-transaction",
+        name: record.name,
+        source: record.source,
+        type: record.type,
+        category: record.category,
+        amount: record.amount.toString(),
+        date: record.date,
+        frequency: record.frequency,
+      },
+      { method: "POST" },
+    );
+  };
+
   // Handle image/file selection & convert to base64
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -148,33 +228,34 @@ const TaxContainer: FC = () => {
     reader.readAsDataURL(file);
   };
 
-  // Clear current receipt file selection
   const clearReceipt = () => {
     setReceiptFilename(null);
     setReceiptMimeType(null);
     setReceiptData(null);
   };
 
-  // Perform UK tax calculations for all relevant tax years to build the P&L Summary comparison
+  // Perform UK tax calculations for all available tax years
   const calculatedTaxYearsData = useMemo(() => {
-    const years = ["2020/21", "2021/22", "2022/23", "2023/24", "2024/25", "2025/26"];
     const results: Record<string, TaxCalculationResult> = {};
-    for (const year of years) {
+    for (const year of availableYears) {
       results[year] = calculateUKTax(year, initialRecords, payeSalary, propertyOwnershipShare);
     }
     return results;
-  }, [initialRecords, payeSalary, propertyOwnershipShare]);
+  }, [availableYears, initialRecords, payeSalary, propertyOwnershipShare]);
 
   const activeYearData = useMemo(() => {
-    return calculatedTaxYearsData[selectedTaxYear] || calculatedTaxYearsData["2024/25"];
-  }, [calculatedTaxYearsData, selectedTaxYear]);
+    return (
+      calculatedTaxYearsData[selectedTaxYear] ||
+      calculatedTaxYearsData[currentTaxYear] ||
+      Object.values(calculatedTaxYearsData)[0]
+    );
+  }, [calculatedTaxYearsData, selectedTaxYear, currentTaxYear]);
 
-  // Filtered detailed transaction records
+  // Filtered detailed transaction records (uses isRecordActiveInTaxYear)
   const filteredRecords = useMemo(() => {
     return initialRecords.filter((record) => {
       if (filterTaxYear !== "all") {
-        const year = getTaxYearForDate(record.date);
-        if (year !== filterTaxYear) return false;
+        if (!isRecordActiveInTaxYear(record, filterTaxYear)) return false;
       }
       if (filterSource !== "all" && record.source !== filterSource) return false;
       if (filterType !== "all" && record.type !== filterType) return false;
@@ -229,10 +310,12 @@ const TaxContainer: FC = () => {
   const { formatCurrencyDecimal } = useFormatCurrency();
   const formatCurrency = formatCurrencyDecimal;
 
-  const getCategoryName = (catId: string, source: "self-employed" | "rental") => {
-    const list = source === "rental" ? RENTAL_CATEGORIES : SELF_EMPLOYED_CATEGORIES;
+  const getCategoryName = (catId: string, source: TaxSource) => {
+    const list = getCategoriesForSource(source);
     return list.find((c) => c.id === catId)?.name || catId;
   };
+
+  const previousTaxYear = getPreviousTaxYear(selectedTaxYear);
 
   // Styles
   const tabStyle = (active: boolean) =>
@@ -254,15 +337,15 @@ const TaxContainer: FC = () => {
 
   const cardsGrid = css({
     display: "grid",
-    gridTemplateColumns: { base: "1fr", md: "repeat(3, 1fr)" },
-    gap: "24px",
-    marginBottom: "32px",
+    gridTemplateColumns: { base: "1fr", sm: "repeat(2, 1fr)", lg: "repeat(4, 1fr)" },
+    gap: "18px",
+    marginBottom: "28px",
   });
 
   const layoutGrid = css({
     display: "grid",
-    gridTemplateColumns: { base: "1fr", lg: "3fr 1.3fr" },
-    gap: "32px",
+    gridTemplateColumns: { base: "1fr", lg: "3.2fr 1.3fr" },
+    gap: "28px",
     alignItems: "start",
   });
 
@@ -284,7 +367,7 @@ const TaxContainer: FC = () => {
   });
 
   const thStyle = css({
-    padding: "12px 16px",
+    padding: "10px 14px",
     fontWeight: "bold",
     color: "text.primary",
     backgroundColor: "rgba(0,0,0,0.02)",
@@ -293,7 +376,7 @@ const TaxContainer: FC = () => {
   });
 
   const tdStyle = css({
-    padding: "12px 16px",
+    padding: "10px 14px",
     borderBottom: "1px solid",
     borderColor: "border",
     color: "text.primary",
@@ -349,19 +432,26 @@ const TaxContainer: FC = () => {
       >
         <div>
           <FLPHeading as="h1" color="blue.500" size="xl">
-            Business & Rental Property Tax Tracker
+            Income & Self-Assessment Tax Planner
           </FLPHeading>
           <FLPText color="text.muted" fontSize="sm">
-            Log self-employed or property records, attach receipts, and estimate your UK
-            Self-Assessment tax liability.
+            Track PAYE salary, freelance profits, rental property P&L, and savings interest across
+            UK fiscal years.
           </FLPText>
         </div>
-        <FLPButton onClick={onOpenAddModal}>
-          <FaPlus size={12} style={{ marginRight: "6px" }} /> Add Record
-        </FLPButton>
+
+        {/* Action Buttons: Copy Year + Add Record */}
+        <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
+          <FLPButton variant="outline" onClick={() => handleOpenCopyModal("all")}>
+            <FaCopy size={12} style={{ marginRight: "6px" }} /> Populate New Year / Copy Figures
+          </FLPButton>
+          <FLPButton onClick={() => onOpenAddModal("rental", "income")}>
+            <FaPlus size={12} style={{ marginRight: "6px" }} /> Add Record
+          </FLPButton>
+        </div>
       </div>
 
-      {/* Tax disclaimer — always visible */}
+      {/* Tax disclaimer notice */}
       <div
         className={css({
           display: "flex",
@@ -400,12 +490,79 @@ const TaxContainer: FC = () => {
               Tax Calculations Notice
             </FLPText>
             <FLPText fontSize="xs" color="text.muted" style={{ marginTop: "2px" }}>
-              Please note that tax calculations and rules on this platform are based on UK HMRC
-              laws/rules/taxes. We plan to onboard support for other countries soon.
+              Tax calculations are based on UK HMRC rules (England/Wales/NI). Multi-country tax
+              support is planned.
             </FLPText>
           </div>
         </div>
       )}
+
+      {/* Tax Year Selector Toolbar */}
+      <div
+        className={css({
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          padding: "12px 18px",
+          backgroundColor: "surface",
+          border: "1px solid",
+          borderColor: "border",
+          borderRadius: "lg",
+          marginBottom: "20px",
+          flexWrap: "wrap",
+          gap: "12px",
+        })}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
+          <span
+            style={{
+              fontSize: "12px",
+              fontWeight: 700,
+              color: "var(--colors-text-muted)",
+              textTransform: "uppercase",
+            }}
+          >
+            Fiscal Year:
+          </span>
+          <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
+            {availableYears.map((yr) => {
+              const isSelected = yr === selectedTaxYear;
+              return (
+                <button
+                  key={yr}
+                  type="button"
+                  onClick={() => setSelectedTaxYear(yr)}
+                  className={css({
+                    padding: "4px 12px",
+                    borderRadius: "full",
+                    fontSize: "xs",
+                    fontWeight: isSelected ? 700 : 500,
+                    border: "1px solid",
+                    borderColor: isSelected ? "primary" : "border",
+                    backgroundColor: isSelected ? "primary" : "surface",
+                    color: isSelected ? "primary.foreground" : "text.muted",
+                    cursor: "pointer",
+                    transition: "all 0.15s",
+                    "&:hover": {
+                      borderColor: "primary",
+                      color: isSelected ? "primary.foreground" : "text.primary",
+                    },
+                  })}
+                >
+                  {yr}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+          <FLPButton size="sm" variant="outline" onClick={() => handleOpenCopyModal("all")}>
+            <FaCopy size={11} style={{ marginRight: "6px" }} /> Copy from {previousTaxYear}
+          </FLPButton>
+        </div>
+      </div>
+
       {/* Tabs */}
       <div
         className={css({
@@ -422,7 +579,7 @@ const TaxContainer: FC = () => {
           type="button"
           onClick={() => setActiveTab("summary")}
         >
-          <FaCalculator size={13} style={{ marginRight: "4px" }} /> Overview & Tax Calculator
+          <FaCalculator size={13} style={{ marginRight: "4px" }} /> Overview & Income Sections
         </button>
         <button
           className={tabStyle(activeTab === "detailed")}
@@ -443,7 +600,7 @@ const TaxContainer: FC = () => {
                 backgroundColor: "rgba(99, 99, 241, 0.06)",
                 border: "1px solid",
                 borderColor: "primary",
-                padding: "20px",
+                padding: "18px",
                 borderRadius: "md",
               })}
             >
@@ -453,13 +610,13 @@ const TaxContainer: FC = () => {
                 fontWeight="semibold"
                 textTransform="uppercase"
               >
-                Estimated Self-Assessment Tax Due ({selectedTaxYear})
+                Estimated Self-Assessment Due ({selectedTaxYear})
               </FLPText>
               <FLPHeading as="h2" color="blue.500" mt={2} size="xl">
                 {formatCurrency(activeYearData.netAdditionalTaxToPay)}
               </FLPHeading>
               <FLPText color="text.muted" fontSize="xs" className={css({ marginTop: "4px" })}>
-                On top of PAYE salary deductions. Includes Income Tax & Class 4 NI.
+                Additional tax & Class 4 NI on top of PAYE deductions.
               </FLPText>
             </FLPCard>
 
@@ -468,7 +625,7 @@ const TaxContainer: FC = () => {
                 backgroundColor: "rgba(16, 185, 129, 0.05)",
                 border: "1px solid",
                 borderColor: "success.500",
-                padding: "20px",
+                padding: "18px",
                 borderRadius: "md",
               })}
             >
@@ -478,14 +635,14 @@ const TaxContainer: FC = () => {
                 fontWeight="semibold"
                 textTransform="uppercase"
               >
-                Self-Employed Net Profit ({selectedTaxYear})
+                Total Gross Income ({selectedTaxYear})
               </FLPText>
               <FLPHeading as="h2" color="success.500" mt={2} size="xl">
-                {formatCurrency(activeYearData.seProfit)}
+                {formatCurrency(activeYearData.totalGrossIncome)}
               </FLPHeading>
               <FLPText color="text.muted" fontSize="xs" className={css({ marginTop: "4px" })}>
-                Revenue of {formatCurrency(activeYearData.seIncomeGross)} less expenses of{" "}
-                {formatCurrency(activeYearData.seExpenses)}.
+                PAYE ({formatCurrency(activeYearData.effectivePayeSalary)}) + Business + Rental +
+                Savings.
               </FLPText>
             </FLPCard>
 
@@ -494,7 +651,7 @@ const TaxContainer: FC = () => {
                 backgroundColor: "rgba(245, 158, 11, 0.05)",
                 border: "1px solid",
                 borderColor: "warning.500",
-                padding: "20px",
+                padding: "18px",
                 borderRadius: "md",
               })}
             >
@@ -514,20 +671,260 @@ const TaxContainer: FC = () => {
                 {formatCurrency(activeYearData.rentalProfitPostInterest)}.
               </FLPText>
             </FLPCard>
+
+            <FLPCard
+              className={css({
+                backgroundColor: "rgba(139, 92, 246, 0.05)",
+                border: "1px solid",
+                borderColor: "purple.500",
+                padding: "18px",
+                borderRadius: "md",
+              })}
+            >
+              <FLPText
+                color="text.muted"
+                fontSize="xs"
+                fontWeight="semibold"
+                textTransform="uppercase"
+              >
+                Self-Employed Profit ({selectedTaxYear})
+              </FLPText>
+              <FLPHeading as="h2" color="purple.500" mt={2} size="xl">
+                {formatCurrency(activeYearData.seProfit)}
+              </FLPHeading>
+              <FLPText color="text.muted" fontSize="xs" className={css({ marginTop: "4px" })}>
+                Turnover {formatCurrency(activeYearData.seIncomeGross)} less allowable costs.
+              </FLPText>
+            </FLPCard>
           </div>
 
           {/* Main Layout Grid */}
           <div className={layoutGrid}>
-            {/* Left side: P&L Summary Grid Table */}
+            {/* Left side: Collapsible Income Sections & Multi-Year P&L Table */}
             <div>
+              {/* Collapsible Sections Header */}
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  marginBottom: "14px",
+                }}
+              >
+                <div>
+                  <FLPHeading as="h3" size="md">
+                    Income & Expense Sections ({selectedTaxYear})
+                  </FLPHeading>
+                  <FLPText color="text.muted" fontSize="xs">
+                    Expand sections to review active items, log receipts, or use inline quick-add.
+                  </FLPText>
+                </div>
+              </div>
+
+              {/* SECTION 1: PAYE Employment Income */}
+              <TaxIncomeSectionCard
+                source="paye"
+                title="Employment Income (PAYE)"
+                subtitle="Salary, bonuses, benefits in kind, and pension contributions"
+                icon={<FaBriefcase />}
+                colorScheme="blue"
+                records={initialRecords}
+                selectedTaxYear={selectedTaxYear}
+                previousTaxYear={previousTaxYear}
+                isOpenDefault={true}
+                onOpenAddModal={onOpenAddModal}
+                onOpenEditModal={onOpenEditModal}
+                onDeleteRecord={handleDeleteTransaction}
+                onOpenCopyModal={handleOpenCopyModal}
+                onQuickAdd={handleQuickAdd}
+                onViewReceipt={setActiveReceiptRecord}
+                contextBanner={
+                  <div
+                    style={{
+                      padding: "10px 14px",
+                      backgroundColor: "rgba(59, 130, 246, 0.05)",
+                      border: "1px solid rgba(59, 130, 246, 0.2)",
+                      borderRadius: "6px",
+                      fontSize: "12px",
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      flexWrap: "wrap",
+                      gap: "8px",
+                    }}
+                  >
+                    <span>
+                      Profile salary baseline: <strong>{formatCurrency(profileSalary)}/year</strong>
+                      .
+                      {activeYearData.payeIncomeGross > 0
+                        ? ` Currently using ${formatCurrency(activeYearData.effectivePayeSalary)} from detailed payslip records.`
+                        : " No payslip items logged; automatically using profile salary."}
+                    </span>
+                    <FLPButton
+                      size="sm"
+                      variant="outline"
+                      onClick={() => onOpenAddModal("paye", "income")}
+                    >
+                      Log Payslip / Bonus
+                    </FLPButton>
+                  </div>
+                }
+              />
+
+              {/* SECTION 2: Rental Property */}
+              <TaxIncomeSectionCard
+                source="rental"
+                title="Rental Property (e.g. Poplar)"
+                subtitle="Tenancy rent, maintenance, service charges, and mortgage finance costs"
+                icon={<FaHome />}
+                colorScheme="amber"
+                records={initialRecords}
+                selectedTaxYear={selectedTaxYear}
+                previousTaxYear={previousTaxYear}
+                isOpenDefault={true}
+                onOpenAddModal={onOpenAddModal}
+                onOpenEditModal={onOpenEditModal}
+                onDeleteRecord={handleDeleteTransaction}
+                onOpenCopyModal={handleOpenCopyModal}
+                onQuickAdd={handleQuickAdd}
+                onViewReceipt={setActiveReceiptRecord}
+                contextBanner={
+                  <div
+                    style={{
+                      padding: "10px 14px",
+                      backgroundColor: "rgba(245, 158, 11, 0.05)",
+                      border: "1px solid rgba(245, 158, 11, 0.2)",
+                      borderRadius: "6px",
+                      fontSize: "12px",
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      flexWrap: "wrap",
+                      gap: "8px",
+                    }}
+                  >
+                    <span>
+                      Ownership share: <strong>{propertyOwnershipShare}%</strong>. Section 24
+                      finance credit:{" "}
+                      <strong style={{ color: "var(--colors-success-500)" }}>
+                        -{formatCurrency(activeYearData.rentalPropertyTaxCredit)}
+                      </strong>{" "}
+                      (20% basic rate relief).
+                    </span>
+                    <FLPButton
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleOpenCopyModal("rental")}
+                    >
+                      <FaCopy size={10} style={{ marginRight: "4px" }} /> Copy Rental from{" "}
+                      {previousTaxYear}
+                    </FLPButton>
+                  </div>
+                }
+              />
+
+              {/* SECTION 3: Self-Employed & Freelance */}
+              <TaxIncomeSectionCard
+                source="self-employed"
+                title="Self-Employed & Freelance Business"
+                subtitle="Sole trader turnover, client retainers, and allowable expenses"
+                icon={<FaLaptopCode />}
+                colorScheme="emerald"
+                records={initialRecords}
+                selectedTaxYear={selectedTaxYear}
+                previousTaxYear={previousTaxYear}
+                isOpenDefault={true}
+                onOpenAddModal={onOpenAddModal}
+                onOpenEditModal={onOpenEditModal}
+                onDeleteRecord={handleDeleteTransaction}
+                onOpenCopyModal={handleOpenCopyModal}
+                onQuickAdd={handleQuickAdd}
+                onViewReceipt={setActiveReceiptRecord}
+                contextBanner={
+                  <div
+                    style={{
+                      padding: "10px 14px",
+                      backgroundColor: "rgba(16, 185, 129, 0.05)",
+                      border: "1px solid rgba(16, 185, 129, 0.2)",
+                      borderRadius: "6px",
+                      fontSize: "12px",
+                    }}
+                  >
+                    <span>
+                      Allowable expenses logged:{" "}
+                      <strong>{formatCurrency(activeYearData.seExpenses)}</strong>. (Note: UK
+                      Trading Allowance of £1,000 can be claimed in lieu of expenses if actual
+                      expenses are lower).
+                    </span>
+                  </div>
+                }
+              />
+
+              {/* SECTION 4: Savings & Dividends */}
+              <TaxIncomeSectionCard
+                source="savings"
+                title="Savings & Dividend Income"
+                subtitle="Bank savings interest, ISA tax-free growth, share dividends"
+                icon={<FaPiggyBank />}
+                colorScheme="purple"
+                records={initialRecords}
+                selectedTaxYear={selectedTaxYear}
+                previousTaxYear={previousTaxYear}
+                isOpenDefault={false}
+                onOpenAddModal={onOpenAddModal}
+                onOpenEditModal={onOpenEditModal}
+                onDeleteRecord={handleDeleteTransaction}
+                onOpenCopyModal={handleOpenCopyModal}
+                onQuickAdd={handleQuickAdd}
+                onViewReceipt={setActiveReceiptRecord}
+                contextBanner={
+                  <div
+                    style={{
+                      padding: "10px 14px",
+                      backgroundColor: "rgba(139, 92, 246, 0.05)",
+                      border: "1px solid rgba(139, 92, 246, 0.2)",
+                      borderRadius: "6px",
+                      fontSize: "12px",
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      flexWrap: "wrap",
+                      gap: "8px",
+                    }}
+                  >
+                    <span>
+                      Personal Savings Allowance:{" "}
+                      <strong>{formatCurrency(activeYearData.personalSavingsAllowance)}</strong> |
+                      Dividend Allowance:{" "}
+                      <strong>{formatCurrency(activeYearData.dividendAllowance)}</strong>. ISA
+                      interest is 100% tax-free.
+                    </span>
+                    <FLPButton
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleOpenCopyModal("savings")}
+                    >
+                      <FaCopy size={10} style={{ marginRight: "4px" }} /> Copy Savings from{" "}
+                      {previousTaxYear}
+                    </FLPButton>
+                  </div>
+                }
+              />
+
+              {/* Multi-Year P&L Summary Grid Table */}
               <FLPCard
-                className={css({ padding: "24px", borderRadius: "lg", backgroundColor: "card" })}
+                className={css({
+                  padding: "24px",
+                  borderRadius: "lg",
+                  backgroundColor: "card",
+                  marginTop: "24px",
+                })}
               >
                 <div
                   style={{
                     display: "flex",
                     justifyContent: "space-between",
-                    marginBottom: "20px",
+                    marginBottom: "16px",
                     flexWrap: "wrap",
                     gap: "10px",
                   }}
@@ -537,36 +934,8 @@ const TaxContainer: FC = () => {
                       P&L & Tax Comparison Table
                     </FLPHeading>
                     <FLPText color="text.muted" fontSize="xs">
-                      Historical and projected figures across tax years.
+                      Historical and projected figures across all fiscal tax years.
                     </FLPText>
-                  </div>
-                  <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                    <span
-                      style={{
-                        fontSize: "12px",
-                        color: "var(--colors-text-muted)",
-                        fontWeight: "bold",
-                      }}
-                    >
-                      Selected Year:
-                    </span>
-                    <select
-                      className={css({
-                        padding: "4px 8px",
-                        fontSize: "sm",
-                        borderRadius: "sm",
-                        border: "1px solid token(colors.border)",
-                        backgroundColor: "background",
-                      })}
-                      value={selectedTaxYear}
-                      onChange={(e) => setSelectedTaxYear(e.target.value)}
-                    >
-                      {Object.keys(TAX_YEARS).map((y) => (
-                        <option key={y} value={y}>
-                          {y}
-                        </option>
-                      ))}
-                    </select>
                   </div>
                 </div>
 
@@ -575,7 +944,7 @@ const TaxContainer: FC = () => {
                     <thead>
                       <tr>
                         <th className={thStyle}>Line Item</th>
-                        {Object.keys(calculatedTaxYearsData).map((year) => (
+                        {availableYears.map((year) => (
                           <th
                             key={year}
                             className={thStyle}
@@ -593,15 +962,20 @@ const TaxContainer: FC = () => {
                       </tr>
                     </thead>
                     <tbody>
+                      {/* Rental */}
                       <tr className={trStyle}>
-                        <td className={tdStyle} style={{ fontWeight: "bold" }}>
+                        <td
+                          className={tdStyle}
+                          style={{ fontWeight: "bold", backgroundColor: "rgba(245,158,11,0.04)" }}
+                        >
                           Rental Property (100% Share)
                         </td>
-                        {Object.keys(calculatedTaxYearsData).map((year) => (
+                        {availableYears.map((year) => (
                           <td
                             key={year}
                             className={tdStyle}
                             style={{
+                              backgroundColor: "rgba(245,158,11,0.04)",
                               borderLeft:
                                 year === selectedTaxYear
                                   ? "2px solid var(--colors-primary)"
@@ -614,34 +988,34 @@ const TaxContainer: FC = () => {
                         <td className={tdStyle} style={{ paddingLeft: "24px" }}>
                           Rental Income
                         </td>
-                        {Object.keys(calculatedTaxYearsData).map((year) => (
+                        {availableYears.map((year) => (
                           <td
                             key={year}
                             className={tdStyle}
                             style={{
                               textAlign: "right",
-                              color: "success.500",
+                              color: "var(--colors-success-500)",
                               borderLeft:
                                 year === selectedTaxYear
                                   ? "2px solid var(--colors-primary)"
                                   : "none",
                             }}
                           >
-                            {formatCurrency(calculatedTaxYearsData[year].rentalIncomeGross)}
+                            {formatCurrency(calculatedTaxYearsData[year]?.rentalIncomeGross || 0)}
                           </td>
                         ))}
                       </tr>
                       <tr className={trStyle}>
                         <td className={tdStyle} style={{ paddingLeft: "24px" }}>
-                          Rental Expenses (Excl. Mortgage Interest)
+                          Rental Expenses (Excl. Interest)
                         </td>
-                        {Object.keys(calculatedTaxYearsData).map((year) => (
+                        {availableYears.map((year) => (
                           <td
                             key={year}
                             className={tdStyle}
                             style={{
                               textAlign: "right",
-                              color: "text.muted",
+                              color: "var(--colors-text-muted)",
                               borderLeft:
                                 year === selectedTaxYear
                                   ? "2px solid var(--colors-primary)"
@@ -649,7 +1023,7 @@ const TaxContainer: FC = () => {
                             }}
                           >
                             {formatCurrency(
-                              calculatedTaxYearsData[year].rentalExpensesExclInterest,
+                              calculatedTaxYearsData[year]?.rentalExpensesExclInterest || 0,
                             )}
                           </td>
                         ))}
@@ -658,20 +1032,22 @@ const TaxContainer: FC = () => {
                         <td className={tdStyle} style={{ paddingLeft: "24px" }}>
                           Mortgage Interest Costs
                         </td>
-                        {Object.keys(calculatedTaxYearsData).map((year) => (
+                        {availableYears.map((year) => (
                           <td
                             key={year}
                             className={tdStyle}
                             style={{
                               textAlign: "right",
-                              color: "destructive",
+                              color: "var(--colors-destructive)",
                               borderLeft:
                                 year === selectedTaxYear
                                   ? "2px solid var(--colors-primary)"
                                   : "none",
                             }}
                           >
-                            {formatCurrency(calculatedTaxYearsData[year].rentalMortgageInterest)}
+                            {formatCurrency(
+                              calculatedTaxYearsData[year]?.rentalMortgageInterest || 0,
+                            )}
                           </td>
                         ))}
                       </tr>
@@ -679,7 +1055,7 @@ const TaxContainer: FC = () => {
                         <td className={tdStyle} style={{ fontWeight: "bold", paddingLeft: "24px" }}>
                           Total Rental Profit (Post-Interest)
                         </td>
-                        {Object.keys(calculatedTaxYearsData).map((year) => (
+                        {availableYears.map((year) => (
                           <td
                             key={year}
                             className={tdStyle}
@@ -692,20 +1068,27 @@ const TaxContainer: FC = () => {
                                   : "none",
                             }}
                           >
-                            {formatCurrency(calculatedTaxYearsData[year].rentalProfitPostInterest)}
+                            {formatCurrency(
+                              calculatedTaxYearsData[year]?.rentalProfitPostInterest || 0,
+                            )}
                           </td>
                         ))}
                       </tr>
 
+                      {/* Self-Employed */}
                       <tr className={trStyle}>
-                        <td className={tdStyle} style={{ fontWeight: "bold", marginTop: "10px" }}>
+                        <td
+                          className={tdStyle}
+                          style={{ fontWeight: "bold", backgroundColor: "rgba(16,185,129,0.04)" }}
+                        >
                           Self-Employed (Sole Trader)
                         </td>
-                        {Object.keys(calculatedTaxYearsData).map((year) => (
+                        {availableYears.map((year) => (
                           <td
                             key={year}
                             className={tdStyle}
                             style={{
+                              backgroundColor: "rgba(16,185,129,0.04)",
                               borderLeft:
                                 year === selectedTaxYear
                                   ? "2px solid var(--colors-primary)"
@@ -718,20 +1101,20 @@ const TaxContainer: FC = () => {
                         <td className={tdStyle} style={{ paddingLeft: "24px" }}>
                           Business Turnover
                         </td>
-                        {Object.keys(calculatedTaxYearsData).map((year) => (
+                        {availableYears.map((year) => (
                           <td
                             key={year}
                             className={tdStyle}
                             style={{
                               textAlign: "right",
-                              color: "success.500",
+                              color: "var(--colors-success-500)",
                               borderLeft:
                                 year === selectedTaxYear
                                   ? "2px solid var(--colors-primary)"
                                   : "none",
                             }}
                           >
-                            {formatCurrency(calculatedTaxYearsData[year].seIncomeGross)}
+                            {formatCurrency(calculatedTaxYearsData[year]?.seIncomeGross || 0)}
                           </td>
                         ))}
                       </tr>
@@ -739,20 +1122,20 @@ const TaxContainer: FC = () => {
                         <td className={tdStyle} style={{ paddingLeft: "24px" }}>
                           Allowable Business Expenses
                         </td>
-                        {Object.keys(calculatedTaxYearsData).map((year) => (
+                        {availableYears.map((year) => (
                           <td
                             key={year}
                             className={tdStyle}
                             style={{
                               textAlign: "right",
-                              color: "text.muted",
+                              color: "var(--colors-text-muted)",
                               borderLeft:
                                 year === selectedTaxYear
                                   ? "2px solid var(--colors-primary)"
                                   : "none",
                             }}
                           >
-                            {formatCurrency(calculatedTaxYearsData[year].seExpenses)}
+                            {formatCurrency(calculatedTaxYearsData[year]?.seExpenses || 0)}
                           </td>
                         ))}
                       </tr>
@@ -760,7 +1143,7 @@ const TaxContainer: FC = () => {
                         <td className={tdStyle} style={{ fontWeight: "bold", paddingLeft: "24px" }}>
                           Self-Employed Net Profit
                         </td>
-                        {Object.keys(calculatedTaxYearsData).map((year) => (
+                        {availableYears.map((year) => (
                           <td
                             key={year}
                             className={tdStyle}
@@ -773,20 +1156,25 @@ const TaxContainer: FC = () => {
                                   : "none",
                             }}
                           >
-                            {formatCurrency(calculatedTaxYearsData[year].seProfit)}
+                            {formatCurrency(calculatedTaxYearsData[year]?.seProfit || 0)}
                           </td>
                         ))}
                       </tr>
 
+                      {/* Savings & Dividends */}
                       <tr className={trStyle}>
-                        <td className={tdStyle} style={{ fontWeight: "bold" }}>
-                          Tax Profile & Liabilities
+                        <td
+                          className={tdStyle}
+                          style={{ fontWeight: "bold", backgroundColor: "rgba(139,92,246,0.04)" }}
+                        >
+                          Savings & Investments
                         </td>
-                        {Object.keys(calculatedTaxYearsData).map((year) => (
+                        {availableYears.map((year) => (
                           <td
                             key={year}
                             className={tdStyle}
                             style={{
+                              backgroundColor: "rgba(139,92,246,0.04)",
                               borderLeft:
                                 year === selectedTaxYear
                                   ? "2px solid var(--colors-primary)"
@@ -797,57 +1185,15 @@ const TaxContainer: FC = () => {
                       </tr>
                       <tr className={trStyle}>
                         <td className={tdStyle} style={{ paddingLeft: "24px" }}>
-                          PAYE Regular Salary
+                          Taxable Savings Interest
                         </td>
-                        {Object.keys(calculatedTaxYearsData).map((year) => (
+                        {availableYears.map((year) => (
                           <td
                             key={year}
                             className={tdStyle}
                             style={{
                               textAlign: "right",
-                              color: "text.primary",
-                              borderLeft:
-                                year === selectedTaxYear
-                                  ? "2px solid var(--colors-primary)"
-                                  : "none",
-                            }}
-                          >
-                            {formatCurrency(calculatedTaxYearsData[year].payeSalary)}
-                          </td>
-                        ))}
-                      </tr>
-                      <tr className={trStyle}>
-                        <td className={tdStyle} style={{ paddingLeft: "24px" }}>
-                          Property Ownership Share
-                        </td>
-                        {Object.keys(calculatedTaxYearsData).map((year) => (
-                          <td
-                            key={year}
-                            className={tdStyle}
-                            style={{
-                              textAlign: "right",
-                              color: "text.primary",
-                              borderLeft:
-                                year === selectedTaxYear
-                                  ? "2px solid var(--colors-primary)"
-                                  : "none",
-                            }}
-                          >
-                            {calculatedTaxYearsData[year].propertyOwnershipShare}%
-                          </td>
-                        ))}
-                      </tr>
-                      <tr className={trStyle}>
-                        <td className={tdStyle} style={{ paddingLeft: "24px" }}>
-                          Owned Property Profit (Excl. Interest)
-                        </td>
-                        {Object.keys(calculatedTaxYearsData).map((year) => (
-                          <td
-                            key={year}
-                            className={tdStyle}
-                            style={{
-                              textAlign: "right",
-                              color: "text.primary",
+                              color: "var(--colors-text-primary)",
                               borderLeft:
                                 year === selectedTaxYear
                                   ? "2px solid var(--colors-primary)"
@@ -855,51 +1201,163 @@ const TaxContainer: FC = () => {
                             }}
                           >
                             {formatCurrency(
-                              calculatedTaxYearsData[year].rentalProfitBeforeInterestShare,
+                              calculatedTaxYearsData[year]?.savingsInterestGross || 0,
                             )}
                           </td>
                         ))}
                       </tr>
                       <tr className={trStyle}>
                         <td className={tdStyle} style={{ paddingLeft: "24px" }}>
-                          Section 24 Mortgage Interest Tax Credit
+                          Dividends Income
                         </td>
-                        {Object.keys(calculatedTaxYearsData).map((year) => (
+                        {availableYears.map((year) => (
                           <td
                             key={year}
                             className={tdStyle}
                             style={{
                               textAlign: "right",
-                              color: "success.500",
+                              color: "var(--colors-text-primary)",
                               borderLeft:
                                 year === selectedTaxYear
                                   ? "2px solid var(--colors-primary)"
                                   : "none",
                             }}
                           >
-                            -{formatCurrency(calculatedTaxYearsData[year].rentalPropertyTaxCredit)}
+                            {formatCurrency(calculatedTaxYearsData[year]?.dividendIncomeGross || 0)}
                           </td>
                         ))}
                       </tr>
-                      <tr className={trStyle} style={{ backgroundColor: "rgba(99,99,241,0.04)" }}>
-                        <td className={tdStyle} style={{ fontWeight: "bold", paddingLeft: "24px" }}>
-                          SA Additional Tax & NI Due
+
+                      {/* Tax Profile & Liabilities */}
+                      <tr className={trStyle}>
+                        <td
+                          className={tdStyle}
+                          style={{ fontWeight: "bold", backgroundColor: "rgba(99,99,241,0.04)" }}
+                        >
+                          Tax Profile & Liabilities
                         </td>
-                        {Object.keys(calculatedTaxYearsData).map((year) => (
+                        {availableYears.map((year) => (
+                          <td
+                            key={year}
+                            className={tdStyle}
+                            style={{
+                              backgroundColor: "rgba(99,99,241,0.04)",
+                              borderLeft:
+                                year === selectedTaxYear
+                                  ? "2px solid var(--colors-primary)"
+                                  : "none",
+                            }}
+                          />
+                        ))}
+                      </tr>
+                      <tr className={trStyle}>
+                        <td className={tdStyle} style={{ paddingLeft: "24px" }}>
+                          PAYE Salary
+                        </td>
+                        {availableYears.map((year) => (
+                          <td
+                            key={year}
+                            className={tdStyle}
+                            style={{
+                              textAlign: "right",
+                              color: "var(--colors-text-primary)",
+                              borderLeft:
+                                year === selectedTaxYear
+                                  ? "2px solid var(--colors-primary)"
+                                  : "none",
+                            }}
+                          >
+                            {formatCurrency(calculatedTaxYearsData[year]?.effectivePayeSalary || 0)}
+                          </td>
+                        ))}
+                      </tr>
+                      <tr className={trStyle}>
+                        <td className={tdStyle} style={{ paddingLeft: "24px" }}>
+                          Total Gross Taxable Income
+                        </td>
+                        {availableYears.map((year) => (
                           <td
                             key={year}
                             className={tdStyle}
                             style={{
                               textAlign: "right",
                               fontWeight: "bold",
-                              color: "blue.500",
                               borderLeft:
                                 year === selectedTaxYear
                                   ? "2px solid var(--colors-primary)"
                                   : "none",
                             }}
                           >
-                            {formatCurrency(calculatedTaxYearsData[year].netAdditionalTaxToPay)}
+                            {formatCurrency(calculatedTaxYearsData[year]?.totalGrossIncome || 0)}
+                          </td>
+                        ))}
+                      </tr>
+                      <tr className={trStyle}>
+                        <td className={tdStyle} style={{ paddingLeft: "24px" }}>
+                          Personal Allowance
+                        </td>
+                        {availableYears.map((year) => (
+                          <td
+                            key={year}
+                            className={tdStyle}
+                            style={{
+                              textAlign: "right",
+                              color: "var(--colors-text-muted)",
+                              borderLeft:
+                                year === selectedTaxYear
+                                  ? "2px solid var(--colors-primary)"
+                                  : "none",
+                            }}
+                          >
+                            {formatCurrency(calculatedTaxYearsData[year]?.personalAllowance || 0)}
+                          </td>
+                        ))}
+                      </tr>
+                      <tr className={trStyle}>
+                        <td className={tdStyle} style={{ paddingLeft: "24px" }}>
+                          Section 24 Mortgage Relief Credit
+                        </td>
+                        {availableYears.map((year) => (
+                          <td
+                            key={year}
+                            className={tdStyle}
+                            style={{
+                              textAlign: "right",
+                              color: "var(--colors-success-500)",
+                              borderLeft:
+                                year === selectedTaxYear
+                                  ? "2px solid var(--colors-primary)"
+                                  : "none",
+                            }}
+                          >
+                            -
+                            {formatCurrency(
+                              calculatedTaxYearsData[year]?.rentalPropertyTaxCredit || 0,
+                            )}
+                          </td>
+                        ))}
+                      </tr>
+                      <tr className={trStyle} style={{ backgroundColor: "rgba(99,99,241,0.06)" }}>
+                        <td className={tdStyle} style={{ fontWeight: "bold", paddingLeft: "24px" }}>
+                          Self-Assessment Tax & NI Due
+                        </td>
+                        {availableYears.map((year) => (
+                          <td
+                            key={year}
+                            className={tdStyle}
+                            style={{
+                              textAlign: "right",
+                              fontWeight: "bold",
+                              color: "var(--colors-blue-500)",
+                              borderLeft:
+                                year === selectedTaxYear
+                                  ? "2px solid var(--colors-primary)"
+                                  : "none",
+                            }}
+                          >
+                            {formatCurrency(
+                              calculatedTaxYearsData[year]?.netAdditionalTaxToPay || 0,
+                            )}
                           </td>
                         ))}
                       </tr>
@@ -909,7 +1367,7 @@ const TaxContainer: FC = () => {
               </FLPCard>
             </div>
 
-            {/* Right side: Tax parameters & detailed breakdown of selected year */}
+            {/* Right side: Parameters and Breakdown */}
             <FLPBox display="flex" flexDirection="column" gap={6}>
               {/* Profile Config panel */}
               <div className={editableFormPanel}>
@@ -923,7 +1381,7 @@ const TaxContainer: FC = () => {
 
                 <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
                   <FLPInput
-                    label="Employment Income (PAYE Salary)"
+                    label="Employment Income (PAYE Baseline Salary)"
                     type="number"
                     value={payeSalary === 0 ? "" : payeSalary}
                     onChange={(e) => setPayeSalary(Number.parseFloat(e.target.value) || 0)}
@@ -950,7 +1408,7 @@ const TaxContainer: FC = () => {
                 </FLPButton>
               </div>
 
-              {/* SA Tax Breakdown detail */}
+              {/* SA Tax Breakdown detail card */}
               <FLPCard
                 className={css({
                   padding: "20px",
@@ -972,7 +1430,7 @@ const TaxContainer: FC = () => {
                   <div style={{ display: "flex", justifyContent: "space-between" }}>
                     <FLPText color="text.muted">PAYE regular salary:</FLPText>
                     <FLPText fontWeight="semibold">
-                      {formatCurrency(activeYearData.payeSalary)}
+                      {formatCurrency(activeYearData.effectivePayeSalary)}
                     </FLPText>
                   </div>
                   <div style={{ display: "flex", justifyContent: "space-between" }}>
@@ -987,11 +1445,19 @@ const TaxContainer: FC = () => {
                       {formatCurrency(activeYearData.rentalProfitBeforeInterestShare)}
                     </FLPText>
                   </div>
+                  <div style={{ display: "flex", justifyContent: "space-between" }}>
+                    <FLPText color="text.muted">Savings & dividend income:</FLPText>
+                    <FLPText fontWeight="semibold">
+                      {formatCurrency(
+                        activeYearData.savingsInterestGross + activeYearData.dividendIncomeGross,
+                      )}
+                    </FLPText>
+                  </div>
                   <hr style={{ border: "0", borderTop: "1px solid var(--colors-border)" }} />
                   <div
                     style={{ display: "flex", justifyContent: "space-between", fontWeight: "bold" }}
                   >
-                    <FLPText>Total taxable revenue:</FLPText>
+                    <FLPText>Total gross income:</FLPText>
                     <FLPText>{formatCurrency(activeYearData.totalGrossIncome)}</FLPText>
                   </div>
                   <div style={{ display: "flex", justifyContent: "space-between" }}>
@@ -1008,7 +1474,7 @@ const TaxContainer: FC = () => {
                   </div>
                   <hr style={{ border: "0", borderTop: "1px solid var(--colors-border)" }} />
                   <div style={{ display: "flex", justifyContent: "space-between" }}>
-                    <FLPText color="text.muted">Self-employed income tax due:</FLPText>
+                    <FLPText color="text.muted">Self-employed income tax:</FLPText>
                     <FLPText fontWeight="semibold">
                       {formatCurrency(activeYearData.seTaxDue)}
                     </FLPText>
@@ -1020,7 +1486,7 @@ const TaxContainer: FC = () => {
                     </FLPText>
                   </div>
                   <div style={{ display: "flex", justifyContent: "space-between" }}>
-                    <FLPText color="text.muted">Property tax due (marginal rate):</FLPText>
+                    <FLPText color="text.muted">Property tax due:</FLPText>
                     <FLPText fontWeight="semibold">
                       {formatCurrency(activeYearData.rentalPropertyTaxDueBeforeCredit)}
                     </FLPText>
@@ -1035,12 +1501,22 @@ const TaxContainer: FC = () => {
                     <FLPText>Section 24 Tax Credit:</FLPText>
                     <FLPText>-{formatCurrency(activeYearData.rentalPropertyTaxCredit)}</FLPText>
                   </div>
-                  <div style={{ display: "flex", justifyContent: "space-between" }}>
-                    <FLPText color="text.muted">Property tax after credit:</FLPText>
-                    <FLPText fontWeight="semibold">
-                      {formatCurrency(activeYearData.rentalPropertyTaxDueAfterCredit)}
-                    </FLPText>
-                  </div>
+                  {activeYearData.savingsTaxDue > 0 && (
+                    <div style={{ display: "flex", justifyContent: "space-between" }}>
+                      <FLPText color="text.muted">Savings tax (above PSA):</FLPText>
+                      <FLPText fontWeight="semibold">
+                        {formatCurrency(activeYearData.savingsTaxDue)}
+                      </FLPText>
+                    </div>
+                  )}
+                  {activeYearData.dividendTaxDue > 0 && (
+                    <div style={{ display: "flex", justifyContent: "space-between" }}>
+                      <FLPText color="text.muted">Dividend tax:</FLPText>
+                      <FLPText fontWeight="semibold">
+                        {formatCurrency(activeYearData.dividendTaxDue)}
+                      </FLPText>
+                    </div>
+                  )}
                   <hr
                     style={{
                       border: "0",
@@ -1095,7 +1571,7 @@ const TaxContainer: FC = () => {
                 onChange={(e) => setFilterTaxYear(e.target.value)}
               >
                 <option value="all">All Tax Years</option>
-                {Object.keys(TAX_YEARS).map((y) => (
+                {availableYears.map((y) => (
                   <option key={y} value={y}>
                     {y}
                   </option>
@@ -1111,7 +1587,7 @@ const TaxContainer: FC = () => {
                   fontWeight: "semibold",
                 }}
               >
-                Source
+                Source Section
               </span>
               <select
                 className={css({
@@ -1125,8 +1601,10 @@ const TaxContainer: FC = () => {
                 onChange={(e) => setFilterSource(e.target.value as any)}
               >
                 <option value="all">All Sources</option>
-                <option value="self-employed">Self-Employed</option>
+                <option value="paye">Employment (PAYE)</option>
                 <option value="rental">Rental Property</option>
+                <option value="self-employed">Self-Employed</option>
+                <option value="savings">Savings & Dividends</option>
               </select>
             </div>
 
@@ -1246,11 +1724,22 @@ const TaxContainer: FC = () => {
                               backgroundColor:
                                 record.source === "rental"
                                   ? "rgba(245, 158, 11, 0.12)"
-                                  : "rgba(16, 185, 129, 0.12)",
-                              color: record.source === "rental" ? "warning.500" : "success.500",
+                                  : record.source === "self-employed"
+                                    ? "rgba(16, 185, 129, 0.12)"
+                                    : record.source === "savings"
+                                      ? "rgba(139, 92, 246, 0.12)"
+                                      : "rgba(59, 130, 246, 0.12)",
+                              color:
+                                record.source === "rental"
+                                  ? "warning.500"
+                                  : record.source === "self-employed"
+                                    ? "success.500"
+                                    : record.source === "savings"
+                                      ? "purple.500"
+                                      : "blue.500",
                             })}
                           >
-                            {record.source === "rental" ? "Rental" : "Biz"}
+                            {record.source}
                           </span>
                         </td>
                         <td
@@ -1353,7 +1842,7 @@ const TaxContainer: FC = () => {
           <FLPBox display="flex" flexDirection="column" gap={4}>
             <FLPInput
               label="Transaction Name"
-              placeholder="e.g. Tenancy Rent, Laptop Purchase"
+              placeholder="e.g. Poplar Rent, Client Retainer, Interest"
               required
               value={formName}
               onChange={(e) => setFormName(e.target.value)}
@@ -1366,15 +1855,17 @@ const TaxContainer: FC = () => {
                     items: [
                       { id: "rental", name: "Rental Property" },
                       { id: "self-employed", name: "Self-Employed" },
+                      { id: "paye", name: "Employment (PAYE)" },
+                      { id: "savings", name: "Savings & Dividends" },
                     ],
                   }}
                   label="Source"
                   value={[formSource]}
                   onValueChange={(e) => {
-                    const src = e.value[0] as "rental" | "self-employed";
+                    const src = e.value[0] as TaxSource;
                     setFormSource(src);
-                    const cats = src === "rental" ? RENTAL_CATEGORIES : SELF_EMPLOYED_CATEGORIES;
-                    setFormCategory(cats.filter((c) => c.type === formType)[0]?.id || "");
+                    const cats = getCategoriesForSource(src, formType);
+                    setFormCategory(cats[0]?.id || "");
                   }}
                 />
               </div>
@@ -1392,9 +1883,8 @@ const TaxContainer: FC = () => {
                   onValueChange={(e) => {
                     const type = e.value[0] as "income" | "expense";
                     setFormType(type);
-                    const cats =
-                      formSource === "rental" ? RENTAL_CATEGORIES : SELF_EMPLOYED_CATEGORIES;
-                    setFormCategory(cats.filter((c) => c.type === type)[0]?.id || "");
+                    const cats = getCategoriesForSource(formSource, type);
+                    setFormCategory(cats[0]?.id || "");
                   }}
                 />
               </div>
@@ -1668,6 +2158,17 @@ const TaxContainer: FC = () => {
           </div>
         )}
       </FLPModal>
+
+      {/* Copy / Populate Tax Year Wizard Modal */}
+      <CopyTaxYearModal
+        open={isCopyModalOpen}
+        onClose={() => setIsCopyModalOpen(false)}
+        records={initialRecords}
+        initialSourceSection={copyModalScope}
+        initialSourceYear={previousTaxYear}
+        initialTargetYear={selectedTaxYear}
+        availableYears={availableYears}
+      />
     </div>
   );
 };

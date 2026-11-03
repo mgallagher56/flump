@@ -4,11 +4,13 @@ import {
   type UKLegacyTaxYearConfig,
 } from "./taxRules.js";
 
+export type TaxSource = "paye" | "self-employed" | "rental" | "savings";
+
 export interface TaxRecord {
   id: string;
   userId: string;
   type: "income" | "expense";
-  source: "self-employed" | "rental";
+  source: TaxSource;
   category: string;
   name: string;
   amount: number | string; // TypeORM decimal fields are often returned as strings in JSON
@@ -56,39 +58,91 @@ export const TAX_YEARS: Record<string, TaxYearConfig> = Object.fromEntries(
 );
 
 export const RENTAL_CATEGORIES = [
-  { id: "rental_income", name: "Rental Income", type: "income" },
-  { id: "rent_rates_insurance", name: "Rent, rates, insurance, ground rents", type: "expense" },
+  { id: "rental_income", name: "Rental Income", type: "income" as const },
+  {
+    id: "rent_rates_insurance",
+    name: "Rent, rates, insurance, ground rents",
+    type: "expense" as const,
+  },
   {
     id: "legal_management_fees",
     name: "Legal, management and other professional fees",
-    type: "expense",
+    type: "expense" as const,
   },
-  { id: "repairs_maintenance", name: "Property repairs and maintenance", type: "expense" },
-  { id: "replace_domestic_items", name: "Replace domestic items", type: "expense" },
-  { id: "services_costs", name: "Costs of services provided", type: "expense" },
+  { id: "repairs_maintenance", name: "Property repairs and maintenance", type: "expense" as const },
+  { id: "replace_domestic_items", name: "Replace domestic items", type: "expense" as const },
+  { id: "services_costs", name: "Costs of services provided", type: "expense" as const },
   {
     id: "mortgage_interest",
     name: "Mortgage Interest / Residential property finance",
-    type: "expense",
+    type: "expense" as const,
   },
 ];
 
 export const SELF_EMPLOYED_CATEGORIES = [
-  { id: "self_employed_income", name: "Self-Employed Turnover/Income", type: "income" },
-  { id: "office_costs", name: "Office, stationery, phone, internet, postage", type: "expense" },
-  { id: "travel_costs", name: "Car, van, travel expenses, fuel, parking", type: "expense" },
-  { id: "clothing_costs", name: "Uniforms, protective clothing", type: "expense" },
-  { id: "staff_costs", name: "Employee salaries, subcontractor costs", type: "expense" },
-  { id: "premises_costs", name: "Rent, rates, power, insurance", type: "expense" },
+  { id: "self_employed_income", name: "Self-Employed Turnover/Income", type: "income" as const },
+  {
+    id: "office_costs",
+    name: "Office, stationery, phone, internet, postage",
+    type: "expense" as const,
+  },
+  {
+    id: "travel_costs",
+    name: "Car, van, travel expenses, fuel, parking",
+    type: "expense" as const,
+  },
+  { id: "clothing_costs", name: "Uniforms, protective clothing", type: "expense" as const },
+  { id: "staff_costs", name: "Employee salaries, subcontractor costs", type: "expense" as const },
+  { id: "premises_costs", name: "Rent, rates, power, insurance", type: "expense" as const },
   {
     id: "legal_finance_fees",
     name: "Accountant, solicitor, bank charges, business insurance",
-    type: "expense",
+    type: "expense" as const,
   },
-  { id: "advertising_marketing", name: "Website, ads, marketing", type: "expense" },
-  { id: "stock_raw_materials", name: "Cost of goods sold, stock, raw materials", type: "expense" },
-  { id: "other_expenses", name: "Other business expenses", type: "expense" },
+  { id: "advertising_marketing", name: "Website, ads, marketing", type: "expense" as const },
+  {
+    id: "stock_raw_materials",
+    name: "Cost of goods sold, stock, raw materials",
+    type: "expense" as const,
+  },
+  { id: "other_expenses", name: "Other business expenses", type: "expense" as const },
 ];
+
+export const PAYE_CATEGORIES = [
+  { id: "paye_salary", name: "Base PAYE Salary", type: "income" as const },
+  { id: "paye_bonus", name: "Bonus, Commission & Overtime", type: "income" as const },
+  { id: "paye_benefit", name: "Taxable Benefits in Kind (P11D)", type: "income" as const },
+  { id: "paye_pension", name: "Employee Pension Contributions", type: "expense" as const },
+];
+
+export const SAVINGS_CATEGORIES = [
+  { id: "savings_interest", name: "Taxable Bank & Savings Interest", type: "income" as const },
+  { id: "dividend_income", name: "Dividends (Shares / Equity)", type: "income" as const },
+  { id: "isa_interest", name: "Tax-Free ISA Interest / Returns", type: "income" as const },
+  {
+    id: "investment_fees",
+    name: "Deductible Investment Management Fees",
+    type: "expense" as const,
+  },
+];
+
+export const ALL_TAX_CATEGORIES = [
+  ...PAYE_CATEGORIES.map((c) => ({ ...c, source: "paye" as const })),
+  ...SELF_EMPLOYED_CATEGORIES.map((c) => ({ ...c, source: "self-employed" as const })),
+  ...RENTAL_CATEGORIES.map((c) => ({ ...c, source: "rental" as const })),
+  ...SAVINGS_CATEGORIES.map((c) => ({ ...c, source: "savings" as const })),
+];
+
+export function getCategoriesForSource(source: TaxSource, type?: "income" | "expense") {
+  let list: { id: string; name: string; type: "income" | "expense" }[] = [];
+  if (source === "rental") list = RENTAL_CATEGORIES;
+  else if (source === "self-employed") list = SELF_EMPLOYED_CATEGORIES;
+  else if (source === "paye") list = PAYE_CATEGORIES;
+  else if (source === "savings") list = SAVINGS_CATEGORIES;
+
+  if (type) return list.filter((c) => c.type === type);
+  return list;
+}
 
 export function getTaxYearForDate(dateStr: string): string {
   const date = new Date(dateStr);
@@ -100,10 +154,26 @@ export function getTaxYearForDate(dateStr: string): string {
   return `${year - 1}/${year.toString().slice(-2)}`;
 }
 
+export function getPreviousTaxYear(taxYear: string): string {
+  const parts = taxYear.split("/");
+  const startYear = Number.parseInt(parts[0], 10);
+  if (Number.isNaN(startYear)) return taxYear;
+  const prevStart = startYear - 1;
+  return `${prevStart}/${startYear.toString().slice(-2)}`;
+}
+
+export function getNextTaxYear(taxYear: string): string {
+  const parts = taxYear.split("/");
+  const startYear = Number.parseInt(parts[0], 10);
+  if (Number.isNaN(startYear)) return taxYear;
+  const nextStart = startYear + 1;
+  return `${nextStart}/${(nextStart + 1).toString().slice(-2)}`;
+}
+
 // Generate the 12 calendar months YYYY-MM for a tax year YYYY/YY
 export function getMonthsForTaxYear(taxYear: string): string[] {
   const parts = taxYear.split("/");
-  const startYear = Number.parseInt(parts[0]);
+  const startYear = Number.parseInt(parts[0], 10);
   const months: string[] = [];
   // April to December of startYear
   for (let m = 4; m <= 12; m++) {
@@ -121,6 +191,7 @@ export function getMonthsForTaxYear(taxYear: string): string[] {
 export function getRecordValueForMonth(record: TaxRecord, monthYYYYMM: string): number {
   const amount =
     typeof record.amount === "string" ? Number.parseFloat(record.amount) : record.amount;
+  if (!amount || Number.isNaN(amount)) return 0;
   const recordMonth = record.date.substring(0, 7);
 
   if (record.frequency === "one-off") {
@@ -151,10 +222,86 @@ export function getRecordValueForMonth(record: TaxRecord, monthYYYYMM: string): 
   return 0;
 }
 
+export function getRecordAnnualTotalForTaxYear(record: TaxRecord, taxYear: string): number {
+  const months = getMonthsForTaxYear(taxYear);
+  let total = 0;
+  for (const month of months) {
+    total += getRecordValueForMonth(record, month);
+  }
+  return total;
+}
+
+export function isRecordActiveInTaxYear(record: TaxRecord, taxYear: string): boolean {
+  return getRecordAnnualTotalForTaxYear(record, taxYear) > 0;
+}
+
+export function buildCopiedRecordForTaxYear(
+  record: TaxRecord,
+  targetTaxYear: string,
+  amountOverride?: number,
+): Omit<TaxRecord, "id" | "userId" | "createdAt" | "updatedAt"> {
+  const sourceTaxYear = getTaxYearForDate(record.date);
+  const sourceStartYear = Number.parseInt(sourceTaxYear.split("/")[0], 10);
+  const targetStartYear = Number.parseInt(targetTaxYear.split("/")[0], 10);
+  const yearDiff =
+    Number.isNaN(sourceStartYear) || Number.isNaN(targetStartYear)
+      ? 1
+      : targetStartYear - sourceStartYear;
+
+  const shiftDateString = (dStr: string | null) => {
+    if (!dStr) return null;
+    const parts = dStr.split("-");
+    if (parts.length !== 3) return dStr;
+    const y = Number.parseInt(parts[0], 10) + yearDiff;
+    return `${y}-${parts[1]}-${parts[2]}`;
+  };
+
+  const newDate = shiftDateString(record.date) || record.date;
+  const newEndDate = shiftDateString(record.endDate);
+
+  // Shift name year references if present e.g. (2024/25) -> (2025/26), 24/25 -> 25/26
+  let newName = record.name;
+  if (sourceTaxYear && targetTaxYear) {
+    const shortSourceYear = `${sourceTaxYear.slice(2, 4)}/${sourceTaxYear.slice(5, 7)}`;
+    const shortTargetYear = `${targetTaxYear.slice(2, 4)}/${targetTaxYear.slice(5, 7)}`;
+    newName = newName.replace(sourceTaxYear, targetTaxYear);
+    newName = newName.replace(shortSourceYear, shortTargetYear);
+  }
+
+  const finalAmount =
+    amountOverride !== undefined
+      ? amountOverride
+      : typeof record.amount === "string"
+        ? Number.parseFloat(record.amount)
+        : record.amount;
+
+  return {
+    name: newName,
+    source: record.source,
+    type: record.type,
+    category: record.category,
+    amount: finalAmount,
+    frequency: record.frequency,
+    date: newDate,
+    endDate: newEndDate,
+    notes: record.notes
+      ? `Copied from ${sourceTaxYear}: ${record.notes}`
+      : `Copied from ${sourceTaxYear}`,
+    receiptFilename: null,
+    receiptMimeType: null,
+    receiptData: null,
+  };
+}
+
 export interface TaxCalculationResult {
   taxYear: string;
   payeSalary: number;
   propertyOwnershipShare: number;
+
+  // PAYE
+  payeIncomeGross: number;
+  payeExpenses: number;
+  effectivePayeSalary: number;
 
   // Rental totals (100% and owned share)
   rentalIncomeGross: number;
@@ -174,8 +321,20 @@ export interface TaxCalculationResult {
   seExpenses: number;
   seProfit: number;
 
+  // Savings & Dividends totals
+  savingsInterestGross: number;
+  isaInterestGross: number;
+  dividendIncomeGross: number;
+  savingsExpenses: number;
+  personalSavingsAllowance: number;
+  dividendAllowance: number;
+  taxableSavingsInterest: number;
+  taxableDividends: number;
+  savingsTaxDue: number;
+  dividendTaxDue: number;
+
   // Combined taxable income
-  totalGrossIncome: number; // PAYE + SE Profit + Rental Profit Before Interest Share
+  totalGrossIncome: number; // PAYE + SE Profit + Rental Profit Before Interest Share + Savings + Dividends
   personalAllowance: number;
   totalTaxableIncome: number;
 
@@ -202,7 +361,7 @@ export function calculateUKTax(
   const config = TAX_YEARS[taxYear] || TAX_YEARS["2024/25"];
   const months = getMonthsForTaxYear(taxYear);
 
-  // 1. Calculate Gross Rental and Self Employed Totals
+  // 1. Calculate Gross Totals for all 4 sources
   let rentalIncomeGross = 0;
   let rentalExpensesExclInterest = 0;
   let rentalMortgageInterest = 0;
@@ -210,36 +369,44 @@ export function calculateUKTax(
   let seIncomeGross = 0;
   let seExpenses = 0;
 
+  let payeIncomeGross = 0;
+  let payeExpenses = 0;
+
+  let savingsInterestGross = 0;
+  let isaInterestGross = 0;
+  let dividendIncomeGross = 0;
+  let savingsExpenses = 0;
+
   const rentalRecordValues: Record<string, number[]> = {};
   const seRecordValues: Record<string, number[]> = {};
+  const payeRecordValues: Record<string, number[]> = {};
+  const savingsRecordValues: Record<string, number[]> = {};
 
   // Setup containers
-  for (const cat of RENTAL_CATEGORIES) {
-    rentalRecordValues[cat.id] = months.map(() => 0);
-  }
-  for (const cat of SELF_EMPLOYED_CATEGORIES) {
-    seRecordValues[cat.id] = months.map(() => 0);
-  }
+  for (const cat of RENTAL_CATEGORIES) rentalRecordValues[cat.id] = months.map(() => 0);
+  for (const cat of SELF_EMPLOYED_CATEGORIES) seRecordValues[cat.id] = months.map(() => 0);
+  for (const cat of PAYE_CATEGORIES) payeRecordValues[cat.id] = months.map(() => 0);
+  for (const cat of SAVINGS_CATEGORIES) savingsRecordValues[cat.id] = months.map(() => 0);
 
   for (const record of records) {
     for (let i = 0; i < months.length; i++) {
       const month = months[i];
       const val = getRecordValueForMonth(record, month);
       if (val > 0) {
-        if (record.source === "rental") {
-          if (rentalRecordValues[record.category]) {
-            rentalRecordValues[record.category][i] += val;
-          }
-        } else if (record.source === "self-employed") {
-          if (seRecordValues[record.category]) {
-            seRecordValues[record.category][i] += val;
-          }
+        if (record.source === "rental" && rentalRecordValues[record.category]) {
+          rentalRecordValues[record.category][i] += val;
+        } else if (record.source === "self-employed" && seRecordValues[record.category]) {
+          seRecordValues[record.category][i] += val;
+        } else if (record.source === "paye" && payeRecordValues[record.category]) {
+          payeRecordValues[record.category][i] += val;
+        } else if (record.source === "savings" && savingsRecordValues[record.category]) {
+          savingsRecordValues[record.category][i] += val;
         }
       }
     }
   }
 
-  // Sum categories
+  // Sum Rental
   for (const catId in rentalRecordValues) {
     const sum = rentalRecordValues[catId].reduce((a, b) => a + b, 0);
     if (catId === "rental_income") {
@@ -251,6 +418,7 @@ export function calculateUKTax(
     }
   }
 
+  // Sum Self Employed
   for (const catId in seRecordValues) {
     const sum = seRecordValues[catId].reduce((a, b) => a + b, 0);
     if (catId === "self_employed_income") {
@@ -260,10 +428,37 @@ export function calculateUKTax(
     }
   }
 
+  // Sum PAYE
+  for (const catId in payeRecordValues) {
+    const sum = payeRecordValues[catId].reduce((a, b) => a + b, 0);
+    if (catId === "paye_pension") {
+      payeExpenses += sum;
+    } else {
+      payeIncomeGross += sum;
+    }
+  }
+
+  // Sum Savings & Dividends
+  for (const catId in savingsRecordValues) {
+    const sum = savingsRecordValues[catId].reduce((a, b) => a + b, 0);
+    if (catId === "savings_interest") {
+      savingsInterestGross += sum;
+    } else if (catId === "isa_interest") {
+      isaInterestGross += sum;
+    } else if (catId === "dividend_income") {
+      dividendIncomeGross += sum;
+    } else if (catId === "investment_fees") {
+      savingsExpenses += sum;
+    }
+  }
+
+  // Effective PAYE salary: use logged records if provided, otherwise default to profile/param salary
+  const effectivePayeSalary =
+    payeIncomeGross > 0 ? Math.max(0, payeIncomeGross - payeExpenses) : payeSalary;
+
   // Calculate profits
   const rentalProfitBeforeInterest = Math.max(0, rentalIncomeGross - rentalExpensesExclInterest);
   const rentalProfitPostInterest = Math.max(0, rentalProfitBeforeInterest - rentalMortgageInterest);
-
   const seProfit = Math.max(0, seIncomeGross - seExpenses);
 
   // Ownership shares
@@ -273,48 +468,65 @@ export function calculateUKTax(
   const rentalMortgageInterestShare = rentalMortgageInterest * shareFactor;
   const rentalProfitBeforeInterestShare = rentalProfitBeforeInterest * shareFactor;
 
-  // 2. Tax Calculations
-  // Total income for tax rate determination (PAYE + SE Profit + Rental Profit before interest deduction)
-  const totalGrossIncome = payeSalary + seProfit + rentalProfitBeforeInterestShare;
+  // Net taxable savings interest before PSA
+  const netTaxableSavingsInterest = Math.max(0, savingsInterestGross - savingsExpenses);
 
-  // Personal Allowance with Tapering
+  // 2. Tax Calculations
+  // Total income for tax rate and allowance determination
+  const nonSavingsGross = effectivePayeSalary + seProfit + rentalProfitBeforeInterestShare;
+  const totalGrossIncome = nonSavingsGross + netTaxableSavingsInterest + dividendIncomeGross;
+
+  // Personal Allowance with Tapering above £100,000
   let personalAllowance = config.personalAllowance;
   if (totalGrossIncome > 100000) {
     const taper = Math.floor((totalGrossIncome - 100000) / 2);
     personalAllowance = Math.max(0, config.personalAllowance - taper);
   }
 
-  // Tax on PAYE alone (baseline already paid)
-  const payeTaxable = Math.max(0, payeSalary - personalAllowance);
+  // Baseline PAYE tax (assumed deducted under PAYE)
+  const payeTaxable = Math.max(0, effectivePayeSalary - personalAllowance);
   const payeTaxDue = calculateIncomeTaxForTaxable(payeTaxable, config);
 
-  // Total Income Tax on ALL income
-  const totalTaxable = Math.max(0, totalGrossIncome - personalAllowance);
-  const totalIncomeTaxDueBeforeCredit = calculateIncomeTaxForTaxable(totalTaxable, config);
+  // Personal Savings Allowance (PSA)
+  // Basic rate taxpayers: £1,000; Higher rate: £500; Additional rate: £0
+  let personalSavingsAllowance = 1000;
+  if (totalGrossIncome > config.higherRateLimit) {
+    personalSavingsAllowance = 0;
+  } else if (totalGrossIncome > (config.higherRateLimit === 125140 ? 50270 : 50000)) {
+    personalSavingsAllowance = 500;
+  }
+
+  // Dividend Allowance
+  const startYr = Number.parseInt(taxYear.split("/")[0], 10);
+  let dividendAllowance = 500;
+  if (startYr <= 2022) {
+    dividendAllowance = 2000;
+  } else if (startYr === 2023) {
+    dividendAllowance = 1000;
+  }
+
+  const taxableSavingsInterest = Math.max(0, netTaxableSavingsInterest - personalSavingsAllowance);
+  const taxableDividends = Math.max(0, dividendIncomeGross - dividendAllowance);
+
+  // Tax on non-savings + non-dividends
+  const nonSavingsTaxable = Math.max(0, nonSavingsGross - personalAllowance);
+  const nonSavingsIncomeTaxBeforeCredit = calculateIncomeTaxForTaxable(nonSavingsTaxable, config);
 
   // Section 24 Rental Property Finance Tax Credit
-  // Capped at 20% of lower of:
-  // - Mortgage interest share
-  // - Rental profit before interest share
-  // - Total taxable income exceeding personal allowance
   const maxCreditBase = Math.min(
     rentalMortgageInterestShare,
     rentalProfitBeforeInterestShare,
-    totalTaxable,
+    nonSavingsTaxable,
   );
   const rentalPropertyTaxCredit = Math.max(0, maxCreditBase * 0.2);
 
   // Allocate Income Tax components
-  // To get individual tax elements, we stack them:
-  // - PAYE at the bottom
-  // - Self Employed in the middle
-  // - Rental profit at the top
-  const totalTaxableExclRental = Math.max(0, payeSalary + seProfit - personalAllowance);
+  const totalTaxableExclRental = Math.max(0, effectivePayeSalary + seProfit - personalAllowance);
   const incomeTaxExclRental = calculateIncomeTaxForTaxable(totalTaxableExclRental, config);
 
   const rentalPropertyTaxDueBeforeCredit = Math.max(
     0,
-    totalIncomeTaxDueBeforeCredit - incomeTaxExclRental,
+    nonSavingsIncomeTaxBeforeCredit - incomeTaxExclRental,
   );
   const rentalPropertyTaxDueAfterCredit = Math.max(
     0,
@@ -334,16 +546,41 @@ export function calculateUKTax(
     seClass4NIDue = niBasicBand * config.class4BasicRate + niHigherBand * config.class4HigherRate;
   }
 
-  const totalIncomeTaxDue = Math.max(0, totalIncomeTaxDueBeforeCredit - rentalPropertyTaxCredit);
+  // Savings tax (stacked above non-savings income)
+  let savingsTaxDue = 0;
+  if (taxableSavingsInterest > 0) {
+    const totalWithSavings = nonSavingsTaxable + taxableSavingsInterest;
+    const taxWithSavings = calculateIncomeTaxForTaxable(totalWithSavings, config);
+    savingsTaxDue = Math.max(0, taxWithSavings - nonSavingsIncomeTaxBeforeCredit);
+  }
+
+  // Dividend tax (stacked at top of all income, taxed at dividend rates: 8.75%, 33.75%, 39.35%)
+  let dividendTaxDue = 0;
+  if (taxableDividends > 0) {
+    const priorTaxable = nonSavingsTaxable + taxableSavingsInterest;
+    dividendTaxDue = calculateDividendTaxForStack(priorTaxable, taxableDividends, config);
+  }
+
+  const totalNonSavingsIncomeTax = Math.max(
+    0,
+    nonSavingsIncomeTaxBeforeCredit - rentalPropertyTaxCredit,
+  );
+  const totalIncomeTaxDue = totalNonSavingsIncomeTax + savingsTaxDue + dividendTaxDue;
   const totalNIDue = seClass4NIDue;
   const totalTaxDue = totalIncomeTaxDue + totalNIDue;
 
   const netAdditionalTaxToPay = Math.max(0, totalTaxDue - payeTaxDue);
+  const totalTaxable = Math.max(0, totalGrossIncome - personalAllowance);
 
   return {
     taxYear,
-    payeSalary,
+    payeSalary: effectivePayeSalary,
     propertyOwnershipShare,
+
+    payeIncomeGross,
+    payeExpenses,
+    effectivePayeSalary,
+
     rentalIncomeGross,
     rentalExpensesExclInterest,
     rentalMortgageInterest,
@@ -354,9 +591,22 @@ export function calculateUKTax(
     rentalMortgageInterestShare,
     rentalProfitBeforeInterestShare,
     rentalProfitPostInterestShare: rentalProfitPostInterest * shareFactor,
+
     seIncomeGross,
     seExpenses,
     seProfit,
+
+    savingsInterestGross,
+    isaInterestGross,
+    dividendIncomeGross,
+    savingsExpenses,
+    personalSavingsAllowance,
+    dividendAllowance,
+    taxableSavingsInterest,
+    taxableDividends,
+    savingsTaxDue,
+    dividendTaxDue,
+
     totalGrossIncome,
     personalAllowance,
     totalTaxableIncome: totalTaxable,
@@ -376,28 +626,9 @@ export function calculateUKTax(
 function calculateIncomeTaxForTaxable(taxable: number, config: TaxYearConfig): number {
   if (taxable <= 0) return 0;
 
-  // Basic rate band limit is config.basicRateBand
-  // Higher rate band is from basicRateBand to (higherRateLimit - personalAllowance)
-  // Let's use the standard basicRateBand and higher rate band limit
   const basicBandTax = Math.min(taxable, config.basicRateBand) * 0.2;
-
-  // Higher rate band width is standardly basicRateBand to additional rate threshold (usually 125,140 or 150,000 depending on tax year)
-  // Let's check config.higherRateLimit. The threshold for additional rate is higherRateLimit.
-  // Taxable threshold for additional rate = higherRateLimit - (personalAllowance at 0) = higherRateLimit.
-  // Wait, if personal allowance is tapered to 0, taxable income matches total income.
-  // Let's calculate exactly based on band widths:
-  // Band 1 (Basic Rate): 0 to config.basicRateBand -> 20%
-  // Band 2 (Higher Rate): config.basicRateBand to (config.higherRateLimit - 12570) -> 40%
-  // Band 3 (Additional Rate): everything above Band 2 -> 45%
-  // Let's be accurate for the higher rate threshold:
-  // In 24/25, Higher rate threshold is 50,270. With 12,570 personal allowance, that is 37,700 taxable.
-  // Additional rate threshold is 125,140. That is 125,140 taxable (as personal allowance is 0 here).
-  // So the higher rate band taxable width is 125,140 - 37,700 = 87,440.
-  // Let's check: 37,700 + 87,440 = 125,140.
-  // Let's use the higher rate band limit directly from config:
-  // Let's calculate:
   const higherBandMaxTaxable =
-    config.higherRateLimit - (config.personalAllowance === 12500 ? 12500 : 12570); // Standard higher rate threshold minus standard personal allowance
+    config.higherRateLimit - (config.personalAllowance === 12500 ? 12500 : 12570);
   const higherBandWidth = higherBandMaxTaxable - config.basicRateBand;
 
   const higherBandTax =
@@ -405,4 +636,44 @@ function calculateIncomeTaxForTaxable(taxable: number, config: TaxYearConfig): n
   const additionalBandTax = Math.max(0, taxable - higherBandMaxTaxable) * 0.45;
 
   return basicBandTax + higherBandTax + additionalBandTax;
+}
+
+function calculateDividendTaxForStack(
+  priorTaxable: number,
+  dividends: number,
+  config: TaxYearConfig,
+): number {
+  if (dividends <= 0) return 0;
+  const basicThreshold = config.basicRateBand;
+  const higherThreshold =
+    config.higherRateLimit - (config.personalAllowance === 12500 ? 12500 : 12570);
+
+  const basicDividendRate = 0.0875;
+  const higherDividendRate = 0.3375;
+  const additionalDividendRate = 0.3935;
+
+  let tax = 0;
+  const divStart = priorTaxable;
+  const divEnd = priorTaxable + dividends;
+
+  // Portion falling in basic rate band (<= basicThreshold)
+  if (divStart < basicThreshold) {
+    const inBasic = Math.min(divEnd, basicThreshold) - divStart;
+    tax += inBasic * basicDividendRate;
+  }
+
+  // Portion falling in higher rate band (> basicThreshold and <= higherThreshold)
+  if (divEnd > basicThreshold && divStart < higherThreshold) {
+    const higherStart = Math.max(divStart, basicThreshold);
+    const higherEnd = Math.min(divEnd, higherThreshold);
+    tax += (higherEnd - higherStart) * higherDividendRate;
+  }
+
+  // Portion falling in additional rate band (> higherThreshold)
+  if (divEnd > higherThreshold) {
+    const addStart = Math.max(divStart, higherThreshold);
+    tax += (divEnd - addStart) * additionalDividendRate;
+  }
+
+  return tax;
 }

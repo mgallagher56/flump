@@ -15,7 +15,7 @@ export class BudgetEntry {
   userId: string;
 
   @Column({ type: "varchar" })
-  category: "housing" | "bills" | "expenses" | "savings" | "income";
+  category: string;
 
   @Column()
   name: string;

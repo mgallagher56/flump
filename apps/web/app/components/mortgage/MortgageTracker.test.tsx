@@ -48,4 +48,25 @@ describe("<MortgageTracker />", () => {
     fireEvent.change(sliders[2], { target: { value: "20" } });
     expect(defaultProps.onRemainingTermChange).toHaveBeenCalledWith(20);
   });
+
+  test("supports switching to Interest Only mortgage", () => {
+    const onMortgageTypeChange = vi.fn();
+    const { getByText } = customRender(
+      <MortgageTracker
+        {...defaultProps}
+        mortgageType="interest-only"
+        onMortgageTypeChange={onMortgageTypeChange}
+      />,
+    );
+
+    // Verify interest-only monthly payment (150,000 * 0.045 / 12 = £562.50 -> approx £563/mo)
+    expect(getByText(/£563/)).toBeDefined();
+    expect(getByText("Principal Bullet Due at Term End")).toBeDefined();
+    expect(getByText("100% of principal remains outstanding at term completion.")).toBeDefined();
+
+    // Click Repayment
+    const repaymentBtn = getByText("Repayment");
+    fireEvent.click(repaymentBtn);
+    expect(onMortgageTypeChange).toHaveBeenCalledWith("repayment");
+  });
 });

@@ -6,6 +6,7 @@ import {
   FaCheckCircle,
   FaChevronDown,
   FaChevronUp,
+  FaFileInvoiceDollar,
   FaHome,
   FaPiggyBank,
   FaRegCircle,
@@ -38,7 +39,9 @@ export interface SetupChecklistProps {
   hasPension?: boolean;
   hasMortgageAccount: boolean;
   hasRunForecast: boolean;
+  hasTax?: boolean;
   completedSteps: string[];
+  enabledPages?: string[];
   onOpenConnectBank?: () => void;
   onOpenBudgetWizard?: () => void;
   isMobile?: boolean;
@@ -124,6 +127,16 @@ const STEP_DEFINITIONS = (props: SetupChecklistProps, navigate: ReturnType<typeo
     actionLabel: "Run Forecast",
     onAction: () => navigate("/app/forecast"),
   },
+  {
+    key: "tax",
+    label: "Record self-employed or rental tax",
+    description:
+      "Log income and deductible expenses to view your estimated UK Self-Assessment liability.",
+    icon: <FaFileInvoiceDollar style={{ color: "#3b82f6" }} />,
+    isComplete: Boolean(props.hasTax || props.completedSteps.includes("tax")),
+    actionLabel: "Open Tax Tracker",
+    onAction: () => navigate("/app/tax"),
+  },
 ];
 
 const SetupChecklist: FC<SetupChecklistProps> = (props) => {
@@ -138,7 +151,15 @@ const SetupChecklist: FC<SetupChecklistProps> = (props) => {
     return false;
   });
 
-  const steps = STEP_DEFINITIONS(props, navigate);
+  const allSteps = STEP_DEFINITIONS(props, navigate);
+  const steps = props.enabledPages
+    ? allSteps.filter((s) => {
+        if (s.key === "profile") return true;
+        if (s.key === "runway") return props.enabledPages?.includes("budget");
+        return props.enabledPages?.includes(s.key);
+      })
+    : allSteps;
+
   const completedCount = steps.filter((s) => s.isComplete).length;
   const allComplete = completedCount === steps.length;
 
@@ -302,7 +323,23 @@ const SetupChecklist: FC<SetupChecklistProps> = (props) => {
                 >
                   {step.description}
                 </FLPText>
-                {!step.isComplete && (
+                {step.isComplete ? (
+                  <span
+                    className={css({
+                      fontSize: "xs",
+                      fontWeight: "medium",
+                      color: "success.500",
+                      backgroundColor: "rgba(16, 185, 129, 0.08)",
+                      padding: "3px 8px",
+                      borderRadius: "md",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "4px",
+                    })}
+                  >
+                    ✓ Widget Unlocked on Dashboard
+                  </span>
+                ) : (
                   <button
                     className={css({
                       fontSize: "xs",

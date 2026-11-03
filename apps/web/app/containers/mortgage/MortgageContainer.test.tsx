@@ -56,4 +56,19 @@ describe("<MortgageContainer />", () => {
     expect(container.querySelector("#mock-compare")).toBeDefined();
     expect(container.querySelector("#mock-simulator")).toBeNull();
   });
+
+  test("allows switching to Buy to Let category and displays BTL overview", () => {
+    const { getByText, queryByText } = customRender(<MortgageContainer />);
+
+    expect(queryByText("Buy to Let Portfolio Overview")).toBeNull();
+
+    // Click Buy to Let (BTL)
+    const btlCategoryBtn = getByText("Buy to Let (BTL)");
+    fireEvent.click(btlCategoryBtn);
+
+    expect(getByText("Buy to Let Portfolio Overview")).toBeDefined();
+    expect(getByText(/Section 24 Rule:/)).toBeDefined();
+    expect(getByText("Gross Monthly Rent")).toBeDefined();
+    expect(getByText("Estimated Net Cashflow")).toBeDefined();
+  });
 });

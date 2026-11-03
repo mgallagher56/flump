@@ -13,6 +13,15 @@ import GithubActionsReporter from "vitest-github-actions-reporter";
 export default defineConfig(({ mode }) => ({
   server: {
     port: 5173,
+    watch: {
+      ignored: [
+        "**/coverage/**",
+        "**/.turbo/**",
+        "**/build/**",
+        "**/storybook-static/**",
+        "**/.react-router/**",
+      ],
+    },
   },
   css: {
     postcss: {

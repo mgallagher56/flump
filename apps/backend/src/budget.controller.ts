@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Delete,
@@ -14,8 +15,9 @@ import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
 import { AuthGuard } from "./auth/auth.guard";
 import { BudgetEntry } from "./entities/budget-entry.entity";
+import { UserProfile } from "./entities/user-profile.entity";
 
-type BudgetCategory = "housing" | "bills" | "expenses" | "savings" | "income";
+type BudgetCategory = "housing" | "bills" | "expenses" | "savings" | "income" | string;
 type BudgetFrequency = "monthly" | "annual" | "weekly";
 
 interface DefaultSeed {
@@ -188,6 +190,8 @@ export class BudgetController {
   constructor(
     @InjectRepository(BudgetEntry)
     private readonly budgetEntryRepository: Repository<BudgetEntry>,
+    @InjectRepository(UserProfile)
+    private readonly userProfileRepository: Repository<UserProfile>,
   ) {}
 
   private async seedDefaults(userId: string): Promise<BudgetEntry[]> {
@@ -205,7 +209,9 @@ export class BudgetController {
       order: { createdAt: "ASC" },
     });
 
-    if (entries.length === 0) {
+    const profile = await this.userProfileRepository.findOne({ where: { userId } });
+
+    if (entries.length === 0 && !profile?.hasResetFinancialData) {
       entries = await this.seedDefaults(userId);
     }
 
@@ -213,6 +219,50 @@ export class BudgetController {
       ...entry,
       amount: Number(entry.amount) || 0,
     })) as BudgetEntry[];
+  }
+
+  @Post("budget-entries/seed-defaults")
+  async seedDefaultBudgetEntries(@Req() req: any): Promise<BudgetEntry[]> {
+    const userId = req.user.id;
+    await this.seedDefaults(userId);
+    const entries = await this.budgetEntryRepository.find({
+      where: { userId },
+      order: { createdAt: "ASC" },
+    });
+    return entries.map((entry) => ({
+      ...entry,
+      amount: Number(entry.amount) || 0,
+    })) as BudgetEntry[];
+  }
+
+  @Post("budget-entries/categories")
+  async addCustomCategory(
+    @Req() req: any,
+    @Body() body: { category: string },
+  ): Promise<{ success: boolean; categories: string[] }> {
+    const userId = req.user.id;
+    const catName = body?.category?.trim();
+    if (!catName) {
+      throw new BadRequestException("Category name is required");
+    }
+
+    let profile = await this.userProfileRepository.findOne({ where: { userId } });
+    if (!profile) {
+      profile = this.userProfileRepository.create({ userId });
+    }
+
+    const currentCategories = Array.isArray(profile.customBudgetCategories)
+      ? [...profile.customBudgetCategories]
+      : [];
+
+    const normalized = catName.toLowerCase();
+    if (!currentCategories.includes(normalized)) {
+      currentCategories.push(normalized);
+      profile.customBudgetCategories = currentCategories;
+      await this.userProfileRepository.save(profile);
+    }
+
+    return { success: true, categories: profile.customBudgetCategories ?? [] };
   }
 
   @Post("budget-entries")

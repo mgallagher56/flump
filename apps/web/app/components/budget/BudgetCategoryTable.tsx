@@ -16,6 +16,7 @@ export interface BudgetCategoryTableProps {
   onAdd: (entry: Omit<BudgetEntry, "id" | "userId" | "createdAt" | "updatedAt">) => Promise<void>;
   onUpdate: (id: string, update: Partial<BudgetEntry>) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
+  onDeleteCategory?: (category: string) => void;
   isMobile?: boolean;
   variant?: "desktop" | "mobile";
 }
@@ -78,6 +79,7 @@ const BudgetCategoryTable: FC<BudgetCategoryTableProps> = ({
   onAdd,
   onUpdate,
   onDelete,
+  onDeleteCategory,
   isMobile: propIsMobile,
   variant = "desktop",
 }) => {
@@ -201,10 +203,30 @@ const BudgetCategoryTable: FC<BudgetCategoryTableProps> = ({
             </FLPText>
           </div>
         </div>
-        <FLPButton isMobile={isMobileVariant} size="sm" variant="outline" onClick={startNew}>
-          <FaPlus style={{ marginRight: "6px" }} />
-          Add
-        </FLPButton>
+        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+          {onDeleteCategory && entries.length === 0 && (
+            <FLPButton
+              id="delete-category-btn"
+              isMobile={isMobileVariant}
+              size="sm"
+              variant="outline"
+              onClick={() => onDeleteCategory(category)}
+            >
+              <FaTrash style={{ marginRight: "6px" }} />
+              Delete Category
+            </FLPButton>
+          )}
+          <FLPButton
+            id="add-entry-btn"
+            isMobile={isMobileVariant}
+            size="sm"
+            variant="outline"
+            onClick={startNew}
+          >
+            <FaPlus style={{ marginRight: "6px" }} />
+            Add
+          </FLPButton>
+        </div>
       </div>
 
       {/* Table / Mobile Card Stack */}

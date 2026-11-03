@@ -1,5 +1,5 @@
 import { css } from "@repo/ui/styled-system/css";
-import { type FC, type ReactElement, useState } from "react";
+import { type FC, type ReactElement, useMemo, useState } from "react";
 import {
   FaBars,
   FaBuilding,
@@ -16,7 +16,9 @@ import ThemeToggle from "~/components/navigation/ThemeToggle";
 import UserAvatar from "~/components/navigation/UserAvatar";
 import UserLogin from "~/components/navigation/UserLogin";
 import { useResponsive } from "~/context/ResponsiveContext";
+import { useUserProfile } from "~/hooks/useUserProfile";
 import type { loader } from "~/root";
+import { isPageEnabled } from "~/utils/pageConfig";
 
 import MobileNavDrawer from "./MobileNavDrawer";
 import {
@@ -85,6 +87,7 @@ export const AUTH_DESKTOP_NAV_ROUTES: NavRouteItem[] = [
 
 const Header: FC<HeaderProps> = ({ isMobile: propIsMobile, variant }): ReactElement<FC> => {
   const { user } = useLoaderData<typeof loader>();
+  const { profile } = useUserProfile();
   const {
     isMobile: contextIsMobile,
     isMobileDrawerOpen,
@@ -95,6 +98,27 @@ const Header: FC<HeaderProps> = ({ isMobile: propIsMobile, variant }): ReactElem
 
   const isMobileVariant = propIsMobile ?? (variant === "mobile" ? true : contextIsMobile);
   const drawerOpen = isMobileDrawerOpen || localDrawerOpen;
+
+  const filteredAuthRoutes = useMemo(() => {
+    const enabled = profile.enabledPages || [];
+    return AUTH_DESKTOP_NAV_ROUTES.map((item) => {
+      if (item.children) {
+        const filteredChildren = item.children.filter((child) =>
+          isPageEnabled(enabled, child.key as any),
+        );
+        return {
+          ...item,
+          children: filteredChildren,
+        };
+      }
+      return item;
+    }).filter((item) => {
+      if (item.children) {
+        return item.children.length > 0;
+      }
+      return isPageEnabled(enabled, item.key as any);
+    });
+  }, [profile.enabledPages]);
 
   const handleToggleDrawer = () => {
     toggleMobileDrawer();
@@ -115,7 +139,7 @@ const Header: FC<HeaderProps> = ({ isMobile: propIsMobile, variant }): ReactElem
             {!isMobileVariant && (
               <div className={desktopMenuLinksStyles}>
                 <NavMenu routes={[{ key: "home", route: "/" }]} />
-                {!!user && <NavMenu routes={AUTH_DESKTOP_NAV_ROUTES} />}
+                {!!user && <NavMenu routes={filteredAuthRoutes} />}
               </div>
             )}
           </FLPBox>

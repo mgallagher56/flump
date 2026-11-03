@@ -3,7 +3,7 @@ import type { LoaderFunctionArgs } from "react-router";
 import { redirect } from "react-router";
 
 const workosLoader = authLoader({
-  returnPathname: "/app/accounts",
+  returnPathname: "/app",
 });
 
 export const loader = async (args: LoaderFunctionArgs) => {

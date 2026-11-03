@@ -153,13 +153,22 @@ export const PensionContainer: FC = () => {
   }, [pensionAccounts, totalValue]);
 
   // Rates from profile
-  const annualSalary = profile.annualSalary ?? userProfile?.annualSalary ?? 45000;
-  const employeePercent = profile.pensionPercent ?? userProfile?.pensionPercent ?? 5.0;
-  const employerPercent =
-    profile.pensionEmployerPercent ?? userProfile?.pensionEmployerPercent ?? 3.0;
-  const isSalarySacrifice = profile.isSalarySacrifice ?? userProfile?.isSalarySacrifice ?? true;
-  const isSalarySacrificeEmployerNi =
-    profile.isSalarySacrificeEmployerNi ?? userProfile?.isSalarySacrificeEmployerNi ?? false;
+  const isReset = Boolean(profile.hasResetFinancialData ?? userProfile?.hasResetFinancialData);
+  const annualSalary = isReset
+    ? (profile.annualSalary ?? userProfile?.annualSalary ?? 0)
+    : (profile.annualSalary ?? userProfile?.annualSalary ?? 45000);
+  const employeePercent = isReset
+    ? (profile.pensionPercent ?? userProfile?.pensionPercent ?? 0)
+    : (profile.pensionPercent ?? userProfile?.pensionPercent ?? 5.0);
+  const employerPercent = isReset
+    ? (profile.pensionEmployerPercent ?? userProfile?.pensionEmployerPercent ?? 0)
+    : (profile.pensionEmployerPercent ?? userProfile?.pensionEmployerPercent ?? 3.0);
+  const isSalarySacrifice = isReset
+    ? (profile.isSalarySacrifice ?? userProfile?.isSalarySacrifice ?? false)
+    : (profile.isSalarySacrifice ?? userProfile?.isSalarySacrifice ?? true);
+  const isSalarySacrificeEmployerNi = isReset
+    ? (profile.isSalarySacrificeEmployerNi ?? userProfile?.isSalarySacrificeEmployerNi ?? false)
+    : (profile.isSalarySacrificeEmployerNi ?? userProfile?.isSalarySacrificeEmployerNi ?? false);
   const employmentType = profile.employmentType ?? userProfile?.employmentType ?? "employed";
 
   const monthlyEmployeeContrib = (annualSalary * (employeePercent / 100)) / 12;

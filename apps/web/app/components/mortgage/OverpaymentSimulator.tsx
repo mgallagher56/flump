@@ -12,6 +12,7 @@ interface OverpaymentSimulatorProps {
   remainingTerm: number;
   overpayment: number;
   onOverpaymentChange: (val: number) => void;
+  mortgageType?: "repayment" | "interest-only";
 }
 
 const OverpaymentSimulator: FC<OverpaymentSimulatorProps> = ({
@@ -20,8 +21,10 @@ const OverpaymentSimulator: FC<OverpaymentSimulatorProps> = ({
   remainingTerm,
   overpayment,
   onOverpaymentChange,
+  mortgageType = "repayment",
 }) => {
   const { formatCurrency } = useFormatCurrency();
+  const isInterestOnly = mortgageType === "interest-only";
 
   // Run Amortization Schedules
   const simulationResults = useMemo(() => {
@@ -32,7 +35,11 @@ const OverpaymentSimulator: FC<OverpaymentSimulatorProps> = ({
     // Monthly scheduled payment
     let monthlyScheduled = 0;
     if (loanAmount > 0 && interestRate > 0 && remainingTerm > 0) {
-      monthlyScheduled = (loanAmount * i * (1 + i) ** totalMonths) / ((1 + i) ** totalMonths - 1);
+      if (isInterestOnly) {
+        monthlyScheduled = loanAmount * i;
+      } else {
+        monthlyScheduled = (loanAmount * i * (1 + i) ** totalMonths) / ((1 + i) ** totalMonths - 1);
+      }
     }
     if (Number.isNaN(monthlyScheduled) || !Number.isFinite(monthlyScheduled)) {
       monthlyScheduled = 0;
@@ -44,15 +51,21 @@ const OverpaymentSimulator: FC<OverpaymentSimulatorProps> = ({
     let standardTotalInterest = 0;
 
     for (let m = 1; m <= totalMonths; m++) {
-      if (standardBalance <= 0) {
-        standardBalances.push(0);
-        continue;
+      if (isInterestOnly) {
+        const interest = standardBalance * i;
+        standardTotalInterest += interest;
+        standardBalances.push(standardBalance);
+      } else {
+        if (standardBalance <= 0) {
+          standardBalances.push(0);
+          continue;
+        }
+        const interest = standardBalance * i;
+        const principal = Math.min(standardBalance, monthlyScheduled - interest);
+        standardBalance = Math.max(0, standardBalance - principal);
+        standardTotalInterest += interest;
+        standardBalances.push(standardBalance);
       }
-      const interest = standardBalance * i;
-      const principal = Math.min(standardBalance, monthlyScheduled - interest);
-      standardBalance = Math.max(0, standardBalance - principal);
-      standardTotalInterest += interest;
-      standardBalances.push(standardBalance);
     }
 
     // 2. Overpayment schedule
@@ -73,12 +86,20 @@ const OverpaymentSimulator: FC<OverpaymentSimulatorProps> = ({
       }
 
       const interest = overpayBalance * i;
-      // Scheduled payment + overpayment
-      const totalPayment = monthlyScheduled + overpayment;
-      const principal = Math.min(overpayBalance, totalPayment - interest);
-
-      overpayBalance = Math.max(0, overpayBalance - principal);
       overpayTotalInterest += interest;
+
+      if (isInterestOnly) {
+        // In interest only, monthly scheduled pays the current interest,
+        // and 100% of the overpayment reduces the loan principal!
+        const principal = Math.min(overpayBalance, overpayment);
+        overpayBalance = Math.max(0, overpayBalance - principal);
+      } else {
+        // Scheduled payment + overpayment
+        const totalPayment = monthlyScheduled + overpayment;
+        const principal = Math.min(overpayBalance, totalPayment - interest);
+        overpayBalance = Math.max(0, overpayBalance - principal);
+      }
+
       overpayBalances.push(overpayBalance);
     }
 
@@ -98,7 +119,9 @@ const OverpaymentSimulator: FC<OverpaymentSimulatorProps> = ({
       const monthIdx = y * 12;
       chartData.push({
         yearLabel: `Yr ${y}`,
-        "Standard Plan": Math.round(standardBalances[monthIdx] ?? 0),
+        "Standard Plan": Math.round(
+          standardBalances[monthIdx] ?? (isInterestOnly ? loanAmount : 0),
+        ),
         "With Overpayment": Math.round(overpayBalances[monthIdx] ?? 0),
       });
     }
@@ -108,6 +131,8 @@ const OverpaymentSimulator: FC<OverpaymentSimulatorProps> = ({
     const remMonthsSaved = monthsSaved % 12;
 
     const interestSaved = Math.max(0, standardTotalInterest - overpayTotalInterest);
+    const finalOverpayBalance = overpayBalances[overpayBalances.length - 1] ?? 0;
+    const principalReduced = Math.max(0, loanAmount - finalOverpayBalance);
 
     return {
       monthlyScheduled,
@@ -118,12 +143,22 @@ const OverpaymentSimulator: FC<OverpaymentSimulatorProps> = ({
       yearsSaved,
       remMonthsSaved,
       newTermMonths: overpayMonthsToZero,
+      finalOverpayBalance,
+      principalReduced,
       chartData,
     };
-  }, [loanAmount, interestRate, remainingTerm, overpayment]);
+  }, [loanAmount, interestRate, remainingTerm, overpayment, isInterestOnly]);
 
-  const { monthlyScheduled, interestSaved, yearsSaved, remMonthsSaved, newTermMonths, chartData } =
-    simulationResults;
+  const {
+    monthlyScheduled,
+    interestSaved,
+    yearsSaved,
+    remMonthsSaved,
+    newTermMonths,
+    finalOverpayBalance,
+    principalReduced,
+    chartData,
+  } = simulationResults;
 
   // Styles
   const gridLayout = css({
@@ -271,7 +306,8 @@ const OverpaymentSimulator: FC<OverpaymentSimulatorProps> = ({
             borderColor: "border",
           })}
         >
-          Scheduled Monthly Payment: <strong>{formatCurrency(monthlyScheduled)}</strong>
+          Scheduled {isInterestOnly ? "Interest" : "Monthly"} Payment:{" "}
+          <strong>{formatCurrency(monthlyScheduled)}</strong>
           <br />
           Total Monthly Outflow: <strong>{formatCurrency(monthlyScheduled + overpayment)}</strong>
         </div>
@@ -396,11 +432,14 @@ const OverpaymentSimulator: FC<OverpaymentSimulatorProps> = ({
               textTransform="uppercase"
               color="text.muted"
             >
-              New Payoff Term
+              {isInterestOnly && yearsSaved === 0 && remMonthsSaved === 0
+                ? "Bullet Balance Reduced"
+                : "New Payoff Term"}
             </FLPText>
             <FLPHeading as="h4" color="text.primary" mt={1} size="lg">
-              {newTermYears} yr{newTermYears !== 1 ? "s" : ""} {newTermMonthsRem} mo
-              {newTermMonthsRem !== 1 ? "s" : ""}
+              {isInterestOnly && yearsSaved === 0 && remMonthsSaved === 0
+                ? formatCurrency(principalReduced)
+                : `${newTermYears} yr${newTermYears !== 1 ? "s" : ""} ${newTermMonthsRem} mo${newTermMonthsRem !== 1 ? "s" : ""}`}
             </FLPHeading>
           </div>
         </div>

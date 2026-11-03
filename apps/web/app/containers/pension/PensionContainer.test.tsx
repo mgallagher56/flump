@@ -4,39 +4,51 @@ import { describe, expect, it, vi } from "vitest";
 const mockUpdateProfile = vi.fn().mockResolvedValue({});
 const mockMarkChecklistStep = vi.fn().mockResolvedValue({});
 
-vi.mock("react-router", () => ({
-  useLoaderData: () => ({
-    accounts: [
-      {
-        id: "p1",
-        name: "Current Workplace Pot",
-        type: "Pension",
-        balance: 10000,
-        interestRate: 6.0,
-        monthlyContribution: 100,
-        isCurrent: true,
-      },
-      {
-        id: "p2",
-        name: "Old Employer Pot",
-        type: "Pension",
-        balance: 20000,
-        interestRate: 5.0,
-        monthlyContribution: 50,
-        isCurrent: false,
-      },
-    ],
-    accountDetails: [],
-    userProfile: {
-      annualSalary: 50000,
-      pensionPercent: 5.0,
-      pensionEmployerPercent: 3.0,
-      isSalarySacrifice: true,
-      isSalarySacrificeEmployerNi: false,
-      employmentType: "employed",
-      setupChecklistCompletedSteps: ["pension"],
+let testLoaderData: any = {
+  accounts: [
+    {
+      id: "p1",
+      name: "Current Workplace Pot",
+      type: "Pension",
+      balance: 10000,
+      interestRate: 6.0,
+      monthlyContribution: 100,
+      isCurrent: true,
     },
-  }),
+    {
+      id: "p2",
+      name: "Old Employer Pot",
+      type: "Pension",
+      balance: 20000,
+      interestRate: 5.0,
+      monthlyContribution: 50,
+      isCurrent: false,
+    },
+  ],
+  accountDetails: [],
+  userProfile: {
+    annualSalary: 50000,
+    pensionPercent: 5.0,
+    pensionEmployerPercent: 3.0,
+    isSalarySacrifice: true,
+    isSalarySacrificeEmployerNi: false,
+    employmentType: "employed",
+    setupChecklistCompletedSteps: ["pension"],
+  },
+};
+
+let testProfileData: any = {
+  annualSalary: 50000,
+  pensionPercent: 5.0,
+  pensionEmployerPercent: 3.0,
+  isSalarySacrifice: true,
+  isSalarySacrificeEmployerNi: false,
+  employmentType: "employed",
+  setupChecklistCompletedSteps: ["pension"],
+};
+
+vi.mock("react-router", () => ({
+  useLoaderData: () => testLoaderData,
   useFetcher: () => ({
     submit: vi.fn(),
     state: "idle",
@@ -45,15 +57,7 @@ vi.mock("react-router", () => ({
 
 vi.mock("~/hooks/useUserProfile", () => ({
   useUserProfile: () => ({
-    profile: {
-      annualSalary: 50000,
-      pensionPercent: 5.0,
-      pensionEmployerPercent: 3.0,
-      isSalarySacrifice: true,
-      isSalarySacrificeEmployerNi: false,
-      employmentType: "employed",
-      setupChecklistCompletedSteps: ["pension"],
-    },
+    profile: testProfileData,
     setProfile: vi.fn(),
     updateProfile: mockUpdateProfile,
     markChecklistStep: mockMarkChecklistStep,
@@ -122,5 +126,33 @@ describe("PensionContainer", () => {
     expect(screen.getAllByText("Old Employer Pot").length).toBeGreaterThan(0);
     expect(screen.getByText("Current Pot")).toBeDefined();
     expect(screen.getByText("Past Pot")).toBeDefined();
+  });
+
+  it("handles reset financial data state with zero values", () => {
+    testLoaderData = {
+      accounts: [],
+      accountDetails: [],
+      userProfile: {
+        annualSalary: null,
+        pensionPercent: 0,
+        pensionEmployerPercent: 0,
+        hasResetFinancialData: true,
+        setupChecklistCompletedSteps: ["pension"],
+      },
+    };
+
+    testProfileData = {
+      annualSalary: null,
+      pensionPercent: 0,
+      pensionEmployerPercent: 0,
+      hasResetFinancialData: true,
+      setupChecklistCompletedSteps: ["pension"],
+    };
+
+    render(<PensionContainer />);
+    expect(screen.getByText("Total Pension Wealth")).toBeDefined();
+    expect(screen.getByText("Across 0 pension pots")).toBeDefined();
+    // Should show £0 Gross Salary and 0% contributions
+    expect(screen.getAllByText("£0").length).toBeGreaterThan(0);
   });
 });

@@ -1,20 +1,24 @@
+import { getCurrentUKTaxYear } from "@repo/common";
 import { css } from "@repo/ui/styled-system/css";
 import type { ReactElement } from "react";
 import { useTranslation } from "react-i18next";
-import { FiArrowRight, FiDatabase, FiLock, FiPieChart, FiTrendingUp } from "react-icons/fi";
+import { FiDatabase, FiLock, FiPieChart, FiTrendingUp } from "react-icons/fi";
 import {
   type LoaderFunctionArgs,
   type MetaFunction,
   Link as RouterLink,
+  redirect,
   useLoaderData,
 } from "react-router";
+import { calculateNetTakeHome } from "~/components/budget/UserProfilePanel";
 import FLPButton from "~/components/core/buttons/FLPButton";
 import FLPBox from "~/components/core/structure/FLPBox";
 import FLPHeading from "~/components/core/typography/FLPHeading";
 import FLPText from "~/components/core/typography/FLPText";
-import SetupChecklist from "~/components/setup/SetupChecklist";
+import { HomeDashboard } from "~/components/dashboard/HomeDashboard";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
 import { toMonthly } from "~/types/budget";
+import { calculateRunwayStats } from "~/utils/runwayStorage";
 import { getAuthSession } from "~/utils/utils";
 
 export const meta: MetaFunction = (): { title: string }[] => [
@@ -39,7 +43,13 @@ export const loader = async (args: LoaderFunctionArgs) => {
       hasProfile: false,
       hasRunForecast: false,
       completedSteps: [] as string[],
-      summary: null,
+      accountsData: null,
+      budgetData: null,
+      savingsData: null,
+      pensionData: null,
+      mortgageData: null,
+      forecastData: null,
+      taxData: null,
     };
   }
 
@@ -47,15 +57,25 @@ export const loader = async (args: LoaderFunctionArgs) => {
   const headers = { Authorization: `Bearer ${accessToken || "mock-session-token"}` };
 
   try {
-    const [accountsRes, profileRes, budgetRes] = await Promise.all([
+    const [accountsRes, profileRes, budgetRes, detailsRes, taxRes] = await Promise.all([
       fetch(`${apiUrl}/accounts`, { headers }),
       fetch(`${apiUrl}/user-profile`, { headers }),
       fetch(`${apiUrl}/budget-entries`, { headers }),
+      fetch(`${apiUrl}/account-details`, { headers }),
+      fetch(`${apiUrl}/tax-records`, { headers }),
     ]);
 
     const accounts = accountsRes.ok ? await accountsRes.json() : [];
     const userProfile = profileRes.ok ? await profileRes.json() : null;
+
+    if (userProfile && userProfile.onboardingCompleted === false) {
+      return redirect("/app/onboarding");
+    }
+
     const budgetEntries = budgetRes.ok ? await budgetRes.json() : [];
+    const accountDetails = detailsRes.ok ? await detailsRes.json() : [];
+    const taxRecords = taxRes.ok ? await taxRes.json() : [];
+
     const completedSteps = (userProfile?.setupChecklistCompletedSteps as string[]) ?? [];
 
     const assetTypes = ["Current", "Saving", "Investment", "Pension", "Owed"];
@@ -69,6 +89,7 @@ export const loader = async (args: LoaderFunctionArgs) => {
           .filter((a: any) => !assetTypes.includes(a.type))
           .reduce((sum: number, a: any) => sum + Math.abs(Number(a.balance) || 0), 0)
       : 0;
+
     const monthlyIncome = Array.isArray(budgetEntries)
       ? budgetEntries
           .filter((e: any) => e.isIncome)
@@ -80,29 +101,167 @@ export const loader = async (args: LoaderFunctionArgs) => {
           .reduce((sum: number, e: any) => sum + toMonthly(e), 0)
       : 0;
 
+    const budgetedSavings = Array.isArray(budgetEntries)
+      ? budgetEntries
+          .filter((e: any) => !e.isIncome && e.category === "savings")
+          .reduce((sum: number, e: any) => sum + toMonthly(e), 0)
+      : 0;
+
+    const livingExpenses = Array.isArray(budgetEntries)
+      ? budgetEntries
+          .filter((e: any) => !e.isIncome && e.category !== "savings")
+          .reduce((sum: number, e: any) => sum + toMonthly(e), 0)
+      : 0;
+
+    // Accounts Breakdown
+    const typeTotals: Record<string, number> = {};
+    if (Array.isArray(accounts)) {
+      accounts.forEach((a: any) => {
+        const t = a.type || "Other";
+        typeTotals[t] = (typeTotals[t] || 0) + Math.abs(Number(a.balance) || 0);
+      });
+    }
+
+    // Savings accounts data
+    const savingsAccounts = Array.isArray(accounts)
+      ? accounts.filter((a: any) => a.type === "Saving" || a.type === "Investment")
+      : [];
+    const totalSavingsBalance = savingsAccounts.reduce(
+      (sum: number, a: any) => sum + (Number(a.balance) || 0),
+      0,
+    );
+    const totalMonthlyContributions = savingsAccounts.reduce(
+      (sum: number, a: any) => sum + (Number(a.monthlyContribution) || 0),
+      0,
+    );
+    const weightedInterestRate =
+      totalSavingsBalance > 0
+        ? savingsAccounts.reduce(
+            (sum: number, a: any) =>
+              sum +
+              ((Number(a.balance) || 0) / totalSavingsBalance) * (Number(a.interestRate) || 0),
+            0,
+          )
+        : Number(userProfile?.savingsDefaultInterestRate) || 5.0;
+
+    // Pension accounts data
+    const pensionAccounts = Array.isArray(accounts)
+      ? accounts.filter((a: any) => a.type === "Pension")
+      : [];
+    const totalPensionBalance = pensionAccounts.reduce(
+      (sum: number, a: any) => sum + (Number(a.balance) || 0),
+      0,
+    );
+
+    // Mortgage data
+    const mortgageAccounts = Array.isArray(accounts)
+      ? accounts.filter((a: any) => a.type === "Mortgage")
+      : [];
+    const mortgageBalance = mortgageAccounts.reduce(
+      (sum: number, a: any) => sum + Math.abs(Number(a.balance) || 0),
+      0,
+    );
+
+    // Tax data
+    const currentYearRecords = Array.isArray(taxRecords) ? taxRecords : [];
+    const totalTaxIncome = currentYearRecords
+      .filter((r: any) => r.type === "income")
+      .reduce((sum: number, r: any) => sum + (Number(r.amount) || 0), 0);
+    const totalTaxExpenses = currentYearRecords
+      .filter((r: any) => r.type === "expense")
+      .reduce((sum: number, r: any) => sum + (Number(r.amount) || 0), 0);
+    const netProfit = Math.max(0, totalTaxIncome - totalTaxExpenses);
+    const estimatedTaxDue = netProfit > 0 ? netProfit * 0.29 : 0; // standard approx 20% tax + 9% Class 4 NI
+
+    // Estimated take-home
+    const takeHomeBreakdown = userProfile?.annualSalary
+      ? calculateNetTakeHome(
+          userProfile.annualSalary,
+          userProfile.employmentType,
+          userProfile.pensionPercent ?? 5,
+          userProfile.isSalarySacrifice ?? true,
+          userProfile.country || "GB",
+        )
+      : null;
+
+    const defaultRunway = calculateRunwayStats({
+      entries: budgetEntries,
+      accounts,
+      accountDetails,
+      savedSettings: null,
+    });
+
     return {
       user,
       hasAccounts: Array.isArray(accounts) && accounts.length > 0,
       hasBudget:
         completedSteps.includes("budget") ||
         (Array.isArray(budgetEntries) && budgetEntries.some((e: any) => !e.isDefault)),
-      hasSavings:
-        Array.isArray(accounts) &&
-        accounts.some((a: any) => a.type === "Saving" || a.type === "Investment"),
-      hasPension:
-        (Array.isArray(accounts) && accounts.some((a: any) => a.type === "Pension")) ||
-        completedSteps.includes("pension"),
-      hasMortgageAccount:
-        Array.isArray(accounts) && accounts.some((a: any) => a.type === "Mortgage"),
+      hasSavings: savingsAccounts.length > 0,
+      hasPension: pensionAccounts.length > 0 || completedSteps.includes("pension"),
+      hasMortgageAccount: mortgageAccounts.length > 0,
       hasProfile: !!userProfile?.annualSalary,
       hasRunForecast: completedSteps.includes("forecast"),
       completedSteps,
-      summary: {
+      accountsData: {
         netWorth: totalAssets - totalLiabilities,
         totalAssets,
         totalLiabilities,
-        monthlySurplus: monthlyIncome - monthlyExpenses,
         accountsCount: Array.isArray(accounts) ? accounts.length : 0,
+        typeTotals,
+      },
+      budgetData: {
+        monthlyIncome,
+        monthlyExpenses,
+        monthlySurplus: monthlyIncome - monthlyExpenses,
+        budgetedSavings,
+        livingExpenses,
+        savingsRatePct:
+          monthlyIncome > 0
+            ? Math.min(
+                100,
+                Math.max(0, Math.round(((monthlyIncome - livingExpenses) / monthlyIncome) * 100)),
+              )
+            : 0,
+        runwayMonths: defaultRunway.runwayMonths,
+        runwayLabel: defaultRunway.shortLabel,
+        rawEntries: budgetEntries,
+        rawAccounts: accounts,
+        rawAccountDetails: accountDetails,
+      },
+      savingsData: {
+        totalSavingsBalance,
+        totalMonthlyContributions,
+        weightedInterestRate: Number(weightedInterestRate.toFixed(2)),
+        accountsCount: savingsAccounts.length,
+      },
+      pensionData: {
+        totalPensionBalance,
+        potsCount: pensionAccounts.length,
+        employeePercent: Number(userProfile?.pensionPercent) || 5.0,
+        employerPercent: Number(userProfile?.pensionEmployerPercent) || 3.0,
+        isSalarySacrifice: userProfile?.isSalarySacrifice ?? true,
+        monthlyContributionEst: 0,
+      },
+      mortgageData: {
+        mortgageBalance,
+        interestRate: 4.5,
+        remainingTermYears: 25,
+        hasMortgageAccount: mortgageAccounts.length > 0,
+      },
+      forecastData: {
+        totalAssets,
+        monthlySavingRate: Math.max(0, monthlyIncome - livingExpenses),
+        annualSalary: userProfile?.annualSalary ?? null,
+        estimatedTakeHome: takeHomeBreakdown?.monthlyTakeHome ?? null,
+      },
+      taxData: {
+        taxYear: getCurrentUKTaxYear(),
+        totalIncome: totalTaxIncome,
+        totalExpenses: totalTaxExpenses,
+        netProfit,
+        estimatedTaxDue,
+        recordsCount: currentYearRecords.length,
       },
     };
   } catch (error) {
@@ -117,7 +276,13 @@ export const loader = async (args: LoaderFunctionArgs) => {
       hasProfile: false,
       hasRunForecast: false,
       completedSteps: [] as string[],
-      summary: null,
+      accountsData: null,
+      budgetData: null,
+      savingsData: null,
+      pensionData: null,
+      mortgageData: null,
+      forecastData: null,
+      taxData: null,
     };
   }
 };
@@ -135,8 +300,40 @@ const Index = (): ReactElement => {
     hasProfile,
     hasRunForecast,
     completedSteps,
-    summary,
+    accountsData,
+    budgetData,
+    savingsData,
+    pensionData,
+    mortgageData,
+    forecastData,
+    taxData,
   } = useLoaderData<typeof loader>();
+
+  if (user && accountsData) {
+    return (
+      <HomeDashboard
+        accountsData={accountsData}
+        budgetData={budgetData}
+        checklistProps={{
+          hasAccounts,
+          hasBudget,
+          hasMortgageAccount,
+          hasPension,
+          hasProfile,
+          hasRunForecast,
+          hasSavings,
+          hasTax: (taxData?.recordsCount ?? 0) > 0,
+          completedSteps,
+        }}
+        forecastData={forecastData}
+        mortgageData={mortgageData}
+        pensionData={pensionData}
+        savingsData={savingsData}
+        taxData={taxData}
+        user={user}
+      />
+    );
+  }
 
   const heroStyle = css({
     display: "flex",
@@ -227,163 +424,6 @@ const Index = (): ReactElement => {
 
   return (
     <FLPBox style={{ paddingTop: "24px", paddingBottom: "64px" }}>
-      {user && (
-        <div
-          className={css({
-            maxWidth: "5xl",
-            marginLeft: "auto",
-            marginRight: "auto",
-            paddingLeft: "16px",
-            paddingRight: "16px",
-            marginBottom: "40px",
-            display: "flex",
-            flexDirection: "column",
-            gap: "24px",
-          })}
-        >
-          {summary && (
-            <div
-              className={css({
-                display: "grid",
-                gridTemplateColumns: { base: "1fr", md: "repeat(3, 1fr)" },
-                gap: "16px",
-              })}
-            >
-              <RouterLink
-                to="/app/accounts"
-                className={css({
-                  textDecoration: "none",
-                  padding: "20px",
-                  borderRadius: "xl",
-                  border: "1px solid",
-                  borderColor: "primary",
-                  backgroundColor: "rgba(99, 99, 241, 0.06)",
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: "6px",
-                  transition: "transform 0.2s ease",
-                  _hover: { transform: "translateY(-2px)" },
-                })}
-              >
-                <FLPText
-                  color="text.muted"
-                  fontSize="xs"
-                  fontWeight="semibold"
-                  textTransform="uppercase"
-                >
-                  Net Worth ({summary.accountsCount} accounts)
-                </FLPText>
-                <FLPHeading
-                  as="h2"
-                  color={summary.netWorth >= 0 ? "success.500" : "destructive.500"}
-                  size="2xl"
-                >
-                  {formatCurrency(summary.netWorth)}
-                </FLPHeading>
-                <FLPText
-                  color="primary"
-                  fontSize="xs"
-                  fontWeight="semibold"
-                  style={{ display: "flex", alignItems: "center", gap: "4px", marginTop: "4px" }}
-                >
-                  View Accounts <FiArrowRight />
-                </FLPText>
-              </RouterLink>
-
-              <RouterLink
-                to="/app/budget"
-                className={css({
-                  textDecoration: "none",
-                  padding: "20px",
-                  borderRadius: "xl",
-                  border: "1px solid",
-                  borderColor: "border",
-                  backgroundColor: "surface",
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: "6px",
-                  transition: "all 0.2s ease",
-                  _hover: { transform: "translateY(-2px)", borderColor: "primary" },
-                })}
-              >
-                <FLPText
-                  color="text.muted"
-                  fontSize="xs"
-                  fontWeight="semibold"
-                  textTransform="uppercase"
-                >
-                  {summary.monthlySurplus >= 0 ? "Monthly Surplus" : "Monthly Deficit"}
-                </FLPText>
-                <FLPHeading
-                  as="h2"
-                  color={summary.monthlySurplus >= 0 ? "success.500" : "destructive.500"}
-                  size="2xl"
-                >
-                  {summary.monthlySurplus >= 0 ? "+" : "-"}
-                  {formatCurrency(Math.abs(summary.monthlySurplus))}/mo
-                </FLPHeading>
-                <FLPText
-                  color="primary"
-                  fontSize="xs"
-                  fontWeight="semibold"
-                  style={{ display: "flex", alignItems: "center", gap: "4px", marginTop: "4px" }}
-                >
-                  Open Budget Planner <FiArrowRight />
-                </FLPText>
-              </RouterLink>
-
-              <RouterLink
-                to="/app/forecast"
-                className={css({
-                  textDecoration: "none",
-                  padding: "20px",
-                  borderRadius: "xl",
-                  border: "1px solid",
-                  borderColor: "border",
-                  backgroundColor: "surface",
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: "6px",
-                  transition: "all 0.2s ease",
-                  _hover: { transform: "translateY(-2px)", borderColor: "primary" },
-                })}
-              >
-                <FLPText
-                  color="text.muted"
-                  fontSize="xs"
-                  fontWeight="semibold"
-                  textTransform="uppercase"
-                >
-                  Total Assets
-                </FLPText>
-                <FLPHeading as="h2" color="blue.500" size="2xl">
-                  {formatCurrency(summary.totalAssets)}
-                </FLPHeading>
-                <FLPText
-                  color="primary"
-                  fontSize="xs"
-                  fontWeight="semibold"
-                  style={{ display: "flex", alignItems: "center", gap: "4px", marginTop: "4px" }}
-                >
-                  Forecast Growth <FiArrowRight />
-                </FLPText>
-              </RouterLink>
-            </div>
-          )}
-
-          <SetupChecklist
-            completedSteps={completedSteps}
-            hasAccounts={hasAccounts}
-            hasBudget={hasBudget}
-            hasMortgageAccount={hasMortgageAccount}
-            hasProfile={hasProfile}
-            hasRunForecast={hasRunForecast}
-            hasSavings={hasSavings}
-            hasPension={hasPension}
-          />
-        </div>
-      )}
-
       {/* Hero Section */}
       <div className={heroStyle}>
         <span className={badgeStyle}>✨ Introducing Flump 1.22</span>
@@ -395,33 +435,16 @@ const Index = (): ReactElement => {
           unified dashboard. Track monthly changes, visualize trends, and reach your goals.
         </FLPText>
         <div className={stackStyle}>
-          {user ? (
-            <>
-              <FLPButton size="lg">
-                <RouterLink style={{ color: "inherit", textDecoration: "none" }} to="/app/accounts">
-                  {t("accounts")}
-                </RouterLink>
-              </FLPButton>
-              <FLPButton size="lg" variant="outline">
-                <RouterLink style={{ color: "inherit", textDecoration: "none" }} to="/app/budget">
-                  Budget Planner
-                </RouterLink>
-              </FLPButton>
-            </>
-          ) : (
-            <>
-              <FLPButton size="lg">
-                <RouterLink style={{ color: "inherit", textDecoration: "none" }} to="/signUp">
-                  {t("signUp")}
-                </RouterLink>
-              </FLPButton>
-              <FLPButton size="lg" variant="outline">
-                <RouterLink style={{ color: "inherit", textDecoration: "none" }} to="/login">
-                  {t("logIn")}
-                </RouterLink>
-              </FLPButton>
-            </>
-          )}
+          <FLPButton size="lg">
+            <RouterLink style={{ color: "inherit", textDecoration: "none" }} to="/signUp">
+              {t("signUp")}
+            </RouterLink>
+          </FLPButton>
+          <FLPButton size="lg" variant="outline">
+            <RouterLink style={{ color: "inherit", textDecoration: "none" }} to="/login">
+              {t("logIn")}
+            </RouterLink>
+          </FLPButton>
         </div>
       </div>
 

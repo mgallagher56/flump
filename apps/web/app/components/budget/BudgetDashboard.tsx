@@ -10,7 +10,11 @@ import { useResponsive } from "~/context/ResponsiveContext";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
 import type { BudgetCategory, BudgetEntry } from "~/types/budget";
 import { CATEGORY_COLOURS, CATEGORY_ICONS, CATEGORY_LABELS, toMonthly } from "~/types/budget";
-import { loadRunwaySettings, type RunwaySavedSettings } from "~/utils/runwayStorage";
+import {
+  calculateRunwayStats,
+  loadRunwaySettings,
+  type RunwaySavedSettings,
+} from "~/utils/runwayStorage";
 
 interface Account {
   id: string;
@@ -35,6 +39,8 @@ export interface BudgetDashboardProps {
   onNavigateToCategory: (cat: BudgetCategory) => void;
   onNavigateToRunway: () => void;
   runwaySettings?: RunwaySavedSettings | null;
+  customCategories?: string[];
+  onAddSuggestedDefaults?: () => void;
   isMobile?: boolean;
   variant?: "desktop" | "mobile";
 }
@@ -49,6 +55,8 @@ const BudgetDashboard: FC<BudgetDashboardProps> = ({
   onNavigateToCategory,
   onNavigateToRunway,
   runwaySettings,
+  customCategories = [],
+  onAddSuggestedDefaults,
   isMobile: propIsMobile,
   variant = "desktop",
 }) => {
@@ -61,16 +69,31 @@ const BudgetDashboard: FC<BudgetDashboardProps> = ({
     return { income, expenses, surplus: income - expenses };
   }, [entries]);
 
+  const expenseCategories = useMemo(() => {
+    const set = new Set<string>(EXPENSE_CATEGORIES);
+    if (customCategories && customCategories.length > 0) {
+      customCategories.forEach((c) => {
+        const catEntries = entries.filter((e) => e.category === c);
+        const isPureIncome = catEntries.length > 0 && catEntries.every((e) => e.isIncome);
+        if (!isPureIncome) set.add(c);
+      });
+    }
+    entries.forEach((e) => {
+      if (!e.isIncome && e.category) set.add(e.category);
+    });
+    return Array.from(set);
+  }, [customCategories, entries]);
+
   const categoryTotals = useMemo(() => {
-    return EXPENSE_CATEGORIES.map((cat) => ({
+    return expenseCategories.map((cat) => ({
       cat,
-      label: CATEGORY_LABELS[cat],
-      colour: CATEGORY_COLOURS[cat],
-      icon: CATEGORY_ICONS[cat],
+      label: CATEGORY_LABELS[cat] || cat,
+      colour: CATEGORY_COLOURS[cat] || "#6363f1",
+      icon: CATEGORY_ICONS[cat] || "📁",
       total: entries.filter((e) => e.category === cat).reduce((s, e) => s + toMonthly(e), 0),
       count: entries.filter((e) => e.category === cat).length,
     }));
-  }, [entries]);
+  }, [expenseCategories, entries]);
 
   const pieData = categoryTotals.filter((d) => d.total > 0);
 
@@ -90,66 +113,12 @@ const BudgetDashboard: FC<BudgetDashboardProps> = ({
     const activeSettings =
       runwaySettings ?? (typeof window !== "undefined" ? loadRunwaySettings() : null);
 
-    let pool = savingsBalance;
-    if (activeSettings?.includedAccounts && accounts && accounts.length > 0) {
-      pool =
-        accounts
-          .filter((a) => {
-            const t = a.type?.toLowerCase().trim();
-            const isLiquid =
-              t === "current" ||
-              t === "saving" ||
-              t === "savings" ||
-              t === "investment" ||
-              t === "investments";
-            if (!isLiquid) return false;
-            return activeSettings.includedAccounts[a.id] !== false;
-          })
-          .reduce((sum, a) => {
-            const details = (accountDetails || [])
-              .filter((d: any) => (d.account_id || d.accountId) === a.id)
-              .sort((x, y) => (x.year !== y.year ? y.year - x.year : y.month - x.month));
-            const latestVal = details.length > 0 ? Number(details[0].value) : 0;
-            const bal =
-              Number.isFinite(latestVal) && latestVal > 0 ? latestVal : Number(a.balance) || 0;
-            return sum + bal;
-          }, 0) + (activeSettings.severanceLump || 0);
-    }
-
-    const nonPrimaryIncome = entries
-      .filter((e) => {
-        if (!e.isIncome || e.isPrimaryIncome) return false;
-        if (activeSettings?.keptIncome) {
-          return activeSettings.keptIncome[e.id] !== false;
-        }
-        return true;
-      })
-      .reduce((s, e) => s + toMonthly(e), 0);
-
-    const expenses = entries
-      .filter((e) => {
-        if (e.isIncome) return false;
-        if (activeSettings?.keptExpenses) {
-          return !!activeSettings.keptExpenses[e.id];
-        }
-        return e.isEssential;
-      })
-      .reduce((s, e) => s + toMonthly(e), 0);
-
-    const extraCut = activeSettings?.extraMonthlyCut || 0;
-    const monthlyBurn = Math.max(0, expenses - nonPrimaryIncome - extraCut);
-    const runwayMonths = monthlyBurn > 0 ? pool / monthlyBurn : Number.POSITIVE_INFINITY;
-
-    const years = Math.floor(runwayMonths / 12);
-    const months = Math.floor(runwayMonths % 12);
-    const runwayLabel =
-      monthlyBurn === 0
-        ? "Infinite (No burn)"
-        : runwayMonths > 120
-          ? `${Math.floor(runwayMonths / 12)}+ years`
-          : years > 0
-            ? `${years} yr${years !== 1 ? "s" : ""} ${months} mo${months !== 1 ? "s" : ""}`
-            : `${Math.floor(runwayMonths)} months`;
+    const stats = calculateRunwayStats({
+      entries,
+      accounts,
+      accountDetails,
+      savedSettings: activeSettings,
+    });
 
     const getStatus = (m: number) => {
       if (m < 3)
@@ -161,20 +130,21 @@ const BudgetDashboard: FC<BudgetDashboardProps> = ({
       return { colour: "#10b981", bg: "rgba(16, 185, 129, 0.1)", label: "Healthy", emoji: "🟢" };
     };
 
-    const status = monthlyBurn === 0 ? getStatus(999) : getStatus(runwayMonths);
+    const runwayMonths = stats.runwayMonths ?? Number.POSITIVE_INFINITY;
+    const status = stats.monthlyBurn === 0 ? getStatus(999) : getStatus(runwayMonths);
     const displayMax = 24;
     const barPct = Math.min((runwayMonths / displayMax) * 100, 100);
 
     return {
-      monthlyBurn,
+      monthlyBurn: stats.monthlyBurn,
       runwayMonths,
-      runwayLabel,
+      runwayLabel: stats.runwayLabel,
       status,
       barPct,
       displayMax,
-      pool,
+      pool: stats.pool,
     };
-  }, [entries, savingsBalance, accounts, accountDetails, runwaySettings]);
+  }, [entries, accounts, accountDetails, runwaySettings]);
 
   const cardBase = css({
     display: "flex",
@@ -196,6 +166,44 @@ const BudgetDashboard: FC<BudgetDashboardProps> = ({
       })}
       data-variant={isMobileVariant ? "mobile" : "desktop"}
     >
+      {/* Empty State Banner */}
+      {entries.length === 0 && (
+        <div
+          id="budget-empty-state-banner"
+          className={css({
+            padding: isMobileVariant ? "16px" : "20px 24px",
+            borderRadius: "lg",
+            border: "1px dashed",
+            borderColor: "primary",
+            backgroundColor: "rgba(99,99,241,0.06)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            flexWrap: "wrap",
+            gap: "16px",
+          })}
+        >
+          <div>
+            <FLPHeading as="h3" size="sm">
+              Your budget has no entries yet
+            </FLPHeading>
+            <FLPText color="text.muted" fontSize="sm">
+              Start building your budget from scratch or load our suggested defaults to get started.
+            </FLPText>
+          </div>
+          {onAddSuggestedDefaults && (
+            <FLPButton
+              id="empty-state-add-defaults-btn"
+              size="sm"
+              variant="outline"
+              onClick={onAddSuggestedDefaults}
+            >
+              Add Suggested Defaults
+            </FLPButton>
+          )}
+        </div>
+      )}
+
       {/* Top KPI row */}
       <div
         className={css({
@@ -227,7 +235,7 @@ const BudgetDashboard: FC<BudgetDashboardProps> = ({
             {fmt(totals.expenses)}
           </FLPHeading>
           <FLPText color="text.muted" fontSize="xs">
-            across {EXPENSE_CATEGORIES.length} categories
+            across {expenseCategories.length} categories
           </FLPText>
         </div>
 

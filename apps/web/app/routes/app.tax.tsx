@@ -106,6 +106,19 @@ export const action = async (args: ActionFunctionArgs) => {
         },
       });
       if (!res.ok) throw new Error("Failed to delete tax record");
+    } else if (intent === "bulk-create-transactions") {
+      const recordsJson = formData.get("records") as string;
+      const capPreviousJson = formData.get("capPreviousRecordIds") as string | null;
+
+      const records = recordsJson ? JSON.parse(recordsJson) : [];
+      const capPreviousRecordIds = capPreviousJson ? JSON.parse(capPreviousJson) : [];
+
+      const res = await fetch(`${apiUrl}/tax-records/bulk`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({ records, capPreviousRecordIds }),
+      });
+      if (!res.ok) throw new Error("Failed to bulk create tax records");
     }
     return data({ success: true });
   } catch (error) {
@@ -120,9 +133,10 @@ export const loader = async (args: LoaderFunctionArgs) => {
   const headers = { Authorization: `Bearer ${accessToken || "mock-session-token"}` };
 
   try {
-    const [recordsRes, profileRes] = await Promise.all([
+    const [recordsRes, profileRes, accountsRes] = await Promise.all([
       fetch(`${apiUrl}/tax-records`, { headers }),
       fetch(`${apiUrl}/user-profile`, { headers }),
+      fetch(`${apiUrl}/accounts`, { headers }),
     ]);
 
     if (!recordsRes.ok || !profileRes.ok) {
@@ -131,13 +145,15 @@ export const loader = async (args: LoaderFunctionArgs) => {
 
     const records = await recordsRes.json();
     const userProfile = await profileRes.json();
+    const accounts = accountsRes.ok ? await accountsRes.json() : [];
 
-    return data({ records, userProfile, user });
+    return data({ records, userProfile, accounts, user });
   } catch (error) {
     console.error("Tax route loader error:", error);
     return data({
       records: [],
       userProfile: null,
+      accounts: [],
       user,
     });
   }

@@ -26,6 +26,8 @@ export const UserAvatar: FC<UserAvatarProps> = ({
 
   const initials = resolveUserInitials({
     displayName: effectiveProfile?.displayName,
+    firstName: effectiveProfile?.firstName,
+    lastName: effectiveProfile?.lastName,
     user,
   });
 

@@ -18,6 +18,8 @@ import NavMenu, { type NavRouteItem } from "~/components/navigation/NavMenu";
 import ThemeToggle from "~/components/navigation/ThemeToggle";
 import UserAvatar from "~/components/navigation/UserAvatar";
 import UserLogin from "~/components/navigation/UserLogin";
+import { useUserProfile } from "~/hooks/useUserProfile";
+import { isPageEnabled } from "~/utils/pageConfig";
 
 export interface MobileNavDrawerProps {
   isOpen: boolean;
@@ -115,6 +117,7 @@ const profileLinkStyle = css({
 
 const MobileNavDrawer: FC<MobileNavDrawerProps> = ({ isOpen, onClose, user }) => {
   const [mounted, setMounted] = useState(false);
+  const { profile } = useUserProfile();
 
   useEffect(() => {
     setMounted(true);
@@ -122,9 +125,10 @@ const MobileNavDrawer: FC<MobileNavDrawerProps> = ({ isOpen, onClose, user }) =>
 
   if (!isOpen) return null;
 
+  const enabled = profile.enabledPages || [];
   const baseRoutes: NavRouteItem[] = [{ key: "home", route: "/", icon: <FaHome size={18} /> }];
 
-  const authRoutes: NavRouteItem[] = user
+  const rawAuthRoutes: NavRouteItem[] = user
     ? [
         { key: "budget", route: "/app/budget", icon: <FaWallet size={18} /> },
         { key: "accounts", route: "/app/accounts", icon: <FaUniversity size={18} /> },
@@ -145,6 +149,21 @@ const MobileNavDrawer: FC<MobileNavDrawerProps> = ({ isOpen, onClose, user }) =>
         },
       ]
     : [];
+
+  const authRoutes = rawAuthRoutes
+    .map((item) => {
+      if (item.children) {
+        return {
+          ...item,
+          children: item.children.filter((child) => isPageEnabled(enabled, child.key as any)),
+        };
+      }
+      return item;
+    })
+    .filter((item) => {
+      if (item.children) return item.children.length > 0;
+      return isPageEnabled(enabled, item.key as any);
+    });
 
   const drawerContent = (
     <>

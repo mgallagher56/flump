@@ -33,6 +33,8 @@ export function getUserInitials(nameOrEmail?: string | null): string {
  */
 export function resolveUserInitials(options: {
   displayName?: string | null;
+  firstName?: string | null;
+  lastName?: string | null;
   user?: {
     firstName?: string | null;
     lastName?: string | null;
@@ -46,10 +48,20 @@ export function resolveUserInitials(options: {
     };
   } | null;
 }): string {
-  const { displayName, user } = options;
+  const { displayName, firstName: optFirst, lastName: optLast, user } = options;
 
   if (displayName?.trim()) {
     return getUserInitials(displayName);
+  }
+
+  const explicitFirst = optFirst?.trim();
+  const explicitLast = optLast?.trim();
+  if (explicitFirst || explicitLast) {
+    if (explicitFirst && explicitLast) {
+      return `${explicitFirst[0]}${explicitLast[0]}`.toUpperCase();
+    }
+    if (explicitFirst) return getUserInitials(explicitFirst);
+    if (explicitLast) return getUserInitials(explicitLast);
   }
 
   if (user) {

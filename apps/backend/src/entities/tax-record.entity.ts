@@ -18,7 +18,7 @@ export class TaxRecord {
   type: "income" | "expense";
 
   @Column({ type: "varchar" })
-  source: "self-employed" | "rental";
+  source: "paye" | "self-employed" | "rental" | "savings";
 
   @Column({ type: "varchar" })
   category: string;

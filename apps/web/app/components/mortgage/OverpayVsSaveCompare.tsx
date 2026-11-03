@@ -12,6 +12,7 @@ interface OverpayVsSaveCompareProps {
   interestRate: number; // Mortgage Rate
   remainingTerm: number;
   overpayment: number; // Monthly budget
+  mortgageType?: "repayment" | "interest-only";
 }
 
 const OverpayVsSaveCompare: FC<OverpayVsSaveCompareProps> = ({
@@ -19,8 +20,10 @@ const OverpayVsSaveCompare: FC<OverpayVsSaveCompareProps> = ({
   interestRate,
   remainingTerm,
   overpayment,
+  mortgageType = "repayment",
 }) => {
   const { formatCurrency } = useFormatCurrency();
+  const isInterestOnly = mortgageType === "interest-only";
   const [savingsRate, setSavingsRate] = useState<number>(4.8); // Default 4.8% savings ROI
   const [taxBracket, setTaxBracket] = useState<string>("isa"); // 'isa' (0%), 'basic' (20%), 'higher' (40%), 'additional' (45%)
   const [horizonYears, setHorizonYears] = useState<number>(10); // Simulation horizon default 10 years
@@ -52,8 +55,12 @@ const OverpayVsSaveCompare: FC<OverpayVsSaveCompareProps> = ({
     // Monthly scheduled mortgage payment
     let monthlyScheduled = 0;
     if (loanAmount > 0 && interestRate > 0 && remainingTerm > 0) {
-      const n = remainingTerm * 12;
-      monthlyScheduled = (loanAmount * im * (1 + im) ** n) / ((1 + im) ** n - 1);
+      if (isInterestOnly) {
+        monthlyScheduled = loanAmount * im;
+      } else {
+        const n = remainingTerm * 12;
+        monthlyScheduled = (loanAmount * im * (1 + im) ** n) / ((1 + im) ** n - 1);
+      }
     }
     if (Number.isNaN(monthlyScheduled) || !Number.isFinite(monthlyScheduled)) {
       monthlyScheduled = 0;
@@ -61,22 +68,40 @@ const OverpayVsSaveCompare: FC<OverpayVsSaveCompareProps> = ({
 
     // 1. Amortize Standard Mortgage
     let standardBalance = loanAmount;
+    let standardCumulativeInterest = 0;
     for (let m = 1; m <= totalMonths; m++) {
       const interest = standardBalance * im;
-      const principal = Math.min(standardBalance, monthlyScheduled - interest);
-      standardBalance = Math.max(0, standardBalance - principal);
+      standardCumulativeInterest += interest;
+      if (!isInterestOnly) {
+        const principal = Math.min(standardBalance, monthlyScheduled - interest);
+        standardBalance = Math.max(0, standardBalance - principal);
+      }
     }
 
     // 2. Amortize Overpayment Mortgage
     let overpayBalance = loanAmount;
+    let overpayCumulativeInterest = 0;
     for (let m = 1; m <= totalMonths; m++) {
       const interest = overpayBalance * im;
-      const principal = Math.min(overpayBalance, monthlyScheduled + overpayment - interest);
-      overpayBalance = Math.max(0, overpayBalance - principal);
+      overpayCumulativeInterest += interest;
+      if (isInterestOnly) {
+        const principal = Math.min(overpayBalance, overpayment);
+        overpayBalance = Math.max(0, overpayBalance - principal);
+      } else {
+        const principal = Math.min(overpayBalance, monthlyScheduled + overpayment - interest);
+        overpayBalance = Math.max(0, overpayBalance - principal);
+      }
     }
 
     // Debt reduction = Standard Balance - Overpay Balance
-    const debtReduction = Math.max(0, standardBalance - overpayBalance);
+    const principalReduced = Math.max(0, standardBalance - overpayBalance);
+    const cumulativeInterestSaved = Math.max(
+      0,
+      standardCumulativeInterest - overpayCumulativeInterest,
+    );
+    const debtReduction = isInterestOnly
+      ? principalReduced + cumulativeInterestSaved
+      : principalReduced;
 
     // 3. Savings Account Accumulation
     let savingsBalance = 0;
@@ -85,7 +110,9 @@ const OverpayVsSaveCompare: FC<OverpayVsSaveCompareProps> = ({
     }
 
     const totalInvested = overpayment * totalMonths;
-    const mortgageInterestSaved = Math.max(0, debtReduction - totalInvested);
+    const mortgageInterestSaved = isInterestOnly
+      ? cumulativeInterestSaved
+      : Math.max(0, debtReduction - totalInvested);
     const savingsInterestEarned = Math.max(0, savingsBalance - totalInvested);
 
     const difference = Math.abs(debtReduction - savingsBalance);
@@ -101,7 +128,15 @@ const OverpayVsSaveCompare: FC<OverpayVsSaveCompareProps> = ({
       isOverpayBetter,
       actualHorizon: H,
     };
-  }, [loanAmount, interestRate, remainingTerm, overpayment, netSavingsRate, horizonYears]);
+  }, [
+    loanAmount,
+    interestRate,
+    remainingTerm,
+    overpayment,
+    netSavingsRate,
+    horizonYears,
+    isInterestOnly,
+  ]);
 
   const {
     debtReduction,

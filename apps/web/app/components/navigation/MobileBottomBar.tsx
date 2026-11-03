@@ -10,6 +10,8 @@ import {
 } from "react-icons/fa";
 import { NavLink } from "react-router";
 import { useResponsive } from "~/context/ResponsiveContext";
+import { useUserProfile } from "~/hooks/useUserProfile";
+import { isPageEnabled } from "~/utils/pageConfig";
 
 export interface MobileBottomBarProps {
   user?: unknown;
@@ -69,12 +71,14 @@ const activeTabStyle = css({
 const MobileBottomBar: FC<MobileBottomBarProps> = ({ user, isMobile, onMoreClick }) => {
   const { t } = useTranslation();
   const { toggleMobileDrawer, isMobileDrawerOpen } = useResponsive();
+  const { profile } = useUserProfile();
 
   if (!user) return null;
 
   const handleMore = onMoreClick || toggleMobileDrawer;
+  const enabled = profile.enabledPages || [];
 
-  const tabs = [
+  const rawTabs = [
     {
       key: "budget",
       label: t("budget", "Budget"),
@@ -100,6 +104,8 @@ const MobileBottomBar: FC<MobileBottomBarProps> = ({ user, isMobile, onMoreClick
       icon: <FaFileInvoiceDollar size={18} />,
     },
   ];
+
+  const tabs = rawTabs.filter((tab) => isPageEnabled(enabled, tab.key as any));
 
   return (
     <nav

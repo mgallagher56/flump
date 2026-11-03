@@ -1,5 +1,5 @@
 import { css } from "@repo/ui/styled-system/css";
-import type { FC } from "react";
+import { type FC, useState } from "react";
 import { FaCalendarAlt, FaHome, FaInfoCircle, FaPercentage } from "react-icons/fa";
 import FLPCard from "~/components/core/cards/FLPCard";
 import FLPHeading from "~/components/core/typography/FLPHeading";
@@ -17,6 +17,8 @@ export interface MortgageTrackerProps {
   mortgageAccounts: any[];
   selectedAccountId: string | null;
   onSelectAccount: (id: string | null) => void;
+  mortgageType?: "repayment" | "interest-only";
+  onMortgageTypeChange?: (val: "repayment" | "interest-only") => void;
   isMobile?: boolean;
   variant?: "desktop" | "mobile";
 }
@@ -31,24 +33,50 @@ const MortgageTracker: FC<MortgageTrackerProps> = ({
   mortgageAccounts,
   selectedAccountId,
   onSelectAccount,
+  mortgageType: propMortgageType,
+  onMortgageTypeChange,
   isMobile: propIsMobile,
   variant = "desktop",
 }) => {
   const { formatCurrency } = useFormatCurrency();
   const { isMobile: contextIsMobile } = useResponsive();
   const isMobileVariant = propIsMobile ?? (variant === "mobile" ? true : contextIsMobile);
+
+  const [internalMortgageType, setInternalMortgageType] = useState<"repayment" | "interest-only">(
+    "repayment",
+  );
+  const currentMortgageType = propMortgageType ?? internalMortgageType;
+
+  const handleMortgageTypeChange = (type: "repayment" | "interest-only") => {
+    if (onMortgageTypeChange) {
+      onMortgageTypeChange(type);
+    } else {
+      setInternalMortgageType(type);
+    }
+  };
+
   // Monthly Payment calculation
-  // M = P [ i(1+i)^n ] / [ (1+i)^n - 1 ]
+  // Repayment: M = P [ i(1+i)^n ] / [ (1+i)^n - 1 ]
+  // Interest Only: M = P * i
   const monthlyPayment = (() => {
     if (loanAmount <= 0 || interestRate <= 0 || remainingTerm <= 0) return 0;
     const i = interestRate / 100 / 12;
+    if (currentMortgageType === "interest-only") {
+      const payment = loanAmount * i;
+      return Number.isNaN(payment) || !Number.isFinite(payment) ? 0 : payment;
+    }
     const n = remainingTerm * 12;
     const payment = (loanAmount * i * (1 + i) ** n) / ((1 + i) ** n - 1);
     return Number.isNaN(payment) || !Number.isFinite(payment) ? 0 : payment;
   })();
 
-  const totalPaid = monthlyPayment * remainingTerm * 12;
-  const totalInterest = Math.max(0, totalPaid - loanAmount);
+  const isInterestOnly = currentMortgageType === "interest-only";
+  const totalInterest = isInterestOnly
+    ? monthlyPayment * remainingTerm * 12
+    : Math.max(0, monthlyPayment * remainingTerm * 12 - loanAmount);
+  const totalPaid = isInterestOnly
+    ? totalInterest + loanAmount
+    : monthlyPayment * remainingTerm * 12;
   const interestPercentage = totalPaid > 0 ? (totalInterest / totalPaid) * 100 : 0;
 
   const gridLayout = css({
@@ -202,6 +230,55 @@ const MortgageTracker: FC<MortgageTrackerProps> = ({
           Mortgage Information
         </FLPHeading>
 
+        {/* Mortgage Type Selector (Repayment vs Interest-Only) */}
+        <div className={inputGroupStyle}>
+          <FLPText fontSize="xs" fontWeight="semibold" textTransform="uppercase">
+            Mortgage Repayment Structure
+          </FLPText>
+          <div className={css({ display: "flex", gap: "8px" })}>
+            <button
+              type="button"
+              className={css({
+                flex: 1,
+                padding: "8px 12px",
+                borderRadius: "sm",
+                border: "1px solid",
+                borderColor: currentMortgageType === "repayment" ? "primary" : "border",
+                backgroundColor:
+                  currentMortgageType === "repayment" ? "rgba(99, 102, 241, 0.08)" : "surface",
+                color: currentMortgageType === "repayment" ? "primary" : "text.primary",
+                fontSize: "xs",
+                fontWeight: "semibold",
+                cursor: "pointer",
+                transition: "all 0.2s",
+              })}
+              onClick={() => handleMortgageTypeChange("repayment")}
+            >
+              Repayment
+            </button>
+            <button
+              type="button"
+              className={css({
+                flex: 1,
+                padding: "8px 12px",
+                borderRadius: "sm",
+                border: "1px solid",
+                borderColor: currentMortgageType === "interest-only" ? "primary" : "border",
+                backgroundColor:
+                  currentMortgageType === "interest-only" ? "rgba(99, 102, 241, 0.08)" : "surface",
+                color: currentMortgageType === "interest-only" ? "primary" : "text.primary",
+                fontSize: "xs",
+                fontWeight: "semibold",
+                cursor: "pointer",
+                transition: "all 0.2s",
+              })}
+              onClick={() => handleMortgageTypeChange("interest-only")}
+            >
+              Interest Only
+            </button>
+          </div>
+        </div>
+
         {/* Sync with bank accounts */}
         {mortgageAccounts.length > 0 && (
           <div className={inputGroupStyle}>
@@ -343,7 +420,7 @@ const MortgageTracker: FC<MortgageTrackerProps> = ({
               textTransform="uppercase"
               color="text.muted"
             >
-              Monthly Payment
+              {isInterestOnly ? "Monthly Payment (Interest)" : "Monthly Payment"}
             </FLPText>
             <FLPHeading as="h4" color="primary" mt={1} size="lg">
               {formatCurrency(monthlyPayment)}/mo
@@ -363,6 +440,42 @@ const MortgageTracker: FC<MortgageTrackerProps> = ({
               {formatCurrency(totalInterest)}
             </FLPHeading>
           </div>
+
+          {isInterestOnly && (
+            <div
+              className={statCard(false)}
+              style={{
+                gridColumn: "1 / -1",
+                backgroundColor: "rgba(245, 158, 11, 0.05)",
+                borderColor: "rgba(245, 158, 11, 0.3)",
+              }}
+            >
+              <div
+                style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}
+              >
+                <div>
+                  <FLPText
+                    fontSize="xs"
+                    fontWeight="semibold"
+                    textTransform="uppercase"
+                    color="warning.500"
+                  >
+                    Principal Bullet Due at Term End
+                  </FLPText>
+                  <FLPHeading as="h4" color="warning.500" mt={1} size="md">
+                    {formatCurrency(loanAmount)}
+                  </FLPHeading>
+                </div>
+                <FLPText
+                  fontSize="xs"
+                  color="text.muted"
+                  style={{ maxWidth: "260px", textAlign: "right" }}
+                >
+                  100% of principal remains outstanding at term completion.
+                </FLPText>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Cost Visualizer */}
@@ -384,11 +497,15 @@ const MortgageTracker: FC<MortgageTrackerProps> = ({
           <div style={{ display: "flex", gap: "16px", marginTop: "12px" }}>
             <div className={legendItem}>
               <div className={legendDot("var(--colors-primary)")} />
-              <span>Principal: {formatCurrency(loanAmount)}</span>
+              <span>
+                {isInterestOnly
+                  ? `Capital Repayment Due: ${formatCurrency(loanAmount)}`
+                  : `Principal Repaid: ${formatCurrency(loanAmount)}`}
+              </span>
             </div>
             <div className={legendItem}>
               <div className={legendDot("#ef4444")} />
-              <span>Interest: {formatCurrency(totalInterest)}</span>
+              <span>Interest Paid: {formatCurrency(totalInterest)}</span>
             </div>
           </div>
         </div>
@@ -416,10 +533,23 @@ const MortgageTracker: FC<MortgageTrackerProps> = ({
             })}
           />
           <FLPText fontSize="xs" color="text.muted" style={{ lineHeight: "1.5" }}>
-            Over the course of {remainingTerm} years, you will pay a total of{" "}
-            <strong>{formatCurrency(totalPaid)}</strong>. To save money, you can use the{" "}
-            <strong>Overpayment Simulator</strong> tab to see how extra payments reduce your overall
-            interest burden.
+            {isInterestOnly ? (
+              <>
+                Under an <strong>Interest-Only</strong> agreement over {remainingTerm} years, you
+                will pay <strong>{formatCurrency(totalInterest)}</strong> in interest fees. The
+                original loan principal of <strong>{formatCurrency(loanAmount)}</strong> remains
+                payable in full at term end. Check the <strong>Overpayment Simulator</strong> to see
+                how extra capital repayments reduce your monthly interest and bullet balance.
+              </>
+            ) : (
+              <>
+                Over the course of {remainingTerm} years, you will pay a total of{" "}
+                <strong>{formatCurrency(totalPaid)}</strong> ({formatCurrency(loanAmount)} principal
+                + {formatCurrency(totalInterest)} interest). To save money, use the{" "}
+                <strong>Overpayment Simulator</strong> tab to see how extra payments reduce your
+                overall interest burden.
+              </>
+            )}
           </FLPText>
         </div>
       </FLPCard>

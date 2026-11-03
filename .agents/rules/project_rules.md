@@ -54,6 +54,8 @@ Flump is a monorepo managed with Turborepo (`turbo`) and Bun.
   - Use React 19's built-in Form Actions (`useActionState`, `useFormStatus`, `useOptimistic`) for server-client forms to avoid boilerplate loading/pending state tracking.
 - **Data Loading**: Avoid "client-side fetching waterfalls". Fetch data in React Router v7 `loader` functions on the server side instead of running `useEffect` fetches on the client.
 - **Atomic State (Jotai)**: Keep Jotai atoms atomic. Avoid giant store-like atoms. Instead, use small, focused atoms and derive state using read-only atoms or utility functions (`selectAtom`, `splitAtom`).
+  - **DataRouter-Safe Hooks**: Hooks that only read atom state (e.g., `useFormatCurrency`) must read `useAtomValue(userProfileAtom)` directly rather than calling `useUserProfile()`, and any call to `useRouteLoaderData("root")` in shared hooks must be wrapped in a `try/catch` fallback so unit tests rendered outside a Data Router do not throw.
+  - **Multi-Currency Formatting**: Never hardcode `£` or `toLocaleString("en-GB")` in UI components. Always use the `useFormatCurrency()` hook (`formatCurrency`, `formatCurrencyDecimal`, `symbol`).
 
 ### 4. Modern Technology Paradigms
 
@@ -61,6 +63,7 @@ Flump is a monorepo managed with Turborepo (`turbo`) and Bun.
   - Implement routes using the new React Router v7 config-based flat routes routing schema.
   - Use loaders and actions properly to handle GET and POST/PUT/DELETE flows.
   - Return responses using the `data` helper when custom headers/status codes are needed.
+  - Use `useRevalidator().revalidate()` instead of `window.location.reload()` to refresh route data after modal/wizard mutations.
 - **TypeORM Queries**: Ensure all TypeORM queries are optimized. Avoid N+1 queries by pre-fetching relations using relations configurations or QueryBuilder joins.
 
 ### 5. Accessibility (A11y) & Semantics
@@ -133,6 +136,7 @@ Flump is a monorepo managed with Turborepo (`turbo`) and Bun.
   - A clear action label describing what the user should do
   - A completion condition (how we detect the step is done)
   - A navigation target or dialog trigger to initiate setup
+- **Avoid Auto-Seed False Positives**: Because backend endpoints (such as `GET /budget-entries`) auto-seed default rows (`isDefault: true`), completion conditions must check `setupChecklistCompletedSteps` or filter out `isDefault` records so brand-new users do not see steps pre-completed.
 - **Backend Tracking**: If the new feature has setup state that should persist across sessions, add the step key to the `UserProfile.setupChecklistCompletedSteps` enum or array.
 
 ### 14. Financial Calculators & Interactive Controls
@@ -197,6 +201,8 @@ Flump is a monorepo managed with Turborepo (`turbo`) and Bun.
 
 ### 21. Financial Domain Invariants (Pensions & Accounts)
 
+- **Point-in-Time Balances vs. Flows**: `AccountDetail` records represent monthly point-in-time balances. Never sum monthly balances into an "Annual Total"; use Year-End Balance or Net Change, and divide monthly averages by the count of recorded months (`count`), not `12`.
+- **Asset vs. Liability Trend Polarity**: For liability account types (`Mortgage`, `Loan`, `Credit Card`), a decreasing balance is favorable (styled in green / `success.500`) and an increasing balance is unfavorable (`destructive`), while keeping the directional arrow (`↑` / `↓`) accurate to the numeric change.
 - **Current vs. Past Pension Pots**:
   - Pension accounts must distinguish between active pots (`isCurrent: true`) and legacy/past employer pots (`isCurrent: false`).
   - Past pots **must never** have direct or workplace monthly contributions (`monthlyContribution = null` / `0`). Direct regular contributions must be stripped at the API layer and excluded from total monthly inflow calculations.
@@ -233,8 +239,8 @@ Flump is a monorepo managed with Turborepo (`turbo`) and Bun.
 
 - **Be Concise**: Keep explanations brief and get straight to the point.
 - **Type Safety First**: Never compromise on TypeScript types. If a type is complex, declare it properly.
-- **Biome Check**: After making code modifications, run the biome command to format and check for lint errors:
+- **Biome Check Before Commit**: Always run `bunx biome check --write <files>` on modified files _before_ running `git commit` so `husky` / `lint-staged` never fails mid-commit or stashes partially staged files:
 
   ```bash
-  bun run lint
+  bunx biome check --write <modified-files>
   ```

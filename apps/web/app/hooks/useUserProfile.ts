@@ -6,6 +6,9 @@ export interface UserProfile {
   id: string;
   userId: string;
   displayName: string | null;
+  firstName?: string | null;
+  lastName?: string | null;
+  email?: string | null;
   avatarUrl: string | null;
   currency: string;
   country: string;
@@ -17,7 +20,15 @@ export interface UserProfile {
   hasRentalIncome: boolean;
   rentalIncomeMonthly: number | null;
   hasMortgage: boolean;
+  mortgageType: "repayment" | "interest-only";
   propertyOwnershipShare: number;
+  hasBuyToLet: boolean;
+  buyToLetCount: number;
+  buyToLetPropertyValue: number | null;
+  buyToLetMonthlyRental: number | null;
+  buyToLetMortgageBalance: number | null;
+  buyToLetMortgageRate: number | null;
+  buyToLetMortgageType: "repayment" | "interest-only";
   pensionPercent: number;
   pensionEmployerPercent: number;
   isSalarySacrifice: boolean;
@@ -26,6 +37,14 @@ export interface UserProfile {
   savingsAllocationMode: "total" | "per_account";
   savingsDefaultInterestRate: number;
   setupChecklistCompletedSteps: string[];
+  enabledPages: string[];
+  dashboardWidgets: string[];
+  dashboardWidgetOrder: string[];
+  dashboardWidgetSizes: Record<string, "normal" | "wide">;
+  dashboardWidgetConfig: Record<string, any>;
+  customBudgetCategories?: string[];
+  hasResetFinancialData?: boolean;
+  onboardingCompleted?: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -38,6 +57,9 @@ export const DEFAULT_PROFILE: UserProfile = {
   id: "",
   userId: "",
   displayName: null,
+  firstName: null,
+  lastName: null,
+  email: null,
   avatarUrl: null,
   currency: "GBP",
   country: "GB",
@@ -49,7 +71,15 @@ export const DEFAULT_PROFILE: UserProfile = {
   hasRentalIncome: false,
   rentalIncomeMonthly: null,
   hasMortgage: false,
+  mortgageType: "repayment",
   propertyOwnershipShare: 100.0,
+  hasBuyToLet: false,
+  buyToLetCount: 1,
+  buyToLetPropertyValue: null,
+  buyToLetMonthlyRental: null,
+  buyToLetMortgageBalance: null,
+  buyToLetMortgageRate: null,
+  buyToLetMortgageType: "interest-only",
   pensionPercent: 5.0,
   pensionEmployerPercent: 3.0,
   isSalarySacrifice: true,
@@ -58,6 +88,32 @@ export const DEFAULT_PROFILE: UserProfile = {
   savingsAllocationMode: "per_account",
   savingsDefaultInterestRate: 5.0,
   setupChecklistCompletedSteps: [],
+  enabledPages: ["accounts", "budget", "savings", "pension", "mortgage", "forecast", "tax"],
+  dashboardWidgets: [
+    "financialHealth",
+    "accounts",
+    "budget",
+    "savings",
+    "pension",
+    "mortgage",
+    "forecast",
+    "tax",
+  ],
+  dashboardWidgetOrder: [
+    "financialHealth",
+    "accounts",
+    "budget",
+    "savings",
+    "pension",
+    "mortgage",
+    "forecast",
+    "tax",
+  ],
+  dashboardWidgetSizes: { financialHealth: "wide", accounts: "wide" },
+  dashboardWidgetConfig: {},
+  customBudgetCategories: [],
+  hasResetFinancialData: false,
+  onboardingCompleted: false,
   createdAt: "",
   updatedAt: "",
 };
@@ -65,6 +121,11 @@ export const DEFAULT_PROFILE: UserProfile = {
 export const normalizeProfile = (p: Partial<UserProfile>): UserProfile => ({
   ...DEFAULT_PROFILE,
   ...p,
+  firstName: p.firstName !== undefined ? p.firstName : DEFAULT_PROFILE.firstName,
+  lastName: p.lastName !== undefined ? p.lastName : DEFAULT_PROFILE.lastName,
+  email: p.email !== undefined ? p.email : DEFAULT_PROFILE.email,
+  hasResetFinancialData: Boolean(p.hasResetFinancialData),
+  onboardingCompleted: Boolean(p.onboardingCompleted),
   avatarUrl: p.avatarUrl !== undefined ? p.avatarUrl : DEFAULT_PROFILE.avatarUrl,
   annualSalary:
     p.annualSalary !== null && p.annualSalary !== undefined ? Number(p.annualSalary) : null,
@@ -84,6 +145,27 @@ export const normalizeProfile = (p: Partial<UserProfile>): UserProfile => ({
     p.propertyOwnershipShare !== null && p.propertyOwnershipShare !== undefined
       ? Number(p.propertyOwnershipShare)
       : 100.0,
+  mortgageType: p.mortgageType || DEFAULT_PROFILE.mortgageType,
+  hasBuyToLet: p.hasBuyToLet !== undefined ? Boolean(p.hasBuyToLet) : false,
+  buyToLetCount:
+    p.buyToLetCount !== null && p.buyToLetCount !== undefined ? Number(p.buyToLetCount) : 1,
+  buyToLetPropertyValue:
+    p.buyToLetPropertyValue !== null && p.buyToLetPropertyValue !== undefined
+      ? Number(p.buyToLetPropertyValue)
+      : null,
+  buyToLetMonthlyRental:
+    p.buyToLetMonthlyRental !== null && p.buyToLetMonthlyRental !== undefined
+      ? Number(p.buyToLetMonthlyRental)
+      : null,
+  buyToLetMortgageBalance:
+    p.buyToLetMortgageBalance !== null && p.buyToLetMortgageBalance !== undefined
+      ? Number(p.buyToLetMortgageBalance)
+      : null,
+  buyToLetMortgageRate:
+    p.buyToLetMortgageRate !== null && p.buyToLetMortgageRate !== undefined
+      ? Number(p.buyToLetMortgageRate)
+      : null,
+  buyToLetMortgageType: p.buyToLetMortgageType || DEFAULT_PROFILE.buyToLetMortgageType,
   pensionPercent:
     p.pensionPercent !== null && p.pensionPercent !== undefined ? Number(p.pensionPercent) : 5.0,
   pensionEmployerPercent:
@@ -101,6 +183,15 @@ export const normalizeProfile = (p: Partial<UserProfile>): UserProfile => ({
     p.savingsDefaultInterestRate !== null && p.savingsDefaultInterestRate !== undefined
       ? Number(p.savingsDefaultInterestRate)
       : 5.0,
+  enabledPages: Array.isArray(p.enabledPages) ? p.enabledPages : DEFAULT_PROFILE.enabledPages,
+  dashboardWidgets: Array.isArray(p.dashboardWidgets)
+    ? p.dashboardWidgets
+    : DEFAULT_PROFILE.dashboardWidgets,
+  dashboardWidgetOrder: Array.isArray(p.dashboardWidgetOrder)
+    ? p.dashboardWidgetOrder
+    : DEFAULT_PROFILE.dashboardWidgetOrder,
+  dashboardWidgetSizes: p.dashboardWidgetSizes || DEFAULT_PROFILE.dashboardWidgetSizes,
+  dashboardWidgetConfig: p.dashboardWidgetConfig || DEFAULT_PROFILE.dashboardWidgetConfig,
 });
 
 export const userProfileAtom = atom<UserProfile>(DEFAULT_PROFILE);
@@ -171,5 +262,81 @@ export function useUserProfile() {
     [setProfile, authHeader],
   );
 
-  return { profile, setProfile, updateProfile, markChecklistStep };
+  const changePassword = useCallback(
+    async (newPassword: string): Promise<{ success: boolean; message: string }> => {
+      const apiUrl =
+        (window as Window & { ENV?: { VITE_API_URL?: string } }).ENV?.VITE_API_URL ??
+        import.meta.env.VITE_API_URL ??
+        "http://localhost:4000";
+      const res = await fetch(`${apiUrl}/user-profile/change-password`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: authHeader,
+        },
+        body: JSON.stringify({ newPassword }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.message || "Failed to update password");
+      }
+      return res.json();
+    },
+    [authHeader],
+  );
+
+  const sendPasswordResetEmail = useCallback(
+    async (email?: string): Promise<{ success: boolean; message: string }> => {
+      const apiUrl =
+        (window as Window & { ENV?: { VITE_API_URL?: string } }).ENV?.VITE_API_URL ??
+        import.meta.env.VITE_API_URL ??
+        "http://localhost:4000";
+      const res = await fetch(`${apiUrl}/user-profile/send-password-reset`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: authHeader,
+        },
+        body: JSON.stringify({ email }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.message || "Failed to send password reset email");
+      }
+      return res.json();
+    },
+    [authHeader],
+  );
+
+  const resetFinancialData = useCallback(async (): Promise<void> => {
+    const apiUrl =
+      (window as Window & { ENV?: { VITE_API_URL?: string } }).ENV?.VITE_API_URL ??
+      import.meta.env.VITE_API_URL ??
+      "http://localhost:4000";
+    const res = await fetch(`${apiUrl}/user-profile/reset-financial-data`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: authHeader,
+      },
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.message || "Failed to reset financial data");
+    }
+    const result = await res.json();
+    if (result.profile) {
+      setProfile(result.profile);
+    }
+  }, [setProfile, authHeader]);
+
+  return {
+    profile,
+    setProfile,
+    updateProfile,
+    markChecklistStep,
+    changePassword,
+    sendPasswordResetEmail,
+    resetFinancialData,
+  };
 }

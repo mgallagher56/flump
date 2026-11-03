@@ -255,8 +255,8 @@ export const PensionForecasterCard: FC<PensionForecasterCardProps> = ({
   // Forecast state
   const [startingPot, setStartingPot] = useState<number>(currentPotTotal);
   const [salary, setSalary] = useState<number>(initialSalary ?? 45000);
-  const [employeePercent, setEmployeePercent] = useState<number>(initialEmployeePercent || 5.0);
-  const [employerPercent, setEmployerPercent] = useState<number>(initialEmployerPercent || 3.0);
+  const [employeePercent, setEmployeePercent] = useState<number>(initialEmployeePercent ?? 5.0);
+  const [employerPercent, setEmployerPercent] = useState<number>(initialEmployerPercent ?? 3.0);
   const [interestRate, setInterestRate] = useState<number>(defaultRate);
   const [horizonYears, setHorizonYears] = useState<number>(25);
 
