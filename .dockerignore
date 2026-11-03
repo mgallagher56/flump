@@ -1,0 +1,9 @@
+node_modules
+.git
+.turbo
+dist
+build
+.next
+.cache
+*.log
+.DS_Store
