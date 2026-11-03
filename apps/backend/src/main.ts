@@ -29,7 +29,7 @@ async function bootstrap() {
     credentials: true,
   });
   const port = Number(configService.get("PORT") ?? 4000);
-  await app.listen(port);
+  await app.listen(port, "0.0.0.0");
 
   // If running on port 4000, forward port 3000 as well to support existing frontend sessions
   if (port === 4000) {
