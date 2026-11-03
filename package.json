@@ -9,9 +9,9 @@
   ],
   "overrides": {
     "zod-validation-error": "5.0.0",
-    "@nestjs/core": "11.2.8",
-    "@nestjs/common": "11.2.8",
-    "@nestjs/platform-express": "11.2.8"
+    "@nestjs/core": "^12.0.0",
+    "@nestjs/common": "^12.0.0",
+    "@nestjs/platform-express": "^12.0.0"
   },
   "scripts": {
     "build": "turbo run build",
