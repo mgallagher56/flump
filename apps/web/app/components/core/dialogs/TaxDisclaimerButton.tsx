@@ -36,12 +36,12 @@ const TaxDisclaimerButton: FC<TaxDisclaimerButtonProps> = ({ showShortText = fal
     backgroundColor: "surface",
     border: "1px solid",
     borderColor: "border",
-    borderRadius: "lg",
+    borderRadius: { base: "xl", md: "lg" },
     boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.2)",
-    padding: "28px",
-    width: "90vw",
-    maxWidth: "640px",
-    maxHeight: "85vh",
+    padding: { base: "20px 16px", md: "28px" },
+    width: { base: "calc(100vw - 20px)", sm: "90vw" },
+    maxWidth: { base: "calc(100vw - 20px)", md: "640px" },
+    maxHeight: { base: "94vh", md: "85vh" },
     overflowY: "auto",
     zIndex: 50,
     outline: "none",
@@ -130,9 +130,13 @@ const TaxDisclaimerButton: FC<TaxDisclaimerButtonProps> = ({ showShortText = fal
               gap: "14px",
             })}
           >
-            {sections.slice(1).map((section, i) => (
-              // biome-ignore lint/suspicious/noArrayIndexKey: static sections
-              <FLPText key={i} fontSize="sm" color="text.muted" style={{ lineHeight: "1.65" }}>
+            {sections.slice(1).map((section) => (
+              <FLPText
+                key={section.slice(0, 32)}
+                fontSize="sm"
+                color="text.muted"
+                style={{ lineHeight: "1.65" }}
+              >
                 {section}
               </FLPText>
             ))}

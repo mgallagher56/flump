@@ -37,15 +37,17 @@ const contentStyle = css({
   top: "50%",
   left: "50%",
   transform: "translate(-50%, -50%)",
-  width: "90%",
-  maxWidth: "460px",
+  width: { base: "calc(100vw - 20px)", sm: "90%", md: "90%" },
+  maxWidth: { base: "calc(100vw - 20px)", sm: "460px", md: "460px" },
+  maxHeight: { base: "94vh", md: "85vh" },
+  overflowY: "auto",
   backgroundColor: "surface",
-  borderRadius: "lg",
+  borderRadius: { base: "xl", md: "lg" },
   border: "1px solid",
   borderColor: "border",
-  padding: "24px",
+  padding: { base: "20px 16px", md: "24px" },
   zIndex: 101,
-  boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
+  boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.2), 0 10px 10px -5px rgba(0, 0, 0, 0.1)",
 });
 
 const inputStyle = css({

@@ -2,6 +2,8 @@
 
 Flump is a personal finance dashboard and decision-making platform designed specifically for UK users. This document outlines the core functional modules, their integration points, and details the business logic rules to facilitate ongoing development and enhancement.
 
+> For an active list of all live routes, component mappings, and currently usable user features, see the **[Pages & Features Catalog](pages_and_features.md)**.
+
 ---
 
 ## 1. Core Modules

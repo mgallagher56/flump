@@ -267,7 +267,7 @@ export const HomeDashboard: FC<HomeDashboardProps> = ({
         maxWidth: "6xl",
         margin: "0 auto",
         paddingTop: { base: "12px", md: "20px" },
-        paddingBottom: "80px",
+        paddingBottom: { base: "24px", md: "40px" },
         paddingX: { base: "10px", sm: "16px", md: "24px" },
         display: "flex",
         flexDirection: "column",

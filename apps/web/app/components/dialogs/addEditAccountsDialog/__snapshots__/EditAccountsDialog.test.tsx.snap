@@ -36,7 +36,7 @@ exports[`<EditAccountDialogBtn > should render edit account dialog and call fetc
   />
   <div
     aria-labelledby="radix-_r_4_"
-    class="pos_fixed top_50% left_50% trf_translate(-50%,_-50%) bg-c_surface bd_1px_solid bd-c_border bdr_lg bx-sh_0_20px_25px_-5px_rgba(0,_0,_0,_0.3),_0_10px_10px_-5px_rgba(0,_0,_0,_0.2) p_24px w_90vw max-w_480px z_50 ring_none c_text.primary"
+    class="pos_fixed top_50% left_50% trf_translate(-50%,_-50%) bg-c_surface bd_1px_solid bd-c_border bdr_xl md:bdr_lg bx-sh_0_20px_25px_-5px_rgba(0,_0,_0,_0.3),_0_10px_10px_-5px_rgba(0,_0,_0,_0.2) p_20px_16px md:p_24px w_calc(100vw_-_20px) sm:w_92vw md:w_90vw max-w_calc(100vw_-_20px) sm:max-w_480px md:max-w_480px max-h_94vh md:max-h_85vh ov-y_auto z_60 ring_none c_text.primary"
     data-state="open"
     data-variant="desktop"
     id="radix-_r_3_"

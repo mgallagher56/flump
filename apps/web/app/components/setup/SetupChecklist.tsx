@@ -176,7 +176,7 @@ const SetupChecklist: FC<SetupChecklistProps> = (props) => {
         borderColor: "primary",
         backgroundColor: "rgba(99,99,241,0.04)",
         overflow: "hidden",
-        marginBottom: "24px",
+        marginBottom: { base: "14px", md: "24px" },
         transition: "all 0.3s ease",
       })}
     >
@@ -186,7 +186,7 @@ const SetupChecklist: FC<SetupChecklistProps> = (props) => {
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
-          padding: "16px 20px",
+          padding: { base: "12px 14px", md: "16px 20px" },
           cursor: "pointer",
           userSelect: "none",
           borderBottom: expanded ? "1px solid" : "none",
@@ -284,7 +284,7 @@ const SetupChecklist: FC<SetupChecklistProps> = (props) => {
                 display: "flex",
                 alignItems: "flex-start",
                 gap: "12px",
-                padding: "16px 20px",
+                padding: { base: "10px 14px", md: "16px 20px" },
                 borderBottom: "1px solid",
                 borderColor: "border",
                 backgroundColor: step.isComplete ? "rgba(16,185,129,0.03)" : "transparent",

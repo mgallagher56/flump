@@ -253,13 +253,13 @@ export default function OnboardingRoute() {
   return (
     <div
       className={css({
-        minHeight: "100vh",
+        minHeight: { base: "auto", md: "calc(100vh - 120px)" },
         backgroundColor: "background",
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
-        justifyContent: "center",
-        padding: { base: "20px 16px", sm: "32px 24px", md: "48px 32px" },
+        justifyContent: { base: "flex-start", md: "center" },
+        padding: { base: "12px 10px 24px", sm: "24px 16px", md: "40px 32px" },
       })}
     >
       <div
@@ -268,7 +268,7 @@ export default function OnboardingRoute() {
           maxWidth: "680px",
           display: "flex",
           flexDirection: "column",
-          gap: "24px",
+          gap: { base: "14px", md: "24px" },
         })}
       >
         {/* Brand & Progress Bar */}
@@ -277,7 +277,7 @@ export default function OnboardingRoute() {
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
-            paddingBottom: "12px",
+            paddingBottom: { base: "8px", md: "12px" },
             borderBottom: "1px solid",
             borderColor: "border",
           })}
@@ -324,13 +324,13 @@ export default function OnboardingRoute() {
         {mode === "welcome" && (
           <FLPCard
             className={css({
-              padding: { base: "28px 20px", sm: "40px 32px" },
+              padding: { base: "20px 16px", sm: "32px 24px", md: "40px 32px" },
               borderRadius: "2xl",
               border: "1px solid",
               borderColor: "border",
               display: "flex",
               flexDirection: "column",
-              gap: "24px",
+              gap: { base: "16px", md: "24px" },
               boxShadow: "sm",
             })}
           >
@@ -481,13 +481,13 @@ export default function OnboardingRoute() {
         {mode === "quiz" && (
           <FLPCard
             className={css({
-              padding: { base: "24px 18px", sm: "36px 32px" },
+              padding: { base: "16px 14px", sm: "28px 24px", md: "36px 32px" },
               borderRadius: "2xl",
               border: "1px solid",
               borderColor: "border",
               display: "flex",
               flexDirection: "column",
-              gap: "24px",
+              gap: { base: "16px", md: "24px" },
               boxShadow: "sm",
             })}
           >
@@ -674,13 +674,13 @@ export default function OnboardingRoute() {
         {mode === "manual" && (
           <FLPCard
             className={css({
-              padding: { base: "24px 18px", sm: "36px 32px" },
+              padding: { base: "16px 14px", sm: "28px 24px", md: "36px 32px" },
               borderRadius: "2xl",
               border: "1px solid",
               borderColor: "border",
               display: "flex",
               flexDirection: "column",
-              gap: "24px",
+              gap: { base: "16px", md: "24px" },
               boxShadow: "sm",
             })}
           >

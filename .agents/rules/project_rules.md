@@ -118,10 +118,16 @@ Flump is a monorepo managed with Turborepo (`turbo`) and Bun.
   - **Mobile Companion (`apps/mobile-companion`)**: Guarantee that feature parity exists on the mobile application, matching the web app's functionality.
   - **Marketing Website (`apps/marketing`)**: Update marketing pages, documentation, or landing layouts with appropriate feature descriptions, copy, or visual highlights showcasing the new capability.
 
-### 11. Documentation Maintenance
+### 11. Documentation Maintenance & Feature Cataloging
 
-- **Keep Docs Current**: When introducing new features, refactoring directory structures, changing build steps, or adding integrations, you must update corresponding documentation files (such as `README.md`, architectural notes, or workspace guides) in the same PR/commit.
-- **Accurate Descriptions**: Document newly introduced user features, configuration parameters, and developer guidelines to avoid documentation drift.
+- **Keep Docs Current**: When introducing new features, modifying routes, refactoring directory structures, changing build steps, or adding integrations, you must update corresponding documentation files (such as `docs/pages_and_features.md`, `README.md`, architectural notes, or workspace guides) in the same PR/commit.
+- **Pages & Features Catalog (`docs/pages_and_features.md`) Synchronization**:
+  - Whenever a page or user-facing feature is added, modified, relocated, or deprecated/removed, the agent **MUST** update `docs/pages_and_features.md`.
+  - The entry must record the exact route, component/container name, status (`Usable` vs `Stub` / `Deprecated`), and a concise bulleted list of all usable capabilities.
+- **README.md Synchronization**:
+  - When user-facing capabilities, financial modules, or architecture components change, the agent **MUST** update the `Features` and `Overview` sections of `README.md` to prevent documentation drift.
+  - Maintain the link to `docs/pages_and_features.md` in `README.md`.
+- **Accurate Descriptions**: Document newly introduced user features, configuration parameters, and developer guidelines immediately. Never defer documentation updates to a later task.
 
 ### 12. Storybook & Build Verification
 
@@ -239,6 +245,7 @@ Flump is a monorepo managed with Turborepo (`turbo`) and Bun.
 
 - **Be Concise**: Keep explanations brief and get straight to the point.
 - **Type Safety First**: Never compromise on TypeScript types. If a type is complex, declare it properly.
+- **Sync Catalog & README**: After adding, altering, or removing user-facing features or pages, always verify that `docs/pages_and_features.md` and `README.md` have been updated before concluding the task.
 - **Biome Check Before Commit**: Always run `bunx biome check --write <files>` on modified files _before_ running `git commit` so `husky` / `lint-staged` never fails mid-commit or stashes partially staged files:
 
   ```bash
