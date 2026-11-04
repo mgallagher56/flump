@@ -1,7 +1,8 @@
 import {
   calculateUKTakeHome,
-  ONBOARDING_SEED_STORAGE_KEY,
+  clearOnboardingSeed,
   type OnboardingSeedPayload,
+  readOnboardingSeed,
 } from "@repo/common";
 import { css } from "@repo/ui/styled-system/css";
 import { useEffect, useMemo, useState } from "react";
@@ -218,9 +219,8 @@ export default function OnboardingRoute() {
   useEffect(() => {
     if (typeof window === "undefined") return;
     try {
-      const raw = localStorage.getItem(ONBOARDING_SEED_STORAGE_KEY);
-      if (!raw) return;
-      const parsed: OnboardingSeedPayload = JSON.parse(raw);
+      const parsed = readOnboardingSeed();
+      if (!parsed) return;
       const isFresh = Date.now() - (parsed.timestamp || 0) < 24 * 60 * 60 * 1000;
       if (isFresh && parsed.grossSalary) {
         setSeed(parsed);
@@ -378,11 +378,7 @@ export default function OnboardingRoute() {
           : []),
       ]);
 
-      if (typeof window !== "undefined") {
-        try {
-          localStorage.removeItem(ONBOARDING_SEED_STORAGE_KEY);
-        } catch {}
-      }
+      clearOnboardingSeed();
 
       navigate("/");
     } catch (err) {

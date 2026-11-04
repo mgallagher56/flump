@@ -2,7 +2,7 @@ import { render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
 import ToolsIndex from "./tools._index";
-import { loader as slugLoader, ToolDetailPage } from "./tools.$slug";
+import { loader as slugLoader, meta as slugMeta, ToolDetailPage } from "./tools.$slug";
 
 vi.mock("react-router", () => ({
   useNavigate: () => vi.fn(),
@@ -70,5 +70,58 @@ describe("Tools Routes", () => {
     ).toBeDefined();
     expect(screen.getByText(/what is the uk £100,000 tax trap\?/i)).toBeDefined();
     expect(screen.getByText(/frequently asked questions/i)).toBeDefined();
+  });
+
+  it("renders ToolDetailPage for mortgage vs isa comparator", async () => {
+    const res = await slugLoader({
+      params: { slug: "mortgage-overpay-vs-isa" },
+      request: new Request("http://localhost/tools/mortgage-overpay-vs-isa"),
+    } as any);
+    vi.mocked(useLoaderData).mockReturnValue(res);
+
+    render(<ToolDetailPage />);
+
+    expect(
+      screen.getByRole("heading", {
+        level: 1,
+        name: /mortgage overpayment vs\. stocks & shares isa calculator/i,
+      }),
+    ).toBeDefined();
+  });
+
+  it("renders ToolDetailPage for section 24 landlord calculator", async () => {
+    const res = await slugLoader({
+      params: { slug: "section-24-landlord-calculator" },
+      request: new Request("http://localhost/tools/section-24-landlord-calculator"),
+    } as any);
+    vi.mocked(useLoaderData).mockReturnValue(res);
+
+    render(<ToolDetailPage />);
+
+    expect(
+      screen.getByRole("heading", {
+        level: 1,
+        name: /section 24 landlord mortgage relief & tax calculator/i,
+      }),
+    ).toBeDefined();
+  });
+
+  it("slugMeta returns correct tags", () => {
+    const tags = slugMeta({
+      data: {
+        tool: {
+          metaTitle: "Test Title",
+          metaDescription: "Test Description",
+        },
+      },
+    } as any);
+
+    expect(tags).toEqual([
+      { title: "Test Title" },
+      { name: "description", content: "Test Description" },
+    ]);
+
+    const notFoundTags = slugMeta({ data: null } as any);
+    expect(notFoundTags).toEqual([{ title: "Tool Not Found | Flump" }]);
   });
 });

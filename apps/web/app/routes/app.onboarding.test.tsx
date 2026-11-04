@@ -186,7 +186,7 @@ describe("OnboardingRoute", () => {
     localStorage.removeItem("flump_onboarding_seed");
   });
 
-  it("navigates through progressive 3-step baseline flow", () => {
+  it("navigates through progressive 3-step baseline flow", async () => {
     const seed = {
       grossSalary: 70000,
       pensionContributionPct: 5,
@@ -217,6 +217,69 @@ describe("OnboardingRoute", () => {
     // Advance to Step 3
     fireEvent.click(screen.getByText(/next: workspace modules/i));
     expect(screen.getByText("Step 3: Confirm Your Workspace Modules")).toBeDefined();
+
+    // Click finish on step 3
+    const finishBtn = screen.getByRole("button", { name: /finish setup & launch dashboard/i });
+    fireEvent.click(finishBtn);
+
+    await waitFor(() => {
+      expect(mockUpdateProfile).toHaveBeenCalled();
+      expect(mockNavigate).toHaveBeenCalledWith("/");
+    });
+
+    localStorage.removeItem("flump_onboarding_seed");
+  });
+
+  it("completes all 5 questions in questionnaire mode and transitions to review", async () => {
+    render(<OnboardingRoute />);
+
+    fireEvent.click(screen.getByText("Answer 5 Quick Questions"));
+
+    // Q1
+    fireEvent.click(screen.getByText("Yes, include Accounts & Budgeting"));
+    // Q2
+    fireEvent.click(screen.getByText("Yes, track Savings & Forecaster"));
+    // Q3
+    fireEvent.click(screen.getByText("Yes, track Pension Pots"));
+    // Q4
+    fireEvent.click(screen.getByText("Yes, add Mortgage Tools"));
+    // Q5
+    fireEvent.click(screen.getByText("Yes, include Tax Tracker"));
+
+    // After Q5, transitions to manual review mode
+    expect(screen.getByText("Select Your Active Modules")).toBeDefined();
+
+    const finishBtn = screen.getByText("Finish Setup & Launch Dashboard →");
+    fireEvent.click(finishBtn);
+
+    await waitFor(() => {
+      expect(mockUpdateProfile).toHaveBeenCalled();
+      expect(mockNavigate).toHaveBeenCalledWith("/");
+    });
+  });
+
+  it("launches dashboard directly from fast-track baseline banner button", async () => {
+    const seed = {
+      grossSalary: 60000,
+      pensionContributionPct: 5,
+      salarySacrifice: false,
+      initialCashSavings: 10000,
+      initialInvestments: 5000,
+      monthlyContribution: 400,
+      inferredModules: ["accounts", "budget", "savings"],
+      timestamp: Date.now(),
+    };
+    localStorage.setItem("flump_onboarding_seed", JSON.stringify(seed));
+
+    render(<OnboardingRoute />);
+
+    const quickLaunchBtn = screen.getByText(/launch dashboard with this baseline \(10s\) →/i);
+    fireEvent.click(quickLaunchBtn);
+
+    await waitFor(() => {
+      expect(mockUpdateProfile).toHaveBeenCalled();
+      expect(mockNavigate).toHaveBeenCalledWith("/");
+    });
 
     localStorage.removeItem("flump_onboarding_seed");
   });

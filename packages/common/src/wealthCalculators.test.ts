@@ -1,8 +1,14 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
   calculateCompoundTrajectory,
   calculateTaxTrapRelief,
   calculateUKTakeHome,
+  clearOnboardingSeed,
+  ONBOARDING_SEED_STORAGE_KEY,
+  type OnboardingSeedPayload,
+  persistOnboardingSeed,
+  readAndClearOnboardingSeed,
+  readOnboardingSeed,
 } from "./wealthCalculators.js";
 
 describe("wealthCalculators", () => {
@@ -28,5 +34,66 @@ describe("wealthCalculators", () => {
     const result = calculateUKTakeHome(65000, 5, true);
     expect(result.monthlyTakeHome).toBeGreaterThan(0);
     expect(result.trapAnalysis.isInTaxTrap).toBe(false);
+  });
+
+  describe("onboarding seed storage", () => {
+    const mockStorage: Record<string, string> = {};
+
+    beforeEach(() => {
+      for (const key of Object.keys(mockStorage)) {
+        delete mockStorage[key];
+      }
+      (globalThis as any).window = {
+        localStorage: {
+          getItem: (key: string) => mockStorage[key] ?? null,
+          setItem: (key: string, val: string) => {
+            mockStorage[key] = val;
+          },
+          removeItem: (key: string) => {
+            delete mockStorage[key];
+          },
+        },
+      };
+    });
+
+    afterEach(() => {
+      delete (globalThis as any).window;
+    });
+
+    const samplePayload: OnboardingSeedPayload = {
+      grossSalary: 85000,
+      pensionContributionPct: 6,
+      salarySacrifice: true,
+      initialCashSavings: 15000,
+      initialInvestments: 20000,
+      monthlyContribution: 500,
+      inferredModules: ["accounts", "budget", "savings", "tax"],
+      timestamp: 1700000000000,
+    };
+
+    it("persists encoded payload and does not store raw salary string", () => {
+      persistOnboardingSeed(samplePayload);
+      const rawStored = mockStorage[ONBOARDING_SEED_STORAGE_KEY];
+      expect(rawStored).toBeDefined();
+      expect(rawStored).not.toContain("85000");
+      expect(rawStored).not.toContain("grossSalary");
+
+      const retrieved = readOnboardingSeed();
+      expect(retrieved).toEqual(samplePayload);
+    });
+
+    it("clears persisted seed", () => {
+      persistOnboardingSeed(samplePayload);
+      expect(readOnboardingSeed()).toEqual(samplePayload);
+      clearOnboardingSeed();
+      expect(readOnboardingSeed()).toBeNull();
+    });
+
+    it("reads and clears persisted seed in one atomic call", () => {
+      persistOnboardingSeed(samplePayload);
+      const retrieved = readAndClearOnboardingSeed();
+      expect(retrieved).toEqual(samplePayload);
+      expect(readOnboardingSeed()).toBeNull();
+    });
   });
 });

@@ -3,7 +3,6 @@ import {
   calculateAvalanche,
   calculateCarFinanceBalloon,
   calculateDebtToWealthBridge,
-  calculateMinimumOnly,
   calculateOverdraftCost,
   calculateSafeToSpend,
   calculateSnowball,

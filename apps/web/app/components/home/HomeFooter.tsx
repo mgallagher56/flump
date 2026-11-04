@@ -1,5 +1,5 @@
 import { css } from "@repo/ui/styled-system/css";
-import { type FC, useState } from "react";
+import { type FC, useRef, useState } from "react";
 import { FiMail } from "react-icons/fi";
 import { Link as RouterLink } from "react-router";
 import FLPModal from "~/components/core/dialogs/FLPModal";
@@ -75,18 +75,29 @@ const bottomRowStyle = css({
 export const HomeFooter: FC = () => {
   const [isContactOpen, setIsContactOpen] = useState(false);
   const [feedbackSent, setFeedbackSent] = useState(false);
+  const feedbackSentRef = useRef(false);
   const [subject, setSubject] = useState("");
   const [message, setMessage] = useState("");
 
   const handleSendFeedback = () => {
     if (message.trim()) {
+      feedbackSentRef.current = true;
       setFeedbackSent(true);
       setTimeout(() => {
         setIsContactOpen(false);
         setFeedbackSent(false);
+        feedbackSentRef.current = false;
         setSubject("");
         setMessage("");
       }, 1500);
+    }
+  };
+
+  const handleClose = () => {
+    if (!feedbackSentRef.current) {
+      setIsContactOpen(false);
+      setSubject("");
+      setMessage("");
     }
   };
 
@@ -224,14 +235,15 @@ export const HomeFooter: FC = () => {
 
       {isContactOpen && (
         <FLPModal
-          open={isContactOpen}
-          title="Contact & Feedback"
-          triggerBtn={<span style={{ display: "none" }} />}
           confirmButton={{
             text: feedbackSent ? "Sent!" : "Send Feedback",
           }}
-          onClose={() => setIsContactOpen(false)}
+          disabled={!message.trim() || feedbackSent}
+          onClose={handleClose}
           onConfirm={handleSendFeedback}
+          open={isContactOpen}
+          title="Contact & Feedback"
+          triggerBtn={<span style={{ display: "none" }} />}
         >
           <div style={{ display: "flex", flexDirection: "column", gap: "16px", padding: "8px 0" }}>
             <FLPText color="text.muted" fontSize="sm">
