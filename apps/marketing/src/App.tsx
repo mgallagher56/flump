@@ -1,12 +1,28 @@
 import { Button } from "@repo/ui";
 import { container, flex, stack } from "@repo/ui/styled-system/patterns";
 
-const APP_URL = import.meta.env?.VITE_APP_URL || "https://web-production-845e6c.up.railway.app";
+const getAppUrl = (): string => {
+  if (import.meta.env?.VITE_APP_URL) {
+    return import.meta.env.VITE_APP_URL;
+  }
+  if (
+    typeof window !== "undefined" &&
+    (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")
+  ) {
+    return "http://localhost:5173";
+  }
+  if (import.meta.env?.DEV) {
+    return "http://localhost:5173";
+  }
+  return "https://web-production-845e6c.up.railway.app";
+};
 
 export default function App() {
+  const appUrl = getAppUrl();
+
   const navigateTo = (path: string) => {
     if (typeof window !== "undefined") {
-      window.location.href = `${APP_URL}${path}`;
+      window.location.href = `${appUrl}${path}`;
     }
   };
 
@@ -88,7 +104,7 @@ export default function App() {
             }}
           >
             <a
-              href={`${APP_URL}/tools/uk-debt-snowball-vs-avalanche-calculator`}
+              href={`${appUrl}/tools/uk-debt-snowball-vs-avalanche-calculator`}
               style={{
                 display: "block",
                 padding: "14px",
@@ -108,7 +124,7 @@ export default function App() {
             </a>
 
             <a
-              href={`${APP_URL}/tools/0-percent-balance-transfer-payoff-calculator`}
+              href={`${appUrl}/tools/0-percent-balance-transfer-payoff-calculator`}
               style={{
                 display: "block",
                 padding: "14px",
@@ -128,7 +144,7 @@ export default function App() {
             </a>
 
             <a
-              href={`${APP_URL}/tools/overdraft-cost-and-payoff-calculator`}
+              href={`${appUrl}/tools/overdraft-cost-and-payoff-calculator`}
               style={{
                 display: "block",
                 padding: "14px",
@@ -146,7 +162,7 @@ export default function App() {
             </a>
 
             <a
-              href={`${APP_URL}/tools/uk-student-loan-overpay-or-invest-calculator`}
+              href={`${appUrl}/tools/uk-student-loan-overpay-or-invest-calculator`}
               style={{
                 display: "block",
                 padding: "14px",
@@ -166,7 +182,7 @@ export default function App() {
             </a>
 
             <a
-              href={`${APP_URL}/tools/uk-100k-tax-trap-calculator`}
+              href={`${appUrl}/tools/uk-100k-tax-trap-calculator`}
               style={{
                 display: "block",
                 padding: "14px",
@@ -184,7 +200,7 @@ export default function App() {
             </a>
 
             <a
-              href={`${APP_URL}/tools/mortgage-overpayment-vs-isa-calculator`}
+              href={`${appUrl}/tools/mortgage-overpayment-vs-isa-calculator`}
               style={{
                 display: "block",
                 padding: "14px",
