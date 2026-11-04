@@ -22,17 +22,20 @@ vi.mock("react-router", () => ({
 }));
 
 describe("FeaturePillars", () => {
-  it("renders the 4 persona tabs and defaults to Higher-Rate PAYE", () => {
+  it("renders the 5 persona tabs and defaults to Debt Crusher & Rebuilder", () => {
     render(<FeaturePillars />);
 
+    expect(screen.getByRole("tab", { name: /debt crusher & rebuilder/i })).toBeDefined();
     expect(screen.getByRole("tab", { name: /higher-rate paye/i })).toBeDefined();
     expect(screen.getByRole("tab", { name: /homeowner & remortgager/i })).toBeDefined();
     expect(screen.getByRole("tab", { name: /landlord & side-hustler/i })).toBeDefined();
     expect(screen.getByRole("tab", { name: /long-term wealth builder/i })).toBeDefined();
 
     // Default persona view
-    expect(screen.getByText(/escape the 60% tax trap & maximize allowances/i)).toBeDefined();
-    expect(screen.getByText(/average tax trap relief/i)).toBeDefined();
+    expect(
+      screen.getByText(/crush high-interest debt & bridge directly into wealth/i),
+    ).toBeDefined();
+    expect(screen.getByText(/interest saved & time shaved/i)).toBeDefined();
   });
 
   it("switches persona when a tab is clicked", () => {

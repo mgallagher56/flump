@@ -1,5 +1,6 @@
 import { css } from "@repo/ui/styled-system/css";
 import type { FC } from "react";
+import { FaCreditCard, FaFire, FaGraduationCap, FaMoneyBillWave } from "react-icons/fa";
 import { FiArrowRight, FiDollarSign, FiHome, FiPercent } from "react-icons/fi";
 import { type MetaFunction, Link as RouterLink } from "react-router";
 import FLPHeading from "~/components/core/typography/FLPHeading";
@@ -178,6 +179,131 @@ export const ToolsIndex: FC = () => {
                 alignItems: "center",
                 gap: "6px",
                 color: "#3b82f6",
+                fontWeight: 600,
+                fontSize: "13px",
+              }}
+            >
+              Launch Calculator <FiArrowRight size={14} />
+            </div>
+          </RouterLink>
+
+          {/* Tool 4: Debt Snowball vs Avalanche */}
+          <RouterLink
+            className={toolCardStyle}
+            to="/tools/uk-debt-snowball-vs-avalanche-calculator"
+          >
+            <div>
+              <div className={iconBadgeStyle("rgba(239, 68, 68, 0.12)", "#ef4444")}>
+                <FaFire />
+              </div>
+              <FLPHeading as="h2" color="text.primary" mb={2} size="lg">
+                Debt Snowball vs. Avalanche Calculator
+              </FLPHeading>
+              <FLPText color="text.muted" fontSize="sm" lineHeight="1.6">
+                Calculate your exact debt-free date, interest saved, and compare mathematical vs
+                psychological payoff ordering for UK credit cards and loans.
+              </FLPText>
+            </div>
+            <div
+              style={{
+                marginTop: "24px",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "6px",
+                color: "#ef4444",
+                fontWeight: 600,
+                fontSize: "13px",
+              }}
+            >
+              Launch Calculator <FiArrowRight size={14} />
+            </div>
+          </RouterLink>
+
+          {/* Tool 5: 0% Balance Transfer Cliff */}
+          <RouterLink
+            className={toolCardStyle}
+            to="/tools/0-percent-balance-transfer-payoff-calculator"
+          >
+            <div>
+              <div className={iconBadgeStyle("rgba(16, 185, 129, 0.12)", "#10b981")}>
+                <FaCreditCard />
+              </div>
+              <FLPHeading as="h2" color="text.primary" mb={2} size="lg">
+                0% Balance Transfer Cliff Calculator
+              </FLPHeading>
+              <FLPText color="text.muted" fontSize="sm" lineHeight="1.6">
+                Calculate the exact monthly repayment needed to clear your promotional card balance
+                before the 24.9%+ revert rate slams shut.
+              </FLPText>
+            </div>
+            <div
+              style={{
+                marginTop: "24px",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "6px",
+                color: "#10b981",
+                fontWeight: 600,
+                fontSize: "13px",
+              }}
+            >
+              Launch Calculator <FiArrowRight size={14} />
+            </div>
+          </RouterLink>
+
+          {/* Tool 6: Arranged Overdraft Cost */}
+          <RouterLink className={toolCardStyle} to="/tools/overdraft-cost-and-payoff-calculator">
+            <div>
+              <div className={iconBadgeStyle("rgba(245, 158, 11, 0.12)", "#f59e0b")}>
+                <FaMoneyBillWave />
+              </div>
+              <FLPHeading as="h2" color="text.primary" mb={2} size="lg">
+                Arranged Overdraft Cost Calculator
+              </FLPHeading>
+              <FLPText color="text.muted" fontSize="sm" lineHeight="1.6">
+                Living in an arranged overdraft? Calculate the annual pound cost of ~39.9% EAR
+                interest charges deducted quietly from your bank account.
+              </FLPText>
+            </div>
+            <div
+              style={{
+                marginTop: "24px",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "6px",
+                color: "#f59e0b",
+                fontWeight: 600,
+                fontSize: "13px",
+              }}
+            >
+              Launch Calculator <FiArrowRight size={14} />
+            </div>
+          </RouterLink>
+
+          {/* Tool 7: Student Loan Overpay or Invest */}
+          <RouterLink
+            className={toolCardStyle}
+            to="/tools/uk-student-loan-overpay-or-invest-calculator"
+          >
+            <div>
+              <div className={iconBadgeStyle("rgba(139, 92, 246, 0.12)", "#8b5cf6")}>
+                <FaGraduationCap />
+              </div>
+              <FLPHeading as="h2" color="text.primary" mb={2} size="lg">
+                UK Student Loan: Overpay or Invest?
+              </FLPHeading>
+              <FLPText color="text.muted" fontSize="sm" lineHeight="1.6">
+                UK student loans act as a graduate tax wiped after 25–40 years. Find out whether
+                voluntary repayments save you money or act as a gift to HM Treasury.
+              </FLPText>
+            </div>
+            <div
+              style={{
+                marginTop: "24px",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "6px",
+                color: "#8b5cf6",
                 fontWeight: 600,
                 fontSize: "13px",
               }}

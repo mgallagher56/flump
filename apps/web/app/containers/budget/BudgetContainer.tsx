@@ -12,7 +12,7 @@ import FLPHeading from "~/components/core/typography/FLPHeading";
 import FLPText from "~/components/core/typography/FLPText";
 import { useUserProfile } from "~/hooks/useUserProfile";
 import type { loader } from "~/routes/app.budget";
-import type { BudgetCategory, BudgetEntry } from "~/types/budget";
+import type { BudgetEntry } from "~/types/budget";
 import { CATEGORY_ICONS, CATEGORY_LABELS } from "~/types/budget";
 import {
   loadRunwaySettings,

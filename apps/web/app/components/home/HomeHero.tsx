@@ -86,29 +86,28 @@ export const HomeHero: FC = () => {
       </span>
 
       <FLPHeading as="h1" color="text.primary" mb={4} size="4xl">
-        Stop guessing your financial future. <br />
+        Get out of the red. <br />
         <span
           className={css({
-            background: "linear-gradient(135deg, #6366F1 0%, #8B5CF6 50%, #EC4899 100%)",
+            background: "linear-gradient(135deg, #EF4444 0%, #F59E0B 50%, #10B981 100%)",
             backgroundClip: "text",
             color: "transparent",
             display: "inline-block",
           })}
         >
-          Model it.
-        </span>{" "}
-        Master your UK wealth.
+          Build into the black.
+        </span>
       </FLPHeading>
 
       <FLPText
         color="text.muted"
         fontSize="lg"
         lineHeight="1.6"
-        style={{ maxWidth: "750px", margin: "0 auto" }}
+        style={{ maxWidth: "780px", margin: "0 auto" }}
       >
-        The UK wealth and tax engine. Track net worth across accounts and pensions, escape the £100k
-        tax trap, stress-test your mortgage against ISA yields, and forecast 30 years ahead—in one
-        unified workspace.
+        The UK financial engine built for every stage of your money. Crush high-interest debt, build
+        an unshakeable emergency runway, and model your path to long-term wealth—in one unified
+        workspace.
       </FLPText>
 
       {/* The 30-Second UK Wealth Check Interactive Sandbox */}

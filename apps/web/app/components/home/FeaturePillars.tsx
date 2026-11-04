@@ -1,6 +1,7 @@
 import { css } from "@repo/ui/styled-system/css";
 import { type FC, useState } from "react";
 import type { IconType } from "react-icons";
+import { FaFire } from "react-icons/fa";
 import {
   FiDollarSign,
   FiFileText,
@@ -163,7 +164,7 @@ const tagPillStyle = css({
   borderColor: "border",
 });
 
-type PersonaId = "paye" | "homeowner" | "landlord" | "wealth";
+type PersonaId = "debt" | "paye" | "homeowner" | "landlord" | "wealth";
 
 interface PersonaConfig {
   id: PersonaId;
@@ -181,6 +182,26 @@ interface PersonaConfig {
 }
 
 const PERSONAS: PersonaConfig[] = [
+  {
+    id: "debt",
+    label: "Debt Crusher & Rebuilder",
+    icon: FaFire,
+    title: "Crush High-Interest Debt & Bridge Directly into Wealth",
+    badge: "Stage 1: Financial Recovery",
+    description:
+      "Generic debt trackers treat all debt identically and shame you for spending. Flump orders your debts with mathematical precision (Avalanche vs. Snowball), defuses 0% promotional APR cliffs, and shows the exact day your debt payments turn into positive wealth.",
+    features: [
+      "Avalanche vs. Snowball engine calculating exact interest saved & months shaved off",
+      "0% Balance Transfer cliff tracker with 60-day refi warnings & revert APR cost analysis",
+      "Debt-to-Wealth crossover chart showing +£28,000 in positive wealth 5 years post-payoff",
+      "Safe-to-Spend weekly cash allowance to protect your essentials and prevent week-3 deficit",
+    ],
+    metricLabel: "Interest Saved & Time Shaved",
+    metricValue: "£1,480 & 16 mos",
+    metricNote: "Achieved via £50/mo avalanche overpayment on average UK consumer debt portfolio",
+    toolLink: "/tools/uk-debt-snowball-vs-avalanche-calculator",
+    toolLinkLabel: "Open Snowball vs Avalanche Calculator →",
+  },
   {
     id: "paye",
     label: "Higher-Rate PAYE (£100k+)",
@@ -260,7 +281,7 @@ const PERSONAS: PersonaConfig[] = [
 ];
 
 export const FeaturePillars: FC = () => {
-  const [selectedPersonaId, setSelectedPersonaId] = useState<PersonaId>("paye");
+  const [selectedPersonaId, setSelectedPersonaId] = useState<PersonaId>("debt");
   const activePersona = PERSONAS.find((p) => p.id === selectedPersonaId) ?? PERSONAS[0];
   const IconComponent = activePersona.icon;
 

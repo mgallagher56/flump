@@ -152,6 +152,22 @@ export const HomeFooter: FC = () => {
               </RouterLink>
             </li>
             <li>
+              <RouterLink
+                className={linkStyle}
+                to="/tools/uk-debt-snowball-vs-avalanche-calculator"
+              >
+                Snowball vs. Avalanche
+              </RouterLink>
+            </li>
+            <li>
+              <RouterLink
+                className={linkStyle}
+                to="/tools/0-percent-balance-transfer-payoff-calculator"
+              >
+                0% Balance Transfer Cliff
+              </RouterLink>
+            </li>
+            <li>
               <RouterLink className={linkStyle} to="/tools">
                 All Calculators →
               </RouterLink>

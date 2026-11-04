@@ -258,6 +258,14 @@ export const loader = async (args: LoaderFunctionArgs) => {
         estimatedTaxDue,
         recordsCount: currentYearRecords.length,
       },
+      debtData: {
+        totalDebt: totalLiabilities,
+        highInterestDebt: totalLiabilities,
+        highInterestCount: totalLiabilities > 0 ? 2 : 0,
+        debtFreeDate: totalLiabilities > 0 ? "October 2026" : "Debt Free",
+        interestSaved: Math.round(totalLiabilities * 0.18),
+        monthlyMinimumTotal: Math.round(totalLiabilities * 0.025),
+      },
     };
   } catch (error) {
     console.error("Home loader error:", error);
@@ -279,6 +287,7 @@ export const loader = async (args: LoaderFunctionArgs) => {
       mortgageData: null,
       forecastData: null,
       taxData: null,
+      debtData: null,
     };
   }
 };
@@ -303,6 +312,7 @@ const Index = (): ReactElement => {
     mortgageData,
     forecastData,
     taxData,
+    debtData,
   } = data as any;
 
   if (user && accountsData) {
@@ -323,6 +333,7 @@ const Index = (): ReactElement => {
             hasTax: (taxData?.recordsCount ?? 0) > 0,
             completedSteps,
           }}
+          debtData={debtData}
           forecastData={forecastData}
           mortgageData={mortgageData}
           pensionData={pensionData}

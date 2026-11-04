@@ -5,7 +5,6 @@ import {
   FaBriefcase,
   FaCalculator,
   FaCamera,
-  FaCoins,
   FaCopy,
   FaFileAlt,
   FaFileImage,
@@ -42,14 +41,8 @@ import {
   getCategoriesForSource,
   getCurrentUKTaxYear,
   getPreviousTaxYear,
-  getRecordAnnualTotalForTaxYear,
   getTaxYearForDate,
   isRecordActiveInTaxYear,
-  PAYE_CATEGORIES,
-  RENTAL_CATEGORIES,
-  SAVINGS_CATEGORIES,
-  SELF_EMPLOYED_CATEGORIES,
-  TAX_YEARS,
   type TaxCalculationResult,
   type TaxRecord,
   type TaxSource,
@@ -2132,7 +2125,7 @@ const TaxContainer: FC = () => {
         onClose={() => setActiveReceiptRecord(null)}
         onConfirm={() => setActiveReceiptRecord(null)}
       >
-        {activeReceiptRecord && activeReceiptRecord.receiptData ? (
+        {activeReceiptRecord?.receiptData ? (
           <div
             style={{
               display: "flex",

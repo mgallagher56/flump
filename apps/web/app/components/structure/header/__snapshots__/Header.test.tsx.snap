@@ -101,6 +101,9 @@ exports[`<Header /> > renders correctly when user logged in 1`] = `
               home
             </div>
             <div>
+              debt
+            </div>
+            <div>
               budget
             </div>
             <div>

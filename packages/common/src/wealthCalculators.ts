@@ -10,7 +10,7 @@ export interface OnboardingSeedPayload {
   mortgageBalance?: number;
   isSelfEmployed?: boolean;
   inferredModules: Array<
-    "accounts" | "budget" | "savings" | "pension" | "mortgage" | "tax" | "forecast"
+    "accounts" | "budget" | "savings" | "pension" | "mortgage" | "tax" | "forecast" | "debt"
   >;
   timestamp: number;
 }

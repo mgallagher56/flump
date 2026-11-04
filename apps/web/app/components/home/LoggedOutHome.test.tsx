@@ -27,9 +27,7 @@ describe("LoggedOutHome", () => {
     render(<LoggedOutHome />);
 
     // Hero section
-    expect(
-      screen.getByRole("heading", { level: 1, name: /stop guessing your financial future/i }),
-    ).toBeDefined();
+    expect(screen.getByRole("heading", { level: 1, name: /get out of the red/i })).toBeDefined();
     expect(screen.getByText(/built specifically for uk personal finance/i)).toBeDefined();
     const heroCta = screen.getByRole("link", { name: /start free today/i });
     expect(heroCta.getAttribute("href")).toBe("/signUp");

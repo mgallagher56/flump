@@ -205,9 +205,9 @@ describe("OnboardingRoute", () => {
     const reviewBtn = screen.getByText("Review & Tweak Numbers");
     fireEvent.click(reviewBtn);
 
-    // Step 1: Income & Tax Status
-    expect(screen.getByText("Step 1: Income & Tax Status")).toBeDefined();
-    expect(screen.getByText(/live take-home preview/i)).toBeDefined();
+    // Step 1: Focus & Baseline
+    expect(screen.getByText("Step 1: Focus & Baseline")).toBeDefined();
+    expect(screen.getByText(/where is your primary focus right now\?/i)).toBeDefined();
 
     // Advance to Step 2
     fireEvent.click(screen.getByText(/next: cash & debt/i));

@@ -10,9 +10,13 @@ import {
 import FLPHeading from "~/components/core/typography/FLPHeading";
 import FLPText from "~/components/core/typography/FLPText";
 import HomeFooter from "~/components/home/HomeFooter";
+import DebtSnowballVsAvalancheTool from "~/components/tools/DebtSnowballVsAvalancheTool";
 import MortgageVsIsaTool from "~/components/tools/MortgageVsIsaTool";
+import OverdraftCostTool from "~/components/tools/OverdraftCostTool";
 import Section24Tool from "~/components/tools/Section24Tool";
+import StudentLoanOverpayTool from "~/components/tools/StudentLoanOverpayTool";
 import TaxTrapCalculatorTool from "~/components/tools/TaxTrapCalculatorTool";
+import ZeroPercentCliffTool from "~/components/tools/ZeroPercentCliffTool";
 
 interface ToolContent {
   slug: string;
@@ -21,7 +25,14 @@ interface ToolContent {
   title: string;
   subtitle: string;
   category: string;
-  component: "tax-trap" | "mortgage-isa" | "section-24";
+  component:
+    | "tax-trap"
+    | "mortgage-isa"
+    | "section-24"
+    | "debt-snowball"
+    | "zero-percent-cliff"
+    | "overdraft-cost"
+    | "student-loan";
   guideSections: { heading: string; body: string[] }[];
   faqs: { q: string; a: string }[];
 }
@@ -171,6 +182,121 @@ const TOOLS_DATA: Record<string, ToolContent> = {
       },
     ],
   },
+  "uk-debt-snowball-vs-avalanche-calculator": {
+    slug: "uk-debt-snowball-vs-avalanche-calculator",
+    metaTitle: "UK Debt Snowball vs Avalanche Calculator (Interest Saved & Exit Date) | Flump",
+    metaDescription:
+      "Compare the mathematically optimal Debt Avalanche vs psychologically rewarding Debt Snowball method for UK credit cards, personal loans, and overdrafts.",
+    title: "UK Debt Snowball vs. Avalanche Payoff Calculator",
+    subtitle:
+      "Model how allocating spare cash into high-APR debts (Avalanche) vs smallest balances (Snowball) changes your debt-free date and total interest paid.",
+    category: "UK Debt Management",
+    component: "debt-snowball",
+    guideSections: [
+      {
+        heading: "Avalanche vs. Snowball: Which UK Payoff Method is Superior?",
+        body: [
+          "The Debt Avalanche strategy targets the account with the highest APR first while paying minimums on the rest. Mathematically, it guarantees you pay the least total interest and become debt-free in the shortest possible timeframe.",
+          "The Debt Snowball strategy targets the smallest balance first regardless of interest rate. While it costs slightly more in overall interest, it delivers quick psychological wins that keep borrowers committed to their repayment plans.",
+        ],
+      },
+      {
+        heading: "The Power of the 'Extra £50' Surplus",
+        body: [
+          "UK credit card minimum repayments are typically calculated as 1% to 2.5% of the outstanding balance plus interest. Paying only minimums keeps borrowers in compounding debt for 15 to 25 years.",
+          "Adding even a fixed £50 to £100 per month above minimums collapses repayment timelines by years and saves thousands of pounds in compounding bank interest.",
+        ],
+      },
+    ],
+    faqs: [
+      {
+        q: "Should I include my mortgage in the debt snowball?",
+        a: "No. Low-interest secured borrowing like UK mortgages should be kept separate from high-cost unsecured consumer debt.",
+      },
+      {
+        q: "What if I have a 0% balance transfer card?",
+        a: "During the 0% window, the APR is zero, so Avalanche orders it last. However, you must ensure it is cleared before the promotional revert APR triggers.",
+      },
+    ],
+  },
+  "0-percent-balance-transfer-payoff-calculator": {
+    slug: "0-percent-balance-transfer-payoff-calculator",
+    metaTitle: "0% Balance Transfer Card Payoff & Cliff Calculator | Flump",
+    metaDescription:
+      "Avoid credit card promotional cliffs. Calculate the exact monthly payment to clear your 0% balance transfer before the 24.9%+ revert rate slams shut.",
+    title: "0% Balance Transfer Payoff & Revert Cliff Calculator",
+    subtitle:
+      "Avoid the high-interest revert trap: calculate your mandatory monthly repayment to extinguish balances before 0% promotional windows expire.",
+    category: "UK Credit Cards",
+    component: "zero-percent-cliff",
+    guideSections: [
+      {
+        heading: "Understanding the UK 0% Balance Transfer Cliff",
+        body: [
+          "A 0% balance transfer credit card is one of the most effective UK borrowing tools, but banks rely on consumers failing to clear the balance before the promotional term ends.",
+          "When the promotional window closes, remaining balances immediately jump to standard revert APRs, often 24.9% to 29.9% EAR, wiping out previous interest savings within months.",
+        ],
+      },
+    ],
+    faqs: [
+      {
+        q: "Can I transfer the remaining balance to another 0% card when it expires?",
+        a: "Yes, provided your credit score remains intact and a suitable deal is available. However, transfer fees (typically 2% to 3.5%) apply each time.",
+      },
+    ],
+  },
+  "overdraft-cost-and-payoff-calculator": {
+    slug: "overdraft-cost-and-payoff-calculator",
+    metaTitle: "UK Arranged Overdraft Cost & EAR Calculator (~39.9% Rate) | Flump",
+    metaDescription:
+      "Living in your bank overdraft? Calculate the true annual pound cost of ~39.9% EAR interest and find out how much you save by clearing it.",
+    title: "UK Arranged Overdraft Cost & Payoff Calculator",
+    subtitle:
+      "Calculate the stealth annual pound cost of living in an arranged overdraft charged at UK banks' standard 35%–39.9% EAR.",
+    category: "UK Banking & Overdrafts",
+    component: "overdraft-cost",
+    guideSections: [
+      {
+        heading: "The True Cost of a 39.9% EAR Bank Overdraft",
+        body: [
+          "Since FCA regulatory reforms abolished daily fixed overdraft charges, almost all major UK banks (Barclays, HSBC, Lloyds, NatWest, Santander) standardized on single interest rates around 39.9% EAR.",
+          "Living continuously in a £1,000 overdraft costs approximately £399 per year in stealth interest deducted directly from your wages.",
+        ],
+      },
+    ],
+    faqs: [
+      {
+        q: "Is an arranged overdraft considered high-priority debt?",
+        a: "Yes. Because EAR rates reach ~40%, clearing an overdraft delivers an immediate guaranteed 40% tax-free return on your money.",
+      },
+    ],
+  },
+  "uk-student-loan-overpay-or-invest-calculator": {
+    slug: "uk-student-loan-overpay-or-invest-calculator",
+    metaTitle: "UK Student Loan: Should You Overpay or Invest? (Plan 2 & 5) | Flump",
+    metaDescription:
+      "Find out whether you should ever make voluntary overpayments on your UK student loan (Plan 1, Plan 2, Plan 4, or Plan 5) or invest the cash instead.",
+    title: "UK Student Loan: Overpay or Invest? (Graduate Tax Calculator)",
+    subtitle:
+      "Evaluate whether voluntary student loan overpayments save you money or act as a needless donation to HM Treasury before statutory cancellation.",
+    category: "UK Student Finance",
+    component: "student-loan",
+    guideSections: [
+      {
+        heading: "Why UK Student Loans Function Like a Graduate Tax",
+        body: [
+          "UK student loans do not behave like commercial loans. Repayments are strictly linked to income (9% above statutory thresholds) regardless of your balance, and uncollected debt is completely wiped after 25 to 40 years.",
+          "For the vast majority of Plan 2 and Plan 5 graduates, the interest rate does not determine total lifetime repayments—only your career salary trajectory does.",
+        ],
+      },
+    ],
+    faqs: [
+      {
+        q: "Who should consider overpaying a UK student loan?",
+        a: "Only very high earners in early-career positions (e.g. corporate law, investment banking, software engineering on £80k+ rising quickly) who will mathematically clear the balance before write-off.",
+      },
+    ],
+  },
 };
 
 export const meta: MetaFunction<typeof loader> = ({ data }) => {
@@ -289,6 +415,10 @@ export const ToolDetailPage: FC = () => {
         {tool.component === "tax-trap" && <TaxTrapCalculatorTool />}
         {tool.component === "mortgage-isa" && <MortgageVsIsaTool />}
         {tool.component === "section-24" && <Section24Tool />}
+        {tool.component === "debt-snowball" && <DebtSnowballVsAvalancheTool />}
+        {tool.component === "zero-percent-cliff" && <ZeroPercentCliffTool />}
+        {tool.component === "overdraft-cost" && <OverdraftCostTool />}
+        {tool.component === "student-loan" && <StudentLoanOverpayTool />}
 
         {/* SEO In-Depth Guide */}
         <div className={guideContainerStyle}>

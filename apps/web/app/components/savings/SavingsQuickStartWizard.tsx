@@ -1,13 +1,6 @@
 import { css } from "@repo/ui/styled-system/css";
 import { type FC, useState } from "react";
-import {
-  FaArrowLeft,
-  FaArrowRight,
-  FaCheckCircle,
-  FaCoins,
-  FaPiggyBank,
-  FaRocket,
-} from "react-icons/fa";
+import { FaArrowLeft, FaArrowRight, FaCheckCircle, FaCoins, FaRocket } from "react-icons/fa";
 import { useFetcher } from "react-router";
 import FLPButton from "~/components/core/buttons/FLPButton";
 import FLPCard from "~/components/core/cards/FLPCard";

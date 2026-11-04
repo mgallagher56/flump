@@ -1,6 +1,16 @@
+import { calculateSafeToSpend, evaluateFinancialStage } from "@repo/common";
 import { css } from "@repo/ui/styled-system/css";
 import { type FC, useMemo, useState } from "react";
-import { FaEyeSlash, FaGripVertical, FaPlus, FaRedo, FaRocket, FaSlidersH } from "react-icons/fa";
+import {
+  FaEyeSlash,
+  FaFire,
+  FaGripVertical,
+  FaPlus,
+  FaRedo,
+  FaRocket,
+  FaSlidersH,
+} from "react-icons/fa";
+import { Link } from "react-router";
 import FLPButton from "~/components/core/buttons/FLPButton";
 import FLPHeading from "~/components/core/typography/FLPHeading";
 import FLPText from "~/components/core/typography/FLPText";
@@ -17,6 +27,7 @@ import {
 } from "~/utils/pageConfig";
 import { AccountsWidget } from "./widgets/AccountsWidget";
 import { BudgetWidget } from "./widgets/BudgetWidget";
+import { DebtWidget } from "./widgets/DebtWidget";
 import { FinancialHealthWidget } from "./widgets/FinancialHealthWidget";
 import { ForecastWidget } from "./widgets/ForecastWidget";
 import { MortgageWidget } from "./widgets/MortgageWidget";
@@ -34,6 +45,7 @@ export interface HomeDashboardProps {
   mortgageData: any;
   forecastData: any;
   taxData: any;
+  debtData?: any;
 }
 
 export const HomeDashboard: FC<HomeDashboardProps> = ({
@@ -46,12 +58,36 @@ export const HomeDashboard: FC<HomeDashboardProps> = ({
   mortgageData,
   forecastData,
   taxData,
+  debtData,
 }) => {
   const { formatCurrency } = useFormatCurrency();
   const { profile, updateProfile } = useUserProfile();
 
   const [editMode, setEditMode] = useState(false);
   const [draggedKey, setDraggedKey] = useState<DashboardWidgetKey | null>(null);
+
+  // Financial Lifecycle Stage evaluation
+  const financialStage = useMemo(() => {
+    if (!debtData && !(accountsData?.totalLiabilities > 0)) {
+      return null;
+    }
+    const debts = debtData?.debts || [];
+    return evaluateFinancialStage({
+      debts,
+      monthlySurplus: budgetData?.monthlySurplus ?? 0,
+      liquidSavings: savingsData?.totalSavingsBalance ?? accountsData?.typeTotals?.Saving ?? 0,
+      monthlyEssentialExpenses: budgetData?.monthlyExpenses ?? 1500,
+    });
+  }, [debtData, accountsData, budgetData, savingsData]);
+
+  // Safe-to-Spend weekly allowance metric
+  const safeToSpend = useMemo(() => {
+    if (!budgetData) return null;
+    const income = budgetData.monthlyIncome || 0;
+    const living = budgetData.livingExpenses || budgetData.monthlyExpenses || 0;
+    const minDebt = debtData?.monthlyMinimumTotal || 0;
+    return calculateSafeToSpend(income, living * 0.6, minDebt, living * 0.4);
+  }, [budgetData, debtData]);
 
   // Enabled pages according to UserProfile
   const enabledPages = useMemo<AppPageKey[]>(() => {
@@ -219,12 +255,19 @@ export const HomeDashboard: FC<HomeDashboardProps> = ({
         );
       case "tax":
         return Boolean(checklistProps.hasTax || (taxData?.recordsCount ?? 0) > 0);
+      case "debt":
+        return Boolean(
+          debtData?.totalDebt > 0 ||
+            (accountsData?.totalLiabilities ?? 0) > 0 ||
+            checklistProps.completedSteps?.includes("debt"),
+        );
       case "financialHealth": {
         // Financial health is unlocked if at least one financial section is configured
         const otherConfigured = (
           [
             "accounts",
             "budget",
+            "debt",
             "savings",
             "pension",
             "mortgage",
@@ -332,6 +375,97 @@ export const HomeDashboard: FC<HomeDashboardProps> = ({
 
       {/* Onboarding Checklist */}
       <SetupChecklist {...checklistProps} enabledPages={enabledPages} />
+
+      {/* Stage 1: Stabilize & Clear Hero Banner */}
+      {financialStage?.stage === "stabilize" && (
+        <div
+          className={css({
+            padding: "20px 24px",
+            borderRadius: "xl",
+            backgroundColor: "rgba(239, 68, 68, 0.06)",
+            border: "1px solid",
+            borderColor: "rgba(239, 68, 68, 0.25)",
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            flexWrap: "wrap",
+            gap: "16px",
+          })}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+            <div
+              style={{
+                width: "48px",
+                height: "48px",
+                borderRadius: "full",
+                backgroundColor: "rgba(239, 68, 68, 0.15)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                color: "#ef4444",
+                flexShrink: 0,
+              }}
+            >
+              <FaFire size={22} />
+            </div>
+            <div>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                <span
+                  style={{
+                    fontSize: "11px",
+                    fontWeight: "bold",
+                    backgroundColor: "#ef4444",
+                    color: "white",
+                    padding: "2px 8px",
+                    borderRadius: "full",
+                    textTransform: "uppercase",
+                  }}
+                >
+                  Stage 1: Stabilize & Clear
+                </span>
+                <span style={{ fontSize: "12px", color: "var(--colors-text-muted)" }}>
+                  Priority: Eliminate High-Cost Unsecured Liabilities
+                </span>
+              </div>
+              <div
+                style={{ marginTop: "4px", display: "flex", alignItems: "baseline", gap: "12px" }}
+              >
+                <span style={{ fontSize: "24px", fontWeight: "bold", color: "#ef4444" }}>
+                  {formatCurrency(financialStage.totalUnsecuredDebt || debtData?.totalDebt || 0)}
+                </span>
+                <span style={{ fontSize: "13px", color: "var(--colors-text-muted)" }}>
+                  Unsecured Debt Remaining • Targeted Debt-Free:{" "}
+                  {debtData?.debtFreeDate || "Calculated in Engine"}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+            {safeToSpend && (
+              <div
+                style={{
+                  backgroundColor: "rgba(255, 255, 255, 0.9)",
+                  border: "1px solid rgba(239, 68, 68, 0.2)",
+                  padding: "8px 14px",
+                  borderRadius: "8px",
+                  textAlign: "right",
+                }}
+              >
+                <div style={{ fontSize: "11px", color: "#6b7280" }}>Safe-to-Spend Allowance</div>
+                <div style={{ fontSize: "16px", fontWeight: "bold", color: "#111827" }}>
+                  {formatCurrency(safeToSpend.weeklyAllowance)} / week
+                </div>
+              </div>
+            )}
+            <Link to="/app/debt">
+              <FLPButton size="sm" variant="primary">
+                Open Debt Crusher →
+              </FLPButton>
+            </Link>
+          </div>
+        </div>
+      )}
 
       {/* Customize Mode Reorder Banner */}
       {editMode && (
@@ -489,6 +623,8 @@ export const HomeDashboard: FC<HomeDashboardProps> = ({
                 return (
                   <BudgetWidget key="budget" {...commonProps} config={cfg} data={budgetData} />
                 );
+              case "debt":
+                return <DebtWidget key="debt" {...commonProps} config={cfg} data={debtData} />;
               case "savings":
                 return (
                   <SavingsWidget key="savings" {...commonProps} config={cfg} data={savingsData} />

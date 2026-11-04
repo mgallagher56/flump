@@ -187,6 +187,9 @@ export default function OnboardingRoute() {
   // Progressive flow step: 1 | 2 | 3
   const [progressiveStep, setProgressiveStep] = useState<1 | 2 | 3>(1);
 
+  // Primary user focus: "debt" | "savings" | "wealth"
+  const [primaryFocus, setPrimaryFocus] = useState<"debt" | "savings" | "wealth">("wealth");
+
   // Financial baseline inputs
   const [grossSalary, setGrossSalary] = useState<number>(65000);
   const [employmentType, setEmploymentType] = useState<"employed" | "self-employed">("employed");
@@ -270,6 +273,21 @@ export default function OnboardingRoute() {
       return Array.from(set) as AppPageKey[];
     });
   }, [mortgageDebt, grossSalary, employmentType, pensionPercent, cashSavings, investments]);
+
+  // Primary focus selection
+  const handleSelectFocus = (focus: "debt" | "savings" | "wealth") => {
+    setPrimaryFocus(focus);
+    if (focus === "debt") {
+      setSelectedPages(["accounts", "budget", "debt"]);
+      setMortgageDebt(0);
+      setGrossSalary((prev) => Math.min(prev, 36000));
+    } else if (focus === "savings") {
+      setSelectedPages(["accounts", "budget", "savings", "forecast"]);
+      setCashSavings((prev) => (prev === 0 ? 5000 : prev));
+    } else {
+      setSelectedPages(["accounts", "budget", "savings", "pension", "mortgage", "forecast", "tax"]);
+    }
+  };
 
   // Live calculation of take-home pay and tax trap status
   const liveTakeHome = useMemo(() => {
@@ -759,12 +777,135 @@ export default function OnboardingRoute() {
               <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
                 <div>
                   <FLPHeading as="h2" size="md">
-                    Step 1: Income & Tax Status
+                    Step 1: Focus & Baseline
                   </FLPHeading>
                   <FLPText color="text.muted" fontSize="xs" style={{ marginTop: "4px" }}>
-                    We automatically calculate your UK PAYE take-home, NI, and tax trap exposure in
-                    real time.
+                    Select your primary objective to adapt your dashboard experience, tools, and
+                    calculators.
                   </FLPText>
+                </div>
+
+                {/* Focus Selector */}
+                <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                  <span style={{ fontSize: "13px", fontWeight: 600 }}>
+                    Where is your primary focus right now?
+                  </span>
+                  <div
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+                      gap: "10px",
+                    }}
+                  >
+                    <button
+                      type="button"
+                      onClick={() => handleSelectFocus("debt")}
+                      style={{
+                        padding: "12px 14px",
+                        borderRadius: "10px",
+                        border: "2px solid",
+                        borderColor: primaryFocus === "debt" ? "#ef4444" : "var(--colors-border)",
+                        backgroundColor:
+                          primaryFocus === "debt"
+                            ? "rgba(239, 68, 68, 0.05)"
+                            : "var(--colors-surface)",
+                        textAlign: "left",
+                        cursor: "pointer",
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: "4px",
+                      }}
+                    >
+                      <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                        <span style={{ fontSize: "16px" }}>🔥</span>
+                        <strong
+                          style={{
+                            fontSize: "13px",
+                            color: primaryFocus === "debt" ? "#ef4444" : "inherit",
+                          }}
+                        >
+                          Clear debt & stabilize
+                        </strong>
+                      </div>
+                      <span style={{ fontSize: "11px", color: "var(--colors-text-muted)" }}>
+                        Crush credit card & loan interest, find margin, and reach £0 debt.
+                      </span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => handleSelectFocus("savings")}
+                      style={{
+                        padding: "12px 14px",
+                        borderRadius: "10px",
+                        border: "2px solid",
+                        borderColor:
+                          primaryFocus === "savings" ? "#10b981" : "var(--colors-border)",
+                        backgroundColor:
+                          primaryFocus === "savings"
+                            ? "rgba(16, 185, 129, 0.05)"
+                            : "var(--colors-surface)",
+                        textAlign: "left",
+                        cursor: "pointer",
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: "4px",
+                      }}
+                    >
+                      <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                        <span style={{ fontSize: "16px" }}>🛡️</span>
+                        <strong
+                          style={{
+                            fontSize: "13px",
+                            color: primaryFocus === "savings" ? "#10b981" : "inherit",
+                          }}
+                        >
+                          Buffer & protect
+                        </strong>
+                      </div>
+                      <span style={{ fontSize: "11px", color: "var(--colors-text-muted)" }}>
+                        Build a £1,000 starter buffer and establish a 3–6 month emergency runway.
+                      </span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => handleSelectFocus("wealth")}
+                      style={{
+                        padding: "12px 14px",
+                        borderRadius: "10px",
+                        border: "2px solid",
+                        borderColor:
+                          primaryFocus === "wealth"
+                            ? "var(--colors-primary)"
+                            : "var(--colors-border)",
+                        backgroundColor:
+                          primaryFocus === "wealth"
+                            ? "rgba(99, 99, 241, 0.05)"
+                            : "var(--colors-surface)",
+                        textAlign: "left",
+                        cursor: "pointer",
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: "4px",
+                      }}
+                    >
+                      <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                        <span style={{ fontSize: "16px" }}>🚀</span>
+                        <strong
+                          style={{
+                            fontSize: "13px",
+                            color: primaryFocus === "wealth" ? "var(--colors-primary)" : "inherit",
+                          }}
+                        >
+                          Optimize wealth & tax
+                        </strong>
+                      </div>
+                      <span style={{ fontSize: "11px", color: "var(--colors-text-muted)" }}>
+                        Salary sacrifice, £100k tax trap, pensions, and mortgage equity.
+                      </span>
+                    </button>
+                  </div>
                 </div>
 
                 <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>

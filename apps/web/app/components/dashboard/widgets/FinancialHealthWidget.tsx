@@ -301,6 +301,64 @@ export const FinancialHealthWidget: FC<FinancialHealthWidgetProps> = ({
       });
     }
 
+    // 2.5. Debt Crusher & Recovery (if enabled)
+    if (enabledPages.includes("debt")) {
+      max += 30;
+      const liabilities = accountsData?.totalLiabilities || 0;
+      const surplus = budgetData?.monthlySurplus || 0;
+      const isProgressing = surplus > 0;
+
+      if (isProgressing) {
+        earned += 18;
+        wins.push({
+          id: "debt_payoff_margin",
+          module: "debt",
+          type: "strength",
+          title: "Debt Payoff Margin Active",
+          detail: `Generating +${formatCurrency(surplus)}/mo in surplus cash flow to crush debt principal.`,
+          impact: "high",
+          actionRoute: "/app/debt",
+        });
+      } else {
+        opps.push({
+          id: "debt_payoff_deficit",
+          module: "debt",
+          type: "improvement",
+          title: "Cash Flow Deficit Warning",
+          detail:
+            "Monthly living costs exceed net income. Review priority vs non-priority obligations.",
+          impact: "high",
+          actionRoute: "/app/budget",
+        });
+      }
+
+      if (liabilities < 5000) {
+        earned += 12;
+      }
+
+      criteria.push({
+        id: "debt_reduction",
+        module: "debt",
+        moduleLabel: "Debt Crusher",
+        title: "Active Principal Payoff & Starter Buffer",
+        earnedPoints: isProgressing ? (liabilities < 5000 ? 30 : 18) : 10,
+        maxPoints: 30,
+        isPassed: isProgressing,
+        whatHelps: "Maintaining a positive cash flow surplus and active monthly overpayments.",
+        whatHurts: "Running a monthly deficit or carrying high-interest overdrafts/cards.",
+        howToImprove: "Allocate surplus into Avalanche or Snowball overpayments.",
+        actionRoute: "/app/debt",
+      });
+
+      statuses.push({
+        key: "debt",
+        label: "Debt Crusher",
+        status: isProgressing ? "good" : "action",
+        summary: `Liabilities: ${formatCurrency(liabilities)}`,
+        score: isProgressing ? 85 : 45,
+      });
+    }
+
     // 3. Savings & Investments (if enabled)
     if (enabledPages.includes("savings") && savingsData) {
       max += 25;
