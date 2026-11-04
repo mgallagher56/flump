@@ -33,10 +33,7 @@ describe("Section24Tool", () => {
     const ctaButton = screen.getByRole("button", { name: /track your properties in flump/i });
     fireEvent.click(ctaButton);
 
-    expect(setItemSpy).toHaveBeenCalledWith(
-      "flump_onboarding_seed",
-      expect.stringContaining("grossSalary"),
-    );
+    expect(setItemSpy).toHaveBeenCalledWith("flump_onboarding_seed", expect.any(String));
     expect(mockNavigate).toHaveBeenCalledWith("/signUp");
   });
 });

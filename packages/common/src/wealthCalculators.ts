@@ -2,7 +2,6 @@ import { calculateUKEWNITakeHome, getCurrentUKTaxYear } from "./taxRules.js";
 
 export interface OnboardingSeedPayload {
   annualIncome?: number;
-  grossSalary?: number;
   pensionContributionPct?: number;
   salarySacrifice?: boolean;
   initialCashSavings?: number;
@@ -55,12 +54,7 @@ function unscramble(b64: string): string {
 export function persistOnboardingSeed(payload: OnboardingSeedPayload): void {
   if (typeof window === "undefined" || !window.localStorage) return;
   try {
-    const normalized: OnboardingSeedPayload = {
-      ...payload,
-      annualIncome: payload.annualIncome ?? payload.grossSalary,
-    };
-    delete normalized.grossSalary;
-    const serialized = JSON.stringify(normalized);
+    const serialized = JSON.stringify(payload);
     window.localStorage.setItem(ONBOARDING_SEED_STORAGE_KEY, scramble(serialized));
   } catch (err) {
     console.error("Failed to persist onboarding seed:", err);
