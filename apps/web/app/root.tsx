@@ -107,7 +107,7 @@ export default function App() {
           <ResponsiveProvider>
             <div
               className={css({
-                maxWidth: "1280px",
+                maxWidth: "1536px",
                 margin: "0 auto",
                 paddingX: { base: "12px", md: "24px" },
               })}

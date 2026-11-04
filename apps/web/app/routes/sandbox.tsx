@@ -65,7 +65,7 @@ export const loader = async (_args: LoaderFunctionArgs) => {
 
 export default function SandboxRoute() {
   const navigate = useNavigate();
-  const [activePersona, setActivePersona] = useState<"debt" | "wealth">("debt");
+  const [activePersona, setActivePersona] = useState<"debt" | "medium" | "high">("debt");
   const dashboardData = getSandboxPersonaData(activePersona);
 
   const handleSaveAndCreateAccount = () => {
@@ -76,13 +76,20 @@ export default function SandboxRoute() {
         inferredModules: ["debt", "budget", "accounts"],
         timestamp: Date.now(),
       });
+    } else if (activePersona === "medium") {
+      persistOnboardingSeed({
+        annualIncome: 45000,
+        initialCashSavings: 12500,
+        inferredModules: ["accounts", "budget", "savings", "pension", "forecast"],
+        timestamp: Date.now(),
+      });
     } else {
       persistOnboardingSeed({
-        annualIncome: 95000,
-        initialCashSavings: 22000,
-        initialInvestments: 48000,
-        mortgageBalance: 180000,
-        inferredModules: ["accounts", "tax", "mortgage", "pension", "forecast"],
+        annualIncome: 100000,
+        initialCashSavings: 28500,
+        initialInvestments: 65000,
+        mortgageBalance: 480000,
+        inferredModules: ["accounts", "budget", "tax", "pension", "mortgage", "forecast"],
         timestamp: Date.now(),
       });
     }
@@ -98,6 +105,9 @@ export default function SandboxRoute() {
         gap: "6",
         paddingTop: "4",
         paddingBottom: "12",
+        width: "100%",
+        maxWidth: "1536px",
+        margin: "0 auto",
       })}
     >
       {/* Sticky Sandbox Header Banner */}
@@ -108,11 +118,10 @@ export default function SandboxRoute() {
             align: "center",
             flexWrap: "wrap",
             gap: "3",
-            maxW: "7xl",
-            mx: "auto",
+            width: "100%",
           })}
         >
-          <div className={flex({ align: "center", gap: "3" })}>
+          <div className={flex({ align: "center", gap: "3", flexWrap: "wrap" })}>
             <span
               className={css({
                 display: "inline-flex",
@@ -128,7 +137,7 @@ export default function SandboxRoute() {
             </span>
 
             {/* Persona Switcher */}
-            <div className={flex({ gap: "2" })}>
+            <div className={flex({ gap: "2", flexWrap: "wrap" })}>
               <button
                 type="button"
                 className={pillStyle(activePersona === "debt")}
@@ -138,10 +147,17 @@ export default function SandboxRoute() {
               </button>
               <button
                 type="button"
-                className={pillStyle(activePersona === "wealth")}
-                onClick={() => setActivePersona("wealth")}
+                className={pillStyle(activePersona === "medium")}
+                onClick={() => setActivePersona("medium")}
               >
-                Persona B: £95k Earner + BTL
+                Persona B: £45k Earner (No Debt)
+              </button>
+              <button
+                type="button"
+                className={pillStyle(activePersona === "high")}
+                onClick={() => setActivePersona("high")}
+              >
+                Persona C: £100k High Earner
               </button>
             </div>
           </div>
@@ -159,6 +175,7 @@ export default function SandboxRoute() {
 
       {/* Actual SPA Dashboard View */}
       <HomeDashboard
+        userProfile={dashboardData.userProfile}
         accountsData={dashboardData.accountsData as any}
         budgetData={dashboardData.budgetData as any}
         checklistProps={{

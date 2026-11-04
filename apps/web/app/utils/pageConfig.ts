@@ -135,9 +135,9 @@ export const DEFAULT_DASHBOARD_WIDGETS: DashboardWidgetKey[] = [
 ];
 export const DEFAULT_WIDGET_SIZES: Record<string, "normal" | "wide"> = {
   financialHealth: "wide",
-  accounts: "wide",
+  accounts: "normal",
   budget: "normal",
-  debt: "wide",
+  debt: "normal",
   savings: "normal",
   pension: "normal",
   mortgage: "normal",

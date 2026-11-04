@@ -15,6 +15,7 @@ export interface BudgetWidgetConfig {
 export interface BudgetWidgetProps {
   data: {
     monthlyIncome: number;
+    annualSalary?: number;
     monthlyExpenses: number;
     monthlySurplus: number;
     savingsRatePct: number;
@@ -196,6 +197,49 @@ export const BudgetWidget: FC<BudgetWidgetProps> = ({
           gap: { base: "10px", md: "14px" },
         })}
       >
+        {/* Prominent Monthly Income & Annual Salary Highlight */}
+        <div
+          className={css({
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            padding: "8px 12px",
+            borderRadius: "lg",
+            backgroundColor: "rgba(16, 185, 129, 0.08)",
+            border: "1px solid rgba(16, 185, 129, 0.2)",
+          })}
+        >
+          <div>
+            <FLPText color="text.muted" fontSize="10px" fontWeight="bold" textTransform="uppercase">
+              Monthly Take-Home
+            </FLPText>
+            <span style={{ fontSize: "1.1rem", fontWeight: 800, color: "#10b981" }}>
+              {formatCurrency(data.monthlyIncome)}/mo
+            </span>
+          </div>
+          {Boolean(data.annualSalary && data.annualSalary > 0) && (
+            <div style={{ textAlign: "right" }}>
+              <FLPText
+                color="text.muted"
+                fontSize="10px"
+                fontWeight="bold"
+                textTransform="uppercase"
+              >
+                Gross Salary
+              </FLPText>
+              <span
+                style={{
+                  fontSize: "0.95rem",
+                  fontWeight: 700,
+                  color: "var(--colors-text-primary)",
+                }}
+              >
+                {formatCurrency(data.annualSalary as number)}/yr
+              </span>
+            </div>
+          )}
+        </div>
+
         {/* Metric Row */}
         <div
           className={css({

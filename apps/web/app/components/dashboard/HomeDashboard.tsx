@@ -16,7 +16,7 @@ import FLPHeading from "~/components/core/typography/FLPHeading";
 import FLPText from "~/components/core/typography/FLPText";
 import SetupChecklist, { type SetupChecklistProps } from "~/components/setup/SetupChecklist";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
-import { useUserProfile } from "~/hooks/useUserProfile";
+import { normalizeProfile, type UserProfile, useUserProfile } from "~/hooks/useUserProfile";
 import {
   ALL_PAGE_KEYS,
   type AppPageKey,
@@ -38,6 +38,7 @@ import { TaxWidget } from "./widgets/TaxWidget";
 export interface HomeDashboardProps {
   user: any;
   checklistProps: SetupChecklistProps;
+  userProfile?: Partial<UserProfile> | UserProfile;
   accountsData: any;
   budgetData: any;
   savingsData: any;
@@ -51,6 +52,7 @@ export interface HomeDashboardProps {
 export const HomeDashboard: FC<HomeDashboardProps> = ({
   user: _user,
   checklistProps,
+  userProfile,
   accountsData,
   budgetData,
   savingsData,
@@ -61,7 +63,13 @@ export const HomeDashboard: FC<HomeDashboardProps> = ({
   debtData,
 }) => {
   const { formatCurrency } = useFormatCurrency();
-  const { profile, updateProfile } = useUserProfile();
+  const { profile: hookProfile, updateProfile } = useUserProfile();
+  const profile = useMemo(() => {
+    if (userProfile) {
+      return normalizeProfile(userProfile);
+    }
+    return hookProfile;
+  }, [userProfile, hookProfile]);
 
   const [editMode, setEditMode] = useState(false);
   const [draggedKey, setDraggedKey] = useState<DashboardWidgetKey | null>(null);
@@ -307,7 +315,7 @@ export const HomeDashboard: FC<HomeDashboardProps> = ({
   return (
     <div
       className={css({
-        maxWidth: "6xl",
+        maxWidth: "100%",
         margin: "0 auto",
         paddingTop: { base: "12px", md: "20px" },
         paddingBottom: { base: "24px", md: "40px" },
@@ -626,7 +634,16 @@ export const HomeDashboard: FC<HomeDashboardProps> = ({
                 );
               case "budget":
                 return (
-                  <BudgetWidget key="budget" {...commonProps} config={cfg} data={budgetData} />
+                  <BudgetWidget
+                    key="budget"
+                    {...commonProps}
+                    config={cfg}
+                    data={{
+                      ...budgetData,
+                      annualSalary:
+                        profile.annualSalary ?? forecastData?.annualSalary ?? taxData?.totalIncome,
+                    }}
+                  />
                 );
               case "debt":
                 return <DebtWidget key="debt" {...commonProps} config={cfg} data={debtData} />;
