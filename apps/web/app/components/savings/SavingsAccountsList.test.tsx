@@ -28,7 +28,6 @@ describe("<SavingsAccountsList />", () => {
       interestRate: 4.75,
       monthlyContribution: 250,
       created_at: "2026-01-01",
-      updated_at: "2026-01-01",
       user_id: "u1",
     },
   ];

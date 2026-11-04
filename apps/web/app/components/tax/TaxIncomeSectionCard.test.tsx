@@ -15,9 +15,13 @@ describe("<TaxIncomeSectionCard />", () => {
     frequency: "monthly",
     date: "2024-04-06",
     endDate: null,
-    isActive: true,
     category: "freelance",
-    isCustom: false,
+    notes: null,
+    receiptFilename: null,
+    receiptMimeType: null,
+    receiptData: null,
+    createdAt: "2026-01-01",
+    updatedAt: "2026-01-01",
   };
 
   const defaultProps: TaxIncomeSectionCardProps = {
