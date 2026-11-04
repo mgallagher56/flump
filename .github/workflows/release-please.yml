@@ -1,19 +1,13 @@
 name: release-please
+
 on:
   push:
     branches:
       - main
-      - dev
-
-env:
-  TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
-  TURBO_TEAM: ${{ vars.TURBO_TEAM }}
 
 permissions:
   contents: write
   pull-requests: write
-  id-token: write
-  pages: write
 
 jobs:
   release:
@@ -25,56 +19,10 @@ jobs:
     steps:
       - id: release
         uses: googleapis/release-please-action@v5.0.0
+        with:
+          target-branch: main
 
       - name: "[Debug] release-please outputs"
         env:
           RELEASE_PLEASE_CONTEXT: ${{ toJson(steps.release.outputs) }}
         run: echo "$RELEASE_PLEASE_CONTEXT"
-
-  deploy-separate:
-    name: 🚀 Deploy
-    needs: release
-    runs-on: ubuntu-latest
-    if: ${{ needs.release.outputs.releases_created == 'true' }}
-    strategy:
-      fail-fast: false
-      matrix:
-        path: ${{fromJson(needs.release.outputs.paths_released)}}
-
-    steps:
-      - name: ⬇️ Checkout repo
-        uses: actions/checkout@v4.4.0
-
-      - name: ⚙️ Setup Bun and install dependencies
-        uses: ./.github/actions/bun-setup
-        with:
-          turbo: true
-          ghToken: ${{ secrets.GITHUB_TOKEN }}
-          turboToken: ${{ env.TURBO_TOKEN }}
-
-      - name: 👀 Read app name
-        uses: SebRollen/toml-action@v1.2.0
-        id: app_name
-        with:
-          file: ${{ matrix.path }}/fly.toml
-          field: app
-
-      - name: Setup Flyctl
-        uses: superfly/flyctl-actions/setup-flyctl@master
-
-      - name: 👀 Prepare app assets
-        run: |
-          if jq -e '.scripts.prepare' ${{ matrix.path }}/package.json >/dev/null 2>&1; then
-            bun run --cwd ${{ matrix.path }} prepare
-          fi
-
-      - name: 🚀 Deploy ${{ steps.app_name.outputs.value }}
-        run: |
-          flyctl deploy . \
-            --config ${{ matrix.path }}/fly.toml \
-            --dockerfile ${{ matrix.path }}/Dockerfile \
-            --remote-only \
-            --build-arg COMMIT_SHA=${{ github.sha }} \
-            --app ${{ steps.app_name.outputs.value }}${{ github.ref == 'refs/heads/dev' && '-staging' || '' }}
-        env:
-          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
