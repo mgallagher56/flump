@@ -1,3 +1,4 @@
+import { clearOnboardingSeed, persistOnboardingSeed } from "@repo/common";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import OnboardingRoute from "./app.onboarding";
@@ -165,16 +166,16 @@ describe("OnboardingRoute", () => {
 
   it("hydrates baseline figures from localStorage seed and shows pre-loaded banner", () => {
     const seed = {
-      grossSalary: 85000,
+      annualIncome: 85000,
       pensionContributionPct: 8,
       salarySacrifice: true,
       initialCashSavings: 20000,
       initialInvestments: 30000,
       monthlyContribution: 800,
-      inferredModules: ["accounts", "budget", "pension", "savings", "forecast"],
+      inferredModules: ["accounts", "budget", "pension", "savings", "forecast"] as const,
       timestamp: Date.now(),
     };
-    localStorage.setItem("flump_onboarding_seed", JSON.stringify(seed));
+    persistOnboardingSeed(seed as any);
 
     render(<OnboardingRoute />);
 
@@ -183,21 +184,21 @@ describe("OnboardingRoute", () => {
     ).toBeDefined();
     expect(screen.getByText(/launch dashboard with this baseline \(10s\) →/i)).toBeDefined();
 
-    localStorage.removeItem("flump_onboarding_seed");
+    clearOnboardingSeed();
   });
 
   it("navigates through progressive 3-step baseline flow", async () => {
     const seed = {
-      grossSalary: 70000,
+      annualIncome: 70000,
       pensionContributionPct: 5,
       salarySacrifice: true,
       initialCashSavings: 15000,
       initialInvestments: 25000,
       monthlyContribution: 600,
-      inferredModules: ["accounts", "budget", "savings", "pension", "forecast"],
+      inferredModules: ["accounts", "budget", "savings", "pension", "forecast"] as const,
       timestamp: Date.now(),
     };
-    localStorage.setItem("flump_onboarding_seed", JSON.stringify(seed));
+    persistOnboardingSeed(seed as any);
 
     render(<OnboardingRoute />);
 
@@ -227,7 +228,7 @@ describe("OnboardingRoute", () => {
       expect(mockNavigate).toHaveBeenCalledWith("/");
     });
 
-    localStorage.removeItem("flump_onboarding_seed");
+    clearOnboardingSeed();
   });
 
   it("completes all 5 questions in questionnaire mode and transitions to review", async () => {
@@ -260,16 +261,16 @@ describe("OnboardingRoute", () => {
 
   it("launches dashboard directly from fast-track baseline banner button", async () => {
     const seed = {
-      grossSalary: 60000,
+      annualIncome: 60000,
       pensionContributionPct: 5,
       salarySacrifice: false,
       initialCashSavings: 10000,
       initialInvestments: 5000,
       monthlyContribution: 400,
-      inferredModules: ["accounts", "budget", "savings"],
+      inferredModules: ["accounts", "budget", "savings"] as const,
       timestamp: Date.now(),
     };
-    localStorage.setItem("flump_onboarding_seed", JSON.stringify(seed));
+    persistOnboardingSeed(seed as any);
 
     render(<OnboardingRoute />);
 
@@ -281,6 +282,6 @@ describe("OnboardingRoute", () => {
       expect(mockNavigate).toHaveBeenCalledWith("/");
     });
 
-    localStorage.removeItem("flump_onboarding_seed");
+    clearOnboardingSeed();
   });
 });

@@ -167,11 +167,11 @@ export const WealthCheckHeroWidget: FC = () => {
   const [debtMonthlyBudget, setDebtMonthlyBudget] = useState<number>(300);
 
   // Tab B: Wealth Check Inputs
-  const [salary, setSalary] = useState<number>(65000);
+  const [annualIncome, setAnnualIncome] = useState<number>(65000);
   const [savings, setSavings] = useState<number>(25000);
   const [monthlyContribution, setMonthlyContribution] = useState<number>(600);
 
-  const salaryId = useId();
+  const incomeId = useId();
   const savingsId = useId();
   const monthlyId = useId();
 
@@ -217,8 +217,8 @@ export const WealthCheckHeroWidget: FC = () => {
     [savings, monthlyContribution],
   );
 
-  const trapAnalysis = useMemo(() => calculateTaxTrapRelief(salary), [salary]);
-  const takeHome = useMemo(() => calculateUKTakeHome(salary, 5, true), [salary]);
+  const trapAnalysis = useMemo(() => calculateTaxTrapRelief(annualIncome), [annualIncome]);
+  const takeHome = useMemo(() => calculateUKTakeHome(annualIncome, 5, true), [annualIncome]);
 
   const handleSaveAndStart = () => {
     const isDebt = activeTab === "debt";
@@ -229,7 +229,7 @@ export const WealthCheckHeroWidget: FC = () => {
     }
 
     const payload: OnboardingSeedPayload = {
-      grossSalary: isDebt ? 34000 : salary,
+      annualIncome: isDebt ? 34000 : annualIncome,
       pensionContributionPct: 5,
       salarySacrifice: true,
       initialCashSavings: isDebt ? 800 : Math.round(savings * 0.4),
@@ -243,7 +243,7 @@ export const WealthCheckHeroWidget: FC = () => {
             "pension",
             "savings",
             "forecast",
-            ...(salary >= 95000 ? (["tax"] as const) : []),
+            ...(annualIncome >= 95000 ? (["tax"] as const) : []),
           ],
       timestamp: Date.now(),
     };
@@ -484,32 +484,32 @@ export const WealthCheckHeroWidget: FC = () => {
         <div className={gridStyle}>
           <div>
             <div className={inputGroupStyle}>
-              <label className={labelStyle} htmlFor={salaryId}>
+              <label className={labelStyle} htmlFor={incomeId}>
                 <span>Annual Gross Salary</span>
                 <span style={{ color: "var(--colors-primary)", fontWeight: "bold" }}>
-                  {formatCurrency(salary)}
+                  {formatCurrency(annualIncome)}
                 </span>
               </label>
               <div className={inputWrapperStyle}>
                 <span className={prefixStyle}>£</span>
                 <input
                   className={inputFieldStyle}
-                  id={salaryId}
+                  id={incomeId}
                   max={300000}
                   min={15000}
                   step={1000}
                   type="number"
-                  value={salary}
-                  onChange={(e) => setSalary(Number(e.target.value) || 0)}
+                  value={annualIncome}
+                  onChange={(e) => setAnnualIncome(Number(e.target.value) || 0)}
                 />
               </div>
               <div className={chipRowStyle}>
                 {[38000, 65000, 105000, 120000].map((preset) => (
                   <button
                     key={preset}
-                    className={chipStyle(salary === preset)}
+                    className={chipStyle(annualIncome === preset)}
                     type="button"
-                    onClick={() => setSalary(preset)}
+                    onClick={() => setAnnualIncome(preset)}
                   >
                     {formatCurrency(preset)}
                   </button>
@@ -648,7 +648,7 @@ export const WealthCheckHeroWidget: FC = () => {
               <div style={{ fontSize: "20px", fontWeight: "700", color: "text.primary" }}>
                 {trapAnalysis.isInTaxTrap
                   ? `${formatCurrency(trapAnalysis.estimatedTaxSaved)} / yr reclaimed`
-                  : `${formatCurrency(Math.round(salary * 0.05 * (trapAnalysis.marginalRatePct / 100)))} / yr saved`}
+                  : `${formatCurrency(Math.round(annualIncome * 0.05 * (trapAnalysis.marginalRatePct / 100)))} / yr saved`}
               </div>
               <div style={{ fontSize: "11px", color: "text.muted" }}>
                 {trapAnalysis.isInTaxTrap

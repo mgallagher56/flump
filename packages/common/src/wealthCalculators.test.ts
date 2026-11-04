@@ -61,7 +61,7 @@ describe("wealthCalculators", () => {
     });
 
     const samplePayload: OnboardingSeedPayload = {
-      grossSalary: 85000,
+      annualIncome: 85000,
       pensionContributionPct: 6,
       salarySacrifice: true,
       initialCashSavings: 15000,
