@@ -19,25 +19,25 @@
     "@repo/app-shell": "workspace:*",
     "@repo/common": "workspace:*",
     "@repo/ui": "workspace:*",
-    "compression": "^1.8.2",
-    "express": "^5.3.0",
-    "react": "^19.3.1",
-    "react-dom": "^19.3.1",
-    "react-helmet-async": "^3.0.0",
-    "react-router-dom": "^7.18.5",
-    "sirv": "^3.0.2"
+    "compression": "1.8.2",
+    "express": "5.3.0",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
+    "react-helmet-async": "3.0.0",
+    "react-router-dom": "7.18.5",
+    "sirv": "3.0.2"
   },
   "devDependencies": {
-    "@pandacss/dev": "^2.4.0",
-    "@pandacss/preset-base": "^2.4.0",
-    "@pandacss/preset-panda": "^2.4.0",
-    "@types/compression": "^1.8.1",
-    "@types/express": "^5.0.6",
-    "@types/node": "^26.6.6",
-    "@types/react": "^19.3.0",
-    "@types/react-dom": "^19.3.0",
-    "@vitejs/plugin-react": "^6.2.1",
-    "typescript": "^7.0.2",
-    "vite": "^8.3.5"
+    "@pandacss/dev": "2.5.0",
+    "@pandacss/preset-base": "2.5.0",
+    "@pandacss/preset-panda": "2.5.0",
+    "@types/compression": "1.8.1",
+    "@types/express": "5.0.6",
+    "@types/node": "26.6.6",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "@vitejs/plugin-react": "6.2.1",
+    "typescript": "7.0.2",
+    "vite": "8.3.5"
   }
 }

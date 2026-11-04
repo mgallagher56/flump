@@ -24,14 +24,14 @@
     "check-types": "tsc --noEmit"
   },
   "dependencies": {
-    "react-helmet-async": "^3.0.0"
+    "react-helmet-async": "3.0.0"
   },
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",
-    "@types/react": "^19.3.0",
-    "@types/react-dom": "^19.3.0",
-    "typescript": "^7.0.2",
-    "vite": "^8.3.5"
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "typescript": "7.0.2",
+    "vite": "8.3.5"
   },
   "peerDependencies": {
     "react": "^19.0.0",
