@@ -444,16 +444,21 @@ export const HomeDashboard: FC<HomeDashboardProps> = ({
           <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
             {safeToSpend && (
               <div
-                style={{
-                  backgroundColor: "rgba(255, 255, 255, 0.9)",
-                  border: "1px solid rgba(239, 68, 68, 0.2)",
+                className={css({
+                  backgroundColor: "surface",
+                  border: "1px solid",
+                  borderColor: "rgba(239, 68, 68, 0.2)",
                   padding: "8px 14px",
                   borderRadius: "8px",
                   textAlign: "right",
-                }}
+                })}
               >
-                <div style={{ fontSize: "11px", color: "#6b7280" }}>Safe-to-Spend Allowance</div>
-                <div style={{ fontSize: "16px", fontWeight: "bold", color: "#111827" }}>
+                <div className={css({ fontSize: "11px", color: "text.muted" })}>
+                  Safe-to-Spend Allowance
+                </div>
+                <div
+                  className={css({ fontSize: "16px", fontWeight: "bold", color: "text.primary" })}
+                >
                   {formatCurrency(safeToSpend.weeklyAllowance)} / week
                 </div>
               </div>

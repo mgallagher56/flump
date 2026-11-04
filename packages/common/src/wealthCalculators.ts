@@ -16,6 +16,16 @@ export interface OnboardingSeedPayload {
 }
 
 export const ONBOARDING_SEED_STORAGE_KEY = "flump_onboarding_seed";
+export const SESSION_PRESENCE_COOKIE = "flump_has_session";
+
+function getCookieDomainAttr(): string {
+  if (typeof window === "undefined" || !window.location) return "";
+  const host = window.location.hostname;
+  if (host === "flump.co.uk" || host.endsWith(".flump.co.uk")) {
+    return "; domain=.flump.co.uk";
+  }
+  return "";
+}
 
 function scramble(str: string): string {
   if (typeof btoa !== "function") return str;
@@ -49,25 +59,87 @@ function unscramble(b64: string): string {
 }
 
 /**
- * Safely persists onboarding seed state without exposing clear-text sensitive fields.
+ * Extracts a cookie value by name from a raw cookie string (e.g. document.cookie or Request header).
+ */
+export function parseCookieValue(
+  rawCookie: string | null | undefined,
+  name: string,
+): string | null {
+  if (!rawCookie) return null;
+  const match = rawCookie.match(new RegExp(`(?:^|;\\s*)${name}=([^;]*)`));
+  return match ? decodeURIComponent(match[1]) : null;
+}
+
+/**
+ * Safely persists onboarding seed state across both localStorage and root cookies (.flump.co.uk).
  */
 export function persistOnboardingSeed(payload: OnboardingSeedPayload): void {
-  if (typeof window === "undefined" || !window.localStorage) return;
-  try {
-    const serialized = JSON.stringify(payload);
-    window.localStorage.setItem(ONBOARDING_SEED_STORAGE_KEY, scramble(serialized));
-  } catch (err) {
-    console.error("Failed to persist onboarding seed:", err);
+  const serialized = JSON.stringify(payload);
+  const scrambled = scramble(serialized);
+
+  if (typeof window !== "undefined") {
+    if (window.localStorage) {
+      try {
+        window.localStorage.setItem(ONBOARDING_SEED_STORAGE_KEY, scrambled);
+      } catch (err) {
+        console.error("Failed to persist onboarding seed to localStorage:", err);
+      }
+    }
+
+    if (typeof document !== "undefined") {
+      try {
+        const domainAttr = getCookieDomainAttr();
+        document.cookie = `${ONBOARDING_SEED_STORAGE_KEY}=${encodeURIComponent(scrambled)}; path=/; max-age=86400; SameSite=Lax${domainAttr}`;
+      } catch (err) {
+        console.error("Failed to persist onboarding seed cookie:", err);
+      }
+    }
   }
 }
 
 /**
- * Safely reads the onboarding seed state without clearing it.
+ * Safely reads the onboarding seed state from cookies or localStorage.
  */
 export function readOnboardingSeed(): OnboardingSeedPayload | null {
-  if (typeof window === "undefined" || !window.localStorage) return null;
+  if (typeof window === "undefined") return null;
+
+  // 1. Try reading from cookie
+  if (typeof document !== "undefined") {
+    try {
+      const cookieVal = parseCookieValue(document.cookie, ONBOARDING_SEED_STORAGE_KEY);
+      if (cookieVal) {
+        const jsonStr = unscramble(cookieVal);
+        return JSON.parse(jsonStr);
+      }
+    } catch {
+      // Continue to localStorage fallback
+    }
+  }
+
+  // 2. Fall back to localStorage
+  if (window.localStorage) {
+    try {
+      const raw = window.localStorage.getItem(ONBOARDING_SEED_STORAGE_KEY);
+      if (!raw) return null;
+      const jsonStr = unscramble(raw);
+      return JSON.parse(jsonStr);
+    } catch {
+      return null;
+    }
+  }
+
+  return null;
+}
+
+/**
+ * Reads onboarding seed payload from a server-side request Cookie header.
+ */
+export function readOnboardingSeedFromHeader(
+  cookieHeader: string | null | undefined,
+): OnboardingSeedPayload | null {
+  if (!cookieHeader) return null;
   try {
-    const raw = window.localStorage.getItem(ONBOARDING_SEED_STORAGE_KEY);
+    const raw = parseCookieValue(cookieHeader, ONBOARDING_SEED_STORAGE_KEY);
     if (!raw) return null;
     const jsonStr = unscramble(raw);
     return JSON.parse(jsonStr);
@@ -77,14 +149,26 @@ export function readOnboardingSeed(): OnboardingSeedPayload | null {
 }
 
 /**
- * Safely clears the onboarding seed state.
+ * Safely clears the onboarding seed state from both localStorage and cookies.
  */
 export function clearOnboardingSeed(): void {
-  if (typeof window === "undefined" || !window.localStorage) return;
-  try {
-    window.localStorage.removeItem(ONBOARDING_SEED_STORAGE_KEY);
-  } catch {
-    // Ignore
+  if (typeof window === "undefined") return;
+
+  if (window.localStorage) {
+    try {
+      window.localStorage.removeItem(ONBOARDING_SEED_STORAGE_KEY);
+    } catch {
+      // Ignore
+    }
+  }
+
+  if (typeof document !== "undefined") {
+    try {
+      const domainAttr = getCookieDomainAttr();
+      document.cookie = `${ONBOARDING_SEED_STORAGE_KEY}=; path=/; max-age=0; SameSite=Lax${domainAttr}`;
+    } catch {
+      // Ignore
+    }
   }
 }
 
@@ -95,6 +179,151 @@ export function readAndClearOnboardingSeed(): OnboardingSeedPayload | null {
   const result = readOnboardingSeed();
   clearOnboardingSeed();
   return result;
+}
+
+/**
+ * Checks whether an active user session exists based on the cross-domain presence cookie.
+ */
+export function hasSessionPresenceCookie(rawCookie?: string): boolean {
+  const cookieSource = rawCookie ?? (typeof document !== "undefined" ? document.cookie : "");
+  return parseCookieValue(cookieSource, SESSION_PRESENCE_COOKIE) === "1";
+}
+
+/**
+ * Sets or clears the cross-domain presence cookie (flump_has_session=1) on .flump.co.uk.
+ */
+export function setSessionPresenceCookie(active: boolean): void {
+  if (typeof document === "undefined") return;
+  const domainAttr = getCookieDomainAttr();
+  if (active) {
+    document.cookie = `${SESSION_PRESENCE_COOKIE}=1; path=/; max-age=2592000; SameSite=Lax${domainAttr}`;
+  } else {
+    document.cookie = `${SESSION_PRESENCE_COOKIE}=; path=/; max-age=0; SameSite=Lax${domainAttr}`;
+  }
+}
+
+export interface Section24Result {
+  actualCashProfit: number;
+  section24TaxableProfit: number;
+  grossTaxOnProperty: number;
+  financeCredit: number;
+  finalTaxDue: number;
+  oldRulesTax: number;
+  section24Penalty: number;
+  effectiveTaxRate: number;
+  netRentalIncomeAfterTax: number;
+  isHigherRate: boolean;
+}
+
+export function calculateSection24LandlordTax(
+  employmentIncome: number,
+  rentalIncome: number,
+  mortgageInterest: number,
+  allowableExpenses: number,
+): Section24Result {
+  const actualCashProfit = Math.max(0, rentalIncome - mortgageInterest - allowableExpenses);
+  const section24TaxableProfit = Math.max(0, rentalIncome - allowableExpenses);
+  const isHigherRate = employmentIncome >= 50270;
+  const taxRate = isHigherRate ? 0.4 : 0.2;
+  const grossTaxOnProperty = section24TaxableProfit * taxRate;
+  const financeCredit = Math.max(0, mortgageInterest * 0.2);
+  const finalTaxDue = Math.max(0, grossTaxOnProperty - financeCredit);
+  const oldRulesTax = actualCashProfit * taxRate;
+  const section24Penalty = Math.max(0, finalTaxDue - oldRulesTax);
+  const effectiveTaxRate =
+    actualCashProfit > 0 ? Math.min(100, Math.round((finalTaxDue / actualCashProfit) * 100)) : 100;
+  const netRentalIncomeAfterTax = Math.max(0, actualCashProfit - finalTaxDue);
+
+  return {
+    actualCashProfit,
+    section24TaxableProfit,
+    grossTaxOnProperty,
+    financeCredit,
+    finalTaxDue,
+    oldRulesTax,
+    section24Penalty,
+    effectiveTaxRate,
+    netRentalIncomeAfterTax,
+    isHigherRate,
+  };
+}
+
+export interface MortgageVsIsaResult {
+  standardPayment: number;
+  interestSaved: number;
+  monthsShaved: number;
+  yearsShaved: string;
+  totalStandardInterest: number;
+  totalInterestOverpay: number;
+  isaAccumulatedValue: number;
+  totalIsaContributed: number;
+  isaGrowth: number;
+  netWealthDelta: number;
+}
+
+export function calculateMortgageVsIsa(
+  mortgageBalance: number,
+  interestRate: number,
+  remainingYears: number,
+  monthlyOverpay: number,
+  expectedIsaReturn: number,
+): MortgageVsIsaResult {
+  const months = remainingYears * 12;
+  const monthlyRate = interestRate / 100 / 12;
+  const monthlyIsaRate = expectedIsaReturn / 100 / 12;
+
+  const standardPayment =
+    monthlyRate > 0
+      ? (mortgageBalance * monthlyRate * (1 + monthlyRate) ** months) /
+        ((1 + monthlyRate) ** months - 1)
+      : mortgageBalance / months;
+
+  let bal = mortgageBalance;
+  let totalInterestOverpay = 0;
+  let monthsToZero = 0;
+  for (let m = 1; m <= months; m++) {
+    if (bal <= 0) break;
+    const interest = bal * monthlyRate;
+    totalInterestOverpay += interest;
+    const principal = Math.min(bal, standardPayment + monthlyOverpay - interest);
+    bal -= principal;
+    monthsToZero = m;
+  }
+
+  let standardBal = mortgageBalance;
+  let totalStandardInterest = 0;
+  for (let m = 1; m <= months; m++) {
+    if (standardBal <= 0) break;
+    const interest = standardBal * monthlyRate;
+    totalStandardInterest += interest;
+    const principal = Math.min(standardBal, standardPayment - interest);
+    standardBal -= principal;
+  }
+
+  const interestSaved = Math.max(0, totalStandardInterest - totalInterestOverpay);
+  const monthsShaved = Math.max(0, months - monthsToZero);
+  const yearsShaved = (monthsShaved / 12).toFixed(1);
+
+  let isaPot = 0;
+  for (let m = 1; m <= months; m++) {
+    isaPot = (isaPot + monthlyOverpay) * (1 + monthlyIsaRate);
+  }
+  const totalIsaContributed = monthlyOverpay * months;
+  const isaGrowth = Math.max(0, isaPot - totalIsaContributed);
+  const netWealthDelta = isaPot - (totalIsaContributed + interestSaved);
+
+  return {
+    standardPayment,
+    interestSaved,
+    monthsShaved,
+    yearsShaved,
+    totalStandardInterest,
+    totalInterestOverpay,
+    isaAccumulatedValue: isaPot,
+    totalIsaContributed,
+    isaGrowth,
+    netWealthDelta,
+  };
 }
 
 export interface CompoundTrajectoryPoint {

@@ -4,11 +4,16 @@ import {
   calculateTaxTrapRelief,
   calculateUKTakeHome,
   clearOnboardingSeed,
+  hasSessionPresenceCookie,
   ONBOARDING_SEED_STORAGE_KEY,
   type OnboardingSeedPayload,
+  parseCookieValue,
   persistOnboardingSeed,
   readAndClearOnboardingSeed,
   readOnboardingSeed,
+  readOnboardingSeedFromHeader,
+  SESSION_PRESENCE_COOKIE,
+  setSessionPresenceCookie,
 } from "./wealthCalculators.js";
 
 describe("wealthCalculators", () => {
@@ -94,6 +99,48 @@ describe("wealthCalculators", () => {
       const retrieved = readAndClearOnboardingSeed();
       expect(retrieved).toEqual(samplePayload);
       expect(readOnboardingSeed()).toBeNull();
+    });
+
+    it("parses cookies and headers correctly", () => {
+      const header = `other_cookie=xyz; ${SESSION_PRESENCE_COOKIE}=1; foo=bar`;
+      expect(parseCookieValue(header, SESSION_PRESENCE_COOKIE)).toBe("1");
+      expect(hasSessionPresenceCookie(header)).toBe(true);
+      expect(hasSessionPresenceCookie("other_cookie=xyz")).toBe(false);
+    });
+
+    it("reads seed from server request Cookie header", () => {
+      let mockCookieVal = "";
+      (globalThis as any).document = {
+        get cookie() {
+          return mockCookieVal;
+        },
+        set cookie(v: string) {
+          mockCookieVal = v;
+        },
+      };
+      persistOnboardingSeed(samplePayload);
+      const parsedHeaderSeed = readOnboardingSeedFromHeader(mockCookieVal);
+      expect(parsedHeaderSeed).toEqual(samplePayload);
+      delete (globalThis as any).document;
+    });
+
+    it("toggles session presence cookie", () => {
+      let mockCookieVal = "";
+      (globalThis as any).document = {
+        get cookie() {
+          return mockCookieVal;
+        },
+        set cookie(v: string) {
+          mockCookieVal = v;
+        },
+      };
+      setSessionPresenceCookie(true);
+      expect(mockCookieVal).toContain(`${SESSION_PRESENCE_COOKIE}=1`);
+      expect(hasSessionPresenceCookie(mockCookieVal)).toBe(true);
+
+      setSessionPresenceCookie(false);
+      expect(mockCookieVal).toContain("max-age=0");
+      delete (globalThis as any).document;
     });
   });
 });

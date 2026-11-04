@@ -392,3 +392,181 @@ export function getDemoDashboardData() {
     },
   };
 }
+
+export function getSandboxPersonaData(persona: "debt" | "wealth" = "debt") {
+  if (persona === "debt") {
+    const debtAccounts = [
+      {
+        id: "demo-debt-acc-1",
+        name: "Monzo Current Account",
+        type: "Current",
+        balance: 950,
+        currency: "GBP",
+        interestRate: 0,
+        monthlyContribution: null,
+        isCurrent: true,
+      },
+      {
+        id: "demo-debt-acc-2",
+        name: "Barclaycard Platinum",
+        type: "Credit Card",
+        balance: -4500,
+        currency: "GBP",
+        interestRate: 24.9,
+        monthlyContribution: 200,
+        isCurrent: true,
+      },
+      {
+        id: "demo-debt-acc-3",
+        name: "Monzo Arranged Overdraft",
+        type: "Overdraft",
+        balance: -1200,
+        currency: "GBP",
+        interestRate: 39.9,
+        monthlyContribution: 100,
+        isCurrent: true,
+      },
+      {
+        id: "demo-debt-acc-4",
+        name: "HSBC Personal Loan",
+        type: "Loan",
+        balance: -2300,
+        currency: "GBP",
+        interestRate: 7.9,
+        monthlyContribution: 150,
+        isCurrent: true,
+      },
+    ];
+
+    const budgetEntries = [
+      {
+        id: "b1",
+        category: "Income",
+        name: "Take-Home Salary",
+        amount: 2450,
+        frequency: "monthly",
+        isIncome: true,
+      },
+      {
+        id: "b2",
+        category: "housing",
+        name: "Rent & Council Tax",
+        amount: 950,
+        frequency: "monthly",
+        isIncome: false,
+      },
+      {
+        id: "b3",
+        category: "living",
+        name: "Groceries & Commute",
+        amount: 450,
+        frequency: "monthly",
+        isIncome: false,
+      },
+      {
+        id: "b4",
+        category: "debt",
+        name: "Debt Repayments",
+        amount: 450,
+        frequency: "monthly",
+        isIncome: false,
+      },
+    ];
+
+    return {
+      isDemo: true,
+      persona: "debt" as const,
+      user: {
+        id: "demo-persona-debt",
+        email: "persona-debt@flump.co.uk",
+        name: "Sam Jordan",
+        firstName: "Sam",
+        lastName: "Jordan",
+      },
+      hasAccounts: true,
+      hasBudget: true,
+      hasSavings: false,
+      hasPension: true,
+      hasMortgageAccount: false,
+      hasProfile: true,
+      hasRunForecast: false,
+      completedSteps: ["accounts", "debt", "budget"],
+      accountsData: {
+        netWorth: -7050,
+        totalAssets: 950,
+        totalLiabilities: 8000,
+        accountsCount: 4,
+        typeTotals: { Current: 950, "Credit Card": 4500, Overdraft: 1200, Loan: 2300 },
+      },
+      budgetData: {
+        monthlyIncome: 2450,
+        monthlyExpenses: 1850,
+        monthlySurplus: 600,
+        budgetedSavings: 0,
+        livingExpenses: 1400,
+        savingsRatePct: 0,
+        runwayMonths: 0.7,
+        runwayLabel: "Critical Runway",
+        rawEntries: budgetEntries,
+        rawAccounts: debtAccounts,
+        rawAccountDetails: [],
+      },
+      savingsData: {
+        totalSavingsBalance: 0,
+        totalMonthlyContributions: 0,
+        weightedInterestRate: 0,
+        accountsCount: 0,
+      },
+      pensionData: {
+        totalPensionBalance: 6500,
+        potsCount: 1,
+        employeePercent: 5.0,
+        employerPercent: 3.0,
+        isSalarySacrifice: false,
+        monthlyContributionEst: 180,
+      },
+      mortgageData: {
+        mortgageBalance: 0,
+        interestRate: 0,
+        remainingTermYears: 0,
+        hasMortgageAccount: false,
+      },
+      forecastData: {
+        totalAssets: 950,
+        monthlySavingRate: 600,
+        annualSalary: 34000,
+        estimatedTakeHome: 2450,
+      },
+      taxData: {
+        taxYear: getCurrentUKTaxYear(),
+        totalIncome: 34000,
+        totalExpenses: 0,
+        netProfit: 34000,
+        estimatedTaxDue: 4400,
+        recordsCount: 1,
+      },
+      debtData: {
+        totalDebt: 8000,
+        highInterestDebt: 5700,
+        highInterestCount: 2,
+        debtFreeDate: "September 2026",
+        interestSaved: 1420,
+        monthlyMinimumTotal: 265,
+      },
+    };
+  }
+
+  // Persona B: Wealth & BTL
+  return {
+    ...getDemoDashboardData(),
+    persona: "wealth" as const,
+    debtData: {
+      totalDebt: 0,
+      highInterestDebt: 0,
+      highInterestCount: 0,
+      debtFreeDate: "Debt Free",
+      interestSaved: 0,
+      monthlyMinimumTotal: 0,
+    },
+  };
+}

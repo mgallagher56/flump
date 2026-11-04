@@ -4,7 +4,6 @@ import { type LoaderFunctionArgs, type MetaFunction, redirect, useLoaderData } f
 import { calculateNetTakeHome } from "~/components/budget/UserProfilePanel";
 import { DemoModeBanner } from "~/components/dashboard/DemoModeBanner";
 import { HomeDashboard } from "~/components/dashboard/HomeDashboard";
-import LoggedOutHome from "~/components/home/LoggedOutHome";
 import { toMonthly } from "~/types/budget";
 import { getDemoDashboardData, isDemoMode } from "~/utils/demoData";
 import { calculateRunwayStats } from "~/utils/runwayStorage";
@@ -26,25 +25,7 @@ export const loader = async (args: LoaderFunctionArgs) => {
   const { user, accessToken } = await getAuthSession(args, { ensureSignedIn: false });
 
   if (!user) {
-    return {
-      isDemo: false,
-      user: null,
-      hasAccounts: false,
-      hasBudget: false,
-      hasSavings: false,
-      hasPension: false,
-      hasMortgageAccount: false,
-      hasProfile: false,
-      hasRunForecast: false,
-      completedSteps: [] as string[],
-      accountsData: null,
-      budgetData: null,
-      savingsData: null,
-      pensionData: null,
-      mortgageData: null,
-      forecastData: null,
-      taxData: null,
-    };
+    return redirect("/login");
   }
 
   const apiUrl = process.env.VITE_API_URL || "http://localhost:4000";
@@ -345,7 +326,7 @@ const Index = (): ReactElement => {
     );
   }
 
-  return <LoggedOutHome />;
+  return null;
 };
 
 export default Index;
