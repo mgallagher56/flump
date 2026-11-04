@@ -8,7 +8,6 @@
 - turborepo migration ([f54ed55](https://github.com/mgallagher56/flump/commit/f54ed550cf5e93671321935ebba0c2f16828bd85))
 - upgrade to vite remix dev server ([8c105cb](https://github.com/mgallagher56/flump/commit/8c105cb1d7e166e20e1634112e40013d8dcd8d4d))
 
-
 ### Bug Fixes
 
 - **deps:** update all non-major third-party dependencies ([7ee8d81](https://github.com/mgallagher56/flump/commit/7ee8d81e455b5b93063165dbcb759179f50aea95))
