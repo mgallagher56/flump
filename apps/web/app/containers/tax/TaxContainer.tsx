@@ -32,7 +32,9 @@ import FLPBox from "~/components/core/structure/FLPBox";
 import FLPHeading from "~/components/core/typography/FLPHeading";
 import FLPText from "~/components/core/typography/FLPText";
 import CopyTaxYearModal from "~/components/tax/CopyTaxYearModal";
+import PaymentsOnAccountCard from "~/components/tax/PaymentsOnAccountCard";
 import TaxIncomeSectionCard from "~/components/tax/TaxIncomeSectionCard";
+import TaxTrapAlertBanner from "~/components/tax/TaxTrapAlertBanner";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
 import type { loader } from "~/routes/app.tax";
 import {
@@ -515,6 +517,18 @@ const TaxContainer: FC = () => {
       )}
 
       {/* Tax Year Selector Toolbar */}
+      <div style={{ marginBottom: "20px", display: "flex", flexDirection: "column", gap: "16px" }}>
+        <TaxTrapAlertBanner grossIncome={activeYearData?.totalGrossIncome || payeSalary} />
+        {activeYearData && (
+          <PaymentsOnAccountCard
+            annualSelfAssessmentTax={
+              activeYearData.netAdditionalTaxToPay ??
+              Math.max(0, activeYearData.totalTaxDue - activeYearData.payeTaxDue)
+            }
+          />
+        )}
+      </div>
+
       <div
         className={css({
           display: "flex",

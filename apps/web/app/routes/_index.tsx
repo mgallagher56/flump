@@ -2,9 +2,11 @@ import { getCurrentUKTaxYear } from "@repo/common";
 import type { ReactElement } from "react";
 import { type LoaderFunctionArgs, type MetaFunction, redirect, useLoaderData } from "react-router";
 import { calculateNetTakeHome } from "~/components/budget/UserProfilePanel";
+import { DemoModeBanner } from "~/components/dashboard/DemoModeBanner";
 import { HomeDashboard } from "~/components/dashboard/HomeDashboard";
 import LoggedOutHome from "~/components/home/LoggedOutHome";
 import { toMonthly } from "~/types/budget";
+import { getDemoDashboardData, isDemoMode } from "~/utils/demoData";
 import { calculateRunwayStats } from "~/utils/runwayStorage";
 import { getAuthSession } from "~/utils/utils";
 
@@ -17,10 +19,15 @@ export const handle = {
 };
 
 export const loader = async (args: LoaderFunctionArgs) => {
+  if (isDemoMode(args.request.url)) {
+    return getDemoDashboardData();
+  }
+
   const { user, accessToken } = await getAuthSession(args, { ensureSignedIn: false });
 
   if (!user) {
     return {
+      isDemo: false,
       user: null,
       hasAccounts: false,
       hasBudget: false,
@@ -179,6 +186,7 @@ export const loader = async (args: LoaderFunctionArgs) => {
     });
 
     return {
+      isDemo: false,
       user,
       hasAccounts: Array.isArray(accounts) && accounts.length > 0,
       hasBudget:
@@ -254,6 +262,7 @@ export const loader = async (args: LoaderFunctionArgs) => {
   } catch (error) {
     console.error("Home loader error:", error);
     return {
+      isDemo: false,
       user,
       hasAccounts: false,
       hasBudget: false,
@@ -275,8 +284,10 @@ export const loader = async (args: LoaderFunctionArgs) => {
 };
 
 const Index = (): ReactElement => {
+  const data = useLoaderData<typeof loader>();
   const {
     user,
+    isDemo,
     hasAccounts,
     hasBudget,
     hasSavings,
@@ -292,31 +303,34 @@ const Index = (): ReactElement => {
     mortgageData,
     forecastData,
     taxData,
-  } = useLoaderData<typeof loader>();
+  } = data as any;
 
   if (user && accountsData) {
     return (
-      <HomeDashboard
-        accountsData={accountsData}
-        budgetData={budgetData}
-        checklistProps={{
-          hasAccounts,
-          hasBudget,
-          hasMortgageAccount,
-          hasPension,
-          hasProfile,
-          hasRunForecast,
-          hasSavings,
-          hasTax: (taxData?.recordsCount ?? 0) > 0,
-          completedSteps,
-        }}
-        forecastData={forecastData}
-        mortgageData={mortgageData}
-        pensionData={pensionData}
-        savingsData={savingsData}
-        taxData={taxData}
-        user={user}
-      />
+      <>
+        {isDemo && <DemoModeBanner />}
+        <HomeDashboard
+          accountsData={accountsData}
+          budgetData={budgetData}
+          checklistProps={{
+            hasAccounts,
+            hasBudget,
+            hasMortgageAccount,
+            hasPension,
+            hasProfile,
+            hasRunForecast,
+            hasSavings,
+            hasTax: (taxData?.recordsCount ?? 0) > 0,
+            completedSteps,
+          }}
+          forecastData={forecastData}
+          mortgageData={mortgageData}
+          pensionData={pensionData}
+          savingsData={savingsData}
+          taxData={taxData}
+          user={user}
+        />
+      </>
     );
   }
 

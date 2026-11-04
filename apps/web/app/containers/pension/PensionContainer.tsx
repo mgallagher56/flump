@@ -18,6 +18,7 @@ import PensionAccountsList from "~/components/pension/PensionAccountsList";
 import PensionForecasterCard from "~/components/pension/PensionForecasterCard";
 import PensionQuickStartWizard from "~/components/pension/PensionQuickStartWizard";
 import PensionSummaryCards from "~/components/pension/PensionSummaryCards";
+import AnnualAllowancePill from "~/components/savings/AnnualAllowancePill";
 import type { Account } from "~/containers/accounts/types";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
 import { useUserProfile } from "~/hooks/useUserProfile";
@@ -354,6 +355,18 @@ export const PensionContainer: FC = () => {
           }}
         />
       )}
+
+      {/* UK Pension Annual Allowance Tracker (£60k Limit) */}
+      <AnnualAllowancePill
+        type="pension"
+        currentAmount={
+          (monthlyEmployeeContrib +
+            monthlyEmployerContrib +
+            monthlyEmployerNiContrib +
+            directMonthlyContrib) *
+          12
+        }
+      />
 
       {/* Summary Cards */}
       <PensionSummaryCards

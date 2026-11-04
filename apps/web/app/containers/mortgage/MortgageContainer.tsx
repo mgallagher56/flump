@@ -16,6 +16,7 @@ import FLPText from "~/components/core/typography/FLPText";
 import MortgageTracker from "~/components/mortgage/MortgageTracker";
 import OverpaymentSimulator from "~/components/mortgage/OverpaymentSimulator";
 import OverpayVsSaveCompare from "~/components/mortgage/OverpayVsSaveCompare";
+import RemortgageShockSim from "~/components/mortgage/RemortgageShockSim";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
 import { useUserProfile } from "~/hooks/useUserProfile";
 import type { loader } from "~/routes/app.mortgage";
@@ -455,14 +456,17 @@ const MortgageContainer: FC = () => {
       )}
 
       {activeTab === "simulator" && (
-        <OverpaymentSimulator
-          interestRate={interestRate}
-          loanAmount={loanAmount}
-          mortgageType={mortgageType}
-          overpayment={overpayment}
-          remainingTerm={remainingTerm}
-          onOverpaymentChange={setOverpayment}
-        />
+        <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
+          <RemortgageShockSim currentBalance={loanAmount} currentRate={interestRate} />
+          <OverpaymentSimulator
+            interestRate={interestRate}
+            loanAmount={loanAmount}
+            mortgageType={mortgageType}
+            overpayment={overpayment}
+            remainingTerm={remainingTerm}
+            onOverpaymentChange={setOverpayment}
+          />
+        </div>
       )}
 
       {activeTab === "compare" && (

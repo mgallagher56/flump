@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from "vitest";
 import LoggedOutHome from "./LoggedOutHome";
 
 vi.mock("react-router", () => ({
+  useNavigate: () => vi.fn(),
   Link: ({
     children,
     to,
@@ -26,7 +27,9 @@ describe("LoggedOutHome", () => {
     render(<LoggedOutHome />);
 
     // Hero section
-    expect(screen.getByRole("heading", { level: 1, name: /master your wealth/i })).toBeDefined();
+    expect(
+      screen.getByRole("heading", { level: 1, name: /stop guessing your financial future/i }),
+    ).toBeDefined();
     expect(screen.getByText(/built specifically for uk personal finance/i)).toBeDefined();
     const heroCta = screen.getByRole("link", { name: /start free today/i });
     expect(heroCta.getAttribute("href")).toBe("/signUp");

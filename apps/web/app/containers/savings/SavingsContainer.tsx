@@ -7,6 +7,7 @@ import FLPButton from "~/components/core/buttons/FLPButton";
 import FLPHeading from "~/components/core/typography/FLPHeading";
 import FLPText from "~/components/core/typography/FLPText";
 import AddSavingsAccountDialog from "~/components/savings/AddSavingsAccountDialog";
+import AnnualAllowancePill from "~/components/savings/AnnualAllowancePill";
 import SavingsAccountsList, {
   calculateOneYearCompoundInterest,
 } from "~/components/savings/SavingsAccountsList";
@@ -203,6 +204,13 @@ export const SavingsContainer: FC = () => {
           onDismiss={() => setShowWizard(false)}
         />
       )}
+
+      {/* UK Annual ISA Allowance Pill */}
+      <AnnualAllowancePill
+        type="isa"
+        currentAmount={totalSavingsBalance}
+        savingsInterest={estimatedAnnualInterest}
+      />
 
       {/* Key Metric Summary Cards */}
       <SavingsSummaryCards

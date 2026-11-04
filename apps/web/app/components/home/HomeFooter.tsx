@@ -1,6 +1,8 @@
 import { css } from "@repo/ui/styled-system/css";
-import type { FC } from "react";
+import { type FC, useState } from "react";
+import { FiMail } from "react-icons/fi";
 import { Link as RouterLink } from "react-router";
+import FLPModal from "~/components/core/dialogs/FLPModal";
 import FLPHeading from "~/components/core/typography/FLPHeading";
 import FLPText from "~/components/core/typography/FLPText";
 
@@ -15,7 +17,7 @@ const footerContainerStyle = css({
 
 const gridStyle = css({
   display: "grid",
-  gridTemplateColumns: { base: "1fr", md: "2fr 1fr 1fr" },
+  gridTemplateColumns: { base: "1fr", sm: "repeat(2, 1fr)", md: "2fr 1fr 1fr 1fr" },
   gap: "32px",
   marginBottom: "36px",
 });
@@ -34,6 +36,13 @@ const linkStyle = css({
   color: "text.muted",
   textDecoration: "none",
   transition: "color 0.15s ease",
+  cursor: "pointer",
+  backgroundColor: "transparent",
+  border: "none",
+  padding: 0,
+  font: "inherit",
+  textAlign: "left",
+  display: "inline-block",
   "&:hover": {
     color: "primary",
   },
@@ -64,6 +73,23 @@ const bottomRowStyle = css({
 });
 
 export const HomeFooter: FC = () => {
+  const [isContactOpen, setIsContactOpen] = useState(false);
+  const [feedbackSent, setFeedbackSent] = useState(false);
+  const [subject, setSubject] = useState("");
+  const [message, setMessage] = useState("");
+
+  const handleSendFeedback = () => {
+    if (message.trim()) {
+      setFeedbackSent(true);
+      setTimeout(() => {
+        setIsContactOpen(false);
+        setFeedbackSent(false);
+        setSubject("");
+        setMessage("");
+      }, 1500);
+    }
+  };
+
   return (
     <footer className={footerContainerStyle}>
       <div className={gridStyle}>
@@ -107,7 +133,35 @@ export const HomeFooter: FC = () => {
 
         <div>
           <FLPHeading as="h4" color="text.primary" mb={3} size="sm">
-            Account & Access
+            Free Calculators
+          </FLPHeading>
+          <ul className={linkListStyle}>
+            <li>
+              <RouterLink className={linkStyle} to="/tools/uk-100k-tax-trap-calculator">
+                £100k Tax Trap
+              </RouterLink>
+            </li>
+            <li>
+              <RouterLink className={linkStyle} to="/tools/mortgage-overpay-vs-isa">
+                Mortgage vs. ISA
+              </RouterLink>
+            </li>
+            <li>
+              <RouterLink className={linkStyle} to="/tools/section-24-landlord-calculator">
+                Section 24 Landlord
+              </RouterLink>
+            </li>
+            <li>
+              <RouterLink className={linkStyle} to="/tools">
+                All Calculators →
+              </RouterLink>
+            </li>
+          </ul>
+        </div>
+
+        <div>
+          <FLPHeading as="h4" color="text.primary" mb={3} size="sm">
+            Account & Support
           </FLPHeading>
           <ul className={linkListStyle}>
             <li>
@@ -119,6 +173,11 @@ export const HomeFooter: FC = () => {
               <RouterLink className={linkStyle} to="/login">
                 Log In
               </RouterLink>
+            </li>
+            <li>
+              <button className={linkStyle} type="button" onClick={() => setIsContactOpen(true)}>
+                Contact & Feedback
+              </button>
             </li>
             <li>
               <a
@@ -146,6 +205,111 @@ export const HomeFooter: FC = () => {
         <div>© {new Date().getFullYear()} Flump. Open-source personal finance platform.</div>
         <div>Built with React 19, React Router 7, Panda CSS, and WorkOS AuthKit.</div>
       </div>
+
+      {isContactOpen && (
+        <FLPModal
+          open={isContactOpen}
+          title="Contact & Feedback"
+          triggerBtn={<span style={{ display: "none" }} />}
+          confirmButton={{
+            text: feedbackSent ? "Sent!" : "Send Feedback",
+          }}
+          onClose={() => setIsContactOpen(false)}
+          onConfirm={handleSendFeedback}
+        >
+          <div style={{ display: "flex", flexDirection: "column", gap: "16px", padding: "8px 0" }}>
+            <FLPText color="text.muted" fontSize="sm">
+              Have a question, feature request, or need help with UK tax modeling? We'd love to hear
+              from you.
+            </FLPText>
+
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
+                padding: "10px 14px",
+                backgroundColor: "rgba(99, 102, 241, 0.08)",
+                borderRadius: "8px",
+                fontSize: "14px",
+                color: "var(--colors-primary)",
+              }}
+            >
+              <FiMail />
+              <span>
+                Direct Email: <strong>support@flump.app</strong>
+              </span>
+            </div>
+
+            {feedbackSent ? (
+              <div style={{ color: "#10b981", fontWeight: 600, padding: "12px 0" }}>
+                Thank you! Your message has been received.
+              </div>
+            ) : (
+              <>
+                <div>
+                  <label
+                    htmlFor="contact-subject"
+                    style={{
+                      display: "block",
+                      fontSize: "12px",
+                      fontWeight: 600,
+                      marginBottom: "4px",
+                    }}
+                  >
+                    Subject
+                  </label>
+                  <input
+                    id="contact-subject"
+                    type="text"
+                    placeholder="e.g. Question about £100k tax trap or feature request"
+                    value={subject}
+                    onChange={(e) => setSubject(e.target.value)}
+                    style={{
+                      width: "100%",
+                      padding: "8px 12px",
+                      borderRadius: "6px",
+                      border: "1px solid var(--colors-border)",
+                      backgroundColor: "var(--colors-surface)",
+                      color: "inherit",
+                    }}
+                  />
+                </div>
+
+                <div>
+                  <label
+                    htmlFor="contact-message"
+                    style={{
+                      display: "block",
+                      fontSize: "12px",
+                      fontWeight: 600,
+                      marginBottom: "4px",
+                    }}
+                  >
+                    Message
+                  </label>
+                  <textarea
+                    id="contact-message"
+                    rows={4}
+                    placeholder="Tell us what you're trying to model or what we can improve..."
+                    value={message}
+                    onChange={(e) => setMessage(e.target.value)}
+                    style={{
+                      width: "100%",
+                      padding: "8px 12px",
+                      borderRadius: "6px",
+                      border: "1px solid var(--colors-border)",
+                      backgroundColor: "var(--colors-surface)",
+                      color: "inherit",
+                      resize: "vertical",
+                    }}
+                  />
+                </div>
+              </>
+            )}
+          </div>
+        </FLPModal>
+      )}
     </footer>
   );
 };

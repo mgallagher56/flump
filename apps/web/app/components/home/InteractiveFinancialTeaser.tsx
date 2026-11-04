@@ -1,6 +1,9 @@
+import { ONBOARDING_SEED_STORAGE_KEY, type OnboardingSeedPayload } from "@repo/common";
 import { css } from "@repo/ui/styled-system/css";
 import { type FC, useId, useMemo, useState } from "react";
-import { FiAlertCircle, FiPercent, FiTrendingUp } from "react-icons/fi";
+import { FiAlertCircle, FiArrowRight, FiPercent, FiTrendingUp } from "react-icons/fi";
+import { useNavigate } from "react-router";
+import FLPButton from "~/components/core/buttons/FLPButton";
 import FLPHeading from "~/components/core/typography/FLPHeading";
 import FLPText from "~/components/core/typography/FLPText";
 
@@ -194,7 +197,58 @@ const formatGBP = (num: number) =>
   }).format(num);
 
 export const InteractiveFinancialTeaser: FC = () => {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<"tax" | "mortgage">("tax");
+
+  const handleSaveTaxSeed = (grossSalary: number) => {
+    const payload: OnboardingSeedPayload = {
+      grossSalary,
+      pensionContributionPct: 5,
+      salarySacrifice: true,
+      initialCashSavings: 15000,
+      initialInvestments: 20000,
+      monthlyContribution: 500,
+      inferredModules: [
+        "accounts",
+        "budget",
+        "pension",
+        "savings",
+        "forecast",
+        ...(grossSalary >= 95000 ? (["tax"] as const) : []),
+      ],
+      timestamp: Date.now(),
+    };
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.setItem(ONBOARDING_SEED_STORAGE_KEY, JSON.stringify(payload));
+      } catch (err) {
+        console.error(err);
+      }
+    }
+    navigate("/signUp");
+  };
+
+  const handleSaveMortgageSeed = (balance: number) => {
+    const payload: OnboardingSeedPayload = {
+      grossSalary: 65000,
+      pensionContributionPct: 5,
+      salarySacrifice: true,
+      initialCashSavings: 15000,
+      initialInvestments: 15000,
+      monthlyContribution: 500,
+      mortgageBalance: balance,
+      inferredModules: ["accounts", "budget", "mortgage", "forecast", "savings"],
+      timestamp: Date.now(),
+    };
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.setItem(ONBOARDING_SEED_STORAGE_KEY, JSON.stringify(payload));
+      } catch (err) {
+        console.error(err);
+      }
+    }
+    navigate("/signUp");
+  };
 
   // Tax state
   const [salary, setSalary] = useState<number>(65000);
@@ -454,6 +508,23 @@ export const InteractiveFinancialTeaser: FC = () => {
                     {taxResults.effectiveTaxRate.toFixed(1)}%
                   </span>
                 </div>
+
+                <div style={{ marginTop: "16px" }}>
+                  <FLPButton
+                    size="md"
+                    onClick={() => handleSaveTaxSeed(salary)}
+                    style={{
+                      width: "100%",
+                      display: "inline-flex",
+                      justifyContent: "center",
+                      alignItems: "center",
+                      gap: "6px",
+                      fontWeight: "600",
+                    }}
+                  >
+                    Save this salary baseline <FiArrowRight aria-hidden="true" />
+                  </FLPButton>
+                </div>
               </div>
             </div>
           )}
@@ -562,6 +633,23 @@ export const InteractiveFinancialTeaser: FC = () => {
                   <strong style={{ color: "text.primary" }}>
                     {formatGBP(mortgageResults.monthlyWithOverpayment)} / month
                   </strong>
+                </div>
+
+                <div style={{ marginTop: "16px" }}>
+                  <FLPButton
+                    size="md"
+                    onClick={() => handleSaveMortgageSeed(mortgageBalance)}
+                    style={{
+                      width: "100%",
+                      display: "inline-flex",
+                      justifyContent: "center",
+                      alignItems: "center",
+                      gap: "6px",
+                      fontWeight: "600",
+                    }}
+                  >
+                    Save this mortgage baseline <FiArrowRight aria-hidden="true" />
+                  </FLPButton>
                 </div>
               </div>
             </div>

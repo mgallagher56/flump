@@ -1,8 +1,13 @@
 import type { LoaderFunctionArgs } from "react-router";
 import { redirect } from "react-router";
+import { isDemoMode } from "~/utils/demoData";
 import { getAuthSession } from "~/utils/utils";
 
 export const loader = async (args: LoaderFunctionArgs) => {
+  if (isDemoMode(args.request.url)) {
+    return redirect("/?demo=true");
+  }
+
   const { user, accessToken } = await getAuthSession(args, { ensureSignedIn: false });
   if (!user) return redirect("/login");
 

@@ -162,4 +162,62 @@ describe("OnboardingRoute", () => {
     // Should return to the questionnaire
     expect(screen.getByText("Question 1 of 5")).toBeDefined();
   });
+
+  it("hydrates baseline figures from localStorage seed and shows pre-loaded banner", () => {
+    const seed = {
+      grossSalary: 85000,
+      pensionContributionPct: 8,
+      salarySacrifice: true,
+      initialCashSavings: 20000,
+      initialInvestments: 30000,
+      monthlyContribution: 800,
+      inferredModules: ["accounts", "budget", "pension", "savings", "forecast"],
+      timestamp: Date.now(),
+    };
+    localStorage.setItem("flump_onboarding_seed", JSON.stringify(seed));
+
+    render(<OnboardingRoute />);
+
+    expect(
+      screen.getByText(/we've pre-loaded your £85,000 salary and savings baseline/i),
+    ).toBeDefined();
+    expect(screen.getByText(/launch dashboard with this baseline \(10s\) →/i)).toBeDefined();
+
+    localStorage.removeItem("flump_onboarding_seed");
+  });
+
+  it("navigates through progressive 3-step baseline flow", () => {
+    const seed = {
+      grossSalary: 70000,
+      pensionContributionPct: 5,
+      salarySacrifice: true,
+      initialCashSavings: 15000,
+      initialInvestments: 25000,
+      monthlyContribution: 600,
+      inferredModules: ["accounts", "budget", "savings", "pension", "forecast"],
+      timestamp: Date.now(),
+    };
+    localStorage.setItem("flump_onboarding_seed", JSON.stringify(seed));
+
+    render(<OnboardingRoute />);
+
+    // Click "Review & Tweak Numbers"
+    const reviewBtn = screen.getByText("Review & Tweak Numbers");
+    fireEvent.click(reviewBtn);
+
+    // Step 1: Income & Tax Status
+    expect(screen.getByText("Step 1: Income & Tax Status")).toBeDefined();
+    expect(screen.getByText(/live take-home preview/i)).toBeDefined();
+
+    // Advance to Step 2
+    fireEvent.click(screen.getByText(/next: cash & debt/i));
+    expect(screen.getByText("Step 2: High-Level Cash & Debt")).toBeDefined();
+    expect(screen.getByText(/starting estimated net worth/i)).toBeDefined();
+
+    // Advance to Step 3
+    fireEvent.click(screen.getByText(/next: workspace modules/i));
+    expect(screen.getByText("Step 3: Confirm Your Workspace Modules")).toBeDefined();
+
+    localStorage.removeItem("flump_onboarding_seed");
+  });
 });

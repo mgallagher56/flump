@@ -5,6 +5,7 @@ import { Link as RouterLink } from "react-router";
 import FLPButton from "~/components/core/buttons/FLPButton";
 import FLPHeading from "~/components/core/typography/FLPHeading";
 import FLPText from "~/components/core/typography/FLPText";
+import WealthCheckHeroWidget from "./WealthCheckHeroWidget";
 
 const heroContainerStyle = css({
   display: "flex",
@@ -12,10 +13,10 @@ const heroContainerStyle = css({
   alignItems: "center",
   justifyContent: "center",
   textAlign: "center",
-  maxWidth: "4xl",
+  maxWidth: "5xl",
   margin: "0 auto",
   paddingTop: { base: "32px", md: "56px" },
-  paddingBottom: { base: "40px", md: "56px" },
+  paddingBottom: { base: "32px", md: "48px" },
   paddingLeft: "16px",
   paddingRight: "16px",
 });
@@ -43,7 +44,7 @@ const ctaStackStyle = css({
   alignItems: "center",
   justifyContent: "center",
   gap: "16px",
-  marginTop: "32px",
+  marginTop: "28px",
   width: { base: "100%", sm: "auto" },
 });
 
@@ -53,7 +54,7 @@ const trustBarContainer = css({
   gap: "16px",
   width: "100%",
   maxWidth: "4xl",
-  marginTop: { base: "40px", md: "56px" },
+  marginTop: { base: "36px", md: "48px" },
   padding: "16px 20px",
   backgroundColor: "surface",
   border: "1px solid",
@@ -85,7 +86,7 @@ export const HomeHero: FC = () => {
       </span>
 
       <FLPHeading as="h1" color="text.primary" mb={4} size="4xl">
-        Master your wealth. <br />
+        Stop guessing your financial future. <br />
         <span
           className={css({
             background: "linear-gradient(135deg, #6366F1 0%, #8B5CF6 50%, #EC4899 100%)",
@@ -94,21 +95,24 @@ export const HomeHero: FC = () => {
             display: "inline-block",
           })}
         >
-          Eliminate tax surprises.
+          Model it.
         </span>{" "}
-        Plan your future.
+        Master your UK wealth.
       </FLPHeading>
 
       <FLPText
         color="text.muted"
         fontSize="lg"
         lineHeight="1.6"
-        style={{ maxWidth: "700px", margin: "0 auto" }}
+        style={{ maxWidth: "750px", margin: "0 auto" }}
       >
-        Track your entire net worth across bank accounts, investments, pensions, and mortgages.
-        Demystify the £100k tax trap, calculate Section 24 rental profits, and stress-test your
-        mortgage against ISA returns—with zero tracker telemetry.
+        The UK wealth and tax engine. Track net worth across accounts and pensions, escape the £100k
+        tax trap, stress-test your mortgage against ISA yields, and forecast 30 years ahead—in one
+        unified workspace.
       </FLPText>
+
+      {/* The 30-Second UK Wealth Check Interactive Sandbox */}
+      <WealthCheckHeroWidget />
 
       <div className={ctaStackStyle}>
         <FLPButton size="lg">
@@ -130,24 +134,38 @@ export const HomeHero: FC = () => {
             Sign In to Account
           </RouterLink>
         </FLPButton>
+        <FLPButton size="lg" variant="ghost">
+          <RouterLink
+            style={{
+              color: "inherit",
+              textDecoration: "none",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "6px",
+            }}
+            to="/?demo=true"
+          >
+            Explore Live Sandbox →
+          </RouterLink>
+        </FLPButton>
       </div>
 
       <div className={trustBarContainer}>
         <div className={trustItem}>
           <FiCheckCircle aria-hidden="true" className={trustIconStyle} />
-          <span>HMRC Bands & £100k Taper</span>
+          <span>FCA Read-Only Open Banking & 256-Bit TLS</span>
         </div>
         <div className={trustItem}>
           <FiPieChart aria-hidden="true" className={trustIconStyle} />
-          <span>Section 24 Landlord Rules</span>
+          <span>Section 24 Landlord & 2026/27 Tax Bands</span>
         </div>
         <div className={trustItem}>
           <FiTrendingUp aria-hidden="true" className={trustIconStyle} />
-          <span>Compound Wealth & Pensions</span>
+          <span>£20k ISA & £60k Pension Allowances</span>
         </div>
         <div className={trustItem}>
           <FiLock aria-hidden="true" className={trustIconStyle} />
-          <span>Bank-Grade WorkOS Auth</span>
+          <span>Zero Ad Tracking or Data Selling</span>
         </div>
       </div>
     </section>
