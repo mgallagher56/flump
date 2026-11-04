@@ -33,10 +33,7 @@ describe("TaxTrapCalculatorTool", () => {
     const ctaButton = screen.getByRole("button", { name: /save scenario & continue free/i });
     fireEvent.click(ctaButton);
 
-    expect(setItemSpy).toHaveBeenCalledWith(
-      "flump_onboarding_seed",
-      expect.stringContaining("grossSalary"),
-    );
+    expect(setItemSpy).toHaveBeenCalledWith("flump_onboarding_seed", expect.any(String));
     expect(mockNavigate).toHaveBeenCalledWith("/signUp");
   });
 });

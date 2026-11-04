@@ -1,4 +1,4 @@
-import { calculateTaxTrapRelief } from "@repo/common";
+import { calculateTaxTrapRelief, persistOnboardingSeed } from "@repo/common";
 import { css } from "@repo/ui/styled-system/css";
 import { type FC, useMemo, useState } from "react";
 import { FiAlertTriangle, FiArrowRight, FiCheckCircle } from "react-icons/fi";
@@ -75,18 +75,13 @@ export const TaxTrapCalculatorTool: FC = () => {
   const childcareEligible = netIncomeAfterSacrifice <= 100000;
 
   const handleSaveAndContinue = () => {
-    try {
-      const seed = {
-        grossSalary: grossIncome,
-        monthlyCashSavings: 1000,
-        mortgageBalance: 250000,
-        inferredModules: ["tax", "pension", "forecast"],
-        timestamp: Date.now(),
-      };
-      localStorage.setItem("flump_onboarding_seed", JSON.stringify(seed));
-    } catch (e) {
-      console.warn("Could not save seed:", e);
-    }
+    persistOnboardingSeed({
+      annualIncome: grossIncome,
+      initialCashSavings: 1000,
+      mortgageBalance: 250000,
+      inferredModules: ["tax", "pension", "forecast"],
+      timestamp: Date.now(),
+    });
     navigate("/signUp");
   };
 

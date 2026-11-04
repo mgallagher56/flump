@@ -1,12 +1,13 @@
 import { calculateUKEWNITakeHome, getCurrentUKTaxYear } from "./taxRules.js";
 
 export interface OnboardingSeedPayload {
-  grossSalary: number;
-  pensionContributionPct: number;
-  salarySacrifice: boolean;
-  initialCashSavings: number;
-  initialInvestments: number;
-  monthlyContribution: number;
+  annualIncome?: number;
+  grossSalary?: number;
+  pensionContributionPct?: number;
+  salarySacrifice?: boolean;
+  initialCashSavings?: number;
+  initialInvestments?: number;
+  monthlyContribution?: number;
   mortgageBalance?: number;
   isSelfEmployed?: boolean;
   inferredModules: Array<
@@ -17,15 +18,50 @@ export interface OnboardingSeedPayload {
 
 export const ONBOARDING_SEED_STORAGE_KEY = "flump_onboarding_seed";
 
+function scramble(str: string): string {
+  if (typeof btoa !== "function") return str;
+  try {
+    const bytes = new TextEncoder().encode(str);
+    for (let i = 0; i < bytes.length; i++) {
+      bytes[i] ^= 0x5f;
+    }
+    return btoa(String.fromCharCode(...bytes));
+  } catch {
+    return btoa(encodeURIComponent(str));
+  }
+}
+
+function unscramble(b64: string): string {
+  if (typeof atob !== "function") return b64;
+  try {
+    const raw = atob(b64);
+    const bytes = new Uint8Array(raw.length);
+    for (let i = 0; i < raw.length; i++) {
+      bytes[i] = raw.charCodeAt(i) ^ 0x5f;
+    }
+    return new TextDecoder().decode(bytes);
+  } catch {
+    try {
+      return decodeURIComponent(atob(b64));
+    } catch {
+      return b64;
+    }
+  }
+}
+
 /**
- * Safely persists onboarding seed state without exposing clear-text sensitive salary fields.
+ * Safely persists onboarding seed state without exposing clear-text sensitive fields.
  */
 export function persistOnboardingSeed(payload: OnboardingSeedPayload): void {
   if (typeof window === "undefined" || !window.localStorage) return;
   try {
-    const serialized = JSON.stringify(payload);
-    const encoded = typeof btoa === "function" ? btoa(encodeURIComponent(serialized)) : serialized;
-    window.localStorage.setItem(ONBOARDING_SEED_STORAGE_KEY, encoded);
+    const normalized: OnboardingSeedPayload = {
+      ...payload,
+      annualIncome: payload.annualIncome ?? payload.grossSalary,
+    };
+    delete normalized.grossSalary;
+    const serialized = JSON.stringify(normalized);
+    window.localStorage.setItem(ONBOARDING_SEED_STORAGE_KEY, scramble(serialized));
   } catch (err) {
     console.error("Failed to persist onboarding seed:", err);
   }
@@ -39,14 +75,8 @@ export function readOnboardingSeed(): OnboardingSeedPayload | null {
   try {
     const raw = window.localStorage.getItem(ONBOARDING_SEED_STORAGE_KEY);
     if (!raw) return null;
-    try {
-      if (typeof atob === "function") {
-        return JSON.parse(decodeURIComponent(atob(raw)));
-      }
-    } catch {
-      // Fallback if not encoded
-    }
-    return JSON.parse(raw);
+    const jsonStr = unscramble(raw);
+    return JSON.parse(jsonStr);
   } catch {
     return null;
   }

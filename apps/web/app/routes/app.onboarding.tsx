@@ -222,10 +222,11 @@ export default function OnboardingRoute() {
       const parsed = readOnboardingSeed();
       if (!parsed) return;
       const isFresh = Date.now() - (parsed.timestamp || 0) < 24 * 60 * 60 * 1000;
-      if (isFresh && parsed.grossSalary) {
+      const incomeVal = parsed.annualIncome ?? parsed.grossSalary;
+      if (isFresh && incomeVal) {
         setSeed(parsed);
         setShowSeedBanner(true);
-        setGrossSalary(parsed.grossSalary);
+        setGrossSalary(incomeVal);
         if (parsed.pensionContributionPct !== undefined) {
           setPensionPercent(parsed.pensionContributionPct);
         }
@@ -517,8 +518,9 @@ export default function OnboardingRoute() {
                 >
                   <FaCheckCircle style={{ color: "#10b981", flexShrink: 0 }} />
                   <span>
-                    We've pre-loaded your £{seed.grossSalary.toLocaleString()} salary and savings
-                    baseline from the calculator.
+                    We've pre-loaded your £
+                    {(seed.annualIncome ?? seed.grossSalary ?? 0).toLocaleString()} salary and
+                    savings baseline from the calculator.
                   </span>
                 </div>
                 <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>

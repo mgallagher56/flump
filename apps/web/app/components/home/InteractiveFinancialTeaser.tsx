@@ -200,9 +200,9 @@ export const InteractiveFinancialTeaser: FC = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<"tax" | "mortgage">("tax");
 
-  const handleSaveTaxSeed = (grossSalary: number) => {
+  const handleSaveTaxSeed = (incomeAmount: number) => {
     const payload: OnboardingSeedPayload = {
-      grossSalary,
+      annualIncome: incomeAmount,
       pensionContributionPct: 5,
       salarySacrifice: true,
       initialCashSavings: 15000,
@@ -214,7 +214,7 @@ export const InteractiveFinancialTeaser: FC = () => {
         "pension",
         "savings",
         "forecast",
-        ...(grossSalary >= 95000 ? (["tax"] as const) : []),
+        ...(incomeAmount >= 95000 ? (["tax"] as const) : []),
       ],
       timestamp: Date.now(),
     };
@@ -224,7 +224,7 @@ export const InteractiveFinancialTeaser: FC = () => {
 
   const handleSaveMortgageSeed = (balance: number) => {
     const payload: OnboardingSeedPayload = {
-      grossSalary: 65000,
+      annualIncome: 65000,
       pensionContributionPct: 5,
       salarySacrifice: true,
       initialCashSavings: 15000,
@@ -239,21 +239,21 @@ export const InteractiveFinancialTeaser: FC = () => {
   };
 
   // Tax state
-  const [salary, setSalary] = useState<number>(65000);
+  const [income, setIncome] = useState<number>(65000);
 
   // Mortgage state
   const [mortgageBalance, setMortgageBalance] = useState<number>(250000);
   const [interestRate, setInterestRate] = useState<number>(4.5);
   const [monthlyOverpayment, setMonthlyOverpayment] = useState<number>(200);
 
-  const salaryInputId = useId();
+  const incomeInputId = useId();
   const mortgageBalanceId = useId();
   const interestRateId = useId();
   const overpaymentId = useId();
 
   // UK Tax calculations
   const taxResults = useMemo(() => {
-    const gross = Math.max(0, salary);
+    const gross = Math.max(0, income);
 
     // Personal Allowance calculation with £100k taper
     let allowance = 12570;
@@ -315,7 +315,7 @@ export const InteractiveFinancialTeaser: FC = () => {
       effectiveTaxRate,
       isTaperActive,
     };
-  }, [salary]);
+  }, [income]);
 
   // Mortgage calculations
   const mortgageResults = useMemo(() => {
@@ -406,29 +406,29 @@ export const InteractiveFinancialTeaser: FC = () => {
             >
               <div>
                 <div className={inputGroupStyle}>
-                  <label className={labelStyle} htmlFor={salaryInputId}>
+                  <label className={labelStyle} htmlFor={incomeInputId}>
                     Annual Gross Salary (PAYE)
                   </label>
                   <div className={inputWrapperStyle}>
                     <span className={currencyPrefixStyle}>£</span>
                     <input
                       className={textInputStyle}
-                      id={salaryInputId}
+                      id={incomeInputId}
                       max={300000}
                       min={10000}
                       step={1000}
                       type="number"
-                      value={salary}
-                      onChange={(e) => setSalary(Number(e.target.value) || 0)}
+                      value={income}
+                      onChange={(e) => setIncome(Number(e.target.value) || 0)}
                     />
                   </div>
                   <div className={chipRowStyle}>
                     {[38000, 65000, 115000, 145000].map((preset) => (
                       <button
                         key={preset}
-                        className={chipButtonStyle(salary === preset)}
+                        className={chipButtonStyle(income === preset)}
                         type="button"
-                        onClick={() => setSalary(preset)}
+                        onClick={() => setIncome(preset)}
                       >
                         {formatGBP(preset)}
                       </button>
@@ -500,7 +500,7 @@ export const InteractiveFinancialTeaser: FC = () => {
                 <div style={{ marginTop: "16px" }}>
                   <FLPButton
                     size="md"
-                    onClick={() => handleSaveTaxSeed(salary)}
+                    onClick={() => handleSaveTaxSeed(income)}
                     style={{
                       width: "100%",
                       display: "inline-flex",

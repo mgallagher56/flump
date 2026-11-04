@@ -1,3 +1,4 @@
+import { persistOnboardingSeed } from "@repo/common";
 import { css } from "@repo/ui/styled-system/css";
 import { type FC, useMemo, useState } from "react";
 import { FiArrowRight } from "react-icons/fi";
@@ -109,18 +110,13 @@ export const Section24Tool: FC = () => {
   }, [rentalIncome, mortgageInterest, allowableExpenses, otherIncome]);
 
   const handleSaveAndContinue = () => {
-    try {
-      const seed = {
-        grossSalary: otherIncome,
-        monthlyCashSavings: 500,
-        mortgageBalance: 200000,
-        inferredModules: ["tax", "mortgage", "forecast"],
-        timestamp: Date.now(),
-      };
-      localStorage.setItem("flump_onboarding_seed", JSON.stringify(seed));
-    } catch (e) {
-      console.warn("Could not save seed:", e);
-    }
+    persistOnboardingSeed({
+      annualIncome: otherIncome,
+      initialCashSavings: 500,
+      mortgageBalance: 200000,
+      inferredModules: ["tax", "mortgage", "forecast"],
+      timestamp: Date.now(),
+    });
     navigate("/signUp");
   };
 

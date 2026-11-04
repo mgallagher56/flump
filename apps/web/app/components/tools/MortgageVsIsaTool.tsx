@@ -1,3 +1,4 @@
+import { persistOnboardingSeed } from "@repo/common";
 import { css } from "@repo/ui/styled-system/css";
 import { type FC, useMemo, useState } from "react";
 import { FiArrowRight, FiHome, FiTrendingUp } from "react-icons/fi";
@@ -125,18 +126,13 @@ export const MortgageVsIsaTool: FC = () => {
   }, [mortgageBalance, interestRate, remainingYears, monthlyContribution, isaExpectedReturn]);
 
   const handleSaveAndContinue = () => {
-    try {
-      const seed = {
-        grossSalary: 75000,
-        monthlyCashSavings: monthlyContribution,
-        mortgageBalance,
-        inferredModules: ["mortgage", "savings", "forecast"],
-        timestamp: Date.now(),
-      };
-      localStorage.setItem("flump_onboarding_seed", JSON.stringify(seed));
-    } catch (e) {
-      console.warn("Could not save seed:", e);
-    }
+    persistOnboardingSeed({
+      annualIncome: 75000,
+      monthlyContribution,
+      mortgageBalance,
+      inferredModules: ["mortgage", "savings", "forecast"],
+      timestamp: Date.now(),
+    });
     navigate("/signUp");
   };
 
