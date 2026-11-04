@@ -225,17 +225,17 @@ const ConnectBankWizard: FC<ConnectBankWizardProps> = ({ onSuccess }) => {
     backgroundColor: "surface",
     border: "1px solid",
     borderColor: "border",
-    borderRadius: "lg",
+    borderRadius: { base: "xl", md: "lg" },
     boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.2)",
-    padding: "24px",
-    width: "90vw",
-    maxWidth: "520px",
+    padding: { base: "18px 14px", md: "24px" },
+    width: { base: "calc(100vw - 20px)", sm: "90vw" },
+    maxWidth: { base: "calc(100vw - 20px)", md: "520px" },
     zIndex: 50,
     outline: "none",
     color: "text.primary",
     display: "flex",
     flexDirection: "column",
-    maxHeight: "85vh",
+    maxHeight: { base: "94vh", md: "85vh" },
   });
 
   const scrollContainerStyle = css({

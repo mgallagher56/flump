@@ -1,5 +1,11 @@
+import {
+  calculateUKTakeHome,
+  clearOnboardingSeed,
+  type OnboardingSeedPayload,
+  readOnboardingSeed,
+} from "@repo/common";
 import { css } from "@repo/ui/styled-system/css";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   FaArrowLeft,
   FaArrowRight,
@@ -48,10 +54,10 @@ export const loader = async (args: LoaderFunctionArgs) => {
       headers: { Authorization: `Bearer ${accessToken || "mock-session-token"}` },
     });
     const userProfile: UserProfile = res.ok ? await res.json() : DEFAULT_PROFILE;
-    return data({ userProfile, user });
+    return data({ userProfile, user, accessToken });
   } catch (error) {
     console.error("Onboarding loader error:", error);
-    return data({ userProfile: DEFAULT_PROFILE, user });
+    return data({ userProfile: DEFAULT_PROFILE, user, accessToken: null });
   }
 };
 
@@ -170,25 +176,124 @@ const QUESTIONS: QuestionConfig[] = [
 ];
 
 export default function OnboardingRoute() {
-  const { userProfile, user } = useLoaderData<typeof loader>();
+  const { userProfile, user, accessToken } = useLoaderData<typeof loader>();
   const navigate = useNavigate();
   const { updateProfile } = useUserProfile();
 
-  // Mode: "welcome" | "quiz" | "manual"
-  const [mode, setMode] = useState<"welcome" | "quiz" | "manual">("welcome");
+  // Mode: "welcome" | "progressive" | "quiz" | "manual"
+  const [mode, setMode] = useState<"welcome" | "progressive" | "quiz" | "manual">("welcome");
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [cameFromQuiz, setCameFromQuiz] = useState(false);
 
-  // Map of enabled pages
+  // Progressive flow step: 1 | 2 | 3
+  const [progressiveStep, setProgressiveStep] = useState<1 | 2 | 3>(1);
+
+  // Primary user focus: "debt" | "savings" | "wealth"
+  const [primaryFocus, setPrimaryFocus] = useState<"debt" | "savings" | "wealth">("wealth");
+
+  // Financial baseline inputs
+  const [grossSalary, setGrossSalary] = useState<number>(65000);
+  const [employmentType, setEmploymentType] = useState<"employed" | "self-employed">("employed");
+  const [pensionPercent, setPensionPercent] = useState<number>(5);
+  const [isSalarySacrifice, setIsSalarySacrifice] = useState<boolean>(true);
+  const [cashSavings, setCashSavings] = useState<number>(15000);
+  const [investments, setInvestments] = useState<number>(20000);
+  const [mortgageDebt, setMortgageDebt] = useState<number>(0);
+
+  // Seed state from landing page
+  const [seed, setSeed] = useState<OnboardingSeedPayload | null>(null);
+  const [showSeedBanner, setShowSeedBanner] = useState<boolean>(false);
+
+  // Initial pages
   const initialPages = useMemo<AppPageKey[]>(() => {
     if (userProfile?.enabledPages && userProfile.enabledPages.length > 0) {
       return userProfile.enabledPages as AppPageKey[];
     }
-    return ["accounts", "budget", "savings", "pension"];
+    return ["accounts", "budget", "savings", "pension", "forecast"];
   }, [userProfile?.enabledPages]);
 
   const [selectedPages, setSelectedPages] = useState<AppPageKey[]>(initialPages);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Hydrate from localStorage seed on mount
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      const parsed = readOnboardingSeed();
+      if (!parsed) return;
+      const isFresh = Date.now() - (parsed.timestamp || 0) < 24 * 60 * 60 * 1000;
+      const incomeVal = parsed.annualIncome;
+      if (isFresh && incomeVal) {
+        setSeed(parsed);
+        setShowSeedBanner(true);
+        setGrossSalary(incomeVal);
+        if (parsed.pensionContributionPct !== undefined) {
+          setPensionPercent(parsed.pensionContributionPct);
+        }
+        if (parsed.salarySacrifice !== undefined) {
+          setIsSalarySacrifice(parsed.salarySacrifice);
+        }
+        if (parsed.initialCashSavings !== undefined) {
+          setCashSavings(parsed.initialCashSavings);
+        }
+        if (parsed.initialInvestments !== undefined) {
+          setInvestments(parsed.initialInvestments);
+        }
+        if (parsed.mortgageBalance !== undefined) {
+          setMortgageDebt(parsed.mortgageBalance);
+        }
+        if (parsed.inferredModules?.length) {
+          setSelectedPages(parsed.inferredModules as AppPageKey[]);
+        }
+      }
+    } catch (err) {
+      console.error("Failed to read onboarding seed:", err);
+    }
+  }, []);
+
+  // Auto-adjust inferred modules based on baseline values
+  useEffect(() => {
+    setSelectedPages((prev) => {
+      const set = new Set(prev);
+      set.add("accounts");
+      set.add("budget");
+      set.add("forecast");
+
+      if (mortgageDebt > 0) {
+        set.add("mortgage");
+      }
+      if (grossSalary >= 95000 || employmentType === "self-employed") {
+        set.add("tax");
+      }
+      if (pensionPercent > 0) {
+        set.add("pension");
+      }
+      if (cashSavings > 0 || investments > 0) {
+        set.add("savings");
+      }
+      return Array.from(set) as AppPageKey[];
+    });
+  }, [mortgageDebt, grossSalary, employmentType, pensionPercent, cashSavings, investments]);
+
+  // Primary focus selection
+  const handleSelectFocus = (focus: "debt" | "savings" | "wealth") => {
+    setPrimaryFocus(focus);
+    if (focus === "debt") {
+      setSelectedPages(["accounts", "budget", "debt"]);
+      setMortgageDebt(0);
+      setGrossSalary((prev) => Math.min(prev, 36000));
+    } else if (focus === "savings") {
+      setSelectedPages(["accounts", "budget", "savings", "forecast"]);
+      setCashSavings((prev) => (prev === 0 ? 5000 : prev));
+    } else {
+      setSelectedPages(["accounts", "budget", "savings", "pension", "mortgage", "forecast", "tax"]);
+    }
+  };
+
+  // Live calculation of take-home pay and tax trap status
+  const liveTakeHome = useMemo(() => {
+    return calculateUKTakeHome(grossSalary, pensionPercent, isSalarySacrifice);
+  }, [grossSalary, pensionPercent, isSalarySacrifice]);
 
   // Questionnaire navigation
   const handleAnswerQuestion = (enable: boolean) => {
@@ -233,15 +338,52 @@ export default function OnboardingRoute() {
 
     try {
       await updateProfile({
+        annualSalary: grossSalary,
+        monthlyTakeHome: liveTakeHome.monthlyTakeHome,
+        employmentType,
+        pensionPercent,
+        isSalarySacrifice,
+        hasMortgage: mortgageDebt > 0,
         enabledPages: pagesToSave,
         dashboardWidgets,
         dashboardWidgetOrder,
         onboardingCompleted: true,
       });
+
+      // Seed initial baseline accounts if provided so dashboard is immediately alive
+      const apiUrl =
+        (window as Window & { ENV?: { VITE_API_URL?: string } }).ENV?.VITE_API_URL ??
+        import.meta.env.VITE_API_URL ??
+        "http://localhost:4000";
+
+      const authHdr = `Bearer ${accessToken || "mock-session-token"}`;
+
+      const createAccountSafe = async (name: string, type: string, balance: number) => {
+        if (balance <= 0) return;
+        try {
+          await fetch(`${apiUrl}/accounts`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json", Authorization: authHdr },
+            body: JSON.stringify({ name, type, balance, isCurrent: true }),
+          });
+        } catch {
+          // Ignore network errors in offline/test environment
+        }
+      };
+
+      await Promise.allSettled([
+        createAccountSafe("Emergency Cash Savings", "Saving", cashSavings),
+        createAccountSafe("Investment Portfolio", "Investment", investments),
+        ...(mortgageDebt > 0
+          ? [createAccountSafe("Residential Mortgage", "Mortgage", mortgageDebt)]
+          : []),
+      ]);
+
+      clearOnboardingSeed();
+
       navigate("/");
     } catch (err) {
       console.error("Error saving onboarding settings:", err);
-      // Fallback: reload to root
       window.location.href = "/";
     } finally {
       setIsSubmitting(false);
@@ -253,13 +395,13 @@ export default function OnboardingRoute() {
   return (
     <div
       className={css({
-        minHeight: "100vh",
+        minHeight: { base: "auto", md: "calc(100vh - 120px)" },
         backgroundColor: "background",
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
-        justifyContent: "center",
-        padding: { base: "20px 16px", sm: "32px 24px", md: "48px 32px" },
+        justifyContent: { base: "flex-start", md: "center" },
+        padding: { base: "12px 10px 24px", sm: "24px 16px", md: "40px 32px" },
       })}
     >
       <div
@@ -268,16 +410,16 @@ export default function OnboardingRoute() {
           maxWidth: "680px",
           display: "flex",
           flexDirection: "column",
-          gap: "24px",
+          gap: { base: "14px", md: "24px" },
         })}
       >
-        {/* Brand & Progress Bar */}
+        {/* Brand Header */}
         <div
           className={css({
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
-            paddingBottom: "12px",
+            paddingBottom: { base: "8px", md: "12px" },
             borderBottom: "1px solid",
             borderColor: "border",
           })}
@@ -285,18 +427,17 @@ export default function OnboardingRoute() {
           <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
             <HomeLogo />
             <div>
-              <FLPHeading as="h3" size="sm" color="blue.500">
+              <FLPHeading as="h3" color="blue.500" size="sm">
                 Flump Onboarding
               </FLPHeading>
-              <FLPText fontSize="xs" color="text.muted">
-                Personalise your financial universe
+              <FLPText color="text.muted" fontSize="xs">
+                Personalise your UK financial universe
               </FLPText>
             </div>
           </div>
 
           {mode === "quiz" && (
             <button
-              type="button"
               className={css({
                 fontSize: "xs",
                 color: "text.muted",
@@ -310,6 +451,7 @@ export default function OnboardingRoute() {
                 borderRadius: "md",
                 _hover: { color: "primary", backgroundColor: "rgba(99, 99, 241, 0.08)" },
               })}
+              type="button"
               onClick={() => {
                 setCameFromQuiz(true);
                 setMode("manual");
@@ -318,22 +460,91 @@ export default function OnboardingRoute() {
               <FaSlidersH size={11} /> Skip to manual picker
             </button>
           )}
+
+          {mode === "progressive" && (
+            <button
+              className={css({
+                fontSize: "xs",
+                color: "text.muted",
+                background: "none",
+                border: "none",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                gap: "4px",
+                padding: "6px 10px",
+                borderRadius: "md",
+                _hover: { color: "primary" },
+              })}
+              type="button"
+              onClick={() => setMode("welcome")}
+            >
+              Cancel
+            </button>
+          )}
         </div>
 
         {/* MODE: WELCOME SCREEN */}
         {mode === "welcome" && (
           <FLPCard
             className={css({
-              padding: { base: "28px 20px", sm: "40px 32px" },
+              padding: { base: "20px 16px", sm: "32px 24px", md: "40px 32px" },
               borderRadius: "2xl",
               border: "1px solid",
               borderColor: "border",
               display: "flex",
               flexDirection: "column",
-              gap: "24px",
+              gap: { base: "16px", md: "24px" },
               boxShadow: "sm",
             })}
           >
+            {/* Seed Hydration Banner */}
+            {showSeedBanner && seed && (
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "10px",
+                  padding: "14px 18px",
+                  borderRadius: "12px",
+                  backgroundColor: "rgba(16, 185, 129, 0.08)",
+                  border: "1px solid rgba(16, 185, 129, 0.3)",
+                  fontSize: "13px",
+                  color: "text.primary",
+                }}
+              >
+                <div
+                  style={{ display: "flex", alignItems: "center", gap: "8px", fontWeight: "600" }}
+                >
+                  <FaCheckCircle style={{ color: "#10b981", flexShrink: 0 }} />
+                  <span>
+                    We've pre-loaded your £{(seed.annualIncome ?? 0).toLocaleString()} salary and
+                    savings baseline from the calculator.
+                  </span>
+                </div>
+                <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
+                  <FLPButton
+                    size="sm"
+                    variant="primary"
+                    onClick={handleFinish}
+                    disabled={isSubmitting}
+                  >
+                    {isSubmitting ? "Launching..." : "Launch Dashboard with this Baseline (10s) →"}
+                  </FLPButton>
+                  <FLPButton
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      setProgressiveStep(1);
+                      setMode("progressive");
+                    }}
+                  >
+                    Review & Tweak Numbers
+                  </FLPButton>
+                </div>
+              </div>
+            )}
+
             <div style={{ textAlign: "center" }}>
               <div
                 className={css({
@@ -351,7 +562,7 @@ export default function OnboardingRoute() {
               >
                 <FaRocket />
               </div>
-              <FLPHeading as="h1" size="xl" color="blue.500">
+              <FLPHeading as="h1" color="blue.500" size="xl">
                 Welcome to Flump{user?.name ? `, ${user.name}` : ""}
               </FLPHeading>
               <FLPText
@@ -359,11 +570,12 @@ export default function OnboardingRoute() {
                 fontSize="sm"
                 style={{ marginTop: "8px", maxWidth: "480px", marginInline: "auto" }}
               >
-                Flump adapts to your individual financial situation. Take a 30-second quiz to pick
-                the right tools for you, or select your preferred sections manually.
+                Flump adapts to your individual financial situation. Set your 4 baseline pillars in
+                90 seconds, answer a quick questionnaire, or choose your modules manually.
               </FLPText>
             </div>
 
+            {/* 3 Onboarding Options */}
             <div
               className={css({
                 display: "grid",
@@ -373,7 +585,6 @@ export default function OnboardingRoute() {
               })}
             >
               <button
-                type="button"
                 className={css({
                   padding: "24px 20px",
                   borderRadius: "xl",
@@ -392,6 +603,7 @@ export default function OnboardingRoute() {
                     backgroundColor: "rgba(99, 99, 241, 0.08)",
                   },
                 })}
+                type="button"
                 onClick={() => {
                   setCurrentQuestionIndex(0);
                   setCameFromQuiz(true);
@@ -411,9 +623,9 @@ export default function OnboardingRoute() {
                       borderRadius: "full",
                     })}
                   >
-                    Recommended
+                    Quick Start
                   </span>
-                  <FaArrowRight size={14} color="var(--colors-primary)" />
+                  <FaArrowRight color="var(--colors-primary)" size={14} />
                 </div>
                 <div>
                   <FLPHeading as="h3" size="sm">
@@ -426,7 +638,6 @@ export default function OnboardingRoute() {
               </button>
 
               <button
-                type="button"
                 className={css({
                   padding: "24px 20px",
                   borderRadius: "xl",
@@ -445,6 +656,7 @@ export default function OnboardingRoute() {
                     boxShadow: "sm",
                   },
                 })}
+                type="button"
                 onClick={() => {
                   setCameFromQuiz(false);
                   setMode("manual");
@@ -462,7 +674,7 @@ export default function OnboardingRoute() {
                   >
                     Direct Setup
                   </span>
-                  <FaSlidersH size={14} color="var(--colors-text-muted)" />
+                  <FaSlidersH color="var(--colors-text-muted)" size={14} />
                 </div>
                 <div>
                   <FLPHeading as="h3" size="sm">
@@ -477,17 +689,586 @@ export default function OnboardingRoute() {
           </FLPCard>
         )}
 
-        {/* MODE: 5-QUESTION QUESTIONNAIRE */}
-        {mode === "quiz" && (
+        {/* MODE: PROGRESSIVE BASELINE FLOW */}
+        {mode === "progressive" && (
           <FLPCard
             className={css({
-              padding: { base: "24px 18px", sm: "36px 32px" },
+              padding: { base: "20px 16px", sm: "32px 24px", md: "36px 32px" },
               borderRadius: "2xl",
               border: "1px solid",
               borderColor: "border",
               display: "flex",
               flexDirection: "column",
-              gap: "24px",
+              gap: { base: "20px", md: "24px" },
+              boxShadow: "sm",
+            })}
+          >
+            {/* Step Pills */}
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                borderBottom: "1px solid var(--colors-border)",
+                paddingBottom: "16px",
+              }}
+            >
+              <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+                <span
+                  style={{
+                    padding: "4px 10px",
+                    borderRadius: "full",
+                    fontSize: "12px",
+                    fontWeight: 700,
+                    backgroundColor:
+                      progressiveStep === 1 ? "var(--colors-primary)" : "var(--colors-surface)",
+                    color: progressiveStep === 1 ? "#fff" : "var(--colors-text-muted)",
+                    border: "1px solid",
+                    borderColor: progressiveStep === 1 ? "transparent" : "var(--colors-border)",
+                  }}
+                >
+                  1. Income & Tax
+                </span>
+                <span style={{ color: "var(--colors-text-muted)" }}>→</span>
+                <span
+                  style={{
+                    padding: "4px 10px",
+                    borderRadius: "full",
+                    fontSize: "12px",
+                    fontWeight: 700,
+                    backgroundColor:
+                      progressiveStep === 2 ? "var(--colors-primary)" : "var(--colors-surface)",
+                    color: progressiveStep === 2 ? "#fff" : "var(--colors-text-muted)",
+                    border: "1px solid",
+                    borderColor: progressiveStep === 2 ? "transparent" : "var(--colors-border)",
+                  }}
+                >
+                  2. Cash & Debt
+                </span>
+                <span style={{ color: "var(--colors-text-muted)" }}>→</span>
+                <span
+                  style={{
+                    padding: "4px 10px",
+                    borderRadius: "full",
+                    fontSize: "12px",
+                    fontWeight: 700,
+                    backgroundColor:
+                      progressiveStep === 3 ? "var(--colors-primary)" : "var(--colors-surface)",
+                    color: progressiveStep === 3 ? "#fff" : "var(--colors-text-muted)",
+                    border: "1px solid",
+                    borderColor: progressiveStep === 3 ? "transparent" : "var(--colors-border)",
+                  }}
+                >
+                  3. Workspace
+                </span>
+              </div>
+              <span
+                style={{ fontSize: "12px", color: "var(--colors-text-muted)", fontWeight: 500 }}
+              >
+                Step {progressiveStep} of 3
+              </span>
+            </div>
+
+            {/* STEP 1: INCOME & TAX STATUS */}
+            {progressiveStep === 1 && (
+              <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+                <div>
+                  <FLPHeading as="h2" size="md">
+                    Step 1: Focus & Baseline
+                  </FLPHeading>
+                  <FLPText color="text.muted" fontSize="xs" style={{ marginTop: "4px" }}>
+                    Select your primary objective to adapt your dashboard experience, tools, and
+                    calculators.
+                  </FLPText>
+                </div>
+
+                {/* Focus Selector */}
+                <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                  <span style={{ fontSize: "13px", fontWeight: 600 }}>
+                    Where is your primary focus right now?
+                  </span>
+                  <div
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+                      gap: "10px",
+                    }}
+                  >
+                    <button
+                      type="button"
+                      onClick={() => handleSelectFocus("debt")}
+                      style={{
+                        padding: "12px 14px",
+                        borderRadius: "10px",
+                        border: "2px solid",
+                        borderColor: primaryFocus === "debt" ? "#ef4444" : "var(--colors-border)",
+                        backgroundColor:
+                          primaryFocus === "debt"
+                            ? "rgba(239, 68, 68, 0.05)"
+                            : "var(--colors-surface)",
+                        textAlign: "left",
+                        cursor: "pointer",
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: "4px",
+                      }}
+                    >
+                      <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                        <span style={{ fontSize: "16px" }}>🔥</span>
+                        <strong
+                          style={{
+                            fontSize: "13px",
+                            color: primaryFocus === "debt" ? "#ef4444" : "inherit",
+                          }}
+                        >
+                          Clear debt & stabilize
+                        </strong>
+                      </div>
+                      <span style={{ fontSize: "11px", color: "var(--colors-text-muted)" }}>
+                        Crush credit card & loan interest, find margin, and reach £0 debt.
+                      </span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => handleSelectFocus("savings")}
+                      style={{
+                        padding: "12px 14px",
+                        borderRadius: "10px",
+                        border: "2px solid",
+                        borderColor:
+                          primaryFocus === "savings" ? "#10b981" : "var(--colors-border)",
+                        backgroundColor:
+                          primaryFocus === "savings"
+                            ? "rgba(16, 185, 129, 0.05)"
+                            : "var(--colors-surface)",
+                        textAlign: "left",
+                        cursor: "pointer",
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: "4px",
+                      }}
+                    >
+                      <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                        <span style={{ fontSize: "16px" }}>🛡️</span>
+                        <strong
+                          style={{
+                            fontSize: "13px",
+                            color: primaryFocus === "savings" ? "#10b981" : "inherit",
+                          }}
+                        >
+                          Buffer & protect
+                        </strong>
+                      </div>
+                      <span style={{ fontSize: "11px", color: "var(--colors-text-muted)" }}>
+                        Build a £1,000 starter buffer and establish a 3–6 month emergency runway.
+                      </span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => handleSelectFocus("wealth")}
+                      style={{
+                        padding: "12px 14px",
+                        borderRadius: "10px",
+                        border: "2px solid",
+                        borderColor:
+                          primaryFocus === "wealth"
+                            ? "var(--colors-primary)"
+                            : "var(--colors-border)",
+                        backgroundColor:
+                          primaryFocus === "wealth"
+                            ? "rgba(99, 99, 241, 0.05)"
+                            : "var(--colors-surface)",
+                        textAlign: "left",
+                        cursor: "pointer",
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: "4px",
+                      }}
+                    >
+                      <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                        <span style={{ fontSize: "16px" }}>🚀</span>
+                        <strong
+                          style={{
+                            fontSize: "13px",
+                            color: primaryFocus === "wealth" ? "var(--colors-primary)" : "inherit",
+                          }}
+                        >
+                          Optimize wealth & tax
+                        </strong>
+                      </div>
+                      <span style={{ fontSize: "11px", color: "var(--colors-text-muted)" }}>
+                        Salary sacrifice, £100k tax trap, pensions, and mortgage equity.
+                      </span>
+                    </button>
+                  </div>
+                </div>
+
+                <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                  <label
+                    htmlFor="onboarding-gross-salary"
+                    style={{ fontSize: "13px", fontWeight: 600 }}
+                  >
+                    Annual Gross Salary (£)
+                  </label>
+                  <input
+                    id="onboarding-gross-salary"
+                    type="number"
+                    step={1000}
+                    value={grossSalary}
+                    onChange={(e) => setGrossSalary(Number(e.target.value) || 0)}
+                    style={{
+                      padding: "10px 14px",
+                      borderRadius: "8px",
+                      border: "1px solid var(--colors-border)",
+                      backgroundColor: "var(--colors-surface)",
+                      color: "inherit",
+                      fontSize: "16px",
+                      fontWeight: 600,
+                    }}
+                  />
+                  <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginTop: "4px" }}>
+                    {[38000, 65000, 105000, 135000].map((preset) => (
+                      <button
+                        key={preset}
+                        type="button"
+                        onClick={() => setGrossSalary(preset)}
+                        style={{
+                          padding: "4px 10px",
+                          borderRadius: "6px",
+                          fontSize: "12px",
+                          border: "1px solid",
+                          borderColor:
+                            grossSalary === preset
+                              ? "var(--colors-primary)"
+                              : "var(--colors-border)",
+                          backgroundColor:
+                            grossSalary === preset ? "rgba(99, 102, 241, 0.1)" : "transparent",
+                          color: grossSalary === preset ? "var(--colors-primary)" : "inherit",
+                          cursor: "pointer",
+                        }}
+                      >
+                        £{preset.toLocaleString()}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                    <label
+                      htmlFor="onboarding-pension-percent"
+                      style={{ fontSize: "13px", fontWeight: 600 }}
+                    >
+                      Workplace Pension (%)
+                    </label>
+                    <input
+                      id="onboarding-pension-percent"
+                      type="number"
+                      min={0}
+                      max={50}
+                      step={1}
+                      value={pensionPercent}
+                      onChange={(e) => setPensionPercent(Number(e.target.value) || 0)}
+                      style={{
+                        padding: "10px 14px",
+                        borderRadius: "8px",
+                        border: "1px solid var(--colors-border)",
+                        backgroundColor: "var(--colors-surface)",
+                        color: "inherit",
+                      }}
+                    />
+                  </div>
+
+                  <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                    <label
+                      htmlFor="onboarding-employment-type"
+                      style={{ fontSize: "13px", fontWeight: 600 }}
+                    >
+                      Employment Setup
+                    </label>
+                    <select
+                      id="onboarding-employment-type"
+                      value={employmentType}
+                      onChange={(e) => setEmploymentType(e.target.value as any)}
+                      style={{
+                        padding: "10px 14px",
+                        borderRadius: "8px",
+                        border: "1px solid var(--colors-border)",
+                        backgroundColor: "var(--colors-surface)",
+                        color: "inherit",
+                      }}
+                    >
+                      <option value="employed">Employed (PAYE)</option>
+                      <option value="self-employed">Self-Employed</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* Live Take-Home Preview Card */}
+                <div
+                  style={{
+                    padding: "16px",
+                    borderRadius: "12px",
+                    backgroundColor: "rgba(99, 102, 241, 0.06)",
+                    border: "1px solid rgba(99, 102, 241, 0.2)",
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                  }}
+                >
+                  <div>
+                    <span
+                      style={{
+                        fontSize: "11px",
+                        textTransform: "uppercase",
+                        fontWeight: 700,
+                        color: "var(--colors-primary)",
+                      }}
+                    >
+                      Live Take-Home Preview
+                    </span>
+                    <div style={{ fontSize: "24px", fontWeight: 800, marginTop: "2px" }}>
+                      £{liveTakeHome.monthlyTakeHome.toLocaleString()}{" "}
+                      <span
+                        style={{
+                          fontSize: "13px",
+                          fontWeight: "normal",
+                          color: "var(--colors-text-muted)",
+                        }}
+                      >
+                        / month
+                      </span>
+                    </div>
+                  </div>
+                  <div style={{ textAlign: "right" }}>
+                    <span style={{ fontSize: "12px", color: "var(--colors-text-muted)" }}>
+                      Marginal Tax & NI Rate:
+                    </span>
+                    <div
+                      style={{
+                        fontSize: "16px",
+                        fontWeight: 700,
+                        color: liveTakeHome.trapAnalysis.isInTaxTrap
+                          ? "#ef4444"
+                          : "var(--colors-primary)",
+                      }}
+                    >
+                      {liveTakeHome.trapAnalysis.marginalRatePct}%
+                    </div>
+                  </div>
+                </div>
+
+                <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "8px" }}>
+                  <FLPButton size="md" variant="primary" onClick={() => setProgressiveStep(2)}>
+                    Next: Cash & Debt (30 sec) →
+                  </FLPButton>
+                </div>
+              </div>
+            )}
+
+            {/* STEP 2: HIGH-LEVEL CASH & DEBT */}
+            {progressiveStep === 2 && (
+              <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+                <div>
+                  <FLPHeading as="h2" size="md">
+                    Step 2: High-Level Cash & Debt
+                  </FLPHeading>
+                  <FLPText color="text.muted" fontSize="xs" style={{ marginTop: "4px" }}>
+                    Enter rough balances so your Net Worth tracker and runway are immediately
+                    populated.
+                  </FLPText>
+                </div>
+
+                <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between" }}>
+                    <label
+                      htmlFor="onboarding-cash-savings"
+                      style={{ fontSize: "13px", fontWeight: 600 }}
+                    >
+                      Total Cash & Emergency Savings
+                    </label>
+                    <span style={{ fontWeight: 700, color: "#10b981" }}>
+                      £{cashSavings.toLocaleString()}
+                    </span>
+                  </div>
+                  <input
+                    id="onboarding-cash-savings"
+                    type="range"
+                    min={0}
+                    max={150000}
+                    step={1000}
+                    value={cashSavings}
+                    onChange={(e) => setCashSavings(Number(e.target.value) || 0)}
+                  />
+                </div>
+
+                <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between" }}>
+                    <label
+                      htmlFor="onboarding-investments"
+                      style={{ fontSize: "13px", fontWeight: 600 }}
+                    >
+                      Total Investments & Workplace Pensions
+                    </label>
+                    <span style={{ fontWeight: 700, color: "var(--colors-primary)" }}>
+                      £{investments.toLocaleString()}
+                    </span>
+                  </div>
+                  <input
+                    id="onboarding-investments"
+                    type="range"
+                    min={0}
+                    max={300000}
+                    step={2500}
+                    value={investments}
+                    onChange={(e) => setInvestments(Number(e.target.value) || 0)}
+                  />
+                </div>
+
+                <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between" }}>
+                    <label
+                      htmlFor="onboarding-mortgage-debt"
+                      style={{ fontSize: "13px", fontWeight: 600 }}
+                    >
+                      Remaining Residential Mortgage or Debt
+                    </label>
+                    <span
+                      style={{ fontWeight: 700, color: mortgageDebt > 0 ? "#f59e0b" : "inherit" }}
+                    >
+                      £{mortgageDebt.toLocaleString()}
+                    </span>
+                  </div>
+                  <input
+                    id="onboarding-mortgage-debt"
+                    type="range"
+                    min={0}
+                    max={600000}
+                    step={5000}
+                    value={mortgageDebt}
+                    onChange={(e) => setMortgageDebt(Number(e.target.value) || 0)}
+                  />
+                </div>
+
+                {/* Net Worth Summary Preview */}
+                <div
+                  style={{
+                    padding: "14px 16px",
+                    borderRadius: "10px",
+                    backgroundColor: "var(--colors-surface)",
+                    border: "1px solid var(--colors-border)",
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                  }}
+                >
+                  <span style={{ fontSize: "13px", color: "var(--colors-text-muted)" }}>
+                    Starting Estimated Net Worth:
+                  </span>
+                  <span style={{ fontSize: "18px", fontWeight: 800, color: "#10b981" }}>
+                    £{(cashSavings + investments - mortgageDebt).toLocaleString()}
+                  </span>
+                </div>
+
+                <div style={{ display: "flex", justifyContent: "space-between", marginTop: "8px" }}>
+                  <FLPButton size="sm" variant="ghost" onClick={() => setProgressiveStep(1)}>
+                    ← Back to Income
+                  </FLPButton>
+                  <FLPButton size="md" variant="primary" onClick={() => setProgressiveStep(3)}>
+                    Next: Workspace Modules →
+                  </FLPButton>
+                </div>
+              </div>
+            )}
+
+            {/* STEP 3: WORKSPACE MODULE CONFIRMATION */}
+            {progressiveStep === 3 && (
+              <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+                <div>
+                  <FLPHeading as="h2" size="md">
+                    Step 3: Confirm Your Workspace Modules
+                  </FLPHeading>
+                  <FLPText color="text.muted" fontSize="xs" style={{ marginTop: "4px" }}>
+                    We've auto-selected the modules matching your financial baseline.
+                  </FLPText>
+                </div>
+
+                <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                  {ALL_PAGE_KEYS.map((key) => {
+                    const cfg = APP_PAGES[key];
+                    const isChecked = selectedPages.includes(key);
+                    return (
+                      <button
+                        key={key}
+                        type="button"
+                        onClick={() => handleTogglePage(key)}
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                          padding: "10px 14px",
+                          borderRadius: "10px",
+                          border: "1px solid",
+                          borderColor: isChecked ? "var(--colors-primary)" : "var(--colors-border)",
+                          backgroundColor: isChecked ? "rgba(99, 102, 241, 0.05)" : "transparent",
+                          cursor: "pointer",
+                          color: "inherit",
+                          textAlign: "left",
+                        }}
+                      >
+                        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                          <span style={{ fontWeight: 600, fontSize: "13px" }}>{cfg.label}</span>
+                          <span
+                            style={{
+                              fontSize: "10px",
+                              color: "var(--colors-text-muted)",
+                              textTransform: "uppercase",
+                            }}
+                          >
+                            {cfg.category}
+                          </span>
+                        </div>
+                        {isChecked ? (
+                          <FaCheckCircle style={{ color: "#10b981" }} />
+                        ) : (
+                          <FaRegCircle style={{ color: "var(--colors-text-muted)" }} />
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <div style={{ display: "flex", justifyContent: "space-between", marginTop: "8px" }}>
+                  <FLPButton size="sm" variant="ghost" onClick={() => setProgressiveStep(2)}>
+                    ← Back to Cash & Debt
+                  </FLPButton>
+                  <FLPButton
+                    size="md"
+                    variant="primary"
+                    disabled={isSubmitting || selectedPages.length === 0}
+                    onClick={handleFinish}
+                  >
+                    {isSubmitting ? "Launching..." : "Finish Setup & Launch Dashboard →"}
+                  </FLPButton>
+                </div>
+              </div>
+            )}
+          </FLPCard>
+        )}
+
+        {/* MODE: 5-QUESTION QUESTIONNAIRE */}
+        {mode === "quiz" && (
+          <FLPCard
+            className={css({
+              padding: { base: "16px 14px", sm: "28px 24px", md: "36px 32px" },
+              borderRadius: "2xl",
+              border: "1px solid",
+              borderColor: "border",
+              display: "flex",
+              flexDirection: "column",
+              gap: { base: "16px", md: "24px" },
               boxShadow: "sm",
             })}
           >
@@ -518,121 +1299,90 @@ export default function OnboardingRoute() {
               </div>
               <div
                 className={css({
-                  height: "6px",
                   width: "100%",
+                  height: "6px",
                   backgroundColor: "secondary",
                   borderRadius: "full",
                   overflow: "hidden",
                 })}
               >
                 <div
-                  style={{
+                  className={css({
                     height: "100%",
-                    width: `${((currentQuestionIndex + 1) / QUESTIONS.length) * 100}%`,
-                    backgroundColor: "#6363f1",
+                    backgroundColor: "primary",
                     borderRadius: "full",
                     transition: "width 0.3s ease",
+                  })}
+                  style={{
+                    width: `${((currentQuestionIndex + 1) / QUESTIONS.length) * 100}%`,
                   }}
                 />
               </div>
             </div>
 
-            {/* Question Content */}
-            <div style={{ display: "flex", gap: "16px", alignItems: "flex-start" }}>
-              <div
-                className={css({
-                  width: "52px",
-                  height: "52px",
-                  borderRadius: "xl",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  flexShrink: 0,
-                })}
-                style={{ backgroundColor: currentQ.iconBg, color: currentQ.iconColor }}
-              >
-                {currentQ.icon}
-              </div>
-              <div>
-                <FLPHeading as="h2" size="md" color="text.primary">
-                  {currentQ.title}
-                </FLPHeading>
-                <FLPText
-                  color="text.muted"
-                  fontSize="sm"
-                  style={{ marginTop: "6px", lineHeight: "1.6" }}
-                >
-                  {currentQ.description}
-                </FLPText>
-              </div>
-            </div>
-
-            {/* Answer Options */}
+            {/* Question Card Content */}
             <div
               className={css({
                 display: "flex",
                 flexDirection: "column",
-                gap: "12px",
-                marginTop: "12px",
+                gap: "16px",
+                padding: { base: "8px 0", sm: "16px 0" },
               })}
             >
-              <button
-                type="button"
-                className={css({
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  padding: "16px 20px",
-                  borderRadius: "xl",
-                  border: "2px solid",
-                  borderColor: "primary",
-                  backgroundColor: "rgba(99, 99, 241, 0.05)",
-                  color: "primary",
-                  fontSize: "sm",
-                  fontWeight: "bold",
-                  cursor: "pointer",
-                  transition: "all 0.15s ease",
-                  _hover: {
-                    backgroundColor: "rgba(99, 99, 241, 0.12)",
-                    transform: "translateX(2px)",
-                  },
-                })}
-                onClick={() => handleAnswerQuestion(true)}
-              >
-                <span>{currentQ.yesLabel}</span>
-                <FaCheck />
-              </button>
-
-              <button
-                type="button"
-                className={css({
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  padding: "16px 20px",
-                  borderRadius: "xl",
-                  border: "1px solid",
-                  borderColor: "border",
-                  backgroundColor: "surface",
-                  color: "text.muted",
-                  fontSize: "sm",
-                  fontWeight: "medium",
-                  cursor: "pointer",
-                  transition: "all 0.15s ease",
-                  _hover: {
-                    borderColor: "primary",
-                    color: "text.primary",
-                    transform: "translateX(2px)",
-                  },
-                })}
-                onClick={() => handleAnswerQuestion(false)}
-              >
-                <span>{currentQ.noLabel}</span>
-                <FaArrowRight size={12} />
-              </button>
+              <div style={{ display: "flex", alignItems: "flex-start", gap: "16px" }}>
+                <div
+                  style={{
+                    width: "48px",
+                    height: "48px",
+                    borderRadius: "14px",
+                    backgroundColor: currentQ.iconBg,
+                    color: currentQ.iconColor,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    flexShrink: 0,
+                  }}
+                >
+                  {currentQ.icon}
+                </div>
+                <div>
+                  <FLPHeading as="h2" size="md">
+                    {currentQ.title}
+                  </FLPHeading>
+                  <FLPText color="text.muted" fontSize="sm" style={{ marginTop: "6px" }}>
+                    {currentQ.description}
+                  </FLPText>
+                </div>
+              </div>
             </div>
 
-            {/* Bottom Actions */}
+            {/* Answer Buttons */}
+            <div
+              className={css({
+                display: "flex",
+                flexDirection: { base: "column", sm: "row" },
+                gap: "12px",
+              })}
+            >
+              <FLPButton
+                className={css({ flex: 1 })}
+                size="lg"
+                variant="primary"
+                onClick={() => handleAnswerQuestion(true)}
+              >
+                <FaCheck style={{ marginRight: "8px" }} /> {currentQ.yesLabel}
+              </FLPButton>
+              <FLPButton
+                className={css({ flex: 1 })}
+                size="lg"
+                variant="outline"
+                onClick={() => handleAnswerQuestion(false)}
+              >
+                {currentQ.noLabel}
+              </FLPButton>
+            </div>
+
+            {/* Bottom Nav */}
             <div
               style={{
                 display: "flex",
@@ -656,85 +1406,69 @@ export default function OnboardingRoute() {
                 <FaArrowLeft style={{ marginRight: "6px" }} /> Back
               </FLPButton>
 
-              <FLPButton
-                size="sm"
-                variant="outline"
+              <button
+                className={css({
+                  fontSize: "xs",
+                  color: "text.muted",
+                  background: "none",
+                  border: "none",
+                  cursor: "pointer",
+                  _hover: { color: "primary", textDecoration: "underline" },
+                })}
+                type="button"
                 onClick={() => {
                   setCameFromQuiz(true);
                   setMode("manual");
                 }}
               >
-                Skip to Review <FaArrowRight style={{ marginLeft: "6px" }} />
-              </FLPButton>
+                Skip to Review
+              </button>
             </div>
           </FLPCard>
         )}
 
-        {/* MODE: MANUAL MODULE SELECTION & REVIEW */}
+        {/* MODE: MANUAL MODULE SELECTION */}
         {mode === "manual" && (
           <FLPCard
             className={css({
-              padding: { base: "24px 18px", sm: "36px 32px" },
+              padding: { base: "16px 14px", sm: "28px 24px", md: "36px 32px" },
               borderRadius: "2xl",
               border: "1px solid",
               borderColor: "border",
               display: "flex",
               flexDirection: "column",
-              gap: "24px",
+              gap: { base: "16px", md: "20px" },
               boxShadow: "sm",
             })}
           >
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "flex-start",
-                flexWrap: "wrap",
-                gap: "12px",
-              }}
-            >
-              <div>
-                <FLPHeading as="h2" size="lg" color="blue.500">
+            <div>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  marginBottom: "4px",
+                }}
+              >
+                <FLPHeading as="h2" size="md">
                   Select Your Active Modules
                 </FLPHeading>
-                <FLPText color="text.muted" fontSize="sm" style={{ marginTop: "4px" }}>
-                  Choose which financial sections to enable. You can change these anytime in
-                  Profile.
-                </FLPText>
-              </div>
-
-              <div style={{ display: "flex", gap: "8px" }}>
-                <button
-                  type="button"
+                <span
                   className={css({
                     fontSize: "xs",
                     color: "primary",
-                    background: "none",
-                    border: "none",
-                    cursor: "pointer",
-                    fontWeight: "semibold",
-                    _hover: { textDecoration: "underline" },
+                    fontWeight: "bold",
+                    backgroundColor: "rgba(99, 99, 241, 0.1)",
+                    padding: "2px 8px",
+                    borderRadius: "full",
                   })}
-                  onClick={() => setSelectedPages([...ALL_PAGE_KEYS])}
                 >
-                  Select All
-                </button>
-                <span style={{ color: "var(--colors-border)" }}>•</span>
-                <button
-                  type="button"
-                  className={css({
-                    fontSize: "xs",
-                    color: "text.muted",
-                    background: "none",
-                    border: "none",
-                    cursor: "pointer",
-                    _hover: { color: "primary", textDecoration: "underline" },
-                  })}
-                  onClick={() => setSelectedPages(["accounts", "budget", "savings"])}
-                >
-                  Essentials Only
-                </button>
+                  {selectedPages.length} of {ALL_PAGE_KEYS.length} enabled
+                </span>
               </div>
+              <FLPText color="text.muted" fontSize="sm" style={{ marginTop: "4px" }}>
+                Choose which financial sections to enable. You can change these anytime in Profile.
+              </FLPText>
             </div>
 
             {/* List of Modules */}
@@ -745,7 +1479,6 @@ export default function OnboardingRoute() {
 
                 return (
                   <button
-                    type="button"
                     key={key}
                     className={css({
                       display: "flex",
@@ -765,6 +1498,7 @@ export default function OnboardingRoute() {
                         borderColor: "primary",
                       },
                     })}
+                    type="button"
                     onClick={() => handleTogglePage(key)}
                   >
                     <div
@@ -837,23 +1571,6 @@ export default function OnboardingRoute() {
                   </button>
                 );
               })}
-            </div>
-
-            {/* Note on Dynamic Activation */}
-            <div
-              className={css({
-                padding: "12px 16px",
-                borderRadius: "lg",
-                backgroundColor: "rgba(99, 99, 241, 0.05)",
-                border: "1px dashed rgba(99, 99, 241, 0.3)",
-                fontSize: "xs",
-                color: "text.muted",
-                lineHeight: "1.5",
-              })}
-            >
-              💡 <strong>Smart Dashboard:</strong> Widgets for your chosen sections will remain
-              cleanly hidden until you complete their setup steps on the dashboard, keeping your
-              home page tidy.
             </div>
 
             {/* Bottom Actions */}

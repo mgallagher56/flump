@@ -167,6 +167,9 @@ export const TaxIncomeSectionCard: FC<TaxIncomeSectionCardProps> = ({
         overflow: "hidden",
         boxShadow: "sm",
         transition: "border-color 0.2s",
+        width: "100%",
+        maxWidth: "100%",
+        boxSizing: "border-box",
         "&[open]": {
           borderColor: colorTokens.border,
         },
@@ -175,39 +178,41 @@ export const TaxIncomeSectionCard: FC<TaxIncomeSectionCardProps> = ({
       <summary
         className={css({
           display: "flex",
-          alignItems: "center",
+          flexDirection: { base: "column", md: "row" },
+          alignItems: { base: "stretch", md: "center" },
           justifyContent: "space-between",
-          padding: "16px 20px",
+          padding: { base: "12px 14px", md: "16px 20px" },
           backgroundColor: "surface",
           cursor: "pointer",
           userSelect: "none",
           listStyle: "none",
+          gap: { base: "12px", md: "16px" },
           "&::-webkit-details-marker": { display: "none" },
           "&:hover": { backgroundColor: "rgba(0,0,0,0.015)" },
         })}
       >
         {/* Left: Icon, Title, Subtitle */}
-        <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "12px", minWidth: 0, flex: 1 }}>
           <div
             style={{
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              width: "40px",
-              height: "40px",
+              width: "38px",
+              height: "38px",
               borderRadius: "8px",
               backgroundColor: colorTokens.iconBg,
               color: colorTokens.badgeText,
-              fontSize: "18px",
+              fontSize: "16px",
               flexShrink: 0,
             }}
           >
             {icon}
           </div>
-          <div>
-            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+          <div style={{ minWidth: 0 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
               <span
-                style={{ fontWeight: 700, fontSize: "16px", color: "var(--colors-text-primary)" }}
+                style={{ fontWeight: 700, fontSize: "15px", color: "var(--colors-text-primary)" }}
               >
                 {title}
               </span>
@@ -224,14 +229,31 @@ export const TaxIncomeSectionCard: FC<TaxIncomeSectionCardProps> = ({
                 {sectionRecords.length} {sectionRecords.length === 1 ? "record" : "records"}
               </span>
             </div>
-            <span style={{ fontSize: "12px", color: "var(--colors-text-muted)", display: "block" }}>
+            <span
+              style={{
+                fontSize: "12px",
+                color: "var(--colors-text-muted)",
+                display: "block",
+                marginTop: "2px",
+              }}
+            >
               {subtitle}
             </span>
           </div>
         </div>
 
         {/* Right: Metrics Pills + Caret */}
-        <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+        <div
+          className={css({
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            width: { base: "100%", md: "auto" },
+            gap: "12px",
+            borderTop: { base: "1px dashed token(colors.border)", md: "none" },
+            paddingTop: { base: "10px", md: 0 },
+          })}
+        >
           <div
             style={{
               display: "flex",
@@ -239,6 +261,7 @@ export const TaxIncomeSectionCard: FC<TaxIncomeSectionCardProps> = ({
               gap: "12px",
               flexWrap: "wrap",
               justifyContent: "flex-end",
+              flex: 1,
             }}
           >
             {totalIncome > 0 && (
@@ -277,7 +300,7 @@ export const TaxIncomeSectionCard: FC<TaxIncomeSectionCardProps> = ({
               </span>
               <span
                 style={{
-                  fontSize: "15px",
+                  fontSize: "14px",
                   fontWeight: 800,
                   color: netTotal >= 0 ? "var(--colors-text-primary)" : "var(--colors-destructive)",
                 }}
@@ -292,7 +315,8 @@ export const TaxIncomeSectionCard: FC<TaxIncomeSectionCardProps> = ({
               color: "var(--colors-text-muted)",
               transition: "transform 0.2s",
               transform: isOpen ? "rotate(90deg)" : "rotate(0deg)",
-              marginLeft: "8px",
+              marginLeft: "6px",
+              flexShrink: 0,
             }}
           >
             <FaChevronRight size={14} />
@@ -301,7 +325,14 @@ export const TaxIncomeSectionCard: FC<TaxIncomeSectionCardProps> = ({
       </summary>
 
       {/* Expanded Content Area */}
-      <div style={{ padding: "16px 20px", borderTop: "1px solid var(--colors-border)" }}>
+      <div
+        className={css({
+          padding: { base: "12px 14px", md: "16px 20px" },
+          borderTop: "1px solid var(--colors-border)",
+          maxWidth: "100%",
+          boxSizing: "border-box",
+        })}
+      >
         {/* Context Banner */}
         {contextBanner && <div style={{ marginBottom: "16px" }}>{contextBanner}</div>}
 
@@ -347,16 +378,20 @@ export const TaxIncomeSectionCard: FC<TaxIncomeSectionCardProps> = ({
               display: "grid",
               gridTemplateColumns: {
                 base: "1fr",
+                sm: "1fr 1fr",
                 md: "2fr 1fr 1.5fr 1fr 1fr auto",
               },
               gap: "8px",
-              padding: "12px",
+              padding: { base: "10px", md: "12px" },
               backgroundColor: "rgba(0,0,0,0.02)",
               border: "1px solid",
               borderColor: "border",
               borderRadius: "md",
               marginBottom: "16px",
               alignItems: "center",
+              width: "100%",
+              maxWidth: "100%",
+              boxSizing: "border-box",
             })}
           >
             <input
@@ -486,15 +521,19 @@ export const TaxIncomeSectionCard: FC<TaxIncomeSectionCardProps> = ({
           <div
             className={css({
               width: "100%",
+              maxWidth: "100%",
               overflowX: "auto",
+              WebkitOverflowScrolling: "touch",
               borderRadius: "md",
               border: "1px solid",
               borderColor: "border",
+              boxSizing: "border-box",
             })}
           >
             <table
               style={{
                 width: "100%",
+                minWidth: "550px",
                 borderCollapse: "collapse",
                 fontSize: "13px",
                 textAlign: "left",

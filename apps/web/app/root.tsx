@@ -2,7 +2,6 @@ import { css } from "@repo/ui/styled-system/css";
 import { useEffect } from "react";
 import type { LoaderFunctionArgs } from "react-router";
 import { Links, Meta, Outlet, Scripts, ScrollRestoration, useLoaderData } from "react-router";
-import MobileBottomBar from "./components/navigation/MobileBottomBar";
 import Header from "./components/structure/header/Header";
 import { ResponsiveProvider } from "./context/ResponsiveContext";
 import { useTheme } from "./hooks/useTheme";
@@ -108,10 +107,9 @@ export default function App() {
           <ResponsiveProvider>
             <div
               className={css({
-                maxWidth: "1280px",
+                maxWidth: "1536px",
                 margin: "0 auto",
                 paddingX: { base: "12px", md: "24px" },
-                paddingBottom: user ? { base: "80px", md: "0" } : "0",
               })}
             >
               <Header />
@@ -119,7 +117,6 @@ export default function App() {
                 <Outlet />
               </main>
             </div>
-            <MobileBottomBar user={user} />
           </ResponsiveProvider>
         </ThemeContext.Provider>
         <ScrollRestoration />

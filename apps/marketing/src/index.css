@@ -1,7 +1,32 @@
 @layer reset, base, tokens, recipes, utilities;
 
+:root {
+  color-scheme: light dark;
+}
+
 body {
   margin: 0;
   min-height: 100vh;
-  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  font-family: "Poppins", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-style: normal;
+  background-color: var(--colors-background);
+  color: var(--colors-text-primary);
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  color: var(--colors-text-primary);
+  font-family: "Poppins", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-style: normal;
+}
+
+p {
+  color: var(--colors-text-muted);
 }

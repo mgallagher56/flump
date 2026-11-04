@@ -1,0 +1,242 @@
+import { calculateDebtToWealthBridge, type DebtItem } from "@repo/common";
+import { css } from "@repo/ui/styled-system/css";
+import { type FC, useMemo, useState } from "react";
+import FLPCard from "~/components/core/cards/FLPCard";
+import FLPHeading from "~/components/core/typography/FLPHeading";
+import FLPText from "~/components/core/typography/FLPText";
+import { useFormatCurrency } from "~/hooks/useFormatCurrency";
+
+export interface DebtToWealthBridgeCardProps {
+  debts: DebtItem[];
+  extraPayment: number;
+}
+
+const cardStyle = css({
+  padding: "24px",
+  display: "flex",
+  flexDirection: "column",
+  gap: "20px",
+});
+
+const metricsRowStyle = css({
+  display: "grid",
+  gridTemplateColumns: {
+    base: "1fr",
+    sm: "repeat(3, 1fr)",
+  },
+  gap: "16px",
+  backgroundColor: "rgba(16, 185, 129, 0.05)",
+  border: "1px solid",
+  borderColor: "rgba(16, 185, 129, 0.2)",
+  padding: "16px",
+  borderRadius: "xl",
+});
+
+const chartTableStyle = css({
+  width: "100%",
+  borderCollapse: "collapse",
+  fontSize: "13px",
+  "& th": {
+    textAlign: "left",
+    padding: "8px 12px",
+    borderBottom: "1px solid",
+    borderColor: "border",
+    color: "text.muted",
+    fontWeight: "600",
+  },
+  "& td": {
+    padding: "8px 12px",
+    borderBottom: "1px solid",
+    borderColor: "border",
+  },
+});
+
+export const DebtToWealthBridgeCard: FC<DebtToWealthBridgeCardProps> = ({
+  debts,
+  extraPayment,
+}) => {
+  const { formatCurrency } = useFormatCurrency();
+  const [returnRate, setReturnRate] = useState<number>(6.0);
+
+  const bridgePoints = useMemo(() => {
+    return calculateDebtToWealthBridge(debts, extraPayment, returnRate, 5);
+  }, [debts, extraPayment, returnRate]);
+
+  const debtFreePoint = bridgePoints.find((p) => p.isPostDebtFree) || bridgePoints[0];
+  const finalPoint = bridgePoints[bridgePoints.length - 1];
+  const totalMonthlyCommitment = debts.reduce((sum, d) => sum + d.minimumPayment, 0) + extraPayment;
+
+  return (
+    <FLPCard>
+      <div className={cardStyle}>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "flex-start",
+            flexWrap: "wrap",
+            gap: "12px",
+          }}
+        >
+          <div>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <span style={{ fontSize: "18px" }}>🚀</span>
+              <FLPHeading as="h3" size="xl">
+                The Debt-to-Wealth Crossover Bridge
+              </FLPHeading>
+            </div>
+            <FLPText color="text.muted" fontSize="sm">
+              The real financial breakthrough happens when you hit £0. Redirecting that exact
+              monthly payment into an ISA creates exponential wealth.
+            </FLPText>
+          </div>
+
+          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <FLPText fontSize="xs">Projected ISA Growth Rate:</FLPText>
+            <select
+              aria-label="Projected ISA Return Rate"
+              style={{
+                padding: "4px 8px",
+                borderRadius: "6px",
+                border: "1px solid var(--colors-border)",
+                backgroundColor: "var(--colors-background)",
+                fontSize: "12px",
+              }}
+              value={returnRate}
+              onChange={(e) => setReturnRate(Number(e.target.value))}
+            >
+              <option value="4.5">4.5% (Cash ISA)</option>
+              <option value="6.0">6.0% (Balanced S&S ISA)</option>
+              <option value="7.5">7.5% (Global Equities S&S ISA)</option>
+            </select>
+          </div>
+        </div>
+
+        {/* Highlight Metrics */}
+        <div className={metricsRowStyle}>
+          <div>
+            <FLPText color="text.muted" fontSize="xs">
+              Current Monthly Debt Outflow
+            </FLPText>
+            <FLPHeading as="h4" size="lg">
+              {formatCurrency(totalMonthlyCommitment)}/mo
+            </FLPHeading>
+            <FLPText color="text.muted" fontSize="xs">
+              Freed up automatically post-payoff
+            </FLPText>
+          </div>
+
+          <div>
+            <FLPText color="text.muted" fontSize="xs">
+              Projected Debt-Free Point
+            </FLPText>
+            <FLPHeading as="h4" color="primary" size="lg">
+              Year {debtFreePoint?.yearNumber || 0}
+            </FLPHeading>
+            <FLPText color="text.muted" fontSize="xs">
+              Liabilities drop to £0
+            </FLPText>
+          </div>
+
+          <div>
+            <FLPText color="text.muted" fontSize="xs">
+              Accumulated Wealth (5 Yrs Post Debt-Free)
+            </FLPText>
+            <FLPHeading as="h4" color="green.600" size="lg">
+              +{formatCurrency(finalPoint?.wealthAccumulated || 0)}
+            </FLPHeading>
+            <FLPText color="green.700" fontSize="xs">
+              Invested in a tax-sheltered ISA
+            </FLPText>
+          </div>
+        </div>
+
+        {/* Visual Progress Milestones */}
+        <div style={{ overflowX: "auto" }}>
+          <table className={chartTableStyle}>
+            <thead>
+              <tr>
+                <th>Timeline</th>
+                <th>Phase</th>
+                <th>Debt Remaining</th>
+                <th>Wealth in ISA</th>
+                <th>Net Balance Trajectory</th>
+              </tr>
+            </thead>
+            <tbody>
+              {bridgePoints.map((point) => (
+                <tr
+                  key={point.month}
+                  style={
+                    point.isPostDebtFree && point.debtRemaining === 0
+                      ? { backgroundColor: "rgba(16, 185, 129, 0.04)" }
+                      : undefined
+                  }
+                >
+                  <td style={{ fontWeight: "500" }}>
+                    Month {point.month} (Yr {point.yearNumber})
+                  </td>
+                  <td>
+                    {point.isPostDebtFree ? (
+                      <span
+                        style={{
+                          fontSize: "11px",
+                          backgroundColor: "#d1fae5",
+                          color: "#065f46",
+                          padding: "2px 6px",
+                          borderRadius: "4px",
+                          fontWeight: "bold",
+                        }}
+                      >
+                        🌱 Wealth Building
+                      </span>
+                    ) : (
+                      <span
+                        style={{
+                          fontSize: "11px",
+                          backgroundColor: "#fee2e2",
+                          color: "#991b1b",
+                          padding: "2px 6px",
+                          borderRadius: "4px",
+                          fontWeight: "bold",
+                        }}
+                      >
+                        🔥 Debt Clearance
+                      </span>
+                    )}
+                  </td>
+                  <td
+                    style={{
+                      color: point.debtRemaining > 0 ? "#ef4444" : "#10b981",
+                      fontWeight: "600",
+                    }}
+                  >
+                    {formatCurrency(point.debtRemaining)}
+                  </td>
+                  <td style={{ color: "#10b981", fontWeight: "600" }}>
+                    {point.wealthAccumulated > 0
+                      ? `+${formatCurrency(point.wealthAccumulated)}`
+                      : "£0"}
+                  </td>
+                  <td>
+                    {point.debtRemaining > 0 ? (
+                      <span style={{ color: "#ef4444" }}>
+                        -{formatCurrency(point.debtRemaining)}
+                      </span>
+                    ) : (
+                      <span style={{ color: "#10b981", fontWeight: "bold" }}>
+                        +{formatCurrency(point.wealthAccumulated)}
+                      </span>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </FLPCard>
+  );
+};
+
+export default DebtToWealthBridgeCard;

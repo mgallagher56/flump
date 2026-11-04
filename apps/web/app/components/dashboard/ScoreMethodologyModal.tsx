@@ -50,7 +50,7 @@ const backdropStyle = css({
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
-  padding: { base: "12px", sm: "20px" },
+  padding: { base: "10px", sm: "20px" },
 });
 
 const modalStyle = css({
@@ -61,9 +61,9 @@ const modalStyle = css({
   boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.5)",
   width: "100%",
   maxWidth: "680px",
-  maxHeight: "90vh",
+  maxHeight: { base: "94vh", md: "90vh" },
   overflowY: "auto",
-  padding: { base: "16px", sm: "24px" },
+  padding: { base: "20px 16px", sm: "24px" },
   position: "relative",
   outline: "none",
   display: "flex",

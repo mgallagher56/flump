@@ -42,7 +42,6 @@
 
 - **deps:** update all non-major third-party dependencies ([8434067](https://github.com/mgallagher56/flump/commit/8434067badbc5c1cefdbdd9c750d121b0e0be6eb))
 
-
 ### Tests 🧪
 
 - updates snaps ([427d8dd](https://github.com/mgallagher56/flump/commit/427d8dd151676259d9533edc3eb3526d9604bd52))
@@ -56,7 +55,6 @@
 - update eslint v9. add new rules, run eslint fix and prettier ([e88a932](https://github.com/mgallagher56/flump/commit/e88a9328679fc6bdf4e8e7301a323bf04a071625))
 - upgrade supabase WIP ([76e5435](https://github.com/mgallagher56/flump/commit/76e543577aac02323af169edd681630d61256de6))
 - upgrade to react router v7 ([2d76de1](https://github.com/mgallagher56/flump/commit/2d76de1813fce5f7c9df5a77cd45b95848383797))
-
 
 ### Bug Fixes 🪲
 
@@ -77,7 +75,6 @@
 - top level await issue ([500ee97](https://github.com/mgallagher56/flump/commit/500ee97a0aa9075cd4a41755d73a377237a104a3))
 - ts issues ([c359969](https://github.com/mgallagher56/flump/commit/c35996977cb69acd6cb6113636e9c2c6b92e5773))
 
-
 ### Tests 🧪
 
 - add custom render and fix tests ([19ca22c](https://github.com/mgallagher56/flump/commit/19ca22ca3c26f24f015d8a8724ecbf50621f3c9e))
@@ -89,7 +86,6 @@
 - update snaps and types ([2ed7fe6](https://github.com/mgallagher56/flump/commit/2ed7fe665a50cafb349f8ec19f3e2a2e20455796))
 - update snaps with styles ([2e01701](https://github.com/mgallagher56/flump/commit/2e017011a85048936fb66344c0e469c1c372fa62))
 - update test mock ([beef25b](https://github.com/mgallagher56/flump/commit/beef25b93fcbd63b7efefd5649985e0351d81cca))
-
 
 ### Miscellaneous 🙃
 
@@ -144,7 +140,6 @@
 
 - **web:** package json ([ad0b9f6](https://github.com/mgallagher56/flump/commit/ad0b9f68e00fa96d418a6db37b3ff27656e7e26b))
 
-
 ### Miscellaneous Chores
 
 - **web:** release 1.21.0 ([a1a66d3](https://github.com/mgallagher56/flump/commit/a1a66d35611c46a5f98d6dac4e155dd219d42fd3))
@@ -155,12 +150,10 @@
 
 - turborepo migration ([f54ed55](https://github.com/mgallagher56/flump/commit/f54ed550cf5e93671321935ebba0c2f16828bd85))
 
-
 ### Bug Fixes
 
 - release please gh action ([4a942a2](https://github.com/mgallagher56/flump/commit/4a942a23da321f7b768657199d2d1140446458d0))
 - **web:** package json ([ad0b9f6](https://github.com/mgallagher56/flump/commit/ad0b9f68e00fa96d418a6db37b3ff27656e7e26b))
-
 
 ### Miscellaneous Chores
 
@@ -185,11 +178,9 @@
 
 - turborepo migration ([f54ed55](https://github.com/mgallagher56/flump/commit/f54ed550cf5e93671321935ebba0c2f16828bd85))
 
-
 ### Bug Fixes
 
 - release please gh action ([4a942a2](https://github.com/mgallagher56/flump/commit/4a942a23da321f7b768657199d2d1140446458d0))
-
 
 ### Miscellaneous Chores
 

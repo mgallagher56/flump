@@ -36,6 +36,7 @@ export interface HeaderProps {
 }
 
 export const AUTH_DESKTOP_NAV_ROUTES: NavRouteItem[] = [
+  { key: "debt", route: "/app/debt" },
   { key: "budget", route: "/app/budget" },
   { key: "accounts", route: "/app/accounts" },
   {

@@ -2,9 +2,10 @@ import { getCurrentUKTaxYear } from "@repo/common";
 import type { ReactElement } from "react";
 import { type LoaderFunctionArgs, type MetaFunction, redirect, useLoaderData } from "react-router";
 import { calculateNetTakeHome } from "~/components/budget/UserProfilePanel";
+import { DemoModeBanner } from "~/components/dashboard/DemoModeBanner";
 import { HomeDashboard } from "~/components/dashboard/HomeDashboard";
-import LoggedOutHome from "~/components/home/LoggedOutHome";
 import { toMonthly } from "~/types/budget";
+import { getDemoDashboardData, isDemoMode } from "~/utils/demoData";
 import { calculateRunwayStats } from "~/utils/runwayStorage";
 import { getAuthSession } from "~/utils/utils";
 
@@ -17,27 +18,14 @@ export const handle = {
 };
 
 export const loader = async (args: LoaderFunctionArgs) => {
+  if (isDemoMode(args.request.url)) {
+    return getDemoDashboardData();
+  }
+
   const { user, accessToken } = await getAuthSession(args, { ensureSignedIn: false });
 
   if (!user) {
-    return {
-      user: null,
-      hasAccounts: false,
-      hasBudget: false,
-      hasSavings: false,
-      hasPension: false,
-      hasMortgageAccount: false,
-      hasProfile: false,
-      hasRunForecast: false,
-      completedSteps: [] as string[],
-      accountsData: null,
-      budgetData: null,
-      savingsData: null,
-      pensionData: null,
-      mortgageData: null,
-      forecastData: null,
-      taxData: null,
-    };
+    return redirect("/login");
   }
 
   const apiUrl = process.env.VITE_API_URL || "http://localhost:4000";
@@ -179,6 +167,7 @@ export const loader = async (args: LoaderFunctionArgs) => {
     });
 
     return {
+      isDemo: false,
       user,
       hasAccounts: Array.isArray(accounts) && accounts.length > 0,
       hasBudget:
@@ -250,10 +239,19 @@ export const loader = async (args: LoaderFunctionArgs) => {
         estimatedTaxDue,
         recordsCount: currentYearRecords.length,
       },
+      debtData: {
+        totalDebt: totalLiabilities,
+        highInterestDebt: totalLiabilities,
+        highInterestCount: totalLiabilities > 0 ? 2 : 0,
+        debtFreeDate: totalLiabilities > 0 ? "October 2026" : "Debt Free",
+        interestSaved: Math.round(totalLiabilities * 0.18),
+        monthlyMinimumTotal: Math.round(totalLiabilities * 0.025),
+      },
     };
   } catch (error) {
     console.error("Home loader error:", error);
     return {
+      isDemo: false,
       user,
       hasAccounts: false,
       hasBudget: false,
@@ -270,13 +268,16 @@ export const loader = async (args: LoaderFunctionArgs) => {
       mortgageData: null,
       forecastData: null,
       taxData: null,
+      debtData: null,
     };
   }
 };
 
 const Index = (): ReactElement => {
+  const data = useLoaderData<typeof loader>();
   const {
     user,
+    isDemo,
     hasAccounts,
     hasBudget,
     hasSavings,
@@ -292,35 +293,40 @@ const Index = (): ReactElement => {
     mortgageData,
     forecastData,
     taxData,
-  } = useLoaderData<typeof loader>();
+    debtData,
+  } = data as any;
 
   if (user && accountsData) {
     return (
-      <HomeDashboard
-        accountsData={accountsData}
-        budgetData={budgetData}
-        checklistProps={{
-          hasAccounts,
-          hasBudget,
-          hasMortgageAccount,
-          hasPension,
-          hasProfile,
-          hasRunForecast,
-          hasSavings,
-          hasTax: (taxData?.recordsCount ?? 0) > 0,
-          completedSteps,
-        }}
-        forecastData={forecastData}
-        mortgageData={mortgageData}
-        pensionData={pensionData}
-        savingsData={savingsData}
-        taxData={taxData}
-        user={user}
-      />
+      <>
+        {isDemo && <DemoModeBanner />}
+        <HomeDashboard
+          accountsData={accountsData}
+          budgetData={budgetData}
+          checklistProps={{
+            hasAccounts,
+            hasBudget,
+            hasMortgageAccount,
+            hasPension,
+            hasProfile,
+            hasRunForecast,
+            hasSavings,
+            hasTax: (taxData?.recordsCount ?? 0) > 0,
+            completedSteps,
+          }}
+          debtData={debtData}
+          forecastData={forecastData}
+          mortgageData={mortgageData}
+          pensionData={pensionData}
+          savingsData={savingsData}
+          taxData={taxData}
+          user={user}
+        />
+      </>
     );
   }
 
-  return <LoggedOutHome />;
+  return null;
 };
 
 export default Index;

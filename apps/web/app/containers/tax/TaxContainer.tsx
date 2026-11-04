@@ -5,7 +5,6 @@ import {
   FaBriefcase,
   FaCalculator,
   FaCamera,
-  FaCoins,
   FaCopy,
   FaFileAlt,
   FaFileImage,
@@ -32,7 +31,9 @@ import FLPBox from "~/components/core/structure/FLPBox";
 import FLPHeading from "~/components/core/typography/FLPHeading";
 import FLPText from "~/components/core/typography/FLPText";
 import CopyTaxYearModal from "~/components/tax/CopyTaxYearModal";
+import PaymentsOnAccountCard from "~/components/tax/PaymentsOnAccountCard";
 import TaxIncomeSectionCard from "~/components/tax/TaxIncomeSectionCard";
+import TaxTrapAlertBanner from "~/components/tax/TaxTrapAlertBanner";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
 import type { loader } from "~/routes/app.tax";
 import {
@@ -40,14 +41,8 @@ import {
   getCategoriesForSource,
   getCurrentUKTaxYear,
   getPreviousTaxYear,
-  getRecordAnnualTotalForTaxYear,
   getTaxYearForDate,
   isRecordActiveInTaxYear,
-  PAYE_CATEGORIES,
-  RENTAL_CATEGORIES,
-  SAVINGS_CATEGORIES,
-  SELF_EMPLOYED_CATEGORIES,
-  TAX_YEARS,
   type TaxCalculationResult,
   type TaxRecord,
   type TaxSource,
@@ -338,25 +333,32 @@ const TaxContainer: FC = () => {
   const cardsGrid = css({
     display: "grid",
     gridTemplateColumns: { base: "1fr", sm: "repeat(2, 1fr)", lg: "repeat(4, 1fr)" },
-    gap: "18px",
-    marginBottom: "28px",
+    gap: { base: "12px", md: "18px" },
+    marginBottom: { base: "18px", md: "28px" },
+    width: "100%",
+    maxWidth: "100%",
   });
 
   const layoutGrid = css({
     display: "grid",
     gridTemplateColumns: { base: "1fr", lg: "3.2fr 1.3fr" },
-    gap: "28px",
+    gap: { base: "18px", md: "28px" },
     alignItems: "start",
+    width: "100%",
+    maxWidth: "100%",
   });
 
   const tableContainer = css({
     width: "100%",
+    maxWidth: "100%",
     overflowX: "auto",
+    WebkitOverflowScrolling: "touch",
     borderRadius: "md",
     border: "1px solid",
     borderColor: "border",
     backgroundColor: "surface",
     marginBottom: "24px",
+    boxSizing: "border-box",
   });
 
   const tableStyle = css({
@@ -402,11 +404,11 @@ const TaxContainer: FC = () => {
     flexDirection: "column",
     gap: "8px",
     flex: 1,
-    minWidth: "160px",
+    minWidth: { base: "100%", sm: "140px" },
   });
 
   const editableFormPanel = css({
-    padding: "20px",
+    padding: { base: "16px", md: "20px" },
     borderRadius: "md",
     backgroundColor: "surface",
     border: "1px solid",
@@ -415,10 +417,20 @@ const TaxContainer: FC = () => {
     flexDirection: "column",
     gap: "16px",
     marginBottom: "24px",
+    width: "100%",
+    maxWidth: "100%",
+    boxSizing: "border-box",
   });
 
   return (
-    <div style={{ paddingBottom: "64px" }}>
+    <div
+      className={css({
+        width: "100%",
+        maxWidth: "100%",
+        overflowX: "hidden",
+        paddingBottom: { base: "24px", md: "48px" },
+      })}
+    >
       {/* Page Header */}
       <div
         className={css({
@@ -498,12 +510,24 @@ const TaxContainer: FC = () => {
       )}
 
       {/* Tax Year Selector Toolbar */}
+      <div style={{ marginBottom: "20px", display: "flex", flexDirection: "column", gap: "16px" }}>
+        <TaxTrapAlertBanner grossIncome={activeYearData?.totalGrossIncome || payeSalary} />
+        {activeYearData && (
+          <PaymentsOnAccountCard
+            annualSelfAssessmentTax={
+              activeYearData.netAdditionalTaxToPay ??
+              Math.max(0, activeYearData.totalTaxDue - activeYearData.payeTaxDue)
+            }
+          />
+        )}
+      </div>
+
       <div
         className={css({
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
-          padding: "12px 18px",
+          padding: { base: "10px 12px", md: "12px 18px" },
           backgroundColor: "surface",
           border: "1px solid",
           borderColor: "border",
@@ -511,20 +535,32 @@ const TaxContainer: FC = () => {
           marginBottom: "20px",
           flexWrap: "wrap",
           gap: "12px",
+          width: "100%",
+          maxWidth: "100%",
+          boxSizing: "border-box",
         })}
       >
-        <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "10px",
+            flexWrap: "wrap",
+            maxWidth: "100%",
+          }}
+        >
           <span
             style={{
               fontSize: "12px",
               fontWeight: 700,
               color: "var(--colors-text-muted)",
               textTransform: "uppercase",
+              flexShrink: 0,
             }}
           >
             Fiscal Year:
           </span>
-          <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
+          <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", maxWidth: "100%" }}>
             {availableYears.map((yr) => {
               const isSelected = yr === selectedTaxYear;
               return (
@@ -543,6 +579,7 @@ const TaxContainer: FC = () => {
                     color: isSelected ? "primary.foreground" : "text.muted",
                     cursor: "pointer",
                     transition: "all 0.15s",
+                    flexShrink: 0,
                     "&:hover": {
                       borderColor: "primary",
                       color: isSelected ? "primary.foreground" : "text.primary",
@@ -556,7 +593,7 @@ const TaxContainer: FC = () => {
           </div>
         </div>
 
-        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
           <FLPButton size="sm" variant="outline" onClick={() => handleOpenCopyModal("all")}>
             <FaCopy size={11} style={{ marginRight: "6px" }} /> Copy from {previousTaxYear}
           </FLPButton>
@@ -572,10 +609,14 @@ const TaxContainer: FC = () => {
           borderColor: "border",
           paddingBottom: "8px",
           marginBottom: "24px",
+          overflowX: "auto",
+          maxWidth: "100%",
+          WebkitOverflowScrolling: "touch",
         })}
       >
         <button
           className={tabStyle(activeTab === "summary")}
+          style={{ whiteSpace: "nowrap", flexShrink: 0 }}
           type="button"
           onClick={() => setActiveTab("summary")}
         >
@@ -583,6 +624,7 @@ const TaxContainer: FC = () => {
         </button>
         <button
           className={tabStyle(activeTab === "detailed")}
+          style={{ whiteSpace: "nowrap", flexShrink: 0 }}
           type="button"
           onClick={() => setActiveTab("detailed")}
         >
@@ -701,7 +743,7 @@ const TaxContainer: FC = () => {
           {/* Main Layout Grid */}
           <div className={layoutGrid}>
             {/* Left side: Collapsible Income Sections & Multi-Year P&L Table */}
-            <div>
+            <div style={{ minWidth: 0, maxWidth: "100%" }}>
               {/* Collapsible Sections Header */}
               <div
                 style={{
@@ -940,7 +982,7 @@ const TaxContainer: FC = () => {
                 </div>
 
                 <div className={tableContainer}>
-                  <table className={tableStyle}>
+                  <table className={tableStyle} style={{ minWidth: "550px" }}>
                     <thead>
                       <tr>
                         <th className={thStyle}>Line Item</th>
@@ -1368,7 +1410,12 @@ const TaxContainer: FC = () => {
             </div>
 
             {/* Right side: Parameters and Breakdown */}
-            <FLPBox display="flex" flexDirection="column" gap={6}>
+            <FLPBox
+              display="flex"
+              flexDirection="column"
+              gap={6}
+              style={{ minWidth: 0, maxWidth: "100%" }}
+            >
               {/* Profile Config panel */}
               <div className={editableFormPanel}>
                 <FLPHeading
@@ -1652,7 +1699,7 @@ const TaxContainer: FC = () => {
 
           {/* Transactions Detailed Log Table */}
           <div className={tableContainer}>
-            <table className={tableStyle}>
+            <table className={tableStyle} style={{ minWidth: "650px" }}>
               <thead>
                 <tr>
                   <th className={thStyle}>Date</th>
@@ -1848,8 +1895,8 @@ const TaxContainer: FC = () => {
               onChange={(e) => setFormName(e.target.value)}
             />
 
-            <div style={{ display: "flex", gap: "16px" }}>
-              <div style={{ flex: 1 }}>
+            <div style={{ display: "flex", gap: "16px", flexWrap: "wrap" }}>
+              <div style={{ flex: "1 1 140px", minWidth: 0 }}>
                 <FLPSelect
                   collection={{
                     items: [
@@ -1870,7 +1917,7 @@ const TaxContainer: FC = () => {
                 />
               </div>
 
-              <div style={{ flex: 1 }}>
+              <div style={{ flex: "1 1 140px", minWidth: 0 }}>
                 <FLPSelect
                   collection={{
                     items: [
@@ -1911,8 +1958,8 @@ const TaxContainer: FC = () => {
               onChange={(e) => setFormAmount(e.target.value)}
             />
 
-            <div style={{ display: "flex", gap: "16px" }}>
-              <div style={{ flex: 1 }}>
+            <div style={{ display: "flex", gap: "16px", flexWrap: "wrap" }}>
+              <div style={{ flex: "1 1 140px", minWidth: 0 }}>
                 <FLPInput
                   label="Date"
                   required
@@ -1921,7 +1968,7 @@ const TaxContainer: FC = () => {
                   onChange={(e) => setFormDate(e.target.value)}
                 />
               </div>
-              <div style={{ flex: 1 }}>
+              <div style={{ flex: "1 1 140px", minWidth: 0 }}>
                 <FLPSelect
                   collection={{
                     items: [
@@ -2078,7 +2125,7 @@ const TaxContainer: FC = () => {
         onClose={() => setActiveReceiptRecord(null)}
         onConfirm={() => setActiveReceiptRecord(null)}
       >
-        {activeReceiptRecord && activeReceiptRecord.receiptData ? (
+        {activeReceiptRecord?.receiptData ? (
           <div
             style={{
               display: "flex",

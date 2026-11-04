@@ -6,7 +6,9 @@ import { useLoaderData } from "react-router";
 import FLPHeading from "~/components/core/typography/FLPHeading";
 import FLPText from "~/components/core/typography/FLPText";
 import SavingsForecaster from "~/components/forecast/SavingsForecaster";
+import ScenarioLayersWidget from "~/components/forecast/ScenarioLayersWidget";
 import UKTaxCalculator from "~/components/forecast/UKTaxCalculator";
+import TaxTrapAlertBanner from "~/components/tax/TaxTrapAlertBanner";
 import { useUserProfile } from "~/hooks/useUserProfile";
 import type { loader } from "~/routes/app.forecast";
 import { currentMonth, currentYear } from "~/utils/utils";
@@ -158,18 +160,28 @@ const ForecastContainer: FC = () => {
         </button>
       </div>
 
+      {/* Contextual £100k-£125k Tax Trap Alert Banner */}
+      {Number(profile.annualSalary) >= 95000 && (
+        <TaxTrapAlertBanner grossIncome={Number(profile.annualSalary)} />
+      )}
+
       {/* Render selected tab */}
       {activeTab === "forecaster" ? (
-        <SavingsForecaster
-          currentSavingRate={currentSavingRate}
-          hypotheticalSavingRate={hypotheticalSavingRate}
-          startingBalance={startingBalance}
-          onCurrentRateChange={setCurrentSavingRate}
-          onHypotheticalRateChange={setHypotheticalSavingRate}
-          onStartingBalanceChange={setStartingBalance}
-          salaryIncrease={netSalaryIncrease}
-          onClearIncrease={() => setNetSalaryIncrease(0)}
-        />
+        <>
+          <SavingsForecaster
+            currentSavingRate={currentSavingRate}
+            hypotheticalSavingRate={hypotheticalSavingRate}
+            startingBalance={startingBalance}
+            onCurrentRateChange={setCurrentSavingRate}
+            onHypotheticalRateChange={setHypotheticalSavingRate}
+            onStartingBalanceChange={setStartingBalance}
+            salaryIncrease={netSalaryIncrease}
+            onClearIncrease={() => setNetSalaryIncrease(0)}
+          />
+
+          {/* Life Event Scenario Layers */}
+          <ScenarioLayersWidget />
+        </>
       ) : (
         <UKTaxCalculator
           initialSalary={profile.annualSalary}

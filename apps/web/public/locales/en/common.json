@@ -47,6 +47,8 @@
   "planning": "Planning",
   "profile": "Profile",
   "tax": "Tax",
+  "debt": "Debt",
+  "navDebtDesc": "Avalanche & Snowball payoff, 0% cliff & wealth bridge",
   "navSavingsDesc": "High-yield accounts, APY & compound interest",
   "navPensionDesc": "Workplace pots, contributions & retirement",
   "navMortgageDesc": "Amortization, equity & overpayment modelling",

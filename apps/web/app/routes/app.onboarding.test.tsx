@@ -1,3 +1,4 @@
+import { clearOnboardingSeed, persistOnboardingSeed } from "@repo/common";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import OnboardingRoute from "./app.onboarding";
@@ -161,5 +162,126 @@ describe("OnboardingRoute", () => {
 
     // Should return to the questionnaire
     expect(screen.getByText("Question 1 of 5")).toBeDefined();
+  });
+
+  it("hydrates baseline figures from localStorage seed and shows pre-loaded banner", () => {
+    const seed = {
+      annualIncome: 85000,
+      pensionContributionPct: 8,
+      salarySacrifice: true,
+      initialCashSavings: 20000,
+      initialInvestments: 30000,
+      monthlyContribution: 800,
+      inferredModules: ["accounts", "budget", "pension", "savings", "forecast"] as const,
+      timestamp: Date.now(),
+    };
+    persistOnboardingSeed(seed as any);
+
+    render(<OnboardingRoute />);
+
+    expect(
+      screen.getByText(/we've pre-loaded your £85,000 salary and savings baseline/i),
+    ).toBeDefined();
+    expect(screen.getByText(/launch dashboard with this baseline \(10s\) →/i)).toBeDefined();
+
+    clearOnboardingSeed();
+  });
+
+  it("navigates through progressive 3-step baseline flow", async () => {
+    const seed = {
+      annualIncome: 70000,
+      pensionContributionPct: 5,
+      salarySacrifice: true,
+      initialCashSavings: 15000,
+      initialInvestments: 25000,
+      monthlyContribution: 600,
+      inferredModules: ["accounts", "budget", "savings", "pension", "forecast"] as const,
+      timestamp: Date.now(),
+    };
+    persistOnboardingSeed(seed as any);
+
+    render(<OnboardingRoute />);
+
+    // Click "Review & Tweak Numbers"
+    const reviewBtn = screen.getByText("Review & Tweak Numbers");
+    fireEvent.click(reviewBtn);
+
+    // Step 1: Focus & Baseline
+    expect(screen.getByText("Step 1: Focus & Baseline")).toBeDefined();
+    expect(screen.getByText(/where is your primary focus right now\?/i)).toBeDefined();
+
+    // Advance to Step 2
+    fireEvent.click(screen.getByText(/next: cash & debt/i));
+    expect(screen.getByText("Step 2: High-Level Cash & Debt")).toBeDefined();
+    expect(screen.getByText(/starting estimated net worth/i)).toBeDefined();
+
+    // Advance to Step 3
+    fireEvent.click(screen.getByText(/next: workspace modules/i));
+    expect(screen.getByText("Step 3: Confirm Your Workspace Modules")).toBeDefined();
+
+    // Click finish on step 3
+    const finishBtn = screen.getByRole("button", { name: /finish setup & launch dashboard/i });
+    fireEvent.click(finishBtn);
+
+    await waitFor(() => {
+      expect(mockUpdateProfile).toHaveBeenCalled();
+      expect(mockNavigate).toHaveBeenCalledWith("/");
+    });
+
+    clearOnboardingSeed();
+  });
+
+  it("completes all 5 questions in questionnaire mode and transitions to review", async () => {
+    render(<OnboardingRoute />);
+
+    fireEvent.click(screen.getByText("Answer 5 Quick Questions"));
+
+    // Q1
+    fireEvent.click(screen.getByText("Yes, include Accounts & Budgeting"));
+    // Q2
+    fireEvent.click(screen.getByText("Yes, track Savings & Forecaster"));
+    // Q3
+    fireEvent.click(screen.getByText("Yes, track Pension Pots"));
+    // Q4
+    fireEvent.click(screen.getByText("Yes, add Mortgage Tools"));
+    // Q5
+    fireEvent.click(screen.getByText("Yes, include Tax Tracker"));
+
+    // After Q5, transitions to manual review mode
+    expect(screen.getByText("Select Your Active Modules")).toBeDefined();
+
+    const finishBtn = screen.getByText("Finish Setup & Launch Dashboard →");
+    fireEvent.click(finishBtn);
+
+    await waitFor(() => {
+      expect(mockUpdateProfile).toHaveBeenCalled();
+      expect(mockNavigate).toHaveBeenCalledWith("/");
+    });
+  });
+
+  it("launches dashboard directly from fast-track baseline banner button", async () => {
+    const seed = {
+      annualIncome: 60000,
+      pensionContributionPct: 5,
+      salarySacrifice: false,
+      initialCashSavings: 10000,
+      initialInvestments: 5000,
+      monthlyContribution: 400,
+      inferredModules: ["accounts", "budget", "savings"] as const,
+      timestamp: Date.now(),
+    };
+    persistOnboardingSeed(seed as any);
+
+    render(<OnboardingRoute />);
+
+    const quickLaunchBtn = screen.getByText(/launch dashboard with this baseline \(10s\) →/i);
+    fireEvent.click(quickLaunchBtn);
+
+    await waitFor(() => {
+      expect(mockUpdateProfile).toHaveBeenCalled();
+      expect(mockNavigate).toHaveBeenCalledWith("/");
+    });
+
+    clearOnboardingSeed();
   });
 });

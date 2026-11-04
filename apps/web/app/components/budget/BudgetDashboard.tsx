@@ -1,3 +1,4 @@
+import { calculateSafeToSpend } from "@repo/common";
 import { css } from "@repo/ui/styled-system/css";
 import { type FC, useMemo } from "react";
 import { FaArrowRight, FaBalanceScale, FaChartPie, FaExclamationTriangle } from "react-icons/fa";
@@ -100,6 +101,36 @@ const BudgetDashboard: FC<BudgetDashboardProps> = ({
   const housingSaved = entries
     .filter((e) => e.category === "savings")
     .reduce((s, e) => s + toMonthly(e), 0);
+
+  const safeToSpend = useMemo(() => {
+    const fixedBills = entries
+      .filter((e) => !e.isIncome && (e.category === "housing" || e.category === "bills"))
+      .reduce((s, e) => s + toMonthly(e), 0);
+    const groceries = entries
+      .filter(
+        (e) =>
+          !e.isIncome &&
+          e.category === "expenses" &&
+          (e.name.toLowerCase().includes("food") || e.name.toLowerCase().includes("grocer")),
+      )
+      .reduce((s, e) => s + toMonthly(e), 0);
+    const minDebt = entries
+      .filter(
+        (e) =>
+          !e.isIncome &&
+          (e.name.toLowerCase().includes("card") ||
+            e.name.toLowerCase().includes("loan") ||
+            e.name.toLowerCase().includes("debt")),
+      )
+      .reduce((s, e) => s + toMonthly(e), 0);
+
+    return calculateSafeToSpend(
+      totals.income,
+      fixedBills,
+      minDebt,
+      groceries || Math.round(totals.expenses * 0.2),
+    );
+  }, [entries, totals]);
 
   const fmt = (n: number | string | null | undefined) => {
     const val = Number(n);
@@ -208,7 +239,9 @@ const BudgetDashboard: FC<BudgetDashboardProps> = ({
       <div
         className={css({
           display: "grid",
-          gridTemplateColumns: isMobileVariant ? "1fr" : { base: "1fr", md: "repeat(3, 1fr)" },
+          gridTemplateColumns: isMobileVariant
+            ? "1fr"
+            : { base: "1fr", sm: "repeat(2, 1fr)", lg: "repeat(4, 1fr)" },
           gap: isMobileVariant ? "10px" : "16px",
         })}
       >
@@ -270,9 +303,148 @@ const BudgetDashboard: FC<BudgetDashboardProps> = ({
             {fmt(totals.surplus)}
           </FLPHeading>
           <FLPText color="text.muted" fontSize="xs">
-            {totals.surplus >= 0 ? "Available to save or invest" : "Spending exceeds income"}
+            {totals.surplus >= 0 ? "Available to save or crush debt" : "Spending exceeds income"}
           </FLPText>
         </div>
+
+        {/* Safe-to-Spend Weekly Allowance */}
+        <div
+          className={cardBase}
+          style={{
+            borderColor: "rgba(99, 99, 241, 0.4)",
+            backgroundColor: "rgba(99, 99, 241, 0.04)",
+          }}
+        >
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <FLPText
+              color="text.muted"
+              fontSize="xs"
+              fontWeight="semibold"
+              textTransform="uppercase"
+            >
+              Safe-to-Spend
+            </FLPText>
+            <span
+              style={{
+                fontSize: "10px",
+                backgroundColor: "rgba(99,99,241,0.15)",
+                color: "#6363f1",
+                padding: "1px 6px",
+                borderRadius: "4px",
+                fontWeight: "bold",
+              }}
+            >
+              Daily ~{fmt(safeToSpend.dailyAllowance)}
+            </span>
+          </div>
+          <FLPHeading as="h2" color="primary" size="2xl" style={{ marginTop: "4px" }}>
+            {fmt(safeToSpend.weeklyAllowance)}
+            <span
+              style={{ fontSize: "13px", color: "var(--colors-text-muted)", fontWeight: "normal" }}
+            >
+              /week
+            </span>
+          </FLPHeading>
+          <FLPText color="text.muted" fontSize="xs">
+            After fixed bills, debt, & groceries
+          </FLPText>
+        </div>
+      </div>
+
+      {/* Priority vs. Non-Priority Debt Guardrail Alert */}
+      {totals.surplus < 0 && (
+        <div
+          className={css({
+            padding: "16px 20px",
+            borderRadius: "lg",
+            backgroundColor: "#fef2f2",
+            border: "1px solid #f87171",
+            color: "#991b1b",
+            display: "flex",
+            flexDirection: "column",
+            gap: "10px",
+          })}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+            <FaExclamationTriangle size={18} style={{ color: "#dc2626", flexShrink: 0 }} />
+            <FLPHeading as="h4" size="sm">
+              UK FCA / Citizens Advice Priority Debt Guardrail
+            </FLPHeading>
+          </div>
+          <FLPText color="#7f1d1d" fontSize="xs">
+            Your monthly expenditure exceeds income. Under UK statutory money guidance,{" "}
+            <strong>never skip Priority Bills</strong> (Council Tax, Rent/Mortgage, Energy, Court
+            Fines) to pay secondary consumer credit cards or loans.
+          </FLPText>
+          <div
+            style={{
+              display: "flex",
+              flexWrap: "wrap",
+              gap: "12px",
+              fontSize: "12px",
+              paddingTop: "4px",
+            }}
+          >
+            <span>Free UK Debt Support:</span>
+            <a
+              href="https://www.stepchange.org"
+              rel="noreferrer"
+              style={{ textDecoration: "underline", fontWeight: "bold", color: "#991b1b" }}
+              target="_blank"
+            >
+              StepChange (0800 138 1111)
+            </a>
+            <span>•</span>
+            <a
+              href="https://www.nationaldebtline.org"
+              rel="noreferrer"
+              style={{ textDecoration: "underline", fontWeight: "bold", color: "#991b1b" }}
+              target="_blank"
+            >
+              National Debtline (0808 808 4000)
+            </a>
+            <span>•</span>
+            <a
+              href="https://www.citizensadvice.org.uk"
+              rel="noreferrer"
+              style={{ textDecoration: "underline", fontWeight: "bold", color: "#991b1b" }}
+              target="_blank"
+            >
+              Citizens Advice
+            </a>
+          </div>
+        </div>
+      )}
+
+      {/* Bill & Subscription Contract Renewal Radar */}
+      <div
+        className={css({
+          padding: "14px 20px",
+          borderRadius: "lg",
+          backgroundColor: "rgba(245, 158, 11, 0.06)",
+          border: "1px solid rgba(245, 158, 11, 0.25)",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          flexWrap: "wrap",
+          gap: "12px",
+        })}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+          <span style={{ fontSize: "20px" }}>📡</span>
+          <div>
+            <FLPText fontSize="sm" fontWeight="bold">
+              Contract Renewal Radar
+            </FLPText>
+            <FLPText color="text.muted" fontSize="xs">
+              Review recurring broadband, mobile SIM, and car insurance 30 days before expiration to
+              avoid out-of-contract price spikes and redirect savings into debt payoff.
+            </FLPText>
+          </div>
+        </div>
+        <FLPButton size="sm" variant="outline" onClick={() => onNavigateToCategory("bills")}>
+          Review Bills & Renewals →
+        </FLPButton>
       </div>
 
       {/* Chart + Category breakdown */}

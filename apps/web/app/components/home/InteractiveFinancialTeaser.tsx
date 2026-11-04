@@ -1,6 +1,9 @@
+import { type OnboardingSeedPayload, persistOnboardingSeed } from "@repo/common";
 import { css } from "@repo/ui/styled-system/css";
 import { type FC, useId, useMemo, useState } from "react";
-import { FiAlertCircle, FiPercent, FiTrendingUp } from "react-icons/fi";
+import { FiAlertCircle, FiArrowRight, FiPercent, FiTrendingUp } from "react-icons/fi";
+import { useNavigate } from "react-router";
+import FLPButton from "~/components/core/buttons/FLPButton";
 import FLPHeading from "~/components/core/typography/FLPHeading";
 import FLPText from "~/components/core/typography/FLPText";
 
@@ -194,24 +197,63 @@ const formatGBP = (num: number) =>
   }).format(num);
 
 export const InteractiveFinancialTeaser: FC = () => {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<"tax" | "mortgage">("tax");
 
+  const handleSaveTaxSeed = (incomeAmount: number) => {
+    const payload: OnboardingSeedPayload = {
+      annualIncome: incomeAmount,
+      pensionContributionPct: 5,
+      salarySacrifice: true,
+      initialCashSavings: 15000,
+      initialInvestments: 20000,
+      monthlyContribution: 500,
+      inferredModules: [
+        "accounts",
+        "budget",
+        "pension",
+        "savings",
+        "forecast",
+        ...(incomeAmount >= 95000 ? (["tax"] as const) : []),
+      ],
+      timestamp: Date.now(),
+    };
+    persistOnboardingSeed(payload);
+    navigate("/signUp");
+  };
+
+  const handleSaveMortgageSeed = (balance: number) => {
+    const payload: OnboardingSeedPayload = {
+      annualIncome: 65000,
+      pensionContributionPct: 5,
+      salarySacrifice: true,
+      initialCashSavings: 15000,
+      initialInvestments: 15000,
+      monthlyContribution: 500,
+      mortgageBalance: balance,
+      inferredModules: ["accounts", "budget", "mortgage", "forecast", "savings"],
+      timestamp: Date.now(),
+    };
+    persistOnboardingSeed(payload);
+    navigate("/signUp");
+  };
+
   // Tax state
-  const [salary, setSalary] = useState<number>(65000);
+  const [income, setIncome] = useState<number>(65000);
 
   // Mortgage state
   const [mortgageBalance, setMortgageBalance] = useState<number>(250000);
   const [interestRate, setInterestRate] = useState<number>(4.5);
   const [monthlyOverpayment, setMonthlyOverpayment] = useState<number>(200);
 
-  const salaryInputId = useId();
+  const incomeInputId = useId();
   const mortgageBalanceId = useId();
   const interestRateId = useId();
   const overpaymentId = useId();
 
   // UK Tax calculations
   const taxResults = useMemo(() => {
-    const gross = Math.max(0, salary);
+    const gross = Math.max(0, income);
 
     // Personal Allowance calculation with £100k taper
     let allowance = 12570;
@@ -273,7 +315,7 @@ export const InteractiveFinancialTeaser: FC = () => {
       effectiveTaxRate,
       isTaperActive,
     };
-  }, [salary]);
+  }, [income]);
 
   // Mortgage calculations
   const mortgageResults = useMemo(() => {
@@ -364,29 +406,29 @@ export const InteractiveFinancialTeaser: FC = () => {
             >
               <div>
                 <div className={inputGroupStyle}>
-                  <label className={labelStyle} htmlFor={salaryInputId}>
+                  <label className={labelStyle} htmlFor={incomeInputId}>
                     Annual Gross Salary (PAYE)
                   </label>
                   <div className={inputWrapperStyle}>
                     <span className={currencyPrefixStyle}>£</span>
                     <input
                       className={textInputStyle}
-                      id={salaryInputId}
+                      id={incomeInputId}
                       max={300000}
                       min={10000}
                       step={1000}
                       type="number"
-                      value={salary}
-                      onChange={(e) => setSalary(Number(e.target.value) || 0)}
+                      value={income}
+                      onChange={(e) => setIncome(Number(e.target.value) || 0)}
                     />
                   </div>
                   <div className={chipRowStyle}>
                     {[38000, 65000, 115000, 145000].map((preset) => (
                       <button
                         key={preset}
-                        className={chipButtonStyle(salary === preset)}
+                        className={chipButtonStyle(income === preset)}
                         type="button"
-                        onClick={() => setSalary(preset)}
+                        onClick={() => setIncome(preset)}
                       >
                         {formatGBP(preset)}
                       </button>
@@ -453,6 +495,23 @@ export const InteractiveFinancialTeaser: FC = () => {
                   >
                     {taxResults.effectiveTaxRate.toFixed(1)}%
                   </span>
+                </div>
+
+                <div style={{ marginTop: "16px" }}>
+                  <FLPButton
+                    size="md"
+                    onClick={() => handleSaveTaxSeed(income)}
+                    style={{
+                      width: "100%",
+                      display: "inline-flex",
+                      justifyContent: "center",
+                      alignItems: "center",
+                      gap: "6px",
+                      fontWeight: "600",
+                    }}
+                  >
+                    Save this salary baseline <FiArrowRight aria-hidden="true" />
+                  </FLPButton>
                 </div>
               </div>
             </div>
@@ -562,6 +621,23 @@ export const InteractiveFinancialTeaser: FC = () => {
                   <strong style={{ color: "text.primary" }}>
                     {formatGBP(mortgageResults.monthlyWithOverpayment)} / month
                   </strong>
+                </div>
+
+                <div style={{ marginTop: "16px" }}>
+                  <FLPButton
+                    size="md"
+                    onClick={() => handleSaveMortgageSeed(mortgageBalance)}
+                    style={{
+                      width: "100%",
+                      display: "inline-flex",
+                      justifyContent: "center",
+                      alignItems: "center",
+                      gap: "6px",
+                      fontWeight: "600",
+                    }}
+                  >
+                    Save this mortgage baseline <FiArrowRight aria-hidden="true" />
+                  </FLPButton>
                 </div>
               </div>
             </div>

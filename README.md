@@ -32,42 +32,80 @@
 
 Designed as a modern Turborepo monorepo, Flump brings together a high-performance web dashboard, a mobile companion app with biometric authentication, an enterprise-grade NestJS backend, and shared TypeScript domain packages.
 
+For a granular breakdown of every live route, component, and user interaction, consult the **[Pages & Features Catalog](docs/pages_and_features.md)**.
+
 ---
 
 ## Features
 
+### 🚀 Onboarding & Modular Dashboard
+
+- **Tailored Setup Wizard**: Interactive questionnaire that automatically customizes the user's navigation and widgets to match their needs.
+- **Financial Health Score**: Comprehensive rating assessing emergency fund liquidity, debt, savings velocity, and tax planning.
+- **Customizable Dashboard**: Reorderable and resizable widgets (`normal` vs. `wide`) with a disabled widget tray to hide or surface features at will.
+- **Setup Checklist**: Guided onboarding milestones persisted to the user profile.
+
 ### 🏦 Wealth & Account Management
 
-- **Net Worth Tracking**: Real-time aggregation of total assets, total liabilities, and net worth across all connected and manual accounts.
-- **Multi-Account Support**: Manage Current, Savings, Credit Cards, Investments, Personal Loans, and Mortgages in one unified view.
-- **Asset Allocation Visualizer**: Interactive allocation charts breaking down your capital distribution across liquid cash, investments, equity, and debt.
-- **Transaction Logs & Categorization**: Filter, search, and categorize historical income and expenses (Groceries, Utilities, Salary, Interest, Subscriptions).
+- **Net Worth Tracking**: Real-time aggregation of total assets, liabilities, and overall net worth.
+- **Multi-Account Hub**: Filterable tabs for Current, Savings, Investments, Pensions, Credit Cards, Mortgages, Loans, and Owed money.
+- **Historical Monthly Balance Ledger**: Grid tracking monthly balances across years with inline editing and multi-year projection capabilities.
+- **Asset Allocation Visualizer**: Interactive allocation charts visualizing distribution across cash, equity, and debt.
+- **Open Banking Integrations**: Bank connection management with automated sync and status indicators.
 
-### 📈 Planning & Long-Term Forecasting
+### 📊 Cash Flow Budgeting & Runway Engine
 
-- **Pension Forecaster**: Projects retirement wealth with compound interest growth, factoring in UK auto-enrolment rules (qualifying earnings band between £6,240 and £50,270, standard 8% total contributions with 3% minimum employer match), salary sacrifice, and custom retirement age targets.
-- **Runway & Emergency Fund Calculator**: Stress-tests your finances by calculating your cash runway under varying monthly burn rates and fixed expenditure scenarios.
-- **Compound Savings Calculator**: Simulates multi-year savings trajectories with variable interest rates, regular deposits, and compounding frequencies.
-- **Cash Flow Budgeting**: Create flexible monthly budgets to monitor discretionary vs. non-discretionary spending.
+- **Budget Setup Wizard**: Quick-start setup with sensible default UK expenditure benchmarks.
+- **50/30/20 Cash Flow Breakdown**: Visualizes monthly surplus/deficit across Needs, Wants, and Savings.
+- **Category Tables**: Dedicated tracking for Housing, Bills, Living Expenses, Savings, and Income, with weekly/monthly/annual frequency conversions.
+- **Custom Expense Categories**: Create, rename, and delete custom budget categories.
+- **Emergency Runway Calculator**: Calculates exact months of survival runway based on liquid reserves divided by monthly burn rate, with scenario cutback toggles.
 
-### 🇬🇧 UK Tax & Self-Assessment Hub
+### 💰 Savings & Investments Hub
 
-- **PAYE Take-Home Estimator**: Accurate net pay projections accounting for standard UK personal allowance (£12,570), tax bands (Basic, Higher, Additional), and the **£100,000 personal allowance taper** (reducing allowance by £1 for every £2 earned above £100k).
-- **Self-Employed & Sole Trader Tax**: Computes taxable trading profits, allowable expenses, Income Tax liabilities, and **Class 4 National Insurance contributions** (6% and 2% thresholds).
-- **Rental Property & Section 24 Landlord Rules**: Accounts for the restriction on deducting mortgage interest as an allowable expense, calculating the replacement **20% basic-rate tax reducer** capped at the lower of mortgage interest, net rental profit, or total taxable income. Supports custom ownership share splits for jointly owned properties.
-- **Fiscal Tax-Year P&L**: Auto-groups transactions by standard UK HMRC tax years (6 April to 5 April) with digital receipt attachment support.
+- **Interest Rate (APY) Tracking**: Calculates weighted average interest rate across all cash ISAs and high-yield savings accounts.
+- **Monthly Savings Targets**: Monitor ongoing regular contributions toward wealth goals.
+- **Compound Growth Forecaster**: Multi-year compound growth projections (1, 3, 5, 10, and 20 years).
+
+### 🛡️ Pension & Retirement Planning
+
+- **Auto-Enrolment & Salary Sacrifice**: Model employee and employer contributions, qualifying earnings bands, and National Insurance savings from salary sacrifice.
+- **Multiple Pension Pots**: Track active workplace schemes and consolidated legacy pots.
+- **Retirement Forecaster**: Projects total pension pot size at target retirement age with custom growth and inflation assumptions.
 
 ### 🏡 Mortgage Optimization Engine
 
-- **Amortization Tracking**: Tracks principal balance, current interest rate, and remaining loan duration.
-- **Overpayment Simulator**: Calculates the exact interest saved and years shaved off your mortgage through recurring or lump-sum overpayments.
-- **Mortgage vs. ISA Investment Comparison**: Compares the guaranteed return of paying down mortgage debt against investing in a tax-sheltered Stocks & Shares ISA, factoring in your marginal income tax bracket.
+- **Residential & Buy-to-Let (BTL)**: Full support for repayment and interest-only mortgages across owner-occupied and rental properties.
+- **Amortization Schedules**: Complete breakdown of principal vs. interest over the entire loan term.
+- **Overpayment Simulator**: Computes interest saved and months shaved off through recurring or one-off lump-sum overpayments.
+- **Mortgage vs. ISA Comparison**: Compares paying down mortgage debt against investing in an ISA or savings account, accounting for marginal tax rates.
+
+### 📈 Planning & Long-Term Wealth Forecaster
+
+- **10-30 Year Wealth Trajectories**: Forecasts net worth trajectories under current vs. hypothetical savings habits.
+- **PAYE Take-Home Estimator**: Net pay calculations accounting for personal allowance, tax bands (Basic, Higher, Additional), and the **£100,000 personal allowance taper**.
+- **"What If" Salary Increase Modeler**: Simulates net monthly gains from a pay rise or bonus and pipes the surplus directly into the compound wealth projection.
+
+### 🇬🇧 UK Tax & Self-Assessment Hub
+
+- **Fiscal Tax-Year P&L**: Filter and organize income and expenses by UK tax years (6 April to 5 April), with a tool to clone records between tax years.
+- **Self-Employed & Sole Trader Tax**: Computes taxable trading profits, allowable expenses, Income Tax, and **Class 4 National Insurance contributions**.
+- **Section 24 Rental Landlord Rules**: Accounts for non-deductible mortgage interest and computes the 20% basic-rate tax reducer.
+- **Property Ownership Share %**: Custom ownership splits for jointly owned rental properties.
+- **Digital Receipt Capture**: Upload PDFs, image receipts, or capture camera photos directly attached to expense records.
+- **Live Self-Assessment Liability Estimator**: Real-time tax bill estimation and filing deadline notices.
+
+### ⚙️ User Profile & App Customization
+
+- **Feature Toggles**: Selectively enable or disable core tools to keep the navigation bar focused.
+- **Multi-Currency Support**: Switch between GBP, USD, EUR, and other global currencies.
+- **Theme Switcher**: Dark and light modes with system preference sync.
 
 ### 📱 Multi-Platform Ecosystem
 
-- **Web Dashboard (`apps/web`)**: Server-rendered React Router 7 application styled with Panda CSS, supporting light/dark modes, accessible UI primitives, and full keyboard navigation.
-- **Mobile Companion (`apps/mobile-companion`)**: Native iOS and Android app built with Expo and React Native, featuring FaceID/TouchID biometric authentication for quick transaction entry and balance checks.
-- **Marketing Site (`apps/marketing`)**: Fast, SEO-optimized landing page powered by Express and Vite.
+- **Web Dashboard (`apps/web`)**: Server-rendered React Router 7 app styled with Panda CSS, supporting accessible UI primitives and full keyboard navigation.
+- **Mobile Companion (`apps/mobile-companion`)**: Native iOS and Android app built with Expo and React Native, featuring FaceID/TouchID biometric authentication.
+- **Marketing Site (`apps/marketing`)**: Fast, SEO-optimized landing site powered by Express and Vite.
 
 ---
 
@@ -145,6 +183,7 @@ cp apps/backend/.env.example apps/backend/.env
 ```
 
 Key environment configurations:
+
 - `VITE_WORKOS_CLIENT_ID`: Your WorkOS client identifier.
 - `VITE_WORKOS_REDIRECT_URI`: OAuth callback URL (default: `http://localhost:5173/callback`).
 - `VITE_API_URL`: Backend API endpoint (default: `http://localhost:3000`).
@@ -221,6 +260,7 @@ Flump enforces strict quality standards across all workspaces:
 4. **Browser Component Testing**: Web components run in Vitest using Playwright browser runners to verify genuine DOM rendering and keyboard interactions.
 
 Run tests locally:
+
 ```bash
 bun run test
 ```

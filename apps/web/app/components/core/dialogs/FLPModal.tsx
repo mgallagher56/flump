@@ -57,7 +57,9 @@ const FLPModal: FC<FLPModalProps> = ({
     zIndex: 50,
   });
 
-  const desktopContentStyle = css({
+  const isExplicitBottomSheet = variant === "bottomSheet";
+
+  const centeredContentStyle = css({
     position: "fixed",
     top: "50%",
     left: "50%",
@@ -65,12 +67,14 @@ const FLPModal: FC<FLPModalProps> = ({
     backgroundColor: "surface",
     border: "1px solid",
     borderColor: "border",
-    borderRadius: "lg",
+    borderRadius: { base: "xl", md: "lg" },
     boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.2)",
-    padding: "24px",
-    width: "90vw",
-    maxWidth: "480px",
-    zIndex: 50,
+    padding: { base: "20px 16px", md: "24px" },
+    width: { base: "calc(100vw - 20px)", sm: "92vw", md: "90vw" },
+    maxWidth: { base: "calc(100vw - 20px)", sm: "480px", md: "480px" },
+    maxHeight: { base: "94vh", md: "85vh" },
+    overflowY: "auto",
+    zIndex: 60,
     outline: "none",
     color: "text.primary",
   });
@@ -134,10 +138,14 @@ const FLPModal: FC<FLPModalProps> = ({
         <Dialog.Overlay className={overlayStyle} />
         <Dialog.Content
           ref={contentRef}
-          className={isMobileVariant ? mobileBottomSheetStyle : desktopContentStyle}
-          data-variant={isMobileVariant ? "mobile" : "desktop"}
+          className={isExplicitBottomSheet ? mobileBottomSheetStyle : centeredContentStyle}
+          data-variant={
+            isExplicitBottomSheet ? "bottomSheet" : isMobileVariant ? "mobile" : "desktop"
+          }
         >
-          {isMobileVariant && <div className={dragHandleStyle} data-testid="modal-drag-handle" />}
+          {isExplicitBottomSheet && (
+            <div className={dragHandleStyle} data-testid="modal-drag-handle" />
+          )}
           <div className={headerStyle}>
             <Dialog.Title className={titleStyle}>{title}</Dialog.Title>
           </div>

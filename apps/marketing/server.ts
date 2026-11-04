@@ -118,9 +118,9 @@ async function createServer() {
     }
   });
 
-  const port = process.env.PORT || 3001; // Avoid port 3000 used by NestJS
-  app.listen(port, () => {
-    console.log(`Server started at http://localhost:${port}`);
+  const port = Number(process.env.PORT) || 3001; // Avoid port 3000 used by NestJS
+  app.listen(port, "0.0.0.0", () => {
+    console.log(`Server started at http://0.0.0.0:${port}`);
   });
 }
 

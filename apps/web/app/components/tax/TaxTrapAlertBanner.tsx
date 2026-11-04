@@ -1,0 +1,255 @@
+import { calculateTaxTrapRelief } from "@repo/common";
+import { css } from "@repo/ui/styled-system/css";
+import { type FC, useId, useMemo, useState } from "react";
+import { FiAlertTriangle, FiArrowRight, FiCheck } from "react-icons/fi";
+import FLPButton from "~/components/core/buttons/FLPButton";
+import FLPHeading from "~/components/core/typography/FLPHeading";
+import FLPText from "~/components/core/typography/FLPText";
+
+export interface TaxTrapAlertBannerProps {
+  grossIncome: number;
+  onApplySacrifice?: (additionalMonthlySacrifice: number) => void;
+}
+
+const bannerContainerStyle = (isInTrap: boolean) =>
+  css({
+    borderRadius: "2xl",
+    border: "1px solid",
+    borderColor: isInTrap ? "rgba(239, 68, 68, 0.4)" : "rgba(245, 158, 11, 0.4)",
+    backgroundColor: isInTrap ? "rgba(239, 68, 68, 0.04)" : "rgba(245, 158, 11, 0.04)",
+    padding: { base: "18px 16px", md: "24px 28px" },
+    display: "flex",
+    flexDirection: "column",
+    gap: "18px",
+    boxShadow: "0 4px 16px rgba(0, 0, 0, 0.04)",
+  });
+
+const metricGridLayout = css({
+  display: "grid",
+  gridTemplateColumns: { base: "1fr", sm: "repeat(3, 1fr)" },
+  gap: "12px",
+  paddingTop: "10px",
+  borderTop: "1px solid",
+  borderColor: "border",
+});
+
+const formatGBP = (num: number) => `£${Math.max(0, Math.round(num)).toLocaleString("en-GB")}`;
+
+export const TaxTrapAlertBanner: FC<TaxTrapAlertBannerProps> = ({
+  grossIncome,
+  onApplySacrifice,
+}) => {
+  const sliderId = useId();
+
+  const trapAnalysis = useMemo(() => {
+    return calculateTaxTrapRelief(grossIncome);
+  }, [grossIncome]);
+
+  const defaultSacrifice = Math.min(25140, trapAnalysis.excessAbove100k);
+  const [sacrificeAmount, setSacrificeAmount] = useState<number>(defaultSacrifice);
+  const [applied, setApplied] = useState(false);
+
+  // If income is below £95,000, this contextual banner stays hidden
+  if (grossIncome < 95000) {
+    return null;
+  }
+
+  // Recalculate relief with custom sacrifice amount
+  const taxSaved = Math.round(sacrificeAmount * 0.62); // 40% income tax + 20% restored allowance + 2% NI
+  const monthlySacrifice = Math.round(sacrificeAmount / 12);
+  const monthlySaved = Math.round(taxSaved / 12);
+  const effectiveCost = monthlySacrifice - monthlySaved;
+
+  const handleApply = () => {
+    if (onApplySacrifice) {
+      onApplySacrifice(monthlySacrifice);
+      setApplied(true);
+      setTimeout(() => setApplied(false), 3000);
+    }
+  };
+
+  return (
+    <div
+      className={bannerContainerStyle(trapAnalysis.isInTaxTrap)}
+      data-testid="tax-trap-alert-banner"
+    >
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "flex-start",
+          gap: "16px",
+          flexWrap: "wrap",
+        }}
+      >
+        <div style={{ display: "flex", gap: "12px", alignItems: "flex-start" }}>
+          <div
+            style={{
+              width: "36px",
+              height: "36px",
+              borderRadius: "10px",
+              backgroundColor: trapAnalysis.isInTaxTrap
+                ? "rgba(239, 68, 68, 0.15)"
+                : "rgba(245, 158, 11, 0.15)",
+              color: trapAnalysis.isInTaxTrap ? "#ef4444" : "#d97706",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontSize: "18px",
+              flexShrink: 0,
+            }}
+          >
+            <FiAlertTriangle />
+          </div>
+          <div>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+              <FLPHeading as="h3" size="sm">
+                {trapAnalysis.isInTaxTrap
+                  ? "UK £100k–£125k 60% Tax Trap Active"
+                  : "Approaching the £100,000 UK Tax Trap"}
+              </FLPHeading>
+              <span
+                style={{
+                  fontSize: "11px",
+                  fontWeight: 700,
+                  padding: "2px 8px",
+                  borderRadius: "full",
+                  backgroundColor: trapAnalysis.isInTaxTrap ? "#ef4444" : "#d97706",
+                  color: "#fff",
+                }}
+              >
+                {trapAnalysis.marginalRatePct}% Marginal Tax
+              </span>
+            </div>
+            <FLPText
+              color="text.muted"
+              fontSize="xs"
+              style={{ marginTop: "4px", maxWidth: "680px" }}
+            >
+              Between £100,000 and £125,140, HMRC reduces your Personal Allowance by £1 for every £2
+              of income. Combined with 40% higher rate tax and 2% National Insurance, you face an
+              effective <strong>62% marginal tax rate</strong> and lose 15–30 hours funded childcare
+              eligibility.
+            </FLPText>
+          </div>
+        </div>
+
+        {trapAnalysis.isInTaxTrap && (
+          <div
+            style={{
+              padding: "8px 14px",
+              borderRadius: "8px",
+              backgroundColor: "rgba(239, 68, 68, 0.08)",
+              border: "1px solid rgba(239, 68, 68, 0.2)",
+              fontSize: "12px",
+              textAlign: "right",
+            }}
+          >
+            <div style={{ color: "text.muted" }}>Personal Allowance Lost:</div>
+            <strong style={{ fontSize: "16px", color: "#ef4444" }}>
+              {formatGBP(trapAnalysis.lostPersonalAllowance)}
+            </strong>
+          </div>
+        )}
+      </div>
+
+      {/* Escape Slider Interactive Box */}
+      <div
+        style={{
+          padding: "16px 20px",
+          borderRadius: "14px",
+          backgroundColor: "var(--colors-surface)",
+          border: "1px solid var(--colors-border)",
+          display: "flex",
+          flexDirection: "column",
+          gap: "14px",
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            flexWrap: "wrap",
+            gap: "8px",
+          }}
+        >
+          <div>
+            <label htmlFor={sliderId} style={{ fontSize: "13px", fontWeight: 700 }}>
+              Pension Salary Sacrifice / SIPP Contribution
+            </label>
+            <div style={{ fontSize: "11px", color: "var(--colors-text-muted)" }}>
+              Slide to bring your adjusted net income down to £100,000 to restore your full
+              allowance.
+            </div>
+          </div>
+          <div style={{ fontSize: "18px", fontWeight: 800, color: "var(--colors-primary)" }}>
+            {formatGBP(sacrificeAmount)}{" "}
+            <span style={{ fontSize: "12px", color: "var(--colors-text-muted)" }}>
+              ({formatGBP(monthlySacrifice)}/mo)
+            </span>
+          </div>
+        </div>
+
+        <input
+          id={sliderId}
+          type="range"
+          min={0}
+          max={Math.max(25140, trapAnalysis.excessAbove100k + 5000)}
+          step={500}
+          value={sacrificeAmount}
+          onChange={(e) => setSacrificeAmount(Number(e.target.value) || 0)}
+        />
+
+        {/* Live Savings Calculation Metrics */}
+        <div className={metricGridLayout}>
+          <div>
+            <span style={{ fontSize: "11px", color: "var(--colors-text-muted)" }}>
+              Annual Tax & NI Saved
+            </span>
+            <div style={{ fontSize: "18px", fontWeight: 800, color: "#10b981" }}>
+              {formatGBP(taxSaved)} / yr
+            </div>
+          </div>
+
+          <div>
+            <span style={{ fontSize: "11px", color: "var(--colors-text-muted)" }}>
+              Gross Pension Added
+            </span>
+            <div style={{ fontSize: "18px", fontWeight: 800, color: "var(--colors-primary)" }}>
+              +{formatGBP(monthlySacrifice)} / mo
+            </div>
+          </div>
+
+          <div>
+            <span style={{ fontSize: "11px", color: "var(--colors-text-muted)" }}>
+              Actual Net Pay Reduced
+            </span>
+            <div style={{ fontSize: "18px", fontWeight: 800, color: "text.primary" }}>
+              Only -{formatGBP(effectiveCost)} / mo
+            </div>
+          </div>
+        </div>
+
+        {onApplySacrifice && (
+          <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "4px" }}>
+            <FLPButton size="sm" variant="primary" onClick={handleApply}>
+              {applied ? (
+                <>
+                  <FiCheck style={{ marginRight: "6px" }} /> Baseline Updated!
+                </>
+              ) : (
+                <>
+                  Apply {formatGBP(monthlySacrifice)}/mo to Pension Baseline{" "}
+                  <FiArrowRight style={{ marginLeft: "6px" }} />
+                </>
+              )}
+            </FLPButton>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default TaxTrapAlertBanner;

@@ -206,17 +206,18 @@ export const CopyTaxYearModal: FC<CopyTaxYearModalProps> = ({
             backgroundColor: "surface",
             border: "1px solid",
             borderColor: "border",
-            borderRadius: "lg",
+            borderRadius: { base: "xl", md: "lg" },
             boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.3)",
-            padding: "24px",
-            width: "92vw",
-            maxWidth: "780px",
-            maxHeight: "88vh",
+            padding: { base: "18px 14px", md: "24px" },
+            width: { base: "calc(100vw - 20px)", sm: "92vw" },
+            maxWidth: { base: "calc(100vw - 20px)", md: "780px" },
+            maxHeight: { base: "94vh", md: "88vh" },
             display: "flex",
             flexDirection: "column",
             zIndex: 51,
             outline: "none",
             color: "text.primary",
+            overflowY: "auto",
           })}
         >
           {/* Header */}
@@ -513,6 +514,9 @@ export const CopyTaxYearModal: FC<CopyTaxYearModalProps> = ({
             className={css({
               flex: 1,
               overflowY: "auto",
+              overflowX: "auto",
+              WebkitOverflowScrolling: "touch",
+              maxWidth: "100%",
               border: "1px solid",
               borderColor: "border",
               borderRadius: "md",
@@ -534,6 +538,7 @@ export const CopyTaxYearModal: FC<CopyTaxYearModalProps> = ({
               <table
                 style={{
                   width: "100%",
+                  minWidth: "500px",
                   borderCollapse: "collapse",
                   fontSize: "13px",
                   textAlign: "left",

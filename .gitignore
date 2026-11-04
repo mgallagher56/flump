@@ -15,6 +15,7 @@ node_modules
 .idea/
 
 tsconfig.tsbuildinfo
+*.tsbuildinfo
 
 # env files
 .env

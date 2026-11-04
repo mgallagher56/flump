@@ -1,6 +1,7 @@
 export type AppPageKey =
   | "accounts"
   | "budget"
+  | "debt"
   | "savings"
   | "pension"
   | "mortgage"
@@ -29,6 +30,7 @@ export interface DashboardWidgetMeta {
 export const ALL_PAGE_KEYS: AppPageKey[] = [
   "accounts",
   "budget",
+  "debt",
   "savings",
   "pension",
   "mortgage",
@@ -52,6 +54,14 @@ export const APP_PAGES: Record<AppPageKey, AppPageConfig> = {
     description: "Income & expense categorisation, cash flow surplus, and runway calculator",
     category: "core",
     badgeColor: "#f59e0b",
+  },
+  debt: {
+    key: "debt",
+    label: "Debt Crusher",
+    route: "/app/debt",
+    description: "Avalanche & Snowball payoff engine, 0% cliff tracker, and wealth bridge",
+    category: "core",
+    badgeColor: "#ef4444",
   },
   savings: {
     key: "savings",
@@ -105,6 +115,7 @@ export const DASHBOARD_WIDGET_METAS: Record<DashboardWidgetKey, DashboardWidgetM
   },
   accounts: APP_PAGES.accounts,
   budget: APP_PAGES.budget,
+  debt: APP_PAGES.debt,
   savings: APP_PAGES.savings,
   pension: APP_PAGES.pension,
   mortgage: APP_PAGES.mortgage,
@@ -124,8 +135,9 @@ export const DEFAULT_DASHBOARD_WIDGETS: DashboardWidgetKey[] = [
 ];
 export const DEFAULT_WIDGET_SIZES: Record<string, "normal" | "wide"> = {
   financialHealth: "wide",
-  accounts: "wide",
+  accounts: "normal",
   budget: "normal",
+  debt: "normal",
   savings: "normal",
   pension: "normal",
   mortgage: "normal",

@@ -17,7 +17,7 @@ runs:
   steps:
     - name: TurboRepo local server
       if: ${{ inputs.turbo == 'true' }}
-      uses: felixmosh/turborepo-gh-artifacts@v3.1.1
+      uses: felixmosh/turborepo-gh-artifacts@v4.1.1
       with:
         repo-token: ${{ inputs.ghToken }}
         server-token: ${{ inputs.turboToken }}

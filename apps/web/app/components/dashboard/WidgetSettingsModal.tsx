@@ -23,7 +23,7 @@ const overlayStyle = css({
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
-  padding: "16px",
+  padding: { base: "10px", sm: "16px" },
 });
 
 const contentStyle = css({
@@ -34,9 +34,9 @@ const contentStyle = css({
   boxShadow: "0 20px 40px rgba(0, 0, 0, 0.4)",
   width: "100%",
   maxWidth: "480px",
-  maxHeight: "85vh",
+  maxHeight: { base: "94vh", md: "85vh" },
   overflowY: "auto",
-  padding: "24px",
+  padding: { base: "20px 16px", sm: "24px" },
   position: "relative",
   outline: "none",
 });
