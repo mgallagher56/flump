@@ -19,7 +19,7 @@ RUN bun install --frozen-lockfile --ignore-scripts
 FROM deps AS build
 COPY . .
 ENV NODE_ENV=production
-RUN bun --filter=@repo/common run build && bun --filter=backend run build
+RUN bun --filter=backend run build
 
 # Stage 3: Create final production image
 FROM base AS runner

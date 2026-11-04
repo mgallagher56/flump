@@ -8,9 +8,7 @@
     "schedule:earlyMondays"
   ],
   "ignoreDeps": ["typescript-coverage-report"],
-  "baseBranchPatterns": [
-    "dev"
-  ],
+  "baseBranchPatterns": ["dev"],
   "labels": ["dependencies"],
   "timezone": "Europe/London",
   "packageRules": [
