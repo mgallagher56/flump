@@ -64,6 +64,35 @@ describe("resolveUserInitials", () => {
     ).toBe("AJ");
   });
 
+  it("falls back to explicit firstName and lastName options", () => {
+    expect(resolveUserInitials({ firstName: "Alice", lastName: "Smith" })).toBe("AS");
+    expect(resolveUserInitials({ firstName: "Alice" })).toBe("AL");
+    expect(resolveUserInitials({ lastName: "Smith" })).toBe("SM");
+  });
+
+  it("handles metadata and single names on user object", () => {
+    expect(
+      resolveUserInitials({
+        user: { user_metadata: { first_name: "Tom", last_name: "Hanks" } },
+      }),
+    ).toBe("TH");
+    expect(
+      resolveUserInitials({
+        user: { firstName: "Tom" },
+      }),
+    ).toBe("TO");
+    expect(
+      resolveUserInitials({
+        user: { lastName: "Hanks" },
+      }),
+    ).toBe("HA");
+    expect(
+      resolveUserInitials({
+        user: { user_metadata: { full_name: "Charlie Brown" } },
+      }),
+    ).toBe("CB");
+  });
+
   it("falls back to U when no details exist", () => {
     expect(resolveUserInitials({ displayName: null, user: null })).toBe("U");
   });
@@ -79,5 +108,12 @@ describe("processImageFile", () => {
     const bigBlob = new Blob([new Uint8Array(6 * 1024 * 1024)]);
     const file = new File([bigBlob], "big.png", { type: "image/png" });
     await expect(processImageFile(file)).rejects.toThrow("Image size must be less than 5MB.");
+  });
+
+  it("processes valid image files", async () => {
+    const file = new File(["fake-image-bytes"], "avatar.png", { type: "image/png" });
+    const result = await processImageFile(file);
+    expect(result).toBeDefined();
+    expect(typeof result).toBe("string");
   });
 });
