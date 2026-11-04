@@ -19,7 +19,7 @@ RUN bun install --frozen-lockfile --ignore-scripts
 FROM deps AS build
 COPY . .
 ENV NODE_ENV=production
-RUN bun turbo run build --filter=marketing...
+RUN bun run --cwd packages/ui generate && bun run --cwd apps/marketing generate && bun turbo run build --filter=marketing...
 
 # Stage 3: Create final production image
 FROM base AS runner
