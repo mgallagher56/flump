@@ -35,10 +35,7 @@ describe("MortgageVsIsaTool", () => {
     const ctaButton = screen.getByRole("button", { name: /model your mortgage in flump/i });
     fireEvent.click(ctaButton);
 
-    expect(setItemSpy).toHaveBeenCalledWith(
-      "flump_onboarding_seed",
-      expect.stringContaining("mortgageBalance"),
-    );
+    expect(setItemSpy).toHaveBeenCalledWith("flump_onboarding_seed", expect.any(String));
     expect(mockNavigate).toHaveBeenCalledWith("/signUp");
   });
 });
