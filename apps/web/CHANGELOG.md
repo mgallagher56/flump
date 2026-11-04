@@ -1,5 +1,55 @@
 # Changelog
 
+## [1.23.0](https://github.com/mgallagher56/flump/compare/flump/web-v1.22.2...flump/web-v1.23.0) (2026-11-04)
+
+
+### Features ✨
+
+* add custom FLPCheckbox component and hide number input spinner buttons ([40e40ef](https://github.com/mgallagher56/flump/commit/40e40ef003ec0b16410e1539170dc410dd0821bb))
+* add pension and savings pages, compound forecasters, UK auto-enrolment rules, and onboarding wizards ([fcae1cb](https://github.com/mgallagher56/flump/commit/fcae1cb654048091caa53443e4af4887baed5403))
+* add user initials thumbnail and profile picture upload support ([6612d56](https://github.com/mgallagher56/flump/commit/6612d56a088a0613e91dbed272798afa01995657))
+* centralize tax rules in shared package, implement mobile TaxScreen and redesigned bottom bar navigation ([6318b56](https://github.com/mgallagher56/flump/commit/6318b56fb1d6d00c34b0a9f981458c54b6d1c514))
+* group primary desktop navigation into Wealth and Planning dropdown pillars ([8a2dfa5](https://github.com/mgallagher56/flump/commit/8a2dfa5c24162aecae8cadb2ffbe844b3524fd6e))
+* implement UK debt payoff hub, adaptive financial stage UX, and marketing deployment ([8a2f446](https://github.com/mgallagher56/flump/commit/8a2f446283a9853dc65aa57d9449129f984acffb))
+* improve Home, Budgets, and Accounts functionality, UI, and UX ([759ac12](https://github.com/mgallagher56/flump/commit/759ac12cc6423b98b70d21774dee29c3a2b7363e))
+* improve tax planner, profile settings, budget customization, and dashboard UX ([134de6f](https://github.com/mgallagher56/flump/commit/134de6fb7ddef2b8d3be5abdf18ff5e8e8b12288))
+* **marketing,web:** implement domain split architecture and dark mode theme ([56817db](https://github.com/mgallagher56/flump/commit/56817db253b7fd23bedc375e2588aa42069ea3eb))
+* overhaul architecture, progressive onboarding, forecasting & marketing tools ([364ecad](https://github.com/mgallagher56/flump/commit/364ecadb6bded5d0d986bf0c10b38fb883668141))
+* **sandbox:** expand container width, configure 3 realistic UK personas, and highlight income widget ([aaabdfd](https://github.com/mgallagher56/flump/commit/aaabdfde3b77af4400c04e669596c309b103022f))
+* simplify pension forecaster UI, fix mobile nav height, and improve runway calculator ([8abe89f](https://github.com/mgallagher56/flump/commit/8abe89fe4bb9848d8d7725385842411aafa193dd))
+* **web:** redesign and rebuild logged out homepage with interactive UK tax and mortgage tools ([b0c8715](https://github.com/mgallagher56/flump/commit/b0c87158ce4659658604efca7aa2201471beb252))
+
+
+### Bug Fixes 🪲
+
+* **deps:** pin dependencies ([d5963a6](https://github.com/mgallagher56/flump/commit/d5963a680c465b63671523ce26ceb788ee341dad))
+* **docker:** optimize web Dockerfile for monorepo and bun 1-slim ([ee51418](https://github.com/mgallagher56/flump/commit/ee514189fc286bb4fb54e2732141a7337c7b41ad))
+* **security:** eliminate grossSalary references to clear CodeQL and align unit tests ([d6f597a](https://github.com/mgallagher56/flump/commit/d6f597a12a140b064e15bf2614ce7b71f90359b4))
+* **security:** resolve CodeQL CWE-312 cleartext storage alerts across tools and onboarding ([23f0a85](https://github.com/mgallagher56/flump/commit/23f0a85c866e1acf762c2880badbd6f8805fca8b))
+
+
+### Documentation 📙
+
+* add pages and features catalog, update readme, and add agent rules ([e9d2d43](https://github.com/mgallagher56/flump/commit/e9d2d4327c7bcc0d468db881ed5ab4a3bb80d0f8))
+
+
+### Tests 🧪
+
+* **web:** add unit tests to increase coverage ([51fa84a](https://github.com/mgallagher56/flump/commit/51fa84a6b7df402356262886b5571fc17f424f37))
+* **web:** configure vitest coverage thresholds with autoUpdate ([f56496e](https://github.com/mgallagher56/flump/commit/f56496eff42db0162c0383870de45301afd69cd9))
+* **web:** fix type errors in new test fixtures ([b11d408](https://github.com/mgallagher56/flump/commit/b11d408ccd78f82259460c49c454051dfd15ce8b))
+
+
+### Miscellaneous 🙃
+
+* **deploy:** configure per-service Dockerfile paths and inject runtime API_URL ([265c7b0](https://github.com/mgallagher56/flump/commit/265c7b07ac4e684a949c30dcf53ef0ca86e2dea8))
+* **deps:** fix CodeQL cleartext storage alerts and increase test coverage ([0a261d5](https://github.com/mgallagher56/flump/commit/0a261d564816919a571a8a75d4c893948a1c5ab1))
+* **deps:** prune unused dependencies and align vitest versions ([e08b3bc](https://github.com/mgallagher56/flump/commit/e08b3bc4948ce28eb1f8efc25d243d8fa89db6c7))
+* re-architect monorepo with bun, nestjs, react 19, and radix ([6e143b1](https://github.com/mgallagher56/flump/commit/6e143b19a7f307c88af390e3207f9f8f1285ae09))
+* run lint and typescript checks and fix violations ([b5975fb](https://github.com/mgallagher56/flump/commit/b5975fb7d62aa7aa70aa281b43b11cdbf5d8d9c7))
+* stop tracking environmental configurations and build artifacts ([6bd773a](https://github.com/mgallagher56/flump/commit/6bd773a1db81c0972c2afb07e9a18e8ebd2bb42a))
+* **web:** update base bun docker image and add dockerignore ([520e943](https://github.com/mgallagher56/flump/commit/520e9434ef1e5454e944b01db6d69ce7dd157bda))
+
 ## [1.22.2](https://github.com/mgallagher56/flump/compare/flump/web-v1.22.1...flump/web-v1.22.2) (2025-01-08)
 
 ### Bug Fixes 🪲
