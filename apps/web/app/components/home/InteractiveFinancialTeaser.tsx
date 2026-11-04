@@ -1,4 +1,4 @@
-import { ONBOARDING_SEED_STORAGE_KEY, type OnboardingSeedPayload } from "@repo/common";
+import { type OnboardingSeedPayload, persistOnboardingSeed } from "@repo/common";
 import { css } from "@repo/ui/styled-system/css";
 import { type FC, useId, useMemo, useState } from "react";
 import { FiAlertCircle, FiArrowRight, FiPercent, FiTrendingUp } from "react-icons/fi";
@@ -218,13 +218,7 @@ export const InteractiveFinancialTeaser: FC = () => {
       ],
       timestamp: Date.now(),
     };
-    if (typeof window !== "undefined") {
-      try {
-        localStorage.setItem(ONBOARDING_SEED_STORAGE_KEY, JSON.stringify(payload));
-      } catch (err) {
-        console.error(err);
-      }
-    }
+    persistOnboardingSeed(payload);
     navigate("/signUp");
   };
 
@@ -240,13 +234,7 @@ export const InteractiveFinancialTeaser: FC = () => {
       inferredModules: ["accounts", "budget", "mortgage", "forecast", "savings"],
       timestamp: Date.now(),
     };
-    if (typeof window !== "undefined") {
-      try {
-        localStorage.setItem(ONBOARDING_SEED_STORAGE_KEY, JSON.stringify(payload));
-      } catch (err) {
-        console.error(err);
-      }
-    }
+    persistOnboardingSeed(payload);
     navigate("/signUp");
   };
 

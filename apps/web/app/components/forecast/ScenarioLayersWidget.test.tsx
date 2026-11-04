@@ -18,5 +18,16 @@ describe("ScenarioLayersWidget", () => {
 
     expect(mockToggle).toHaveBeenCalledWith(["buy_home_2028"]);
     expect(screen.getByText(/30-yr trajectory impact/i)).toBeDefined();
+
+    // Toggle off to cover line 81
+    fireEvent.click(homeChip);
+    expect(mockToggle).toHaveBeenCalledWith([]);
+  });
+
+  it("renders and toggles without crashing when onScenarioToggle is omitted", () => {
+    render(<ScenarioLayersWidget />);
+    const childChip = screen.getByText("Have a Child in 2027");
+    fireEvent.click(childChip);
+    expect(screen.getByText(/30-yr trajectory impact/i)).toBeDefined();
   });
 });

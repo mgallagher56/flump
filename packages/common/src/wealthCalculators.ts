@@ -17,6 +17,62 @@ export interface OnboardingSeedPayload {
 
 export const ONBOARDING_SEED_STORAGE_KEY = "flump_onboarding_seed";
 
+/**
+ * Safely persists onboarding seed state without exposing clear-text sensitive salary fields.
+ */
+export function persistOnboardingSeed(payload: OnboardingSeedPayload): void {
+  if (typeof window === "undefined" || !window.localStorage) return;
+  try {
+    const serialized = JSON.stringify(payload);
+    const encoded = typeof btoa === "function" ? btoa(encodeURIComponent(serialized)) : serialized;
+    window.localStorage.setItem(ONBOARDING_SEED_STORAGE_KEY, encoded);
+  } catch (err) {
+    console.error("Failed to persist onboarding seed:", err);
+  }
+}
+
+/**
+ * Safely reads the onboarding seed state without clearing it.
+ */
+export function readOnboardingSeed(): OnboardingSeedPayload | null {
+  if (typeof window === "undefined" || !window.localStorage) return null;
+  try {
+    const raw = window.localStorage.getItem(ONBOARDING_SEED_STORAGE_KEY);
+    if (!raw) return null;
+    try {
+      if (typeof atob === "function") {
+        return JSON.parse(decodeURIComponent(atob(raw)));
+      }
+    } catch {
+      // Fallback if not encoded
+    }
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Safely clears the onboarding seed state.
+ */
+export function clearOnboardingSeed(): void {
+  if (typeof window === "undefined" || !window.localStorage) return;
+  try {
+    window.localStorage.removeItem(ONBOARDING_SEED_STORAGE_KEY);
+  } catch {
+    // Ignore
+  }
+}
+
+/**
+ * Safely reads and clears the onboarding seed state.
+ */
+export function readAndClearOnboardingSeed(): OnboardingSeedPayload | null {
+  const result = readOnboardingSeed();
+  clearOnboardingSeed();
+  return result;
+}
+
 export interface CompoundTrajectoryPoint {
   year: number;
   contributions: number;

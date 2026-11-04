@@ -5,8 +5,8 @@ import {
   calculateTaxTrapRelief,
   calculateUKTakeHome,
   type DebtItem,
-  ONBOARDING_SEED_STORAGE_KEY,
   type OnboardingSeedPayload,
+  persistOnboardingSeed,
 } from "@repo/common";
 import { css } from "@repo/ui/styled-system/css";
 import { type FC, useId, useMemo, useState } from "react";
@@ -248,13 +248,7 @@ export const WealthCheckHeroWidget: FC = () => {
       timestamp: Date.now(),
     };
 
-    if (typeof window !== "undefined") {
-      try {
-        localStorage.setItem(ONBOARDING_SEED_STORAGE_KEY, JSON.stringify(payload));
-      } catch (err) {
-        console.error("Failed to persist onboarding seed:", err);
-      }
-    }
+    persistOnboardingSeed(payload);
     navigate("/signUp");
   };
 
