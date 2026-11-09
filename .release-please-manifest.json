@@ -1,1 +1,5 @@
-{ "apps/web": "1.22.2" }
+{
+  "apps/web": "1.22.2",
+  "apps/backend": "0.0.1",
+  "apps/marketing": "0.0.0"
+}
