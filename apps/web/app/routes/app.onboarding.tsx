@@ -1,9 +1,5 @@
-import {
-  calculateUKTakeHome,
-  clearOnboardingSeed,
-  type OnboardingSeedPayload,
-  readOnboardingSeed,
-} from "@repo/common";
+import { calculateUkTax } from "@flump/finance-engine";
+import { clearOnboardingSeed, type OnboardingSeedPayload, readOnboardingSeed } from "@repo/common";
 import { css } from "@repo/ui/styled-system/css";
 import { useEffect, useMemo, useState } from "react";
 import {
@@ -174,25 +170,16 @@ export default function OnboardingRoute() {
         trapAnalysis: { isInTaxTrap: false, marginalRatePct: 0 },
       };
     }
-    const computed = calculateUKTakeHome(grossSalary, pensionPercent, isSalarySacrifice);
-    // Student loan deduction adjustment
-    let loanDeduction = 0;
-    if (studentLoanPlan === "PLAN_1" && grossSalary > 24990) {
-      loanDeduction = ((grossSalary - 24990) * 0.09) / 12;
-    } else if (studentLoanPlan === "PLAN_2" && grossSalary > 27295) {
-      loanDeduction = ((grossSalary - 27295) * 0.09) / 12;
-    } else if (studentLoanPlan === "PLAN_4" && grossSalary > 31395) {
-      loanDeduction = ((grossSalary - 31395) * 0.09) / 12;
-    } else if (studentLoanPlan === "PLAN_5" && grossSalary > 25000) {
-      loanDeduction = ((grossSalary - 25000) * 0.09) / 12;
-    } else if (studentLoanPlan === "POSTGRAD" && grossSalary > 21000) {
-      loanDeduction = ((grossSalary - 21000) * 0.06) / 12;
-    }
-    const adjustedMonthly = Math.max(0, computed.monthlyTakeHome - loanDeduction);
+    const taxResult = calculateUkTax({
+      grossSalary,
+      pensionContributionPct: pensionPercent,
+      isSalarySacrifice,
+      studentLoanPlan: studentLoanPlan as any,
+    });
     return {
-      monthlyTakeHome: Math.round(adjustedMonthly),
-      annualTakeHome: Math.round(adjustedMonthly * 12),
-      trapAnalysis: computed.trapAnalysis,
+      monthlyTakeHome: Math.round(taxResult.netTakeHomePayMonthlyGbp),
+      annualTakeHome: Math.round(taxResult.netTakeHomePayAnnualGbp),
+      trapAnalysis: taxResult.taxTrap,
     };
   }, [
     incomeMode,

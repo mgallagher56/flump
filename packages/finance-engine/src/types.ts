@@ -85,6 +85,7 @@ export interface OnboardingSeedPayload {
 export type DebtType =
   | "credit_card"
   | "overdraft"
+  | "loan"
   | "loan_personal"
   | "car_finance"
   | "bnpl"
@@ -94,16 +95,125 @@ export type DebtType =
 export interface DebtItem {
   id: string;
   name: string;
-  balanceGbp: number;
-  interestRateApr: number;
-  minimumPaymentGbp: number;
+  balanceGbp?: number;
+  interestRateApr?: number;
+  minimumPaymentGbp?: number;
   debtType?: DebtType;
   promoAprExpiryDate?: string; // ISO date 'YYYY-MM-DD'
   revertApr?: number;
   creditLimitGbp?: number;
+  // Compatibility aliases for @repo/common and existing UI callers
+  balance?: number;
+  apr?: number;
+  minimumPayment?: number;
+  type?: DebtType;
+  promotionalExpiryMonths?: number;
+  balloonPayment?: { amount: number; dueMonths: number };
+  studentLoanPlan?: "plan1" | "plan2" | "plan4" | "plan5" | "postgrad" | UkStudentLoanPlan;
+}
+
+export interface NormalizedDebtItem extends DebtItem {
+  balanceGbp: number;
+  interestRateApr: number;
+  minimumPaymentGbp: number;
+  balance: number;
+  apr: number;
+  minimumPayment: number;
 }
 
 export type DebtPayoffStrategy = "AVALANCHE" | "SNOWBALL";
+
+export interface PayoffScheduleMonth {
+  month: number;
+  debtBalances: Record<string, number>;
+  totalBalance: number;
+  totalInterestPaidThisMonth: number;
+  cumulativeInterest: number;
+  paymentsMade: Record<string, number>;
+}
+
+export interface PayoffResult {
+  months: number;
+  debtFreeDate: string;
+  totalInterest: number;
+  totalPaid: number;
+  quickWinDebtName?: string;
+  quickWinMonths?: number;
+  monthlySchedule: PayoffScheduleMonth[];
+}
+
+export interface AvalancheVsSnowballComparison {
+  avalanche: PayoffResult;
+  snowball: PayoffResult;
+  minimumOnly: PayoffResult;
+  interestSavedAvalancheVsMin: number;
+  monthsShavedAvalancheVsMin: number;
+  interestSavedAvalancheVsSnowball: number;
+  snowballFirstWinDescription: string;
+}
+
+export interface ZeroPercentCliffResult {
+  requiredMonthlyPayment: number;
+  balanceRemainingIfMinimum: number;
+  penaltyInterestFirstYearIfUnpaid: number;
+  daysRemaining: number;
+  alertRequired: boolean;
+}
+
+export interface OverdraftCostResult {
+  annualPoundCost: number;
+  monthlyPoundCost: number;
+  effectiveApr: number;
+}
+
+export interface CarFinanceBalloonResult {
+  balloonAmount: number;
+  dueMonths: number;
+  monthlySinkingFundNeeded: number;
+  totalCostOfFinance: number;
+}
+
+export interface StudentLoanEvaluationResult {
+  plan: "plan1" | "plan2" | "plan4" | "plan5" | "postgrad";
+  annualRepayment: number;
+  monthlyRepayment: number;
+  threshold: number;
+  rate: number;
+  writeOffYears: number;
+  willLikelyRepayBeforeWriteOff: boolean;
+  recommendation: "do_not_overpay" | "consider_overpaying";
+  reasoning: string;
+}
+
+export interface DebtToWealthBridgePoint {
+  month: number;
+  yearNumber: number;
+  debtRemaining: number;
+  wealthAccumulated: number;
+  isPostDebtFree: boolean;
+}
+
+export interface SafeToSpendResult {
+  weeklyAllowance: number;
+  dailyAllowance: number;
+  monthlyDiscretionary: number;
+  fixedCommitments: number;
+}
+
+export type FinancialLifecycleStage = "stabilize" | "buffer" | "optimize";
+
+export interface FinancialStageEvaluation {
+  stage: FinancialLifecycleStage;
+  canonicalStage: FinancialStage;
+  totalUnsecuredDebt: number;
+  highInterestDebt: number;
+  monthlySurplus: number;
+  emergencyRunwayMonths: number;
+  starterBufferMet: boolean;
+  primaryHeroMetric: "unsecured_debt" | "emergency_runway" | "net_worth";
+  headline: string;
+  subline: string;
+}
 
 export interface DebtScheduleMonthPayment {
   debtId: string;
@@ -179,13 +289,20 @@ export interface UkTaxCalculationInput {
 
 export interface TaxTrapAnalysis {
   isInTaxTrap: boolean;
+  isNearTaxTrap: boolean;
+  grossIncome: number;
   adjustedNetIncome: number;
   personalAllowanceTaperGbp: number;
   effectivePersonalAllowanceGbp: number;
   excessOver100kGbp: number;
+  excessAbove100k: number;
   marginalRatePct: number;
+  effectiveMarginalRatePct: number;
   contributionRequiredToEscapeGbp: number;
+  recommendedSacrifice: number;
   estimatedTaxSavedByEscapingGbp: number;
+  estimatedTaxSaved: number;
+  lostPersonalAllowance: number;
 }
 
 export interface UkAllowancesStatus {
@@ -241,6 +358,33 @@ export interface LtvMilestone {
   isAchieved: boolean;
 }
 
+export interface MortgageVsIsaResult {
+  standardPayment: number;
+  interestSaved: number;
+  monthsShaved: number;
+  yearsShaved: string;
+  totalStandardInterest: number;
+  totalInterestOverpay: number;
+  isaAccumulatedValue: number;
+  totalIsaContributed: number;
+  isaGrowth: number;
+  netWealthDelta: number;
+}
+
+export interface CompoundTrajectoryPoint {
+  year: number;
+  contributions: number;
+  interest: number;
+  total: number;
+}
+
+export interface CompoundTrajectoryResult {
+  endBalance: number;
+  totalContributions: number;
+  totalInterest: number;
+  points: CompoundTrajectoryPoint[];
+}
+
 export interface MortgageAmortizationResult {
   monthlyPaymentGbp: number;
   totalInterestStandardGbp: number;
@@ -284,6 +428,17 @@ export interface Section24Result {
   secondPaymentOnAccount31JulyGbp: number;
   totalDue31JulyGbp: number;
   recommendedMonthlyTaxSetAsideGbp: number;
+  // Compatibility aliases
+  actualCashProfit: number;
+  section24TaxableProfit: number;
+  grossTaxOnProperty: number;
+  financeCredit: number;
+  finalTaxDue: number;
+  oldRulesTax: number;
+  section24Penalty: number;
+  effectiveTaxRate: number;
+  netRentalIncomeAfterTax: number;
+  isHigherRate: boolean;
 }
 
 // ---------------------------------------------------------------------------

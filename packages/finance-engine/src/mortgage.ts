@@ -2,6 +2,7 @@ import type {
   LtvMilestone,
   MortgageAmortizationResult,
   MortgageCalculationInput,
+  MortgageVsIsaResult,
 } from "./types.js";
 
 /**
@@ -158,5 +159,73 @@ export function calculateMortgageAmortization(
       projectedIsaWealthGbp: Math.round(accumulatedIsaWealth * 100) / 100,
       netBenefitOfIsaOverMortgageGbp: netBenefitOfIsa,
     },
+  };
+}
+
+/**
+ * Calculates Mortgage Overpayment vs ISA Wealth Accumulation Comparison.
+ */
+export function calculateMortgageVsIsa(
+  mortgageBalance: number,
+  interestRate: number,
+  remainingYears: number,
+  monthlyOverpay: number,
+  expectedIsaReturn: number,
+): MortgageVsIsaResult {
+  const months = Math.max(1, remainingYears * 12);
+  const monthlyRate = interestRate / 100 / 12;
+  const monthlyIsaRate = expectedIsaReturn / 100 / 12;
+
+  const standardPayment =
+    monthlyRate > 0
+      ? (mortgageBalance * monthlyRate * (1 + monthlyRate) ** months) /
+        ((1 + monthlyRate) ** months - 1)
+      : mortgageBalance / months;
+
+  let bal = mortgageBalance;
+  let totalInterestOverpay = 0;
+  let monthsToZero = 0;
+  for (let m = 1; m <= months; m++) {
+    if (bal <= 0) break;
+    const interest = bal * monthlyRate;
+    totalInterestOverpay += interest;
+    const principal = Math.min(bal, standardPayment + monthlyOverpay - interest);
+    bal -= principal;
+    monthsToZero = m;
+  }
+
+  let standardBal = mortgageBalance;
+  let totalStandardInterest = 0;
+  for (let m = 1; m <= months; m++) {
+    if (standardBal <= 0) break;
+    const interest = standardBal * monthlyRate;
+    totalStandardInterest += interest;
+    const principal = Math.min(standardBal, standardPayment - interest);
+    standardBal -= principal;
+  }
+
+  const interestSaved = Math.max(0, totalStandardInterest - totalInterestOverpay);
+  const monthsShaved = Math.max(0, months - monthsToZero);
+  const yearsShaved = (monthsShaved / 12).toFixed(1);
+
+  let isaPot = 0;
+  for (let m = 1; m <= months; m++) {
+    isaPot = (isaPot + monthlyOverpay) * (1 + monthlyIsaRate);
+  }
+  const totalIsaContributed = monthlyOverpay * months;
+  const isaGrowth = Math.max(0, isaPot - totalIsaContributed);
+  const netWealthDelta = isaPot - (totalIsaContributed + interestSaved);
+
+  return {
+    standardPayment: Math.round(standardPayment * 100) / 100,
+    interestSaved: Math.round(interestSaved * 100) / 100,
+    monthsShaved,
+    yearsShaved,
+    totalStandardInterest: Math.round(totalStandardInterest * 100) / 100,
+    totalInterestOverpay: Math.round(totalInterestOverpay * 100) / 100,
+    isaAccumulatedValue: Math.round(isaPot * 100) / 100,
+    totalIsaContributed: Math.round(totalIsaContributed * 100) / 100,
+    isaGrowth: Math.round(isaGrowth * 100) / 100,
+    netWealthDelta: Math.round(netWealthDelta * 100) / 100,
   };
 }

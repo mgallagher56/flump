@@ -1,3 +1,14 @@
+import {
+  calculateUKTax,
+  getCategoriesForSource,
+  getCurrentUKTaxYear,
+  getPreviousTaxYear,
+  getTaxYearForDate,
+  isRecordActiveInTaxYear,
+  type TaxCalculationResult,
+  type TaxRecord,
+  type TaxSource,
+} from "@repo/common";
 import { css } from "@repo/ui/styled-system/css";
 import { type FC, useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -38,17 +49,6 @@ import TaxTrapAlertBanner from "~/components/tax/TaxTrapAlertBanner";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
 import type { loader } from "~/routes/app.tax";
 import { useFinancialBaseline } from "~/state/baseline.store";
-import {
-  calculateUKTax,
-  getCategoriesForSource,
-  getCurrentUKTaxYear,
-  getPreviousTaxYear,
-  getTaxYearForDate,
-  isRecordActiveInTaxYear,
-  type TaxCalculationResult,
-  type TaxRecord,
-  type TaxSource,
-} from "./TaxCalculator";
 
 const TaxContainer: FC = () => {
   const { t } = useTranslation();

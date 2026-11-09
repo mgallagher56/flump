@@ -1,12 +1,22 @@
 import type {
+  AvalancheVsSnowballComparison,
+  CarFinanceBalloonResult,
   CrossoverMonth,
   DebtItem,
   DebtPayoffResult,
   DebtPayoffStrategy,
   DebtScheduleMonth,
   DebtScheduleMonthPayment,
+  DebtToWealthBridgePoint,
+  NormalizedDebtItem,
+  OverdraftCostResult,
+  PayoffResult,
+  PayoffScheduleMonth,
   PromoCliffAlert,
+  StudentLoanEvaluationResult,
+  ZeroPercentCliffResult,
 } from "./types.js";
+import { STUDENT_LOAN_THRESHOLDS } from "./uk-tax.js";
 
 export interface DebtPayoffOptions {
   strategy?: DebtPayoffStrategy;
@@ -17,18 +27,50 @@ export interface DebtPayoffOptions {
 }
 
 /**
+ * Normalizes any DebtItem variation to ensure canonical field presence.
+ */
+export function normalizeDebtItem(
+  item: Partial<DebtItem> & { id: string; name: string },
+): NormalizedDebtItem {
+  const balanceGbp = item.balanceGbp ?? item.balance ?? 0;
+  const interestRateApr = item.interestRateApr ?? item.apr ?? 0;
+  const minimumPaymentGbp = item.minimumPaymentGbp ?? item.minimumPayment ?? 0;
+  const debtType = item.debtType ?? item.type ?? "other";
+
+  return {
+    id: item.id,
+    name: item.name,
+    balanceGbp,
+    interestRateApr,
+    minimumPaymentGbp,
+    debtType,
+    promoAprExpiryDate: item.promoAprExpiryDate,
+    revertApr: item.revertApr,
+    creditLimitGbp: item.creditLimitGbp,
+    balance: balanceGbp,
+    apr: interestRateApr,
+    minimumPayment: minimumPaymentGbp,
+    type: debtType,
+    promotionalExpiryMonths: item.promotionalExpiryMonths,
+    balloonPayment: item.balloonPayment,
+    studentLoanPlan: item.studentLoanPlan,
+  };
+}
+
+/**
  * Filter out UK Student Loans from consumer debt payoff calculations.
  * In the UK, Student Loans are income-contingent graduate taxes collected via PAYE,
  * not commercial debts with standard default risks.
  */
 export function filterConsumerDebts(debts: DebtItem[]): {
-  consumerDebts: DebtItem[];
-  excludedStudentLoans: DebtItem[];
+  consumerDebts: NormalizedDebtItem[];
+  excludedStudentLoans: NormalizedDebtItem[];
 } {
-  const consumerDebts: DebtItem[] = [];
-  const excludedStudentLoans: DebtItem[] = [];
+  const consumerDebts: NormalizedDebtItem[] = [];
+  const excludedStudentLoans: NormalizedDebtItem[] = [];
 
-  for (const d of debts) {
+  for (const raw of debts) {
+    const d = normalizeDebtItem(raw);
     if (d.debtType === "student_loan" || d.id.toLowerCase().includes("student_loan")) {
       excludedStudentLoans.push(d);
     } else {
@@ -77,10 +119,11 @@ function formatYearMonth(date: Date): string {
  * Calculate 0% Promotional Balance Transfer Cliff metrics.
  */
 export function analyzePromoCliff(
-  debt: DebtItem,
+  rawDebt: DebtItem,
   projectedPayoffMonthIndex: number,
   referenceDate: Date,
 ): PromoCliffAlert | null {
+  const debt = normalizeDebtItem(rawDebt);
   if (!debt.promoAprExpiryDate) {
     return null;
   }
@@ -378,4 +421,285 @@ export function calculateDebtSchedule(
     crossoverProjection,
     fiveYearPostDebtWealthGbp: fiveYearPostDebtWealth,
   };
+}
+
+/**
+ * Convenience alias for Avalanche payoff simulation.
+ */
+export function calculateAvalanche(debts: DebtItem[], extraMonthlyPayment = 0): PayoffResult {
+  const normalized = debts.map((d) => normalizeDebtItem(d));
+  const res = calculateDebtSchedule(normalized, extraMonthlyPayment, "AVALANCHE");
+
+  const monthlySchedule: PayoffScheduleMonth[] = res.schedule.map((s) => {
+    const debtBalances: Record<string, number> = {};
+    const paymentsMade: Record<string, number> = {};
+    s.payments.forEach((p) => {
+      debtBalances[p.debtId] = p.endingBalanceGbp;
+      paymentsMade[p.debtId] = Math.round((p.principalPaidGbp + p.interestChargedGbp) * 100) / 100;
+    });
+    return {
+      month: s.monthIndex,
+      debtBalances,
+      totalBalance: s.remainingDebtGbp,
+      totalInterestPaidThisMonth: s.totalInterestGbp,
+      cumulativeInterest: 0,
+      paymentsMade,
+    };
+  });
+
+  return {
+    months: res.monthsToPayoff,
+    debtFreeDate: res.debtFreeDate,
+    totalInterest: res.totalInterestPaidGbp,
+    totalPaid: Math.round((res.totalStartingDebtGbp + res.totalInterestPaidGbp) * 100) / 100,
+    quickWinDebtName: res.firstQuickWinDebtName,
+    quickWinMonths: undefined,
+    monthlySchedule,
+  };
+}
+
+/**
+ * Convenience alias for Snowball payoff simulation.
+ */
+export function calculateSnowball(debts: DebtItem[], extraMonthlyPayment = 0): PayoffResult {
+  const normalized = debts.map((d) => normalizeDebtItem(d));
+  const res = calculateDebtSchedule(normalized, extraMonthlyPayment, "SNOWBALL");
+
+  const monthlySchedule: PayoffScheduleMonth[] = res.schedule.map((s) => {
+    const debtBalances: Record<string, number> = {};
+    const paymentsMade: Record<string, number> = {};
+    s.payments.forEach((p) => {
+      debtBalances[p.debtId] = p.endingBalanceGbp;
+      paymentsMade[p.debtId] = Math.round((p.principalPaidGbp + p.interestChargedGbp) * 100) / 100;
+    });
+    return {
+      month: s.monthIndex,
+      debtBalances,
+      totalBalance: s.remainingDebtGbp,
+      totalInterestPaidThisMonth: s.totalInterestGbp,
+      cumulativeInterest: 0,
+      paymentsMade,
+    };
+  });
+
+  return {
+    months: res.monthsToPayoff,
+    debtFreeDate: res.debtFreeDate,
+    totalInterest: res.totalInterestPaidGbp,
+    totalPaid: Math.round((res.totalStartingDebtGbp + res.totalInterestPaidGbp) * 100) / 100,
+    quickWinDebtName: res.firstQuickWinDebtName,
+    quickWinMonths: undefined,
+    monthlySchedule,
+  };
+}
+
+/**
+ * Minimum-only payoff calculation baseline.
+ */
+export function calculateMinimumOnly(debts: DebtItem[]): PayoffResult {
+  return calculateAvalanche(debts, 0);
+}
+
+/**
+ * Compares Avalanche and Snowball payoff strategies side by side.
+ */
+export function compareAvalancheAndSnowball(
+  debts: DebtItem[],
+  extraMonthlyPayment = 50,
+): AvalancheVsSnowballComparison {
+  const avalanche = calculateAvalanche(debts, extraMonthlyPayment);
+  const snowball = calculateSnowball(debts, extraMonthlyPayment);
+  const minimumOnly = calculateMinimumOnly(debts);
+
+  const interestSavedAvalancheVsMin = Math.max(
+    0,
+    minimumOnly.totalInterest - avalanche.totalInterest,
+  );
+  const monthsShavedAvalancheVsMin = Math.max(0, minimumOnly.months - avalanche.months);
+  const interestSavedAvalancheVsSnowball = Math.max(
+    0,
+    snowball.totalInterest - avalanche.totalInterest,
+  );
+
+  const quickWinText = snowball.quickWinDebtName
+    ? `Clear your ${snowball.quickWinDebtName} with Snowball momentum`
+    : "Achieve your first payoff milestone quickly";
+
+  return {
+    avalanche,
+    snowball,
+    minimumOnly,
+    interestSavedAvalancheVsMin: Math.round(interestSavedAvalancheVsMin * 100) / 100,
+    monthsShavedAvalancheVsMin,
+    interestSavedAvalancheVsSnowball: Math.round(interestSavedAvalancheVsSnowball * 100) / 100,
+    snowballFirstWinDescription: quickWinText,
+  };
+}
+
+/**
+ * 0% Balance Transfer Promotional Cliff Tracker.
+ */
+export function calculateZeroPercentCliff(
+  balance: number,
+  monthsRemaining: number,
+  revertApr = 24.9,
+  currentMonthlyPayment = 0,
+): ZeroPercentCliffResult {
+  if (monthsRemaining <= 0 || balance <= 0) {
+    return {
+      requiredMonthlyPayment: balance,
+      balanceRemainingIfMinimum: balance,
+      penaltyInterestFirstYearIfUnpaid: Math.round(balance * (revertApr / 100) * 100) / 100,
+      daysRemaining: 0,
+      alertRequired: true,
+    };
+  }
+
+  const requiredMonthlyPayment = Math.round((balance / monthsRemaining) * 100) / 100;
+  const simulatedMin =
+    currentMonthlyPayment > 0 ? currentMonthlyPayment : Math.max(balance * 0.02, 25);
+  const balanceRemainingIfMinimum = Math.max(
+    0,
+    Math.round((balance - simulatedMin * monthsRemaining) * 100) / 100,
+  );
+  const penaltyInterestFirstYearIfUnpaid =
+    Math.round(balanceRemainingIfMinimum * (revertApr / 100) * 100) / 100;
+  const daysRemaining = Math.max(0, Math.round(monthsRemaining * 30.4375));
+  const alertRequired = daysRemaining <= 60 && balanceRemainingIfMinimum > 10;
+
+  return {
+    requiredMonthlyPayment,
+    balanceRemainingIfMinimum,
+    penaltyInterestFirstYearIfUnpaid,
+    daysRemaining,
+    alertRequired,
+  };
+}
+
+/**
+ * Arranged Overdraft Cost Calculator (UK banks charge EAR ~35% - 39.9%).
+ */
+export function calculateOverdraftCost(balance: number, earRate = 39.9): OverdraftCostResult {
+  if (balance <= 0) {
+    return { annualPoundCost: 0, monthlyPoundCost: 0, effectiveApr: earRate };
+  }
+  const annualPoundCost = Math.round(balance * (earRate / 100) * 100) / 100;
+  const monthlyPoundCost = Math.round((annualPoundCost / 12) * 100) / 100;
+
+  return {
+    annualPoundCost,
+    monthlyPoundCost,
+    effectiveApr: earRate,
+  };
+}
+
+/**
+ * PCP / HP Car Finance Balloon Payment Tracker.
+ */
+export function calculateCarFinanceBalloon(
+  monthlyPayment: number,
+  monthsRemaining: number,
+  balloonAmount: number,
+): CarFinanceBalloonResult {
+  const safeMonths = Math.max(monthsRemaining, 1);
+  const monthlySinkingFundNeeded = Math.round((balloonAmount / safeMonths) * 100) / 100;
+  const totalCostOfFinance = Math.round((monthlyPayment * safeMonths + balloonAmount) * 100) / 100;
+
+  return {
+    balloonAmount,
+    dueMonths: monthsRemaining,
+    monthlySinkingFundNeeded,
+    totalCostOfFinance,
+  };
+}
+
+/**
+ * UK Student Loan Evaluation (Plans 1, 2, 4, 5 & Postgraduate).
+ */
+export function evaluateUkStudentLoan(
+  plan: "plan1" | "plan2" | "plan4" | "plan5" | "postgrad" | string,
+  annualSalary: number,
+  currentBalance: number,
+): StudentLoanEvaluationResult {
+  const key = plan.toLowerCase().replace(/[^a-z0-9]/g, "");
+  const fallback = { threshold: 28470, rate: 0.09, writeOffYears: 30 };
+  const cfg =
+    STUDENT_LOAN_THRESHOLDS[key] ?? STUDENT_LOAN_THRESHOLDS[plan.toUpperCase()] ?? fallback;
+
+  const taxableExcess = Math.max(0, annualSalary - cfg.threshold);
+  const annualRepayment = Math.round(taxableExcess * cfg.rate * 100) / 100;
+  const monthlyRepayment = Math.round((annualRepayment / 12) * 100) / 100;
+
+  const interestAccumulation = currentBalance * 0.065;
+  const willLikelyRepayBeforeWriteOff =
+    annualRepayment > interestAccumulation * 1.5 &&
+    currentBalance < annualRepayment * (cfg.writeOffYears / 2);
+
+  const recommendation = willLikelyRepayBeforeWriteOff ? "consider_overpaying" : "do_not_overpay";
+  const reasoning = willLikelyRepayBeforeWriteOff
+    ? `Based on your salary of £${Math.round(annualSalary).toLocaleString()}, you are projected to clear the balance before statutory write-off.`
+    : `Your annual repayment of £${Math.round(annualRepayment).toLocaleString()} is insufficient to clear £${Math.round(currentBalance).toLocaleString()} before statutory cancellation. Prioritise emergency savings or commercial debts instead.`;
+
+  return {
+    plan: (key.startsWith("plan") ? key : "plan2") as any,
+    annualRepayment,
+    monthlyRepayment,
+    threshold: cfg.threshold,
+    rate: cfg.rate * 100,
+    writeOffYears: cfg.writeOffYears,
+    willLikelyRepayBeforeWriteOff,
+    recommendation,
+    reasoning,
+  };
+}
+
+/**
+ * The "Redirect Surplus to Wealth" Bridge Chart.
+ */
+export function calculateDebtToWealthBridge(
+  debts: DebtItem[],
+  extraMonthlyPayment = 50,
+  investmentAnnualReturnPct = 6.0,
+  postDebtYears = 5,
+): DebtToWealthBridgePoint[] {
+  const normalized = debts.map((d) => normalizeDebtItem(d));
+  const payoff = calculateDebtSchedule(normalized, extraMonthlyPayment, "AVALANCHE");
+  const payoffMonths = payoff.monthsToPayoff;
+  const commercialDebts = filterConsumerDebts(normalized).consumerDebts;
+  const totalMin = commercialDebts.reduce((sum, d) => sum + d.minimumPaymentGbp, 0);
+  const monthlyFreedCash = totalMin + extraMonthlyPayment;
+
+  const monthlyGrowthRate = investmentAnnualReturnPct / 100 / 12;
+  const postDebtMonths = postDebtYears * 12;
+  const totalHorizonMonths = payoffMonths + postDebtMonths;
+
+  const points: DebtToWealthBridgePoint[] = [];
+  let currentWealth = 0;
+
+  for (let m = 0; m <= totalHorizonMonths; m++) {
+    const isPost = m > payoffMonths;
+    let debtRemaining = 0;
+
+    if (m === 0) {
+      debtRemaining = commercialDebts.reduce((sum, d) => sum + d.balanceGbp, 0);
+    } else if (m <= payoffMonths) {
+      const scheduleEntry = payoff.schedule[m - 1];
+      debtRemaining = scheduleEntry ? scheduleEntry.remainingDebtGbp : 0;
+    } else {
+      debtRemaining = 0;
+      currentWealth = (currentWealth + monthlyFreedCash) * (1 + monthlyGrowthRate);
+    }
+
+    if (m === 0 || m === payoffMonths || m % 3 === 0 || m === totalHorizonMonths) {
+      points.push({
+        month: m,
+        yearNumber: Math.round((m / 12) * 10) / 10,
+        debtRemaining: Math.round(debtRemaining),
+        wealthAccumulated: Math.round(currentWealth),
+        isPostDebtFree: isPost,
+      });
+    }
+  }
+
+  return points;
 }

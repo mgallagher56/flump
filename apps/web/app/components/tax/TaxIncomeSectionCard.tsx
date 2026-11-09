@@ -1,3 +1,10 @@
+import {
+  getCategoriesForSource,
+  getRecordAnnualTotalForTaxYear,
+  isRecordActiveInTaxYear,
+  type TaxRecord,
+  type TaxSource,
+} from "@repo/common";
 import { css } from "@repo/ui/styled-system/css";
 import { type FC, type ReactNode, useMemo, useState } from "react";
 import {
@@ -11,13 +18,6 @@ import {
 } from "react-icons/fa";
 import FLPButton from "~/components/core/buttons/FLPButton";
 import FLPText from "~/components/core/typography/FLPText";
-import {
-  getCategoriesForSource,
-  getRecordAnnualTotalForTaxYear,
-  isRecordActiveInTaxYear,
-  type TaxRecord,
-  type TaxSource,
-} from "~/containers/tax/TaxCalculator";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
 
 export interface TaxIncomeSectionCardProps {

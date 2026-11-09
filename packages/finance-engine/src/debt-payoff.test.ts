@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 import {
   calculateDebtSchedule,
+  calculateDebtToWealthBridge,
+  calculateOverdraftCost,
+  calculateZeroPercentCliff,
+  compareAvalancheAndSnowball,
+  evaluateUkStudentLoan,
   filterConsumerDebts,
   projectCrossoverWealth,
   sortDebtsByStrategy,
@@ -136,6 +141,41 @@ describe("debt-payoff module", () => {
       expect(lastMonth.totalContributedGbp).toBe(24000); // 400 * 60
       expect(lastMonth.projectedWealthGbp).toBeGreaterThan(24000);
       expect(lastMonth.interestEarnedGbp).toBeGreaterThan(0);
+    });
+  });
+
+  describe("tool calculators", () => {
+    it("compareAvalancheAndSnowball compares both strategies", () => {
+      const cmp = compareAvalancheAndSnowball(sampleDebts, 100);
+      expect(cmp.avalanche.months).toBeGreaterThan(0);
+      expect(cmp.snowball.months).toBeGreaterThan(0);
+      expect(cmp.minimumOnly.months).toBeGreaterThanOrEqual(cmp.avalanche.months);
+    });
+
+    it("calculateZeroPercentCliff detects cliff alert when near expiry", () => {
+      const cliff = calculateZeroPercentCliff(3000, 1, 24.9, 50);
+      expect(cliff.alertRequired).toBe(true);
+      expect(cliff.requiredMonthlyPayment).toBe(3000);
+    });
+
+    it("calculateOverdraftCost calculates cost from EAR", () => {
+      const cost = calculateOverdraftCost(1000, 39.9);
+      expect(cost.annualPoundCost).toBe(399);
+      expect(cost.monthlyPoundCost).toBe(33.25);
+    });
+
+    it("evaluateUkStudentLoan calculates repayment according to plan", () => {
+      const sl = evaluateUkStudentLoan("plan2", 35000, 40000);
+      expect(sl.annualRepayment).toBeGreaterThan(0);
+      expect(sl.threshold).toBe(28470);
+    });
+
+    it("calculateDebtToWealthBridge returns crossover points", () => {
+      const bridge = calculateDebtToWealthBridge(sampleDebts, 50, 6.0, 5);
+      expect(bridge.length).toBeGreaterThan(5);
+      const last = bridge[bridge.length - 1]!;
+      expect(last.isPostDebtFree).toBe(true);
+      expect(last.wealthAccumulated).toBeGreaterThan(0);
     });
   });
 });

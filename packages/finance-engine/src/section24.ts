@@ -85,6 +85,20 @@ export function calculateSection24Tax(input: Section24Input): Section24Result {
   // Monthly reserve needed to cover annual recurring tax bills smoothly
   const recommendedMonthlyTaxSetAside = Math.round((netRentalTaxLiability / 12) * 100) / 100;
 
+  // Old rules (pre-Section 24) comparison
+  const actualCashProfit = Math.max(0, netRentalProfitBeforeFinance - shareMortgageInterest);
+  const isHigherRate = otherIncome >= 50270;
+  const taxRate = isHigherRate ? 0.4 : 0.2;
+  const oldRulesTax = Math.round(actualCashProfit * taxRate * 100) / 100;
+  const section24Penalty = Math.max(
+    0,
+    Math.round((netRentalTaxLiability - oldRulesTax) * 100) / 100,
+  );
+  const netRentalIncomeAfterTax = Math.max(
+    0,
+    Math.round((actualCashProfit - netRentalTaxLiability) * 100) / 100,
+  );
+
   return {
     ownershipSharePct: Math.round(share * 100),
     shareRentalIncomeGbp: shareRentalIncome,
@@ -101,5 +115,35 @@ export function calculateSection24Tax(input: Section24Input): Section24Result {
     secondPaymentOnAccount31JulyGbp: secondPaymentOnAccount31July,
     totalDue31JulyGbp: totalDue31July,
     recommendedMonthlyTaxSetAsideGbp: recommendedMonthlyTaxSetAside,
+    // Compatibility aliases
+    actualCashProfit: Math.round(actualCashProfit * 100) / 100,
+    section24TaxableProfit: Math.round(taxableRentalProfit * 100) / 100,
+    grossTaxOnProperty: Math.round(grossRentalTaxLiability * 100) / 100,
+    financeCredit: section24TaxCredit,
+    finalTaxDue: netRentalTaxLiability,
+    oldRulesTax,
+    section24Penalty,
+    effectiveTaxRate: effectiveRentalTaxRate,
+    netRentalIncomeAfterTax,
+    isHigherRate,
   };
+}
+
+/**
+ * Convenience calculator for Section 24 Landlord Tax tool.
+ */
+export function calculateSection24LandlordTax(
+  employmentIncome: number,
+  rentalIncome: number,
+  mortgageInterest: number,
+  allowableExpenses: number,
+  ownershipSharePct = 100,
+): Section24Result {
+  return calculateSection24Tax({
+    grossRentalIncomeGbp: rentalIncome,
+    allowableExpensesGbp: allowableExpenses,
+    mortgageInterestGbp: mortgageInterest,
+    otherTaxableIncomeGbp: employmentIncome,
+    ownershipSharePct,
+  });
 }

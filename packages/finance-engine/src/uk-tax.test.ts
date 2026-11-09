@@ -1,11 +1,13 @@
 import { describe, expect, it } from "vitest";
 import {
   analyzeTaxTrap,
+  calculateEmployerNISavings,
   calculateEwniIncomeTax,
   calculateNationalInsurance,
   calculatePersonalAllowance,
   calculateScottishIncomeTax,
   calculateStudentLoanDeduction,
+  calculateTaxTrapRelief,
   calculateUkTax,
   getTaxYearRemainingDays,
 } from "./uk-tax.js";
@@ -58,6 +60,20 @@ describe("uk-tax module", () => {
       expect(trap.isInTaxTrap).toBe(false);
       expect(trap.excessOver100kGbp).toBe(0);
       expect(trap.contributionRequiredToEscapeGbp).toBe(0);
+    });
+
+    it("calculateTaxTrapRelief aliases work as expected", () => {
+      const relief = calculateTaxTrapRelief(110000);
+      expect(relief.isInTaxTrap).toBe(true);
+      expect(relief.excessAbove100k).toBe(10000);
+      expect(relief.recommendedSacrifice).toBe(10000);
+      expect(relief.estimatedTaxSaved).toBe(6200);
+      expect(relief.lostPersonalAllowance).toBe(5000);
+    });
+
+    it("calculateEmployerNISavings computes employer 13.8% NI relief", () => {
+      const savings = calculateEmployerNISavings(100000, 10000);
+      expect(savings).toBe(1380);
     });
   });
 

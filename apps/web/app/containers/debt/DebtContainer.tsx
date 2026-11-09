@@ -1,5 +1,9 @@
-import { calculateDebtSchedule } from "@flump/finance-engine";
-import { compareAvalancheAndSnowball, type DebtItem, evaluateFinancialStage } from "@repo/common";
+import {
+  calculateDebtSchedule,
+  compareAvalancheAndSnowball,
+  type DebtItem,
+  evaluateFinancialStage,
+} from "@flump/finance-engine";
 import { css } from "@repo/ui/styled-system/css";
 import { type FC, useMemo, useState } from "react";
 import { FaExclamationTriangle, FaFire, FaShieldAlt } from "react-icons/fa";
@@ -128,15 +132,7 @@ export const DebtContainer: FC = () => {
 
   const scheduleResult = useMemo(() => {
     return calculateDebtSchedule(
-      debts.map((d) => ({
-        id: d.id,
-        name: d.name,
-        balanceGbp: d.balance,
-        interestRateApr: d.apr,
-        minimumPaymentGbp: d.minimumPayment,
-        promoAprExpiryDate: (d as any).promoAprExpiryDate,
-        revertApr: (d as any).revertApr,
-      })),
+      debts,
       extraPayment,
       selectedStrategy.toUpperCase() as "AVALANCHE" | "SNOWBALL",
     );
