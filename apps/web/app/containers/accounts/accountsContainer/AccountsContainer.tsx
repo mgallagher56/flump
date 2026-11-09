@@ -16,6 +16,8 @@ import { useLoaderData, useSearchParams } from "react-router";
 import BankConnectionsList from "~/components/accounts/BankConnectionsList";
 import MonthlyBalanceCheckInDrawer from "~/components/accounts/MonthlyBalanceCheckInDrawer";
 import AccountsCard from "~/components/core/cards/AccountsCard";
+import FLPCard from "~/components/core/cards/FLPCard";
+import StatMetric from "~/components/core/metrics/StatMetric";
 import FLPBox from "~/components/core/structure/FLPBox";
 import FLPTabs from "~/components/core/tabs/FLPTabs";
 import FLPHeading from "~/components/core/typography/FLPHeading";
@@ -139,12 +141,13 @@ const AccountsContainer: FC = () => {
       }
     });
 
+    // Institutional restrained palette
     const colorsMap: { [key: string]: string } = {
-      [CURRENT]: "#6363F1",
-      [SAVING]: "#10B981",
-      [INVESTMENT]: "#F59E0B",
-      [PENSION]: "#8B5CF6",
-      [OWED]: "#64748b",
+      [CURRENT]: "#4f46e5", // Indigo
+      [SAVING]: "#059669", // Emerald
+      [INVESTMENT]: "#d97706", // Amber
+      [PENSION]: "#7c3aed", // Purple
+      [OWED]: "#64748b", // Slate
     };
 
     return Object.entries(typeTotals).map(([type, val]) => {
@@ -153,34 +156,33 @@ const AccountsContainer: FC = () => {
         type,
         value: val,
         percentage,
-        color: colorsMap[type] || "#3b82f6",
+        color: colorsMap[type] || "#4f46e5",
       };
     });
   }, [accounts, accountDetails]);
 
   const getAccountTypeIcon = (type: string) => {
     const iconStyle = css({
-      fontSize: "20px",
-      marginRight: "10px",
+      fontSize: "16px",
       display: "inline-block",
       verticalAlign: "middle",
     });
 
     switch (type) {
       case CURRENT:
-        return <FaWallet className={iconStyle} style={{ color: "#6363F1" }} />;
+        return <FaWallet className={iconStyle} style={{ color: "#4f46e5" }} />;
       case SAVING:
-        return <FaPiggyBank className={iconStyle} style={{ color: "#10b981" }} />;
+        return <FaPiggyBank className={iconStyle} style={{ color: "#059669" }} />;
       case INVESTMENT:
-        return <FaChartLine className={iconStyle} style={{ color: "#f59e0b" }} />;
+        return <FaChartLine className={iconStyle} style={{ color: "#d97706" }} />;
       case PENSION:
-        return <FaShieldAlt className={iconStyle} style={{ color: "#8B5CF6" }} />;
+        return <FaShieldAlt className={iconStyle} style={{ color: "#7c3aed" }} />;
       case CREDIT_CARD:
-        return <FaCreditCard className={iconStyle} style={{ color: "#ec4899" }} />;
+        return <FaCreditCard className={iconStyle} style={{ color: "#e11d48" }} />;
       case MORTGAGE:
-        return <FaHome className={iconStyle} style={{ color: "#ef4444" }} />;
+        return <FaHome className={iconStyle} style={{ color: "#dc2626" }} />;
       case LOAN:
-        return <FaHandHoldingUsd className={iconStyle} style={{ color: "#a855f7" }} />;
+        return <FaHandHoldingUsd className={iconStyle} style={{ color: "#9333ea" }} />;
       case OWED:
         return <FaUserFriends className={iconStyle} style={{ color: "#64748b" }} />;
       default:
@@ -188,67 +190,65 @@ const AccountsContainer: FC = () => {
     }
   };
 
-  const gridStyle = css({
-    display: "grid",
-    gridTemplateColumns: { base: "1fr", md: "repeat(3, 1fr)" },
-    gap: "24px",
-    marginBottom: "24px",
-  });
-
-  const summaryCardStyle = css({
-    backgroundColor: "card",
-    border: "1px solid",
-    borderColor: "border",
-    borderRadius: "lg",
-    padding: "24px",
-    display: "flex",
-    flexDirection: "column",
-    gap: "8px",
-    boxShadow: "xs",
-    transition: "transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease",
-    "&:hover": {
-      transform: "translateY(-2px)",
-      boxShadow: "sm",
-      borderColor: "primary",
-    },
-  });
-
-  const netWorthCardStyle = css({
-    backgroundColor: "rgba(99, 99, 241, 0.08)",
-    _dark: {
-      backgroundColor: "rgba(99, 99, 241, 0.15)",
-    },
-    border: "1px solid",
-    borderColor: "primary",
-    borderRadius: "lg",
-    padding: "24px",
-    display: "flex",
-    flexDirection: "column",
-    gap: "8px",
-    boxShadow: "sm",
-    transition: "transform 0.2s ease, box-shadow 0.2s ease",
-    "&:hover": {
-      transform: "translateY(-2px)",
-      boxShadow: "md",
-    },
-  });
-
-  const headerStyle = css({
+  const pageHeaderStyle = css({
     display: "flex",
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     flexWrap: "wrap",
     gap: "16px",
-    marginTop: "20px",
-    marginBottom: "20px",
+    marginTop: "8px",
+    marginBottom: "24px",
   });
 
-  const categoryRowStyle = css({
-    borderBottom: "1px solid",
-    borderColor: "border",
-    paddingBottom: "24px",
-    marginBottom: "40px",
+  const kpiGridStyle = css({
+    display: "grid",
+    gridTemplateColumns: { base: "1fr", md: "repeat(3, 1fr)" },
+    gap: "20px",
+    marginBottom: "28px",
+  });
+
+  const kpiCardStyle = css({
+    backgroundColor: "surface",
+    borderWidth: "1px",
+    borderStyle: "solid",
+    borderColor: "border.subtle",
+    borderRadius: "xl",
+    padding: { base: "16px", md: "20px" },
+    boxShadow: "card",
+    display: "flex",
+    flexDirection: "column",
+    justifyContent: "space-between",
+    height: "100%",
+    minHeight: { base: "135px", md: "145px" },
+  });
+
+  const categorySectionStyle = css({
+    marginBottom: "36px",
+  });
+
+  const categoryHeaderStyle = css({
+    display: "flex",
+    alignItems: "center",
+    gap: "10px",
+    marginBottom: "16px",
+    paddingBottom: "8px",
+    borderBottomWidth: "1px",
+    borderBottomStyle: "solid",
+    borderBottomColor: "border.subtle",
+  });
+
+  const categoryIconWrapperStyle = css({
+    width: "28px",
+    height: "28px",
+    borderRadius: "md",
+    backgroundColor: "surface.sunken",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: "1px",
+    borderStyle: "solid",
+    borderColor: "border.subtle",
   });
 
   const cardListStyle = css({
@@ -256,11 +256,10 @@ const AccountsContainer: FC = () => {
     gridTemplateColumns: {
       base: "1fr",
       sm: "repeat(2, 1fr)",
-      md: "repeat(3, 1fr)",
-      lg: "repeat(4, 1fr)",
+      lg: "repeat(3, 1fr)",
+      xl: "repeat(4, 1fr)",
     },
-    gap: "24px",
-    marginTop: "16px",
+    gap: "20px",
   });
 
   // Filter accounts by tab category
@@ -268,26 +267,29 @@ const AccountsContainer: FC = () => {
     const matchingTypes = types.filter((t) => isAccountTypeValid(t, accounts));
     if (matchingTypes.length === 0) {
       return (
-        <div className={css({ padding: "40px 0", textAlign: "center", color: "text.muted" })}>
+        <div
+          className={css({
+            padding: "48px 24px",
+            textAlign: "center",
+            color: "text.muted",
+            backgroundColor: "surface.sunken",
+            borderRadius: "xl",
+            borderWidth: "1px",
+            borderStyle: "dashed",
+            borderColor: "border.subtle",
+            fontSize: "sm",
+          })}
+        >
           No accounts found in this category.
         </div>
       );
     }
     return matchingTypes.map((accountType) => (
       <Fragment key={accountType}>
-        <div className={categoryRowStyle}>
-          <div
-            className={css({
-              display: "flex",
-              alignItems: "center",
-              marginBottom: "16px",
-              pb: 2,
-              borderBottom: "1px solid",
-              borderColor: "border",
-            })}
-          >
-            {getAccountTypeIcon(accountType)}
-            <FLPHeading as="h2" color="text.primary" size="lg">
+        <div className={categorySectionStyle}>
+          <div className={categoryHeaderStyle}>
+            <div className={categoryIconWrapperStyle}>{getAccountTypeIcon(accountType)}</div>
+            <FLPHeading as="h2" color="text.primary" size="sm">
               {accountType}
             </FLPHeading>
           </div>
@@ -298,9 +300,9 @@ const AccountsContainer: FC = () => {
                   <AccountsCard
                     key={id}
                     accountId={id}
+                    balance={balance !== undefined ? Number(balance) : undefined}
                     name={name}
                     type={type as AccountTypeEnum}
-                    balance={balance !== undefined ? Number(balance) : undefined}
                   />
                 ),
             )}
@@ -317,13 +319,13 @@ const AccountsContainer: FC = () => {
 
   return (
     <>
-      {/* Title & Actions */}
-      <div className={headerStyle}>
+      {/* Standard Institutional Page Header */}
+      <div className={pageHeaderStyle}>
         <div>
-          <FLPHeading as="h1" color="blue.500" size="xl">
+          <FLPHeading as="h1" color="text.primary" size="xl">
             {t("accounts")}
           </FLPHeading>
-          <FLPText fontSize="sm" color="text.muted" className={css({ marginTop: "4px" })}>
+          <FLPText color="text.muted" fontSize="sm" style={{ marginTop: "4px" }}>
             Unified net worth, savings yield and UK allowance hub
           </FLPText>
         </div>
@@ -336,62 +338,50 @@ const AccountsContainer: FC = () => {
         </div>
       </div>
 
-      {/* Top Summary Bar: Net Worth, Liquid Cash & Yield, and ISA Allowance Pill */}
+      {/* 3-Second Top KPI Summary Row: Net Worth, Liquid Cash & Yield, and ISA Allowance */}
       {accounts.length > 0 && (
         <>
-          <div className={gridStyle}>
+          <div className={kpiGridStyle}>
             {/* Total Net Worth */}
-            <div className={netWorthCardStyle}>
-              <FLPText
-                color="gray.500"
-                fontSize="xs"
-                fontWeight="semibold"
-                textTransform="uppercase"
-              >
-                Total net worth
-              </FLPText>
-              <FLPHeading
-                as="h2"
-                color={stats.netWorth >= 0 ? "success.500" : "destructive.500"}
-                mt={1}
-                size="2xl"
-              >
-                {formatCurrency(stats.netWorth)}
-              </FLPHeading>
-              <FLPText fontSize="xs" color="text.muted">
-                Assets: {formatCurrency(stats.assets)} • Liabilities:{" "}
-                {formatCurrency(stats.liabilities)}
-              </FLPText>
+            <div className={kpiCardStyle}>
+              <StatMetric
+                delta={{
+                  text: stats.netWorth >= 0 ? "Surplus" : "Deficit",
+                  variant: stats.netWorth >= 0 ? "positive" : "negative",
+                }}
+                label="Total net worth"
+                subtext={
+                  <span>
+                    Assets: <strong>{formatCurrency(stats.assets)}</strong> • Liabilities:{" "}
+                    <strong>{formatCurrency(stats.liabilities)}</strong>
+                  </span>
+                }
+                tone={stats.netWorth >= 0 ? "positive" : "negative"}
+                value={formatCurrency(stats.netWorth)}
+              />
             </div>
 
-            {/* Total Liquid Cash & Savings (with Weighted Average AER) */}
-            <div className={summaryCardStyle}>
-              <FLPText
-                color="gray.500"
-                fontSize="xs"
-                fontWeight="semibold"
-                textTransform="uppercase"
-              >
-                Liquid cash and savings
-              </FLPText>
-              <FLPHeading as="h2" color="success.500" mt={1} size="xl">
-                {formatCurrency(stats.liquidCash)}
-              </FLPHeading>
-              <FLPText fontSize="xs" color="text.muted">
-                Weighted yield:{" "}
-                <strong>
-                  {stats.weightedAvgApy > 0 ? `${stats.weightedAvgApy}% AER` : "0.0%"}
-                </strong>
-              </FLPText>
+            {/* Liquid Cash & Savings */}
+            <div className={kpiCardStyle}>
+              <StatMetric
+                delta={{
+                  text: stats.weightedAvgApy > 0 ? `${stats.weightedAvgApy}% AER` : "0.0% AER",
+                  variant: "positive",
+                }}
+                label="Liquid cash and savings"
+                subtext="Instant emergency reserve and checking liquidity"
+                tone="neutral"
+                value={formatCurrency(stats.liquidCash)}
+              />
             </div>
 
-            {/* UK £20,000 ISA Allowance Progress Pill */}
-            <div>
+            {/* UK ISA Allowance Pill Card */}
+            <div style={{ height: "100%" }}>
               <AnnualAllowancePill
-                type="isa"
                 currentAmount={stats.isaUsed}
-                totalLimit={20000}
                 taxBand="higher"
+                totalLimit={20000}
+                type="isa"
               />
             </div>
           </div>
@@ -400,13 +390,14 @@ const AccountsContainer: FC = () => {
           {allocationSegments.length > 0 && (
             <div
               className={css({
-                backgroundColor: "card",
-                border: "1px solid",
-                borderColor: "border",
-                borderRadius: "lg",
-                padding: "16px 24px",
+                backgroundColor: "surface",
+                borderWidth: "1px",
+                borderStyle: "solid",
+                borderColor: "border.subtle",
+                borderRadius: "xl",
+                padding: { base: "16px", md: "20px" },
                 marginBottom: "32px",
-                boxShadow: "xs",
+                boxShadow: "card",
               })}
             >
               <div
@@ -414,18 +405,30 @@ const AccountsContainer: FC = () => {
                   display: "flex",
                   justifyContent: "space-between",
                   alignItems: "center",
-                  marginBottom: "8px",
+                  marginBottom: "10px",
                 })}
               >
-                <FLPText
-                  fontSize="xs"
-                  fontWeight="semibold"
-                  color="text.muted"
-                  textTransform="uppercase"
+                <span
+                  className={css({
+                    fontSize: "xs",
+                    fontWeight: "medium",
+                    color: "text.muted",
+                  })}
                 >
                   Asset allocation preview
-                </FLPText>
+                </span>
+                <span
+                  className={css({
+                    fontSize: "xs",
+                    color: "text.muted",
+                    fontVariantNumeric: "tabular-nums",
+                  })}
+                >
+                  Total Assets: {formatCurrency(stats.assets)}
+                </span>
               </div>
+
+              {/* Sunken well progress track */}
               <div
                 className={css({
                   display: "flex",
@@ -433,8 +436,11 @@ const AccountsContainer: FC = () => {
                   width: "100%",
                   borderRadius: "full",
                   overflow: "hidden",
-                  backgroundColor: "secondary",
-                  marginBottom: "12px",
+                  backgroundColor: "surface.sunken",
+                  borderWidth: "1px",
+                  borderStyle: "solid",
+                  borderColor: "border.subtle",
+                  marginBottom: "14px",
                 })}
               >
                 {allocationSegments.map((seg) => (
@@ -448,6 +454,8 @@ const AccountsContainer: FC = () => {
                   />
                 ))}
               </div>
+
+              {/* Refined Legend with tabular numbers */}
               <div className={css({ display: "flex", flexWrap: "wrap", gap: "16px" })}>
                 {allocationSegments.map((seg) => (
                   <div
@@ -460,14 +468,27 @@ const AccountsContainer: FC = () => {
                         height: "8px",
                         borderRadius: "50%",
                         backgroundColor: seg.color,
+                        flexShrink: 0,
                       }}
                     />
-                    <FLPText fontSize="xs" fontWeight="medium" color="text.primary">
+                    <span
+                      className={css({
+                        fontSize: "xs",
+                        fontWeight: "medium",
+                        color: "text.primary",
+                      })}
+                    >
                       {seg.type}
-                    </FLPText>
-                    <FLPText fontSize="xs" color="text.muted">
+                    </span>
+                    <span
+                      className={css({
+                        fontSize: "xs",
+                        color: "text.muted",
+                        fontVariantNumeric: "tabular-nums",
+                      })}
+                    >
                       ({Math.round(seg.percentage)}%)
-                    </FLPText>
+                    </span>
                   </div>
                 ))}
               </div>
@@ -476,17 +497,15 @@ const AccountsContainer: FC = () => {
         </>
       )}
 
-      {/* Tabs list: All | Cash & current | Savings & ISAs | Investments & pensions | Credit & debt | Mortgages */}
+      {/* Primary Workspace: Category Tabs & Bento Cards */}
       <div className={css({ marginTop: "24px" })}>
         <FLPTabs
-          value={activeTab}
-          onValueChange={handleTabChange}
           data={[
             {
               value: "all",
               label: "All accounts",
               children: (
-                <FLPBox display="flex" flexDirection="column" gap={10} mt={4}>
+                <FLPBox display="flex" flexDirection="column" gap={8} mt={4}>
                   {renderAccountsForTypes([
                     CURRENT,
                     SAVING,
@@ -504,21 +523,21 @@ const AccountsContainer: FC = () => {
               value: "cash-current",
               label: "Cash & current",
               children: (
-                <FLPBox display="flex" flexDirection="column" gap={10} mt={4}>
+                <FLPBox display="flex" flexDirection="column" gap={8} mt={4}>
                   {renderAccountsForTypes([CURRENT])}
                 </FLPBox>
               ),
             },
             {
               value: "savings-yield",
-              label: "Savings & ISAs (yield & compound forecaster)",
+              label: "Savings & ISAs",
               children: (
                 <FLPBox display="flex" flexDirection="column" gap={8} mt={4}>
                   <SavingsForecasterCard
-                    startingBalance={stats.liquidCash}
+                    accounts={accounts}
                     monthlyContribution={200}
                     portfolioInterestRate={stats.weightedAvgApy || 4.5}
-                    accounts={accounts}
+                    startingBalance={stats.liquidCash}
                   />
                   {renderAccountsForTypes([SAVING])}
                 </FLPBox>
@@ -528,7 +547,7 @@ const AccountsContainer: FC = () => {
               value: "investments-pensions",
               label: "Investments & pensions",
               children: (
-                <FLPBox display="flex" flexDirection="column" gap={10} mt={4}>
+                <FLPBox display="flex" flexDirection="column" gap={8} mt={4}>
                   {renderAccountsForTypes([INVESTMENT, PENSION])}
                 </FLPBox>
               ),
@@ -537,7 +556,7 @@ const AccountsContainer: FC = () => {
               value: "credit-debt",
               label: "Credit & debt",
               children: (
-                <FLPBox display="flex" flexDirection="column" gap={10} mt={4}>
+                <FLPBox display="flex" flexDirection="column" gap={8} mt={4}>
                   {renderAccountsForTypes([CREDIT_CARD, LOAN, OWED])}
                 </FLPBox>
               ),
@@ -546,7 +565,7 @@ const AccountsContainer: FC = () => {
               value: "mortgages",
               label: "Mortgages",
               children: (
-                <FLPBox display="flex" flexDirection="column" gap={10} mt={4}>
+                <FLPBox display="flex" flexDirection="column" gap={8} mt={4}>
                   {renderAccountsForTypes([MORTGAGE])}
                 </FLPBox>
               ),
@@ -561,6 +580,8 @@ const AccountsContainer: FC = () => {
               ),
             },
           ]}
+          value={activeTab}
+          onValueChange={handleTabChange}
         />
       </div>
     </>

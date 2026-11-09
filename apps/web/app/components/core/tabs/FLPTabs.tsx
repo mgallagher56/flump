@@ -41,23 +41,32 @@ const FLPTabs: FC<FLPTabsProps> = ({
 
   const triggerStyle = css({
     padding: isMobileVariant ? "10px 16px" : "8px 16px",
-    minHeight: isMobileVariant ? "44px" : undefined,
-    whiteSpace: isMobileVariant ? "nowrap" : undefined,
+    minHeight: isMobileVariant ? "44px" : "40px",
+    display: "inline-flex",
+    alignItems: "center",
+    whiteSpace: "nowrap",
     fontSize: "sm",
     fontWeight: "medium",
     color: "text.muted",
     backgroundColor: "transparent",
     border: "none",
     cursor: "pointer",
-    transition: "color 0.2s, border-color 0.2s",
+    transition: "color 0.15s ease, border-color 0.15s ease",
     borderBottom: orientation === "horizontal" ? "2px solid transparent" : "none",
     borderRight: orientation === "vertical" ? "2px solid transparent" : "none",
+    marginBottom: orientation === "horizontal" ? "-1px" : "0",
     "&[data-state='active']": {
       color: "primary",
       borderColor: "primary",
+      fontWeight: "semibold",
     },
     _hover: {
       color: "text.primary",
+    },
+    _focusVisible: {
+      outline: "2px solid",
+      outlineColor: "primary",
+      outlineOffset: "2px",
     },
   });
 

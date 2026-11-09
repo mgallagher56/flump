@@ -74,12 +74,22 @@ export class FinanceController {
         },
         {
           userId,
-          name: "Investment Portfolio",
+          name: "Cash ISA — Trading 212",
           type: "Saving" as const,
           balance: 42100.5,
           currency: "GBP",
           interestRate: 7.0,
           monthlyContribution: 300.0,
+        },
+        {
+          userId,
+          name: "Workplace Pension — Nest",
+          type: "Pension" as const,
+          balance: 18500.0,
+          currency: "GBP",
+          interestRate: 5.5,
+          monthlyContribution: 433.0,
+          isCurrent: true,
         },
       ];
 

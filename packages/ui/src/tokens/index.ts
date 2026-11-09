@@ -33,8 +33,11 @@ export const colors = {
     canvas: { value: "#0B0F17" },
     subtle: { value: "#111622" },
     bg: { value: "#111622" },
-    surface: { value: "#161C2A" },
-    border: { value: "#263042" },
+    surface: { value: "#141A26" },
+    surfaceSunken: { value: "#0D121D" },
+    surfaceOverlay: { value: "#182030" },
+    border: { value: "rgba(255, 255, 255, 0.08)" },
+    borderSubtle: { value: "rgba(255, 255, 255, 0.05)" },
     contrast: { value: "#1E293B" },
   },
   // Shared Semantic Colors (WCAG compliant)
@@ -162,16 +165,16 @@ export const radii = {
 
 export const shadows = {
   xs: {
-    value: "0 1px 2px rgba(15, 23, 42, 0.05)",
+    value: "0 1px 2px rgba(15, 23, 42, 0.04)",
   },
   cardLight: {
-    value: "0 1px 3px rgba(15, 23, 42, 0.08), 0 4px 12px rgba(15, 23, 42, 0.05)",
+    value: "0 1px 2px rgba(15, 23, 42, 0.04)",
   },
   cardHoverLight: {
-    value: "0 4px 12px -2px rgba(15, 23, 42, 0.12), 0 12px 24px -4px rgba(15, 23, 42, 0.08)",
+    value: "0 2px 8px -2px rgba(15, 23, 42, 0.06)",
   },
   floatingLight: {
-    value: "0 10px 25px -4px rgba(15, 23, 42, 0.1), 0 4px 10px -2px rgba(15, 23, 42, 0.05)",
+    value: "0 10px 25px -4px rgba(15, 23, 42, 0.08), 0 4px 10px -2px rgba(15, 23, 42, 0.04)",
   },
 } as const;
 
@@ -183,12 +186,17 @@ export const semanticTokens = {
       hover: { value: { base: "{colors.indigo.700}", _dark: "{colors.indigo.300}" } },
       foreground: { value: "#ffffff" },
     },
+    canvas: {
+      DEFAULT: { value: { base: "{colors.slate.50}", _dark: "{colors.dark.canvas}" } },
+    },
     background: {
       DEFAULT: { value: { base: "{colors.slate.50}", _dark: "{colors.dark.canvas}" } },
     },
     surface: {
       DEFAULT: { value: { base: "#ffffff", _dark: "{colors.dark.surface}" } },
+      sunken: { value: { base: "{colors.slate.100}", _dark: "{colors.dark.surfaceSunken}" } },
       subtle: { value: { base: "{colors.slate.100}", _dark: "{colors.dark.subtle}" } },
+      overlay: { value: { base: "#ffffff", _dark: "{colors.dark.surfaceOverlay}" } },
       tinted: { value: { base: "{colors.indigo.50}", _dark: "rgba(99, 102, 241, 0.07)" } },
       contrast: { value: { base: "{colors.slate.900}", _dark: "{colors.dark.contrast}" } },
       contrastForeground: { value: { base: "#ffffff", _dark: "#f8fafc" } },
@@ -199,9 +207,28 @@ export const semanticTokens = {
       muted: { value: { base: "{colors.slate.600}", _dark: "{colors.slate.400}" } },
     },
     border: {
-      DEFAULT: { value: { base: "{colors.slate.300}", _dark: "{colors.dark.border}" } },
-      subtle: { value: { base: "{colors.slate.200}", _dark: "rgba(255, 255, 255, 0.08)" } },
+      DEFAULT: { value: { base: "{colors.slate.200}", _dark: "{colors.dark.border}" } },
+      subtle: { value: { base: "rgba(15, 23, 42, 0.06)", _dark: "{colors.dark.borderSubtle}" } },
+      strong: { value: { base: "{colors.slate.300}", _dark: "rgba(255, 255, 255, 0.16)" } },
       input: { value: { base: "{colors.slate.300}", _dark: "{colors.dark.border}" } },
+    },
+    financial: {
+      positive: { value: { base: "{colors.success.600}", _dark: "{colors.success.400}" } },
+      positiveBg: { value: { base: "{colors.success.50}", _dark: "rgba(16, 185, 129, 0.12)" } },
+      positiveBorder: {
+        value: { base: "{colors.success.200}", _dark: "rgba(16, 185, 129, 0.25)" },
+      },
+      warning: { value: { base: "{colors.warning.600}", _dark: "{colors.warning.400}" } },
+      warningBg: { value: { base: "{colors.warning.50}", _dark: "rgba(245, 158, 11, 0.12)" } },
+      warningBorder: { value: { base: "{colors.warning.200}", _dark: "rgba(245, 158, 11, 0.25)" } },
+      negative: { value: { base: "{colors.destructive.600}", _dark: "{colors.destructive.400}" } },
+      negativeBg: { value: { base: "{colors.destructive.50}", _dark: "rgba(239, 68, 68, 0.12)" } },
+      negativeBorder: {
+        value: { base: "{colors.destructive.200}", _dark: "rgba(239, 68, 68, 0.25)" },
+      },
+      neutral: { value: { base: "{colors.slate.600}", _dark: "{colors.slate.400}" } },
+      neutralBg: { value: { base: "{colors.slate.100}", _dark: "rgba(148, 163, 184, 0.12)" } },
+      neutralBorder: { value: { base: "{colors.slate.200}", _dark: "rgba(148, 163, 184, 0.25)" } },
     },
     secondary: {
       DEFAULT: { value: { base: "{colors.slate.100}", _dark: "{colors.slate.800}" } },
@@ -247,7 +274,7 @@ export const semanticTokens = {
     card: {
       DEFAULT: { value: { base: "#ffffff", _dark: "{colors.dark.surface}" } },
       foreground: { value: { base: "{colors.slate.900}", _dark: "#ffffff" } },
-      border: { value: { base: "{colors.slate.200}", _dark: "{colors.dark.border}" } },
+      border: { value: { base: "rgba(15, 23, 42, 0.08)", _dark: "{colors.dark.border}" } },
     },
     popover: {
       DEFAULT: { value: { base: "#ffffff", _dark: "{colors.dark.surface}" } },

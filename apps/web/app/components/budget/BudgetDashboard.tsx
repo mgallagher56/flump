@@ -74,8 +74,18 @@ const BudgetDashboard: FC<BudgetDashboardProps> = ({
   const isMobileVariant = propIsMobile ?? (variant === "mobile" ? true : contextIsMobile);
   const totals = useMemo(() => {
     const income = entries.filter((e) => e.isIncome).reduce((s, e) => s + toMonthly(e), 0);
-    const expenses = entries.filter((e) => !e.isIncome).reduce((s, e) => s + toMonthly(e), 0);
-    return { income, expenses, surplus: income - expenses };
+    const expenses = entries
+      .filter((e) => !e.isIncome && e.category !== "savings")
+      .reduce((s, e) => s + toMonthly(e), 0);
+    const budgetedSavings = entries
+      .filter((e) => !e.isIncome && e.category === "savings")
+      .reduce((s, e) => s + toMonthly(e), 0);
+    return {
+      income,
+      expenses,
+      budgetedSavings,
+      surplus: income - expenses - budgetedSavings,
+    };
   }, [entries]);
 
   const expenseCategories = useMemo(() => {
@@ -226,10 +236,11 @@ const BudgetDashboard: FC<BudgetDashboardProps> = ({
     display: "flex",
     flexDirection: "column",
     gap: "4px",
-    padding: isMobileVariant ? "14px" : "20px",
-    borderRadius: "lg",
-    border: "1px solid",
-    borderColor: "border",
+    padding: isMobileVariant ? "12px" : "16px",
+    borderRadius: "xl",
+    borderWidth: "1px",
+    borderStyle: "solid",
+    borderColor: "border.subtle",
     backgroundColor: "surface",
   });
 
@@ -323,9 +334,10 @@ const BudgetDashboard: FC<BudgetDashboardProps> = ({
             display: "flex",
             flexDirection: "column",
             gap: "4px",
-            padding: "20px",
-            borderRadius: "lg",
-            border: "2px solid",
+            padding: isMobileVariant ? "12px" : "16px",
+            borderRadius: "xl",
+            borderWidth: "1px",
+            borderStyle: "solid",
             borderColor: totals.surplus >= 0 ? "success.500" : "destructive",
             backgroundColor: totals.surplus >= 0 ? "rgba(16,185,129,0.06)" : "rgba(239,68,68,0.06)",
           })}
@@ -975,170 +987,6 @@ const BudgetDashboard: FC<BudgetDashboardProps> = ({
             </button>
           ))}
         </div>
-      </div>
-
-      {/* Insights row */}
-      <div
-        className={css({
-          display: "grid",
-          gridTemplateColumns: isMobileVariant ? "1fr" : { base: "1fr", md: "1fr 1fr" },
-          gap: "16px",
-        })}
-      >
-        {/* Savings comparison */}
-        <FLPCard>
-          <FLPHeading as="h3" size="sm" style={{ marginBottom: "12px" }}>
-            💰 Savings Status
-          </FLPHeading>
-          <div className={css({ display: "flex", flexDirection: "column", gap: "10px" })}>
-            <div
-              className={css({
-                display: "flex",
-                justifyContent: "space-between",
-                padding: "10px 14px",
-                borderRadius: "md",
-                backgroundColor: "background",
-                border: "1px solid",
-                borderColor: "border",
-              })}
-            >
-              <FLPText fontSize="sm" color="text.muted">
-                Current savings pool
-              </FLPText>
-              <FLPText fontSize="sm" fontWeight="bold" style={{ color: "#10b981" }}>
-                {fmt(savingsBalance)}
-              </FLPText>
-            </div>
-            <div
-              className={css({
-                display: "flex",
-                justifyContent: "space-between",
-                padding: "10px 14px",
-                borderRadius: "md",
-                backgroundColor: "background",
-                border: "1px solid",
-                borderColor: "border",
-              })}
-            >
-              <FLPText fontSize="sm" color="text.muted">
-                Budgeted savings/mo
-              </FLPText>
-              <FLPText fontSize="sm" fontWeight="bold">
-                {fmt(housingSaved)}/mo
-              </FLPText>
-            </div>
-            {savingsBalance > 0 && housingSaved > 0 && (
-              <FLPText fontSize="xs" color="text.muted" style={{ lineHeight: "1.5" }}>
-                At this rate you'll save an extra <strong>{fmt(housingSaved * 12)}</strong> per
-                year.
-              </FLPText>
-            )}
-          </div>
-        </FLPCard>
-
-        {/* Condensed Unemployment Runway Card */}
-        <FLPCard>
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "flex-start",
-              marginBottom: "10px",
-              flexWrap: "wrap",
-              gap: "8px",
-            }}
-          >
-            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-              <span style={{ fontSize: "18px" }}>⏱️</span>
-              <FLPHeading as="h3" size="sm">
-                Unemployment Runway
-              </FLPHeading>
-            </div>
-            <span
-              style={{
-                fontSize: "11px",
-                fontWeight: 700,
-                padding: "2px 8px",
-                borderRadius: "999px",
-                backgroundColor: runwayStats.status.bg,
-                color: runwayStats.status.colour,
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "4px",
-              }}
-            >
-              <span>{runwayStats.status.emoji}</span>
-              {runwayStats.status.label}
-            </span>
-          </div>
-
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "baseline",
-              marginBottom: "12px",
-            }}
-          >
-            <FLPHeading as="h4" size="xl" style={{ color: runwayStats.status.colour, margin: 0 }}>
-              {runwayStats.runwayLabel}
-            </FLPHeading>
-            <FLPText color="text.muted" fontSize="xs">
-              Burn:{" "}
-              <strong style={{ color: "var(--colors-text-primary)" }}>
-                {fmt(runwayStats.monthlyBurn)}/mo
-              </strong>
-            </FLPText>
-          </div>
-
-          {/* Condensed Timeline Bar Chart */}
-          <div style={{ marginBottom: "16px" }}>
-            <div
-              style={{
-                height: "10px",
-                borderRadius: "999px",
-                backgroundColor: "var(--colors-border)",
-                overflow: "hidden",
-                position: "relative",
-                marginBottom: "6px",
-              }}
-            >
-              <div
-                style={{
-                  height: "100%",
-                  width: `${runwayStats.barPct}%`,
-                  backgroundColor: runwayStats.status.colour,
-                  borderRadius: "999px",
-                  transition: "width 0.4s ease",
-                }}
-              />
-            </div>
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                fontSize: "10px",
-                color: "var(--colors-text-muted)",
-              }}
-            >
-              <span>0 mo</span>
-              <span style={{ color: "#ef4444" }}>3 mo</span>
-              <span style={{ color: "#f59e0b" }}>6 mo</span>
-              <span style={{ color: "#10b981" }}>12 mo</span>
-              <span>24+ mo</span>
-            </div>
-          </div>
-
-          <FLPButton
-            variant="outline"
-            size="sm"
-            onClick={onNavigateToRunway}
-            style={{ width: "100%" }}
-          >
-            <FaBalanceScale style={{ marginRight: "8px" }} />
-            Open Runway Calculator
-          </FLPButton>
-        </FLPCard>
       </div>
     </div>
   );

@@ -322,50 +322,28 @@ export const PensionAccountsList: FC<PensionAccountsListProps> = ({
           <div
             className={css({
               display: "flex",
-              flexDirection: "column",
+              justifyContent: "space-between",
               alignItems: "center",
-              justifyContent: "center",
-              padding: "48px 24px",
-              textAlign: "center",
+              flexWrap: "wrap",
               gap: "12px",
-              backgroundColor: "rgba(139, 92, 246, 0.02)",
-              borderRadius: "lg",
-              border: "1px dashed",
-              borderColor: "border",
+              padding: "12px 16px",
+              backgroundColor: "surface.sunken",
+              borderRadius: "xl",
+              borderWidth: "1px",
+              borderStyle: "dashed",
+              borderColor: "border.subtle",
             })}
           >
-            <div
-              className={css({
-                width: "56px",
-                height: "56px",
-                borderRadius: "full",
-                backgroundColor: "rgba(139, 92, 246, 0.1)",
-                color: "#8b5cf6",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontSize: "24px",
-              })}
-            >
-              <FaPiggyBank />
+            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+              <FaPiggyBank style={{ color: "var(--colors-text-muted)", fontSize: "16px" }} />
+              <FLPText color="text.muted" fontSize="sm">
+                No individual pension pots tracked yet. Baseline contributions are modeled from your
+                salary.
+              </FLPText>
             </div>
-            <FLPHeading as="h4" size="sm">
-              No pension pots tracked yet
-            </FLPHeading>
-            <FLPText color="text.muted" fontSize="sm" style={{ maxWidth: "420px" }}>
-              Add your current workplace pension, previous schemes, or SIPP to track your total
-              retirement wealth in one place.
-            </FLPText>
-            <div style={{ display: "flex", gap: "12px", marginTop: "8px" }}>
-              {onOpenWizard && (
-                <FLPButton variant="primary" onClick={onOpenWizard}>
-                  Quick Start Wizard
-                </FLPButton>
-              )}
-              <FLPButton variant="outline" onClick={onOpenAddModal}>
-                <FaPlus style={{ marginRight: "6px" }} /> Add Pot Manually
-              </FLPButton>
-            </div>
+            <FLPButton size="sm" variant="outline" onClick={onOpenAddModal}>
+              <FaPlus style={{ marginRight: "6px" }} /> Add Pension Pot
+            </FLPButton>
           </div>
         ) : isMobileVariant ? (
           <div

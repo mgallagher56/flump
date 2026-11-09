@@ -21,10 +21,11 @@ export interface DebtToWealthBridgeCardProps {
 }
 
 const cardStyle = css({
-  padding: "24px",
+  padding: "20px",
   display: "flex",
   flexDirection: "column",
-  gap: "20px",
+  gap: "16px",
+  height: "100%",
 });
 
 const metricsRowStyle = css({
@@ -33,10 +34,10 @@ const metricsRowStyle = css({
     base: "1fr",
     sm: "repeat(3, 1fr)",
   },
-  gap: "16px",
-  backgroundColor: "rgba(16, 185, 129, 0.05)",
+  gap: "12px",
+  backgroundColor: "surface.sunken",
   border: "1px solid",
-  borderColor: "rgba(16, 185, 129, 0.2)",
+  borderColor: "border.subtle",
   padding: "16px",
   borderRadius: "xl",
 });
@@ -151,7 +152,7 @@ export const DebtToWealthBridgeCard: FC<DebtToWealthBridgeCardProps> = ({
             <FLPText color="text.muted" fontSize="xs">
               Current Monthly Debt Outflow
             </FLPText>
-            <FLPHeading as="h4" size="lg">
+            <FLPHeading as="h4" size="lg" className={css({ fontVariantNumeric: "tabular-nums" })}>
               {formatCurrency(totalMonthlyCommitment)}/mo
             </FLPHeading>
             <FLPText color="text.muted" fontSize="xs">
@@ -163,7 +164,12 @@ export const DebtToWealthBridgeCard: FC<DebtToWealthBridgeCardProps> = ({
             <FLPText color="text.muted" fontSize="xs">
               Projected Debt-Free Point
             </FLPText>
-            <FLPHeading as="h4" color="primary" size="lg">
+            <FLPHeading
+              as="h4"
+              color="primary"
+              size="lg"
+              className={css({ fontVariantNumeric: "tabular-nums" })}
+            >
               Year {debtFreePoint?.yearNumber || 0}
             </FLPHeading>
             <FLPText color="text.muted" fontSize="xs">
@@ -175,7 +181,12 @@ export const DebtToWealthBridgeCard: FC<DebtToWealthBridgeCardProps> = ({
             <FLPText color="text.muted" fontSize="xs">
               Accumulated Wealth (5 Yrs Post Debt-Free)
             </FLPText>
-            <FLPHeading as="h4" color="green.600" size="lg">
+            <FLPHeading
+              as="h4"
+              color="green.600"
+              size="lg"
+              className={css({ fontVariantNumeric: "tabular-nums" })}
+            >
               +{formatCurrency(finalPoint?.wealthAccumulated || 0)}
             </FLPHeading>
             <FLPText color="green.700" fontSize="xs">

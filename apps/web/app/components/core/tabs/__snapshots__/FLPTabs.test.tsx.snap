@@ -18,7 +18,7 @@ exports[`FLPTabs > renders correctly 1`] = `
       <button
         aria-controls="radix-_r_0_-content-tab1"
         aria-selected="true"
-        class="p_8px_16px fs_sm fw_medium c_text.muted bg-c_transparent bd_none cursor_pointer trs_color_0.2s,_border-color_0.2s bd-b_2px_solid_transparent bd-r_none [&[data-state='active']]:c_primary [&[data-state='active']]:bd-c_primary hover:c_text.primary"
+        class="p_8px_16px min-h_40px d_inline-flex ai_center white-space_nowrap fs_sm fw_medium c_text.muted bg-c_transparent bd_none cursor_pointer trs_color_0.15s_ease,_border-color_0.15s_ease bd-b_2px_solid_transparent bd-r_none mb_-1px [&[data-state='active']]:c_primary [&[data-state='active']]:bd-c_primary [&[data-state='active']]:fw_semibold hover:c_text.primary focusVisible:ring_2px_solid focusVisible:ring-c_primary focusVisible:ring-o_2px"
         data-orientation="horizontal"
         data-radix-collection-item=""
         data-state="active"
@@ -32,7 +32,7 @@ exports[`FLPTabs > renders correctly 1`] = `
       <button
         aria-controls="radix-_r_0_-content-tab2"
         aria-selected="false"
-        class="p_8px_16px fs_sm fw_medium c_text.muted bg-c_transparent bd_none cursor_pointer trs_color_0.2s,_border-color_0.2s bd-b_2px_solid_transparent bd-r_none [&[data-state='active']]:c_primary [&[data-state='active']]:bd-c_primary hover:c_text.primary"
+        class="p_8px_16px min-h_40px d_inline-flex ai_center white-space_nowrap fs_sm fw_medium c_text.muted bg-c_transparent bd_none cursor_pointer trs_color_0.15s_ease,_border-color_0.15s_ease bd-b_2px_solid_transparent bd-r_none mb_-1px [&[data-state='active']]:c_primary [&[data-state='active']]:bd-c_primary [&[data-state='active']]:fw_semibold hover:c_text.primary focusVisible:ring_2px_solid focusVisible:ring-c_primary focusVisible:ring-o_2px"
         data-orientation="horizontal"
         data-radix-collection-item=""
         data-state="inactive"
@@ -46,7 +46,7 @@ exports[`FLPTabs > renders correctly 1`] = `
       <button
         aria-controls="radix-_r_0_-content-tab3"
         aria-selected="false"
-        class="p_8px_16px fs_sm fw_medium c_text.muted bg-c_transparent bd_none cursor_pointer trs_color_0.2s,_border-color_0.2s bd-b_2px_solid_transparent bd-r_none [&[data-state='active']]:c_primary [&[data-state='active']]:bd-c_primary hover:c_text.primary"
+        class="p_8px_16px min-h_40px d_inline-flex ai_center white-space_nowrap fs_sm fw_medium c_text.muted bg-c_transparent bd_none cursor_pointer trs_color_0.15s_ease,_border-color_0.15s_ease bd-b_2px_solid_transparent bd-r_none mb_-1px [&[data-state='active']]:c_primary [&[data-state='active']]:bd-c_primary [&[data-state='active']]:fw_semibold hover:c_text.primary focusVisible:ring_2px_solid focusVisible:ring-c_primary focusVisible:ring-o_2px"
         data-disabled=""
         data-orientation="horizontal"
         data-radix-collection-item=""

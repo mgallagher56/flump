@@ -29,10 +29,12 @@ const containerStyle = css({
 
 const tabsHeaderStyle = css({
   display: "flex",
-  gap: "8px",
-  borderBottom: "1px solid",
-  borderColor: "border",
-  paddingBottom: "8px",
+  backgroundColor: "surface.sunken",
+  border: "1px solid",
+  borderColor: "border.subtle",
+  padding: "4px",
+  borderRadius: "lg",
+  gap: "4px",
   overflowX: "auto",
 });
 
@@ -41,16 +43,19 @@ const tabButtonStyle = (active: boolean) =>
     padding: "8px 14px",
     borderRadius: "md",
     fontSize: "13px",
-    fontWeight: "bold",
+    fontWeight: "semibold",
     cursor: "pointer",
     display: "flex",
     alignItems: "center",
     gap: "6px",
-    backgroundColor: active ? "primary" : "transparent",
-    color: active ? "white" : "text.muted",
-    border: "none",
+    backgroundColor: active ? "card" : "transparent",
+    color: active ? "text.primary" : "text.muted",
+    boxShadow: active ? "0 1px 2px rgba(0,0,0,0.06)" : "none",
+    border: "1px solid",
+    borderColor: active ? "border.subtle" : "transparent",
     transition: "all 0.15s ease",
     whiteSpace: "nowrap",
+    _hover: active ? {} : { color: "text.primary" },
   });
 
 const toolGridStyle = css({

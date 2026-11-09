@@ -38,21 +38,16 @@ const gridStyle = (isMobile?: boolean) =>
 
 const cardStyle = (isMobile?: boolean) =>
   css({
-    padding: isMobile ? "14px" : "20px",
+    padding: isMobile ? "12px" : "16px",
     borderRadius: "xl",
-    border: "1px solid",
-    borderColor: "border",
+    borderWidth: "1px",
+    borderStyle: "solid",
+    borderColor: "border.subtle",
     backgroundColor: "surface",
     display: "flex",
     flexDirection: "column",
-    gap: isMobile ? "8px" : "12px",
-    boxShadow: "sm",
-    transition: "all 0.2s ease",
-    _hover: {
-      borderColor: "primary",
-      transform: "translateY(-2px)",
-      boxShadow: "md",
-    },
+    gap: isMobile ? "6px" : "8px",
+    boxShadow: "card",
   });
 
 const iconWrapperStyle = (bg: string, color: string) =>

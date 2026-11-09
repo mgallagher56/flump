@@ -81,17 +81,18 @@ const MortgageTracker: FC<MortgageTrackerProps> = ({
 
   const gridLayout = css({
     display: "grid",
-    gridTemplateColumns: { base: "1fr", lg: "1fr 1fr" },
-    gap: "32px",
+    gridTemplateColumns: { base: "1fr", lg: "repeat(12, 1fr)" },
+    gap: "24px",
     alignItems: "start",
   });
 
   const controlPanel = css({
+    gridColumn: { base: "span 1", lg: "span 5" },
     padding: "24px",
     backgroundColor: "card",
-    borderRadius: "lg",
+    borderRadius: "xl",
     border: "1px solid",
-    borderColor: "border",
+    borderColor: "border.subtle",
     display: "flex",
     flexDirection: "column",
     gap: "20px",
@@ -463,7 +464,7 @@ const MortgageTracker: FC<MortgageTrackerProps> = ({
       </div>
 
       {/* Results Panel */}
-      <FLPCard>
+      <FLPCard className={css({ gridColumn: { base: "span 1", lg: "span 7" } })}>
         <FLPHeading as="h3" size="md">
           Mortgage cost breakdown
         </FLPHeading>

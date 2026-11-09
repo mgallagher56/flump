@@ -163,6 +163,9 @@ describe("TaxContainer & Calculation Tools", () => {
     expect(screen.getAllByText(/Total Gross Income/i).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/Rental Profit Share/i).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/Self-Employed Profit/i).length).toBeGreaterThan(0);
+
+    const compareTab = screen.getByText("Multi-Year Comparison");
+    fireEvent.click(compareTab);
     expect(screen.getByText("P&L & Tax Comparison Table")).toBeDefined();
   });
 

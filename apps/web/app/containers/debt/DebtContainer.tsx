@@ -200,50 +200,6 @@ export const DebtContainer: FC = () => {
         </div>
       </div>
 
-      {/* Adaptive Stage Banner */}
-      <div
-        className={stageBannerStyle}
-        style={{
-          backgroundColor:
-            stageEval.stage === "stabilize"
-              ? "rgba(239, 68, 68, 0.08)"
-              : "rgba(16, 185, 129, 0.08)",
-          borderColor:
-            stageEval.stage === "stabilize" ? "rgba(239, 68, 68, 0.3)" : "rgba(16, 185, 129, 0.3)",
-        }}
-      >
-        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-          {stageEval.stage === "stabilize" ? (
-            <FaFire color="#ef4444" size={24} />
-          ) : (
-            <FaShieldAlt color="#10b981" size={24} />
-          )}
-          <div>
-            <FLPHeading as="h4" size="sm">
-              {stageEval.headline}
-            </FLPHeading>
-            <FLPText color="text.muted" fontSize="xs">
-              {stageEval.subline}
-            </FLPText>
-          </div>
-        </div>
-
-        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-          <span
-            style={{
-              padding: "4px 10px",
-              borderRadius: "full",
-              fontSize: "12px",
-              fontWeight: "bold",
-              backgroundColor: stageEval.stage === "stabilize" ? "#ef4444" : "#10b981",
-              color: "white",
-            }}
-          >
-            {stageEval.stage === "stabilize" ? "Stage 1 Active" : "Stage 2/3 Unlocked"}
-          </span>
-        </div>
-      </div>
-
       {/* 2. Summary Metric Cards */}
       <DebtSummaryCards
         debtFreeDate={activeResult.debtFreeDate}
@@ -264,29 +220,40 @@ export const DebtContainer: FC = () => {
         }
       />
 
-      {/* 3. Avalanche vs Snowball Switcher & Extra £50 Slider */}
-      <PayoffStrategySwitcher
-        budgetSurplus={budgetSurplus}
-        comparison={comparison}
-        extraPayment={extraPayment}
-        selectedStrategy={selectedStrategy}
-        onChangeExtraPayment={setExtraPayment}
-        onSelectStrategy={setSelectedStrategy}
-      />
-
-      {/* 4. The "Redirect Surplus to Wealth" Bridge Chart */}
-      <DebtToWealthBridgeCard debts={debts} extraPayment={extraPayment} />
-
-      {/* 5. UK Specific Debt Instruments & Rules */}
-      <UkDebtInstrumentsCard />
-
-      {/* 6. Active Debts Management List */}
+      {/* 3. Active Liability Accounts List */}
       <DebtAccountsList
         debts={debts}
         onAddDebt={() => setIsAddModalOpen(true)}
         onDeleteDebt={handleDeleteDebt}
         onUpdateDebt={handleUpdateDebt}
       />
+
+      {/* 4 & 5. 2-Column Interactive Payoff Simulator & Wealth Bridge */}
+      <div
+        className={css({
+          display: "grid",
+          gridTemplateColumns: { base: "1fr", lg: "repeat(12, 1fr)" },
+          gap: "24px",
+          alignItems: "start",
+        })}
+      >
+        <div className={css({ gridColumn: { base: "span 1", lg: "span 5" } })}>
+          <PayoffStrategySwitcher
+            budgetSurplus={budgetSurplus}
+            comparison={comparison}
+            extraPayment={extraPayment}
+            selectedStrategy={selectedStrategy}
+            onChangeExtraPayment={setExtraPayment}
+            onSelectStrategy={setSelectedStrategy}
+          />
+        </div>
+        <div className={css({ gridColumn: { base: "span 1", lg: "span 7" } })}>
+          <DebtToWealthBridgeCard debts={debts} extraPayment={extraPayment} />
+        </div>
+      </div>
+
+      {/* 6. UK Specific Debt Instruments & Rules */}
+      <UkDebtInstrumentsCard />
 
       {/* Add Debt Modal */}
       <AddDebtDialog

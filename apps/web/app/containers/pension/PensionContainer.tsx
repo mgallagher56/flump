@@ -234,21 +234,6 @@ export const PensionContainer: FC = () => {
     isSalarySacrificeEmployerNi,
   ]);
 
-  // Open wizard by default only if user has no pension accounts and hasn't dismissed/completed it
-  useEffect(() => {
-    const alreadyCompleted =
-      profile.setupChecklistCompletedSteps?.includes("pension") ||
-      userProfile?.setupChecklistCompletedSteps?.includes("pension");
-    if (pensionAccounts.length === 0 && !wizardDismissed && !alreadyCompleted) {
-      setShowWizard(true);
-    }
-  }, [
-    pensionAccounts.length,
-    wizardDismissed,
-    profile.setupChecklistCompletedSteps,
-    userProfile?.setupChecklistCompletedSteps,
-  ]);
-
   // Mark setup checklist step as completed if accounts exist
   useEffect(() => {
     if (pensionAccounts.length > 0) {
@@ -396,33 +381,11 @@ export const PensionContainer: FC = () => {
         </div>
 
         <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
-          {!showWizard && (
-            <FLPButton size="md" variant="outline" onClick={() => setShowWizard(true)}>
-              <FaMagic style={{ marginRight: "6px" }} /> Quick Start Wizard
-            </FLPButton>
-          )}
           <FLPButton size="md" variant="primary" onClick={() => setIsAddModalOpen(true)}>
             <FaPlus style={{ marginRight: "6px" }} /> Add Pension Pot
           </FLPButton>
         </div>
       </div>
-
-      {/* Onboarding Wizard */}
-      {showWizard && (
-        <PensionQuickStartWizard
-          initialEmployeePercent={employeePercent}
-          initialEmployerPercent={employerPercent}
-          initialSalary={annualSalary}
-          onComplete={() => {
-            setWizardDismissed(true);
-            setShowWizard(false);
-          }}
-          onDismiss={() => {
-            setWizardDismissed(true);
-            setShowWizard(false);
-          }}
-        />
-      )}
 
       {/* UK Pension Annual Allowance Tracker (£60k Limit) */}
       <AnnualAllowancePill

@@ -95,9 +95,16 @@ export function calculateRunwayStats({
     pool = liquidAccounts.reduce((sum, a) => sum + snapshot.getLatestBalance(a.id), 0);
   }
 
+  const incomeEntries = (entries || []).filter((e) => e.isIncome);
+  const hasExplicitPrimary = incomeEntries.some((e) => e.isPrimaryIncome);
+  const primaryId = hasExplicitPrimary
+    ? incomeEntries.find((e) => e.isPrimaryIncome)?.id
+    : incomeEntries.slice().sort((a, b) => toMonthly(b) - toMonthly(a))[0]?.id;
+
   const nonPrimaryIncome = (entries || [])
     .filter((e) => {
-      if (!e.isIncome || e.isPrimaryIncome) return false;
+      if (!e.isIncome) return false;
+      if (hasExplicitPrimary ? e.isPrimaryIncome : e.id === primaryId) return false;
       if (savedSettings?.keptIncome) {
         return savedSettings.keptIncome[e.id] !== false;
       }
@@ -128,7 +135,9 @@ export function calculateRunwayStats({
       : runwayMonths > 120
         ? `${Math.floor(runwayMonths / 12)}+ years`
         : years > 0
-          ? `${years} yr${years !== 1 ? "s" : ""} ${months} mo${months !== 1 ? "s" : ""}`
+          ? months > 0
+            ? `${years} year${years !== 1 ? "s" : ""} ${months} month${months !== 1 ? "s" : ""}`
+            : `${years} year${years !== 1 ? "s" : ""}`
           : `${Math.floor(runwayMonths)} months`;
 
   const shortLabel =
@@ -137,7 +146,9 @@ export function calculateRunwayStats({
       : runwayMonths > 120
         ? `${Math.floor(runwayMonths / 12)}+ yrs`
         : years > 0
-          ? `${years} yr${years !== 1 ? "s" : ""} ${months} mo${months !== 1 ? "s" : ""}`
+          ? months > 0
+            ? `${years} yr${years !== 1 ? "s" : ""} ${months} mo${months !== 1 ? "s" : ""}`
+            : `${years} yr${years !== 1 ? "s" : ""}`
           : `${Math.round(runwayMonths * 10) / 10} mos`;
 
   return {
