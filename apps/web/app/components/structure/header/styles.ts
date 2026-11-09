@@ -6,26 +6,25 @@ export const headerStyles = css({
   zIndex: 50,
   width: "100%",
   backgroundColor: {
-    base: "rgba(255, 255, 255, 0.85)",
-    _dark: "rgba(22, 24, 29, 0.85)",
+    base: "rgba(255, 255, 255, 0.92)",
+    _dark: "rgba(11, 15, 23, 0.92)",
   },
   backdropFilter: "blur(12px)",
+  borderBottomWidth: "1px",
+  borderBottomColor: "border",
+  borderBottomStyle: "solid",
   transition: "background-color 0.2s ease, border-color 0.2s ease",
 });
 
 export const navStyles = css({
-  position: "sticky",
-  top: 0,
-  zIndex: 50,
   display: "flex",
-  borderBottomWidth: "2px",
-  borderBottomColor: "border",
-  borderBottomStyle: "solid",
   alignItems: "center",
   justifyContent: "space-between",
   width: "100%",
+  maxWidth: "1536px",
+  margin: "0 auto",
   paddingY: { base: "3", md: "4" },
-  paddingX: "2",
+  paddingX: { base: "12px", md: "24px" },
 });
 
 export const menuStyles = css({

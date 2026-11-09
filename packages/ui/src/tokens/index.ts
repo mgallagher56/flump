@@ -165,13 +165,13 @@ export const shadows = {
     value: "0 1px 2px rgba(15, 23, 42, 0.05)",
   },
   cardLight: {
-    value: "0 1px 3px rgba(15, 23, 42, 0.04), 0 6px 16px rgba(15, 23, 42, 0.04)",
+    value: "0 1px 3px rgba(15, 23, 42, 0.08), 0 4px 12px rgba(15, 23, 42, 0.05)",
   },
   cardHoverLight: {
-    value: "0 4px 6px -1px rgba(15, 23, 42, 0.08), 0 12px 28px -4px rgba(15, 23, 42, 0.08)",
+    value: "0 4px 12px -2px rgba(15, 23, 42, 0.12), 0 12px 24px -4px rgba(15, 23, 42, 0.08)",
   },
   floatingLight: {
-    value: "0 12px 32px -4px rgba(15, 23, 42, 0.08), 0 4px 12px rgba(79, 70, 229, 0.06)",
+    value: "0 10px 25px -4px rgba(15, 23, 42, 0.1), 0 4px 10px -2px rgba(15, 23, 42, 0.05)",
   },
 } as const;
 
@@ -184,11 +184,11 @@ export const semanticTokens = {
       foreground: { value: "#ffffff" },
     },
     background: {
-      DEFAULT: { value: { base: "#ffffff", _dark: "{colors.dark.canvas}" } },
+      DEFAULT: { value: { base: "{colors.slate.50}", _dark: "{colors.dark.canvas}" } },
     },
     surface: {
-      DEFAULT: { value: { base: "{colors.slate.50}", _dark: "{colors.dark.surface}" } },
-      subtle: { value: { base: "{colors.slate.50}", _dark: "{colors.dark.subtle}" } },
+      DEFAULT: { value: { base: "#ffffff", _dark: "{colors.dark.surface}" } },
+      subtle: { value: { base: "{colors.slate.100}", _dark: "{colors.dark.subtle}" } },
       tinted: { value: { base: "{colors.indigo.50}", _dark: "rgba(99, 102, 241, 0.07)" } },
       contrast: { value: { base: "{colors.slate.900}", _dark: "{colors.dark.contrast}" } },
       contrastForeground: { value: { base: "#ffffff", _dark: "#f8fafc" } },
@@ -199,8 +199,8 @@ export const semanticTokens = {
       muted: { value: { base: "{colors.slate.600}", _dark: "{colors.slate.400}" } },
     },
     border: {
-      DEFAULT: { value: { base: "{colors.slate.200}", _dark: "{colors.dark.border}" } },
-      subtle: { value: { base: "{colors.slate.100}", _dark: "rgba(255, 255, 255, 0.08)" } },
+      DEFAULT: { value: { base: "{colors.slate.300}", _dark: "{colors.dark.border}" } },
+      subtle: { value: { base: "{colors.slate.200}", _dark: "rgba(255, 255, 255, 0.08)" } },
       input: { value: { base: "{colors.slate.300}", _dark: "{colors.dark.border}" } },
     },
     secondary: {
