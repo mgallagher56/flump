@@ -106,6 +106,7 @@ export default function App() {
       >
         <ThemeContext.Provider value={{ theme, toggleTheme }}>
           <ResponsiveProvider>
+            <Header />
             <div
               className={css({
                 maxWidth: "1536px",
@@ -113,7 +114,6 @@ export default function App() {
                 paddingX: { base: "12px", md: "24px" },
               })}
             >
-              <Header />
               <main
                 className={css({
                   paddingBottom: { base: user ? "72px" : "0", md: "0" },
