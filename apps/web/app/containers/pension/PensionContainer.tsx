@@ -2,6 +2,7 @@ import {
   calculate100kTaxTrap,
   calculateEmployerNISavings,
   getCurrentUKTaxYear,
+  PortfolioSnapshot,
 } from "@flump/finance-engine";
 import { calculateUKEWNITakeHome } from "@repo/common";
 import { css } from "@repo/ui/styled-system/css";
@@ -95,26 +96,15 @@ export const PensionContainer: FC = () => {
 
   // Filter pension accounts and calculate current balances
   const pensionAccounts = useMemo(() => {
+    const snapshot = new PortfolioSnapshot(accounts, accountDetails);
     return accounts
       .filter((acc) => acc.type === "Pension")
       .map((acc) => {
-        const details = accountDetails.filter((d) => (d.account_id || d.accountId) === acc.id);
-        const currentDetail = details.find(
-          (d) => d.month === currentMonth && d.year === currentYear,
-        );
-        let balance = 0;
-        if (acc.balance !== undefined && acc.balance !== null) {
-          balance = Number(acc.balance);
-        } else if (currentDetail) {
-          balance = Number(currentDetail.value);
-        } else if (details.length > 0) {
-          balance = Number(details[details.length - 1].value);
-        }
-
+        const resolved = snapshot.getAccount(acc.id);
         const isCurrent = acc.isCurrent !== false;
         return {
           ...acc,
-          balance,
+          balance: resolved?.nominalBalance ?? (Number(acc.balance) || 0),
           interestRate:
             acc.interestRate !== undefined && acc.interestRate !== null
               ? Number(acc.interestRate)
@@ -130,8 +120,9 @@ export const PensionContainer: FC = () => {
 
   // Total pension value
   const totalValue = useMemo(() => {
-    return pensionAccounts.reduce((sum, acc) => sum + (acc.balance || 0), 0);
-  }, [pensionAccounts]);
+    const snapshot = new PortfolioSnapshot(accounts, accountDetails);
+    return snapshot.getTotalPensions();
+  }, [accounts, accountDetails]);
 
   // Direct monthly contributions set on individual pension pots (current pots only)
   const directMonthlyContrib = useMemo(() => {

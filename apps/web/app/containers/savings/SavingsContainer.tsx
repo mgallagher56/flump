@@ -1,3 +1,4 @@
+import { PortfolioSnapshot } from "@flump/finance-engine";
 import { css } from "@repo/ui/styled-system/css";
 import { type FC, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -57,25 +58,14 @@ export const SavingsContainer: FC = () => {
 
   // Filter savings and investment accounts and sync current balances
   const savingsAccounts = useMemo(() => {
+    const snapshot = new PortfolioSnapshot(accounts, accountDetails);
     return accounts
       .filter((acc) => acc.type === "Saving" || acc.type === "Investment")
       .map((acc) => {
-        const details = accountDetails.filter((d) => (d.account_id || d.accountId) === acc.id);
-        const currentDetail = details.find(
-          (d) => d.month === currentMonth && d.year === currentYear,
-        );
-        let balance = 0;
-        if (acc.balance !== undefined && acc.balance !== null) {
-          balance = Number(acc.balance);
-        } else if (currentDetail) {
-          balance = Number(currentDetail.value);
-        } else if (details.length > 0) {
-          balance = Number(details[details.length - 1].value);
-        }
-
+        const resolved = snapshot.getAccount(acc.id);
         return {
           ...acc,
-          balance,
+          balance: resolved?.nominalBalance ?? (Number(acc.balance) || 0),
           interestRate:
             acc.interestRate !== undefined && acc.interestRate !== null
               ? Number(acc.interestRate)

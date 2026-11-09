@@ -3,6 +3,7 @@ import {
   compareAvalancheAndSnowball,
   type DebtItem,
   evaluateFinancialStage,
+  PortfolioSnapshot,
 } from "@flump/finance-engine";
 import { css } from "@repo/ui/styled-system/css";
 import { type FC, useMemo, useState } from "react";
@@ -84,31 +85,9 @@ export const DebtContainer: FC = () => {
 
   // Initialize debts from existing liability accounts or fallback to sensible baseline
   const [debts, setDebts] = useState<DebtItem[]>(() => {
-    const liabilityAccounts = accounts.filter(
-      (a: any) =>
-        a.type === "Credit Card" ||
-        a.type === "Loan" ||
-        a.type === "credit_card" ||
-        a.type === "Owed" ||
-        (Number(a.balance) < 0 && a.type === "Current"),
-    );
-
-    if (liabilityAccounts.length > 0) {
-      return liabilityAccounts.map((a: any, idx: number) => {
-        const bal = Math.abs(Number(a.balance) || 1000);
-        const isOverdraft = a.type === "Current" && Number(a.balance) < 0;
-        return {
-          id: a.id || `acc-${idx}`,
-          name: a.name || "Credit Account",
-          balance: bal,
-          apr: isOverdraft ? 39.9 : a.interestRate ? Number(a.interestRate) : 21.9,
-          minimumPayment: Math.max(Math.round(bal * 0.025), 25),
-          type: isOverdraft ? "overdraft" : a.type === "Loan" ? "loan" : "credit_card",
-        };
-      });
-    }
-
-    return defaultDebts;
+    const snapshot = new PortfolioSnapshot(accounts, loaderData?.accountDetails || []);
+    const items = snapshot.toDebtItems();
+    return items.length > 0 ? items : defaultDebts;
   });
 
   const [selectedStrategy, setSelectedStrategy] = useState<"avalanche" | "snowball">("avalanche");

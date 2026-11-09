@@ -1,3 +1,4 @@
+import { PortfolioSnapshot } from "@flump/finance-engine";
 import { getCurrentUKTaxYear } from "@repo/common";
 import type { ReactElement } from "react";
 import { type LoaderFunctionArgs, type MetaFunction, redirect, useLoaderData } from "react-router";
@@ -73,17 +74,9 @@ export const loader = async (args: LoaderFunctionArgs) => {
 
     const completedSteps = (userProfile?.setupChecklistCompletedSteps as string[]) ?? [];
 
-    const assetTypes = ["Current", "Saving", "Investment", "Pension", "Owed"];
-    const totalAssets = Array.isArray(accounts)
-      ? accounts
-          .filter((a: any) => assetTypes.includes(a.type))
-          .reduce((sum: number, a: any) => sum + (Number(a.balance) || 0), 0)
-      : 0;
-    const totalLiabilities = Array.isArray(accounts)
-      ? accounts
-          .filter((a: any) => !assetTypes.includes(a.type))
-          .reduce((sum: number, a: any) => sum + Math.abs(Number(a.balance) || 0), 0)
-      : 0;
+    const portfolioSnapshot = new PortfolioSnapshot(accounts, accountDetails);
+    const totalAssets = portfolioSnapshot.getTotalAssets();
+    const totalLiabilities = portfolioSnapshot.getTotalLiabilities();
 
     const monthlyIncome = Array.isArray(budgetEntries)
       ? budgetEntries
@@ -129,33 +122,21 @@ export const loader = async (args: LoaderFunctionArgs) => {
       (sum: number, a: any) => sum + (Number(a.monthlyContribution) || 0),
       0,
     );
-    const weightedInterestRate =
-      totalSavingsBalance > 0
-        ? savingsAccounts.reduce(
-            (sum: number, a: any) =>
-              sum +
-              ((Number(a.balance) || 0) / totalSavingsBalance) * (Number(a.interestRate) || 0),
-            0,
-          )
-        : Number(userProfile?.savingsDefaultInterestRate) || 5.0;
+    const weightedInterestRate = portfolioSnapshot.getWeightedSavingsRate(
+      Number(userProfile?.savingsDefaultInterestRate) || 5.0,
+    );
 
     // Pension accounts data
     const pensionAccounts = Array.isArray(accounts)
       ? accounts.filter((a: any) => a.type === "Pension")
       : [];
-    const totalPensionBalance = pensionAccounts.reduce(
-      (sum: number, a: any) => sum + (Number(a.balance) || 0),
-      0,
-    );
+    const totalPensionBalance = portfolioSnapshot.getTotalPensions();
 
     // Mortgage data
     const mortgageAccounts = Array.isArray(accounts)
       ? accounts.filter((a: any) => a.type === "Mortgage")
       : [];
-    const mortgageBalance = mortgageAccounts.reduce(
-      (sum: number, a: any) => sum + Math.abs(Number(a.balance) || 0),
-      0,
-    );
+    const mortgageBalance = portfolioSnapshot.getTotalMortgageBalance();
 
     // Tax data
     const currentYearRecords = Array.isArray(taxRecords) ? taxRecords : [];
