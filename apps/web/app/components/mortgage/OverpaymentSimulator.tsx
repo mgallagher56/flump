@@ -26,7 +26,7 @@ const OverpaymentSimulator: FC<OverpaymentSimulatorProps> = ({
   const { formatCurrency } = useFormatCurrency();
   const isInterestOnly = mortgageType === "interest-only";
 
-  // Run Amortization Schedules
+  // Run amortisation schedules
   const simulationResults = useMemo(() => {
     const r = interestRate / 100;
     const i = r / 12;
@@ -326,7 +326,7 @@ const OverpaymentSimulator: FC<OverpaymentSimulatorProps> = ({
         >
           <div>
             <FLPHeading as="h3" size="md">
-              Amortization Projection
+              Amortisation projection
             </FLPHeading>
             <FLPText color="text.muted" fontSize="xs">
               Comparison of scheduled balance reduction paths.
@@ -334,7 +334,7 @@ const OverpaymentSimulator: FC<OverpaymentSimulatorProps> = ({
           </div>
           {overpayment > 0 && interestSaved > 0 && (
             <div className={savingsCallout}>
-              Save {formatCurrency(interestSaved)} in total interest!
+              Save {formatCurrency(interestSaved)} in total interest
             </div>
           )}
         </div>

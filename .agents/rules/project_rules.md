@@ -79,7 +79,7 @@ Flump is a monorepo managed with Turborepo (`turbo`) and Bun.
 - **Grouped Domain Pillars**: Keep primary high-frequency links direct (`Budget`, `Accounts`), and organize specialized tools into grouped dropdown pillars:
   - **Wealth**: Savings (`/app/savings`), Pension (`/app/pension`), Mortgage (`/app/mortgage`).
   - **Planning**: Forecast (`/app/forecast`), Tax (`/app/tax`).
-- **Multi-platform Sync**: When adding or re-organizing tools, ensure `AUTH_DESKTOP_NAV_ROUTES` in `Header.tsx`, `MobileNavDrawer.tsx`, and `MobileBottomBar.tsx` are updated in sync, including localization keys in `en/common.json`.
+- **Multi-platform Sync**: When adding or re-organizing tools, ensure `AUTH_DESKTOP_NAV_ROUTES` in `Header.tsx`, `MobileNavDrawer.tsx`, and `MobileBottomBar.tsx` are updated in sync, including localization keys in `en/common.json` and `es/common.json`.
 
 ### 6. Type-Safe API Client
 

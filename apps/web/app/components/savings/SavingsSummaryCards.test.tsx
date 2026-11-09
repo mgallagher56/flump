@@ -24,7 +24,7 @@ describe("SavingsSummaryCards", () => {
 
     expect(screen.getByText("Total Savings Balance")).toBeDefined();
     expect(screen.getByText("Monthly Savings")).toBeDefined();
-    expect(screen.getByText("Portfolio Weighted APY")).toBeDefined();
+    expect(screen.getByText("Portfolio weighted AER")).toBeDefined();
     expect(screen.getByText("10-Year Growth")).toBeDefined();
     expect(screen.getByText("5.20%")).toBeDefined();
   });

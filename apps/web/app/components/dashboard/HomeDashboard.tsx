@@ -449,7 +449,7 @@ export const HomeDashboard: FC<HomeDashboardProps> = ({
             )}
             <Link to="/app/debt">
               <FLPButton size="sm" variant="primary">
-                Open Debt Crusher →
+                Open debt payoff →
               </FLPButton>
             </Link>
           </div>

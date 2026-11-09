@@ -125,13 +125,13 @@ describe("HomeDashboard", () => {
   it("renders welcome header and widgets for all enabled pages", () => {
     render(<HomeDashboard {...dummyProps} />);
     expect(screen.getByText(/Welcome back, Alex/i)).toBeDefined();
-    expect(screen.getByText("Accounts & Net Worth")).toBeDefined();
-    expect(screen.getByText("Budget Planner")).toBeDefined();
-    expect(screen.getByText("Savings & Investments")).toBeDefined();
-    expect(screen.getByText("Pension & Retirement")).toBeDefined();
-    expect(screen.getByText("Mortgage Tools")).toBeDefined();
-    expect(screen.getByText("Wealth Forecaster")).toBeDefined();
-    expect(screen.getByText("Tax & Self-Assessment")).toBeDefined();
+    expect(screen.getByText("Accounts and net worth")).toBeDefined();
+    expect(screen.getByText("Budget planner")).toBeDefined();
+    expect(screen.getByText("Savings and investments")).toBeDefined();
+    expect(screen.getByText("Pension and retirement")).toBeDefined();
+    expect(screen.getByText("Mortgage tools")).toBeDefined();
+    expect(screen.getByText("Wealth forecaster")).toBeDefined();
+    expect(screen.getByText("Tax and Self Assessment")).toBeDefined();
   });
 
   it("toggles customize mode toolbar when button is clicked", () => {
@@ -152,7 +152,7 @@ describe("HomeDashboard", () => {
 
   it("opens per-widget settings modal when cog icon is clicked", () => {
     render(<HomeDashboard {...dummyProps} />);
-    const accountsCog = screen.getByLabelText("Customize Accounts & Net Worth widget");
+    const accountsCog = screen.getByLabelText("Customize Accounts and net worth widget");
     fireEvent.click(accountsCog);
 
     expect(screen.getByText("Accounts Widget Settings")).toBeDefined();
@@ -182,8 +182,8 @@ describe("HomeDashboard", () => {
       ),
     ).toBeDefined();
 
-    // Click "Add" button for Debt Crusher
-    const addBtn = screen.getByLabelText("Enable Debt Crusher widget");
+    // Click "Add" button for Debt payoff
+    const addBtn = screen.getByLabelText("Enable Debt payoff widget");
     fireEvent.click(addBtn);
 
     // Verify updateProfile was called with debt added to widgets and at the bottom of the order
@@ -223,10 +223,14 @@ describe("HomeDashboard", () => {
     render(<HomeDashboard {...unconfiguredProps} />);
 
     // Widgets should NOT be visible
-    expect(screen.queryByText("Accounts & Net Worth")).toBeNull();
-    expect(screen.queryByText("Budget Planner")).toBeNull();
-    expect(screen.queryByText("Savings & Investments")).toBeNull();
-    expect(screen.queryByText("Pension & Retirement")).toBeNull();
+    expect(screen.queryByText("Accounts and net worth")).toBeNull();
+    expect(screen.queryByText("Budget planner")).toBeNull();
+    expect(screen.queryByText("Savings and investments")).toBeNull();
+    expect(screen.queryByText("Pension and retirement")).toBeNull();
+    expect(screen.queryByText("Debt payoff")).toBeNull();
+    expect(screen.queryByText("Mortgage tools")).toBeNull();
+    expect(screen.queryByText("Wealth forecaster")).toBeNull();
+    expect(screen.queryByText("Tax and Self Assessment")).toBeNull();
 
     // Inviting setup prompt should be displayed
     expect(screen.getByText("Ready to Build Your Dashboard")).toBeDefined();
@@ -262,11 +266,11 @@ describe("HomeDashboard", () => {
     render(<HomeDashboard {...partiallyConfiguredProps} />);
 
     // Accounts is configured -> displayed
-    expect(screen.getByText("Accounts & Net Worth")).toBeDefined();
+    expect(screen.getByText("Accounts and net worth")).toBeDefined();
 
     // Budget, Savings, Pension are unconfigured -> not displayed
-    expect(screen.queryByText("Budget Planner")).toBeNull();
-    expect(screen.queryByText("Savings & Investments")).toBeNull();
-    expect(screen.queryByText("Pension & Retirement")).toBeNull();
+    expect(screen.queryByText("Budget planner")).toBeNull();
+    expect(screen.queryByText("Savings and investments")).toBeNull();
+    expect(screen.queryByText("Pension and retirement")).toBeNull();
   });
 });

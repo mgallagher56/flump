@@ -76,7 +76,7 @@ export const MortgageVsIsaTool: FC = () => {
           ((1 + monthlyRate) ** months - 1)
         : mortgageBalance / months;
 
-    // 1. Overpayment amortization
+    // 1. Overpayment amortisation
     let bal = mortgageBalance;
     let totalInterestOverpay = 0;
     let monthsToZero = 0;

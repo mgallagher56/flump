@@ -347,7 +347,7 @@ const BudgetDashboard: FC<BudgetDashboardProps> = ({
             {fmt(totals.surplus)}
           </FLPHeading>
           <FLPText color="text.muted" fontSize="xs">
-            {totals.surplus >= 0 ? "Available to save or crush debt" : "Spending exceeds income"}
+            {totals.surplus >= 0 ? "Available to save or pay down debt" : "Spending exceeds income"}
           </FLPText>
         </div>
 
@@ -728,8 +728,8 @@ const BudgetDashboard: FC<BudgetDashboardProps> = ({
                       color: "#dc2626",
                     }}
                   >
-                    {cashFlowSplit.billsWithCliffs.length} Renewal Cliff
-                    {cashFlowSplit.billsWithCliffs.length > 1 ? "s" : ""} Within 30 Days
+                    {cashFlowSplit.billsWithCliffs.length} renewal deadline
+                    {cashFlowSplit.billsWithCliffs.length > 1 ? "s" : ""} within 30 days
                   </span>
                 )}
               </FLPText>

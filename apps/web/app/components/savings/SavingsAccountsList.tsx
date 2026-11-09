@@ -252,10 +252,10 @@ export const SavingsAccountsList: FC<SavingsAccountsListProps> = ({
         <div className={headerRowStyle}>
           <div>
             <FLPHeading as="h4" size="md">
-              Savings & Investment Accounts
+              Savings and investment accounts
             </FLPHeading>
             <FLPText color="text.muted" fontSize="sm">
-              Manage your accounts, or click any balance, APY, or monthly savings value to
+              Manage your accounts, or click any balance, AER, or monthly savings value to
               quick-edit inline.
             </FLPText>
           </div>
@@ -376,7 +376,7 @@ export const SavingsAccountsList: FC<SavingsAccountsListProps> = ({
                   >
                     <div>
                       <FLPText color="text.muted" fontSize="xs">
-                        APY
+                        AER
                       </FLPText>
                       <FLPText fontSize="xs" fontWeight="semibold">
                         {rate.toFixed(2)}%
@@ -430,16 +430,16 @@ export const SavingsAccountsList: FC<SavingsAccountsListProps> = ({
                   <th className={thStyle}>Account</th>
                   <th className={thStyle}>Type</th>
                   <th className={thStyle} style={{ textAlign: "right" }}>
-                    Current Balance
+                    Current balance
                   </th>
                   <th className={thStyle} style={{ textAlign: "right" }}>
-                    Interest Rate (APY)
+                    Interest rate (AER)
                   </th>
                   <th className={thStyle} style={{ textAlign: "right" }}>
-                    Monthly Savings
+                    Monthly savings
                   </th>
                   <th className={thStyle} style={{ textAlign: "right" }}>
-                    Est. Annual Interest
+                    Estimated annual interest
                   </th>
                   <th className={thStyle} style={{ textAlign: "center", width: "110px" }}>
                     Actions
@@ -556,7 +556,7 @@ export const SavingsAccountsList: FC<SavingsAccountsListProps> = ({
                         ) : (
                           <span
                             className={editableCellStyle}
-                            title="Click to quick-edit APY %"
+                            title="Click to quick-edit AER %"
                             onClick={() =>
                               acc.id &&
                               setInlineEdit({

@@ -406,10 +406,10 @@ const MortgageTracker: FC<MortgageTrackerProps> = ({
       {/* Results Panel */}
       <FLPCard>
         <FLPHeading as="h3" size="md">
-          Mortgage Cost Breakdown
+          Mortgage cost breakdown
         </FLPHeading>
         <FLPText color="text.muted" fontSize="xs">
-          Scheduled amortization projection summary.
+          Scheduled amortisation projection summary.
         </FLPText>
 
         <div className={statsGrid}>

@@ -18,7 +18,7 @@ describe("AddSavingsAccountDialog", () => {
     expect(screen.getByLabelText("Account Name")).toBeDefined();
     expect(screen.getByLabelText("Account Type")).toBeDefined();
     expect(screen.getByLabelText("Current Balance (£)")).toBeDefined();
-    expect(screen.getByLabelText("Interest Rate / APY (%)")).toBeDefined();
+    expect(screen.getByLabelText("Interest rate / AER (%)")).toBeDefined();
     expect(screen.getByLabelText("Regular Monthly Savings Contribution (£/month)")).toBeDefined();
   });
 });

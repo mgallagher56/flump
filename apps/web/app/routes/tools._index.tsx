@@ -8,7 +8,7 @@ import FLPText from "~/components/core/typography/FLPText";
 import HomeFooter from "~/components/home/HomeFooter";
 
 export const meta: MetaFunction = () => [
-  { title: "Free UK Financial Calculators and Tax Tools | Flump" },
+  { title: "Free UK financial and tax calculators | Flump" },
   {
     name: "description",
     content:
@@ -229,7 +229,7 @@ export const ToolsIndex: FC = () => {
                 <FaCreditCard />
               </div>
               <FLPHeading as="h2" color="text.primary" mb={2} size="lg">
-                0% balance transfer cliff calculator
+                0% balance transfer promotional expiry calculator
               </FLPHeading>
               <FLPText color="text.muted" fontSize="sm" lineHeight="1.6">
                 Calculate the monthly payment required to clear your credit card balance before

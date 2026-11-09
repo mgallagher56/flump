@@ -45,7 +45,7 @@ describe("<SavingsAccountsList />", () => {
       <SavingsAccountsList accounts={mockAccounts} onOpenAddModal={onOpenAddModal} />,
     );
 
-    expect(getByText("Savings & Investment Accounts")).toBeDefined();
+    expect(getByText("Savings and investment accounts")).toBeDefined();
     expect(getByText("Marcus High Yield Saver")).toBeDefined();
 
     const addBtn = getByText(/Add Account/);

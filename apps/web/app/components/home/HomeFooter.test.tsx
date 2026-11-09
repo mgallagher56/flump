@@ -37,7 +37,7 @@ describe("HomeFooter", () => {
 
     // When message is empty, submit is a no-op
     fireEvent.click(submitBtn);
-    expect(screen.queryByText(/Thank you! Your message has been received\./i)).toBeNull();
+    expect(screen.queryByText(/Thank you\. Your message has been received\./i)).toBeNull();
 
     // Type feedback
     fireEvent.change(subjectInput, { target: { value: "Feature Idea" } });
@@ -46,7 +46,7 @@ describe("HomeFooter", () => {
     });
     fireEvent.click(submitBtn);
 
-    expect(screen.getByText(/Thank you! Your message has been received\./i)).toBeDefined();
+    expect(screen.getByText(/Thank you\. Your message has been received\./i)).toBeDefined();
 
     act(() => {
       vi.advanceTimersByTime(2000);

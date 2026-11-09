@@ -559,8 +559,8 @@ export function evaluateFinancialStage(params: {
       emergencyRunwayMonths,
       starterBufferMet,
       primaryHeroMetric: "unsecured_debt",
-      headline: "Stage 1: Stabilize & Clear",
-      subline: "Crush high-interest liabilities and achieve steady cash-flow margin.",
+      headline: "Stage 1: Stabilise and clear",
+      subline: "Clear high-interest liabilities and achieve steady cash-flow margin.",
     };
   }
 

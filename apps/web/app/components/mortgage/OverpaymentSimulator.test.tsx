@@ -12,13 +12,13 @@ describe("<OverpaymentSimulator />", () => {
     onOverpaymentChange: vi.fn(),
   };
 
-  test("renders parameter controls, stats, and amortization savings", () => {
+  test("renders parameter controls, stats, and amortisation savings", () => {
     const { getByText, getAllByDisplayValue } = customRender(
       <OverpaymentSimulator {...defaultProps} />,
     );
 
     expect(getByText("Overpayment")).toBeDefined();
-    expect(getByText("Amortization Projection")).toBeDefined();
+    expect(getByText("Amortisation projection")).toBeDefined();
     expect(getByText("Time Shaved Off")).toBeDefined();
     expect(getByText("Interest Saved")).toBeDefined();
     expect(getByText(/Total Monthly Outflow:/i)).toBeDefined();
@@ -42,7 +42,7 @@ describe("<OverpaymentSimulator />", () => {
       <OverpaymentSimulator {...defaultProps} mortgageType="interest-only" overpayment={500} />,
     );
 
-    expect(getByText("Amortization Projection")).toBeDefined();
+    expect(getByText("Amortisation projection")).toBeDefined();
     expect(getByText(/Scheduled Interest Payment:/i)).toBeDefined();
     expect(getByText("Bullet Balance Reduced")).toBeDefined();
   });
@@ -58,6 +58,6 @@ describe("<OverpaymentSimulator />", () => {
       />,
     );
 
-    expect(getByText("Amortization Projection")).toBeDefined();
+    expect(getByText("Amortisation projection")).toBeDefined();
   });
 });

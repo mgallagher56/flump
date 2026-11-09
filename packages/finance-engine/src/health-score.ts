@@ -120,10 +120,10 @@ export function calculateFinancialHealthScore(input: HealthScoreInput): HealthSc
     else yieldScore = 40;
 
     components.push({
-      name: "Cash Yield & Allowance Optimization",
+      name: "Cash yield and allowance optimisation",
       score: yieldScore,
       weight: 0.25,
-      comment: `Earning ${yieldApr.toFixed(1)}% APY on liquid savings.`,
+      comment: `Earning ${yieldApr.toFixed(1)}% AER on liquid savings.`,
     });
     if (yieldApr < 4.0) {
       recommendations.push(

@@ -224,7 +224,7 @@ export const ToolsIndexPage: FC = () => {
               <div style={{ height: "100%", minHeight: "200px", maxHeight: "260px" }}>
                 <img
                   src="/illustrations/tax-bridge.jpg"
-                  alt="UK tax cliff bridge visualising Personal Allowance taper"
+                  alt="UK tax bridge visualising Personal Allowance taper"
                   loading="lazy"
                   style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
                 />

@@ -331,13 +331,13 @@ export default function OnboardingRoute() {
       };
 
       await Promise.allSettled([
-        createAccountSafe("Cash & Emergency Savings", "Saving", cashSavings),
-        createAccountSafe("Workplace & Personal Pension", "Pension", pensionPot),
+        createAccountSafe("Cash and emergency savings", "Saving", cashSavings),
+        createAccountSafe("Workplace and personal pension", "Pension", pensionPot),
         ...(mortgageBalance > 0
           ? [createAccountSafe("Residential Mortgage", "Mortgage", mortgageBalance)]
           : []),
         ...(unsecuredDebt > 0
-          ? [createAccountSafe("Cards & Loans Baseline", "Credit Card", unsecuredDebt)]
+          ? [createAccountSafe("Cards and loans baseline", "Credit Card", unsecuredDebt)]
           : []),
         createBudgetEntrySafe(
           "Monthly Take-Home Income",
@@ -358,7 +358,7 @@ export default function OnboardingRoute() {
         ...(monthlyOtherOutgoings > 0
           ? [
               createBudgetEntrySafe(
-                "General Living & Outgoings",
+                "General living and outgoings",
                 "living",
                 monthlyOtherOutgoings,
                 false,
@@ -495,7 +495,7 @@ export default function OnboardingRoute() {
               gap: "6px",
             }}
           >
-            <FaUser size={12} /> 1. You & Income
+            <FaUser size={12} /> 1. You and income
           </button>
           <button
             type="button"
@@ -516,7 +516,7 @@ export default function OnboardingRoute() {
               gap: "6px",
             }}
           >
-            <FaHome size={12} /> 2. Housing & Outgoings
+            <FaHome size={12} /> 2. Housing and outgoings
           </button>
           <button
             type="button"
@@ -537,7 +537,7 @@ export default function OnboardingRoute() {
               gap: "6px",
             }}
           >
-            <FaPiggyBank size={12} /> 3. Savings & Debt
+            <FaPiggyBank size={12} /> 3. Savings and debt
           </button>
         </div>
 
@@ -559,7 +559,7 @@ export default function OnboardingRoute() {
             <div style={{ display: "flex", flexDirection: "column", gap: "18px" }}>
               <div>
                 <FLPHeading as="h2" size="md">
-                  Step 1: You & income
+                  Step 1: You and income
                 </FLPHeading>
                 <FLPText color="text.muted" fontSize="xs" style={{ marginTop: "4px" }}>
                   Your age and income calculate your net take-home and 10–30 year compound
@@ -787,7 +787,7 @@ export default function OnboardingRoute() {
 
               <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "8px" }}>
                 <FLPButton size="md" variant="primary" onClick={() => setStep(2)}>
-                  Next: Housing & outgoings →
+                  Next: Housing and outgoings →
                 </FLPButton>
               </div>
             </div>
@@ -798,7 +798,7 @@ export default function OnboardingRoute() {
             <div style={{ display: "flex", flexDirection: "column", gap: "18px" }}>
               <div>
                 <FLPHeading as="h2" size="md">
-                  Step 2: Housing & monthly outgoings
+                  Step 2: Housing and monthly outgoings
                 </FLPHeading>
                 <FLPText color="text.muted" fontSize="xs" style={{ marginTop: "4px" }}>
                   Your regular living costs power your emergency runway and safe-to-spend weekly
@@ -1007,7 +1007,7 @@ export default function OnboardingRoute() {
                   <FaArrowLeft style={{ marginRight: "6px" }} /> Back
                 </FLPButton>
                 <FLPButton size="md" variant="primary" onClick={() => setStep(3)}>
-                  Next: Savings, pension & debt →
+                  Next: Savings, pension and debt →
                 </FLPButton>
               </div>
             </div>

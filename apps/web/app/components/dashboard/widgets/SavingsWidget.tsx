@@ -122,10 +122,10 @@ export const SavingsWidget: FC<SavingsWidgetProps> = ({
           >
             <div>
               <div className={css({ fontSize: "sm", fontWeight: "semibold" })}>
-                Show Estimated Interest
+                Show estimated interest
               </div>
               <div className={css({ fontSize: "xs", color: "text.muted" })}>
-                Display projected interest earned at current APY
+                Display projected interest earned at current AER
               </div>
             </div>
             <button

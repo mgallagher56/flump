@@ -228,7 +228,7 @@ export const AddSavingsAccountDialog: FC<AddSavingsAccountDialogProps> = ({
           <div className={formGroupStyle}>
             <label htmlFor="savings-account-interest">
               <FLPText fontSize="sm" fontWeight="medium">
-                Interest Rate / APY (%)
+                Interest rate / AER (%)
               </FLPText>
             </label>
             <input

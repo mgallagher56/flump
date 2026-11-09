@@ -174,7 +174,7 @@ export const SavingsSummaryCards: FC<SavingsSummaryCardsProps> = ({
       <FLPCard className={cardStyle(isMobileVariant)} isMobile={isMobileVariant}>
         <div className={headerRowStyle}>
           <FLPText color="text.muted" fontSize="sm" fontWeight="medium">
-            Portfolio Weighted APY
+            Portfolio weighted AER
           </FLPText>
           <div className={iconContainerStyle("#f59e0b", "rgba(245, 158, 11, 0.12)")}>
             <FaPercent />
@@ -214,7 +214,7 @@ export const SavingsSummaryCards: FC<SavingsSummaryCardsProps> = ({
             {formatCurrency(Math.round(projectedTenYearBalance))}
           </FLPHeading>
           <FLPText color="text.muted" fontSize="xs" style={{ marginTop: "4px" }}>
-            Forecast with current regular contributions & APY
+            Forecast with current regular contributions and AER
           </FLPText>
         </div>
       </FLPCard>

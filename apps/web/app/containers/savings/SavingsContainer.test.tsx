@@ -78,7 +78,7 @@ describe("SavingsContainer", () => {
 
     expect(screen.getByText("Savings and compound growth")).toBeDefined();
     expect(screen.getByText("Total Savings Balance")).toBeDefined();
-    expect(screen.getByText("Savings & Investment Accounts")).toBeDefined();
+    expect(screen.getByText("Savings and investment accounts")).toBeDefined();
     expect(screen.getByText("Compound Interest Growth Forecaster")).toBeDefined();
   });
 
