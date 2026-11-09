@@ -68,3 +68,32 @@ export function decryptBankingToken(packedToken: string, keyOverride?: string): 
 
   return decrypted;
 }
+
+/**
+ * Checks whether a string conforms to the `iv:tag:ciphertext` packed format.
+ */
+export function isEncryptedToken(token: string): boolean {
+  if (!token || typeof token !== "string") return false;
+  const parts = token.split(":");
+  return (
+    parts.length === 3 &&
+    /^[0-9a-f]{24}$/i.test(parts[0]!) &&
+    /^[0-9a-f]{32}$/i.test(parts[1]!) &&
+    /^[0-9a-f]+$/i.test(parts[2]!)
+  );
+}
+
+/**
+ * Safely decrypts a banking token, falling back to returning the raw token if it is
+ * not encrypted or from a legacy plaintext store.
+ */
+export function safeDecryptBankingToken(token: string, keyOverride?: string): string {
+  if (!token) return token;
+  if (!isEncryptedToken(token)) return token;
+
+  try {
+    return decryptBankingToken(token, keyOverride);
+  } catch {
+    return token;
+  }
+}

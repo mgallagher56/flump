@@ -1,4 +1,11 @@
-export type BankingProviderName = "plaid" | "truelayer" | "csv" | "sandbox" | "manual";
+export type BankingProviderName =
+  | "plaid"
+  | "truelayer"
+  | "monzo"
+  | "starling"
+  | "csv"
+  | "sandbox"
+  | "manual";
 
 export type FlumpAccountCategory =
   | "CURRENT"
