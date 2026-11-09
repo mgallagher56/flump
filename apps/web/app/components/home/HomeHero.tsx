@@ -13,29 +13,30 @@ const heroContainerStyle = css({
   alignItems: "center",
   justifyContent: "center",
   textAlign: "center",
-  maxWidth: "5xl",
+  maxWidth: { base: "100%", lg: "1160px", xl: "1280px" },
   margin: "0 auto",
-  paddingTop: { base: "32px", md: "56px" },
-  paddingBottom: { base: "32px", md: "48px" },
+  paddingTop: { base: "48px", md: "72px", lg: "96px" },
+  paddingBottom: { base: "44px", md: "64px", lg: "80px" },
   paddingLeft: "16px",
   paddingRight: "16px",
+  position: "relative",
 });
 
 const badgeStyle = css({
   display: "inline-flex",
   alignItems: "center",
-  gap: "8px",
+  gap: "10px",
   borderRadius: "full",
   backgroundColor: "rgba(99, 102, 241, 0.12)",
   border: "1px solid",
-  borderColor: "rgba(99, 102, 241, 0.25)",
+  borderColor: "rgba(99, 102, 241, 0.28)",
   color: "primary",
-  padding: "6px 16px",
-  fontSize: "xs",
+  padding: "8px 20px",
+  fontSize: "sm",
   fontWeight: "semibold",
-  marginBottom: "24px",
+  marginBottom: "28px",
   letterSpacing: "0.02em",
-  boxShadow: "0 1px 2px rgba(0, 0, 0, 0.05)",
+  boxShadow: "0 2px 8px rgba(99, 102, 241, 0.15)",
 });
 
 const ctaStackStyle = css({
@@ -43,8 +44,8 @@ const ctaStackStyle = css({
   flexDirection: { base: "column", sm: "row" },
   alignItems: "center",
   justifyContent: "center",
-  gap: "16px",
-  marginTop: "28px",
+  gap: "18px",
+  marginTop: "36px",
   width: { base: "100%", sm: "auto" },
 });
 
@@ -53,13 +54,14 @@ const trustBarContainer = css({
   gridTemplateColumns: { base: "repeat(2, 1fr)", md: "repeat(4, 1fr)" },
   gap: "16px",
   width: "100%",
-  maxWidth: "4xl",
-  marginTop: { base: "36px", md: "48px" },
-  padding: "16px 20px",
+  maxWidth: "1060px",
+  marginTop: { base: "40px", md: "52px" },
+  padding: "18px 24px",
   backgroundColor: "surface",
   border: "1px solid",
   borderColor: "border",
   borderRadius: "xl",
+  boxShadow: "card",
 });
 
 const trustItem = css({
@@ -81,130 +83,188 @@ const trustIconStyle = css({
 export const HomeHero: FC = () => {
   return (
     <section aria-labelledby="hero-heading" className={heroContainerStyle}>
-      <span className={badgeStyle}>
-        <span>🇬🇧</span> Built Specifically for UK Personal Finance & HMRC Rules
-      </span>
-
-      <h1
-        id="hero-heading"
+      {/* Ambient Hero Spotlight Glow */}
+      <div
+        aria-hidden="true"
         style={{
-          fontSize: "clamp(2.5rem, 5.5vw, 4.25rem)",
-          fontWeight: "900",
-          lineHeight: "1.1",
-          letterSpacing: "-0.035em",
-          color: "var(--colors-text-primary)",
-          fontFamily: "var(--fonts-display, 'Plus Jakarta Sans', sans-serif)",
-          margin: "0 0 16px 0",
-          textAlign: "center",
+          position: "absolute",
+          top: "0",
+          left: "50%",
+          transform: "translateX(-50%)",
+          width: "min(100vw, 1100px)",
+          height: "520px",
+          background:
+            "radial-gradient(ellipse 70% 60% at 50% 10%, rgba(99, 102, 241, 0.16) 0%, rgba(16, 185, 129, 0.05) 45%, transparent 75%)",
+          pointerEvents: "none",
+          zIndex: 0,
+        }}
+      />
+
+      <div
+        style={{
+          position: "relative",
+          zIndex: 1,
+          width: "100%",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
         }}
       >
-        Get out of the red. <br />
-        <span
+        <span className={badgeStyle}>
+          <span>🇬🇧</span> Built Specifically for UK Personal Finance & HMRC Rules
+        </span>
+
+        <h1
+          id="hero-heading"
           style={{
-            background: "linear-gradient(135deg, #EF4444 0%, #F59E0B 50%, #10B981 100%)",
-            backgroundClip: "text",
-            WebkitBackgroundClip: "text",
-            color: "transparent",
-            display: "inline-block",
+            fontSize: "clamp(2.875rem, 6.5vw, 5.25rem)",
+            fontWeight: "900",
+            lineHeight: "1.08",
+            letterSpacing: "-0.04em",
+            color: "var(--colors-text-primary)",
+            fontFamily: "var(--fonts-display, 'Plus Jakarta Sans', sans-serif)",
+            margin: "0 0 20px 0",
+            textAlign: "center",
+            maxWidth: "960px",
           }}
         >
-          Build into the black.
-        </span>
-      </h1>
-
-      <FLPText
-        color="text.muted"
-        fontSize="lg"
-        lineHeight="1.6"
-        style={{ maxWidth: "680px", margin: "0 auto", fontSize: "1.2rem" }}
-      >
-        Get your complete UK financial baseline in 60 seconds. Know your Net Worth, weekly
-        Safe-to-Spend cash, and emergency runway—then drill down into taxes, mortgages, or debt
-        payoff when you're ready.
-      </FLPText>
-
-      <div className={ctaStackStyle}>
-        <FLPButton size="lg">
-          <RouterLink
+          Get out of the red. <br />
+          <span
             style={{
-              color: "inherit",
-              textDecoration: "none",
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "8px",
+              background: "linear-gradient(135deg, #EF4444 0%, #F59E0B 45%, #10B981 100%)",
+              backgroundClip: "text",
+              WebkitBackgroundClip: "text",
+              color: "transparent",
+              display: "inline-block",
             }}
-            to="/signUp"
           >
-            Get Your 60-Second Baseline Free <FiArrowRight aria-hidden="true" />
-          </RouterLink>
-        </FLPButton>
-        <FLPButton size="lg" variant="outline">
-          <RouterLink style={{ color: "inherit", textDecoration: "none" }} to="/login">
-            Sign In to Account
-          </RouterLink>
-        </FLPButton>
-        <FLPButton size="lg" variant="ghost">
-          <RouterLink
-            style={{
-              color: "inherit",
-              textDecoration: "none",
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "6px",
-            }}
-            to="/?demo=true"
-          >
-            Explore Live Sandbox →
-          </RouterLink>
-        </FLPButton>
-      </div>
+            Build into the black.
+          </span>
+        </h1>
 
-      {/* 3D Wealth Engine Hero Illustration */}
-      <div
-        className={css({
-          maxWidth: "820px",
-          width: "100%",
-          margin: "36px auto 0",
-          borderRadius: "2xl",
-          overflow: "hidden",
-          border: "1px solid",
-          borderColor: "border",
-          boxShadow: "0 16px 36px rgba(0, 0, 0, 0.08)",
-        })}
-      >
-        <img
-          src="/illustrations/hero-wealth-engine.jpg"
-          alt="3D Wealth Engine visualising UK net worth progression"
-          loading="eager"
-          style={{
+        <FLPText
+          color="text.muted"
+          fontSize="lg"
+          lineHeight="1.65"
+          style={{ maxWidth: "780px", margin: "0 auto", fontSize: "clamp(1.15rem, 2vw, 1.35rem)" }}
+        >
+          Get your complete UK financial baseline in 60 seconds. Know your Net Worth, weekly
+          Safe-to-Spend cash, and emergency runway—then drill down into taxes, mortgages, or debt
+          payoff when you're ready.
+        </FLPText>
+
+        <div className={ctaStackStyle}>
+          <FLPButton
+            size="lg"
+            style={{
+              padding: "16px 36px",
+              fontSize: "1.0625rem",
+              fontWeight: "700",
+              borderRadius: "12px",
+              boxShadow: "0 10px 28px -4px rgba(99, 102, 241, 0.45)",
+            }}
+          >
+            <RouterLink
+              style={{
+                color: "inherit",
+                textDecoration: "none",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "10px",
+              }}
+              to="/signUp"
+            >
+              Get Your 60-Second Baseline Free <FiArrowRight aria-hidden="true" />
+            </RouterLink>
+          </FLPButton>
+          <FLPButton
+            size="lg"
+            variant="outline"
+            style={{
+              padding: "16px 28px",
+              fontSize: "1.0625rem",
+              borderRadius: "12px",
+            }}
+          >
+            <RouterLink style={{ color: "inherit", textDecoration: "none" }} to="/login">
+              Sign In to Account
+            </RouterLink>
+          </FLPButton>
+          <FLPButton
+            size="lg"
+            variant="ghost"
+            style={{
+              padding: "16px 24px",
+              fontSize: "1.0625rem",
+              borderRadius: "12px",
+            }}
+          >
+            <RouterLink
+              style={{
+                color: "inherit",
+                textDecoration: "none",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "8px",
+              }}
+              to="/?demo=true"
+            >
+              Explore Live Sandbox →
+            </RouterLink>
+          </FLPButton>
+        </div>
+
+        {/* 3D Wealth Engine Hero Illustration */}
+        <div
+          className={css({
+            maxWidth: "1060px",
             width: "100%",
-            maxHeight: "320px",
-            objectFit: "cover",
-            objectPosition: "center 42%",
-            display: "block",
-          }}
-        />
-      </div>
+            margin: "48px auto 0",
+            borderRadius: "3xl",
+            overflow: "hidden",
+            border: "1px solid",
+            borderColor: "border",
+            boxShadow: {
+              base: "0 20px 48px rgba(0, 0, 0, 0.1)",
+              _dark: "0 28px 64px rgba(0, 0, 0, 0.6), 0 0 60px rgba(99, 102, 241, 0.18)",
+            },
+            position: "relative",
+          })}
+        >
+          <img
+            src="/illustrations/hero-wealth-engine.jpg"
+            alt="3D Wealth Engine visualising UK net worth progression"
+            loading="eager"
+            style={{
+              width: "100%",
+              maxHeight: "560px",
+              objectFit: "cover",
+              objectPosition: "center 48%",
+              display: "block",
+            }}
+          />
+        </div>
 
-      {/* Clean Baseline Snapshot Preview Card */}
-      <WebBaselineSnapshotPreview />
+        {/* Clean Baseline Snapshot Preview Card */}
+        <WebBaselineSnapshotPreview />
 
-      <div className={trustBarContainer}>
-        <div className={trustItem}>
-          <FiCheckCircle aria-hidden="true" className={trustIconStyle} />
-          <span>FCA Read-Only Open Banking & 256-Bit TLS</span>
-        </div>
-        <div className={trustItem}>
-          <FiPieChart aria-hidden="true" className={trustIconStyle} />
-          <span>Section 24 Landlord & 2026/27 Tax Bands</span>
-        </div>
-        <div className={trustItem}>
-          <FiTrendingUp aria-hidden="true" className={trustIconStyle} />
-          <span>£20k ISA & £60k Pension Allowances</span>
-        </div>
-        <div className={trustItem}>
-          <FiLock aria-hidden="true" className={trustIconStyle} />
-          <span>Zero Ad Tracking or Data Selling</span>
+        <div className={trustBarContainer}>
+          <div className={trustItem}>
+            <FiCheckCircle aria-hidden="true" className={trustIconStyle} />
+            <span>FCA Read-Only Open Banking & 256-Bit TLS</span>
+          </div>
+          <div className={trustItem}>
+            <FiPieChart aria-hidden="true" className={trustIconStyle} />
+            <span>Section 24 Landlord & 2026/27 Tax Bands</span>
+          </div>
+          <div className={trustItem}>
+            <FiTrendingUp aria-hidden="true" className={trustIconStyle} />
+            <span>£20k ISA & £60k Pension Allowances</span>
+          </div>
+          <div className={trustItem}>
+            <FiLock aria-hidden="true" className={trustIconStyle} />
+            <span>Zero Ad Tracking or Data Selling</span>
+          </div>
         </div>
       </div>
     </section>

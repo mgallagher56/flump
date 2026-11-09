@@ -36,7 +36,7 @@ export const HomePage: FC = () => {
         <section
           style={{
             position: "relative",
-            padding: "64px 16px 56px",
+            padding: "80px 16px 72px",
             textAlign: "center",
             overflow: "hidden",
             backgroundColor: "var(--colors-background)",
@@ -46,33 +46,34 @@ export const HomePage: FC = () => {
           <div
             style={{
               position: "absolute",
-              top: "-100px",
+              top: "-80px",
               left: "50%",
               transform: "translateX(-50%)",
-              width: "700px",
-              height: "400px",
+              width: "1100px",
+              height: "520px",
               background:
-                "radial-gradient(circle, rgba(99, 102, 241, 0.12) 0%, rgba(16, 185, 129, 0.05) 50%, transparent 70%)",
+                "radial-gradient(ellipse 70% 60% at 50% 10%, rgba(99, 102, 241, 0.16) 0%, rgba(16, 185, 129, 0.05) 45%, transparent 75%)",
               pointerEvents: "none",
               zIndex: 0,
             }}
           />
 
           <div
-            style={{ maxWidth: "850px", margin: "0 auto", position: "relative", zIndex: 1 }}
-            className={stack({ gap: "6", align: "center" })}
+            style={{ maxWidth: "1060px", margin: "0 auto", position: "relative", zIndex: 1 }}
+            className={stack({ gap: "7", align: "center" })}
           >
             <span
               style={{
                 display: "inline-block",
-                padding: "6px 14px",
+                padding: "8px 18px",
                 borderRadius: "9999px",
                 backgroundColor: "var(--colors-surface-tinted)",
                 color: "var(--colors-primary)",
-                fontSize: "12px",
+                fontSize: "13px",
                 fontWeight: "700",
                 letterSpacing: "0.04em",
                 fontFamily: "var(--fonts-mono)",
+                boxShadow: "0 2px 8px rgba(99, 102, 241, 0.15)",
               }}
             >
               🇬🇧 ENGINEERED FOR UK RULES & HMRC THRESHOLDS
@@ -80,19 +81,20 @@ export const HomePage: FC = () => {
 
             <h1
               style={{
-                fontSize: "clamp(2.5rem, 5.5vw, 4.25rem)",
+                fontSize: "clamp(2.875rem, 6.5vw, 5.25rem)",
                 fontWeight: "900",
-                lineHeight: "1.1",
-                letterSpacing: "-0.035em",
+                lineHeight: "1.08",
+                letterSpacing: "-0.04em",
                 color: "var(--colors-text-primary)",
                 fontFamily: "var(--fonts-display)",
                 margin: 0,
+                maxWidth: "960px",
               }}
             >
               Get out of the red. <br />
               <span
                 style={{
-                  background: "linear-gradient(135deg, #EF4444 0%, #F59E0B 50%, #10B981 100%)",
+                  background: "linear-gradient(135deg, #EF4444 0%, #F59E0B 45%, #10B981 100%)",
                   backgroundClip: "text",
                   WebkitBackgroundClip: "text",
                   color: "transparent",
@@ -104,10 +106,10 @@ export const HomePage: FC = () => {
 
             <p
               style={{
-                fontSize: "1.2rem",
+                fontSize: "clamp(1.15rem, 2vw, 1.35rem)",
                 color: "var(--colors-text-secondary)",
-                maxWidth: "660px",
-                lineHeight: "1.6",
+                maxWidth: "780px",
+                lineHeight: "1.65",
                 margin: 0,
               }}
             >
@@ -118,7 +120,17 @@ export const HomePage: FC = () => {
 
             <div className={flex({ gap: "4", flexWrap: "wrap", justify: "center" })}>
               <a href={`${appUrl}/signUp`} style={{ textDecoration: "none" }}>
-                <Button size="lg" variant="primary">
+                <Button
+                  size="lg"
+                  variant="primary"
+                  style={{
+                    padding: "16px 36px",
+                    fontSize: "1.0625rem",
+                    fontWeight: "700",
+                    borderRadius: "12px",
+                    boxShadow: "0 10px 28px -4px rgba(99, 102, 241, 0.45)",
+                  }}
+                >
                   Get Your 60-Second Baseline Free →
                 </Button>
               </a>
@@ -128,7 +140,15 @@ export const HomePage: FC = () => {
                 target="_blank"
                 rel="noreferrer"
               >
-                <Button size="lg" variant="outline">
+                <Button
+                  size="lg"
+                  variant="outline"
+                  style={{
+                    padding: "16px 28px",
+                    fontSize: "1.0625rem",
+                    borderRadius: "12px",
+                  }}
+                >
                   Explore Live Demo Sandbox
                 </Button>
               </a>
@@ -138,14 +158,14 @@ export const HomePage: FC = () => {
           {/* 3D Wealth Engine Hero Illustration */}
           <div
             style={{
-              maxWidth: "820px",
-              margin: "40px auto 0",
+              maxWidth: "1060px",
+              margin: "48px auto 0",
               position: "relative",
               zIndex: 1,
-              borderRadius: "24px",
+              borderRadius: "28px",
               overflow: "hidden",
               border: "1px solid var(--colors-border)",
-              boxShadow: "0 20px 48px -12px rgba(0, 0, 0, 0.12)",
+              boxShadow: "0 24px 56px -12px rgba(0, 0, 0, 0.16)",
             }}
           >
             <img
@@ -154,16 +174,16 @@ export const HomePage: FC = () => {
               loading="eager"
               style={{
                 width: "100%",
-                maxHeight: "320px",
+                maxHeight: "560px",
                 objectFit: "cover",
-                objectPosition: "center 42%",
+                objectPosition: "center 48%",
                 display: "block",
               }}
             />
           </div>
 
           {/* Clean Baseline Snapshot Preview Card with Cashflow Bar */}
-          <div style={{ marginTop: "32px", position: "relative", zIndex: 1 }}>
+          <div style={{ marginTop: "36px", position: "relative", zIndex: 1 }}>
             <BaselineSnapshotPreview />
           </div>
         </section>
