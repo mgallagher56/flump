@@ -128,30 +128,11 @@ export class UserProfileController {
         : ["accounts", "budget", "savings", "pension", "mortgage", "forecast", "tax"],
       dashboardWidgets: Array.isArray(profile.dashboardWidgets)
         ? profile.dashboardWidgets
-        : [
-            "financialHealth",
-            "accounts",
-            "budget",
-            "savings",
-            "pension",
-            "mortgage",
-            "forecast",
-            "tax",
-          ],
+        : ["accounts", "budget", "savings", "pension", "mortgage", "forecast", "tax"],
       dashboardWidgetOrder: Array.isArray(profile.dashboardWidgetOrder)
         ? profile.dashboardWidgetOrder
-        : [
-            "financialHealth",
-            "accounts",
-            "budget",
-            "savings",
-            "pension",
-            "mortgage",
-            "forecast",
-            "tax",
-          ],
+        : ["accounts", "budget", "savings", "pension", "mortgage", "forecast", "tax"],
       dashboardWidgetSizes: profile.dashboardWidgetSizes || {
-        financialHealth: "wide",
         accounts: "wide",
       },
       dashboardWidgetConfig: profile.dashboardWidgetConfig || {},
@@ -203,7 +184,6 @@ export class UserProfileController {
           setupChecklistCompletedSteps: [],
           enabledPages: ["accounts", "budget", "savings", "pension", "mortgage", "forecast", "tax"],
           dashboardWidgets: [
-            "financialHealth",
             "accounts",
             "budget",
             "savings",
@@ -213,7 +193,6 @@ export class UserProfileController {
             "tax",
           ],
           dashboardWidgetOrder: [
-            "financialHealth",
             "accounts",
             "budget",
             "savings",
@@ -222,7 +201,7 @@ export class UserProfileController {
             "forecast",
             "tax",
           ],
-          dashboardWidgetSizes: { financialHealth: "wide", accounts: "wide" },
+          dashboardWidgetSizes: { accounts: "wide" },
           dashboardWidgetConfig: {},
           onboardingCompleted: false,
         }),

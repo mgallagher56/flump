@@ -23,7 +23,16 @@ vi.mock("~/hooks/useUserProfile", async (importOriginal) => {
         userId: "u1",
         displayName: "Alex",
         currency: "GBP",
-        enabledPages: ["accounts", "budget", "savings", "pension", "mortgage", "forecast", "tax"],
+        enabledPages: [
+          "accounts",
+          "budget",
+          "savings",
+          "pension",
+          "mortgage",
+          "forecast",
+          "tax",
+          "debt",
+        ],
         dashboardWidgets: [
           "accounts",
           "budget",
@@ -173,22 +182,20 @@ describe("HomeDashboard", () => {
       ),
     ).toBeDefined();
 
-    // Click "Add" button for Financial Health Summary
-    const addBtn = screen.getByLabelText("Enable Financial Health Summary widget");
+    // Click "Add" button for Debt Crusher
+    const addBtn = screen.getByLabelText("Enable Debt Crusher widget");
     fireEvent.click(addBtn);
 
-    // Verify updateProfile was called with financialHealth added to widgets and at the bottom of the order
+    // Verify updateProfile was called with debt added to widgets and at the bottom of the order
     expect(mockUpdateProfile).toHaveBeenCalledWith(
       expect.objectContaining({
-        dashboardWidgets: expect.arrayContaining(["financialHealth"]),
-        dashboardWidgetOrder: expect.arrayContaining(["financialHealth"]),
+        dashboardWidgets: expect.arrayContaining(["debt"]),
+        dashboardWidgetOrder: expect.arrayContaining(["debt"]),
       }),
     );
-    // Specifically check that financialHealth was appended to the bottom
+    // Specifically check that debt was appended to the bottom
     const lastCall = mockUpdateProfile.mock.calls[mockUpdateProfile.mock.calls.length - 1][0];
-    expect(lastCall.dashboardWidgetOrder[lastCall.dashboardWidgetOrder.length - 1]).toBe(
-      "financialHealth",
-    );
+    expect(lastCall.dashboardWidgetOrder[lastCall.dashboardWidgetOrder.length - 1]).toBe("debt");
   });
 
   it("does not render widgets when modules are unconfigured and displays build dashboard prompt", () => {

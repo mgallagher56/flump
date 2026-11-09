@@ -28,7 +28,6 @@ import {
 import { AccountsWidget } from "./widgets/AccountsWidget";
 import { BudgetWidget } from "./widgets/BudgetWidget";
 import { DebtWidget } from "./widgets/DebtWidget";
-import { FinancialHealthWidget } from "./widgets/FinancialHealthWidget";
 import { ForecastWidget } from "./widgets/ForecastWidget";
 import { MortgageWidget } from "./widgets/MortgageWidget";
 import { PensionWidget } from "./widgets/PensionWidget";
@@ -104,14 +103,13 @@ export const HomeDashboard: FC<HomeDashboardProps> = ({
 
   // Candidate widgets applicable to the user
   const availableWidgetKeys = useMemo<DashboardWidgetKey[]>(() => {
-    return ["financialHealth", ...enabledPages];
+    return [...enabledPages];
   }, [enabledPages]);
 
   // Active dashboard widgets
   const dashboardWidgets = useMemo<DashboardWidgetKey[]>(() => {
     const raw = (profile.dashboardWidgets as DashboardWidgetKey[]) || DEFAULT_DASHBOARD_WIDGETS;
-    // Include financialHealth always if selected, plus any widget whose page is enabled
-    return raw.filter((k) => k === "financialHealth" || enabledPages.includes(k as AppPageKey));
+    return raw.filter((k) => enabledPages.includes(k as AppPageKey));
   }, [profile.dashboardWidgets, enabledPages]);
 
   // Disabled widgets: applicable widgets currently removed from dashboardWidgets
@@ -122,13 +120,7 @@ export const HomeDashboard: FC<HomeDashboardProps> = ({
   // Widget order
   const widgetOrder = useMemo<DashboardWidgetKey[]>(() => {
     const raw = (profile.dashboardWidgetOrder as DashboardWidgetKey[]) || DEFAULT_DASHBOARD_WIDGETS;
-    const filtered = raw.filter(
-      (k) => k === "financialHealth" || enabledPages.includes(k as AppPageKey),
-    );
-    // Ensure financialHealth is in the list
-    if (!filtered.includes("financialHealth")) {
-      filtered.unshift("financialHealth");
-    }
+    const filtered = raw.filter((k) => enabledPages.includes(k as AppPageKey));
     // Append any missing enabled widgets
     enabledPages.forEach((k) => {
       if (!filtered.includes(k)) filtered.push(k);
@@ -193,8 +185,8 @@ export const HomeDashboard: FC<HomeDashboardProps> = ({
 
   const handleResetLayout = async () => {
     await updateProfile({
-      dashboardWidgets: ["financialHealth", ...enabledPages],
-      dashboardWidgetOrder: ["financialHealth", ...ALL_PAGE_KEYS],
+      dashboardWidgets: [...enabledPages],
+      dashboardWidgetOrder: [...ALL_PAGE_KEYS],
       dashboardWidgetSizes: { ...DEFAULT_WIDGET_SIZES },
       dashboardWidgetConfig: {},
     });
@@ -269,22 +261,6 @@ export const HomeDashboard: FC<HomeDashboardProps> = ({
             (accountsData?.totalLiabilities ?? 0) > 0 ||
             checklistProps.completedSteps?.includes("debt"),
         );
-      case "financialHealth": {
-        // Financial health is unlocked if at least one financial section is configured
-        const otherConfigured = (
-          [
-            "accounts",
-            "budget",
-            "debt",
-            "savings",
-            "pension",
-            "mortgage",
-            "forecast",
-            "tax",
-          ] as AppPageKey[]
-        ).some((k) => enabledPages.includes(k) && isModuleConfigured(k));
-        return otherConfigured;
-      }
       default:
         return false;
     }
@@ -607,22 +583,6 @@ export const HomeDashboard: FC<HomeDashboardProps> = ({
             };
 
             switch (key) {
-              case "financialHealth":
-                return (
-                  <FinancialHealthWidget
-                    key="financialHealth"
-                    {...commonProps}
-                    config={cfg}
-                    enabledPages={enabledPages}
-                    accountsData={accountsData}
-                    budgetData={budgetData}
-                    savingsData={savingsData}
-                    pensionData={pensionData}
-                    mortgageData={mortgageData}
-                    forecastData={forecastData}
-                    taxData={taxData}
-                  />
-                );
               case "accounts":
                 return (
                   <AccountsWidget

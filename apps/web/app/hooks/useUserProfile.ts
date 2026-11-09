@@ -101,7 +101,6 @@ export const DEFAULT_PROFILE: UserProfile = {
   setupChecklistCompletedSteps: [],
   enabledPages: ["accounts", "budget", "debt", "savings", "pension", "mortgage", "forecast", "tax"],
   dashboardWidgets: [
-    "financialHealth",
     "accounts",
     "budget",
     "debt",
@@ -112,7 +111,6 @@ export const DEFAULT_PROFILE: UserProfile = {
     "tax",
   ],
   dashboardWidgetOrder: [
-    "financialHealth",
     "accounts",
     "budget",
     "debt",
@@ -122,7 +120,7 @@ export const DEFAULT_PROFILE: UserProfile = {
     "forecast",
     "tax",
   ],
-  dashboardWidgetSizes: { financialHealth: "wide", accounts: "wide", debt: "wide" },
+  dashboardWidgetSizes: { accounts: "wide", debt: "wide" },
   dashboardWidgetConfig: {},
   customBudgetCategories: [],
   hasResetFinancialData: false,
