@@ -193,6 +193,89 @@ export const ToolsIndexPage: FC = () => {
             </p>
           </div>
 
+          {/* Featured Spotlight: 100k Tax Cliff Bridge */}
+          <Link
+            to="/tools/uk-100k-tax-trap-calculator"
+            style={{
+              textDecoration: "none",
+              color: "inherit",
+              display: "block",
+              marginBottom: "32px",
+            }}
+          >
+            <div
+              className={css({
+                backgroundColor: "card",
+                border: "1px solid",
+                borderColor: "border",
+                borderRadius: "2xl",
+                overflow: "hidden",
+                display: "grid",
+                gridTemplateColumns: { base: "1fr", md: "5fr 7fr" },
+                boxShadow: "card",
+                transition: "all 0.2s ease",
+                _hover: {
+                  transform: "translateY(-3px)",
+                  borderColor: "primary",
+                  boxShadow: "cardHover",
+                },
+              })}
+            >
+              <div style={{ height: "100%", minHeight: "200px", maxHeight: "260px" }}>
+                <img
+                  src="/illustrations/tax-bridge.jpg"
+                  alt="3D UK Tax Cliff Bridge visualising Personal Allowance taper"
+                  loading="lazy"
+                  style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+                />
+              </div>
+              <div
+                style={{
+                  padding: "24px 28px",
+                  display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "center",
+                  gap: "10px",
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                  <span className={badgeStyle}>FEATURED CALCULATOR</span>
+                  <span
+                    style={{ fontSize: "12px", color: "var(--colors-primary)", fontWeight: "700" }}
+                  >
+                    60% Effective Marginal Rate
+                  </span>
+                </div>
+                <h2
+                  style={{
+                    fontFamily: "var(--fonts-display)",
+                    fontSize: "1.35rem",
+                    fontWeight: "700",
+                    margin: 0,
+                    color: "var(--colors-text-primary)",
+                  }}
+                >
+                  Bridge the £100k–£125k Tax Trap & Childcare Cliff
+                </h2>
+                <p
+                  style={{
+                    fontSize: "14px",
+                    color: "var(--colors-text-secondary)",
+                    margin: 0,
+                    lineHeight: "1.5",
+                  }}
+                >
+                  Model how Personal Allowance reduction combined with student loan and childcare
+                  loss creates a 60%+ marginal tax trap—and compute the exact salary sacrifice to
+                  bridge across it safely.
+                </p>
+                <div className={ctaLinkStyle} style={{ marginTop: "4px" }}>
+                  Run £100k Tax Trap Simulation <FiArrowRight />
+                </div>
+              </div>
+            </div>
+          </Link>
+
           <div className={grid({ columns: { base: 1, md: 2, lg: 3 }, gap: "6" })}>
             {TOOLS_CATALOG.map((tool) => (
               <Link key={tool.slug} to={`/tools/${tool.slug}`} className={toolCardStyle}>
