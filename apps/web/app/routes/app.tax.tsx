@@ -2,6 +2,7 @@ import type { ReactElement } from "react";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 import { data } from "react-router";
 import TaxContainer from "~/containers/tax/TaxContainer";
+import { loadWorkspaceSnapshot } from "~/services/backend-client.server";
 import { getAuthSession } from "~/utils/utils";
 
 export const action = async (args: ActionFunctionArgs) => {
@@ -128,35 +129,10 @@ export const action = async (args: ActionFunctionArgs) => {
 };
 
 export const loader = async (args: LoaderFunctionArgs) => {
-  const { user, accessToken } = await getAuthSession(args, { ensureSignedIn: true });
-  const apiUrl = process.env.VITE_API_URL || "http://localhost:4000";
-  const headers = { Authorization: `Bearer ${accessToken || "mock-session-token"}` };
-
-  try {
-    const [recordsRes, profileRes, accountsRes] = await Promise.all([
-      fetch(`${apiUrl}/tax-records`, { headers }),
-      fetch(`${apiUrl}/user-profile`, { headers }),
-      fetch(`${apiUrl}/accounts`, { headers }),
-    ]);
-
-    if (!recordsRes.ok || !profileRes.ok) {
-      throw new Error("Failed to fetch tax route loader data");
-    }
-
-    const records = await recordsRes.json();
-    const userProfile = await profileRes.json();
-    const accounts = accountsRes.ok ? await accountsRes.json() : [];
-
-    return data({ records, userProfile, accounts, user });
-  } catch (error) {
-    console.error("Tax route loader error:", error);
-    return data({
-      records: [],
-      userProfile: null,
-      accounts: [],
-      user,
-    });
-  }
+  const { taxRecords, userProfile, accounts, user } = await loadWorkspaceSnapshot(args, {
+    includeTax: true,
+  });
+  return data({ records: taxRecords, userProfile, accounts, user });
 };
 
 const TaxRoute = (): ReactElement => {

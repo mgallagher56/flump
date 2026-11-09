@@ -2,6 +2,7 @@ import type { ReactElement } from "react";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 import { data } from "react-router";
 import AccountsContainer from "~/containers/accounts/accountsContainer/AccountsContainer";
+import { loadWorkspaceSnapshot } from "~/services/backend-client.server";
 import { getAuthSession } from "~/utils/utils";
 
 export const action = async (args: ActionFunctionArgs) => {
@@ -91,49 +92,10 @@ export const action = async (args: ActionFunctionArgs) => {
 };
 
 export const loader = async (args: LoaderFunctionArgs) => {
-  const { user, accessToken } = await getAuthSession(args, {
-    ensureSignedIn: true,
+  const { accounts, accountDetails, bankConnections, user } = await loadWorkspaceSnapshot(args, {
+    includeConnections: true,
   });
-
-  const apiUrl = process.env.VITE_API_URL || "http://localhost:4000";
-
-  try {
-    const [accountsRes, detailsRes, connectionsRes] = await Promise.all([
-      fetch(`${apiUrl}/accounts`, {
-        headers: {
-          Authorization: `Bearer ${accessToken || "mock-session-token"}`,
-        },
-      }),
-      fetch(`${apiUrl}/account-details`, {
-        headers: {
-          Authorization: `Bearer ${accessToken || "mock-session-token"}`,
-        },
-      }),
-      fetch(`${apiUrl}/bank-connections`, {
-        headers: {
-          Authorization: `Bearer ${accessToken || "mock-session-token"}`,
-        },
-      }),
-    ]);
-
-    if (!accountsRes.ok || !detailsRes.ok || !connectionsRes.ok) {
-      throw new Error("Failed to fetch data from API");
-    }
-
-    const accounts = await accountsRes.json();
-    const accountDetails = await detailsRes.json();
-    const bankConnections = await connectionsRes.json();
-
-    return data({ accounts, accountDetails, bankConnections, user });
-  } catch (error) {
-    console.error("API fetch error in loader:", error);
-    return data({
-      accounts: [],
-      accountDetails: [],
-      bankConnections: [],
-      user,
-    });
-  }
+  return data({ accounts, accountDetails, bankConnections, user });
 };
 
 const Accounts = (): ReactElement<ReactElement> => {
