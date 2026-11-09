@@ -258,7 +258,7 @@ export const ToolPage: FC = () => {
                 fontWeight: "600",
               }}
             >
-              <FiArrowLeft /> All UK Calculators
+              <FiArrowLeft /> All UK calculators
             </Link>
           </div>
 
@@ -627,7 +627,7 @@ export const ToolPage: FC = () => {
                   <label className={inputGroupStyle}>
                     <span className={labelStyle}>
                       <span>Mortgage Rate: {mortgageRate}%</span>
-                      <span>Expected ISA APY: {expectedIsaReturn}%</span>
+                      <span>Expected ISA annual return: {expectedIsaReturn}%</span>
                     </span>
                     <input
                       type="range"

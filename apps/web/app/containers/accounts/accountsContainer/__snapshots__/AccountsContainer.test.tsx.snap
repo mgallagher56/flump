@@ -15,7 +15,7 @@ exports[`<AccountsContainer /> > should render as expected when accounts exist 1
       <p
         class="ff_var(--fonts-body,_'Inter',_sans-serif) fs_sm fw_normal lh_1.6 ls_normal c_text.muted m_0 mt_4px"
       >
-        Unified Net Worth, Savings Yield & UK Allowance Hub
+        Unified net worth, savings yield and UK allowance hub
       </p>
     </div>
     <div
@@ -65,7 +65,7 @@ exports[`<AccountsContainer /> > should render as expected when accounts exist 1
       <p
         class="ff_var(--fonts-body,_'Inter',_sans-serif) fs_xs fw_semibold lh_1.6 ls_normal c_gray.500 tt_uppercase m_0 "
       >
-        Total Net Worth
+        Total net worth
       </p>
       <h2
         class="c_success.500 ff_var(--fonts-display,_'Plus_Jakarta_Sans',_sans-serif) ls_-0.025em fs_1.875rem fw_bold mt_1 lh_tight m_0 "
@@ -89,7 +89,7 @@ exports[`<AccountsContainer /> > should render as expected when accounts exist 1
       <p
         class="ff_var(--fonts-body,_'Inter',_sans-serif) fs_xs fw_semibold lh_1.6 ls_normal c_gray.500 tt_uppercase m_0 "
       >
-        Liquid Cash & Savings
+        Liquid cash and savings
       </p>
       <h2
         class="c_success.500 ff_var(--fonts-display,_'Plus_Jakarta_Sans',_sans-serif) ls_-0.025em fs_1.5rem fw_bold mt_1 lh_tight m_0 "
@@ -100,7 +100,7 @@ exports[`<AccountsContainer /> > should render as expected when accounts exist 1
       <p
         class="ff_var(--fonts-body,_'Inter',_sans-serif) fs_xs fw_normal lh_1.6 ls_normal c_text.muted m_0 "
       >
-        Weighted Yield:
+        Weighted yield:
          
         <strong>
           0.0%
@@ -246,7 +246,7 @@ exports[`<AccountsContainer /> > should render as expected when accounts exist 1
       <p
         class="ff_var(--fonts-body,_'Inter',_sans-serif) fs_xs fw_semibold lh_1.6 ls_normal c_text.muted tt_uppercase m_0 "
       >
-        Asset Allocation Preview
+        Asset allocation preview
       </p>
     </div>
     <div
@@ -330,7 +330,7 @@ exports[`<AccountsContainer /> > should render as expected when accounts exist 1
           tabindex="-1"
           type="button"
         >
-          All Accounts
+          All accounts
         </button>
         <button
           aria-controls="radix-_r_k_-content-cash-current"
@@ -344,7 +344,7 @@ exports[`<AccountsContainer /> > should render as expected when accounts exist 1
           tabindex="-1"
           type="button"
         >
-          Cash & Current
+          Cash & current
         </button>
         <button
           aria-controls="radix-_r_k_-content-savings-yield"
@@ -358,7 +358,7 @@ exports[`<AccountsContainer /> > should render as expected when accounts exist 1
           tabindex="-1"
           type="button"
         >
-          Savings & ISAs (Yield & Compound Forecaster)
+          Savings & ISAs (yield & compound forecaster)
         </button>
         <button
           aria-controls="radix-_r_k_-content-investments-pensions"
@@ -372,7 +372,7 @@ exports[`<AccountsContainer /> > should render as expected when accounts exist 1
           tabindex="-1"
           type="button"
         >
-          Investments & Pensions
+          Investments & pensions
         </button>
         <button
           aria-controls="radix-_r_k_-content-credit-debt"
@@ -386,7 +386,7 @@ exports[`<AccountsContainer /> > should render as expected when accounts exist 1
           tabindex="-1"
           type="button"
         >
-          Credit & Debt
+          Credit & debt
         </button>
         <button
           aria-controls="radix-_r_k_-content-mortgages"
@@ -414,7 +414,7 @@ exports[`<AccountsContainer /> > should render as expected when accounts exist 1
           tabindex="-1"
           type="button"
         >
-          Open Banking Connections
+          Open banking connections
         </button>
       </div>
       <div
@@ -685,7 +685,7 @@ exports[`<AccountsContainer /> > should render as expected when no accounts exis
       <p
         class="ff_var(--fonts-body,_'Inter',_sans-serif) fs_sm fw_normal lh_1.6 ls_normal c_text.muted m_0 mt_4px"
       >
-        Unified Net Worth, Savings Yield & UK Allowance Hub
+        Unified net worth, savings yield and UK allowance hub
       </p>
     </div>
     <div
@@ -754,7 +754,7 @@ exports[`<AccountsContainer /> > should render as expected when no accounts exis
           tabindex="-1"
           type="button"
         >
-          All Accounts
+          All accounts
         </button>
         <button
           aria-controls="radix-_r_6_-content-cash-current"
@@ -768,7 +768,7 @@ exports[`<AccountsContainer /> > should render as expected when no accounts exis
           tabindex="-1"
           type="button"
         >
-          Cash & Current
+          Cash & current
         </button>
         <button
           aria-controls="radix-_r_6_-content-savings-yield"
@@ -782,7 +782,7 @@ exports[`<AccountsContainer /> > should render as expected when no accounts exis
           tabindex="-1"
           type="button"
         >
-          Savings & ISAs (Yield & Compound Forecaster)
+          Savings & ISAs (yield & compound forecaster)
         </button>
         <button
           aria-controls="radix-_r_6_-content-investments-pensions"
@@ -796,7 +796,7 @@ exports[`<AccountsContainer /> > should render as expected when no accounts exis
           tabindex="-1"
           type="button"
         >
-          Investments & Pensions
+          Investments & pensions
         </button>
         <button
           aria-controls="radix-_r_6_-content-credit-debt"
@@ -810,7 +810,7 @@ exports[`<AccountsContainer /> > should render as expected when no accounts exis
           tabindex="-1"
           type="button"
         >
-          Credit & Debt
+          Credit & debt
         </button>
         <button
           aria-controls="radix-_r_6_-content-mortgages"
@@ -838,7 +838,7 @@ exports[`<AccountsContainer /> > should render as expected when no accounts exis
           tabindex="-1"
           type="button"
         >
-          Open Banking Connections
+          Open banking connections
         </button>
       </div>
       <div

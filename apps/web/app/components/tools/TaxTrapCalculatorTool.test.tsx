@@ -11,9 +11,9 @@ describe("TaxTrapCalculatorTool", () => {
   it("renders with default £115k income and 60% trap active badge", () => {
     render(<TaxTrapCalculatorTool />);
 
-    expect(screen.getByText(/interactive £100k–£125k tax trap modeler/i)).toBeDefined();
+    expect(screen.getByText(/interactive £100k–£125k tax trap modeller/i)).toBeDefined();
     expect(screen.getByText(/60% trap active/i)).toBeDefined();
-    expect(screen.getByText(/tax & ni saved/i)).toBeDefined();
+    expect(screen.getByText(/tax and ni saved/i)).toBeDefined();
     expect(screen.getByText(/personal allowance reclaimed/i)).toBeDefined();
   });
 
@@ -30,7 +30,7 @@ describe("TaxTrapCalculatorTool", () => {
     const setItemSpy = vi.spyOn(Storage.prototype, "setItem");
     render(<TaxTrapCalculatorTool />);
 
-    const ctaButton = screen.getByRole("button", { name: /save scenario & continue free/i });
+    const ctaButton = screen.getByRole("button", { name: /save scenario and continue free/i });
     fireEvent.click(ctaButton);
 
     expect(setItemSpy).toHaveBeenCalledWith("flump_onboarding_seed", expect.any(String));

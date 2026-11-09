@@ -413,7 +413,7 @@ export default function OnboardingRoute() {
             <HomeLogo />
             <div>
               <FLPHeading as="h3" color="blue.500" size="sm">
-                Flump Financial Baseline
+                Flump financial baseline
               </FLPHeading>
               <FLPText color="text.muted" fontSize="xs">
                 Set up your UK financial baseline in ~60 seconds
@@ -459,10 +459,10 @@ export default function OnboardingRoute() {
             </div>
             <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
               <FLPButton size="sm" variant="primary" onClick={handleFinish} disabled={isSubmitting}>
-                {isSubmitting ? "Launching..." : "Launch Dashboard with this Baseline (10s) →"}
+                {isSubmitting ? "Launching..." : "Launch dashboard with this baseline (10s) →"}
               </FLPButton>
               <FLPButton size="sm" variant="outline" onClick={() => setShowSeedBanner(false)}>
-                Review & Tweak Numbers
+                Review and tweak numbers
               </FLPButton>
             </div>
           </div>
@@ -559,7 +559,7 @@ export default function OnboardingRoute() {
             <div style={{ display: "flex", flexDirection: "column", gap: "18px" }}>
               <div>
                 <FLPHeading as="h2" size="md">
-                  Step 1: You & Income
+                  Step 1: You & income
                 </FLPHeading>
                 <FLPText color="text.muted" fontSize="xs" style={{ marginTop: "4px" }}>
                   Your age and income calculate your net take-home and 10–30 year compound
@@ -571,7 +571,7 @@ export default function OnboardingRoute() {
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px" }}>
                 <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
                   <label htmlFor="baseline-age" style={{ fontSize: "13px", fontWeight: 600 }}>
-                    Current Age
+                    Current age
                   </label>
                   <input
                     id="baseline-age"
@@ -787,7 +787,7 @@ export default function OnboardingRoute() {
 
               <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "8px" }}>
                 <FLPButton size="md" variant="primary" onClick={() => setStep(2)}>
-                  Next: Housing & Outgoings →
+                  Next: Housing & outgoings →
                 </FLPButton>
               </div>
             </div>
@@ -798,17 +798,17 @@ export default function OnboardingRoute() {
             <div style={{ display: "flex", flexDirection: "column", gap: "18px" }}>
               <div>
                 <FLPHeading as="h2" size="md">
-                  Step 2: Housing & Monthly Outgoings
+                  Step 2: Housing & monthly outgoings
                 </FLPHeading>
                 <FLPText color="text.muted" fontSize="xs" style={{ marginTop: "4px" }}>
-                  Your regular living costs power your Emergency Runway and Safe-to-Spend weekly
+                  Your regular living costs power your emergency runway and safe-to-spend weekly
                   allowance.
                 </FLPText>
               </div>
 
               {/* Housing Status Selector */}
               <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-                <span style={{ fontSize: "13px", fontWeight: 600 }}>Housing Status</span>
+                <span style={{ fontSize: "13px", fontWeight: 600 }}>Housing status</span>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "8px" }}>
                   <button
                     type="button"
@@ -1007,7 +1007,7 @@ export default function OnboardingRoute() {
                   <FaArrowLeft style={{ marginRight: "6px" }} /> Back
                 </FLPButton>
                 <FLPButton size="md" variant="primary" onClick={() => setStep(3)}>
-                  Next: Savings, Pension & Debt →
+                  Next: Savings, pension & debt →
                 </FLPButton>
               </div>
             </div>
@@ -1018,11 +1018,11 @@ export default function OnboardingRoute() {
             <div style={{ display: "flex", flexDirection: "column", gap: "18px" }}>
               <div>
                 <FLPHeading as="h2" size="md">
-                  Step 3: Savings, Pension & Debt
+                  Step 3: Savings, pension and debt
                 </FLPHeading>
                 <FLPText color="text.muted" fontSize="xs" style={{ marginTop: "4px" }}>
-                  Rough balances to unlock Net Worth, Emergency Runway, and your Retirement
-                  Forecaster.
+                  Rough balances to unlock net worth, emergency runway and your retirement
+                  forecaster.
                 </FLPText>
               </div>
 
@@ -1030,7 +1030,7 @@ export default function OnboardingRoute() {
               <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
                 <div style={{ display: "flex", justifyContent: "space-between" }}>
                   <label htmlFor="baseline-savings" style={{ fontSize: "13px", fontWeight: 600 }}>
-                    Total Cash & ISA Savings (£)
+                    Total cash and ISA savings (£)
                   </label>
                   <span style={{ fontWeight: 700, color: "#10b981" }}>
                     £{cashSavings.toLocaleString()}
@@ -1060,7 +1060,7 @@ export default function OnboardingRoute() {
                     htmlFor="baseline-pension-pot"
                     style={{ fontSize: "13px", fontWeight: 600 }}
                   >
-                    Current Pension Pot (£)
+                    Current pension pot (£)
                   </label>
                   <input
                     id="baseline-pension-pot"
@@ -1107,7 +1107,7 @@ export default function OnboardingRoute() {
               <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
                 <div style={{ display: "flex", justifyContent: "space-between" }}>
                   <label htmlFor="baseline-debt" style={{ fontSize: "13px", fontWeight: 600 }}>
-                    Total Cards & Personal Loans (Unsecured Debt)
+                    Total credit cards and personal loans (unsecured debt)
                   </label>
                   <span
                     style={{ fontWeight: 700, color: unsecuredDebt > 0 ? "#ef4444" : "inherit" }}
@@ -1145,7 +1145,7 @@ export default function OnboardingRoute() {
                   disabled={isSubmitting}
                   onClick={handleFinish}
                 >
-                  {isSubmitting ? "Launching..." : "Finish Setup & Launch Dashboard →"}
+                  {isSubmitting ? "Launching..." : "Finish setup and launch dashboard →"}
                 </FLPButton>
               </div>
             </div>
@@ -1174,7 +1174,7 @@ export default function OnboardingRoute() {
                   fontWeight: 600,
                 }}
               >
-                Net Take-Home
+                Net take-home
               </span>
               <div
                 style={{
@@ -1196,7 +1196,7 @@ export default function OnboardingRoute() {
                   fontWeight: 600,
                 }}
               >
-                Monthly Surplus
+                Monthly surplus
               </span>
               <div
                 style={{
@@ -1218,7 +1218,7 @@ export default function OnboardingRoute() {
                   fontWeight: 600,
                 }}
               >
-                Starting Net Worth
+                Starting net worth
               </span>
               <div
                 style={{

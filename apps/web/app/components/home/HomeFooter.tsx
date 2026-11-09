@@ -109,7 +109,7 @@ export const HomeFooter: FC = () => {
             Flump
           </FLPHeading>
           <FLPText color="text.muted" fontSize="sm" lineHeight="1.6" style={{ maxWidth: "380px" }}>
-            The UK wealth intelligence, tax optimization, and long-term financial decision platform.
+            The UK wealth intelligence, tax optimisation, and long-term financial decision platform.
             Open-source architecture engineered for clarity and privacy.
           </FLPText>
         </div>
@@ -121,22 +121,22 @@ export const HomeFooter: FC = () => {
           <ul className={linkListStyle}>
             <li>
               <a className={linkStyle} href="#features-heading">
-                Feature Pillars
+                Feature pillars
               </a>
             </li>
             <li>
               <a className={linkStyle} href="#interactive-demo">
-                Live Tax Sandbox
+                Live tax sandbox
               </a>
             </li>
             <li>
               <a className={linkStyle} href="#comparison-heading">
-                Spreadsheet Comparison
+                Spreadsheet comparison
               </a>
             </li>
             <li>
               <a className={linkStyle} href="#faq-heading">
-                FAQ
+                Frequently asked questions
               </a>
             </li>
           </ul>
@@ -144,22 +144,22 @@ export const HomeFooter: FC = () => {
 
         <div>
           <FLPHeading as="h4" color="text.primary" mb={3} size="sm">
-            Free Calculators
+            Free calculators
           </FLPHeading>
           <ul className={linkListStyle}>
             <li>
               <RouterLink className={linkStyle} to="/tools/uk-100k-tax-trap-calculator">
-                £100k Tax Trap
+                £100k tax trap
               </RouterLink>
             </li>
             <li>
               <RouterLink className={linkStyle} to="/tools/mortgage-overpay-vs-isa">
-                Mortgage vs. ISA
+                Mortgage vs ISA
               </RouterLink>
             </li>
             <li>
               <RouterLink className={linkStyle} to="/tools/section-24-landlord-calculator">
-                Section 24 Landlord
+                Section 24 landlord
               </RouterLink>
             </li>
             <li>
@@ -167,7 +167,7 @@ export const HomeFooter: FC = () => {
                 className={linkStyle}
                 to="/tools/uk-debt-snowball-vs-avalanche-calculator"
               >
-                Snowball vs. Avalanche
+                Snowball vs avalanche
               </RouterLink>
             </li>
             <li>
@@ -175,12 +175,12 @@ export const HomeFooter: FC = () => {
                 className={linkStyle}
                 to="/tools/0-percent-balance-transfer-payoff-calculator"
               >
-                0% Balance Transfer Cliff
+                0% balance transfer cliff
               </RouterLink>
             </li>
             <li>
               <RouterLink className={linkStyle} to="/tools">
-                All Calculators →
+                All calculators →
               </RouterLink>
             </li>
           </ul>
@@ -188,22 +188,22 @@ export const HomeFooter: FC = () => {
 
         <div>
           <FLPHeading as="h4" color="text.primary" mb={3} size="sm">
-            Account & Support
+            Account and support
           </FLPHeading>
           <ul className={linkListStyle}>
             <li>
               <RouterLink className={linkStyle} to="/signUp">
-                Sign Up
+                Sign up
               </RouterLink>
             </li>
             <li>
               <RouterLink className={linkStyle} to="/login">
-                Log In
+                Sign in
               </RouterLink>
             </li>
             <li>
               <button className={linkStyle} type="button" onClick={() => setIsContactOpen(true)}>
-                Contact & Feedback
+                Contact and feedback
               </button>
             </li>
             <li>
@@ -213,7 +213,7 @@ export const HomeFooter: FC = () => {
                 rel="noreferrer"
                 target="_blank"
               >
-                GitHub Monorepo
+                GitHub monorepo
               </a>
             </li>
           </ul>
@@ -221,9 +221,9 @@ export const HomeFooter: FC = () => {
       </div>
 
       <div className={disclaimerBoxStyle}>
-        <strong>Financial & Legal Disclaimer:</strong> Flump provides wealth forecasting, mortgage
+        <strong>Financial and legal disclaimer:</strong> Flump provides wealth forecasting, mortgage
         scenario simulations, and UK tax liability estimations for educational and decision-support
-        purposes only. Flump is not an authorized or regulated financial advisory firm under the
+        purposes only. Flump is not an authorised or regulated financial advisory firm under the
         Financial Conduct Authority (FCA). HMRC tax legislation changes annually; please verify all
         tax filings with a certified tax accountant (CTA) or independent financial advisor (IFA).
       </div>
@@ -236,19 +236,19 @@ export const HomeFooter: FC = () => {
       {isContactOpen && (
         <FLPModal
           confirmButton={{
-            text: feedbackSent ? "Sent!" : "Send Feedback",
+            text: feedbackSent ? "Sent!" : "Send feedback",
           }}
           disabled={!message.trim() || feedbackSent}
           onClose={handleClose}
           onConfirm={handleSendFeedback}
           open={isContactOpen}
-          title="Contact & Feedback"
+          title="Contact and feedback"
           triggerBtn={<span style={{ display: "none" }} />}
         >
           <div style={{ display: "flex", flexDirection: "column", gap: "16px", padding: "8px 0" }}>
             <FLPText color="text.muted" fontSize="sm">
-              Have a question, feature request, or need help with UK tax modeling? We'd love to hear
-              from you.
+              Have a question, feature request, or need help with UK tax modelling? We'd love to
+              hear from you.
             </FLPText>
 
             <div
@@ -265,7 +265,7 @@ export const HomeFooter: FC = () => {
             >
               <FiMail />
               <span>
-                Direct Email: <strong>support@flump.app</strong>
+                Direct email: <strong>support@flump.app</strong>
               </span>
             </div>
 

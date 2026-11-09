@@ -65,10 +65,10 @@ export const WebHowItWorksSection: FC = () => {
             color: "var(--colors-primary)",
           }}
         >
-          Maximum Value, Minimum Effort
+          How it works
         </span>
         <FLPHeading as="h2" color="text.primary" mt={2} size="3xl">
-          How Flump Works in 3 Simple Steps
+          How Flump works in 3 simple steps
         </FLPHeading>
         <FLPText
           color="text.muted"
@@ -76,7 +76,7 @@ export const WebHowItWorksSection: FC = () => {
           style={{ maxWidth: "620px", margin: "12px auto 0" }}
         >
           Skip weeks of spreadsheet configuration. Start with rough numbers in under a minute, then
-          add granular detail only where you choose.
+          add detail only where you choose.
         </FLPText>
       </div>
 
@@ -89,14 +89,13 @@ export const WebHowItWorksSection: FC = () => {
       >
         <div className={stepCardStyle}>
           <span className={stepNumberBadge}>
-            <FiEdit3 size={13} /> Step 1 · 60 Seconds
+            <FiEdit3 size={13} /> Step 1 · 60s
           </span>
           <FLPHeading as="h3" size="lg">
-            Enter 6 Rough Numbers
+            Enter 6 rough numbers
           </FLPHeading>
           <FLPText color="text.muted" fontSize="sm" lineHeight="1.6">
-            Income, housing, general outgoings, cash savings, pension, and debt. No bank logins,
-            passwords, or CSV imports needed.
+            Input your top-level estimates without bank logins, passwords, or CSV imports.
           </FLPText>
           <div
             style={{
@@ -119,11 +118,11 @@ export const WebHowItWorksSection: FC = () => {
             <FiSliders size={13} /> Step 2 · Instant
           </span>
           <FLPHeading as="h3" size="lg">
-            Unlock Instant UK Insights
+            See your numbers immediately
           </FLPHeading>
           <FLPText color="text.muted" fontSize="sm" lineHeight="1.6">
-            Immediately view your true Net Worth, weekly Safe-to-Spend allowance, emergency survival
-            runway, and UK take-home pay breakdown.
+            Immediately view your true net worth, weekly safe to spend allowance, emergency runway,
+            and UK take-home pay breakdown.
           </FLPText>
           <div
             style={{
@@ -137,20 +136,20 @@ export const WebHowItWorksSection: FC = () => {
               gap: "6px",
             }}
           >
-            <FiCheckCircle size={14} /> Built-in HMRC & NI rules
+            <FiCheckCircle size={14} /> Built-in HMRC and National Insurance rules
           </div>
         </div>
 
         <div className={stepCardStyle}>
           <span className={stepNumberBadge}>
-            <FiArrowRight size={13} /> Step 3 · On Your Schedule
+            <FiArrowRight size={13} /> Step 3 · On demand
           </span>
           <FLPHeading as="h3" size="lg">
-            Drill Down When You Want
+            Drill down when you need to
           </FLPHeading>
           <FLPText color="text.muted" fontSize="sm" lineHeight="1.6">
-            Want to crush a credit card, simulate mortgage overpayments, or escape the £100k tax
-            trap? Add granular detail to individual modules whenever you're ready.
+            Explore individual tools for mortgage overpayments, the £100k tax trap, or debt payoff
+            at your own pace.
           </FLPText>
           <div
             style={{

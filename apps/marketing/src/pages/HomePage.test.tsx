@@ -16,13 +16,12 @@ describe("Marketing HomePage (Simplified 6-Section Narrative)", () => {
 
   it("renders the benefit-focused hero without embedded calculator sliders", () => {
     renderHome();
-    expect(screen.getByText(/Get out of the red/i)).toBeDefined();
-    expect(screen.getByText(/Build into the black/i)).toBeDefined();
-    expect(screen.getByText(/Get Your 60-Second Baseline Free →/i)).toBeDefined();
+    expect(screen.getByText(/Your complete UK financial picture in 60 seconds/i)).toBeDefined();
+    expect(screen.getByText(/Get your free baseline →/i)).toBeDefined();
 
     // Verify clean baseline preview card is present
     expect(screen.getByTestId("baseline-snapshot-preview")).toBeDefined();
-    expect(screen.getByText("Your 60-Second UK Financial Baseline")).toBeDefined();
+    expect(screen.getByText("Your 60-second UK financial baseline")).toBeDefined();
     expect(screen.getByText("£68,400")).toBeDefined();
     expect(screen.getByText("+£840")).toBeDefined();
     expect(screen.getAllByText("£195").length).toBeGreaterThan(0);
@@ -32,18 +31,18 @@ describe("Marketing HomePage (Simplified 6-Section Narrative)", () => {
   it("renders the 3-step How It Works section", () => {
     renderHome();
     expect(screen.getByTestId("how-it-works-section")).toBeDefined();
-    expect(screen.getByText("How Flump Works in 3 Simple Steps")).toBeDefined();
-    expect(screen.getByText("Enter 6 Rough Numbers")).toBeDefined();
-    expect(screen.getByText("Unlock Instant UK Insights")).toBeDefined();
-    expect(screen.getByText("Drill Down When You Want")).toBeDefined();
+    expect(screen.getByText("How Flump works in 3 simple steps")).toBeDefined();
+    expect(screen.getByText("Enter 6 rough numbers")).toBeDefined();
+    expect(screen.getByText("See your numbers immediately")).toBeDefined();
+    expect(screen.getByText("Drill down when you need to")).toBeDefined();
   });
 
   it("renders core outcome pillars, comparison matrix, security, and FAQ sections", () => {
     renderHome();
-    expect(screen.getByText("Four Pillars of Your Financial Plan")).toBeDefined();
-    expect(screen.getByText("Built for UK Rules, Not Generic Spreadsheets")).toBeDefined();
+    expect(screen.getByText("Four pillars of your financial plan")).toBeDefined();
+    expect(screen.getByText("Built for UK rules, not spreadsheets")).toBeDefined();
     expect(screen.getByTestId("security-privacy-section")).toBeDefined();
-    expect(screen.getByText("Frequently Asked Questions")).toBeDefined();
-    expect(screen.getByText("Browse Free Calculators Directory")).toBeDefined();
+    expect(screen.getAllByText("Frequently asked questions").length).toBeGreaterThan(0);
+    expect(screen.getByText("Browse free calculators")).toBeDefined();
   });
 });

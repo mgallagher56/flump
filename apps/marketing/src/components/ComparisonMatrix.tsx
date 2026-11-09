@@ -75,37 +75,37 @@ const rowStyle = css({
 export const ComparisonMatrix: FC = () => {
   const rows = [
     {
-      feature: "FCA Open Banking Read-Only Sync (UK Banks & Cards)",
+      feature: "FCA Open Banking read-only sync (UK banks and cards)",
       flump: true,
       spreadsheet: false,
-      genericApp: "US Centric / Incomplete",
+      genericApp: "US-centric / incomplete",
     },
     {
-      feature: "UK £100k–£125k Personal Allowance Taper & Childcare Trap",
+      feature: "UK £100k–£125k Personal Allowance taper and childcare trap",
       flump: true,
-      spreadsheet: "Manual complex formulas",
+      spreadsheet: "Complex manual formulas",
       genericApp: false,
     },
     {
-      feature: "Section 24 Buy-to-Let Finance Cost Disallowance",
+      feature: "Section 24 buy-to-let finance cost disallowance",
       flump: true,
       spreadsheet: false,
       genericApp: false,
     },
     {
-      feature: "Workplace Pension Auto-Enrolment & Salary Sacrifice",
+      feature: "Workplace pension auto-enrolment and salary sacrifice",
       flump: true,
       spreadsheet: "Prone to formula drift",
       genericApp: false,
     },
     {
-      feature: "Debt Avalanche vs Snowball with 3-Year Wealth Bridge",
+      feature: "Debt avalanche vs snowball payoff schedules",
       flump: true,
       spreadsheet: "Complex macro required",
       genericApp: "Basic snowball only",
     },
     {
-      feature: "Safe-to-Spend Allowance factoring Emergency Runway",
+      feature: "Safe to spend allowance factoring emergency runway",
       flump: true,
       spreadsheet: false,
       genericApp: "Static backward budgets",
@@ -116,16 +116,16 @@ export const ComparisonMatrix: FC = () => {
     <SectionBand
       id="comparison"
       tone="canvas"
-      indexBadge="04 // WHY FLUMP"
-      title="Built for UK Rules, Not Generic Spreadsheets"
-      subtitle="How Flump compares directly against spreadsheets and generic US-first budgeting applications."
+      indexBadge="Why Flump"
+      title="Built for UK rules, not spreadsheets"
+      subtitle="How Flump compares directly with spreadsheets and generic US-first budgeting applications."
     >
       <div style={{ overflowX: "auto" }}>
         <table className={tableStyle}>
           <thead>
             <tr>
               <th className={thStyle} style={{ width: "45%" }}>
-                Feature / Capability
+                Feature
               </th>
               <th className={flumpThStyle} style={{ width: "25%" }}>
                 Flump 🇬🇧
@@ -134,7 +134,7 @@ export const ComparisonMatrix: FC = () => {
                 Excel / Sheets
               </th>
               <th className={thStyle} style={{ width: "15%" }}>
-                Generic Apps
+                Generic apps
               </th>
             </tr>
           </thead>

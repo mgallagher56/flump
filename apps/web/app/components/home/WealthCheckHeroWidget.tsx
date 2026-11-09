@@ -261,14 +261,14 @@ export const WealthCheckHeroWidget: FC = () => {
           type="button"
           onClick={() => setActiveTab("debt")}
         >
-          <FaFire color="var(--colors-destructive-500)" /> Clear Debt & Stabilize
+          <FaFire color="var(--colors-destructive-500)" /> Clear debt and stabilise
         </button>
         <button
           className={tabButtonStyle(activeTab === "wealth", "var(--colors-primary)")}
           type="button"
           onClick={() => setActiveTab("wealth")}
         >
-          <FaRocket color="var(--colors-primary)" /> Build Wealth & Optimize Tax
+          <FaRocket color="var(--colors-primary)" /> Build wealth and optimise tax
         </button>
       </div>
 
@@ -288,13 +288,13 @@ export const WealthCheckHeroWidget: FC = () => {
         >
           <FiCompass />
           {activeTab === "debt"
-            ? "The 30-Second Debt Payoff & Recovery Check"
-            : "The 30-Second UK Wealth & Tax Check"}
+            ? "The 30-second debt payoff and recovery check"
+            : "The 30-second UK wealth and tax check"}
         </span>
         <FLPHeading as="h3" color="text.primary" size="md">
           {activeTab === "debt"
             ? "Calculate your debt-free exit date and post-payoff wealth bridge"
-            : "Model your 10-year net worth & UK tax efficiency"}
+            : "Model your 10-year net worth and UK tax efficiency"}
         </FLPHeading>
       </div>
 
@@ -304,7 +304,7 @@ export const WealthCheckHeroWidget: FC = () => {
           <div>
             <div className={inputGroupStyle}>
               <label className={labelStyle} htmlFor="hero-debt-balance-input">
-                <span>Total Card & Loan Liabilities</span>
+                <span>Total card and loan liabilities</span>
                 <span style={{ color: "var(--colors-destructive-500)", fontWeight: "bold" }}>
                   {formatCurrency(debtBalance)}
                 </span>
@@ -312,7 +312,7 @@ export const WealthCheckHeroWidget: FC = () => {
               <div className={inputWrapperStyle}>
                 <span className={prefixStyle}>£</span>
                 <input
-                  aria-label="Total Card & Loan Liabilities"
+                  aria-label="Total card and loan liabilities"
                   className={inputFieldStyle}
                   id="hero-debt-balance-input"
                   max={80000}
@@ -339,7 +339,7 @@ export const WealthCheckHeroWidget: FC = () => {
 
             <div className={inputGroupStyle}>
               <label className={labelStyle} htmlFor="hero-debt-apr-input">
-                <span>Average Interest Rate (APR)</span>
+                <span>Average interest rate (APR)</span>
                 <span style={{ color: "var(--colors-destructive-500)", fontWeight: "bold" }}>
                   {debtApr}%
                 </span>
@@ -347,7 +347,7 @@ export const WealthCheckHeroWidget: FC = () => {
               <div className={inputWrapperStyle}>
                 <span className={prefixStyle}>%</span>
                 <input
-                  aria-label="Average APR Rate"
+                  aria-label="Average APR rate"
                   className={inputFieldStyle}
                   id="hero-debt-apr-input"
                   max={50}
@@ -378,7 +378,7 @@ export const WealthCheckHeroWidget: FC = () => {
 
             <div className={inputGroupStyle}>
               <label className={labelStyle} htmlFor="hero-debt-budget-input">
-                <span>Monthly Budget for Debt</span>
+                <span>Monthly budget for debt</span>
                 <span style={{ color: "primary", fontWeight: "bold" }}>
                   {formatCurrency(debtMonthlyBudget)}/mo
                 </span>
@@ -386,7 +386,7 @@ export const WealthCheckHeroWidget: FC = () => {
               <div className={inputWrapperStyle}>
                 <span className={prefixStyle}>£</span>
                 <input
-                  aria-label="Monthly Budget for Debt"
+                  aria-label="Monthly budget for debt"
                   className={inputFieldStyle}
                   id="hero-debt-budget-input"
                   max={2000}
@@ -415,7 +415,7 @@ export const WealthCheckHeroWidget: FC = () => {
           <div className={outputColumnStyle}>
             <div className={metricCardStyle}>
               <span style={{ fontSize: "12px", color: "text.muted", fontWeight: "600" }}>
-                Target Debt-Free Date
+                Target debt-free date
               </span>
               <div
                 style={{ fontSize: "26px", fontWeight: "800", color: "var(--colors-success-500)" }}
@@ -429,7 +429,7 @@ export const WealthCheckHeroWidget: FC = () => {
 
             <div className={metricCardStyle}>
               <span style={{ fontSize: "12px", color: "text.muted", fontWeight: "600" }}>
-                Interest Saved via Avalanche Strategy
+                Interest saved via avalanche strategy
               </span>
               <div
                 style={{
@@ -447,7 +447,7 @@ export const WealthCheckHeroWidget: FC = () => {
 
             <div className={metricCardStyle} style={{ borderBottom: "none", paddingBottom: 0 }}>
               <span style={{ fontSize: "12px", color: "text.muted", fontWeight: "600" }}>
-                Projected Wealth 3 Yrs After Debt-Free
+                Projected wealth 3 years after debt payoff
               </span>
               <div style={{ fontSize: "20px", fontWeight: "700", color: "var(--colors-primary)" }}>
                 +{formatCurrency(projected3YearWealth || 11500)}
@@ -471,7 +471,7 @@ export const WealthCheckHeroWidget: FC = () => {
                   fontWeight: "700",
                 }}
               >
-                Crush Your Debt with Flump <FiArrowRight aria-hidden="true" />
+                Start your debt payoff plan <FiArrowRight aria-hidden="true" />
               </FLPButton>
               <div
                 style={{
@@ -484,7 +484,7 @@ export const WealthCheckHeroWidget: FC = () => {
                   textAlign: "center",
                 }}
               >
-                <FiShield /> Pre-configures Debt Crusher mode. Free forever.
+                <FiShield /> Pre-configures debt payoff mode. Free forever.
               </div>
             </div>
           </div>
@@ -495,7 +495,7 @@ export const WealthCheckHeroWidget: FC = () => {
           <div>
             <div className={inputGroupStyle}>
               <label className={labelStyle} htmlFor={incomeId}>
-                <span>Annual Gross Salary</span>
+                <span>Annual gross salary</span>
                 <span style={{ color: "var(--colors-primary)", fontWeight: "bold" }}>
                   {formatCurrency(annualIncome)}
                 </span>
@@ -529,7 +529,7 @@ export const WealthCheckHeroWidget: FC = () => {
 
             <div className={inputGroupStyle}>
               <label className={labelStyle} htmlFor={savingsId}>
-                <span>Current Cash & Investments</span>
+                <span>Current cash and investments</span>
                 <span style={{ color: "var(--colors-primary)", fontWeight: "bold" }}>
                   {formatCurrency(savings)}
                 </span>
@@ -563,7 +563,7 @@ export const WealthCheckHeroWidget: FC = () => {
 
             <div className={inputGroupStyle}>
               <label className={labelStyle} htmlFor={monthlyId}>
-                <span>Monthly Savings & Investments</span>
+                <span>Monthly savings and investments</span>
                 <span style={{ color: "var(--colors-primary)", fontWeight: "bold" }}>
                   {formatCurrency(monthlyContribution)}/mo
                 </span>
@@ -599,7 +599,7 @@ export const WealthCheckHeroWidget: FC = () => {
           <div className={outputColumnStyle}>
             <div className={metricCardStyle}>
               <span style={{ fontSize: "12px", color: "text.muted", fontWeight: "600" }}>
-                10-Year Projected Wealth (at 5% real return)
+                10-year projected wealth (at 5% real return)
               </span>
               <div style={{ fontSize: "28px", fontWeight: "800", color: "var(--colors-primary)" }}>
                 {formatCurrency(trajectory.endBalance)}
@@ -611,10 +611,10 @@ export const WealthCheckHeroWidget: FC = () => {
 
             <div className={metricCardStyle}>
               <span style={{ fontSize: "12px", color: "text.muted", fontWeight: "600" }}>
-                Marginal Tax Rate & Relief
+                Marginal tax rate and relief
               </span>
               <div style={{ fontSize: "20px", fontWeight: "700", color: "text.primary" }}>
-                {trapAnalysis.marginalRatePct}% Marginal Rate
+                {trapAnalysis.marginalRatePct}% marginal rate
               </div>
               {trapAnalysis.isInTaxTrap ? (
                 <div
@@ -628,7 +628,7 @@ export const WealthCheckHeroWidget: FC = () => {
                     fontWeight: "600",
                   }}
                 >
-                  <FiAlertTriangle /> £100k–£125k 60% Personal Allowance Trap Active
+                  <FiAlertTriangle /> £100k–£125k 60% Personal Allowance trap active
                 </div>
               ) : trapAnalysis.isNearTaxTrap ? (
                 <div
@@ -642,7 +642,7 @@ export const WealthCheckHeroWidget: FC = () => {
                     fontWeight: "600",
                   }}
                 >
-                  <FiAlertTriangle /> Approaching 60% Tax Trap at £100k
+                  <FiAlertTriangle /> Approaching 60% tax trap at £100k
                 </div>
               ) : (
                 <div style={{ fontSize: "12px", color: "text.muted", marginTop: "2px" }}>
@@ -653,7 +653,7 @@ export const WealthCheckHeroWidget: FC = () => {
 
             <div className={metricCardStyle} style={{ borderBottom: "none", paddingBottom: 0 }}>
               <span style={{ fontSize: "12px", color: "text.muted", fontWeight: "600" }}>
-                Potential Annual Pension / SIPP Tax Savings
+                Potential annual pension or SIPP tax savings
               </span>
               <div style={{ fontSize: "20px", fontWeight: "700", color: "text.primary" }}>
                 {trapAnalysis.isInTaxTrap
@@ -680,7 +680,7 @@ export const WealthCheckHeroWidget: FC = () => {
                   fontWeight: "700",
                 }}
               >
-                Save this baseline & unlock your forecast <FiArrowRight aria-hidden="true" />
+                Save this baseline and unlock your forecast <FiArrowRight aria-hidden="true" />
               </FLPButton>
               <div
                 style={{
@@ -693,7 +693,7 @@ export const WealthCheckHeroWidget: FC = () => {
                   textAlign: "center",
                 }}
               >
-                <FiShield /> Pre-populates 90-second onboarding. Zero commitment.
+                <FiShield /> Pre-populates 60-second onboarding. Zero commitment.
               </div>
             </div>
           </div>

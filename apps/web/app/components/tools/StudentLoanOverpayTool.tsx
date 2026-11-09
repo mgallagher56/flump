@@ -74,11 +74,11 @@ export const StudentLoanOverpayTool: FC = () => {
       >
         <div>
           <FLPHeading as="h3" size="xl">
-            UK Student Loan: Overpay or Invest? (Graduate Tax Calculator)
+            UK student loan: overpay or invest?
           </FLPHeading>
           <FLPText color="text.muted" fontSize="sm">
-            UK student loans are wiped after 25–40 years. Find out whether voluntary overpayments
-            save you interest or act as a donation to HM Treasury.
+            UK student loans are cancelled after 25–40 years. Find out whether voluntary
+            overpayments save you interest or act as a donation to HM Treasury.
           </FLPText>
         </div>
       </div>
@@ -87,10 +87,10 @@ export const StudentLoanOverpayTool: FC = () => {
         <div>
           <div className={inputGroupStyle}>
             <FLPText fontSize="sm" fontWeight="bold">
-              Student Loan Plan
+              Student loan plan
             </FLPText>
             <select
-              aria-label="Student Loan Plan"
+              aria-label="Student loan plan"
               className={textInputStyle}
               value={plan}
               onChange={(e) => setPlan(e.target.value as any)}
@@ -105,10 +105,10 @@ export const StudentLoanOverpayTool: FC = () => {
 
           <div className={inputGroupStyle}>
             <FLPText fontSize="sm" fontWeight="bold">
-              Gross Annual Salary (£)
+              Gross annual salary (£)
             </FLPText>
             <input
-              aria-label="Annual Salary"
+              aria-label="Annual salary"
               className={textInputStyle}
               min={15000}
               step={1000}
@@ -120,10 +120,10 @@ export const StudentLoanOverpayTool: FC = () => {
 
           <div className={inputGroupStyle}>
             <FLPText fontSize="sm" fontWeight="bold">
-              Current Outstanding Loan Balance (£)
+              Current outstanding loan balance (£)
             </FLPText>
             <input
-              aria-label="Outstanding Balance"
+              aria-label="Outstanding balance"
               className={textInputStyle}
               min={1000}
               step={1000}
@@ -148,8 +148,8 @@ export const StudentLoanOverpayTool: FC = () => {
               }}
             >
               {evaluation.recommendation === "do_not_overpay"
-                ? "🛑 Verdict: DO NOT OVERPAY"
-                : "⚡ Verdict: CONSIDER OVERPAYING"}
+                ? "🛑 Verdict: Do not overpay"
+                : "⚡ Verdict: Consider overpaying"}
             </span>
             <div style={{ fontSize: "24px", fontWeight: "bold", marginTop: "6px" }}>
               £{Math.round(evaluation.monthlyRepayment)}/mo (
@@ -174,7 +174,7 @@ export const StudentLoanOverpayTool: FC = () => {
             }}
           >
             <FLPText fontSize="xs" fontWeight="bold">
-              Graduate Tax Reality Check
+              Graduate tax reality check
             </FLPText>
             <FLPText fontSize="xs" style={{ marginTop: "4px" }}>
               {evaluation.reasoning}
@@ -183,7 +183,7 @@ export const StudentLoanOverpayTool: FC = () => {
 
           <RouterLink style={{ textDecoration: "none" }} to="/signUp">
             <FLPButton size="md" variant="primary" style={{ width: "100%" }}>
-              Model Full Career Trajectory in Flump →
+              Model your career trajectory in Flump →
             </FLPButton>
           </RouterLink>
         </div>

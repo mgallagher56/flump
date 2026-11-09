@@ -48,10 +48,10 @@
   "profile": "Profile",
   "tax": "Tax",
   "debt": "Debt",
-  "navDebtDesc": "Avalanche & Snowball payoff, 0% cliff & wealth bridge",
-  "navSavingsDesc": "High-yield accounts, APY & compound interest",
-  "navPensionDesc": "Workplace pots, contributions & retirement",
-  "navMortgageDesc": "Amortization, equity & overpayment modelling",
-  "navForecastDesc": "Multi-year cashflow & net worth projections",
-  "navTaxDesc": "UK & Irish income tax, NI & take-home pay"
+  "navDebtDesc": "Avalanche and snowball payoff, 0% transfer alerts, and debt freedom",
+  "navSavingsDesc": "High-yield accounts, AER, and compound interest",
+  "navPensionDesc": "Workplace pots, salary sacrifice, and retirement",
+  "navMortgageDesc": "Amortisation, equity, and overpayment modelling",
+  "navForecastDesc": "Multi-year cashflow and net worth projections",
+  "navTaxDesc": "UK income tax, National Insurance, and take-home pay"
 }

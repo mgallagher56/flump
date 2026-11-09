@@ -73,11 +73,11 @@ export const OverdraftCostTool: FC = () => {
       >
         <div>
           <FLPHeading as="h3" size="xl">
-            UK Arranged Overdraft Cost & EAR Calculator
+            Overdraft interest cost calculator
           </FLPHeading>
           <FLPText color="text.muted" fontSize="sm">
             UK banks charge effective rates approaching 40% EAR on arranged overdrafts. Calculate
-            your stealth annual fee.
+            your annual cost.
           </FLPText>
         </div>
       </div>
@@ -86,10 +86,10 @@ export const OverdraftCostTool: FC = () => {
         <div>
           <div className={inputGroupStyle}>
             <FLPText fontSize="sm" fontWeight="bold">
-              Average Overdraft Balance Used (£)
+              Average overdraft balance used (£)
             </FLPText>
             <input
-              aria-label="Overdraft Balance"
+              aria-label="Overdraft balance"
               className={textInputStyle}
               min={50}
               type="number"
@@ -100,10 +100,10 @@ export const OverdraftCostTool: FC = () => {
 
           <div className={inputGroupStyle}>
             <FLPText fontSize="sm" fontWeight="bold">
-              Bank EAR Rate (%) (UK standard is ~39.9%)
+              Bank EAR rate (%) (UK standard is ~39.9%)
             </FLPText>
             <input
-              aria-label="Bank EAR Rate"
+              aria-label="Bank EAR rate"
               className={textInputStyle}
               step="0.1"
               type="number"
@@ -125,7 +125,7 @@ export const OverdraftCostTool: FC = () => {
                 fontWeight: "bold",
               }}
             >
-              Annual Stealth Bank Cost
+              Annual bank interest cost
             </span>
             <div
               style={{ fontSize: "30px", fontWeight: "800", color: "#ef4444", marginTop: "4px" }}
@@ -134,7 +134,7 @@ export const OverdraftCostTool: FC = () => {
             </div>
             <FLPText color="text.muted" fontSize="xs">
               Directly debited as ~£{cost.monthlyPoundCost.toFixed(2)}/month from your regular
-              checking balance.
+              current account balance.
             </FLPText>
           </div>
 
@@ -147,18 +147,18 @@ export const OverdraftCostTool: FC = () => {
             }}
           >
             <FLPText fontSize="xs" fontWeight="bold">
-              💡 Why Overdrafts Are Dangerous
+              💡 Why overdrafts are dangerous
             </FLPText>
             <FLPText color="text.muted" fontSize="xs" style={{ marginTop: "4px" }}>
               Because there is no fixed repayment date or separate statement, persistent overdrafts
-              act as an indefinite 40% APR revolving charge. Clearing a £1,200 overdraft delivers an
-              immediate guaranteed 39.9% tax-free return on your money!
+              act as an indefinite 40% EAR revolving charge. Clearing a £1,200 overdraft delivers an
+              immediate guaranteed 39.9% tax-free return on your money.
             </FLPText>
           </div>
 
           <RouterLink style={{ textDecoration: "none" }} to="/signUp">
             <FLPButton size="md" variant="primary" style={{ width: "100%" }}>
-              Eliminate Your Overdraft with Flump →
+              Clear your overdraft with Flump →
             </FLPButton>
           </RouterLink>
         </div>

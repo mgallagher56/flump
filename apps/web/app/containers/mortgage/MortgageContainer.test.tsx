@@ -34,22 +34,22 @@ describe("<MortgageContainer />", () => {
     const { container, getByText } = customRender(<MortgageContainer />);
     expect(container).toBeDefined();
 
-    // Verify title and initial active tab (Mortgage Tracker)
-    expect(getByText("Mortgage Tools & Calculator")).toBeDefined();
+    // Verify title and initial active tab (Mortgage tracker)
+    expect(getByText("Mortgage tools and calculator")).toBeDefined();
     expect(container.querySelector("#mock-tracker")).toBeDefined();
     expect(container.querySelector("#mock-simulator")).toBeNull();
     expect(container.querySelector("#mock-compare")).toBeNull();
 
-    // Switch to Overpayment Simulator tab
-    const simulatorTabBtn = getByText("Overpayment Simulator");
+    // Switch to Overpayment simulator tab
+    const simulatorTabBtn = getByText("Overpayment simulator");
     fireEvent.click(simulatorTabBtn);
 
     // Verify view switch
     expect(container.querySelector("#mock-simulator")).toBeDefined();
     expect(container.querySelector("#mock-tracker")).toBeNull();
 
-    // Switch to Overpay vs. Save tab
-    const compareTabBtn = getByText("Overpay vs. Save");
+    // Switch to Overpay vs save tab
+    const compareTabBtn = getByText("Overpay vs save");
     fireEvent.click(compareTabBtn);
 
     // Verify view switch
@@ -57,18 +57,18 @@ describe("<MortgageContainer />", () => {
     expect(container.querySelector("#mock-simulator")).toBeNull();
   });
 
-  test("allows switching to Buy to Let category and displays BTL overview", () => {
+  test("allows switching to Buy to let category and displays BTL overview", () => {
     const { getByText, queryByText } = customRender(<MortgageContainer />);
 
-    expect(queryByText("Buy to Let Portfolio Overview")).toBeNull();
+    expect(queryByText("Buy to let portfolio overview")).toBeNull();
 
-    // Click Buy to Let (BTL)
-    const btlCategoryBtn = getByText("Buy to Let (BTL)");
+    // Click Buy to let (BTL)
+    const btlCategoryBtn = getByText("Buy to let (BTL)");
     fireEvent.click(btlCategoryBtn);
 
-    expect(getByText("Buy to Let Portfolio Overview")).toBeDefined();
-    expect(getByText(/Section 24 Rule:/)).toBeDefined();
-    expect(getByText("Gross Monthly Rent")).toBeDefined();
-    expect(getByText("Estimated Net Cashflow")).toBeDefined();
+    expect(getByText("Buy to let portfolio overview")).toBeDefined();
+    expect(getByText(/Section 24 rule:/)).toBeDefined();
+    expect(getByText("Gross monthly rent")).toBeDefined();
+    expect(getByText("Estimated net cash flow")).toBeDefined();
   });
 });

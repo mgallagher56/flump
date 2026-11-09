@@ -53,9 +53,9 @@ export const HowItWorksSection: FC = () => {
     <SectionBand
       id="how-it-works"
       tone="subtle"
-      indexBadge="01 // HOW IT WORKS"
-      title="How Flump Works in 3 Simple Steps"
-      subtitle="Skip weeks of spreadsheet configuration. Start with rough numbers in under a minute, then add granular detail only where you choose."
+      indexBadge="How it works"
+      title="How Flump works in 3 simple steps"
+      subtitle="Skip weeks of spreadsheet configuration. Start with rough numbers in under a minute, then add detail only where you choose."
     >
       <div
         className={grid({ columns: { base: 1, md: 3 }, gap: "6" })}
@@ -77,7 +77,7 @@ export const HowItWorksSection: FC = () => {
                 gap: "4px",
               }}
             >
-              <FiCheckCircle size={13} /> Zero Friction
+              <FiCheckCircle size={13} /> No bank login
             </span>
           </div>
 
@@ -90,7 +90,7 @@ export const HowItWorksSection: FC = () => {
               margin: 0,
             }}
           >
-            Enter 6 Rough Numbers
+            Enter 6 rough numbers
           </h3>
 
           <p
@@ -117,7 +117,7 @@ export const HowItWorksSection: FC = () => {
           {/* Mini Visual Schematic */}
           <div
             role="img"
-            aria-label="Schematic diagram showing 6 simple sliders"
+            aria-label="Schematic diagram showing 6 simple inputs"
             style={{
               marginTop: "auto",
               padding: "12px",
@@ -172,7 +172,7 @@ export const HowItWorksSection: FC = () => {
                 gap: "4px",
               }}
             >
-              <FiCheckCircle size={13} /> UK HMRC Rules
+              <FiCheckCircle size={13} /> UK tax rules
             </span>
           </div>
 
@@ -185,7 +185,7 @@ export const HowItWorksSection: FC = () => {
               margin: 0,
             }}
           >
-            Unlock Instant UK Insights
+            See your numbers immediately
           </h3>
 
           <p
@@ -200,10 +200,10 @@ export const HowItWorksSection: FC = () => {
           </p>
 
           <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", marginTop: "4px" }}>
-            <span className={chipTagStyle}>Net Worth</span>
-            <span className={chipTagStyle}>Safe-to-Spend</span>
-            <span className={chipTagStyle}>Runway</span>
-            <span className={chipTagStyle}>Take-Home</span>
+            <span className={chipTagStyle}>Net worth</span>
+            <span className={chipTagStyle}>Safe to spend</span>
+            <span className={chipTagStyle}>Emergency runway</span>
+            <span className={chipTagStyle}>Take-home pay</span>
           </div>
 
           {/* Mini Visual Schematic */}
@@ -262,7 +262,7 @@ export const HowItWorksSection: FC = () => {
                 gap: "4px",
               }}
             >
-              <FiCheckCircle size={13} /> Progressive
+              <FiCheckCircle size={13} /> Customised
             </span>
           </div>
 
@@ -275,7 +275,7 @@ export const HowItWorksSection: FC = () => {
               margin: 0,
             }}
           >
-            Drill Down When You Want
+            Drill down when you need to
           </h3>
 
           <p
@@ -286,13 +286,14 @@ export const HowItWorksSection: FC = () => {
               lineHeight: "1.5",
             }}
           >
-            Add granular detail to individual calculation engines without feeling overwhelmed.
+            Explore individual tools for mortgage overpayments, the £100k tax trap, or debt payoff
+            at your own pace.
           </p>
 
           <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", marginTop: "4px" }}>
-            <span className={chipTagStyle}>£100k Tax Trap</span>
-            <span className={chipTagStyle}>Mortgage Overpay</span>
-            <span className={chipTagStyle}>Debt Avalanche</span>
+            <span className={chipTagStyle}>£100k tax trap</span>
+            <span className={chipTagStyle}>Mortgage overpayment</span>
+            <span className={chipTagStyle}>Debt payoff</span>
           </div>
 
           {/* Mini Visual Schematic */}

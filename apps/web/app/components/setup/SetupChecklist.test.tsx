@@ -23,8 +23,8 @@ describe("SetupChecklist", () => {
       />,
     );
 
-    expect(screen.getByText("Refine pension schemes & match")).toBeDefined();
-    expect(screen.getByText("Refine Pension →")).toBeDefined();
+    expect(screen.getByText("Refine pension schemes and employer match")).toBeDefined();
+    expect(screen.getByText("Refine pension →")).toBeDefined();
   });
 
   it("marks pension step as completed when hasPension is true", () => {
@@ -41,8 +41,8 @@ describe("SetupChecklist", () => {
       />,
     );
 
-    expect(screen.getByText("Refine pension schemes & match")).toBeDefined();
+    expect(screen.getByText("Refine pension schemes and employer match")).toBeDefined();
     // Action button should not be present when completed
-    expect(screen.queryByText("Refine Pension →")).toBeNull();
+    expect(screen.queryByText("Refine pension →")).toBeNull();
   });
 });

@@ -2,7 +2,7 @@
 
 <div align="center">
 
-**Personal finance dashboard, UK tax optimization engine, and long-term wealth forecasting platform.**
+**Personal finance dashboard, UK tax optimisation engine and long-term wealth forecasting platform.**
 
 [![TypeScript](https://img.shields.io/badge/TypeScript-7.0-blue.svg?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![React](https://img.shields.io/badge/React-19.3-61dafb.svg?logo=react&logoColor=white)](https://react.dev/)
@@ -28,7 +28,7 @@
 
 ## Overview
 
-**Flump** is an open-source financial management and decision-making platform built specifically to demystify personal finance and taxation. It bridges the gap between everyday budgeting, net worth tracking, and forward-looking financial decisions—with built-in engines for the UK tax system, pension auto-enrolment rules, rental property landlord restrictions (Section 24), and mortgage optimization scenarios.
+**Flump** is an open-source financial management and decision-making platform built specifically to demystify personal finance and taxation. It bridges the gap between everyday budgeting, net worth tracking, and forward-looking financial decisions – with built-in engines for the UK tax system, pension auto-enrolment rules, rental property landlord restrictions (Section 24), and mortgage optimisation scenarios.
 
 Designed as a modern Turborepo monorepo, Flump brings together a high-performance web dashboard, a mobile companion app with biometric authentication, an enterprise-grade NestJS backend, and shared TypeScript domain packages.
 
@@ -38,74 +38,74 @@ For a granular breakdown of every live route, component, and user interaction, c
 
 ## Features
 
-### 🚀 Onboarding & Modular Dashboard
+### 🚀 Onboarding and modular dashboard
 
-- **Tailored Setup Wizard**: Interactive questionnaire that automatically customizes the user's navigation and widgets to match their needs.
-- **Financial Health Score**: Comprehensive rating assessing emergency fund liquidity, debt, savings velocity, and tax planning.
-- **Customizable Dashboard**: Reorderable and resizable widgets (`normal` vs. `wide`) with a disabled widget tray to hide or surface features at will.
-- **Setup Checklist**: Guided onboarding milestones persisted to the user profile.
+- **Tailored setup wizard**: Interactive questionnaire that automatically customises the user's navigation and widgets to match their needs.
+- **Financial health score**: Comprehensive rating assessing emergency fund liquidity, debt, savings velocity, and tax planning.
+- **Customisable dashboard**: Reorderable and resizable widgets (`normal` vs. `wide`) with a disabled widget tray to hide or surface features at will.
+- **Setup checklist**: Guided onboarding milestones persisted to the user profile.
 
-### 🏦 Wealth & Account Management
+### 🏦 Wealth and account management
 
-- **Net Worth Tracking**: Real-time aggregation of total assets, liabilities, and overall net worth.
-- **Multi-Account Hub**: Filterable tabs for Current, Savings, Investments, Pensions, Credit Cards, Mortgages, Loans, and Owed money.
-- **Historical Monthly Balance Ledger**: Grid tracking monthly balances across years with inline editing and multi-year projection capabilities.
-- **Asset Allocation Visualizer**: Interactive allocation charts visualizing distribution across cash, equity, and debt.
-- **Open Banking Integrations**: Bank connection management with automated sync and status indicators.
+- **Net worth tracking**: Real-time aggregation of total assets, liabilities, and overall net worth.
+- **Multi-account hub**: Filterable tabs for current accounts, savings, investments, pensions, credit cards, mortgages, loans, and owed money.
+- **Historical monthly balance ledger**: Grid tracking monthly balances across years with inline editing and multi-year projection capabilities.
+- **Asset allocation visualiser**: Interactive allocation charts visualising distribution across cash, equity, and debt.
+- **Open Banking integrations**: Bank connection management with automated sync and status indicators.
 
-### 📊 Cash Flow Budgeting & Runway Engine
+### 📊 Cash flow budgeting and runway engine
 
-- **Budget Setup Wizard**: Quick-start setup with sensible default UK expenditure benchmarks.
-- **50/30/20 Cash Flow Breakdown**: Visualizes monthly surplus/deficit across Needs, Wants, and Savings.
-- **Category Tables**: Dedicated tracking for Housing, Bills, Living Expenses, Savings, and Income, with weekly/monthly/annual frequency conversions.
-- **Custom Expense Categories**: Create, rename, and delete custom budget categories.
-- **Emergency Runway Calculator**: Calculates exact months of survival runway based on liquid reserves divided by monthly burn rate, with scenario cutback toggles.
+- **Budget setup wizard**: Quick-start setup with sensible default UK expenditure benchmarks.
+- **50/30/20 cash flow breakdown**: Visualises monthly surplus or deficit across needs, wants, and savings.
+- **Category tables**: Dedicated tracking for housing, bills, living expenses, savings, and income, with weekly, monthly, and annual frequency conversions.
+- **Custom expense categories**: Create, rename, and delete custom budget categories.
+- **Emergency runway calculator**: Calculates exact months of survival runway based on liquid reserves divided by monthly burn rate, with scenario cutback toggles.
 
-### 💰 Savings & Investments Hub
+### 💰 Savings and investments hub
 
-- **Interest Rate (APY) Tracking**: Calculates weighted average interest rate across all cash ISAs and high-yield savings accounts.
-- **Monthly Savings Targets**: Monitor ongoing regular contributions toward wealth goals.
-- **Compound Growth Forecaster**: Multi-year compound growth projections (1, 3, 5, 10, and 20 years).
+- **Interest rate (AER) tracking**: Calculates weighted average interest rate across all cash ISAs and high-yield savings accounts.
+- **Monthly savings targets**: Monitor ongoing regular contributions toward wealth goals.
+- **Compound growth forecaster**: Multi-year compound growth projections (1, 3, 5, 10, and 20 years).
 
-### 🛡️ Pension & Retirement Planning
+### 🛡️ Pension and retirement planning
 
-- **Auto-Enrolment & Salary Sacrifice**: Model employee and employer contributions, qualifying earnings bands, and National Insurance savings from salary sacrifice.
-- **Multiple Pension Pots**: Track active workplace schemes and consolidated legacy pots.
-- **Retirement Forecaster**: Projects total pension pot size at target retirement age with custom growth and inflation assumptions.
+- **Auto-enrolment and salary sacrifice**: Model employee and employer contributions, qualifying earnings bands, and National Insurance savings from salary sacrifice.
+- **Multiple pension pots**: Track active workplace schemes and consolidated legacy pots.
+- **Retirement forecaster**: Projects total pension pot size at target retirement age with custom growth and inflation assumptions.
 
-### 🏡 Mortgage Optimization Engine
+### 🏡 Mortgage optimisation engine
 
-- **Residential & Buy-to-Let (BTL)**: Full support for repayment and interest-only mortgages across owner-occupied and rental properties.
-- **Amortization Schedules**: Complete breakdown of principal vs. interest over the entire loan term.
-- **Overpayment Simulator**: Computes interest saved and months shaved off through recurring or one-off lump-sum overpayments.
-- **Mortgage vs. ISA Comparison**: Compares paying down mortgage debt against investing in an ISA or savings account, accounting for marginal tax rates.
+- **Residential and buy to let (BTL)**: Full support for repayment and interest-only mortgages across owner-occupied and rental properties.
+- **Amortisation schedules**: Complete breakdown of principal vs. interest over the entire loan term.
+- **Overpayment simulator**: Computes interest saved and months shaved off through recurring or one-off lump-sum overpayments.
+- **Mortgage vs ISA comparison**: Compares paying down mortgage debt against investing in an ISA or savings account, accounting for marginal tax rates.
 
-### 📈 Planning & Long-Term Wealth Forecaster
+### 📈 Planning and long-term wealth forecaster
 
-- **10-30 Year Wealth Trajectories**: Forecasts net worth trajectories under current vs. hypothetical savings habits.
-- **PAYE Take-Home Estimator**: Net pay calculations accounting for personal allowance, tax bands (Basic, Higher, Additional), and the **£100,000 personal allowance taper**.
-- **"What If" Salary Increase Modeler**: Simulates net monthly gains from a pay rise or bonus and pipes the surplus directly into the compound wealth projection.
+- **10–30 year wealth trajectories**: Forecasts net worth trajectories under current vs. hypothetical savings habits.
+- **PAYE take-home estimator**: Net pay calculations accounting for Personal Allowance, tax bands (basic, higher, additional), and the **£100,000 Personal Allowance taper**.
+- **Salary increase modeller**: Simulates net monthly gains from a pay rise or bonus and pipes the surplus directly into the compound wealth projection.
 
-### 🇬🇧 UK Tax & Self-Assessment Hub
+### 🇬🇧 UK tax and Self Assessment hub
 
-- **Fiscal Tax-Year P&L**: Filter and organize income and expenses by UK tax years (6 April to 5 April), with a tool to clone records between tax years.
-- **Self-Employed & Sole Trader Tax**: Computes taxable trading profits, allowable expenses, Income Tax, and **Class 4 National Insurance contributions**.
-- **Section 24 Rental Landlord Rules**: Accounts for non-deductible mortgage interest and computes the 20% basic-rate tax reducer.
-- **Property Ownership Share %**: Custom ownership splits for jointly owned rental properties.
-- **Digital Receipt Capture**: Upload PDFs, image receipts, or capture camera photos directly attached to expense records.
-- **Live Self-Assessment Liability Estimator**: Real-time tax bill estimation and filing deadline notices.
+- **Fiscal tax year P&L**: Filter and organise income and expenses by UK tax years (6 April to 5 April), with a tool to clone records between tax years.
+- **Self-employed and sole trader tax**: Computes taxable trading profits, allowable expenses, Income Tax, and **Class 4 National Insurance contributions**.
+- **Section 24 rental landlord rules**: Accounts for non-deductible mortgage interest and computes the 20% basic-rate tax credit.
+- **Property ownership share %**: Custom ownership splits for jointly owned rental properties.
+- **Digital receipt capture**: Upload PDFs, image receipts, or capture camera photos directly attached to expense records.
+- **Live Self Assessment liability estimator**: Real-time tax bill estimation and filing deadline notices.
 
-### ⚙️ User Profile & App Customization
+### ⚙️ User profile and app customisation
 
-- **Feature Toggles**: Selectively enable or disable core tools to keep the navigation bar focused.
-- **Multi-Currency Support**: Switch between GBP, USD, EUR, and other global currencies.
-- **Theme Switcher**: Dark and light modes with system preference sync.
+- **Feature toggles**: Selectively enable or disable core tools to keep the navigation bar focused.
+- **Multi-currency support**: Switch between GBP, USD, EUR, and other global currencies.
+- **Theme switcher**: Dark and light modes with system preference sync.
 
-### 📱 Multi-Platform Ecosystem
+### 📱 Multi-platform ecosystem
 
-- **Web Dashboard (`apps/web`)**: Server-rendered React Router 7 app styled with Panda CSS, supporting accessible UI primitives and full keyboard navigation.
-- **Mobile Companion (`apps/mobile-companion`)**: Native iOS and Android app built with Expo and React Native, featuring FaceID/TouchID biometric authentication.
-- **Marketing Site (`apps/marketing`)**: Fast, SEO-optimized landing site powered by Express and Vite.
+- **Web dashboard (`apps/web`)**: Server-rendered React Router 7 app styled with Panda CSS, supporting accessible UI primitives and full keyboard navigation.
+- **Mobile companion (`apps/mobile-companion`)**: Native iOS and Android app built with Expo and React Native, featuring FaceID/TouchID biometric authentication.
+- **Marketing site (`apps/marketing`)**: Fast, SEO-optimised landing site powered by Express and Vite.
 
 ---
 

@@ -17,7 +17,7 @@ vi.mock("react-router", async () => {
   return {
     ...actual,
     useLoaderData: vi.fn(() => ({
-      accounts: [{ id: "1", name: "Main checking", type: "Current", balance: 5000 }],
+      accounts: [{ id: "1", name: "Main current account", type: "Current", balance: 5000 }],
       accountDetails: [{ account_id: "1", month: 12, year: 2023, value: 5000 }],
     })),
   };
@@ -29,12 +29,12 @@ describe("<ForecastContainer />", () => {
     expect(container).toBeDefined();
 
     // Verify title and initial active tab (Savings Forecaster)
-    expect(getByText("Forecast & Tools")).toBeDefined();
+    expect(getByText("Forecast and tools")).toBeDefined();
     expect(container.querySelector("#mock-forecaster")).toBeDefined();
     expect(container.querySelector("#mock-calculator")).toBeNull();
 
-    // Click on UK Take-Home Pay Calculator tab
-    const calcTabBtn = getByText("UK Take-Home Pay Calculator");
+    // Click on UK take-home pay calculator tab
+    const calcTabBtn = getByText("UK take-home pay calculator");
     fireEvent.click(calcTabBtn);
 
     // Verify view switch

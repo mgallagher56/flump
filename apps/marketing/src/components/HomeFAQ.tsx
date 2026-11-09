@@ -39,24 +39,24 @@ const answerStyle = css({
 
 const FAQS = [
   {
-    q: "Can Flump move my money or execute payments?",
-    a: "No. Flump connects strictly through read-only Account Information Services (AISP) regulated by the Financial Conduct Authority (FCA). Flump has zero payment initiation capability and can never move money, initiate transfers, or change your account details.",
+    q: "Can Flump move my money or make payments?",
+    a: "No. Flump connects strictly through read-only Account Information Services (AISP) regulated by the Financial Conduct Authority (FCA). Flump cannot initiate payments, move money, or change your account details.",
   },
   {
     q: "Do I have to connect my bank accounts?",
-    a: "Not at all. Flump is designed from the ground up to be 100% manual-first. You can enter rough totals for income, expenses, and savings in 60 seconds and use every single tax, debt, mortgage, and forecasting tool without connecting a bank account.",
+    a: "No. Flump is designed to work completely manually. You can enter rough totals for income, expenses, and savings in 60 seconds and use every tax, debt, mortgage, and forecasting tool without connecting a bank account.",
   },
   {
     q: "What makes Flump different from generic budgeting apps?",
-    a: "Most budgeting tools are built for US tax laws (401k, credit scores). Flump is built natively for UK personal finance rules: HMRC income tax bands, National Insurance, £100k Personal Allowance taper, student loan plans (1, 2, 4, 5, PG), Section 24 buy-to-let calculations, and pension salary sacrifice.",
+    a: "Most budgeting apps are built around US tax rules. Flump is built natively for UK personal finance: HMRC income tax bands, National Insurance, the £100k Personal Allowance taper, student loan plans (1, 2, 4, 5, Postgraduate), Section 24 buy-to-let calculations, and pension salary sacrifice.",
   },
   {
-    q: "How does the 60-Second Baseline work?",
-    a: "On your first visit, enter 6 rough figures: your salary, housing, core bills, savings, pension balance, and debt. Flump calculates your Net Worth, weekly Safe-to-Spend allowance, and emergency survival runway immediately. You can drill down and refine details later.",
+    q: "How does the 60-second baseline work?",
+    a: "Enter 6 rough numbers: your salary, housing, core bills, savings, pension balance, and debt. Flump calculates your net worth, weekly safe to spend, and emergency runway immediately. You can add detail whenever you want.",
   },
   {
-    q: "Is there a free trial or free tier?",
-    a: "Yes. Flump offers a free baseline tier with all core calculators, take-home tools, and dashboard summaries included. No credit card is required to start.",
+    q: "Is there a free tier?",
+    a: "Yes. Flump offers a free baseline tier with all core calculators, take-home pay tools, and dashboard summaries included. No credit card is required.",
   },
 ];
 
@@ -71,8 +71,8 @@ export const HomeFAQ: FC = () => {
     <SectionBand
       id="faq"
       tone="subtle"
-      indexBadge="06 // FAQ"
-      title="Frequently Asked Questions"
+      indexBadge="Frequently asked questions"
+      title="Frequently asked questions"
       subtitle="Everything you need to know about Flump, UK financial rules, and our privacy-first design."
     >
       <div style={{ maxWidth: "780px", margin: "0 auto" }}>

@@ -313,10 +313,10 @@ const BudgetContainer: FC = () => {
       >
         <div>
           <FLPHeading as="h1" color="text.primary" size="xl">
-            Budget Planner
+            Budget planner
           </FLPHeading>
           <FLPText color="text.muted" fontSize="sm">
-            Track income, expenses, and plan your financial runway.
+            Track income, expenses and plan your financial runway.
           </FLPText>
         </div>
         <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", alignItems: "center" }}>
@@ -327,7 +327,7 @@ const BudgetContainer: FC = () => {
             variant="outline"
             onClick={() => setIsAddCategoryOpen(true)}
           >
-            <FaPlus size={11} style={{ marginRight: "6px" }} /> Add Category
+            <FaPlus size={11} style={{ marginRight: "6px" }} /> Add category
           </FLPButton>
           <FLPButton
             id="add-suggested-defaults-btn"
@@ -338,7 +338,7 @@ const BudgetContainer: FC = () => {
             onClick={handleAddSuggestedDefaults}
           >
             <FaPlus size={11} style={{ marginRight: "6px" }} />
-            {isSeedingDefaults ? "Adding..." : "Add Suggested Defaults"}
+            {isSeedingDefaults ? "Adding..." : "Add suggested defaults"}
           </FLPButton>
           <button
             id="setup-wizard-btn"
@@ -365,7 +365,7 @@ const BudgetContainer: FC = () => {
             type="button"
             onClick={() => setActiveTab("wizard")}
           >
-            <FaRocket size={13} /> Setup Wizard
+            <FaRocket size={13} /> Setup wizard
           </button>
         </div>
       </div>
@@ -413,7 +413,7 @@ const BudgetContainer: FC = () => {
               type="button"
               onClick={handleOpenRunway}
             >
-              <FaBalanceScale size={14} /> Runway Analysis
+              <FaBalanceScale size={14} /> Runway analysis
             </button>
           </div>
 

@@ -21,10 +21,10 @@ export const HomePage: FC = () => {
   return (
     <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
       <Helmet>
-        <title>Flump | UK Wealth, Tax Optimization & Net Worth Engine</title>
+        <title>Flump | UK wealth, tax planning and net worth</title>
         <meta
           name="description"
-          content="The UK financial engine engineered for HMRC rules. Get your complete financial baseline in 60 seconds, crush high-interest debt, avoid the 60% tax trap, and model long-term wealth."
+          content="Get your complete UK financial picture in 60 seconds. Know your net worth, safe to spend, emergency runway, and tax savings – built specifically for UK rules."
         />
         <link rel="canonical" href="https://flump.co.uk/" />
       </Helmet>
@@ -76,7 +76,7 @@ export const HomePage: FC = () => {
                 boxShadow: "0 2px 8px rgba(99, 102, 241, 0.15)",
               }}
             >
-              🇬🇧 ENGINEERED FOR UK RULES & HMRC THRESHOLDS
+              🇬🇧 Built for UK rules and HMRC thresholds
             </span>
 
             <h1
@@ -91,17 +91,7 @@ export const HomePage: FC = () => {
                 maxWidth: "960px",
               }}
             >
-              Get out of the red. <br />
-              <span
-                style={{
-                  background: "linear-gradient(135deg, #EF4444 0%, #F59E0B 45%, #10B981 100%)",
-                  backgroundClip: "text",
-                  WebkitBackgroundClip: "text",
-                  color: "transparent",
-                }}
-              >
-                Build into the black.
-              </span>
+              Your complete UK financial picture in 60 seconds.
             </h1>
 
             <p
@@ -113,9 +103,9 @@ export const HomePage: FC = () => {
                 margin: 0,
               }}
             >
-              Get your complete UK financial baseline in 60 seconds. Know your Net Worth, weekly
-              Safe-to-Spend cash, and emergency runway—then drill down into taxes, mortgages, or
-              debt payoff when you're ready.
+              Enter 6 rough numbers to calculate your net worth, weekly safe to spend, and emergency
+              runway – then drill down into tax, mortgage overpayments, or debt payoff when you need
+              to.
             </p>
 
             <div className={flex({ gap: "4", flexWrap: "wrap", justify: "center" })}>
@@ -131,7 +121,7 @@ export const HomePage: FC = () => {
                     boxShadow: "0 10px 28px -4px rgba(99, 102, 241, 0.45)",
                   }}
                 >
-                  Get Your 60-Second Baseline Free →
+                  Get your free baseline →
                 </Button>
               </a>
               <a
@@ -149,13 +139,13 @@ export const HomePage: FC = () => {
                     borderRadius: "12px",
                   }}
                 >
-                  Explore Live Demo Sandbox
+                  Try the live demo
                 </Button>
               </a>
             </div>
           </div>
 
-          {/* 3D Wealth Engine Hero Illustration */}
+          {/* Wealth Engine Hero Illustration */}
           <div
             style={{
               maxWidth: "1060px",
@@ -170,7 +160,7 @@ export const HomePage: FC = () => {
           >
             <img
               src="/illustrations/hero-wealth-engine.jpg"
-              alt="3D Wealth Engine - Visualising financial baseline, debt elimination, and long-term net worth"
+              alt="Visual summary of financial baseline, debt payoff, and net worth"
               loading="eager"
               style={{
                 width: "100%",
@@ -236,18 +226,18 @@ export const HomePage: FC = () => {
                 lineHeight: "1.6",
               }}
             >
-              Start free with your 6-number baseline. No credit card, no ads, and zero complex
-              setup.
+              Start free with your 6-number baseline. No credit card, no bank login, and zero
+              complicated setup.
             </p>
             <div className={flex({ gap: "4", justify: "center", flexWrap: "wrap" })}>
               <a href={`${appUrl}/signUp`} style={{ textDecoration: "none" }}>
                 <Button size="lg" variant="primary">
-                  Start Your Free Baseline Now →
+                  Start your free baseline →
                 </Button>
               </a>
               <Link to="/tools" style={{ textDecoration: "none" }}>
                 <Button size="lg" variant="ghost">
-                  Browse Free Calculators Directory
+                  Browse free calculators
                 </Button>
               </Link>
             </div>

@@ -328,7 +328,7 @@ export const InteractiveFinancialTeaser: FC = () => {
   return (
     <section
       id="live-calculators"
-      aria-label="Interactive UK Financial Engine Teaser"
+      aria-label="Interactive UK financial calculator"
       style={{
         backgroundColor: "var(--colors-surface-tinted)",
         borderTop: "1px solid var(--colors-border)",
@@ -352,7 +352,7 @@ export const InteractiveFinancialTeaser: FC = () => {
               marginBottom: "12px",
             }}
           >
-            {"03 // LIVE HMRC SIMULATOR"}
+            Live calculator
           </span>
           <h2
             style={{
@@ -364,7 +364,7 @@ export const InteractiveFinancialTeaser: FC = () => {
               margin: "0 0 12px 0",
             }}
           >
-            Test the live UK financial engine
+            Test the live UK financial calculator
           </h2>
           <p
             style={{
@@ -375,7 +375,8 @@ export const InteractiveFinancialTeaser: FC = () => {
               lineHeight: "1.6",
             }}
           >
-            Adjust the sliders to run real HMRC marginal rates and mortgage amortization formulas.
+            Enter your figures to see real HMRC marginal tax rates and mortgage amortisation
+            schedules.
           </p>
         </div>
 
@@ -391,7 +392,7 @@ export const InteractiveFinancialTeaser: FC = () => {
               onClick={() => setActiveTab("tax")}
             >
               <FiPercent size={16} />
-              <span>UK PAYE & 60% Tax Trap</span>
+              <span>UK PAYE and 60% tax trap</span>
             </button>
             <button
               aria-controls="panel-mortgage"
@@ -403,7 +404,7 @@ export const InteractiveFinancialTeaser: FC = () => {
               onClick={() => setActiveTab("mortgage")}
             >
               <FiTrendingUp size={16} />
-              <span>Mortgage Overpayment Savings</span>
+              <span>Mortgage overpayment savings</span>
             </button>
           </div>
 
@@ -418,7 +419,7 @@ export const InteractiveFinancialTeaser: FC = () => {
                 <div>
                   <div className={inputGroupStyle}>
                     <label className={labelStyle} htmlFor={incomeInputId}>
-                      Annual Gross Salary (PAYE)
+                      Annual gross salary (PAYE)
                     </label>
                     <div className={inputWrapperStyle}>
                       <span className={currencyPrefixStyle}>£</span>
@@ -451,7 +452,7 @@ export const InteractiveFinancialTeaser: FC = () => {
                     <div className={alertTaperStyle}>
                       <FiAlertCircle size={18} style={{ flexShrink: 0, marginTop: "2px" }} />
                       <div>
-                        <strong>£100k+ Personal Allowance Taper Active</strong>
+                        <strong>£100k+ Personal Allowance taper active</strong>
                         <p style={{ margin: "4px 0 0", lineHeight: "1.5" }}>
                           Allowance reduced to {formatGBP(taxResults.allowance)}. Earnings between
                           £100k–£125k face an effective 60% marginal income tax rate.
@@ -463,7 +464,7 @@ export const InteractiveFinancialTeaser: FC = () => {
 
                 <div className={resultBoxStyle}>
                   <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-                    <span className={labelStyle}>Net Take-Home Pay</span>
+                    <span className={labelStyle}>Net take-home pay</span>
                     <div className={highlightValueStyle}>
                       {formatGBP(taxResults.monthlyNet)}{" "}
                       <span
@@ -477,12 +478,12 @@ export const InteractiveFinancialTeaser: FC = () => {
                       </span>
                     </div>
                     <span style={{ fontSize: "12px", color: "var(--colors-text-secondary)" }}>
-                      {formatGBP(taxResults.annualNet)} annually after all UK deductions
+                      {formatGBP(taxResults.annualNet)} annually after UK tax and National Insurance
                     </span>
                   </div>
 
                   <div className={statRowStyle}>
-                    <span style={{ color: "var(--colors-text-secondary)" }}>Income Tax:</span>
+                    <span style={{ color: "var(--colors-text-secondary)" }}>Income tax:</span>
                     <strong style={{ color: "var(--colors-text-primary)" }}>
                       {formatGBP(taxResults.incomeTax)}
                     </strong>
@@ -499,7 +500,7 @@ export const InteractiveFinancialTeaser: FC = () => {
 
                   <div className={statRowStyle}>
                     <span style={{ color: "var(--colors-text-secondary)" }}>
-                      Effective Tax & NI Rate:
+                      Effective tax and NI rate:
                     </span>
                     <span
                       style={{
@@ -542,7 +543,7 @@ export const InteractiveFinancialTeaser: FC = () => {
                 <div>
                   <div className={inputGroupStyle}>
                     <label className={labelStyle} htmlFor={mortgageBalanceId}>
-                      Remaining Mortgage Balance
+                      Remaining mortgage balance
                     </label>
                     <div className={inputWrapperStyle}>
                       <span className={currencyPrefixStyle}>£</span>
@@ -572,7 +573,7 @@ export const InteractiveFinancialTeaser: FC = () => {
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
                     <div className={inputGroupStyle}>
                       <label className={labelStyle} htmlFor={interestRateId}>
-                        Interest Rate (%)
+                        Interest rate (%)
                       </label>
                       <input
                         className={textInputStyle}
@@ -589,7 +590,7 @@ export const InteractiveFinancialTeaser: FC = () => {
 
                     <div className={inputGroupStyle}>
                       <label className={labelStyle} htmlFor={overpaymentId}>
-                        Monthly Overpayment (£)
+                        Monthly overpayment (£)
                       </label>
                       <input
                         className={textInputStyle}
@@ -608,7 +609,7 @@ export const InteractiveFinancialTeaser: FC = () => {
 
                 <div className={resultBoxStyle}>
                   <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-                    <span className={labelStyle}>Total Interest Saved</span>
+                    <span className={labelStyle}>Total interest saved</span>
                     <div
                       className={highlightValueStyle}
                       style={{ color: "var(--colors-success-500, #10b981)" }}
@@ -622,7 +623,7 @@ export const InteractiveFinancialTeaser: FC = () => {
 
                   <div className={statRowStyle}>
                     <span style={{ color: "var(--colors-text-secondary)" }}>
-                      Standard Repayment:
+                      Standard repayment:
                     </span>
                     <span style={{ color: "var(--colors-text-primary)", fontWeight: "medium" }}>
                       {formatGBP(mortgageResults.monthlyStandard)} / month
@@ -631,7 +632,7 @@ export const InteractiveFinancialTeaser: FC = () => {
 
                   <div className={statRowStyle}>
                     <span style={{ color: "var(--colors-text-secondary)" }}>
-                      Mortgage Term Shaved:
+                      Mortgage term reduced:
                     </span>
                     <strong style={{ color: "var(--colors-primary)" }}>
                       {mortgageResults.yearsSaved} yrs {mortgageResults.remainingMonthsSaved} mos
@@ -640,7 +641,7 @@ export const InteractiveFinancialTeaser: FC = () => {
 
                   <div className={statRowStyle}>
                     <span style={{ color: "var(--colors-text-secondary)" }}>
-                      New Total Monthly:
+                      New total monthly:
                     </span>
                     <strong style={{ color: "var(--colors-text-primary)" }}>
                       {formatGBP(mortgageResults.monthlyWithOverpayment)} / month

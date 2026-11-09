@@ -48,9 +48,9 @@ export const FeaturePillars: FC = () => {
     <SectionBand
       id="pillars"
       tone="canvas"
-      indexBadge="02 // FOUR PILLARS"
-      title="Four Pillars of Your Financial Plan"
-      subtitle="Engineered for UK specific tax laws, personal allowance thresholds, and interest rate realities."
+      indexBadge="Core tools"
+      title="Four pillars of your financial plan"
+      subtitle="Built specifically for UK tax bands, Personal Allowance thresholds, and interest rates."
     >
       <div className={grid({ columns: { base: 1, md: 2 }, gap: "6" })}>
         {/* Pillar 1: Debt */}
@@ -69,7 +69,7 @@ export const FeaturePillars: FC = () => {
                 fontFamily: "var(--fonts-mono, monospace)",
               }}
             >
-              STAGE 1 FOCUS
+              STAGE 1
             </span>
           </div>
 
@@ -83,7 +83,7 @@ export const FeaturePillars: FC = () => {
                 margin: "0 0 6px 0",
               }}
             >
-              Debt & Repayment Strategies
+              Debt payoff
             </h3>
             <p
               style={{
@@ -93,15 +93,15 @@ export const FeaturePillars: FC = () => {
                 lineHeight: "1.5",
               }}
             >
-              Accelerate debt freedom by comparing Avalanche and Snowball schedules with promotional
-              cliff alerts.
+              Clear debt faster by comparing avalanche and snowball schedules, with alerts before 0%
+              promotional rates expire.
             </p>
           </div>
 
           <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
-            <span className={pillChip}>Avalanche vs Snowball</span>
-            <span className={pillChip}>0% Balance Transfer Cliffs</span>
-            <span className={pillChip}>39.9% Overdraft Traps</span>
+            <span className={pillChip}>Avalanche vs snowball</span>
+            <span className={pillChip}>0% transfer alerts</span>
+            <span className={pillChip}>39.9% EAR overdraft costs</span>
           </div>
 
           {/* Code-driven SVG Micro-Diagram */}
@@ -125,8 +125,8 @@ export const FeaturePillars: FC = () => {
                 marginBottom: "6px",
               }}
             >
-              <span>Payoff Trajectory</span>
-              <strong style={{ color: "#10b981" }}>-£1,420 Interest Saved</strong>
+              <span>Payoff trajectory</span>
+              <strong style={{ color: "#10b981" }}>-£1,420 interest saved</strong>
             </div>
             <svg
               viewBox="0 0 280 40"
@@ -181,7 +181,7 @@ export const FeaturePillars: FC = () => {
                 margin: "0 0 6px 0",
               }}
             >
-              UK Tax & Pension Planning
+              UK tax and pension planning
             </h3>
             <p
               style={{
@@ -191,20 +191,21 @@ export const FeaturePillars: FC = () => {
                 lineHeight: "1.5",
               }}
             >
-              Navigate the £100k Personal Allowance taper and calculate salary sacrifice NI savings.
+              Navigate the £100k Personal Allowance taper and calculate salary sacrifice National
+              Insurance savings.
             </p>
           </div>
 
           <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
-            <span className={pillChip}>60% Tax Trap Radar</span>
-            <span className={pillChip}>30h Free Childcare</span>
-            <span className={pillChip}>Salary Sacrifice</span>
+            <span className={pillChip}>60% tax trap</span>
+            <span className={pillChip}>30 hours free childcare</span>
+            <span className={pillChip}>Salary sacrifice</span>
           </div>
 
           {/* Code-driven SVG Micro-Diagram: £100k Cliff */}
           <div
             role="img"
-            aria-label="UK Income tax marginal rate diagram showing 60% trap"
+            aria-label="UK income tax marginal rate diagram showing 60% trap"
             style={{
               marginTop: "auto",
               padding: "12px",
@@ -222,8 +223,8 @@ export const FeaturePillars: FC = () => {
                 marginBottom: "6px",
               }}
             >
-              <span>Marginal Rate Curve</span>
-              <strong style={{ color: "#ef4444" }}>60% Zone (£100k–£125k)</strong>
+              <span>Marginal rate curve</span>
+              <strong style={{ color: "#ef4444" }}>60% zone (£100k–£125k)</strong>
             </div>
             <div style={{ display: "flex", alignItems: "flex-end", height: "30px", gap: "8px" }}>
               <div
@@ -282,7 +283,7 @@ export const FeaturePillars: FC = () => {
                 fontFamily: "var(--fonts-mono, monospace)",
               }}
             >
-              PROPERTY EQUITY
+              MORTGAGES
             </span>
           </div>
 
@@ -296,7 +297,7 @@ export const FeaturePillars: FC = () => {
                 margin: "0 0 6px 0",
               }}
             >
-              Mortgage & Property Equity
+              Mortgage and property equity
             </h3>
             <p
               style={{
@@ -306,14 +307,14 @@ export const FeaturePillars: FC = () => {
                 lineHeight: "1.5",
               }}
             >
-              Simulate monthly overpayments against Stocks & Shares ISA compound returns.
+              Simulate monthly overpayments against Stocks and Shares ISA compound returns.
             </p>
           </div>
 
           <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
-            <span className={pillChip}>Overpay vs S&S ISA</span>
-            <span className={pillChip}>Fixed-Rate Renewal Shock</span>
-            <span className={pillChip}>LTV Thresholds</span>
+            <span className={pillChip}>Overpay vs ISA</span>
+            <span className={pillChip}>Fixed-rate renewal shock</span>
+            <span className={pillChip}>LTV thresholds</span>
           </div>
 
           {/* Code-driven SVG Micro-Diagram */}
@@ -337,8 +338,8 @@ export const FeaturePillars: FC = () => {
                 marginBottom: "6px",
               }}
             >
-              <span>Term Shortened</span>
-              <strong style={{ color: "#f59e0b" }}>-4 Years 2 Months</strong>
+              <span>Term shortened</span>
+              <strong style={{ color: "#f59e0b" }}>-4 years 2 months</strong>
             </div>
             <div
               style={{
@@ -356,7 +357,7 @@ export const FeaturePillars: FC = () => {
           </div>
         </div>
 
-        {/* Pillar 4: Safe-to-Spend & Runway */}
+        {/* Pillar 4: Safe to spend & Runway */}
         <div className={bentoCardStyle}>
           <div
             style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}
@@ -372,7 +373,7 @@ export const FeaturePillars: FC = () => {
                 fontFamily: "var(--fonts-mono, monospace)",
               }}
             >
-              CASHFLOW CONTROL
+              CASHFLOW
             </span>
           </div>
 
@@ -386,7 +387,7 @@ export const FeaturePillars: FC = () => {
                 margin: "0 0 6px 0",
               }}
             >
-              Discretionary Surplus & Runway
+              Safe to spend and emergency runway
             </h3>
             <p
               style={{
@@ -396,14 +397,14 @@ export const FeaturePillars: FC = () => {
                 lineHeight: "1.5",
               }}
             >
-              Know your exact guilt-free weekly allowance after ring-fencing priority obligations.
+              Know your exact weekly allowance after ring-fencing fixed bills and emergency savings.
             </p>
           </div>
 
           <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
-            <span className={pillChip}>Safe-to-Spend / Wk</span>
-            <span className={pillChip}>Emergency Runway Gauge</span>
-            <span className={pillChip}>Priority vs Flexible</span>
+            <span className={pillChip}>Safe to spend / week</span>
+            <span className={pillChip}>Emergency runway</span>
+            <span className={pillChip}>Fixed vs flexible bills</span>
           </div>
 
           {/* Code-driven SVG Micro-Diagram */}
@@ -427,8 +428,8 @@ export const FeaturePillars: FC = () => {
                 marginBottom: "6px",
               }}
             >
-              <span>Survival Runway</span>
-              <strong style={{ color: "#10b981" }}>6.4 Months (Target Met)</strong>
+              <span>Emergency runway</span>
+              <strong style={{ color: "#10b981" }}>6.4 months (target met)</strong>
             </div>
             <div style={{ display: "flex", gap: "4px", height: "8px" }}>
               <div style={{ flex: 1, backgroundColor: "#10b981", borderRadius: "2px" }} />
@@ -444,3 +445,5 @@ export const FeaturePillars: FC = () => {
     </SectionBand>
   );
 };
+
+export default FeaturePillars;

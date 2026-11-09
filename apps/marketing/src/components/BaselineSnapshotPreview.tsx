@@ -100,11 +100,11 @@ export const BaselineSnapshotPreview: FC = () => {
               fontFamily: "var(--fonts-display)",
             }}
           >
-            Your 60-Second UK Financial Baseline
+            Your 60-second UK financial baseline
           </strong>
         </div>
         <span className={pillBadgeStyle}>
-          <FiCheckCircle size={14} /> Instant Dashboard Snapshot
+          <FiCheckCircle size={14} /> Instant summary
         </span>
       </div>
 
@@ -120,7 +120,7 @@ export const BaselineSnapshotPreview: FC = () => {
               letterSpacing: "0.04em",
             }}
           >
-            Total Net Worth
+            Total net worth
           </span>
           <div
             className="tabular-nums"
@@ -134,7 +134,7 @@ export const BaselineSnapshotPreview: FC = () => {
             £68,400
           </div>
           <span style={{ fontSize: "12px", color: "var(--colors-text-muted)" }}>
-            Cash, ISA, Pension & Equity
+            Cash, ISAs, pensions, and property equity
           </span>
         </div>
 
@@ -148,7 +148,7 @@ export const BaselineSnapshotPreview: FC = () => {
               letterSpacing: "0.04em",
             }}
           >
-            Monthly Surplus
+            Monthly surplus
           </span>
           <div
             className="tabular-nums"
@@ -167,7 +167,7 @@ export const BaselineSnapshotPreview: FC = () => {
             </span>
           </div>
           <span style={{ fontSize: "12px", color: "var(--colors-text-muted)" }}>
-            After tax, NI & outgoings
+            After tax, NI, and fixed outgoings
           </span>
         </div>
 
@@ -181,7 +181,7 @@ export const BaselineSnapshotPreview: FC = () => {
               letterSpacing: "0.04em",
             }}
           >
-            Safe-to-Spend
+            Safe to spend
           </span>
           <div
             className="tabular-nums"
@@ -200,7 +200,7 @@ export const BaselineSnapshotPreview: FC = () => {
             </span>
           </div>
           <span style={{ fontSize: "12px", color: "var(--colors-text-muted)" }}>
-            Guilt-free cash buffer
+            Discretionary weekly cash
           </span>
         </div>
 
@@ -214,7 +214,7 @@ export const BaselineSnapshotPreview: FC = () => {
               letterSpacing: "0.04em",
             }}
           >
-            Emergency Runway
+            Emergency runway
           </span>
           <div
             className="tabular-nums"
@@ -228,7 +228,7 @@ export const BaselineSnapshotPreview: FC = () => {
             6.4 <span style={{ fontSize: "13px", fontWeight: "600" }}>Months</span>
           </div>
           <span style={{ fontSize: "12px", color: "var(--colors-text-muted)" }}>
-            Survival without salary
+            Essential expenses covered
           </span>
         </div>
       </div>
@@ -252,20 +252,20 @@ export const BaselineSnapshotPreview: FC = () => {
               color: "var(--colors-text-primary)",
             }}
           >
-            Monthly Cashflow Allocation
+            Monthly cashflow breakdown
           </span>
           <span
             className="tabular-nums"
             style={{ fontSize: "12px", color: "var(--colors-text-muted)" }}
           >
-            Gross Take-Home: £4,200/mo
+            Gross take-home: £4,200/mo
           </span>
         </div>
 
         {/* Proportional Stacked Allocation Bar */}
         <div
           role="img"
-          aria-label="Cashflow allocation diagram: 24% UK Tax and NI, 42% Housing and Fixed Bills, 18% Safe-to-Spend, 16% Surplus to Wealth"
+          aria-label="Cashflow allocation diagram: 24% UK Tax and NI, 42% Housing and Fixed Bills, 18% Safe to Spend, 16% Surplus to Wealth"
           style={{
             height: "14px",
             borderRadius: "9999px",
@@ -285,7 +285,7 @@ export const BaselineSnapshotPreview: FC = () => {
           />
           <div
             style={{ width: "18%", backgroundColor: "var(--colors-info-500)" }}
-            title="Safe-to-Spend Cash: £756 (18% / £195/wk)"
+            title="Safe to spend: £756 (18% / £195/wk)"
           />
           <div
             style={{ width: "16%", backgroundColor: "var(--colors-success-500)" }}
@@ -313,7 +313,7 @@ export const BaselineSnapshotPreview: FC = () => {
                 backgroundColor: "var(--colors-slate-500)",
               }}
             />
-            <span>Tax & NI (24%)</span>
+            <span>Tax and NI (24%)</span>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
             <span
@@ -324,7 +324,7 @@ export const BaselineSnapshotPreview: FC = () => {
                 backgroundColor: "var(--colors-destructive-500)",
               }}
             />
-            <span>Fixed Bills (42%)</span>
+            <span>Fixed bills (42%)</span>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
             <span
@@ -335,7 +335,7 @@ export const BaselineSnapshotPreview: FC = () => {
                 backgroundColor: "var(--colors-info-500)",
               }}
             />
-            <span>Safe-to-Spend (£195/wk · 18%)</span>
+            <span>Safe to spend (£195/wk · 18%)</span>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
             <span
@@ -363,8 +363,8 @@ export const BaselineSnapshotPreview: FC = () => {
         >
           <FiShield size={16} style={{ color: "var(--colors-success-500)", flexShrink: 0 }} />
           <span>
-            <strong>Zero setup hassle:</strong> Enter rough totals on first login. Drill down and
-            add accounts only when you want.
+            <strong>Zero setup hassle:</strong> Enter rough totals to start. Add accounts and
+            details only when you choose.
           </span>
         </div>
         <div

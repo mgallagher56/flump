@@ -41,10 +41,10 @@ export const PricingPage: FC = () => {
   return (
     <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
       <Helmet>
-        <title>Pricing & Plans | Free Manual vs Pro Open Banking | Flump</title>
+        <title>Pricing and plans | Free manual vs Pro Open Banking | Flump</title>
         <meta
           name="description"
-          content="Choose between our 100% Free Manual tier or upgrade to Pro for automated FCA Open Banking sync and the full UK HMRC tax engine."
+          content="Choose between our free manual tier or upgrade to Pro for automated FCA Open Banking sync and complete UK tax tools."
         />
         <link rel="canonical" href="https://flump.co.uk/pricing" />
       </Helmet>
@@ -63,7 +63,7 @@ export const PricingPage: FC = () => {
                 color: "#6363f1",
               }}
             >
-              Simple, Transparent Pricing
+              Simple, transparent pricing
             </span>
             <h1
               style={{
@@ -73,7 +73,7 @@ export const PricingPage: FC = () => {
                 marginTop: "8px",
               }}
             >
-              Choose the Plan for Your Financial Journey
+              Choose the plan for your financial journey
             </h1>
             <p
               style={{
@@ -84,7 +84,7 @@ export const PricingPage: FC = () => {
               }}
             >
               Start completely free with manual control, or unlock real-time bank sync and advanced
-              UK tax modeling.
+              UK tax modelling.
             </p>
 
             {/* Monthly / Annual Toggle */}
@@ -98,7 +98,7 @@ export const PricingPage: FC = () => {
                     : "var(--colors-text-primary, #0f172a)",
                 }}
               >
-                Monthly Billing
+                Monthly billing
               </span>
               <button
                 type="button"
@@ -136,7 +136,7 @@ export const PricingPage: FC = () => {
                     : "var(--colors-text-muted, #64748b)",
                 }}
               >
-                Annual Billing{" "}
+                Annual billing{" "}
                 <span style={{ color: "#10b981", fontWeight: "700" }}>(Save 20%)</span>
               </span>
             </div>
@@ -163,7 +163,7 @@ export const PricingPage: FC = () => {
                     marginBottom: "4px",
                   }}
                 >
-                  Free Manual Tier
+                  Free manual tier
                 </h3>
                 <p
                   style={{
@@ -172,8 +172,7 @@ export const PricingPage: FC = () => {
                     minHeight: "42px",
                   }}
                 >
-                  Ideal for privacy enthusiasts and spreadsheet fans who want full control over
-                  their data.
+                  Ideal for spreadsheet users who want complete control over their personal data.
                 </p>
 
                 <div
@@ -202,7 +201,7 @@ export const PricingPage: FC = () => {
                       color: "var(--colors-text-primary, #334155)",
                     })}
                   >
-                    <FiCheck color="#10b981" size={18} /> Unlimited Manual Accounts & Pots
+                    <FiCheck color="#10b981" size={18} /> Unlimited manual accounts and pots
                   </div>
                   <div
                     className={flex({
@@ -212,7 +211,7 @@ export const PricingPage: FC = () => {
                       color: "var(--colors-text-primary, #334155)",
                     })}
                   >
-                    <FiCheck color="#10b981" size={18} /> Debt Crusher (Snowball & Avalanche)
+                    <FiCheck color="#10b981" size={18} /> Debt payoff (snowball and avalanche)
                   </div>
                   <div
                     className={flex({
@@ -222,7 +221,7 @@ export const PricingPage: FC = () => {
                       color: "var(--colors-text-primary, #334155)",
                     })}
                   >
-                    <FiCheck color="#10b981" size={18} /> Safe-to-Spend Cash Flow Runway
+                    <FiCheck color="#10b981" size={18} /> Safe to spend and emergency runway
                   </div>
                   <div
                     className={flex({
@@ -232,7 +231,7 @@ export const PricingPage: FC = () => {
                       color: "var(--colors-text-primary, #334155)",
                     })}
                   >
-                    <FiCheck color="#10b981" size={18} /> CSV Transaction & Balance Imports
+                    <FiCheck color="#10b981" size={18} /> CSV transaction and balance imports
                   </div>
                   <div
                     className={flex({
@@ -242,7 +241,7 @@ export const PricingPage: FC = () => {
                       color: "var(--colors-text-primary, #334155)",
                     })}
                   >
-                    <FiCheck color="#10b981" size={18} /> 5-Year Net Worth Forecast
+                    <FiCheck color="#10b981" size={18} /> 5-year net worth forecast
                   </div>
                   <div
                     className={flex({
@@ -252,7 +251,7 @@ export const PricingPage: FC = () => {
                       color: "#94a3b8",
                     })}
                   >
-                    <FiMinus size={18} /> FCA Open Banking Auto-Sync
+                    <FiMinus size={18} /> FCA Open Banking auto-sync
                   </div>
                   <div
                     className={flex({
@@ -262,7 +261,7 @@ export const PricingPage: FC = () => {
                       color: "#94a3b8",
                     })}
                   >
-                    <FiMinus size={18} /> Section 24 Landlord Tax Restrictions
+                    <FiMinus size={18} /> Section 24 landlord tax calculations
                   </div>
                 </div>
               </div>
@@ -273,7 +272,7 @@ export const PricingPage: FC = () => {
                   variant="outline"
                   style={{ width: "100%", justifyContent: "center" }}
                 >
-                  Get Started Free
+                  Get started free
                 </Button>
               </a>
             </div>
@@ -306,7 +305,7 @@ export const PricingPage: FC = () => {
                     marginBottom: "4px",
                   }}
                 >
-                  Pro Open Banking & Tax Engine
+                  Pro Open Banking and tax tools
                 </h3>
                 <p
                   style={{
@@ -315,8 +314,7 @@ export const PricingPage: FC = () => {
                     minHeight: "42px",
                   }}
                 >
-                  Complete hands-off automation, live bank feeds, and enterprise-grade UK tax
-                  models.
+                  Automated live bank feeds and comprehensive UK tax models.
                 </p>
 
                 <div
@@ -346,7 +344,7 @@ export const PricingPage: FC = () => {
                       fontWeight: "600",
                     })}
                   >
-                    <FiCheck color="#10b981" size={18} /> Everything in Free Manual
+                    <FiCheck color="#10b981" size={18} /> Everything in Free manual
                   </div>
                   <div
                     className={flex({
@@ -357,8 +355,8 @@ export const PricingPage: FC = () => {
                       fontWeight: "600",
                     })}
                   >
-                    <FiCheck color="#10b981" size={18} /> Regulated FCA Open Banking Sync (All UK
-                    Banks)
+                    <FiCheck color="#10b981" size={18} /> Regulated FCA Open Banking sync (all UK
+                    banks)
                   </div>
                   <div
                     className={flex({
@@ -369,8 +367,8 @@ export const PricingPage: FC = () => {
                       fontWeight: "600",
                     })}
                   >
-                    <FiCheck color="#10b981" size={18} /> £100k Tax Trap & 30-Hour Childcare Reclaim
-                    Engine
+                    <FiCheck color="#10b981" size={18} /> £100k tax trap and 30-hour childcare
+                    calculator
                   </div>
                   <div
                     className={flex({
@@ -381,7 +379,8 @@ export const PricingPage: FC = () => {
                       fontWeight: "600",
                     })}
                   >
-                    <FiCheck color="#10b981" size={18} /> Section 24 BTL Finance Cost Modeler
+                    <FiCheck color="#10b981" size={18} /> Section 24 buy-to-let finance cost
+                    modeller
                   </div>
                   <div
                     className={flex({
@@ -392,7 +391,7 @@ export const PricingPage: FC = () => {
                       fontWeight: "600",
                     })}
                   >
-                    <FiCheck color="#10b981" size={18} /> 30-Year Compounding Net Worth Scenarios
+                    <FiCheck color="#10b981" size={18} /> 30-year compounding net worth scenarios
                   </div>
                   <div
                     className={flex({
@@ -403,7 +402,7 @@ export const PricingPage: FC = () => {
                       fontWeight: "600",
                     })}
                   >
-                    <FiCheck color="#10b981" size={18} /> Daily Transaction Auto-Categorization
+                    <FiCheck color="#10b981" size={18} /> Daily transaction auto-categorisation
                   </div>
                 </div>
               </div>
@@ -414,7 +413,7 @@ export const PricingPage: FC = () => {
                   variant="primary"
                   style={{ width: "100%", justifyContent: "center" }}
                 >
-                  Start 14-Day Free Pro Trial →
+                  Start 14-day free Pro trial →
                 </Button>
               </a>
             </div>

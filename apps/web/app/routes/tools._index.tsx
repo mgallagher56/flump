@@ -8,11 +8,11 @@ import FLPText from "~/components/core/typography/FLPText";
 import HomeFooter from "~/components/home/HomeFooter";
 
 export const meta: MetaFunction = () => [
-  { title: "Free UK Financial Calculators & Tax Tools | Flump" },
+  { title: "Free UK Financial Calculators and Tax Tools | Flump" },
   {
     name: "description",
     content:
-      "Free interactive UK wealth and tax calculators. Model the £100k tax trap, compare mortgage overpayment vs ISA investing, and calculate Section 24 buy-to-let mortgage interest relief.",
+      "Free interactive UK wealth and tax calculators. Model the £100k tax trap, compare mortgage overpayment with ISA investing, and calculate Section 24 buy-to-let mortgage interest relief.",
   },
 ];
 
@@ -88,14 +88,14 @@ export const ToolsIndex: FC = () => {
               marginBottom: "12px",
             }}
           >
-            Open UK Financial Calculators
+            Free UK calculators
           </span>
           <FLPHeading as="h1" color="text.primary" mb={3} size="3xl">
-            Free UK Wealth, Tax & Mortgage Decision Tools
+            Free UK wealth, tax, and mortgage calculators
           </FLPHeading>
           <FLPText color="text.muted" fontSize="md">
-            Mathematical modeling tools built strictly for UK fiscal rules, HMRC tax bands, and
-            allowances. No account or email required to test scenarios.
+            Calculation tools built specifically for UK tax rules, HMRC thresholds, and allowances.
+            No account or email address required.
           </FLPText>
         </div>
 
@@ -107,11 +107,11 @@ export const ToolsIndex: FC = () => {
                 <FiPercent />
               </div>
               <FLPHeading as="h2" color="text.primary" mb={2} size="lg">
-                £100k–£125k Tax Trap Calculator
+                £100k–£125k tax trap calculator
               </FLPHeading>
               <FLPText color="text.muted" fontSize="sm" lineHeight="1.6">
-                Calculate your effective 60% marginal tax rate, personal allowance clawback, and the
-                exact salary sacrifice needed to protect 15–30 hours free childcare.
+                Calculate your effective 60% marginal tax rate, Personal Allowance taper, and the
+                salary sacrifice required to retain tax-free childcare.
               </FLPText>
             </div>
             <div
@@ -125,7 +125,7 @@ export const ToolsIndex: FC = () => {
                 fontSize: "13px",
               }}
             >
-              Launch Calculator <FiArrowRight size={14} />
+              Open calculator <FiArrowRight size={14} />
             </div>
           </RouterLink>
 
@@ -136,11 +136,11 @@ export const ToolsIndex: FC = () => {
                 <FiHome />
               </div>
               <FLPHeading as="h2" color="text.primary" mb={2} size="lg">
-                Mortgage Overpay vs. ISA Comparator
+                Mortgage overpay vs ISA calculator
               </FLPHeading>
               <FLPText color="text.muted" fontSize="sm" lineHeight="1.6">
-                Directly compare guaranteed interest saved by overpaying your mortgage against the
-                tax-free compounding growth of a UK Stocks & Shares ISA.
+                Compare guaranteed interest savings from mortgage overpayments against compound
+                growth in a UK Stocks and Shares ISA.
               </FLPText>
             </div>
             <div
@@ -154,7 +154,7 @@ export const ToolsIndex: FC = () => {
                 fontSize: "13px",
               }}
             >
-              Launch Calculator <FiArrowRight size={14} />
+              Open calculator <FiArrowRight size={14} />
             </div>
           </RouterLink>
 
@@ -165,11 +165,11 @@ export const ToolsIndex: FC = () => {
                 <FiDollarSign />
               </div>
               <FLPHeading as="h2" color="text.primary" mb={2} size="lg">
-                Section 24 Landlord Tax Calculator
+                Section 24 landlord tax calculator
               </FLPHeading>
               <FLPText color="text.muted" fontSize="sm" lineHeight="1.6">
-                Model phantom buy-to-let profit and the 20% basic rate finance relief cap. See exact
-                tax owed and true cash retained in your pocket.
+                Calculate buy-to-let tax under Section 24 rules, including the 20% basic rate
+                finance cost credit and true net cash flow.
               </FLPText>
             </div>
             <div
@@ -183,7 +183,7 @@ export const ToolsIndex: FC = () => {
                 fontSize: "13px",
               }}
             >
-              Launch Calculator <FiArrowRight size={14} />
+              Open calculator <FiArrowRight size={14} />
             </div>
           </RouterLink>
 
@@ -197,11 +197,11 @@ export const ToolsIndex: FC = () => {
                 <FaFire />
               </div>
               <FLPHeading as="h2" color="text.primary" mb={2} size="lg">
-                Debt Snowball vs. Avalanche Calculator
+                Debt payoff: snowball vs avalanche calculator
               </FLPHeading>
               <FLPText color="text.muted" fontSize="sm" lineHeight="1.6">
-                Calculate your exact debt-free date, interest saved, and compare mathematical vs
-                psychological payoff ordering for UK credit cards and loans.
+                Compare mathematical interest savings against psychological momentum across your UK
+                credit cards and loans.
               </FLPText>
             </div>
             <div
@@ -215,7 +215,7 @@ export const ToolsIndex: FC = () => {
                 fontSize: "13px",
               }}
             >
-              Launch Calculator <FiArrowRight size={14} />
+              Open calculator <FiArrowRight size={14} />
             </div>
           </RouterLink>
 
@@ -229,11 +229,11 @@ export const ToolsIndex: FC = () => {
                 <FaCreditCard />
               </div>
               <FLPHeading as="h2" color="text.primary" mb={2} size="lg">
-                0% Balance Transfer Cliff Calculator
+                0% balance transfer cliff calculator
               </FLPHeading>
               <FLPText color="text.muted" fontSize="sm" lineHeight="1.6">
-                Calculate the exact monthly repayment needed to clear your promotional card balance
-                before the 24.9%+ revert rate slams shut.
+                Calculate the monthly payment required to clear your credit card balance before
+                promotional 0% interest rates expire.
               </FLPText>
             </div>
             <div
@@ -247,7 +247,7 @@ export const ToolsIndex: FC = () => {
                 fontSize: "13px",
               }}
             >
-              Launch Calculator <FiArrowRight size={14} />
+              Open calculator <FiArrowRight size={14} />
             </div>
           </RouterLink>
 
@@ -258,11 +258,11 @@ export const ToolsIndex: FC = () => {
                 <FaMoneyBillWave />
               </div>
               <FLPHeading as="h2" color="text.primary" mb={2} size="lg">
-                Arranged Overdraft Cost Calculator
+                Overdraft interest cost calculator
               </FLPHeading>
               <FLPText color="text.muted" fontSize="sm" lineHeight="1.6">
-                Living in an arranged overdraft? Calculate the annual pound cost of ~39.9% EAR
-                interest charges deducted quietly from your bank account.
+                Calculate the true annual cost of arranged overdraft interest charges at standard UK
+                rates of up to 39.9% EAR.
               </FLPText>
             </div>
             <div
@@ -276,7 +276,7 @@ export const ToolsIndex: FC = () => {
                 fontSize: "13px",
               }}
             >
-              Launch Calculator <FiArrowRight size={14} />
+              Open calculator <FiArrowRight size={14} />
             </div>
           </RouterLink>
 
@@ -290,11 +290,11 @@ export const ToolsIndex: FC = () => {
                 <FaGraduationCap />
               </div>
               <FLPHeading as="h2" color="text.primary" mb={2} size="lg">
-                UK Student Loan: Overpay or Invest?
+                UK student loan: overpay vs invest calculator
               </FLPHeading>
               <FLPText color="text.muted" fontSize="sm" lineHeight="1.6">
-                UK student loans act as a graduate tax wiped after 25–40 years. Find out whether
-                voluntary repayments save you money or act as a gift to HM Treasury.
+                Determine whether voluntary student loan repayments save you money before loan
+                cancellation or whether investing yields more.
               </FLPText>
             </div>
             <div
@@ -308,7 +308,7 @@ export const ToolsIndex: FC = () => {
                 fontSize: "13px",
               }}
             >
-              Launch Calculator <FiArrowRight size={14} />
+              Open calculator <FiArrowRight size={14} />
             </div>
           </RouterLink>
         </div>

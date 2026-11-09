@@ -140,10 +140,10 @@ const ForecastContainer: FC = () => {
       {/* Title */}
       <div className={css({ my: 6 })}>
         <FLPHeading as="h1" color="blue.500" size="xl">
-          Forecast & Tools
+          Forecast and tools
         </FLPHeading>
         <FLPText color="text.muted" fontSize="sm">
-          Calculate your UK take-home salary and forecast your future savings potential.
+          Calculate your UK take-home salary and model your future savings potential.
         </FLPText>
       </div>
 
@@ -155,7 +155,7 @@ const ForecastContainer: FC = () => {
           onClick={() => setActiveTab("forecaster")}
         >
           <FaChartLine size={14} />
-          Savings Forecaster
+          Savings forecaster
         </button>
         <button
           className={tabBtnStyle(activeTab === "calculator")}
@@ -163,7 +163,7 @@ const ForecastContainer: FC = () => {
           onClick={() => setActiveTab("calculator")}
         >
           <FaCalculator size={14} />
-          UK Take-Home Pay Calculator
+          UK take-home pay calculator
         </button>
       </div>
 

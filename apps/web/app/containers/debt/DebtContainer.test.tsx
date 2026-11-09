@@ -46,7 +46,7 @@ describe("DebtContainer", () => {
   it("renders Debt Crusher overview and active liabilities", () => {
     render(<DebtContainer />);
 
-    expect(screen.getByText(/Debt Crusher & Financial Recovery/i)).toBeDefined();
+    expect(screen.getByText(/Debt payoff and recovery/i)).toBeDefined();
     expect(screen.getByText(/Total Unsecured Debt/i)).toBeDefined();
     expect(screen.getByText(/Payoff Strategy: Avalanche vs. Snowball/i)).toBeDefined();
     expect(screen.getByText(/The Debt-to-Wealth Crossover Bridge/i)).toBeDefined();

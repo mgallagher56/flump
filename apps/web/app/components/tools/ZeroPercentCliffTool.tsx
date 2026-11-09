@@ -75,10 +75,10 @@ export const ZeroPercentCliffTool: FC = () => {
       >
         <div>
           <FLPHeading as="h3" size="xl">
-            0% Balance Transfer Promotional Cliff Calculator
+            0% balance transfer cliff calculator
           </FLPHeading>
           <FLPText color="text.muted" fontSize="sm">
-            Calculate the exact monthly repayment needed to extinguish your card before the 0%
+            Calculate the exact monthly repayment needed to clear your card before the 0%
             promotional window expires.
           </FLPText>
         </div>
@@ -88,10 +88,10 @@ export const ZeroPercentCliffTool: FC = () => {
         <div>
           <div className={inputGroupStyle}>
             <FLPText fontSize="sm" fontWeight="bold">
-              Current 0% Card Balance (£)
+              Current 0% card balance (£)
             </FLPText>
             <input
-              aria-label="0% Card Balance"
+              aria-label="0% card balance"
               className={textInputStyle}
               min={100}
               type="number"
@@ -102,10 +102,10 @@ export const ZeroPercentCliffTool: FC = () => {
 
           <div className={inputGroupStyle}>
             <FLPText fontSize="sm" fontWeight="bold">
-              Months Remaining on 0% Offer
+              Months remaining on 0% offer
             </FLPText>
             <input
-              aria-label="Months Remaining on 0% Offer"
+              aria-label="Months remaining on 0% offer"
               className={textInputStyle}
               max={48}
               min={1}
@@ -117,7 +117,7 @@ export const ZeroPercentCliffTool: FC = () => {
 
           <div className={inputGroupStyle}>
             <FLPText fontSize="sm" fontWeight="bold">
-              Revert APR After Offer Ends (%)
+              Revert APR after offer ends (%)
             </FLPText>
             <input
               aria-label="Revert APR"
@@ -142,7 +142,7 @@ export const ZeroPercentCliffTool: FC = () => {
                 fontWeight: "bold",
               }}
             >
-              Target Monthly Clearance
+              Target monthly payment
             </span>
             <div
               style={{ fontSize: "28px", fontWeight: "bold", color: "#10b981", marginTop: "4px" }}
@@ -165,19 +165,19 @@ export const ZeroPercentCliffTool: FC = () => {
           >
             <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "#991b1b" }}>
               <FaExclamationTriangle size={16} />
-              <strong style={{ fontSize: "13px" }}>APR Cliff Trap Warning</strong>
+              <strong style={{ fontSize: "13px" }}>Revert APR alert</strong>
             </div>
             <FLPText color="#7f1d1d" fontSize="xs" style={{ marginTop: "4px" }}>
-              If you pay only minimums, you will slam into the {revertApr}% cliff with ~£
+              If you pay only minimums, you will reach the {revertApr}% revert date with ~£
               {Math.round(cliff.balanceRemainingIfMinimum).toLocaleString()} unpaid, costing £
               {Math.round(cliff.penaltyInterestFirstYearIfUnpaid).toLocaleString()} in first-year
-              penalty interest!
+              interest.
             </FLPText>
           </div>
 
           <RouterLink style={{ textDecoration: "none" }} to="/signUp">
             <FLPButton size="md" variant="primary" style={{ width: "100%" }}>
-              Track 0% Expiries in Flump Free →
+              Track 0% expiry dates in Flump free →
             </FLPButton>
           </RouterLink>
         </div>

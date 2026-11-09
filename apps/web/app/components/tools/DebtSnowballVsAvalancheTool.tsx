@@ -101,11 +101,11 @@ export const DebtSnowballVsAvalancheTool: FC = () => {
       >
         <div>
           <FLPHeading as="h3" size="xl">
-            UK Debt Snowball vs. Avalanche Simulator
+            Debt payoff: snowball vs avalanche calculator
           </FLPHeading>
           <FLPText color="text.muted" fontSize="sm">
-            Model exact interest savings and exit dates between mathematically optimal (Avalanche)
-            and psychological momentum (Snowball).
+            Model exact interest savings and exit dates between mathematically optimal (avalanche)
+            and psychological momentum (snowball).
           </FLPText>
         </div>
       </div>
@@ -121,7 +121,7 @@ export const DebtSnowballVsAvalancheTool: FC = () => {
             }}
           >
             <FLPText fontSize="sm" fontWeight="bold">
-              Liability 1: Credit Card
+              Liability 1: Credit card
             </FLPText>
             <div
               style={{
@@ -134,7 +134,7 @@ export const DebtSnowballVsAvalancheTool: FC = () => {
               <div className={inputGroupStyle}>
                 <FLPText fontSize="xs">Balance (£)</FLPText>
                 <input
-                  aria-label="Credit Card Balance"
+                  aria-label="Credit card balance"
                   className={textInputStyle}
                   type="number"
                   value={cardBalance}
@@ -144,7 +144,7 @@ export const DebtSnowballVsAvalancheTool: FC = () => {
               <div className={inputGroupStyle}>
                 <FLPText fontSize="xs">APR (%)</FLPText>
                 <input
-                  aria-label="Credit Card APR"
+                  aria-label="Credit card APR"
                   className={textInputStyle}
                   step="0.1"
                   type="number"
@@ -155,7 +155,7 @@ export const DebtSnowballVsAvalancheTool: FC = () => {
               <div className={inputGroupStyle}>
                 <FLPText fontSize="xs">Min / mo (£)</FLPText>
                 <input
-                  aria-label="Credit Card Minimum Payment"
+                  aria-label="Credit card minimum payment"
                   className={textInputStyle}
                   type="number"
                   value={cardMin}
@@ -174,7 +174,7 @@ export const DebtSnowballVsAvalancheTool: FC = () => {
             }}
           >
             <FLPText fontSize="sm" fontWeight="bold">
-              Liability 2: Personal Loan
+              Liability 2: Personal loan
             </FLPText>
             <div
               style={{
@@ -187,7 +187,7 @@ export const DebtSnowballVsAvalancheTool: FC = () => {
               <div className={inputGroupStyle}>
                 <FLPText fontSize="xs">Balance (£)</FLPText>
                 <input
-                  aria-label="Personal Loan Balance"
+                  aria-label="Personal loan balance"
                   className={textInputStyle}
                   type="number"
                   value={loanBalance}
@@ -197,7 +197,7 @@ export const DebtSnowballVsAvalancheTool: FC = () => {
               <div className={inputGroupStyle}>
                 <FLPText fontSize="xs">APR (%)</FLPText>
                 <input
-                  aria-label="Personal Loan APR"
+                  aria-label="Personal loan APR"
                   className={textInputStyle}
                   step="0.1"
                   type="number"
@@ -208,7 +208,7 @@ export const DebtSnowballVsAvalancheTool: FC = () => {
               <div className={inputGroupStyle}>
                 <FLPText fontSize="xs">Min / mo (£)</FLPText>
                 <input
-                  aria-label="Personal Loan Minimum Payment"
+                  aria-label="Personal loan minimum payment"
                   className={textInputStyle}
                   type="number"
                   value={loanMin}
@@ -221,14 +221,14 @@ export const DebtSnowballVsAvalancheTool: FC = () => {
           <div className={inputGroupStyle}>
             <div style={{ display: "flex", justifyContent: "space-between" }}>
               <FLPText fontSize="sm" fontWeight="bold">
-                Monthly Overpayment Surplus
+                Monthly overpayment surplus
               </FLPText>
               <FLPText color="primary" fontSize="sm" fontWeight="bold">
                 +£{extraPayment}/mo
               </FLPText>
             </div>
             <input
-              aria-label="Monthly Overpayment Surplus"
+              aria-label="Monthly overpayment surplus"
               max={500}
               min={0}
               step={10}
@@ -252,12 +252,12 @@ export const DebtSnowballVsAvalancheTool: FC = () => {
                 fontWeight: "bold",
               }}
             >
-              ⚡ Avalanche Strategy (Highest APR First)
+              ⚡ Avalanche strategy (highest APR first)
             </span>
             <div
               style={{ fontSize: "24px", fontWeight: "bold", color: "#10b981", marginTop: "4px" }}
             >
-              Debt Free: {comparison.avalanche.debtFreeDate}
+              Debt free: {comparison.avalanche.debtFreeDate}
             </div>
             <FLPText color="text.muted" fontSize="xs">
               {comparison.avalanche.months} months total • Shaves{" "}
@@ -274,7 +274,7 @@ export const DebtSnowballVsAvalancheTool: FC = () => {
             }}
           >
             <FLPText color="text.muted" fontSize="xs">
-              Total Interest Saved vs. Minimum Baseline:
+              Total interest saved vs minimum payments:
             </FLPText>
             <div
               style={{ fontSize: "20px", fontWeight: "bold", color: "#ef4444", marginTop: "2px" }}
@@ -294,7 +294,7 @@ export const DebtSnowballVsAvalancheTool: FC = () => {
                 fontWeight: "bold",
               }}
             >
-              ❄️ Snowball Strategy (Smallest Balance First)
+              ❄️ Snowball strategy (smallest balance first)
             </span>
             <div style={{ fontSize: "18px", fontWeight: "bold", marginTop: "4px" }}>
               {comparison.snowballFirstWinDescription}
@@ -307,7 +307,7 @@ export const DebtSnowballVsAvalancheTool: FC = () => {
 
           <RouterLink style={{ textDecoration: "none" }} to="/signUp">
             <FLPButton size="md" variant="primary" style={{ width: "100%" }}>
-              Track Live in Flump Free →
+              Track live in Flump free →
             </FLPButton>
           </RouterLink>
         </div>

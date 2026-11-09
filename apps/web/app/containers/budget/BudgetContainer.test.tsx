@@ -77,7 +77,7 @@ describe("BudgetContainer", () => {
 
   it("renders the Budget Planner heading and custom category tab", () => {
     render(<BudgetContainer />);
-    expect(screen.getByText("Budget Planner")).toBeDefined();
+    expect(screen.getByText("Budget planner")).toBeDefined();
     // Custom category tab from user profile
     expect(screen.getByTestId("budget-tab-subscriptions")).toBeDefined();
   });

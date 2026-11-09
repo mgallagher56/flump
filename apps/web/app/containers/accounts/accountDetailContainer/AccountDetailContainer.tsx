@@ -236,7 +236,7 @@ const AccountDetailContainer: FC = () => {
       {/* Back Link */}
       <div className={backLinkStyle} onClick={() => navigate("/app/accounts")}>
         <FaArrowLeft size={12} />
-        Back to Accounts
+        Back to accounts
       </div>
 
       {/* Account Info Header Card */}
@@ -311,7 +311,7 @@ const AccountDetailContainer: FC = () => {
             onClick={() => setActiveTab("chart")}
           >
             <FaChartArea size={14} />
-            History Trend
+            History trend
           </button>
           <button
             className={tabBtnStyle(activeTab === "table")}
@@ -319,7 +319,7 @@ const AccountDetailContainer: FC = () => {
             onClick={() => setActiveTab("table")}
           >
             <FaTable size={14} />
-            Values Table
+            Values table
           </button>
         </div>
       )}

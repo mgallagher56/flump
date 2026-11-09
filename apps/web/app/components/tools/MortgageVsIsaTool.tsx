@@ -152,15 +152,15 @@ export const MortgageVsIsaTool: FC = () => {
               letterSpacing: "0.05em",
             }}
           >
-            UK Mortgage & Wealth Engine
+            UK mortgage and wealth engine
           </span>
         </div>
         <FLPHeading as="h2" color="text.primary" mb={1} size="xl">
-          Mortgage Overpayment vs. Stocks & Shares ISA Comparator
+          Mortgage overpayment vs Stocks and Shares ISA comparator
         </FLPHeading>
         <FLPText color="text.muted" fontSize="sm">
           Mathematically compare the guaranteed interest savings of mortgage overpayments against
-          the compound returns of a tax-sheltered UK Stocks & Shares ISA.
+          the compound returns of a tax-efficient UK Stocks and Shares ISA.
         </FLPText>
       </div>
 
@@ -168,7 +168,7 @@ export const MortgageVsIsaTool: FC = () => {
         <div className={inputGroupStyle}>
           <div style={{ display: "flex", justifyContent: "space-between" }}>
             <label htmlFor="mortgage-bal" style={{ fontSize: "13px", fontWeight: 600 }}>
-              Mortgage Balance
+              Mortgage balance
             </label>
             <span style={{ fontSize: "15px", fontWeight: 700, color: "#f59e0b" }}>
               £{mortgageBalance.toLocaleString("en-GB")}
@@ -189,7 +189,7 @@ export const MortgageVsIsaTool: FC = () => {
         <div className={inputGroupStyle}>
           <div style={{ display: "flex", justifyContent: "space-between" }}>
             <label htmlFor="mortgage-rate" style={{ fontSize: "13px", fontWeight: 600 }}>
-              Mortgage Interest Rate
+              Mortgage interest rate
             </label>
             <span style={{ fontSize: "15px", fontWeight: 700, color: "#f59e0b" }}>
               {interestRate}%
@@ -210,7 +210,7 @@ export const MortgageVsIsaTool: FC = () => {
         <div className={inputGroupStyle}>
           <div style={{ display: "flex", justifyContent: "space-between" }}>
             <label htmlFor="monthly-extra" style={{ fontSize: "13px", fontWeight: 600 }}>
-              Monthly Extra Cash
+              Monthly extra cash
             </label>
             <span style={{ fontSize: "15px", fontWeight: 700, color: "#6366f1" }}>
               £{monthlyContribution.toLocaleString("en-GB")} / mo
@@ -231,7 +231,7 @@ export const MortgageVsIsaTool: FC = () => {
         <div className={inputGroupStyle}>
           <div style={{ display: "flex", justifyContent: "space-between" }}>
             <label htmlFor="isa-return" style={{ fontSize: "13px", fontWeight: 600 }}>
-              Expected Stocks & Shares ISA Return
+              Expected Stocks and Shares ISA return
             </label>
             <span style={{ fontSize: "15px", fontWeight: 700, color: "#10b981" }}>
               {isaExpectedReturn}%
@@ -256,7 +256,7 @@ export const MortgageVsIsaTool: FC = () => {
           <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
             <FiHome color="var(--colors-warning-500)" size={14} />
             <span style={{ fontSize: "12px", color: "var(--colors-text-muted)", fontWeight: 600 }}>
-              Mortgage Overpay
+              Mortgage overpayment
             </span>
           </div>
           <span
@@ -277,7 +277,7 @@ export const MortgageVsIsaTool: FC = () => {
           <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
             <FiTrendingUp color="var(--colors-success-500)" size={14} />
             <span style={{ fontSize: "12px", color: "var(--colors-text-muted)", fontWeight: 600 }}>
-              Stocks & Shares ISA Pot
+              Stocks and Shares ISA pot
             </span>
           </div>
           <span
@@ -296,7 +296,7 @@ export const MortgageVsIsaTool: FC = () => {
 
         <div className={metricCard}>
           <span style={{ fontSize: "12px", color: "var(--colors-text-muted)", fontWeight: 600 }}>
-            ISA Net Wealth Spread
+            ISA net wealth spread
           </span>
           <span
             className="tabular-nums"
@@ -334,7 +334,7 @@ export const MortgageVsIsaTool: FC = () => {
       >
         <div style={{ maxWidth: "440px" }}>
           <span style={{ fontSize: "13px", fontWeight: 600, color: "var(--colors-text-primary)" }}>
-            Ready to track your mortgage deal expiry & live ISA yields?
+            Ready to track your mortgage deal expiry and live ISA yields?
           </span>
           <p style={{ fontSize: "12px", color: "var(--colors-text-muted)", margin: 0 }}>
             Flump syncs your live balance and monitors fixed-rate renewal dates automatically.
@@ -342,7 +342,7 @@ export const MortgageVsIsaTool: FC = () => {
         </div>
 
         <FLPButton onClick={handleSaveAndContinue} size="lg">
-          Model Your Mortgage in Flump <FiArrowRight aria-hidden="true" />
+          Model your mortgage in Flump <FiArrowRight aria-hidden="true" />
         </FLPButton>
       </div>
     </div>

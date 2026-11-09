@@ -45,11 +45,11 @@ export const HomeCTA: FC = () => {
       <div className={ctaCardStyle}>
         <div style={{ maxWidth: "680px" }}>
           <FLPHeading as="h2" color="text.primary" id="cta-heading" mb={3} size="3xl">
-            Ready to master your wealth and taxes?
+            Your financial baseline in 60 seconds.
           </FLPHeading>
           <FLPText color="text.muted" fontSize="lg" lineHeight="1.6">
-            Join UK professionals, landlords, and independent contractors taking control of their
-            net worth, mortgage timelines, and HMRC tax obligations.
+            Start with 6 rough numbers. See your true net worth, safe to spend allowance, and
+            emergency runway immediately.
           </FLPText>
         </div>
 
@@ -65,18 +65,18 @@ export const HomeCTA: FC = () => {
               }}
               to="/signUp"
             >
-              Get Started for Free <FiArrowRight aria-hidden="true" />
+              Get started free <FiArrowRight aria-hidden="true" />
             </RouterLink>
           </FLPButton>
           <FLPButton size="lg" variant="outline">
             <RouterLink style={{ color: "inherit", textDecoration: "none" }} to="/login">
-              Sign In to Account
+              Sign in
             </RouterLink>
           </FLPButton>
         </div>
 
         <FLPText color="text.muted" fontSize="xs">
-          Free personal tier • Zero credit card required • Open-source transparency
+          Free manual tier · No credit card required · FCA Open Banking
         </FLPText>
       </div>
     </section>

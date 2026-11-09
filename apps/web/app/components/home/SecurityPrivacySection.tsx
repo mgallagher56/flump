@@ -82,14 +82,13 @@ export const SecurityPrivacySection: FC = () => {
               marginBottom: "8px",
             })}
           >
-            Privacy First
+            Security and privacy
           </span>
           <FLPHeading as="h2" color="text.primary" id="security-heading" mb={3} size="3xl">
-            Bank-grade security. Zero ad tracking.
+            Your financial privacy comes first
           </FLPHeading>
           <FLPText color="text.muted" fontSize="md">
-            Your financial data is deeply personal. We believe personal finance software should be
-            transparent, secure, and completely free from ad-network spyware.
+            Designed from the start to work fully without bank account linking or password sharing.
           </FLPText>
         </div>
 
@@ -98,7 +97,7 @@ export const SecurityPrivacySection: FC = () => {
           <div className={illustrationContainer}>
             <img
               src="/illustrations/security-vault-shield.jpg"
-              alt="Bank-Grade Security Vault Shield with Cryptographic Protection"
+              alt="Security shield representing privacy protection and 256-bit encryption"
               loading="lazy"
               style={{
                 width: "100%",
@@ -116,7 +115,7 @@ export const SecurityPrivacySection: FC = () => {
               </div>
               <div>
                 <FLPHeading as="h3" color="text.primary" size="md">
-                  WorkOS AuthKit
+                  Manual-first control
                 </FLPHeading>
                 <FLPText
                   color="text.muted"
@@ -124,8 +123,8 @@ export const SecurityPrivacySection: FC = () => {
                   lineHeight="1.6"
                   style={{ marginTop: "4px" }}
                 >
-                  Enterprise-grade authentication with Passkeys, biometric FaceID/TouchID,
-                  passwordless magic links, and SSO. We never store raw passwords.
+                  Use all tax, debt, mortgage, and forecasting tools with rough estimates. No bank
+                  connection required.
                 </FLPText>
               </div>
             </div>
@@ -136,7 +135,7 @@ export const SecurityPrivacySection: FC = () => {
               </div>
               <div>
                 <FLPHeading as="h3" color="text.primary" size="md">
-                  Zero Financial Telemetry
+                  FCA Open Banking
                 </FLPHeading>
                 <FLPText
                   color="text.muted"
@@ -144,8 +143,8 @@ export const SecurityPrivacySection: FC = () => {
                   lineHeight="1.6"
                   style={{ marginTop: "4px" }}
                 >
-                  We never sell your spending trends, net worth data, or transaction history to
-                  third-party marketers, insurance companies, or credit brokers.
+                  Optional live account sync operates through FCA-regulated Open Banking APIs. We
+                  can never move money or change account settings.
                 </FLPText>
               </div>
             </div>
@@ -156,7 +155,7 @@ export const SecurityPrivacySection: FC = () => {
               </div>
               <div>
                 <FLPHeading as="h3" color="text.primary" size="md">
-                  Open & Deterministic
+                  Zero data selling
                 </FLPHeading>
                 <FLPText
                   color="text.muted"
@@ -164,8 +163,8 @@ export const SecurityPrivacySection: FC = () => {
                   lineHeight="1.6"
                   style={{ marginTop: "4px" }}
                 >
-                  All tax rules and compound interest engines in our domain package are transparent
-                  and testable. Complete mathematical accuracy without black boxes.
+                  We never sell your personal or financial records to credit card lenders, mortgage
+                  brokers, or third parties.
                 </FLPText>
               </div>
             </div>
