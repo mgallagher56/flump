@@ -8,6 +8,7 @@ export default defineConfig({
     alias: {
       "@": path.resolve(__dirname, "./src"),
       "@repo/ui/styled-system": path.resolve(__dirname, "./styled-system"),
+      "@repo/ui/calculators": path.resolve(__dirname, "../../packages/ui/src/calculators/index.ts"),
       "@repo/ui": path.resolve(__dirname, "../../packages/ui/src/index.tsx"),
       "@repo/app-shell/server": path.resolve(
         __dirname,
