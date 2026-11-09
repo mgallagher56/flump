@@ -8,9 +8,9 @@ const previewCardContainer = css({
   borderColor: "border",
   borderRadius: "2xl",
   boxShadow: "floating",
-  maxWidth: "820px",
+  maxWidth: "1060px",
   width: "100%",
-  margin: "32px auto 0",
+  margin: "36px auto 0",
   textAlign: "left",
   overflow: "hidden",
 });
