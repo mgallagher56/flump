@@ -247,9 +247,9 @@ export const DebtToWealthBridgeCard: FC<DebtToWealthBridgeCardProps> = ({
                     {point.isPostDebtFree ? (
                       <span
                         style={{
-                          fontSize: "11px",
-                          backgroundColor: "#d1fae5",
-                          color: "#065f46",
+                          fontSize: "12px",
+                          backgroundColor: "var(--colors-success-bg)",
+                          color: "var(--colors-success-DEFAULT)",
                           padding: "2px 6px",
                           borderRadius: "4px",
                           fontWeight: "bold",
@@ -260,9 +260,9 @@ export const DebtToWealthBridgeCard: FC<DebtToWealthBridgeCardProps> = ({
                     ) : (
                       <span
                         style={{
-                          fontSize: "11px",
-                          backgroundColor: "#fee2e2",
-                          color: "#991b1b",
+                          fontSize: "12px",
+                          backgroundColor: "var(--colors-destructive-bg)",
+                          color: "var(--colors-destructive-DEFAULT)",
                           padding: "2px 6px",
                           borderRadius: "4px",
                           fontWeight: "bold",
@@ -273,25 +273,32 @@ export const DebtToWealthBridgeCard: FC<DebtToWealthBridgeCardProps> = ({
                     )}
                   </td>
                   <td
+                    className="tabular-nums"
                     style={{
-                      color: point.debtRemaining > 0 ? "#ef4444" : "#10b981",
+                      color:
+                        point.debtRemaining > 0
+                          ? "var(--colors-destructive-500)"
+                          : "var(--colors-success-500)",
                       fontWeight: "600",
                     }}
                   >
                     {formatCurrency(point.debtRemaining)}
                   </td>
-                  <td style={{ color: "#10b981", fontWeight: "600" }}>
+                  <td
+                    className="tabular-nums"
+                    style={{ color: "var(--colors-success-500)", fontWeight: "600" }}
+                  >
                     {point.wealthAccumulated > 0
                       ? `+${formatCurrency(point.wealthAccumulated)}`
                       : "£0"}
                   </td>
-                  <td>
+                  <td className="tabular-nums">
                     {point.debtRemaining > 0 ? (
-                      <span style={{ color: "#ef4444" }}>
+                      <span style={{ color: "var(--colors-destructive-500)" }}>
                         -{formatCurrency(point.debtRemaining)}
                       </span>
                     ) : (
-                      <span style={{ color: "#10b981", fontWeight: "bold" }}>
+                      <span style={{ color: "var(--colors-success-500)", fontWeight: "bold" }}>
                         +{formatCurrency(point.wealthAccumulated)}
                       </span>
                     )}

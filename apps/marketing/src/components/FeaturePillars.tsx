@@ -5,25 +5,19 @@ import type { FC } from "react";
 import { FiDollarSign, FiHome, FiPercent, FiTrendingUp } from "react-icons/fi";
 
 const bentoCardStyle = css({
-  backgroundColor: { base: "#ffffff", _dark: "dark.surface" },
+  backgroundColor: "card",
   border: "1px solid",
-  borderColor: { base: "slate.200", _dark: "dark.border" },
+  borderColor: "border",
   borderRadius: "2xl",
   p: "6",
   display: "flex",
   flexDirection: "column",
   gap: "14px",
-  boxShadow: {
-    base: "0 1px 3px rgba(15,23,42,0.04), 0 6px 16px rgba(15,23,42,0.04)",
-    _dark: "inset 0 1px 0 rgba(255,255,255,0.06), 0 8px 24px rgba(0,0,0,0.35)",
-  },
+  boxShadow: "card",
   transition: "transform 0.2s ease, box-shadow 0.2s ease",
   _hover: {
     transform: "translateY(-3px)",
-    boxShadow: {
-      base: "0 12px 28px rgba(15,23,42,0.08)",
-      _dark: "inset 0 1px 0 rgba(255,255,255,0.1), 0 16px 32px rgba(0,0,0,0.45)",
-    },
+    boxShadow: "cardHover",
   },
 });
 
@@ -41,12 +35,12 @@ const iconBoxStyle = (bg: string, color: string) =>
   });
 
 const pillChip = css({
-  fontSize: "12px",
+  fontSize: "xs",
   fontWeight: "600",
   padding: "2px 8px",
   borderRadius: "full",
-  backgroundColor: { base: "slate.100", _dark: "slate.800" },
-  color: { base: "slate.700", _dark: "slate.300" },
+  backgroundColor: "surface.subtle",
+  color: "text.secondary",
 });
 
 export const FeaturePillars: FC = () => {

@@ -82,6 +82,28 @@ export const colors = {
     700: { value: "#b91c1c" },
     800: { value: "#991b1b" },
   },
+  purple: {
+    50: { value: "#faf5ff" },
+    100: { value: "#f3e8ff" },
+    200: { value: "#e9d5ff" },
+    300: { value: "#d8b4fe" },
+    400: { value: "#c084fc" },
+    500: { value: "#8b5cf6" },
+    600: { value: "#7c3aed" },
+    700: { value: "#6d28d9" },
+    800: { value: "#5b21b6" },
+  },
+  cyan: {
+    50: { value: "#ecfeff" },
+    100: { value: "#cffafe" },
+    200: { value: "#a5f3fc" },
+    300: { value: "#67e8f9" },
+    400: { value: "#22d3ee" },
+    500: { value: "#06b6d4" },
+    600: { value: "#0891b2" },
+    700: { value: "#0e7490" },
+    800: { value: "#155e75" },
+  },
 } as const;
 
 export const fonts = {

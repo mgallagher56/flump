@@ -237,39 +237,57 @@ export const Section24Tool: FC = () => {
       {/* Results */}
       <div className={metricsGridStyle}>
         <div className={metricCard}>
-          <span style={{ fontSize: "12px", color: "#64748b", fontWeight: 600 }}>
+          <span style={{ fontSize: "12px", color: "var(--colors-text-muted)", fontWeight: 600 }}>
             HMRC Tax Due on Rental
           </span>
-          <span style={{ fontSize: "22px", fontWeight: 800, color: "#ef4444" }}>
+          <span
+            className="tabular-nums"
+            style={{ fontSize: "22px", fontWeight: 800, color: "var(--colors-destructive-500)" }}
+          >
             £{Math.round(calc.finalTaxDue).toLocaleString("en-GB")}
           </span>
-          <span style={{ fontSize: "11px", color: "#64748b" }}>
+          <span
+            className="tabular-nums"
+            style={{ fontSize: "12px", color: "var(--colors-text-muted)" }}
+          >
             (Gross tax £{Math.round(calc.grossTaxOnProperty).toLocaleString("en-GB")} minus £
             {Math.round(calc.financeCredit).toLocaleString("en-GB")} credit)
           </span>
         </div>
 
         <div className={metricCard}>
-          <span style={{ fontSize: "12px", color: "#64748b", fontWeight: 600 }}>
+          <span style={{ fontSize: "12px", color: "var(--colors-text-muted)", fontWeight: 600 }}>
             True Effective Tax Rate
           </span>
-          <span style={{ fontSize: "22px", fontWeight: 800, color: "#f59e0b" }}>
+          <span
+            className="tabular-nums"
+            style={{ fontSize: "22px", fontWeight: 800, color: "var(--colors-warning-500)" }}
+          >
             {calc.effectiveTaxRate}%
           </span>
-          <span style={{ fontSize: "11px", color: "#64748b" }}>
+          <span
+            className="tabular-nums"
+            style={{ fontSize: "12px", color: "var(--colors-text-muted)" }}
+          >
             Tax paid relative to your £{Math.round(calc.actualCashProfit).toLocaleString("en-GB")}{" "}
             real cash profit
           </span>
         </div>
 
         <div className={metricCard}>
-          <span style={{ fontSize: "12px", color: "#64748b", fontWeight: 600 }}>
+          <span style={{ fontSize: "12px", color: "var(--colors-text-muted)", fontWeight: 600 }}>
             Net Cash Retained
           </span>
-          <span style={{ fontSize: "22px", fontWeight: 800, color: "#10b981" }}>
+          <span
+            className="tabular-nums"
+            style={{ fontSize: "22px", fontWeight: 800, color: "var(--colors-success-500)" }}
+          >
             £{Math.round(calc.netCashInPocket).toLocaleString("en-GB")} / yr
           </span>
-          <span style={{ fontSize: "11px", color: "#64748b" }}>
+          <span
+            className="tabular-nums"
+            style={{ fontSize: "12px", color: "var(--colors-text-muted)" }}
+          >
             £{Math.round(calc.netCashInPocket / 12).toLocaleString("en-GB")}/mo cash in pocket after
             tax & mortgage
           </span>
@@ -292,7 +310,7 @@ export const Section24Tool: FC = () => {
           <span style={{ fontSize: "13px", fontWeight: 600, color: "var(--colors-text-primary)" }}>
             Need automated HMRC Self-Assessment & property tax tracking?
           </span>
-          <p style={{ fontSize: "12px", color: "#64748b", margin: 0 }}>
+          <p style={{ fontSize: "12px", color: "var(--colors-text-muted)", margin: 0 }}>
             Flump automatically models Section 24 adjustments, joint spousal splits, and Payments on
             Account.
           </p>
