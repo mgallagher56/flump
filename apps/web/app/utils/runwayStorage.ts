@@ -1,3 +1,4 @@
+import { PortfolioSnapshot } from "@flump/finance-engine";
 import { toMonthly } from "~/types/budget";
 
 export interface RunwaySavedSettings {
@@ -81,38 +82,17 @@ export function calculateRunwayStats({
   savedSettings,
 }: CalculateRunwayParams): RunwayCalculationResult {
   const liquidAccounts = (accounts || []).filter((a) => isLiquidAccountType(a.type));
+  const snapshot = new PortfolioSnapshot(accounts, accountDetails);
 
   let pool = 0;
   if (savedSettings?.includedAccounts) {
     pool =
       liquidAccounts
         .filter((a) => savedSettings.includedAccounts[a.id] !== false)
-        .reduce((sum, a) => {
-          const details = (accountDetails || [])
-            .filter((d: any) => (d.account_id || d.accountId) === a.id)
-            .sort((x: any, y: any) =>
-              Number(x.year) !== Number(y.year)
-                ? Number(y.year) - Number(x.year)
-                : Number(y.month) - Number(x.month),
-            );
-          const latestVal = details.length > 0 ? Number(details[0].value) : 0;
-          const bal =
-            Number.isFinite(latestVal) && latestVal > 0 ? latestVal : Number(a.balance) || 0;
-          return sum + Math.max(bal, 0);
-        }, 0) + (savedSettings.severanceLump || 0);
+        .reduce((sum, a) => sum + snapshot.getLatestBalance(a.id), 0) +
+      (savedSettings.severanceLump || 0);
   } else {
-    pool = liquidAccounts.reduce((sum, a) => {
-      const details = (accountDetails || [])
-        .filter((d: any) => (d.account_id || d.accountId) === a.id)
-        .sort((x: any, y: any) =>
-          Number(x.year) !== Number(y.year)
-            ? Number(y.year) - Number(x.year)
-            : Number(y.month) - Number(x.month),
-        );
-      const latestVal = details.length > 0 ? Number(details[0].value) : 0;
-      const bal = Number.isFinite(latestVal) && latestVal > 0 ? latestVal : Number(a.balance) || 0;
-      return sum + Math.max(bal, 0);
-    }, 0);
+    pool = liquidAccounts.reduce((sum, a) => sum + snapshot.getLatestBalance(a.id), 0);
   }
 
   const nonPrimaryIncome = (entries || [])

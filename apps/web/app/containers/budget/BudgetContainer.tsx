@@ -1,3 +1,4 @@
+import { PortfolioSnapshot } from "@flump/finance-engine";
 import { css } from "@repo/ui/styled-system/css";
 import { type FC, useEffect, useMemo, useState } from "react";
 import { FaBalanceScale, FaChartBar, FaPlus, FaRocket } from "react-icons/fa";
@@ -114,24 +115,15 @@ const BudgetContainer: FC = () => {
 
   // Sync current balance for all accounts from latest accountDetails or direct balance
   const accountsWithBalances = useMemo(() => {
+    const snapshot = new PortfolioSnapshot(accounts, accountDetails);
     return accounts.map((acc: any) => {
-      const details = normalizedAccountDetails
-        .filter((d: any) => d.account_id === acc.id)
-        .sort((a: any, b: any) => (a.year !== b.year ? b.year - a.year : b.month - a.month));
-
-      let bal = Number(acc.balance ?? acc.value);
-      if (details.length > 0) {
-        const detailVal = Number(details[0].value);
-        if (Number.isFinite(detailVal) && (detailVal > 0 || !Number.isFinite(bal) || bal === 0)) {
-          bal = detailVal;
-        }
-      }
+      const resolved = snapshot.getAccount(acc.id);
       return {
         ...acc,
-        balance: Number.isFinite(bal) ? bal : 0,
+        balance: resolved?.nominalBalance ?? (Number(acc.balance) || 0),
       };
     });
-  }, [accounts, normalizedAccountDetails]);
+  }, [accounts, accountDetails]);
 
   // Calculate savings balance from accounts (includes Current, Saving, and Investment accounts)
   const savingsBalance = accountsWithBalances

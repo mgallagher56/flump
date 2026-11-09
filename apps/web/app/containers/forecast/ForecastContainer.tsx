@@ -1,3 +1,4 @@
+import { PortfolioSnapshot } from "@flump/finance-engine";
 import { css } from "@repo/ui/styled-system/css";
 import { type FC, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -37,20 +38,8 @@ const ForecastContainer: FC = () => {
 
   // Calculate total current savings assets
   const totalAssets = useMemo(() => {
-    let sum = 0;
-    accounts.forEach((acc: any) => {
-      const isAsset = ["Current", "Saving", "Investment", "Owed"].includes(acc.type);
-      if (!isAsset) return;
-
-      const accDetails = accountDetails.filter((d: any) => d.account_id === acc.id);
-      const balance =
-        accDetails.length > 0
-          ? (accDetails.find((d: any) => d.month === currentMonth && d.year === currentYear)
-              ?.value ?? accDetails[accDetails.length - 1].value)
-          : acc.balance || 0;
-      sum += balance;
-    });
-    return sum;
+    const snapshot = new PortfolioSnapshot(accounts, accountDetails);
+    return snapshot.getTotalLiquidCash() + snapshot.getTotalInvestments();
   }, [accounts, accountDetails]);
 
   // Estimate average savings rate based on history

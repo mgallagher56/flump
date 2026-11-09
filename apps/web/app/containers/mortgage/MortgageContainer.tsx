@@ -1,4 +1,4 @@
-import { calculateLtvMilestones } from "@flump/finance-engine";
+import { calculateLtvMilestones, PortfolioSnapshot } from "@flump/finance-engine";
 import { css } from "@repo/ui/styled-system/css";
 import { type FC, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -94,20 +94,13 @@ const MortgageContainer: FC = () => {
   // Handle account selection
   useEffect(() => {
     if (selectedAccountId && propertyCategory === "residential") {
-      const acc = mortgageAccounts.find((a) => a.id === selectedAccountId);
-      if (acc) {
-        const details = accountDetails.filter((d: any) => d.account_id === acc.id);
-        const rawBalance =
-          details.length > 0
-            ? (details.find((d: any) => d.month === currentMonth && d.year === currentYear)
-                ?.value ?? details[details.length - 1].value)
-            : acc.balance || 0;
-
-        // Balance is negative in database, take absolute value for calculations
-        setLoanAmount(Math.abs(rawBalance));
+      const snapshot = new PortfolioSnapshot(accounts, accountDetails);
+      const bal = snapshot.getLatestBalance(selectedAccountId);
+      if (bal > 0) {
+        setLoanAmount(bal);
       }
     }
-  }, [selectedAccountId, mortgageAccounts, accountDetails, propertyCategory]);
+  }, [selectedAccountId, accounts, accountDetails, propertyCategory]);
 
   const switchToCategory = (cat: "residential" | "btl") => {
     setPropertyCategory(cat);
