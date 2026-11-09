@@ -1,0 +1,287 @@
+import { calculateTaxTrapRelief, persistOnboardingSeed } from "@repo/common";
+import type { FC } from "react";
+import { useMemo, useState } from "react";
+import { FiAlertTriangle, FiArrowRight, FiCheckCircle } from "react-icons/fi";
+import { css } from "../../styled-system/css/index.js";
+import { Button } from "../components/forms/Button.js";
+
+const cardStyle = css({
+  backgroundColor: "surface",
+  border: "1px solid",
+  borderColor: "border",
+  borderRadius: "2xl",
+  padding: { base: "20px", sm: "32px" },
+  boxShadow: "0 8px 30px rgba(0, 0, 0, 0.06)",
+  marginBottom: "40px",
+});
+
+const inputGroupStyle = css({
+  display: "flex",
+  flexDirection: "column",
+  gap: "8px",
+  marginBottom: "20px",
+});
+
+const sliderStyle = css({
+  width: "100%",
+  accentColor: "#6366f1",
+  cursor: "pointer",
+  height: "6px",
+});
+
+const metricsGridStyle = css({
+  display: "grid",
+  gridTemplateColumns: { base: "1fr", sm: "repeat(3, 1fr)" },
+  gap: "16px",
+  marginTop: "24px",
+  marginBottom: "24px",
+});
+
+const metricCard = css({
+  backgroundColor: "background",
+  border: "1px solid",
+  borderColor: "border",
+  borderRadius: "xl",
+  padding: "16px",
+  display: "flex",
+  flexDirection: "column",
+  gap: "4px",
+});
+
+export interface TaxTrapCalculatorProps {
+  onSaveAndContinue?: (payload: any) => void;
+  ctaText?: string;
+}
+
+export const TaxTrapCalculator: FC<TaxTrapCalculatorProps> = ({
+  onSaveAndContinue,
+  ctaText = "Save scenario and continue free →",
+}) => {
+  const [grossIncome, setGrossIncome] = useState<number>(115000);
+  const [salarySacrifice, setSalarySacrifice] = useState<number>(10000);
+
+  const analysis = useMemo(() => {
+    return calculateTaxTrapRelief(grossIncome);
+  }, [grossIncome]);
+
+  const allowanceReclaimed = Math.min(
+    analysis.lostPersonalAllowance,
+    Math.round(salarySacrifice / 2),
+  );
+
+  const inTrapSacrifice = Math.min(analysis.excessAbove100k, salarySacrifice);
+  const aboveTrapSacrifice = Math.max(0, salarySacrifice - analysis.excessAbove100k);
+  const totalTaxSaved = Math.round(inTrapSacrifice * 0.62 + aboveTrapSacrifice * 0.42);
+
+  const maxSacrifice = Math.min(60000, Math.max(0, grossIncome - 20000));
+  const isTrapZone = grossIncome > 100000;
+  const netIncomeAfterSacrifice = Math.max(0, grossIncome - salarySacrifice);
+  const childcareEligible = netIncomeAfterSacrifice <= 100000;
+
+  const handleSave = () => {
+    const payload = {
+      annualIncome: grossIncome,
+      initialCashSavings: 1000,
+      mortgageBalance: 250000,
+      inferredModules: ["tax", "pension", "forecast"],
+      timestamp: Date.now(),
+    };
+    persistOnboardingSeed(payload as any);
+    if (onSaveAndContinue) {
+      onSaveAndContinue(payload);
+    } else if (typeof window !== "undefined") {
+      window.location.href = "/signUp";
+    }
+  };
+
+  return (
+    <div className={cardStyle} data-testid="tax-trap-calculator-tool">
+      <div style={{ marginBottom: "24px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
+          <span
+            style={{
+              padding: "3px 10px",
+              borderRadius: "9999px",
+              backgroundColor: "rgba(99, 102, 241, 0.12)",
+              color: "#6366f1",
+              fontSize: "12px",
+              fontWeight: 700,
+              textTransform: "uppercase",
+              letterSpacing: "0.05em",
+            }}
+          >
+            UK 2026/27 Tax Engine
+          </span>
+          {isTrapZone && (
+            <span
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "4px",
+                padding: "3px 10px",
+                borderRadius: "9999px",
+                backgroundColor: "rgba(239, 68, 68, 0.12)",
+                color: "#ef4444",
+                fontSize: "12px",
+                fontWeight: 700,
+              }}
+            >
+              <FiAlertTriangle size={13} /> 60% trap active
+            </span>
+          )}
+        </div>
+        <h2
+          style={{
+            fontSize: "1.25rem",
+            fontWeight: 700,
+            color: "var(--colors-text-primary, #0f172a)",
+            margin: "0 0 4px 0",
+          }}
+        >
+          Interactive £100k–£125k tax trap modeller
+        </h2>
+        <p style={{ fontSize: "0.875rem", color: "var(--colors-text-muted, #64748b)", margin: 0 }}>
+          Slide your income and test how salary sacrifice or SIPP contributions reclaim your
+          personal allowance and unlock tax-free childcare.
+        </p>
+      </div>
+
+      <div className={inputGroupStyle}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <label htmlFor="gross-income-slider" style={{ fontSize: "14px", fontWeight: 600 }}>
+            Total gross UK income
+          </label>
+          <span style={{ fontSize: "18px", fontWeight: 700, color: "#6366f1" }}>
+            £{grossIncome.toLocaleString()}
+          </span>
+        </div>
+        <input
+          id="gross-income-slider"
+          aria-label="Total gross UK income"
+          className={sliderStyle}
+          max={150000}
+          min={90000}
+          step={1000}
+          type="range"
+          value={grossIncome}
+          onChange={(e) => setGrossIncome(Number(e.target.value))}
+        />
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            fontSize: "11px",
+            color: "var(--colors-text-muted, #64748b)",
+          }}
+        >
+          <span>£90k (40% Higher Rate)</span>
+          <span>£100k (Trap Starts)</span>
+          <span>£125,140 (Zero Allowance)</span>
+          <span>£150k</span>
+        </div>
+      </div>
+
+      <div className={inputGroupStyle}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <label htmlFor="sacrifice-slider" style={{ fontSize: "14px", fontWeight: 600 }}>
+            Annual Pension Salary Sacrifice / SIPP Contribution
+          </label>
+          <span style={{ fontSize: "18px", fontWeight: 700, color: "#10b981" }}>
+            £{salarySacrifice.toLocaleString()}
+          </span>
+        </div>
+        <input
+          id="sacrifice-slider"
+          aria-label="Annual Pension Salary Sacrifice"
+          className={sliderStyle}
+          max={maxSacrifice}
+          min={0}
+          step={500}
+          type="range"
+          value={salarySacrifice}
+          onChange={(e) => setSalarySacrifice(Number(e.target.value))}
+        />
+      </div>
+
+      <div className={metricsGridStyle}>
+        <div className={metricCard}>
+          <span style={{ fontSize: "12px", color: "var(--colors-text-muted, #64748b)" }}>
+            Effective Marginal Rate
+          </span>
+          <span
+            style={{
+              fontSize: "24px",
+              fontWeight: 800,
+              color:
+                isTrapZone && salarySacrifice < analysis.excessAbove100k ? "#ef4444" : "#10b981",
+            }}
+          >
+            {isTrapZone && salarySacrifice < analysis.excessAbove100k ? "62.0%" : "42.0%"}
+          </span>
+          <span style={{ fontSize: "11px", color: "var(--colors-text-muted, #64748b)" }}>
+            40% Income Tax + 20% Taper + 2% NI
+          </span>
+        </div>
+
+        <div className={metricCard}>
+          <span style={{ fontSize: "12px", color: "var(--colors-text-muted, #64748b)" }}>
+            Tax and NI saved
+          </span>
+          <span style={{ fontSize: "24px", fontWeight: 800, color: "#10b981" }}>
+            £{totalTaxSaved.toLocaleString()}
+          </span>
+          <span style={{ fontSize: "11px", color: "var(--colors-text-muted, #64748b)" }}>
+            Guaranteed immediate relief
+          </span>
+        </div>
+
+        <div className={metricCard}>
+          <span style={{ fontSize: "12px", color: "var(--colors-text-muted, #64748b)" }}>
+            Personal allowance reclaimed
+          </span>
+          <span style={{ fontSize: "24px", fontWeight: 800, color: "#6366f1" }}>
+            £{allowanceReclaimed.toLocaleString()}
+          </span>
+          <span style={{ fontSize: "11px", color: "var(--colors-text-muted, #64748b)" }}>
+            of £{analysis.lostPersonalAllowance.toLocaleString()} lost allowance
+          </span>
+        </div>
+      </div>
+
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "10px",
+          padding: "12px 16px",
+          borderRadius: "12px",
+          backgroundColor: childcareEligible
+            ? "rgba(16, 185, 129, 0.08)"
+            : "rgba(239, 68, 68, 0.08)",
+          border: `1px solid ${childcareEligible ? "rgba(16, 185, 129, 0.2)" : "rgba(239, 68, 68, 0.2)"}`,
+          marginBottom: "24px",
+        }}
+      >
+        {childcareEligible ? (
+          <FiCheckCircle color="#10b981" size={18} />
+        ) : (
+          <FiAlertTriangle color="#ef4444" size={18} />
+        )}
+        <span style={{ fontSize: "13px", fontWeight: 600 }}>
+          {childcareEligible
+            ? "Eligible for 15–30 Hours Free Childcare & Tax-Free Childcare (Adjusted Net Income ≤ £100k)"
+            : "Childcare Cliff Edge Triggered: Adjusted net income exceeds £100,000. All funded hours revoked."}
+        </span>
+      </div>
+
+      <Button
+        size="md"
+        style={{ width: "100%", justifyContent: "center" }}
+        variant="primary"
+        onClick={handleSave}
+      >
+        {ctaText} <FiArrowRight style={{ marginLeft: "8px" }} />
+      </Button>
+    </div>
+  );
+};
