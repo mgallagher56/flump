@@ -20,7 +20,7 @@ const headerStyle = css({
   borderBottom: "1px solid",
   borderColor: "border",
   py: "3",
-  px: { base: "4", md: "8" },
+  px: { base: "3", sm: "4", md: "8" },
 });
 
 const navLinkStyle = css({
@@ -199,29 +199,66 @@ export const Header: FC = () => {
           </nav>
         </div>
 
-        <div className={flex({ align: "center", gap: "3" })}>
+        <div className={flex({ align: "center", gap: { base: "2", sm: "3" } })}>
           <ThemeToggle />
 
-          {/* Desktop Auth Buttons */}
+          {/* Header Auth Buttons (Accessible on mobile and desktop) */}
           <div
-            className={flex({ align: "center", gap: "2", display: { base: "none", md: "flex" } })}
+            className={flex({
+              align: "center",
+              gap: { base: "1.5", sm: "2" },
+            })}
           >
             {hasSession ? (
               <a href={`${appUrl}/`} style={{ textDecoration: "none" }}>
-                <Button variant="primary" size="sm">
-                  Go to Dashboard →
+                <Button
+                  variant="primary"
+                  size="sm"
+                  className={css({
+                    px: { base: "2.5", sm: "4" },
+                    fontSize: { base: "xs", sm: "sm" },
+                  })}
+                >
+                  <span className={css({ display: { base: "none", sm: "inline" } })}>
+                    Go to Dashboard →
+                  </span>
+                  <span className={css({ display: { base: "inline", sm: "none" } })}>
+                    Dashboard
+                  </span>
                 </Button>
               </a>
             ) : (
               <>
                 <a href={`${appUrl}/login`} style={{ textDecoration: "none" }}>
-                  <Button variant="ghost" size="sm">
-                    Sign In
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className={css({
+                      px: { base: "2", sm: "3" },
+                      fontSize: { base: "xs", sm: "sm" },
+                    })}
+                  >
+                    <span className={css({ display: { base: "none", sm: "inline" } })}>
+                      Sign In
+                    </span>
+                    <span className={css({ display: { base: "inline", sm: "none" } })}>Log In</span>
                   </Button>
                 </a>
                 <a href={`${appUrl}/signUp`} style={{ textDecoration: "none" }}>
-                  <Button variant="primary" size="sm">
-                    Get Started
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    className={css({
+                      px: { base: "2.5", sm: "4" },
+                      fontSize: { base: "xs", sm: "sm" },
+                    })}
+                  >
+                    <span className={css({ display: { base: "none", sm: "inline" } })}>
+                      Get Started
+                    </span>
+                    <span className={css({ display: { base: "inline", sm: "none" } })}>
+                      Sign Up
+                    </span>
                   </Button>
                 </a>
               </>
