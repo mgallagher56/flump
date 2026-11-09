@@ -63,7 +63,9 @@ const TaxContainer: FC = () => {
   const currentTaxYear = getCurrentUKTaxYear();
 
   // Page state
-  const [activeTab, setActiveTab] = useState<"summary" | "detailed">("summary");
+  const [activeTab, setActiveTab] = useState<
+    "streams" | "trap-reserve" | "multi-year" | "detailed" | "summary"
+  >("streams");
   const [selectedTaxYear, setSelectedTaxYear] = useState<string>(() => getCurrentUKTaxYear());
 
   const { baseline } = useFinancialBaseline();
@@ -328,23 +330,26 @@ const TaxContainer: FC = () => {
       display: "flex",
       alignItems: "center",
       gap: "6px",
-      padding: "10px 18px",
-      fontSize: "sm",
+      padding: "8px 16px",
+      borderRadius: "md",
+      fontSize: "13px",
       fontWeight: "semibold",
-      color: active ? "primary" : "text.muted",
       cursor: "pointer",
-      marginBottom: "-10px",
-      transition: "all 0.2s",
-      background: "none",
-      border: "none",
-      borderBottom: active ? "2px solid var(--colors-primary)" : "2px solid transparent",
+      backgroundColor: active ? "card" : "transparent",
+      color: active ? "text.primary" : "text.muted",
+      boxShadow: active ? "0 1px 2px rgba(0,0,0,0.06)" : "none",
+      border: "1px solid",
+      borderColor: active ? "border.subtle" : "transparent",
+      transition: "all 0.15s ease",
+      whiteSpace: "nowrap",
+      _hover: active ? {} : { color: "text.primary" },
     });
 
   const cardsGrid = css({
     display: "grid",
     gridTemplateColumns: { base: "1fr", sm: "repeat(2, 1fr)", lg: "repeat(4, 1fr)" },
-    gap: { base: "12px", md: "18px" },
-    marginBottom: { base: "18px", md: "28px" },
+    gap: "16px",
+    marginBottom: "24px",
     width: "100%",
     maxWidth: "100%",
   });
@@ -518,19 +523,6 @@ const TaxContainer: FC = () => {
         </div>
       )}
 
-      {/* Tax Year Selector Toolbar */}
-      <div style={{ marginBottom: "20px", display: "flex", flexDirection: "column", gap: "16px" }}>
-        <TaxTrapAlertBanner grossIncome={activeYearData?.totalGrossIncome || payeSalary} />
-        {activeYearData && (
-          <PaymentsOnAccountCard
-            annualSelfAssessmentTax={
-              activeYearData.netAdditionalTaxToPay ??
-              Math.max(0, activeYearData.totalTaxDue - activeYearData.payeTaxDue)
-            }
-          />
-        )}
-      </div>
-
       <div
         className={css({
           display: "flex",
@@ -539,8 +531,8 @@ const TaxContainer: FC = () => {
           padding: { base: "10px 12px", md: "12px 18px" },
           backgroundColor: "surface",
           border: "1px solid",
-          borderColor: "border",
-          borderRadius: "lg",
+          borderColor: "border.subtle",
+          borderRadius: "xl",
           marginBottom: "20px",
           flexWrap: "wrap",
           gap: "12px",
@@ -609,14 +601,105 @@ const TaxContainer: FC = () => {
         </div>
       </div>
 
-      {/* Tabs */}
+      {/* Top 4-KPI Row (Single sleek row on desktop) */}
+      <div className={cardsGrid}>
+        <FLPCard
+          className={css({
+            padding: "16px",
+            borderRadius: "xl",
+            borderWidth: "1px",
+            borderStyle: "solid",
+            borderColor: "border.subtle",
+            backgroundColor: "surface",
+          })}
+        >
+          <FLPText color="text.muted" fontSize="xs" fontWeight="semibold" textTransform="uppercase">
+            Estimated Self Assessment due ({selectedTaxYear})
+          </FLPText>
+          <FLPHeading as="h2" color="blue.500" mt={2} size="xl" className="tabular-nums">
+            {formatCurrency(activeYearData.netAdditionalTaxToPay)}
+          </FLPHeading>
+          <FLPText color="text.muted" fontSize="xs" className={css({ marginTop: "4px" })}>
+            Additional tax & Class 4 NI on top of PAYE deductions.
+          </FLPText>
+        </FLPCard>
+
+        <FLPCard
+          className={css({
+            padding: "16px",
+            borderRadius: "xl",
+            borderWidth: "1px",
+            borderStyle: "solid",
+            borderColor: "border.subtle",
+            backgroundColor: "surface",
+          })}
+        >
+          <FLPText color="text.muted" fontSize="xs" fontWeight="semibold" textTransform="uppercase">
+            Total Gross Income ({selectedTaxYear})
+          </FLPText>
+          <FLPHeading as="h2" color="success.500" mt={2} size="xl" className="tabular-nums">
+            {formatCurrency(activeYearData.totalGrossIncome)}
+          </FLPHeading>
+          <FLPText color="text.muted" fontSize="xs" className={css({ marginTop: "4px" })}>
+            PAYE ({formatCurrency(activeYearData.effectivePayeSalary)}) + Business + Rental +
+            Savings.
+          </FLPText>
+        </FLPCard>
+
+        <FLPCard
+          className={css({
+            padding: "16px",
+            borderRadius: "xl",
+            borderWidth: "1px",
+            borderStyle: "solid",
+            borderColor: "border.subtle",
+            backgroundColor: "surface",
+          })}
+        >
+          <FLPText color="text.muted" fontSize="xs" fontWeight="semibold" textTransform="uppercase">
+            Rental Profit Share ({selectedTaxYear})
+          </FLPText>
+          <FLPHeading as="h2" color="warning.500" mt={2} size="xl" className="tabular-nums">
+            {formatCurrency(activeYearData.rentalProfitPostInterestShare)}
+          </FLPHeading>
+          <FLPText color="text.muted" fontSize="xs" className={css({ marginTop: "4px" })}>
+            {propertyOwnershipShare}% share of total property profit{" "}
+            {formatCurrency(activeYearData.rentalProfitPostInterest)}.
+          </FLPText>
+        </FLPCard>
+
+        <FLPCard
+          className={css({
+            padding: "16px",
+            borderRadius: "xl",
+            borderWidth: "1px",
+            borderStyle: "solid",
+            borderColor: "border.subtle",
+            backgroundColor: "surface",
+          })}
+        >
+          <FLPText color="text.muted" fontSize="xs" fontWeight="semibold" textTransform="uppercase">
+            Self-Employed Profit ({selectedTaxYear})
+          </FLPText>
+          <FLPHeading as="h2" color="purple.500" mt={2} size="xl" className="tabular-nums">
+            {formatCurrency(activeYearData.seProfit)}
+          </FLPHeading>
+          <FLPText color="text.muted" fontSize="xs" className={css({ marginTop: "4px" })}>
+            Turnover {formatCurrency(activeYearData.seIncomeGross)} less allowable costs.
+          </FLPText>
+        </FLPCard>
+      </div>
+
+      {/* 3 Segmented Tabs */}
       <div
         className={css({
           display: "flex",
-          gap: "8px",
-          borderBottom: "1px solid",
-          borderColor: "border",
-          paddingBottom: "8px",
+          backgroundColor: "surface.sunken",
+          border: "1px solid",
+          borderColor: "border.subtle",
+          padding: "4px",
+          borderRadius: "lg",
+          gap: "4px",
           marginBottom: "24px",
           overflowX: "auto",
           maxWidth: "100%",
@@ -624,12 +707,28 @@ const TaxContainer: FC = () => {
         })}
       >
         <button
-          className={tabStyle(activeTab === "summary")}
+          className={tabStyle(activeTab === "streams" || activeTab === "summary")}
           style={{ whiteSpace: "nowrap", flexShrink: 0 }}
           type="button"
-          onClick={() => setActiveTab("summary")}
+          onClick={() => setActiveTab("streams")}
         >
-          <FaCalculator size={13} style={{ marginRight: "4px" }} /> Overview & Income Sections
+          <FaBriefcase size={13} style={{ marginRight: "6px" }} /> Income & Expense Streams
+        </button>
+        <button
+          className={tabStyle(activeTab === "trap-reserve")}
+          style={{ whiteSpace: "nowrap", flexShrink: 0 }}
+          type="button"
+          onClick={() => setActiveTab("trap-reserve")}
+        >
+          <FaPercent size={13} style={{ marginRight: "6px" }} /> Tax Trap & HMRC Reserve
+        </button>
+        <button
+          className={tabStyle(activeTab === "multi-year")}
+          style={{ whiteSpace: "nowrap", flexShrink: 0 }}
+          type="button"
+          onClick={() => setActiveTab("multi-year")}
+        >
+          <FaCalculator size={13} style={{ marginRight: "6px" }} /> Multi-Year Comparison
         </button>
         <button
           className={tabStyle(activeTab === "detailed")}
@@ -637,895 +736,807 @@ const TaxContainer: FC = () => {
           type="button"
           onClick={() => setActiveTab("detailed")}
         >
-          <FaList size={13} style={{ marginRight: "4px" }} /> Detailed Transaction Log
+          <FaList size={13} style={{ marginRight: "6px" }} /> Detailed Transaction Log
         </button>
       </div>
 
-      {/* Summary View Tab */}
-      {activeTab === "summary" && (
-        <>
-          {/* Quick Metrics Cards */}
-          <div className={cardsGrid}>
-            <FLPCard
-              className={css({
-                backgroundColor: "rgba(99, 99, 241, 0.06)",
-                border: "1px solid",
-                borderColor: "primary",
-                padding: "18px",
-                borderRadius: "md",
-              })}
-            >
-              <FLPText
-                color="text.muted"
-                fontSize="xs"
-                fontWeight="semibold"
-                textTransform="uppercase"
-              >
-                Estimated Self Assessment due ({selectedTaxYear})
-              </FLPText>
-              <FLPHeading as="h2" color="blue.500" mt={2} size="xl">
-                {formatCurrency(activeYearData.netAdditionalTaxToPay)}
+      {/* Tab 1: Income & Expense Streams */}
+      {(activeTab === "streams" || activeTab === "summary") && (
+        <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+          {/* Collapsible Sections Header */}
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              marginBottom: "8px",
+            }}
+          >
+            <div>
+              <FLPHeading as="h3" size="md">
+                Income & Expense Sections ({selectedTaxYear})
               </FLPHeading>
-              <FLPText color="text.muted" fontSize="xs" className={css({ marginTop: "4px" })}>
-                Additional tax & Class 4 NI on top of PAYE deductions.
+              <FLPText color="text.muted" fontSize="xs">
+                Expand sections to review active items, log receipts, or use inline quick-add.
               </FLPText>
-            </FLPCard>
-
-            <FLPCard
-              className={css({
-                backgroundColor: "rgba(16, 185, 129, 0.05)",
-                border: "1px solid",
-                borderColor: "success.500",
-                padding: "18px",
-                borderRadius: "md",
-              })}
-            >
-              <FLPText
-                color="text.muted"
-                fontSize="xs"
-                fontWeight="semibold"
-                textTransform="uppercase"
-              >
-                Total Gross Income ({selectedTaxYear})
-              </FLPText>
-              <FLPHeading as="h2" color="success.500" mt={2} size="xl">
-                {formatCurrency(activeYearData.totalGrossIncome)}
-              </FLPHeading>
-              <FLPText color="text.muted" fontSize="xs" className={css({ marginTop: "4px" })}>
-                PAYE ({formatCurrency(activeYearData.effectivePayeSalary)}) + Business + Rental +
-                Savings.
-              </FLPText>
-            </FLPCard>
-
-            <FLPCard
-              className={css({
-                backgroundColor: "rgba(245, 158, 11, 0.05)",
-                border: "1px solid",
-                borderColor: "warning.500",
-                padding: "18px",
-                borderRadius: "md",
-              })}
-            >
-              <FLPText
-                color="text.muted"
-                fontSize="xs"
-                fontWeight="semibold"
-                textTransform="uppercase"
-              >
-                Rental Profit Share ({selectedTaxYear})
-              </FLPText>
-              <FLPHeading as="h2" color="warning.500" mt={2} size="xl">
-                {formatCurrency(activeYearData.rentalProfitPostInterestShare)}
-              </FLPHeading>
-              <FLPText color="text.muted" fontSize="xs" className={css({ marginTop: "4px" })}>
-                {propertyOwnershipShare}% share of total property profit{" "}
-                {formatCurrency(activeYearData.rentalProfitPostInterest)}.
-              </FLPText>
-            </FLPCard>
-
-            <FLPCard
-              className={css({
-                backgroundColor: "rgba(139, 92, 246, 0.05)",
-                border: "1px solid",
-                borderColor: "purple.500",
-                padding: "18px",
-                borderRadius: "md",
-              })}
-            >
-              <FLPText
-                color="text.muted"
-                fontSize="xs"
-                fontWeight="semibold"
-                textTransform="uppercase"
-              >
-                Self-Employed Profit ({selectedTaxYear})
-              </FLPText>
-              <FLPHeading as="h2" color="purple.500" mt={2} size="xl">
-                {formatCurrency(activeYearData.seProfit)}
-              </FLPHeading>
-              <FLPText color="text.muted" fontSize="xs" className={css({ marginTop: "4px" })}>
-                Turnover {formatCurrency(activeYearData.seIncomeGross)} less allowable costs.
-              </FLPText>
-            </FLPCard>
+            </div>
           </div>
 
-          {/* Main Layout Grid */}
-          <div className={layoutGrid}>
-            {/* Left side: Collapsible Income Sections & Multi-Year P&L Table */}
-            <div style={{ minWidth: 0, maxWidth: "100%" }}>
-              {/* Collapsible Sections Header */}
+          {/* SECTION 1: PAYE Employment Income */}
+          <TaxIncomeSectionCard
+            source="paye"
+            title="Employment Income (PAYE)"
+            subtitle="Salary, bonuses, benefits in kind, and pension contributions"
+            icon={<FaBriefcase />}
+            colorScheme="blue"
+            records={initialRecords}
+            selectedTaxYear={selectedTaxYear}
+            previousTaxYear={previousTaxYear}
+            isOpenDefault={true}
+            onOpenAddModal={onOpenAddModal}
+            onOpenEditModal={onOpenEditModal}
+            onDeleteRecord={handleDeleteTransaction}
+            onOpenCopyModal={handleOpenCopyModal}
+            onQuickAdd={handleQuickAdd}
+            onViewReceipt={setActiveReceiptRecord}
+            contextBanner={
               <div
                 style={{
+                  padding: "10px 14px",
+                  backgroundColor: "rgba(59, 130, 246, 0.05)",
+                  border: "1px solid rgba(59, 130, 246, 0.2)",
+                  borderRadius: "6px",
+                  fontSize: "12px",
                   display: "flex",
                   justifyContent: "space-between",
                   alignItems: "center",
-                  marginBottom: "14px",
+                  flexWrap: "wrap",
+                  gap: "8px",
                 }}
               >
-                <div>
-                  <FLPHeading as="h3" size="md">
-                    Income & Expense Sections ({selectedTaxYear})
-                  </FLPHeading>
-                  <FLPText color="text.muted" fontSize="xs">
-                    Expand sections to review active items, log receipts, or use inline quick-add.
-                  </FLPText>
-                </div>
-              </div>
-
-              {/* SECTION 1: PAYE Employment Income */}
-              <TaxIncomeSectionCard
-                source="paye"
-                title="Employment Income (PAYE)"
-                subtitle="Salary, bonuses, benefits in kind, and pension contributions"
-                icon={<FaBriefcase />}
-                colorScheme="blue"
-                records={initialRecords}
-                selectedTaxYear={selectedTaxYear}
-                previousTaxYear={previousTaxYear}
-                isOpenDefault={true}
-                onOpenAddModal={onOpenAddModal}
-                onOpenEditModal={onOpenEditModal}
-                onDeleteRecord={handleDeleteTransaction}
-                onOpenCopyModal={handleOpenCopyModal}
-                onQuickAdd={handleQuickAdd}
-                onViewReceipt={setActiveReceiptRecord}
-                contextBanner={
-                  <div
-                    style={{
-                      padding: "10px 14px",
-                      backgroundColor: "rgba(59, 130, 246, 0.05)",
-                      border: "1px solid rgba(59, 130, 246, 0.2)",
-                      borderRadius: "6px",
-                      fontSize: "12px",
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                      flexWrap: "wrap",
-                      gap: "8px",
-                    }}
-                  >
-                    <span>
-                      Profile salary baseline: <strong>{formatCurrency(profileSalary)}/year</strong>
-                      .
-                      {activeYearData.payeIncomeGross > 0
-                        ? ` Currently using ${formatCurrency(activeYearData.effectivePayeSalary)} from detailed payslip records.`
-                        : " No payslip items logged; automatically using profile salary."}
-                    </span>
-                    <FLPButton
-                      size="sm"
-                      variant="outline"
-                      onClick={() => onOpenAddModal("paye", "income")}
-                    >
-                      Log Payslip / Bonus
-                    </FLPButton>
-                  </div>
-                }
-              />
-
-              {/* SECTION 2: Rental Property */}
-              <TaxIncomeSectionCard
-                source="rental"
-                title="Rental Property (e.g. Poplar)"
-                subtitle="Tenancy rent, maintenance, service charges, and mortgage finance costs"
-                icon={<FaHome />}
-                colorScheme="amber"
-                records={initialRecords}
-                selectedTaxYear={selectedTaxYear}
-                previousTaxYear={previousTaxYear}
-                isOpenDefault={true}
-                onOpenAddModal={onOpenAddModal}
-                onOpenEditModal={onOpenEditModal}
-                onDeleteRecord={handleDeleteTransaction}
-                onOpenCopyModal={handleOpenCopyModal}
-                onQuickAdd={handleQuickAdd}
-                onViewReceipt={setActiveReceiptRecord}
-                contextBanner={
-                  <div
-                    style={{
-                      padding: "10px 14px",
-                      backgroundColor: "rgba(245, 158, 11, 0.05)",
-                      border: "1px solid rgba(245, 158, 11, 0.2)",
-                      borderRadius: "6px",
-                      fontSize: "12px",
-                    }}
-                  >
-                    <span>
-                      Ownership share: <strong>{propertyOwnershipShare}%</strong>. Section 24
-                      finance credit:{" "}
-                      <strong style={{ color: "var(--colors-success-500)" }}>
-                        -{formatCurrency(activeYearData.rentalPropertyTaxCredit)}
-                      </strong>{" "}
-                      (20% basic rate relief).
-                    </span>
-                  </div>
-                }
-              />
-
-              {/* SECTION 3: Self-Employed & Freelance */}
-              <TaxIncomeSectionCard
-                source="self-employed"
-                title="Self-Employed & Freelance Business"
-                subtitle="Sole trader turnover, client retainers, and allowable expenses"
-                icon={<FaLaptopCode />}
-                colorScheme="emerald"
-                records={initialRecords}
-                selectedTaxYear={selectedTaxYear}
-                previousTaxYear={previousTaxYear}
-                isOpenDefault={true}
-                onOpenAddModal={onOpenAddModal}
-                onOpenEditModal={onOpenEditModal}
-                onDeleteRecord={handleDeleteTransaction}
-                onOpenCopyModal={handleOpenCopyModal}
-                onQuickAdd={handleQuickAdd}
-                onViewReceipt={setActiveReceiptRecord}
-                contextBanner={
-                  <div
-                    style={{
-                      padding: "10px 14px",
-                      backgroundColor: "rgba(16, 185, 129, 0.05)",
-                      border: "1px solid rgba(16, 185, 129, 0.2)",
-                      borderRadius: "6px",
-                      fontSize: "12px",
-                    }}
-                  >
-                    <span>
-                      Allowable expenses logged:{" "}
-                      <strong>{formatCurrency(activeYearData.seExpenses)}</strong>. (Note: UK
-                      Trading Allowance of £1,000 can be claimed in lieu of expenses if actual
-                      expenses are lower).
-                    </span>
-                  </div>
-                }
-              />
-
-              {/* SECTION 4: Savings & Dividends */}
-              <TaxIncomeSectionCard
-                source="savings"
-                title="Savings & Dividend Income"
-                subtitle="Bank savings interest, ISA tax-free growth, share dividends"
-                icon={<FaPiggyBank />}
-                colorScheme="purple"
-                records={initialRecords}
-                selectedTaxYear={selectedTaxYear}
-                previousTaxYear={previousTaxYear}
-                isOpenDefault={false}
-                onOpenAddModal={onOpenAddModal}
-                onOpenEditModal={onOpenEditModal}
-                onDeleteRecord={handleDeleteTransaction}
-                onOpenCopyModal={handleOpenCopyModal}
-                onQuickAdd={handleQuickAdd}
-                onViewReceipt={setActiveReceiptRecord}
-                contextBanner={
-                  <div
-                    style={{
-                      padding: "10px 14px",
-                      backgroundColor: "rgba(139, 92, 246, 0.05)",
-                      border: "1px solid rgba(139, 92, 246, 0.2)",
-                      borderRadius: "6px",
-                      fontSize: "12px",
-                    }}
-                  >
-                    <span>
-                      Personal Savings Allowance:{" "}
-                      <strong>{formatCurrency(activeYearData.personalSavingsAllowance)}</strong> |
-                      Dividend Allowance:{" "}
-                      <strong>{formatCurrency(activeYearData.dividendAllowance)}</strong>. ISA
-                      interest is 100% tax-free.
-                    </span>
-                  </div>
-                }
-              />
-            </div>
-
-            {/* Right side: Parameters and Breakdown */}
-            <FLPBox
-              display="flex"
-              flexDirection="column"
-              gap={6}
-              style={{ minWidth: 0, maxWidth: "100%" }}
-            >
-              {/* Profile Config panel */}
-              <div className={editableFormPanel}>
-                <FLPHeading
-                  as="h4"
-                  size="sm"
-                  style={{ display: "flex", alignItems: "center", gap: "6px" }}
-                >
-                  <FaPercent /> Tax Parameters
-                </FLPHeading>
-
-                <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-                  <FLPInput
-                    label="Employment Income (PAYE Baseline Salary)"
-                    type="number"
-                    value={payeSalary === 0 ? "" : payeSalary}
-                    onChange={(e) => setPayeSalary(Number.parseFloat(e.target.value) || 0)}
-                  />
-                  <FLPInput
-                    label="Property Ownership Share (%)"
-                    type="number"
-                    max={100}
-                    min={0}
-                    value={propertyOwnershipShare}
-                    onChange={(e) =>
-                      setPropertyOwnershipShare(Number.parseFloat(e.target.value) || 0)
-                    }
-                  />
-                </div>
-
+                <span>
+                  Profile salary baseline: <strong>{formatCurrency(profileSalary)}/year</strong>.
+                  {activeYearData.payeIncomeGross > 0
+                    ? ` Currently using ${formatCurrency(activeYearData.effectivePayeSalary)} from detailed payslip records.`
+                    : " No payslip items logged; automatically using profile salary."}
+                </span>
                 <FLPButton
-                  loading={isProfileSaving}
-                  onClick={handleSaveProfile}
                   size="sm"
-                  style={{ alignSelf: "flex-end", marginTop: "4px" }}
+                  variant="outline"
+                  onClick={() => onOpenAddModal("paye", "income")}
                 >
-                  <FaSave size={12} style={{ marginRight: "6px" }} /> Sync parameters
+                  Log Payslip / Bonus
                 </FLPButton>
               </div>
+            }
+          />
 
-              {/* SA Tax Breakdown detail card */}
-              <FLPCard
-                className={css({
-                  padding: "20px",
-                  borderRadius: "md",
-                  backgroundColor: "surface",
-                  border: "1px solid token(colors.border)",
-                })}
+          {/* SECTION 2: Rental Property */}
+          <TaxIncomeSectionCard
+            source="rental"
+            title="Rental Property (e.g. Poplar)"
+            subtitle="Tenancy rent, maintenance, service charges, and mortgage finance costs"
+            icon={<FaHome />}
+            colorScheme="amber"
+            records={initialRecords}
+            selectedTaxYear={selectedTaxYear}
+            previousTaxYear={previousTaxYear}
+            isOpenDefault={false}
+            onOpenAddModal={onOpenAddModal}
+            onOpenEditModal={onOpenEditModal}
+            onDeleteRecord={handleDeleteTransaction}
+            onOpenCopyModal={handleOpenCopyModal}
+            onQuickAdd={handleQuickAdd}
+            onViewReceipt={setActiveReceiptRecord}
+            contextBanner={
+              <div
+                style={{
+                  padding: "10px 14px",
+                  backgroundColor: "rgba(245, 158, 11, 0.05)",
+                  border: "1px solid rgba(245, 158, 11, 0.2)",
+                  borderRadius: "6px",
+                  fontSize: "12px",
+                }}
               >
-                <FLPHeading
-                  as="h4"
-                  size="sm"
-                  mb={4}
-                  style={{ display: "flex", alignItems: "center", gap: "6px" }}
-                >
-                  <FaInfoCircle /> Tax Calculations breakdown ({selectedTaxYear})
-                </FLPHeading>
+                <span>
+                  Ownership share: <strong>{propertyOwnershipShare}%</strong>. Section 24 finance
+                  credit:{" "}
+                  <strong style={{ color: "var(--colors-success-500)" }}>
+                    -{formatCurrency(activeYearData.rentalPropertyTaxCredit)}
+                  </strong>{" "}
+                  (20% basic rate relief).
+                </span>
+              </div>
+            }
+          />
 
-                <FLPBox display="flex" flexDirection="column" gap={3} style={{ fontSize: "13px" }}>
-                  <div style={{ display: "flex", justifyContent: "space-between" }}>
-                    <FLPText color="text.muted">PAYE regular salary:</FLPText>
-                    <FLPText fontWeight="semibold">
-                      {formatCurrency(activeYearData.effectivePayeSalary)}
-                    </FLPText>
-                  </div>
-                  <div style={{ display: "flex", justifyContent: "space-between" }}>
-                    <FLPText color="text.muted">Self-employed net profit:</FLPText>
-                    <FLPText fontWeight="semibold">
-                      {formatCurrency(activeYearData.seProfit)}
-                    </FLPText>
-                  </div>
-                  <div style={{ display: "flex", justifyContent: "space-between" }}>
-                    <FLPText color="text.muted">Rental profit share (excl. interest):</FLPText>
-                    <FLPText fontWeight="semibold">
-                      {formatCurrency(activeYearData.rentalProfitBeforeInterestShare)}
-                    </FLPText>
-                  </div>
-                  <div style={{ display: "flex", justifyContent: "space-between" }}>
-                    <FLPText color="text.muted">Savings & dividend income:</FLPText>
-                    <FLPText fontWeight="semibold">
-                      {formatCurrency(
-                        activeYearData.savingsInterestGross + activeYearData.dividendIncomeGross,
-                      )}
-                    </FLPText>
-                  </div>
-                  <hr style={{ border: "0", borderTop: "1px solid var(--colors-border)" }} />
-                  <div
-                    style={{ display: "flex", justifyContent: "space-between", fontWeight: "bold" }}
-                  >
-                    <FLPText>Total gross income:</FLPText>
-                    <FLPText>{formatCurrency(activeYearData.totalGrossIncome)}</FLPText>
-                  </div>
-                  <div style={{ display: "flex", justifyContent: "space-between" }}>
-                    <FLPText color="text.muted">Personal allowance:</FLPText>
-                    <FLPText fontWeight="semibold">
-                      {formatCurrency(activeYearData.personalAllowance)}
-                    </FLPText>
-                  </div>
-                  <div style={{ display: "flex", justifyContent: "space-between" }}>
-                    <FLPText color="text.muted">Combined taxable income:</FLPText>
-                    <FLPText fontWeight="semibold">
-                      {formatCurrency(activeYearData.totalTaxableIncome)}
-                    </FLPText>
-                  </div>
-                  <hr style={{ border: "0", borderTop: "1px solid var(--colors-border)" }} />
-                  <div style={{ display: "flex", justifyContent: "space-between" }}>
-                    <FLPText color="text.muted">Self-employed income tax:</FLPText>
-                    <FLPText fontWeight="semibold">
-                      {formatCurrency(activeYearData.seTaxDue)}
-                    </FLPText>
-                  </div>
-                  <div style={{ display: "flex", justifyContent: "space-between" }}>
-                    <FLPText color="text.muted">Self-employed Class 4 NI:</FLPText>
-                    <FLPText fontWeight="semibold">
-                      {formatCurrency(activeYearData.seClass4NIDue)}
-                    </FLPText>
-                  </div>
-                  <div style={{ display: "flex", justifyContent: "space-between" }}>
-                    <FLPText color="text.muted">Property tax due:</FLPText>
-                    <FLPText fontWeight="semibold">
-                      {formatCurrency(activeYearData.rentalPropertyTaxDueBeforeCredit)}
-                    </FLPText>
-                  </div>
-                  <div
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      color: "var(--colors-success-500)",
-                    }}
-                  >
-                    <FLPText>Section 24 Tax Credit:</FLPText>
-                    <FLPText>-{formatCurrency(activeYearData.rentalPropertyTaxCredit)}</FLPText>
-                  </div>
-                  {activeYearData.savingsTaxDue > 0 && (
-                    <div style={{ display: "flex", justifyContent: "space-between" }}>
-                      <FLPText color="text.muted">Savings tax (above PSA):</FLPText>
-                      <FLPText fontWeight="semibold">
-                        {formatCurrency(activeYearData.savingsTaxDue)}
-                      </FLPText>
-                    </div>
-                  )}
-                  {activeYearData.dividendTaxDue > 0 && (
-                    <div style={{ display: "flex", justifyContent: "space-between" }}>
-                      <FLPText color="text.muted">Dividend tax:</FLPText>
-                      <FLPText fontWeight="semibold">
-                        {formatCurrency(activeYearData.dividendTaxDue)}
-                      </FLPText>
-                    </div>
-                  )}
-                  <hr
-                    style={{
-                      border: "0",
-                      borderTop: "2px solid var(--colors-border)",
-                      margin: "4px 0",
-                    }}
-                  />
-                  <div
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      fontWeight: "bold",
-                      fontSize: "14px",
-                    }}
-                  >
-                    <FLPText color="blue.500">Self Assessment due:</FLPText>
-                    <FLPText color="blue.500">
-                      {formatCurrency(activeYearData.netAdditionalTaxToPay)}
-                    </FLPText>
-                  </div>
-                </FLPBox>
-              </FLPCard>
-            </FLPBox>
-          </div>
+          {/* SECTION 3: Self-Employed & Freelance */}
+          <TaxIncomeSectionCard
+            source="self-employed"
+            title="Self-Employed & Freelance Business"
+            subtitle="Sole trader turnover, client retainers, and allowable expenses"
+            icon={<FaLaptopCode />}
+            colorScheme="emerald"
+            records={initialRecords}
+            selectedTaxYear={selectedTaxYear}
+            previousTaxYear={previousTaxYear}
+            isOpenDefault={false}
+            onOpenAddModal={onOpenAddModal}
+            onOpenEditModal={onOpenEditModal}
+            onDeleteRecord={handleDeleteTransaction}
+            onOpenCopyModal={handleOpenCopyModal}
+            onQuickAdd={handleQuickAdd}
+            onViewReceipt={setActiveReceiptRecord}
+            contextBanner={
+              <div
+                style={{
+                  padding: "10px 14px",
+                  backgroundColor: "rgba(16, 185, 129, 0.05)",
+                  border: "1px solid rgba(16, 185, 129, 0.2)",
+                  borderRadius: "6px",
+                  fontSize: "12px",
+                }}
+              >
+                <span>
+                  Allowable expenses logged:{" "}
+                  <strong>{formatCurrency(activeYearData.seExpenses)}</strong>. (Note: UK Trading
+                  Allowance of £1,000 can be claimed in lieu of expenses if actual expenses are
+                  lower).
+                </span>
+              </div>
+            }
+          />
 
-          {/* Multi-Year P&L Summary Grid Table */}
-          <FLPCard
+          {/* SECTION 4: Savings & Dividends */}
+          <TaxIncomeSectionCard
+            source="savings"
+            title="Savings & Dividend Income"
+            subtitle="Bank savings interest, ISA tax-free growth, share dividends"
+            icon={<FaPiggyBank />}
+            colorScheme="purple"
+            records={initialRecords}
+            selectedTaxYear={selectedTaxYear}
+            previousTaxYear={previousTaxYear}
+            isOpenDefault={false}
+            onOpenAddModal={onOpenAddModal}
+            onOpenEditModal={onOpenEditModal}
+            onDeleteRecord={handleDeleteTransaction}
+            onOpenCopyModal={handleOpenCopyModal}
+            onQuickAdd={handleQuickAdd}
+            onViewReceipt={setActiveReceiptRecord}
+            contextBanner={
+              <div
+                style={{
+                  padding: "10px 14px",
+                  backgroundColor: "rgba(139, 92, 246, 0.05)",
+                  border: "1px solid rgba(139, 92, 246, 0.2)",
+                  borderRadius: "6px",
+                  fontSize: "12px",
+                }}
+              >
+                <span>
+                  Personal Savings Allowance:{" "}
+                  <strong>{formatCurrency(activeYearData.personalSavingsAllowance)}</strong> |
+                  Dividend Allowance:{" "}
+                  <strong>{formatCurrency(activeYearData.dividendAllowance)}</strong>. ISA interest
+                  is 100% tax-free.
+                </span>
+              </div>
+            }
+          />
+        </div>
+      )}
+
+      {/* Tab 2: Tax Trap & HMRC Reserve */}
+      {activeTab === "trap-reserve" && (
+        <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
+          {/* Side-by-Side £100k-£125k Tax Trap Escape Slider & Payments on Account Cash-Flow Reserve */}
+          <div
             className={css({
-              padding: "24px",
-              borderRadius: "lg",
-              backgroundColor: "card",
-              marginTop: "24px",
+              display: "grid",
+              gridTemplateColumns: { base: "1fr", lg: "repeat(2, 1fr)" },
+              gap: "20px",
+              alignItems: "start",
             })}
           >
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                marginBottom: "16px",
-                flexWrap: "wrap",
-                gap: "10px",
-              }}
-            >
-              <div>
-                <FLPHeading as="h3" size="md">
-                  P&L & Tax Comparison Table
-                </FLPHeading>
-                <FLPText color="text.muted" fontSize="xs">
-                  Historical and projected figures across all fiscal tax years.
-                </FLPText>
+            <TaxTrapAlertBanner grossIncome={activeYearData?.totalGrossIncome || payeSalary} />
+            {activeYearData && (
+              <PaymentsOnAccountCard
+                annualSelfAssessmentTax={
+                  activeYearData.netAdditionalTaxToPay ??
+                  Math.max(0, activeYearData.totalTaxDue - activeYearData.payeTaxDue)
+                }
+              />
+            )}
+          </div>
+
+          {/* Side-by-Side Tax Parameters & Calculation Breakdown */}
+          <div
+            className={css({
+              display: "grid",
+              gridTemplateColumns: { base: "1fr", lg: "1fr 1.6fr" },
+              gap: "20px",
+              alignItems: "start",
+            })}
+          >
+            {/* Profile Config panel */}
+            <div className={editableFormPanel}>
+              <FLPHeading
+                as="h4"
+                size="sm"
+                style={{ display: "flex", alignItems: "center", gap: "6px" }}
+              >
+                <FaPercent /> Tax Parameters
+              </FLPHeading>
+
+              <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+                <FLPInput
+                  label="Employment Income (PAYE Baseline Salary)"
+                  type="number"
+                  value={payeSalary === 0 ? "" : payeSalary}
+                  onChange={(e) => setPayeSalary(Number.parseFloat(e.target.value) || 0)}
+                />
+                <FLPInput
+                  label="Property Ownership Share (%)"
+                  type="number"
+                  max={100}
+                  min={0}
+                  value={propertyOwnershipShare}
+                  onChange={(e) =>
+                    setPropertyOwnershipShare(Number.parseFloat(e.target.value) || 0)
+                  }
+                />
               </div>
+
+              <FLPButton
+                loading={isProfileSaving}
+                onClick={handleSaveProfile}
+                size="sm"
+                style={{ alignSelf: "flex-end", marginTop: "4px" }}
+              >
+                <FaSave size={12} style={{ marginRight: "6px" }} /> Sync parameters
+              </FLPButton>
             </div>
 
-            <div className={tableContainer}>
-              <table className={tableStyle} style={{ minWidth: "550px" }}>
-                <thead>
-                  <tr>
-                    <th className={thStyle}>Line Item</th>
-                    {availableYears.map((year) => (
-                      <th
-                        key={year}
-                        className={thStyle}
-                        style={{
-                          textAlign: "right",
-                          borderLeft:
-                            year === selectedTaxYear ? "2px solid var(--colors-primary)" : "none",
-                        }}
-                      >
-                        {year}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {/* Rental */}
-                  <tr className={trStyle}>
-                    <td
-                      className={tdStyle}
-                      style={{ fontWeight: "bold", backgroundColor: "rgba(245,158,11,0.04)" }}
-                    >
-                      Rental Property (100% Share)
-                    </td>
-                    {availableYears.map((year) => (
-                      <td
-                        key={year}
-                        className={tdStyle}
-                        style={{
-                          backgroundColor: "rgba(245,158,11,0.04)",
-                          borderLeft:
-                            year === selectedTaxYear ? "2px solid var(--colors-primary)" : "none",
-                        }}
-                      />
-                    ))}
-                  </tr>
-                  <tr className={trStyle}>
-                    <td className={tdStyle} style={{ paddingLeft: "24px" }}>
-                      Rental Income
-                    </td>
-                    {availableYears.map((year) => (
-                      <td
-                        key={year}
-                        className={tdStyle}
-                        style={{
-                          textAlign: "right",
-                          color: "var(--colors-success-500)",
-                          borderLeft:
-                            year === selectedTaxYear ? "2px solid var(--colors-primary)" : "none",
-                        }}
-                      >
-                        {formatCurrency(calculatedTaxYearsData[year]?.rentalIncomeGross || 0)}
-                      </td>
-                    ))}
-                  </tr>
-                  <tr className={trStyle}>
-                    <td className={tdStyle} style={{ paddingLeft: "24px" }}>
-                      Rental Expenses (Excl. Interest)
-                    </td>
-                    {availableYears.map((year) => (
-                      <td
-                        key={year}
-                        className={tdStyle}
-                        style={{
-                          textAlign: "right",
-                          color: "var(--colors-text-muted)",
-                          borderLeft:
-                            year === selectedTaxYear ? "2px solid var(--colors-primary)" : "none",
-                        }}
-                      >
-                        {formatCurrency(
-                          calculatedTaxYearsData[year]?.rentalExpensesExclInterest || 0,
-                        )}
-                      </td>
-                    ))}
-                  </tr>
-                  <tr className={trStyle}>
-                    <td className={tdStyle} style={{ paddingLeft: "24px" }}>
-                      Mortgage Interest Costs
-                    </td>
-                    {availableYears.map((year) => (
-                      <td
-                        key={year}
-                        className={tdStyle}
-                        style={{
-                          textAlign: "right",
-                          color: "var(--colors-destructive)",
-                          borderLeft:
-                            year === selectedTaxYear ? "2px solid var(--colors-primary)" : "none",
-                        }}
-                      >
-                        {formatCurrency(calculatedTaxYearsData[year]?.rentalMortgageInterest || 0)}
-                      </td>
-                    ))}
-                  </tr>
-                  <tr className={trStyle} style={{ backgroundColor: "rgba(0,0,0,0.02)" }}>
-                    <td className={tdStyle} style={{ fontWeight: "bold", paddingLeft: "24px" }}>
-                      Total Rental Profit (Post-Interest)
-                    </td>
-                    {availableYears.map((year) => (
-                      <td
-                        key={year}
-                        className={tdStyle}
-                        style={{
-                          textAlign: "right",
-                          fontWeight: "bold",
-                          borderLeft:
-                            year === selectedTaxYear ? "2px solid var(--colors-primary)" : "none",
-                        }}
-                      >
-                        {formatCurrency(
-                          calculatedTaxYearsData[year]?.rentalProfitPostInterest || 0,
-                        )}
-                      </td>
-                    ))}
-                  </tr>
+            {/* SA Tax Breakdown detail card */}
+            <FLPCard
+              className={css({
+                padding: "20px",
+                borderRadius: "md",
+                backgroundColor: "surface",
+                border: "1px solid token(colors.border)",
+              })}
+            >
+              <FLPHeading
+                as="h4"
+                size="sm"
+                mb={4}
+                style={{ display: "flex", alignItems: "center", gap: "6px" }}
+              >
+                <FaInfoCircle /> Tax Calculations breakdown ({selectedTaxYear})
+              </FLPHeading>
 
-                  {/* Self-Employed */}
-                  <tr className={trStyle}>
-                    <td
-                      className={tdStyle}
-                      style={{ fontWeight: "bold", backgroundColor: "rgba(16,185,129,0.04)" }}
-                    >
-                      Self-Employed (Sole Trader)
-                    </td>
-                    {availableYears.map((year) => (
-                      <td
-                        key={year}
-                        className={tdStyle}
-                        style={{
-                          backgroundColor: "rgba(16,185,129,0.04)",
-                          borderLeft:
-                            year === selectedTaxYear ? "2px solid var(--colors-primary)" : "none",
-                        }}
-                      />
-                    ))}
-                  </tr>
-                  <tr className={trStyle}>
-                    <td className={tdStyle} style={{ paddingLeft: "24px" }}>
-                      Business Turnover
-                    </td>
-                    {availableYears.map((year) => (
-                      <td
-                        key={year}
-                        className={tdStyle}
-                        style={{
-                          textAlign: "right",
-                          color: "var(--colors-success-500)",
-                          borderLeft:
-                            year === selectedTaxYear ? "2px solid var(--colors-primary)" : "none",
-                        }}
-                      >
-                        {formatCurrency(calculatedTaxYearsData[year]?.seIncomeGross || 0)}
-                      </td>
-                    ))}
-                  </tr>
-                  <tr className={trStyle}>
-                    <td className={tdStyle} style={{ paddingLeft: "24px" }}>
-                      Allowable Business Expenses
-                    </td>
-                    {availableYears.map((year) => (
-                      <td
-                        key={year}
-                        className={tdStyle}
-                        style={{
-                          textAlign: "right",
-                          color: "var(--colors-text-muted)",
-                          borderLeft:
-                            year === selectedTaxYear ? "2px solid var(--colors-primary)" : "none",
-                        }}
-                      >
-                        {formatCurrency(calculatedTaxYearsData[year]?.seExpenses || 0)}
-                      </td>
-                    ))}
-                  </tr>
-                  <tr className={trStyle} style={{ backgroundColor: "rgba(0,0,0,0.02)" }}>
-                    <td className={tdStyle} style={{ fontWeight: "bold", paddingLeft: "24px" }}>
-                      Self-Employed Net Profit
-                    </td>
-                    {availableYears.map((year) => (
-                      <td
-                        key={year}
-                        className={tdStyle}
-                        style={{
-                          textAlign: "right",
-                          fontWeight: "bold",
-                          borderLeft:
-                            year === selectedTaxYear ? "2px solid var(--colors-primary)" : "none",
-                        }}
-                      >
-                        {formatCurrency(calculatedTaxYearsData[year]?.seProfit || 0)}
-                      </td>
-                    ))}
-                  </tr>
+              <FLPBox display="flex" flexDirection="column" gap={3} style={{ fontSize: "13px" }}>
+                <div style={{ display: "flex", justifyContent: "space-between" }}>
+                  <FLPText color="text.muted">PAYE regular salary:</FLPText>
+                  <FLPText fontWeight="semibold">
+                    {formatCurrency(activeYearData.effectivePayeSalary)}
+                  </FLPText>
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between" }}>
+                  <FLPText color="text.muted">Self-employed net profit:</FLPText>
+                  <FLPText fontWeight="semibold">{formatCurrency(activeYearData.seProfit)}</FLPText>
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between" }}>
+                  <FLPText color="text.muted">Rental profit share (excl. interest):</FLPText>
+                  <FLPText fontWeight="semibold">
+                    {formatCurrency(activeYearData.rentalProfitBeforeInterestShare)}
+                  </FLPText>
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between" }}>
+                  <FLPText color="text.muted">Savings & dividend income:</FLPText>
+                  <FLPText fontWeight="semibold">
+                    {formatCurrency(
+                      activeYearData.savingsInterestGross + activeYearData.dividendIncomeGross,
+                    )}
+                  </FLPText>
+                </div>
+                <hr style={{ border: "0", borderTop: "1px solid var(--colors-border)" }} />
+                <div
+                  style={{ display: "flex", justifyContent: "space-between", fontWeight: "bold" }}
+                >
+                  <FLPText>Total gross income:</FLPText>
+                  <FLPText>{formatCurrency(activeYearData.totalGrossIncome)}</FLPText>
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between" }}>
+                  <FLPText color="text.muted">Personal allowance:</FLPText>
+                  <FLPText fontWeight="semibold">
+                    {formatCurrency(activeYearData.personalAllowance)}
+                  </FLPText>
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between" }}>
+                  <FLPText color="text.muted">Combined taxable income:</FLPText>
+                  <FLPText fontWeight="semibold">
+                    {formatCurrency(activeYearData.totalTaxableIncome)}
+                  </FLPText>
+                </div>
+                <hr style={{ border: "0", borderTop: "1px solid var(--colors-border)" }} />
+                <div style={{ display: "flex", justifyContent: "space-between" }}>
+                  <FLPText color="text.muted">Self-employed income tax:</FLPText>
+                  <FLPText fontWeight="semibold">{formatCurrency(activeYearData.seTaxDue)}</FLPText>
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between" }}>
+                  <FLPText color="text.muted">Self-employed Class 4 NI:</FLPText>
+                  <FLPText fontWeight="semibold">
+                    {formatCurrency(activeYearData.seClass4NIDue)}
+                  </FLPText>
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between" }}>
+                  <FLPText color="text.muted">Property tax due:</FLPText>
+                  <FLPText fontWeight="semibold">
+                    {formatCurrency(activeYearData.rentalPropertyTaxDueBeforeCredit)}
+                  </FLPText>
+                </div>
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    color: "var(--colors-success-500)",
+                  }}
+                >
+                  <FLPText>Section 24 Tax Credit:</FLPText>
+                  <FLPText>-{formatCurrency(activeYearData.rentalPropertyTaxCredit)}</FLPText>
+                </div>
+                {activeYearData.savingsTaxDue > 0 && (
+                  <div style={{ display: "flex", justifyContent: "space-between" }}>
+                    <FLPText color="text.muted">Savings tax (above PSA):</FLPText>
+                    <FLPText fontWeight="semibold">
+                      {formatCurrency(activeYearData.savingsTaxDue)}
+                    </FLPText>
+                  </div>
+                )}
+                {activeYearData.dividendTaxDue > 0 && (
+                  <div style={{ display: "flex", justifyContent: "space-between" }}>
+                    <FLPText color="text.muted">Dividend tax:</FLPText>
+                    <FLPText fontWeight="semibold">
+                      {formatCurrency(activeYearData.dividendTaxDue)}
+                    </FLPText>
+                  </div>
+                )}
+                <hr
+                  style={{
+                    border: "0",
+                    borderTop: "2px solid var(--colors-border)",
+                    margin: "4px 0",
+                  }}
+                />
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    fontWeight: "bold",
+                    fontSize: "14px",
+                  }}
+                >
+                  <FLPText color="blue.500">Self Assessment due:</FLPText>
+                  <FLPText color="blue.500">
+                    {formatCurrency(activeYearData.netAdditionalTaxToPay)}
+                  </FLPText>
+                </div>
+              </FLPBox>
+            </FLPCard>
+          </div>
+        </div>
+      )}
 
-                  {/* Savings & Dividends */}
-                  <tr className={trStyle}>
-                    <td
-                      className={tdStyle}
-                      style={{ fontWeight: "bold", backgroundColor: "rgba(139,92,246,0.04)" }}
-                    >
-                      Savings & Investments
-                    </td>
-                    {availableYears.map((year) => (
-                      <td
-                        key={year}
-                        className={tdStyle}
-                        style={{
-                          backgroundColor: "rgba(139,92,246,0.04)",
-                          borderLeft:
-                            year === selectedTaxYear ? "2px solid var(--colors-primary)" : "none",
-                        }}
-                      />
-                    ))}
-                  </tr>
-                  <tr className={trStyle}>
-                    <td className={tdStyle} style={{ paddingLeft: "24px" }}>
-                      Taxable Savings Interest
-                    </td>
-                    {availableYears.map((year) => (
-                      <td
-                        key={year}
-                        className={tdStyle}
-                        style={{
-                          textAlign: "right",
-                          color: "var(--colors-text-primary)",
-                          borderLeft:
-                            year === selectedTaxYear ? "2px solid var(--colors-primary)" : "none",
-                        }}
-                      >
-                        {formatCurrency(calculatedTaxYearsData[year]?.savingsInterestGross || 0)}
-                      </td>
-                    ))}
-                  </tr>
-                  <tr className={trStyle}>
-                    <td className={tdStyle} style={{ paddingLeft: "24px" }}>
-                      Dividends Income
-                    </td>
-                    {availableYears.map((year) => (
-                      <td
-                        key={year}
-                        className={tdStyle}
-                        style={{
-                          textAlign: "right",
-                          color: "var(--colors-text-primary)",
-                          borderLeft:
-                            year === selectedTaxYear ? "2px solid var(--colors-primary)" : "none",
-                        }}
-                      >
-                        {formatCurrency(calculatedTaxYearsData[year]?.dividendIncomeGross || 0)}
-                      </td>
-                    ))}
-                  </tr>
-
-                  {/* Tax Profile & Liabilities */}
-                  <tr className={trStyle}>
-                    <td
-                      className={tdStyle}
-                      style={{ fontWeight: "bold", backgroundColor: "rgba(99,99,241,0.04)" }}
-                    >
-                      Tax Profile & Liabilities
-                    </td>
-                    {availableYears.map((year) => (
-                      <td
-                        key={year}
-                        className={tdStyle}
-                        style={{
-                          backgroundColor: "rgba(99,99,241,0.04)",
-                          borderLeft:
-                            year === selectedTaxYear ? "2px solid var(--colors-primary)" : "none",
-                        }}
-                      />
-                    ))}
-                  </tr>
-                  <tr className={trStyle}>
-                    <td className={tdStyle} style={{ paddingLeft: "24px" }}>
-                      PAYE Salary
-                    </td>
-                    {availableYears.map((year) => (
-                      <td
-                        key={year}
-                        className={tdStyle}
-                        style={{
-                          textAlign: "right",
-                          color: "var(--colors-text-primary)",
-                          borderLeft:
-                            year === selectedTaxYear ? "2px solid var(--colors-primary)" : "none",
-                        }}
-                      >
-                        {formatCurrency(calculatedTaxYearsData[year]?.effectivePayeSalary || 0)}
-                      </td>
-                    ))}
-                  </tr>
-                  <tr className={trStyle}>
-                    <td className={tdStyle} style={{ paddingLeft: "24px" }}>
-                      Total Gross Taxable Income
-                    </td>
-                    {availableYears.map((year) => (
-                      <td
-                        key={year}
-                        className={tdStyle}
-                        style={{
-                          textAlign: "right",
-                          fontWeight: "bold",
-                          borderLeft:
-                            year === selectedTaxYear ? "2px solid var(--colors-primary)" : "none",
-                        }}
-                      >
-                        {formatCurrency(calculatedTaxYearsData[year]?.totalGrossIncome || 0)}
-                      </td>
-                    ))}
-                  </tr>
-                  <tr className={trStyle}>
-                    <td className={tdStyle} style={{ paddingLeft: "24px" }}>
-                      Personal Allowance
-                    </td>
-                    {availableYears.map((year) => (
-                      <td
-                        key={year}
-                        className={tdStyle}
-                        style={{
-                          textAlign: "right",
-                          color: "var(--colors-text-muted)",
-                          borderLeft:
-                            year === selectedTaxYear ? "2px solid var(--colors-primary)" : "none",
-                        }}
-                      >
-                        {formatCurrency(calculatedTaxYearsData[year]?.personalAllowance || 0)}
-                      </td>
-                    ))}
-                  </tr>
-                  <tr className={trStyle}>
-                    <td className={tdStyle} style={{ paddingLeft: "24px" }}>
-                      Section 24 Mortgage Relief Credit
-                    </td>
-                    {availableYears.map((year) => (
-                      <td
-                        key={year}
-                        className={tdStyle}
-                        style={{
-                          textAlign: "right",
-                          color: "var(--colors-success-500)",
-                          borderLeft:
-                            year === selectedTaxYear ? "2px solid var(--colors-primary)" : "none",
-                        }}
-                      >
-                        -
-                        {formatCurrency(calculatedTaxYearsData[year]?.rentalPropertyTaxCredit || 0)}
-                      </td>
-                    ))}
-                  </tr>
-                  <tr className={trStyle} style={{ backgroundColor: "rgba(99,99,241,0.06)" }}>
-                    <td className={tdStyle} style={{ fontWeight: "bold", paddingLeft: "24px" }}>
-                      Self Assessment tax & NI due
-                    </td>
-                    {availableYears.map((year) => (
-                      <td
-                        key={year}
-                        className={tdStyle}
-                        style={{
-                          textAlign: "right",
-                          fontWeight: "bold",
-                          color: "var(--colors-blue-500)",
-                          borderLeft:
-                            year === selectedTaxYear ? "2px solid var(--colors-primary)" : "none",
-                        }}
-                      >
-                        {formatCurrency(calculatedTaxYearsData[year]?.netAdditionalTaxToPay || 0)}
-                      </td>
-                    ))}
-                  </tr>
-                </tbody>
-              </table>
+      {/* Tab 3: Multi-Year Comparison */}
+      {activeTab === "multi-year" && (
+        <FLPCard
+          className={css({
+            padding: "24px",
+            borderRadius: "xl",
+            backgroundColor: "card",
+            borderWidth: "1px",
+            borderStyle: "solid",
+            borderColor: "border.subtle",
+          })}
+        >
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              marginBottom: "16px",
+              flexWrap: "wrap",
+              gap: "10px",
+            }}
+          >
+            <div>
+              <FLPHeading as="h3" size="md">
+                P&L & Tax Comparison Table
+              </FLPHeading>
+              <FLPText color="text.muted" fontSize="xs">
+                Historical and projected figures across all fiscal tax years.
+              </FLPText>
             </div>
-          </FLPCard>
-        </>
+          </div>
+
+          <div className={tableContainer}>
+            <table className={tableStyle} style={{ minWidth: "550px" }}>
+              <thead>
+                <tr>
+                  <th className={thStyle}>Line Item</th>
+                  {availableYears.map((year) => (
+                    <th
+                      key={year}
+                      className={thStyle}
+                      style={{
+                        textAlign: "right",
+                        borderLeft:
+                          year === selectedTaxYear ? "2px solid var(--colors-primary)" : "none",
+                      }}
+                    >
+                      {year}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {/* Rental */}
+                <tr className={trStyle}>
+                  <td
+                    className={tdStyle}
+                    style={{ fontWeight: "bold", backgroundColor: "rgba(245,158,11,0.04)" }}
+                  >
+                    Rental Property (100% Share)
+                  </td>
+                  {availableYears.map((year) => (
+                    <td
+                      key={year}
+                      className={tdStyle}
+                      style={{
+                        backgroundColor: "rgba(245,158,11,0.04)",
+                        borderLeft:
+                          year === selectedTaxYear ? "2px solid var(--colors-primary)" : "none",
+                      }}
+                    />
+                  ))}
+                </tr>
+                <tr className={trStyle}>
+                  <td className={tdStyle} style={{ paddingLeft: "24px" }}>
+                    Rental Income
+                  </td>
+                  {availableYears.map((year) => (
+                    <td
+                      key={year}
+                      className={tdStyle}
+                      style={{
+                        textAlign: "right",
+                        color: "var(--colors-success-500)",
+                        borderLeft:
+                          year === selectedTaxYear ? "2px solid var(--colors-primary)" : "none",
+                      }}
+                    >
+                      {formatCurrency(calculatedTaxYearsData[year]?.rentalIncomeGross || 0)}
+                    </td>
+                  ))}
+                </tr>
+                <tr className={trStyle}>
+                  <td className={tdStyle} style={{ paddingLeft: "24px" }}>
+                    Rental Expenses (Excl. Interest)
+                  </td>
+                  {availableYears.map((year) => (
+                    <td
+                      key={year}
+                      className={tdStyle}
+                      style={{
+                        textAlign: "right",
+                        color: "var(--colors-text-muted)",
+                        borderLeft:
+                          year === selectedTaxYear ? "2px solid var(--colors-primary)" : "none",
+                      }}
+                    >
+                      {formatCurrency(
+                        calculatedTaxYearsData[year]?.rentalExpensesExclInterest || 0,
+                      )}
+                    </td>
+                  ))}
+                </tr>
+                <tr className={trStyle}>
+                  <td className={tdStyle} style={{ paddingLeft: "24px" }}>
+                    Mortgage Interest Costs
+                  </td>
+                  {availableYears.map((year) => (
+                    <td
+                      key={year}
+                      className={tdStyle}
+                      style={{
+                        textAlign: "right",
+                        color: "var(--colors-destructive)",
+                        borderLeft:
+                          year === selectedTaxYear ? "2px solid var(--colors-primary)" : "none",
+                      }}
+                    >
+                      {formatCurrency(calculatedTaxYearsData[year]?.rentalMortgageInterest || 0)}
+                    </td>
+                  ))}
+                </tr>
+                <tr className={trStyle} style={{ backgroundColor: "rgba(0,0,0,0.02)" }}>
+                  <td className={tdStyle} style={{ fontWeight: "bold", paddingLeft: "24px" }}>
+                    Total Rental Profit (Post-Interest)
+                  </td>
+                  {availableYears.map((year) => (
+                    <td
+                      key={year}
+                      className={tdStyle}
+                      style={{
+                        textAlign: "right",
+                        fontWeight: "bold",
+                        borderLeft:
+                          year === selectedTaxYear ? "2px solid var(--colors-primary)" : "none",
+                      }}
+                    >
+                      {formatCurrency(calculatedTaxYearsData[year]?.rentalProfitPostInterest || 0)}
+                    </td>
+                  ))}
+                </tr>
+
+                {/* Self-Employed */}
+                <tr className={trStyle}>
+                  <td
+                    className={tdStyle}
+                    style={{ fontWeight: "bold", backgroundColor: "rgba(16,185,129,0.04)" }}
+                  >
+                    Self-Employed (Sole Trader)
+                  </td>
+                  {availableYears.map((year) => (
+                    <td
+                      key={year}
+                      className={tdStyle}
+                      style={{
+                        backgroundColor: "rgba(16,185,129,0.04)",
+                        borderLeft:
+                          year === selectedTaxYear ? "2px solid var(--colors-primary)" : "none",
+                      }}
+                    />
+                  ))}
+                </tr>
+                <tr className={trStyle}>
+                  <td className={tdStyle} style={{ paddingLeft: "24px" }}>
+                    Business Turnover
+                  </td>
+                  {availableYears.map((year) => (
+                    <td
+                      key={year}
+                      className={tdStyle}
+                      style={{
+                        textAlign: "right",
+                        color: "var(--colors-success-500)",
+                        borderLeft:
+                          year === selectedTaxYear ? "2px solid var(--colors-primary)" : "none",
+                      }}
+                    >
+                      {formatCurrency(calculatedTaxYearsData[year]?.seIncomeGross || 0)}
+                    </td>
+                  ))}
+                </tr>
+                <tr className={trStyle}>
+                  <td className={tdStyle} style={{ paddingLeft: "24px" }}>
+                    Allowable Business Expenses
+                  </td>
+                  {availableYears.map((year) => (
+                    <td
+                      key={year}
+                      className={tdStyle}
+                      style={{
+                        textAlign: "right",
+                        color: "var(--colors-text-muted)",
+                        borderLeft:
+                          year === selectedTaxYear ? "2px solid var(--colors-primary)" : "none",
+                      }}
+                    >
+                      {formatCurrency(calculatedTaxYearsData[year]?.seExpenses || 0)}
+                    </td>
+                  ))}
+                </tr>
+                <tr className={trStyle} style={{ backgroundColor: "rgba(0,0,0,0.02)" }}>
+                  <td className={tdStyle} style={{ fontWeight: "bold", paddingLeft: "24px" }}>
+                    Self-Employed Net Profit
+                  </td>
+                  {availableYears.map((year) => (
+                    <td
+                      key={year}
+                      className={tdStyle}
+                      style={{
+                        textAlign: "right",
+                        fontWeight: "bold",
+                        borderLeft:
+                          year === selectedTaxYear ? "2px solid var(--colors-primary)" : "none",
+                      }}
+                    >
+                      {formatCurrency(calculatedTaxYearsData[year]?.seProfit || 0)}
+                    </td>
+                  ))}
+                </tr>
+
+                {/* Savings & Dividends */}
+                <tr className={trStyle}>
+                  <td
+                    className={tdStyle}
+                    style={{ fontWeight: "bold", backgroundColor: "rgba(139,92,246,0.04)" }}
+                  >
+                    Savings & Investments
+                  </td>
+                  {availableYears.map((year) => (
+                    <td
+                      key={year}
+                      className={tdStyle}
+                      style={{
+                        backgroundColor: "rgba(139,92,246,0.04)",
+                        borderLeft:
+                          year === selectedTaxYear ? "2px solid var(--colors-primary)" : "none",
+                      }}
+                    />
+                  ))}
+                </tr>
+                <tr className={trStyle}>
+                  <td className={tdStyle} style={{ paddingLeft: "24px" }}>
+                    Taxable Savings Interest
+                  </td>
+                  {availableYears.map((year) => (
+                    <td
+                      key={year}
+                      className={tdStyle}
+                      style={{
+                        textAlign: "right",
+                        color: "var(--colors-text-primary)",
+                        borderLeft:
+                          year === selectedTaxYear ? "2px solid var(--colors-primary)" : "none",
+                      }}
+                    >
+                      {formatCurrency(calculatedTaxYearsData[year]?.savingsInterestGross || 0)}
+                    </td>
+                  ))}
+                </tr>
+                <tr className={trStyle}>
+                  <td className={tdStyle} style={{ paddingLeft: "24px" }}>
+                    Dividends Income
+                  </td>
+                  {availableYears.map((year) => (
+                    <td
+                      key={year}
+                      className={tdStyle}
+                      style={{
+                        textAlign: "right",
+                        color: "var(--colors-text-primary)",
+                        borderLeft:
+                          year === selectedTaxYear ? "2px solid var(--colors-primary)" : "none",
+                      }}
+                    >
+                      {formatCurrency(calculatedTaxYearsData[year]?.dividendIncomeGross || 0)}
+                    </td>
+                  ))}
+                </tr>
+
+                {/* Tax Profile & Liabilities */}
+                <tr className={trStyle}>
+                  <td
+                    className={tdStyle}
+                    style={{ fontWeight: "bold", backgroundColor: "rgba(99,99,241,0.04)" }}
+                  >
+                    Tax Profile & Liabilities
+                  </td>
+                  {availableYears.map((year) => (
+                    <td
+                      key={year}
+                      className={tdStyle}
+                      style={{
+                        backgroundColor: "rgba(99,99,241,0.04)",
+                        borderLeft:
+                          year === selectedTaxYear ? "2px solid var(--colors-primary)" : "none",
+                      }}
+                    />
+                  ))}
+                </tr>
+                <tr className={trStyle}>
+                  <td className={tdStyle} style={{ paddingLeft: "24px" }}>
+                    PAYE Salary
+                  </td>
+                  {availableYears.map((year) => (
+                    <td
+                      key={year}
+                      className={tdStyle}
+                      style={{
+                        textAlign: "right",
+                        color: "var(--colors-text-primary)",
+                        borderLeft:
+                          year === selectedTaxYear ? "2px solid var(--colors-primary)" : "none",
+                      }}
+                    >
+                      {formatCurrency(calculatedTaxYearsData[year]?.effectivePayeSalary || 0)}
+                    </td>
+                  ))}
+                </tr>
+                <tr className={trStyle}>
+                  <td className={tdStyle} style={{ paddingLeft: "24px" }}>
+                    Total Gross Taxable Income
+                  </td>
+                  {availableYears.map((year) => (
+                    <td
+                      key={year}
+                      className={tdStyle}
+                      style={{
+                        textAlign: "right",
+                        fontWeight: "bold",
+                        borderLeft:
+                          year === selectedTaxYear ? "2px solid var(--colors-primary)" : "none",
+                      }}
+                    >
+                      {formatCurrency(calculatedTaxYearsData[year]?.totalGrossIncome || 0)}
+                    </td>
+                  ))}
+                </tr>
+                <tr className={trStyle}>
+                  <td className={tdStyle} style={{ paddingLeft: "24px" }}>
+                    Personal Allowance
+                  </td>
+                  {availableYears.map((year) => (
+                    <td
+                      key={year}
+                      className={tdStyle}
+                      style={{
+                        textAlign: "right",
+                        color: "var(--colors-text-muted)",
+                        borderLeft:
+                          year === selectedTaxYear ? "2px solid var(--colors-primary)" : "none",
+                      }}
+                    >
+                      {formatCurrency(calculatedTaxYearsData[year]?.personalAllowance || 0)}
+                    </td>
+                  ))}
+                </tr>
+                <tr className={trStyle}>
+                  <td className={tdStyle} style={{ paddingLeft: "24px" }}>
+                    Section 24 Mortgage Relief Credit
+                  </td>
+                  {availableYears.map((year) => (
+                    <td
+                      key={year}
+                      className={tdStyle}
+                      style={{
+                        textAlign: "right",
+                        color: "var(--colors-success-500)",
+                        borderLeft:
+                          year === selectedTaxYear ? "2px solid var(--colors-primary)" : "none",
+                      }}
+                    >
+                      -{formatCurrency(calculatedTaxYearsData[year]?.rentalPropertyTaxCredit || 0)}
+                    </td>
+                  ))}
+                </tr>
+                <tr className={trStyle} style={{ backgroundColor: "rgba(99,99,241,0.06)" }}>
+                  <td className={tdStyle} style={{ fontWeight: "bold", paddingLeft: "24px" }}>
+                    Self Assessment tax & NI due
+                  </td>
+                  {availableYears.map((year) => (
+                    <td
+                      key={year}
+                      className={tdStyle}
+                      style={{
+                        textAlign: "right",
+                        fontWeight: "bold",
+                        color: "var(--colors-blue-500)",
+                        borderLeft:
+                          year === selectedTaxYear ? "2px solid var(--colors-primary)" : "none",
+                      }}
+                    >
+                      {formatCurrency(calculatedTaxYearsData[year]?.netAdditionalTaxToPay || 0)}
+                    </td>
+                  ))}
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </FLPCard>
       )}
 
       {/* Detailed Transaction Log Tab */}

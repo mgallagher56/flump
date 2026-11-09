@@ -73,17 +73,18 @@ const SavingsForecaster: FC<SavingsForecasterProps> = ({
   // Styles
   const forecasterGrid = css({
     display: "grid",
-    gridTemplateColumns: { base: "1fr", lg: "1fr 2fr" },
-    gap: "32px",
+    gridTemplateColumns: { base: "1fr", lg: "repeat(12, 1fr)" },
+    gap: "24px",
     alignItems: "start",
   });
 
   const controlPanelStyle = css({
+    gridColumn: { base: "span 1", lg: "span 5" },
     padding: "24px",
     backgroundColor: "card",
-    borderRadius: "lg",
+    borderRadius: "xl",
     border: "1px solid",
-    borderColor: "border",
+    borderColor: "border.subtle",
     display: "flex",
     flexDirection: "column",
     gap: "20px",
@@ -458,7 +459,7 @@ const SavingsForecaster: FC<SavingsForecasterProps> = ({
         </div>
 
         {/* Visual Chart & Breakdown (Right Column) */}
-        <FLPCard>
+        <FLPCard className={css({ gridColumn: { base: "span 1", lg: "span 7" } })}>
           <div
             style={{
               display: "flex",
@@ -605,14 +606,7 @@ const SavingsForecaster: FC<SavingsForecasterProps> = ({
               >
                 Current Plan Final
               </FLPText>
-              <FLPHeading
-                as="h4"
-                color="primary"
-                mt={1}
-                size="lg"
-                className="tabular-nums"
-                style={{ fontFamily: "var(--fonts-mono)" }}
-              >
+              <FLPHeading as="h4" color="primary" mt={1} size="lg" className="tabular-nums">
                 {formatCurrency(totalA)}
               </FLPHeading>
             </div>
@@ -626,14 +620,7 @@ const SavingsForecaster: FC<SavingsForecasterProps> = ({
               >
                 Hypothetical Plan Final
               </FLPText>
-              <FLPHeading
-                as="h4"
-                color="success.500"
-                mt={1}
-                size="lg"
-                className="tabular-nums"
-                style={{ fontFamily: "var(--fonts-mono)" }}
-              >
+              <FLPHeading as="h4" color="success.500" mt={1} size="lg" className="tabular-nums">
                 {formatCurrency(totalB)}
               </FLPHeading>
             </div>
@@ -647,14 +634,7 @@ const SavingsForecaster: FC<SavingsForecasterProps> = ({
               >
                 Total Interest Gained
               </FLPText>
-              <FLPHeading
-                as="h4"
-                color="text.primary"
-                mt={1}
-                size="lg"
-                className="tabular-nums"
-                style={{ fontFamily: "var(--fonts-mono)" }}
-              >
+              <FLPHeading as="h4" color="text.primary" mt={1} size="lg" className="tabular-nums">
                 {formatCurrency(
                   totalB - startingBalance - hypotheticalSavingRate * 12 * projectionYears,
                 )}

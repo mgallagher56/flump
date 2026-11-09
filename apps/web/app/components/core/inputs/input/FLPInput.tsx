@@ -45,19 +45,20 @@ const FLPInput: FC<FLPInputProps> = ({
 
   const inputStyle = css({
     width: "100%",
-    padding: isMobileVariant ? "12px 14px" : "10px 14px",
-    minHeight: isMobileVariant ? "44px" : undefined,
+    padding: isMobileVariant ? "12px 14px" : "8px 14px",
+    minHeight: isMobileVariant ? "44px" : "40px",
     fontSize: isMobileVariant ? "16px" : "sm",
-    borderRadius: "sm",
+    borderRadius: "md",
     border: "1px solid",
     borderColor: "border",
-    backgroundColor: "transparent",
+    backgroundColor: "surface",
     color: "text.primary",
     outline: "none",
-    transition: "all 0.2s",
+    transition: "border-color 0.15s ease, box-shadow 0.15s ease",
+    fontVariantNumeric: "tabular-nums",
     _focus: {
       borderColor: "primary",
-      boxShadow: "0 0 0 1px token(colors.primary)",
+      boxShadow: "0 0 0 2px token(colors.primary, #4f46e5)",
     },
     _disabled: {
       opacity: 0.5,
@@ -65,6 +66,7 @@ const FLPInput: FC<FLPInputProps> = ({
     },
     "&[type='number']": {
       appearance: "textfield",
+      fontVariantNumeric: "tabular-nums",
       "&::-webkit-outer-spin-button, &::-webkit-inner-spin-button": {
         WebkitAppearance: "none",
         margin: 0,

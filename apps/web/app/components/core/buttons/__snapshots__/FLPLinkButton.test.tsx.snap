@@ -3,7 +3,7 @@
 exports[`FLPLinkButton > renders as expected 1`] = `
 <div>
   <a
-    class="d_inline-flex ai_center jc_center bdr_full fw_medium trs_all_0.2s cursor_pointer px_6 py_3 fs_sm lh_1 disabled:op_0.5 disabled:cursor_not-allowed focusVisible:ring_2px_solid focusVisible:ring-c_primary focusVisible:ring-o_2px bg_transparent c_text.primary hover:bg_accent hover:c_accent.foreground"
+    class="d_inline-flex ai_center jc_center bdr_md fw_medium trs_all_0.15s_ease cursor_pointer lh_1 disabled:op_0.5 disabled:cursor_not-allowed focusVisible:ring_2px_solid focusVisible:ring-c_primary focusVisible:ring-o_2px bg_transparent c_text.primary hover:bg_surface.subtle px_4 py_2.5 fs_sm min-h_10"
     href="/test"
   >
     Button
@@ -14,7 +14,7 @@ exports[`FLPLinkButton > renders as expected 1`] = `
 exports[`FLPLinkButton > renders as expected with a custom class 1`] = `
 <div>
   <a
-    class="d_inline-flex ai_center jc_center bdr_full fw_medium trs_all_0.2s cursor_pointer px_6 py_3 fs_sm lh_1 disabled:op_0.5 disabled:cursor_not-allowed focusVisible:ring_2px_solid focusVisible:ring-c_primary focusVisible:ring-o_2px bg_transparent c_text.primary hover:bg_accent hover:c_accent.foreground  test-class"
+    class="d_inline-flex ai_center jc_center bdr_md fw_medium trs_all_0.15s_ease cursor_pointer lh_1 disabled:op_0.5 disabled:cursor_not-allowed focusVisible:ring_2px_solid focusVisible:ring-c_primary focusVisible:ring-o_2px bg_transparent c_text.primary hover:bg_surface.subtle px_4 py_2.5 fs_sm min-h_10  test-class"
     href="/test"
   >
     Button

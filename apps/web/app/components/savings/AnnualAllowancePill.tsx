@@ -1,7 +1,8 @@
 import { css } from "@repo/ui/styled-system/css";
 import { type FC, useMemo } from "react";
 import { FiClock, FiShield, FiTrendingUp } from "react-icons/fi";
-import FLPText from "~/components/core/typography/FLPText";
+import FLPBadge from "~/components/core/badges/FLPBadge";
+import FLPProgressBar from "~/components/core/progress/FLPProgressBar";
 
 export interface AnnualAllowancePillProps {
   type: "isa" | "pension";
@@ -13,30 +14,24 @@ export interface AnnualAllowancePillProps {
 
 const pillCardStyle = css({
   backgroundColor: "surface",
-  border: "1px solid",
-  borderColor: "border",
+  borderWidth: "1px",
+  borderStyle: "solid",
+  borderColor: "border.subtle",
   borderRadius: "xl",
-  padding: { base: "14px 16px", md: "16px 20px" },
+  padding: { base: "16px", md: "20px" },
   display: "flex",
   flexDirection: "column",
-  gap: "10px",
-  boxShadow: "0 2px 8px rgba(0, 0, 0, 0.04)",
+  gap: "12px",
+  boxShadow: "card",
+  height: "100%",
 });
 
 const topRowStyle = css({
   display: "flex",
   justifyContent: "space-between",
-  alignItems: "center",
+  alignItems: "flex-start",
   flexWrap: "wrap",
   gap: "10px",
-});
-
-const progressTrackStyle = css({
-  width: "100%",
-  height: "8px",
-  backgroundColor: "secondary",
-  borderRadius: "full",
-  overflow: "hidden",
 });
 
 const formatGBP = (num: number) => `£${Math.max(0, Math.round(num)).toLocaleString("en-GB")}`;
@@ -58,8 +53,7 @@ export const AnnualAllowancePill: FC<AnnualAllowancePillProps> = ({
   const daysUntilApril5 = useMemo(() => {
     const now = new Date();
     const currentYear = now.getFullYear();
-    // 5 April of current year
-    let target = new Date(currentYear, 3, 5, 23, 59, 59); // Month is 0-indexed: 3 = April
+    let target = new Date(currentYear, 3, 5, 23, 59, 59); // 3 = April
     if (now > target) {
       target = new Date(currentYear + 1, 3, 5, 23, 59, 59);
     }
@@ -74,86 +68,74 @@ export const AnnualAllowancePill: FC<AnnualAllowancePillProps> = ({
   return (
     <div className={pillCardStyle} data-testid={`allowance-pill-${type}`}>
       <div className={topRowStyle}>
-        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
           <div
-            style={{
-              width: "28px",
-              height: "28px",
-              borderRadius: "full",
-              backgroundColor: isIsa ? "rgba(16, 185, 129, 0.12)" : "rgba(99, 102, 241, 0.12)",
-              color: isIsa ? "#10b981" : "var(--colors-primary)",
+            className={css({
+              width: "32px",
+              height: "32px",
+              borderRadius: "md",
+              backgroundColor: isIsa ? "financial.positiveBg" : "surface.tinted",
+              color: isIsa ? "financial.positive" : "primary",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              fontSize: "14px",
-            }}
+              fontSize: "15px",
+              borderWidth: "1px",
+              borderStyle: "solid",
+              borderColor: isIsa ? "financial.positiveBorder" : "border.subtle",
+              flexShrink: 0,
+            })}
           >
             {isIsa ? <FiShield /> : <FiTrendingUp />}
           </div>
           <div>
-            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-              <strong style={{ fontSize: "14px", color: "text.primary" }}>
-                {isIsa ? "UK ISA Annual Allowance" : "UK Pension Annual Allowance"}
-              </strong>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
               <span
-                style={{
-                  fontSize: "11px",
-                  fontWeight: 600,
-                  padding: "1px 6px",
-                  borderRadius: "full",
-                  backgroundColor: "rgba(99, 102, 241, 0.08)",
-                  color: "var(--colors-primary)",
-                }}
+                className={css({ fontSize: "sm", fontWeight: "semibold", color: "text.primary" })}
               >
-                {formatGBP(limit)} / Tax Year
+                {isIsa ? "UK ISA Annual Allowance" : "UK Pension Annual Allowance"}
               </span>
+              <FLPBadge size="sm" variant="brand">
+                {formatGBP(limit)} / Tax Year
+              </FLPBadge>
             </div>
-            <FLPText color="text.muted" fontSize="xs">
+            <div
+              className={css({
+                fontSize: "xs",
+                color: "text.muted",
+                marginTop: "2px",
+                fontVariantNumeric: "tabular-nums",
+              })}
+            >
               {formatGBP(remaining)} remaining tax-free capacity
-            </FLPText>
+            </div>
           </div>
         </div>
 
-        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-          <div
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "6px",
-              padding: "4px 10px",
-              borderRadius: "full",
-              backgroundColor: "rgba(245, 158, 11, 0.1)",
-              color: "#d97706",
-              fontSize: "12px",
-              fontWeight: 600,
-            }}
-          >
-            <FiClock /> {daysUntilApril5} days left until 5 April
-          </div>
+        <div>
+          <FLPBadge icon={<FiClock />} size="sm" variant="warning">
+            {daysUntilApril5} days left until 5 April
+          </FLPBadge>
         </div>
       </div>
 
       {/* Progress Track */}
       <div>
-        <div className={progressTrackStyle}>
-          <div
-            style={{
-              width: `${percentage}%`,
-              height: "100%",
-              backgroundColor: isIsa ? "#10b981" : "var(--colors-primary)",
-              borderRadius: "9999px",
-              transition: "width 0.4s ease",
-            }}
-          />
-        </div>
+        <FLPProgressBar
+          height={6}
+          max={limit}
+          value={used}
+          variant={isIsa ? "positive" : "primary"}
+        />
         <div
-          style={{
+          className={css({
             display: "flex",
             justifyContent: "space-between",
-            fontSize: "11px",
-            color: "var(--colors-text-muted)",
-            marginTop: "4px",
-          }}
+            fontSize: "xs",
+            color: "text.muted",
+            marginTop: "6px",
+            fontVariantNumeric: "tabular-nums",
+          })}
         >
           <span>
             {formatGBP(used)} contributed ({percentage.toFixed(0)}%)
@@ -162,21 +144,26 @@ export const AnnualAllowancePill: FC<AnnualAllowancePillProps> = ({
         </div>
       </div>
 
-      {/* Extra helper for Savings page: Personal Savings Allowance */}
+      {/* Extra helper for Savings: Personal Savings Allowance */}
       {isIsa && psaLimit > 0 && (
         <div
-          style={{
-            fontSize: "11px",
-            color: "var(--colors-text-muted)",
-            borderTop: "1px dashed var(--colors-border)",
-            paddingTop: "6px",
+          className={css({
+            fontSize: "xs",
+            color: "text.muted",
+            borderTopWidth: "1px",
+            borderTopStyle: "solid",
+            borderTopColor: "border.subtle",
+            paddingTop: "8px",
             display: "flex",
             justifyContent: "space-between",
-          }}
+            flexWrap: "wrap",
+            gap: "4px",
+            fontVariantNumeric: "tabular-nums",
+          })}
         >
           <span>
-            💡 <strong>Personal Savings Allowance ({taxBand.toUpperCase()} rate):</strong>{" "}
-            {formatGBP(psaLimit)} tax-free interest/yr
+            💡 <strong>Personal Savings Allowance ({taxBand} rate):</strong> {formatGBP(psaLimit)}{" "}
+            tax-free interest/yr
           </span>
           <span>
             {savingsInterest > 0

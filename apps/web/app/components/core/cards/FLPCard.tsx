@@ -5,6 +5,7 @@ import { FLPCardMobileStyles, FLPCardStyles } from "./FLPCardStyles";
 export interface FLPCardProps extends HTMLAttributes<HTMLDivElement> {
   isMobile?: boolean;
   variant?: "desktop" | "mobile";
+  interactive?: boolean;
 }
 
 const FLPCard: FC<FLPCardProps> = ({
@@ -12,6 +13,7 @@ const FLPCard: FC<FLPCardProps> = ({
   className,
   isMobile: propIsMobile,
   variant = "desktop",
+  interactive = false,
   ...props
 }) => {
   const { isMobile: contextIsMobile } = useResponsive();
@@ -20,6 +22,7 @@ const FLPCard: FC<FLPCardProps> = ({
   return (
     <div
       className={`${FLPCardStyles} ${isMobileVariant ? FLPCardMobileStyles : ""} ${className || ""}`.trim()}
+      data-interactive={interactive ? "true" : undefined}
       data-variant={isMobileVariant ? "mobile" : "desktop"}
       {...props}
     >

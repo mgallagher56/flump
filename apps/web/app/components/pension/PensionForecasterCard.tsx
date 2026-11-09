@@ -96,19 +96,17 @@ const controlsDeckStyle = css({
   display: "flex",
   flexDirection: "column",
   gap: "16px",
-  backgroundColor: {
-    base: "rgba(139, 92, 246, 0.03)",
-    _dark: "rgba(139, 92, 246, 0.05)",
-  },
+  backgroundColor: "surface.sunken",
   padding: { base: "16px", md: "20px" },
   borderRadius: "xl",
-  border: "1px solid",
-  borderColor: "border",
+  borderWidth: "1px",
+  borderStyle: "solid",
+  borderColor: "border.subtle",
 });
 
 const controlsGridStyle = css({
   display: "grid",
-  gridTemplateColumns: { base: "1fr", sm: "repeat(2, 1fr)", lg: "repeat(4, 1fr)" },
+  gridTemplateColumns: { base: "1fr", sm: "repeat(2, 1fr)", lg: "1fr" },
   gap: "14px",
 });
 
@@ -526,629 +524,666 @@ export const PensionForecasterCard: FC<PensionForecasterCardProps> = ({
         </div>
       </div>
 
-      {/* Outcome Cards (Top Results) */}
-      <div className={outcomeGridStyle}>
-        {/* Card 1: Projected Pot */}
-        <div className={heroCardStyle("#8b5cf6")}>
-          <div>
-            <FLPText color="text.muted" fontSize="xs" fontWeight="semibold">
-              PROJECTED POT ({horizonYears} YRS)
-            </FLPText>
-            <FLPHeading as="h4" size="lg" style={{ color: "#8b5cf6", marginTop: "4px" }}>
-              {formatCurrency(finalBalance)}
-            </FLPHeading>
-          </div>
-          <div
-            style={{
-              fontSize: "12px",
-              color: "var(--colors-text-muted)",
-              display: "flex",
-              flexDirection: "column",
-              gap: "3px",
-            }}
-          >
-            <div>
-              25% tax-free lump sum:{" "}
-              <strong style={{ color: "var(--colors-text-primary)" }}>
-                {formatCurrency(taxFreeLumpSum)}
-              </strong>
-            </div>
-            <div>
-              Remaining drawdown pot: <strong>{formatCurrency(drawdownPotAfterLumpSum)}</strong>
-            </div>
-          </div>
-        </div>
-
-        {/* Card 2: Estimated Retirement Income & PLSA Benchmark */}
-        <div className={heroCardStyle("#10b981")}>
-          <div>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <FLPText color="text.muted" fontSize="xs" fontWeight="semibold">
-                EST. RETIREMENT INCOME (4%)
+      {/* 2-Column Interactive Simulator Pattern */}
+      <div
+        className={css({
+          display: "grid",
+          gridTemplateColumns: { base: "1fr", lg: "repeat(12, 1fr)" },
+          gap: "24px",
+          alignItems: "start",
+        })}
+      >
+        {/* Left Column: Forecaster Parameters (4 cols) */}
+        <div
+          className={css({
+            gridColumn: { base: "span 1", lg: "span 4" },
+            display: "flex",
+            flexDirection: "column",
+            gap: "16px",
+          })}
+        >
+          {/* Core Levers (Inputs Deck) */}
+          <div className={controlsDeckStyle}>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <FaSlidersH style={{ color: "#8b5cf6", fontSize: "14px" }} />
+              <FLPText fontSize="xs" fontWeight="bold" textTransform="uppercase" color="text.muted">
+                Forecaster Parameters
               </FLPText>
-              <span
-                style={{
-                  fontSize: "11px",
-                  fontWeight: 700,
-                  padding: "2px 8px",
-                  borderRadius: "999px",
-                  backgroundColor: `${plsaStandard.color}20`,
-                  color: plsaStandard.color,
-                }}
-              >
-                {plsaStandard.label}
-              </span>
             </div>
-            <FLPHeading as="h4" size="lg" style={{ color: "#10b981", marginTop: "4px" }}>
-              {formatCurrency(monthlyRetirementIncome)}
-              <span
-                style={{
-                  fontSize: "14px",
-                  color: "var(--colors-text-muted)",
-                  fontWeight: "normal",
-                }}
-              >
-                /mo
-              </span>
-            </FLPHeading>
-          </div>
 
-          {/* Integrated PLSA Benchmark Track */}
-          <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                fontSize: "11px",
-                color: "var(--colors-text-muted)",
-              }}
-            >
-              <span>UK Retirement Living Standard Benchmark (PLSA)</span>
-              <span>{formatCurrency(annualRetirementIncome)}/yr</span>
+            <div className={controlsGridStyle}>
+              {/* 1. Salary */}
+              <div className={inputCardStyle}>
+                <label className={labelStyle} htmlFor="pension-forecast-salary">
+                  <span>Annual Salary</span>
+                  <span style={{ color: "var(--colors-text-primary)", fontWeight: "bold" }}>
+                    {formatCurrency(salary)}
+                  </span>
+                </label>
+                <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
+                  <span
+                    style={{
+                      position: "absolute",
+                      left: "10px",
+                      color: "var(--colors-text-muted)",
+                      fontSize: "14px",
+                      fontWeight: "bold",
+                    }}
+                  >
+                    £
+                  </span>
+                  <input
+                    className={textInputStyle}
+                    id="pension-forecast-salary"
+                    min="0"
+                    step="1000"
+                    style={{ paddingLeft: "24px" }}
+                    type="number"
+                    value={salary}
+                    onChange={(e) => setSalary(Number(e.target.value) || 0)}
+                  />
+                </div>
+                <FLPText color="text.muted" fontSize="xs">
+                  {useQualifyingEarnings
+                    ? `Qualifying band: ${formatCurrency(pensionableSalary)}/yr`
+                    : "Total gross salary"}
+                </FLPText>
+              </div>
+
+              {/* 2. Employee Contribution % */}
+              <div className={inputCardStyle}>
+                <label className={labelStyle} htmlFor="pension-forecast-employee-pct">
+                  <span>Employee Contrib</span>
+                  <span style={{ color: "#6363f1", fontWeight: "bold" }}>
+                    {employeePercent}% ({formatCurrency(monthlyEmployee)}/mo)
+                  </span>
+                </label>
+                <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
+                  <input
+                    aria-label="Employee Contrib (%)"
+                    className={textInputStyle}
+                    id="pension-forecast-employee-pct"
+                    max="100"
+                    min="0"
+                    step="0.5"
+                    style={{ paddingRight: "26px" }}
+                    type="number"
+                    value={employeePercent}
+                    onChange={(e) => setEmployeePercent(Number(e.target.value) || 0)}
+                  />
+                  <span
+                    style={{
+                      position: "absolute",
+                      right: "10px",
+                      color: "var(--colors-text-muted)",
+                      fontSize: "13px",
+                      fontWeight: "bold",
+                    }}
+                  >
+                    %
+                  </span>
+                </div>
+                <FLPText color="text.muted" fontSize="xs">
+                  Standard UK min: 5%
+                </FLPText>
+              </div>
+
+              {/* 3. Employer Contribution % */}
+              <div className={inputCardStyle}>
+                <label className={labelStyle} htmlFor="pension-forecast-employer-pct">
+                  <span>Employer Contrib</span>
+                  <span style={{ color: "#f59e0b", fontWeight: "bold" }}>
+                    {employerPercent}% ({formatCurrency(monthlyEmployer)}/mo)
+                  </span>
+                </label>
+                <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
+                  <input
+                    aria-label="Employer Contrib (%)"
+                    className={textInputStyle}
+                    id="pension-forecast-employer-pct"
+                    max="100"
+                    min="0"
+                    step="0.5"
+                    style={{ paddingRight: "26px" }}
+                    type="number"
+                    value={employerPercent}
+                    onChange={(e) => setEmployerPercent(Number(e.target.value) || 0)}
+                  />
+                  <span
+                    style={{
+                      position: "absolute",
+                      right: "10px",
+                      color: "var(--colors-text-muted)",
+                      fontSize: "13px",
+                      fontWeight: "bold",
+                    }}
+                  >
+                    %
+                  </span>
+                </div>
+                <FLPText color="text.muted" fontSize="xs">
+                  Standard UK min: 3%
+                </FLPText>
+              </div>
+
+              {/* 4. Investment Horizon */}
+              <div className={inputCardStyle}>
+                <label className={labelStyle} htmlFor="pension-forecast-horizon">
+                  <span>Horizon to Retirement</span>
+                  <span style={{ color: "#8b5cf6", fontWeight: "bold" }}>
+                    {horizonYears} {horizonYears === 1 ? "Year" : "Years"}
+                  </span>
+                </label>
+                <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
+                  <input
+                    aria-label="Horizon to Retirement (Years)"
+                    className={textInputStyle}
+                    id="pension-forecast-horizon"
+                    max="60"
+                    min="1"
+                    step="1"
+                    style={{ paddingRight: "48px" }}
+                    type="number"
+                    value={horizonYears}
+                    onChange={(e) => setHorizonYears(Number(e.target.value) || 1)}
+                  />
+                  <span
+                    style={{
+                      position: "absolute",
+                      right: "10px",
+                      color: "var(--colors-text-muted)",
+                      fontSize: "12px",
+                      fontWeight: "medium",
+                    }}
+                  >
+                    years
+                  </span>
+                </div>
+                <FLPText color="text.muted" fontSize="xs">
+                  Years until retirement age
+                </FLPText>
+              </div>
             </div>
+
+            {/* Expected Annual Growth Rate */}
             <div
-              style={{
-                height: "8px",
-                width: "100%",
-                borderRadius: "999px",
-                backgroundColor: "var(--colors-border)",
-                overflow: "hidden",
-              }}
+              style={{ display: "flex", flexDirection: "column", gap: "8px", paddingTop: "4px" }}
             >
               <div
                 style={{
-                  height: "100%",
-                  width: `${plsaProgressPct}%`,
-                  backgroundColor: plsaStandard.color,
-                  borderRadius: "999px",
-                  transition: "width 0.3s ease",
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  flexWrap: "wrap",
+                  gap: "8px",
                 }}
-              />
+              >
+                <FLPText
+                  fontSize="xs"
+                  fontWeight="semibold"
+                  textTransform="uppercase"
+                  color="text.muted"
+                >
+                  Expected Annual Growth Rate (p.a.)
+                </FLPText>
+                <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
+                  {portfolioReturnRate !== undefined && portfolioReturnRate > 0 && (
+                    <button
+                      className={presetBtnStyle(
+                        interestRate === Number(portfolioReturnRate.toFixed(1)),
+                      )}
+                      type="button"
+                      onClick={() => setInterestRate(Number(portfolioReturnRate.toFixed(1)))}
+                    >
+                      Portfolio Avg ({portfolioReturnRate.toFixed(1)}%)
+                    </button>
+                  )}
+                  {PRESETS.map((preset) => (
+                    <button
+                      key={preset.label}
+                      className={presetBtnStyle(interestRate === preset.rate)}
+                      type="button"
+                      onClick={() => setInterestRate(preset.rate)}
+                    >
+                      {preset.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                <div
+                  style={{
+                    position: "relative",
+                    display: "flex",
+                    alignItems: "center",
+                    width: "120px",
+                  }}
+                >
+                  <input
+                    aria-label="Expected Annual Growth Rate"
+                    className={textInputStyle}
+                    id="pension-custom-rate-slider"
+                    max="30"
+                    min="0"
+                    step="0.1"
+                    style={{ paddingRight: "30px", fontWeight: "bold" }}
+                    type="number"
+                    value={interestRate}
+                    onChange={(e) => setInterestRate(Number(e.target.value) || 0)}
+                  />
+                  <span
+                    style={{
+                      position: "absolute",
+                      right: "10px",
+                      color: "var(--colors-text-muted)",
+                      fontSize: "13px",
+                      fontWeight: "bold",
+                    }}
+                  >
+                    %
+                  </span>
+                </div>
+                {adjustForInflation && (
+                  <span style={{ fontSize: "12px", color: "var(--colors-text-muted)" }}>
+                    ({effectiveAnnualRate.toFixed(1)}% real return after {INFLATION_RATE}%
+                    inflation)
+                  </span>
+                )}
+              </div>
             </div>
+          </div>
+
+          {/* Smart UK Tax Insights */}
+          {inTaxTrap && pctToReclaimAllowance > employeePercent && (
             <div
-              style={{
+              className={css({
+                padding: "12px 16px",
+                borderRadius: "lg",
+                backgroundColor: "rgba(99, 99, 241, 0.08)",
+                border: "1px solid",
+                borderColor: "primary",
                 display: "flex",
                 justifyContent: "space-between",
-                fontSize: "10px",
-                color: "var(--colors-text-muted)",
-              }}
+                alignItems: "center",
+                flexWrap: "wrap",
+                gap: "10px",
+              })}
             >
-              <span>Min: {formatCurrency(PLSA_MINIMUM)}/mo</span>
-              <span>Mod: {formatCurrency(PLSA_MODERATE)}/mo</span>
-              <span>Comf: {formatCurrency(PLSA_COMFORTABLE)}/mo</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Card 3: Contributions & Compound Growth Breakdown */}
-        <div className={heroCardStyle("#6363f1")}>
-          <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-            <div>
-              <FLPText color="text.muted" fontSize="xs" fontWeight="semibold">
-                YOUR CONTRIBUTIONS
-              </FLPText>
-              <FLPHeading as="h4" size="sm" style={{ color: "#6363f1", marginTop: "2px" }}>
-                {formatCurrency(totalEmployeeContribs)}
-              </FLPHeading>
-              <span style={{ fontSize: "11px", color: "var(--colors-text-muted)" }}>
-                {formatCurrency(monthlyEmployee + directMonthlyContrib)}/mo
-              </span>
-            </div>
-
-            <div>
-              <FLPText color="text.muted" fontSize="xs" fontWeight="semibold">
-                EMPLOYER & COMPOUND GROWTH
-              </FLPText>
-              <FLPHeading as="h4" size="sm" style={{ color: "#f59e0b", marginTop: "2px" }}>
-                {formatCurrency(totalEmployerContribs + totalGrowth)}
-              </FLPHeading>
-              <span style={{ fontSize: "11px", color: "#10b981", fontWeight: 600 }}>
-                +{formatCurrency(totalGrowth)} investment returns
-              </span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Core Levers (Inputs Deck) */}
-      <div className={controlsDeckStyle}>
-        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-          <FaSlidersH style={{ color: "#8b5cf6", fontSize: "14px" }} />
-          <FLPText fontSize="xs" fontWeight="bold" textTransform="uppercase" color="text.muted">
-            Forecaster Parameters
-          </FLPText>
-        </div>
-
-        <div className={controlsGridStyle}>
-          {/* 1. Salary */}
-          <div className={inputCardStyle}>
-            <label className={labelStyle} htmlFor="pension-forecast-salary">
-              <span>Annual Salary</span>
-              <span style={{ color: "var(--colors-text-primary)", fontWeight: "bold" }}>
-                {formatCurrency(salary)}
-              </span>
-            </label>
-            <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
-              <span
-                style={{
-                  position: "absolute",
-                  left: "10px",
-                  color: "var(--colors-text-muted)",
-                  fontSize: "14px",
-                  fontWeight: "bold",
-                }}
+              <div style={{ display: "flex", alignItems: "center", gap: "10px", flex: 1 }}>
+                <FaLightbulb style={{ color: "#6363f1", fontSize: "16px", flexShrink: 0 }} />
+                <FLPText fontSize="xs">
+                  <strong>UK £100k Tax Trap Detected:</strong> Your adjusted income is{" "}
+                  {formatCurrency(adjustedNetIncome)}/yr (60% effective marginal tax). Increasing
+                  your employee pension contribution to <strong>{pctToReclaimAllowance}%</strong>{" "}
+                  restores your full tax-free allowance.
+                </FLPText>
+              </div>
+              <FLPButton
+                size="sm"
+                variant="outline"
+                onClick={() => setEmployeePercent(pctToReclaimAllowance)}
               >
-                £
-              </span>
-              <input
-                className={textInputStyle}
-                id="pension-forecast-salary"
-                min="0"
-                step="1000"
-                style={{ paddingLeft: "24px" }}
-                type="number"
-                value={salary}
-                onChange={(e) => setSalary(Number(e.target.value) || 0)}
-              />
+                Apply {pctToReclaimAllowance}%
+              </FLPButton>
             </div>
-            <FLPText color="text.muted" fontSize="xs">
-              {useQualifyingEarnings
-                ? `Qualifying band: ${formatCurrency(pensionableSalary)}/yr`
-                : "Total gross salary"}
-            </FLPText>
-          </div>
+          )}
 
-          {/* 2. Employee Contribution % */}
-          <div className={inputCardStyle}>
-            <label className={labelStyle} htmlFor="pension-forecast-employee-pct">
-              <span>Employee Contrib</span>
-              <span style={{ color: "#6363f1", fontWeight: "bold" }}>
-                {employeePercent}% ({formatCurrency(monthlyEmployee)}/mo)
-              </span>
-            </label>
-            <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
-              <input
-                aria-label="Employee Contrib (%)"
-                className={textInputStyle}
-                id="pension-forecast-employee-pct"
-                max="100"
-                min="0"
-                step="0.5"
-                style={{ paddingRight: "26px" }}
-                type="number"
-                value={employeePercent}
-                onChange={(e) => setEmployeePercent(Number(e.target.value) || 0)}
-              />
-              <span
-                style={{
-                  position: "absolute",
-                  right: "10px",
-                  color: "var(--colors-text-muted)",
-                  fontSize: "13px",
-                  fontWeight: "bold",
-                }}
-              >
-                %
-              </span>
-            </div>
-            <FLPText color="text.muted" fontSize="xs">
-              Standard UK min: 5%
-            </FLPText>
-          </div>
-
-          {/* 3. Employer Contribution % */}
-          <div className={inputCardStyle}>
-            <label className={labelStyle} htmlFor="pension-forecast-employer-pct">
-              <span>Employer Contrib</span>
-              <span style={{ color: "#f59e0b", fontWeight: "bold" }}>
-                {employerPercent}% ({formatCurrency(monthlyEmployer)}/mo)
-              </span>
-            </label>
-            <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
-              <input
-                aria-label="Employer Contrib (%)"
-                className={textInputStyle}
-                id="pension-forecast-employer-pct"
-                max="100"
-                min="0"
-                step="0.5"
-                style={{ paddingRight: "26px" }}
-                type="number"
-                value={employerPercent}
-                onChange={(e) => setEmployerPercent(Number(e.target.value) || 0)}
-              />
-              <span
-                style={{
-                  position: "absolute",
-                  right: "10px",
-                  color: "var(--colors-text-muted)",
-                  fontSize: "13px",
-                  fontWeight: "bold",
-                }}
-              >
-                %
-              </span>
-            </div>
-            <FLPText color="text.muted" fontSize="xs">
-              Standard UK min: 3%
-            </FLPText>
-          </div>
-
-          {/* 4. Investment Horizon */}
-          <div className={inputCardStyle}>
-            <label className={labelStyle} htmlFor="pension-forecast-horizon">
-              <span>Horizon to Retirement</span>
-              <span style={{ color: "#8b5cf6", fontWeight: "bold" }}>
-                {horizonYears} {horizonYears === 1 ? "Year" : "Years"}
-              </span>
-            </label>
-            <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
-              <input
-                aria-label="Horizon to Retirement (Years)"
-                className={textInputStyle}
-                id="pension-forecast-horizon"
-                max="60"
-                min="1"
-                step="1"
-                style={{ paddingRight: "48px" }}
-                type="number"
-                value={horizonYears}
-                onChange={(e) => setHorizonYears(Number(e.target.value) || 1)}
-              />
-              <span
-                style={{
-                  position: "absolute",
-                  right: "10px",
-                  color: "var(--colors-text-muted)",
-                  fontSize: "12px",
-                  fontWeight: "medium",
-                }}
-              >
-                years
-              </span>
-            </div>
-            <FLPText color="text.muted" fontSize="xs">
-              Years until retirement age
-            </FLPText>
-          </div>
-        </div>
-
-        {/* Expected Annual Growth Rate */}
-        <div style={{ display: "flex", flexDirection: "column", gap: "8px", paddingTop: "4px" }}>
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              flexWrap: "wrap",
-              gap: "8px",
-            }}
-          >
-            <FLPText
-              fontSize="xs"
-              fontWeight="semibold"
-              textTransform="uppercase"
-              color="text.muted"
-            >
-              Expected Annual Growth Rate (p.a.)
-            </FLPText>
-            <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
-              {portfolioReturnRate !== undefined && portfolioReturnRate > 0 && (
-                <button
-                  className={presetBtnStyle(
-                    interestRate === Number(portfolioReturnRate.toFixed(1)),
-                  )}
-                  type="button"
-                  onClick={() => setInterestRate(Number(portfolioReturnRate.toFixed(1)))}
-                >
-                  Portfolio Avg ({portfolioReturnRate.toFixed(1)}%)
-                </button>
-              )}
-              {PRESETS.map((preset) => (
-                <button
-                  key={preset.label}
-                  className={presetBtnStyle(interestRate === preset.rate)}
-                  type="button"
-                  onClick={() => setInterestRate(preset.rate)}
-                >
-                  {preset.label}
-                </button>
-              ))}
-            </div>
-          </div>
-          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+          {totalAnnualInflow > UK_ANNUAL_ALLOWANCE && (
             <div
-              style={{
-                position: "relative",
+              className={css({
+                padding: "12px 16px",
+                borderRadius: "lg",
+                backgroundColor: "rgba(245, 158, 11, 0.1)",
+                border: "1px solid #f59e0b",
                 display: "flex",
                 alignItems: "center",
-                width: "120px",
-              }}
+                gap: "10px",
+              })}
             >
-              <input
-                aria-label="Expected Annual Growth Rate"
-                className={textInputStyle}
-                id="pension-custom-rate-slider"
-                max="30"
-                min="0"
-                step="0.1"
-                style={{ paddingRight: "30px", fontWeight: "bold" }}
-                type="number"
-                value={interestRate}
-                onChange={(e) => setInterestRate(Number(e.target.value) || 0)}
+              <FaExclamationTriangle
+                style={{ color: "#f59e0b", fontSize: "16px", flexShrink: 0 }}
               />
-              <span
-                style={{
-                  position: "absolute",
-                  right: "10px",
-                  color: "var(--colors-text-muted)",
-                  fontSize: "13px",
-                  fontWeight: "bold",
+              <FLPText fontSize="xs">
+                <strong>UK Annual Allowance Notice:</strong> Projected inflow (
+                {formatCurrency(totalAnnualInflow)}/yr) exceeds the standard{" "}
+                {formatCurrency(UK_ANNUAL_ALLOWANCE)} Annual Allowance unless using carry-forward
+                relief.
+              </FLPText>
+            </div>
+          )}
+
+          {/* Collapsible UK Tax Rules & Assumptions */}
+          <details open className={assumptionsDetailsStyle}>
+            <summary className={assumptionsSummaryStyle}>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                <span>UK Tax Rules & Assumptions</span>
+                <span
+                  style={{
+                    fontSize: "11px",
+                    fontWeight: 600,
+                    color: "#8b5cf6",
+                    backgroundColor: "rgba(139, 92, 246, 0.12)",
+                    padding: "1px 7px",
+                    borderRadius: "999px",
+                    textTransform: "none",
+                  }}
+                >
+                  {activeRulesCount} active
+                </span>
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                <span style={{ fontSize: "11px", textTransform: "none", opacity: 0.8 }}>
+                  Toggle rules
+                </span>
+                <FaChevronDown size={11} />
+              </div>
+            </summary>
+
+            <div style={{ padding: "14px 16px", display: "flex", flexWrap: "wrap", gap: "8px" }}>
+              <button
+                aria-pressed={useQualifyingEarnings}
+                className={togglePillStyle(useQualifyingEarnings)}
+                type="button"
+                onClick={() => setUseQualifyingEarnings((v) => !v)}
+              >
+                {useQualifyingEarnings ? "✓ " : ""}UK Qualifying Earnings (£6,240–£50,270)
+              </button>
+              <button
+                aria-pressed={adjustForInflation}
+                className={togglePillStyle(adjustForInflation)}
+                type="button"
+                onClick={() => setAdjustForInflation((v) => !v)}
+              >
+                {adjustForInflation ? "✓ " : ""}Adjust for Inflation ({INFLATION_RATE}% p.a.)
+              </button>
+              <button
+                aria-pressed={includeStatePension}
+                className={togglePillStyle(includeStatePension)}
+                type="button"
+                onClick={() => setIncludeStatePension((v) => !v)}
+              >
+                {includeStatePension ? "✓ " : ""}Include UK State Pension (+£958/mo)
+              </button>
+              <button
+                aria-pressed={isSalarySacrifice}
+                className={togglePillStyle(isSalarySacrifice)}
+                type="button"
+                onClick={() => {
+                  setIsSalarySacrifice((v) => {
+                    const next = !v;
+                    if (!next) setPassEmployerNi(false);
+                    return next;
+                  });
                 }}
               >
-                %
-              </span>
+                {isSalarySacrifice ? "✓ " : ""}Salary Sacrifice (saves NI)
+              </button>
+              <button
+                aria-pressed={isSalarySacrifice && passEmployerNi}
+                className={togglePillStyle(isSalarySacrifice && passEmployerNi)}
+                disabled={!isSalarySacrifice}
+                style={{
+                  opacity: isSalarySacrifice ? 1 : 0.5,
+                  cursor: isSalarySacrifice ? "pointer" : "not-allowed",
+                }}
+                type="button"
+                onClick={() => setPassEmployerNi((v) => !v)}
+              >
+                {isSalarySacrifice && passEmployerNi ? "✓ " : ""}Pass on Employer NI (15%)
+              </button>
             </div>
-            {adjustForInflation && (
-              <span style={{ fontSize: "12px", color: "var(--colors-text-muted)" }}>
-                ({effectiveAnnualRate.toFixed(1)}% real return after {INFLATION_RATE}% inflation)
-              </span>
-            )}
-          </div>
+          </details>
         </div>
-      </div>
 
-      {/* Smart UK Tax Insights */}
-      {inTaxTrap && pctToReclaimAllowance > employeePercent && (
+        {/* Right Column: 3 Outcome Cards & Visual Chart (8 cols) */}
         <div
           className={css({
-            padding: "12px 16px",
-            borderRadius: "lg",
-            backgroundColor: "rgba(99, 99, 241, 0.08)",
-            border: "1px solid",
-            borderColor: "primary",
+            gridColumn: { base: "span 1", lg: "span 8" },
             display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            flexWrap: "wrap",
-            gap: "10px",
+            flexDirection: "column",
+            gap: "20px",
           })}
         >
-          <div style={{ display: "flex", alignItems: "center", gap: "10px", flex: 1 }}>
-            <FaLightbulb style={{ color: "#6363f1", fontSize: "16px", flexShrink: 0 }} />
-            <FLPText fontSize="xs">
-              <strong>UK £100k Tax Trap Detected:</strong> Your adjusted income is{" "}
-              {formatCurrency(adjustedNetIncome)}/yr (60% effective marginal tax). Increasing your
-              employee pension contribution to <strong>{pctToReclaimAllowance}%</strong> restores
-              your full tax-free allowance.
-            </FLPText>
+          {/* Outcome Cards (Top Results) */}
+          <div className={outcomeGridStyle}>
+            {/* Card 1: Projected Pot */}
+            <div className={heroCardStyle("#8b5cf6")}>
+              <div>
+                <FLPText color="text.muted" fontSize="xs" fontWeight="semibold">
+                  PROJECTED POT ({horizonYears} YRS)
+                </FLPText>
+                <FLPHeading as="h4" size="lg" style={{ color: "#8b5cf6", marginTop: "4px" }}>
+                  {formatCurrency(finalBalance)}
+                </FLPHeading>
+              </div>
+              <div
+                style={{
+                  fontSize: "12px",
+                  color: "var(--colors-text-muted)",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "3px",
+                }}
+              >
+                <div>
+                  25% tax-free lump sum:{" "}
+                  <strong style={{ color: "var(--colors-text-primary)" }}>
+                    {formatCurrency(taxFreeLumpSum)}
+                  </strong>
+                </div>
+                <div>
+                  Remaining drawdown pot: <strong>{formatCurrency(drawdownPotAfterLumpSum)}</strong>
+                </div>
+              </div>
+            </div>
+
+            {/* Card 2: Estimated Retirement Income & PLSA Benchmark */}
+            <div className={heroCardStyle("#10b981")}>
+              <div>
+                <div
+                  style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}
+                >
+                  <FLPText color="text.muted" fontSize="xs" fontWeight="semibold">
+                    EST. RETIREMENT INCOME (4%)
+                  </FLPText>
+                  <span
+                    style={{
+                      fontSize: "11px",
+                      fontWeight: 700,
+                      padding: "2px 8px",
+                      borderRadius: "999px",
+                      backgroundColor: `${plsaStandard.color}20`,
+                      color: plsaStandard.color,
+                    }}
+                  >
+                    {plsaStandard.label}
+                  </span>
+                </div>
+                <FLPHeading as="h4" size="lg" style={{ color: "#10b981", marginTop: "4px" }}>
+                  {formatCurrency(monthlyRetirementIncome)}
+                  <span
+                    style={{
+                      fontSize: "14px",
+                      color: "var(--colors-text-muted)",
+                      fontWeight: "normal",
+                    }}
+                  >
+                    /mo
+                  </span>
+                </FLPHeading>
+              </div>
+
+              {/* Integrated PLSA Benchmark Track */}
+              <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    fontSize: "11px",
+                    color: "var(--colors-text-muted)",
+                  }}
+                >
+                  <span>UK Retirement Living Standard Benchmark (PLSA)</span>
+                  <span>{formatCurrency(annualRetirementIncome)}/yr</span>
+                </div>
+                <div
+                  style={{
+                    height: "8px",
+                    width: "100%",
+                    borderRadius: "999px",
+                    backgroundColor: "var(--colors-border)",
+                    overflow: "hidden",
+                  }}
+                >
+                  <div
+                    style={{
+                      height: "100%",
+                      width: `${plsaProgressPct}%`,
+                      backgroundColor: plsaStandard.color,
+                      borderRadius: "999px",
+                      transition: "width 0.3s ease",
+                    }}
+                  />
+                </div>
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    fontSize: "10px",
+                    color: "var(--colors-text-muted)",
+                  }}
+                >
+                  <span>Min: {formatCurrency(PLSA_MINIMUM)}/mo</span>
+                  <span>Mod: {formatCurrency(PLSA_MODERATE)}/mo</span>
+                  <span>Comf: {formatCurrency(PLSA_COMFORTABLE)}/mo</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Card 3: Contributions & Compound Growth Breakdown */}
+            <div className={heroCardStyle("#6363f1")}>
+              <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                <div>
+                  <FLPText color="text.muted" fontSize="xs" fontWeight="semibold">
+                    YOUR CONTRIBUTIONS
+                  </FLPText>
+                  <FLPHeading as="h4" size="sm" style={{ color: "#6363f1", marginTop: "2px" }}>
+                    {formatCurrency(totalEmployeeContribs)}
+                  </FLPHeading>
+                  <span style={{ fontSize: "11px", color: "var(--colors-text-muted)" }}>
+                    {formatCurrency(monthlyEmployee + directMonthlyContrib)}/mo
+                  </span>
+                </div>
+
+                <div>
+                  <FLPText color="text.muted" fontSize="xs" fontWeight="semibold">
+                    EMPLOYER & COMPOUND GROWTH
+                  </FLPText>
+                  <FLPHeading as="h4" size="sm" style={{ color: "#f59e0b", marginTop: "2px" }}>
+                    {formatCurrency(totalEmployerContribs + totalGrowth)}
+                  </FLPHeading>
+                  <span style={{ fontSize: "11px", color: "#10b981", fontWeight: 600 }}>
+                    +{formatCurrency(totalGrowth)} investment returns
+                  </span>
+                </div>
+              </div>
+            </div>
           </div>
-          <FLPButton
-            size="sm"
-            variant="outline"
-            onClick={() => setEmployeePercent(pctToReclaimAllowance)}
-          >
-            Apply {pctToReclaimAllowance}%
-          </FLPButton>
-        </div>
-      )}
 
-      {totalAnnualInflow > UK_ANNUAL_ALLOWANCE && (
-        <div
-          className={css({
-            padding: "12px 16px",
-            borderRadius: "lg",
-            backgroundColor: "rgba(245, 158, 11, 0.1)",
-            border: "1px solid #f59e0b",
-            display: "flex",
-            alignItems: "center",
-            gap: "10px",
-          })}
-        >
-          <FaExclamationTriangle style={{ color: "#f59e0b", fontSize: "16px", flexShrink: 0 }} />
-          <FLPText fontSize="xs">
-            <strong>UK Annual Allowance Notice:</strong> Projected inflow (
-            {formatCurrency(totalAnnualInflow)}/yr) exceeds the standard{" "}
-            {formatCurrency(UK_ANNUAL_ALLOWANCE)} Annual Allowance unless using carry-forward
-            relief.
-          </FLPText>
-        </div>
-      )}
-
-      {/* Collapsible UK Tax Rules & Assumptions */}
-      <details open className={assumptionsDetailsStyle}>
-        <summary className={assumptionsSummaryStyle}>
-          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-            <span>UK Tax Rules & Assumptions</span>
-            <span
-              style={{
-                fontSize: "11px",
-                fontWeight: 600,
-                color: "#8b5cf6",
-                backgroundColor: "rgba(139, 92, 246, 0.12)",
-                padding: "1px 7px",
-                borderRadius: "999px",
-                textTransform: "none",
-              }}
-            >
-              {activeRulesCount} active
-            </span>
+          {/* Visual Stacked Area Chart */}
+          <div style={{ height: "340px", width: "100%", marginTop: "4px" }}>
+            <ResponsiveContainer height="100%" width="100%">
+              <AreaChart data={chartData} margin={{ top: 10, right: 30, left: 10, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="colorStartingPot" x1="0" x2="0" y1="0" y2="1">
+                    <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.35} />
+                    <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0.05} />
+                  </linearGradient>
+                  <linearGradient id="colorContribs" x1="0" x2="0" y1="0" y2="1">
+                    <stop offset="5%" stopColor="#6363f1" stopOpacity={0.4} />
+                    <stop offset="95%" stopColor="#6363f1" stopOpacity={0.05} />
+                  </linearGradient>
+                  <linearGradient id="colorGrowth" x1="0" x2="0" y1="0" y2="1">
+                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.45} />
+                    <stop offset="95%" stopColor="#10b981" stopOpacity={0.05} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" opacity={0.15} vertical={false} />
+                <XAxis dataKey="year" fontSize={12} stroke="var(--colors-text-muted)" />
+                <YAxis
+                  fontSize={12}
+                  stroke="var(--colors-text-muted)"
+                  tickFormatter={(val) =>
+                    `£${val >= 1000000 ? `${(val / 1000000).toFixed(1)}m` : `${Math.round(val / 1000)}k`}`
+                  }
+                />
+                <Tooltip
+                  content={({ active, payload, label }) => {
+                    if (active && payload?.length) {
+                      const point = payload[0]?.payload;
+                      return (
+                        <div
+                          style={{
+                            backgroundColor: "var(--colors-surface)",
+                            color: "var(--colors-text-primary)",
+                            border: "1px solid var(--colors-border)",
+                            padding: "12px",
+                            borderRadius: "8px",
+                            fontSize: "12px",
+                            boxShadow: "0 4px 12px rgba(0,0,0,0.18)",
+                          }}
+                        >
+                          <div style={{ fontWeight: "bold", marginBottom: "6px" }}>{label}</div>
+                          <div style={{ color: "#8b5cf6", fontWeight: 700, marginBottom: "4px" }}>
+                            Total Projected Pot: {formatCurrency(point?.totalPot ?? 0)}
+                          </div>
+                          <div style={{ color: "#10b981", marginTop: "2px" }}>
+                            Compound Growth: +{formatCurrency(point?.growth ?? 0)}
+                          </div>
+                          <div style={{ color: "#6363f1", marginTop: "2px" }}>
+                            Cumulative Contributions: +{formatCurrency(point?.totalContribs ?? 0)}
+                          </div>
+                          <div style={{ color: "var(--colors-text-muted)", marginTop: "2px" }}>
+                            Starting Pot: {formatCurrency(point?.startingPot ?? 0)}
+                          </div>
+                        </div>
+                      );
+                    }
+                    return null;
+                  }}
+                />
+                <Legend height={36} verticalAlign="top" />
+                <Area
+                  dataKey="startingPot"
+                  fill="url(#colorStartingPot)"
+                  name="Starting Pot"
+                  stackId="1"
+                  stroke="#8b5cf6"
+                  strokeWidth={1.5}
+                  type="monotone"
+                />
+                <Area
+                  dataKey="totalContribs"
+                  fill="url(#colorContribs)"
+                  name="Cumulative Contributions"
+                  stackId="1"
+                  stroke="#6363f1"
+                  strokeWidth={2}
+                  type="monotone"
+                />
+                <Area
+                  dataKey="growth"
+                  fill="url(#colorGrowth)"
+                  name="Compound Investment Growth"
+                  stackId="1"
+                  stroke="#10b981"
+                  strokeWidth={2.5}
+                  type="monotone"
+                />
+              </AreaChart>
+            </ResponsiveContainer>
           </div>
-          <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-            <span style={{ fontSize: "11px", textTransform: "none", opacity: 0.8 }}>
-              Toggle rules
-            </span>
-            <FaChevronDown size={11} />
-          </div>
-        </summary>
-
-        <div style={{ padding: "14px 16px", display: "flex", flexWrap: "wrap", gap: "8px" }}>
-          <button
-            aria-pressed={useQualifyingEarnings}
-            className={togglePillStyle(useQualifyingEarnings)}
-            type="button"
-            onClick={() => setUseQualifyingEarnings((v) => !v)}
-          >
-            {useQualifyingEarnings ? "✓ " : ""}UK Qualifying Earnings (£6,240–£50,270)
-          </button>
-          <button
-            aria-pressed={adjustForInflation}
-            className={togglePillStyle(adjustForInflation)}
-            type="button"
-            onClick={() => setAdjustForInflation((v) => !v)}
-          >
-            {adjustForInflation ? "✓ " : ""}Adjust for Inflation ({INFLATION_RATE}% p.a.)
-          </button>
-          <button
-            aria-pressed={includeStatePension}
-            className={togglePillStyle(includeStatePension)}
-            type="button"
-            onClick={() => setIncludeStatePension((v) => !v)}
-          >
-            {includeStatePension ? "✓ " : ""}Include UK State Pension (+£958/mo)
-          </button>
-          <button
-            aria-pressed={isSalarySacrifice}
-            className={togglePillStyle(isSalarySacrifice)}
-            type="button"
-            onClick={() => {
-              setIsSalarySacrifice((v) => {
-                const next = !v;
-                if (!next) setPassEmployerNi(false);
-                return next;
-              });
-            }}
-          >
-            {isSalarySacrifice ? "✓ " : ""}Salary Sacrifice (saves NI)
-          </button>
-          <button
-            aria-pressed={isSalarySacrifice && passEmployerNi}
-            className={togglePillStyle(isSalarySacrifice && passEmployerNi)}
-            disabled={!isSalarySacrifice}
-            style={{
-              opacity: isSalarySacrifice ? 1 : 0.5,
-              cursor: isSalarySacrifice ? "pointer" : "not-allowed",
-            }}
-            type="button"
-            onClick={() => setPassEmployerNi((v) => !v)}
-          >
-            {isSalarySacrifice && passEmployerNi ? "✓ " : ""}Pass on Employer NI (15%)
-          </button>
         </div>
-      </details>
-
-      {/* Visual Stacked Area Chart */}
-      <div style={{ height: "320px", width: "100%", marginTop: "4px" }}>
-        <ResponsiveContainer height="100%" width="100%">
-          <AreaChart data={chartData} margin={{ top: 10, right: 30, left: 10, bottom: 0 }}>
-            <defs>
-              <linearGradient id="colorStartingPot" x1="0" x2="0" y1="0" y2="1">
-                <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.35} />
-                <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0.05} />
-              </linearGradient>
-              <linearGradient id="colorContribs" x1="0" x2="0" y1="0" y2="1">
-                <stop offset="5%" stopColor="#6363f1" stopOpacity={0.4} />
-                <stop offset="95%" stopColor="#6363f1" stopOpacity={0.05} />
-              </linearGradient>
-              <linearGradient id="colorGrowth" x1="0" x2="0" y1="0" y2="1">
-                <stop offset="5%" stopColor="#10b981" stopOpacity={0.45} />
-                <stop offset="95%" stopColor="#10b981" stopOpacity={0.05} />
-              </linearGradient>
-            </defs>
-            <CartesianGrid strokeDasharray="3 3" opacity={0.15} vertical={false} />
-            <XAxis dataKey="year" fontSize={12} stroke="var(--colors-text-muted)" />
-            <YAxis
-              fontSize={12}
-              stroke="var(--colors-text-muted)"
-              tickFormatter={(val) =>
-                `£${val >= 1000000 ? `${(val / 1000000).toFixed(1)}m` : `${Math.round(val / 1000)}k`}`
-              }
-            />
-            <Tooltip
-              content={({ active, payload, label }) => {
-                if (active && payload?.length) {
-                  const point = payload[0]?.payload;
-                  return (
-                    <div
-                      style={{
-                        backgroundColor: "var(--colors-surface)",
-                        color: "var(--colors-text-primary)",
-                        border: "1px solid var(--colors-border)",
-                        padding: "12px",
-                        borderRadius: "8px",
-                        fontSize: "12px",
-                        boxShadow: "0 4px 12px rgba(0,0,0,0.18)",
-                      }}
-                    >
-                      <div style={{ fontWeight: "bold", marginBottom: "6px" }}>{label}</div>
-                      <div style={{ color: "#8b5cf6", fontWeight: 700, marginBottom: "4px" }}>
-                        Total Projected Pot: {formatCurrency(point?.totalPot ?? 0)}
-                      </div>
-                      <div style={{ color: "#10b981", marginTop: "2px" }}>
-                        Compound Growth: +{formatCurrency(point?.growth ?? 0)}
-                      </div>
-                      <div style={{ color: "#6363f1", marginTop: "2px" }}>
-                        Cumulative Contributions: +{formatCurrency(point?.totalContribs ?? 0)}
-                      </div>
-                      <div style={{ color: "var(--colors-text-muted)", marginTop: "2px" }}>
-                        Starting Pot: {formatCurrency(point?.startingPot ?? 0)}
-                      </div>
-                    </div>
-                  );
-                }
-                return null;
-              }}
-            />
-            <Legend height={36} verticalAlign="top" />
-            <Area
-              dataKey="startingPot"
-              fill="url(#colorStartingPot)"
-              name="Starting Pot"
-              stackId="1"
-              stroke="#8b5cf6"
-              strokeWidth={1.5}
-              type="monotone"
-            />
-            <Area
-              dataKey="totalContribs"
-              fill="url(#colorContribs)"
-              name="Cumulative Contributions"
-              stackId="1"
-              stroke="#6363f1"
-              strokeWidth={2}
-              type="monotone"
-            />
-            <Area
-              dataKey="growth"
-              fill="url(#colorGrowth)"
-              name="Compound Investment Growth"
-              stackId="1"
-              stroke="#10b981"
-              strokeWidth={2.5}
-              type="monotone"
-            />
-          </AreaChart>
-        </ResponsiveContainer>
       </div>
     </FLPCard>
   );

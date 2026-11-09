@@ -18,10 +18,11 @@ export interface PayoffStrategySwitcherProps {
 }
 
 const cardStyle = css({
-  padding: "24px",
+  padding: "20px",
   display: "flex",
   flexDirection: "column",
-  gap: "20px",
+  gap: "16px",
+  height: "100%",
 });
 
 const headerRowStyle = css({
@@ -34,7 +35,9 @@ const headerRowStyle = css({
 
 const pillGroupStyle = css({
   display: "flex",
-  backgroundColor: "muted",
+  backgroundColor: "surface.sunken",
+  border: "1px solid",
+  borderColor: "border.subtle",
   padding: "4px",
   borderRadius: "lg",
   gap: "4px",
@@ -44,27 +47,29 @@ const pillButtonStyle = (active: boolean) =>
   css({
     padding: "8px 16px",
     borderRadius: "md",
-    fontSize: "14px",
-    fontWeight: "bold",
+    fontSize: "13px",
+    fontWeight: "semibold",
     cursor: "pointer",
     display: "flex",
     alignItems: "center",
     gap: "8px",
     backgroundColor: active ? "card" : "transparent",
-    color: active ? "primary" : "text.muted",
-    boxShadow: active ? "0 1px 3px rgba(0,0,0,0.1)" : "none",
-    border: "none",
+    color: active ? "text.primary" : "text.muted",
+    boxShadow: active ? "0 1px 2px rgba(0,0,0,0.06)" : "none",
+    border: "1px solid",
+    borderColor: active ? "border.subtle" : "transparent",
     transition: "all 0.15s ease",
+    _hover: active ? {} : { color: "text.primary" },
   });
 
 const sliderContainerStyle = css({
   display: "flex",
   flexDirection: "column",
   gap: "12px",
-  backgroundColor: "rgba(99, 99, 241, 0.05)",
+  backgroundColor: "surface.sunken",
   border: "1px solid",
-  borderColor: "rgba(99, 99, 241, 0.2)",
-  padding: "18px 20px",
+  borderColor: "border.subtle",
+  padding: "16px",
   borderRadius: "xl",
 });
 
@@ -84,21 +89,25 @@ const comparisonGridStyle = css({
   display: "grid",
   gridTemplateColumns: {
     base: "1fr",
-    md: "repeat(3, 1fr)",
+    sm: "repeat(3, 1fr)",
+    lg: "1fr",
+    xl: "repeat(3, 1fr)",
   },
-  gap: "16px",
+  gap: "12px",
 });
 
 const modeCardStyle = (active: boolean) =>
   css({
-    padding: "16px",
+    padding: "14px 16px",
     borderRadius: "lg",
-    border: "2px solid",
-    borderColor: active ? "primary" : "border",
-    backgroundColor: active ? "rgba(99, 99, 241, 0.04)" : "card",
+    borderWidth: "1px",
+    borderStyle: "solid",
+    borderColor: active ? "primary" : "border.subtle",
+    backgroundColor: active ? "rgba(99, 99, 241, 0.04)" : "surface",
     display: "flex",
     flexDirection: "column",
-    gap: "8px",
+    gap: "6px",
+    transition: "all 0.15s ease",
   });
 
 export const PayoffStrategySwitcher: FC<PayoffStrategySwitcherProps> = ({
@@ -280,15 +289,23 @@ export const PayoffStrategySwitcher: FC<PayoffStrategySwitcherProps> = ({
             </FLPText>
             <div style={{ marginTop: "8px", display: "flex", flexDirection: "column", gap: "4px" }}>
               <FLPText fontSize="sm">
-                <strong>Payoff Horizon:</strong> {comparison.avalanche.debtFreeDate} (
-                {comparison.avalanche.months} mos)
+                <strong>Payoff Horizon:</strong>{" "}
+                <span className={css({ fontVariantNumeric: "tabular-nums" })}>
+                  {comparison.avalanche.debtFreeDate} ({comparison.avalanche.months} mos)
+                </span>
               </FLPText>
               <FLPText fontSize="sm">
                 <strong>Total Interest:</strong>{" "}
-                {formatCurrency(comparison.avalanche.totalInterest)}
+                <span className={css({ fontVariantNumeric: "tabular-nums" })}>
+                  {formatCurrency(comparison.avalanche.totalInterest)}
+                </span>
               </FLPText>
               <FLPText color="green.600" fontSize="xs">
-                Saves {formatCurrency(comparison.interestSavedAvalancheVsMin)} vs minimum payments
+                Saves{" "}
+                <span className={css({ fontVariantNumeric: "tabular-nums" })}>
+                  {formatCurrency(comparison.interestSavedAvalancheVsMin)}
+                </span>{" "}
+                vs minimum payments
               </FLPText>
             </div>
           </div>
@@ -318,11 +335,16 @@ export const PayoffStrategySwitcher: FC<PayoffStrategySwitcherProps> = ({
             </FLPText>
             <div style={{ marginTop: "8px", display: "flex", flexDirection: "column", gap: "4px" }}>
               <FLPText fontSize="sm">
-                <strong>Payoff Horizon:</strong> {comparison.snowball.debtFreeDate} (
-                {comparison.snowball.months} mos)
+                <strong>Payoff Horizon:</strong>{" "}
+                <span className={css({ fontVariantNumeric: "tabular-nums" })}>
+                  {comparison.snowball.debtFreeDate} ({comparison.snowball.months} mos)
+                </span>
               </FLPText>
               <FLPText fontSize="sm">
-                <strong>Total Interest:</strong> {formatCurrency(comparison.snowball.totalInterest)}
+                <strong>Total Interest:</strong>{" "}
+                <span className={css({ fontVariantNumeric: "tabular-nums" })}>
+                  {formatCurrency(comparison.snowball.totalInterest)}
+                </span>
               </FLPText>
               <FLPText color="blue.600" fontSize="xs">
                 🏆 Quick Win: {comparison.snowballFirstWinDescription}
@@ -355,12 +377,16 @@ export const PayoffStrategySwitcher: FC<PayoffStrategySwitcherProps> = ({
             </FLPText>
             <div style={{ marginTop: "8px", display: "flex", flexDirection: "column", gap: "4px" }}>
               <FLPText fontSize="sm">
-                <strong>Payoff Horizon:</strong> {comparison.minimumOnly.debtFreeDate} (
-                {comparison.minimumOnly.months} mos)
+                <strong>Payoff Horizon:</strong>{" "}
+                <span className={css({ fontVariantNumeric: "tabular-nums" })}>
+                  {comparison.minimumOnly.debtFreeDate} ({comparison.minimumOnly.months} mos)
+                </span>
               </FLPText>
               <FLPText color="red.600" fontSize="sm">
                 <strong>Total Interest:</strong>{" "}
-                {formatCurrency(comparison.minimumOnly.totalInterest)}
+                <span className={css({ fontVariantNumeric: "tabular-nums" })}>
+                  {formatCurrency(comparison.minimumOnly.totalInterest)}
+                </span>
               </FLPText>
               <FLPText color="text.muted" fontSize="xs">
                 Costly baseline to avoid

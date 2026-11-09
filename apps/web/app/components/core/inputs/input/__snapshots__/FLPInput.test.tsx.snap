@@ -16,7 +16,7 @@ exports[`<FLPInput /> > should render as expected 1`] = `
       style="flex-grow: 1; flex-shrink: 1; flex-basis: 0%;"
     >
       <input
-        class="w_100% p_10px_14px fs_sm bdr_sm bd_1px_solid bd-c_border bg-c_transparent c_text.primary ring_none trs_all_0.2s focus:bd-c_primary focus:bx-sh_0_0_0_1px_token(colors.primary) disabled:op_0.5 disabled:cursor_not-allowed [&[type='number']]:ap_textfield [&[type='number']]:[&::-webkit-outer-spin-button,_&::-webkit-inner-spin-button]:-webkit-appearance_none [&[type='number']]:[&::-webkit-outer-spin-button,_&::-webkit-inner-spin-button]:m_0 "
+        class="w_100% p_8px_14px min-h_40px fs_sm bdr_md bd_1px_solid bd-c_border bg-c_surface c_text.primary ring_none trs_border-color_0.15s_ease,_box-shadow_0.15s_ease fv-num_tabular-nums focus:bd-c_primary focus:bx-sh_0_0_0_2px_token(colors.primary,_#4f46e5) disabled:op_0.5 disabled:cursor_not-allowed [&[type='number']]:ap_textfield [&[type='number']]:fv-num_tabular-nums [&[type='number']]:[&::-webkit-outer-spin-button,_&::-webkit-inner-spin-button]:-webkit-appearance_none [&[type='number']]:[&::-webkit-outer-spin-button,_&::-webkit-inner-spin-button]:m_0 "
         id="Test"
       />
     </div>
@@ -40,7 +40,7 @@ exports[`<FLPInput /> > should render as expected with error 1`] = `
       style="flex-grow: 1; flex-shrink: 1; flex-basis: 0%;"
     >
       <input
-        class="w_100% p_10px_14px fs_sm bdr_sm bd_1px_solid bd-c_border bg-c_transparent c_text.primary ring_none trs_all_0.2s focus:bd-c_primary focus:bx-sh_0_0_0_1px_token(colors.primary) disabled:op_0.5 disabled:cursor_not-allowed [&[type='number']]:ap_textfield [&[type='number']]:[&::-webkit-outer-spin-button,_&::-webkit-inner-spin-button]:-webkit-appearance_none [&[type='number']]:[&::-webkit-outer-spin-button,_&::-webkit-inner-spin-button]:m_0 "
+        class="w_100% p_8px_14px min-h_40px fs_sm bdr_md bd_1px_solid bd-c_border bg-c_surface c_text.primary ring_none trs_border-color_0.15s_ease,_box-shadow_0.15s_ease fv-num_tabular-nums focus:bd-c_primary focus:bx-sh_0_0_0_2px_token(colors.primary,_#4f46e5) disabled:op_0.5 disabled:cursor_not-allowed [&[type='number']]:ap_textfield [&[type='number']]:fv-num_tabular-nums [&[type='number']]:[&::-webkit-outer-spin-button,_&::-webkit-inner-spin-button]:-webkit-appearance_none [&[type='number']]:[&::-webkit-outer-spin-button,_&::-webkit-inner-spin-button]:m_0 "
         id="Test"
       />
       <span
@@ -69,7 +69,7 @@ exports[`<FLPInput /> > should render as expected with value 1`] = `
       style="flex-grow: 1; flex-shrink: 1; flex-basis: 0%;"
     >
       <input
-        class="w_100% p_10px_14px fs_sm bdr_sm bd_1px_solid bd-c_border bg-c_transparent c_text.primary ring_none trs_all_0.2s focus:bd-c_primary focus:bx-sh_0_0_0_1px_token(colors.primary) disabled:op_0.5 disabled:cursor_not-allowed [&[type='number']]:ap_textfield [&[type='number']]:[&::-webkit-outer-spin-button,_&::-webkit-inner-spin-button]:-webkit-appearance_none [&[type='number']]:[&::-webkit-outer-spin-button,_&::-webkit-inner-spin-button]:m_0 "
+        class="w_100% p_8px_14px min-h_40px fs_sm bdr_md bd_1px_solid bd-c_border bg-c_surface c_text.primary ring_none trs_border-color_0.15s_ease,_box-shadow_0.15s_ease fv-num_tabular-nums focus:bd-c_primary focus:bx-sh_0_0_0_2px_token(colors.primary,_#4f46e5) disabled:op_0.5 disabled:cursor_not-allowed [&[type='number']]:ap_textfield [&[type='number']]:fv-num_tabular-nums [&[type='number']]:[&::-webkit-outer-spin-button,_&::-webkit-inner-spin-button]:-webkit-appearance_none [&[type='number']]:[&::-webkit-outer-spin-button,_&::-webkit-inner-spin-button]:m_0 "
         id="Test"
         value="Value"
       />
@@ -94,7 +94,7 @@ exports[`<FLPInput /> > should render as expected with value and error 1`] = `
       style="flex-grow: 1; flex-shrink: 1; flex-basis: 0%;"
     >
       <input
-        class="w_100% p_10px_14px fs_sm bdr_sm bd_1px_solid bd-c_border bg-c_transparent c_text.primary ring_none trs_all_0.2s focus:bd-c_primary focus:bx-sh_0_0_0_1px_token(colors.primary) disabled:op_0.5 disabled:cursor_not-allowed [&[type='number']]:ap_textfield [&[type='number']]:[&::-webkit-outer-spin-button,_&::-webkit-inner-spin-button]:-webkit-appearance_none [&[type='number']]:[&::-webkit-outer-spin-button,_&::-webkit-inner-spin-button]:m_0 "
+        class="w_100% p_8px_14px min-h_40px fs_sm bdr_md bd_1px_solid bd-c_border bg-c_surface c_text.primary ring_none trs_border-color_0.15s_ease,_box-shadow_0.15s_ease fv-num_tabular-nums focus:bd-c_primary focus:bx-sh_0_0_0_2px_token(colors.primary,_#4f46e5) disabled:op_0.5 disabled:cursor_not-allowed [&[type='number']]:ap_textfield [&[type='number']]:fv-num_tabular-nums [&[type='number']]:[&::-webkit-outer-spin-button,_&::-webkit-inner-spin-button]:-webkit-appearance_none [&[type='number']]:[&::-webkit-outer-spin-button,_&::-webkit-inner-spin-button]:m_0 "
         id="Test"
         value="Value"
       />
@@ -118,7 +118,7 @@ exports[`<FLPInput /> > should render as expected without a label 1`] = `
       style="flex-grow: 1; flex-shrink: 1; flex-basis: 0%;"
     >
       <input
-        class="w_100% p_10px_14px fs_sm bdr_sm bd_1px_solid bd-c_border bg-c_transparent c_text.primary ring_none trs_all_0.2s focus:bd-c_primary focus:bx-sh_0_0_0_1px_token(colors.primary) disabled:op_0.5 disabled:cursor_not-allowed [&[type='number']]:ap_textfield [&[type='number']]:[&::-webkit-outer-spin-button,_&::-webkit-inner-spin-button]:-webkit-appearance_none [&[type='number']]:[&::-webkit-outer-spin-button,_&::-webkit-inner-spin-button]:m_0 "
+        class="w_100% p_8px_14px min-h_40px fs_sm bdr_md bd_1px_solid bd-c_border bg-c_surface c_text.primary ring_none trs_border-color_0.15s_ease,_box-shadow_0.15s_ease fv-num_tabular-nums focus:bd-c_primary focus:bx-sh_0_0_0_2px_token(colors.primary,_#4f46e5) disabled:op_0.5 disabled:cursor_not-allowed [&[type='number']]:ap_textfield [&[type='number']]:fv-num_tabular-nums [&[type='number']]:[&::-webkit-outer-spin-button,_&::-webkit-inner-spin-button]:-webkit-appearance_none [&[type='number']]:[&::-webkit-outer-spin-button,_&::-webkit-inner-spin-button]:m_0 "
         id="Test"
       />
     </div>
@@ -142,7 +142,7 @@ exports[`<FLPInput /> > should render elements as a row 1`] = `
       style="flex-grow: 1; flex-shrink: 1; flex-basis: 0%;"
     >
       <input
-        class="w_100% p_10px_14px fs_sm bdr_sm bd_1px_solid bd-c_border bg-c_transparent c_text.primary ring_none trs_all_0.2s focus:bd-c_primary focus:bx-sh_0_0_0_1px_token(colors.primary) disabled:op_0.5 disabled:cursor_not-allowed [&[type='number']]:ap_textfield [&[type='number']]:[&::-webkit-outer-spin-button,_&::-webkit-inner-spin-button]:-webkit-appearance_none [&[type='number']]:[&::-webkit-outer-spin-button,_&::-webkit-inner-spin-button]:m_0 "
+        class="w_100% p_8px_14px min-h_40px fs_sm bdr_md bd_1px_solid bd-c_border bg-c_surface c_text.primary ring_none trs_border-color_0.15s_ease,_box-shadow_0.15s_ease fv-num_tabular-nums focus:bd-c_primary focus:bx-sh_0_0_0_2px_token(colors.primary,_#4f46e5) disabled:op_0.5 disabled:cursor_not-allowed [&[type='number']]:ap_textfield [&[type='number']]:fv-num_tabular-nums [&[type='number']]:[&::-webkit-outer-spin-button,_&::-webkit-inner-spin-button]:-webkit-appearance_none [&[type='number']]:[&::-webkit-outer-spin-button,_&::-webkit-inner-spin-button]:m_0 "
         id="Test"
       />
     </div>

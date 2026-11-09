@@ -3,6 +3,7 @@ import { type FC, useCallback, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { useLoaderData, useNavigate } from "react-router";
 import AccountDetailChart from "~/components/charts/AccountDetailChart";
+import FLPBadge from "~/components/core/badges/FLPBadge";
 import FLPHeading from "~/components/core/typography/FLPHeading";
 import AddEditAccountsDialogBtn from "~/components/dialogs/addEditAccountsDialog/AddEditAccountsDialog";
 import type { AccountDetail } from "~/containers/accounts/types";
@@ -86,13 +87,6 @@ const AccountsCard: FC<AccountsCardProp> = ({
   const secondPreviousAccountBalance =
     secondPreviousDetail?.value !== undefined ? Number(secondPreviousDetail.value) : undefined;
 
-  const prevPercentageChangeValue =
-    prevAccountBalance !== undefined && secondPreviousAccountBalance
-      ? Math.round(
-          ((prevAccountBalance - secondPreviousAccountBalance) / secondPreviousAccountBalance) *
-            100,
-        )
-      : 0;
   const currentPercentageChangeValue =
     currentBalance !== undefined && prevAccountBalance
       ? Math.round(((currentBalance - prevAccountBalance) / prevAccountBalance) * 100)
@@ -113,85 +107,6 @@ const AccountsCard: FC<AccountsCardProp> = ({
     [onViewClick],
   );
 
-  const headerWrapperStyle = css({
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
-    marginBottom: "12px",
-  });
-
-  const headerTextStyle = css({
-    display: "flex",
-    flexDirection: "column",
-    gap: "2px",
-    cursor: "pointer",
-    flex: 1,
-  });
-
-  const bodyStyle = css({
-    flex: 1,
-    display: "flex",
-    flexDirection: "column",
-    justifyContent: "space-between",
-    cursor: "pointer",
-    marginTop: "8px",
-  });
-
-  const balanceRowStyle = css({
-    display: "flex",
-    alignItems: "baseline",
-    gap: "8px",
-    marginBottom: "16px",
-  });
-
-  const balanceValStyle = css({
-    fontSize: "22px",
-    fontWeight: "bold",
-    color: "text.primary",
-  });
-
-  const percentBadgeStyle = (isUp: boolean) =>
-    css({
-      fontSize: "11px",
-      fontWeight: "bold",
-      padding: "2px 8px",
-      borderRadius: "full",
-      backgroundColor: isUp ? "rgba(16, 185, 129, 0.1)" : "rgba(239, 68, 68, 0.1)",
-      color: isUp ? "success.500" : "destructive",
-      display: "inline-flex",
-      alignItems: "center",
-      gap: "2px",
-    });
-
-  const chartContainerStyle = css({
-    flex: 1,
-    height: "100%",
-    minHeight: "100px",
-    marginTop: "auto",
-    marginLeft: "-20px",
-    marginRight: "-20px",
-    marginBottom: "-20px",
-    overflow: "hidden",
-    borderBottomLeftRadius: "lg",
-    borderBottomRightRadius: "lg",
-  });
-
-  const cardStyle = css({
-    height: isMobileVariant ? "220px" : "280px",
-    display: "flex",
-    flexDirection: "column",
-    justifyContent: "space-between",
-    padding: isMobileVariant ? "14px" : "20px",
-    position: "relative",
-    overflow: "hidden",
-    transition: "transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease",
-    "&:hover": {
-      transform: "translateY(-4px)",
-      boxShadow: "md",
-      borderColor: "primary",
-    },
-  });
-
   const isUp =
     prevAccountBalance !== undefined && currentBalance !== undefined
       ? prevAccountBalance <= currentBalance
@@ -208,51 +123,144 @@ const AccountsCard: FC<AccountsCardProp> = ({
       ? `+${currentPercentageChangeValue}%`
       : `${currentPercentageChangeValue}%`;
 
-  return (
-    <FLPCard className={cardStyle} id={accountId} isMobile={isMobileVariant}>
-      <div className={headerWrapperStyle}>
-        <div
-          className={headerTextStyle}
-          role="button"
-          tabIndex={0}
-          onClick={onViewClick}
-          onKeyDown={handleKeyDown}
-        >
-          <FLPHeading as="h5" color="text.muted" size="xs">
-            {`${type} ${t("account")}`}
-          </FLPHeading>
-          <FLPHeading as="h4" color="blue.500" size="md">
-            {name}
-          </FLPHeading>
-        </div>
-        <AddEditAccountsDialogBtn accountId={accountId} isEditAccount={true} isIconButton={true} />
-      </div>
+  const cardStyle = css({
+    height: isMobileVariant ? "140px" : "155px",
+    display: "flex",
+    flexDirection: "column",
+    justifyContent: "space-between",
+    padding: { base: "14px", md: "16px" },
+    position: "relative",
+    overflow: "hidden",
+    borderWidth: "1px",
+    borderStyle: "solid",
+    borderColor: "border.subtle",
+    borderRadius: "xl",
+    backgroundColor: "surface",
+    transition: "border-color 0.15s ease, box-shadow 0.15s ease",
+    cursor: "pointer",
+    _hover: {
+      borderColor: "primary",
+      boxShadow: "cardHover",
+    },
+    _focusVisible: {
+      outline: "2px solid",
+      outlineColor: "primary",
+      outlineOffset: "2px",
+    },
+  });
 
-      <div
-        className={bodyStyle}
-        role="button"
-        tabIndex={0}
-        onClick={onViewClick}
-        onKeyDown={handleKeyDown}
-      >
-        <div className={balanceRowStyle}>
+  const topRowStyle = css({
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+    gap: "12px",
+  });
+
+  const headerInfoStyle = css({
+    display: "flex",
+    flexDirection: "column",
+    gap: "2px",
+    flex: 1,
+    minWidth: 0,
+  });
+
+  const eyebrowStyle = css({
+    fontSize: "xs", // 12px
+    fontWeight: "medium",
+    color: "text.muted",
+    lineHeight: "1.2",
+  });
+
+  const accountNameStyle = css({
+    fontSize: "sm", // 14px
+    fontWeight: "semibold",
+    color: "text.primary",
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    whiteSpace: "nowrap",
+    letterSpacing: "-0.01em",
+  });
+
+  const balanceSectionStyle = css({
+    display: "flex",
+    alignItems: "baseline",
+    flexWrap: "wrap",
+    gap: "8px",
+    marginTop: "8px",
+  });
+
+  const balanceValueStyle = css({
+    fontFamily: "var(--fonts-display, 'Plus Jakarta Sans', sans-serif)",
+    fontSize: { base: "20px", md: "24px" },
+    fontWeight: "bold",
+    letterSpacing: "-0.02em",
+    fontVariantNumeric: "tabular-nums",
+    color: "text.primary",
+    lineHeight: "1.2",
+  });
+
+  const chartWellStyle = css({
+    height: "36px",
+    marginTop: "auto",
+    marginLeft: { base: "-14px", md: "-16px" },
+    marginRight: { base: "-14px", md: "-16px" },
+    marginBottom: { base: "-14px", md: "-16px" },
+    overflow: "hidden",
+    borderBottomLeftRadius: "xl",
+    borderBottomRightRadius: "xl",
+    borderTopWidth: "1px",
+    borderTopStyle: "solid",
+    borderTopColor: "border.subtle",
+    backgroundColor: "surface.sunken",
+  });
+
+  return (
+    <FLPCard
+      className={cardStyle}
+      id={accountId}
+      interactive={true}
+      isMobile={isMobileVariant}
+      role="button"
+      tabIndex={0}
+      onClick={onViewClick}
+      onKeyDown={handleKeyDown}
+    >
+      <div>
+        <div className={topRowStyle}>
+          <div className={headerInfoStyle}>
+            <span className={eyebrowStyle}>{`${type} ${t("account")}`}</span>
+            <span className={accountNameStyle} title={name}>
+              {name}
+            </span>
+          </div>
+          <div onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
+            <AddEditAccountsDialogBtn
+              accountId={accountId}
+              isEditAccount={true}
+              isIconButton={true}
+            />
+          </div>
+        </div>
+
+        <div className={balanceSectionStyle}>
           {currentBalance !== undefined && (
             <>
-              <span className={balanceValStyle}>{formatCurrency(currentBalance)}</span>
+              <span className={balanceValueStyle}>{formatCurrency(currentBalance)}</span>
               {prevAccountBalance !== undefined && (
-                <span className={percentBadgeStyle(isFavorable)}>
+                <FLPBadge size="sm" variant={isFavorable ? "positive" : "negative"}>
                   {isUp ? "↑" : "↓"} {trendLabel}
-                </span>
+                </FLPBadge>
               )}
             </>
           )}
         </div>
-        {!!accountDetailYear.length && (
-          <div className={chartContainerStyle}>
-            <AccountDetailChart accountDetails={accountDetailYear} />
-          </div>
-        )}
       </div>
+
+      {!!accountDetailYear.length && (
+        <div className={chartWellStyle}>
+          <AccountDetailChart accountDetails={accountDetailYear} />
+        </div>
+      )}
     </FLPCard>
   );
 };

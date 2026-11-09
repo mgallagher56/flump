@@ -30,8 +30,8 @@ const gridStyle = css({
 const cardBodyStyle = css({
   display: "flex",
   flexDirection: "column",
-  gap: "8px",
-  padding: "20px",
+  gap: "6px",
+  padding: "16px",
 });
 
 const cardHeaderStyle = css({
@@ -79,7 +79,7 @@ export const DebtSummaryCards: FC<DebtSummaryCardsProps> = ({
               <FaFire size={18} />
             </div>
           </div>
-          <FLPHeading as="h3" size="2xl">
+          <FLPHeading as="h3" size="2xl" className="tabular-nums">
             {formatCurrency(totalDebt)}
           </FLPHeading>
           <FLPText color="text.muted" fontSize="xs">
@@ -101,7 +101,7 @@ export const DebtSummaryCards: FC<DebtSummaryCardsProps> = ({
               <FaCoins size={18} />
             </div>
           </div>
-          <FLPHeading as="h3" size="2xl">
+          <FLPHeading as="h3" size="2xl" className="tabular-nums">
             {formatCurrency(monthlyMinimumTotal + extraPayment)}
             <span style={{ fontSize: "14px", fontWeight: "normal", color: "#6b7280" }}>/mo</span>
           </FLPHeading>
@@ -124,7 +124,7 @@ export const DebtSummaryCards: FC<DebtSummaryCardsProps> = ({
               <FaCalendarCheck size={18} />
             </div>
           </div>
-          <FLPHeading as="h3" size="2xl">
+          <FLPHeading as="h3" size="2xl" className="tabular-nums">
             {debtFreeDate}
           </FLPHeading>
           <FLPText color="text.muted" fontSize="xs">
@@ -146,7 +146,7 @@ export const DebtSummaryCards: FC<DebtSummaryCardsProps> = ({
               <FaPiggyBank size={18} />
             </div>
           </div>
-          <FLPHeading as="h3" size="2xl">
+          <FLPHeading as="h3" size="2xl" className="tabular-nums">
             {formatCurrency(totalInterestSaved)}
           </FLPHeading>
           <FLPText color="text.muted" fontSize="xs">

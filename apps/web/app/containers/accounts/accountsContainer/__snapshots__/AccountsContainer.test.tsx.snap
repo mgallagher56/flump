@@ -3,7 +3,7 @@
 exports[`<AccountsContainer /> > should render as expected when accounts exist 1`] = `
 <div>
   <div
-    class="d_flex flex-d_row ai_center jc_space-between flex-wrap_wrap gap_16px mt_20px mb_20px"
+    class="d_flex flex-d_row ai_center jc_space-between flex-wrap_wrap gap_16px mt_8px mb_24px"
   >
     <div>
       <h1
@@ -13,7 +13,8 @@ exports[`<AccountsContainer /> > should render as expected when accounts exist 1
         accounts
       </h1>
       <p
-        class="ff_var(--fonts-body,_'Inter',_sans-serif) fs_sm fw_normal lh_1.6 ls_normal c_text.muted m_0 mt_4px"
+        class="ff_var(--fonts-body,_'Inter',_sans-serif) fs_sm fw_normal lh_1.6 ls_normal c_text.muted m_0 "
+        style="margin-top: 4px;"
       >
         Unified net worth, savings yield and UK allowance hub
       </p>
@@ -48,7 +49,7 @@ exports[`<AccountsContainer /> > should render as expected when accounts exist 1
       <button
         aria-expanded="false"
         aria-haspopup="dialog"
-        class="d_inline-flex ai_center jc_center bdr_full fw_medium trs_all_0.2s cursor_pointer px_6 py_3 fs_sm lh_1 disabled:op_0.5 disabled:cursor_not-allowed focusVisible:ring_2px_solid focusVisible:ring-c_primary focusVisible:ring-o_2px bg_background c_text.primary bd_1px_solid bd-c_border hover:bg_accent hover:c_accent.foreground"
+        class="d_inline-flex ai_center jc_center bdr_md fw_medium trs_all_0.15s_ease cursor_pointer lh_1 disabled:op_0.5 disabled:cursor_not-allowed focusVisible:ring_2px_solid focusVisible:ring-c_primary focusVisible:ring-o_2px bg_surface c_text.primary bd_1px_solid bd-c_border hover:bg_surface.subtle hover:bd-c_border.strong px_4 py_2.5 fs_sm min-h_10"
         data-state="closed"
         type="button"
       >
@@ -57,69 +58,109 @@ exports[`<AccountsContainer /> > should render as expected when accounts exist 1
     </div>
   </div>
   <div
-    class="d_grid grid-tc_1fr md:grid-tc_repeat(3,_1fr) gap_24px mb_24px"
+    class="d_grid grid-tc_1fr md:grid-tc_repeat(3,_1fr) gap_20px mb_28px"
   >
     <div
-      class="bg-c_rgba(99,_99,_241,_0.08) dark:bg-c_rgba(99,_99,_241,_0.15) bd_1px_solid bd-c_primary bdr_lg p_24px d_flex flex-d_column gap_8px bx-sh_sm trs_transform_0.2s_ease,_box-shadow_0.2s_ease [&:hover]:trf_translateY(-2px) [&:hover]:bx-sh_md"
+      class="bg-c_surface bd-w_1px border-style_solid bd-c_border.subtle bdr_xl p_16px md:p_20px bx-sh_card d_flex flex-d_column jc_space-between h_100% min-h_135px md:min-h_145px"
     >
-      <p
-        class="ff_var(--fonts-body,_'Inter',_sans-serif) fs_xs fw_semibold lh_1.6 ls_normal c_gray.500 tt_uppercase m_0 "
+      <div
+        class="d_flex flex-d_column jc_space-between gap_6px w_100% h_100%"
       >
-        Total net worth
-      </p>
-      <h2
-        class="c_success.500 ff_var(--fonts-display,_'Plus_Jakarta_Sans',_sans-serif) ls_-0.025em fs_1.875rem fw_bold mt_1 lh_tight m_0 "
-        style="font-size: 1.875rem; margin-top: 4px;"
-      >
-        £1,300
-      </h2>
-      <p
-        class="ff_var(--fonts-body,_'Inter',_sans-serif) fs_xs fw_normal lh_1.6 ls_normal c_text.muted m_0 "
-      >
-        Assets: 
-        £1,800
-         • Liabilities:
-         
-        £500
-      </p>
+        <div
+          class="d_flex ai_center jc_space-between gap_8px"
+        >
+          <span
+            class="fs_xs fw_medium c_text.muted ls_0.01em"
+          >
+            Total net worth
+          </span>
+        </div>
+        <div
+          class="d_flex ai_baseline flex-wrap_wrap gap_10px"
+        >
+          <div
+            class="ff_var(--fonts-display,_'Plus_Jakarta_Sans',_sans-serif) fw_bold ls_-0.02em fv-num_tabular-nums c_financial.positive m_0 fs_24px md:fs_30px lh_1.15"
+          >
+            £1,300
+          </div>
+          <div>
+            <span
+              class="d_inline-flex ai_center gap_4px bdr_full fw_semibold bd-w_1px border-style_solid fv-num_tabular-nums white-space_nowrap bg-c_financial.positiveBg c_financial.positive bd-c_financial.positiveBorder p_2px_8px fs_xs lh_1.25"
+            >
+              Surplus
+            </span>
+          </div>
+        </div>
+        <div
+          class="fs_xs c_text.muted lh_1.45 max-w_65ch m_0 mt_auto pt_6px [&_strong]:c_text.secondary [&_strong]:fw_semibold"
+        >
+          <span>
+            Assets: 
+            <strong>
+              £1,800
+            </strong>
+             • Liabilities:
+             
+            <strong>
+              £500
+            </strong>
+          </span>
+        </div>
+      </div>
     </div>
     <div
-      class="bg-c_card bd_1px_solid bd-c_border bdr_lg p_24px d_flex flex-d_column gap_8px bx-sh_xs trs_transform_0.2s_ease,_box-shadow_0.2s_ease,_border-color_0.2s_ease [&:hover]:trf_translateY(-2px) [&:hover]:bx-sh_sm [&:hover]:bd-c_primary"
+      class="bg-c_surface bd-w_1px border-style_solid bd-c_border.subtle bdr_xl p_16px md:p_20px bx-sh_card d_flex flex-d_column jc_space-between h_100% min-h_135px md:min-h_145px"
     >
-      <p
-        class="ff_var(--fonts-body,_'Inter',_sans-serif) fs_xs fw_semibold lh_1.6 ls_normal c_gray.500 tt_uppercase m_0 "
-      >
-        Liquid cash and savings
-      </p>
-      <h2
-        class="c_success.500 ff_var(--fonts-display,_'Plus_Jakarta_Sans',_sans-serif) ls_-0.025em fs_1.5rem fw_bold mt_1 lh_tight m_0 "
-        style="font-size: 1.5rem; margin-top: 4px;"
-      >
-        £1,800
-      </h2>
-      <p
-        class="ff_var(--fonts-body,_'Inter',_sans-serif) fs_xs fw_normal lh_1.6 ls_normal c_text.muted m_0 "
-      >
-        Weighted yield:
-         
-        <strong>
-          0.0%
-        </strong>
-      </p>
-    </div>
-    <div>
       <div
-        class="bg-c_surface bd_1px_solid bd-c_border bdr_xl p_14px_16px md:p_16px_20px d_flex flex-d_column gap_10px bx-sh_0_2px_8px_rgba(0,_0,_0,_0.04)"
+        class="d_flex flex-d_column jc_space-between gap_6px w_100% h_100%"
+      >
+        <div
+          class="d_flex ai_center jc_space-between gap_8px"
+        >
+          <span
+            class="fs_xs fw_medium c_text.muted ls_0.01em"
+          >
+            Liquid cash and savings
+          </span>
+        </div>
+        <div
+          class="d_flex ai_baseline flex-wrap_wrap gap_10px"
+        >
+          <div
+            class="ff_var(--fonts-display,_'Plus_Jakarta_Sans',_sans-serif) fw_bold ls_-0.02em fv-num_tabular-nums c_text.primary m_0 fs_24px md:fs_30px lh_1.15"
+          >
+            £1,800
+          </div>
+          <div>
+            <span
+              class="d_inline-flex ai_center gap_4px bdr_full fw_semibold bd-w_1px border-style_solid fv-num_tabular-nums white-space_nowrap bg-c_financial.positiveBg c_financial.positive bd-c_financial.positiveBorder p_2px_8px fs_xs lh_1.25"
+            >
+              0.0% AER
+            </span>
+          </div>
+        </div>
+        <div
+          class="fs_xs c_text.muted lh_1.45 max-w_65ch m_0 mt_auto pt_6px [&_strong]:c_text.secondary [&_strong]:fw_semibold"
+        >
+          Instant emergency reserve and checking liquidity
+        </div>
+      </div>
+    </div>
+    <div
+      style="height: 100%;"
+    >
+      <div
+        class="bg-c_surface bd-w_1px border-style_solid bd-c_border.subtle bdr_xl p_16px md:p_20px d_flex flex-d_column gap_12px bx-sh_card h_100%"
         data-testid="allowance-pill-isa"
       >
         <div
-          class="d_flex jc_space-between ai_center flex-wrap_wrap gap_10px"
+          class="d_flex jc_space-between ai_flex-start flex-wrap_wrap gap_10px"
         >
           <div
-            style="display: flex; align-items: center; gap: 8px;"
+            style="display: flex; align-items: center; gap: 10px;"
           >
             <div
-              style="width: 28px; height: 28px; background-color: rgba(16, 185, 129, 0.12); color: #10b981; display: flex; align-items: center; justify-content: center; font-size: 14px;"
+              class="w_32px h_32px bdr_md bg-c_financial.positiveBg c_financial.positive d_flex ai_center jc_center fs_15px bd-w_1px border-style_solid bd-c_financial.positiveBorder flex-sh_0"
             >
               <svg
                 fill="none"
@@ -139,70 +180,79 @@ exports[`<AccountsContainer /> > should render as expected when accounts exist 1
             </div>
             <div>
               <div
-                style="display: flex; align-items: center; gap: 8px;"
+                style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;"
               >
-                <strong
-                  style="font-size: 14px;"
+                <span
+                  class="fs_sm fw_semibold c_text.primary"
                 >
                   UK ISA Annual Allowance
-                </strong>
+                </span>
                 <span
-                  style="font-size: 11px; font-weight: 600; padding: 1px 6px; background-color: rgba(99, 102, 241, 0.08); color: var(--colors-primary);"
+                  class="d_inline-flex ai_center gap_4px bdr_full fw_semibold bd-w_1px border-style_solid fv-num_tabular-nums white-space_nowrap bg-c_surface.tinted c_primary bd-c_border.subtle p_2px_8px fs_xs lh_1.25"
                 >
                   £20,000
                    / Tax Year
                 </span>
               </div>
-              <p
-                class="ff_var(--fonts-body,_'Inter',_sans-serif) fs_xs fw_normal lh_1.6 ls_normal c_text.muted m_0 "
+              <div
+                class="fs_xs c_text.muted mt_2px fv-num_tabular-nums"
               >
                 £20,000
                  remaining tax-free capacity
-              </p>
+              </div>
             </div>
           </div>
-          <div
-            style="display: flex; align-items: center; gap: 10px;"
-          >
-            <div
-              style="display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; background-color: rgba(245, 158, 11, 0.1); color: #d97706; font-size: 12px; font-weight: 600;"
+          <div>
+            <span
+              class="d_inline-flex ai_center gap_4px bdr_full fw_semibold bd-w_1px border-style_solid fv-num_tabular-nums white-space_nowrap bg-c_financial.warningBg c_financial.warning bd-c_financial.warningBorder p_2px_8px fs_xs lh_1.25"
             >
-              <svg
-                fill="none"
-                height="1em"
-                stroke="currentColor"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                viewBox="0 0 24 24"
-                width="1em"
-                xmlns="http://www.w3.org/2000/svg"
+              <span
+                class="d_inline-flex ai_center"
               >
-                <circle
-                  cx="12"
-                  cy="12"
-                  r="10"
-                />
-                <polyline
-                  points="12 6 12 12 16 14"
-                />
-              </svg>
-               
-              148
+                <svg
+                  fill="none"
+                  height="1em"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  viewBox="0 0 24 24"
+                  width="1em"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <circle
+                    cx="12"
+                    cy="12"
+                    r="10"
+                  />
+                  <polyline
+                    points="12 6 12 12 16 14"
+                  />
+                </svg>
+              </span>
+              147
                days left until 5 April
-            </div>
+            </span>
           </div>
         </div>
         <div>
-          <div
-            class="w_100% h_8px bg-c_secondary bdr_full ov_hidden"
-          >
+          <div>
             <div
-              style="width: 0%; height: 100%; background-color: #10b981; border-radius: 9999px; transition: width 0.4s ease;"
-            />
+              aria-valuemax="20000"
+              aria-valuemin="0"
+              aria-valuenow="0"
+              class="w_100% bg-c_surface.sunken bdr_full bd-w_1px border-style_solid bd-c_border.subtle ov_hidden"
+              role="progressbar"
+              style="height: 6px;"
+            >
+              <div
+                class="h_100% bdr_full bg-c_financial.positive trs_width_0.4s_ease-out"
+                style="width: 0%;"
+              />
+            </div>
           </div>
           <div
-            style="display: flex; justify-content: space-between; font-size: 11px; color: var(--colors-text-muted); margin-top: 4px;"
+            class="d_flex jc_space-between fs_xs c_text.muted mt_6px fv-num_tabular-nums"
           >
             <span>
               £0
@@ -217,18 +267,19 @@ exports[`<AccountsContainer /> > should render as expected when accounts exist 1
           </div>
         </div>
         <div
-          style="font-size: 11px; color: var(--colors-text-muted); padding-top: 6px; display: flex; justify-content: space-between; border-top-width: var(--colors-border); border-top-style: var(--colors-border); border-top-color: var(--colors-border);"
+          class="fs_xs c_text.muted bd-t-w_1px border-top-style_solid bd-t-c_border.subtle pt_8px d_flex jc_space-between flex-wrap_wrap gap_4px fv-num_tabular-nums"
         >
           <span>
             💡 
             <strong>
               Personal Savings Allowance (
-              HIGHER
+              higher
                rate):
             </strong>
              
             £500
-             tax-free interest/yr
+             
+            tax-free interest/yr
           </span>
           <span>
             0% tax on non-ISA interest up to limit
@@ -238,25 +289,31 @@ exports[`<AccountsContainer /> > should render as expected when accounts exist 1
     </div>
   </div>
   <div
-    class="bg-c_card bd_1px_solid bd-c_border bdr_lg p_16px_24px mb_32px bx-sh_xs"
+    class="bg-c_surface bd-w_1px border-style_solid bd-c_border.subtle bdr_xl p_16px md:p_20px mb_32px bx-sh_card"
   >
     <div
-      class="d_flex jc_space-between ai_center mb_8px"
+      class="d_flex jc_space-between ai_center mb_10px"
     >
-      <p
-        class="ff_var(--fonts-body,_'Inter',_sans-serif) fs_xs fw_semibold lh_1.6 ls_normal c_text.muted tt_uppercase m_0 "
+      <span
+        class="fs_xs fw_medium c_text.muted"
       >
         Asset allocation preview
-      </p>
+      </span>
+      <span
+        class="fs_xs c_text.muted fv-num_tabular-nums"
+      >
+        Total Assets: 
+        £1,800
+      </span>
     </div>
     <div
-      class="d_flex h_8px w_100% bdr_full ov_hidden bg-c_secondary mb_12px"
+      class="d_flex h_8px w_100% bdr_full ov_hidden bg-c_surface.sunken bd-w_1px border-style_solid bd-c_border.subtle mb_14px"
     >
       <div
-        style="width: 55.55555555555556%; background-color: #6363F1; height: 100%;"
+        style="width: 55.55555555555556%; background-color: #4f46e5; height: 100%;"
       />
       <div
-        style="width: 44.44444444444444%; background-color: #10B981; height: 100%;"
+        style="width: 44.44444444444444%; background-color: #059669; height: 100%;"
       />
     </div>
     <div
@@ -266,39 +323,39 @@ exports[`<AccountsContainer /> > should render as expected when accounts exist 1
         class="d_flex ai_center gap_6px"
       >
         <div
-          style="width: 8px; height: 8px; border-radius: 50%; background-color: #6363F1;"
+          style="width: 8px; height: 8px; border-radius: 50%; background-color: #4f46e5; flex-shrink: 0;"
         />
-        <p
-          class="ff_var(--fonts-body,_'Inter',_sans-serif) fs_xs fw_medium lh_1.6 ls_normal c_text.primary m_0 "
+        <span
+          class="fs_xs fw_medium c_text.primary"
         >
           Current
-        </p>
-        <p
-          class="ff_var(--fonts-body,_'Inter',_sans-serif) fs_xs fw_normal lh_1.6 ls_normal c_text.muted m_0 "
+        </span>
+        <span
+          class="fs_xs c_text.muted fv-num_tabular-nums"
         >
           (
           56
           %)
-        </p>
+        </span>
       </div>
       <div
         class="d_flex ai_center gap_6px"
       >
         <div
-          style="width: 8px; height: 8px; border-radius: 50%; background-color: #10B981;"
+          style="width: 8px; height: 8px; border-radius: 50%; background-color: #059669; flex-shrink: 0;"
         />
-        <p
-          class="ff_var(--fonts-body,_'Inter',_sans-serif) fs_xs fw_medium lh_1.6 ls_normal c_text.primary m_0 "
+        <span
+          class="fs_xs fw_medium c_text.primary"
         >
           Saving
-        </p>
-        <p
-          class="ff_var(--fonts-body,_'Inter',_sans-serif) fs_xs fw_normal lh_1.6 ls_normal c_text.muted m_0 "
+        </span>
+        <span
+          class="fs_xs c_text.muted fv-num_tabular-nums"
         >
           (
           44
           %)
-        </p>
+        </span>
       </div>
     </div>
   </div>
@@ -321,7 +378,7 @@ exports[`<AccountsContainer /> > should render as expected when accounts exist 1
         <button
           aria-controls="radix-_r_k_-content-all"
           aria-selected="true"
-          class="p_8px_16px fs_sm fw_medium c_text.muted bg-c_transparent bd_none cursor_pointer trs_color_0.2s,_border-color_0.2s bd-b_2px_solid_transparent bd-r_none [&[data-state='active']]:c_primary [&[data-state='active']]:bd-c_primary hover:c_text.primary"
+          class="p_8px_16px min-h_40px d_inline-flex ai_center white-space_nowrap fs_sm fw_medium c_text.muted bg-c_transparent bd_none cursor_pointer trs_color_0.15s_ease,_border-color_0.15s_ease bd-b_2px_solid_transparent bd-r_none mb_-1px [&[data-state='active']]:c_primary [&[data-state='active']]:bd-c_primary [&[data-state='active']]:fw_semibold hover:c_text.primary focusVisible:ring_2px_solid focusVisible:ring-c_primary focusVisible:ring-o_2px"
           data-orientation="horizontal"
           data-radix-collection-item=""
           data-state="active"
@@ -335,7 +392,7 @@ exports[`<AccountsContainer /> > should render as expected when accounts exist 1
         <button
           aria-controls="radix-_r_k_-content-cash-current"
           aria-selected="false"
-          class="p_8px_16px fs_sm fw_medium c_text.muted bg-c_transparent bd_none cursor_pointer trs_color_0.2s,_border-color_0.2s bd-b_2px_solid_transparent bd-r_none [&[data-state='active']]:c_primary [&[data-state='active']]:bd-c_primary hover:c_text.primary"
+          class="p_8px_16px min-h_40px d_inline-flex ai_center white-space_nowrap fs_sm fw_medium c_text.muted bg-c_transparent bd_none cursor_pointer trs_color_0.15s_ease,_border-color_0.15s_ease bd-b_2px_solid_transparent bd-r_none mb_-1px [&[data-state='active']]:c_primary [&[data-state='active']]:bd-c_primary [&[data-state='active']]:fw_semibold hover:c_text.primary focusVisible:ring_2px_solid focusVisible:ring-c_primary focusVisible:ring-o_2px"
           data-orientation="horizontal"
           data-radix-collection-item=""
           data-state="inactive"
@@ -349,7 +406,7 @@ exports[`<AccountsContainer /> > should render as expected when accounts exist 1
         <button
           aria-controls="radix-_r_k_-content-savings-yield"
           aria-selected="false"
-          class="p_8px_16px fs_sm fw_medium c_text.muted bg-c_transparent bd_none cursor_pointer trs_color_0.2s,_border-color_0.2s bd-b_2px_solid_transparent bd-r_none [&[data-state='active']]:c_primary [&[data-state='active']]:bd-c_primary hover:c_text.primary"
+          class="p_8px_16px min-h_40px d_inline-flex ai_center white-space_nowrap fs_sm fw_medium c_text.muted bg-c_transparent bd_none cursor_pointer trs_color_0.15s_ease,_border-color_0.15s_ease bd-b_2px_solid_transparent bd-r_none mb_-1px [&[data-state='active']]:c_primary [&[data-state='active']]:bd-c_primary [&[data-state='active']]:fw_semibold hover:c_text.primary focusVisible:ring_2px_solid focusVisible:ring-c_primary focusVisible:ring-o_2px"
           data-orientation="horizontal"
           data-radix-collection-item=""
           data-state="inactive"
@@ -358,12 +415,12 @@ exports[`<AccountsContainer /> > should render as expected when accounts exist 1
           tabindex="-1"
           type="button"
         >
-          Savings & ISAs (yield & compound forecaster)
+          Savings & ISAs
         </button>
         <button
           aria-controls="radix-_r_k_-content-investments-pensions"
           aria-selected="false"
-          class="p_8px_16px fs_sm fw_medium c_text.muted bg-c_transparent bd_none cursor_pointer trs_color_0.2s,_border-color_0.2s bd-b_2px_solid_transparent bd-r_none [&[data-state='active']]:c_primary [&[data-state='active']]:bd-c_primary hover:c_text.primary"
+          class="p_8px_16px min-h_40px d_inline-flex ai_center white-space_nowrap fs_sm fw_medium c_text.muted bg-c_transparent bd_none cursor_pointer trs_color_0.15s_ease,_border-color_0.15s_ease bd-b_2px_solid_transparent bd-r_none mb_-1px [&[data-state='active']]:c_primary [&[data-state='active']]:bd-c_primary [&[data-state='active']]:fw_semibold hover:c_text.primary focusVisible:ring_2px_solid focusVisible:ring-c_primary focusVisible:ring-o_2px"
           data-orientation="horizontal"
           data-radix-collection-item=""
           data-state="inactive"
@@ -377,7 +434,7 @@ exports[`<AccountsContainer /> > should render as expected when accounts exist 1
         <button
           aria-controls="radix-_r_k_-content-credit-debt"
           aria-selected="false"
-          class="p_8px_16px fs_sm fw_medium c_text.muted bg-c_transparent bd_none cursor_pointer trs_color_0.2s,_border-color_0.2s bd-b_2px_solid_transparent bd-r_none [&[data-state='active']]:c_primary [&[data-state='active']]:bd-c_primary hover:c_text.primary"
+          class="p_8px_16px min-h_40px d_inline-flex ai_center white-space_nowrap fs_sm fw_medium c_text.muted bg-c_transparent bd_none cursor_pointer trs_color_0.15s_ease,_border-color_0.15s_ease bd-b_2px_solid_transparent bd-r_none mb_-1px [&[data-state='active']]:c_primary [&[data-state='active']]:bd-c_primary [&[data-state='active']]:fw_semibold hover:c_text.primary focusVisible:ring_2px_solid focusVisible:ring-c_primary focusVisible:ring-o_2px"
           data-orientation="horizontal"
           data-radix-collection-item=""
           data-state="inactive"
@@ -391,7 +448,7 @@ exports[`<AccountsContainer /> > should render as expected when accounts exist 1
         <button
           aria-controls="radix-_r_k_-content-mortgages"
           aria-selected="false"
-          class="p_8px_16px fs_sm fw_medium c_text.muted bg-c_transparent bd_none cursor_pointer trs_color_0.2s,_border-color_0.2s bd-b_2px_solid_transparent bd-r_none [&[data-state='active']]:c_primary [&[data-state='active']]:bd-c_primary hover:c_text.primary"
+          class="p_8px_16px min-h_40px d_inline-flex ai_center white-space_nowrap fs_sm fw_medium c_text.muted bg-c_transparent bd_none cursor_pointer trs_color_0.15s_ease,_border-color_0.15s_ease bd-b_2px_solid_transparent bd-r_none mb_-1px [&[data-state='active']]:c_primary [&[data-state='active']]:bd-c_primary [&[data-state='active']]:fw_semibold hover:c_text.primary focusVisible:ring_2px_solid focusVisible:ring-c_primary focusVisible:ring-o_2px"
           data-orientation="horizontal"
           data-radix-collection-item=""
           data-state="inactive"
@@ -405,7 +462,7 @@ exports[`<AccountsContainer /> > should render as expected when accounts exist 1
         <button
           aria-controls="radix-_r_k_-content-bank-connections"
           aria-selected="false"
-          class="p_8px_16px fs_sm fw_medium c_text.muted bg-c_transparent bd_none cursor_pointer trs_color_0.2s,_border-color_0.2s bd-b_2px_solid_transparent bd-r_none [&[data-state='active']]:c_primary [&[data-state='active']]:bd-c_primary hover:c_text.primary"
+          class="p_8px_16px min-h_40px d_inline-flex ai_center white-space_nowrap fs_sm fw_medium c_text.muted bg-c_transparent bd_none cursor_pointer trs_color_0.15s_ease,_border-color_0.15s_ease bd-b_2px_solid_transparent bd-r_none mb_-1px [&[data-state='active']]:c_primary [&[data-state='active']]:bd-c_primary [&[data-state='active']]:fw_semibold hover:c_text.primary focusVisible:ring_2px_solid focusVisible:ring-c_primary focusVisible:ring-o_2px"
           data-orientation="horizontal"
           data-radix-collection-item=""
           data-state="inactive"
@@ -428,73 +485,81 @@ exports[`<AccountsContainer /> > should render as expected when accounts exist 1
         tabindex="0"
       >
         <div
-          class="d_flex flex-d_column gap_10 mt_4 "
+          class="d_flex flex-d_column gap_8 mt_4 "
         >
           <div
-            class="bd-b_1px_solid bd-c_border pb_24px mb_40px"
+            class="mb_36px"
           >
             <div
-              class="d_flex ai_center mb_16px pb_2 bd-b_1px_solid bd-c_border"
+              class="d_flex ai_center gap_10px mb_16px pb_8px bd-b-w_1px border-bottom-style_solid bd-b-c_border.subtle"
             >
-              <svg
-                class="fs_20px mr_10px d_inline-block va_middle"
-                fill="currentColor"
-                height="1em"
-                stroke="currentColor"
-                stroke-width="0"
-                style="color: #6363F1;"
-                viewBox="0 0 512 512"
-                width="1em"
-                xmlns="http://www.w3.org/2000/svg"
+              <div
+                class="w_28px h_28px bdr_md bg-c_surface.sunken d_flex ai_center jc_center bd-w_1px border-style_solid bd-c_border.subtle"
               >
-                <path
-                  d="M461.2 128H80c-8.84 0-16-7.16-16-16s7.16-16 16-16h384c8.84 0 16-7.16 16-16 0-26.51-21.49-48-48-48H64C28.65 32 0 60.65 0 96v320c0 35.35 28.65 64 64 64h397.2c28.02 0 50.8-21.53 50.8-48V176c0-26.47-22.78-48-50.8-48zM416 336c-17.67 0-32-14.33-32-32s14.33-32 32-32 32 14.33 32 32-14.33 32-32 32z"
-                />
-              </svg>
+                <svg
+                  class="fs_16px d_inline-block va_middle"
+                  fill="currentColor"
+                  height="1em"
+                  stroke="currentColor"
+                  stroke-width="0"
+                  style="color: #4f46e5;"
+                  viewBox="0 0 512 512"
+                  width="1em"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M461.2 128H80c-8.84 0-16-7.16-16-16s7.16-16 16-16h384c8.84 0 16-7.16 16-16 0-26.51-21.49-48-48-48H64C28.65 32 0 60.65 0 96v320c0 35.35 28.65 64 64 64h397.2c28.02 0 50.8-21.53 50.8-48V176c0-26.47-22.78-48-50.8-48zM416 336c-17.67 0-32-14.33-32-32s14.33-32 32-32 32 14.33 32 32-14.33 32-32 32z"
+                  />
+                </svg>
+              </div>
               <h2
-                class="c_text.primary ff_var(--fonts-display,_'Plus_Jakarta_Sans',_sans-serif) ls_-0.025em fs_1.25rem fw_bold lh_tight m_0 "
-                style="font-size: 1.25rem;"
+                class="c_text.primary ff_var(--fonts-display,_'Plus_Jakarta_Sans',_sans-serif) ls_-0.025em fs_0.875rem fw_bold lh_tight m_0 "
+                style="font-size: 0.875rem;"
               >
                 Current
               </h2>
             </div>
             <div
-              class="d_grid grid-tc_1fr sm:grid-tc_repeat(2,_1fr) md:grid-tc_repeat(3,_1fr) lg:grid-tc_repeat(4,_1fr) gap_24px mt_16px"
+              class="d_grid grid-tc_1fr sm:grid-tc_repeat(2,_1fr) lg:grid-tc_repeat(3,_1fr) xl:grid-tc_repeat(4,_1fr) gap_20px"
             >
               AccountsCard
               AccountsCard
             </div>
           </div>
           <div
-            class="bd-b_1px_solid bd-c_border pb_24px mb_40px"
+            class="mb_36px"
           >
             <div
-              class="d_flex ai_center mb_16px pb_2 bd-b_1px_solid bd-c_border"
+              class="d_flex ai_center gap_10px mb_16px pb_8px bd-b-w_1px border-bottom-style_solid bd-b-c_border.subtle"
             >
-              <svg
-                class="fs_20px mr_10px d_inline-block va_middle"
-                fill="currentColor"
-                height="1em"
-                stroke="currentColor"
-                stroke-width="0"
-                style="color: #10b981;"
-                viewBox="0 0 576 512"
-                width="1em"
-                xmlns="http://www.w3.org/2000/svg"
+              <div
+                class="w_28px h_28px bdr_md bg-c_surface.sunken d_flex ai_center jc_center bd-w_1px border-style_solid bd-c_border.subtle"
               >
-                <path
-                  d="M560 224h-29.5c-8.8-20-21.6-37.7-37.4-52.5L512 96h-32c-29.4 0-55.4 13.5-73 34.3-7.6-1.1-15.1-2.3-23-2.3H256c-77.4 0-141.9 55-156.8 128H56c-14.8 0-26.5-13.5-23.5-28.8C34.7 215.8 45.4 208 57 208h1c3.3 0 6-2.7 6-6v-20c0-3.3-2.7-6-6-6-28.5 0-53.9 20.4-57.5 48.6C-3.9 258.8 22.7 288 56 288h40c0 52.2 25.4 98.1 64 127.3V496c0 8.8 7.2 16 16 16h64c8.8 0 16-7.2 16-16v-48h128v48c0 8.8 7.2 16 16 16h64c8.8 0 16-7.2 16-16v-80.7c11.8-8.9 22.3-19.4 31.3-31.3H560c8.8 0 16-7.2 16-16V240c0-8.8-7.2-16-16-16zm-128 64c-8.8 0-16-7.2-16-16s7.2-16 16-16 16 7.2 16 16-7.2 16-16 16zM256 96h128c5.4 0 10.7.4 15.9.8 0-.3.1-.5.1-.8 0-53-43-96-96-96s-96 43-96 96c0 2.1.5 4.1.6 6.2 15.2-3.9 31-6.2 47.4-6.2z"
-                />
-              </svg>
+                <svg
+                  class="fs_16px d_inline-block va_middle"
+                  fill="currentColor"
+                  height="1em"
+                  stroke="currentColor"
+                  stroke-width="0"
+                  style="color: #059669;"
+                  viewBox="0 0 576 512"
+                  width="1em"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M560 224h-29.5c-8.8-20-21.6-37.7-37.4-52.5L512 96h-32c-29.4 0-55.4 13.5-73 34.3-7.6-1.1-15.1-2.3-23-2.3H256c-77.4 0-141.9 55-156.8 128H56c-14.8 0-26.5-13.5-23.5-28.8C34.7 215.8 45.4 208 57 208h1c3.3 0 6-2.7 6-6v-20c0-3.3-2.7-6-6-6-28.5 0-53.9 20.4-57.5 48.6C-3.9 258.8 22.7 288 56 288h40c0 52.2 25.4 98.1 64 127.3V496c0 8.8 7.2 16 16 16h64c8.8 0 16-7.2 16-16v-48h128v48c0 8.8 7.2 16 16 16h64c8.8 0 16-7.2 16-16v-80.7c11.8-8.9 22.3-19.4 31.3-31.3H560c8.8 0 16-7.2 16-16V240c0-8.8-7.2-16-16-16zm-128 64c-8.8 0-16-7.2-16-16s7.2-16 16-16 16 7.2 16 16-7.2 16-16 16zM256 96h128c5.4 0 10.7.4 15.9.8 0-.3.1-.5.1-.8 0-53-43-96-96-96s-96 43-96 96c0 2.1.5 4.1.6 6.2 15.2-3.9 31-6.2 47.4-6.2z"
+                  />
+                </svg>
+              </div>
               <h2
-                class="c_text.primary ff_var(--fonts-display,_'Plus_Jakarta_Sans',_sans-serif) ls_-0.025em fs_1.25rem fw_bold lh_tight m_0 "
-                style="font-size: 1.25rem;"
+                class="c_text.primary ff_var(--fonts-display,_'Plus_Jakarta_Sans',_sans-serif) ls_-0.025em fs_0.875rem fw_bold lh_tight m_0 "
+                style="font-size: 0.875rem;"
               >
                 Saving
               </h2>
             </div>
             <div
-              class="d_grid grid-tc_1fr sm:grid-tc_repeat(2,_1fr) md:grid-tc_repeat(3,_1fr) lg:grid-tc_repeat(4,_1fr) gap_24px mt_16px"
+              class="d_grid grid-tc_1fr sm:grid-tc_repeat(2,_1fr) lg:grid-tc_repeat(3,_1fr) xl:grid-tc_repeat(4,_1fr) gap_20px"
             >
               AccountsCard
               AccountsCard
@@ -502,103 +567,115 @@ exports[`<AccountsContainer /> > should render as expected when accounts exist 1
             </div>
           </div>
           <div
-            class="bd-b_1px_solid bd-c_border pb_24px mb_40px"
+            class="mb_36px"
           >
             <div
-              class="d_flex ai_center mb_16px pb_2 bd-b_1px_solid bd-c_border"
+              class="d_flex ai_center gap_10px mb_16px pb_8px bd-b-w_1px border-bottom-style_solid bd-b-c_border.subtle"
             >
-              <svg
-                class="fs_20px mr_10px d_inline-block va_middle"
-                fill="currentColor"
-                height="1em"
-                stroke="currentColor"
-                stroke-width="0"
-                style="color: #ef4444;"
-                viewBox="0 0 576 512"
-                width="1em"
-                xmlns="http://www.w3.org/2000/svg"
+              <div
+                class="w_28px h_28px bdr_md bg-c_surface.sunken d_flex ai_center jc_center bd-w_1px border-style_solid bd-c_border.subtle"
               >
-                <path
-                  d="M280.37 148.26L96 300.11V464a16 16 0 0 0 16 16l112.06-.29a16 16 0 0 0 15.92-16V368a16 16 0 0 1 16-16h64a16 16 0 0 1 16 16v95.64a16 16 0 0 0 16 16.05L464 480a16 16 0 0 0 16-16V300L295.67 148.26a12.19 12.19 0 0 0-15.3 0zM571.6 251.47L488 182.56V44.05a12 12 0 0 0-12-12h-56a12 12 0 0 0-12 12v72.61L318.47 43a48 48 0 0 0-61 0L4.34 251.47a12 12 0 0 0-1.6 16.9l25.5 31A12 12 0 0 0 45.15 301l235.22-193.74a12.19 12.19 0 0 1 15.3 0L530.9 301a12 12 0 0 0 16.9-1.6l25.5-31a12 12 0 0 0-1.7-16.93z"
-                />
-              </svg>
+                <svg
+                  class="fs_16px d_inline-block va_middle"
+                  fill="currentColor"
+                  height="1em"
+                  stroke="currentColor"
+                  stroke-width="0"
+                  style="color: #dc2626;"
+                  viewBox="0 0 576 512"
+                  width="1em"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M280.37 148.26L96 300.11V464a16 16 0 0 0 16 16l112.06-.29a16 16 0 0 0 15.92-16V368a16 16 0 0 1 16-16h64a16 16 0 0 1 16 16v95.64a16 16 0 0 0 16 16.05L464 480a16 16 0 0 0 16-16V300L295.67 148.26a12.19 12.19 0 0 0-15.3 0zM571.6 251.47L488 182.56V44.05a12 12 0 0 0-12-12h-56a12 12 0 0 0-12 12v72.61L318.47 43a48 48 0 0 0-61 0L4.34 251.47a12 12 0 0 0-1.6 16.9l25.5 31A12 12 0 0 0 45.15 301l235.22-193.74a12.19 12.19 0 0 1 15.3 0L530.9 301a12 12 0 0 0 16.9-1.6l25.5-31a12 12 0 0 0-1.7-16.93z"
+                  />
+                </svg>
+              </div>
               <h2
-                class="c_text.primary ff_var(--fonts-display,_'Plus_Jakarta_Sans',_sans-serif) ls_-0.025em fs_1.25rem fw_bold lh_tight m_0 "
-                style="font-size: 1.25rem;"
+                class="c_text.primary ff_var(--fonts-display,_'Plus_Jakarta_Sans',_sans-serif) ls_-0.025em fs_0.875rem fw_bold lh_tight m_0 "
+                style="font-size: 0.875rem;"
               >
                 Mortgage
               </h2>
             </div>
             <div
-              class="d_grid grid-tc_1fr sm:grid-tc_repeat(2,_1fr) md:grid-tc_repeat(3,_1fr) lg:grid-tc_repeat(4,_1fr) gap_24px mt_16px"
+              class="d_grid grid-tc_1fr sm:grid-tc_repeat(2,_1fr) lg:grid-tc_repeat(3,_1fr) xl:grid-tc_repeat(4,_1fr) gap_20px"
             >
               AccountsCard
             </div>
           </div>
           <div
-            class="bd-b_1px_solid bd-c_border pb_24px mb_40px"
+            class="mb_36px"
           >
             <div
-              class="d_flex ai_center mb_16px pb_2 bd-b_1px_solid bd-c_border"
+              class="d_flex ai_center gap_10px mb_16px pb_8px bd-b-w_1px border-bottom-style_solid bd-b-c_border.subtle"
             >
-              <svg
-                class="fs_20px mr_10px d_inline-block va_middle"
-                fill="currentColor"
-                height="1em"
-                stroke="currentColor"
-                stroke-width="0"
-                style="color: #a855f7;"
-                viewBox="0 0 576 512"
-                width="1em"
-                xmlns="http://www.w3.org/2000/svg"
+              <div
+                class="w_28px h_28px bdr_md bg-c_surface.sunken d_flex ai_center jc_center bd-w_1px border-style_solid bd-c_border.subtle"
               >
-                <path
-                  d="M271.06,144.3l54.27,14.3a8.59,8.59,0,0,1,6.63,8.1c0,4.6-4.09,8.4-9.12,8.4h-35.6a30,30,0,0,1-11.19-2.2c-5.24-2.2-11.28-1.7-15.3,2l-19,17.5a11.68,11.68,0,0,0-2.25,2.66,11.42,11.42,0,0,0,3.88,15.74,83.77,83.77,0,0,0,34.51,11.5V240c0,8.8,7.83,16,17.37,16h17.37c9.55,0,17.38-7.2,17.38-16V222.4c32.93-3.6,57.84-31,53.5-63-3.15-23-22.46-41.3-46.56-47.7L282.68,97.4a8.59,8.59,0,0,1-6.63-8.1c0-4.6,4.09-8.4,9.12-8.4h35.6A30,30,0,0,1,332,83.1c5.23,2.2,11.28,1.7,15.3-2l19-17.5A11.31,11.31,0,0,0,368.47,61a11.43,11.43,0,0,0-3.84-15.78,83.82,83.82,0,0,0-34.52-11.5V16c0-8.8-7.82-16-17.37-16H295.37C285.82,0,278,7.2,278,16V33.6c-32.89,3.6-57.85,31-53.51,63C227.63,119.6,247,137.9,271.06,144.3ZM565.27,328.1c-11.8-10.7-30.2-10-42.6,0L430.27,402a63.64,63.64,0,0,1-40,14H272a16,16,0,0,1,0-32h78.29c15.9,0,30.71-10.9,33.25-26.6a31.2,31.2,0,0,0,.46-5.46A32,32,0,0,0,352,320H192a117.66,117.66,0,0,0-74.1,26.29L71.4,384H16A16,16,0,0,0,0,400v96a16,16,0,0,0,16,16H372.77a64,64,0,0,0,40-14L564,377a32,32,0,0,0,1.28-48.9Z"
-                />
-              </svg>
+                <svg
+                  class="fs_16px d_inline-block va_middle"
+                  fill="currentColor"
+                  height="1em"
+                  stroke="currentColor"
+                  stroke-width="0"
+                  style="color: #9333ea;"
+                  viewBox="0 0 576 512"
+                  width="1em"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M271.06,144.3l54.27,14.3a8.59,8.59,0,0,1,6.63,8.1c0,4.6-4.09,8.4-9.12,8.4h-35.6a30,30,0,0,1-11.19-2.2c-5.24-2.2-11.28-1.7-15.3,2l-19,17.5a11.68,11.68,0,0,0-2.25,2.66,11.42,11.42,0,0,0,3.88,15.74,83.77,83.77,0,0,0,34.51,11.5V240c0,8.8,7.83,16,17.37,16h17.37c9.55,0,17.38-7.2,17.38-16V222.4c32.93-3.6,57.84-31,53.5-63-3.15-23-22.46-41.3-46.56-47.7L282.68,97.4a8.59,8.59,0,0,1-6.63-8.1c0-4.6,4.09-8.4,9.12-8.4h35.6A30,30,0,0,1,332,83.1c5.23,2.2,11.28,1.7,15.3-2l19-17.5A11.31,11.31,0,0,0,368.47,61a11.43,11.43,0,0,0-3.84-15.78,83.82,83.82,0,0,0-34.52-11.5V16c0-8.8-7.82-16-17.37-16H295.37C285.82,0,278,7.2,278,16V33.6c-32.89,3.6-57.85,31-53.51,63C227.63,119.6,247,137.9,271.06,144.3ZM565.27,328.1c-11.8-10.7-30.2-10-42.6,0L430.27,402a63.64,63.64,0,0,1-40,14H272a16,16,0,0,1,0-32h78.29c15.9,0,30.71-10.9,33.25-26.6a31.2,31.2,0,0,0,.46-5.46A32,32,0,0,0,352,320H192a117.66,117.66,0,0,0-74.1,26.29L71.4,384H16A16,16,0,0,0,0,400v96a16,16,0,0,0,16,16H372.77a64,64,0,0,0,40-14L564,377a32,32,0,0,0,1.28-48.9Z"
+                  />
+                </svg>
+              </div>
               <h2
-                class="c_text.primary ff_var(--fonts-display,_'Plus_Jakarta_Sans',_sans-serif) ls_-0.025em fs_1.25rem fw_bold lh_tight m_0 "
-                style="font-size: 1.25rem;"
+                class="c_text.primary ff_var(--fonts-display,_'Plus_Jakarta_Sans',_sans-serif) ls_-0.025em fs_0.875rem fw_bold lh_tight m_0 "
+                style="font-size: 0.875rem;"
               >
                 Loan
               </h2>
             </div>
             <div
-              class="d_grid grid-tc_1fr sm:grid-tc_repeat(2,_1fr) md:grid-tc_repeat(3,_1fr) lg:grid-tc_repeat(4,_1fr) gap_24px mt_16px"
+              class="d_grid grid-tc_1fr sm:grid-tc_repeat(2,_1fr) lg:grid-tc_repeat(3,_1fr) xl:grid-tc_repeat(4,_1fr) gap_20px"
             >
               AccountsCard
             </div>
           </div>
           <div
-            class="bd-b_1px_solid bd-c_border pb_24px mb_40px"
+            class="mb_36px"
           >
             <div
-              class="d_flex ai_center mb_16px pb_2 bd-b_1px_solid bd-c_border"
+              class="d_flex ai_center gap_10px mb_16px pb_8px bd-b-w_1px border-bottom-style_solid bd-b-c_border.subtle"
             >
-              <svg
-                class="fs_20px mr_10px d_inline-block va_middle"
-                fill="currentColor"
-                height="1em"
-                stroke="currentColor"
-                stroke-width="0"
-                style="color: #64748b;"
-                viewBox="0 0 640 512"
-                width="1em"
-                xmlns="http://www.w3.org/2000/svg"
+              <div
+                class="w_28px h_28px bdr_md bg-c_surface.sunken d_flex ai_center jc_center bd-w_1px border-style_solid bd-c_border.subtle"
               >
-                <path
-                  d="M192 256c61.9 0 112-50.1 112-112S253.9 32 192 32 80 82.1 80 144s50.1 112 112 112zm76.8 32h-8.3c-20.8 10-43.9 16-68.5 16s-47.6-6-68.5-16h-8.3C51.6 288 0 339.6 0 403.2V432c0 26.5 21.5 48 48 48h288c26.5 0 48-21.5 48-48v-28.8c0-63.6-51.6-115.2-115.2-115.2zM480 256c53 0 96-43 96-96s-43-96-96-96-96 43-96 96 43 96 96 96zm48 32h-3.8c-13.9 4.8-28.6 8-44.2 8s-30.3-3.2-44.2-8H432c-20.4 0-39.2 5.9-55.7 15.4 24.4 26.3 39.7 61.2 39.7 99.8v38.4c0 2.2-.5 4.3-.6 6.4H592c26.5 0 48-21.5 48-48 0-61.9-50.1-112-112-112z"
-                />
-              </svg>
+                <svg
+                  class="fs_16px d_inline-block va_middle"
+                  fill="currentColor"
+                  height="1em"
+                  stroke="currentColor"
+                  stroke-width="0"
+                  style="color: #64748b;"
+                  viewBox="0 0 640 512"
+                  width="1em"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M192 256c61.9 0 112-50.1 112-112S253.9 32 192 32 80 82.1 80 144s50.1 112 112 112zm76.8 32h-8.3c-20.8 10-43.9 16-68.5 16s-47.6-6-68.5-16h-8.3C51.6 288 0 339.6 0 403.2V432c0 26.5 21.5 48 48 48h288c26.5 0 48-21.5 48-48v-28.8c0-63.6-51.6-115.2-115.2-115.2zM480 256c53 0 96-43 96-96s-43-96-96-96-96 43-96 96 43 96 96 96zm48 32h-3.8c-13.9 4.8-28.6 8-44.2 8s-30.3-3.2-44.2-8H432c-20.4 0-39.2 5.9-55.7 15.4 24.4 26.3 39.7 61.2 39.7 99.8v38.4c0 2.2-.5 4.3-.6 6.4H592c26.5 0 48-21.5 48-48 0-61.9-50.1-112-112-112z"
+                  />
+                </svg>
+              </div>
               <h2
-                class="c_text.primary ff_var(--fonts-display,_'Plus_Jakarta_Sans',_sans-serif) ls_-0.025em fs_1.25rem fw_bold lh_tight m_0 "
-                style="font-size: 1.25rem;"
+                class="c_text.primary ff_var(--fonts-display,_'Plus_Jakarta_Sans',_sans-serif) ls_-0.025em fs_0.875rem fw_bold lh_tight m_0 "
+                style="font-size: 0.875rem;"
               >
                 Owed
               </h2>
             </div>
             <div
-              class="d_grid grid-tc_1fr sm:grid-tc_repeat(2,_1fr) md:grid-tc_repeat(3,_1fr) lg:grid-tc_repeat(4,_1fr) gap_24px mt_16px"
+              class="d_grid grid-tc_1fr sm:grid-tc_repeat(2,_1fr) lg:grid-tc_repeat(3,_1fr) xl:grid-tc_repeat(4,_1fr) gap_20px"
             >
               AccountsCard
             </div>
@@ -673,7 +750,7 @@ exports[`<AccountsContainer /> > should render as expected when accounts exist 1
 exports[`<AccountsContainer /> > should render as expected when no accounts exist 1`] = `
 <div>
   <div
-    class="d_flex flex-d_row ai_center jc_space-between flex-wrap_wrap gap_16px mt_20px mb_20px"
+    class="d_flex flex-d_row ai_center jc_space-between flex-wrap_wrap gap_16px mt_8px mb_24px"
   >
     <div>
       <h1
@@ -683,7 +760,8 @@ exports[`<AccountsContainer /> > should render as expected when no accounts exis
         accounts
       </h1>
       <p
-        class="ff_var(--fonts-body,_'Inter',_sans-serif) fs_sm fw_normal lh_1.6 ls_normal c_text.muted m_0 mt_4px"
+        class="ff_var(--fonts-body,_'Inter',_sans-serif) fs_sm fw_normal lh_1.6 ls_normal c_text.muted m_0 "
+        style="margin-top: 4px;"
       >
         Unified net worth, savings yield and UK allowance hub
       </p>
@@ -718,7 +796,7 @@ exports[`<AccountsContainer /> > should render as expected when no accounts exis
       <button
         aria-expanded="false"
         aria-haspopup="dialog"
-        class="d_inline-flex ai_center jc_center bdr_full fw_medium trs_all_0.2s cursor_pointer px_6 py_3 fs_sm lh_1 disabled:op_0.5 disabled:cursor_not-allowed focusVisible:ring_2px_solid focusVisible:ring-c_primary focusVisible:ring-o_2px bg_background c_text.primary bd_1px_solid bd-c_border hover:bg_accent hover:c_accent.foreground"
+        class="d_inline-flex ai_center jc_center bdr_md fw_medium trs_all_0.15s_ease cursor_pointer lh_1 disabled:op_0.5 disabled:cursor_not-allowed focusVisible:ring_2px_solid focusVisible:ring-c_primary focusVisible:ring-o_2px bg_surface c_text.primary bd_1px_solid bd-c_border hover:bg_surface.subtle hover:bd-c_border.strong px_4 py_2.5 fs_sm min-h_10"
         data-state="closed"
         type="button"
       >
@@ -745,7 +823,7 @@ exports[`<AccountsContainer /> > should render as expected when no accounts exis
         <button
           aria-controls="radix-_r_6_-content-all"
           aria-selected="true"
-          class="p_8px_16px fs_sm fw_medium c_text.muted bg-c_transparent bd_none cursor_pointer trs_color_0.2s,_border-color_0.2s bd-b_2px_solid_transparent bd-r_none [&[data-state='active']]:c_primary [&[data-state='active']]:bd-c_primary hover:c_text.primary"
+          class="p_8px_16px min-h_40px d_inline-flex ai_center white-space_nowrap fs_sm fw_medium c_text.muted bg-c_transparent bd_none cursor_pointer trs_color_0.15s_ease,_border-color_0.15s_ease bd-b_2px_solid_transparent bd-r_none mb_-1px [&[data-state='active']]:c_primary [&[data-state='active']]:bd-c_primary [&[data-state='active']]:fw_semibold hover:c_text.primary focusVisible:ring_2px_solid focusVisible:ring-c_primary focusVisible:ring-o_2px"
           data-orientation="horizontal"
           data-radix-collection-item=""
           data-state="active"
@@ -759,7 +837,7 @@ exports[`<AccountsContainer /> > should render as expected when no accounts exis
         <button
           aria-controls="radix-_r_6_-content-cash-current"
           aria-selected="false"
-          class="p_8px_16px fs_sm fw_medium c_text.muted bg-c_transparent bd_none cursor_pointer trs_color_0.2s,_border-color_0.2s bd-b_2px_solid_transparent bd-r_none [&[data-state='active']]:c_primary [&[data-state='active']]:bd-c_primary hover:c_text.primary"
+          class="p_8px_16px min-h_40px d_inline-flex ai_center white-space_nowrap fs_sm fw_medium c_text.muted bg-c_transparent bd_none cursor_pointer trs_color_0.15s_ease,_border-color_0.15s_ease bd-b_2px_solid_transparent bd-r_none mb_-1px [&[data-state='active']]:c_primary [&[data-state='active']]:bd-c_primary [&[data-state='active']]:fw_semibold hover:c_text.primary focusVisible:ring_2px_solid focusVisible:ring-c_primary focusVisible:ring-o_2px"
           data-orientation="horizontal"
           data-radix-collection-item=""
           data-state="inactive"
@@ -773,7 +851,7 @@ exports[`<AccountsContainer /> > should render as expected when no accounts exis
         <button
           aria-controls="radix-_r_6_-content-savings-yield"
           aria-selected="false"
-          class="p_8px_16px fs_sm fw_medium c_text.muted bg-c_transparent bd_none cursor_pointer trs_color_0.2s,_border-color_0.2s bd-b_2px_solid_transparent bd-r_none [&[data-state='active']]:c_primary [&[data-state='active']]:bd-c_primary hover:c_text.primary"
+          class="p_8px_16px min-h_40px d_inline-flex ai_center white-space_nowrap fs_sm fw_medium c_text.muted bg-c_transparent bd_none cursor_pointer trs_color_0.15s_ease,_border-color_0.15s_ease bd-b_2px_solid_transparent bd-r_none mb_-1px [&[data-state='active']]:c_primary [&[data-state='active']]:bd-c_primary [&[data-state='active']]:fw_semibold hover:c_text.primary focusVisible:ring_2px_solid focusVisible:ring-c_primary focusVisible:ring-o_2px"
           data-orientation="horizontal"
           data-radix-collection-item=""
           data-state="inactive"
@@ -782,12 +860,12 @@ exports[`<AccountsContainer /> > should render as expected when no accounts exis
           tabindex="-1"
           type="button"
         >
-          Savings & ISAs (yield & compound forecaster)
+          Savings & ISAs
         </button>
         <button
           aria-controls="radix-_r_6_-content-investments-pensions"
           aria-selected="false"
-          class="p_8px_16px fs_sm fw_medium c_text.muted bg-c_transparent bd_none cursor_pointer trs_color_0.2s,_border-color_0.2s bd-b_2px_solid_transparent bd-r_none [&[data-state='active']]:c_primary [&[data-state='active']]:bd-c_primary hover:c_text.primary"
+          class="p_8px_16px min-h_40px d_inline-flex ai_center white-space_nowrap fs_sm fw_medium c_text.muted bg-c_transparent bd_none cursor_pointer trs_color_0.15s_ease,_border-color_0.15s_ease bd-b_2px_solid_transparent bd-r_none mb_-1px [&[data-state='active']]:c_primary [&[data-state='active']]:bd-c_primary [&[data-state='active']]:fw_semibold hover:c_text.primary focusVisible:ring_2px_solid focusVisible:ring-c_primary focusVisible:ring-o_2px"
           data-orientation="horizontal"
           data-radix-collection-item=""
           data-state="inactive"
@@ -801,7 +879,7 @@ exports[`<AccountsContainer /> > should render as expected when no accounts exis
         <button
           aria-controls="radix-_r_6_-content-credit-debt"
           aria-selected="false"
-          class="p_8px_16px fs_sm fw_medium c_text.muted bg-c_transparent bd_none cursor_pointer trs_color_0.2s,_border-color_0.2s bd-b_2px_solid_transparent bd-r_none [&[data-state='active']]:c_primary [&[data-state='active']]:bd-c_primary hover:c_text.primary"
+          class="p_8px_16px min-h_40px d_inline-flex ai_center white-space_nowrap fs_sm fw_medium c_text.muted bg-c_transparent bd_none cursor_pointer trs_color_0.15s_ease,_border-color_0.15s_ease bd-b_2px_solid_transparent bd-r_none mb_-1px [&[data-state='active']]:c_primary [&[data-state='active']]:bd-c_primary [&[data-state='active']]:fw_semibold hover:c_text.primary focusVisible:ring_2px_solid focusVisible:ring-c_primary focusVisible:ring-o_2px"
           data-orientation="horizontal"
           data-radix-collection-item=""
           data-state="inactive"
@@ -815,7 +893,7 @@ exports[`<AccountsContainer /> > should render as expected when no accounts exis
         <button
           aria-controls="radix-_r_6_-content-mortgages"
           aria-selected="false"
-          class="p_8px_16px fs_sm fw_medium c_text.muted bg-c_transparent bd_none cursor_pointer trs_color_0.2s,_border-color_0.2s bd-b_2px_solid_transparent bd-r_none [&[data-state='active']]:c_primary [&[data-state='active']]:bd-c_primary hover:c_text.primary"
+          class="p_8px_16px min-h_40px d_inline-flex ai_center white-space_nowrap fs_sm fw_medium c_text.muted bg-c_transparent bd_none cursor_pointer trs_color_0.15s_ease,_border-color_0.15s_ease bd-b_2px_solid_transparent bd-r_none mb_-1px [&[data-state='active']]:c_primary [&[data-state='active']]:bd-c_primary [&[data-state='active']]:fw_semibold hover:c_text.primary focusVisible:ring_2px_solid focusVisible:ring-c_primary focusVisible:ring-o_2px"
           data-orientation="horizontal"
           data-radix-collection-item=""
           data-state="inactive"
@@ -829,7 +907,7 @@ exports[`<AccountsContainer /> > should render as expected when no accounts exis
         <button
           aria-controls="radix-_r_6_-content-bank-connections"
           aria-selected="false"
-          class="p_8px_16px fs_sm fw_medium c_text.muted bg-c_transparent bd_none cursor_pointer trs_color_0.2s,_border-color_0.2s bd-b_2px_solid_transparent bd-r_none [&[data-state='active']]:c_primary [&[data-state='active']]:bd-c_primary hover:c_text.primary"
+          class="p_8px_16px min-h_40px d_inline-flex ai_center white-space_nowrap fs_sm fw_medium c_text.muted bg-c_transparent bd_none cursor_pointer trs_color_0.15s_ease,_border-color_0.15s_ease bd-b_2px_solid_transparent bd-r_none mb_-1px [&[data-state='active']]:c_primary [&[data-state='active']]:bd-c_primary [&[data-state='active']]:fw_semibold hover:c_text.primary focusVisible:ring_2px_solid focusVisible:ring-c_primary focusVisible:ring-o_2px"
           data-orientation="horizontal"
           data-radix-collection-item=""
           data-state="inactive"
@@ -852,10 +930,10 @@ exports[`<AccountsContainer /> > should render as expected when no accounts exis
         tabindex="0"
       >
         <div
-          class="d_flex flex-d_column gap_10 mt_4 "
+          class="d_flex flex-d_column gap_8 mt_4 "
         >
           <div
-            class="p_40px_0 ta_center c_text.muted"
+            class="p_48px_24px ta_center c_text.muted bg-c_surface.sunken bdr_xl bd-w_1px border-style_dashed bd-c_border.subtle fs_sm"
           >
             No accounts found in this category.
           </div>

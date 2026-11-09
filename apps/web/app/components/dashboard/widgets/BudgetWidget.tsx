@@ -71,14 +71,23 @@ export const BudgetWidget: FC<BudgetWidgetProps> = ({
         return stats.shortLabel;
       }
     }
-    return (
-      data.runwayLabel ||
-      (data.runwayMonths !== null
-        ? data.runwayMonths > 120
-          ? `${Math.floor(data.runwayMonths / 12)}+ yrs`
-          : `${data.runwayMonths} mos`
-        : "Not set")
-    );
+    if (data.runwayMonths !== null && data.runwayMonths !== undefined) {
+      if (!Number.isFinite(data.runwayMonths)) return "No burn";
+      if (data.runwayMonths <= 0) return "0 mos";
+      if (data.runwayMonths > 120) return `${Math.floor(data.runwayMonths / 12)}+ yrs`;
+      const years = Math.floor(data.runwayMonths / 12);
+      const months = Math.round((data.runwayMonths % 12) * 10) / 10;
+      if (years > 0) {
+        return months > 0
+          ? `${years} yr${years !== 1 ? "s" : ""} ${months} mo${months !== 1 ? "s" : ""}`
+          : `${years} yr${years !== 1 ? "s" : ""}`;
+      }
+      return `${Math.round(data.runwayMonths * 10) / 10} mos`;
+    }
+    if (data.runwayLabel && !data.runwayLabel.toLowerCase().includes("runway")) {
+      return data.runwayLabel;
+    }
+    return "Not set";
   }, [data]);
 
   return (
@@ -205,15 +214,23 @@ export const BudgetWidget: FC<BudgetWidgetProps> = ({
             alignItems: "center",
             padding: "8px 12px",
             borderRadius: "lg",
-            backgroundColor: "rgba(16, 185, 129, 0.08)",
-            border: "1px solid rgba(16, 185, 129, 0.2)",
+            backgroundColor: "surface.sunken",
+            border: "1px solid",
+            borderColor: "border.subtle",
           })}
         >
           <div>
             <FLPText color="text.muted" fontSize="10px" fontWeight="semibold">
               Monthly take-home
             </FLPText>
-            <span style={{ fontSize: "1.1rem", fontWeight: 800, color: "#10b981" }}>
+            <span
+              className="tabular-nums"
+              style={{
+                fontSize: "1.05rem",
+                fontWeight: 700,
+                color: "var(--colors-text-primary)",
+              }}
+            >
               {formatCurrency(data.monthlyIncome)}/mo
             </span>
           </div>

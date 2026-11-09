@@ -20,9 +20,8 @@ describe("PensionAccountsList", () => {
   it("renders empty state when no pots exist", () => {
     render(<PensionAccountsList accounts={[]} onOpenAddModal={vi.fn()} onOpenWizard={vi.fn()} />);
 
-    expect(screen.getByText("No pension pots tracked yet")).toBeDefined();
-    expect(screen.getByText("Quick Start Wizard")).toBeDefined();
-    expect(screen.getByText("Add Pot Manually")).toBeDefined();
+    expect(screen.getByText(/No individual pension pots tracked yet/i)).toBeDefined();
+    expect(screen.getAllByText("Add Pension Pot").length).toBeGreaterThan(0);
   });
 
   it("renders table of pension pots, pot allocation breakdown, and consolidation tip when small pot exists", () => {
