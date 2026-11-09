@@ -9,18 +9,11 @@ import { useEffect, useMemo, useState } from "react";
 import {
   FaArrowLeft,
   FaArrowRight,
-  FaBuilding,
-  FaChartLine,
-  FaCheck,
   FaCheckCircle,
-  FaCoins,
-  FaFileInvoiceDollar,
+  FaHome,
   FaPiggyBank,
-  FaRegCircle,
   FaRocket,
-  FaShieldAlt,
-  FaSlidersH,
-  FaWallet,
+  FaUser,
 } from "react-icons/fa";
 import {
   type ActionFunctionArgs,
@@ -37,12 +30,8 @@ import FLPText from "~/components/core/typography/FLPText";
 import HomeLogo from "~/components/navigation/HomeLogo";
 import type { UserProfile } from "~/hooks/useUserProfile";
 import { DEFAULT_PROFILE, useUserProfile } from "~/hooks/useUserProfile";
-import {
-  ALL_PAGE_KEYS,
-  APP_PAGES,
-  type AppPageKey,
-  type DashboardWidgetKey,
-} from "~/utils/pageConfig";
+import { useFinancialBaseline } from "~/state/baseline.store";
+import { ALL_PAGE_KEYS, type AppPageKey, type DashboardWidgetKey } from "~/utils/pageConfig";
 import { getAuthSession } from "~/utils/utils";
 
 export const loader = async (args: LoaderFunctionArgs) => {
@@ -94,239 +83,156 @@ export const action = async (args: ActionFunctionArgs) => {
   return redirect("/");
 };
 
-interface QuestionConfig {
-  id: number;
-  category: string;
-  title: string;
-  description: string;
-  icon: React.ReactNode;
-  iconBg: string;
-  iconColor: string;
-  associatedPages: AppPageKey[];
-  yesLabel: string;
-  noLabel: string;
-}
-
-const QUESTIONS: QuestionConfig[] = [
-  {
-    id: 1,
-    category: "Everyday Banking & Budgeting",
-    title: "Do you want to manage accounts and plan your monthly budget?",
-    description:
-      "Track your accounts, see your overall net worth, organize spending into categories, and find out your emergency savings runway.",
-    icon: <FaWallet size={24} />,
-    iconBg: "rgba(99, 99, 241, 0.12)",
-    iconColor: "#6363f1",
-    associatedPages: ["accounts", "budget"],
-    yesLabel: "Yes, include Accounts & Budgeting",
-    noLabel: "No, skip for now",
-  },
-  {
-    id: 2,
-    category: "Savings & Wealth Growth",
-    title: "Do you have savings accounts or investment portfolios?",
-    description:
-      "Record your interest rates, set regular monthly contributions, and forecast compound interest growth 10+ years into the future.",
-    icon: <FaPiggyBank size={24} />,
-    iconBg: "rgba(16, 185, 129, 0.12)",
-    iconColor: "#10b981",
-    associatedPages: ["savings", "forecast"],
-    yesLabel: "Yes, track Savings & Forecaster",
-    noLabel: "No, not right now",
-  },
-  {
-    id: 3,
-    category: "Pension & Retirement",
-    title: "Do you contribute to a workplace or personal pension?",
-    description:
-      "Monitor UK auto-enrolment employer and employee contribution splits, salary sacrifice tax savings, and forecast retirement funds.",
-    icon: <FaShieldAlt size={24} />,
-    iconBg: "rgba(139, 92, 246, 0.12)",
-    iconColor: "#8b5cf6",
-    associatedPages: ["pension"],
-    yesLabel: "Yes, track Pension Pots",
-    noLabel: "No, don't track pensions",
-  },
-  {
-    id: 4,
-    category: "Homeownership & Mortgages",
-    title: "Do you own a home with a mortgage or plan to buy soon?",
-    description:
-      "Track amortization schedules, simulate how overpayments shorten your loan term, and compare paying off the mortgage vs. saving.",
-    icon: <FaBuilding size={24} />,
-    iconBg: "rgba(245, 158, 11, 0.12)",
-    iconColor: "#f59e0b",
-    associatedPages: ["mortgage"],
-    yesLabel: "Yes, add Mortgage Tools",
-    noLabel: "No, I rent or don't have a mortgage",
-  },
-  {
-    id: 5,
-    category: "Self-Employment & Property Tax",
-    title: "Do you earn self-employed income or rent out residential property?",
-    description:
-      "Keep cash-basis P&L records, upload receipts, and estimate UK Self-Assessment income tax, Class 4 NI, and Section 24 mortgage relief.",
-    icon: <FaFileInvoiceDollar size={24} />,
-    iconBg: "rgba(59, 130, 246, 0.12)",
-    iconColor: "#3b82f6",
-    associatedPages: ["tax"],
-    yesLabel: "Yes, include Tax Tracker",
-    noLabel: "No, I am standard PAYE employed only",
-  },
-];
-
 export default function OnboardingRoute() {
   const { userProfile, user, accessToken } = useLoaderData<typeof loader>();
   const navigate = useNavigate();
   const { updateProfile } = useUserProfile();
+  const { updateBaseline } = useFinancialBaseline();
 
-  // Mode: "welcome" | "progressive" | "quiz" | "manual"
-  const [mode, setMode] = useState<"welcome" | "progressive" | "quiz" | "manual">("welcome");
-  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-  const [cameFromQuiz, setCameFromQuiz] = useState(false);
+  // Current Step: 1 = You & Income, 2 = Housing & Outgoings, 3 = Savings, Pension & Debt
+  const [step, setStep] = useState<1 | 2 | 3>(1);
 
-  // Progressive flow step: 1 | 2 | 3
-  const [progressiveStep, setProgressiveStep] = useState<1 | 2 | 3>(1);
-
-  // Primary user focus: "debt" | "savings" | "wealth"
-  const [primaryFocus, setPrimaryFocus] = useState<"debt" | "savings" | "wealth">("wealth");
-
-  // Financial baseline inputs
-  const [grossSalary, setGrossSalary] = useState<number>(65000);
+  // Step 1: You & Income
+  const [age, setAge] = useState<number>(32);
   const [employmentType, setEmploymentType] = useState<"employed" | "self-employed">("employed");
+  const [incomeMode, setIncomeMode] = useState<"gross" | "net">("gross");
+  const [grossSalary, setGrossSalary] = useState<number>(45000);
+  const [monthlyTakeHomeOverride, setMonthlyTakeHomeOverride] = useState<number>(2900);
+  const [studentLoanPlan, setStudentLoanPlan] = useState<string>("NONE");
+
+  // Step 2: Housing & Outgoings
+  const [housingStatus, setHousingStatus] = useState<"renting" | "mortgage" | "own_outright">(
+    "renting",
+  );
+  const [monthlyHousingCost, setMonthlyHousingCost] = useState<number>(900);
+  const [propertyValue, setPropertyValue] = useState<number>(0);
+  const [mortgageBalance, setMortgageBalance] = useState<number>(0);
+  const [monthlyOtherOutgoings, setMonthlyOtherOutgoings] = useState<number>(1100);
+
+  // Step 3: Savings, Pension & Debt
+  const [cashSavings, setCashSavings] = useState<number>(5000);
+  const [pensionPot, setPensionPot] = useState<number>(15000);
   const [pensionPercent, setPensionPercent] = useState<number>(5);
   const [isSalarySacrifice, setIsSalarySacrifice] = useState<boolean>(true);
-  const [cashSavings, setCashSavings] = useState<number>(15000);
-  const [investments, setInvestments] = useState<number>(20000);
-  const [mortgageDebt, setMortgageDebt] = useState<number>(0);
+  const [unsecuredDebt, setUnsecuredDebt] = useState<number>(0);
 
-  // Seed state from landing page
+  // Seed banner from tools/calculators
   const [seed, setSeed] = useState<OnboardingSeedPayload | null>(null);
   const [showSeedBanner, setShowSeedBanner] = useState<boolean>(false);
-
-  // Initial pages
-  const initialPages = useMemo<AppPageKey[]>(() => {
-    if (userProfile?.enabledPages && userProfile.enabledPages.length > 0) {
-      return userProfile.enabledPages as AppPageKey[];
-    }
-    return ["accounts", "budget", "savings", "pension", "forecast"];
-  }, [userProfile?.enabledPages]);
-
-  const [selectedPages, setSelectedPages] = useState<AppPageKey[]>(initialPages);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Hydrate from localStorage seed on mount
+  // Hydrate from seed on mount
   useEffect(() => {
     if (typeof window === "undefined") return;
     try {
       const parsed = readOnboardingSeed();
       if (!parsed) return;
       const isFresh = Date.now() - (parsed.timestamp || 0) < 24 * 60 * 60 * 1000;
-      const incomeVal = parsed.annualIncome;
-      if (isFresh && incomeVal) {
+      if (
+        isFresh &&
+        (parsed.annualIncome || parsed.annualGrossSalary || parsed.initialCashSavings !== undefined)
+      ) {
         setSeed(parsed);
         setShowSeedBanner(true);
-        setGrossSalary(incomeVal);
-        if (parsed.pensionContributionPct !== undefined) {
+        if (parsed.annualIncome || parsed.annualGrossSalary) {
+          setGrossSalary(parsed.annualIncome ?? parsed.annualGrossSalary ?? 45000);
+        }
+        if (parsed.age) setAge(parsed.age);
+        if (parsed.isSelfEmployed) setEmploymentType("self-employed");
+        if (parsed.pensionContributionPct !== undefined)
           setPensionPercent(parsed.pensionContributionPct);
-        }
-        if (parsed.salarySacrifice !== undefined) {
-          setIsSalarySacrifice(parsed.salarySacrifice);
-        }
-        if (parsed.initialCashSavings !== undefined) {
-          setCashSavings(parsed.initialCashSavings);
-        }
-        if (parsed.initialInvestments !== undefined) {
-          setInvestments(parsed.initialInvestments);
-        }
+        if (parsed.salarySacrifice !== undefined) setIsSalarySacrifice(parsed.salarySacrifice);
+        if (parsed.isSalarySacrifice !== undefined) setIsSalarySacrifice(parsed.isSalarySacrifice);
+        if (parsed.initialCashSavings !== undefined) setCashSavings(parsed.initialCashSavings);
+        if (parsed.totalCashSavings !== undefined) setCashSavings(parsed.totalCashSavings);
+        if (parsed.totalPensionPot !== undefined) setPensionPot(parsed.totalPensionPot);
+        if (parsed.initialInvestments !== undefined) setPensionPot(parsed.initialInvestments);
         if (parsed.mortgageBalance !== undefined) {
-          setMortgageDebt(parsed.mortgageBalance);
+          setMortgageBalance(parsed.mortgageBalance);
+          if (parsed.mortgageBalance > 0) {
+            setHousingStatus("mortgage");
+            setPropertyValue(parsed.propertyValue ?? Math.round(parsed.mortgageBalance * 1.35));
+          }
         }
-        if (parsed.inferredModules?.length) {
-          setSelectedPages(parsed.inferredModules as AppPageKey[]);
-        }
+        if (parsed.totalUnsecuredDebt !== undefined) setUnsecuredDebt(parsed.totalUnsecuredDebt);
+        if (parsed.monthlyHousingCost !== undefined)
+          setMonthlyHousingCost(parsed.monthlyHousingCost);
+        if (parsed.monthlyOtherOutgoings !== undefined)
+          setMonthlyOtherOutgoings(parsed.monthlyOtherOutgoings);
       }
     } catch (err) {
       console.error("Failed to read onboarding seed:", err);
     }
   }, []);
 
-  // Auto-adjust inferred modules based on baseline values
-  useEffect(() => {
-    setSelectedPages((prev) => {
-      const set = new Set(prev);
-      set.add("accounts");
-      set.add("budget");
-      set.add("forecast");
-
-      if (mortgageDebt > 0) {
-        set.add("mortgage");
-      }
-      if (grossSalary >= 95000 || employmentType === "self-employed") {
-        set.add("tax");
-      }
-      if (pensionPercent > 0) {
-        set.add("pension");
-      }
-      if (cashSavings > 0 || investments > 0) {
-        set.add("savings");
-      }
-      return Array.from(set) as AppPageKey[];
-    });
-  }, [mortgageDebt, grossSalary, employmentType, pensionPercent, cashSavings, investments]);
-
-  // Primary focus selection
-  const handleSelectFocus = (focus: "debt" | "savings" | "wealth") => {
-    setPrimaryFocus(focus);
-    if (focus === "debt") {
-      setSelectedPages(["accounts", "budget", "debt"]);
-      setMortgageDebt(0);
-      setGrossSalary((prev) => Math.min(prev, 36000));
-    } else if (focus === "savings") {
-      setSelectedPages(["accounts", "budget", "savings", "forecast"]);
-      setCashSavings((prev) => (prev === 0 ? 5000 : prev));
-    } else {
-      setSelectedPages(["accounts", "budget", "savings", "pension", "mortgage", "forecast", "tax"]);
-    }
-  };
-
-  // Live calculation of take-home pay and tax trap status
+  // Compute live UK take home
   const liveTakeHome = useMemo(() => {
-    return calculateUKTakeHome(grossSalary, pensionPercent, isSalarySacrifice);
-  }, [grossSalary, pensionPercent, isSalarySacrifice]);
-
-  // Questionnaire navigation
-  const handleAnswerQuestion = (enable: boolean) => {
-    const q = QUESTIONS[currentQuestionIndex];
-    setSelectedPages((prev) => {
-      let next = [...prev];
-      if (enable) {
-        q.associatedPages.forEach((p) => {
-          if (!next.includes(p)) next.push(p);
-        });
-      } else {
-        next = next.filter((p) => !q.associatedPages.includes(p));
-      }
-      return next;
-    });
-
-    if (currentQuestionIndex < QUESTIONS.length - 1) {
-      setCurrentQuestionIndex((prev) => prev + 1);
-    } else {
-      setCameFromQuiz(true);
-      setMode("manual");
+    if (incomeMode === "net") {
+      return {
+        monthlyTakeHome: monthlyTakeHomeOverride,
+        annualTakeHome: monthlyTakeHomeOverride * 12,
+        trapAnalysis: { isInTaxTrap: false, marginalRatePct: 0 },
+      };
     }
-  };
+    const computed = calculateUKTakeHome(grossSalary, pensionPercent, isSalarySacrifice);
+    // Student loan deduction adjustment
+    let loanDeduction = 0;
+    if (studentLoanPlan === "PLAN_1" && grossSalary > 24990) {
+      loanDeduction = ((grossSalary - 24990) * 0.09) / 12;
+    } else if (studentLoanPlan === "PLAN_2" && grossSalary > 27295) {
+      loanDeduction = ((grossSalary - 27295) * 0.09) / 12;
+    } else if (studentLoanPlan === "PLAN_4" && grossSalary > 31395) {
+      loanDeduction = ((grossSalary - 31395) * 0.09) / 12;
+    } else if (studentLoanPlan === "PLAN_5" && grossSalary > 25000) {
+      loanDeduction = ((grossSalary - 25000) * 0.09) / 12;
+    } else if (studentLoanPlan === "POSTGRAD" && grossSalary > 21000) {
+      loanDeduction = ((grossSalary - 21000) * 0.06) / 12;
+    }
+    const adjustedMonthly = Math.max(0, computed.monthlyTakeHome - loanDeduction);
+    return {
+      monthlyTakeHome: Math.round(adjustedMonthly),
+      annualTakeHome: Math.round(adjustedMonthly * 12),
+      trapAnalysis: computed.trapAnalysis,
+    };
+  }, [
+    incomeMode,
+    grossSalary,
+    pensionPercent,
+    isSalarySacrifice,
+    monthlyTakeHomeOverride,
+    studentLoanPlan,
+  ]);
 
-  const handleTogglePage = (key: AppPageKey) => {
-    setSelectedPages((prev) =>
-      prev.includes(key) ? prev.filter((p) => p !== key) : [...prev, key],
-    );
-  };
+  // Live Summary Calculations
+  const monthlyHousing = housingStatus === "own_outright" ? 0 : monthlyHousingCost;
+  const totalOutgoings = monthlyHousing + monthlyOtherOutgoings;
+  const monthlySurplus = liveTakeHome.monthlyTakeHome - totalOutgoings;
+  const homeEquity = housingStatus === "renting" ? 0 : Math.max(0, propertyValue - mortgageBalance);
+  const startingNetWorth = cashSavings + pensionPot + homeEquity - unsecuredDebt;
+
+  // Auto-inferred modules
+  const inferredModules = useMemo<AppPageKey[]>(() => {
+    const modules = new Set<AppPageKey>(["accounts", "budget", "savings", "forecast"]);
+    if (unsecuredDebt > 0) modules.add("debt");
+    if (pensionPot > 0 || pensionPercent > 0) modules.add("pension");
+    if (housingStatus === "mortgage" || mortgageBalance > 0 || propertyValue > 0)
+      modules.add("mortgage");
+    if (employmentType === "self-employed" || grossSalary >= 95000) modules.add("tax");
+    return Array.from(modules);
+  }, [
+    unsecuredDebt,
+    pensionPot,
+    pensionPercent,
+    housingStatus,
+    mortgageBalance,
+    propertyValue,
+    employmentType,
+    grossSalary,
+  ]);
 
   const handleFinish = async () => {
     setIsSubmitting(true);
-    const pagesToSave = selectedPages.length > 0 ? selectedPages : ["accounts", "budget"];
+    const pagesToSave = inferredModules;
     const dashboardWidgets: DashboardWidgetKey[] = [
       "financialHealth",
       ...(pagesToSave as DashboardWidgetKey[]),
@@ -337,25 +243,66 @@ export default function OnboardingRoute() {
     ];
 
     try {
+      // 1. Update UserProfile
       await updateProfile({
-        annualSalary: grossSalary,
+        age,
+        annualSalary: incomeMode === "gross" ? grossSalary : monthlyTakeHomeOverride * 12,
         monthlyTakeHome: liveTakeHome.monthlyTakeHome,
         employmentType,
+        studentLoanPlan,
+        housingStatus,
+        monthlyHousingCost: monthlyHousing,
+        monthlyOtherOutgoings,
+        totalCashSavings: cashSavings,
+        totalPensionPot: pensionPot,
+        totalUnsecuredDebt: unsecuredDebt,
+        hasMortgage: housingStatus === "mortgage" || mortgageBalance > 0,
+        homeValue: propertyValue > 0 ? propertyValue : null,
+        mortgageBalance: mortgageBalance > 0 ? mortgageBalance : null,
         pensionPercent,
         isSalarySacrifice,
-        hasMortgage: mortgageDebt > 0,
         enabledPages: pagesToSave,
         dashboardWidgets,
         dashboardWidgetOrder,
         onboardingCompleted: true,
       });
 
-      // Seed initial baseline accounts if provided so dashboard is immediately alive
+      // 2. Update Central FinancialBaseline Store
+      updateBaseline({
+        age,
+        employmentStatus: employmentType === "self-employed" ? "SELF_EMPLOYED" : "PAYE",
+        annualGrossSalary: incomeMode === "gross" ? grossSalary : monthlyTakeHomeOverride * 12,
+        monthlyTakeHomeOverride: incomeMode === "net" ? monthlyTakeHomeOverride : undefined,
+        housingStatus:
+          housingStatus === "renting"
+            ? "RENTING"
+            : housingStatus === "mortgage"
+              ? "MORTGAGE"
+              : "OWN_OUTRIGHT",
+        monthlyHousingCost: monthlyHousing,
+        propertyValue,
+        mortgageBalance,
+        monthlyOtherOutgoings,
+        totalCashSavings: cashSavings,
+        totalPensionPot: pensionPot,
+        totalUnsecuredDebt: unsecuredDebt,
+        pensionContributionPct: pensionPercent,
+        isSalarySacrifice,
+        studentLoanPlan: studentLoanPlan as any,
+        financialStage:
+          unsecuredDebt > 0
+            ? "STAGE_1_DEBT_RECOVERY"
+            : grossSalary >= 100000
+              ? "STAGE_3_WEALTH_OPTIMIZE"
+              : "STAGE_2_BUFFER_BUILD",
+        enabledModules: pagesToSave.filter((p): p is any => p !== "savings"),
+      });
+
+      // 3. Seed initial baseline accounts and budget entries
       const apiUrl =
         (window as Window & { ENV?: { VITE_API_URL?: string } }).ENV?.VITE_API_URL ??
         import.meta.env.VITE_API_URL ??
         "http://localhost:4000";
-
       const authHdr = `Bearer ${accessToken || "mock-session-token"}`;
 
       const createAccountSafe = async (name: string, type: string, balance: number) => {
@@ -367,30 +314,74 @@ export default function OnboardingRoute() {
             body: JSON.stringify({ name, type, balance, isCurrent: true }),
           });
         } catch {
-          // Ignore network errors in offline/test environment
+          // Ignore network errors in test environment
+        }
+      };
+
+      const createBudgetEntrySafe = async (
+        title: string,
+        category: string,
+        amount: number,
+        isIncome: boolean,
+      ) => {
+        if (amount <= 0) return;
+        try {
+          await fetch(`${apiUrl}/budget-entries`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json", Authorization: authHdr },
+            body: JSON.stringify({ title, category, amount, isIncome, frequency: "monthly" }),
+          });
+        } catch {
+          // Ignore network errors in test environment
         }
       };
 
       await Promise.allSettled([
-        createAccountSafe("Emergency Cash Savings", "Saving", cashSavings),
-        createAccountSafe("Investment Portfolio", "Investment", investments),
-        ...(mortgageDebt > 0
-          ? [createAccountSafe("Residential Mortgage", "Mortgage", mortgageDebt)]
+        createAccountSafe("Cash & Emergency Savings", "Saving", cashSavings),
+        createAccountSafe("Workplace & Personal Pension", "Pension", pensionPot),
+        ...(mortgageBalance > 0
+          ? [createAccountSafe("Residential Mortgage", "Mortgage", mortgageBalance)]
+          : []),
+        ...(unsecuredDebt > 0
+          ? [createAccountSafe("Cards & Loans Baseline", "Credit Card", unsecuredDebt)]
+          : []),
+        createBudgetEntrySafe(
+          "Monthly Take-Home Income",
+          "income",
+          liveTakeHome.monthlyTakeHome,
+          true,
+        ),
+        ...(monthlyHousing > 0
+          ? [
+              createBudgetEntrySafe(
+                housingStatus === "mortgage" ? "Mortgage Payment" : "Rent Payment",
+                "housing",
+                monthlyHousing,
+                false,
+              ),
+            ]
+          : []),
+        ...(monthlyOtherOutgoings > 0
+          ? [
+              createBudgetEntrySafe(
+                "General Living & Outgoings",
+                "living",
+                monthlyOtherOutgoings,
+                false,
+              ),
+            ]
           : []),
       ]);
 
       clearOnboardingSeed();
-
       navigate("/");
     } catch (err) {
       console.error("Error saving onboarding settings:", err);
-      window.location.href = "/";
+      navigate("/");
     } finally {
       setIsSubmitting(false);
     }
   };
-
-  const currentQ = QUESTIONS[currentQuestionIndex];
 
   return (
     <div
@@ -428,496 +419,336 @@ export default function OnboardingRoute() {
             <HomeLogo />
             <div>
               <FLPHeading as="h3" color="blue.500" size="sm">
-                Flump Onboarding
+                Flump Financial Baseline
               </FLPHeading>
               <FLPText color="text.muted" fontSize="xs">
-                Personalise your UK financial universe
+                Set up your UK financial baseline in ~60 seconds
               </FLPText>
             </div>
           </div>
-
-          {mode === "quiz" && (
-            <button
-              className={css({
-                fontSize: "xs",
-                color: "text.muted",
-                background: "none",
-                border: "none",
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                gap: "4px",
-                padding: "6px 10px",
-                borderRadius: "md",
-                _hover: { color: "primary", backgroundColor: "rgba(99, 99, 241, 0.08)" },
-              })}
-              type="button"
-              onClick={() => {
-                setCameFromQuiz(true);
-                setMode("manual");
-              }}
-            >
-              <FaSlidersH size={11} /> Skip to manual picker
-            </button>
-          )}
-
-          {mode === "progressive" && (
-            <button
-              className={css({
-                fontSize: "xs",
-                color: "text.muted",
-                background: "none",
-                border: "none",
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                gap: "4px",
-                padding: "6px 10px",
-                borderRadius: "md",
-                _hover: { color: "primary" },
-              })}
-              type="button"
-              onClick={() => setMode("welcome")}
-            >
-              Cancel
-            </button>
-          )}
+          <span
+            className={css({
+              fontSize: "xs",
+              fontWeight: "bold",
+              color: "primary",
+              backgroundColor: "rgba(99, 99, 241, 0.1)",
+              padding: "4px 10px",
+              borderRadius: "full",
+            })}
+          >
+            Step {step} of 3
+          </span>
         </div>
 
-        {/* MODE: WELCOME SCREEN */}
-        {mode === "welcome" && (
-          <FLPCard
-            className={css({
-              padding: { base: "20px 16px", sm: "32px 24px", md: "40px 32px" },
-              borderRadius: "2xl",
-              border: "1px solid",
-              borderColor: "border",
+        {/* Pre-loaded Seed Banner */}
+        {showSeedBanner && seed && (
+          <div
+            style={{
               display: "flex",
               flexDirection: "column",
-              gap: { base: "16px", md: "24px" },
-              boxShadow: "sm",
-            })}
+              gap: "10px",
+              padding: "14px 18px",
+              borderRadius: "12px",
+              backgroundColor: "rgba(16, 185, 129, 0.08)",
+              border: "1px solid rgba(16, 185, 129, 0.3)",
+              fontSize: "13px",
+              color: "text.primary",
+            }}
           >
-            {/* Seed Hydration Banner */}
-            {showSeedBanner && seed && (
-              <div
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: "10px",
-                  padding: "14px 18px",
-                  borderRadius: "12px",
-                  backgroundColor: "rgba(16, 185, 129, 0.08)",
-                  border: "1px solid rgba(16, 185, 129, 0.3)",
-                  fontSize: "13px",
-                  color: "text.primary",
-                }}
-              >
-                <div
-                  style={{ display: "flex", alignItems: "center", gap: "8px", fontWeight: "600" }}
-                >
-                  <FaCheckCircle style={{ color: "#10b981", flexShrink: 0 }} />
-                  <span>
-                    We've pre-loaded your £{(seed.annualIncome ?? 0).toLocaleString()} salary and
-                    savings baseline from the calculator.
-                  </span>
-                </div>
-                <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
-                  <FLPButton
-                    size="sm"
-                    variant="primary"
-                    onClick={handleFinish}
-                    disabled={isSubmitting}
-                  >
-                    {isSubmitting ? "Launching..." : "Launch Dashboard with this Baseline (10s) →"}
-                  </FLPButton>
-                  <FLPButton
-                    size="sm"
-                    variant="outline"
-                    onClick={() => {
-                      setProgressiveStep(1);
-                      setMode("progressive");
-                    }}
-                  >
-                    Review & Tweak Numbers
-                  </FLPButton>
-                </div>
-              </div>
-            )}
-
-            <div style={{ textAlign: "center" }}>
-              <div
-                className={css({
-                  width: "64px",
-                  height: "64px",
-                  borderRadius: "full",
-                  backgroundColor: "rgba(99, 99, 241, 0.12)",
-                  color: "primary",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontSize: "28px",
-                  margin: "0 auto 16px",
-                })}
-              >
-                <FaRocket />
-              </div>
-              <FLPHeading as="h1" color="blue.500" size="xl">
-                Welcome to Flump{user?.name ? `, ${user.name}` : ""}
-              </FLPHeading>
-              <FLPText
-                color="text.muted"
-                fontSize="sm"
-                style={{ marginTop: "8px", maxWidth: "480px", marginInline: "auto" }}
-              >
-                Flump adapts to your individual financial situation. Set your 4 baseline pillars in
-                90 seconds, answer a quick questionnaire, or choose your modules manually.
-              </FLPText>
-            </div>
-
-            {/* 3 Onboarding Options */}
-            <div
-              className={css({
-                display: "grid",
-                gridTemplateColumns: { base: "1fr", sm: "1fr 1fr" },
-                gap: "16px",
-                marginTop: "8px",
-              })}
-            >
-              <button
-                className={css({
-                  padding: "24px 20px",
-                  borderRadius: "xl",
-                  border: "2px solid",
-                  borderColor: "primary",
-                  backgroundColor: "rgba(99, 99, 241, 0.04)",
-                  cursor: "pointer",
-                  textAlign: "left",
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: "10px",
-                  transition: "all 0.2s ease",
-                  _hover: {
-                    transform: "translateY(-2px)",
-                    boxShadow: "md",
-                    backgroundColor: "rgba(99, 99, 241, 0.08)",
-                  },
-                })}
-                type="button"
-                onClick={() => {
-                  setCurrentQuestionIndex(0);
-                  setCameFromQuiz(true);
-                  setMode("quiz");
-                }}
-              >
-                <div
-                  style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}
-                >
-                  <span
-                    className={css({
-                      fontSize: "xs",
-                      fontWeight: "bold",
-                      color: "primary",
-                      backgroundColor: "rgba(99, 99, 241, 0.15)",
-                      padding: "2px 8px",
-                      borderRadius: "full",
-                    })}
-                  >
-                    Quick Start
-                  </span>
-                  <FaArrowRight color="var(--colors-primary)" size={14} />
-                </div>
-                <div>
-                  <FLPHeading as="h3" size="sm">
-                    Answer 5 Quick Questions
-                  </FLPHeading>
-                  <FLPText color="text.muted" fontSize="xs" style={{ marginTop: "4px" }}>
-                    We'll tailor your sections based on your housing, pension, and employment setup.
-                  </FLPText>
-                </div>
-              </button>
-
-              <button
-                className={css({
-                  padding: "24px 20px",
-                  borderRadius: "xl",
-                  border: "1px solid",
-                  borderColor: "border",
-                  backgroundColor: "surface",
-                  cursor: "pointer",
-                  textAlign: "left",
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: "10px",
-                  transition: "all 0.2s ease",
-                  _hover: {
-                    borderColor: "primary",
-                    transform: "translateY(-2px)",
-                    boxShadow: "sm",
-                  },
-                })}
-                type="button"
-                onClick={() => {
-                  setCameFromQuiz(false);
-                  setMode("manual");
-                }}
-              >
-                <div
-                  style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}
-                >
-                  <span
-                    className={css({
-                      fontSize: "xs",
-                      fontWeight: "medium",
-                      color: "text.muted",
-                    })}
-                  >
-                    Direct Setup
-                  </span>
-                  <FaSlidersH color="var(--colors-text-muted)" size={14} />
-                </div>
-                <div>
-                  <FLPHeading as="h3" size="sm">
-                    Choose Modules Manually
-                  </FLPHeading>
-                  <FLPText color="text.muted" fontSize="xs" style={{ marginTop: "4px" }}>
-                    Browse all available financial modules and toggle each one on or off yourself.
-                  </FLPText>
-                </div>
-              </button>
-            </div>
-          </FLPCard>
-        )}
-
-        {/* MODE: PROGRESSIVE BASELINE FLOW */}
-        {mode === "progressive" && (
-          <FLPCard
-            className={css({
-              padding: { base: "20px 16px", sm: "32px 24px", md: "36px 32px" },
-              borderRadius: "2xl",
-              border: "1px solid",
-              borderColor: "border",
-              display: "flex",
-              flexDirection: "column",
-              gap: { base: "20px", md: "24px" },
-              boxShadow: "sm",
-            })}
-          >
-            {/* Step Pills */}
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                borderBottom: "1px solid var(--colors-border)",
-                paddingBottom: "16px",
-              }}
-            >
-              <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-                <span
-                  style={{
-                    padding: "4px 10px",
-                    borderRadius: "full",
-                    fontSize: "12px",
-                    fontWeight: 700,
-                    backgroundColor:
-                      progressiveStep === 1 ? "var(--colors-primary)" : "var(--colors-surface)",
-                    color: progressiveStep === 1 ? "#fff" : "var(--colors-text-muted)",
-                    border: "1px solid",
-                    borderColor: progressiveStep === 1 ? "transparent" : "var(--colors-border)",
-                  }}
-                >
-                  1. Income & Tax
-                </span>
-                <span style={{ color: "var(--colors-text-muted)" }}>→</span>
-                <span
-                  style={{
-                    padding: "4px 10px",
-                    borderRadius: "full",
-                    fontSize: "12px",
-                    fontWeight: 700,
-                    backgroundColor:
-                      progressiveStep === 2 ? "var(--colors-primary)" : "var(--colors-surface)",
-                    color: progressiveStep === 2 ? "#fff" : "var(--colors-text-muted)",
-                    border: "1px solid",
-                    borderColor: progressiveStep === 2 ? "transparent" : "var(--colors-border)",
-                  }}
-                >
-                  2. Cash & Debt
-                </span>
-                <span style={{ color: "var(--colors-text-muted)" }}>→</span>
-                <span
-                  style={{
-                    padding: "4px 10px",
-                    borderRadius: "full",
-                    fontSize: "12px",
-                    fontWeight: 700,
-                    backgroundColor:
-                      progressiveStep === 3 ? "var(--colors-primary)" : "var(--colors-surface)",
-                    color: progressiveStep === 3 ? "#fff" : "var(--colors-text-muted)",
-                    border: "1px solid",
-                    borderColor: progressiveStep === 3 ? "transparent" : "var(--colors-border)",
-                  }}
-                >
-                  3. Workspace
-                </span>
-              </div>
-              <span
-                style={{ fontSize: "12px", color: "var(--colors-text-muted)", fontWeight: 500 }}
-              >
-                Step {progressiveStep} of 3
+            <div style={{ display: "flex", alignItems: "center", gap: "8px", fontWeight: "600" }}>
+              <FaCheckCircle style={{ color: "#10b981", flexShrink: 0 }} />
+              <span>
+                We've pre-loaded your £
+                {(seed.annualIncome ?? seed.annualGrossSalary ?? grossSalary).toLocaleString()}{" "}
+                salary and savings baseline from the calculator.
               </span>
             </div>
+            <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
+              <FLPButton size="sm" variant="primary" onClick={handleFinish} disabled={isSubmitting}>
+                {isSubmitting ? "Launching..." : "Launch Dashboard with this Baseline (10s) →"}
+              </FLPButton>
+              <FLPButton size="sm" variant="outline" onClick={() => setShowSeedBanner(false)}>
+                Review & Tweak Numbers
+              </FLPButton>
+            </div>
+          </div>
+        )}
 
-            {/* STEP 1: INCOME & TAX STATUS */}
-            {progressiveStep === 1 && (
-              <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
-                <div>
-                  <FLPHeading as="h2" size="md">
-                    Step 1: Focus & Baseline
-                  </FLPHeading>
-                  <FLPText color="text.muted" fontSize="xs" style={{ marginTop: "4px" }}>
-                    Select your primary objective to adapt your dashboard experience, tools, and
-                    calculators.
-                  </FLPText>
+        {/* Step Indicator Tabs */}
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr 1fr",
+            gap: "8px",
+          }}
+        >
+          <button
+            type="button"
+            onClick={() => setStep(1)}
+            style={{
+              padding: "8px 10px",
+              borderRadius: "8px",
+              border: "1px solid",
+              borderColor: step === 1 ? "var(--colors-primary)" : "var(--colors-border)",
+              backgroundColor: step === 1 ? "rgba(99, 102, 241, 0.08)" : "transparent",
+              color: step === 1 ? "var(--colors-primary)" : "var(--colors-text-muted)",
+              fontSize: "12px",
+              fontWeight: 700,
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "6px",
+            }}
+          >
+            <FaUser size={12} /> 1. You & Income
+          </button>
+          <button
+            type="button"
+            onClick={() => setStep(2)}
+            style={{
+              padding: "8px 10px",
+              borderRadius: "8px",
+              border: "1px solid",
+              borderColor: step === 2 ? "var(--colors-primary)" : "var(--colors-border)",
+              backgroundColor: step === 2 ? "rgba(99, 102, 241, 0.08)" : "transparent",
+              color: step === 2 ? "var(--colors-primary)" : "var(--colors-text-muted)",
+              fontSize: "12px",
+              fontWeight: 700,
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "6px",
+            }}
+          >
+            <FaHome size={12} /> 2. Housing & Outgoings
+          </button>
+          <button
+            type="button"
+            onClick={() => setStep(3)}
+            style={{
+              padding: "8px 10px",
+              borderRadius: "8px",
+              border: "1px solid",
+              borderColor: step === 3 ? "var(--colors-primary)" : "var(--colors-border)",
+              backgroundColor: step === 3 ? "rgba(99, 102, 241, 0.08)" : "transparent",
+              color: step === 3 ? "var(--colors-primary)" : "var(--colors-text-muted)",
+              fontSize: "12px",
+              fontWeight: 700,
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "6px",
+            }}
+          >
+            <FaPiggyBank size={12} /> 3. Savings & Debt
+          </button>
+        </div>
+
+        {/* Card Content */}
+        <FLPCard
+          className={css({
+            padding: { base: "20px 16px", sm: "32px 24px" },
+            borderRadius: "2xl",
+            border: "1px solid",
+            borderColor: "border",
+            display: "flex",
+            flexDirection: "column",
+            gap: "20px",
+            boxShadow: "sm",
+          })}
+        >
+          {/* STEP 1: YOU & INCOME */}
+          {step === 1 && (
+            <div style={{ display: "flex", flexDirection: "column", gap: "18px" }}>
+              <div>
+                <FLPHeading as="h2" size="md">
+                  Step 1: You & Income
+                </FLPHeading>
+                <FLPText color="text.muted" fontSize="xs" style={{ marginTop: "4px" }}>
+                  Your age and income calculate your net take-home and 10–30 year compound
+                  projections.
+                </FLPText>
+              </div>
+
+              {/* Age & Employment Type */}
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px" }}>
+                <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                  <label htmlFor="baseline-age" style={{ fontSize: "13px", fontWeight: 600 }}>
+                    Current Age
+                  </label>
+                  <input
+                    id="baseline-age"
+                    type="number"
+                    min={18}
+                    max={85}
+                    value={age}
+                    onChange={(e) => setAge(Number(e.target.value) || 0)}
+                    style={{
+                      padding: "8px 12px",
+                      borderRadius: "8px",
+                      border: "1px solid var(--colors-border)",
+                      backgroundColor: "var(--colors-surface)",
+                      color: "inherit",
+                    }}
+                  />
+                  <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", marginTop: "2px" }}>
+                    {[25, 32, 40, 50].map((preset) => (
+                      <button
+                        key={preset}
+                        type="button"
+                        onClick={() => setAge(preset)}
+                        style={{
+                          padding: "2px 8px",
+                          borderRadius: "4px",
+                          fontSize: "11px",
+                          border: "1px solid",
+                          borderColor:
+                            age === preset ? "var(--colors-primary)" : "var(--colors-border)",
+                          backgroundColor:
+                            age === preset ? "rgba(99, 102, 241, 0.1)" : "transparent",
+                          color: age === preset ? "var(--colors-primary)" : "inherit",
+                          cursor: "pointer",
+                        }}
+                      >
+                        {preset}
+                      </button>
+                    ))}
+                  </div>
                 </div>
 
-                {/* Focus Selector */}
-                <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                  <span style={{ fontSize: "13px", fontWeight: 600 }}>
-                    Where is your primary focus right now?
-                  </span>
-                  <div
+                <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                  <label
+                    htmlFor="baseline-employment"
+                    style={{ fontSize: "13px", fontWeight: 600 }}
+                  >
+                    Employment Setup
+                  </label>
+                  <select
+                    id="baseline-employment"
+                    value={employmentType}
+                    onChange={(e) => setEmploymentType(e.target.value as any)}
                     style={{
-                      display: "grid",
-                      gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
-                      gap: "10px",
+                      padding: "8px 12px",
+                      borderRadius: "8px",
+                      border: "1px solid var(--colors-border)",
+                      backgroundColor: "var(--colors-surface)",
+                      color: "inherit",
                     }}
                   >
-                    <button
-                      type="button"
-                      onClick={() => handleSelectFocus("debt")}
-                      style={{
-                        padding: "12px 14px",
-                        borderRadius: "10px",
-                        border: "2px solid",
-                        borderColor: primaryFocus === "debt" ? "#ef4444" : "var(--colors-border)",
-                        backgroundColor:
-                          primaryFocus === "debt"
-                            ? "rgba(239, 68, 68, 0.05)"
-                            : "var(--colors-surface)",
-                        textAlign: "left",
-                        cursor: "pointer",
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: "4px",
-                      }}
-                    >
-                      <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                        <span style={{ fontSize: "16px" }}>🔥</span>
-                        <strong
-                          style={{
-                            fontSize: "13px",
-                            color: primaryFocus === "debt" ? "#ef4444" : "inherit",
-                          }}
-                        >
-                          Clear debt & stabilize
-                        </strong>
-                      </div>
-                      <span style={{ fontSize: "11px", color: "var(--colors-text-muted)" }}>
-                        Crush credit card & loan interest, find margin, and reach £0 debt.
-                      </span>
-                    </button>
+                    <option value="employed">Employed (PAYE)</option>
+                    <option value="self-employed">Self-Employed (Class 4 NI)</option>
+                  </select>
+                </div>
+              </div>
 
+              {/* Income Mode Toggle & Input */}
+              <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                <div
+                  style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}
+                >
+                  <label htmlFor="baseline-income" style={{ fontSize: "13px", fontWeight: 600 }}>
+                    {incomeMode === "gross"
+                      ? "Annual Gross Salary (£)"
+                      : "Monthly Take-Home Pay (£)"}
+                  </label>
+                  <div style={{ display: "flex", gap: "6px" }}>
                     <button
                       type="button"
-                      onClick={() => handleSelectFocus("savings")}
+                      onClick={() => setIncomeMode("gross")}
                       style={{
-                        padding: "12px 14px",
-                        borderRadius: "10px",
-                        border: "2px solid",
+                        padding: "2px 8px",
+                        borderRadius: "4px",
+                        fontSize: "11px",
+                        fontWeight: 600,
+                        border: "1px solid",
                         borderColor:
-                          primaryFocus === "savings" ? "#10b981" : "var(--colors-border)",
+                          incomeMode === "gross" ? "var(--colors-primary)" : "var(--colors-border)",
                         backgroundColor:
-                          primaryFocus === "savings"
-                            ? "rgba(16, 185, 129, 0.05)"
-                            : "var(--colors-surface)",
-                        textAlign: "left",
+                          incomeMode === "gross" ? "rgba(99, 102, 241, 0.1)" : "transparent",
+                        color: incomeMode === "gross" ? "var(--colors-primary)" : "inherit",
                         cursor: "pointer",
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: "4px",
                       }}
                     >
-                      <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                        <span style={{ fontSize: "16px" }}>🛡️</span>
-                        <strong
-                          style={{
-                            fontSize: "13px",
-                            color: primaryFocus === "savings" ? "#10b981" : "inherit",
-                          }}
-                        >
-                          Buffer & protect
-                        </strong>
-                      </div>
-                      <span style={{ fontSize: "11px", color: "var(--colors-text-muted)" }}>
-                        Build a £1,000 starter buffer and establish a 3–6 month emergency runway.
-                      </span>
+                      Annual Gross
                     </button>
-
                     <button
                       type="button"
-                      onClick={() => handleSelectFocus("wealth")}
+                      onClick={() => setIncomeMode("net")}
                       style={{
-                        padding: "12px 14px",
-                        borderRadius: "10px",
-                        border: "2px solid",
+                        padding: "2px 8px",
+                        borderRadius: "4px",
+                        fontSize: "11px",
+                        fontWeight: 600,
+                        border: "1px solid",
                         borderColor:
-                          primaryFocus === "wealth"
-                            ? "var(--colors-primary)"
-                            : "var(--colors-border)",
+                          incomeMode === "net" ? "var(--colors-primary)" : "var(--colors-border)",
                         backgroundColor:
-                          primaryFocus === "wealth"
-                            ? "rgba(99, 99, 241, 0.05)"
-                            : "var(--colors-surface)",
-                        textAlign: "left",
+                          incomeMode === "net" ? "rgba(99, 102, 241, 0.1)" : "transparent",
+                        color: incomeMode === "net" ? "var(--colors-primary)" : "inherit",
                         cursor: "pointer",
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: "4px",
                       }}
                     >
-                      <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                        <span style={{ fontSize: "16px" }}>🚀</span>
-                        <strong
-                          style={{
-                            fontSize: "13px",
-                            color: primaryFocus === "wealth" ? "var(--colors-primary)" : "inherit",
-                          }}
-                        >
-                          Optimize wealth & tax
-                        </strong>
-                      </div>
-                      <span style={{ fontSize: "11px", color: "var(--colors-text-muted)" }}>
-                        Salary sacrifice, £100k tax trap, pensions, and mortgage equity.
-                      </span>
+                      Monthly Net
                     </button>
                   </div>
                 </div>
 
-                <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                  <label
-                    htmlFor="onboarding-gross-salary"
-                    style={{ fontSize: "13px", fontWeight: 600 }}
-                  >
-                    Annual Gross Salary (£)
-                  </label>
+                {incomeMode === "gross" ? (
+                  <>
+                    <input
+                      id="baseline-income"
+                      type="number"
+                      step={1000}
+                      value={grossSalary}
+                      onChange={(e) => setGrossSalary(Number(e.target.value) || 0)}
+                      style={{
+                        padding: "10px 14px",
+                        borderRadius: "8px",
+                        border: "1px solid var(--colors-border)",
+                        backgroundColor: "var(--colors-surface)",
+                        color: "inherit",
+                        fontSize: "16px",
+                        fontWeight: 600,
+                      }}
+                    />
+                    <div
+                      style={{ display: "flex", gap: "6px", flexWrap: "wrap", marginTop: "2px" }}
+                    >
+                      {[32000, 45000, 65000, 105000].map((preset) => (
+                        <button
+                          key={preset}
+                          type="button"
+                          onClick={() => setGrossSalary(preset)}
+                          style={{
+                            padding: "3px 8px",
+                            borderRadius: "6px",
+                            fontSize: "11px",
+                            border: "1px solid",
+                            borderColor:
+                              grossSalary === preset
+                                ? "var(--colors-primary)"
+                                : "var(--colors-border)",
+                            backgroundColor:
+                              grossSalary === preset ? "rgba(99, 102, 241, 0.1)" : "transparent",
+                            color: grossSalary === preset ? "var(--colors-primary)" : "inherit",
+                            cursor: "pointer",
+                          }}
+                        >
+                          £{preset.toLocaleString()}
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                ) : (
                   <input
-                    id="onboarding-gross-salary"
+                    id="baseline-income"
                     type="number"
-                    step={1000}
-                    value={grossSalary}
-                    onChange={(e) => setGrossSalary(Number(e.target.value) || 0)}
+                    step={100}
+                    value={monthlyTakeHomeOverride}
+                    onChange={(e) => setMonthlyTakeHomeOverride(Number(e.target.value) || 0)}
                     style={{
                       padding: "10px 14px",
                       borderRadius: "8px",
@@ -928,51 +759,192 @@ export default function OnboardingRoute() {
                       fontWeight: 600,
                     }}
                   />
-                  <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginTop: "4px" }}>
-                    {[38000, 65000, 105000, 135000].map((preset) => (
-                      <button
-                        key={preset}
-                        type="button"
-                        onClick={() => setGrossSalary(preset)}
-                        style={{
-                          padding: "4px 10px",
-                          borderRadius: "6px",
-                          fontSize: "12px",
-                          border: "1px solid",
-                          borderColor:
-                            grossSalary === preset
-                              ? "var(--colors-primary)"
-                              : "var(--colors-border)",
-                          backgroundColor:
-                            grossSalary === preset ? "rgba(99, 102, 241, 0.1)" : "transparent",
-                          color: grossSalary === preset ? "var(--colors-primary)" : "inherit",
-                          cursor: "pointer",
-                        }}
-                      >
-                        £{preset.toLocaleString()}
-                      </button>
-                    ))}
-                  </div>
-                </div>
+                )}
+              </div>
 
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
-                  <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+              {/* Student Loan Plan */}
+              <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                <label
+                  htmlFor="baseline-student-loan"
+                  style={{ fontSize: "13px", fontWeight: 600 }}
+                >
+                  UK Student Loan Plan
+                </label>
+                <select
+                  id="baseline-student-loan"
+                  value={studentLoanPlan}
+                  onChange={(e) => setStudentLoanPlan(e.target.value)}
+                  style={{
+                    padding: "8px 12px",
+                    borderRadius: "8px",
+                    border: "1px solid var(--colors-border)",
+                    backgroundColor: "var(--colors-surface)",
+                    color: "inherit",
+                  }}
+                >
+                  <option value="NONE">None</option>
+                  <option value="PLAN_1">Plan 1 (Pre-2012)</option>
+                  <option value="PLAN_2">Plan 2 (Post-2012)</option>
+                  <option value="PLAN_4">Plan 4 (Scotland)</option>
+                  <option value="PLAN_5">Plan 5 (Post-2023)</option>
+                  <option value="POSTGRAD">Postgraduate Loan</option>
+                </select>
+              </div>
+
+              <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "8px" }}>
+                <FLPButton size="md" variant="primary" onClick={() => setStep(2)}>
+                  Next: Housing & Outgoings →
+                </FLPButton>
+              </div>
+            </div>
+          )}
+
+          {/* STEP 2: HOUSING & OUTGOINGS */}
+          {step === 2 && (
+            <div style={{ display: "flex", flexDirection: "column", gap: "18px" }}>
+              <div>
+                <FLPHeading as="h2" size="md">
+                  Step 2: Housing & Monthly Outgoings
+                </FLPHeading>
+                <FLPText color="text.muted" fontSize="xs" style={{ marginTop: "4px" }}>
+                  Your regular living costs power your Emergency Runway and Safe-to-Spend weekly
+                  allowance.
+                </FLPText>
+              </div>
+
+              {/* Housing Status Selector */}
+              <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                <span style={{ fontSize: "13px", fontWeight: 600 }}>Housing Status</span>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "8px" }}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setHousingStatus("renting");
+                      setMortgageBalance(0);
+                    }}
+                    style={{
+                      padding: "10px",
+                      borderRadius: "8px",
+                      border: "2px solid",
+                      borderColor:
+                        housingStatus === "renting"
+                          ? "var(--colors-primary)"
+                          : "var(--colors-border)",
+                      backgroundColor:
+                        housingStatus === "renting" ? "rgba(99, 102, 241, 0.08)" : "transparent",
+                      color: "inherit",
+                      fontSize: "12px",
+                      fontWeight: 600,
+                      cursor: "pointer",
+                      textAlign: "center",
+                    }}
+                  >
+                    🏢 Renting
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setHousingStatus("mortgage");
+                      if (mortgageBalance === 0) setMortgageBalance(180000);
+                      if (propertyValue === 0) setPropertyValue(240000);
+                    }}
+                    style={{
+                      padding: "10px",
+                      borderRadius: "8px",
+                      border: "2px solid",
+                      borderColor:
+                        housingStatus === "mortgage"
+                          ? "var(--colors-primary)"
+                          : "var(--colors-border)",
+                      backgroundColor:
+                        housingStatus === "mortgage" ? "rgba(99, 102, 241, 0.08)" : "transparent",
+                      color: "inherit",
+                      fontSize: "12px",
+                      fontWeight: 600,
+                      cursor: "pointer",
+                      textAlign: "center",
+                    }}
+                  >
+                    🏡 Mortgage
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setHousingStatus("own_outright");
+                      setMortgageBalance(0);
+                      if (propertyValue === 0) setPropertyValue(280000);
+                    }}
+                    style={{
+                      padding: "10px",
+                      borderRadius: "8px",
+                      border: "2px solid",
+                      borderColor:
+                        housingStatus === "own_outright"
+                          ? "var(--colors-primary)"
+                          : "var(--colors-border)",
+                      backgroundColor:
+                        housingStatus === "own_outright"
+                          ? "rgba(99, 102, 241, 0.08)"
+                          : "transparent",
+                      color: "inherit",
+                      fontSize: "12px",
+                      fontWeight: 600,
+                      cursor: "pointer",
+                      textAlign: "center",
+                    }}
+                  >
+                    🔑 Own Outright
+                  </button>
+                </div>
+              </div>
+
+              {/* Monthly Housing Cost (if not owning outright) */}
+              {housingStatus !== "own_outright" && (
+                <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                  <label
+                    htmlFor="baseline-housing-cost"
+                    style={{ fontSize: "13px", fontWeight: 600 }}
+                  >
+                    {housingStatus === "mortgage"
+                      ? "Monthly Mortgage Payment (£/mo)"
+                      : "Monthly Rent (£/mo)"}
+                  </label>
+                  <input
+                    id="baseline-housing-cost"
+                    type="number"
+                    step={50}
+                    value={monthlyHousingCost}
+                    onChange={(e) => setMonthlyHousingCost(Number(e.target.value) || 0)}
+                    style={{
+                      padding: "10px 14px",
+                      borderRadius: "8px",
+                      border: "1px solid var(--colors-border)",
+                      backgroundColor: "var(--colors-surface)",
+                      color: "inherit",
+                      fontSize: "15px",
+                    }}
+                  />
+                </div>
+              )}
+
+              {/* Property Value & Mortgage Balance if owning */}
+              {housingStatus !== "renting" && (
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
                     <label
-                      htmlFor="onboarding-pension-percent"
+                      htmlFor="baseline-property-val"
                       style={{ fontSize: "13px", fontWeight: 600 }}
                     >
-                      Workplace Pension (%)
+                      Property Value (£)
                     </label>
                     <input
-                      id="onboarding-pension-percent"
+                      id="baseline-property-val"
                       type="number"
-                      min={0}
-                      max={50}
-                      step={1}
-                      value={pensionPercent}
-                      onChange={(e) => setPensionPercent(Number(e.target.value) || 0)}
+                      step={5000}
+                      value={propertyValue}
+                      onChange={(e) => setPropertyValue(Number(e.target.value) || 0)}
                       style={{
-                        padding: "10px 14px",
+                        padding: "8px 12px",
                         borderRadius: "8px",
                         border: "1px solid var(--colors-border)",
                         backgroundColor: "var(--colors-surface)",
@@ -980,635 +952,293 @@ export default function OnboardingRoute() {
                       }}
                     />
                   </div>
-
-                  <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                    <label
-                      htmlFor="onboarding-employment-type"
-                      style={{ fontSize: "13px", fontWeight: 600 }}
-                    >
-                      Employment Setup
-                    </label>
-                    <select
-                      id="onboarding-employment-type"
-                      value={employmentType}
-                      onChange={(e) => setEmploymentType(e.target.value as any)}
-                      style={{
-                        padding: "10px 14px",
-                        borderRadius: "8px",
-                        border: "1px solid var(--colors-border)",
-                        backgroundColor: "var(--colors-surface)",
-                        color: "inherit",
-                      }}
-                    >
-                      <option value="employed">Employed (PAYE)</option>
-                      <option value="self-employed">Self-Employed</option>
-                    </select>
-                  </div>
-                </div>
-
-                {/* Live Take-Home Preview Card */}
-                <div
-                  style={{
-                    padding: "16px",
-                    borderRadius: "12px",
-                    backgroundColor: "rgba(99, 102, 241, 0.06)",
-                    border: "1px solid rgba(99, 102, 241, 0.2)",
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                  }}
-                >
-                  <div>
-                    <span
-                      style={{
-                        fontSize: "11px",
-                        textTransform: "uppercase",
-                        fontWeight: 700,
-                        color: "var(--colors-primary)",
-                      }}
-                    >
-                      Live Take-Home Preview
-                    </span>
-                    <div style={{ fontSize: "24px", fontWeight: 800, marginTop: "2px" }}>
-                      £{liveTakeHome.monthlyTakeHome.toLocaleString()}{" "}
-                      <span
-                        style={{
-                          fontSize: "13px",
-                          fontWeight: "normal",
-                          color: "var(--colors-text-muted)",
-                        }}
+                  {housingStatus === "mortgage" && (
+                    <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                      <label
+                        htmlFor="baseline-mortgage-bal"
+                        style={{ fontSize: "13px", fontWeight: 600 }}
                       >
-                        / month
-                      </span>
-                    </div>
-                  </div>
-                  <div style={{ textAlign: "right" }}>
-                    <span style={{ fontSize: "12px", color: "var(--colors-text-muted)" }}>
-                      Marginal Tax & NI Rate:
-                    </span>
-                    <div
-                      style={{
-                        fontSize: "16px",
-                        fontWeight: 700,
-                        color: liveTakeHome.trapAnalysis.isInTaxTrap
-                          ? "#ef4444"
-                          : "var(--colors-primary)",
-                      }}
-                    >
-                      {liveTakeHome.trapAnalysis.marginalRatePct}%
-                    </div>
-                  </div>
-                </div>
-
-                <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "8px" }}>
-                  <FLPButton size="md" variant="primary" onClick={() => setProgressiveStep(2)}>
-                    Next: Cash & Debt (30 sec) →
-                  </FLPButton>
-                </div>
-              </div>
-            )}
-
-            {/* STEP 2: HIGH-LEVEL CASH & DEBT */}
-            {progressiveStep === 2 && (
-              <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
-                <div>
-                  <FLPHeading as="h2" size="md">
-                    Step 2: High-Level Cash & Debt
-                  </FLPHeading>
-                  <FLPText color="text.muted" fontSize="xs" style={{ marginTop: "4px" }}>
-                    Enter rough balances so your Net Worth tracker and runway are immediately
-                    populated.
-                  </FLPText>
-                </div>
-
-                <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                  <div style={{ display: "flex", justifyContent: "space-between" }}>
-                    <label
-                      htmlFor="onboarding-cash-savings"
-                      style={{ fontSize: "13px", fontWeight: 600 }}
-                    >
-                      Total Cash & Emergency Savings
-                    </label>
-                    <span style={{ fontWeight: 700, color: "#10b981" }}>
-                      £{cashSavings.toLocaleString()}
-                    </span>
-                  </div>
-                  <input
-                    id="onboarding-cash-savings"
-                    type="range"
-                    min={0}
-                    max={150000}
-                    step={1000}
-                    value={cashSavings}
-                    onChange={(e) => setCashSavings(Number(e.target.value) || 0)}
-                  />
-                </div>
-
-                <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                  <div style={{ display: "flex", justifyContent: "space-between" }}>
-                    <label
-                      htmlFor="onboarding-investments"
-                      style={{ fontSize: "13px", fontWeight: 600 }}
-                    >
-                      Total Investments & Workplace Pensions
-                    </label>
-                    <span style={{ fontWeight: 700, color: "var(--colors-primary)" }}>
-                      £{investments.toLocaleString()}
-                    </span>
-                  </div>
-                  <input
-                    id="onboarding-investments"
-                    type="range"
-                    min={0}
-                    max={300000}
-                    step={2500}
-                    value={investments}
-                    onChange={(e) => setInvestments(Number(e.target.value) || 0)}
-                  />
-                </div>
-
-                <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                  <div style={{ display: "flex", justifyContent: "space-between" }}>
-                    <label
-                      htmlFor="onboarding-mortgage-debt"
-                      style={{ fontSize: "13px", fontWeight: 600 }}
-                    >
-                      Remaining Residential Mortgage or Debt
-                    </label>
-                    <span
-                      style={{ fontWeight: 700, color: mortgageDebt > 0 ? "#f59e0b" : "inherit" }}
-                    >
-                      £{mortgageDebt.toLocaleString()}
-                    </span>
-                  </div>
-                  <input
-                    id="onboarding-mortgage-debt"
-                    type="range"
-                    min={0}
-                    max={600000}
-                    step={5000}
-                    value={mortgageDebt}
-                    onChange={(e) => setMortgageDebt(Number(e.target.value) || 0)}
-                  />
-                </div>
-
-                {/* Net Worth Summary Preview */}
-                <div
-                  style={{
-                    padding: "14px 16px",
-                    borderRadius: "10px",
-                    backgroundColor: "var(--colors-surface)",
-                    border: "1px solid var(--colors-border)",
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                  }}
-                >
-                  <span style={{ fontSize: "13px", color: "var(--colors-text-muted)" }}>
-                    Starting Estimated Net Worth:
-                  </span>
-                  <span style={{ fontSize: "18px", fontWeight: 800, color: "#10b981" }}>
-                    £{(cashSavings + investments - mortgageDebt).toLocaleString()}
-                  </span>
-                </div>
-
-                <div style={{ display: "flex", justifyContent: "space-between", marginTop: "8px" }}>
-                  <FLPButton size="sm" variant="ghost" onClick={() => setProgressiveStep(1)}>
-                    ← Back to Income
-                  </FLPButton>
-                  <FLPButton size="md" variant="primary" onClick={() => setProgressiveStep(3)}>
-                    Next: Workspace Modules →
-                  </FLPButton>
-                </div>
-              </div>
-            )}
-
-            {/* STEP 3: WORKSPACE MODULE CONFIRMATION */}
-            {progressiveStep === 3 && (
-              <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
-                <div>
-                  <FLPHeading as="h2" size="md">
-                    Step 3: Confirm Your Workspace Modules
-                  </FLPHeading>
-                  <FLPText color="text.muted" fontSize="xs" style={{ marginTop: "4px" }}>
-                    We've auto-selected the modules matching your financial baseline.
-                  </FLPText>
-                </div>
-
-                <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                  {ALL_PAGE_KEYS.map((key) => {
-                    const cfg = APP_PAGES[key];
-                    const isChecked = selectedPages.includes(key);
-                    return (
-                      <button
-                        key={key}
-                        type="button"
-                        onClick={() => handleTogglePage(key)}
+                        Mortgage Balance (£)
+                      </label>
+                      <input
+                        id="baseline-mortgage-bal"
+                        type="number"
+                        step={5000}
+                        value={mortgageBalance}
+                        onChange={(e) => setMortgageBalance(Number(e.target.value) || 0)}
                         style={{
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "space-between",
-                          padding: "10px 14px",
-                          borderRadius: "10px",
-                          border: "1px solid",
-                          borderColor: isChecked ? "var(--colors-primary)" : "var(--colors-border)",
-                          backgroundColor: isChecked ? "rgba(99, 102, 241, 0.05)" : "transparent",
-                          cursor: "pointer",
+                          padding: "8px 12px",
+                          borderRadius: "8px",
+                          border: "1px solid var(--colors-border)",
+                          backgroundColor: "var(--colors-surface)",
                           color: "inherit",
-                          textAlign: "left",
                         }}
-                      >
-                        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                          <span style={{ fontWeight: 600, fontSize: "13px" }}>{cfg.label}</span>
-                          <span
-                            style={{
-                              fontSize: "10px",
-                              color: "var(--colors-text-muted)",
-                              textTransform: "uppercase",
-                            }}
-                          >
-                            {cfg.category}
-                          </span>
-                        </div>
-                        {isChecked ? (
-                          <FaCheckCircle style={{ color: "#10b981" }} />
-                        ) : (
-                          <FaRegCircle style={{ color: "var(--colors-text-muted)" }} />
-                        )}
-                      </button>
-                    );
-                  })}
+                      />
+                    </div>
+                  )}
                 </div>
+              )}
 
-                <div style={{ display: "flex", justifyContent: "space-between", marginTop: "8px" }}>
-                  <FLPButton size="sm" variant="ghost" onClick={() => setProgressiveStep(2)}>
-                    ← Back to Cash & Debt
-                  </FLPButton>
-                  <FLPButton
-                    size="md"
-                    variant="primary"
-                    disabled={isSubmitting || selectedPages.length === 0}
-                    onClick={handleFinish}
-                  >
-                    {isSubmitting ? "Launching..." : "Finish Setup & Launch Dashboard →"}
-                  </FLPButton>
-                </div>
-              </div>
-            )}
-          </FLPCard>
-        )}
-
-        {/* MODE: 5-QUESTION QUESTIONNAIRE */}
-        {mode === "quiz" && (
-          <FLPCard
-            className={css({
-              padding: { base: "16px 14px", sm: "28px 24px", md: "36px 32px" },
-              borderRadius: "2xl",
-              border: "1px solid",
-              borderColor: "border",
-              display: "flex",
-              flexDirection: "column",
-              gap: { base: "16px", md: "24px" },
-              boxShadow: "sm",
-            })}
-          >
-            {/* Progress Bar */}
-            <div>
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  marginBottom: "8px",
-                }}
-              >
-                <span
-                  className={css({
-                    fontSize: "xs",
-                    fontWeight: "bold",
-                    color: "primary",
-                    textTransform: "uppercase",
-                    letterSpacing: "wider",
-                  })}
+              {/* Other Monthly Outgoings */}
+              <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                <label
+                  htmlFor="baseline-other-outgoings"
+                  style={{ fontSize: "13px", fontWeight: 600 }}
                 >
-                  Question {currentQuestionIndex + 1} of {QUESTIONS.length}
-                </span>
-                <span className={css({ fontSize: "xs", color: "text.muted" })}>
-                  {currentQ.category}
-                </span>
-              </div>
-              <div
-                className={css({
-                  width: "100%",
-                  height: "6px",
-                  backgroundColor: "secondary",
-                  borderRadius: "full",
-                  overflow: "hidden",
-                })}
-              >
-                <div
-                  className={css({
-                    height: "100%",
-                    backgroundColor: "primary",
-                    borderRadius: "full",
-                    transition: "width 0.3s ease",
-                  })}
+                  Other Monthly Outgoings (Bills, Living, Subs, Food)
+                </label>
+                <input
+                  id="baseline-other-outgoings"
+                  type="number"
+                  step={50}
+                  value={monthlyOtherOutgoings}
+                  onChange={(e) => setMonthlyOtherOutgoings(Number(e.target.value) || 0)}
                   style={{
-                    width: `${((currentQuestionIndex + 1) / QUESTIONS.length) * 100}%`,
+                    padding: "10px 14px",
+                    borderRadius: "8px",
+                    border: "1px solid var(--colors-border)",
+                    backgroundColor: "var(--colors-surface)",
+                    color: "inherit",
+                    fontSize: "15px",
+                  }}
+                />
+                <FLPText color="text.muted" fontSize="xs">
+                  A rough total is fine! You can break this down into individual budget categories
+                  later.
+                </FLPText>
+              </div>
+
+              <div style={{ display: "flex", justifyContent: "space-between", marginTop: "8px" }}>
+                <FLPButton size="sm" variant="ghost" onClick={() => setStep(1)}>
+                  <FaArrowLeft style={{ marginRight: "6px" }} /> Back
+                </FLPButton>
+                <FLPButton size="md" variant="primary" onClick={() => setStep(3)}>
+                  Next: Savings, Pension & Debt →
+                </FLPButton>
+              </div>
+            </div>
+          )}
+
+          {/* STEP 3: SAVINGS, PENSION & DEBT */}
+          {step === 3 && (
+            <div style={{ display: "flex", flexDirection: "column", gap: "18px" }}>
+              <div>
+                <FLPHeading as="h2" size="md">
+                  Step 3: Savings, Pension & Debt
+                </FLPHeading>
+                <FLPText color="text.muted" fontSize="xs" style={{ marginTop: "4px" }}>
+                  Rough balances to unlock Net Worth, Emergency Runway, and your Retirement
+                  Forecaster.
+                </FLPText>
+              </div>
+
+              {/* Total Cash & Savings */}
+              <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                <div style={{ display: "flex", justifyContent: "space-between" }}>
+                  <label htmlFor="baseline-savings" style={{ fontSize: "13px", fontWeight: 600 }}>
+                    Total Cash & ISA Savings (£)
+                  </label>
+                  <span style={{ fontWeight: 700, color: "#10b981" }}>
+                    £{cashSavings.toLocaleString()}
+                  </span>
+                </div>
+                <input
+                  id="baseline-savings"
+                  type="number"
+                  step={500}
+                  value={cashSavings}
+                  onChange={(e) => setCashSavings(Number(e.target.value) || 0)}
+                  style={{
+                    padding: "10px 14px",
+                    borderRadius: "8px",
+                    border: "1px solid var(--colors-border)",
+                    backgroundColor: "var(--colors-surface)",
+                    color: "inherit",
+                    fontSize: "15px",
                   }}
                 />
               </div>
-            </div>
 
-            {/* Question Card Content */}
-            <div
-              className={css({
-                display: "flex",
-                flexDirection: "column",
-                gap: "16px",
-                padding: { base: "8px 0", sm: "16px 0" },
-              })}
-            >
-              <div style={{ display: "flex", alignItems: "flex-start", gap: "16px" }}>
-                <div
-                  style={{
-                    width: "48px",
-                    height: "48px",
-                    borderRadius: "14px",
-                    backgroundColor: currentQ.iconBg,
-                    color: currentQ.iconColor,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    flexShrink: 0,
-                  }}
-                >
-                  {currentQ.icon}
+              {/* Pension Pot & Contribution */}
+              <div style={{ display: "grid", gridTemplateColumns: "1.2fr 0.8fr", gap: "12px" }}>
+                <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                  <label
+                    htmlFor="baseline-pension-pot"
+                    style={{ fontSize: "13px", fontWeight: 600 }}
+                  >
+                    Current Pension Pot (£)
+                  </label>
+                  <input
+                    id="baseline-pension-pot"
+                    type="number"
+                    step={1000}
+                    value={pensionPot}
+                    onChange={(e) => setPensionPot(Number(e.target.value) || 0)}
+                    style={{
+                      padding: "8px 12px",
+                      borderRadius: "8px",
+                      border: "1px solid var(--colors-border)",
+                      backgroundColor: "var(--colors-surface)",
+                      color: "inherit",
+                    }}
+                  />
                 </div>
-                <div>
-                  <FLPHeading as="h2" size="md">
-                    {currentQ.title}
-                  </FLPHeading>
-                  <FLPText color="text.muted" fontSize="sm" style={{ marginTop: "6px" }}>
-                    {currentQ.description}
-                  </FLPText>
+                <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                  <label
+                    htmlFor="baseline-pension-pct"
+                    style={{ fontSize: "13px", fontWeight: 600 }}
+                  >
+                    Contribution (%)
+                  </label>
+                  <input
+                    id="baseline-pension-pct"
+                    type="number"
+                    min={0}
+                    max={50}
+                    step={1}
+                    value={pensionPercent}
+                    onChange={(e) => setPensionPercent(Number(e.target.value) || 0)}
+                    style={{
+                      padding: "8px 12px",
+                      borderRadius: "8px",
+                      border: "1px solid var(--colors-border)",
+                      backgroundColor: "var(--colors-surface)",
+                      color: "inherit",
+                    }}
+                  />
                 </div>
               </div>
+
+              {/* Total Unsecured Debt */}
+              <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                <div style={{ display: "flex", justifyContent: "space-between" }}>
+                  <label htmlFor="baseline-debt" style={{ fontSize: "13px", fontWeight: 600 }}>
+                    Total Cards & Personal Loans (Unsecured Debt)
+                  </label>
+                  <span
+                    style={{ fontWeight: 700, color: unsecuredDebt > 0 ? "#ef4444" : "inherit" }}
+                  >
+                    £{unsecuredDebt.toLocaleString()}
+                  </span>
+                </div>
+                <input
+                  id="baseline-debt"
+                  type="number"
+                  step={250}
+                  value={unsecuredDebt}
+                  onChange={(e) => setUnsecuredDebt(Number(e.target.value) || 0)}
+                  style={{
+                    padding: "10px 14px",
+                    borderRadius: "8px",
+                    border: "1px solid var(--colors-border)",
+                    backgroundColor: "var(--colors-surface)",
+                    color: "inherit",
+                    fontSize: "15px",
+                  }}
+                />
+                <FLPText color="text.muted" fontSize="xs">
+                  Exclude your mortgage. Enter £0 if debt-free.
+                </FLPText>
+              </div>
+
+              <div style={{ display: "flex", justifyContent: "space-between", marginTop: "8px" }}>
+                <FLPButton size="sm" variant="ghost" onClick={() => setStep(2)}>
+                  <FaArrowLeft style={{ marginRight: "6px" }} /> Back
+                </FLPButton>
+                <FLPButton
+                  size="md"
+                  variant="primary"
+                  disabled={isSubmitting}
+                  onClick={handleFinish}
+                >
+                  {isSubmitting ? "Launching..." : "Finish Setup & Launch Dashboard →"}
+                </FLPButton>
+              </div>
             </div>
+          )}
 
-            {/* Answer Buttons */}
-            <div
-              className={css({
-                display: "flex",
-                flexDirection: { base: "column", sm: "row" },
-                gap: "12px",
-              })}
-            >
-              <FLPButton
-                className={css({ flex: 1 })}
-                size="lg"
-                variant="primary"
-                onClick={() => handleAnswerQuestion(true)}
-              >
-                <FaCheck style={{ marginRight: "8px" }} /> {currentQ.yesLabel}
-              </FLPButton>
-              <FLPButton
-                className={css({ flex: 1 })}
-                size="lg"
-                variant="outline"
-                onClick={() => handleAnswerQuestion(false)}
-              >
-                {currentQ.noLabel}
-              </FLPButton>
-            </div>
-
-            {/* Bottom Nav */}
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                paddingTop: "12px",
-                borderTop: "1px solid var(--colors-border)",
-              }}
-            >
-              <FLPButton
-                size="sm"
-                variant="ghost"
-                onClick={() => {
-                  if (currentQuestionIndex > 0) {
-                    setCurrentQuestionIndex((prev) => prev - 1);
-                  } else {
-                    setMode("welcome");
-                  }
-                }}
-              >
-                <FaArrowLeft style={{ marginRight: "6px" }} /> Back
-              </FLPButton>
-
-              <button
-                className={css({
-                  fontSize: "xs",
-                  color: "text.muted",
-                  background: "none",
-                  border: "none",
-                  cursor: "pointer",
-                  _hover: { color: "primary", textDecoration: "underline" },
-                })}
-                type="button"
-                onClick={() => {
-                  setCameFromQuiz(true);
-                  setMode("manual");
-                }}
-              >
-                Skip to Review
-              </button>
-            </div>
-          </FLPCard>
-        )}
-
-        {/* MODE: MANUAL MODULE SELECTION */}
-        {mode === "manual" && (
-          <FLPCard
-            className={css({
-              padding: { base: "16px 14px", sm: "28px 24px", md: "36px 32px" },
-              borderRadius: "2xl",
-              border: "1px solid",
-              borderColor: "border",
-              display: "flex",
-              flexDirection: "column",
-              gap: { base: "16px", md: "20px" },
-              boxShadow: "sm",
-            })}
+          {/* Live Baseline Summary Bar */}
+          <div
+            style={{
+              marginTop: "8px",
+              padding: "14px 16px",
+              borderRadius: "12px",
+              backgroundColor: "rgba(99, 102, 241, 0.05)",
+              border: "1px solid rgba(99, 102, 241, 0.2)",
+              display: "grid",
+              gridTemplateColumns: "repeat(3, 1fr)",
+              gap: "8px",
+              textAlign: "center",
+            }}
           >
             <div>
+              <span
+                style={{
+                  fontSize: "11px",
+                  color: "var(--colors-text-muted)",
+                  textTransform: "uppercase",
+                  fontWeight: 600,
+                }}
+              >
+                Net Take-Home
+              </span>
               <div
                 style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  marginBottom: "4px",
+                  fontSize: "16px",
+                  fontWeight: 800,
+                  marginTop: "2px",
+                  color: "var(--colors-primary)",
                 }}
               >
-                <FLPHeading as="h2" size="md">
-                  Select Your Active Modules
-                </FLPHeading>
-                <span
-                  className={css({
-                    fontSize: "xs",
-                    color: "primary",
-                    fontWeight: "bold",
-                    backgroundColor: "rgba(99, 99, 241, 0.1)",
-                    padding: "2px 8px",
-                    borderRadius: "full",
-                  })}
-                >
-                  {selectedPages.length} of {ALL_PAGE_KEYS.length} enabled
-                </span>
+                £{liveTakeHome.monthlyTakeHome.toLocaleString()}/mo
               </div>
-              <FLPText color="text.muted" fontSize="sm" style={{ marginTop: "4px" }}>
-                Choose which financial sections to enable. You can change these anytime in Profile.
-              </FLPText>
             </div>
-
-            {/* List of Modules */}
-            <div className={css({ display: "flex", flexDirection: "column", gap: "10px" })}>
-              {ALL_PAGE_KEYS.map((key) => {
-                const config = APP_PAGES[key];
-                const isChecked = selectedPages.includes(key);
-
-                return (
-                  <button
-                    key={key}
-                    className={css({
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                      width: "100%",
-                      textAlign: "left",
-                      fontFamily: "inherit",
-                      padding: "14px 16px",
-                      borderRadius: "xl",
-                      border: "1px solid",
-                      borderColor: isChecked ? "primary" : "border",
-                      backgroundColor: isChecked ? "rgba(99, 99, 241, 0.04)" : "surface",
-                      cursor: "pointer",
-                      transition: "all 0.15s ease",
-                      _hover: {
-                        borderColor: "primary",
-                      },
-                    })}
-                    type="button"
-                    onClick={() => handleTogglePage(key)}
-                  >
-                    <div
-                      style={{ display: "flex", alignItems: "center", gap: "12px", minWidth: 0 }}
-                    >
-                      <div
-                        style={{
-                          width: "36px",
-                          height: "36px",
-                          borderRadius: "lg",
-                          backgroundColor: `${config.badgeColor}20`,
-                          color: config.badgeColor,
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          flexShrink: 0,
-                        }}
-                      >
-                        {key === "accounts" && <FaWallet size={16} />}
-                        {key === "budget" && <FaCoins size={16} />}
-                        {key === "savings" && <FaPiggyBank size={16} />}
-                        {key === "pension" && <FaShieldAlt size={16} />}
-                        {key === "mortgage" && <FaBuilding size={16} />}
-                        {key === "forecast" && <FaChartLine size={16} />}
-                        {key === "tax" && <FaFileInvoiceDollar size={16} />}
-                      </div>
-                      <div style={{ minWidth: 0 }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                          <FLPHeading as="h4" size="xs">
-                            {config.label}
-                          </FLPHeading>
-                          <span
-                            className={css({
-                              fontSize: "10px",
-                              fontWeight: "bold",
-                              textTransform: "uppercase",
-                              padding: "1px 6px",
-                              borderRadius: "full",
-                              backgroundColor: "secondary",
-                              color: "text.muted",
-                            })}
-                          >
-                            {config.category}
-                          </span>
-                        </div>
-                        <FLPText
-                          color="text.muted"
-                          fontSize="xs"
-                          style={{
-                            marginTop: "2px",
-                            whiteSpace: "nowrap",
-                            overflow: "hidden",
-                            textOverflow: "ellipsis",
-                          }}
-                        >
-                          {config.description}
-                        </FLPText>
-                      </div>
-                    </div>
-
-                    <div style={{ marginLeft: "12px", flexShrink: 0 }}>
-                      {isChecked ? (
-                        <FaCheckCircle style={{ color: "#10b981", fontSize: "20px" }} />
-                      ) : (
-                        <FaRegCircle
-                          style={{ color: "var(--colors-text-muted)", fontSize: "20px" }}
-                        />
-                      )}
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-
-            {/* Bottom Actions */}
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                paddingTop: "12px",
-                borderTop: "1px solid var(--colors-border)",
-              }}
-            >
-              <FLPButton
-                size="sm"
-                variant="ghost"
-                onClick={() => {
-                  if (cameFromQuiz) {
-                    setMode("quiz");
-                  } else {
-                    setMode("welcome");
-                  }
+            <div>
+              <span
+                style={{
+                  fontSize: "11px",
+                  color: "var(--colors-text-muted)",
+                  textTransform: "uppercase",
+                  fontWeight: 600,
                 }}
               >
-                <FaArrowLeft style={{ marginRight: "6px" }} />{" "}
-                {cameFromQuiz ? "Back to Questions" : "Back to Welcome"}
-              </FLPButton>
-
-              <FLPButton
-                disabled={isSubmitting || selectedPages.length === 0}
-                size="md"
-                variant="primary"
-                onClick={handleFinish}
+                Monthly Surplus
+              </span>
+              <div
+                style={{
+                  fontSize: "16px",
+                  fontWeight: 800,
+                  marginTop: "2px",
+                  color: monthlySurplus >= 0 ? "#10b981" : "#ef4444",
+                }}
               >
-                {isSubmitting ? "Personalising..." : "Finish Setup & Launch Dashboard →"}
-              </FLPButton>
+                {monthlySurplus >= 0 ? "+" : ""}£{monthlySurplus.toLocaleString()}/mo
+              </div>
             </div>
-          </FLPCard>
-        )}
+            <div>
+              <span
+                style={{
+                  fontSize: "11px",
+                  color: "var(--colors-text-muted)",
+                  textTransform: "uppercase",
+                  fontWeight: 600,
+                }}
+              >
+                Starting Net Worth
+              </span>
+              <div
+                style={{
+                  fontSize: "16px",
+                  fontWeight: 800,
+                  marginTop: "2px",
+                  color: startingNetWorth >= 0 ? "#10b981" : "#ef4444",
+                }}
+              >
+                £{startingNetWorth.toLocaleString()}
+              </div>
+            </div>
+          </div>
+        </FLPCard>
       </div>
     </div>
   );

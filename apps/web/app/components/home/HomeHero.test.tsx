@@ -22,10 +22,11 @@ describe("HomeHero", () => {
     expect(screen.getByText(/Get out of the red\./i)).toBeDefined();
     expect(screen.getByText(/Build into the black\./i)).toBeDefined();
     expect(
-      screen.getByText(/The UK financial engine built for every stage of your money\./i),
+      screen.getByText(/Get your complete UK financial baseline in 60 seconds/i),
     ).toBeDefined();
 
-    expect(screen.getByRole("link", { name: /Start Free Today/i })).toBeDefined();
+    expect(screen.getByTestId("web-baseline-snapshot-preview")).toBeDefined();
+    expect(screen.getByRole("link", { name: /Get Your 60-Second Baseline Free/i })).toBeDefined();
     expect(screen.getByRole("link", { name: /Sign In to Account/i })).toBeDefined();
     expect(screen.getByRole("link", { name: /Explore Live Sandbox/i })).toBeDefined();
 
