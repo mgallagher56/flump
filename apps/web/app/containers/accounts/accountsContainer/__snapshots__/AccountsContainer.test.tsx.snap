@@ -76,7 +76,8 @@ exports[`<AccountsContainer /> > should render as expected when accounts exist 1
       >
         Assets: 
         £1,800
-         • Liabilities: 
+         • Liabilities:
+         
         £500
       </p>
     </div>
@@ -96,7 +97,8 @@ exports[`<AccountsContainer /> > should render as expected when accounts exist 1
       <p
         class="fs_xs fw_normal lh_normal ls_normal c_text.muted m_0 "
       >
-        Weighted Yield: 
+        Weighted Yield:
+         
         <strong>
           0.0%
         </strong>
