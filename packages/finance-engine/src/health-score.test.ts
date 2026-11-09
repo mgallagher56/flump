@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { calculateFinancialHealthScore } from "./health-score.js";
+import {
+  calculateFinancialHealthScore,
+  calculateSafeToSpend,
+  evaluateFinancialStage,
+} from "./health-score.js";
 
 describe("health-score module", () => {
   it("assigns stage-weighted score for STAGE_1_DEBT_RECOVERY", () => {
@@ -49,5 +53,59 @@ describe("health-score module", () => {
     const trapComponent = res.components.find((c) => c.name.includes("Tax Trap"));
     expect(trapComponent).toBeDefined();
     expect(trapComponent?.score).toBe(40);
+  });
+
+  describe("calculateSafeToSpend", () => {
+    it("computes safe-to-spend weekly and daily metrics", () => {
+      const res = calculateSafeToSpend(3000, 1000, 200, 400);
+      expect(res.fixedCommitments).toBe(1600);
+      expect(res.monthlyDiscretionary).toBe(1400);
+      expect(res.weeklyAllowance).toBeCloseTo(323.08, 1);
+      expect(res.dailyAllowance).toBeCloseTo(46.15, 1);
+    });
+  });
+
+  describe("evaluateFinancialStage", () => {
+    it("evaluates Stage 1 for high interest debt", () => {
+      const res = evaluateFinancialStage({
+        debts: [
+          {
+            id: "1",
+            name: "Card",
+            balance: 2000,
+            apr: 24.9,
+            minimumPayment: 50,
+            type: "credit_card",
+          },
+        ],
+        monthlySurplus: 200,
+        liquidSavings: 500,
+        monthlyEssentialExpenses: 1500,
+      });
+      expect(res.stage).toBe("stabilize");
+      expect(res.canonicalStage).toBe("STAGE_1_DEBT_RECOVERY");
+    });
+
+    it("evaluates Stage 2 when debt is cleared but runway < 3 months", () => {
+      const res = evaluateFinancialStage({
+        debts: [],
+        monthlySurplus: 500,
+        liquidSavings: 2000,
+        monthlyEssentialExpenses: 1500,
+      });
+      expect(res.stage).toBe("buffer");
+      expect(res.canonicalStage).toBe("STAGE_2_BUFFER_BUILD");
+    });
+
+    it("evaluates Stage 3 when debt is cleared and runway >= 3 months", () => {
+      const res = evaluateFinancialStage({
+        debts: [],
+        monthlySurplus: 1000,
+        liquidSavings: 6000,
+        monthlyEssentialExpenses: 1500,
+      });
+      expect(res.stage).toBe("optimize");
+      expect(res.canonicalStage).toBe("STAGE_3_WEALTH_OPTIMIZE");
+    });
   });
 });

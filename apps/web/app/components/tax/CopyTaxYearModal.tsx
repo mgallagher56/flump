@@ -1,11 +1,4 @@
 import * as Dialog from "@radix-ui/react-dialog";
-import { css } from "@repo/ui/styled-system/css";
-import { type FC, useEffect, useMemo, useState } from "react";
-import { FaArrowRight, FaCopy, FaFilter, FaTimes } from "react-icons/fa";
-import { useFetcher } from "react-router";
-import FLPButton from "~/components/core/buttons/FLPButton";
-import FLPHeading from "~/components/core/typography/FLPHeading";
-import FLPText from "~/components/core/typography/FLPText";
 import {
   buildCopiedRecordForTaxYear,
   getCurrentUKTaxYear,
@@ -15,7 +8,14 @@ import {
   isRecordActiveInTaxYear,
   type TaxRecord,
   type TaxSource,
-} from "~/containers/tax/TaxCalculator";
+} from "@repo/common";
+import { css } from "@repo/ui/styled-system/css";
+import { type FC, useEffect, useMemo, useState } from "react";
+import { FaArrowRight, FaCopy, FaFilter, FaTimes } from "react-icons/fa";
+import { useFetcher } from "react-router";
+import FLPButton from "~/components/core/buttons/FLPButton";
+import FLPHeading from "~/components/core/typography/FLPHeading";
+import FLPText from "~/components/core/typography/FLPText";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
 
 export interface CopyTaxYearModalProps {

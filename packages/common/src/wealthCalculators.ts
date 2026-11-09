@@ -215,250 +215,30 @@ export function setSessionPresenceCookie(active: boolean): void {
   }
 }
 
-export interface Section24Result {
-  actualCashProfit: number;
-  section24TaxableProfit: number;
-  grossTaxOnProperty: number;
-  financeCredit: number;
-  finalTaxDue: number;
-  oldRulesTax: number;
-  section24Penalty: number;
-  effectiveTaxRate: number;
-  netRentalIncomeAfterTax: number;
-  isHigherRate: boolean;
-}
+import {
+  type CompoundTrajectoryPoint,
+  type CompoundTrajectoryResult,
+  calculateCompoundTrajectory,
+  calculateMortgageVsIsa,
+  calculateSection24LandlordTax,
+  calculateTaxTrapRelief,
+  type MortgageVsIsaResult,
+  type Section24Result,
+  type TaxTrapAnalysis,
+} from "@flump/finance-engine";
 
-export function calculateSection24LandlordTax(
-  employmentIncome: number,
-  rentalIncome: number,
-  mortgageInterest: number,
-  allowableExpenses: number,
-): Section24Result {
-  const actualCashProfit = Math.max(0, rentalIncome - mortgageInterest - allowableExpenses);
-  const section24TaxableProfit = Math.max(0, rentalIncome - allowableExpenses);
-  const isHigherRate = employmentIncome >= 50270;
-  const taxRate = isHigherRate ? 0.4 : 0.2;
-  const grossTaxOnProperty = section24TaxableProfit * taxRate;
-  const financeCredit = Math.max(0, mortgageInterest * 0.2);
-  const finalTaxDue = Math.max(0, grossTaxOnProperty - financeCredit);
-  const oldRulesTax = actualCashProfit * taxRate;
-  const section24Penalty = Math.max(0, finalTaxDue - oldRulesTax);
-  const effectiveTaxRate =
-    actualCashProfit > 0 ? Math.min(100, Math.round((finalTaxDue / actualCashProfit) * 100)) : 100;
-  const netRentalIncomeAfterTax = Math.max(0, actualCashProfit - finalTaxDue);
+export {
+  type CompoundTrajectoryPoint,
+  type CompoundTrajectoryResult,
+  calculateCompoundTrajectory,
+  calculateMortgageVsIsa,
+  calculateSection24LandlordTax,
+  calculateTaxTrapRelief,
+  type MortgageVsIsaResult,
+  type Section24Result,
+  type TaxTrapAnalysis,
+};
 
-  return {
-    actualCashProfit,
-    section24TaxableProfit,
-    grossTaxOnProperty,
-    financeCredit,
-    finalTaxDue,
-    oldRulesTax,
-    section24Penalty,
-    effectiveTaxRate,
-    netRentalIncomeAfterTax,
-    isHigherRate,
-  };
-}
-
-export interface MortgageVsIsaResult {
-  standardPayment: number;
-  interestSaved: number;
-  monthsShaved: number;
-  yearsShaved: string;
-  totalStandardInterest: number;
-  totalInterestOverpay: number;
-  isaAccumulatedValue: number;
-  totalIsaContributed: number;
-  isaGrowth: number;
-  netWealthDelta: number;
-}
-
-export function calculateMortgageVsIsa(
-  mortgageBalance: number,
-  interestRate: number,
-  remainingYears: number,
-  monthlyOverpay: number,
-  expectedIsaReturn: number,
-): MortgageVsIsaResult {
-  const months = remainingYears * 12;
-  const monthlyRate = interestRate / 100 / 12;
-  const monthlyIsaRate = expectedIsaReturn / 100 / 12;
-
-  const standardPayment =
-    monthlyRate > 0
-      ? (mortgageBalance * monthlyRate * (1 + monthlyRate) ** months) /
-        ((1 + monthlyRate) ** months - 1)
-      : mortgageBalance / months;
-
-  let bal = mortgageBalance;
-  let totalInterestOverpay = 0;
-  let monthsToZero = 0;
-  for (let m = 1; m <= months; m++) {
-    if (bal <= 0) break;
-    const interest = bal * monthlyRate;
-    totalInterestOverpay += interest;
-    const principal = Math.min(bal, standardPayment + monthlyOverpay - interest);
-    bal -= principal;
-    monthsToZero = m;
-  }
-
-  let standardBal = mortgageBalance;
-  let totalStandardInterest = 0;
-  for (let m = 1; m <= months; m++) {
-    if (standardBal <= 0) break;
-    const interest = standardBal * monthlyRate;
-    totalStandardInterest += interest;
-    const principal = Math.min(standardBal, standardPayment - interest);
-    standardBal -= principal;
-  }
-
-  const interestSaved = Math.max(0, totalStandardInterest - totalInterestOverpay);
-  const monthsShaved = Math.max(0, months - monthsToZero);
-  const yearsShaved = (monthsShaved / 12).toFixed(1);
-
-  let isaPot = 0;
-  for (let m = 1; m <= months; m++) {
-    isaPot = (isaPot + monthlyOverpay) * (1 + monthlyIsaRate);
-  }
-  const totalIsaContributed = monthlyOverpay * months;
-  const isaGrowth = Math.max(0, isaPot - totalIsaContributed);
-  const netWealthDelta = isaPot - (totalIsaContributed + interestSaved);
-
-  return {
-    standardPayment,
-    interestSaved,
-    monthsShaved,
-    yearsShaved,
-    totalStandardInterest,
-    totalInterestOverpay,
-    isaAccumulatedValue: isaPot,
-    totalIsaContributed,
-    isaGrowth,
-    netWealthDelta,
-  };
-}
-
-export interface CompoundTrajectoryPoint {
-  year: number;
-  contributions: number;
-  interest: number;
-  total: number;
-}
-
-export interface CompoundTrajectoryResult {
-  endBalance: number;
-  totalContributions: number;
-  totalInterest: number;
-  points: CompoundTrajectoryPoint[];
-}
-
-/**
- * Calculates compound growth over a given number of years.
- * Default 5% real growth rate. Compounded monthly.
- */
-export function calculateCompoundTrajectory(
-  initialPrincipal: number,
-  monthlyContribution: number,
-  annualReturnRatePct = 5,
-  years = 10,
-): CompoundTrajectoryResult {
-  const principal = Math.max(0, initialPrincipal || 0);
-  const monthly = Math.max(0, monthlyContribution || 0);
-  const rate = Math.max(0, annualReturnRatePct || 0) / 100;
-  const monthlyRate = rate / 12;
-
-  let balance = principal;
-  let totalContributed = principal;
-  const points: CompoundTrajectoryPoint[] = [
-    { year: 0, contributions: principal, interest: 0, total: principal },
-  ];
-
-  for (let y = 1; y <= years; y++) {
-    for (let m = 0; m < 12; m++) {
-      balance = balance * (1 + monthlyRate) + monthly;
-      totalContributed += monthly;
-    }
-    const totalInterest = Math.max(0, balance - totalContributed);
-    points.push({
-      year: y,
-      contributions: Math.round(totalContributed),
-      interest: Math.round(totalInterest),
-      total: Math.round(balance),
-    });
-  }
-
-  const finalInterest = Math.max(0, balance - totalContributed);
-
-  return {
-    endBalance: Math.round(balance),
-    totalContributions: Math.round(totalContributed),
-    totalInterest: Math.round(finalInterest),
-    points,
-  };
-}
-
-export interface TaxTrapAnalysis {
-  grossIncome: number;
-  isInTaxTrap: boolean;
-  isNearTaxTrap: boolean;
-  marginalRatePct: number;
-  excessAbove100k: number;
-  recommendedSacrifice: number;
-  estimatedTaxSaved: number;
-  lostPersonalAllowance: number;
-}
-
-/**
- * Analyzes UK £100k - £125k tax trap where personal allowance tapers by £1 for every £2 of income above £100,000,
- * causing an effective 60% income tax rate (+2% Class 1 NI = 62% marginal tax trap).
- */
-export function calculateTaxTrapRelief(
-  grossIncome: number,
-  _taxYear = getCurrentUKTaxYear(),
-): TaxTrapAnalysis {
-  const income = Math.max(0, grossIncome || 0);
-  const isInTaxTrap = income >= 100000 && income <= 125140;
-  const isNearTaxTrap = income >= 95000 && income < 100000;
-
-  let marginalRatePct = 20;
-  if (income <= 12570) {
-    marginalRatePct = 0;
-  } else if (income <= 50270) {
-    marginalRatePct = 28; // 20% IT + 8% NI
-  } else if (income <= 100000) {
-    marginalRatePct = 42; // 40% IT + 2% NI
-  } else if (income <= 125140) {
-    marginalRatePct = 62; // 40% IT + 20% tapered PA + 2% NI
-  } else {
-    marginalRatePct = 47; // 45% IT + 2% NI
-  }
-
-  const excessAbove100k = Math.max(0, Math.min(income - 100000, 25140));
-  const lostPersonalAllowance = Math.round(excessAbove100k / 2);
-  const recommendedSacrifice = excessAbove100k;
-
-  // With full salary sacrifice of excess:
-  // Income tax saved: 40% on excess + 40% on restored allowance = 60% of excess
-  // Class 1 NI saved: 2% on excess
-  // Total saving is 62% of the sacrificed amount
-  const estimatedTaxSaved = Math.round(recommendedSacrifice * 0.62);
-
-  return {
-    grossIncome: income,
-    isInTaxTrap,
-    isNearTaxTrap,
-    marginalRatePct,
-    excessAbove100k: Math.round(excessAbove100k),
-    recommendedSacrifice: Math.round(recommendedSacrifice),
-    estimatedTaxSaved,
-    lostPersonalAllowance,
-  };
-}
-
-/**
- * Simple calculation helper for UK take-home pay, pension, NI and tax.
- */
 export function calculateUKTakeHome(
   grossSalary: number,
   pensionContributionPct = 5,
@@ -473,7 +253,7 @@ export function calculateUKTakeHome(
     taxYear,
   );
 
-  const trapAnalysis = calculateTaxTrapRelief(grossSalary, taxYear);
+  const trapAnalysis = calculateTaxTrapRelief(grossSalary, taxYear as any);
 
   return {
     ...result,

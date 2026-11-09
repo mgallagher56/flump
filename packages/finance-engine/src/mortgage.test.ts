@@ -3,6 +3,7 @@ import {
   calculateLtvMilestones,
   calculateMonthlyMortgagePayment,
   calculateMortgageAmortization,
+  calculateMortgageVsIsa,
 } from "./mortgage.js";
 
 describe("mortgage module", () => {
@@ -59,6 +60,14 @@ describe("mortgage module", () => {
         res.interestSavedGbp,
       );
       expect(res.overpayVsIsaComparison.projectedIsaWealthGbp).toBeGreaterThan(0);
+    });
+
+    it("calculateMortgageVsIsa returns comparison results", () => {
+      const res = calculateMortgageVsIsa(200000, 4.5, 20, 200, 6.0);
+      expect(res.standardPayment).toBeGreaterThan(0);
+      expect(res.interestSaved).toBeGreaterThan(0);
+      expect(res.monthsShaved).toBeGreaterThan(0);
+      expect(res.isaAccumulatedValue).toBeGreaterThan(res.totalIsaContributed);
     });
   });
 });

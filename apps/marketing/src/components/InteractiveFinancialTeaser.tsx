@@ -1,3 +1,4 @@
+import { calculateMortgageAmortization, calculateUkTax } from "@flump/finance-engine";
 import { type OnboardingSeedPayload, persistOnboardingSeed } from "@repo/common";
 import { Button } from "@repo/ui";
 import { css } from "@repo/ui/styled-system/css";
@@ -206,98 +207,39 @@ export const InteractiveFinancialTeaser: FC = () => {
   const appUrl = getAppUrl();
 
   const taxResults = useMemo(() => {
-    let personalAllowance = 12570;
-    if (income > 100000) {
-      const reduction = Math.min(personalAllowance, (income - 100000) / 2);
-      personalAllowance -= reduction;
-    }
-
-    const taxableIncome = Math.max(0, income - personalAllowance);
-    let incomeTax = 0;
-
-    const basicRateBand = 37700;
-    const higherRateBand = 125140 - 12570;
-
-    if (taxableIncome > 0) {
-      const basicTaxable = Math.min(taxableIncome, basicRateBand);
-      incomeTax += basicTaxable * 0.2;
-
-      if (taxableIncome > basicRateBand) {
-        const higherTaxable = Math.min(
-          taxableIncome - basicRateBand,
-          higherRateBand - basicRateBand,
-        );
-        incomeTax += higherTaxable * 0.4;
-
-        if (taxableIncome > higherRateBand) {
-          const additionalTaxable = taxableIncome - higherRateBand;
-          incomeTax += additionalTaxable * 0.45;
-        }
-      }
-    }
-
-    let ni = 0;
-    const niPrimaryThreshold = 12570;
-    const niUpperLimit = 50270;
-
-    if (income > niPrimaryThreshold) {
-      const standardNiEarnings = Math.min(income, niUpperLimit) - niPrimaryThreshold;
-      ni += standardNiEarnings * 0.08;
-
-      if (income > niUpperLimit) {
-        const higherNiEarnings = income - niUpperLimit;
-        ni += higherNiEarnings * 0.02;
-      }
-    }
-
-    const totalDeductions = incomeTax + ni;
-    const annualNet = Math.max(0, income - totalDeductions);
-    const monthlyNet = annualNet / 12;
-    const effectiveTaxRate = income > 0 ? (totalDeductions / income) * 100 : 0;
-    const isTaperActive = income > 100000 && income < 125140;
+    const gross = Math.max(0, income);
+    const tax = calculateUkTax({ grossSalary: gross });
 
     return {
-      annualNet,
-      monthlyNet,
-      incomeTax,
-      nationalInsurance: ni,
-      allowance: personalAllowance,
-      effectiveTaxRate,
-      isTaperActive,
+      annualNet: tax.netTakeHomePayAnnualGbp,
+      monthlyNet: tax.netTakeHomePayMonthlyGbp,
+      incomeTax: tax.incomeTaxGbp,
+      nationalInsurance: tax.nationalInsuranceGbp,
+      allowance: tax.taxTrap.effectivePersonalAllowanceGbp,
+      effectiveTaxRate: tax.effectiveTaxRatePct,
+      isTaperActive: tax.taxTrap.isInTaxTrap || gross > 100000,
     };
   }, [income]);
 
   const mortgageResults = useMemo(() => {
-    const monthlyRate = interestRate / 100 / 12;
+    const P = Math.max(1000, mortgageBalance);
     const totalMonths = 25 * 12;
+    const amortization = calculateMortgageAmortization({
+      propertyValueGbp: P * 1.25,
+      currentBalanceGbp: P,
+      interestRateApr: interestRate,
+      remainingTermMonths: totalMonths,
+      monthlyOverpaymentGbp: monthlyOverpayment,
+    });
 
-    const standardPayment =
-      (mortgageBalance * (monthlyRate * (1 + monthlyRate) ** totalMonths)) /
-      ((1 + monthlyRate) ** totalMonths - 1);
-
-    let balanceWithOverpayment = mortgageBalance;
-    let monthsElapsed = 0;
-    let totalInterestOverpayment = 0;
-    const acceleratedPayment = standardPayment + monthlyOverpayment;
-
-    while (balanceWithOverpayment > 0 && monthsElapsed < totalMonths) {
-      const interestThisMonth = balanceWithOverpayment * monthlyRate;
-      totalInterestOverpayment += interestThisMonth;
-      const principalThisMonth = acceleratedPayment - interestThisMonth;
-      balanceWithOverpayment -= principalThisMonth;
-      monthsElapsed += 1;
-    }
-
-    const baselineTotalInterest = standardPayment * totalMonths - mortgageBalance;
-    const totalInterestSaved = Math.max(0, baselineTotalInterest - totalInterestOverpayment);
-    const monthsSaved = Math.max(0, totalMonths - monthsElapsed);
+    const monthsSaved = amortization.monthsSaved;
     const yearsSaved = Math.floor(monthsSaved / 12);
     const remainingMonthsSaved = monthsSaved % 12;
 
     return {
-      monthlyStandard: standardPayment,
-      monthlyWithOverpayment: acceleratedPayment,
-      totalInterestSaved,
+      monthlyStandard: amortization.monthlyPaymentGbp,
+      monthlyWithOverpayment: amortization.monthlyPaymentGbp + monthlyOverpayment,
+      totalInterestSaved: amortization.interestSavedGbp,
       monthsSaved,
       yearsSaved,
       remainingMonthsSaved,

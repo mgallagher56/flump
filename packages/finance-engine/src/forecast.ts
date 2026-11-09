@@ -1,4 +1,10 @@
-import type { ForecastResult, ForecastYearPoint, LifeEventScenario } from "./types.js";
+import type {
+  CompoundTrajectoryPoint,
+  CompoundTrajectoryResult,
+  ForecastResult,
+  ForecastYearPoint,
+  LifeEventScenario,
+} from "./types.js";
 
 export interface ForecastInput {
   currentAge?: number;
@@ -167,5 +173,49 @@ export function calculateForecast(input: ForecastInput): ForecastResult {
     tenYearNetWorthScenarioGbp: tenYearScenario,
     thirtyYearNetWorthBaselineGbp: thirtyYearBaseline,
     thirtyYearNetWorthScenarioGbp: thirtyYearScenario,
+  };
+}
+
+/**
+ * Calculates compound trajectory over a given number of years.
+ */
+export function calculateCompoundTrajectory(
+  initialPrincipal: number,
+  monthlyContribution: number,
+  annualReturnRatePct = 5,
+  years = 10,
+): CompoundTrajectoryResult {
+  const principal = Math.max(0, initialPrincipal || 0);
+  const monthly = Math.max(0, monthlyContribution || 0);
+  const rate = Math.max(0, annualReturnRatePct || 0) / 100;
+  const monthlyRate = rate / 12;
+
+  let balance = principal;
+  let totalContributed = principal;
+  const points: CompoundTrajectoryPoint[] = [
+    { year: 0, contributions: principal, interest: 0, total: principal },
+  ];
+
+  for (let y = 1; y <= years; y++) {
+    for (let m = 0; m < 12; m++) {
+      balance = balance * (1 + monthlyRate) + monthly;
+      totalContributed += monthly;
+    }
+    const totalInterest = Math.max(0, balance - totalContributed);
+    points.push({
+      year: y,
+      contributions: Math.round(totalContributed),
+      interest: Math.round(totalInterest),
+      total: Math.round(balance),
+    });
+  }
+
+  const finalInterest = Math.max(0, balance - totalContributed);
+
+  return {
+    endBalance: Math.round(balance),
+    totalContributions: Math.round(totalContributed),
+    totalInterest: Math.round(finalInterest),
+    points,
   };
 }

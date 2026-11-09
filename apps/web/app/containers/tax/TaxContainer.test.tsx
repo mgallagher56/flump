@@ -1,5 +1,3 @@
-import { fireEvent, render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
 import {
   buildCopiedRecordForTaxYear,
   calculateUKTax,
@@ -9,7 +7,9 @@ import {
   getRecordAnnualTotalForTaxYear,
   isRecordActiveInTaxYear,
   type TaxRecord,
-} from "./TaxCalculator";
+} from "@repo/common";
+import { fireEvent, render, screen } from "@testing-library/react";
+import { describe, expect, it, vi } from "vitest";
 
 const mockRecords: TaxRecord[] = [
   {

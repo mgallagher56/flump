@@ -1,6 +1,6 @@
+import type { TaxRecord } from "@repo/common";
 import { fireEvent } from "@testing-library/react";
 import { describe, expect, test, vi } from "vitest";
-import type { TaxRecord } from "~/containers/tax/TaxCalculator";
 import customRender from "~/testUtils/customRender";
 import { CopyTaxYearModal, type CopyTaxYearModalProps } from "./CopyTaxYearModal";
 

@@ -1,3 +1,4 @@
+import { calculateMortgageAmortization, calculateUkTax } from "@flump/finance-engine";
 import { type OnboardingSeedPayload, persistOnboardingSeed } from "@repo/common";
 import { css } from "@repo/ui/styled-system/css";
 import { type FC, useId, useMemo, useState } from "react";
@@ -255,107 +256,44 @@ export const InteractiveFinancialTeaser: FC = () => {
   // UK Tax calculations
   const taxResults = useMemo(() => {
     const gross = Math.max(0, income);
-
-    // Personal Allowance calculation with £100k taper
-    let allowance = 12570;
-    if (gross > 100000) {
-      const reduction = Math.min(allowance, (gross - 100000) / 2);
-      allowance = Math.max(0, allowance - reduction);
-    }
-
-    const taxable = Math.max(0, gross - allowance);
-
-    // 2024/25 - 2026/27 Standard UK Income Tax bands
-    const basicLimit = 37700;
-    const higherLimit = 125140;
-
-    let incomeTax = 0;
-    if (taxable > 0) {
-      const basicTaxable = Math.min(taxable, basicLimit);
-      incomeTax += basicTaxable * 0.2;
-
-      if (taxable > basicLimit) {
-        const higherTaxable = Math.min(taxable, higherLimit - allowance) - basicLimit;
-        if (higherTaxable > 0) {
-          incomeTax += higherTaxable * 0.4;
-        }
-
-        const additionalTaxable = Math.max(0, gross - higherLimit);
-        if (additionalTaxable > 0) {
-          incomeTax += additionalTaxable * 0.45;
-        }
-      }
-    }
-
-    // Class 1 Employee National Insurance (8% between 12570 and 50270, 2% above)
-    let nationalInsurance = 0;
-    const niLower = 12570;
-    const niUpper = 50270;
-    if (gross > niLower) {
-      const mainNiBand = Math.min(gross, niUpper) - niLower;
-      nationalInsurance += mainNiBand * 0.08;
-      if (gross > niUpper) {
-        nationalInsurance += (gross - niUpper) * 0.02;
-      }
-    }
-
-    const totalDeductions = incomeTax + nationalInsurance;
-    const annualNet = Math.max(0, gross - totalDeductions);
-    const monthlyNet = annualNet / 12;
-    const effectiveTaxRate = gross > 0 ? (totalDeductions / gross) * 100 : 0;
-    const isTaperActive = gross > 100000;
+    const tax = calculateUkTax({ grossSalary: gross });
 
     return {
       gross,
-      allowance,
-      incomeTax,
-      nationalInsurance,
-      totalDeductions,
-      annualNet,
-      monthlyNet,
-      effectiveTaxRate,
-      isTaperActive,
+      allowance: tax.taxTrap.effectivePersonalAllowanceGbp,
+      incomeTax: tax.incomeTaxGbp,
+      nationalInsurance: tax.nationalInsuranceGbp,
+      totalDeductions: tax.totalDeductionsGbp,
+      annualNet: tax.netTakeHomePayAnnualGbp,
+      monthlyNet: tax.netTakeHomePayMonthlyGbp,
+      effectiveTaxRate: tax.effectiveTaxRatePct,
+      isTaperActive: tax.taxTrap.isInTaxTrap || gross > 100000,
     };
   }, [income]);
 
   // Mortgage calculations
   const mortgageResults = useMemo(() => {
     const P = Math.max(1000, mortgageBalance);
-    const r = Math.max(0.001, interestRate) / 100 / 12;
-    const originalTermMonths = 25 * 12;
+    const termMonths = 25 * 12;
+    const amortization = calculateMortgageAmortization({
+      propertyValueGbp: P * 1.25,
+      currentBalanceGbp: P,
+      interestRateApr: interestRate,
+      remainingTermMonths: termMonths,
+      monthlyOverpaymentGbp: monthlyOverpayment,
+    });
 
-    // Monthly regular payment: M = P * [r(1+r)^n] / [(1+r)^n - 1]
-    const monthlyStandard =
-      (P * (r * (1 + r) ** originalTermMonths)) / ((1 + r) ** originalTermMonths - 1);
-    const standardTotalCost = monthlyStandard * originalTermMonths;
-    const standardInterest = standardTotalCost - P;
-
-    // Simulation with overpayment
-    const newMonthlyPayment = monthlyStandard + monthlyOverpayment;
-    let balance = P;
-    let monthsElapsed = 0;
-    let totalPaidWithOverpayment = 0;
-
-    while (balance > 0 && monthsElapsed < originalTermMonths) {
-      const monthInterest = balance * r;
-      const principalPaid = Math.min(balance, newMonthlyPayment - monthInterest);
-      balance -= principalPaid;
-      totalPaidWithOverpayment += monthInterest + principalPaid;
-      monthsElapsed += 1;
-    }
-
-    const monthsSaved = Math.max(0, originalTermMonths - monthsElapsed);
+    const monthsSaved = amortization.monthsSaved;
     const yearsSaved = Math.floor(monthsSaved / 12);
     const remainingMonthsSaved = monthsSaved % 12;
-    const totalInterestSaved = Math.max(0, standardTotalCost - totalPaidWithOverpayment);
 
     return {
-      monthlyStandard,
-      monthlyWithOverpayment: newMonthlyPayment,
-      standardInterest,
+      monthlyStandard: amortization.monthlyPaymentGbp,
+      monthlyWithOverpayment: amortization.monthlyPaymentGbp + monthlyOverpayment,
+      standardInterest: amortization.totalInterestStandardGbp,
       yearsSaved,
       remainingMonthsSaved,
-      totalInterestSaved,
+      totalInterestSaved: amortization.interestSavedGbp,
     };
   }, [mortgageBalance, interestRate, monthlyOverpayment]);
 

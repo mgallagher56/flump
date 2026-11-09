@@ -1,4 +1,12 @@
-import type { FinancialStage, HealthScoreComponent, HealthScoreResult } from "./types.js";
+import { filterConsumerDebts, normalizeDebtItem } from "./debt-payoff.js";
+import type {
+  DebtItem,
+  FinancialStage,
+  FinancialStageEvaluation,
+  HealthScoreComponent,
+  HealthScoreResult,
+  SafeToSpendResult,
+} from "./types.js";
 
 export interface HealthScoreInput {
   stage: FinancialStage;
@@ -204,5 +212,102 @@ export function calculateFinancialHealthScore(input: HealthScoreInput): HealthSc
     grade,
     components,
     topRecommendations: recommendations.slice(0, 3),
+  };
+}
+
+/**
+ * Calculates Weekly Safe-to-Spend Allowance Metric.
+ */
+export function calculateSafeToSpend(
+  monthlyIncome: number,
+  fixedBills: number,
+  minDebtPayments: number,
+  essentialGroceries: number,
+): SafeToSpendResult {
+  const fixedCommitments = fixedBills + minDebtPayments + essentialGroceries;
+  const monthlyDiscretionary = Math.max(0, monthlyIncome - fixedCommitments);
+  // 52 weeks / 12 months = 4.3333 weeks per month
+  const weeklyAllowance = Math.round((monthlyDiscretionary / 4.333333) * 100) / 100;
+  const dailyAllowance = Math.round((weeklyAllowance / 7) * 100) / 100;
+
+  return {
+    weeklyAllowance,
+    dailyAllowance,
+    monthlyDiscretionary: Math.round(monthlyDiscretionary * 100) / 100,
+    fixedCommitments: Math.round(fixedCommitments * 100) / 100,
+  };
+}
+
+/**
+ * Adaptive Financial Lifecycle Stage Evaluator.
+ */
+export function evaluateFinancialStage(params: {
+  debts: DebtItem[];
+  monthlySurplus: number;
+  liquidSavings: number;
+  monthlyEssentialExpenses: number;
+}): FinancialStageEvaluation {
+  const { debts, monthlySurplus, liquidSavings, monthlyEssentialExpenses } = params;
+  const normalizedDebts = debts.map((d) => normalizeDebtItem(d));
+  const commercial = filterConsumerDebts(normalizedDebts).consumerDebts;
+
+  const totalUnsecuredDebt = commercial.reduce((sum, d) => sum + d.balanceGbp, 0);
+  const highInterestDebt = commercial
+    .filter(
+      (d) => d.interestRateApr >= 6.5 || d.debtType === "overdraft" || d.debtType === "credit_card",
+    )
+    .reduce((sum, d) => sum + d.balanceGbp, 0);
+
+  const emergencyRunwayMonths =
+    monthlyEssentialExpenses > 0
+      ? Math.round((liquidSavings / monthlyEssentialExpenses) * 10) / 10
+      : 0;
+
+  const starterBufferMet = liquidSavings >= 1000;
+
+  // Stage 1: Stabilize & Clear
+  if (highInterestDebt > 50 || monthlySurplus < 0) {
+    return {
+      stage: "stabilize",
+      canonicalStage: "STAGE_1_DEBT_RECOVERY",
+      totalUnsecuredDebt: Math.round(totalUnsecuredDebt),
+      highInterestDebt: Math.round(highInterestDebt),
+      monthlySurplus: Math.round(monthlySurplus),
+      emergencyRunwayMonths,
+      starterBufferMet,
+      primaryHeroMetric: "unsecured_debt",
+      headline: "Stage 1: Stabilise and clear",
+      subline: "Clear high-interest liabilities and achieve steady cash-flow margin.",
+    };
+  }
+
+  // Stage 2: Buffer & Protect
+  if (emergencyRunwayMonths < 3) {
+    return {
+      stage: "buffer",
+      canonicalStage: "STAGE_2_BUFFER_BUILD",
+      totalUnsecuredDebt: Math.round(totalUnsecuredDebt),
+      highInterestDebt: 0,
+      monthlySurplus: Math.round(monthlySurplus),
+      emergencyRunwayMonths,
+      starterBufferMet,
+      primaryHeroMetric: "emergency_runway",
+      headline: "Stage 2: Buffer & Protect",
+      subline: "Build your £1,000 starter buffer and establish a 3–6 month emergency reserve.",
+    };
+  }
+
+  // Stage 3: Build & Optimize
+  return {
+    stage: "optimize",
+    canonicalStage: "STAGE_3_WEALTH_OPTIMIZE",
+    totalUnsecuredDebt: Math.round(totalUnsecuredDebt),
+    highInterestDebt: 0,
+    monthlySurplus: Math.round(monthlySurplus),
+    emergencyRunwayMonths,
+    starterBufferMet: true,
+    primaryHeroMetric: "net_worth",
+    headline: "Stage 3: Build & Optimize",
+    subline: "Amplify compound wealth, optimize pensions, and eliminate mortgage interest.",
   };
 }

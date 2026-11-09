@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { calculateSection24Tax } from "./section24.js";
+import { calculateSection24LandlordTax, calculateSection24Tax } from "./section24.js";
 
 describe("section24 module", () => {
   it("applies Section 24 20% tax reducer on mortgage interest", () => {
@@ -56,5 +56,13 @@ describe("section24 module", () => {
     expect(res.shareAllowableExpensesGbp).toBe(1000);
     expect(res.shareMortgageInterestGbp).toBe(3000);
     expect(res.section24TaxCreditGbp).toBe(600); // 20% of 3,000
+  });
+
+  it("calculateSection24LandlordTax returns compatibility fields", () => {
+    const res = calculateSection24LandlordTax(60000, 18000, 8000, 2000, 100);
+    expect(res.actualCashProfit).toBe(8000);
+    expect(res.section24TaxableProfit).toBe(16000);
+    expect(res.finalTaxDue).toBe(4800);
+    expect(res.financeCredit).toBe(1600);
   });
 });

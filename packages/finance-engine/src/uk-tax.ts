@@ -23,15 +23,25 @@ export const UK_TAX_CONSTANTS = {
   NI_HIGHER_RATE: 0.02,
 } as const;
 
+export function getCurrentUKTaxYear(): UkTaxYear {
+  return "2025/26";
+}
+
 export const STUDENT_LOAN_THRESHOLDS: Record<
-  Exclude<UkStudentLoanPlan, "NONE">,
-  { threshold: number; rate: number }
+  string,
+  { threshold: number; rate: number; writeOffYears: number }
 > = {
-  PLAN_1: { threshold: 26065, rate: 0.09 },
-  PLAN_2: { threshold: 28470, rate: 0.09 },
-  PLAN_4: { threshold: 32745, rate: 0.09 },
-  PLAN_5: { threshold: 25000, rate: 0.09 },
-  POSTGRAD: { threshold: 21000, rate: 0.06 },
+  PLAN_1: { threshold: 26065, rate: 0.09, writeOffYears: 25 },
+  PLAN_2: { threshold: 28470, rate: 0.09, writeOffYears: 30 },
+  PLAN_4: { threshold: 32745, rate: 0.09, writeOffYears: 30 },
+  PLAN_5: { threshold: 25000, rate: 0.09, writeOffYears: 40 },
+  POSTGRAD: { threshold: 21000, rate: 0.06, writeOffYears: 30 },
+  // Lowercase aliases
+  plan1: { threshold: 26065, rate: 0.09, writeOffYears: 25 },
+  plan2: { threshold: 28470, rate: 0.09, writeOffYears: 30 },
+  plan4: { threshold: 32745, rate: 0.09, writeOffYears: 30 },
+  plan5: { threshold: 25000, rate: 0.09, writeOffYears: 40 },
+  postgrad: { threshold: 21000, rate: 0.06, writeOffYears: 30 },
 };
 
 /**
@@ -63,12 +73,15 @@ export function analyzeTaxTrap(
   const isInTaxTrap =
     adjustedNetIncome > UK_TAX_CONSTANTS.TAX_TRAP_LOWER_THRESHOLD &&
     adjustedNetIncome <= UK_TAX_CONSTANTS.TAX_TRAP_UPPER_THRESHOLD;
+  const isNearTaxTrap =
+    adjustedNetIncome >= 95000 && adjustedNetIncome <= UK_TAX_CONSTANTS.TAX_TRAP_LOWER_THRESHOLD;
 
   const excessOver100k = Math.max(0, adjustedNetIncome - UK_TAX_CONSTANTS.TAX_TRAP_LOWER_THRESHOLD);
+  const excessAbove100k = Math.min(excessOver100k, 25140);
   const { effectiveAllowance, taperAmount } = calculatePersonalAllowance(adjustedNetIncome);
 
   // In the trap: 40% income tax (EWNI) + 20% loss of allowance = 60% (+ 2% NI = 62%)
-  // In Scotland: 45% advanced rate + 22.5% loss of allowance = 67.5% (+ 2% NI)
+  // In Scotland: 45% advanced rate + 22.5% loss of allowance = 67.5% (+ 2% NI = 69.5%)
   const marginalRatePct = isInTaxTrap
     ? region === "SCOTLAND"
       ? 67.5
@@ -83,18 +96,32 @@ export function analyzeTaxTrap(
           : 40.0
         : 20.0;
 
+  const effectiveMarginalRatePct = isInTaxTrap
+    ? region === "SCOTLAND"
+      ? 69.5
+      : 62.0
+    : marginalRatePct + (adjustedNetIncome > 12570 ? (adjustedNetIncome <= 50270 ? 8.0 : 2.0) : 0);
+
   const contributionRequiredToEscapeGbp = excessOver100k;
   const estimatedTaxSavedByEscapingGbp = Math.round(excessOver100k * (marginalRatePct / 100));
+  const estimatedTaxSaved = Math.round(excessOver100k * (effectiveMarginalRatePct / 100));
 
   return {
     isInTaxTrap,
+    isNearTaxTrap,
+    grossIncome: adjustedNetIncome,
     adjustedNetIncome,
     personalAllowanceTaperGbp: taperAmount,
     effectivePersonalAllowanceGbp: effectiveAllowance,
     excessOver100kGbp: excessOver100k,
+    excessAbove100k,
     marginalRatePct,
+    effectiveMarginalRatePct,
     contributionRequiredToEscapeGbp,
+    recommendedSacrifice: excessOver100k,
     estimatedTaxSavedByEscapingGbp,
+    estimatedTaxSaved,
+    lostPersonalAllowance: taperAmount,
   };
 }
 
@@ -110,6 +137,38 @@ export function calculate100kTaxTrap(
   const pensionDeduction = grossIncome * (pensionContributionPct / 100);
   const adjustedNetIncome = Math.max(0, grossIncome - pensionDeduction);
   return analyzeTaxTrap(adjustedNetIncome, region);
+}
+
+/**
+ * Calculates tax trap relief and marginal rate breakdown.
+ */
+export function calculateTaxTrapRelief(
+  grossIncome: number,
+  _taxYear = getCurrentUKTaxYear(),
+  region: UkTaxRegion = "ENGLAND_NI_WALES",
+): TaxTrapAnalysis {
+  const analysis = analyzeTaxTrap(grossIncome, region);
+  return {
+    ...analysis,
+    marginalRatePct: analysis.isInTaxTrap
+      ? region === "SCOTLAND"
+        ? 69.5
+        : 62
+      : analysis.marginalRatePct,
+  };
+}
+
+/**
+ * Calculates Employer National Insurance savings on salary sacrifice.
+ * UK Employer Class 1 NI secondary rate is 13.8% (or 15% from April 2025).
+ */
+export function calculateEmployerNISavings(
+  _grossSalary: number,
+  sacrificeAmount: number,
+  taxYearOrRate: string | number = 13.8,
+): number {
+  const ratePct = typeof taxYearOrRate === "number" ? taxYearOrRate : 13.8;
+  return Math.round(Math.max(0, sacrificeAmount) * (ratePct / 100) * 100) / 100;
 }
 
 /**
