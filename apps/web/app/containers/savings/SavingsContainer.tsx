@@ -39,7 +39,7 @@ const headerContainerStyle = css({
 
 export const SavingsContainer: FC = () => {
   const { t } = useTranslation();
-  const loaderData = useLoaderData<typeof loader>();
+  const loaderData = useLoaderData<any>();
   const accounts: Account[] = loaderData?.accounts || [];
   const accountDetails: any[] = loaderData?.accountDetails || [];
   const userProfile = loaderData?.userProfile;

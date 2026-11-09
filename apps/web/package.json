@@ -11,6 +11,8 @@
     "@emotion/cache": "11.14.0",
     "@emotion/react": "11.14.0",
     "@emotion/server": "11.11.0",
+    "@flump/banking": "workspace:*",
+    "@flump/finance-engine": "workspace:*",
     "@radix-ui/react-dialog": "1.3.1",
     "@radix-ui/react-tabs": "1.2.1",
     "@react-router/node": "7.18.5",

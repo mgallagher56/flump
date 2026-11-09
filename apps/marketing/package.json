@@ -17,6 +17,7 @@
     "prepare": "panda codegen"
   },
   "dependencies": {
+    "@flump/finance-engine": "workspace:*",
     "@repo/app-shell": "workspace:*",
     "@repo/common": "workspace:*",
     "@repo/ui": "workspace:*",

@@ -1,10 +1,18 @@
+import type { OnboardingSeedPayload } from "@flump/finance-engine";
 import { persistOnboardingSeed } from "@repo/common";
 import { css } from "@repo/ui/styled-system/css";
 import { flex } from "@repo/ui/styled-system/patterns";
-import { useState } from "react";
+import { useSetAtom } from "jotai";
+import { useEffect, useState } from "react";
 import { FiArrowRight, FiLock } from "react-icons/fi";
-import { type LoaderFunctionArgs, type MetaFunction, useNavigate } from "react-router";
+import {
+  type LoaderFunctionArgs,
+  type MetaFunction,
+  useNavigate,
+  useSearchParams,
+} from "react-router";
 import { HomeDashboard } from "~/components/dashboard/HomeDashboard";
+import { financialBaselineAtom, writeOnboardingSeedCookie } from "~/state/baseline.store";
 import { getSandboxPersonaData } from "~/utils/demoData";
 
 export const meta: MetaFunction = () => [
@@ -65,34 +73,68 @@ export const loader = async (_args: LoaderFunctionArgs) => {
 
 export default function SandboxRoute() {
   const navigate = useNavigate();
-  const [activePersona, setActivePersona] = useState<"debt" | "medium" | "high">("debt");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const personaParam = searchParams.get("persona");
+
+  const initialPersona: "debt" | "medium" | "high" =
+    personaParam === "wealth" || personaParam === "high"
+      ? "high"
+      : personaParam === "medium"
+        ? "medium"
+        : "debt";
+
+  const [activePersona, setActivePersona] = useState<"debt" | "medium" | "high">(initialPersona);
+  const setBaseline = useSetAtom(financialBaselineAtom);
+
+  useEffect(() => {
+    if (activePersona === "debt") {
+      setBaseline((prev) => ({
+        ...prev,
+        annualGrossSalary: 34000,
+        financialStage: "STAGE_1_DEBT_RECOVERY",
+        enabledModules: ["debt", "budget", "accounts"],
+      }));
+    } else if (activePersona === "medium") {
+      setBaseline((prev) => ({
+        ...prev,
+        annualGrossSalary: 45000,
+        financialStage: "STAGE_2_BUFFER_BUILD",
+        enabledModules: ["accounts", "budget", "pension", "forecast"],
+      }));
+    } else {
+      setBaseline((prev) => ({
+        ...prev,
+        annualGrossSalary: 115000,
+        financialStage: "STAGE_3_WEALTH_OPTIMIZE",
+        enabledModules: ["accounts", "budget", "tax", "pension", "mortgage", "forecast"],
+      }));
+    }
+  }, [activePersona, setBaseline]);
+
   const dashboardData = getSandboxPersonaData(activePersona);
 
   const handleSaveAndCreateAccount = () => {
-    if (activePersona === "debt") {
-      persistOnboardingSeed({
-        annualIncome: 34000,
-        initialCashSavings: 950,
-        inferredModules: ["debt", "budget", "accounts"],
-        timestamp: Date.now(),
-      });
-    } else if (activePersona === "medium") {
-      persistOnboardingSeed({
-        annualIncome: 45000,
-        initialCashSavings: 12500,
-        inferredModules: ["accounts", "budget", "savings", "pension", "forecast"],
-        timestamp: Date.now(),
-      });
-    } else {
-      persistOnboardingSeed({
-        annualIncome: 100000,
-        initialCashSavings: 28500,
-        initialInvestments: 65000,
-        mortgageBalance: 480000,
-        inferredModules: ["accounts", "budget", "tax", "pension", "mortgage", "forecast"],
-        timestamp: Date.now(),
-      });
-    }
+    const seed: OnboardingSeedPayload = {
+      mode: activePersona === "debt" ? "DEBT" : "WEALTH",
+      annualGrossSalary:
+        activePersona === "debt" ? 34000 : activePersona === "medium" ? 45000 : 115000,
+      inferredStage:
+        activePersona === "debt"
+          ? "STAGE_1_DEBT_RECOVERY"
+          : activePersona === "medium"
+            ? "STAGE_2_BUFFER_BUILD"
+            : "STAGE_3_WEALTH_OPTIMIZE",
+      inferredModules:
+        activePersona === "debt"
+          ? ["debt", "budget", "accounts"]
+          : activePersona === "medium"
+            ? ["accounts", "budget", "pension", "forecast"]
+            : ["accounts", "budget", "tax", "pension", "mortgage", "forecast"],
+      timestamp: Date.now(),
+    };
+
+    writeOnboardingSeedCookie(seed);
+    persistOnboardingSeed(seed as any);
 
     navigate("/signUp");
   };
@@ -167,7 +209,7 @@ export default function SandboxRoute() {
               Ready to use your own bank feeds & HMRC data?
             </span>
             <button type="button" className={saveButtonStyle} onClick={handleSaveAndCreateAccount}>
-              Save My Changes & Create Account <FiArrowRight size={13} />
+              Save My Custom Numbers <FiArrowRight size={13} />
             </button>
           </div>
         </div>

@@ -18,6 +18,8 @@ vi.mock("react-router", async () => {
     ...actual,
     useLoaderData: mocks.mockUseLoaderData,
     useRevalidator: mocks.mockUseRevalidator,
+    useLocation: () => ({ search: "", pathname: "/app/accounts" }),
+    useSearchParams: () => [new URLSearchParams(), vi.fn()],
     Form: ({ children }: { children: ReactNode }) => <form>{children}</form>,
     useSubmit: () => ({ onSubmit: vi.fn() }),
     useFetcher: () => ({

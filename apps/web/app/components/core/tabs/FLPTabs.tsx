@@ -9,6 +9,9 @@ export interface FLPTabsProps {
   orientation?: "horizontal" | "vertical";
   isMobile?: boolean;
   variant?: "default" | "mobile" | "segmented";
+  value?: string;
+  onValueChange?: (value: string) => void;
+  defaultValue?: string;
 }
 
 const FLPTabs: FC<FLPTabsProps> = ({
@@ -16,6 +19,9 @@ const FLPTabs: FC<FLPTabsProps> = ({
   orientation = "horizontal",
   isMobile: propIsMobile,
   variant = "default",
+  value,
+  onValueChange,
+  defaultValue,
 }) => {
   const { isMobile: contextIsMobile } = useResponsive();
   const isMobileVariant =
@@ -62,7 +68,9 @@ const FLPTabs: FC<FLPTabsProps> = ({
   return (
     <Tabs.Root
       data-variant={isMobileVariant ? "mobile" : "desktop"}
-      defaultValue={data[0].value}
+      defaultValue={defaultValue ?? data[0]?.value}
+      value={value}
+      onValueChange={onValueChange}
       orientation={orientation}
     >
       <Tabs.List className={listStyle}>

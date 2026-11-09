@@ -3,25 +3,60 @@
 exports[`<AccountsContainer /> > should render as expected when accounts exist 1`] = `
 <div>
   <div
-    class="d_flex flex-d_row ai_center jc_space-between mt_20px mb_20px"
+    class="d_flex flex-d_row ai_center jc_space-between flex-wrap_wrap gap_16px mt_20px mb_20px"
   >
-    <h1
-      class="c_primary fs_1.5rem fw_bold lh_tight m_0 "
+    <div>
+      <h1
+        class="c_primary fs_1.5rem fw_bold lh_tight m_0 "
+      >
+        accounts
+      </h1>
+      <p
+        class="fs_sm fw_normal lh_normal ls_normal c_text.muted m_0 mt_4px"
+      >
+        Unified Net Worth, Savings Yield & UK Allowance Hub
+      </p>
+    </div>
+    <div
+      class="d_flex ai_center gap_12px flex-wrap_wrap"
     >
-      accounts
-    </h1>
-    <button
-      aria-expanded="false"
-      aria-haspopup="dialog"
-      class="d_inline-flex ai_center jc_center bdr_full fw_medium trs_all_0.2s cursor_pointer px_6 py_3 fs_sm lh_1 disabled:op_0.5 disabled:cursor_not-allowed focusVisible:ring_2px_solid focusVisible:ring-c_primary focusVisible:ring-o_2px bg_background c_text.primary bd_1px_solid bd-c_border hover:bg_accent hover:c_accent.foreground"
-      data-state="closed"
-      type="button"
-    >
-      addAccount
-    </button>
+      <button
+        aria-expanded="false"
+        aria-haspopup="dialog"
+        class="d_inline-flex ai_center gap_8px p_8px_16px bdr_md fs_sm fw_semibold bg-c_rgba(99,_99,_241,_0.1) c_primary bd_1px_solid bd-c_rgba(99,_99,_241,_0.25) cursor_pointer trs_all_0.15s_ease hover:bg-c_rgba(99,_99,_241,_0.18) hover:bd-c_primary"
+        data-state="closed"
+        type="button"
+      >
+        <svg
+          fill="currentColor"
+          height="1em"
+          stroke="currentColor"
+          stroke-width="0"
+          viewBox="0 0 512 512"
+          width="1em"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M256,8C119,8,8,119,8,256S119,504,256,504,504,393,504,256,393,8,256,8Zm92.49,313h0l-20,25a16,16,0,0,1-22.49,2.5h0l-67-49.72a40,40,0,0,1-15-31.23V112a16,16,0,0,1,16-16h32a16,16,0,0,1,16,16V256l58,42.5A16,16,0,0,1,348.49,321Z"
+          />
+        </svg>
+        <span>
+          60-Sec Balance Check-In
+        </span>
+      </button>
+      <button
+        aria-expanded="false"
+        aria-haspopup="dialog"
+        class="d_inline-flex ai_center jc_center bdr_full fw_medium trs_all_0.2s cursor_pointer px_6 py_3 fs_sm lh_1 disabled:op_0.5 disabled:cursor_not-allowed focusVisible:ring_2px_solid focusVisible:ring-c_primary focusVisible:ring-o_2px bg_background c_text.primary bd_1px_solid bd-c_border hover:bg_accent hover:c_accent.foreground"
+        data-state="closed"
+        type="button"
+      >
+        addAccount
+      </button>
+    </div>
   </div>
   <div
-    class="d_grid grid-tc_1fr md:grid-tc_repeat(3,_1fr) gap_24px mb_32px"
+    class="d_grid grid-tc_1fr md:grid-tc_repeat(3,_1fr) gap_24px mb_24px"
   >
     <div
       class="bg-c_rgba(99,_99,_241,_0.08) dark:bg-c_rgba(99,_99,_241,_0.15) bd_1px_solid bd-c_primary bdr_lg p_24px d_flex flex-d_column gap_8px bx-sh_sm trs_transform_0.2s_ease,_box-shadow_0.2s_ease [&:hover]:trf_translateY(-2px) [&:hover]:bx-sh_md"
@@ -29,13 +64,21 @@ exports[`<AccountsContainer /> > should render as expected when accounts exist 1
       <p
         class="fs_xs fw_semibold lh_normal ls_normal c_gray.500 tt_uppercase m_0 "
       >
-        Net Worth
+        Total Net Worth
       </p>
       <h2
         class="c_success.500 fs_1.875rem fw_bold mt_1 lh_tight m_0 "
       >
         £1,300
       </h2>
+      <p
+        class="fs_xs fw_normal lh_normal ls_normal c_text.muted m_0 "
+      >
+        Assets: 
+        £1,800
+         • Liabilities: 
+        £500
+      </p>
     </div>
     <div
       class="bg-c_card bd_1px_solid bd-c_border bdr_lg p_24px d_flex flex-d_column gap_8px bx-sh_xs trs_transform_0.2s_ease,_box-shadow_0.2s_ease,_border-color_0.2s_ease [&:hover]:trf_translateY(-2px) [&:hover]:bx-sh_sm [&:hover]:bd-c_primary"
@@ -43,27 +86,150 @@ exports[`<AccountsContainer /> > should render as expected when accounts exist 1
       <p
         class="fs_xs fw_semibold lh_normal ls_normal c_gray.500 tt_uppercase m_0 "
       >
-        Total Assets
+        Liquid Cash & Savings
       </p>
       <h2
         class="c_success.500 fs_1.5rem fw_bold mt_1 lh_tight m_0 "
       >
         £1,800
       </h2>
-    </div>
-    <div
-      class="bg-c_card bd_1px_solid bd-c_border bdr_lg p_24px d_flex flex-d_column gap_8px bx-sh_xs trs_transform_0.2s_ease,_box-shadow_0.2s_ease,_border-color_0.2s_ease [&:hover]:trf_translateY(-2px) [&:hover]:bx-sh_sm [&:hover]:bd-c_primary"
-    >
       <p
-        class="fs_xs fw_semibold lh_normal ls_normal c_gray.500 tt_uppercase m_0 "
+        class="fs_xs fw_normal lh_normal ls_normal c_text.muted m_0 "
       >
-        Total Liabilities
+        Weighted Yield: 
+        <strong>
+          0.0%
+        </strong>
       </p>
-      <h2
-        class="c_destructive.500 fs_1.5rem fw_bold mt_1 lh_tight m_0 "
+    </div>
+    <div>
+      <div
+        class="bg-c_surface bd_1px_solid bd-c_border bdr_xl p_14px_16px md:p_16px_20px d_flex flex-d_column gap_10px bx-sh_0_2px_8px_rgba(0,_0,_0,_0.04)"
+        data-testid="allowance-pill-isa"
       >
-        £500
-      </h2>
+        <div
+          class="d_flex jc_space-between ai_center flex-wrap_wrap gap_10px"
+        >
+          <div
+            style="display: flex; align-items: center; gap: 8px;"
+          >
+            <div
+              style="width: 28px; height: 28px; background-color: rgba(16, 185, 129, 0.12); color: #10b981; display: flex; align-items: center; justify-content: center; font-size: 14px;"
+            >
+              <svg
+                fill="none"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"
+                />
+              </svg>
+            </div>
+            <div>
+              <div
+                style="display: flex; align-items: center; gap: 8px;"
+              >
+                <strong
+                  style="font-size: 14px;"
+                >
+                  UK ISA Annual Allowance
+                </strong>
+                <span
+                  style="font-size: 11px; font-weight: 600; padding: 1px 6px; background-color: rgba(99, 102, 241, 0.08); color: var(--colors-primary);"
+                >
+                  £20,000
+                   / Tax Year
+                </span>
+              </div>
+              <p
+                class="fs_xs fw_normal lh_normal ls_normal c_text.muted m_0 "
+              >
+                £20,000
+                 remaining tax-free capacity
+              </p>
+            </div>
+          </div>
+          <div
+            style="display: flex; align-items: center; gap: 10px;"
+          >
+            <div
+              style="display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; background-color: rgba(245, 158, 11, 0.1); color: #d97706; font-size: 12px; font-weight: 600;"
+            >
+              <svg
+                fill="none"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <circle
+                  cx="12"
+                  cy="12"
+                  r="10"
+                />
+                <polyline
+                  points="12 6 12 12 16 14"
+                />
+              </svg>
+               
+              148
+               days left until 5 April
+            </div>
+          </div>
+        </div>
+        <div>
+          <div
+            class="w_100% h_8px bg-c_secondary bdr_full ov_hidden"
+          >
+            <div
+              style="width: 0%; height: 100%; background-color: #10b981; border-radius: 9999px; transition: width 0.4s ease;"
+            />
+          </div>
+          <div
+            style="display: flex; justify-content: space-between; font-size: 11px; color: var(--colors-text-muted); margin-top: 4px;"
+          >
+            <span>
+              £0
+               contributed (
+              0
+              %)
+            </span>
+            <span>
+              Max 
+              £20,000
+            </span>
+          </div>
+        </div>
+        <div
+          style="font-size: 11px; color: var(--colors-text-muted); padding-top: 6px; display: flex; justify-content: space-between; border-top-width: var(--colors-border); border-top-style: var(--colors-border); border-top-color: var(--colors-border);"
+        >
+          <span>
+            💡 
+            <strong>
+              Personal Savings Allowance (
+              HIGHER
+               rate):
+            </strong>
+             
+            £500
+             tax-free interest/yr
+          </span>
+          <span>
+            0% tax on non-ISA interest up to limit
+          </span>
+        </div>
+      </div>
     </div>
   </div>
   <div
@@ -148,40 +314,110 @@ exports[`<AccountsContainer /> > should render as expected when accounts exist 1
         tabindex="0"
       >
         <button
-          aria-controls="radix-_r_9_-content-my-accounts"
+          aria-controls="radix-_r_k_-content-all"
           aria-selected="true"
           class="p_8px_16px fs_sm fw_medium c_text.muted bg-c_transparent bd_none cursor_pointer trs_color_0.2s,_border-color_0.2s bd-b_2px_solid_transparent bd-r_none [&[data-state='active']]:c_primary [&[data-state='active']]:bd-c_primary hover:c_text.primary"
           data-orientation="horizontal"
           data-radix-collection-item=""
           data-state="active"
-          id="radix-_r_9_-trigger-my-accounts"
+          id="radix-_r_k_-trigger-all"
           role="tab"
           tabindex="-1"
           type="button"
         >
-          My Accounts
+          All Accounts
         </button>
         <button
-          aria-controls="radix-_r_9_-content-bank-connections"
+          aria-controls="radix-_r_k_-content-cash-current"
           aria-selected="false"
           class="p_8px_16px fs_sm fw_medium c_text.muted bg-c_transparent bd_none cursor_pointer trs_color_0.2s,_border-color_0.2s bd-b_2px_solid_transparent bd-r_none [&[data-state='active']]:c_primary [&[data-state='active']]:bd-c_primary hover:c_text.primary"
           data-orientation="horizontal"
           data-radix-collection-item=""
           data-state="inactive"
-          id="radix-_r_9_-trigger-bank-connections"
+          id="radix-_r_k_-trigger-cash-current"
           role="tab"
           tabindex="-1"
           type="button"
         >
-          Bank Connections
+          Cash & Current
+        </button>
+        <button
+          aria-controls="radix-_r_k_-content-savings-yield"
+          aria-selected="false"
+          class="p_8px_16px fs_sm fw_medium c_text.muted bg-c_transparent bd_none cursor_pointer trs_color_0.2s,_border-color_0.2s bd-b_2px_solid_transparent bd-r_none [&[data-state='active']]:c_primary [&[data-state='active']]:bd-c_primary hover:c_text.primary"
+          data-orientation="horizontal"
+          data-radix-collection-item=""
+          data-state="inactive"
+          id="radix-_r_k_-trigger-savings-yield"
+          role="tab"
+          tabindex="-1"
+          type="button"
+        >
+          Savings & ISAs (Yield & Compound Forecaster)
+        </button>
+        <button
+          aria-controls="radix-_r_k_-content-investments-pensions"
+          aria-selected="false"
+          class="p_8px_16px fs_sm fw_medium c_text.muted bg-c_transparent bd_none cursor_pointer trs_color_0.2s,_border-color_0.2s bd-b_2px_solid_transparent bd-r_none [&[data-state='active']]:c_primary [&[data-state='active']]:bd-c_primary hover:c_text.primary"
+          data-orientation="horizontal"
+          data-radix-collection-item=""
+          data-state="inactive"
+          id="radix-_r_k_-trigger-investments-pensions"
+          role="tab"
+          tabindex="-1"
+          type="button"
+        >
+          Investments & Pensions
+        </button>
+        <button
+          aria-controls="radix-_r_k_-content-credit-debt"
+          aria-selected="false"
+          class="p_8px_16px fs_sm fw_medium c_text.muted bg-c_transparent bd_none cursor_pointer trs_color_0.2s,_border-color_0.2s bd-b_2px_solid_transparent bd-r_none [&[data-state='active']]:c_primary [&[data-state='active']]:bd-c_primary hover:c_text.primary"
+          data-orientation="horizontal"
+          data-radix-collection-item=""
+          data-state="inactive"
+          id="radix-_r_k_-trigger-credit-debt"
+          role="tab"
+          tabindex="-1"
+          type="button"
+        >
+          Credit & Debt
+        </button>
+        <button
+          aria-controls="radix-_r_k_-content-mortgages"
+          aria-selected="false"
+          class="p_8px_16px fs_sm fw_medium c_text.muted bg-c_transparent bd_none cursor_pointer trs_color_0.2s,_border-color_0.2s bd-b_2px_solid_transparent bd-r_none [&[data-state='active']]:c_primary [&[data-state='active']]:bd-c_primary hover:c_text.primary"
+          data-orientation="horizontal"
+          data-radix-collection-item=""
+          data-state="inactive"
+          id="radix-_r_k_-trigger-mortgages"
+          role="tab"
+          tabindex="-1"
+          type="button"
+        >
+          Mortgages
+        </button>
+        <button
+          aria-controls="radix-_r_k_-content-bank-connections"
+          aria-selected="false"
+          class="p_8px_16px fs_sm fw_medium c_text.muted bg-c_transparent bd_none cursor_pointer trs_color_0.2s,_border-color_0.2s bd-b_2px_solid_transparent bd-r_none [&[data-state='active']]:c_primary [&[data-state='active']]:bd-c_primary hover:c_text.primary"
+          data-orientation="horizontal"
+          data-radix-collection-item=""
+          data-state="inactive"
+          id="radix-_r_k_-trigger-bank-connections"
+          role="tab"
+          tabindex="-1"
+          type="button"
+        >
+          Open Banking Connections
         </button>
       </div>
       <div
-        aria-labelledby="radix-_r_9_-trigger-my-accounts"
+        aria-labelledby="radix-_r_k_-trigger-all"
         class="ring_none"
         data-orientation="horizontal"
         data-state="active"
-        id="radix-_r_9_-content-my-accounts"
+        id="radix-_r_k_-content-all"
         role="tabpanel"
         style="animation-duration: 0s;"
         tabindex="0"
@@ -360,12 +596,62 @@ exports[`<AccountsContainer /> > should render as expected when accounts exist 1
         </div>
       </div>
       <div
-        aria-labelledby="radix-_r_9_-trigger-bank-connections"
+        aria-labelledby="radix-_r_k_-trigger-cash-current"
         class="ring_none"
         data-orientation="horizontal"
         data-state="inactive"
         hidden=""
-        id="radix-_r_9_-content-bank-connections"
+        id="radix-_r_k_-content-cash-current"
+        role="tabpanel"
+        tabindex="0"
+      />
+      <div
+        aria-labelledby="radix-_r_k_-trigger-savings-yield"
+        class="ring_none"
+        data-orientation="horizontal"
+        data-state="inactive"
+        hidden=""
+        id="radix-_r_k_-content-savings-yield"
+        role="tabpanel"
+        tabindex="0"
+      />
+      <div
+        aria-labelledby="radix-_r_k_-trigger-investments-pensions"
+        class="ring_none"
+        data-orientation="horizontal"
+        data-state="inactive"
+        hidden=""
+        id="radix-_r_k_-content-investments-pensions"
+        role="tabpanel"
+        tabindex="0"
+      />
+      <div
+        aria-labelledby="radix-_r_k_-trigger-credit-debt"
+        class="ring_none"
+        data-orientation="horizontal"
+        data-state="inactive"
+        hidden=""
+        id="radix-_r_k_-content-credit-debt"
+        role="tabpanel"
+        tabindex="0"
+      />
+      <div
+        aria-labelledby="radix-_r_k_-trigger-mortgages"
+        class="ring_none"
+        data-orientation="horizontal"
+        data-state="inactive"
+        hidden=""
+        id="radix-_r_k_-content-mortgages"
+        role="tabpanel"
+        tabindex="0"
+      />
+      <div
+        aria-labelledby="radix-_r_k_-trigger-bank-connections"
+        class="ring_none"
+        data-orientation="horizontal"
+        data-state="inactive"
+        hidden=""
+        id="radix-_r_k_-content-bank-connections"
         role="tabpanel"
         tabindex="0"
       />
@@ -377,22 +663,57 @@ exports[`<AccountsContainer /> > should render as expected when accounts exist 1
 exports[`<AccountsContainer /> > should render as expected when no accounts exist 1`] = `
 <div>
   <div
-    class="d_flex flex-d_row ai_center jc_space-between mt_20px mb_20px"
+    class="d_flex flex-d_row ai_center jc_space-between flex-wrap_wrap gap_16px mt_20px mb_20px"
   >
-    <h1
-      class="c_primary fs_1.5rem fw_bold lh_tight m_0 "
+    <div>
+      <h1
+        class="c_primary fs_1.5rem fw_bold lh_tight m_0 "
+      >
+        accounts
+      </h1>
+      <p
+        class="fs_sm fw_normal lh_normal ls_normal c_text.muted m_0 mt_4px"
+      >
+        Unified Net Worth, Savings Yield & UK Allowance Hub
+      </p>
+    </div>
+    <div
+      class="d_flex ai_center gap_12px flex-wrap_wrap"
     >
-      accounts
-    </h1>
-    <button
-      aria-expanded="false"
-      aria-haspopup="dialog"
-      class="d_inline-flex ai_center jc_center bdr_full fw_medium trs_all_0.2s cursor_pointer px_6 py_3 fs_sm lh_1 disabled:op_0.5 disabled:cursor_not-allowed focusVisible:ring_2px_solid focusVisible:ring-c_primary focusVisible:ring-o_2px bg_background c_text.primary bd_1px_solid bd-c_border hover:bg_accent hover:c_accent.foreground"
-      data-state="closed"
-      type="button"
-    >
-      addAccount
-    </button>
+      <button
+        aria-expanded="false"
+        aria-haspopup="dialog"
+        class="d_inline-flex ai_center gap_8px p_8px_16px bdr_md fs_sm fw_semibold bg-c_rgba(99,_99,_241,_0.1) c_primary bd_1px_solid bd-c_rgba(99,_99,_241,_0.25) cursor_pointer trs_all_0.15s_ease hover:bg-c_rgba(99,_99,_241,_0.18) hover:bd-c_primary"
+        data-state="closed"
+        type="button"
+      >
+        <svg
+          fill="currentColor"
+          height="1em"
+          stroke="currentColor"
+          stroke-width="0"
+          viewBox="0 0 512 512"
+          width="1em"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M256,8C119,8,8,119,8,256S119,504,256,504,504,393,504,256,393,8,256,8Zm92.49,313h0l-20,25a16,16,0,0,1-22.49,2.5h0l-67-49.72a40,40,0,0,1-15-31.23V112a16,16,0,0,1,16-16h32a16,16,0,0,1,16,16V256l58,42.5A16,16,0,0,1,348.49,321Z"
+          />
+        </svg>
+        <span>
+          60-Sec Balance Check-In
+        </span>
+      </button>
+      <button
+        aria-expanded="false"
+        aria-haspopup="dialog"
+        class="d_inline-flex ai_center jc_center bdr_full fw_medium trs_all_0.2s cursor_pointer px_6 py_3 fs_sm lh_1 disabled:op_0.5 disabled:cursor_not-allowed focusVisible:ring_2px_solid focusVisible:ring-c_primary focusVisible:ring-o_2px bg_background c_text.primary bd_1px_solid bd-c_border hover:bg_accent hover:c_accent.foreground"
+        data-state="closed"
+        type="button"
+      >
+        addAccount
+      </button>
+    </div>
   </div>
   <div
     class="mt_24px"
@@ -411,40 +732,110 @@ exports[`<AccountsContainer /> > should render as expected when no accounts exis
         tabindex="0"
       >
         <button
-          aria-controls="radix-_r_3_-content-my-accounts"
+          aria-controls="radix-_r_6_-content-all"
           aria-selected="true"
           class="p_8px_16px fs_sm fw_medium c_text.muted bg-c_transparent bd_none cursor_pointer trs_color_0.2s,_border-color_0.2s bd-b_2px_solid_transparent bd-r_none [&[data-state='active']]:c_primary [&[data-state='active']]:bd-c_primary hover:c_text.primary"
           data-orientation="horizontal"
           data-radix-collection-item=""
           data-state="active"
-          id="radix-_r_3_-trigger-my-accounts"
+          id="radix-_r_6_-trigger-all"
           role="tab"
           tabindex="-1"
           type="button"
         >
-          My Accounts
+          All Accounts
         </button>
         <button
-          aria-controls="radix-_r_3_-content-bank-connections"
+          aria-controls="radix-_r_6_-content-cash-current"
           aria-selected="false"
           class="p_8px_16px fs_sm fw_medium c_text.muted bg-c_transparent bd_none cursor_pointer trs_color_0.2s,_border-color_0.2s bd-b_2px_solid_transparent bd-r_none [&[data-state='active']]:c_primary [&[data-state='active']]:bd-c_primary hover:c_text.primary"
           data-orientation="horizontal"
           data-radix-collection-item=""
           data-state="inactive"
-          id="radix-_r_3_-trigger-bank-connections"
+          id="radix-_r_6_-trigger-cash-current"
           role="tab"
           tabindex="-1"
           type="button"
         >
-          Bank Connections
+          Cash & Current
+        </button>
+        <button
+          aria-controls="radix-_r_6_-content-savings-yield"
+          aria-selected="false"
+          class="p_8px_16px fs_sm fw_medium c_text.muted bg-c_transparent bd_none cursor_pointer trs_color_0.2s,_border-color_0.2s bd-b_2px_solid_transparent bd-r_none [&[data-state='active']]:c_primary [&[data-state='active']]:bd-c_primary hover:c_text.primary"
+          data-orientation="horizontal"
+          data-radix-collection-item=""
+          data-state="inactive"
+          id="radix-_r_6_-trigger-savings-yield"
+          role="tab"
+          tabindex="-1"
+          type="button"
+        >
+          Savings & ISAs (Yield & Compound Forecaster)
+        </button>
+        <button
+          aria-controls="radix-_r_6_-content-investments-pensions"
+          aria-selected="false"
+          class="p_8px_16px fs_sm fw_medium c_text.muted bg-c_transparent bd_none cursor_pointer trs_color_0.2s,_border-color_0.2s bd-b_2px_solid_transparent bd-r_none [&[data-state='active']]:c_primary [&[data-state='active']]:bd-c_primary hover:c_text.primary"
+          data-orientation="horizontal"
+          data-radix-collection-item=""
+          data-state="inactive"
+          id="radix-_r_6_-trigger-investments-pensions"
+          role="tab"
+          tabindex="-1"
+          type="button"
+        >
+          Investments & Pensions
+        </button>
+        <button
+          aria-controls="radix-_r_6_-content-credit-debt"
+          aria-selected="false"
+          class="p_8px_16px fs_sm fw_medium c_text.muted bg-c_transparent bd_none cursor_pointer trs_color_0.2s,_border-color_0.2s bd-b_2px_solid_transparent bd-r_none [&[data-state='active']]:c_primary [&[data-state='active']]:bd-c_primary hover:c_text.primary"
+          data-orientation="horizontal"
+          data-radix-collection-item=""
+          data-state="inactive"
+          id="radix-_r_6_-trigger-credit-debt"
+          role="tab"
+          tabindex="-1"
+          type="button"
+        >
+          Credit & Debt
+        </button>
+        <button
+          aria-controls="radix-_r_6_-content-mortgages"
+          aria-selected="false"
+          class="p_8px_16px fs_sm fw_medium c_text.muted bg-c_transparent bd_none cursor_pointer trs_color_0.2s,_border-color_0.2s bd-b_2px_solid_transparent bd-r_none [&[data-state='active']]:c_primary [&[data-state='active']]:bd-c_primary hover:c_text.primary"
+          data-orientation="horizontal"
+          data-radix-collection-item=""
+          data-state="inactive"
+          id="radix-_r_6_-trigger-mortgages"
+          role="tab"
+          tabindex="-1"
+          type="button"
+        >
+          Mortgages
+        </button>
+        <button
+          aria-controls="radix-_r_6_-content-bank-connections"
+          aria-selected="false"
+          class="p_8px_16px fs_sm fw_medium c_text.muted bg-c_transparent bd_none cursor_pointer trs_color_0.2s,_border-color_0.2s bd-b_2px_solid_transparent bd-r_none [&[data-state='active']]:c_primary [&[data-state='active']]:bd-c_primary hover:c_text.primary"
+          data-orientation="horizontal"
+          data-radix-collection-item=""
+          data-state="inactive"
+          id="radix-_r_6_-trigger-bank-connections"
+          role="tab"
+          tabindex="-1"
+          type="button"
+        >
+          Open Banking Connections
         </button>
       </div>
       <div
-        aria-labelledby="radix-_r_3_-trigger-my-accounts"
+        aria-labelledby="radix-_r_6_-trigger-all"
         class="ring_none"
         data-orientation="horizontal"
         data-state="active"
-        id="radix-_r_3_-content-my-accounts"
+        id="radix-_r_6_-content-all"
         role="tabpanel"
         style="animation-duration: 0s;"
         tabindex="0"
@@ -453,47 +844,69 @@ exports[`<AccountsContainer /> > should render as expected when no accounts exis
           class="d_flex flex-d_column gap_10 mt_4 "
         >
           <div
-            class="p_64px_24px ta_center bd_2px_dashed bd-c_border bdr_lg d_flex flex-d_column ai_center gap_16px max-w_480px m_40px_auto"
+            class="p_40px_0 ta_center c_text.muted"
           >
-            <div
-              class="w_56px h_56px bdr_full bg-c_rgba(99,_99,_241,_0.08) d_flex ai_center jc_center fs_24px c_primary"
-            >
-              <svg
-                fill="currentColor"
-                height="1em"
-                stroke="currentColor"
-                stroke-width="0"
-                viewBox="0 0 512 512"
-                width="1em"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  d="M461.2 128H80c-8.84 0-16-7.16-16-16s7.16-16 16-16h384c8.84 0 16-7.16 16-16 0-26.51-21.49-48-48-48H64C28.65 32 0 60.65 0 96v320c0 35.35 28.65 64 64 64h397.2c28.02 0 50.8-21.53 50.8-48V176c0-26.47-22.78-48-50.8-48zM416 336c-17.67 0-32-14.33-32-32s14.33-32 32-32 32 14.33 32 32-14.33 32-32 32z"
-                />
-              </svg>
-            </div>
-            <div>
-              <h3
-                class="c_primary fs_1rem fw_bold mb_1 lh_tight m_0 "
-              >
-                No Accounts Connected
-              </h3>
-              <p
-                class="fs_sm fw_normal lh_normal ls_normal c_text.muted m_0 "
-              >
-                Connect your bank accounts securely or create manual ones to start tracking your net worth and asset allocation progression.
-              </p>
-            </div>
+            No accounts found in this category.
           </div>
         </div>
       </div>
       <div
-        aria-labelledby="radix-_r_3_-trigger-bank-connections"
+        aria-labelledby="radix-_r_6_-trigger-cash-current"
         class="ring_none"
         data-orientation="horizontal"
         data-state="inactive"
         hidden=""
-        id="radix-_r_3_-content-bank-connections"
+        id="radix-_r_6_-content-cash-current"
+        role="tabpanel"
+        tabindex="0"
+      />
+      <div
+        aria-labelledby="radix-_r_6_-trigger-savings-yield"
+        class="ring_none"
+        data-orientation="horizontal"
+        data-state="inactive"
+        hidden=""
+        id="radix-_r_6_-content-savings-yield"
+        role="tabpanel"
+        tabindex="0"
+      />
+      <div
+        aria-labelledby="radix-_r_6_-trigger-investments-pensions"
+        class="ring_none"
+        data-orientation="horizontal"
+        data-state="inactive"
+        hidden=""
+        id="radix-_r_6_-content-investments-pensions"
+        role="tabpanel"
+        tabindex="0"
+      />
+      <div
+        aria-labelledby="radix-_r_6_-trigger-credit-debt"
+        class="ring_none"
+        data-orientation="horizontal"
+        data-state="inactive"
+        hidden=""
+        id="radix-_r_6_-content-credit-debt"
+        role="tabpanel"
+        tabindex="0"
+      />
+      <div
+        aria-labelledby="radix-_r_6_-trigger-mortgages"
+        class="ring_none"
+        data-orientation="horizontal"
+        data-state="inactive"
+        hidden=""
+        id="radix-_r_6_-content-mortgages"
+        role="tabpanel"
+        tabindex="0"
+      />
+      <div
+        aria-labelledby="radix-_r_6_-trigger-bank-connections"
+        class="ring_none"
+        data-orientation="horizontal"
+        data-state="inactive"
+        hidden=""
+        id="radix-_r_6_-content-bank-connections"
         role="tabpanel"
         tabindex="0"
       />

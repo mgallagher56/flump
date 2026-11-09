@@ -10,7 +10,14 @@ import FLPText from "~/components/core/typography/FLPText";
 import { useResponsive } from "~/context/ResponsiveContext";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
 import type { BudgetCategory, BudgetEntry } from "~/types/budget";
-import { CATEGORY_COLOURS, CATEGORY_ICONS, CATEGORY_LABELS, toMonthly } from "~/types/budget";
+import {
+  CATEGORY_COLOURS,
+  CATEGORY_ICONS,
+  CATEGORY_LABELS,
+  getDaysUntilContractEnd,
+  isPriorityBill,
+  toMonthly,
+} from "~/types/budget";
 import {
   calculateRunwayStats,
   loadRunwaySettings,
@@ -176,6 +183,43 @@ const BudgetDashboard: FC<BudgetDashboardProps> = ({
       pool: stats.pool,
     };
   }, [entries, accounts, accountDetails, runwaySettings]);
+
+  const cashFlowSplit = useMemo(() => {
+    const priorityItems = entries.filter((e) => !e.isIncome && isPriorityBill(e));
+    const flexibleItems = entries.filter(
+      (e) => !e.isIncome && !isPriorityBill(e) && e.category !== "savings",
+    );
+
+    const priorityBudget = priorityItems.reduce((s, e) => s + toMonthly(e), 0);
+    const flexibleBudget = flexibleItems.reduce((s, e) => s + toMonthly(e), 0);
+
+    const priorityActual = priorityItems.reduce(
+      (s, e) => s + (e.actualMtdGbp !== undefined ? e.actualMtdGbp : toMonthly(e) * 0.92),
+      0,
+    );
+    const flexibleActual = flexibleItems.reduce(
+      (s, e) => s + (e.actualMtdGbp !== undefined ? e.actualMtdGbp : toMonthly(e) * 0.78),
+      0,
+    );
+
+    const billsWithCliffs = entries
+      .filter((e) => !e.isIncome && e.category === "bills" && e.contractEndDate)
+      .map((e) => ({
+        ...e,
+        daysUntil: getDaysUntilContractEnd(e.contractEndDate),
+      }))
+      .filter((e) => e.daysUntil !== null && e.daysUntil <= 30);
+
+    return {
+      priorityItems,
+      flexibleItems,
+      priorityBudget,
+      flexibleBudget,
+      priorityActual,
+      flexibleActual,
+      billsWithCliffs,
+    };
+  }, [entries]);
 
   const cardBase = css({
     display: "flex",
@@ -351,6 +395,193 @@ const BudgetDashboard: FC<BudgetDashboardProps> = ({
         </div>
       </div>
 
+      {/* Cash Flow & Safe-to-Spend: Priority Obligations vs Flexible / Discretionary Spend */}
+      <div
+        className={css({
+          display: "grid",
+          gridTemplateColumns: isMobileVariant ? "1fr" : { base: "1fr", md: "1fr 1fr" },
+          gap: "16px",
+        })}
+      >
+        {/* Priority Obligations */}
+        <div
+          className={css({
+            padding: isMobileVariant ? "16px" : "20px",
+            borderRadius: "lg",
+            border: "1px solid",
+            borderColor: "rgba(99, 102, 241, 0.3)",
+            backgroundColor: "rgba(99, 102, 241, 0.03)",
+            display: "flex",
+            flexDirection: "column",
+            gap: "12px",
+          })}
+        >
+          <div
+            style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}
+          >
+            <div>
+              <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                <span style={{ fontSize: "16px" }}>🛡️</span>
+                <FLPHeading as="h3" size="sm">
+                  Priority Obligations (Protected)
+                </FLPHeading>
+              </div>
+              <FLPText color="text.muted" fontSize="xs" style={{ marginTop: "2px" }}>
+                Rent/Mortgage, Council Tax, Energy & Water (Statutory UK protections)
+              </FLPText>
+            </div>
+            <span
+              style={{
+                fontSize: "10px",
+                fontWeight: 700,
+                padding: "2px 8px",
+                borderRadius: "999px",
+                backgroundColor: "rgba(99, 102, 241, 0.15)",
+                color: "#6366f1",
+              }}
+            >
+              Non-negotiable
+            </span>
+          </div>
+
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "1fr 1fr",
+              gap: "12px",
+              padding: "10px 12px",
+              borderRadius: "8px",
+              backgroundColor: "var(--colors-surface)",
+              border: "1px solid var(--colors-border)",
+            }}
+          >
+            <div>
+              <FLPText color="text.muted" fontSize="xs">
+                Planned Monthly
+              </FLPText>
+              <FLPHeading as="h4" size="md" style={{ marginTop: "2px" }}>
+                {fmt(cashFlowSplit.priorityBudget)}
+                <span
+                  style={{
+                    fontSize: "11px",
+                    fontWeight: "normal",
+                    color: "var(--colors-text-muted)",
+                  }}
+                >
+                  /mo
+                </span>
+              </FLPHeading>
+            </div>
+            <div>
+              <FLPText color="text.muted" fontSize="xs">
+                MTD Settled Actuals
+              </FLPText>
+              <FLPHeading as="h4" size="md" style={{ marginTop: "2px", color: "#6366f1" }}>
+                {fmt(cashFlowSplit.priorityActual)}
+              </FLPHeading>
+            </div>
+          </div>
+
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <FLPText color="text.muted" fontSize="xs">
+              {cashFlowSplit.priorityItems.length} priority items tracked
+            </FLPText>
+            <FLPText color="success.500" fontSize="xs" fontWeight="semibold">
+              Protected against secondary credit claims
+            </FLPText>
+          </div>
+        </div>
+
+        {/* Flexible & Discretionary Spend */}
+        <div
+          className={css({
+            padding: isMobileVariant ? "16px" : "20px",
+            borderRadius: "lg",
+            border: "1px solid",
+            borderColor: "rgba(16, 185, 129, 0.3)",
+            backgroundColor: "rgba(16, 185, 129, 0.03)",
+            display: "flex",
+            flexDirection: "column",
+            gap: "12px",
+          })}
+        >
+          <div
+            style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}
+          >
+            <div>
+              <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                <span style={{ fontSize: "16px" }}>🎯</span>
+                <FLPHeading as="h3" size="sm">
+                  Flexible & Discretionary Spend
+                </FLPHeading>
+              </div>
+              <FLPText color="text.muted" fontSize="xs" style={{ marginTop: "2px" }}>
+                Day-to-day lifestyle, dining, leisure & variable subscriptions
+              </FLPText>
+            </div>
+            <span
+              style={{
+                fontSize: "10px",
+                fontWeight: 700,
+                padding: "2px 8px",
+                borderRadius: "999px",
+                backgroundColor: "rgba(16, 185, 129, 0.15)",
+                color: "#10b981",
+              }}
+            >
+              Safe-to-Spend
+            </span>
+          </div>
+
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "1fr 1fr",
+              gap: "12px",
+              padding: "10px 12px",
+              borderRadius: "8px",
+              backgroundColor: "var(--colors-surface)",
+              border: "1px solid var(--colors-border)",
+            }}
+          >
+            <div>
+              <FLPText color="text.muted" fontSize="xs">
+                Budgeted Limit
+              </FLPText>
+              <FLPHeading as="h4" size="md" style={{ marginTop: "2px" }}>
+                {fmt(cashFlowSplit.flexibleBudget)}
+                <span
+                  style={{
+                    fontSize: "11px",
+                    fontWeight: "normal",
+                    color: "var(--colors-text-muted)",
+                  }}
+                >
+                  /mo
+                </span>
+              </FLPHeading>
+            </div>
+            <div>
+              <FLPText color="text.muted" fontSize="xs">
+                MTD Settled Actuals
+              </FLPText>
+              <FLPHeading as="h4" size="md" style={{ marginTop: "2px", color: "#10b981" }}>
+                {fmt(cashFlowSplit.flexibleActual)}
+              </FLPHeading>
+            </div>
+          </div>
+
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <FLPText color="text.muted" fontSize="xs">
+              Weekly Burn Target:
+            </FLPText>
+            <FLPText color="primary" fontSize="xs" fontWeight="bold">
+              {fmt(safeToSpend.weeklyAllowance)} / week
+            </FLPText>
+          </div>
+        </div>
+      </div>
+
       {/* Priority vs. Non-Priority Debt Guardrail Alert */}
       {totals.surplus < 0 && (
         <div
@@ -419,32 +650,108 @@ const BudgetDashboard: FC<BudgetDashboardProps> = ({
       {/* Bill & Subscription Contract Renewal Radar */}
       <div
         className={css({
-          padding: "14px 20px",
+          padding: "16px 20px",
           borderRadius: "lg",
-          backgroundColor: "rgba(245, 158, 11, 0.06)",
-          border: "1px solid rgba(245, 158, 11, 0.25)",
+          backgroundColor:
+            cashFlowSplit.billsWithCliffs.length > 0
+              ? "rgba(239, 68, 68, 0.06)"
+              : "rgba(245, 158, 11, 0.06)",
+          border: "1px solid",
+          borderColor:
+            cashFlowSplit.billsWithCliffs.length > 0
+              ? "rgba(239, 68, 68, 0.3)"
+              : "rgba(245, 158, 11, 0.25)",
           display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          flexWrap: "wrap",
+          flexDirection: "column",
           gap: "12px",
         })}
       >
-        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-          <span style={{ fontSize: "20px" }}>📡</span>
-          <div>
-            <FLPText fontSize="sm" fontWeight="bold">
-              Contract Renewal Radar
-            </FLPText>
-            <FLPText color="text.muted" fontSize="xs">
-              Review recurring broadband, mobile SIM, and car insurance 30 days before expiration to
-              avoid out-of-contract price spikes and redirect savings into debt payoff.
-            </FLPText>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            flexWrap: "wrap",
+            gap: "12px",
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+            <span style={{ fontSize: "20px" }}>
+              {cashFlowSplit.billsWithCliffs.length > 0 ? "⚠️" : "📡"}
+            </span>
+            <div>
+              <FLPText fontSize="sm" fontWeight="bold">
+                Contract Renewal Radar
+                {cashFlowSplit.billsWithCliffs.length > 0 && (
+                  <span
+                    style={{
+                      marginLeft: "8px",
+                      fontSize: "11px",
+                      padding: "2px 8px",
+                      borderRadius: "999px",
+                      backgroundColor: "rgba(239, 68, 68, 0.15)",
+                      color: "#dc2626",
+                    }}
+                  >
+                    {cashFlowSplit.billsWithCliffs.length} Renewal Cliff
+                    {cashFlowSplit.billsWithCliffs.length > 1 ? "s" : ""} Within 30 Days
+                  </span>
+                )}
+              </FLPText>
+              <FLPText color="text.muted" fontSize="xs">
+                Review recurring broadband, mobile SIM, and car insurance 30 days before expiration
+                to avoid out-of-contract price spikes and redirect savings into debt payoff.
+              </FLPText>
+            </div>
           </div>
+          <FLPButton size="sm" variant="outline" onClick={() => onNavigateToCategory("bills")}>
+            Review Bills & Renewals →
+          </FLPButton>
         </div>
-        <FLPButton size="sm" variant="outline" onClick={() => onNavigateToCategory("bills")}>
-          Review Bills & Renewals →
-        </FLPButton>
+
+        {cashFlowSplit.billsWithCliffs.length > 0 && (
+          <div
+            style={{
+              display: "flex",
+              flexWrap: "wrap",
+              gap: "8px",
+              paddingTop: "4px",
+              borderTop: "1px solid rgba(239, 68, 68, 0.15)",
+            }}
+          >
+            {cashFlowSplit.billsWithCliffs.map((bill) => (
+              <div
+                key={bill.id}
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  fontSize: "12px",
+                  padding: "4px 10px",
+                  borderRadius: "6px",
+                  backgroundColor: "var(--colors-surface)",
+                  border: "1px solid rgba(239, 68, 68, 0.25)",
+                }}
+              >
+                <span style={{ fontWeight: 600 }}>{bill.name}</span>
+                <span style={{ color: "var(--colors-text-muted)" }}>
+                  ({fmt(toMonthly(bill))}/mo)
+                </span>
+                <span
+                  style={{
+                    fontSize: "11px",
+                    fontWeight: 700,
+                    color: (bill.daysUntil ?? 0) <= 0 ? "#dc2626" : "#d97706",
+                  }}
+                >
+                  {(bill.daysUntil ?? 0) <= 0
+                    ? `🚨 Expired ${Math.abs(bill.daysUntil ?? 0)}d ago`
+                    : `⚠️ Renews in ${bill.daysUntil}d`}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Chart + Category breakdown */}

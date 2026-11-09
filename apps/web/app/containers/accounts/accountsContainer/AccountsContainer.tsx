@@ -1,6 +1,5 @@
 import { css } from "@repo/ui/styled-system/css";
-import type { FC } from "react";
-import { Fragment, useMemo } from "react";
+import { type FC, Fragment, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   FaChartLine,
@@ -13,14 +12,17 @@ import {
   FaUserFriends,
   FaWallet,
 } from "react-icons/fa";
-import { useLoaderData } from "react-router";
+import { useLoaderData, useSearchParams } from "react-router";
 import BankConnectionsList from "~/components/accounts/BankConnectionsList";
+import MonthlyBalanceCheckInDrawer from "~/components/accounts/MonthlyBalanceCheckInDrawer";
 import AccountsCard from "~/components/core/cards/AccountsCard";
 import FLPBox from "~/components/core/structure/FLPBox";
 import FLPTabs from "~/components/core/tabs/FLPTabs";
 import FLPHeading from "~/components/core/typography/FLPHeading";
 import FLPText from "~/components/core/typography/FLPText";
 import AddEditAccountsDialogBtn from "~/components/dialogs/addEditAccountsDialog/AddEditAccountsDialog";
+import AnnualAllowancePill from "~/components/savings/AnnualAllowancePill";
+import SavingsForecasterCard from "~/components/savings/SavingsForecasterCard";
 import type { Account } from "~/containers/accounts/types";
 import { AccountTypeEnum, isAccountTypeValid } from "~/containers/accounts/utils";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
@@ -33,20 +35,24 @@ const { CURRENT, SAVING, MORTGAGE, CREDIT_CARD, LOAN, OWED, INVESTMENT, PENSION 
 const AccountsContainer: FC = () => {
   const { formatCurrency } = useFormatCurrency();
   const { t } = useTranslation();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const initialTab = searchParams.get("tab") || "all";
+  const [activeTab, setActiveTab] = useState(initialTab);
+
   const {
     accounts = [],
     accountDetails = [],
     bankConnections = [],
   } = useLoaderData<typeof loader>();
-  const accountTypeArr = useMemo(
-    () => [CURRENT, SAVING, INVESTMENT, PENSION, CREDIT_CARD, MORTGAGE, LOAN, OWED],
-    [],
-  );
 
-  // Calculate Net Worth, Assets, Liabilities
+  // Calculate Net Worth, Assets, Liabilities, Liquid Cash, and Weighted Yield
   const stats = useMemo(() => {
     let totalAssets = 0;
     let totalLiabilities = 0;
+    let liquidCash = 0;
+    let weightedYieldSum = 0;
+    let yieldingCashSum = 0;
+    let isaUsed = 0;
 
     accounts.forEach((acc: Account) => {
       const accDetails = accountDetails
@@ -71,15 +77,32 @@ const AccountsContainer: FC = () => {
       );
       if (isAsset) {
         totalAssets += balance;
+        if (acc.type === CURRENT || acc.type === SAVING) {
+          liquidCash += balance;
+        }
+        const apr = Number(acc.interestRate ?? 0);
+        if (apr > 0 && balance > 0) {
+          weightedYieldSum += balance * apr;
+          yieldingCashSum += balance;
+        }
+        if (acc.name.toLowerCase().includes("isa") || acc.type === INVESTMENT) {
+          isaUsed += balance;
+        }
       } else {
         totalLiabilities += balance;
       }
     });
 
+    const weightedAvgApy =
+      yieldingCashSum > 0 ? Math.round((weightedYieldSum / yieldingCashSum) * 100) / 100 : 0;
+
     return {
       assets: totalAssets,
       liabilities: totalLiabilities,
       netWorth: totalAssets - totalLiabilities,
+      liquidCash,
+      weightedAvgApy,
+      isaUsed: Math.min(20000, isaUsed),
     };
   }, [accounts, accountDetails]);
 
@@ -169,7 +192,7 @@ const AccountsContainer: FC = () => {
     display: "grid",
     gridTemplateColumns: { base: "1fr", md: "repeat(3, 1fr)" },
     gap: "24px",
-    marginBottom: "32px",
+    marginBottom: "24px",
   });
 
   const summaryCardStyle = css({
@@ -215,6 +238,8 @@ const AccountsContainer: FC = () => {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
+    flexWrap: "wrap",
+    gap: "16px",
     marginTop: "20px",
     marginBottom: "20px",
   });
@@ -238,21 +263,84 @@ const AccountsContainer: FC = () => {
     marginTop: "16px",
   });
 
+  // Filter accounts by tab category
+  const renderAccountsForTypes = (types: AccountTypeEnum[]) => {
+    const matchingTypes = types.filter((t) => isAccountTypeValid(t, accounts));
+    if (matchingTypes.length === 0) {
+      return (
+        <div className={css({ padding: "40px 0", textAlign: "center", color: "text.muted" })}>
+          No accounts found in this category.
+        </div>
+      );
+    }
+    return matchingTypes.map((accountType) => (
+      <Fragment key={accountType}>
+        <div className={categoryRowStyle}>
+          <div
+            className={css({
+              display: "flex",
+              alignItems: "center",
+              marginBottom: "16px",
+              pb: 2,
+              borderBottom: "1px solid",
+              borderColor: "border",
+            })}
+          >
+            {getAccountTypeIcon(accountType)}
+            <FLPHeading as="h2" color="text.primary" size="lg">
+              {accountType}
+            </FLPHeading>
+          </div>
+          <div className={cardListStyle}>
+            {accounts.map(
+              ({ name, id, type, balance }) =>
+                type === accountType && (
+                  <AccountsCard
+                    key={id}
+                    accountId={id}
+                    name={name}
+                    type={type as AccountTypeEnum}
+                    balance={balance !== undefined ? Number(balance) : undefined}
+                  />
+                ),
+            )}
+          </div>
+        </div>
+      </Fragment>
+    ));
+  };
+
+  const handleTabChange = (val: string) => {
+    setActiveTab(val);
+    setSearchParams({ tab: val });
+  };
+
   return (
     <>
       {/* Title & Actions */}
       <div className={headerStyle}>
-        <FLPHeading as="h1" color="blue.500" size="xl">
-          {t("accounts")}
-        </FLPHeading>
-        <AddEditAccountsDialogBtn />
+        <div>
+          <FLPHeading as="h1" color="blue.500" size="xl">
+            {t("accounts")}
+          </FLPHeading>
+          <FLPText fontSize="sm" color="text.muted" className={css({ marginTop: "4px" })}>
+            Unified Net Worth, Savings Yield & UK Allowance Hub
+          </FLPText>
+        </div>
+
+        <div
+          className={css({ display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap" })}
+        >
+          <MonthlyBalanceCheckInDrawer accounts={accounts} />
+          <AddEditAccountsDialogBtn />
+        </div>
       </div>
 
-      {/* Summary Stats Header */}
+      {/* Top Summary Bar: Net Worth, Liquid Cash & Yield, and ISA Allowance Pill */}
       {accounts.length > 0 && (
         <>
           <div className={gridStyle}>
-            {/* Net Worth Card */}
+            {/* Total Net Worth */}
             <div className={netWorthCardStyle}>
               <FLPText
                 color="gray.500"
@@ -260,7 +348,7 @@ const AccountsContainer: FC = () => {
                 fontWeight="semibold"
                 textTransform="uppercase"
               >
-                Net Worth
+                Total Net Worth
               </FLPText>
               <FLPHeading
                 as="h2"
@@ -270,9 +358,13 @@ const AccountsContainer: FC = () => {
               >
                 {formatCurrency(stats.netWorth)}
               </FLPHeading>
+              <FLPText fontSize="xs" color="text.muted">
+                Assets: {formatCurrency(stats.assets)} • Liabilities:{" "}
+                {formatCurrency(stats.liabilities)}
+              </FLPText>
             </div>
 
-            {/* Assets Card */}
+            {/* Total Liquid Cash & Savings (with Weighted Average APY) */}
             <div className={summaryCardStyle}>
               <FLPText
                 color="gray.500"
@@ -280,30 +372,31 @@ const AccountsContainer: FC = () => {
                 fontWeight="semibold"
                 textTransform="uppercase"
               >
-                Total Assets
+                Liquid Cash & Savings
               </FLPText>
               <FLPHeading as="h2" color="success.500" mt={1} size="xl">
-                {formatCurrency(stats.assets)}
+                {formatCurrency(stats.liquidCash)}
               </FLPHeading>
+              <FLPText fontSize="xs" color="text.muted">
+                Weighted Yield:{" "}
+                <strong>
+                  {stats.weightedAvgApy > 0 ? `${stats.weightedAvgApy}% APY` : "0.0%"}
+                </strong>
+              </FLPText>
             </div>
 
-            {/* Liabilities Card */}
-            <div className={summaryCardStyle}>
-              <FLPText
-                color="gray.500"
-                fontSize="xs"
-                fontWeight="semibold"
-                textTransform="uppercase"
-              >
-                Total Liabilities
-              </FLPText>
-              <FLPHeading as="h2" color="destructive.500" mt={1} size="xl">
-                {formatCurrency(stats.liabilities)}
-              </FLPHeading>
+            {/* UK £20,000 ISA Allowance Progress Pill */}
+            <div>
+              <AnnualAllowancePill
+                type="isa"
+                currentAmount={stats.isaUsed}
+                totalLimit={20000}
+                taxBand="higher"
+              />
             </div>
           </div>
 
-          {/* Allocation Preview Bar */}
+          {/* Asset Allocation Preview Bar */}
           {allocationSegments.length > 0 && (
             <div
               className={css({
@@ -383,102 +476,84 @@ const AccountsContainer: FC = () => {
         </>
       )}
 
-      {/* Tabs list for Accounts vs Bank Connections */}
+      {/* Tabs list: All | Cash & Current | Savings & ISAs | Investments & Pensions | Credit & Debt | Mortgages */}
       <div className={css({ marginTop: "24px" })}>
         <FLPTabs
+          value={activeTab}
+          onValueChange={handleTabChange}
           data={[
             {
-              value: "my-accounts",
-              label: "My Accounts",
+              value: "all",
+              label: "All Accounts",
               children: (
                 <FLPBox display="flex" flexDirection="column" gap={10} mt={4}>
-                  {accountTypeArr.map((accountType) => {
-                    return (
-                      isAccountTypeValid(accountType, accounts) && (
-                        <Fragment key={accountType}>
-                          <div className={categoryRowStyle}>
-                            <div
-                              className={css({
-                                display: "flex",
-                                alignItems: "center",
-                                marginBottom: "16px",
-                                pb: 2,
-                                borderBottom: "1px solid",
-                                borderColor: "border",
-                              })}
-                            >
-                              {getAccountTypeIcon(accountType)}
-                              <FLPHeading as="h2" color="text.primary" size="lg">
-                                {accountType}
-                              </FLPHeading>
-                            </div>
-                            <div className={cardListStyle}>
-                              {accounts.map(
-                                ({ name, id, type, balance }) =>
-                                  type === accountType && (
-                                    <AccountsCard
-                                      key={id}
-                                      accountId={id}
-                                      name={name}
-                                      type={type as AccountTypeEnum}
-                                      balance={balance !== undefined ? Number(balance) : undefined}
-                                    />
-                                  ),
-                              )}
-                            </div>
-                          </div>
-                        </Fragment>
-                      )
-                    );
-                  })}
-                  {accounts.length === 0 && (
-                    <div
-                      className={css({
-                        padding: "64px 24px",
-                        textAlign: "center",
-                        border: "2px dashed",
-                        borderColor: "border",
-                        borderRadius: "lg",
-                        display: "flex",
-                        flexDirection: "column",
-                        alignItems: "center",
-                        gap: "16px",
-                        maxWidth: "480px",
-                        margin: "40px auto",
-                      })}
-                    >
-                      <div
-                        className={css({
-                          width: "56px",
-                          height: "56px",
-                          borderRadius: "full",
-                          backgroundColor: "rgba(99, 99, 241, 0.08)",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          fontSize: "24px",
-                          color: "primary",
-                        })}
-                      >
-                        <FaWallet />
-                      </div>
-                      <div>
-                        <FLPHeading as="h3" size="md" mb={1}>
-                          No Accounts Connected
-                        </FLPHeading>
-                        <FLPText color="text.muted" fontSize="sm">
-                          Connect your bank accounts securely or create manual ones to start
-                          tracking your net worth and asset allocation progression.
-                        </FLPText>
-                      </div>
-                    </div>
-                  )}
+                  {renderAccountsForTypes([
+                    CURRENT,
+                    SAVING,
+                    INVESTMENT,
+                    PENSION,
+                    CREDIT_CARD,
+                    MORTGAGE,
+                    LOAN,
+                    OWED,
+                  ])}
+                </FLPBox>
+              ),
+            },
+            {
+              value: "cash-current",
+              label: "Cash & Current",
+              children: (
+                <FLPBox display="flex" flexDirection="column" gap={10} mt={4}>
+                  {renderAccountsForTypes([CURRENT])}
+                </FLPBox>
+              ),
+            },
+            {
+              value: "savings-yield",
+              label: "Savings & ISAs (Yield & Compound Forecaster)",
+              children: (
+                <FLPBox display="flex" flexDirection="column" gap={8} mt={4}>
+                  <SavingsForecasterCard
+                    startingBalance={stats.liquidCash}
+                    monthlyContribution={200}
+                    portfolioInterestRate={stats.weightedAvgApy || 4.5}
+                    accounts={accounts}
+                  />
+                  {renderAccountsForTypes([SAVING])}
+                </FLPBox>
+              ),
+            },
+            {
+              value: "investments-pensions",
+              label: "Investments & Pensions",
+              children: (
+                <FLPBox display="flex" flexDirection="column" gap={10} mt={4}>
+                  {renderAccountsForTypes([INVESTMENT, PENSION])}
+                </FLPBox>
+              ),
+            },
+            {
+              value: "credit-debt",
+              label: "Credit & Debt",
+              children: (
+                <FLPBox display="flex" flexDirection="column" gap={10} mt={4}>
+                  {renderAccountsForTypes([CREDIT_CARD, LOAN, OWED])}
+                </FLPBox>
+              ),
+            },
+            {
+              value: "mortgages",
+              label: "Mortgages",
+              children: (
+                <FLPBox display="flex" flexDirection="column" gap={10} mt={4}>
+                  {renderAccountsForTypes([MORTGAGE])}
                 </FLPBox>
               ),
             },
             {
               value: "bank-connections",
-              label: "Bank Connections",
+              label: "Open Banking Connections",
               children: (
                 <div style={{ marginTop: "16px" }}>
                   <BankConnectionsList connections={bankConnections} />

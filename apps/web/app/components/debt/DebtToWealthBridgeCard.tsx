@@ -1,6 +1,15 @@
 import { calculateDebtToWealthBridge, type DebtItem } from "@repo/common";
 import { css } from "@repo/ui/styled-system/css";
 import { type FC, useMemo, useState } from "react";
+import {
+  Area,
+  AreaChart,
+  CartesianGrid,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
 import FLPCard from "~/components/core/cards/FLPCard";
 import FLPHeading from "~/components/core/typography/FLPHeading";
 import FLPText from "~/components/core/typography/FLPText";
@@ -65,6 +74,15 @@ export const DebtToWealthBridgeCard: FC<DebtToWealthBridgeCardProps> = ({
   const debtFreePoint = bridgePoints.find((p) => p.isPostDebtFree) || bridgePoints[0];
   const finalPoint = bridgePoints[bridgePoints.length - 1];
   const totalMonthlyCommitment = debts.reduce((sum, d) => sum + d.minimumPayment, 0) + extraPayment;
+
+  // Chart data points
+  const chartData = useMemo(() => {
+    return bridgePoints.map((pt) => ({
+      name: `Mo ${pt.month}`,
+      debt: pt.debtRemaining,
+      wealth: pt.wealthAccumulated,
+    }));
+  }, [bridgePoints]);
 
   return (
     <FLPCard>
@@ -151,7 +169,56 @@ export const DebtToWealthBridgeCard: FC<DebtToWealthBridgeCardProps> = ({
           </div>
         </div>
 
-        {/* Visual Progress Milestones */}
+        {/* Primary Visual Chart: Crossover Area Chart */}
+        <div style={{ width: "100%", height: 260, marginTop: "8px" }}>
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={chartData} margin={{ top: 10, right: 30, left: 10, bottom: 0 }}>
+              <defs>
+                <linearGradient id="debtGradient" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#ef4444" stopOpacity={0.8} />
+                  <stop offset="95%" stopColor="#ef4444" stopOpacity={0.05} />
+                </linearGradient>
+                <linearGradient id="wealthGradient" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#10b981" stopOpacity={0.8} />
+                  <stop offset="95%" stopColor="#10b981" stopOpacity={0.05} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
+              <XAxis dataKey="name" fontSize={11} tickLine={false} />
+              <YAxis
+                fontSize={11}
+                tickFormatter={(val) => `£${val >= 1000 ? `${Math.round(val / 1000)}k` : val}`}
+                tickLine={false}
+              />
+              <Tooltip
+                formatter={(val: any, name: any) => [
+                  formatCurrency(Number(val)),
+                  name === "debt" ? "Debt Remaining" : "Wealth in ISA",
+                ]}
+              />
+              <Area
+                type="monotone"
+                dataKey="debt"
+                stroke="#ef4444"
+                strokeWidth={2}
+                fillOpacity={1}
+                fill="url(#debtGradient)"
+                name="debt"
+              />
+              <Area
+                type="monotone"
+                dataKey="wealth"
+                stroke="#10b981"
+                strokeWidth={2}
+                fillOpacity={1}
+                fill="url(#wealthGradient)"
+                name="wealth"
+              />
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
+
+        {/* Visual Progress Milestones Table */}
         <div style={{ overflowX: "auto" }}>
           <table className={chartTableStyle}>
             <thead>

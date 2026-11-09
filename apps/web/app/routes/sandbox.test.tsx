@@ -4,9 +4,11 @@ import { describe, expect, it, vi } from "vitest";
 import SandboxRoute, { meta } from "./sandbox";
 
 const mockNavigate = vi.fn();
+let mockSearchParams = new URLSearchParams();
 
 vi.mock("react-router", () => ({
   useNavigate: () => mockNavigate,
+  useSearchParams: () => [mockSearchParams, vi.fn()],
   useLoaderData: vi.fn(),
   Link: ({ children, to }: { children: ReactNode; to: string }) => <a href={to}>{children}</a>,
 }));
@@ -14,8 +16,12 @@ vi.mock("react-router", () => ({
 vi.mock("~/components/dashboard/HomeDashboard", () => ({
   HomeDashboard: ({ accountsData, debtData }: any) => (
     <div id="mock-dashboard">
-      <span id="net-worth">{accountsData?.netWorth}</span>
-      <span id="total-debt">{debtData?.totalDebt}</span>
+      <span id="net-worth" data-testid="net-worth">
+        {accountsData?.netWorth}
+      </span>
+      <span id="total-debt" data-testid="total-debt">
+        {debtData?.totalDebt}
+      </span>
     </div>
   ),
 }));
@@ -30,6 +36,7 @@ describe("SandboxRoute", () => {
   });
 
   it("renders Persona A by default and switches between Persona B and Persona C", () => {
+    mockSearchParams = new URLSearchParams();
     render(<SandboxRoute />);
 
     expect(screen.getByText(/LIVE DEMO SANDBOX \(READ-ONLY\)/i)).toBeDefined();
@@ -48,10 +55,19 @@ describe("SandboxRoute", () => {
     expect(screen.getByTestId("net-worth").textContent).toBe("441500");
   });
 
-  it("clicking Save My Changes commits seed and navigates to /signUp", () => {
+  it("boots directly in wealth persona if ?persona=wealth", () => {
+    mockSearchParams = new URLSearchParams("persona=wealth");
     render(<SandboxRoute />);
 
-    const saveBtn = screen.getByText(/Save My Changes & Create Account/i);
+    expect(screen.getByTestId("total-debt").textContent).toBe("0");
+    expect(screen.getByTestId("net-worth").textContent).toBe("441500");
+  });
+
+  it("clicking Save My Custom Numbers commits seed and navigates to /signUp", () => {
+    mockSearchParams = new URLSearchParams();
+    render(<SandboxRoute />);
+
+    const saveBtn = screen.getByText(/Save My Custom Numbers/i);
     fireEvent.click(saveBtn);
 
     expect(mockNavigate).toHaveBeenCalledWith("/signUp");

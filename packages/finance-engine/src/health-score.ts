@@ -1,0 +1,208 @@
+import type { FinancialStage, HealthScoreComponent, HealthScoreResult } from "./types.js";
+
+export interface HealthScoreInput {
+  stage: FinancialStage;
+  totalUnsecuredDebtGbp?: number;
+  highInterestDebtGbp?: number; // Debt with APR > 10%
+  totalMonthlyDebtPaymentGbp?: number;
+  monthlyMinimumDebtPaymentGbp?: number;
+  monthlyEssentialBillsGbp?: number;
+  monthlyNetIncomeGbp?: number;
+  emergencyFundGbp?: number;
+  cashSavingsYieldApr?: number;
+  annualIsaContributionGbp?: number;
+  annualPensionContributionGbp?: number;
+  adjustedNetIncomeGbp?: number;
+}
+
+/**
+ * Calculates a stage-weighted Financial Health Score (0 - 100).
+ */
+export function calculateFinancialHealthScore(input: HealthScoreInput): HealthScoreResult {
+  const stage = input.stage;
+  const components: HealthScoreComponent[] = [];
+  const recommendations: string[] = [];
+
+  const netIncome = Math.max(0, input.monthlyNetIncomeGbp ?? 0);
+  const essentialBills = Math.max(1, input.monthlyEssentialBillsGbp ?? 1);
+  const totalDebt = Math.max(0, input.totalUnsecuredDebtGbp ?? 0);
+  const highInterestDebt = Math.max(0, input.highInterestDebtGbp ?? totalDebt);
+  const emergencyFund = Math.max(0, input.emergencyFundGbp ?? 0);
+  const runwayMonths = essentialBills > 0 ? emergencyFund / essentialBills : 0;
+
+  if (stage === "STAGE_1_DEBT_RECOVERY") {
+    // 1. High-interest debt load (Weight 0.40)
+    let debtScore = 100;
+    if (highInterestDebt > 10000) debtScore = 20;
+    else if (highInterestDebt > 5000) debtScore = 40;
+    else if (highInterestDebt > 1000) debtScore = 65;
+    else if (highInterestDebt > 0) debtScore = 80;
+
+    components.push({
+      name: "High-Interest Debt Load",
+      score: debtScore,
+      weight: 0.4,
+      comment:
+        highInterestDebt > 0
+          ? `£${highInterestDebt.toLocaleString()} in high-APR credit/overdrafts needing immediate Avalanche payoff.`
+          : "Zero high-interest commercial debt.",
+    });
+    if (highInterestDebt > 0) {
+      recommendations.push(
+        "Prioritize high-interest cards and overdrafts with Avalanche strategy to eliminate interest burn.",
+      );
+    }
+
+    // 2. Minimum Payment & Priority Bills Coverage (Weight 0.35)
+    const totalOutflows = essentialBills + (input.monthlyMinimumDebtPaymentGbp ?? 0);
+    const surplus = netIncome - totalOutflows;
+    let cashFlowScore = 50;
+    if (surplus >= 300) cashFlowScore = 95;
+    else if (surplus > 0) cashFlowScore = 75;
+    else if (surplus === 0) cashFlowScore = 50;
+    else cashFlowScore = Math.max(10, 50 - Math.abs(surplus) / 10);
+
+    components.push({
+      name: "Priority Bills & Cash Flow Protection",
+      score: Math.min(100, Math.round(cashFlowScore)),
+      weight: 0.35,
+      comment:
+        surplus >= 0
+          ? `Safe cash flow surplus of £${Math.round(surplus)}/mo after priority obligations.`
+          : `Deficit of £${Math.abs(Math.round(surplus))}/mo. Priority bills are at risk.`,
+    });
+    if (surplus < 0) {
+      recommendations.push(
+        "Protect priority UK bills (Council Tax, rent/mortgage, utilities) before allocating money to unsecured debts.",
+      );
+    }
+
+    // 3. Starter Buffer (£1,000) (Weight 0.25)
+    const starterScore = Math.min(100, Math.round((emergencyFund / 1000) * 100));
+    components.push({
+      name: "Starter Buffer (£1k)",
+      score: starterScore,
+      weight: 0.25,
+      comment:
+        emergencyFund >= 1000
+          ? "£1,000 starter buffer secured to prevent relapsing into debt."
+          : `£${Math.round(emergencyFund)} / £1,000 starter buffer established.`,
+    });
+    if (emergencyFund < 1000) {
+      recommendations.push(
+        "Build a £1,000 mini-buffer in an instant-access account before aggressive overpayments.",
+      );
+    }
+  } else if (stage === "STAGE_2_BUFFER_BUILD") {
+    // 1. Emergency Runway (Weight 0.50) - Target 3-6 months
+    let runwayScore = 0;
+    if (runwayMonths >= 6) runwayScore = 100;
+    else if (runwayMonths >= 3) runwayScore = 80 + ((runwayMonths - 3) / 3) * 20;
+    else runwayScore = (runwayMonths / 3) * 80;
+
+    components.push({
+      name: "Emergency Living Runway",
+      score: Math.min(100, Math.round(runwayScore)),
+      weight: 0.5,
+      comment: `${runwayMonths.toFixed(1)} months of essential expenses covered (Target: 3-6 months).`,
+    });
+    if (runwayMonths < 3) {
+      recommendations.push(
+        `Top up cash buffer to reach at least 3 months (£${Math.round(essentialBills * 3).toLocaleString()}) of runway.`,
+      );
+    }
+
+    // 2. Cash Savings Yield Optimization (Weight 0.25)
+    const yieldApr = input.cashSavingsYieldApr ?? 3.5;
+    let yieldScore = 50;
+    if (yieldApr >= 4.5) yieldScore = 100;
+    else if (yieldApr >= 3.5) yieldScore = 75;
+    else yieldScore = 40;
+
+    components.push({
+      name: "Cash Yield & Allowance Optimization",
+      score: yieldScore,
+      weight: 0.25,
+      comment: `Earning ${yieldApr.toFixed(1)}% APY on liquid savings.`,
+    });
+    if (yieldApr < 4.0) {
+      recommendations.push(
+        "Move low-yielding current account cash to a top-tier Cash ISA or high-yield notice account.",
+      );
+    }
+
+    // 3. Debt-Free Maintenance (Weight 0.25)
+    const debtFreeScore = totalDebt === 0 ? 100 : Math.max(0, 100 - (totalDebt / 500) * 20);
+    components.push({
+      name: "Zero Consumer Debt Maintenance",
+      score: Math.round(debtFreeScore),
+      weight: 0.25,
+      comment: totalDebt === 0 ? "No consumer debt." : `£${totalDebt} residual balance remaining.`,
+    });
+  } else {
+    // STAGE_3_WEALTH_OPTIMIZE
+    // 1. ISA & SIPP Allowance Utilization (Weight 0.40)
+    const isaUsed = input.annualIsaContributionGbp ?? 0;
+    const pensionUsed = input.annualPensionContributionGbp ?? 0;
+    const isaRatio = Math.min(1, isaUsed / 20000);
+    const pensionRatio = Math.min(1, pensionUsed / 60000);
+    const allowanceScore = Math.round((isaRatio * 0.5 + pensionRatio * 0.5) * 100);
+
+    components.push({
+      name: "Tax-Advantaged Allowance Utilization",
+      score: allowanceScore,
+      weight: 0.4,
+      comment: `Utilized £${Math.round(isaUsed).toLocaleString()} / £20k ISA and £${Math.round(pensionUsed).toLocaleString()} / £60k Pension allowance.`,
+    });
+    if (isaRatio < 0.5) {
+      recommendations.push("Maximize remaining £20,000 UK ISA allowance before 5 April.");
+    }
+
+    // 2. £100k 60% Tax Trap Mitigation (Weight 0.35)
+    const adjIncome = input.adjustedNetIncomeGbp ?? 0;
+    let taxTrapScore = 100;
+    if (adjIncome > 100000 && adjIncome <= 125140) {
+      taxTrapScore = 40;
+      recommendations.push(
+        `Adjusted net income is £${Math.round(adjIncome).toLocaleString()}. Sacrifice £${Math.round(adjIncome - 100000).toLocaleString()} into pension to reclaim your £12,570 personal allowance.`,
+      );
+    } else if (adjIncome > 125140) {
+      taxTrapScore = 70;
+    }
+
+    components.push({
+      name: "£100k Tax Trap Mitigation",
+      score: taxTrapScore,
+      weight: 0.35,
+      comment:
+        adjIncome > 100000 && adjIncome <= 125140
+          ? "Caught in the UK 60% tax trap (£100k - £125k band)."
+          : "Tax band fully optimized or not in 60% trap zone.",
+    });
+
+    // 3. Emergency Runway & Liquidity (Weight 0.25)
+    const runwayScore = Math.min(100, Math.round((runwayMonths / 6) * 100));
+    components.push({
+      name: "Runway & Liquid Reserves",
+      score: runwayScore,
+      weight: 0.25,
+      comment: `${runwayMonths.toFixed(1)} months living runway preserved.`,
+    });
+  }
+
+  // Calculate weighted overall score
+  const overallScore = Math.round(components.reduce((sum, c) => sum + c.score * c.weight, 0));
+
+  let grade: HealthScoreResult["grade"] = "CRITICAL";
+  if (overallScore >= 85) grade = "EXCELLENT";
+  else if (overallScore >= 70) grade = "GOOD";
+  else if (overallScore >= 50) grade = "NEEDS_ATTENTION";
+
+  return {
+    overallScore,
+    stage,
+    grade,
+    components,
+    topRecommendations: recommendations.slice(0, 3),
+  };
+}

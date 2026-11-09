@@ -74,8 +74,10 @@ const teaserHandoffStyle = css({
 export const ToolPage: FC = () => {
   const { slug } = useParams<{ slug: string }>();
   const appUrl = getAppUrl();
+  const normalizedSlug =
+    slug === "mortgage-overpay-vs-isa-calculator" ? "mortgage-overpayment-vs-isa-calculator" : slug;
   const toolMeta =
-    TOOLS_CATALOG.find((t) => t.slug === slug) ??
+    TOOLS_CATALOG.find((t) => t.slug === normalizedSlug) ??
     (TOOLS_CATALOG[0] as (typeof TOOLS_CATALOG)[number]);
 
   // Tool 1: £100k Tax Trap State
@@ -215,8 +217,18 @@ export const ToolPage: FC = () => {
     }
 
     persistOnboardingSeed(payload as any);
+
+    if (typeof document !== "undefined") {
+      const encoded = encodeURIComponent(JSON.stringify(payload));
+      const domain =
+        typeof window !== "undefined" && window.location.hostname.includes("flump.co.uk")
+          ? "; domain=.flump.co.uk"
+          : "";
+      document.cookie = `flump_onboarding_seed=${encoded}; path=/; max-age=2592000; SameSite=Lax${domain}`;
+    }
+
     if (typeof window !== "undefined") {
-      window.location.href = `${appUrl}/onboarding`;
+      window.location.href = `${appUrl}/signup`;
     }
   };
 
