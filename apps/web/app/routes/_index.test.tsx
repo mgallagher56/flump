@@ -55,12 +55,24 @@ describe("_index route", () => {
     expect(data.taxData).toBeDefined();
   });
 
-  it("redirects to /login when no session and not demo mode", async () => {
+  it("returns logged-out data when no session and not demo mode", async () => {
     const request = new Request("http://localhost/");
-    const res = (await loader({ request, params: {}, context: {} } as any)) as any;
+    const data = (await loader({ request, params: {}, context: {} } as any)) as any;
 
-    expect(res).toBeDefined();
-    expect(res.url).toBe("/login");
+    expect(data).toBeDefined();
+    expect(data.user).toBeNull();
+    expect(data.isDemo).toBe(false);
+  });
+
+  it("renders LoggedOutHome when user is null", () => {
+    vi.mocked(useLoaderData).mockReturnValue({
+      isDemo: false,
+      user: null,
+      accountsData: null,
+    } as any);
+
+    render(<Index />);
+    expect(screen.getByTestId("mock-logged-out-home")).toBeDefined();
   });
 
   it("renders DemoModeBanner and HomeDashboard when isDemo is true", () => {
