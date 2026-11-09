@@ -188,7 +188,7 @@ exports[`<EditAccountDialogBtn > should render edit account dialog and call fetc
           class="d_flex flex-d_row ai_center gap_8px "
         >
           <button
-            class="d_inline-flex ai_center jc_center bdr_full fw_medium trs_all_0.2s cursor_pointer px_6 py_3 fs_sm lh_1 disabled:op_0.5 disabled:cursor_not-allowed focusVisible:ring_2px_solid focusVisible:ring-c_primary focusVisible:ring-o_2px bg_primary c_primary.foreground hover:bg_primary.hover"
+            class="d_inline-flex ai_center jc_center bdr_full fw_medium trs_all_0.2s cursor_pointer px_6 py_3 fs_sm lh_1 disabled:op_0.5 disabled:cursor_not-allowed focusVisible:ring_2px_solid focusVisible:ring-c_primary focusVisible:ring-o_2px bg_destructive c_destructive.foreground hover:bg_destructive.hover"
           >
             delete
           </button>

@@ -8,11 +8,12 @@ export const FLPCardStyles = css({
   borderRadius: "lg",
   backgroundColor: "card",
   color: "card.foreground",
+  boxShadow: "card",
   padding: "5",
   display: "flex",
   flexDirection: "column",
   "&:hover": {
-    boxShadow: "0 10px 20px rgba(0, 0, 0, 0.15) !important",
+    boxShadow: "cardHover",
     transform: "translate3d(-2px, -4px, 0)",
   },
 });

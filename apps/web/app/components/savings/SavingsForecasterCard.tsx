@@ -384,7 +384,7 @@ export const SavingsForecasterCard: FC<SavingsForecasterCardProps> = ({
                 boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
               }}
             />
-            <Legend wrapperStyle={{ fontSize: "11px", paddingTop: "6px" }} />
+            <Legend wrapperStyle={{ fontSize: "12px", paddingTop: "6px" }} />
             <Area
               dataKey="Total Forecast"
               fill="url(#colorTotal)"
@@ -412,7 +412,7 @@ export const SavingsForecasterCard: FC<SavingsForecasterCardProps> = ({
           <FLPText color="text.muted" fontSize="xs">
             Starting Balance
           </FLPText>
-          <FLPText fontSize="sm" fontWeight="semibold">
+          <FLPText fontSize="sm" fontWeight="semibold" className="tabular-nums">
             {formatCurrency(startingBalance)}
           </FLPText>
         </div>
@@ -420,7 +420,7 @@ export const SavingsForecasterCard: FC<SavingsForecasterCardProps> = ({
           <FLPText color="text.muted" fontSize="xs">
             {horizonYears}-Year Contributions
           </FLPText>
-          <FLPText fontSize="sm" fontWeight="semibold">
+          <FLPText fontSize="sm" fontWeight="semibold" className="tabular-nums">
             +{formatCurrency(Math.round(totalContributed - startingBalance))}
           </FLPText>
         </div>
@@ -428,7 +428,12 @@ export const SavingsForecasterCard: FC<SavingsForecasterCardProps> = ({
           <FLPText color="text.muted" fontSize="xs">
             Compound Interest Earned
           </FLPText>
-          <FLPText fontSize="sm" fontWeight="semibold" style={{ color: "#10b981" }}>
+          <FLPText
+            fontSize="sm"
+            fontWeight="semibold"
+            className="tabular-nums"
+            style={{ color: "var(--colors-success-500)" }}
+          >
             +{formatCurrency(Math.round(totalInterestEarned))}
           </FLPText>
         </div>
@@ -436,7 +441,12 @@ export const SavingsForecasterCard: FC<SavingsForecasterCardProps> = ({
           <FLPText color="text.muted" fontSize="xs">
             Forecast Balance (Year {horizonYears})
           </FLPText>
-          <FLPText fontSize="sm" fontWeight="bold" style={{ color: "var(--colors-primary)" }}>
+          <FLPText
+            fontSize="sm"
+            fontWeight="bold"
+            className="tabular-nums"
+            style={{ color: "var(--colors-primary)" }}
+          >
             {formatCurrency(Math.round(finalTotal))}
           </FLPText>
         </div>
@@ -519,11 +529,11 @@ export const SavingsForecasterCard: FC<SavingsForecasterCardProps> = ({
                     {formatCurrency(m.target)}
                   </FLPText>
                   {m.achieved ? (
-                    <FaCheckCircle style={{ color: "#10b981" }} size={13} />
+                    <FaCheckCircle style={{ color: "var(--colors-success-500)" }} size={13} />
                   ) : m.isCustom ? (
                     <span
                       style={{
-                        fontSize: "9px",
+                        fontSize: "12px",
                         fontWeight: 600,
                         color: "var(--colors-primary)",
                         textTransform: "uppercase",
@@ -535,7 +545,9 @@ export const SavingsForecasterCard: FC<SavingsForecasterCardProps> = ({
                 </div>
                 <FLPText color="text.muted" fontSize="xs">
                   {m.achieved ? (
-                    <span style={{ color: "#10b981", fontWeight: "medium" }}>Reached!</span>
+                    <span style={{ color: "var(--colors-success-500)", fontWeight: "medium" }}>
+                      Reached!
+                    </span>
                   ) : m.years === Infinity ? (
                     "Not reached"
                   ) : m.years === 0 ? (

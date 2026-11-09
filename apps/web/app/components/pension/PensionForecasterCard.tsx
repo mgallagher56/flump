@@ -214,16 +214,16 @@ const togglePillStyle = (active: boolean) =>
     fontSize: "xs",
     fontWeight: active ? "semibold" : "medium",
     backgroundColor: active ? "rgba(139, 92, 246, 0.14)" : "surface",
-    color: active ? "#8b5cf6" : "text.secondary",
+    color: active ? "var(--colors-purple-500)" : "text.secondary",
     border: "1px solid",
-    borderColor: active ? "#8b5cf6" : "border",
+    borderColor: active ? "var(--colors-purple-500)" : "border",
     cursor: "pointer",
     transition: "all 0.15s ease",
     display: "inline-flex",
     alignItems: "center",
     gap: "6px",
     _hover: {
-      borderColor: "#8b5cf6",
+      borderColor: "var(--colors-purple-500)",
     },
   });
 
@@ -410,15 +410,15 @@ export const PensionForecasterCard: FC<PensionForecasterCardProps> = ({
   // PLSA Standard status
   const plsaStandard = useMemo(() => {
     if (monthlyRetirementIncome >= PLSA_COMFORTABLE) {
-      return { label: "Comfortable Standard", color: "#10b981" };
+      return { label: "Comfortable Standard", color: "var(--colors-success-500)" };
     }
     if (monthlyRetirementIncome >= PLSA_MODERATE) {
-      return { label: "Moderate Standard", color: "#3b82f6" };
+      return { label: "Moderate Standard", color: "var(--colors-info-500)" };
     }
     if (monthlyRetirementIncome >= PLSA_MINIMUM) {
-      return { label: "Minimum Standard", color: "#f59e0b" };
+      return { label: "Minimum Standard", color: "var(--colors-warning-500)" };
     }
-    return { label: "Below PLSA Minimum", color: "#ef4444" };
+    return { label: "Below PLSA Minimum", color: "var(--colors-destructive-500)" };
   }, [monthlyRetirementIncome]);
 
   const plsaProgressPct = Math.min(100, (monthlyRetirementIncome / PLSA_COMFORTABLE) * 100);

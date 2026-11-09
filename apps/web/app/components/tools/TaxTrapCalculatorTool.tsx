@@ -137,7 +137,10 @@ export const TaxTrapCalculatorTool: FC = () => {
             <label htmlFor="gross-income-slider" style={{ fontSize: "14px", fontWeight: 600 }}>
               Total Gross UK Income (Salary + Bonus + Side Income)
             </label>
-            <span style={{ fontSize: "18px", fontWeight: 700, color: "#6366f1" }}>
+            <span
+              className="tabular-nums"
+              style={{ fontSize: "18px", fontWeight: 700, color: "var(--colors-primary)" }}
+            >
               £{grossIncome.toLocaleString("en-GB")}
             </span>
           </div>
@@ -151,7 +154,7 @@ export const TaxTrapCalculatorTool: FC = () => {
             type="range"
             value={grossIncome}
           />
-          <span style={{ fontSize: "12px", color: "#64748b" }}>
+          <span style={{ fontSize: "12px", color: "var(--colors-text-muted)" }}>
             HMRC personal allowance taper begins at £100,000 and eliminates all £12,570 allowance by
             £125,140.
           </span>
@@ -163,7 +166,10 @@ export const TaxTrapCalculatorTool: FC = () => {
             <label htmlFor="pension-sacrifice-slider" style={{ fontSize: "14px", fontWeight: 600 }}>
               Pension Salary Sacrifice / SIPP Contribution
             </label>
-            <span style={{ fontSize: "18px", fontWeight: 700, color: "#10b981" }}>
+            <span
+              className="tabular-nums"
+              style={{ fontSize: "18px", fontWeight: 700, color: "var(--colors-success-500)" }}
+            >
               £{salarySacrifice.toLocaleString("en-GB")} / yr (£
               {Math.round(salarySacrifice / 12).toLocaleString("en-GB")}/mo)
             </span>
@@ -178,7 +184,7 @@ export const TaxTrapCalculatorTool: FC = () => {
             type="range"
             value={salarySacrifice}
           />
-          <span style={{ fontSize: "12px", color: "#64748b" }}>
+          <span style={{ fontSize: "12px", color: "var(--colors-text-muted)" }}>
             Annual pension contributions reduce your adjusted net income pound-for-pound against
             HMRC limits (£60,000 annual allowance).
           </span>
@@ -188,39 +194,53 @@ export const TaxTrapCalculatorTool: FC = () => {
       {/* Metrics Grid */}
       <div className={metricsGridStyle}>
         <div className={metricCard}>
-          <span style={{ fontSize: "12px", color: "#64748b", fontWeight: 600 }}>
+          <span style={{ fontSize: "12px", color: "var(--colors-text-muted)", fontWeight: 600 }}>
             Tax & NI Saved
           </span>
-          <span style={{ fontSize: "24px", fontWeight: 800, color: "#10b981" }}>
+          <span
+            className="tabular-nums"
+            style={{ fontSize: "24px", fontWeight: 800, color: "var(--colors-success-500)" }}
+          >
             £{totalTaxSaved.toLocaleString("en-GB")}
           </span>
-          <span style={{ fontSize: "11px", color: "#64748b" }}>
+          <span
+            className="tabular-nums"
+            style={{ fontSize: "12px", color: "var(--colors-text-muted)" }}
+          >
             £{Math.round(totalTaxSaved / 12).toLocaleString("en-GB")}/mo kept from HMRC
           </span>
         </div>
 
         <div className={metricCard}>
-          <span style={{ fontSize: "12px", color: "#64748b", fontWeight: 600 }}>
+          <span style={{ fontSize: "12px", color: "var(--colors-text-muted)", fontWeight: 600 }}>
             Personal Allowance Reclaimed
           </span>
-          <span style={{ fontSize: "24px", fontWeight: 800, color: "#6366f1" }}>
+          <span
+            className="tabular-nums"
+            style={{ fontSize: "24px", fontWeight: 800, color: "var(--colors-primary)" }}
+          >
             £{allowanceReclaimed.toLocaleString("en-GB")}
           </span>
-          <span style={{ fontSize: "11px", color: "#64748b" }}>
+          <span
+            className="tabular-nums"
+            style={{ fontSize: "12px", color: "var(--colors-text-muted)" }}
+          >
             Out of £{analysis.lostPersonalAllowance.toLocaleString("en-GB")} lost at £
             {grossIncome.toLocaleString("en-GB")}
           </span>
         </div>
 
         <div className={metricCard}>
-          <span style={{ fontSize: "12px", color: "#64748b", fontWeight: 600 }}>
+          <span style={{ fontSize: "12px", color: "var(--colors-text-muted)", fontWeight: 600 }}>
             Tax-Free Childcare (15-30h)
           </span>
           <span
             style={{
               fontSize: "20px",
               fontWeight: 800,
-              color: childcareEligible ? "#10b981" : "#ef4444",
+              color: childcareEligible
+                ? "var(--colors-success-500)"
+                : "var(--colors-destructive-500)",
               display: "flex",
               alignItems: "center",
               gap: "6px",
@@ -236,7 +256,7 @@ export const TaxTrapCalculatorTool: FC = () => {
               </>
             )}
           </span>
-          <span style={{ fontSize: "11px", color: "#64748b" }}>
+          <span style={{ fontSize: "12px", color: "var(--colors-text-muted)" }}>
             {childcareEligible
               ? "Net income £100k or below — retain up to £2,000/child/yr"
               : "Adjusted net income exceeds £100k threshold"}
@@ -261,7 +281,7 @@ export const TaxTrapCalculatorTool: FC = () => {
           <span style={{ fontSize: "13px", fontWeight: 600, color: "var(--colors-text-primary)" }}>
             Want to model multi-year pension runway & automated HMRC tax tracking?
           </span>
-          <p style={{ fontSize: "12px", color: "#64748b", margin: 0 }}>
+          <p style={{ fontSize: "12px", color: "var(--colors-text-muted)", margin: 0 }}>
             Sign up for Flump to connect bank accounts and lock in your complete UK tax baseline.
           </p>
         </div>

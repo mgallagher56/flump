@@ -257,11 +257,11 @@ export const WealthCheckHeroWidget: FC = () => {
       {/* 2-Tab Interactive Switcher */}
       <div className={tabSwitcherStyle}>
         <button
-          className={tabButtonStyle(activeTab === "debt", "#ef4444")}
+          className={tabButtonStyle(activeTab === "debt", "var(--colors-destructive-500)")}
           type="button"
           onClick={() => setActiveTab("debt")}
         >
-          <FaFire color="#ef4444" /> Clear Debt & Stabilize
+          <FaFire color="var(--colors-destructive-500)" /> Clear Debt & Stabilize
         </button>
         <button
           className={tabButtonStyle(activeTab === "wealth", "var(--colors-primary)")}
@@ -282,7 +282,7 @@ export const WealthCheckHeroWidget: FC = () => {
             fontWeight: "700",
             textTransform: "uppercase",
             letterSpacing: "0.06em",
-            color: activeTab === "debt" ? "#ef4444" : "var(--colors-primary)",
+            color: activeTab === "debt" ? "var(--colors-destructive-500)" : "var(--colors-primary)",
             marginBottom: "6px",
           }}
         >
@@ -305,7 +305,7 @@ export const WealthCheckHeroWidget: FC = () => {
             <div className={inputGroupStyle}>
               <label className={labelStyle} htmlFor="hero-debt-balance-input">
                 <span>Total Card & Loan Liabilities</span>
-                <span style={{ color: "#ef4444", fontWeight: "bold" }}>
+                <span style={{ color: "var(--colors-destructive-500)", fontWeight: "bold" }}>
                   {formatCurrency(debtBalance)}
                 </span>
               </label>
@@ -340,7 +340,9 @@ export const WealthCheckHeroWidget: FC = () => {
             <div className={inputGroupStyle}>
               <label className={labelStyle} htmlFor="hero-debt-apr-input">
                 <span>Average Interest Rate (APR)</span>
-                <span style={{ color: "#ef4444", fontWeight: "bold" }}>{debtApr}%</span>
+                <span style={{ color: "var(--colors-destructive-500)", fontWeight: "bold" }}>
+                  {debtApr}%
+                </span>
               </label>
               <div className={inputWrapperStyle}>
                 <span className={prefixStyle}>%</span>
@@ -415,7 +417,9 @@ export const WealthCheckHeroWidget: FC = () => {
               <span style={{ fontSize: "12px", color: "text.muted", fontWeight: "600" }}>
                 Target Debt-Free Date
               </span>
-              <div style={{ fontSize: "26px", fontWeight: "800", color: "#10b981" }}>
+              <div
+                style={{ fontSize: "26px", fontWeight: "800", color: "var(--colors-success-500)" }}
+              >
                 {debtPayoffResult.debtFreeDate}
               </div>
               <div style={{ fontSize: "12px", color: "text.muted" }}>
@@ -427,10 +431,16 @@ export const WealthCheckHeroWidget: FC = () => {
               <span style={{ fontSize: "12px", color: "text.muted", fontWeight: "600" }}>
                 Interest Saved via Avalanche Strategy
               </span>
-              <div style={{ fontSize: "20px", fontWeight: "700", color: "#ef4444" }}>
+              <div
+                style={{
+                  fontSize: "20px",
+                  fontWeight: "700",
+                  color: "var(--colors-destructive-500)",
+                }}
+              >
                 +{formatCurrency(interestSaved || 720)}
               </div>
-              <div style={{ fontSize: "11px", color: "text.muted" }}>
+              <div style={{ fontSize: "12px", color: "text.muted" }}>
                 Compared to paying standard minimum amounts
               </div>
             </div>
@@ -442,7 +452,7 @@ export const WealthCheckHeroWidget: FC = () => {
               <div style={{ fontSize: "20px", fontWeight: "700", color: "var(--colors-primary)" }}>
                 +{formatCurrency(projected3YearWealth || 11500)}
               </div>
-              <div style={{ fontSize: "11px", color: "text.muted" }}>
+              <div style={{ fontSize: "12px", color: "text.muted" }}>
                 Redirecting your £{debtMonthlyBudget}/mo debt budget into a tax-free ISA
               </div>
             </div>
@@ -450,6 +460,7 @@ export const WealthCheckHeroWidget: FC = () => {
             <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginTop: "4px" }}>
               <FLPButton
                 size="lg"
+                variant="destructive"
                 onClick={handleSaveAndStart}
                 style={{
                   width: "100%",
@@ -458,7 +469,6 @@ export const WealthCheckHeroWidget: FC = () => {
                   alignItems: "center",
                   gap: "8px",
                   fontWeight: "700",
-                  backgroundColor: "#ef4444",
                 }}
               >
                 Crush Your Debt with Flump <FiArrowRight aria-hidden="true" />
@@ -614,7 +624,7 @@ export const WealthCheckHeroWidget: FC = () => {
                     gap: "6px",
                     marginTop: "4px",
                     fontSize: "12px",
-                    color: "#ef4444",
+                    color: "var(--colors-destructive-500)",
                     fontWeight: "600",
                   }}
                 >
@@ -628,7 +638,7 @@ export const WealthCheckHeroWidget: FC = () => {
                     gap: "6px",
                     marginTop: "4px",
                     fontSize: "12px",
-                    color: "#f59e0b",
+                    color: "var(--colors-warning-500)",
                     fontWeight: "600",
                   }}
                 >

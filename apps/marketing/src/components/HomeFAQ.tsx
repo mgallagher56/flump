@@ -5,9 +5,9 @@ import { type FC, useState } from "react";
 import { FiChevronDown, FiChevronUp } from "react-icons/fi";
 
 const faqItemStyle = css({
-  backgroundColor: { base: "#ffffff", _dark: "dark.surface" },
+  backgroundColor: "card",
   border: "1px solid",
-  borderColor: { base: "slate.200", _dark: "dark.border" },
+  borderColor: "border",
   borderRadius: "xl",
   overflow: "hidden",
   transition: "border-color 0.15s ease",
@@ -23,18 +23,18 @@ const questionStyle = css({
   backgroundColor: "transparent",
   border: "none",
   textAlign: "left",
-  fontSize: "1rem",
+  fontSize: "md",
   fontWeight: "700",
-  fontFamily: "var(--fonts-display, sans-serif)",
-  color: { base: "slate.900", _dark: "#ffffff" },
+  fontFamily: "display",
+  color: "text.primary",
   cursor: "pointer",
 });
 
 const answerStyle = css({
   padding: "0 24px 20px 24px",
-  fontSize: "14px",
+  fontSize: "sm",
   lineHeight: "1.7",
-  color: { base: "slate.600", _dark: "slate.300" },
+  color: "text.secondary",
 });
 
 const FAQS = [
