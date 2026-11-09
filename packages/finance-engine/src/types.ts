@@ -74,7 +74,7 @@ export interface OnboardingSeedPayload {
   studentLoanPlan?: UkStudentLoanPlan;
   isSelfEmployed?: boolean;
   inferredStage?: FinancialStage;
-  inferredModules: ActiveModule[];
+  inferredModules: Array<ActiveModule | "savings">;
   timestamp: number;
 }
 
@@ -263,6 +263,7 @@ export interface DebtPayoffResult {
   debtFreeDate: string; // 'Month YYYY'
   firstQuickWinDate?: string; // 'Month YYYY'
   firstQuickWinDebtName?: string;
+  firstQuickWinMonth?: number;
   interestSavedVsMinimumGbp: number;
   promoCliffAlerts: PromoCliffAlert[];
   schedule: DebtScheduleMonth[];

@@ -218,15 +218,6 @@ export const ToolPage: FC = () => {
 
     persistOnboardingSeed(payload as any);
 
-    if (typeof document !== "undefined") {
-      const encoded = encodeURIComponent(JSON.stringify(payload));
-      const domain =
-        typeof window !== "undefined" && window.location.hostname.includes("flump.co.uk")
-          ? "; domain=.flump.co.uk"
-          : "";
-      document.cookie = `flump_onboarding_seed=${encoded}; path=/; max-age=2592000; SameSite=Lax${domain}`;
-    }
-
     if (typeof window !== "undefined") {
       window.location.href = `${appUrl}/signup`;
     }

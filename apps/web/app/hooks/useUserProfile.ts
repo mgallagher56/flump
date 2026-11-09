@@ -1,6 +1,15 @@
+import {
+  type FinancialBaseline,
+  financialBaselineToUserProfileUpdate,
+  type OnboardingSeedPayload,
+  type ProfilePersistenceAdapter,
+  userProfileToFinancialBaseline,
+} from "@flump/finance-engine";
+import { clearOnboardingSeed, persistOnboardingSeed, readOnboardingSeed } from "@repo/common";
 import { atom, useAtom } from "jotai";
 import { useCallback } from "react";
 import { useRouteLoaderData } from "react-router";
+import { financialBaselineAtom } from "~/state/baseline.store";
 
 export interface UserProfile {
   id: string;
@@ -242,6 +251,7 @@ export const userProfileAtom = atom<UserProfile>(DEFAULT_PROFILE);
  */
 export function useUserProfile() {
   const [profile, rawSetProfile] = useAtom(userProfileAtom);
+  const [, rawSetBaseline] = useAtom(financialBaselineAtom);
   let rootData: { accessToken?: string | null } | undefined;
   try {
     // biome-ignore lint/correctness/useHookAtTopLevel: fallback when rendered outside DataRouter in unit tests
@@ -254,9 +264,15 @@ export function useUserProfile() {
 
   const setProfile = useCallback(
     (p: UserProfile | Partial<UserProfile>) => {
-      rawSetProfile(normalizeProfile(p));
+      const normalized = normalizeProfile(p);
+      rawSetProfile(normalized);
+      try {
+        rawSetBaseline(userProfileToFinancialBaseline(normalized));
+      } catch {
+        // Continue
+      }
     },
-    [rawSetProfile],
+    [rawSetProfile, rawSetBaseline],
   );
 
   const updateProfile = useCallback(
@@ -378,4 +394,51 @@ export function useUserProfile() {
     sendPasswordResetEmail,
     resetFinancialData,
   };
+}
+
+export class HttpProfileAdapter implements ProfilePersistenceAdapter {
+  constructor(private getAuthToken?: () => string | null | undefined) {}
+
+  private getBaseUrl(): string {
+    return (
+      (window as Window & { ENV?: { VITE_API_URL?: string } }).ENV?.VITE_API_URL ??
+      import.meta.env.VITE_API_URL ??
+      "http://localhost:4000"
+    );
+  }
+
+  async getBaseline(): Promise<FinancialBaseline | null> {
+    const token = this.getAuthToken?.() ?? "mock-session-token";
+    const res = await fetch(`${this.getBaseUrl()}/user-profile`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) return null;
+    const profile = await res.json();
+    return userProfileToFinancialBaseline(profile);
+  }
+
+  async saveBaseline(baseline: FinancialBaseline): Promise<void> {
+    const token = this.getAuthToken?.() ?? "mock-session-token";
+    const updates = financialBaselineToUserProfileUpdate(baseline);
+    await fetch(`${this.getBaseUrl()}/user-profile`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(updates),
+    });
+  }
+
+  getSeed(): OnboardingSeedPayload | null {
+    return readOnboardingSeed();
+  }
+
+  saveSeed(seed: OnboardingSeedPayload): void {
+    persistOnboardingSeed(seed);
+  }
+
+  clearSeed(): void {
+    clearOnboardingSeed();
+  }
 }
