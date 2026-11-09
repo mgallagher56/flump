@@ -110,6 +110,33 @@ export const HomeHero: FC = () => {
         payoff when you're ready.
       </FLPText>
 
+      {/* 3D Wealth Engine Hero Illustration */}
+      <div
+        className={css({
+          maxWidth: "820px",
+          width: "100%",
+          margin: "32px auto 0",
+          borderRadius: "2xl",
+          overflow: "hidden",
+          border: "1px solid",
+          borderColor: "border",
+          boxShadow: "0 16px 36px rgba(0, 0, 0, 0.08)",
+        })}
+      >
+        <img
+          src="/illustrations/hero-wealth-engine.jpg"
+          alt="3D Wealth Engine visualising UK net worth progression"
+          loading="eager"
+          style={{
+            width: "100%",
+            maxHeight: "320px",
+            objectFit: "cover",
+            objectPosition: "center 42%",
+            display: "block",
+          }}
+        />
+      </div>
+
       {/* Clean Baseline Snapshot Preview Card */}
       <WebBaselineSnapshotPreview />
 

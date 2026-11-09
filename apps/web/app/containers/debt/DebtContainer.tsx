@@ -209,12 +209,12 @@ export const DebtContainer: FC = () => {
         style={{
           display: "flex",
           justifyContent: "space-between",
-          alignItems: "flex-start",
+          alignItems: "center",
           flexWrap: "wrap",
-          gap: "16px",
+          gap: "20px",
         }}
       >
-        <div>
+        <div style={{ flex: "1 1 320px" }}>
           <FLPHeading as="h2" size="2xl">
             Debt Crusher & Financial Recovery
           </FLPHeading>
@@ -222,6 +222,27 @@ export const DebtContainer: FC = () => {
             Model mathematically optimal debt clearance, defuse promotional cliffs, and bridge your
             surplus into long-term wealth.
           </FLPText>
+        </div>
+
+        <div
+          className={css({
+            width: { base: "100%", sm: "200px" },
+            height: "90px",
+            borderRadius: "xl",
+            overflow: "hidden",
+            border: "1px solid",
+            borderColor: "border",
+            boxShadow: "0 4px 12px rgba(0, 0, 0, 0.05)",
+            flexShrink: 0,
+            display: { base: "none", sm: "block" },
+          })}
+        >
+          <img
+            src="/illustrations/debt-crusher-momentum.jpg"
+            alt="3D Debt Crusher Momentum visual"
+            loading="lazy"
+            style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+          />
         </div>
       </div>
 

@@ -514,19 +514,21 @@ export const HomeDashboard: FC<HomeDashboardProps> = ({
             <>
               <div
                 className={css({
-                  width: "48px",
-                  height: "48px",
-                  borderRadius: "full",
-                  backgroundColor: "rgba(99, 99, 241, 0.1)",
-                  color: "primary",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  margin: "0 auto 12px",
-                  fontSize: "20px",
+                  maxWidth: "280px",
+                  margin: "0 auto 16px",
+                  borderRadius: "xl",
+                  overflow: "hidden",
+                  border: "1px solid",
+                  borderColor: "border",
+                  boxShadow: "0 4px 16px rgba(0, 0, 0, 0.06)",
                 })}
               >
-                <FaRocket />
+                <img
+                  src="/illustrations/dashboard-baseline-ready.jpg"
+                  alt="Interactive Modular Dashboard Tiles"
+                  loading="lazy"
+                  style={{ width: "100%", height: "auto", display: "block" }}
+                />
               </div>
               <FLPHeading as="h3" size="md">
                 Ready to Build Your Dashboard

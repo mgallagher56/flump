@@ -21,17 +21,36 @@ const bannerCardStyle = css({
   boxShadow: "sm",
 });
 
-const gridStyle = css({
+const contentLayout = css({
   display: "grid",
-  gridTemplateColumns: { base: "1fr", md: "repeat(3, 1fr)" },
-  gap: "32px",
+  gridTemplateColumns: { base: "1fr", lg: "5fr 7fr" },
+  gap: { base: "32px", lg: "40px" },
+  alignItems: "center",
   marginTop: "40px",
+});
+
+const illustrationContainer = css({
+  borderRadius: "2xl",
+  overflow: "hidden",
+  border: "1px solid",
+  borderColor: "border",
+  backgroundColor: "surface.subtle",
+  boxShadow: "0 12px 32px rgba(0, 0, 0, 0.08)",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+});
+
+const featureStackStyle = css({
+  display: "flex",
+  flexDirection: "column",
+  gap: "24px",
 });
 
 const featureItemStyle = css({
   display: "flex",
-  flexDirection: "column",
-  gap: "12px",
+  alignItems: "flex-start",
+  gap: "16px",
 });
 
 const iconBoxStyle = css({
@@ -44,6 +63,7 @@ const iconBoxStyle = css({
   backgroundColor: "rgba(99, 102, 241, 0.12)",
   color: "primary",
   fontSize: "20px",
+  flexShrink: 0,
 });
 
 export const SecurityPrivacySection: FC = () => {
@@ -73,44 +93,82 @@ export const SecurityPrivacySection: FC = () => {
           </FLPText>
         </div>
 
-        <div className={gridStyle}>
-          <div className={featureItemStyle}>
-            <div className={iconBoxStyle}>
-              <FiLock aria-hidden="true" />
-            </div>
-            <FLPHeading as="h3" color="text.primary" size="md">
-              WorkOS AuthKit
-            </FLPHeading>
-            <FLPText color="text.muted" fontSize="sm" lineHeight="1.6">
-              Enterprise-grade authentication with Passkeys, biometric FaceID/TouchID, passwordless
-              magic links, and SSO. We never store raw passwords.
-            </FLPText>
+        <div className={contentLayout}>
+          {/* 3D Security Vault Illustration */}
+          <div className={illustrationContainer}>
+            <img
+              src="/illustrations/security-vault-shield.jpg"
+              alt="Bank-Grade Security Vault Shield with Cryptographic Protection"
+              loading="lazy"
+              style={{
+                width: "100%",
+                height: "auto",
+                display: "block",
+                borderRadius: "16px",
+              }}
+            />
           </div>
 
-          <div className={featureItemStyle}>
-            <div className={iconBoxStyle}>
-              <FiEyeOff aria-hidden="true" />
+          <div className={featureStackStyle}>
+            <div className={featureItemStyle}>
+              <div className={iconBoxStyle}>
+                <FiLock aria-hidden="true" />
+              </div>
+              <div>
+                <FLPHeading as="h3" color="text.primary" size="md">
+                  WorkOS AuthKit
+                </FLPHeading>
+                <FLPText
+                  color="text.muted"
+                  fontSize="sm"
+                  lineHeight="1.6"
+                  style={{ marginTop: "4px" }}
+                >
+                  Enterprise-grade authentication with Passkeys, biometric FaceID/TouchID,
+                  passwordless magic links, and SSO. We never store raw passwords.
+                </FLPText>
+              </div>
             </div>
-            <FLPHeading as="h3" color="text.primary" size="md">
-              Zero Financial Telemetry
-            </FLPHeading>
-            <FLPText color="text.muted" fontSize="sm" lineHeight="1.6">
-              We never sell your spending trends, net worth data, or transaction history to
-              third-party marketers, insurance companies, or credit brokers.
-            </FLPText>
-          </div>
 
-          <div className={featureItemStyle}>
-            <div className={iconBoxStyle}>
-              <FiCode aria-hidden="true" />
+            <div className={featureItemStyle}>
+              <div className={iconBoxStyle}>
+                <FiEyeOff aria-hidden="true" />
+              </div>
+              <div>
+                <FLPHeading as="h3" color="text.primary" size="md">
+                  Zero Financial Telemetry
+                </FLPHeading>
+                <FLPText
+                  color="text.muted"
+                  fontSize="sm"
+                  lineHeight="1.6"
+                  style={{ marginTop: "4px" }}
+                >
+                  We never sell your spending trends, net worth data, or transaction history to
+                  third-party marketers, insurance companies, or credit brokers.
+                </FLPText>
+              </div>
             </div>
-            <FLPHeading as="h3" color="text.primary" size="md">
-              Open & Deterministic
-            </FLPHeading>
-            <FLPText color="text.muted" fontSize="sm" lineHeight="1.6">
-              All tax rules and compound interest engines in our domain package are transparent and
-              testable. Complete mathematical accuracy without black boxes.
-            </FLPText>
+
+            <div className={featureItemStyle}>
+              <div className={iconBoxStyle}>
+                <FiCode aria-hidden="true" />
+              </div>
+              <div>
+                <FLPHeading as="h3" color="text.primary" size="md">
+                  Open & Deterministic
+                </FLPHeading>
+                <FLPText
+                  color="text.muted"
+                  fontSize="sm"
+                  lineHeight="1.6"
+                  style={{ marginTop: "4px" }}
+                >
+                  All tax rules and compound interest engines in our domain package are transparent
+                  and testable. Complete mathematical accuracy without black boxes.
+                </FLPText>
+              </div>
+            </div>
           </div>
         </div>
       </div>
