@@ -1,3 +1,4 @@
+import { calculate100kTaxTrap } from "@flump/finance-engine";
 import {
   calculateEmployerNISavings,
   calculateUKEWNITakeHome,
@@ -13,6 +14,7 @@ import FLPCard from "~/components/core/cards/FLPCard";
 import FLPCheckbox from "~/components/core/inputs/checkbox/FLPCheckbox";
 import FLPHeading from "~/components/core/typography/FLPHeading";
 import FLPText from "~/components/core/typography/FLPText";
+import { GlobalBaselineScenarioBar } from "~/components/navigation/GlobalBaselineScenarioBar";
 import AddPensionAccountDialog from "~/components/pension/AddPensionAccountDialog";
 import PensionAccountsList from "~/components/pension/PensionAccountsList";
 import PensionForecasterCard from "~/components/pension/PensionForecasterCard";
@@ -23,6 +25,7 @@ import type { Account } from "~/containers/accounts/types";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
 import { useUserProfile } from "~/hooks/useUserProfile";
 import type { loader } from "~/routes/app.pension";
+import { useFinancialBaseline } from "~/state/baseline.store";
 import { currentMonth, currentYear } from "~/utils/utils";
 
 const containerStyle = css({
@@ -78,6 +81,7 @@ export const PensionContainer: FC = () => {
 
   const { formatCurrency } = useFormatCurrency();
   const { profile, setProfile, updateProfile, markChecklistStep } = useUserProfile();
+  const { baseline } = useFinancialBaseline();
 
   useEffect(() => {
     if (userProfile) {
@@ -299,8 +303,81 @@ export const PensionContainer: FC = () => {
     }
   };
 
+  const effectiveSalary =
+    baseline.annualGrossSalary > 0 ? baseline.annualGrossSalary : annualSalary;
+  const effectiveEmployeePct =
+    baseline.pensionContributionPct > 0 ? baseline.pensionContributionPct : employeePercent;
+  const effectiveIsSalarySacrifice = baseline.isSalarySacrifice ?? isSalarySacrifice;
+
+  const taxTrap = useMemo(() => {
+    return calculate100kTaxTrap(effectiveSalary, effectiveEmployeePct, effectiveIsSalarySacrifice);
+  }, [effectiveSalary, effectiveEmployeePct, effectiveIsSalarySacrifice]);
+
   return (
     <div className={containerStyle}>
+      <GlobalBaselineScenarioBar />
+
+      {/* £100k-£125k 60% Marginal Tax Trap Optimizer Callout */}
+      {taxTrap.isInTaxTrap && (
+        <div
+          className={css({
+            padding: "16px 20px",
+            borderRadius: "lg",
+            backgroundColor: "rgba(245, 158, 11, 0.08)",
+            border: "1px solid rgba(245, 158, 11, 0.35)",
+            display: "flex",
+            flexDirection: "column",
+            gap: "10px",
+          })}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <span style={{ fontSize: "20px" }}>⚠️</span>
+            <FLPHeading as="h3" size="sm" style={{ color: "#b45309" }}>
+              £100k–£125,140 60% Marginal Tax Trap Active
+            </FLPHeading>
+            <span
+              style={{
+                fontSize: "11px",
+                fontWeight: 700,
+                padding: "2px 8px",
+                borderRadius: "999px",
+                backgroundColor: "#fef3c7",
+                color: "#b45309",
+              }}
+            >
+              60% Effective Marginal Rate
+            </span>
+          </div>
+          <FLPText fontSize="xs" color="text.secondary">
+            Your adjusted net income is <strong>{formatCurrency(taxTrap.adjustedNetIncome)}</strong>
+            . Every £2 earned above £100k reduces your Personal Allowance by £1, resulting in an
+            effective 60% marginal tax rate and{" "}
+            {formatCurrency(taxTrap.estimatedTaxSavedByEscapingGbp)} in additional tax.
+          </FLPText>
+          <div
+            style={{
+              padding: "10px 14px",
+              borderRadius: "6px",
+              backgroundColor: "var(--colors-surface)",
+              border: "1px solid rgba(245, 158, 11, 0.3)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              flexWrap: "wrap",
+              gap: "8px",
+            }}
+          >
+            <div style={{ fontSize: "12px" }}>
+              💡 <strong>Actionable Optimization:</strong> Increase pension contributions or make a
+              SIPP contribution of{" "}
+              <strong>{formatCurrency(taxTrap.contributionRequiredToEscapeGbp)}</strong> to recover
+              your full £12,570 Personal Allowance and reclaim{" "}
+              {formatCurrency(taxTrap.estimatedTaxSavedByEscapingGbp)} in tax relief.
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className={headerContainerStyle}>
         <div>

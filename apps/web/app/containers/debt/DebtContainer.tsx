@@ -1,7 +1,8 @@
+import { calculateDebtSchedule } from "@flump/finance-engine";
 import { compareAvalancheAndSnowball, type DebtItem, evaluateFinancialStage } from "@repo/common";
 import { css } from "@repo/ui/styled-system/css";
 import { type FC, useMemo, useState } from "react";
-import { FaFire, FaShieldAlt } from "react-icons/fa";
+import { FaExclamationTriangle, FaFire, FaShieldAlt } from "react-icons/fa";
 import { useLoaderData } from "react-router";
 import FLPHeading from "~/components/core/typography/FLPHeading";
 import FLPText from "~/components/core/typography/FLPText";
@@ -11,6 +12,7 @@ import DebtSummaryCards from "~/components/debt/DebtSummaryCards";
 import DebtToWealthBridgeCard from "~/components/debt/DebtToWealthBridgeCard";
 import PayoffStrategySwitcher from "~/components/debt/PayoffStrategySwitcher";
 import UkDebtInstrumentsCard from "~/components/debt/UkDebtInstrumentsCard";
+import GlobalBaselineScenarioBar from "~/components/navigation/GlobalBaselineScenarioBar";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
 import { useUserProfile } from "~/hooks/useUserProfile";
 
@@ -119,10 +121,28 @@ export const DebtContainer: FC = () => {
     });
   }, [debts, budgetSurplus]);
 
-  // Strategy comparison
+  // Strategy comparison and promotional cliff detection
   const comparison = useMemo(() => {
     return compareAvalancheAndSnowball(debts, extraPayment);
   }, [debts, extraPayment]);
+
+  const scheduleResult = useMemo(() => {
+    return calculateDebtSchedule(
+      debts.map((d) => ({
+        id: d.id,
+        name: d.name,
+        balanceGbp: d.balance,
+        interestRateApr: d.apr,
+        minimumPaymentGbp: d.minimumPayment,
+        promoAprExpiryDate: (d as any).promoAprExpiryDate,
+        revertApr: (d as any).revertApr,
+      })),
+      extraPayment,
+      selectedStrategy.toUpperCase() as "AVALANCHE" | "SNOWBALL",
+    );
+  }, [debts, extraPayment, selectedStrategy]);
+
+  const promoAlerts = scheduleResult.promoCliffAlerts.filter((a) => a.hasCliffRisk);
 
   const activeResult =
     selectedStrategy === "avalanche" ? comparison.avalanche : comparison.snowball;
@@ -147,6 +167,43 @@ export const DebtContainer: FC = () => {
 
   return (
     <div className={containerStyle}>
+      {/* Global Baseline & What-If Scenario Bar */}
+      <GlobalBaselineScenarioBar />
+
+      {/* 0% Promotional Cliff & Overdraft Warning Alerts */}
+      {promoAlerts.length > 0 && (
+        <div
+          className={css({
+            padding: "16px 20px",
+            borderRadius: "xl",
+            backgroundColor: "rgba(239, 68, 68, 0.08)",
+            border: "1px solid",
+            borderColor: "rgba(239, 68, 68, 0.3)",
+            display: "flex",
+            flexDirection: "column",
+            gap: "8px",
+          })}
+        >
+          <div className={css({ display: "flex", alignItems: "center", gap: "8px" })}>
+            <FaExclamationTriangle
+              className={css({ color: "destructive.500", fontSize: "18px" })}
+            />
+            <FLPHeading as="h4" size="sm" color="destructive.500">
+              0% Balance Transfer Promotional Cliff Alert
+            </FLPHeading>
+          </div>
+          {promoAlerts.map((alert) => (
+            <FLPText key={alert.debtId} fontSize="xs" color="text.primary">
+              <strong>{alert.debtName}</strong> promotional 0% APR expires on{" "}
+              <strong>{alert.promoExpiryDate}</strong>. At current repayment rates, £
+              {alert.projectedBalanceAtExpiryGbp.toLocaleString()} will revert to{" "}
+              <strong>{alert.revertApr}% APR</strong>. Allocate £
+              {alert.requiredMonthlyToClearBeforeCliff}/mo to clear it before the cliff.
+            </FLPText>
+          ))}
+        </div>
+      )}
+
       {/* 1. Header & Stage Notification */}
       <div
         style={{

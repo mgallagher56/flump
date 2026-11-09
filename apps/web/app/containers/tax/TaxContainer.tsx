@@ -30,12 +30,14 @@ import FLPSelect from "~/components/core/inputs/select/FLPSelect";
 import FLPBox from "~/components/core/structure/FLPBox";
 import FLPHeading from "~/components/core/typography/FLPHeading";
 import FLPText from "~/components/core/typography/FLPText";
+import { GlobalBaselineScenarioBar } from "~/components/navigation/GlobalBaselineScenarioBar";
 import CopyTaxYearModal from "~/components/tax/CopyTaxYearModal";
 import PaymentsOnAccountCard from "~/components/tax/PaymentsOnAccountCard";
 import TaxIncomeSectionCard from "~/components/tax/TaxIncomeSectionCard";
 import TaxTrapAlertBanner from "~/components/tax/TaxTrapAlertBanner";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
 import type { loader } from "~/routes/app.tax";
+import { useFinancialBaseline } from "~/state/baseline.store";
 import {
   calculateUKTax,
   getCategoriesForSource,
@@ -64,18 +66,26 @@ const TaxContainer: FC = () => {
   const [activeTab, setActiveTab] = useState<"summary" | "detailed">("summary");
   const [selectedTaxYear, setSelectedTaxYear] = useState<string>(() => getCurrentUKTaxYear());
 
-  // User input overrides for salary & property ownership share (synced with profile)
-  const profileSalary = userProfile?.annualSalary
-    ? typeof userProfile.annualSalary === "string"
-      ? Number.parseFloat(userProfile.annualSalary)
-      : userProfile.annualSalary
-    : 0;
+  const { baseline } = useFinancialBaseline();
 
-  const profileShare = userProfile?.propertyOwnershipShare
-    ? typeof userProfile.propertyOwnershipShare === "string"
-      ? Number.parseFloat(userProfile.propertyOwnershipShare)
-      : userProfile.propertyOwnershipShare
-    : 100.0;
+  // User input overrides for salary & property ownership share (synced with profile)
+  const profileSalary =
+    baseline.annualGrossSalary > 0
+      ? baseline.annualGrossSalary
+      : userProfile?.annualSalary
+        ? typeof userProfile.annualSalary === "string"
+          ? Number.parseFloat(userProfile.annualSalary)
+          : userProfile.annualSalary
+        : 0;
+
+  const profileShare =
+    baseline.propertyOwnershipSharePct !== undefined
+      ? baseline.propertyOwnershipSharePct
+      : userProfile?.propertyOwnershipShare
+        ? typeof userProfile.propertyOwnershipShare === "string"
+          ? Number.parseFloat(userProfile.propertyOwnershipShare)
+          : userProfile.propertyOwnershipShare
+        : 100.0;
 
   const [payeSalary, setPayeSalary] = useState<number>(profileSalary);
   const [propertyOwnershipShare, setPropertyOwnershipShare] = useState<number>(profileShare);
@@ -431,6 +441,8 @@ const TaxContainer: FC = () => {
         paddingBottom: { base: "24px", md: "48px" },
       })}
     >
+      <GlobalBaselineScenarioBar />
+
       {/* Page Header */}
       <div
         className={css({

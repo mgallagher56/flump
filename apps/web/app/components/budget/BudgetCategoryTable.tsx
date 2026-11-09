@@ -8,7 +8,13 @@ import FLPText from "~/components/core/typography/FLPText";
 import { useResponsive } from "~/context/ResponsiveContext";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
 import type { BudgetCategory, BudgetEntry } from "~/types/budget";
-import { CATEGORY_COLOURS, CATEGORY_ICONS, CATEGORY_LABELS, toMonthly } from "~/types/budget";
+import {
+  CATEGORY_COLOURS,
+  CATEGORY_ICONS,
+  CATEGORY_LABELS,
+  getDaysUntilContractEnd,
+  toMonthly,
+} from "~/types/budget";
 
 export interface BudgetCategoryTableProps {
   category: BudgetCategory;
@@ -28,6 +34,7 @@ interface EditRow {
   frequency: BudgetEntry["frequency"];
   notes: string;
   isEssential: boolean;
+  contractEndDate: string;
 }
 
 const EMPTY_ROW: EditRow = {
@@ -37,6 +44,7 @@ const EMPTY_ROW: EditRow = {
   frequency: "monthly",
   notes: "",
   isEssential: true,
+  contractEndDate: "",
 };
 
 const inputStyle = (isMobile?: boolean) =>
@@ -90,6 +98,58 @@ const BudgetCategoryTable: FC<BudgetCategoryTableProps> = ({
   const [editingRow, setEditingRow] = useState<EditRow | null>(null);
   const [saving, setSaving] = useState(false);
 
+  const renderRenewalBadge = (entry: BudgetEntry) => {
+    if (!entry.contractEndDate) return null;
+    const days = getDaysUntilContractEnd(entry.contractEndDate);
+    if (days === null) return null;
+    if (days <= 0) {
+      return (
+        <span
+          style={{
+            fontSize: "10px",
+            padding: "1px 6px",
+            borderRadius: "4px",
+            backgroundColor: "rgba(239, 68, 68, 0.15)",
+            color: "#ef4444",
+            fontWeight: 700,
+          }}
+        >
+          🚨 Expired {Math.abs(days)}d ago
+        </span>
+      );
+    }
+    if (days <= 30) {
+      return (
+        <span
+          style={{
+            fontSize: "10px",
+            padding: "1px 6px",
+            borderRadius: "4px",
+            backgroundColor: "rgba(245, 158, 11, 0.15)",
+            color: "#f59e0b",
+            fontWeight: 700,
+          }}
+        >
+          ⚠️ Renews in {days}d (Price Hike Risk)
+        </span>
+      );
+    }
+    return (
+      <span
+        style={{
+          fontSize: "10px",
+          padding: "1px 6px",
+          borderRadius: "4px",
+          backgroundColor: "rgba(107, 114, 128, 0.1)",
+          color: "#6b7280",
+          fontWeight: 500,
+        }}
+      >
+        Renews in {days}d
+      </span>
+    );
+  };
+
   const isIncome = category === "income";
   const colour = CATEGORY_COLOURS[category];
   const total = entries.reduce((sum, e) => sum + toMonthly(e), 0);
@@ -102,6 +162,7 @@ const BudgetCategoryTable: FC<BudgetCategoryTableProps> = ({
       frequency: entry.frequency,
       notes: entry.notes ?? "",
       isEssential: entry.isEssential,
+      contractEndDate: entry.contractEndDate ?? "",
     });
   };
 
@@ -122,6 +183,7 @@ const BudgetCategoryTable: FC<BudgetCategoryTableProps> = ({
           frequency: editingRow.frequency,
           notes: editingRow.notes || null,
           isEssential: editingRow.isEssential,
+          contractEndDate: editingRow.contractEndDate.trim() || null,
         });
       } else {
         await onAdd({
@@ -134,6 +196,7 @@ const BudgetCategoryTable: FC<BudgetCategoryTableProps> = ({
           isEssential: editingRow.isEssential,
           notes: editingRow.notes || null,
           isDefault: false,
+          contractEndDate: editingRow.contractEndDate.trim() || null,
         });
       }
       setEditingRow(null);
@@ -337,6 +400,18 @@ const BudgetCategoryTable: FC<BudgetCategoryTableProps> = ({
                         value={editingRow.notes}
                         onChange={(e) => setEditingRow((r) => r && { ...r, notes: e.target.value })}
                       />
+                      {category === "bills" && (
+                        <input
+                          className={inputStyle(isMobileVariant)}
+                          placeholder="Contract end date (YYYY-MM-DD)"
+                          title="Contract End Date (YYYY-MM-DD)"
+                          type="date"
+                          value={editingRow.contractEndDate}
+                          onChange={(e) =>
+                            setEditingRow((r) => r && { ...r, contractEndDate: e.target.value })
+                          }
+                        />
+                      )}
                       {!isIncome && (
                         <FLPCheckbox
                           checked={editingRow.isEssential}
@@ -460,6 +535,7 @@ const BudgetCategoryTable: FC<BudgetCategoryTableProps> = ({
                           primary
                         </span>
                       )}
+                      {renderRenewalBadge(entry)}
                     </div>
                     <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
                       <button
@@ -559,6 +635,7 @@ const BudgetCategoryTable: FC<BudgetCategoryTableProps> = ({
                           primary
                         </span>
                       )}
+                      {renderRenewalBadge(entry)}
                       {entry.notes && (
                         <FLPText color="text.muted" fontSize="xs">
                           · {entry.notes}

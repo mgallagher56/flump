@@ -1,3 +1,4 @@
+import { calculateLtvMilestones } from "@flump/finance-engine";
 import { css } from "@repo/ui/styled-system/css";
 import { type FC, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -17,9 +18,11 @@ import MortgageTracker from "~/components/mortgage/MortgageTracker";
 import OverpaymentSimulator from "~/components/mortgage/OverpaymentSimulator";
 import OverpayVsSaveCompare from "~/components/mortgage/OverpayVsSaveCompare";
 import RemortgageShockSim from "~/components/mortgage/RemortgageShockSim";
+import { GlobalBaselineScenarioBar } from "~/components/navigation/GlobalBaselineScenarioBar";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
 import { useUserProfile } from "~/hooks/useUserProfile";
 import type { loader } from "~/routes/app.mortgage";
+import { useFinancialBaseline } from "~/state/baseline.store";
 import { currentMonth, currentYear } from "~/utils/utils";
 
 const MortgageContainer: FC = () => {
@@ -28,6 +31,7 @@ const MortgageContainer: FC = () => {
   const navigate = useNavigate();
   const { profile, setProfile } = useUserProfile();
   const { formatCurrency } = useFormatCurrency();
+  const { baseline } = useFinancialBaseline();
 
   // Sync profile from loader into atom
   useEffect(() => {
@@ -45,6 +49,32 @@ const MortgageContainer: FC = () => {
   const [interestRate, setInterestRate] = useState<number>(4.5);
   const [remainingTerm, setRemainingTerm] = useState<number>(25);
   const [overpayment, setOverpayment] = useState<number>(200);
+
+  const propertyValue =
+    propertyCategory === "btl"
+      ? profile.buyToLetPropertyValue || 250000
+      : profile.homeValue || Math.round(loanAmount / 0.75);
+
+  const currentLtv = propertyValue > 0 ? (loanAmount / propertyValue) * 100 : 75;
+
+  const ltvMilestones = useMemo(() => {
+    return calculateLtvMilestones(propertyValue, loanAmount, profile.mortgageRenewalDate);
+  }, [propertyValue, loanAmount, profile.mortgageRenewalDate]);
+
+  const refinanceWarning = useMemo(() => {
+    if (!profile.mortgageRenewalDate) return null;
+    const expiry = new Date(profile.mortgageRenewalDate).getTime();
+    if (Number.isNaN(expiry)) return null;
+    const now = new Date().getTime();
+    const diffMonths = Math.ceil((expiry - now) / (1000 * 60 * 60 * 24 * 30.4375));
+    if (diffMonths <= 6) {
+      return {
+        diffMonths,
+        date: profile.mortgageRenewalDate,
+      };
+    }
+    return null;
+  }, [profile.mortgageRenewalDate]);
 
   // Synced account state
   const [selectedAccountId, setSelectedAccountId] = useState<string | null>(null);
@@ -154,6 +184,56 @@ const MortgageContainer: FC = () => {
 
   return (
     <div className={containerStyle}>
+      <GlobalBaselineScenarioBar />
+
+      {/* Refinance Warning Banner */}
+      {refinanceWarning && (
+        <div
+          className={css({
+            padding: "16px 20px",
+            borderRadius: "lg",
+            backgroundColor: "rgba(239, 68, 68, 0.08)",
+            border: "1px solid rgba(239, 68, 68, 0.35)",
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            flexWrap: "wrap",
+            gap: "12px",
+          })}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+            <FaExclamationTriangle color="#dc2626" size={20} />
+            <div>
+              <FLPHeading as="h4" size="sm" style={{ color: "#dc2626", margin: 0 }}>
+                Mortgage Refinance Cliff Warning (Expires in {refinanceWarning.diffMonths} months)
+              </FLPHeading>
+              <FLPText fontSize="xs" color="text.muted" style={{ margin: "2px 0 0 0" }}>
+                Your fixed-rate deal expires on <strong>{refinanceWarning.date}</strong>. Moving to
+                your lender's Standard Variable Rate (~7.5–8.0%) will sharply increase monthly
+                payments. Compare new fixed deals now.
+              </FLPText>
+            </div>
+          </div>
+          <button
+            type="button"
+            className={css({
+              padding: "8px 14px",
+              fontSize: "xs",
+              fontWeight: "bold",
+              color: "white",
+              backgroundColor: "#dc2626",
+              border: "none",
+              borderRadius: "md",
+              cursor: "pointer",
+              "&:hover": { opacity: 0.9 },
+            })}
+            onClick={() => setActiveTab("simulator")}
+          >
+            Simulate Rate Shock →
+          </button>
+        </div>
+      )}
+
       {/* Title */}
       <div className={css({ my: 4 })}>
         <FLPHeading as="h1" color="blue.500" size="xl">
@@ -219,6 +299,125 @@ const MortgageContainer: FC = () => {
           <FaBuilding size={14} />
           Buy to Let (BTL)
         </button>
+      </div>
+
+      {/* LTV Threshold Milestones (85%, 80%, 75%, 60%) */}
+      <div
+        className={css({
+          padding: "16px 20px",
+          borderRadius: "lg",
+          backgroundColor: "surface",
+          border: "1px solid",
+          borderColor: "border",
+          display: "flex",
+          flexDirection: "column",
+          gap: "12px",
+        })}
+      >
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            flexWrap: "wrap",
+            gap: "8px",
+          }}
+        >
+          <div>
+            <FLPText
+              fontSize="xs"
+              color="text.muted"
+              fontWeight="semibold"
+              textTransform="uppercase"
+            >
+              LTV Threshold Milestones
+            </FLPText>
+            <FLPHeading as="h3" size="sm" style={{ marginTop: "2px" }}>
+              Current LTV: {currentLtv.toFixed(1)}% ({formatCurrency(loanAmount)} /{" "}
+              {formatCurrency(propertyValue)})
+            </FLPHeading>
+          </div>
+          <span
+            style={{
+              fontSize: "11px",
+              fontWeight: 600,
+              padding: "3px 10px",
+              borderRadius: "999px",
+              backgroundColor: "rgba(99, 102, 241, 0.1)",
+              color: "#6366f1",
+            }}
+          >
+            Ownership Share: {baseline.propertyOwnershipSharePct ?? 100}%
+          </span>
+        </div>
+
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+            gap: "10px",
+          }}
+        >
+          {ltvMilestones.map((m) => (
+            <div
+              key={m.targetLtvPct}
+              style={{
+                padding: "10px 14px",
+                borderRadius: "8px",
+                backgroundColor: m.isAchieved
+                  ? "rgba(16, 185, 129, 0.08)"
+                  : "rgba(245, 158, 11, 0.08)",
+                border: `1px solid ${
+                  m.isAchieved ? "rgba(16, 185, 129, 0.3)" : "rgba(245, 158, 11, 0.3)"
+                }`,
+                display: "flex",
+                flexDirection: "column",
+                gap: "4px",
+              }}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                }}
+              >
+                <span
+                  style={{
+                    fontSize: "12px",
+                    fontWeight: "bold",
+                    color: m.isAchieved ? "#10b981" : "#d97706",
+                  }}
+                >
+                  {m.targetLtvPct}% LTV Tier
+                </span>
+                <span
+                  style={{
+                    fontSize: "10px",
+                    fontWeight: 700,
+                    color: m.isAchieved ? "#10b981" : "#d97706",
+                  }}
+                >
+                  {m.isAchieved ? "✓ Unlocked" : "Locked"}
+                </span>
+              </div>
+              <div style={{ fontSize: "11px", color: "var(--colors-text-muted)" }}>
+                {m.isAchieved ? (
+                  "Lowest rate tier active"
+                ) : (
+                  <>
+                    <strong>{formatCurrency(m.lumpSumNeededGbp)}</strong> equity needed
+                    {m.requiredMonthlyOverpaymentBeforeFixGbp && (
+                      <div>
+                        {formatCurrency(m.requiredMonthlyOverpaymentBeforeFixGbp)}/mo to unlock
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
 
       {/* Buy to Let Portfolio Information Card when BTL is active */}

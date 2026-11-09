@@ -21,6 +21,8 @@ export interface UserProfile {
   rentalIncomeMonthly: number | null;
   hasMortgage: boolean;
   mortgageType: "repayment" | "interest-only";
+  mortgageRenewalDate?: string | null;
+  homeValue?: number | null;
   propertyOwnershipShare: number;
   hasBuyToLet: boolean;
   buyToLetCount: number;

@@ -12,8 +12,39 @@ export interface BudgetEntry {
   isEssential: boolean;
   notes: string | null;
   isDefault: boolean;
+  contractEndDate?: string | null;
+  actualMtdGbp?: number;
   createdAt: string;
   updatedAt: string;
+}
+
+const PRIORITY_KEYWORDS = [
+  "rent",
+  "mortgage",
+  "council tax",
+  "gas",
+  "electric",
+  "energy",
+  "water",
+  "rates",
+  "child maintenance",
+  "tv licence",
+  "court",
+];
+
+export function isPriorityBill(entry: BudgetEntry): boolean {
+  if (entry.isIncome) return false;
+  if (entry.category === "housing") return true;
+  const lowerName = entry.name.toLowerCase();
+  return PRIORITY_KEYWORDS.some((kw) => lowerName.includes(kw));
+}
+
+export function getDaysUntilContractEnd(contractEndDate?: string | null): number | null {
+  if (!contractEndDate) return null;
+  const target = new Date(contractEndDate).getTime();
+  if (Number.isNaN(target)) return null;
+  const now = new Date().getTime();
+  return Math.ceil((target - now) / (1000 * 60 * 60 * 24));
 }
 
 /** Normalise any entry to a monthly amount */

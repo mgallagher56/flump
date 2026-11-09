@@ -255,18 +255,33 @@ export const HeroCalculator: FC = () => {
   const takeHome = useMemo(() => calculateUKTakeHome(annualIncome), [annualIncome]);
 
   const handleSaveToFlump = () => {
-    persistOnboardingSeed({
+    const payload = {
+      mode: activeTab === "wealth" ? ("WEALTH" as const) : ("DEBT" as const),
+      annualGrossSalary:
+        activeTab === "wealth" ? annualIncome : (PERSONAS[selectedPersona].annualIncome ?? 30000),
       annualIncome:
         activeTab === "wealth" ? annualIncome : (PERSONAS[selectedPersona].annualIncome ?? 30000),
       initialCashSavings: activeTab === "wealth" ? savings : 500,
       monthlyContribution: activeTab === "wealth" ? monthlyContribution : debtMonthlyBudget,
       mortgageBalance,
       inferredModules: PERSONAS[selectedPersona].inferredModules as any,
+      inferredStage: activeTab === "wealth" ? "STAGE_3_WEALTH_OPTIMIZE" : "STAGE_1_DEBT_RECOVERY",
       timestamp: Date.now(),
-    });
+    };
+
+    persistOnboardingSeed(payload as any);
+
+    if (typeof document !== "undefined") {
+      const encoded = encodeURIComponent(JSON.stringify(payload));
+      const domain =
+        typeof window !== "undefined" && window.location.hostname.includes("flump.co.uk")
+          ? "; domain=.flump.co.uk"
+          : "";
+      document.cookie = `flump_onboarding_seed=${encoded}; path=/; max-age=2592000; SameSite=Lax${domain}`;
+    }
 
     if (typeof window !== "undefined") {
-      window.location.href = `${appUrl}/onboarding`;
+      window.location.href = `${appUrl}/signup`;
     }
   };
 

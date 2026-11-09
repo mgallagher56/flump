@@ -8,9 +8,11 @@ import FLPText from "~/components/core/typography/FLPText";
 import SavingsForecaster from "~/components/forecast/SavingsForecaster";
 import ScenarioLayersWidget from "~/components/forecast/ScenarioLayersWidget";
 import UKTaxCalculator from "~/components/forecast/UKTaxCalculator";
+import { GlobalBaselineScenarioBar } from "~/components/navigation/GlobalBaselineScenarioBar";
 import TaxTrapAlertBanner from "~/components/tax/TaxTrapAlertBanner";
 import { useUserProfile } from "~/hooks/useUserProfile";
 import type { loader } from "~/routes/app.forecast";
+import { useFinancialBaseline } from "~/state/baseline.store";
 import { currentMonth, currentYear } from "~/utils/utils";
 
 const ForecastContainer: FC = () => {
@@ -19,6 +21,9 @@ const ForecastContainer: FC = () => {
   const [activeTab, setActiveTab] = useState<"forecaster" | "calculator">("forecaster");
 
   const { profile, setProfile, markChecklistStep } = useUserProfile();
+  const { baseline } = useFinancialBaseline();
+  const effectiveSalary =
+    baseline.annualGrossSalary > 0 ? baseline.annualGrossSalary : Number(profile.annualSalary || 0);
 
   // Sync profile from loader into atom
   useEffect(() => {
@@ -130,6 +135,8 @@ const ForecastContainer: FC = () => {
 
   return (
     <div className={containerStyle}>
+      <GlobalBaselineScenarioBar />
+
       {/* Title */}
       <div className={css({ my: 6 })}>
         <FLPHeading as="h1" color="blue.500" size="xl">
@@ -161,9 +168,7 @@ const ForecastContainer: FC = () => {
       </div>
 
       {/* Contextual £100k-£125k Tax Trap Alert Banner */}
-      {Number(profile.annualSalary) >= 95000 && (
-        <TaxTrapAlertBanner grossIncome={Number(profile.annualSalary)} />
-      )}
+      {effectiveSalary >= 95000 && <TaxTrapAlertBanner grossIncome={effectiveSalary} />}
 
       {/* Render selected tab */}
       {activeTab === "forecaster" ? (

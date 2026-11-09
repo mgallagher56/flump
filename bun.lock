@@ -45,6 +45,7 @@
       "name": "marketing",
       "version": "0.0.0",
       "dependencies": {
+        "@flump/finance-engine": "workspace:*",
         "@repo/app-shell": "workspace:*",
         "@repo/common": "workspace:*",
         "@repo/ui": "workspace:*",
@@ -106,6 +107,8 @@
         "@emotion/cache": "11.14.0",
         "@emotion/react": "11.14.0",
         "@emotion/server": "11.11.0",
+        "@flump/banking": "workspace:*",
+        "@flump/finance-engine": "workspace:*",
         "@radix-ui/react-dialog": "1.3.1",
         "@radix-ui/react-tabs": "1.2.1",
         "@react-router/node": "7.18.5",
@@ -188,6 +191,16 @@
         "react-router-dom": "^7.11.0",
       },
     },
+    "packages/banking": {
+      "name": "@flump/banking",
+      "version": "1.0.0",
+      "devDependencies": {
+        "@repo/typescript-config": "workspace:*",
+        "@types/node": "26.6.6",
+        "typescript": "7.0.2",
+        "vitest": "5.1.0",
+      },
+    },
     "packages/common": {
       "name": "@repo/common",
       "version": "0.0.0",
@@ -195,6 +208,16 @@
         "@repo/typescript-config": "workspace:*",
         "@types/node": "26.6.6",
         "typescript": "7.0.2",
+      },
+    },
+    "packages/finance-engine": {
+      "name": "@flump/finance-engine",
+      "version": "1.0.0",
+      "devDependencies": {
+        "@repo/typescript-config": "workspace:*",
+        "@types/node": "26.6.6",
+        "typescript": "7.0.2",
+        "vitest": "5.1.0",
       },
     },
     "packages/typescript-config": {
@@ -581,6 +604,10 @@
     "@expo/xcpretty": ["@expo/xcpretty@4.4.7", "", { "dependencies": { "@babel/code-frame": "^7.20.0", "chalk": "^4.1.0", "js-yaml": "^4.1.0" }, "bin": { "excpretty": "build/cli.js" } }, "sha512-EbxYllZ7/ozONVZd425cm4XnolfW+AmSFT5aP7Jdno6oc3WrYQcHz2CO20z/2rwWwYgztmV2PXvYH+BQ8YFjqg=="],
 
     "@fastify/busboy": ["@fastify/busboy@2.1.1", "", {}, "sha512-vBZP4NlzfOlerQTnba4aqZoMhE/a9HY7HRqoOPaETQcSQuWEIyZMHGfVu6w9wGtGK5fED5qRs2DteVCjOH60sA=="],
+
+    "@flump/banking": ["@flump/banking@workspace:packages/banking"],
+
+    "@flump/finance-engine": ["@flump/finance-engine@workspace:packages/finance-engine"],
 
     "@flump/web": ["@flump/web@workspace:apps/web"],
 
