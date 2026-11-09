@@ -239,7 +239,7 @@ Flump is a monorepo managed with Turborepo (`turbo`) and Bun.
   - `docs: <description>` (for documentation updates)
   - `test: <description>` (for adding/updating tests)
 
-- **No Direct Pushes to `main`**: Agents must never push, force-push, or fast-forward-merge directly into `main` (including `git push origin main` or `git push origin dev main`). Work on a feature branch or `dev`, push that branch, and open a pull request targeting `main`. Never bypass or alter branch protection to get around this. Only the user merges into `main`.
+- **Primary Branch (`main`)**: `main` is the primary branch for merging and pushing work to. Direct all commits, pull requests, Renovate updates, and `release-please` releases to `main`. Railway production services watch `apps/<service>/CHANGELOG.md` on `main` and deploy when a Release Please PR is merged.
 
 ---
 

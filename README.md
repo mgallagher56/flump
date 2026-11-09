@@ -286,7 +286,7 @@ bun run test
    bun run test
    ```
 4. **Open a Pull Request**:
-   Push your branch and open a PR against `dev`.
+   Push your branch and open a PR against `main` (the primary branch for all merges and releases).
 
 ---
 
