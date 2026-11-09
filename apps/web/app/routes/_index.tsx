@@ -316,13 +316,44 @@ const Index = (): ReactElement => {
     debtData,
   } = data as any;
 
-  if (user && accountsData) {
+  if (user) {
+    const safeAccountsData = accountsData || {
+      netWorth: 0,
+      totalAssets: 0,
+      totalLiabilities: 0,
+      accountsCount: 0,
+      typeTotals: {},
+    };
+
+    const safeBudgetData = budgetData || {
+      monthlyIncome: 0,
+      monthlyExpenses: 0,
+      monthlySurplus: 0,
+      budgetedSavings: 0,
+      livingExpenses: 0,
+      savingsRatePct: 0,
+      runwayMonths: 0,
+      runwayLabel: "0 mo",
+      rawEntries: [],
+      rawAccounts: [],
+      rawAccountDetails: [],
+    };
+
+    const safeDebtData = debtData || {
+      totalDebt: 0,
+      highInterestDebt: 0,
+      highInterestCount: 0,
+      debtFreeDate: "Debt Free",
+      interestSaved: 0,
+      monthlyMinimumTotal: 0,
+    };
+
     return (
       <>
         {isDemo && <DemoModeBanner />}
         <HomeDashboard
-          accountsData={accountsData}
-          budgetData={budgetData}
+          accountsData={safeAccountsData}
+          budgetData={safeBudgetData}
           checklistProps={{
             hasAccounts,
             hasBudget,
@@ -334,7 +365,7 @@ const Index = (): ReactElement => {
             hasTax: (taxData?.recordsCount ?? 0) > 0,
             completedSteps,
           }}
-          debtData={debtData}
+          debtData={safeDebtData}
           forecastData={forecastData}
           mortgageData={mortgageData}
           pensionData={pensionData}
