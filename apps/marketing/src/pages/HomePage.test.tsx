@@ -40,7 +40,7 @@ describe("Marketing HomePage (Simplified 6-Section Narrative)", () => {
 
   it("renders core outcome pillars, comparison matrix, security, and FAQ sections", () => {
     renderHome();
-    expect(screen.getByText("Four Pillars to Master Your Money")).toBeDefined();
+    expect(screen.getByText("Four Pillars of Your Financial Plan")).toBeDefined();
     expect(screen.getByText("Built for UK Rules, Not Generic Spreadsheets")).toBeDefined();
     expect(screen.getByTestId("security-privacy-section")).toBeDefined();
     expect(screen.getByText("Frequently Asked Questions")).toBeDefined();

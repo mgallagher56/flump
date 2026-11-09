@@ -4,6 +4,7 @@ import { type LoaderFunctionArgs, type MetaFunction, redirect, useLoaderData } f
 import { calculateNetTakeHome } from "~/components/budget/UserProfilePanel";
 import { DemoModeBanner } from "~/components/dashboard/DemoModeBanner";
 import { HomeDashboard } from "~/components/dashboard/HomeDashboard";
+import LoggedOutHome from "~/components/home/LoggedOutHome";
 import { toMonthly } from "~/types/budget";
 import { getDemoDashboardData, isDemoMode } from "~/utils/demoData";
 import { calculateRunwayStats } from "~/utils/runwayStorage";

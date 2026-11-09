@@ -47,10 +47,11 @@ export const FeaturePillars: FC = () => {
             fontSize: "12px",
             fontWeight: "700",
             textTransform: "uppercase",
+            letterSpacing: "0.08em",
             color: "#6363f1",
           }}
         >
-          Engineered for the UK Financial Reality
+          Core Capabilities
         </span>
         <h2
           style={{
@@ -60,7 +61,7 @@ export const FeaturePillars: FC = () => {
             marginTop: "8px",
           }}
         >
-          Four Pillars to Master Your Money
+          Four Pillars of Your Financial Plan
         </h2>
       </div>
 
@@ -78,7 +79,7 @@ export const FeaturePillars: FC = () => {
               marginBottom: "8px",
             }}
           >
-            Debt Crusher & Snowball
+            Debt & Repayment Strategies
           </h3>
           <p
             style={{
@@ -87,8 +88,8 @@ export const FeaturePillars: FC = () => {
               lineHeight: "1.6",
             }}
           >
-            Crush UK credit cards, overdraft fees, and balloon payments with mathematical precision
-            using Avalanche or Snowball prioritization.
+            Compare Avalanche and Snowball payoff timelines for credit cards, overdrafts, and
+            personal loans to eliminate interest faster.
           </p>
         </div>
 
@@ -105,7 +106,7 @@ export const FeaturePillars: FC = () => {
               marginBottom: "8px",
             }}
           >
-            UK HMRC Tax Engine
+            UK Tax & Pension Planning
           </h3>
           <p
             style={{
@@ -114,8 +115,8 @@ export const FeaturePillars: FC = () => {
               lineHeight: "1.6",
             }}
           >
-            Navigate the £100k Personal Allowance taper, preserve 30 hours of funded childcare, and
-            optimize pension salary sacrifice.
+            Navigate the £100k Personal Allowance taper, protect 30 hours funded childcare, and
+            model pension salary sacrifice benefits.
           </p>
         </div>
 
@@ -132,7 +133,7 @@ export const FeaturePillars: FC = () => {
               marginBottom: "8px",
             }}
           >
-            Mortgage & Section 24
+            Mortgage & Property Equity
           </h3>
           <p
             style={{
@@ -141,8 +142,8 @@ export const FeaturePillars: FC = () => {
               lineHeight: "1.6",
             }}
           >
-            Simulate overpayments against S&S ISA compounding, track fixed-rate expiry cliffs, and
-            model Section 24 restrictions for landlords.
+            Simulate mortgage overpayments against Stocks & Shares ISA investing, track fixed-rate
+            renewal dates, and monitor your equity growth.
           </p>
         </div>
 
@@ -159,7 +160,7 @@ export const FeaturePillars: FC = () => {
               marginBottom: "8px",
             }}
           >
-            Safe-to-Spend Runway
+            Discretionary Surplus & Runway
           </h3>
           <p
             style={{
@@ -168,8 +169,8 @@ export const FeaturePillars: FC = () => {
               lineHeight: "1.6",
             }}
           >
-            Calculate exactly how much discretionary cash you can spend this month without
-            compromising your emergency runway or retirement target.
+            See exactly what is safe to spend each month after housing, committed bills, and
+            scheduled savings goals are accounted for.
           </p>
         </div>
       </div>
