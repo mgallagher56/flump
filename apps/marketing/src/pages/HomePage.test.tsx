@@ -26,6 +26,10 @@ describe("Marketing HomePage (Simplified 6-Section Narrative)", () => {
     expect(screen.getByText("+£840")).toBeDefined();
     expect(screen.getAllByText("£195").length).toBeGreaterThan(0);
     expect(screen.getByText("6.4")).toBeDefined();
+
+    const livePreviewLink = screen.getByRole("link", { name: /See live preview in app/i });
+    expect(livePreviewLink).toBeDefined();
+    expect(livePreviewLink.getAttribute("href")).toContain("/sandbox");
   });
 
   it("renders the 3-step How It Works section", () => {

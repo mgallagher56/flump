@@ -32,15 +32,17 @@ const cardBodyStyle = css({
   flexDirection: "column",
   gap: "8px",
   padding: "20px",
-  position: "relative",
-  overflow: "hidden",
+});
+
+const cardHeaderStyle = css({
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "space-between",
+  gap: "12px",
 });
 
 const iconBadgeStyle = (bg: string, color: string) =>
   css({
-    position: "absolute",
-    top: "16px",
-    right: "16px",
     width: "36px",
     height: "36px",
     borderRadius: "full",
@@ -49,6 +51,7 @@ const iconBadgeStyle = (bg: string, color: string) =>
     justifyContent: "center",
     backgroundColor: bg,
     color: color,
+    flexShrink: 0,
   });
 
 export const DebtSummaryCards: FC<DebtSummaryCardsProps> = ({
@@ -68,12 +71,14 @@ export const DebtSummaryCards: FC<DebtSummaryCardsProps> = ({
       {/* 1. Total Unsecured Debt */}
       <FLPCard>
         <div className={cardBodyStyle}>
-          <div className={iconBadgeStyle("rgba(239, 68, 68, 0.12)", "#ef4444")}>
-            <FaFire size={18} />
+          <div className={cardHeaderStyle}>
+            <FLPText color="text.muted" fontSize="sm">
+              Total Unsecured Debt
+            </FLPText>
+            <div className={iconBadgeStyle("rgba(239, 68, 68, 0.12)", "#ef4444")}>
+              <FaFire size={18} />
+            </div>
           </div>
-          <FLPText color="text.muted" fontSize="sm">
-            Total Unsecured Debt
-          </FLPText>
           <FLPHeading as="h3" size="2xl">
             {formatCurrency(totalDebt)}
           </FLPHeading>
@@ -88,12 +93,14 @@ export const DebtSummaryCards: FC<DebtSummaryCardsProps> = ({
       {/* 2. Monthly Debt Service */}
       <FLPCard>
         <div className={cardBodyStyle}>
-          <div className={iconBadgeStyle("rgba(245, 158, 11, 0.12)", "#f59e0b")}>
-            <FaCoins size={18} />
+          <div className={cardHeaderStyle}>
+            <FLPText color="text.muted" fontSize="sm">
+              Monthly Debt Budget
+            </FLPText>
+            <div className={iconBadgeStyle("rgba(245, 158, 11, 0.12)", "#f59e0b")}>
+              <FaCoins size={18} />
+            </div>
           </div>
-          <FLPText color="text.muted" fontSize="sm">
-            Monthly Debt Budget
-          </FLPText>
           <FLPHeading as="h3" size="2xl">
             {formatCurrency(monthlyMinimumTotal + extraPayment)}
             <span style={{ fontSize: "14px", fontWeight: "normal", color: "#6b7280" }}>/mo</span>
@@ -109,12 +116,14 @@ export const DebtSummaryCards: FC<DebtSummaryCardsProps> = ({
       {/* 3. Debt-Free Target Date */}
       <FLPCard>
         <div className={cardBodyStyle}>
-          <div className={iconBadgeStyle("rgba(16, 185, 129, 0.12)", "#10b981")}>
-            <FaCalendarCheck size={18} />
+          <div className={cardHeaderStyle}>
+            <FLPText color="text.muted" fontSize="sm">
+              Debt-Free Horizon
+            </FLPText>
+            <div className={iconBadgeStyle("rgba(16, 185, 129, 0.12)", "#10b981")}>
+              <FaCalendarCheck size={18} />
+            </div>
           </div>
-          <FLPText color="text.muted" fontSize="sm">
-            Debt-Free Horizon
-          </FLPText>
           <FLPHeading as="h3" size="2xl">
             {debtFreeDate}
           </FLPHeading>
@@ -129,12 +138,14 @@ export const DebtSummaryCards: FC<DebtSummaryCardsProps> = ({
       {/* 4. Interest Saved */}
       <FLPCard>
         <div className={cardBodyStyle}>
-          <div className={iconBadgeStyle("rgba(99, 99, 241, 0.12)", "#6363f1")}>
-            <FaPiggyBank size={18} />
+          <div className={cardHeaderStyle}>
+            <FLPText color="text.muted" fontSize="sm">
+              Interest Saved ({strategy === "avalanche" ? "Avalanche" : "Snowball"})
+            </FLPText>
+            <div className={iconBadgeStyle("rgba(99, 99, 241, 0.12)", "#6363f1")}>
+              <FaPiggyBank size={18} />
+            </div>
           </div>
-          <FLPText color="text.muted" fontSize="sm">
-            Interest Saved ({strategy === "avalanche" ? "Avalanche" : "Snowball"})
-          </FLPText>
           <FLPHeading as="h3" size="2xl">
             {formatCurrency(totalInterestSaved)}
           </FLPHeading>

@@ -1,6 +1,7 @@
 import { css } from "@repo/ui/styled-system/css";
 import type { FC } from "react";
 import { FiArrowUpRight, FiCheckCircle, FiShield } from "react-icons/fi";
+import { getAppUrl } from "../utils/url";
 
 const previewCardContainer = css({
   backgroundColor: "card",
@@ -76,7 +77,23 @@ const highlightStripStyle = css({
   fontSize: "xs",
 });
 
+const livePreviewLinkStyle = css({
+  display: "inline-flex",
+  alignItems: "center",
+  gap: "4px",
+  color: "primary",
+  fontWeight: "600",
+  textDecoration: "none",
+  cursor: "pointer",
+  transition: "opacity 0.15s ease",
+  _hover: {
+    textDecoration: "underline",
+    opacity: 0.85,
+  },
+});
+
 export const BaselineSnapshotPreview: FC = () => {
+  const appUrl = getAppUrl();
   return (
     <div className={previewCardContainer} data-testid="baseline-snapshot-preview">
       {/* Top Header Bar */}
@@ -361,18 +378,15 @@ export const BaselineSnapshotPreview: FC = () => {
             details only when you choose.
           </span>
         </div>
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "4px",
-            color: "var(--colors-primary)",
-            fontWeight: "600",
-          }}
+        <a
+          href={`${appUrl}/sandbox`}
+          className={livePreviewLinkStyle}
+          target="_blank"
+          rel="noreferrer"
         >
           <span>See live preview in app</span>
           <FiArrowUpRight size={14} />
-        </div>
+        </a>
       </div>
     </div>
   );
