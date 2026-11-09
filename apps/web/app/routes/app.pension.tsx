@@ -2,6 +2,7 @@ import type { ReactElement } from "react";
 import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from "react-router";
 import { data } from "react-router";
 import PensionContainer from "~/containers/pension/PensionContainer";
+import { loadWorkspaceSnapshot } from "~/services/backend-client.server";
 import { getAuthSession } from "~/utils/utils";
 
 export const meta: MetaFunction = () => [{ title: "Pension & Retirement | Flump" }];
@@ -192,34 +193,8 @@ export const action = async (args: ActionFunctionArgs) => {
 };
 
 export const loader = async (args: LoaderFunctionArgs) => {
-  const { user, accessToken } = await getAuthSession(args, {
-    ensureSignedIn: true,
-  });
-
-  const apiUrl = process.env.VITE_API_URL || "http://localhost:4000";
-  const headers = { Authorization: `Bearer ${accessToken || "mock-session-token"}` };
-
-  try {
-    const [accountsRes, detailsRes, profileRes] = await Promise.all([
-      fetch(`${apiUrl}/accounts`, { headers }),
-      fetch(`${apiUrl}/account-details`, { headers }),
-      fetch(`${apiUrl}/user-profile`, { headers }),
-    ]);
-
-    const accounts = accountsRes.ok ? await accountsRes.json() : [];
-    const accountDetails = detailsRes.ok ? await detailsRes.json() : [];
-    const userProfile = profileRes.ok ? await profileRes.json() : null;
-
-    return data({ accounts, accountDetails, userProfile, user });
-  } catch (error) {
-    console.error("Pension route loader error:", error);
-    return data({
-      accounts: [],
-      accountDetails: [],
-      userProfile: null,
-      user,
-    });
-  }
+  const { accounts, accountDetails, userProfile, user } = await loadWorkspaceSnapshot(args);
+  return data({ accounts, accountDetails, userProfile, user });
 };
 
 const PensionRoute = (): ReactElement => {

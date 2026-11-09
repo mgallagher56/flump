@@ -6,6 +6,7 @@ import { calculateNetTakeHome } from "~/components/budget/UserProfilePanel";
 import { DemoModeBanner } from "~/components/dashboard/DemoModeBanner";
 import { HomeDashboard } from "~/components/dashboard/HomeDashboard";
 import LoggedOutHome from "~/components/home/LoggedOutHome";
+import { loadWorkspaceSnapshot } from "~/services/backend-client.server";
 import { toMonthly } from "~/types/budget";
 import { getDemoDashboardData, isDemoMode } from "~/utils/demoData";
 import { calculateRunwayStats } from "~/utils/runwayStorage";
@@ -24,7 +25,12 @@ export const loader = async (args: LoaderFunctionArgs) => {
     return getDemoDashboardData();
   }
 
-  const { user, accessToken } = await getAuthSession(args, { ensureSignedIn: false });
+  const { accounts, userProfile, budgetEntries, accountDetails, taxRecords, user } =
+    await loadWorkspaceSnapshot(args, {
+      ensureSignedIn: false,
+      includeBudget: true,
+      includeTax: true,
+    });
 
   if (!user) {
     return {
@@ -49,28 +55,10 @@ export const loader = async (args: LoaderFunctionArgs) => {
     };
   }
 
-  const apiUrl = process.env.VITE_API_URL || "http://localhost:4000";
-  const headers = { Authorization: `Bearer ${accessToken || "mock-session-token"}` };
-
   try {
-    const [accountsRes, profileRes, budgetRes, detailsRes, taxRes] = await Promise.all([
-      fetch(`${apiUrl}/accounts`, { headers }),
-      fetch(`${apiUrl}/user-profile`, { headers }),
-      fetch(`${apiUrl}/budget-entries`, { headers }),
-      fetch(`${apiUrl}/account-details`, { headers }),
-      fetch(`${apiUrl}/tax-records`, { headers }),
-    ]);
-
-    const accounts = accountsRes.ok ? await accountsRes.json() : [];
-    const userProfile = profileRes.ok ? await profileRes.json() : null;
-
     if (userProfile && userProfile.onboardingCompleted === false) {
       return redirect("/app/onboarding");
     }
-
-    const budgetEntries = budgetRes.ok ? await budgetRes.json() : [];
-    const accountDetails = detailsRes.ok ? await detailsRes.json() : [];
-    const taxRecords = taxRes.ok ? await taxRes.json() : [];
 
     const completedSteps = (userProfile?.setupChecklistCompletedSteps as string[]) ?? [];
 
