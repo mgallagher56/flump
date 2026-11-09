@@ -91,7 +91,7 @@ export const WebHowItWorksSection: FC = () => {
           <span className={stepNumberBadge}>
             <FiEdit3 size={13} /> Step 1 · 60 Seconds
           </span>
-          <FLPHeading as="h3" size="sm">
+          <FLPHeading as="h3" size="lg">
             Enter 6 Rough Numbers
           </FLPHeading>
           <FLPText color="text.muted" fontSize="sm" lineHeight="1.6">
@@ -118,7 +118,7 @@ export const WebHowItWorksSection: FC = () => {
           <span className={stepNumberBadge}>
             <FiSliders size={13} /> Step 2 · Instant
           </span>
-          <FLPHeading as="h3" size="sm">
+          <FLPHeading as="h3" size="lg">
             Unlock Instant UK Insights
           </FLPHeading>
           <FLPText color="text.muted" fontSize="sm" lineHeight="1.6">
@@ -145,7 +145,7 @@ export const WebHowItWorksSection: FC = () => {
           <span className={stepNumberBadge}>
             <FiArrowRight size={13} /> Step 3 · On Your Schedule
           </span>
-          <FLPHeading as="h3" size="sm">
+          <FLPHeading as="h3" size="lg">
             Drill Down When You Want
           </FLPHeading>
           <FLPText color="text.muted" fontSize="sm" lineHeight="1.6">

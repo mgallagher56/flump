@@ -4,6 +4,7 @@ exports[`FLPHeading > render only number of lines 1`] = `
 <div>
   <h1
     class="c_text.primary ff_var(--fonts-display,_'Plus_Jakarta_Sans',_sans-serif) ls_-0.025em fs_3rem fw_bold lh_tight m_0 "
+    style="font-size: 3rem;"
   >
     Lorem, ipsum dolor sit amet consectetur adipisicing elit. Nemo quaerat repellendus numquam et esse ut labore molestias nihil optio expedita atque, quas eligendi corrupti quasi impedit suscipit sunt.
   </h1>
@@ -14,6 +15,7 @@ exports[`FLPHeading > renders as expected 1`] = `
 <div>
   <h1
     class="c_text.primary ff_var(--fonts-display,_'Plus_Jakarta_Sans',_sans-serif) ls_-0.025em fs_1rem fw_bold lh_tight m_0 "
+    style="font-size: 1rem;"
   >
     Lorem, ipsum dolor sit amet consectetur adipisicing elit. Nemo quaerat repellendus numquam et esse ut labore molestias nihil optio expedita atque, quas eligendi corrupti quasi impedit suscipit sunt.
   </h1>
@@ -24,6 +26,7 @@ exports[`FLPHeading > renders as expected with a color 1`] = `
 <div>
   <h2
     class="c_text.primary ff_var(--fonts-display,_'Plus_Jakarta_Sans',_sans-serif) ls_-0.025em fs_1rem fw_bold lh_tight m_0 "
+    style="font-size: 1rem;"
   >
     Lorem, ipsum dolor sit amet consectetur adipisicing elit. Nemo quaerat repellendus numquam et esse ut labore molestias nihil optio expedita atque, quas eligendi corrupti quasi impedit suscipit sunt.
   </h2>
@@ -34,6 +37,7 @@ exports[`FLPHeading > renders as expected with a size 1`] = `
 <div>
   <h2
     class="c_text.primary ff_var(--fonts-display,_'Plus_Jakarta_Sans',_sans-serif) ls_-0.025em fs_1.25rem fw_bold lh_tight m_0 "
+    style="font-size: 1.25rem;"
   >
     Lorem, ipsum dolor sit amet consectetur adipisicing elit. Nemo quaerat repellendus numquam et esse ut labore molestias nihil optio expedita atque, quas eligendi corrupti quasi impedit suscipit sunt.
   </h2>
