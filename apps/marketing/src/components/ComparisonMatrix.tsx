@@ -1,64 +1,71 @@
+import { SectionBand } from "@repo/ui";
 import { css } from "@repo/ui/styled-system/css";
 import type { FC } from "react";
 import { FiCheck, FiX } from "react-icons/fi";
-
-const containerStyle = css({
-  maxWidth: "5xl",
-  mx: "auto",
-  py: "16",
-  px: "4",
-});
 
 const tableStyle = css({
   width: "100%",
   borderCollapse: "separate",
   borderSpacing: 0,
-  borderRadius: "xl",
+  borderRadius: "2xl",
   overflow: "hidden",
   border: "1px solid",
-  borderColor: { base: "slate.200", _dark: "slate.800" },
+  borderColor: { base: "slate.200", _dark: "dark.border" },
   backgroundColor: { base: "#ffffff", _dark: "dark.surface" },
-  boxShadow: { base: "0 6px 20px rgba(0,0,0,0.03)", _dark: "0 6px 20px rgba(0,0,0,0.2)" },
+  boxShadow: {
+    base: "0 1px 3px rgba(15,23,42,0.04), 0 12px 28px rgba(15,23,42,0.06)",
+    _dark: "inset 0 1px 0 rgba(255,255,255,0.06), 0 16px 36px rgba(0,0,0,0.45)",
+  },
 });
 
 const thStyle = css({
-  padding: "16px",
-  fontSize: "14px",
+  padding: "16px 20px",
+  fontSize: "xs",
   fontWeight: "700",
+  textTransform: "uppercase",
+  letterSpacing: "0.05em",
   textAlign: "left",
-  backgroundColor: { base: "slate.50", _dark: "dark.bg" },
+  backgroundColor: { base: "slate.50", _dark: "dark.subtle" },
   borderBottom: "1px solid",
-  borderColor: { base: "slate.200", _dark: "slate.800" },
-  color: { base: "slate.900", _dark: "#ffffff" },
-});
-
-const flumpThStyle = css({
-  padding: "16px",
-  fontSize: "14px",
-  fontWeight: "700",
-  textAlign: "left",
-  borderBottom: "1px solid",
-  borderColor: { base: "slate.200", _dark: "slate.800" },
-  backgroundColor: { base: "#eef2ff", _dark: "rgba(99, 102, 241, 0.15)" },
-  color: { base: "#4338ca", _dark: "#a5b4fc" },
-});
-
-const tdStyle = css({
-  padding: "14px 16px",
-  fontSize: "14px",
-  borderBottom: "1px solid",
-  borderColor: { base: "slate.100", _dark: "slate.800" },
+  borderColor: { base: "slate.200", _dark: "dark.border" },
   color: { base: "slate.700", _dark: "slate.300" },
 });
 
-const flumpTdStyle = css({
-  padding: "14px 16px",
+const flumpThStyle = css({
+  padding: "16px 20px",
+  fontSize: "sm",
+  fontWeight: "800",
+  textAlign: "left",
+  borderBottom: "1px solid",
+  borderColor: { base: "slate.200", _dark: "dark.border" },
+  backgroundColor: { base: "#eef2ff", _dark: "rgba(99, 102, 241, 0.18)" },
+  color: { base: "#4338ca", _dark: "#a5b4fc" },
+  borderLeft: "2px solid",
+  borderRight: "2px solid",
+  borderLeftColor: { base: "#6363f1", _dark: "#6363f1" },
+  borderRightColor: { base: "#6363f1", _dark: "#6363f1" },
+});
+
+const tdStyle = css({
+  padding: "16px 20px",
   fontSize: "14px",
   borderBottom: "1px solid",
-  borderColor: { base: "slate.100", _dark: "slate.800" },
+  borderColor: { base: "slate.100", _dark: "rgba(255, 255, 255, 0.05)" },
+  color: { base: "slate.600", _dark: "slate.300" },
+});
+
+const flumpTdStyle = css({
+  padding: "16px 20px",
+  fontSize: "14px",
+  borderBottom: "1px solid",
+  borderColor: { base: "slate.100", _dark: "rgba(255, 255, 255, 0.05)" },
   backgroundColor: { base: "#f5f7ff", _dark: "rgba(99, 102, 241, 0.08)" },
   color: { base: "#3730a3", _dark: "#c7d2fe" },
   fontWeight: "600",
+  borderLeft: "2px solid",
+  borderRight: "2px solid",
+  borderLeftColor: { base: "#6363f1", _dark: "#6363f1" },
+  borderRightColor: { base: "#6363f1", _dark: "#6363f1" },
 });
 
 const rowStyle = css({
@@ -109,30 +116,13 @@ export const ComparisonMatrix: FC = () => {
   ];
 
   return (
-    <section className={containerStyle}>
-      <div style={{ textAlign: "center", marginBottom: "32px" }}>
-        <span
-          style={{
-            fontSize: "12px",
-            fontWeight: "700",
-            textTransform: "uppercase",
-            color: "#6363f1",
-          }}
-        >
-          Why Flump?
-        </span>
-        <h2
-          style={{
-            fontSize: "2.25rem",
-            fontWeight: "800",
-            color: "var(--colors-text-primary, #0f172a)",
-            marginTop: "8px",
-          }}
-        >
-          Built for UK Rules, Not Generic Spreadsheets
-        </h2>
-      </div>
-
+    <SectionBand
+      id="comparison"
+      tone="canvas"
+      indexBadge="04 // WHY FLUMP"
+      title="Built for UK Rules, Not Generic Spreadsheets"
+      subtitle="How Flump compares directly against spreadsheets and generic US-first budgeting applications."
+    >
       <div style={{ overflowX: "auto" }}>
         <table className={tableStyle}>
           <thead>
@@ -168,9 +158,10 @@ export const ComparisonMatrix: FC = () => {
                         alignItems: "center",
                         gap: "6px",
                         color: "#10b981",
+                        fontWeight: "700",
                       }}
                     >
-                      <FiCheck size={18} /> Yes (Built-in)
+                      <FiCheck size={18} /> Built-in
                     </span>
                   ) : (
                     row.flump
@@ -203,6 +194,6 @@ export const ComparisonMatrix: FC = () => {
           </tbody>
         </table>
       </div>
-    </section>
+    </SectionBand>
   );
 };

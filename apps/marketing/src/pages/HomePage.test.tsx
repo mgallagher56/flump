@@ -25,7 +25,7 @@ describe("Marketing HomePage (Simplified 6-Section Narrative)", () => {
     expect(screen.getByText("Your 60-Second UK Financial Baseline")).toBeDefined();
     expect(screen.getByText("£68,400")).toBeDefined();
     expect(screen.getByText("+£840")).toBeDefined();
-    expect(screen.getByText("£195")).toBeDefined();
+    expect(screen.getAllByText("£195").length).toBeGreaterThan(0);
     expect(screen.getByText("6.4")).toBeDefined();
   });
 

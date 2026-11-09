@@ -14,10 +14,10 @@ import { getAuthSession } from "./utils/utils";
 
 export const links = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
-  { rel: "preconnect", href: "https://fonts.gstatic.com" },
+  { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
   {
     rel: "stylesheet",
-    href: "https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,300;1,400;1,500;1,600;1,700;1,800&display=swap",
+    href: "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800;900&display=swap",
   },
   { rel: "stylesheet", href: styles },
 ];
@@ -97,7 +97,7 @@ export default function App() {
         style={{
           backgroundColor: "var(--colors-background)",
           color: "var(--colors-text-primary)",
-          fontFamily: "Poppins, sans-serif",
+          fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
           margin: 0,
           minHeight: "100vh",
           transition: "background-color 0.2s ease, color 0.2s ease",

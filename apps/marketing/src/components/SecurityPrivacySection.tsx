@@ -1,173 +1,189 @@
+import { SectionBand } from "@repo/ui";
 import { css } from "@repo/ui/styled-system/css";
 import { grid } from "@repo/ui/styled-system/patterns";
 import type { FC } from "react";
-import { FiLock, FiShield, FiSlash } from "react-icons/fi";
-
-const containerStyle = css({
-  maxWidth: "5xl",
-  mx: "auto",
-  py: "16",
-  px: "4",
-});
+import { FiCheckCircle, FiLock, FiShield, FiSlash } from "react-icons/fi";
 
 const cardStyle = css({
-  backgroundColor: { base: "#ffffff", _dark: "dark.surface" },
+  backgroundColor: { base: "rgba(255, 255, 255, 0.05)", _dark: "rgba(255, 255, 255, 0.04)" },
   border: "1px solid",
-  borderColor: { base: "slate.200", _dark: "slate.800" },
+  borderColor: { base: "rgba(255, 255, 255, 0.12)", _dark: "rgba(255, 255, 255, 0.1)" },
   borderRadius: "2xl",
   p: { base: "6", md: "8" },
-  boxShadow: { base: "0 4px 16px rgba(0,0,0,0.03)", _dark: "0 4px 16px rgba(0,0,0,0.2)" },
+  display: "flex",
+  flexDirection: "column",
+  gap: "14px",
+  backdropFilter: "blur(8px)",
 });
 
-const featureItemStyle = css({
-  display: "flex",
-  gap: "12px",
-  alignItems: "flex-start",
+const verificationBadge = css({
+  fontSize: "12px",
+  fontWeight: "700",
+  padding: "3px 8px",
+  borderRadius: "full",
+  backgroundColor: "rgba(16, 185, 129, 0.2)",
+  color: "#34d399",
+  display: "inline-flex",
+  alignItems: "center",
+  gap: "4px",
+  width: "fit-content",
+  fontFamily: "var(--fonts-mono, monospace)",
 });
 
 export const SecurityPrivacySection: FC = () => {
   return (
-    <section className={containerStyle} data-testid="security-privacy-section">
-      <div className={cardStyle}>
-        <div style={{ textAlign: "center", marginBottom: "32px" }}>
-          <span
-            style={{
-              fontSize: "12px",
-              fontWeight: "700",
-              textTransform: "uppercase",
-              letterSpacing: "0.08em",
-              color: "#10b981",
-            }}
-          >
-            Bank-Grade Trust & Compliance
-          </span>
-          <h2
-            style={{
-              fontSize: "2rem",
-              fontWeight: "800",
-              color: "var(--colors-text-primary, #0f172a)",
-              marginTop: "8px",
-            }}
-          >
-            Your Financial Privacy Comes First
-          </h2>
-          <p
-            style={{
-              fontSize: "1rem",
-              color: "var(--colors-text-muted, #64748b)",
-              maxWidth: "600px",
-              margin: "8px auto 0",
-            }}
-          >
-            Designed from day one to operate fully without mandatory bank account links or
-            credential sharing.
-          </p>
-        </div>
-
-        <div className={grid({ columns: { base: 1, md: 3 }, gap: "6" })}>
-          <div className={featureItemStyle}>
+    <SectionBand
+      id="security"
+      tone="contrast"
+      indexBadge="05 // TRUST & SECURITY"
+      title="Your Financial Privacy Comes First"
+      subtitle="Engineered from day one to operate fully without mandatory bank account linking or credential sharing."
+    >
+      <div
+        className={grid({ columns: { base: 1, md: 3 }, gap: "6" })}
+        data-testid="security-privacy-section"
+      >
+        {/* Pillar 1 */}
+        <div className={cardStyle}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <div
               style={{
-                width: "40px",
-                height: "40px",
-                borderRadius: "10px",
-                backgroundColor: "rgba(16, 185, 129, 0.1)",
+                width: "42px",
+                height: "42px",
+                borderRadius: "12px",
+                backgroundColor: "rgba(16, 185, 129, 0.2)",
                 color: "#10b981",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                flexShrink: 0,
+                fontSize: "18px",
               }}
             >
-              <FiShield size={20} />
+              <FiShield />
             </div>
-            <div>
-              <h4 style={{ fontSize: "1rem", fontWeight: "700", margin: "0 0 4px 0" }}>
-                100% Manual-First Mode
-              </h4>
-              <p
-                style={{
-                  fontSize: "13px",
-                  color: "var(--colors-text-muted, #64748b)",
-                  margin: 0,
-                  lineHeight: "1.5",
-                }}
-              >
-                Keep complete control. You can use all tax, debt, mortgage, and forecasting features
-                by entering rough totals by hand.
-              </p>
-            </div>
+            <span className={verificationBadge}>
+              <FiCheckCircle size={12} /> 100% Offline Capable
+            </span>
           </div>
 
-          <div className={featureItemStyle}>
+          <h3
+            style={{
+              fontSize: "1.25rem",
+              fontWeight: "700",
+              color: "#ffffff",
+              fontFamily: "var(--fonts-display, sans-serif)",
+              margin: 0,
+            }}
+          >
+            Manual-First Control
+          </h3>
+          <p
+            style={{
+              fontSize: "14px",
+              color: "rgba(255, 255, 255, 0.75)",
+              margin: 0,
+              lineHeight: "1.5",
+            }}
+          >
+            Use all tax, debt, mortgage, and forecasting tools with rough estimates. No bank
+            connection required.
+          </p>
+        </div>
+
+        {/* Pillar 2 */}
+        <div className={cardStyle}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <div
               style={{
-                width: "40px",
-                height: "40px",
-                borderRadius: "10px",
-                backgroundColor: "rgba(99, 102, 241, 0.1)",
-                color: "#6363f1",
+                width: "42px",
+                height: "42px",
+                borderRadius: "12px",
+                backgroundColor: "rgba(99, 102, 241, 0.2)",
+                color: "#818cf8",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                flexShrink: 0,
+                fontSize: "18px",
               }}
             >
-              <FiLock size={20} />
+              <FiLock />
             </div>
-            <div>
-              <h4 style={{ fontSize: "1rem", fontWeight: "700", margin: "0 0 4px 0" }}>
-                FCA Read-Only Open Banking
-              </h4>
-              <p
-                style={{
-                  fontSize: "13px",
-                  color: "var(--colors-text-muted, #64748b)",
-                  margin: 0,
-                  lineHeight: "1.5",
-                }}
-              >
-                If you choose to sync accounts, connections are strictly read-only through
-                FCA-regulated Open Banking. We can never move money.
-              </p>
-            </div>
+            <span className={verificationBadge}>
+              <FiCheckCircle size={12} /> Read-Only Only
+            </span>
           </div>
 
-          <div className={featureItemStyle}>
+          <h3
+            style={{
+              fontSize: "1.25rem",
+              fontWeight: "700",
+              color: "#ffffff",
+              fontFamily: "var(--fonts-display, sans-serif)",
+              margin: 0,
+            }}
+          >
+            FCA Open Banking
+          </h3>
+          <p
+            style={{
+              fontSize: "14px",
+              color: "rgba(255, 255, 255, 0.75)",
+              margin: 0,
+              lineHeight: "1.5",
+            }}
+          >
+            Optional live account syncs operate via FCA-regulated Open Banking APIs. We can never
+            move money.
+          </p>
+        </div>
+
+        {/* Pillar 3 */}
+        <div className={cardStyle}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <div
               style={{
-                width: "40px",
-                height: "40px",
-                borderRadius: "10px",
-                backgroundColor: "rgba(245, 158, 11, 0.1)",
-                color: "#f59e0b",
+                width: "42px",
+                height: "42px",
+                borderRadius: "12px",
+                backgroundColor: "rgba(245, 158, 11, 0.2)",
+                color: "#fbbf24",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                flexShrink: 0,
+                fontSize: "18px",
               }}
             >
-              <FiSlash size={20} />
+              <FiSlash />
             </div>
-            <div>
-              <h4 style={{ fontSize: "1rem", fontWeight: "700", margin: "0 0 4px 0" }}>
-                Zero Ads or Data Selling
-              </h4>
-              <p
-                style={{
-                  fontSize: "13px",
-                  color: "var(--colors-text-muted, #64748b)",
-                  margin: 0,
-                  lineHeight: "1.5",
-                }}
-              >
-                We do not sell your personal or financial data to lenders, mortgage brokers, or
-                marketing networks. Period.
-              </p>
-            </div>
+            <span className={verificationBadge}>
+              <FiCheckCircle size={12} /> Zero Ads
+            </span>
           </div>
+
+          <h3
+            style={{
+              fontSize: "1.25rem",
+              fontWeight: "700",
+              color: "#ffffff",
+              fontFamily: "var(--fonts-display, sans-serif)",
+              margin: 0,
+            }}
+          >
+            Zero Data Selling
+          </h3>
+          <p
+            style={{
+              fontSize: "14px",
+              color: "rgba(255, 255, 255, 0.75)",
+              margin: 0,
+              lineHeight: "1.5",
+            }}
+          >
+            We do not sell personal or financial records to credit card lenders or mortgage brokers.
+            Ever.
+          </p>
         </div>
       </div>
-    </section>
+    </SectionBand>
   );
 };

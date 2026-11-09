@@ -247,23 +247,48 @@ const BudgetContainer: FC = () => {
     }
   };
 
-  const tabStyle = (active: boolean) =>
+  const primaryTabStyle = (active: boolean) =>
     css({
-      display: "flex",
+      display: "inline-flex",
       alignItems: "center",
-      gap: "6px",
-      padding: "8px 14px",
+      gap: "8px",
+      padding: "8px 16px",
       fontSize: "sm",
       fontWeight: "semibold",
-      color: active ? "primary" : "text.muted",
+      borderRadius: "md",
       cursor: "pointer",
-      marginBottom: "-10px",
-      transition: "all 0.2s",
+      transition: "all 0.15s ease",
+      color: active ? "primary" : "text.secondary",
+      backgroundColor: active ? "card" : "transparent",
+      boxShadow: active ? "xs" : "none",
+      border: "1px solid",
+      borderColor: active ? "border" : "transparent",
+      "&:hover": {
+        color: "primary",
+        backgroundColor: active ? "card" : "rgba(99, 99, 241, 0.05)",
+      },
+    });
+
+  const categoryPillStyle = (active: boolean) =>
+    css({
+      display: "inline-flex",
+      alignItems: "center",
+      gap: "6px",
+      padding: "6px 12px",
+      fontSize: "xs",
+      fontWeight: active ? "bold" : "medium",
+      borderRadius: "full",
+      cursor: "pointer",
       whiteSpace: "nowrap",
-      "&:hover": { color: "primary" },
-      background: "none",
-      border: "none",
-      borderBottom: active ? "2px solid var(--colors-primary)" : "2px solid transparent",
+      transition: "all 0.15s ease",
+      color: active ? "primary" : "text.secondary",
+      backgroundColor: active ? "rgba(99, 99, 241, 0.1)" : "surface.subtle",
+      border: "1px solid",
+      borderColor: active ? "primary" : "border",
+      "&:hover": {
+        borderColor: "primary",
+        color: "primary",
+      },
     });
 
   return (
@@ -281,13 +306,13 @@ const BudgetContainer: FC = () => {
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
-          my: 6,
+          my: 4,
           flexWrap: "wrap",
           gap: "16px",
         })}
       >
         <div>
-          <FLPHeading as="h1" color="blue.500" size="xl">
+          <FLPHeading as="h1" color="text.primary" size="xl">
             Budget Planner
           </FLPHeading>
           <FLPText color="text.muted" fontSize="sm">
@@ -325,13 +350,17 @@ const BudgetContainer: FC = () => {
               padding: "8px 14px",
               fontSize: "sm",
               fontWeight: "semibold",
-              color: activeTab === "wizard" ? "primary" : "text.muted",
+              color: activeTab === "wizard" ? "primary" : "text.secondary",
               borderRadius: "md",
               border: "1px solid",
               borderColor: activeTab === "wizard" ? "primary" : "border",
-              backgroundColor: activeTab === "wizard" ? "rgba(99,99,241,0.08)" : "surface",
+              backgroundColor: activeTab === "wizard" ? "rgba(99,99,241,0.08)" : "card",
               cursor: "pointer",
               transition: "all 0.2s",
+              "&:hover": {
+                borderColor: "primary",
+                color: "primary",
+              },
             })}
             type="button"
             onClick={() => setActiveTab("wizard")}
@@ -341,76 +370,117 @@ const BudgetContainer: FC = () => {
         </div>
       </div>
 
-      {/* Tab bar */}
+      {/* Primary & Category Navigation */}
       {activeTab !== "wizard" && (
         <div
           className={css({
             display: "flex",
-            gap: "4px",
-            borderBottom: "1px solid",
+            flexDirection: "column",
+            gap: "12px",
+            backgroundColor: "card",
+            padding: "12px 16px",
+            borderRadius: "xl",
+            border: "1px solid",
             borderColor: "border",
-            paddingBottom: "8px",
-            overflowX: "auto",
-            alignItems: "center",
+            boxShadow: "xs",
           })}
         >
-          <button
-            id="budget-tab-overview"
-            data-testid="budget-tab-overview"
-            className={tabStyle(activeTab === "dashboard")}
-            type="button"
-            onClick={() => setActiveTab("dashboard")}
-          >
-            <FaChartBar size={13} /> Overview
-          </button>
-          {categoryTabs.map((cat) => (
-            <button
-              key={cat}
-              id={`budget-tab-${cat}`}
-              data-testid={`budget-tab-${cat}`}
-              className={tabStyle(activeTab === cat)}
-              type="button"
-              onClick={() => setActiveTab(cat as BudgetTab)}
-            >
-              <span style={{ fontSize: "14px" }}>{CATEGORY_ICONS[cat]}</span>
-              {CATEGORY_LABELS[cat]}
-            </button>
-          ))}
-          <button
-            id="add-category-tab-btn"
-            data-testid="add-category-tab-btn"
+          {/* Level 1: Primary View Switcher */}
+          <div
             className={css({
               display: "flex",
               alignItems: "center",
-              gap: "4px",
-              padding: "6px 10px",
-              fontSize: "xs",
-              fontWeight: "medium",
-              color: "primary",
-              cursor: "pointer",
-              marginBottom: "-8px",
-              transition: "all 0.2s",
-              whiteSpace: "nowrap",
-              background: "none",
-              border: "1px dashed",
-              borderColor: "primary",
-              borderRadius: "sm",
-              _hover: { backgroundColor: "rgba(99,99,241,0.08)" },
+              gap: "8px",
+              backgroundColor: "surface.subtle",
+              padding: "4px",
+              borderRadius: "lg",
+              width: "fit-content",
             })}
-            type="button"
-            onClick={() => setIsAddCategoryOpen(true)}
           >
-            <FaPlus size={10} /> Add Category
-          </button>
-          <button
-            id="budget-tab-runway"
-            data-testid="budget-tab-runway"
-            className={tabStyle(activeTab === "runway")}
-            type="button"
-            onClick={handleOpenRunway}
+            <button
+              id="budget-tab-overview"
+              data-testid="budget-tab-overview"
+              className={primaryTabStyle(activeTab === "dashboard")}
+              type="button"
+              onClick={() => setActiveTab("dashboard")}
+            >
+              <FaChartBar size={14} /> Overview
+            </button>
+            <button
+              id="budget-tab-runway"
+              data-testid="budget-tab-runway"
+              className={primaryTabStyle(activeTab === "runway")}
+              type="button"
+              onClick={handleOpenRunway}
+            >
+              <FaBalanceScale size={14} /> Runway Analysis
+            </button>
+          </div>
+
+          {/* Level 2: Category Ledgers Strip */}
+          <div
+            className={css({
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+              overflowX: "auto",
+              paddingTop: "6px",
+              borderTop: "1px solid",
+              borderColor: "border",
+            })}
           >
-            <FaBalanceScale size={13} /> Runway
-          </button>
+            <span
+              className={css({
+                fontSize: "xs",
+                fontWeight: "semibold",
+                color: "text.muted",
+                textTransform: "uppercase",
+                letterSpacing: "0.05em",
+                marginRight: "4px",
+                whiteSpace: "nowrap",
+              })}
+            >
+              Categories:
+            </span>
+            {categoryTabs.map((cat) => (
+              <button
+                key={cat}
+                id={`budget-tab-${cat}`}
+                data-testid={`budget-tab-${cat}`}
+                className={categoryPillStyle(activeTab === cat)}
+                type="button"
+                onClick={() => setActiveTab(cat as BudgetTab)}
+              >
+                <span style={{ fontSize: "14px" }}>{CATEGORY_ICONS[cat]}</span>
+                {CATEGORY_LABELS[cat] || cat.charAt(0).toUpperCase() + cat.slice(1)}
+              </button>
+            ))}
+            <button
+              id="add-category-tab-btn"
+              data-testid="add-category-tab-btn"
+              className={css({
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "4px",
+                padding: "5px 10px",
+                fontSize: "xs",
+                fontWeight: "semibold",
+                color: "primary",
+                cursor: "pointer",
+                whiteSpace: "nowrap",
+                background: "none",
+                border: "1px dashed",
+                borderColor: "primary",
+                borderRadius: "full",
+                transition: "all 0.15s ease",
+                _hover: { backgroundColor: "rgba(99,99,241,0.08)" },
+              })}
+              type="button"
+              onClick={() => setIsAddCategoryOpen(true)}
+            >
+              <FaPlus size={10} /> Add
+            </button>
+          </div>
         </div>
       )}
 
