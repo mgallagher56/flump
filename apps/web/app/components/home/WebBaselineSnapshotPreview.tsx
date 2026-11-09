@@ -1,6 +1,7 @@
 import { css } from "@repo/ui/styled-system/css";
 import type { FC } from "react";
 import { FiArrowUpRight, FiCheckCircle, FiShield } from "react-icons/fi";
+import { Link as RouterLink } from "react-router";
 
 const previewCardContainer = css({
   backgroundColor: "card",
@@ -77,6 +78,21 @@ const highlightStripStyle = css({
   flexWrap: "wrap",
   gap: "12px",
   fontSize: "xs",
+});
+
+const livePreviewLinkStyle = css({
+  display: "inline-flex",
+  alignItems: "center",
+  gap: "4px",
+  color: "primary",
+  fontWeight: "600",
+  textDecoration: "none",
+  cursor: "pointer",
+  transition: "opacity 0.15s ease",
+  _hover: {
+    textDecoration: "underline",
+    opacity: 0.85,
+  },
 });
 
 export const WebBaselineSnapshotPreview: FC = () => {
@@ -373,18 +389,10 @@ export const WebBaselineSnapshotPreview: FC = () => {
             add accounts only when you want.
           </span>
         </div>
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "4px",
-            color: "var(--colors-primary)",
-            fontWeight: "600",
-          }}
-        >
+        <RouterLink to="/sandbox" className={livePreviewLinkStyle}>
           <span>See live preview in app</span>
           <FiArrowUpRight size={14} />
-        </div>
+        </RouterLink>
       </div>
     </div>
   );

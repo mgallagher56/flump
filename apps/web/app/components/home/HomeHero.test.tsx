@@ -29,6 +29,9 @@ describe("HomeHero", () => {
     expect(screen.getByRole("link", { name: /Get your free baseline/i })).toBeDefined();
     expect(screen.getByRole("link", { name: /Sign in/i })).toBeDefined();
     expect(screen.getByRole("link", { name: /Try the live demo/i })).toBeDefined();
+    const livePreviewLink = screen.getByRole("link", { name: /See live preview in app/i });
+    expect(livePreviewLink).toBeDefined();
+    expect(livePreviewLink.getAttribute("href")).toBe("/sandbox");
 
     expect(screen.getByText(/FCA read-only Open Banking and 256-bit encryption/i)).toBeDefined();
     expect(screen.getByText(/Section 24 landlord and HMRC tax bands/i)).toBeDefined();
