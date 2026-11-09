@@ -239,6 +239,8 @@ Flump is a monorepo managed with Turborepo (`turbo`) and Bun.
   - `docs: <description>` (for documentation updates)
   - `test: <description>` (for adding/updating tests)
 
+- **No Direct Pushes to `main`**: Agents must never push, force-push, or fast-forward-merge directly into `main` (including `git push origin main` or `git push origin dev main`). Work on a feature branch or `dev`, push that branch, and open a pull request targeting `main`. Never bypass or alter branch protection to get around this. Only the user merges into `main`.
+
 ---
 
 ## Agent Persona & Behavior
@@ -251,3 +253,19 @@ Flump is a monorepo managed with Turborepo (`turbo`) and Bun.
   ```bash
   bunx biome check --write <modified-files>
   ```
+
+---
+
+## Agent skills
+
+### Issue tracker
+
+GitHub issues via `gh` CLI (`mgallagher56/flump`). See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Canonical roles (`needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`). See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context layout (`GLOSSARY.md` + `docs/adr/` at repo root). See `docs/agents/domain.md`.
