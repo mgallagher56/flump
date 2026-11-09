@@ -1,3 +1,4 @@
+import { BankSyncOrchestrator } from "@flump/banking/server";
 import {
   Body,
   Controller,
@@ -486,7 +487,7 @@ export class FinanceController {
 
       connection.status = "connected";
       connection.authType = "token";
-      connection.accessToken = token;
+      connection.accessToken = BankSyncOrchestrator.encryptToken(token);
       connection.lastSyncedAt = new Date();
       await this.bankConnectionRepository.save(connection);
 
@@ -620,9 +621,9 @@ export class FinanceController {
 
       connection.status = "connected";
       connection.authType = "oauth";
-      connection.accessToken = tokenResponse.accessToken;
+      connection.accessToken = BankSyncOrchestrator.encryptToken(tokenResponse.accessToken);
       if (tokenResponse.refreshToken) {
-        connection.refreshToken = tokenResponse.refreshToken;
+        connection.refreshToken = BankSyncOrchestrator.encryptToken(tokenResponse.refreshToken);
       }
       if (tokenResponse.expiresIn) {
         connection.expiresAt = new Date(Date.now() + tokenResponse.expiresIn * 1000);
@@ -657,7 +658,7 @@ export class FinanceController {
     // 1. If connection has an active token, run real sync
     if (connection.accessToken) {
       try {
-        let token = connection.accessToken;
+        let token = BankSyncOrchestrator.decryptToken(connection.accessToken);
 
         // Check token expiration for OAuth
         if (
@@ -676,11 +677,12 @@ export class FinanceController {
           );
 
           if (provider && clientId && clientSecret) {
+            const rawRefreshToken = BankSyncOrchestrator.decryptToken(connection.refreshToken);
             const body = new URLSearchParams({
               grant_type: "refresh_token",
               client_id: clientId,
               client_secret: clientSecret,
-              refresh_token: connection.refreshToken,
+              refresh_token: rawRefreshToken,
             });
             const tokenUrl =
               connection.institutionId === "monzo"
@@ -695,10 +697,10 @@ export class FinanceController {
 
             if (res.ok) {
               const data = await res.json();
-              connection.accessToken = data.access_token;
+              connection.accessToken = BankSyncOrchestrator.encryptToken(data.access_token);
               token = data.access_token;
               if (data.refresh_token) {
-                connection.refreshToken = data.refresh_token;
+                connection.refreshToken = BankSyncOrchestrator.encryptToken(data.refresh_token);
               }
               if (data.expires_in) {
                 connection.expiresAt = new Date(Date.now() + data.expires_in * 1000);
@@ -801,17 +803,20 @@ export class FinanceController {
   private async syncProviderAccounts(
     connection: BankConnection,
     userId: string,
-    accessToken: string,
+    tokenOrEncryptedToken: string,
   ): Promise<number> {
     const provider = this.providerRegistry.getProvider(connection.institutionId);
     if (!provider) return 0;
 
+    const accessToken = BankSyncOrchestrator.decryptToken(tokenOrEncryptedToken);
     const providerAccounts = await provider.fetchAccounts(accessToken);
     const now = new Date();
     const currentYear = now.getFullYear();
     const currentMonth = now.getMonth() + 1;
 
     for (const pa of providerAccounts) {
+      const normalizedBalance = BankSyncOrchestrator.normalizeAccountBalance(pa.type, pa.balance);
+
       let account = await this.accountRepository.findOne({
         where: {
           connectionId: connection.id,
@@ -825,7 +830,7 @@ export class FinanceController {
           userId,
           name: pa.name,
           type: pa.type,
-          balance: pa.balance,
+          balance: normalizedBalance,
           currency: pa.currency,
           connectionId: connection.id,
           externalAccountId: pa.externalAccountId,
@@ -833,7 +838,7 @@ export class FinanceController {
       } else {
         account.name = pa.name;
         account.type = pa.type;
-        account.balance = pa.balance;
+        account.balance = normalizedBalance;
       }
       await this.accountRepository.save(account);
 
@@ -842,22 +847,18 @@ export class FinanceController {
       });
 
       if (detailsCount === 0) {
-        const historyRows = [];
-        for (let i = 0; i < 12; i++) {
-          let m = currentMonth - i;
-          let y = currentYear;
-          if (m <= 0) {
-            m += 12;
-            y -= 1;
-          }
-          const multiplier = 1 - i * 0.005;
-          historyRows.push({
-            accountId: account.id,
-            month: m,
-            year: y,
-            value: Math.round(pa.balance * multiplier * 100) / 100,
-          });
-        }
+        const historyPoints = BankSyncOrchestrator.generateMockHistory(
+          normalizedBalance,
+          pa.type,
+          currentYear,
+          currentMonth,
+        );
+        const historyRows = historyPoints.map((hp) => ({
+          accountId: account.id,
+          month: hp.month,
+          year: hp.year,
+          value: hp.value,
+        }));
         await this.accountDetailRepository.save(historyRows);
       } else {
         let detail = await this.accountDetailRepository.findOne({
@@ -910,174 +911,55 @@ export class FinanceController {
 
   private async seedMockSyncData(connection: BankConnection, userId: string): Promise<number> {
     const instId = connection.institutionId;
-    const accountsData: { name: string; type: any; balance: number }[] = [];
+    const accountsData = BankSyncOrchestrator.getMockInstitutionAccounts(instId);
 
-    if (instId === "hsbc") {
-      accountsData.push(
-        { name: "HSBC Premier Checking", type: "Current", balance: 2450.75 },
-        { name: "HSBC Flexi Savings", type: "Saving", balance: 15800.0 },
-        { name: "HSBC Fixed Mortgage", type: "Mortgage", balance: -135400.0 },
-      );
-    } else if (instId === "barclays") {
-      accountsData.push(
-        { name: "Barclays Everyday Checking", type: "Current", balance: 980.5 },
-        { name: "Barclays Platinum Credit Card", type: "Credit Card", balance: -420.25 },
-      );
-    } else if (instId === "monzo") {
-      accountsData.push(
-        { name: "Monzo Card Account", type: "Current", balance: 1230.15 },
-        { name: "Monzo Rainy Day Pot", type: "Saving", balance: 4500.0 },
-      );
-    } else if (instId === "revolut") {
-      accountsData.push(
-        { name: "Revolut Card Account", type: "Current", balance: 750.6 },
-        { name: "Revolut Savings Vault", type: "Saving", balance: 3200.0 },
-      );
-    } else if (instId === "chase") {
-      accountsData.push(
-        { name: "Chase Checking", type: "Current", balance: 1550.0 },
-        { name: "Chase Saver", type: "Saving", balance: 12000.0 },
-      );
-    } else if (instId === "fidelity") {
-      accountsData.push({ name: "Fidelity Brokerage", type: "Investment", balance: 28500.0 });
-    } else if (instId === "vanguard") {
-      accountsData.push({ name: "Vanguard ISA", type: "Investment", balance: 42100.5 });
-    }
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth() + 1;
 
-    const savedAccounts = [];
     for (const acc of accountsData) {
       const saved = await this.accountRepository.save({
         userId,
         name: acc.name,
         type: acc.type,
         balance: acc.balance,
-        currency: "GBP",
+        currency: acc.currency,
         connectionId: connection.id,
         externalAccountId: `ext_${connection.institutionId}_${Math.random().toString(36).substring(7)}`,
       });
-      savedAccounts.push(saved);
 
-      // Seed 12 months history
-      const currentYear = new Date().getFullYear();
-      const currentMonth = new Date().getMonth() + 1;
-      const historyRows = [];
-      for (let i = 0; i < 12; i++) {
-        let m = currentMonth - i;
-        let y = currentYear;
-        if (m <= 0) {
-          m += 12;
-          y -= 1;
-        }
-
-        let multiplier = 1;
-        if (acc.type === "Mortgage") {
-          multiplier = 1 + i * 0.003;
-        } else if (acc.type === "Investment" || acc.type === "Saving") {
-          multiplier = 1 - i * 0.005;
-        } else {
-          multiplier = 1 + Math.sin(i) * 0.05 - i * 0.002;
-        }
-        historyRows.push({
-          accountId: saved.id,
-          month: m,
-          year: y,
-          value: Math.round(acc.balance * multiplier * 100) / 100,
-        });
-      }
+      const historyPoints = BankSyncOrchestrator.generateMockHistory(
+        acc.balance,
+        acc.type,
+        currentYear,
+        currentMonth,
+      );
+      const historyRows = historyPoints.map((hp) => ({
+        accountId: saved.id,
+        month: hp.month,
+        year: hp.year,
+        value: hp.value,
+      }));
       await this.accountDetailRepository.save(historyRows);
 
-      // Seed recent transactions
-      const txs = [];
-      const now = new Date();
-      if (acc.type === "Current") {
-        txs.push(
-          {
-            accountId: saved.id,
-            userId,
-            amount: 2100.0,
-            description: `${connection.institutionName} Salary Direct Deposit`,
-            category: "Salary",
-            timestamp: new Date(now.getTime() - 5 * 24 * 60 * 60 * 1000),
-          },
-          {
-            accountId: saved.id,
-            userId,
-            amount: -45.2,
-            description: "Supermarket Checkout",
-            category: "Food",
-            timestamp: new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000),
-          },
-          {
-            accountId: saved.id,
-            userId,
-            amount: -3.8,
-            description: "Coffee House",
-            category: "Food",
-            timestamp: new Date(now.getTime() - 1 * 24 * 60 * 60 * 1000),
-          },
-        );
-      } else if (acc.type === "Saving") {
-        txs.push({
-          accountId: saved.id,
-          userId,
-          amount: 25.4,
-          description: "Monthly Savings Interest",
-          category: "Interest",
-          timestamp: new Date(now.getTime() - 10 * 24 * 60 * 60 * 1000),
-        });
-      } else if (acc.type === "Credit Card") {
-        txs.push(
-          {
-            accountId: saved.id,
-            userId,
-            amount: -32.99,
-            description: "Amazon.co.uk purchase",
-            category: "Shopping",
-            timestamp: new Date(now.getTime() - 4 * 24 * 60 * 60 * 1000),
-          },
-          {
-            accountId: saved.id,
-            userId,
-            amount: -18.5,
-            description: "Ride-hailing transport",
-            category: "Transport",
-            timestamp: new Date(now.getTime() - 1 * 24 * 60 * 60 * 1000),
-          },
-        );
-      } else if (acc.type === "Mortgage") {
-        txs.push({
-          accountId: saved.id,
-          userId,
-          amount: -850.0,
-          description: "Monthly Mortgage Installment",
-          category: "Housing",
-          timestamp: new Date(now.getTime() - 15 * 24 * 60 * 60 * 1000),
-        });
-      } else if (acc.type === "Investment") {
-        txs.push(
-          {
-            accountId: saved.id,
-            userId,
-            amount: 125.0,
-            description: "Dividend Reinvestment",
-            category: "Investment",
-            timestamp: new Date(now.getTime() - 12 * 24 * 60 * 60 * 1000),
-          },
-          {
-            accountId: saved.id,
-            userId,
-            amount: -500.0,
-            description: "Regular share deposit plan",
-            category: "Investment",
-            timestamp: new Date(now.getTime() - 8 * 24 * 60 * 60 * 1000),
-          },
-        );
-      }
+      const txs = BankSyncOrchestrator.generateMockTransactions(
+        acc.type,
+        connection.institutionName,
+        now,
+      );
       if (txs.length > 0) {
-        await this.transactionRepository.save(txs);
+        const txRows = txs.map((tx) => ({
+          accountId: saved.id,
+          userId,
+          amount: tx.amount,
+          description: tx.description,
+          category: tx.category,
+          timestamp: tx.timestamp,
+        }));
+        await this.transactionRepository.save(txRows);
       }
     }
 
-    return savedAccounts.length;
+    return accountsData.length;
   }
 }
