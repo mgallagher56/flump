@@ -25,9 +25,8 @@ const stepCardStyle = css({
 
 const stepNumberBadge = css({
   fontSize: "xs",
-  fontWeight: "800",
-  textTransform: "uppercase",
-  letterSpacing: "0.06em",
+  fontWeight: "600",
+  letterSpacing: "0.01em",
   color: "primary",
   backgroundColor: "surface.tinted",
   padding: "4px 10px",
@@ -122,8 +121,8 @@ export const HowItWorksSection: FC = () => {
               marginTop: "auto",
               padding: "12px",
               borderRadius: "8px",
-              backgroundColor: "var(--colors-slate-50, #f8fafc)",
-              border: "1px dashed var(--colors-border, #e2e8f0)",
+              backgroundColor: "var(--colors-surface-subtle)",
+              border: "1px dashed var(--colors-border)",
               display: "flex",
               flexDirection: "column",
               gap: "6px",
@@ -214,8 +213,8 @@ export const HowItWorksSection: FC = () => {
               marginTop: "auto",
               padding: "10px",
               borderRadius: "8px",
-              backgroundColor: "var(--colors-slate-50, #f8fafc)",
-              border: "1px dashed var(--colors-border, #e2e8f0)",
+              backgroundColor: "var(--colors-surface-subtle)",
+              border: "1px dashed var(--colors-border)",
               display: "grid",
               gridTemplateColumns: "1fr 1fr",
               gap: "6px",
@@ -225,22 +224,22 @@ export const HowItWorksSection: FC = () => {
               style={{
                 padding: "6px",
                 borderRadius: "4px",
-                backgroundColor: "#ffffff",
-                border: "1px solid #e2e8f0",
+                backgroundColor: "var(--colors-card, var(--colors-surface))",
+                border: "1px solid var(--colors-border)",
               }}
             >
-              <div style={{ fontSize: "10px", color: "#64748b" }}>NET WORTH</div>
+              <div style={{ fontSize: "10px", color: "var(--colors-text-muted)" }}>Net worth</div>
               <div style={{ fontSize: "12px", fontWeight: "bold", color: "#10b981" }}>£68.4k</div>
             </div>
             <div
               style={{
                 padding: "6px",
                 borderRadius: "4px",
-                backgroundColor: "#ffffff",
-                border: "1px solid #e2e8f0",
+                backgroundColor: "var(--colors-card, var(--colors-surface))",
+                border: "1px solid var(--colors-border)",
               }}
             >
-              <div style={{ fontSize: "10px", color: "#64748b" }}>SAFE/WK</div>
+              <div style={{ fontSize: "10px", color: "var(--colors-text-muted)" }}>Safe/wk</div>
               <div style={{ fontSize: "12px", fontWeight: "bold", color: "#0ea5e9" }}>£195</div>
             </div>
           </div>
@@ -304,8 +303,8 @@ export const HowItWorksSection: FC = () => {
               marginTop: "auto",
               padding: "10px",
               borderRadius: "8px",
-              backgroundColor: "var(--colors-slate-50, #f8fafc)",
-              border: "1px dashed var(--colors-border, #e2e8f0)",
+              backgroundColor: "var(--colors-surface-subtle)",
+              border: "1px dashed var(--colors-border)",
               display: "flex",
               alignItems: "center",
               justifyContent: "space-around",

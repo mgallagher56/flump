@@ -566,17 +566,15 @@ const UserProfilePanel: FC<UserProfilePanelProps> = ({ initialProfile, user }) =
             fontSize: "xs",
             fontWeight: "semibold",
             color: "text.muted",
-            textTransform: "uppercase",
-            letterSpacing: "wider",
             marginBottom: "8px",
           })}
         >
-          Profile Settings Section
+          Profile settings section
         </label>
         <div className={css({ position: "relative" })}>
           <select
             id="mobile-section-select"
-            aria-label="Profile Settings Section"
+            aria-label="Profile settings section"
             data-testid="mobile-section-select"
             value={activeSection}
             onChange={(e) => setActiveSection(e.target.value as any)}
@@ -596,10 +594,10 @@ const UserProfilePanel: FC<UserProfilePanelProps> = ({ initialProfile, user }) =
             })}
           >
             {[
-              { id: "personal", label: "Personal Details" },
-              { id: "employment", label: "Employment & Tax" },
-              { id: "property", label: "Property & Mortgage" },
-              { id: "overview", label: "How Profile is Used" },
+              { id: "personal", label: "Personal details" },
+              { id: "employment", label: "Employment & tax" },
+              { id: "property", label: "Property & mortgage" },
+              { id: "overview", label: "How profile is used" },
             ].map((tab) => (
               <option key={tab.id} value={tab.id}>
                 {tab.label}
@@ -614,20 +612,18 @@ const UserProfilePanel: FC<UserProfilePanelProps> = ({ initialProfile, user }) =
         className={css({
           display: { base: "none", md: "flex" },
           gap: "8px",
-          overflowX: "auto",
+          flexWrap: "wrap",
           paddingBottom: "8px",
           marginBottom: "20px",
           borderBottom: "1px solid",
           borderColor: "border",
-          scrollbarWidth: "none",
-          "&::-webkit-scrollbar": { display: "none" },
         })}
       >
         {[
-          { id: "personal", label: "Personal Details", icon: <FaUser size={13} /> },
-          { id: "employment", label: "Employment & Tax", icon: <FaBriefcase size={13} /> },
-          { id: "property", label: "Property & Mortgage", icon: <FaHome size={13} /> },
-          { id: "overview", label: "How Profile is Used", icon: <FaGlobe size={13} /> },
+          { id: "personal", label: "Personal details", icon: <FaUser size={13} /> },
+          { id: "employment", label: "Employment & tax", icon: <FaBriefcase size={13} /> },
+          { id: "property", label: "Property & mortgage", icon: <FaHome size={13} /> },
+          { id: "overview", label: "How profile is used", icon: <FaGlobe size={13} /> },
         ].map((tab) => {
           const isActive = activeSection === tab.id;
           return (
@@ -742,7 +738,7 @@ const UserProfilePanel: FC<UserProfilePanelProps> = ({ initialProfile, user }) =
                   <div className={css({ fontSize: "xs", color: "text.muted" })}>
                     {form.avatarUrl
                       ? "Your custom profile picture is active and used as your thumbnail."
-                      : "Your initials are currently used as your thumbnail. Upload an image to personalize your profile picture."}
+                      : "Your initials are currently used as your thumbnail. Upload an image to personalise your profile picture."}
                   </div>
                   <div
                     className={css({

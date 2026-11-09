@@ -270,14 +270,53 @@ const OverpaymentSimulator: FC<OverpaymentSimulatorProps> = ({
 
         <div className={inputGroupStyle}>
           <div className={sliderLabelRow}>
-            <FLPText fontSize="xs" fontWeight="semibold" textTransform="uppercase">
-              Monthly Overpayment
-            </FLPText>
-            <FLPText fontSize="sm" fontWeight="bold">
-              {formatCurrency(overpayment)}/mo
-            </FLPText>
+            <label
+              htmlFor="overpayment-input"
+              style={{ fontSize: "12px", fontWeight: "600", color: "var(--colors-text-primary)" }}
+            >
+              Monthly overpayment
+            </label>
+            <div style={{ position: "relative", display: "inline-flex", alignItems: "center" }}>
+              <span
+                style={{
+                  position: "absolute",
+                  left: "8px",
+                  fontSize: "12px",
+                  color: "var(--colors-text-muted)",
+                }}
+              >
+                +£
+              </span>
+              <input
+                id="overpayment-input"
+                type="number"
+                min={0}
+                max={2500}
+                step={20}
+                value={overpayment}
+                onChange={(e) => onOverpaymentChange(Number(e.target.value) || 0)}
+                style={{
+                  width: "90px",
+                  padding: "4px 8px 4px 26px",
+                  fontSize: "13px",
+                  fontWeight: 700,
+                  textAlign: "right",
+                  borderRadius: "6px",
+                  border: "1px solid var(--colors-border)",
+                  backgroundColor: "var(--colors-surface)",
+                  color: "var(--colors-text-primary)",
+                }}
+              />
+              <span
+                style={{ fontSize: "12px", color: "var(--colors-text-muted)", marginLeft: "4px" }}
+              >
+                /mo
+              </span>
+            </div>
           </div>
           <input
+            id="overpayment-slider"
+            aria-label="Monthly overpayment slider"
             className={sliderStyle}
             max="2500"
             min="0"
@@ -286,15 +325,6 @@ const OverpaymentSimulator: FC<OverpaymentSimulatorProps> = ({
             value={overpayment}
             onChange={(e) => onOverpaymentChange(Number(e.target.value))}
           />
-          <div className={numberInputContainer}>
-            <span className={inputPrefix}>£</span>
-            <input
-              className={numberInputStyle}
-              type="number"
-              value={overpayment}
-              onChange={(e) => onOverpaymentChange(Number(e.target.value))}
-            />
-          </div>
         </div>
 
         <div
@@ -375,6 +405,7 @@ const OverpaymentSimulator: FC<OverpaymentSimulatorProps> = ({
                 stroke="#ef4444"
                 strokeWidth={2}
                 type="monotone"
+                isAnimationActive={false}
               />
               <Area
                 activeDot={{ r: 6 }}
@@ -383,6 +414,7 @@ const OverpaymentSimulator: FC<OverpaymentSimulatorProps> = ({
                 stroke="#10B981"
                 strokeWidth={2}
                 type="monotone"
+                isAnimationActive={false}
               />
             </AreaChart>
           </ResponsiveContainer>

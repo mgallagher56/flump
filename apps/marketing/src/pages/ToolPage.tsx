@@ -74,12 +74,13 @@ export const ToolPage: FC = () => {
             <span
               style={{
                 fontSize: "12px",
-                fontWeight: "700",
-                textTransform: "uppercase",
-                backgroundColor: "#e0e7ff",
-                color: "#4338ca",
-                padding: "3px 8px",
-                borderRadius: "6px",
+                fontWeight: "600",
+                letterSpacing: "0.01em",
+                backgroundColor: "var(--colors-surface-subtle)",
+                color: "var(--colors-primary)",
+                border: "1px solid var(--colors-border)",
+                padding: "3px 10px",
+                borderRadius: "9999px",
               }}
             >
               {toolMeta.badge}

@@ -271,7 +271,7 @@ const BankConnectionsList: FC<BankConnectionsListProps> = ({
                 marginRight: "auto",
               }}
             >
-              Connect your banks to automatically pull in balances and transactions for checking,
+              Connect your banks to automatically pull in balances and transactions for current,
               savings, mortgages, credit cards, and investments.
             </FLPText>
           </div>

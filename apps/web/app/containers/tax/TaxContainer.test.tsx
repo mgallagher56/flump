@@ -149,7 +149,7 @@ describe("TaxContainer & Calculation Tools", () => {
   it("renders page title and 4 collapsible income sections", () => {
     render(<TaxContainer />);
 
-    expect(screen.getByText("Income & Self-Assessment Tax Planner")).toBeDefined();
+    expect(screen.getByText("Income & Self Assessment Tax Planner")).toBeDefined();
     expect(screen.getByText("Employment Income (PAYE)")).toBeDefined();
     expect(screen.getByText("Rental Property (e.g. Poplar)")).toBeDefined();
     expect(screen.getByText("Self-Employed & Freelance Business")).toBeDefined();
@@ -159,7 +159,7 @@ describe("TaxContainer & Calculation Tools", () => {
   it("renders top summary cards and comparison table", () => {
     render(<TaxContainer />);
 
-    expect(screen.getByText(/Estimated Self-Assessment Due/i)).toBeDefined();
+    expect(screen.getByText(/Estimated Self Assessment due/i)).toBeDefined();
     expect(screen.getAllByText(/Total Gross Income/i).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/Rental Profit Share/i).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/Self-Employed Profit/i).length).toBeGreaterThan(0);
@@ -179,7 +179,7 @@ describe("TaxContainer & Calculation Tools", () => {
   it("opens the Copy / Populate New Year modal", () => {
     render(<TaxContainer />);
 
-    const copyBtn = screen.getByText(/Populate New Year \/ Copy Figures/i);
+    const copyBtn = screen.getAllByText(/Copy from/i)[0];
     fireEvent.click(copyBtn);
 
     expect(screen.getByText("Copy Figures & Populate Tax Year")).toBeDefined();

@@ -148,20 +148,48 @@ export const TaxTrapCalculator: FC<TaxTrapCalculatorProps> = ({
 
       <div className={inputGroupStyle}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <label htmlFor="gross-income-slider" style={{ fontSize: "14px", fontWeight: 600 }}>
+          <label htmlFor="gross-income-input" style={{ fontSize: "14px", fontWeight: 600 }}>
             Total gross UK income
           </label>
-          <span style={{ fontSize: "18px", fontWeight: 700, color: "#6366f1" }}>
-            £{grossIncome.toLocaleString()}
-          </span>
+          <div style={{ position: "relative", display: "inline-flex", alignItems: "center" }}>
+            <span
+              style={{
+                position: "absolute",
+                left: "8px",
+                fontSize: "13px",
+                color: "var(--colors-text-muted)",
+              }}
+            >
+              £
+            </span>
+            <input
+              id="gross-income-input"
+              type="number"
+              min={0}
+              step={500}
+              value={grossIncome}
+              onChange={(e) => setGrossIncome(Number(e.target.value) || 0)}
+              style={{
+                width: "110px",
+                padding: "4px 8px 4px 20px",
+                fontSize: "15px",
+                fontWeight: 700,
+                textAlign: "right",
+                color: "#6366f1",
+                borderRadius: "8px",
+                border: "1px solid var(--colors-border)",
+                backgroundColor: "var(--colors-surface)",
+              }}
+            />
+          </div>
         </div>
         <input
           id="gross-income-slider"
-          aria-label="Total gross UK income"
+          aria-label="Total gross UK income slider"
           className={sliderStyle}
           max={150000}
           min={90000}
-          step={1000}
+          step={500}
           type="range"
           value={grossIncome}
           onChange={(e) => setGrossIncome(Number(e.target.value))}
@@ -183,16 +211,45 @@ export const TaxTrapCalculator: FC<TaxTrapCalculatorProps> = ({
 
       <div className={inputGroupStyle}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <label htmlFor="sacrifice-slider" style={{ fontSize: "14px", fontWeight: 600 }}>
-            Annual Pension Salary Sacrifice / SIPP Contribution
+          <label htmlFor="sacrifice-input" style={{ fontSize: "14px", fontWeight: 600 }}>
+            Annual pension salary sacrifice / SIPP contribution
           </label>
-          <span style={{ fontSize: "18px", fontWeight: 700, color: "#10b981" }}>
-            £{salarySacrifice.toLocaleString()}
-          </span>
+          <div style={{ position: "relative", display: "inline-flex", alignItems: "center" }}>
+            <span
+              style={{
+                position: "absolute",
+                left: "8px",
+                fontSize: "13px",
+                color: "var(--colors-text-muted)",
+              }}
+            >
+              £
+            </span>
+            <input
+              id="sacrifice-input"
+              type="number"
+              min={0}
+              max={maxSacrifice}
+              step={500}
+              value={salarySacrifice}
+              onChange={(e) => setSalarySacrifice(Number(e.target.value) || 0)}
+              style={{
+                width: "110px",
+                padding: "4px 8px 4px 20px",
+                fontSize: "15px",
+                fontWeight: 700,
+                textAlign: "right",
+                color: "#10b981",
+                borderRadius: "8px",
+                border: "1px solid var(--colors-border)",
+                backgroundColor: "var(--colors-surface)",
+              }}
+            />
+          </div>
         </div>
         <input
           id="sacrifice-slider"
-          aria-label="Annual Pension Salary Sacrifice"
+          aria-label="Annual pension salary sacrifice slider"
           className={sliderStyle}
           max={maxSacrifice}
           min={0}

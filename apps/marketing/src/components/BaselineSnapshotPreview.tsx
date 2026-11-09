@@ -28,9 +28,8 @@ const headerBarStyle = css({
 
 const pillBadgeStyle = css({
   fontSize: "xs",
-  fontWeight: "700",
-  textTransform: "uppercase",
-  letterSpacing: "0.05em",
+  fontWeight: "600",
+  letterSpacing: "0.01em",
   color: "primary",
   backgroundColor: "surface.tinted",
   padding: "4px 12px",
@@ -116,8 +115,7 @@ export const BaselineSnapshotPreview: FC = () => {
               fontSize: "12px",
               color: "var(--colors-text-muted)",
               fontWeight: "600",
-              textTransform: "uppercase",
-              letterSpacing: "0.04em",
+              letterSpacing: "0.01em",
             }}
           >
             Total net worth
@@ -144,8 +142,7 @@ export const BaselineSnapshotPreview: FC = () => {
               fontSize: "12px",
               color: "var(--colors-text-muted)",
               fontWeight: "600",
-              textTransform: "uppercase",
-              letterSpacing: "0.04em",
+              letterSpacing: "0.01em",
             }}
           >
             Monthly surplus
@@ -177,8 +174,7 @@ export const BaselineSnapshotPreview: FC = () => {
               fontSize: "12px",
               color: "var(--colors-text-muted)",
               fontWeight: "600",
-              textTransform: "uppercase",
-              letterSpacing: "0.04em",
+              letterSpacing: "0.01em",
             }}
           >
             Safe to spend
@@ -210,8 +206,7 @@ export const BaselineSnapshotPreview: FC = () => {
               fontSize: "12px",
               color: "var(--colors-text-muted)",
               fontWeight: "600",
-              textTransform: "uppercase",
-              letterSpacing: "0.04em",
+              letterSpacing: "0.01em",
             }}
           >
             Emergency runway
@@ -246,9 +241,8 @@ export const BaselineSnapshotPreview: FC = () => {
           <span
             style={{
               fontSize: "12px",
-              fontWeight: "700",
-              textTransform: "uppercase",
-              letterSpacing: "0.05em",
+              fontWeight: "600",
+              letterSpacing: "0.01em",
               color: "var(--colors-text-primary)",
             }}
           >

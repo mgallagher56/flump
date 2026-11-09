@@ -656,7 +656,7 @@ const RunwayCalculator: FC<RunwayCalculatorProps> = ({
               >
                 <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                   <FLPHeading as="h3" size="sm">
-                    💼 Income I'd Keep
+                    Income I'd keep
                   </FLPHeading>
                   <span
                     style={{

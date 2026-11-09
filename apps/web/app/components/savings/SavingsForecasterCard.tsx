@@ -392,6 +392,7 @@ export const SavingsForecasterCard: FC<SavingsForecasterCardProps> = ({
               stroke="#6363f1"
               strokeWidth={2.5}
               type="monotone"
+              isAnimationActive={false}
             />
             <Area
               dataKey="Cash Contributions"
@@ -401,6 +402,7 @@ export const SavingsForecasterCard: FC<SavingsForecasterCardProps> = ({
               strokeDasharray="4 4"
               strokeWidth={2}
               type="monotone"
+              isAnimationActive={false}
             />
           </AreaChart>
         </ResponsiveContainer>
@@ -546,7 +548,7 @@ export const SavingsForecasterCard: FC<SavingsForecasterCardProps> = ({
                 <FLPText color="text.muted" fontSize="xs">
                   {m.achieved ? (
                     <span style={{ color: "var(--colors-success-500)", fontWeight: "medium" }}>
-                      Reached!
+                      Reached
                     </span>
                   ) : m.years === Infinity ? (
                     "Not reached"

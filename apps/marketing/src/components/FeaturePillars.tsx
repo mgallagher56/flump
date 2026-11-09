@@ -64,12 +64,12 @@ export const FeaturePillars: FC = () => {
             <span
               style={{
                 fontSize: "12px",
-                fontWeight: "700",
+                fontWeight: "600",
                 color: "#ef4444",
                 fontFamily: "var(--fonts-mono, monospace)",
               }}
             >
-              STAGE 1
+              Stage 1
             </span>
           </div>
 
@@ -112,8 +112,8 @@ export const FeaturePillars: FC = () => {
               marginTop: "auto",
               padding: "12px",
               borderRadius: "10px",
-              backgroundColor: "var(--colors-slate-50, #f8fafc)",
-              border: "1px solid var(--colors-border, #e2e8f0)",
+              backgroundColor: "var(--colors-surface-subtle)",
+              border: "1px solid var(--colors-border)",
             }}
           >
             <div
@@ -121,7 +121,7 @@ export const FeaturePillars: FC = () => {
                 display: "flex",
                 justifyContent: "space-between",
                 fontSize: "11px",
-                color: "#64748b",
+                color: "var(--colors-text-muted)",
                 marginBottom: "6px",
               }}
             >
@@ -131,12 +131,15 @@ export const FeaturePillars: FC = () => {
             <svg
               viewBox="0 0 280 40"
               style={{ width: "100%", height: "40px", overflow: "visible" }}
+              role="img"
+              aria-label="Debt payoff comparison chart"
             >
+              <title>Debt payoff comparison chart</title>
               {/* Minimum line */}
               <path
                 d="M 0 10 Q 140 25 280 35"
                 fill="none"
-                stroke="#94a3b8"
+                stroke="var(--colors-text-muted)"
                 strokeWidth="2"
                 strokeDasharray="4 4"
               />
@@ -162,12 +165,12 @@ export const FeaturePillars: FC = () => {
             <span
               style={{
                 fontSize: "12px",
-                fontWeight: "700",
-                color: "var(--colors-primary, #6363f1)",
+                fontWeight: "600",
+                color: "var(--colors-primary)",
                 fontFamily: "var(--fonts-mono, monospace)",
               }}
             >
-              HMRC RULES
+              HMRC rules
             </span>
           </div>
 
@@ -210,8 +213,8 @@ export const FeaturePillars: FC = () => {
               marginTop: "auto",
               padding: "12px",
               borderRadius: "10px",
-              backgroundColor: "var(--colors-slate-50, #f8fafc)",
-              border: "1px solid var(--colors-border, #e2e8f0)",
+              backgroundColor: "var(--colors-surface-subtle)",
+              border: "1px solid var(--colors-border)",
             }}
           >
             <div
@@ -219,7 +222,7 @@ export const FeaturePillars: FC = () => {
                 display: "flex",
                 justifyContent: "space-between",
                 fontSize: "11px",
-                color: "#64748b",
+                color: "var(--colors-text-muted)",
                 marginBottom: "6px",
               }}
             >
@@ -278,12 +281,12 @@ export const FeaturePillars: FC = () => {
             <span
               style={{
                 fontSize: "12px",
-                fontWeight: "700",
+                fontWeight: "600",
                 color: "#f59e0b",
                 fontFamily: "var(--fonts-mono, monospace)",
               }}
             >
-              MORTGAGES
+              Mortgages
             </span>
           </div>
 
@@ -325,8 +328,8 @@ export const FeaturePillars: FC = () => {
               marginTop: "auto",
               padding: "12px",
               borderRadius: "10px",
-              backgroundColor: "var(--colors-slate-50, #f8fafc)",
-              border: "1px solid var(--colors-border, #e2e8f0)",
+              backgroundColor: "var(--colors-surface-subtle)",
+              border: "1px solid var(--colors-border)",
             }}
           >
             <div
@@ -334,7 +337,7 @@ export const FeaturePillars: FC = () => {
                 display: "flex",
                 justifyContent: "space-between",
                 fontSize: "11px",
-                color: "#64748b",
+                color: "var(--colors-text-muted)",
                 marginBottom: "6px",
               }}
             >
@@ -345,7 +348,7 @@ export const FeaturePillars: FC = () => {
               style={{
                 height: "8px",
                 width: "100%",
-                backgroundColor: "#e2e8f0",
+                backgroundColor: "var(--colors-border)",
                 borderRadius: "999px",
                 overflow: "hidden",
                 display: "flex",
@@ -368,12 +371,12 @@ export const FeaturePillars: FC = () => {
             <span
               style={{
                 fontSize: "12px",
-                fontWeight: "700",
+                fontWeight: "600",
                 color: "#10b981",
                 fontFamily: "var(--fonts-mono, monospace)",
               }}
             >
-              CASHFLOW
+              Cashflow
             </span>
           </div>
 
@@ -415,8 +418,8 @@ export const FeaturePillars: FC = () => {
               marginTop: "auto",
               padding: "12px",
               borderRadius: "10px",
-              backgroundColor: "var(--colors-slate-50, #f8fafc)",
-              border: "1px solid var(--colors-border, #e2e8f0)",
+              backgroundColor: "var(--colors-surface-subtle)",
+              border: "1px solid var(--colors-border)",
             }}
           >
             <div
@@ -424,7 +427,7 @@ export const FeaturePillars: FC = () => {
                 display: "flex",
                 justifyContent: "space-between",
                 fontSize: "11px",
-                color: "#64748b",
+                color: "var(--colors-text-muted)",
                 marginBottom: "6px",
               }}
             >
@@ -436,8 +439,12 @@ export const FeaturePillars: FC = () => {
               <div style={{ flex: 1, backgroundColor: "#10b981", borderRadius: "2px" }} />
               <div style={{ flex: 1, backgroundColor: "#10b981", borderRadius: "2px" }} />
               <div style={{ flex: 1, backgroundColor: "#10b981", borderRadius: "2px" }} />
-              <div style={{ flex: 1, backgroundColor: "#e2e8f0", borderRadius: "2px" }} />
-              <div style={{ flex: 1, backgroundColor: "#e2e8f0", borderRadius: "2px" }} />
+              <div
+                style={{ flex: 1, backgroundColor: "var(--colors-border)", borderRadius: "2px" }}
+              />
+              <div
+                style={{ flex: 1, backgroundColor: "var(--colors-border)", borderRadius: "2px" }}
+              />
             </div>
           </div>
         </div>

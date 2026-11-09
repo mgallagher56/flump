@@ -18,9 +18,8 @@ const tableStyle = css({
 const thStyle = css({
   padding: "16px 20px",
   fontSize: "xs",
-  fontWeight: "700",
-  textTransform: "uppercase",
-  letterSpacing: "0.05em",
+  fontWeight: "600",
+  letterSpacing: "0.01em",
   textAlign: "left",
   backgroundColor: "surface.subtle",
   borderBottom: "1px solid",

@@ -456,7 +456,7 @@ const TaxContainer: FC = () => {
       >
         <div>
           <FLPHeading as="h1" color="blue.500" size="xl">
-            Income & Self-Assessment Tax Planner
+            Income & Self Assessment Tax Planner
           </FLPHeading>
           <FLPText color="text.muted" fontSize="sm">
             Track PAYE salary, freelance profits, rental property P&L, and savings interest across
@@ -464,11 +464,8 @@ const TaxContainer: FC = () => {
           </FLPText>
         </div>
 
-        {/* Action Buttons: Copy Year + Add Record */}
+        {/* Action Button: Add Record */}
         <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
-          <FLPButton variant="outline" onClick={() => handleOpenCopyModal("all")}>
-            <FaCopy size={12} style={{ marginRight: "6px" }} /> Populate New Year / Copy Figures
-          </FLPButton>
           <FLPButton onClick={() => onOpenAddModal("rental", "income")}>
             <FaPlus size={12} style={{ marginRight: "6px" }} /> Add Record
           </FLPButton>
@@ -664,7 +661,7 @@ const TaxContainer: FC = () => {
                 fontWeight="semibold"
                 textTransform="uppercase"
               >
-                Estimated Self-Assessment Due ({selectedTaxYear})
+                Estimated Self Assessment due ({selectedTaxYear})
               </FLPText>
               <FLPHeading as="h2" color="blue.500" mt={2} size="xl">
                 {formatCurrency(activeYearData.netAdditionalTaxToPay)}
@@ -850,11 +847,6 @@ const TaxContainer: FC = () => {
                       border: "1px solid rgba(245, 158, 11, 0.2)",
                       borderRadius: "6px",
                       fontSize: "12px",
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                      flexWrap: "wrap",
-                      gap: "8px",
                     }}
                   >
                     <span>
@@ -865,14 +857,6 @@ const TaxContainer: FC = () => {
                       </strong>{" "}
                       (20% basic rate relief).
                     </span>
-                    <FLPButton
-                      size="sm"
-                      variant="outline"
-                      onClick={() => handleOpenCopyModal("rental")}
-                    >
-                      <FaCopy size={10} style={{ marginRight: "4px" }} /> Copy Rental from{" "}
-                      {previousTaxYear}
-                    </FLPButton>
                   </div>
                 }
               />
@@ -939,11 +923,6 @@ const TaxContainer: FC = () => {
                       border: "1px solid rgba(139, 92, 246, 0.2)",
                       borderRadius: "6px",
                       fontSize: "12px",
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                      flexWrap: "wrap",
-                      gap: "8px",
                     }}
                   >
                     <span>
@@ -953,472 +932,9 @@ const TaxContainer: FC = () => {
                       <strong>{formatCurrency(activeYearData.dividendAllowance)}</strong>. ISA
                       interest is 100% tax-free.
                     </span>
-                    <FLPButton
-                      size="sm"
-                      variant="outline"
-                      onClick={() => handleOpenCopyModal("savings")}
-                    >
-                      <FaCopy size={10} style={{ marginRight: "4px" }} /> Copy Savings from{" "}
-                      {previousTaxYear}
-                    </FLPButton>
                   </div>
                 }
               />
-
-              {/* Multi-Year P&L Summary Grid Table */}
-              <FLPCard
-                className={css({
-                  padding: "24px",
-                  borderRadius: "lg",
-                  backgroundColor: "card",
-                  marginTop: "24px",
-                })}
-              >
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    marginBottom: "16px",
-                    flexWrap: "wrap",
-                    gap: "10px",
-                  }}
-                >
-                  <div>
-                    <FLPHeading as="h3" size="md">
-                      P&L & Tax Comparison Table
-                    </FLPHeading>
-                    <FLPText color="text.muted" fontSize="xs">
-                      Historical and projected figures across all fiscal tax years.
-                    </FLPText>
-                  </div>
-                </div>
-
-                <div className={tableContainer}>
-                  <table className={tableStyle} style={{ minWidth: "550px" }}>
-                    <thead>
-                      <tr>
-                        <th className={thStyle}>Line Item</th>
-                        {availableYears.map((year) => (
-                          <th
-                            key={year}
-                            className={thStyle}
-                            style={{
-                              textAlign: "right",
-                              borderLeft:
-                                year === selectedTaxYear
-                                  ? "2px solid var(--colors-primary)"
-                                  : "none",
-                            }}
-                          >
-                            {year}
-                          </th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {/* Rental */}
-                      <tr className={trStyle}>
-                        <td
-                          className={tdStyle}
-                          style={{ fontWeight: "bold", backgroundColor: "rgba(245,158,11,0.04)" }}
-                        >
-                          Rental Property (100% Share)
-                        </td>
-                        {availableYears.map((year) => (
-                          <td
-                            key={year}
-                            className={tdStyle}
-                            style={{
-                              backgroundColor: "rgba(245,158,11,0.04)",
-                              borderLeft:
-                                year === selectedTaxYear
-                                  ? "2px solid var(--colors-primary)"
-                                  : "none",
-                            }}
-                          />
-                        ))}
-                      </tr>
-                      <tr className={trStyle}>
-                        <td className={tdStyle} style={{ paddingLeft: "24px" }}>
-                          Rental Income
-                        </td>
-                        {availableYears.map((year) => (
-                          <td
-                            key={year}
-                            className={tdStyle}
-                            style={{
-                              textAlign: "right",
-                              color: "var(--colors-success-500)",
-                              borderLeft:
-                                year === selectedTaxYear
-                                  ? "2px solid var(--colors-primary)"
-                                  : "none",
-                            }}
-                          >
-                            {formatCurrency(calculatedTaxYearsData[year]?.rentalIncomeGross || 0)}
-                          </td>
-                        ))}
-                      </tr>
-                      <tr className={trStyle}>
-                        <td className={tdStyle} style={{ paddingLeft: "24px" }}>
-                          Rental Expenses (Excl. Interest)
-                        </td>
-                        {availableYears.map((year) => (
-                          <td
-                            key={year}
-                            className={tdStyle}
-                            style={{
-                              textAlign: "right",
-                              color: "var(--colors-text-muted)",
-                              borderLeft:
-                                year === selectedTaxYear
-                                  ? "2px solid var(--colors-primary)"
-                                  : "none",
-                            }}
-                          >
-                            {formatCurrency(
-                              calculatedTaxYearsData[year]?.rentalExpensesExclInterest || 0,
-                            )}
-                          </td>
-                        ))}
-                      </tr>
-                      <tr className={trStyle}>
-                        <td className={tdStyle} style={{ paddingLeft: "24px" }}>
-                          Mortgage Interest Costs
-                        </td>
-                        {availableYears.map((year) => (
-                          <td
-                            key={year}
-                            className={tdStyle}
-                            style={{
-                              textAlign: "right",
-                              color: "var(--colors-destructive)",
-                              borderLeft:
-                                year === selectedTaxYear
-                                  ? "2px solid var(--colors-primary)"
-                                  : "none",
-                            }}
-                          >
-                            {formatCurrency(
-                              calculatedTaxYearsData[year]?.rentalMortgageInterest || 0,
-                            )}
-                          </td>
-                        ))}
-                      </tr>
-                      <tr className={trStyle} style={{ backgroundColor: "rgba(0,0,0,0.02)" }}>
-                        <td className={tdStyle} style={{ fontWeight: "bold", paddingLeft: "24px" }}>
-                          Total Rental Profit (Post-Interest)
-                        </td>
-                        {availableYears.map((year) => (
-                          <td
-                            key={year}
-                            className={tdStyle}
-                            style={{
-                              textAlign: "right",
-                              fontWeight: "bold",
-                              borderLeft:
-                                year === selectedTaxYear
-                                  ? "2px solid var(--colors-primary)"
-                                  : "none",
-                            }}
-                          >
-                            {formatCurrency(
-                              calculatedTaxYearsData[year]?.rentalProfitPostInterest || 0,
-                            )}
-                          </td>
-                        ))}
-                      </tr>
-
-                      {/* Self-Employed */}
-                      <tr className={trStyle}>
-                        <td
-                          className={tdStyle}
-                          style={{ fontWeight: "bold", backgroundColor: "rgba(16,185,129,0.04)" }}
-                        >
-                          Self-Employed (Sole Trader)
-                        </td>
-                        {availableYears.map((year) => (
-                          <td
-                            key={year}
-                            className={tdStyle}
-                            style={{
-                              backgroundColor: "rgba(16,185,129,0.04)",
-                              borderLeft:
-                                year === selectedTaxYear
-                                  ? "2px solid var(--colors-primary)"
-                                  : "none",
-                            }}
-                          />
-                        ))}
-                      </tr>
-                      <tr className={trStyle}>
-                        <td className={tdStyle} style={{ paddingLeft: "24px" }}>
-                          Business Turnover
-                        </td>
-                        {availableYears.map((year) => (
-                          <td
-                            key={year}
-                            className={tdStyle}
-                            style={{
-                              textAlign: "right",
-                              color: "var(--colors-success-500)",
-                              borderLeft:
-                                year === selectedTaxYear
-                                  ? "2px solid var(--colors-primary)"
-                                  : "none",
-                            }}
-                          >
-                            {formatCurrency(calculatedTaxYearsData[year]?.seIncomeGross || 0)}
-                          </td>
-                        ))}
-                      </tr>
-                      <tr className={trStyle}>
-                        <td className={tdStyle} style={{ paddingLeft: "24px" }}>
-                          Allowable Business Expenses
-                        </td>
-                        {availableYears.map((year) => (
-                          <td
-                            key={year}
-                            className={tdStyle}
-                            style={{
-                              textAlign: "right",
-                              color: "var(--colors-text-muted)",
-                              borderLeft:
-                                year === selectedTaxYear
-                                  ? "2px solid var(--colors-primary)"
-                                  : "none",
-                            }}
-                          >
-                            {formatCurrency(calculatedTaxYearsData[year]?.seExpenses || 0)}
-                          </td>
-                        ))}
-                      </tr>
-                      <tr className={trStyle} style={{ backgroundColor: "rgba(0,0,0,0.02)" }}>
-                        <td className={tdStyle} style={{ fontWeight: "bold", paddingLeft: "24px" }}>
-                          Self-Employed Net Profit
-                        </td>
-                        {availableYears.map((year) => (
-                          <td
-                            key={year}
-                            className={tdStyle}
-                            style={{
-                              textAlign: "right",
-                              fontWeight: "bold",
-                              borderLeft:
-                                year === selectedTaxYear
-                                  ? "2px solid var(--colors-primary)"
-                                  : "none",
-                            }}
-                          >
-                            {formatCurrency(calculatedTaxYearsData[year]?.seProfit || 0)}
-                          </td>
-                        ))}
-                      </tr>
-
-                      {/* Savings & Dividends */}
-                      <tr className={trStyle}>
-                        <td
-                          className={tdStyle}
-                          style={{ fontWeight: "bold", backgroundColor: "rgba(139,92,246,0.04)" }}
-                        >
-                          Savings & Investments
-                        </td>
-                        {availableYears.map((year) => (
-                          <td
-                            key={year}
-                            className={tdStyle}
-                            style={{
-                              backgroundColor: "rgba(139,92,246,0.04)",
-                              borderLeft:
-                                year === selectedTaxYear
-                                  ? "2px solid var(--colors-primary)"
-                                  : "none",
-                            }}
-                          />
-                        ))}
-                      </tr>
-                      <tr className={trStyle}>
-                        <td className={tdStyle} style={{ paddingLeft: "24px" }}>
-                          Taxable Savings Interest
-                        </td>
-                        {availableYears.map((year) => (
-                          <td
-                            key={year}
-                            className={tdStyle}
-                            style={{
-                              textAlign: "right",
-                              color: "var(--colors-text-primary)",
-                              borderLeft:
-                                year === selectedTaxYear
-                                  ? "2px solid var(--colors-primary)"
-                                  : "none",
-                            }}
-                          >
-                            {formatCurrency(
-                              calculatedTaxYearsData[year]?.savingsInterestGross || 0,
-                            )}
-                          </td>
-                        ))}
-                      </tr>
-                      <tr className={trStyle}>
-                        <td className={tdStyle} style={{ paddingLeft: "24px" }}>
-                          Dividends Income
-                        </td>
-                        {availableYears.map((year) => (
-                          <td
-                            key={year}
-                            className={tdStyle}
-                            style={{
-                              textAlign: "right",
-                              color: "var(--colors-text-primary)",
-                              borderLeft:
-                                year === selectedTaxYear
-                                  ? "2px solid var(--colors-primary)"
-                                  : "none",
-                            }}
-                          >
-                            {formatCurrency(calculatedTaxYearsData[year]?.dividendIncomeGross || 0)}
-                          </td>
-                        ))}
-                      </tr>
-
-                      {/* Tax Profile & Liabilities */}
-                      <tr className={trStyle}>
-                        <td
-                          className={tdStyle}
-                          style={{ fontWeight: "bold", backgroundColor: "rgba(99,99,241,0.04)" }}
-                        >
-                          Tax Profile & Liabilities
-                        </td>
-                        {availableYears.map((year) => (
-                          <td
-                            key={year}
-                            className={tdStyle}
-                            style={{
-                              backgroundColor: "rgba(99,99,241,0.04)",
-                              borderLeft:
-                                year === selectedTaxYear
-                                  ? "2px solid var(--colors-primary)"
-                                  : "none",
-                            }}
-                          />
-                        ))}
-                      </tr>
-                      <tr className={trStyle}>
-                        <td className={tdStyle} style={{ paddingLeft: "24px" }}>
-                          PAYE Salary
-                        </td>
-                        {availableYears.map((year) => (
-                          <td
-                            key={year}
-                            className={tdStyle}
-                            style={{
-                              textAlign: "right",
-                              color: "var(--colors-text-primary)",
-                              borderLeft:
-                                year === selectedTaxYear
-                                  ? "2px solid var(--colors-primary)"
-                                  : "none",
-                            }}
-                          >
-                            {formatCurrency(calculatedTaxYearsData[year]?.effectivePayeSalary || 0)}
-                          </td>
-                        ))}
-                      </tr>
-                      <tr className={trStyle}>
-                        <td className={tdStyle} style={{ paddingLeft: "24px" }}>
-                          Total Gross Taxable Income
-                        </td>
-                        {availableYears.map((year) => (
-                          <td
-                            key={year}
-                            className={tdStyle}
-                            style={{
-                              textAlign: "right",
-                              fontWeight: "bold",
-                              borderLeft:
-                                year === selectedTaxYear
-                                  ? "2px solid var(--colors-primary)"
-                                  : "none",
-                            }}
-                          >
-                            {formatCurrency(calculatedTaxYearsData[year]?.totalGrossIncome || 0)}
-                          </td>
-                        ))}
-                      </tr>
-                      <tr className={trStyle}>
-                        <td className={tdStyle} style={{ paddingLeft: "24px" }}>
-                          Personal Allowance
-                        </td>
-                        {availableYears.map((year) => (
-                          <td
-                            key={year}
-                            className={tdStyle}
-                            style={{
-                              textAlign: "right",
-                              color: "var(--colors-text-muted)",
-                              borderLeft:
-                                year === selectedTaxYear
-                                  ? "2px solid var(--colors-primary)"
-                                  : "none",
-                            }}
-                          >
-                            {formatCurrency(calculatedTaxYearsData[year]?.personalAllowance || 0)}
-                          </td>
-                        ))}
-                      </tr>
-                      <tr className={trStyle}>
-                        <td className={tdStyle} style={{ paddingLeft: "24px" }}>
-                          Section 24 Mortgage Relief Credit
-                        </td>
-                        {availableYears.map((year) => (
-                          <td
-                            key={year}
-                            className={tdStyle}
-                            style={{
-                              textAlign: "right",
-                              color: "var(--colors-success-500)",
-                              borderLeft:
-                                year === selectedTaxYear
-                                  ? "2px solid var(--colors-primary)"
-                                  : "none",
-                            }}
-                          >
-                            -
-                            {formatCurrency(
-                              calculatedTaxYearsData[year]?.rentalPropertyTaxCredit || 0,
-                            )}
-                          </td>
-                        ))}
-                      </tr>
-                      <tr className={trStyle} style={{ backgroundColor: "rgba(99,99,241,0.06)" }}>
-                        <td className={tdStyle} style={{ fontWeight: "bold", paddingLeft: "24px" }}>
-                          Self-Assessment Tax & NI Due
-                        </td>
-                        {availableYears.map((year) => (
-                          <td
-                            key={year}
-                            className={tdStyle}
-                            style={{
-                              textAlign: "right",
-                              fontWeight: "bold",
-                              color: "var(--colors-blue-500)",
-                              borderLeft:
-                                year === selectedTaxYear
-                                  ? "2px solid var(--colors-primary)"
-                                  : "none",
-                            }}
-                          >
-                            {formatCurrency(
-                              calculatedTaxYearsData[year]?.netAdditionalTaxToPay || 0,
-                            )}
-                          </td>
-                        ))}
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-              </FLPCard>
             </div>
 
             {/* Right side: Parameters and Breakdown */}
@@ -1591,7 +1107,7 @@ const TaxContainer: FC = () => {
                       fontSize: "14px",
                     }}
                   >
-                    <FLPText color="blue.500">Self-Assessment Due:</FLPText>
+                    <FLPText color="blue.500">Self Assessment due:</FLPText>
                     <FLPText color="blue.500">
                       {formatCurrency(activeYearData.netAdditionalTaxToPay)}
                     </FLPText>
@@ -1600,6 +1116,415 @@ const TaxContainer: FC = () => {
               </FLPCard>
             </FLPBox>
           </div>
+
+          {/* Multi-Year P&L Summary Grid Table */}
+          <FLPCard
+            className={css({
+              padding: "24px",
+              borderRadius: "lg",
+              backgroundColor: "card",
+              marginTop: "24px",
+            })}
+          >
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                marginBottom: "16px",
+                flexWrap: "wrap",
+                gap: "10px",
+              }}
+            >
+              <div>
+                <FLPHeading as="h3" size="md">
+                  P&L & Tax Comparison Table
+                </FLPHeading>
+                <FLPText color="text.muted" fontSize="xs">
+                  Historical and projected figures across all fiscal tax years.
+                </FLPText>
+              </div>
+            </div>
+
+            <div className={tableContainer}>
+              <table className={tableStyle} style={{ minWidth: "550px" }}>
+                <thead>
+                  <tr>
+                    <th className={thStyle}>Line Item</th>
+                    {availableYears.map((year) => (
+                      <th
+                        key={year}
+                        className={thStyle}
+                        style={{
+                          textAlign: "right",
+                          borderLeft:
+                            year === selectedTaxYear ? "2px solid var(--colors-primary)" : "none",
+                        }}
+                      >
+                        {year}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {/* Rental */}
+                  <tr className={trStyle}>
+                    <td
+                      className={tdStyle}
+                      style={{ fontWeight: "bold", backgroundColor: "rgba(245,158,11,0.04)" }}
+                    >
+                      Rental Property (100% Share)
+                    </td>
+                    {availableYears.map((year) => (
+                      <td
+                        key={year}
+                        className={tdStyle}
+                        style={{
+                          backgroundColor: "rgba(245,158,11,0.04)",
+                          borderLeft:
+                            year === selectedTaxYear ? "2px solid var(--colors-primary)" : "none",
+                        }}
+                      />
+                    ))}
+                  </tr>
+                  <tr className={trStyle}>
+                    <td className={tdStyle} style={{ paddingLeft: "24px" }}>
+                      Rental Income
+                    </td>
+                    {availableYears.map((year) => (
+                      <td
+                        key={year}
+                        className={tdStyle}
+                        style={{
+                          textAlign: "right",
+                          color: "var(--colors-success-500)",
+                          borderLeft:
+                            year === selectedTaxYear ? "2px solid var(--colors-primary)" : "none",
+                        }}
+                      >
+                        {formatCurrency(calculatedTaxYearsData[year]?.rentalIncomeGross || 0)}
+                      </td>
+                    ))}
+                  </tr>
+                  <tr className={trStyle}>
+                    <td className={tdStyle} style={{ paddingLeft: "24px" }}>
+                      Rental Expenses (Excl. Interest)
+                    </td>
+                    {availableYears.map((year) => (
+                      <td
+                        key={year}
+                        className={tdStyle}
+                        style={{
+                          textAlign: "right",
+                          color: "var(--colors-text-muted)",
+                          borderLeft:
+                            year === selectedTaxYear ? "2px solid var(--colors-primary)" : "none",
+                        }}
+                      >
+                        {formatCurrency(
+                          calculatedTaxYearsData[year]?.rentalExpensesExclInterest || 0,
+                        )}
+                      </td>
+                    ))}
+                  </tr>
+                  <tr className={trStyle}>
+                    <td className={tdStyle} style={{ paddingLeft: "24px" }}>
+                      Mortgage Interest Costs
+                    </td>
+                    {availableYears.map((year) => (
+                      <td
+                        key={year}
+                        className={tdStyle}
+                        style={{
+                          textAlign: "right",
+                          color: "var(--colors-destructive)",
+                          borderLeft:
+                            year === selectedTaxYear ? "2px solid var(--colors-primary)" : "none",
+                        }}
+                      >
+                        {formatCurrency(calculatedTaxYearsData[year]?.rentalMortgageInterest || 0)}
+                      </td>
+                    ))}
+                  </tr>
+                  <tr className={trStyle} style={{ backgroundColor: "rgba(0,0,0,0.02)" }}>
+                    <td className={tdStyle} style={{ fontWeight: "bold", paddingLeft: "24px" }}>
+                      Total Rental Profit (Post-Interest)
+                    </td>
+                    {availableYears.map((year) => (
+                      <td
+                        key={year}
+                        className={tdStyle}
+                        style={{
+                          textAlign: "right",
+                          fontWeight: "bold",
+                          borderLeft:
+                            year === selectedTaxYear ? "2px solid var(--colors-primary)" : "none",
+                        }}
+                      >
+                        {formatCurrency(
+                          calculatedTaxYearsData[year]?.rentalProfitPostInterest || 0,
+                        )}
+                      </td>
+                    ))}
+                  </tr>
+
+                  {/* Self-Employed */}
+                  <tr className={trStyle}>
+                    <td
+                      className={tdStyle}
+                      style={{ fontWeight: "bold", backgroundColor: "rgba(16,185,129,0.04)" }}
+                    >
+                      Self-Employed (Sole Trader)
+                    </td>
+                    {availableYears.map((year) => (
+                      <td
+                        key={year}
+                        className={tdStyle}
+                        style={{
+                          backgroundColor: "rgba(16,185,129,0.04)",
+                          borderLeft:
+                            year === selectedTaxYear ? "2px solid var(--colors-primary)" : "none",
+                        }}
+                      />
+                    ))}
+                  </tr>
+                  <tr className={trStyle}>
+                    <td className={tdStyle} style={{ paddingLeft: "24px" }}>
+                      Business Turnover
+                    </td>
+                    {availableYears.map((year) => (
+                      <td
+                        key={year}
+                        className={tdStyle}
+                        style={{
+                          textAlign: "right",
+                          color: "var(--colors-success-500)",
+                          borderLeft:
+                            year === selectedTaxYear ? "2px solid var(--colors-primary)" : "none",
+                        }}
+                      >
+                        {formatCurrency(calculatedTaxYearsData[year]?.seIncomeGross || 0)}
+                      </td>
+                    ))}
+                  </tr>
+                  <tr className={trStyle}>
+                    <td className={tdStyle} style={{ paddingLeft: "24px" }}>
+                      Allowable Business Expenses
+                    </td>
+                    {availableYears.map((year) => (
+                      <td
+                        key={year}
+                        className={tdStyle}
+                        style={{
+                          textAlign: "right",
+                          color: "var(--colors-text-muted)",
+                          borderLeft:
+                            year === selectedTaxYear ? "2px solid var(--colors-primary)" : "none",
+                        }}
+                      >
+                        {formatCurrency(calculatedTaxYearsData[year]?.seExpenses || 0)}
+                      </td>
+                    ))}
+                  </tr>
+                  <tr className={trStyle} style={{ backgroundColor: "rgba(0,0,0,0.02)" }}>
+                    <td className={tdStyle} style={{ fontWeight: "bold", paddingLeft: "24px" }}>
+                      Self-Employed Net Profit
+                    </td>
+                    {availableYears.map((year) => (
+                      <td
+                        key={year}
+                        className={tdStyle}
+                        style={{
+                          textAlign: "right",
+                          fontWeight: "bold",
+                          borderLeft:
+                            year === selectedTaxYear ? "2px solid var(--colors-primary)" : "none",
+                        }}
+                      >
+                        {formatCurrency(calculatedTaxYearsData[year]?.seProfit || 0)}
+                      </td>
+                    ))}
+                  </tr>
+
+                  {/* Savings & Dividends */}
+                  <tr className={trStyle}>
+                    <td
+                      className={tdStyle}
+                      style={{ fontWeight: "bold", backgroundColor: "rgba(139,92,246,0.04)" }}
+                    >
+                      Savings & Investments
+                    </td>
+                    {availableYears.map((year) => (
+                      <td
+                        key={year}
+                        className={tdStyle}
+                        style={{
+                          backgroundColor: "rgba(139,92,246,0.04)",
+                          borderLeft:
+                            year === selectedTaxYear ? "2px solid var(--colors-primary)" : "none",
+                        }}
+                      />
+                    ))}
+                  </tr>
+                  <tr className={trStyle}>
+                    <td className={tdStyle} style={{ paddingLeft: "24px" }}>
+                      Taxable Savings Interest
+                    </td>
+                    {availableYears.map((year) => (
+                      <td
+                        key={year}
+                        className={tdStyle}
+                        style={{
+                          textAlign: "right",
+                          color: "var(--colors-text-primary)",
+                          borderLeft:
+                            year === selectedTaxYear ? "2px solid var(--colors-primary)" : "none",
+                        }}
+                      >
+                        {formatCurrency(calculatedTaxYearsData[year]?.savingsInterestGross || 0)}
+                      </td>
+                    ))}
+                  </tr>
+                  <tr className={trStyle}>
+                    <td className={tdStyle} style={{ paddingLeft: "24px" }}>
+                      Dividends Income
+                    </td>
+                    {availableYears.map((year) => (
+                      <td
+                        key={year}
+                        className={tdStyle}
+                        style={{
+                          textAlign: "right",
+                          color: "var(--colors-text-primary)",
+                          borderLeft:
+                            year === selectedTaxYear ? "2px solid var(--colors-primary)" : "none",
+                        }}
+                      >
+                        {formatCurrency(calculatedTaxYearsData[year]?.dividendIncomeGross || 0)}
+                      </td>
+                    ))}
+                  </tr>
+
+                  {/* Tax Profile & Liabilities */}
+                  <tr className={trStyle}>
+                    <td
+                      className={tdStyle}
+                      style={{ fontWeight: "bold", backgroundColor: "rgba(99,99,241,0.04)" }}
+                    >
+                      Tax Profile & Liabilities
+                    </td>
+                    {availableYears.map((year) => (
+                      <td
+                        key={year}
+                        className={tdStyle}
+                        style={{
+                          backgroundColor: "rgba(99,99,241,0.04)",
+                          borderLeft:
+                            year === selectedTaxYear ? "2px solid var(--colors-primary)" : "none",
+                        }}
+                      />
+                    ))}
+                  </tr>
+                  <tr className={trStyle}>
+                    <td className={tdStyle} style={{ paddingLeft: "24px" }}>
+                      PAYE Salary
+                    </td>
+                    {availableYears.map((year) => (
+                      <td
+                        key={year}
+                        className={tdStyle}
+                        style={{
+                          textAlign: "right",
+                          color: "var(--colors-text-primary)",
+                          borderLeft:
+                            year === selectedTaxYear ? "2px solid var(--colors-primary)" : "none",
+                        }}
+                      >
+                        {formatCurrency(calculatedTaxYearsData[year]?.effectivePayeSalary || 0)}
+                      </td>
+                    ))}
+                  </tr>
+                  <tr className={trStyle}>
+                    <td className={tdStyle} style={{ paddingLeft: "24px" }}>
+                      Total Gross Taxable Income
+                    </td>
+                    {availableYears.map((year) => (
+                      <td
+                        key={year}
+                        className={tdStyle}
+                        style={{
+                          textAlign: "right",
+                          fontWeight: "bold",
+                          borderLeft:
+                            year === selectedTaxYear ? "2px solid var(--colors-primary)" : "none",
+                        }}
+                      >
+                        {formatCurrency(calculatedTaxYearsData[year]?.totalGrossIncome || 0)}
+                      </td>
+                    ))}
+                  </tr>
+                  <tr className={trStyle}>
+                    <td className={tdStyle} style={{ paddingLeft: "24px" }}>
+                      Personal Allowance
+                    </td>
+                    {availableYears.map((year) => (
+                      <td
+                        key={year}
+                        className={tdStyle}
+                        style={{
+                          textAlign: "right",
+                          color: "var(--colors-text-muted)",
+                          borderLeft:
+                            year === selectedTaxYear ? "2px solid var(--colors-primary)" : "none",
+                        }}
+                      >
+                        {formatCurrency(calculatedTaxYearsData[year]?.personalAllowance || 0)}
+                      </td>
+                    ))}
+                  </tr>
+                  <tr className={trStyle}>
+                    <td className={tdStyle} style={{ paddingLeft: "24px" }}>
+                      Section 24 Mortgage Relief Credit
+                    </td>
+                    {availableYears.map((year) => (
+                      <td
+                        key={year}
+                        className={tdStyle}
+                        style={{
+                          textAlign: "right",
+                          color: "var(--colors-success-500)",
+                          borderLeft:
+                            year === selectedTaxYear ? "2px solid var(--colors-primary)" : "none",
+                        }}
+                      >
+                        -
+                        {formatCurrency(calculatedTaxYearsData[year]?.rentalPropertyTaxCredit || 0)}
+                      </td>
+                    ))}
+                  </tr>
+                  <tr className={trStyle} style={{ backgroundColor: "rgba(99,99,241,0.06)" }}>
+                    <td className={tdStyle} style={{ fontWeight: "bold", paddingLeft: "24px" }}>
+                      Self Assessment tax & NI due
+                    </td>
+                    {availableYears.map((year) => (
+                      <td
+                        key={year}
+                        className={tdStyle}
+                        style={{
+                          textAlign: "right",
+                          fontWeight: "bold",
+                          color: "var(--colors-blue-500)",
+                          borderLeft:
+                            year === selectedTaxYear ? "2px solid var(--colors-primary)" : "none",
+                        }}
+                      >
+                        {formatCurrency(calculatedTaxYearsData[year]?.netAdditionalTaxToPay || 0)}
+                      </td>
+                    ))}
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </FLPCard>
         </>
       )}
 

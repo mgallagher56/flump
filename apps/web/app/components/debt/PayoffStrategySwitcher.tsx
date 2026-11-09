@@ -152,23 +152,56 @@ export const PayoffStrategySwitcher: FC<PayoffStrategySwitcherProps> = ({
           </div>
         </div>
 
-        {/* The "Extra £50" Interactive Slider */}
+        {/* The "Extra £50" Interactive Input & Slider */}
         <div className={sliderContainerStyle}>
           <div className={sliderHeaderStyle}>
             <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-              <FaSlidersH color="#6363f1" />
-              <FLPText fontSize="sm" fontWeight="bold">
-                Monthly Debt Overpayment Slider
-              </FLPText>
+              <FaSlidersH color="var(--colors-primary)" />
+              <label htmlFor="debt-extra-input" style={{ fontSize: "14px", fontWeight: "bold" }}>
+                Monthly debt overpayment
+              </label>
             </div>
-            <FLPText color="primary" fontSize="lg" fontWeight="bold">
-              +{formatCurrency(extraPayment)}
-              <span style={{ fontSize: "13px", fontWeight: "normal", color: "#6b7280" }}>/mo</span>
-            </FLPText>
+            <div style={{ position: "relative", display: "inline-flex", alignItems: "center" }}>
+              <span
+                style={{
+                  position: "absolute",
+                  left: "8px",
+                  fontSize: "13px",
+                  color: "var(--colors-text-muted)",
+                }}
+              >
+                +£
+              </span>
+              <input
+                id="debt-extra-input"
+                type="number"
+                min="0"
+                step="10"
+                value={extraPayment}
+                onChange={(e) => onChangeExtraPayment(Number(e.target.value) || 0)}
+                style={{
+                  width: "90px",
+                  padding: "4px 8px 4px 26px",
+                  fontSize: "14px",
+                  fontWeight: 700,
+                  textAlign: "right",
+                  color: "var(--colors-primary)",
+                  borderRadius: "6px",
+                  border: "1px solid var(--colors-border)",
+                  backgroundColor: "var(--colors-surface)",
+                }}
+              />
+              <span
+                style={{ fontSize: "12px", color: "var(--colors-text-muted)", marginLeft: "4px" }}
+              >
+                /mo
+              </span>
+            </div>
           </div>
 
           <input
-            aria-label="Extra monthly debt overpayment"
+            id="debt-extra-slider"
+            aria-label="Extra monthly debt overpayment slider"
             className={sliderInputStyle}
             max="600"
             min="0"
@@ -198,23 +231,23 @@ export const PayoffStrategySwitcher: FC<PayoffStrategySwitcherProps> = ({
                 variant="outline"
                 onClick={() => onChangeExtraPayment(Math.min(Math.round(budgetSurplus), 500))}
               >
-                Match Surplus ({formatCurrency(budgetSurplus)})
+                Match surplus ({formatCurrency(budgetSurplus)})
               </FLPButton>
             )}
           </div>
 
           <div
             style={{
-              backgroundColor: "rgba(255, 255, 255, 0.7)",
+              backgroundColor: "rgba(99, 99, 241, 0.08)",
               padding: "10px 14px",
               borderRadius: "8px",
               border: "1px dashed rgba(99, 99, 241, 0.3)",
             }}
           >
             <FLPText color="text.primary" fontSize="sm" fontWeight="bold">
-              ✨ Impact: Put an extra {formatCurrency(extraPayment)}/mo toward debt →{" "}
+              Impact: Put an extra {formatCurrency(extraPayment)}/mo toward debt →{" "}
               {monthsSaved > 0
-                ? `Become debt-free ${monthsSaved} months sooner and save ${formatCurrency(interestSaved)} in interest!`
+                ? `Become debt-free ${monthsSaved} months sooner and save ${formatCurrency(interestSaved)} in interest.`
                 : "Increase overpayment to shave months off your timeline."}
             </FLPText>
           </div>
@@ -226,19 +259,19 @@ export const PayoffStrategySwitcher: FC<PayoffStrategySwitcherProps> = ({
           <div className={modeCardStyle(selectedStrategy === "avalanche")}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <FLPText fontSize="md" fontWeight="bold">
-                ⚡ Avalanche Mode
+                Avalanche mode
               </FLPText>
               <span
                 style={{
                   fontSize: "11px",
-                  backgroundColor: "#fef3c7",
-                  color: "#b45309",
+                  backgroundColor: "rgba(245, 158, 11, 0.15)",
+                  color: "#d97706",
                   padding: "2px 6px",
                   borderRadius: "4px",
                   fontWeight: "bold",
                 }}
               >
-                Mathematically Optimal
+                Mathematically optimal
               </span>
             </div>
             <FLPText color="text.muted" fontSize="xs">
