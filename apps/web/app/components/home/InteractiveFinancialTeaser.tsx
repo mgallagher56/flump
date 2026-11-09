@@ -214,7 +214,6 @@ export const InteractiveFinancialTeaser: FC = () => {
         "accounts",
         "budget",
         "pension",
-        "savings",
         "forecast",
         ...(incomeAmount >= 95000 ? (["tax"] as const) : []),
       ],
@@ -233,7 +232,7 @@ export const InteractiveFinancialTeaser: FC = () => {
       initialInvestments: 15000,
       monthlyContribution: 500,
       mortgageBalance: balance,
-      inferredModules: ["accounts", "budget", "mortgage", "forecast", "savings"],
+      inferredModules: ["accounts", "budget", "mortgage", "forecast"],
       timestamp: Date.now(),
     };
     persistOnboardingSeed(payload);

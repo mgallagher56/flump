@@ -252,6 +252,7 @@ export function calculateDebtSchedule(
   let totalInterestPaid = 0;
   let firstQuickWinDate: string | undefined;
   let firstQuickWinDebtName: string | undefined;
+  let firstQuickWinMonth: number | undefined;
 
   const simDate = new Date(referenceDate);
 
@@ -316,6 +317,7 @@ export function calculateDebtSchedule(
         if (!firstQuickWinDate) {
           firstQuickWinDate = formatMonthYear(simDate);
           firstQuickWinDebtName = d.name;
+          firstQuickWinMonth = month;
         }
       }
     }
@@ -343,6 +345,7 @@ export function calculateDebtSchedule(
           if (!firstQuickWinDate) {
             firstQuickWinDate = formatMonthYear(simDate);
             firstQuickWinDebtName = debtObj.name;
+            firstQuickWinMonth = month;
           }
         }
 
@@ -415,6 +418,7 @@ export function calculateDebtSchedule(
     debtFreeDate: debtFreeDateFormatted,
     firstQuickWinDate,
     firstQuickWinDebtName,
+    firstQuickWinMonth,
     interestSavedVsMinimumGbp: interestSavedVsMinimum,
     promoCliffAlerts,
     schedule,
@@ -453,7 +457,7 @@ export function calculateAvalanche(debts: DebtItem[], extraMonthlyPayment = 0): 
     totalInterest: res.totalInterestPaidGbp,
     totalPaid: Math.round((res.totalStartingDebtGbp + res.totalInterestPaidGbp) * 100) / 100,
     quickWinDebtName: res.firstQuickWinDebtName,
-    quickWinMonths: undefined,
+    quickWinMonths: res.firstQuickWinMonth,
     monthlySchedule,
   };
 }
@@ -488,7 +492,7 @@ export function calculateSnowball(debts: DebtItem[], extraMonthlyPayment = 0): P
     totalInterest: res.totalInterestPaidGbp,
     totalPaid: Math.round((res.totalStartingDebtGbp + res.totalInterestPaidGbp) * 100) / 100,
     quickWinDebtName: res.firstQuickWinDebtName,
-    quickWinMonths: undefined,
+    quickWinMonths: res.firstQuickWinMonth,
     monthlySchedule,
   };
 }
@@ -621,10 +625,21 @@ export function evaluateUkStudentLoan(
   annualSalary: number,
   currentBalance: number,
 ): StudentLoanEvaluationResult {
+  const configs: Record<string, { threshold: number; rate: number; writeOffYears: number }> = {
+    plan1: { threshold: 24990, rate: 0.09, writeOffYears: 25 },
+    plan2: { threshold: 27295, rate: 0.09, writeOffYears: 30 },
+    plan4: { threshold: 31395, rate: 0.09, writeOffYears: 30 },
+    plan5: { threshold: 25000, rate: 0.09, writeOffYears: 40 },
+    postgrad: { threshold: 21000, rate: 0.06, writeOffYears: 30 },
+  };
+
   const key = plan.toLowerCase().replace(/[^a-z0-9]/g, "");
-  const fallback = { threshold: 28470, rate: 0.09, writeOffYears: 30 };
+  const fallback = { threshold: 27295, rate: 0.09, writeOffYears: 30 };
   const cfg =
-    STUDENT_LOAN_THRESHOLDS[key] ?? STUDENT_LOAN_THRESHOLDS[plan.toUpperCase()] ?? fallback;
+    configs[key] ??
+    STUDENT_LOAN_THRESHOLDS[key] ??
+    STUDENT_LOAN_THRESHOLDS[plan.toUpperCase()] ??
+    fallback;
 
   const taxableExcess = Math.max(0, annualSalary - cfg.threshold);
   const annualRepayment = Math.round(taxableExcess * cfg.rate * 100) / 100;
@@ -638,7 +653,7 @@ export function evaluateUkStudentLoan(
   const recommendation = willLikelyRepayBeforeWriteOff ? "consider_overpaying" : "do_not_overpay";
   const reasoning = willLikelyRepayBeforeWriteOff
     ? `Based on your salary of £${Math.round(annualSalary).toLocaleString()}, you are projected to clear the balance before statutory write-off.`
-    : `Your annual repayment of £${Math.round(annualRepayment).toLocaleString()} is insufficient to clear £${Math.round(currentBalance).toLocaleString()} before statutory cancellation. Prioritise emergency savings or commercial debts instead.`;
+    : `Your annual repayment of £${Math.round(annualRepayment).toLocaleString()} is insufficient to clear the £${Math.round(currentBalance).toLocaleString()} balance before the ${cfg.writeOffYears}-year statutory cancellation. Any voluntary overpayments act as an effective gift to HM Treasury. Prioritise emergency savings or commercial debts instead.`;
 
   return {
     plan: (key.startsWith("plan") ? key : "plan2") as any,

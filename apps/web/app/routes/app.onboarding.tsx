@@ -1,4 +1,4 @@
-import { calculateUkTax } from "@flump/finance-engine";
+import { calculateUkTax, hydrateBaselineFromSeed } from "@flump/finance-engine";
 import { clearOnboardingSeed, type OnboardingSeedPayload, readOnboardingSeed } from "@repo/common";
 import { css } from "@repo/ui/styled-system/css";
 import { useEffect, useMemo, useState } from "react";
@@ -130,31 +130,26 @@ export default function OnboardingRoute() {
       ) {
         setSeed(parsed);
         setShowSeedBanner(true);
-        if (parsed.annualIncome || parsed.annualGrossSalary) {
-          setGrossSalary(parsed.annualIncome ?? parsed.annualGrossSalary ?? 45000);
+        const hydrated = hydrateBaselineFromSeed(parsed);
+        setGrossSalary(hydrated.annualGrossSalary);
+        if (hydrated.age) setAge(hydrated.age);
+        if (hydrated.employmentStatus === "SELF_EMPLOYED") setEmploymentType("self-employed");
+        setPensionPercent(hydrated.pensionContributionPct);
+        setIsSalarySacrifice(hydrated.isSalarySacrifice);
+        setCashSavings(hydrated.totalCashSavings);
+        setPensionPot(hydrated.totalPensionPot);
+        setMortgageBalance(hydrated.mortgageBalance);
+        if (hydrated.mortgageBalance > 0) {
+          setHousingStatus("mortgage");
+          setPropertyValue(hydrated.propertyValue);
+        } else if (hydrated.housingStatus === "OWN_OUTRIGHT") {
+          setHousingStatus("own_outright");
+        } else {
+          setHousingStatus("renting");
         }
-        if (parsed.age) setAge(parsed.age);
-        if (parsed.isSelfEmployed) setEmploymentType("self-employed");
-        if (parsed.pensionContributionPct !== undefined)
-          setPensionPercent(parsed.pensionContributionPct);
-        if (parsed.salarySacrifice !== undefined) setIsSalarySacrifice(parsed.salarySacrifice);
-        if (parsed.isSalarySacrifice !== undefined) setIsSalarySacrifice(parsed.isSalarySacrifice);
-        if (parsed.initialCashSavings !== undefined) setCashSavings(parsed.initialCashSavings);
-        if (parsed.totalCashSavings !== undefined) setCashSavings(parsed.totalCashSavings);
-        if (parsed.totalPensionPot !== undefined) setPensionPot(parsed.totalPensionPot);
-        if (parsed.initialInvestments !== undefined) setPensionPot(parsed.initialInvestments);
-        if (parsed.mortgageBalance !== undefined) {
-          setMortgageBalance(parsed.mortgageBalance);
-          if (parsed.mortgageBalance > 0) {
-            setHousingStatus("mortgage");
-            setPropertyValue(parsed.propertyValue ?? Math.round(parsed.mortgageBalance * 1.35));
-          }
-        }
-        if (parsed.totalUnsecuredDebt !== undefined) setUnsecuredDebt(parsed.totalUnsecuredDebt);
-        if (parsed.monthlyHousingCost !== undefined)
-          setMonthlyHousingCost(parsed.monthlyHousingCost);
-        if (parsed.monthlyOtherOutgoings !== undefined)
-          setMonthlyOtherOutgoings(parsed.monthlyOtherOutgoings);
+        setUnsecuredDebt(hydrated.totalUnsecuredDebt);
+        setMonthlyHousingCost(hydrated.monthlyHousingCost);
+        setMonthlyOtherOutgoings(hydrated.monthlyOtherOutgoings);
       }
     } catch (err) {
       console.error("Failed to read onboarding seed:", err);

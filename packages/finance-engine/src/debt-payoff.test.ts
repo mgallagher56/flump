@@ -167,7 +167,7 @@ describe("debt-payoff module", () => {
     it("evaluateUkStudentLoan calculates repayment according to plan", () => {
       const sl = evaluateUkStudentLoan("plan2", 35000, 40000);
       expect(sl.annualRepayment).toBeGreaterThan(0);
-      expect(sl.threshold).toBe(28470);
+      expect(sl.threshold).toBe(27295);
     });
 
     it("calculateDebtToWealthBridge returns crossover points", () => {

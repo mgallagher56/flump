@@ -223,11 +223,6 @@ export const WealthCheckHeroWidget: FC = () => {
   const handleSaveAndStart = () => {
     const isDebt = activeTab === "debt";
 
-    if (typeof document !== "undefined") {
-      // biome-ignore lint/suspicious/noDocumentCookie: Cookie required for SSR/onboarding hydration
-      document.cookie = `flump_onboarding_seed=${isDebt ? "stabilize" : "optimize"}; path=/; max-age=86400`;
-    }
-
     const payload: OnboardingSeedPayload = {
       annualIncome: isDebt ? 34000 : annualIncome,
       pensionContributionPct: 5,
@@ -241,12 +236,12 @@ export const WealthCheckHeroWidget: FC = () => {
             "accounts",
             "budget",
             "pension",
-            "savings",
             "forecast",
             ...(annualIncome >= 95000 ? (["tax"] as const) : []),
           ],
       timestamp: Date.now(),
     };
+    persistOnboardingSeed(payload);
 
     persistOnboardingSeed(payload);
     navigate("/signUp");
