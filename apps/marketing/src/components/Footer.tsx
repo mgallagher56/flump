@@ -42,7 +42,7 @@ export const Footer: FC = () => {
       <div style={{ maxWidth: "1200px", margin: "0 auto" }}>
         <div
           className={grid({
-            columns: { base: 1, sm: 2, lg: 5 },
+            columns: { base: 1, sm: 2, lg: 4 },
             gap: "8",
             mb: "12",
           })}
@@ -62,8 +62,8 @@ export const Footer: FC = () => {
               </span>
             </div>
             <p style={{ fontSize: "14px", lineHeight: "1.6", color: "#94a3b8" }}>
-              The UK personal finance engine engineered specifically for HMRC rules, high marginal
-              tax rates, and debt-to-wealth transitions.
+              The UK personal finance engine engineered for HMRC tax thresholds, pension
+              optimization, and clear debt-to-wealth transitions.
             </p>
             <div className={flex({ gap: "3", align: "center" })}>
               <span
@@ -78,14 +78,14 @@ export const Footer: FC = () => {
                   borderRadius: "6px",
                 }}
               >
-                <FiLock size={12} /> Bank-Grade 256-bit AES
+                <FiLock size={12} /> 256-bit AES Encryption
               </span>
             </div>
           </div>
 
           {/* Calculators */}
           <div className={stack({ gap: "3" })}>
-            <h4 className={sectionTitleStyle}>Free UK Calculators</h4>
+            <h4 className={sectionTitleStyle}>Calculators</h4>
             <Link to="/tools/uk-100k-tax-trap-calculator" className={linkStyle}>
               £100k Tax Trap Calculator
             </Link>
@@ -102,7 +102,7 @@ export const Footer: FC = () => {
               Section 24 Landlord Tax
             </Link>
             <Link to="/tools/overdraft-cost-and-payoff-calculator" className={linkStyle}>
-              Arranged Overdraft EAR
+              Overdraft Cost & Payoff
             </Link>
           </div>
 
@@ -110,10 +110,10 @@ export const Footer: FC = () => {
           <div className={stack({ gap: "3" })}>
             <h4 className={sectionTitleStyle}>Platform</h4>
             <a href={`${appUrl}/sandbox`} className={linkStyle} target="_blank" rel="noreferrer">
-              Live Interactive Sandbox <FiExternalLink style={{ display: "inline" }} size={11} />
+              Live Interactive Demo <FiExternalLink style={{ display: "inline" }} size={11} />
             </a>
             <Link to="/pricing" className={linkStyle}>
-              Pricing & Tier Matrix
+              Pricing Plans
             </Link>
             <a href={`${appUrl}/login`} className={linkStyle}>
               Sign In to Web App
@@ -133,27 +133,10 @@ export const Footer: FC = () => {
               UK GDPR Data Policies
             </Link>
             <Link to="/security" className={linkStyle}>
-              Manual-Only Privacy Mode
+              Manual-First Privacy Mode
             </Link>
             <Link to="/security" className={linkStyle}>
-              Encryption Standards
-            </Link>
-          </div>
-
-          {/* Financial Playbooks */}
-          <div className={stack({ gap: "3" })}>
-            <h4 className={sectionTitleStyle}>UK Playbooks</h4>
-            <Link to="/guides/how-to-escape-the-60-percent-tax-trap" className={linkStyle}>
-              Escape the 60% Tax Trap
-            </Link>
-            <Link to="/guides/snowball-vs-avalanche-uk-overdrafts-cards" className={linkStyle}>
-              Card & Overdraft Payoff
-            </Link>
-            <Link to="/guides/mortgage-fix-ending-overpay-vs-invest" className={linkStyle}>
-              Mortgage Fix Ending Strategy
-            </Link>
-            <Link to="/guides/section-24-landlord-tax-survival" className={linkStyle}>
-              Section 24 BTL Survival
+              Security Architecture
             </Link>
           </div>
         </div>
@@ -189,10 +172,7 @@ export const Footer: FC = () => {
             </span>
             <div className={flex({ gap: "4" })}>
               <Link to="/security" style={{ color: "#94a3b8", textDecoration: "none" }}>
-                Privacy & Data Deletion
-              </Link>
-              <Link to="/security" style={{ color: "#94a3b8", textDecoration: "none" }}>
-                Security Whitepaper
+                Security & Data Policies
               </Link>
             </div>
           </div>

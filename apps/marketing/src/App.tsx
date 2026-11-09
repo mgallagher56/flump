@@ -1,7 +1,5 @@
 import { Route, Routes } from "react-router-dom";
 import { ThemeProvider } from "./context/ThemeContext";
-import { GuidePage } from "./pages/GuidePage";
-import { GuidesIndexPage } from "./pages/GuidesIndexPage";
 import { HomePage } from "./pages/HomePage";
 import { PricingPage } from "./pages/PricingPage";
 import { SecurityPage } from "./pages/SecurityPage";
@@ -17,8 +15,6 @@ export default function App() {
         <Route path="/tools/:slug" element={<ToolPage />} />
         <Route path="/pricing" element={<PricingPage />} />
         <Route path="/security" element={<SecurityPage />} />
-        <Route path="/guides" element={<GuidesIndexPage />} />
-        <Route path="/guides/:slug" element={<GuidePage />} />
         <Route path="*" element={<HomePage />} />
       </Routes>
     </ThemeProvider>
