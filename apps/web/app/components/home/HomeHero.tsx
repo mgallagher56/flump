@@ -5,7 +5,7 @@ import { Link as RouterLink } from "react-router";
 import FLPButton from "~/components/core/buttons/FLPButton";
 import FLPHeading from "~/components/core/typography/FLPHeading";
 import FLPText from "~/components/core/typography/FLPText";
-import WealthCheckHeroWidget from "./WealthCheckHeroWidget";
+import WebBaselineSnapshotPreview from "./WebBaselineSnapshotPreview";
 
 const heroContainerStyle = css({
   display: "flex",
@@ -105,13 +105,13 @@ export const HomeHero: FC = () => {
         lineHeight="1.6"
         style={{ maxWidth: "780px", margin: "0 auto" }}
       >
-        The UK financial engine built for every stage of your money. Crush high-interest debt, build
-        an unshakeable emergency runway, and model your path to long-term wealth—in one unified
-        workspace.
+        Get your complete UK financial baseline in 60 seconds. Know your Net Worth, weekly
+        Safe-to-Spend cash, and emergency runway—then drill down into taxes, mortgages, or debt
+        payoff when you're ready.
       </FLPText>
 
-      {/* The 30-Second UK Wealth Check Interactive Sandbox */}
-      <WealthCheckHeroWidget />
+      {/* Clean Baseline Snapshot Preview Card */}
+      <WebBaselineSnapshotPreview />
 
       <div className={ctaStackStyle}>
         <FLPButton size="lg">
@@ -125,7 +125,7 @@ export const HomeHero: FC = () => {
             }}
             to="/signUp"
           >
-            Start Free Today <FiArrowRight aria-hidden="true" />
+            Get Your 60-Second Baseline Free <FiArrowRight aria-hidden="true" />
           </RouterLink>
         </FLPButton>
         <FLPButton size="lg" variant="outline">

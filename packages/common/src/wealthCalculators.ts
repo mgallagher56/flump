@@ -1,13 +1,26 @@
 import { calculateUKEWNITakeHome, getCurrentUKTaxYear } from "./taxRules.js";
 
 export interface OnboardingSeedPayload {
+  mode?: "DEBT" | "WEALTH";
+  age?: number;
   annualIncome?: number;
+  annualGrossSalary?: number;
+  monthlyTakeHomeOverride?: number;
   pensionContributionPct?: number;
   salarySacrifice?: boolean;
+  isSalarySacrifice?: boolean;
+  housingStatus?: "RENTING" | "MORTGAGE" | "OWN_OUTRIGHT";
+  monthlyHousingCost?: number;
+  propertyValue?: number;
+  mortgageBalance?: number;
+  monthlyOtherOutgoings?: number;
+  totalCashSavings?: number;
+  totalPensionPot?: number;
+  totalUnsecuredDebt?: number;
   initialCashSavings?: number;
   initialInvestments?: number;
   monthlyContribution?: number;
-  mortgageBalance?: number;
+  studentLoanPlan?: string;
   isSelfEmployed?: boolean;
   inferredModules: Array<
     "accounts" | "budget" | "savings" | "pension" | "mortgage" | "tax" | "forecast" | "debt"
