@@ -362,7 +362,7 @@ export const InteractiveFinancialTeaser: FC = () => {
   return (
     <div className={containerStyle} id="interactive-demo">
       <div style={{ textAlign: "center", marginBottom: "32px" }}>
-        <FLPHeading as="h2" color="text.primary" mb={2} size="2xl">
+        <FLPHeading as="h2" color="text.primary" mb={2} size="3xl">
           Test the calculation engines live
         </FLPHeading>
         <FLPText color="text.muted" fontSize="md">

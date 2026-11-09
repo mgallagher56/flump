@@ -54,8 +54,15 @@ const FLPHeading: FC<FLPHeadingProps> = ({
     margin: 0,
   });
 
+  const mergedStyle = {
+    fontSize: sizeMap[size],
+    ...(mt !== undefined ? { marginTop: typeof mt === "number" ? `${mt * 4}px` : mt } : {}),
+    ...(mb !== undefined ? { marginBottom: typeof mb === "number" ? `${mb * 4}px` : mb } : {}),
+    ...style,
+  };
+
   return (
-    <Component className={`${headingStyle} ${className || ""}`} style={style} {...props}>
+    <Component className={`${headingStyle} ${className || ""}`} style={mergedStyle} {...props}>
       {children}
     </Component>
   );

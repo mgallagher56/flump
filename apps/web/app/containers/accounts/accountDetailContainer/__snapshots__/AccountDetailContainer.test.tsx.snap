@@ -39,6 +39,7 @@ exports[`<AccountDetailContainer /> > should add new years when buttons are clic
           </div>
           <h1
             class="c_text.primary ff_var(--fonts-display,_'Plus_Jakarta_Sans',_sans-serif) ls_-0.025em fs_1.5rem fw_bold mt_1 lh_tight m_0 "
+            style="font-size: 1.5rem; margin-top: 4px;"
           >
             My current account
           </h1>
@@ -47,6 +48,7 @@ exports[`<AccountDetailContainer /> > should add new years when buttons are clic
           >
             <h2
               class="c_text.primary ff_var(--fonts-display,_'Plus_Jakarta_Sans',_sans-serif) ls_-0.025em fs_1.875rem fw_bold lh_tight m_0 "
+              style="font-size: 1.875rem;"
             >
               £1,000
             </h2>
@@ -215,6 +217,7 @@ exports[`<AccountDetailContainer /> > should render 1`] = `
           </div>
           <h1
             class="c_text.primary ff_var(--fonts-display,_'Plus_Jakarta_Sans',_sans-serif) ls_-0.025em fs_1.5rem fw_bold mt_1 lh_tight m_0 "
+            style="font-size: 1.5rem; margin-top: 4px;"
           >
             My current account
           </h1>
@@ -223,6 +226,7 @@ exports[`<AccountDetailContainer /> > should render 1`] = `
           >
             <h2
               class="c_text.primary ff_var(--fonts-display,_'Plus_Jakarta_Sans',_sans-serif) ls_-0.025em fs_1.875rem fw_bold lh_tight m_0 "
+              style="font-size: 1.875rem;"
             >
               £1,000
             </h2>
@@ -391,6 +395,7 @@ exports[`<AccountDetailContainer /> > should render add current year button and 
           </div>
           <h1
             class="c_text.primary ff_var(--fonts-display,_'Plus_Jakarta_Sans',_sans-serif) ls_-0.025em fs_1.5rem fw_bold mt_1 lh_tight m_0 "
+            style="font-size: 1.5rem; margin-top: 4px;"
           >
             My current account
           </h1>
@@ -399,6 +404,7 @@ exports[`<AccountDetailContainer /> > should render add current year button and 
           >
             <h2
               class="c_text.primary ff_var(--fonts-display,_'Plus_Jakarta_Sans',_sans-serif) ls_-0.025em fs_1.875rem fw_bold lh_tight m_0 "
+              style="font-size: 1.875rem;"
             >
               £1,000
             </h2>
@@ -540,6 +546,7 @@ exports[`<AccountDetailContainer /> > should toggle edit mode when button is cli
           </div>
           <h1
             class="c_text.primary ff_var(--fonts-display,_'Plus_Jakarta_Sans',_sans-serif) ls_-0.025em fs_1.5rem fw_bold mt_1 lh_tight m_0 "
+            style="font-size: 1.5rem; margin-top: 4px;"
           >
             My current account
           </h1>
@@ -548,6 +555,7 @@ exports[`<AccountDetailContainer /> > should toggle edit mode when button is cli
           >
             <h2
               class="c_text.primary ff_var(--fonts-display,_'Plus_Jakarta_Sans',_sans-serif) ls_-0.025em fs_1.875rem fw_bold lh_tight m_0 "
+              style="font-size: 1.875rem;"
             >
               £1,000
             </h2>
