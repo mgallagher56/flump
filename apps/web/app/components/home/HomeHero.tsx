@@ -85,60 +85,43 @@ export const HomeHero: FC = () => {
         <span>🇬🇧</span> Built Specifically for UK Personal Finance & HMRC Rules
       </span>
 
-      <FLPHeading as="h1" color="text.primary" mb={4} size="4xl">
+      <h1
+        id="hero-heading"
+        style={{
+          fontSize: "clamp(2.5rem, 5.5vw, 4.25rem)",
+          fontWeight: "900",
+          lineHeight: "1.1",
+          letterSpacing: "-0.035em",
+          color: "var(--colors-text-primary)",
+          fontFamily: "var(--fonts-display, 'Plus Jakarta Sans', sans-serif)",
+          margin: "0 0 16px 0",
+          textAlign: "center",
+        }}
+      >
         Get out of the red. <br />
         <span
-          className={css({
+          style={{
             background: "linear-gradient(135deg, #EF4444 0%, #F59E0B 50%, #10B981 100%)",
             backgroundClip: "text",
+            WebkitBackgroundClip: "text",
             color: "transparent",
             display: "inline-block",
-          })}
+          }}
         >
           Build into the black.
         </span>
-      </FLPHeading>
+      </h1>
 
       <FLPText
         color="text.muted"
         fontSize="lg"
         lineHeight="1.6"
-        style={{ maxWidth: "780px", margin: "0 auto" }}
+        style={{ maxWidth: "680px", margin: "0 auto", fontSize: "1.2rem" }}
       >
         Get your complete UK financial baseline in 60 seconds. Know your Net Worth, weekly
         Safe-to-Spend cash, and emergency runway—then drill down into taxes, mortgages, or debt
         payoff when you're ready.
       </FLPText>
-
-      {/* 3D Wealth Engine Hero Illustration */}
-      <div
-        className={css({
-          maxWidth: "820px",
-          width: "100%",
-          margin: "32px auto 0",
-          borderRadius: "2xl",
-          overflow: "hidden",
-          border: "1px solid",
-          borderColor: "border",
-          boxShadow: "0 16px 36px rgba(0, 0, 0, 0.08)",
-        })}
-      >
-        <img
-          src="/illustrations/hero-wealth-engine.jpg"
-          alt="3D Wealth Engine visualising UK net worth progression"
-          loading="eager"
-          style={{
-            width: "100%",
-            maxHeight: "320px",
-            objectFit: "cover",
-            objectPosition: "center 42%",
-            display: "block",
-          }}
-        />
-      </div>
-
-      {/* Clean Baseline Snapshot Preview Card */}
-      <WebBaselineSnapshotPreview />
 
       <div className={ctaStackStyle}>
         <FLPButton size="lg">
@@ -175,6 +158,36 @@ export const HomeHero: FC = () => {
           </RouterLink>
         </FLPButton>
       </div>
+
+      {/* 3D Wealth Engine Hero Illustration */}
+      <div
+        className={css({
+          maxWidth: "820px",
+          width: "100%",
+          margin: "36px auto 0",
+          borderRadius: "2xl",
+          overflow: "hidden",
+          border: "1px solid",
+          borderColor: "border",
+          boxShadow: "0 16px 36px rgba(0, 0, 0, 0.08)",
+        })}
+      >
+        <img
+          src="/illustrations/hero-wealth-engine.jpg"
+          alt="3D Wealth Engine visualising UK net worth progression"
+          loading="eager"
+          style={{
+            width: "100%",
+            maxHeight: "320px",
+            objectFit: "cover",
+            objectPosition: "center 42%",
+            display: "block",
+          }}
+        />
+      </div>
+
+      {/* Clean Baseline Snapshot Preview Card */}
+      <WebBaselineSnapshotPreview />
 
       <div className={trustBarContainer}>
         <div className={trustItem}>
