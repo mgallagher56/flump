@@ -14,7 +14,7 @@ const containerStyle = css({
 });
 
 const stepCardStyle = css({
-  backgroundColor: "surface",
+  backgroundColor: "card",
   border: "1px solid",
   borderColor: "border",
   borderRadius: "2xl",
@@ -22,7 +22,13 @@ const stepCardStyle = css({
   display: "flex",
   flexDirection: "column",
   gap: "12px",
-  boxShadow: "0 4px 16px rgba(0,0,0,0.03)",
+  boxShadow: "card",
+  transition: "transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease",
+  _hover: {
+    transform: "translateY(-3px)",
+    boxShadow: "cardHover",
+    borderColor: "primary",
+  },
 });
 
 const stepNumberBadge = css({
@@ -31,7 +37,9 @@ const stepNumberBadge = css({
   textTransform: "uppercase",
   letterSpacing: "0.08em",
   color: "primary",
-  backgroundColor: "rgba(99, 102, 241, 0.12)",
+  backgroundColor: "surface.tinted",
+  border: "1px solid",
+  borderColor: { base: "rgba(99, 102, 241, 0.25)", _dark: "rgba(99, 102, 241, 0.3)" },
   padding: "4px 10px",
   borderRadius: "full",
   display: "inline-flex",

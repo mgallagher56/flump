@@ -61,7 +61,7 @@ describe("<Header />", () => {
     expect(header).not.toBeNull();
     expect(nav).not.toBeNull();
     expect(header?.className).toContain("pos_sticky");
-    expect(nav?.className).toContain("pos_sticky");
+    expect(header?.className).toContain("top_0");
   });
 
   test("renders mobile variant and opens/closes mobile navigation drawer", () => {

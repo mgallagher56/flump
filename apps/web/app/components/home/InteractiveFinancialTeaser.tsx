@@ -16,11 +16,11 @@ const containerStyle = css({
 });
 
 const teaserCardStyle = css({
-  backgroundColor: "surface",
+  backgroundColor: "card",
   border: "1px solid",
   borderColor: "border",
   borderRadius: "2xl",
-  boxShadow: "0 12px 32px rgba(0, 0, 0, 0.06)",
+  boxShadow: "floating",
   overflow: "hidden",
   transition: "border-color 0.2s ease",
 });
@@ -29,7 +29,7 @@ const tabListStyle = css({
   display: "flex",
   borderBottom: "1px solid",
   borderColor: "border",
-  backgroundColor: "rgba(0, 0, 0, 0.02)",
+  backgroundColor: { base: "slate.100", _dark: "dark.subtle" },
   overflowX: "auto",
 });
 
@@ -43,9 +43,9 @@ const tabButtonStyle = (active: boolean) =>
     justifyContent: "center",
     gap: "8px",
     fontSize: "sm",
-    fontWeight: active ? "semibold" : "medium",
-    color: active ? "primary" : "text.muted",
-    backgroundColor: active ? "surface" : "transparent",
+    fontWeight: active ? "bold" : "medium",
+    color: active ? "primary" : "text.secondary",
+    backgroundColor: active ? "card" : "transparent",
     border: "none",
     borderBottom: active ? "2px solid" : "2px solid transparent",
     borderBottomColor: active ? "primary" : "transparent",
@@ -131,28 +131,29 @@ const chipButtonStyle = (active: boolean) =>
     padding: "6px 12px",
     borderRadius: "full",
     fontSize: "xs",
-    fontWeight: "medium",
+    fontWeight: "semibold",
     cursor: "pointer",
     border: "1px solid",
     borderColor: active ? "primary" : "border",
-    backgroundColor: active ? "rgba(99, 102, 241, 0.1)" : "background",
-    color: active ? "primary" : "text.muted",
+    backgroundColor: active ? "rgba(99, 102, 241, 0.12)" : "surface.subtle",
+    color: active ? "primary" : "text.secondary",
     transition: "all 0.15s ease",
     "&:hover": {
       borderColor: "primary",
-      color: "text.primary",
+      color: "primary",
     },
   });
 
 const resultBoxStyle = css({
   padding: "24px",
   borderRadius: "xl",
-  backgroundColor: "background",
+  backgroundColor: { base: "slate.50", _dark: "dark.subtle" },
   border: "1px solid",
   borderColor: "border",
   display: "flex",
   flexDirection: "column",
   gap: "16px",
+  boxShadow: "xs",
 });
 
 const statRowStyle = css({
