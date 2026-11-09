@@ -6,6 +6,7 @@ import HomeCTA from "./HomeCTA";
 import HomeFAQ from "./HomeFAQ";
 import HomeFooter from "./HomeFooter";
 import HomeHero from "./HomeHero";
+import InteractiveFinancialTeaser from "./InteractiveFinancialTeaser";
 import SecurityPrivacySection from "./SecurityPrivacySection";
 import WebHowItWorksSection from "./WebHowItWorksSection";
 
@@ -22,13 +23,15 @@ export const LoggedOutHome: FC = () => {
       <HomeHero />
       {/* 2. How It Works (3 Simple Steps) */}
       <WebHowItWorksSection />
-      {/* 3. Core Outcome Pillars */}
+      {/* 3. Interactive Engine Sandbox Station */}
+      <InteractiveFinancialTeaser />
+      {/* 4. Core Outcome Pillars */}
       <FeaturePillars />
-      {/* 4. Comparison Matrix */}
+      {/* 5. Comparison Matrix */}
       <ComparisonMatrix />
-      {/* 5. Security & Privacy Reassurance */}
+      {/* 6. Security & Privacy Reassurance */}
       <SecurityPrivacySection />
-      {/* 6. FAQ & Final CTA */}
+      {/* 7. FAQ & Final CTA */}
       <HomeFAQ />
       <HomeCTA />
       <HomeFooter />

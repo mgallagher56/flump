@@ -59,8 +59,8 @@ export const action = async (args: ActionFunctionArgs) => {
     ? JSON.parse(rawEnabledPages as string)
     : ALL_PAGE_KEYS;
 
-  const dashboardWidgets: DashboardWidgetKey[] = ["financialHealth", ...enabledPages];
-  const dashboardWidgetOrder: DashboardWidgetKey[] = ["financialHealth", ...enabledPages];
+  const dashboardWidgets: DashboardWidgetKey[] = [...enabledPages];
+  const dashboardWidgetOrder: DashboardWidgetKey[] = [...enabledPages];
 
   try {
     await fetch(`${apiUrl}/user-profile`, {
@@ -233,14 +233,8 @@ export default function OnboardingRoute() {
   const handleFinish = async () => {
     setIsSubmitting(true);
     const pagesToSave = inferredModules;
-    const dashboardWidgets: DashboardWidgetKey[] = [
-      "financialHealth",
-      ...(pagesToSave as DashboardWidgetKey[]),
-    ];
-    const dashboardWidgetOrder: DashboardWidgetKey[] = [
-      "financialHealth",
-      ...(pagesToSave as DashboardWidgetKey[]),
-    ];
+    const dashboardWidgets: DashboardWidgetKey[] = [...(pagesToSave as DashboardWidgetKey[])];
+    const dashboardWidgetOrder: DashboardWidgetKey[] = [...(pagesToSave as DashboardWidgetKey[])];
 
     try {
       // 1. Update UserProfile

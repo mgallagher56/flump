@@ -269,14 +269,14 @@ export const DashboardWidgetCard: FC<DashboardWidgetCardProps> = ({
                 </>
               )}
 
-              {!hideOpenLink && widgetKey !== "financialHealth" && Boolean(page.route) && (
+              {!hideOpenLink && Boolean(page.route) && (
                 <Link
                   to={page.route}
                   className={css({
                     display: editMode ? { base: "none", md: "inline-flex" } : "inline-flex",
                     alignItems: "center",
                     gap: "4px",
-                    fontSize: { base: "11px", md: "xs" },
+                    fontSize: "xs",
                     fontWeight: "semibold",
                     color: "primary",
                     textDecoration: "none",

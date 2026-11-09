@@ -8,7 +8,7 @@ export type AppPageKey =
   | "forecast"
   | "tax";
 
-export type DashboardWidgetKey = AppPageKey | "financialHealth";
+export type DashboardWidgetKey = AppPageKey;
 
 export interface AppPageConfig {
   key: AppPageKey;
@@ -106,13 +106,6 @@ export const APP_PAGES: Record<AppPageKey, AppPageConfig> = {
 };
 
 export const DASHBOARD_WIDGET_METAS: Record<DashboardWidgetKey, DashboardWidgetMeta> = {
-  financialHealth: {
-    key: "financialHealth",
-    label: "Financial Health Summary",
-    route: "/app",
-    description: "Holistic score, current strengths, and areas to improve across your finances",
-    badgeColor: "#10b981",
-  },
   accounts: APP_PAGES.accounts,
   budget: APP_PAGES.budget,
   debt: APP_PAGES.debt,
@@ -123,18 +116,11 @@ export const DASHBOARD_WIDGET_METAS: Record<DashboardWidgetKey, DashboardWidgetM
   tax: APP_PAGES.tax,
 };
 
-export const ALL_DASHBOARD_WIDGET_KEYS: DashboardWidgetKey[] = [
-  "financialHealth",
-  ...ALL_PAGE_KEYS,
-];
+export const ALL_DASHBOARD_WIDGET_KEYS: DashboardWidgetKey[] = [...ALL_PAGE_KEYS];
 
 export const DEFAULT_ENABLED_PAGES: AppPageKey[] = [...ALL_PAGE_KEYS];
-export const DEFAULT_DASHBOARD_WIDGETS: DashboardWidgetKey[] = [
-  "financialHealth",
-  ...ALL_PAGE_KEYS,
-];
+export const DEFAULT_DASHBOARD_WIDGETS: DashboardWidgetKey[] = [...ALL_PAGE_KEYS];
 export const DEFAULT_WIDGET_SIZES: Record<string, "normal" | "wide"> = {
-  financialHealth: "wide",
   accounts: "normal",
   budget: "normal",
   debt: "normal",

@@ -2,6 +2,7 @@ import { css } from "@repo/ui/styled-system/css";
 import { useEffect } from "react";
 import type { LoaderFunctionArgs } from "react-router";
 import { Links, Meta, Outlet, Scripts, ScrollRestoration, useLoaderData } from "react-router";
+import MobileBottomBar from "./components/navigation/MobileBottomBar";
 import Header from "./components/structure/header/Header";
 import { ResponsiveProvider } from "./context/ResponsiveContext";
 import { useTheme } from "./hooks/useTheme";
@@ -113,9 +114,14 @@ export default function App() {
               })}
             >
               <Header />
-              <main>
+              <main
+                className={css({
+                  paddingBottom: { base: user ? "72px" : "0", md: "0" },
+                })}
+              >
                 <Outlet />
               </main>
+              {Boolean(user) && <MobileBottomBar user={user} />}
             </div>
           </ResponsiveProvider>
         </ThemeContext.Provider>

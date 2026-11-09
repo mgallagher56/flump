@@ -55,26 +55,8 @@ export const DEMO_PROFILE: UserProfile = {
     "tax",
   ],
   enabledPages: ["accounts", "budget", "savings", "pension", "mortgage", "forecast", "tax"],
-  dashboardWidgets: [
-    "financialHealth",
-    "accounts",
-    "budget",
-    "savings",
-    "pension",
-    "mortgage",
-    "forecast",
-    "tax",
-  ],
-  dashboardWidgetOrder: [
-    "financialHealth",
-    "accounts",
-    "budget",
-    "savings",
-    "pension",
-    "mortgage",
-    "forecast",
-    "tax",
-  ],
+  dashboardWidgets: ["accounts", "budget", "savings", "pension", "mortgage", "forecast", "tax"],
+  dashboardWidgetOrder: ["accounts", "budget", "savings", "pension", "mortgage", "forecast", "tax"],
   dashboardWidgetSizes: {},
   dashboardWidgetConfig: {},
   onboardingCompleted: true,
@@ -482,14 +464,13 @@ export function getSandboxPersonaData(persona: "debt" | "medium" | "high" | "wea
       hasMortgage: false,
       hasBuyToLet: false,
       enabledPages: ["accounts", "budget", "debt", "pension", "tax"],
-      dashboardWidgets: ["financialHealth", "accounts", "budget", "debt"],
+      dashboardWidgets: ["accounts", "budget", "debt"],
       dashboardWidgetSizes: {
-        financialHealth: "wide",
         accounts: "normal",
         budget: "normal",
         debt: "normal",
       },
-      dashboardWidgetOrder: ["financialHealth", "accounts", "budget", "debt"],
+      dashboardWidgetOrder: ["accounts", "budget", "debt"],
     };
 
     return {
@@ -663,23 +644,15 @@ export function getSandboxPersonaData(persona: "debt" | "medium" | "high" | "wea
       hasMortgage: false,
       hasBuyToLet: false,
       enabledPages: ["accounts", "budget", "savings", "pension", "forecast"],
-      dashboardWidgets: ["financialHealth", "accounts", "budget", "savings", "pension", "forecast"],
+      dashboardWidgets: ["accounts", "budget", "savings", "pension", "forecast"],
       dashboardWidgetSizes: {
-        financialHealth: "wide",
         accounts: "normal",
         budget: "normal",
         savings: "normal",
         pension: "normal",
         forecast: "normal",
       },
-      dashboardWidgetOrder: [
-        "financialHealth",
-        "accounts",
-        "budget",
-        "savings",
-        "pension",
-        "forecast",
-      ],
+      dashboardWidgetOrder: ["accounts", "budget", "savings", "pension", "forecast"],
     };
 
     return {
@@ -912,17 +885,8 @@ export function getSandboxPersonaData(persona: "debt" | "medium" | "high" | "wea
     pensionEmployerPercent: 5.0,
     isSalarySacrifice: true,
     enabledPages: ["accounts", "budget", "tax", "pension", "mortgage", "forecast"],
-    dashboardWidgets: [
-      "financialHealth",
-      "accounts",
-      "budget",
-      "tax",
-      "pension",
-      "mortgage",
-      "forecast",
-    ],
+    dashboardWidgets: ["accounts", "budget", "tax", "pension", "mortgage", "forecast"],
     dashboardWidgetSizes: {
-      financialHealth: "wide",
       accounts: "normal",
       budget: "normal",
       tax: "normal",
@@ -930,15 +894,7 @@ export function getSandboxPersonaData(persona: "debt" | "medium" | "high" | "wea
       mortgage: "normal",
       forecast: "normal",
     },
-    dashboardWidgetOrder: [
-      "financialHealth",
-      "accounts",
-      "budget",
-      "tax",
-      "pension",
-      "mortgage",
-      "forecast",
-    ],
+    dashboardWidgetOrder: ["accounts", "budget", "tax", "pension", "mortgage", "forecast"],
   };
 
   return {
