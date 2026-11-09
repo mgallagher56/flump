@@ -43,7 +43,7 @@ vi.mock("~/hooks/useUserProfile", async (importOriginal) => {
 });
 
 describe("DebtContainer", () => {
-  it("renders Debt Crusher overview and active liabilities", () => {
+  it("renders debt payoff overview and active liabilities", () => {
     render(<DebtContainer />);
 
     expect(screen.getByText(/Debt payoff and recovery/i)).toBeDefined();

@@ -316,7 +316,7 @@ export interface BankingProviderAdapter {
 
 - Redirect `/app/savings` → `/app/accounts?tab=savings-yield`.
 - `/app/accounts` must include:
-- Top Summary Bar: **Total Net Worth**, **Total Liquid Cash & Savings (with Weighted Average APY)**, and **UK £20,000 ISA Allowance Progress Pill** (with days remaining until 5 April).
+- Top Summary Bar: **Total Net Worth**, **Total Liquid Cash & Savings (with Weighted Average AER)**, and **UK £20,000 ISA Allowance Progress Pill** (with days remaining until 5 April).
 - Tabs: `All` | `Cash & Current` | `Savings & ISAs (Yield & Compound Forecaster)` | `Investments & Pensions` | `Credit & Debt` | `Mortgages`.
 - **60-Second Monthly Balance Check-In Drawer:** A 1-click inline grid allowing users with manual accounts (SIPPs, Vanguard, Mortgages) to update all current-month balances in one view without opening individual account pages.
 

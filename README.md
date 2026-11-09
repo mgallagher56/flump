@@ -59,7 +59,7 @@ For a granular breakdown of every live route, component, and user interaction, c
 - **50/30/20 cash flow breakdown**: Visualises monthly surplus or deficit across needs, wants, and savings.
 - **Category tables**: Dedicated tracking for housing, bills, living expenses, savings, and income, with weekly, monthly, and annual frequency conversions.
 - **Custom expense categories**: Create, rename, and delete custom budget categories.
-- **Emergency runway calculator**: Calculates exact months of survival runway based on liquid reserves divided by monthly burn rate, with scenario cutback toggles.
+- **Emergency runway calculator**: Calculates exact months of emergency runway based on liquid reserves divided by monthly essential outgoings, with scenario cutback toggles.
 
 ### 💰 Savings and investments hub
 
@@ -133,7 +133,7 @@ flump/
 
 ### Domain Packages
 
-- **`@repo/common`**: Houses pure mathematical calculators and domain logic (`taxCalculator.ts`, `taxRules.ts`, mortgage amortization formulas, auto-enrolment logic). Zero framework dependencies so it can be shared seamlessly across Web, Backend, and Mobile.
+- **`@repo/common`**: Houses pure mathematical calculators and domain logic (`taxCalculator.ts`, `taxRules.ts`, mortgage amortisation formulas, auto-enrolment logic). Zero framework dependencies so it can be shared seamlessly across Web, Backend, and Mobile.
 - **`@repo/ui`**: Design system library with Panda CSS tokens, recipe variants, and custom UI primitives (including accessible `FLPCheckbox`, modal dialogs, and navigation menus).
 
 ---

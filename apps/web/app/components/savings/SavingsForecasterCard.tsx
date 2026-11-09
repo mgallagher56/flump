@@ -298,7 +298,7 @@ export const SavingsForecasterCard: FC<SavingsForecasterCardProps> = ({
                   color: "var(--colors-text-muted)",
                   cursor: "pointer",
                 }}
-                title={`Reset to portfolio weighted APY (${defaultRate.toFixed(2)}%)`}
+                title={`Reset to portfolio weighted AER (${defaultRate.toFixed(2)}%)`}
                 type="button"
                 onClick={() => {
                   setIsCustomRate(false);
@@ -467,7 +467,7 @@ export const SavingsForecasterCard: FC<SavingsForecasterCardProps> = ({
           <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
             <FaFlagCheckered style={{ color: "var(--colors-primary)" }} size={13} />
             <FLPHeading as="h5" size="xs">
-              Milestone Timeline at {effectiveScenarioRate.toFixed(1)}% APY
+              Milestone timeline at {effectiveScenarioRate.toFixed(1)}% AER
               {adjustForInflation ? " (Real)" : ""}
             </FLPHeading>
           </div>

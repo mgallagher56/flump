@@ -75,7 +75,7 @@ export const ZeroPercentCliffTool: FC = () => {
       >
         <div>
           <FLPHeading as="h3" size="xl">
-            0% balance transfer cliff calculator
+            0% balance transfer promotional expiry calculator
           </FLPHeading>
           <FLPText color="text.muted" fontSize="sm">
             Calculate the exact monthly repayment needed to clear your card before the 0%

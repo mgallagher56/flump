@@ -145,7 +145,7 @@ export const DebtWidget: FC<DebtWidgetProps> = ({
           </FLPText>
           <Link to="/app/debt">
             <FLPButton size="sm" variant="outline">
-              Open Debt Crusher →
+              Open debt payoff →
             </FLPButton>
           </Link>
         </div>

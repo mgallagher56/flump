@@ -701,7 +701,7 @@ const BudgetSetupWizard: FC<BudgetSetupWizardProps> = ({
               >
                 <FaPiggyBank style={{ color: "#10b981", fontSize: "18px", flexShrink: 0 }} />
                 <FLPText fontSize="xs">
-                  Tip: Want to track specific savings pots, APY rates, and compound growth? You can
+                  Tip: Want to track specific savings pots, AER rates, and compound growth? You can
                   manage and forecast multi-account savings anytime in the{" "}
                   <Link
                     to="/app/savings"

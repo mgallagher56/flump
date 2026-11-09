@@ -205,7 +205,7 @@ const MortgageContainer: FC = () => {
             <FaExclamationTriangle color="#dc2626" size={20} />
             <div>
               <FLPHeading as="h4" size="sm" style={{ color: "#dc2626", margin: 0 }}>
-                Mortgage refinance cliff warning (expires in {refinanceWarning.diffMonths} months)
+                Mortgage refinance expiry warning (expires in {refinanceWarning.diffMonths} months)
               </FLPHeading>
               <FLPText fontSize="xs" color="text.muted" style={{ margin: "2px 0 0 0" }}>
                 Your fixed-rate deal expires on <strong>{refinanceWarning.date}</strong>. Moving to

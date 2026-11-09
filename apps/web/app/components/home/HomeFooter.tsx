@@ -175,7 +175,7 @@ export const HomeFooter: FC = () => {
                 className={linkStyle}
                 to="/tools/0-percent-balance-transfer-payoff-calculator"
               >
-                0% balance transfer cliff
+                0% balance transfer expiry
               </RouterLink>
             </li>
             <li>
@@ -236,7 +236,7 @@ export const HomeFooter: FC = () => {
       {isContactOpen && (
         <FLPModal
           confirmButton={{
-            text: feedbackSent ? "Sent!" : "Send feedback",
+            text: feedbackSent ? "Sent" : "Send feedback",
           }}
           disabled={!message.trim() || feedbackSent}
           onClose={handleClose}
@@ -271,7 +271,7 @@ export const HomeFooter: FC = () => {
 
             {feedbackSent ? (
               <div style={{ color: "#10b981", fontWeight: 600, padding: "12px 0" }}>
-                Thank you! Your message has been received.
+                Thank you. Your message has been received.
               </div>
             ) : (
               <>

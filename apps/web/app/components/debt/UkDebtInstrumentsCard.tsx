@@ -171,12 +171,12 @@ export const UkDebtInstrumentsCard: FC = () => {
 
         <div className={tabsHeaderStyle}>
           <button
-            aria-label="0% Balance Transfer Cliff Tracker"
+            aria-label="0% Balance Transfer Expiry Tracker"
             className={tabButtonStyle(activeTab === "cliff")}
             type="button"
             onClick={() => setActiveTab("cliff")}
           >
-            <FaCreditCard /> 0% Cliff Tracker
+            <FaCreditCard /> 0% Expiry Tracker
           </button>
           <button
             aria-label="Arranged Overdraft EAR Cost"
@@ -245,14 +245,14 @@ export const UkDebtInstrumentsCard: FC = () => {
 
             <div className={resultBoxStyle}>
               <FLPText fontSize="md" fontWeight="bold">
-                Cliff Payoff Diagnosis
+                Promotional expiry diagnosis
               </FLPText>
 
               {cliffResult.alertRequired ? (
                 <div className={alertBannerStyle}>
                   <FaExclamationTriangle size={20} style={{ flexShrink: 0, marginTop: "2px" }} />
                   <div>
-                    <strong>Promotional Window Alert!</strong> You have approximately{" "}
+                    <strong>Promotional window alert:</strong> You have approximately{" "}
                     {cliffResult.daysRemaining} days remaining. Pay down{" "}
                     {formatCurrency(cliffResult.requiredMonthlyPayment)}/mo or prepare to refinance
                     to avoid the {btRevertApr}% revert APR.
@@ -276,7 +276,7 @@ export const UkDebtInstrumentsCard: FC = () => {
                   paddingBottom: "8px",
                 }}
               >
-                <FLPText fontSize="sm">Target Monthly Payment to Beat Cliff:</FLPText>
+                <FLPText fontSize="sm">Target monthly payment before expiry:</FLPText>
                 <FLPText color="primary" fontSize="sm" fontWeight="bold">
                   {formatCurrency(cliffResult.requiredMonthlyPayment)}/mo
                 </FLPText>
@@ -290,15 +290,15 @@ export const UkDebtInstrumentsCard: FC = () => {
                   paddingBottom: "8px",
                 }}
               >
-                <FLPText fontSize="sm">Est. Penalty Interest If Left Unpaid Year 1:</FLPText>
+                <FLPText fontSize="sm">Estimated penalty interest if left unpaid year 1:</FLPText>
                 <FLPText color="red.600" fontSize="sm" fontWeight="bold">
                   {formatCurrency(cliffResult.penaltyInterestFirstYearIfUnpaid)}
                 </FLPText>
               </div>
 
               <FLPText color="text.muted" fontSize="xs">
-                💡 Pro-tip: Never make only the minimum repayment on a 0% card, or you will slam
-                into the APR cliff with an unaddressed balance.
+                💡 Note: Never make only the minimum repayment on a 0% card, or you will revert to
+                the full APR with an unaddressed balance.
               </FLPText>
             </div>
           </div>

@@ -501,7 +501,7 @@ export const ToolPage: FC = () => {
                       color: "var(--colors-text-muted, #64748b)",
                     }}
                   >
-                    MONTHLY TARGET TO BEAT THE CLIFF
+                    MONTHLY TARGET TO CLEAR BEFORE EXPIRY
                   </div>
                   <div
                     style={{

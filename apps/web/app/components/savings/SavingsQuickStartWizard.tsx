@@ -176,7 +176,7 @@ export const SavingsQuickStartWizard: FC<SavingsQuickStartWizardProps> = ({
             <div>
               <label htmlFor="wizard-int-rate">
                 <FLPText fontSize="sm" fontWeight="medium">
-                  Interest Rate / APY (%)
+                  Interest rate / AER (%)
                 </FLPText>
               </label>
               <input

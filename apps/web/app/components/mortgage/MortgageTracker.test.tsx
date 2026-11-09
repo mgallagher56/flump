@@ -22,7 +22,7 @@ describe("<MortgageTracker />", () => {
     const { getByText, getByLabelText } = customRender(<MortgageTracker {...defaultProps} />);
 
     // Verify labels and title
-    expect(getByText("Mortgage Cost Breakdown")).toBeDefined();
+    expect(getByText("Mortgage cost breakdown")).toBeDefined();
     expect(getByText("Outstanding Mortgage Balance")).toBeDefined();
 
     // Verify calculated scheduled monthly payment is rendered (150k at 4.5% over 25yrs is approx £834/mo)
