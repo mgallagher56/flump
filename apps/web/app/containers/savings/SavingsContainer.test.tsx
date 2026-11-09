@@ -76,7 +76,7 @@ describe("SavingsContainer", () => {
   it("renders page header and main savings sections", () => {
     render(<SavingsContainer />);
 
-    expect(screen.getByText("Savings & Compound Growth")).toBeDefined();
+    expect(screen.getByText("Savings and compound growth")).toBeDefined();
     expect(screen.getByText("Total Savings Balance")).toBeDefined();
     expect(screen.getByText("Savings & Investment Accounts")).toBeDefined();
     expect(screen.getByText("Compound Interest Growth Forecaster")).toBeDefined();

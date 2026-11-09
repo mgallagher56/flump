@@ -79,7 +79,7 @@ Flump is a monorepo managed with Turborepo (`turbo`) and Bun.
 - **Grouped Domain Pillars**: Keep primary high-frequency links direct (`Budget`, `Accounts`), and organize specialized tools into grouped dropdown pillars:
   - **Wealth**: Savings (`/app/savings`), Pension (`/app/pension`), Mortgage (`/app/mortgage`).
   - **Planning**: Forecast (`/app/forecast`), Tax (`/app/tax`).
-- **Multi-platform Sync**: When adding or re-organizing tools, ensure `AUTH_DESKTOP_NAV_ROUTES` in `Header.tsx`, `MobileNavDrawer.tsx`, and `MobileBottomBar.tsx` are updated in sync, including localization keys in `en/common.json` and `es/common.json`.
+- **Multi-platform Sync**: When adding or re-organizing tools, ensure `AUTH_DESKTOP_NAV_ROUTES` in `Header.tsx`, `MobileNavDrawer.tsx`, and `MobileBottomBar.tsx` are updated in sync, including localization keys in `en/common.json`.
 
 ### 6. Type-Safe API Client
 
@@ -213,6 +213,14 @@ Flump is a monorepo managed with Turborepo (`turbo`) and Bun.
   - Pension accounts must distinguish between active pots (`isCurrent: true`) and legacy/past employer pots (`isCurrent: false`).
   - Past pots **must never** have direct or workplace monthly contributions (`monthlyContribution = null` / `0`). Direct regular contributions must be stripped at the API layer and excluded from total monthly inflow calculations.
   - Highlight consolidation guidance whenever users have multiple pots or past employer schemes.
+
+### 22. Copy & Style Guide Maintenance
+
+- **Strict British English (`en-GB`)**: All user-facing text across apps, marketing pages, components, dialogs, tools, and documentation must use British English spelling (`optimisation`, `amortisation`, `modelling`, `categorisation`, `visualising`, `enrolment`, `enquiry`, `favourite`, `analyse`).
+- **Sentence Case**: Use sentence case for all headings, subheadings, buttons, tabs, badges, table headers, and form labels, except for proper nouns and recognised UK acronyms (`HMRC`, `FCA`, `PAYE`, `NI`, `ISA`, `SIPP`, `Section 24`).
+- **UK Financial Terminology**: Use `AER` for savings accounts and cash ISAs, `APR`/`EAR` for borrowing and overdrafts, and official UK statutory tax definitions. Never use Americanisms such as `APY`.
+- **No AI Slop or Pseudo-Engineering Jargon**: Avoid melodramatic or speculative buzzwords (`engineered for`, `zero-latency`, `air-gapped`, `cryptographic vault`, `crush your debt`, `defuse promotional cliffs`). Use grounded, pragmatic, and direct language.
+- **Consult & Maintain `docs/copy-style-guide.md`**: Whenever copy, routes, or features are introduced or modified, the agent **MUST** consult `docs/copy-style-guide.md` and ensure full consistency. If new terms or domain concepts are introduced, update `docs/copy-style-guide.md` in the same commit.
 
 ---
 

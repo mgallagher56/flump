@@ -74,34 +74,29 @@ const contentPanelStyle = (isOpen: boolean) =>
 
 const faqItems = [
   {
-    question: "How accurate are the UK tax calculations?",
+    question: "Can Flump move my money or make payments?",
     answer:
-      "Flump's engine is built directly around official HMRC legislation. It supports standard UK tax years (6 April to 5 April), accurate Personal Allowance tapering between £100,000 and £125,140, Class 4 National Insurance contributions (6% and 2% thresholds), and Section 24 finance cost tax reducers.",
+      "No. Flump connects strictly through read-only Account Information Services (AISP) regulated by the Financial Conduct Authority (FCA). Flump cannot initiate payments, move money, or change your account details.",
   },
   {
-    question: "What is Section 24 and why does Flump model it?",
+    question: "Do I have to connect my bank accounts?",
     answer:
-      "Section 24 restricts residential landlords from deducting mortgage interest from rental profits as an expense. Instead, HMRC grants a 20% basic rate tax reducer. For higher and additional rate taxpayers, this often pushes taxable income into higher brackets. Flump models this automatically so you are never surprised by your January Self-Assessment bill.",
+      "No. Flump is designed to work completely manually. You can enter rough totals for income, expenses, and savings in 60 seconds and use every tax, debt, mortgage, and forecasting tool without connecting a bank account.",
   },
   {
-    question: "Can I model joint mortgages or split rental property ownership?",
+    question: "What makes Flump different from generic budgeting apps?",
     answer:
-      "Yes. You can assign custom ownership shares (e.g. 50/50, 70/30) to joint mortgages and rental properties. Flump automatically proportions rental turnover, allowable repairs, and finance cost credits to match your legal ownership share.",
+      "Most budgeting apps are built around US tax rules. Flump is built natively for UK personal finance: HMRC income tax bands, National Insurance, the £100k Personal Allowance taper, student loan plans (1, 2, 4, 5, Postgraduate), Section 24 buy-to-let calculations, and pension salary sacrifice.",
   },
   {
-    question: "How does the Mortgage vs. ISA comparison work?",
+    question: "How does the 60-second baseline work?",
     answer:
-      "Paying down a mortgage provides a guaranteed, tax-free return equal to your mortgage interest rate. Investing in a Stocks & Shares ISA provides variable compound market returns tax-free. Flump's modeler calculates the break-even expected return needed in an ISA to outperform your mortgage overpayment, adjusted for inflation and time horizon.",
+      "Enter 6 rough numbers: your salary, housing, core bills, savings, pension balance, and debt. Flump calculates your net worth, weekly safe to spend, and emergency runway immediately. You can add detail whenever you want.",
   },
   {
-    question: "Is Flump regulated to provide financial advice?",
+    question: "Is there a free tier?",
     answer:
-      "No. Flump is a decision-support and financial forecasting tool designed to provide personal clarity. It does not provide regulated FCA financial advice, and should be used alongside independent certified financial planners (IFA) or qualified tax advisors (CTA).",
-  },
-  {
-    question: "How is my account secured?",
-    answer:
-      "We partner with WorkOS to deliver AuthKit: enterprise-grade authentication supporting biometric passkeys (FaceID/TouchID), OAuth social sign-ins, and passwordless magic links. We never store plain text passwords, and your financial data is never monetized.",
+      "Yes. Flump offers a free baseline tier with all core calculators, take-home pay tools, and dashboard summaries included. No credit card is required.",
   },
 ];
 
@@ -126,13 +121,13 @@ export const HomeFAQ: FC = () => {
             marginBottom: "8px",
           })}
         >
-          Frequently Asked Questions
+          Frequently asked questions
         </span>
         <FLPHeading as="h2" color="text.primary" id="faq-heading" mb={3} size="3xl">
-          Everything you need to know about Flump
+          Frequently asked questions
         </FLPHeading>
         <FLPText color="text.muted" fontSize="md">
-          Clear answers regarding UK tax modeling, account security, and mortgage calculations.
+          Everything you need to know about Flump, UK financial rules, and our privacy-first design.
         </FLPText>
       </div>
 

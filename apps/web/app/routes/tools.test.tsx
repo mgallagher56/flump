@@ -30,9 +30,9 @@ describe("Tools Routes", () => {
   it("renders ToolsIndex with all 3 calculators listed", () => {
     render(<ToolsIndex />);
 
-    expect(screen.getByText(/free uk wealth, tax & mortgage decision tools/i)).toBeDefined();
+    expect(screen.getByText(/free uk wealth, tax, and mortgage calculators/i)).toBeDefined();
     expect(screen.getByText(/£100k–£125k tax trap calculator/i)).toBeDefined();
-    expect(screen.getByText(/mortgage overpay vs\. isa comparator/i)).toBeDefined();
+    expect(screen.getByText(/mortgage overpay vs isa calculator/i)).toBeDefined();
     expect(screen.getByText(/section 24 landlord tax calculator/i)).toBeDefined();
   });
 
@@ -69,7 +69,7 @@ describe("Tools Routes", () => {
       }),
     ).toBeDefined();
     expect(screen.getByText(/what is the uk £100,000 tax trap\?/i)).toBeDefined();
-    expect(screen.getByText(/frequently asked questions/i)).toBeDefined();
+    expect(screen.getAllByText(/frequently asked questions/i).length).toBeGreaterThan(0);
   });
 
   it("renders ToolDetailPage for mortgage vs isa comparator", async () => {

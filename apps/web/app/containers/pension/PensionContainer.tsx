@@ -333,7 +333,7 @@ export const PensionContainer: FC = () => {
           <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
             <span style={{ fontSize: "20px" }}>⚠️</span>
             <FLPHeading as="h3" size="sm" style={{ color: "#b45309" }}>
-              £100k–£125,140 60% Marginal Tax Trap Active
+              £100k–£125,140 60% marginal tax trap active
             </FLPHeading>
             <span
               style={{
@@ -345,7 +345,7 @@ export const PensionContainer: FC = () => {
                 color: "#b45309",
               }}
             >
-              60% Effective Marginal Rate
+              60% effective marginal rate
             </span>
           </div>
           <FLPText fontSize="xs" color="text.secondary">
@@ -368,7 +368,7 @@ export const PensionContainer: FC = () => {
             }}
           >
             <div style={{ fontSize: "12px" }}>
-              💡 <strong>Actionable Optimization:</strong> Increase pension contributions or make a
+              💡 <strong>Actionable optimisation:</strong> Increase pension contributions or make a
               SIPP contribution of{" "}
               <strong>{formatCurrency(taxTrap.contributionRequiredToEscapeGbp)}</strong> to recover
               your full £12,570 Personal Allowance and reclaim{" "}
@@ -383,7 +383,7 @@ export const PensionContainer: FC = () => {
         <div>
           <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
             <FLPHeading as="h1" size="xl">
-              Pension & Retirement Tracking
+              Pension and retirement tracking
             </FLPHeading>
             <span
               className={css({
@@ -395,7 +395,7 @@ export const PensionContainer: FC = () => {
                 borderRadius: "full",
               })}
             >
-              UK Auto-Enrolment
+              UK auto-enrolment
             </span>
           </div>
           <FLPText color="text.muted" fontSize="sm" style={{ marginTop: "4px" }}>

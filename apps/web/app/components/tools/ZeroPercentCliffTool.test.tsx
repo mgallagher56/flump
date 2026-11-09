@@ -7,9 +7,9 @@ describe("<ZeroPercentCliffTool />", () => {
   test("renders 0% cliff calculator and updates fields", () => {
     const { getByText, getByDisplayValue } = customRender(<ZeroPercentCliffTool />);
 
-    expect(getByText(/0% Balance Transfer Promotional Cliff Calculator/i)).toBeDefined();
-    expect(getByText(/Target Monthly Clearance/i)).toBeDefined();
-    expect(getByText(/APR Cliff Trap Warning/i)).toBeDefined();
+    expect(getByText(/0% balance transfer cliff calculator/i)).toBeDefined();
+    expect(getByText(/Target monthly payment/i)).toBeDefined();
+    expect(getByText(/Revert APR alert/i)).toBeDefined();
 
     // Update inputs
     const balanceInput = getByDisplayValue("3600");

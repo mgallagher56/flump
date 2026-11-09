@@ -101,7 +101,7 @@ export const TaxTrapCalculatorTool: FC = () => {
               letterSpacing: "0.05em",
             }}
           >
-            UK 2026/27 Tax Engine
+            UK 2026/27 tax engine
           </span>
           {isTrapZone && (
             <span
@@ -117,16 +117,16 @@ export const TaxTrapCalculatorTool: FC = () => {
                 fontWeight: 700,
               }}
             >
-              <FiAlertTriangle size={13} /> 60% Trap Active
+              <FiAlertTriangle size={13} /> 60% trap active
             </span>
           )}
         </div>
         <FLPHeading as="h2" color="text.primary" mb={1} size="xl">
-          Interactive £100k–£125k Tax Trap Modeler
+          Interactive £100k–£125k tax trap modeller
         </FLPHeading>
         <FLPText color="text.muted" fontSize="sm">
           Slide your income and test how salary sacrifice or SIPP contributions reclaim your
-          personal allowance and unlock tax-free childcare.
+          Personal Allowance and unlock tax-free childcare.
         </FLPText>
       </div>
 
@@ -135,7 +135,7 @@ export const TaxTrapCalculatorTool: FC = () => {
         <div className={inputGroupStyle}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <label htmlFor="gross-income-slider" style={{ fontSize: "14px", fontWeight: 600 }}>
-              Total Gross UK Income (Salary + Bonus + Side Income)
+              Total gross UK income (salary, bonus, and side income)
             </label>
             <span
               className="tabular-nums"
@@ -155,7 +155,7 @@ export const TaxTrapCalculatorTool: FC = () => {
             value={grossIncome}
           />
           <span style={{ fontSize: "12px", color: "var(--colors-text-muted)" }}>
-            HMRC personal allowance taper begins at £100,000 and eliminates all £12,570 allowance by
+            HMRC Personal Allowance taper begins at £100,000 and eliminates all £12,570 allowance by
             £125,140.
           </span>
         </div>
@@ -164,7 +164,7 @@ export const TaxTrapCalculatorTool: FC = () => {
         <div className={inputGroupStyle}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <label htmlFor="pension-sacrifice-slider" style={{ fontSize: "14px", fontWeight: 600 }}>
-              Pension Salary Sacrifice / SIPP Contribution
+              Pension salary sacrifice or SIPP contribution
             </label>
             <span
               className="tabular-nums"
@@ -195,7 +195,7 @@ export const TaxTrapCalculatorTool: FC = () => {
       <div className={metricsGridStyle}>
         <div className={metricCard}>
           <span style={{ fontSize: "12px", color: "var(--colors-text-muted)", fontWeight: 600 }}>
-            Tax & NI Saved
+            Tax and NI saved
           </span>
           <span
             className="tabular-nums"
@@ -213,7 +213,7 @@ export const TaxTrapCalculatorTool: FC = () => {
 
         <div className={metricCard}>
           <span style={{ fontSize: "12px", color: "var(--colors-text-muted)", fontWeight: 600 }}>
-            Personal Allowance Reclaimed
+            Personal Allowance reclaimed
           </span>
           <span
             className="tabular-nums"
@@ -232,7 +232,7 @@ export const TaxTrapCalculatorTool: FC = () => {
 
         <div className={metricCard}>
           <span style={{ fontSize: "12px", color: "var(--colors-text-muted)", fontWeight: 600 }}>
-            Tax-Free Childcare (15-30h)
+            Tax-free childcare (15–30 hours)
           </span>
           <span
             style={{
@@ -279,7 +279,7 @@ export const TaxTrapCalculatorTool: FC = () => {
       >
         <div style={{ maxWidth: "440px" }}>
           <span style={{ fontSize: "13px", fontWeight: 600, color: "var(--colors-text-primary)" }}>
-            Want to model multi-year pension runway & automated HMRC tax tracking?
+            Want to model multi-year pension runway and automated HMRC tax tracking?
           </span>
           <p style={{ fontSize: "12px", color: "var(--colors-text-muted)", margin: 0 }}>
             Sign up for Flump to connect bank accounts and lock in your complete UK tax baseline.
@@ -287,7 +287,7 @@ export const TaxTrapCalculatorTool: FC = () => {
         </div>
 
         <FLPButton onClick={handleSaveAndContinue} size="lg">
-          Save Scenario & Continue Free <FiArrowRight aria-hidden="true" />
+          Save scenario and continue free <FiArrowRight aria-hidden="true" />
         </FLPButton>
       </div>
     </div>

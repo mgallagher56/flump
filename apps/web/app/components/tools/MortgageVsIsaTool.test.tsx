@@ -12,10 +12,10 @@ describe("MortgageVsIsaTool", () => {
     render(<MortgageVsIsaTool />);
 
     expect(
-      screen.getByText(/mortgage overpayment vs\. stocks & shares isa comparator/i),
+      screen.getByText(/mortgage overpayment vs stocks and shares isa comparator/i),
     ).toBeDefined();
     expect(screen.getAllByText(/mortgage overpay/i).length).toBeGreaterThan(0);
-    expect(screen.getByText(/stocks & shares isa pot/i)).toBeDefined();
+    expect(screen.getByText(/stocks and shares isa pot/i)).toBeDefined();
     expect(screen.getByText(/isa net wealth spread/i)).toBeDefined();
   });
 

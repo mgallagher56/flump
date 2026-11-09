@@ -82,7 +82,7 @@ export const SecurityPage: FC = () => {
   return (
     <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
       <Helmet>
-        <title>Trust, Security & FCA AISP Compliance | Flump</title>
+        <title>Trust, security and FCA AISP compliance | Flump</title>
         <meta
           name="description"
           content="Learn how Flump protects your data with FCA-regulated read-only Open Banking, 256-bit encryption, strict UK GDPR compliance, and manual privacy mode."
@@ -104,7 +104,7 @@ export const SecurityPage: FC = () => {
                 color: "#10b981",
               }}
             >
-              Trust & Transparency Hub
+              Trust and transparency hub
             </span>
             <h1
               style={{
@@ -114,7 +114,7 @@ export const SecurityPage: FC = () => {
                 marginTop: "8px",
               }}
             >
-              Security Built Into the Architecture
+              Security built into the architecture
             </h1>
             <p
               style={{
@@ -130,7 +130,7 @@ export const SecurityPage: FC = () => {
 
             <div style={{ marginTop: "20px" }}>
               <Button size="sm" variant="outline" onClick={() => setModalOpen(true)}>
-                <FiMail style={{ marginRight: "6px" }} /> Contact Security & Support
+                <FiMail style={{ marginRight: "6px" }} /> Contact security and support
               </Button>
             </div>
           </div>
@@ -155,7 +155,7 @@ export const SecurityPage: FC = () => {
               >
                 <FiShield />
               </div>
-              <h3 className={securityTitleStyle}>FCA Open Banking Read-Only AISP Scope</h3>
+              <h3 className={securityTitleStyle}>FCA Open Banking read-only AISP scope</h3>
               <p className={securityDescStyle}>
                 Flump operates strictly under Account Information Service Provider (AISP)
                 regulations. We do not have Payment Initiation Service (PISP) permissions. Flump can
@@ -181,7 +181,7 @@ export const SecurityPage: FC = () => {
               >
                 <FiLock />
               </div>
-              <h3 className={securityTitleStyle}>Bank-Grade 256-bit AES & TLS 1.3</h3>
+              <h3 className={securityTitleStyle}>Bank-grade 256-bit AES and TLS 1.3</h3>
               <p className={securityDescStyle}>
                 All sensitive personal financial records are encrypted using 256-bit Advanced
                 Encryption Standard (AES-GCM) at rest. In transit, all network traffic is forced
@@ -207,11 +207,11 @@ export const SecurityPage: FC = () => {
               >
                 <FiEyeOff />
               </div>
-              <h3 className={securityTitleStyle}>Manual-Only Air-Gapped Privacy Mode</h3>
+              <h3 className={securityTitleStyle}>Private manual mode</h3>
               <p className={securityDescStyle}>
-                If you prefer not to connect your bank feeds, you don't have to. Flump is 100%
+                If you prefer not to connect your bank feeds, you do not have to. Flump is fully
                 usable with manual balance entries and CSV imports, giving you the same advanced tax
-                and wealth projections with zero 3rd-party bank ties.
+                and wealth projections with zero third-party bank connections.
               </p>
             </div>
 
@@ -233,9 +233,9 @@ export const SecurityPage: FC = () => {
               >
                 <FiCheckCircle />
               </div>
-              <h3 className={securityTitleStyle}>UK GDPR Compliance & One-Click Deletion</h3>
+              <h3 className={securityTitleStyle}>UK GDPR compliance and one-click deletion</h3>
               <p className={securityDescStyle}>
-                We never monetize your data or sell transaction history to loan brokers. You retain
+                We never monetise your data or sell transaction history to loan brokers. You retain
                 the right to one-click permanent erasure: deleting your account permanently purges
                 all historical data from our storage.
               </p>
@@ -277,7 +277,7 @@ export const SecurityPage: FC = () => {
                     margin: 0,
                   }}
                 >
-                  Security & Compliance Inquiry
+                  Security and compliance enquiry
                 </h3>
                 <button
                   type="button"
@@ -296,7 +296,7 @@ export const SecurityPage: FC = () => {
               {submitted ? (
                 <div style={{ textAlign: "center", padding: "24px 0", color: "#059669" }}>
                   <FiCheckCircle size={40} style={{ margin: "0 auto 12px" }} />
-                  <p style={{ fontWeight: "700", fontSize: "1.1rem" }}>Inquiry Dispatched</p>
+                  <p style={{ fontWeight: "700", fontSize: "1.1rem" }}>Enquiry sent</p>
                   <p style={{ fontSize: "13px", color: "var(--colors-text-muted, #64748b)" }}>
                     Our compliance team will respond within 1 business day.
                   </p>
@@ -312,7 +312,7 @@ export const SecurityPage: FC = () => {
                         display: "block",
                       }}
                     >
-                      Your Name
+                      Your name
                     </span>
                     <input
                       type="text"
@@ -340,7 +340,7 @@ export const SecurityPage: FC = () => {
                         display: "block",
                       }}
                     >
-                      Your Email
+                      Your email
                     </span>
                     <input
                       type="email"
@@ -368,7 +368,7 @@ export const SecurityPage: FC = () => {
                         display: "block",
                       }}
                     >
-                      Inquiry Type
+                      Enquiry type
                     </span>
                     <select
                       value={inquirySubject}
@@ -383,10 +383,10 @@ export const SecurityPage: FC = () => {
                         marginTop: "4px",
                       }}
                     >
-                      <option value="Security Question">Security & Encryption Details</option>
-                      <option value="FCA Scope">Open Banking / AISP Clarification</option>
-                      <option value="GDPR Data Request">UK GDPR / Data Subject Request</option>
-                      <option value="General Support">General Support Inquiry</option>
+                      <option value="Security Question">Security and encryption details</option>
+                      <option value="FCA Scope">Open Banking / AISP clarification</option>
+                      <option value="GDPR Data Request">UK GDPR / data subject request</option>
+                      <option value="General Support">General support enquiry</option>
                     </select>
                   </label>
                   <label style={{ display: "block" }}>
@@ -423,7 +423,7 @@ export const SecurityPage: FC = () => {
                     variant="primary"
                     style={{ marginTop: "12px", justifyContent: "center" }}
                   >
-                    <FiSend style={{ marginRight: "6px" }} /> Submit Inquiry
+                    <FiSend style={{ marginRight: "6px" }} /> Submit enquiry
                   </Button>
                 </form>
               )}

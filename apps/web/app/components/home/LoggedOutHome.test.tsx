@@ -27,9 +27,14 @@ describe("LoggedOutHome", () => {
     render(<LoggedOutHome />);
 
     // 1. Hero section
-    expect(screen.getByRole("heading", { level: 1, name: /get out of the red/i })).toBeDefined();
-    expect(screen.getByText(/built specifically for uk personal finance/i)).toBeDefined();
-    const heroCta = screen.getByRole("link", { name: /get your 60-second baseline free/i });
+    expect(
+      screen.getByRole("heading", {
+        level: 1,
+        name: /your complete uk financial picture in 60 seconds/i,
+      }),
+    ).toBeDefined();
+    expect(screen.getByText(/built for uk personal finance and hmrc rules/i)).toBeDefined();
+    const heroCta = screen.getByRole("link", { name: /get your free baseline/i });
     expect(heroCta.getAttribute("href")).toBe("/signUp");
 
     // Clean Baseline Preview
@@ -43,11 +48,11 @@ describe("LoggedOutHome", () => {
     expect(
       screen.getByRole("heading", {
         level: 2,
-        name: /everything you need to master uk wealth & taxation/i,
+        name: /everything you need to master uk wealth and taxation/i,
       }),
     ).toBeDefined();
     expect(
-      screen.getByRole("heading", { level: 3, name: /uk tax & self-assessment hub/i }),
+      screen.getByRole("heading", { level: 3, name: /uk tax and self assessment hub/i }),
     ).toBeDefined();
     expect(
       screen.getByRole("heading", { level: 3, name: /complete net worth aggregation/i }),
@@ -61,30 +66,30 @@ describe("LoggedOutHome", () => {
 
     // 5. Security & Privacy
     expect(
-      screen.getByRole("heading", { level: 2, name: /bank-grade security\. zero ad tracking\./i }),
+      screen.getByRole("heading", { level: 2, name: /your financial privacy comes first/i }),
     ).toBeDefined();
 
     // 6. FAQ Accordion
     expect(
-      screen.getByRole("heading", { level: 2, name: /everything you need to know about flump/i }),
+      screen.getByRole("heading", { level: 2, name: /frequently asked questions/i }),
     ).toBeDefined();
 
     // Bottom CTA
     expect(
-      screen.getByRole("heading", { level: 2, name: /ready to master your wealth and taxes\?/i }),
+      screen.getByRole("heading", { level: 2, name: /your financial baseline in 60 seconds/i }),
     ).toBeDefined();
-    const bottomCta = screen.getByRole("link", { name: /get started for free/i });
+    const bottomCta = screen.getByRole("link", { name: /get started free/i });
     expect(bottomCta.getAttribute("href")).toBe("/signUp");
 
     // Footer
-    expect(screen.getByText(/financial & legal disclaimer:/i)).toBeDefined();
+    expect(screen.getByText(/financial and legal disclaimer:/i)).toBeDefined();
   });
 
   it("toggles FAQ accordion questions and answers", () => {
     render(<LoggedOutHome />);
 
     const firstTrigger = screen.getByRole("button", {
-      name: /how accurate are the uk tax calculations\?/i,
+      name: /can flump move my money or make payments\?/i,
     });
     expect(firstTrigger.getAttribute("aria-expanded")).toBe("true");
 

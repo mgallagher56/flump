@@ -63,8 +63,8 @@ export const Footer: FC = () => {
               </span>
             </div>
             <p style={{ fontSize: "14px", lineHeight: "1.6", color: "#94a3b8" }}>
-              The UK personal finance engine engineered for HMRC tax thresholds, pension
-              optimization, and clear debt-to-wealth transitions.
+              The UK personal finance platform built for HMRC tax thresholds, pension optimisation,
+              and clear debt payoff.
             </p>
             <div className={flex({ gap: "3", align: "center" })}>
               <span
@@ -79,7 +79,7 @@ export const Footer: FC = () => {
                   borderRadius: "6px",
                 }}
               >
-                <FiLock size={12} /> 256-bit AES Encryption
+                <FiLock size={12} /> 256-bit AES encryption
               </span>
             </div>
           </div>
@@ -88,22 +88,22 @@ export const Footer: FC = () => {
           <div className={stack({ gap: "3" })}>
             <h4 className={sectionTitleStyle}>Calculators</h4>
             <Link to="/tools/uk-100k-tax-trap-calculator" className={linkStyle}>
-              £100k Tax Trap Calculator
+              £100k tax trap calculator
             </Link>
             <Link to="/tools/uk-debt-snowball-vs-avalanche-calculator" className={linkStyle}>
-              Snowball vs. Avalanche
+              Snowball vs avalanche
             </Link>
             <Link to="/tools/0-percent-balance-transfer-payoff-calculator" className={linkStyle}>
-              0% Balance Transfer Cliff
+              0% balance transfer calculator
             </Link>
             <Link to="/tools/mortgage-overpayment-vs-isa-calculator" className={linkStyle}>
-              Mortgage vs. S&S ISA
+              Mortgage vs Stocks and Shares ISA
             </Link>
             <Link to="/tools/section-24-landlord-tax-calculator" className={linkStyle}>
-              Section 24 Landlord Tax
+              Section 24 landlord tax
             </Link>
             <Link to="/tools/overdraft-cost-and-payoff-calculator" className={linkStyle}>
-              Overdraft Cost & Payoff
+              Overdraft cost and payoff
             </Link>
           </div>
 
@@ -111,33 +111,33 @@ export const Footer: FC = () => {
           <div className={stack({ gap: "3" })}>
             <h4 className={sectionTitleStyle}>Platform</h4>
             <a href={`${appUrl}/sandbox`} className={linkStyle} target="_blank" rel="noreferrer">
-              Live Interactive Demo <FiExternalLink style={{ display: "inline" }} size={11} />
+              Live interactive demo <FiExternalLink style={{ display: "inline" }} size={11} />
             </a>
             <Link to="/pricing" className={linkStyle}>
-              Pricing Plans
+              Pricing plans
             </Link>
             <a href={`${appUrl}/login`} className={linkStyle}>
-              Sign In to Web App
+              Sign in to web app
             </a>
             <a href={`${appUrl}/signUp`} className={linkStyle}>
-              Create Free Account
+              Create free account
             </a>
           </div>
 
           {/* Security & Compliance */}
           <div className={stack({ gap: "3" })}>
-            <h4 className={sectionTitleStyle}>Security & Compliance</h4>
+            <h4 className={sectionTitleStyle}>Security and compliance</h4>
             <Link to="/security" className={linkStyle}>
-              FCA AISP Read-Only Scope
+              FCA AISP read-only scope
             </Link>
             <Link to="/security" className={linkStyle}>
-              UK GDPR Data Policies
+              UK GDPR data policies
             </Link>
             <Link to="/security" className={linkStyle}>
-              Manual-First Privacy Mode
+              Manual privacy mode
             </Link>
             <Link to="/security" className={linkStyle}>
-              Security Architecture
+              Security architecture
             </Link>
           </div>
         </div>
@@ -155,16 +155,16 @@ export const Footer: FC = () => {
           <div className={flex({ gap: "2", align: "center", mb: "2", color: "#94a3b8" })}>
             <FiShield size={14} style={{ color: "#10b981" }} />
             <strong style={{ color: "#cbd5e1" }}>
-              FCA Open Banking Read-Only & Regulatory Notice:
+              FCA Open Banking read-only and regulatory notice:
             </strong>
           </div>
           <p style={{ margin: "0 0 12px 0" }}>
-            Flump is a personal finance analytics, projection, and modeling platform. Flump connects
-            to UK financial institutions via regulated Open Banking Account Information Services
-            (AISP) on a strictly read-only basis. Flump cannot initiate payments, move funds, or
-            alter account configurations. Flump does not provide regulated financial, tax, or
-            investment advice. Tax calculations reflect UK EWNI and Scottish HMRC rules for current
-            tax years as reference models.
+            Flump is a personal finance analytics, projection, and modelling platform. Flump
+            connects to UK financial institutions via regulated Open Banking Account Information
+            Services (AISP) on a strictly read-only basis. Flump cannot initiate payments, move
+            funds, or alter account configurations. Flump does not provide regulated financial, tax,
+            or investment advice. Tax calculations reflect UK HMRC rules for current tax years as
+            reference models.
           </p>
           <div className={flex({ justify: "space-between", flexWrap: "wrap", gap: "4" })}>
             <span>

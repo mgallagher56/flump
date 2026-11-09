@@ -94,40 +94,40 @@ const minusBadge = css({
 
 const rows = [
   {
-    feature: "HMRC Tax Year Tracking (6 Apr – 5 Apr)",
+    feature: "HMRC tax-year tracking (6 Apr – 5 Apr)",
     spreadsheets: "Manual maintenance",
     genericApps: "Calendar year only (Jan–Dec)",
-    flump: "Automated UK Fiscal Ledger",
+    flump: "Automated UK tax ledger",
   },
   {
-    feature: "£100k Personal Allowance Taper Warning",
+    feature: "£100k Personal Allowance taper alert",
     spreadsheets: "Complex nested formulas",
     genericApps: "Not supported",
-    flump: "Native 60% Tax Trap Engine",
+    flump: "Built-in 60% tax trap engine",
   },
   {
-    feature: "Section 24 Landlord Relief Restriction",
-    spreadsheets: "Fragile manual math",
+    feature: "Section 24 landlord relief restriction",
+    spreadsheets: "Fragile manual formulas",
     genericApps: "Not supported",
-    flump: "20% Basic Rate Reducer Built-in",
+    flump: "20% basic rate credit built-in",
   },
   {
-    feature: "Mortgage Overpayment vs ISA Arbitrage",
-    spreadsheets: "Advanced custom modeling",
+    feature: "Mortgage overpayment vs ISA comparison",
+    spreadsheets: "Advanced custom modelling",
     genericApps: "Not supported",
-    flump: "One-Click Comparison Engine",
+    flump: "One-click comparison engine",
   },
   {
-    feature: "UK Auto-Enrolment Pension Rules",
+    feature: "UK auto-enrolment pension rules",
     spreadsheets: "Manual percentage updates",
     genericApps: "Flat contribution only",
-    flump: "Qualifying Earnings Bands Built-in",
+    flump: "Qualifying earnings bands built-in",
   },
   {
-    feature: "Zero Tracker Telemetry / Open Monorepo",
+    feature: "Zero tracker telemetry and private mode",
     spreadsheets: "Offline only",
-    genericApps: "Often monetizes financial data",
-    flump: "100% Private & Open Source",
+    genericApps: "Often sells or monetises financial data",
+    flump: "100% private and open source",
   },
 ];
 
@@ -146,13 +146,13 @@ export const ComparisonMatrix: FC = () => {
             marginBottom: "8px",
           })}
         >
-          Why Flump?
+          Why Flump
         </span>
         <FLPHeading as="h2" color="text.primary" id="comparison-heading" mb={3} size="3xl">
           Engineered for UK reality, not generic budgets
         </FLPHeading>
         <FLPText color="text.muted" fontSize="md">
-          See how Flump compares to brittle spreadsheets and generic US-oriented budgeting apps.
+          See how Flump compares to spreadsheets and generic US-first budgeting applications.
         </FLPText>
       </div>
 
@@ -167,7 +167,7 @@ export const ComparisonMatrix: FC = () => {
                 Spreadsheets
               </th>
               <th className={thStyle} scope="col">
-                Generic Budget Apps
+                Generic budget apps
               </th>
               <th className={highlightThStyle} scope="col">
                 Flump

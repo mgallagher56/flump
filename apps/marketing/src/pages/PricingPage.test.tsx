@@ -14,13 +14,13 @@ describe("PricingPage", () => {
       </HelmetProvider>,
     );
 
-    expect(screen.getByText("Free Manual Tier")).toBeDefined();
-    expect(screen.getByText("Pro Open Banking & Tax Engine")).toBeDefined();
+    expect(screen.getByText("Free manual tier")).toBeDefined();
+    expect(screen.getByText("Pro Open Banking and tax tools")).toBeDefined();
 
-    const freeLink = screen.getByText("Get Started Free").closest("a");
+    const freeLink = screen.getByText("Get started free").closest("a");
     expect(freeLink?.getAttribute("href")).toContain("/signUp?plan=free");
 
-    const proLink = screen.getByText("Start 14-Day Free Pro Trial →").closest("a");
+    const proLink = screen.getByText("Start 14-day free Pro trial →").closest("a");
     expect(proLink?.getAttribute("href")).toContain("/signUp?plan=pro");
   });
 

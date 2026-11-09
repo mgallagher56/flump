@@ -205,7 +205,7 @@ const MortgageContainer: FC = () => {
             <FaExclamationTriangle color="#dc2626" size={20} />
             <div>
               <FLPHeading as="h4" size="sm" style={{ color: "#dc2626", margin: 0 }}>
-                Mortgage Refinance Cliff Warning (Expires in {refinanceWarning.diffMonths} months)
+                Mortgage refinance cliff warning (expires in {refinanceWarning.diffMonths} months)
               </FLPHeading>
               <FLPText fontSize="xs" color="text.muted" style={{ margin: "2px 0 0 0" }}>
                 Your fixed-rate deal expires on <strong>{refinanceWarning.date}</strong>. Moving to
@@ -229,7 +229,7 @@ const MortgageContainer: FC = () => {
             })}
             onClick={() => setActiveTab("simulator")}
           >
-            Simulate Rate Shock →
+            Simulate rate shock →
           </button>
         </div>
       )}
@@ -237,10 +237,10 @@ const MortgageContainer: FC = () => {
       {/* Title */}
       <div className={css({ my: 4 })}>
         <FLPHeading as="h1" color="blue.500" size="xl">
-          Mortgage Tools & Calculator
+          Mortgage tools and calculator
         </FLPHeading>
         <FLPText color="text.muted" fontSize="sm">
-          Track your payments, simulate overpayments, and optimize your savings strategy.
+          Track your payments, simulate overpayments and optimise your savings strategy.
         </FLPText>
       </div>
 
@@ -276,7 +276,7 @@ const MortgageContainer: FC = () => {
           onClick={() => switchToCategory("residential")}
         >
           <FaHome size={14} />
-          Residential Mortgage
+          Residential mortgage
         </button>
         <button
           type="button"
@@ -297,7 +297,7 @@ const MortgageContainer: FC = () => {
           onClick={() => switchToCategory("btl")}
         >
           <FaBuilding size={14} />
-          Buy to Let (BTL)
+          Buy to let (BTL)
         </button>
       </div>
 
@@ -330,7 +330,7 @@ const MortgageContainer: FC = () => {
               fontWeight="semibold"
               textTransform="uppercase"
             >
-              LTV Threshold Milestones
+              LTV threshold milestones
             </FLPText>
             <FLPHeading as="h3" size="sm" style={{ marginTop: "2px" }}>
               Current LTV: {currentLtv.toFixed(1)}% ({formatCurrency(loanAmount)} /{" "}
@@ -347,7 +347,7 @@ const MortgageContainer: FC = () => {
               color: "#6366f1",
             }}
           >
-            Ownership Share: {baseline.propertyOwnershipSharePct ?? 100}%
+            Ownership share: {baseline.propertyOwnershipSharePct ?? 100}%
           </span>
         </div>
 
@@ -389,7 +389,7 @@ const MortgageContainer: FC = () => {
                     color: m.isAchieved ? "#10b981" : "#d97706",
                   }}
                 >
-                  {m.targetLtvPct}% LTV Tier
+                  {m.targetLtvPct}% LTV tier
                 </span>
                 <span
                   style={{
@@ -450,7 +450,7 @@ const MortgageContainer: FC = () => {
                   size="sm"
                   style={{ margin: 0, color: "var(--colors-emerald-500)" }}
                 >
-                  Buy to Let Portfolio Overview
+                  Buy to let portfolio overview
                 </FLPHeading>
                 <FLPText fontSize="xs" color="text.muted" style={{ margin: 0 }}>
                   Managing {profile.buyToLetCount ?? 1} propert
@@ -478,7 +478,7 @@ const MortgageContainer: FC = () => {
               })}
               onClick={() => navigate("/app/profile")}
             >
-              Configure in Profile <FaArrowRight size={10} />
+              Configure in profile <FaArrowRight size={10} />
             </button>
           </div>
 
@@ -493,7 +493,7 @@ const MortgageContainer: FC = () => {
           >
             <div>
               <FLPText fontSize="xs" color="text.muted">
-                Gross Monthly Rent
+                Gross monthly rent
               </FLPText>
               <FLPHeading as="h5" size="sm" color="text.primary">
                 {btlMonthlyRent > 0 ? `${formatCurrency(btlMonthlyRent)}/mo` : "Not configured"}
@@ -502,7 +502,7 @@ const MortgageContainer: FC = () => {
 
             <div>
               <FLPText fontSize="xs" color="text.muted">
-                Gross Rental Yield
+                Gross rental yield
               </FLPText>
               <FLPHeading as="h5" size="sm" color="primary">
                 {btlGrossYield ? `${btlGrossYield.toFixed(2)}%` : "—"}
@@ -511,7 +511,7 @@ const MortgageContainer: FC = () => {
 
             <div>
               <FLPText fontSize="xs" color="text.muted">
-                Mortgage Payment
+                Mortgage payment
               </FLPText>
               <FLPHeading as="h5" size="sm" color="text.primary">
                 {formatCurrency(btlMonthlyPayment)}/mo (
@@ -521,7 +521,7 @@ const MortgageContainer: FC = () => {
 
             <div>
               <FLPText fontSize="xs" color="text.muted">
-                Estimated Net Cashflow
+                Estimated net cash flow
               </FLPText>
               <FLPHeading
                 as="h5"
@@ -547,7 +547,7 @@ const MortgageContainer: FC = () => {
           >
             <FaInfoCircle className={css({ color: "blue.500", marginTop: "2px", flexShrink: 0 })} />
             <span>
-              <strong>Section 24 Rule:</strong> Buy to Let finance costs receive a 20% tax credit
+              <strong>Section 24 rule:</strong> Buy to let finance costs receive a 20% tax credit
               rather than being deductible expenses from gross rental receipts.
             </span>
           </div>
@@ -575,7 +575,7 @@ const MortgageContainer: FC = () => {
               <FaExclamationTriangle color="#f59e0b" size={18} />
               <div>
                 <FLPHeading as="h4" size="xs" style={{ margin: 0, color: "#f59e0b" }}>
-                  Mortgage Account Missing
+                  Mortgage account missing
                 </FLPHeading>
                 <FLPText fontSize="xs" color="text.muted" style={{ margin: 0 }}>
                   You indicated that you have a mortgage in your profile, but no mortgage account
@@ -599,7 +599,7 @@ const MortgageContainer: FC = () => {
               type="button"
               onClick={() => navigate("/app/accounts")}
             >
-              Add Account
+              Add account
             </button>
           </div>
         )}
@@ -612,7 +612,7 @@ const MortgageContainer: FC = () => {
           onClick={() => setActiveTab("tracker")}
         >
           <FaHome size={14} />
-          Mortgage Tracker
+          Mortgage tracker
         </button>
         <button
           className={tabBtnStyle(activeTab === "simulator")}
@@ -620,7 +620,7 @@ const MortgageContainer: FC = () => {
           onClick={() => setActiveTab("simulator")}
         >
           <FaChartLine size={14} />
-          Overpayment Simulator
+          Overpayment simulator
         </button>
         <button
           className={tabBtnStyle(activeTab === "compare")}
@@ -628,7 +628,7 @@ const MortgageContainer: FC = () => {
           onClick={() => setActiveTab("compare")}
         >
           <FaCoins size={14} />
-          Overpay vs. Save
+          Overpay vs save
         </button>
       </div>
 

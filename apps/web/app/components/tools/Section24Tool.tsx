@@ -136,11 +136,11 @@ export const Section24Tool: FC = () => {
               letterSpacing: "0.05em",
             }}
           >
-            HMRC Landlord Tax Rules
+            HMRC landlord tax rules
           </span>
         </div>
         <FLPHeading as="h2" color="text.primary" mb={1} size="xl">
-          Section 24 Buy-to-Let Mortgage Relief Calculator
+          Section 24 buy-to-let mortgage relief calculator
         </FLPHeading>
         <FLPText color="text.muted" fontSize="sm">
           Calculate phantom taxable rental profit and the 20% basic rate tax credit reduction
@@ -152,7 +152,7 @@ export const Section24Tool: FC = () => {
         <div className={inputGroupStyle}>
           <div style={{ display: "flex", justifyContent: "space-between" }}>
             <label htmlFor="rental-income" style={{ fontSize: "13px", fontWeight: 600 }}>
-              Annual Rental Income
+              Annual rental income
             </label>
             <span style={{ fontSize: "15px", fontWeight: 700, color: "#3b82f6" }}>
               £{rentalIncome.toLocaleString("en-GB")}
@@ -173,7 +173,7 @@ export const Section24Tool: FC = () => {
         <div className={inputGroupStyle}>
           <div style={{ display: "flex", justifyContent: "space-between" }}>
             <label htmlFor="mortgage-interest" style={{ fontSize: "13px", fontWeight: 600 }}>
-              Annual Mortgage Interest (Finance Costs)
+              Annual mortgage interest (finance costs)
             </label>
             <span style={{ fontSize: "15px", fontWeight: 700, color: "#ef4444" }}>
               £{mortgageInterest.toLocaleString("en-GB")}
@@ -194,7 +194,7 @@ export const Section24Tool: FC = () => {
         <div className={inputGroupStyle}>
           <div style={{ display: "flex", justifyContent: "space-between" }}>
             <label htmlFor="allowable-expenses" style={{ fontSize: "13px", fontWeight: 600 }}>
-              Other Allowable Expenses (Repairs, Insurance, Agent Fees)
+              Other allowable expenses (repairs, insurance, agent fees)
             </label>
             <span style={{ fontSize: "15px", fontWeight: 700, color: "#64748b" }}>
               £{allowableExpenses.toLocaleString("en-GB")}
@@ -215,7 +215,7 @@ export const Section24Tool: FC = () => {
         <div className={inputGroupStyle}>
           <div style={{ display: "flex", justifyContent: "space-between" }}>
             <label htmlFor="other-income" style={{ fontSize: "13px", fontWeight: 600 }}>
-              Other Annual Income (Salary / Self-Employed)
+              Other annual income (salary or self-employed)
             </label>
             <span style={{ fontSize: "15px", fontWeight: 700, color: "#6366f1" }}>
               £{otherIncome.toLocaleString("en-GB")}
@@ -238,7 +238,7 @@ export const Section24Tool: FC = () => {
       <div className={metricsGridStyle}>
         <div className={metricCard}>
           <span style={{ fontSize: "12px", color: "var(--colors-text-muted)", fontWeight: 600 }}>
-            HMRC Tax Due on Rental
+            HMRC tax due on rental
           </span>
           <span
             className="tabular-nums"
@@ -257,7 +257,7 @@ export const Section24Tool: FC = () => {
 
         <div className={metricCard}>
           <span style={{ fontSize: "12px", color: "var(--colors-text-muted)", fontWeight: 600 }}>
-            True Effective Tax Rate
+            True effective tax rate
           </span>
           <span
             className="tabular-nums"
@@ -276,7 +276,7 @@ export const Section24Tool: FC = () => {
 
         <div className={metricCard}>
           <span style={{ fontSize: "12px", color: "var(--colors-text-muted)", fontWeight: 600 }}>
-            Net Cash Retained
+            Net cash retained
           </span>
           <span
             className="tabular-nums"
@@ -289,7 +289,7 @@ export const Section24Tool: FC = () => {
             style={{ fontSize: "12px", color: "var(--colors-text-muted)" }}
           >
             £{Math.round(calc.netCashInPocket / 12).toLocaleString("en-GB")}/mo cash in pocket after
-            tax & mortgage
+            tax and mortgage
           </span>
         </div>
       </div>
@@ -308,7 +308,7 @@ export const Section24Tool: FC = () => {
       >
         <div style={{ maxWidth: "440px" }}>
           <span style={{ fontSize: "13px", fontWeight: 600, color: "var(--colors-text-primary)" }}>
-            Need automated HMRC Self-Assessment & property tax tracking?
+            Need automated HMRC Self Assessment and property tax tracking?
           </span>
           <p style={{ fontSize: "12px", color: "var(--colors-text-muted)", margin: 0 }}>
             Flump automatically models Section 24 adjustments, joint spousal splits, and Payments on
@@ -317,7 +317,7 @@ export const Section24Tool: FC = () => {
         </div>
 
         <FLPButton onClick={handleSaveAndContinue} size="lg">
-          Track Your Properties in Flump <FiArrowRight aria-hidden="true" />
+          Track your properties in Flump <FiArrowRight aria-hidden="true" />
         </FLPButton>
       </div>
     </div>

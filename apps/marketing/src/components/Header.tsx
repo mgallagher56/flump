@@ -194,7 +194,7 @@ export const Header: FC = () => {
               Security
             </Link>
             <a href={`${appUrl}/sandbox`} className={navLinkStyle} target="_blank" rel="noreferrer">
-              Live Demo
+              Live demo
             </a>
           </nav>
         </div>
@@ -220,7 +220,7 @@ export const Header: FC = () => {
                   })}
                 >
                   <span className={css({ display: { base: "none", sm: "inline" } })}>
-                    Go to Dashboard →
+                    Go to dashboard →
                   </span>
                   <span className={css({ display: { base: "inline", sm: "none" } })}>
                     Dashboard
@@ -239,9 +239,9 @@ export const Header: FC = () => {
                     })}
                   >
                     <span className={css({ display: { base: "none", sm: "inline" } })}>
-                      Sign In
+                      Sign in
                     </span>
-                    <span className={css({ display: { base: "inline", sm: "none" } })}>Log In</span>
+                    <span className={css({ display: { base: "inline", sm: "none" } })}>Log in</span>
                   </Button>
                 </a>
                 <a href={`${appUrl}/signUp`} style={{ textDecoration: "none" }}>
@@ -254,10 +254,10 @@ export const Header: FC = () => {
                     })}
                   >
                     <span className={css({ display: { base: "none", sm: "inline" } })}>
-                      Get Started
+                      Get started
                     </span>
                     <span className={css({ display: { base: "inline", sm: "none" } })}>
-                      Sign Up
+                      Sign up
                     </span>
                   </Button>
                 </a>
@@ -294,7 +294,7 @@ export const Header: FC = () => {
             >
               <span>Calculators</span>
               <span style={{ fontSize: "12px", color: "var(--colors-text-muted, #94a3b8)" }}>
-                6 Tools
+                6 tools
               </span>
             </Link>
             <Link
@@ -306,7 +306,7 @@ export const Header: FC = () => {
             >
               <span>Pricing</span>
               <span style={{ fontSize: "12px", color: "var(--colors-text-muted, #94a3b8)" }}>
-                Free & Pro
+                Free and Pro
               </span>
             </Link>
             <Link
@@ -329,7 +329,7 @@ export const Header: FC = () => {
               onClick={() => setMobileMenuOpen(false)}
             >
               <span style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}>
-                Live Demo <FiExternalLink size={14} />
+                Live demo <FiExternalLink size={14} />
               </span>
               <span style={{ fontSize: "12px", color: "var(--colors-text-muted, #94a3b8)" }}>
                 Sandbox
@@ -352,7 +352,7 @@ export const Header: FC = () => {
                 onClick={() => setMobileMenuOpen(false)}
               >
                 <Button variant="primary" size="md" style={{ width: "100%" }}>
-                  Go to Dashboard →
+                  Go to dashboard →
                 </Button>
               </a>
             ) : (
@@ -363,7 +363,7 @@ export const Header: FC = () => {
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   <Button variant="primary" size="md" style={{ width: "100%" }}>
-                    Get Started Free
+                    Get started free
                   </Button>
                 </a>
                 <a
@@ -372,7 +372,7 @@ export const Header: FC = () => {
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   <Button variant="outline" size="md" style={{ width: "100%" }}>
-                    Sign In
+                    Sign in
                   </Button>
                 </a>
               </>

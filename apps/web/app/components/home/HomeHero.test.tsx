@@ -16,23 +16,23 @@ describe("HomeHero", () => {
   it("renders the hero heading, CTA buttons, and trust bar badges", () => {
     render(<HomeHero />);
 
+    expect(screen.getByText(/Built for UK personal finance and HMRC rules/i)).toBeDefined();
     expect(
-      screen.getByText(/Built Specifically for UK Personal Finance & HMRC Rules/i),
+      screen.getByRole("heading", {
+        level: 1,
+        name: /Your complete UK financial picture in 60 seconds\./i,
+      }),
     ).toBeDefined();
-    expect(screen.getByText(/Get out of the red\./i)).toBeDefined();
-    expect(screen.getByText(/Build into the black\./i)).toBeDefined();
-    expect(
-      screen.getByText(/Get your complete UK financial baseline in 60 seconds/i),
-    ).toBeDefined();
+    expect(screen.getByText(/Enter 6 rough numbers to calculate your net worth/i)).toBeDefined();
 
     expect(screen.getByTestId("web-baseline-snapshot-preview")).toBeDefined();
-    expect(screen.getByRole("link", { name: /Get Your 60-Second Baseline Free/i })).toBeDefined();
-    expect(screen.getByRole("link", { name: /Sign In to Account/i })).toBeDefined();
-    expect(screen.getByRole("link", { name: /Explore Live Sandbox/i })).toBeDefined();
+    expect(screen.getByRole("link", { name: /Get your free baseline/i })).toBeDefined();
+    expect(screen.getByRole("link", { name: /Sign in/i })).toBeDefined();
+    expect(screen.getByRole("link", { name: /Try the live demo/i })).toBeDefined();
 
-    expect(screen.getByText(/FCA Read-Only Open Banking & 256-Bit TLS/i)).toBeDefined();
-    expect(screen.getByText(/Section 24 Landlord & 2026\/27 Tax Bands/i)).toBeDefined();
-    expect(screen.getByText(/£20k ISA & £60k Pension Allowances/i)).toBeDefined();
-    expect(screen.getByText(/Zero Ad Tracking or Data Selling/i)).toBeDefined();
+    expect(screen.getByText(/FCA read-only Open Banking and 256-bit encryption/i)).toBeDefined();
+    expect(screen.getByText(/Section 24 landlord and HMRC tax bands/i)).toBeDefined();
+    expect(screen.getByText(/£20k ISA and £60k pension allowances/i)).toBeDefined();
+    expect(screen.getByText(/No ad tracking or data selling/i)).toBeDefined();
   });
 });

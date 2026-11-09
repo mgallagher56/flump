@@ -46,22 +46,22 @@ describe("OnboardingRoute (3-Step Baseline Flow)", () => {
 
   it("renders Step 1 (You & Income) by default with summary bar", () => {
     render(<OnboardingRoute />);
-    expect(screen.getByText("Step 1: You & Income")).toBeDefined();
+    expect(screen.getByText("Step 1: You & income")).toBeDefined();
     expect(screen.getByLabelText(/current age/i)).toBeDefined();
     expect(screen.getByLabelText(/employment setup/i)).toBeDefined();
     expect(screen.getByText(/annual gross salary/i)).toBeDefined();
-    expect(screen.getByText("Net Take-Home")).toBeDefined();
-    expect(screen.getByText("Monthly Surplus")).toBeDefined();
-    expect(screen.getByText("Starting Net Worth")).toBeDefined();
+    expect(screen.getByText("Net take-home")).toBeDefined();
+    expect(screen.getByText("Monthly surplus")).toBeDefined();
+    expect(screen.getByText("Starting net worth")).toBeDefined();
   });
 
   it("advances from Step 1 to Step 2 and allows selecting housing status", () => {
     render(<OnboardingRoute />);
 
-    const nextBtn = screen.getByText("Next: Housing & Outgoings →");
+    const nextBtn = screen.getByText("Next: Housing & outgoings →");
     fireEvent.click(nextBtn);
 
-    expect(screen.getByText("Step 2: Housing & Monthly Outgoings")).toBeDefined();
+    expect(screen.getByText("Step 2: Housing & monthly outgoings")).toBeDefined();
     expect(screen.getByText(/housing status/i)).toBeDefined();
     expect(screen.getByText(/rent payment|monthly rent/i)).toBeDefined();
 
@@ -75,16 +75,16 @@ describe("OnboardingRoute (3-Step Baseline Flow)", () => {
     render(<OnboardingRoute />);
 
     // Step 1 -> Step 2
-    fireEvent.click(screen.getByText("Next: Housing & Outgoings →"));
+    fireEvent.click(screen.getByText("Next: Housing & outgoings →"));
     // Step 2 -> Step 3
-    fireEvent.click(screen.getByText("Next: Savings, Pension & Debt →"));
+    fireEvent.click(screen.getByText("Next: Savings, pension & debt →"));
 
-    expect(screen.getByText("Step 3: Savings, Pension & Debt")).toBeDefined();
-    expect(screen.getByLabelText(/total cash & isa savings/i)).toBeDefined();
+    expect(screen.getByText("Step 3: Savings, pension and debt")).toBeDefined();
+    expect(screen.getByLabelText(/total cash and isa savings/i)).toBeDefined();
     expect(screen.getByLabelText(/current pension pot/i)).toBeDefined();
-    expect(screen.getByLabelText(/total cards & personal loans/i)).toBeDefined();
+    expect(screen.getByLabelText(/total credit cards and personal loans/i)).toBeDefined();
 
-    const finishBtn = screen.getByRole("button", { name: /finish setup & launch dashboard/i });
+    const finishBtn = screen.getByRole("button", { name: /finish setup and launch dashboard/i });
     fireEvent.click(finishBtn);
 
     await waitFor(() => {
@@ -103,12 +103,12 @@ describe("OnboardingRoute (3-Step Baseline Flow)", () => {
     render(<OnboardingRoute />);
 
     // Step 1 -> Step 2
-    fireEvent.click(screen.getByText("Next: Housing & Outgoings →"));
-    expect(screen.getByText("Step 2: Housing & Monthly Outgoings")).toBeDefined();
+    fireEvent.click(screen.getByText("Next: Housing & outgoings →"));
+    expect(screen.getByText("Step 2: Housing & monthly outgoings")).toBeDefined();
 
     // Step 2 -> Back to Step 1
     fireEvent.click(screen.getByRole("button", { name: /back/i }));
-    expect(screen.getByText("Step 1: You & Income")).toBeDefined();
+    expect(screen.getByText("Step 1: You & income")).toBeDefined();
   });
 
   it("hydrates pre-loaded seed from tools and allows 10s fast-track launch", async () => {

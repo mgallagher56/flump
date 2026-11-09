@@ -189,7 +189,7 @@ export const DebtContainer: FC = () => {
               className={css({ color: "destructive.500", fontSize: "18px" })}
             />
             <FLPHeading as="h4" size="sm" color="destructive.500">
-              0% Balance Transfer Promotional Cliff Alert
+              0% balance transfer promotional expiry alert
             </FLPHeading>
           </div>
           {promoAlerts.map((alert) => (
@@ -198,7 +198,7 @@ export const DebtContainer: FC = () => {
               <strong>{alert.promoExpiryDate}</strong>. At current repayment rates, £
               {alert.projectedBalanceAtExpiryGbp.toLocaleString()} will revert to{" "}
               <strong>{alert.revertApr}% APR</strong>. Allocate £
-              {alert.requiredMonthlyToClearBeforeCliff}/mo to clear it before the cliff.
+              {alert.requiredMonthlyToClearBeforeCliff}/mo to clear it before expiry.
             </FLPText>
           ))}
         </div>
@@ -216,11 +216,11 @@ export const DebtContainer: FC = () => {
       >
         <div style={{ flex: "1 1 320px" }}>
           <FLPHeading as="h2" size="2xl">
-            Debt Crusher & Financial Recovery
+            Debt payoff and recovery
           </FLPHeading>
           <FLPText color="text.muted" fontSize="md">
-            Model mathematically optimal debt clearance, defuse promotional cliffs, and bridge your
-            surplus into long-term wealth.
+            Model mathematically optimal debt clearance, manage promotional 0% offers, and bridge
+            your surplus into long-term wealth.
           </FLPText>
         </div>
 
@@ -239,7 +239,7 @@ export const DebtContainer: FC = () => {
         >
           <img
             src="/illustrations/debt-crusher-momentum.jpg"
-            alt="3D Debt Crusher Momentum visual"
+            alt="Debt payoff momentum illustration"
             loading="lazy"
             style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
           />

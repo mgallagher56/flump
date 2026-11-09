@@ -86,7 +86,7 @@ describe("PensionContainer", () => {
   it("renders contributions breakdown and toggles inline editing for employer NI", async () => {
     render(<PensionContainer />);
 
-    expect(screen.getByText("Pension & Retirement Tracking")).toBeDefined();
+    expect(screen.getByText("Pension and retirement tracking")).toBeDefined();
     expect(screen.getByText("Current Contributions Breakdown (UK Auto-Enrolment)")).toBeDefined();
 
     // Click Edit Rates button

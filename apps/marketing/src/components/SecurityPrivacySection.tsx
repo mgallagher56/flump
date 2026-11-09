@@ -54,16 +54,16 @@ export const SecurityPrivacySection: FC = () => {
     <SectionBand
       id="security"
       tone="contrast"
-      indexBadge="05 // TRUST & SECURITY"
-      title="Your Financial Privacy Comes First"
-      subtitle="Engineered from day one to operate fully without mandatory bank account linking or credential sharing."
+      indexBadge="Security and privacy"
+      title="Your financial privacy comes first"
+      subtitle="Designed from the start to work fully without bank account linking or password sharing."
     >
       <div className={sectionGridLayout} data-testid="security-privacy-section">
-        {/* 3D Security Vault Graphic */}
+        {/* Security Vault Graphic */}
         <div className={illustrationContainer}>
           <img
             src="/illustrations/security-vault-shield.jpg"
-            alt="Cryptographic Bank-Grade Security Vault Shield with Zero-Knowledge Architecture"
+            alt="Security shield representing privacy protection and 256-bit encryption"
             loading="lazy"
             style={{
               width: "100%",
@@ -95,7 +95,7 @@ export const SecurityPrivacySection: FC = () => {
                 <FiShield />
               </div>
               <span className={verificationBadge}>
-                <FiCheckCircle size={12} /> 100% Offline Capable
+                <FiCheckCircle size={12} /> Private manual entry
               </span>
             </div>
 
@@ -108,7 +108,7 @@ export const SecurityPrivacySection: FC = () => {
                 margin: 0,
               }}
             >
-              Manual-First Control
+              Manual-first control
             </h3>
             <p
               style={{
@@ -142,7 +142,7 @@ export const SecurityPrivacySection: FC = () => {
                 <FiLock />
               </div>
               <span className={verificationBadge}>
-                <FiCheckCircle size={12} /> Read-Only Only
+                <FiCheckCircle size={12} /> Read-only access
               </span>
             </div>
 
@@ -165,8 +165,8 @@ export const SecurityPrivacySection: FC = () => {
                 lineHeight: "1.5",
               }}
             >
-              Optional live account syncs operate via FCA-regulated Open Banking APIs. We can never
-              move money.
+              Optional live account sync operates through FCA-regulated Open Banking APIs. We can
+              never move money or change account settings.
             </p>
           </div>
 
@@ -189,7 +189,7 @@ export const SecurityPrivacySection: FC = () => {
                 <FiSlash />
               </div>
               <span className={verificationBadge}>
-                <FiCheckCircle size={12} /> Zero Ads
+                <FiCheckCircle size={12} /> Zero ads
               </span>
             </div>
 
@@ -202,7 +202,7 @@ export const SecurityPrivacySection: FC = () => {
                 margin: 0,
               }}
             >
-              Zero Data Selling
+              Zero data selling
             </h3>
             <p
               style={{
@@ -212,8 +212,8 @@ export const SecurityPrivacySection: FC = () => {
                 lineHeight: "1.5",
               }}
             >
-              We do not sell personal or financial records to credit card lenders or mortgage
-              brokers. Ever.
+              We never sell your personal or financial records to credit card lenders, mortgage
+              brokers, or third parties.
             </p>
           </div>
         </div>

@@ -1,0 +1,141 @@
+# Flump Copy Style Guide
+
+This style guide defines the standards for all copy across Flump, including the marketing site, web application, tool pages, onboarding flows, and documentation.
+
+---
+
+## 1. Core Voice and Tone
+
+Flump's voice is **direct, grounded, and pragmatic** – inspired by the best of UK fintech (such as Monzo and Wise).
+
+### Principles
+
+1. **Clarity over cleverness**: Say exactly what something does. Never make users decode metaphors or marketing jargon.
+2. **Concrete numbers over hype**: State the maths, timelines, and UK statutory thresholds directly (£100k taper, 40% higher rate, 30 hours free childcare) rather than relying on superlative claims.
+3. **Active, human voice**: Use clean, active sentences. Address the user directly as "you", and refer to Flump as "Flump" or "we".
+4. **No pseudo-engineering buzzwords**: Flump is a financial decision tool, not a defence contractor or high-frequency trading platform. Avoid terms like "zero-latency", "air-gapped", "cryptographic vault", "engineered for", "enterprise-grade", or "radar".
+5. **Accurate UI descriptions**: Always describe interactive controls accurately. If an interface uses compact numeric inputs, never refer to "sliders". If a feature is manual, explain it simply without claiming it is "air-gapped".
+
+---
+
+## 2. Language and Spelling: Strict British English (en-GB)
+
+All copy must strictly adhere to standard British English spelling and usage. Never use American English variants.
+
+### Canonical Spelling Table
+
+| Use (en-GB)                         | Do Not Use (en-US)          | Notes                                           |
+| :---------------------------------- | :-------------------------- | :---------------------------------------------- |
+| **optimise / optimisation**         | optimize / optimization     | Applies to headings, buttons, and code labels   |
+| **amortise / amortisation**         | amortize / amortization     | In mortgage calculations and schedules          |
+| **model / modelling / modelled**    | model / modeling / modeled  | Double 'l' in inflected forms                   |
+| **categorise / categorisation**     | categorize / categorization | In budget and transaction tracking              |
+| **visualise / visualising**         | visualize / visualizing     | In charts and diagrams                          |
+| **enrol / enrolment**               | enroll / enrollment         | Workplace pension auto-enrolment                |
+| **enquiry / enquiries**             | inquiry / inquiries         | For support, security, and contact requests     |
+| **monetise / monetisation**         | monetize / monetization     | In privacy and GDPR statements                  |
+| **favourite**                       | favorite                    | Across all settings and bookmarks               |
+| **analyse / analysing**             | analyze / analyzing         | In financial breakdowns and tools               |
+| **programme**                       | program                     | Except when referring strictly to computer code |
+| **licence (noun) / license (verb)** | license (noun)              | e.g. "under an FCA licence"                     |
+| **centre**                          | center                      | In alignment or layout descriptions             |
+
+---
+
+## 3. UK Financial Terminology
+
+Flump is engineered specifically for UK taxpayers and personal finance rules. Always use official UK statutory terms and financial abbreviations.
+
+### Terminology Rules
+
+- **AER (Annual Equivalent Rate)**: Use for savings accounts, cash ISAs, and interest earned. Never use the US term "APY" for UK savings.
+- **APR (Annual Percentage Rate)**: Use for consumer borrowing, loans, and credit cards.
+- **EAR (Equivalent Annual Rate)**: Use for arranged and unarranged bank overdrafts (e.g. "39.9% EAR").
+- **HMRC**: Her Majesty's / His Majesty's Revenue and Customs. Always all-caps.
+- **PAYE**: Pay As You Earn. Always all-caps.
+- **National Insurance (NI)**: Capitalise National Insurance. Abbreviate to NI when space is constrained.
+- **Personal Allowance**: Capitalise both words when referring to the UK statutory income tax allowance.
+- **ISA / Stocks and Shares ISA / Cash ISA**: Individual Savings Account. Always capitalise ISA and formal types.
+- **SIPP**: Self-Invested Personal Pension. Always all-caps.
+- **Section 24**: Capitalise Section 24 when referencing residential landlord mortgage interest tax restriction.
+- **Self Assessment**: Two words, no hyphen, both capitalised when referring to the UK tax return system.
+- **Take-Home Pay**: Hyphenated when used as a compound noun or modifier.
+- **Student Loans**: Specify the plan explicitly (Plan 1, Plan 2, Plan 4, Plan 5, Postgraduate Loan).
+
+---
+
+## 4. Canonical Feature and Module Names
+
+Replace outdated or melodramatic names with clear, professional names:
+
+| Canonical Name               | Deprecated / Gimmicky Name                 | Description                                                                |
+| :--------------------------- | :----------------------------------------- | :------------------------------------------------------------------------- |
+| **60-second baseline**       | 60-Second Wealth Engine / Baseline Station | The 6-figure setup that produces the initial financial picture             |
+| **Debt payoff**              | Debt Crusher / Debt Elimination Engine     | The module comparing avalanche and snowball payoff schedules               |
+| **Emergency runway**         | Survival Runway / Survival Gauge           | Liquid cash divided by monthly essential outgoings                         |
+| **Safe to spend**            | Safe-to-Spend / Guilt-Free Cash Allowance  | Weekly discretionary cash buffer after ring-fencing obligations            |
+| **Cashflow allocation**      | Cashflow Waterfall / Dynamic Cash Engine   | Proportional breakdown of tax, fixed bills, flexible spending, and surplus |
+| **Promotional expiry alert** | Promotional Cliff / 0% Cliff Alert         | Clear notice when a 0% credit card or transfer rate is ending              |
+
+---
+
+## 5. Capitalisation Rules
+
+Flump uses **sentence case** across all user-facing copy:
+
+- **Page headings (H1, H2, H3)**: Sentence case (e.g. _Your complete UK financial picture in 60 seconds_, _How Flump works in 3 simple steps_).
+- **Eyebrows and badges**: Sentence case (e.g. _How it works_, _Why Flump_, _Core tools_, _Security and privacy_, _Live calculator_).
+- **Buttons and interactive links**: Sentence case (e.g. _Get your free baseline_, _Start free baseline_, _Add account_, _Save this plan_).
+- **Navigation items**: Single words or sentence case (e.g. _Dashboard_, _Budget_, _Accounts_, _Debt_, _Savings_, _Pension_, _Mortgage_, _Forecast_, _Tax_, _Profile_).
+- **Table headers and form labels**: Sentence case (e.g. _Remaining mortgage balance_, _Annual gross salary_, _Monthly payment_).
+- **Exceptions (Title Case / All-Caps)**:
+  - Proper nouns (_Flump_, _England_, _Scotland_).
+  - Recognised UK acronyms and statutes (_HMRC_, _FCA_, _PAYE_, _NI_, _ISA_, _SIPP_, _GDPR_, _AER_, _APR_, _Section 24_).
+
+---
+
+## 6. Punctuation and Formatting
+
+- **En-dashes (`–`) for parenthetical breaks**: Use a spaced en-dash (`–`) with a space on either side. Never use unspaced em-dashes (`—`) or double hyphens (`--`).
+- **Closed en-dashes (`–`) for ranges**: Use an unspaced en-dash for numeric or currency ranges (e.g. `£100k–£125k`, `10–30 years`, `3–5 days`).
+- **Currency formatting**:
+  - Always use `£` directly before the number with no space (e.g. `£1,250`, `£45k`).
+  - Use `k` for thousands in constrained UI components (e.g. `£100k`).
+  - Use `/mo` and `/wk` for recurring rates in compact badges, or spell out "per month" / "per week" in body copy.
+- **Ellipses**: Avoid trailing ellipses (`...`) in normal copy or button labels unless an asynchronous background action is currently pending (e.g. _Saving..._).
+- **No exclamation marks**: Avoid exclamation marks in headings, confirmation messages, and banners. Confidence is conveyed through precise facts and clean typography.
+
+---
+
+## 7. Banned Words and AI Slop
+
+The following words and phrases must be removed or rewritten:
+
+| Banned Phrase                                  | Preferred Replacement                                   |
+| :--------------------------------------------- | :------------------------------------------------------ |
+| _Engineered for UK rules_                      | Built for UK rules / Designed for HMRC thresholds       |
+| _Zero-latency_                                 | Instant / fast                                          |
+| _Air-gapped privacy mode_                      | Manual mode / Private manual entry                      |
+| _Cryptographic bank-grade vault_               | 256-bit AES encryption                                  |
+| _Crush your debt_                              | Pay off debt faster / Clear your debt                   |
+| _Defuse promotional cliffs_                    | Avoid high revert rates / Clear balances before 0% ends |
+| _Unlock instant insights_                      | See your numbers immediately                            |
+| _Delve into / Tapestry / Beacon / Supercharge_ | Explain, show, calculate, review                        |
+| _Inquiry dispatched_                           | Enquiry sent                                            |
+| _Get out of the red. Build into the black._    | Your complete UK financial picture in 60 seconds.       |
+| _01 // HOW IT WORKS_                           | How it works                                            |
+| _02 // FOUR PILLARS_                           | Core tools                                              |
+| _03 // LIVE HMRC SIMULATOR_                    | Live calculator                                         |
+| _04 // WHY FLUMP_                              | Why Flump                                               |
+| _05 // TRUST & SECURITY_                       | Security and privacy                                    |
+| _06 // FAQ_                                    | Frequently asked questions                              |
+
+---
+
+## 8. Maintenance Rule
+
+Whenever new features, pages, modals, or documentation are added to Flump, agents and developers must:
+
+1. Review this document ([docs/copy-style-guide.md](file:///Users/marcgallagher/personal/flump/docs/copy-style-guide.md)).
+2. Apply strict British English (en-GB) and sentence case formatting.
+3. Update this guide if new domain concepts or canonical terms are introduced.

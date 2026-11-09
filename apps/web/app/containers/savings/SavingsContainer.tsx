@@ -177,7 +177,7 @@ export const SavingsContainer: FC = () => {
           <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
             <FaPiggyBank style={{ color: "#10b981", fontSize: "28px" }} />
             <FLPHeading as="h2" size="xl">
-              Savings & Compound Growth
+              Savings and compound growth
             </FLPHeading>
           </div>
           <FLPText color="text.muted" fontSize="sm" style={{ marginTop: "4px" }}>
@@ -189,10 +189,10 @@ export const SavingsContainer: FC = () => {
         <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
           <FLPButton size="sm" variant="outline" onClick={() => setShowWizard((prev) => !prev)}>
             <FaMagic style={{ marginRight: "6px" }} />
-            {showWizard ? "Hide Wizard" : "Guided Setup"}
+            {showWizard ? "Hide wizard" : "Guided setup"}
           </FLPButton>
           <FLPButton size="sm" variant="primary" onClick={() => setIsAddModalOpen(true)}>
-            <FaPlus style={{ marginRight: "6px" }} /> Add Account
+            <FaPlus style={{ marginRight: "6px" }} /> Add account
           </FLPButton>
         </div>
       </div>

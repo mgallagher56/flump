@@ -53,47 +53,49 @@ const STEP_DEFINITIONS = (props: SetupChecklistProps, navigate: ReturnType<typeo
     key: "budget",
     label: "Break down monthly outgoings",
     description:
-      "Your baseline outgoings are active. Break them down into Housing, Bills, Living & Wants to refine your Runway.",
+      "Your baseline outgoings are active. Break them down into housing, bills, living, and wants to refine your emergency runway.",
     icon: <FaWallet style={{ color: "#f59e0b" }} />,
     isComplete: props.hasBudget || props.completedSteps.includes("budget"),
-    actionLabel: "Drill Down Budget",
+    actionLabel: "Drill down budget",
     onAction: props.onOpenBudgetWizard || (() => navigate("/app/budget")),
   },
   {
     key: "accounts",
     label: "Connect bank or split savings accounts",
-    description: "Sync via FCA Read-Only Open Banking or add individual current and savings pots.",
+    description:
+      "Sync via FCA read-only Open Banking or add individual current accounts and savings pots.",
     icon: <FaUniversity style={{ color: "#6363f1" }} />,
     isComplete: props.hasAccounts || props.completedSteps.includes("accounts"),
-    actionLabel: "Add Account Detail",
+    actionLabel: "Add account detail",
     onAction: props.onOpenConnectBank || (() => navigate("/app/accounts")),
   },
   {
     key: "savings",
-    label: "Track savings & interest rates",
-    description: "Record individual interest rates (APY) and set regular monthly wealth targets.",
+    label: "Track savings and interest rates",
+    description: "Record individual interest rates (AER) and set regular monthly savings targets.",
     icon: <FaPiggyBank style={{ color: "#10b981" }} />,
     isComplete: !!props.hasSavings || props.completedSteps.includes("savings"),
-    actionLabel: "Track Savings",
+    actionLabel: "Track savings",
     onAction: () => navigate("/app/savings"),
   },
   {
     key: "pension",
-    label: "Refine pension schemes & match",
-    description: "Add employer matching % and track multiple active or legacy UK pension pots.",
+    label: "Refine pension schemes and employer match",
+    description:
+      "Add employer matching percentage and track multiple active or legacy UK pension pots.",
     icon: <FaShieldAlt style={{ color: "#8b5cf6" }} />,
     isComplete: !!props.hasPension || props.completedSteps.includes("pension"),
-    actionLabel: "Refine Pension",
+    actionLabel: "Refine pension",
     onAction: () => navigate("/app/pension"),
   },
   {
     key: "mortgage",
-    label: "Refine mortgage term & overpayment",
+    label: "Refine mortgage term and overpayment",
     description:
-      "Simulate monthly overpayments, view your full amortization curve, and compare ISA vs. mortgage payoff.",
+      "Simulate monthly overpayments, view your full amortisation curve, and compare ISA vs mortgage payoff.",
     icon: <FaHome style={{ color: "#10b981" }} />,
     isComplete: props.hasMortgageAccount || props.completedSteps.includes("mortgage"),
-    actionLabel: "Drill Down Mortgage",
+    actionLabel: "Drill down mortgage",
     onAction: () => navigate("/app/mortgage"),
   },
   {
@@ -103,17 +105,17 @@ const STEP_DEFINITIONS = (props: SetupChecklistProps, navigate: ReturnType<typeo
       "Simulate pay rises, career breaks, or mortgage interest shocks on your net worth line.",
     icon: <FaChartLine style={{ color: "#3b82f6" }} />,
     isComplete: props.hasRunForecast || props.completedSteps.includes("forecast"),
-    actionLabel: "Model Scenarios",
+    actionLabel: "Model scenarios",
     onAction: () => navigate("/app/forecast"),
   },
   {
     key: "tax",
     label: "Record self-employed or rental tax",
     description:
-      "Log income and deductible expenses to view your estimated UK Self-Assessment liability.",
+      "Log income and allowable expenses to view your estimated UK Self Assessment liability.",
     icon: <FaFileInvoiceDollar style={{ color: "#3b82f6" }} />,
     isComplete: Boolean(props.hasTax || props.completedSteps.includes("tax")),
-    actionLabel: "Open Tax Tracker",
+    actionLabel: "Open tax tracker",
     onAction: () => navigate("/app/tax"),
   },
 ];
@@ -178,7 +180,7 @@ const SetupChecklist: FC<SetupChecklistProps> = (props) => {
           <div>
             <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
               <FLPHeading as="h4" size="sm">
-                Refine & Drill Down Your Baseline
+                Refine and drill down your baseline
               </FLPHeading>
               <span
                 className={css({
@@ -316,7 +318,7 @@ const SetupChecklist: FC<SetupChecklistProps> = (props) => {
                       gap: "4px",
                     })}
                   >
-                    ✓ Widget Unlocked on Dashboard
+                    ✓ Widget unlocked on dashboard
                   </span>
                 ) : (
                   <button

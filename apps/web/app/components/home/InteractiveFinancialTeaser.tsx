@@ -366,13 +366,13 @@ export const InteractiveFinancialTeaser: FC = () => {
           Test the calculation engines live
         </FLPHeading>
         <FLPText color="text.muted" fontSize="md">
-          Zero login required. Explore how Flump models UK income taxes and mortgage scenario
-          savings in real time.
+          Enter your figures to see real HMRC marginal tax rates and mortgage amortisation
+          schedules.
         </FLPText>
       </div>
 
       <div className={teaserCardStyle}>
-        <div aria-label="Demo Calculators" className={tabListStyle} role="tablist">
+        <div aria-label="Calculation tools" className={tabListStyle} role="tablist">
           <button
             aria-controls="panel-tax"
             aria-selected={activeTab === "tax"}
@@ -382,7 +382,7 @@ export const InteractiveFinancialTeaser: FC = () => {
             type="button"
             onClick={() => setActiveTab("tax")}
           >
-            <FiPercent aria-hidden="true" /> UK Tax & 60% Trap Estimator
+            <FiPercent aria-hidden="true" /> UK PAYE and 60% tax trap
           </button>
           <button
             aria-controls="panel-mortgage"
@@ -393,7 +393,7 @@ export const InteractiveFinancialTeaser: FC = () => {
             type="button"
             onClick={() => setActiveTab("mortgage")}
           >
-            <FiTrendingUp aria-hidden="true" /> Mortgage Overpayment Modeler
+            <FiTrendingUp aria-hidden="true" /> Mortgage overpayment savings
           </button>
         </div>
 
@@ -408,7 +408,7 @@ export const InteractiveFinancialTeaser: FC = () => {
               <div>
                 <div className={inputGroupStyle}>
                   <label className={labelStyle} htmlFor={incomeInputId}>
-                    Annual Gross Salary (PAYE)
+                    Annual gross salary (PAYE)
                   </label>
                   <div className={inputWrapperStyle}>
                     <span className={currencyPrefixStyle}>£</span>
@@ -441,7 +441,7 @@ export const InteractiveFinancialTeaser: FC = () => {
                   <div className={alertTaperStyle}>
                     <FiAlertCircle size={18} style={{ flexShrink: 0, marginTop: "2px" }} />
                     <div>
-                      <strong>£100k+ Personal Allowance Taper Active</strong>
+                      <strong>£100k+ Personal Allowance taper active</strong>
                       <p style={{ margin: "4px 0 0" }}>
                         Allowance reduced to {formatGBP(taxResults.allowance)}. Earnings between
                         £100k–£125k face an effective 60% marginal income tax rate.
@@ -453,7 +453,7 @@ export const InteractiveFinancialTeaser: FC = () => {
 
               <div className={resultBoxStyle}>
                 <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-                  <span className={labelStyle}>Net Take-Home Pay</span>
+                  <span className={labelStyle}>Net take-home pay</span>
                   <div className={highlightValueStyle}>
                     {formatGBP(taxResults.monthlyNet)}{" "}
                     <span style={{ fontSize: "sm", fontWeight: "normal", color: "text.muted" }}>
@@ -461,12 +461,12 @@ export const InteractiveFinancialTeaser: FC = () => {
                     </span>
                   </div>
                   <FLPText color="text.muted" fontSize="xs">
-                    {formatGBP(taxResults.annualNet)} annually after all UK deductions
+                    {formatGBP(taxResults.annualNet)} annually after UK tax and National Insurance
                   </FLPText>
                 </div>
 
                 <div className={statRowStyle}>
-                  <span style={{ color: "text.muted" }}>Income Tax:</span>
+                  <span style={{ color: "text.muted" }}>Income tax:</span>
                   <strong style={{ color: "text.primary" }}>
                     {formatGBP(taxResults.incomeTax)}
                   </strong>
@@ -487,7 +487,7 @@ export const InteractiveFinancialTeaser: FC = () => {
                 </div>
 
                 <div className={statRowStyle}>
-                  <span style={{ color: "text.muted" }}>Effective Tax & NI Rate:</span>
+                  <span style={{ color: "text.muted" }}>Effective tax and NI rate:</span>
                   <span
                     style={{
                       fontWeight: "bold",
@@ -528,7 +528,7 @@ export const InteractiveFinancialTeaser: FC = () => {
               <div>
                 <div className={inputGroupStyle}>
                   <label className={labelStyle} htmlFor={mortgageBalanceId}>
-                    Remaining Mortgage Balance
+                    Remaining mortgage balance
                   </label>
                   <div className={inputWrapperStyle}>
                     <span className={currencyPrefixStyle}>£</span>
@@ -558,7 +558,7 @@ export const InteractiveFinancialTeaser: FC = () => {
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
                   <div className={inputGroupStyle}>
                     <label className={labelStyle} htmlFor={interestRateId}>
-                      Interest Rate (%)
+                      Interest rate (%)
                     </label>
                     <input
                       className={textInputStyle}
@@ -575,7 +575,7 @@ export const InteractiveFinancialTeaser: FC = () => {
 
                   <div className={inputGroupStyle}>
                     <label className={labelStyle} htmlFor={overpaymentId}>
-                      Monthly Overpayment (£)
+                      Monthly overpayment (£)
                     </label>
                     <input
                       className={textInputStyle}
@@ -594,7 +594,7 @@ export const InteractiveFinancialTeaser: FC = () => {
 
               <div className={resultBoxStyle}>
                 <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-                  <span className={labelStyle}>Total Interest Saved</span>
+                  <span className={labelStyle}>Total interest saved</span>
                   <div className={highlightValueStyle} style={{ color: "#10b981" }}>
                     {formatGBP(mortgageResults.totalInterestSaved)}
                   </div>
@@ -604,21 +604,21 @@ export const InteractiveFinancialTeaser: FC = () => {
                 </div>
 
                 <div className={statRowStyle}>
-                  <span style={{ color: "text.muted" }}>Standard Repayment:</span>
+                  <span style={{ color: "text.muted" }}>Standard repayment:</span>
                   <span style={{ color: "text.primary", fontWeight: "medium" }}>
                     {formatGBP(mortgageResults.monthlyStandard)} / month
                   </span>
                 </div>
 
                 <div className={statRowStyle}>
-                  <span style={{ color: "text.muted" }}>Mortgage Term Shaved:</span>
+                  <span style={{ color: "text.muted" }}>Mortgage term reduced:</span>
                   <strong style={{ color: "primary" }}>
                     {mortgageResults.yearsSaved} yrs {mortgageResults.remainingMonthsSaved} mos
                   </strong>
                 </div>
 
                 <div className={statRowStyle}>
-                  <span style={{ color: "text.muted" }}>New Total Monthly:</span>
+                  <span style={{ color: "text.muted" }}>New total monthly:</span>
                   <strong style={{ color: "text.primary" }}>
                     {formatGBP(mortgageResults.monthlyWithOverpayment)} / month
                   </strong>

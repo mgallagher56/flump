@@ -324,7 +324,7 @@ const AccountsContainer: FC = () => {
             {t("accounts")}
           </FLPHeading>
           <FLPText fontSize="sm" color="text.muted" className={css({ marginTop: "4px" })}>
-            Unified Net Worth, Savings Yield & UK Allowance Hub
+            Unified net worth, savings yield and UK allowance hub
           </FLPText>
         </div>
 
@@ -348,7 +348,7 @@ const AccountsContainer: FC = () => {
                 fontWeight="semibold"
                 textTransform="uppercase"
               >
-                Total Net Worth
+                Total net worth
               </FLPText>
               <FLPHeading
                 as="h2"
@@ -364,7 +364,7 @@ const AccountsContainer: FC = () => {
               </FLPText>
             </div>
 
-            {/* Total Liquid Cash & Savings (with Weighted Average APY) */}
+            {/* Total Liquid Cash & Savings (with Weighted Average AER) */}
             <div className={summaryCardStyle}>
               <FLPText
                 color="gray.500"
@@ -372,15 +372,15 @@ const AccountsContainer: FC = () => {
                 fontWeight="semibold"
                 textTransform="uppercase"
               >
-                Liquid Cash & Savings
+                Liquid cash and savings
               </FLPText>
               <FLPHeading as="h2" color="success.500" mt={1} size="xl">
                 {formatCurrency(stats.liquidCash)}
               </FLPHeading>
               <FLPText fontSize="xs" color="text.muted">
-                Weighted Yield:{" "}
+                Weighted yield:{" "}
                 <strong>
-                  {stats.weightedAvgApy > 0 ? `${stats.weightedAvgApy}% APY` : "0.0%"}
+                  {stats.weightedAvgApy > 0 ? `${stats.weightedAvgApy}% AER` : "0.0%"}
                 </strong>
               </FLPText>
             </div>
@@ -423,7 +423,7 @@ const AccountsContainer: FC = () => {
                   color="text.muted"
                   textTransform="uppercase"
                 >
-                  Asset Allocation Preview
+                  Asset allocation preview
                 </FLPText>
               </div>
               <div
@@ -476,7 +476,7 @@ const AccountsContainer: FC = () => {
         </>
       )}
 
-      {/* Tabs list: All | Cash & Current | Savings & ISAs | Investments & Pensions | Credit & Debt | Mortgages */}
+      {/* Tabs list: All | Cash & current | Savings & ISAs | Investments & pensions | Credit & debt | Mortgages */}
       <div className={css({ marginTop: "24px" })}>
         <FLPTabs
           value={activeTab}
@@ -484,7 +484,7 @@ const AccountsContainer: FC = () => {
           data={[
             {
               value: "all",
-              label: "All Accounts",
+              label: "All accounts",
               children: (
                 <FLPBox display="flex" flexDirection="column" gap={10} mt={4}>
                   {renderAccountsForTypes([
@@ -502,7 +502,7 @@ const AccountsContainer: FC = () => {
             },
             {
               value: "cash-current",
-              label: "Cash & Current",
+              label: "Cash & current",
               children: (
                 <FLPBox display="flex" flexDirection="column" gap={10} mt={4}>
                   {renderAccountsForTypes([CURRENT])}
@@ -511,7 +511,7 @@ const AccountsContainer: FC = () => {
             },
             {
               value: "savings-yield",
-              label: "Savings & ISAs (Yield & Compound Forecaster)",
+              label: "Savings & ISAs (yield & compound forecaster)",
               children: (
                 <FLPBox display="flex" flexDirection="column" gap={8} mt={4}>
                   <SavingsForecasterCard
@@ -526,7 +526,7 @@ const AccountsContainer: FC = () => {
             },
             {
               value: "investments-pensions",
-              label: "Investments & Pensions",
+              label: "Investments & pensions",
               children: (
                 <FLPBox display="flex" flexDirection="column" gap={10} mt={4}>
                   {renderAccountsForTypes([INVESTMENT, PENSION])}
@@ -535,7 +535,7 @@ const AccountsContainer: FC = () => {
             },
             {
               value: "credit-debt",
-              label: "Credit & Debt",
+              label: "Credit & debt",
               children: (
                 <FLPBox display="flex" flexDirection="column" gap={10} mt={4}>
                   {renderAccountsForTypes([CREDIT_CARD, LOAN, OWED])}
@@ -553,7 +553,7 @@ const AccountsContainer: FC = () => {
             },
             {
               value: "bank-connections",
-              label: "Open Banking Connections",
+              label: "Open banking connections",
               children: (
                 <div style={{ marginTop: "16px" }}>
                   <BankConnectionsList connections={bankConnections} />

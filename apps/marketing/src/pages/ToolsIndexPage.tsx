@@ -93,52 +93,52 @@ const ctaLinkStyle = css({
 export const TOOLS_CATALOG = [
   {
     slug: "uk-100k-tax-trap-calculator",
-    title: "£100k–£125k Tax Trap & Childcare Reclaim",
-    desc: "Model how Personal Allowance taper creates an effective 60% marginal rate and compute the exact pension sacrifice to recover £12,570 and free childcare.",
+    title: "£100k–£125k tax trap and childcare calculator",
+    desc: "Model how the Personal Allowance taper creates an effective 60% marginal rate and calculate the exact pension salary sacrifice to reclaim your allowance and 30 hours free childcare.",
     icon: <FiPercent size={22} color="#6363f1" />,
-    badge: "HMRC Income Tax",
+    badge: "HMRC income tax",
   },
   {
     slug: "uk-debt-snowball-vs-avalanche-calculator",
-    title: "Debt Snowball vs. Avalanche Payoff",
-    desc: "Compare payoff speeds, interest savings, and debt-free dates between high-APR Avalanche and momentum-building Snowball methods.",
+    title: "Debt snowball vs avalanche payoff",
+    desc: "Compare payoff speeds, interest savings, and debt-free dates between high-APR avalanche and balance-clearing snowball methods.",
     icon: <FiDollarSign size={22} color="#ef4444" />,
-    badge: "Debt Freedom",
+    badge: "Debt payoff",
   },
   {
     slug: "0-percent-balance-transfer-payoff-calculator",
-    title: "0% Balance Transfer Cliff Calculator",
-    desc: "Calculate the exact monthly repayment needed to extinguish transfer balances before the promotional 0% window ends and 25%+ APR kicks in.",
+    title: "0% balance transfer payoff calculator",
+    desc: "Calculate the exact monthly repayment needed to clear transfer balances before your promotional 0% window ends and standard APR applies.",
     icon: <FiCreditCard size={22} color="#f59e0b" />,
-    badge: "Credit Cards",
+    badge: "Credit cards",
   },
   {
     slug: "section-24-landlord-tax-calculator",
-    title: "Section 24 BTL Landlord Tax Calculator",
-    desc: "Model how mortgage interest relief restriction impacts higher-rate landlords and see how pension contributions restore standard tax bands.",
+    title: "Section 24 buy-to-let landlord tax calculator",
+    desc: "Model how mortgage interest relief restriction impacts higher-rate landlords and see how pension contributions restore basic tax bands.",
     icon: <FiHome size={22} color="#8b5cf6" />,
-    badge: "Property & BTL",
+    badge: "Property tax",
   },
   {
     slug: "mortgage-overpayment-vs-isa-calculator",
-    title: "Mortgage Overpayment vs. Stocks & Shares ISA",
-    desc: "Compare the guaranteed return of paying off your UK mortgage early against compounding equity market returns over 5–25 years.",
+    title: "Mortgage overpayment vs Stocks and Shares ISA",
+    desc: "Compare the guaranteed return of paying down your UK mortgage against compounding equity market returns over 5–25 years.",
     icon: <FiTrendingUp size={22} color="#10b981" />,
-    badge: "Mortgages & Wealth",
+    badge: "Mortgages and wealth",
   },
   {
     slug: "overdraft-cost-and-payoff-calculator",
-    title: "Arranged Overdraft Cost & Payoff Modeler",
-    desc: "Expose the stealth compound cost of arranged UK overdrafts (often 39.9% EAR) and plan an exit strategy with small weekly payments.",
+    title: "Arranged overdraft cost and payoff modeller",
+    desc: "Expose the compound cost of arranged UK overdrafts (often 39.9% EAR) and plan a clear exit strategy with regular payments.",
     icon: <FiDollarSign size={22} color="#ef4444" />,
-    badge: "Banking Fees",
+    badge: "Banking fees",
   },
   {
     slug: "uk-student-loan-overpay-or-invest-calculator",
-    title: "Student Loan (Plan 2 / 5) Overpay or Invest",
-    desc: "Analyze whether treating your UK student loan as a graduate tax or aggressively paying it off is mathematically optimal based on salary growth.",
+    title: "Student loan (Plan 2 / Plan 5) overpay or invest",
+    desc: "Analyse whether treating your UK student loan as a graduate tax or paying it down is mathematically optimal based on salary growth.",
     icon: <FiPercent size={22} color="#06b6d4" />,
-    badge: "Student Finance",
+    badge: "Student finance",
   },
 ];
 
@@ -146,7 +146,7 @@ export const ToolsIndexPage: FC = () => {
   return (
     <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
       <Helmet>
-        <title>Free UK Financial & Tax Calculators | Flump</title>
+        <title>Free UK financial and tax calculators | Flump</title>
         <meta
           name="description"
           content="Free standalone UK personal finance calculators: £100k tax trap, debt avalanche vs snowball, Section 24 landlord tax, and mortgage vs ISA."
@@ -168,7 +168,7 @@ export const ToolsIndexPage: FC = () => {
                 color: "#6363f1",
               }}
             >
-              Public Tools Directory
+              Public tools directory
             </span>
             <h1
               style={{
@@ -178,7 +178,7 @@ export const ToolsIndexPage: FC = () => {
                 marginTop: "8px",
               }}
             >
-              Engineered UK Financial Calculators
+              Free UK financial calculators
             </h1>
             <p
               style={{
@@ -188,8 +188,8 @@ export const ToolsIndexPage: FC = () => {
                 margin: "12px auto 0",
               }}
             >
-              Fast, zero-latency calculators running 100% in your browser. Solve specific UK tax and
-              debt questions with zero sign-up.
+              Fast calculators running directly in your browser. Answer specific UK tax, debt, and
+              mortgage questions with zero sign-up required.
             </p>
           </div>
 
@@ -224,7 +224,7 @@ export const ToolsIndexPage: FC = () => {
               <div style={{ height: "100%", minHeight: "200px", maxHeight: "260px" }}>
                 <img
                   src="/illustrations/tax-bridge.jpg"
-                  alt="3D UK Tax Cliff Bridge visualising Personal Allowance taper"
+                  alt="UK tax cliff bridge visualising Personal Allowance taper"
                   loading="lazy"
                   style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
                 />
@@ -243,7 +243,7 @@ export const ToolsIndexPage: FC = () => {
                   <span
                     style={{ fontSize: "12px", color: "var(--colors-primary)", fontWeight: "700" }}
                   >
-                    60% Effective Marginal Rate
+                    60% effective marginal rate
                   </span>
                 </div>
                 <h2
@@ -255,7 +255,7 @@ export const ToolsIndexPage: FC = () => {
                     color: "var(--colors-text-primary)",
                   }}
                 >
-                  Bridge the £100k–£125k Tax Trap & Childcare Cliff
+                  Bridge the £100k–£125k tax trap and protect childcare
                 </h2>
                 <p
                   style={{
@@ -266,11 +266,11 @@ export const ToolsIndexPage: FC = () => {
                   }}
                 >
                   Model how Personal Allowance reduction combined with student loan and childcare
-                  loss creates a 60%+ marginal tax trap—and compute the exact salary sacrifice to
-                  bridge across it safely.
+                  loss creates a 60%+ marginal tax trap – and calculate the exact salary sacrifice
+                  to bridge across it safely.
                 </p>
                 <div className={ctaLinkStyle} style={{ marginTop: "4px" }}>
-                  Run £100k Tax Trap Simulation <FiArrowRight />
+                  Run £100k tax trap simulation <FiArrowRight />
                 </div>
               </div>
             </div>
@@ -297,7 +297,7 @@ export const ToolsIndexPage: FC = () => {
                 </div>
 
                 <div className={ctaLinkStyle}>
-                  Open Calculator <FiArrowRight />
+                  Open calculator <FiArrowRight />
                 </div>
               </Link>
             ))}

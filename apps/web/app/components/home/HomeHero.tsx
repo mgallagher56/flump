@@ -111,7 +111,7 @@ export const HomeHero: FC = () => {
         }}
       >
         <span className={badgeStyle}>
-          <span>🇬🇧</span> Built Specifically for UK Personal Finance & HMRC Rules
+          <span>🇬🇧</span> Built for UK personal finance and HMRC rules
         </span>
 
         <h1
@@ -128,18 +128,7 @@ export const HomeHero: FC = () => {
             maxWidth: "960px",
           }}
         >
-          Get out of the red. <br />
-          <span
-            style={{
-              background: "linear-gradient(135deg, #EF4444 0%, #F59E0B 45%, #10B981 100%)",
-              backgroundClip: "text",
-              WebkitBackgroundClip: "text",
-              color: "transparent",
-              display: "inline-block",
-            }}
-          >
-            Build into the black.
-          </span>
+          Your complete UK financial picture in 60 seconds.
         </h1>
 
         <FLPText
@@ -148,9 +137,8 @@ export const HomeHero: FC = () => {
           lineHeight="1.65"
           style={{ maxWidth: "780px", margin: "0 auto", fontSize: "clamp(1.15rem, 2vw, 1.35rem)" }}
         >
-          Get your complete UK financial baseline in 60 seconds. Know your Net Worth, weekly
-          Safe-to-Spend cash, and emergency runway—then drill down into taxes, mortgages, or debt
-          payoff when you're ready.
+          Enter 6 rough numbers to calculate your net worth, weekly safe to spend, and emergency
+          runway – then drill down into tax, mortgage overpayments, or debt payoff when you need to.
         </FLPText>
 
         <div className={ctaStackStyle}>
@@ -174,7 +162,7 @@ export const HomeHero: FC = () => {
               }}
               to="/signUp"
             >
-              Get Your 60-Second Baseline Free <FiArrowRight aria-hidden="true" />
+              Get your free baseline <FiArrowRight aria-hidden="true" />
             </RouterLink>
           </FLPButton>
           <FLPButton
@@ -187,7 +175,7 @@ export const HomeHero: FC = () => {
             }}
           >
             <RouterLink style={{ color: "inherit", textDecoration: "none" }} to="/login">
-              Sign In to Account
+              Sign in
             </RouterLink>
           </FLPButton>
           <FLPButton
@@ -209,12 +197,12 @@ export const HomeHero: FC = () => {
               }}
               to="/?demo=true"
             >
-              Explore Live Sandbox →
+              Try the live demo →
             </RouterLink>
           </FLPButton>
         </div>
 
-        {/* 3D Wealth Engine Hero Illustration */}
+        {/* Wealth Engine Hero Illustration */}
         <div
           className={css({
             maxWidth: "1060px",
@@ -233,7 +221,7 @@ export const HomeHero: FC = () => {
         >
           <img
             src="/illustrations/hero-wealth-engine.jpg"
-            alt="3D Wealth Engine visualising UK net worth progression"
+            alt="Visual summary of financial baseline, debt payoff, and net worth"
             loading="eager"
             style={{
               width: "100%",
@@ -251,19 +239,19 @@ export const HomeHero: FC = () => {
         <div className={trustBarContainer}>
           <div className={trustItem}>
             <FiCheckCircle aria-hidden="true" className={trustIconStyle} />
-            <span>FCA Read-Only Open Banking & 256-Bit TLS</span>
+            <span>FCA read-only Open Banking and 256-bit encryption</span>
           </div>
           <div className={trustItem}>
             <FiPieChart aria-hidden="true" className={trustIconStyle} />
-            <span>Section 24 Landlord & 2026/27 Tax Bands</span>
+            <span>Section 24 landlord and HMRC tax bands</span>
           </div>
           <div className={trustItem}>
             <FiTrendingUp aria-hidden="true" className={trustIconStyle} />
-            <span>£20k ISA & £60k Pension Allowances</span>
+            <span>£20k ISA and £60k pension allowances</span>
           </div>
           <div className={trustItem}>
             <FiLock aria-hidden="true" className={trustIconStyle} />
-            <span>Zero Ad Tracking or Data Selling</span>
+            <span>No ad tracking or data selling</span>
           </div>
         </div>
       </div>
