@@ -26,7 +26,26 @@ export const loader = async (args: LoaderFunctionArgs) => {
   const { user, accessToken } = await getAuthSession(args, { ensureSignedIn: false });
 
   if (!user) {
-    return redirect("/login");
+    return {
+      isDemo: false,
+      user: null,
+      hasAccounts: false,
+      hasBudget: false,
+      hasSavings: false,
+      hasPension: false,
+      hasMortgageAccount: false,
+      hasProfile: false,
+      hasRunForecast: false,
+      completedSteps: [] as string[],
+      accountsData: null,
+      budgetData: null,
+      savingsData: null,
+      pensionData: null,
+      mortgageData: null,
+      forecastData: null,
+      taxData: null,
+      debtData: null,
+    };
   }
 
   const apiUrl = process.env.VITE_API_URL || "http://localhost:4000";
@@ -327,7 +346,7 @@ const Index = (): ReactElement => {
     );
   }
 
-  return null;
+  return <LoggedOutHome />;
 };
 
 export default Index;
