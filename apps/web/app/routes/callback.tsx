@@ -1,6 +1,6 @@
-import { authLoader } from "@workos-inc/authkit-react-router";
+import { authLoader, configure } from "@workos-inc/authkit-react-router";
 import type { LoaderFunctionArgs } from "react-router";
-import { redirect } from "react-router";
+import { redirect, useLoaderData } from "react-router";
 
 const workosLoader = authLoader({
   returnPathname: "/app",
@@ -10,6 +10,15 @@ export const loader = async (args: LoaderFunctionArgs) => {
   const url = new URL(args.request.url);
   if (!url.searchParams.get("code")) {
     return redirect("/login");
+  }
+
+  if (url.hostname === "localhost" || url.hostname === "127.0.0.1") {
+    configure((key: string) => {
+      if (key === "WORKOS_REDIRECT_URI") {
+        return `${url.origin}/callback`;
+      }
+      return process.env[key];
+    });
   }
 
   const response = await workosLoader(args);
@@ -30,5 +39,34 @@ export const loader = async (args: LoaderFunctionArgs) => {
 };
 
 export default function CallbackRoute() {
+  const data = useLoaderData<typeof loader>() as any;
+  if (data?.error) {
+    return (
+      <div style={{ textAlign: "center", padding: "80px 20px" }}>
+        <h2 style={{ fontSize: "1.5rem", fontWeight: "bold", marginBottom: "12px" }}>
+          Authentication Could Not Be Completed
+        </h2>
+        <p style={{ color: "var(--colors-text-muted)", maxWidth: "480px", margin: "0 auto 24px" }}>
+          {data.error.description ||
+            data.error.message ||
+            "An authentication error occurred while validating your session."}
+        </p>
+        <a
+          href="/login"
+          style={{
+            display: "inline-block",
+            padding: "12px 24px",
+            backgroundColor: "var(--colors-primary)",
+            color: "#fff",
+            borderRadius: "8px",
+            textDecoration: "none",
+            fontWeight: 600,
+          }}
+        >
+          Return to Log In
+        </a>
+      </div>
+    );
+  }
   return null;
 }
