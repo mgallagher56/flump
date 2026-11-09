@@ -1,16 +1,42 @@
 import { css } from "@repo/ui/styled-system/css";
-import { type FC, useState } from "react";
+import { type FC, useEffect, useState } from "react";
 import { FaCheck, FaCoins, FaSlidersH, FaUndo } from "react-icons/fa";
 import FLPText from "~/components/core/typography/FLPText";
-import { useFinancialBaseline } from "~/state/baseline.store";
+import { useUserProfile } from "~/hooks/useUserProfile";
+import { DEFAULT_FINANCIAL_BASELINE, useFinancialBaseline } from "~/state/baseline.store";
 import { useScenario } from "~/state/scenario.store";
 
 export const GlobalBaselineScenarioBar: FC = () => {
   const { baseline, updateBaseline, stage } = useFinancialBaseline();
   const { isActive, overrides, effectiveBaseline, toggleScenario, updateOverrides, resetScenario } =
     useScenario();
+  const { profile } = useUserProfile();
 
   const [isExpanded, setIsExpanded] = useState(false);
+
+  // Hydrate baseline from userProfile if baseline is currently at its default
+  useEffect(() => {
+    if (
+      profile?.annualSalary &&
+      profile.annualSalary > 0 &&
+      baseline.annualGrossSalary === DEFAULT_FINANCIAL_BASELINE.annualGrossSalary
+    ) {
+      updateBaseline({
+        annualGrossSalary: profile.annualSalary,
+        pensionContributionPct:
+          profile.pensionPercent !== undefined && profile.pensionPercent !== null
+            ? profile.pensionPercent
+            : baseline.pensionContributionPct,
+        isSalarySacrifice: profile.isSalarySacrifice ?? baseline.isSalarySacrifice,
+      });
+    }
+  }, [
+    profile,
+    baseline.annualGrossSalary,
+    updateBaseline,
+    baseline.pensionContributionPct,
+    baseline.isSalarySacrifice,
+  ]);
 
   const stageLabels = {
     STAGE_1_DEBT_RECOVERY: {
@@ -193,7 +219,7 @@ export const GlobalBaselineScenarioBar: FC = () => {
         </div>
       </div>
 
-      {/* Expanded Inline Slider Controls */}
+      {/* Expanded Inline Scenario Controls */}
       {isExpanded && (
         <div
           className={css({
@@ -204,62 +230,112 @@ export const GlobalBaselineScenarioBar: FC = () => {
             display: "grid",
             gridTemplateColumns: { base: "1fr", sm: "repeat(2, 1fr)", md: "repeat(3, 1fr)" },
             gap: "16px",
+            alignItems: "end",
           })}
         >
-          {/* Salary Adjustment Slider */}
+          {/* Salary Adjustment Input */}
           <div>
-            <div
+            <label
+              htmlFor="scenario-gross-salary"
               className={css({
-                display: "flex",
-                justifyContent: "space-between",
+                display: "block",
                 fontSize: "xs",
+                fontWeight: "semibold",
+                color: "text.primary",
                 mb: 1,
               })}
             >
-              <span className={css({ fontWeight: "semibold", color: "text.primary" })}>
-                Gross Salary
+              Gross Annual Salary
+            </label>
+            <div className={css({ position: "relative", display: "flex", alignItems: "center" })}>
+              <span
+                className={css({
+                  position: "absolute",
+                  left: "10px",
+                  fontSize: "xs",
+                  color: "text.muted",
+                  pointerEvents: "none",
+                })}
+              >
+                £
               </span>
-              <span className={css({ color: "primary", fontWeight: "bold" })}>
-                £{effectiveBaseline.annualGrossSalary.toLocaleString()}
-              </span>
+              <input
+                id="scenario-gross-salary"
+                type="number"
+                min="0"
+                step="500"
+                value={effectiveBaseline.annualGrossSalary}
+                onChange={(e) =>
+                  updateOverrides({ annualGrossSalary: Number(e.target.value) || 0 })
+                }
+                className={css({
+                  width: "100%",
+                  padding: "6px 12px 6px 24px",
+                  fontSize: "sm",
+                  fontWeight: "semibold",
+                  borderRadius: "md",
+                  border: "1px solid",
+                  borderColor: "border",
+                  backgroundColor: "surface",
+                  color: "text.primary",
+                  outline: "none",
+                  _focus: { borderColor: "primary" },
+                })}
+              />
             </div>
-            <input
-              type="range"
-              min="15000"
-              max="250000"
-              step="1000"
-              value={effectiveBaseline.annualGrossSalary}
-              onChange={(e) => updateOverrides({ annualGrossSalary: Number(e.target.value) })}
-              className={css({ width: "100%", accentColor: "primary", cursor: "pointer" })}
-            />
           </div>
 
-          {/* Pension % Slider */}
+          {/* Pension % Input */}
           <div>
-            <div
+            <label
+              htmlFor="scenario-pension-pct"
               className={css({
-                display: "flex",
-                justifyContent: "space-between",
+                display: "block",
                 fontSize: "xs",
+                fontWeight: "semibold",
+                color: "text.primary",
                 mb: 1,
               })}
             >
-              <span className={css({ fontWeight: "semibold", color: "text.primary" })}>
-                Pension Contribution
-              </span>
-              <span className={css({ color: "primary", fontWeight: "bold" })}>
-                {effectiveBaseline.pensionContributionPct}%
+              Pension Contribution
+            </label>
+            <div className={css({ position: "relative", display: "flex", alignItems: "center" })}>
+              <input
+                id="scenario-pension-pct"
+                type="number"
+                min="0"
+                max="100"
+                step="0.5"
+                value={effectiveBaseline.pensionContributionPct}
+                onChange={(e) =>
+                  updateOverrides({ pensionContributionPct: Number(e.target.value) || 0 })
+                }
+                className={css({
+                  width: "100%",
+                  padding: "6px 24px 6px 12px",
+                  fontSize: "sm",
+                  fontWeight: "semibold",
+                  borderRadius: "md",
+                  border: "1px solid",
+                  borderColor: "border",
+                  backgroundColor: "surface",
+                  color: "text.primary",
+                  outline: "none",
+                  _focus: { borderColor: "primary" },
+                })}
+              />
+              <span
+                className={css({
+                  position: "absolute",
+                  right: "10px",
+                  fontSize: "xs",
+                  color: "text.muted",
+                  pointerEvents: "none",
+                })}
+              >
+                %
               </span>
             </div>
-            <input
-              type="range"
-              min="0"
-              max="40"
-              step="1"
-              value={effectiveBaseline.pensionContributionPct}
-              onChange={(e) => updateOverrides({ pensionContributionPct: Number(e.target.value) })}
-              className={css({ width: "100%", accentColor: "primary", cursor: "pointer" })}
-            />
           </div>
 
           {/* Salary Sacrifice Toggle */}
@@ -268,6 +344,11 @@ export const GlobalBaselineScenarioBar: FC = () => {
               display: "flex",
               alignItems: "center",
               justifyContent: "space-between",
+              padding: "6px 10px",
+              borderRadius: "md",
+              border: "1px solid",
+              borderColor: "border",
+              backgroundColor: "surface",
             })}
           >
             <div>
@@ -275,7 +356,7 @@ export const GlobalBaselineScenarioBar: FC = () => {
                 Salary Sacrifice (NI Relief)
               </FLPText>
               <FLPText fontSize="xs" color="text.muted">
-                Deducted pre-PAYE & NI
+                Pre-PAYE & NI deduction
               </FLPText>
             </div>
             <input

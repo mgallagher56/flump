@@ -137,17 +137,46 @@ export const Section24Calculator: FC<Section24CalculatorProps> = ({
 
       <div className={inputGridStyle}>
         <div className={inputGroupStyle}>
-          <div style={{ display: "flex", justifyContent: "space-between" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <label htmlFor="rental-income" style={{ fontSize: "13px", fontWeight: 600 }}>
-              Annual rental income
+              Gross annual rental income
             </label>
-            <span style={{ fontSize: "15px", fontWeight: 700, color: "#3b82f6" }}>
-              £{rentalIncome.toLocaleString("en-GB")}
-            </span>
+            <div style={{ position: "relative", display: "inline-flex", alignItems: "center" }}>
+              <span
+                style={{
+                  position: "absolute",
+                  left: "8px",
+                  fontSize: "12px",
+                  color: "var(--colors-text-muted)",
+                }}
+              >
+                £
+              </span>
+              <input
+                id="rental-income"
+                type="number"
+                min={0}
+                step={1000}
+                value={rentalIncome}
+                onChange={(e) => setRentalIncome(Number(e.target.value) || 0)}
+                style={{
+                  width: "100px",
+                  padding: "3px 6px 3px 20px",
+                  fontSize: "13px",
+                  fontWeight: 700,
+                  textAlign: "right",
+                  color: "#3b82f6",
+                  borderRadius: "6px",
+                  border: "1px solid var(--colors-border)",
+                  backgroundColor: "var(--colors-surface)",
+                }}
+              />
+            </div>
           </div>
           <input
             className={sliderStyle}
-            id="rental-income"
+            id="rental-income-slider"
+            aria-label="Gross annual rental income slider"
             max={100000}
             min={6000}
             onChange={(e) => setRentalIncome(Number(e.target.value))}
@@ -158,17 +187,46 @@ export const Section24Calculator: FC<Section24CalculatorProps> = ({
         </div>
 
         <div className={inputGroupStyle}>
-          <div style={{ display: "flex", justifyContent: "space-between" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <label htmlFor="mortgage-interest" style={{ fontSize: "13px", fontWeight: 600 }}>
-              Annual Mortgage Interest Paid
+              Annual mortgage interest paid
             </label>
-            <span style={{ fontSize: "15px", fontWeight: 700, color: "#ef4444" }}>
-              £{mortgageInterest.toLocaleString("en-GB")}
-            </span>
+            <div style={{ position: "relative", display: "inline-flex", alignItems: "center" }}>
+              <span
+                style={{
+                  position: "absolute",
+                  left: "8px",
+                  fontSize: "12px",
+                  color: "var(--colors-text-muted)",
+                }}
+              >
+                £
+              </span>
+              <input
+                id="mortgage-interest"
+                type="number"
+                min={0}
+                step={500}
+                value={mortgageInterest}
+                onChange={(e) => setMortgageInterest(Number(e.target.value) || 0)}
+                style={{
+                  width: "100px",
+                  padding: "3px 6px 3px 20px",
+                  fontSize: "13px",
+                  fontWeight: 700,
+                  textAlign: "right",
+                  color: "#ef4444",
+                  borderRadius: "6px",
+                  border: "1px solid var(--colors-border)",
+                  backgroundColor: "var(--colors-surface)",
+                }}
+              />
+            </div>
           </div>
           <input
             className={sliderStyle}
-            id="mortgage-interest"
+            id="mortgage-interest-slider"
+            aria-label="Annual mortgage interest paid slider"
             max={50000}
             min={0}
             onChange={(e) => setMortgageInterest(Number(e.target.value))}
@@ -179,17 +237,46 @@ export const Section24Calculator: FC<Section24CalculatorProps> = ({
         </div>
 
         <div className={inputGroupStyle}>
-          <div style={{ display: "flex", justifyContent: "space-between" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <label htmlFor="allowable-expenses" style={{ fontSize: "13px", fontWeight: 600 }}>
-              Other Allowable Expenses (Repairs, Insurance, Agent Fees)
+              Other allowable expenses (repairs, agent fees)
             </label>
-            <span style={{ fontSize: "15px", fontWeight: 700, color: "#64748b" }}>
-              £{allowableExpenses.toLocaleString("en-GB")}
-            </span>
+            <div style={{ position: "relative", display: "inline-flex", alignItems: "center" }}>
+              <span
+                style={{
+                  position: "absolute",
+                  left: "8px",
+                  fontSize: "12px",
+                  color: "var(--colors-text-muted)",
+                }}
+              >
+                £
+              </span>
+              <input
+                id="allowable-expenses"
+                type="number"
+                min={0}
+                step={250}
+                value={allowableExpenses}
+                onChange={(e) => setAllowableExpenses(Number(e.target.value) || 0)}
+                style={{
+                  width: "90px",
+                  padding: "3px 6px 3px 20px",
+                  fontSize: "13px",
+                  fontWeight: 700,
+                  textAlign: "right",
+                  color: "var(--colors-text-secondary)",
+                  borderRadius: "6px",
+                  border: "1px solid var(--colors-border)",
+                  backgroundColor: "var(--colors-surface)",
+                }}
+              />
+            </div>
           </div>
           <input
             className={sliderStyle}
-            id="allowable-expenses"
+            id="allowable-expenses-slider"
+            aria-label="Other allowable expenses slider"
             max={15000}
             min={0}
             onChange={(e) => setAllowableExpenses(Number(e.target.value))}
@@ -200,17 +287,46 @@ export const Section24Calculator: FC<Section24CalculatorProps> = ({
         </div>
 
         <div className={inputGroupStyle}>
-          <div style={{ display: "flex", justifyContent: "space-between" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <label htmlFor="other-income" style={{ fontSize: "13px", fontWeight: 600 }}>
-              Other Annual Income (Salary / Self-Employed)
+              Other annual taxable income (salary / profits)
             </label>
-            <span style={{ fontSize: "15px", fontWeight: 700, color: "#6366f1" }}>
-              £{otherIncome.toLocaleString("en-GB")}
-            </span>
+            <div style={{ position: "relative", display: "inline-flex", alignItems: "center" }}>
+              <span
+                style={{
+                  position: "absolute",
+                  left: "8px",
+                  fontSize: "12px",
+                  color: "var(--colors-text-muted)",
+                }}
+              >
+                £
+              </span>
+              <input
+                id="other-income"
+                type="number"
+                min={0}
+                step={2500}
+                value={otherIncome}
+                onChange={(e) => setOtherIncome(Number(e.target.value) || 0)}
+                style={{
+                  width: "100px",
+                  padding: "3px 6px 3px 20px",
+                  fontSize: "13px",
+                  fontWeight: 700,
+                  textAlign: "right",
+                  color: "#6366f1",
+                  borderRadius: "6px",
+                  border: "1px solid var(--colors-border)",
+                  backgroundColor: "var(--colors-surface)",
+                }}
+              />
+            </div>
           </div>
           <input
             className={sliderStyle}
-            id="other-income"
+            id="other-income-slider"
+            aria-label="Other annual taxable income slider"
             max={150000}
             min={20000}
             onChange={(e) => setOtherIncome(Number(e.target.value))}

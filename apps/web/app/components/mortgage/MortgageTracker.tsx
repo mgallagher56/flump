@@ -308,13 +308,43 @@ const MortgageTracker: FC<MortgageTrackerProps> = ({
           <div className={labelRow}>
             <span className={labelTitle}>
               <FaHome size={12} />
-              Outstanding Mortgage Balance
+              Outstanding mortgage balance
             </span>
-            <FLPText fontSize="sm" fontWeight="bold">
-              {formatCurrency(loanAmount)}
-            </FLPText>
+            <div style={{ position: "relative", display: "inline-flex", alignItems: "center" }}>
+              <span
+                style={{
+                  position: "absolute",
+                  left: "8px",
+                  fontSize: "12px",
+                  color: "var(--colors-text-muted)",
+                }}
+              >
+                £
+              </span>
+              <input
+                id="tracker-loan-amount-input"
+                type="number"
+                min={0}
+                step={5000}
+                value={loanAmount}
+                onChange={(e) => onLoanAmountChange(Number(e.target.value) || 0)}
+                style={{
+                  width: "110px",
+                  padding: "4px 8px 4px 22px",
+                  fontSize: "13px",
+                  fontWeight: 700,
+                  textAlign: "right",
+                  borderRadius: "6px",
+                  border: "1px solid var(--colors-border)",
+                  backgroundColor: "var(--colors-surface)",
+                  color: "var(--colors-text-primary)",
+                }}
+              />
+            </div>
           </div>
           <input
+            id="tracker-loan-amount-slider"
+            aria-label="Outstanding mortgage balance slider"
             className={sliderStyle}
             max="1000000"
             min="10000"
@@ -323,15 +353,6 @@ const MortgageTracker: FC<MortgageTrackerProps> = ({
             value={loanAmount}
             onChange={(e) => onLoanAmountChange(Number(e.target.value))}
           />
-          <div className={numberInputContainer}>
-            <span className={inputPrefix}>£</span>
-            <input
-              className={numberInputStyle}
-              type="number"
-              value={loanAmount}
-              onChange={(e) => onLoanAmountChange(Number(e.target.value))}
-            />
-          </div>
         </div>
 
         {/* Interest Rate */}
@@ -339,13 +360,44 @@ const MortgageTracker: FC<MortgageTrackerProps> = ({
           <div className={labelRow}>
             <span className={labelTitle}>
               <FaPercentage size={12} />
-              Interest Rate
+              Interest rate
             </span>
-            <FLPText fontSize="sm" fontWeight="bold">
-              {interestRate}%
-            </FLPText>
+            <div style={{ position: "relative", display: "inline-flex", alignItems: "center" }}>
+              <input
+                id="tracker-interest-rate-input"
+                type="number"
+                min={0.1}
+                max={15}
+                step={0.05}
+                value={interestRate}
+                onChange={(e) => onInterestRateChange(Number(e.target.value) || 0)}
+                style={{
+                  width: "75px",
+                  padding: "4px 18px 4px 8px",
+                  fontSize: "13px",
+                  fontWeight: 700,
+                  textAlign: "right",
+                  borderRadius: "6px",
+                  border: "1px solid var(--colors-border)",
+                  backgroundColor: "var(--colors-surface)",
+                  color: "var(--colors-text-primary)",
+                }}
+              />
+              <span
+                style={{
+                  position: "absolute",
+                  right: "6px",
+                  fontSize: "12px",
+                  color: "var(--colors-text-muted)",
+                }}
+              >
+                %
+              </span>
+            </div>
           </div>
           <input
+            id="tracker-interest-rate-slider"
+            aria-label="Interest rate slider"
             className={sliderStyle}
             max="15"
             min="0.1"
@@ -354,18 +406,6 @@ const MortgageTracker: FC<MortgageTrackerProps> = ({
             value={interestRate}
             onChange={(e) => onInterestRateChange(Number(e.target.value))}
           />
-          <div className={numberInputContainer}>
-            <span className={inputPrefix} style={{ left: "28px" }}>
-              %
-            </span>
-            <input
-              className={numberInputStyle}
-              style={{ paddingLeft: "42px" }}
-              type="number"
-              value={interestRate}
-              onChange={(e) => onInterestRateChange(Number(e.target.value))}
-            />
-          </div>
         </div>
 
         {/* Remaining Term */}
@@ -373,13 +413,44 @@ const MortgageTracker: FC<MortgageTrackerProps> = ({
           <div className={labelRow}>
             <span className={labelTitle}>
               <FaCalendarAlt size={12} />
-              Remaining Term
+              Remaining term
             </span>
-            <FLPText fontSize="sm" fontWeight="bold">
-              {remainingTerm} Years
-            </FLPText>
+            <div style={{ position: "relative", display: "inline-flex", alignItems: "center" }}>
+              <input
+                id="tracker-remaining-term-input"
+                type="number"
+                min={1}
+                max={40}
+                step={1}
+                value={remainingTerm}
+                onChange={(e) => onRemainingTermChange(Number(e.target.value) || 0)}
+                style={{
+                  width: "75px",
+                  padding: "4px 28px 4px 8px",
+                  fontSize: "13px",
+                  fontWeight: 700,
+                  textAlign: "right",
+                  borderRadius: "6px",
+                  border: "1px solid var(--colors-border)",
+                  backgroundColor: "var(--colors-surface)",
+                  color: "var(--colors-text-primary)",
+                }}
+              />
+              <span
+                style={{
+                  position: "absolute",
+                  right: "6px",
+                  fontSize: "12px",
+                  color: "var(--colors-text-muted)",
+                }}
+              >
+                yrs
+              </span>
+            </div>
           </div>
           <input
+            id="tracker-remaining-term-slider"
+            aria-label="Remaining term slider"
             className={sliderStyle}
             max="40"
             min="1"
@@ -388,18 +459,6 @@ const MortgageTracker: FC<MortgageTrackerProps> = ({
             value={remainingTerm}
             onChange={(e) => onRemainingTermChange(Number(e.target.value))}
           />
-          <div className={numberInputContainer}>
-            <span className={inputPrefix} style={{ left: "12px" }}>
-              Yrs
-            </span>
-            <input
-              className={numberInputStyle}
-              style={{ paddingLeft: "42px" }}
-              type="number"
-              value={remainingTerm}
-              onChange={(e) => onRemainingTermChange(Number(e.target.value))}
-            />
-          </div>
         </div>
       </div>
 

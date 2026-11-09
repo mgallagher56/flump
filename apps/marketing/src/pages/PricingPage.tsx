@@ -57,10 +57,9 @@ export const PricingPage: FC = () => {
             <span
               style={{
                 fontSize: "12px",
-                fontWeight: "700",
-                textTransform: "uppercase",
-                letterSpacing: "0.08em",
-                color: "#6363f1",
+                fontWeight: "600",
+                letterSpacing: "0.01em",
+                color: "var(--colors-primary)",
               }}
             >
               Simple, transparent pricing

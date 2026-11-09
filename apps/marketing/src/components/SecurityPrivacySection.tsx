@@ -59,19 +59,141 @@ export const SecurityPrivacySection: FC = () => {
       subtitle="Designed from the start to work fully without bank account linking or password sharing."
     >
       <div className={sectionGridLayout} data-testid="security-privacy-section">
-        {/* Security Vault Graphic */}
-        <div className={illustrationContainer}>
-          <img
-            src="/illustrations/security-vault-shield.jpg"
-            alt="Security shield representing privacy protection and 256-bit encryption"
-            loading="lazy"
-            style={{
-              width: "100%",
-              height: "auto",
-              display: "block",
-              borderRadius: "16px",
-            }}
-          />
+        {/* FCA AISP Read-Only Architecture Diagram */}
+        <div className={illustrationContainer} style={{ padding: "28px 24px" }}>
+          <div style={{ width: "100%", display: "flex", flexDirection: "column", gap: "16px" }}>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                borderBottom: "1px solid rgba(255, 255, 255, 0.12)",
+                paddingBottom: "12px",
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                <FiShield style={{ color: "#34d399", fontSize: "18px" }} />
+                <span
+                  style={{
+                    fontSize: "13px",
+                    fontWeight: "700",
+                    letterSpacing: "0.02em",
+                    color: "#ffffff",
+                    fontFamily: "var(--fonts-display, sans-serif)",
+                  }}
+                >
+                  FCA Open Banking Architecture
+                </span>
+              </div>
+              <span
+                style={{
+                  fontSize: "11px",
+                  fontWeight: "600",
+                  padding: "2px 8px",
+                  borderRadius: "999px",
+                  backgroundColor: "rgba(16, 185, 129, 0.15)",
+                  color: "#34d399",
+                  border: "1px solid rgba(52, 211, 153, 0.3)",
+                }}
+              >
+                AISP Read-Only
+              </span>
+            </div>
+
+            {/* Architecture Node 1: UK Banks */}
+            <div
+              style={{
+                padding: "12px 14px",
+                borderRadius: "10px",
+                backgroundColor: "rgba(255, 255, 255, 0.05)",
+                border: "1px solid rgba(255, 255, 255, 0.1)",
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+              }}
+            >
+              <div>
+                <div style={{ fontSize: "12px", fontWeight: "600", color: "#ffffff" }}>
+                  UK Authorised Banks & Building Societies
+                </div>
+                <div style={{ fontSize: "11px", color: "rgba(255, 255, 255, 0.6)" }}>
+                  Open Banking OAuth 2.0 PKCE Handshake
+                </div>
+              </div>
+              <span style={{ fontSize: "11px", color: "#38bdf8", fontFamily: "monospace" }}>
+                TLS 1.3
+              </span>
+            </div>
+
+            {/* Flow Indicator with Directional Arrow */}
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "8px",
+                color: "rgba(255, 255, 255, 0.4)",
+                fontSize: "11px",
+              }}
+            >
+              <span>↓ Read-only encrypted telemetry stream</span>
+            </div>
+
+            {/* Architecture Node 2: Flump Local Sandbox */}
+            <div
+              style={{
+                padding: "12px 14px",
+                borderRadius: "10px",
+                backgroundColor: "rgba(99, 102, 241, 0.1)",
+                border: "1px solid rgba(99, 102, 241, 0.3)",
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+              }}
+            >
+              <div>
+                <div style={{ fontSize: "12px", fontWeight: "600", color: "#ffffff" }}>
+                  Flump Analytics & Tax Modeling Engine
+                </div>
+                <div style={{ fontSize: "11px", color: "rgba(255, 255, 255, 0.6)" }}>
+                  Zero access to initiate payments, transfers or alter accounts
+                </div>
+              </div>
+              <span
+                style={{
+                  fontSize: "10px",
+                  fontWeight: "700",
+                  padding: "2px 6px",
+                  borderRadius: "4px",
+                  backgroundColor: "rgba(239, 68, 68, 0.2)",
+                  color: "#f87171",
+                  border: "1px solid rgba(239, 68, 68, 0.4)",
+                }}
+              >
+                PISP Blocked
+              </span>
+            </div>
+
+            {/* Architecture Node 3: Storage Isolation */}
+            <div
+              style={{
+                padding: "10px 14px",
+                borderRadius: "8px",
+                backgroundColor: "rgba(255, 255, 255, 0.03)",
+                border: "1px dashed rgba(255, 255, 255, 0.15)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                fontSize: "11px",
+                color: "rgba(255, 255, 255, 0.7)",
+              }}
+            >
+              <span>AES-256-GCM data at rest</span>
+              <span style={{ color: "#34d399", fontWeight: "600" }}>
+                ✓ Zero third-party ad brokers
+              </span>
+            </div>
+          </div>
         </div>
 
         {/* Security Pillars List */}

@@ -15,7 +15,7 @@ vi.mock("recharts", async () => {
 
 describe("<SavingsForecaster />", () => {
   test("renders correctly with parameter values", () => {
-    const { container, getByText } = customRender(
+    const { container, getAllByDisplayValue } = customRender(
       <SavingsForecaster
         currentSavingRate={250}
         hypotheticalSavingRate={500}
@@ -28,8 +28,8 @@ describe("<SavingsForecaster />", () => {
 
     expect(container).toBeDefined();
     // Validate that starting balance and monthly rates are displayed in controls
-    expect(getByText("£10,000")).toBeDefined();
-    expect(getByText("£250/mo")).toBeDefined();
-    expect(getByText("£500/mo")).toBeDefined();
+    expect(getAllByDisplayValue("10000").length).toBeGreaterThan(0);
+    expect(getAllByDisplayValue("250").length).toBeGreaterThan(0);
+    expect(getAllByDisplayValue("500").length).toBeGreaterThan(0);
   });
 });

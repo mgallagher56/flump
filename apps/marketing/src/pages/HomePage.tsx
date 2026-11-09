@@ -145,35 +145,8 @@ export const HomePage: FC = () => {
             </div>
           </div>
 
-          {/* Wealth Engine Hero Illustration */}
-          <div
-            style={{
-              maxWidth: "1060px",
-              margin: "48px auto 0",
-              position: "relative",
-              zIndex: 1,
-              borderRadius: "28px",
-              overflow: "hidden",
-              border: "1px solid var(--colors-border)",
-              boxShadow: "0 24px 56px -12px rgba(0, 0, 0, 0.16)",
-            }}
-          >
-            <img
-              src="/illustrations/hero-wealth-engine.jpg"
-              alt="Visual summary of financial baseline, debt payoff, and net worth"
-              loading="eager"
-              style={{
-                width: "100%",
-                maxHeight: "560px",
-                objectFit: "cover",
-                objectPosition: "center 48%",
-                display: "block",
-              }}
-            />
-          </div>
-
           {/* Clean Baseline Snapshot Preview Card with Cashflow Bar */}
-          <div style={{ marginTop: "36px", position: "relative", zIndex: 1 }}>
+          <div style={{ marginTop: "44px", position: "relative", zIndex: 1 }}>
             <BaselineSnapshotPreview />
           </div>
         </section>

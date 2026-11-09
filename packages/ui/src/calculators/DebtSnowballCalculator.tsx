@@ -248,22 +248,50 @@ export const DebtSnowballCalculator: FC<DebtSnowballCalculatorProps> = ({
           </div>
 
           <div className={inputGroupStyle}>
-            <div style={{ display: "flex", justifyContent: "space-between" }}>
-              <span style={{ fontSize: "14px", fontWeight: "bold" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <label htmlFor="extra-payment-input" style={{ fontSize: "14px", fontWeight: "bold" }}>
                 Monthly overpayment surplus
-              </span>
-              <span
-                style={{
-                  fontSize: "14px",
-                  fontWeight: "bold",
-                  color: "var(--colors-primary, #6366f1)",
-                }}
-              >
-                +£{extraPayment}/mo
-              </span>
+              </label>
+              <div style={{ position: "relative", display: "inline-flex", alignItems: "center" }}>
+                <span
+                  style={{
+                    position: "absolute",
+                    left: "8px",
+                    fontSize: "12px",
+                    color: "var(--colors-text-muted)",
+                  }}
+                >
+                  +£
+                </span>
+                <input
+                  id="extra-payment-input"
+                  type="number"
+                  min={0}
+                  step={10}
+                  value={extraPayment}
+                  onChange={(e) => setExtraPayment(Number(e.target.value) || 0)}
+                  style={{
+                    width: "80px",
+                    padding: "3px 6px 3px 24px",
+                    fontSize: "13px",
+                    fontWeight: 700,
+                    textAlign: "right",
+                    color: "var(--colors-primary)",
+                    borderRadius: "6px",
+                    border: "1px solid var(--colors-border)",
+                    backgroundColor: "var(--colors-surface)",
+                  }}
+                />
+                <span
+                  style={{ fontSize: "12px", color: "var(--colors-text-muted)", marginLeft: "4px" }}
+                >
+                  /mo
+                </span>
+              </div>
             </div>
             <input
-              aria-label="Monthly overpayment surplus"
+              id="extra-payment-slider"
+              aria-label="Monthly overpayment surplus slider"
               max={500}
               min={0}
               step={10}

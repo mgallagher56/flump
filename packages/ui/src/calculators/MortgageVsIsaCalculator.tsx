@@ -183,17 +183,46 @@ export const MortgageVsIsaCalculator: FC<MortgageVsIsaCalculatorProps> = ({
 
       <div className={inputGridStyle}>
         <div className={inputGroupStyle}>
-          <div style={{ display: "flex", justifyContent: "space-between" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <label htmlFor="mortgage-bal" style={{ fontSize: "13px", fontWeight: 600 }}>
-              Mortgage Balance
+              Mortgage balance
             </label>
-            <span style={{ fontSize: "15px", fontWeight: 700, color: "#f59e0b" }}>
-              £{mortgageBalance.toLocaleString("en-GB")}
-            </span>
+            <div style={{ position: "relative", display: "inline-flex", alignItems: "center" }}>
+              <span
+                style={{
+                  position: "absolute",
+                  left: "8px",
+                  fontSize: "12px",
+                  color: "var(--colors-text-muted)",
+                }}
+              >
+                £
+              </span>
+              <input
+                id="mortgage-bal"
+                type="number"
+                min={0}
+                step={5000}
+                value={mortgageBalance}
+                onChange={(e) => setMortgageBalance(Number(e.target.value) || 0)}
+                style={{
+                  width: "100px",
+                  padding: "3px 6px 3px 20px",
+                  fontSize: "13px",
+                  fontWeight: 700,
+                  textAlign: "right",
+                  color: "#f59e0b",
+                  borderRadius: "6px",
+                  border: "1px solid var(--colors-border)",
+                  backgroundColor: "var(--colors-surface)",
+                }}
+              />
+            </div>
           </div>
           <input
             className={sliderStyle}
-            id="mortgage-bal"
+            id="mortgage-bal-slider"
+            aria-label="Mortgage balance slider"
             max={750000}
             min={50000}
             onChange={(e) => setMortgageBalance(Number(e.target.value))}
@@ -204,17 +233,47 @@ export const MortgageVsIsaCalculator: FC<MortgageVsIsaCalculatorProps> = ({
         </div>
 
         <div className={inputGroupStyle}>
-          <div style={{ display: "flex", justifyContent: "space-between" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <label htmlFor="mortgage-rate" style={{ fontSize: "13px", fontWeight: 600 }}>
-              Mortgage Interest Rate
+              Mortgage interest rate
             </label>
-            <span style={{ fontSize: "15px", fontWeight: 700, color: "#f59e0b" }}>
-              {interestRate}%
-            </span>
+            <div style={{ position: "relative", display: "inline-flex", alignItems: "center" }}>
+              <input
+                id="mortgage-rate"
+                type="number"
+                min={0}
+                max={20}
+                step={0.1}
+                value={interestRate}
+                onChange={(e) => setInterestRate(Number(e.target.value) || 0)}
+                style={{
+                  width: "70px",
+                  padding: "3px 18px 3px 6px",
+                  fontSize: "13px",
+                  fontWeight: 700,
+                  textAlign: "right",
+                  color: "#f59e0b",
+                  borderRadius: "6px",
+                  border: "1px solid var(--colors-border)",
+                  backgroundColor: "var(--colors-surface)",
+                }}
+              />
+              <span
+                style={{
+                  position: "absolute",
+                  right: "6px",
+                  fontSize: "12px",
+                  color: "var(--colors-text-muted)",
+                }}
+              >
+                %
+              </span>
+            </div>
           </div>
           <input
             className={sliderStyle}
-            id="mortgage-rate"
+            id="mortgage-rate-slider"
+            aria-label="Mortgage interest rate slider"
             max={8.0}
             min={1.5}
             onChange={(e) => setInterestRate(Number(e.target.value))}
@@ -225,17 +284,51 @@ export const MortgageVsIsaCalculator: FC<MortgageVsIsaCalculatorProps> = ({
         </div>
 
         <div className={inputGroupStyle}>
-          <div style={{ display: "flex", justifyContent: "space-between" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <label htmlFor="monthly-extra" style={{ fontSize: "13px", fontWeight: 600 }}>
               Monthly extra cash
             </label>
-            <span style={{ fontSize: "15px", fontWeight: 700, color: "#6366f1" }}>
-              £{monthlyContribution.toLocaleString("en-GB")} / mo
-            </span>
+            <div style={{ position: "relative", display: "inline-flex", alignItems: "center" }}>
+              <span
+                style={{
+                  position: "absolute",
+                  left: "8px",
+                  fontSize: "12px",
+                  color: "var(--colors-text-muted)",
+                }}
+              >
+                £
+              </span>
+              <input
+                id="monthly-extra"
+                type="number"
+                min={0}
+                step={25}
+                value={monthlyContribution}
+                onChange={(e) => setMonthlyContribution(Number(e.target.value) || 0)}
+                style={{
+                  width: "80px",
+                  padding: "3px 6px 3px 20px",
+                  fontSize: "13px",
+                  fontWeight: 700,
+                  textAlign: "right",
+                  color: "#6366f1",
+                  borderRadius: "6px",
+                  border: "1px solid var(--colors-border)",
+                  backgroundColor: "var(--colors-surface)",
+                }}
+              />
+              <span
+                style={{ fontSize: "12px", color: "var(--colors-text-muted)", marginLeft: "4px" }}
+              >
+                /mo
+              </span>
+            </div>
           </div>
           <input
             className={sliderStyle}
-            id="monthly-extra"
+            id="monthly-extra-slider"
+            aria-label="Monthly extra cash slider"
             max={1500}
             min={50}
             onChange={(e) => setMonthlyContribution(Number(e.target.value))}
@@ -246,17 +339,47 @@ export const MortgageVsIsaCalculator: FC<MortgageVsIsaCalculatorProps> = ({
         </div>
 
         <div className={inputGroupStyle}>
-          <div style={{ display: "flex", justifyContent: "space-between" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <label htmlFor="isa-return" style={{ fontSize: "13px", fontWeight: 600 }}>
-              Expected Stocks & Shares ISA Return
+              Expected Stocks and Shares ISA return
             </label>
-            <span style={{ fontSize: "15px", fontWeight: 700, color: "#10b981" }}>
-              {isaExpectedReturn}%
-            </span>
+            <div style={{ position: "relative", display: "inline-flex", alignItems: "center" }}>
+              <input
+                id="isa-return"
+                type="number"
+                min={0}
+                max={25}
+                step={0.25}
+                value={isaExpectedReturn}
+                onChange={(e) => setIsaExpectedReturn(Number(e.target.value) || 0)}
+                style={{
+                  width: "70px",
+                  padding: "3px 18px 3px 6px",
+                  fontSize: "13px",
+                  fontWeight: 700,
+                  textAlign: "right",
+                  color: "#10b981",
+                  borderRadius: "6px",
+                  border: "1px solid var(--colors-border)",
+                  backgroundColor: "var(--colors-surface)",
+                }}
+              />
+              <span
+                style={{
+                  position: "absolute",
+                  right: "6px",
+                  fontSize: "12px",
+                  color: "var(--colors-text-muted)",
+                }}
+              >
+                %
+              </span>
+            </div>
           </div>
           <input
             className={sliderStyle}
-            id="isa-return"
+            id="isa-return-slider"
+            aria-label="Expected Stocks and Shares ISA return slider"
             max={12.0}
             min={3.0}
             onChange={(e) => setIsaExpectedReturn(Number(e.target.value))}

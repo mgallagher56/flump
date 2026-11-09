@@ -141,13 +141,8 @@ export const DebtWidget: FC<DebtWidgetProps> = ({
           }}
         >
           <FLPText color="text.muted" fontSize="xs">
-            ⚡ Avalanche payoff active (+£50/mo surplus)
+            Avalanche payoff active (+£50/mo surplus)
           </FLPText>
-          <Link to="/app/debt">
-            <FLPButton size="sm" variant="outline">
-              Open debt payoff →
-            </FLPButton>
-          </Link>
         </div>
       </div>
     </DashboardWidgetCard>

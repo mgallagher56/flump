@@ -210,8 +210,8 @@ export const BudgetWidget: FC<BudgetWidgetProps> = ({
           })}
         >
           <div>
-            <FLPText color="text.muted" fontSize="10px" fontWeight="bold" textTransform="uppercase">
-              Monthly Take-Home
+            <FLPText color="text.muted" fontSize="10px" fontWeight="semibold">
+              Monthly take-home
             </FLPText>
             <span style={{ fontSize: "1.1rem", fontWeight: 800, color: "#10b981" }}>
               {formatCurrency(data.monthlyIncome)}/mo
@@ -219,13 +219,8 @@ export const BudgetWidget: FC<BudgetWidgetProps> = ({
           </div>
           {Boolean(data.annualSalary && data.annualSalary > 0) && (
             <div style={{ textAlign: "right" }}>
-              <FLPText
-                color="text.muted"
-                fontSize="10px"
-                fontWeight="bold"
-                textTransform="uppercase"
-              >
-                Gross Salary
+              <FLPText color="text.muted" fontSize="10px" fontWeight="semibold">
+                Gross salary
               </FLPText>
               <span
                 style={{
@@ -255,17 +250,12 @@ export const BudgetWidget: FC<BudgetWidgetProps> = ({
           })}
         >
           <div>
-            <FLPText
-              color="text.muted"
-              fontSize="10px"
-              fontWeight="semibold"
-              textTransform="uppercase"
-            >
+            <FLPText color="text.muted" fontSize="10px" fontWeight="semibold">
               {primaryMetric === "surplus"
                 ? data.monthlySurplus >= 0
-                  ? "Monthly Surplus"
-                  : "Monthly Deficit"
-                : "Savings Rate"}
+                  ? "Monthly surplus"
+                  : "Monthly deficit"
+                : "Savings rate"}
             </FLPText>
             <FLPHeading
               as="h2"
@@ -303,21 +293,34 @@ export const BudgetWidget: FC<BudgetWidgetProps> = ({
                 gap: "6px",
                 padding: { base: "3px 8px", md: "6px 12px" },
                 borderRadius: "md",
-                backgroundColor: "rgba(99,99,241,0.06)",
-                border: "1px solid rgba(99,99,241,0.15)",
+                backgroundColor:
+                  data.runwayMonths !== undefined && data.runwayMonths < 1
+                    ? "rgba(239,68,68,0.1)"
+                    : data.runwayMonths !== undefined && data.runwayMonths < 3
+                      ? "rgba(245,158,11,0.1)"
+                      : "rgba(16,185,129,0.08)",
+                border: "1px solid",
+                borderColor:
+                  data.runwayMonths !== undefined && data.runwayMonths < 1
+                    ? "rgba(239,68,68,0.3)"
+                    : data.runwayMonths !== undefined && data.runwayMonths < 3
+                      ? "rgba(245,158,11,0.3)"
+                      : "rgba(16,185,129,0.25)",
               })}
             >
-              <FLPText
-                color="text.muted"
-                fontSize="10px"
-                fontWeight="bold"
-                textTransform="uppercase"
-              >
+              <FLPText color="text.muted" fontSize="10px" fontWeight="semibold">
                 Runway:
               </FLPText>
               <FLPText
-                color="primary"
                 fontWeight="bold"
+                style={{
+                  color:
+                    data.runwayMonths !== undefined && data.runwayMonths < 1
+                      ? "var(--colors-destructive-500, #ef4444)"
+                      : data.runwayMonths !== undefined && data.runwayMonths < 3
+                        ? "#d97706"
+                        : "var(--colors-success-500, #10b981)",
+                }}
                 className={css({ fontSize: { base: "xs", md: "sm" } })}
               >
                 {runwayDisplay}

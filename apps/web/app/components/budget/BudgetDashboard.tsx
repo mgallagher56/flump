@@ -2,6 +2,7 @@ import { calculateSafeToSpend } from "@repo/common";
 import { css } from "@repo/ui/styled-system/css";
 import { type FC, useMemo } from "react";
 import { FaArrowRight, FaBalanceScale, FaChartPie, FaExclamationTriangle } from "react-icons/fa";
+import { FiAlertTriangle, FiCalendar, FiCompass, FiShield } from "react-icons/fi";
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
 import FLPButton from "~/components/core/buttons/FLPButton";
 import FLPCard from "~/components/core/cards/FLPCard";
@@ -421,9 +422,9 @@ const BudgetDashboard: FC<BudgetDashboardProps> = ({
           >
             <div>
               <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                <span style={{ fontSize: "16px" }}>🛡️</span>
+                <FiShield style={{ color: "var(--colors-primary)", fontSize: "16px" }} />
                 <FLPHeading as="h3" size="sm">
-                  Priority Obligations (Protected)
+                  Priority obligations (protected)
                 </FLPHeading>
               </div>
               <FLPText color="text.muted" fontSize="xs" style={{ marginTop: "2px" }}>
@@ -510,9 +511,9 @@ const BudgetDashboard: FC<BudgetDashboardProps> = ({
           >
             <div>
               <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                <span style={{ fontSize: "16px" }}>🎯</span>
+                <FiCompass style={{ color: "#0ea5e9", fontSize: "16px" }} />
                 <FLPHeading as="h3" size="sm">
-                  Flexible & Discretionary Spend
+                  Flexible and discretionary spend
                 </FLPHeading>
               </div>
               <FLPText color="text.muted" fontSize="xs" style={{ marginTop: "2px" }}>
@@ -711,12 +712,17 @@ const BudgetDashboard: FC<BudgetDashboardProps> = ({
           }}
         >
           <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-            <span style={{ fontSize: "20px" }}>
-              {cashFlowSplit.billsWithCliffs.length > 0 ? "⚠️" : "📡"}
+            <span
+              style={{
+                fontSize: "18px",
+                color: cashFlowSplit.billsWithCliffs.length > 0 ? "#ef4444" : "#6363f1",
+              }}
+            >
+              {cashFlowSplit.billsWithCliffs.length > 0 ? <FiAlertTriangle /> : <FiCalendar />}
             </span>
             <div>
               <FLPText fontSize="sm" fontWeight="bold">
-                Contract Renewal Radar
+                Upcoming bill renewals
                 {cashFlowSplit.billsWithCliffs.length > 0 && (
                   <span
                     style={{

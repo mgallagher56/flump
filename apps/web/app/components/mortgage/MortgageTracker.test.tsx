@@ -23,7 +23,7 @@ describe("<MortgageTracker />", () => {
 
     // Verify labels and title
     expect(getByText("Mortgage cost breakdown")).toBeDefined();
-    expect(getByText("Outstanding Mortgage Balance")).toBeDefined();
+    expect(getByText(/Outstanding mortgage balance/i)).toBeDefined();
 
     // Verify calculated scheduled monthly payment is rendered (150k at 4.5% over 25yrs is approx £834/mo)
     expect(getByText(/£834/)).toBeDefined();

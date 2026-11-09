@@ -54,9 +54,8 @@ const iconBoxStyle = css({
 
 const badgeStyle = css({
   fontSize: "xs",
-  fontWeight: "700",
-  textTransform: "uppercase",
-  letterSpacing: "0.04em",
+  fontWeight: "600",
+  letterSpacing: "0.01em",
   backgroundColor: "surface.subtle",
   color: "text.secondary",
   border: "1px solid",
@@ -162,9 +161,8 @@ export const ToolsIndexPage: FC = () => {
             <span
               style={{
                 fontSize: "12px",
-                fontWeight: "700",
-                textTransform: "uppercase",
-                letterSpacing: "0.08em",
+                fontWeight: "600",
+                letterSpacing: "0.01em",
                 color: "#6363f1",
               }}
             >
@@ -221,13 +219,84 @@ export const ToolsIndexPage: FC = () => {
                 },
               })}
             >
-              <div style={{ height: "100%", minHeight: "200px", maxHeight: "260px" }}>
-                <img
-                  src="/illustrations/tax-bridge.jpg"
-                  alt="UK tax bridge visualising Personal Allowance taper"
-                  loading="lazy"
-                  style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
-                />
+              {/* Coded UK Marginal Tax Rate Visualization */}
+              <div
+                style={{
+                  height: "100%",
+                  minHeight: "200px",
+                  backgroundColor: "var(--colors-surface-subtle)",
+                  borderRight: "1px solid var(--colors-border)",
+                  padding: "24px",
+                  display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "center",
+                  gap: "12px",
+                }}
+              >
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    fontSize: "11px",
+                    color: "var(--colors-text-muted)",
+                  }}
+                >
+                  <span>UK Marginal Income Tax Curve</span>
+                  <span style={{ color: "#ef4444", fontWeight: "700" }}>60% Peak Zone</span>
+                </div>
+                <div
+                  style={{ display: "flex", gap: "3px", height: "36px", alignItems: "flex-end" }}
+                >
+                  <div
+                    style={{
+                      flex: 2,
+                      height: "40%",
+                      backgroundColor: "#38bdf8",
+                      borderRadius: "3px",
+                    }}
+                    title="20% Basic rate (£12,570–£50,270)"
+                  />
+                  <div
+                    style={{
+                      flex: 3,
+                      height: "70%",
+                      backgroundColor: "#6363f1",
+                      borderRadius: "3px",
+                    }}
+                    title="40% Higher rate (£50,270–£100,000)"
+                  />
+                  <div
+                    style={{
+                      flex: 2,
+                      height: "100%",
+                      backgroundColor: "#ef4444",
+                      borderRadius: "3px",
+                    }}
+                    title="60% Taper trap (£100,000–£125,140)"
+                  />
+                  <div
+                    style={{
+                      flex: 3,
+                      height: "80%",
+                      backgroundColor: "#4f46e5",
+                      borderRadius: "3px",
+                    }}
+                    title="45% Additional rate (£125,140+)"
+                  />
+                </div>
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    fontSize: "10px",
+                    color: "var(--colors-text-muted)",
+                  }}
+                >
+                  <span>£12.5k</span>
+                  <span>£50.2k</span>
+                  <span style={{ color: "#ef4444", fontWeight: "bold" }}>£100k–£125k</span>
+                  <span>£125k+</span>
+                </div>
               </div>
               <div
                 style={{
@@ -239,7 +308,7 @@ export const ToolsIndexPage: FC = () => {
                 }}
               >
                 <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                  <span className={badgeStyle}>FEATURED CALCULATOR</span>
+                  <span className={badgeStyle}>Featured calculator</span>
                   <span
                     style={{ fontSize: "12px", color: "var(--colors-primary)", fontWeight: "700" }}
                   >
@@ -277,30 +346,32 @@ export const ToolsIndexPage: FC = () => {
           </Link>
 
           <div className={grid({ columns: { base: 1, md: 2, lg: 3 }, gap: "6" })}>
-            {TOOLS_CATALOG.map((tool) => (
-              <Link key={tool.slug} to={`/tools/${tool.slug}`} className={toolCardStyle}>
-                <div>
-                  <div
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                      marginBottom: "16px",
-                    }}
-                  >
-                    <div className={iconBoxStyle}>{tool.icon}</div>
-                    <span className={badgeStyle}>{tool.badge}</span>
+            {TOOLS_CATALOG.filter((tool) => tool.slug !== "uk-100k-tax-trap-calculator").map(
+              (tool) => (
+                <Link key={tool.slug} to={`/tools/${tool.slug}`} className={toolCardStyle}>
+                  <div>
+                    <div
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        marginBottom: "16px",
+                      }}
+                    >
+                      <div className={iconBoxStyle}>{tool.icon}</div>
+                      <span className={badgeStyle}>{tool.badge}</span>
+                    </div>
+
+                    <h3 className={toolTitleStyle}>{tool.title}</h3>
+                    <p className={toolDescStyle}>{tool.desc}</p>
                   </div>
 
-                  <h3 className={toolTitleStyle}>{tool.title}</h3>
-                  <p className={toolDescStyle}>{tool.desc}</p>
-                </div>
-
-                <div className={ctaLinkStyle}>
-                  Open calculator <FiArrowRight />
-                </div>
-              </Link>
-            ))}
+                  <div className={ctaLinkStyle}>
+                    Open calculator <FiArrowRight />
+                  </div>
+                </Link>
+              ),
+            )}
           </div>
         </section>
       </main>

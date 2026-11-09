@@ -198,27 +198,6 @@ export const DebtContainer: FC = () => {
             your surplus into long-term wealth.
           </FLPText>
         </div>
-
-        <div
-          className={css({
-            width: { base: "100%", sm: "200px" },
-            height: "90px",
-            borderRadius: "xl",
-            overflow: "hidden",
-            border: "1px solid",
-            borderColor: "border",
-            boxShadow: "0 4px 12px rgba(0, 0, 0, 0.05)",
-            flexShrink: 0,
-            display: { base: "none", sm: "block" },
-          })}
-        >
-          <img
-            src="/illustrations/debt-crusher-momentum.jpg"
-            alt="Debt payoff momentum illustration"
-            loading="lazy"
-            style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
-          />
-        </div>
       </div>
 
       {/* Adaptive Stage Banner */}

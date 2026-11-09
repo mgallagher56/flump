@@ -81,8 +81,7 @@ const labelStyle = css({
   fontSize: "xs",
   fontWeight: "semibold",
   color: "text.secondary",
-  textTransform: "uppercase",
-  letterSpacing: "0.05em",
+  letterSpacing: "0.01em",
 });
 
 const inputWrapperStyle = css({

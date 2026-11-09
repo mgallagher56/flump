@@ -75,7 +75,7 @@ const ForecastContainer: FC = () => {
 
   // Pre-populate with user's actual data when loaded
   useEffect(() => {
-    setStartingBalance(totalAssets);
+    setStartingBalance(Math.round(totalAssets));
     setCurrentSavingRate(computedAverageSavingRate);
     setHypotheticalSavingRate(Math.round(computedAverageSavingRate * 1.5) || 500);
   }, [totalAssets, computedAverageSavingRate]);

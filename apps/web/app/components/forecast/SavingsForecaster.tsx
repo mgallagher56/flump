@@ -177,14 +177,47 @@ const SavingsForecaster: FC<SavingsForecasterProps> = ({
           {/* Starting Balance */}
           <div className={inputGroupStyle}>
             <div className={sliderLabelRow}>
-              <FLPText fontSize="xs" fontWeight="semibold" textTransform="uppercase">
-                Starting Savings
-              </FLPText>
-              <FLPText fontSize="sm" fontWeight="bold">
-                {formatCurrency(startingBalance)}
-              </FLPText>
+              <label
+                htmlFor="starting-savings-input"
+                style={{ fontSize: "12px", fontWeight: "600", color: "var(--colors-text-muted)" }}
+              >
+                Starting savings
+              </label>
+              <div style={{ position: "relative", display: "inline-flex", alignItems: "center" }}>
+                <span
+                  style={{
+                    position: "absolute",
+                    left: "8px",
+                    fontSize: "12px",
+                    color: "var(--colors-text-muted)",
+                  }}
+                >
+                  £
+                </span>
+                <input
+                  id="starting-savings-input"
+                  type="number"
+                  min={0}
+                  step={1000}
+                  value={startingBalance}
+                  onChange={(e) => onStartingBalanceChange(Number(e.target.value) || 0)}
+                  style={{
+                    width: "100px",
+                    padding: "3px 6px 3px 20px",
+                    fontSize: "13px",
+                    fontWeight: 700,
+                    textAlign: "right",
+                    borderRadius: "6px",
+                    border: "1px solid var(--colors-border)",
+                    backgroundColor: "var(--colors-surface)",
+                    color: "var(--colors-text-primary)",
+                  }}
+                />
+              </div>
             </div>
             <input
+              id="starting-savings-slider"
+              aria-label="Starting savings slider"
               className={sliderStyle}
               max="250000"
               min="0"
@@ -193,36 +226,62 @@ const SavingsForecaster: FC<SavingsForecasterProps> = ({
               value={startingBalance}
               onChange={(e) => onStartingBalanceChange(Number(e.target.value))}
             />
-            <input
-              className={numberInputStyle}
-              type="number"
-              value={startingBalance}
-              onChange={(e) => onStartingBalanceChange(Number(e.target.value))}
-            />
           </div>
 
           {/* Current Saving Rate */}
           <div className={inputGroupStyle}>
             <div className={sliderLabelRow}>
-              <FLPText fontSize="xs" fontWeight="semibold" textTransform="uppercase">
-                Current Saving Rate
-              </FLPText>
-              <FLPText fontSize="sm" fontWeight="bold">
-                {formatCurrency(currentSavingRate)}/mo
-              </FLPText>
+              <label
+                htmlFor="current-rate-input"
+                style={{ fontSize: "12px", fontWeight: "600", color: "var(--colors-text-muted)" }}
+              >
+                Current monthly saving
+              </label>
+              <div style={{ position: "relative", display: "inline-flex", alignItems: "center" }}>
+                <span
+                  style={{
+                    position: "absolute",
+                    left: "8px",
+                    fontSize: "12px",
+                    color: "var(--colors-text-muted)",
+                  }}
+                >
+                  £
+                </span>
+                <input
+                  id="current-rate-input"
+                  type="number"
+                  min={0}
+                  step={50}
+                  value={currentSavingRate}
+                  onChange={(e) => onCurrentRateChange(Number(e.target.value) || 0)}
+                  style={{
+                    width: "90px",
+                    padding: "3px 6px 3px 20px",
+                    fontSize: "13px",
+                    fontWeight: 700,
+                    textAlign: "right",
+                    borderRadius: "6px",
+                    border: "1px solid var(--colors-border)",
+                    backgroundColor: "var(--colors-surface)",
+                    color: "var(--colors-text-primary)",
+                  }}
+                />
+                <span
+                  style={{ fontSize: "12px", color: "var(--colors-text-muted)", marginLeft: "4px" }}
+                >
+                  /mo
+                </span>
+              </div>
             </div>
             <input
+              id="current-rate-slider"
+              aria-label="Current monthly saving slider"
               className={sliderStyle}
               max="5000"
               min="0"
               step="50"
               type="range"
-              value={currentSavingRate}
-              onChange={(e) => onCurrentRateChange(Number(e.target.value))}
-            />
-            <input
-              className={numberInputStyle}
-              type="number"
               value={currentSavingRate}
               onChange={(e) => onCurrentRateChange(Number(e.target.value))}
             />
@@ -231,14 +290,52 @@ const SavingsForecaster: FC<SavingsForecasterProps> = ({
           {/* Hypothetical Saving Rate */}
           <div className={inputGroupStyle}>
             <div className={sliderLabelRow}>
-              <FLPText fontSize="xs" fontWeight="semibold" textTransform="uppercase">
-                Hypothetical Rate
-              </FLPText>
-              <FLPText fontSize="sm" fontWeight="bold">
-                {formatCurrency(hypotheticalSavingRate)}/mo
-              </FLPText>
+              <label
+                htmlFor="hypo-rate-input"
+                style={{ fontSize: "12px", fontWeight: "600", color: "var(--colors-text-muted)" }}
+              >
+                Hypothetical target
+              </label>
+              <div style={{ position: "relative", display: "inline-flex", alignItems: "center" }}>
+                <span
+                  style={{
+                    position: "absolute",
+                    left: "8px",
+                    fontSize: "12px",
+                    color: "var(--colors-text-muted)",
+                  }}
+                >
+                  £
+                </span>
+                <input
+                  id="hypo-rate-input"
+                  type="number"
+                  min={0}
+                  step={50}
+                  value={hypotheticalSavingRate}
+                  onChange={(e) => onHypotheticalRateChange(Number(e.target.value) || 0)}
+                  style={{
+                    width: "90px",
+                    padding: "3px 6px 3px 20px",
+                    fontSize: "13px",
+                    fontWeight: 700,
+                    textAlign: "right",
+                    borderRadius: "6px",
+                    border: "1px solid var(--colors-border)",
+                    backgroundColor: "var(--colors-surface)",
+                    color: "var(--colors-text-primary)",
+                  }}
+                />
+                <span
+                  style={{ fontSize: "12px", color: "var(--colors-text-muted)", marginLeft: "4px" }}
+                >
+                  /mo
+                </span>
+              </div>
             </div>
             <input
+              id="hypo-rate-slider"
+              aria-label="Hypothetical target saving rate slider"
               className={sliderStyle}
               max="5000"
               min="0"
@@ -247,25 +344,53 @@ const SavingsForecaster: FC<SavingsForecasterProps> = ({
               value={hypotheticalSavingRate}
               onChange={(e) => onHypotheticalRateChange(Number(e.target.value))}
             />
-            <input
-              className={numberInputStyle}
-              type="number"
-              value={hypotheticalSavingRate}
-              onChange={(e) => onHypotheticalRateChange(Number(e.target.value))}
-            />
           </div>
 
           {/* Investment Return Rate */}
           <div className={inputGroupStyle}>
             <div className={sliderLabelRow}>
-              <FLPText fontSize="xs" fontWeight="semibold" textTransform="uppercase">
-                Annual Return (ROI)
-              </FLPText>
-              <FLPText fontSize="sm" fontWeight="bold">
-                {interestRate}%
-              </FLPText>
+              <label
+                htmlFor="return-rate-input"
+                style={{ fontSize: "12px", fontWeight: "600", color: "var(--colors-text-muted)" }}
+              >
+                Annual investment return (AER)
+              </label>
+              <div style={{ position: "relative", display: "inline-flex", alignItems: "center" }}>
+                <input
+                  id="return-rate-input"
+                  type="number"
+                  min={0}
+                  max={25}
+                  step={0.5}
+                  value={interestRate}
+                  onChange={(e) => setInterestRate(Number(e.target.value) || 0)}
+                  style={{
+                    width: "70px",
+                    padding: "3px 18px 3px 6px",
+                    fontSize: "13px",
+                    fontWeight: 700,
+                    textAlign: "right",
+                    borderRadius: "6px",
+                    border: "1px solid var(--colors-border)",
+                    backgroundColor: "var(--colors-surface)",
+                    color: "var(--colors-text-primary)",
+                  }}
+                />
+                <span
+                  style={{
+                    position: "absolute",
+                    right: "6px",
+                    fontSize: "12px",
+                    color: "var(--colors-text-muted)",
+                  }}
+                >
+                  %
+                </span>
+              </div>
             </div>
             <input
+              id="return-rate-slider"
+              aria-label="Annual investment return rate slider"
               className={sliderStyle}
               max="15"
               min="0"
@@ -279,14 +404,48 @@ const SavingsForecaster: FC<SavingsForecasterProps> = ({
           {/* Projection Years */}
           <div className={inputGroupStyle}>
             <div className={sliderLabelRow}>
-              <FLPText fontSize="xs" fontWeight="semibold" textTransform="uppercase">
-                Horizon (Years)
-              </FLPText>
-              <FLPText fontSize="sm" fontWeight="bold">
-                {projectionYears} Years
-              </FLPText>
+              <label
+                htmlFor="horizon-years-input"
+                style={{ fontSize: "12px", fontWeight: "600", color: "var(--colors-text-muted)" }}
+              >
+                Horizon (years)
+              </label>
+              <div style={{ position: "relative", display: "inline-flex", alignItems: "center" }}>
+                <input
+                  id="horizon-years-input"
+                  type="number"
+                  min={1}
+                  max={40}
+                  step={1}
+                  value={projectionYears}
+                  onChange={(e) => setProjectionYears(Number(e.target.value) || 0)}
+                  style={{
+                    width: "70px",
+                    padding: "3px 26px 3px 6px",
+                    fontSize: "13px",
+                    fontWeight: 700,
+                    textAlign: "right",
+                    borderRadius: "6px",
+                    border: "1px solid var(--colors-border)",
+                    backgroundColor: "var(--colors-surface)",
+                    color: "var(--colors-text-primary)",
+                  }}
+                />
+                <span
+                  style={{
+                    position: "absolute",
+                    right: "6px",
+                    fontSize: "12px",
+                    color: "var(--colors-text-muted)",
+                  }}
+                >
+                  yrs
+                </span>
+              </div>
             </div>
             <input
+              id="horizon-years-slider"
+              aria-label="Horizon years slider"
               className={sliderStyle}
               max="40"
               min="1"
@@ -419,6 +578,7 @@ const SavingsForecaster: FC<SavingsForecasterProps> = ({
                   stroke="#6363F1"
                   strokeWidth={2}
                   type="monotone"
+                  isAnimationActive={false}
                 />
                 <Area
                   activeDot={{ r: 6 }}
@@ -428,6 +588,7 @@ const SavingsForecaster: FC<SavingsForecasterProps> = ({
                   strokeDasharray="5 5"
                   strokeWidth={2}
                   type="monotone"
+                  isAnimationActive={false}
                 />
               </AreaChart>
             </ResponsiveContainer>

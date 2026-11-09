@@ -98,9 +98,8 @@ export const SecurityPage: FC = () => {
             <span
               style={{
                 fontSize: "12px",
-                fontWeight: "700",
-                textTransform: "uppercase",
-                letterSpacing: "0.08em",
+                fontWeight: "600",
+                letterSpacing: "0.01em",
                 color: "#10b981",
               }}
             >
@@ -124,8 +123,8 @@ export const SecurityPage: FC = () => {
                 margin: "12px auto 0",
               }}
             >
-              Flump is designed around the principle of minimal data access, bank-grade encryption,
-              and absolute user ownership.
+              Flump is designed around the principle of minimal data access, AES-256-GCM encryption
+              at rest, TLS 1.3 in transit, and absolute user ownership.
             </p>
 
             <div style={{ marginTop: "20px" }}>
@@ -136,7 +135,7 @@ export const SecurityPage: FC = () => {
           </div>
 
           {/* Core Guarantees Grid */}
-          <div className={grid({ columns: { base: 1, md: 2 }, gap: "6", mb: "8" })}>
+          <div className={grid({ columns: { base: 1, md: 2 }, gap: "6", mb: "12" })}>
             {/* Guarantee 1 */}
             <div className={sectionCardStyle}>
               <div
@@ -144,8 +143,8 @@ export const SecurityPage: FC = () => {
                   width: "44px",
                   height: "44px",
                   borderRadius: "12px",
-                  backgroundColor: "#ecfdf5",
-                  color: "#059669",
+                  backgroundColor: "rgba(16, 185, 129, 0.12)",
+                  color: "#10b981",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
@@ -170,8 +169,8 @@ export const SecurityPage: FC = () => {
                   width: "44px",
                   height: "44px",
                   borderRadius: "12px",
-                  backgroundColor: "#e0e7ff",
-                  color: "#4338ca",
+                  backgroundColor: "rgba(99, 102, 241, 0.12)",
+                  color: "#6366f1",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
@@ -181,7 +180,7 @@ export const SecurityPage: FC = () => {
               >
                 <FiLock />
               </div>
-              <h3 className={securityTitleStyle}>Bank-grade 256-bit AES and TLS 1.3</h3>
+              <h3 className={securityTitleStyle}>AES-256-GCM and TLS 1.3 transport security</h3>
               <p className={securityDescStyle}>
                 All sensitive personal financial records are encrypted using 256-bit Advanced
                 Encryption Standard (AES-GCM) at rest. In transit, all network traffic is forced
@@ -196,8 +195,8 @@ export const SecurityPage: FC = () => {
                   width: "44px",
                   height: "44px",
                   borderRadius: "12px",
-                  backgroundColor: "#fef3c7",
-                  color: "#d97706",
+                  backgroundColor: "rgba(245, 158, 11, 0.12)",
+                  color: "#f59e0b",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
@@ -222,8 +221,8 @@ export const SecurityPage: FC = () => {
                   width: "44px",
                   height: "44px",
                   borderRadius: "12px",
-                  backgroundColor: "#fce7f3",
-                  color: "#db2777",
+                  backgroundColor: "rgba(236, 72, 153, 0.12)",
+                  color: "#ec4899",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
@@ -239,6 +238,173 @@ export const SecurityPage: FC = () => {
                 the right to one-click permanent erasure: deleting your account permanently purges
                 all historical data from our storage.
               </p>
+            </div>
+          </div>
+
+          {/* FCA Permissions Ledger Table */}
+          <div
+            style={{
+              backgroundColor: "var(--colors-card)",
+              border: "1px solid var(--colors-border)",
+              borderRadius: "16px",
+              padding: "24px 28px",
+              marginBottom: "40px",
+            }}
+          >
+            <div style={{ marginBottom: "16px" }}>
+              <h2
+                style={{
+                  fontSize: "1.25rem",
+                  fontWeight: "700",
+                  color: "var(--colors-text-primary)",
+                  margin: 0,
+                }}
+              >
+                FCA regulatory permissions ledger
+              </h2>
+              <p
+                style={{ fontSize: "14px", color: "var(--colors-text-muted)", margin: "4px 0 0 0" }}
+              >
+                Formal breakdown of what Flump is technically and legally authorised to perform.
+              </p>
+            </div>
+
+            <div style={{ overflowX: "auto" }}>
+              <table
+                style={{
+                  width: "100%",
+                  borderCollapse: "collapse",
+                  fontSize: "13px",
+                  textAlign: "left",
+                }}
+              >
+                <thead>
+                  <tr
+                    style={{
+                      borderBottom: "1px solid var(--colors-border)",
+                      color: "var(--colors-text-muted)",
+                    }}
+                  >
+                    <th style={{ padding: "10px 12px", fontWeight: "600" }}>Operation</th>
+                    <th style={{ padding: "10px 12px", fontWeight: "600" }}>Scope</th>
+                    <th style={{ padding: "10px 12px", fontWeight: "600" }}>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr style={{ borderBottom: "1px solid var(--colors-border)" }}>
+                    <td
+                      style={{
+                        padding: "10px 12px",
+                        fontWeight: "500",
+                        color: "var(--colors-text-primary)",
+                      }}
+                    >
+                      Read balances and transactions
+                    </td>
+                    <td style={{ padding: "10px 12px", color: "var(--colors-text-muted)" }}>
+                      AISP (Account Information Service)
+                    </td>
+                    <td style={{ padding: "10px 12px" }}>
+                      <span
+                        style={{
+                          fontSize: "12px",
+                          fontWeight: "600",
+                          padding: "2px 8px",
+                          borderRadius: "4px",
+                          backgroundColor: "rgba(16, 185, 129, 0.12)",
+                          color: "#10b981",
+                        }}
+                      >
+                        Permitted (Read-Only)
+                      </span>
+                    </td>
+                  </tr>
+                  <tr style={{ borderBottom: "1px solid var(--colors-border)" }}>
+                    <td
+                      style={{
+                        padding: "10px 12px",
+                        fontWeight: "500",
+                        color: "var(--colors-text-primary)",
+                      }}
+                    >
+                      Initiate payments or transfers
+                    </td>
+                    <td style={{ padding: "10px 12px", color: "var(--colors-text-muted)" }}>
+                      PISP (Payment Initiation Service)
+                    </td>
+                    <td style={{ padding: "10px 12px" }}>
+                      <span
+                        style={{
+                          fontSize: "12px",
+                          fontWeight: "600",
+                          padding: "2px 8px",
+                          borderRadius: "4px",
+                          backgroundColor: "rgba(239, 68, 68, 0.12)",
+                          color: "#ef4444",
+                        }}
+                      >
+                        Prohibited (No Access)
+                      </span>
+                    </td>
+                  </tr>
+                  <tr style={{ borderBottom: "1px solid var(--colors-border)" }}>
+                    <td
+                      style={{
+                        padding: "10px 12px",
+                        fontWeight: "500",
+                        color: "var(--colors-text-primary)",
+                      }}
+                    >
+                      Store bank login credentials
+                    </td>
+                    <td style={{ padding: "10px 12px", color: "var(--colors-text-muted)" }}>
+                      Direct Credentials
+                    </td>
+                    <td style={{ padding: "10px 12px" }}>
+                      <span
+                        style={{
+                          fontSize: "12px",
+                          fontWeight: "600",
+                          padding: "2px 8px",
+                          borderRadius: "4px",
+                          backgroundColor: "rgba(239, 68, 68, 0.12)",
+                          color: "#ef4444",
+                        }}
+                      >
+                        Prohibited (OAuth 2.0 PKCE)
+                      </span>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td
+                      style={{
+                        padding: "10px 12px",
+                        fontWeight: "500",
+                        color: "var(--colors-text-primary)",
+                      }}
+                    >
+                      Sell records to credit lenders
+                    </td>
+                    <td style={{ padding: "10px 12px", color: "var(--colors-text-muted)" }}>
+                      Third-Party Marketing
+                    </td>
+                    <td style={{ padding: "10px 12px" }}>
+                      <span
+                        style={{
+                          fontSize: "12px",
+                          fontWeight: "600",
+                          padding: "2px 8px",
+                          borderRadius: "4px",
+                          backgroundColor: "rgba(239, 68, 68, 0.12)",
+                          color: "#ef4444",
+                        }}
+                      >
+                        Prohibited (UK GDPR Compliant)
+                      </span>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
           </div>
         </section>

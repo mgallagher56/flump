@@ -207,11 +207,6 @@ export const PensionAccountsList: FC<PensionAccountsListProps> = ({
             </FLPText>
           </div>
           <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
-            {onOpenWizard && (
-              <FLPButton size="sm" variant="outline" onClick={onOpenWizard}>
-                Launch Wizard
-              </FLPButton>
-            )}
             <FLPButton size="sm" variant="primary" onClick={onOpenAddModal}>
               <FaPlus style={{ marginRight: "6px" }} /> Add Pension Pot
             </FLPButton>

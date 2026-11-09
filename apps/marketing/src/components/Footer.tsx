@@ -19,8 +19,7 @@ const footerStyle = css({
 const sectionTitleStyle = css({
   fontSize: "xs",
   fontWeight: "700",
-  textTransform: "uppercase",
-  letterSpacing: "0.08em",
+  letterSpacing: "0.02em",
   color: "slate.400",
   fontFamily: "display",
   mb: "4",

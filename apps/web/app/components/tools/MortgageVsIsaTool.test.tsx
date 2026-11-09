@@ -22,10 +22,10 @@ describe("MortgageVsIsaTool", () => {
   it("updates simulation when monthly contribution changes", () => {
     render(<MortgageVsIsaTool />);
 
-    const monthlyInput = screen.getByLabelText(/monthly extra cash/i);
-    fireEvent.change(monthlyInput, { target: { value: "500" } });
+    const monthlySlider = screen.getByRole("slider", { name: /monthly extra cash/i });
+    fireEvent.change(monthlySlider, { target: { value: "500" } });
 
-    expect(screen.getByText("£500 / mo")).toBeDefined();
+    expect(screen.getAllByDisplayValue("500").length).toBeGreaterThan(0);
   });
 
   it("persists seed and redirects to /signUp on CTA", () => {

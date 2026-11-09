@@ -50,8 +50,7 @@ const logoTextStyle = css({
 const ukBadgeStyle = css({
   fontSize: "xs",
   fontWeight: "700",
-  textTransform: "uppercase",
-  letterSpacing: "0.06em",
+  letterSpacing: "0.02em",
   backgroundColor: "surface.tinted",
   color: "primary",
   padding: "2px 8px",
