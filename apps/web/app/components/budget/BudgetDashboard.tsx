@@ -612,7 +612,7 @@ const BudgetDashboard: FC<BudgetDashboardProps> = ({
               </strong>
               <span
                 style={{
-                  fontSize: "11px",
+                  fontSize: "12px",
                   fontWeight: "700",
                   padding: "2px 8px",
                   borderRadius: "full",
@@ -721,7 +721,7 @@ const BudgetDashboard: FC<BudgetDashboardProps> = ({
                   <span
                     style={{
                       marginLeft: "8px",
-                      fontSize: "11px",
+                      fontSize: "12px",
                       padding: "2px 8px",
                       borderRadius: "999px",
                       backgroundColor: "rgba(239, 68, 68, 0.15)",
@@ -807,33 +807,70 @@ const BudgetDashboard: FC<BudgetDashboardProps> = ({
           </div>
           {pieData.length > 0 ? (
             <div>
-              <ResponsiveContainer height={200} width="100%">
-                <PieChart>
-                  <Pie
-                    cx="50%"
-                    cy="50%"
-                    data={pieData}
-                    dataKey="total"
-                    innerRadius={55}
-                    nameKey="label"
-                    outerRadius={85}
-                    paddingAngle={3}
-                  >
-                    {pieData.map((d) => (
-                      <Cell key={d.cat} fill={d.colour} />
-                    ))}
-                  </Pie>
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: "var(--colors-surface)",
-                      border: "1px solid var(--colors-border)",
-                      borderRadius: "8px",
-                      color: "var(--colors-text-primary)",
+              <div style={{ position: "relative" }}>
+                <ResponsiveContainer height={200} width="100%">
+                  <PieChart>
+                    <Pie
+                      cx="50%"
+                      cy="50%"
+                      data={pieData}
+                      dataKey="total"
+                      innerRadius={55}
+                      nameKey="label"
+                      outerRadius={85}
+                      paddingAngle={3}
+                    >
+                      {pieData.map((d) => (
+                        <Cell key={d.cat} fill={d.colour} />
+                      ))}
+                    </Pie>
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: "var(--colors-surface)",
+                        border: "1px solid var(--colors-border)",
+                        borderRadius: "8px",
+                        color: "var(--colors-text-primary)",
+                      }}
+                      formatter={(value: any) => [`${fmt(value)}/mo`, ""]}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+                {/* Centered Donut Hole Metric */}
+                <div
+                  style={{
+                    position: "absolute",
+                    top: "50%",
+                    left: "50%",
+                    transform: "translate(-50%, -50%)",
+                    textAlign: "center",
+                    pointerEvents: "none",
+                  }}
+                >
+                  <span
+                    style={{
+                      fontSize: "12px",
+                      fontWeight: "600",
+                      color: "var(--colors-text-muted)",
+                      display: "block",
+                      lineHeight: "1.2",
                     }}
-                    formatter={(value: any) => [`${fmt(value)}/mo`, ""]}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
+                  >
+                    Expenses
+                  </span>
+                  <strong
+                    style={{
+                      fontSize: "15px",
+                      fontWeight: "800",
+                      fontFamily: "var(--fonts-mono)",
+                      color: "var(--colors-text-primary)",
+                      lineHeight: "1.2",
+                    }}
+                    className="tabular-nums"
+                  >
+                    {fmt(totals.expenses)}
+                  </strong>
+                </div>
+              </div>
               <div
                 className={css({
                   display: "flex",
@@ -850,7 +887,7 @@ const BudgetDashboard: FC<BudgetDashboardProps> = ({
                       display: "flex",
                       alignItems: "center",
                       gap: "6px",
-                      fontSize: "11px",
+                      fontSize: "12px",
                       color: "var(--colors-text-muted)",
                     }}
                   >
@@ -863,7 +900,12 @@ const BudgetDashboard: FC<BudgetDashboardProps> = ({
                         flexShrink: 0,
                       }}
                     />
-                    {d.label}
+                    <span>
+                      {d.label}{" "}
+                      <strong style={{ color: "var(--colors-text-primary)" }}>
+                        ({totals.expenses > 0 ? Math.round((d.total / totals.expenses) * 100) : 0}%)
+                      </strong>
+                    </span>
                   </div>
                 ))}
               </div>

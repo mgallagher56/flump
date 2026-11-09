@@ -11,6 +11,7 @@ import { Footer } from "../components/Footer";
 import { Header } from "../components/Header";
 import { HomeFAQ } from "../components/HomeFAQ";
 import { HowItWorksSection } from "../components/HowItWorksSection";
+import { InteractiveFinancialTeaser } from "../components/InteractiveFinancialTeaser";
 import { SecurityPrivacySection } from "../components/SecurityPrivacySection";
 import { getAppUrl } from "../utils/url";
 
@@ -145,6 +146,9 @@ export const HomePage: FC = () => {
 
         {/* Section 02: Core Benefits (Canvas Surface Band + Bento Micro-Diagrams) */}
         <FeaturePillars />
+
+        {/* Section 03: Live HMRC Simulator Sandbox (Tinted Surface Band) */}
+        <InteractiveFinancialTeaser />
 
         {/* Section 04: Comparison Matrix (Canvas Surface Band + Column Contrast) */}
         <ComparisonMatrix />

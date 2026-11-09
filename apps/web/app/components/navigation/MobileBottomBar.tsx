@@ -50,7 +50,7 @@ const tabItemBaseStyle = css({
   flex: 1,
   height: "100%",
   minHeight: "48px",
-  fontSize: "11px",
+  fontSize: "xs",
   fontWeight: "medium",
   textDecoration: "none",
   border: "none",
