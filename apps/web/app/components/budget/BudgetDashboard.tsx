@@ -582,68 +582,103 @@ const BudgetDashboard: FC<BudgetDashboardProps> = ({
         </div>
       </div>
 
-      {/* Priority vs. Non-Priority Debt Guardrail Alert */}
+      {/* Priority vs. Non-Priority Debt Guardrail Alert (Compact with Progressive Disclosure) */}
       {totals.surplus < 0 && (
         <div
           className={css({
-            padding: "16px 20px",
+            padding: "14px 18px",
             borderRadius: "lg",
-            backgroundColor: "#fef2f2",
-            border: "1px solid #f87171",
-            color: "#991b1b",
+            backgroundColor: { base: "destructive.bg", _dark: "rgba(239, 68, 68, 0.12)" },
+            border: "1px solid",
+            borderColor: { base: "destructive.border", _dark: "rgba(239, 68, 68, 0.35)" },
             display: "flex",
             flexDirection: "column",
-            gap: "10px",
+            gap: "8px",
           })}
         >
-          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-            <FaExclamationTriangle size={18} style={{ color: "#dc2626", flexShrink: 0 }} />
-            <FLPHeading as="h4" size="sm">
-              UK FCA / Citizens Advice Priority Debt Guardrail
-            </FLPHeading>
-          </div>
-          <FLPText color="#7f1d1d" fontSize="xs">
-            Your monthly expenditure exceeds income. Under UK statutory money guidance,{" "}
-            <strong>never skip Priority Bills</strong> (Council Tax, Rent/Mortgage, Energy, Court
-            Fines) to pay secondary consumer credit cards or loans.
-          </FLPText>
           <div
             style={{
               display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
               flexWrap: "wrap",
-              gap: "12px",
-              fontSize: "12px",
-              paddingTop: "4px",
+              gap: "8px",
             }}
           >
-            <span>Free UK Debt Support:</span>
-            <a
-              href="https://www.stepchange.org"
-              rel="noreferrer"
-              style={{ textDecoration: "underline", fontWeight: "bold", color: "#991b1b" }}
-              target="_blank"
-            >
-              StepChange (0800 138 1111)
-            </a>
-            <span>•</span>
-            <a
-              href="https://www.nationaldebtline.org"
-              rel="noreferrer"
-              style={{ textDecoration: "underline", fontWeight: "bold", color: "#991b1b" }}
-              target="_blank"
-            >
-              National Debtline (0808 808 4000)
-            </a>
-            <span>•</span>
-            <a
-              href="https://www.citizensadvice.org.uk"
-              rel="noreferrer"
-              style={{ textDecoration: "underline", fontWeight: "bold", color: "#991b1b" }}
-              target="_blank"
-            >
-              Citizens Advice
-            </a>
+            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+              <FaExclamationTriangle size={16} style={{ color: "#ef4444", flexShrink: 0 }} />
+              <strong style={{ fontSize: "14px", color: "var(--colors-text-primary, #0f172a)" }}>
+                UK FCA Priority Debt Guardrail Active
+              </strong>
+              <span
+                style={{
+                  fontSize: "11px",
+                  fontWeight: "700",
+                  padding: "2px 8px",
+                  borderRadius: "full",
+                  backgroundColor: "rgba(239, 68, 68, 0.2)",
+                  color: "#ef4444",
+                }}
+              >
+                Deficit: -{fmt(totals.surplus)}/mo
+              </span>
+            </div>
           </div>
+          <p
+            style={{
+              fontSize: "13px",
+              color: "var(--colors-text-secondary, #475569)",
+              margin: 0,
+              lineHeight: 1.5,
+            }}
+          >
+            Never skip Priority Bills (Council Tax, Rent/Mortgage, Energy) to pay secondary credit
+            cards or personal loans.
+          </p>
+          <details style={{ fontSize: "12px", color: "var(--colors-text-muted)" }}>
+            <summary
+              style={{ cursor: "pointer", fontWeight: "600", color: "var(--colors-primary)" }}
+            >
+              View Free UK Debt Helplines (StepChange, National Debtline)
+            </summary>
+            <div
+              style={{
+                display: "flex",
+                flexWrap: "wrap",
+                gap: "12px",
+                fontSize: "12px",
+                paddingTop: "8px",
+              }}
+            >
+              <span>Free UK Debt Support:</span>
+              <a
+                href="https://www.stepchange.org"
+                rel="noreferrer"
+                style={{ textDecoration: "underline", fontWeight: "bold" }}
+                target="_blank"
+              >
+                StepChange (0800 138 1111)
+              </a>
+              <span>•</span>
+              <a
+                href="https://www.nationaldebtline.org"
+                rel="noreferrer"
+                style={{ textDecoration: "underline", fontWeight: "bold" }}
+                target="_blank"
+              >
+                National Debtline (0808 808 4000)
+              </a>
+              <span>•</span>
+              <a
+                href="https://www.citizensadvice.org.uk"
+                rel="noreferrer"
+                style={{ textDecoration: "underline", fontWeight: "bold" }}
+                target="_blank"
+              >
+                Citizens Advice
+              </a>
+            </div>
+          </details>
         </div>
       )}
 

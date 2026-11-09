@@ -322,10 +322,12 @@ const SavingsForecaster: FC<SavingsForecasterProps> = ({
                 className={css({
                   fontSize: "xs",
                   fontWeight: "bold",
+                  fontFamily: "mono",
                   color: "success.500",
                   backgroundColor: "rgba(16, 185, 129, 0.08)",
                   padding: "4px 12px",
                   borderRadius: "full",
+                  border: "1px solid rgba(16, 185, 129, 0.2)",
                 })}
               >
                 + {formatCurrency(difference)} saved with Hypothetical Plan
@@ -333,8 +335,53 @@ const SavingsForecaster: FC<SavingsForecasterProps> = ({
             )}
           </div>
 
+          {/* Accessible Legend for Colorblind Distinction */}
+          <div
+            className={css({
+              display: "flex",
+              gap: "16px",
+              alignItems: "center",
+              marginTop: "12px",
+              paddingTop: "8px",
+              borderTop: "1px solid",
+              borderColor: "border",
+            })}
+          >
+            <div className={css({ display: "flex", alignItems: "center", gap: "6px" })}>
+              <span
+                style={{
+                  display: "inline-block",
+                  width: "16px",
+                  height: "3px",
+                  backgroundColor: "#6363F1",
+                  borderRadius: "2px",
+                }}
+              />
+              <span
+                className={css({ fontSize: "xs", fontWeight: "medium", color: "text.secondary" })}
+              >
+                Current Plan (Solid)
+              </span>
+            </div>
+            <div className={css({ display: "flex", alignItems: "center", gap: "6px" })}>
+              <span
+                style={{
+                  display: "inline-block",
+                  width: "16px",
+                  height: "3px",
+                  borderTop: "3px dashed #10B981",
+                }}
+              />
+              <span
+                className={css({ fontSize: "xs", fontWeight: "medium", color: "text.secondary" })}
+              >
+                Hypothetical Plan (Dashed)
+              </span>
+            </div>
+          </div>
+
           {/* Recharts Area Chart */}
-          <div style={{ height: "300px", width: "100%", marginTop: "24px" }}>
+          <div style={{ height: "300px", width: "100%", marginTop: "16px" }}>
             <ResponsiveContainer height="100%" width="100%">
               <AreaChart
                 data={projectionData}
@@ -378,6 +425,7 @@ const SavingsForecaster: FC<SavingsForecasterProps> = ({
                   dataKey="Hypothetical Plan"
                   fill="url(#colorHypo)"
                   stroke="#10B981"
+                  strokeDasharray="5 5"
                   strokeWidth={2}
                   type="monotone"
                 />
@@ -396,7 +444,14 @@ const SavingsForecaster: FC<SavingsForecasterProps> = ({
               >
                 Current Plan Final
               </FLPText>
-              <FLPHeading as="h4" color="primary" mt={1} size="lg">
+              <FLPHeading
+                as="h4"
+                color="primary"
+                mt={1}
+                size="lg"
+                className="tabular-nums"
+                style={{ fontFamily: "var(--fonts-mono)" }}
+              >
                 {formatCurrency(totalA)}
               </FLPHeading>
             </div>
@@ -410,7 +465,14 @@ const SavingsForecaster: FC<SavingsForecasterProps> = ({
               >
                 Hypothetical Plan Final
               </FLPText>
-              <FLPHeading as="h4" color="success.500" mt={1} size="lg">
+              <FLPHeading
+                as="h4"
+                color="success.500"
+                mt={1}
+                size="lg"
+                className="tabular-nums"
+                style={{ fontFamily: "var(--fonts-mono)" }}
+              >
                 {formatCurrency(totalB)}
               </FLPHeading>
             </div>
@@ -424,7 +486,14 @@ const SavingsForecaster: FC<SavingsForecasterProps> = ({
               >
                 Total Interest Gained
               </FLPText>
-              <FLPHeading as="h4" color="text.primary" mt={1} size="lg">
+              <FLPHeading
+                as="h4"
+                color="text.primary"
+                mt={1}
+                size="lg"
+                className="tabular-nums"
+                style={{ fontFamily: "var(--fonts-mono)" }}
+              >
                 {formatCurrency(
                   totalB - startingBalance - hypotheticalSavingRate * 12 * projectionYears,
                 )}

@@ -1,23 +1,17 @@
+import { SectionBand } from "@repo/ui";
 import { css } from "@repo/ui/styled-system/css";
 import { stack } from "@repo/ui/styled-system/patterns";
 import { type FC, useState } from "react";
 import { FiChevronDown, FiChevronUp } from "react-icons/fi";
 
-const containerStyle = css({
-  maxWidth: "4xl",
-  mx: "auto",
-  py: "16",
-  px: "4",
-});
-
 const faqItemStyle = css({
   backgroundColor: { base: "#ffffff", _dark: "dark.surface" },
   border: "1px solid",
-  borderColor: { base: "slate.200", _dark: "slate.800" },
+  borderColor: { base: "slate.200", _dark: "dark.border" },
   borderRadius: "xl",
   overflow: "hidden",
   transition: "border-color 0.15s ease",
-  _hover: { borderColor: "indigo.500" },
+  _hover: { borderColor: "primary" },
 });
 
 const questionStyle = css({
@@ -31,6 +25,7 @@ const questionStyle = css({
   textAlign: "left",
   fontSize: "1rem",
   fontWeight: "700",
+  fontFamily: "var(--fonts-display, sans-serif)",
   color: { base: "slate.900", _dark: "#ffffff" },
   cursor: "pointer",
 });
@@ -48,70 +43,71 @@ const FAQS = [
     a: "No. Flump connects strictly through read-only Account Information Services (AISP) regulated by the Financial Conduct Authority (FCA). Flump has zero payment initiation capability and can never move money, initiate transfers, or change your account details.",
   },
   {
-    q: "Can I use Flump without connecting my bank accounts?",
-    a: "Yes! Flump offers an air-gapped manual mode where you can input balances, income, mortgage rates, and debts by hand or via CSV import. You retain 100% of the tax, debt payoff, and forecasting engines without ever linking bank credentials.",
+    q: "Do I have to connect my bank accounts?",
+    a: "Not at all. Flump is designed from the ground up to be 100% manual-first. You can enter rough totals for income, expenses, and savings in 60 seconds and use every single tax, debt, mortgage, and forecasting tool without connecting a bank account.",
   },
   {
-    q: "How does Flump calculate the £100k tax trap and childcare cliff?",
-    a: "HMRC reduces your Personal Allowance by £1 for every £2 your adjusted net income exceeds £100,000, creating an effective 60% marginal tax rate between £100,000 and £125,140. Furthermore, exceeding £100k eliminates the 15/30 hours of government-funded childcare and Tax-Free Childcare. Flump calculates the exact salary sacrifice required into a workplace pension or SIPP to restore your allowance.",
+    q: "What makes Flump different from generic budgeting apps?",
+    a: "Most budgeting tools are built for US tax laws (401k, credit scores). Flump is built natively for UK personal finance rules: HMRC income tax bands, National Insurance, £100k Personal Allowance taper, student loan plans (1, 2, 4, 5, PG), Section 24 buy-to-let calculations, and pension salary sacrifice.",
   },
   {
-    q: "How does the Live Demo Sandbox differ from a real account?",
-    a: "The Live Demo Sandbox runs entirely in your browser memory against realistic UK financial personas. You can test every dashboard widget, tax tool, and debt calculator with zero sign-up. When you are ready to track your real numbers, clicking 'Save My Changes' commits your custom inputs directly to your new secure account.",
+    q: "How does the 60-Second Baseline work?",
+    a: "On your first visit, enter 6 rough figures: your salary, housing, core bills, savings, pension balance, and debt. Flump calculates your Net Worth, weekly Safe-to-Spend allowance, and emergency survival runway immediately. You can drill down and refine details later.",
   },
   {
-    q: "What is your data retention and deletion policy under UK GDPR?",
-    a: "Your personal financial data is yours alone. We do not sell data to lenders, brokers, or advertisers. If you decide to leave Flump, clicking 'Delete Account' in your profile permanently and irrevocably purges all transaction records, balances, and credentials from our encrypted database.",
+    q: "Is there a free trial or free tier?",
+    a: "Yes. Flump offers a free baseline tier with all core calculators, take-home tools, and dashboard summaries included. No credit card is required to start.",
   },
 ];
 
 export const HomeFAQ: FC = () => {
-  const [openIdx, setOpenIdx] = useState<number | null>(0);
+  const [openIndex, setOpenIndex] = useState<number | null>(0);
 
   const toggle = (idx: number) => {
-    setOpenIdx(openIdx === idx ? null : idx);
+    setOpenIndex(openIndex === idx ? null : idx);
   };
 
   return (
-    <section className={containerStyle}>
-      <div style={{ textAlign: "center", marginBottom: "36px" }}>
-        <span
-          style={{
-            fontSize: "12px",
-            fontWeight: "700",
-            textTransform: "uppercase",
-            color: "#6363f1",
-          }}
-        >
-          Got Questions?
-        </span>
-        <h2
-          style={{
-            fontSize: "2.25rem",
-            fontWeight: "800",
-            color: "var(--colors-text-primary, #0f172a)",
-            marginTop: "8px",
-          }}
-        >
-          Frequently Asked Questions
-        </h2>
+    <SectionBand
+      id="faq"
+      tone="subtle"
+      indexBadge="06 // FAQ"
+      title="Frequently Asked Questions"
+      subtitle="Everything you need to know about Flump, UK financial rules, and our privacy-first design."
+    >
+      <div style={{ maxWidth: "780px", margin: "0 auto" }}>
+        <div className={stack({ gap: "3" })}>
+          {FAQS.map((faq, idx) => {
+            const isOpen = openIndex === idx;
+            return (
+              <div key={idx} className={faqItemStyle}>
+                <button
+                  aria-controls={`faq-answer-${idx}`}
+                  aria-expanded={isOpen}
+                  className={questionStyle}
+                  type="button"
+                  onClick={() => toggle(idx)}
+                >
+                  <span>{faq.q}</span>
+                  {isOpen ? (
+                    <FiChevronUp
+                      size={18}
+                      style={{ color: "var(--colors-primary, #6363f1)", flexShrink: 0 }}
+                    />
+                  ) : (
+                    <FiChevronDown size={18} style={{ color: "#94a3b8", flexShrink: 0 }} />
+                  )}
+                </button>
+                {isOpen && (
+                  <div className={answerStyle} id={`faq-answer-${idx}`} role="region">
+                    <p style={{ margin: 0 }}>{faq.a}</p>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
       </div>
-
-      <div className={stack({ gap: "4" })}>
-        {FAQS.map((faq, idx) => (
-          <div key={idx} className={faqItemStyle}>
-            <button type="button" className={questionStyle} onClick={() => toggle(idx)}>
-              <span>{faq.q}</span>
-              {openIdx === idx ? (
-                <FiChevronUp size={20} color="#6363f1" />
-              ) : (
-                <FiChevronDown size={20} color="#94a3b8" />
-              )}
-            </button>
-            {openIdx === idx && <div className={answerStyle}>{faq.a}</div>}
-          </div>
-        ))}
-      </div>
-    </section>
+    </SectionBand>
   );
 };

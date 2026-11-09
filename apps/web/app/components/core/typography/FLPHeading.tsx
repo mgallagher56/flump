@@ -14,7 +14,7 @@ export interface FLPHeadingProps extends HTMLAttributes<HTMLHeadingElement> {
 
 const FLPHeading: FC<FLPHeadingProps> = ({
   as: Component = "h2",
-  color = "primary",
+  color = "text.primary",
   size = "md",
   mt,
   mb,
@@ -39,8 +39,13 @@ const FLPHeading: FC<FLPHeadingProps> = ({
     "4xl": isMobileVariant ? "2rem" : "3rem",
   };
 
+  const resolvedColor =
+    color === "primary" ? "primary" : color === "blue.500" ? "text.primary" : color;
+
   const headingStyle = css({
-    color: color === "blue.500" ? "primary" : color,
+    color: resolvedColor,
+    fontFamily: "var(--fonts-display, 'Plus Jakarta Sans', sans-serif)",
+    letterSpacing: "-0.025em",
     fontSize: sizeMap[size],
     fontWeight: "bold",
     marginTop: mt,
