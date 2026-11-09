@@ -5,6 +5,7 @@ import OnboardingRoute from "./app.onboarding";
 
 const mockUpdateProfile = vi.fn().mockResolvedValue(undefined);
 const mockNavigate = vi.fn();
+const mockUpdateBaseline = vi.fn();
 
 vi.mock("react-router", () => ({
   useLoaderData: () => ({
@@ -12,6 +13,7 @@ vi.mock("react-router", () => ({
       enabledPages: ["accounts", "budget", "savings", "pension"],
     },
     user: { name: "Alex" },
+    accessToken: "mock-token",
   }),
   useNavigate: () => mockNavigate,
   Link: ({ children, to, className }: any) => (
@@ -30,59 +32,59 @@ vi.mock("~/hooks/useUserProfile", () => ({
   }),
 }));
 
-describe("OnboardingRoute", () => {
+vi.mock("~/state/baseline.store", () => ({
+  useFinancialBaseline: () => ({
+    baseline: {},
+    updateBaseline: mockUpdateBaseline,
+  }),
+}));
+
+describe("OnboardingRoute (3-Step Baseline Flow)", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it("renders welcome screen with choice between questionnaire and manual picker", () => {
+  it("renders Step 1 (You & Income) by default with summary bar", () => {
     render(<OnboardingRoute />);
-    expect(screen.getByText(/Welcome to Flump, Alex/i)).toBeDefined();
-    expect(screen.getByText("Answer 5 Quick Questions")).toBeDefined();
-    expect(screen.getByText("Choose Modules Manually")).toBeDefined();
+    expect(screen.getByText("Step 1: You & Income")).toBeDefined();
+    expect(screen.getByLabelText(/current age/i)).toBeDefined();
+    expect(screen.getByLabelText(/employment setup/i)).toBeDefined();
+    expect(screen.getByText(/annual gross salary/i)).toBeDefined();
+    expect(screen.getByText("Net Take-Home")).toBeDefined();
+    expect(screen.getByText("Monthly Surplus")).toBeDefined();
+    expect(screen.getByText("Starting Net Worth")).toBeDefined();
   });
 
-  it("allows starting the questionnaire and answering questions", () => {
+  it("advances from Step 1 to Step 2 and allows selecting housing status", () => {
     render(<OnboardingRoute />);
 
-    // Click to start quiz
-    fireEvent.click(screen.getByText("Answer 5 Quick Questions"));
+    const nextBtn = screen.getByText("Next: Housing & Outgoings →");
+    fireEvent.click(nextBtn);
 
-    // First question should be active
-    expect(screen.getByText("Question 1 of 5")).toBeDefined();
-    expect(
-      screen.getByText("Do you want to manage accounts and plan your monthly budget?"),
-    ).toBeDefined();
+    expect(screen.getByText("Step 2: Housing & Monthly Outgoings")).toBeDefined();
+    expect(screen.getByText(/housing status/i)).toBeDefined();
+    expect(screen.getByText(/rent payment|monthly rent/i)).toBeDefined();
 
-    // Answer Yes to Q1
-    fireEvent.click(screen.getByText("Yes, include Accounts & Budgeting"));
-
-    // Advances to Q2
-    expect(screen.getByText("Question 2 of 5")).toBeDefined();
-    expect(
-      screen.getByText("Do you have savings accounts or investment portfolios?"),
-    ).toBeDefined();
+    // Select mortgage
+    fireEvent.click(screen.getByText(/🏡 mortgage/i));
+    expect(screen.getByText(/property value/i)).toBeDefined();
+    expect(screen.getByText(/mortgage balance/i)).toBeDefined();
   });
 
-  it("allows skipping to manual module selection and finishing setup", async () => {
+  it("advances from Step 2 to Step 3 and finishes setup to launch dashboard", async () => {
     render(<OnboardingRoute />);
 
-    // Click manual picker
-    fireEvent.click(screen.getByText("Choose Modules Manually"));
+    // Step 1 -> Step 2
+    fireEvent.click(screen.getByText("Next: Housing & Outgoings →"));
+    // Step 2 -> Step 3
+    fireEvent.click(screen.getByText("Next: Savings, Pension & Debt →"));
 
-    // Should render manual module list
-    expect(screen.getByText("Select Your Active Modules")).toBeDefined();
-    expect(screen.getByText("Accounts & Net Worth")).toBeDefined();
-    expect(screen.getByText("Budget Planner")).toBeDefined();
-    expect(screen.getByText("Savings & Investments")).toBeDefined();
-    expect(screen.getByText("Pension & Retirement")).toBeDefined();
+    expect(screen.getByText("Step 3: Savings, Pension & Debt")).toBeDefined();
+    expect(screen.getByLabelText(/total cash & isa savings/i)).toBeDefined();
+    expect(screen.getByLabelText(/current pension pot/i)).toBeDefined();
+    expect(screen.getByLabelText(/total cards & personal loans/i)).toBeDefined();
 
-    // Toggle a module off and on
-    const pensionCard = screen.getByText("Pension & Retirement");
-    fireEvent.click(pensionCard);
-
-    // Click Finish Setup button
-    const finishBtn = screen.getByText("Finish Setup & Launch Dashboard →");
+    const finishBtn = screen.getByRole("button", { name: /finish setup & launch dashboard/i });
     fireEvent.click(finishBtn);
 
     await waitFor(() => {
@@ -90,88 +92,31 @@ describe("OnboardingRoute", () => {
         expect.objectContaining({
           onboardingCompleted: true,
           enabledPages: expect.any(Array),
-          dashboardWidgets: expect.any(Array),
         }),
       );
+      expect(mockUpdateBaseline).toHaveBeenCalled();
       expect(mockNavigate).toHaveBeenCalledWith("/");
     });
   });
 
-  it("navigates back to the welcome screen from the first question when Back is clicked", () => {
+  it("allows navigating back between steps", () => {
     render(<OnboardingRoute />);
 
-    // Start quiz
-    fireEvent.click(screen.getByText("Answer 5 Quick Questions"));
-    expect(screen.getByText("Question 1 of 5")).toBeDefined();
+    // Step 1 -> Step 2
+    fireEvent.click(screen.getByText("Next: Housing & Outgoings →"));
+    expect(screen.getByText("Step 2: Housing & Monthly Outgoings")).toBeDefined();
 
-    // Click Back
-    const backBtn = screen.getByRole("button", { name: /back/i });
-    expect(backBtn).toBeDefined();
-    fireEvent.click(backBtn);
-
-    // Should be back on Welcome screen
-    expect(screen.getByText(/Welcome to Flump, Alex/i)).toBeDefined();
-    expect(screen.getByText("Answer 5 Quick Questions")).toBeDefined();
+    // Step 2 -> Back to Step 1
+    fireEvent.click(screen.getByRole("button", { name: /back/i }));
+    expect(screen.getByText("Step 1: You & Income")).toBeDefined();
   });
 
-  it("navigates back to Question 1 from Question 2 when Back is clicked", () => {
-    render(<OnboardingRoute />);
-
-    // Start quiz and advance to Q2
-    fireEvent.click(screen.getByText("Answer 5 Quick Questions"));
-    fireEvent.click(screen.getByText("Yes, include Accounts & Budgeting"));
-    expect(screen.getByText("Question 2 of 5")).toBeDefined();
-
-    // Click Back
-    const backBtn = screen.getByRole("button", { name: /back/i });
-    fireEvent.click(backBtn);
-
-    // Should be back on Question 1
-    expect(screen.getByText("Question 1 of 5")).toBeDefined();
-  });
-
-  it("navigates back to welcome screen from manual picker if opened directly from welcome", () => {
-    render(<OnboardingRoute />);
-
-    // Open manual picker directly
-    fireEvent.click(screen.getByText("Choose Modules Manually"));
-    expect(screen.getByText("Select Your Active Modules")).toBeDefined();
-
-    // Click Back to Welcome
-    const backBtn = screen.getByRole("button", { name: /back to welcome/i });
-    fireEvent.click(backBtn);
-
-    // Should be back on Welcome screen
-    expect(screen.getByText(/Welcome to Flump, Alex/i)).toBeDefined();
-  });
-
-  it("navigates back to questionnaire from manual picker if opened from quiz skip", () => {
-    render(<OnboardingRoute />);
-
-    // Start quiz
-    fireEvent.click(screen.getByText("Answer 5 Quick Questions"));
-    expect(screen.getByText("Question 1 of 5")).toBeDefined();
-
-    // Skip to manual picker
-    fireEvent.click(screen.getByText("Skip to Review"));
-    expect(screen.getByText("Select Your Active Modules")).toBeDefined();
-
-    // Click Back to Questions
-    const backBtn = screen.getByRole("button", { name: /back to questions/i });
-    fireEvent.click(backBtn);
-
-    // Should return to the questionnaire
-    expect(screen.getByText("Question 1 of 5")).toBeDefined();
-  });
-
-  it("hydrates baseline figures from localStorage seed and shows pre-loaded banner", () => {
+  it("hydrates pre-loaded seed from tools and allows 10s fast-track launch", async () => {
     const seed = {
-      annualIncome: 85000,
-      pensionContributionPct: 8,
-      salarySacrifice: true,
-      initialCashSavings: 20000,
-      initialInvestments: 30000,
-      monthlyContribution: 800,
+      annualIncome: 75000,
+      pensionContributionPct: 7,
+      initialCashSavings: 18000,
+      initialInvestments: 25000,
       inferredModules: ["accounts", "budget", "pension", "savings", "forecast"] as const,
       timestamp: Date.now(),
     };
@@ -179,101 +124,7 @@ describe("OnboardingRoute", () => {
 
     render(<OnboardingRoute />);
 
-    expect(
-      screen.getByText(/we've pre-loaded your £85,000 salary and savings baseline/i),
-    ).toBeDefined();
-    expect(screen.getByText(/launch dashboard with this baseline \(10s\) →/i)).toBeDefined();
-
-    clearOnboardingSeed();
-  });
-
-  it("navigates through progressive 3-step baseline flow", async () => {
-    const seed = {
-      annualIncome: 70000,
-      pensionContributionPct: 5,
-      salarySacrifice: true,
-      initialCashSavings: 15000,
-      initialInvestments: 25000,
-      monthlyContribution: 600,
-      inferredModules: ["accounts", "budget", "savings", "pension", "forecast"] as const,
-      timestamp: Date.now(),
-    };
-    persistOnboardingSeed(seed as any);
-
-    render(<OnboardingRoute />);
-
-    // Click "Review & Tweak Numbers"
-    const reviewBtn = screen.getByText("Review & Tweak Numbers");
-    fireEvent.click(reviewBtn);
-
-    // Step 1: Focus & Baseline
-    expect(screen.getByText("Step 1: Focus & Baseline")).toBeDefined();
-    expect(screen.getByText(/where is your primary focus right now\?/i)).toBeDefined();
-
-    // Advance to Step 2
-    fireEvent.click(screen.getByText(/next: cash & debt/i));
-    expect(screen.getByText("Step 2: High-Level Cash & Debt")).toBeDefined();
-    expect(screen.getByText(/starting estimated net worth/i)).toBeDefined();
-
-    // Advance to Step 3
-    fireEvent.click(screen.getByText(/next: workspace modules/i));
-    expect(screen.getByText("Step 3: Confirm Your Workspace Modules")).toBeDefined();
-
-    // Click finish on step 3
-    const finishBtn = screen.getByRole("button", { name: /finish setup & launch dashboard/i });
-    fireEvent.click(finishBtn);
-
-    await waitFor(() => {
-      expect(mockUpdateProfile).toHaveBeenCalled();
-      expect(mockNavigate).toHaveBeenCalledWith("/");
-    });
-
-    clearOnboardingSeed();
-  });
-
-  it("completes all 5 questions in questionnaire mode and transitions to review", async () => {
-    render(<OnboardingRoute />);
-
-    fireEvent.click(screen.getByText("Answer 5 Quick Questions"));
-
-    // Q1
-    fireEvent.click(screen.getByText("Yes, include Accounts & Budgeting"));
-    // Q2
-    fireEvent.click(screen.getByText("Yes, track Savings & Forecaster"));
-    // Q3
-    fireEvent.click(screen.getByText("Yes, track Pension Pots"));
-    // Q4
-    fireEvent.click(screen.getByText("Yes, add Mortgage Tools"));
-    // Q5
-    fireEvent.click(screen.getByText("Yes, include Tax Tracker"));
-
-    // After Q5, transitions to manual review mode
-    expect(screen.getByText("Select Your Active Modules")).toBeDefined();
-
-    const finishBtn = screen.getByText("Finish Setup & Launch Dashboard →");
-    fireEvent.click(finishBtn);
-
-    await waitFor(() => {
-      expect(mockUpdateProfile).toHaveBeenCalled();
-      expect(mockNavigate).toHaveBeenCalledWith("/");
-    });
-  });
-
-  it("launches dashboard directly from fast-track baseline banner button", async () => {
-    const seed = {
-      annualIncome: 60000,
-      pensionContributionPct: 5,
-      salarySacrifice: false,
-      initialCashSavings: 10000,
-      initialInvestments: 5000,
-      monthlyContribution: 400,
-      inferredModules: ["accounts", "budget", "savings"] as const,
-      timestamp: Date.now(),
-    };
-    persistOnboardingSeed(seed as any);
-
-    render(<OnboardingRoute />);
-
+    expect(screen.getByText(/we've pre-loaded your £75,000 salary/i)).toBeDefined();
     const quickLaunchBtn = screen.getByText(/launch dashboard with this baseline \(10s\) →/i);
     fireEvent.click(quickLaunchBtn);
 

@@ -12,17 +12,26 @@ export interface UserProfile {
   avatarUrl: string | null;
   currency: string;
   country: string;
+  age?: number | null;
   employmentType: "employed" | "self-employed" | "other" | null;
   annualSalary: number | null;
   monthlyTakeHome: number | null;
+  studentLoanPlan?: string | null;
   hasSecondIncome: boolean;
   secondIncomeMonthly: number | null;
   hasRentalIncome: boolean;
   rentalIncomeMonthly: number | null;
+  housingStatus?: "renting" | "mortgage" | "own_outright" | null;
+  monthlyHousingCost?: number | null;
+  monthlyOtherOutgoings?: number | null;
+  totalCashSavings?: number | null;
+  totalPensionPot?: number | null;
+  totalUnsecuredDebt?: number | null;
   hasMortgage: boolean;
   mortgageType: "repayment" | "interest-only";
   mortgageRenewalDate?: string | null;
   homeValue?: number | null;
+  mortgageBalance?: number | null;
   propertyOwnershipShare: number;
   hasBuyToLet: boolean;
   buyToLetCount: number;
@@ -131,6 +140,34 @@ export const normalizeProfile = (p: Partial<UserProfile>): UserProfile => ({
   hasResetFinancialData: Boolean(p.hasResetFinancialData),
   onboardingCompleted: Boolean(p.onboardingCompleted),
   avatarUrl: p.avatarUrl !== undefined ? p.avatarUrl : DEFAULT_PROFILE.avatarUrl,
+  age: p.age !== undefined && p.age !== null ? Number(p.age) : null,
+  studentLoanPlan: p.studentLoanPlan !== undefined ? p.studentLoanPlan : null,
+  housingStatus: p.housingStatus !== undefined ? p.housingStatus : null,
+  monthlyHousingCost:
+    p.monthlyHousingCost !== undefined && p.monthlyHousingCost !== null
+      ? Number(p.monthlyHousingCost)
+      : null,
+  monthlyOtherOutgoings:
+    p.monthlyOtherOutgoings !== undefined && p.monthlyOtherOutgoings !== null
+      ? Number(p.monthlyOtherOutgoings)
+      : null,
+  totalCashSavings:
+    p.totalCashSavings !== undefined && p.totalCashSavings !== null
+      ? Number(p.totalCashSavings)
+      : null,
+  totalPensionPot:
+    p.totalPensionPot !== undefined && p.totalPensionPot !== null
+      ? Number(p.totalPensionPot)
+      : null,
+  totalUnsecuredDebt:
+    p.totalUnsecuredDebt !== undefined && p.totalUnsecuredDebt !== null
+      ? Number(p.totalUnsecuredDebt)
+      : null,
+  homeValue: p.homeValue !== undefined && p.homeValue !== null ? Number(p.homeValue) : null,
+  mortgageBalance:
+    p.mortgageBalance !== undefined && p.mortgageBalance !== null
+      ? Number(p.mortgageBalance)
+      : null,
   annualSalary:
     p.annualSalary !== null && p.annualSalary !== undefined ? Number(p.annualSalary) : null,
   monthlyTakeHome:

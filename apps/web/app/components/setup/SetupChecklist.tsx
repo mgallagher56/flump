@@ -50,19 +50,28 @@ export interface SetupChecklistProps {
 
 const STEP_DEFINITIONS = (props: SetupChecklistProps, navigate: ReturnType<typeof useNavigate>) => [
   {
+    key: "budget",
+    label: "Break down monthly outgoings",
+    description:
+      "Your baseline outgoings are active. Break them down into Housing, Bills, Living & Wants to refine your Runway.",
+    icon: <FaWallet style={{ color: "#f59e0b" }} />,
+    isComplete: props.hasBudget || props.completedSteps.includes("budget"),
+    actionLabel: "Drill Down Budget",
+    onAction: props.onOpenBudgetWizard || (() => navigate("/app/budget")),
+  },
+  {
     key: "accounts",
-    label: "Connect or add accounts",
-    description: "Sync your bank accounts or add manual accounts to start tracking your net worth.",
+    label: "Connect bank or split savings accounts",
+    description: "Sync via FCA Read-Only Open Banking or add individual current and savings pots.",
     icon: <FaUniversity style={{ color: "#6363f1" }} />,
     isComplete: props.hasAccounts || props.completedSteps.includes("accounts"),
-    actionLabel: "Connect Bank",
+    actionLabel: "Add Account Detail",
     onAction: props.onOpenConnectBank || (() => navigate("/app/accounts")),
   },
   {
     key: "savings",
-    label: "Track savings & forecast growth",
-    description:
-      "Track your savings accounts, set monthly regular contributions, and forecast compound growth.",
+    label: "Track savings & interest rates",
+    description: "Record individual interest rates (APY) and set regular monthly wealth targets.",
     icon: <FaPiggyBank style={{ color: "#10b981" }} />,
     isComplete: !!props.hasSavings || props.completedSteps.includes("savings"),
     actionLabel: "Track Savings",
@@ -70,61 +79,31 @@ const STEP_DEFINITIONS = (props: SetupChecklistProps, navigate: ReturnType<typeo
   },
   {
     key: "pension",
-    label: "Track pension & retirement",
-    description:
-      "Track your pension pots, set contribution percentages (UK standard 5% + 3%), and forecast retirement growth.",
+    label: "Refine pension schemes & match",
+    description: "Add employer matching % and track multiple active or legacy UK pension pots.",
     icon: <FaShieldAlt style={{ color: "#8b5cf6" }} />,
     isComplete: !!props.hasPension || props.completedSteps.includes("pension"),
-    actionLabel: "Track Pension",
+    actionLabel: "Refine Pension",
     onAction: () => navigate("/app/pension"),
   },
   {
-    key: "budget",
-    label: "Configure your budget",
-    description:
-      "Set up income and expense categories with the guided wizard to unlock the Runway Calculator.",
-    icon: <FaWallet style={{ color: "#f59e0b" }} />,
-    isComplete: props.hasBudget || props.completedSteps.includes("budget"),
-    actionLabel: "Set Up Budget",
-    onAction: props.onOpenBudgetWizard || (() => navigate("/app/budget")),
-  },
-  {
-    key: "profile",
-    label: "Set up your financial profile",
-    description: "Enter your salary, employment type, and income sources. Used across all tools.",
-    icon: <FaUser style={{ color: "#8b5cf6" }} />,
-    isComplete: props.hasProfile || props.completedSteps.includes("profile"),
-    actionLabel: "Open Profile",
-    onAction: () => navigate("/app/profile"),
-  },
-  {
-    key: "runway",
-    label: "Check your unemployment runway",
-    description:
-      "Find out how many months you could survive without your salary. Requires budget setup.",
-    icon: <FaBalanceScale style={{ color: "#ef4444" }} />,
-    isComplete: props.completedSteps.includes("runway"),
-    actionLabel: "Calculate Runway",
-    onAction: () => navigate("/app/budget"),
-  },
-  {
     key: "mortgage",
-    label: "Track your mortgage",
+    label: "Refine mortgage term & overpayment",
     description:
-      "Simulate overpayments, compare savings vs. paying off early, and track your balance.",
+      "Simulate monthly overpayments, view your full amortization curve, and compare ISA vs. mortgage payoff.",
     icon: <FaHome style={{ color: "#10b981" }} />,
     isComplete: props.hasMortgageAccount || props.completedSteps.includes("mortgage"),
-    actionLabel: "Open Mortgage Tools",
+    actionLabel: "Drill Down Mortgage",
     onAction: () => navigate("/app/mortgage"),
   },
   {
     key: "forecast",
-    label: "Run a savings forecast",
+    label: "Explore 10–30 year scenarios",
     description:
-      "Project your assets 10+ years into the future and model compound interest scenarios.",
+      "Simulate pay rises, career breaks, or mortgage interest shocks on your net worth line.",
     icon: <FaChartLine style={{ color: "#3b82f6" }} />,
     isComplete: props.hasRunForecast || props.completedSteps.includes("forecast"),
-    actionLabel: "Run Forecast",
+    actionLabel: "Model Scenarios",
     onAction: () => navigate("/app/forecast"),
   },
   {
@@ -199,7 +178,7 @@ const SetupChecklist: FC<SetupChecklistProps> = (props) => {
           <div>
             <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
               <FLPHeading as="h4" size="sm">
-                Getting Started with Flump
+                Refine & Drill Down Your Baseline
               </FLPHeading>
               <span
                 className={css({

@@ -12,18 +12,28 @@ export const FINANCIAL_BASELINE_STORAGE_KEY = "flump_financial_baseline_v1";
 
 export const DEFAULT_FINANCIAL_BASELINE: FinancialBaseline = {
   userId: "",
+  age: 32,
   taxYear: "2025/26",
   ukRegion: "ENGLAND_NI_WALES",
   employmentStatus: "PAYE",
   annualGrossSalary: 45000,
+  monthlyTakeHomeOverride: undefined,
   annualBonusOrSideIncome: 0,
+  housingStatus: "RENTING",
+  monthlyHousingCost: 900,
+  propertyValue: 0,
+  mortgageBalance: 0,
+  monthlyOtherOutgoings: 1100,
+  totalCashSavings: 5000,
+  totalPensionPot: 15000,
+  totalUnsecuredDebt: 0,
   pensionContributionPct: 5,
   employerPensionMatchPct: 3,
   isSalarySacrifice: true,
   studentLoanPlan: "NONE",
   propertyOwnershipSharePct: 100,
   financialStage: "STAGE_2_BUFFER_BUILD",
-  enabledModules: ["accounts", "debt", "budget", "pension", "mortgage", "forecast", "tax"],
+  enabledModules: ["accounts", "budget", "pension", "forecast"],
 };
 
 export type AnySeedPayload = OnboardingSeedPayload | Record<string, any>;
@@ -39,11 +49,27 @@ export function hydrateBaselineFromSeed(seed: AnySeedPayload, userId = ""): Fina
     (seedAny.mode === "WEALTH" ? 65000 : 38000);
   const pensionContributionPct = seedAny.pensionContributionPct ?? 5;
   const isSalarySacrifice = seedAny.isSalarySacrifice ?? seedAny.salarySacrifice ?? true;
+  const totalUnsecuredDebt =
+    seedAny.totalUnsecuredDebt !== undefined ? seedAny.totalUnsecuredDebt : 0;
+  const totalCashSavings = seedAny.totalCashSavings ?? seedAny.initialCashSavings ?? 5000;
+  const mortgageBalance = seedAny.mortgageBalance ?? 0;
+  const propertyValue =
+    seedAny.propertyValue ?? (mortgageBalance > 0 ? Math.round(mortgageBalance * 1.35) : 0);
+  const housingStatus = seedAny.housingStatus ?? (mortgageBalance > 0 ? "MORTGAGE" : "RENTING");
+  const monthlyHousingCost =
+    seedAny.monthlyHousingCost ?? (housingStatus === "OWN_OUTRIGHT" ? 0 : 900);
+  const monthlyOtherOutgoings = seedAny.monthlyOtherOutgoings ?? 1100;
+  const totalPensionPot = seedAny.totalPensionPot ?? seedAny.initialInvestments ?? 15000;
+  const age = seedAny.age ?? 32;
+  const studentLoanPlan = seedAny.studentLoanPlan ?? "NONE";
+  const employmentStatus = seedAny.isSelfEmployed
+    ? "SELF_EMPLOYED"
+    : (seedAny.employmentStatus ?? "PAYE");
 
   // Determine stage if not already explicitly inferred
   let stage: FinancialStage = seedAny.inferredStage as FinancialStage;
   if (!stage) {
-    if (seedAny.mode === "DEBT" || (seedAny.totalUnsecuredDebt && seedAny.totalUnsecuredDebt > 0)) {
+    if (seedAny.mode === "DEBT" || totalUnsecuredDebt > 0) {
       stage = "STAGE_1_DEBT_RECOVERY";
     } else if (annualGrossSalary >= 100000) {
       stage = "STAGE_3_WEALTH_OPTIMIZE";
@@ -66,21 +92,40 @@ export function hydrateBaselineFromSeed(seed: AnySeedPayload, userId = ""): Fina
   enabledModules = Array.from(new Set(enabledModules));
 
   if (enabledModules.length === 0) {
-    if (stage === "STAGE_1_DEBT_RECOVERY") {
-      enabledModules = ["accounts", "debt", "budget"];
-    } else if (stage === "STAGE_2_BUFFER_BUILD") {
-      enabledModules = ["accounts", "budget", "mortgage", "forecast"];
-    } else {
-      enabledModules = ["accounts", "budget", "pension", "mortgage", "forecast", "tax"];
+    enabledModules = ["accounts", "budget", "forecast"];
+    if (totalUnsecuredDebt > 0 || stage === "STAGE_1_DEBT_RECOVERY") {
+      enabledModules.push("debt");
     }
+    if (totalPensionPot > 0 || pensionContributionPct > 0) {
+      enabledModules.push("pension");
+    }
+    if (housingStatus === "MORTGAGE" || mortgageBalance > 0) {
+      enabledModules.push("mortgage");
+    }
+    if (employmentStatus === "SELF_EMPLOYED" || annualGrossSalary >= 95000) {
+      enabledModules.push("tax");
+    }
+    enabledModules = Array.from(new Set(enabledModules));
   }
 
   return {
     ...DEFAULT_FINANCIAL_BASELINE,
     userId,
+    age,
+    employmentStatus,
     annualGrossSalary,
+    monthlyTakeHomeOverride: seedAny.monthlyTakeHomeOverride,
+    housingStatus,
+    monthlyHousingCost,
+    propertyValue,
+    mortgageBalance,
+    monthlyOtherOutgoings,
+    totalCashSavings,
+    totalPensionPot,
+    totalUnsecuredDebt,
     pensionContributionPct,
     isSalarySacrifice,
+    studentLoanPlan,
     financialStage: stage,
     enabledModules,
   };

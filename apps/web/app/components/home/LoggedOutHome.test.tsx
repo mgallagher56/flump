@@ -26,18 +26,20 @@ describe("LoggedOutHome", () => {
   it("renders all primary sections of the logged out homepage", () => {
     render(<LoggedOutHome />);
 
-    // Hero section
+    // 1. Hero section
     expect(screen.getByRole("heading", { level: 1, name: /get out of the red/i })).toBeDefined();
     expect(screen.getByText(/built specifically for uk personal finance/i)).toBeDefined();
-    const heroCta = screen.getByRole("link", { name: /start free today/i });
+    const heroCta = screen.getByRole("link", { name: /get your 60-second baseline free/i });
     expect(heroCta.getAttribute("href")).toBe("/signUp");
 
-    // Interactive Demo Section
-    expect(
-      screen.getByRole("heading", { level: 2, name: /test the calculation engines live/i }),
-    ).toBeDefined();
+    // Clean Baseline Preview
+    expect(screen.getByTestId("web-baseline-snapshot-preview")).toBeDefined();
 
-    // Feature Pillars
+    // 2. How It Works Section
+    expect(screen.getByTestId("how-it-works-section")).toBeDefined();
+    expect(screen.getByText(/how flump works in 3 simple steps/i)).toBeDefined();
+
+    // 3. Feature Pillars
     expect(
       screen.getByRole("heading", {
         level: 2,
@@ -51,18 +53,18 @@ describe("LoggedOutHome", () => {
       screen.getByRole("heading", { level: 3, name: /complete net worth aggregation/i }),
     ).toBeDefined();
 
-    // Comparison Matrix
+    // 4. Comparison Matrix
     expect(
       screen.getByRole("heading", { level: 2, name: /engineered for uk reality/i }),
     ).toBeDefined();
     expect(screen.getByText(/section 24 landlord relief restriction/i)).toBeDefined();
 
-    // Security & Privacy
+    // 5. Security & Privacy
     expect(
       screen.getByRole("heading", { level: 2, name: /bank-grade security\. zero ad tracking\./i }),
     ).toBeDefined();
 
-    // FAQ Accordion
+    // 6. FAQ Accordion
     expect(
       screen.getByRole("heading", { level: 2, name: /everything you need to know about flump/i }),
     ).toBeDefined();
@@ -78,54 +80,20 @@ describe("LoggedOutHome", () => {
     expect(screen.getByText(/financial & legal disclaimer:/i)).toBeDefined();
   });
 
-  it("calculates UK tax take-home and displays the £100k taper alert for higher incomes", () => {
-    render(<LoggedOutHome />);
-
-    // Default salary is £65,000, so taper alert should not be visible
-    expect(screen.queryByText(/personal allowance taper active/i)).toBeNull();
-
-    // Click £115k preset
-    const preset115k = screen.getByRole("button", { name: "£115,000" });
-    fireEvent.click(preset115k);
-
-    // Taper alert should now be active
-    expect(screen.getByText(/personal allowance taper active/i)).toBeDefined();
-    expect(screen.getByText(/allowance reduced to £5,070/i)).toBeDefined();
-  });
-
-  it("switches to the mortgage calculator tab and simulates overpayment interest savings", () => {
-    render(<LoggedOutHome />);
-
-    // Switch to mortgage tab
-    const mortgageTab = screen.getByRole("tab", { name: /mortgage overpayment modeler/i });
-    fireEvent.click(mortgageTab);
-
-    expect(screen.getByLabelText(/remaining mortgage balance/i)).toBeDefined();
-    expect(screen.getByText(/total interest saved/i)).toBeDefined();
-
-    // Change overpayment amount
-    const overpaymentInput = screen.getByLabelText(/monthly overpayment/i);
-    fireEvent.change(overpaymentInput, { target: { value: "350" } });
-
-    expect(
-      screen.getByText(/guaranteed interest eliminated by overpaying £350\/mo/i),
-    ).toBeDefined();
-  });
-
   it("toggles FAQ accordion questions and answers", () => {
     render(<LoggedOutHome />);
 
-    const questionBtn = screen.getByRole("button", {
-      name: /what is section 24 and why does flump model it\?/i,
+    const firstTrigger = screen.getByRole("button", {
+      name: /how accurate are the uk tax calculations\?/i,
     });
-    expect(questionBtn.getAttribute("aria-expanded")).toBe("false");
+    expect(firstTrigger.getAttribute("aria-expanded")).toBe("true");
 
-    fireEvent.click(questionBtn);
-    expect(questionBtn.getAttribute("aria-expanded")).toBe("true");
-    expect(screen.getByText(/section 24 restricts residential landlords/i)).toBeDefined();
+    // Click to toggle close
+    fireEvent.click(firstTrigger);
+    expect(firstTrigger.getAttribute("aria-expanded")).toBe("false");
 
-    // Clicking again collapses it
-    fireEvent.click(questionBtn);
-    expect(questionBtn.getAttribute("aria-expanded")).toBe("false");
+    // Click to toggle open
+    fireEvent.click(firstTrigger);
+    expect(firstTrigger.getAttribute("aria-expanded")).toBe("true");
   });
 });

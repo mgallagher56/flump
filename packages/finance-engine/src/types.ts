@@ -20,13 +20,25 @@ export type UkEmploymentStatus = "PAYE" | "SELF_EMPLOYED" | "MIXED" | "OTHER";
 
 export type UkStudentLoanPlan = "NONE" | "PLAN_1" | "PLAN_2" | "PLAN_4" | "PLAN_5" | "POSTGRAD";
 
+export type HousingStatus = "RENTING" | "MORTGAGE" | "OWN_OUTRIGHT";
+
 export interface FinancialBaseline {
   userId: string;
+  age?: number;
   taxYear: UkTaxYear;
   ukRegion: UkTaxRegion;
   employmentStatus: UkEmploymentStatus;
   annualGrossSalary: number;
+  monthlyTakeHomeOverride?: number;
   annualBonusOrSideIncome: number;
+  housingStatus?: HousingStatus;
+  monthlyHousingCost?: number;
+  propertyValue?: number;
+  mortgageBalance?: number;
+  monthlyOtherOutgoings?: number;
+  totalCashSavings?: number;
+  totalPensionPot?: number;
+  totalUnsecuredDebt?: number;
   pensionContributionPct: number;
   employerPensionMatchPct: number;
   isSalarySacrifice: boolean;
@@ -37,17 +49,31 @@ export interface FinancialBaseline {
 }
 
 export interface OnboardingSeedPayload {
-  mode: "DEBT" | "WEALTH";
+  mode?: "DEBT" | "WEALTH";
+  age?: number;
+  annualIncome?: number;
   annualGrossSalary?: number;
+  monthlyTakeHomeOverride?: number;
   pensionContributionPct?: number;
   isSalarySacrifice?: boolean;
+  salarySacrifice?: boolean;
+  housingStatus?: HousingStatus;
+  monthlyHousingCost?: number;
+  propertyValue?: number;
+  mortgageBalance?: number;
+  monthlyOtherOutgoings?: number;
+  totalCashSavings?: number;
+  totalPensionPot?: number;
   totalUnsecuredDebt?: number;
   averageDebtApr?: number;
   monthlyDebtRepaymentBudget?: number;
   initialCashSavings?: number;
   initialInvestments?: number;
+  monthlyContribution?: number;
   monthlySavingsSurplus?: number;
-  inferredStage: FinancialStage;
+  studentLoanPlan?: UkStudentLoanPlan;
+  isSelfEmployed?: boolean;
+  inferredStage?: FinancialStage;
   inferredModules: ActiveModule[];
   timestamp: number;
 }
