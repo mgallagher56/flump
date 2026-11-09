@@ -37,7 +37,7 @@ exports[`FLPSpinner > renders as expected with a label 1`] = `
       data-testid="flp-spinner"
     />
     <p
-      class="fs_md fw_normal lh_normal ls_normal m_0 "
+      class="ff_var(--fonts-body,_'Inter',_sans-serif) fs_md fw_normal lh_1.6 ls_normal c_text.secondary m_0 "
     >
       Processing...
     </p>

@@ -18,7 +18,7 @@ const FLPText: FC<FLPTextProps> = ({
   fontWeight = "normal",
   lineHeight = "normal",
   letterSpacing = "normal",
-  color,
+  color = "text.secondary",
   textTransform,
   style,
   className,
@@ -31,9 +31,10 @@ const FLPText: FC<FLPTextProps> = ({
   const isMobileVariant = propIsMobile ?? (variant === "mobile" ? true : contextIsMobile);
 
   const textStyle = css({
+    fontFamily: "var(--fonts-body, 'Inter', sans-serif)",
     fontSize: isMobileVariant && fontSize === "lg" ? "md" : fontSize,
     fontWeight,
-    lineHeight,
+    lineHeight: lineHeight === "normal" ? 1.6 : lineHeight,
     letterSpacing,
     color,
     textTransform,

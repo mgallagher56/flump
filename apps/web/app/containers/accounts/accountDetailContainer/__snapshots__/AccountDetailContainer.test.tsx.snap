@@ -38,7 +38,7 @@ exports[`<AccountDetailContainer /> > should add new years when buttons are clic
             </span>
           </div>
           <h1
-            class="c_primary fs_1.5rem fw_bold mt_1 lh_tight m_0 "
+            class="c_text.primary ff_var(--fonts-display,_'Plus_Jakarta_Sans',_sans-serif) ls_-0.025em fs_1.5rem fw_bold mt_1 lh_tight m_0 "
           >
             My current account
           </h1>
@@ -46,7 +46,7 @@ exports[`<AccountDetailContainer /> > should add new years when buttons are clic
             class="d_flex ai_baseline gap_12px mt_8px"
           >
             <h2
-              class="c_text.primary fs_1.875rem fw_bold lh_tight m_0 "
+              class="c_text.primary ff_var(--fonts-display,_'Plus_Jakarta_Sans',_sans-serif) ls_-0.025em fs_1.875rem fw_bold lh_tight m_0 "
             >
               £1,000
             </h2>
@@ -214,7 +214,7 @@ exports[`<AccountDetailContainer /> > should render 1`] = `
             </span>
           </div>
           <h1
-            class="c_primary fs_1.5rem fw_bold mt_1 lh_tight m_0 "
+            class="c_text.primary ff_var(--fonts-display,_'Plus_Jakarta_Sans',_sans-serif) ls_-0.025em fs_1.5rem fw_bold mt_1 lh_tight m_0 "
           >
             My current account
           </h1>
@@ -222,7 +222,7 @@ exports[`<AccountDetailContainer /> > should render 1`] = `
             class="d_flex ai_baseline gap_12px mt_8px"
           >
             <h2
-              class="c_text.primary fs_1.875rem fw_bold lh_tight m_0 "
+              class="c_text.primary ff_var(--fonts-display,_'Plus_Jakarta_Sans',_sans-serif) ls_-0.025em fs_1.875rem fw_bold lh_tight m_0 "
             >
               £1,000
             </h2>
@@ -390,7 +390,7 @@ exports[`<AccountDetailContainer /> > should render add current year button and 
             </span>
           </div>
           <h1
-            class="c_primary fs_1.5rem fw_bold mt_1 lh_tight m_0 "
+            class="c_text.primary ff_var(--fonts-display,_'Plus_Jakarta_Sans',_sans-serif) ls_-0.025em fs_1.5rem fw_bold mt_1 lh_tight m_0 "
           >
             My current account
           </h1>
@@ -398,7 +398,7 @@ exports[`<AccountDetailContainer /> > should render add current year button and 
             class="d_flex ai_baseline gap_12px mt_8px"
           >
             <h2
-              class="c_text.primary fs_1.875rem fw_bold lh_tight m_0 "
+              class="c_text.primary ff_var(--fonts-display,_'Plus_Jakarta_Sans',_sans-serif) ls_-0.025em fs_1.875rem fw_bold lh_tight m_0 "
             >
               £1,000
             </h2>
@@ -539,7 +539,7 @@ exports[`<AccountDetailContainer /> > should toggle edit mode when button is cli
             </span>
           </div>
           <h1
-            class="c_primary fs_1.5rem fw_bold mt_1 lh_tight m_0 "
+            class="c_text.primary ff_var(--fonts-display,_'Plus_Jakarta_Sans',_sans-serif) ls_-0.025em fs_1.5rem fw_bold mt_1 lh_tight m_0 "
           >
             My current account
           </h1>
@@ -547,7 +547,7 @@ exports[`<AccountDetailContainer /> > should toggle edit mode when button is cli
             class="d_flex ai_baseline gap_12px mt_8px"
           >
             <h2
-              class="c_text.primary fs_1.875rem fw_bold lh_tight m_0 "
+              class="c_text.primary ff_var(--fonts-display,_'Plus_Jakarta_Sans',_sans-serif) ls_-0.025em fs_1.875rem fw_bold lh_tight m_0 "
             >
               £1,000
             </h2>

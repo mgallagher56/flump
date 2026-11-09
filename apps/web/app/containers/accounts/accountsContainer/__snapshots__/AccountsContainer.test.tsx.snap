@@ -7,12 +7,12 @@ exports[`<AccountsContainer /> > should render as expected when accounts exist 1
   >
     <div>
       <h1
-        class="c_primary fs_1.5rem fw_bold lh_tight m_0 "
+        class="c_text.primary ff_var(--fonts-display,_'Plus_Jakarta_Sans',_sans-serif) ls_-0.025em fs_1.5rem fw_bold lh_tight m_0 "
       >
         accounts
       </h1>
       <p
-        class="fs_sm fw_normal lh_normal ls_normal c_text.muted m_0 mt_4px"
+        class="ff_var(--fonts-body,_'Inter',_sans-serif) fs_sm fw_normal lh_1.6 ls_normal c_text.muted m_0 mt_4px"
       >
         Unified Net Worth, Savings Yield & UK Allowance Hub
       </p>
@@ -62,17 +62,17 @@ exports[`<AccountsContainer /> > should render as expected when accounts exist 1
       class="bg-c_rgba(99,_99,_241,_0.08) dark:bg-c_rgba(99,_99,_241,_0.15) bd_1px_solid bd-c_primary bdr_lg p_24px d_flex flex-d_column gap_8px bx-sh_sm trs_transform_0.2s_ease,_box-shadow_0.2s_ease [&:hover]:trf_translateY(-2px) [&:hover]:bx-sh_md"
     >
       <p
-        class="fs_xs fw_semibold lh_normal ls_normal c_gray.500 tt_uppercase m_0 "
+        class="ff_var(--fonts-body,_'Inter',_sans-serif) fs_xs fw_semibold lh_1.6 ls_normal c_gray.500 tt_uppercase m_0 "
       >
         Total Net Worth
       </p>
       <h2
-        class="c_success.500 fs_1.875rem fw_bold mt_1 lh_tight m_0 "
+        class="c_success.500 ff_var(--fonts-display,_'Plus_Jakarta_Sans',_sans-serif) ls_-0.025em fs_1.875rem fw_bold mt_1 lh_tight m_0 "
       >
         £1,300
       </h2>
       <p
-        class="fs_xs fw_normal lh_normal ls_normal c_text.muted m_0 "
+        class="ff_var(--fonts-body,_'Inter',_sans-serif) fs_xs fw_normal lh_1.6 ls_normal c_text.muted m_0 "
       >
         Assets: 
         £1,800
@@ -85,17 +85,17 @@ exports[`<AccountsContainer /> > should render as expected when accounts exist 1
       class="bg-c_card bd_1px_solid bd-c_border bdr_lg p_24px d_flex flex-d_column gap_8px bx-sh_xs trs_transform_0.2s_ease,_box-shadow_0.2s_ease,_border-color_0.2s_ease [&:hover]:trf_translateY(-2px) [&:hover]:bx-sh_sm [&:hover]:bd-c_primary"
     >
       <p
-        class="fs_xs fw_semibold lh_normal ls_normal c_gray.500 tt_uppercase m_0 "
+        class="ff_var(--fonts-body,_'Inter',_sans-serif) fs_xs fw_semibold lh_1.6 ls_normal c_gray.500 tt_uppercase m_0 "
       >
         Liquid Cash & Savings
       </p>
       <h2
-        class="c_success.500 fs_1.5rem fw_bold mt_1 lh_tight m_0 "
+        class="c_success.500 ff_var(--fonts-display,_'Plus_Jakarta_Sans',_sans-serif) ls_-0.025em fs_1.5rem fw_bold mt_1 lh_tight m_0 "
       >
         £1,800
       </h2>
       <p
-        class="fs_xs fw_normal lh_normal ls_normal c_text.muted m_0 "
+        class="ff_var(--fonts-body,_'Inter',_sans-serif) fs_xs fw_normal lh_1.6 ls_normal c_text.muted m_0 "
       >
         Weighted Yield:
          
@@ -151,7 +151,7 @@ exports[`<AccountsContainer /> > should render as expected when accounts exist 1
                 </span>
               </div>
               <p
-                class="fs_xs fw_normal lh_normal ls_normal c_text.muted m_0 "
+                class="ff_var(--fonts-body,_'Inter',_sans-serif) fs_xs fw_normal lh_1.6 ls_normal c_text.muted m_0 "
               >
                 £20,000
                  remaining tax-free capacity
@@ -241,7 +241,7 @@ exports[`<AccountsContainer /> > should render as expected when accounts exist 1
       class="d_flex jc_space-between ai_center mb_8px"
     >
       <p
-        class="fs_xs fw_semibold lh_normal ls_normal c_text.muted tt_uppercase m_0 "
+        class="ff_var(--fonts-body,_'Inter',_sans-serif) fs_xs fw_semibold lh_1.6 ls_normal c_text.muted tt_uppercase m_0 "
       >
         Asset Allocation Preview
       </p>
@@ -266,12 +266,12 @@ exports[`<AccountsContainer /> > should render as expected when accounts exist 1
           style="width: 8px; height: 8px; border-radius: 50%; background-color: #6363F1;"
         />
         <p
-          class="fs_xs fw_medium lh_normal ls_normal c_text.primary m_0 "
+          class="ff_var(--fonts-body,_'Inter',_sans-serif) fs_xs fw_medium lh_1.6 ls_normal c_text.primary m_0 "
         >
           Current
         </p>
         <p
-          class="fs_xs fw_normal lh_normal ls_normal c_text.muted m_0 "
+          class="ff_var(--fonts-body,_'Inter',_sans-serif) fs_xs fw_normal lh_1.6 ls_normal c_text.muted m_0 "
         >
           (
           56
@@ -285,12 +285,12 @@ exports[`<AccountsContainer /> > should render as expected when accounts exist 1
           style="width: 8px; height: 8px; border-radius: 50%; background-color: #10B981;"
         />
         <p
-          class="fs_xs fw_medium lh_normal ls_normal c_text.primary m_0 "
+          class="ff_var(--fonts-body,_'Inter',_sans-serif) fs_xs fw_medium lh_1.6 ls_normal c_text.primary m_0 "
         >
           Saving
         </p>
         <p
-          class="fs_xs fw_normal lh_normal ls_normal c_text.muted m_0 "
+          class="ff_var(--fonts-body,_'Inter',_sans-serif) fs_xs fw_normal lh_1.6 ls_normal c_text.muted m_0 "
         >
           (
           44
@@ -449,7 +449,7 @@ exports[`<AccountsContainer /> > should render as expected when accounts exist 1
                 />
               </svg>
               <h2
-                class="c_text.primary fs_1.25rem fw_bold lh_tight m_0 "
+                class="c_text.primary ff_var(--fonts-display,_'Plus_Jakarta_Sans',_sans-serif) ls_-0.025em fs_1.25rem fw_bold lh_tight m_0 "
               >
                 Current
               </h2>
@@ -483,7 +483,7 @@ exports[`<AccountsContainer /> > should render as expected when accounts exist 1
                 />
               </svg>
               <h2
-                class="c_text.primary fs_1.25rem fw_bold lh_tight m_0 "
+                class="c_text.primary ff_var(--fonts-display,_'Plus_Jakarta_Sans',_sans-serif) ls_-0.025em fs_1.25rem fw_bold lh_tight m_0 "
               >
                 Saving
               </h2>
@@ -518,7 +518,7 @@ exports[`<AccountsContainer /> > should render as expected when accounts exist 1
                 />
               </svg>
               <h2
-                class="c_text.primary fs_1.25rem fw_bold lh_tight m_0 "
+                class="c_text.primary ff_var(--fonts-display,_'Plus_Jakarta_Sans',_sans-serif) ls_-0.025em fs_1.25rem fw_bold lh_tight m_0 "
               >
                 Mortgage
               </h2>
@@ -551,7 +551,7 @@ exports[`<AccountsContainer /> > should render as expected when accounts exist 1
                 />
               </svg>
               <h2
-                class="c_text.primary fs_1.25rem fw_bold lh_tight m_0 "
+                class="c_text.primary ff_var(--fonts-display,_'Plus_Jakarta_Sans',_sans-serif) ls_-0.025em fs_1.25rem fw_bold lh_tight m_0 "
               >
                 Loan
               </h2>
@@ -584,7 +584,7 @@ exports[`<AccountsContainer /> > should render as expected when accounts exist 1
                 />
               </svg>
               <h2
-                class="c_text.primary fs_1.25rem fw_bold lh_tight m_0 "
+                class="c_text.primary ff_var(--fonts-display,_'Plus_Jakarta_Sans',_sans-serif) ls_-0.025em fs_1.25rem fw_bold lh_tight m_0 "
               >
                 Owed
               </h2>
@@ -669,12 +669,12 @@ exports[`<AccountsContainer /> > should render as expected when no accounts exis
   >
     <div>
       <h1
-        class="c_primary fs_1.5rem fw_bold lh_tight m_0 "
+        class="c_text.primary ff_var(--fonts-display,_'Plus_Jakarta_Sans',_sans-serif) ls_-0.025em fs_1.5rem fw_bold lh_tight m_0 "
       >
         accounts
       </h1>
       <p
-        class="fs_sm fw_normal lh_normal ls_normal c_text.muted m_0 mt_4px"
+        class="ff_var(--fonts-body,_'Inter',_sans-serif) fs_sm fw_normal lh_1.6 ls_normal c_text.muted m_0 mt_4px"
       >
         Unified Net Worth, Savings Yield & UK Allowance Hub
       </p>

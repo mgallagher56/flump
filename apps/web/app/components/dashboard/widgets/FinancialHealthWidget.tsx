@@ -948,15 +948,15 @@ export const FinancialHealthWidget: FC<FinancialHealthWidgetProps> = ({
                 >
                   {rating} Health
                 </span>
-                <span style={{ fontSize: "11px", color: "var(--colors-text-muted)" }}>•</span>
-                <span style={{ fontSize: "11px", color: "var(--colors-text-muted)" }}>
+                <span style={{ fontSize: "12px", color: "var(--colors-text-muted)" }}>•</span>
+                <span style={{ fontSize: "12px", color: "var(--colors-text-muted)" }}>
                   {moduleStatuses.length} {moduleStatuses.length === 1 ? "section" : "sections"}{" "}
                   active
                 </span>
               </div>
               <FLPText
                 color="text.muted"
-                fontSize="11px"
+                fontSize="xs"
                 className={css({
                   whiteSpace: "nowrap",
                   overflow: "hidden",
@@ -1194,18 +1194,13 @@ export const FinancialHealthWidget: FC<FinancialHealthWidgetProps> = ({
                             alignItems: "baseline",
                           }}
                         >
-                          <FLPText
-                            fontSize="xs"
-                            className={css({ fontSize: { base: "11px", md: "xs" } })}
-                            fontWeight="bold"
-                            color="text.primary"
-                          >
+                          <FLPText fontSize="xs" fontWeight="bold" color="text.primary">
                             {item.title}
                           </FLPText>
                           {item.metric && (
                             <span
                               className={css({
-                                fontSize: "10px",
+                                fontSize: "xs",
                                 fontWeight: 700,
                                 color: "emerald.500",
                                 marginLeft: "4px",
@@ -1216,9 +1211,9 @@ export const FinancialHealthWidget: FC<FinancialHealthWidgetProps> = ({
                           )}
                         </div>
                         <FLPText
-                          fontSize="10px"
+                          fontSize="xs"
                           color="text.muted"
-                          style={{ marginTop: "1px", lineHeight: "1.3" }}
+                          style={{ marginTop: "2px", lineHeight: "1.4" }}
                         >
                           {item.detail}
                         </FLPText>
@@ -1239,14 +1234,14 @@ export const FinancialHealthWidget: FC<FinancialHealthWidgetProps> = ({
                       display: "flex",
                       alignItems: "center",
                       gap: "6px",
-                      fontSize: "11px",
+                      fontSize: "xs",
                       fontWeight: "bold",
                       color: "warning.500",
                       textTransform: "uppercase",
                       letterSpacing: "0.5px",
                     })}
                   >
-                    <FaLightbulb size={11} />
+                    <FaLightbulb size={12} />
                     <span>Areas to Improve</span>
                   </div>
                   {improvements.slice(0, size === "wide" ? 3 : 2).map((item) => (
@@ -1257,7 +1252,7 @@ export const FinancialHealthWidget: FC<FinancialHealthWidgetProps> = ({
                         display: "flex",
                         alignItems: "flex-start",
                         gap: "8px",
-                        padding: { base: "6px 8px", md: "8px 10px" },
+                        padding: { base: "8px 10px", md: "8px 12px" },
                         borderRadius: "md",
                         backgroundColor: "rgba(245, 158, 11, 0.04)",
                         border: "1px solid rgba(245, 158, 11, 0.18)",
@@ -1285,20 +1280,15 @@ export const FinancialHealthWidget: FC<FinancialHealthWidgetProps> = ({
                             alignItems: "baseline",
                           }}
                         >
-                          <FLPText
-                            fontSize="xs"
-                            className={css({ fontSize: { base: "11px", md: "xs" } })}
-                            fontWeight="bold"
-                            color="text.primary"
-                          >
+                          <FLPText fontSize="xs" fontWeight="bold" color="text.primary">
                             {item.title}
                           </FLPText>
-                          <FaArrowRight size={9} style={{ color: "var(--colors-text-muted)" }} />
+                          <FaArrowRight size={10} style={{ color: "var(--colors-text-muted)" }} />
                         </div>
                         <FLPText
-                          fontSize="10px"
+                          fontSize="xs"
                           color="text.muted"
-                          style={{ marginTop: "1px", lineHeight: "1.3" }}
+                          style={{ marginTop: "2px", lineHeight: "1.4" }}
                         >
                           {item.detail}
                         </FLPText>
@@ -1362,9 +1352,9 @@ export const FinancialHealthWidget: FC<FinancialHealthWidgetProps> = ({
                           </FLPText>
                           <span
                             className={css({
-                              fontSize: "9px",
+                              fontSize: "xs",
                               fontWeight: 700,
-                              padding: "1px 5px",
+                              padding: "2px 6px",
                               borderRadius: "full",
                               backgroundColor: "background",
                               color: "text.muted",
@@ -1377,7 +1367,7 @@ export const FinancialHealthWidget: FC<FinancialHealthWidgetProps> = ({
                         {item.metric && (
                           <span
                             style={{
-                              fontSize: "11px",
+                              fontSize: "12px",
                               fontWeight: 700,
                               color: "var(--colors-emerald-500)",
                             }}
@@ -1386,7 +1376,11 @@ export const FinancialHealthWidget: FC<FinancialHealthWidgetProps> = ({
                           </span>
                         )}
                       </div>
-                      <FLPText fontSize="11px" color="text.muted" style={{ marginTop: "2px" }}>
+                      <FLPText
+                        fontSize="xs"
+                        color="text.muted"
+                        style={{ marginTop: "3px", lineHeight: "1.4" }}
+                      >
                         {item.detail}
                       </FLPText>
                     </div>
@@ -1440,9 +1434,9 @@ export const FinancialHealthWidget: FC<FinancialHealthWidgetProps> = ({
                           </FLPText>
                           <span
                             className={css({
-                              fontSize: "9px",
+                              fontSize: "xs",
                               fontWeight: 700,
-                              padding: "1px 5px",
+                              padding: "2px 6px",
                               borderRadius: "full",
                               backgroundColor:
                                 item.impact === "high"
@@ -1457,7 +1451,7 @@ export const FinancialHealthWidget: FC<FinancialHealthWidgetProps> = ({
                         </div>
                         <span
                           style={{
-                            fontSize: "10px",
+                            fontSize: "12px",
                             color: "var(--colors-primary)",
                             fontWeight: 600,
                           }}
@@ -1465,7 +1459,11 @@ export const FinancialHealthWidget: FC<FinancialHealthWidgetProps> = ({
                           Open {item.module} →
                         </span>
                       </div>
-                      <FLPText fontSize="11px" color="text.muted" style={{ marginTop: "2px" }}>
+                      <FLPText
+                        fontSize="xs"
+                        color="text.muted"
+                        style={{ marginTop: "3px", lineHeight: "1.4" }}
+                      >
                         {item.detail}
                       </FLPText>
                     </div>

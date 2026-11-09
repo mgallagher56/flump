@@ -1,4 +1,5 @@
 import { Button } from "@repo/ui";
+import { css } from "@repo/ui/styled-system/css";
 import { flex, stack } from "@repo/ui/styled-system/patterns";
 import type { FC } from "react";
 import { Helmet } from "react-helmet-async";
@@ -30,10 +31,34 @@ export const HomePage: FC = () => {
       <Header />
 
       <main style={{ flex: 1 }}>
-        {/* Section 1: Hero Section + Baseline Snapshot Preview Card */}
-        <section style={{ padding: "48px 16px 40px", textAlign: "center" }}>
+        {/* Section 00: Hero Section with Architectural Grid & Radial Glow */}
+        <section
+          style={{
+            position: "relative",
+            padding: "64px 16px 56px",
+            textAlign: "center",
+            overflow: "hidden",
+            backgroundColor: "var(--colors-background)",
+          }}
+        >
+          {/* Subtle radial ambient spotlight backdrop */}
           <div
-            style={{ maxWidth: "850px", margin: "0 auto" }}
+            style={{
+              position: "absolute",
+              top: "-100px",
+              left: "50%",
+              transform: "translateX(-50%)",
+              width: "700px",
+              height: "400px",
+              background:
+                "radial-gradient(circle, rgba(99, 102, 241, 0.12) 0%, rgba(16, 185, 129, 0.05) 50%, transparent 70%)",
+              pointerEvents: "none",
+              zIndex: 0,
+            }}
+          />
+
+          <div
+            style={{ maxWidth: "850px", margin: "0 auto", position: "relative", zIndex: 1 }}
             className={stack({ gap: "6", align: "center" })}
           >
             <span
@@ -42,22 +67,24 @@ export const HomePage: FC = () => {
                 padding: "6px 14px",
                 borderRadius: "9999px",
                 backgroundColor: "rgba(99, 102, 241, 0.12)",
-                color: "#6363F1",
+                color: "var(--colors-primary, #6363F1)",
                 fontSize: "12px",
                 fontWeight: "700",
-                letterSpacing: "0.02em",
+                letterSpacing: "0.04em",
+                fontFamily: "var(--fonts-mono, monospace)",
               }}
             >
-              🇬🇧 Engineered Specifically for UK Personal Finance & HMRC Rules
+              🇬🇧 ENGINEERED FOR UK RULES & HMRC THRESHOLDS
             </span>
 
             <h1
               style={{
-                fontSize: "clamp(2.5rem, 5vw, 4rem)",
+                fontSize: "clamp(2.5rem, 5.5vw, 4.25rem)",
                 fontWeight: "900",
                 lineHeight: "1.1",
-                letterSpacing: "-0.03em",
+                letterSpacing: "-0.035em",
                 color: "var(--colors-text-primary, #0f172a)",
+                fontFamily: "var(--fonts-display, sans-serif)",
                 margin: 0,
               }}
             >
@@ -77,7 +104,7 @@ export const HomePage: FC = () => {
             <p
               style={{
                 fontSize: "1.2rem",
-                color: "var(--colors-text-muted, #475569)",
+                color: "var(--colors-text-secondary, #475569)",
                 maxWidth: "660px",
                 lineHeight: "1.6",
                 margin: 0,
@@ -107,52 +134,54 @@ export const HomePage: FC = () => {
             </div>
           </div>
 
-          {/* Clean Baseline Snapshot Preview Card */}
-          <div style={{ marginTop: "40px" }}>
+          {/* Clean Baseline Snapshot Preview Card with Cashflow Bar */}
+          <div style={{ marginTop: "48px", position: "relative", zIndex: 1 }}>
             <BaselineSnapshotPreview />
           </div>
         </section>
 
-        {/* Section 2: How It Works (60s Baseline -> Instant Insights -> Optional Drill-Down) */}
+        {/* Section 01: How It Works (Subtle Surface Band + Step Schematics) */}
         <HowItWorksSection />
 
-        {/* Section 3: Core Benefits (4 Outcome Pillars) */}
+        {/* Section 02: Core Benefits (Canvas Surface Band + Bento Micro-Diagrams) */}
         <FeaturePillars />
 
-        {/* Section 4: Why Flump vs Spreadsheets & Generic Apps */}
+        {/* Section 04: Comparison Matrix (Canvas Surface Band + Column Contrast) */}
         <ComparisonMatrix />
 
-        {/* Section 5: Security & Privacy Reassurance */}
+        {/* Section 05: Security & Privacy (Full-Bleed Contrast Dark Band) */}
         <SecurityPrivacySection />
 
-        {/* Section 6: FAQ Accordion & Final CTA */}
+        {/* Section 06: FAQ Accordion (Subtle Surface Band) */}
         <HomeFAQ />
 
         {/* Final CTA Banner */}
         <section
           style={{
-            padding: "64px 16px",
+            padding: "80px 16px",
             textAlign: "center",
-            backgroundColor: "rgba(99, 102, 241, 0.04)",
+            backgroundColor: "var(--colors-background)",
             borderTop: "1px solid var(--colors-border, #e2e8f0)",
           }}
         >
           <div style={{ maxWidth: "680px", margin: "0 auto" }}>
             <h2
               style={{
-                fontSize: "2.25rem",
+                fontSize: "2.5rem",
                 fontWeight: "800",
                 color: "var(--colors-text-primary, #0f172a)",
-                margin: "0 0 12px 0",
+                fontFamily: "var(--fonts-display, sans-serif)",
+                letterSpacing: "-0.03em",
+                margin: "0 0 14px 0",
               }}
             >
               Ready to see your clear UK financial picture?
             </h2>
             <p
               style={{
-                fontSize: "1.1rem",
-                color: "var(--colors-text-muted, #64748b)",
-                marginBottom: "28px",
+                fontSize: "1.15rem",
+                color: "var(--colors-text-secondary, #64748b)",
+                marginBottom: "32px",
                 lineHeight: "1.6",
               }}
             >

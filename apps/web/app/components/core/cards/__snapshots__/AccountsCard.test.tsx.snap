@@ -17,12 +17,12 @@ exports[`<AccountsCard /> > it renders an AccountsCard component with title as e
           tabindex="0"
         >
           <h5
-            class="c_text.muted fs_0.75rem fw_bold lh_tight m_0 "
+            class="c_text.muted ff_var(--fonts-display,_'Plus_Jakarta_Sans',_sans-serif) ls_-0.025em fs_0.75rem fw_bold lh_tight m_0 "
           >
             Current account
           </h5>
           <h4
-            class="c_primary fs_1rem fw_bold lh_tight m_0 "
+            class="c_text.primary ff_var(--fonts-display,_'Plus_Jakarta_Sans',_sans-serif) ls_-0.025em fs_1rem fw_bold lh_tight m_0 "
           >
             My curent account
           </h4>
@@ -106,12 +106,12 @@ exports[`<AccountsCard with increasing values > should match snapshot for accoun
           tabindex="0"
         >
           <h5
-            class="c_text.muted fs_0.75rem fw_bold lh_tight m_0 "
+            class="c_text.muted ff_var(--fonts-display,_'Plus_Jakarta_Sans',_sans-serif) ls_-0.025em fs_0.75rem fw_bold lh_tight m_0 "
           >
             Current account
           </h5>
           <h4
-            class="c_primary fs_1rem fw_bold lh_tight m_0 "
+            class="c_text.primary ff_var(--fonts-display,_'Plus_Jakarta_Sans',_sans-serif) ls_-0.025em fs_1rem fw_bold lh_tight m_0 "
           >
             My curent account
           </h4>
