@@ -167,7 +167,7 @@ const Header: FC<HeaderProps> = ({ isMobile: propIsMobile, variant }): ReactElem
                 <UserAvatar bordered size={26} user={user} />
               </Link>
             )}
-            {!isMobileVariant && <UserLogin />}
+            <UserLogin />
             <button
               aria-expanded={drawerOpen}
               aria-label="Open navigation menu"

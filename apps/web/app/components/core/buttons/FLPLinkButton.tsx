@@ -9,6 +9,7 @@ interface FLPLinkButtonProps {
   className?: string;
   isMobile?: boolean;
   variant?: "desktop" | "mobile";
+  size?: "sm" | "md" | "lg" | "icon";
   icon?: ReactNode;
   onClick?: () => void;
 }
@@ -29,6 +30,7 @@ const FLPLinkButton: FC<FLPLinkButtonProps> = ({
   className,
   isMobile,
   variant = "desktop",
+  size,
   icon,
   onClick,
 }) => {
@@ -37,7 +39,7 @@ const FLPLinkButton: FC<FLPLinkButtonProps> = ({
   return (
     <RouterNavLink
       className={({ isActive }) =>
-        `${buttonVariants({ variant: isActive ? "secondary" : "ghost" })} ${
+        `${buttonVariants({ variant: isActive ? "secondary" : "ghost", size })} ${
           isMobileVariant ? mobileLinkStyle : ""
         } ${className || ""}`.trim()
       }
