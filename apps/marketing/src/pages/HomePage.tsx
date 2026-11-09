@@ -66,12 +66,12 @@ export const HomePage: FC = () => {
                 display: "inline-block",
                 padding: "6px 14px",
                 borderRadius: "9999px",
-                backgroundColor: "rgba(99, 102, 241, 0.12)",
-                color: "var(--colors-primary, #6363F1)",
+                backgroundColor: "var(--colors-surface-tinted)",
+                color: "var(--colors-primary)",
                 fontSize: "12px",
                 fontWeight: "700",
                 letterSpacing: "0.04em",
-                fontFamily: "var(--fonts-mono, monospace)",
+                fontFamily: "var(--fonts-mono)",
               }}
             >
               🇬🇧 ENGINEERED FOR UK RULES & HMRC THRESHOLDS
@@ -83,8 +83,8 @@ export const HomePage: FC = () => {
                 fontWeight: "900",
                 lineHeight: "1.1",
                 letterSpacing: "-0.035em",
-                color: "var(--colors-text-primary, #0f172a)",
-                fontFamily: "var(--fonts-display, sans-serif)",
+                color: "var(--colors-text-primary)",
+                fontFamily: "var(--fonts-display)",
                 margin: 0,
               }}
             >
@@ -104,7 +104,7 @@ export const HomePage: FC = () => {
             <p
               style={{
                 fontSize: "1.2rem",
-                color: "var(--colors-text-secondary, #475569)",
+                color: "var(--colors-text-secondary)",
                 maxWidth: "660px",
                 lineHeight: "1.6",
                 margin: 0,
@@ -161,7 +161,7 @@ export const HomePage: FC = () => {
             padding: "80px 16px",
             textAlign: "center",
             backgroundColor: "var(--colors-background)",
-            borderTop: "1px solid var(--colors-border, #e2e8f0)",
+            borderTop: "1px solid var(--colors-border)",
           }}
         >
           <div style={{ maxWidth: "680px", margin: "0 auto" }}>
@@ -169,8 +169,8 @@ export const HomePage: FC = () => {
               style={{
                 fontSize: "2.5rem",
                 fontWeight: "800",
-                color: "var(--colors-text-primary, #0f172a)",
-                fontFamily: "var(--fonts-display, sans-serif)",
+                color: "var(--colors-text-primary)",
+                fontFamily: "var(--fonts-display)",
                 letterSpacing: "-0.03em",
                 margin: "0 0 14px 0",
               }}
@@ -180,7 +180,7 @@ export const HomePage: FC = () => {
             <p
               style={{
                 fontSize: "1.15rem",
-                color: "var(--colors-text-secondary, #64748b)",
+                color: "var(--colors-text-secondary)",
                 marginBottom: "32px",
                 lineHeight: "1.6",
               }}

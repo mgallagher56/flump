@@ -54,16 +54,36 @@ const STATUS_CONFIG: Record<
   RunwayStatus,
   { colour: string; bg: string; label: string; emoji: string }
 > = {
-  critical: { colour: "#ef4444", bg: "rgba(239,68,68,0.08)", label: "Critical", emoji: "🔴" },
-  caution: { colour: "#f59e0b", bg: "rgba(245,158,11,0.08)", label: "Caution", emoji: "🟡" },
-  moderate: { colour: "#f97316", bg: "rgba(249,115,22,0.08)", label: "Moderate", emoji: "🟠" },
-  healthy: { colour: "#10b981", bg: "rgba(16,185,129,0.08)", label: "Healthy", emoji: "🟢" },
+  critical: {
+    colour: "var(--colors-destructive-500)",
+    bg: "var(--colors-destructive-bg)",
+    label: "Critical",
+    emoji: "🔴",
+  },
+  caution: {
+    colour: "var(--colors-warning-500)",
+    bg: "var(--colors-warning-bg)",
+    label: "Caution",
+    emoji: "🟡",
+  },
+  moderate: {
+    colour: "var(--colors-warning-600)",
+    bg: "rgba(249,115,22,0.08)",
+    label: "Moderate",
+    emoji: "🟠",
+  },
+  healthy: {
+    colour: "var(--colors-success-500)",
+    bg: "var(--colors-success-bg)",
+    label: "Healthy",
+    emoji: "🟢",
+  },
 };
 
 const THRESHOLDS = [
-  { months: 3, label: "3 mo", colour: "#ef4444" },
-  { months: 6, label: "6 mo", colour: "#f59e0b" },
-  { months: 12, label: "12 mo", colour: "#10b981" },
+  { months: 3, label: "3 mo", colour: "var(--colors-destructive-500)" },
+  { months: 6, label: "6 mo", colour: "var(--colors-warning-500)" },
+  { months: 12, label: "12 mo", colour: "var(--colors-success-500)" },
 ];
 
 const toggleBtnStyle = css({

@@ -14,11 +14,11 @@ const headerStyle = css({
   zIndex: 40,
   backgroundColor: {
     base: "rgba(255, 255, 255, 0.9)",
-    _dark: "rgba(22, 24, 29, 0.9)",
+    _dark: "rgba(11, 15, 23, 0.9)",
   },
   backdropFilter: "blur(12px)",
   borderBottom: "1px solid",
-  borderColor: { base: "slate.200", _dark: "slate.800" },
+  borderColor: "border",
   py: "3",
   px: { base: "4", md: "8" },
 });
@@ -26,35 +26,36 @@ const headerStyle = css({
 const navLinkStyle = css({
   fontSize: "sm",
   fontWeight: "500",
-  color: { base: "slate.700", _dark: "slate.300" },
+  color: "text.secondary",
   textDecoration: "none",
   transition: "color 0.15s ease",
-  _hover: { color: { base: "indigo.600", _dark: "indigo.400" } },
+  _hover: { color: "primary" },
 });
 
 const activeNavLinkStyle = css({
   fontSize: "sm",
   fontWeight: "600",
-  color: { base: "indigo.600", _dark: "indigo.400" },
+  color: "primary",
   textDecoration: "none",
 });
 
 const logoTextStyle = css({
+  fontFamily: "display",
   fontSize: "1.5rem",
   fontWeight: "800",
   letterSpacing: "-0.03em",
-  color: { base: "slate.900", _dark: "#ffffff" },
+  color: "text.primary",
 });
 
 const ukBadgeStyle = css({
-  fontSize: "11px",
+  fontSize: "xs",
   fontWeight: "700",
   textTransform: "uppercase",
   letterSpacing: "0.06em",
-  backgroundColor: { base: "#e0e7ff", _dark: "rgba(99, 102, 241, 0.2)" },
-  color: { base: "#4338ca", _dark: "#a5b4fc" },
+  backgroundColor: "surface.tinted",
+  color: "primary",
   padding: "2px 8px",
-  borderRadius: "9999px",
+  borderRadius: "full",
 });
 
 const mobileToggleButtonStyle = css({
@@ -65,25 +66,22 @@ const mobileToggleButtonStyle = css({
   height: "38px",
   borderRadius: "lg",
   border: "1px solid",
-  borderColor: { base: "slate.200", _dark: "slate.800" },
-  backgroundColor: { base: "white", _dark: "slate.900" },
-  color: { base: "slate.700", _dark: "slate.200" },
+  borderColor: "border",
+  backgroundColor: "card",
+  color: "text.primary",
   cursor: "pointer",
   fontSize: "20px",
   transition: "all 0.15s ease",
   _hover: {
-    backgroundColor: { base: "slate.100", _dark: "slate.800" },
+    backgroundColor: "surface.subtle",
   },
 });
 
 const mobileDrawerStyle = css({
   display: { base: "block", md: "none" },
   borderTop: "1px solid",
-  borderColor: { base: "slate.200", _dark: "slate.800" },
-  backgroundColor: {
-    base: "rgba(255, 255, 255, 0.98)",
-    _dark: "rgba(15, 23, 42, 0.98)",
-  },
+  borderColor: "border",
+  backgroundColor: "card",
   backdropFilter: "blur(16px)",
   pt: "4",
   pb: "6",
@@ -99,13 +97,13 @@ const mobileNavLinkStyle = css({
   px: "3",
   fontSize: "1rem",
   fontWeight: "500",
-  color: { base: "slate.800", _dark: "slate.100" },
+  color: "text.primary",
   borderRadius: "lg",
   textDecoration: "none",
   transition: "background-color 0.15s ease",
   _hover: {
-    backgroundColor: { base: "slate.100", _dark: "slate.800" },
-    color: { base: "indigo.600", _dark: "indigo.400" },
+    backgroundColor: "surface.subtle",
+    color: "primary",
   },
 });
 
@@ -117,8 +115,8 @@ const activeMobileNavLinkStyle = css({
   px: "3",
   fontSize: "1rem",
   fontWeight: "600",
-  color: { base: "indigo.600", _dark: "indigo.400" },
-  backgroundColor: { base: "indigo.50", _dark: "rgba(99, 102, 241, 0.12)" },
+  color: "primary",
+  backgroundColor: "surface.tinted",
   borderRadius: "lg",
   textDecoration: "none",
 });

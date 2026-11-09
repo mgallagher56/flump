@@ -22,63 +22,61 @@ const containerStyle = css({
 });
 
 const toolCardStyle = css({
-  backgroundColor: { base: "#ffffff", _dark: "dark.surface" },
+  backgroundColor: "card",
   border: "1px solid",
-  borderColor: { base: "slate.200", _dark: "slate.800" },
+  borderColor: "border",
   borderRadius: "2xl",
   p: "6",
   textDecoration: "none",
   color: "inherit",
-  boxShadow: { base: "0 4px 16px rgba(0,0,0,0.03)", _dark: "0 4px 16px rgba(0,0,0,0.2)" },
+  boxShadow: "card",
   display: "flex",
   flexDirection: "column",
   justifyContent: "space-between",
   transition: "all 0.2s ease",
   _hover: {
     transform: "translateY(-4px)",
-    borderColor: "indigo.500",
-    boxShadow: {
-      base: "0 12px 28px rgba(99, 102, 241, 0.1)",
-      _dark: "0 12px 28px rgba(99, 102, 241, 0.25)",
-    },
+    borderColor: "primary",
+    boxShadow: "cardHover",
   },
 });
 
 const iconBoxStyle = css({
   padding: "10px",
-  borderRadius: "12px",
-  backgroundColor: { base: "slate.50", _dark: "dark.bg" },
+  borderRadius: "lg",
+  backgroundColor: "surface.subtle",
   border: "1px solid",
-  borderColor: { base: "slate.200", _dark: "slate.800" },
+  borderColor: "border",
   display: "inline-flex",
   alignItems: "center",
   justifyContent: "center",
 });
 
 const badgeStyle = css({
-  fontSize: "11px",
+  fontSize: "xs",
   fontWeight: "700",
   textTransform: "uppercase",
   letterSpacing: "0.04em",
-  backgroundColor: { base: "#f1f5f9", _dark: "rgba(255, 255, 255, 0.08)" },
-  color: { base: "slate.700", _dark: "slate.300" },
+  backgroundColor: "surface.subtle",
+  color: "text.secondary",
   border: "1px solid",
-  borderColor: { base: "transparent", _dark: "rgba(255, 255, 255, 0.1)" },
+  borderColor: "border.subtle",
   padding: "3px 10px",
   borderRadius: "full",
 });
 
 const toolTitleStyle = css({
+  fontFamily: "display",
   fontSize: "1.2rem",
   fontWeight: "700",
-  color: { base: "slate.900", _dark: "#ffffff" },
+  color: "text.primary",
   marginBottom: "8px",
   lineHeight: "1.3",
 });
 
 const toolDescStyle = css({
-  fontSize: "14px",
-  color: { base: "slate.600", _dark: "slate.300" },
+  fontSize: "sm",
+  color: "text.muted",
   lineHeight: "1.6",
 });
 
@@ -86,9 +84,9 @@ const ctaLinkStyle = css({
   display: "flex",
   alignItems: "center",
   gap: "6px",
-  color: { base: "indigo.600", _dark: "indigo.400" },
+  color: "primary",
   fontWeight: "600",
-  fontSize: "14px",
+  fontSize: "sm",
   marginTop: "20px",
 });
 

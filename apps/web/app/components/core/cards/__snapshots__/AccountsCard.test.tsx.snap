@@ -4,7 +4,7 @@ exports[`<AccountsCard /> > it renders an AccountsCard component with title as e
 <body>
   <div>
     <div
-      class="pos_relative trs_all_0.3s_ease-in-out bd_1px_solid bd-c_border bdr_lg bg-c_card c_card.foreground p_5 d_flex flex-d_column [&:hover]:bx-sh_0_10px_20px_rgba(0,_0,_0,_0.15)! [&:hover]:trf_translate3d(-2px,_-4px,_0)  h_280px d_flex flex-d_column jc_space-between p_20px pos_relative ov_hidden trs_transform_0.2s_ease,_box-shadow_0.2s_ease,_border-color_0.2s_ease [&:hover]:trf_translateY(-4px) [&:hover]:bx-sh_md [&:hover]:bd-c_primary"
+      class="pos_relative trs_all_0.3s_ease-in-out bd_1px_solid bd-c_border bdr_lg bg-c_card c_card.foreground bx-sh_card p_5 d_flex flex-d_column [&:hover]:bx-sh_cardHover [&:hover]:trf_translate3d(-2px,_-4px,_0)  h_280px d_flex flex-d_column jc_space-between p_20px pos_relative ov_hidden trs_transform_0.2s_ease,_box-shadow_0.2s_ease,_border-color_0.2s_ease [&:hover]:trf_translateY(-4px) [&:hover]:bx-sh_md [&:hover]:bd-c_primary"
       data-variant="desktop"
       id="123456"
     >
@@ -93,7 +93,7 @@ exports[`<AccountsCard with increasing values > should match snapshot for accoun
 <body>
   <div>
     <div
-      class="pos_relative trs_all_0.3s_ease-in-out bd_1px_solid bd-c_border bdr_lg bg-c_card c_card.foreground p_5 d_flex flex-d_column [&:hover]:bx-sh_0_10px_20px_rgba(0,_0,_0,_0.15)! [&:hover]:trf_translate3d(-2px,_-4px,_0)  h_280px d_flex flex-d_column jc_space-between p_20px pos_relative ov_hidden trs_transform_0.2s_ease,_box-shadow_0.2s_ease,_border-color_0.2s_ease [&:hover]:trf_translateY(-4px) [&:hover]:bx-sh_md [&:hover]:bd-c_primary"
+      class="pos_relative trs_all_0.3s_ease-in-out bd_1px_solid bd-c_border bdr_lg bg-c_card c_card.foreground bx-sh_card p_5 d_flex flex-d_column [&:hover]:bx-sh_cardHover [&:hover]:trf_translate3d(-2px,_-4px,_0)  h_280px d_flex flex-d_column jc_space-between p_20px pos_relative ov_hidden trs_transform_0.2s_ease,_box-shadow_0.2s_ease,_border-color_0.2s_ease [&:hover]:trf_translateY(-4px) [&:hover]:bx-sh_md [&:hover]:bd-c_primary"
       data-variant="desktop"
       id="123456"
     >

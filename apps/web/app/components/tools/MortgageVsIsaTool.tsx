@@ -254,49 +254,65 @@ export const MortgageVsIsaTool: FC = () => {
       <div className={metricsGridStyle}>
         <div className={metricCard}>
           <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-            <FiHome color="#f59e0b" size={14} />
-            <span style={{ fontSize: "12px", color: "#64748b", fontWeight: 600 }}>
+            <FiHome color="var(--colors-warning-500)" size={14} />
+            <span style={{ fontSize: "12px", color: "var(--colors-text-muted)", fontWeight: 600 }}>
               Mortgage Overpay
             </span>
           </div>
-          <span style={{ fontSize: "22px", fontWeight: 800, color: "#f59e0b" }}>
+          <span
+            className="tabular-nums"
+            style={{ fontSize: "22px", fontWeight: 800, color: "var(--colors-warning-500)" }}
+          >
             Save £{Math.round(simulation.interestSaved).toLocaleString("en-GB")}
           </span>
-          <span style={{ fontSize: "11px", color: "#64748b" }}>
+          <span
+            className="tabular-nums"
+            style={{ fontSize: "12px", color: "var(--colors-text-muted)" }}
+          >
             Shaves ~{simulation.yearsShaved} years off loan term
           </span>
         </div>
 
         <div className={metricCard}>
           <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-            <FiTrendingUp color="#10b981" size={14} />
-            <span style={{ fontSize: "12px", color: "#64748b", fontWeight: 600 }}>
+            <FiTrendingUp color="var(--colors-success-500)" size={14} />
+            <span style={{ fontSize: "12px", color: "var(--colors-text-muted)", fontWeight: 600 }}>
               Stocks & Shares ISA Pot
             </span>
           </div>
-          <span style={{ fontSize: "22px", fontWeight: 800, color: "#10b981" }}>
+          <span
+            className="tabular-nums"
+            style={{ fontSize: "22px", fontWeight: 800, color: "var(--colors-success-500)" }}
+          >
             £{Math.round(simulation.isaPot).toLocaleString("en-GB")}
           </span>
-          <span style={{ fontSize: "11px", color: "#64748b" }}>
+          <span
+            className="tabular-nums"
+            style={{ fontSize: "12px", color: "var(--colors-text-muted)" }}
+          >
             Includes £{Math.round(simulation.isaGrowth).toLocaleString("en-GB")} in tax-free returns
           </span>
         </div>
 
         <div className={metricCard}>
-          <span style={{ fontSize: "12px", color: "#64748b", fontWeight: 600 }}>
+          <span style={{ fontSize: "12px", color: "var(--colors-text-muted)", fontWeight: 600 }}>
             ISA Net Wealth Spread
           </span>
           <span
+            className="tabular-nums"
             style={{
               fontSize: "22px",
               fontWeight: 800,
-              color: simulation.isaNetAdvantage >= 0 ? "#10b981" : "#ef4444",
+              color:
+                simulation.isaNetAdvantage >= 0
+                  ? "var(--colors-success-500)"
+                  : "var(--colors-destructive-500)",
             }}
           >
             {simulation.isaNetAdvantage >= 0 ? "+" : ""}£
             {Math.round(simulation.isaNetAdvantage).toLocaleString("en-GB")}
           </span>
-          <span style={{ fontSize: "11px", color: "#64748b" }}>
+          <span style={{ fontSize: "12px", color: "var(--colors-text-muted)" }}>
             {simulation.isaNetAdvantage >= 0
               ? "Expected net wealth gain from investing"
               : "Overpaying mortgage yields higher return"}
@@ -320,7 +336,7 @@ export const MortgageVsIsaTool: FC = () => {
           <span style={{ fontSize: "13px", fontWeight: 600, color: "var(--colors-text-primary)" }}>
             Ready to track your mortgage deal expiry & live ISA yields?
           </span>
-          <p style={{ fontSize: "12px", color: "#64748b", margin: 0 }}>
+          <p style={{ fontSize: "12px", color: "var(--colors-text-muted)", margin: 0 }}>
             Flump syncs your live balance and monitors fixed-rate renewal dates automatically.
           </p>
         </div>

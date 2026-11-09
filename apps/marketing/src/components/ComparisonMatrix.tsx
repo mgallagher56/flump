@@ -10,12 +10,9 @@ const tableStyle = css({
   borderRadius: "2xl",
   overflow: "hidden",
   border: "1px solid",
-  borderColor: { base: "slate.200", _dark: "dark.border" },
-  backgroundColor: { base: "#ffffff", _dark: "dark.surface" },
-  boxShadow: {
-    base: "0 1px 3px rgba(15,23,42,0.04), 0 12px 28px rgba(15,23,42,0.06)",
-    _dark: "inset 0 1px 0 rgba(255,255,255,0.06), 0 16px 36px rgba(0,0,0,0.45)",
-  },
+  borderColor: "border",
+  backgroundColor: "card",
+  boxShadow: "card",
 });
 
 const thStyle = css({
@@ -25,10 +22,10 @@ const thStyle = css({
   textTransform: "uppercase",
   letterSpacing: "0.05em",
   textAlign: "left",
-  backgroundColor: { base: "slate.50", _dark: "dark.subtle" },
+  backgroundColor: "surface.subtle",
   borderBottom: "1px solid",
-  borderColor: { base: "slate.200", _dark: "dark.border" },
-  color: { base: "slate.700", _dark: "slate.300" },
+  borderColor: "border",
+  color: "text.secondary",
 });
 
 const flumpThStyle = css({
@@ -37,35 +34,35 @@ const flumpThStyle = css({
   fontWeight: "800",
   textAlign: "left",
   borderBottom: "1px solid",
-  borderColor: { base: "slate.200", _dark: "dark.border" },
-  backgroundColor: { base: "#eef2ff", _dark: "rgba(99, 102, 241, 0.18)" },
-  color: { base: "#4338ca", _dark: "#a5b4fc" },
+  borderColor: "border",
+  backgroundColor: "surface.tinted",
+  color: "primary",
   borderLeft: "2px solid",
   borderRight: "2px solid",
-  borderLeftColor: { base: "#6363f1", _dark: "#6363f1" },
-  borderRightColor: { base: "#6363f1", _dark: "#6363f1" },
+  borderLeftColor: "primary",
+  borderRightColor: "primary",
 });
 
 const tdStyle = css({
   padding: "16px 20px",
-  fontSize: "14px",
+  fontSize: "sm",
   borderBottom: "1px solid",
-  borderColor: { base: "slate.100", _dark: "rgba(255, 255, 255, 0.05)" },
-  color: { base: "slate.600", _dark: "slate.300" },
+  borderColor: "border.subtle",
+  color: "text.secondary",
 });
 
 const flumpTdStyle = css({
   padding: "16px 20px",
-  fontSize: "14px",
+  fontSize: "sm",
   borderBottom: "1px solid",
-  borderColor: { base: "slate.100", _dark: "rgba(255, 255, 255, 0.05)" },
-  backgroundColor: { base: "#f5f7ff", _dark: "rgba(99, 102, 241, 0.08)" },
-  color: { base: "#3730a3", _dark: "#c7d2fe" },
+  borderColor: "border",
+  backgroundColor: "surface.tinted",
+  color: "primary",
   fontWeight: "600",
   borderLeft: "2px solid",
   borderRight: "2px solid",
-  borderLeftColor: { base: "#6363f1", _dark: "#6363f1" },
-  borderRightColor: { base: "#6363f1", _dark: "#6363f1" },
+  borderLeftColor: "primary",
+  borderRightColor: "primary",
 });
 
 const rowStyle = css({

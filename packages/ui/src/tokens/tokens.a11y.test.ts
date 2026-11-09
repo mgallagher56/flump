@@ -73,5 +73,13 @@ describe("Tokens & Typography A11y Suite", () => {
     expect(
       getContrastRatio(colors.destructive[800].value, colors.destructive[50].value),
     ).toBeGreaterThanOrEqual(4.5);
+    // Purple badge light: text on light purple bg
+    expect(
+      getContrastRatio(colors.purple[800].value, colors.purple[50].value),
+    ).toBeGreaterThanOrEqual(4.5);
+    // Cyan badge light: text on light cyan bg
+    expect(getContrastRatio(colors.cyan[800].value, colors.cyan[50].value)).toBeGreaterThanOrEqual(
+      4.5,
+    );
   });
 });

@@ -34,7 +34,6 @@ const FLPButton: FC<FLPButtonProps> = ({
   const { isMobile: contextIsMobile } = useResponsive();
   const isMobileVariant = propIsMobile ?? contextIsMobile;
 
-  // Map "ghost" and "outline" and "solid" variants to @repo/ui Button variants
   const mappedVariant =
     variant === "ghost"
       ? "ghost"
@@ -42,7 +41,11 @@ const FLPButton: FC<FLPButtonProps> = ({
         ? "outline"
         : variant === "link"
           ? "link"
-          : "primary";
+          : variant === "destructive"
+            ? "destructive"
+            : variant === "secondary"
+              ? "secondary"
+              : "primary";
 
   const combinedClassName = [
     isMobileVariant ? mobileBtnStyle(fullWidthOnMobile) : "",

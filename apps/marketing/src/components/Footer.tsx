@@ -17,18 +17,19 @@ const footerStyle = css({
 });
 
 const sectionTitleStyle = css({
-  fontSize: "12px",
+  fontSize: "xs",
   fontWeight: "700",
   textTransform: "uppercase",
   letterSpacing: "0.08em",
   color: "slate.400",
+  fontFamily: "display",
   mb: "4",
 });
 
 const linkStyle = css({
   color: "slate.300",
   textDecoration: "none",
-  fontSize: "14px",
+  fontSize: "sm",
   transition: "color 0.15s ease",
   _hover: { color: "#ffffff" },
 });
