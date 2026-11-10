@@ -2,6 +2,11 @@ import { css } from "@repo/ui/styled-system/css";
 import { type FC, useMemo, useState } from "react";
 import { FaCheckCircle, FaCoins, FaInfoCircle, FaPercentage, FaSlidersH } from "react-icons/fa";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import {
+  chartTooltipContentStyle,
+  chartTooltipItemStyle,
+  chartTooltipLabelStyle,
+} from "~/components/charts/chartTheme";
 import FLPCard from "~/components/core/cards/FLPCard";
 import FLPHeading from "~/components/core/typography/FLPHeading";
 import FLPText from "~/components/core/typography/FLPText";
@@ -493,7 +498,12 @@ const OverpayVsSaveCompare: FC<OverpayVsSaveCompareProps> = ({
                     tickLine={false}
                     tickFormatter={(val) => `£${val / 1000}k`}
                   />
-                  <Tooltip formatter={(value: any) => formatCurrency(value)} />
+                  <Tooltip
+                    formatter={(value: any) => formatCurrency(value)}
+                    contentStyle={chartTooltipContentStyle}
+                    itemStyle={chartTooltipItemStyle}
+                    labelStyle={chartTooltipLabelStyle}
+                  />
                   <Bar
                     dataKey="Principal Contributed"
                     fill="var(--colors-primary)"

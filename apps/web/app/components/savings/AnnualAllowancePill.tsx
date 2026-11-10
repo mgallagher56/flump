@@ -10,6 +10,7 @@ export interface AnnualAllowancePillProps {
   totalLimit?: number; // £20,000 for ISA, £60,000 for Pension
   taxBand?: "basic" | "higher" | "additional";
   savingsInterest?: number;
+  contributingAccounts?: Array<{ name: string; balance: number }>;
 }
 
 const pillCardStyle = css({
@@ -42,12 +43,15 @@ export const AnnualAllowancePill: FC<AnnualAllowancePillProps> = ({
   totalLimit: customLimit,
   taxBand = "higher",
   savingsInterest = 0,
+  contributingAccounts,
 }) => {
   const isIsa = type === "isa";
   const limit = customLimit ?? (isIsa ? 20000 : 60000);
   const used = Math.max(0, Math.min(currentAmount, limit));
   const remaining = Math.max(0, limit - used);
   const percentage = Math.min(100, (used / limit) * 100);
+  const progressVariant =
+    percentage >= 100 ? "negative" : percentage >= 85 ? "warning" : isIsa ? "positive" : "primary";
 
   // Calculate days until next 5 April
   const daysUntilApril5 = useMemo(() => {
@@ -119,29 +123,63 @@ export const AnnualAllowancePill: FC<AnnualAllowancePillProps> = ({
         </div>
       </div>
 
-      {/* Progress Track */}
-      <div>
-        <FLPProgressBar
-          height={6}
-          max={limit}
-          value={used}
-          variant={isIsa ? "positive" : "primary"}
-        />
+      {/* Progress Track & Scannable Utilization */}
+      <div className={css({ display: "flex", flexDirection: "column", gap: "8px" })}>
         <div
           className={css({
             display: "flex",
             justifyContent: "space-between",
-            fontSize: "xs",
-            color: "text.muted",
-            marginTop: "6px",
+            alignItems: "baseline",
+            fontSize: "sm",
             fontVariantNumeric: "tabular-nums",
           })}
         >
-          <span>
-            {formatGBP(used)} contributed ({percentage.toFixed(0)}%)
+          <span className={css({ fontWeight: "semibold", color: "text.primary" })}>
+            {formatGBP(used)}{" "}
+            <span className={css({ color: "text.muted", fontWeight: "normal", fontSize: "xs" })}>
+              contributed ({percentage.toFixed(0)}%)
+            </span>
           </span>
-          <span>Max {formatGBP(limit)}</span>
+          <span className={css({ color: "text.muted", fontSize: "xs" })}>
+            Max {formatGBP(limit)}
+          </span>
         </div>
+        <FLPProgressBar height={8} max={limit} value={used} variant={progressVariant} />
+      </div>
+
+      {/* Contributing Accounts / Scope Breakdown */}
+      <div
+        className={css({
+          fontSize: "xs",
+          color: "text.muted",
+          backgroundColor: "surface.sunken",
+          padding: "8px 12px",
+          borderRadius: "lg",
+          borderWidth: "1px",
+          borderStyle: "solid",
+          borderColor: "border.subtle",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          flexWrap: "wrap",
+          gap: "6px",
+        })}
+      >
+        <span>
+          <strong>Affects allowance:</strong>{" "}
+          {isIsa
+            ? contributingAccounts && contributingAccounts.length > 0
+              ? contributingAccounts
+                  .map((acc) => `${acc.name} (${formatGBP(acc.balance)})`)
+                  .join(", ")
+              : "Cash ISAs, Stocks & Shares ISAs, and Lifetime ISAs."
+            : "All workplace pension, SIPP, and personal pension contributions."}
+        </span>
+        {isIsa && (
+          <span className={css({ color: "primary", fontSize: "xs", fontWeight: "medium" })}>
+            Resets 6 April
+          </span>
+        )}
       </div>
 
       {/* Extra helper for Savings: Personal Savings Allowance */}

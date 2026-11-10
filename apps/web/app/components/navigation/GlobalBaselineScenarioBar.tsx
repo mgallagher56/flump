@@ -40,19 +40,19 @@ export const GlobalBaselineScenarioBar: FC = () => {
 
   const stageLabels = {
     STAGE_1_DEBT_RECOVERY: {
-      label: "Stage 1: Debt Recovery",
-      color: "#dc2626",
-      bg: "rgba(220, 38, 38, 0.1)",
+      label: "Stage 1: Stabilise & Clear",
+      color: "#ef4444",
+      bg: "rgba(239, 68, 68, 0.1)",
     },
     STAGE_2_BUFFER_BUILD: {
-      label: "Stage 2: Buffer Build",
+      label: "Stage 2: Buffer & Protect",
       color: "#d97706",
       bg: "rgba(217, 119, 6, 0.1)",
     },
     STAGE_3_WEALTH_OPTIMIZE: {
-      label: "Stage 3: Wealth Optimize",
-      color: "#16a34a",
-      bg: "rgba(22, 163, 74, 0.1)",
+      label: "Stage 3: Build & Optimize",
+      color: "#10b981",
+      bg: "rgba(16, 185, 129, 0.1)",
     },
   };
 
@@ -74,8 +74,8 @@ export const GlobalBaselineScenarioBar: FC = () => {
         border: "1px solid",
         borderColor: isActive ? "primary" : "border",
         borderRadius: "xl",
-        padding: "12px 20px",
-        marginBottom: "24px",
+        padding: "8px 16px",
+        marginBottom: "16px",
         transition: "all 0.2s ease",
         boxShadow: isActive ? "0 4px 16px rgba(99, 99, 241, 0.12)" : "xs",
       })}
@@ -165,7 +165,7 @@ export const GlobalBaselineScenarioBar: FC = () => {
             })}
           >
             <FaSlidersH />
-            <span>{isExpanded ? "Hide Controls" : "Adjust / What-If"}</span>
+            <span>{isExpanded ? "Hide details" : "Update details"}</span>
           </button>
 
           {isActive && (

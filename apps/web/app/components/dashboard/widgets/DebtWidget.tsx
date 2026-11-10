@@ -85,18 +85,19 @@ export const DebtWidget: FC<DebtWidgetProps> = ({
             <FLPText color="text.muted" fontSize="xs">
               Total Unsecured Debt
             </FLPText>
-            <FLPHeading as="h3" color="red.600" size="2xl">
+            <FLPHeading as="h3" color="text.primary" size="2xl">
               {formatCurrency(totalDebt)}
             </FLPHeading>
           </div>
           <span
             style={{
-              padding: "4px 8px",
-              borderRadius: "full",
+              padding: "3px 8px",
+              borderRadius: "9999px",
               fontSize: "11px",
-              fontWeight: "bold",
-              backgroundColor: "#fee2e2",
-              color: "#991b1b",
+              fontWeight: 600,
+              backgroundColor: "rgba(239, 68, 68, 0.12)",
+              color: "var(--colors-destructive-500, #ef4444)",
+              border: "1px solid rgba(239, 68, 68, 0.25)",
               display: "inline-flex",
               alignItems: "center",
               gap: "4px",
@@ -108,7 +109,14 @@ export const DebtWidget: FC<DebtWidgetProps> = ({
 
         <div className={statsGridStyle}>
           <div className={statBoxStyle}>
-            <div style={{ display: "flex", alignItems: "center", gap: "6px", color: "#10b981" }}>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "6px",
+                color: "var(--colors-text-muted)",
+              }}
+            >
               <FaCalendarCheck size={14} />
               <FLPText color="text.muted" fontSize="xs">
                 Debt-Free Date
@@ -120,7 +128,14 @@ export const DebtWidget: FC<DebtWidgetProps> = ({
           </div>
 
           <div className={statBoxStyle}>
-            <div style={{ display: "flex", alignItems: "center", gap: "6px", color: "#6363f1" }}>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "6px",
+                color: "var(--colors-text-muted)",
+              }}
+            >
               <FaPiggyBank size={14} />
               <FLPText color="text.muted" fontSize="xs">
                 Interest Saved

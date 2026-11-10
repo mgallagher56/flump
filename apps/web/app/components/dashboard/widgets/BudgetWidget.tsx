@@ -277,13 +277,9 @@ export const BudgetWidget: FC<BudgetWidgetProps> = ({
             <FLPHeading
               as="h2"
               color={
-                primaryMetric === "surplus"
-                  ? data.monthlySurplus >= 0
-                    ? "success.500"
-                    : "destructive.500"
-                  : data.savingsRatePct > 0
-                    ? "success.500"
-                    : "text.primary"
+                primaryMetric === "surplus" && data.monthlySurplus < 0
+                  ? "destructive.500"
+                  : "text.primary"
               }
               className={css({
                 fontSize: { base: "lg", sm: "xl", md: "2xl" },

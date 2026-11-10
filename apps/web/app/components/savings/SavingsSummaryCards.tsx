@@ -123,6 +123,7 @@ export const SavingsSummaryCards: FC<SavingsSummaryCardsProps> = ({
         <div>
           <FLPHeading
             as="h3"
+            className="tabular-nums"
             isMobile={isMobileVariant}
             size="lg"
             style={{ color: "var(--colors-text-primary)" }}
@@ -147,6 +148,7 @@ export const SavingsSummaryCards: FC<SavingsSummaryCardsProps> = ({
         <div>
           <FLPHeading
             as="h3"
+            className="tabular-nums"
             isMobile={isMobileVariant}
             size="lg"
             style={{ color: "var(--colors-text-primary)" }}
@@ -183,6 +185,7 @@ export const SavingsSummaryCards: FC<SavingsSummaryCardsProps> = ({
         <div>
           <FLPHeading
             as="h3"
+            className="tabular-nums"
             isMobile={isMobileVariant}
             size="lg"
             style={{ color: "var(--colors-text-primary)" }}
@@ -207,6 +210,7 @@ export const SavingsSummaryCards: FC<SavingsSummaryCardsProps> = ({
         <div>
           <FLPHeading
             as="h3"
+            className="tabular-nums"
             isMobile={isMobileVariant}
             size="lg"
             style={{ color: "var(--colors-text-primary)" }}

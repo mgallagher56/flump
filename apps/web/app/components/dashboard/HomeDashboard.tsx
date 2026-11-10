@@ -12,6 +12,7 @@ import {
 } from "react-icons/fa";
 import { Link } from "react-router";
 import FLPButton from "~/components/core/buttons/FLPButton";
+import FLPCard from "~/components/core/cards/FLPCard";
 import FLPHeading from "~/components/core/typography/FLPHeading";
 import FLPText from "~/components/core/typography/FLPText";
 import SetupChecklist, { type SetupChecklistProps } from "~/components/setup/SetupChecklist";
@@ -356,6 +357,114 @@ export const HomeDashboard: FC<HomeDashboardProps> = ({
           </FLPButton>
         </div>
       </div>
+
+      {/* 4-KPI Overview Strip (Single horizontal row) */}
+      {(accountsData || budgetData) && (
+        <div
+          className={css({
+            display: "grid",
+            gridTemplateColumns: { base: "1fr", sm: "repeat(2, 1fr)", lg: "repeat(4, 1fr)" },
+            gap: "16px",
+          })}
+        >
+          <FLPCard>
+            <div style={{ padding: "16px 20px" }}>
+              <FLPText
+                color="text.muted"
+                fontSize="xs"
+                fontWeight="semibold"
+                textTransform="uppercase"
+              >
+                Total Net Worth
+              </FLPText>
+              <FLPHeading as="h3" size="xl" className="tabular-nums" style={{ marginTop: "4px" }}>
+                {formatCurrency(accountsData?.netWorth ?? 0)}
+              </FLPHeading>
+              <FLPText color="text.muted" fontSize="xs" style={{ marginTop: "4px" }}>
+                Assets {formatCurrency(accountsData?.totalAssets ?? 0)} • Liab{" "}
+                {formatCurrency(accountsData?.totalLiabilities ?? 0)}
+              </FLPText>
+            </div>
+          </FLPCard>
+
+          <FLPCard>
+            <div style={{ padding: "16px 20px" }}>
+              <FLPText
+                color="text.muted"
+                fontSize="xs"
+                fontWeight="semibold"
+                textTransform="uppercase"
+              >
+                Monthly Net Surplus
+              </FLPText>
+              <FLPHeading
+                as="h3"
+                size="xl"
+                color="success.500"
+                className="tabular-nums"
+                style={{ marginTop: "4px" }}
+              >
+                {formatCurrency(budgetData?.monthlySurplus ?? 0)}
+              </FLPHeading>
+              <FLPText color="text.muted" fontSize="xs" style={{ marginTop: "4px" }}>
+                Available to save, invest, or overpay
+              </FLPText>
+            </div>
+          </FLPCard>
+
+          <FLPCard>
+            <div style={{ padding: "16px 20px" }}>
+              <FLPText
+                color="text.muted"
+                fontSize="xs"
+                fontWeight="semibold"
+                textTransform="uppercase"
+              >
+                Weekly Safe-to-Spend
+              </FLPText>
+              <FLPHeading
+                as="h3"
+                size="xl"
+                color="blue.500"
+                className="tabular-nums"
+                style={{ marginTop: "4px" }}
+              >
+                {formatCurrency(safeToSpend?.weeklyAllowance ?? 0)}
+              </FLPHeading>
+              <FLPText color="text.muted" fontSize="xs" style={{ marginTop: "4px" }}>
+                Discretionary burn rate allowance
+              </FLPText>
+            </div>
+          </FLPCard>
+
+          <FLPCard>
+            <div style={{ padding: "16px 20px" }}>
+              <FLPText
+                color="text.muted"
+                fontSize="xs"
+                fontWeight="semibold"
+                textTransform="uppercase"
+              >
+                Liquid Cash & Buffer
+              </FLPText>
+              <FLPHeading
+                as="h3"
+                size="xl"
+                color="purple.500"
+                className="tabular-nums"
+                style={{ marginTop: "4px" }}
+              >
+                {formatCurrency(
+                  savingsData?.totalSavingsBalance ?? accountsData?.typeTotals?.Saving ?? 0,
+                )}
+              </FLPHeading>
+              <FLPText color="text.muted" fontSize="xs" style={{ marginTop: "4px" }}>
+                Instant emergency liquidity
+              </FLPText>
+            </div>
+          </FLPCard>
+        </div>
+      )}
 
       {/* Onboarding Checklist */}
       <SetupChecklist {...checklistProps} enabledPages={enabledPages} />

@@ -87,27 +87,24 @@ const sliderInputStyle = css({
 
 const comparisonGridStyle = css({
   display: "grid",
-  gridTemplateColumns: {
-    base: "1fr",
-    sm: "repeat(3, 1fr)",
-    lg: "1fr",
-    xl: "repeat(3, 1fr)",
-  },
+  gridTemplateColumns: { base: "1fr", md: "repeat(3, 1fr)" },
   gap: "12px",
 });
 
-const modeCardStyle = (active: boolean) =>
+const modeCardStyle = (active: boolean, clickable: boolean = false) =>
   css({
-    padding: "14px 16px",
-    borderRadius: "lg",
-    borderWidth: "1px",
+    padding: "16px",
+    borderRadius: "xl",
+    borderWidth: active ? "2px" : "1px",
     borderStyle: "solid",
     borderColor: active ? "primary" : "border.subtle",
-    backgroundColor: active ? "rgba(99, 99, 241, 0.04)" : "surface",
+    backgroundColor: active ? "rgba(99, 99, 241, 0.06)" : "surface.card",
     display: "flex",
     flexDirection: "column",
-    gap: "6px",
+    gap: "8px",
     transition: "all 0.15s ease",
+    cursor: clickable ? "pointer" : "default",
+    _hover: clickable && !active ? { borderColor: "border.strong" } : {},
   });
 
 export const PayoffStrategySwitcher: FC<PayoffStrategySwitcherProps> = ({
@@ -139,25 +136,6 @@ export const PayoffStrategySwitcher: FC<PayoffStrategySwitcherProps> = ({
             <FLPText color="text.muted" fontSize="sm">
               Choose the mathematical engine that matches your financial psychology.
             </FLPText>
-          </div>
-
-          <div className={pillGroupStyle}>
-            <button
-              aria-label="Select Avalanche strategy"
-              className={pillButtonStyle(selectedStrategy === "avalanche")}
-              type="button"
-              onClick={() => onSelectStrategy("avalanche")}
-            >
-              <FaBolt color="#f59e0b" /> Avalanche (Highest APR)
-            </button>
-            <button
-              aria-label="Select Snowball strategy"
-              className={pillButtonStyle(selectedStrategy === "snowball")}
-              type="button"
-              onClick={() => onSelectStrategy("snowball")}
-            >
-              <FaSnowflake color="#3b82f6" /> Snowball (Smallest Balance)
-            </button>
           </div>
         </div>
 
@@ -265,19 +243,47 @@ export const PayoffStrategySwitcher: FC<PayoffStrategySwitcherProps> = ({
         {/* Strategy Comparison Cards */}
         <div className={comparisonGridStyle}>
           {/* 1. Avalanche Mode */}
-          <div className={modeCardStyle(selectedStrategy === "avalanche")}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <FLPText fontSize="md" fontWeight="bold">
-                Avalanche mode
-              </FLPText>
+          <div
+            className={modeCardStyle(selectedStrategy === "avalanche" && extraPayment > 0, true)}
+            role="button"
+            tabIndex={0}
+            aria-label="Select Avalanche strategy"
+            onClick={() => {
+              onSelectStrategy("avalanche");
+              if (extraPayment === 0) onChangeExtraPayment(50);
+            }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                onSelectStrategy("avalanche");
+                if (extraPayment === 0) onChangeExtraPayment(50);
+              }
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                gap: "8px",
+                flexWrap: "wrap",
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                <FaBolt color="#f59e0b" size={14} />
+                <FLPText fontSize="md" fontWeight="bold">
+                  Avalanche (Highest APR)
+                </FLPText>
+              </div>
               <span
                 style={{
                   fontSize: "11px",
                   backgroundColor: "rgba(245, 158, 11, 0.15)",
                   color: "#d97706",
-                  padding: "2px 6px",
-                  borderRadius: "4px",
+                  padding: "3px 8px",
+                  borderRadius: "6px",
                   fontWeight: "bold",
+                  whiteSpace: "nowrap",
                 }}
               >
                 Mathematically optimal
@@ -287,7 +293,7 @@ export const PayoffStrategySwitcher: FC<PayoffStrategySwitcherProps> = ({
               Targets highest APR debts first. Maximizes pure interest savings across your entire
               liability portfolio.
             </FLPText>
-            <div style={{ marginTop: "8px", display: "flex", flexDirection: "column", gap: "4px" }}>
+            <div style={{ marginTop: "6px", display: "flex", flexDirection: "column", gap: "4px" }}>
               <FLPText fontSize="sm">
                 <strong>Payoff Horizon:</strong>{" "}
                 <span className={css({ fontVariantNumeric: "tabular-nums" })}>
@@ -300,7 +306,7 @@ export const PayoffStrategySwitcher: FC<PayoffStrategySwitcherProps> = ({
                   {formatCurrency(comparison.avalanche.totalInterest)}
                 </span>
               </FLPText>
-              <FLPText color="green.600" fontSize="xs">
+              <FLPText color="green.600" fontSize="xs" fontWeight="semibold">
                 Saves{" "}
                 <span className={css({ fontVariantNumeric: "tabular-nums" })}>
                   {formatCurrency(comparison.interestSavedAvalancheVsMin)}
@@ -311,29 +317,57 @@ export const PayoffStrategySwitcher: FC<PayoffStrategySwitcherProps> = ({
           </div>
 
           {/* 2. Snowball Mode */}
-          <div className={modeCardStyle(selectedStrategy === "snowball")}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <FLPText fontSize="md" fontWeight="bold">
-                ❄️ Snowball Mode
-              </FLPText>
+          <div
+            className={modeCardStyle(selectedStrategy === "snowball" && extraPayment > 0, true)}
+            role="button"
+            tabIndex={0}
+            aria-label="Select Snowball strategy"
+            onClick={() => {
+              onSelectStrategy("snowball");
+              if (extraPayment === 0) onChangeExtraPayment(50);
+            }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                onSelectStrategy("snowball");
+                if (extraPayment === 0) onChangeExtraPayment(50);
+              }
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                gap: "8px",
+                flexWrap: "wrap",
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                <FaSnowflake color="#3b82f6" size={14} />
+                <FLPText fontSize="md" fontWeight="bold">
+                  Snowball (Smallest Balance)
+                </FLPText>
+              </div>
               <span
                 style={{
                   fontSize: "11px",
-                  backgroundColor: "#dbeafe",
-                  color: "#1e40af",
-                  padding: "2px 6px",
-                  borderRadius: "4px",
+                  backgroundColor: "rgba(59, 130, 246, 0.15)",
+                  color: "#3b82f6",
+                  padding: "3px 8px",
+                  borderRadius: "6px",
                   fontWeight: "bold",
+                  whiteSpace: "nowrap",
                 }}
               >
-                Psychologically Optimal
+                Psychologically optimal
               </span>
             </div>
             <FLPText color="text.muted" fontSize="xs">
               Targets smallest balances first to generate immediate momentum and knock out
               individual accounts fast.
             </FLPText>
-            <div style={{ marginTop: "8px", display: "flex", flexDirection: "column", gap: "4px" }}>
+            <div style={{ marginTop: "6px", display: "flex", flexDirection: "column", gap: "4px" }}>
               <FLPText fontSize="sm">
                 <strong>Payoff Horizon:</strong>{" "}
                 <span className={css({ fontVariantNumeric: "tabular-nums" })}>
@@ -346,43 +380,64 @@ export const PayoffStrategySwitcher: FC<PayoffStrategySwitcherProps> = ({
                   {formatCurrency(comparison.snowball.totalInterest)}
                 </span>
               </FLPText>
-              <FLPText color="blue.600" fontSize="xs">
+              <FLPText color="blue.500" fontSize="xs" fontWeight="semibold">
                 🏆 Quick Win: {comparison.snowballFirstWinDescription}
               </FLPText>
             </div>
           </div>
 
           {/* 3. Minimum Payments Baseline */}
-          <div className={modeCardStyle(false)}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <div
+            className={modeCardStyle(extraPayment === 0, true)}
+            role="button"
+            tabIndex={0}
+            aria-label="Select Minimum Only strategy"
+            onClick={() => onChangeExtraPayment(0)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                onChangeExtraPayment(0);
+              }
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                gap: "8px",
+                flexWrap: "wrap",
+              }}
+            >
               <FLPText color="text.muted" fontSize="md" fontWeight="bold">
                 🐌 Minimum Only
               </FLPText>
               <span
                 style={{
                   fontSize: "11px",
-                  backgroundColor: "#fee2e2",
-                  color: "#991b1b",
-                  padding: "2px 6px",
-                  borderRadius: "4px",
+                  backgroundColor: "rgba(239, 68, 68, 0.15)",
+                  color: "#ef4444",
+                  padding: "3px 8px",
+                  borderRadius: "6px",
                   fontWeight: "bold",
+                  whiteSpace: "nowrap",
                 }}
               >
-                High Cost Trap
+                High cost baseline
               </span>
             </div>
             <FLPText color="text.muted" fontSize="xs">
               Making only mandatory minimums causes compounding interest to drag out your
               liabilities for years.
             </FLPText>
-            <div style={{ marginTop: "8px", display: "flex", flexDirection: "column", gap: "4px" }}>
+            <div style={{ marginTop: "6px", display: "flex", flexDirection: "column", gap: "4px" }}>
               <FLPText fontSize="sm">
                 <strong>Payoff Horizon:</strong>{" "}
                 <span className={css({ fontVariantNumeric: "tabular-nums" })}>
                   {comparison.minimumOnly.debtFreeDate} ({comparison.minimumOnly.months} mos)
                 </span>
               </FLPText>
-              <FLPText color="red.600" fontSize="sm">
+              <FLPText color="red.500" fontSize="sm">
                 <strong>Total Interest:</strong>{" "}
                 <span className={css({ fontVariantNumeric: "tabular-nums" })}>
                   {formatCurrency(comparison.minimumOnly.totalInterest)}

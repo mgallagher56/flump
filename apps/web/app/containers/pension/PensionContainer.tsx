@@ -15,7 +15,6 @@ import FLPCard from "~/components/core/cards/FLPCard";
 import FLPCheckbox from "~/components/core/inputs/checkbox/FLPCheckbox";
 import FLPHeading from "~/components/core/typography/FLPHeading";
 import FLPText from "~/components/core/typography/FLPText";
-import { GlobalBaselineScenarioBar } from "~/components/navigation/GlobalBaselineScenarioBar";
 import AddPensionAccountDialog from "~/components/pension/AddPensionAccountDialog";
 import PensionAccountsList from "~/components/pension/PensionAccountsList";
 import PensionForecasterCard from "~/components/pension/PensionForecasterCard";
@@ -32,20 +31,57 @@ import { currentMonth, currentYear } from "~/utils/utils";
 const containerStyle = css({
   display: "flex",
   flexDirection: "column",
-  gap: "28px",
-  paddingBottom: "64px",
+  gap: "20px",
+  paddingBottom: "48px",
 });
 
 const headerContainerStyle = css({
   display: "flex",
   justifyContent: "space-between",
-  alignItems: "flex-start",
+  alignItems: "center",
   flexWrap: "wrap",
   gap: "16px",
-  borderBottom: "1px solid",
-  borderColor: "border",
-  paddingBottom: "20px",
+  marginTop: "16px",
+  marginBottom: "8px",
 });
+
+const segmentedControlStyle = css({
+  display: "inline-flex",
+  alignItems: "center",
+  backgroundColor: "surface.sunken",
+  padding: "4px",
+  borderRadius: "xl",
+  borderWidth: "1px",
+  borderStyle: "solid",
+  borderColor: "border.subtle",
+  gap: "4px",
+  maxWidth: "100%",
+  overflowX: "auto",
+  width: "fit-content",
+});
+
+const segmentedTabStyle = (active: boolean) =>
+  css({
+    padding: "8px 18px",
+    minHeight: "38px",
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: "6px",
+    whiteSpace: "nowrap",
+    fontSize: "sm",
+    fontWeight: active ? "semibold" : "medium",
+    color: active ? "text.primary" : "text.muted",
+    backgroundColor: active ? "surface" : "transparent",
+    borderRadius: "lg",
+    border: "none",
+    cursor: "pointer",
+    boxShadow: active ? "0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06)" : "none",
+    transition: "all 0.15s ease",
+    _hover: {
+      color: "text.primary",
+    },
+  });
 
 const inlineEditGridStyle = css({
   display: "grid",
@@ -93,6 +129,7 @@ export const PensionContainer: FC = () => {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [showWizard, setShowWizard] = useState(false);
   const [wizardDismissed, setWizardDismissed] = useState(false);
+  const [activeTab, setActiveTab] = useState<"forecaster" | "pots" | "rules">("forecaster");
 
   // Filter pension accounts and calculate current balances
   const pensionAccounts = useMemo(() => {
@@ -289,10 +326,20 @@ export const PensionContainer: FC = () => {
     return calculate100kTaxTrap(effectiveSalary, effectiveEmployeePct, effectiveIsSalarySacrifice);
   }, [effectiveSalary, effectiveEmployeePct, effectiveIsSalarySacrifice]);
 
+  const handleOptimizeTaxTrap = async (contributionReq: number) => {
+    if (!effectiveSalary || effectiveSalary <= 0) return;
+    const currentMonthlyEmployee = (effectiveSalary * (effectiveEmployeePct / 100)) / 12;
+    const extraMonthly = Math.round(contributionReq / 12);
+    const targetMonthly = currentMonthlyEmployee + extraMonthly;
+    const newEmployeePct = Math.min(
+      100,
+      Number((((targetMonthly * 12) / effectiveSalary) * 100).toFixed(1)),
+    );
+    await handleSyncContributions(newEmployeePct, employerPercent, effectiveSalary);
+  };
+
   return (
     <div className={containerStyle}>
-      <GlobalBaselineScenarioBar />
-
       {/* £100k-£125k 60% Marginal Tax Trap Optimizer Callout */}
       {taxTrap.isInTaxTrap && (
         <div
@@ -343,13 +390,20 @@ export const PensionContainer: FC = () => {
               gap: "8px",
             }}
           >
-            <div style={{ fontSize: "12px" }}>
+            <div style={{ fontSize: "12px", maxWidth: "600px" }}>
               💡 <strong>Actionable optimisation:</strong> Increase pension contributions or make a
               SIPP contribution of{" "}
               <strong>{formatCurrency(taxTrap.contributionRequiredToEscapeGbp)}</strong> to recover
               your full £12,570 Personal Allowance and reclaim{" "}
               {formatCurrency(taxTrap.estimatedTaxSavedByEscapingGbp)} in tax relief.
             </div>
+            <FLPButton
+              size="sm"
+              variant="primary"
+              onClick={() => handleOptimizeTaxTrap(taxTrap.contributionRequiredToEscapeGbp)}
+            >
+              Reclaim Allowance (SIPP {formatCurrency(taxTrap.contributionRequiredToEscapeGbp)}) →
+            </FLPButton>
           </div>
         </div>
       )}
@@ -358,7 +412,7 @@ export const PensionContainer: FC = () => {
       <div className={headerContainerStyle}>
         <div>
           <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-            <FLPHeading as="h1" size="xl">
+            <FLPHeading as="h1" color="text.primary" size="2xl">
               Pension and retirement tracking
             </FLPHeading>
             <span
@@ -387,18 +441,6 @@ export const PensionContainer: FC = () => {
         </div>
       </div>
 
-      {/* UK Pension Annual Allowance Tracker (£60k Limit) */}
-      <AnnualAllowancePill
-        type="pension"
-        currentAmount={
-          (monthlyEmployeeContrib +
-            monthlyEmployerContrib +
-            monthlyEmployerNiContrib +
-            directMonthlyContrib) *
-          12
-        }
-      />
-
       {/* Summary Cards */}
       <PensionSummaryCards
         directMonthlyContrib={directMonthlyContrib}
@@ -414,259 +456,356 @@ export const PensionContainer: FC = () => {
         weightedReturnRate={weightedReturnRate}
       />
 
-      {/* Contribution Rules & Split Banner */}
-      <FLPCard
-        className={css({
-          padding: "20px",
-          borderRadius: "xl",
-          border: "1px solid",
-          borderColor: "border",
-          backgroundColor: "surface",
-          display: "flex",
-          flexDirection: "column",
-          gap: "14px",
-        })}
-      >
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            flexWrap: "wrap",
-            gap: "8px",
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-            <FaShieldAlt style={{ color: "#8b5cf6", fontSize: "16px" }} />
-            <FLPHeading as="h4" size="sm">
-              Current Contributions Breakdown (UK Auto-Enrolment)
-            </FLPHeading>
-          </div>
-          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-            <FLPText color="text.muted" fontSize="xs">
-              Standard: 5% employee + 3% employer = 8% total
-            </FLPText>
-            {!isEditingRates ? (
-              <FLPButton size="sm" variant="outline" onClick={() => setIsEditingRates(true)}>
-                <FaEdit style={{ marginRight: "4px" }} /> Edit Rates
-              </FLPButton>
-            ) : (
-              <div style={{ display: "flex", gap: "6px" }}>
-                <FLPButton size="sm" variant="ghost" onClick={() => setIsEditingRates(false)}>
-                  <FaTimes style={{ marginRight: "4px" }} /> Cancel
-                </FLPButton>
-                <FLPButton
-                  disabled={isSavingRates}
-                  size="sm"
-                  variant="primary"
-                  onClick={handleSaveInlineRates}
-                >
-                  <FaCheck style={{ marginRight: "4px" }} />{" "}
-                  {isSavingRates ? "Saving..." : "Save to Profile"}
-                </FLPButton>
-              </div>
-            )}
-          </div>
+      {/* Primary Workspace Segmented Tabs */}
+      <div>
+        <div className={segmentedControlStyle}>
+          <button
+            type="button"
+            onClick={() => setActiveTab("forecaster")}
+            className={segmentedTabStyle(activeTab === "forecaster")}
+          >
+            Retirement Simulator & Forecast
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab("pots")}
+            className={segmentedTabStyle(activeTab === "pots")}
+          >
+            Pension Pots & Schemes ({pensionAccounts.length})
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab("rules")}
+            className={segmentedTabStyle(activeTab === "rules")}
+          >
+            Contributions & Allowances
+          </button>
         </div>
+      </div>
 
-        {isEditingRates && (
-          <div className={inlineEditGridStyle}>
-            <div>
-              <label
-                htmlFor="inline-pension-salary"
-                style={{ fontSize: "12px", fontWeight: 600, display: "block", marginBottom: "4px" }}
-              >
-                Annual Salary (£)
-              </label>
-              <input
-                className={inlineInputStyle}
-                id="inline-pension-salary"
-                min="0"
-                step="500"
-                type="number"
-                value={editSalary}
-                onChange={(e) => setEditSalary(Number(e.target.value) || 0)}
-              />
+      {/* Tab 1: Forecaster Card (Simulator) */}
+      <div
+        style={
+          activeTab === "forecaster"
+            ? undefined
+            : {
+                height: 0,
+                overflow: "hidden",
+                opacity: 0,
+                position: "absolute",
+                pointerEvents: "none",
+              }
+        }
+      >
+        <PensionForecasterCard
+          currentPotTotal={totalValue}
+          directMonthlyContrib={directMonthlyContrib}
+          initialEmployeePercent={employeePercent}
+          initialEmployerPercent={employerPercent}
+          initialEmployerNiPassThrough={isSalarySacrificeEmployerNi}
+          initialSalary={annualSalary}
+          initialSalarySacrifice={isSalarySacrifice}
+          portfolioReturnRate={weightedReturnRate}
+          onSyncToProfile={handleSyncContributions}
+        />
+      </div>
+
+      {/* Tab 2: Pension Pots List */}
+      <div
+        style={
+          activeTab === "pots"
+            ? undefined
+            : {
+                height: 0,
+                overflow: "hidden",
+                opacity: 0,
+                position: "absolute",
+                pointerEvents: "none",
+              }
+        }
+      >
+        <PensionAccountsList
+          accounts={pensionAccounts}
+          onOpenAddModal={() => setIsAddModalOpen(true)}
+          onOpenWizard={() => setShowWizard(true)}
+        />
+      </div>
+
+      {/* Tab 3: Contribution Rules & UK Auto-Enrolment Breakdown */}
+      <div
+        style={
+          activeTab === "rules"
+            ? { display: "flex", flexDirection: "column", gap: "20px" }
+            : {
+                height: 0,
+                overflow: "hidden",
+                opacity: 0,
+                position: "absolute",
+                pointerEvents: "none",
+              }
+        }
+      >
+        {/* UK Pension Annual Allowance Tracker (£60k Limit) */}
+        <AnnualAllowancePill
+          type="pension"
+          currentAmount={
+            (monthlyEmployeeContrib +
+              monthlyEmployerContrib +
+              monthlyEmployerNiContrib +
+              directMonthlyContrib) *
+            12
+          }
+        />
+
+        {/* Contribution Rules & Split Banner */}
+        <FLPCard
+          className={css({
+            padding: "20px",
+            borderRadius: "xl",
+            border: "1px solid",
+            borderColor: "border",
+            backgroundColor: "surface",
+            display: "flex",
+            flexDirection: "column",
+            gap: "14px",
+          })}
+        >
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              flexWrap: "wrap",
+              gap: "8px",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <FaShieldAlt style={{ color: "#8b5cf6", fontSize: "16px" }} />
+              <FLPHeading as="h4" size="sm">
+                Current Contributions Breakdown (UK Auto-Enrolment)
+              </FLPHeading>
             </div>
-            <div>
-              <label
-                htmlFor="inline-employee-pct"
-                style={{ fontSize: "12px", fontWeight: 600, display: "block", marginBottom: "4px" }}
-              >
-                Employee Contrib (%)
-              </label>
-              <input
-                className={inlineInputStyle}
-                id="inline-employee-pct"
-                max="100"
-                min="0"
-                step="0.5"
-                type="number"
-                value={editEmployeePct}
-                onChange={(e) => setEditEmployeePct(Number(e.target.value) || 0)}
-              />
+            <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+              <FLPText color="text.muted" fontSize="xs">
+                Standard: 5% employee + 3% employer = 8% total
+              </FLPText>
+              {!isEditingRates ? (
+                <FLPButton size="sm" variant="outline" onClick={() => setIsEditingRates(true)}>
+                  <FaEdit style={{ marginRight: "4px" }} /> Edit Rates
+                </FLPButton>
+              ) : (
+                <div style={{ display: "flex", gap: "6px" }}>
+                  <FLPButton size="sm" variant="ghost" onClick={() => setIsEditingRates(false)}>
+                    <FaTimes style={{ marginRight: "4px" }} /> Cancel
+                  </FLPButton>
+                  <FLPButton
+                    disabled={isSavingRates}
+                    size="sm"
+                    variant="primary"
+                    onClick={handleSaveInlineRates}
+                  >
+                    <FaCheck style={{ marginRight: "4px" }} />{" "}
+                    {isSavingRates ? "Saving..." : "Save to Profile"}
+                  </FLPButton>
+                </div>
+              )}
             </div>
-            <div>
-              <label
-                htmlFor="inline-employer-pct"
-                style={{ fontSize: "12px", fontWeight: 600, display: "block", marginBottom: "4px" }}
+          </div>
+
+          {isEditingRates && (
+            <div className={inlineEditGridStyle}>
+              <div>
+                <label
+                  htmlFor="inline-pension-salary"
+                  style={{
+                    fontSize: "12px",
+                    fontWeight: 600,
+                    display: "block",
+                    marginBottom: "4px",
+                  }}
+                >
+                  Annual Salary (£)
+                </label>
+                <input
+                  className={inlineInputStyle}
+                  id="inline-pension-salary"
+                  min="0"
+                  step="500"
+                  type="number"
+                  value={editSalary}
+                  onChange={(e) => setEditSalary(Number(e.target.value) || 0)}
+                />
+              </div>
+              <div>
+                <label
+                  htmlFor="inline-employee-pct"
+                  style={{
+                    fontSize: "12px",
+                    fontWeight: 600,
+                    display: "block",
+                    marginBottom: "4px",
+                  }}
+                >
+                  Employee Contrib (%)
+                </label>
+                <input
+                  className={inlineInputStyle}
+                  id="inline-employee-pct"
+                  max="100"
+                  min="0"
+                  step="0.5"
+                  type="number"
+                  value={editEmployeePct}
+                  onChange={(e) => setEditEmployeePct(Number(e.target.value) || 0)}
+                />
+              </div>
+              <div>
+                <label
+                  htmlFor="inline-employer-pct"
+                  style={{
+                    fontSize: "12px",
+                    fontWeight: 600,
+                    display: "block",
+                    marginBottom: "4px",
+                  }}
+                >
+                  Employer Contrib (%)
+                </label>
+                <input
+                  className={inlineInputStyle}
+                  id="inline-employer-pct"
+                  max="100"
+                  min="0"
+                  step="0.5"
+                  type="number"
+                  value={editEmployerPct}
+                  onChange={(e) => setEditEmployerPct(Number(e.target.value) || 0)}
+                />
+              </div>
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "8px",
+                  justifyContent: "center",
+                  marginTop: "8px",
+                }}
               >
-                Employer Contrib (%)
-              </label>
-              <input
-                className={inlineInputStyle}
-                id="inline-employer-pct"
-                max="100"
-                min="0"
-                step="0.5"
-                type="number"
-                value={editEmployerPct}
-                onChange={(e) => setEditEmployerPct(Number(e.target.value) || 0)}
-              />
+                <FLPCheckbox
+                  checked={editSalarySacrifice}
+                  id="pension-salary-sacrifice-checkbox"
+                  label="Salary Sacrifice (saves NI)"
+                  size="sm"
+                  onChange={(e) => {
+                    setEditSalarySacrifice(e.target.checked);
+                    if (!e.target.checked) {
+                      setEditSalarySacrificeEmployerNi(false);
+                    }
+                  }}
+                />
+                <FLPCheckbox
+                  checked={editSalarySacrifice && editSalarySacrificeEmployerNi}
+                  disabled={!editSalarySacrifice}
+                  id="pension-employer-ni-checkbox"
+                  label="Pass on Employer NI"
+                  description={
+                    editSalarySacrifice
+                      ? "Employer reinvests their NI saving into your pot"
+                      : "Requires salary sacrifice"
+                  }
+                  size="sm"
+                  onChange={(e) => setEditSalarySacrificeEmployerNi(e.target.checked)}
+                />
+              </div>
             </div>
+          )}
+
+          {/* Visual Progress / Proportion Bar */}
+          <div
+            style={{
+              height: "12px",
+              borderRadius: "999px",
+              backgroundColor: "var(--colors-border)",
+              display: "flex",
+              overflow: "hidden",
+              width: "100%",
+            }}
+          >
             <div
               style={{
-                display: "flex",
-                flexDirection: "column",
-                gap: "8px",
-                justifyContent: "center",
-                marginTop: "8px",
+                width: `${(employeePercent / (employeePercent + employerPercent || 1)) * 100}%`,
+                backgroundColor: "#6363f1",
+                transition: "width 0.4s ease",
               }}
-            >
-              <FLPCheckbox
-                checked={editSalarySacrifice}
-                id="pension-salary-sacrifice-checkbox"
-                label="Salary Sacrifice (saves NI)"
-                size="sm"
-                onChange={(e) => {
-                  setEditSalarySacrifice(e.target.checked);
-                  if (!e.target.checked) {
-                    setEditSalarySacrificeEmployerNi(false);
-                  }
-                }}
-              />
-              <FLPCheckbox
-                checked={editSalarySacrifice && editSalarySacrificeEmployerNi}
-                disabled={!editSalarySacrifice}
-                id="pension-employer-ni-checkbox"
-                label="Pass on Employer NI"
-                description={
-                  editSalarySacrifice
-                    ? "Employer reinvests their NI saving into your pot"
-                    : "Requires salary sacrifice"
-                }
-                size="sm"
-                onChange={(e) => setEditSalarySacrificeEmployerNi(e.target.checked)}
-              />
+              title={`Employee: ${employeePercent}%`}
+            />
+            <div
+              style={{
+                width: `${(employerPercent / (employeePercent + employerPercent || 1)) * 100}%`,
+                backgroundColor: "#f59e0b",
+                transition: "width 0.4s ease",
+              }}
+              title={`Employer: ${employerPercent}%`}
+            />
+          </div>
+
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              flexWrap: "wrap",
+              gap: "12px",
+              fontSize: "13px",
+            }}
+          >
+            <div style={{ display: "flex", gap: "20px", flexWrap: "wrap" }}>
+              <span style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                <span
+                  style={{
+                    width: "10px",
+                    height: "10px",
+                    borderRadius: "50%",
+                    backgroundColor: "#6363f1",
+                    display: "inline-block",
+                  }}
+                />
+                <strong>Employee:</strong> {employeePercent}% (
+                {formatCurrency(monthlyEmployeeContrib)}/mo)
+              </span>
+              <span style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                <span
+                  style={{
+                    width: "10px",
+                    height: "10px",
+                    borderRadius: "50%",
+                    backgroundColor: "#f59e0b",
+                    display: "inline-block",
+                  }}
+                />
+                <strong>Employer:</strong> {employerPercent}% (
+                {formatCurrency(standardMonthlyEmployerContrib)}/mo
+                {monthlyEmployerNiContrib > 0 && (
+                  <span style={{ color: "#10b981", marginLeft: "4px" }}>
+                    + {formatCurrency(monthlyEmployerNiContrib)}/mo NI
+                  </span>
+                )}
+                )
+              </span>
             </div>
+
+            <FLPText color="text.muted" fontSize="xs">
+              Salary: <strong>{formatCurrency(annualSalary)}/yr</strong> ·{" "}
+              {isSalarySacrifice
+                ? isSalarySacrificeEmployerNi
+                  ? "Salary Sacrifice + Employer NI"
+                  : "Salary Sacrifice"
+                : "Net Pay"}{" "}
+              · Synced with User Profile
+            </FLPText>
           </div>
-        )}
-
-        {/* Visual Progress / Proportion Bar */}
-        <div
-          style={{
-            height: "12px",
-            borderRadius: "999px",
-            backgroundColor: "var(--colors-border)",
-            display: "flex",
-            overflow: "hidden",
-            width: "100%",
-          }}
-        >
-          <div
-            style={{
-              width: `${(employeePercent / (employeePercent + employerPercent || 1)) * 100}%`,
-              backgroundColor: "#6363f1",
-              transition: "width 0.4s ease",
-            }}
-            title={`Employee: ${employeePercent}%`}
-          />
-          <div
-            style={{
-              width: `${(employerPercent / (employeePercent + employerPercent || 1)) * 100}%`,
-              backgroundColor: "#f59e0b",
-              transition: "width 0.4s ease",
-            }}
-            title={`Employer: ${employerPercent}%`}
-          />
-        </div>
-
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            flexWrap: "wrap",
-            gap: "12px",
-            fontSize: "13px",
-          }}
-        >
-          <div style={{ display: "flex", gap: "20px", flexWrap: "wrap" }}>
-            <span style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-              <span
-                style={{
-                  width: "10px",
-                  height: "10px",
-                  borderRadius: "50%",
-                  backgroundColor: "#6363f1",
-                  display: "inline-block",
-                }}
-              />
-              <strong>Employee:</strong> {employeePercent}% (
-              {formatCurrency(monthlyEmployeeContrib)}/mo)
-            </span>
-            <span style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-              <span
-                style={{
-                  width: "10px",
-                  height: "10px",
-                  borderRadius: "50%",
-                  backgroundColor: "#f59e0b",
-                  display: "inline-block",
-                }}
-              />
-              <strong>Employer:</strong> {employerPercent}% (
-              {formatCurrency(standardMonthlyEmployerContrib)}/mo
-              {monthlyEmployerNiContrib > 0 && (
-                <span style={{ color: "#10b981", marginLeft: "4px" }}>
-                  + {formatCurrency(monthlyEmployerNiContrib)}/mo NI
-                </span>
-              )}
-              )
-            </span>
-          </div>
-
-          <FLPText color="text.muted" fontSize="xs">
-            Salary: <strong>{formatCurrency(annualSalary)}/yr</strong> ·{" "}
-            {isSalarySacrifice
-              ? isSalarySacrificeEmployerNi
-                ? "Salary Sacrifice + Employer NI"
-                : "Salary Sacrifice"
-              : "Net Pay"}{" "}
-            · Synced with User Profile
-          </FLPText>
-        </div>
-      </FLPCard>
-
-      {/* Pension Pots List */}
-      <PensionAccountsList
-        accounts={pensionAccounts}
-        onOpenAddModal={() => setIsAddModalOpen(true)}
-        onOpenWizard={() => setShowWizard(true)}
-      />
-
-      {/* Forecaster Card */}
-      <PensionForecasterCard
-        currentPotTotal={totalValue}
-        directMonthlyContrib={directMonthlyContrib}
-        initialEmployeePercent={employeePercent}
-        initialEmployerPercent={employerPercent}
-        initialEmployerNiPassThrough={isSalarySacrificeEmployerNi}
-        initialSalary={annualSalary}
-        initialSalarySacrifice={isSalarySacrifice}
-        portfolioReturnRate={weightedReturnRate}
-        onSyncToProfile={handleSyncContributions}
-      />
+        </FLPCard>
+      </div>
 
       {/* Add Pot Modal */}
       <AddPensionAccountDialog isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} />

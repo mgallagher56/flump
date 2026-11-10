@@ -2,6 +2,11 @@ import { css } from "@repo/ui/styled-system/css";
 import { type FC, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import {
+  chartTooltipContentStyle,
+  chartTooltipItemStyle,
+  chartTooltipLabelStyle,
+} from "~/components/charts/chartTheme";
 import FLPButton from "~/components/core/buttons/FLPButton";
 import FLPCard from "~/components/core/cards/FLPCard";
 import FLPHeading from "~/components/core/typography/FLPHeading";
@@ -571,7 +576,12 @@ const SavingsForecaster: FC<SavingsForecasterProps> = ({
                   tickMargin={8}
                   tickFormatter={(val) => `£${val / 1000}k`}
                 />
-                <Tooltip formatter={(value: any) => formatCurrency(value)} />
+                <Tooltip
+                  formatter={(value: any) => formatCurrency(value)}
+                  contentStyle={chartTooltipContentStyle}
+                  itemStyle={chartTooltipItemStyle}
+                  labelStyle={chartTooltipLabelStyle}
+                />
                 <Area
                   activeDot={{ r: 6 }}
                   dataKey="Current Plan"

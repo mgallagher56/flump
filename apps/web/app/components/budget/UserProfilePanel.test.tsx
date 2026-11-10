@@ -113,32 +113,12 @@ describe("<UserProfilePanel />", () => {
     });
   });
 
-  it("renders property and buy to let sections when Property tab is active", () => {
-    render(
-      <UserProfilePanel
-        initialProfile={{
-          ...DEFAULT_PROFILE,
-          hasMortgage: true,
-          mortgageType: "interest-only",
-          hasBuyToLet: true,
-          buyToLetCount: 2,
-          buyToLetPropertyValue: 300000,
-          buyToLetMonthlyRental: 1500,
-          buyToLetMortgageBalance: 200000,
-          buyToLetMortgageRate: 5.0,
-          buyToLetMortgageType: "interest-only",
-        }}
-      />,
-    );
+  it("renders contextual links directing to Tax and Mortgage tools", () => {
+    render(<UserProfilePanel initialProfile={DEFAULT_PROFILE} />);
 
-    // Switch to Property & Mortgage tab via button
-    const propertyTab = screen.getByRole("button", { name: /Property & Mortgage/i });
-    fireEvent.click(propertyTab);
-
-    expect(screen.getByText("Residential Property & Mortgage")).toBeDefined();
-    expect(screen.getByText("Buy to Let (BTL) Property")).toBeDefined();
-    expect(screen.getByText("Section 24 Tax Notice:")).toBeDefined();
-    expect(screen.getByText("Gross Rental Yield")).toBeDefined();
+    expect(screen.getByText("Employment, Tax & Property Settings")).toBeDefined();
+    expect(screen.getByRole("button", { name: /Go to Tax & Take-Home/i })).toBeDefined();
+    expect(screen.getByRole("button", { name: /Go to Mortgage Tracker/i })).toBeDefined();
   });
 
   it("allows user to edit first name, last name, and display name and save", async () => {
@@ -214,19 +194,26 @@ describe("<UserProfilePanel />", () => {
     });
   });
 
-  it("switches sections using the mobile section select dropdown", () => {
+  it("allows user to update country and currency preferences", async () => {
     render(<UserProfilePanel initialProfile={DEFAULT_PROFILE} />);
 
-    const mobileSelect = screen.getByTestId("mobile-section-select");
-    expect(mobileSelect).toBeDefined();
+    const countrySelect = screen.getByLabelText(/Country/i) as HTMLSelectElement;
+    const currencySelect = screen.getByLabelText(/Currency/i) as HTMLSelectElement;
 
-    // Switch to Employment & Tax
-    fireEvent.change(mobileSelect, { target: { value: "employment" } });
-    expect(screen.getByText("Employment & Income")).toBeDefined();
+    fireEvent.change(countrySelect, { target: { value: "US" } });
+    fireEvent.change(currencySelect, { target: { value: "USD" } });
 
-    // Switch to Property & Mortgage
-    fireEvent.change(mobileSelect, { target: { value: "property" } });
-    expect(screen.getByText("Residential Property & Mortgage")).toBeDefined();
+    const saveBtn = screen.getByRole("button", { name: /Save Profile/i });
+    fireEvent.click(saveBtn);
+
+    await waitFor(() => {
+      expect(mockUpdateProfile).toHaveBeenCalledWith(
+        expect.objectContaining({
+          country: "US",
+          currency: "USD",
+        }),
+      );
+    });
   });
 
   it("opens reset financial data modal and requires typing RESET to confirm", async () => {

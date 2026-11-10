@@ -154,12 +154,6 @@ export const AddSavingsAccountDialog: FC<AddSavingsAccountDialogProps> = ({
     onClose,
   ]);
 
-  const defaultTrigger = (
-    <FLPButton size="sm" variant="primary">
-      <FaPlus style={{ marginRight: "6px" }} /> Add Savings Account
-    </FLPButton>
-  );
-
   return (
     <FLPModal
       confirmButton={{
@@ -168,7 +162,7 @@ export const AddSavingsAccountDialog: FC<AddSavingsAccountDialogProps> = ({
       disabled={!name.trim()}
       open={isOpen}
       title={isEditing ? "Edit Savings Account" : "Add Manual Savings Account"}
-      triggerBtn={triggerButton || defaultTrigger}
+      triggerBtn={triggerButton || <span style={{ display: "none" }} />}
       onClose={onClose}
       onConfirm={handleSubmit}
     >

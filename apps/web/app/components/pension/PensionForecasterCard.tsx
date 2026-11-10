@@ -74,23 +74,17 @@ const outcomeGridStyle = css({
   gap: "16px",
 });
 
-const heroCardStyle = (accentColor: string) =>
-  css({
-    padding: "16px 18px",
-    borderRadius: "xl",
-    border: "1px solid",
-    borderColor: "border",
-    backgroundColor: {
-      base: "rgba(255, 255, 255, 0.6)",
-      _dark: "rgba(25, 27, 34, 0.6)",
-    },
-    display: "flex",
-    flexDirection: "column",
-    justifyContent: "space-between",
-    gap: "10px",
-    borderTopWidth: "3px",
-    borderTopColor: accentColor,
-  });
+const heroCardStyle = css({
+  padding: "16px 18px",
+  borderRadius: "xl",
+  border: "1px solid",
+  borderColor: "border.subtle",
+  backgroundColor: "surface",
+  display: "flex",
+  flexDirection: "column",
+  justifyContent: "space-between",
+  gap: "10px",
+});
 
 const controlsDeckStyle = css({
   display: "flex",
@@ -345,11 +339,8 @@ export const PensionForecasterCard: FC<PensionForecasterCardProps> = ({
       const points = [
         {
           year: "Year 0",
-          startingPot: Math.round(effectiveStartingPot),
-          totalPot: Math.round(currentBalance),
-          employeeContrib: 0,
-          employerContrib: 0,
-          totalContribs: 0,
+          totalPot: Math.round(effectiveStartingPot),
+          totalContribs: Math.round(effectiveStartingPot),
           growth: 0,
         },
       ];
@@ -363,14 +354,12 @@ export const PensionForecasterCard: FC<PensionForecasterCardProps> = ({
         if (m % 12 === 0) {
           const y = m / 12;
           const totalPaid = cumEmployee + cumEmployer + cumDirect;
-          const growth = Math.max(0, currentBalance - effectiveStartingPot - totalPaid);
+          const totalPrincipal = effectiveStartingPot + totalPaid;
+          const growth = Math.max(0, currentBalance - totalPrincipal);
           points.push({
             year: `Year ${y}`,
-            startingPot: Math.round(effectiveStartingPot),
             totalPot: Math.round(currentBalance),
-            employeeContrib: Math.round(cumEmployee + cumDirect),
-            employerContrib: Math.round(cumEmployer),
-            totalContribs: Math.round(totalPaid),
+            totalContribs: Math.round(totalPrincipal),
             growth: Math.round(growth),
           });
         }
@@ -853,7 +842,7 @@ export const PensionForecasterCard: FC<PensionForecasterCardProps> = ({
           )}
 
           {/* Collapsible UK Tax Rules & Assumptions */}
-          <details open className={assumptionsDetailsStyle}>
+          <details className={assumptionsDetailsStyle}>
             <summary className={assumptionsSummaryStyle}>
               <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                 <span>UK Tax Rules & Assumptions</span>
@@ -947,12 +936,12 @@ export const PensionForecasterCard: FC<PensionForecasterCardProps> = ({
           {/* Outcome Cards (Top Results) */}
           <div className={outcomeGridStyle}>
             {/* Card 1: Projected Pot */}
-            <div className={heroCardStyle("#8b5cf6")}>
+            <div className={heroCardStyle}>
               <div>
                 <FLPText color="text.muted" fontSize="xs" fontWeight="semibold">
                   PROJECTED POT ({horizonYears} YRS)
                 </FLPText>
-                <FLPHeading as="h4" size="lg" style={{ color: "#8b5cf6", marginTop: "4px" }}>
+                <FLPHeading as="h4" className="tabular-nums" size="lg" style={{ marginTop: "4px" }}>
                   {formatCurrency(finalBalance)}
                 </FLPHeading>
               </div>
@@ -978,7 +967,7 @@ export const PensionForecasterCard: FC<PensionForecasterCardProps> = ({
             </div>
 
             {/* Card 2: Estimated Retirement Income & PLSA Benchmark */}
-            <div className={heroCardStyle("#10b981")}>
+            <div className={heroCardStyle}>
               <div>
                 <div
                   style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}
@@ -992,14 +981,15 @@ export const PensionForecasterCard: FC<PensionForecasterCardProps> = ({
                       fontWeight: 700,
                       padding: "2px 8px",
                       borderRadius: "999px",
-                      backgroundColor: `${plsaStandard.color}20`,
-                      color: plsaStandard.color,
+                      backgroundColor: "rgba(99, 99, 241, 0.08)",
+                      color: "var(--colors-text-muted)",
+                      border: "1px solid var(--colors-border-subtle)",
                     }}
                   >
                     {plsaStandard.label}
                   </span>
                 </div>
-                <FLPHeading as="h4" size="lg" style={{ color: "#10b981", marginTop: "4px" }}>
+                <FLPHeading as="h4" className="tabular-nums" size="lg" style={{ marginTop: "4px" }}>
                   {formatCurrency(monthlyRetirementIncome)}
                   <span
                     style={{
@@ -1039,7 +1029,7 @@ export const PensionForecasterCard: FC<PensionForecasterCardProps> = ({
                     style={{
                       height: "100%",
                       width: `${plsaProgressPct}%`,
-                      backgroundColor: plsaStandard.color,
+                      backgroundColor: "var(--colors-primary)",
                       borderRadius: "999px",
                       transition: "width 0.3s ease",
                     }}
@@ -1061,13 +1051,18 @@ export const PensionForecasterCard: FC<PensionForecasterCardProps> = ({
             </div>
 
             {/* Card 3: Contributions & Compound Growth Breakdown */}
-            <div className={heroCardStyle("#6363f1")}>
+            <div className={heroCardStyle}>
               <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
                 <div>
                   <FLPText color="text.muted" fontSize="xs" fontWeight="semibold">
                     YOUR CONTRIBUTIONS
                   </FLPText>
-                  <FLPHeading as="h4" size="sm" style={{ color: "#6363f1", marginTop: "2px" }}>
+                  <FLPHeading
+                    as="h4"
+                    className="tabular-nums"
+                    size="sm"
+                    style={{ marginTop: "2px" }}
+                  >
                     {formatCurrency(totalEmployeeContribs)}
                   </FLPHeading>
                   <span style={{ fontSize: "11px", color: "var(--colors-text-muted)" }}>
@@ -1079,10 +1074,17 @@ export const PensionForecasterCard: FC<PensionForecasterCardProps> = ({
                   <FLPText color="text.muted" fontSize="xs" fontWeight="semibold">
                     EMPLOYER & COMPOUND GROWTH
                   </FLPText>
-                  <FLPHeading as="h4" size="sm" style={{ color: "#f59e0b", marginTop: "2px" }}>
+                  <FLPHeading
+                    as="h4"
+                    className="tabular-nums"
+                    size="sm"
+                    style={{ marginTop: "2px" }}
+                  >
                     {formatCurrency(totalEmployerContribs + totalGrowth)}
                   </FLPHeading>
-                  <span style={{ fontSize: "11px", color: "#10b981", fontWeight: 600 }}>
+                  <span
+                    style={{ fontSize: "11px", color: "var(--colors-text-muted)", fontWeight: 600 }}
+                  >
                     +{formatCurrency(totalGrowth)} investment returns
                   </span>
                 </div>
@@ -1091,14 +1093,10 @@ export const PensionForecasterCard: FC<PensionForecasterCardProps> = ({
           </div>
 
           {/* Visual Stacked Area Chart */}
-          <div style={{ height: "340px", width: "100%", marginTop: "4px" }}>
+          <div style={{ height: "360px", width: "100%", marginTop: "4px" }}>
             <ResponsiveContainer height="100%" width="100%">
               <AreaChart data={chartData} margin={{ top: 10, right: 30, left: 10, bottom: 0 }}>
                 <defs>
-                  <linearGradient id="colorStartingPot" x1="0" x2="0" y1="0" y2="1">
-                    <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.35} />
-                    <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0.05} />
-                  </linearGradient>
                   <linearGradient id="colorContribs" x1="0" x2="0" y1="0" y2="1">
                     <stop offset="5%" stopColor="#6363f1" stopOpacity={0.4} />
                     <stop offset="95%" stopColor="#6363f1" stopOpacity={0.05} />
@@ -1134,7 +1132,7 @@ export const PensionForecasterCard: FC<PensionForecasterCardProps> = ({
                           }}
                         >
                           <div style={{ fontWeight: "bold", marginBottom: "6px" }}>{label}</div>
-                          <div style={{ color: "#8b5cf6", fontWeight: 700, marginBottom: "4px" }}>
+                          <div style={{ fontWeight: 700, marginBottom: "4px" }}>
                             Total Projected Pot: {formatCurrency(point?.totalPot ?? 0)}
                           </div>
                           <div style={{ color: "#10b981", marginTop: "2px" }}>
@@ -1142,9 +1140,6 @@ export const PensionForecasterCard: FC<PensionForecasterCardProps> = ({
                           </div>
                           <div style={{ color: "#6363f1", marginTop: "2px" }}>
                             Cumulative Contributions: +{formatCurrency(point?.totalContribs ?? 0)}
-                          </div>
-                          <div style={{ color: "var(--colors-text-muted)", marginTop: "2px" }}>
-                            Starting Pot: {formatCurrency(point?.startingPot ?? 0)}
                           </div>
                         </div>
                       );
@@ -1154,29 +1149,22 @@ export const PensionForecasterCard: FC<PensionForecasterCardProps> = ({
                 />
                 <Legend height={36} verticalAlign="top" />
                 <Area
-                  dataKey="startingPot"
-                  fill="url(#colorStartingPot)"
-                  name="Starting Pot"
-                  stackId="1"
-                  stroke="#8b5cf6"
-                  strokeWidth={1.5}
-                  type="monotone"
-                />
-                <Area
                   dataKey="totalContribs"
                   fill="url(#colorContribs)"
-                  name="Cumulative Contributions"
+                  name="Cumulative Contributions (Projected)"
                   stackId="1"
                   stroke="#6363f1"
+                  strokeDasharray="5 5"
                   strokeWidth={2}
                   type="monotone"
                 />
                 <Area
                   dataKey="growth"
                   fill="url(#colorGrowth)"
-                  name="Compound Investment Growth"
+                  name="Compound Investment Growth (Projected)"
                   stackId="1"
                   stroke="#10b981"
+                  strokeDasharray="5 5"
                   strokeWidth={2.5}
                   type="monotone"
                 />

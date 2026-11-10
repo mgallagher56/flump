@@ -50,19 +50,21 @@ const cardStyle = (isMobile?: boolean) =>
     boxShadow: "card",
   });
 
-const iconWrapperStyle = (bg: string, color: string) =>
-  css({
-    width: "40px",
-    height: "40px",
-    borderRadius: "lg",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: bg,
-    color: color,
-    fontSize: "18px",
-    flexShrink: 0,
-  });
+const iconWrapperStyle = css({
+  width: "36px",
+  height: "36px",
+  borderRadius: "lg",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  backgroundColor: "surface.sunken",
+  color: "text.primary",
+  fontSize: "16px",
+  flexShrink: 0,
+  borderWidth: "1px",
+  borderStyle: "solid",
+  borderColor: "border.subtle",
+});
 
 export const PensionSummaryCards: FC<PensionSummaryCardsProps> = ({
   totalValue,
@@ -97,12 +99,12 @@ export const PensionSummaryCards: FC<PensionSummaryCardsProps> = ({
           <FLPText color="text.muted" fontSize="xs" fontWeight="semibold" textTransform="uppercase">
             Total Pension Wealth
           </FLPText>
-          <div className={iconWrapperStyle("rgba(139, 92, 246, 0.12)", "#8b5cf6")}>
+          <div className={iconWrapperStyle}>
             <FaPiggyBank />
           </div>
         </div>
         <div>
-          <FLPHeading as="h3" isMobile={isMobileVariant} size="lg" style={{ color: "#8b5cf6" }}>
+          <FLPHeading as="h3" className="tabular-nums" isMobile={isMobileVariant} size="lg">
             {formatCurrency(totalValue)}
           </FLPHeading>
           <FLPText color="text.muted" fontSize="xs" style={{ marginTop: "4px" }}>
@@ -120,12 +122,12 @@ export const PensionSummaryCards: FC<PensionSummaryCardsProps> = ({
           <FLPText color="text.muted" fontSize="xs" fontWeight="semibold" textTransform="uppercase">
             Total Monthly Inflow
           </FLPText>
-          <div className={iconWrapperStyle("rgba(16, 185, 129, 0.12)", "#10b981")}>
+          <div className={iconWrapperStyle}>
             <FaCoins />
           </div>
         </div>
         <div>
-          <FLPHeading as="h3" isMobile={isMobileVariant} size="lg" style={{ color: "#10b981" }}>
+          <FLPHeading as="h3" className="tabular-nums" isMobile={isMobileVariant} size="lg">
             {formatCurrency(totalMonthlyContrib)}
             <span
               style={{ fontSize: "14px", fontWeight: "normal", color: "var(--colors-text-muted)" }}
@@ -150,12 +152,12 @@ export const PensionSummaryCards: FC<PensionSummaryCardsProps> = ({
           <FLPText color="text.muted" fontSize="xs" fontWeight="semibold" textTransform="uppercase">
             Employee ({employeePercent.toFixed(1)}%)
           </FLPText>
-          <div className={iconWrapperStyle("rgba(99, 99, 241, 0.12)", "#6363f1")}>
+          <div className={iconWrapperStyle}>
             <FaUser />
           </div>
         </div>
         <div>
-          <FLPHeading as="h3" isMobile={isMobileVariant} size="lg">
+          <FLPHeading as="h3" className="tabular-nums" isMobile={isMobileVariant} size="lg">
             {formatCurrency(monthlyEmployeeContrib)}
             <span
               style={{ fontSize: "14px", fontWeight: "normal", color: "var(--colors-text-muted)" }}
@@ -177,12 +179,12 @@ export const PensionSummaryCards: FC<PensionSummaryCardsProps> = ({
           <FLPText color="text.muted" fontSize="xs" fontWeight="semibold" textTransform="uppercase">
             Employer ({employerPercent.toFixed(1)}%)
           </FLPText>
-          <div className={iconWrapperStyle("rgba(245, 158, 11, 0.12)", "#f59e0b")}>
+          <div className={iconWrapperStyle}>
             <FaBuilding />
           </div>
         </div>
         <div>
-          <FLPHeading as="h3" isMobile={isMobileVariant} size="lg">
+          <FLPHeading as="h3" className="tabular-nums" isMobile={isMobileVariant} size="lg">
             {formatCurrency(monthlyEmployerContrib)}
             <span
               style={{ fontSize: "14px", fontWeight: "normal", color: "var(--colors-text-muted)" }}

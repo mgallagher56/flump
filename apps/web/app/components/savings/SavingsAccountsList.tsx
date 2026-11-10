@@ -438,8 +438,8 @@ export const SavingsAccountsList: FC<SavingsAccountsListProps> = ({
                   <th className={thStyle} style={{ textAlign: "right" }}>
                     Monthly savings
                   </th>
-                  <th className={thStyle} style={{ textAlign: "right" }}>
-                    Estimated annual interest
+                  <th className={thStyle} style={{ textAlign: "right", whiteSpace: "nowrap" }}>
+                    Est. annual interest
                   </th>
                   <th className={thStyle} style={{ textAlign: "center", width: "110px" }}>
                     Actions

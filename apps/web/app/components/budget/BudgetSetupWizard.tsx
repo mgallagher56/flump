@@ -7,6 +7,7 @@ import {
   FaPiggyBank,
   FaPlus,
   FaRegCircle,
+  FaRocket,
   FaTrash,
 } from "react-icons/fa";
 import { Link } from "react-router";
@@ -31,9 +32,18 @@ interface BudgetSetupWizardProps {
   monthlyTakeHome: number | null;
 }
 
-type WizardStep = "welcome" | "income" | "housing" | "bills" | "expenses" | "savings" | "summary";
+type WizardStep =
+  | "welcome"
+  | "defaults"
+  | "income"
+  | "housing"
+  | "bills"
+  | "expenses"
+  | "savings"
+  | "summary";
 const STEPS: WizardStep[] = [
   "welcome",
+  "defaults",
   "income",
   "housing",
   "bills",
@@ -44,6 +54,7 @@ const STEPS: WizardStep[] = [
 
 const STEP_LABELS: Record<WizardStep, string> = {
   welcome: "Welcome",
+  defaults: "Defaults",
   income: "Income",
   housing: "Housing",
   bills: "Bills",
@@ -55,6 +66,7 @@ const STEP_LABELS: Record<WizardStep, string> = {
 const STEP_DESCRIPTIONS: Record<WizardStep, string> = {
   welcome:
     "Set up your monthly budget to understand where your money goes and how long your runway is.",
+  defaults: "Choose whether to start with standard UK budget defaults or build from scratch.",
   income: "Enter your take-home pay and any other income sources.",
   housing: "Rent, mortgage, insurance — your home costs.",
   bills: "Gas, electricity, water, council tax, broadband.",
@@ -550,13 +562,21 @@ const BudgetSetupWizard: FC<BudgetSetupWizardProps> = ({
 
       {/* Content */}
       <div
-        className={css({ padding: "32px", display: "flex", flexDirection: "column", gap: "24px" })}
+        className={css({
+          padding: "32px",
+          display: "flex",
+          flexDirection: "column",
+          gap: "24px",
+          minHeight: { base: "380px", md: "440px" },
+        })}
       >
         <div>
           <FLPHeading as="h2" size="lg" style={{ marginBottom: "6px" }}>
             {currentStep === "welcome"
               ? "Welcome to Budget Setup"
-              : `${CATEGORY_ICONS[currentStep as BudgetEntry["category"]] ?? "📋"} ${STEP_LABELS[currentStep]}`}
+              : currentStep === "defaults"
+                ? "✨ Suggested Defaults Template"
+                : `${CATEGORY_ICONS[currentStep as BudgetEntry["category"]] ?? "📋"} ${STEP_LABELS[currentStep]}`}
           </FLPHeading>
           <FLPText color="text.muted" fontSize="sm">
             {STEP_DESCRIPTIONS[currentStep]}
@@ -587,6 +607,168 @@ const BudgetSetupWizard: FC<BudgetSetupWizardProps> = ({
                 <FLPText fontSize="sm">{point}</FLPText>
               </div>
             ))}
+          </div>
+        )}
+
+        {currentStep === "defaults" && (
+          <div
+            className={css({
+              display: "grid",
+              gridTemplateColumns: { base: "1fr", md: "1fr 1fr" },
+              gap: "16px",
+            })}
+          >
+            <div
+              className={css({
+                padding: "20px",
+                borderRadius: "xl",
+                border: "2px solid",
+                borderColor: "primary",
+                backgroundColor: "rgba(99, 99, 241, 0.05)",
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "space-between",
+                gap: "16px",
+              })}
+            >
+              <div>
+                <div
+                  style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}
+                >
+                  <FaRocket style={{ color: "var(--colors-primary)" }} />
+                  <FLPHeading as="h3" size="sm">
+                    Standard UK Budget Template
+                  </FLPHeading>
+                </div>
+                <FLPText color="text.muted" fontSize="xs" style={{ lineHeight: "1.6" }}>
+                  Pre-fills common UK baseline expenses: Rent/Mortgage (£1,200), Council Tax (£160),
+                  Gas & Electric (£150), Water (£40), Broadband (£35), and Groceries (£350). You can
+                  customize every number in subsequent steps.
+                </FLPText>
+              </div>
+              <FLPButton
+                type="button"
+                variant="primary"
+                disabled={saving}
+                onClick={async () => {
+                  setSaving(true);
+                  try {
+                    const defaultItems: Array<
+                      Omit<BudgetEntry, "id" | "userId" | "createdAt" | "updatedAt">
+                    > = [
+                      {
+                        name: "Rent / Mortgage",
+                        amount: 1200,
+                        category: "housing",
+                        frequency: "monthly",
+                        isIncome: false,
+                        isPrimaryIncome: false,
+                        isEssential: true,
+                        notes: null,
+                        isDefault: true,
+                      },
+                      {
+                        name: "Council Tax",
+                        amount: 160,
+                        category: "bills",
+                        frequency: "monthly",
+                        isIncome: false,
+                        isPrimaryIncome: false,
+                        isEssential: true,
+                        notes: null,
+                        isDefault: true,
+                      },
+                      {
+                        name: "Gas & Electricity",
+                        amount: 150,
+                        category: "bills",
+                        frequency: "monthly",
+                        isIncome: false,
+                        isPrimaryIncome: false,
+                        isEssential: true,
+                        notes: null,
+                        isDefault: true,
+                      },
+                      {
+                        name: "Water",
+                        amount: 40,
+                        category: "bills",
+                        frequency: "monthly",
+                        isIncome: false,
+                        isPrimaryIncome: false,
+                        isEssential: true,
+                        notes: null,
+                        isDefault: true,
+                      },
+                      {
+                        name: "Broadband",
+                        amount: 35,
+                        category: "bills",
+                        frequency: "monthly",
+                        isIncome: false,
+                        isPrimaryIncome: false,
+                        isEssential: false,
+                        notes: null,
+                        isDefault: true,
+                      },
+                      {
+                        name: "Groceries",
+                        amount: 350,
+                        category: "expenses",
+                        frequency: "monthly",
+                        isIncome: false,
+                        isPrimaryIncome: false,
+                        isEssential: true,
+                        notes: null,
+                        isDefault: true,
+                      },
+                    ];
+                    for (const item of defaultItems) {
+                      await onAddEntry(item);
+                    }
+                    saveAllAndProceed();
+                  } catch (err) {
+                    console.error(err);
+                  } finally {
+                    setSaving(false);
+                  }
+                }}
+              >
+                {saving ? "Adding..." : "Use suggested defaults →"}
+              </FLPButton>
+            </div>
+
+            <div
+              className={css({
+                padding: "20px",
+                borderRadius: "xl",
+                border: "1px solid",
+                borderColor: "border",
+                backgroundColor: "surface",
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "space-between",
+                gap: "16px",
+              })}
+            >
+              <div>
+                <div
+                  style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}
+                >
+                  <FaRegCircle style={{ color: "var(--colors-text-muted)" }} />
+                  <FLPHeading as="h3" size="sm">
+                    Start From Scratch
+                  </FLPHeading>
+                </div>
+                <FLPText color="text.muted" fontSize="xs" style={{ lineHeight: "1.6" }}>
+                  Begin with a completely blank canvas and manually enter only the categories and
+                  transactions that apply to you.
+                </FLPText>
+              </div>
+              <FLPButton type="button" variant="outline" onClick={saveAllAndProceed}>
+                Start blank →
+              </FLPButton>
+            </div>
           </div>
         )}
 

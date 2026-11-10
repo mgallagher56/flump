@@ -178,7 +178,7 @@ export const ForecastWidget: FC<ForecastWidgetProps> = ({
             </FLPText>
             <FLPHeading
               as="h2"
-              color="blue.500"
+              color="text.primary"
               className={css({
                 fontSize: { base: "lg", sm: "xl", md: "2xl" },
                 lineHeight: "tight",
@@ -209,8 +209,9 @@ export const ForecastWidget: FC<ForecastWidgetProps> = ({
               alignItems: "center",
               padding: { base: "6px 10px", md: "10px 14px" },
               borderRadius: "lg",
-              backgroundColor: "rgba(99, 99, 241, 0.05)",
-              border: "1px solid rgba(99, 99, 241, 0.15)",
+              backgroundColor: "surface.sunken",
+              border: "1px solid",
+              borderColor: "border.subtle",
               fontSize: { base: "10px", md: "xs" },
               gap: "6px",
             })}

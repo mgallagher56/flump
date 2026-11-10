@@ -58,8 +58,12 @@ describe("BudgetSetupWizard", () => {
 
     expect(screen.getByText("Welcome to Budget Setup")).toBeDefined();
 
-    // Click Next to go to Income step
+    // Click Next to go to Defaults step
     fireEvent.click(screen.getByRole("button", { name: /next/i }));
+    expect(await screen.findByText(/suggested defaults template/i)).toBeDefined();
+
+    // Click Start blank to go to Income step
+    fireEvent.click(screen.getByRole("button", { name: /start blank/i }));
 
     expect(await screen.findByText("Salary")).toBeDefined();
     expect(screen.getByText("Add Income item")).toBeDefined();
@@ -84,8 +88,9 @@ describe("BudgetSetupWizard", () => {
       />,
     );
 
-    // Advance to Income step
+    // Advance through Defaults to Income step
     fireEvent.click(screen.getByRole("button", { name: /next/i }));
+    fireEvent.click(await screen.findByRole("button", { name: /start blank/i }));
     await screen.findByText("Salary");
 
     // Click the delete button for Salary
@@ -116,8 +121,9 @@ describe("BudgetSetupWizard", () => {
       />,
     );
 
-    // Advance to Income step
+    // Advance through Defaults to Income step
     fireEvent.click(screen.getByRole("button", { name: /next/i }));
+    fireEvent.click(await screen.findByRole("button", { name: /start blank/i }));
     await screen.findByText("Salary");
 
     // Click Add item button
@@ -141,6 +147,35 @@ describe("BudgetSetupWizard", () => {
           amount: 500,
           isIncome: true,
         }),
+      );
+    });
+  });
+
+  it("allows applying suggested defaults from the defaults step", async () => {
+    const onAddEntry = vi.fn().mockResolvedValue(undefined);
+
+    render(
+      <BudgetSetupWizard
+        entries={[]}
+        monthlyTakeHome={2500}
+        onAddEntry={onAddEntry}
+        onCancel={vi.fn()}
+        onComplete={vi.fn()}
+        onDeleteEntry={vi.fn()}
+        onUpdateEntry={vi.fn()}
+      />,
+    );
+
+    // Advance to Defaults step
+    fireEvent.click(screen.getByRole("button", { name: /next/i }));
+    const useDefaultsBtn = await screen.findByRole("button", {
+      name: /use suggested defaults/i,
+    });
+    fireEvent.click(useDefaultsBtn);
+
+    await waitFor(() => {
+      expect(onAddEntry).toHaveBeenCalledWith(
+        expect.objectContaining({ name: "Rent / Mortgage", amount: 1200 }),
       );
     });
   });

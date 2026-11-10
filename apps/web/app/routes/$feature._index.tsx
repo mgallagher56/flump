@@ -10,6 +10,7 @@ const LEGACY_REDIRECTS: Record<string, string> = {
   onboarding: "/app/onboarding",
   pension: "/app/pension",
   profile: "/app/profile",
+  savings: "/app/savings",
   tax: "/app/tax",
 };
 

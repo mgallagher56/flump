@@ -13,7 +13,6 @@ import {
   FaWallet,
 } from "react-icons/fa";
 import { useLoaderData, useSearchParams } from "react-router";
-import BankConnectionsList from "~/components/accounts/BankConnectionsList";
 import MonthlyBalanceCheckInDrawer from "~/components/accounts/MonthlyBalanceCheckInDrawer";
 import AccountsCard from "~/components/core/cards/AccountsCard";
 import FLPCard from "~/components/core/cards/FLPCard";
@@ -24,11 +23,11 @@ import FLPHeading from "~/components/core/typography/FLPHeading";
 import FLPText from "~/components/core/typography/FLPText";
 import AddEditAccountsDialogBtn from "~/components/dialogs/addEditAccountsDialog/AddEditAccountsDialog";
 import AnnualAllowancePill from "~/components/savings/AnnualAllowancePill";
-import SavingsForecasterCard from "~/components/savings/SavingsForecasterCard";
 import type { Account } from "~/containers/accounts/types";
 import { AccountTypeEnum, isAccountTypeValid } from "~/containers/accounts/utils";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
 import type { loader } from "~/routes/app.accounts._index";
+import { useFinancialBaseline } from "~/state/baseline.store";
 import { isFutureMonth, monthYearSort } from "~/utils/accounts";
 import { currentMonth, currentYear } from "~/utils/utils";
 
@@ -40,6 +39,12 @@ const AccountsContainer: FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const initialTab = searchParams.get("tab") || "all";
   const [activeTab, setActiveTab] = useState(initialTab);
+
+  const { baseline } = useFinancialBaseline();
+  const dynamicSavingsContribution =
+    baseline.annualGrossSalary > 0
+      ? Math.max(150, Math.round((baseline.annualGrossSalary * 0.1) / 12))
+      : 250;
 
   const {
     accounts = [],
@@ -197,15 +202,15 @@ const AccountsContainer: FC = () => {
     justifyContent: "space-between",
     flexWrap: "wrap",
     gap: "16px",
-    marginTop: "8px",
-    marginBottom: "24px",
+    marginTop: "16px",
+    marginBottom: "8px",
   });
 
   const kpiGridStyle = css({
     display: "grid",
-    gridTemplateColumns: { base: "1fr", md: "repeat(3, 1fr)" },
-    gap: "20px",
-    marginBottom: "28px",
+    gridTemplateColumns: { base: "1fr", sm: "repeat(2, 1fr)", lg: "repeat(4, 1fr)" },
+    gap: "16px",
+    marginBottom: "20px",
   });
 
   const kpiCardStyle = css({
@@ -322,7 +327,7 @@ const AccountsContainer: FC = () => {
       {/* Standard Institutional Page Header */}
       <div className={pageHeaderStyle}>
         <div>
-          <FLPHeading as="h1" color="text.primary" size="xl">
+          <FLPHeading as="h1" color="text.primary" size="2xl">
             {t("accounts")}
           </FLPHeading>
           <FLPText color="text.muted" fontSize="sm" style={{ marginTop: "4px" }}>
@@ -338,174 +343,242 @@ const AccountsContainer: FC = () => {
         </div>
       </div>
 
-      {/* 3-Second Top KPI Summary Row: Net Worth, Liquid Cash & Yield, and ISA Allowance */}
-      {accounts.length > 0 && (
-        <>
-          <div className={kpiGridStyle}>
-            {/* Total Net Worth */}
-            <div className={kpiCardStyle}>
-              <StatMetric
-                delta={{
-                  text: stats.netWorth >= 0 ? "Surplus" : "Deficit",
-                  variant: stats.netWorth >= 0 ? "positive" : "negative",
-                }}
-                label="Total net worth"
-                subtext={
-                  <span>
-                    Assets: <strong>{formatCurrency(stats.assets)}</strong> • Liabilities:{" "}
-                    <strong>{formatCurrency(stats.liabilities)}</strong>
-                  </span>
-                }
-                tone={stats.netWorth >= 0 ? "positive" : "negative"}
-                value={formatCurrency(stats.netWorth)}
-              />
-            </div>
-
-            {/* Liquid Cash & Savings */}
-            <div className={kpiCardStyle}>
-              <StatMetric
-                delta={{
-                  text: stats.weightedAvgApy > 0 ? `${stats.weightedAvgApy}% AER` : "0.0% AER",
-                  variant: "positive",
-                }}
-                label="Liquid cash and savings"
-                subtext="Instant emergency reserve and checking liquidity"
-                tone="neutral"
-                value={formatCurrency(stats.liquidCash)}
-              />
-            </div>
-
-            {/* UK ISA Allowance Pill Card */}
-            <div style={{ height: "100%" }}>
-              <AnnualAllowancePill
-                currentAmount={stats.isaUsed}
-                taxBand="higher"
-                totalLimit={20000}
-                type="isa"
-              />
-            </div>
-          </div>
-
-          {/* Asset Allocation Preview Bar */}
-          {allocationSegments.length > 0 && (
-            <div
-              className={css({
-                backgroundColor: "surface",
-                borderWidth: "1px",
-                borderStyle: "solid",
-                borderColor: "border.subtle",
-                borderRadius: "xl",
-                padding: { base: "16px", md: "20px" },
-                marginBottom: "32px",
-                boxShadow: "card",
-              })}
-            >
-              <div
-                className={css({
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  marginBottom: "10px",
-                })}
-              >
-                <span
-                  className={css({
-                    fontSize: "xs",
-                    fontWeight: "medium",
-                    color: "text.muted",
-                  })}
-                >
-                  Asset allocation preview
-                </span>
-                <span
-                  className={css({
-                    fontSize: "xs",
-                    color: "text.muted",
-                    fontVariantNumeric: "tabular-nums",
-                  })}
-                >
-                  Total Assets: {formatCurrency(stats.assets)}
-                </span>
-              </div>
-
-              {/* Sunken well progress track */}
-              <div
-                className={css({
-                  display: "flex",
-                  height: "8px",
-                  width: "100%",
-                  borderRadius: "full",
-                  overflow: "hidden",
-                  backgroundColor: "surface.sunken",
-                  borderWidth: "1px",
-                  borderStyle: "solid",
-                  borderColor: "border.subtle",
-                  marginBottom: "14px",
-                })}
-              >
-                {allocationSegments.map((seg) => (
-                  <div
-                    key={seg.type}
-                    style={{
-                      width: `${seg.percentage}%`,
-                      backgroundColor: seg.color,
-                      height: "100%",
-                    }}
-                  />
-                ))}
-              </div>
-
-              {/* Refined Legend with tabular numbers */}
-              <div className={css({ display: "flex", flexWrap: "wrap", gap: "16px" })}>
-                {allocationSegments.map((seg) => (
-                  <div
-                    key={seg.type}
-                    className={css({ display: "flex", alignItems: "center", gap: "6px" })}
-                  >
-                    <div
-                      style={{
-                        width: "8px",
-                        height: "8px",
-                        borderRadius: "50%",
-                        backgroundColor: seg.color,
-                        flexShrink: 0,
-                      }}
-                    />
-                    <span
-                      className={css({
-                        fontSize: "xs",
-                        fontWeight: "medium",
-                        color: "text.primary",
-                      })}
-                    >
-                      {seg.type}
-                    </span>
-                    <span
-                      className={css({
-                        fontSize: "xs",
-                        color: "text.muted",
-                        fontVariantNumeric: "tabular-nums",
-                      })}
-                    >
-                      ({Math.round(seg.percentage)}%)
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-        </>
-      )}
-
-      {/* Primary Workspace: Category Tabs & Bento Cards */}
+      {/* Primary Workspace: 2 Tabs - Overview & All Accounts */}
       <div className={css({ marginTop: "24px" })}>
         <FLPTabs
+          variant="segmented"
           data={[
             {
-              value: "all",
-              label: "All accounts",
+              value: "overview",
+              label: "Overview",
               children: (
-                <FLPBox display="flex" flexDirection="column" gap={8} mt={4}>
+                <FLPBox display="flex" flexDirection="column" gap={6} mt={4}>
+                  {accounts.length > 0 ? (
+                    <>
+                      {/* 3-Second Top KPI Summary Row */}
+                      <div className={kpiGridStyle}>
+                        {/* Total Net Worth */}
+                        <div className={kpiCardStyle}>
+                          <StatMetric
+                            delta={{
+                              text: stats.netWorth >= 0 ? "Surplus" : "Deficit",
+                              variant: stats.netWorth >= 0 ? "positive" : "negative",
+                            }}
+                            label="Total net worth"
+                            subtext={
+                              <span>
+                                Assets: <strong>{formatCurrency(stats.assets)}</strong> •
+                                Liabilities: <strong>{formatCurrency(stats.liabilities)}</strong>
+                              </span>
+                            }
+                            tone={stats.netWorth >= 0 ? "positive" : "negative"}
+                            value={formatCurrency(stats.netWorth)}
+                          />
+                        </div>
+
+                        {/* Total Assets */}
+                        <div className={kpiCardStyle}>
+                          <StatMetric
+                            delta={{
+                              text: `${allocationSegments.length} categories`,
+                              variant: "neutral",
+                            }}
+                            label="Total assets"
+                            subtext="Cash, savings, investments & pensions"
+                            tone="positive"
+                            value={formatCurrency(stats.assets)}
+                          />
+                        </div>
+
+                        {/* Total Liabilities */}
+                        <div className={kpiCardStyle}>
+                          <StatMetric
+                            delta={{
+                              text: stats.liabilities > 0 ? "Active debt" : "Debt-free",
+                              variant: stats.liabilities > 0 ? "negative" : "positive",
+                            }}
+                            label="Total liabilities"
+                            subtext="Mortgages, credit cards, loans & overdrafts"
+                            tone={stats.liabilities > 0 ? "negative" : "neutral"}
+                            value={formatCurrency(stats.liabilities)}
+                          />
+                        </div>
+
+                        {/* Liquid Cash & Savings */}
+                        <div className={kpiCardStyle}>
+                          <StatMetric
+                            delta={{
+                              text:
+                                stats.weightedAvgApy > 0
+                                  ? `${stats.weightedAvgApy}% AER`
+                                  : "0.0% AER",
+                              variant: "positive",
+                            }}
+                            label="Liquid cash & savings"
+                            subtext="Instant emergency reserve and checking liquidity"
+                            tone="neutral"
+                            value={formatCurrency(stats.liquidCash)}
+                          />
+                        </div>
+                      </div>
+
+                      {/* UK ISA Allowance Strip */}
+                      <div>
+                        <AnnualAllowancePill
+                          contributingAccounts={accounts
+                            .filter(
+                              (acc) =>
+                                acc.name.toLowerCase().includes("isa") || acc.type === INVESTMENT,
+                            )
+                            .map((acc) => ({
+                              name: acc.name,
+                              balance: Number(acc.balance) || 0,
+                            }))}
+                          currentAmount={stats.isaUsed}
+                          taxBand="higher"
+                          totalLimit={20000}
+                          type="isa"
+                        />
+                      </div>
+
+                      {/* Asset Allocation Preview Bar */}
+                      {allocationSegments.length > 0 && (
+                        <div
+                          className={css({
+                            backgroundColor: "surface",
+                            borderWidth: "1px",
+                            borderStyle: "solid",
+                            borderColor: "border.subtle",
+                            borderRadius: "xl",
+                            padding: { base: "16px", md: "20px" },
+                            boxShadow: "card",
+                          })}
+                        >
+                          <div
+                            className={css({
+                              display: "flex",
+                              justifyContent: "space-between",
+                              alignItems: "center",
+                              marginBottom: "10px",
+                            })}
+                          >
+                            <span
+                              className={css({
+                                fontSize: "xs",
+                                fontWeight: "medium",
+                                color: "text.muted",
+                              })}
+                            >
+                              Asset allocation preview
+                            </span>
+                            <span
+                              className={css({
+                                fontSize: "xs",
+                                color: "text.muted",
+                                fontVariantNumeric: "tabular-nums",
+                              })}
+                            >
+                              Total Assets: {formatCurrency(stats.assets)}
+                            </span>
+                          </div>
+
+                          {/* Sunken well progress track */}
+                          <div
+                            className={css({
+                              display: "flex",
+                              height: "8px",
+                              width: "100%",
+                              borderRadius: "full",
+                              overflow: "hidden",
+                              backgroundColor: "surface.sunken",
+                              borderWidth: "1px",
+                              borderStyle: "solid",
+                              borderColor: "border.subtle",
+                              marginBottom: "14px",
+                            })}
+                          >
+                            {allocationSegments.map((seg) => (
+                              <div
+                                key={seg.type}
+                                style={{
+                                  width: `${seg.percentage}%`,
+                                  backgroundColor: seg.color,
+                                  height: "100%",
+                                }}
+                              />
+                            ))}
+                          </div>
+
+                          {/* Refined Legend with tabular numbers */}
+                          <div className={css({ display: "flex", flexWrap: "wrap", gap: "16px" })}>
+                            {allocationSegments.map((seg) => (
+                              <div
+                                key={seg.type}
+                                className={css({
+                                  display: "flex",
+                                  alignItems: "center",
+                                  gap: "6px",
+                                })}
+                              >
+                                <div
+                                  style={{
+                                    width: "8px",
+                                    height: "8px",
+                                    borderRadius: "50%",
+                                    backgroundColor: seg.color,
+                                    flexShrink: 0,
+                                  }}
+                                />
+                                <span
+                                  className={css({
+                                    fontSize: "xs",
+                                    fontWeight: "medium",
+                                    color: "text.primary",
+                                  })}
+                                >
+                                  {seg.type}
+                                </span>
+                                <span
+                                  className={css({
+                                    fontSize: "xs",
+                                    color: "text.muted",
+                                    fontVariantNumeric: "tabular-nums",
+                                  })}
+                                >
+                                  ({Math.round(seg.percentage)}%)
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <div
+                      className={css({
+                        padding: "48px 24px",
+                        textAlign: "center",
+                        color: "text.muted",
+                        backgroundColor: "surface.sunken",
+                        borderRadius: "xl",
+                        borderWidth: "1px",
+                        borderStyle: "dashed",
+                        borderColor: "border.subtle",
+                        fontSize: "sm",
+                      })}
+                    >
+                      No accounts added yet. Click &quot;Add Account&quot; to begin tracking your
+                      portfolio.
+                    </div>
+                  )}
+                </FLPBox>
+              ),
+            },
+            {
+              value: "all-accounts",
+              label: "All Accounts",
+              children: (
+                <FLPBox display="flex" flexDirection="column" gap={6} mt={4}>
                   {renderAccountsForTypes([
                     CURRENT,
                     SAVING,
@@ -519,68 +592,8 @@ const AccountsContainer: FC = () => {
                 </FLPBox>
               ),
             },
-            {
-              value: "cash-current",
-              label: "Cash & current",
-              children: (
-                <FLPBox display="flex" flexDirection="column" gap={8} mt={4}>
-                  {renderAccountsForTypes([CURRENT])}
-                </FLPBox>
-              ),
-            },
-            {
-              value: "savings-yield",
-              label: "Savings & ISAs",
-              children: (
-                <FLPBox display="flex" flexDirection="column" gap={8} mt={4}>
-                  <SavingsForecasterCard
-                    accounts={accounts}
-                    monthlyContribution={200}
-                    portfolioInterestRate={stats.weightedAvgApy || 4.5}
-                    startingBalance={stats.liquidCash}
-                  />
-                  {renderAccountsForTypes([SAVING])}
-                </FLPBox>
-              ),
-            },
-            {
-              value: "investments-pensions",
-              label: "Investments & pensions",
-              children: (
-                <FLPBox display="flex" flexDirection="column" gap={8} mt={4}>
-                  {renderAccountsForTypes([INVESTMENT, PENSION])}
-                </FLPBox>
-              ),
-            },
-            {
-              value: "credit-debt",
-              label: "Credit & debt",
-              children: (
-                <FLPBox display="flex" flexDirection="column" gap={8} mt={4}>
-                  {renderAccountsForTypes([CREDIT_CARD, LOAN, OWED])}
-                </FLPBox>
-              ),
-            },
-            {
-              value: "mortgages",
-              label: "Mortgages",
-              children: (
-                <FLPBox display="flex" flexDirection="column" gap={8} mt={4}>
-                  {renderAccountsForTypes([MORTGAGE])}
-                </FLPBox>
-              ),
-            },
-            {
-              value: "bank-connections",
-              label: "Open banking connections",
-              children: (
-                <div style={{ marginTop: "16px" }}>
-                  <BankConnectionsList connections={bankConnections} />
-                </div>
-              ),
-            },
           ]}
-          value={activeTab}
+          value={activeTab === "all-accounts" || activeTab === "all" ? "all-accounts" : "overview"}
           onValueChange={handleTabChange}
         />
       </div>

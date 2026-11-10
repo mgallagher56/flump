@@ -107,6 +107,21 @@ export const action = async (args: ActionFunctionArgs) => {
         },
       });
       if (!res.ok) throw new Error("Failed to delete tax record");
+    } else if (intent === "delete-tax-year") {
+      const recordIdsJson = formData.get("recordIds") as string | null;
+      if (recordIdsJson) {
+        const recordIds: string[] = JSON.parse(recordIdsJson);
+        await Promise.all(
+          recordIds.map((id) =>
+            fetch(`${apiUrl}/tax-records/${id}`, {
+              method: "DELETE",
+              headers: {
+                Authorization: `Bearer ${accessToken || "mock-session-token"}`,
+              },
+            }),
+          ),
+        );
+      }
     } else if (intent === "bulk-create-transactions") {
       const recordsJson = formData.get("records") as string;
       const capPreviousJson = formData.get("capPreviousRecordIds") as string | null;
