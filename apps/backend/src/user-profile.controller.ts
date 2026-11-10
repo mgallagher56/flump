@@ -1,14 +1,5 @@
-import {
-  BadRequestException,
-  Body,
-  Controller,
-  Get,
-  Patch,
-  Post,
-  Req,
-  UseGuards,
-} from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
+import { Body, Controller, Get, Optional, Patch, Post, Req, UseGuards } from "@nestjs/common";
+import type { ConfigService } from "@nestjs/config";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
 import { AuthGuard } from "./auth/auth.guard";
@@ -27,21 +18,18 @@ export class UserProfileController {
   private readonly userProfileService: UserProfileService;
 
   constructor(
-    @InjectRepository(UserProfile)
-    userProfileRepositoryOrService: Repository<UserProfile> | UserProfileService,
-    @InjectRepository(Account)
-    accountRepository?: Repository<Account>,
-    @InjectRepository(Transaction)
-    transactionRepository?: Repository<Transaction>,
+    userProfileRepositoryOrService: UserProfileService | Repository<UserProfile>,
+    @Optional() @InjectRepository(Account) accountRepository?: Repository<Account>,
+    @Optional() @InjectRepository(Transaction) transactionRepository?: Repository<Transaction>,
+    @Optional()
     @InjectRepository(AccountDetail)
     accountDetailRepository?: Repository<AccountDetail>,
+    @Optional()
     @InjectRepository(BankConnection)
     bankConnectionRepository?: Repository<BankConnection>,
-    @InjectRepository(BudgetEntry)
-    budgetEntryRepository?: Repository<BudgetEntry>,
-    @InjectRepository(TaxRecord)
-    taxRecordRepository?: Repository<TaxRecord>,
-    configService?: ConfigService,
+    @Optional() @InjectRepository(BudgetEntry) budgetEntryRepository?: Repository<BudgetEntry>,
+    @Optional() @InjectRepository(TaxRecord) taxRecordRepository?: Repository<TaxRecord>,
+    @Optional() _configService?: ConfigService,
   ) {
     if (userProfileRepositoryOrService instanceof UserProfileService) {
       this.userProfileService = userProfileRepositoryOrService;
@@ -54,7 +42,6 @@ export class UserProfileController {
         bankConnectionRepository!,
         budgetEntryRepository!,
         taxRecordRepository!,
-        configService!,
       );
     }
   }

@@ -1,12 +1,31 @@
 import { describe, expect, it } from "vitest";
 import {
   BrowserCookieSeedAdapter,
+  clearOnboardingSeed,
   InMemoryProfileAdapter,
+  InMemoryStorageDriver,
   parseCookieValue,
+  persistOnboardingSeed,
+  readOnboardingSeed,
+  setStorageDriver,
 } from "./persistence.js";
 import type { FinancialBaseline, OnboardingSeedPayload } from "./types.js";
 
 describe("Profile Persistence", () => {
+  it("operates in pure in-memory mode via InMemoryStorageDriver without browser globals", () => {
+    const memoryDriver = new InMemoryStorageDriver();
+    setStorageDriver(memoryDriver);
+
+    const testSeed = { salary: 65000, age: 30 };
+    persistOnboardingSeed(testSeed);
+
+    const read = readOnboardingSeed();
+    expect(read).toMatchObject(testSeed);
+
+    clearOnboardingSeed();
+    expect(readOnboardingSeed()).toBeNull();
+  });
+
   it("parseCookieValue extracts named cookie", () => {
     const header = "foo=bar; flump_onboarding_seed=hello123; other=xyz";
     expect(parseCookieValue(header, "flump_onboarding_seed")).toBe("hello123");

@@ -1,8 +1,6 @@
-import { BadRequestException, Injectable } from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
+import { BadRequestException, Inject, Injectable, Optional } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { WorkOS } from "@workos-inc/node";
-import { In, Repository } from "typeorm";
+import { DataSource, In, Repository } from "typeorm";
 import { Account } from "./entities/account.entity";
 import { AccountDetail } from "./entities/account-detail.entity";
 import { BankConnection } from "./entities/bank-connection.entity";
@@ -10,9 +8,19 @@ import { BudgetEntry } from "./entities/budget-entry.entity";
 import { TaxRecord } from "./entities/tax-record.entity";
 import { Transaction } from "./entities/transaction.entity";
 import { UserProfile } from "./entities/user-profile.entity";
+import { USER_IDENTITY_ADAPTER, type UserIdentityAdapter } from "./identity/identity.adapter";
+
+export interface ProfileLifecycle {
+  getProfile(userId: string, email?: string): Promise<any>;
+  updateProfile(userId: string, body: any, email?: string): Promise<any>;
+  resetFinancialData(userId: string, email?: string): Promise<any>;
+  updatePassword(userId: string, newPassword: string): Promise<any>;
+  sendPasswordReset(email: string): Promise<any>;
+  updateChecklist(userId: string, step: string, completed: boolean): Promise<any>;
+}
 
 @Injectable()
-export class UserProfileService {
+export class UserProfileService implements ProfileLifecycle {
   constructor(
     @InjectRepository(UserProfile)
     private readonly userProfileRepository: Repository<UserProfile>,
@@ -28,7 +36,11 @@ export class UserProfileService {
     private readonly budgetEntryRepository: Repository<BudgetEntry>,
     @InjectRepository(TaxRecord)
     private readonly taxRecordRepository: Repository<TaxRecord>,
-    private readonly configService: ConfigService,
+    @Optional()
+    @Inject(USER_IDENTITY_ADAPTER)
+    private readonly identityAdapter?: UserIdentityAdapter,
+    @Optional()
+    private readonly dataSource?: DataSource,
   ) {}
 
   formatProfile(profile: UserProfile): any {
@@ -295,18 +307,16 @@ export class UserProfileService {
 
     const saved = await this.userProfileRepository.save(profile);
 
-    // Synchronize first/last name with WorkOS if API key is configured
-    const workosApiKey = this.configService.get<string>("WORKOS_API_KEY");
-    if (workosApiKey && (body.firstName !== undefined || body.lastName !== undefined)) {
+    // Synchronize first/last name with identity provider
+    if (this.identityAdapter && (body.firstName !== undefined || body.lastName !== undefined)) {
       try {
-        const workos = new WorkOS(workosApiKey);
-        await workos.userManagement.updateUser({
+        await this.identityAdapter.updateName(
           userId,
-          firstName: body.firstName !== undefined ? body.firstName : profile.firstName || undefined,
-          lastName: body.lastName !== undefined ? body.lastName : profile.lastName || undefined,
-        });
+          body.firstName !== undefined ? body.firstName : profile.firstName || undefined,
+          body.lastName !== undefined ? body.lastName : profile.lastName || undefined,
+        );
       } catch (err: any) {
-        console.warn("WorkOS name sync warning:", err?.message || err);
+        console.warn("Identity name sync warning:", err?.message || err);
       }
     }
 
@@ -317,53 +327,89 @@ export class UserProfileService {
   }
 
   async resetFinancialData(userId: string, email?: string): Promise<any> {
-    const accounts = await this.accountRepository.find({
-      where: { userId },
-      select: ["id"],
-    });
-    if (accounts.length > 0) {
-      const accountIds = accounts.map((a) => a.id);
-      await this.accountDetailRepository.delete({ accountId: In(accountIds) });
+    const performReset = async (
+      accountRepo: Repository<Account>,
+      detailRepo: Repository<AccountDetail>,
+      txRepo: Repository<Transaction>,
+      bankRepo: Repository<BankConnection>,
+      budgetRepo: Repository<BudgetEntry>,
+      taxRepo: Repository<TaxRecord>,
+      profileRepo: Repository<UserProfile>,
+    ) => {
+      const accounts = await accountRepo.find({
+        where: { userId },
+        select: ["id"],
+      });
+      if (accounts.length > 0) {
+        const accountIds = accounts.map((a) => a.id);
+        await detailRepo.delete({ accountId: In(accountIds) });
+      }
+
+      await txRepo.delete({ userId });
+      await accountRepo.delete({ userId });
+      await bankRepo.delete({ userId });
+      await budgetRepo.delete({ userId });
+      await taxRepo.delete({ userId });
+
+      let profile = await profileRepo.findOne({ where: { userId } });
+      if (!profile) {
+        profile = profileRepo.create({ userId });
+      }
+
+      profile.annualSalary = null;
+      profile.monthlyTakeHome = null;
+      profile.hasSecondIncome = false;
+      profile.secondIncomeMonthly = null;
+      profile.hasRentalIncome = false;
+      profile.rentalIncomeMonthly = null;
+      profile.hasMortgage = false;
+      profile.mortgageType = "repayment";
+      profile.propertyOwnershipShare = 100.0;
+      profile.hasBuyToLet = false;
+      profile.buyToLetCount = 1;
+      profile.buyToLetPropertyValue = null;
+      profile.buyToLetMonthlyRental = null;
+      profile.buyToLetMortgageBalance = null;
+      profile.buyToLetMortgageRate = null;
+      profile.buyToLetMortgageType = "interest-only";
+      profile.pensionPercent = 0;
+      profile.pensionEmployerPercent = 0;
+      profile.isSalarySacrifice = false;
+      profile.isSalarySacrificeEmployerNi = false;
+      profile.customBudgetCategories = [];
+      profile.monthlySavingsTarget = null;
+      profile.setupChecklistCompletedSteps = [];
+      profile.hasResetFinancialData = true;
+      profile.onboardingCompleted = false;
+
+      return await profileRepo.save(profile);
+    };
+
+    let saved: UserProfile;
+    if (this.dataSource) {
+      saved = await this.dataSource.transaction(async (manager) => {
+        return performReset(
+          manager.getRepository(Account),
+          manager.getRepository(AccountDetail),
+          manager.getRepository(Transaction),
+          manager.getRepository(BankConnection),
+          manager.getRepository(BudgetEntry),
+          manager.getRepository(TaxRecord),
+          manager.getRepository(UserProfile),
+        );
+      });
+    } else {
+      saved = await performReset(
+        this.accountRepository,
+        this.accountDetailRepository,
+        this.transactionRepository,
+        this.bankConnectionRepository,
+        this.budgetEntryRepository,
+        this.taxRecordRepository,
+        this.userProfileRepository,
+      );
     }
 
-    await this.transactionRepository.delete({ userId });
-    await this.accountRepository.delete({ userId });
-    await this.bankConnectionRepository.delete({ userId });
-    await this.budgetEntryRepository.delete({ userId });
-    await this.taxRecordRepository.delete({ userId });
-
-    let profile = await this.userProfileRepository.findOne({ where: { userId } });
-    if (!profile) {
-      profile = this.userProfileRepository.create({ userId });
-    }
-
-    profile.annualSalary = null;
-    profile.monthlyTakeHome = null;
-    profile.hasSecondIncome = false;
-    profile.secondIncomeMonthly = null;
-    profile.hasRentalIncome = false;
-    profile.rentalIncomeMonthly = null;
-    profile.hasMortgage = false;
-    profile.mortgageType = "repayment";
-    profile.propertyOwnershipShare = 100.0;
-    profile.hasBuyToLet = false;
-    profile.buyToLetCount = 1;
-    profile.buyToLetPropertyValue = null;
-    profile.buyToLetMonthlyRental = null;
-    profile.buyToLetMortgageBalance = null;
-    profile.buyToLetMortgageRate = null;
-    profile.buyToLetMortgageType = "interest-only";
-    profile.pensionPercent = 0;
-    profile.pensionEmployerPercent = 0;
-    profile.isSalarySacrifice = false;
-    profile.isSalarySacrificeEmployerNi = false;
-    profile.customBudgetCategories = [];
-    profile.monthlySavingsTarget = null;
-    profile.setupChecklistCompletedSteps = [];
-    profile.hasResetFinancialData = true;
-    profile.onboardingCompleted = false;
-
-    const saved = await this.userProfileRepository.save(profile);
     return {
       success: true,
       message: "All financial data has been reset",
@@ -428,14 +474,9 @@ export class UserProfileService {
       throw new BadRequestException("Password must be at least 8 characters");
     }
 
-    const workosApiKey = this.configService.get<string>("WORKOS_API_KEY");
-    if (workosApiKey) {
+    if (this.identityAdapter) {
       try {
-        const workos = new WorkOS(workosApiKey);
-        await workos.userManagement.updateUser({
-          userId,
-          password: newPassword,
-        });
+        await this.identityAdapter.updatePassword(userId, newPassword);
       } catch (err: any) {
         throw new BadRequestException(
           err?.message || "Failed to update password with authentication provider",
@@ -451,11 +492,9 @@ export class UserProfileService {
       throw new BadRequestException("Email is required to send password reset");
     }
 
-    const workosApiKey = this.configService.get<string>("WORKOS_API_KEY");
-    if (workosApiKey) {
+    if (this.identityAdapter) {
       try {
-        const workos = new WorkOS(workosApiKey);
-        await workos.userManagement.createPasswordReset({ email });
+        await this.identityAdapter.sendPasswordReset(email);
       } catch (err: any) {
         throw new BadRequestException(err?.message || "Failed to send password reset email");
       }

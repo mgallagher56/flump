@@ -48,4 +48,76 @@ describe("BankSyncOrchestrator", () => {
     expect(history[0]?.year).toBe(2026);
     expect(history[0]?.month).toBe(11);
   });
+
+  it("generates canonical OAuth URLs for banks", () => {
+    const monzoUrl = BankSyncOrchestrator.getOAuthUrl(
+      "monzo",
+      "http://localhost:3000/auth/callback",
+    );
+    expect(monzoUrl).toContain("https://auth.monzo.com/?client_id=");
+    expect(monzoUrl).toContain("redirect_uri=http%3A%2F%2Flocalhost%3A3000%2Fauth%2Fcallback");
+
+    const starlingUrl = BankSyncOrchestrator.getOAuthUrl(
+      "starling",
+      "http://localhost:3000/auth/callback",
+    );
+    expect(starlingUrl).toContain("https://oauth.starlingbank.com/?client_id=");
+
+    const unknown = BankSyncOrchestrator.getOAuthUrl(
+      "unknown-bank",
+      "http://localhost:3000/auth/callback",
+    );
+    expect(unknown).toBeNull();
+  });
+
+  it("detects expiring tokens accurately based on margin", () => {
+    const now = Date.now();
+    const soon = new Date(now + 60_000); // 1 minute in future
+    const distant = new Date(now + 3600_000); // 1 hour in future
+
+    expect(BankSyncOrchestrator.isTokenExpiring(soon, 300_000)).toBe(true);
+    expect(BankSyncOrchestrator.isTokenExpiring(distant, 300_000)).toBe(false);
+    expect(BankSyncOrchestrator.isTokenExpiring(null)).toBe(false);
+  });
+
+  it("orchestrates token refresh, re-encrypts tokens, and updates expiry", async () => {
+    const rawAccessToken = "old-access-token";
+    const rawRefreshToken = "old-refresh-token";
+    const encAccessToken = BankSyncOrchestrator.encryptToken(rawAccessToken);
+    const encRefreshToken = BankSyncOrchestrator.encryptToken(rawRefreshToken);
+
+    const connection = {
+      institutionId: "monzo",
+      accessToken: encAccessToken,
+      refreshToken: encRefreshToken,
+      expiresAt: new Date(Date.now() + 60_000), // expiring in 1 min
+    };
+
+    const mockExchange = async (plainRefresh: string) => {
+      expect(plainRefresh).toBe(rawRefreshToken);
+      return {
+        accessToken: "new-access-token",
+        refreshToken: "new-refresh-token",
+        expiresIn: 3600,
+      };
+    };
+
+    const result = await BankSyncOrchestrator.refreshConnectionTokensIfNeeded({
+      connection,
+      exchangeRefreshToken: mockExchange,
+      marginMs: 300_000,
+    });
+
+    expect(result.wasRefreshed).toBe(true);
+    expect(result.activeAccessToken).toBe("new-access-token");
+    expect(result.updatedEncryptedAccessToken).toBeDefined();
+    expect(BankSyncOrchestrator.decryptToken(result.updatedEncryptedAccessToken!)).toBe(
+      "new-access-token",
+    );
+    expect(result.updatedEncryptedRefreshToken).toBeDefined();
+    expect(BankSyncOrchestrator.decryptToken(result.updatedEncryptedRefreshToken!)).toBe(
+      "new-refresh-token",
+    );
+    expect(result.newExpiresAt).toBeDefined();
+  });
 });

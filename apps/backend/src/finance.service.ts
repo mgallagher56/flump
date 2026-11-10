@@ -1,8 +1,10 @@
 import { BankSyncOrchestrator } from "@flump/banking/server";
-import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
+import { PortfolioSnapshot } from "@flump/finance-engine";
+import { BadRequestException, Injectable, NotFoundException, Optional } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { InjectRepository } from "@nestjs/typeorm";
 import { In, Repository } from "typeorm";
+import { AccountIntakeService } from "./account-intake.service";
 import { Account } from "./entities/account.entity";
 import { AccountDetail } from "./entities/account-detail.entity";
 import { BankConnection } from "./entities/bank-connection.entity";
@@ -25,6 +27,8 @@ export class FinanceService {
     private readonly userProfileRepository: Repository<UserProfile>,
     private readonly providerRegistry: BankProviderRegistry,
     private readonly configService: ConfigService,
+    @Optional()
+    private readonly accountIntakeService?: AccountIntakeService,
   ) {}
 
   async getAccounts(userId: string) {
@@ -114,6 +118,10 @@ export class FinanceService {
   }
 
   async getAccount(userId: string, id: string) {
+    if (this.accountIntakeService) {
+      return this.accountIntakeService.getAccount(userId, id);
+    }
+
     const account = await this.accountRepository.findOne({
       where: { id, userId },
     });
@@ -129,6 +137,58 @@ export class FinanceService {
     return {
       ...account,
       details,
+    };
+  }
+
+  async getAccountDetails(userId: string, accountId?: string) {
+    if (this.accountIntakeService) {
+      return this.accountIntakeService.getAccountDetails(userId, accountId);
+    }
+
+    if (accountId) {
+      const account = await this.accountRepository.findOne({
+        where: { id: accountId, userId },
+      });
+      if (!account) {
+        throw new NotFoundException("Account not found");
+      }
+      return this.accountDetailRepository.find({
+        where: { accountId },
+        order: { year: "ASC", month: "ASC" },
+      });
+    }
+
+    const accounts = await this.accountRepository.find({
+      where: { userId },
+      select: ["id"],
+    });
+    if (accounts.length === 0) return [];
+    const accountIds = accounts.map((a) => a.id);
+    return this.accountDetailRepository.find({
+      where: { accountId: In(accountIds) },
+      order: { year: "ASC", month: "ASC" },
+    });
+  }
+
+  async getPortfolioSnapshot(userId: string) {
+    if (this.accountIntakeService) {
+      return this.accountIntakeService.getPortfolioSnapshot(userId);
+    }
+    const accounts = await this.getAccounts(userId);
+    const details = await this.getAccountDetails(userId);
+    const snapshot = new PortfolioSnapshot(accounts, details);
+    return {
+      netWorth: snapshot.getTotalNetWorth(),
+      totalAssets: snapshot.getTotalAssets(),
+      totalLiabilities: snapshot.getTotalLiabilities(),
+      totalLiquidCash: snapshot.getTotalLiquidCash(),
+      totalInvestments: snapshot.getTotalInvestments(),
+      totalPensions: snapshot.getTotalPensions(),
+      totalConsumerDebt: snapshot.getTotalConsumerDebt(),
+      totalMortgageBalance: snapshot.getTotalMortgageBalance(),
+      resolvedAccounts: snapshot.getResolvedAccounts(),
+      monthlyHistory: snapshot.getMonthlyHistory(),
+      currency: accounts[0]?.currency || "GBP",
     };
   }
 
@@ -311,45 +371,46 @@ export class FinanceService {
 
     if (provider && connection.accessToken) {
       try {
-        let token = BankSyncOrchestrator.decryptToken(connection.accessToken);
-
-        if (
-          connection.expiresAt &&
-          connection.expiresAt.getTime() - Date.now() < 300000 &&
-          connection.refreshToken
-        ) {
-          const refreshToken = BankSyncOrchestrator.decryptToken(connection.refreshToken);
-          const clientId = this.configService.get<string>(
-            `${connection.institutionId.toUpperCase()}_CLIENT_ID`,
-          );
-          const clientSecret = this.configService.get<string>(
-            `${connection.institutionId.toUpperCase()}_CLIENT_SECRET`,
-          );
-          const redirectUri =
-            this.configService.get<string>(
-              `${connection.institutionId.toUpperCase()}_REDIRECT_URI`,
-            ) || "http://localhost:5173/auth/callback";
-
-          if (clientId && clientSecret) {
-            const tokenRes = await provider.exchangeCode(
-              clientId,
-              clientSecret,
-              redirectUri,
-              refreshToken,
+        const refreshed = await BankSyncOrchestrator.refreshConnectionTokensIfNeeded({
+          connection,
+          exchangeRefreshToken: async (plainRefreshToken) => {
+            const clientId = this.configService.get<string>(
+              `${connection.institutionId.toUpperCase()}_CLIENT_ID`,
             );
-            token = tokenRes.accessToken;
-            connection.accessToken = BankSyncOrchestrator.encryptToken(tokenRes.accessToken);
-            if (tokenRes.refreshToken) {
-              connection.refreshToken = BankSyncOrchestrator.encryptToken(tokenRes.refreshToken);
+            const clientSecret = this.configService.get<string>(
+              `${connection.institutionId.toUpperCase()}_CLIENT_SECRET`,
+            );
+            const redirectUri =
+              this.configService.get<string>(
+                `${connection.institutionId.toUpperCase()}_REDIRECT_URI`,
+              ) || "http://localhost:5173/auth/callback";
+
+            if (!clientId || !clientSecret) {
+              throw new Error(`Missing OAuth credentials for ${connection.institutionId}`);
             }
-            if (tokenRes.expiresIn) {
-              connection.expiresAt = new Date(Date.now() + tokenRes.expiresIn * 1000);
-            }
-            await this.bankConnectionRepository.save(connection);
+
+            return provider.exchangeCode(clientId, clientSecret, redirectUri, plainRefreshToken);
+          },
+        });
+
+        if (refreshed.wasRefreshed) {
+          if (refreshed.updatedEncryptedAccessToken) {
+            connection.accessToken = refreshed.updatedEncryptedAccessToken;
           }
+          if (refreshed.updatedEncryptedRefreshToken) {
+            connection.refreshToken = refreshed.updatedEncryptedRefreshToken;
+          }
+          if (refreshed.newExpiresAt) {
+            connection.expiresAt = refreshed.newExpiresAt;
+          }
+          await this.bankConnectionRepository.save(connection);
         }
 
-        const accountsCount = await this.syncProviderAccounts(connection, userId, token);
+        const accountsCount = await this.syncProviderAccounts(
+          connection,
+          userId,
+          refreshed.activeAccessToken,
+        );
         connection.lastSyncedAt = new Date();
         connection.status = "connected";
         await this.bankConnectionRepository.save(connection);
