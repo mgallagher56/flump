@@ -1,5 +1,37 @@
 # Changelog
 
+## [1.24.0](https://github.com/mgallagher56/flump/compare/flump/web-v1.23.0...flump/web-v1.24.0) (2026-11-10)
+
+
+### Features ✨
+
+* **architecture:** resolve design system review findings, colocated directory law, and strict backend types ([4806f3a](https://github.com/mgallagher56/flump/commit/4806f3a34fb7d4eb3912913853177a46d287b0ff))
+* **banking:** enable live Open Banking for all popular banks and add Trading 212 ([bcd56d6](https://github.com/mgallagher56/flump/commit/bcd56d6da4a19f00d4afe609c60a2df26e53ebb3))
+* **banking:** remove dummy data and enable real bank connections ([a78b7de](https://github.com/mgallagher56/flump/commit/a78b7ded2d7063597497d675173900b059cba2a6))
+* **design-system:** consolidate semantic tokens, enforce colocated architecture, and configure Storybook 10 suite ([b629a1b](https://github.com/mgallagher56/flump/commit/b629a1bf0fe89ea03bfab4eedb89f7ff882f007e))
+* **marketing,web:** add MCP marketing page, homepage spotlight and in-app setup instructions ([6fc69ac](https://github.com/mgallagher56/flump/commit/6fc69ac8c278129cb92ae98fc4165cfb21d8219f))
+
+
+### Bug Fixes 🪲
+
+* **banking:** fix modal horizontal overflow and restore popular banks with live vs manual flow ([a0a7a6e](https://github.com/mgallagher56/flump/commit/a0a7a6ee08830bcc13b6e2a071928d1e74d4efa3))
+* **banking:** redirect to bank authorization portal on OAuth click ([fe87c92](https://github.com/mgallagher56/flump/commit/fe87c924dac418e32ba6f198bf08a2e110869cdd))
+* **banking:** use fetcher for bank connection actions and handle errors safely ([8f74635](https://github.com/mgallagher56/flump/commit/8f74635eaa6850c8e9aade6f7090cdca80c3282e))
+* **ci:** add @radix-ui/react-tabs to ui dependencies and fix backend account intake types ([7f996b1](https://github.com/mgallagher56/flump/commit/7f996b1f442b62ab255945438360a504f85a1114))
+* **ci:** fix lightningcss syntax error, tab trigger tests, and add mandatory CI pre-flight law ([e26f4d8](https://github.com/mgallagher56/flump/commit/e26f4d8738dd439cf1f666728bfc1e731052aa75))
+* **docker:** include banking and finance-engine package.json in Dockerfiles ([83923df](https://github.com/mgallagher56/flump/commit/83923df4d914395482137681cd7380e547839df9))
+
+
+### Refactor 🔥
+
+* **arch:** deepen modules, consolidate finance engine, and isolate banking seam ([d516793](https://github.com/mgallagher56/flump/commit/d5167938b6e343439c9bcdea944d49365162d66d))
+* **marketing:** align MCP components with colocated token laws and add agent component guidelines ([69929e3](https://github.com/mgallagher56/flump/commit/69929e3fdd9bce1908a7f62589454c1de7609439))
+
+
+### Tests 🧪
+
+* **web:** add test for AI & MCP profile tab and refine Radix tab events ([4c159aa](https://github.com/mgallagher56/flump/commit/4c159aaf0e771419d9f05cf9be8f1f069e632ae4))
+
 ## [1.23.0](https://github.com/mgallagher56/flump/compare/flump/web-v1.22.2...flump/web-v1.23.0) (2026-11-10)
 
 ### Features ✨
