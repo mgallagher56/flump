@@ -30,13 +30,64 @@ const POPULAR_BANKS = [
     id: "monzo",
     name: "Monzo Bank",
     color: "#ff4f5e",
-    desc: "Current account, joint account & pots",
+    desc: "Current, joint & pots",
+    directSync: true,
   },
   {
     id: "starling",
     name: "Starling Bank",
     color: "#00aeef",
-    desc: "Current account, joint account & spaces",
+    desc: "Current, joint & spaces",
+    directSync: true,
+  },
+  {
+    id: "hsbc",
+    name: "HSBC Bank",
+    color: "#db0011",
+    desc: "Current & savings",
+    directSync: false,
+  },
+  {
+    id: "barclays",
+    name: "Barclays",
+    color: "#00aeef",
+    desc: "Everyday & cards",
+    directSync: false,
+  },
+  {
+    id: "revolut",
+    name: "Revolut",
+    color: "#111118",
+    desc: "Multi-currency accounts",
+    directSync: false,
+  },
+  {
+    id: "santander",
+    name: "Santander",
+    color: "#ec0000",
+    desc: "123 Current & ISA",
+    directSync: false,
+  },
+  {
+    id: "natwest",
+    name: "NatWest",
+    color: "#4e195b",
+    desc: "Select & reward accounts",
+    directSync: false,
+  },
+  {
+    id: "lloyds",
+    name: "Lloyds Bank",
+    color: "#006a4e",
+    desc: "Club Lloyds & cards",
+    directSync: false,
+  },
+  {
+    id: "chase",
+    name: "Chase",
+    color: "#112e51",
+    desc: "Current & saver accounts",
+    directSync: false,
   },
 ];
 
@@ -223,21 +274,53 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
     [accountId, fetcher, handleCloseModal],
   );
 
+  const selectedBankObj = POPULAR_BANKS.find((b) => b.id === selectedBank) ?? POPULAR_BANKS[0];
+  const isDirectSync = !!selectedBankObj.directSync;
+
+  const onSwitchToManualForBank = useCallback(() => {
+    setEntryMethod("manual");
+    setFormInput((prev) => ({
+      ...prev,
+      name: `${selectedBankObj.name} Account`,
+    }));
+  }, [selectedBankObj.name]);
+
   const submitAction = useMemo(() => {
     if (isEditAccount) return onEditAccount;
-    return entryMethod === "bank" ? onConnectBank : onAddAccount;
-  }, [isEditAccount, entryMethod, onConnectBank, onAddAccount, onEditAccount]);
+    if (entryMethod === "bank") {
+      if (isDirectSync) return onConnectBank;
+      return onSwitchToManualForBank;
+    }
+    return onAddAccount;
+  }, [
+    isEditAccount,
+    entryMethod,
+    isDirectSync,
+    onConnectBank,
+    onSwitchToManualForBank,
+    onAddAccount,
+    onEditAccount,
+  ]);
 
-  const selectedBankObj = POPULAR_BANKS.find((b) => b.id === selectedBank);
   const confirmBtnText = isEditAccount
     ? t("save")
     : entryMethod === "bank"
-      ? isConnecting
-        ? "Connecting..."
-        : bankAuthType === "token"
-          ? `Connect ${selectedBankObj?.name || "Bank"}`
-          : `Authorize via ${selectedBankObj?.name || "Bank"}`
+      ? isDirectSync
+        ? isConnecting
+          ? "Connecting..."
+          : bankAuthType === "token"
+            ? `Connect ${selectedBankObj?.name || "Bank"}`
+            : `Authorize via ${selectedBankObj?.name || "Bank"}`
+        : `Track ${selectedBankObj?.name} via Manual Entry`
       : t("addAccount");
+
+  const isConfirmDisabled = useMemo(() => {
+    if (isConnecting) return true;
+    if (entryMethod === "bank" && isDirectSync && bankAuthType === "token" && !bankToken.trim()) {
+      return true;
+    }
+    return false;
+  }, [isConnecting, entryMethod, isDirectSync, bankAuthType, bankToken]);
 
   return (
     <FLPModal
@@ -250,12 +333,10 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
           </FLPButtonGroup>
         ) : undefined
       }
-      closeOnConfirm={entryMethod !== "bank"}
+      closeOnConfirm={entryMethod === "manual" || isEditAccount}
       confirmButton={{ id: accountId, text: confirmBtnText }}
       contentRef={contentRef}
-      disabled={
-        isConnecting || (entryMethod === "bank" && bankAuthType === "token" && !bankToken.trim())
-      }
+      disabled={isConfirmDisabled}
       open={modalOpen}
       title={t(isEditAccount ? "editAccount" : "addAccount")}
       triggerBtn={
@@ -287,6 +368,9 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
             borderRadius: "8px",
             gap: "4px",
             marginBottom: "16px",
+            width: "100%",
+            minWidth: 0,
+            boxSizing: "border-box",
           }}
         >
           <button
@@ -306,6 +390,8 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
                   ? "var(--colors-text-primary)"
                   : "var(--colors-text-muted)",
               transition: "all 0.15s ease",
+              minWidth: 0,
+              boxSizing: "border-box",
             }}
           >
             Manual Entry
@@ -325,6 +411,8 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
               color:
                 entryMethod === "bank" ? "var(--colors-text-primary)" : "var(--colors-text-muted)",
               transition: "all 0.15s ease",
+              minWidth: 0,
+              boxSizing: "border-box",
             }}
           >
             Connect to Bank
@@ -360,7 +448,16 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
           </FLPBox>
         </form>
       ) : (
-        <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: "12px",
+            width: "100%",
+            minWidth: 0,
+            boxSizing: "border-box",
+          }}
+        >
           <div
             style={{
               display: "flex",
@@ -370,23 +467,33 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
               borderRadius: "8px",
               backgroundColor: "rgba(16, 185, 129, 0.08)",
               border: "1px solid rgba(16, 185, 129, 0.2)",
+              width: "100%",
+              minWidth: 0,
+              boxSizing: "border-box",
             }}
           >
-            <FaShieldAlt color="#10b981" size={14} />
+            <FaShieldAlt color="#10b981" size={14} style={{ flexShrink: 0 }} />
             <FLPText color="text.muted" fontSize="xs">
               FCA regulated Open Banking. 256-bit encrypted read-only connection.
             </FLPText>
           </div>
 
           <FLPText color="text.muted" fontSize="xs">
-            Select your UK financial institution to securely link accounts:
+            Select your UK financial institution:
           </FLPText>
 
           <div
             style={{
               display: "grid",
-              gridTemplateColumns: "repeat(2, 1fr)",
+              gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
               gap: "8px",
+              maxHeight: "220px",
+              overflowY: "auto",
+              overflowX: "hidden",
+              paddingRight: "2px",
+              width: "100%",
+              minWidth: 0,
+              boxSizing: "border-box",
             }}
           >
             {POPULAR_BANKS.map((bank) => {
@@ -395,12 +502,15 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
                 <button
                   key={bank.id}
                   type="button"
-                  onClick={() => setSelectedBank(bank.id)}
+                  onClick={() => {
+                    setSelectedBank(bank.id);
+                    setBankError(null);
+                  }}
                   style={{
                     display: "flex",
                     alignItems: "center",
-                    gap: "10px",
-                    padding: "12px",
+                    gap: "8px",
+                    padding: "8px 10px",
                     borderRadius: "8px",
                     border: isSelected
                       ? "2px solid var(--colors-primary)"
@@ -411,6 +521,9 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
                     cursor: "pointer",
                     textAlign: "left",
                     transition: "all 0.15s ease",
+                    width: "100%",
+                    minWidth: 0,
+                    boxSizing: "border-box",
                   }}
                 >
                   <div
@@ -422,131 +535,237 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
                       flexShrink: 0,
                     }}
                   />
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <FLPText fontSize="sm" fontWeight="bold">
-                      {bank.name}
-                    </FLPText>
+                  <div style={{ flex: 1, minWidth: 0, overflow: "hidden" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "4px", minWidth: 0 }}>
+                      <FLPText
+                        fontSize="sm"
+                        fontWeight="bold"
+                        style={{
+                          whiteSpace: "nowrap",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                        }}
+                      >
+                        {bank.name}
+                      </FLPText>
+                      {bank.directSync && (
+                        <span
+                          style={{
+                            fontSize: "9px",
+                            padding: "1px 4px",
+                            borderRadius: "4px",
+                            backgroundColor: "rgba(16, 185, 129, 0.15)",
+                            color: "#10b981",
+                            fontWeight: 700,
+                            flexShrink: 0,
+                            textTransform: "uppercase",
+                            lineHeight: "1.2",
+                          }}
+                        >
+                          Live
+                        </span>
+                      )}
+                    </div>
                     <FLPText
                       color="text.muted"
                       fontSize="xs"
-                      style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}
+                      style={{
+                        whiteSpace: "nowrap",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                      }}
                     >
                       {bank.desc}
                     </FLPText>
                   </div>
-                  {isSelected && <FaCheckCircle color="var(--colors-primary)" size={14} />}
+                  {isSelected && (
+                    <FaCheckCircle
+                      color="var(--colors-primary)"
+                      size={14}
+                      style={{ flexShrink: 0 }}
+                    />
+                  )}
                 </button>
               );
             })}
           </div>
 
-          {/* Connection Method Selection */}
-          <div
-            style={{
-              display: "flex",
-              gap: "8px",
-              marginTop: "4px",
-              backgroundColor: "var(--colors-surface-sunken)",
-              padding: "4px",
-              borderRadius: "8px",
-            }}
-          >
-            <button
-              type="button"
-              onClick={() => {
-                setBankAuthType("token");
-                setBankError(null);
-              }}
-              style={{
-                flex: 1,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: "6px",
-                padding: "8px 10px",
-                borderRadius: "6px",
-                fontSize: "12px",
-                fontWeight: 600,
-                cursor: "pointer",
-                border: bankAuthType === "token" ? "1px solid var(--colors-border)" : "none",
-                backgroundColor: bankAuthType === "token" ? "var(--colors-card)" : "transparent",
-                color:
-                  bankAuthType === "token"
-                    ? "var(--colors-text-primary)"
-                    : "var(--colors-text-muted)",
-              }}
-            >
-              <FaKey size={12} />
-              Developer Token
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setBankAuthType("oauth");
-                setBankError(null);
-              }}
-              style={{
-                flex: 1,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: "6px",
-                padding: "8px 10px",
-                borderRadius: "6px",
-                fontSize: "12px",
-                fontWeight: 600,
-                cursor: "pointer",
-                border: bankAuthType === "oauth" ? "1px solid var(--colors-border)" : "none",
-                backgroundColor: bankAuthType === "oauth" ? "var(--colors-card)" : "transparent",
-                color:
-                  bankAuthType === "oauth"
-                    ? "var(--colors-text-primary)"
-                    : "var(--colors-text-muted)",
-              }}
-            >
-              <FaGlobe size={12} />
-              OAuth Portal
-            </button>
-          </div>
-
-          {bankAuthType === "token" ? (
-            <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginTop: "4px" }}>
-              <FLPInput
-                label={
-                  selectedBank === "monzo" ? "Monzo Access Token" : "Starling Personal Access Token"
-                }
-                name="bankToken"
-                placeholder={
-                  selectedBank === "monzo"
-                    ? "Access token from developers.monzo.com..."
-                    : "Bearer token starting with eyJ..."
-                }
-                value={bankToken}
-                onChange={(e) => {
-                  setBankToken(e.target.value);
-                  setBankError(null);
+          {isDirectSync ? (
+            <>
+              {/* Connection Method Selection */}
+              <div
+                style={{
+                  display: "flex",
+                  gap: "8px",
+                  marginTop: "4px",
+                  backgroundColor: "var(--colors-surface-sunken)",
+                  padding: "4px",
+                  borderRadius: "8px",
+                  width: "100%",
+                  minWidth: 0,
+                  boxSizing: "border-box",
                 }}
-              />
-              <FLPText color="text.muted" fontSize="xs">
-                {selectedBank === "monzo"
-                  ? "* Sign in at https://developers.monzo.com and copy your access token from the playground."
-                  : "* Generate a Personal Access Token in the Starling Developer Console with account:read and balance:read permissions."}
-              </FLPText>
-            </div>
+              >
+                <button
+                  type="button"
+                  onClick={() => {
+                    setBankAuthType("token");
+                    setBankError(null);
+                  }}
+                  style={{
+                    flex: 1,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: "6px",
+                    padding: "8px 10px",
+                    borderRadius: "6px",
+                    fontSize: "12px",
+                    fontWeight: 600,
+                    cursor: "pointer",
+                    border: bankAuthType === "token" ? "1px solid var(--colors-border)" : "none",
+                    backgroundColor:
+                      bankAuthType === "token" ? "var(--colors-card)" : "transparent",
+                    color:
+                      bankAuthType === "token"
+                        ? "var(--colors-text-primary)"
+                        : "var(--colors-text-muted)",
+                    minWidth: 0,
+                    boxSizing: "border-box",
+                  }}
+                >
+                  <FaKey size={12} style={{ flexShrink: 0 }} />
+                  <span>Developer Token</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setBankAuthType("oauth");
+                    setBankError(null);
+                  }}
+                  style={{
+                    flex: 1,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: "6px",
+                    padding: "8px 10px",
+                    borderRadius: "6px",
+                    fontSize: "12px",
+                    fontWeight: 600,
+                    cursor: "pointer",
+                    border: bankAuthType === "oauth" ? "1px solid var(--colors-border)" : "none",
+                    backgroundColor:
+                      bankAuthType === "oauth" ? "var(--colors-card)" : "transparent",
+                    color:
+                      bankAuthType === "oauth"
+                        ? "var(--colors-text-primary)"
+                        : "var(--colors-text-muted)",
+                    minWidth: 0,
+                    boxSizing: "border-box",
+                  }}
+                >
+                  <FaGlobe size={12} style={{ flexShrink: 0 }} />
+                  <span>OAuth Portal</span>
+                </button>
+              </div>
+
+              {bankAuthType === "token" ? (
+                <div
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "8px",
+                    marginTop: "4px",
+                    width: "100%",
+                    minWidth: 0,
+                    boxSizing: "border-box",
+                  }}
+                >
+                  <FLPInput
+                    label={
+                      selectedBank === "monzo"
+                        ? "Monzo Access Token"
+                        : "Starling Personal Access Token"
+                    }
+                    name="bankToken"
+                    placeholder={
+                      selectedBank === "monzo"
+                        ? "Access token from developers.monzo.com..."
+                        : "Bearer token starting with eyJ..."
+                    }
+                    value={bankToken}
+                    onChange={(e) => {
+                      setBankToken(e.target.value);
+                      setBankError(null);
+                    }}
+                  />
+                  <FLPText color="text.muted" fontSize="xs">
+                    {selectedBank === "monzo"
+                      ? "* Sign in at https://developers.monzo.com and copy your access token from the playground."
+                      : "* Generate a Personal Access Token in the Starling Developer Console with account:read and balance:read permissions."}
+                  </FLPText>
+                </div>
+              ) : (
+                <div
+                  style={{
+                    padding: "12px",
+                    borderRadius: "8px",
+                    backgroundColor: "var(--colors-surface-sunken)",
+                    border: "1px solid var(--colors-border-subtle)",
+                    width: "100%",
+                    minWidth: 0,
+                    boxSizing: "border-box",
+                  }}
+                >
+                  <FLPText fontSize="xs" color="text.muted">
+                    Clicking &quot;Authorize via {selectedBankObj?.name}&quot; will redirect you to{" "}
+                    {selectedBankObj?.name}&apos;s secure login page to grant read-only permissions
+                    (requires server OAuth client keys configured in your environment).
+                  </FLPText>
+                </div>
+              )}
+            </>
           ) : (
             <div
               style={{
-                padding: "12px",
+                display: "flex",
+                flexDirection: "column",
+                gap: "10px",
+                padding: "12px 14px",
                 borderRadius: "8px",
                 backgroundColor: "var(--colors-surface-sunken)",
                 border: "1px solid var(--colors-border-subtle)",
+                width: "100%",
+                minWidth: 0,
+                boxSizing: "border-box",
               }}
             >
-              <FLPText fontSize="xs" color="text.muted">
-                Clicking &quot;Authorize via {selectedBankObj?.name}&quot; will redirect you to{" "}
-                {selectedBankObj?.name}&apos;s secure login page to grant read-only permissions
-                (requires server OAuth client keys configured in your environment).
-              </FLPText>
+              <div style={{ display: "flex", alignItems: "flex-start", gap: "8px" }}>
+                <FaExclamationTriangle
+                  color="var(--colors-text-muted)"
+                  size={14}
+                  style={{ flexShrink: 0, marginTop: "2px" }}
+                />
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <FLPText fontSize="xs" fontWeight="bold">
+                    Direct Sync for {selectedBankObj?.name} coming soon
+                  </FLPText>
+                  <FLPText color="text.muted" fontSize="xs" style={{ marginTop: "2px" }}>
+                    Live Open Banking sync is currently enabled for Monzo and Starling. No dummy
+                    data is created. You can record and track {selectedBankObj?.name} balances with
+                    manual entry right now.
+                  </FLPText>
+                </div>
+              </div>
+              <FLPButton
+                size="sm"
+                variant="outline"
+                onClick={onSwitchToManualForBank}
+                style={{ alignSelf: "flex-start" }}
+              >
+                Track {selectedBankObj?.name} via Manual Entry
+              </FLPButton>
             </div>
           )}
 
@@ -560,6 +779,9 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
                 borderRadius: "8px",
                 backgroundColor: "rgba(239, 68, 68, 0.08)",
                 border: "1px solid rgba(239, 68, 68, 0.3)",
+                width: "100%",
+                minWidth: 0,
+                boxSizing: "border-box",
               }}
             >
               <FaExclamationTriangle
