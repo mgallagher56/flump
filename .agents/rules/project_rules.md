@@ -304,3 +304,7 @@ Canonical roles (`needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-hum
 ### Domain docs
 
 Single-context layout (`GLOSSARY.md` + `docs/adr/` at repo root). See `docs/agents/domain.md`.
+
+### Component creation & editing guidelines
+
+5-file colocated component blueprint, canonical semantic token map, UK copy standards, and testing conventions (`id` + `data-testid` pairing, Radix tab interactions, Storybook `play()` tests). See `docs/agents/component-guidelines.md`.
