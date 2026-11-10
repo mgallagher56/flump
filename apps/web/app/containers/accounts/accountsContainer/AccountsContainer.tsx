@@ -13,6 +13,7 @@ import {
   FaWallet,
 } from "react-icons/fa";
 import { useLoaderData, useSearchParams } from "react-router";
+import BankConnectionsList from "~/components/accounts/BankConnectionsList";
 import MonthlyBalanceCheckInDrawer from "~/components/accounts/MonthlyBalanceCheckInDrawer";
 import AccountsCard from "~/components/core/cards/AccountsCard";
 import FLPCard from "~/components/core/cards/FLPCard";
@@ -571,6 +572,10 @@ const AccountsContainer: FC = () => {
                       portfolio.
                     </div>
                   )}
+
+                  <div className={css({ marginTop: "8px" })}>
+                    <BankConnectionsList connections={bankConnections} />
+                  </div>
                 </FLPBox>
               ),
             },

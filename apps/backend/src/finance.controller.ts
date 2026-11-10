@@ -1,5 +1,6 @@
 import { BankSyncOrchestrator } from "@flump/banking/server";
 import {
+  BadRequestException,
   Body,
   Controller,
   Delete,
@@ -511,7 +512,7 @@ export class FinanceController {
       } catch (err) {
         connection.status = "error";
         await this.bankConnectionRepository.save(connection);
-        throw new Error(`Token sync verification failed: ${(err as Error).message}`);
+        throw new BadRequestException(`Token sync verification failed: ${(err as Error).message}`);
       }
     }
 
@@ -536,46 +537,22 @@ export class FinanceController {
       };
     }
 
-    // 3. Fallback to Mock Sync Mode (Demo Mode) if not configured
-    const names: { [key: string]: string } = {
-      hsbc: "HSBC Bank",
-      barclays: "Barclays Bank",
-      monzo: "Monzo Bank (Demo)",
-      revolut: "Revolut (Demo)",
-      chase: "Chase (Demo)",
-      fidelity: "Fidelity Investments (Demo)",
-      vanguard: "Vanguard (Demo)",
-      starling: "Starling Bank (Demo)",
-    };
-
-    const name = names[institutionId] || "External Bank (Demo)";
-
-    let connection = await this.bankConnectionRepository.findOne({
-      where: { userId, institutionId },
-    });
-
-    if (connection) {
-      connection.status = "connected";
-      connection.lastSyncedAt = new Date();
-      await this.bankConnectionRepository.save(connection);
-      return { success: true, connection, message: "Institution re-connected" };
+    // 3. No credentials provided — reject rather than seeding dummy mock data
+    if (!provider) {
+      throw new BadRequestException(
+        `Financial institution "${institutionId}" is not currently supported for direct bank connections. Supported providers: Monzo Bank and Starling Bank.`,
+      );
     }
 
-    connection = await this.bankConnectionRepository.save({
-      userId,
-      institutionId,
-      institutionName: name,
-      status: "connected",
-      authType: "oauth", // default mock value
-    });
-
-    const accountsCount = await this.seedMockSyncData(connection, userId);
-
-    return {
-      success: true,
-      connection,
-      message: `Connected successfully (Demo Mode)! Sync'd ${accountsCount} accounts.`,
+    const providerNames: { [key: string]: string } = {
+      starling: "Starling Bank",
+      monzo: "Monzo Bank",
     };
+    const institutionName = providerNames[institutionId] || institutionId;
+
+    throw new BadRequestException(
+      `OAuth credentials are not configured on the server for ${institutionName}. Please connect using a Personal Access Token or configure ${institutionId.toUpperCase()}_CLIENT_ID and ${institutionId.toUpperCase()}_CLIENT_SECRET.`,
+    );
   }
 
   @Get("bank-connections/callback")
@@ -734,54 +711,7 @@ export class FinanceController {
       }
     }
 
-    // 2. Mock Mode Refresh Fallback
-    const accounts = await this.accountRepository.find({
-      where: { connectionId: connection.id, userId },
-    });
-
-    const now = new Date();
-    const currentYear = now.getFullYear();
-    const currentMonth = now.getMonth() + 1;
-
-    for (const acc of accounts) {
-      const isPositive = Math.random() > 0.4;
-      const delta = Math.round((Math.random() * 50 + 5) * 100) / 100;
-      const amount = isPositive ? delta : -delta;
-
-      acc.balance = Math.round((Number(acc.balance) + amount) * 100) / 100;
-      await this.accountRepository.save(acc);
-
-      await this.transactionRepository.save({
-        accountId: acc.id,
-        userId,
-        amount,
-        description: `Simulated sync transaction from ${connection.institutionName}`,
-        category: acc.type === "Investment" ? "Investment" : "Food",
-        timestamp: now,
-      });
-
-      let detail = await this.accountDetailRepository.findOne({
-        where: { accountId: acc.id, month: currentMonth, year: currentYear },
-      });
-
-      if (!detail) {
-        detail = this.accountDetailRepository.create({
-          accountId: acc.id,
-          month: currentMonth,
-          year: currentYear,
-          value: acc.balance,
-        });
-      } else {
-        detail.value = acc.balance;
-      }
-      await this.accountDetailRepository.save(detail);
-    }
-
-    connection.lastSyncedAt = now;
-    connection.status = "connected";
-    await this.bankConnectionRepository.save(connection);
-
-    return { success: true, connection };
+    throw new BadRequestException("Bank connection has no active token or credentials to refresh.");
   }
 
   @Delete("bank-connections/:id")
@@ -852,40 +782,20 @@ export class FinanceController {
       }
       await this.accountRepository.save(account);
 
-      const detailsCount = await this.accountDetailRepository.count({
-        where: { accountId: account.id },
+      let detail = await this.accountDetailRepository.findOne({
+        where: { accountId: account.id, month: currentMonth, year: currentYear },
       });
-
-      if (detailsCount === 0) {
-        const historyPoints = BankSyncOrchestrator.generateMockHistory(
-          normalizedBalance,
-          pa.type,
-          currentYear,
-          currentMonth,
-        );
-        const historyRows = historyPoints.map((hp) => ({
+      if (!detail) {
+        detail = this.accountDetailRepository.create({
           accountId: account.id,
-          month: hp.month,
-          year: hp.year,
-          value: hp.value,
-        }));
-        await this.accountDetailRepository.save(historyRows);
-      } else {
-        let detail = await this.accountDetailRepository.findOne({
-          where: { accountId: account.id, month: currentMonth, year: currentYear },
+          month: currentMonth,
+          year: currentYear,
+          value: account.balance,
         });
-        if (!detail) {
-          detail = this.accountDetailRepository.create({
-            accountId: account.id,
-            month: currentMonth,
-            year: currentYear,
-            value: account.balance,
-          });
-        } else {
-          detail.value = account.balance;
-        }
-        await this.accountDetailRepository.save(detail);
+      } else {
+        detail.value = account.balance;
       }
+      await this.accountDetailRepository.save(detail);
 
       try {
         const providerTxs = await provider.fetchTransactions(accessToken, pa.externalAccountId);
@@ -917,59 +827,5 @@ export class FinanceController {
     }
 
     return providerAccounts.length;
-  }
-
-  private async seedMockSyncData(connection: BankConnection, userId: string): Promise<number> {
-    const instId = connection.institutionId;
-    const accountsData = BankSyncOrchestrator.getMockInstitutionAccounts(instId);
-
-    const now = new Date();
-    const currentYear = now.getFullYear();
-    const currentMonth = now.getMonth() + 1;
-
-    for (const acc of accountsData) {
-      const saved = await this.accountRepository.save({
-        userId,
-        name: acc.name,
-        type: acc.type,
-        balance: acc.balance,
-        currency: acc.currency,
-        connectionId: connection.id,
-        externalAccountId: `ext_${connection.institutionId}_${Math.random().toString(36).substring(7)}`,
-      });
-
-      const historyPoints = BankSyncOrchestrator.generateMockHistory(
-        acc.balance,
-        acc.type,
-        currentYear,
-        currentMonth,
-      );
-      const historyRows = historyPoints.map((hp) => ({
-        accountId: saved.id,
-        month: hp.month,
-        year: hp.year,
-        value: hp.value,
-      }));
-      await this.accountDetailRepository.save(historyRows);
-
-      const txs = BankSyncOrchestrator.generateMockTransactions(
-        acc.type,
-        connection.institutionName,
-        now,
-      );
-      if (txs.length > 0) {
-        const txRows = txs.map((tx) => ({
-          accountId: saved.id,
-          userId,
-          amount: tx.amount,
-          description: tx.description,
-          category: tx.category,
-          timestamp: tx.timestamp,
-        }));
-        await this.transactionRepository.save(txRows);
-      }
-    }
-
-    return accountsData.length;
   }
 }

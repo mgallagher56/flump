@@ -31,6 +31,7 @@ export interface BankConnectionsListProps {
 
 const INSTITUTION_COLORS: { [key: string]: string } = {
   monzo: "#ff4f5e",
+  starling: "#00aeef",
   hsbc: "#db0011",
   barclays: "#00aeef",
   chase: "#112e51",
