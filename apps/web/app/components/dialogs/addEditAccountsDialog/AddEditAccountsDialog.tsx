@@ -152,10 +152,18 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
       return;
     }
 
+    if (bankAuthType === "oauth" && !res.redirectUrl) {
+      setBankError(
+        res.message ||
+          "Could not initialize OAuth redirect for this institution. Please use Developer Token.",
+      );
+      return;
+    }
+
     if (res.success) {
       handleCloseModal();
     }
-  }, [fetcher.data, handleCloseModal]);
+  }, [fetcher.data, handleCloseModal, bankAuthType]);
 
   const selectedAccount = useMemo(
     () =>
@@ -237,6 +245,7 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
           intent: "connectBank",
           institutionId: selectedBank,
           token: bankToken.trim(),
+          authType: "token",
         },
         { method: "POST", action: "/app/accounts" },
       );
@@ -245,6 +254,7 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
         {
           intent: "connectBank",
           institutionId: selectedBank,
+          authType: "oauth",
         },
         { method: "POST", action: "/app/accounts" },
       );
