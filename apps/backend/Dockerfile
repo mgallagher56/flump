@@ -10,7 +10,9 @@ COPY apps/web/package.json ./apps/web/
 COPY apps/marketing/package.json ./apps/marketing/
 COPY apps/mobile-companion/package.json ./apps/mobile-companion/
 COPY packages/app-shell/package.json ./packages/app-shell/
+COPY packages/banking/package.json ./packages/banking/
 COPY packages/common/package.json ./packages/common/
+COPY packages/finance-engine/package.json ./packages/finance-engine/
 COPY packages/typescript-config/package.json ./packages/typescript-config/
 COPY packages/ui/package.json ./packages/ui/
 RUN bun install --frozen-lockfile --ignore-scripts
@@ -19,7 +21,7 @@ RUN bun install --frozen-lockfile --ignore-scripts
 FROM deps AS build
 COPY . .
 ENV NODE_ENV=production
-RUN bun --filter=backend run build
+RUN bun turbo run build --filter=backend...
 
 # Stage 3: Create final production image
 FROM base AS runner
