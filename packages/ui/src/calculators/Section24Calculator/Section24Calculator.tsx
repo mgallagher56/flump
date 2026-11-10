@@ -81,13 +81,13 @@ export const Section24Calculator: FC<Section24CalculatorProps> = ({
           style={{
             fontSize: "1.25rem",
             fontWeight: 700,
-            color: "var(--colors-text-primary))",
+            color: "var(--colors-text-primary)",
             margin: "0 0 4px 0",
           }}
         >
           Section 24 buy-to-let mortgage relief calculator
         </h2>
-        <p style={{ fontSize: "0.875rem", color: "var(--colors-text-muted))", margin: 0 }}>
+        <p style={{ fontSize: "0.875rem", color: "var(--colors-text-muted)", margin: 0 }}>
           Calculate phantom taxable rental profit and the 20% basic rate tax credit reduction
           introduced by Section 24 of the Finance (No. 2) Act 2015.
         </p>
@@ -301,7 +301,7 @@ export const Section24Calculator: FC<Section24CalculatorProps> = ({
           <span
             style={{
               fontSize: "12px",
-              color: "var(--colors-text-muted))",
+              color: "var(--colors-text-muted)",
               fontWeight: 600,
             }}
           >
@@ -312,14 +312,14 @@ export const Section24Calculator: FC<Section24CalculatorProps> = ({
             style={{
               fontSize: "22px",
               fontWeight: 800,
-              color: "var(--colors-status-danger-solid))",
+              color: "var(--colors-status-danger-solid)",
             }}
           >
             £{Math.round(calc.finalTaxDue).toLocaleString("en-GB")}
           </span>
           <span
             className="tabular-nums"
-            style={{ fontSize: "12px", color: "var(--colors-text-muted))" }}
+            style={{ fontSize: "12px", color: "var(--colors-text-muted)" }}
           >
             (Gross tax £{Math.round(calc.grossTaxOnProperty).toLocaleString("en-GB")} minus £
             {Math.round(calc.financeCredit).toLocaleString("en-GB")} credit)
@@ -330,7 +330,7 @@ export const Section24Calculator: FC<Section24CalculatorProps> = ({
           <span
             style={{
               fontSize: "12px",
-              color: "var(--colors-text-muted))",
+              color: "var(--colors-text-muted)",
               fontWeight: 600,
             }}
           >
@@ -341,14 +341,14 @@ export const Section24Calculator: FC<Section24CalculatorProps> = ({
             style={{
               fontSize: "22px",
               fontWeight: 800,
-              color: "var(--colors-status-warning-solid))",
+              color: "var(--colors-status-warning-solid)",
             }}
           >
             {calc.effectiveTaxRate}%
           </span>
           <span
             className="tabular-nums"
-            style={{ fontSize: "12px", color: "var(--colors-text-muted))" }}
+            style={{ fontSize: "12px", color: "var(--colors-text-muted)" }}
           >
             Tax paid relative to your £{Math.round(calc.actualCashProfit).toLocaleString("en-GB")}{" "}
             real cash profit
@@ -359,7 +359,7 @@ export const Section24Calculator: FC<Section24CalculatorProps> = ({
           <span
             style={{
               fontSize: "12px",
-              color: "var(--colors-text-muted))",
+              color: "var(--colors-text-muted)",
               fontWeight: 600,
             }}
           >
@@ -370,14 +370,14 @@ export const Section24Calculator: FC<Section24CalculatorProps> = ({
             style={{
               fontSize: "22px",
               fontWeight: 800,
-              color: "var(--colors-status-positive-solid))",
+              color: "var(--colors-status-positive-solid)",
             }}
           >
             £{Math.round(calc.netCashInPocket).toLocaleString("en-GB")} / yr
           </span>
           <span
             className="tabular-nums"
-            style={{ fontSize: "12px", color: "var(--colors-text-muted))" }}
+            style={{ fontSize: "12px", color: "var(--colors-text-muted)" }}
           >
             £{Math.round(calc.netCashInPocket / 12).toLocaleString("en-GB")}/mo cash in pocket after
             tax & mortgage
@@ -394,7 +394,7 @@ export const Section24Calculator: FC<Section24CalculatorProps> = ({
           flexWrap: "wrap",
           gap: "16px",
           paddingTop: "20px",
-          borderTop: "1px solid var(--colors-border))",
+          borderTop: "1px solid var(--colors-border)",
         }}
       >
         <div style={{ maxWidth: "440px" }}>
@@ -402,12 +402,12 @@ export const Section24Calculator: FC<Section24CalculatorProps> = ({
             style={{
               fontSize: "13px",
               fontWeight: 600,
-              color: "var(--colors-text-primary))",
+              color: "var(--colors-text-primary)",
             }}
           >
             Need automated HMRC Self-Assessment & property tax tracking?
           </span>
-          <p style={{ fontSize: "12px", color: "var(--colors-text-muted))", margin: 0 }}>
+          <p style={{ fontSize: "12px", color: "var(--colors-text-muted)", margin: 0 }}>
             Flump automatically models Section 24 adjustments, joint spousal splits, and Payments on
             Account.
           </p>

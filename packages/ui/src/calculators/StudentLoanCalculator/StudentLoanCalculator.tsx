@@ -61,7 +61,7 @@ export const StudentLoanCalculator: FC<StudentLoanCalculatorProps> = ({
               fontSize: "1.25rem",
               fontWeight: 700,
               margin: "0 0 4px 0",
-              color: "var(--colors-text-primary))",
+              color: "var(--colors-text-primary)",
             }}
           >
             UK Student Loan: Overpay or Invest? (Graduate Tax Calculator)
@@ -69,7 +69,7 @@ export const StudentLoanCalculator: FC<StudentLoanCalculatorProps> = ({
           <p
             style={{
               fontSize: "0.875rem",
-              color: "var(--colors-text-muted))",
+              color: "var(--colors-text-muted)",
               margin: 0,
             }}
           >
@@ -155,7 +155,7 @@ export const StudentLoanCalculator: FC<StudentLoanCalculatorProps> = ({
             <p
               style={{
                 fontSize: "12px",
-                color: "var(--colors-text-muted))",
+                color: "var(--colors-text-muted)",
                 margin: "4px 0 0 0",
               }}
             >

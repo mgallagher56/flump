@@ -97,13 +97,13 @@ export const TaxTrapCalculator: FC<TaxTrapCalculatorProps> = ({
           style={{
             fontSize: "1.25rem",
             fontWeight: 700,
-            color: "var(--colors-text-primary))",
+            color: "var(--colors-text-primary)",
             margin: "0 0 4px 0",
           }}
         >
           Interactive £100k–£125k tax trap modeller
         </h2>
-        <p style={{ fontSize: "0.875rem", color: "var(--colors-text-muted))", margin: 0 }}>
+        <p style={{ fontSize: "0.875rem", color: "var(--colors-text-muted)", margin: 0 }}>
           Slide your income and test how salary sacrifice or SIPP contributions reclaim your
           personal allowance and unlock tax-free childcare.
         </p>
@@ -162,7 +162,7 @@ export const TaxTrapCalculator: FC<TaxTrapCalculatorProps> = ({
             display: "flex",
             justifyContent: "space-between",
             fontSize: "11px",
-            color: "var(--colors-text-muted))",
+            color: "var(--colors-text-muted)",
           }}
         >
           <span>£90k (40% Higher Rate)</span>
@@ -225,7 +225,7 @@ export const TaxTrapCalculator: FC<TaxTrapCalculatorProps> = ({
 
       <div className={metricsGridStyle}>
         <div className={metricCard}>
-          <span style={{ fontSize: "12px", color: "var(--colors-text-muted))" }}>
+          <span style={{ fontSize: "12px", color: "var(--colors-text-muted)" }}>
             Effective Marginal Rate
           </span>
           <span
@@ -240,13 +240,13 @@ export const TaxTrapCalculator: FC<TaxTrapCalculatorProps> = ({
           >
             {isTrapZone && salarySacrifice < analysis.excessAbove100k ? "62.0%" : "42.0%"}
           </span>
-          <span style={{ fontSize: "11px", color: "var(--colors-text-muted))" }}>
+          <span style={{ fontSize: "11px", color: "var(--colors-text-muted)" }}>
             40% Income Tax + 20% Taper + 2% NI
           </span>
         </div>
 
         <div className={metricCard}>
-          <span style={{ fontSize: "12px", color: "var(--colors-text-muted))" }}>
+          <span style={{ fontSize: "12px", color: "var(--colors-text-muted)" }}>
             Tax and NI saved
           </span>
           <span
@@ -258,19 +258,19 @@ export const TaxTrapCalculator: FC<TaxTrapCalculatorProps> = ({
           >
             £{totalTaxSaved.toLocaleString()}
           </span>
-          <span style={{ fontSize: "11px", color: "var(--colors-text-muted))" }}>
+          <span style={{ fontSize: "11px", color: "var(--colors-text-muted)" }}>
             Guaranteed immediate relief
           </span>
         </div>
 
         <div className={metricCard}>
-          <span style={{ fontSize: "12px", color: "var(--colors-text-muted))" }}>
+          <span style={{ fontSize: "12px", color: "var(--colors-text-muted)" }}>
             Personal allowance reclaimed
           </span>
           <span style={{ fontSize: "24px", fontWeight: 800, color: "var(--colors-primary)" }}>
             £{allowanceReclaimed.toLocaleString()}
           </span>
-          <span style={{ fontSize: "11px", color: "var(--colors-text-muted))" }}>
+          <span style={{ fontSize: "11px", color: "var(--colors-text-muted)" }}>
             of £{analysis.lostPersonalAllowance.toLocaleString()} lost allowance
           </span>
         </div>
