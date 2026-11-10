@@ -266,6 +266,107 @@ export const McpConnectionCard: FC<McpConnectionCardProps> = ({
           </StatusBadge>
         </div>
 
+        {/* Features & Benefits Strip */}
+        <div
+          className={css({
+            display: "grid",
+            gridTemplateColumns: { base: "1fr", sm: "1fr 1fr", md: "1fr 1fr 1fr 1fr" },
+            gap: "10px",
+          })}
+        >
+          <div
+            className={css({
+              padding: "10px 12px",
+              borderRadius: "md",
+              backgroundColor: "surface.sunken",
+              borderWidth: "1px",
+              borderStyle: "solid",
+              borderColor: "border.subtle",
+              display: "flex",
+              flexDirection: "column",
+              gap: "2px",
+            })}
+          >
+            <span
+              className={css({ fontSize: "xs", fontWeight: "semibold", color: "text.primary" })}
+            >
+              Deterministic Math
+            </span>
+            <span className={css({ fontSize: "11px", color: "text.muted" })}>
+              Zero hallucinations via @flump/finance-engine
+            </span>
+          </div>
+
+          <div
+            className={css({
+              padding: "10px 12px",
+              borderRadius: "md",
+              backgroundColor: "surface.sunken",
+              borderWidth: "1px",
+              borderStyle: "solid",
+              borderColor: "border.subtle",
+              display: "flex",
+              flexDirection: "column",
+              gap: "2px",
+            })}
+          >
+            <span
+              className={css({ fontSize: "xs", fontWeight: "semibold", color: "text.primary" })}
+            >
+              PII Scrubbed
+            </span>
+            <span className={css({ fontSize: "11px", color: "text.muted" })}>
+              Names, emails & account numbers removed
+            </span>
+          </div>
+
+          <div
+            className={css({
+              padding: "10px 12px",
+              borderRadius: "md",
+              backgroundColor: "surface.sunken",
+              borderWidth: "1px",
+              borderStyle: "solid",
+              borderColor: "border.subtle",
+              display: "flex",
+              flexDirection: "column",
+              gap: "2px",
+            })}
+          >
+            <span
+              className={css({ fontSize: "xs", fontWeight: "semibold", color: "text.primary" })}
+            >
+              Read-Only Safe
+            </span>
+            <span className={css({ fontSize: "11px", color: "text.muted" })}>
+              Agents cannot move funds or change settings
+            </span>
+          </div>
+
+          <div
+            className={css({
+              padding: "10px 12px",
+              borderRadius: "md",
+              backgroundColor: "surface.sunken",
+              borderWidth: "1px",
+              borderStyle: "solid",
+              borderColor: "border.subtle",
+              display: "flex",
+              flexDirection: "column",
+              gap: "2px",
+            })}
+          >
+            <span
+              className={css({ fontSize: "xs", fontWeight: "semibold", color: "text.primary" })}
+            >
+              Rate Limited
+            </span>
+            <span className={css({ fontSize: "11px", color: "text.muted" })}>
+              60 req/min bucket prevents runaway loops
+            </span>
+          </div>
+        </div>
+
         {/* Anonymization Toggle Switch */}
         <div
           className={css({
@@ -529,11 +630,63 @@ export const McpConnectionCard: FC<McpConnectionCardProps> = ({
 
           {/* Tab A: Claude Desktop / Cursor */}
           {activeTab === "claude_desktop" && (
-            <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-              <p className={css({ fontSize: "xs", color: "text.muted", margin: 0 })}>
-                Add this block to your <code>claude_desktop_config.json</code> or Cursor MCP
-                settings:
-              </p>
+            <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+              <div
+                className={css({
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "6px",
+                  padding: "12px 14px",
+                  borderRadius: "md",
+                  backgroundColor: "surface.sunken",
+                  borderWidth: "1px",
+                  borderStyle: "solid",
+                  borderColor: "border.subtle",
+                  fontSize: "xs",
+                })}
+              >
+                <span className={css({ fontWeight: "semibold", color: "text.primary" })}>
+                  Setup Instructions for Claude Desktop & Cursor:
+                </span>
+                <ol
+                  className={css({
+                    margin: 0,
+                    paddingLeft: "18px",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "4px",
+                    color: "text.secondary",
+                  })}
+                >
+                  <li>Generate your Personal Access Token above and copy the secret key.</li>
+                  <li>
+                    Locate or create your config file:
+                    <div
+                      className={css({
+                        mt: "2px",
+                        mb: "2px",
+                        fontFamily: "mono",
+                        fontSize: "11px",
+                      })}
+                    >
+                      • macOS Claude:{" "}
+                      <code>~/Library/Application Support/Claude/claude_desktop_config.json</code>
+                      <br />• Windows Claude:{" "}
+                      <code>%APPDATA%\Claude\claude_desktop_config.json</code>
+                      <br />• Cursor AI: <code>.cursor/mcp.json</code> or Settings &gt; Features
+                      &gt; MCP
+                    </div>
+                  </li>
+                  <li>
+                    Paste the configuration snippet below into your <code>mcpServers</code> object.
+                  </li>
+                  <li>
+                    Restart Claude Desktop or Cursor. Look for the hammer 🔨 icon confirming your 8
+                    tools are active!
+                  </li>
+                </ol>
+              </div>
+
               <div
                 className={codeSnippetBox()}
                 id="claude-desktop-snippet"
@@ -556,9 +709,44 @@ export const McpConnectionCard: FC<McpConnectionCardProps> = ({
           {/* Tab B: Claude Web / ChatGPT Remote MCP */}
           {activeTab === "remote_mcp" && (
             <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-              <p className={css({ fontSize: "xs", color: "text.muted", margin: 0 })}>
-                For Remote MCP clients (Claude Web or Custom GPT Actions), connect via OAuth 2.1:
-              </p>
+              <div
+                className={css({
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "6px",
+                  padding: "12px 14px",
+                  borderRadius: "md",
+                  backgroundColor: "surface.sunken",
+                  borderWidth: "1px",
+                  borderStyle: "solid",
+                  borderColor: "border.subtle",
+                  fontSize: "xs",
+                })}
+              >
+                <span className={css({ fontWeight: "semibold", color: "text.primary" })}>
+                  Setup Instructions for Web AI Agents (OAuth 2.1 & RFC 9728):
+                </span>
+                <ol
+                  className={css({
+                    margin: 0,
+                    paddingLeft: "18px",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "4px",
+                    color: "text.secondary",
+                  })}
+                >
+                  <li>Copy the Remote MCP Server URL below.</li>
+                  <li>
+                    In Claude.ai Web or ChatGPT Custom Actions, add a new MCP / OpenAPI server.
+                  </li>
+                  <li>
+                    Authenticate with your Flump account via OAuth 2.1 PKCE to authorize scoped
+                    access.
+                  </li>
+                </ol>
+              </div>
+
               <div
                 className={css({
                   display: "flex",

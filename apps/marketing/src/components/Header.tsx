@@ -192,6 +192,12 @@ export const Header: FC = () => {
             >
               Security
             </Link>
+            <Link
+              to="/mcp"
+              className={location.pathname === "/mcp" ? activeNavLinkStyle : navLinkStyle}
+            >
+              AI & MCP
+            </Link>
             <a href={`${appUrl}/sandbox`} className={navLinkStyle} target="_blank" rel="noreferrer">
               Live demo
             </a>
@@ -318,6 +324,18 @@ export const Header: FC = () => {
               <span>Security</span>
               <span style={{ fontSize: "12px", color: "var(--colors-text-muted, #94a3b8)" }}>
                 FCA AISP
+              </span>
+            </Link>
+            <Link
+              to="/mcp"
+              className={
+                location.pathname === "/mcp" ? activeMobileNavLinkStyle : mobileNavLinkStyle
+              }
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              <span>AI & MCP</span>
+              <span style={{ fontSize: "12px", color: "var(--colors-text-muted, #94a3b8)" }}>
+                Claude & Cursor
               </span>
             </Link>
             <a
