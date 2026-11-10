@@ -80,14 +80,24 @@ export const action = async (args: ActionFunctionArgs) => {
           token: token ? String(token) : undefined,
         }),
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Failed to connect bank");
-      return data;
+
+      let backendData: any = null;
+      const text = await res.text();
+      try {
+        backendData = JSON.parse(text);
+      } catch {
+        backendData = { message: text };
+      }
+
+      if (!res.ok) {
+        throw new Error(backendData.message || "Failed to connect bank");
+      }
+      return data(backendData);
     }
     return data({ success: true });
   } catch (error) {
     console.error("Action error in accounts route:", error);
-    return data({ success: false, error: (error as Error).message }, { status: 500 });
+    return data({ success: false, error: (error as Error).message }, { status: 400 });
   }
 };
 

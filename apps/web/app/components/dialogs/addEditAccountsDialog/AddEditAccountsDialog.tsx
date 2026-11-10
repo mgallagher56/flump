@@ -1,4 +1,4 @@
-import { type FC, useCallback, useMemo, useRef, useState } from "react";
+import { type FC, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   FaCheckCircle,
@@ -8,7 +8,7 @@ import {
   FaPencilAlt,
   FaShieldAlt,
 } from "react-icons/fa";
-import { useFetcher, useLoaderData, useRevalidator } from "react-router";
+import { useFetcher, useLoaderData } from "react-router";
 import FLPButton from "~/components/core/buttons/FLPButton";
 import FLPButtonGroup from "~/components/core/buttons/FLPButtonGroup";
 import FLPModal from "~/components/core/dialogs/FLPModal";
@@ -60,7 +60,6 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
   } = useLoaderData<typeof loader>();
   const { t } = useTranslation();
   const fetcher = useFetcher();
-  const revalidator = useRevalidator();
   const contentRef = useRef<HTMLDivElement>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [entryMethod, setEntryMethod] = useState<"manual" | "bank">("manual");
@@ -68,7 +67,37 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
   const [bankAuthType, setBankAuthType] = useState<"token" | "oauth">("token");
   const [bankToken, setBankToken] = useState<string>("");
   const [bankError, setBankError] = useState<string | null>(null);
-  const [isConnecting, setIsConnecting] = useState(false);
+  const isConnecting = fetcher.state === "submitting" || fetcher.state === "loading";
+
+  const handleCloseModal = useCallback(() => {
+    setModalOpen(false);
+    setBankError(null);
+  }, []);
+
+  useEffect(() => {
+    if (!fetcher.data) return;
+    const res = fetcher.data as {
+      success?: boolean;
+      oauth?: boolean;
+      redirectUrl?: string;
+      error?: string;
+      message?: string;
+    };
+
+    if (res.oauth && res.redirectUrl) {
+      window.location.href = res.redirectUrl;
+      return;
+    }
+
+    if (res.error) {
+      setBankError(res.error);
+      return;
+    }
+
+    if (res.success) {
+      handleCloseModal();
+    }
+  }, [fetcher.data, handleCloseModal]);
 
   const selectedAccount = useMemo(
     () =>
@@ -97,7 +126,6 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
       setBankAuthType("token");
       setBankToken("");
       setBankError(null);
-      setIsConnecting(false);
       setFormInput({
         name: isEditAccount ? selectedAccount.name || "" : "",
         type: [isEditAccount ? selectedAccount.type || accountTypeArray[0] : accountTypeArray[0]],
@@ -110,12 +138,6 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
     },
     [isEditAccount, selectedAccount.balance, selectedAccount.name, selectedAccount.type],
   );
-
-  const handleCloseModal = useCallback(() => {
-    setModalOpen(false);
-    setBankError(null);
-    setIsConnecting(false);
-  }, []);
 
   const onChangeNameInput = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     const { value } = event.target;
@@ -145,46 +167,31 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
     handleCloseModal();
   }, [formInput, fetcher, handleCloseModal]);
 
-  const onConnectBank = useCallback(async () => {
+  const onConnectBank = useCallback(() => {
     setBankError(null);
-    setIsConnecting(true);
-
-    try {
-      const formData = new FormData();
-      formData.append("intent", "connectBank");
-      formData.append("institutionId", selectedBank);
-      if (bankAuthType === "token") {
-        if (!bankToken.trim()) {
-          setBankError("Please enter your developer token.");
-          setIsConnecting(false);
-          return;
-        }
-        formData.append("token", bankToken.trim());
-      }
-
-      const res = await fetch("/app/accounts", {
-        method: "POST",
-        body: formData,
-      });
-
-      const data = await res.json();
-      if (!res.ok || data.error) {
-        throw new Error(data.error || data.message || "Failed to connect bank");
-      }
-
-      if (data.oauth && data.redirectUrl) {
-        window.location.href = data.redirectUrl;
+    if (bankAuthType === "token") {
+      if (!bankToken.trim()) {
+        setBankError("Please enter your developer token.");
         return;
       }
-
-      revalidator.revalidate();
-      handleCloseModal();
-    } catch (err) {
-      setBankError((err as Error).message);
-    } finally {
-      setIsConnecting(false);
+      fetcher.submit(
+        {
+          intent: "connectBank",
+          institutionId: selectedBank,
+          token: bankToken.trim(),
+        },
+        { method: "POST", action: "/app/accounts" },
+      );
+    } else {
+      fetcher.submit(
+        {
+          intent: "connectBank",
+          institutionId: selectedBank,
+        },
+        { method: "POST", action: "/app/accounts" },
+      );
     }
-  }, [bankAuthType, bankToken, handleCloseModal, revalidator, selectedBank]);
+  }, [bankAuthType, bankToken, fetcher, selectedBank]);
 
   const onEditAccount = useCallback(() => {
     const { name, type, balance } = formInput;
