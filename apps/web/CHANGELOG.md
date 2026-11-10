@@ -1,5 +1,88 @@
 # Changelog
 
+## [1.23.0](https://github.com/mgallagher56/flump/compare/flump/web-v1.22.2...flump/web-v1.23.0) (2026-11-10)
+
+
+### Features ✨
+
+* add custom FLPCheckbox component and hide number input spinner buttons ([40e40ef](https://github.com/mgallagher56/flump/commit/40e40ef003ec0b16410e1539170dc410dd0821bb))
+* add pension and savings pages, compound forecasters, UK auto-enrolment rules, and onboarding wizards ([fcae1cb](https://github.com/mgallagher56/flump/commit/fcae1cb654048091caa53443e4af4887baed5403))
+* add user initials thumbnail and profile picture upload support ([6612d56](https://github.com/mgallagher56/flump/commit/6612d56a088a0613e91dbed272798afa01995657))
+* centralize tax rules in shared package, implement mobile TaxScreen and redesigned bottom bar navigation ([6318b56](https://github.com/mgallagher56/flump/commit/6318b56fb1d6d00c34b0a9f981458c54b6d1c514))
+* **copy:** comprehensive en-GB copy, typography, and style guide refresh ([7834dec](https://github.com/mgallagher56/flump/commit/7834decd5128b603b474fb52cfcb0a9de94de3bf))
+* **design-system:** overhaul typography, section rhythm, financial diagrams, and responsive accessibility ([8fe6be3](https://github.com/mgallagher56/flump/commit/8fe6be31f01d6ebdbd83864b1ccd6ee856b6b544))
+* group primary desktop navigation into Wealth and Planning dropdown pillars ([8a2dfa5](https://github.com/mgallagher56/flump/commit/8a2dfa5c24162aecae8cadb2ffbe844b3524fd6e))
+* **hero:** enlarge hero scale, typography, and visual impact ([c196275](https://github.com/mgallagher56/flump/commit/c1962752d87173324e6c4d42c5d70a1ed3fdf985))
+* **illustrations:** integrate 3D fintech illustrations across marketing and app ([c7085ac](https://github.com/mgallagher56/flump/commit/c7085aca29a99d29067b567b0995039070d52a42))
+* implement flump architecture blueprint, uk finance engine, banking package, and full lifecycle ux ([d52015b](https://github.com/mgallagher56/flump/commit/d52015b1ff897fba21887cec06fd4ffaa4a8a75c))
+* implement UK debt payoff hub, adaptive financial stage UX, and marketing deployment ([8a2f446](https://github.com/mgallagher56/flump/commit/8a2f446283a9853dc65aa57d9449129f984acffb))
+* improve Home, Budgets, and Accounts functionality, UI, and UX ([759ac12](https://github.com/mgallagher56/flump/commit/759ac12cc6423b98b70d21774dee29c3a2b7363e))
+* improve tax planner, profile settings, budget customization, and dashboard UX ([134de6f](https://github.com/mgallagher56/flump/commit/134de6fb7ddef2b8d3be5abdf18ff5e8e8b12288))
+* **marketing,web:** implement domain split architecture and dark mode theme ([56817db](https://github.com/mgallagher56/flump/commit/56817db253b7fd23bedc375e2588aa42069ea3eb))
+* **marketing:** add mobile menu to header, clean navigation and remove unused guide pages ([46f5006](https://github.com/mgallagher56/flump/commit/46f500685c52f5029d386ead476a378255e13a26))
+* **nav:** keep sign up and log in buttons accessible in mobile headers ([0c79909](https://github.com/mgallagher56/flump/commit/0c799092bf4779ab5b692887847eaf4969dfbb35))
+* **onboarding:** simplify baseline onboarding and streamline marketing homepage ([2b603dc](https://github.com/mgallagher56/flump/commit/2b603dc825ecba31bda62b5d52d10935abb06c32))
+* overhaul architecture, progressive onboarding, forecasting & marketing tools ([364ecad](https://github.com/mgallagher56/flump/commit/364ecadb6bded5d0d986bf0c10b38fb883668141))
+* **sandbox:** expand container width, configure 3 realistic UK personas, and highlight income widget ([aaabdfd](https://github.com/mgallagher56/flump/commit/aaabdfde3b77af4400c04e669596c309b103022f))
+* simplify pension forecaster UI, fix mobile nav height, and improve runway calculator ([8abe89f](https://github.com/mgallagher56/flump/commit/8abe89fe4bb9848d8d7725385842411aafa193dd))
+* **ui:** complete frontend design review, domain styling, and UX improvements ([a2b734b](https://github.com/mgallagher56/flump/commit/a2b734b5db719e34ae264535e5bcf908476b9913))
+* **ui:** enforce design tokens and accessible typography across marketing and web apps ([e457b9e](https://github.com/mgallagher56/flump/commit/e457b9ea00bd878c71a6b6f50fe8d405c27d2e8a))
+* **ui:** institutional fintech UI/UX refactor and 2-column simulator layouts ([92885f1](https://github.com/mgallagher56/flump/commit/92885f128d9ac4526aa1496d85b8ee96de2b3816))
+* **ui:** standardize typography, segmented tabs, mortgage edit mode, and visual UX ([dc11666](https://github.com/mgallagher56/flump/commit/dc11666ef8e940a1778d37e4ca33ea612f92df5e))
+* **ux:** embed interactive sandboxes, connect mobile bottom bar, add centered donut metric, and remove health scoring ([eba2184](https://github.com/mgallagher56/flump/commit/eba21845efa86e616873f5385557e1c199048724))
+* **web:** redesign and rebuild logged out homepage with interactive UK tax and mortgage tools ([b0c8715](https://github.com/mgallagher56/flump/commit/b0c87158ce4659658604efca7aa2201471beb252))
+
+
+### Bug Fixes 🪲
+
+* **auth:** align local redirect URIs and prevent post-login blank page ([0b2cbfb](https://github.com/mgallagher56/flump/commit/0b2cbfb931d330d446e143d350bc6783c601adcb))
+* **copy:** resolve all code review standards and spec findings ([00bb016](https://github.com/mgallagher56/flump/commit/00bb0161731edf09a3d4bf02ef552e1931af3433))
+* **debt:** prevent metric card icon badges from overlapping title text ([a618ce1](https://github.com/mgallagher56/flump/commit/a618ce16428efd3b0f308bf5b567e2ac4b5c03e1))
+* **deps:** pin dependencies ([b69b5ce](https://github.com/mgallagher56/flump/commit/b69b5cebf960dfa37f3176c5d1bce0a9f14c88be))
+* **deps:** pin dependencies ([d5963a6](https://github.com/mgallagher56/flump/commit/d5963a680c465b63671523ce26ceb788ee341dad))
+* **docker:** optimize web Dockerfile for monorepo and bun 1-slim ([ee51418](https://github.com/mgallagher56/flump/commit/ee514189fc286bb4fb54e2732141a7337c7b41ad))
+* **security:** eliminate grossSalary references to clear CodeQL and align unit tests ([d6f597a](https://github.com/mgallagher56/flump/commit/d6f597a12a140b064e15bf2614ce7b71f90359b4))
+* **security:** resolve CodeQL CWE-312 cleartext storage alerts across tools and onboarding ([23f0a85](https://github.com/mgallagher56/flump/commit/23f0a85c866e1acf762c2880badbd6f8805fca8b))
+* **theme:** expand navbar to full-width and heighten light mode card contrast ([d1a9521](https://github.com/mgallagher56/flump/commit/d1a9521771acd6d4915edb63d6e54ad11c7dc56d))
+* **typography:** restore heading hierarchy and scale across FLPHeading and base h1-h6 ([0c43dc6](https://github.com/mgallagher56/flump/commit/0c43dc6ae3530abdcc734135012df179b462bf26))
+* **typography:** scale hero display heading and promote CTAs above illustration ([8daf170](https://github.com/mgallagher56/flump/commit/8daf17098de6b5cbd57d91d83472c81211069dd7))
+* **web:** render LoggedOutHome on root route when user is unauthenticated ([b4b9163](https://github.com/mgallagher56/flump/commit/b4b9163f91b1bd273de700512d32a3fcbc0bdbec))
+
+
+### Documentation 📙
+
+* add pages and features catalog, update readme, and add agent rules ([e9d2d43](https://github.com/mgallagher56/flump/commit/e9d2d4327c7bcc0d468db881ed5ab4a3bb80d0f8))
+
+
+### Refactor 🔥
+
+* **finance-engine:** collapse dual calculation engines and unify tax/debt math ([6c5fce0](https://github.com/mgallagher56/flump/commit/6c5fce0990cde6bc06410704f6d013b445392a9d))
+* **finance-engine:** extract deep PortfolioSnapshot domain module ([c607dc3](https://github.com/mgallagher56/flump/commit/c607dc325a5b2c423179afb055999f5500f02593))
+* **state:** unify financial profile, baseline store, and seed hydration ([8d77149](https://github.com/mgallagher56/flump/commit/8d771498c8a4229ae87b97e30a2938de4b3096b6))
+* **ui:** consolidate shared public calculators into @repo/ui ([96a328e](https://github.com/mgallagher56/flump/commit/96a328eddfe7d9ae21c117a89edfdd47ffdd1192))
+* **web:** consolidate backend workspace loader and simplify route redirects ([98ee670](https://github.com/mgallagher56/flump/commit/98ee6703032b12e29585afcd08d1d9263274f61d))
+
+
+### Tests 🧪
+
+* **ci:** set vitest coverage target to 80% ([b51369c](https://github.com/mgallagher56/flump/commit/b51369c51391c490bdc27b629543563960320db1))
+* **web:** add unit tests to increase coverage ([51fa84a](https://github.com/mgallagher56/flump/commit/51fa84a6b7df402356262886b5571fc17f424f37))
+* **web:** configure vitest coverage thresholds with autoUpdate ([f56496e](https://github.com/mgallagher56/flump/commit/f56496eff42db0162c0383870de45301afd69cd9))
+* **web:** fix type errors in new test fixtures ([b11d408](https://github.com/mgallagher56/flump/commit/b11d408ccd78f82259460c49c454051dfd15ce8b))
+* **web:** update AccountsContainer snapshot for whitespace formatting ([41121ce](https://github.com/mgallagher56/flump/commit/41121ce4fc878ed4bf4224f9ba7b6569455851e4))
+
+
+### Miscellaneous 🙃
+
+* **deploy:** configure per-service Dockerfile paths and inject runtime API_URL ([265c7b0](https://github.com/mgallagher56/flump/commit/265c7b07ac4e684a949c30dcf53ef0ca86e2dea8))
+* **deps:** fix CodeQL cleartext storage alerts and increase test coverage ([0a261d5](https://github.com/mgallagher56/flump/commit/0a261d564816919a571a8a75d4c893948a1c5ab1))
+* **deps:** prune unused dependencies and align vitest versions ([e08b3bc](https://github.com/mgallagher56/flump/commit/e08b3bc4948ce28eb1f8efc25d243d8fa89db6c7))
+* **deps:** update node.js to v26 ([4d1a8c4](https://github.com/mgallagher56/flump/commit/4d1a8c45b90c7f8ac4909df8d25d7b841d694e41))
+* re-architect monorepo with bun, nestjs, react 19, and radix ([6e143b1](https://github.com/mgallagher56/flump/commit/6e143b19a7f307c88af390e3207f9f8f1285ae09))
+* run lint and typescript checks and fix violations ([b5975fb](https://github.com/mgallagher56/flump/commit/b5975fb7d62aa7aa70aa281b43b11cdbf5d8d9c7))
+* stop tracking environmental configurations and build artifacts ([6bd773a](https://github.com/mgallagher56/flump/commit/6bd773a1db81c0972c2afb07e9a18e8ebd2bb42a))
+* **web:** update base bun docker image and add dockerignore ([520e943](https://github.com/mgallagher56/flump/commit/520e9434ef1e5454e944b01db6d69ce7dd157bda))
+
 ## [1.22.2](https://github.com/mgallagher56/flump/compare/flump/web-v1.22.1...flump/web-v1.22.2) (2025-01-08)
 
 ### Bug Fixes 🪲
