@@ -75,9 +75,11 @@ const FLPModal: FC<FLPModalProps> = ({
     boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.2)",
     padding: { base: "20px 16px", md: "24px" },
     width: { base: "calc(100vw - 20px)", sm: "92vw", md: "90vw" },
-    maxWidth: { base: "calc(100vw - 20px)", sm: "480px", md: "480px" },
+    maxWidth: { base: "calc(100vw - 20px)", sm: "520px", md: "520px" },
     maxHeight: { base: "94vh", md: "85vh" },
     overflowY: "auto",
+    overflowX: "hidden",
+    boxSizing: "border-box",
     zIndex: 60,
     outline: "none",
     color: "text.primary",
@@ -98,6 +100,8 @@ const FLPModal: FC<FLPModalProps> = ({
     width: "100%",
     maxHeight: "88vh",
     overflowY: "auto",
+    overflowX: "hidden",
+    boxSizing: "border-box",
     zIndex: 60,
     outline: "none",
     color: "text.primary",
@@ -113,6 +117,9 @@ const FLPModal: FC<FLPModalProps> = ({
 
   const headerStyle = css({
     marginBottom: "20px",
+    minWidth: 0,
+    width: "100%",
+    boxSizing: "border-box",
   });
 
   const titleStyle = css({
@@ -120,10 +127,14 @@ const FLPModal: FC<FLPModalProps> = ({
     fontWeight: "bold",
     color: "text.primary",
     margin: 0,
+    overflowWrap: "break-word",
   });
 
   const bodyStyle = css({
     marginBottom: "24px",
+    minWidth: 0,
+    width: "100%",
+    boxSizing: "border-box",
   });
 
   const footerStyle = css({
@@ -133,6 +144,9 @@ const FLPModal: FC<FLPModalProps> = ({
     marginTop: "24px",
     gap: "16px",
     flexWrap: "wrap",
+    minWidth: 0,
+    width: "100%",
+    boxSizing: "border-box",
   });
 
   return (

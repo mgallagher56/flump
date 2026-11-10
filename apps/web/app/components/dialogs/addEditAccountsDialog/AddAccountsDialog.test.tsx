@@ -55,4 +55,63 @@ describe("<AddAccountDialogBtn", () => {
     const baseElementConstant = htmlString.replaceAll(/style="[^"]*"/g, "");
     expect(baseElementConstant).toMatchSnapshot();
   });
+
+  test("should render popular banks and allow switching to manual entry for banks without direct sync", async () => {
+    mocks.mockUseLoaderData.mockReturnValue({ user: mockUser });
+    const { getByText, getAllByText, getByPlaceholderText, user } = customRender(
+      <AddEditAccountsDialogBtn accountId="123456" />,
+    );
+    await user.click(getByText("addAccount"));
+
+    // Switch to Connect to Bank
+    await user.click(getByText("Connect to Bank"));
+
+    // Verify popular banks are listed
+    expect(getByText("Monzo Bank")).toBeDefined();
+    expect(getByText("Starling Bank")).toBeDefined();
+    expect(getByText("HSBC Bank")).toBeDefined();
+    expect(getByText("Barclays")).toBeDefined();
+    expect(getByText("Revolut")).toBeDefined();
+
+    // Select HSBC (coming soon)
+    await user.click(getByText("HSBC Bank"));
+    expect(getByText("Direct Sync for HSBC Bank coming soon")).toBeDefined();
+
+    // Click track via manual entry
+    const trackManualBtns = getAllByText("Track HSBC Bank via Manual Entry");
+    expect(trackManualBtns.length).toBeGreaterThan(0);
+    await user.click(trackManualBtns[0]);
+
+    // Should now be on the manual entry form with name prefilled
+    const nameInput = getByPlaceholderText("accountName") as HTMLInputElement;
+    expect(nameInput.value).toBe("HSBC Bank Account");
+  });
+
+  test("should submit real bank connection credentials for direct sync bank", async () => {
+    mocks.mockUseLoaderData.mockReturnValue({ user: mockUser });
+    const { getByText, getByPlaceholderText, user } = customRender(
+      <AddEditAccountsDialogBtn accountId="123456" />,
+    );
+    await user.click(getByText("addAccount"));
+    await user.click(getByText("Connect to Bank"));
+
+    // Select Monzo
+    await user.click(getByText("Monzo Bank"));
+
+    // Enter token
+    const tokenInput = getByPlaceholderText("Access token from developers.monzo.com...");
+    await user.type(tokenInput, "secret-monzo-token");
+
+    // Click Connect Monzo Bank
+    await user.click(getByText("Connect Monzo Bank"));
+
+    expect(mocks.mockFetcherSubmit).toHaveBeenCalledWith(
+      {
+        intent: "connectBank",
+        institutionId: "monzo",
+        token: "secret-monzo-token",
+      },
+      { method: "POST", action: "/app/accounts" },
+    );
+  });
 });

@@ -28,6 +28,7 @@ interface BankItem {
   color: string;
   desc: string;
   accounts: string[];
+  directSync?: boolean;
 }
 
 const BANKS: BankItem[] = [
@@ -37,6 +38,7 @@ const BANKS: BankItem[] = [
     color: "#ff4f5e",
     desc: "Sync real checking, joint & savings pots via Developer Token or OAuth",
     accounts: ["Monzo Current Account", "Monzo Savings Pots"],
+    directSync: true,
   },
   {
     id: "starling",
@@ -44,10 +46,75 @@ const BANKS: BankItem[] = [
     color: "#00aeef",
     desc: "Sync real accounts & savings spaces via Personal Access Token or OAuth",
     accounts: ["Starling Current Account", "Starling Savings Spaces"],
+    directSync: true,
+  },
+  {
+    id: "hsbc",
+    name: "HSBC Bank",
+    color: "#db0011",
+    desc: "Direct Open Banking sync coming soon (Manual entry available)",
+    accounts: ["HSBC Current Account"],
+    directSync: false,
+  },
+  {
+    id: "barclays",
+    name: "Barclays Bank",
+    color: "#00aeef",
+    desc: "Direct Open Banking sync coming soon (Manual entry available)",
+    accounts: ["Barclays Everyday Account"],
+    directSync: false,
+  },
+  {
+    id: "revolut",
+    name: "Revolut",
+    color: "#111118",
+    desc: "Direct Open Banking sync coming soon (Manual entry available)",
+    accounts: ["Revolut Multi-Currency"],
+    directSync: false,
+  },
+  {
+    id: "santander",
+    name: "Santander",
+    color: "#ec0000",
+    desc: "Direct Open Banking sync coming soon (Manual entry available)",
+    accounts: ["Santander 123 Current"],
+    directSync: false,
+  },
+  {
+    id: "natwest",
+    name: "NatWest",
+    color: "#4e195b",
+    desc: "Direct Open Banking sync coming soon (Manual entry available)",
+    accounts: ["NatWest Select Current"],
+    directSync: false,
+  },
+  {
+    id: "lloyds",
+    name: "Lloyds Bank",
+    color: "#006a4e",
+    desc: "Direct Open Banking sync coming soon (Manual entry available)",
+    accounts: ["Lloyds Classic Account"],
+    directSync: false,
+  },
+  {
+    id: "chase",
+    name: "Chase",
+    color: "#112e51",
+    desc: "Direct Open Banking sync coming soon (Manual entry available)",
+    accounts: ["Chase Current Account"],
+    directSync: false,
   },
 ];
 
-type WizardStep = "select" | "method" | "tokenInput" | "consent" | "syncing" | "success" | "error";
+type WizardStep =
+  | "select"
+  | "method"
+  | "tokenInput"
+  | "consent"
+  | "syncing"
+  | "success"
+  | "error"
+  | "unsupported";
 
 const ConnectBankWizard: FC<ConnectBankWizardProps> = ({ onSuccess }) => {
   const [open, setOpen] = useState(false);
@@ -110,7 +177,11 @@ const ConnectBankWizard: FC<ConnectBankWizardProps> = ({ onSuccess }) => {
 
   const handleSelectBank = (bank: BankItem) => {
     setSelectedBank(bank);
-    setStep("method");
+    if (bank.directSync === false) {
+      setStep("unsupported");
+    } else {
+      setStep("method");
+    }
   };
 
   const handleSelectMethod = (selectedType: "pat" | "oauth") => {
@@ -177,6 +248,8 @@ const ConnectBankWizard: FC<ConnectBankWizardProps> = ({ onSuccess }) => {
     display: "flex",
     flexDirection: "column",
     maxHeight: { base: "94vh", md: "85vh" },
+    overflowX: "hidden",
+    boxSizing: "border-box",
   });
 
   const scrollContainerStyle = css({
@@ -324,16 +397,65 @@ const ConnectBankWizard: FC<ConnectBankWizardProps> = ({ onSuccess }) => {
                       }
                     }}
                   >
-                    <div className={flexContainer}>
+                    <div className={flexContainer} style={{ minWidth: 0, flex: 1 }}>
                       <div className={bankLogoCircleStyle(bank.color)}>{bank.name.charAt(0)}</div>
-                      <div>
-                        <FLPText fontWeight="semibold">{bank.name}</FLPText>
-                        <FLPText color="text.muted" fontSize="xs">
+                      <div style={{ minWidth: 0, flex: 1, paddingRight: "8px" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                          <FLPText
+                            fontWeight="semibold"
+                            style={{
+                              whiteSpace: "nowrap",
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                            }}
+                          >
+                            {bank.name}
+                          </FLPText>
+                          {bank.directSync ? (
+                            <span
+                              style={{
+                                fontSize: "9px",
+                                padding: "1px 5px",
+                                borderRadius: "4px",
+                                backgroundColor: "rgba(16, 185, 129, 0.15)",
+                                color: "#10b981",
+                                fontWeight: 700,
+                                textTransform: "uppercase",
+                                flexShrink: 0,
+                              }}
+                            >
+                              Live
+                            </span>
+                          ) : (
+                            <span
+                              style={{
+                                fontSize: "9px",
+                                padding: "1px 5px",
+                                borderRadius: "4px",
+                                backgroundColor: "rgba(156, 163, 175, 0.15)",
+                                color: "var(--colors-text-muted)",
+                                fontWeight: 600,
+                                flexShrink: 0,
+                              }}
+                            >
+                              Soon
+                            </span>
+                          )}
+                        </div>
+                        <FLPText
+                          color="text.muted"
+                          fontSize="xs"
+                          style={{
+                            whiteSpace: "nowrap",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                          }}
+                        >
                           {bank.desc}
                         </FLPText>
                       </div>
                     </div>
-                    <FaChevronRight style={{ color: "#a1a1aa", fontSize: "14px" }} />
+                    <FaChevronRight style={{ color: "#a1a1aa", fontSize: "14px", flexShrink: 0 }} />
                   </div>
                 ))}
                 {filteredBanks.length === 0 && (
@@ -697,6 +819,68 @@ const ConnectBankWizard: FC<ConnectBankWizardProps> = ({ onSuccess }) => {
               <div style={{ display: "flex", justifyContent: "center", marginTop: "12px" }}>
                 <FLPButton variant="outline" onClick={() => setStep("method")}>
                   Try Again
+                </FLPButton>
+              </div>
+            </>
+          )}
+
+          {/* Step 8: Unsupported Bank State */}
+          {step === "unsupported" && selectedBank && (
+            <>
+              <div>
+                <FLPHeading as="h2" size="lg">
+                  {selectedBank.name} Direct Sync
+                </FLPHeading>
+                <FLPText color="text.muted" fontSize="sm" style={{ marginTop: "4px" }}>
+                  Direct live connection coming soon.
+                </FLPText>
+              </div>
+
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "12px",
+                  padding: "16px",
+                  borderRadius: "8px",
+                  backgroundColor: "var(--colors-surface-sunken)",
+                  border: "1px solid var(--colors-border-subtle)",
+                  marginTop: "20px",
+                  marginBottom: "20px",
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "flex-start", gap: "10px" }}>
+                  <FaShieldAlt
+                    color="#10b981"
+                    size={18}
+                    style={{ flexShrink: 0, marginTop: "2px" }}
+                  />
+                  <FLPText fontSize="sm">
+                    Flump connects directly to real Open Banking APIs and does not create mock
+                    accounts. Direct live sync is currently supported for <strong>Monzo</strong> and{" "}
+                    <strong>Starling Bank</strong>.
+                  </FLPText>
+                </div>
+                <FLPText color="text.muted" fontSize="xs">
+                  To track your {selectedBank.name} accounts now, use the{" "}
+                  <strong>Manual Entry</strong> option in the Add Account dialog.
+                </FLPText>
+              </div>
+
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  marginTop: "auto",
+                  gap: "12px",
+                }}
+              >
+                <FLPButton variant="outline" onClick={() => setStep("select")}>
+                  <FaArrowLeft style={{ marginRight: "8px" }} />
+                  Back to Banks
+                </FLPButton>
+                <FLPButton variant="primary" onClick={handleCloseModal}>
+                  Close
                 </FLPButton>
               </div>
             </>

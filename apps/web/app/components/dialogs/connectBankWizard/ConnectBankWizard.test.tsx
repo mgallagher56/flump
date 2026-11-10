@@ -50,4 +50,19 @@ describe("<ConnectBankWizard />", () => {
     fireEvent.click(getByText("Back"));
     expect(getByText("Choose Connection Mode")).toBeDefined();
   });
+
+  test("shows clear coming soon notice when selecting bank without direct sync", () => {
+    const { getByText } = customRender(<ConnectBankWizard onSuccess={vi.fn()} />);
+
+    fireEvent.click(getByText("Connect Bank Account"));
+    fireEvent.click(getByText("HSBC Bank"));
+    expect(getByText("HSBC Bank Direct Sync")).toBeDefined();
+    expect(getByText(/Direct live connection coming soon/i)).toBeDefined();
+
+    // Click back to banks
+    fireEvent.click(getByText("Back to Banks"));
+    expect(
+      getByText("Choose your bank or financial institution to automatically sync your balances."),
+    ).toBeDefined();
+  });
 });
