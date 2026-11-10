@@ -201,8 +201,16 @@ export class FinanceService {
       const names: { [key: string]: string } = {
         starling: "Starling Bank",
         monzo: "Monzo Bank",
+        trading212: "Trading 212",
+        hsbc: "HSBC Bank",
+        barclays: "Barclays",
+        revolut: "Revolut",
+        santander: "Santander",
+        natwest: "NatWest",
+        lloyds: "Lloyds Bank",
+        chase: "Chase",
       };
-      const name = names[institutionId] || "External Bank";
+      const name = names[institutionId.toLowerCase()] || "External Bank";
 
       let conn: BankConnection;
       const found = await this.bankConnectionRepository.findOne({
@@ -272,8 +280,16 @@ export class FinanceService {
     const providerNames: { [key: string]: string } = {
       starling: "Starling Bank",
       monzo: "Monzo Bank",
+      trading212: "Trading 212",
+      hsbc: "HSBC Bank",
+      barclays: "Barclays",
+      revolut: "Revolut",
+      santander: "Santander",
+      natwest: "NatWest",
+      lloyds: "Lloyds Bank",
+      chase: "Chase",
     };
-    const institutionName = providerNames[institutionId] || institutionId;
+    const institutionName = providerNames[institutionId.toLowerCase()] || institutionId;
 
     throw new BadRequestException(
       `OAuth credentials are not configured on the server for ${institutionName}. Please connect using a Personal Access Token or configure ${institutionId.toUpperCase()}_CLIENT_ID and ${institutionId.toUpperCase()}_CLIENT_SECRET.`,
