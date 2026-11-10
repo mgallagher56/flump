@@ -1,6 +1,7 @@
 import { Module } from "@nestjs/common";
 import { ConfigModule, ConfigService } from "@nestjs/config";
 import { TypeOrmModule } from "@nestjs/typeorm";
+import { AccountIntakeService } from "./account-intake.service";
 import { AppController } from "./app.controller";
 import { AppService } from "./app.service";
 import { BudgetController } from "./budget.controller";
@@ -13,6 +14,7 @@ import { Transaction } from "./entities/transaction.entity";
 import { UserProfile } from "./entities/user-profile.entity";
 import { FinanceController } from "./finance.controller";
 import { FinanceService } from "./finance.service";
+import { USER_IDENTITY_ADAPTER, WorkOSIdentityAdapter } from "./identity/identity.adapter";
 import { MonzoProvider } from "./providers/monzo.provider";
 import { BankProviderRegistry } from "./providers/provider.registry";
 import { StarlingProvider } from "./providers/starling.provider";
@@ -89,12 +91,17 @@ import { UserProfileService } from "./user-profile.service";
   ],
   providers: [
     AppService,
+    AccountIntakeService,
     FinanceService,
     UserProfileService,
     MonzoProvider,
     StarlingProvider,
     Trading212Provider,
     BankProviderRegistry,
+    {
+      provide: USER_IDENTITY_ADAPTER,
+      useClass: WorkOSIdentityAdapter,
+    },
   ],
 })
 export class AppModule {}

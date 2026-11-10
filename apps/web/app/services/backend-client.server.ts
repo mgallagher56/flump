@@ -49,7 +49,7 @@ export async function loadWorkspaceSnapshot(
     }
   };
 
-  const [accounts, accountDetails, userProfile, budgetEntries, taxRecords, bankConnections] =
+  const [accounts, rawAccountDetails, userProfile, budgetEntries, taxRecords, bankConnections] =
     await Promise.all([
       fetchJson<any[]>("/accounts", []),
       fetchJson<any[]>("/account-details", []),
@@ -58,6 +58,11 @@ export async function loadWorkspaceSnapshot(
       includeTax ? fetchJson<any[]>("/tax-records", []) : Promise.resolve([]),
       includeConnections ? fetchJson<any[]>("/bank-connections", []) : Promise.resolve([]),
     ]);
+
+  const accountDetails =
+    rawAccountDetails && rawAccountDetails.length > 0
+      ? rawAccountDetails
+      : accounts.flatMap((a) => a.details || []);
 
   return {
     user,

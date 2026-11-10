@@ -65,9 +65,24 @@ export class FinanceController {
     return this.financeService.getAccounts(req.user.id);
   }
 
+  @Get("account-details")
+  async getAccountDetails(@Req() req: any) {
+    return this.financeService.getAccountDetails(req.user.id);
+  }
+
   @Get("accounts/:id")
   async getAccount(@Req() req: any, @Param("id") id: string) {
     return this.financeService.getAccount(req.user.id, id);
+  }
+
+  @Get("accounts/:id/details")
+  async getAccountSpecificDetails(@Req() req: any, @Param("id") id: string) {
+    return this.financeService.getAccountDetails(req.user.id, id);
+  }
+
+  @Get("portfolio-snapshot")
+  async getPortfolioSnapshot(@Req() req: any) {
+    return this.financeService.getPortfolioSnapshot(req.user.id);
   }
 
   @Post("accounts")

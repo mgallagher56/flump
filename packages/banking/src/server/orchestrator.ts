@@ -1,6 +1,7 @@
 import { enforceSignConvention } from "../core/sign-enforcement.js";
 import type { FlumpAccountCategory, NormalizedAccount } from "../core/types.js";
 import { encryptBankingToken, safeDecryptBankingToken } from "./crypto.js";
+import type { BankingProviderAdapter } from "./interface.js";
 
 export interface MockAccountSeed {
   name: string;
@@ -22,7 +23,46 @@ export interface MockTransactionSeed {
   timestamp: Date;
 }
 
+export interface RefreshTokenOptions {
+  connection: {
+    institutionId: string;
+    accessToken?: string | null;
+    refreshToken?: string | null;
+    expiresAt?: Date | null;
+  };
+  exchangeRefreshToken: (plainRefreshToken: string) => Promise<{
+    accessToken: string;
+    refreshToken?: string;
+    expiresIn?: number;
+  }>;
+  marginMs?: number;
+}
+
+export interface RefreshedTokenResult {
+  activeAccessToken: string;
+  updatedEncryptedAccessToken?: string;
+  updatedEncryptedRefreshToken?: string;
+  newExpiresAt?: Date;
+  wasRefreshed: boolean;
+}
+
 export class BankSyncOrchestrator {
+  private static adapters: Map<string, BankingProviderAdapter> = new Map();
+
+  /**
+   * Registers a banking provider adapter by provider name.
+   */
+  static registerAdapter(providerName: string, adapter: BankingProviderAdapter): void {
+    this.adapters.set(providerName.toLowerCase(), adapter);
+  }
+
+  /**
+   * Retrieves a registered banking provider adapter.
+   */
+  static getAdapter(providerName: string): BankingProviderAdapter | undefined {
+    return this.adapters.get(providerName.toLowerCase());
+  }
+
   /**
    * Encrypts a banking token (access or refresh token) using AES-256-GCM.
    */
@@ -35,6 +75,107 @@ export class BankSyncOrchestrator {
    */
   static decryptToken(token: string): string {
     return safeDecryptBankingToken(token);
+  }
+
+  /**
+   * Determines whether a token is close to expiry or already expired.
+   */
+  static isTokenExpiring(expiresAt?: Date | string | null, marginMs = 300_000): boolean {
+    if (!expiresAt) return false;
+    const expiryTime =
+      typeof expiresAt === "string" ? new Date(expiresAt).getTime() : expiresAt.getTime();
+    return expiryTime - Date.now() < marginMs;
+  }
+
+  /**
+   * Calculates a future expiry Date from a TTL in seconds.
+   */
+  static calculateExpiryDate(expiresInSeconds?: number): Date | undefined {
+    if (!expiresInSeconds) return undefined;
+    return new Date(Date.now() + expiresInSeconds * 1000);
+  }
+
+  /**
+   * Encapsulates token lifecycle and automatic refresh. If token is expiring and a refresh token
+   * is present, calls the provider's token exchange, encrypts the new tokens, and updates state.
+   */
+  static async refreshConnectionTokensIfNeeded(
+    options: RefreshTokenOptions,
+  ): Promise<RefreshedTokenResult> {
+    const { connection, exchangeRefreshToken, marginMs = 300_000 } = options;
+
+    if (!connection.accessToken) {
+      throw new Error("No access token provided on connection");
+    }
+
+    let activeAccessToken = this.decryptToken(connection.accessToken);
+
+    const shouldRefresh =
+      this.isTokenExpiring(connection.expiresAt, marginMs) && Boolean(connection.refreshToken);
+
+    if (shouldRefresh && connection.refreshToken) {
+      const plainRefreshToken = this.decryptToken(connection.refreshToken);
+      const tokenRes = await exchangeRefreshToken(plainRefreshToken);
+
+      activeAccessToken = tokenRes.accessToken;
+      const updatedEncryptedAccessToken = this.encryptToken(tokenRes.accessToken);
+      const updatedEncryptedRefreshToken = tokenRes.refreshToken
+        ? this.encryptToken(tokenRes.refreshToken)
+        : undefined;
+      const newExpiresAt = this.calculateExpiryDate(tokenRes.expiresIn);
+
+      return {
+        activeAccessToken,
+        updatedEncryptedAccessToken,
+        updatedEncryptedRefreshToken,
+        newExpiresAt,
+        wasRefreshed: true,
+      };
+    }
+
+    return {
+      activeAccessToken,
+      wasRefreshed: false,
+    };
+  }
+
+  /**
+   * Generates canonical OAuth redirect URLs for supported banking institutions.
+   */
+  static getOAuthUrl(
+    institutionId: string,
+    callbackUrl: string,
+    clientId?: string,
+    state?: string,
+  ): string | null {
+    const encCallback = encodeURIComponent(callbackUrl);
+    const targetState = encodeURIComponent(state || institutionId);
+    const id = institutionId.toLowerCase();
+
+    switch (id) {
+      case "monzo":
+        return `https://auth.monzo.com/?client_id=${clientId || "flump-client"}&redirect_uri=${encCallback}&response_type=code&state=${targetState}`;
+      case "starling":
+        return `https://oauth.starlingbank.com/?client_id=${clientId || "flump-client"}&redirect_uri=${encCallback}&response_type=code&state=${targetState}`;
+      case "trading212":
+        return `https://live.trading212.com/oauth/authorize?client_id=${clientId || "flump-client"}&redirect_uri=${encCallback}&response_type=code&state=${targetState}`;
+      case "revolut":
+        return `https://business.revolut.com/app-confirm?client_id=${clientId || "flump-client"}&redirect_uri=${encCallback}&response_type=code&state=${targetState}`;
+      case "hsbc":
+        return `https://api.hsbc.com/oauth/v1/authorize?client_id=${clientId || "flump-client"}&redirect_uri=${encCallback}&response_type=code&scope=openid%20accounts&state=${targetState}`;
+      case "barclays":
+        return `https://oauth.barclays.com/as/authorization.oauth2?client_id=${clientId || "flump-client"}&redirect_uri=${encCallback}&response_type=code&scope=openid%20accounts&state=${targetState}`;
+      case "santander":
+        return `https://api.santander.co.uk/oauth/authorize?client_id=${clientId || "flump-client"}&redirect_uri=${encCallback}&response_type=code&scope=accounts&state=${targetState}`;
+      case "natwest":
+        return `https://api.natwest.com/open-banking/v3.1/aisp/authorize?client_id=${clientId || "flump-client"}&redirect_uri=${encCallback}&response_type=code&scope=accounts&state=${targetState}`;
+      case "lloyds":
+        return `https://api.lloydsbank.com/open-banking/v3.1/aisp/authorize?client_id=${clientId || "flump-client"}&redirect_uri=${encCallback}&response_type=code&scope=accounts&state=${targetState}`;
+      case "chase":
+        return `https://secure.chase.com/web/auth/oauth2/v2/authorize?client_id=${clientId || "flump-client"}&redirect_uri=${encCallback}&response_type=code&scope=accounts&state=${targetState}`;
+      default:
+        return null;
+    }
   }
 
   /**

@@ -60,25 +60,18 @@ export const loader = async (args: LoaderFunctionArgs) => {
   const apiUrl = process.env.VITE_API_URL || "http://localhost:4000";
 
   try {
-    const [accountRes, detailsRes] = await Promise.all([
-      fetch(`${apiUrl}/accounts/${accountId}`, {
-        headers: {
-          Authorization: `Bearer ${accessToken || "mock-session-token"}`,
-        },
-      }),
-      fetch(`${apiUrl}/accounts/${accountId}/details`, {
-        headers: {
-          Authorization: `Bearer ${accessToken || "mock-session-token"}`,
-        },
-      }),
-    ]);
+    const accountRes = await fetch(`${apiUrl}/accounts/${accountId}`, {
+      headers: {
+        Authorization: `Bearer ${accessToken || "mock-session-token"}`,
+      },
+    });
 
-    if (!accountRes.ok || !detailsRes.ok) {
+    if (!accountRes.ok) {
       throw new Error("Failed to fetch data from API");
     }
 
     const account = await accountRes.json();
-    const accountDetails = await detailsRes.json();
+    const accountDetails = account.details || [];
 
     return data({ account, accountDetails, user });
   } catch (error) {

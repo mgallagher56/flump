@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { InMemoryIdentityAdapter } from "./identity/identity.adapter";
 import { UserProfileService } from "./user-profile.service";
 
 describe("UserProfileService (Deep Module)", () => {
@@ -10,7 +11,8 @@ describe("UserProfileService (Deep Module)", () => {
   let mockBankConnectionRepo: any;
   let mockBudgetEntryRepo: any;
   let mockTaxRecordRepo: any;
-  let mockConfigService: any;
+  let identityAdapter: InMemoryIdentityAdapter;
+  let mockDataSource: any;
 
   beforeEach(() => {
     mockUserProfileRepo = {
@@ -37,8 +39,23 @@ describe("UserProfileService (Deep Module)", () => {
     mockTaxRecordRepo = {
       delete: vi.fn().mockResolvedValue({ affected: 4 }),
     };
-    mockConfigService = {
-      get: vi.fn().mockReturnValue(null),
+    identityAdapter = new InMemoryIdentityAdapter();
+    mockDataSource = {
+      transaction: vi.fn(async (cb) => {
+        const fakeManager = {
+          getRepository: (entityClass: any) => {
+            if (entityClass.name === "UserProfile") return mockUserProfileRepo;
+            if (entityClass.name === "Account") return mockAccountRepo;
+            if (entityClass.name === "Transaction") return mockTransactionRepo;
+            if (entityClass.name === "AccountDetail") return mockAccountDetailRepo;
+            if (entityClass.name === "BankConnection") return mockBankConnectionRepo;
+            if (entityClass.name === "BudgetEntry") return mockBudgetEntryRepo;
+            if (entityClass.name === "TaxRecord") return mockTaxRecordRepo;
+            return {};
+          },
+        };
+        return cb(fakeManager);
+      }),
     };
 
     service = new UserProfileService(
@@ -49,11 +66,12 @@ describe("UserProfileService (Deep Module)", () => {
       mockBankConnectionRepo,
       mockBudgetEntryRepo,
       mockTaxRecordRepo,
-      mockConfigService,
+      identityAdapter,
+      mockDataSource,
     );
   });
 
-  it("resets all 6 financial entity tables in a single operation", async () => {
+  it("resets all 6 financial entity tables inside a single atomic transaction", async () => {
     mockUserProfileRepo.findOne.mockResolvedValueOnce({
       userId: "user-123",
       annualSalary: 95000,
@@ -61,6 +79,7 @@ describe("UserProfileService (Deep Module)", () => {
 
     const result = await service.resetFinancialData("user-123", "user@flump.co.uk");
 
+    expect(mockDataSource.transaction).toHaveBeenCalledTimes(1);
     expect(mockAccountRepo.delete).toHaveBeenCalledWith({ userId: "user-123" });
     expect(mockTransactionRepo.delete).toHaveBeenCalledWith({ userId: "user-123" });
     expect(mockBankConnectionRepo.delete).toHaveBeenCalledWith({ userId: "user-123" });
@@ -71,5 +90,33 @@ describe("UserProfileService (Deep Module)", () => {
     expect(result.success).toBe(true);
     expect(result.profile.hasResetFinancialData).toBe(true);
     expect(result.profile.annualSalary).toBeNull();
+  });
+
+  it("delegates name updates to the UserIdentityAdapter seam", async () => {
+    mockUserProfileRepo.findOne.mockResolvedValueOnce({
+      userId: "user-123",
+      firstName: "Jane",
+      lastName: "Doe",
+    });
+
+    await service.updateProfile("user-123", { firstName: "Janet", lastName: "Smith" });
+
+    expect(identityAdapter.updatedNames).toEqual([
+      { userId: "user-123", firstName: "Janet", lastName: "Smith" },
+    ]);
+  });
+
+  it("delegates password updates and validation to the UserIdentityAdapter", async () => {
+    await service.updatePassword("user-123", "new-secure-password");
+
+    expect(identityAdapter.updatedPasswords).toEqual([
+      { userId: "user-123", newPassword: "new-secure-password" },
+    ]);
+  });
+
+  it("delegates password reset requests to the UserIdentityAdapter", async () => {
+    await service.sendPasswordReset("test@flump.co.uk");
+
+    expect(identityAdapter.resetEmails).toEqual(["test@flump.co.uk"]);
   });
 });

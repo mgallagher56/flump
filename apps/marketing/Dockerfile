@@ -10,7 +10,6 @@ COPY apps/web/package.json ./apps/web/
 COPY apps/backend/package.json ./apps/backend/
 COPY apps/mobile-companion/package.json ./apps/mobile-companion/
 COPY packages/banking/package.json ./packages/banking/
-COPY packages/common/package.json ./packages/common/
 COPY packages/finance-engine/package.json ./packages/finance-engine/
 COPY packages/typescript-config/package.json ./packages/typescript-config/
 COPY packages/ui/package.json ./packages/ui/
