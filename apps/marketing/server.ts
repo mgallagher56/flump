@@ -94,12 +94,37 @@ async function createServer() {
         render = (await import("./dist/server/entry-server.js")).render;
       }
 
+      const host = req.headers.host || "";
+      const isRailway = host.includes("railway.app");
+      const isLocal = host.includes("localhost") || host.includes("127.0.0.1");
+      const resolvedAppUrl =
+        process.env.VITE_APP_URL ||
+        process.env.APP_URL ||
+        (isLocal
+          ? "http://localhost:5173"
+          : isRailway
+            ? "https://web-production-845e6c.up.railway.app"
+            : "https://app.flump.co.uk");
+
+      const prevAppUrl = process.env.VITE_APP_URL;
+      process.env.VITE_APP_URL = resolvedAppUrl;
+
       const { html: appHtml, helmet } = render(url);
+
+      if (prevAppUrl !== undefined) {
+        process.env.VITE_APP_URL = prevAppUrl;
+      } else {
+        delete process.env.VITE_APP_URL;
+      }
+
+      const nonceAttr = res.locals.nonce ? ` nonce="${res.locals.nonce}"` : "";
+      const appUrlScript = `<script${nonceAttr}>window.__FLUMP_APP_URL__=${JSON.stringify(resolvedAppUrl)};</script>`;
 
       const helmetMeta = `
         ${helmet?.title?.toString() || ""}
         ${helmet?.meta?.toString() || ""}
         ${helmet?.link?.toString() || ""}
+        ${appUrlScript}
       `;
 
       const html = template

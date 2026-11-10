@@ -1,7 +1,11 @@
 export const getAppUrl = (): string => {
-  const env = typeof globalThis !== "undefined" ? (globalThis as any).process?.env : undefined;
+  // 1. Injected global override (e.g. from SSR HTML template)
+  if (typeof window !== "undefined" && (window as any).__FLUMP_APP_URL__) {
+    return (window as any).__FLUMP_APP_URL__;
+  }
 
-  // 1. Explicit environment variable
+  // 2. Explicit environment variable
+  const env = typeof globalThis !== "undefined" ? (globalThis as any).process?.env : undefined;
   if (env?.VITE_APP_URL) {
     return env.VITE_APP_URL;
   }
@@ -9,21 +13,36 @@ export const getAppUrl = (): string => {
     return import.meta.env.VITE_APP_URL;
   }
 
-  // 2. Client-side browser checks
+  // 3. Client-side browser checks
+  if (typeof window !== "undefined" && window.location) {
+    const hostname = window.location.hostname;
+    if (hostname === "localhost" || hostname === "127.0.0.1") {
+      return "http://localhost:5173";
+    }
+    if (hostname.endsWith("railway.app")) {
+      return "https://web-production-845e6c.up.railway.app";
+    }
+    if (hostname.endsWith("flump.co.uk")) {
+      return "https://app.flump.co.uk";
+    }
+    return "https://app.flump.co.uk";
+  }
+
+  // 4. Server-side development & environment checks (Bun / Node / Vite SSR)
+  if (env?.RAILWAY_SERVICE_WEB_URL) {
+    return env.RAILWAY_SERVICE_WEB_URL.startsWith("http")
+      ? env.RAILWAY_SERVICE_WEB_URL
+      : `https://${env.RAILWAY_SERVICE_WEB_URL}`;
+  }
+  if (env?.RAILWAY_PUBLIC_DOMAIN) {
+    return "https://web-production-845e6c.up.railway.app";
+  }
   if (
-    typeof window !== "undefined" &&
-    (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")
+    env?.NODE_ENV === "production" ||
+    (typeof import.meta !== "undefined" && import.meta.env?.PROD)
   ) {
-    return "http://localhost:5173";
+    return "https://app.flump.co.uk";
   }
 
-  // 3. Server-side development checks (Bun / Node / Vite SSR)
-  if (env?.NODE_ENV !== "production") {
-    return "http://localhost:5173";
-  }
-  if (typeof import.meta !== "undefined" && import.meta.env?.DEV) {
-    return "http://localhost:5173";
-  }
-
-  return "https://app.flump.co.uk";
+  return "http://localhost:5173";
 };
