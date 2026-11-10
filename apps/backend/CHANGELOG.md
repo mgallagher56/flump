@@ -1,5 +1,26 @@
 # Changelog
 
+## [1.22.0](https://github.com/mgallagher56/flump/compare/flump/backend-v1.21.3...flump/backend-v1.22.0) (2026-11-10)
+
+
+### Features ✨
+
+* **architecture:** resolve design system review findings, colocated directory law, and strict backend types ([4806f3a](https://github.com/mgallagher56/flump/commit/4806f3a34fb7d4eb3912913853177a46d287b0ff))
+* **banking:** enable live Open Banking for all popular banks and add Trading 212 ([bcd56d6](https://github.com/mgallagher56/flump/commit/bcd56d6da4a19f00d4afe609c60a2df26e53ebb3))
+* **banking:** remove dummy data and enable real bank connections ([a78b7de](https://github.com/mgallagher56/flump/commit/a78b7ded2d7063597497d675173900b059cba2a6))
+* **design-system:** consolidate semantic tokens, enforce colocated architecture, and configure Storybook 10 suite ([b629a1b](https://github.com/mgallagher56/flump/commit/b629a1bf0fe89ea03bfab4eedb89f7ff882f007e))
+
+
+### Bug Fixes 🪲
+
+* **ci:** add @radix-ui/react-tabs to ui dependencies and fix backend account intake types ([7f996b1](https://github.com/mgallagher56/flump/commit/7f996b1f442b62ab255945438360a504f85a1114))
+* **docker:** include banking and finance-engine package.json in Dockerfiles ([83923df](https://github.com/mgallagher56/flump/commit/83923df4d914395482137681cd7380e547839df9))
+
+
+### Refactor 🔥
+
+* **arch:** deepen modules, consolidate finance engine, and isolate banking seam ([d516793](https://github.com/mgallagher56/flump/commit/d5167938b6e343439c9bcdea944d49365162d66d))
+
 ## [1.21.3](https://github.com/mgallagher56/flump/compare/flump/backend-v0.0.1...flump/backend-v1.21.3) (2026-11-10)
 
 ### Features ✨
