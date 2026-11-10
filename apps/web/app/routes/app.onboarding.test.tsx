@@ -1,4 +1,4 @@
-import { clearOnboardingSeed, persistOnboardingSeed } from "@repo/common";
+import { clearOnboardingSeed, persistOnboardingSeed } from "@flump/finance-engine";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import OnboardingRoute from "./app.onboarding";

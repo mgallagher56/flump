@@ -1,4 +1,4 @@
-import { persistOnboardingSeed } from "@repo/common";
+import { persistOnboardingSeed } from "@flump/finance-engine";
 import type { FC } from "react";
 import { useMemo, useState } from "react";
 import { FiArrowRight, FiHome, FiTrendingUp } from "react-icons/fi";

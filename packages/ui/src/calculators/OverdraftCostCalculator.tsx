@@ -1,4 +1,4 @@
-import { calculateOverdraftCost, persistOnboardingSeed } from "@repo/common";
+import { calculateOverdraftCost, persistOnboardingSeed } from "@flump/finance-engine";
 import type { FC } from "react";
 import { useMemo, useState } from "react";
 import { css } from "../../styled-system/css/index.js";

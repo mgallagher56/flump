@@ -1,4 +1,4 @@
-import { calculateSafeToSpend, evaluateFinancialStage } from "@repo/common";
+import { calculateSafeToSpend, evaluateFinancialStage } from "@flump/finance-engine";
 import { css } from "@repo/ui/styled-system/css";
 import { type FC, useMemo, useState } from "react";
 import {

@@ -1,11 +1,13 @@
 import {
+  clearOnboardingSeed,
   DEFAULT_FINANCIAL_BASELINE,
   type FinancialBaseline,
   hydrateBaselineFromSeed,
   type OnboardingSeedPayload,
   type ProfilePersistenceAdapter,
+  persistOnboardingSeed,
+  readOnboardingSeed,
 } from "@flump/finance-engine";
-import { clearOnboardingSeed, persistOnboardingSeed, readOnboardingSeed } from "@repo/common";
 import { atom, useAtom } from "jotai";
 import { useCallback, useEffect } from "react";
 

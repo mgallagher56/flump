@@ -1,4 +1,4 @@
-import { calculateDebtToWealthBridge, type DebtItem } from "@repo/common";
+import { calculateDebtToWealthBridge, type DebtItem } from "@flump/finance-engine";
 import { css } from "@repo/ui/styled-system/css";
 import { type FC, useMemo, useState } from "react";
 import {

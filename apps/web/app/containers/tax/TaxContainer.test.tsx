@@ -7,7 +7,7 @@ import {
   getRecordAnnualTotalForTaxYear,
   isRecordActiveInTaxYear,
   type TaxRecord,
-} from "@repo/common";
+} from "@flump/finance-engine";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 

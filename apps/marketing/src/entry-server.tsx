@@ -1,6 +1,6 @@
 import "./index.css";
-import { createServerEntry } from "@repo/app-shell/server";
 import App from "./App";
+import { createServerEntry } from "./app-shell/entry-server";
 
 export const render = createServerEntry({
   App,

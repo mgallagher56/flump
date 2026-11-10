@@ -1,6 +1,6 @@
 import "./index.css";
-import { createClientEntry } from "@repo/app-shell/client";
 import App from "./App";
+import { createClientEntry } from "./app-shell/entry-client";
 
 createClientEntry({
   App,

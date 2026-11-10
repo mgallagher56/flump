@@ -1,3 +1,4 @@
+import { calculateUKEWNITakeHome, getCurrentUKTaxYear } from "./tax-rules.js";
 import type {
   TaxTrapAnalysis,
   UkAllowancesStatus,
@@ -23,9 +24,7 @@ export const UK_TAX_CONSTANTS = {
   NI_HIGHER_RATE: 0.02,
 } as const;
 
-export function getCurrentUKTaxYear(): UkTaxYear {
-  return "2025/26";
-}
+export { getCurrentUKTaxYear };
 
 export const STUDENT_LOAN_THRESHOLDS: Record<
   string,
@@ -160,15 +159,29 @@ export function calculateTaxTrapRelief(
 
 /**
  * Calculates Employer National Insurance savings on salary sacrifice.
- * UK Employer Class 1 NI secondary rate is 13.8% (or 15% from April 2025).
+ * UK Employer Class 1 NI secondary rate is 13.8% (or 15% from April 2025/2026).
  */
 export function calculateEmployerNISavings(
-  _grossSalary: number,
+  grossSalary: number,
   sacrificeAmount: number,
   taxYearOrRate: string | number = 13.8,
 ): number {
-  const ratePct = typeof taxYearOrRate === "number" ? taxYearOrRate : 13.8;
-  return Math.round(Math.max(0, sacrificeAmount) * (ratePct / 100) * 100) / 100;
+  if (grossSalary <= 0 || sacrificeAmount <= 0) return 0;
+
+  let rate: number;
+  let secondaryThreshold = 0;
+
+  if (typeof taxYearOrRate === "number") {
+    rate = taxYearOrRate / 100;
+  } else {
+    rate = taxYearOrRate === "2026/27" ? 0.15 : 0.138;
+    secondaryThreshold = taxYearOrRate === "2026/27" ? 5000 : 9100;
+  }
+
+  const earningsAboveSecondary =
+    secondaryThreshold > 0 ? Math.max(0, grossSalary - secondaryThreshold) : grossSalary;
+  const eligibleAmount = Math.min(sacrificeAmount, earningsAboveSecondary);
+  return Math.round(eligibleAmount * rate);
 }
 
 /**
@@ -434,5 +447,27 @@ export function calculateUkTax(input: UkTaxCalculationInput): UkTaxCalculationRe
     effectiveTaxRatePct,
     taxTrap,
     allowances,
+  };
+}
+
+export function calculateUKTakeHome(
+  grossSalary: number,
+  pensionContributionPct = 5,
+  salarySacrifice = true,
+  taxYear: string = getCurrentUKTaxYear(),
+) {
+  const result = calculateUKEWNITakeHome(
+    grossSalary,
+    "employed",
+    pensionContributionPct,
+    salarySacrifice,
+    taxYear,
+  );
+
+  const trapAnalysis = calculateTaxTrapRelief(grossSalary, taxYear as any);
+
+  return {
+    ...result,
+    trapAnalysis,
   };
 }

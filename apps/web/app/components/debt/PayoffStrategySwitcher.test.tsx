@@ -1,4 +1,4 @@
-import type { AvalancheVsSnowballComparison } from "@repo/common";
+import type { AvalancheVsSnowballComparison } from "@flump/finance-engine";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { PayoffStrategySwitcher } from "./PayoffStrategySwitcher";

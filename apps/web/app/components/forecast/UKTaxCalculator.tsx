@@ -3,7 +3,7 @@ import {
   calculateUKEWNITakeHome,
   getCurrentUKTaxYear,
   UK_STUDENT_LOANS,
-} from "@repo/common";
+} from "@flump/finance-engine";
 import { css } from "@repo/ui/styled-system/css";
 import { type FC, useEffect, useMemo, useState } from "react";
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";

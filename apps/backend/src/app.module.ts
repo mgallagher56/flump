@@ -12,11 +12,13 @@ import { TaxRecord } from "./entities/tax-record.entity";
 import { Transaction } from "./entities/transaction.entity";
 import { UserProfile } from "./entities/user-profile.entity";
 import { FinanceController } from "./finance.controller";
+import { FinanceService } from "./finance.service";
 import { MonzoProvider } from "./providers/monzo.provider";
 import { BankProviderRegistry } from "./providers/provider.registry";
 import { StarlingProvider } from "./providers/starling.provider";
 import { TaxController } from "./tax.controller";
 import { UserProfileController } from "./user-profile.controller";
+import { UserProfileService } from "./user-profile.service";
 
 @Module({
   imports: [
@@ -84,6 +86,13 @@ import { UserProfileController } from "./user-profile.controller";
     BudgetController,
     TaxController,
   ],
-  providers: [AppService, MonzoProvider, StarlingProvider, BankProviderRegistry],
+  providers: [
+    AppService,
+    FinanceService,
+    UserProfileService,
+    MonzoProvider,
+    StarlingProvider,
+    BankProviderRegistry,
+  ],
 })
 export class AppModule {}

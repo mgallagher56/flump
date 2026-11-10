@@ -1,10 +1,10 @@
-import * as Dialog from "@radix-ui/react-dialog";
 import {
   calculateIrishTakeHome,
   calculateUKEWNITakeHome,
   getCurrentIrishTaxYear,
   getCurrentUKTaxYear,
-} from "@repo/common";
+} from "@flump/finance-engine";
+import * as Dialog from "@radix-ui/react-dialog";
 import { css } from "@repo/ui/styled-system/css";
 import { type FC, useRef, useState } from "react";
 import {

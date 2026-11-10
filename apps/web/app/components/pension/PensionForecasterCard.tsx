@@ -1,4 +1,4 @@
-import { calculateEmployerNISavings } from "@repo/common";
+import { calculateEmployerNISavings } from "@flump/finance-engine";
 import { css } from "@repo/ui/styled-system/css";
 import { type FC, useEffect, useMemo, useState } from "react";
 import {

@@ -1,4 +1,3 @@
-import * as Dialog from "@radix-ui/react-dialog";
 import {
   buildCopiedRecordForTaxYear,
   getCurrentUKTaxYear,
@@ -8,7 +7,8 @@ import {
   isRecordActiveInTaxYear,
   type TaxRecord,
   type TaxSource,
-} from "@repo/common";
+} from "@flump/finance-engine";
+import * as Dialog from "@radix-ui/react-dialog";
 import { css } from "@repo/ui/styled-system/css";
 import { type FC, useEffect, useMemo, useState } from "react";
 import { FaArrowRight, FaCopy, FaFilter, FaTimes } from "react-icons/fa";

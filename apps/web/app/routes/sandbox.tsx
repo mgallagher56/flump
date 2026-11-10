@@ -1,5 +1,5 @@
 import type { OnboardingSeedPayload } from "@flump/finance-engine";
-import { persistOnboardingSeed } from "@repo/common";
+import { persistOnboardingSeed } from "@flump/finance-engine";
 import { css } from "@repo/ui/styled-system/css";
 import { flex } from "@repo/ui/styled-system/patterns";
 import { useSetAtom } from "jotai";

@@ -1,4 +1,4 @@
-import { calculateSafeToSpend } from "@repo/common";
+import { calculateSafeToSpend } from "@flump/finance-engine";
 import { css } from "@repo/ui/styled-system/css";
 import { type FC, useMemo } from "react";
 import { FaArrowRight, FaBalanceScale, FaChartPie, FaExclamationTriangle } from "react-icons/fa";

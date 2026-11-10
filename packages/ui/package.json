@@ -47,7 +47,6 @@
   "dependencies": {
     "@flump/finance-engine": "workspace:*",
     "@radix-ui/react-slot": "1.5.0",
-    "@repo/common": "workspace:*",
     "react-icons": "5.7.0"
   }
 }

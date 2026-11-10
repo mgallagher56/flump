@@ -1,4 +1,4 @@
-import type { DebtItem } from "@repo/common";
+import type { DebtItem } from "@flump/finance-engine";
 import { css } from "@repo/ui/styled-system/css";
 import { type FC, useState } from "react";
 import FLPButton from "~/components/core/buttons/FLPButton";

@@ -1,4 +1,4 @@
-import type { AvalancheVsSnowballComparison } from "@repo/common";
+import type { AvalancheVsSnowballComparison } from "@flump/finance-engine";
 import { css } from "@repo/ui/styled-system/css";
 import type { FC } from "react";
 import { FaBolt, FaSlidersH, FaSnowflake } from "react-icons/fa";
