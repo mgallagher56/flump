@@ -1,4 +1,4 @@
-import { calculateZeroPercentCliff, persistOnboardingSeed } from "@repo/common";
+import { calculateZeroPercentCliff, persistOnboardingSeed } from "@flump/finance-engine";
 import type { FC } from "react";
 import { useMemo, useState } from "react";
 import { FaExclamationTriangle } from "react-icons/fa";

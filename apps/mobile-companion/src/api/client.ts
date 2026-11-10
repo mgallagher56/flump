@@ -1,4 +1,4 @@
-import type { TaxRecord } from "@repo/common";
+import type { TaxRecord } from "@flump/finance-engine";
 import { Platform } from "react-native";
 import type {
   Account,

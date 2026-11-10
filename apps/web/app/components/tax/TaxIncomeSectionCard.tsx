@@ -4,7 +4,7 @@ import {
   isRecordActiveInTaxYear,
   type TaxRecord,
   type TaxSource,
-} from "@repo/common";
+} from "@flump/finance-engine";
 import { css } from "@repo/ui/styled-system/css";
 import { type FC, type ReactNode, useMemo, useState } from "react";
 import {

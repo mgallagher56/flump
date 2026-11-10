@@ -1,4 +1,4 @@
-import { calculateSection24LandlordTax, persistOnboardingSeed } from "@repo/common";
+import { calculateSection24LandlordTax, persistOnboardingSeed } from "@flump/finance-engine";
 import type { FC } from "react";
 import { useMemo, useState } from "react";
 import { FiArrowRight } from "react-icons/fi";

@@ -4,8 +4,9 @@
  * A small info-icon button that opens a full legal disclaimer modal.
  * Used on all tax calculation surfaces in the application.
  */
+
+import { TAX_DISCLAIMER } from "@flump/finance-engine";
 import * as Dialog from "@radix-ui/react-dialog";
-import { TAX_DISCLAIMER } from "@repo/common";
 import { css } from "@repo/ui/styled-system/css";
 import { type FC, useState } from "react";
 import { FaInfoCircle, FaTimes } from "react-icons/fa";

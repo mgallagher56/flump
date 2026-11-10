@@ -1,4 +1,4 @@
-import type { TaxRecord } from "@repo/common";
+import type { TaxRecord } from "@flump/finance-engine";
 import { fireEvent } from "@testing-library/react";
 import { describe, expect, test, vi } from "vitest";
 import customRender from "~/testUtils/customRender";

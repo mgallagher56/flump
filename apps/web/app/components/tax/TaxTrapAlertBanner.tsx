@@ -1,4 +1,4 @@
-import { calculateTaxTrapRelief } from "@repo/common";
+import { calculateTaxTrapRelief } from "@flump/finance-engine";
 import { css } from "@repo/ui/styled-system/css";
 import { type FC, useId, useMemo, useState } from "react";
 import { FiAlertTriangle, FiArrowRight, FiCheck } from "react-icons/fi";

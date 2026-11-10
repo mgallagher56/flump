@@ -1,10 +1,10 @@
 import {
   calculate100kTaxTrap,
   calculateEmployerNISavings,
+  calculateUKEWNITakeHome,
   getCurrentUKTaxYear,
   PortfolioSnapshot,
 } from "@flump/finance-engine";
-import { calculateUKEWNITakeHome } from "@repo/common";
 import { css } from "@repo/ui/styled-system/css";
 import { type FC, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";

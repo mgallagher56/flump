@@ -8,7 +8,7 @@ import {
   type TaxCalculationResult,
   type TaxRecord,
   type TaxSource,
-} from "@repo/common";
+} from "@flump/finance-engine";
 import { css } from "@repo/ui/styled-system/css";
 import { type FC, useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";

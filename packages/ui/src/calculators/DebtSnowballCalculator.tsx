@@ -1,4 +1,8 @@
-import { compareAvalancheAndSnowball, type DebtItem, persistOnboardingSeed } from "@repo/common";
+import {
+  compareAvalancheAndSnowball,
+  type DebtItem,
+  persistOnboardingSeed,
+} from "@flump/finance-engine";
 import type { FC } from "react";
 import { useMemo, useState } from "react";
 import { css } from "../../styled-system/css/index.js";

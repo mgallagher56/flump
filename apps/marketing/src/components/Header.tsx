@@ -1,4 +1,4 @@
-import { hasSessionPresenceCookie } from "@repo/common";
+import { hasSessionPresenceCookie } from "@flump/finance-engine";
 import { Button } from "@repo/ui";
 import { css } from "@repo/ui/styled-system/css";
 import { flex } from "@repo/ui/styled-system/patterns";

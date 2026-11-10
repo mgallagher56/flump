@@ -7,7 +7,7 @@ import {
   type DebtItem,
   type OnboardingSeedPayload,
   persistOnboardingSeed,
-} from "@repo/common";
+} from "@flump/finance-engine";
 import { css } from "@repo/ui/styled-system/css";
 import { type FC, useId, useMemo, useState } from "react";
 import { FaFire, FaRocket } from "react-icons/fa";

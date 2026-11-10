@@ -3,7 +3,7 @@ import {
   calculateOverdraftCost,
   calculateZeroPercentCliff,
   evaluateUkStudentLoan,
-} from "@repo/common";
+} from "@flump/finance-engine";
 import { css } from "@repo/ui/styled-system/css";
 import { type FC, useMemo, useState } from "react";
 import {
