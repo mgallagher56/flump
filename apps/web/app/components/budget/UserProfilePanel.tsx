@@ -5,6 +5,7 @@ import {
   getCurrentUKTaxYear,
 } from "@flump/finance-engine";
 import * as Dialog from "@radix-ui/react-dialog";
+import { SegmentedTabs } from "@repo/ui";
 import { css } from "@repo/ui/styled-system/css";
 import { type FC, useRef, useState } from "react";
 import {
@@ -26,6 +27,7 @@ import FLPCard from "~/components/core/cards/FLPCard";
 import FLPHeading from "~/components/core/typography/FLPHeading";
 import FLPText from "~/components/core/typography/FLPText";
 import UserAvatar from "~/components/navigation/UserAvatar";
+import { McpConnectionCard } from "~/features/ai-connections/components/McpConnectionCard";
 import { type UserProfile, type UserProfileUpdate, useUserProfile } from "~/hooks/useUserProfile";
 import { useFinancialBaseline } from "~/state/baseline.store";
 import { processImageFile } from "~/utils/avatar";
@@ -310,6 +312,10 @@ const UserProfilePanel: FC<UserProfilePanelProps> = ({ initialProfile, user }) =
   const [resetError, setResetError] = useState<string | null>(null);
   const [resetSuccess, setResetSuccess] = useState(false);
 
+  const [activeTab, setActiveTab] = useState<"profile_security" | "ai_connections">(
+    "profile_security",
+  );
+
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [imageUploadError, setImageUploadError] = useState<string | null>(null);
@@ -488,479 +494,499 @@ const UserProfilePanel: FC<UserProfilePanelProps> = ({ initialProfile, user }) =
           Your Profile
         </FLPHeading>
         <FLPText color="text.muted" fontSize="sm">
-          Manage your personal details, avatar, security settings, and account preferences.
+          Manage your personal details, avatar, security settings, and AI connections.
         </FLPText>
       </div>
 
-      <div className={css({ display: "flex", flexDirection: "column", gap: "24px" })}>
-        {/* Personal Details */}
-        <FLPCard>
-          <div
-            className={css({
-              display: "flex",
-              alignItems: "center",
-              gap: "10px",
-              marginBottom: "20px",
-            })}
-          >
+      <div style={{ marginTop: "16px", marginBottom: "24px" }}>
+        <SegmentedTabs
+          aria-label="Profile navigation tabs"
+          items={[
+            { value: "profile_security", label: "Profile & Security" },
+            { value: "ai_connections", label: "AI & MCP Access" },
+          ]}
+          value={activeTab}
+          onValueChange={(val) => setActiveTab(val as "profile_security" | "ai_connections")}
+        />
+      </div>
+
+      {activeTab === "profile_security" ? (
+        <div className={css({ display: "flex", flexDirection: "column", gap: "24px" })}>
+          {/* Personal Details */}
+          <FLPCard>
             <div
               className={css({
-                width: "36px",
-                height: "36px",
-                borderRadius: "full",
-                backgroundColor: "rgba(99, 99, 241, 0.12)",
                 display: "flex",
                 alignItems: "center",
-                justifyContent: "center",
-                color: "primary",
-              })}
-            >
-              <FaUser size={14} />
-            </div>
-            <FLPHeading as="h3" size="md">
-              Personal Details
-            </FLPHeading>
-          </div>
-
-          {/* Profile Picture & Thumbnail Section */}
-          <div
-            className={css({
-              display: "flex",
-              alignItems: "center",
-              gap: "20px",
-              padding: "16px",
-              borderRadius: "md",
-              backgroundColor: "surface.muted",
-              border: "1px solid",
-              borderColor: "border",
-              marginBottom: "24px",
-              flexWrap: { base: "wrap", sm: "nowrap" },
-            })}
-          >
-            <UserAvatar
-              bordered
-              profile={{
-                ...effectiveProfile,
-                displayName: form.displayName,
-                firstName: form.firstName,
-                lastName: form.lastName,
-                avatarUrl: form.avatarUrl,
-              }}
-              size={72}
-              user={user}
-            />
-            <div
-              className={css({
-                display: "flex",
-                flexDirection: "column",
-                gap: "6px",
-                flex: 1,
+                gap: "10px",
+                marginBottom: "20px",
               })}
             >
               <div
                 className={css({
-                  fontWeight: "semibold",
-                  fontSize: "sm",
-                  color: "text.primary",
-                })}
-              >
-                Profile Picture & Thumbnail
-              </div>
-              <div className={css({ fontSize: "xs", color: "text.muted" })}>
-                {form.avatarUrl
-                  ? "Your custom profile picture is active and used as your thumbnail."
-                  : "Your initials are currently used as your thumbnail. Upload an image to personalise your profile picture."}
-              </div>
-              <div
-                className={css({
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "10px",
-                  marginTop: "6px",
-                  flexWrap: "wrap",
-                })}
-              >
-                <input
-                  ref={fileInputRef}
-                  accept="image/png,image/jpeg,image/webp,image/gif"
-                  aria-label="Upload profile picture"
-                  data-testid="profile-picture-input"
-                  id="profile-picture-input"
-                  style={{ display: "none" }}
-                  type="file"
-                  onChange={handleImageUpload}
-                />
-                <FLPButton
-                  data-testid="upload-picture-button"
-                  disabled={uploadingImage}
-                  id="upload-picture-button"
-                  size="sm"
-                  variant="primary"
-                  onClick={() => fileInputRef.current?.click()}
-                >
-                  <FaCamera style={{ marginRight: "6px" }} />
-                  {uploadingImage
-                    ? "Processing..."
-                    : form.avatarUrl
-                      ? "Change Picture"
-                      : "Upload Picture"}
-                </FLPButton>
-                {form.avatarUrl && (
-                  <FLPButton
-                    data-testid="remove-picture-button"
-                    disabled={uploadingImage}
-                    id="remove-picture-button"
-                    size="sm"
-                    variant="outline"
-                    onClick={handleRemoveImage}
-                  >
-                    <FaTrash style={{ marginRight: "6px" }} />
-                    Remove
-                  </FLPButton>
-                )}
-              </div>
-              {imageUploadError && (
-                <div
-                  className={css({ color: "error", fontSize: "xs", marginTop: "4px" })}
-                  data-testid="profile-upload-error"
-                >
-                  {imageUploadError}
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Names and Profile Fields */}
-          <div
-            className={css({
-              display: "grid",
-              gridTemplateColumns: { base: "1fr", sm: "1fr 1fr", md: "1fr 1fr 1fr" },
-              gap: "16px",
-              marginBottom: "16px",
-            })}
-          >
-            <div className={fieldGroupStyle}>
-              <label className={labelStyle} htmlFor="first-name-input">
-                First Name
-              </label>
-              <input
-                className={inputStyle}
-                id="first-name-input"
-                data-testid="first-name-input"
-                placeholder="First name"
-                type="text"
-                value={form.firstName ?? ""}
-                onChange={(e) => setForm((p) => ({ ...p, firstName: e.target.value || null }))}
-              />
-            </div>
-            <div className={fieldGroupStyle}>
-              <label className={labelStyle} htmlFor="last-name-input">
-                Last Name
-              </label>
-              <input
-                className={inputStyle}
-                id="last-name-input"
-                data-testid="last-name-input"
-                placeholder="Last name"
-                type="text"
-                value={form.lastName ?? ""}
-                onChange={(e) => setForm((p) => ({ ...p, lastName: e.target.value || null }))}
-              />
-            </div>
-            <div className={fieldGroupStyle}>
-              <label className={labelStyle} htmlFor="display-name-input">
-                Display Name
-              </label>
-              <input
-                className={inputStyle}
-                id="display-name-input"
-                data-testid="display-name-input"
-                placeholder="Your display name"
-                type="text"
-                value={form.displayName ?? ""}
-                onChange={(e) => setForm((p) => ({ ...p, displayName: e.target.value || null }))}
-              />
-            </div>
-          </div>
-
-          <div
-            className={css({
-              display: "grid",
-              gridTemplateColumns: { base: "1fr", sm: "1fr 1fr" },
-              gap: "16px",
-            })}
-          >
-            <div className={fieldGroupStyle}>
-              <label className={labelStyle} htmlFor="country">
-                Country
-              </label>
-              <select
-                className={selectStyle}
-                id="country"
-                value={form.country ?? "GB"}
-                onChange={(e) => {
-                  const countryCode = e.target.value;
-                  const matched = COUNTRIES.find((c) => c.code === countryCode);
-                  setForm((p) => ({
-                    ...p,
-                    country: countryCode,
-                    currency: matched ? matched.currency : p.currency,
-                  }));
-                }}
-              >
-                {COUNTRIES.map((c) => (
-                  <option key={c.code} value={c.code}>
-                    {c.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className={fieldGroupStyle}>
-              <label className={labelStyle} htmlFor="currency">
-                Currency
-              </label>
-              <select
-                className={selectStyle}
-                id="currency"
-                value={form.currency ?? "GBP"}
-                onChange={(e) => setForm((p) => ({ ...p, currency: e.target.value }))}
-              >
-                {CURRENCIES.map((c) => (
-                  <option key={c} value={c}>
-                    {c}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-        </FLPCard>
-
-        {/* Email & Account Security Card */}
-        <FLPCard>
-          <div
-            className={css({
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              flexWrap: "wrap",
-              gap: "16px",
-            })}
-          >
-            <div className={css({ display: "flex", alignItems: "center", gap: "12px" })}>
-              <div
-                className={css({
-                  width: "40px",
-                  height: "40px",
+                  width: "36px",
+                  height: "36px",
                   borderRadius: "full",
                   backgroundColor: "rgba(99, 99, 241, 0.12)",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
                   color: "primary",
-                  flexShrink: 0,
                 })}
               >
-                <FaEnvelope size={16} />
+                <FaUser size={14} />
               </div>
-              <div>
-                <div className={css({ fontSize: "xs", color: "text.muted", fontWeight: "medium" })}>
-                  Account Email
-                </div>
-                <div
-                  id="user-email-display"
-                  data-testid="user-email-display"
-                  className={css({
-                    fontSize: "sm",
-                    fontWeight: "bold",
-                    color: "text.primary",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "8px",
-                    flexWrap: "wrap",
-                  })}
-                >
-                  <span>{user?.email || profile.email || "dev@flump.com"}</span>
-                  <span
-                    className={css({
-                      fontSize: "xs",
-                      color: "green.500",
-                      backgroundColor: "rgba(34, 197, 94, 0.12)",
-                      padding: "2px 8px",
-                      borderRadius: "full",
-                      fontWeight: "medium",
-                    })}
-                  >
-                    Verified
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            <FLPButton
-              type="button"
-              variant="outline"
-              size="sm"
-              id="change-password-trigger"
-              data-testid="change-password-trigger"
-              onClick={() => {
-                setPasswordError(null);
-                setPasswordSuccess(null);
-                setNewPassword("");
-                setConfirmPassword("");
-                setPasswordModalOpen(true);
-              }}
-            >
-              <FaKey style={{ marginRight: "6px" }} />
-              Change Password
-            </FLPButton>
-          </div>
-        </FLPCard>
-
-        {/* Dedicated Financial Tool Locations Notice */}
-        <FLPCard>
-          <div className={css({ display: "flex", flexDirection: "column", gap: "14px" })}>
-            <div>
-              <FLPHeading as="h4" size="sm">
-                Employment, Tax & Property Settings
+              <FLPHeading as="h3" size="md">
+                Personal Details
               </FLPHeading>
-              <FLPText fontSize="xs" color="text.muted" style={{ marginTop: "4px" }}>
-                To keep configurations close to their financial context, your salary, tax code, and
-                pension rates are configured in Tax & Pension, while your property values and
-                mortgage parameters live in Mortgage Tracker.
-              </FLPText>
             </div>
-            <div className={css({ display: "flex", gap: "12px", flexWrap: "wrap" })}>
-              <FLPButton
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => navigate("/app/tax")}
-              >
-                <FaBriefcase style={{ marginRight: "6px" }} />
-                Go to Tax & Take-Home
-              </FLPButton>
-              <FLPButton
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => navigate("/app/mortgage")}
-              >
-                <FaHome style={{ marginRight: "6px" }} />
-                Go to Mortgage Tracker
-              </FLPButton>
-            </div>
-          </div>
-        </FLPCard>
 
-        {/* Save */}
-        {error && (
-          <FLPText color="destructive" fontSize="sm">
-            {error}
-          </FLPText>
-        )}
-        <div style={{ display: "flex", justifyContent: "flex-end", gap: "12px" }}>
-          {saved && (
+            {/* Profile Picture & Thumbnail Section */}
             <div
               className={css({
                 display: "flex",
                 alignItems: "center",
-                gap: "6px",
-                color: "success.500",
-                fontSize: "sm",
+                gap: "20px",
+                padding: "16px",
+                borderRadius: "md",
+                backgroundColor: "surface.muted",
+                border: "1px solid",
+                borderColor: "border",
+                marginBottom: "24px",
+                flexWrap: { base: "wrap", sm: "nowrap" },
               })}
             >
-              <FaCheckCircle />
-              Saved!
-            </div>
-          )}
-          <FLPButton disabled={saving} variant="primary" onClick={handleSave}>
-            {saving ? "Saving..." : "Save Profile"}
-          </FLPButton>
-        </div>
-
-        {/* Danger Zone: Reset Financial Data (Isolated in collapsible disclosure) */}
-        <details
-          className={css({
-            marginTop: "16px",
-            borderRadius: "xl",
-            border: "1px solid",
-            borderColor: "rgba(239, 68, 68, 0.25)",
-            backgroundColor: "rgba(239, 68, 68, 0.02)",
-            overflow: "hidden",
-            "&[open] summary": {
-              borderBottom: "1px solid rgba(239, 68, 68, 0.15)",
-            },
-          })}
-        >
-          <summary
-            className={css({
-              padding: "12px 18px",
-              cursor: "pointer",
-              fontSize: "xs",
-              fontWeight: "semibold",
-              color: "red.500",
-              display: "flex",
-              alignItems: "center",
-              gap: "8px",
-              userSelect: "none",
-              _hover: { backgroundColor: "rgba(239, 68, 68, 0.05)" },
-            })}
-          >
-            <FaExclamationTriangle />
-            <span>Danger Zone: Reset Financial Data (Click to expand)</span>
-          </summary>
-          <div style={{ padding: "16px 20px" }}>
-            <div
-              className={css({
-                display: "flex",
-                flexDirection: { base: "column", sm: "row" },
-                justifyContent: "space-between",
-                alignItems: { base: "flex-start", sm: "center" },
-                gap: "16px",
-                borderLeft: "4px solid",
-                borderLeftColor: "red.500",
-                paddingLeft: "16px",
-              })}
-            >
-              <div>
+              <UserAvatar
+                bordered
+                profile={{
+                  ...effectiveProfile,
+                  displayName: form.displayName,
+                  firstName: form.firstName,
+                  lastName: form.lastName,
+                  avatarUrl: form.avatarUrl,
+                }}
+                size={72}
+                user={user}
+              />
+              <div
+                className={css({
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "6px",
+                  flex: 1,
+                })}
+              >
+                <div
+                  className={css({
+                    fontWeight: "semibold",
+                    fontSize: "sm",
+                    color: "text.primary",
+                  })}
+                >
+                  Profile Picture & Thumbnail
+                </div>
+                <div className={css({ fontSize: "xs", color: "text.muted" })}>
+                  {form.avatarUrl
+                    ? "Your custom profile picture is active and used as your thumbnail."
+                    : "Your initials are currently used as your thumbnail. Upload an image to personalise your profile picture."}
+                </div>
                 <div
                   className={css({
                     display: "flex",
                     alignItems: "center",
-                    gap: "8px",
-                    color: "red.500",
-                    fontWeight: "semibold",
-                    fontSize: "sm",
-                    marginBottom: "4px",
+                    gap: "10px",
+                    marginTop: "6px",
+                    flexWrap: "wrap",
                   })}
                 >
-                  <FaExclamationTriangle />
-                  <span>Danger Zone: Reset Financial Data</span>
+                  <input
+                    ref={fileInputRef}
+                    accept="image/png,image/jpeg,image/webp,image/gif"
+                    aria-label="Upload profile picture"
+                    data-testid="profile-picture-input"
+                    id="profile-picture-input"
+                    style={{ display: "none" }}
+                    type="file"
+                    onChange={handleImageUpload}
+                  />
+                  <FLPButton
+                    data-testid="upload-picture-button"
+                    disabled={uploadingImage}
+                    id="upload-picture-button"
+                    size="sm"
+                    variant="primary"
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    <FaCamera style={{ marginRight: "6px" }} />
+                    {uploadingImage
+                      ? "Processing..."
+                      : form.avatarUrl
+                        ? "Change Picture"
+                        : "Upload Picture"}
+                  </FLPButton>
+                  {form.avatarUrl && (
+                    <FLPButton
+                      data-testid="remove-picture-button"
+                      disabled={uploadingImage}
+                      id="remove-picture-button"
+                      size="sm"
+                      variant="outline"
+                      onClick={handleRemoveImage}
+                    >
+                      <FaTrash style={{ marginRight: "6px" }} />
+                      Remove
+                    </FLPButton>
+                  )}
                 </div>
-                <FLPText fontSize="xs" color="text.muted">
-                  Permanently delete all your accounts, transactions, bank connections, budget
-                  entries, and tax records to start completely from scratch.
-                </FLPText>
+                {imageUploadError && (
+                  <div
+                    className={css({ color: "error", fontSize: "xs", marginTop: "4px" })}
+                    data-testid="profile-upload-error"
+                  >
+                    {imageUploadError}
+                  </div>
+                )}
               </div>
+            </div>
+
+            {/* Names and Profile Fields */}
+            <div
+              className={css({
+                display: "grid",
+                gridTemplateColumns: { base: "1fr", sm: "1fr 1fr", md: "1fr 1fr 1fr" },
+                gap: "16px",
+                marginBottom: "16px",
+              })}
+            >
+              <div className={fieldGroupStyle}>
+                <label className={labelStyle} htmlFor="first-name-input">
+                  First Name
+                </label>
+                <input
+                  className={inputStyle}
+                  id="first-name-input"
+                  data-testid="first-name-input"
+                  placeholder="First name"
+                  type="text"
+                  value={form.firstName ?? ""}
+                  onChange={(e) => setForm((p) => ({ ...p, firstName: e.target.value || null }))}
+                />
+              </div>
+              <div className={fieldGroupStyle}>
+                <label className={labelStyle} htmlFor="last-name-input">
+                  Last Name
+                </label>
+                <input
+                  className={inputStyle}
+                  id="last-name-input"
+                  data-testid="last-name-input"
+                  placeholder="Last name"
+                  type="text"
+                  value={form.lastName ?? ""}
+                  onChange={(e) => setForm((p) => ({ ...p, lastName: e.target.value || null }))}
+                />
+              </div>
+              <div className={fieldGroupStyle}>
+                <label className={labelStyle} htmlFor="display-name-input">
+                  Display Name
+                </label>
+                <input
+                  className={inputStyle}
+                  id="display-name-input"
+                  data-testid="display-name-input"
+                  placeholder="Your display name"
+                  type="text"
+                  value={form.displayName ?? ""}
+                  onChange={(e) => setForm((p) => ({ ...p, displayName: e.target.value || null }))}
+                />
+              </div>
+            </div>
+
+            <div
+              className={css({
+                display: "grid",
+                gridTemplateColumns: { base: "1fr", sm: "1fr 1fr" },
+                gap: "16px",
+              })}
+            >
+              <div className={fieldGroupStyle}>
+                <label className={labelStyle} htmlFor="country">
+                  Country
+                </label>
+                <select
+                  className={selectStyle}
+                  id="country"
+                  value={form.country ?? "GB"}
+                  onChange={(e) => {
+                    const countryCode = e.target.value;
+                    const matched = COUNTRIES.find((c) => c.code === countryCode);
+                    setForm((p) => ({
+                      ...p,
+                      country: countryCode,
+                      currency: matched ? matched.currency : p.currency,
+                    }));
+                  }}
+                >
+                  {COUNTRIES.map((c) => (
+                    <option key={c.code} value={c.code}>
+                      {c.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className={fieldGroupStyle}>
+                <label className={labelStyle} htmlFor="currency">
+                  Currency
+                </label>
+                <select
+                  className={selectStyle}
+                  id="currency"
+                  value={form.currency ?? "GBP"}
+                  onChange={(e) => setForm((p) => ({ ...p, currency: e.target.value }))}
+                >
+                  {CURRENCIES.map((c) => (
+                    <option key={c} value={c}>
+                      {c}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          </FLPCard>
+
+          {/* Email & Account Security Card */}
+          <FLPCard>
+            <div
+              className={css({
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                flexWrap: "wrap",
+                gap: "16px",
+              })}
+            >
+              <div className={css({ display: "flex", alignItems: "center", gap: "12px" })}>
+                <div
+                  className={css({
+                    width: "40px",
+                    height: "40px",
+                    borderRadius: "full",
+                    backgroundColor: "rgba(99, 99, 241, 0.12)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    color: "primary",
+                    flexShrink: 0,
+                  })}
+                >
+                  <FaEnvelope size={16} />
+                </div>
+                <div>
+                  <div
+                    className={css({ fontSize: "xs", color: "text.muted", fontWeight: "medium" })}
+                  >
+                    Account Email
+                  </div>
+                  <div
+                    id="user-email-display"
+                    data-testid="user-email-display"
+                    className={css({
+                      fontSize: "sm",
+                      fontWeight: "bold",
+                      color: "text.primary",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "8px",
+                      flexWrap: "wrap",
+                    })}
+                  >
+                    <span>{user?.email || profile.email || "dev@flump.com"}</span>
+                    <span
+                      className={css({
+                        fontSize: "xs",
+                        color: "green.500",
+                        backgroundColor: "rgba(34, 197, 94, 0.12)",
+                        padding: "2px 8px",
+                        borderRadius: "full",
+                        fontWeight: "medium",
+                      })}
+                    >
+                      Verified
+                    </span>
+                  </div>
+                </div>
+              </div>
+
               <FLPButton
                 type="button"
-                variant="destructive"
+                variant="outline"
                 size="sm"
-                id="reset-financial-data-trigger"
-                data-testid="reset-financial-data-trigger"
+                id="change-password-trigger"
+                data-testid="change-password-trigger"
                 onClick={() => {
-                  setResetError(null);
-                  setResetSuccess(false);
-                  setResetConfirmInput("");
-                  setResetModalOpen(true);
+                  setPasswordError(null);
+                  setPasswordSuccess(null);
+                  setNewPassword("");
+                  setConfirmPassword("");
+                  setPasswordModalOpen(true);
                 }}
               >
-                Reset All Financial Data
+                <FaKey style={{ marginRight: "6px" }} />
+                Change Password
               </FLPButton>
             </div>
+          </FLPCard>
+
+          {/* Dedicated Financial Tool Locations Notice */}
+          <FLPCard>
+            <div className={css({ display: "flex", flexDirection: "column", gap: "14px" })}>
+              <div>
+                <FLPHeading as="h4" size="sm">
+                  Employment, Tax & Property Settings
+                </FLPHeading>
+                <FLPText fontSize="xs" color="text.muted" style={{ marginTop: "4px" }}>
+                  To keep configurations close to their financial context, your salary, tax code,
+                  and pension rates are configured in Tax & Pension, while your property values and
+                  mortgage parameters live in Mortgage Tracker.
+                </FLPText>
+              </div>
+              <div className={css({ display: "flex", gap: "12px", flexWrap: "wrap" })}>
+                <FLPButton
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => navigate("/app/tax")}
+                >
+                  <FaBriefcase style={{ marginRight: "6px" }} />
+                  Go to Tax & Take-Home
+                </FLPButton>
+                <FLPButton
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => navigate("/app/mortgage")}
+                >
+                  <FaHome style={{ marginRight: "6px" }} />
+                  Go to Mortgage Tracker
+                </FLPButton>
+              </div>
+            </div>
+          </FLPCard>
+
+          {/* Save */}
+          {error && (
+            <FLPText color="destructive" fontSize="sm">
+              {error}
+            </FLPText>
+          )}
+          <div style={{ display: "flex", justifyContent: "flex-end", gap: "12px" }}>
+            {saved && (
+              <div
+                className={css({
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  color: "success.500",
+                  fontSize: "sm",
+                })}
+              >
+                <FaCheckCircle />
+                Saved!
+              </div>
+            )}
+            <FLPButton disabled={saving} variant="primary" onClick={handleSave}>
+              {saving ? "Saving..." : "Save Profile"}
+            </FLPButton>
           </div>
-        </details>
-      </div>
+
+          {/* Danger Zone: Reset Financial Data (Isolated in collapsible disclosure) */}
+          <details
+            className={css({
+              marginTop: "16px",
+              borderRadius: "xl",
+              border: "1px solid",
+              borderColor: "rgba(239, 68, 68, 0.25)",
+              backgroundColor: "rgba(239, 68, 68, 0.02)",
+              overflow: "hidden",
+              "&[open] summary": {
+                borderBottom: "1px solid rgba(239, 68, 68, 0.15)",
+              },
+            })}
+          >
+            <summary
+              className={css({
+                padding: "12px 18px",
+                cursor: "pointer",
+                fontSize: "xs",
+                fontWeight: "semibold",
+                color: "red.500",
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
+                userSelect: "none",
+                _hover: { backgroundColor: "rgba(239, 68, 68, 0.05)" },
+              })}
+            >
+              <FaExclamationTriangle />
+              <span>Danger Zone: Reset Financial Data (Click to expand)</span>
+            </summary>
+            <div style={{ padding: "16px 20px" }}>
+              <div
+                className={css({
+                  display: "flex",
+                  flexDirection: { base: "column", sm: "row" },
+                  justifyContent: "space-between",
+                  alignItems: { base: "flex-start", sm: "center" },
+                  gap: "16px",
+                  borderLeft: "4px solid",
+                  borderLeftColor: "red.500",
+                  paddingLeft: "16px",
+                })}
+              >
+                <div>
+                  <div
+                    className={css({
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "8px",
+                      color: "red.500",
+                      fontWeight: "semibold",
+                      fontSize: "sm",
+                      marginBottom: "4px",
+                    })}
+                  >
+                    <FaExclamationTriangle />
+                    <span>Danger Zone: Reset Financial Data</span>
+                  </div>
+                  <FLPText fontSize="xs" color="text.muted">
+                    Permanently delete all your accounts, transactions, bank connections, budget
+                    entries, and tax records to start completely from scratch.
+                  </FLPText>
+                </div>
+                <FLPButton
+                  type="button"
+                  variant="destructive"
+                  size="sm"
+                  id="reset-financial-data-trigger"
+                  data-testid="reset-financial-data-trigger"
+                  onClick={() => {
+                    setResetError(null);
+                    setResetSuccess(false);
+                    setResetConfirmInput("");
+                    setResetModalOpen(true);
+                  }}
+                >
+                  Reset All Financial Data
+                </FLPButton>
+              </div>
+            </div>
+          </details>
+        </div>
+      ) : (
+        <div className={css({ display: "flex", flexDirection: "column", gap: "24px" })}>
+          <McpConnectionCard />
+        </div>
+      )}
 
       {/* Change Password Dialog */}
       <Dialog.Root open={passwordModalOpen} onOpenChange={setPasswordModalOpen}>

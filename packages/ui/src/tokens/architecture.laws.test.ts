@@ -6,11 +6,19 @@ const UI_SRC = path.resolve(__dirname, "..");
 const FOUNDATIONS_DIR = path.join(UI_SRC, "foundations");
 const PRIMITIVES_DIR = path.join(UI_SRC, "primitives");
 const PATTERNS_DIR = path.join(UI_SRC, "patterns");
+const CALCULATORS_DIR = path.join(UI_SRC, "calculators");
 const DEBT_FEATURES_DIR = path.resolve(
   __dirname,
   "../../../../apps/web/app/features/debt/components",
 );
-const SANDBOX_FEATURES_DIR = path.resolve(__dirname, "../../../../apps/web/app/features/sandbox");
+const SANDBOX_FEATURES_DIR = path.resolve(
+  __dirname,
+  "../../../../apps/web/app/features/sandbox/components",
+);
+const AI_CONNECTIONS_FEATURES_DIR = path.resolve(
+  __dirname,
+  "../../../../apps/web/app/features/ai-connections/components",
+);
 
 function getSubdirectories(dir: string): string[] {
   if (!fs.existsSync(dir)) return [];
@@ -79,6 +87,14 @@ describe("Architecture & Design System Laws", () => {
       }
     });
 
+    it("enforces colocated structure for all calculators", () => {
+      const calculators = getSubdirectories(CALCULATORS_DIR);
+      expect(calculators.length).toBeGreaterThanOrEqual(7);
+      for (const comp of calculators) {
+        verifyColocatedStructure(CALCULATORS_DIR, comp);
+      }
+    });
+
     it("enforces colocated structure for features/sandbox components", () => {
       if (fs.existsSync(SANDBOX_FEATURES_DIR)) {
         const sandboxComponents = getSubdirectories(SANDBOX_FEATURES_DIR);
@@ -88,11 +104,21 @@ describe("Architecture & Design System Laws", () => {
         }
       }
     });
+
+    it("enforces colocated structure for features/ai-connections components", () => {
+      if (fs.existsSync(AI_CONNECTIONS_FEATURES_DIR)) {
+        const aiComponents = getSubdirectories(AI_CONNECTIONS_FEATURES_DIR);
+        expect(aiComponents.length).toBeGreaterThanOrEqual(1);
+        for (const comp of aiComponents) {
+          verifyColocatedStructure(AI_CONNECTIONS_FEATURES_DIR, comp);
+        }
+      }
+    });
   });
 
   describe("2. Design Token Boundaries Law", () => {
     it("ensures no new/consolidated component files reference deprecated semantic token paths", () => {
-      const targetDirs = [FOUNDATIONS_DIR, PRIMITIVES_DIR, PATTERNS_DIR];
+      const targetDirs = [FOUNDATIONS_DIR, PRIMITIVES_DIR, PATTERNS_DIR, CALCULATORS_DIR];
       const deprecatedPatterns = [
         "financial.positive",
         "financial.negative",

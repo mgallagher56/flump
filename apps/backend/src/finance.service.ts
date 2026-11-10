@@ -1,10 +1,13 @@
 import { BankSyncOrchestrator } from "@flump/banking/server";
-import { PortfolioSnapshot } from "@flump/finance-engine";
 import { BadRequestException, Injectable, NotFoundException, Optional } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { InjectRepository } from "@nestjs/typeorm";
-import { In, Repository } from "typeorm";
-import { AccountIntakeService } from "./account-intake.service";
+import { Repository } from "typeorm";
+import {
+  AccountIntakeService,
+  type CreateAccountDto,
+  type UpdateAccountDto,
+} from "./account-intake.service";
 import { Account } from "./entities/account.entity";
 import { AccountDetail } from "./entities/account-detail.entity";
 import { BankConnection } from "./entities/bank-connection.entity";
@@ -14,6 +17,8 @@ import { BankProviderRegistry } from "./providers/provider.registry";
 
 @Injectable()
 export class FinanceService {
+  private readonly accountIntakeService: AccountIntakeService;
+
   constructor(
     @InjectRepository(Account)
     private readonly accountRepository: Repository<Account>,
@@ -28,200 +33,40 @@ export class FinanceService {
     private readonly providerRegistry: BankProviderRegistry,
     private readonly configService: ConfigService,
     @Optional()
-    private readonly accountIntakeService?: AccountIntakeService,
-  ) {}
+    accountIntakeService?: AccountIntakeService,
+  ) {
+    this.accountIntakeService =
+      accountIntakeService ??
+      new AccountIntakeService(accountRepository, accountDetailRepository, userProfileRepository);
+  }
 
   async getAccounts(userId: string) {
-    let accounts = await this.accountRepository.find({
-      where: { userId },
-      order: { createdAt: "ASC" },
-    });
-
-    const profile = await this.userProfileRepository.findOne({ where: { userId } });
-
-    // Auto-seed mock data for development if the user has no accounts yet and has not reset data
-    if (accounts.length === 0 && !profile?.hasResetFinancialData) {
-      const defaultAccounts = [
-        {
-          userId,
-          name: "Main Checking",
-          type: "Current" as const,
-          balance: 2450.75,
-          currency: "GBP",
-        },
-        {
-          userId,
-          name: "High Yield Savings",
-          type: "Saving" as const,
-          balance: 15800.0,
-          currency: "GBP",
-          interestRate: 4.5,
-          monthlyContribution: 250.0,
-        },
-        {
-          userId,
-          name: "Cash ISA — Trading 212",
-          type: "Saving" as const,
-          balance: 42100.5,
-          currency: "GBP",
-          interestRate: 7.0,
-          monthlyContribution: 300.0,
-        },
-        {
-          userId,
-          name: "Workplace Pension — Nest",
-          type: "Pension" as const,
-          balance: 18500.0,
-          currency: "GBP",
-          interestRate: 5.5,
-          monthlyContribution: 433.0,
-          isCurrent: true,
-        },
-      ];
-
-      const seeded = await this.accountRepository.save(defaultAccounts);
-      accounts = seeded;
-    }
-
-    const accountIds = accounts.map((a) => a.id);
-    let details: AccountDetail[] = [];
-    if (accountIds.length > 0) {
-      details = await this.accountDetailRepository.find({
-        where: { accountId: In(accountIds) },
-        order: { year: "ASC", month: "ASC" },
-      });
-    }
-
-    const detailsByAccount = details.reduce(
-      (acc, d) => {
-        if (!acc[d.accountId]) acc[d.accountId] = [];
-        acc[d.accountId].push(d);
-        return acc;
-      },
-      {} as Record<string, AccountDetail[]>,
-    );
-
-    return accounts.map((acc) => ({
-      ...acc,
-      balance: Number(acc.balance),
-      interestRate:
-        acc.interestRate !== null && acc.interestRate !== undefined
-          ? Number(acc.interestRate)
-          : null,
-      monthlyContribution:
-        acc.monthlyContribution !== null && acc.monthlyContribution !== undefined
-          ? Number(acc.monthlyContribution)
-          : null,
-      isCurrent: acc.isCurrent !== false,
-      details: detailsByAccount[acc.id] || [],
-    }));
+    return this.accountIntakeService.getAccounts(userId);
   }
 
   async getAccount(userId: string, id: string) {
-    if (this.accountIntakeService) {
-      return this.accountIntakeService.getAccount(userId, id);
-    }
-
-    const account = await this.accountRepository.findOne({
-      where: { id, userId },
-    });
-    if (!account) {
-      throw new NotFoundException("Account not found");
-    }
-
-    const details = await this.accountDetailRepository.find({
-      where: { accountId: id },
-      order: { year: "ASC", month: "ASC" },
-    });
-
-    return {
-      ...account,
-      details,
-    };
+    return this.accountIntakeService.getAccount(userId, id);
   }
 
   async getAccountDetails(userId: string, accountId?: string) {
-    if (this.accountIntakeService) {
-      return this.accountIntakeService.getAccountDetails(userId, accountId);
-    }
-
-    if (accountId) {
-      const account = await this.accountRepository.findOne({
-        where: { id: accountId, userId },
-      });
-      if (!account) {
-        throw new NotFoundException("Account not found");
-      }
-      return this.accountDetailRepository.find({
-        where: { accountId },
-        order: { year: "ASC", month: "ASC" },
-      });
-    }
-
-    const accounts = await this.accountRepository.find({
-      where: { userId },
-      select: ["id"],
-    });
-    if (accounts.length === 0) return [];
-    const accountIds = accounts.map((a) => a.id);
-    return this.accountDetailRepository.find({
-      where: { accountId: In(accountIds) },
-      order: { year: "ASC", month: "ASC" },
-    });
+    return this.accountIntakeService.getAccountDetails(userId, accountId);
   }
 
   async getPortfolioSnapshot(userId: string) {
-    if (this.accountIntakeService) {
-      return this.accountIntakeService.getPortfolioSnapshot(userId);
-    }
-    const accounts = await this.getAccounts(userId);
-    const details = await this.getAccountDetails(userId);
-    const snapshot = new PortfolioSnapshot(accounts, details);
-    return {
-      netWorth: snapshot.getTotalNetWorth(),
-      totalAssets: snapshot.getTotalAssets(),
-      totalLiabilities: snapshot.getTotalLiabilities(),
-      totalLiquidCash: snapshot.getTotalLiquidCash(),
-      totalInvestments: snapshot.getTotalInvestments(),
-      totalPensions: snapshot.getTotalPensions(),
-      totalConsumerDebt: snapshot.getTotalConsumerDebt(),
-      totalMortgageBalance: snapshot.getTotalMortgageBalance(),
-      resolvedAccounts: snapshot.getResolvedAccounts(),
-      monthlyHistory: snapshot.getMonthlyHistory(),
-      currency: accounts[0]?.currency || "GBP",
-    };
+    return this.accountIntakeService.getPortfolioSnapshot(userId);
   }
 
-  async createAccount(userId: string, body: any) {
-    const account = this.accountRepository.create({
-      ...body,
-      userId,
-    });
-    return this.accountRepository.save(account);
+  async createAccount(userId: string, body: CreateAccountDto) {
+    return this.accountIntakeService.createAccount(userId, body);
   }
 
-  async updateAccount(userId: string, id: string, body: any) {
-    const account = await this.accountRepository.findOne({
-      where: { id, userId },
-    });
-    if (!account) {
-      throw new NotFoundException("Account not found");
-    }
-    Object.assign(account, body);
-    return this.accountRepository.save(account);
+  async updateAccount(userId: string, id: string, body: UpdateAccountDto) {
+    return this.accountIntakeService.updateAccount(userId, id, body);
   }
 
   async deleteAccount(userId: string, id: string) {
-    const account = await this.accountRepository.findOne({
-      where: { id, userId },
-    });
-    if (!account) {
-      throw new NotFoundException("Account not found");
-    }
-    await this.accountDetailRepository.delete({ accountId: id });
     await this.transactionRepository.delete({ accountId: id });
-    await this.accountRepository.remove(account);
-    return { success: true };
+    return this.accountIntakeService.deleteAccount(userId, id);
   }
 
   async getTransactions(userId: string, accountId?: string) {

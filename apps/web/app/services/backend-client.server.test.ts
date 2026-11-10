@@ -41,6 +41,18 @@ describe("backend-client.server", () => {
       if (url.includes("/bank-connections")) {
         return Promise.resolve(new Response(JSON.stringify([{ id: "conn_1" }]), { status: 200 }));
       }
+      if (url.includes("/portfolio-snapshot")) {
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              netWorth: 15000,
+              totalAssets: 20000,
+              totalLiabilities: 5000,
+            }),
+            { status: 200 },
+          ),
+        );
+      }
       return Promise.resolve(new Response("Not found", { status: 404 }));
     });
   });
@@ -67,11 +79,14 @@ describe("backend-client.server", () => {
       includeBudget: true,
       includeTax: true,
       includeConnections: true,
+      includePortfolioSnapshot: true,
     });
 
     expect(snapshot.budgetEntries.length).toBe(1);
     expect(snapshot.taxRecords.length).toBe(1);
     expect(snapshot.bankConnections.length).toBe(1);
+    expect(snapshot.portfolioSnapshot).toBeDefined();
+    expect(snapshot.portfolioSnapshot?.netWorth).toBe(15000);
   });
 
   it("falls back gracefully when backend fetch fails", async () => {

@@ -17,7 +17,7 @@ import {
 } from "@repo/ui";
 import { css } from "@repo/ui/styled-system/css";
 import { type FC, useState } from "react";
-import { PayoffStrategyControls } from "../../debt/components/PayoffStrategyControls";
+import { PayoffStrategyControls } from "../../../debt/components/PayoffStrategyControls";
 import { sandboxLayoutRecipe } from "./SandboxTemplates.styles";
 
 export interface SandboxTemplatesProps {

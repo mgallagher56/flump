@@ -5,54 +5,14 @@ import {
 } from "@flump/finance-engine";
 import type { FC } from "react";
 import { useMemo, useState } from "react";
-import { css } from "../../styled-system/css/index.js";
-import { Button } from "../components/forms/Button.js";
-
-const cardStyle = css({
-  backgroundColor: "surface.card",
-  border: "1px solid",
-  borderColor: "border",
-  borderRadius: "2xl",
-  padding: { base: "20px", md: "32px" },
-  display: "flex",
-  flexDirection: "column",
-  gap: "24px",
-  boxShadow: "sm",
-});
-
-const gridStyle = css({
-  display: "grid",
-  gridTemplateColumns: { base: "1fr", lg: "1.1fr 0.9fr" },
-  gap: "32px",
-});
-
-const inputGroupStyle = css({
-  display: "flex",
-  flexDirection: "column",
-  gap: "8px",
-  marginBottom: "16px",
-});
-
-const textInputStyle = css({
-  padding: "10px 14px",
-  borderRadius: "lg",
-  border: "1px solid",
-  borderColor: "border",
-  backgroundColor: "surface.canvas",
-  color: "text.primary",
-  fontSize: "15px",
-});
-
-const resultsBoxStyle = css({
-  backgroundColor: "surface.canvas",
-  border: "1px solid",
-  borderColor: "border",
-  borderRadius: "xl",
-  padding: "24px",
-  display: "flex",
-  flexDirection: "column",
-  gap: "18px",
-});
+import { Button } from "../../components/forms/Button.js";
+import {
+  cardStyle,
+  gridStyle,
+  inputGroupStyle,
+  resultsBoxStyle,
+  textInputStyle,
+} from "./DebtSnowballCalculator.styles.js";
 
 export interface DebtSnowballCalculatorProps {
   onSaveAndContinue?: (payload: any) => void;
@@ -131,14 +91,12 @@ export const DebtSnowballCalculator: FC<DebtSnowballCalculatorProps> = ({
               fontSize: "1.25rem",
               fontWeight: 700,
               margin: "0 0 4px 0",
-              color: "var(--colors-text-primary, #0f172a)",
+              color: "var(--colors-text-primary))",
             }}
           >
             Debt payoff: snowball vs avalanche calculator
           </h2>
-          <p
-            style={{ fontSize: "0.875rem", color: "var(--colors-text-muted, #64748b)", margin: 0 }}
-          >
+          <p style={{ fontSize: "0.875rem", color: "var(--colors-text-muted))", margin: 0 }}>
             Model exact interest savings and exit dates between mathematically optimal (avalanche)
             and psychological momentum (snowball).
           </p>
@@ -299,7 +257,7 @@ export const DebtSnowballCalculator: FC<DebtSnowballCalculatorProps> = ({
               max={500}
               min={0}
               step={10}
-              style={{ width: "100%", accentColor: "var(--colors-primary, #6366f1)" }}
+              style={{ width: "100%", accentColor: "var(--colors-primary))" }}
               type="range"
               value={extraPayment}
               onChange={(e) => setExtraPayment(Number(e.target.value))}
@@ -312,8 +270,8 @@ export const DebtSnowballCalculator: FC<DebtSnowballCalculatorProps> = ({
             <span
               style={{
                 fontSize: "11px",
-                backgroundColor: "#fef3c7",
-                color: "#b45309",
+                backgroundColor: "var(--colors-status-warning-bg)",
+                color: "var(--colors-status-warning-text)",
                 padding: "2px 8px",
                 borderRadius: "4px",
                 fontWeight: "bold",
@@ -322,14 +280,19 @@ export const DebtSnowballCalculator: FC<DebtSnowballCalculatorProps> = ({
               ⚡ Avalanche strategy (highest APR first)
             </span>
             <div
-              style={{ fontSize: "24px", fontWeight: "bold", color: "#10b981", marginTop: "4px" }}
+              style={{
+                fontSize: "24px",
+                fontWeight: "bold",
+                color: "var(--colors-status-positive-solid)",
+                marginTop: "4px",
+              }}
             >
               Debt free: {comparison.avalanche.debtFreeDate}
             </div>
             <p
               style={{
                 fontSize: "12px",
-                color: "var(--colors-text-muted, #64748b)",
+                color: "var(--colors-text-muted))",
                 margin: "4px 0 0 0",
               }}
             >
@@ -343,14 +306,19 @@ export const DebtSnowballCalculator: FC<DebtSnowballCalculatorProps> = ({
               padding: "12px",
               backgroundColor: "surface.card",
               borderRadius: "8px",
-              border: "1px solid var(--colors-border, #e2e8f0)",
+              border: "1px solid var(--colors-border))",
             }}
           >
-            <span style={{ fontSize: "12px", color: "var(--colors-text-muted, #64748b)" }}>
+            <span style={{ fontSize: "12px", color: "var(--colors-text-muted))" }}>
               Total interest saved vs minimum payments:
             </span>
             <div
-              style={{ fontSize: "20px", fontWeight: "bold", color: "#ef4444", marginTop: "2px" }}
+              style={{
+                fontSize: "20px",
+                fontWeight: "bold",
+                color: "var(--colors-status-danger-solid)",
+                marginTop: "2px",
+              }}
             >
               £{Math.round(comparison.interestSavedAvalancheVsMin).toLocaleString()}
             </div>
@@ -360,8 +328,8 @@ export const DebtSnowballCalculator: FC<DebtSnowballCalculatorProps> = ({
             <span
               style={{
                 fontSize: "11px",
-                backgroundColor: "#dbeafe",
-                color: "#1e40af",
+                backgroundColor: "var(--colors-status-info-bg)",
+                color: "var(--colors-status-info-text)",
                 padding: "2px 8px",
                 borderRadius: "4px",
                 fontWeight: "bold",
@@ -375,7 +343,7 @@ export const DebtSnowballCalculator: FC<DebtSnowballCalculatorProps> = ({
             <p
               style={{
                 fontSize: "12px",
-                color: "var(--colors-text-muted, #64748b)",
+                color: "var(--colors-text-muted))",
                 margin: "4px 0 0 0",
               }}
             >

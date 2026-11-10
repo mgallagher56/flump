@@ -24,12 +24,20 @@ export const loader = async (args: LoaderFunctionArgs) => {
     return getDemoDashboardData();
   }
 
-  const { accounts, userProfile, budgetEntries, accountDetails, taxRecords, user } =
-    await loadWorkspaceSnapshot(args, {
-      ensureSignedIn: false,
-      includeBudget: true,
-      includeTax: true,
-    });
+  const {
+    accounts,
+    userProfile,
+    budgetEntries,
+    accountDetails,
+    taxRecords,
+    user,
+    portfolioSnapshot: preloadedSnapshot,
+  } = await loadWorkspaceSnapshot(args, {
+    ensureSignedIn: false,
+    includeBudget: true,
+    includeTax: true,
+    includePortfolioSnapshot: true,
+  });
 
   if (!user) {
     return {
@@ -62,8 +70,9 @@ export const loader = async (args: LoaderFunctionArgs) => {
     const completedSteps = (userProfile?.setupChecklistCompletedSteps as string[]) ?? [];
 
     const portfolioSnapshot = new PortfolioSnapshot(accounts, accountDetails);
-    const totalAssets = portfolioSnapshot.getTotalAssets();
-    const totalLiabilities = portfolioSnapshot.getTotalLiabilities();
+    const totalAssets = preloadedSnapshot?.totalAssets ?? portfolioSnapshot.getTotalAssets();
+    const totalLiabilities =
+      preloadedSnapshot?.totalLiabilities ?? portfolioSnapshot.getTotalLiabilities();
 
     const monthlyIncome = Array.isArray(budgetEntries)
       ? budgetEntries

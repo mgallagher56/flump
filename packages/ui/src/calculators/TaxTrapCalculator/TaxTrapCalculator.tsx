@@ -2,51 +2,14 @@ import { calculateTaxTrapRelief, persistOnboardingSeed } from "@flump/finance-en
 import type { FC } from "react";
 import { useMemo, useState } from "react";
 import { FiAlertTriangle, FiArrowRight, FiCheckCircle } from "react-icons/fi";
-import { css } from "../../styled-system/css/index.js";
-import { Button } from "../components/forms/Button.js";
-
-const cardStyle = css({
-  backgroundColor: "surface.card",
-  border: "1px solid",
-  borderColor: "border",
-  borderRadius: "2xl",
-  padding: { base: "20px", sm: "32px" },
-  boxShadow: "0 8px 30px rgba(0, 0, 0, 0.06)",
-  marginBottom: "40px",
-});
-
-const inputGroupStyle = css({
-  display: "flex",
-  flexDirection: "column",
-  gap: "8px",
-  marginBottom: "20px",
-});
-
-const sliderStyle = css({
-  width: "100%",
-  accentColor: "#6366f1",
-  cursor: "pointer",
-  height: "6px",
-});
-
-const metricsGridStyle = css({
-  display: "grid",
-  gridTemplateColumns: { base: "1fr", sm: "repeat(3, 1fr)" },
-  gap: "16px",
-  marginTop: "24px",
-  marginBottom: "24px",
-});
-
-const metricCard = css({
-  backgroundColor: "surface.canvas",
-  border: "1px solid",
-  borderColor: "border",
-  borderRadius: "xl",
-  padding: "16px",
-  display: "flex",
-  flexDirection: "column",
-  gap: "4px",
-});
+import { Button } from "../../components/forms/Button.js";
+import {
+  cardStyle,
+  inputGroupStyle,
+  metricCard,
+  metricsGridStyle,
+  sliderStyle,
+} from "./TaxTrapCalculator.styles.js";
 
 export interface TaxTrapCalculatorProps {
   onSaveAndContinue?: (payload: any) => void;
@@ -103,7 +66,7 @@ export const TaxTrapCalculator: FC<TaxTrapCalculatorProps> = ({
               padding: "3px 10px",
               borderRadius: "9999px",
               backgroundColor: "rgba(99, 102, 241, 0.12)",
-              color: "#6366f1",
+              color: "var(--colors-primary)",
               fontSize: "12px",
               fontWeight: 700,
               textTransform: "uppercase",
@@ -121,7 +84,7 @@ export const TaxTrapCalculator: FC<TaxTrapCalculatorProps> = ({
                 padding: "3px 10px",
                 borderRadius: "9999px",
                 backgroundColor: "rgba(239, 68, 68, 0.12)",
-                color: "#ef4444",
+                color: "var(--colors-status-danger-solid)",
                 fontSize: "12px",
                 fontWeight: 700,
               }}
@@ -134,13 +97,13 @@ export const TaxTrapCalculator: FC<TaxTrapCalculatorProps> = ({
           style={{
             fontSize: "1.25rem",
             fontWeight: 700,
-            color: "var(--colors-text-primary, #0f172a)",
+            color: "var(--colors-text-primary))",
             margin: "0 0 4px 0",
           }}
         >
           Interactive £100k–£125k tax trap modeller
         </h2>
-        <p style={{ fontSize: "0.875rem", color: "var(--colors-text-muted, #64748b)", margin: 0 }}>
+        <p style={{ fontSize: "0.875rem", color: "var(--colors-text-muted))", margin: 0 }}>
           Slide your income and test how salary sacrifice or SIPP contributions reclaim your
           personal allowance and unlock tax-free childcare.
         </p>
@@ -175,7 +138,7 @@ export const TaxTrapCalculator: FC<TaxTrapCalculatorProps> = ({
                 fontSize: "15px",
                 fontWeight: 700,
                 textAlign: "right",
-                color: "#6366f1",
+                color: "var(--colors-primary)",
                 borderRadius: "8px",
                 border: "1px solid var(--colors-border)",
                 backgroundColor: "var(--colors-surface)",
@@ -199,7 +162,7 @@ export const TaxTrapCalculator: FC<TaxTrapCalculatorProps> = ({
             display: "flex",
             justifyContent: "space-between",
             fontSize: "11px",
-            color: "var(--colors-text-muted, #64748b)",
+            color: "var(--colors-text-muted))",
           }}
         >
           <span>£90k (40% Higher Rate)</span>
@@ -239,7 +202,7 @@ export const TaxTrapCalculator: FC<TaxTrapCalculatorProps> = ({
                 fontSize: "15px",
                 fontWeight: 700,
                 textAlign: "right",
-                color: "#10b981",
+                color: "var(--colors-status-positive-solid)",
                 borderRadius: "8px",
                 border: "1px solid var(--colors-border)",
                 backgroundColor: "var(--colors-surface)",
@@ -262,7 +225,7 @@ export const TaxTrapCalculator: FC<TaxTrapCalculatorProps> = ({
 
       <div className={metricsGridStyle}>
         <div className={metricCard}>
-          <span style={{ fontSize: "12px", color: "var(--colors-text-muted, #64748b)" }}>
+          <span style={{ fontSize: "12px", color: "var(--colors-text-muted))" }}>
             Effective Marginal Rate
           </span>
           <span
@@ -270,36 +233,44 @@ export const TaxTrapCalculator: FC<TaxTrapCalculatorProps> = ({
               fontSize: "24px",
               fontWeight: 800,
               color:
-                isTrapZone && salarySacrifice < analysis.excessAbove100k ? "#ef4444" : "#10b981",
+                isTrapZone && salarySacrifice < analysis.excessAbove100k
+                  ? "var(--colors-status-danger-solid)"
+                  : "var(--colors-status-positive-solid)",
             }}
           >
             {isTrapZone && salarySacrifice < analysis.excessAbove100k ? "62.0%" : "42.0%"}
           </span>
-          <span style={{ fontSize: "11px", color: "var(--colors-text-muted, #64748b)" }}>
+          <span style={{ fontSize: "11px", color: "var(--colors-text-muted))" }}>
             40% Income Tax + 20% Taper + 2% NI
           </span>
         </div>
 
         <div className={metricCard}>
-          <span style={{ fontSize: "12px", color: "var(--colors-text-muted, #64748b)" }}>
+          <span style={{ fontSize: "12px", color: "var(--colors-text-muted))" }}>
             Tax and NI saved
           </span>
-          <span style={{ fontSize: "24px", fontWeight: 800, color: "#10b981" }}>
+          <span
+            style={{
+              fontSize: "24px",
+              fontWeight: 800,
+              color: "var(--colors-status-positive-solid)",
+            }}
+          >
             £{totalTaxSaved.toLocaleString()}
           </span>
-          <span style={{ fontSize: "11px", color: "var(--colors-text-muted, #64748b)" }}>
+          <span style={{ fontSize: "11px", color: "var(--colors-text-muted))" }}>
             Guaranteed immediate relief
           </span>
         </div>
 
         <div className={metricCard}>
-          <span style={{ fontSize: "12px", color: "var(--colors-text-muted, #64748b)" }}>
+          <span style={{ fontSize: "12px", color: "var(--colors-text-muted))" }}>
             Personal allowance reclaimed
           </span>
-          <span style={{ fontSize: "24px", fontWeight: 800, color: "#6366f1" }}>
+          <span style={{ fontSize: "24px", fontWeight: 800, color: "var(--colors-primary)" }}>
             £{allowanceReclaimed.toLocaleString()}
           </span>
-          <span style={{ fontSize: "11px", color: "var(--colors-text-muted, #64748b)" }}>
+          <span style={{ fontSize: "11px", color: "var(--colors-text-muted))" }}>
             of £{analysis.lostPersonalAllowance.toLocaleString()} lost allowance
           </span>
         </div>
@@ -320,9 +291,9 @@ export const TaxTrapCalculator: FC<TaxTrapCalculatorProps> = ({
         }}
       >
         {childcareEligible ? (
-          <FiCheckCircle color="#10b981" size={18} />
+          <FiCheckCircle color="var(--colors-status-positive-solid)" size={18} />
         ) : (
-          <FiAlertTriangle color="#ef4444" size={18} />
+          <FiAlertTriangle color="var(--colors-status-danger-solid)" size={18} />
         )}
         <span style={{ fontSize: "13px", fontWeight: 600 }}>
           {childcareEligible
@@ -342,3 +313,5 @@ export const TaxTrapCalculator: FC<TaxTrapCalculatorProps> = ({
     </div>
   );
 };
+
+export default TaxTrapCalculator;

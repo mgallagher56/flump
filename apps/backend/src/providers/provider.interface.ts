@@ -1,3 +1,5 @@
+import type { BankingProviderName, FlumpAccountCategory, NormalizedAccount } from "@flump/banking";
+
 export interface TokenResponse {
   accessToken: string;
   refreshToken?: string;
@@ -33,4 +35,34 @@ export interface IBankProvider {
     externalAccountId: string,
     details?: any,
   ): Promise<ProviderTransaction[]>;
+}
+
+export function toNormalizedAccount(
+  account: ProviderAccount,
+  provider: BankingProviderName,
+  institutionName: string,
+): NormalizedAccount {
+  const isDebt = account.type === "Credit Card" || account.type === "Mortgage";
+  const categoryMap: Record<ProviderAccount["type"], FlumpAccountCategory> = {
+    Current: "CURRENT",
+    Saving: "SAVINGS",
+    Mortgage: "MORTGAGE_RESIDENTIAL",
+    "Credit Card": "CREDIT_CARD",
+    Investment: "GENERAL_INVESTMENT",
+  };
+
+  const balanceMag = Math.abs(account.balance);
+
+  return {
+    externalAccountId: account.externalAccountId,
+    provider,
+    institutionName,
+    name: account.name,
+    category: categoryMap[account.type] || "CURRENT",
+    currency: account.currency,
+    netWorthImpactGbp: isDebt ? -balanceMag : balanceMag,
+    principalOwedGbp: isDebt ? balanceMag : 0,
+    isTaxFreeIsaWrapper: false,
+    lastSyncedAt: new Date().toISOString(),
+  };
 }

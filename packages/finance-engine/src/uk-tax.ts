@@ -187,13 +187,17 @@ export function calculateEmployerNISavings(
 /**
  * Calculates UK Income Tax for England, Wales & Northern Ireland.
  */
-export function calculateEwniIncomeTax(taxableIncome: number, personalAllowance: number): number {
+export function calculateEwniIncomeTax(
+  taxableIncome: number,
+  personalAllowance: number,
+  basicBandExtension = 0,
+): number {
   if (taxableIncome <= personalAllowance) {
     return 0;
   }
 
   const incomeAboveAllowance = taxableIncome - personalAllowance;
-  const basicBandWidth = 50270 - UK_TAX_CONSTANTS.PERSONAL_ALLOWANCE_DEFAULT; // £37,700
+  const basicBandWidth = 50270 - UK_TAX_CONSTANTS.PERSONAL_ALLOWANCE_DEFAULT + basicBandExtension; // £37,700 + Gift Aid
 
   let tax = 0;
 
@@ -201,19 +205,21 @@ export function calculateEwniIncomeTax(taxableIncome: number, personalAllowance:
   const basicTaxable = Math.min(incomeAboveAllowance, basicBandWidth);
   tax += basicTaxable * 0.2;
 
-  // Higher rate band: 40% up to £125,140
-  if (taxableIncome > 50270) {
-    const higherBandUpper = UK_TAX_CONSTANTS.TAX_TRAP_UPPER_THRESHOLD;
+  // Higher rate band: 40% up to £125,140 + basicBandExtension
+  const higherRateStart = 50270 + basicBandExtension;
+  if (taxableIncome > higherRateStart) {
+    const higherBandUpper = UK_TAX_CONSTANTS.TAX_TRAP_UPPER_THRESHOLD + basicBandExtension;
     const higherTaxable =
-      Math.min(taxableIncome, higherBandUpper) - Math.max(50270, personalAllowance);
+      Math.min(taxableIncome, higherBandUpper) - Math.max(higherRateStart, personalAllowance);
     if (higherTaxable > 0) {
       tax += higherTaxable * 0.4;
     }
   }
 
-  // Additional rate band: 45% over £125,140
-  if (taxableIncome > UK_TAX_CONSTANTS.TAX_TRAP_UPPER_THRESHOLD) {
-    const additionalTaxable = taxableIncome - UK_TAX_CONSTANTS.TAX_TRAP_UPPER_THRESHOLD;
+  // Additional rate band: 45% over £125,140 + basicBandExtension
+  const additionalThreshold = UK_TAX_CONSTANTS.TAX_TRAP_UPPER_THRESHOLD + basicBandExtension;
+  if (taxableIncome > additionalThreshold) {
+    const additionalTaxable = taxableIncome - additionalThreshold;
     tax += additionalTaxable * 0.45;
   }
 
@@ -347,6 +353,8 @@ export function calculateUkTax(input: UkTaxCalculationInput): UkTaxCalculationRe
   const employerMatchPct = Math.max(0, input.employerPensionMatchPct ?? 0);
   const isSalarySacrifice = input.isSalarySacrifice ?? false;
   const studentLoanPlan = input.studentLoanPlan ?? "NONE";
+  const netGiftAid = Math.max(0, input.giftAidContributionsGbp ?? 0);
+  const grossGiftAid = netGiftAid * 1.25;
 
   const totalGrossIncome = grossSalary + bonusOrSideIncome + taxableSavingsInterest + netBtlProfit;
 
@@ -354,13 +362,22 @@ export function calculateUkTax(input: UkTaxCalculationInput): UkTaxCalculationRe
   const employeePensionContribution = (grossSalary * pensionPct) / 100;
   const employerPensionContribution = (grossSalary * employerMatchPct) / 100;
 
+  // Employer NI savings if salary sacrifice
+  const employerNiSavings =
+    isSalarySacrifice && input.includeEmployerNiRebate
+      ? calculateEmployerNISavings(grossSalary, employeePensionContribution, taxYear)
+      : 0;
+
   // Under salary sacrifice, gross pay subject to NI and Tax is reduced
   const grossPayForNi = isSalarySacrifice
     ? Math.max(0, grossSalary - employeePensionContribution) + bonusOrSideIncome
     : grossSalary + bonusOrSideIncome;
 
-  // Adjusted Net Income = total gross income minus gross pension contributions
-  const adjustedNetIncome = Math.max(0, totalGrossIncome - employeePensionContribution);
+  // Adjusted Net Income = total gross income minus gross pension contributions minus gross Gift Aid
+  const adjustedNetIncome = Math.max(
+    0,
+    totalGrossIncome - employeePensionContribution - grossGiftAid,
+  );
 
   // Personal Allowance after taper
   const { effectiveAllowance } = calculatePersonalAllowance(adjustedNetIncome);
@@ -372,7 +389,7 @@ export function calculateUkTax(input: UkTaxCalculationInput): UkTaxCalculationRe
   const incomeTax =
     region === "SCOTLAND"
       ? calculateScottishIncomeTax(taxableIncome, effectiveAllowance)
-      : calculateEwniIncomeTax(taxableIncome, effectiveAllowance);
+      : calculateEwniIncomeTax(taxableIncome, effectiveAllowance, grossGiftAid);
 
   // National Insurance (calculated on payroll gross pay)
   const nationalInsurance = calculateNationalInsurance(grossPayForNi);
@@ -441,6 +458,8 @@ export function calculateUkTax(input: UkTaxCalculationInput): UkTaxCalculationRe
     studentLoanDeductionGbp: studentLoanDeduction,
     employeePensionDeductionGbp: employeePensionContribution,
     employerPensionContributionGbp: employerPensionContribution,
+    employerNiSavingsGbp: employerNiSavings,
+    giftAidContributionsGbp: netGiftAid,
     totalDeductionsGbp: totalDeductions,
     netTakeHomePayAnnualGbp: netTakeHomeAnnual,
     netTakeHomePayMonthlyGbp: netTakeHomeMonthly,

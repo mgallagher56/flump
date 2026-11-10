@@ -2,57 +2,15 @@ import { persistOnboardingSeed } from "@flump/finance-engine";
 import type { FC } from "react";
 import { useMemo, useState } from "react";
 import { FiArrowRight, FiHome, FiTrendingUp } from "react-icons/fi";
-import { css } from "../../styled-system/css/index.js";
-import { Button } from "../components/forms/Button.js";
-
-const cardStyle = css({
-  backgroundColor: "surface.card",
-  border: "1px solid",
-  borderColor: "border",
-  borderRadius: "2xl",
-  padding: { base: "20px", sm: "32px" },
-  boxShadow: "0 8px 30px rgba(0, 0, 0, 0.06)",
-  marginBottom: "40px",
-});
-
-const inputGridStyle = css({
-  display: "grid",
-  gridTemplateColumns: { base: "1fr", sm: "repeat(2, 1fr)" },
-  gap: "20px",
-  marginBottom: "24px",
-});
-
-const inputGroupStyle = css({
-  display: "flex",
-  flexDirection: "column",
-  gap: "6px",
-});
-
-const sliderStyle = css({
-  width: "100%",
-  accentColor: "#6366f1",
-  cursor: "pointer",
-  height: "6px",
-});
-
-const metricsGridStyle = css({
-  display: "grid",
-  gridTemplateColumns: { base: "1fr", sm: "repeat(3, 1fr)" },
-  gap: "16px",
-  marginTop: "24px",
-  marginBottom: "24px",
-});
-
-const metricCard = css({
-  backgroundColor: "surface.canvas",
-  border: "1px solid",
-  borderColor: "border",
-  borderRadius: "xl",
-  padding: "16px",
-  display: "flex",
-  flexDirection: "column",
-  gap: "4px",
-});
+import { Button } from "../../components/forms/Button.js";
+import {
+  cardStyle,
+  inputGridStyle,
+  inputGroupStyle,
+  metricCard,
+  metricsGridStyle,
+  sliderStyle,
+} from "./MortgageVsIsaCalculator.styles.js";
 
 export interface MortgageVsIsaCalculatorProps {
   onSaveAndContinue?: (payload: any) => void;
@@ -155,7 +113,7 @@ export const MortgageVsIsaCalculator: FC<MortgageVsIsaCalculatorProps> = ({
               padding: "3px 10px",
               borderRadius: "9999px",
               backgroundColor: "rgba(245, 158, 11, 0.12)",
-              color: "#f59e0b",
+              color: "var(--colors-status-warning-solid)",
               fontSize: "12px",
               fontWeight: 700,
               textTransform: "uppercase",
@@ -169,13 +127,13 @@ export const MortgageVsIsaCalculator: FC<MortgageVsIsaCalculatorProps> = ({
           style={{
             fontSize: "1.25rem",
             fontWeight: 700,
-            color: "var(--colors-text-primary, #0f172a)",
+            color: "var(--colors-text-primary))",
             margin: "0 0 4px 0",
           }}
         >
           Mortgage overpayment vs stocks and shares ISA comparator
         </h2>
-        <p style={{ fontSize: "0.875rem", color: "var(--colors-text-muted, #64748b)", margin: 0 }}>
+        <p style={{ fontSize: "0.875rem", color: "var(--colors-text-muted))", margin: 0 }}>
           Mathematically compare the guaranteed interest savings of mortgage overpayments against
           the compound returns of a tax-sheltered UK Stocks & Shares ISA.
         </p>
@@ -211,7 +169,7 @@ export const MortgageVsIsaCalculator: FC<MortgageVsIsaCalculatorProps> = ({
                   fontSize: "13px",
                   fontWeight: 700,
                   textAlign: "right",
-                  color: "#f59e0b",
+                  color: "var(--colors-status-warning-solid)",
                   borderRadius: "6px",
                   border: "1px solid var(--colors-border)",
                   backgroundColor: "var(--colors-surface)",
@@ -252,7 +210,7 @@ export const MortgageVsIsaCalculator: FC<MortgageVsIsaCalculatorProps> = ({
                   fontSize: "13px",
                   fontWeight: 700,
                   textAlign: "right",
-                  color: "#f59e0b",
+                  color: "var(--colors-status-warning-solid)",
                   borderRadius: "6px",
                   border: "1px solid var(--colors-border)",
                   backgroundColor: "var(--colors-surface)",
@@ -312,7 +270,7 @@ export const MortgageVsIsaCalculator: FC<MortgageVsIsaCalculatorProps> = ({
                   fontSize: "13px",
                   fontWeight: 700,
                   textAlign: "right",
-                  color: "#6366f1",
+                  color: "var(--colors-primary)",
                   borderRadius: "6px",
                   border: "1px solid var(--colors-border)",
                   backgroundColor: "var(--colors-surface)",
@@ -358,7 +316,7 @@ export const MortgageVsIsaCalculator: FC<MortgageVsIsaCalculatorProps> = ({
                   fontSize: "13px",
                   fontWeight: 700,
                   textAlign: "right",
-                  color: "#10b981",
+                  color: "var(--colors-status-positive-solid)",
                   borderRadius: "6px",
                   border: "1px solid var(--colors-border)",
                   backgroundColor: "var(--colors-surface)",
@@ -394,11 +352,11 @@ export const MortgageVsIsaCalculator: FC<MortgageVsIsaCalculatorProps> = ({
       <div className={metricsGridStyle}>
         <div className={metricCard}>
           <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-            <FiHome color="var(--colors-warning-500, #f59e0b)" size={14} />
+            <FiHome color="var(--colors-status-warning-solid))" size={14} />
             <span
               style={{
                 fontSize: "12px",
-                color: "var(--colors-text-muted, #64748b)",
+                color: "var(--colors-text-muted))",
                 fontWeight: 600,
               }}
             >
@@ -410,14 +368,14 @@ export const MortgageVsIsaCalculator: FC<MortgageVsIsaCalculatorProps> = ({
             style={{
               fontSize: "22px",
               fontWeight: 800,
-              color: "var(--colors-warning-500, #f59e0b)",
+              color: "var(--colors-status-warning-solid))",
             }}
           >
             Save £{Math.round(simulation.interestSaved).toLocaleString("en-GB")}
           </span>
           <span
             className="tabular-nums"
-            style={{ fontSize: "12px", color: "var(--colors-text-muted, #64748b)" }}
+            style={{ fontSize: "12px", color: "var(--colors-text-muted))" }}
           >
             Shaves ~{simulation.yearsShaved} years off loan term
           </span>
@@ -425,11 +383,11 @@ export const MortgageVsIsaCalculator: FC<MortgageVsIsaCalculatorProps> = ({
 
         <div className={metricCard}>
           <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-            <FiTrendingUp color="var(--colors-success-500, #10b981)" size={14} />
+            <FiTrendingUp color="var(--colors-status-positive-solid))" size={14} />
             <span
               style={{
                 fontSize: "12px",
-                color: "var(--colors-text-muted, #64748b)",
+                color: "var(--colors-text-muted))",
                 fontWeight: 600,
               }}
             >
@@ -441,14 +399,14 @@ export const MortgageVsIsaCalculator: FC<MortgageVsIsaCalculatorProps> = ({
             style={{
               fontSize: "22px",
               fontWeight: 800,
-              color: "var(--colors-success-500, #10b981)",
+              color: "var(--colors-status-positive-solid))",
             }}
           >
             £{Math.round(simulation.isaPot).toLocaleString("en-GB")}
           </span>
           <span
             className="tabular-nums"
-            style={{ fontSize: "12px", color: "var(--colors-text-muted, #64748b)" }}
+            style={{ fontSize: "12px", color: "var(--colors-text-muted))" }}
           >
             Includes £{Math.round(simulation.isaGrowth).toLocaleString("en-GB")} in tax-free returns
           </span>
@@ -458,7 +416,7 @@ export const MortgageVsIsaCalculator: FC<MortgageVsIsaCalculatorProps> = ({
           <span
             style={{
               fontSize: "12px",
-              color: "var(--colors-text-muted, #64748b)",
+              color: "var(--colors-text-muted))",
               fontWeight: 600,
             }}
           >
@@ -471,14 +429,14 @@ export const MortgageVsIsaCalculator: FC<MortgageVsIsaCalculatorProps> = ({
               fontWeight: 800,
               color:
                 simulation.isaNetAdvantage >= 0
-                  ? "var(--colors-success-500, #10b981)"
-                  : "var(--colors-destructive-500, #ef4444)",
+                  ? "var(--colors-status-positive-solid))"
+                  : "var(--colors-status-danger-solid))",
             }}
           >
             {simulation.isaNetAdvantage >= 0 ? "+" : ""}£
             {Math.round(simulation.isaNetAdvantage).toLocaleString("en-GB")}
           </span>
-          <span style={{ fontSize: "12px", color: "var(--colors-text-muted, #64748b)" }}>
+          <span style={{ fontSize: "12px", color: "var(--colors-text-muted))" }}>
             {simulation.isaNetAdvantage >= 0
               ? "Expected net wealth gain from investing"
               : "Overpaying mortgage yields higher return"}
@@ -495,7 +453,7 @@ export const MortgageVsIsaCalculator: FC<MortgageVsIsaCalculatorProps> = ({
           flexWrap: "wrap",
           gap: "16px",
           paddingTop: "20px",
-          borderTop: "1px solid var(--colors-border, #e2e8f0)",
+          borderTop: "1px solid var(--colors-border))",
         }}
       >
         <div style={{ maxWidth: "440px" }}>
@@ -503,12 +461,12 @@ export const MortgageVsIsaCalculator: FC<MortgageVsIsaCalculatorProps> = ({
             style={{
               fontSize: "13px",
               fontWeight: 600,
-              color: "var(--colors-text-primary, #0f172a)",
+              color: "var(--colors-text-primary))",
             }}
           >
             Ready to track your mortgage deal expiry & live ISA yields?
           </span>
-          <p style={{ fontSize: "12px", color: "var(--colors-text-muted, #64748b)", margin: 0 }}>
+          <p style={{ fontSize: "12px", color: "var(--colors-text-muted))", margin: 0 }}>
             Flump syncs your live balance and monitors fixed-rate renewal dates automatically.
           </p>
         </div>
