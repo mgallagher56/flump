@@ -163,6 +163,15 @@ const ConnectBankWizard: FC<ConnectBankWizardProps> = ({ onSuccess }) => {
       return;
     }
 
+    if (authType === "oauth" && !res.redirectUrl) {
+      setErrorMessage(
+        res.message ||
+          "Could not initialize OAuth redirect for this institution. Please use Developer Token.",
+      );
+      setStep("error");
+      return;
+    }
+
     if (res.success) {
       setImportedCount(res.accountsCount || selectedBank?.accounts.length || 1);
       setStep("success");
@@ -223,6 +232,7 @@ const ConnectBankWizard: FC<ConnectBankWizardProps> = ({ onSuccess }) => {
       {
         intent: "connectBank",
         institutionId: selectedBank.id,
+        authType: "oauth",
       },
       { method: "POST", action: "/app/accounts" },
     );

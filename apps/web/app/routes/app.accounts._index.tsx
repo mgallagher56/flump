@@ -5,6 +5,34 @@ import AccountsContainer from "~/containers/accounts/accountsContainer/AccountsC
 import { loadWorkspaceSnapshot } from "~/services/backend-client.server";
 import { getAuthSession } from "~/utils/utils";
 
+export function getBankOAuthUrl(institutionId: string, callbackUrl: string): string | null {
+  const encCallback = encodeURIComponent(callbackUrl);
+  switch (institutionId.toLowerCase()) {
+    case "monzo":
+      return `https://auth.monzo.com/?client_id=${process.env.MONZO_CLIENT_ID || "flump-client"}&redirect_uri=${encCallback}&response_type=code&state=monzo`;
+    case "starling":
+      return `https://oauth.starlingbank.com/?client_id=${process.env.STARLING_CLIENT_ID || "flump-client"}&redirect_uri=${encCallback}&response_type=code&state=starling`;
+    case "trading212":
+      return "https://live.trading212.com/";
+    case "revolut":
+      return `https://business.revolut.com/app-confirm?client_id=${process.env.REVOLUT_CLIENT_ID || "flump-client"}&redirect_uri=${encCallback}&response_type=code&state=revolut`;
+    case "hsbc":
+      return `https://api.hsbc.com/oauth/v1/authorize?client_id=${process.env.HSBC_CLIENT_ID || "flump-client"}&redirect_uri=${encCallback}&response_type=code&scope=openid%20accounts&state=hsbc`;
+    case "barclays":
+      return `https://oauth.barclays.com/as/authorization.oauth2?client_id=${process.env.BARCLAYS_CLIENT_ID || "flump-client"}&redirect_uri=${encCallback}&response_type=code&scope=openid%20accounts&state=barclays`;
+    case "santander":
+      return `https://api.santander.co.uk/retail/sb/oauth2/authorize?client_id=${process.env.SANTANDER_CLIENT_ID || "flump-client"}&redirect_uri=${encCallback}&response_type=code&scope=openid%20accounts&state=santander`;
+    case "natwest":
+      return `https://api.natwest.com/secure/as/authorization.oauth2?client_id=${process.env.NATWEST_CLIENT_ID || "flump-client"}&redirect_uri=${encCallback}&response_type=code&scope=openid%20accounts&state=natwest`;
+    case "lloyds":
+      return `https://authorise-api.lloydsbank.co.uk/business/as/authorization.oauth2?client_id=${process.env.LLOYDS_CLIENT_ID || "flump-client"}&redirect_uri=${encCallback}&response_type=code&scope=openid%20accounts&state=lloyds`;
+    case "chase":
+      return `https://api.chase.co.uk/oauth2/v1/authorize?client_id=${process.env.CHASE_CLIENT_ID || "flump-client"}&redirect_uri=${encCallback}&response_type=code&scope=openid%20accounts&state=chase`;
+    default:
+      return null;
+  }
+}
+
 export const action = async (args: ActionFunctionArgs) => {
   const { accessToken } = await getAuthSession(args, { ensureSignedIn: true });
   const formData = await args.request.formData();
@@ -67,32 +95,60 @@ export const action = async (args: ActionFunctionArgs) => {
       });
       if (!res.ok) throw new Error("Failed to disconnect bank connection");
     } else if (intent === "connectBank") {
-      const institutionId = formData.get("institutionId");
+      const institutionId = String(formData.get("institutionId") || "");
       const token = formData.get("token");
-      const res = await fetch(`${apiUrl}/bank-connections`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${accessToken || "mock-session-token"}`,
-        },
-        body: JSON.stringify({
-          institutionId,
-          token: token ? String(token) : undefined,
-        }),
-      });
+      const authType = formData.get("authType");
+      const isOAuth = authType === "oauth" || (!token && authType !== "token");
 
       let backendData: any = null;
-      const text = await res.text();
       try {
-        backendData = JSON.parse(text);
-      } catch {
-        backendData = { message: text };
+        const res = await fetch(`${apiUrl}/bank-connections`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${accessToken || "mock-session-token"}`,
+          },
+          body: JSON.stringify({
+            institutionId,
+            token: token ? String(token) : undefined,
+          }),
+        });
+
+        const text = await res.text();
+        try {
+          backendData = JSON.parse(text);
+        } catch {
+          backendData = { message: text };
+        }
+
+        if (!res.ok && !isOAuth) {
+          throw new Error(backendData.message || "Failed to connect bank");
+        }
+      } catch (fetchErr) {
+        if (!isOAuth) {
+          throw fetchErr;
+        }
       }
 
-      if (!res.ok) {
-        throw new Error(backendData.message || "Failed to connect bank");
+      if (isOAuth) {
+        if (backendData?.oauth && backendData?.redirectUrl) {
+          return data({ success: true, oauth: true, redirectUrl: backendData.redirectUrl });
+        }
+
+        const origin = new URL(args.request.url).origin;
+        const callbackUrl = `${origin}/auth/callback`;
+        const oauthUrl = getBankOAuthUrl(institutionId, callbackUrl);
+
+        if (oauthUrl) {
+          return data({
+            success: true,
+            oauth: true,
+            redirectUrl: oauthUrl,
+          });
+        }
       }
-      return data(backendData);
+
+      return data(backendData || { success: true });
     }
     return data({ success: true });
   } catch (error) {

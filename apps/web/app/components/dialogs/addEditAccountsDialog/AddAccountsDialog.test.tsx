@@ -92,6 +92,7 @@ describe("<AddAccountDialogBtn", () => {
         intent: "connectBank",
         institutionId: "trading212",
         token: "t212-api-key-test",
+        authType: "token",
       },
       { method: "POST", action: "/app/accounts" },
     );
@@ -120,6 +121,29 @@ describe("<AddAccountDialogBtn", () => {
         intent: "connectBank",
         institutionId: "monzo",
         token: "secret-monzo-token",
+        authType: "token",
+      },
+      { method: "POST", action: "/app/accounts" },
+    );
+  });
+
+  test("should submit OAuth portal request when clicking Authorize button", async () => {
+    mocks.mockUseLoaderData.mockReturnValue({ user: mockUser });
+    const { getByText, user } = customRender(<AddEditAccountsDialogBtn accountId="123456" />);
+    await user.click(getByText("addAccount"));
+    await user.click(getByText("Connect to Bank"));
+
+    // Select OAuth Portal
+    await user.click(getByText("OAuth Portal"));
+
+    // Click Authorize via Monzo Bank
+    await user.click(getByText("Authorize via Monzo Bank"));
+
+    expect(mocks.mockFetcherSubmit).toHaveBeenCalledWith(
+      {
+        intent: "connectBank",
+        institutionId: "monzo",
+        authType: "oauth",
       },
       { method: "POST", action: "/app/accounts" },
     );
