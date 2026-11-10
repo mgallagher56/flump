@@ -1,7 +1,14 @@
 import { type FC, useCallback, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { FaCheckCircle, FaLock, FaPencilAlt, FaShieldAlt, FaUniversity } from "react-icons/fa";
-import { useFetcher, useLoaderData } from "react-router";
+import {
+  FaCheckCircle,
+  FaExclamationTriangle,
+  FaGlobe,
+  FaKey,
+  FaPencilAlt,
+  FaShieldAlt,
+} from "react-icons/fa";
+import { useFetcher, useLoaderData, useRevalidator } from "react-router";
 import FLPButton from "~/components/core/buttons/FLPButton";
 import FLPButtonGroup from "~/components/core/buttons/FLPButtonGroup";
 import FLPModal from "~/components/core/dialogs/FLPModal";
@@ -19,12 +26,18 @@ const accountTypes = {
 };
 
 const POPULAR_BANKS = [
-  { id: "monzo", name: "Monzo Bank", color: "#ff4f5e", desc: "Current & savings pots" },
-  { id: "starling", name: "Starling Bank", color: "#00aeef", desc: "Current & spaces" },
-  { id: "hsbc", name: "HSBC Bank", color: "#db0011", desc: "Current, savings & mortgage" },
-  { id: "barclays", name: "Barclays", color: "#00aeef", desc: "Everyday & platinum cards" },
-  { id: "revolut", name: "Revolut", color: "#111118", desc: "Multi-currency & savings" },
-  { id: "santander", name: "Santander", color: "#ec0000", desc: "123 Current & ISA" },
+  {
+    id: "monzo",
+    name: "Monzo Bank",
+    color: "#ff4f5e",
+    desc: "Current account, joint account & pots",
+  },
+  {
+    id: "starling",
+    name: "Starling Bank",
+    color: "#00aeef",
+    desc: "Current account, joint account & spaces",
+  },
 ];
 
 interface AddEditAccountsDialogBtnProp {
@@ -47,10 +60,15 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
   } = useLoaderData<typeof loader>();
   const { t } = useTranslation();
   const fetcher = useFetcher();
+  const revalidator = useRevalidator();
   const contentRef = useRef<HTMLDivElement>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [entryMethod, setEntryMethod] = useState<"manual" | "bank">("manual");
   const [selectedBank, setSelectedBank] = useState<string>("monzo");
+  const [bankAuthType, setBankAuthType] = useState<"token" | "oauth">("token");
+  const [bankToken, setBankToken] = useState<string>("");
+  const [bankError, setBankError] = useState<string | null>(null);
+  const [isConnecting, setIsConnecting] = useState(false);
 
   const selectedAccount = useMemo(
     () =>
@@ -76,6 +94,10 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
       e.stopPropagation();
       setEntryMethod("manual");
       setSelectedBank("monzo");
+      setBankAuthType("token");
+      setBankToken("");
+      setBankError(null);
+      setIsConnecting(false);
       setFormInput({
         name: isEditAccount ? selectedAccount.name || "" : "",
         type: [isEditAccount ? selectedAccount.type || accountTypeArray[0] : accountTypeArray[0]],
@@ -91,6 +113,8 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
 
   const handleCloseModal = useCallback(() => {
     setModalOpen(false);
+    setBankError(null);
+    setIsConnecting(false);
   }, []);
 
   const onChangeNameInput = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
@@ -121,16 +145,46 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
     handleCloseModal();
   }, [formInput, fetcher, handleCloseModal]);
 
-  const onConnectBank = useCallback(() => {
-    fetcher.submit(
-      {
-        intent: "connectBank",
-        institutionId: selectedBank,
-      },
-      { method: "POST" },
-    );
-    handleCloseModal();
-  }, [fetcher, handleCloseModal, selectedBank]);
+  const onConnectBank = useCallback(async () => {
+    setBankError(null);
+    setIsConnecting(true);
+
+    try {
+      const formData = new FormData();
+      formData.append("intent", "connectBank");
+      formData.append("institutionId", selectedBank);
+      if (bankAuthType === "token") {
+        if (!bankToken.trim()) {
+          setBankError("Please enter your developer token.");
+          setIsConnecting(false);
+          return;
+        }
+        formData.append("token", bankToken.trim());
+      }
+
+      const res = await fetch("/app/accounts", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await res.json();
+      if (!res.ok || data.error) {
+        throw new Error(data.error || data.message || "Failed to connect bank");
+      }
+
+      if (data.oauth && data.redirectUrl) {
+        window.location.href = data.redirectUrl;
+        return;
+      }
+
+      revalidator.revalidate();
+      handleCloseModal();
+    } catch (err) {
+      setBankError((err as Error).message);
+    } finally {
+      setIsConnecting(false);
+    }
+  }, [bankAuthType, bankToken, handleCloseModal, revalidator, selectedBank]);
 
   const onEditAccount = useCallback(() => {
     const { name, type, balance } = formInput;
@@ -171,7 +225,11 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
   const confirmBtnText = isEditAccount
     ? t("save")
     : entryMethod === "bank"
-      ? `Connect ${selectedBankObj?.name || "Bank"}`
+      ? isConnecting
+        ? "Connecting..."
+        : bankAuthType === "token"
+          ? `Connect ${selectedBankObj?.name || "Bank"}`
+          : `Authorize via ${selectedBankObj?.name || "Bank"}`
       : t("addAccount");
 
   return (
@@ -185,8 +243,12 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
           </FLPButtonGroup>
         ) : undefined
       }
+      closeOnConfirm={entryMethod !== "bank"}
       confirmButton={{ id: accountId, text: confirmBtnText }}
       contentRef={contentRef}
+      disabled={
+        isConnecting || (entryMethod === "bank" && bankAuthType === "token" && !bankToken.trim())
+      }
       open={modalOpen}
       title={t(isEditAccount ? "editAccount" : "addAccount")}
       triggerBtn={
@@ -205,7 +267,7 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
           </FLPButton>
         )
       }
-      onClose={() => setModalOpen(false)}
+      onClose={handleCloseModal}
       onConfirm={submitAction}
     >
       {!isEditAccount && (
@@ -370,6 +432,139 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
               );
             })}
           </div>
+
+          {/* Connection Method Selection */}
+          <div
+            style={{
+              display: "flex",
+              gap: "8px",
+              marginTop: "4px",
+              backgroundColor: "var(--colors-surface-sunken)",
+              padding: "4px",
+              borderRadius: "8px",
+            }}
+          >
+            <button
+              type="button"
+              onClick={() => {
+                setBankAuthType("token");
+                setBankError(null);
+              }}
+              style={{
+                flex: 1,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "6px",
+                padding: "8px 10px",
+                borderRadius: "6px",
+                fontSize: "12px",
+                fontWeight: 600,
+                cursor: "pointer",
+                border: bankAuthType === "token" ? "1px solid var(--colors-border)" : "none",
+                backgroundColor: bankAuthType === "token" ? "var(--colors-card)" : "transparent",
+                color:
+                  bankAuthType === "token"
+                    ? "var(--colors-text-primary)"
+                    : "var(--colors-text-muted)",
+              }}
+            >
+              <FaKey size={12} />
+              Developer Token
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setBankAuthType("oauth");
+                setBankError(null);
+              }}
+              style={{
+                flex: 1,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "6px",
+                padding: "8px 10px",
+                borderRadius: "6px",
+                fontSize: "12px",
+                fontWeight: 600,
+                cursor: "pointer",
+                border: bankAuthType === "oauth" ? "1px solid var(--colors-border)" : "none",
+                backgroundColor: bankAuthType === "oauth" ? "var(--colors-card)" : "transparent",
+                color:
+                  bankAuthType === "oauth"
+                    ? "var(--colors-text-primary)"
+                    : "var(--colors-text-muted)",
+              }}
+            >
+              <FaGlobe size={12} />
+              OAuth Portal
+            </button>
+          </div>
+
+          {bankAuthType === "token" ? (
+            <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginTop: "4px" }}>
+              <FLPInput
+                label={
+                  selectedBank === "monzo" ? "Monzo Access Token" : "Starling Personal Access Token"
+                }
+                name="bankToken"
+                placeholder={
+                  selectedBank === "monzo"
+                    ? "Access token from developers.monzo.com..."
+                    : "Bearer token starting with eyJ..."
+                }
+                value={bankToken}
+                onChange={(e) => {
+                  setBankToken(e.target.value);
+                  setBankError(null);
+                }}
+              />
+              <FLPText color="text.muted" fontSize="xs">
+                {selectedBank === "monzo"
+                  ? "* Sign in at https://developers.monzo.com and copy your access token from the playground."
+                  : "* Generate a Personal Access Token in the Starling Developer Console with account:read and balance:read permissions."}
+              </FLPText>
+            </div>
+          ) : (
+            <div
+              style={{
+                padding: "12px",
+                borderRadius: "8px",
+                backgroundColor: "var(--colors-surface-sunken)",
+                border: "1px solid var(--colors-border-subtle)",
+              }}
+            >
+              <FLPText fontSize="xs" color="text.muted">
+                Clicking &quot;Authorize via {selectedBankObj?.name}&quot; will redirect you to{" "}
+                {selectedBankObj?.name}&apos;s secure login page to grant read-only permissions
+                (requires server OAuth client keys configured in your environment).
+              </FLPText>
+            </div>
+          )}
+
+          {bankError && (
+            <div
+              style={{
+                display: "flex",
+                alignItems: "flex-start",
+                gap: "8px",
+                padding: "10px 12px",
+                borderRadius: "8px",
+                backgroundColor: "rgba(239, 68, 68, 0.08)",
+                border: "1px solid rgba(239, 68, 68, 0.3)",
+              }}
+            >
+              <FaExclamationTriangle
+                color="#ef4444"
+                size={14}
+                style={{ marginTop: "2px", flexShrink: 0 }}
+              />
+              <FLPText fontSize="xs" color="destructive">
+                {bankError}
+              </FLPText>
+            </div>
+          )}
         </div>
       )}
     </FLPModal>

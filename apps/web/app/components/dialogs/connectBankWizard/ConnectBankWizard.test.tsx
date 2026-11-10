@@ -29,21 +29,23 @@ describe("<ConnectBankWizard />", () => {
 
     // Select Personal Access Token
     fireEvent.click(getByText("Personal Access Token (Recommended)"));
-    expect(getByText("Starling Personal Token")).toBeDefined();
+    expect(getByText("Starling Bank Developer Token")).toBeDefined();
 
     // Click back
     fireEvent.click(getByText("Back"));
     expect(getByText("Choose Connection Mode")).toBeDefined();
   });
 
-  test("supports selecting demo simulation mode", () => {
-    const { getByText } = customRender(<ConnectBankWizard onSuccess={vi.fn()} />);
+  test("supports selecting Monzo developer token flow", () => {
+    const { getByText, getByPlaceholderText } = customRender(
+      <ConnectBankWizard onSuccess={vi.fn()} />,
+    );
 
     fireEvent.click(getByText("Connect Bank Account"));
     fireEvent.click(getByText("Monzo Bank"));
-    fireEvent.click(getByText("Simulated Demo Sync"));
-    expect(getByText("Simulated Demo Connection")).toBeDefined();
-    expect(getByText("Confirm & Sync")).toBeDefined();
+    fireEvent.click(getByText("Personal Access Token (Recommended)"));
+    expect(getByText("Monzo Bank Developer Token")).toBeDefined();
+    expect(getByPlaceholderText(/Monzo access token/i)).toBeDefined();
 
     fireEvent.click(getByText("Back"));
     expect(getByText("Choose Connection Mode")).toBeDefined();

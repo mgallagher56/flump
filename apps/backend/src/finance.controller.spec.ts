@@ -21,6 +21,8 @@ describe("FinanceController Banking Orchestration", () => {
     };
     const mockAccountDetailRepo = {
       find: vi.fn().mockResolvedValue([]),
+      findOne: vi.fn().mockResolvedValue(null),
+      create: vi.fn((data) => ({ ...data })),
       count: vi.fn().mockResolvedValue(0),
       save: vi.fn((data) => Promise.resolve(data)),
     };
@@ -74,30 +76,20 @@ describe("FinanceController Banking Orchestration", () => {
     expect(BankSyncOrchestrator.decryptToken(savedConnection.accessToken)).toBe(rawToken);
   });
 
-  it("should seed demo data with strict sign convention rules (mortgages negative)", async () => {
-    let savedConnection: any = null;
-    const savedAccounts: any[] = [];
-
+  it("should reject bank connection without token or OAuth credentials rather than seeding dummy data", async () => {
     const mockBankConnRepo = {
       findOne: vi.fn().mockResolvedValue(null),
       create: vi.fn((data) => ({ ...data })),
-      save: vi.fn((data) => {
-        savedConnection = data;
-        return Promise.resolve({ id: "conn-hsbc", ...data });
-      }),
+      save: vi.fn(),
     };
     const mockAccountRepo = {
-      save: vi.fn((data) => {
-        const item = { id: `acc-${savedAccounts.length + 1}`, ...data };
-        savedAccounts.push(item);
-        return Promise.resolve(item);
-      }),
+      save: vi.fn(),
     };
     const mockAccountDetailRepo = {
-      save: vi.fn((data) => Promise.resolve(data)),
+      save: vi.fn(),
     };
     const mockTransactionRepo = {
-      save: vi.fn((data) => Promise.resolve(data)),
+      save: vi.fn(),
     };
     const mockProfileRepo = {
       findOne: vi.fn().mockResolvedValue(null),
@@ -119,11 +111,65 @@ describe("FinanceController Banking Orchestration", () => {
       mockConfig as any,
     );
 
-    await controller.connectBank({ user: { id: "user-123" } }, { institutionId: "hsbc" });
+    // Unsupported institution
+    await expect(
+      controller.connectBank({ user: { id: "user-123" } }, { institutionId: "hsbc" }),
+    ).rejects.toThrow(/not currently supported/i);
 
-    expect(savedAccounts.length).toBe(3);
-    const mortgage = savedAccounts.find((a) => a.type === "Mortgage");
-    expect(mortgage).toBeDefined();
-    expect(mortgage.balance).toBeLessThan(0); // -135400
+    // Supported institution with no token and no OAuth credentials
+    mockRegistry.getProvider.mockReturnValue({
+      getAuthUrl: vi.fn(),
+    });
+    await expect(
+      controller.connectBank({ user: { id: "user-123" } }, { institutionId: "monzo" }),
+    ).rejects.toThrow(/OAuth credentials are not configured/i);
+
+    expect(mockAccountRepo.save).not.toHaveBeenCalled();
+  });
+
+  it("should return OAuth redirect URL when OAuth keys are configured", async () => {
+    const mockBankConnRepo = {
+      findOne: vi.fn(),
+      save: vi.fn(),
+    };
+    const mockAccountRepo = { save: vi.fn() };
+    const mockAccountDetailRepo = { save: vi.fn() };
+    const mockTransactionRepo = { save: vi.fn() };
+    const mockProfileRepo = { findOne: vi.fn() };
+    const mockProvider = {
+      getAuthUrl: vi.fn().mockReturnValue("https://auth.monzo.com/?client_id=monzo-id"),
+    };
+    const mockRegistry = {
+      getProvider: vi.fn().mockReturnValue(mockProvider),
+    };
+    const mockConfig = {
+      get: vi.fn((key: string) => {
+        if (key === "MONZO_CLIENT_ID") return "monzo-client-id";
+        if (key === "MONZO_CLIENT_SECRET") return "monzo-client-secret";
+        if (key === "BACKEND_URL") return "http://localhost:4000";
+        return null;
+      }),
+    };
+
+    const controller = new FinanceController(
+      mockAccountRepo as any,
+      mockTransactionRepo as any,
+      mockAccountDetailRepo as any,
+      mockBankConnRepo as any,
+      mockProfileRepo as any,
+      mockRegistry as any,
+      mockConfig as any,
+    );
+
+    const result = await controller.connectBank(
+      { user: { id: "user-123" } },
+      { institutionId: "monzo" },
+    );
+
+    expect(result).toEqual({
+      success: true,
+      oauth: true,
+      redirectUrl: "https://auth.monzo.com/?client_id=monzo-id",
+    });
   });
 });

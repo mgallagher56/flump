@@ -16,6 +16,7 @@ export interface FLPModalProps {
   };
   contentRef?: React.RefObject<HTMLDivElement | null>;
   disabled?: boolean;
+  closeOnConfirm?: boolean;
   open: boolean;
   title: string;
   onConfirm: () => void;
@@ -31,6 +32,7 @@ const FLPModal: FC<FLPModalProps> = ({
   confirmButton,
   contentRef,
   disabled,
+  closeOnConfirm = true,
   open,
   title,
   triggerBtn,
@@ -46,8 +48,10 @@ const FLPModal: FC<FLPModalProps> = ({
 
   const handleOnConfirm = useCallback(() => {
     onConfirm();
-    onClose();
-  }, [onClose, onConfirm]);
+    if (closeOnConfirm) {
+      onClose();
+    }
+  }, [closeOnConfirm, onClose, onConfirm]);
 
   const overlayStyle = css({
     position: "fixed",

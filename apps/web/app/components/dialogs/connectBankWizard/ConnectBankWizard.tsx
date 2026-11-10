@@ -34,57 +34,15 @@ const BANKS: BankItem[] = [
     id: "monzo",
     name: "Monzo Bank",
     color: "#ff4f5e",
-    desc: "Sync real pots & transactions, or run simulation",
-    accounts: ["Monzo Current Account", "Monzo Joint Account", "Savings Pot"],
+    desc: "Sync real checking, joint & savings pots via Developer Token or OAuth",
+    accounts: ["Monzo Current Account", "Monzo Savings Pots"],
   },
   {
     id: "starling",
     name: "Starling Bank",
     color: "#00aeef",
-    desc: "Sync via Personal Token or standard OAuth",
-    accounts: ["Starling Current Account", "Starling Joint Account", "Savings Spaces"],
-  },
-  {
-    id: "hsbc",
-    name: "HSBC Bank",
-    color: "#db0011",
-    desc: "Current, savings and mortgage accounts (Demo)",
-    accounts: ["HSBC Premier Current Account", "HSBC Flexi Savings", "HSBC Fixed Mortgage"],
-  },
-  {
-    id: "barclays",
-    name: "Barclays Bank",
-    color: "#00aeef",
-    desc: "Everyday accounts and Platinum credit cards (Demo)",
-    accounts: ["Barclays Everyday Current Account", "Barclays Platinum Credit Card"],
-  },
-  {
-    id: "chase",
-    name: "Chase",
-    color: "#112e51",
-    desc: "Current and saver accounts (Demo)",
-    accounts: ["Chase Current Account", "Chase Saver"],
-  },
-  {
-    id: "revolut",
-    name: "Revolut",
-    color: "#000000",
-    desc: "Multicurrency vaults & card accounts (Demo)",
-    accounts: ["Revolut Card Account", "Revolut Savings Vault"],
-  },
-  {
-    id: "fidelity",
-    name: "Fidelity Investments",
-    color: "#008a00",
-    desc: "Brokerage & retirement portfolios (Demo)",
-    accounts: ["Fidelity Brokerage"],
-  },
-  {
-    id: "vanguard",
-    name: "Vanguard",
-    color: "#a8201a",
-    desc: "Index funds, ISAs & mutual investments (Demo)",
-    accounts: ["Vanguard ISA"],
+    desc: "Sync real accounts & savings spaces via Personal Access Token or OAuth",
+    accounts: ["Starling Current Account", "Starling Savings Spaces"],
   },
 ];
 
@@ -97,8 +55,7 @@ const ConnectBankWizard: FC<ConnectBankWizardProps> = ({ onSuccess }) => {
   const [searchQuery, setSearchQuery] = useState("");
 
   // Connection choices
-  const [connMode, setConnMode] = useState<"demo" | "api">("demo");
-  const [starlingAuthType, setStarlingAuthType] = useState<"pat" | "oauth">("pat");
+  const [authType, setAuthType] = useState<"pat" | "oauth">("pat");
   const [tokenInput, setTokenInput] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [importedCount, setImportedCount] = useState(0);
@@ -122,27 +79,15 @@ const ConnectBankWizard: FC<ConnectBankWizardProps> = ({ onSuccess }) => {
 
   const handleSelectBank = (bank: BankItem) => {
     setSelectedBank(bank);
-    // If Monzo or Starling, go to connection method selection. Otherwise, go straight to Demo consent.
-    if (bank.id === "monzo" || bank.id === "starling") {
-      setStep("method");
-    } else {
-      setConnMode("demo");
-      setStep("consent");
-    }
+    setStep("method");
   };
 
-  const handleSelectMethod = (mode: "demo" | "api", authType: "pat" | "oauth" = "oauth") => {
-    setConnMode(mode);
-    setStarlingAuthType(authType);
-
-    if (mode === "demo") {
-      setStep("consent");
+  const handleSelectMethod = (selectedType: "pat" | "oauth") => {
+    setAuthType(selectedType);
+    if (selectedType === "pat") {
+      setStep("tokenInput");
     } else {
-      if (selectedBank?.id === "starling" && authType === "pat") {
-        setStep("tokenInput");
-      } else {
-        setStep("consent");
-      }
+      setStep("consent");
     }
   };
 
@@ -166,7 +111,7 @@ const ConnectBankWizard: FC<ConnectBankWizardProps> = ({ onSuccess }) => {
         throw new Error(data.error || data.message || "Failed to authenticate Token");
       }
 
-      setImportedCount(2); // starling standard imported accounts
+      setImportedCount(data.accountsCount || selectedBank.accounts.length);
       setStep("success");
       onSuccess?.();
     } catch (err) {
@@ -199,7 +144,7 @@ const ConnectBankWizard: FC<ConnectBankWizardProps> = ({ onSuccess }) => {
         return;
       }
 
-      setImportedCount(selectedBank.accounts.length);
+      setImportedCount(data.accountsCount || selectedBank.accounts.length);
       setStep("success");
       onSuccess?.();
     } catch (err) {
@@ -423,100 +368,52 @@ const ConnectBankWizard: FC<ConnectBankWizardProps> = ({ onSuccess }) => {
               </div>
 
               <div className={scrollContainerStyle}>
-                {/* Option 1: Live API (PAT for Starling, OAuth for Monzo) */}
-                {selectedBank.id === "starling" && (
-                  <>
-                    <div
-                      className={methodCardStyle}
-                      role="button"
-                      tabIndex={0}
-                      onClick={() => handleSelectMethod("api", "pat")}
-                      onKeyDown={(e) =>
-                        (e.key === "Enter" || e.key === " ") && handleSelectMethod("api", "pat")
-                      }
-                    >
-                      <div style={{ display: "flex", gap: "16px", alignItems: "flex-start" }}>
-                        <FaKey style={{ color: "#00aeef", fontSize: "20px", marginTop: "4px" }} />
-                        <div>
-                          <FLPText fontWeight="bold" fontSize="sm">
-                            Personal Access Token (Recommended)
-                          </FLPText>
-                          <FLPText color="text.muted" fontSize="xs" style={{ marginTop: "2px" }}>
-                            Paste a developer token to sync your personal balances without
-                            configuring OAuth keys.
-                          </FLPText>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div
-                      className={methodCardStyle}
-                      role="button"
-                      tabIndex={0}
-                      onClick={() => handleSelectMethod("api", "oauth")}
-                      onKeyDown={(e) =>
-                        (e.key === "Enter" || e.key === " ") && handleSelectMethod("api", "oauth")
-                      }
-                    >
-                      <div style={{ display: "flex", gap: "16px", alignItems: "flex-start" }}>
-                        <FaGlobe style={{ color: "#00aeef", fontSize: "20px", marginTop: "4px" }} />
-                        <div>
-                          <FLPText fontWeight="bold" fontSize="sm">
-                            OAuth 2.0 Auth Flow
-                          </FLPText>
-                          <FLPText color="text.muted" fontSize="xs" style={{ marginTop: "2px" }}>
-                            Redirect to Starling's portal to securely authorize. (Requires
-                            registered Client Keys).
-                          </FLPText>
-                        </div>
-                      </div>
-                    </div>
-                  </>
-                )}
-
-                {selectedBank.id === "monzo" && (
-                  <div
-                    className={methodCardStyle}
-                    role="button"
-                    tabIndex={0}
-                    onClick={() => handleSelectMethod("api", "oauth")}
-                    onKeyDown={(e) =>
-                      (e.key === "Enter" || e.key === " ") && handleSelectMethod("api", "oauth")
-                    }
-                  >
-                    <div style={{ display: "flex", gap: "16px", alignItems: "flex-start" }}>
-                      <FaGlobe style={{ color: "#ff4f5e", fontSize: "20px", marginTop: "4px" }} />
-                      <div>
-                        <FLPText fontWeight="bold" fontSize="sm">
-                          OAuth 2.0 Auth Flow
-                        </FLPText>
-                        <FLPText color="text.muted" fontSize="xs" style={{ marginTop: "2px" }}>
-                          Redirect securely to Monzo's login portal to grant read-only access.
-                        </FLPText>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Option 2: Simulated Demo */}
                 <div
                   className={methodCardStyle}
                   role="button"
                   tabIndex={0}
-                  onClick={() => handleSelectMethod("demo")}
+                  onClick={() => handleSelectMethod("pat")}
                   onKeyDown={(e) =>
-                    (e.key === "Enter" || e.key === " ") && handleSelectMethod("demo")
+                    (e.key === "Enter" || e.key === " ") && handleSelectMethod("pat")
                   }
                 >
                   <div style={{ display: "flex", gap: "16px", alignItems: "flex-start" }}>
-                    <FaSpinner style={{ color: "#a1a1aa", fontSize: "20px", marginTop: "4px" }} />
+                    <FaKey
+                      style={{ color: selectedBank.color, fontSize: "20px", marginTop: "4px" }}
+                    />
                     <div>
                       <FLPText fontWeight="bold" fontSize="sm">
-                        Simulated Demo Sync
+                        Personal Access Token (Recommended)
                       </FLPText>
                       <FLPText color="text.muted" fontSize="xs" style={{ marginTop: "2px" }}>
-                        Instantly seed mock accounts and transaction feeds. Perfect for testing
-                        layout and charts.
+                        {selectedBank.id === "monzo"
+                          ? "Use an access token from the Monzo Developer Portal for instant direct sync."
+                          : "Paste your developer token from the Starling Developer Console to sync directly."}
+                      </FLPText>
+                    </div>
+                  </div>
+                </div>
+
+                <div
+                  className={methodCardStyle}
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => handleSelectMethod("oauth")}
+                  onKeyDown={(e) =>
+                    (e.key === "Enter" || e.key === " ") && handleSelectMethod("oauth")
+                  }
+                >
+                  <div style={{ display: "flex", gap: "16px", alignItems: "flex-start" }}>
+                    <FaGlobe
+                      style={{ color: selectedBank.color, fontSize: "20px", marginTop: "4px" }}
+                    />
+                    <div>
+                      <FLPText fontWeight="bold" fontSize="sm">
+                        OAuth 2.0 Auth Flow
+                      </FLPText>
+                      <FLPText color="text.muted" fontSize="xs" style={{ marginTop: "2px" }}>
+                        Redirect to {selectedBank.name}&apos;s secure portal to authorize read-only
+                        access (requires server OAuth keys).
                       </FLPText>
                     </div>
                   </div>
@@ -532,15 +429,17 @@ const ConnectBankWizard: FC<ConnectBankWizardProps> = ({ onSuccess }) => {
             </>
           )}
 
-          {/* Step 3: Starling PAT Input */}
+          {/* Step 3: Developer / Personal Token Input */}
           {step === "tokenInput" && selectedBank && (
             <>
               <div>
                 <FLPHeading as="h2" size="lg">
-                  Starling Personal Token
+                  {selectedBank.name} Developer Token
                 </FLPHeading>
                 <FLPText color="text.muted" fontSize="sm" style={{ marginTop: "4px" }}>
-                  Generate a Personal Access Token in the Starling Developer Portal.
+                  {selectedBank.id === "monzo"
+                    ? "Generate a temporary Access Token from developers.monzo.com"
+                    : "Generate a Personal Access Token in the Starling Developer Portal"}
                 </FLPText>
               </div>
 
@@ -548,14 +447,19 @@ const ConnectBankWizard: FC<ConnectBankWizardProps> = ({ onSuccess }) => {
                 <FLPInput
                   label="Developer Access Token"
                   name="token"
-                  placeholder="Bearer token starting with eyJ..."
+                  placeholder={
+                    selectedBank.id === "monzo"
+                      ? "Monzo access token (e.g. eyJ...)"
+                      : "Starling Bearer token starting with eyJ..."
+                  }
                   value={tokenInput}
                   onChange={(e) => setTokenInput(e.target.value)}
                 />
                 <div style={{ marginTop: "16px" }}>
                   <FLPText color="text.muted" fontSize="xs">
-                    * Make sure your token has permissions `account:read` and `balance:read`
-                    configured.
+                    {selectedBank.id === "monzo"
+                      ? "* Sign in with your Monzo email at https://developers.monzo.com and copy your access token from the playground."
+                      : "* Make sure your token has permissions account:read and balance:read configured in the Starling Developer Portal."}
                   </FLPText>
                 </div>
               </div>
@@ -611,9 +515,7 @@ const ConnectBankWizard: FC<ConnectBankWizardProps> = ({ onSuccess }) => {
                       {selectedBank.name}
                     </FLPText>
                     <FLPText color="text.muted" fontSize="xs">
-                      {connMode === "demo"
-                        ? "Simulated Demo Connection"
-                        : "Secure Open Banking API Connection"}
+                      Secure Open Banking API Connection
                     </FLPText>
                   </div>
                 </div>
@@ -667,18 +569,11 @@ const ConnectBankWizard: FC<ConnectBankWizardProps> = ({ onSuccess }) => {
                   gap: "16px",
                 }}
               >
-                <FLPButton
-                  variant="outline"
-                  onClick={() =>
-                    selectedBank.id === "monzo" || selectedBank.id === "starling"
-                      ? setStep("method")
-                      : setStep("select")
-                  }
-                >
+                <FLPButton variant="outline" onClick={() => setStep("method")}>
                   Back
                 </FLPButton>
                 <FLPButton onClick={handleAuthorize} variant="primary">
-                  {connMode === "demo" ? "Confirm & Sync" : "Redirect to Authorize"}
+                  Redirect to Authorize
                 </FLPButton>
               </div>
             </>
