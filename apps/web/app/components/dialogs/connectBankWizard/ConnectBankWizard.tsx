@@ -1,6 +1,6 @@
 import * as Dialog from "@radix-ui/react-dialog";
 import { css } from "@repo/ui/styled-system/css";
-import { type FC, useMemo, useState } from "react";
+import { type FC, useEffect, useMemo, useState } from "react";
 import {
   FaArrowLeft,
   FaCheckCircle,
@@ -12,6 +12,7 @@ import {
   FaSpinner,
   FaUniversity,
 } from "react-icons/fa";
+import { useFetcher } from "react-router";
 import FLPButton from "~/components/core/buttons/FLPButton";
 import FLPInput from "~/components/core/inputs/input/FLPInput";
 import FLPHeading from "~/components/core/typography/FLPHeading";
@@ -59,10 +60,40 @@ const ConnectBankWizard: FC<ConnectBankWizardProps> = ({ onSuccess }) => {
   const [tokenInput, setTokenInput] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [importedCount, setImportedCount] = useState(0);
+  const fetcher = useFetcher();
 
   const filteredBanks = useMemo(() => {
     return BANKS.filter((bank) => bank.name.toLowerCase().includes(searchQuery.toLowerCase()));
   }, [searchQuery]);
+
+  useEffect(() => {
+    if (!fetcher.data) return;
+    const res = fetcher.data as {
+      success?: boolean;
+      oauth?: boolean;
+      redirectUrl?: string;
+      error?: string;
+      message?: string;
+      accountsCount?: number;
+    };
+
+    if (res.oauth && res.redirectUrl) {
+      window.location.href = res.redirectUrl;
+      return;
+    }
+
+    if (res.error) {
+      setErrorMessage(res.error);
+      setStep("error");
+      return;
+    }
+
+    if (res.success) {
+      setImportedCount(res.accountsCount || selectedBank?.accounts.length || 1);
+      setStep("success");
+      onSuccess?.();
+    }
+  }, [fetcher.data, onSuccess, selectedBank]);
 
   const handleOpenModal = () => {
     setStep("select");
@@ -91,66 +122,31 @@ const ConnectBankWizard: FC<ConnectBankWizardProps> = ({ onSuccess }) => {
     }
   };
 
-  const handleConnectWithToken = async () => {
+  const handleConnectWithToken = () => {
     if (!selectedBank || !tokenInput.trim()) return;
     setStep("syncing");
 
-    try {
-      const formData = new FormData();
-      formData.append("intent", "connectBank");
-      formData.append("institutionId", selectedBank.id);
-      formData.append("token", tokenInput.trim());
-
-      const res = await fetch("/app/accounts", {
-        method: "POST",
-        body: formData,
-      });
-
-      const data = await res.json();
-      if (!res.ok || data.error) {
-        throw new Error(data.error || data.message || "Failed to authenticate Token");
-      }
-
-      setImportedCount(data.accountsCount || selectedBank.accounts.length);
-      setStep("success");
-      onSuccess?.();
-    } catch (err) {
-      setErrorMessage((err as Error).message);
-      setStep("error");
-    }
+    fetcher.submit(
+      {
+        intent: "connectBank",
+        institutionId: selectedBank.id,
+        token: tokenInput.trim(),
+      },
+      { method: "POST", action: "/app/accounts" },
+    );
   };
 
-  const handleAuthorize = async () => {
+  const handleAuthorize = () => {
     if (!selectedBank) return;
     setStep("syncing");
 
-    try {
-      const formData = new FormData();
-      formData.append("intent", "connectBank");
-      formData.append("institutionId", selectedBank.id);
-
-      const res = await fetch("/app/accounts", {
-        method: "POST",
-        body: formData,
-      });
-
-      const data = await res.json();
-      if (!res.ok || data.error) {
-        throw new Error(data.error || data.message || "Sync request failed");
-      }
-
-      if (data.oauth && data.redirectUrl) {
-        window.location.href = data.redirectUrl;
-        return;
-      }
-
-      setImportedCount(data.accountsCount || selectedBank.accounts.length);
-      setStep("success");
-      onSuccess?.();
-    } catch (err) {
-      setErrorMessage((err as Error).message);
-      setStep("error");
-    }
+    fetcher.submit(
+      {
+        intent: "connectBank",
+        institutionId: selectedBank.id,
+      },
+      { method: "POST", action: "/app/accounts" },
+    );
   };
 
   // Styles
