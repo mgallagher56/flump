@@ -51,18 +51,19 @@ describe("<ConnectBankWizard />", () => {
     expect(getByText("Choose Connection Mode")).toBeDefined();
   });
 
-  test("shows clear coming soon notice when selecting bank without direct sync", () => {
-    const { getByText } = customRender(<ConnectBankWizard onSuccess={vi.fn()} />);
+  test("supports selecting Trading 212 API key connection flow", () => {
+    const { getByText, getByPlaceholderText } = customRender(
+      <ConnectBankWizard onSuccess={vi.fn()} />,
+    );
 
     fireEvent.click(getByText("Connect Bank Account"));
-    fireEvent.click(getByText("HSBC Bank"));
-    expect(getByText("HSBC Bank Direct Sync")).toBeDefined();
-    expect(getByText(/Direct live connection coming soon/i)).toBeDefined();
+    fireEvent.click(getByText("Trading 212"));
+    fireEvent.click(getByText("Personal Access Token (Recommended)"));
+    expect(getByText("Trading 212 Developer Token")).toBeDefined();
+    expect(getByPlaceholderText(/Trading 212 API key/i)).toBeDefined();
 
-    // Click back to banks
-    fireEvent.click(getByText("Back to Banks"));
-    expect(
-      getByText("Choose your bank or financial institution to automatically sync your balances."),
-    ).toBeDefined();
+    // Click back
+    fireEvent.click(getByText("Back"));
+    expect(getByText("Choose Connection Mode")).toBeDefined();
   });
 });

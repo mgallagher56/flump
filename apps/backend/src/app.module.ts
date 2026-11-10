@@ -16,6 +16,7 @@ import { FinanceService } from "./finance.service";
 import { MonzoProvider } from "./providers/monzo.provider";
 import { BankProviderRegistry } from "./providers/provider.registry";
 import { StarlingProvider } from "./providers/starling.provider";
+import { Trading212Provider } from "./providers/trading212.provider";
 import { TaxController } from "./tax.controller";
 import { UserProfileController } from "./user-profile.controller";
 import { UserProfileService } from "./user-profile.service";
@@ -92,6 +93,7 @@ import { UserProfileService } from "./user-profile.service";
     UserProfileService,
     MonzoProvider,
     StarlingProvider,
+    Trading212Provider,
     BankProviderRegistry,
   ],
 })

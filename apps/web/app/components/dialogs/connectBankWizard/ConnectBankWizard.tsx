@@ -49,60 +49,68 @@ const BANKS: BankItem[] = [
     directSync: true,
   },
   {
+    id: "trading212",
+    name: "Trading 212",
+    color: "#00aaff",
+    desc: "Sync real Invest, Stocks ISA & CFD portfolio via API Key",
+    accounts: ["Trading 212 Portfolio"],
+    directSync: true,
+  },
+  {
     id: "hsbc",
     name: "HSBC Bank",
     color: "#db0011",
-    desc: "Direct Open Banking sync coming soon (Manual entry available)",
+    desc: "Sync real accounts via Open Banking Token or OAuth",
     accounts: ["HSBC Current Account"],
-    directSync: false,
+    directSync: true,
   },
   {
     id: "barclays",
     name: "Barclays Bank",
     color: "#00aeef",
-    desc: "Direct Open Banking sync coming soon (Manual entry available)",
+    desc: "Sync real accounts via Open Banking Token or OAuth",
     accounts: ["Barclays Everyday Account"],
-    directSync: false,
+    directSync: true,
   },
   {
     id: "revolut",
     name: "Revolut",
     color: "#111118",
-    desc: "Direct Open Banking sync coming soon (Manual entry available)",
+    desc: "Sync real accounts via Open Banking Token or OAuth",
     accounts: ["Revolut Multi-Currency"],
-    directSync: false,
+    directSync: true,
   },
   {
     id: "santander",
     name: "Santander",
     color: "#ec0000",
-    desc: "Direct Open Banking sync coming soon (Manual entry available)",
+    desc: "Sync real accounts via Open Banking Token or OAuth",
     accounts: ["Santander 123 Current"],
-    directSync: false,
+    directSync: true,
   },
   {
     id: "natwest",
     name: "NatWest",
     color: "#4e195b",
-    desc: "Direct Open Banking sync coming soon (Manual entry available)",
+    desc: "Sync real accounts via Open Banking Token or OAuth",
     accounts: ["NatWest Select Current"],
-    directSync: false,
+    directSync: true,
   },
   {
     id: "lloyds",
     name: "Lloyds Bank",
     color: "#006a4e",
-    desc: "Direct Open Banking sync coming soon (Manual entry available)",
+    desc: "Sync real accounts via Open Banking Token or OAuth",
     accounts: ["Lloyds Classic Account"],
-    directSync: false,
+    directSync: true,
   },
   {
     id: "chase",
     name: "Chase",
     color: "#112e51",
-    desc: "Direct Open Banking sync coming soon (Manual entry available)",
+    desc: "Sync real accounts via Open Banking Token or OAuth",
     accounts: ["Chase Current Account"],
-    directSync: false,
+    directSync: true,
   },
 ];
 
@@ -557,18 +565,30 @@ const ConnectBankWizard: FC<ConnectBankWizardProps> = ({ onSuccess }) => {
                 <FLPText color="text.muted" fontSize="sm" style={{ marginTop: "4px" }}>
                   {selectedBank.id === "monzo"
                     ? "Generate a temporary Access Token from developers.monzo.com"
-                    : "Generate a Personal Access Token in the Starling Developer Portal"}
+                    : selectedBank.id === "starling"
+                      ? "Generate a Personal Access Token in the Starling Developer Portal"
+                      : selectedBank.id === "trading212"
+                        ? "Generate an API Key in the Trading 212 app under Settings -> API"
+                        : `Enter your ${selectedBank.name} Open Banking Access Token`}
                 </FLPText>
               </div>
 
               <div className={scrollContainerStyle}>
                 <FLPInput
-                  label="Developer Access Token"
+                  label={
+                    selectedBank.id === "trading212"
+                      ? "Trading 212 API Key"
+                      : "Developer Access Token"
+                  }
                   name="token"
                   placeholder={
                     selectedBank.id === "monzo"
                       ? "Monzo access token (e.g. eyJ...)"
-                      : "Starling Bearer token starting with eyJ..."
+                      : selectedBank.id === "starling"
+                        ? "Starling Bearer token starting with eyJ..."
+                        : selectedBank.id === "trading212"
+                          ? "Trading 212 API key..."
+                          : "Open Banking access token or AISP bearer token..."
                   }
                   value={tokenInput}
                   onChange={(e) => setTokenInput(e.target.value)}
@@ -577,7 +597,11 @@ const ConnectBankWizard: FC<ConnectBankWizardProps> = ({ onSuccess }) => {
                   <FLPText color="text.muted" fontSize="xs">
                     {selectedBank.id === "monzo"
                       ? "* Sign in with your Monzo email at https://developers.monzo.com and copy your access token from the playground."
-                      : "* Make sure your token has permissions account:read and balance:read configured in the Starling Developer Portal."}
+                      : selectedBank.id === "starling"
+                        ? "* Make sure your token has permissions account:read and balance:read configured in the Starling Developer Portal."
+                        : selectedBank.id === "trading212"
+                          ? "* In the Trading 212 app, navigate to Settings -> API -> Generate API key and copy it here."
+                          : `* Enter an Open Banking AISP access token or return to choose OAuth 2.0 to authorize directly with ${selectedBank.name}.`}
                   </FLPText>
                 </div>
               </div>

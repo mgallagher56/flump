@@ -56,9 +56,9 @@ describe("<AddAccountDialogBtn", () => {
     expect(baseElementConstant).toMatchSnapshot();
   });
 
-  test("should render popular banks and allow switching to manual entry for banks without direct sync", async () => {
+  test("should render popular banks including Trading 212 with live open banking enabled", async () => {
     mocks.mockUseLoaderData.mockReturnValue({ user: mockUser });
-    const { getByText, getAllByText, getByPlaceholderText, user } = customRender(
+    const { getByText, getByPlaceholderText, user } = customRender(
       <AddEditAccountsDialogBtn accountId="123456" />,
     );
     await user.click(getByText("addAccount"));
@@ -66,25 +66,35 @@ describe("<AddAccountDialogBtn", () => {
     // Switch to Connect to Bank
     await user.click(getByText("Connect to Bank"));
 
-    // Verify popular banks are listed
+    // Verify popular banks and Trading 212 are listed
     expect(getByText("Monzo Bank")).toBeDefined();
     expect(getByText("Starling Bank")).toBeDefined();
+    expect(getByText("Trading 212")).toBeDefined();
     expect(getByText("HSBC Bank")).toBeDefined();
     expect(getByText("Barclays")).toBeDefined();
     expect(getByText("Revolut")).toBeDefined();
 
-    // Select HSBC (coming soon)
-    await user.click(getByText("HSBC Bank"));
-    expect(getByText("Direct Sync for HSBC Bank coming soon")).toBeDefined();
+    // Select Trading 212
+    await user.click(getByText("Trading 212"));
 
-    // Click track via manual entry
-    const trackManualBtns = getAllByText("Track HSBC Bank via Manual Entry");
-    expect(trackManualBtns.length).toBeGreaterThan(0);
-    await user.click(trackManualBtns[0]);
+    // Verify Trading 212 API Key prompt
+    expect(getByText("Trading 212 API Key")).toBeDefined();
 
-    // Should now be on the manual entry form with name prefilled
-    const nameInput = getByPlaceholderText("accountName") as HTMLInputElement;
-    expect(nameInput.value).toBe("HSBC Bank Account");
+    // Enter API key
+    const tokenInput = getByPlaceholderText(/Trading 212 app/i);
+    await user.type(tokenInput, "t212-api-key-test");
+
+    // Click Connect
+    await user.click(getByText("Connect Trading 212"));
+
+    expect(mocks.mockFetcherSubmit).toHaveBeenCalledWith(
+      {
+        intent: "connectBank",
+        institutionId: "trading212",
+        token: "t212-api-key-test",
+      },
+      { method: "POST", action: "/app/accounts" },
+    );
   });
 
   test("should submit real bank connection credentials for direct sync bank", async () => {

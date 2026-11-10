@@ -41,53 +41,60 @@ const POPULAR_BANKS = [
     directSync: true,
   },
   {
+    id: "trading212",
+    name: "Trading 212",
+    color: "#00aaff",
+    desc: "Invest, Stocks ISA & CFD sync",
+    directSync: true,
+  },
+  {
     id: "hsbc",
     name: "HSBC Bank",
     color: "#db0011",
     desc: "Current & savings",
-    directSync: false,
+    directSync: true,
   },
   {
     id: "barclays",
     name: "Barclays",
     color: "#00aeef",
     desc: "Everyday & cards",
-    directSync: false,
+    directSync: true,
   },
   {
     id: "revolut",
     name: "Revolut",
     color: "#111118",
     desc: "Multi-currency accounts",
-    directSync: false,
+    directSync: true,
   },
   {
     id: "santander",
     name: "Santander",
     color: "#ec0000",
     desc: "123 Current & ISA",
-    directSync: false,
+    directSync: true,
   },
   {
     id: "natwest",
     name: "NatWest",
     color: "#4e195b",
     desc: "Select & reward accounts",
-    directSync: false,
+    directSync: true,
   },
   {
     id: "lloyds",
     name: "Lloyds Bank",
     color: "#006a4e",
     desc: "Club Lloyds & cards",
-    directSync: false,
+    directSync: true,
   },
   {
     id: "chase",
     name: "Chase",
     color: "#112e51",
     desc: "Current & saver accounts",
-    directSync: false,
+    directSync: true,
   },
 ];
 
@@ -686,13 +693,21 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
                     label={
                       selectedBank === "monzo"
                         ? "Monzo Access Token"
-                        : "Starling Personal Access Token"
+                        : selectedBank === "starling"
+                          ? "Starling Personal Access Token"
+                          : selectedBank === "trading212"
+                            ? "Trading 212 API Key"
+                            : `${selectedBankObj?.name} Open Banking Access Token`
                     }
                     name="bankToken"
                     placeholder={
                       selectedBank === "monzo"
                         ? "Access token from developers.monzo.com..."
-                        : "Bearer token starting with eyJ..."
+                        : selectedBank === "starling"
+                          ? "Bearer token starting with eyJ..."
+                          : selectedBank === "trading212"
+                            ? "API key from Trading 212 app (Settings -> API)..."
+                            : "Open Banking access token or bearer token..."
                     }
                     value={bankToken}
                     onChange={(e) => {
@@ -703,7 +718,11 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
                   <FLPText color="text.muted" fontSize="xs">
                     {selectedBank === "monzo"
                       ? "* Sign in at https://developers.monzo.com and copy your access token from the playground."
-                      : "* Generate a Personal Access Token in the Starling Developer Console with account:read and balance:read permissions."}
+                      : selectedBank === "starling"
+                        ? "* Generate a Personal Access Token in the Starling Developer Console with account:read and balance:read permissions."
+                        : selectedBank === "trading212"
+                          ? "* In the Trading 212 mobile or web app, go to Settings -> API -> Generate API key and copy it here."
+                          : `* Enter an Open Banking AISP access token or switch to OAuth Portal to sign in directly via ${selectedBankObj?.name}.`}
                   </FLPText>
                 </div>
               ) : (
