@@ -35,4 +35,15 @@ A component or page task is NOT complete until:
 1. It follows the colocated directory structure.
 2. It has a `.stories.tsx` file rendering in both Light and Dark mode with zero `@storybook/addon-a11y` violations.
 3. Interactive states are covered by a `.test.tsx` or Storybook `play()` test.
-4. `bun run check-types` and `bun run test` pass with zero errors.
+4. `bun run lint`, `bun run check-types`, `bun run test`, and `bun run build` pass with zero errors.
+
+## 5. MANDATORY CI PRE-FLIGHT LAW (BEFORE CREATING OR UPDATING A PR)
+
+Before creating or pushing to any Pull Request, agents MUST run and verify all four CI checks locally:
+
+1. `bun run lint` (zero Biome lint/format errors)
+2. `bun run check-types` (zero TypeScript errors across all monorepo packages)
+3. `bun run test` (100% passing tests across all packages)
+4. `bun run build` (successful compilation across all packages and apps)
+
+Never open, push, or ask the user to merge a PR without executing this exact 4-step sequence and confirming all checks pass with zero errors.
