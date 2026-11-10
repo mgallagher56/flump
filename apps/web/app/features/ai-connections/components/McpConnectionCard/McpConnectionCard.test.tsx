@@ -39,12 +39,14 @@ describe("McpConnectionCard Feature Component", () => {
 
     // Click Remote MCP tab
     const remoteTab = screen.getByRole("tab", { name: "Claude Web / ChatGPT (Remote MCP)" });
-    fireEvent.click(remoteTab);
+    fireEvent.pointerDown(remoteTab, { button: 0 });
+    fireEvent.keyDown(remoteTab, { key: "Enter", code: "Enter" });
     expect(screen.getByTestId("remote-mcp-url-box")).toBeDefined();
 
     // Click Active Tokens tab
     const activeTab = screen.getByRole("tab", { name: /Active Tokens/i });
-    fireEvent.click(activeTab);
+    fireEvent.pointerDown(activeTab, { button: 0 });
+    fireEvent.keyDown(activeTab, { key: "Enter", code: "Enter" });
     expect(screen.getByTestId("active-tokens-table")).toBeDefined();
     expect(screen.getByText("Cursor AI")).toBeDefined();
     expect(screen.getByText("4 calls")).toBeDefined();
@@ -101,7 +103,8 @@ describe("McpConnectionCard Feature Component", () => {
     render(<McpConnectionCard initialTokens={initialTokens} onRevokeToken={mockRevoke} />);
 
     const activeTab = screen.getByRole("tab", { name: /Active Tokens/i });
-    fireEvent.click(activeTab);
+    fireEvent.pointerDown(activeTab, { button: 0 });
+    fireEvent.keyDown(activeTab, { key: "Enter", code: "Enter" });
 
     const revokeBtn = screen.getByTestId("revoke-token-tok_rev_1");
     fireEvent.click(revokeBtn);

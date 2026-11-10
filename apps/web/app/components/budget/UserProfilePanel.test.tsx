@@ -238,4 +238,17 @@ describe("<UserProfilePanel />", () => {
       expect(mockResetFinancialData).toHaveBeenCalled();
     });
   });
+
+  it("switches to the AI & MCP Access tab and displays McpConnectionCard", () => {
+    render(<UserProfilePanel initialProfile={DEFAULT_PROFILE} />);
+
+    const aiTab = screen.getByRole("tab", { name: "AI & MCP Access" });
+    expect(aiTab).toBeDefined();
+
+    fireEvent.pointerDown(aiTab, { button: 0 });
+    fireEvent.keyDown(aiTab, { key: "Enter", code: "Enter" });
+
+    expect(screen.getByText("Model Context Protocol (MCP) & AI Connections")).toBeDefined();
+    expect(screen.getByTestId("offline-context-pack-card")).toBeDefined();
+  });
 });
