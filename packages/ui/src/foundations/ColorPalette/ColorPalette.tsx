@@ -175,7 +175,7 @@ export const ColorPalette: FC = () => {
                       py: "1px",
                       borderRadius: "xs",
                       backgroundColor: "rgba(0,0,0,0.45)",
-                      color: "#ffffff",
+                      color: "text.onContrast",
                       fontFamily: "mono",
                     })}
                   >

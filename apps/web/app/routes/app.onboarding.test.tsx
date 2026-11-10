@@ -42,6 +42,9 @@ vi.mock("~/state/baseline.store", () => ({
 describe("OnboardingRoute (3-Step Baseline Flow)", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    globalThis.fetch = vi
+      .fn()
+      .mockResolvedValue(new Response(JSON.stringify({ success: true }), { status: 200 }));
   });
 
   it("renders Step 1 (You & Income) by default with summary bar", () => {

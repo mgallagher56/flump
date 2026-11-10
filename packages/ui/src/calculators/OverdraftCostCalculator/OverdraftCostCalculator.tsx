@@ -1,54 +1,16 @@
 import { calculateOverdraftCost, persistOnboardingSeed } from "@flump/finance-engine";
 import type { FC } from "react";
 import { useMemo, useState } from "react";
-import { css } from "../../styled-system/css/index.js";
-import { Button } from "../components/forms/Button.js";
+import { css } from "../../../styled-system/css/index.js";
+import { Button } from "../../components/forms/Button.js";
 
-const cardStyle = css({
-  backgroundColor: "surface.card",
-  border: "1px solid",
-  borderColor: "border",
-  borderRadius: "2xl",
-  padding: { base: "20px", md: "32px" },
-  display: "flex",
-  flexDirection: "column",
-  gap: "24px",
-  boxShadow: "sm",
-});
-
-const gridStyle = css({
-  display: "grid",
-  gridTemplateColumns: { base: "1fr", lg: "1.1fr 0.9fr" },
-  gap: "32px",
-});
-
-const inputGroupStyle = css({
-  display: "flex",
-  flexDirection: "column",
-  gap: "8px",
-  marginBottom: "16px",
-});
-
-const textInputStyle = css({
-  padding: "10px 14px",
-  borderRadius: "lg",
-  border: "1px solid",
-  borderColor: "border",
-  backgroundColor: "surface.canvas",
-  color: "text.primary",
-  fontSize: "15px",
-});
-
-const resultsBoxStyle = css({
-  backgroundColor: "surface.canvas",
-  border: "1px solid",
-  borderColor: "border",
-  borderRadius: "xl",
-  padding: "24px",
-  display: "flex",
-  flexDirection: "column",
-  gap: "18px",
-});
+import {
+  cardStyle,
+  gridStyle,
+  inputGroupStyle,
+  resultsBoxStyle,
+  textInputStyle,
+} from "./OverdraftCostCalculator.styles.js";
 
 export interface OverdraftCostCalculatorProps {
   onSaveAndContinue?: (payload: any) => void;
@@ -98,7 +60,7 @@ export const OverdraftCostCalculator: FC<OverdraftCostCalculatorProps> = ({
               fontSize: "1.25rem",
               fontWeight: 700,
               margin: "0 0 4px 0",
-              color: "var(--colors-text-primary, #0f172a)",
+              color: "var(--colors-text-primary))",
             }}
           >
             Overdraft interest cost calculator
@@ -106,7 +68,7 @@ export const OverdraftCostCalculator: FC<OverdraftCostCalculatorProps> = ({
           <p
             style={{
               fontSize: "0.875rem",
-              color: "var(--colors-text-muted, #64748b)",
+              color: "var(--colors-text-muted))",
               margin: 0,
             }}
           >
@@ -152,8 +114,8 @@ export const OverdraftCostCalculator: FC<OverdraftCostCalculatorProps> = ({
             <span
               style={{
                 fontSize: "11px",
-                backgroundColor: "#fee2e2",
-                color: "#991b1b",
+                backgroundColor: "var(--colors-status-danger-bg)",
+                color: "var(--colors-status-danger-text)",
                 padding: "2px 8px",
                 borderRadius: "4px",
                 fontWeight: "bold",
@@ -165,7 +127,7 @@ export const OverdraftCostCalculator: FC<OverdraftCostCalculatorProps> = ({
               style={{
                 fontSize: "30px",
                 fontWeight: "800",
-                color: "#ef4444",
+                color: "var(--colors-status-danger-solid)",
                 marginTop: "4px",
               }}
             >
@@ -174,7 +136,7 @@ export const OverdraftCostCalculator: FC<OverdraftCostCalculatorProps> = ({
             <p
               style={{
                 fontSize: "12px",
-                color: "var(--colors-text-muted, #64748b)",
+                color: "var(--colors-text-muted))",
                 margin: "4px 0 0 0",
               }}
             >
@@ -188,7 +150,7 @@ export const OverdraftCostCalculator: FC<OverdraftCostCalculatorProps> = ({
               padding: "14px",
               backgroundColor: "surface.card",
               borderRadius: "10px",
-              border: "1px solid var(--colors-border, #e2e8f0)",
+              border: "1px solid var(--colors-border))",
             }}
           >
             <div style={{ fontSize: "12px", fontWeight: "bold" }}>
@@ -197,7 +159,7 @@ export const OverdraftCostCalculator: FC<OverdraftCostCalculatorProps> = ({
             <p
               style={{
                 fontSize: "12px",
-                color: "var(--colors-text-muted, #64748b)",
+                color: "var(--colors-text-muted))",
                 marginTop: "4px",
                 marginBottom: 0,
               }}

@@ -2,54 +2,16 @@ import { calculateZeroPercentCliff, persistOnboardingSeed } from "@flump/finance
 import type { FC } from "react";
 import { useMemo, useState } from "react";
 import { FaExclamationTriangle } from "react-icons/fa";
-import { css } from "../../styled-system/css/index.js";
-import { Button } from "../components/forms/Button.js";
+import { css } from "../../../styled-system/css/index.js";
+import { Button } from "../../components/forms/Button.js";
 
-const cardStyle = css({
-  backgroundColor: "surface.card",
-  border: "1px solid",
-  borderColor: "border",
-  borderRadius: "2xl",
-  padding: { base: "20px", md: "32px" },
-  display: "flex",
-  flexDirection: "column",
-  gap: "24px",
-  boxShadow: "sm",
-});
-
-const gridStyle = css({
-  display: "grid",
-  gridTemplateColumns: { base: "1fr", lg: "1.1fr 0.9fr" },
-  gap: "32px",
-});
-
-const inputGroupStyle = css({
-  display: "flex",
-  flexDirection: "column",
-  gap: "8px",
-  marginBottom: "16px",
-});
-
-const textInputStyle = css({
-  padding: "10px 14px",
-  borderRadius: "lg",
-  border: "1px solid",
-  borderColor: "border",
-  backgroundColor: "surface.canvas",
-  color: "text.primary",
-  fontSize: "15px",
-});
-
-const resultsBoxStyle = css({
-  backgroundColor: "surface.canvas",
-  border: "1px solid",
-  borderColor: "border",
-  borderRadius: "xl",
-  padding: "24px",
-  display: "flex",
-  flexDirection: "column",
-  gap: "18px",
-});
+import {
+  cardStyle,
+  gridStyle,
+  inputGroupStyle,
+  resultsBoxStyle,
+  textInputStyle,
+} from "./ZeroPercentCliffCalculator.styles.js";
 
 export interface ZeroPercentCliffCalculatorProps {
   onSaveAndContinue?: (payload: any) => void;
@@ -100,7 +62,7 @@ export const ZeroPercentCliffCalculator: FC<ZeroPercentCliffCalculatorProps> = (
               fontSize: "1.25rem",
               fontWeight: 700,
               margin: "0 0 4px 0",
-              color: "var(--colors-text-primary, #0f172a)",
+              color: "var(--colors-text-primary))",
             }}
           >
             0% balance transfer promotional expiry calculator
@@ -108,7 +70,7 @@ export const ZeroPercentCliffCalculator: FC<ZeroPercentCliffCalculatorProps> = (
           <p
             style={{
               fontSize: "0.875rem",
-              color: "var(--colors-text-muted, #64748b)",
+              color: "var(--colors-text-muted))",
               margin: 0,
             }}
           >
@@ -169,8 +131,8 @@ export const ZeroPercentCliffCalculator: FC<ZeroPercentCliffCalculatorProps> = (
             <span
               style={{
                 fontSize: "11px",
-                backgroundColor: "#d1fae5",
-                color: "#065f46",
+                backgroundColor: "var(--colors-status-positive-bg)",
+                color: "var(--colors-status-positive-text)",
                 padding: "2px 8px",
                 borderRadius: "4px",
                 fontWeight: "bold",
@@ -182,7 +144,7 @@ export const ZeroPercentCliffCalculator: FC<ZeroPercentCliffCalculatorProps> = (
               style={{
                 fontSize: "28px",
                 fontWeight: "bold",
-                color: "#10b981",
+                color: "var(--colors-status-positive-solid)",
                 marginTop: "4px",
               }}
             >
@@ -191,7 +153,7 @@ export const ZeroPercentCliffCalculator: FC<ZeroPercentCliffCalculatorProps> = (
             <p
               style={{
                 fontSize: "12px",
-                color: "var(--colors-text-muted, #64748b)",
+                color: "var(--colors-text-muted))",
                 margin: "4px 0 0 0",
               }}
             >
@@ -203,18 +165,25 @@ export const ZeroPercentCliffCalculator: FC<ZeroPercentCliffCalculatorProps> = (
           <div
             style={{
               padding: "14px",
-              backgroundColor: "#fef2f2",
+              backgroundColor: "var(--colors-status-danger-bg)",
               borderRadius: "10px",
-              border: "1px solid #fecaca",
+              border: "1px solid var(--colors-status-danger-border)",
             }}
           >
-            <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "#991b1b" }}>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
+                color: "var(--colors-status-danger-text)",
+              }}
+            >
               <FaExclamationTriangle size={16} />
               <strong style={{ fontSize: "13px" }}>Revert APR alert</strong>
             </div>
             <p
               style={{
-                color: "#7f1d1d",
+                color: "var(--colors-status-danger-text)",
                 fontSize: "12px",
                 margin: "4px 0 0 0",
               }}

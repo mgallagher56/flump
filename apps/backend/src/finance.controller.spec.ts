@@ -172,4 +172,63 @@ describe("FinanceController Banking Orchestration", () => {
       redirectUrl: "https://auth.monzo.com/?client_id=monzo-id",
     });
   });
+
+  it("delegates account intake and portfolio snapshot operations cleanly", async () => {
+    const mockAccounts = [
+      {
+        id: "acc-1",
+        userId: "user-123",
+        name: "Current Account",
+        type: "Current",
+        balance: 1000,
+        currency: "GBP",
+        isCurrent: true,
+        details: [],
+      },
+    ];
+    const mockDetails = [{ id: "det-1", accountId: "acc-1", month: 1, year: 2026, value: 1000 }];
+    const mockSnapshot = {
+      netWorth: 1000,
+      totalAssets: 1000,
+      totalLiabilities: 0,
+      totalLiquidCash: 1000,
+      totalInvestments: 0,
+      totalPensions: 0,
+      totalConsumerDebt: 0,
+      totalMortgageBalance: 0,
+      resolvedAccounts: [],
+      monthlyHistory: [],
+      currency: "GBP",
+    };
+
+    const mockFinanceService = {
+      getAccounts: vi.fn().mockResolvedValue(mockAccounts),
+      getAccount: vi.fn().mockResolvedValue(mockAccounts[0]),
+      getAccountDetails: vi.fn().mockResolvedValue(mockDetails),
+      getPortfolioSnapshot: vi.fn().mockResolvedValue(mockSnapshot),
+      createAccount: vi.fn().mockResolvedValue(mockAccounts[0]),
+      updateAccount: vi.fn().mockResolvedValue(mockAccounts[0]),
+      deleteAccount: vi.fn().mockResolvedValue({ success: true }),
+    };
+
+    const controller = new FinanceController(mockFinanceService as any);
+
+    const userReq = { user: { id: "user-123" } };
+    expect(await controller.getAccounts(userReq)).toEqual(mockAccounts);
+    expect(await controller.getAccount(userReq, "acc-1")).toEqual(mockAccounts[0]);
+    expect(await controller.getAccountDetails(userReq)).toEqual(mockDetails);
+    expect(await controller.getAccountSpecificDetails(userReq, "acc-1")).toEqual(mockDetails);
+    expect(await controller.getPortfolioSnapshot(userReq)).toEqual(mockSnapshot);
+
+    const createDto = { name: "Savings", type: "Saving", balance: 500 };
+    await controller.createAccount(userReq, createDto);
+    expect(mockFinanceService.createAccount).toHaveBeenCalledWith("user-123", createDto);
+
+    const updateDto = { balance: 600 };
+    await controller.updateAccount(userReq, "acc-1", updateDto);
+    expect(mockFinanceService.updateAccount).toHaveBeenCalledWith("user-123", "acc-1", updateDto);
+
+    await controller.deleteAccount(userReq, "acc-1");
+    expect(mockFinanceService.deleteAccount).toHaveBeenCalledWith("user-123", "acc-1");
+  });
 });

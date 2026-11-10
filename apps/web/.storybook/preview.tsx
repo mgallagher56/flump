@@ -98,10 +98,10 @@ const preview: Preview = {
               <div
                 data-theme="light"
                 style={{
-                  backgroundColor: "#f8fafc",
-                  color: "#0f172a",
+                  backgroundColor: "var(--colors-surface-canvas)",
+                  color: "var(--colors-text-primary)",
                   padding: "24px",
-                  borderRight: "1px solid #e2e8f0",
+                  borderRight: "1px solid var(--colors-border)",
                   minHeight: "100vh",
                 }}
               >
@@ -111,7 +111,7 @@ const preview: Preview = {
                     fontWeight: 700,
                     textTransform: "uppercase",
                     letterSpacing: "0.08em",
-                    color: "#64748b",
+                    color: "var(--colors-text-muted)",
                     marginBottom: "16px",
                   }}
                 >
@@ -125,8 +125,8 @@ const preview: Preview = {
                 className="dark"
                 data-theme="dark"
                 style={{
-                  backgroundColor: "#0B0F17",
-                  color: "#f8fafc",
+                  backgroundColor: "var(--colors-surface-canvas)",
+                  color: "var(--colors-text-primary)",
                   padding: "24px",
                   minHeight: "100vh",
                 }}
@@ -137,11 +137,11 @@ const preview: Preview = {
                     fontWeight: 700,
                     textTransform: "uppercase",
                     letterSpacing: "0.08em",
-                    color: "#94a3b8",
+                    color: "var(--colors-text-muted)",
                     marginBottom: "16px",
                   }}
                 >
-                  🌙 Dark Mode (dark.canvas)
+                  🌙 Dark Mode (surface.canvas)
                 </div>
                 <Story />
               </div>
@@ -159,8 +159,8 @@ const preview: Preview = {
             data-theme={isDark ? "dark" : "light"}
             style={{
               fontFamily: "var(--fonts-sans, 'Inter', sans-serif)",
-              backgroundColor: isDark ? "#0B0F17" : "#f8fafc",
-              color: isDark ? "#f8fafc" : "#0f172a",
+              backgroundColor: "var(--colors-surface-canvas)",
+              color: "var(--colors-text-primary)",
               padding: "24px",
               minHeight: "100vh",
             }}

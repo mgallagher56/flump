@@ -1,4 +1,8 @@
-import { PortfolioSnapshot } from "@flump/finance-engine";
+import {
+  type MonthlyPortfolioHistoryPoint,
+  PortfolioSnapshot,
+  type ResolvedAccount,
+} from "@flump/finance-engine";
 import { Injectable, NotFoundException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { In, Repository } from "typeorm";
@@ -6,14 +10,65 @@ import { Account } from "./entities/account.entity";
 import { AccountDetail } from "./entities/account-detail.entity";
 import { UserProfile } from "./entities/user-profile.entity";
 
+export type AccountType =
+  | "Current"
+  | "Saving"
+  | "Mortgage"
+  | "Loan"
+  | "Credit Card"
+  | "Owed"
+  | "Investment"
+  | "Pension";
+
+export interface AccountWithDetails
+  extends Omit<Account, "balance" | "interestRate" | "monthlyContribution"> {
+  balance: number;
+  interestRate: number | null;
+  monthlyContribution: number | null;
+  isCurrent: boolean;
+  details: AccountDetail[];
+}
+
+export interface CreateAccountDto {
+  name: string;
+  type: AccountType | string;
+  balance: number;
+  currency?: string;
+  interestRate?: number | null;
+  monthlyContribution?: number | null;
+  isCurrent?: boolean;
+  connectionId?: string | null;
+  externalAccountId?: string | null;
+}
+
+export type UpdateAccountDto = Partial<CreateAccountDto>;
+
+export interface PortfolioSnapshotResponse {
+  netWorth: number;
+  totalAssets: number;
+  totalLiabilities: number;
+  totalLiquidCash: number;
+  totalInvestments: number;
+  totalPensions: number;
+  totalConsumerDebt: number;
+  totalMortgageBalance: number;
+  resolvedAccounts: ResolvedAccount[];
+  monthlyHistory: MonthlyPortfolioHistoryPoint[];
+  currency: string;
+}
+
+export interface DeleteAccountResponse {
+  success: boolean;
+}
+
 export interface IAccountIntake {
-  getAccounts(userId: string): Promise<any[]>;
-  getAccount(userId: string, id: string): Promise<any>;
+  getAccounts(userId: string): Promise<AccountWithDetails[]>;
+  getAccount(userId: string, id: string): Promise<AccountWithDetails>;
   getAccountDetails(userId: string, accountId?: string): Promise<AccountDetail[]>;
-  createAccount(userId: string, body: any): Promise<Account>;
-  updateAccount(userId: string, id: string, body: any): Promise<Account>;
-  deleteAccount(userId: string, id: string): Promise<{ success: boolean }>;
-  getPortfolioSnapshot(userId: string): Promise<any>;
+  createAccount(userId: string, body: CreateAccountDto): Promise<Account>;
+  updateAccount(userId: string, id: string, body: UpdateAccountDto): Promise<Account>;
+  deleteAccount(userId: string, id: string): Promise<DeleteAccountResponse>;
+  getPortfolioSnapshot(userId: string): Promise<PortfolioSnapshotResponse>;
 }
 
 @Injectable()
@@ -27,7 +82,7 @@ export class AccountIntakeService implements IAccountIntake {
     private readonly userProfileRepository: Repository<UserProfile>,
   ) {}
 
-  async getAccounts(userId: string): Promise<any[]> {
+  async getAccounts(userId: string): Promise<AccountWithDetails[]> {
     let accounts = await this.accountRepository.find({
       where: { userId },
       order: { createdAt: "ASC" },
@@ -113,7 +168,7 @@ export class AccountIntakeService implements IAccountIntake {
     }));
   }
 
-  async getAccount(userId: string, id: string): Promise<any> {
+  async getAccount(userId: string, id: string): Promise<AccountWithDetails> {
     const account = await this.accountRepository.findOne({
       where: { id, userId },
     });
@@ -137,6 +192,7 @@ export class AccountIntakeService implements IAccountIntake {
         account.monthlyContribution !== null && account.monthlyContribution !== undefined
           ? Number(account.monthlyContribution)
           : null,
+      isCurrent: account.isCurrent !== false,
       details,
     };
   }
@@ -171,7 +227,7 @@ export class AccountIntakeService implements IAccountIntake {
     });
   }
 
-  async createAccount(userId: string, body: any): Promise<Account> {
+  async createAccount(userId: string, body: CreateAccountDto): Promise<Account> {
     const account: Account = this.accountRepository.create({
       ...body,
       userId,
@@ -179,7 +235,7 @@ export class AccountIntakeService implements IAccountIntake {
     return this.accountRepository.save(account);
   }
 
-  async updateAccount(userId: string, id: string, body: any): Promise<Account> {
+  async updateAccount(userId: string, id: string, body: UpdateAccountDto): Promise<Account> {
     const account = await this.accountRepository.findOne({
       where: { id, userId },
     });
@@ -191,7 +247,7 @@ export class AccountIntakeService implements IAccountIntake {
     return this.accountRepository.save(account);
   }
 
-  async deleteAccount(userId: string, id: string): Promise<{ success: boolean }> {
+  async deleteAccount(userId: string, id: string): Promise<DeleteAccountResponse> {
     const account = await this.accountRepository.findOne({
       where: { id, userId },
     });
@@ -204,7 +260,7 @@ export class AccountIntakeService implements IAccountIntake {
     return { success: true };
   }
 
-  async getPortfolioSnapshot(userId: string): Promise<any> {
+  async getPortfolioSnapshot(userId: string): Promise<PortfolioSnapshotResponse> {
     const accounts = await this.getAccounts(userId);
     const details = await this.getAccountDetails(userId);
     const snapshot = new PortfolioSnapshot(accounts, details);

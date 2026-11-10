@@ -286,6 +286,8 @@ export interface UkTaxCalculationInput {
   studentLoanPlan?: UkStudentLoanPlan;
   taxYear?: UkTaxYear;
   region?: UkTaxRegion;
+  giftAidContributionsGbp?: number;
+  includeEmployerNiRebate?: boolean;
 }
 
 export interface TaxTrapAnalysis {
@@ -329,6 +331,8 @@ export interface UkTaxCalculationResult {
   studentLoanDeductionGbp: number;
   employeePensionDeductionGbp: number;
   employerPensionContributionGbp: number;
+  employerNiSavingsGbp?: number;
+  giftAidContributionsGbp?: number;
   totalDeductionsGbp: number;
   netTakeHomePayAnnualGbp: number;
   netTakeHomePayMonthlyGbp: number;
