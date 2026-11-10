@@ -189,7 +189,7 @@ export const SavingsWidget: FC<SavingsWidgetProps> = ({
             </FLPText>
             <FLPHeading
               as="h2"
-              color="success.500"
+              color="text.primary"
               className={css({
                 fontSize: { base: "lg", sm: "xl", md: "2xl" },
                 lineHeight: "tight",
@@ -211,7 +211,7 @@ export const SavingsWidget: FC<SavingsWidgetProps> = ({
             </FLPText>
             <FLPText color="text.muted" fontSize="10px" style={{ marginTop: "1px" }}>
               Saving:{" "}
-              <strong style={{ color: "#10b981" }}>
+              <strong style={{ color: "var(--colors-text-primary)" }}>
                 +{formatCurrency(data.totalMonthlyContributions)}/mo
               </strong>
             </FLPText>
@@ -227,8 +227,9 @@ export const SavingsWidget: FC<SavingsWidgetProps> = ({
               alignItems: "center",
               padding: { base: "6px 10px", md: "10px 14px" },
               borderRadius: "lg",
-              backgroundColor: "rgba(16, 185, 129, 0.05)",
-              border: "1px solid rgba(16, 185, 129, 0.2)",
+              backgroundColor: "surface.sunken",
+              border: "1px solid",
+              borderColor: "border.subtle",
               gap: "8px",
             })}
           >
@@ -237,7 +238,7 @@ export const SavingsWidget: FC<SavingsWidgetProps> = ({
                 className={css({
                   fontSize: { base: "10px", md: "xs" },
                   fontWeight: "semibold",
-                  color: "success.500",
+                  color: "text.primary",
                 })}
               >
                 {horizonYears}yr Forecast

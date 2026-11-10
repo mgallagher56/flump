@@ -2,7 +2,7 @@ import { PortfolioSnapshot } from "@flump/finance-engine";
 import { css } from "@repo/ui/styled-system/css";
 import { type FC, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { FaMagic, FaPiggyBank, FaPlus } from "react-icons/fa";
+import { FaPiggyBank, FaPlus } from "react-icons/fa";
 import { useLoaderData } from "react-router";
 import FLPButton from "~/components/core/buttons/FLPButton";
 import FLPHeading from "~/components/core/typography/FLPHeading";
@@ -13,7 +13,6 @@ import SavingsAccountsList, {
   calculateOneYearCompoundInterest,
 } from "~/components/savings/SavingsAccountsList";
 import SavingsForecasterCard from "~/components/savings/SavingsForecasterCard";
-import SavingsQuickStartWizard from "~/components/savings/SavingsQuickStartWizard";
 import SavingsSummaryCards from "~/components/savings/SavingsSummaryCards";
 import type { Account } from "~/containers/accounts/types";
 import { useUserProfile } from "~/hooks/useUserProfile";
@@ -23,20 +22,57 @@ import { currentMonth, currentYear } from "~/utils/utils";
 const containerStyle = css({
   display: "flex",
   flexDirection: "column",
-  gap: "28px",
-  paddingBottom: "64px",
+  gap: "24px",
+  paddingBottom: "48px",
 });
 
 const headerContainerStyle = css({
   display: "flex",
   justifyContent: "space-between",
-  alignItems: "flex-start",
+  alignItems: "center",
   flexWrap: "wrap",
   gap: "16px",
-  borderBottom: "1px solid",
-  borderColor: "border",
-  paddingBottom: "20px",
+  marginTop: "16px",
+  marginBottom: "8px",
 });
+
+const segmentedControlStyle = css({
+  display: "inline-flex",
+  alignItems: "center",
+  backgroundColor: "surface.sunken",
+  padding: "4px",
+  borderRadius: "xl",
+  borderWidth: "1px",
+  borderStyle: "solid",
+  borderColor: "border.subtle",
+  gap: "4px",
+  maxWidth: "100%",
+  overflowX: "auto",
+  width: "fit-content",
+});
+
+const segmentedTabStyle = (active: boolean) =>
+  css({
+    padding: "8px 18px",
+    minHeight: "38px",
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: "6px",
+    whiteSpace: "nowrap",
+    fontSize: "sm",
+    fontWeight: active ? "semibold" : "medium",
+    color: active ? "text.primary" : "text.muted",
+    backgroundColor: active ? "surface" : "transparent",
+    borderRadius: "lg",
+    border: "none",
+    cursor: "pointer",
+    boxShadow: active ? "0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06)" : "none",
+    transition: "all 0.15s ease",
+    _hover: {
+      color: "text.primary",
+    },
+  });
 
 export const SavingsContainer: FC = () => {
   const { t } = useTranslation();
@@ -54,9 +90,7 @@ export const SavingsContainer: FC = () => {
   }, [userProfile, setProfile]);
 
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [showWizard, setShowWizard] = useState(false);
-
-  // Filter savings and investment accounts and sync current balances
+  const [activeTab, setActiveTab] = useState<"forecaster" | "accounts" | "allowance">("forecaster");
   const savingsAccounts = useMemo(() => {
     const snapshot = new PortfolioSnapshot(accounts, accountDetails);
     return accounts
@@ -77,13 +111,6 @@ export const SavingsContainer: FC = () => {
         };
       });
   }, [accounts, accountDetails]);
-
-  // If user has no savings accounts, prompt the wizard by default
-  useEffect(() => {
-    if (savingsAccounts.length === 0) {
-      setShowWizard(true);
-    }
-  }, [savingsAccounts.length]);
 
   // Mark setup checklist step as completed if accounts exist
   useEffect(() => {
@@ -164,12 +191,9 @@ export const SavingsContainer: FC = () => {
       {/* Page Header */}
       <div className={headerContainerStyle}>
         <div>
-          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-            <FaPiggyBank style={{ color: "#10b981", fontSize: "28px" }} />
-            <FLPHeading as="h2" size="xl">
-              Savings and compound growth
-            </FLPHeading>
-          </div>
+          <FLPHeading as="h1" color="text.primary" size="2xl">
+            Savings and compound growth
+          </FLPHeading>
           <FLPText color="text.muted" fontSize="sm" style={{ marginTop: "4px" }}>
             Track balances across savings accounts, plan regular monthly contributions, and forecast
             your wealth with compound interest.
@@ -177,32 +201,13 @@ export const SavingsContainer: FC = () => {
         </div>
 
         <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-          <FLPButton size="sm" variant="outline" onClick={() => setShowWizard((prev) => !prev)}>
-            <FaMagic style={{ marginRight: "6px" }} />
-            {showWizard ? "Hide wizard" : "Guided setup"}
-          </FLPButton>
           <FLPButton size="sm" variant="primary" onClick={() => setIsAddModalOpen(true)}>
             <FaPlus style={{ marginRight: "6px" }} /> Add account
           </FLPButton>
         </div>
       </div>
 
-      {/* Guided Quick-Start Wizard */}
-      {showWizard && (
-        <SavingsQuickStartWizard
-          onComplete={() => setShowWizard(false)}
-          onDismiss={() => setShowWizard(false)}
-        />
-      )}
-
-      {/* UK Annual ISA Allowance Pill */}
-      <AnnualAllowancePill
-        type="isa"
-        currentAmount={totalSavingsBalance}
-        savingsInterest={estimatedAnnualInterest}
-      />
-
-      {/* Key Metric Summary Cards */}
+      {/* Key Metric Summary Cards (Single 4-column compact row) */}
       <SavingsSummaryCards
         accountCount={savingsAccounts.length}
         estimatedAnnualInterest={estimatedAnnualInterest}
@@ -213,19 +218,96 @@ export const SavingsContainer: FC = () => {
         weightedInterestRate={weightedInterestRate}
       />
 
-      {/* Accounts List & Management */}
-      <SavingsAccountsList
-        accounts={savingsAccounts}
-        onOpenAddModal={() => setIsAddModalOpen(true)}
-      />
+      {/* Unified Segmented Workspace Tabs */}
+      <div>
+        <div className={segmentedControlStyle}>
+          <button
+            type="button"
+            onClick={() => setActiveTab("forecaster")}
+            className={segmentedTabStyle(activeTab === "forecaster")}
+          >
+            Growth Forecaster & Simulator
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab("accounts")}
+            className={segmentedTabStyle(activeTab === "accounts")}
+          >
+            Savings & Investment Accounts ({savingsAccounts.length})
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab("allowance")}
+            className={segmentedTabStyle(activeTab === "allowance")}
+          >
+            Annual Allowances & Setup
+          </button>
+        </div>
+      </div>
 
-      {/* Compound Interest Forecaster with Scenarios */}
-      <SavingsForecasterCard
-        accounts={savingsAccounts}
-        monthlyContribution={totalMonthlySavings}
-        portfolioInterestRate={weightedInterestRate}
-        startingBalance={totalSavingsBalance}
-      />
+      {/* Tab 1: Compound Interest Forecaster with Scenarios */}
+      <div
+        style={
+          activeTab === "forecaster"
+            ? undefined
+            : {
+                height: 0,
+                overflow: "hidden",
+                opacity: 0,
+                position: "absolute",
+                pointerEvents: "none",
+              }
+        }
+      >
+        <SavingsForecasterCard
+          accounts={savingsAccounts}
+          monthlyContribution={totalMonthlySavings}
+          portfolioInterestRate={weightedInterestRate}
+          startingBalance={totalSavingsBalance}
+        />
+      </div>
+
+      {/* Tab 2: Accounts List & Management */}
+      <div
+        style={
+          activeTab === "accounts"
+            ? undefined
+            : {
+                height: 0,
+                overflow: "hidden",
+                opacity: 0,
+                position: "absolute",
+                pointerEvents: "none",
+              }
+        }
+      >
+        <SavingsAccountsList
+          accounts={savingsAccounts}
+          onOpenAddModal={() => setIsAddModalOpen(true)}
+        />
+      </div>
+
+      {/* Tab 3: UK Annual ISA Allowance Pill */}
+      <div
+        style={
+          activeTab === "allowance"
+            ? { display: "flex", flexDirection: "column", gap: "20px" }
+            : {
+                height: 0,
+                overflow: "hidden",
+                opacity: 0,
+                position: "absolute",
+                pointerEvents: "none",
+              }
+        }
+      >
+        {/* UK Annual ISA Allowance Pill */}
+        <AnnualAllowancePill
+          type="isa"
+          currentAmount={totalSavingsBalance}
+          savingsInterest={estimatedAnnualInterest}
+        />
+      </div>
 
       {/* Modal Dialog for Adding Accounts */}
       <AddSavingsAccountDialog isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} />

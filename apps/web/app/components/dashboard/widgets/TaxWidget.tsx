@@ -183,7 +183,7 @@ export const TaxWidget: FC<TaxWidgetProps> = ({
             </FLPText>
             <FLPHeading
               as="h2"
-              color={metricMode === "taxDue" ? "destructive.500" : "blue.500"}
+              color="text.primary"
               className={css({
                 fontSize: { base: "lg", sm: "xl", md: "2xl" },
                 lineHeight: "tight",
@@ -208,10 +208,10 @@ export const TaxWidget: FC<TaxWidgetProps> = ({
                 mt: "1px",
               })}
             >
-              <span style={{ color: "#10b981", fontWeight: 600 }}>
+              <span style={{ color: "var(--colors-text-primary)", fontWeight: 600 }}>
                 +{formatCurrency(data.totalIncome)}
               </span>
-              <span style={{ color: "#ef4444", fontWeight: 600 }}>
+              <span style={{ color: "var(--colors-text-muted)", fontWeight: 600 }}>
                 -{formatCurrency(data.totalExpenses)}
               </span>
             </div>
@@ -225,9 +225,9 @@ export const TaxWidget: FC<TaxWidgetProps> = ({
             alignItems: "center",
             padding: { base: "6px 10px", md: "10px 14px" },
             borderRadius: "lg",
-            backgroundColor: "background",
+            backgroundColor: "surface.sunken",
             border: "1px solid",
-            borderColor: "border",
+            borderColor: "border.subtle",
             fontSize: { base: "10px", md: "xs" },
             gap: "6px",
           })}

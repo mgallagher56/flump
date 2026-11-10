@@ -54,7 +54,7 @@ export interface BudgetDashboardProps {
   variant?: "desktop" | "mobile";
 }
 
-const EXPENSE_CATEGORIES: BudgetCategory[] = ["housing", "bills", "expenses", "savings"];
+const EXPENSE_CATEGORIES: BudgetCategory[] = ["housing", "bills", "expenses"];
 
 const BudgetDashboard: FC<BudgetDashboardProps> = ({
   entries,
@@ -92,13 +92,14 @@ const BudgetDashboard: FC<BudgetDashboardProps> = ({
     const set = new Set<string>(EXPENSE_CATEGORIES);
     if (customCategories && customCategories.length > 0) {
       customCategories.forEach((c) => {
+        if (c === "savings") return;
         const catEntries = entries.filter((e) => e.category === c);
         const isPureIncome = catEntries.length > 0 && catEntries.every((e) => e.isIncome);
         if (!isPureIncome) set.add(c);
       });
     }
     entries.forEach((e) => {
-      if (!e.isIncome && e.category) set.add(e.category);
+      if (!e.isIncome && e.category && e.category !== "savings") set.add(e.category);
     });
     return Array.from(set);
   }, [customCategories, entries]);
@@ -430,7 +431,12 @@ const BudgetDashboard: FC<BudgetDashboardProps> = ({
           })}
         >
           <div
-            style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "flex-start",
+              gap: "8px",
+            }}
           >
             <div>
               <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
@@ -451,6 +457,8 @@ const BudgetDashboard: FC<BudgetDashboardProps> = ({
                 borderRadius: "999px",
                 backgroundColor: "rgba(99, 102, 241, 0.15)",
                 color: "#6366f1",
+                whiteSpace: "nowrap",
+                flexShrink: 0,
               }}
             >
               Non-negotiable
@@ -938,7 +946,15 @@ const BudgetDashboard: FC<BudgetDashboardProps> = ({
         </FLPCard>
 
         {/* Category cards */}
-        <div className={css({ display: "flex", flexDirection: "column", gap: "10px" })}>
+        <div
+          className={css({
+            display: "flex",
+            flexDirection: "column",
+            gap: "12px",
+            height: "100%",
+            justifyContent: "space-between",
+          })}
+        >
           {categoryTotals.map((ct) => (
             <button
               key={ct.cat}
@@ -946,7 +962,7 @@ const BudgetDashboard: FC<BudgetDashboardProps> = ({
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "space-between",
-                padding: "14px 16px",
+                padding: "16px 20px",
                 borderRadius: "md",
                 border: "1px solid",
                 borderColor: "border",
@@ -954,6 +970,7 @@ const BudgetDashboard: FC<BudgetDashboardProps> = ({
                 cursor: "pointer",
                 transition: "all 0.2s",
                 width: "100%",
+                flex: 1,
                 textAlign: "left",
                 _hover: {
                   borderColor: "primary",

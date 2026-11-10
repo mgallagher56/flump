@@ -24,51 +24,98 @@ const FLPTabs: FC<FLPTabsProps> = ({
   defaultValue,
 }) => {
   const { isMobile: contextIsMobile } = useResponsive();
-  const isMobileVariant =
-    propIsMobile ?? (variant === "mobile" || variant === "segmented" ? true : contextIsMobile);
+  const isMobileVariant = propIsMobile ?? (variant === "mobile" ? true : contextIsMobile);
+  const isSegmented = variant === "segmented";
 
-  const listStyle = css({
-    display: "flex",
-    borderBottom: orientation === "horizontal" ? "1px solid" : "none",
-    borderRight: orientation === "vertical" ? "1px solid" : "none",
-    borderColor: "border",
-    gap: isMobileVariant ? "8px" : "16px",
-    marginBottom: orientation === "horizontal" ? "16px" : "0",
-    flexDirection: orientation === "vertical" ? "column" : "row",
-    overflowX: isMobileVariant && orientation === "horizontal" ? "auto" : undefined,
-    scrollbarWidth: isMobileVariant ? "none" : undefined,
-  });
+  const listStyle = isSegmented
+    ? css({
+        display: "inline-flex",
+        alignItems: "center",
+        backgroundColor: "surface.sunken",
+        padding: "4px",
+        borderRadius: "xl",
+        borderWidth: "1px",
+        borderStyle: "solid",
+        borderColor: "border.subtle",
+        gap: "4px",
+        maxWidth: "100%",
+        overflowX: "auto",
+        marginBottom: "20px",
+      })
+    : css({
+        display: "flex",
+        borderBottom: orientation === "horizontal" ? "1px solid" : "none",
+        borderRight: orientation === "vertical" ? "1px solid" : "none",
+        borderColor: "border",
+        gap: isMobileVariant ? "8px" : "16px",
+        marginBottom: orientation === "horizontal" ? "16px" : "0",
+        flexDirection: orientation === "vertical" ? "column" : "row",
+        overflowX: isMobileVariant && orientation === "horizontal" ? "auto" : undefined,
+        scrollbarWidth: isMobileVariant ? "none" : undefined,
+      });
 
-  const triggerStyle = css({
-    padding: isMobileVariant ? "10px 16px" : "8px 16px",
-    minHeight: isMobileVariant ? "44px" : "40px",
-    display: "inline-flex",
-    alignItems: "center",
-    whiteSpace: "nowrap",
-    fontSize: "sm",
-    fontWeight: "medium",
-    color: "text.muted",
-    backgroundColor: "transparent",
-    border: "none",
-    cursor: "pointer",
-    transition: "color 0.15s ease, border-color 0.15s ease",
-    borderBottom: orientation === "horizontal" ? "2px solid transparent" : "none",
-    borderRight: orientation === "vertical" ? "2px solid transparent" : "none",
-    marginBottom: orientation === "horizontal" ? "-1px" : "0",
-    "&[data-state='active']": {
-      color: "primary",
-      borderColor: "primary",
-      fontWeight: "semibold",
-    },
-    _hover: {
-      color: "text.primary",
-    },
-    _focusVisible: {
-      outline: "2px solid",
-      outlineColor: "primary",
-      outlineOffset: "2px",
-    },
-  });
+  const triggerStyle = isSegmented
+    ? css({
+        padding: "8px 18px",
+        minHeight: "38px",
+        display: "inline-flex",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: "6px",
+        whiteSpace: "nowrap",
+        fontSize: "sm",
+        fontWeight: "medium",
+        color: "text.muted",
+        backgroundColor: "transparent",
+        borderRadius: "lg",
+        border: "none",
+        cursor: "pointer",
+        transition: "all 0.15s ease",
+        "&[data-state='active']": {
+          backgroundColor: "surface",
+          color: "text.primary",
+          fontWeight: "semibold",
+          boxShadow: "0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06)",
+        },
+        _hover: {
+          color: "text.primary",
+        },
+        _focusVisible: {
+          outline: "2px solid",
+          outlineColor: "primary",
+          outlineOffset: "2px",
+        },
+      })
+    : css({
+        padding: isMobileVariant ? "10px 16px" : "8px 16px",
+        minHeight: isMobileVariant ? "44px" : "40px",
+        display: "inline-flex",
+        alignItems: "center",
+        whiteSpace: "nowrap",
+        fontSize: "sm",
+        fontWeight: "medium",
+        color: "text.muted",
+        backgroundColor: "transparent",
+        border: "none",
+        cursor: "pointer",
+        transition: "color 0.15s ease, border-color 0.15s ease",
+        borderBottom: orientation === "horizontal" ? "2px solid transparent" : "none",
+        borderRight: orientation === "vertical" ? "2px solid transparent" : "none",
+        marginBottom: orientation === "horizontal" ? "-1px" : "0",
+        "&[data-state='active']": {
+          color: "primary",
+          borderColor: "primary",
+          fontWeight: "semibold",
+        },
+        _hover: {
+          color: "text.primary",
+        },
+        _focusVisible: {
+          outline: "2px solid",
+          outlineColor: "primary",
+          outlineOffset: "2px",
+        },
+      });
 
   const contentStyle = css({
     outline: "none",

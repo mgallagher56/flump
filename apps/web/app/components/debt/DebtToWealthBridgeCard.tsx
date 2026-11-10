@@ -10,6 +10,11 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import {
+  chartTooltipContentStyle,
+  chartTooltipItemStyle,
+  chartTooltipLabelStyle,
+} from "~/components/charts/chartTheme";
 import FLPCard from "~/components/core/cards/FLPCard";
 import FLPHeading from "~/components/core/typography/FLPHeading";
 import FLPText from "~/components/core/typography/FLPText";
@@ -42,32 +47,12 @@ const metricsRowStyle = css({
   borderRadius: "xl",
 });
 
-const chartTableStyle = css({
-  width: "100%",
-  borderCollapse: "collapse",
-  fontSize: "13px",
-  "& th": {
-    textAlign: "left",
-    padding: "8px 12px",
-    borderBottom: "1px solid",
-    borderColor: "border",
-    color: "text.muted",
-    fontWeight: "600",
-  },
-  "& td": {
-    padding: "8px 12px",
-    borderBottom: "1px solid",
-    borderColor: "border",
-  },
-});
-
 export const DebtToWealthBridgeCard: FC<DebtToWealthBridgeCardProps> = ({
   debts,
   extraPayment,
 }) => {
   const { formatCurrency } = useFormatCurrency();
   const [returnRate, setReturnRate] = useState<number>(6.0);
-  const [showAllRows, setShowAllRows] = useState<boolean>(false);
 
   const bridgePoints = useMemo(() => {
     return calculateDebtToWealthBridge(debts, extraPayment, returnRate, 5);
@@ -76,21 +61,6 @@ export const DebtToWealthBridgeCard: FC<DebtToWealthBridgeCardProps> = ({
   const debtFreePoint = bridgePoints.find((p) => p.isPostDebtFree) || bridgePoints[0];
   const finalPoint = bridgePoints[bridgePoints.length - 1];
   const totalMonthlyCommitment = debts.reduce((sum, d) => sum + d.minimumPayment, 0) + extraPayment;
-
-  // Filter key milestones if not showing all
-  const displayedPoints = useMemo(() => {
-    if (showAllRows || bridgePoints.length <= 8) return bridgePoints;
-    const debtFreeMonth = debtFreePoint?.month ?? 1;
-    const keyMonthSet = new Set<number>([
-      1,
-      Math.max(1, Math.round(debtFreeMonth / 2)),
-      debtFreeMonth,
-      debtFreeMonth + 12,
-      debtFreeMonth + 36,
-      bridgePoints[bridgePoints.length - 1]?.month ?? 60,
-    ]);
-    return bridgePoints.filter((pt) => keyMonthSet.has(pt.month));
-  }, [bridgePoints, debtFreePoint, showAllRows]);
 
   // Chart data points
   const chartData = useMemo(() => {
@@ -223,6 +193,9 @@ export const DebtToWealthBridgeCard: FC<DebtToWealthBridgeCardProps> = ({
                 tickLine={false}
               />
               <Tooltip
+                contentStyle={chartTooltipContentStyle}
+                itemStyle={chartTooltipItemStyle}
+                labelStyle={chartTooltipLabelStyle}
                 formatter={(val: any, name: any) => [
                   formatCurrency(Number(val)),
                   name === "debt" ? "Debt Remaining" : "Wealth in ISA",
@@ -250,132 +223,6 @@ export const DebtToWealthBridgeCard: FC<DebtToWealthBridgeCardProps> = ({
               />
             </AreaChart>
           </ResponsiveContainer>
-        </div>
-
-        {/* Visual Progress Milestones Table */}
-        <div>
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              marginBottom: "8px",
-            }}
-          >
-            <FLPText fontSize="xs" color="text.muted" fontWeight="semibold">
-              {showAllRows
-                ? `Showing all ${bridgePoints.length} monthly steps`
-                : "Key milestone timeline"}
-            </FLPText>
-            {bridgePoints.length > 8 && (
-              <button
-                type="button"
-                onClick={() => setShowAllRows((prev) => !prev)}
-                style={{
-                  fontSize: "12px",
-                  color: "var(--colors-primary)",
-                  backgroundColor: "transparent",
-                  border: "none",
-                  cursor: "pointer",
-                  textDecoration: "underline",
-                  padding: "2px 4px",
-                }}
-              >
-                {showAllRows
-                  ? "Show key milestones only"
-                  : `Show all ${bridgePoints.length} months`}
-              </button>
-            )}
-          </div>
-          <div style={{ overflowX: "auto" }}>
-            <table className={chartTableStyle}>
-              <thead>
-                <tr>
-                  <th>Timeline</th>
-                  <th>Phase</th>
-                  <th>Debt Remaining</th>
-                  <th>Wealth in ISA</th>
-                  <th>Net Balance Trajectory</th>
-                </tr>
-              </thead>
-              <tbody>
-                {displayedPoints.map((point) => (
-                  <tr
-                    key={point.month}
-                    style={
-                      point.isPostDebtFree && point.debtRemaining === 0
-                        ? { backgroundColor: "rgba(16, 185, 129, 0.04)" }
-                        : undefined
-                    }
-                  >
-                    <td style={{ fontWeight: "500" }}>
-                      Month {point.month} (Yr {point.yearNumber})
-                    </td>
-                    <td>
-                      {point.isPostDebtFree ? (
-                        <span
-                          style={{
-                            fontSize: "12px",
-                            backgroundColor: "var(--colors-success-bg)",
-                            color: "var(--colors-success-DEFAULT)",
-                            padding: "2px 6px",
-                            borderRadius: "4px",
-                            fontWeight: "bold",
-                          }}
-                        >
-                          Wealth building
-                        </span>
-                      ) : (
-                        <span
-                          style={{
-                            fontSize: "12px",
-                            backgroundColor: "var(--colors-destructive-bg)",
-                            color: "var(--colors-destructive-DEFAULT)",
-                            padding: "2px 6px",
-                            borderRadius: "4px",
-                            fontWeight: "bold",
-                          }}
-                        >
-                          Debt clearance
-                        </span>
-                      )}
-                    </td>
-                    <td
-                      className="tabular-nums"
-                      style={{
-                        color:
-                          point.debtRemaining > 0
-                            ? "var(--colors-destructive-500)"
-                            : "var(--colors-success-500)",
-                        fontWeight: "600",
-                      }}
-                    >
-                      {formatCurrency(point.debtRemaining)}
-                    </td>
-                    <td
-                      className="tabular-nums"
-                      style={{ color: "var(--colors-success-500)", fontWeight: "600" }}
-                    >
-                      {point.wealthAccumulated > 0
-                        ? `+${formatCurrency(point.wealthAccumulated)}`
-                        : "£0"}
-                    </td>
-                    <td className="tabular-nums">
-                      {point.debtRemaining > 0 ? (
-                        <span style={{ color: "var(--colors-destructive-500)" }}>
-                          -{formatCurrency(point.debtRemaining)}
-                        </span>
-                      ) : (
-                        <span style={{ color: "var(--colors-success-500)", fontWeight: "bold" }}>
-                          +{formatCurrency(point.wealthAccumulated)}
-                        </span>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
         </div>
       </div>
     </FLPCard>

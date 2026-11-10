@@ -39,7 +39,7 @@ interface RunwayCalculatorProps {
   onSaveSettings?: (settings: RunwaySavedSettings) => void;
 }
 
-const EXPENSE_CATEGORIES: BudgetEntry["category"][] = ["housing", "bills", "expenses", "savings"];
+const EXPENSE_CATEGORIES: BudgetEntry["category"][] = ["housing", "bills", "expenses"];
 
 type RunwayStatus = "critical" | "caution" | "moderate" | "healthy";
 
@@ -180,7 +180,10 @@ const RunwayCalculator: FC<RunwayCalculatorProps> = ({
     [entries],
   );
 
-  const expenseEntries = useMemo(() => entries.filter((e) => !e.isIncome), [entries]);
+  const expenseEntries = useMemo(
+    () => entries.filter((e) => !e.isIncome && e.category !== "savings"),
+    [entries],
+  );
 
   // Initial settings from props or localStorage
   const initialSettings = useMemo(() => {

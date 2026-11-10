@@ -124,7 +124,7 @@ const SetupChecklist: FC<SetupChecklistProps> = (props) => {
   const navigate = useNavigate();
   const { isMobile: contextIsMobile } = useResponsive();
   const isMobileVariant = props.isMobile ?? (props.variant === "mobile" ? true : contextIsMobile);
-  const [expanded, setExpanded] = useState(true);
+  const [expanded, setExpanded] = useState(false);
   const [dismissed, setDismissed] = useState(() => {
     if (typeof window !== "undefined") {
       return window.localStorage.getItem("flump_setup_checklist_dismissed") === "true";
@@ -250,104 +250,112 @@ const SetupChecklist: FC<SetupChecklistProps> = (props) => {
       </div>
 
       {/* Step list */}
-      {expanded && (
-        <div
-          className={css({
-            display: "grid",
-            gridTemplateColumns: isMobileVariant ? "1fr" : { base: "1fr", md: "repeat(2, 1fr)" },
-            gap: "0",
-          })}
-        >
-          {steps.map((step) => (
-            <div
-              key={step.key}
-              className={css({
-                display: "flex",
-                alignItems: "flex-start",
-                gap: "12px",
-                padding: { base: "10px 14px", md: "16px 20px" },
-                borderBottom: "1px solid",
-                borderColor: "border",
-                backgroundColor: step.isComplete ? "rgba(16,185,129,0.03)" : "transparent",
-                transition: "background-color 0.2s",
-              })}
-            >
-              {/* Status icon */}
-              <div style={{ marginTop: "2px", flexShrink: 0 }}>
-                {step.isComplete ? (
-                  <FaCheckCircle style={{ color: "#10b981", fontSize: "18px" }} />
-                ) : (
-                  <FaRegCircle style={{ color: "#a1a1aa", fontSize: "18px" }} />
-                )}
-              </div>
-
-              <div style={{ flex: 1 }}>
-                <div
-                  style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "3px" }}
-                >
-                  {step.icon}
-                  <FLPText
-                    fontSize="sm"
-                    fontWeight="semibold"
-                    style={{
-                      textDecoration: step.isComplete ? "line-through" : "none",
-                      opacity: step.isComplete ? 0.6 : 1,
-                    }}
-                  >
-                    {step.label}
-                  </FLPText>
-                </div>
-                <FLPText
-                  color="text.muted"
-                  fontSize="xs"
-                  style={{ lineHeight: "1.5", marginBottom: "10px" }}
-                >
-                  {step.description}
-                </FLPText>
-                {step.isComplete ? (
-                  <span
-                    className={css({
-                      fontSize: "xs",
-                      fontWeight: "medium",
-                      color: "success.500",
-                      backgroundColor: "rgba(16, 185, 129, 0.08)",
-                      padding: "3px 8px",
-                      borderRadius: "md",
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: "4px",
-                    })}
-                  >
-                    ✓ Widget unlocked on dashboard
-                  </span>
-                ) : (
-                  <button
-                    className={css({
-                      fontSize: "xs",
-                      fontWeight: "semibold",
-                      color: "primary",
-                      background: "none",
-                      border: "1px solid",
-                      borderColor: "primary",
-                      borderRadius: "sm",
-                      padding: "4px 10px",
-                      cursor: "pointer",
-                      transition: "all 0.15s",
-                      _hover: {
-                        backgroundColor: "rgba(99,99,241,0.08)",
-                      },
-                    })}
-                    type="button"
-                    onClick={step.onAction}
-                  >
-                    {step.actionLabel} →
-                  </button>
-                )}
-              </div>
+      <div
+        className={css({
+          gridTemplateColumns: isMobileVariant ? "1fr" : { base: "1fr", md: "repeat(2, 1fr)" },
+          gap: "0",
+        })}
+        style={
+          expanded
+            ? { display: "grid" }
+            : {
+                height: 0,
+                overflow: "hidden",
+                opacity: 0,
+                position: "absolute",
+                pointerEvents: "none",
+              }
+        }
+      >
+        {steps.map((step) => (
+          <div
+            key={step.key}
+            className={css({
+              display: "flex",
+              alignItems: "flex-start",
+              gap: "12px",
+              padding: { base: "10px 14px", md: "16px 20px" },
+              borderBottom: "1px solid",
+              borderColor: "border",
+              backgroundColor: step.isComplete ? "rgba(16,185,129,0.03)" : "transparent",
+              transition: "background-color 0.2s",
+            })}
+          >
+            {/* Status icon */}
+            <div style={{ marginTop: "2px", flexShrink: 0 }}>
+              {step.isComplete ? (
+                <FaCheckCircle style={{ color: "#10b981", fontSize: "18px" }} />
+              ) : (
+                <FaRegCircle style={{ color: "#a1a1aa", fontSize: "18px" }} />
+              )}
             </div>
-          ))}
-        </div>
-      )}
+
+            <div style={{ flex: 1 }}>
+              <div
+                style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "3px" }}
+              >
+                {step.icon}
+                <FLPText
+                  fontSize="sm"
+                  fontWeight="semibold"
+                  style={{
+                    textDecoration: step.isComplete ? "line-through" : "none",
+                    opacity: step.isComplete ? 0.6 : 1,
+                  }}
+                >
+                  {step.label}
+                </FLPText>
+              </div>
+              <FLPText
+                color="text.muted"
+                fontSize="xs"
+                style={{ lineHeight: "1.5", marginBottom: "10px" }}
+              >
+                {step.description}
+              </FLPText>
+              {step.isComplete ? (
+                <span
+                  className={css({
+                    fontSize: "xs",
+                    fontWeight: "medium",
+                    color: "success.500",
+                    backgroundColor: "rgba(16, 185, 129, 0.08)",
+                    padding: "3px 8px",
+                    borderRadius: "md",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "4px",
+                  })}
+                >
+                  ✓ Widget unlocked on dashboard
+                </span>
+              ) : (
+                <button
+                  className={css({
+                    fontSize: "xs",
+                    fontWeight: "semibold",
+                    color: "primary",
+                    background: "none",
+                    border: "1px solid",
+                    borderColor: "primary",
+                    borderRadius: "sm",
+                    padding: "4px 10px",
+                    cursor: "pointer",
+                    transition: "all 0.15s",
+                    _hover: {
+                      backgroundColor: "rgba(99,99,241,0.08)",
+                    },
+                  })}
+                  type="button"
+                  onClick={step.onAction}
+                >
+                  {step.actionLabel} →
+                </button>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 };

@@ -41,7 +41,6 @@ import FLPSelect from "~/components/core/inputs/select/FLPSelect";
 import FLPBox from "~/components/core/structure/FLPBox";
 import FLPHeading from "~/components/core/typography/FLPHeading";
 import FLPText from "~/components/core/typography/FLPText";
-import { GlobalBaselineScenarioBar } from "~/components/navigation/GlobalBaselineScenarioBar";
 import CopyTaxYearModal from "~/components/tax/CopyTaxYearModal";
 import PaymentsOnAccountCard from "~/components/tax/PaymentsOnAccountCard";
 import TaxIncomeSectionCard from "~/components/tax/TaxIncomeSectionCard";
@@ -314,6 +313,32 @@ const TaxContainer: FC = () => {
     }
   };
 
+  const recordsInSelectedTaxYear = useMemo(() => {
+    return initialRecords.filter((r) => getTaxYearForDate(r.date) === selectedTaxYear);
+  }, [initialRecords, selectedTaxYear]);
+
+  const handleDeleteTaxYear = (yearToDelete: string) => {
+    const yearRecords = initialRecords.filter((r) => getTaxYearForDate(r.date) === yearToDelete);
+    if (yearRecords.length === 0) {
+      alert(`There are no records to delete for tax year ${yearToDelete}.`);
+      return;
+    }
+    if (
+      confirm(
+        `Are you sure you want to delete all ${yearRecords.length} records for tax year ${yearToDelete}? This cannot be undone.`,
+      )
+    ) {
+      const recordIds = yearRecords.map((r) => r.id);
+      fetcher.submit(
+        {
+          intent: "delete-tax-year",
+          recordIds: JSON.stringify(recordIds),
+        },
+        { method: "POST" },
+      );
+    }
+  };
+
   const { formatCurrencyDecimal } = useFormatCurrency();
   const formatCurrency = formatCurrencyDecimal;
 
@@ -330,14 +355,15 @@ const TaxContainer: FC = () => {
       display: "flex",
       alignItems: "center",
       gap: "6px",
-      padding: "8px 16px",
-      borderRadius: "md",
-      fontSize: "13px",
-      fontWeight: "semibold",
+      padding: "8px 18px",
+      minHeight: "38px",
+      borderRadius: "lg",
+      fontSize: "sm",
+      fontWeight: active ? "semibold" : "medium",
       cursor: "pointer",
-      backgroundColor: active ? "card" : "transparent",
+      backgroundColor: active ? "surface" : "transparent",
       color: active ? "text.primary" : "text.muted",
-      boxShadow: active ? "0 1px 2px rgba(0,0,0,0.06)" : "none",
+      boxShadow: active ? "0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06)" : "none",
       border: "1px solid",
       borderColor: active ? "border.subtle" : "transparent",
       transition: "all 0.15s ease",
@@ -367,6 +393,8 @@ const TaxContainer: FC = () => {
     width: "100%",
     maxWidth: "100%",
     overflowX: "auto",
+    maxHeight: "480px",
+    overflowY: "auto",
     WebkitOverflowScrolling: "touch",
     borderRadius: "md",
     border: "1px solid",
@@ -390,6 +418,7 @@ const TaxContainer: FC = () => {
     backgroundColor: "rgba(0,0,0,0.02)",
     borderBottom: "1px solid",
     borderColor: "border",
+    fontVariantNumeric: "tabular-nums",
   });
 
   const tdStyle = css({
@@ -397,6 +426,7 @@ const TaxContainer: FC = () => {
     borderBottom: "1px solid",
     borderColor: "border",
     color: "text.primary",
+    fontVariantNumeric: "tabular-nums",
   });
 
   const trStyle = css({
@@ -446,52 +476,35 @@ const TaxContainer: FC = () => {
         paddingBottom: { base: "24px", md: "48px" },
       })}
     >
-      <GlobalBaselineScenarioBar />
-
       {/* Page Header */}
       <div
         className={css({
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
-          my: 6,
+          marginTop: "16px",
+          marginBottom: "8px",
           flexWrap: "wrap",
           gap: "16px",
         })}
       >
         <div>
-          <FLPHeading as="h1" color="blue.500" size="xl">
+          <FLPHeading as="h1" color="text.primary" size="2xl">
             Income & Self Assessment Tax Planner
           </FLPHeading>
-          <FLPText color="text.muted" fontSize="sm">
+          <FLPText color="text.muted" fontSize="sm" style={{ marginTop: "4px" }}>
             Track PAYE salary, freelance profits, rental property P&L, and savings interest across
             UK fiscal years.
           </FLPText>
         </div>
 
-        {/* Action Button: Add Record */}
+        {/* Action Buttons: Disclaimer & Add Record */}
         <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
+          <TaxDisclaimerButton showShortText />
           <FLPButton onClick={() => onOpenAddModal("rental", "income")}>
             <FaPlus size={12} style={{ marginRight: "6px" }} /> Add Record
           </FLPButton>
         </div>
-      </div>
-
-      {/* Tax disclaimer notice */}
-      <div
-        className={css({
-          display: "flex",
-          alignItems: "center",
-          gap: "8px",
-          marginBottom: "16px",
-          padding: "10px 14px",
-          backgroundColor: "surface",
-          border: "1px solid",
-          borderColor: "border",
-          borderRadius: "md",
-        })}
-      >
-        <TaxDisclaimerButton showShortText />
       </div>
 
       {/* Non-UK User Advice Banner */}
@@ -502,8 +515,8 @@ const TaxContainer: FC = () => {
             border: "1px solid",
             borderColor: "warning.500",
             borderRadius: "md",
-            padding: "16px",
-            marginBottom: "24px",
+            padding: "12px 16px",
+            marginBottom: "16px",
             display: "flex",
             alignItems: "center",
             gap: "12px",
@@ -528,12 +541,12 @@ const TaxContainer: FC = () => {
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
-          padding: { base: "10px 12px", md: "12px 18px" },
+          padding: { base: "8px 12px", md: "10px 16px" },
           backgroundColor: "surface",
           border: "1px solid",
           borderColor: "border.subtle",
           borderRadius: "xl",
-          marginBottom: "20px",
+          marginBottom: "16px",
           flexWrap: "wrap",
           gap: "12px",
           width: "100%",
@@ -598,6 +611,20 @@ const TaxContainer: FC = () => {
           <FLPButton size="sm" variant="outline" onClick={() => handleOpenCopyModal("all")}>
             <FaCopy size={11} style={{ marginRight: "6px" }} /> Copy from {previousTaxYear}
           </FLPButton>
+          {recordsInSelectedTaxYear.length > 0 && (
+            <FLPButton
+              size="sm"
+              variant="ghost"
+              onClick={() => handleDeleteTaxYear(selectedTaxYear)}
+              title={`Delete all records for tax year ${selectedTaxYear}`}
+            >
+              <FaTrash
+                size={11}
+                style={{ marginRight: "6px", color: "var(--colors-destructive)" }}
+              />
+              Delete {selectedTaxYear}
+            </FLPButton>
+          )}
         </div>
       </div>
 

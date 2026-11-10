@@ -175,10 +175,10 @@ describe("<AccountDetails />", () => {
   });
 
   test("should remove year when delete button is clicked", () => {
-    const { container, getAllByText } = customRender(
+    const { container, getByTitle } = customRender(
       <AccountDetails editedValues={emptyObject} isEditMode={false} onInputChange={vi.fn()} />,
     );
-    const deleteBtn = getAllByText("deleteYear")[0];
+    const deleteBtn = getByTitle("Delete 2023");
     fireEvent.click(deleteBtn);
     expect(mocks.mockFetcherSubmit).toHaveBeenCalledWith(
       {

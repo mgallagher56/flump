@@ -7,6 +7,11 @@ import {
 import { css } from "@repo/ui/styled-system/css";
 import { type FC, useEffect, useMemo, useState } from "react";
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
+import {
+  chartTooltipContentStyle,
+  chartTooltipItemStyle,
+  chartTooltipLabelStyle,
+} from "~/components/charts/chartTheme";
 import FLPButton from "~/components/core/buttons/FLPButton";
 import FLPCard from "~/components/core/cards/FLPCard";
 import TaxDisclaimerButton from "~/components/core/dialogs/TaxDisclaimerButton";
@@ -591,7 +596,12 @@ const UKTaxCalculator: FC<UKTaxCalculatorProps> = ({ initialSalary, onApplyIncre
                       <Cell key={`cell-${index}`} fill={entry.color} />
                     ))}
                   </Pie>
-                  <Tooltip formatter={(value: any) => formatCurrency(value)} />
+                  <Tooltip
+                    formatter={(value: any) => formatCurrency(value)}
+                    contentStyle={chartTooltipContentStyle}
+                    itemStyle={chartTooltipItemStyle}
+                    labelStyle={chartTooltipLabelStyle}
+                  />
                 </PieChart>
               </ResponsiveContainer>
               {/* Pie Legends */}

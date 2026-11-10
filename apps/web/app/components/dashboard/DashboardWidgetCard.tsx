@@ -123,7 +123,7 @@ export const DashboardWidgetCard: FC<DashboardWidgetCardProps> = ({
                   width: "8px",
                   height: "8px",
                   borderRadius: "50%",
-                  backgroundColor: page.badgeColor,
+                  backgroundColor: "var(--colors-primary, #6363f1)",
                   flexShrink: 0,
                 }}
               />

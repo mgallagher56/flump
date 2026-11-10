@@ -34,13 +34,13 @@ export interface AccountsWidgetProps {
 }
 
 const TYPE_COLORS: Record<string, string> = {
-  Current: "#6363f1",
+  Current: "#6366f1",
   Saving: "#10b981",
-  Investment: "#8b5cf6",
-  Pension: "#ec4899",
-  "Credit Card": "#ef4444",
+  Investment: "#818cf8",
+  Pension: "#a78bfa",
+  "Credit Card": "#f43f5e",
   Mortgage: "#f59e0b",
-  Loan: "#f97316",
+  Loan: "#fb7185",
   Owed: "#06b6d4",
 };
 
@@ -210,7 +210,9 @@ export const AccountsWidget: FC<AccountsWidgetProps> = ({
             <FLPHeading
               as="h2"
               color={
-                highlightMetric === "netWorth" && data.netWorth < 0 ? "destructive.500" : "blue.500"
+                highlightMetric === "netWorth" && data.netWorth < 0
+                  ? "destructive.500"
+                  : "text.primary"
               }
               className={css({
                 fontSize: { base: "lg", sm: "xl", md: "2xl" },

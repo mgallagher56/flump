@@ -7,8 +7,9 @@ import {
 } from "@flump/finance-engine";
 import { css } from "@repo/ui/styled-system/css";
 import { type FC, useMemo, useState } from "react";
-import { FaExclamationTriangle, FaFire, FaShieldAlt } from "react-icons/fa";
+import { FaBookOpen, FaCalculator, FaCreditCard, FaExclamationTriangle } from "react-icons/fa";
 import { useLoaderData } from "react-router";
+import FLPButton from "~/components/core/buttons/FLPButton";
 import FLPHeading from "~/components/core/typography/FLPHeading";
 import FLPText from "~/components/core/typography/FLPText";
 import AddDebtDialog from "~/components/debt/AddDebtDialog";
@@ -17,26 +18,14 @@ import DebtSummaryCards from "~/components/debt/DebtSummaryCards";
 import DebtToWealthBridgeCard from "~/components/debt/DebtToWealthBridgeCard";
 import PayoffStrategySwitcher from "~/components/debt/PayoffStrategySwitcher";
 import UkDebtInstrumentsCard from "~/components/debt/UkDebtInstrumentsCard";
-import GlobalBaselineScenarioBar from "~/components/navigation/GlobalBaselineScenarioBar";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
 import { useUserProfile } from "~/hooks/useUserProfile";
 
 const containerStyle = css({
   display: "flex",
   flexDirection: "column",
-  gap: "24px",
+  gap: "20px",
   paddingBottom: "64px",
-});
-
-const stageBannerStyle = css({
-  padding: "16px 20px",
-  borderRadius: "xl",
-  border: "1px solid",
-  display: "flex",
-  justifyContent: "space-between",
-  alignItems: "center",
-  flexWrap: "wrap",
-  gap: "12px",
 });
 
 const defaultDebts: DebtItem[] = [
@@ -74,6 +63,26 @@ const defaultDebts: DebtItem[] = [
   },
 ];
 
+const tabStyle = (active: boolean) =>
+  css({
+    display: "flex",
+    alignItems: "center",
+    gap: "6px",
+    padding: "8px 16px",
+    borderRadius: "md",
+    fontSize: "13px",
+    fontWeight: "semibold",
+    cursor: "pointer",
+    backgroundColor: active ? "card" : "transparent",
+    color: active ? "text.primary" : "text.muted",
+    boxShadow: active ? "0 1px 2px rgba(0,0,0,0.06)" : "none",
+    border: "1px solid",
+    borderColor: active ? "border.subtle" : "transparent",
+    transition: "all 0.15s ease",
+    whiteSpace: "nowrap",
+    _hover: active ? {} : { color: "text.primary" },
+  });
+
 export const DebtContainer: FC = () => {
   const loaderData = useLoaderData<any>();
   const { formatCurrency } = useFormatCurrency();
@@ -82,6 +91,9 @@ export const DebtContainer: FC = () => {
   const accounts = loaderData?.accounts || [];
   const budgetData = loaderData?.budgetData;
   const budgetSurplus = budgetData?.monthlySurplus || 150;
+
+  // Tab state
+  const [activeTab, setActiveTab] = useState<"simulator" | "accounts" | "instruments">("simulator");
 
   // Initialize debts from existing liability accounts or fallback to sensible baseline
   const [debts, setDebts] = useState<DebtItem[]>(() => {
@@ -142,9 +154,6 @@ export const DebtContainer: FC = () => {
 
   return (
     <div className={containerStyle}>
-      {/* Global Baseline & What-If Scenario Bar */}
-      <GlobalBaselineScenarioBar />
-
       {/* 0% Promotional Cliff & Overdraft Warning Alerts */}
       {promoAlerts.length > 0 && (
         <div
@@ -156,7 +165,7 @@ export const DebtContainer: FC = () => {
             borderColor: "rgba(239, 68, 68, 0.3)",
             display: "flex",
             flexDirection: "column",
-            gap: "8px",
+            gap: "10px",
           })}
         >
           <div className={css({ display: "flex", alignItems: "center", gap: "8px" })}>
@@ -168,39 +177,58 @@ export const DebtContainer: FC = () => {
             </FLPHeading>
           </div>
           {promoAlerts.map((alert) => (
-            <FLPText key={alert.debtId} fontSize="xs" color="text.primary">
-              <strong>{alert.debtName}</strong> promotional 0% APR expires on{" "}
-              <strong>{alert.promoExpiryDate}</strong>. At current repayment rates, £
-              {alert.projectedBalanceAtExpiryGbp.toLocaleString()} will revert to{" "}
-              <strong>{alert.revertApr}% APR</strong>. Allocate £
-              {alert.requiredMonthlyToClearBeforeCliff}/mo to clear it before expiry.
-            </FLPText>
+            <div
+              key={alert.debtId}
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                flexWrap: "wrap",
+                gap: "10px",
+              }}
+            >
+              <FLPText fontSize="xs" color="text.primary">
+                <strong>{alert.debtName}</strong> promotional 0% APR expires on{" "}
+                <strong>{alert.promoExpiryDate}</strong>. At current repayment rates, £
+                {alert.projectedBalanceAtExpiryGbp.toLocaleString()} will revert to{" "}
+                <strong>{alert.revertApr}% APR</strong>.
+              </FLPText>
+              <FLPButton
+                size="sm"
+                variant="outline"
+                onClick={() => setExtraPayment(alert.requiredMonthlyToClearBeforeCliff)}
+              >
+                Allocate £{alert.requiredMonthlyToClearBeforeCliff}/mo to clear
+              </FLPButton>
+            </div>
           ))}
         </div>
       )}
 
       {/* 1. Header & Stage Notification */}
       <div
-        style={{
+        className={css({
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
           flexWrap: "wrap",
-          gap: "20px",
-        }}
+          gap: "16px",
+          marginTop: "16px",
+          marginBottom: "8px",
+        })}
       >
-        <div style={{ flex: "1 1 320px" }}>
-          <FLPHeading as="h2" size="2xl">
+        <div>
+          <FLPHeading as="h1" color="text.primary" size="2xl">
             Debt payoff and recovery
           </FLPHeading>
-          <FLPText color="text.muted" fontSize="md">
+          <FLPText color="text.muted" fontSize="sm" style={{ marginTop: "4px" }}>
             Model mathematically optimal debt clearance, manage promotional 0% offers, and bridge
             your surplus into long-term wealth.
           </FLPText>
         </div>
       </div>
 
-      {/* 2. Summary Metric Cards */}
+      {/* 2. Summary Metric Cards (Single compact 4-card row) */}
       <DebtSummaryCards
         debtFreeDate={activeResult.debtFreeDate}
         extraPayment={extraPayment}
@@ -220,40 +248,121 @@ export const DebtContainer: FC = () => {
         }
       />
 
-      {/* 3. Active Liability Accounts List */}
-      <DebtAccountsList
-        debts={debts}
-        onAddDebt={() => setIsAddModalOpen(true)}
-        onDeleteDebt={handleDeleteDebt}
-        onUpdateDebt={handleUpdateDebt}
-      />
-
-      {/* 4 & 5. 2-Column Interactive Payoff Simulator & Wealth Bridge */}
+      {/* Tab Bar: Segmented Navigation */}
       <div
         className={css({
-          display: "grid",
-          gridTemplateColumns: { base: "1fr", lg: "repeat(12, 1fr)" },
-          gap: "24px",
-          alignItems: "start",
+          display: "flex",
+          backgroundColor: "surface.sunken",
+          border: "1px solid",
+          borderColor: "border.subtle",
+          padding: "4px",
+          borderRadius: "lg",
+          gap: "4px",
+          overflowX: "auto",
+          maxWidth: "100%",
+          WebkitOverflowScrolling: "touch",
         })}
       >
-        <div className={css({ gridColumn: { base: "span 1", lg: "span 5" } })}>
-          <PayoffStrategySwitcher
-            budgetSurplus={budgetSurplus}
-            comparison={comparison}
-            extraPayment={extraPayment}
-            selectedStrategy={selectedStrategy}
-            onChangeExtraPayment={setExtraPayment}
-            onSelectStrategy={setSelectedStrategy}
-          />
-        </div>
-        <div className={css({ gridColumn: { base: "span 1", lg: "span 7" } })}>
-          <DebtToWealthBridgeCard debts={debts} extraPayment={extraPayment} />
+        <button
+          type="button"
+          className={tabStyle(activeTab === "simulator")}
+          onClick={() => setActiveTab("simulator")}
+        >
+          <FaCalculator size={13} style={{ marginRight: "6px" }} /> Strategy & Payoff Simulator
+        </button>
+        <button
+          type="button"
+          className={tabStyle(activeTab === "accounts")}
+          onClick={() => setActiveTab("accounts")}
+        >
+          <FaCreditCard size={13} style={{ marginRight: "6px" }} /> Liability Accounts & Cards (
+          {debts.length})
+        </button>
+        <button
+          type="button"
+          className={tabStyle(activeTab === "instruments")}
+          onClick={() => setActiveTab("instruments")}
+        >
+          <FaBookOpen size={13} style={{ marginRight: "6px" }} /> UK Debt Rules & Helplines
+        </button>
+      </div>
+
+      {/* Tab 1: Strategy & Payoff Simulator */}
+      <div
+        style={
+          activeTab === "simulator"
+            ? { display: "block" }
+            : {
+                height: 0,
+                overflow: "hidden",
+                opacity: 0,
+                position: "absolute",
+                pointerEvents: "none",
+              }
+        }
+      >
+        <div
+          className={css({
+            display: "grid",
+            gridTemplateColumns: { base: "1fr", lg: "repeat(12, 1fr)" },
+            gap: "24px",
+            alignItems: "start",
+          })}
+        >
+          <div className={css({ gridColumn: { base: "span 1", lg: "span 5" } })}>
+            <PayoffStrategySwitcher
+              budgetSurplus={budgetSurplus}
+              comparison={comparison}
+              extraPayment={extraPayment}
+              selectedStrategy={selectedStrategy}
+              onChangeExtraPayment={setExtraPayment}
+              onSelectStrategy={setSelectedStrategy}
+            />
+          </div>
+          <div className={css({ gridColumn: { base: "span 1", lg: "span 7" } })}>
+            <DebtToWealthBridgeCard debts={debts} extraPayment={extraPayment} />
+          </div>
         </div>
       </div>
 
-      {/* 6. UK Specific Debt Instruments & Rules */}
-      <UkDebtInstrumentsCard />
+      {/* Tab 2: Liability Accounts & Cards */}
+      <div
+        style={
+          activeTab === "accounts"
+            ? { display: "block" }
+            : {
+                height: 0,
+                overflow: "hidden",
+                opacity: 0,
+                position: "absolute",
+                pointerEvents: "none",
+              }
+        }
+      >
+        <DebtAccountsList
+          debts={debts}
+          onAddDebt={() => setIsAddModalOpen(true)}
+          onDeleteDebt={handleDeleteDebt}
+          onUpdateDebt={handleUpdateDebt}
+        />
+      </div>
+
+      {/* Tab 3: UK Specific Debt Instruments & Rules */}
+      <div
+        style={
+          activeTab === "instruments"
+            ? { display: "block" }
+            : {
+                height: 0,
+                overflow: "hidden",
+                opacity: 0,
+                position: "absolute",
+                pointerEvents: "none",
+              }
+        }
+      >
+        <UkDebtInstrumentsCard />
+      </div>
 
       {/* Add Debt Modal */}
       <AddDebtDialog

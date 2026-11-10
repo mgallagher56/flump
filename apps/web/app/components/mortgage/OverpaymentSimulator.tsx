@@ -1,6 +1,11 @@
 import { css } from "@repo/ui/styled-system/css";
 import { type FC, useMemo } from "react";
 import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import {
+  chartTooltipContentStyle,
+  chartTooltipItemStyle,
+  chartTooltipLabelStyle,
+} from "~/components/charts/chartTheme";
 import FLPCard from "~/components/core/cards/FLPCard";
 import FLPHeading from "~/components/core/typography/FLPHeading";
 import FLPText from "~/components/core/typography/FLPText";
@@ -397,7 +402,12 @@ const OverpaymentSimulator: FC<OverpaymentSimulatorProps> = ({
                 tickMargin={8}
                 tickFormatter={(val) => `£${val / 1000}k`}
               />
-              <Tooltip formatter={(value: any) => formatCurrency(value)} />
+              <Tooltip
+                formatter={(value: any) => formatCurrency(value)}
+                contentStyle={chartTooltipContentStyle}
+                itemStyle={chartTooltipItemStyle}
+                labelStyle={chartTooltipLabelStyle}
+              />
               <Area
                 activeDot={{ r: 6 }}
                 dataKey="Standard Plan"
@@ -412,6 +422,7 @@ const OverpaymentSimulator: FC<OverpaymentSimulatorProps> = ({
                 dataKey="With Overpayment"
                 fill="url(#colorOverpay)"
                 stroke="#10B981"
+                strokeDasharray="5 5"
                 strokeWidth={2}
                 type="monotone"
                 isAnimationActive={false}

@@ -377,12 +377,17 @@ export const SavingsForecasterCard: FC<SavingsForecasterCardProps> = ({
             <Tooltip
               formatter={(value: any) => [formatCurrency(Number(value) || 0), ""]}
               contentStyle={{
-                backgroundColor: "var(--colors-surface)",
-                borderColor: "var(--colors-border)",
-                borderRadius: "8px",
+                backgroundColor: "var(--colors-surface, #1e293b)",
+                borderColor: "var(--colors-border, #334155)",
+                borderWidth: "1px",
+                borderStyle: "solid",
+                borderRadius: "10px",
                 fontSize: "12px",
-                boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+                color: "var(--colors-text-primary, #f8fafc)",
+                boxShadow: "0 10px 25px -5px rgba(0,0,0,0.4)",
               }}
+              itemStyle={{ color: "var(--colors-text-primary, #f8fafc)" }}
+              labelStyle={{ color: "var(--colors-text-muted, #94a3b8)", fontWeight: 600 }}
             />
             <Legend wrapperStyle={{ fontSize: "12px", paddingTop: "6px" }} />
             <Area
@@ -390,6 +395,7 @@ export const SavingsForecasterCard: FC<SavingsForecasterCardProps> = ({
               fill="url(#colorTotal)"
               name="Projected Total (Interest + Deposits)"
               stroke="#6363f1"
+              strokeDasharray="5 5"
               strokeWidth={2.5}
               type="monotone"
               isAnimationActive={false}

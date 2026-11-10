@@ -283,13 +283,13 @@ const AccountDetails: FC<AccountDetailsProps> = ({
                   <span>{year}</span>
                   {!isEditMode && (
                     <button
+                      aria-label={`Delete ${year}`}
                       className={deleteBtnStyle}
                       title={`Delete ${year}`}
                       type="button"
                       onClick={() => onRemoveYear(year)}
                     >
-                      <FaTrashAlt size={12} style={{ marginRight: "4px" }} />
-                      {t("deleteYear")}
+                      <FaTrashAlt size={12} />
                     </button>
                   )}
                 </div>

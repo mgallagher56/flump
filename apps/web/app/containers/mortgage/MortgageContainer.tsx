@@ -10,15 +10,18 @@ import {
   FaExclamationTriangle,
   FaHome,
   FaInfoCircle,
+  FaPercentage,
 } from "react-icons/fa";
 import { useLoaderData, useNavigate } from "react-router";
+import FLPButton from "~/components/core/buttons/FLPButton";
+import FLPCard from "~/components/core/cards/FLPCard";
+import { CollapsibleSection } from "~/components/core/disclosure/CollapsibleSection";
 import FLPHeading from "~/components/core/typography/FLPHeading";
 import FLPText from "~/components/core/typography/FLPText";
 import MortgageTracker from "~/components/mortgage/MortgageTracker";
 import OverpaymentSimulator from "~/components/mortgage/OverpaymentSimulator";
 import OverpayVsSaveCompare from "~/components/mortgage/OverpayVsSaveCompare";
 import RemortgageShockSim from "~/components/mortgage/RemortgageShockSim";
-import { GlobalBaselineScenarioBar } from "~/components/navigation/GlobalBaselineScenarioBar";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
 import { useUserProfile } from "~/hooks/useUserProfile";
 import type { loader } from "~/routes/app.mortgage";
@@ -29,7 +32,7 @@ const MortgageContainer: FC = () => {
   const { t } = useTranslation();
   const { accounts = [], accountDetails = [], userProfile } = useLoaderData<typeof loader>();
   const navigate = useNavigate();
-  const { profile, setProfile } = useUserProfile();
+  const { profile, setProfile, updateProfile } = useUserProfile();
   const { formatCurrency } = useFormatCurrency();
   const { baseline } = useFinancialBaseline();
 
@@ -38,17 +41,75 @@ const MortgageContainer: FC = () => {
     if (userProfile) setProfile(userProfile);
   }, [userProfile, setProfile]);
 
-  const [activeTab, setActiveTab] = useState<"tracker" | "simulator" | "compare">("tracker");
+  const [activeTab, setActiveTab] = useState<"tracker" | "milestones" | "simulator" | "compare">(
+    "tracker",
+  );
   const [propertyCategory, setPropertyCategory] = useState<"residential" | "btl">("residential");
   const [mortgageType, setMortgageType] = useState<"repayment" | "interest-only">(
     userProfile?.mortgageType || "repayment",
   );
 
   // Shared mortgage states
-  const [loanAmount, setLoanAmount] = useState<number>(150000);
-  const [interestRate, setInterestRate] = useState<number>(4.5);
-  const [remainingTerm, setRemainingTerm] = useState<number>(25);
+  const [loanAmount, setLoanAmount] = useState<number>(userProfile?.mortgageBalance || 150000);
+  const [interestRate, setInterestRate] = useState<number>(userProfile?.mortgageRate || 4.5);
+  const [remainingTerm, setRemainingTerm] = useState<number>(userProfile?.mortgageTermYears || 25);
   const [overpayment, setOverpayment] = useState<number>(200);
+  const [isSaved, setIsSaved] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editLoanAmount, setEditLoanAmount] = useState<number>(
+    userProfile?.mortgageBalance || 150000,
+  );
+  const [editInterestRate, setEditInterestRate] = useState<number>(
+    userProfile?.mortgageRate || 4.5,
+  );
+  const [editRemainingTerm, setEditRemainingTerm] = useState<number>(
+    userProfile?.mortgageTermYears || 25,
+  );
+  const [editMortgageType, setEditMortgageType] = useState<"repayment" | "interest-only">(
+    userProfile?.mortgageType || "repayment",
+  );
+
+  const startEditing = () => {
+    setEditLoanAmount(loanAmount);
+    setEditInterestRate(interestRate);
+    setEditRemainingTerm(remainingTerm);
+    setEditMortgageType(mortgageType);
+    setIsEditing(true);
+  };
+
+  const cancelEditing = () => {
+    setIsEditing(false);
+  };
+
+  const handleSaveMortgageDetails = async () => {
+    try {
+      setLoanAmount(editLoanAmount);
+      setInterestRate(editInterestRate);
+      setRemainingTerm(editRemainingTerm);
+      setMortgageType(editMortgageType);
+      await updateProfile({
+        hasMortgage: true,
+        mortgageBalance: editLoanAmount,
+        mortgageType: editMortgageType,
+        homeValue: propertyValue,
+      });
+      setIsSaved(true);
+      setIsEditing(false);
+      setTimeout(() => setIsSaved(false), 3000);
+    } catch (err) {
+      console.error("Failed to save mortgage details:", err);
+    }
+  };
+
+  const currentMonthlyPayment = useMemo(() => {
+    if (loanAmount <= 0 || interestRate <= 0 || remainingTerm <= 0) return 0;
+    const i = interestRate / 100 / 12;
+    if (mortgageType === "interest-only") {
+      return loanAmount * i;
+    }
+    const n = remainingTerm * 12;
+    return (loanAmount * i * (1 + i) ** n) / ((1 + i) ** n - 1);
+  }, [loanAmount, interestRate, remainingTerm, mortgageType]);
 
   const propertyValue =
     propertyCategory === "btl"
@@ -177,8 +238,6 @@ const MortgageContainer: FC = () => {
 
   return (
     <div className={containerStyle}>
-      <GlobalBaselineScenarioBar />
-
       {/* Refinance Warning Banner */}
       {refinanceWarning && (
         <div
@@ -227,84 +286,97 @@ const MortgageContainer: FC = () => {
         </div>
       )}
 
-      {/* Title */}
-      <div className={css({ my: 4 })}>
-        <FLPHeading as="h1" color="blue.500" size="xl">
-          Mortgage tools and calculator
-        </FLPHeading>
-        <FLPText color="text.muted" fontSize="sm">
-          Track your payments, simulate overpayments and optimise your savings strategy.
-        </FLPText>
-      </div>
-
-      {/* Property Category Switcher */}
+      {/* Title & Category Switcher */}
       <div
         className={css({
           display: "flex",
-          gap: "8px",
-          backgroundColor: "surface",
-          padding: "4px",
-          borderRadius: "lg",
-          border: "1px solid",
-          borderColor: "border",
-          width: "fit-content",
+          justifyContent: "space-between",
+          alignItems: "center",
+          marginTop: "16px",
+          marginBottom: "8px",
+          flexWrap: "wrap",
+          gap: "16px",
         })}
       >
-        <button
-          type="button"
+        <div>
+          <FLPHeading as="h1" color="text.primary" size="2xl">
+            Mortgage tools and calculator
+          </FLPHeading>
+          <FLPText color="text.muted" fontSize="sm" style={{ marginTop: "4px" }}>
+            Track your payments, simulate overpayments and optimise your savings strategy.
+          </FLPText>
+        </div>
+
+        {/* Property Category Switcher */}
+        <div
           className={css({
             display: "inline-flex",
             alignItems: "center",
-            gap: "8px",
-            padding: "8px 16px",
-            borderRadius: "md",
-            fontSize: "sm",
-            fontWeight: propertyCategory === "residential" ? "semibold" : "medium",
-            backgroundColor: propertyCategory === "residential" ? "primary" : "transparent",
-            color: propertyCategory === "residential" ? "white" : "text.muted",
-            border: "none",
-            cursor: "pointer",
-            transition: "all 0.2s",
+            gap: "4px",
+            backgroundColor: "surface.sunken",
+            padding: "4px",
+            borderRadius: "xl",
+            border: "1px solid",
+            borderColor: "border.subtle",
+            width: "fit-content",
           })}
-          onClick={() => switchToCategory("residential")}
         >
-          <FaHome size={14} />
-          Residential mortgage
-        </button>
-        <button
-          type="button"
-          className={css({
-            display: "inline-flex",
-            alignItems: "center",
-            gap: "8px",
-            padding: "8px 16px",
-            borderRadius: "md",
-            fontSize: "sm",
-            fontWeight: propertyCategory === "btl" ? "semibold" : "medium",
-            backgroundColor: propertyCategory === "btl" ? "emerald.500" : "transparent",
-            color: propertyCategory === "btl" ? "white" : "text.muted",
-            border: "none",
-            cursor: "pointer",
-            transition: "all 0.2s",
-          })}
-          onClick={() => switchToCategory("btl")}
-        >
-          <FaBuilding size={14} />
-          Buy to let (BTL)
-        </button>
+          <button
+            type="button"
+            className={css({
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "8px",
+              padding: "6px 14px",
+              borderRadius: "md",
+              fontSize: "xs",
+              fontWeight: propertyCategory === "residential" ? "semibold" : "medium",
+              backgroundColor: propertyCategory === "residential" ? "primary" : "transparent",
+              color: propertyCategory === "residential" ? "white" : "text.muted",
+              border: "none",
+              cursor: "pointer",
+              transition: "all 0.2s",
+            })}
+            onClick={() => switchToCategory("residential")}
+          >
+            <FaHome size={13} />
+            Residential mortgage
+          </button>
+          <button
+            type="button"
+            className={css({
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "8px",
+              padding: "6px 14px",
+              borderRadius: "md",
+              fontSize: "xs",
+              fontWeight: propertyCategory === "btl" ? "semibold" : "medium",
+              backgroundColor: propertyCategory === "btl" ? "emerald.500" : "transparent",
+              color: propertyCategory === "btl" ? "white" : "text.muted",
+              border: "none",
+              cursor: "pointer",
+              transition: "all 0.2s",
+            })}
+            onClick={() => switchToCategory("btl")}
+          >
+            <FaBuilding size={13} />
+            Buy to let (BTL)
+          </button>
+        </div>
       </div>
 
-      {/* LTV Threshold Milestones (85%, 80%, 75%, 60%) */}
-      <div
+      {/* My Mortgage Information (Prominent Hero Card Outside Tabs) */}
+      <FLPCard
         className={css({
-          padding: "16px 20px",
-          borderRadius: "lg",
-          backgroundColor: "surface",
-          border: "1px solid",
-          borderColor: "border",
+          padding: "20px 24px",
           display: "flex",
           flexDirection: "column",
-          gap: "12px",
+          gap: "16px",
+          borderWidth: "1px",
+          borderColor: "border.subtle",
+          backgroundColor: "surface",
+          boxShadow: "card",
         })}
       >
         <div
@@ -313,105 +385,410 @@ const MortgageContainer: FC = () => {
             justifyContent: "space-between",
             alignItems: "center",
             flexWrap: "wrap",
-            gap: "8px",
+            gap: "12px",
           }}
         >
           <div>
-            <FLPText
-              fontSize="xs"
-              color="text.muted"
-              fontWeight="semibold"
-              textTransform="uppercase"
-            >
-              LTV threshold milestones
+            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <FaHome size={18} style={{ color: "var(--colors-primary)" }} />
+              <FLPHeading as="h2" size="md">
+                My Mortgage Information
+              </FLPHeading>
+              <span
+                style={{
+                  fontSize: "11px",
+                  fontWeight: 700,
+                  padding: "2px 8px",
+                  borderRadius: "full",
+                  backgroundColor: "rgba(99, 99, 241, 0.1)",
+                  color: "var(--colors-primary)",
+                }}
+              >
+                {propertyCategory === "residential" ? "Primary Residence" : "Buy to Let"}
+              </span>
+            </div>
+            <FLPText color="text.muted" fontSize="xs" style={{ marginTop: "2px" }}>
+              Your real mortgage parameters. Save changes to update your account balance, net worth,
+              and monthly budget.
             </FLPText>
-            <FLPHeading as="h3" size="sm" style={{ marginTop: "2px" }}>
-              Current LTV: {currentLtv.toFixed(1)}% ({formatCurrency(loanAmount)} /{" "}
-              {formatCurrency(propertyValue)})
-            </FLPHeading>
           </div>
-          <span
-            style={{
-              fontSize: "11px",
-              fontWeight: 600,
-              padding: "3px 10px",
-              borderRadius: "999px",
-              backgroundColor: "rgba(99, 102, 241, 0.1)",
-              color: "#6366f1",
-            }}
-          >
-            Ownership share: {baseline.propertyOwnershipSharePct ?? 100}%
-          </span>
+
+          <div>
+            {isEditing ? (
+              <div style={{ display: "flex", gap: "8px" }}>
+                <FLPButton size="sm" variant="ghost" onClick={cancelEditing}>
+                  Cancel
+                </FLPButton>
+                <FLPButton size="sm" variant="primary" onClick={handleSaveMortgageDetails}>
+                  Save
+                </FLPButton>
+              </div>
+            ) : (
+              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                {isSaved && (
+                  <span
+                    style={{
+                      fontSize: "12px",
+                      color: "var(--colors-financial-positive)",
+                      fontWeight: 600,
+                    }}
+                  >
+                    ✓ Saved!
+                  </span>
+                )}
+                <FLPButton size="sm" variant="outline" onClick={startEditing}>
+                  Edit
+                </FLPButton>
+              </div>
+            )}
+          </div>
         </div>
 
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
-            gap: "10px",
-          }}
-        >
-          {ltvMilestones.map((m) => (
+        {isEditing ? (
+          <div
+            className={css({
+              display: "grid",
+              gridTemplateColumns: { base: "1fr", sm: "repeat(2, 1fr)", lg: "repeat(5, 1fr)" },
+              gap: "14px",
+              alignItems: "end",
+            })}
+          >
+            {/* 1. Loan Balance */}
+            <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+              <label
+                htmlFor="hero-mortgage-balance"
+                style={{ fontSize: "12px", fontWeight: 600, color: "var(--colors-text-muted)" }}
+              >
+                Remaining Balance (£)
+              </label>
+              <input
+                id="hero-mortgage-balance"
+                type="number"
+                step="1000"
+                value={editLoanAmount}
+                onChange={(e) => setEditLoanAmount(Number(e.target.value) || 0)}
+                style={{
+                  padding: "8px 12px",
+                  borderRadius: "8px",
+                  border: "1px solid var(--colors-border)",
+                  backgroundColor: "var(--colors-surface-sunken)",
+                  color: "var(--colors-text-primary)",
+                  fontWeight: 700,
+                  fontSize: "14px",
+                  fontFamily: "var(--fonts-mono)",
+                }}
+              />
+            </div>
+
+            {/* 2. Interest Rate */}
+            <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+              <label
+                htmlFor="hero-mortgage-rate"
+                style={{ fontSize: "12px", fontWeight: 600, color: "var(--colors-text-muted)" }}
+              >
+                Interest Rate (%)
+              </label>
+              <input
+                id="hero-mortgage-rate"
+                type="number"
+                step="0.05"
+                value={editInterestRate}
+                onChange={(e) => setEditInterestRate(Number(e.target.value) || 0)}
+                style={{
+                  padding: "8px 12px",
+                  borderRadius: "8px",
+                  border: "1px solid var(--colors-border)",
+                  backgroundColor: "var(--colors-surface-sunken)",
+                  color: "var(--colors-text-primary)",
+                  fontWeight: 700,
+                  fontSize: "14px",
+                  fontFamily: "var(--fonts-mono)",
+                }}
+              />
+            </div>
+
+            {/* 3. Remaining Term */}
+            <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+              <label
+                htmlFor="hero-mortgage-term"
+                style={{ fontSize: "12px", fontWeight: 600, color: "var(--colors-text-muted)" }}
+              >
+                Remaining Term (Years)
+              </label>
+              <input
+                id="hero-mortgage-term"
+                type="number"
+                min="1"
+                max="40"
+                value={editRemainingTerm}
+                onChange={(e) => setEditRemainingTerm(Number(e.target.value) || 1)}
+                style={{
+                  padding: "8px 12px",
+                  borderRadius: "8px",
+                  border: "1px solid var(--colors-border)",
+                  backgroundColor: "var(--colors-surface-sunken)",
+                  color: "var(--colors-text-primary)",
+                  fontWeight: 700,
+                  fontSize: "14px",
+                  fontFamily: "var(--fonts-mono)",
+                }}
+              />
+            </div>
+
+            {/* 4. Payment Type */}
+            <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+              <span
+                style={{ fontSize: "12px", fontWeight: 600, color: "var(--colors-text-muted)" }}
+              >
+                Repayment Type
+              </span>
+              <div style={{ display: "flex", gap: "4px" }}>
+                <button
+                  type="button"
+                  onClick={() => setEditMortgageType("repayment")}
+                  style={{
+                    flex: 1,
+                    padding: "8px 6px",
+                    fontSize: "12px",
+                    fontWeight: 600,
+                    borderRadius: "6px",
+                    border:
+                      editMortgageType === "repayment"
+                        ? "1px solid var(--colors-primary)"
+                        : "1px solid var(--colors-border)",
+                    backgroundColor:
+                      editMortgageType === "repayment" ? "rgba(99, 99, 241, 0.1)" : "transparent",
+                    color:
+                      editMortgageType === "repayment"
+                        ? "var(--colors-primary)"
+                        : "var(--colors-text-muted)",
+                    cursor: "pointer",
+                  }}
+                >
+                  Repayment
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setEditMortgageType("interest-only")}
+                  style={{
+                    flex: 1,
+                    padding: "8px 6px",
+                    fontSize: "12px",
+                    fontWeight: 600,
+                    borderRadius: "6px",
+                    border:
+                      editMortgageType === "interest-only"
+                        ? "1px solid var(--colors-primary)"
+                        : "1px solid var(--colors-border)",
+                    backgroundColor:
+                      editMortgageType === "interest-only"
+                        ? "rgba(99, 99, 241, 0.1)"
+                        : "transparent",
+                    color:
+                      editMortgageType === "interest-only"
+                        ? "var(--colors-primary)"
+                        : "var(--colors-text-muted)",
+                    cursor: "pointer",
+                  }}
+                >
+                  Interest-Only
+                </button>
+              </div>
+            </div>
+
+            {/* 5. Estimated Payment */}
             <div
-              key={m.targetLtvPct}
+              style={{
+                padding: "8px 12px",
+                borderRadius: "8px",
+                backgroundColor: "var(--colors-surface-sunken)",
+                border: "1px solid var(--colors-border-subtle)",
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "center",
+              }}
+            >
+              <span
+                style={{
+                  fontSize: "11px",
+                  fontWeight: 600,
+                  color: "var(--colors-text-muted)",
+                  textTransform: "uppercase",
+                }}
+              >
+                Est. Monthly Payment
+              </span>
+              <strong
+                style={{
+                  fontSize: "16px",
+                  color: "var(--colors-text-primary)",
+                  fontFamily: "var(--fonts-mono)",
+                }}
+                className="tabular-nums"
+              >
+                {formatCurrency(currentMonthlyPayment)}
+                <span
+                  style={{
+                    fontSize: "11px",
+                    fontWeight: "normal",
+                    color: "var(--colors-text-muted)",
+                  }}
+                >
+                  /mo
+                </span>
+              </strong>
+            </div>
+          </div>
+        ) : (
+          <div
+            className={css({
+              display: "grid",
+              gridTemplateColumns: { base: "1fr", sm: "repeat(2, 1fr)", lg: "repeat(5, 1fr)" },
+              gap: "12px",
+            })}
+          >
+            {/* 1. Loan Balance */}
+            <div
               style={{
                 padding: "10px 14px",
                 borderRadius: "8px",
-                backgroundColor: m.isAchieved
-                  ? "rgba(16, 185, 129, 0.08)"
-                  : "rgba(245, 158, 11, 0.08)",
-                border: `1px solid ${
-                  m.isAchieved ? "rgba(16, 185, 129, 0.3)" : "rgba(245, 158, 11, 0.3)"
-                }`,
+                backgroundColor: "var(--colors-surface-sunken)",
+                border: "1px solid var(--colors-border-subtle)",
                 display: "flex",
                 flexDirection: "column",
-                gap: "4px",
+                gap: "2px",
               }}
             >
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                }}
+              <span
+                style={{ fontSize: "11px", fontWeight: 600, color: "var(--colors-text-muted)" }}
               >
-                <span
-                  style={{
-                    fontSize: "12px",
-                    fontWeight: "bold",
-                    color: m.isAchieved ? "#10b981" : "#d97706",
-                  }}
-                >
-                  {m.targetLtvPct}% LTV tier
-                </span>
-                <span
-                  style={{
-                    fontSize: "10px",
-                    fontWeight: 700,
-                    color: m.isAchieved ? "#10b981" : "#d97706",
-                  }}
-                >
-                  {m.isAchieved ? "✓ Unlocked" : "Locked"}
-                </span>
-              </div>
-              <div style={{ fontSize: "11px", color: "var(--colors-text-muted)" }}>
-                {m.isAchieved ? (
-                  "Lowest rate tier active"
-                ) : (
-                  <>
-                    <strong>{formatCurrency(m.lumpSumNeededGbp)}</strong> equity needed
-                    {m.requiredMonthlyOverpaymentBeforeFixGbp && (
-                      <div>
-                        {formatCurrency(m.requiredMonthlyOverpaymentBeforeFixGbp)}/mo to unlock
-                      </div>
-                    )}
-                  </>
-                )}
-              </div>
+                Remaining Balance
+              </span>
+              <strong
+                style={{
+                  fontSize: "15px",
+                  color: "var(--colors-text-primary)",
+                  fontFamily: "var(--fonts-mono)",
+                }}
+                className="tabular-nums"
+              >
+                {formatCurrency(loanAmount)}
+              </strong>
             </div>
-          ))}
-        </div>
-      </div>
+
+            {/* 2. Interest Rate */}
+            <div
+              style={{
+                padding: "10px 14px",
+                borderRadius: "8px",
+                backgroundColor: "var(--colors-surface-sunken)",
+                border: "1px solid var(--colors-border-subtle)",
+                display: "flex",
+                flexDirection: "column",
+                gap: "2px",
+              }}
+            >
+              <span
+                style={{ fontSize: "11px", fontWeight: 600, color: "var(--colors-text-muted)" }}
+              >
+                Interest Rate
+              </span>
+              <strong
+                style={{
+                  fontSize: "15px",
+                  color: "var(--colors-text-primary)",
+                  fontFamily: "var(--fonts-mono)",
+                }}
+                className="tabular-nums"
+              >
+                {interestRate}%
+              </strong>
+            </div>
+
+            {/* 3. Remaining Term */}
+            <div
+              style={{
+                padding: "10px 14px",
+                borderRadius: "8px",
+                backgroundColor: "var(--colors-surface-sunken)",
+                border: "1px solid var(--colors-border-subtle)",
+                display: "flex",
+                flexDirection: "column",
+                gap: "2px",
+              }}
+            >
+              <span
+                style={{ fontSize: "11px", fontWeight: 600, color: "var(--colors-text-muted)" }}
+              >
+                Remaining Term
+              </span>
+              <strong style={{ fontSize: "15px", color: "var(--colors-text-primary)" }}>
+                {remainingTerm} years
+              </strong>
+            </div>
+
+            {/* 4. Payment Type */}
+            <div
+              style={{
+                padding: "10px 14px",
+                borderRadius: "8px",
+                backgroundColor: "var(--colors-surface-sunken)",
+                border: "1px solid var(--colors-border-subtle)",
+                display: "flex",
+                flexDirection: "column",
+                gap: "2px",
+              }}
+            >
+              <span
+                style={{ fontSize: "11px", fontWeight: 600, color: "var(--colors-text-muted)" }}
+              >
+                Repayment Type
+              </span>
+              <strong style={{ fontSize: "15px", color: "var(--colors-text-primary)" }}>
+                {mortgageType === "repayment" ? "Repayment" : "Interest-Only"}
+              </strong>
+            </div>
+
+            {/* 5. Monthly Payment Display */}
+            <div
+              style={{
+                padding: "10px 14px",
+                borderRadius: "8px",
+                backgroundColor: "var(--colors-surface-sunken)",
+                border: "1px solid var(--colors-border-subtle)",
+                display: "flex",
+                flexDirection: "column",
+                gap: "2px",
+              }}
+            >
+              <span
+                style={{ fontSize: "11px", fontWeight: 600, color: "var(--colors-text-muted)" }}
+              >
+                Monthly Payment
+              </span>
+              <strong
+                style={{
+                  fontSize: "15px",
+                  color: "var(--colors-primary)",
+                  fontFamily: "var(--fonts-mono)",
+                }}
+                className="tabular-nums"
+              >
+                {formatCurrency(currentMonthlyPayment)}
+                <span
+                  style={{
+                    fontSize: "11px",
+                    fontWeight: "normal",
+                    color: "var(--colors-text-muted)",
+                  }}
+                >
+                  /mo
+                </span>
+              </strong>
+            </div>
+          </div>
+        )}
+      </FLPCard>
 
       {/* Buy to Let Portfolio Information Card when BTL is active */}
       {propertyCategory === "btl" && (
@@ -608,6 +985,14 @@ const MortgageContainer: FC = () => {
           Mortgage tracker
         </button>
         <button
+          className={tabBtnStyle(activeTab === "milestones")}
+          type="button"
+          onClick={() => setActiveTab("milestones")}
+        >
+          <FaPercentage size={14} />
+          LTV milestones
+        </button>
+        <button
           className={tabBtnStyle(activeTab === "simulator")}
           type="button"
           onClick={() => setActiveTab("simulator")}
@@ -647,9 +1032,172 @@ const MortgageContainer: FC = () => {
         />
       )}
 
+      {activeTab === "milestones" && (
+        <div
+          className={css({
+            padding: "20px 24px",
+            borderRadius: "xl",
+            backgroundColor: "surface",
+            border: "1px solid",
+            borderColor: "border",
+            display: "flex",
+            flexDirection: "column",
+            gap: "16px",
+          })}
+        >
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              flexWrap: "wrap",
+              gap: "8px",
+            }}
+          >
+            <div>
+              <FLPText
+                fontSize="xs"
+                color="text.muted"
+                fontWeight="semibold"
+                textTransform="uppercase"
+              >
+                LTV threshold milestones & interest tiers
+              </FLPText>
+              <FLPHeading as="h3" size="sm" style={{ marginTop: "2px" }}>
+                Current LTV: {currentLtv.toFixed(1)}% ({formatCurrency(loanAmount)} /{" "}
+                {formatCurrency(propertyValue)})
+              </FLPHeading>
+            </div>
+            <span
+              style={{
+                fontSize: "11px",
+                fontWeight: 600,
+                padding: "3px 10px",
+                borderRadius: "999px",
+                backgroundColor: "rgba(99, 102, 241, 0.1)",
+                color: "#6366f1",
+              }}
+            >
+              Ownership share: {baseline.propertyOwnershipSharePct ?? 100}%
+            </span>
+          </div>
+
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+              gap: "12px",
+            }}
+          >
+            {ltvMilestones.map((m) => (
+              <div
+                key={m.targetLtvPct}
+                style={{
+                  padding: "14px 16px",
+                  borderRadius: "10px",
+                  backgroundColor: m.isAchieved
+                    ? "rgba(16, 185, 129, 0.08)"
+                    : "rgba(245, 158, 11, 0.08)",
+                  border: `1px solid ${
+                    m.isAchieved ? "rgba(16, 185, 129, 0.3)" : "rgba(245, 158, 11, 0.3)"
+                  }`,
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "6px",
+                }}
+              >
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                  }}
+                >
+                  <span
+                    style={{
+                      fontSize: "13px",
+                      fontWeight: "bold",
+                      color: m.isAchieved ? "#10b981" : "#d97706",
+                    }}
+                  >
+                    {m.targetLtvPct}% LTV tier
+                  </span>
+                  <span
+                    style={{
+                      fontSize: "11px",
+                      fontWeight: 700,
+                      color: m.isAchieved ? "#10b981" : "#d97706",
+                    }}
+                  >
+                    {m.isAchieved ? "✓ Unlocked" : "Locked"}
+                  </span>
+                </div>
+                <div style={{ fontSize: "12px", color: "var(--colors-text-muted)" }}>
+                  {m.isAchieved ? (
+                    "Lowest rate tier active"
+                  ) : (
+                    <>
+                      <div>
+                        <strong className="tabular-nums">
+                          {formatCurrency(m.lumpSumNeededGbp)}
+                        </strong>{" "}
+                        equity needed
+                      </div>
+                      {m.requiredMonthlyOverpaymentBeforeFixGbp && (
+                        <div style={{ marginTop: "4px" }}>
+                          <span className="tabular-nums">
+                            {formatCurrency(m.requiredMonthlyOverpaymentBeforeFixGbp)}/mo
+                          </span>{" "}
+                          to unlock
+                          <button
+                            type="button"
+                            className={css({
+                              display: "block",
+                              marginTop: "6px",
+                              padding: "4px 10px",
+                              fontSize: "11px",
+                              fontWeight: "semibold",
+                              borderRadius: "md",
+                              border: "1px solid",
+                              borderColor: "warning.500",
+                              backgroundColor: "surface",
+                              color: "warning.500",
+                              cursor: "pointer",
+                              transition: "all 0.15s ease",
+                              "&:hover": {
+                                backgroundColor: "warning.500",
+                                color: "white",
+                              },
+                            })}
+                            onClick={() => {
+                              setOverpayment(m.requiredMonthlyOverpaymentBeforeFixGbp!);
+                              setActiveTab("simulator");
+                            }}
+                          >
+                            Apply {formatCurrency(m.requiredMonthlyOverpaymentBeforeFixGbp)}/mo
+                          </button>
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {activeTab === "simulator" && (
-        <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
-          <RemortgageShockSim currentBalance={loanAmount} currentRate={interestRate} />
+        <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+          <CollapsibleSection
+            title="Remortgage rate shock simulator"
+            subtitle="Model the monthly payment increase when your current fixed-rate deal expires"
+            defaultOpen={false}
+          >
+            <div style={{ padding: "16px 20px" }}>
+              <RemortgageShockSim currentBalance={loanAmount} currentRate={interestRate} />
+            </div>
+          </CollapsibleSection>
           <OverpaymentSimulator
             interestRate={interestRate}
             loanAmount={loanAmount}
