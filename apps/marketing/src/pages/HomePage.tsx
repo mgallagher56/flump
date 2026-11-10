@@ -1,5 +1,4 @@
 import { Button } from "@repo/ui";
-import { css } from "@repo/ui/styled-system/css";
 import { flex, stack } from "@repo/ui/styled-system/patterns";
 import type { FC } from "react";
 import { Helmet } from "react-helmet-async";
@@ -12,6 +11,7 @@ import { Header } from "../components/Header";
 import { HomeFAQ } from "../components/HomeFAQ";
 import { HowItWorksSection } from "../components/HowItWorksSection";
 import { InteractiveFinancialTeaser } from "../components/InteractiveFinancialTeaser";
+import { McpSpotlightSection } from "../components/McpSpotlightSection";
 import { SecurityPrivacySection } from "../components/SecurityPrivacySection";
 import { getAppUrl } from "../utils/url";
 
@@ -166,7 +166,10 @@ export const HomePage: FC = () => {
         {/* Section 05: Security & Privacy (Full-Bleed Contrast Dark Band) */}
         <SecurityPrivacySection />
 
-        {/* Section 06: FAQ Accordion (Subtle Surface Band) */}
+        {/* Section 06: Official Model Context Protocol (MCP) Spotlight */}
+        <McpSpotlightSection />
+
+        {/* Section 07: FAQ Accordion (Subtle Surface Band) */}
         <HomeFAQ />
 
         {/* Final CTA Banner */}

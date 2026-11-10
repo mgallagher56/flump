@@ -112,6 +112,9 @@ export const Footer: FC = () => {
             <a href={`${appUrl}/sandbox`} className={linkStyle} target="_blank" rel="noreferrer">
               Live interactive demo <FiExternalLink style={{ display: "inline" }} size={11} />
             </a>
+            <Link to="/mcp" className={linkStyle}>
+              AI & MCP Protocol
+            </Link>
             <Link to="/pricing" className={linkStyle}>
               Pricing plans
             </Link>
