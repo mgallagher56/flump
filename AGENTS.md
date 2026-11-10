@@ -2,7 +2,9 @@
 
 ## 1. COLOCATED COMPONENT DIRECTORY LAW (MANDATORY)
 
-Never create standalone, flat `.tsx` component files. Every component in `packages/ui` and `apps/web/app/features/*/components` MUST live in its own PascalCase directory with colocated files:
+> **Detailed Reference**: Before creating or editing any component in `packages/ui`, `apps/web`, or `apps/marketing`, read [`docs/agents/component-guidelines.md`](./docs/agents/component-guidelines.md).
+
+Never create standalone, flat `.tsx` component files. Every component in `packages/ui`, `apps/web/app/features/*/components`, and new feature sections/pages in `apps/marketing/src/{components|pages}` MUST live in its own PascalCase directory with colocated files:
 
 - `ComponentName/ComponentName.tsx` (Component implementation)
 - `ComponentName/ComponentName.styles.ts` (Panda CSS `cva` or `sva` recipes—no inline style soup)

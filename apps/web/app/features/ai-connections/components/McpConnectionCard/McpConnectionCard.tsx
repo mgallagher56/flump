@@ -1,5 +1,6 @@
 import { Button, SegmentedTabs, StatusBadge } from "@repo/ui";
 import { css, cx } from "@repo/ui/styled-system/css";
+import { flex, stack } from "@repo/ui/styled-system/patterns";
 import { type FC, useState } from "react";
 import {
   FaCheck,
@@ -221,7 +222,7 @@ export const McpConnectionCard: FC<McpConnectionCardProps> = ({
       {/* Card 1: Connect Live via MCP */}
       <div className={connectionCard()}>
         <div className={headerRow()}>
-          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+          <div className={flex({ align: "center", gap: "2.5" })}>
             <div
               className={css({
                 width: "36px",
@@ -381,7 +382,7 @@ export const McpConnectionCard: FC<McpConnectionCardProps> = ({
             borderColor: "border.subtle",
           })}
         >
-          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+          <div className={flex({ align: "center", gap: "2.5" })}>
             <FaShieldAlt className={css({ color: "primary" })} size={16} />
             <div>
               <span
@@ -436,7 +437,7 @@ export const McpConnectionCard: FC<McpConnectionCardProps> = ({
             id="new-token-banner"
             data-testid="new-token-banner"
           >
-            <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+            <div className={flex({ align: "center", gap: "1.5" })}>
               <FaCheckCircle className={css({ color: "status.positive.text" })} />
               <span
                 className={css({
@@ -488,7 +489,7 @@ export const McpConnectionCard: FC<McpConnectionCardProps> = ({
 
         {/* Generate Token Form or Trigger */}
         {!showGenerateForm ? (
-          <div style={{ display: "flex", justifyContent: "flex-start" }}>
+          <div className={flex({ justify: "flex-start" })}>
             <Button
               id="generate-token-trigger"
               data-testid="generate-token-trigger"
@@ -496,7 +497,7 @@ export const McpConnectionCard: FC<McpConnectionCardProps> = ({
               variant="outline"
               onClick={() => setShowGenerateForm(true)}
             >
-              <FaKey style={{ marginRight: "6px" }} />+ Generate New AI Connection Token
+              <FaKey className={css({ mr: "1.5" })} />+ Generate New AI Connection Token
             </Button>
           </div>
         ) : (
@@ -594,7 +595,7 @@ export const McpConnectionCard: FC<McpConnectionCardProps> = ({
               </div>
             </div>
 
-            <div style={{ display: "flex", justifyContent: "flex-end", gap: "8px" }}>
+            <div className={flex({ justify: "flex-end", gap: "2" })}>
               <Button size="sm" variant="ghost" onClick={() => setShowGenerateForm(false)}>
                 Cancel
               </Button>
@@ -613,7 +614,7 @@ export const McpConnectionCard: FC<McpConnectionCardProps> = ({
         )}
 
         {/* 3-Tab Setup Snippet Box */}
-        <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+        <div className={stack({ gap: "2.5" })}>
           <SegmentedTabs
             aria-label="MCP Client Setup Options"
             items={[
@@ -630,7 +631,7 @@ export const McpConnectionCard: FC<McpConnectionCardProps> = ({
 
           {/* Tab A: Claude Desktop / Cursor */}
           {activeTab === "claude_desktop" && (
-            <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+            <div className={stack({ gap: "3" })}>
               <div
                 className={css({
                   display: "flex",
@@ -701,14 +702,14 @@ export const McpConnectionCard: FC<McpConnectionCardProps> = ({
                   {copiedSnippet ? <FaCheck /> : <FaCopy />}
                   {copiedSnippet ? "Copied" : "Copy Config"}
                 </button>
-                <pre style={{ margin: 0 }}>{claudeDesktopSnippet}</pre>
+                <pre className={css({ m: "0" })}>{claudeDesktopSnippet}</pre>
               </div>
             </div>
           )}
 
           {/* Tab B: Claude Web / ChatGPT Remote MCP */}
           {activeTab === "remote_mcp" && (
-            <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+            <div className={stack({ gap: "3" })}>
               <div
                 className={css({
                   display: "flex",
@@ -815,18 +816,15 @@ export const McpConnectionCard: FC<McpConnectionCardProps> = ({
                     <th className={tokenTableHeader()}>Last Used</th>
                     <th className={tokenTableHeader()}>Tool Calls</th>
                     <th className={tokenTableHeader()}>Status</th>
-                    <th className={tokenTableHeader()} style={{ textAlign: "right" }}>
-                      Action
-                    </th>
+                    <th className={cx(tokenTableHeader(), css({ textAlign: "right" }))}>Action</th>
                   </tr>
                 </thead>
                 <tbody>
                   {tokens.length === 0 ? (
                     <tr>
                       <td
-                        className={tokenTableCell()}
+                        className={cx(tokenTableCell(), css({ textAlign: "center", p: "5" }))}
                         colSpan={7}
-                        style={{ textAlign: "center", padding: "20px" }}
                       >
                         <span className={css({ color: "text.muted" })}>
                           No AI connection tokens generated yet.
@@ -869,7 +867,7 @@ export const McpConnectionCard: FC<McpConnectionCardProps> = ({
                             </StatusBadge>
                           )}
                         </td>
-                        <td className={tokenTableCell()} style={{ textAlign: "right" }}>
+                        <td className={cx(tokenTableCell(), css({ textAlign: "right" }))}>
                           {!tok.isRevoked && (
                             <button
                               aria-label={`Revoke token ${tok.name}`}
@@ -888,7 +886,7 @@ export const McpConnectionCard: FC<McpConnectionCardProps> = ({
                               type="button"
                               onClick={() => handleRevoke(tok.id)}
                             >
-                              <FaTrash style={{ marginRight: "4px" }} />
+                              <FaTrash className={css({ mr: "1" })} />
                               Revoke
                             </button>
                           )}
@@ -910,7 +908,7 @@ export const McpConnectionCard: FC<McpConnectionCardProps> = ({
         data-testid="offline-context-pack-card"
       >
         <div className={headerRow()}>
-          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+          <div className={flex({ align: "center", gap: "2.5" })}>
             <div
               className={css({
                 width: "36px",
@@ -951,7 +949,7 @@ export const McpConnectionCard: FC<McpConnectionCardProps> = ({
           </div>
         </div>
 
-        <div style={{ display: "flex", gap: "12px", flexWrap: "wrap", alignItems: "center" }}>
+        <div className={flex({ gap: "3", flexWrap: "wrap", align: "center" })}>
           <Button
             id="copy-context-pack-btn"
             data-testid="copy-context-pack-btn"
@@ -961,9 +959,9 @@ export const McpConnectionCard: FC<McpConnectionCardProps> = ({
             onClick={() => handleExportContextPack("clipboard")}
           >
             {exportedSuccess ? (
-              <FaCheck style={{ marginRight: "6px" }} />
+              <FaCheck className={css({ mr: "1.5" })} />
             ) : (
-              <FaCopy style={{ marginRight: "6px" }} />
+              <FaCopy className={css({ mr: "1.5" })} />
             )}
             {exportedSuccess ? "Copied to Clipboard!" : "Copy Context Pack to Clipboard"}
           </Button>
@@ -976,7 +974,7 @@ export const McpConnectionCard: FC<McpConnectionCardProps> = ({
             variant="outline"
             onClick={() => handleExportContextPack("markdown")}
           >
-            <FaDownload style={{ marginRight: "6px" }} />
+            <FaDownload className={css({ mr: "1.5" })} />
             Download .md
           </Button>
 
@@ -988,7 +986,7 @@ export const McpConnectionCard: FC<McpConnectionCardProps> = ({
             variant="outline"
             onClick={() => handleExportContextPack("json")}
           >
-            <FaDownload style={{ marginRight: "6px" }} />
+            <FaDownload className={css({ mr: "1.5" })} />
             Download .json
           </Button>
         </div>
