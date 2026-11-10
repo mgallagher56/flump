@@ -19,6 +19,7 @@
     "format": "biome check --write .",
     "test": "turbo run test",
     "test:coverage": "turbo run test:coverage",
+    "test:storybook": "bun run --cwd apps/web test:storybook",
     "check-types": "turbo run check-types",
     "verify": "turbo run verify",
     "prepare": "husky"

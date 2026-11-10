@@ -13,34 +13,34 @@ export interface FLPBadgeProps extends HTMLAttributes<HTMLSpanElement> {
 
 const variantStyles: Record<FLPBadgeVariant, string> = {
   positive: css({
-    backgroundColor: "financial.positiveBg",
-    color: "financial.positive",
-    borderColor: "financial.positiveBorder",
+    backgroundColor: "status.positive.bg",
+    color: "status.positive.text",
+    borderColor: "status.positive.border",
   }),
   warning: css({
-    backgroundColor: "financial.warningBg",
-    color: "financial.warning",
-    borderColor: "financial.warningBorder",
+    backgroundColor: "status.warning.bg",
+    color: "status.warning.text",
+    borderColor: "status.warning.border",
   }),
   negative: css({
-    backgroundColor: "financial.negativeBg",
-    color: "financial.negative",
-    borderColor: "financial.negativeBorder",
+    backgroundColor: "status.danger.bg",
+    color: "status.danger.text",
+    borderColor: "status.danger.border",
   }),
   neutral: css({
-    backgroundColor: "financial.neutralBg",
-    color: "financial.neutral",
-    borderColor: "financial.neutralBorder",
+    backgroundColor: "status.neutral.bg",
+    color: "status.neutral.text",
+    borderColor: "status.neutral.border",
   }),
   info: css({
-    backgroundColor: "info.bg",
-    color: "info.DEFAULT",
-    borderColor: "info.border",
+    backgroundColor: "status.info.bg",
+    color: "status.info.text",
+    borderColor: "status.info.border",
   }),
   brand: css({
-    backgroundColor: "surface.tinted",
+    backgroundColor: "primary.subtle",
     color: "primary",
-    borderColor: "border.subtle",
+    borderColor: "primary.border",
   }),
 };
 

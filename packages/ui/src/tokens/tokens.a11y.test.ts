@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { colors, fontSizes, fonts } from "./index";
+import { colors, fontSizes, fonts, semanticTokens } from "./index";
 
 // Standard WCAG relative luminance calculation
 function getLuminance(hex: string): number {
@@ -35,6 +35,47 @@ describe("Tokens & Typography A11y Suite", () => {
     expect(fonts.mono.value).toContain("JetBrains Mono");
   });
 
+  it("enforces the 6 canonical semantic token namespaces and eliminates redundancies", () => {
+    const namespaces = Object.keys(semanticTokens.colors);
+    expect(namespaces.sort()).toEqual(
+      ["border", "chart", "primary", "status", "surface", "text"].sort(),
+    );
+
+    const legacyNamespaces = [
+      "financial",
+      "background",
+      "canvas",
+      "card",
+      "popover",
+      "muted",
+      "accent",
+      "secondary",
+      "destructive",
+      "success",
+      "warning",
+      "info",
+      "ring",
+    ];
+
+    for (const legacy of legacyNamespaces) {
+      expect(semanticTokens.colors).not.toHaveProperty(legacy);
+    }
+  });
+
+  it("removes duplicate dark.bg and trims purple and cyan to active steps", () => {
+    expect((colors.dark as any).bg).toBeUndefined();
+    expect(
+      Object.keys(colors.purple)
+        .map(Number)
+        .sort((a, b) => a - b),
+    ).toEqual([100, 400, 500, 600]);
+    expect(
+      Object.keys(colors.cyan)
+        .map(Number)
+        .sort((a, b) => a - b),
+    ).toEqual([100, 400, 500, 600]);
+  });
+
   it("verifies Light Mode primary text contrast exceeds WCAG AAA (7.0:1) on canvas", () => {
     const textPrimary = colors.slate[900].value;
     const canvasBg = "#ffffff";
@@ -63,23 +104,15 @@ describe("Tokens & Typography A11y Suite", () => {
   it("verifies semantic status color contrasts meet WCAG standards on their badges", () => {
     // Success badge light: text on light green bg
     expect(
-      getContrastRatio(colors.success[800].value, colors.success[50].value),
+      getContrastRatio(colors.success[700].value, colors.success[50].value),
     ).toBeGreaterThanOrEqual(4.5);
     // Warning badge light: text on light amber bg
     expect(
-      getContrastRatio(colors.warning[800].value, colors.warning[50].value),
+      getContrastRatio(colors.warning[700].value, colors.warning[50].value),
     ).toBeGreaterThanOrEqual(4.5);
     // Danger badge light: text on light red bg
     expect(
-      getContrastRatio(colors.destructive[800].value, colors.destructive[50].value),
+      getContrastRatio(colors.destructive[700].value, colors.destructive[50].value),
     ).toBeGreaterThanOrEqual(4.5);
-    // Purple badge light: text on light purple bg
-    expect(
-      getContrastRatio(colors.purple[800].value, colors.purple[50].value),
-    ).toBeGreaterThanOrEqual(4.5);
-    // Cyan badge light: text on light cyan bg
-    expect(getContrastRatio(colors.cyan[800].value, colors.cyan[50].value)).toBeGreaterThanOrEqual(
-      4.5,
-    );
   });
 });

@@ -78,15 +78,15 @@ export const AnnualAllowancePill: FC<AnnualAllowancePillProps> = ({
               width: "32px",
               height: "32px",
               borderRadius: "md",
-              backgroundColor: isIsa ? "financial.positiveBg" : "surface.tinted",
-              color: isIsa ? "financial.positive" : "primary",
+              backgroundColor: isIsa ? "status.positive.bg" : "primary.subtle",
+              color: isIsa ? "status.positive.text" : "primary",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
               fontSize: "15px",
               borderWidth: "1px",
               borderStyle: "solid",
-              borderColor: isIsa ? "financial.positiveBorder" : "border.subtle",
+              borderColor: isIsa ? "status.positive.border" : "border.subtle",
               flexShrink: 0,
             })}
           >

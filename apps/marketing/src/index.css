@@ -12,7 +12,7 @@
     font-size: 1rem;
     line-height: 1.6;
     font-style: normal;
-    background-color: var(--colors-background);
+    background-color: var(--colors-surface-canvas);
     color: var(--colors-text-primary);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;

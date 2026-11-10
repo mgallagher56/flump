@@ -8,6 +8,7 @@ export interface MockRouterContextType {
     Form: (props: { children: ReactNode; [key: string]: any }) => ReactElement;
   };
   navigate: (to: string, options?: any) => void;
+  location?: { pathname: string; search: string; hash: string; state: any; key: string };
 }
 
 export const StorybookRouterContext = createContext<MockRouterContextType>({
@@ -18,11 +19,17 @@ export const StorybookRouterContext = createContext<MockRouterContextType>({
     Form: ({ children, ...props }) => <form {...props}>{children}</form>,
   },
   navigate: () => {},
+  location: { pathname: "/", search: "", hash: "", state: null, key: "default" },
 });
 
 export const useLoaderData = () => {
   const context = useContext(StorybookRouterContext);
   return context.loaderData;
+};
+
+export const useRouteLoaderData = (routeId: string) => {
+  const context = useContext(StorybookRouterContext);
+  return context.loaderData?.[routeId] ?? context.loaderData;
 };
 
 export const useFetcher = () => {
@@ -33,6 +40,28 @@ export const useFetcher = () => {
 export const useNavigate = () => {
   const context = useContext(StorybookRouterContext);
   return context.navigate;
+};
+
+export const useLocation = () => {
+  const context = useContext(StorybookRouterContext);
+  return context.location || { pathname: "/", search: "", hash: "", state: null, key: "default" };
+};
+
+export const useSearchParams = () => {
+  const [params, setParams] = [new URLSearchParams(), () => {}];
+  return [params, setParams] as const;
+};
+
+export const useRevalidator = () => {
+  return { revalidate: () => {}, state: "idle" as const };
+};
+
+export const useNavigation = () => {
+  return { state: "idle" as const, location: undefined };
+};
+
+export const useSubmit = () => {
+  return () => {};
 };
 
 export const Link = ({ to, children, className, ...props }: any) => {
@@ -66,8 +95,14 @@ export const useMatches = () => {
 
 const mockReactRouter = {
   useLoaderData,
+  useRouteLoaderData,
   useFetcher,
   useNavigate,
+  useLocation,
+  useSearchParams,
+  useRevalidator,
+  useNavigation,
+  useSubmit,
   Link,
   NavLink,
   useMatches,
