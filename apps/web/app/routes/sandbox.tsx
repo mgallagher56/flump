@@ -52,8 +52,8 @@ const pillStyle = (active: boolean) =>
   });
 
 const saveButtonStyle = css({
-  backgroundColor: "success",
-  color: "success.foreground",
+  backgroundColor: "status.positive.solid",
+  color: "text.onContrast",
   border: "none",
   borderRadius: "lg",
   padding: "6px 14px",
@@ -63,8 +63,8 @@ const saveButtonStyle = css({
   display: "inline-flex",
   alignItems: "center",
   gap: "6px",
-  transition: "background-color 0.15s ease",
-  _hover: { backgroundColor: "success.hover" },
+  transition: "opacity 0.15s ease",
+  _hover: { opacity: 0.9 },
 });
 
 export const loader = async (_args: LoaderFunctionArgs) => {

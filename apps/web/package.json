@@ -84,8 +84,9 @@
     "typecheck": "react-router typegen && tsc",
     "check-types": "bun run typecheck",
     "prepare": "panda codegen && react-router typegen",
-    "storybook": "cross-env STORYBOOK=true storybook dev -p 6006",
-    "build-storybook": "cross-env STORYBOOK=true storybook build"
+    "storybook": "cross-env STORYBOOK=true STORYBOOK_DISABLE_TELEMETRY=1 storybook dev -p 6006 --disable-telemetry",
+    "build-storybook": "cross-env STORYBOOK=true STORYBOOK_DISABLE_TELEMETRY=1 storybook build --disable-telemetry",
+    "test:storybook": "cross-env STORYBOOK=true STORYBOOK_DISABLE_TELEMETRY=1 storybook build --test --disable-telemetry"
   },
   "lint-staged": {
     "app/**/*.{js,jsx,ts,tsx,json,css,md}": "biome check --write"

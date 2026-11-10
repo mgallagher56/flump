@@ -222,6 +222,33 @@ Flump is a monorepo managed with Turborepo (`turbo`) and Bun.
 - **No AI Slop or Pseudo-Engineering Jargon**: Avoid melodramatic or speculative buzzwords (`engineered for`, `zero-latency`, `air-gapped`, `cryptographic vault`, `crush your debt`, `defuse promotional cliffs`). Use grounded, pragmatic, and direct language.
 - **Consult & Maintain `docs/copy-style-guide.md`**: Whenever copy, routes, or features are introduced or modified, the agent **MUST** consult `docs/copy-style-guide.md` and ensure full consistency. If new terms or domain concepts are introduced, update `docs/copy-style-guide.md` in the same commit.
 
+### 23. Institutional-Grade Frontend Architecture & Design System Laws
+
+- **Colocated Component Directory Law (Mandatory)**: Never create standalone, flat `.tsx` component files. Every component in `packages/ui` and `apps/web/app/features/*/components` MUST live in its own PascalCase directory with colocated files:
+  - `ComponentName/ComponentName.tsx` (Component implementation)
+  - `ComponentName/ComponentName.styles.ts` (Panda CSS `cva` or `sva` recipes—no inline style soup)
+  - `ComponentName/ComponentName.stories.tsx` (Storybook visual states + `play()` interaction test)
+  - `ComponentName/ComponentName.test.tsx` (Vitest unit test)
+  - `ComponentName/index.ts` (Barrel export)
+- **Zero Raw Hex/RGB or Primitive Token Leaks**: Components may NEVER use hardcoded hex values (`#141A26`) or raw primitive scale tokens (`indigo.600`, `slate.800`, `success.500`, `purple.500`, `cyan.400`). Always use the 6 canonical semantic namespaces:
+  - `surface.*` (`canvas`, `card`, `sunken`, `subtle`, `overlay`, `contrast`)
+  - `text.*` (`primary`, `secondary`, `muted`, `onContrast`)
+  - `border.*` (`DEFAULT`, `subtle`, `strong`, `input`, `focusRing`)
+  - `primary.*` (`DEFAULT`, `hover`, `subtle`, `border`, `foreground`)
+  - `status.{positive|warning|danger|info|neutral}.{text|bg|border|solid}`
+  - `chart.*` (`primary`, `wealth`, `debt`, `warning`, `accentPurple`, `accentCyan`, `grid`, `series1`..`series5`)
+- **Tabular Numbers on All Financial Data**: Every currency value, percentage, date, table cell, and slider badge MUST apply `fontVariantNumeric: 'tabular-nums'` (`tabular-nums`) and format numbers via standard UK formatting (`Intl.NumberFormat('en-GB')` / `useFormatCurrency()`).
+- **Progressive Disclosure & Layout Laws**:
+  - **Single-Row KPI Strip**: Top-level page metrics must use `<KpiStrip>` (`lg:grid-cols-4` or `3`, max 4 items in a single horizontal row—never a tall 2x2 grid).
+  - **2-Column Simulator Split**: Any calculator or forecaster (`/debt`, `/mortgage`, `/pension`, `/forecast`) must use `<SimulatorSplitLayout>` (`lg:col-span-5` or `4` sticky left parameter controls + `lg:col-span-7` or `8` right visual chart & outcome cards). Never stack slider parameters full-width above the chart they control.
+  - **Compact Slider Inputs**: Always use `<SliderField>` (Label top-left, compact editable value pill top-right, slider below). Never render a full-width text input box below a slider.
+  - **No Uncollapsed Raw Schedules**: Any table exceeding 8 rows (Amortisation schedules, 12-month ledgers, multi-year tax tables) must live inside a `<CollapsibleDrawer>` or secondary tab.
+- **Definition of Done for Any UI Change**:
+  1. Follows the colocated directory structure.
+  2. Has a `.stories.tsx` file rendering in both Light and Dark mode with zero `@storybook/addon-a11y` violations.
+  3. Interactive states are covered by a `.test.tsx` or Storybook `play()` test.
+  4. `bun run check-types` and `bun run test` pass with zero errors.
+
 ---
 
 ## Coding Guidelines (Style & Lint)

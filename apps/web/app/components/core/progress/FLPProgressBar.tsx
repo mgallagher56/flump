@@ -16,9 +16,9 @@ export interface FLPProgressBarProps {
 
 const variantFillMap: Record<ProgressBarVariant, string> = {
   primary: "primary",
-  positive: "financial.positive",
-  warning: "financial.warning",
-  negative: "financial.negative",
+  positive: "status.positive.solid",
+  warning: "status.warning.solid",
+  negative: "status.danger.solid",
 };
 
 export const FLPProgressBar: FC<FLPProgressBarProps> = ({

@@ -6,7 +6,7 @@ import { css } from "../../styled-system/css/index.js";
 import { Button } from "../components/forms/Button.js";
 
 const cardStyle = css({
-  backgroundColor: "surface",
+  backgroundColor: "surface.card",
   border: "1px solid",
   borderColor: "border",
   borderRadius: "2xl",
@@ -35,13 +35,13 @@ const textInputStyle = css({
   borderRadius: "lg",
   border: "1px solid",
   borderColor: "border",
-  backgroundColor: "background",
+  backgroundColor: "surface.canvas",
   color: "text.primary",
   fontSize: "15px",
 });
 
 const resultsBoxStyle = css({
-  backgroundColor: "background",
+  backgroundColor: "surface.canvas",
   border: "1px solid",
   borderColor: "border",
   borderRadius: "xl",

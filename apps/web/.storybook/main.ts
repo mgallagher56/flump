@@ -12,6 +12,7 @@ const config: StorybookConfig = {
   stories: [
     "../app/**/*.stories.@(js|jsx|mjs|ts|tsx)",
     "../../../packages/ui/src/**/*.stories.@(js|jsx|mjs|ts|tsx)",
+    "../../../apps/marketing/src/**/*.stories.@(js|jsx|mjs|ts|tsx)",
   ],
   addons: [
     getAbsolutePath("@chromatic-com/storybook"),
@@ -34,6 +35,8 @@ const config: StorybookConfig = {
           ...config.resolve?.alias,
           "~": resolve(__dirname, "../app"),
           "react-router": resolve(__dirname, "./react-router-mock.tsx"),
+          "react-router-dom": resolve(__dirname, "./react-router-mock.tsx"),
+          "@storybook/test": resolve(__dirname, "../node_modules/storybook/dist/test/index.js"),
         },
       },
     };

@@ -39,7 +39,7 @@ export default defineConfig({
   // Global styles
   globalCss: {
     body: {
-      bg: "background",
+      bg: "surface.canvas",
       color: "text.primary",
     },
   },

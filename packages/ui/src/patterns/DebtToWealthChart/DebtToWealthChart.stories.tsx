@@ -1,0 +1,21 @@
+import type { Meta, StoryObj } from "@storybook/react";
+import { expect, within } from "@storybook/test";
+import { DebtToWealthChart } from "./DebtToWealthChart";
+
+const meta: Meta<typeof DebtToWealthChart> = {
+  title: "3. Financial Patterns & Sections/DebtToWealthChart",
+  component: DebtToWealthChart,
+  parameters: {
+    layout: "centered",
+  },
+};
+
+export default meta;
+type Story = StoryObj<typeof DebtToWealthChart>;
+
+export const Default: Story = {
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await expect(canvas.getByText("The Debt-to-Wealth Crossover Bridge")).toBeInTheDocument();
+  },
+};

@@ -34,7 +34,7 @@ exports[`<AccountsCard /> > it renders an AccountsCard component with title as e
             <button
               aria-expanded="false"
               aria-haspopup="dialog"
-              class="d_inline-flex ai_center jc_center bdr_md fw_medium trs_all_0.15s_ease cursor_pointer lh_1 disabled:op_0.5 disabled:cursor_not-allowed focusVisible:ring_2px_solid focusVisible:ring-c_primary focusVisible:ring-o_2px bg_transparent c_text.primary hover:bg_surface.subtle h_10 w_10 px_0"
+              class="d_inline-flex ai_center jc_center bdr_md fw_semibold trs_all_0.15s_ease cursor_pointer lh_1 td_none disabled:op_0.5 disabled:cursor_not-allowed focusVisible:ring_2px_solid focusVisible:ring-c_border.focusRing focusVisible:ring-o_2px bg_transparent c_text.primary hover:bg_surface.subtle h_10 w_10 px_0"
               data-state="closed"
               style="border-radius: 50%; width: 32px; height: 32px; padding: 0px;"
               type="button"
@@ -64,7 +64,7 @@ exports[`<AccountsCard /> > it renders an AccountsCard component with title as e
             £12,000
           </span>
           <span
-            class="d_inline-flex ai_center gap_4px bdr_full fw_semibold bd-w_1px border-style_solid fv-num_tabular-nums white-space_nowrap bg-c_financial.positiveBg c_financial.positive bd-c_financial.positiveBorder p_2px_8px fs_xs lh_1.25"
+            class="d_inline-flex ai_center gap_4px bdr_full fw_semibold bd-w_1px border-style_solid fv-num_tabular-nums white-space_nowrap bg-c_status.positive.bg c_status.positive.text bd-c_status.positive.border p_2px_8px fs_xs lh_1.25"
           >
             ↑
              
@@ -123,7 +123,7 @@ exports[`<AccountsCard with increasing values > should match snapshot for accoun
             <button
               aria-expanded="false"
               aria-haspopup="dialog"
-              class="d_inline-flex ai_center jc_center bdr_md fw_medium trs_all_0.15s_ease cursor_pointer lh_1 disabled:op_0.5 disabled:cursor_not-allowed focusVisible:ring_2px_solid focusVisible:ring-c_primary focusVisible:ring-o_2px bg_transparent c_text.primary hover:bg_surface.subtle h_10 w_10 px_0"
+              class="d_inline-flex ai_center jc_center bdr_md fw_semibold trs_all_0.15s_ease cursor_pointer lh_1 td_none disabled:op_0.5 disabled:cursor_not-allowed focusVisible:ring_2px_solid focusVisible:ring-c_border.focusRing focusVisible:ring-o_2px bg_transparent c_text.primary hover:bg_surface.subtle h_10 w_10 px_0"
               data-state="closed"
               style="border-radius: 50%; width: 32px; height: 32px; padding: 0px;"
               type="button"
@@ -153,7 +153,7 @@ exports[`<AccountsCard with increasing values > should match snapshot for accoun
             £9,000
           </span>
           <span
-            class="d_inline-flex ai_center gap_4px bdr_full fw_semibold bd-w_1px border-style_solid fv-num_tabular-nums white-space_nowrap bg-c_financial.negativeBg c_financial.negative bd-c_financial.negativeBorder p_2px_8px fs_xs lh_1.25"
+            class="d_inline-flex ai_center gap_4px bdr_full fw_semibold bd-w_1px border-style_solid fv-num_tabular-nums white-space_nowrap bg-c_status.danger.bg c_status.danger.text bd-c_status.danger.border p_2px_8px fs_xs lh_1.25"
           >
             ↓
              

@@ -70,7 +70,7 @@ export const GlobalBaselineScenarioBar: FC = () => {
   return (
     <div
       className={css({
-        backgroundColor: isActive ? "rgba(99, 99, 241, 0.08)" : "card",
+        backgroundColor: isActive ? "primary.subtle" : "surface.card",
         border: "1px solid",
         borderColor: isActive ? "primary" : "border",
         borderRadius: "xl",
@@ -156,7 +156,7 @@ export const GlobalBaselineScenarioBar: FC = () => {
               borderRadius: "md",
               fontSize: "xs",
               fontWeight: "semibold",
-              backgroundColor: "secondary",
+              backgroundColor: "surface.subtle",
               color: "text.primary",
               border: "1px solid",
               borderColor: "border",

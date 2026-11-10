@@ -6,7 +6,7 @@ import { css } from "../../styled-system/css/index.js";
 import { Button } from "../components/forms/Button.js";
 
 const cardStyle = css({
-  backgroundColor: "surface",
+  backgroundColor: "surface.card",
   border: "1px solid",
   borderColor: "border",
   borderRadius: "2xl",
@@ -38,7 +38,7 @@ const metricsGridStyle = css({
 });
 
 const metricCard = css({
-  backgroundColor: "background",
+  backgroundColor: "surface.canvas",
   border: "1px solid",
   borderColor: "border",
   borderRadius: "xl",

@@ -6,12 +6,12 @@ exports[`FLPButtonGroup > renders as expected 1`] = `
     class="d_flex flex-d_row ai_center gap_8px "
   >
     <button
-      class="d_inline-flex ai_center jc_center bdr_md fw_medium trs_all_0.15s_ease cursor_pointer lh_1 disabled:op_0.5 disabled:cursor_not-allowed focusVisible:ring_2px_solid focusVisible:ring-c_primary focusVisible:ring-o_2px bg_primary c_primary.foreground hover:bg_primary.hover px_4 py_2.5 fs_sm min-h_10"
+      class="d_inline-flex ai_center jc_center bdr_md fw_semibold trs_all_0.15s_ease cursor_pointer lh_1 td_none disabled:op_0.5 disabled:cursor_not-allowed focusVisible:ring_2px_solid focusVisible:ring-c_border.focusRing focusVisible:ring-o_2px bg_primary c_primary.foreground hover:bg_primary.hover px_4 py_2.5 fs_sm min-h_10"
     >
       Button 1
     </button>
     <button
-      class="d_inline-flex ai_center jc_center bdr_md fw_medium trs_all_0.15s_ease cursor_pointer lh_1 disabled:op_0.5 disabled:cursor_not-allowed focusVisible:ring_2px_solid focusVisible:ring-c_primary focusVisible:ring-o_2px bg_primary c_primary.foreground hover:bg_primary.hover px_4 py_2.5 fs_sm min-h_10"
+      class="d_inline-flex ai_center jc_center bdr_md fw_semibold trs_all_0.15s_ease cursor_pointer lh_1 td_none disabled:op_0.5 disabled:cursor_not-allowed focusVisible:ring_2px_solid focusVisible:ring-c_border.focusRing focusVisible:ring-o_2px bg_primary c_primary.foreground hover:bg_primary.hover px_4 py_2.5 fs_sm min-h_10"
     >
       Button 2
     </button>

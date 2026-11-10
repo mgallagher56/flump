@@ -21,6 +21,22 @@ i18n.use(initReactI18next).init({
 });
 
 const preview: Preview = {
+  globalTypes: {
+    theme: {
+      description: "Theme selector for components",
+      defaultValue: "side-by-side",
+      toolbar: {
+        title: "Theme Mode",
+        icon: "circlehollow",
+        items: [
+          { value: "side-by-side", title: "Side-by-Side (Light & Dark)", icon: "mirror" },
+          { value: "light", title: "Light Mode", icon: "sun" },
+          { value: "dark", title: "Dark Mode", icon: "moon" },
+        ],
+        dynamicTitle: true,
+      },
+    },
+  },
   parameters: {
     controls: {
       matchers: {
@@ -29,43 +45,123 @@ const preview: Preview = {
       },
     },
     a11y: {
-      test: "todo",
+      config: {
+        rules: [
+          {
+            id: "color-contrast",
+            enabled: true,
+          },
+        ],
+      },
     },
     backgrounds: {
-      default: "dark",
+      default: "canvas",
       values: [
         {
+          name: "canvas",
+          value: "#f8fafc",
+        },
+        {
           name: "dark",
-          value: "#16181D",
+          value: "#0B0F17",
         },
       ],
     },
   },
   decorators: [
     (Story, context) => {
-      // Mock router configuration using story parameters
+      const selectedTheme = context.globals.theme || "side-by-side";
       const routerParams = context.parameters.router || {};
       const routerValue = {
         loaderData: routerParams.loaderData || {},
         fetcher: routerParams.fetcher || {
-          submit: (_data: any, _options: any) => {
-            // mock: no-op
-          },
+          submit: () => {},
           state: routerParams.fetcherState || "idle",
           Form: ({ children, ...props }: any) => <form {...props}>{children}</form>,
         },
-        navigate: (_to: string) => {
-          // mock: no-op
-        },
+        navigate: () => {},
       };
+
+      if (selectedTheme === "side-by-side") {
+        return (
+          <StorybookRouterContext.Provider value={routerValue}>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "1fr 1fr",
+                minHeight: "100vh",
+                width: "100%",
+                fontFamily: "var(--fonts-sans, 'Inter', sans-serif)",
+              }}
+            >
+              {/* Light Mode Pane */}
+              <div
+                data-theme="light"
+                style={{
+                  backgroundColor: "#f8fafc",
+                  color: "#0f172a",
+                  padding: "24px",
+                  borderRight: "1px solid #e2e8f0",
+                  minHeight: "100vh",
+                }}
+              >
+                <div
+                  style={{
+                    fontSize: "11px",
+                    fontWeight: 700,
+                    textTransform: "uppercase",
+                    letterSpacing: "0.08em",
+                    color: "#64748b",
+                    marginBottom: "16px",
+                  }}
+                >
+                  ☀️ Light Mode (surface.canvas)
+                </div>
+                <Story />
+              </div>
+
+              {/* Dark Mode Pane */}
+              <div
+                className="dark"
+                data-theme="dark"
+                style={{
+                  backgroundColor: "#0B0F17",
+                  color: "#f8fafc",
+                  padding: "24px",
+                  minHeight: "100vh",
+                }}
+              >
+                <div
+                  style={{
+                    fontSize: "11px",
+                    fontWeight: 700,
+                    textTransform: "uppercase",
+                    letterSpacing: "0.08em",
+                    color: "#94a3b8",
+                    marginBottom: "16px",
+                  }}
+                >
+                  🌙 Dark Mode (dark.canvas)
+                </div>
+                <Story />
+              </div>
+            </div>
+          </StorybookRouterContext.Provider>
+        );
+      }
+
+      const isDark = selectedTheme === "dark";
 
       return (
         <StorybookRouterContext.Provider value={routerValue}>
           <div
+            className={isDark ? "dark" : ""}
+            data-theme={isDark ? "dark" : "light"}
             style={{
-              fontFamily: "Poppins, sans-serif",
-              color: "#ffffff",
-              padding: "2rem",
+              fontFamily: "var(--fonts-sans, 'Inter', sans-serif)",
+              backgroundColor: isDark ? "#0B0F17" : "#f8fafc",
+              color: isDark ? "#f8fafc" : "#0f172a",
+              padding: "24px",
               minHeight: "100vh",
             }}
           >

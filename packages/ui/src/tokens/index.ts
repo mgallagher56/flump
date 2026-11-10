@@ -32,7 +32,6 @@ export const colors = {
   dark: {
     canvas: { value: "#0B0F17" },
     subtle: { value: "#111622" },
-    bg: { value: "#111622" },
     surface: { value: "#141A26" },
     surfaceSunken: { value: "#0D121D" },
     surfaceOverlay: { value: "#182030" },
@@ -86,26 +85,16 @@ export const colors = {
     800: { value: "#991b1b" },
   },
   purple: {
-    50: { value: "#faf5ff" },
     100: { value: "#f3e8ff" },
-    200: { value: "#e9d5ff" },
-    300: { value: "#d8b4fe" },
     400: { value: "#c084fc" },
     500: { value: "#8b5cf6" },
     600: { value: "#7c3aed" },
-    700: { value: "#6d28d9" },
-    800: { value: "#5b21b6" },
   },
   cyan: {
-    50: { value: "#ecfeff" },
     100: { value: "#cffafe" },
-    200: { value: "#a5f3fc" },
-    300: { value: "#67e8f9" },
     400: { value: "#22d3ee" },
     500: { value: "#06b6d4" },
     600: { value: "#0891b2" },
-    700: { value: "#0e7490" },
-    800: { value: "#155e75" },
   },
 } as const;
 
@@ -181,106 +170,92 @@ export const shadows = {
 // Universal Mapping (Consumed by Panda CSS)
 export const semanticTokens = {
   colors: {
+    // 1. Brand & Interactive Primary
     primary: {
-      DEFAULT: { value: { base: "{colors.indigo.600}", _dark: "{colors.indigo.400}" } },
-      hover: { value: { base: "{colors.indigo.700}", _dark: "{colors.indigo.300}" } },
+      DEFAULT: { value: { base: "{colors.indigo.600}", _dark: "{colors.indigo.500}" } },
+      hover: { value: { base: "{colors.indigo.700}", _dark: "{colors.indigo.400}" } },
+      subtle: { value: { base: "{colors.indigo.50}", _dark: "rgba(99, 102, 241, 0.12)" } },
+      border: { value: { base: "{colors.indigo.200}", _dark: "rgba(99, 102, 241, 0.30)" } },
       foreground: { value: "#ffffff" },
     },
-    canvas: {
-      DEFAULT: { value: { base: "{colors.slate.50}", _dark: "{colors.dark.canvas}" } },
-    },
-    background: {
-      DEFAULT: { value: { base: "{colors.slate.50}", _dark: "{colors.dark.canvas}" } },
-    },
+
+    // 2. Layered Surfaces (Canonical surface namespace)
     surface: {
       DEFAULT: { value: { base: "#ffffff", _dark: "{colors.dark.surface}" } },
+      canvas: { value: { base: "{colors.slate.50}", _dark: "{colors.dark.canvas}" } },
+      card: { value: { base: "#ffffff", _dark: "{colors.dark.surface}" } },
       sunken: { value: { base: "{colors.slate.100}", _dark: "{colors.dark.surfaceSunken}" } },
       subtle: { value: { base: "{colors.slate.100}", _dark: "{colors.dark.subtle}" } },
       overlay: { value: { base: "#ffffff", _dark: "{colors.dark.surfaceOverlay}" } },
-      tinted: { value: { base: "{colors.indigo.50}", _dark: "rgba(99, 102, 241, 0.07)" } },
       contrast: { value: { base: "{colors.slate.900}", _dark: "{colors.dark.contrast}" } },
-      contrastForeground: { value: { base: "#ffffff", _dark: "#f8fafc" } },
     },
+
+    // 3. Typography Hierarchy
     text: {
       primary: { value: { base: "{colors.slate.900}", _dark: "#f8fafc" } },
       secondary: { value: { base: "{colors.slate.700}", _dark: "{colors.slate.300}" } },
       muted: { value: { base: "{colors.slate.600}", _dark: "{colors.slate.400}" } },
+      onContrast: { value: { base: "#ffffff", _dark: "#f8fafc" } },
     },
+
+    // 4. Hairline & Interactive Borders
     border: {
       DEFAULT: { value: { base: "{colors.slate.200}", _dark: "{colors.dark.border}" } },
       subtle: { value: { base: "rgba(15, 23, 42, 0.06)", _dark: "{colors.dark.borderSubtle}" } },
       strong: { value: { base: "{colors.slate.300}", _dark: "rgba(255, 255, 255, 0.16)" } },
       input: { value: { base: "{colors.slate.300}", _dark: "{colors.dark.border}" } },
+      focusRing: { value: { base: "{colors.indigo.600}", _dark: "{colors.indigo.400}" } },
     },
-    financial: {
-      positive: { value: { base: "{colors.success.600}", _dark: "{colors.success.400}" } },
-      positiveBg: { value: { base: "{colors.success.50}", _dark: "rgba(16, 185, 129, 0.12)" } },
-      positiveBorder: {
-        value: { base: "{colors.success.200}", _dark: "rgba(16, 185, 129, 0.25)" },
+
+    // 5. Unified Financial & System Status (Merges financial.* and success/warning/destructive/info)
+    status: {
+      positive: {
+        text: { value: { base: "{colors.success.700}", _dark: "{colors.success.400}" } },
+        bg: { value: { base: "{colors.success.50}", _dark: "rgba(16, 185, 129, 0.12)" } },
+        border: { value: { base: "{colors.success.200}", _dark: "rgba(16, 185, 129, 0.28)" } },
+        solid: { value: { base: "{colors.success.600}", _dark: "{colors.success.500}" } },
       },
-      warning: { value: { base: "{colors.warning.600}", _dark: "{colors.warning.400}" } },
-      warningBg: { value: { base: "{colors.warning.50}", _dark: "rgba(245, 158, 11, 0.12)" } },
-      warningBorder: { value: { base: "{colors.warning.200}", _dark: "rgba(245, 158, 11, 0.25)" } },
-      negative: { value: { base: "{colors.destructive.600}", _dark: "{colors.destructive.400}" } },
-      negativeBg: { value: { base: "{colors.destructive.50}", _dark: "rgba(239, 68, 68, 0.12)" } },
-      negativeBorder: {
-        value: { base: "{colors.destructive.200}", _dark: "rgba(239, 68, 68, 0.25)" },
+      warning: {
+        text: { value: { base: "{colors.warning.700}", _dark: "{colors.warning.400}" } },
+        bg: { value: { base: "{colors.warning.50}", _dark: "rgba(245, 158, 11, 0.12)" } },
+        border: { value: { base: "{colors.warning.200}", _dark: "rgba(245, 158, 11, 0.28)" } },
+        solid: { value: { base: "{colors.warning.600}", _dark: "{colors.warning.500}" } },
       },
-      neutral: { value: { base: "{colors.slate.600}", _dark: "{colors.slate.400}" } },
-      neutralBg: { value: { base: "{colors.slate.100}", _dark: "rgba(148, 163, 184, 0.12)" } },
-      neutralBorder: { value: { base: "{colors.slate.200}", _dark: "rgba(148, 163, 184, 0.25)" } },
+      danger: {
+        text: { value: { base: "{colors.destructive.700}", _dark: "{colors.destructive.400}" } },
+        bg: { value: { base: "{colors.destructive.50}", _dark: "rgba(239, 68, 68, 0.12)" } },
+        border: { value: { base: "{colors.destructive.200}", _dark: "rgba(239, 68, 68, 0.30)" } },
+        solid: { value: { base: "{colors.destructive.600}", _dark: "{colors.destructive.500}" } },
+      },
+      info: {
+        text: { value: { base: "{colors.info.700}", _dark: "{colors.info.400}" } },
+        bg: { value: { base: "{colors.info.50}", _dark: "rgba(14, 165, 233, 0.12)" } },
+        border: { value: { base: "{colors.info.200}", _dark: "rgba(14, 165, 233, 0.28)" } },
+        solid: { value: { base: "{colors.info.600}", _dark: "{colors.info.500}" } },
+      },
+      neutral: {
+        text: { value: { base: "{colors.slate.700}", _dark: "{colors.slate.300}" } },
+        bg: { value: { base: "{colors.slate.100}", _dark: "rgba(148, 163, 184, 0.12)" } },
+        border: { value: { base: "{colors.slate.200}", _dark: "rgba(148, 163, 184, 0.25)" } },
+        solid: { value: { base: "{colors.slate.600}", _dark: "{colors.slate.500}" } },
+      },
     },
-    secondary: {
-      DEFAULT: { value: { base: "{colors.slate.100}", _dark: "{colors.slate.800}" } },
-      foreground: { value: { base: "{colors.slate.900}", _dark: "#ffffff" } },
-      hover: { value: { base: "{colors.slate.200}", _dark: "{colors.slate.700}" } },
+
+    // 6. Semantic Data Visualization & Chart Series
+    chart: {
+      primary: { value: { base: "{colors.indigo.600}", _dark: "{colors.indigo.400}" } },
+      wealth: { value: { base: "{colors.success.600}", _dark: "{colors.success.400}" } },
+      debt: { value: { base: "{colors.destructive.600}", _dark: "{colors.destructive.400}" } },
+      warning: { value: { base: "{colors.warning.500}", _dark: "{colors.warning.400}" } },
+      accentPurple: { value: { base: "{colors.purple.600}", _dark: "{colors.purple.400}" } },
+      accentCyan: { value: { base: "{colors.cyan.600}", _dark: "{colors.cyan.400}" } },
+      series1: { value: { base: "{colors.indigo.600}", _dark: "{colors.indigo.400}" } },
+      series2: { value: { base: "{colors.success.600}", _dark: "{colors.success.400}" } },
+      series3: { value: { base: "{colors.purple.600}", _dark: "{colors.purple.400}" } },
+      series4: { value: { base: "{colors.cyan.600}", _dark: "{colors.cyan.400}" } },
+      series5: { value: { base: "{colors.warning.500}", _dark: "{colors.warning.400}" } },
+      grid: { value: { base: "rgba(15, 23, 42, 0.06)", _dark: "rgba(255, 255, 255, 0.06)" } },
     },
-    destructive: {
-      DEFAULT: { value: { base: "{colors.destructive.600}", _dark: "{colors.destructive.400}" } },
-      bg: { value: { base: "{colors.destructive.50}", _dark: "rgba(239, 68, 68, 0.12)" } },
-      border: { value: { base: "{colors.destructive.200}", _dark: "rgba(239, 68, 68, 0.35)" } },
-      foreground: { value: "#ffffff" },
-      hover: { value: { base: "{colors.destructive.700}", _dark: "{colors.destructive.500}" } },
-    },
-    success: {
-      DEFAULT: { value: { base: "{colors.success.600}", _dark: "{colors.success.400}" } },
-      bg: { value: { base: "{colors.success.50}", _dark: "rgba(16, 185, 129, 0.12)" } },
-      border: { value: { base: "{colors.success.200}", _dark: "rgba(16, 185, 129, 0.3)" } },
-      foreground: { value: "#ffffff" },
-      hover: { value: { base: "{colors.success.700}", _dark: "{colors.success.500}" } },
-    },
-    warning: {
-      DEFAULT: { value: { base: "{colors.warning.600}", _dark: "{colors.warning.400}" } },
-      bg: { value: { base: "{colors.warning.50}", _dark: "rgba(245, 158, 11, 0.12)" } },
-      border: { value: { base: "{colors.warning.200}", _dark: "rgba(245, 158, 11, 0.3)" } },
-      foreground: { value: "#ffffff" },
-      hover: { value: { base: "{colors.warning.700}", _dark: "{colors.warning.500}" } },
-    },
-    info: {
-      DEFAULT: { value: { base: "{colors.info.600}", _dark: "{colors.info.400}" } },
-      bg: { value: { base: "{colors.info.50}", _dark: "rgba(14, 165, 233, 0.12)" } },
-      border: { value: { base: "{colors.info.200}", _dark: "rgba(14, 165, 233, 0.3)" } },
-      foreground: { value: "#ffffff" },
-      hover: { value: { base: "{colors.info.700}", _dark: "{colors.info.500}" } },
-    },
-    muted: {
-      DEFAULT: { value: { base: "{colors.slate.100}", _dark: "{colors.slate.800}" } },
-      foreground: { value: { base: "{colors.slate.600}", _dark: "{colors.slate.400}" } },
-    },
-    accent: {
-      DEFAULT: { value: { base: "{colors.slate.100}", _dark: "{colors.slate.800}" } },
-      foreground: { value: { base: "{colors.slate.900}", _dark: "#ffffff" } },
-    },
-    card: {
-      DEFAULT: { value: { base: "#ffffff", _dark: "{colors.dark.surface}" } },
-      foreground: { value: { base: "{colors.slate.900}", _dark: "#ffffff" } },
-      border: { value: { base: "rgba(15, 23, 42, 0.08)", _dark: "{colors.dark.border}" } },
-    },
-    popover: {
-      DEFAULT: { value: { base: "#ffffff", _dark: "{colors.dark.surface}" } },
-      foreground: { value: { base: "{colors.slate.900}", _dark: "#ffffff" } },
-    },
-    ring: { value: { base: "{colors.indigo.600}", _dark: "{colors.indigo.400}" } },
   },
   shadows: {
     card: {

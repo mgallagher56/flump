@@ -20,9 +20,9 @@ export interface StatMetricProps {
 }
 
 const toneColorMap = {
-  positive: "financial.positive",
-  negative: "financial.negative",
-  warning: "financial.warning",
+  positive: "status.positive.text",
+  negative: "status.danger.text",
+  warning: "status.warning.text",
   brand: "primary",
   neutral: "text.primary",
 };
