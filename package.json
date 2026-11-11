@@ -21,6 +21,7 @@
     "test:coverage": "turbo run test:coverage",
     "test:storybook": "bun run --cwd apps/web test:storybook",
     "check-types": "turbo run check-types",
+    "check:auth": "bash scripts/check-no-mock-auth.sh",
     "verify": "turbo run verify",
     "prepare": "husky"
   },

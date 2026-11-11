@@ -40,6 +40,9 @@ jobs:
       - name: 🔬 Lint
         run: bun run lint
 
+      - name: 🔐 Check no mock auth literals
+        run: bun run check:auth
+
   check-types:
     name: 🔎 Type Check
     runs-on: ubuntu-latest
