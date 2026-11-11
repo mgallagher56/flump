@@ -156,3 +156,5 @@ const TaxRoute = (): ReactElement => {
 };
 
 export default TaxRoute;
+
+export { RouteErrorBoundary as ErrorBoundary } from "~/features/feedback/components/RouteErrorBoundary";

@@ -202,3 +202,5 @@ const PensionRoute = (): ReactElement => {
 };
 
 export default PensionRoute;
+
+export { RouteErrorBoundary as ErrorBoundary } from "~/features/feedback/components/RouteErrorBoundary";

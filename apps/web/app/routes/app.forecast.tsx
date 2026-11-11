@@ -14,3 +14,5 @@ const ForecastRoute = (): ReactElement => {
 };
 
 export default ForecastRoute;
+
+export { RouteErrorBoundary as ErrorBoundary } from "~/features/feedback/components/RouteErrorBoundary";

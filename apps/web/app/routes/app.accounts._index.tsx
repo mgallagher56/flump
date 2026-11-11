@@ -146,3 +146,5 @@ const Accounts = (): ReactElement<ReactElement> => {
   return <AccountsContainer />;
 };
 export default Accounts;
+
+export { RouteErrorBoundary as ErrorBoundary } from "~/features/feedback/components/RouteErrorBoundary";

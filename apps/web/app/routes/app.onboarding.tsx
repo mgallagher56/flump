@@ -1226,3 +1226,5 @@ export default function OnboardingRoute() {
     </div>
   );
 }
+
+export { RouteErrorBoundary as ErrorBoundary } from "~/features/feedback/components/RouteErrorBoundary";

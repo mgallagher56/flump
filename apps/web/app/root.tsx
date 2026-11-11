@@ -5,6 +5,7 @@ import { Links, Meta, Outlet, Scripts, ScrollRestoration, useLoaderData } from "
 import MobileBottomBar from "./components/navigation/MobileBottomBar";
 import Header from "./components/structure/header/Header";
 import { ResponsiveProvider } from "./context/ResponsiveContext";
+import { RouteErrorBoundary } from "./features/feedback/components/RouteErrorBoundary";
 import { useTheme } from "./hooks/useTheme";
 import type { UserProfile } from "./hooks/useUserProfile";
 import { useUserProfile } from "./hooks/useUserProfile";
@@ -137,24 +138,26 @@ export default function App() {
 }
 
 export function ErrorBoundary() {
+  // The root boundary replaces the whole document, so it must render html and body itself.
   return (
     <html lang="en">
       <head>
-        <title>Oops! Something went wrong</title>
+        <meta charSet="utf-8" />
+        <meta content="width=device-width,initial-scale=1,viewport-fit=cover" name="viewport" />
+        <meta name="color-scheme" content="light dark" />
+        <title>Something went wrong</title>
         <Meta />
         <Links />
       </head>
       <body
-        style={{
-          backgroundColor: "var(--colors-background)",
-          color: "var(--colors-text-primary)",
-          fontFamily: "Poppins, sans-serif",
-          padding: "50px",
-          textAlign: "center",
-        }}
+        className={css({
+          backgroundColor: "surface.canvas",
+          color: "text.primary",
+          minHeight: "100vh",
+          padding: { base: "24px", md: "48px" },
+        })}
       >
-        <h1>Uh oh... Something went wrong</h1>
-        <p>An unexpected error occurred. Please try reloading the page.</p>
+        <RouteErrorBoundary />
         <ScrollRestoration />
         <Scripts />
       </body>

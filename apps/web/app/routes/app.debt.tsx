@@ -22,3 +22,5 @@ const DebtRoute = (): ReactElement => {
 };
 
 export default DebtRoute;
+
+export { RouteErrorBoundary as ErrorBoundary } from "~/features/feedback/components/RouteErrorBoundary";

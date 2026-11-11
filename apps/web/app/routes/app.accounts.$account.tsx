@@ -91,3 +91,5 @@ const AccountDetailComponent = (): ReactElement<ReactElement> => {
 };
 
 export default AccountDetailComponent;
+
+export { RouteErrorBoundary as ErrorBoundary } from "~/features/feedback/components/RouteErrorBoundary";

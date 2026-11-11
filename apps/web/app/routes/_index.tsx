@@ -358,3 +358,5 @@ const Index = (): ReactElement => {
 };
 
 export default Index;
+
+export { RouteErrorBoundary as ErrorBoundary } from "~/features/feedback/components/RouteErrorBoundary";

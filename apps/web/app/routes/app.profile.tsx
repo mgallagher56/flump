@@ -37,3 +37,5 @@ const ProfileRoute = (): ReactElement => {
 };
 
 export default ProfileRoute;
+
+export { RouteErrorBoundary as ErrorBoundary } from "~/features/feedback/components/RouteErrorBoundary";
