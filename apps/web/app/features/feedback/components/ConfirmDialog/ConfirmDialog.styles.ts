@@ -87,22 +87,3 @@ export const confirmActions = cva({
     marginTop: "8px",
   },
 });
-
-export const confirmButton = cva({
-  base: {
-    _disabled: { opacity: 0.5, cursor: "not-allowed" },
-  },
-  variants: {
-    tone: {
-      default: {
-        backgroundColor: "primary",
-        color: "primary.foreground",
-      },
-      danger: {
-        backgroundColor: "status.danger.solid",
-        color: "text.onContrast",
-      },
-    },
-  },
-  defaultVariants: { tone: "default" },
-});
