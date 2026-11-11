@@ -50,14 +50,26 @@ describe("WealthCheckHeroWidget", () => {
     expect(mockNavigate).toHaveBeenCalledWith("/signUp");
   });
 
-  it("never shows invented fallback figures when nothing is calculated", () => {
-    render(<WealthCheckHeroWidget />);
-    // A budget equal to the minimum leaves no saving to show: nothing is made up.
+  it("never shows invented fallback figures while data is absent", () => {
+    const { container } = render(<WealthCheckHeroWidget />);
     fireEvent.change(screen.getByLabelText("Total card and loan liabilities"), {
       target: { value: "0" },
     });
-    expect(screen.queryByText(/720/)).toBeNull();
-    expect(screen.queryByText(/11,500/)).toBeNull();
-    expect(screen.getAllByText("Not calculated").length).toBeGreaterThanOrEqual(1);
+    expect(container.textContent).not.toMatch(/720/);
+    expect(container.textContent).not.toMatch(/11,500/);
+    expect(screen.getAllByText("Not calculated")).toHaveLength(2);
+  });
+
+  it("shows a calculated zero as £0 rather than Not calculated", () => {
+    render(<WealthCheckHeroWidget />);
+    fireEvent.change(screen.getByLabelText("Total card and loan liabilities"), {
+      target: { value: "5000" },
+    });
+    fireEvent.change(screen.getByLabelText("Average APR rate"), { target: { value: "0" } });
+    const label = screen.getByText("Interest saved via avalanche strategy");
+    const value = label.nextElementSibling as HTMLElement;
+    expect(value.textContent).toBe("£0");
+    expect(value.className).not.toBe("");
+    expect(screen.queryAllByText("Not calculated")).toHaveLength(0);
   });
 });

@@ -136,10 +136,9 @@ export const loader = async (args: LoaderFunctionArgs) => {
     const n = Number(value);
     return Number.isFinite(n) ? n : null;
   };
-  // Account rate first, then the rate the user entered on the mortgage page.
-  const mortgageRate =
-    toKnownNumber(storedMortgageRate) ?? toKnownNumber(userProfile?.mortgageRate);
-  const mortgageTermYears = toKnownNumber(userProfile?.mortgageTermYears);
+  // The rate lives on the mortgage account. The term is not stored anywhere, so it is unknown.
+  const mortgageRate = toKnownNumber(storedMortgageRate);
+  const mortgageTermYears: number | null = null;
 
   // Tax data
   const currentYearRecords = Array.isArray(taxRecords) ? taxRecords : [];

@@ -155,6 +155,20 @@ const metricCardStyle = css({
   borderColor: "border",
 });
 
+const interestSavedValueStyle = css({
+  fontSize: "20px",
+  fontWeight: "bold",
+  color: "status.positive.text",
+  fontVariantNumeric: "tabular-nums",
+});
+
+const projectedWealthValueStyle = css({
+  fontSize: "20px",
+  fontWeight: "bold",
+  color: "primary",
+  fontVariantNumeric: "tabular-nums",
+});
+
 const formatCurrency = (val: number) => `£${Math.round(val).toLocaleString("en-GB")}`;
 
 export const WealthCheckHeroWidget: FC = () => {
@@ -201,12 +215,14 @@ export const WealthCheckHeroWidget: FC = () => {
     return calculateDebtToWealthBridge(debtsForCalc, extra, 6.0, 3);
   }, [debtsForCalc, debtMonthlyBudget]);
 
-  const projected3YearWealth = useMemo(() => {
+  // null means unknown (nothing to calculate from); 0 is a calculated zero and is shown as £0.
+  const projected3YearWealth = useMemo<number | null>(() => {
     const lastPoint = bridgePoints[bridgePoints.length - 1];
-    return lastPoint ? lastPoint.wealthAccumulated : 0;
-  }, [bridgePoints]);
+    return debtBalance > 0 && lastPoint ? lastPoint.wealthAccumulated : null;
+  }, [bridgePoints, debtBalance]);
 
-  const interestSaved = useMemo(() => {
+  const interestSaved = useMemo<number | null>(() => {
+    if (debtBalance <= 0) return null;
     const minInterest = Math.round(
       debtBalance * (debtApr / 100) * (debtPayoffResult.months / 12) * 0.85,
     );
@@ -428,14 +444,10 @@ export const WealthCheckHeroWidget: FC = () => {
               <span style={{ fontSize: "12px", color: "text.muted", fontWeight: "600" }}>
                 Interest saved via avalanche strategy
               </span>
-              <div
-                style={{
-                  fontSize: "20px",
-                  fontWeight: "700",
-                  color: "var(--colors-destructive-500)",
-                }}
-              >
-                {interestSaved > 0 ? `+${formatCurrency(interestSaved)}` : "Not calculated"}
+              <div className={interestSavedValueStyle}>
+                {interestSaved === null
+                  ? "Not calculated"
+                  : `${interestSaved > 0 ? "+" : ""}${formatCurrency(interestSaved)}`}
               </div>
               <div style={{ fontSize: "12px", color: "text.muted" }}>
                 Compared to paying standard minimum amounts
@@ -446,10 +458,10 @@ export const WealthCheckHeroWidget: FC = () => {
               <span style={{ fontSize: "12px", color: "text.muted", fontWeight: "600" }}>
                 Projected wealth 3 years after debt payoff
               </span>
-              <div style={{ fontSize: "20px", fontWeight: "700", color: "var(--colors-primary)" }}>
-                {projected3YearWealth > 0
-                  ? `+${formatCurrency(projected3YearWealth)}`
-                  : "Not calculated"}
+              <div className={projectedWealthValueStyle}>
+                {projected3YearWealth === null
+                  ? "Not calculated"
+                  : `${projected3YearWealth > 0 ? "+" : ""}${formatCurrency(projected3YearWealth)}`}
               </div>
               <div style={{ fontSize: "12px", color: "text.muted" }}>
                 Redirecting your £{debtMonthlyBudget}/mo debt budget into a tax-free ISA
