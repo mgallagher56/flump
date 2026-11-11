@@ -435,7 +435,7 @@ export const WealthCheckHeroWidget: FC = () => {
                   color: "var(--colors-destructive-500)",
                 }}
               >
-                +{formatCurrency(interestSaved || 720)}
+                {interestSaved > 0 ? `+${formatCurrency(interestSaved)}` : "Not calculated"}
               </div>
               <div style={{ fontSize: "12px", color: "text.muted" }}>
                 Compared to paying standard minimum amounts
@@ -447,7 +447,9 @@ export const WealthCheckHeroWidget: FC = () => {
                 Projected wealth 3 years after debt payoff
               </span>
               <div style={{ fontSize: "20px", fontWeight: "700", color: "var(--colors-primary)" }}>
-                +{formatCurrency(projected3YearWealth || 11500)}
+                {projected3YearWealth > 0
+                  ? `+${formatCurrency(projected3YearWealth)}`
+                  : "Not calculated"}
               </div>
               <div style={{ fontSize: "12px", color: "text.muted" }}>
                 Redirecting your £{debtMonthlyBudget}/mo debt budget into a tax-free ISA
