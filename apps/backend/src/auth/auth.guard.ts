@@ -1,54 +1,33 @@
-import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
+import {
+  type CanActivate,
+  type ExecutionContext,
+  Inject,
+  Injectable,
+  UnauthorizedException,
+} from "@nestjs/common";
+import { TOKEN_VERIFIER, type TokenVerifier } from "./token-verifier";
 
 @Injectable()
 export class AuthGuard implements CanActivate {
-  constructor(private readonly configService: ConfigService) {}
+  constructor(@Inject(TOKEN_VERIFIER) private readonly verifier: TokenVerifier) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();
+    const header: unknown = request.headers?.authorization;
 
-    // Bypass auth header validation for OAuth callback redirect
-    if (request.path === "/bank-connections/callback") {
-      return true;
+    if (typeof header !== "string") {
+      throw new UnauthorizedException("Authentication failed");
     }
-
-    const authHeader = request.headers.authorization;
-
-    if (!authHeader?.startsWith("Bearer ")) {
-      throw new UnauthorizedException("Missing or invalid authorization header");
+    const parts = header.trim().split(/\s+/);
+    if (parts.length !== 2 || parts[0].toLowerCase() !== "bearer" || parts[1].length === 0) {
+      throw new UnauthorizedException("Authentication failed");
     }
-
-    const token = authHeader.split(" ")[1];
 
     try {
-      if (token === "mock-session-token") {
-        request.user = { id: "user_mock", email: "mock@user.com" };
-        return true;
-      }
-
-      // Decode the JWT access token to get the user payload
-      const parts = token.split(".");
-      if (parts.length === 3) {
-        const payloadB64 = parts[1];
-        const payloadJson = Buffer.from(payloadB64, "base64").toString("utf-8");
-        const payload = JSON.parse(payloadJson);
-        if (payload && (payload.sub || payload.id)) {
-          request.user = {
-            id: payload.sub || payload.id,
-            email: payload.email || "dev@flump.com",
-          };
-          return true;
-        }
-      }
-      throw new Error("Invalid JWT token format");
-    } catch (_error) {
-      // Mock fallback in development mode if no WorkOS keys are configured
-      if (!this.configService.get("WORKOS_API_KEY")) {
-        request.user = { id: "dev_user_123", email: "dev@flump.com" };
-        return true;
-      }
-      throw new UnauthorizedException("Session token is invalid or expired");
+      request.user = await this.verifier.verify(parts[1]);
+    } catch {
+      throw new UnauthorizedException("Authentication failed");
     }
+    return true;
   }
 }
