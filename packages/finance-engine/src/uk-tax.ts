@@ -8,6 +8,12 @@ import type {
   UkTaxRegion,
   UkTaxYear,
 } from "./types.js";
+import {
+  calculateIncomeTaxOnTaxable,
+  calculatePersonalAllowanceForYear,
+  getUkTaxYearRules,
+  resolveUkTaxYear,
+} from "./uk-tax-year.js";
 
 export const UK_TAX_CONSTANTS = {
   PERSONAL_ALLOWANCE_DEFAULT: 12570,
@@ -185,45 +191,25 @@ export function calculateEmployerNISavings(
 }
 
 /**
- * Calculates UK Income Tax for England, Wales & Northern Ireland.
+ * Calculates UK Income Tax for England, Wales & Northern Ireland on income
+ * before the personal allowance. Delegates to the shared band function on
+ * (income - personalAllowance); `basicBandExtension` is the grossed-up Gift Aid
+ * that widens the basic and higher bands (ITA 2007 s.414).
+ * Source: https://www.gov.uk/income-tax-rates
  */
 export function calculateEwniIncomeTax(
   taxableIncome: number,
   personalAllowance: number,
   basicBandExtension = 0,
+  taxYear: string = resolveUkTaxYear(),
 ): number {
-  if (taxableIncome <= personalAllowance) {
-    return 0;
-  }
-
-  const incomeAboveAllowance = taxableIncome - personalAllowance;
-  const basicBandWidth = 50270 - UK_TAX_CONSTANTS.PERSONAL_ALLOWANCE_DEFAULT + basicBandExtension; // £37,700 + Gift Aid
-
-  let tax = 0;
-
-  // Basic rate band: 20%
-  const basicTaxable = Math.min(incomeAboveAllowance, basicBandWidth);
-  tax += basicTaxable * 0.2;
-
-  // Higher rate band: 40% up to £125,140 + basicBandExtension
-  const higherRateStart = 50270 + basicBandExtension;
-  if (taxableIncome > higherRateStart) {
-    const higherBandUpper = UK_TAX_CONSTANTS.TAX_TRAP_UPPER_THRESHOLD + basicBandExtension;
-    const higherTaxable =
-      Math.min(taxableIncome, higherBandUpper) - Math.max(higherRateStart, personalAllowance);
-    if (higherTaxable > 0) {
-      tax += higherTaxable * 0.4;
-    }
-  }
-
-  // Additional rate band: 45% over £125,140 + basicBandExtension
-  const additionalThreshold = UK_TAX_CONSTANTS.TAX_TRAP_UPPER_THRESHOLD + basicBandExtension;
-  if (taxableIncome > additionalThreshold) {
-    const additionalTaxable = taxableIncome - additionalThreshold;
-    tax += additionalTaxable * 0.45;
-  }
-
-  return Math.round(tax * 100) / 100;
+  const rules = getUkTaxYearRules(resolveUkTaxYear(taxYear));
+  return calculateIncomeTaxOnTaxable(
+    Math.max(0, taxableIncome - personalAllowance),
+    rules,
+    "ENGLAND_NI_WALES",
+    { bandExtension: basicBandExtension },
+  ).total;
 }
 
 /**
@@ -328,7 +314,7 @@ export function getTaxYearRemainingDays(
   referenceDate = new Date(),
   taxYear: UkTaxYear = "2025/26",
 ): { daysRemaining: number; endDateFormatted: string } {
-  const endYear = taxYear === "2025/26" ? 2026 : 2027;
+  const endYear = Number.parseInt(taxYear.slice(0, 4), 10) + 1;
   const taxYearEnd = new Date(Date.UTC(endYear, 3, 5, 23, 59, 59)); // 5 April
   const diffMs = taxYearEnd.getTime() - referenceDate.getTime();
   const daysRemaining = Math.max(0, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
@@ -343,7 +329,8 @@ export function getTaxYearRemainingDays(
  * Primary UK Tax & Allowance Calculator.
  */
 export function calculateUkTax(input: UkTaxCalculationInput): UkTaxCalculationResult {
-  const taxYear = input.taxYear ?? "2025/26";
+  const taxYear = resolveUkTaxYear(input.taxYear);
+  const rules = getUkTaxYearRules(taxYear);
   const region = input.region ?? "ENGLAND_NI_WALES";
   const grossSalary = Math.max(0, input.grossSalary);
   const bonusOrSideIncome = Math.max(0, input.bonusOrSideIncome ?? 0);
@@ -373,23 +360,27 @@ export function calculateUkTax(input: UkTaxCalculationInput): UkTaxCalculationRe
     ? Math.max(0, grossSalary - employeePensionContribution) + bonusOrSideIncome
     : grossSalary + bonusOrSideIncome;
 
-  // Adjusted Net Income = total gross income minus gross pension contributions minus gross Gift Aid
+  // Adjusted Net Income (used ONLY for the personal allowance taper) = total gross income
+  // minus gross pension contributions minus gross Gift Aid.
+  // Pension is pinned as net-pay (deducted from taxable income too): UNVERIFIED, owner ruling pending.
   const adjustedNetIncome = Math.max(
     0,
     totalGrossIncome - employeePensionContribution - grossGiftAid,
   );
 
-  // Personal Allowance after taper
-  const { effectiveAllowance } = calculatePersonalAllowance(adjustedNetIncome);
+  // Personal Allowance after taper (year-specific)
+  const effectiveAllowance = calculatePersonalAllowanceForYear(adjustedNetIncome, rules);
 
-  // Taxable income
-  const taxableIncome = Math.max(0, adjustedNetIncome);
+  // Income before allowance: Gift Aid does NOT reduce it (it extends the bands instead).
+  const incomeBeforeAllowance = Math.max(0, totalGrossIncome - employeePensionContribution);
+  const taxableIncome = Math.max(0, incomeBeforeAllowance - effectiveAllowance);
 
   // Income Tax
   const incomeTax =
     region === "SCOTLAND"
-      ? calculateScottishIncomeTax(taxableIncome, effectiveAllowance)
-      : calculateEwniIncomeTax(taxableIncome, effectiveAllowance, grossGiftAid);
+      ? calculateScottishIncomeTax(incomeBeforeAllowance, effectiveAllowance)
+      : calculateIncomeTaxOnTaxable(taxableIncome, rules, region, { bandExtension: grossGiftAid })
+          .total;
 
   // National Insurance (calculated on payroll gross pay)
   const nationalInsurance = calculateNationalInsurance(grossPayForNi);
@@ -415,13 +406,20 @@ export function calculateUkTax(input: UkTaxCalculationInput): UkTaxCalculationRe
   let marginalBand: UkAllowancesStatus["marginalIncomeTaxBand"] = "PERSONAL_ALLOWANCE";
   let personalSavingsAllowance: number = UK_TAX_CONSTANTS.PSA_BASIC_RATE;
 
-  if (taxableIncome > UK_TAX_CONSTANTS.TAX_TRAP_UPPER_THRESHOLD) {
+  const basicTop = rules.ewni.basicRateBandWidth + grossGiftAid;
+  const additionalFrom = rules.ewni.additionalRateThreshold + grossGiftAid;
+  const isAdditional =
+    region === "SCOTLAND"
+      ? incomeBeforeAllowance > UK_TAX_CONSTANTS.TAX_TRAP_UPPER_THRESHOLD
+      : taxableIncome > additionalFrom;
+  const isHigher = region === "SCOTLAND" ? incomeBeforeAllowance > 50270 : taxableIncome > basicTop;
+  if (isAdditional) {
     marginalBand = "ADDITIONAL";
     personalSavingsAllowance = UK_TAX_CONSTANTS.PSA_ADDITIONAL_RATE;
-  } else if (taxableIncome > 50270) {
+  } else if (isHigher) {
     marginalBand = "HIGHER";
     personalSavingsAllowance = UK_TAX_CONSTANTS.PSA_HIGHER_RATE;
-  } else if (taxableIncome > effectiveAllowance) {
+  } else if (taxableIncome > 0) {
     marginalBand = "BASIC";
     personalSavingsAllowance = UK_TAX_CONSTANTS.PSA_BASIC_RATE;
   }
