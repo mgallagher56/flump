@@ -3,7 +3,7 @@ import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from "react
 import { data } from "react-router";
 import PensionContainer from "~/containers/pension/PensionContainer";
 import { loadWorkspaceSnapshot } from "~/services/backend-client.server";
-import { getAuthSession } from "~/utils/utils";
+import { getAuthSession, requireAccessToken } from "~/utils/auth.server";
 
 export const meta: MetaFunction = () => [{ title: "Pension & Retirement | Flump" }];
 
@@ -18,7 +18,7 @@ export const action = async (args: ActionFunctionArgs) => {
   const accountId = formData.get("accountId");
 
   const apiUrl = process.env.VITE_API_URL || "http://localhost:4000";
-  const authHeader = `Bearer ${accessToken || "mock-session-token"}`;
+  const authHeader = `Bearer ${requireAccessToken({ accessToken })}`;
 
   try {
     if (intent === "createPensionAccount") {

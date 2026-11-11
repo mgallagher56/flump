@@ -1,5 +1,5 @@
 import type { LoaderFunctionArgs } from "react-router";
-import { getAuthSession } from "~/utils/utils";
+import { authHeader, getAuthSession } from "~/utils/auth.server";
 
 export interface PortfolioSnapshotData {
   netWorth: number;
@@ -68,7 +68,7 @@ export async function loadWorkspaceSnapshot(
   }
 
   const apiUrl = process.env.VITE_API_URL || "http://localhost:4000";
-  const headers = { Authorization: `Bearer ${accessToken || "mock-session-token"}` };
+  const headers = authHeader({ accessToken });
 
   const fetchJson = async <T>(endpoint: string, fallback: T): Promise<T> => {
     try {

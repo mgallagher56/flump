@@ -2,8 +2,15 @@ import { act, renderHook } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { DEFAULT_PROFILE, normalizeProfile, useUserProfile } from "./useUserProfile";
 
+let mockRootData: { accessToken?: string | null } | undefined = { accessToken: "test-token" };
+vi.mock("react-router", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("react-router")>()),
+  useRouteLoaderData: () => mockRootData,
+}));
+
 describe("useUserProfile", () => {
   beforeEach(() => {
+    mockRootData = { accessToken: "test-token" };
     vi.stubGlobal("fetch", vi.fn());
   });
 
@@ -36,6 +43,16 @@ describe("useUserProfile", () => {
 
     expect(result.current.profile.displayName).toBe("John Smith");
     expect(result.current.profile.annualSalary).toBe(75000);
+  });
+
+  test("rejects without calling the API when there is no access token", async () => {
+    mockRootData = { accessToken: null };
+    const { result } = renderHook(() => useUserProfile());
+
+    await expect(result.current.updateProfile({ displayName: "X" })).rejects.toThrow(
+      /no access token/i,
+    );
+    expect(global.fetch).not.toHaveBeenCalled();
   });
 
   test("updateProfile sends PATCH request and updates state", async () => {

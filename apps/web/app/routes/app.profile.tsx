@@ -5,15 +5,16 @@ import { data, useLoaderData } from "react-router";
 import UserProfilePanel from "~/components/budget/UserProfilePanel";
 import type { UserProfile } from "~/hooks/useUserProfile";
 import { DEFAULT_PROFILE, useUserProfile } from "~/hooks/useUserProfile";
-import { getAuthSession } from "~/utils/utils";
+import { authHeader, getAuthSession } from "~/utils/auth.server";
 
 export const loader = async (args: LoaderFunctionArgs) => {
   const { user, accessToken } = await getAuthSession(args, { ensureSignedIn: true });
+  const authz = authHeader({ accessToken });
   const apiUrl = process.env.VITE_API_URL || "http://localhost:4000";
 
   try {
     const res = await fetch(`${apiUrl}/user-profile`, {
-      headers: { Authorization: `Bearer ${accessToken || "mock-session-token"}` },
+      headers: { ...authz },
     });
     const userProfile: UserProfile = res.ok ? await res.json() : DEFAULT_PROFILE;
     return data({ userProfile, user });

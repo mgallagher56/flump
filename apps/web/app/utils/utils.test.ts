@@ -1,12 +1,6 @@
 import { vi } from "vitest";
 
-import { getAuthSession, noop, safeRedirect, useMatchesData, validateEmail } from "./utils";
-
-const mockAuthkitLoader = vi.fn();
-
-vi.mock("@workos-inc/authkit-react-router", () => ({
-  authkitLoader: (...args: any[]) => mockAuthkitLoader(...args),
-}));
+import { noop, safeRedirect, useMatchesData, validateEmail } from "./utils";
 
 // vi mock useMatches
 vi.mock("react-router", () => {
@@ -82,59 +76,4 @@ describe("useMatchesData", () => {
 
 describe("noop()", () => {
   test("noop returns undefined", () => expect(noop()).toBe(undefined));
-});
-
-describe("getAuthSession", () => {
-  test("handles object with data field", async () => {
-    mockAuthkitLoader.mockImplementationOnce(async (_args: any, cb: any) => {
-      await cb({ getAccessToken: () => "tok-1" });
-      return {
-        data: { user: { id: "u1", email: "u1@test.com" }, accessToken: "tok-1" },
-        init: { headers: { "Set-Cookie": "a=b" } },
-      };
-    });
-
-    const session = await getAuthSession({} as any);
-    expect(session.user?.id).toBe("u1");
-    expect(session.accessToken).toBe("tok-1");
-  });
-
-  test("handles Response-like object with json() method", async () => {
-    mockAuthkitLoader.mockResolvedValueOnce({
-      json: async () => ({ user: { id: "u2" }, accessToken: "tok-2" }),
-      headers: { "X-Custom": "1" },
-    });
-
-    const session = await getAuthSession({} as any, { ensureSignedIn: false });
-    expect(session.user?.id).toBe("u2");
-    expect(session.accessToken).toBe("tok-2");
-  });
-
-  test("handles plain object response", async () => {
-    mockAuthkitLoader.mockResolvedValueOnce({
-      user: { id: "u3" },
-      accessToken: "tok-3",
-    });
-
-    const session = await getAuthSession({} as any);
-    expect(session.user?.id).toBe("u3");
-  });
-
-  test("rethrows Response and status/headers errors", async () => {
-    mockAuthkitLoader.mockRejectedValueOnce(new Response("Redirect", { status: 302 }));
-    await expect(getAuthSession({} as any)).rejects.toBeInstanceOf(Response);
-
-    mockAuthkitLoader.mockRejectedValueOnce({ status: 302, headers: {} });
-    await expect(getAuthSession({} as any)).rejects.toEqual({ status: 302, headers: {} });
-  });
-
-  test("falls back to mock dev session on generic error", async () => {
-    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
-    mockAuthkitLoader.mockRejectedValueOnce(new Error("Missing WorkOS config"));
-
-    const session = await getAuthSession({} as any);
-    expect(session.user?.id).toBe("dev_user_123");
-    expect(session.accessToken).toBe("mock-session-token");
-    warnSpy.mockRestore();
-  });
 });

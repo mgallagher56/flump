@@ -1,7 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { loadWorkspaceSnapshot } from "./backend-client.server";
 
-vi.mock("~/utils/utils", () => ({
+vi.mock("~/utils/auth.server", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("~/utils/auth.server")>()),
   getAuthSession: vi.fn().mockResolvedValue({
     user: { id: "user_test", email: "test@flump.co.uk" },
     accessToken: "test_token_123",

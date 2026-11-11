@@ -4,7 +4,7 @@ import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 import { data } from "react-router";
 import AccountsContainer from "~/containers/accounts/accountsContainer/AccountsContainer";
 import { loadWorkspaceSnapshot } from "~/services/backend-client.server";
-import { getAuthSession } from "~/utils/utils";
+import { authHeader, getAuthSession } from "~/utils/auth.server";
 
 export function getBankOAuthUrl(institutionId: string, callbackUrl: string): string | null {
   return BankSyncOrchestrator.getOAuthUrl(institutionId, callbackUrl);
@@ -12,6 +12,7 @@ export function getBankOAuthUrl(institutionId: string, callbackUrl: string): str
 
 export const action = async (args: ActionFunctionArgs) => {
   const { accessToken } = await getAuthSession(args, { ensureSignedIn: true });
+  const authz = authHeader({ accessToken });
   const formData = await args.request.formData();
   const intent = formData.get("intent");
   const accountId = formData.get("accountId");
@@ -32,7 +33,7 @@ export const action = async (args: ActionFunctionArgs) => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${accessToken || "mock-session-token"}`,
+          ...authz,
         },
         body: JSON.stringify({ name, type, ...(balance !== undefined ? { balance } : {}) }),
       });
@@ -42,7 +43,7 @@ export const action = async (args: ActionFunctionArgs) => {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${accessToken || "mock-session-token"}`,
+          ...authz,
         },
         body: JSON.stringify({ name, type, ...(balance !== undefined ? { balance } : {}) }),
       });
@@ -51,7 +52,7 @@ export const action = async (args: ActionFunctionArgs) => {
       const res = await fetch(`${apiUrl}/accounts/${accountId}`, {
         method: "DELETE",
         headers: {
-          Authorization: `Bearer ${accessToken || "mock-session-token"}`,
+          ...authz,
         },
       });
       if (!res.ok) throw new Error("Failed to delete account");
@@ -59,7 +60,7 @@ export const action = async (args: ActionFunctionArgs) => {
       const res = await fetch(`${apiUrl}/bank-connections/${connectionId}/refresh`, {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${accessToken || "mock-session-token"}`,
+          ...authz,
         },
       });
       if (!res.ok) throw new Error("Failed to sync bank connection");
@@ -67,7 +68,7 @@ export const action = async (args: ActionFunctionArgs) => {
       const res = await fetch(`${apiUrl}/bank-connections/${connectionId}`, {
         method: "DELETE",
         headers: {
-          Authorization: `Bearer ${accessToken || "mock-session-token"}`,
+          ...authz,
         },
       });
       if (!res.ok) throw new Error("Failed to disconnect bank connection");
@@ -83,7 +84,7 @@ export const action = async (args: ActionFunctionArgs) => {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${accessToken || "mock-session-token"}`,
+            ...authz,
           },
           body: JSON.stringify({
             institutionId,
