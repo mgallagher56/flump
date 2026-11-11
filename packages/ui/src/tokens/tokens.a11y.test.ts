@@ -271,6 +271,10 @@ const PASSING_PAIRS: Pair[] = [
   ...["surface.card", "surface.canvas"].map(
     (bg): Pair => ({ fg: "border.focusRing", bg, themes: BOTH, min: 3, role: "ui" }),
   ),
+  // J-06 (E8 T03): form-control boundaries need 3:1 against every surface they sit on.
+  ...["surface.card", "surface.canvas", "surface.sunken", "surface.overlay", "surface.subtle"].map(
+    (bg): Pair => ({ fg: "border.input", bg, themes: BOTH, min: 3, role: "ui" }),
+  ),
 ];
 
 /** Known failures. Each row names the audit finding; fix the token then move the row to PASSING_PAIRS. */
@@ -282,10 +286,6 @@ const KNOWN_FAILURES: { finding: string; pair: Pair }[] = [
   {
     finding: "J-01",
     pair: { fg: "primary", bg: "surface.card", themes: ["dark"], min: 4.5, role: "text" },
-  },
-  {
-    finding: "J-06",
-    pair: { fg: "border.input", bg: "surface.card", themes: BOTH, min: 3, role: "ui" },
   },
   {
     finding: "chart-warning",
@@ -325,7 +325,8 @@ describe("Semantic token contrast matrix", () => {
     expect(resolveColor("surface.card", "light")).toBe("#ffffff");
     expect(resolveColor("primary", "light")).toBe(colors.indigo[600].value);
     expect(resolveColor("border", "light")).toBe(colors.slate[200].value);
-    expect(resolveColor("border.input", "dark")).toBe(colors.dark.border.value);
+    expect(resolveColor("border.input", "light")).toBe(colors.slate[500].value);
+    expect(resolveColor("border.input", "dark")).toBe("rgba(255, 255, 255, 0.40)");
   });
 
   it("resolveColor throws on unresolved tokens and references", () => {
@@ -336,11 +337,11 @@ describe("Semantic token contrast matrix", () => {
 
   it("composites rgba over the surface it sits on", () => {
     const surface = resolveColor("surface.card", "dark");
-    const ratio = contrast(resolveColor("border.input", "dark"), surface, surface);
-    expect(ratio).toBeCloseTo(1.25, 2);
+    const ratio = contrast(resolveColor("border.strong", "dark"), surface, surface);
+    expect(ratio).toBeCloseTo(1.64, 2);
     // Compositing over a different surface gives a different answer (not over white or black only).
     const onCanvas = contrast(
-      resolveColor("border.input", "dark"),
+      resolveColor("border.strong", "dark"),
       resolveColor("surface.canvas", "dark"),
       resolveColor("surface.canvas", "dark"),
     );
@@ -360,6 +361,18 @@ describe("Semantic token contrast matrix", () => {
 
   it.each(PASSING_PAIRS)("$fg on $bg >= $min ($role, $themes)", (pair) => {
     assertPair(pair);
+  });
+
+  it("border.input reaches 3:1 on every surface in both themes (reports ratios)", () => {
+    for (const theme of BOTH) {
+      for (const bg of ["card", "canvas", "sunken", "overlay", "subtle"]) {
+        const r = pairContrast(
+          { fg: "border.input", bg: `surface.${bg}`, themes: [theme], min: 3, role: "ui" },
+          theme,
+        );
+        expect(r).toBeGreaterThanOrEqual(3);
+      }
+    }
   });
 
   describe("known failures (flip by moving the row to PASSING_PAIRS)", () => {
