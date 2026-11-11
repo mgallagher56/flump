@@ -83,6 +83,76 @@ describe("uk-tax module", () => {
       expect(trap.contributionRequiredToEscapeGbp).toBe(0);
     });
 
+    // I6. Hand derivations use 2025/26 tables (PA 12,570; EWNI basic band 37,700, additional above
+    // 125,140; Scotland taxable bands 2,827 / 14,921 / 31,092 / 62,430 / 125,140 at 19/20/21/42/45/48%;
+    // NI 8% to 50,270 then 2%). Rates are income tax only; the effective rate adds employee NI.
+    it.each([
+      // [income, region, marginalRatePct, effectiveMarginalRatePct]
+      [10000, "ENGLAND_NI_WALES", 0, 0], // inside the personal allowance
+      [30000, "ENGLAND_NI_WALES", 20, 28],
+      [50270, "ENGLAND_NI_WALES", 20, 28], // taxable 37,700 is the last basic-rate pound
+      [50271, "ENGLAND_NI_WALES", 40, 42],
+      [125141, "ENGLAND_NI_WALES", 45, 47],
+      [10000, "SCOTLAND", 0, 0],
+      [15000, "SCOTLAND", 19, 27], // taxable 2,430, starter band
+      [20000, "SCOTLAND", 20, 28], // taxable 7,430, basic band
+      [30000, "SCOTLAND", 21, 29], // taxable 17,430, intermediate band
+      [50000, "SCOTLAND", 42, 50], // taxable 37,430, higher band (old code: 20); NI still 8% below 50,270
+      [74000, "SCOTLAND", 42, 44], // taxable 61,430, still higher band
+      [80000, "SCOTLAND", 45, 47], // taxable 67,430, advanced band from 75,000 gross (old code: 42)
+      [125141, "SCOTLAND", 48, 50], // top band
+    ] as const)(
+      "marginal rates outside the trap: %i %s -> %d / %d",
+      (income, region, rate, eff) => {
+        const t = analyzeTaxTrap(income, region, "2025/26");
+        expect(t.marginalRatePct).toBe(rate);
+        expect(t.effectiveMarginalRatePct).toBe(eff);
+      },
+    );
+
+    it("Scottish trap rate follows the year's band: 2023/24 Higher 42% x 1.5 = 63", () => {
+      // 2023/24 Scotland has no Advanced band: taxable 102,430 is in Higher (42% to 125,140).
+      expect(analyzeTaxTrap(110000, "SCOTLAND", "2023/24").marginalRatePct).toBe(63);
+      expect(analyzeTaxTrap(110000, "SCOTLAND", "2025/26").marginalRatePct).toBe(67.5);
+    });
+
+    it("EWNI tax saved by escaping at 150,000 is the true tax difference, 26,271 (not 22,500)", () => {
+      // tax(150,000): PA 0; 37,700 x 20% = 7,540; (125,140 - 37,700) x 40% = 34,976; 24,860 x 45% = 11,187 -> 53,703
+      // tax(100,000): taxable 87,430: 7,540 + 49,730 x 40% = 19,892 -> 27,432
+      const t = analyzeTaxTrap(150000, "ENGLAND_NI_WALES", "2025/26");
+      expect(t.estimatedTaxSavedByEscapingGbp).toBe(26271);
+      // plus employee NI saved: 50,000 x 2% = 1,000
+      expect(t.estimatedTaxSaved).toBe(27271);
+    });
+
+    it("Scottish tax saved by escaping at 150,000 is 28,902.30 (income tax) / 29,902.30 (with NI)", () => {
+      // tax(150,000): 537.13 + 2,418.80 + 3,395.91 + 13,161.96 + 62,710 x 45% (28,219.50) + 24,860 x 48% (11,932.80) = 59,666.10
+      // tax(100,000): taxable 87,430: 19,513.80 + 25,000 x 45% = 30,763.80
+      const t = analyzeTaxTrap(150000, "SCOTLAND", "2025/26");
+      expect(t.estimatedTaxSavedByEscapingGbp).toBe(28902.3);
+      expect(t.estimatedTaxSaved).toBe(29902.3);
+    });
+
+    it("rounds escape savings to pence, not whole pounds", () => {
+      // 100,001: PA unchanged (floor 0.5 = 0), 1 x 40% = 0.40 income tax, 1 x 2% = 0.02 NI
+      const t = analyzeTaxTrap(100001, "ENGLAND_NI_WALES", "2025/26");
+      expect(t.estimatedTaxSavedByEscapingGbp).toBe(0.4);
+      expect(t.estimatedTaxSaved).toBe(0.42);
+    });
+
+    it("saves nothing at or below the escape level", () => {
+      const t = analyzeTaxTrap(100000, "SCOTLAND", "2025/26");
+      expect(t.estimatedTaxSavedByEscapingGbp).toBe(0);
+      expect(t.estimatedTaxSaved).toBe(0);
+    });
+
+    it("defaults the tax year to the current year and throws for an unsupported year", () => {
+      expect(analyzeTaxTrap(110000).marginalRatePct).toBe(60);
+      expect(() => analyzeTaxTrap(110000, "ENGLAND_NI_WALES", "1999/00")).toThrow(
+        UnsupportedUkTaxYearError,
+      );
+    });
+
     it("calculateTaxTrapRelief aliases work as expected", () => {
       const relief = calculateTaxTrapRelief(110000);
       expect(relief.isInTaxTrap).toBe(true);
