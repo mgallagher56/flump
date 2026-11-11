@@ -12,7 +12,7 @@ import {
   FaInfoCircle,
   FaPercentage,
 } from "react-icons/fa";
-import { useLoaderData, useNavigate } from "react-router";
+import { useLoaderData, useNavigate, useRouteLoaderData } from "react-router";
 import FLPButton from "~/components/core/buttons/FLPButton";
 import FLPCard from "~/components/core/cards/FLPCard";
 import { CollapsibleSection } from "~/components/core/disclosure/CollapsibleSection";
@@ -25,9 +25,36 @@ import RemortgageShockSim from "~/components/mortgage/RemortgageShockSim";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
 import { useUserProfile } from "~/hooks/useUserProfile";
 import type { loader } from "~/routes/app.mortgage";
+import { apiFetch } from "~/services/api-client";
 import { useFinancialBaseline } from "~/state/baseline.store";
 import { monthlyMortgagePayment } from "~/utils/mortgagePayment";
 import { currentMonth, currentYear } from "~/utils/utils";
+
+const saveMessageStyle = css({
+  fontSize: "xs",
+  color: "status.positive.text",
+  fontWeight: "semibold",
+  fontVariantNumeric: "tabular-nums",
+});
+
+const missingPromptStyle = css({
+  display: "flex",
+  alignItems: "center",
+  gap: "3",
+  flexWrap: "wrap",
+});
+
+const termHintStyle = css({
+  display: "block",
+  fontWeight: "normal",
+  color: "text.muted",
+});
+
+const saveErrorStyle = css({
+  fontSize: "xs",
+  color: "status.danger.text",
+  fontWeight: "semibold",
+});
 
 const formatList = (items: string[]): string =>
   items.length <= 1 ? items.join("") : `${items.slice(0, -1).join(", ")} and ${items.at(-1)}`;
@@ -39,6 +66,8 @@ const MortgageContainer: FC = () => {
   const { profile, setProfile, updateProfile } = useUserProfile();
   const { formatCurrency } = useFormatCurrency();
   const { baseline } = useFinancialBaseline();
+  const rootData = useRouteLoaderData("root") as { accessToken?: string | null } | undefined;
+  const accessToken = rootData?.accessToken;
 
   // Sync profile from loader into atom
   useEffect(() => {
@@ -56,24 +85,25 @@ const MortgageContainer: FC = () => {
   // Shared mortgage states
   // Unknown values start at 0 (empty): nothing is assumed, and the page prompts for them.
   const [loanAmount, setLoanAmount] = useState<number>(userProfile?.mortgageBalance ?? 0);
-  const [interestRate, setInterestRate] = useState<number>(userProfile?.mortgageRate ?? 0);
-  const [remainingTerm, setRemainingTerm] = useState<number>(userProfile?.mortgageTermYears ?? 0);
+  const [interestRate, setInterestRate] = useState<number>(0);
+  const [remainingTerm, setRemainingTerm] = useState<number>(0);
   const [overpayment, setOverpayment] = useState<number>(200);
-  const [isSaved, setIsSaved] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editLoanAmount, setEditLoanAmount] = useState<number>(userProfile?.mortgageBalance ?? 0);
-  const [editInterestRate, setEditInterestRate] = useState<number>(userProfile?.mortgageRate ?? 0);
-  const [editRemainingTerm, setEditRemainingTerm] = useState<number>(
-    userProfile?.mortgageTermYears ?? 0,
-  );
+  // Held as strings so a cleared field stays empty instead of showing 0.
+  const [editInterestRate, setEditInterestRate] = useState("");
+  const [editRemainingTerm, setEditRemainingTerm] = useState("");
+  const [saveMessage, setSaveMessage] = useState<string | null>(null);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [editMortgageType, setEditMortgageType] = useState<"repayment" | "interest-only">(
     userProfile?.mortgageType || "repayment",
   );
 
   const startEditing = () => {
     setEditLoanAmount(loanAmount);
-    setEditInterestRate(interestRate);
-    setEditRemainingTerm(remainingTerm);
+    setEditInterestRate(interestRate > 0 ? String(interestRate) : "");
+    setEditRemainingTerm(remainingTerm > 0 ? String(remainingTerm) : "");
+    setSaveError(null);
     setEditMortgageType(mortgageType);
     setIsEditing(true);
   };
@@ -83,24 +113,33 @@ const MortgageContainer: FC = () => {
   };
 
   const handleSaveMortgageDetails = async () => {
+    const rate = Math.max(0, Number(editInterestRate));
+    const term = Math.max(0, Number(editRemainingTerm));
+    setLoanAmount(editLoanAmount);
+    setInterestRate(rate);
+    setRemainingTerm(term);
+    setMortgageType(editMortgageType);
+    setSaveError(null);
+    const saved = ["repayment type"];
     try {
-      setLoanAmount(editLoanAmount);
-      setInterestRate(editInterestRate);
-      setRemainingTerm(editRemainingTerm);
-      setMortgageType(editMortgageType);
-      await updateProfile({
-        hasMortgage: true,
-        mortgageBalance: editLoanAmount,
-        // Only user-entered values are stored; an empty field is saved as unknown.
-        mortgageRate: editInterestRate > 0 ? editInterestRate : null,
-        mortgageTermYears: editRemainingTerm > 0 ? editRemainingTerm : null,
-        mortgageType: editMortgageType,
-      });
-      setIsSaved(true);
+      // The profile stores only whether there is a mortgage and its type. Balance, rate and
+      // term are not profile fields, so they are not sent.
+      await updateProfile({ hasMortgage: true, mortgageType: editMortgageType });
+      if (selectedAccountId && propertyCategory === "residential" && rate > 0) {
+        await apiFetch(`/accounts/${selectedAccountId}`, {
+          accessToken,
+          method: "PATCH",
+          body: { interestRate: rate },
+        });
+        saved.push("interest rate");
+      }
+      setSaveMessage(`Saved ${formatList(saved)}`);
       setIsEditing(false);
-      setTimeout(() => setIsSaved(false), 3000);
+      setTimeout(() => setSaveMessage(null), 3000);
     } catch (err) {
       console.error("Failed to save mortgage details:", err);
+      setSaveMessage(null);
+      setSaveError("Could not save your mortgage details. Please try again.");
     }
   };
 
@@ -433,15 +472,9 @@ const MortgageContainer: FC = () => {
               </div>
             ) : (
               <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                {isSaved && (
-                  <span
-                    style={{
-                      fontSize: "12px",
-                      color: "var(--colors-financial-positive)",
-                      fontWeight: 600,
-                    }}
-                  >
-                    ✓ Saved!
+                {saveMessage && (
+                  <span role="status" className={saveMessageStyle}>
+                    ✓ {saveMessage}
                   </span>
                 )}
                 <FLPButton size="sm" variant="outline" onClick={startEditing}>
@@ -451,6 +484,12 @@ const MortgageContainer: FC = () => {
             )}
           </div>
         </div>
+
+        {saveError && (
+          <p role="alert" className={saveErrorStyle}>
+            {saveError}
+          </p>
+        )}
 
         {isEditing ? (
           <div
@@ -501,7 +540,7 @@ const MortgageContainer: FC = () => {
                 type="number"
                 step="0.05"
                 value={editInterestRate}
-                onChange={(e) => setEditInterestRate(Number(e.target.value) || 0)}
+                onChange={(e) => setEditInterestRate(e.target.value)}
                 style={{
                   padding: "8px 12px",
                   borderRadius: "8px",
@@ -521,7 +560,8 @@ const MortgageContainer: FC = () => {
                 htmlFor="hero-mortgage-term"
                 style={{ fontSize: "12px", fontWeight: 600, color: "var(--colors-text-muted)" }}
               >
-                Remaining Term (Years)
+                Remaining Term (Years){" "}
+                <span className={termHintStyle}>Not saved — enter each visit</span>
               </label>
               <input
                 id="hero-mortgage-term"
@@ -529,7 +569,7 @@ const MortgageContainer: FC = () => {
                 min="1"
                 max="40"
                 value={editRemainingTerm}
-                onChange={(e) => setEditRemainingTerm(Number(e.target.value) || 0)}
+                onChange={(e) => setEditRemainingTerm(e.target.value)}
                 style={{
                   padding: "8px 12px",
                   borderRadius: "8px",
@@ -1019,7 +1059,7 @@ const MortgageContainer: FC = () => {
       </div>
 
       {missingMortgageDetails.length > 0 && propertyCategory === "residential" && (
-        <div style={{ display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap" }}>
+        <div className={missingPromptStyle}>
           <FLPText color="text.muted" fontSize="sm">
             Add your mortgage {formatList(missingMortgageDetails)} to see your figures.
           </FLPText>

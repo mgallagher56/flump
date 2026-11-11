@@ -1,5 +1,4 @@
 import { fireEvent } from "@testing-library/react";
-import { useLoaderData } from "react-router";
 import { afterEach, vi } from "vitest";
 import customRender from "~/testUtils/customRender";
 import MortgageContainer from "./MortgageContainer";
@@ -17,21 +16,32 @@ vi.mock("app/components/mortgage/OverpayVsSaveCompare", () => ({
   default: () => <div id="mock-compare">Mock Overpay vs Save Compare</div>,
 }));
 
+const defaultLoaderData = () => ({
+  accounts: [{ id: "m1", name: "HSBC Fixed Mortgage", type: "Mortgage", balance: -135400 }],
+  accountDetails: [{ account_id: "m1", month: 6, year: 2026, value: -135400 }],
+});
+// Per-test loader data; a plain variable keeps it stable across re-renders and is reset below.
+let loaderData: Record<string, unknown> = defaultLoaderData();
 const mockNavigate = vi.fn();
 vi.mock("react-router", async () => {
   const actual: Record<string, unknown> = await vi.importActual("react-router");
   return {
     ...actual,
-    useLoaderData: vi.fn(() => ({
-      accounts: [{ id: "m1", name: "HSBC Fixed Mortgage", type: "Mortgage", balance: -135400 }],
-      accountDetails: [{ account_id: "m1", month: 6, year: 2026, value: -135400 }],
-    })),
+    useLoaderData: vi.fn(() => loaderData),
     useNavigate: () => mockNavigate,
     useRouteLoaderData: () => ({ accessToken: "test-token" }),
   };
 });
 
+const originalEnv = (window as unknown as { ENV?: unknown }).ENV;
+
 describe("<MortgageContainer />", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+    (window as unknown as { ENV?: unknown }).ENV = originalEnv;
+    loaderData = defaultLoaderData();
+  });
+
   test("renders correctly and allows tab switching", () => {
     const { container, getByText } = customRender(<MortgageContainer />);
     expect(container).toBeDefined();
@@ -75,8 +85,8 @@ describe("<MortgageContainer />", () => {
   });
 
   test("allows editing My Mortgage Information and switching to LTV milestones tab", async () => {
-    vi.spyOn(globalThis, "fetch").mockResolvedValue(
-      new Response(JSON.stringify({}), { status: 200 }),
+    vi.spyOn(globalThis, "fetch").mockImplementation(
+      async () => new Response(JSON.stringify({}), { status: 200 }),
     );
     const { getByText, getByLabelText, getByRole } = customRender(<MortgageContainer />);
 
@@ -89,7 +99,7 @@ describe("<MortgageContainer />", () => {
     const rateInput = getByLabelText("Interest Rate (%)");
     fireEvent.change(rateInput, { target: { value: "4.5" } });
 
-    const termInput = getByLabelText("Remaining Term (Years)");
+    const termInput = getByLabelText(/^Remaining Term \(Years\)/);
     fireEvent.change(termInput, { target: { value: "18" } });
 
     // Toggle Interest-Only and back to Repayment
@@ -103,45 +113,86 @@ describe("<MortgageContainer />", () => {
     fireEvent.click(getByText("LTV milestones"));
   });
 
-  test("saving sends the entered rate and term to the profile", async () => {
+  const setApiEnv = () => {
     (window as unknown as { ENV: { VITE_API_URL: string } }).ENV = {
       VITE_API_URL: "http://api.test",
     };
+  };
+  const patches = (fetchSpy: ReturnType<typeof vi.spyOn>) =>
+    fetchSpy.mock.calls.filter(([, init]) => (init as RequestInit)?.method === "PATCH");
+
+  test("saving stores the rate on the mortgage account and never sends unsupported profile fields", async () => {
+    setApiEnv();
     const fetchSpy = vi
       .spyOn(globalThis, "fetch")
-      .mockResolvedValue(new Response(JSON.stringify({}), { status: 200 }));
-    const { getByLabelText, getByRole } = customRender(<MortgageContainer />);
+      .mockImplementation(async () => new Response(JSON.stringify({}), { status: 200 }));
+    const { getByLabelText, getByRole, findByText, queryByText } = customRender(
+      <MortgageContainer />,
+    );
     fireEvent.click(getByRole("button", { name: /^Edit$/i }));
     fireEvent.change(getByLabelText("Interest Rate (%)"), { target: { value: "4.5" } });
-    fireEvent.change(getByLabelText("Remaining Term (Years)"), { target: { value: "18" } });
+    fireEvent.change(getByLabelText(/^Remaining Term \(Years\)/), { target: { value: "18" } });
     fireEvent.click(getByRole("button", { name: /^Save$/i }));
-    await vi.waitFor(() => {
-      const patch = fetchSpy.mock.calls.find(
-        ([, init]) => (init as RequestInit)?.method === "PATCH",
-      );
-      const init = patch?.[1] as RequestInit | undefined;
-      expect(init).toBeDefined();
-      const body = JSON.parse(String(init?.body));
-      expect(body.mortgageRate).toBe(4.5);
-      expect(body.mortgageTermYears).toBe(18);
+    await findByText(/Saved/);
+
+    const calls = patches(fetchSpy);
+    const accountPatch = calls.find(([url]) => String(url).endsWith("/accounts/m1"));
+    if (!accountPatch) throw new Error("expected an account PATCH");
+    expect(JSON.parse(String((accountPatch[1] as RequestInit).body))).toEqual({
+      interestRate: 4.5,
     });
+    const profilePatch = calls.find(([url]) => String(url).endsWith("/user-profile"));
+    if (!profilePatch) throw new Error("expected a profile PATCH");
+    const profileBody = JSON.parse(String((profilePatch[1] as RequestInit).body));
+    for (const key of ["mortgageRate", "mortgageTermYears", "mortgageBalance", "homeValue"]) {
+      expect(profileBody).not.toHaveProperty(key);
+    }
+    expect(queryByText(/term/i, { selector: "[role='status']" })).toBeNull();
   });
 
-  test("blanking the term field leaves it empty rather than becoming 1 year", () => {
+  test("the term field is labelled as not saved", () => {
     const { getByLabelText, getByRole } = customRender(<MortgageContainer />);
     fireEvent.click(getByRole("button", { name: /^Edit$/i }));
-    const term = getByLabelText("Remaining Term (Years)") as HTMLInputElement;
+    expect(getByLabelText(/Not saved — enter each visit/)).toBeDefined();
+  });
+
+  test("shows an error and no success message when the account PATCH fails", async () => {
+    setApiEnv();
+    vi.spyOn(globalThis, "fetch").mockImplementation(async (url) =>
+      String(url).includes("/accounts/")
+        ? new Response(JSON.stringify({ message: "nope" }), { status: 500 })
+        : new Response(JSON.stringify({}), { status: 200 }),
+    );
+    const { getByLabelText, getByRole, findByRole, queryByText } = customRender(
+      <MortgageContainer />,
+    );
+    fireEvent.click(getByRole("button", { name: /^Edit$/i }));
+    fireEvent.change(getByLabelText("Interest Rate (%)"), { target: { value: "4.5" } });
+    fireEvent.click(getByRole("button", { name: /^Save$/i }));
+    expect((await findByRole("alert")).textContent).toMatch(/could not save/i);
+    expect(queryByText(/Saved/)).toBeNull();
+  });
+
+  test("blanking the rate and term fields leaves them empty rather than 0 or 1", () => {
+    const { getByLabelText, getByRole } = customRender(<MortgageContainer />);
+    fireEvent.click(getByRole("button", { name: /^Edit$/i }));
+    const term = getByLabelText(/^Remaining Term \(Years\)/) as HTMLInputElement;
+    const rate = getByLabelText("Interest Rate (%)") as HTMLInputElement;
+    expect(rate.value).toBe("");
     fireEvent.change(term, { target: { value: "18" } });
+    fireEvent.change(rate, { target: { value: "4.5" } });
+    expect(term.value).toBe("18");
     fireEvent.change(term, { target: { value: "" } });
-    expect(term.value).not.toBe("1");
+    fireEvent.change(rate, { target: { value: "" } });
+    expect(term.value).toBe("");
+    expect(rate.value).toBe("");
   });
 
   test("empty prompt offers a call to action that opens the edit form", () => {
-    vi.mocked(useLoaderData).mockReturnValue({ accounts: [], accountDetails: [] } as any);
+    loaderData = { accounts: [], accountDetails: [] };
     const { getByRole, getByLabelText } = customRender(<MortgageContainer />);
     fireEvent.click(getByRole("button", { name: "Add mortgage details" }));
     expect(getByLabelText("Interest Rate (%)")).toBeDefined();
-    vi.mocked(useLoaderData).mockReset();
   });
 
   describe("with no stored rate or term", () => {
@@ -158,19 +209,15 @@ describe("<MortgageContainer />", () => {
       accountDetails: [{ account_id: "m1", month: 6, year: 2026, value: -135400 }],
     });
 
-    afterEach(() => {
-      vi.mocked(useLoaderData).mockReset();
-    });
-
     test("prompts for rate and term instead of assuming 4.5% over 25 years", () => {
-      vi.mocked(useLoaderData).mockReturnValue(loaderWith() as any);
+      loaderData = loaderWith();
       const { getByText, queryByText } = customRender(<MortgageContainer />);
       expect(getByText("Add your mortgage rate and term to see your figures.")).toBeDefined();
       expect(queryByText(/150,000/)).toBeNull();
     });
 
     test("starts empty with no mortgage account instead of assuming £150,000", () => {
-      vi.mocked(useLoaderData).mockReturnValue({ accounts: [], accountDetails: [] } as any);
+      loaderData = { accounts: [], accountDetails: [] };
       const { getByText, queryByText } = customRender(<MortgageContainer />);
       expect(
         getByText("Add your mortgage balance, rate and term to see your figures."),
@@ -179,7 +226,7 @@ describe("<MortgageContainer />", () => {
     });
 
     test("LTV milestones prompt instead of reading achieved when there is no property value", () => {
-      vi.mocked(useLoaderData).mockReturnValue(loaderWith({ interestRate: 3.9 }) as any);
+      loaderData = loaderWith({ interestRate: 3.9 });
       const { getByText, queryByText } = customRender(<MortgageContainer />);
       fireEvent.click(getByText("LTV milestones"));
       expect(
@@ -190,7 +237,7 @@ describe("<MortgageContainer />", () => {
     });
 
     test("buy to let starts empty rather than prefilling 180,000", () => {
-      vi.mocked(useLoaderData).mockReturnValue({ accounts: [], accountDetails: [] } as any);
+      loaderData = { accounts: [], accountDetails: [] };
       const { getByText, queryByText } = customRender(<MortgageContainer />);
       fireEvent.click(getByText("Buy to let (BTL)"));
       expect(queryByText(/180,000/)).toBeNull();
@@ -198,7 +245,7 @@ describe("<MortgageContainer />", () => {
     });
 
     test("uses the stored account rate and only asks for the term", () => {
-      vi.mocked(useLoaderData).mockReturnValue(loaderWith({ interestRate: 3.9 }) as any);
+      loaderData = loaderWith({ interestRate: 3.9 });
       const { getByText } = customRender(<MortgageContainer />);
       expect(getByText("Add your mortgage term to see your figures.")).toBeDefined();
     });
