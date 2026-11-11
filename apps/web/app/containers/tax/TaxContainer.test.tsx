@@ -243,42 +243,105 @@ describe("TaxContainer & Calculation Tools", () => {
     expect(mockSubmit).toHaveBeenCalled();
   });
 
-  it("filters Detailed Transaction Log, opens Edit Record modal, and deletes record", () => {
-    window.confirm = vi.fn(() => true);
+  describe("destructive confirmations", () => {
+    const stubDialogs = () => {
+      const confirmSpy = vi.fn(() => true);
+      const alertSpy = vi.fn();
+      window.confirm = confirmSpy;
+      window.alert = alertSpy;
+      mockSubmit.mockClear();
+      return { confirmSpy, alertSpy };
+    };
+
+    it("confirms a transaction delete in a dialog, not window.confirm", () => {
+      const { confirmSpy, alertSpy } = stubDialogs();
+      render(<TaxContainer />);
+      fireEvent.click(screen.getByText("Detailed Transaction Log"));
+
+      fireEvent.click(screen.getAllByTitle("Delete record")[0]);
+      expect(mockSubmit).not.toHaveBeenCalled();
+      expect(screen.getByText("Delete transaction?")).toBeDefined();
+
+      fireEvent.click(screen.getByRole("button", { name: "Delete transaction" }));
+      expect(mockSubmit).toHaveBeenCalledTimes(1);
+      expect(mockSubmit).toHaveBeenCalledWith(
+        { intent: "delete-transaction", id: expect.any(String) },
+        { method: "POST" },
+      );
+      expect(confirmSpy).not.toHaveBeenCalled();
+      expect(alertSpy).not.toHaveBeenCalled();
+    });
+
+    it("cancelling a transaction delete submits nothing", () => {
+      stubDialogs();
+      render(<TaxContainer />);
+      fireEvent.click(screen.getByText("Detailed Transaction Log"));
+
+      fireEvent.click(screen.getAllByTitle("Delete record")[0]);
+      fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+
+      expect(mockSubmit).not.toHaveBeenCalled();
+      expect(screen.queryByRole("alertdialog")).toBeNull();
+    });
+
+    it("confirms a tax year delete with the record count and ids", () => {
+      const { confirmSpy, alertSpy } = stubDialogs();
+      render(<TaxContainer />);
+      fireEvent.click(screen.getByRole("button", { name: "2024/25" }));
+
+      fireEvent.click(screen.getByRole("button", { name: /Delete 2024\/25/i }));
+      expect(mockSubmit).not.toHaveBeenCalled();
+      const dialog = screen.getByRole("alertdialog");
+      expect(dialog.textContent).toContain("Delete all 6 records for 2024/25?");
+      expect(dialog.textContent).toContain("can't be undone");
+
+      fireEvent.click(screen.getByRole("button", { name: "Delete year" }));
+      expect(mockSubmit).toHaveBeenCalledWith(
+        {
+          intent: "delete-tax-year",
+          recordIds: JSON.stringify(["rec-1", "rec-2", "rec-3", "rec-4", "rec-5", "rec-6"]),
+        },
+        { method: "POST" },
+      );
+      expect(confirmSpy).not.toHaveBeenCalled();
+      expect(alertSpy).not.toHaveBeenCalled();
+    });
+
+    it("cancelling a tax year delete submits nothing", () => {
+      stubDialogs();
+      render(<TaxContainer />);
+      fireEvent.click(screen.getByRole("button", { name: "2024/25" }));
+      fireEvent.click(screen.getByRole("button", { name: /Delete 2024\/25/i }));
+      fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+      expect(mockSubmit).not.toHaveBeenCalled();
+    });
+
+    it("never offers a delete-year control (or alert) for an empty year", () => {
+      const { alertSpy } = stubDialogs();
+      mockLoaderRecords = [];
+      const { unmount } = render(<TaxContainer />);
+      expect(screen.queryByRole("button", { name: /^Delete \d{4}\/\d{2}$/ })).toBeNull();
+      expect(alertSpy).not.toHaveBeenCalled();
+      unmount();
+      mockLoaderRecords = mockRecords;
+    });
+  });
+
+  it("filters Detailed Transaction Log and opens Edit Record modal", () => {
+    mockSubmit.mockClear();
     render(<TaxContainer />);
 
     fireEvent.click(screen.getByText("Detailed Transaction Log"));
-
-    // Click on a record row to open Edit modal
     fireEvent.click(screen.getByText("Poplar Rent (2024/25)"));
 
     const saveBtn = screen.getByRole("button", { name: /Save Record/i, hidden: true });
     fireEvent.click(saveBtn);
     expect(mockSubmit).toHaveBeenCalled();
-
-    // Delete record in log
-    const deleteBtns = screen.getAllByTitle("Delete record");
-    fireEvent.click(deleteBtns[0]);
-    expect(mockSubmit).toHaveBeenCalled();
   });
 
-  it("executes Copy Tax Year modal action and Delete Tax Year button", () => {
-    window.confirm = vi.fn(() => true);
+  it("executes Copy Tax Year modal action", () => {
     render(<TaxContainer />);
 
-    // Select 2024/25 fiscal year so records exist and Delete year button appears
-    const yearBtn = screen.queryByRole("button", { name: "2024/25" });
-    if (yearBtn) {
-      fireEvent.click(yearBtn);
-    }
-
-    const deleteYearBtn = screen.queryByRole("button", { name: /Delete 2024\/25/i });
-    if (deleteYearBtn) {
-      fireEvent.click(deleteYearBtn);
-      expect(mockSubmit).toHaveBeenCalled();
-    }
-
-    // Open Copy modal and execute copy
     const copyBtn = screen.getAllByText(/Copy from/i)[0];
     fireEvent.click(copyBtn);
 

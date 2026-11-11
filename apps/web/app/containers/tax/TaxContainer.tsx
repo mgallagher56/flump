@@ -45,9 +45,12 @@ import CopyTaxYearModal from "~/components/tax/CopyTaxYearModal";
 import PaymentsOnAccountCard from "~/components/tax/PaymentsOnAccountCard";
 import TaxIncomeSectionCard from "~/components/tax/TaxIncomeSectionCard";
 import TaxTrapAlertBanner from "~/components/tax/TaxTrapAlertBanner";
+import { ConfirmDialog } from "~/features/feedback/components/ConfirmDialog";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
 import type { loader } from "~/routes/app.tax";
 import { useFinancialBaseline } from "~/state/baseline.store";
+
+const numeric = css({ fontVariantNumeric: "tabular-nums" });
 
 const TaxContainer: FC = () => {
   const { t } = useTranslation();
@@ -121,6 +124,8 @@ const TaxContainer: FC = () => {
 
   // Add/Edit transaction modal state
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+  const [transactionToDelete, setTransactionToDelete] = useState<string | null>(null);
+  const [taxYearToDelete, setTaxYearToDelete] = useState<string | null>(null);
   const [editingRecord, setEditingRecord] = useState<TaxRecord | null>(null);
 
   // Form inputs
@@ -308,9 +313,14 @@ const TaxContainer: FC = () => {
 
   const handleDeleteTransaction = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (confirm("Are you sure you want to delete this transaction record?")) {
-      fetcher.submit({ intent: "delete-transaction", id }, { method: "POST" });
+    setTransactionToDelete(id);
+  };
+
+  const confirmDeleteTransaction = () => {
+    if (transactionToDelete) {
+      fetcher.submit({ intent: "delete-transaction", id: transactionToDelete }, { method: "POST" });
     }
+    setTransactionToDelete(null);
   };
 
   const recordsInSelectedTaxYear = useMemo(() => {
@@ -318,27 +328,27 @@ const TaxContainer: FC = () => {
   }, [initialRecords, selectedTaxYear]);
 
   const handleDeleteTaxYear = (yearToDelete: string) => {
-    const yearRecords = initialRecords.filter(
-      (r) => getTaxYearForRecordDate(r.date) === yearToDelete,
-    );
-    if (yearRecords.length === 0) {
-      alert(`There are no records to delete for tax year ${yearToDelete}.`);
-      return;
+    // The Delete year control only renders when the year has records.
+    if (recordsInSelectedTaxYear.length === 0) return;
+    setTaxYearToDelete(yearToDelete);
+  };
+
+  const confirmDeleteTaxYear = () => {
+    if (taxYearToDelete) {
+      const recordIds = initialRecords
+        .filter((r) => getTaxYearForRecordDate(r.date) === taxYearToDelete)
+        .map((r) => r.id);
+      if (recordIds.length > 0) {
+        fetcher.submit(
+          {
+            intent: "delete-tax-year",
+            recordIds: JSON.stringify(recordIds),
+          },
+          { method: "POST" },
+        );
+      }
     }
-    if (
-      confirm(
-        `Are you sure you want to delete all ${yearRecords.length} records for tax year ${yearToDelete}? This cannot be undone.`,
-      )
-    ) {
-      const recordIds = yearRecords.map((r) => r.id);
-      fetcher.submit(
-        {
-          intent: "delete-tax-year",
-          recordIds: JSON.stringify(recordIds),
-        },
-        { method: "POST" },
-      );
-    }
+    setTaxYearToDelete(null);
   };
 
   const { formatCurrencyDecimal } = useFormatCurrency();
@@ -2192,6 +2202,35 @@ const TaxContainer: FC = () => {
         initialSourceYear={previousTaxYear}
         initialTargetYear={selectedTaxYear}
         availableYears={availableYears}
+      />
+
+      <ConfirmDialog
+        open={transactionToDelete !== null}
+        onOpenChange={(open) => {
+          if (!open) setTransactionToDelete(null);
+        }}
+        title="Delete transaction?"
+        description="This removes the transaction record. This can't be undone."
+        confirmLabel="Delete transaction"
+        tone="danger"
+        onConfirm={confirmDeleteTransaction}
+      />
+
+      <ConfirmDialog
+        open={taxYearToDelete !== null}
+        onOpenChange={(open) => {
+          if (!open) setTaxYearToDelete(null);
+        }}
+        title={
+          <>
+            Delete all <span className={numeric}>{recordsInSelectedTaxYear.length}</span> records
+            for <span className={numeric}>{taxYearToDelete}</span>?
+          </>
+        }
+        description="These records are removed from your tax planner. This can't be undone."
+        confirmLabel="Delete year"
+        tone="danger"
+        onConfirm={confirmDeleteTaxYear}
       />
     </div>
   );

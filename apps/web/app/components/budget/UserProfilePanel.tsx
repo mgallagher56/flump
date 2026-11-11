@@ -28,6 +28,7 @@ import FLPHeading from "~/components/core/typography/FLPHeading";
 import FLPText from "~/components/core/typography/FLPText";
 import UserAvatar from "~/components/navigation/UserAvatar";
 import { McpConnectionCard } from "~/features/ai-connections/components/McpConnectionCard";
+import { ConfirmDialog } from "~/features/feedback/components/ConfirmDialog";
 import { type UserProfile, type UserProfileUpdate, useUserProfile } from "~/hooks/useUserProfile";
 import { useFinancialBaseline } from "~/state/baseline.store";
 import { processImageFile } from "~/utils/avatar";
@@ -307,7 +308,6 @@ const UserProfilePanel: FC<UserProfilePanelProps> = ({ initialProfile, user }) =
 
   // Reset Financial Data state
   const [resetModalOpen, setResetModalOpen] = useState(false);
-  const [resetConfirmInput, setResetConfirmInput] = useState("");
   const [resettingData, setResettingData] = useState(false);
   const [resetError, setResetError] = useState<string | null>(null);
   const [resetSuccess, setResetSuccess] = useState(false);
@@ -407,11 +407,6 @@ const UserProfilePanel: FC<UserProfilePanelProps> = ({ initialProfile, user }) =
   };
 
   const handleResetFinancialData = async () => {
-    if (resetConfirmInput.trim().toUpperCase() !== "RESET") {
-      setResetError("Please type RESET to confirm.");
-      return;
-    }
-
     setResettingData(true);
     setResetError(null);
     try {
@@ -437,7 +432,6 @@ const UserProfilePanel: FC<UserProfilePanelProps> = ({ initialProfile, user }) =
       setTimeout(() => {
         setResetModalOpen(false);
         setResetSuccess(false);
-        setResetConfirmInput("");
         navigate("/app/onboarding");
       }, 1500);
     } catch (err: any) {
@@ -972,7 +966,6 @@ const UserProfilePanel: FC<UserProfilePanelProps> = ({ initialProfile, user }) =
                   onClick={() => {
                     setResetError(null);
                     setResetSuccess(false);
-                    setResetConfirmInput("");
                     setResetModalOpen(true);
                   }}
                 >
@@ -1177,170 +1170,44 @@ const UserProfilePanel: FC<UserProfilePanelProps> = ({ initialProfile, user }) =
       </Dialog.Root>
 
       {/* Reset Financial Data Dialog */}
-      <Dialog.Root open={resetModalOpen} onOpenChange={setResetModalOpen}>
-        <Dialog.Portal>
-          <Dialog.Overlay
-            className={css({
-              position: "fixed",
-              inset: 0,
-              backgroundColor: "rgba(0, 0, 0, 0.6)",
-              backdropFilter: "blur(4px)",
-              zIndex: 50,
-            })}
-          />
-          <Dialog.Content
-            className={css({
-              position: "fixed",
-              top: "50%",
-              left: "50%",
-              transform: "translate(-50%, -50%)",
-              backgroundColor: "surface",
-              border: "1px solid",
-              borderColor: "border",
-              borderRadius: "lg",
-              boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.3)",
-              padding: "24px",
-              width: "92vw",
-              maxWidth: "480px",
-              zIndex: 51,
-              outline: "none",
-              color: "text.primary",
-            })}
-          >
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                marginBottom: "16px",
-              }}
-            >
-              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                <FaExclamationTriangle
-                  style={{ color: "var(--colors-red-500)", fontSize: "18px" }}
-                />
-                <Dialog.Title asChild>
-                  <FLPHeading as="h2" size="md">
-                    Reset All Financial Data
-                  </FLPHeading>
-                </Dialog.Title>
-              </div>
-              <Dialog.Close asChild>
-                <button
-                  type="button"
-                  aria-label="Close"
-                  className={css({
-                    border: "none",
-                    background: "transparent",
-                    color: "text.muted",
-                    cursor: "pointer",
-                    padding: "4px",
-                    borderRadius: "sm",
-                    _hover: { color: "text.primary" },
-                  })}
-                >
-                  <FaTimes />
-                </button>
-              </Dialog.Close>
-            </div>
-
-            <Dialog.Description asChild>
-              <div style={{ marginBottom: "16px" }}>
-                <FLPText fontSize="sm" color="text.muted">
-                  Are you absolutely sure? This action is <strong>permanent</strong> and will
-                  immediately wipe:
-                </FLPText>
-                <ul
-                  style={{
-                    fontSize: "12px",
-                    color: "var(--colors-text-muted)",
-                    paddingLeft: "18px",
-                    marginTop: "8px",
-                    marginBottom: "12px",
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: "4px",
-                  }}
-                >
-                  <li>All connected and manual accounts</li>
-                  <li>All transaction history and balances</li>
-                  <li>All budget entries and recurring rules</li>
-                  <li>All income and expense tax records</li>
-                  <li>All property, salary, and savings settings</li>
-                </ul>
-                <FLPText fontSize="xs" color="red.500" fontWeight="semibold">
-                  You will start completely fresh from scratch.
-                </FLPText>
-              </div>
-            </Dialog.Description>
-
+      <ConfirmDialog
+        open={resetModalOpen}
+        onOpenChange={(open) => {
+          setResetModalOpen(open);
+          if (!open) setResetError(null);
+        }}
+        title="Reset all financial data"
+        description={
+          <div className={css({ display: "flex", flexDirection: "column", gap: "8px" })}>
+            <span>
+              Are you sure? This is <strong>permanent</strong> and immediately wipes:
+            </span>
+            <ul className={css({ paddingLeft: "18px", listStyle: "disc" })}>
+              <li>All connected and manual accounts</li>
+              <li>All transaction history and balances</li>
+              <li>All budget entries and recurring rules</li>
+              <li>All income and expense tax records</li>
+              <li>All property, salary and savings settings</li>
+            </ul>
+            <span>You will start again from scratch.</span>
             {resetSuccess ? (
-              <div
-                className={css({
-                  padding: "16px",
-                  borderRadius: "md",
-                  backgroundColor: "rgba(34, 197, 94, 0.12)",
-                  color: "green.500",
-                  fontSize: "sm",
-                  fontWeight: "medium",
-                  textAlign: "center",
-                })}
-              >
-                All financial data wiped successfully. You have a clean slate!
-              </div>
-            ) : (
-              <div>
-                <div className={fieldGroupStyle} style={{ marginBottom: "16px" }}>
-                  <label className={labelStyle} htmlFor="confirm-reset-input">
-                    Type <strong>RESET</strong> to confirm:
-                  </label>
-                  <input
-                    id="confirm-reset-input"
-                    data-testid="confirm-reset-input"
-                    type="text"
-                    placeholder="RESET"
-                    className={inputStyle}
-                    value={resetConfirmInput}
-                    onChange={(e) => setResetConfirmInput(e.target.value)}
-                    autoComplete="off"
-                  />
-                </div>
-
-                {resetError && (
-                  <div
-                    data-testid="reset-error"
-                    className={css({ color: "red.500", fontSize: "xs", marginBottom: "12px" })}
-                  >
-                    {resetError}
-                  </div>
-                )}
-
-                <div style={{ display: "flex", justifyContent: "flex-end", gap: "8px" }}>
-                  <FLPButton
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setResetModalOpen(false)}
-                  >
-                    Cancel
-                  </FLPButton>
-                  <FLPButton
-                    type="button"
-                    variant="destructive"
-                    size="sm"
-                    id="confirm-reset-btn"
-                    data-testid="confirm-reset-btn"
-                    disabled={resetConfirmInput.trim().toUpperCase() !== "RESET" || resettingData}
-                    onClick={handleResetFinancialData}
-                  >
-                    {resettingData ? "Resetting..." : "Permanently Reset Everything"}
-                  </FLPButton>
-                </div>
-              </div>
-            )}
-          </Dialog.Content>
-        </Dialog.Portal>
-      </Dialog.Root>
+              <p role="status" className={css({ color: "status.positive.text" })}>
+                All financial data wiped. You have a clean slate.
+              </p>
+            ) : null}
+            {resetError ? (
+              <p role="alert" className={css({ color: "status.danger.text" })}>
+                {resetError}
+              </p>
+            ) : null}
+          </div>
+        }
+        confirmLabel="Reset everything"
+        tone="danger"
+        requireText="RESET"
+        pending={resettingData || resetSuccess}
+        onConfirm={handleResetFinancialData}
+      />
     </div>
   );
 };
