@@ -28,7 +28,7 @@ describe("TaxController", () => {
     const bulkPayload = {
       records: [
         {
-          name: "Poplar Rent (2025/26)",
+          name: "Rental income (2025/26)",
           source: "rental" as const,
           type: "income" as const,
           category: "rental_income",
@@ -52,12 +52,9 @@ describe("TaxController", () => {
     expect(await controller.createBulkTaxRecords(mockReq, { records: [] })).toEqual([]);
   });
 
-  it("should seed default tax records when empty and not reset, and skip if reset", async () => {
+  it("returns [] for a new user and never calls create or save", async () => {
     const mockRepo = {
-      find: vi
-        .fn()
-        .mockResolvedValueOnce([])
-        .mockResolvedValueOnce([{ id: "r1", name: "Seeded" }]),
+      find: vi.fn().mockResolvedValue([]),
       create: vi.fn((r) => r),
       save: vi.fn().mockResolvedValue([]),
     };
@@ -66,16 +63,14 @@ describe("TaxController", () => {
     };
 
     const controller = new TaxController(mockRepo as any, mockProfileRepo as any);
-    const seeded = await controller.getTaxRecords({ user: { id: "user-123" } });
-    expect(seeded).toHaveLength(1);
-    expect(mockRepo.save).toHaveBeenCalled();
+    const result = await controller.getTaxRecords({ user: { id: "user-123" } });
 
-    // When hasResetFinancialData is true
-    mockRepo.find.mockResolvedValueOnce([]);
-    mockRepo.save.mockClear();
-    mockProfileRepo.findOne.mockResolvedValueOnce({ hasResetFinancialData: true });
-    const empty = await controller.getTaxRecords({ user: { id: "user-123" } });
-    expect(empty).toEqual([]);
+    expect(result).toEqual([]);
+    expect(mockRepo.find).toHaveBeenCalledWith({
+      where: { userId: "user-123" },
+      order: { date: "DESC" },
+    });
+    expect(mockRepo.create).not.toHaveBeenCalled();
     expect(mockRepo.save).not.toHaveBeenCalled();
   });
 
