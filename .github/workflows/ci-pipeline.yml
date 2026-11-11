@@ -43,6 +43,9 @@ jobs:
       - name: 🔐 Check no mock auth literals
         run: bun run check:auth
 
+      - name: 🧪 Test repo scripts
+        run: bun run test:scripts
+
   check-types:
     name: 🔎 Type Check
     runs-on: ubuntu-latest
