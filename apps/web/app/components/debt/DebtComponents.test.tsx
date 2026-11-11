@@ -1,6 +1,7 @@
 import { compareAvalancheAndSnowball } from "@flump/finance-engine";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
+import { debtItemToAccountPayload } from "~/features/debt/utils/debtAccountMapping";
 import { AddDebtDialog } from "./AddDebtDialog";
 import { PayoffStrategySwitcher } from "./PayoffStrategySwitcher";
 import { UkDebtInstrumentsCard } from "./UkDebtInstrumentsCard";
@@ -13,7 +14,7 @@ describe("Debt Components: AddDebtDialog, PayoffStrategySwitcher, UkDebtInstrume
     const { rerender, container } = render(
       <AddDebtDialog isOpen={false} onAddDebt={onAddDebt} onClose={onClose} />,
     );
-    expect(screen.queryByText("Add Liability Account")).toBeNull();
+    expect(screen.queryByText("Add liability account")).toBeNull();
 
     rerender(<AddDebtDialog isOpen={true} onAddDebt={onAddDebt} onClose={onClose} />);
 
@@ -35,10 +36,125 @@ describe("Debt Components: AddDebtDialog, PayoffStrategySwitcher, UkDebtInstrume
       name: "Amex Gold",
       balance: 3500,
       apr: 19.9,
+      aprKnown: true,
       minimumPayment: 90,
+      minimumPaymentEstimated: false,
       type: "loan",
     });
     expect(onClose).toHaveBeenCalled();
+  });
+
+  describe("AddDebtDialog without fabricated defaults", () => {
+    const open = () => {
+      const onAddDebt = vi.fn();
+      const onClose = vi.fn();
+      const view = render(<AddDebtDialog isOpen onAddDebt={onAddDebt} onClose={onClose} />);
+      return { onAddDebt, onClose, ...view };
+    };
+
+    it("starts with empty balance, APR and minimum fields", () => {
+      open();
+      for (const input of screen.getAllByRole("spinbutton")) {
+        expect((input as HTMLInputElement).value).toBe("");
+      }
+    });
+
+    it("needs only a name and balance; blank APR and minimum are flagged unknown", () => {
+      const { onAddDebt, container } = open();
+      fireEvent.change(screen.getByPlaceholderText(/Barclaycard Platinum/i), {
+        target: { value: "Klarna" },
+      });
+      fireEvent.change(screen.getByLabelText("Outstanding balance (£)"), {
+        target: { value: "250" },
+      });
+      fireEvent.submit(container.querySelector("form") as HTMLFormElement);
+
+      expect(onAddDebt).toHaveBeenCalledTimes(1);
+      const submitted = onAddDebt.mock.calls[0][0];
+      expect(submitted).toMatchObject({
+        name: "Klarna",
+        balance: 250,
+        aprKnown: false,
+        minimumPaymentEstimated: true,
+      });
+      expect(debtItemToAccountPayload(submitted)).toMatchObject({
+        balance: -250,
+        interestRate: null,
+        monthlyContribution: null,
+      });
+    });
+
+    it("treats an explicit 0 APR as a real rate", () => {
+      const { onAddDebt, container } = open();
+      fireEvent.change(screen.getByPlaceholderText(/Barclaycard Platinum/i), {
+        target: { value: "0% card" },
+      });
+      fireEvent.change(screen.getByLabelText("Outstanding balance (£)"), {
+        target: { value: "900" },
+      });
+      fireEvent.change(screen.getByLabelText("APR (%)"), { target: { value: "0" } });
+      fireEvent.submit(container.querySelector("form") as HTMLFormElement);
+
+      const submitted = onAddDebt.mock.calls[0][0];
+      expect(submitted.aprKnown).toBe(true);
+      expect(debtItemToAccountPayload(submitted).interestRate).toBe(0);
+    });
+
+    it("does not submit without a balance", () => {
+      const { onAddDebt, container } = open();
+      fireEvent.change(screen.getByPlaceholderText(/Barclaycard Platinum/i), {
+        target: { value: "Klarna" },
+      });
+      fireEvent.submit(container.querySelector("form") as HTMLFormElement);
+      expect(onAddDebt).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("AddDebtDialog in edit mode", () => {
+    const debt = {
+      id: "d1",
+      name: "Barclaycard",
+      balance: 1000,
+      apr: 21.9,
+      aprKnown: true,
+      minimumPayment: 30,
+      minimumPaymentEstimated: false,
+      type: "credit_card" as const,
+    };
+
+    it("offers no balance field and sends only the changed fields", () => {
+      const onEditDebt = vi.fn();
+      const { container } = render(
+        <AddDebtDialog
+          debt={debt}
+          isOpen
+          onAddDebt={vi.fn()}
+          onClose={vi.fn()}
+          onEditDebt={onEditDebt}
+        />,
+      );
+      expect(screen.queryByLabelText("Outstanding balance (£)")).toBeNull();
+      fireEvent.change(screen.getByLabelText("APR (%)"), { target: { value: "" } });
+      fireEvent.submit(container.querySelector("form") as HTMLFormElement);
+      expect(onEditDebt).toHaveBeenCalledWith("d1", { apr: 0, aprKnown: false });
+    });
+
+    it("sends nothing when nothing changed", () => {
+      const onEditDebt = vi.fn();
+      const onClose = vi.fn();
+      const { container } = render(
+        <AddDebtDialog
+          debt={debt}
+          isOpen
+          onAddDebt={vi.fn()}
+          onClose={onClose}
+          onEditDebt={onEditDebt}
+        />,
+      );
+      fireEvent.submit(container.querySelector("form") as HTMLFormElement);
+      expect(onEditDebt).not.toHaveBeenCalled();
+      expect(onClose).toHaveBeenCalled();
+    });
   });
 
   it("interacts with PayoffStrategySwitcher slider, surplus match, and keyboard/click strategy cards", () => {

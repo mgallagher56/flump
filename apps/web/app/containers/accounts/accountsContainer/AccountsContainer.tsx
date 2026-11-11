@@ -32,7 +32,8 @@ import { useFinancialBaseline } from "~/state/baseline.store";
 import { isFutureMonth, monthYearSort } from "~/utils/accounts";
 import { currentMonth, currentYear } from "~/utils/utils";
 
-const { CURRENT, SAVING, MORTGAGE, CREDIT_CARD, LOAN, OWED, INVESTMENT, PENSION } = AccountTypeEnum;
+const { CURRENT, SAVING, MORTGAGE, CREDIT_CARD, LOAN, OVERDRAFT, OWED, INVESTMENT, PENSION } =
+  AccountTypeEnum;
 
 const AccountsContainer: FC = () => {
   const { formatCurrency } = useFormatCurrency();
@@ -97,7 +98,8 @@ const AccountsContainer: FC = () => {
           isaUsed += balance;
         }
       } else {
-        totalLiabilities += balance;
+        // Liabilities are stored as minus the amount owed.
+        totalLiabilities += Math.abs(balance);
       }
     });
 
@@ -187,6 +189,8 @@ const AccountsContainer: FC = () => {
         return <FaCreditCard className={iconStyle} style={{ color: "#e11d48" }} />;
       case MORTGAGE:
         return <FaHome className={iconStyle} style={{ color: "#dc2626" }} />;
+      case OVERDRAFT:
+        return <FaExchangeAlt className={iconStyle} style={{ color: "#dc2626" }} />;
       case LOAN:
         return <FaHandHoldingUsd className={iconStyle} style={{ color: "#9333ea" }} />;
       case OWED:
@@ -592,6 +596,7 @@ const AccountsContainer: FC = () => {
                     CREDIT_CARD,
                     MORTGAGE,
                     LOAN,
+                    OVERDRAFT,
                     OWED,
                   ])}
                 </FLPBox>

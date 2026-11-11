@@ -149,6 +149,9 @@ describe("DebtContainer", () => {
     fireEvent.click(screen.getByRole("button", { name: /Add Debt/i }));
     const nameInput = screen.getByPlaceholderText(/Barclaycard Platinum/i);
     fireEvent.change(nameInput, { target: { value: "New Store Card" } });
+    fireEvent.change(screen.getByLabelText("Outstanding balance (£)"), {
+      target: { value: "1000" },
+    });
     const form = nameInput.closest("form");
     if (form) fireEvent.submit(form);
     expect(fetcherState.submit).toHaveBeenCalledTimes(1);
@@ -161,6 +164,8 @@ describe("DebtContainer", () => {
       name: "New Store Card",
       type: "Credit Card",
       balance: "-1000",
+      interestRate: "",
+      monthlyContribution: "",
     });
     expect(options).toEqual({ method: "POST", action: "/app/debt" });
   });
@@ -177,6 +182,18 @@ describe("DebtContainer", () => {
     fireEvent.click(within(dialog).getByRole("button", { name: "Delete debt" }));
     expect(fetcherState.submit).toHaveBeenCalledWith(
       { intent: "deleteDebt", accountId: "acc-loan" },
+      { method: "POST", action: "/app/debt" },
+    );
+  });
+
+  it("edits a debt, sending only the changed APR and never the balance", () => {
+    render(<DebtContainer />);
+    fireEvent.click(screen.getByRole("button", { name: /Liability Accounts & Cards/i }));
+    fireEvent.click(screen.getByRole("button", { name: "Edit Barclaycard Platinum" }));
+    fireEvent.change(screen.getByLabelText("APR (%)"), { target: { value: "" } });
+    fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
+    expect(fetcherState.submit).toHaveBeenCalledWith(
+      { intent: "updateDebt", accountId: "acc-cc", interestRate: "" },
       { method: "POST", action: "/app/debt" },
     );
   });

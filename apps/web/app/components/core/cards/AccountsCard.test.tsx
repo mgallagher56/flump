@@ -123,3 +123,36 @@ describe("<AccountsCard with increasing values", () => {
     expect(getByText("£13,216")).toBeDefined();
   });
 });
+
+describe("<AccountsCard /> liabilities", () => {
+  test.each([AccountTypeEnum.CREDIT_CARD, AccountTypeEnum.LOAN, AccountTypeEnum.OVERDRAFT])(
+    "shows a negative stored %s balance as a positive amount owed",
+    (type) => {
+      mocks.mockUseLoaderData.mockReturnValueOnce({ user: mockUser, accountDetails: [] });
+
+      const { getByText, queryByText } = customRender(
+        <AccountsCard accountId={"debt-1"} balance={-1200} name="Debt" type={type} />,
+      );
+
+      expect(getByText("£1,200")).toBeDefined();
+      expect(queryByText("£-1,200")).toBeNull();
+    },
+  );
+
+  test("shows a negative latest history value as a positive amount owed", () => {
+    mocks.mockUseLoaderData.mockReturnValueOnce({
+      user: mockUser,
+      accountDetails: [
+        { id: 1, account_id: "debt-2", month: 10, year: 2023, value: -1500 },
+        { id: 2, account_id: "debt-2", month: 11, year: 2023, value: -1200 },
+      ],
+    });
+
+    const { getByText, queryByText } = customRender(
+      <AccountsCard accountId={"debt-2"} name="Card" type={AccountTypeEnum.CREDIT_CARD} />,
+    );
+
+    expect(getByText("£1,200")).toBeDefined();
+    expect(queryByText("£-1,200")).toBeNull();
+  });
+});
