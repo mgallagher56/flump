@@ -3,6 +3,7 @@ import { NotFoundException } from "@nestjs/common";
 import { describe, expect, it, vi } from "vitest";
 import { FinanceController } from "./finance.controller";
 import { FinanceService } from "./finance.service";
+import { createInMemoryRepository } from "./testing/in-memory-repository";
 
 describe("FinanceController & FinanceService", () => {
   const createMocks = () => {
@@ -345,5 +346,123 @@ describe("FinanceController & FinanceService", () => {
     const delConn = await controller.deleteBankConnection(req, "c1");
     expect(delConn.success).toBe(true);
     expect(mockBankConnRepo.remove).toHaveBeenCalled();
+  });
+
+  describe("cross-user access (user B against user A's rows)", () => {
+    const userA = { user: { id: "userA" } };
+    const userB = { user: { id: "userB" } };
+
+    const createScopedController = () => {
+      const accountRepo = createInMemoryRepository([
+        { id: "acc-A", userId: "userA", name: "Savings", type: "Saving", balance: "100" },
+      ]);
+      const transactionRepo = createInMemoryRepository([
+        { id: "tx-A", userId: "userA", accountId: "acc-A", amount: -5, description: "Coffee" },
+      ]);
+      const accountDetailRepo = createInMemoryRepository([
+        { id: "det-A", accountId: "acc-A", year: 2026, month: 1, value: "100" },
+      ]);
+      const bankConnRepo = createInMemoryRepository([
+        { id: "conn-A", userId: "userA", institutionId: "monzo", status: "connected" },
+      ]);
+      const profileRepo = createInMemoryRepository([
+        { userId: "userB", hasResetFinancialData: true },
+      ]);
+      const service = new FinanceService(
+        accountRepo as any,
+        transactionRepo as any,
+        accountDetailRepo as any,
+        bankConnRepo as any,
+        profileRepo as any,
+        { getProvider: vi.fn() } as any,
+        { get: vi.fn() } as any,
+      );
+      return {
+        controller: new FinanceController(service),
+        accountRepo,
+        transactionRepo,
+        accountDetailRepo,
+        bankConnRepo,
+      };
+    };
+
+    it("account: B gets not-found on get, update and delete of A's account, which is unchanged", async () => {
+      const { controller, accountRepo, accountDetailRepo, transactionRepo } =
+        createScopedController();
+
+      await expect(controller.getAccount(userB, "acc-A")).rejects.toThrow(NotFoundException);
+      await expect(
+        controller.updateAccount(userB, "acc-A", { balance: 0, name: "Hijacked" }),
+      ).rejects.toThrow(NotFoundException);
+      await expect(controller.deleteAccount(userB, "acc-A")).rejects.toThrow(NotFoundException);
+
+      expect(accountRepo.rows).toEqual([
+        { id: "acc-A", userId: "userA", name: "Savings", type: "Saving", balance: "100" },
+      ]);
+      expect(accountDetailRepo.rows).toHaveLength(1);
+      expect(transactionRepo.rows).toHaveLength(1);
+
+      // The owner still sees the same row.
+      expect((await controller.getAccount(userA, "acc-A")).name).toBe("Savings");
+    });
+
+    it("account: B cannot create an account that takes over A's row id", async () => {
+      const { controller, accountRepo } = createScopedController();
+
+      await controller.createAccount(userB, {
+        id: "acc-A",
+        userId: "userA",
+        name: "Mine",
+        type: "Current",
+        balance: 1,
+      } as any);
+
+      expect(accountRepo.rows.find((r) => r.id === "acc-A")).toMatchObject({
+        userId: "userA",
+        name: "Savings",
+      });
+      expect(accountRepo.rows.filter((r) => r.userId === "userB")).toHaveLength(1);
+    });
+
+    it("transaction: B sees none of A's transactions and cannot write into A's", async () => {
+      const { controller, transactionRepo } = createScopedController();
+
+      expect(await controller.getTransactions(userB)).toEqual([]);
+      expect(await controller.getTransactions(userB, "acc-A")).toEqual([]);
+
+      await controller.createTransaction(userB, {
+        id: "tx-A",
+        userId: "userA",
+        accountId: "acc-A",
+        amount: 999,
+        description: "Forged",
+        category: "Other",
+      } as any);
+
+      expect(transactionRepo.rows.find((r) => r.id === "tx-A")).toMatchObject({
+        userId: "userA",
+        amount: -5,
+        description: "Coffee",
+      });
+      expect(await controller.getTransactions(userA)).toHaveLength(1);
+    });
+
+    it("bank connection: B gets not-found on sync and delete of A's connection, which is unchanged", async () => {
+      const { controller, bankConnRepo, accountRepo } = createScopedController();
+
+      await expect(controller.syncBankConnection(userB, "conn-A")).rejects.toThrow(
+        NotFoundException,
+      );
+      await expect(controller.deleteBankConnection(userB, "conn-A")).rejects.toThrow(
+        NotFoundException,
+      );
+
+      expect(bankConnRepo.rows).toEqual([
+        { id: "conn-A", userId: "userA", institutionId: "monzo", status: "connected" },
+      ]);
+      expect(accountRepo.rows).toHaveLength(1);
+      expect(await controller.getBankConnections(userB)).toEqual([]);
+      expect(await controller.getBankConnections(userA)).toHaveLength(1);
+    });
   });
 });

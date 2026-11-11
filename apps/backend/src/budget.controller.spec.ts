@@ -1,6 +1,7 @@
 import { BadRequestException, NotFoundException } from "@nestjs/common";
 import { describe, expect, it, vi } from "vitest";
 import { BudgetController } from "./budget.controller";
+import { createInMemoryRepository } from "./testing/in-memory-repository";
 
 describe("BudgetController", () => {
   it("should be defined", () => {
@@ -138,5 +139,28 @@ describe("BudgetController", () => {
     const resetRes = await controller.resetBudgetEntries(req);
     expect(mockBudgetRepo.remove).toHaveBeenCalled();
     expect(resetRes.length).toBeGreaterThan(0);
+  });
+
+  it("scopes budget entries by owner: user B cannot list, update or delete user A's entry", async () => {
+    const budgetRepo = createInMemoryRepository([
+      { id: "e-A", userId: "userA", category: "housing", name: "Rent", amount: 1500 },
+    ]);
+    const profileRepo = createInMemoryRepository([
+      { userId: "userB", hasResetFinancialData: true },
+    ]);
+    const controller = new BudgetController(budgetRepo as any, profileRepo as any);
+    const userA = { user: { id: "userA" } };
+    const userB = { user: { id: "userB" } };
+
+    expect(await controller.getBudgetEntries(userB)).toEqual([]);
+    await expect(controller.updateBudgetEntry(userB, "e-A", { amount: 1 })).rejects.toThrow(
+      NotFoundException,
+    );
+    await expect(controller.deleteBudgetEntry(userB, "e-A")).rejects.toThrow(NotFoundException);
+
+    expect(budgetRepo.rows).toEqual([
+      { id: "e-A", userId: "userA", category: "housing", name: "Rent", amount: 1500 },
+    ]);
+    expect(await controller.getBudgetEntries(userA)).toHaveLength(1);
   });
 });
