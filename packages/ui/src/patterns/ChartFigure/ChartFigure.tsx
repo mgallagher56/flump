@@ -51,7 +51,7 @@ export const ChartFigure: FC<ChartFigureProps> = ({
         {summary}
       </figcaption>
       {dataTable ? (
-        <CollapsibleDrawer title="Show data">
+        <CollapsibleDrawer closedLabel="▼" openLabel="▲" title="Show data">
           <div className={chartFigureData()}>{dataTable}</div>
         </CollapsibleDrawer>
       ) : null}
