@@ -113,6 +113,9 @@ export const DebtContainer: FC = () => {
   const totalDebt = debts.reduce((sum, d) => sum + d.balance, 0);
   const totalMin = debts.reduce((sum, d) => sum + d.minimumPayment, 0);
   const hasDebts = debts.length > 0;
+  // An unset APR is modelled as 0%, which would invent optimistic dates and savings.
+  const aprUnknown = debts.some((d) => d.aprKnown === false);
+  const minimumEstimated = debts.some((d) => d.minimumPaymentEstimated === true);
 
   const fetcher = useFetcher();
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
@@ -265,6 +268,8 @@ export const DebtContainer: FC = () => {
       {/* 2. Summary Metric Cards (Single compact 4-card row) */}
       {hasDebts ? (
         <DebtSummaryCards
+          aprUnknown={aprUnknown}
+          minimumEstimated={minimumEstimated}
           debtFreeDate={activeResult.debtFreeDate}
           extraPayment={extraPayment}
           highInterestDebt={stageEval.highInterestDebt}
@@ -388,6 +393,12 @@ export const DebtContainer: FC = () => {
                     >
                       Set up your budget to see your monthly surplus
                     </Link>
+                  </FLPText>
+                ) : null}
+                {aprUnknown ? (
+                  <FLPText color="text.muted" fontSize="sm" data-testid="apr-unknown-note">
+                    Some debts have no APR set, so the payoff figures below treat them as 0% and are
+                    optimistic. Add each APR for accurate dates and interest.
                   </FLPText>
                 ) : null}
                 <PayoffStrategySwitcher

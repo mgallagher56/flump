@@ -30,6 +30,21 @@ describe("BudgetWidget Runway Display", () => {
   const renderBudgetWidget = (data: any) =>
     render(<BudgetWidget data={data} editMode={false} size="normal" />);
 
+  it("shows Not set rather than 0 mos or No burn when no budget is entered", () => {
+    renderBudgetWidget({
+      monthlyIncome: 0,
+      monthlyExpenses: 0,
+      monthlySurplus: 0,
+      budgetedSavings: 0,
+      livingExpenses: 0,
+      savingsRatePct: 0,
+      runwayMonths: 0,
+      runwayLabel: "0 mo",
+    });
+    expect(screen.getByText("Not set")).toBeDefined();
+    expect(screen.queryByText("0 mos")).toBeNull();
+  });
+
   it("shows years/months instead of descriptive labels like 'Ironclad Runway'", () => {
     renderBudgetWidget({
       ...baseData,

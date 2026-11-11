@@ -319,4 +319,46 @@ describe("HomeDashboard", () => {
     expect(screen.queryByText(/Stage 1: Stabilize/)).toBeNull();
     expect(screen.queryByText(/Unsecured Debt Remaining/)).toBeNull();
   });
+
+  describe("with no budget entered", () => {
+    const noBudget = {
+      ...dummyProps,
+      budgetData: {
+        monthlyIncome: 0,
+        monthlyExpenses: 0,
+        monthlySurplus: 0,
+        savingsRatePct: 0,
+        runwayMonths: 0,
+      },
+      accountsData: { ...dummyProps.accountsData, totalLiabilities: 3000 },
+      debtData: {
+        totalDebt: 3000,
+        debtCount: 1,
+        highInterestCount: 1,
+        monthlyMinimumTotal: 90,
+        monthlyMinimumEstimated: false,
+        debtFreeDate: null,
+        debts: [{ id: "d1", name: "Card", balance: 3000, apr: 22, minimumPayment: 90 }],
+      },
+    };
+
+    it("does not show a £0 weekly Safe-to-Spend allowance invented from an empty budget", () => {
+      render(<HomeDashboard {...(noBudget as any)} />);
+      expect(screen.getByText(/Stage 1: Stabilize/)).toBeDefined();
+      expect(screen.queryByText(/Safe-to-Spend Allowance/)).toBeNull();
+      expect(screen.getByText(/Add your budget to see your safe-to-spend/)).toBeDefined();
+    });
+
+    it("hides the Stage 1 banner when only a zero-surplus budget would imply it", () => {
+      const lowCost = {
+        ...noBudget,
+        debtData: {
+          ...noBudget.debtData,
+          debts: [{ id: "d1", name: "Loan", balance: 3000, apr: 3, minimumPayment: 90 }],
+        },
+      };
+      render(<HomeDashboard {...(lowCost as any)} />);
+      expect(screen.queryByText(/Stage 1: Stabilize/)).toBeNull();
+    });
+  });
 });

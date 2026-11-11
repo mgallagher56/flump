@@ -9,6 +9,7 @@ const fetcherState = vi.hoisted(() => ({
 
 const loaderState = vi.hoisted(() => ({
   empty: false,
+  accountsOverride: null as unknown[] | null,
   debtInputs: { monthlySurplus: 420, liquidSavings: 2000, monthlyEssentialExpenses: 1500 } as {
     monthlySurplus: number | null;
     liquidSavings: number;
@@ -18,24 +19,26 @@ const loaderState = vi.hoisted(() => ({
 
 vi.mock("react-router", () => ({
   useLoaderData: () => ({
-    accounts: loaderState.empty
-      ? []
-      : [
-          {
-            id: "acc-cc",
-            name: "Barclaycard Platinum",
-            type: "Credit Card",
-            balance: 3000,
-            interestRate: 22.9,
-          },
-          {
-            id: "acc-loan",
-            name: "Tesco Loan",
-            type: "Loan",
-            balance: 4500,
-            interestRate: 7.9,
-          },
-        ],
+    accounts: loaderState.accountsOverride
+      ? loaderState.accountsOverride
+      : loaderState.empty
+        ? []
+        : [
+            {
+              id: "acc-cc",
+              name: "Barclaycard Platinum",
+              type: "Credit Card",
+              balance: 3000,
+              interestRate: 22.9,
+            },
+            {
+              id: "acc-loan",
+              name: "Tesco Loan",
+              type: "Loan",
+              balance: 4500,
+              interestRate: 7.9,
+            },
+          ],
     debtInputs: loaderState.debtInputs,
     userProfile: {},
   }),
@@ -67,6 +70,7 @@ describe("DebtContainer", () => {
   beforeEach(() => {
     fetcherState.submit.mockReset();
     fetcherState.data = undefined;
+    loaderState.accountsOverride = null;
   });
 
   it("passes the loader surplus, not a hard-coded fallback", () => {
@@ -74,6 +78,23 @@ describe("DebtContainer", () => {
     expect(screen.getByText(/Wired to budget surplus: £420\/mo available/)).toBeDefined();
     expect(screen.queryByText(/Set up your budget to see your monthly surplus/)).toBeNull();
     expect(screen.queryByTestId("surplus-unknown-note")).toBeNull();
+  });
+
+  it("shows Not calculated for date and interest saved when a debt has no APR", () => {
+    loaderState.accountsOverride = [
+      { id: "acc-cc", name: "Barclaycard", type: "Credit Card", balance: 3000 },
+    ];
+    render(<DebtContainer />);
+    expect(screen.getAllByText("Not calculated").length).toBeGreaterThanOrEqual(2);
+    expect(screen.getAllByText(/Add each debt's APR/).length).toBeGreaterThan(0);
+  });
+
+  it("marks estimated minimum payments as estimated", () => {
+    loaderState.accountsOverride = [
+      { id: "acc-cc", name: "Barclaycard", type: "Credit Card", balance: 3000, interestRate: 20 },
+    ];
+    render(<DebtContainer />);
+    expect(screen.getByText(/minimums estimated/)).toBeDefined();
   });
 
   it("shows the budget prompt when surplus is null", () => {
