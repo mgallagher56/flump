@@ -168,6 +168,21 @@ describe("_index route", () => {
     expect(data.mortgageData.remainingTermYears).toBeNull();
   });
 
+  it("mortgage term and fallback rate come from the profile; account rate wins", async () => {
+    const fallback = await loadSignedIn({
+      userProfile: { onboardingCompleted: true, mortgageRate: 4.2, mortgageTermYears: 18 },
+      accounts: [{ id: "m", name: "Home", type: "Mortgage", balance: -200000 }],
+    });
+    expect(fallback.mortgageData.interestRate).toBe(4.2);
+    expect(fallback.mortgageData.remainingTermYears).toBe(18);
+
+    const accountFirst = await loadSignedIn({
+      userProfile: { onboardingCompleted: true, mortgageRate: 4.2, mortgageTermYears: 18 },
+      accounts: [{ id: "m", name: "Home", type: "Mortgage", balance: -200000, interestRate: 3.9 }],
+    });
+    expect(accountFirst.mortgageData.interestRate).toBe(3.9);
+  });
+
   it("mortgage rate is null when the account has none", async () => {
     const data = await loadSignedIn({
       accounts: [{ id: "m", name: "Home", type: "Mortgage", balance: -200000 }],

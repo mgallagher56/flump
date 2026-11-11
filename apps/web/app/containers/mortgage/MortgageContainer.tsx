@@ -91,6 +91,9 @@ const MortgageContainer: FC = () => {
       await updateProfile({
         hasMortgage: true,
         mortgageBalance: editLoanAmount,
+        // Only user-entered values are stored; an empty field is saved as unknown.
+        mortgageRate: editInterestRate > 0 ? editInterestRate : null,
+        mortgageTermYears: editRemainingTerm > 0 ? editRemainingTerm : null,
         mortgageType: editMortgageType,
       });
       setIsSaved(true);
@@ -526,7 +529,7 @@ const MortgageContainer: FC = () => {
                 min="1"
                 max="40"
                 value={editRemainingTerm}
-                onChange={(e) => setEditRemainingTerm(Number(e.target.value) || 1)}
+                onChange={(e) => setEditRemainingTerm(Number(e.target.value) || 0)}
                 style={{
                   padding: "8px 12px",
                   borderRadius: "8px",
@@ -1016,9 +1019,14 @@ const MortgageContainer: FC = () => {
       </div>
 
       {missingMortgageDetails.length > 0 && propertyCategory === "residential" && (
-        <FLPText color="text.muted" fontSize="sm">
-          Add your mortgage {formatList(missingMortgageDetails)} to see your figures.
-        </FLPText>
+        <div style={{ display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap" }}>
+          <FLPText color="text.muted" fontSize="sm">
+            Add your mortgage {formatList(missingMortgageDetails)} to see your figures.
+          </FLPText>
+          <FLPButton size="sm" variant="primary" onClick={startEditing}>
+            Add mortgage details
+          </FLPButton>
+        </div>
       )}
 
       {/* Selected Tab content */}

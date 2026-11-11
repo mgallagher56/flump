@@ -45,6 +45,8 @@ export interface UserProfile {
   mortgageRenewalDate?: string | null;
   homeValue?: number | null;
   mortgageBalance?: number | null;
+  mortgageRate?: number | null;
+  mortgageTermYears?: number | null;
   propertyOwnershipShare: number;
   hasBuyToLet: boolean;
   buyToLetCount: number;

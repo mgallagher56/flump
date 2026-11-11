@@ -131,10 +131,15 @@ export const loader = async (args: LoaderFunctionArgs) => {
     : [];
   const mortgageBalance = portfolioSnapshot.getTotalMortgageBalance();
   const storedMortgageRate = mortgageAccounts[0]?.interestRate;
+  const toKnownNumber = (value: unknown): number | null => {
+    if (value === null || value === undefined || value === "") return null;
+    const n = Number(value);
+    return Number.isFinite(n) ? n : null;
+  };
+  // Account rate first, then the rate the user entered on the mortgage page.
   const mortgageRate =
-    storedMortgageRate === null || storedMortgageRate === undefined || storedMortgageRate === ""
-      ? null
-      : Number(storedMortgageRate);
+    toKnownNumber(storedMortgageRate) ?? toKnownNumber(userProfile?.mortgageRate);
+  const mortgageTermYears = toKnownNumber(userProfile?.mortgageTermYears);
 
   // Tax data
   const currentYearRecords = Array.isArray(taxRecords) ? taxRecords : [];
@@ -235,7 +240,7 @@ export const loader = async (args: LoaderFunctionArgs) => {
     mortgageData: {
       mortgageBalance,
       interestRate: mortgageRate,
-      remainingTermYears: null,
+      remainingTermYears: mortgageTermYears,
       hasMortgageAccount: mortgageAccounts.length > 0,
     },
     forecastData: {

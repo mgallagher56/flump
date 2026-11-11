@@ -27,6 +27,7 @@ vi.mock("react-router", async () => {
       accountDetails: [{ account_id: "m1", month: 6, year: 2026, value: -135400 }],
     })),
     useNavigate: () => mockNavigate,
+    useRouteLoaderData: () => ({ accessToken: "test-token" }),
   };
 });
 
@@ -100,6 +101,47 @@ describe("<MortgageContainer />", () => {
 
     // Switch to LTV milestones tab
     fireEvent.click(getByText("LTV milestones"));
+  });
+
+  test("saving sends the entered rate and term to the profile", async () => {
+    (window as unknown as { ENV: { VITE_API_URL: string } }).ENV = {
+      VITE_API_URL: "http://api.test",
+    };
+    const fetchSpy = vi
+      .spyOn(globalThis, "fetch")
+      .mockResolvedValue(new Response(JSON.stringify({}), { status: 200 }));
+    const { getByLabelText, getByRole } = customRender(<MortgageContainer />);
+    fireEvent.click(getByRole("button", { name: /^Edit$/i }));
+    fireEvent.change(getByLabelText("Interest Rate (%)"), { target: { value: "4.5" } });
+    fireEvent.change(getByLabelText("Remaining Term (Years)"), { target: { value: "18" } });
+    fireEvent.click(getByRole("button", { name: /^Save$/i }));
+    await vi.waitFor(() => {
+      const patch = fetchSpy.mock.calls.find(
+        ([, init]) => (init as RequestInit)?.method === "PATCH",
+      );
+      const init = patch?.[1] as RequestInit | undefined;
+      expect(init).toBeDefined();
+      const body = JSON.parse(String(init?.body));
+      expect(body.mortgageRate).toBe(4.5);
+      expect(body.mortgageTermYears).toBe(18);
+    });
+  });
+
+  test("blanking the term field leaves it empty rather than becoming 1 year", () => {
+    const { getByLabelText, getByRole } = customRender(<MortgageContainer />);
+    fireEvent.click(getByRole("button", { name: /^Edit$/i }));
+    const term = getByLabelText("Remaining Term (Years)") as HTMLInputElement;
+    fireEvent.change(term, { target: { value: "18" } });
+    fireEvent.change(term, { target: { value: "" } });
+    expect(term.value).not.toBe("1");
+  });
+
+  test("empty prompt offers a call to action that opens the edit form", () => {
+    vi.mocked(useLoaderData).mockReturnValue({ accounts: [], accountDetails: [] } as any);
+    const { getByRole, getByLabelText } = customRender(<MortgageContainer />);
+    fireEvent.click(getByRole("button", { name: "Add mortgage details" }));
+    expect(getByLabelText("Interest Rate (%)")).toBeDefined();
+    vi.mocked(useLoaderData).mockReset();
   });
 
   describe("with no stored rate or term", () => {
