@@ -20,6 +20,8 @@ export class BackendError extends Error {
   readonly kind: BackendErrorKind;
   readonly status?: number;
   readonly endpoint: string;
+  /** Server-supplied message for browser callers (e.g. weak password). Never part of `message`. */
+  detail?: string;
 
   constructor(kind: BackendErrorKind, endpoint: string, status?: number, options?: ErrorOptions) {
     super(`Backend request to ${endpoint} failed: ${kind}${status ? ` (${status})` : ""}`, options);
