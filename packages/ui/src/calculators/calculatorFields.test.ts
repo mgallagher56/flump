@@ -27,7 +27,7 @@ describe("inline calculator number inputs use the input boundary token", () => {
   it.each(files)("%s has no <input> styled with the decorative border", (file) => {
     const src = readFileSync(join(__dirname, file), "utf8");
     const inputs = src.match(/<input[\s\S]*?\/>/g) ?? [];
-    const inline = inputs.filter((i) => i.includes("style={{"));
+    const inline = inputs.filter((i) => i.includes("style={{") && i.includes('type="number"'));
     expect(inline.length).toBeGreaterThan(0);
     for (const input of inline) {
       expect(input).not.toContain('"1px solid var(--colors-border)"');
