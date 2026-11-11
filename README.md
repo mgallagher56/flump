@@ -246,6 +246,8 @@ docker rm -f flump-e3-pg
 
 These tests are destructive, so a safety guard always refuses a non-local host (`localhost`, `127.0.0.1`, `::1`) and refuses a database whose name does not contain `test` unless `ALLOW_DESTRUCTIVE_DB_TESTS=1` is set. Never point them at a development or production database.
 
+The migration integration suite (`apps/backend/src/migrations/migrations.integration.spec.ts`) needs a real Postgres and is skipped locally unless `TEST_DATABASE_URL` is set. It drops the `public` schema, so it only accepts a local host and a database name containing `test`. CI runs it in the vitest job against a Postgres 18 service container with `REQUIRE_DB_TESTS=1`, so a missing database fails the job instead of skipping. `turbo.json` lists `TEST_DATABASE_URL` and `REQUIRE_DB_TESTS` under `env` for the test tasks, so `bun run test` from the repo root passes them through.
+
 ### 3. Start Local Database (PostgreSQL)
 
 ```bash

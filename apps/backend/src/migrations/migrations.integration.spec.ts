@@ -14,6 +14,8 @@ import { ClearBankTokens1794355300000 } from "./ClearBankTokens1794355300000";
 //     bunx vitest run src/migrations
 // Skipped when TEST_DATABASE_URL is unset, unless REQUIRE_DB_TESTS=1 (CI), in which
 // case collection fails instead. Throws if the URL points at anything unsafe.
+// CI runs this suite against the Postgres 18 service container in the vitest job
+// (.github/workflows/ci-pipeline.yml); turbo.json passes the variables through.
 const TEST_DATABASE_URL = process.env.TEST_DATABASE_URL;
 
 const ENTITY_TABLES = [
