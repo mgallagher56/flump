@@ -1,4 +1,5 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mockUpdateProfile = vi.fn().mockResolvedValue({});
@@ -26,6 +27,7 @@ const mockProfileData = {
 };
 
 vi.mock("react-router", () => ({
+  Link: ({ children, to }: { children: ReactNode; to: string }) => <a href={to}>{children}</a>,
   useLoaderData: () => mockLoaderData,
   useNavigate: () => vi.fn(),
 }));

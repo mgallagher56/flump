@@ -23,6 +23,7 @@ const entry = (overrides: Partial<BudgetEntry>): BudgetEntry => ({
   isIncome: false,
   isPrimaryIncome: false,
   isDefault: false,
+  notes: null,
   createdAt: "2026-01-01",
   updatedAt: "2026-01-01",
   ...overrides,
