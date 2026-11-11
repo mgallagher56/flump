@@ -240,7 +240,7 @@ export const DebtSnowballCalculator: FC<DebtSnowballCalculatorProps> = ({
                     textAlign: "right",
                     color: "var(--colors-primary)",
                     borderRadius: "6px",
-                    border: "1px solid var(--colors-border)",
+                    border: "1px solid var(--colors-border-input)",
                     backgroundColor: "var(--colors-surface)",
                   }}
                 />
