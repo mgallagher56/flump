@@ -19,6 +19,10 @@ const AI_CONNECTIONS_FEATURES_DIR = path.resolve(
   __dirname,
   "../../../../apps/web/app/features/ai-connections/components",
 );
+const FEEDBACK_FEATURES_DIR = path.resolve(
+  __dirname,
+  "../../../../apps/web/app/features/feedback/components",
+);
 const MARKETING_COMPONENTS_DIR = path.resolve(
   __dirname,
   "../../../../apps/marketing/src/components",
@@ -116,6 +120,16 @@ describe("Architecture & Design System Laws", () => {
         expect(aiComponents.length).toBeGreaterThanOrEqual(1);
         for (const comp of aiComponents) {
           verifyColocatedStructure(AI_CONNECTIONS_FEATURES_DIR, comp);
+        }
+      }
+    });
+
+    it("enforces colocated structure for features/feedback components", () => {
+      if (fs.existsSync(FEEDBACK_FEATURES_DIR)) {
+        const feedbackComponents = getSubdirectories(FEEDBACK_FEATURES_DIR);
+        expect(feedbackComponents.length).toBeGreaterThanOrEqual(1);
+        for (const comp of feedbackComponents) {
+          verifyColocatedStructure(FEEDBACK_FEATURES_DIR, comp);
         }
       }
     });
