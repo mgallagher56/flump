@@ -211,6 +211,15 @@ Configuration and database environment contract (the backend validates this at b
 
 In strict mode (production) the backend runs pending migrations on boot. The schema is no longer managed by `synchronize`. A baseline migration records itself on a database that was previously built by `synchronize`, so existing databases adopt migrations without changes. Confirm the production tables match the entities before the first deploy.
 
+**Pre-deploy checklist (first production deploy of this epic):**
+
+1. Take a database backup first. The boot runs migrations automatically, and `ClearBankTokens` irreversibly nulls every stored bank token (its `down()` is a no-op).
+2. Set `NODE_ENV=production` explicitly.
+3. Set `BANKING_TOKEN_ENCRYPTION_KEY` (32+ characters, generated with `openssl rand -hex 32`, never the example text) and the database variables.
+4. Decide the TLS setting: leave `DB_SSL` unset to verify certificates, use `DB_SSL_CA` for a private CA, and use `no-verify` only as a conscious opt-out.
+5. Expect connected users to reconnect their bank once.
+6. The baseline migration records itself on a database already built by `synchronize`. If only some of the eight tables exist it throws a "partial schema" error: the boot fails and nothing is changed. Reconcile the schema by hand, then redeploy.
+
 Commands run from `apps/backend`. They do not set `NODE_ENV`, so they work against production settings:
 
 ```bash
