@@ -220,5 +220,54 @@ describe("Architecture & Design System Laws", () => {
         }
       }
     });
+    it("no component uses status.*.solid as a text colour", () => {
+      // status.*.solid is a fill/graphic colour (3:1, SC 1.4.11). As text it is only guaranteed
+      // when paired with text.onContrast. Use status.*.text for text. Icons are graphics, so
+      // they may use solid. Paths are relative to the repo root.
+      const ALLOWED: Record<string, string> = {
+        "apps/web/app/features/debt/components/PromoCliffTracker/PromoCliffTracker.tsx":
+          "icon (graphic)",
+        "apps/web/app/features/debt/components/PayoffStrategyControls/PayoffStrategyControls.tsx":
+          "icon (graphic)",
+        "apps/marketing/src/components/McpSpotlightSection/McpSpotlightSection.styles.ts":
+          "bulletIcon recipe, applied to icon components only (graphic)",
+        // Known sites pending fixes. Remove each entry when the site moves to status.*.text.
+        "apps/web/app/features/ai-connections/components/McpConnectionCard/McpConnectionCard.tsx":
+          "Revoke button text, pending the web sweep: must move to status.danger.text",
+        "packages/ui/src/patterns/TaxTrapEscapeBanner/TaxTrapEscapeBanner.tsx":
+          "saving figure text, pending fix: must move to status.positive.text",
+      };
+      const repoRoot = path.resolve(__dirname, "../../../..");
+      const roots = [path.join(repoRoot, "packages/ui/src")];
+      for (const app of ["web", "marketing", "mobile-companion"]) {
+        for (const sub of ["src", "app"]) roots.push(path.join(repoRoot, "apps", app, sub));
+      }
+      const files: string[] = [];
+      const walk = (dir: string) => {
+        if (!fs.existsSync(dir)) return;
+        for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+          if (entry.name === "node_modules" || entry.name === "styled-system") continue;
+          const full = path.join(dir, entry.name);
+          if (entry.isDirectory()) walk(full);
+          else if (/\.(ts|tsx)$/.test(entry.name) && !/\.(test|stories)\.tsx?$/.test(entry.name))
+            files.push(full);
+        }
+      };
+      for (const root of roots) walk(root);
+      expect(files.length).toBeGreaterThan(100);
+
+      const textSolid = /\bcolor:\s*["']status\.[a-zA-Z]+\.solid["']/;
+      const offenders = files
+        .filter((f) => textSolid.test(fs.readFileSync(f, "utf-8")))
+        .map((f) => path.relative(repoRoot, f));
+      const unexpected = offenders.filter((f) => !(f in ALLOWED));
+      expect(
+        unexpected,
+        `status.*.solid used as text colour (use status.*.text): ${unexpected.join(", ")}`,
+      ).toEqual([]);
+      // Stale allowlist entries must be removed once the site is fixed.
+      const stale = Object.keys(ALLOWED).filter((f) => !offenders.includes(f));
+      expect(stale, `Allowlist entries no longer match: ${stale.join(", ")}`).toEqual([]);
+    });
   });
 });

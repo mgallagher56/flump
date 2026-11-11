@@ -275,6 +275,22 @@ const PASSING_PAIRS: Pair[] = [
   ...["surface.card", "surface.canvas", "surface.sunken", "surface.overlay", "surface.subtle"].map(
     (bg): Pair => ({ fg: "border.input", bg, themes: BOTH, min: 3, role: "ui" }),
   ),
+  // J-01/H-07/chart-warning (E8 T05): status fills and chart warning series are graphics (SC 1.4.11, 3:1).
+  ...STATUSES.map(
+    (s): Pair => ({
+      fg: `status.${s}.solid`,
+      bg: "surface.card",
+      themes: BOTH,
+      min: 3,
+      role: "graphic",
+    }),
+  ),
+  { fg: "text.onContrast", bg: "status.danger.solid", themes: BOTH, min: 4.5, role: "text" },
+  ...["chart.warning", "chart.series5"].flatMap((fg) =>
+    ["surface.card", "surface.canvas"].map(
+      (bg): Pair => ({ fg, bg, themes: BOTH, min: 3, role: "graphic" }),
+    ),
+  ),
 ];
 
 /** Known failures. Each row names the audit finding; fix the token then move the row to PASSING_PAIRS. */
@@ -286,20 +302,6 @@ const KNOWN_FAILURES: { finding: string; pair: Pair }[] = [
   {
     finding: "J-01",
     pair: { fg: "primary", bg: "surface.card", themes: ["dark"], min: 4.5, role: "text" },
-  },
-  {
-    finding: "chart-warning",
-    pair: { fg: "chart.warning", bg: "surface.card", themes: ["light"], min: 3, role: "graphic" },
-  },
-  {
-    finding: "H-07",
-    pair: {
-      fg: "text.onContrast",
-      bg: "status.danger.solid",
-      themes: ["dark"],
-      min: 4.5,
-      role: "text",
-    },
   },
 ];
 
