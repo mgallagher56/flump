@@ -118,9 +118,9 @@ export const loader = async (args: LoaderFunctionArgs) => {
     (sum: number, a: any) => sum + (Number(a.monthlyContribution) || 0),
     0,
   );
-  const weightedInterestRate = portfolioSnapshot.getWeightedSavingsRate(
-    Number(userProfile?.savingsDefaultInterestRate) || 5.0,
-  );
+  // No savings balance means no weighted rate: never substitute a default rate for a real one.
+  const weightedInterestRate =
+    totalSavingsBalance > 0 ? portfolioSnapshot.getWeightedSavingsRate(0) : null;
 
   // Pension accounts data
   const pensionAccounts = Array.isArray(accounts)
@@ -133,6 +133,11 @@ export const loader = async (args: LoaderFunctionArgs) => {
     ? accounts.filter((a: any) => a.type === "Mortgage")
     : [];
   const mortgageBalance = portfolioSnapshot.getTotalMortgageBalance();
+  const storedMortgageRate = mortgageAccounts[0]?.interestRate;
+  const mortgageRate =
+    storedMortgageRate === null || storedMortgageRate === undefined || storedMortgageRate === ""
+      ? null
+      : Number(storedMortgageRate);
 
   // Tax data
   const currentYearRecords = Array.isArray(taxRecords) ? taxRecords : [];
@@ -205,21 +210,27 @@ export const loader = async (args: LoaderFunctionArgs) => {
     savingsData: {
       totalSavingsBalance,
       totalMonthlyContributions,
-      weightedInterestRate: Number(weightedInterestRate.toFixed(2)),
+      weightedInterestRate:
+        weightedInterestRate === null ? null : Number(weightedInterestRate.toFixed(2)),
       accountsCount: savingsAccounts.length,
     },
     pensionData: {
       totalPensionBalance,
       potsCount: pensionAccounts.length,
-      employeePercent: Number(userProfile?.pensionPercent) || 5.0,
-      employerPercent: Number(userProfile?.pensionEmployerPercent) || 3.0,
+      // 0% is a real contribution rate; only a missing profile value is null.
+      employeePercent:
+        userProfile?.pensionPercent == null ? null : Number(userProfile.pensionPercent),
+      employerPercent:
+        userProfile?.pensionEmployerPercent == null
+          ? null
+          : Number(userProfile.pensionEmployerPercent),
       isSalarySacrifice: userProfile?.isSalarySacrifice ?? true,
       monthlyContributionEst: 0,
     },
     mortgageData: {
       mortgageBalance,
-      interestRate: 4.5,
-      remainingTermYears: 25,
+      interestRate: mortgageRate,
+      remainingTermYears: null,
       hasMortgageAccount: mortgageAccounts.length > 0,
     },
     forecastData: {

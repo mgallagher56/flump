@@ -123,6 +123,52 @@ describe("_index route", () => {
     expect(data.debtData).not.toHaveProperty("interestSaved");
   });
 
+  const loadSignedIn = async (overrides: Record<string, unknown>) => {
+    vi.mocked(loadWorkspaceSnapshot).mockResolvedValueOnce(signedInSnapshot(overrides) as any);
+    const request = new Request("http://localhost/");
+    return (await loader({ request, params: {}, context: {} } as any)) as any;
+  };
+
+  it("a user with 0% pension contribution gets employeePercent 0", async () => {
+    const data = await loadSignedIn({
+      userProfile: { onboardingCompleted: true, pensionPercent: 0, pensionEmployerPercent: 0 },
+    });
+    expect(data.pensionData.employeePercent).toBe(0);
+    expect(data.pensionData.employerPercent).toBe(0);
+  });
+
+  it("keeps stored pension percentages and shows nothing invented when absent", async () => {
+    const stored = await loadSignedIn({
+      userProfile: { onboardingCompleted: true, pensionPercent: "8", pensionEmployerPercent: "4" },
+    });
+    expect(stored.pensionData.employeePercent).toBe(8);
+    expect(stored.pensionData.employerPercent).toBe(4);
+
+    const absent = await loadSignedIn({ userProfile: { onboardingCompleted: true } });
+    expect(absent.pensionData.employeePercent).toBeNull();
+    expect(absent.pensionData.employerPercent).toBeNull();
+  });
+
+  it("mortgage rate comes from the account, term is null", async () => {
+    const data = await loadSignedIn({
+      accounts: [{ id: "m", name: "Home", type: "Mortgage", balance: -200000, interestRate: 3.9 }],
+    });
+    expect(data.mortgageData.interestRate).toBe(3.9);
+    expect(data.mortgageData.remainingTermYears).toBeNull();
+  });
+
+  it("mortgage rate is null when the account has none", async () => {
+    const data = await loadSignedIn({
+      accounts: [{ id: "m", name: "Home", type: "Mortgage", balance: -200000 }],
+    });
+    expect(data.mortgageData.interestRate).toBeNull();
+  });
+
+  it("savings rate is null with no savings balance rather than a default", async () => {
+    const data = await loadSignedIn({ userProfile: { onboardingCompleted: true } });
+    expect(data.savingsData.weightedInterestRate).toBeNull();
+  });
+
   it("renders LoggedOutHome when user is null", () => {
     vi.mocked(useLoaderData).mockReturnValue({
       isDemo: false,
