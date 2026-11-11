@@ -224,7 +224,7 @@ function unverifiedFor(year: UkTaxYear): string[] {
   }
   if (year === "2023/24") {
     notes.push(
-      "UNVERIFIED: Class 1 main rate 11.5% is a derived approximation of the mid-year change (12% to 5 Jan 2024, then 10%), (9*12 + 3*10)/12, not a figure printed on GOV.UK",
+      "UNVERIFIED: Class 1 main rate 11.5% is printed on the GOV.UK 2023 to 2024 employer page as the directors' whole-year rate; applying it to ordinary employees (12% to 5 Jan 2024, then 10%) is an approximation",
     );
   }
   if (year === "2023/24" || year === "2024/25" || year === "2025/26") {
@@ -232,14 +232,8 @@ function unverifiedFor(year: UkTaxYear): string[] {
       "UNVERIFIED: Plan 5 threshold 25,000 is not listed on this year's GOV.UK employer page",
     );
   }
-  if (year === "2025/26") {
-    notes.push(
-      "UNVERIFIED: Class 1 lower earnings limit 6,396 is not on the pages read for this year",
-    );
-  }
   if (year === "2026/27") {
     notes.push(
-      "UNVERIFIED: Class 1 lower earnings limit 6,708 is not on the pages read for this year",
       "UNVERIFIED: Scottish advanced/top boundary 125,140 is a published figure but its frame (taxable vs gross) is ambiguous between GOV.UK pages",
     );
   }

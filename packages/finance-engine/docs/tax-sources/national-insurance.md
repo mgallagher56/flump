@@ -141,3 +141,10 @@ No other disagreements found: tax-rules.ts:309-315 employer thresholds (8788, 88
 ## Method note
 
 WebFetch returns an LLM-extracted summary rather than raw HTML, so figures were read through that summary. Page-embedded old-year Class 4 data was unavailable because RA only covers 2022/23 onward and SE only the current year.
+
+## C2 corrections (read 2026-11-11)
+
+- LEL 2025/26: 6,500 (125/wk, 542/mo) on the GOV.UK 2025 to 2026 employer page; the repo had 6,396 (2024/25 figure).
+- LEL 2026/27: 6,708 (129/wk, 559/mo) on the GOV.UK 2026 to 2027 employer page: verified.
+- 2023/24 directors' rate 11.5% (whole year, annual method) IS printed on the GOV.UK 2023 to 2024 employer page; applying it to employees is an approximation.
+- Class 2 small profits threshold 2023/24: 6,725 (rates-and-allowances-national-insurance-contributions page).

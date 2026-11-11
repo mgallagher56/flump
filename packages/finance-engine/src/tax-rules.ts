@@ -419,7 +419,9 @@ export const UK_NATIONAL_INSURANCE: Record<string, UKNationalInsuranceYear> = {
       primaryThreshold: 12570,
       upperEarningsLimit: 50270,
       // APPROXIMATION: 12% from 6 Apr 2023 to 5 Jan 2024, 10% from 6 Jan 2024 (8% only starts 6 Apr 2024).
-      // 11.5% is derived arithmetic for evenly paid earnings, (9*12 + 3*10)/12, not a figure printed on GOV.UK.
+      // 11.5% IS printed on the GOV.UK 2023 to 2024 employer page, as the directors' rate for the whole year
+      // (annual method). Applying it to ordinary employees (who are on 12% then 10% by period) is an
+      // approximation; it equals the evenly paid blend (9*12 + 3*10)/12.
       // Source: https://www.gov.uk/guidance/rates-and-thresholds-for-employers-2023-to-2024
       mainRate: 0.115,
       upperRate: 0.02,
@@ -430,7 +432,8 @@ export const UK_NATIONAL_INSURANCE: Record<string, UKNationalInsuranceYear> = {
       mainRate: 0.09,
       upperRate: 0.02,
     },
-    class2: { abolished: false, weeklyRate: 3.45, smallProfitsThreshold: 12570 },
+    // Small profits threshold 6,725 (rates-and-allowances-national-insurance-contributions page). Class 2 is unused by any calculation.
+    class2: { abolished: false, weeklyRate: 3.45, smallProfitsThreshold: 6725 },
   },
   "2024/25": {
     description: "UK National Insurance — 2024/25",
@@ -452,7 +455,8 @@ export const UK_NATIONAL_INSURANCE: Record<string, UKNationalInsuranceYear> = {
   "2025/26": {
     description: "UK National Insurance — 2025/26",
     class1: {
-      lowerEarningsLimit: 6396,
+      // 6,500 (125 a week): https://www.gov.uk/guidance/rates-and-thresholds-for-employers-2025-to-2026
+      lowerEarningsLimit: 6500,
       primaryThreshold: 12570,
       upperEarningsLimit: 50270,
       mainRate: 0.08,

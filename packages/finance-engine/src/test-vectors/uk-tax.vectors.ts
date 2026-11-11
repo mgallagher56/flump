@@ -2097,7 +2097,7 @@ export const UK_TAX_VECTORS: readonly UkTaxVector[] = [
     confidence: "medium",
     status: "UNVERIFIED",
     unverifiedReason:
-      "UNVERIFIED: 2023/24 main rate was 12% to 5 Jan 2024 then 10%. The 11.5% annual blend is derived arithmetic (9*12 + 3*10)/12, not a printed figure; the reviewer must choose blend vs period method.",
+      "UNVERIFIED: 2023/24 main rate was 12% to 5 Jan 2024 then 10% for employees. 11.5% is printed on the GOV.UK 2023 to 2024 employer page as the directors' whole-year rate; applying it to ordinary employees is an approximation (equals the evenly paid blend (9*12 + 3*10)/12). The reviewer must choose blend vs period method.",
     signedOffBy: null,
   },
   {
@@ -2115,7 +2115,7 @@ export const UK_TAX_VECTORS: readonly UkTaxVector[] = [
     confidence: "medium",
     status: "UNVERIFIED",
     unverifiedReason:
-      "UNVERIFIED: 2023/24 main rate was 12% to 5 Jan 2024 then 10%. The 11.5% annual blend is derived arithmetic (9*12 + 3*10)/12, not a printed figure; the reviewer must choose blend vs period method.",
+      "UNVERIFIED: 2023/24 main rate was 12% to 5 Jan 2024 then 10% for employees. 11.5% is printed on the GOV.UK 2023 to 2024 employer page as the directors' whole-year rate; applying it to ordinary employees is an approximation (equals the evenly paid blend (9*12 + 3*10)/12). The reviewer must choose blend vs period method.",
     signedOffBy: null,
   },
   {

@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { calculateUKTax, getTaxYearForDate, type TaxRecord } from "./tax-calculator.js";
-import { getCurrentUKTaxYear } from "./tax-rules.js";
+import { getCurrentUKTaxYear, UK_NATIONAL_INSURANCE } from "./tax-rules.js";
 import { UK_TAX_VECTORS } from "./test-vectors/uk-tax.vectors.js";
 import { SUPPORTED_UK_TAX_YEARS } from "./types.js";
 import {
@@ -388,6 +388,14 @@ describe("NI, Class 4, employer NI and student loan calculators", () => {
 });
 
 describe("T3b NI table data: mid-year changes use the documented annual approach", () => {
+  it("Class 1 lower earnings limit: 2024/25 6,396, 2025/26 6,500 (125/wk), 2026/27 6,708 (129/wk); Class 2 2023/24 SPT 6,725", () => {
+    // GOV.UK employer pages 2024 to 2025 / 2025 to 2026 / 2026 to 2027.
+    expect(getUkTaxYearRules("2024/25").ni.class1.lowerEarningsLimit).toBe(6396);
+    expect(getUkTaxYearRules("2025/26").ni.class1.lowerEarningsLimit).toBe(6500);
+    expect(getUkTaxYearRules("2026/27").ni.class1.lowerEarningsLimit).toBe(6708);
+    expect(UK_NATIONAL_INSURANCE["2023/24"].class2.smallProfitsThreshold).toBe(6725);
+  });
+
   it("UK_NATIONAL_INSURANCE 2023/24 class1 mainRate is not 0.08", () => {
     // 2023/24: 12% to 5 Jan 2024, 10% from 6 Jan 2024 (GOV.UK employer page 2023 to 2024).
     // Derived annual blend (9*12 + 3*10)/12 = 11.5%. 8% is the 2024/25 rate.
