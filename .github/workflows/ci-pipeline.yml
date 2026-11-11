@@ -192,6 +192,11 @@ jobs:
             bunx playwright install --with-deps chromium
           fi
 
+      # The stories import workspace packages (e.g. @flump/finance-engine) through their built
+      # output, so build them (and run Panda codegen) first; without this Vite cannot resolve them.
+      - name: 🏗️ Build workspace dependencies of the web app
+        run: bunx turbo run generate build --filter='@flump/web^...'
+
       - name: ♿ Storybook a11y (light)
         run: bun run --cwd apps/web test:storybook
 
