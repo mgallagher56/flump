@@ -172,8 +172,9 @@ export const semanticTokens = {
   colors: {
     // 1. Brand & Interactive Primary
     primary: {
-      DEFAULT: { value: { base: "{colors.indigo.600}", _dark: "{colors.indigo.500}" } },
-      hover: { value: { base: "{colors.indigo.700}", _dark: "{colors.indigo.400}" } },
+      DEFAULT: { value: { base: "{colors.indigo.600}", _dark: "{colors.indigo.400}" } },
+      solid: { value: { base: "{colors.indigo.600}", _dark: "{colors.indigo.600}" } },
+      hover: { value: { base: "{colors.indigo.700}", _dark: "{colors.indigo.700}" } },
       subtle: { value: { base: "{colors.indigo.50}", _dark: "rgba(99, 102, 241, 0.12)" } },
       border: { value: { base: "{colors.indigo.200}", _dark: "rgba(99, 102, 241, 0.30)" } },
       foreground: { value: "#ffffff" },
