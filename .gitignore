@@ -25,6 +25,9 @@ tsconfig.tsbuildinfo
 .env.production
 .env.staging
 
+# test coverage output
+coverage/
+
 # build outputs
 dist/
 build/

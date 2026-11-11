@@ -18,6 +18,7 @@ export default defineConfig({
         "src/**/*.{test,spec}.{ts,tsx}",
         "**/styled-system/**",
       ],
+      reporter: ["text", "json-summary", "lcov"],
     },
   },
 });

@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
-import { readFileSync } from "node:fs";
+import { execFileSync } from "node:child_process";
+import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
 const repoRoot = resolve(import.meta.dir, "..");
@@ -23,5 +24,44 @@ describe("lint configuration", () => {
   test("biome excludes release-please changelogs", () => {
     const biome = readJson("biome.json");
     expect(biome.files.includes).toContain("!**/CHANGELOG.md");
+  });
+});
+
+describe("coverage configuration", () => {
+  const workspaces = [
+    "apps/backend",
+    "apps/marketing",
+    "packages/banking",
+    "packages/finance-engine",
+    "packages/mcp",
+    "packages/ui",
+  ];
+
+  for (const ws of workspaces) {
+    test(`${ws} declares an explicit v8 coverage include list`, () => {
+      const file = ["vitest.config.ts", "vitest.config.mts"]
+        .map((name) => resolve(repoRoot, ws, name))
+        .find((path) => existsSync(path));
+      expect(file).toBeDefined();
+      const source = readFileSync(file as string, "utf8");
+      expect(source).toMatch(/provider:\s*"v8"/);
+      expect(source).toMatch(/coverage:\s*\{[\s\S]*include:/);
+      expect(source).toMatch(/json-summary/);
+    });
+  }
+
+  test("coverage output is gitignored", () => {
+    const ignore = readFileSync(resolve(repoRoot, ".gitignore"), "utf8");
+    expect(ignore.split("\n")).toContain("coverage/");
+  });
+
+  test("no coverage output is tracked by git", () => {
+    const tracked = execFileSync("git", ["ls-files"], {
+      cwd: repoRoot,
+      encoding: "utf8",
+    })
+      .split("\n")
+      .filter((path) => /(^|\/)coverage\//.test(path));
+    expect(tracked).toEqual([]);
   });
 });
