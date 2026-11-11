@@ -6,11 +6,33 @@ const AUTH_TAG_LENGTH = 16; // 128 bits
 
 const DEFAULT_DEV_KEY = "flump_default_dev_banking_encryption_key_32_bytes!";
 
+const KEY_ENV_VAR = "BANKING_TOKEN_ENCRYPTION_KEY";
+const MIN_KEY_LENGTH = 32;
+
+/**
+ * Resolves the banking token encryption secret. Outside `development` and `test`
+ * (including when NODE_ENV is unset) a key of at least 32 characters is required;
+ * otherwise the committed development default is used when the variable is unset.
+ * Error messages never include key material.
+ */
+export function resolveBankingKey(env: Record<string, string | undefined>): string {
+  const configured = env[KEY_ENV_VAR];
+  const nodeEnv = env.NODE_ENV;
+  const strict = nodeEnv !== "development" && nodeEnv !== "test";
+
+  if (!strict) return configured || DEFAULT_DEV_KEY;
+
+  if (!configured || configured.length < MIN_KEY_LENGTH) {
+    throw new Error(`${KEY_ENV_VAR} must be set to at least ${MIN_KEY_LENGTH} characters.`);
+  }
+  return configured;
+}
+
 /**
  * Derives a consistent 32-byte key from the provided secret or environment variable.
  */
 function getDerivedKey(keyOverride?: string): Buffer {
-  const secret = keyOverride ?? process.env.BANKING_TOKEN_ENCRYPTION_KEY ?? DEFAULT_DEV_KEY;
+  const secret = keyOverride ?? resolveBankingKey(process.env);
 
   // SHA-256 hash guarantees a strict 32-byte key
   return createHash("sha256").update(secret).digest();
@@ -84,16 +106,19 @@ export function isEncryptedToken(token: string): boolean {
 }
 
 /**
- * Safely decrypts a banking token, falling back to returning the raw token if it is
- * not encrypted or from a legacy plaintext store.
+ * Decrypts a banking token, throwing if a non-empty token cannot be decrypted
+ * (not in encrypted format, wrong key, or tampered). Empty input is returned unchanged.
+ * Errors never include the token, ciphertext or key.
  */
 export function safeDecryptBankingToken(token: string, keyOverride?: string): string {
   if (!token) return token;
-  if (!isEncryptedToken(token)) return token;
+  if (!isEncryptedToken(token)) {
+    throw new Error("Banking token is not in the encrypted format.");
+  }
 
   try {
     return decryptBankingToken(token, keyOverride);
   } catch {
-    return token;
+    throw new Error("Failed to decrypt banking token: wrong key or corrupted data.");
   }
 }

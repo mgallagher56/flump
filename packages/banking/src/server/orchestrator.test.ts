@@ -13,10 +13,9 @@ describe("BankSyncOrchestrator", () => {
     expect(decrypted).toBe(rawToken);
   });
 
-  it("safely handles plaintext legacy tokens without error", () => {
+  it("throws on plaintext legacy tokens instead of returning them", () => {
     const legacyToken = "pat_starling_legacy_token_not_encrypted";
-    const result = BankSyncOrchestrator.decryptToken(legacyToken);
-    expect(result).toBe(legacyToken);
+    expect(() => BankSyncOrchestrator.decryptToken(legacyToken)).toThrow();
   });
 
   it("normalizes balances enforcing sign convention law", () => {
