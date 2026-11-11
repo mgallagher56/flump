@@ -87,6 +87,10 @@ describe("uk-tax module", () => {
       expect(relief.excessAbove100k).toBe(10000);
       expect(relief.recommendedSacrifice).toBe(10000);
       expect(relief.estimatedTaxSaved).toBe(6200);
+      // D7-a: income tax only (60) and incl. NI (62) are separate fields
+      expect(relief.marginalRatePct).toBe(60);
+      expect(relief.effectiveMarginalRatePct).toBe(62);
+      expect(relief.estimatedTaxSavedByEscapingGbp).toBe(6000);
       expect(relief.lostPersonalAllowance).toBe(5000);
     });
   });

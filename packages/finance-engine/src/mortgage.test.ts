@@ -11,9 +11,9 @@ describe("mortgage module", () => {
     it("calculates monthly repayment for standard UK repayment mortgage", () => {
       // £250,000 at 4.5% over 25 years (300 months)
       const payment = calculateMonthlyMortgagePayment(250000, 4.5, 300);
-      // Standard UK repayment formula yields ~£1,389.58
-      expect(payment).toBeGreaterThan(1380);
-      expect(payment).toBeLessThan(1400);
+      // M = P r (1+r)^n / ((1+r)^n - 1), r = 0.045/12 = 0.00375, n = 300:
+      // 250000 x 0.00375 x 3.073742528 / 2.073742528 = 1389.5811949 -> 1389.58
+      expect(payment).toBe(1389.58);
     });
 
     it("handles 0% interest rate as linear repayment", () => {
