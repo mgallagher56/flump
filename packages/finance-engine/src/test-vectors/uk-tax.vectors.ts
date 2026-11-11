@@ -18,8 +18,10 @@
  * - studentLoan: { grossIncome, plan } plan is plan1|plan2|plan4|plan5|postgrad
  * - dividends: { employmentIncome, dividendIncome }; expected is dividend tax only
  *
- * Scotland Gift Aid vectors are deliberately absent: decision D9-B models Gift Aid for Scotland only
- * through the allowance taper (no band extension), so there is no verified figure to pin.
+ * Scotland Gift Aid vectors are NOT in UK_TAX_VECTORS: decision D9-B models Gift Aid for Scotland only
+ * through the allowance taper (no band extension). The band-extension reading of ITA 2007 s.414(2)(b)
+ * is kept separately in UK_TAX_PENDING_OWNER_VECTORS (UNVERIFIED, owner ruling pending D9). Those
+ * vectors are never run against the engine (their tests are skipped).
  */
 
 /**
@@ -3338,6 +3340,156 @@ export const UK_TAX_VECTORS: readonly UkTaxVector[] = [
       "Employment income 200000 gives PA 0 and taxable income above 125140, so all dividends fall in the additional band. Dividend allowance 500: taxable dividends 5000 - 500 = 4500 x 39.35% = 1770.75 (dividend tax only).",
     confidence: "high",
     status: "VERIFIED",
+    signedOffBy: null,
+  },
+];
+
+/**
+ * Scottish Gift Aid band-extension vectors (D9 owner ruling pending). ITA 2007 s.414(2)(b), read on
+ * legislation.gov.uk: the basic rate limit and the higher rate limit "and additionally, in the case of a
+ * Scottish taxpayer, the upper limit for the Scottish basic rate and the limits for any Scottish rates
+ * above the Scottish basic rate, were increased by an amount equal to the grossed up amount of the gift".
+ * Expected values are hand-derived with the Scottish bands above the starter band extended by the
+ * grossed-up gift (starter upper limit and every lower limit unchanged). The engine does NOT implement
+ * this (D9-B), so these must not be asserted against it; tests are skipped until the owner rules.
+ */
+export const UK_TAX_PENDING_OWNER_VECTORS: readonly UkTaxVector[] = [
+  {
+    id: "scotland.giftAid.2025-26.30000.net1000",
+    taxYear: "2025/26",
+    region: "SCOTLAND",
+    kind: "giftAid",
+    input: {
+      grossIncome: 30000,
+      giftAidNet: 1000,
+    },
+    expected: 3470.32,
+    source: "https://www.gov.uk/guidance/rates-and-thresholds-for-employers-2025-to-2026",
+    additionalSources: [
+      "https://www.legislation.gov.uk/ukpga/2007/3/section/414",
+      "https://www.gov.uk/guidance/adjusted-net-income",
+    ],
+    derivation:
+      "Gross income 30000, net gift 1000. Gross-up 1000 x 1.25 = 1250. Adjusted net income 30000 - 1250 = 28750, no taper, PA 12570. Taxable 30000 - 12570 = 17430. s.414(2)(b) reading: upper limits of the Scottish basic rate and every Scottish rate above it rise by 1250; starter upper limit unchanged. Unextended upper bounds 2827/14921/31092/62430/125140 become 2827/16171/32342/63680/126390. Bands: 2827 x 19% = 537.13; 13344 x 20% = 2668.8; 1259 x 21% = 264.39; 0 x 42% = 0; 0 x 45% = 0; 0 x 48% = 0. Total 3470.32. Engine today (D9-B, taper only) gives 3482.82, so it would overstate by 12.5.",
+    confidence: "medium",
+    status: "UNVERIFIED",
+    unverifiedReason:
+      "UNVERIFIED: owner ruling pending D9 (whether s.414(2)(b) band extension applies to Scottish taxpayers in this engine); statute text read on legislation.gov.uk but no HMRC guidance page confirming the Scottish application was read.",
+    signedOffBy: null,
+  },
+  {
+    id: "scotland.giftAid.2025-26.60000.net1000",
+    taxYear: "2025/26",
+    region: "SCOTLAND",
+    kind: "giftAid",
+    input: {
+      grossIncome: 60000,
+      giftAidNet: 1000,
+    },
+    expected: 12938.8,
+    source: "https://www.gov.uk/guidance/rates-and-thresholds-for-employers-2025-to-2026",
+    additionalSources: [
+      "https://www.legislation.gov.uk/ukpga/2007/3/section/414",
+      "https://www.gov.uk/guidance/adjusted-net-income",
+    ],
+    derivation:
+      "Gross income 60000, net gift 1000. Gross-up 1000 x 1.25 = 1250. Adjusted net income 60000 - 1250 = 58750, no taper, PA 12570. Taxable 60000 - 12570 = 47430. s.414(2)(b) reading: upper limits of the Scottish basic rate and every Scottish rate above it rise by 1250; starter upper limit unchanged. Unextended upper bounds 2827/14921/31092/62430/125140 become 2827/16171/32342/63680/126390. Bands: 2827 x 19% = 537.13; 13344 x 20% = 2668.8; 16171 x 21% = 3395.91; 15088 x 42% = 6336.96; 0 x 45% = 0; 0 x 48% = 0. Total 12938.8. Engine today (D9-B, taper only) gives 13213.8, so it would overstate by 275.",
+    confidence: "medium",
+    status: "UNVERIFIED",
+    unverifiedReason:
+      "UNVERIFIED: owner ruling pending D9 (whether s.414(2)(b) band extension applies to Scottish taxpayers in this engine); statute text read on legislation.gov.uk but no HMRC guidance page confirming the Scottish application was read.",
+    signedOffBy: null,
+  },
+  {
+    id: "scotland.giftAid.2025-26.110000.net1000",
+    taxYear: "2025/26",
+    region: "SCOTLAND",
+    kind: "giftAid",
+    input: {
+      grossIncome: 110000,
+      giftAidNet: 1000,
+    },
+    expected: 36920.05,
+    source: "https://www.gov.uk/guidance/rates-and-thresholds-for-employers-2025-to-2026",
+    additionalSources: [
+      "https://www.legislation.gov.uk/ukpga/2007/3/section/414",
+      "https://www.gov.uk/guidance/adjusted-net-income",
+    ],
+    derivation:
+      "Gross income 110000, net gift 1000. Gross-up 1000 x 1.25 = 1250. Adjusted net income 110000 - 1250 = 108750; taper (108750 - 100000) / 2 = 4375, PA 12570 - 4375 = 8195. Taxable 110000 - 8195 = 101805. s.414(2)(b) reading: upper limits of the Scottish basic rate and every Scottish rate above it rise by 1250; starter upper limit unchanged. Unextended upper bounds 2827/14921/31092/62430/125140 become 2827/16171/32342/63680/126390. Bands: 2827 x 19% = 537.13; 13344 x 20% = 2668.8; 16171 x 21% = 3395.91; 31338 x 42% = 13161.96; 38125 x 45% = 17156.25; 0 x 48% = 0. Total 36920.05. Engine today (D9-B, taper only) gives 37232.55, so it would overstate by 312.5.",
+    confidence: "medium",
+    status: "UNVERIFIED",
+    unverifiedReason:
+      "UNVERIFIED: owner ruling pending D9 (whether s.414(2)(b) band extension applies to Scottish taxpayers in this engine); statute text read on legislation.gov.uk but no HMRC guidance page confirming the Scottish application was read. Also rests on the unconfirmed taper/band frame for Scottish bands.",
+    signedOffBy: null,
+  },
+  {
+    id: "scotland.giftAid.2026-27.30000.net1000",
+    taxYear: "2026/27",
+    region: "SCOTLAND",
+    kind: "giftAid",
+    input: {
+      grossIncome: 30000,
+      giftAidNet: 1000,
+    },
+    expected: 3446.33,
+    source: "https://www.gov.uk/guidance/rates-and-thresholds-for-employers-2026-to-2027",
+    additionalSources: [
+      "https://www.legislation.gov.uk/ukpga/2007/3/section/414",
+      "https://www.gov.uk/guidance/adjusted-net-income",
+    ],
+    derivation:
+      "Gross income 30000, net gift 1000. Gross-up 1000 x 1.25 = 1250. Adjusted net income 30000 - 1250 = 28750, no taper, PA 12570. Taxable 30000 - 12570 = 17430. s.414(2)(b) reading: upper limits of the Scottish basic rate and every Scottish rate above it rise by 1250; starter upper limit unchanged. Unextended upper bounds 3967/16956/31092/62430/125140 become 3967/18206/32342/63680/126390. Bands: 3967 x 19% = 753.73; 13463 x 20% = 2692.6; 0 x 21% = 0; 0 x 42% = 0; 0 x 45% = 0; 0 x 48% = 0. Total 3446.33. Engine today (D9-B, taper only) gives 3451.07, so it would overstate by 4.74.",
+    confidence: "medium",
+    status: "UNVERIFIED",
+    unverifiedReason:
+      "UNVERIFIED: owner ruling pending D9 (whether s.414(2)(b) band extension applies to Scottish taxpayers in this engine); statute text read on legislation.gov.uk but no HMRC guidance page confirming the Scottish application was read.",
+    signedOffBy: null,
+  },
+  {
+    id: "scotland.giftAid.2026-27.60000.net1000",
+    taxYear: "2026/27",
+    region: "SCOTLAND",
+    kind: "giftAid",
+    input: {
+      grossIncome: 60000,
+      giftAidNet: 1000,
+    },
+    expected: 12907.05,
+    source: "https://www.gov.uk/guidance/rates-and-thresholds-for-employers-2026-to-2027",
+    additionalSources: [
+      "https://www.legislation.gov.uk/ukpga/2007/3/section/414",
+      "https://www.gov.uk/guidance/adjusted-net-income",
+    ],
+    derivation:
+      "Gross income 60000, net gift 1000. Gross-up 1000 x 1.25 = 1250. Adjusted net income 60000 - 1250 = 58750, no taper, PA 12570. Taxable 60000 - 12570 = 47430. s.414(2)(b) reading: upper limits of the Scottish basic rate and every Scottish rate above it rise by 1250; starter upper limit unchanged. Unextended upper bounds 3967/16956/31092/62430/125140 become 3967/18206/32342/63680/126390. Bands: 3967 x 19% = 753.73; 14239 x 20% = 2847.8; 14136 x 21% = 2968.56; 15088 x 42% = 6336.96; 0 x 45% = 0; 0 x 48% = 0. Total 12907.05. Engine today (D9-B, taper only) gives 13182.05, so it would overstate by 275.",
+    confidence: "medium",
+    status: "UNVERIFIED",
+    unverifiedReason:
+      "UNVERIFIED: owner ruling pending D9 (whether s.414(2)(b) band extension applies to Scottish taxpayers in this engine); statute text read on legislation.gov.uk but no HMRC guidance page confirming the Scottish application was read.",
+    signedOffBy: null,
+  },
+  {
+    id: "scotland.giftAid.2026-27.110000.net1000",
+    taxYear: "2026/27",
+    region: "SCOTLAND",
+    kind: "giftAid",
+    input: {
+      grossIncome: 110000,
+      giftAidNet: 1000,
+    },
+    expected: 36888.3,
+    source: "https://www.gov.uk/guidance/rates-and-thresholds-for-employers-2026-to-2027",
+    additionalSources: [
+      "https://www.legislation.gov.uk/ukpga/2007/3/section/414",
+      "https://www.gov.uk/guidance/adjusted-net-income",
+    ],
+    derivation:
+      "Gross income 110000, net gift 1000. Gross-up 1000 x 1.25 = 1250. Adjusted net income 110000 - 1250 = 108750; taper (108750 - 100000) / 2 = 4375, PA 12570 - 4375 = 8195. Taxable 110000 - 8195 = 101805. s.414(2)(b) reading: upper limits of the Scottish basic rate and every Scottish rate above it rise by 1250; starter upper limit unchanged. Unextended upper bounds 3967/16956/31092/62430/125140 become 3967/18206/32342/63680/126390. Bands: 3967 x 19% = 753.73; 14239 x 20% = 2847.8; 14136 x 21% = 2968.56; 31338 x 42% = 13161.96; 38125 x 45% = 17156.25; 0 x 48% = 0. Total 36888.3. Engine today (D9-B, taper only) gives 37200.8, so it would overstate by 312.5.",
+    confidence: "medium",
+    status: "UNVERIFIED",
+    unverifiedReason:
+      "UNVERIFIED: owner ruling pending D9 (whether s.414(2)(b) band extension applies to Scottish taxpayers in this engine); statute text read on legislation.gov.uk but no HMRC guidance page confirming the Scottish application was read. Also rests on the unconfirmed taper/band frame for Scottish bands.",
     signedOffBy: null,
   },
 ];
