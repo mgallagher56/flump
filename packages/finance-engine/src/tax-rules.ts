@@ -550,12 +550,15 @@ export const UK_STUDENT_LOANS: Record<string, UKStudentLoanYear> = {
       postgrad: { name: "Postgrad", threshold: 21000, rate: 0.06 },
     },
   },
+  // E4 T3a: 2025/26 Plan 1/2/4 corrected (this key previously held the 2026/27 figures).
+  // Source: https://www.gov.uk/guidance/rates-and-thresholds-for-employers-2025-to-2026
+  // UNVERIFIED: Plan 5 25,000 is not listed on the 2025 to 2026 page (kept from the previous code).
   "2025/26": {
     description: "Student Loans — 2025/26",
     plans: {
-      plan1: { name: "Plan 1", threshold: 26900, rate: 0.09 },
-      plan2: { name: "Plan 2", threshold: 29385, rate: 0.09 },
-      plan4: { name: "Plan 4 (Scotland)", threshold: 33795, rate: 0.09 },
+      plan1: { name: "Plan 1", threshold: 26065, rate: 0.09 },
+      plan2: { name: "Plan 2", threshold: 28470, rate: 0.09 },
+      plan4: { name: "Plan 4 (Scotland)", threshold: 32745, rate: 0.09 },
       plan5: { name: "Plan 5", threshold: 25000, rate: 0.09 },
       postgrad: { name: "Postgrad", threshold: 21000, rate: 0.06 },
     },

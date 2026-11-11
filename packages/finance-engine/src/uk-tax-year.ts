@@ -225,7 +225,6 @@ function unverifiedFor(year: UkTaxYear): string[] {
   }
   if (year === "2025/26") {
     notes.push(
-      "UNVERIFIED: student loan thresholds hold the 2026/27 figures; GOV.UK gives 26,065 / 28,470 / 32,745 for Plans 1 / 2 / 4 (to be corrected in T3a)",
       "UNVERIFIED: Class 1 lower earnings limit 6,396 is not on the pages read for this year",
     );
   }

@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { calculateUKTax, getTaxYearForDate, type TaxRecord } from "./tax-calculator.js";
 import { getCurrentUKTaxYear } from "./tax-rules.js";
+import { UK_TAX_VECTORS } from "./test-vectors/uk-tax.vectors.js";
 import { SUPPORTED_UK_TAX_YEARS } from "./types.js";
 import {
   calculateClass4Ni,
@@ -15,6 +16,7 @@ import {
   resolveUkTaxYear,
   roundPence,
   toMoney,
+  type UkStudentLoanPlanKey,
   UnsupportedUkTaxYearError,
 } from "./uk-tax-year.js";
 
@@ -318,6 +320,40 @@ describe("NI, Class 4, employer NI and student loan calculators", () => {
     expect(calculateStudentLoanRepayment(20000, "plan2", r27)).toBe(0);
     // postgrad 21,000 at 6%: (35,000-21,000)*.06 = 840
     expect(calculateStudentLoanRepayment(35000, "postgrad", r27)).toBeCloseTo(840, 2);
+  });
+
+  it("2025/26 and 2026/27 thresholds match GOV.UK employer pages (T3a)", () => {
+    // Sources: https://www.gov.uk/guidance/rates-and-thresholds-for-employers-2025-to-2026
+    // and ...-2026-to-2027. 2025/26 previously held the 2026/27 figures.
+    const p25 = getUkTaxYearRules("2025/26").studentLoans.plans;
+    expect(p25.plan1.threshold).toBe(26065);
+    expect(p25.plan2.threshold).toBe(28470);
+    expect(p25.plan4?.threshold).toBe(32745);
+    expect(p25.postgrad.threshold).toBe(21000);
+    const p26 = getUkTaxYearRules("2026/27").studentLoans.plans;
+    expect(p26.plan1.threshold).toBe(26900);
+    expect(p26.plan2.threshold).toBe(29385);
+    expect(p26.plan4?.threshold).toBe(33795);
+    expect(p26.plan5?.threshold).toBe(25000);
+  });
+
+  it("calculateStudentLoanRepayment matches every VERIFIED studentLoan vector", () => {
+    for (const v of UK_TAX_VECTORS) {
+      if (v.kind !== "studentLoan" || v.status !== "VERIFIED") continue;
+      const input = v.input as { grossIncome: number; plan: UkStudentLoanPlanKey };
+      const actual = calculateStudentLoanRepayment(
+        input.grossIncome,
+        input.plan,
+        getUkTaxYearRules(v.taxYear),
+      );
+      expect(actual, v.id).toBeCloseTo(v.expected, 2);
+    }
+  });
+
+  it("2025/26 no longer reports the student loan thresholds as unverified", () => {
+    expect(getUkTaxYearRules("2025/26").unverified.join("\n")).not.toContain(
+      "student loan thresholds",
+    );
   });
 
   it("throws for a plan that has no verified entry for the year", () => {
