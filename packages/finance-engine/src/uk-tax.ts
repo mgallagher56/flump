@@ -21,9 +21,11 @@ import {
   calculatePersonalAllowanceForYear,
   calculateStudentLoanRepayment,
   getUkTaxYearRules,
+  isSupportedUkTaxYear,
   resolveUkTaxYear,
   roundPence,
   type UkStudentLoanPlanKey,
+  type UkTaxYearRules,
 } from "./uk-tax-year.js";
 
 /**
@@ -108,12 +110,59 @@ export function calculatePersonalAllowance(
 }
 
 /**
- * Analyses the £100k - £125,140 60% UK Tax Trap.
+ * Rate of the band containing the last pound of `taxable` (taxable income is
+ * after the personal allowance): from < taxable <= to. Zero taxable income has
+ * a zero marginal rate. EWNI bands come from rules.ewni (basic up to
+ * basicRateBandWidth, higher up to additionalRateThreshold, additional above),
+ * Scottish bands from rules.scotland.bands. Returns a fraction (0.4 = 40%).
+ */
+function marginalIncomeTaxRate(
+  taxable: number,
+  rules: UkTaxYearRules,
+  region: UkTaxRegion,
+): number {
+  if (taxable <= 0) return 0;
+  if (region === "SCOTLAND") {
+    const bands = rules.scotland.bands;
+    const band = bands.find((b) => taxable > b.from && (b.to === null || taxable <= b.to));
+    return band?.rate ?? bands.at(-1)?.rate ?? 0;
+  }
+  const e = rules.ewni;
+  if (taxable <= e.basicRateBandWidth) return e.basicRate;
+  if (taxable <= e.additionalRateThreshold) return e.higherRate;
+  return e.additionalRate;
+}
+
+/** Income tax on adjusted net income `ani`: allowance (with the 100k taper) then the shared band function. */
+function incomeTaxOnAdjustedNetIncome(
+  ani: number,
+  rules: UkTaxYearRules,
+  region: UkTaxRegion,
+): number {
+  const allowance = calculatePersonalAllowanceForYear(ani, rules);
+  return calculateIncomeTaxOnTaxable(Math.max(0, ani - allowance), rules, region).total;
+}
+
+/**
+ * Analyses the £100k - £125,140 60% UK Tax Trap for `taxYear` (default: the
+ * current tax year; unsupported years throw UnsupportedUkTaxYearError).
+ *
+ * Rates and escape savings are derived from the year's tables, not flat-rate
+ * arithmetic. `marginalRatePct` is income tax only: the rate of the band that
+ * holds the next pound of taxable income (zero while income is within the
+ * personal allowance), multiplied by 1.5 inside the taper zone because each
+ * extra pound also removes 50p of allowance. `effectiveMarginalRatePct` adds the
+ * employee NI rate for that income (decision D7-a).
+ * `estimatedTaxSavedByEscapingGbp` is income tax at the current income minus income tax
+ * at 100,000 (the escape level); `estimatedTaxSaved` also adds the employee
+ * NI saved. Both are rounded to pence.
  */
 export function analyzeTaxTrap(
   adjustedNetIncome: number,
   region: UkTaxRegion = "ENGLAND_NI_WALES",
+  taxYear: string = resolveUkTaxYear(),
 ): TaxTrapAnalysis {
+  const rules = getUkTaxYearRules(resolveUkTaxYear(taxYear));
   const isInTaxTrap =
     adjustedNetIncome > UK_TAX_CONSTANTS.TAX_TRAP_LOWER_THRESHOLD &&
     adjustedNetIncome <= UK_TAX_CONSTANTS.TAX_TRAP_UPPER_THRESHOLD;
@@ -124,31 +173,39 @@ export function analyzeTaxTrap(
   const excessAbove100k = Math.min(excessOver100k, 25140);
   const { effectiveAllowance, taperAmount } = calculatePersonalAllowance(adjustedNetIncome);
 
-  // In the trap: 40% income tax (EWNI) + 20% loss of allowance = 60% (+ 2% NI = 62%)
-  // In Scotland: 45% advanced rate + 22.5% loss of allowance = 67.5% (+ 2% NI = 69.5%)
-  const marginalRatePct = isInTaxTrap
-    ? region === "SCOTLAND"
-      ? 67.5
-      : 60.0
-    : adjustedNetIncome > UK_TAX_CONSTANTS.TAX_TRAP_UPPER_THRESHOLD
-      ? region === "SCOTLAND"
-        ? 48.0
-        : 45.0
-      : adjustedNetIncome > 50270
-        ? region === "SCOTLAND"
-          ? 42.0
-          : 40.0
-        : 20.0;
+  const taxable = Math.max(
+    0,
+    adjustedNetIncome - calculatePersonalAllowanceForYear(adjustedNetIncome, rules),
+  );
+  const bandRate = marginalIncomeTaxRate(taxable, rules, region);
+  // Inside the trap each extra pound of income adds 1 to taxable income plus 0.5 from the
+  // lost allowance, so the income tax rate is 1.5 times the band rate (40% -> 60%, 45% -> 67.5%).
+  const marginalRatePct = roundPence(bandRate * (isInTaxTrap ? 1.5 : 1) * 100);
 
-  const effectiveMarginalRatePct = isInTaxTrap
-    ? region === "SCOTLAND"
-      ? 69.5
-      : 62.0
-    : marginalRatePct + (adjustedNetIncome > 12570 ? (adjustedNetIncome <= 50270 ? 8.0 : 2.0) : 0);
+  const { primaryThreshold, upperEarningsLimit, mainRate, upperRate } = rules.ni.class1;
+  const niRate =
+    adjustedNetIncome <= primaryThreshold
+      ? 0
+      : adjustedNetIncome <= upperEarningsLimit
+        ? mainRate
+        : upperRate;
+  const effectiveMarginalRatePct = roundPence(marginalRatePct + niRate * 100);
 
+  const escapeLevel = UK_TAX_CONSTANTS.TAX_TRAP_LOWER_THRESHOLD;
   const contributionRequiredToEscapeGbp = excessOver100k;
-  const estimatedTaxSavedByEscapingGbp = Math.round(excessOver100k * (marginalRatePct / 100));
-  const estimatedTaxSaved = Math.round(excessOver100k * (effectiveMarginalRatePct / 100));
+  const incomeTaxSaved =
+    excessOver100k > 0
+      ? roundPence(
+          incomeTaxOnAdjustedNetIncome(adjustedNetIncome, rules, region) -
+            incomeTaxOnAdjustedNetIncome(escapeLevel, rules, region),
+        )
+      : 0;
+  const niSaved =
+    excessOver100k > 0
+      ? calculateEmployeeNi(adjustedNetIncome, rules) - calculateEmployeeNi(escapeLevel, rules)
+      : 0;
+  const estimatedTaxSavedByEscapingGbp = incomeTaxSaved;
+  const estimatedTaxSaved = roundPence(incomeTaxSaved + niSaved);
 
   return {
     isInTaxTrap,
@@ -177,10 +234,11 @@ export function calculate100kTaxTrap(
   pensionContributionPct = 0,
   _isSalarySacrifice = true,
   region: UkTaxRegion = "ENGLAND_NI_WALES",
+  taxYear: string = resolveUkTaxYear(),
 ): TaxTrapAnalysis {
   const pensionDeduction = grossIncome * (pensionContributionPct / 100);
   const adjustedNetIncome = Math.max(0, grossIncome - pensionDeduction);
-  return analyzeTaxTrap(adjustedNetIncome, region);
+  return analyzeTaxTrap(adjustedNetIncome, region, taxYear);
 }
 
 /**
@@ -192,10 +250,10 @@ export function calculate100kTaxTrap(
  */
 export function calculateTaxTrapRelief(
   grossIncome: number,
-  _taxYear = getCurrentUKTaxYear(),
+  taxYear: string = getCurrentUKTaxYear(),
   region: UkTaxRegion = "ENGLAND_NI_WALES",
 ): TaxTrapAnalysis {
-  return analyzeTaxTrap(grossIncome, region);
+  return analyzeTaxTrap(grossIncome, region, taxYear);
 }
 
 /**
@@ -435,7 +493,7 @@ export function calculateUkTax(input: UkTaxCalculationInput): UkTaxCalculationRe
     daysRemainingInTaxYear: daysRemaining,
   };
 
-  const taxTrap = analyzeTaxTrap(adjustedNetIncome, region);
+  const taxTrap = analyzeTaxTrap(adjustedNetIncome, region, taxYear);
 
   return {
     taxYear,
@@ -475,7 +533,12 @@ export function calculateUKTakeHome(
     taxYear,
   );
 
-  const trapAnalysis = calculateTaxTrapRelief(grossSalary, taxYear as any);
+  // calculateUKEWNITakeHome falls back to 2026/27 for an unsupported year (open item (b)/(c));
+  // keep the same fallback here so the trap analysis does not throw where the take-home does not.
+  const trapAnalysis = calculateTaxTrapRelief(
+    grossSalary,
+    isSupportedUkTaxYear(taxYear) ? taxYear : "2026/27",
+  );
 
   return {
     ...result,
