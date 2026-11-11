@@ -15,6 +15,7 @@ import type {
   UkTaxYear,
 } from "./types.js";
 import {
+  calculateEmployeeNi,
   calculateEmployerNiSaving,
   calculateIncomeTaxOnTaxable,
   calculatePersonalAllowanceForYear,
@@ -59,7 +60,9 @@ export { getCurrentUKTaxYear };
  */
 export function toStudentLoanPlanKey(plan: string): UkStudentLoanPlanKey | undefined {
   const key = plan.toLowerCase().replace(/[^a-z0-9]/g, "");
-  return key in STUDENT_LOAN_WRITE_OFF_YEARS ? (key as UkStudentLoanPlanKey) : undefined;
+  return Object.hasOwn(STUDENT_LOAN_WRITE_OFF_YEARS, key)
+    ? (key as UkStudentLoanPlanKey)
+    : undefined;
 }
 
 /**
@@ -368,7 +371,7 @@ export function calculateUkTax(input: UkTaxCalculationInput): UkTaxCalculationRe
           .total;
 
   // National Insurance (calculated on payroll gross pay)
-  const nationalInsurance = calculateNationalInsurance(grossPayForNi);
+  const nationalInsurance = calculateEmployeeNi(grossPayForNi, rules);
 
   // Student Loan deduction (calculated on payroll gross pay)
   const studentLoanDeduction = calculateStudentLoanDeduction(

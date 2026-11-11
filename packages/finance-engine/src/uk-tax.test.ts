@@ -8,6 +8,7 @@ import {
   runUkTaxVectors,
   selectUkTaxVectors,
   UK_TAX_PENSION_TREATMENT,
+  UK_TAX_VECTORS,
 } from "./test-vectors/uk-tax.vectors.js";
 import type { UkTaxYear } from "./types.js";
 import {
@@ -24,6 +25,7 @@ import {
   getTaxYearRemainingDays,
   SCOTLAND_GIFT_AID_DISCLAIMER,
   STUDENT_LOAN_THRESHOLDS,
+  toStudentLoanPlanKey,
 } from "./uk-tax.js";
 import { getCurrentUkTaxYear, UnsupportedUkTaxYearError } from "./uk-tax-year.js";
 
@@ -205,6 +207,42 @@ describe("uk-tax module", () => {
       // Upper band: (£60,000 - £50,270) * 2% = £9,730 * 0.02 = £194.60
       // Total = £3,210.60
       expect(calculateNationalInsurance(60000)).toBe(3210.6);
+    });
+  });
+
+  describe("calculateUkTax employee NI uses the per-year table", () => {
+    it("matches every employeeNi vector for its tax year", () => {
+      let checked = 0;
+      for (const v of UK_TAX_VECTORS) {
+        if (v.kind !== "employeeNi") continue;
+        const { grossEarnings } = v.input as { grossEarnings: number };
+        const r = calculateUkTax({ grossSalary: grossEarnings, taxYear: v.taxYear });
+        expect(r.nationalInsuranceGbp, v.id).toBeCloseTo(v.expected, 2);
+        checked++;
+      }
+      expect(checked).toBeGreaterThan(0);
+    });
+
+    it("gives 2460, about 2303 and about 2004 at 30,000 for 2020/21, 2022/23 and 2023/24", () => {
+      expect(calculateUkTax({ grossSalary: 30000, taxYear: "2020/21" }).nationalInsuranceGbp).toBe(
+        2460,
+      );
+      // 2022/23 table (11,908 PT, 12.73%): (30,000 - 11,908) x 0.1273 = 2,303.11 (rounded 2,303).
+      expect(
+        calculateUkTax({ grossSalary: 30000, taxYear: "2022/23" }).nationalInsuranceGbp,
+      ).toBeCloseTo(2303.11, 2);
+      expect(
+        calculateUkTax({ grossSalary: 30000, taxYear: "2023/24" }).nationalInsuranceGbp,
+      ).toBeCloseTo(2004.45, 2);
+    });
+  });
+
+  describe("toStudentLoanPlanKey", () => {
+    it("ignores inherited properties such as constructor", () => {
+      expect(toStudentLoanPlanKey("constructor")).toBeUndefined();
+      expect(toStudentLoanPlanKey("toString")).toBeUndefined();
+      expect(toStudentLoanPlanKey("PLAN_2")).toBe("plan2");
+      expect(calculateStudentLoanDeduction(40000, "constructor" as never)).toBe(0);
     });
   });
 
