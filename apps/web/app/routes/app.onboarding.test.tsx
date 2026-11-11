@@ -7,7 +7,9 @@ const mockUpdateProfile = vi.fn().mockResolvedValue(undefined);
 const mockNavigate = vi.fn();
 const mockUpdateBaseline = vi.fn();
 
+let mockActionData: unknown;
 vi.mock("react-router", () => ({
+  useActionData: () => mockActionData,
   useLoaderData: () => ({
     userProfile: {
       enabledPages: ["accounts", "budget", "savings", "pension"],
@@ -42,9 +44,23 @@ vi.mock("~/state/baseline.store", () => ({
 describe("OnboardingRoute (3-Step Baseline Flow)", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockActionData = undefined;
     globalThis.fetch = vi
       .fn()
       .mockResolvedValue(new Response(JSON.stringify({ success: true }), { status: 200 }));
+  });
+
+  it("shows a failed action's error in an alert", () => {
+    mockActionData = { success: false, error: "We couldn't reach the server. Please try again." };
+    render(<OnboardingRoute />);
+    expect(screen.getByRole("alert").textContent).toBe(
+      "We couldn't reach the server. Please try again.",
+    );
+  });
+
+  it("shows no alert when there is no action error", () => {
+    render(<OnboardingRoute />);
+    expect(screen.queryByRole("alert")).toBeNull();
   });
 
   it("renders Step 1 (You & Income) by default with summary bar", () => {
