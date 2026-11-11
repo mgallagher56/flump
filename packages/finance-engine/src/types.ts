@@ -353,6 +353,8 @@ export interface UkTaxCalculationResult {
   effectiveTaxRatePct: number;
   taxTrap: TaxTrapAnalysis;
   allowances: UkAllowancesStatus;
+  /** Set for Scottish taxpayers with Gift Aid: band extension is not modelled (D9-B). */
+  giftAidDisclaimer?: string;
 }
 
 // ---------------------------------------------------------------------------
