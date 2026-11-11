@@ -23,8 +23,8 @@ export const ENTITIES: Function[] = [
 ];
 
 // Relative to this file so it resolves under both `bun src/...` (ts) and dist/ (js).
-// Migration files end in a timestamp (Name1794355200000), so `*[0-9]` skips specs,
-// .d.ts and source maps that sit in the same folder.
+// Migration file names MUST end in their timestamp digits (Name1794355200000.ts) or they are
+// silently ignored; `*[0-9]` is what skips specs, .d.ts and source maps in the same folder.
 const MIGRATIONS_GLOB = join(__dirname, "..", "migrations", "*[0-9]{.ts,.js}");
 
 /**
