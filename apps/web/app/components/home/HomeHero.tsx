@@ -195,7 +195,7 @@ export const HomeHero: FC = () => {
                 alignItems: "center",
                 gap: "8px",
               }}
-              to="/?demo=true"
+              to="/sandbox"
             >
               Try the live demo →
             </RouterLink>

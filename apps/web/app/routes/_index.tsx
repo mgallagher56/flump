@@ -2,14 +2,13 @@ import { getCurrentUKTaxYear, PortfolioSnapshot } from "@flump/finance-engine";
 import type { ReactElement } from "react";
 import { type LoaderFunctionArgs, type MetaFunction, redirect, useLoaderData } from "react-router";
 import { calculateNetTakeHome } from "~/components/budget/UserProfilePanel";
-import { DemoModeBanner } from "~/components/dashboard/DemoModeBanner";
 import { HomeDashboard } from "~/components/dashboard/HomeDashboard";
 import LoggedOutHome from "~/components/home/LoggedOutHome";
 import { loadWorkspaceSnapshot } from "~/services/backend-client.server";
 import { toMonthly } from "~/types/budget";
 import { getAuthSession } from "~/utils/auth.server";
 import { buildDebtSummary } from "~/utils/debtSummary";
-import { getDemoDashboardData, isDemoMode } from "~/utils/demoData";
+import { isDemoMode } from "~/utils/demoData";
 import { calculateRunwayStats } from "~/utils/runwayStorage";
 
 export const meta: MetaFunction = (): { title: string }[] => [
@@ -21,10 +20,6 @@ export const handle = {
 };
 
 export const loader = async (args: LoaderFunctionArgs) => {
-  if (isDemoMode(args.request.url)) {
-    return getDemoDashboardData();
-  }
-
   const {
     accounts,
     userProfile,
@@ -41,8 +36,11 @@ export const loader = async (args: LoaderFunctionArgs) => {
   });
 
   if (!user) {
+    // Demo is a single experience at /sandbox; signed-in users never see demo data.
+    if (isDemoMode(args.request.url)) {
+      return redirect("/sandbox");
+    }
     return {
-      isDemo: false,
       user: null,
       hasAccounts: false,
       hasBudget: false,
@@ -169,7 +167,6 @@ export const loader = async (args: LoaderFunctionArgs) => {
   });
 
   return {
-    isDemo: false,
     user,
     hasAccounts: Array.isArray(accounts) && accounts.length > 0,
     hasBudget:
@@ -255,7 +252,6 @@ const Index = (): ReactElement => {
   const data = useLoaderData<typeof loader>();
   const {
     user,
-    isDemo,
     hasAccounts,
     hasBudget,
     hasSavings,
@@ -299,7 +295,6 @@ const Index = (): ReactElement => {
 
     return (
       <>
-        {isDemo && <DemoModeBanner />}
         <HomeDashboard
           accountsData={safeAccountsData}
           budgetData={safeBudgetData}
