@@ -1,0 +1,39 @@
+import type { Meta, StoryObj } from "@storybook/react";
+import { expect, fn, userEvent, within } from "storybook/test";
+import { RouteErrorState } from "./RouteErrorState";
+
+const meta: Meta<typeof RouteErrorState> = {
+  title: "3. Financial Patterns & Sections/RouteErrorState",
+  component: RouteErrorState,
+  // The Storybook decorator renders every story side by side in Light and Dark by default.
+  parameters: { layout: "padded" },
+  args: { onRetry: fn() },
+};
+
+export default meta;
+type Story = StoryObj<typeof RouteErrorState>;
+
+export const Unavailable: Story = {
+  args: { kind: "unavailable" },
+  play: async ({ canvasElement, args }) => {
+    const canvas = within(canvasElement);
+    await userEvent.click(canvas.getByRole("button", { name: "Try again" }));
+    await expect(args.onRetry).toHaveBeenCalled();
+  },
+};
+
+export const Retrying: Story = {
+  args: { kind: "unavailable", retrying: true },
+};
+
+export const NotFound: Story = {
+  args: { kind: "not-found", primaryHref: "/app/accounts", primaryLabel: "Back to accounts" },
+};
+
+export const Unauthorised: Story = {
+  args: { kind: "unauthorised", signInAction: "/logout" },
+};
+
+export const Unknown: Story = {
+  args: { kind: "unknown" },
+};
