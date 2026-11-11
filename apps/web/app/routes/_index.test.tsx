@@ -24,7 +24,7 @@ vi.mock("react-router", () => ({
   ),
 }));
 
-vi.mock("~/utils/utils", () => ({
+vi.mock("~/utils/auth.server", () => ({
   getAuthSession: vi.fn().mockResolvedValue({ user: null, accessToken: null }),
 }));
 

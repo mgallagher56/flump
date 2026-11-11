@@ -147,7 +147,9 @@ const BudgetContainer: FC = () => {
     (typeof import.meta !== "undefined" && (import.meta as any).env?.VITE_API_URL) ??
     (window as Window & { ENV?: { VITE_API_URL?: string } }).ENV?.VITE_API_URL ??
     "http://localhost:4000";
-  const authHeader = { Authorization: `Bearer ${accessToken || "mock-session-token"}` };
+  const authHeader: Record<string, string> = accessToken
+    ? { Authorization: `Bearer ${accessToken}` }
+    : {};
 
   const addEntry = async (
     entry: Omit<BudgetEntry, "id" | "userId" | "createdAt" | "updatedAt">,

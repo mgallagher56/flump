@@ -11,7 +11,7 @@ import { useUserProfile } from "./hooks/useUserProfile";
 import i18next from "./i18n.server";
 import styles from "./index.css?url";
 import { ThemeContext } from "./ThemeContext";
-import { getAuthSession } from "./utils/utils";
+import { getAuthSession } from "./utils/auth.server";
 
 export const links = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -25,14 +25,17 @@ export const links = () => [
 
 export const loader = async (args: LoaderFunctionArgs) => {
   const locale = await i18next.getLocale(args.request);
-  const { user, accessToken } = await getAuthSession(args, { ensureSignedIn: false });
+  const session = await getAuthSession(args, { ensureSignedIn: false });
+  // A user without an access token is treated as signed out; never invent a token.
+  const user = session.accessToken ? session.user : null;
+  const { accessToken } = session;
   let userProfile: UserProfile | null = null;
 
-  if (user) {
+  if (user && accessToken) {
     try {
       const apiUrl = process.env.VITE_API_URL || "http://localhost:4000";
       const res = await fetch(`${apiUrl}/user-profile`, {
-        headers: { Authorization: `Bearer ${accessToken || "mock-session-token"}` },
+        headers: { Authorization: `Bearer ${accessToken}` },
       });
       if (res.ok) {
         userProfile = await res.json();

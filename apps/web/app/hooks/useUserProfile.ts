@@ -251,6 +251,11 @@ export const userProfileAtom = atom<UserProfile>(DEFAULT_PROFILE);
  * The profile is fetched once via the loader and set into the atom.
  * Components can read and mutate profile data through this hook.
  */
+function bearer(token: string | null | undefined): string {
+  if (!token) throw new Error("Not signed in: no access token available");
+  return `Bearer ${token}`;
+}
+
 export function useUserProfile() {
   const [profile, rawSetProfile] = useAtom(userProfileAtom);
   const [, rawSetBaseline] = useAtom(financialBaselineAtom);
@@ -262,7 +267,6 @@ export function useUserProfile() {
     rootData = undefined;
   }
   const accessToken = rootData?.accessToken;
-  const authHeader = `Bearer ${accessToken || "mock-session-token"}`;
 
   const setProfile = useCallback(
     (p: UserProfile | Partial<UserProfile>) => {
@@ -287,7 +291,7 @@ export function useUserProfile() {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
-          Authorization: authHeader,
+          Authorization: bearer(accessToken),
         },
         body: JSON.stringify(updates),
       });
@@ -295,7 +299,7 @@ export function useUserProfile() {
       const updated = (await res.json()) as UserProfile;
       setProfile(updated);
     },
-    [setProfile, authHeader],
+    [setProfile, accessToken],
   );
 
   const markChecklistStep = useCallback(
@@ -308,7 +312,7 @@ export function useUserProfile() {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
-          Authorization: authHeader,
+          Authorization: bearer(accessToken),
         },
         body: JSON.stringify({ step, completed }),
       });
@@ -316,7 +320,7 @@ export function useUserProfile() {
       const updated = (await res.json()) as UserProfile;
       setProfile(updated);
     },
-    [setProfile, authHeader],
+    [setProfile, accessToken],
   );
 
   const changePassword = useCallback(
@@ -329,7 +333,7 @@ export function useUserProfile() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: authHeader,
+          Authorization: bearer(accessToken),
         },
         body: JSON.stringify({ newPassword }),
       });
@@ -339,7 +343,7 @@ export function useUserProfile() {
       }
       return res.json();
     },
-    [authHeader],
+    [accessToken],
   );
 
   const sendPasswordResetEmail = useCallback(
@@ -352,7 +356,7 @@ export function useUserProfile() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: authHeader,
+          Authorization: bearer(accessToken),
         },
         body: JSON.stringify({ email }),
       });
@@ -362,7 +366,7 @@ export function useUserProfile() {
       }
       return res.json();
     },
-    [authHeader],
+    [accessToken],
   );
 
   const resetFinancialData = useCallback(async (): Promise<void> => {
@@ -374,7 +378,7 @@ export function useUserProfile() {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: authHeader,
+        Authorization: bearer(accessToken),
       },
     });
     if (!res.ok) {
@@ -385,7 +389,7 @@ export function useUserProfile() {
     if (result.profile) {
       setProfile(result.profile);
     }
-  }, [setProfile, authHeader]);
+  }, [setProfile, accessToken]);
 
   return {
     profile,
@@ -410,7 +414,8 @@ export class HttpProfileAdapter implements ProfilePersistenceAdapter {
   }
 
   async getBaseline(): Promise<FinancialBaseline | null> {
-    const token = this.getAuthToken?.() ?? "mock-session-token";
+    const token = this.getAuthToken?.();
+    if (!token) throw new Error("Not signed in: no access token available");
     const res = await fetch(`${this.getBaseUrl()}/user-profile`, {
       headers: { Authorization: `Bearer ${token}` },
     });
@@ -420,7 +425,8 @@ export class HttpProfileAdapter implements ProfilePersistenceAdapter {
   }
 
   async saveBaseline(baseline: FinancialBaseline): Promise<void> {
-    const token = this.getAuthToken?.() ?? "mock-session-token";
+    const token = this.getAuthToken?.();
+    if (!token) throw new Error("Not signed in: no access token available");
     const updates = financialBaselineToUserProfileUpdate(baseline);
     await fetch(`${this.getBaseUrl()}/user-profile`, {
       method: "PATCH",

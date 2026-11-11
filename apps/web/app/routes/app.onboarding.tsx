@@ -32,16 +32,17 @@ import HomeLogo from "~/components/navigation/HomeLogo";
 import type { UserProfile } from "~/hooks/useUserProfile";
 import { DEFAULT_PROFILE, useUserProfile } from "~/hooks/useUserProfile";
 import { useFinancialBaseline } from "~/state/baseline.store";
+import { authHeader, getAuthSession } from "~/utils/auth.server";
 import { ALL_PAGE_KEYS, type AppPageKey, type DashboardWidgetKey } from "~/utils/pageConfig";
-import { getAuthSession } from "~/utils/utils";
 
 export const loader = async (args: LoaderFunctionArgs) => {
   const { user, accessToken } = await getAuthSession(args, { ensureSignedIn: true });
+  const authz = authHeader({ accessToken });
   const apiUrl = process.env.VITE_API_URL || "http://localhost:4000";
 
   try {
     const res = await fetch(`${apiUrl}/user-profile`, {
-      headers: { Authorization: `Bearer ${accessToken || "mock-session-token"}` },
+      headers: { ...authz },
     });
     const userProfile: UserProfile = res.ok ? await res.json() : DEFAULT_PROFILE;
     return data({ userProfile, user, accessToken });
@@ -53,6 +54,7 @@ export const loader = async (args: LoaderFunctionArgs) => {
 
 export const action = async (args: ActionFunctionArgs) => {
   const { accessToken } = await getAuthSession(args, { ensureSignedIn: true });
+  const authz = authHeader({ accessToken });
   const apiUrl = process.env.VITE_API_URL || "http://localhost:4000";
   const formData = await args.request.formData();
   const rawEnabledPages = formData.get("enabledPages");
@@ -68,7 +70,7 @@ export const action = async (args: ActionFunctionArgs) => {
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${accessToken || "mock-session-token"}`,
+        ...authz,
       },
       body: JSON.stringify({
         enabledPages,
@@ -284,10 +286,10 @@ export default function OnboardingRoute() {
         (window as Window & { ENV?: { VITE_API_URL?: string } }).ENV?.VITE_API_URL ??
         import.meta.env.VITE_API_URL ??
         "http://localhost:4000";
-      const authHdr = `Bearer ${accessToken || "mock-session-token"}`;
+      const authHdr = accessToken ? `Bearer ${accessToken}` : null;
 
       const createAccountSafe = async (name: string, type: string, balance: number) => {
-        if (balance <= 0) return;
+        if (!authHdr || balance <= 0) return;
         try {
           await fetch(`${apiUrl}/accounts`, {
             method: "POST",
@@ -305,7 +307,7 @@ export default function OnboardingRoute() {
         amount: number,
         isIncome: boolean,
       ) => {
-        if (amount <= 0) return;
+        if (!authHdr || amount <= 0) return;
         try {
           await fetch(`${apiUrl}/budget-entries`, {
             method: "POST",

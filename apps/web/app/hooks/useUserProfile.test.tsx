@@ -8,6 +8,12 @@ import {
   useUserProfile,
 } from "./useUserProfile";
 
+const mockRootData = { accessToken: "test-token" };
+vi.mock("react-router", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("react-router")>()),
+  useRouteLoaderData: () => mockRootData,
+}));
+
 describe("useUserProfile & HttpProfileAdapter", () => {
   const originalFetch = global.fetch;
 

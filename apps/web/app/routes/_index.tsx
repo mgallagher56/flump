@@ -7,9 +7,9 @@ import { HomeDashboard } from "~/components/dashboard/HomeDashboard";
 import LoggedOutHome from "~/components/home/LoggedOutHome";
 import { loadWorkspaceSnapshot } from "~/services/backend-client.server";
 import { toMonthly } from "~/types/budget";
+import { getAuthSession } from "~/utils/auth.server";
 import { getDemoDashboardData, isDemoMode } from "~/utils/demoData";
 import { calculateRunwayStats } from "~/utils/runwayStorage";
-import { getAuthSession } from "~/utils/utils";
 
 export const meta: MetaFunction = (): { title: string }[] => [
   { title: "Flump | UK Wealth, Tax Optimization & Net Worth Engine" },

@@ -3,17 +3,18 @@ import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 import { data } from "react-router";
 import TaxContainer from "~/containers/tax/TaxContainer";
 import { loadWorkspaceSnapshot } from "~/services/backend-client.server";
-import { getAuthSession } from "~/utils/utils";
+import { authHeader, getAuthSession } from "~/utils/auth.server";
 
 export const action = async (args: ActionFunctionArgs) => {
   const { accessToken } = await getAuthSession(args, { ensureSignedIn: true });
+  const authz = authHeader({ accessToken });
   const formData = await args.request.formData();
   const intent = formData.get("intent");
 
   const apiUrl = process.env.VITE_API_URL || "http://localhost:4000";
   const headers = {
     "Content-Type": "application/json",
-    Authorization: `Bearer ${accessToken || "mock-session-token"}`,
+    ...authz,
   };
 
   try {
@@ -103,7 +104,7 @@ export const action = async (args: ActionFunctionArgs) => {
       const res = await fetch(`${apiUrl}/tax-records/${id}`, {
         method: "DELETE",
         headers: {
-          Authorization: `Bearer ${accessToken || "mock-session-token"}`,
+          ...authz,
         },
       });
       if (!res.ok) throw new Error("Failed to delete tax record");
@@ -116,7 +117,7 @@ export const action = async (args: ActionFunctionArgs) => {
             fetch(`${apiUrl}/tax-records/${id}`, {
               method: "DELETE",
               headers: {
-                Authorization: `Bearer ${accessToken || "mock-session-token"}`,
+                ...authz,
               },
             }),
           ),
