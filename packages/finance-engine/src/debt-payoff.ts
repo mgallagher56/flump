@@ -1,3 +1,4 @@
+import { STUDENT_LOAN_WRITE_OFF_YEARS } from "./tax-rules.js";
 import type {
   AvalancheVsSnowballComparison,
   CarFinanceBalloonResult,
@@ -16,7 +17,13 @@ import type {
   StudentLoanEvaluationResult,
   ZeroPercentCliffResult,
 } from "./types.js";
-import { STUDENT_LOAN_THRESHOLDS } from "./uk-tax.js";
+import { toStudentLoanPlanKey } from "./uk-tax.js";
+import {
+  calculateStudentLoanRepayment,
+  getUkTaxYearRules,
+  resolveUkTaxYear,
+  roundPence,
+} from "./uk-tax-year.js";
 
 export interface DebtPayoffOptions {
   strategy?: DebtPayoffStrategy;
@@ -624,26 +631,22 @@ export function evaluateUkStudentLoan(
   plan: "plan1" | "plan2" | "plan4" | "plan5" | "postgrad" | string,
   annualSalary: number,
   currentBalance: number,
+  taxYear: string = resolveUkTaxYear(),
 ): StudentLoanEvaluationResult {
-  const configs: Record<string, { threshold: number; rate: number; writeOffYears: number }> = {
-    plan1: { threshold: 24990, rate: 0.09, writeOffYears: 25 },
-    plan2: { threshold: 27295, rate: 0.09, writeOffYears: 30 },
-    plan4: { threshold: 31395, rate: 0.09, writeOffYears: 30 },
-    plan5: { threshold: 25000, rate: 0.09, writeOffYears: 40 },
-    postgrad: { threshold: 21000, rate: 0.06, writeOffYears: 30 },
+  const rules = getUkTaxYearRules(resolveUkTaxYear(taxYear));
+
+  // PLAN_2 and plan2 spellings agree; an unrecognised plan falls back to Plan 2 (as before).
+  const key = toStudentLoanPlanKey(plan) ?? "plan2";
+  const entry = rules.studentLoans.plans[key];
+  // calculateStudentLoanRepayment throws UnsupportedUkTaxYearError if the plan has no
+  // verified entry for this year (e.g. Plan 4 in 2020/21).
+  const annualRepayment = calculateStudentLoanRepayment(annualSalary, key, rules);
+  const cfg = {
+    threshold: entry!.threshold,
+    rate: entry!.rate,
+    writeOffYears: STUDENT_LOAN_WRITE_OFF_YEARS[key],
   };
-
-  const key = plan.toLowerCase().replace(/[^a-z0-9]/g, "");
-  const fallback = { threshold: 27295, rate: 0.09, writeOffYears: 30 };
-  const cfg =
-    configs[key] ??
-    STUDENT_LOAN_THRESHOLDS[key] ??
-    STUDENT_LOAN_THRESHOLDS[plan.toUpperCase()] ??
-    fallback;
-
-  const taxableExcess = Math.max(0, annualSalary - cfg.threshold);
-  const annualRepayment = Math.round(taxableExcess * cfg.rate * 100) / 100;
-  const monthlyRepayment = Math.round((annualRepayment / 12) * 100) / 100;
+  const monthlyRepayment = roundPence(annualRepayment / 12);
 
   const interestAccumulation = currentBalance * 0.065;
   const willLikelyRepayBeforeWriteOff =
@@ -656,7 +659,7 @@ export function evaluateUkStudentLoan(
     : `Your annual repayment of £${Math.round(annualRepayment).toLocaleString()} is insufficient to clear the £${Math.round(currentBalance).toLocaleString()} balance before the ${cfg.writeOffYears}-year statutory cancellation. Any voluntary overpayments act as an effective gift to HM Treasury. Prioritise emergency savings or commercial debts instead.`;
 
   return {
-    plan: (key.startsWith("plan") ? key : "plan2") as any,
+    plan: key,
     annualRepayment,
     monthlyRepayment,
     threshold: cfg.threshold,

@@ -1,5 +1,10 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
+  getCurrentUKTaxYear,
+  STUDENT_LOAN_WRITE_OFF_YEARS,
+  UK_STUDENT_LOANS,
+} from "./tax-rules.js";
+import {
   runUkTaxVectors,
   selectUkTaxVectors,
   UK_TAX_PENSION_TREATMENT,
@@ -18,6 +23,7 @@ import {
   calculateUkTax,
   getTaxYearRemainingDays,
   SCOTLAND_GIFT_AID_DISCLAIMER,
+  STUDENT_LOAN_THRESHOLDS,
 } from "./uk-tax.js";
 import { getCurrentUkTaxYear, UnsupportedUkTaxYearError } from "./uk-tax-year.js";
 
@@ -203,14 +209,58 @@ describe("uk-tax module", () => {
       expect(calculateStudentLoanDeduction(40000, "NONE")).toBe(0);
     });
 
-    it("calculates Plan 2 repayment at 9% above £28,470", () => {
+    it("calculates Plan 2 repayment at 9% above the 2025/26 threshold of £28,470", () => {
+      // https://www.gov.uk/guidance/rates-and-thresholds-for-employers-2025-to-2026
       // (£38,470 - £28,470) * 9% = £10,000 * 0.09 = £900
-      expect(calculateStudentLoanDeduction(38470, "PLAN_2")).toBe(900);
+      expect(calculateStudentLoanDeduction(38470, "PLAN_2", "2025/26")).toBe(900);
     });
 
     it("calculates Postgraduate repayment at 6% above £21,000", () => {
       // (£31,000 - £21,000) * 6% = £10,000 * 0.06 = £600
-      expect(calculateStudentLoanDeduction(31000, "POSTGRAD")).toBe(600);
+      expect(calculateStudentLoanDeduction(31000, "POSTGRAD", "2025/26")).toBe(600);
+    });
+
+    it("uses the per-year table: Plan 2 on 35,000 is 587.70 in 2025/26 and 505.35 in 2026/27", () => {
+      // 2025/26: (35000 - 28470) * 9% = 587.70; 2026/27: (35000 - 29385) * 9% = 505.35
+      expect(calculateStudentLoanDeduction(35000, "PLAN_2", "2025/26")).toBe(587.7);
+      expect(calculateStudentLoanDeduction(35000, "PLAN_2", "2026/27")).toBe(505.35);
+    });
+
+    it("defaults the tax year to the current UK tax year", () => {
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date("2026-11-11T12:00:00Z"));
+      expect(calculateStudentLoanDeduction(35000, "PLAN_2")).toBe(505.35);
+      vi.setSystemTime(new Date("2026-01-11T12:00:00Z"));
+      expect(calculateStudentLoanDeduction(35000, "PLAN_2")).toBe(587.7);
+    });
+
+    it("throws UnsupportedUkTaxYearError for an unknown year", () => {
+      expect(() => calculateStudentLoanDeduction(35000, "PLAN_2", "2019/20")).toThrow(
+        UnsupportedUkTaxYearError,
+      );
+    });
+
+    it("matches every VERIFIED studentLoan vector", () => {
+      const vectors = selectUkTaxVectors({ kind: "studentLoan", status: "VERIFIED" });
+      expect(vectors.length).toBeGreaterThan(20);
+      const res = runUkTaxVectors(vectors, (v) => {
+        const input = v.input as { grossIncome: number; plan: string };
+        const plan = input.plan === "postgrad" ? "POSTGRAD" : input.plan.replace("plan", "PLAN_");
+        return calculateStudentLoanDeduction(input.grossIncome, plan as never, v.taxYear);
+      });
+      expect(res.failures).toEqual([]);
+    });
+  });
+
+  describe("STUDENT_LOAN_THRESHOLDS (deprecated alias)", () => {
+    it("is derived from the current year's UK_STUDENT_LOANS table", () => {
+      const year = UK_STUDENT_LOANS[getCurrentUKTaxYear()] ?? UK_STUDENT_LOANS["2026/27"]!;
+      expect(STUDENT_LOAN_THRESHOLDS.PLAN_2?.threshold).toBe(year.plans.plan2.threshold);
+      expect(STUDENT_LOAN_THRESHOLDS.PLAN_1?.threshold).toBe(year.plans.plan1.threshold);
+      expect(STUDENT_LOAN_THRESHOLDS.POSTGRAD?.rate).toBe(year.plans.postgrad.rate);
+      expect(STUDENT_LOAN_THRESHOLDS.PLAN_2?.writeOffYears).toBe(
+        STUDENT_LOAN_WRITE_OFF_YEARS.plan2,
+      );
     });
   });
 

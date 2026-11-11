@@ -2,6 +2,8 @@ import {
   calculateScottishIncomeTaxOnTaxable,
   calculateUKEWNITakeHome,
   getCurrentUKTaxYear,
+  STUDENT_LOAN_WRITE_OFF_YEARS,
+  UK_STUDENT_LOANS,
 } from "./tax-rules.js";
 import type {
   TaxTrapAnalysis,
@@ -16,9 +18,11 @@ import {
   calculateEmployerNiSaving,
   calculateIncomeTaxOnTaxable,
   calculatePersonalAllowanceForYear,
+  calculateStudentLoanRepayment,
   getUkTaxYearRules,
   resolveUkTaxYear,
   roundPence,
+  type UkStudentLoanPlanKey,
 } from "./uk-tax-year.js";
 
 /**
@@ -49,22 +53,37 @@ export const UK_TAX_CONSTANTS = {
 
 export { getCurrentUKTaxYear };
 
+/**
+ * Maps any student loan plan spelling ("PLAN_2", "plan2", "Plan 2", "POSTGRAD") to the
+ * UK_STUDENT_LOANS plan key, or undefined for NONE / unrecognised values.
+ */
+export function toStudentLoanPlanKey(plan: string): UkStudentLoanPlanKey | undefined {
+  const key = plan.toLowerCase().replace(/[^a-z0-9]/g, "");
+  return key in STUDENT_LOAN_WRITE_OFF_YEARS ? (key as UkStudentLoanPlanKey) : undefined;
+}
+
+/**
+ * @deprecated Year-less view of the CURRENT tax year's UK_STUDENT_LOANS entry, kept for
+ * existing importers. Use getUkTaxYearRules(year).studentLoans or
+ * calculateStudentLoanDeduction(gross, plan, taxYear) so the year is explicit.
+ */
 export const STUDENT_LOAN_THRESHOLDS: Record<
   string,
   { threshold: number; rate: number; writeOffYears: number }
-> = {
-  PLAN_1: { threshold: 26065, rate: 0.09, writeOffYears: 25 },
-  PLAN_2: { threshold: 28470, rate: 0.09, writeOffYears: 30 },
-  PLAN_4: { threshold: 32745, rate: 0.09, writeOffYears: 30 },
-  PLAN_5: { threshold: 25000, rate: 0.09, writeOffYears: 40 },
-  POSTGRAD: { threshold: 21000, rate: 0.06, writeOffYears: 30 },
-  // Lowercase aliases
-  plan1: { threshold: 26065, rate: 0.09, writeOffYears: 25 },
-  plan2: { threshold: 28470, rate: 0.09, writeOffYears: 30 },
-  plan4: { threshold: 32745, rate: 0.09, writeOffYears: 30 },
-  plan5: { threshold: 25000, rate: 0.09, writeOffYears: 40 },
-  postgrad: { threshold: 21000, rate: 0.06, writeOffYears: 30 },
-};
+> = (() => {
+  const year = UK_STUDENT_LOANS[getCurrentUKTaxYear()] ?? UK_STUDENT_LOANS["2026/27"]!;
+  const out: Record<string, { threshold: number; rate: number; writeOffYears: number }> = {};
+  for (const [key, plan] of Object.entries(year.plans)) {
+    const entry = {
+      threshold: plan.threshold,
+      rate: plan.rate,
+      writeOffYears: STUDENT_LOAN_WRITE_OFF_YEARS[key as UkStudentLoanPlanKey],
+    };
+    out[key] = entry; // lowercase alias (plan1, postgrad)
+    out[key === "postgrad" ? "POSTGRAD" : key.replace("plan", "PLAN_")] = entry;
+  }
+  return out;
+})();
 
 /**
  * Calculates effective Personal Allowance after £100,000 income taper.
@@ -269,16 +288,12 @@ export function calculateNationalInsurance(grossPay: number): number {
 export function calculateStudentLoanDeduction(
   grossPay: number,
   plan: UkStudentLoanPlan = "NONE",
+  taxYear: string = resolveUkTaxYear(),
 ): number {
-  if (plan === "NONE") return 0;
-
-  const config = STUDENT_LOAN_THRESHOLDS[plan];
-  if (!config || grossPay <= config.threshold) {
-    return 0;
-  }
-
-  const excess = grossPay - config.threshold;
-  return Math.round(excess * config.rate * 100) / 100;
+  const rules = getUkTaxYearRules(resolveUkTaxYear(taxYear));
+  const key = toStudentLoanPlanKey(plan);
+  if (!key) return 0;
+  return calculateStudentLoanRepayment(grossPay, key, rules);
 }
 
 /**
@@ -360,7 +375,11 @@ export function calculateUkTax(input: UkTaxCalculationInput): UkTaxCalculationRe
   const nationalInsurance = calculateNationalInsurance(grossPayForNi);
 
   // Student Loan deduction (calculated on payroll gross pay)
-  const studentLoanDeduction = calculateStudentLoanDeduction(grossPayForNi, studentLoanPlan);
+  const studentLoanDeduction = calculateStudentLoanDeduction(
+    grossPayForNi,
+    studentLoanPlan,
+    taxYear,
+  );
 
   // Total deductions from salary
   const totalDeductions =
