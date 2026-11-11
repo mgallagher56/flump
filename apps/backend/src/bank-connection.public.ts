@@ -1,0 +1,29 @@
+import type { BankConnection } from "./entities/bank-connection.entity";
+
+/** The only shape of a bank connection that may be sent to a client. */
+export interface PublicBankConnection {
+  id: string;
+  institutionId: string;
+  institutionName: string;
+  status: "connected" | "disconnected" | "error";
+  authType: "oauth" | "token";
+  expiresAt: Date | null;
+  lastSyncedAt: Date;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+/** Allowlist mapper: never exposes accessToken, refreshToken or userId. */
+export function toPublicConnection(connection: BankConnection): PublicBankConnection {
+  return {
+    id: connection.id,
+    institutionId: connection.institutionId,
+    institutionName: connection.institutionName,
+    status: connection.status,
+    authType: connection.authType,
+    expiresAt: connection.expiresAt,
+    lastSyncedAt: connection.lastSyncedAt,
+    createdAt: connection.createdAt,
+    updatedAt: connection.updatedAt,
+  };
+}

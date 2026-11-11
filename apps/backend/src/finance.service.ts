@@ -8,6 +8,7 @@ import {
   type CreateAccountDto,
   type UpdateAccountDto,
 } from "./account-intake.service";
+import { toPublicConnection } from "./bank-connection.public";
 import { Account } from "./entities/account.entity";
 import { AccountDetail } from "./entities/account-detail.entity";
 import { BankConnection } from "./entities/bank-connection.entity";
@@ -125,10 +126,11 @@ export class FinanceService {
   }
 
   async getBankConnections(userId: string) {
-    return this.bankConnectionRepository.find({
+    const connections = await this.bankConnectionRepository.find({
       where: { userId },
       order: { createdAt: "DESC" },
     });
+    return connections.map(toPublicConnection);
   }
 
   async connectBank(userId: string, body: { institutionId: string; token?: string }) {
@@ -180,7 +182,7 @@ export class FinanceService {
         const accountsCount = await this.syncProviderAccounts(savedConn, userId, token);
         return {
           success: true,
-          connection: savedConn,
+          connection: toPublicConnection(savedConn),
           message: `Connected successfully! Sync'd ${accountsCount} accounts.`,
         };
       } catch (err) {
@@ -250,7 +252,21 @@ export class FinanceService {
       ? this.providerRegistry.getProvider(connection.institutionId)
       : null;
 
-    if (provider && connection.accessToken) {
+    if (!connection.accessToken) {
+      await this.failNeedingReconnect(connection);
+    }
+
+    if (provider) {
+      // Stored ciphertext that cannot be decrypted (wrong key, corruption) must not surface
+      // decrypt or key details; the user has to reconnect.
+      try {
+        BankSyncOrchestrator.decryptToken(connection.accessToken as string);
+        if (connection.refreshToken) BankSyncOrchestrator.decryptToken(connection.refreshToken);
+      } catch (err) {
+        console.error(`Stored tokens unusable for ${connection.institutionName}:`, err);
+        await this.failNeedingReconnect(connection);
+      }
+
       try {
         const refreshed = await BankSyncOrchestrator.refreshConnectionTokensIfNeeded({
           connection,
@@ -296,16 +312,33 @@ export class FinanceService {
         connection.status = "connected";
         await this.bankConnectionRepository.save(connection);
 
-        return { success: true, connection, message: `Sync'd ${accountsCount} accounts.` };
+        return {
+          success: true,
+          connection: toPublicConnection(connection),
+          message: `Sync'd ${accountsCount} accounts.`,
+        };
       } catch (err) {
         console.error(`API Sync failed for ${connection.institutionName}:`, err);
         connection.status = "error";
         await this.bankConnectionRepository.save(connection);
-        return { success: false, connection, error: (err as Error).message };
+        // Provider error text is logged, not returned: it can echo credentials or internals.
+        return {
+          success: false,
+          connection: toPublicConnection(connection),
+          error: "Sync failed. Please try again, or reconnect the bank if it keeps failing.",
+        };
       }
     }
 
     throw new BadRequestException("Bank connection has no active token or credentials to refresh.");
+  }
+
+  private async failNeedingReconnect(connection: BankConnection): Promise<never> {
+    connection.status = "error";
+    await this.bankConnectionRepository.save(connection);
+    throw new BadRequestException(
+      "This bank connection needs to be reconnected. Please reconnect it to resume syncing.",
+    );
   }
 
   async deleteBankConnection(userId: string, id: string) {
