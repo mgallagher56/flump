@@ -12,6 +12,9 @@ describe("SecurityPrivacySection", () => {
     expect(screen.getAllByText("Bank connection (coming soon)").length).toBeGreaterThan(0);
     expect(screen.getByText("Manual-first control")).toBeDefined();
     expect(screen.getByText("Coming soon")).toBeDefined();
+    expect(screen.getByRole("heading", { name: "Security and privacy" })).toBeDefined();
+    expect(screen.getByText("Manual entry today, bank connection coming soon.")).toBeDefined();
+    expect(screen.getByText("Manual entry")).toBeDefined();
   });
 
   it("makes no data-selling or advertising claims", () => {

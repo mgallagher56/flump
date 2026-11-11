@@ -43,7 +43,7 @@ describe("Footer", () => {
     expect(text).toContain(COMPANY_NUMBER_PLACEHOLDER);
     expect(text).toContain(COMPANY_ADDRESS_PLACEHOLDER);
     expect(text).not.toMatch(/Registered in England/i);
-    expect(screen.getByRole("link", { name: "Read-only by design" }).getAttribute("href")).toBe(
+    expect(screen.getByRole("link", { name: "Security and privacy" }).getAttribute("href")).toBe(
       "/security",
     );
   });

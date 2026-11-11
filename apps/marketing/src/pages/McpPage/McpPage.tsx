@@ -189,9 +189,9 @@ export const McpPage: FC = () => {
               </div>
               <h3 className={cardTitle()}>Read-only guardrails</h3>
               <p className={cardBody()}>
-                All MCP tools and resources carry strict <code>readOnlyHint: true</code> and{" "}
-                <code>destructiveHint: false</code> metadata. Connected agents can never move money,
-                change credentials, or initiate payments.
+                All Flump MCP tools carry <code>readOnlyHint: true</code> and{" "}
+                <code>destructiveHint: false</code> metadata. Flump MCP tools have no payment
+                feature.
               </p>
             </div>
 
@@ -213,8 +213,8 @@ export const McpPage: FC = () => {
               </div>
               <h3 className={cardTitle()}>Token-bucket safety limits</h3>
               <p className={cardBody()}>
-                Enforces strict rate limits (60 tool calls/min, 300 calls/hr) per token to guard
-                against runaway autonomous loops and unintended server spam.
+                Enforces rate limits (60 tool calls/min, 300 calls/hr) per token to guard against
+                runaway autonomous loops and unintended server spam.
               </p>
             </div>
 

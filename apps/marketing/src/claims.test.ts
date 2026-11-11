@@ -26,6 +26,11 @@ const BANNED: Array<[RegExp, string]> = [
   [/Zero ads/i, "B"],
   [/not authorised by the Financial Conduct/i, "B"],
   [/encrypted at rest/i, "A"],
+  [/256-bit/, "A"],
+  [/\bFCA\b/, "B"],
+  [/hallucinat/i, "E"],
+  [/\bnpx\b/, "E"],
+  [/No credit card/i, "E"],
 ];
 
 function files(dir: string): string[] {

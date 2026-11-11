@@ -45,6 +45,8 @@ describe("Marketing McpPage", () => {
     expect(screen.queryByText(/npx @flump\/mcp|npx/)).toBeNull();
 
     const text = document.body.textContent ?? "";
+    expect(text).toContain("Flump MCP tools have no payment feature");
+    expect(text).not.toMatch(/never move money|strict/i);
     expect(text).not.toContain("mcp.flump.co.uk");
     expect(text).not.toContain("oauth-protected-resource");
     expect(text).not.toContain("OAuth 2.1");

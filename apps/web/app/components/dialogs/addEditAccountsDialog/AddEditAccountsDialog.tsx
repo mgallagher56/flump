@@ -572,8 +572,8 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
           >
             <FaShieldAlt color="#10b981" size={14} style={{ flexShrink: 0 }} />
             <FLPText color="text.muted" fontSize="xs">
-              Paste a read-only access token from your provider. Flump has no feature to make
-              payments.
+              Preview: paste your own read-only access token from your provider. Flump has no
+              feature to make payments.
             </FLPText>
           </div>
 
@@ -789,7 +789,7 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
                           ? "Starling Personal Access Token"
                           : selectedBank === "trading212"
                             ? "Trading 212 API Key"
-                            : `${selectedBankObj?.name} Open Banking Access Token`
+                            : `${selectedBankObj?.name} access token`
                     }
                     name="bankToken"
                     placeholder={
@@ -799,7 +799,7 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
                           ? "Bearer token starting with eyJ..."
                           : selectedBank === "trading212"
                             ? "API key from Trading 212 app (Settings -> API)..."
-                            : "Open Banking access token or bearer token..."
+                            : "Read-only access token..."
                     }
                     value={bankToken}
                     onChange={(e) => {
@@ -814,7 +814,7 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
                         ? "* Generate a Personal Access Token in the Starling Developer Console with account:read and balance:read permissions."
                         : selectedBank === "trading212"
                           ? "* In the Trading 212 mobile or web app, go to Settings -> API -> Generate API key and copy it here."
-                          : `* Enter an Open Banking AISP access token or switch to OAuth Portal to sign in directly via ${selectedBankObj?.name}.`}
+                          : `* Paste a read-only access token from ${selectedBankObj?.name}, or switch to OAuth Portal.`}
                   </FLPText>
                 </div>
               ) : (
@@ -860,12 +860,12 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
                 />
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <FLPText fontSize="xs" fontWeight="bold">
-                    Direct Sync for {selectedBankObj?.name} coming soon
+                    Bank connection for {selectedBankObj?.name} coming soon
                   </FLPText>
                   <FLPText color="text.muted" fontSize="xs" style={{ marginTop: "2px" }}>
-                    Live Open Banking sync is currently enabled for Monzo and Starling. No dummy
-                    data is created. You can record and track {selectedBankObj?.name} balances with
-                    manual entry right now.
+                    Bank connection is a preview for Monzo and Starling only. No dummy data is
+                    created. You can record and track {selectedBankObj?.name} balances with manual
+                    entry right now.
                   </FLPText>
                 </div>
               </div>

@@ -59,7 +59,7 @@ describe("<ConnectBankWizard />", () => {
 
     // Dialog title
     expect(
-      getByText("Choose your bank or financial institution to automatically sync your balances."),
+      getByText("Choose your bank or financial institution. Bank connection is a preview."),
     ).toBeDefined();
 
     // Filter banks
@@ -75,6 +75,9 @@ describe("<ConnectBankWizard />", () => {
     // Select Personal Access Token
     fireEvent.click(getByText("Personal Access Token (Recommended)"));
     expect(getByText("Starling Bank Developer Token")).toBeDefined();
+    expect(
+      getByText("Preview: paste your own read-only access token from your provider."),
+    ).toBeDefined();
 
     // Click back
     fireEvent.click(getByText("Back"));

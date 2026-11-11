@@ -37,7 +37,7 @@ const BANKS: BankItem[] = [
     id: "monzo",
     name: "Monzo Bank",
     color: "#ff4f5e",
-    desc: "Sync real checking, joint & savings pots via Developer Token or OAuth",
+    desc: "Preview: connect via Developer Token or OAuth",
     accounts: ["Monzo Current Account", "Monzo Savings Pots"],
     directSync: true,
   },
@@ -45,7 +45,7 @@ const BANKS: BankItem[] = [
     id: "starling",
     name: "Starling Bank",
     color: "#00aeef",
-    desc: "Sync real accounts & savings spaces via Personal Access Token or OAuth",
+    desc: "Preview: connect via Personal Access Token or OAuth",
     accounts: ["Starling Current Account", "Starling Savings Spaces"],
     directSync: true,
   },
@@ -53,7 +53,7 @@ const BANKS: BankItem[] = [
     id: "trading212",
     name: "Trading 212",
     color: "#00aaff",
-    desc: "Sync real Invest, Stocks ISA & CFD portfolio via API Key",
+    desc: "Preview: connect via API Key",
     accounts: ["Trading 212 Portfolio"],
     directSync: true,
   },
@@ -61,7 +61,7 @@ const BANKS: BankItem[] = [
     id: "hsbc",
     name: "HSBC Bank",
     color: "#db0011",
-    desc: "Sync real accounts via Open Banking Token or OAuth",
+    desc: "Preview: paste your own read-only access token",
     accounts: ["HSBC Current Account"],
     directSync: true,
   },
@@ -69,7 +69,7 @@ const BANKS: BankItem[] = [
     id: "barclays",
     name: "Barclays Bank",
     color: "#00aeef",
-    desc: "Sync real accounts via Open Banking Token or OAuth",
+    desc: "Preview: paste your own read-only access token",
     accounts: ["Barclays Everyday Account"],
     directSync: true,
   },
@@ -77,7 +77,7 @@ const BANKS: BankItem[] = [
     id: "revolut",
     name: "Revolut",
     color: "#111118",
-    desc: "Sync real accounts via Open Banking Token or OAuth",
+    desc: "Preview: paste your own read-only access token",
     accounts: ["Revolut Multi-Currency"],
     directSync: true,
   },
@@ -85,7 +85,7 @@ const BANKS: BankItem[] = [
     id: "santander",
     name: "Santander",
     color: "#ec0000",
-    desc: "Sync real accounts via Open Banking Token or OAuth",
+    desc: "Preview: paste your own read-only access token",
     accounts: ["Santander 123 Current"],
     directSync: true,
   },
@@ -93,7 +93,7 @@ const BANKS: BankItem[] = [
     id: "natwest",
     name: "NatWest",
     color: "#4e195b",
-    desc: "Sync real accounts via Open Banking Token or OAuth",
+    desc: "Preview: paste your own read-only access token",
     accounts: ["NatWest Select Current"],
     directSync: true,
   },
@@ -101,7 +101,7 @@ const BANKS: BankItem[] = [
     id: "lloyds",
     name: "Lloyds Bank",
     color: "#006a4e",
-    desc: "Sync real accounts via Open Banking Token or OAuth",
+    desc: "Preview: paste your own read-only access token",
     accounts: ["Lloyds Classic Account"],
     directSync: true,
   },
@@ -109,7 +109,7 @@ const BANKS: BankItem[] = [
     id: "chase",
     name: "Chase",
     color: "#112e51",
-    desc: "Sync real accounts via Open Banking Token or OAuth",
+    desc: "Preview: paste your own read-only access token",
     accounts: ["Chase Current Account"],
     directSync: true,
   },
@@ -393,7 +393,7 @@ const ConnectBankWizard: FC<ConnectBankWizardProps> = ({ onSuccess }) => {
                   Connect Bank Account
                 </FLPHeading>
                 <FLPText color="text.muted" fontSize="sm" style={{ marginTop: "4px" }}>
-                  Choose your bank or financial institution to automatically sync your balances.
+                  Choose your bank or financial institution. Bank connection is a preview.
                 </FLPText>
               </div>
 
@@ -528,9 +528,7 @@ const ConnectBankWizard: FC<ConnectBankWizardProps> = ({ onSuccess }) => {
                         Personal Access Token (Recommended)
                       </FLPText>
                       <FLPText color="text.muted" fontSize="xs" style={{ marginTop: "2px" }}>
-                        {selectedBank.id === "monzo"
-                          ? "Use an access token from the Monzo Developer Portal for instant direct sync."
-                          : "Paste your developer token from the Starling Developer Console to sync directly."}
+                        Preview: paste your own read-only access token from your provider.
                       </FLPText>
                     </div>
                   </div>
@@ -579,13 +577,7 @@ const ConnectBankWizard: FC<ConnectBankWizardProps> = ({ onSuccess }) => {
                   {selectedBank.name} Developer Token
                 </FLPHeading>
                 <FLPText color="text.muted" fontSize="sm" style={{ marginTop: "4px" }}>
-                  {selectedBank.id === "monzo"
-                    ? "Generate a temporary Access Token from developers.monzo.com"
-                    : selectedBank.id === "starling"
-                      ? "Generate a Personal Access Token in the Starling Developer Portal"
-                      : selectedBank.id === "trading212"
-                        ? "Generate an API Key in the Trading 212 app under Settings -> API"
-                        : `Enter your ${selectedBank.name} Open Banking Access Token`}
+                  Preview: paste your own read-only access token from your provider.
                 </FLPText>
               </div>
 
@@ -604,7 +596,7 @@ const ConnectBankWizard: FC<ConnectBankWizardProps> = ({ onSuccess }) => {
                         ? "Starling Bearer token starting with eyJ..."
                         : selectedBank.id === "trading212"
                           ? "Trading 212 API key..."
-                          : "Open Banking access token or AISP bearer token..."
+                          : "Read-only access token..."
                   }
                   value={tokenInput}
                   onChange={(e) => setTokenInput(e.target.value)}
@@ -617,7 +609,7 @@ const ConnectBankWizard: FC<ConnectBankWizardProps> = ({ onSuccess }) => {
                         ? "* Make sure your token has permissions account:read and balance:read configured in the Starling Developer Portal."
                         : selectedBank.id === "trading212"
                           ? "* In the Trading 212 app, navigate to Settings -> API -> Generate API key and copy it here."
-                          : `* Enter an Open Banking AISP access token or return to choose OAuth 2.0 to authorize directly with ${selectedBank.name}.`}
+                          : `* Paste a read-only access token from ${selectedBank.name}, or go back and choose the OAuth flow.`}
                   </FLPText>
                 </div>
               </div>
@@ -673,7 +665,7 @@ const ConnectBankWizard: FC<ConnectBankWizardProps> = ({ onSuccess }) => {
                       {selectedBank.name}
                     </FLPText>
                     <FLPText color="text.muted" fontSize="xs">
-                      Secure Open Banking API Connection
+                      Bank connection (preview)
                     </FLPText>
                   </div>
                 </div>
@@ -869,10 +861,10 @@ const ConnectBankWizard: FC<ConnectBankWizardProps> = ({ onSuccess }) => {
             <>
               <div>
                 <FLPHeading as="h2" size="lg">
-                  {selectedBank.name} Direct Sync
+                  {selectedBank.name}: bank connection
                 </FLPHeading>
                 <FLPText color="text.muted" fontSize="sm" style={{ marginTop: "4px" }}>
-                  Direct live connection coming soon.
+                  Bank connection coming soon.
                 </FLPText>
               </div>
 
@@ -896,9 +888,9 @@ const ConnectBankWizard: FC<ConnectBankWizardProps> = ({ onSuccess }) => {
                     style={{ flexShrink: 0, marginTop: "2px" }}
                   />
                   <FLPText fontSize="sm">
-                    Flump connects directly to real Open Banking APIs and does not create mock
-                    accounts. Direct live sync is currently supported for <strong>Monzo</strong> and{" "}
-                    <strong>Starling Bank</strong>.
+                    Bank connection is in preview and does not create mock accounts. You can try it
+                    with <strong>Monzo</strong> and <strong>Starling Bank</strong> using your own
+                    read-only access token.
                   </FLPText>
                 </div>
                 <FLPText color="text.muted" fontSize="xs">

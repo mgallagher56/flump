@@ -214,7 +214,7 @@ export const PricingPage: FC = () => {
                   variant="outline"
                   style={{ width: "100%", justifyContent: "center" }}
                 >
-                  Get started free
+                  Get started
                 </Button>
               </a>
             </div>

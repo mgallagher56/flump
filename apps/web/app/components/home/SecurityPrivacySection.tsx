@@ -35,7 +35,7 @@ const illustrationContainer = css({
   border: "1px solid",
   borderColor: "border",
   backgroundColor: "surface.subtle",
-  boxShadow: "0 12px 32px rgba(0, 0, 0, 0.08)",
+  boxShadow: "lg",
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
@@ -60,7 +60,7 @@ const iconBoxStyle = css({
   width: "44px",
   height: "44px",
   borderRadius: "xl",
-  backgroundColor: "rgba(99, 102, 241, 0.12)",
+  backgroundColor: "primary.subtle",
   color: "primary",
   fontSize: "20px",
   flexShrink: 0,
@@ -85,10 +85,10 @@ export const SecurityPrivacySection: FC = () => {
             Security and privacy
           </span>
           <FLPHeading as="h2" color="text.primary" id="security-heading" mb={3} size="3xl">
-            Your financial privacy comes first
+            Security and privacy
           </FLPHeading>
           <FLPText color="text.muted" fontSize="md">
-            Designed from the start to work fully without bank account linking or password sharing.
+            Manual entry today, bank connection coming soon.
           </FLPText>
         </div>
 

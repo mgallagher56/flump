@@ -1,7 +1,7 @@
 import { SectionBand } from "@repo/ui";
 import { css } from "@repo/ui/styled-system/css";
 import type { FC } from "react";
-import { FiCheckCircle, FiClock, FiShield } from "react-icons/fi";
+import { FiClock, FiShield } from "react-icons/fi";
 
 const sectionGridLayout = css({
   display: "grid",
@@ -14,25 +14,23 @@ const illustrationContainer = css({
   borderRadius: "2xl",
   overflow: "hidden",
   border: "1px solid",
-  borderColor: "rgba(255, 255, 255, 0.15)",
-  backgroundColor: "rgba(255, 255, 255, 0.03)",
-  boxShadow: "0 20px 40px -15px rgba(0, 0, 0, 0.6)",
-  backdropFilter: "blur(12px)",
+  borderColor: "border.strong",
+  backgroundColor: "surface.contrast",
+  boxShadow: "lg",
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
 });
 
 const cardStyle = css({
-  backgroundColor: { base: "rgba(255, 255, 255, 0.05)", _dark: "rgba(255, 255, 255, 0.04)" },
+  backgroundColor: "surface.contrast",
   border: "1px solid",
-  borderColor: { base: "rgba(255, 255, 255, 0.12)", _dark: "rgba(255, 255, 255, 0.1)" },
+  borderColor: "border.strong",
   borderRadius: "2xl",
   p: { base: "5", md: "6" },
   display: "flex",
   flexDirection: "column",
   gap: "10px",
-  backdropFilter: "blur(8px)",
 });
 
 const verificationBadge = css({
@@ -40,7 +38,9 @@ const verificationBadge = css({
   fontWeight: "700",
   padding: "3px 8px",
   borderRadius: "full",
-  backgroundColor: "rgba(255, 255, 255, 0.12)",
+  backgroundColor: "transparent",
+  border: "1px solid",
+  borderColor: "border.strong",
   color: "text.onContrast",
   display: "inline-flex",
   alignItems: "center",
@@ -97,7 +97,7 @@ const diagramHeader = css({
   alignItems: "center",
   gap: "8px",
   borderBottom: "1px solid",
-  borderColor: "rgba(255, 255, 255, 0.12)",
+  borderColor: "border.strong",
   paddingBottom: "12px",
 });
 
@@ -114,26 +114,27 @@ const diagramHeaderTitle = css({
 const nodeStyle = css({
   padding: "12px 14px",
   borderRadius: "10px",
-  backgroundColor: "rgba(255, 255, 255, 0.05)",
+  backgroundColor: "surface.contrast",
   border: "1px solid",
-  borderColor: "rgba(255, 255, 255, 0.1)",
+  borderColor: "border.strong",
 });
 
 const dashedNodeStyle = css({
   padding: "12px 14px",
   borderRadius: "10px",
-  backgroundColor: "rgba(255, 255, 255, 0.03)",
+  backgroundColor: "surface.contrast",
   border: "1px dashed",
-  borderColor: "rgba(255, 255, 255, 0.25)",
+  borderColor: "border.strong",
 });
 
 const nodeTitle = css({ fontSize: "12px", fontWeight: "600", color: "text.onContrast" });
 
-const nodeCaption = css({ fontSize: "11px", color: "rgba(255, 255, 255, 0.7)" });
+const nodeCaption = css({ fontSize: "11px", color: "text.onContrast", opacity: 0.8 });
 
 const flowArrow = css({
   textAlign: "center",
-  color: "rgba(255, 255, 255, 0.6)",
+  color: "text.onContrast",
+  opacity: 0.7,
   fontSize: "14px",
 });
 
@@ -143,8 +144,8 @@ export const SecurityPrivacySection: FC = () => {
       id="security"
       tone="contrast"
       indexBadge="Security and privacy"
-      title="Your financial privacy comes first"
-      subtitle="Designed from the start to work fully without bank account linking or password sharing."
+      title="Security and privacy"
+      subtitle="Manual entry today, bank connection coming soon."
     >
       <div className={sectionGridLayout} data-testid="security-privacy-section">
         {/* Data flow diagram */}
@@ -183,9 +184,7 @@ export const SecurityPrivacySection: FC = () => {
               <div className={pillarIconTile}>
                 <FiShield />
               </div>
-              <span className={verificationBadge}>
-                <FiCheckCircle size={12} /> Private manual entry
-              </span>
+              <span className={verificationBadge}>Manual entry</span>
             </div>
             <h3 className={pillarTitle}>Manual-first control</h3>
             <p className={pillarBody}>

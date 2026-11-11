@@ -47,7 +47,7 @@ const FAQS = [
   },
   {
     q: "Do I have to connect my bank accounts?",
-    a: "No. Flump is designed to work completely manually. You can enter rough totals for income, expenses, and savings in 60 seconds and use every tax, debt, mortgage, and forecasting tool without connecting a bank account.",
+    a: "No. Flump is manual-first. You can enter rough totals for income, expenses, and savings in 60 seconds and use the tax, debt, mortgage, and forecasting tools without connecting a bank account. Bank connection is coming soon.",
   },
   {
     q: "What makes Flump different from generic budgeting apps?",

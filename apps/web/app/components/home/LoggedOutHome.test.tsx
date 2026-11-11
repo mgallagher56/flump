@@ -64,7 +64,7 @@ describe("LoggedOutHome", () => {
 
     // 5. Security & Privacy
     expect(
-      screen.getByRole("heading", { level: 2, name: /your financial privacy comes first/i }),
+      screen.getByRole("heading", { level: 2, name: /^security and privacy$/i }),
     ).toBeDefined();
 
     // 6. FAQ Accordion
