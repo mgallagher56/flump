@@ -332,6 +332,8 @@ Each needs an owner ruling or a primary source before sign-off.
 
 (g) Month versus date granularity (task C3): `getMonthsForTaxYear` and `getRecordValueForMonth` bucket by whole calendar month (all of April is the new tax year), while `getTaxYearForDate` puts 1 to 5 April in the previous year. A record dated 1 to 5 April is filed under the previous year by date but its April value is counted in the new year. Documented in code and covered by a test rather than reconciled, because records have monthly granularity. The web app now defaults new records to 6 April so it never creates such records itself.
 
+(h) RESOLVED (task I8): `calculateDebtSchedule` `interestSavedVsMinimumGbp` now compares against a true minimum-only baseline (each debt pays only its own minimum, no rollover of freed minimums, zero extra budget). Previously the baseline kept the total commitment fixed so freed minimums rolled into the target debt and the saving was understated. Field name unchanged. Because the main plan keeps the commitment fixed, even extra = 0 shows a positive saving for multi-debt portfolios. Not a tax figure.
+
 (f) RESOLVED (task C3): the three apps/web tests were updated (UKTaxCalculator expects 337.5 and 2250 + 337.5; TaxTrapAlertBanner and WealthCheckHeroWidget show effectiveMarginalRatePct, 62; TaxContainer fixtures use 2024-04-06). Original note: three apps/web tests now fail as a consequence of deliberate engine changes and need consumer-track follow-up:
 
 - UKTaxCalculator.test.tsx:61 expects 338 and gets 337.5 (employer NI pence rounding, D5-a).
