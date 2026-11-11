@@ -18,6 +18,7 @@ import FLPText from "~/components/core/typography/FLPText";
 import SetupChecklist, { type SetupChecklistProps } from "~/components/setup/SetupChecklist";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
 import { normalizeProfile, type UserProfile, useUserProfile } from "~/hooks/useUserProfile";
+import type { DebtSummary } from "~/utils/debtSummary";
 import {
   ALL_PAGE_KEYS,
   type AppPageKey,
@@ -46,7 +47,7 @@ export interface HomeDashboardProps {
   mortgageData: any;
   forecastData: any;
   taxData: any;
-  debtData?: any;
+  debtData?: DebtSummary | null;
 }
 
 export const HomeDashboard: FC<HomeDashboardProps> = ({
@@ -79,12 +80,12 @@ export const HomeDashboard: FC<HomeDashboardProps> = ({
     if (!debtData && !(accountsData?.totalLiabilities > 0)) {
       return null;
     }
-    const debts = debtData?.debts || [];
+    const debts = debtData?.debts ?? [];
     return evaluateFinancialStage({
       debts,
       monthlySurplus: budgetData?.monthlySurplus ?? 0,
       liquidSavings: savingsData?.totalSavingsBalance ?? accountsData?.typeTotals?.Saving ?? 0,
-      monthlyEssentialExpenses: budgetData?.monthlyExpenses ?? 1500,
+      monthlyEssentialExpenses: budgetData?.monthlyExpenses ?? 0,
     });
   }, [debtData, accountsData, budgetData, savingsData]);
 
@@ -258,9 +259,7 @@ export const HomeDashboard: FC<HomeDashboardProps> = ({
         return Boolean(checklistProps.hasTax || (taxData?.recordsCount ?? 0) > 0);
       case "debt":
         return Boolean(
-          debtData?.totalDebt > 0 ||
-            (accountsData?.totalLiabilities ?? 0) > 0 ||
-            checklistProps.completedSteps?.includes("debt"),
+          (debtData?.totalDebt ?? 0) > 0 || checklistProps.completedSteps?.includes("debt"),
         );
       default:
         return false;
@@ -528,7 +527,7 @@ export const HomeDashboard: FC<HomeDashboardProps> = ({
                 </span>
                 <span style={{ fontSize: "13px", color: "var(--colors-text-muted)" }}>
                   Unsecured Debt Remaining • Targeted Debt-Free:{" "}
-                  {debtData?.debtFreeDate || "Calculated in Engine"}
+                  {debtData?.debtFreeDate ?? "Not calculated"}
                 </span>
               </div>
             </div>

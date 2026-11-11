@@ -20,7 +20,7 @@ vi.mock("~/components/dashboard/HomeDashboard", () => ({
         {accountsData?.netWorth}
       </span>
       <span id="total-debt" data-testid="total-debt">
-        {debtData?.totalDebt}
+        {debtData?.totalDebt ?? 0}
       </span>
     </div>
   ),
@@ -43,6 +43,8 @@ describe("SandboxRoute", () => {
     expect(screen.getByText("Persona A: Clearing £8k Debt")).toBeDefined();
     expect(screen.getByText("Persona B: £45k Earner (No Debt)")).toBeDefined();
     expect(screen.getByText("Persona C: £100k High Earner")).toBeDefined();
+
+    expect(screen.getByTestId("total-debt").textContent).toBe("8000");
 
     // Switch to Persona B (£45k earner, no debt)
     fireEvent.click(screen.getByText("Persona B: £45k Earner (No Debt)"));
