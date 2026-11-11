@@ -6,6 +6,7 @@ import FLPCheckbox from "~/components/core/inputs/checkbox/FLPCheckbox";
 import FLPHeading from "~/components/core/typography/FLPHeading";
 import FLPText from "~/components/core/typography/FLPText";
 import { useResponsive } from "~/context/ResponsiveContext";
+import { ConfirmDialog } from "~/features/feedback/components/ConfirmDialog";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
 import type { BudgetCategory, BudgetEntry } from "~/types/budget";
 import {
@@ -97,6 +98,7 @@ const BudgetCategoryTable: FC<BudgetCategoryTableProps> = ({
 
   const [editingRow, setEditingRow] = useState<EditRow | null>(null);
   const [saving, setSaving] = useState(false);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const renderRenewalBadge = (entry: BudgetEntry) => {
     if (!entry.contractEndDate) return null;
@@ -205,8 +207,12 @@ const BudgetCategoryTable: FC<BudgetCategoryTableProps> = ({
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("Delete this entry?")) return;
+  const entryToDelete = entries.find((entry) => entry.id === deleteId);
+
+  const handleConfirmDelete = async () => {
+    if (!deleteId) return;
+    const id = deleteId;
+    setDeleteId(null);
     await onDelete(id);
   };
 
@@ -569,7 +575,7 @@ const BudgetCategoryTable: FC<BudgetCategoryTableProps> = ({
                           })}
                           title="Delete"
                           type="button"
-                          onClick={() => handleDelete(entry.id)}
+                          onClick={() => setDeleteId(entry.id)}
                         >
                           <FaTrash size={14} />
                         </button>
@@ -681,7 +687,7 @@ const BudgetCategoryTable: FC<BudgetCategoryTableProps> = ({
                       })}
                       title="Delete"
                       type="button"
-                      onClick={() => handleDelete(entry.id)}
+                      onClick={() => setDeleteId(entry.id)}
                     >
                       <FaTrash size={13} />
                     </button>
@@ -814,6 +820,17 @@ const BudgetCategoryTable: FC<BudgetCategoryTableProps> = ({
           </div>
         )}
       </div>
+      <ConfirmDialog
+        open={entryToDelete !== undefined}
+        onOpenChange={(open) => {
+          if (!open) setDeleteId(null);
+        }}
+        title={`Delete ${entryToDelete?.name ?? "entry"}?`}
+        description="This removes the entry from your budget. This can't be undone."
+        confirmLabel="Delete entry"
+        tone="danger"
+        onConfirm={handleConfirmDelete}
+      />
     </div>
   );
 };

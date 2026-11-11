@@ -2,12 +2,10 @@ import { css } from "@repo/ui/styled-system/css";
 import { type FC, useMemo, useState } from "react";
 import {
   FaChartLine,
-  FaCheck,
   FaEdit,
   FaExternalLinkAlt,
   FaPiggyBank,
   FaPlus,
-  FaTimes,
   FaTrash,
 } from "react-icons/fa";
 import { useFetcher, useNavigate } from "react-router";
@@ -17,6 +15,7 @@ import FLPHeading from "~/components/core/typography/FLPHeading";
 import FLPText from "~/components/core/typography/FLPText";
 import type { Account } from "~/containers/accounts/types";
 import { useResponsive } from "~/context/ResponsiveContext";
+import { ConfirmDialog } from "~/features/feedback/components/ConfirmDialog";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
 import AddSavingsAccountDialog from "./AddSavingsAccountDialog";
 
@@ -198,6 +197,10 @@ export const SavingsAccountsList: FC<SavingsAccountsListProps> = ({
     );
     setConfirmDeleteId(null);
   };
+
+  const accountToDelete = confirmDeleteId
+    ? accounts.find((acc) => acc.id === confirmDeleteId)
+    : undefined;
 
   const commitInlineEdit = () => {
     if (!inlineEdit) return;
@@ -413,7 +416,7 @@ export const SavingsAccountsList: FC<SavingsAccountsListProps> = ({
                       aria-label={`Delete ${acc.name}`}
                       className={deleteBtnStyle}
                       type="button"
-                      onClick={() => acc.id && handleConfirmDelete(acc.id)}
+                      onClick={() => acc.id && setConfirmDeleteId(acc.id)}
                     >
                       <FaTrash size={13} />
                     </button>
@@ -638,74 +641,33 @@ export const SavingsAccountsList: FC<SavingsAccountsListProps> = ({
                         ~{formatCurrency(Math.round(annualInterest))}/yr
                       </td>
                       <td className={tdStyle}>
-                        {confirmDeleteId === acc.id ? (
-                          <div
-                            style={{
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                              gap: "4px",
-                            }}
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            gap: "6px",
+                          }}
+                        >
+                          <button
+                            aria-label={`Edit ${acc.name}`}
+                            className={actionBtnStyle}
+                            title="Edit Account"
+                            type="button"
+                            onClick={() => setEditingAccount(acc)}
                           >
-                            <button
-                              aria-label={`Confirm delete ${acc.name}`}
-                              style={{
-                                background: "#ef4444",
-                                color: "#fff",
-                                border: "none",
-                                borderRadius: "4px",
-                                padding: "4px 6px",
-                                fontSize: "11px",
-                                cursor: "pointer",
-                                display: "inline-flex",
-                                alignItems: "center",
-                                gap: "3px",
-                              }}
-                              title="Confirm Delete"
-                              type="button"
-                              onClick={() => acc.id && handleConfirmDelete(acc.id)}
-                            >
-                              <FaCheck size={10} /> Delete
-                            </button>
-                            <button
-                              aria-label="Cancel delete"
-                              className={actionBtnStyle}
-                              title="Cancel"
-                              type="button"
-                              onClick={() => setConfirmDeleteId(null)}
-                            >
-                              <FaTimes size={12} />
-                            </button>
-                          </div>
-                        ) : (
-                          <div
-                            style={{
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                              gap: "6px",
-                            }}
+                            <FaEdit size={14} />
+                          </button>
+                          <button
+                            aria-label={`Delete ${acc.name}`}
+                            className={deleteBtnStyle}
+                            title="Delete Account"
+                            type="button"
+                            onClick={() => setConfirmDeleteId(acc.id || null)}
                           >
-                            <button
-                              aria-label={`Edit ${acc.name}`}
-                              className={actionBtnStyle}
-                              title="Edit Account"
-                              type="button"
-                              onClick={() => setEditingAccount(acc)}
-                            >
-                              <FaEdit size={14} />
-                            </button>
-                            <button
-                              aria-label={`Delete ${acc.name}`}
-                              className={deleteBtnStyle}
-                              title="Delete Account"
-                              type="button"
-                              onClick={() => setConfirmDeleteId(acc.id || null)}
-                            >
-                              <FaTrash size={13} />
-                            </button>
-                          </div>
-                        )}
+                            <FaTrash size={13} />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   );
@@ -758,6 +720,20 @@ export const SavingsAccountsList: FC<SavingsAccountsListProps> = ({
           </div>
         )}
       </FLPCard>
+
+      <ConfirmDialog
+        open={accountToDelete !== undefined}
+        onOpenChange={(open) => {
+          if (!open) setConfirmDeleteId(null);
+        }}
+        title={`Delete ${accountToDelete?.name ?? "account"}?`}
+        description="This deletes the savings account and its history. This can't be undone."
+        confirmLabel="Delete account"
+        tone="danger"
+        onConfirm={() => {
+          if (confirmDeleteId) handleConfirmDelete(confirmDeleteId);
+        }}
+      />
 
       {editingAccount && (
         <AddSavingsAccountDialog

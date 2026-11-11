@@ -94,12 +94,43 @@ describe("BudgetSetupWizard", () => {
     await screen.findByText("Salary");
 
     // Click the delete button for Salary
+    const confirmSpy = vi.fn();
+    vi.stubGlobal("confirm", confirmSpy);
     const deleteButton = screen.getByTitle("Remove Salary");
     fireEvent.click(deleteButton);
+
+    // Asks first: nothing is deleted until confirmed
+    expect(screen.getByRole("alertdialog", { name: "Delete Salary?" })).toBeDefined();
+    expect(onDeleteEntry).not.toHaveBeenCalled();
+    expect(confirmSpy).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole("button", { name: "Delete entry" }));
 
     await waitFor(() => {
       expect(onDeleteEntry).toHaveBeenCalledWith("entry-1");
     });
+    expect(onDeleteEntry).toHaveBeenCalledTimes(1);
+  });
+
+  it("cancelling the remove confirm does not delete", async () => {
+    const onDeleteEntry = vi.fn().mockResolvedValue(undefined);
+    render(
+      <BudgetSetupWizard
+        entries={mockEntries}
+        monthlyTakeHome={3000}
+        onAddEntry={vi.fn()}
+        onCancel={vi.fn()}
+        onComplete={vi.fn()}
+        onDeleteEntry={onDeleteEntry}
+        onUpdateEntry={vi.fn()}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: /next/i }));
+    fireEvent.click(await screen.findByRole("button", { name: /start blank/i }));
+    await screen.findByText("Salary");
+    fireEvent.click(screen.getByTitle("Remove Salary"));
+    fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+    expect(onDeleteEntry).not.toHaveBeenCalled();
   });
 
   it("allows adding a new item", async () => {

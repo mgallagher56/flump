@@ -11,11 +11,11 @@ import {
 import { useFetcher } from "react-router";
 import FLPButton from "~/components/core/buttons/FLPButton";
 import FLPCard from "~/components/core/cards/FLPCard";
-import FLPModal from "~/components/core/dialogs/FLPModal";
 import FLPHeading from "~/components/core/typography/FLPHeading";
 import FLPText from "~/components/core/typography/FLPText";
 import type { Account } from "~/containers/accounts/types";
 import { useResponsive } from "~/context/ResponsiveContext";
+import { ConfirmDialog } from "~/features/feedback/components/ConfirmDialog";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
 import AddPensionAccountDialog from "./AddPensionAccountDialog";
 
@@ -613,28 +613,17 @@ export const PensionAccountsList: FC<PensionAccountsListProps> = ({
         />
       )}
 
-      {/* Delete Confirmation Modal */}
-      {accountToDelete && (
-        <FLPModal
-          confirmButton={{
-            text: "Delete Pot",
-            colorPalette: "red",
-          }}
-          open={!!accountToDelete}
-          title="Remove Pension Pot"
-          triggerBtn={<span style={{ display: "none" }} />}
-          onClose={() => setAccountToDelete(null)}
-          onConfirm={confirmDelete}
-        >
-          <div style={{ paddingTop: "8px", maxWidth: "400px" }}>
-            <FLPText fontSize="sm">
-              Are you sure you want to remove{" "}
-              <strong>{accountToDelete.name || "this pension pot"}</strong>? This action cannot be
-              undone.
-            </FLPText>
-          </div>
-        </FLPModal>
-      )}
+      <ConfirmDialog
+        open={accountToDelete !== null}
+        onOpenChange={(open) => {
+          if (!open) setAccountToDelete(null);
+        }}
+        title={`Delete ${accountToDelete?.name || "this pension pot"}?`}
+        description="This deletes the pension pot and its history. This can't be undone."
+        confirmLabel="Delete pot"
+        tone="danger"
+        onConfirm={confirmDelete}
+      />
     </>
   );
 };
