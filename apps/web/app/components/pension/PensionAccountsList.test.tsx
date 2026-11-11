@@ -8,11 +8,13 @@ vi.mock("~/hooks/useFormatCurrency", () => ({
 }));
 
 const mockSubmit = vi.hoisted(() => vi.fn());
+const fetcherData = vi.hoisted(() => ({ current: null as unknown }));
 
 vi.mock("react-router", () => ({
   useFetcher: () => ({
     submit: mockSubmit,
     state: "idle",
+    data: fetcherData.current,
   }),
 }));
 
@@ -95,6 +97,31 @@ describe("PensionAccountsList", () => {
         { intent: "deletePensionAccount", accountId: "p1" },
         { method: "POST", action: "/app/pension" },
       );
+    });
+
+    it("a failed delete shows the error inline and keeps the dialog open; success closes it", () => {
+      mockSubmit.mockClear();
+      fetcherData.current = null;
+      const ui = () => <PensionAccountsList accounts={pots as any} onOpenAddModal={vi.fn()} />;
+      const { rerender } = render(ui());
+      fireEvent.click(screen.getAllByRole("button", { name: "Delete Nest Workplace Pension" })[0]);
+      fireEvent.click(screen.getByRole("button", { name: "Delete pot" }));
+
+      fetcherData.current = {
+        success: false,
+        error: "We couldn't reach the server. Please try again.",
+      };
+      rerender(ui());
+      expect(screen.getByRole("alert").textContent).toBe(
+        "We couldn't reach the server. Please try again.",
+      );
+      expect(screen.getByRole("alertdialog")).toBeDefined();
+
+      fireEvent.click(screen.getByRole("button", { name: "Delete pot" }));
+      fetcherData.current = { success: true };
+      rerender(ui());
+      expect(screen.queryByRole("alertdialog")).toBeNull();
+      fetcherData.current = null;
     });
 
     it("cancel does nothing", () => {

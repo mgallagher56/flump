@@ -4,6 +4,7 @@ import customRender from "~/testUtils/customRender";
 import BankConnectionsList, { type BankConnectionsListProps } from "./BankConnectionsList";
 
 const mockSubmit = vi.fn();
+const fetcherData = { current: null as unknown };
 vi.mock("react-router", async () => {
   const actual = await vi.importActual<any>("react-router");
   return {
@@ -11,7 +12,7 @@ vi.mock("react-router", async () => {
     useFetcher: () => ({
       submit: mockSubmit,
       state: "idle",
-      data: null,
+      data: fetcherData.current,
     }),
     useRevalidator: () => ({
       revalidate: vi.fn(),
@@ -104,6 +105,34 @@ describe("<BankConnectionsList />", () => {
       { intent: "disconnectConnection", connectionId: "conn-2" },
       { method: "POST" },
     );
+  });
+
+  test("a failed disconnect shows the error inline and keeps the dialog open; success closes it", () => {
+    mockSubmit.mockClear();
+    fetcherData.current = null;
+    const ui = () => <BankConnectionsList connections={mockConnections} />;
+    const { getAllByText, getByRole, queryByRole, rerender } = customRender(ui());
+    fireEvent.click(getAllByText("Disconnect")[0]);
+    fireEvent.click(
+      within(getByRole("alertdialog", { name: "Disconnect Monzo Bank?" })).getByRole("button", {
+        name: "Disconnect",
+      }),
+    );
+
+    fetcherData.current = {
+      success: false,
+      error: "We couldn't reach the server. Please try again.",
+    };
+    rerender(ui());
+    expect(within(getByRole("alertdialog")).getByRole("alert").textContent).toBe(
+      "We couldn't reach the server. Please try again.",
+    );
+
+    fireEvent.click(within(getByRole("alertdialog")).getByRole("button", { name: "Disconnect" }));
+    fetcherData.current = { success: true };
+    rerender(ui());
+    expect(queryByRole("alertdialog")).toBeNull();
+    fetcherData.current = null;
   });
 
   test("renders empty state when there are no connections", () => {

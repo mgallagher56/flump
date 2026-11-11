@@ -8,6 +8,7 @@ import AccountDetailChart from "~/components/charts/AccountDetailChart";
 import FLPText from "~/components/core/typography/FLPText";
 import { useResponsive } from "~/context/ResponsiveContext";
 import { ConfirmDialog } from "~/features/feedback/components/ConfirmDialog";
+import { useFetcherOutcome } from "~/features/feedback/hooks/useFetcherOutcome";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
 import type { loader } from "~/routes/app.accounts.$account";
 import { isFutureMonth } from "~/utils/accounts";
@@ -35,9 +36,11 @@ const AccountDetails: FC<AccountDetailsProps> = ({
   const { accountDetails = [], account } = useLoaderData<typeof loader>();
   const [yearToDelete, setYearToDelete] = useState<number | null>(null);
   const fetcher = useFetcher();
+  const deleteOutcome = useFetcherOutcome(fetcher, { onSuccess: () => setYearToDelete(null) });
 
   const onRemoveYear = useCallback(
     (year: number) => {
+      deleteOutcome.begin();
       fetcher.submit(
         {
           intent: "deleteYear",
@@ -45,9 +48,8 @@ const AccountDetails: FC<AccountDetailsProps> = ({
         },
         { method: "POST" },
       );
-      setYearToDelete(null);
     },
-    [fetcher],
+    [fetcher, deleteOutcome.begin],
   );
 
   // Chronological sorting for chart & MoM change calculations
@@ -366,8 +368,13 @@ const AccountDetails: FC<AccountDetailsProps> = ({
       <ConfirmDialog
         open={yearToDelete !== null}
         onOpenChange={(open) => {
-          if (!open) setYearToDelete(null);
+          if (!open) {
+            setYearToDelete(null);
+            deleteOutcome.dismiss();
+          }
         }}
+        pending={deleteOutcome.pending}
+        error={deleteOutcome.error}
         title={`Delete ${yearToDelete ?? ""}?`}
         description={
           <>

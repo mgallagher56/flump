@@ -25,6 +25,10 @@ export const Default: Story = {};
 
 export const Danger: Story = { args: { tone: "danger" } };
 
+export const WithError: Story = {
+  args: { tone: "danger", error: "We couldn't reach the server. Please try again." },
+};
+
 export const Pending: Story = { args: { tone: "danger", pending: true } };
 
 export const RequireText: Story = {

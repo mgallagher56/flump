@@ -87,3 +87,19 @@ export const confirmActions = cva({
     marginTop: "8px",
   },
 });
+
+export const confirmError = cva({
+  base: {
+    margin: 0,
+    px: "12px",
+    py: "8px",
+    fontSize: "sm",
+    lineHeight: "1.5",
+    color: "status.danger.text",
+    backgroundColor: "status.danger.bg",
+    borderWidth: "1px",
+    borderStyle: "solid",
+    borderColor: "status.danger.border",
+    borderRadius: "md",
+  },
+});

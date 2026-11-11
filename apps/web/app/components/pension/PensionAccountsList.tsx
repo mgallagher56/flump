@@ -16,6 +16,7 @@ import FLPText from "~/components/core/typography/FLPText";
 import type { Account } from "~/containers/accounts/types";
 import { useResponsive } from "~/context/ResponsiveContext";
 import { ConfirmDialog } from "~/features/feedback/components/ConfirmDialog";
+import { useFetcherOutcome } from "~/features/feedback/hooks/useFetcherOutcome";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
 import AddPensionAccountDialog from "./AddPensionAccountDialog";
 
@@ -150,6 +151,7 @@ export const PensionAccountsList: FC<PensionAccountsListProps> = ({
   const [editingAccount, setEditingAccount] = useState<Account | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [accountToDelete, setAccountToDelete] = useState<Account | null>(null);
+  const deleteOutcome = useFetcherOutcome(fetcher, { onSuccess: () => setAccountToDelete(null) });
 
   const totalBalance = useMemo(
     () => accounts.reduce((sum, acc) => sum + (Number(acc.balance) || 0), 0),
@@ -184,6 +186,7 @@ export const PensionAccountsList: FC<PensionAccountsListProps> = ({
 
   const confirmDelete = () => {
     if (!accountToDelete?.id) return;
+    deleteOutcome.begin();
     fetcher.submit(
       {
         intent: "deletePensionAccount",
@@ -191,7 +194,6 @@ export const PensionAccountsList: FC<PensionAccountsListProps> = ({
       },
       { method: "POST", action: "/app/pension" },
     );
-    setAccountToDelete(null);
   };
 
   return (
@@ -616,8 +618,13 @@ export const PensionAccountsList: FC<PensionAccountsListProps> = ({
       <ConfirmDialog
         open={accountToDelete !== null}
         onOpenChange={(open) => {
-          if (!open) setAccountToDelete(null);
+          if (!open) {
+            setAccountToDelete(null);
+            deleteOutcome.dismiss();
+          }
         }}
+        pending={deleteOutcome.pending}
+        error={deleteOutcome.error}
         title={`Delete ${accountToDelete?.name || "this pension pot"}?`}
         description="This deletes the pension pot and its history. This can't be undone."
         confirmLabel="Delete pot"
