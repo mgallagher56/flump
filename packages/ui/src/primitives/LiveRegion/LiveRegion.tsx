@@ -1,4 +1,4 @@
-import { type FC, useEffect, useState } from "react";
+import { type FC, useEffect, useRef, useState } from "react";
 import { cx } from "../../../styled-system/css";
 import { VisuallyHidden } from "../VisuallyHidden";
 import { liveRegionRecipe } from "./LiveRegion.styles";
@@ -11,7 +11,8 @@ export interface LiveRegionProps {
   className?: string;
 }
 
-// Mounted empty; text is inserted after the debounce so screen readers detect the change.
+// Mounted empty; the initial message is never announced (it is page content, not an update).
+// Text is inserted after the debounce once the message changes so screen readers detect it.
 // Identical consecutive messages leave the state (and DOM) untouched, so they are not re-announced.
 export const LiveRegion: FC<LiveRegionProps> = ({
   message,
@@ -21,8 +22,13 @@ export const LiveRegion: FC<LiveRegionProps> = ({
   className,
 }) => {
   const [text, setText] = useState("");
+  const initialMessage = useRef(message);
+  const hasChanged = useRef(false);
 
   useEffect(() => {
+    // Compare against the mount value (not "first run") so StrictMode's double effect is safe.
+    if (!hasChanged.current && message === initialMessage.current) return;
+    hasChanged.current = true;
     const id = setTimeout(() => setText(message), debounceMs);
     return () => clearTimeout(id);
   }, [message, debounceMs]);

@@ -31,7 +31,6 @@ export * from "./primitives/SegmentedTabs";
 export * from "./primitives/SliderField";
 export * from "./primitives/StatusBadge";
 export * from "./primitives/Table";
-export * from "./primitives/VisuallyHidden";
 // Explicit names shadow Panda's generated visually-hidden JSX pattern (star-export ambiguity).
 export { VisuallyHidden, type VisuallyHiddenProps } from "./primitives/VisuallyHidden";
 

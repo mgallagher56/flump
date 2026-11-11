@@ -13,12 +13,21 @@ describe("LiveRegion Primitive", () => {
     expect(region.getAttribute("aria-atomic")).toBe("true");
   });
 
-  it("inserts the message after the debounce", () => {
+  it("does not announce the initial message on mount", () => {
     render(<LiveRegion message="Hello" />);
+    act(() => {
+      vi.advanceTimersByTime(5000);
+    });
+    expect(screen.getByRole("status").textContent).toBe("");
+  });
+
+  it("announces a later change after the debounce", () => {
+    const { rerender } = render(<LiveRegion message="Hello" />);
+    rerender(<LiveRegion message="Updated" />);
     act(() => {
       vi.advanceTimersByTime(1000);
     });
-    expect(screen.getByRole("status").textContent).toBe("Hello");
+    expect(screen.getByRole("status").textContent).toBe("Updated");
   });
 
   it("debounces updates without an intermediate message", () => {
@@ -41,7 +50,8 @@ describe("LiveRegion Primitive", () => {
   });
 
   it("does not re-announce an identical message", () => {
-    const { rerender } = render(<LiveRegion message="Same" />);
+    const { rerender } = render(<LiveRegion message="First" />);
+    rerender(<LiveRegion message="Same" />);
     act(() => {
       vi.advanceTimersByTime(1000);
     });
@@ -55,7 +65,7 @@ describe("LiveRegion Primitive", () => {
   });
 
   it("visuallyHidden applies the clip recipe", () => {
-    render(<LiveRegion message="x" visuallyHidden />);
+    render(<LiveRegion message="" visuallyHidden />);
     expect(screen.getByRole("status").className).toContain("pos_absolute");
   });
 });
