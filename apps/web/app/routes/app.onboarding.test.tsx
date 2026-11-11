@@ -112,10 +112,10 @@ describe("OnboardingRoute (3-Step Baseline Flow)", () => {
     await waitFor(() => {
       expect(mockUpdateProfile).toHaveBeenCalledWith(
         expect.objectContaining({
-          onboardingCompleted: true,
           enabledPages: expect.any(Array),
         }),
       );
+      expect(mockUpdateProfile).toHaveBeenLastCalledWith({ onboardingCompleted: true });
       expect(mockUpdateBaseline).toHaveBeenCalled();
       expect(mockNavigate).toHaveBeenCalledWith("/");
     });
@@ -174,16 +174,42 @@ describe("OnboardingRoute (3-Step Baseline Flow)", () => {
     expect(globalThis.fetch).not.toHaveBeenCalled();
   });
 
-  it("shows an alert and does not navigate when seeding fails, retrying only what failed", async () => {
+  it("shows an alert and does not navigate when seeding fails, and a retry can then succeed", async () => {
     const fetchMock = vi.fn().mockResolvedValue(new Response(null, { status: 503 }));
     globalThis.fetch = fetchMock as any;
     finish();
     expect((await screen.findByRole("alert")).textContent).toMatch(/couldn.t save your details/i);
     expect(mockNavigate).not.toHaveBeenCalled();
+    expect(mockUpdateProfile).not.toHaveBeenCalledWith({ onboardingCompleted: true });
+    expect(mockUpdateProfile).not.toHaveBeenCalledWith(
+      expect.objectContaining({ onboardingCompleted: true }),
+    );
 
     fetchMock.mockImplementation(async () => new Response("{}", { status: 200 }));
     fireEvent.click(screen.getByRole("button", { name: /finish setup and launch dashboard/i }));
     await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith("/"));
     expect(screen.queryByRole("alert")).toBeNull();
+  });
+
+  it("retries only failed seed jobs after a partial success", async () => {
+    let entriesOk = false;
+    const fetchMock = vi.fn().mockImplementation(async (url: string) => {
+      if (url.endsWith("/budget-entries") && !entriesOk) return new Response(null, { status: 503 });
+      return new Response("{}", { status: 200 });
+    });
+    globalThis.fetch = fetchMock as any;
+    finish();
+    await screen.findByRole("alert");
+    expect(mockNavigate).not.toHaveBeenCalled();
+    const accountCalls = () =>
+      fetchMock.mock.calls.filter(([u]) => String(u).endsWith("/accounts")).length;
+    const accountsFirst = accountCalls();
+    expect(accountsFirst).toBeGreaterThan(0);
+
+    entriesOk = true;
+    fireEvent.click(screen.getByRole("button", { name: /finish setup and launch dashboard/i }));
+    await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith("/"));
+    expect(accountCalls()).toBe(accountsFirst);
+    expect(mockUpdateProfile).toHaveBeenLastCalledWith({ onboardingCompleted: true });
   });
 });

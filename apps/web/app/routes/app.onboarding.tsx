@@ -252,7 +252,6 @@ export default function OnboardingRoute() {
         enabledPages: pagesToSave,
         dashboardWidgets,
         dashboardWidgetOrder,
-        onboardingCompleted: true,
       });
 
       // 2. Update Central FinancialBaseline Store
@@ -356,6 +355,9 @@ export default function OnboardingRoute() {
         setClientError(FINISH_ERROR);
         return;
       }
+
+      // Only now is onboarding complete; a failed seed leaves the flag false so the user stays here.
+      await updateProfile({ onboardingCompleted: true });
 
       clearOnboardingSeed();
       navigate("/");
