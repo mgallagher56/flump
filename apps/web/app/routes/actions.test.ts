@@ -13,6 +13,7 @@ vi.mock("~/utils/auth.server", () => ({
 }));
 vi.mock("~/i18n.server", () => ({ default: { getLocale: vi.fn().mockResolvedValue("en") } }));
 
+import { BankSyncOrchestrator } from "@flump/banking/server";
 import { apiConfig } from "~/config.server";
 import { action as accountsAction } from "./app.accounts._index";
 import { action as accountAction } from "./app.accounts.$account";
@@ -368,7 +369,9 @@ describe("accounts action, connectBank", () => {
       params: {},
       context: {},
     } as any);
-    expect(res.data.success === false && res.init?.status === 503).toBe(false);
+    // The failed backend call is tolerated; with no provider URL available it falls through.
+    expect(res.data).toEqual({ success: true });
+    expect(res.init?.status).toBeUndefined();
   });
 
   it("returns the backend redirect URL for OAuth", async () => {
@@ -458,5 +461,57 @@ describe("onboarding action", () => {
     globalThis.fetch = respond(503);
     const res: any = await onboardingAction(args());
     expect(res.init.status).toBe(503);
+  });
+});
+
+describe("tax action, malformed JSON", () => {
+  const run = (intent: string, fields: Record<string, string>) => {
+    globalThis.fetch = respond(200);
+    return taxAction(makeArgs({ intent, fields } as Case));
+  };
+
+  it.each([
+    ["delete-tax-year", { recordIds: "not json" }],
+    ["delete-tax-year", { recordIds: '{"a":1}' }],
+    ["bulk-create-transactions", { records: "not json" }],
+    ["bulk-create-transactions", { records: '{"a":1}' }],
+    ["bulk-create-transactions", { records: "[]", capPreviousRecordIds: '"x"' }],
+  ])("%s with %j returns a 400 and never calls the backend", async (intent, fields) => {
+    const res: any = await run(intent, fields);
+    expect(res.init.status).toBe(400);
+    expect(res.data).toEqual({ success: false, error: expect.any(String) });
+    expect(globalThis.fetch).not.toHaveBeenCalled();
+  });
+});
+
+describe("action edge cases", () => {
+  it("pension checklist PATCH failing still returns success", async () => {
+    const wizard = cases.find((c) => c.intent === "completePensionWizard") as Case;
+    globalThis.fetch = vi
+      .fn()
+      .mockResolvedValueOnce(new Response("{}", { status: 200 }))
+      .mockResolvedValueOnce(new Response("{}", { status: 200 }))
+      .mockResolvedValueOnce(new Response("{}", { status: 503 }));
+    const res: any = await pensionAction(makeArgs(wizard));
+    expect(res.data).toEqual({ success: true });
+  });
+
+  it("an auth redirect thrown inside the try block propagates", async () => {
+    const redirectResponse = new Response(null, { status: 302, headers: { Location: "/login" } });
+    vi.spyOn(BankSyncOrchestrator, "getOAuthUrl").mockImplementation(() => {
+      throw redirectResponse;
+    });
+    globalThis.fetch = respond(200, {});
+    const form = new FormData();
+    form.set("intent", "connectBank");
+    form.set("institutionId", "inst");
+    form.set("authType", "oauth");
+    await expect(
+      accountsAction({
+        request: new Request("http://localhost/app", { method: "POST", body: form }),
+        params: {},
+        context: {},
+      } as any),
+    ).rejects.toBe(redirectResponse);
   });
 });

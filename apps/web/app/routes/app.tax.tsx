@@ -97,7 +97,8 @@ export const action = async (args: ActionFunctionArgs) => {
     } else if (intent === "delete-tax-year") {
       const recordIdsJson = formData.get("recordIds") as string | null;
       if (recordIdsJson) {
-        const recordIds: string[] = JSON.parse(recordIdsJson);
+        const recordIds: unknown = JSON.parse(recordIdsJson);
+        if (!Array.isArray(recordIds)) throw new SyntaxError("recordIds must be an array");
         await Promise.all(
           recordIds.map((id) =>
             backendFetch(`/tax-records/${id}`, { accessToken: token, method: "DELETE" }),
@@ -110,6 +111,9 @@ export const action = async (args: ActionFunctionArgs) => {
 
       const records = recordsJson ? JSON.parse(recordsJson) : [];
       const capPreviousRecordIds = capPreviousJson ? JSON.parse(capPreviousJson) : [];
+      if (!Array.isArray(records) || !Array.isArray(capPreviousRecordIds)) {
+        throw new SyntaxError("records and capPreviousRecordIds must be arrays");
+      }
 
       await backendFetch(`/tax-records/bulk`, {
         accessToken: token,
@@ -119,6 +123,9 @@ export const action = async (args: ActionFunctionArgs) => {
     }
     return data({ success: true });
   } catch (error) {
+    if (error instanceof SyntaxError) {
+      return data({ success: false, error: "We couldn't read those records." }, { status: 400 });
+    }
     return actionErrorResponse(error);
   }
 };

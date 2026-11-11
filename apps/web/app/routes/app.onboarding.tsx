@@ -21,6 +21,7 @@ import {
   data,
   type LoaderFunctionArgs,
   redirect,
+  useActionData,
   useLoaderData,
   useNavigate,
 } from "react-router";
@@ -84,6 +85,9 @@ export const action = async (args: ActionFunctionArgs) => {
 export default function OnboardingRoute() {
   const { userProfile, user, accessToken } = useLoaderData<typeof loader>();
   const navigate = useNavigate();
+  const actionData = useActionData<typeof action>();
+  const actionError =
+    actionData && "success" in actionData && actionData.success === false ? actionData.error : null;
   const { updateProfile } = useUserProfile();
   const { updateBaseline } = useFinancialBaseline();
 
@@ -417,6 +421,23 @@ export default function OnboardingRoute() {
             Step {step} of 3
           </span>
         </div>
+
+        {actionError && (
+          <div
+            role="alert"
+            className={css({
+              padding: "12px 16px",
+              borderRadius: "12px",
+              fontSize: "sm",
+              backgroundColor: "status.danger.bg",
+              color: "status.danger.text",
+              border: "1px solid",
+              borderColor: "status.danger.border",
+            })}
+          >
+            {actionError}
+          </div>
+        )}
 
         {/* Pre-loaded Seed Banner */}
         {showSeedBanner && seed && (
