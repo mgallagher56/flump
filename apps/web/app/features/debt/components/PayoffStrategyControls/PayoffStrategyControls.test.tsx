@@ -24,4 +24,18 @@ describe("PayoffStrategyControls Feature Component", () => {
     fireEvent.click(snowballBtn);
     expect(handleSelect).toHaveBeenCalledWith("snowball");
   });
+
+  it("shows no saving badge or months claim when no figures are supplied", () => {
+    render(
+      <PayoffStrategyControls
+        extraPayment={50}
+        selectedStrategy="avalanche"
+        onChangeExtraPayment={vi.fn()}
+        onSelectStrategy={vi.fn()}
+      />,
+    );
+    expect(screen.queryByTestId("interest-saved-badge")).toBeNull();
+    expect(screen.queryByText(/Saved/)).toBeNull();
+    expect(screen.queryByText(/months ahead/)).toBeNull();
+  });
 });

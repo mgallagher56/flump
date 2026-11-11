@@ -228,10 +228,23 @@ export const Stage3View: FC = () => (
   </div>
 );
 
+const sampleLabelStyle = css({
+  fontSize: "xs",
+  fontWeight: "semibold",
+  color: "text.muted",
+  marginBottom: "8px",
+});
+
 export const SandboxTemplates: FC<SandboxTemplatesProps> = ({ stage = 1 }) => {
-  if (stage === 2) return <Stage2View />;
-  if (stage === 3) return <Stage3View />;
-  return <Stage1View />;
+  const view = stage === 2 ? <Stage2View /> : stage === 3 ? <Stage3View /> : <Stage1View />;
+  return (
+    <>
+      <p className={sampleLabelStyle} id="sample-data-label">
+        Sample data: illustrative figures, not yours.
+      </p>
+      {view}
+    </>
+  );
 };
 
 export default SandboxTemplates;

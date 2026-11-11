@@ -19,8 +19,8 @@ export const PayoffStrategyControls: FC<PayoffStrategyControlsProps> = ({
   onSelectStrategy,
   extraPayment,
   onChangeExtraPayment,
-  interestSaved = 2140,
-  monthsSaved = 14,
+  interestSaved,
+  monthsSaved,
   className,
 }) => {
   return (
@@ -45,7 +45,7 @@ export const PayoffStrategyControls: FC<PayoffStrategyControlsProps> = ({
       {/* Overpayment Slider */}
       <SliderField
         helperText={
-          monthsSaved > 0
+          monthsSaved !== undefined && monthsSaved > 0
             ? `Puts you ${monthsSaved} months ahead of minimum repayments.`
             : "Slide to allocate surplus cash."
         }
@@ -60,28 +60,30 @@ export const PayoffStrategyControls: FC<PayoffStrategyControlsProps> = ({
       />
 
       {/* Impact Callout */}
-      <div
-        className={css({
-          backgroundColor: "primary.subtle",
-          p: "10px 14px",
-          borderRadius: "lg",
-          borderWidth: "1px",
-          borderStyle: "dashed",
-          borderColor: "primary.border",
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          flexWrap: "wrap",
-          gap: "8px",
-        })}
-      >
-        <span className={css({ fontSize: "xs", fontWeight: "semibold", color: "text.primary" })}>
-          Total Projected Interest Saved
-        </span>
-        <StatusBadge data-testid="interest-saved-badge" size="sm" variant="positive">
-          £{interestSaved.toLocaleString("en-GB")} Saved
-        </StatusBadge>
-      </div>
+      {interestSaved !== undefined && (
+        <div
+          className={css({
+            backgroundColor: "primary.subtle",
+            p: "10px 14px",
+            borderRadius: "lg",
+            borderWidth: "1px",
+            borderStyle: "dashed",
+            borderColor: "primary.border",
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            flexWrap: "wrap",
+            gap: "8px",
+          })}
+        >
+          <span className={css({ fontSize: "xs", fontWeight: "semibold", color: "text.primary" })}>
+            Total Projected Interest Saved
+          </span>
+          <StatusBadge data-testid="interest-saved-badge" size="sm" variant="positive">
+            £{interestSaved.toLocaleString("en-GB")} Saved
+          </StatusBadge>
+        </div>
+      )}
 
       {/* Avalanche vs Snowball Toggles */}
       <div

@@ -147,16 +147,25 @@ export const loader = async (args: LoaderFunctionArgs) => {
   const netProfit = Math.max(0, totalTaxIncome - totalTaxExpenses);
   const estimatedTaxDue = netProfit > 0 ? netProfit * 0.29 : 0; // standard approx 20% tax + 9% Class 4 NI
 
-  // Estimated take-home
-  const takeHomeBreakdown = userProfile?.annualSalary
-    ? calculateNetTakeHome(
-        userProfile.annualSalary,
-        userProfile.employmentType,
-        userProfile.pensionPercent ?? 5,
-        userProfile.isSalarySacrifice ?? true,
-        userProfile.country || "GB",
-      )
-    : null;
+  // Estimated take-home: only when salary, pension percent and salary-sacrifice status are all known.
+  const pensionPercentKnown = userProfile?.pensionPercent != null;
+  const salarySacrificeKnown = userProfile?.isSalarySacrifice != null;
+  const takeHomeBreakdown =
+    userProfile?.annualSalary && pensionPercentKnown && salarySacrificeKnown
+      ? calculateNetTakeHome(
+          userProfile.annualSalary,
+          userProfile.employmentType,
+          Number(userProfile.pensionPercent),
+          Boolean(userProfile.isSalarySacrifice),
+          userProfile.country || "GB",
+        )
+      : null;
+  const monthlyContributionEst =
+    userProfile?.annualSalary && pensionPercentKnown
+      ? Math.round(
+          (Number(userProfile.annualSalary) * Number(userProfile.pensionPercent)) / 100 / 12,
+        )
+      : null;
 
   const defaultRunway = calculateRunwayStats({
     entries: budgetEntries,
@@ -220,8 +229,8 @@ export const loader = async (args: LoaderFunctionArgs) => {
         userProfile?.pensionEmployerPercent == null
           ? null
           : Number(userProfile.pensionEmployerPercent),
-      isSalarySacrifice: userProfile?.isSalarySacrifice ?? true,
-      monthlyContributionEst: 0,
+      isSalarySacrifice: userProfile?.isSalarySacrifice ?? null,
+      monthlyContributionEst,
     },
     mortgageData: {
       mortgageBalance,

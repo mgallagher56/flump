@@ -22,6 +22,7 @@ const summary: DebtSummary = {
   debtCount: 3,
   highInterestCount: 3,
   monthlyMinimumTotal: 265,
+  monthlyMinimumEstimated: false,
   debtFreeDate: "December 2027",
   debts: [],
 };
@@ -44,6 +45,14 @@ describe("DebtWidget", () => {
     expect(screen.getByText("December 2027")).toBeTruthy();
     expect(screen.getByText(/3 high APR accounts/i)).toBeTruthy();
     expect(screen.queryByText(/Interest saved/i)).toBeNull();
+  });
+
+  it("labels minimums as estimated only when the summary flag is set", () => {
+    const { rerender } = render(<DebtWidget {...baseProps} data={summary} />);
+    expect(screen.queryByText("Monthly minimums (estimated)")).toBeNull();
+    expect(screen.getByText("Monthly minimums")).toBeTruthy();
+    rerender(<DebtWidget {...baseProps} data={{ ...summary, monthlyMinimumEstimated: true }} />);
+    expect(screen.getByText("Monthly minimums (estimated)")).toBeTruthy();
   });
 
   it("shows 'Not calculated' when the debt-free date is null", () => {

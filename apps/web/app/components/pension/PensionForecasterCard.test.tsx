@@ -85,4 +85,22 @@ describe("PensionForecasterCard", () => {
     fireEvent.click(applyBtn);
     expect(screen.getByText(/13\.5%/i)).toBeDefined();
   });
+
+  it("labels the 5% / 3% rates as the auto-enrolment default, and not other rates", () => {
+    const props = {
+      currentPotTotal: 20000,
+      directMonthlyContrib: 50,
+      initialSalary: 50000,
+      portfolioReturnRate: 5.5,
+    };
+    const { unmount } = render(
+      <PensionForecasterCard {...props} initialEmployeePercent={5} initialEmployerPercent={3} />,
+    );
+    expect(screen.getByTestId("pension-default-rates-note").textContent).toMatch(/Default/);
+    unmount();
+    render(
+      <PensionForecasterCard {...props} initialEmployeePercent={8} initialEmployerPercent={4} />,
+    );
+    expect(screen.queryByTestId("pension-default-rates-note")).toBeNull();
+  });
 });

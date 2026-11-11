@@ -141,7 +141,7 @@ export const DebtWidget: FC<DebtWidgetProps> = ({
 
               <div className={statBoxStyle}>
                 <FLPText color="text.muted" fontSize="xs">
-                  {data.debts.some((d) => d.minimumPaymentEstimated)
+                  {data.monthlyMinimumEstimated
                     ? "Monthly minimums (estimated)"
                     : "Monthly minimums"}
                 </FLPText>

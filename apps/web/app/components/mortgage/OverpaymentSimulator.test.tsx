@@ -60,4 +60,13 @@ describe("<OverpaymentSimulator />", () => {
 
     expect(getByText("Amortisation projection")).toBeDefined();
   });
+
+  test("empty profile (all zeros) shows no NaN, Infinity or zero-month result", () => {
+    const { container } = customRender(
+      <OverpaymentSimulator {...defaultProps} interestRate={0} loanAmount={0} remainingTerm={0} />,
+    );
+    const text = container.textContent ?? "";
+    expect(text).not.toMatch(/NaN|Infinity/);
+    expect(text).not.toMatch(/\b0 months?\b/i);
+  });
 });
