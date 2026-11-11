@@ -167,6 +167,30 @@ export function getTaxYearForDate(dateStr: string): string {
   );
 }
 
+/**
+ * Tax year ("YYYY/YY") a RECORD filed on `dateStr` belongs to, for listing and copying.
+ * Records are bucketed by whole calendar month (getMonthsForTaxYear /
+ * getRecordValueForMonth), so the month alone decides: April to December start the tax
+ * year of that calendar year, January to March end the one that started the year before.
+ * A record dated 1-5 April therefore belongs to the year starting that April, unlike
+ * getTaxYearForDate (6 April boundary, for real calendar dates). Use this, not
+ * getTaxYearForDate, wherever a record is filed under a year. Existing persisted records
+ * dated 1-5 April (the old web default was -04-01) are re-filed by this rule; no data
+ * migration is included (sign-off sheet, known issue (f)).
+ */
+export function getTaxYearForRecordDate(dateStr: string): string {
+  const normalised = /^\d{4}-\d{2}/.test(dateStr)
+    ? dateStr
+    : (() => {
+        const d = new Date(dateStr);
+        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+      })();
+  const year = Number.parseInt(normalised.substring(0, 4), 10);
+  const month = Number.parseInt(normalised.substring(5, 7), 10);
+  const startYear = month >= 4 ? year : year - 1;
+  return `${startYear}/${String(startYear + 1).slice(-2)}`;
+}
+
 export function getPreviousTaxYear(taxYear: string): string {
   const parts = taxYear.split("/");
   const startYear = Number.parseInt(parts[0] || "0", 10);
@@ -185,10 +209,9 @@ export function getNextTaxYear(taxYear: string): string {
 
 // Generate the 12 calendar months YYYY-MM for a tax year YYYY/YY.
 // Known granularity limit: record values are bucketed by WHOLE calendar month,
-// so April belongs entirely to the new tax year, whereas getTaxYearForDate puts
-// 1-5 April in the previous year. A record dated 1-5 April is therefore filed
-// under the previous year by date but its April value lands in the new year's
-// months. Deliberate (records are monthly, not daily); see sign-off sheet known issue (g).
+// so April belongs entirely to the new tax year. getTaxYearForRecordDate applies the
+// same rule to a record's date (1-5 April belongs to the year starting that April), so
+// listing, copying and totals agree. See sign-off sheet known issue (f).
 export function getMonthsForTaxYear(taxYear: string): string[] {
   const parts = taxYear.split("/");
   const startYear = Number.parseInt(parts[0] || "0", 10);
@@ -258,7 +281,7 @@ export function buildCopiedRecordForTaxYear(
   targetTaxYear: string,
   amountOverride?: number,
 ): Omit<TaxRecord, "id" | "userId" | "createdAt" | "updatedAt"> {
-  const sourceTaxYear = getTaxYearForDate(record.date);
+  const sourceTaxYear = getTaxYearForRecordDate(record.date);
   const sourceStartYear = Number.parseInt(sourceTaxYear.split("/")[0] || "0", 10);
   const targetStartYear = Number.parseInt(targetTaxYear.split("/")[0] || "0", 10);
   const yearDiff =

@@ -568,3 +568,28 @@ export function estimateSalarySacrificeTaxSaving(
 ): number {
   return annualIncome * (contributionPct / 100) * (getDisplayMarginalRatePct(analysis) / 100);
 }
+
+/**
+ * Annual income tax plus employee Class 1 NI saved by sacrificing `sacrifice` of
+ * `annualIncome` (salary sacrifice reduces both the taxed and the NI-able pay).
+ * Computed as the difference between the full calculations at `annualIncome` and
+ * `annualIncome - sacrifice`, so it is exact across band edges and the 100k
+ * allowance taper (unlike a flat marginal rate at the starting income). The
+ * sacrifice is clamped to [0, annualIncome]. Rounded to pence. Defaults to the
+ * same year as the trap helpers; an explicitly unsupported year throws.
+ */
+export function calculateSalarySacrificeSaving(
+  annualIncome: number,
+  sacrifice: number,
+  taxYear: string = defaultTrapTaxYear(),
+  region: UkTaxRegion = "ENGLAND_NI_WALES",
+): number {
+  const rules = getUkTaxYearRules(resolveUkTaxYear(taxYear));
+  const income = Math.max(0, annualIncome);
+  const reduced = income - Math.min(income, Math.max(0, sacrifice));
+  const tax =
+    incomeTaxOnAdjustedNetIncome(income, rules, region) -
+    incomeTaxOnAdjustedNetIncome(reduced, rules, region);
+  const ni = calculateEmployeeNi(income, rules) - calculateEmployeeNi(reduced, rules);
+  return roundPence(tax + ni);
+}

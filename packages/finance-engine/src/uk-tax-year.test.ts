@@ -359,6 +359,34 @@ describe("calculateIncomeTaxOnTaxable", () => {
   });
 });
 
+describe("calculateIncomeTaxOnTaxable Scottish band lookup", () => {
+  it("keys the extension on the 20% rate, so renaming the Basic band does not silently disable it", () => {
+    const r27 = getUkTaxYearRules("2026/27");
+    const renamed = {
+      ...r27,
+      scotland: {
+        ...r27.scotland,
+        bands: r27.scotland.bands.map((b) => (b.name === "Basic" ? { ...b, name: "Standard" } : b)),
+      },
+    };
+    // Same expected value as the s.414(2)(b) test above (ext 5000 => 7,882.05).
+    const res = calculateIncomeTaxOnTaxable(37430, renamed, "SCOTLAND", { bandExtension: 5000 });
+    expect(res.total).toBeCloseTo(7882.05, 2);
+  });
+
+  it("throws when no Scottish band carries the 20% rate", () => {
+    const r27 = getUkTaxYearRules("2026/27");
+    const broken = {
+      ...r27,
+      scotland: {
+        ...r27.scotland,
+        bands: r27.scotland.bands.map((b) => ({ ...b, rate: b.rate === 0.2 ? 0.25 : b.rate })),
+      },
+    };
+    expect(() => calculateIncomeTaxOnTaxable(37430, broken, "SCOTLAND")).toThrow(/20%/);
+  });
+});
+
 describe("NI, Class 4, employer NI and student loan calculators", () => {
   const r = getUkTaxYearRules("2025/26");
 

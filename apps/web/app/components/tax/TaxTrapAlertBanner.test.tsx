@@ -26,4 +26,25 @@ describe("TaxTrapAlertBanner", () => {
     expect(screen.getByText("40% Marginal Tax")).toBeDefined();
     expect(screen.queryByText(/62%/)).toBeNull();
   });
+
+  // Savings are the income tax difference plus employee NI difference from the engine
+  // (EWNI; 2025/26 and 2026/27 share these figures: PA 12,570, basic 20% to taxable 37,700,
+  // higher 40% to 125,140, additional 45%, NI 8% to 50,270 then 2%).
+  it("97k income, 3k sacrifice: saves 1,260 (40% + 2% NI), not the flat 62% (1,860)", () => {
+    // Tax(97,000) = 7,540 + 46,730*.4 = 26,232; Tax(94,000) = 7,540 + 43,730*.4 = 25,032;
+    // diff 1,200; NI 3,000*.02 = 60; total 1,260.
+    render(<TaxTrapAlertBanner grossIncome={97000} />);
+    fireEvent.change(screen.getByRole("slider"), { target: { value: "3000" } });
+    expect(screen.getByText("£1,260 / yr")).toBeDefined();
+    expect(screen.queryByText("£1,860 / yr")).toBeNull();
+  });
+
+  it("130k income, 25,140 sacrifice: saves 14,858 (not the flat 62% 15,587)", () => {
+    // Tax(130,000) = 7,540 + 34,976 + 2,187 = 44,703 (PA 0);
+    // Tax(104,860): PA 12,570 - 2,430 = 10,140, taxable 94,720 => 7,540 + 22,808 = 30,348;
+    // diff 14,355; NI 25,140*.02 = 502.80; total 14,857.80 => rounds to 14,858.
+    render(<TaxTrapAlertBanner grossIncome={130000} />);
+    expect(screen.getByText("£14,858 / yr")).toBeDefined();
+    expect(screen.queryByText("£15,587 / yr")).toBeNull();
+  });
 });

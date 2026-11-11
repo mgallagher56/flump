@@ -345,7 +345,7 @@ export interface IncomeTaxResult {
  * Scotland: walks rules.scotland.bands. `bandExtension` (grossed-up Gift Aid,
  * ITA 2007 s.414(2)(b)) raises "the upper limit for the Scottish basic rate and
  * the limits for any Scottish rates above the Scottish basic rate": the upper
- * limit of the band named "Basic" and every limit (lower and upper) of the bands
+ * limit of the 20% (basic rate) band and every limit (lower and upper) of the bands
  * after it. Bands before Basic (Starter) are unchanged.
  */
 export function calculateIncomeTaxOnTaxable(
@@ -360,7 +360,12 @@ export function calculateIncomeTaxOnTaxable(
   if (region === "SCOTLAND") {
     const ext = Math.max(0, opts.bandExtension ?? 0);
     const bands = rules.scotland.bands;
-    const basicIdx = bands.findIndex((b) => b.name === "Basic");
+    // The basic band is identified by its 20% rate, not its display name: the statute does
+    // not define Scottish band names, and a rename must not silently disable the extension.
+    const basicIdx = bands.findIndex((b) => b.rate === 0.2);
+    if (basicIdx < 0) {
+      throw new Error("Scottish income tax bands have no 20% (basic rate) band");
+    }
     for (const [i, band] of bands.entries()) {
       const aboveBasic = basicIdx >= 0 && i > basicIdx;
       const atOrAboveBasic = basicIdx >= 0 && i >= basicIdx;

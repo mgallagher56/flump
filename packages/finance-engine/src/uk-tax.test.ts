@@ -588,6 +588,7 @@ describe("uk-tax module", () => {
 
 import {
   calculate100kTaxTrap,
+  calculateSalarySacrificeSaving,
   estimateSalarySacrificeTaxSaving,
   getDisplayMarginalRatePct,
 } from "./uk-tax.js";
@@ -608,6 +609,32 @@ describe("display marginal rate (trap-only NI inclusion)", () => {
   it("estimates the 5% salary-sacrifice saving from the display rate", () => {
     const a = calculate100kTaxTrap(40000);
     expect(estimateSalarySacrificeTaxSaving(40000, 5, a)).toBe(400);
+  });
+});
+
+describe("calculateSalarySacrificeSaving (income tax difference plus employee NI difference)", () => {
+  // EWNI 2025/26 and 2026/27 share: PA 12,570 (tapered by 1 per 2 over 100,000), basic 20% to
+  // taxable 37,700, higher 40% to taxable 125,140, additional 45%; NI 8% to 50,270, 2% above.
+  it("97,000 income, 3,000 sacrifice: all in the 40% band, outside the taper => 1,260", () => {
+    // Tax(97,000): taxable 84,430 => 37,700*.2 (7,540) + 46,730*.4 (18,692) = 26,232
+    // Tax(94,000): taxable 81,430 => 7,540 + 43,730*.4 (17,492) = 25,032; diff 1,200
+    // NI diff: both above 50,270 => 3,000*.02 = 60. Total 1,260 (not 3,000*.62 = 1,860).
+    expect(calculateSalarySacrificeSaving(97000, 3000, "2025/26")).toBe(1260);
+    expect(calculateSalarySacrificeSaving(97000, 3000, "2026/27")).toBe(1260);
+  });
+
+  it("130,000 income, 25,140 sacrifice: spans additional, higher and taper => 14,857.80", () => {
+    // Tax(130,000): ANI over 100k by 30,000 => PA 0, taxable 130,000
+    //   7,540 + (125,140-37,700)*.4 (34,976) + (130,000-125,140)*.45 (2,187) = 44,703
+    // Tax(104,860): taper floor(4,860/2) = 2,430 => PA 10,140, taxable 94,720
+    //   7,540 + (94,720-37,700)*.4 (22,808) = 30,348; diff 14,355
+    // NI diff: 25,140*.02 = 502.80. Total 14,857.80 (flat 62% would give 15,586.80, +729).
+    expect(calculateSalarySacrificeSaving(130000, 25140, "2025/26")).toBe(14857.8);
+  });
+
+  it("clamps the sacrifice to the income and ignores negatives", () => {
+    expect(calculateSalarySacrificeSaving(50000, 0, "2025/26")).toBe(0);
+    expect(calculateSalarySacrificeSaving(50000, -100, "2025/26")).toBe(0);
   });
 });
 
