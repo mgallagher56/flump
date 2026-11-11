@@ -14,17 +14,22 @@ env:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  # Cancel superseded PR runs only; never cancel a push-to-main run mid-flight.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
+# Least privilege by default; each job declares what it needs. actions: write is
+# for the turborepo-gh-artifacts cache server, which every turbo job uses.
 permissions:
-  actions: write
   contents: read
-  pull-requests: write
 
 jobs:
   lint:
     name: ⬣ Lint
     runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      actions: write
+      contents: read
 
     steps:
       - name: ⬇️ Checkout repo
@@ -49,12 +54,14 @@ jobs:
   check-types:
     name: 🔎 Type Check
     runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      actions: write
+      contents: read
 
     steps:
       - name: ⬇️ Checkout repo
         uses: actions/checkout@v7.0.1
-        with:
-          fetch-depth: 0
 
       - name: ⚙️ Setup Bun and install dependencies
         uses: ./.github/actions/bun-setup
@@ -70,6 +77,11 @@ jobs:
     name: ⚡ Vitest Tests
     runs-on: ubuntu-latest
     timeout-minutes: 25
+    # pull-requests: write is for the coverage report comment.
+    permissions:
+      actions: write
+      contents: read
+      pull-requests: write
 
     # Throwaway Postgres for the real-database migration suite. The job runs on the
     # runner (not in a container), so localhost:5432 reaches the service. The password
@@ -100,8 +112,6 @@ jobs:
     steps:
       - name: ⬇️ Checkout repo
         uses: actions/checkout@v7.0.1
-        with:
-          fetch-depth: 0
 
       - name: ⚙️ Setup Bun and install dependencies
         uses: ./.github/actions/bun-setup
@@ -123,6 +133,10 @@ jobs:
   build:
     name: 🏗️ Build
     runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      actions: write
+      contents: read
 
     steps:
       - name: ⬇️ Checkout repo
