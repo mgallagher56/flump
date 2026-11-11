@@ -288,7 +288,23 @@ export default function OnboardingRoute() {
       });
 
       // 3. Seed initial baseline accounts and budget entries
-      // Jobs that already succeeded are remembered so a retry never creates duplicates.
+      // Jobs that already succeeded are remembered so a retry never creates duplicates. The
+      // backend is also asked what already exists, so a retry after a reload, a crash or a lost
+      // response skips records an earlier attempt created. A failed lookup stops here (no guessing).
+      const existingNames = async (endpoint: string, field: "name" | "title") => {
+        const rows = await apiFetch<Array<Record<string, unknown>>>(endpoint, { accessToken });
+        if (!Array.isArray(rows)) throw new BackendError("bad-response", endpoint);
+        return rows.flatMap((row) =>
+          typeof row[field] === "string" ? [row[field] as string] : [],
+        );
+      };
+      const [existingAccounts, existingEntries] = await Promise.all([
+        existingNames("/accounts", "name"),
+        existingNames("/budget-entries", "title"),
+      ]);
+      for (const name of existingAccounts) seededRef.current.add(`account:${name}`);
+      for (const title of existingEntries) seededRef.current.add(`entry:${title}`);
+
       const runSeed = async (key: string, endpoint: string, payload: unknown, enabled: boolean) => {
         if (!enabled || seededRef.current.has(key)) return;
         await apiFetch<unknown>(endpoint, { accessToken, method: "POST", body: payload });
