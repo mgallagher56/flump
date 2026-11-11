@@ -217,3 +217,5 @@ export async function loadWorkspaceSnapshot(
     bankConnections,
   };
 }
+
+export { throwRouteError } from "./route-error.server";
