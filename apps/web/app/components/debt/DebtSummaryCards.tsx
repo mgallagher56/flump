@@ -15,6 +15,10 @@ export interface DebtSummaryCardsProps {
   totalInterestSaved: number;
   monthsShaved: number;
   strategy: "avalanche" | "snowball";
+  /** True when any debt has no stored APR: payoff date and interest saved cannot be calculated. */
+  aprUnknown?: boolean;
+  /** True when any minimum payment is an estimate rather than a stored figure. */
+  minimumEstimated?: boolean;
 }
 
 const gridStyle = css({
@@ -63,6 +67,8 @@ export const DebtSummaryCards: FC<DebtSummaryCardsProps> = ({
   totalInterestSaved,
   monthsShaved,
   strategy,
+  aprUnknown = false,
+  minimumEstimated = false,
 }) => {
   const { formatCurrency } = useFormatCurrency();
 
@@ -109,6 +115,7 @@ export const DebtSummaryCards: FC<DebtSummaryCardsProps> = ({
             {extraPayment > 0
               ? `Includes ${formatCurrency(extraPayment)} surplus overpayment`
               : "Minimum payments only"}
+            {minimumEstimated ? " (minimums estimated)" : ""}
           </FLPText>
         </div>
       </FLPCard>
@@ -125,12 +132,14 @@ export const DebtSummaryCards: FC<DebtSummaryCardsProps> = ({
             </div>
           </div>
           <FLPHeading as="h3" size="2xl" className="tabular-nums">
-            {debtFreeDate}
+            {aprUnknown ? "Not calculated" : debtFreeDate}
           </FLPHeading>
           <FLPText color="text.muted" fontSize="xs">
-            {monthsShaved > 0
-              ? `${monthsShaved} months sooner than minimum payments`
-              : "Standard minimum schedule"}
+            {aprUnknown
+              ? "Add each debt's APR to calculate this"
+              : monthsShaved > 0
+                ? `${monthsShaved} months sooner than minimum payments`
+                : "Standard minimum schedule"}
           </FLPText>
         </div>
       </FLPCard>
@@ -147,10 +156,12 @@ export const DebtSummaryCards: FC<DebtSummaryCardsProps> = ({
             </div>
           </div>
           <FLPHeading as="h3" size="2xl" className="tabular-nums">
-            {formatCurrency(totalInterestSaved)}
+            {aprUnknown ? "Not calculated" : formatCurrency(totalInterestSaved)}
           </FLPHeading>
           <FLPText color="text.muted" fontSize="xs">
-            Compared to making minimum payments only
+            {aprUnknown
+              ? "Add each debt's APR to calculate this"
+              : "Compared to making minimum payments only"}
           </FLPText>
         </div>
       </FLPCard>

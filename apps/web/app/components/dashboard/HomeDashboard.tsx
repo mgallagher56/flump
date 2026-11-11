@@ -75,28 +75,34 @@ export const HomeDashboard: FC<HomeDashboardProps> = ({
   const [editMode, setEditMode] = useState(false);
   const [draggedKey, setDraggedKey] = useState<DashboardWidgetKey | null>(null);
 
+  // An empty budget means surplus, essentials and runway are unknown, not zero.
+  const budgetKnown =
+    (budgetData?.monthlyIncome ?? 0) > 0 || (budgetData?.monthlyExpenses ?? 0) > 0;
+
   // Financial Lifecycle Stage evaluation
   const financialStage = useMemo(() => {
     if (!debtData && !(accountsData?.totalLiabilities > 0)) {
       return null;
     }
     const debts = debtData?.debts ?? [];
-    return evaluateFinancialStage({
+    const stage = evaluateFinancialStage({
       debts,
       monthlySurplus: budgetData?.monthlySurplus ?? 0,
       liquidSavings: savingsData?.totalSavingsBalance ?? accountsData?.typeTotals?.Saving ?? 0,
       monthlyEssentialExpenses: budgetData?.monthlyExpenses ?? 0,
     });
-  }, [debtData, accountsData, budgetData, savingsData]);
+    // Without a budget only the debt-driven stage is real; buffer/optimise depend on runway.
+    return budgetKnown || stage.stage === "stabilize" ? stage : null;
+  }, [debtData, accountsData, budgetData, savingsData, budgetKnown]);
 
   // Safe-to-Spend weekly allowance metric
   const safeToSpend = useMemo(() => {
-    if (!budgetData) return null;
+    if (!budgetData || !budgetKnown) return null;
     const income = budgetData.monthlyIncome || 0;
     const living = budgetData.livingExpenses || budgetData.monthlyExpenses || 0;
     const minDebt = debtData?.monthlyMinimumTotal || 0;
     return calculateSafeToSpend(income, living * 0.6, minDebt, living * 0.4);
-  }, [budgetData, debtData]);
+  }, [budgetData, debtData, budgetKnown]);
 
   // Enabled pages according to UserProfile
   const enabledPages = useMemo<AppPageKey[]>(() => {
@@ -554,6 +560,11 @@ export const HomeDashboard: FC<HomeDashboardProps> = ({
                   {formatCurrency(safeToSpend.weeklyAllowance)} / week
                 </div>
               </div>
+            )}
+            {!safeToSpend && (
+              <Link to="/app/budget" className={css({ fontSize: "12px", color: "text.muted" })}>
+                Add your budget to see your safe-to-spend allowance
+              </Link>
             )}
             <Link to="/app/debt">
               <FLPButton size="sm" variant="primary">

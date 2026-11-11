@@ -58,7 +58,11 @@ export const BudgetWidget: FC<BudgetWidgetProps> = ({
   const showRunway = config.showRunway !== false;
   const primaryMetric = config.primaryMetric || "surplus";
 
+  // With no income or expenses entered, runway cannot be calculated: never show 0 or "No burn".
+  const budgetKnown = data.monthlyIncome > 0 || data.monthlyExpenses > 0;
+
   const runwayDisplay = useMemo(() => {
+    if (!budgetKnown) return "Not set";
     if (typeof window !== "undefined" && data.rawEntries && data.rawAccounts) {
       const activeSettings = loadRunwaySettings();
       if (activeSettings) {
@@ -88,7 +92,7 @@ export const BudgetWidget: FC<BudgetWidgetProps> = ({
       return data.runwayLabel;
     }
     return "Not set";
-  }, [data]);
+  }, [data, budgetKnown]);
 
   return (
     <DashboardWidgetCard
