@@ -15,6 +15,7 @@ import FLPButton from "~/components/core/buttons/FLPButton";
 import FLPCheckbox from "~/components/core/inputs/checkbox/FLPCheckbox";
 import FLPHeading from "~/components/core/typography/FLPHeading";
 import FLPText from "~/components/core/typography/FLPText";
+import { ConfirmDialog } from "~/features/feedback/components/ConfirmDialog";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
 import type { BudgetCategory, BudgetEntry } from "~/types/budget";
 import { CATEGORY_ICONS, toMonthly } from "~/types/budget";
@@ -215,6 +216,7 @@ const BudgetSetupWizard: FC<BudgetSetupWizardProps> = ({
   const [localUpdates, setLocalUpdates] = useState<Record<string, Partial<BudgetEntry>>>({});
   const [saving, setSaving] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
 
   // Inline add item form state
   const [isAdding, setIsAdding] = useState(false);
@@ -270,6 +272,10 @@ const BudgetSetupWizard: FC<BudgetSetupWizardProps> = ({
       setDeletingId(null);
     }
   };
+
+  const pendingDeleteEntry = pendingDeleteId
+    ? entries.find((entry) => entry.id === pendingDeleteId)
+    : undefined;
 
   const stepIndex = STEPS.indexOf(currentStep);
   const isFirst = stepIndex === 0;
@@ -830,7 +836,7 @@ const BudgetSetupWizard: FC<BudgetSetupWizardProps> = ({
                 deleting={deletingId === e.id}
                 entry={e}
                 symbol={symbol}
-                onDelete={handleDeleteItem}
+                onDelete={setPendingDeleteId}
                 onUpdate={localUpdate}
               />
             ))}
@@ -856,7 +862,7 @@ const BudgetSetupWizard: FC<BudgetSetupWizardProps> = ({
                 deleting={deletingId === e.id}
                 entry={e}
                 symbol={symbol}
-                onDelete={handleDeleteItem}
+                onDelete={setPendingDeleteId}
                 onUpdate={localUpdate}
               />
             ))}
@@ -996,6 +1002,22 @@ const BudgetSetupWizard: FC<BudgetSetupWizardProps> = ({
           </FLPButton>
         </div>
       </div>
+      <ConfirmDialog
+        open={pendingDeleteEntry !== undefined}
+        onOpenChange={(open) => {
+          if (!open) setPendingDeleteId(null);
+        }}
+        title={`Delete ${pendingDeleteEntry?.name ?? "entry"}?`}
+        description="This removes the entry from your budget. This can't be undone."
+        confirmLabel="Delete entry"
+        tone="danger"
+        onConfirm={() => {
+          if (!pendingDeleteId) return;
+          const id = pendingDeleteId;
+          setPendingDeleteId(null);
+          void handleDeleteItem(id);
+        }}
+      />
     </div>
   );
 };

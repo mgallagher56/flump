@@ -64,13 +64,32 @@ describe("<BudgetCategoryTable />", () => {
     });
   });
 
-  test("allows deleting an entry", async () => {
-    window.confirm = vi.fn().mockReturnValue(true);
-    const { getByTitle } = customRender(<BudgetCategoryTable {...defaultProps} />);
+  test("delete opens a confirm and does not call window.confirm", async () => {
+    const confirmSpy = vi.fn();
+    vi.stubGlobal("confirm", confirmSpy);
+    const onDelete = vi.fn().mockResolvedValue(undefined);
+    const { getByTitle, getByRole } = customRender(
+      <BudgetCategoryTable {...defaultProps} onDelete={onDelete} />,
+    );
 
-    const deleteBtn = getByTitle("Delete");
-    fireEvent.click(deleteBtn);
-    expect(defaultProps.onDelete).toHaveBeenCalledWith("entry-1");
+    fireEvent.click(getByTitle("Delete"));
+    expect(getByRole("alertdialog", { name: "Delete Mortgage?" })).toBeDefined();
+    expect(onDelete).not.toHaveBeenCalled();
+
+    fireEvent.click(getByRole("button", { name: "Delete entry" }));
+    await waitFor(() => expect(onDelete).toHaveBeenCalledWith("entry-1"));
+    expect(onDelete).toHaveBeenCalledTimes(1);
+    expect(confirmSpy).not.toHaveBeenCalled();
+  });
+
+  test("cancelling the delete confirm does nothing", () => {
+    const onDelete = vi.fn().mockResolvedValue(undefined);
+    const { getByTitle, getByRole } = customRender(
+      <BudgetCategoryTable {...defaultProps} onDelete={onDelete} />,
+    );
+    fireEvent.click(getByTitle("Delete"));
+    fireEvent.click(getByRole("button", { name: "Cancel" }));
+    expect(onDelete).not.toHaveBeenCalled();
   });
 
   test("renders mobile variant cleanly", () => {

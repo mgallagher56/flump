@@ -203,6 +203,7 @@ describe("BudgetContainer", () => {
     const row = await screen.findByText("Mortgage");
     const deleteBtn = screen.getAllByTitle("Delete")[0];
     fireEvent.click(deleteBtn);
+    fireEvent.click(await screen.findByRole("button", { name: "Delete entry" }));
 
     const alert = await screen.findByRole("alert");
     expect(alert.textContent).toMatch(/couldn.t delete/i);

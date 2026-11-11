@@ -1,5 +1,5 @@
-import { fireEvent } from "@testing-library/react";
-import { describe, expect, test, vi } from "vitest";
+import { fireEvent, screen, within } from "@testing-library/react";
+import { beforeEach, describe, expect, test, vi } from "vitest";
 import type { Account } from "~/containers/accounts/types";
 import customRender from "~/testUtils/customRender";
 import SavingsAccountsList, { calculateOneYearCompoundInterest } from "./SavingsAccountsList";
@@ -65,5 +65,68 @@ describe("<SavingsAccountsList />", () => {
       <SavingsAccountsList accounts={mockAccounts} onOpenAddModal={vi.fn()} variant="mobile" />,
     );
     expect(getByText("Marcus High Yield Saver")).toBeDefined();
+  });
+
+  describe("delete confirmation", () => {
+    beforeEach(() => {
+      mockSubmit.mockClear();
+    });
+
+    for (const variant of ["desktop", "mobile"] as const) {
+      test(`${variant} trash opens the confirm and submits nothing`, () => {
+        const confirmSpy = vi.fn();
+        vi.stubGlobal("confirm", confirmSpy);
+        customRender(
+          <SavingsAccountsList
+            accounts={mockAccounts}
+            onOpenAddModal={vi.fn()}
+            variant={variant}
+          />,
+        );
+        fireEvent.click(
+          screen.getAllByRole("button", { name: "Delete Marcus High Yield Saver" })[0],
+        );
+        const dialog = screen.getByRole("alertdialog", {
+          name: "Delete Marcus High Yield Saver?",
+        });
+        expect(within(dialog).getByText(/savings account and its history/)).toBeDefined();
+        expect(mockSubmit).not.toHaveBeenCalled();
+        expect(confirmSpy).not.toHaveBeenCalled();
+      });
+
+      test(`${variant} confirm deletes once`, () => {
+        customRender(
+          <SavingsAccountsList
+            accounts={mockAccounts}
+            onOpenAddModal={vi.fn()}
+            variant={variant}
+          />,
+        );
+        fireEvent.click(
+          screen.getAllByRole("button", { name: "Delete Marcus High Yield Saver" })[0],
+        );
+        fireEvent.click(screen.getByRole("button", { name: "Delete account" }));
+        expect(mockSubmit).toHaveBeenCalledTimes(1);
+        expect(mockSubmit).toHaveBeenCalledWith(
+          { intent: "deleteAccount", accountId: "acc-1" },
+          { method: "POST", action: "/app/savings" },
+        );
+      });
+
+      test(`${variant} cancel does nothing`, () => {
+        customRender(
+          <SavingsAccountsList
+            accounts={mockAccounts}
+            onOpenAddModal={vi.fn()}
+            variant={variant}
+          />,
+        );
+        fireEvent.click(
+          screen.getAllByRole("button", { name: "Delete Marcus High Yield Saver" })[0],
+        );
+        fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+        expect(mockSubmit).not.toHaveBeenCalled();
+      });
+    }
   });
 });
