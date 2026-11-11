@@ -135,6 +135,40 @@ describe("useUserProfile & HttpProfileAdapter", () => {
     await expect(result.current.resetFinancialData()).rejects.toThrow("Reset failed");
   });
 
+  it("shows backend text only for 4xx other than 401 and 403", async () => {
+    const { result } = renderHook(() => useUserProfile());
+    (global.fetch as any).mockResolvedValueOnce(jsonRes({ message: "Weak password" }, 422));
+    await expect(result.current.changePassword("1")).rejects.toThrow("Weak password");
+    for (const status of [401, 403, 500, 503]) {
+      (global.fetch as any).mockResolvedValueOnce(
+        jsonRes({ message: "Internal stack trace" }, status),
+      );
+      await expect(result.current.changePassword("1")).rejects.toThrow("Failed to update password");
+    }
+    (global.fetch as any).mockResolvedValueOnce(jsonRes({ message: "boom" }, 500));
+    await expect(result.current.sendPasswordResetEmail("a@b.co")).rejects.toThrow(
+      "Failed to send password reset email",
+    );
+    (global.fetch as any).mockResolvedValueOnce(jsonRes({ message: "boom" }, 403));
+    await expect(result.current.resetFinancialData()).rejects.toThrow(
+      "Failed to reset financial data",
+    );
+  });
+
+  it("does not store an empty response as the profile", async () => {
+    const { result } = renderHook(() => useUserProfile());
+    const before = result.current.profile;
+    (global.fetch as any).mockResolvedValueOnce(jsonRes(undefined, 204));
+    await expect(result.current.updateProfile({ displayName: "X" })).rejects.toMatchObject({
+      kind: "bad-response",
+    });
+    (global.fetch as any).mockResolvedValueOnce(new Response("", { status: 200 }));
+    await expect(result.current.markChecklistStep("budget", true)).rejects.toMatchObject({
+      kind: "bad-response",
+    });
+    expect(result.current.profile).toBe(before);
+  });
+
   it("exercises HttpProfileAdapter methods", async () => {
     const adapter = new HttpProfileAdapter(() => "custom-token");
 

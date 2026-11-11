@@ -180,7 +180,11 @@ const BudgetContainer: FC = () => {
 
   const deleteEntry = async (id: string) => {
     try {
-      await apiFetch<void>(`/budget-entries/${id}`, { accessToken, method: "DELETE" });
+      await apiFetch<void>(`/budget-entries/${id}`, {
+        accessToken,
+        method: "DELETE",
+        allowEmpty: true,
+      });
     } catch {
       // Keep the row: the server still has it.
       setActionError("We couldn't delete that entry. Please try again.");

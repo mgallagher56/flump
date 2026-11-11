@@ -377,6 +377,7 @@ export class HttpProfileAdapter implements ProfilePersistenceAdapter {
       accessToken: this.getAuthToken?.(),
       method: "PATCH",
       body: financialBaselineToUserProfileUpdate(baseline),
+      allowEmpty: true,
     });
   }
 
