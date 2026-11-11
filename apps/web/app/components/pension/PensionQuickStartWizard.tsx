@@ -92,9 +92,9 @@ export const PensionQuickStartWizard: FC<PensionQuickStartWizardProps> = ({
   const [step, setStep] = useState<1 | 2 | 3>(1);
 
   // Step 1: Salary & Contribution percentages
-  const [salary, setSalary] = useState(String(initialSalary || 45000));
-  const [employeePercent, setEmployeePercent] = useState(String(initialEmployeePercent || 5.0));
-  const [employerPercent, setEmployerPercent] = useState(String(initialEmployerPercent || 3.0));
+  const [salary, setSalary] = useState(initialSalary ? String(initialSalary) : "");
+  const [employeePercent, setEmployeePercent] = useState(String(initialEmployeePercent ?? 5.0));
+  const [employerPercent, setEmployerPercent] = useState(String(initialEmployerPercent ?? 3.0));
   const [isSalarySacrifice, setIsSalarySacrifice] = useState(true);
   const [isSalarySacrificeEmployerNi, setIsSalarySacrificeEmployerNi] = useState(false);
 

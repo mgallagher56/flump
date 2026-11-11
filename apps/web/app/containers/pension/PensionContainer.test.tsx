@@ -48,6 +48,7 @@ let testProfileData: any = {
 };
 
 vi.mock("react-router", () => ({
+  Link: ({ children, to }: any) => <a href={to}>{children}</a>,
   useLoaderData: () => testLoaderData,
   useFetcher: () => ({
     submit: vi.fn(),
@@ -154,5 +155,70 @@ describe("PensionContainer", () => {
     expect(screen.getByText("Across 0 pension pots")).toBeDefined();
     // Should show £0 Gross Salary and 0% contributions
     expect(screen.getAllByText("£0").length).toBeGreaterThan(0);
+  });
+
+  describe("assumptions", () => {
+    const setProfile = (profile: Record<string, unknown>) => {
+      testLoaderData = { accounts: [], accountDetails: [], userProfile: profile };
+      testProfileData = profile;
+    };
+
+    it("no salary shows the add-salary prompt, not a projection", () => {
+      setProfile({
+        annualSalary: null,
+        pensionPercent: 5,
+        pensionEmployerPercent: 3,
+        setupChecklistCompletedSteps: ["pension"],
+      });
+      const { container } = render(<PensionContainer />);
+
+      const prompt = screen.getByText(/Add your salary in/);
+      expect(prompt.textContent).toContain("to project your pension.");
+      expect(screen.getByRole("link", { name: "Profile" }).getAttribute("href")).toBe(
+        "/app/profile",
+      );
+      expect(screen.queryByText(/45,000/)).toBeNull();
+      expect(container.querySelector("#pension-forecast-salary")).toBeNull();
+    });
+
+    it("unsaved profile shows the assumed label on contribution rates", () => {
+      setProfile({
+        annualSalary: 50000,
+        pensionPercent: 5,
+        pensionEmployerPercent: 3,
+        createdAt: "2026-11-01T09:00:00.000Z",
+        updatedAt: "2026-11-01T09:00:00.000Z",
+        setupChecklistCompletedSteps: ["pension"],
+      });
+      render(<PensionContainer />);
+      expect(screen.getAllByText("Assumed: auto-enrolment minimum").length).toBe(2);
+    });
+
+    it("a saved profile does not show the assumed label", () => {
+      setProfile({
+        annualSalary: 50000,
+        pensionPercent: 5,
+        pensionEmployerPercent: 3,
+        createdAt: "2026-11-01T09:00:00.000Z",
+        updatedAt: "2026-11-05T10:30:00.000Z",
+        setupChecklistCompletedSteps: ["pension"],
+      });
+      render(<PensionContainer />);
+      expect(screen.queryByText("Assumed: auto-enrolment minimum")).toBeNull();
+    });
+
+    it("keeps a saved 0% contribution rate as 0%", () => {
+      setProfile({
+        annualSalary: 50000,
+        pensionPercent: 0,
+        pensionEmployerPercent: 0,
+        createdAt: "2026-11-01T09:00:00.000Z",
+        updatedAt: "2026-11-05T10:30:00.000Z",
+        setupChecklistCompletedSteps: ["pension"],
+      });
+      render(<PensionContainer />);
+      expect(screen.getByText(/Employee:/).parentElement?.textContent).toContain("0%");
+      expect(screen.queryByText("Assumed: auto-enrolment minimum")).toBeNull();
+    });
   });
 });

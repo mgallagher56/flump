@@ -52,4 +52,24 @@ describe("PensionQuickStartWizard", () => {
     expect(mockSubmit).toHaveBeenCalled();
     expect(onComplete).toHaveBeenCalled();
   });
+
+  it("starts with an empty salary instead of assuming £45,000 when none is stored", () => {
+    render(<PensionQuickStartWizard initialSalary={null} onComplete={vi.fn()} />);
+    expect((screen.getByLabelText("Annual Salary (£)") as HTMLInputElement).value).toBe("");
+  });
+
+  it("keeps a stored 0% contribution rate instead of defaulting to 5%", () => {
+    render(
+      <PensionQuickStartWizard
+        initialEmployeePercent={0}
+        initialEmployerPercent={0}
+        initialSalary={30000}
+        onComplete={vi.fn()}
+      />,
+    );
+    expect(
+      (screen.getByLabelText(/employee/i, { selector: "#wizard-employee-pct" }) as HTMLInputElement)
+        .value,
+    ).toBe("0");
+  });
 });
