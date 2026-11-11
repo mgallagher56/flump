@@ -1,4 +1,5 @@
 import type { MigrationInterface, QueryRunner } from "typeorm";
+import { MIGRATION_LOCK_KEY } from "../config/migration-lock";
 
 // Tables the entities create. The production database was originally built by
 // `synchronize`, so this migration must be a no-op there.
@@ -30,10 +31,12 @@ export class Baseline1794355200000 implements MigrationInterface {
   name = "Baseline1794355200000";
 
   public async up(queryRunner: QueryRunner): Promise<void> {
-    // Serialise concurrent boots (several instances may run migrations at once).
-    // Transaction-scoped, so it is released on commit; the check below then
-    // runs after the first instance has finished creating the schema.
-    await queryRunner.query("SELECT pg_advisory_xact_lock(1794355200000)");
+    // The lock serialises the migration bodies of concurrently booting instances; it is
+    // transaction-scoped, so the check below runs after the first instance committed.
+    // TypeORM computes the pending list before the transaction, so a second instance may
+    // still insert a second record row for this migration (harmless); migrations that
+    // must not repeat (ClearBankTokens) re-check for themselves.
+    await queryRunner.query("SELECT pg_advisory_xact_lock($1)", [MIGRATION_LOCK_KEY]);
 
     // Guard rule: all eight tables present => schema came from `synchronize`, skip.
     // None present => empty database, create everything. Anything in between is an
