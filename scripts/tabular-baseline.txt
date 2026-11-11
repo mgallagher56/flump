@@ -6,18 +6,13 @@ apps/web/app/components/budget/BudgetSetupWizard.tsx
 apps/web/app/components/budget/RunwayCalculator.tsx
 apps/web/app/components/charts/AccountDetailChart.tsx
 apps/web/app/components/dashboard/widgets/AccountsWidget.tsx
-apps/web/app/components/dashboard/widgets/DebtWidget.tsx
 apps/web/app/components/dashboard/widgets/ForecastWidget.tsx
-apps/web/app/components/dashboard/widgets/MortgageWidget.tsx
-apps/web/app/components/dashboard/widgets/PensionWidget.tsx
 apps/web/app/components/dashboard/widgets/SavingsWidget.tsx
 apps/web/app/components/dashboard/widgets/TaxWidget.tsx
-apps/web/app/components/debt/DebtAccountsList.tsx
 apps/web/app/components/debt/UkDebtInstrumentsCard.tsx
 apps/web/app/components/forecast/ScenarioLayersWidget.tsx
 apps/web/app/components/forecast/UKTaxCalculator.tsx
 apps/web/app/components/home/InteractiveFinancialTeaser.tsx
-apps/web/app/components/home/WealthCheckHeroWidget.tsx
 apps/web/app/components/mortgage/MortgageTracker.tsx
 apps/web/app/components/mortgage/OverpayVsSaveCompare.tsx
 apps/web/app/components/mortgage/OverpaymentSimulator.tsx
@@ -32,7 +27,6 @@ apps/web/app/components/tax/PaymentsOnAccountCard.tsx
 apps/web/app/components/tax/TaxIncomeSectionCard.tsx
 apps/web/app/components/tax/TaxTrapAlertBanner.tsx
 apps/web/app/containers/accounts/accountDetailContainer/AccountDetailContainer.tsx
-apps/web/app/containers/debt/DebtContainer.tsx
 apps/web/app/containers/pension/PensionContainer.tsx
 apps/web/app/features/debt/components/PayoffStrategyControls/PayoffStrategyControls.tsx
 apps/web/app/routes/_index.tsx
