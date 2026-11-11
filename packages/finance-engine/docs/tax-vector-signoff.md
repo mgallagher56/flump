@@ -333,7 +333,7 @@ Each needs an owner ruling or a primary source before sign-off.
 
 (b) `calculateUKEWNITakeHome` still rounds tax, NI, pension and student loan to whole pounds (up to about 1 pound difference versus `calculateUkTax`). D5-a is not fully applied to that wrapper.
 
-(c) Silent unknown-year fallbacks remain: `calculateUKTax` falls back to 2024/25, `calculateUKEWNITakeHome` falls back similarly, and uk-tax.ts:74 falls back to 2026/27. They were deliberately not changed to throw, to avoid breaking app callers outside this track.
+(c) Silent unknown-year fallbacks remain: `calculateUKTax` falls back to 2024/25, `calculateUKEWNITakeHome` falls back similarly, and uk-tax.ts:74 falls back to 2026/27. They were deliberately not changed to throw, to avoid breaking app callers outside this track. Also (task I6): the no-argument trap entry points (`analyzeTaxTrap`, `calculate100kTaxTrap`, `calculateTaxTrapRelief`) default to the latest supported year (2026/27) once the clock passes the last supported year, instead of throwing, so the UI callers do not crash; an explicitly passed unsupported year still throws.
 
 (d) The PSA logic is still year-blind (hardcoded 50,270 / 125,140 Scottish and PSA thresholds). RESOLVED (task I6) for `analyzeTaxTrap`: rates and escape savings now come from the year's tables, so Scottish pre-2024/25 trap rates follow the Higher band (e.g. 63 in 2023/24). The 1.5x taper multiplier is verified for 2023/24 onward only (taper rate for 2020/21 to 2022/23 is memory only, item 7).
 

@@ -24,6 +24,7 @@ import {
   isSupportedUkTaxYear,
   resolveUkTaxYear,
   roundPence,
+  SUPPORTED_UK_TAX_YEARS,
   type UkStudentLoanPlanKey,
   type UkTaxYearRules,
 } from "./uk-tax-year.js";
@@ -157,10 +158,22 @@ function incomeTaxOnAdjustedNetIncome(
  * at 100,000 (the escape level); `estimatedTaxSaved` also adds the employee
  * NI saved. Both are rounded to pence.
  */
+/**
+ * Default year for the UI-facing trap entry points (no year passed): the current UK tax
+ * year if supported, otherwise the latest supported year, so the banner, hero widget,
+ * pension container and calculator do not crash once the clock passes the last supported
+ * year (same degradation as calculateUKEWNITakeHome). An explicitly passed unsupported
+ * year still throws UnsupportedUkTaxYearError. Recorded as known issue (c).
+ */
+function defaultTrapTaxYear(): string {
+  const current = getCurrentUKTaxYear();
+  return isSupportedUkTaxYear(current) ? current : (SUPPORTED_UK_TAX_YEARS.at(-1) ?? "2026/27");
+}
+
 export function analyzeTaxTrap(
   adjustedNetIncome: number,
   region: UkTaxRegion = "ENGLAND_NI_WALES",
-  taxYear: string = resolveUkTaxYear(),
+  taxYear: string = defaultTrapTaxYear(),
 ): TaxTrapAnalysis {
   const rules = getUkTaxYearRules(resolveUkTaxYear(taxYear));
   const isInTaxTrap =
@@ -234,7 +247,7 @@ export function calculate100kTaxTrap(
   pensionContributionPct = 0,
   _isSalarySacrifice = true,
   region: UkTaxRegion = "ENGLAND_NI_WALES",
-  taxYear: string = resolveUkTaxYear(),
+  taxYear: string = defaultTrapTaxYear(),
 ): TaxTrapAnalysis {
   const pensionDeduction = grossIncome * (pensionContributionPct / 100);
   const adjustedNetIncome = Math.max(0, grossIncome - pensionDeduction);
@@ -250,7 +263,7 @@ export function calculate100kTaxTrap(
  */
 export function calculateTaxTrapRelief(
   grossIncome: number,
-  taxYear: string = getCurrentUKTaxYear(),
+  taxYear: string = defaultTrapTaxYear(),
   region: UkTaxRegion = "ENGLAND_NI_WALES",
 ): TaxTrapAnalysis {
   return analyzeTaxTrap(grossIncome, region, taxYear);
