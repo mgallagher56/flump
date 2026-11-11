@@ -189,6 +189,13 @@ Key environment configurations:
 - `VITE_API_URL`: Backend API endpoint (default: `http://localhost:3000`).
 - `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`: PostgreSQL credentials.
 
+Authentication environment contract (auth fails closed):
+
+- `WORKOS_CLIENT_ID`: **required in production** (backend). Without it the backend refuses to start and the error names the variable.
+- `AUTH_DEV_BYPASS=true`: **local development only.** It is honoured only when `NODE_ENV=development`, cannot be combined with `WORKOS_API_KEY`, and is refused in production by both the backend and the web server at startup. Errors name the variable, never its value.
+- `SESSION_SECRET`: required by the web server.
+- Never commit mock tokens: `bun run check:auth` fails CI if dev-session literals appear outside the dev-bypass allow-list.
+
 ### 3. Start Local Database (PostgreSQL)
 
 ```bash
