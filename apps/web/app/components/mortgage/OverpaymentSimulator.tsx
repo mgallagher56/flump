@@ -411,6 +411,7 @@ const OverpaymentSimulator: FC<OverpaymentSimulatorProps> = ({
                 }.`
               : "Add a monthly overpayment to see the interest saved."
           }`}
+          hideTitle
           title="Mortgage balance projection"
         >
           <div style={{ height: "300px", width: "100%", marginTop: "24px" }}>

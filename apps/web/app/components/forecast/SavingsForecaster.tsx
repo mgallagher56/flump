@@ -574,6 +574,7 @@ const SavingsForecaster: FC<SavingsForecasterProps> = ({
               </table>
             }
             summary={`After ${projectionYears} years the current plan reaches ${formatCurrency(totalA)} and the hypothetical plan reaches ${formatCurrency(totalB)}, a difference of ${formatCurrency(difference)}.`}
+            hideTitle
             title="Savings plan comparison"
           >
             <div style={{ height: "300px", width: "100%", marginTop: "16px" }}>

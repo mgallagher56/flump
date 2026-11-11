@@ -20,7 +20,7 @@ describe("PayoffStrategyControls Feature Component", () => {
     expect(screen.getByText("Payoff Strategy: Avalanche vs. Snowball")).toBeDefined();
     expect(screen.getByText("£2,450 Saved")).toBeDefined();
 
-    const snowballBtn = screen.getByRole("button", { name: "Select Snowball strategy" });
+    const snowballBtn = screen.getByRole("button", { name: /^Snowball \(Smallest Pot\)/ });
     fireEvent.click(snowballBtn);
     expect(handleSelect).toHaveBeenCalledWith("snowball");
   });

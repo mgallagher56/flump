@@ -35,8 +35,6 @@ const mockDetails = [
 ];
 
 export const Default: Story = {
-  // E8 waiver: aria-hidden-focus
-  parameters: { a11y: { test: "todo" } },
   args: {
     accountDetails: mockDetails,
   },

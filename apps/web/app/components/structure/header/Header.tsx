@@ -148,7 +148,6 @@ const Header: FC<HeaderProps> = ({ isMobile: propIsMobile, variant }): ReactElem
             <ThemeToggle />
             {!!user && (
               <Link
-                aria-label="User Profile"
                 className={css({
                   display: "inline-flex",
                   alignItems: "center",
@@ -164,7 +163,10 @@ const Header: FC<HeaderProps> = ({ isMobile: propIsMobile, variant }): ReactElem
                 title="User Profile"
                 to="/app/profile"
               >
-                <UserAvatar bordered size={26} user={user} />
+                <span aria-hidden="true">
+                  <UserAvatar bordered size={26} user={user} />
+                </span>
+                <span className={css({ srOnly: true })}>User Profile</span>
               </Link>
             )}
             <UserLogin />

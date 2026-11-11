@@ -125,10 +125,10 @@ exports[`<AccountDetailContainer /> > should add new years when buttons are clic
           <figure
             aria-describedby="_r_5_"
             aria-labelledby="_r_4_"
-            class="d_flex flex-d_column gap_12px m_0 w_100% h_100% gap_0 [&_>_h3]:sr_true [&_>_div[aria-hidden]]:flex_1 [&_>_div[aria-hidden]]:min-h_0"
+            class="d_flex flex-d_column gap_12px m_0 w_100% h_100% gap_0 [&_>_div[aria-hidden]]:flex_1 [&_>_div[aria-hidden]]:min-h_0"
           >
             <h3
-              class="fs_md fw_semibold c_text.primary m_0"
+              class="pos_absolute w_1px h_1px m_-1px p_0 ov_hidden clip_rect(0,_0,_0,_0) white-space_nowrap bd-w_0"
               id="_r_4_"
             >
               Account balance history
@@ -353,10 +353,10 @@ exports[`<AccountDetailContainer /> > should render 1`] = `
           <figure
             aria-describedby="_r_1_"
             aria-labelledby="_r_0_"
-            class="d_flex flex-d_column gap_12px m_0 w_100% h_100% gap_0 [&_>_h3]:sr_true [&_>_div[aria-hidden]]:flex_1 [&_>_div[aria-hidden]]:min-h_0"
+            class="d_flex flex-d_column gap_12px m_0 w_100% h_100% gap_0 [&_>_div[aria-hidden]]:flex_1 [&_>_div[aria-hidden]]:min-h_0"
           >
             <h3
-              class="fs_md fw_semibold c_text.primary m_0"
+              class="pos_absolute w_1px h_1px m_-1px p_0 ov_hidden clip_rect(0,_0,_0,_0) white-space_nowrap bd-w_0"
               id="_r_0_"
             >
               Account balance history
@@ -573,10 +573,10 @@ exports[`<AccountDetailContainer /> > should render add current year button and 
           <figure
             aria-describedby="_r_d_"
             aria-labelledby="_r_c_"
-            class="d_flex flex-d_column gap_12px m_0 w_100% h_100% gap_0 [&_>_h3]:sr_true [&_>_div[aria-hidden]]:flex_1 [&_>_div[aria-hidden]]:min-h_0"
+            class="d_flex flex-d_column gap_12px m_0 w_100% h_100% gap_0 [&_>_div[aria-hidden]]:flex_1 [&_>_div[aria-hidden]]:min-h_0"
           >
             <h3
-              class="fs_md fw_semibold c_text.primary m_0"
+              class="pos_absolute w_1px h_1px m_-1px p_0 ov_hidden clip_rect(0,_0,_0,_0) white-space_nowrap bd-w_0"
               id="_r_c_"
             >
               Account balance history

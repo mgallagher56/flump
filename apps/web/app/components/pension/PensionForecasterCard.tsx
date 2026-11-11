@@ -1138,6 +1138,7 @@ export const PensionForecasterCard: FC<PensionForecasterCardProps> = ({
               </table>
             }
             summary={`Projected pension pot after ${horizonYears} years: ${formatCurrency(finalBalance)}, with ${formatCurrency(totalEmployeeContribs + totalEmployerContribs)} contributed over the period and ${formatCurrency(totalGrowth)} of investment growth.`}
+            hideTitle
             title="Pension pot projection"
           >
             <div style={{ height: "360px", width: "100%", marginTop: "4px" }}>

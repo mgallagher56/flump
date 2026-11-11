@@ -5,12 +5,9 @@ exports[`<AccountsCard /> > it renders an AccountsCard component with title as e
   <div>
     <div
       class="pos_relative trs_border-color_0.15s_ease,_box-shadow_0.15s_ease bd_1px_solid bd-c_border bdr_xl bg-c_surface c_text.primary bx-sh_card p_4 md:p_6 d_flex flex-d_column [&[data-interactive='true']:hover]:bd-c_primary [&[data-interactive='true']:hover]:bx-sh_cardHover  h_155px d_flex flex-d_column jc_space-between p_14px md:p_16px pos_relative ov_hidden bd-w_1px border-style_solid bd-c_border.subtle bdr_xl bg-c_surface trs_border-color_0.15s_ease,_box-shadow_0.15s_ease cursor_pointer hover:bd-c_primary hover:bx-sh_cardHover focusVisible:ring_2px_solid focusVisible:ring-c_primary focusVisible:ring-o_2px"
-      data-focus-managed=""
       data-interactive="true"
       data-variant="desktop"
       id="123456"
-      role="button"
-      tabindex="0"
     >
       <div>
         <div
@@ -24,16 +21,18 @@ exports[`<AccountsCard /> > it renders an AccountsCard component with title as e
             >
               Current account
             </span>
-            <span
-              class="fs_sm fw_semibold c_text.primary ov_hidden tov_ellipsis white-space_nowrap ls_-0.01em"
+            <button
+              class="fs_sm fw_semibold c_text.primary ov_hidden tov_ellipsis white-space_nowrap ls_-0.01em d_block max-w_100% p_0 bd_none bg-c_transparent ta_left cursor_pointer focusVisible:ring_2px_solid focusVisible:ring-c_border.focusRing focusVisible:ring-o_2px"
               title="My curent account"
+              type="button"
             >
               My curent account
-            </span>
+            </button>
           </div>
           <button
             aria-expanded="false"
             aria-haspopup="dialog"
+            aria-label="editAccount"
             class="d_inline-flex ai_center jc_center bdr_md fw_semibold trs_all_0.15s_ease cursor_pointer lh_1 td_none disabled:op_0.5 disabled:cursor_not-allowed focusVisible:ring_2px_solid focusVisible:ring-c_border.focusRing focusVisible:ring-o_2px bg_transparent c_text.primary hover:bg_surface.subtle h_10 w_10 px_0"
             data-state="closed"
             style="border-radius: 50%; width: 32px; height: 32px; padding: 0px;"
@@ -77,10 +76,10 @@ exports[`<AccountsCard /> > it renders an AccountsCard component with title as e
         <figure
           aria-describedby="_r_4_"
           aria-labelledby="_r_3_"
-          class="d_flex flex-d_column gap_12px m_0 w_100% h_100% gap_0 [&_>_h3]:sr_true [&_>_div[aria-hidden]]:flex_1 [&_>_div[aria-hidden]]:min-h_0"
+          class="d_flex flex-d_column gap_12px m_0 w_100% h_100% gap_0 [&_>_div[aria-hidden]]:flex_1 [&_>_div[aria-hidden]]:min-h_0"
         >
           <h3
-            class="fs_md fw_semibold c_text.primary m_0"
+            class="pos_absolute w_1px h_1px m_-1px p_0 ov_hidden clip_rect(0,_0,_0,_0) white-space_nowrap bd-w_0"
             id="_r_3_"
           >
             Account balance history
@@ -115,12 +114,9 @@ exports[`<AccountsCard with increasing values > should match snapshot for accoun
   <div>
     <div
       class="pos_relative trs_border-color_0.15s_ease,_box-shadow_0.15s_ease bd_1px_solid bd-c_border bdr_xl bg-c_surface c_text.primary bx-sh_card p_4 md:p_6 d_flex flex-d_column [&[data-interactive='true']:hover]:bd-c_primary [&[data-interactive='true']:hover]:bx-sh_cardHover  h_155px d_flex flex-d_column jc_space-between p_14px md:p_16px pos_relative ov_hidden bd-w_1px border-style_solid bd-c_border.subtle bdr_xl bg-c_surface trs_border-color_0.15s_ease,_box-shadow_0.15s_ease cursor_pointer hover:bd-c_primary hover:bx-sh_cardHover focusVisible:ring_2px_solid focusVisible:ring-c_primary focusVisible:ring-o_2px"
-      data-focus-managed=""
       data-interactive="true"
       data-variant="desktop"
       id="123456"
-      role="button"
-      tabindex="0"
     >
       <div>
         <div
@@ -134,16 +130,18 @@ exports[`<AccountsCard with increasing values > should match snapshot for accoun
             >
               Current account
             </span>
-            <span
-              class="fs_sm fw_semibold c_text.primary ov_hidden tov_ellipsis white-space_nowrap ls_-0.01em"
+            <button
+              class="fs_sm fw_semibold c_text.primary ov_hidden tov_ellipsis white-space_nowrap ls_-0.01em d_block max-w_100% p_0 bd_none bg-c_transparent ta_left cursor_pointer focusVisible:ring_2px_solid focusVisible:ring-c_border.focusRing focusVisible:ring-o_2px"
               title="My curent account"
+              type="button"
             >
               My curent account
-            </span>
+            </button>
           </div>
           <button
             aria-expanded="false"
             aria-haspopup="dialog"
+            aria-label="editAccount"
             class="d_inline-flex ai_center jc_center bdr_md fw_semibold trs_all_0.15s_ease cursor_pointer lh_1 td_none disabled:op_0.5 disabled:cursor_not-allowed focusVisible:ring_2px_solid focusVisible:ring-c_border.focusRing focusVisible:ring-o_2px bg_transparent c_text.primary hover:bg_surface.subtle h_10 w_10 px_0"
             data-state="closed"
             style="border-radius: 50%; width: 32px; height: 32px; padding: 0px;"
@@ -187,10 +185,10 @@ exports[`<AccountsCard with increasing values > should match snapshot for accoun
         <figure
           aria-describedby="_r_9_"
           aria-labelledby="_r_8_"
-          class="d_flex flex-d_column gap_12px m_0 w_100% h_100% gap_0 [&_>_h3]:sr_true [&_>_div[aria-hidden]]:flex_1 [&_>_div[aria-hidden]]:min-h_0"
+          class="d_flex flex-d_column gap_12px m_0 w_100% h_100% gap_0 [&_>_div[aria-hidden]]:flex_1 [&_>_div[aria-hidden]]:min-h_0"
         >
           <h3
-            class="fs_md fw_semibold c_text.primary m_0"
+            class="pos_absolute w_1px h_1px m_-1px p_0 ov_hidden clip_rect(0,_0,_0,_0) white-space_nowrap bd-w_0"
             id="_r_8_"
           >
             Account balance history

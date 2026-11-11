@@ -383,6 +383,7 @@ export const SavingsForecasterCard: FC<SavingsForecasterCardProps> = ({
           </table>
         }
         summary={`Projected savings balance after ${horizonYears} years: ${formatCurrency(finalTotal)}, made up of ${formatCurrency(totalContributed)} contributed and ${formatCurrency(totalInterestEarned)} interest earned, at ${interestRate}% a year.`}
+        hideTitle
         title="Savings growth projection"
       >
         <div style={{ height: "220px", width: "100%" }}>

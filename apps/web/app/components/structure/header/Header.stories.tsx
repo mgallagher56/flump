@@ -21,9 +21,7 @@ export const LoggedOut: Story = {
 };
 
 export const LoggedIn: Story = {
-  // E8 waiver: label-content-name-mismatch
   parameters: {
-    a11y: { test: "todo" },
     router: {
       loaderData: {
         user: { id: "1", name: "Marc Gallagher", email: "marc@example.com" },

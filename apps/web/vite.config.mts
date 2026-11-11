@@ -135,31 +135,6 @@ export default defineConfig(({ mode }) => ({
         // failing suites on a cold cache. Add to this list if the "optimized dependencies
         // changed. reloading" warning reappears.
         optimizeDeps: {
-          include: ["./app/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}"],
-          logHeapUsage: true,
-          setupFiles: ["./test/setup-test-env.ts", "./test/vitest.setup.ts"],
-          useAtomics: true,
-        },
-      },
-      {
-        extends: true,
-        resolve: {
-          alias: [
-            // Only a dependency of apps/marketing, so it cannot be resolved by bare name from here.
-            {
-              find: "react-helmet-async",
-              replacement: marketingRequire.resolve("react-helmet-async"),
-            },
-            // Public-dir assets imported from JS (e.g. "/images/flump_logo.png") only work in
-            // Storybook proper via staticDirs; point them at the real files under vitest.
-            { find: /^\/images\//, replacement: `${configDir}/public/images/` },
-          ],
-        },
-        plugins: [storybookTest({ configDir: `${configDir}/.storybook` })],
-        // Pre-bundle deps up front; otherwise Vite re-optimises mid-run and reloads the page,
-        // failing suites on a cold cache. Add to this list if the "optimized dependencies
-        // changed. reloading" warning reappears.
-        optimizeDeps: {
           entries: [
             `${configDir}/app/**/*.stories.tsx`,
             `${configDir}/../../packages/ui/src/**/*.stories.tsx`,
