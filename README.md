@@ -298,7 +298,8 @@ Root-level scripts orchestrated via Turborepo:
 | :---------------------- | :---------------------------------------------------------------------- |
 | `bun run dev`           | Starts all applications in watch mode                                   |
 | `bun run build`         | Builds all packages and applications                                    |
-| `bun run lint`          | Runs [Biome](https://biomejs.dev/) checks across the workspace          |
+| `bun run lint`          | Runs [Biome](https://biomejs.dev/) checks (read-only, as CI does)       |
+| `bun run lint:fix`      | Applies Biome's safe lint and format fixes across the workspace         |
 | `bun run format`        | Auto-formats code across all packages using Biome                       |
 | `bun run test`          | Runs unit and integration test suites via [Vitest](https://vitest.dev/) |
 | `bun run test:coverage` | Executes tests with V8 code coverage reports                            |
