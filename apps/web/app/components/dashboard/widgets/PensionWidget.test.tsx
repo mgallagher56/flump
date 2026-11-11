@@ -36,4 +36,18 @@ describe("PensionWidget", () => {
     expect(screen.queryByText(/total contribution/)).toBeNull();
     expect(screen.getByText("Contribution rates not set")).toBeTruthy();
   });
+
+  it("labels the backend default 5% + 3% rates", () => {
+    render(
+      <PensionWidget {...baseProps} data={{ ...data, employeePercent: 5, employerPercent: 3 }} />,
+    );
+    expect(screen.getByText("Default: auto-enrolment minimum. Change in Profile")).toBeTruthy();
+  });
+
+  it("does not label non-default rates", () => {
+    render(
+      <PensionWidget {...baseProps} data={{ ...data, employeePercent: 6, employerPercent: 4 }} />,
+    );
+    expect(screen.queryByText(/Default: auto-enrolment minimum/)).toBeNull();
+  });
 });

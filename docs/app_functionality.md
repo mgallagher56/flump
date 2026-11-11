@@ -74,7 +74,3 @@ graph TD
   Backend -->|TypeORM| DB[(PostgreSQL)]
   Backend -->|Open Banking APIs| Providers[Monzo / Starling]
 ```
-
-### 3.1 Financial Seeding
-
-When a user accesses the Tax Tracker page for the first time, the backend automatically seeds a complete history matching the user's Poplar CSV detailed records. This provides immediate value and illustrates the summary computations and tax-year comparison tables out of the box.
