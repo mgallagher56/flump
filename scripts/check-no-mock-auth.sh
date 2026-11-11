@@ -11,6 +11,7 @@ PATTERN='mock-session-token|dev_user_123|user_mock|mock_mcp_'
 ALLOWED_FILES=(
   "apps/backend/src/auth/dev-bypass.verifier.ts"
   "apps/web/app/utils/auth.server.ts"
+  "apps/backend/src/migrations/RemoveSeededExampleData1794355400000.ts"
 )
 ALLOWED_PREFIXES=(
   "apps/mobile-companion/"

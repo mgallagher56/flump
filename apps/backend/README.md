@@ -7,7 +7,7 @@ This migration runs on boot (`migrationsRun`) and **deletes rows irreversibly** 
 - tax records whose fingerprint matches one of 62 hashes of the old seeded ledger (name, amount, date, frequency, category, source and end date must all be unchanged),
 - the four old seed accounts, only when every field is unchanged, they have no bank connection, no `account_details` and no `transactions`,
 - budget template rows (`is_default`) with the exact template values and `updated_at = created_at`,
-- every row owned by the retired mock identities `user_mock` and `dev_user_123`, in all user-owned tables (including `user_profiles`).
+- every row owned by the retired mock identities (the ids listed in `MOCK_USER_IDS` in the migration file), in all user-owned tables (including `user_profiles`).
 
 Before deploying:
 
@@ -51,14 +51,15 @@ SELECT count(*) AS is_default_rows,
        count(*) FILTER (WHERE "updated_at" = "created_at") AS never_edited
 FROM budget_entries WHERE "is_default" = true;
 
--- Rows under the mock identities, per table.
-SELECT 'accounts' AS tbl, count(*) FROM accounts WHERE "user_id" IN ('user_mock', 'dev_user_123')
+-- Rows under the mock identities, per table. Run in psql with the ids from
+-- MOCK_USER_IDS in the migration file, e.g. psql -v mock_ids='{id1,id2}' (Postgres array literal).
+SELECT 'accounts' AS tbl, count(*) FROM accounts WHERE "user_id" = ANY(:'mock_ids'::text[])
 UNION ALL SELECT 'account_details', count(*) FROM account_details WHERE "account_id" IN
-  (SELECT "id"::text FROM accounts WHERE "user_id" IN ('user_mock', 'dev_user_123'))
-UNION ALL SELECT 'transactions', count(*) FROM transactions WHERE "user_id" IN ('user_mock', 'dev_user_123')
-UNION ALL SELECT 'bank_connections', count(*) FROM bank_connections WHERE "user_id" IN ('user_mock', 'dev_user_123')
-UNION ALL SELECT 'budget_entries', count(*) FROM budget_entries WHERE "user_id" IN ('user_mock', 'dev_user_123')
-UNION ALL SELECT 'mcp_tokens', count(*) FROM mcp_tokens WHERE "user_id" IN ('user_mock', 'dev_user_123')
-UNION ALL SELECT 'tax_records', count(*) FROM tax_records WHERE "user_id" IN ('user_mock', 'dev_user_123')
-UNION ALL SELECT 'user_profiles', count(*) FROM user_profiles WHERE "user_id" IN ('user_mock', 'dev_user_123');
+  (SELECT "id"::text FROM accounts WHERE "user_id" = ANY(:'mock_ids'::text[]))
+UNION ALL SELECT 'transactions', count(*) FROM transactions WHERE "user_id" = ANY(:'mock_ids'::text[])
+UNION ALL SELECT 'bank_connections', count(*) FROM bank_connections WHERE "user_id" = ANY(:'mock_ids'::text[])
+UNION ALL SELECT 'budget_entries', count(*) FROM budget_entries WHERE "user_id" = ANY(:'mock_ids'::text[])
+UNION ALL SELECT 'mcp_tokens', count(*) FROM mcp_tokens WHERE "user_id" = ANY(:'mock_ids'::text[])
+UNION ALL SELECT 'tax_records', count(*) FROM tax_records WHERE "user_id" = ANY(:'mock_ids'::text[])
+UNION ALL SELECT 'user_profiles', count(*) FROM user_profiles WHERE "user_id" = ANY(:'mock_ids'::text[]);
 ```
