@@ -1,10 +1,8 @@
 import * as Dialog from "@radix-ui/react-dialog";
 import { Button } from "@repo/ui";
-import { cx } from "@repo/ui/styled-system/css";
 import { type FC, type ReactNode, useId, useRef, useState } from "react";
 import {
   confirmActions,
-  confirmButton,
   confirmContent,
   confirmDescription,
   confirmField,
@@ -106,7 +104,7 @@ export const ConfirmDialog: FC<ConfirmDialogProps> = ({
             <Button
               type="button"
               id="confirm-dialog-confirm"
-              className={cx(confirmButton({ tone }))}
+              variant={tone === "danger" ? "destructive" : "primary"}
               disabled={pending || !textMatches}
               onClick={() => {
                 void onConfirm();

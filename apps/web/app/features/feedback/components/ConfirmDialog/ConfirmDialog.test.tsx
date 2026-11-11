@@ -1,7 +1,7 @@
+import { css } from "@repo/ui/styled-system/css";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { ConfirmDialog, type ConfirmDialogProps } from "./ConfirmDialog";
-import { confirmButton } from "./ConfirmDialog.styles";
 
 function setup(overrides: Partial<ConfirmDialogProps> = {}) {
   const onOpenChange = vi.fn();
@@ -70,16 +70,21 @@ describe("ConfirmDialog", () => {
     expect(onConfirm).toHaveBeenCalledTimes(1);
   });
 
-  it("applies the danger recipe variant for tone danger", () => {
+  const dangerBg = css({ bg: "status.danger.solid" });
+  const primaryBg = css({ bg: "primary" });
+
+  it("uses Button's destructive variant for tone danger, with no competing background", () => {
     setup({ tone: "danger" });
     const button = screen.getByRole("button", { name: "Delete year" });
-    expect(button.className).toContain(confirmButton({ tone: "danger" }));
+    expect(button.className).toContain(dangerBg);
+    expect(button.className).not.toContain(primaryBg);
   });
 
-  it("uses the default recipe variant otherwise", () => {
+  it("uses Button's primary variant otherwise", () => {
     setup();
     const button = screen.getByRole("button", { name: "Delete year" });
-    expect(button.className).not.toContain(confirmButton({ tone: "danger" }));
+    expect(button.className).toContain(primaryBg);
+    expect(button.className).not.toContain(dangerBg);
   });
 
   it("renders through a portal on document.body", () => {
