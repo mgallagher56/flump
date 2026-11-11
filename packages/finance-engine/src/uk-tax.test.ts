@@ -516,3 +516,40 @@ describe("display marginal rate (trap-only NI inclusion)", () => {
     expect(estimateSalarySacrificeTaxSaving(40000, 5, a)).toBe(400);
   });
 });
+
+describe("calculateUkTax result-boundary rounding (I7, D5-a)", () => {
+  it("returns every money figure rounded to pence", () => {
+    const res = calculateUkTax({
+      taxYear: "2026/27",
+      grossSalary: 33333.33,
+      bonusOrSideIncome: 111.111,
+      pensionContributionPct: 4.4444,
+      employerPensionMatchPct: 3.3333,
+      giftAidContributionsGbp: 77.777,
+      isSalarySacrifice: false,
+    });
+    const isPence = (n: number) => Math.abs(n * 100 - Math.round(n * 100)) < 1e-6;
+    for (const key of [
+      "grossIncomeGbp",
+      "adjustedNetIncomeGbp",
+      "taxableIncomeGbp",
+      "incomeTaxGbp",
+      "nationalInsuranceGbp",
+      "studentLoanDeductionGbp",
+      "employeePensionDeductionGbp",
+      "employerPensionContributionGbp",
+      "employerNiSavingsGbp",
+      "giftAidContributionsGbp",
+      "totalDeductionsGbp",
+      "netTakeHomePayAnnualGbp",
+      "netTakeHomePayMonthlyGbp",
+    ] as const) {
+      expect(isPence(res[key]), `${key}=${res[key]}`).toBe(true);
+    }
+    // 33333.33 * 4.4444% = 1481.4...: exact pence, not the unrounded float
+    expect(res.employeePensionDeductionGbp).toBe(
+      Math.round(((33333.33 * 4.4444) / 100) * 100) / 100,
+    );
+    expect(res.grossIncomeGbp).toBe(33444.44);
+  });
+});
