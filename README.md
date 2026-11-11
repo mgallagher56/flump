@@ -194,8 +194,46 @@ Authentication environment contract (auth fails closed):
 - `WORKOS_CLIENT_ID`: **required in production** (backend). Without it the backend refuses to start and the error names the variable.
 - `WORKOS_ISSUER`: optional, comma-separated list of accepted token issuers. When set it REPLACES the defaults (`https://api.workos.com` and `https://api.workos.com/user_management/<WORKOS_CLIENT_ID>`); use it for custom auth domains. Decode one real access token and check its `iss` before the first deploy.
 - `AUTH_DEV_BYPASS=true`: **local development only.** It is honoured only when `NODE_ENV=development`, cannot be combined with `WORKOS_API_KEY`, and is refused in production by both the backend (at boot) and the web server (the check runs when its server code loads, so the process fails at startup). Errors name the variable, never its value.
-- `SESSION_SECRET`: required by the web server.
+- `SESSION_SECRET`: required by the web server (`apps/web/.env.example`); generate one with `openssl rand -hex 32`.
 - Never commit mock tokens: `bun run check:auth` fails CI if dev-session literals appear outside the dev-bypass allow-list.
+
+Configuration and database environment contract (the backend validates this at boot and fails closed):
+
+- `NODE_ENV`: only `development` and `test` are relaxed. Anything else, **including unset**, is strict (production rules), so set `NODE_ENV=production` explicitly in deployments and `NODE_ENV=development` locally.
+- `BANKING_TOKEN_ENCRYPTION_KEY`: **required in strict mode, at least 32 characters** (`openssl rand -hex 32`). The built-in default key only works in development/test. Changing the key makes stored bank tokens undecryptable.
+- `DATABASE_URL`: optional alternative to the `DB_*` variables. The app splits it into discrete fields and **ignores its query string** (for example `?sslmode=require`); configure TLS with `DB_SSL`. In strict mode the database must be configured explicitly and `DB_PASSWORD` must not be the default.
+- `DB_SSL`: unset verifies the server certificate for non-local hosts and uses no TLS for localhost; `true` forces TLS; `false` disables TLS; `no-verify` uses TLS without certificate verification (explicit opt-out, logs a warning). `DB_SSL_CA` optionally supplies a PEM CA certificate for private or self-signed CAs.
+- `DB_SYNCHRONIZE=true`: lets TypeORM auto-alter the schema. **Development/test only**; in strict mode the backend refuses to start with it set.
+- Bank tokens are no longer returned by the API: bank connection responses omit them.
+- **Existing bank connections:** the `ClearBankTokens` migration nulls every stored bank token and marks connected connections `error` (already disconnected ones stay disconnected). Users with existing bank connections must reconnect once after the deploy.
+
+### Migrations
+
+In strict mode (production) the backend runs pending migrations on boot. The schema is no longer managed by `synchronize`. A baseline migration records itself on a database that was previously built by `synchronize`, so existing databases adopt migrations without changes. Confirm the production tables match the entities before the first deploy.
+
+Commands run from `apps/backend`. They do not set `NODE_ENV`, so they work against production settings:
+
+```bash
+cd apps/backend
+bun run migration:run        # apply pending migrations
+bun run migration:revert     # revert the last migration
+bun run migration:generate src/migrations/<Name>   # generate from entity changes
+```
+
+To run against production-like settings, set the environment explicitly, for example `NODE_ENV=production DATABASE_URL=... BANKING_TOKEN_ENCRYPTION_KEY=... bun run migration:run`.
+
+The migration integration tests need a real PostgreSQL and are skipped unless `TEST_DATABASE_URL` is set. Use a throwaway container and a dedicated database:
+
+```bash
+docker run --rm -d --name flump-e3-pg -e POSTGRES_PASSWORD=postgres \
+  -e POSTGRES_DB=flump_e3_test -p 55432:5432 postgres:18-alpine
+cd apps/backend
+TEST_DATABASE_URL=postgres://postgres:postgres@localhost:55432/flump_e3_test \
+  bunx vitest run src/migrations
+docker rm -f flump-e3-pg
+```
+
+These tests are destructive, so a safety guard always refuses a non-local host (`localhost`, `127.0.0.1`, `::1`) and refuses a database whose name does not contain `test` unless `ALLOW_DESTRUCTIVE_DB_TESTS=1` is set. Never point them at a development or production database.
 
 ### 3. Start Local Database (PostgreSQL)
 
