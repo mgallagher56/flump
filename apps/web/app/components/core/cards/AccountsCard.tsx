@@ -7,7 +7,11 @@ import FLPBadge from "~/components/core/badges/FLPBadge";
 import FLPHeading from "~/components/core/typography/FLPHeading";
 import AddEditAccountsDialogBtn from "~/components/dialogs/addEditAccountsDialog/AddEditAccountsDialog";
 import type { AccountDetail } from "~/containers/accounts/types";
-import type { AccountTypeEnum } from "~/containers/accounts/utils";
+import {
+  type AccountTypeEnum,
+  isLiabilityType,
+  toDisplayBalance,
+} from "~/containers/accounts/utils";
 import { useResponsive } from "~/context/ResponsiveContext";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
 import type { loader } from "~/routes/app.accounts._index";
@@ -63,12 +67,16 @@ const AccountsCard: FC<AccountsCardProp> = ({
       ? sortedAccountDetails[currentMonthIndex]
       : sortedAccountDetails[sortedAccountDetails.length - 1];
 
-  const currentBalance =
+  // Liabilities are stored as minus the amount owed; show the amount owed.
+  const isLiability = isLiabilityType(type);
+  const currentBalance = toDisplayBalance(
+    type,
     latestDetail?.value !== undefined
       ? Number(latestDetail.value)
       : balance !== undefined
         ? Number(balance)
-        : undefined;
+        : undefined,
+  );
 
   const prevDetail =
     currentMonthIndex > 0
@@ -77,7 +85,10 @@ const AccountsCard: FC<AccountsCardProp> = ({
         ? sortedAccountDetails[sortedAccountDetails.length - 2]
         : undefined;
 
-  const prevAccountBalance = prevDetail?.value !== undefined ? Number(prevDetail.value) : undefined;
+  const prevAccountBalance = toDisplayBalance(
+    type,
+    prevDetail?.value !== undefined ? Number(prevDetail.value) : undefined,
+  );
   const secondPreviousDetail =
     currentMonthIndex > 1
       ? sortedAccountDetails[currentMonthIndex - 2]
@@ -111,7 +122,6 @@ const AccountsCard: FC<AccountsCardProp> = ({
     prevAccountBalance !== undefined && currentBalance !== undefined
       ? prevAccountBalance <= currentBalance
       : true;
-  const isLiability = ["Mortgage", "Loan", "Credit Card"].includes(type);
   const isFavorable =
     prevAccountBalance !== undefined && currentBalance !== undefined
       ? isLiability

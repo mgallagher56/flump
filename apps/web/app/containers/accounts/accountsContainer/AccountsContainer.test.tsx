@@ -87,4 +87,22 @@ describe("<AccountsContainer />", () => {
       expect(getAllByText("addAccount")[0]).toBeDefined();
     });
   });
+
+  test("counts a negative stored liability as money owed, reducing net worth", () => {
+    mocks.mockUseLoaderData.mockReturnValue({
+      accounts: [
+        { id: "a1", name: "Current", type: "Current", balance: 5000 },
+        { id: "d1", name: "Barclaycard", type: "Credit Card", balance: -1200 },
+        { id: "d2", name: "Arranged overdraft", type: "Overdraft", balance: -300 },
+      ],
+      accountDetails: [],
+    });
+    const { container, getByText } = customRender(<AccountsContainer />);
+    fireEvent.mouseDown(getByText("Overview"));
+    fireEvent.click(getByText("Overview"));
+    const text = container.textContent ?? "";
+    expect(text).toContain("£1,500");
+    expect(text).toContain("£3,500");
+    expect(text).not.toContain("£-");
+  });
 });

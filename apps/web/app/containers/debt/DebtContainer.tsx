@@ -148,23 +148,25 @@ export const DebtContainer: FC = () => {
     );
   };
 
+  // Sends only the fields that changed. Balance is deliberately never sent:
+  // PortfolioSnapshot prefers the latest accountDetails value over
+  // account.balance, so a balance edit on an account with history would not
+  // apply. The edit dialog is limited to name, APR and minimum payment.
   const handleUpdateDebt = (id: string, updates: Partial<DebtItem>) => {
     const current = debts.find((d) => d.id === id);
     if (!current) return;
     const payload = debtItemToAccountPayload({ ...current, ...updates });
-    fetcher.submit(
-      {
-        intent: "updateDebt",
-        accountId: id,
-        name: payload.name,
-        type: payload.type,
-        balance: String(payload.balance),
-        interestRate: payload.interestRate === null ? "" : String(payload.interestRate),
-        monthlyContribution:
-          payload.monthlyContribution === null ? "" : String(payload.monthlyContribution),
-      },
-      { method: "POST", action: "/app/debt" },
-    );
+    const fields: Record<string, string> = { intent: "updateDebt", accountId: id };
+    if ("name" in updates) fields.name = payload.name;
+    if ("apr" in updates || "aprKnown" in updates) {
+      fields.interestRate = payload.interestRate === null ? "" : String(payload.interestRate);
+    }
+    if ("minimumPayment" in updates || "minimumPaymentEstimated" in updates) {
+      fields.monthlyContribution =
+        payload.monthlyContribution === null ? "" : String(payload.monthlyContribution);
+    }
+    if (Object.keys(fields).length === 2) return;
+    fetcher.submit(fields, { method: "POST", action: "/app/debt" });
   };
 
   return (

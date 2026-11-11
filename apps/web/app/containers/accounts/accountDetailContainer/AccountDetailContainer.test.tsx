@@ -225,4 +225,14 @@ describe("<AccountDetailContainer />", () => {
     expect(mocks.mockFetcherSubmit).toHaveBeenCalledTimes(1);
     expect(baseElement).toMatchSnapshot("with current year added");
   });
+
+  test("shows a negative stored liability balance as a positive amount owed", () => {
+    mocks.mockUseLoaderData.mockReturnValueOnce({
+      account: { id: "d1", name: "Barclaycard", type: "Credit Card", balance: -1200 },
+      accountDetails: [],
+    } as never);
+    const { queryAllByText } = customRender(<AccountDetailContainer />);
+    expect(queryAllByText("£1,200").length).toBeGreaterThan(0);
+    expect(queryAllByText("£-1,200").length).toBe(0);
+  });
 });

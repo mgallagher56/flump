@@ -9,6 +9,7 @@ import FLPCard from "~/components/core/cards/FLPCard";
 import FLPBox from "~/components/core/structure/FLPBox";
 import FLPHeading from "~/components/core/typography/FLPHeading";
 import FLPText from "~/components/core/typography/FLPText";
+import { isLiabilityType, toDisplayBalance } from "~/containers/accounts/utils";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
 import type { loader } from "~/routes/app.accounts.$account";
 import { isFutureMonth } from "~/utils/accounts";
@@ -45,19 +46,25 @@ const AccountDetailContainer: FC = () => {
       });
 
     if (sorted.length === 0) {
-      return { current: account?.balance ?? 0, prev: 0, percentChange: 0, isUp: true };
+      return {
+        current: toDisplayBalance(account?.type, account?.balance ?? 0),
+        prev: 0,
+        percentChange: 0,
+        isUp: true,
+      };
     }
 
     const latest = sorted[sorted.length - 1];
     const prev = sorted[sorted.length - 2];
 
-    const currentBalance = latest.value;
-    const prevBalance = prev?.value ?? 0;
+    // Liabilities are stored as minus the amount owed; show the amount owed.
+    const isLiability = isLiabilityType(account?.type);
+    const currentBalance = toDisplayBalance(account?.type, latest.value);
+    const prevBalance = toDisplayBalance(account?.type, prev?.value ?? 0);
 
     const percentChange =
       prevBalance !== 0 ? Math.round(((currentBalance - prevBalance) / prevBalance) * 100) : 0;
     const isUp = currentBalance >= prevBalance;
-    const isLiability = ["Mortgage", "Loan", "Credit Card"].includes(account?.type ?? "");
     const isFavorable = isLiability ? currentBalance <= prevBalance : isUp;
 
     return {
