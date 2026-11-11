@@ -1,5 +1,5 @@
 import { fireEvent, screen, within } from "@testing-library/react";
-import { beforeEach, describe, expect, test, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import type { Account } from "~/containers/accounts/types";
 import customRender from "~/testUtils/customRender";
 import SavingsAccountsList, { calculateOneYearCompoundInterest } from "./SavingsAccountsList";
@@ -129,4 +129,8 @@ describe("<SavingsAccountsList />", () => {
       });
     }
   });
+});
+
+afterEach(() => {
+  vi.unstubAllGlobals();
 });

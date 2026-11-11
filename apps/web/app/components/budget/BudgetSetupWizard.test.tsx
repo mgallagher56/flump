@@ -1,5 +1,5 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import type { BudgetEntry } from "~/types/budget";
 import BudgetSetupWizard from "./BudgetSetupWizard";
 
@@ -210,4 +210,8 @@ describe("BudgetSetupWizard", () => {
       );
     });
   });
+});
+
+afterEach(() => {
+  vi.unstubAllGlobals();
 });

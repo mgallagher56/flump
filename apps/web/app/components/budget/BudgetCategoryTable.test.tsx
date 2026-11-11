@@ -1,5 +1,5 @@
 import { fireEvent, waitFor } from "@testing-library/react";
-import { describe, expect, test, vi } from "vitest";
+import { afterEach, describe, expect, test, vi } from "vitest";
 import customRender from "~/testUtils/customRender";
 import BudgetCategoryTable, { type BudgetCategoryTableProps } from "./BudgetCategoryTable";
 
@@ -80,6 +80,23 @@ describe("<BudgetCategoryTable />", () => {
     await waitFor(() => expect(onDelete).toHaveBeenCalledWith("entry-1"));
     expect(onDelete).toHaveBeenCalledTimes(1);
     expect(confirmSpy).not.toHaveBeenCalled();
+  });
+
+  test("keeps the confirm open and pending until onDelete resolves", async () => {
+    let resolve!: () => void;
+    const onDelete = vi.fn().mockReturnValue(new Promise<void>((r) => (resolve = r)));
+    const { getByTitle, getByRole, queryByRole } = customRender(
+      <BudgetCategoryTable {...defaultProps} onDelete={onDelete} />,
+    );
+    fireEvent.click(getByTitle("Delete"));
+    fireEvent.click(getByRole("button", { name: "Delete entry" }));
+    await waitFor(() => expect(onDelete).toHaveBeenCalledTimes(1));
+    expect(getByRole("alertdialog", { name: "Delete Mortgage?" })).toBeDefined();
+    expect((getByRole("button", { name: "Delete entry" }) as HTMLButtonElement).disabled).toBe(
+      true,
+    );
+    resolve();
+    await waitFor(() => expect(queryByRole("alertdialog")).toBeNull());
   });
 
   test("cancelling the delete confirm does nothing", () => {
@@ -170,4 +187,8 @@ describe("<BudgetCategoryTable />", () => {
     fireEvent.change(mobileAmtInput, { target: { value: "160" } });
     fireEvent.click(mobileView.getByText(/Save/i));
   });
+});
+
+afterEach(() => {
+  vi.unstubAllGlobals();
 });

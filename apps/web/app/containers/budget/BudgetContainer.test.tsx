@@ -195,7 +195,6 @@ describe("BudgetContainer", () => {
       updatedAt: "",
     };
     mockLoaderData = { ...mockLoaderData, budgetEntries: [entry] };
-    vi.stubGlobal("confirm", vi.fn().mockReturnValue(true));
     global.fetch = vi.fn().mockResolvedValue(new Response(null, { status: 500 })) as any;
 
     render(<BudgetContainer />);

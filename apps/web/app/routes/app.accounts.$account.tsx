@@ -3,6 +3,7 @@ import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 import { data } from "react-router";
 import AccountDetailContainer from "~/containers/accounts/accountDetailContainer/AccountDetailContainer";
 import { backendFetch } from "~/services/backend-client.server";
+import { BackendError } from "~/services/backend-error";
 import { actionErrorResponse, throwRouteError } from "~/services/route-error.server";
 import { getAuthSession, requireAccessToken } from "~/utils/auth.server";
 
@@ -11,7 +12,7 @@ export const action = async (args: ActionFunctionArgs) => {
   const token = requireAccessToken({ accessToken });
   const formData = await args.request.formData();
   const intent = formData.get("intent");
-  const accountId = args.params.account;
+  const accountId = encodeURIComponent(args.params.account ?? "");
   const year = formData.get("year");
 
   try {
@@ -45,13 +46,14 @@ export const action = async (args: ActionFunctionArgs) => {
 
 export const loader = async (args: LoaderFunctionArgs) => {
   const { user, accessToken } = await getAuthSession(args, { ensureSignedIn: true });
-  const accountId = args.params.account;
+  const accountId = encodeURIComponent(args.params.account ?? "");
 
   try {
     const account = await backendFetch<any>(`/accounts/${accountId}`, {
       accessToken,
       signal: args.request.signal,
     });
+    if (!account) throw new BackendError("not-found", `/accounts/${accountId}`);
     const accountDetails = account.details || [];
     return data({ account, accountDetails, user });
   } catch (error) {

@@ -63,6 +63,11 @@ describe("root ErrorBoundary", () => {
 describe("root loader", () => {
   const args = { request: new Request("http://localhost/"), params: {}, context: {} } as any;
 
+  const realFetch = globalThis.fetch;
+  afterEach(() => {
+    globalThis.fetch = realFetch;
+  });
+
   beforeEach(() => {
     vi.mocked(i18next.getLocale).mockResolvedValue("en");
     vi.mocked(getAuthSession).mockResolvedValue({ user: { id: "u" }, accessToken: "tok" } as any);
@@ -74,6 +79,13 @@ describe("root loader", () => {
     const result = await loader(args);
     expect(result.userProfile).toBeNull();
     expect(result.ENV.VITE_API_URL).toBe(apiConfig.apiBaseUrl);
+  });
+
+  it("keeps the shell up with a null profile when the backend is 401", async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue(new Response("x", { status: 401 }));
+    const result = await loader(args);
+    expect(result.userProfile).toBeNull();
+    expect(result.user).toEqual({ id: "u" });
   });
 
   it("logs only the kind and endpoint, never the token", async () => {
