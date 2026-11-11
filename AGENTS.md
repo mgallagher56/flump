@@ -66,3 +66,14 @@ Enforcement lives in `.claude/`:
 - `.claude/settings.json` sets `CLAUDE_CODE_SUBAGENT_MODEL=sonnet` as the default for any subagent (including built-ins such as `Explore`, `Plan`, `general-purpose`) that has no model of its own.
 
 A per-spawn `model` parameter overrides both frontmatter and the default, so only pass `opus` there for planning, and never pass `fable`. In workflow scripts, every `agent()` call must pass `model: 'sonnet'` or `model: 'haiku'` (or `'opus'` for a planning stage), or use `agentType: 'explorer' | 'implementer' | 'planner'` — never omit both.
+
+## 7. RTK TOKEN-SAVING LAW (RUST TOKEN KILLER)
+
+[`rtk`](https://github.com/rtk-ai/rtk) is a CLI proxy that compresses noisy command output (60-90% fewer tokens). When running a command it supports, agents MUST prefix it with `rtk`.
+
+- Applicable: `git` (status, diff, log, ...), `gh`, `bun`/`npm`/`pnpm` scripts (`lint`, `check-types`, `test`, `build`), `tsc`, `vitest`, `playwright`, `docker`, and file/search builtins (`ls`, `grep`, `find`, `cat`/read).
+  - Example: `rtk git status`, `rtk bun run test`, `rtk bun run build`.
+- Not applicable: interactive commands, long-running dev servers (`bun run dev`, `storybook`), and commands whose raw output is itself the deliverable.
+- If a command's compressed output hides something needed (e.g. a full stack trace), use `rtk bypass <cmd>` for the raw output.
+- The Section 5 CI pre-flight checks must still be executed and verified; `rtk` only changes how their output is displayed (e.g. `rtk bun run lint`).
+- If `rtk` is not installed, install it (`brew install rtk`, or the official install script, which installs to `~/.local/bin` — ensure that is on `PATH`) and run `rtk init -g` for the Claude Code hook; fall back to the plain command only if installation is impossible.
