@@ -13,6 +13,7 @@ describe("UI package exports", () => {
     expect(UI.Button).toBeDefined();
     expect(UI.SectionBand).toBeDefined();
     expect(UI.AppSectionDivider).toBeDefined();
+    expect(UI.EmptyState).toBeDefined();
     expect(UI.colors).toBeDefined();
   });
 });
