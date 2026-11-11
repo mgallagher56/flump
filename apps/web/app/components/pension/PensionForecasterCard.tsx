@@ -246,7 +246,7 @@ export const PensionForecasterCard: FC<PensionForecasterCardProps> = ({
 
   // Forecast state
   const [startingPot, setStartingPot] = useState<number>(currentPotTotal);
-  const [salary, setSalary] = useState<number>(initialSalary ?? 45000);
+  const [salary, setSalary] = useState<number>(initialSalary ?? 0);
   const [employeePercent, setEmployeePercent] = useState<number>(initialEmployeePercent ?? 5.0);
   const [employerPercent, setEmployerPercent] = useState<number>(initialEmployerPercent ?? 3.0);
   const [interestRate, setInterestRate] = useState<number>(defaultRate);
@@ -412,9 +412,9 @@ export const PensionForecasterCard: FC<PensionForecasterCardProps> = ({
 
   // Detect if controls differ from profile
   const isModified =
-    employeePercent !== (initialEmployeePercent || 5.0) ||
-    employerPercent !== (initialEmployerPercent || 3.0) ||
-    salary !== (initialSalary ?? 45000) ||
+    employeePercent !== (initialEmployeePercent ?? 5.0) ||
+    employerPercent !== (initialEmployerPercent ?? 3.0) ||
+    salary !== (initialSalary ?? 0) ||
     isSalarySacrifice !== (initialSalarySacrifice ?? true) ||
     passEmployerNi !== (initialEmployerNiPassThrough ?? false);
 
@@ -426,9 +426,9 @@ export const PensionForecasterCard: FC<PensionForecasterCardProps> = ({
     : 0;
 
   const handleReset = () => {
-    setSalary(initialSalary ?? 45000);
-    setEmployeePercent(initialEmployeePercent || 5.0);
-    setEmployerPercent(initialEmployerPercent || 3.0);
+    setSalary(initialSalary ?? 0);
+    setEmployeePercent(initialEmployeePercent ?? 5.0);
+    setEmployerPercent(initialEmployerPercent ?? 3.0);
     setIsSalarySacrifice(initialSalarySacrifice ?? true);
     setPassEmployerNi(initialEmployerNiPassThrough ?? false);
     setStartingPot(currentPotTotal);

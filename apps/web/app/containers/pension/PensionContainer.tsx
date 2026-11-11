@@ -9,7 +9,7 @@ import { css } from "@repo/ui/styled-system/css";
 import { type FC, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { FaCheck, FaEdit, FaMagic, FaPlus, FaShieldAlt, FaTimes } from "react-icons/fa";
-import { useLoaderData } from "react-router";
+import { Link, useLoaderData } from "react-router";
 import FLPButton from "~/components/core/buttons/FLPButton";
 import FLPCard from "~/components/core/cards/FLPCard";
 import FLPCheckbox from "~/components/core/inputs/checkbox/FLPCheckbox";
@@ -109,6 +109,20 @@ const inlineInputStyle = css({
   },
 });
 
+const ASSUMED_RATE_LABEL = "Assumed: auto-enrolment minimum";
+
+const assumedLabelStyle = css({
+  fontSize: "xs",
+  color: "text.muted",
+  fontStyle: "italic",
+});
+
+const promptLinkStyle = css({
+  color: "primary",
+  fontWeight: "semibold",
+  textDecoration: "underline",
+});
+
 export const PensionContainer: FC = () => {
   const { t } = useTranslation();
   const loaderData = useLoaderData<typeof loader>();
@@ -187,9 +201,15 @@ export const PensionContainer: FC = () => {
 
   // Rates from profile
   const isReset = Boolean(profile.hasResetFinancialData ?? userProfile?.hasResetFinancialData);
-  const annualSalary = isReset
-    ? (profile.annualSalary ?? userProfile?.annualSalary ?? 0)
-    : (profile.annualSalary ?? userProfile?.annualSalary ?? 45000);
+  // No salary is a real state: the forecaster prompts for it instead of assuming a figure.
+  const storedSalary: number | null = profile.annualSalary ?? userProfile?.annualSalary ?? null;
+  const hasSalary = storedSalary !== null && storedSalary > 0;
+  const annualSalary = storedSalary ?? 0;
+  // The backend creates the profile row with the auto-enrolment minimums (5% and 3%). Until
+  // the profile is saved again, updatedAt still equals createdAt, so those rates are assumed.
+  const timestamps = userProfile?.createdAt ? userProfile : profile;
+  const ratesAssumed =
+    Boolean(timestamps?.createdAt) && timestamps.createdAt === timestamps.updatedAt;
   const employeePercent = isReset
     ? (profile.pensionPercent ?? userProfile?.pensionPercent ?? 0)
     : (profile.pensionPercent ?? userProfile?.pensionPercent ?? 5.0);
@@ -302,7 +322,7 @@ export const PensionContainer: FC = () => {
     setIsSavingRates(true);
     try {
       await updateProfile({
-        annualSalary: editSalary,
+        ...(editSalary > 0 ? { annualSalary: editSalary } : {}),
         pensionPercent: editEmployeePct,
         pensionEmployerPercent: editEmployerPct,
         isSalarySacrifice: editSalarySacrifice,
@@ -497,17 +517,29 @@ export const PensionContainer: FC = () => {
               }
         }
       >
-        <PensionForecasterCard
-          currentPotTotal={totalValue}
-          directMonthlyContrib={directMonthlyContrib}
-          initialEmployeePercent={employeePercent}
-          initialEmployerPercent={employerPercent}
-          initialEmployerNiPassThrough={isSalarySacrificeEmployerNi}
-          initialSalary={annualSalary}
-          initialSalarySacrifice={isSalarySacrifice}
-          portfolioReturnRate={weightedReturnRate}
-          onSyncToProfile={handleSyncContributions}
-        />
+        {hasSalary ? (
+          <PensionForecasterCard
+            currentPotTotal={totalValue}
+            directMonthlyContrib={directMonthlyContrib}
+            initialEmployeePercent={employeePercent}
+            initialEmployerPercent={employerPercent}
+            initialEmployerNiPassThrough={isSalarySacrificeEmployerNi}
+            initialSalary={annualSalary}
+            initialSalarySacrifice={isSalarySacrifice}
+            portfolioReturnRate={weightedReturnRate}
+            onSyncToProfile={handleSyncContributions}
+          />
+        ) : (
+          <FLPCard>
+            <FLPText color="text.muted" fontSize="sm">
+              Add your salary in{" "}
+              <Link className={promptLinkStyle} to="/app/profile">
+                Profile
+              </Link>{" "}
+              to project your pension.
+            </FLPText>
+          </FLPCard>
+        )}
       </div>
 
       {/* Tab 2: Pension Pots List */}
@@ -772,6 +804,7 @@ export const PensionContainer: FC = () => {
                 />
                 <strong>Employee:</strong> {employeePercent}% (
                 {formatCurrency(monthlyEmployeeContrib)}/mo)
+                {ratesAssumed && <span className={assumedLabelStyle}>{ASSUMED_RATE_LABEL}</span>}
               </span>
               <span style={{ display: "flex", alignItems: "center", gap: "6px" }}>
                 <span
@@ -790,12 +823,13 @@ export const PensionContainer: FC = () => {
                     + {formatCurrency(monthlyEmployerNiContrib)}/mo NI
                   </span>
                 )}
-                )
+                ){ratesAssumed && <span className={assumedLabelStyle}>{ASSUMED_RATE_LABEL}</span>}
               </span>
             </div>
 
             <FLPText color="text.muted" fontSize="xs">
-              Salary: <strong>{formatCurrency(annualSalary)}/yr</strong> ·{" "}
+              Salary:{" "}
+              <strong>{hasSalary ? `${formatCurrency(annualSalary)}/yr` : "not set"}</strong> ·{" "}
               {isSalarySacrifice
                 ? isSalarySacrificeEmployerNi
                   ? "Salary Sacrifice + Employer NI"
