@@ -5,6 +5,7 @@ import {
   evaluateFinancialStage,
   PortfolioSnapshot,
 } from "@flump/finance-engine";
+import { Button, EmptyState } from "@repo/ui";
 import { css } from "@repo/ui/styled-system/css";
 import { type FC, useMemo, useState } from "react";
 import { FaBookOpen, FaCalculator, FaCreditCard, FaExclamationTriangle } from "react-icons/fa";
@@ -27,41 +28,6 @@ const containerStyle = css({
   gap: "20px",
   paddingBottom: "64px",
 });
-
-const defaultDebts: DebtItem[] = [
-  {
-    id: "debt-1",
-    name: "Barclaycard Platinum",
-    balance: 3200,
-    apr: 24.9,
-    minimumPayment: 80,
-    type: "credit_card",
-  },
-  {
-    id: "debt-2",
-    name: "Klarna Pay in 3",
-    balance: 450,
-    apr: 18.9,
-    minimumPayment: 60,
-    type: "bnpl",
-  },
-  {
-    id: "debt-3",
-    name: "Lloyds Arranged Overdraft",
-    balance: 1000,
-    apr: 39.9,
-    minimumPayment: 40,
-    type: "overdraft",
-  },
-  {
-    id: "debt-4",
-    name: "Tesco Personal Loan",
-    balance: 4500,
-    apr: 7.9,
-    minimumPayment: 135,
-    type: "loan",
-  },
-];
 
 const tabStyle = (active: boolean) =>
   css({
@@ -95,11 +61,10 @@ export const DebtContainer: FC = () => {
   // Tab state
   const [activeTab, setActiveTab] = useState<"simulator" | "accounts" | "instruments">("simulator");
 
-  // Initialize debts from existing liability accounts or fallback to sensible baseline
+  // Initialise debts from the user's real liability accounts only
   const [debts, setDebts] = useState<DebtItem[]>(() => {
     const snapshot = new PortfolioSnapshot(accounts, loaderData?.accountDetails || []);
-    const items = snapshot.toDebtItems();
-    return items.length > 0 ? items : defaultDebts;
+    return snapshot.toDebtItems();
   });
 
   const [selectedStrategy, setSelectedStrategy] = useState<"avalanche" | "snowball">("avalanche");
@@ -135,6 +100,7 @@ export const DebtContainer: FC = () => {
     selectedStrategy === "avalanche" ? comparison.avalanche : comparison.snowball;
   const totalDebt = debts.reduce((sum, d) => sum + d.balance, 0);
   const totalMin = debts.reduce((sum, d) => sum + d.minimumPayment, 0);
+  const hasDebts = debts.length > 0;
 
   const handleAddDebt = (newDebt: Omit<DebtItem, "id">) => {
     const item: DebtItem = {
@@ -229,24 +195,29 @@ export const DebtContainer: FC = () => {
       </div>
 
       {/* 2. Summary Metric Cards (Single compact 4-card row) */}
-      <DebtSummaryCards
-        debtFreeDate={activeResult.debtFreeDate}
-        extraPayment={extraPayment}
-        highInterestDebt={stageEval.highInterestDebt}
-        monthlyMinimumTotal={totalMin}
-        monthsShaved={
-          selectedStrategy === "avalanche"
-            ? comparison.monthsShavedAvalancheVsMin
-            : Math.max(0, comparison.minimumOnly.months - comparison.snowball.months)
-        }
-        strategy={selectedStrategy}
-        totalDebt={totalDebt}
-        totalInterestSaved={
-          selectedStrategy === "avalanche"
-            ? comparison.interestSavedAvalancheVsMin
-            : Math.max(0, comparison.minimumOnly.totalInterest - comparison.snowball.totalInterest)
-        }
-      />
+      {hasDebts ? (
+        <DebtSummaryCards
+          debtFreeDate={activeResult.debtFreeDate}
+          extraPayment={extraPayment}
+          highInterestDebt={stageEval.highInterestDebt}
+          monthlyMinimumTotal={totalMin}
+          monthsShaved={
+            selectedStrategy === "avalanche"
+              ? comparison.monthsShavedAvalancheVsMin
+              : Math.max(0, comparison.minimumOnly.months - comparison.snowball.months)
+          }
+          strategy={selectedStrategy}
+          totalDebt={totalDebt}
+          totalInterestSaved={
+            selectedStrategy === "avalanche"
+              ? comparison.interestSavedAvalancheVsMin
+              : Math.max(
+                  0,
+                  comparison.minimumOnly.totalInterest - comparison.snowball.totalInterest,
+                )
+          }
+        />
+      ) : null}
 
       {/* Tab Bar: Segmented Navigation */}
       <div
@@ -263,21 +234,34 @@ export const DebtContainer: FC = () => {
           WebkitOverflowScrolling: "touch",
         })}
       >
-        <button
-          type="button"
-          className={tabStyle(activeTab === "simulator")}
-          onClick={() => setActiveTab("simulator")}
-        >
-          <FaCalculator size={13} style={{ marginRight: "6px" }} /> Strategy & Payoff Simulator
-        </button>
-        <button
-          type="button"
-          className={tabStyle(activeTab === "accounts")}
-          onClick={() => setActiveTab("accounts")}
-        >
-          <FaCreditCard size={13} style={{ marginRight: "6px" }} /> Liability Accounts & Cards (
-          {debts.length})
-        </button>
+        {hasDebts ? null : (
+          <button
+            type="button"
+            className={tabStyle(activeTab !== "instruments")}
+            onClick={() => setActiveTab("simulator")}
+          >
+            <FaCreditCard size={13} style={{ marginRight: "6px" }} /> Your debts
+          </button>
+        )}
+        {hasDebts ? (
+          <>
+            <button
+              type="button"
+              className={tabStyle(activeTab === "simulator")}
+              onClick={() => setActiveTab("simulator")}
+            >
+              <FaCalculator size={13} style={{ marginRight: "6px" }} /> Strategy & Payoff Simulator
+            </button>
+            <button
+              type="button"
+              className={tabStyle(activeTab === "accounts")}
+              onClick={() => setActiveTab("accounts")}
+            >
+              <FaCreditCard size={13} style={{ marginRight: "6px" }} /> Liability Accounts & Cards (
+              {debts.length})
+            </button>
+          </>
+        ) : null}
         <button
           type="button"
           className={tabStyle(activeTab === "instruments")}
@@ -287,65 +271,81 @@ export const DebtContainer: FC = () => {
         </button>
       </div>
 
+      {!hasDebts && activeTab !== "instruments" ? (
+        <EmptyState
+          title="No debts yet"
+          description="Add your credit cards, loans and overdrafts to compare payoff plans."
+          action={
+            <Button type="button" onClick={() => setIsAddModalOpen(true)}>
+              Add debt
+            </Button>
+          }
+        />
+      ) : null}
+
       {/* Tab 1: Strategy & Payoff Simulator */}
-      <div
-        style={
-          activeTab === "simulator"
-            ? { display: "block" }
-            : {
-                height: 0,
-                overflow: "hidden",
-                opacity: 0,
-                position: "absolute",
-                pointerEvents: "none",
-              }
-        }
-      >
-        <div
-          className={css({
-            display: "grid",
-            gridTemplateColumns: { base: "1fr", lg: "repeat(12, 1fr)" },
-            gap: "24px",
-            alignItems: "start",
-          })}
-        >
-          <div className={css({ gridColumn: { base: "span 1", lg: "span 5" } })}>
-            <PayoffStrategySwitcher
-              budgetSurplus={budgetSurplus}
-              comparison={comparison}
-              extraPayment={extraPayment}
-              selectedStrategy={selectedStrategy}
-              onChangeExtraPayment={setExtraPayment}
-              onSelectStrategy={setSelectedStrategy}
+      {hasDebts ? (
+        <>
+          <div
+            style={
+              activeTab === "simulator"
+                ? { display: "block" }
+                : {
+                    height: 0,
+                    overflow: "hidden",
+                    opacity: 0,
+                    position: "absolute",
+                    pointerEvents: "none",
+                  }
+            }
+          >
+            <div
+              className={css({
+                display: "grid",
+                gridTemplateColumns: { base: "1fr", lg: "repeat(12, 1fr)" },
+                gap: "24px",
+                alignItems: "start",
+              })}
+            >
+              <div className={css({ gridColumn: { base: "span 1", lg: "span 5" } })}>
+                <PayoffStrategySwitcher
+                  budgetSurplus={budgetSurplus}
+                  comparison={comparison}
+                  extraPayment={extraPayment}
+                  selectedStrategy={selectedStrategy}
+                  onChangeExtraPayment={setExtraPayment}
+                  onSelectStrategy={setSelectedStrategy}
+                />
+              </div>
+              <div className={css({ gridColumn: { base: "span 1", lg: "span 7" } })}>
+                <DebtToWealthBridgeCard debts={debts} extraPayment={extraPayment} />
+              </div>
+            </div>
+          </div>
+
+          {/* Tab 2: Liability Accounts & Cards */}
+          <div
+            style={
+              activeTab === "accounts"
+                ? { display: "block" }
+                : {
+                    height: 0,
+                    overflow: "hidden",
+                    opacity: 0,
+                    position: "absolute",
+                    pointerEvents: "none",
+                  }
+            }
+          >
+            <DebtAccountsList
+              debts={debts}
+              onAddDebt={() => setIsAddModalOpen(true)}
+              onDeleteDebt={handleDeleteDebt}
+              onUpdateDebt={handleUpdateDebt}
             />
           </div>
-          <div className={css({ gridColumn: { base: "span 1", lg: "span 7" } })}>
-            <DebtToWealthBridgeCard debts={debts} extraPayment={extraPayment} />
-          </div>
-        </div>
-      </div>
-
-      {/* Tab 2: Liability Accounts & Cards */}
-      <div
-        style={
-          activeTab === "accounts"
-            ? { display: "block" }
-            : {
-                height: 0,
-                overflow: "hidden",
-                opacity: 0,
-                position: "absolute",
-                pointerEvents: "none",
-              }
-        }
-      >
-        <DebtAccountsList
-          debts={debts}
-          onAddDebt={() => setIsAddModalOpen(true)}
-          onDeleteDebt={handleDeleteDebt}
-          onUpdateDebt={handleUpdateDebt}
-        />
-      </div>
+        </>
+      ) : null}
 
       {/* Tab 3: UK Specific Debt Instruments & Rules */}
       <div

@@ -2,24 +2,28 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import DebtContainer from "./DebtContainer";
 
+const loaderState = vi.hoisted(() => ({ empty: false }));
+
 vi.mock("react-router", () => ({
   useLoaderData: () => ({
-    accounts: [
-      {
-        id: "acc-cc",
-        name: "Barclaycard Platinum",
-        type: "Credit Card",
-        balance: 3000,
-        interestRate: 22.9,
-      },
-      {
-        id: "acc-loan",
-        name: "Tesco Loan",
-        type: "Loan",
-        balance: 4500,
-        interestRate: 7.9,
-      },
-    ],
+    accounts: loaderState.empty
+      ? []
+      : [
+          {
+            id: "acc-cc",
+            name: "Barclaycard Platinum",
+            type: "Credit Card",
+            balance: 3000,
+            interestRate: 22.9,
+          },
+          {
+            id: "acc-loan",
+            name: "Tesco Loan",
+            type: "Loan",
+            balance: 4500,
+            interestRate: 7.9,
+          },
+        ],
     budgetData: {
       monthlySurplus: 150,
     },
@@ -43,6 +47,32 @@ vi.mock("~/hooks/useUserProfile", async (importOriginal) => {
 });
 
 describe("DebtContainer", () => {
+  it("shows the empty state and no invented debts for a user without debt accounts", () => {
+    loaderState.empty = true;
+    try {
+      render(<DebtContainer />);
+      expect(screen.queryByText("Barclaycard Platinum")).toBeNull();
+      expect(screen.queryByText("Klarna Pay in 3")).toBeNull();
+      expect(screen.getByText("No debts yet")).toBeDefined();
+      expect(screen.queryByText(/Total Unsecured Debt/i)).toBeNull();
+      fireEvent.click(screen.getByRole("button", { name: "Add debt" }));
+      expect(screen.getByText(/Add Liability Account/i)).toBeDefined();
+    } finally {
+      loaderState.empty = false;
+    }
+  });
+
+  it("keeps the UK debt rules tab reachable when there are no debts", () => {
+    loaderState.empty = true;
+    try {
+      render(<DebtContainer />);
+      fireEvent.click(screen.getByRole("button", { name: /UK Debt Rules & Helplines/i }));
+      expect(screen.getByText(/UK Debt Rules & Specialised Instruments/i)).toBeDefined();
+    } finally {
+      loaderState.empty = false;
+    }
+  });
+
   it("renders debt payoff overview and active liabilities", () => {
     render(<DebtContainer />);
 
