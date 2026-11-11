@@ -134,7 +134,10 @@ vi.mock("react-router", async () => {
   const actual: Record<string, unknown> = await vi.importActual("react-router");
   return {
     ...actual,
-    useLoaderData: () => ({ accountDetails: mocks.mockAccountDetails, account: { id: "123456" } }),
+    useLoaderData: () => ({
+      accountDetails: mocks.mockAccountDetails,
+      account: { id: "123456", name: "Monzo Current" },
+    }),
     useRevalidator: () => ({ revalidate: vi.fn() }),
     useFetcher: () => ({
       submit: mocks.mockFetcherSubmit,
@@ -174,12 +177,41 @@ describe("<AccountDetails />", () => {
     expect(container).toMatchSnapshot();
   });
 
-  test("should remove year when delete button is clicked", () => {
-    const { container, getByTitle } = customRender(
+  test("opens a confirm dialog for deleting a year without submitting or using window.confirm", () => {
+    const confirmSpy = vi.fn();
+    window.confirm = confirmSpy;
+    mocks.mockFetcherSubmit.mockClear();
+    const { getByTitle, getByRole } = customRender(
       <AccountDetails editedValues={emptyObject} isEditMode={false} onInputChange={vi.fn()} />,
     );
-    const deleteBtn = getByTitle("Delete 2023");
-    fireEvent.click(deleteBtn);
+    fireEvent.click(getByTitle("Delete 2023"));
+    expect(getByRole("alertdialog", { name: "Delete 2023?" })).toBeDefined();
+    expect(getByRole("alertdialog").textContent).toContain(
+      "This removes all monthly balances for 2023 from Monzo Current. This can't be undone.",
+    );
+    expect(mocks.mockFetcherSubmit).not.toHaveBeenCalled();
+    expect(confirmSpy).not.toHaveBeenCalled();
+  });
+
+  test("cancelling the year confirm submits nothing", () => {
+    mocks.mockFetcherSubmit.mockClear();
+    const { getByTitle, getByRole, queryByRole } = customRender(
+      <AccountDetails editedValues={emptyObject} isEditMode={false} onInputChange={vi.fn()} />,
+    );
+    fireEvent.click(getByTitle("Delete 2023"));
+    fireEvent.click(getByRole("button", { name: "Cancel" }));
+    expect(queryByRole("alertdialog")).toBeNull();
+    expect(mocks.mockFetcherSubmit).not.toHaveBeenCalled();
+  });
+
+  test("should remove year when the delete year confirmation is accepted", () => {
+    mocks.mockFetcherSubmit.mockClear();
+    const { getByTitle, getByRole } = customRender(
+      <AccountDetails editedValues={emptyObject} isEditMode={false} onInputChange={vi.fn()} />,
+    );
+    fireEvent.click(getByTitle("Delete 2023"));
+    fireEvent.click(getByRole("button", { name: "Delete year" }));
+    expect(mocks.mockFetcherSubmit).toHaveBeenCalledTimes(1);
     expect(mocks.mockFetcherSubmit).toHaveBeenCalledWith(
       {
         intent: "deleteYear",
@@ -187,6 +219,5 @@ describe("<AccountDetails />", () => {
       },
       { method: "POST" },
     );
-    expect(container).toMatchSnapshot();
   });
 });

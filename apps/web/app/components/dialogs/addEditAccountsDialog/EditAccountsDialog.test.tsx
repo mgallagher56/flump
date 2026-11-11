@@ -1,4 +1,4 @@
-import { cleanup } from "@testing-library/react";
+import { cleanup, waitFor } from "@testing-library/react";
 import mockUser from "__mocks__/user";
 import type { ReactNode } from "react";
 import { vi } from "vitest";
@@ -57,28 +57,77 @@ describe("<EditAccountDialogBtn", () => {
     expect(baseElementConstant).toMatchSnapshot();
   });
 
-  test("should render edit account dialog and call fetcher.submit when delete button is clicked", async () => {
-    mocks.mockUseLoaderData.mockReturnValue({ user: mockUser });
-    const { baseElement, getByText, user } = customRender(
+  test("delete opens a confirm dialog and submits nothing until confirmed", async () => {
+    mocks.mockUseLoaderData.mockReturnValue({
+      accounts: [{ id: "123456", name: "Monzo Current", type: "Current", balance: 10 }],
+    });
+    mocks.mockFetcherSubmit.mockClear();
+    const confirmSpy = vi.fn();
+    window.confirm = confirmSpy;
+    const { getByText, getByRole, user } = customRender(
       <AddEditAccountsDialogBtn isEditAccount accountId="123456" />,
     );
 
-    const triggerBtn = getByText("edit");
-    expect(triggerBtn).toBeDefined();
-    await user.click(triggerBtn);
+    await user.click(getByText("edit"));
+    await user.click(getByText("delete"));
 
-    expect(baseElement).toMatchSnapshot();
+    const dialog = getByRole("alertdialog", { name: "Delete Monzo Current?" });
+    expect(dialog.textContent).toContain("This deletes the account and its full balance history.");
+    expect(mocks.mockFetcherSubmit).not.toHaveBeenCalled();
+    expect(confirmSpy).not.toHaveBeenCalled();
 
-    const deleteBtn = getByText("delete");
-    expect(deleteBtn).toBeDefined();
-    await user.click(deleteBtn);
-
+    await user.click(getByRole("button", { name: "Delete account" }));
+    expect(mocks.mockFetcherSubmit).toHaveBeenCalledTimes(1);
     expect(mocks.mockFetcherSubmit).toHaveBeenCalledWith(
-      expect.objectContaining({
-        intent: "delete",
-        accountId: "123456",
-      }),
+      { intent: "delete", accountId: "123456" },
       expect.anything(),
     );
+  });
+
+  test("cancel leaves the edit modal open and submits nothing", async () => {
+    mocks.mockUseLoaderData.mockReturnValue({
+      accounts: [{ id: "123456", name: "Monzo Current", type: "Current", balance: 10 }],
+    });
+    mocks.mockFetcherSubmit.mockClear();
+    const { getByText, getByRole, queryByRole, user } = customRender(
+      <AddEditAccountsDialogBtn isEditAccount accountId="123456" />,
+    );
+
+    await user.click(getByText("edit"));
+    await user.click(getByText("delete"));
+    await user.click(getByRole("button", { name: "Cancel" }));
+
+    expect(queryByRole("alertdialog")).toBeNull();
+    expect(getByRole("dialog")).toBeDefined();
+    expect(mocks.mockFetcherSubmit).not.toHaveBeenCalled();
+  });
+
+  test("Escape closes only the confirm dialog, returns focus and keeps the edit modal", async () => {
+    mocks.mockUseLoaderData.mockReturnValue({
+      accounts: [{ id: "123456", name: "Monzo Current", type: "Current", balance: 10 }],
+    });
+    mocks.mockFetcherSubmit.mockClear();
+    const { getByText, getByRole, queryByRole, user } = customRender(
+      <AddEditAccountsDialogBtn isEditAccount accountId="123456" />,
+    );
+
+    await user.click(getByText("edit"));
+    const deleteBtn = getByText("delete");
+    await user.click(deleteBtn);
+    expect(getByRole("alertdialog")).toBeDefined();
+
+    await user.keyboard("{Escape}");
+
+    expect(queryByRole("alertdialog")).toBeNull();
+    expect(getByRole("dialog")).toBeDefined();
+    await waitFor(() => expect(document.activeElement).toBe(deleteBtn.closest("button")));
+    expect(mocks.mockFetcherSubmit).not.toHaveBeenCalled();
+
+    // The outer modal is still open, so it legitimately keeps the scroll lock. Closing it
+    // must release everything the nested dialog stacked up.
+    await user.keyboard("{Escape}");
+    await waitFor(() => expect(queryByRole("dialog")).toBeNull());
+    expect(document.body.style.pointerEvents).not.toBe("none");
+    expect(document.body.hasAttribute("data-scroll-locked")).toBe(false);
   });
 });

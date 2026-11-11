@@ -1,5 +1,5 @@
 import { css } from "@repo/ui/styled-system/css";
-import type { FC } from "react";
+import { type FC, useState } from "react";
 import {
   FaCheckCircle,
   FaExclamationTriangle,
@@ -13,6 +13,7 @@ import FLPHeading from "~/components/core/typography/FLPHeading";
 import FLPText from "~/components/core/typography/FLPText";
 import ConnectBankWizard from "~/components/dialogs/connectBankWizard/ConnectBankWizard";
 import { useResponsive } from "~/context/ResponsiveContext";
+import { ConfirmDialog } from "~/features/feedback/components/ConfirmDialog";
 
 interface BankConnection {
   id: string;
@@ -50,6 +51,7 @@ const BankConnectionsList: FC<BankConnectionsListProps> = ({
   variant = "desktop",
 }) => {
   const fetcher = useFetcher();
+  const [disconnectTarget, setDisconnectTarget] = useState<BankConnection | null>(null);
   const revalidator = useRevalidator();
   const { isMobile: contextIsMobile } = useResponsive();
   const isMobileVariant = propIsMobile ?? (variant === "mobile" ? true : contextIsMobile);
@@ -58,14 +60,13 @@ const BankConnectionsList: FC<BankConnectionsListProps> = ({
     fetcher.submit({ intent: "syncConnection", connectionId }, { method: "POST" });
   };
 
-  const handleDisconnect = (connectionId: string) => {
-    if (
-      confirm(
-        "Are you sure you want to disconnect this bank account? All synced accounts and transactions will be removed.",
-      )
-    ) {
-      fetcher.submit({ intent: "disconnectConnection", connectionId }, { method: "POST" });
-    }
+  const handleConfirmDisconnect = () => {
+    if (!disconnectTarget) return;
+    fetcher.submit(
+      { intent: "disconnectConnection", connectionId: disconnectTarget.id },
+      { method: "POST" },
+    );
+    setDisconnectTarget(null);
   };
 
   const formatDate = (dateStr: string) => {
@@ -194,6 +195,18 @@ const BankConnectionsList: FC<BankConnectionsListProps> = ({
         <ConnectBankWizard onSuccess={() => revalidator.revalidate()} />
       </div>
 
+      <ConfirmDialog
+        open={disconnectTarget !== null}
+        onOpenChange={(open) => {
+          if (!open) setDisconnectTarget(null);
+        }}
+        title={`Disconnect ${disconnectTarget?.institutionName ?? "this bank"}?`}
+        description="Synced accounts and transactions from this bank will be removed."
+        confirmLabel="Disconnect"
+        tone="danger"
+        onConfirm={handleConfirmDisconnect}
+      />
+
       {connections.length > 0 ? (
         <div className={listStyle}>
           {connections.map((conn) => {
@@ -247,7 +260,7 @@ const BankConnectionsList: FC<BankConnectionsListProps> = ({
                     {isSyncing ? "Syncing..." : "Sync Now"}
                   </FLPButton>
                   <FLPButton
-                    onClick={() => handleDisconnect(conn.id)}
+                    onClick={() => setDisconnectTarget(conn)}
                     variant="destructive"
                     size="sm"
                   >
