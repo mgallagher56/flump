@@ -39,7 +39,9 @@ export const Unavailable: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
     loaderSpy.mockClear();
-    await userEvent.click(await canvas.findByRole("button", { name: "Try again" }));
+    // The side-by-side theme decorator renders the story in each pane, so pick the first button.
+    const [retry] = await canvas.findAllByRole("button", { name: "Try again" });
+    await userEvent.click(retry);
     await expect(loaderSpy).toHaveBeenCalled();
   },
 };
