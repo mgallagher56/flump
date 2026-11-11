@@ -24,6 +24,7 @@ export * from "./primitives/Button";
 export * from "./primitives/Card";
 export * from "./primitives/CollapsibleDrawer";
 export * from "./primitives/KpiCard";
+export { LiveRegion, type LiveRegionProps } from "./primitives/LiveRegion";
 export * from "./primitives/ProgressBar";
 export * from "./primitives/SegmentedTabs";
 export * from "./primitives/SliderField";
