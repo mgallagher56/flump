@@ -14,3 +14,5 @@ const MortgageRoute = (): ReactElement => {
 };
 
 export default MortgageRoute;
+
+export { RouteErrorBoundary as ErrorBoundary } from "~/features/feedback/components/RouteErrorBoundary";

@@ -16,3 +16,5 @@ const BudgetRoute = (): ReactElement => {
 };
 
 export default BudgetRoute;
+
+export { RouteErrorBoundary as ErrorBoundary } from "~/features/feedback/components/RouteErrorBoundary";
