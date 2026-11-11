@@ -62,9 +62,8 @@ interface AllowEntry {
 }
 
 /**
- * Remaining offenders. 8 distinct files carry the 14 base URL fallback lines (12 and 21 before
- * the loaders moved to backendFetch); the other entries hand-roll fetch against the same base. Remove an entry when the file is
- * migrated to backend-client.server.ts or services/api-client.ts.
+ * Remaining offenders. 3 distinct files carry the 8 base URL fallback lines (14 before the route
+ * actions moved to backendFetch). Remove an entry when the file is migrated to backend-client.server.ts or services/api-client.ts.
  */
 const ALLOW_LIST: Record<string, AllowEntry> = {
   "hooks/useUserProfile.ts": {
@@ -75,29 +74,9 @@ const ALLOW_LIST: Record<string, AllowEntry> = {
     reason: "Client container reads the URL from env, window.ENV and a literal",
     rules: { "localhost-4000": 1, "vite-api-url-read": 2, "direct-api-fetch": 5 },
   },
-  "routes/app.pension.tsx": {
-    reason: "Loader and action hand-roll fetch with the fallback base URL",
-    rules: { "localhost-4000": 1, "vite-api-url-read": 1, "direct-api-fetch": 7 },
-  },
-  "routes/app.tax.tsx": {
-    reason: "Loader and action hand-roll fetch with the fallback base URL",
-    rules: { "localhost-4000": 1, "vite-api-url-read": 1, "direct-api-fetch": 6 },
-  },
-  "routes/app.savings.tsx": {
-    reason: "Loader and action hand-roll fetch with the fallback base URL",
-    rules: { "localhost-4000": 1, "vite-api-url-read": 1, "direct-api-fetch": 4 },
-  },
   "routes/app.onboarding.tsx": {
-    reason: "Action and client submit hand-roll fetch with the fallback base URL",
-    rules: { "localhost-4000": 2, "vite-api-url-read": 3, "direct-api-fetch": 3 },
-  },
-  "routes/app.accounts.$account.tsx": {
-    reason: "Action hand-rolls fetch with the fallback base URL",
-    rules: { "localhost-4000": 1, "vite-api-url-read": 1, "direct-api-fetch": 3 },
-  },
-  "routes/app.accounts._index.tsx": {
-    reason: "Loader and action hand-roll fetch with the fallback base URL",
-    rules: { "localhost-4000": 1, "vite-api-url-read": 1, "direct-api-fetch": 6 },
+    reason: "Client-side seeding hand-rolls fetch with the fallback base URL (Task D)",
+    rules: { "localhost-4000": 1, "vite-api-url-read": 2, "direct-api-fetch": 2 },
   },
 };
 
@@ -209,15 +188,15 @@ describe("single API client guard", () => {
     expect(problems).toEqual([]);
   });
 
-  it("records 8 files for the 14 base URL fallback lines", () => {
+  it("records 3 files for the 8 base URL fallback lines", () => {
     const files = [...found.entries()].filter(([, o]) =>
       o.some((x) => x.rule === "localhost-4000"),
     );
-    expect(files).toHaveLength(8);
+    expect(files).toHaveLength(3);
     const lines = files.reduce(
       (n, [, o]) => n + o.filter((x) => x.rule === "localhost-4000").length,
       0,
     );
-    expect(lines).toBe(14);
+    expect(lines).toBe(8);
   });
 });

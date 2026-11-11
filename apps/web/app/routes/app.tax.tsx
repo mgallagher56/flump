@@ -2,36 +2,30 @@ import type { ReactElement } from "react";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 import { data } from "react-router";
 import TaxContainer from "~/containers/tax/TaxContainer";
-import { loadWorkspaceSnapshot } from "~/services/backend-client.server";
-import { authHeader, getAuthSession } from "~/utils/auth.server";
+import { backendFetch, loadWorkspaceSnapshot } from "~/services/backend-client.server";
+import { actionErrorResponse } from "~/services/route-error.server";
+import { getAuthSession, requireAccessToken } from "~/utils/auth.server";
 
 export const action = async (args: ActionFunctionArgs) => {
   const { accessToken } = await getAuthSession(args, { ensureSignedIn: true });
-  const authz = authHeader({ accessToken });
+  const token = requireAccessToken({ accessToken });
   const formData = await args.request.formData();
   const intent = formData.get("intent");
-
-  const apiUrl = process.env.VITE_API_URL || "http://localhost:4000";
-  const headers = {
-    "Content-Type": "application/json",
-    ...authz,
-  };
 
   try {
     if (intent === "update-profile") {
       const annualSalary = formData.get("annualSalary");
       const propertyOwnershipShare = formData.get("propertyOwnershipShare");
-      const res = await fetch(`${apiUrl}/user-profile`, {
+      await backendFetch(`/user-profile`, {
+        accessToken: token,
         method: "PATCH",
-        headers,
-        body: JSON.stringify({
+        body: {
           annualSalary: annualSalary ? Number.parseFloat(annualSalary as string) : null,
           propertyOwnershipShare: propertyOwnershipShare
             ? Number.parseFloat(propertyOwnershipShare as string)
             : 100.0,
-        }),
+        },
       });
-      if (!res.ok) throw new Error("Failed to update user profile");
     } else if (intent === "create-transaction") {
       const name = formData.get("name");
       const source = formData.get("source");
@@ -46,10 +40,10 @@ export const action = async (args: ActionFunctionArgs) => {
       const receiptMimeType = formData.get("receiptMimeType") || null;
       const receiptData = formData.get("receiptData") || null;
 
-      const res = await fetch(`${apiUrl}/tax-records`, {
+      await backendFetch(`/tax-records`, {
+        accessToken: token,
         method: "POST",
-        headers,
-        body: JSON.stringify({
+        body: {
           name,
           source,
           type,
@@ -62,9 +56,8 @@ export const action = async (args: ActionFunctionArgs) => {
           receiptFilename,
           receiptMimeType,
           receiptData,
-        }),
+        },
       });
-      if (!res.ok) throw new Error("Failed to create tax record");
     } else if (intent === "update-transaction") {
       const id = formData.get("id");
       const name = formData.get("name");
@@ -80,10 +73,10 @@ export const action = async (args: ActionFunctionArgs) => {
       const receiptMimeType = formData.get("receiptMimeType") || null;
       const receiptData = formData.get("receiptData") || null;
 
-      const res = await fetch(`${apiUrl}/tax-records/${id}`, {
+      await backendFetch(`/tax-records/${id}`, {
+        accessToken: token,
         method: "PATCH",
-        headers,
-        body: JSON.stringify({
+        body: {
           name,
           source,
           type,
@@ -96,30 +89,18 @@ export const action = async (args: ActionFunctionArgs) => {
           receiptFilename,
           receiptMimeType,
           receiptData,
-        }),
-      });
-      if (!res.ok) throw new Error("Failed to update tax record");
-    } else if (intent === "delete-transaction") {
-      const id = formData.get("id");
-      const res = await fetch(`${apiUrl}/tax-records/${id}`, {
-        method: "DELETE",
-        headers: {
-          ...authz,
         },
       });
-      if (!res.ok) throw new Error("Failed to delete tax record");
+    } else if (intent === "delete-transaction") {
+      const id = formData.get("id");
+      await backendFetch(`/tax-records/${id}`, { accessToken: token, method: "DELETE" });
     } else if (intent === "delete-tax-year") {
       const recordIdsJson = formData.get("recordIds") as string | null;
       if (recordIdsJson) {
         const recordIds: string[] = JSON.parse(recordIdsJson);
         await Promise.all(
           recordIds.map((id) =>
-            fetch(`${apiUrl}/tax-records/${id}`, {
-              method: "DELETE",
-              headers: {
-                ...authz,
-              },
-            }),
+            backendFetch(`/tax-records/${id}`, { accessToken: token, method: "DELETE" }),
           ),
         );
       }
@@ -130,17 +111,15 @@ export const action = async (args: ActionFunctionArgs) => {
       const records = recordsJson ? JSON.parse(recordsJson) : [];
       const capPreviousRecordIds = capPreviousJson ? JSON.parse(capPreviousJson) : [];
 
-      const res = await fetch(`${apiUrl}/tax-records/bulk`, {
+      await backendFetch(`/tax-records/bulk`, {
+        accessToken: token,
         method: "POST",
-        headers,
-        body: JSON.stringify({ records, capPreviousRecordIds }),
+        body: { records, capPreviousRecordIds },
       });
-      if (!res.ok) throw new Error("Failed to bulk create tax records");
     }
     return data({ success: true });
   } catch (error) {
-    console.error("Action error in tax route:", error);
-    return data({ success: false, error: (error as Error).message }, { status: 500 });
+    return actionErrorResponse(error);
   }
 };
 

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { BackendError, type BackendErrorKind, type RouteErrorPayload } from "./backend-error";
-import { throwRouteError } from "./route-error.server";
+import { actionErrorResponse, throwRouteError } from "./route-error.server";
 
 function caught(err: unknown): { data: RouteErrorPayload; init: { status: number } } {
   try {
@@ -59,5 +59,27 @@ describe("throwRouteError", () => {
     const serialised = JSON.stringify(caught(err));
     expect(serialised).not.toContain("localhost");
     expect(serialised).not.toContain("secret_token");
+  });
+});
+
+describe("actionErrorResponse", () => {
+  it("keeps the backend status and returns a generic message", () => {
+    const res: any = actionErrorResponse(
+      new BackendError("server", "/accounts?token=secret", 503, { cause: "secret body" }),
+    );
+    expect(res.init.status).toBe(503);
+    expect(res.data.success).toBe(false);
+    expect(res.data.error).toMatch(/try again/);
+    expect(JSON.stringify(res.data)).not.toMatch(/secret|accounts/);
+  });
+
+  it("falls back to the kind's status when the backend never answered", () => {
+    const res: any = actionErrorResponse(new BackendError("unavailable", "/accounts"));
+    expect(res.init.status).toBe(503);
+  });
+
+  it("rethrows non-BackendErrors by identity", () => {
+    const redirect = new Response(null, { status: 302 });
+    expect(() => actionErrorResponse(redirect)).toThrow(redirect);
   });
 });
