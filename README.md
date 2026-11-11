@@ -202,7 +202,7 @@ Configuration and database environment contract (the backend validates this at b
 - `NODE_ENV`: only `development` and `test` are relaxed. Anything else, **including unset**, is strict (production rules), so set `NODE_ENV=production` explicitly in deployments and `NODE_ENV=development` locally.
 - `BANKING_TOKEN_ENCRYPTION_KEY`: **required in strict mode, at least 32 characters** (`openssl rand -hex 32`). The built-in default key only works in development/test. Changing the key makes stored bank tokens undecryptable.
 - `DATABASE_URL`: optional alternative to the `DB_*` variables. The app splits it into discrete fields and **ignores its query string** (for example `?sslmode=require`); configure TLS with `DB_SSL`. In strict mode the database must be configured explicitly and `DB_PASSWORD` must not be the default.
-- `DB_SSL`: unset verifies the server certificate for non-local hosts and uses no TLS for localhost; `true` forces TLS; `false` disables TLS; `no-verify` uses TLS without certificate verification (explicit opt-out, logs a warning). `DB_SSL_CA` optionally supplies a PEM CA certificate for private or self-signed CAs.
+- `DB_SSL`: unset verifies the server certificate for non-local hosts and uses no TLS for localhost; `true` forces TLS; `false` disables TLS; `no-verify` uses TLS without certificate verification (explicit opt-out, logs a warning). `DB_SSL_CA` optionally supplies a PEM CA certificate for private or self-signed CAs and only applies when TLS is on. `DB_SSL=false` disables TLS entirely (a remote host logs a warning); use it only for a local or private-network database.
 - `DB_SYNCHRONIZE=true`: lets TypeORM auto-alter the schema. **Development/test only**; in strict mode the backend refuses to start with it set.
 - Bank tokens are no longer returned by the API: bank connection responses omit them.
 - **Existing bank connections:** the `ClearBankTokens` migration nulls every stored bank token and marks connected connections `error` (already disconnected ones stay disconnected). Users with existing bank connections must reconnect once after the deploy.
@@ -225,9 +225,11 @@ Commands run from `apps/backend`. They do not set `NODE_ENV`, so they work again
 ```bash
 cd apps/backend
 bun run migration:run        # apply pending migrations
-bun run migration:revert     # revert the last migration
+bun run migration:revert     # removes the last migration record only (see warning below)
 bun run migration:generate src/migrations/<Name>   # generate from entity changes
 ```
+
+**Do not revert the current migrations.** Both have no-op `down()` methods, so `migration:revert` only deletes the migration record: it does not restore schema or tokens. Reverting `ClearBankTokens` would make the next boot clear every bank token again, including those of users who already reconnected. The CLI never auto-runs pending migrations; use `migration:run` explicitly.
 
 To run against production-like settings, set the environment explicitly, for example `NODE_ENV=production DATABASE_URL=... BANKING_TOKEN_ENCRYPTION_KEY=... bun run migration:run`.
 
@@ -250,6 +252,15 @@ These tests are destructive, so a safety guard always refuses a non-local host (
 # Start local PostgreSQL container
 docker compose up -d
 ```
+
+Development and test do not create tables on boot, so run the migrations once against the new database (the `.env` copied from the example already has `NODE_ENV=development`; the migration scripts do not set it themselves):
+
+```bash
+cd apps/backend
+NODE_ENV=development bun run migration:run
+```
+
+Alternatively set `DB_SYNCHRONIZE=true` in `apps/backend/.env` to let TypeORM sync the schema for a throwaway development database.
 
 ### 4. Run Development Servers
 

@@ -128,6 +128,28 @@ describe("resolveDbConfig", () => {
       );
     });
 
+    it("DB_SSL=false on a remote host keeps TLS off but warns once without leaking the URL", () => {
+      const config = resolveDbConfig({
+        ...prod,
+        DATABASE_URL: "postgres://user:s3cret@db.example.com/x",
+        DB_SSL: "false",
+      });
+      expect(config.ssl).toBe(false);
+      expect(config.warnings).toHaveLength(1);
+      expect(config.warnings[0]).toContain("DB_SSL");
+      expect(config.warnings[0]).not.toMatch(/s3cret|db\.example\.com|postgres:\/\//);
+    });
+
+    it("DB_SSL=false on a local host does not warn", () => {
+      const config = resolveDbConfig({
+        NODE_ENV: "development",
+        DB_HOST: "localhost",
+        DB_SSL: "false",
+      });
+      expect(config.ssl).toBe(false);
+      expect(config.warnings).toEqual([]);
+    });
+
     it("rejects an unknown DB_SSL value without echoing it", () => {
       const message = messageOf({ ...prod, DATABASE_URL: remoteUrl, DB_SSL: "bogus" });
       expect(message).toContain("DB_SSL");
