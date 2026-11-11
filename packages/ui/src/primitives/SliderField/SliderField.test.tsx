@@ -2,6 +2,7 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { colors } from "../../tokens";
 import { SliderField } from "./SliderField";
+import { sliderPillInput } from "./SliderField.styles";
 
 function lum(hex: string): number {
   const c = [1, 3, 5].map((i) => {
@@ -60,5 +61,58 @@ describe("SliderField Primitive", () => {
     expect(pill?.className).not.toContain("bd-c_border.subtle");
     // Light theme boundary vs the pill's own surface.sunken fill (slate.100), WCAG 1.4.11 needs >= 3.
     expect(ratio(colors.slate[500].value, colors.slate[100].value)).toBeGreaterThanOrEqual(3);
+  });
+
+  it("announces formatted value", () => {
+    render(
+      <SliderField
+        label="Price"
+        max={500000}
+        min={0}
+        unitPrefix="£"
+        value={250000}
+        onChange={vi.fn()}
+      />,
+    );
+    expect(screen.getByRole("slider").getAttribute("aria-valuetext")).toBe("£250,000");
+  });
+
+  it("suffix is appended", () => {
+    render(
+      <SliderField label="Rate" max={10} min={0} unitSuffix="%" value={4.5} onChange={vi.fn()} />,
+    );
+    expect(screen.getByRole("slider").getAttribute("aria-valuetext")).toBe("4.5%");
+  });
+
+  it("custom formatter wins", () => {
+    render(
+      <SliderField
+        formatValue={(v) => `${v} years`}
+        label="Term"
+        max={40}
+        min={1}
+        unitSuffix="%"
+        value={25}
+        onChange={vi.fn()}
+      />,
+    );
+    expect(screen.getByRole("slider").getAttribute("aria-valuetext")).toBe("25 years");
+  });
+
+  it("pill has focus-within outline using the focus ring token", () => {
+    render(<SliderField label="Rate" max={100} min={0} value={5} onChange={vi.fn()} />);
+    const pill = screen.getByLabelText("Rate input").parentElement;
+    expect(pill?.className).toContain("focusWithin:");
+    expect(pill?.className).toContain("focusWithin:ring-c_border.focusRing");
+  });
+
+  it("pill input is styled by a recipe, not inline css", () => {
+    render(<SliderField label="Rate" max={100} min={0} value={5} onChange={vi.fn()} />);
+    expect(sliderPillInput()).toBe(screen.getByLabelText("Rate input").className);
+  });
+
+  it("keeps focus-visible outline on the range slider", () => {
+    render(<SliderField label="Rate" max={100} min={0} value={5} onChange={vi.fn()} />);
+    expect(screen.getByRole("slider").className).toContain("focusVisible:");
   });
 });

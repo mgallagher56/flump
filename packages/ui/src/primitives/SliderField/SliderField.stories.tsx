@@ -47,3 +47,23 @@ export const Percentage: Story = {
     unitSuffix: "%",
   },
 };
+
+export const Dark: Story = {
+  globals: { theme: "dark" },
+  args: { value: 120 },
+};
+
+export const FocusWithinPill: Story = {
+  args: { value: 100 },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const pillInput = canvas.getByLabelText("Monthly Debt Overpayment input");
+    const slider = canvas.getByRole("slider");
+    await expect(slider).toHaveAttribute("aria-valuetext", "£100/mo");
+    for (let i = 0; i < 5 && document.activeElement !== pillInput; i++) {
+      await userEvent.tab();
+    }
+    await expect(pillInput).toHaveFocus();
+    await expect(pillInput.parentElement?.className).toContain("focusWithin:");
+  },
+};

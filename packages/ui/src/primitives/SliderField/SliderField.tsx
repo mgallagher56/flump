@@ -1,11 +1,13 @@
 import { type ChangeEvent, type FC, useId } from "react";
-import { css, cx } from "../../../styled-system/css";
+import { cx } from "../../../styled-system/css";
 import {
   sliderFieldContainer,
   sliderFieldHeader,
   sliderFieldLabel,
   sliderFieldValuePill,
+  sliderHelperText,
   sliderInputTrack,
+  sliderPillInput,
 } from "./SliderField.styles";
 
 export interface SliderFieldProps {
@@ -16,11 +18,15 @@ export interface SliderFieldProps {
   step?: number;
   unitPrefix?: string;
   unitSuffix?: string;
+  /** Formats the value for assistive tech (aria-valuetext). Defaults to en-GB number formatting with unitPrefix/unitSuffix. */
+  formatValue?: (value: number) => string;
   helperText?: string;
   onChange: (value: number) => void;
   className?: string;
   disabled?: boolean;
 }
+
+const numberFormat = new Intl.NumberFormat("en-GB", { maximumFractionDigits: 20 });
 
 export const SliderField: FC<SliderFieldProps> = ({
   label,
@@ -30,12 +36,16 @@ export const SliderField: FC<SliderFieldProps> = ({
   step = 1,
   unitPrefix = "",
   unitSuffix = "",
+  formatValue,
   helperText,
   onChange,
   className,
   disabled,
 }) => {
   const inputId = useId();
+  const valueText = formatValue
+    ? formatValue(value)
+    : `${unitPrefix}${numberFormat.format(value)}${unitSuffix}`;
 
   const handleSliderChange = (e: ChangeEvent<HTMLInputElement>) => {
     onChange(Number(e.target.value));
@@ -59,18 +69,7 @@ export const SliderField: FC<SliderFieldProps> = ({
           {unitPrefix && <span>{unitPrefix}</span>}
           <input
             aria-label={`${label} input`}
-            className={css({
-              width: "56px",
-              textAlign: "right",
-              border: "none",
-              backgroundColor: "transparent",
-              color: "primary",
-              fontWeight: "bold",
-              fontSize: "xs",
-              fontVariantNumeric: "tabular-nums",
-              p: "0",
-              outline: "none",
-            })}
+            className={sliderPillInput()}
             disabled={disabled}
             max={max}
             min={min}
@@ -85,6 +84,7 @@ export const SliderField: FC<SliderFieldProps> = ({
 
       <input
         aria-label={`${label} range slider`}
+        aria-valuetext={valueText}
         className={sliderInputTrack()}
         disabled={disabled}
         id={inputId}
@@ -96,11 +96,7 @@ export const SliderField: FC<SliderFieldProps> = ({
         onChange={handleSliderChange}
       />
 
-      {helperText && (
-        <span className={css({ fontSize: "xs", color: "text.muted", lineHeight: "1.3" })}>
-          {helperText}
-        </span>
-      )}
+      {helperText && <span className={sliderHelperText()}>{helperText}</span>}
     </div>
   );
 };
