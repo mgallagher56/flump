@@ -14,15 +14,20 @@ vi.mock("react-router", async (importOriginal) => ({
   useRouteLoaderData: () => mockRootData,
 }));
 
+const jsonRes = (body: unknown, status = 200) =>
+  new Response(body === undefined ? null : JSON.stringify(body), { status });
+
 describe("useUserProfile & HttpProfileAdapter", () => {
   const originalFetch = global.fetch;
 
   beforeEach(() => {
     global.fetch = vi.fn();
+    vi.stubGlobal("ENV", { VITE_API_URL: "https://api.example.test" });
   });
 
   afterEach(() => {
     global.fetch = originalFetch;
+    vi.unstubAllGlobals();
     vi.restoreAllMocks();
   });
 
@@ -73,97 +78,76 @@ describe("useUserProfile & HttpProfileAdapter", () => {
     const { result } = renderHook(() => useUserProfile());
 
     // updateProfile success
-    (global.fetch as any).mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({ ...DEFAULT_PROFILE, displayName: "Updated User" }),
-    });
+    (global.fetch as any).mockResolvedValueOnce(
+      jsonRes({ ...DEFAULT_PROFILE, displayName: "Updated User" }),
+    );
     await act(async () => {
       await result.current.updateProfile({ displayName: "Updated User" });
     });
     expect(result.current.profile.displayName).toBe("Updated User");
 
     // updateProfile error
-    (global.fetch as any).mockResolvedValueOnce({ ok: false });
-    await expect(result.current.updateProfile({ displayName: "Fail" })).rejects.toThrow(
-      "Failed to update profile",
-    );
+    (global.fetch as any).mockResolvedValueOnce(jsonRes(undefined, 503));
+    await expect(result.current.updateProfile({ displayName: "Fail" })).rejects.toThrow(/server/);
 
     // markChecklistStep success & failure
-    (global.fetch as any).mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({ ...DEFAULT_PROFILE, setupChecklistCompletedSteps: ["budget"] }),
-    });
+    (global.fetch as any).mockResolvedValueOnce(
+      jsonRes({ ...DEFAULT_PROFILE, setupChecklistCompletedSteps: ["budget"] }),
+    );
     await act(async () => {
       await result.current.markChecklistStep("budget", true);
     });
     expect(result.current.profile.setupChecklistCompletedSteps).toEqual(["budget"]);
 
-    (global.fetch as any).mockResolvedValueOnce({ ok: false });
-    await expect(result.current.markChecklistStep("budget", false)).rejects.toThrow(
-      "Failed to update checklist",
-    );
+    (global.fetch as any).mockResolvedValueOnce(jsonRes(undefined, 503));
+    await expect(result.current.markChecklistStep("budget", false)).rejects.toThrow(/server/);
 
     // changePassword success & failure
-    (global.fetch as any).mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({ success: true, message: "Password updated" }),
-    });
+    (global.fetch as any).mockResolvedValueOnce(
+      jsonRes({ success: true, message: "Password updated" }),
+    );
     const pwRes = await result.current.changePassword("NewSecret123!");
     expect(pwRes.success).toBe(true);
 
-    (global.fetch as any).mockResolvedValueOnce({
-      ok: false,
-      json: async () => ({ message: "Weak password" }),
-    });
+    (global.fetch as any).mockResolvedValueOnce(jsonRes({ message: "Weak password" }, 400));
     await expect(result.current.changePassword("123")).rejects.toThrow("Weak password");
 
     // sendPasswordResetEmail success & failure
-    (global.fetch as any).mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({ success: true, message: "Reset sent" }),
-    });
+    (global.fetch as any).mockResolvedValueOnce(jsonRes({ success: true, message: "Reset sent" }));
     const resetRes = await result.current.sendPasswordResetEmail("user@example.com");
     expect(resetRes.success).toBe(true);
 
-    (global.fetch as any).mockResolvedValueOnce({
-      ok: false,
-      json: async () => ({}),
-    });
+    (global.fetch as any).mockResolvedValueOnce(jsonRes({}, 400));
     await expect(result.current.sendPasswordResetEmail("user@example.com")).rejects.toThrow(
       "Failed to send password reset email",
     );
 
     // resetFinancialData success & failure
-    (global.fetch as any).mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({ profile: { ...DEFAULT_PROFILE, hasResetFinancialData: true } }),
-    });
+    (global.fetch as any).mockResolvedValueOnce(
+      jsonRes({ profile: { ...DEFAULT_PROFILE, hasResetFinancialData: true } }),
+    );
     await act(async () => {
       await result.current.resetFinancialData();
     });
     expect(result.current.profile.hasResetFinancialData).toBe(true);
 
-    (global.fetch as any).mockResolvedValueOnce({
-      ok: false,
-      json: async () => ({ message: "Reset failed" }),
-    });
+    (global.fetch as any).mockResolvedValueOnce(jsonRes({ message: "Reset failed" }, 400));
     await expect(result.current.resetFinancialData()).rejects.toThrow("Reset failed");
   });
 
   it("exercises HttpProfileAdapter methods", async () => {
     const adapter = new HttpProfileAdapter(() => "custom-token");
 
-    (global.fetch as any).mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({ ...DEFAULT_PROFILE, annualSalary: 68000 }),
-    });
+    (global.fetch as any).mockResolvedValueOnce(
+      jsonRes({ ...DEFAULT_PROFILE, annualSalary: 68000 }),
+    );
     const baseline = await adapter.getBaseline();
     expect(baseline?.annualGrossSalary).toBe(68000);
 
-    (global.fetch as any).mockResolvedValueOnce({ ok: false });
-    expect(await adapter.getBaseline()).toBeNull();
+    (global.fetch as any).mockResolvedValueOnce(jsonRes(undefined, 503));
+    await expect(adapter.getBaseline()).rejects.toMatchObject({ kind: "server" });
 
-    (global.fetch as any).mockResolvedValueOnce({ ok: true });
+    (global.fetch as any).mockResolvedValueOnce(jsonRes(undefined, 204));
     await adapter.saveBaseline(DEFAULT_FINANCIAL_BASELINE);
     expect(global.fetch).toHaveBeenCalled();
 

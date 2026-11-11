@@ -11,6 +11,8 @@ import {
 import { atom, useAtom } from "jotai";
 import { useCallback } from "react";
 import { useRouteLoaderData } from "react-router";
+import { apiFetch } from "~/services/api-client";
+import { BackendError } from "~/services/backend-error";
 import { financialBaselineAtom } from "~/state/baseline.store";
 
 export interface UserProfile {
@@ -251,9 +253,9 @@ export const userProfileAtom = atom<UserProfile>(DEFAULT_PROFILE);
  * The profile is fetched once via the loader and set into the atom.
  * Components can read and mutate profile data through this hook.
  */
-function bearer(token: string | null | undefined): string {
-  if (!token) throw new Error("Not signed in: no access token available");
-  return `Bearer ${token}`;
+function messageFrom(err: unknown, fallback: string): Error {
+  if (err instanceof BackendError) return new Error(err.detail ?? fallback);
+  return err instanceof Error ? err : new Error(fallback);
 }
 
 export function useUserProfile() {
@@ -283,20 +285,11 @@ export function useUserProfile() {
 
   const updateProfile = useCallback(
     async (updates: UserProfileUpdate): Promise<void> => {
-      const apiUrl =
-        (window as Window & { ENV?: { VITE_API_URL?: string } }).ENV?.VITE_API_URL ??
-        import.meta.env.VITE_API_URL ??
-        "http://localhost:4000";
-      const res = await fetch(`${apiUrl}/user-profile`, {
+      const updated = await apiFetch<UserProfile>("/user-profile", {
+        accessToken,
         method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: bearer(accessToken),
-        },
-        body: JSON.stringify(updates),
+        body: updates,
       });
-      if (!res.ok) throw new Error("Failed to update profile");
-      const updated = (await res.json()) as UserProfile;
       setProfile(updated);
     },
     [setProfile, accessToken],
@@ -304,20 +297,11 @@ export function useUserProfile() {
 
   const markChecklistStep = useCallback(
     async (step: string, completed: boolean): Promise<void> => {
-      const apiUrl =
-        (window as Window & { ENV?: { VITE_API_URL?: string } }).ENV?.VITE_API_URL ??
-        import.meta.env.VITE_API_URL ??
-        "http://localhost:4000";
-      const res = await fetch(`${apiUrl}/user-profile/checklist`, {
+      const updated = await apiFetch<UserProfile>("/user-profile/checklist", {
+        accessToken,
         method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: bearer(accessToken),
-        },
-        body: JSON.stringify({ step, completed }),
+        body: { step, completed },
       });
-      if (!res.ok) throw new Error("Failed to update checklist");
-      const updated = (await res.json()) as UserProfile;
       setProfile(updated);
     },
     [setProfile, accessToken],
@@ -325,68 +309,44 @@ export function useUserProfile() {
 
   const changePassword = useCallback(
     async (newPassword: string): Promise<{ success: boolean; message: string }> => {
-      const apiUrl =
-        (window as Window & { ENV?: { VITE_API_URL?: string } }).ENV?.VITE_API_URL ??
-        import.meta.env.VITE_API_URL ??
-        "http://localhost:4000";
-      const res = await fetch(`${apiUrl}/user-profile/change-password`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: bearer(accessToken),
-        },
-        body: JSON.stringify({ newPassword }),
-      });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.message || "Failed to update password");
+      try {
+        return await apiFetch<{ success: boolean; message: string }>(
+          "/user-profile/change-password",
+          { accessToken, method: "POST", body: { newPassword } },
+        );
+      } catch (err) {
+        throw messageFrom(err, "Failed to update password");
       }
-      return res.json();
     },
     [accessToken],
   );
 
   const sendPasswordResetEmail = useCallback(
     async (email?: string): Promise<{ success: boolean; message: string }> => {
-      const apiUrl =
-        (window as Window & { ENV?: { VITE_API_URL?: string } }).ENV?.VITE_API_URL ??
-        import.meta.env.VITE_API_URL ??
-        "http://localhost:4000";
-      const res = await fetch(`${apiUrl}/user-profile/send-password-reset`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: bearer(accessToken),
-        },
-        body: JSON.stringify({ email }),
-      });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.message || "Failed to send password reset email");
+      try {
+        return await apiFetch<{ success: boolean; message: string }>(
+          "/user-profile/send-password-reset",
+          { accessToken, method: "POST", body: { email } },
+        );
+      } catch (err) {
+        throw messageFrom(err, "Failed to send password reset email");
       }
-      return res.json();
     },
     [accessToken],
   );
 
   const resetFinancialData = useCallback(async (): Promise<void> => {
-    const apiUrl =
-      (window as Window & { ENV?: { VITE_API_URL?: string } }).ENV?.VITE_API_URL ??
-      import.meta.env.VITE_API_URL ??
-      "http://localhost:4000";
-    const res = await fetch(`${apiUrl}/user-profile/reset-financial-data`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: bearer(accessToken),
-      },
-    });
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      throw new Error(err.message || "Failed to reset financial data");
+    let result: { profile?: UserProfile } | undefined;
+    try {
+      result = await apiFetch<{ profile?: UserProfile }>("/user-profile/reset-financial-data", {
+        accessToken,
+        method: "POST",
+        body: {},
+      });
+    } catch (err) {
+      throw messageFrom(err, "Failed to reset financial data");
     }
-    const result = await res.json();
-    if (result.profile) {
+    if (result?.profile) {
       setProfile(result.profile);
     }
   }, [setProfile, accessToken]);
@@ -405,36 +365,18 @@ export function useUserProfile() {
 export class HttpProfileAdapter implements ProfilePersistenceAdapter {
   constructor(private getAuthToken?: () => string | null | undefined) {}
 
-  private getBaseUrl(): string {
-    return (
-      (window as Window & { ENV?: { VITE_API_URL?: string } }).ENV?.VITE_API_URL ??
-      import.meta.env.VITE_API_URL ??
-      "http://localhost:4000"
-    );
-  }
-
   async getBaseline(): Promise<FinancialBaseline | null> {
-    const token = this.getAuthToken?.();
-    if (!token) throw new Error("Not signed in: no access token available");
-    const res = await fetch(`${this.getBaseUrl()}/user-profile`, {
-      headers: { Authorization: `Bearer ${token}` },
+    const profile = await apiFetch<UserProfile>("/user-profile", {
+      accessToken: this.getAuthToken?.(),
     });
-    if (!res.ok) return null;
-    const profile = await res.json();
     return userProfileToFinancialBaseline(profile);
   }
 
   async saveBaseline(baseline: FinancialBaseline): Promise<void> {
-    const token = this.getAuthToken?.();
-    if (!token) throw new Error("Not signed in: no access token available");
-    const updates = financialBaselineToUserProfileUpdate(baseline);
-    await fetch(`${this.getBaseUrl()}/user-profile`, {
+    await apiFetch<unknown>("/user-profile", {
+      accessToken: this.getAuthToken?.(),
       method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify(updates),
+      body: financialBaselineToUserProfileUpdate(baseline),
     });
   }
 

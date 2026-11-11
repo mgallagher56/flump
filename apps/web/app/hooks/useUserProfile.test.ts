@@ -8,13 +8,18 @@ vi.mock("react-router", async (importOriginal) => ({
   useRouteLoaderData: () => mockRootData,
 }));
 
+const jsonRes = (body: unknown, status = 200) =>
+  new Response(body === undefined ? null : JSON.stringify(body), { status });
+
 describe("useUserProfile", () => {
   beforeEach(() => {
     mockRootData = { accessToken: "test-token" };
     vi.stubGlobal("fetch", vi.fn());
+    vi.stubGlobal("ENV", { VITE_API_URL: "https://api.example.test" });
   });
 
   afterEach(() => {
+    vi.unstubAllGlobals();
     vi.restoreAllMocks();
   });
 
@@ -50,9 +55,22 @@ describe("useUserProfile", () => {
     const { result } = renderHook(() => useUserProfile());
 
     await expect(result.current.updateProfile({ displayName: "X" })).rejects.toThrow(
-      /no access token/i,
+      /unauthorised/i,
     );
     expect(global.fetch).not.toHaveBeenCalled();
+  });
+
+  test("updateProfile rejects with an unavailable BackendError on 503", async () => {
+    (global.fetch as any).mockResolvedValueOnce(jsonRes(undefined, 503));
+    const { result } = renderHook(() => useUserProfile());
+    await expect(result.current.updateProfile({ displayName: "X" })).rejects.toMatchObject({
+      name: "BackendError",
+      kind: "server",
+    });
+    (global.fetch as any).mockRejectedValueOnce(new TypeError("Failed to fetch"));
+    await expect(result.current.updateProfile({ displayName: "X" })).rejects.toMatchObject({
+      kind: "unavailable",
+    });
   });
 
   test("updateProfile sends PATCH request and updates state", async () => {
@@ -62,10 +80,7 @@ describe("useUserProfile", () => {
       annualSalary: 80000,
     };
 
-    (global.fetch as any).mockResolvedValueOnce({
-      ok: true,
-      json: async () => mockUpdated,
-    });
+    (global.fetch as any).mockResolvedValueOnce(jsonRes(mockUpdated));
 
     const { result } = renderHook(() => useUserProfile());
 
@@ -89,10 +104,7 @@ describe("useUserProfile", () => {
       setupChecklistCompletedSteps: ["step1"],
     };
 
-    (global.fetch as any).mockResolvedValueOnce({
-      ok: true,
-      json: async () => mockUpdated,
-    });
+    (global.fetch as any).mockResolvedValueOnce(jsonRes(mockUpdated));
 
     const { result } = renderHook(() => useUserProfile());
 
@@ -110,10 +122,9 @@ describe("useUserProfile", () => {
   });
 
   test("changePassword sends POST request", async () => {
-    (global.fetch as any).mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({ success: true, message: "Password updated" }),
-    });
+    (global.fetch as any).mockResolvedValueOnce(
+      jsonRes({ success: true, message: "Password updated" }),
+    );
 
     const { result } = renderHook(() => useUserProfile());
 
@@ -122,10 +133,9 @@ describe("useUserProfile", () => {
   });
 
   test("sendPasswordResetEmail sends request", async () => {
-    (global.fetch as any).mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({ success: true, message: "Reset email sent" }),
-    });
+    (global.fetch as any).mockResolvedValueOnce(
+      jsonRes({ success: true, message: "Reset email sent" }),
+    );
 
     const { result } = renderHook(() => useUserProfile());
 
@@ -139,10 +149,7 @@ describe("useUserProfile", () => {
       hasResetFinancialData: true,
     };
 
-    (global.fetch as any).mockResolvedValueOnce({
-      ok: true,
-      json: async () => mockUpdated,
-    });
+    (global.fetch as any).mockResolvedValueOnce(jsonRes(mockUpdated));
 
     const { result } = renderHook(() => useUserProfile());
 
