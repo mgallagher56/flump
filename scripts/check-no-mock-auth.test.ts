@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 
@@ -78,6 +78,19 @@ describe("check-no-mock-auth.sh", () => {
     writeFixture("src/bar.spec.tsx", "const u = 'user_mock';\n");
 
     const result = runCheck(root);
+
+    expect(result.exitCode).toBe(0);
+    expect(result.stdout).toContain("OK:");
+  });
+
+  test("allow-lists the RemoveSeededExampleData migration, which must name the retired mock ids", () => {
+    const migration = "apps/backend/src/migrations/RemoveSeededExampleData1794355400000.ts";
+    // The migration really contains a literal, so passing proves the allow-list entry works.
+    expect(readFileSync(resolve(import.meta.dir, "..", migration), "utf8")).toMatch(
+      /user_mock|dev_user_123/,
+    );
+
+    const result = runCheck("apps/backend/src/migrations");
 
     expect(result.exitCode).toBe(0);
     expect(result.stdout).toContain("OK:");
