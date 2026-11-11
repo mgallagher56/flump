@@ -77,11 +77,90 @@ describe("apiFetch", () => {
     });
   });
 
-  it("returns undefined for 204 and empty bodies", async () => {
+  it("returns undefined for 204 and empty bodies only when allowEmpty is set", async () => {
     fetchMock.mockResolvedValueOnce(respond(204));
-    await expect(apiFetch("/x", { accessToken: "t" })).resolves.toBeUndefined();
+    await expect(apiFetch("/x", { accessToken: "t", allowEmpty: true })).resolves.toBeUndefined();
     fetchMock.mockResolvedValueOnce(respond(200, ""));
-    await expect(apiFetch("/x", { accessToken: "t" })).resolves.toBeUndefined();
+    await expect(apiFetch("/x", { accessToken: "t", allowEmpty: true })).resolves.toBeUndefined();
+  });
+
+  it("treats an empty or 204 body as bad-response by default", async () => {
+    fetchMock.mockResolvedValueOnce(respond(204));
+    await expect(apiFetch("/x", { accessToken: "t" })).rejects.toMatchObject({
+      kind: "bad-response",
+    });
+    fetchMock.mockResolvedValueOnce(respond(200, "  "));
+    await expect(apiFetch("/x", { accessToken: "t" })).rejects.toMatchObject({
+      kind: "bad-response",
+    });
+  });
+
+  it("keeps detail for 4xx other than 401 and 403", async () => {
+    for (const status of [400, 404, 422]) {
+      fetchMock.mockResolvedValueOnce(respond(status, JSON.stringify({ message: "Nope" })));
+      const err = (await apiFetch("/x", { accessToken: "t" }).catch((e) => e)) as BackendError;
+      expect(err.detail).toBe("Nope");
+    }
+  });
+
+  it("drops detail for 401, 403 and 5xx", async () => {
+    for (const status of [401, 403, 500, 503]) {
+      fetchMock.mockResolvedValueOnce(respond(status, JSON.stringify({ message: "Secret" })));
+      const err = (await apiFetch("/x", { accessToken: "t" }).catch((e) => e)) as BackendError;
+      expect(err.detail).toBeUndefined();
+    }
+  });
+
+  describe("timeout and abort", () => {
+    afterEach(() => vi.useRealTimers());
+
+    it("aborts after the default 15000 ms and reports unavailable", async () => {
+      vi.useFakeTimers();
+      fetchMock.mockImplementation(
+        (_url: string, init: RequestInit) =>
+          new Promise((_resolve, reject) => {
+            init.signal?.addEventListener("abort", () => reject(init.signal?.reason));
+          }),
+      );
+      const result = apiFetch("/x", { accessToken: "t" }).catch((e) => e);
+      await vi.advanceTimersByTimeAsync(14999);
+      expect(fetchMock.mock.calls[0][1].signal.aborted).toBe(false);
+      await vi.advanceTimersByTimeAsync(2);
+      const err = (await result) as BackendError;
+      expect(err).toBeInstanceOf(BackendError);
+      expect(err.kind).toBe("unavailable");
+    });
+
+    it("honours a custom timeoutMs", async () => {
+      vi.useFakeTimers();
+      fetchMock.mockImplementation(
+        (_url: string, init: RequestInit) =>
+          new Promise((_resolve, reject) => {
+            init.signal?.addEventListener("abort", () => reject(init.signal?.reason));
+          }),
+      );
+      const result = apiFetch("/x", { accessToken: "t", timeoutMs: 100 }).catch((e) => e);
+      await vi.advanceTimersByTimeAsync(101);
+      expect(((await result) as BackendError).kind).toBe("unavailable");
+    });
+
+    it("rethrows a caller abort as is, not as a backend failure", async () => {
+      const controller = new AbortController();
+      const reason = new DOMException("Aborted", "AbortError");
+      fetchMock.mockImplementation(
+        (_url: string, init: RequestInit) =>
+          new Promise((_resolve, reject) => {
+            init.signal?.addEventListener("abort", () => reject(init.signal?.reason));
+          }),
+      );
+      const result = apiFetch("/x", { accessToken: "t", signal: controller.signal }).catch(
+        (e) => e,
+      );
+      controller.abort(reason);
+      const err = await result;
+      expect(err).toBe(reason);
+      expect(err).not.toBeInstanceOf(BackendError);
+    });
   });
 
   it("maps invalid JSON to bad-response", async () => {
