@@ -1,9 +1,8 @@
-import { Button } from "@repo/ui";
 import { css } from "@repo/ui/styled-system/css";
-import { flex, grid, stack } from "@repo/ui/styled-system/patterns";
-import { type FC, useState } from "react";
+import { grid } from "@repo/ui/styled-system/patterns";
+import type { FC } from "react";
 import { Helmet } from "react-helmet-async";
-import { FiCheckCircle, FiEyeOff, FiLock, FiMail, FiSend, FiShield, FiX } from "react-icons/fi";
+import { FiCheckCircle, FiEyeOff, FiLock, FiShield } from "react-icons/fi";
 import { Footer } from "../components/Footer";
 import { Header } from "../components/Header";
 
@@ -24,30 +23,6 @@ const sectionCardStyle = css({
   mb: "8",
 });
 
-const modalOverlayStyle = css({
-  position: "fixed",
-  inset: 0,
-  backgroundColor: "rgba(15, 23, 42, 0.6)",
-  backdropFilter: "blur(4px)",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  zIndex: 50,
-  p: "4",
-});
-
-const modalContentStyle = css({
-  backgroundColor: { base: "#ffffff", _dark: "dark.surface" },
-  border: "1px solid",
-  borderColor: { base: "slate.200", _dark: "slate.800" },
-  borderRadius: "2xl",
-  maxWidth: "500px",
-  width: "100%",
-  p: "6",
-  boxShadow: "0 20px 50px rgba(0,0,0,0.2)",
-  position: "relative",
-});
-
 const securityTitleStyle = css({
   fontSize: "1.25rem",
   fontWeight: "700",
@@ -62,23 +37,6 @@ const securityDescStyle = css({
 });
 
 export const SecurityPage: FC = () => {
-  const [modalOpen, setModalOpen] = useState(false);
-  const [inquiryName, setInquiryName] = useState("");
-  const [inquiryEmail, setInquiryEmail] = useState("");
-  const [inquirySubject, setInquirySubject] = useState("Security Question");
-  const [inquiryMessage, setInquiryMessage] = useState("");
-  const [submitted, setSubmitted] = useState(false);
-
-  const handleSubmitInquiry = (e: React.FormEvent) => {
-    e.preventDefault();
-    setSubmitted(true);
-    setTimeout(() => {
-      setSubmitted(false);
-      setModalOpen(false);
-      setInquiryMessage("");
-    }, 2500);
-  };
-
   return (
     <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
       <Helmet>
@@ -126,12 +84,6 @@ export const SecurityPage: FC = () => {
               Flump is designed around the principle of minimal data access, AES-256-GCM encryption
               at rest, TLS 1.3 in transit, and absolute user ownership.
             </p>
-
-            <div style={{ marginTop: "20px" }}>
-              <Button size="sm" variant="outline" onClick={() => setModalOpen(true)}>
-                <FiMail style={{ marginRight: "6px" }} /> Contact security and support
-              </Button>
-            </div>
           </div>
 
           {/* Core Guarantees Grid */}
@@ -408,194 +360,6 @@ export const SecurityPage: FC = () => {
             </div>
           </div>
         </section>
-
-        {/* Lightweight Support / Security Modal */}
-        {modalOpen && (
-          <div className={modalOverlayStyle}>
-            <button
-              type="button"
-              aria-label="Close modal backdrop"
-              onClick={() => setModalOpen(false)}
-              style={{
-                position: "absolute",
-                inset: 0,
-                width: "100%",
-                height: "100%",
-                background: "transparent",
-                border: "none",
-                cursor: "pointer",
-              }}
-            />
-            <div
-              role="dialog"
-              aria-modal="true"
-              aria-labelledby="security-modal-title"
-              className={modalContentStyle}
-              style={{ position: "relative", zIndex: 1 }}
-            >
-              <div className={flex({ justify: "space-between", align: "center", mb: "4" })}>
-                <h3
-                  id="security-modal-title"
-                  style={{
-                    fontSize: "1.2rem",
-                    fontWeight: "700",
-                    color: "var(--colors-text-primary, #0f172a)",
-                    margin: 0,
-                  }}
-                >
-                  Security and compliance enquiry
-                </h3>
-                <button
-                  type="button"
-                  onClick={() => setModalOpen(false)}
-                  style={{
-                    background: "none",
-                    border: "none",
-                    cursor: "pointer",
-                    color: "#94a3b8",
-                  }}
-                >
-                  <FiX size={20} />
-                </button>
-              </div>
-
-              {submitted ? (
-                <div style={{ textAlign: "center", padding: "24px 0", color: "#059669" }}>
-                  <FiCheckCircle size={40} style={{ margin: "0 auto 12px" }} />
-                  <p style={{ fontWeight: "700", fontSize: "1.1rem" }}>Enquiry sent</p>
-                  <p style={{ fontSize: "13px", color: "var(--colors-text-muted, #64748b)" }}>
-                    Our compliance team will respond within 1 business day.
-                  </p>
-                </div>
-              ) : (
-                <form onSubmit={handleSubmitInquiry} className={stack({ gap: "3" })}>
-                  <label style={{ display: "block" }}>
-                    <span
-                      style={{
-                        fontSize: "12px",
-                        fontWeight: "600",
-                        color: "var(--colors-text-muted, #475569)",
-                        display: "block",
-                      }}
-                    >
-                      Your name
-                    </span>
-                    <input
-                      type="text"
-                      required
-                      value={inquiryName}
-                      onChange={(e) => setInquiryName(e.target.value)}
-                      placeholder="Jane Doe"
-                      style={{
-                        width: "100%",
-                        padding: "8px 12px",
-                        borderRadius: "8px",
-                        border: "1px solid var(--colors-border, #cbd5e1)",
-                        backgroundColor: "var(--colors-background, #ffffff)",
-                        color: "var(--colors-text-primary, #0f172a)",
-                        marginTop: "4px",
-                      }}
-                    />
-                  </label>
-                  <label style={{ display: "block" }}>
-                    <span
-                      style={{
-                        fontSize: "12px",
-                        fontWeight: "600",
-                        color: "var(--colors-text-muted, #475569)",
-                        display: "block",
-                      }}
-                    >
-                      Your email
-                    </span>
-                    <input
-                      type="email"
-                      required
-                      value={inquiryEmail}
-                      onChange={(e) => setInquiryEmail(e.target.value)}
-                      placeholder="jane@example.co.uk"
-                      style={{
-                        width: "100%",
-                        padding: "8px 12px",
-                        borderRadius: "8px",
-                        border: "1px solid var(--colors-border, #cbd5e1)",
-                        backgroundColor: "var(--colors-background, #ffffff)",
-                        color: "var(--colors-text-primary, #0f172a)",
-                        marginTop: "4px",
-                      }}
-                    />
-                  </label>
-                  <label style={{ display: "block" }}>
-                    <span
-                      style={{
-                        fontSize: "12px",
-                        fontWeight: "600",
-                        color: "var(--colors-text-muted, #475569)",
-                        display: "block",
-                      }}
-                    >
-                      Enquiry type
-                    </span>
-                    <select
-                      value={inquirySubject}
-                      onChange={(e) => setInquirySubject(e.target.value)}
-                      style={{
-                        width: "100%",
-                        padding: "8px 12px",
-                        borderRadius: "8px",
-                        border: "1px solid var(--colors-border, #cbd5e1)",
-                        backgroundColor: "var(--colors-background, #ffffff)",
-                        color: "var(--colors-text-primary, #0f172a)",
-                        marginTop: "4px",
-                      }}
-                    >
-                      <option value="Security Question">Security and encryption details</option>
-                      <option value="FCA Scope">Open Banking / AISP clarification</option>
-                      <option value="GDPR Data Request">UK GDPR / data subject request</option>
-                      <option value="General Support">General support enquiry</option>
-                    </select>
-                  </label>
-                  <label style={{ display: "block" }}>
-                    <span
-                      style={{
-                        fontSize: "12px",
-                        fontWeight: "600",
-                        color: "var(--colors-text-muted, #475569)",
-                        display: "block",
-                      }}
-                    >
-                      Message
-                    </span>
-                    <textarea
-                      required
-                      rows={3}
-                      value={inquiryMessage}
-                      onChange={(e) => setInquiryMessage(e.target.value)}
-                      placeholder="How can our compliance team assist?"
-                      style={{
-                        width: "100%",
-                        padding: "8px 12px",
-                        borderRadius: "8px",
-                        border: "1px solid var(--colors-border, #cbd5e1)",
-                        backgroundColor: "var(--colors-background, #ffffff)",
-                        color: "var(--colors-text-primary, #0f172a)",
-                        marginTop: "4px",
-                      }}
-                    />
-                  </label>
-
-                  <Button
-                    type="submit"
-                    variant="primary"
-                    style={{ marginTop: "12px", justifyContent: "center" }}
-                  >
-                    <FiSend style={{ marginRight: "6px" }} /> Submit enquiry
-                  </Button>
-                </form>
-              )}
-            </div>
-          </div>
-        )}
       </main>
 
       <Footer />
