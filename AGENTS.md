@@ -49,3 +49,20 @@ Before creating or pushing to any Pull Request, agents MUST run and verify all f
 4. `bun run build` (successful compilation across all packages and apps)
 
 Never open, push, or ask the user to merge a PR without executing this exact 4-step sequence and confirming all checks pass with zero errors.
+
+## 6. SUBAGENT MODEL LAW
+
+When spawning any subagent (Agent/Task tool, workflows, parallel agents, or session forks that accept a model override), agents MUST set the model to `sonnet` or `haiku`. The only exception is planning: `opus` is allowed for subagents whose sole job is producing an implementation plan. Never use `fable`, never use `opus` for anything other than planning, and never leave the model to inherit from the parent session.
+
+- Use `haiku` for read-only search, exploration, and simple mechanical tasks.
+- Use `sonnet` for implementation, code review, and anything else requiring reasoning.
+- Use `opus` only for planning (designing implementation plans, architectural trade-offs). Planning subagents must stay read-only.
+
+Enforcement lives in `.claude/`:
+
+- `.claude/agents/explorer.md` (`model: haiku`, read-only tools) — prefer this for search and exploration.
+- `.claude/agents/implementer.md` (`model: sonnet`) — prefer this for writing code and review.
+- `.claude/agents/planner.md` (`model: opus`, read-only tools) — prefer this over the built-in `Plan` agent for planning.
+- `.claude/settings.json` sets `CLAUDE_CODE_SUBAGENT_MODEL=sonnet` as the default for any subagent (including built-ins such as `Explore`, `Plan`, `general-purpose`) that has no model of its own.
+
+A per-spawn `model` parameter overrides both frontmatter and the default, so only pass `opus` there for planning, and never pass `fable`. In workflow scripts, every `agent()` call must pass `model: 'sonnet'` or `model: 'haiku'` (or `'opus'` for a planning stage), or use `agentType: 'explorer' | 'implementer' | 'planner'` — never omit both.
