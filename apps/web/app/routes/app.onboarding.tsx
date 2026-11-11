@@ -6,7 +6,7 @@ import {
   readOnboardingSeed,
 } from "@flump/finance-engine";
 import { css } from "@repo/ui/styled-system/css";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   FaArrowLeft,
   FaArrowRight,
@@ -32,6 +32,7 @@ import FLPText from "~/components/core/typography/FLPText";
 import HomeLogo from "~/components/navigation/HomeLogo";
 import type { UserProfile } from "~/hooks/useUserProfile";
 import { useUserProfile } from "~/hooks/useUserProfile";
+import { apiFetch } from "~/services/api-client";
 import { backendFetch } from "~/services/backend-client.server";
 import { actionErrorResponse, throwRouteError } from "~/services/route-error.server";
 import { useFinancialBaseline } from "~/state/baseline.store";
@@ -82,12 +83,16 @@ export const action = async (args: ActionFunctionArgs) => {
   return redirect("/");
 };
 
+const FINISH_ERROR = "We couldn't save your details. Check your connection and try again.";
+
 export default function OnboardingRoute() {
   const { userProfile, user, accessToken } = useLoaderData<typeof loader>();
   const navigate = useNavigate();
   const actionData = useActionData<typeof action>();
   const actionError =
     actionData && "success" in actionData && actionData.success === false ? actionData.error : null;
+  const [clientError, setClientError] = useState<string | null>(null);
+  const seededRef = useRef<Set<string>>(new Set());
   const { updateProfile } = useUserProfile();
   const { updateBaseline } = useFinancialBaseline();
 
@@ -220,6 +225,7 @@ export default function OnboardingRoute() {
 
   const handleFinish = async () => {
     setIsSubmitting(true);
+    setClientError(null);
     const pagesToSave = inferredModules;
     const dashboardWidgets: DashboardWidgetKey[] = [...(pagesToSave as DashboardWidgetKey[])];
     const dashboardWidgetOrder: DashboardWidgetKey[] = [...(pagesToSave as DashboardWidgetKey[])];
@@ -281,44 +287,35 @@ export default function OnboardingRoute() {
       });
 
       // 3. Seed initial baseline accounts and budget entries
-      const apiUrl =
-        (window as Window & { ENV?: { VITE_API_URL?: string } }).ENV?.VITE_API_URL ??
-        import.meta.env.VITE_API_URL ??
-        "http://localhost:4000";
-      const authHdr = accessToken ? `Bearer ${accessToken}` : null;
-
-      const createAccountSafe = async (name: string, type: string, balance: number) => {
-        if (!authHdr || balance <= 0) return;
-        try {
-          await fetch(`${apiUrl}/accounts`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json", Authorization: authHdr },
-            body: JSON.stringify({ name, type, balance, isCurrent: true }),
-          });
-        } catch {
-          // Ignore network errors in test environment
-        }
+      // Jobs that already succeeded are remembered so a retry never creates duplicates.
+      const runSeed = async (key: string, endpoint: string, payload: unknown, enabled: boolean) => {
+        if (!enabled || seededRef.current.has(key)) return;
+        await apiFetch<unknown>(endpoint, { accessToken, method: "POST", body: payload });
+        seededRef.current.add(key);
       };
 
-      const createBudgetEntrySafe = async (
+      const createAccountSafe = (name: string, type: string, balance: number) =>
+        runSeed(
+          `account:${name}`,
+          "/accounts",
+          { name, type, balance, isCurrent: true },
+          balance > 0,
+        );
+
+      const createBudgetEntrySafe = (
         title: string,
         category: string,
         amount: number,
         isIncome: boolean,
-      ) => {
-        if (!authHdr || amount <= 0) return;
-        try {
-          await fetch(`${apiUrl}/budget-entries`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json", Authorization: authHdr },
-            body: JSON.stringify({ title, category, amount, isIncome, frequency: "monthly" }),
-          });
-        } catch {
-          // Ignore network errors in test environment
-        }
-      };
+      ) =>
+        runSeed(
+          `entry:${title}`,
+          "/budget-entries",
+          { title, category, amount, isIncome, frequency: "monthly" },
+          amount > 0,
+        );
 
-      await Promise.allSettled([
+      const seedResults = await Promise.allSettled([
         createAccountSafe("Cash and emergency savings", "Saving", cashSavings),
         createAccountSafe("Workplace and personal pension", "Pension", pensionPot),
         ...(mortgageBalance > 0
@@ -355,11 +352,16 @@ export default function OnboardingRoute() {
           : []),
       ]);
 
+      if (seedResults.some((r) => r.status === "rejected")) {
+        setClientError(FINISH_ERROR);
+        return;
+      }
+
       clearOnboardingSeed();
       navigate("/");
     } catch (err) {
       console.error("Error saving onboarding settings:", err);
-      navigate("/");
+      setClientError(FINISH_ERROR);
     } finally {
       setIsSubmitting(false);
     }
@@ -422,7 +424,7 @@ export default function OnboardingRoute() {
           </span>
         </div>
 
-        {actionError && (
+        {(clientError ?? actionError) && (
           <div
             role="alert"
             className={css({
@@ -435,7 +437,7 @@ export default function OnboardingRoute() {
               borderColor: "status.danger.border",
             })}
           >
-            {actionError}
+            {clientError ?? actionError}
           </div>
         )}
 

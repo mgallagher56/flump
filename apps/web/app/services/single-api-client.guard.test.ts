@@ -28,7 +28,7 @@ const RULES: Rule[] = [
   {
     id: "vite-api-url-read",
     pattern: /(?:process\.env|import\.meta\.env|\.env\??|\bENV\??)\??\.VITE_API_URL/,
-    exempt: ["config.server.ts"],
+    exempt: ["config.server.ts", "services/api-client.ts"],
   },
   {
     id: "direct-api-fetch",
@@ -62,23 +62,10 @@ interface AllowEntry {
 }
 
 /**
- * Remaining offenders. 3 distinct files carry the 8 base URL fallback lines (14 before the route
- * actions moved to backendFetch). Remove an entry when the file is migrated to backend-client.server.ts or services/api-client.ts.
+ * Remaining offenders. Empty: every file uses backend-client.server.ts or services/api-client.ts.
+ * Do not add entries; fix the file instead.
  */
-const ALLOW_LIST: Record<string, AllowEntry> = {
-  "hooks/useUserProfile.ts": {
-    reason: "Client hook and HttpProfileAdapter read the URL from window.ENV, env and a literal",
-    rules: { "localhost-4000": 6, "vite-api-url-read": 12, "direct-api-fetch": 7 },
-  },
-  "containers/budget/BudgetContainer.tsx": {
-    reason: "Client container reads the URL from env, window.ENV and a literal",
-    rules: { "localhost-4000": 1, "vite-api-url-read": 2, "direct-api-fetch": 5 },
-  },
-  "routes/app.onboarding.tsx": {
-    reason: "Client-side seeding hand-rolls fetch with the fallback base URL (Task D)",
-    rules: { "localhost-4000": 1, "vite-api-url-read": 2, "direct-api-fetch": 2 },
-  },
-};
+const ALLOW_LIST: Record<string, AllowEntry> = {};
 
 const APP_DIR = join(__dirname, "..");
 const SKIPPED = /\.(test|spec|stories)\.tsx?$|\.d\.ts$/;
@@ -188,15 +175,10 @@ describe("single API client guard", () => {
     expect(problems).toEqual([]);
   });
 
-  it("records 3 files for the 8 base URL fallback lines", () => {
+  it("records no file carrying a base URL fallback literal outside config.server.ts", () => {
     const files = [...found.entries()].filter(([, o]) =>
       o.some((x) => x.rule === "localhost-4000"),
     );
-    expect(files).toHaveLength(3);
-    const lines = files.reduce(
-      (n, [, o]) => n + o.filter((x) => x.rule === "localhost-4000").length,
-      0,
-    );
-    expect(lines).toBe(8);
+    expect(files).toEqual([]);
   });
 });

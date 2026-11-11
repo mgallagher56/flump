@@ -45,9 +45,12 @@ describe("OnboardingRoute (3-Step Baseline Flow)", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockActionData = undefined;
+    vi.stubGlobal("ENV", { VITE_API_URL: "https://api.example.test" });
     globalThis.fetch = vi
       .fn()
-      .mockResolvedValue(new Response(JSON.stringify({ success: true }), { status: 200 }));
+      .mockImplementation(
+        async () => new Response(JSON.stringify({ success: true }), { status: 200 }),
+      );
   });
 
   it("shows a failed action's error in an alert", () => {
@@ -153,5 +156,34 @@ describe("OnboardingRoute (3-Step Baseline Flow)", () => {
     });
 
     clearOnboardingSeed();
+  });
+
+  const finish = () => {
+    render(<OnboardingRoute />);
+    fireEvent.click(screen.getByText("Next: Housing and outgoings →"));
+    fireEvent.click(screen.getByText("Next: Savings, pension and debt →"));
+    fireEvent.click(screen.getByRole("button", { name: /finish setup and launch dashboard/i }));
+  };
+
+  it("shows an alert and does not navigate when saving the profile fails", async () => {
+    mockUpdateProfile.mockRejectedValueOnce(new Error("503"));
+    finish();
+    const alert = await screen.findByRole("alert");
+    expect(alert.textContent).toMatch(/couldn.t save your details/i);
+    expect(mockNavigate).not.toHaveBeenCalled();
+    expect(globalThis.fetch).not.toHaveBeenCalled();
+  });
+
+  it("shows an alert and does not navigate when seeding fails, retrying only what failed", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(new Response(null, { status: 503 }));
+    globalThis.fetch = fetchMock as any;
+    finish();
+    expect((await screen.findByRole("alert")).textContent).toMatch(/couldn.t save your details/i);
+    expect(mockNavigate).not.toHaveBeenCalled();
+
+    fetchMock.mockImplementation(async () => new Response("{}", { status: 200 }));
+    fireEvent.click(screen.getByRole("button", { name: /finish setup and launch dashboard/i }));
+    await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith("/"));
+    expect(screen.queryByRole("alert")).toBeNull();
   });
 });
