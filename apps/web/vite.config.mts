@@ -8,7 +8,6 @@ import { visualizer } from "rollup-plugin-visualizer";
 import { defineConfig, loadEnv } from "vite";
 import checker from "vite-plugin-checker";
 import tsconfigPaths from "vite-tsconfig-paths";
-import GithubActionsReporter from "vitest-github-actions-reporter";
 
 export default defineConfig(({ mode }) => ({
   server: {
@@ -98,7 +97,7 @@ export default defineConfig(({ mode }) => ({
     outputFile: "sonar-report.xml",
     reporters: [
       "vitest-sonar-reporter",
-      ...(process.env.GITHUB_ACTIONS ? ["default", new GithubActionsReporter()] : ["default"]),
+      ...(process.env.GITHUB_ACTIONS ? ["default", "github-actions"] : ["default"]),
     ],
     setupFiles: ["./test/setup-test-env.ts", "./test/vitest.setup.ts"],
     useAtomics: true,
