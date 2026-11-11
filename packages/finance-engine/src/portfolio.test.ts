@@ -160,6 +160,52 @@ describe("PortfolioSnapshot domain module", () => {
       const loan = debts.find((d) => d.id === "acc_8")!;
       expect(loan.type).toBe("loan");
     });
+
+    it("a 0% card keeps 0 APR and is flagged as known", () => {
+      const snapshot = new PortfolioSnapshot(
+        [{ id: "c0", name: "0% card", type: "Credit Card", balance: -1000, interestRate: 0 }],
+        [],
+      );
+      const [debt] = snapshot.toDebtItems();
+      expect(debt?.apr).toBe(0);
+      expect(debt?.interestRateApr).toBe(0);
+      expect(debt?.aprKnown).toBe(true);
+    });
+
+    it("null interestRate gives aprKnown false and apr 0, never 19.9", () => {
+      const snapshot = new PortfolioSnapshot(
+        [{ id: "c1", name: "Card", type: "Credit Card", balance: -1000, interestRate: null }],
+        [],
+      );
+      const [debt] = snapshot.toDebtItems();
+      expect(debt?.aprKnown).toBe(false);
+      expect(debt?.apr).toBe(0);
+      expect(debt?.interestRateApr).toBe(0);
+    });
+
+    it("minimumPaymentEstimated is true only when no monthlyContribution is stored", () => {
+      const snapshot = new PortfolioSnapshot(
+        [
+          { id: "e1", name: "No min", type: "Loan", balance: -2000, interestRate: 5 },
+          {
+            id: "e2",
+            name: "Has min",
+            type: "Loan",
+            balance: -2000,
+            interestRate: 5,
+            monthlyContribution: 90,
+          },
+        ],
+        [],
+      );
+      const debts = snapshot.toDebtItems();
+      const estimated = debts.find((d) => d.id === "e1");
+      const stored = debts.find((d) => d.id === "e2");
+      expect(estimated?.minimumPaymentEstimated).toBe(true);
+      expect(estimated?.minimumPayment).toBe(50);
+      expect(stored?.minimumPaymentEstimated).toBe(false);
+      expect(stored?.minimumPayment).toBe(90);
+    });
   });
 
   describe("getMonthlyHistory", () => {
