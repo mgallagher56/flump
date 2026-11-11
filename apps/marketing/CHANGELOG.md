@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.23.0](https://github.com/mgallagher56/flump/compare/flump/marketing-v1.22.0...flump/marketing-v1.23.0) (2026-11-11)
+
+
+### Features ✨
+
+* **marketing,backend,web:** add unit tests and increase vitest coverage across backend and marketing apps ([5473e7d](https://github.com/mgallagher56/flump/commit/5473e7dc59fee7cab67dc250bbd124d133398897))
+
 ## [1.22.0](https://github.com/mgallagher56/flump/compare/flump/marketing-v1.21.3...flump/marketing-v1.22.0) (2026-11-10)
 
 ### Features ✨
