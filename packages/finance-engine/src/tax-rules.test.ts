@@ -171,6 +171,27 @@ describe("calculateUKEWNIIncomeTaxOnTaxable additional-rate threshold (E4 T4)", 
       ).toBe(0);
     });
 
+    // I4: only salary sacrifice reduces student-loan earnings (calculateUkTax already does this).
+    // Plan 2 2026/27 on 35,000 with 5% pension (1,750):
+    //   not sacrifice: (35000-29385)*9% = 505.35 -> 505
+    //   sacrifice:     (33250-29385)*9% = 347.85 -> 348
+    it("only salary sacrifice reduces student loan earnings", () => {
+      expect(
+        calculateUKEWNITakeHome(35000, "employed", 5, false, "2026/27", "plan2").studentLoan,
+      ).toBe(505);
+      expect(
+        calculateUKEWNITakeHome(35000, "employed", 5, true, "2026/27", "plan2").studentLoan,
+      ).toBe(348);
+    });
+
+    it("floors the personal allowance taper to whole pounds", () => {
+      // 110,001: taper = floor(10,001/2) = 5,000 -> PA 7,570, taxable 102,431
+      // (an unfloored 5,000.5 gave taxable 102,431.5 -> 102,432)
+      const res = calculateUKEWNITakeHome(110001, "employed", 0, false, "2026/27");
+      expect(res.personalAllowance).toBe(7570);
+      expect(res.taxableIncome).toBe(102431);
+    });
+
     it("throws when the plan has no verified entry for the year (no silent zero)", () => {
       // 2020/21 page lists no Plan 4 threshold
       expect(() =>

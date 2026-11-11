@@ -1125,6 +1125,9 @@ export function calculateUKEWNITakeHome(
   taxYear: string,
   studentLoanPlan: keyof UKStudentLoanYear["plans"] | "none" = "none",
 ): UKTakeHomeResult {
+  // Unsupported years fall back to 2026/27 rather than throwing: callers pass
+  // getCurrentUKTaxYear(), which never throws once the clock passes the last supported year,
+  // so throwing here would crash the UI. Recorded in tax-vector-signoff.md known issues.
   const itRules = UK_EWNI_INCOME_TAX[taxYear] ?? UK_EWNI_INCOME_TAX["2026/27"]!;
   const niRules = UK_NATIONAL_INSURANCE[taxYear] ?? UK_NATIONAL_INSURANCE["2026/27"]!;
   const slRules = UK_STUDENT_LOANS[taxYear] ?? UK_STUDENT_LOANS["2026/27"]!;
@@ -1152,7 +1155,8 @@ export function calculateUKEWNITakeHome(
   // 2. Personal Allowance (tapered above £100k)
   let personalAllowance = itRules.personalAllowance;
   if (adjustedGrossForTax > itRules.personalAllowanceTaperStart) {
-    const reduction = (adjustedGrossForTax - itRules.personalAllowanceTaperStart) / 2;
+    // Whole-pound taper, as calculatePersonalAllowanceForYear.
+    const reduction = Math.floor((adjustedGrossForTax - itRules.personalAllowanceTaperStart) / 2);
     personalAllowance = Math.max(0, itRules.personalAllowance - reduction);
   }
 
@@ -1187,8 +1191,10 @@ export function calculateUKEWNITakeHome(
   if (studentLoanPlan !== "none") {
     const plan = slRules.plans[studentLoanPlan];
     if (!plan) throw new UnsupportedUkTaxYearError(taxYear, `student loan ${studentLoanPlan}`);
-    if (adjustedGrossForTax > plan.threshold) {
-      studentLoan = Math.round((adjustedGrossForTax - plan.threshold) * plan.rate);
+    // Only salary sacrifice reduces student-loan earnings; ordinary pension does not.
+    const studentLoanEarnings = isSalarySacrifice ? adjustedGrossForTax : gross;
+    if (studentLoanEarnings > plan.threshold) {
+      studentLoan = Math.round((studentLoanEarnings - plan.threshold) * plan.rate);
     }
   }
 
