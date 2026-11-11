@@ -49,6 +49,14 @@ describe("MonthlyBalanceCheckInDrawer & AccountDetailsStyles", () => {
     expect(screen.getByText(/Balances Updated Successfully!/i)).toBeTruthy();
   });
 
+  it("drawer is named", () => {
+    render(<MonthlyBalanceCheckInDrawer accounts={[]} />);
+    fireEvent.click(screen.getByRole("button", { name: /60-Sec Balance Check-In/i }));
+    expect(
+      screen.getByRole("dialog", { name: "60-Second Monthly Balance Check-In" }),
+    ).toBeDefined();
+  });
+
   it("renders empty state when no accounts are provided", () => {
     render(<MonthlyBalanceCheckInDrawer accounts={[]} />);
     fireEvent.click(screen.getByRole("button", { name: /60-Sec Balance Check-In/i }));

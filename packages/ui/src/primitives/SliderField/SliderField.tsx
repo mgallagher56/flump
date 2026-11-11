@@ -70,6 +70,7 @@ export const SliderField: FC<SliderFieldProps> = ({
           <input
             aria-label={`${label} input`}
             className={sliderPillInput()}
+            data-focus-managed=""
             disabled={disabled}
             max={max}
             min={min}

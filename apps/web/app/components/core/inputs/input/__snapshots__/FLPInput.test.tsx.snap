@@ -8,7 +8,7 @@ exports[`<FLPInput /> > should render as expected 1`] = `
   >
     <label
       class="fs_sm fw_medium c_text.primary"
-      for="Test"
+      for="_r_0_"
     >
       Test
     </label>
@@ -16,8 +16,8 @@ exports[`<FLPInput /> > should render as expected 1`] = `
       style="flex-grow: 1; flex-shrink: 1; flex-basis: 0%;"
     >
       <input
-        class="w_100% p_8px_14px min-h_40px fs_sm bdr_md bd_1px_solid bd-c_border bg-c_surface c_text.primary ring_none trs_border-color_0.15s_ease,_box-shadow_0.15s_ease fv-num_tabular-nums focus:bd-c_primary focus:bx-sh_0_0_0_2px_token(colors.primary,_#4f46e5) disabled:op_0.5 disabled:cursor_not-allowed [&[type='number']]:ap_textfield [&[type='number']]:fv-num_tabular-nums [&[type='number']]:[&::-webkit-outer-spin-button,_&::-webkit-inner-spin-button]:-webkit-appearance_none [&[type='number']]:[&::-webkit-outer-spin-button,_&::-webkit-inner-spin-button]:m_0 "
-        id="Test"
+        class="w_100% p_8px_14px min-h_40px fs_sm bdr_md bd_1px_solid bd-c_border.input bg-c_surface c_text.primary ring_none trs_border-color_0.15s_ease,_box-shadow_0.15s_ease fv-num_tabular-nums focus:bd-c_primary focus:bx-sh_0_0_0_2px_token(colors.primary,_#4f46e5) disabled:op_0.5 disabled:cursor_not-allowed [&[type='number']]:ap_textfield [&[type='number']]:fv-num_tabular-nums [&[type='number']]:[&::-webkit-outer-spin-button,_&::-webkit-inner-spin-button]:-webkit-appearance_none [&[type='number']]:[&::-webkit-outer-spin-button,_&::-webkit-inner-spin-button]:m_0 "
+        id="_r_0_"
       />
     </div>
   </div>
@@ -32,7 +32,7 @@ exports[`<FLPInput /> > should render as expected with error 1`] = `
   >
     <label
       class="fs_sm fw_medium c_text.primary"
-      for="Test"
+      for="_r_1_"
     >
       Test
     </label>
@@ -40,11 +40,15 @@ exports[`<FLPInput /> > should render as expected with error 1`] = `
       style="flex-grow: 1; flex-shrink: 1; flex-basis: 0%;"
     >
       <input
-        class="w_100% p_8px_14px min-h_40px fs_sm bdr_md bd_1px_solid bd-c_border bg-c_surface c_text.primary ring_none trs_border-color_0.15s_ease,_box-shadow_0.15s_ease fv-num_tabular-nums focus:bd-c_primary focus:bx-sh_0_0_0_2px_token(colors.primary,_#4f46e5) disabled:op_0.5 disabled:cursor_not-allowed [&[type='number']]:ap_textfield [&[type='number']]:fv-num_tabular-nums [&[type='number']]:[&::-webkit-outer-spin-button,_&::-webkit-inner-spin-button]:-webkit-appearance_none [&[type='number']]:[&::-webkit-outer-spin-button,_&::-webkit-inner-spin-button]:m_0 "
-        id="Test"
+        aria-describedby="_r_1_-error"
+        aria-invalid="true"
+        class="w_100% p_8px_14px min-h_40px fs_sm bdr_md bd_1px_solid bd-c_border.input bg-c_surface c_text.primary ring_none trs_border-color_0.15s_ease,_box-shadow_0.15s_ease fv-num_tabular-nums focus:bd-c_primary focus:bx-sh_0_0_0_2px_token(colors.primary,_#4f46e5) disabled:op_0.5 disabled:cursor_not-allowed [&[type='number']]:ap_textfield [&[type='number']]:fv-num_tabular-nums [&[type='number']]:[&::-webkit-outer-spin-button,_&::-webkit-inner-spin-button]:-webkit-appearance_none [&[type='number']]:[&::-webkit-outer-spin-button,_&::-webkit-inner-spin-button]:m_0 "
+        id="_r_1_"
       />
       <span
-        class="c_destructive fs_xs fw_medium mt_4px"
+        class="c_status.danger.text fs_xs fw_medium mt_4px"
+        id="_r_1_-error"
+        role="alert"
       >
         Error
       </span>
@@ -61,7 +65,7 @@ exports[`<FLPInput /> > should render as expected with value 1`] = `
   >
     <label
       class="fs_sm fw_medium c_text.primary"
-      for="Test"
+      for="_r_2_"
     >
       Test
     </label>
@@ -69,8 +73,8 @@ exports[`<FLPInput /> > should render as expected with value 1`] = `
       style="flex-grow: 1; flex-shrink: 1; flex-basis: 0%;"
     >
       <input
-        class="w_100% p_8px_14px min-h_40px fs_sm bdr_md bd_1px_solid bd-c_border bg-c_surface c_text.primary ring_none trs_border-color_0.15s_ease,_box-shadow_0.15s_ease fv-num_tabular-nums focus:bd-c_primary focus:bx-sh_0_0_0_2px_token(colors.primary,_#4f46e5) disabled:op_0.5 disabled:cursor_not-allowed [&[type='number']]:ap_textfield [&[type='number']]:fv-num_tabular-nums [&[type='number']]:[&::-webkit-outer-spin-button,_&::-webkit-inner-spin-button]:-webkit-appearance_none [&[type='number']]:[&::-webkit-outer-spin-button,_&::-webkit-inner-spin-button]:m_0 "
-        id="Test"
+        class="w_100% p_8px_14px min-h_40px fs_sm bdr_md bd_1px_solid bd-c_border.input bg-c_surface c_text.primary ring_none trs_border-color_0.15s_ease,_box-shadow_0.15s_ease fv-num_tabular-nums focus:bd-c_primary focus:bx-sh_0_0_0_2px_token(colors.primary,_#4f46e5) disabled:op_0.5 disabled:cursor_not-allowed [&[type='number']]:ap_textfield [&[type='number']]:fv-num_tabular-nums [&[type='number']]:[&::-webkit-outer-spin-button,_&::-webkit-inner-spin-button]:-webkit-appearance_none [&[type='number']]:[&::-webkit-outer-spin-button,_&::-webkit-inner-spin-button]:m_0 "
+        id="_r_2_"
         value="Value"
       />
     </div>
@@ -86,7 +90,7 @@ exports[`<FLPInput /> > should render as expected with value and error 1`] = `
   >
     <label
       class="fs_sm fw_medium c_text.primary"
-      for="Test"
+      for="_r_3_"
     >
       Test
     </label>
@@ -94,12 +98,16 @@ exports[`<FLPInput /> > should render as expected with value and error 1`] = `
       style="flex-grow: 1; flex-shrink: 1; flex-basis: 0%;"
     >
       <input
-        class="w_100% p_8px_14px min-h_40px fs_sm bdr_md bd_1px_solid bd-c_border bg-c_surface c_text.primary ring_none trs_border-color_0.15s_ease,_box-shadow_0.15s_ease fv-num_tabular-nums focus:bd-c_primary focus:bx-sh_0_0_0_2px_token(colors.primary,_#4f46e5) disabled:op_0.5 disabled:cursor_not-allowed [&[type='number']]:ap_textfield [&[type='number']]:fv-num_tabular-nums [&[type='number']]:[&::-webkit-outer-spin-button,_&::-webkit-inner-spin-button]:-webkit-appearance_none [&[type='number']]:[&::-webkit-outer-spin-button,_&::-webkit-inner-spin-button]:m_0 "
-        id="Test"
+        aria-describedby="_r_3_-error"
+        aria-invalid="true"
+        class="w_100% p_8px_14px min-h_40px fs_sm bdr_md bd_1px_solid bd-c_border.input bg-c_surface c_text.primary ring_none trs_border-color_0.15s_ease,_box-shadow_0.15s_ease fv-num_tabular-nums focus:bd-c_primary focus:bx-sh_0_0_0_2px_token(colors.primary,_#4f46e5) disabled:op_0.5 disabled:cursor_not-allowed [&[type='number']]:ap_textfield [&[type='number']]:fv-num_tabular-nums [&[type='number']]:[&::-webkit-outer-spin-button,_&::-webkit-inner-spin-button]:-webkit-appearance_none [&[type='number']]:[&::-webkit-outer-spin-button,_&::-webkit-inner-spin-button]:m_0 "
+        id="_r_3_"
         value="Value"
       />
       <span
-        class="c_destructive fs_xs fw_medium mt_4px"
+        class="c_status.danger.text fs_xs fw_medium mt_4px"
+        id="_r_3_-error"
+        role="alert"
       >
         Error
       </span>
@@ -118,8 +126,9 @@ exports[`<FLPInput /> > should render as expected without a label 1`] = `
       style="flex-grow: 1; flex-shrink: 1; flex-basis: 0%;"
     >
       <input
-        class="w_100% p_8px_14px min-h_40px fs_sm bdr_md bd_1px_solid bd-c_border bg-c_surface c_text.primary ring_none trs_border-color_0.15s_ease,_box-shadow_0.15s_ease fv-num_tabular-nums focus:bd-c_primary focus:bx-sh_0_0_0_2px_token(colors.primary,_#4f46e5) disabled:op_0.5 disabled:cursor_not-allowed [&[type='number']]:ap_textfield [&[type='number']]:fv-num_tabular-nums [&[type='number']]:[&::-webkit-outer-spin-button,_&::-webkit-inner-spin-button]:-webkit-appearance_none [&[type='number']]:[&::-webkit-outer-spin-button,_&::-webkit-inner-spin-button]:m_0 "
-        id="Test"
+        aria-label="Test"
+        class="w_100% p_8px_14px min-h_40px fs_sm bdr_md bd_1px_solid bd-c_border.input bg-c_surface c_text.primary ring_none trs_border-color_0.15s_ease,_box-shadow_0.15s_ease fv-num_tabular-nums focus:bd-c_primary focus:bx-sh_0_0_0_2px_token(colors.primary,_#4f46e5) disabled:op_0.5 disabled:cursor_not-allowed [&[type='number']]:ap_textfield [&[type='number']]:fv-num_tabular-nums [&[type='number']]:[&::-webkit-outer-spin-button,_&::-webkit-inner-spin-button]:-webkit-appearance_none [&[type='number']]:[&::-webkit-outer-spin-button,_&::-webkit-inner-spin-button]:m_0 "
+        id="_r_4_"
       />
     </div>
   </div>
@@ -134,7 +143,7 @@ exports[`<FLPInput /> > should render elements as a row 1`] = `
   >
     <label
       class="fs_sm fw_medium c_text.primary"
-      for="Test"
+      for="_r_5_"
     >
       Test
     </label>
@@ -142,8 +151,8 @@ exports[`<FLPInput /> > should render elements as a row 1`] = `
       style="flex-grow: 1; flex-shrink: 1; flex-basis: 0%;"
     >
       <input
-        class="w_100% p_8px_14px min-h_40px fs_sm bdr_md bd_1px_solid bd-c_border bg-c_surface c_text.primary ring_none trs_border-color_0.15s_ease,_box-shadow_0.15s_ease fv-num_tabular-nums focus:bd-c_primary focus:bx-sh_0_0_0_2px_token(colors.primary,_#4f46e5) disabled:op_0.5 disabled:cursor_not-allowed [&[type='number']]:ap_textfield [&[type='number']]:fv-num_tabular-nums [&[type='number']]:[&::-webkit-outer-spin-button,_&::-webkit-inner-spin-button]:-webkit-appearance_none [&[type='number']]:[&::-webkit-outer-spin-button,_&::-webkit-inner-spin-button]:m_0 "
-        id="Test"
+        class="w_100% p_8px_14px min-h_40px fs_sm bdr_md bd_1px_solid bd-c_border.input bg-c_surface c_text.primary ring_none trs_border-color_0.15s_ease,_box-shadow_0.15s_ease fv-num_tabular-nums focus:bd-c_primary focus:bx-sh_0_0_0_2px_token(colors.primary,_#4f46e5) disabled:op_0.5 disabled:cursor_not-allowed [&[type='number']]:ap_textfield [&[type='number']]:fv-num_tabular-nums [&[type='number']]:[&::-webkit-outer-spin-button,_&::-webkit-inner-spin-button]:-webkit-appearance_none [&[type='number']]:[&::-webkit-outer-spin-button,_&::-webkit-inner-spin-button]:m_0 "
+        id="_r_5_"
       />
     </div>
   </div>

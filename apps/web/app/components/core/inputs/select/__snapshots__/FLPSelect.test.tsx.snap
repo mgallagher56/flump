@@ -9,7 +9,7 @@ exports[`<FLPSelect /> > should render as expected 1`] = `
     >
       <label
         class="fs_sm fw_medium c_text.primary"
-        for="label"
+        for="_r_0_"
       >
         label
       </label>
@@ -17,8 +17,8 @@ exports[`<FLPSelect /> > should render as expected 1`] = `
         style="flex-grow: 1; flex-shrink: 1; flex-basis: 0%;"
       >
         <select
-          class="w_100% p_10px_14px fs_sm bdr_sm bd_1px_solid bd-c_border bg-c_surface c_text.primary ring_none trs_all_0.2s cursor_pointer focus:bd-c_primary focus:bx-sh_0_0_0_1px_token(colors.primary) "
-          id="label"
+          class="w_100% p_10px_14px fs_sm bdr_sm bd_1px_solid bd-c_border.input bg-c_surface c_text.primary ring_none trs_all_0.2s cursor_pointer focus:bd-c_primary focus:bx-sh_0_0_0_1px_token(colors.primary) "
+          id="_r_0_"
         >
           <option
             style="background-color: var(--colors-surface); color: var(--colors-text-primary);"
@@ -54,7 +54,7 @@ exports[`<FLPSelect /> > should render as expected as row 1`] = `
     >
       <label
         class="fs_sm fw_medium c_text.primary"
-        for="label"
+        for="_r_1_"
       >
         label
       </label>
@@ -62,8 +62,8 @@ exports[`<FLPSelect /> > should render as expected as row 1`] = `
         style="flex-grow: 1; flex-shrink: 1; flex-basis: 0%;"
       >
         <select
-          class="w_100% p_10px_14px fs_sm bdr_sm bd_1px_solid bd-c_border bg-c_surface c_text.primary ring_none trs_all_0.2s cursor_pointer focus:bd-c_primary focus:bx-sh_0_0_0_1px_token(colors.primary) "
-          id="label"
+          class="w_100% p_10px_14px fs_sm bdr_sm bd_1px_solid bd-c_border.input bg-c_surface c_text.primary ring_none trs_all_0.2s cursor_pointer focus:bd-c_primary focus:bx-sh_0_0_0_1px_token(colors.primary) "
+          id="_r_1_"
         >
           <option
             style="background-color: var(--colors-surface); color: var(--colors-text-primary);"

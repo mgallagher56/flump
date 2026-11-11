@@ -1,4 +1,5 @@
 import { fireEvent, render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import SetupChecklist from "./SetupChecklist";
 
@@ -52,5 +53,28 @@ describe("SetupChecklist", () => {
     // Dismiss checklist
     fireEvent.click(screen.getByTitle("Dismiss"));
     expect(window.localStorage.getItem("flump_setup_checklist_dismissed")).toBe("true");
+  });
+
+  it("expands and collapses with the keyboard", async () => {
+    const user = userEvent.setup();
+    render(
+      <SetupChecklist
+        completedSteps={["budget"]}
+        hasAccounts={false}
+        hasBudget={true}
+        hasMortgageAccount={false}
+        hasProfile={true}
+        hasRunForecast={false}
+        variant="mobile"
+      />,
+    );
+    const toggle = screen.getByRole("button", { name: /refine and drill down/i });
+    expect(toggle.getAttribute("aria-expanded")).toBe("false");
+    await user.tab();
+    expect(document.activeElement).toBe(toggle);
+    await user.keyboard("{Enter}");
+    expect(toggle.getAttribute("aria-expanded")).toBe("true");
+    await user.keyboard("{Enter}");
+    expect(toggle.getAttribute("aria-expanded")).toBe("false");
   });
 });

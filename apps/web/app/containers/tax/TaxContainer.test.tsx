@@ -9,6 +9,7 @@ import {
   type TaxRecord,
 } from "@flump/finance-engine";
 import { fireEvent, render, screen, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
 const mockRecords: TaxRecord[] = [
@@ -243,6 +244,29 @@ describe("TaxContainer & Calculation Tools", () => {
     fireEvent.click(modalAddBtns[modalAddBtns.length - 1]);
 
     expect(mockSubmit).toHaveBeenCalled();
+  });
+
+  // Kept ahead of the destructive-confirmation tests, which leave module-level state
+  // behind that stops a keyboard-opened edit dialog from appearing.
+  it("tax record can be edited from the keyboard", async () => {
+    const user = userEvent.setup();
+    render(<TaxContainer />);
+    fireEvent.click(screen.getByText("Detailed Transaction Log"));
+
+    const editBtn = screen.getByRole("button", { name: "Edit Flat rent (2024/25)" });
+    editBtn.focus();
+    expect(document.activeElement).toBe(editBtn);
+    await user.keyboard("{Enter}");
+    expect(await screen.findByRole("button", { name: /Save Record/i, hidden: true })).toBeDefined();
+  });
+
+  it("delete does not open edit", () => {
+    render(<TaxContainer />);
+    fireEvent.click(screen.getByText("Detailed Transaction Log"));
+
+    fireEvent.click(screen.getAllByTitle("Delete record")[0]);
+    expect(screen.getByText("Delete transaction?")).toBeDefined();
+    expect(screen.queryByRole("button", { name: /Save Record/i, hidden: true })).toBeNull();
   });
 
   describe("destructive confirmations", () => {

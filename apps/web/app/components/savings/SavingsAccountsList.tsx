@@ -152,6 +152,12 @@ const inlineInputStyle = css({
 });
 
 const editableCellStyle = css({
+  background: "none",
+  border: "none",
+  font: "inherit",
+  color: "inherit",
+  textAlign: "inherit",
+  fontVariantNumeric: "tabular-nums",
   cursor: "pointer",
   borderRadius: "sm",
   padding: "2px 6px",
@@ -523,8 +529,10 @@ export const SavingsAccountsList: FC<SavingsAccountsListProps> = ({
                             }}
                           />
                         ) : (
-                          <span
+                          <button
                             className={editableCellStyle}
+                            type="button"
+                            aria-label={`Edit balance for ${acc.name}`}
                             title="Click to quick-edit balance"
                             onClick={() =>
                               acc.id &&
@@ -536,7 +544,7 @@ export const SavingsAccountsList: FC<SavingsAccountsListProps> = ({
                             }
                           >
                             {formatCurrency(bal)}
-                          </span>
+                          </button>
                         )}
                       </td>
                       <td className={tdStyle} style={{ textAlign: "right" }}>
@@ -559,8 +567,10 @@ export const SavingsAccountsList: FC<SavingsAccountsListProps> = ({
                             }}
                           />
                         ) : (
-                          <span
+                          <button
                             className={editableCellStyle}
+                            type="button"
+                            aria-label={`Edit interest rate for ${acc.name}`}
                             title="Click to quick-edit AER %"
                             onClick={() =>
                               acc.id &&
@@ -583,7 +593,7 @@ export const SavingsAccountsList: FC<SavingsAccountsListProps> = ({
                             ) : (
                               <span style={{ color: "var(--colors-text-muted)" }}>0.00%</span>
                             )}
-                          </span>
+                          </button>
                         )}
                       </td>
                       <td className={tdStyle} style={{ textAlign: "right" }}>
@@ -605,8 +615,10 @@ export const SavingsAccountsList: FC<SavingsAccountsListProps> = ({
                             }}
                           />
                         ) : (
-                          <span
+                          <button
                             className={editableCellStyle}
+                            type="button"
+                            aria-label={`Edit monthly contribution for ${acc.name}`}
                             title="Click to quick-edit monthly contribution"
                             onClick={() =>
                               acc.id &&
@@ -633,7 +645,7 @@ export const SavingsAccountsList: FC<SavingsAccountsListProps> = ({
                                 {formatCurrency(0)}/mo
                               </span>
                             )}
-                          </span>
+                          </button>
                         )}
                       </td>
                       <td

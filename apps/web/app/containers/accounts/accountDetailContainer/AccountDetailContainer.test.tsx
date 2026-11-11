@@ -150,6 +150,11 @@ vi.mock("react-router", async () => {
       Form: "form",
     }),
     useNavigate: () => vi.fn(),
+    Link: ({ to, children, ...rest }: { to: string; children: React.ReactNode }) => (
+      <a href={to} {...rest}>
+        {children}
+      </a>
+    ),
   };
 });
 
@@ -163,6 +168,12 @@ describe("<AccountDetailContainer />", () => {
   test("should render", () => {
     const { baseElement } = customRender(<AccountDetailContainer />);
     expect(baseElement).toMatchSnapshot();
+  });
+  test("back to accounts is a real link", () => {
+    const { getByRole } = customRender(<AccountDetailContainer />);
+    expect(getByRole("link", { name: /back to accounts/i }).getAttribute("href")).toBe(
+      "/app/accounts",
+    );
   });
   test("should add new years when buttons are clicked", () => {
     const { baseElement, getByText } = customRender(<AccountDetailContainer />);

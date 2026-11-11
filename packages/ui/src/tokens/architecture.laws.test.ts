@@ -232,8 +232,6 @@ describe("Architecture & Design System Laws", () => {
         "apps/marketing/src/components/McpSpotlightSection/McpSpotlightSection.styles.ts":
           "bulletIcon recipe, applied to icon components only (graphic)",
         // Known sites pending fixes. Remove each entry when the site moves to status.*.text.
-        "apps/web/app/features/ai-connections/components/McpConnectionCard/McpConnectionCard.tsx":
-          "Revoke button text, pending the web sweep: must move to status.danger.text",
         "packages/ui/src/patterns/TaxTrapEscapeBanner/TaxTrapEscapeBanner.tsx":
           "saving figure text, pending fix: must move to status.positive.text",
       };
@@ -267,6 +265,100 @@ describe("Architecture & Design System Laws", () => {
       ).toEqual([]);
       // Stale allowlist entries must be removed once the site is fixed.
       const stale = Object.keys(ALLOWED).filter((f) => !offenders.includes(f));
+      expect(stale, `Allowlist entries no longer match: ${stale.join(", ")}`).toEqual([]);
+    });
+    it("no bare primary background (text/icon-bearing fills use primary.solid)", () => {
+      // `primary` (indigo.400 in dark) is only 2.77:1 against white text, so a fill that carries
+      // text or an icon must use bg 'primary.solid' with color 'primary.foreground'. Bare
+      // `primary` backgrounds are allowed only for graphic-only fills (SC 1.4.11, 3:1), listed
+      // here with the count of matching lines per file. Paths are relative to the repo root.
+      const ALLOWED: Record<string, { count: number; reason: string }> = {
+        "packages/ui/src/primitives/ProgressBar/ProgressBar.styles.ts": {
+          count: 1,
+          reason: "progress fill (graphic)",
+        },
+        "apps/web/app/components/core/inputs/slider/FLPSlider.tsx": {
+          count: 1,
+          reason: "slider track fill (graphic)",
+        },
+        "apps/web/app/components/navigation/NavMenu.tsx": {
+          count: 1,
+          reason: "active child dot (graphic)",
+        },
+        "apps/web/app/components/pension/PensionForecasterCard.tsx": {
+          count: 1,
+          reason: "PLSA progress fill (graphic)",
+        },
+        "apps/web/app/components/dashboard/HomeDashboard.tsx": {
+          count: 1,
+          reason: "8px badge dot, fallback colour (graphic)",
+        },
+        "apps/web/app/components/dashboard/widgets/AccountsWidget.tsx": {
+          count: 1,
+          reason: "toggle switch track, knob is the label (graphic)",
+        },
+        "apps/web/app/components/dashboard/widgets/BudgetWidget.tsx": {
+          count: 1,
+          reason: "toggle switch track (graphic)",
+        },
+        "apps/web/app/components/dashboard/widgets/MortgageWidget.tsx": {
+          count: 1,
+          reason: "toggle switch track (graphic)",
+        },
+        "apps/web/app/components/dashboard/widgets/PensionWidget.tsx": {
+          count: 1,
+          reason: "toggle switch track (graphic)",
+        },
+        "apps/web/app/components/dashboard/widgets/SavingsWidget.tsx": {
+          count: 1,
+          reason: "toggle switch track (graphic)",
+        },
+        "apps/web/app/components/budget/UserProfilePanel.tsx": {
+          count: 1,
+          reason: "toggle switch track (graphic)",
+        },
+        // Pending: another task owns this file. Remove the entry once it is settled.
+        "apps/web/app/features/ai-connections/components/McpConnectionCard/McpConnectionCard.styles.ts":
+          { count: 1, reason: "toggle track (graphic, no label text)" },
+      };
+      const repoRoot = path.resolve(__dirname, "../../../..");
+      const roots = [
+        path.join(repoRoot, "packages/ui/src"),
+        path.join(repoRoot, "apps/web/app"),
+        path.join(repoRoot, "apps/marketing/src"),
+      ];
+      const files: string[] = [];
+      const walk = (dir: string) => {
+        if (!fs.existsSync(dir)) return;
+        for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+          if (entry.name === "node_modules" || entry.name === "styled-system") continue;
+          const full = path.join(dir, entry.name);
+          if (entry.isDirectory()) walk(full);
+          else if (/\.(ts|tsx)$/.test(entry.name) && !/\.(test|stories)\.tsx?$/.test(entry.name))
+            files.push(full);
+        }
+      };
+      for (const root of roots) walk(root);
+      expect(files.length).toBeGreaterThan(100);
+
+      const bareBg =
+        /(bg|background|backgroundColor)["']?\s*:\s*[^,\n]*(["']primary["']|colors\.primary\)|colors-primary\))/;
+      const found: Record<string, number> = {};
+      for (const f of files) {
+        const n = fs
+          .readFileSync(f, "utf-8")
+          .split("\n")
+          .filter((line) => bareBg.test(line)).length;
+        if (n > 0) found[path.relative(repoRoot, f)] = n;
+      }
+      const unexpected = Object.entries(found)
+        .filter(([f, n]) => n > (ALLOWED[f]?.count ?? 0))
+        .map(([f]) => f);
+      expect(
+        unexpected,
+        `bare primary background (use primary.solid + primary.foreground, or allowlist if graphic-only): ${unexpected.join(", ")}`,
+      ).toEqual([]);
+      const stale = Object.keys(ALLOWED).filter((f) => !(f in found));
       expect(stale, `Allowlist entries no longer match: ${stale.join(", ")}`).toEqual([]);
     });
   });

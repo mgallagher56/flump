@@ -1,4 +1,5 @@
 import { fireEvent, screen, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import type { Account } from "~/containers/accounts/types";
 import customRender from "~/testUtils/customRender";
@@ -52,6 +53,17 @@ describe("<SavingsAccountsList />", () => {
     const addBtn = getByText(/Add Account/);
     fireEvent.click(addBtn);
     expect(onOpenAddModal).toHaveBeenCalled();
+  });
+
+  test("edits balance from the keyboard", async () => {
+    const user = userEvent.setup();
+    customRender(<SavingsAccountsList accounts={mockAccounts} onOpenAddModal={vi.fn()} />);
+    const btn = screen.getAllByRole("button", {
+      name: "Edit balance for Marcus High Yield Saver",
+    })[0];
+    btn.focus();
+    await user.keyboard("{Enter}");
+    expect((screen.getAllByRole("spinbutton")[0] as HTMLInputElement).value).toBe("10000");
   });
 
   test("renders empty state when no savings accounts exist", () => {

@@ -17,6 +17,7 @@ import {
   FaCalculator,
   FaCamera,
   FaCopy,
+  FaEdit,
   FaFileAlt,
   FaFileImage,
   FaFilePdf,
@@ -612,7 +613,7 @@ const TaxContainer: FC = () => {
                     fontWeight: isSelected ? 700 : 500,
                     border: "1px solid",
                     borderColor: isSelected ? "primary" : "border",
-                    backgroundColor: isSelected ? "primary" : "surface",
+                    backgroundColor: isSelected ? "primary.solid" : "surface",
                     color: isSelected ? "primary.foreground" : "text.muted",
                     cursor: "pointer",
                     transition: "all 0.15s",
@@ -1796,7 +1797,7 @@ const TaxContainer: FC = () => {
                         <td className={tdStyle} style={{ textTransform: "capitalize" }}>
                           {record.frequency}
                         </td>
-                        <td className={tdStyle} onClick={(e) => e.stopPropagation()}>
+                        <td className={tdStyle}>
                           {record.receiptFilename ? (
                             <button
                               className={css({
@@ -1811,7 +1812,10 @@ const TaxContainer: FC = () => {
                                 "&:hover": { textDecoration: "underline" },
                               })}
                               type="button"
-                              onClick={() => setActiveReceiptRecord(record)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setActiveReceiptRecord(record);
+                              }}
                             >
                               {record.receiptMimeType?.includes("pdf") ? (
                                 <FaFilePdf size={14} style={{ color: "#EF4444" }} />
@@ -1839,11 +1843,27 @@ const TaxContainer: FC = () => {
                           {isIncome ? "+" : "-"}
                           {formatCurrency(amtVal)}
                         </td>
-                        <td
-                          className={tdStyle}
-                          style={{ textAlign: "center" }}
-                          onClick={(e) => e.stopPropagation()}
-                        >
+                        <td className={tdStyle} style={{ textAlign: "center" }}>
+                          <button
+                            aria-label={`Edit ${record.name}`}
+                            className={css({
+                              padding: "6px",
+                              border: "none",
+                              background: "none",
+                              color: "text.muted",
+                              cursor: "pointer",
+                              borderRadius: "sm",
+                              "&:hover": { color: "primary" },
+                            })}
+                            title="Edit record"
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onOpenEditModal(record);
+                            }}
+                          >
+                            <FaEdit size={12} />
+                          </button>
                           <button
                             className={css({
                               padding: "6px",
@@ -2160,7 +2180,7 @@ const TaxContainer: FC = () => {
                     marginTop: "16px",
                     display: "inline-block",
                     padding: "8px 16px",
-                    backgroundColor: "primary",
+                    backgroundColor: "primary.solid",
                     color: "primary.foreground",
                     fontSize: "xs",
                     fontWeight: "bold",

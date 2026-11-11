@@ -208,18 +208,15 @@ describe("Debt Components: AddDebtDialog, PayoffStrategySwitcher, UkDebtInstrume
     });
     expect(onChangeExtraPayment).toHaveBeenCalledWith(200);
 
-    // Strategy cards click & keyDown
-    const avalancheCard = screen.getByRole("button", { name: /Select Avalanche strategy/i });
+    // Strategy radios
+    const avalancheCard = screen.getByRole("radio", { name: /Select Avalanche strategy/i });
     fireEvent.click(avalancheCard);
-    fireEvent.keyDown(avalancheCard, { key: "Enter" });
 
-    const snowballCard = screen.getByRole("button", { name: /Select Snowball strategy/i });
+    const snowballCard = screen.getByRole("radio", { name: /Select Snowball strategy/i });
     fireEvent.click(snowballCard);
-    fireEvent.keyDown(snowballCard, { key: " " });
 
-    const minCard = screen.getByRole("button", { name: /Select Minimum Only strategy/i });
+    const minCard = screen.getByRole("radio", { name: /Select Minimum Only strategy/i });
     fireEvent.click(minCard);
-    fireEvent.keyDown(minCard, { key: "Enter" });
   });
 
   it("switches across all 4 tabs in UkDebtInstrumentsCard and updates inputs", () => {

@@ -1,6 +1,8 @@
 import type { AvalancheVsSnowballComparison } from "@flump/finance-engine";
+import { VisuallyHidden } from "@repo/ui";
 import { css } from "@repo/ui/styled-system/css";
 import type { FC } from "react";
+import { useId } from "react";
 import { FaBolt, FaSlidersH, FaSnowflake } from "react-icons/fa";
 import FLPButton from "~/components/core/buttons/FLPButton";
 import FLPCard from "~/components/core/cards/FLPCard";
@@ -104,6 +106,11 @@ const modeCardStyle = (active: boolean, clickable: boolean = false) =>
     gap: "8px",
     transition: "all 0.15s ease",
     cursor: clickable ? "pointer" : "default",
+    "&:has(:focus-visible)": {
+      outline: "2px solid",
+      outlineColor: "border.focusRing",
+      outlineOffset: "2px",
+    },
     _hover: clickable && !active ? { borderColor: "border.strong" } : {},
   });
 
@@ -116,6 +123,7 @@ export const PayoffStrategySwitcher: FC<PayoffStrategySwitcherProps> = ({
   budgetSurplus = 0,
 }) => {
   const { formatCurrency } = useFormatCurrency();
+  const groupName = useId();
 
   const activeResult =
     selectedStrategy === "avalanche" ? comparison.avalanche : comparison.snowball;
@@ -241,25 +249,23 @@ export const PayoffStrategySwitcher: FC<PayoffStrategySwitcherProps> = ({
         </div>
 
         {/* Strategy Comparison Cards */}
-        <div className={comparisonGridStyle}>
+        <div aria-label="Payoff strategy" className={comparisonGridStyle} role="radiogroup">
           {/* 1. Avalanche Mode */}
-          <div
+          <label
             className={modeCardStyle(selectedStrategy === "avalanche" && extraPayment > 0, true)}
-            role="button"
-            tabIndex={0}
-            aria-label="Select Avalanche strategy"
-            onClick={() => {
-              onSelectStrategy("avalanche");
-              if (extraPayment === 0) onChangeExtraPayment(50);
-            }}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" || e.key === " ") {
-                e.preventDefault();
-                onSelectStrategy("avalanche");
-                if (extraPayment === 0) onChangeExtraPayment(50);
-              }
-            }}
           >
+            <VisuallyHidden>
+              <input
+                aria-label="Select Avalanche strategy"
+                checked={selectedStrategy === "avalanche" && extraPayment > 0}
+                name={groupName}
+                type="radio"
+                onChange={() => {
+                  onSelectStrategy("avalanche");
+                  if (extraPayment === 0) onChangeExtraPayment(50);
+                }}
+              />
+            </VisuallyHidden>
             <div
               style={{
                 display: "flex",
@@ -314,26 +320,24 @@ export const PayoffStrategySwitcher: FC<PayoffStrategySwitcherProps> = ({
                 vs minimum payments
               </FLPText>
             </div>
-          </div>
+          </label>
 
           {/* 2. Snowball Mode */}
-          <div
+          <label
             className={modeCardStyle(selectedStrategy === "snowball" && extraPayment > 0, true)}
-            role="button"
-            tabIndex={0}
-            aria-label="Select Snowball strategy"
-            onClick={() => {
-              onSelectStrategy("snowball");
-              if (extraPayment === 0) onChangeExtraPayment(50);
-            }}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" || e.key === " ") {
-                e.preventDefault();
-                onSelectStrategy("snowball");
-                if (extraPayment === 0) onChangeExtraPayment(50);
-              }
-            }}
           >
+            <VisuallyHidden>
+              <input
+                aria-label="Select Snowball strategy"
+                checked={selectedStrategy === "snowball" && extraPayment > 0}
+                name={groupName}
+                type="radio"
+                onChange={() => {
+                  onSelectStrategy("snowball");
+                  if (extraPayment === 0) onChangeExtraPayment(50);
+                }}
+              />
+            </VisuallyHidden>
             <div
               style={{
                 display: "flex",
@@ -380,26 +384,23 @@ export const PayoffStrategySwitcher: FC<PayoffStrategySwitcherProps> = ({
                   {formatCurrency(comparison.snowball.totalInterest)}
                 </span>
               </FLPText>
-              <FLPText color="blue.500" fontSize="xs" fontWeight="semibold">
+              <FLPText color="text.primary" fontSize="xs" fontWeight="semibold">
                 🏆 Quick Win: {comparison.snowballFirstWinDescription}
               </FLPText>
             </div>
-          </div>
+          </label>
 
           {/* 3. Minimum Payments Baseline */}
-          <div
-            className={modeCardStyle(extraPayment === 0, true)}
-            role="button"
-            tabIndex={0}
-            aria-label="Select Minimum Only strategy"
-            onClick={() => onChangeExtraPayment(0)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" || e.key === " ") {
-                e.preventDefault();
-                onChangeExtraPayment(0);
-              }
-            }}
-          >
+          <label className={modeCardStyle(extraPayment === 0, true)}>
+            <VisuallyHidden>
+              <input
+                aria-label="Select Minimum Only strategy"
+                checked={extraPayment === 0}
+                name={groupName}
+                type="radio"
+                onChange={() => onChangeExtraPayment(0)}
+              />
+            </VisuallyHidden>
             <div
               style={{
                 display: "flex",
@@ -447,7 +448,7 @@ export const PayoffStrategySwitcher: FC<PayoffStrategySwitcherProps> = ({
                 Costly baseline to avoid
               </FLPText>
             </div>
-          </div>
+          </label>
         </div>
       </div>
     </FLPCard>

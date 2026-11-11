@@ -1,5 +1,5 @@
 import { css } from "@repo/ui/styled-system/css";
-import type { FC, InputHTMLAttributes } from "react";
+import { type FC, type InputHTMLAttributes, useId } from "react";
 import { useResponsive } from "~/context/ResponsiveContext";
 
 export interface FLPInputProps extends InputHTMLAttributes<HTMLInputElement> {
@@ -23,8 +23,15 @@ const FLPInput: FC<FLPInputProps> = ({
   className,
   isMobile: propIsMobile,
   variant = "desktop",
+  id: propId,
+  "aria-describedby": ariaDescribedBy,
   ...props
 }) => {
+  const generatedId = useId();
+  const id = propId ?? generatedId;
+  const errorId = `${id}-error`;
+  const describedBy =
+    [ariaDescribedBy, error ? errorId : undefined].filter(Boolean).join(" ") || undefined;
   const { isMobile: contextIsMobile } = useResponsive();
   const isMobileVariant = propIsMobile ?? (variant === "mobile" ? true : contextIsMobile);
   const resolvedDirection = isMobileVariant ? "column" : flexDirection;
@@ -50,7 +57,7 @@ const FLPInput: FC<FLPInputProps> = ({
     fontSize: isMobileVariant ? "16px" : "sm",
     borderRadius: "md",
     border: "1px solid",
-    borderColor: "border",
+    borderColor: "border.input",
     backgroundColor: "surface",
     color: "text.primary",
     outline: "none",
@@ -75,7 +82,7 @@ const FLPInput: FC<FLPInputProps> = ({
   });
 
   const errorStyle = css({
-    color: "destructive",
+    color: "status.danger.text",
     fontSize: "xs",
     fontWeight: "medium",
     marginTop: "4px",
@@ -84,19 +91,26 @@ const FLPInput: FC<FLPInputProps> = ({
   return (
     <div className={containerStyle} data-variant={isMobileVariant ? "mobile" : "desktop"}>
       {!isLabelHidden && (
-        <label className={labelStyle} htmlFor={label}>
+        <label className={labelStyle} htmlFor={id}>
           {label}
         </label>
       )}
       <div style={{ flex: 1 }}>
         <input
           className={`${inputStyle} ${className || ""}`}
-          id={label}
+          id={id}
           style={style}
           onChange={onChange}
           {...props}
+          aria-describedby={describedBy}
+          aria-invalid={error ? true : props["aria-invalid"]}
+          aria-label={isLabelHidden ? label : props["aria-label"]}
         />
-        {error && <span className={errorStyle}>{error}</span>}
+        {error && (
+          <span className={errorStyle} id={errorId} role="alert">
+            {error}
+          </span>
+        )}
       </div>
     </div>
   );

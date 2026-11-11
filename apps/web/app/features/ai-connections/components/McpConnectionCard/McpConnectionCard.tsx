@@ -521,11 +521,16 @@ export const McpConnectionCard: FC<McpConnectionCardProps> = ({
                     borderRadius: "md",
                     borderWidth: "1px",
                     borderStyle: "solid",
-                    borderColor: "border.strong",
+                    borderColor: "border.input",
                     backgroundColor: "surface.card",
                     color: "text.primary",
                     fontSize: "xs",
                     outline: "none",
+                    _focusVisible: {
+                      outline: "2px solid",
+                      outlineColor: "border.focusRing",
+                      outlineOffset: "2px",
+                    },
                   })}
                   id="mcp-token-name"
                   placeholder="e.g. Claude Desktop, Cursor AI"
@@ -555,11 +560,16 @@ export const McpConnectionCard: FC<McpConnectionCardProps> = ({
                     borderRadius: "md",
                     borderWidth: "1px",
                     borderStyle: "solid",
-                    borderColor: "border.strong",
+                    borderColor: "border.input",
                     backgroundColor: "surface.card",
                     color: "text.primary",
                     fontSize: "xs",
                     outline: "none",
+                    _focusVisible: {
+                      outline: "2px solid",
+                      outlineColor: "border.focusRing",
+                      outlineOffset: "2px",
+                    },
                     cursor: "pointer",
                   })}
                   id="mcp-token-expiry"
@@ -713,7 +723,7 @@ export const McpConnectionCard: FC<McpConnectionCardProps> = ({
                               className={css({
                                 border: "none",
                                 background: "none",
-                                color: "status.danger.solid",
+                                color: "status.danger.text",
                                 cursor: "pointer",
                                 padding: "4px 8px",
                                 borderRadius: "sm",

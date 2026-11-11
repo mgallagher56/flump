@@ -49,8 +49,8 @@ const personaTabStyle = (active: boolean) =>
     cursor: "pointer",
     border: "1px solid",
     borderColor: active ? "primary" : "border",
-    backgroundColor: active ? "primary" : "surface",
-    color: active ? "#ffffff" : "text.secondary",
+    backgroundColor: active ? "primary.solid" : "surface",
+    color: active ? "primary.foreground" : "text.secondary",
     transition: "all 0.2s ease",
     "&:hover": {
       borderColor: "primary",
