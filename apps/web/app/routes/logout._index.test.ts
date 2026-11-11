@@ -79,4 +79,11 @@ describe("logout loader", () => {
     await action(makeArgs("http://localhost:3000/logout", "POST"));
     expect(mocks.signOut).toHaveBeenCalledTimes(2);
   });
+
+  it("rejects when signOut rejects, so no clear-cookie response is fabricated", async () => {
+    const boom = new Error("signOut failed");
+    mocks.signOut.mockRejectedValue(boom);
+    await expect(loader(makeArgs("http://localhost:3000/logout"))).rejects.toBe(boom);
+    await expect(action(makeArgs("http://localhost:3000/logout", "POST"))).rejects.toBe(boom);
+  });
 });

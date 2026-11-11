@@ -29,25 +29,48 @@ export function defaultRunner(env: Record<string, string | undefined> = process.
   };
 }
 
+/** Pause before the single registry retry (ms). */
+export const RETRY_DELAY_MS = 10_000;
+
+/**
+ * Exit codes: 0 clean, 1 real advisory failures, 2 no usable report (registry outage),
+ * 3 configuration/shape bug (bad allow-list, unrecognised report shape): never an outage,
+ * so CI fails on it. A run that produced
+ * no usable JSON is retried once after `retryDelayMs`; JSON that parsed is never retried.
+ */
 export function run(opts: {
   runner: Runner;
   allowFile: string;
   today: string;
   log?: (m: string) => void;
+  sleep?: (ms: number) => void;
+  retryDelayMs?: number;
 }): number {
   const log = opts.log ?? ((m: string) => console.log(m));
-  const { stdout, error } = opts.runner();
-  if (error) {
-    log(`check-audit: could not run bun audit: ${error}`);
-    return 2;
+  const sleep = opts.sleep ?? ((ms: number) => Bun.sleepSync(ms));
+  const delay = opts.retryDelayMs ?? RETRY_DELAY_MS;
+
+  const attempt = (): { report: unknown } | { failure: string } => {
+    const { stdout, error } = opts.runner();
+    if (error) return { failure: `could not run bun audit: ${error}` };
+    try {
+      return { report: JSON.parse(stdout) };
+    } catch {
+      return { failure: "bun audit produced no parseable JSON" };
+    }
+  };
+
+  let outcome = attempt();
+  if ("failure" in outcome) {
+    log(`check-audit: ${outcome.failure}; retrying once in ${delay}ms`);
+    sleep(delay);
+    outcome = attempt();
+    if ("failure" in outcome) {
+      log(`check-audit: ${outcome.failure} (after retry)`);
+      return 2;
+    }
   }
-  let report: unknown;
-  try {
-    report = JSON.parse(stdout);
-  } catch {
-    log("check-audit: bun audit produced no parseable JSON");
-    return 2;
-  }
+  const report = outcome.report;
   let allow: AllowEntry[];
   try {
     allow = JSON.parse(readFileSync(opts.allowFile, "utf8"));
@@ -56,14 +79,14 @@ export function run(opts: {
     log(
       `check-audit: cannot read allow-list ${opts.allowFile}: ${err instanceof Error ? err.message : err}`,
     );
-    return 2;
+    return 3;
   }
   let result: ReturnType<typeof evaluateAudit>;
   try {
     result = evaluateAudit(report, allow, { threshold: "high", today: opts.today });
   } catch (err) {
     log(`check-audit: ${err instanceof Error ? err.message : err}`);
-    return 2;
+    return 3;
   }
   for (const w of result.warnings) log(`warning: ${w}`);
   for (const f of result.failures) log(`FAIL: ${f}`);

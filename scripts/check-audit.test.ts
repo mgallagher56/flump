@@ -94,6 +94,7 @@ describe("check-audit CLI", () => {
       allowFile: allow,
       today,
       log: (m) => logs.push(m),
+      sleep: () => {},
     });
     return { code, logs };
   };
@@ -109,11 +110,74 @@ describe("check-audit CLI", () => {
     expect(cli("not json").code).toBe(2);
     expect(cli("", allowFile, "ENOENT").code).toBe(2);
   });
-  test("unrecognised shape exits 2", () => {
-    expect(cli("[]").code).toBe(2);
+  test("retries once: first call no JSON, second succeeds -> evaluated", () => {
+    const outputs = [{ stdout: "" }, { stdout: JSON.stringify({ foo: [adv("high")] }) }];
+    const sleeps: number[] = [];
+    let calls = 0;
+    const code = run({
+      runner: () => outputs[calls++],
+      allowFile,
+      today,
+      log: () => {},
+      sleep: (ms) => sleeps.push(ms),
+      retryDelayMs: 5,
+    });
+    expect(calls).toBe(2);
+    expect(sleeps).toEqual([5]);
+    expect(code).toBe(1);
   });
-  test("missing allow-list exits 2", () => {
-    expect(cli("{}", join(dir, "missing.json")).code).toBe(2);
+  test("retry recovering to a clean report exits 0", () => {
+    let calls = 0;
+    const code = run({
+      runner: () => (calls++ === 0 ? { stdout: "", error: "ENOENT" } : { stdout: "{}" }),
+      allowFile,
+      today,
+      log: () => {},
+      sleep: () => {},
+    });
+    expect(code).toBe(0);
+    expect(calls).toBe(2);
+  });
+  test("two failures exit 2 after exactly two attempts", () => {
+    let calls = 0;
+    const code = run({
+      runner: () => {
+        calls++;
+        return { stdout: "registry down" };
+      },
+      allowFile,
+      today,
+      log: () => {},
+      sleep: () => {},
+    });
+    expect(code).toBe(2);
+    expect(calls).toBe(2);
+  });
+  test("no retry when JSON was produced (even with advisories or a bad shape)", () => {
+    for (const out of [JSON.stringify({ foo: [adv("high")] }), "[]", "{}"]) {
+      let calls = 0;
+      let slept = false;
+      run({
+        runner: () => {
+          calls++;
+          return { stdout: out };
+        },
+        allowFile,
+        today,
+        log: () => {},
+        sleep: () => {
+          slept = true;
+        },
+      });
+      expect(calls).toBe(1);
+      expect(slept).toBe(false);
+    }
+  });
+  test("unrecognised shape exits 3", () => {
+    expect(cli("[]").code).toBe(3);
+  });
+  test("missing allow-list exits 3", () => {
+    expect(cli("{}", join(dir, "missing.json")).code).toBe(3);
   });
   test("real script honours AUDIT_COMMAND_JSON_FILE", () => {
     const bad = write("bad.json", { foo: [adv("high")] });

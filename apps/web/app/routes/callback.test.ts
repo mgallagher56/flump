@@ -1,6 +1,6 @@
 // @vitest-environment node
 // happy-dom drops Set-Cookie on Response, so use the native Node fetch classes.
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 // The global test setup stubs parts of react-router; the loaders need the real `redirect`.
 vi.mock("react-router", async () => await vi.importActual("react-router"));
@@ -32,6 +32,10 @@ beforeEach(() => {
   mocks.workosLoader.mockReset();
   mocks.configure.mockReset();
   mocks.workosLoader.mockResolvedValue(new Response(null, { status: 302 }));
+});
+
+afterEach(() => {
+  vi.unstubAllEnvs();
 });
 
 describe("callback loader", () => {
@@ -81,7 +85,6 @@ describe("callback loader", () => {
       await callLoader("http://localhost:3000/callback?code=abc");
       const getValue = mocks.configure.mock.calls[0][0] as (key: string) => unknown;
       expect(getValue("SOME_OTHER_KEY")).toBe("value");
-      vi.unstubAllEnvs();
     });
 
     it("is not called on app.flump.co.uk", async () => {
@@ -89,13 +92,16 @@ describe("callback loader", () => {
       expect(mocks.configure).not.toHaveBeenCalled();
     });
 
-    it("is invoked per request and never reset (mutates global WorkOS state)", async () => {
+    it("never resets: after a later app.flump.co.uk request the last-installed callback still returns the localhost redirect URI", async () => {
       await callLoader("http://localhost:3000/callback?code=abc");
-      await callLoader("http://localhost:3000/callback?code=def");
-      expect(mocks.configure).toHaveBeenCalledTimes(2);
-      // A subsequent production request does not undo the localhost override.
-      await callLoader("https://app.flump.co.uk/callback?code=ghi");
-      expect(mocks.configure).toHaveBeenCalledTimes(2);
+      expect(mocks.configure).toHaveBeenCalledTimes(1);
+      const installed = mocks.configure.mock.calls[0][0] as (key: string) => unknown;
+
+      await callLoader("https://app.flump.co.uk/callback?code=def");
+      // Nothing re-configured or reset WorkOS state on the production request, so the last
+      // callback WorkOS holds is still the localhost one (global state leak, pinned).
+      expect(mocks.configure).toHaveBeenCalledTimes(1);
+      expect(installed("WORKOS_REDIRECT_URI")).toBe("http://localhost:3000/callback");
     });
   });
 
@@ -118,5 +124,44 @@ describe("callback loader", () => {
     mocks.workosLoader.mockResolvedValue(data);
     const res = await callLoader("http://localhost:3000/callback?code=abc");
     expect(res).toBe(data);
+  });
+
+  describe("failure handling", () => {
+    it("rejects when the WorkOS loader throws, without swallowing the error", async () => {
+      const boom = new Error("workos exploded");
+      mocks.workosLoader.mockImplementation(() => {
+        throw boom;
+      });
+      await expect(callLoader("http://localhost:3000/callback?code=abc")).rejects.toBe(boom);
+    });
+
+    it("rejects when the WorkOS loader rejects, so no presence cookie can be set", async () => {
+      const boom = new Error("token exchange failed");
+      mocks.workosLoader.mockRejectedValue(boom);
+      await expect(callLoader("https://app.flump.co.uk/callback?code=abc")).rejects.toBe(boom);
+    });
+
+    it.each([
+      [401, "Unauthorized"],
+      [500, "Internal Server Error"],
+    ])(
+      "passes an upstream %i Response through with its status preserved",
+      async (status, statusText) => {
+        const upstream = new Response("denied", { status, statusText });
+        upstream.headers.append("Set-Cookie", "wos-session=; Max-Age=0; Path=/");
+        mocks.workosLoader.mockResolvedValue(upstream);
+
+        const res = await callLoader("http://localhost:3000/callback?code=abc");
+        expect(res.status).toBe(status);
+        expect(res.statusText).toBe(statusText);
+        expect(await res.text()).toBe("denied");
+        // PINS current behaviour: the loader appends flump_has_session=1 to ANY upstream
+        // Response, error statuses included. Only a thrown/rejected loader skips the cookie.
+        expect(res.headers.getSetCookie()).toEqual([
+          "wos-session=; Max-Age=0; Path=/",
+          SESSION_COOKIE,
+        ]);
+      },
+    );
   });
 });
