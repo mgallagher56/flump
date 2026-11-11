@@ -1,7 +1,8 @@
 import type { LoaderFunctionArgs } from "react-router";
 import { apiConfig } from "~/config.server";
-import { authHeader, getAuthSession } from "~/utils/auth.server";
+import { getAuthSession } from "~/utils/auth.server";
 import { BackendError, kindFromStatus } from "./backend-error";
+import { throwRouteError } from "./route-error.server";
 
 export type HttpMethod = "GET" | "POST" | "PATCH" | "PUT" | "DELETE";
 
@@ -137,7 +138,8 @@ export interface WorkspaceFetchOptions {
 
 /**
  * Canonical server loader helper for fetching Flump workspace data.
- * Unifies auth headers, parallel fetching, error handling, and default fallbacks across routes.
+ * Unifies auth, parallel fetching and error reporting across routes. Any failing requested endpoint
+ * throws a route error via throwRouteError; an empty array is a valid empty account.
  */
 export async function loadWorkspaceSnapshot(
   args: LoaderFunctionArgs,
@@ -167,39 +169,42 @@ export async function loadWorkspaceSnapshot(
     };
   }
 
-  const apiUrl = process.env.VITE_API_URL || "http://localhost:4000";
-  const headers = authHeader({ accessToken });
+  if (!accessToken) throwRouteError(new BackendError("unauthorised", "/accounts"));
+  const signal = args.request.signal;
+  const get = <T>(endpoint: string) => backendFetch<T>(endpoint, { accessToken, signal });
 
-  const fetchJson = async <T>(endpoint: string, fallback: T): Promise<T> => {
-    try {
-      const res = await fetch(`${apiUrl}${endpoint}`, { headers });
-      if (!res.ok) return fallback;
-      return (await res.json()) as T;
-    } catch {
-      return fallback;
-    }
-  };
+  let accounts: any[];
+  let rawAccountDetails: any[];
+  let userProfile: any | null;
+  let budgetEntries: any[];
+  let taxRecords: any[];
+  let bankConnections: any[];
+  let portfolioSnapshot: PortfolioSnapshotData | null;
+  try {
+    [
+      accounts,
+      rawAccountDetails,
+      userProfile,
+      budgetEntries,
+      taxRecords,
+      bankConnections,
+      portfolioSnapshot,
+    ] = await Promise.all([
+      get<any[]>("/accounts"),
+      get<any[]>("/account-details"),
+      get<any | null>("/user-profile"),
+      includeBudget ? get<any[]>("/budget-entries") : Promise.resolve([]),
+      includeTax ? get<any[]>("/tax-records") : Promise.resolve([]),
+      includeConnections ? get<any[]>("/bank-connections") : Promise.resolve([]),
+      includePortfolioSnapshot
+        ? get<PortfolioSnapshotData | null>("/portfolio-snapshot")
+        : Promise.resolve(null),
+    ]);
+  } catch (err) {
+    throwRouteError(err);
+  }
 
-  const [
-    accounts,
-    rawAccountDetails,
-    userProfile,
-    budgetEntries,
-    taxRecords,
-    bankConnections,
-    portfolioSnapshot,
-  ] = await Promise.all([
-    fetchJson<any[]>("/accounts", []),
-    fetchJson<any[]>("/account-details", []),
-    fetchJson<any | null>("/user-profile", null),
-    includeBudget ? fetchJson<any[]>("/budget-entries", []) : Promise.resolve([]),
-    includeTax ? fetchJson<any[]>("/tax-records", []) : Promise.resolve([]),
-    includeConnections ? fetchJson<any[]>("/bank-connections", []) : Promise.resolve([]),
-    includePortfolioSnapshot
-      ? fetchJson<PortfolioSnapshotData | null>("/portfolio-snapshot", null)
-      : Promise.resolve(null),
-  ]);
-
+  // An empty /account-details array is a valid answer; only then use the accounts' nested details.
   const accountDetails =
     rawAccountDetails && rawAccountDetails.length > 0
       ? rawAccountDetails

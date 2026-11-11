@@ -4,6 +4,7 @@ import type { LoaderFunctionArgs } from "react-router";
 import { Links, Meta, Outlet, Scripts, ScrollRestoration, useLoaderData } from "react-router";
 import MobileBottomBar from "./components/navigation/MobileBottomBar";
 import Header from "./components/structure/header/Header";
+import { apiConfig } from "./config.server";
 import { ResponsiveProvider } from "./context/ResponsiveContext";
 import { RouteErrorBoundary } from "./features/feedback/components/RouteErrorBoundary";
 import { useTheme } from "./hooks/useTheme";
@@ -11,6 +12,8 @@ import type { UserProfile } from "./hooks/useUserProfile";
 import { useUserProfile } from "./hooks/useUserProfile";
 import i18next from "./i18n.server";
 import styles from "./index.css?url";
+import { backendFetch } from "./services/backend-client.server";
+import { BackendError } from "./services/backend-error";
 import { ThemeContext } from "./ThemeContext";
 import { THEME_INIT_SCRIPT } from "./theme-init-script";
 import { getAuthSession } from "./utils/auth.server";
@@ -35,15 +38,17 @@ export const loader = async (args: LoaderFunctionArgs) => {
 
   if (user && accessToken) {
     try {
-      const apiUrl = process.env.VITE_API_URL || "http://localhost:4000";
-      const res = await fetch(`${apiUrl}/user-profile`, {
-        headers: { Authorization: `Bearer ${accessToken}` },
+      userProfile = await backendFetch<UserProfile>("/user-profile", {
+        accessToken,
+        signal: args.request.signal,
       });
-      if (res.ok) {
-        userProfile = await res.json();
+    } catch (error) {
+      // Keep the shell up without a profile; log only the kind and endpoint, never the token.
+      if (error instanceof BackendError) {
+        console.error("Root loader profile failed", { kind: error.kind, endpoint: error.endpoint });
+      } else {
+        throw error;
       }
-    } catch {
-      // Gracefully continue without profile if API is unreachable
     }
   }
 
@@ -53,7 +58,7 @@ export const loader = async (args: LoaderFunctionArgs) => {
     userProfile,
     accessToken,
     ENV: {
-      VITE_API_URL: process.env.VITE_API_URL || "http://localhost:4000",
+      VITE_API_URL: apiConfig.apiBaseUrl,
     },
   };
 };

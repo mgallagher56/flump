@@ -1,6 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
+import { loadWorkspaceSnapshot } from "~/services/backend-client.server";
 import { default as Index, loader } from "./_index";
 
 vi.mock("react-router", () => ({
@@ -27,6 +28,11 @@ vi.mock("react-router", () => ({
 vi.mock("~/utils/auth.server", () => ({
   getAuthSession: vi.fn().mockResolvedValue({ user: null, accessToken: null }),
 }));
+
+vi.mock("~/services/backend-client.server", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("~/services/backend-client.server")>();
+  return { ...actual, loadWorkspaceSnapshot: vi.fn(actual.loadWorkspaceSnapshot) };
+});
 
 vi.mock("~/components/dashboard/HomeDashboard", () => ({
   HomeDashboard: () => <div id="mock-home-dashboard">Mock Dashboard</div>,
@@ -62,6 +68,13 @@ describe("_index route", () => {
     expect(data).toBeDefined();
     expect(data.user).toBeNull();
     expect(data.isDemo).toBe(false);
+  });
+
+  it("rejects when the workspace snapshot fails instead of returning zeroed data", async () => {
+    const failure = new Error("snapshot failed");
+    vi.mocked(loadWorkspaceSnapshot).mockRejectedValueOnce(failure);
+    const request = new Request("http://localhost/");
+    await expect(loader({ request, params: {}, context: {} } as any)).rejects.toBe(failure);
   });
 
   it("renders LoggedOutHome when user is null", () => {

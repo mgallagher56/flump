@@ -30,25 +30,23 @@ import FLPHeading from "~/components/core/typography/FLPHeading";
 import FLPText from "~/components/core/typography/FLPText";
 import HomeLogo from "~/components/navigation/HomeLogo";
 import type { UserProfile } from "~/hooks/useUserProfile";
-import { DEFAULT_PROFILE, useUserProfile } from "~/hooks/useUserProfile";
+import { useUserProfile } from "~/hooks/useUserProfile";
+import { backendFetch } from "~/services/backend-client.server";
+import { throwRouteError } from "~/services/route-error.server";
 import { useFinancialBaseline } from "~/state/baseline.store";
 import { authHeader, getAuthSession } from "~/utils/auth.server";
 import { ALL_PAGE_KEYS, type AppPageKey, type DashboardWidgetKey } from "~/utils/pageConfig";
 
 export const loader = async (args: LoaderFunctionArgs) => {
   const { user, accessToken } = await getAuthSession(args, { ensureSignedIn: true });
-  const authz = authHeader({ accessToken });
-  const apiUrl = process.env.VITE_API_URL || "http://localhost:4000";
-
   try {
-    const res = await fetch(`${apiUrl}/user-profile`, {
-      headers: { ...authz },
+    const userProfile = await backendFetch<UserProfile>("/user-profile", {
+      accessToken,
+      signal: args.request.signal,
     });
-    const userProfile: UserProfile = res.ok ? await res.json() : DEFAULT_PROFILE;
     return data({ userProfile, user, accessToken });
   } catch (error) {
-    console.error("Onboarding loader error:", error);
-    return data({ userProfile: DEFAULT_PROFILE, user, accessToken: null });
+    throwRouteError(error);
   }
 };
 

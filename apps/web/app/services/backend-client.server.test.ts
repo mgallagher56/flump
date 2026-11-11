@@ -63,7 +63,7 @@ describe("backend-client.server", () => {
   });
 
   it("loads standard workspace snapshot with accounts, details, and profile", async () => {
-    const snapshot = await loadWorkspaceSnapshot({} as any);
+    const snapshot = await loadWorkspaceSnapshot({ request: new Request("http://x/") } as any);
 
     expect(snapshot.user.id).toBe("user_test");
     expect(snapshot.accounts.length).toBe(1);
@@ -76,7 +76,7 @@ describe("backend-client.server", () => {
   });
 
   it("fetches budget and tax records when requested in options", async () => {
-    const snapshot = await loadWorkspaceSnapshot({} as any, {
+    const snapshot = await loadWorkspaceSnapshot({ request: new Request("http://x/") } as any, {
       includeBudget: true,
       includeTax: true,
       includeConnections: true,
@@ -90,18 +90,89 @@ describe("backend-client.server", () => {
     expect(snapshot.portfolioSnapshot?.netWorth).toBe(15000);
   });
 
-  it("falls back gracefully when backend fetch fails", async () => {
+  it("rejects with a 503 route error when the backend is unreachable", async () => {
     globalThis.fetch = vi.fn().mockRejectedValue(new Error("Network Error"));
-
-    const snapshot = await loadWorkspaceSnapshot({} as any, {
+    const err = await loadWorkspaceSnapshot({ request: new Request("http://x/") } as any, {
       includeBudget: true,
       includeTax: true,
-    });
+    }).catch((e) => e);
+    expect(err.init.status).toBe(503);
+    expect(err.data.kind).toBe("unavailable");
+  });
 
-    expect(snapshot.accounts).toEqual([]);
-    expect(snapshot.accountDetails).toEqual([]);
-    expect(snapshot.userProfile).toBeNull();
-    expect(snapshot.budgetEntries).toEqual([]);
-    expect(snapshot.taxRecords).toEqual([]);
+  it("rejects with status 401 when /accounts is unauthorised", async () => {
+    globalThis.fetch = vi
+      .fn()
+      .mockImplementation((url: string) =>
+        Promise.resolve(
+          url.includes("/accounts")
+            ? new Response("no", { status: 401 })
+            : new Response("[]", { status: 200 }),
+        ),
+      );
+    const err = await loadWorkspaceSnapshot({ request: new Request("http://x/") } as any).catch(
+      (e) => e,
+    );
+    expect(err.init.status).toBe(401);
+    expect(err.data.kind).toBe("unauthorised");
+  });
+
+  it("rejects with 502 when /tax-records fails and tax was requested", async () => {
+    globalThis.fetch = vi
+      .fn()
+      .mockImplementation((url: string) =>
+        Promise.resolve(
+          url.includes("/tax-records")
+            ? new Response("boom", { status: 500 })
+            : new Response("[]", { status: 200 }),
+        ),
+      );
+    const err = await loadWorkspaceSnapshot({ request: new Request("http://x/") } as any, {
+      includeTax: true,
+    }).catch((e) => e);
+    expect(err.init.status).toBe(502);
+    expect(err.data.endpoint).toBe("/tax-records");
+  });
+
+  it("treats an empty account-details array as valid and falls back to nested details", async () => {
+    globalThis.fetch = vi.fn().mockImplementation((url: string) =>
+      Promise.resolve(
+        url.includes("/accounts")
+          ? new Response(JSON.stringify([{ id: "a", details: [{ year: 2026 }] }]), {
+              status: 200,
+            })
+          : new Response("[]", { status: 200 }),
+      ),
+    );
+    const snapshot = await loadWorkspaceSnapshot({ request: new Request("http://x/") } as any);
+    expect(snapshot.accountDetails).toEqual([{ year: 2026 }]);
+  });
+
+  it("does not fall back to nested details when /account-details fails", async () => {
+    globalThis.fetch = vi.fn().mockImplementation((url: string) =>
+      Promise.resolve(
+        url.includes("/account-details")
+          ? new Response("boom", { status: 500 })
+          : new Response(JSON.stringify([{ id: "a", details: [{ year: 2026 }] }]), {
+              status: 200,
+            }),
+      ),
+    );
+    const err = await loadWorkspaceSnapshot({ request: new Request("http://x/") } as any).catch(
+      (e) => e,
+    );
+    expect(err.init.status).toBe(502);
+  });
+
+  it("returns the empty snapshot without fetching when there is no user", async () => {
+    const { getAuthSession } = await import("~/utils/auth.server");
+    vi.mocked(getAuthSession).mockResolvedValueOnce({ user: null, accessToken: undefined } as any);
+    const fetchSpy = vi.fn();
+    globalThis.fetch = fetchSpy;
+    const snapshot = await loadWorkspaceSnapshot({ request: new Request("http://x/") } as any, {
+      ensureSignedIn: false,
+    });
+    expect(snapshot.user).toBeNull();
+    expect(fetchSpy).not.toHaveBeenCalled();
   });
 });

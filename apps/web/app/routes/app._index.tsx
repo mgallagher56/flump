@@ -1,6 +1,8 @@
 import type { LoaderFunctionArgs } from "react-router";
 import { redirect } from "react-router";
-import { authHeader, getAuthSession } from "~/utils/auth.server";
+import { backendFetch } from "~/services/backend-client.server";
+import { throwRouteError } from "~/services/route-error.server";
+import { getAuthSession } from "~/utils/auth.server";
 import { isDemoMode } from "~/utils/demoData";
 
 export const loader = async (args: LoaderFunctionArgs) => {
@@ -9,19 +11,19 @@ export const loader = async (args: LoaderFunctionArgs) => {
   }
 
   const { user, accessToken } = await getAuthSession(args, { ensureSignedIn: false });
-  const authz = authHeader({ accessToken });
   if (!user) return redirect("/login");
 
-  const apiUrl = process.env.VITE_API_URL || "http://localhost:4000";
   try {
-    const res = await fetch(`${apiUrl}/user-profile`, {
-      headers: { ...authz },
+    const profile = await backendFetch<{ onboardingCompleted?: boolean } | null>("/user-profile", {
+      accessToken,
+      signal: args.request.signal,
     });
-    const profile = res.ok ? await res.json() : null;
     if (profile && profile.onboardingCompleted === false) {
       return redirect("/app/onboarding");
     }
-  } catch {}
+  } catch (error) {
+    throwRouteError(error);
+  }
 
   return redirect("/");
 };
