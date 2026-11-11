@@ -1,5 +1,5 @@
 import { css } from "@repo/ui/styled-system/css";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { ConfirmDialog, type ConfirmDialogProps } from "./ConfirmDialog";
 
@@ -39,6 +39,25 @@ describe("ConfirmDialog", () => {
     fireEvent.keyDown(screen.getByRole("alertdialog"), { key: "Escape" });
     expect(onOpenChange).toHaveBeenCalledTimes(2);
     expect(onConfirm).not.toHaveBeenCalled();
+  });
+
+  it("returns focus to the element that opened it when closed", async () => {
+    const opener = document.createElement("button");
+    document.body.appendChild(opener);
+    opener.focus();
+    const props: ConfirmDialogProps = {
+      open: true,
+      onOpenChange: vi.fn(),
+      title: "Delete?",
+      description: "Sure?",
+      confirmLabel: "Delete",
+      onConfirm: vi.fn(),
+    };
+    const { rerender } = render(<ConfirmDialog {...props} />);
+    expect(document.activeElement).toBe(screen.getByRole("button", { name: "Cancel" }));
+    rerender(<ConfirmDialog {...props} open={false} />);
+    await waitFor(() => expect(document.activeElement).toBe(opener));
+    opener.remove();
   });
 
   it("calls onConfirm once from the confirm button", () => {

@@ -43,6 +43,7 @@ export const ConfirmDialog: FC<ConfirmDialogProps> = ({
   requireText,
 }) => {
   const cancelRef = useRef<HTMLButtonElement>(null);
+  const returnFocusRef = useRef<HTMLElement | null>(null);
   const [typed, setTyped] = useState("");
   const inputId = useId();
 
@@ -69,7 +70,15 @@ export const ConfirmDialog: FC<ConfirmDialogProps> = ({
           className={confirmContent()}
           onOpenAutoFocus={(event) => {
             event.preventDefault();
+            returnFocusRef.current =
+              document.activeElement instanceof HTMLElement ? document.activeElement : null;
             cancelRef.current?.focus();
+          }}
+          // No Dialog.Trigger here, so Radix would drop focus on <body>; hand it back to
+          // whatever opened the dialog (e.g. the Delete button inside a parent modal).
+          onCloseAutoFocus={(event) => {
+            event.preventDefault();
+            returnFocusRef.current?.focus();
           }}
           onPointerDownOutside={(event) => event.preventDefault()}
           onInteractOutside={(event) => event.preventDefault()}

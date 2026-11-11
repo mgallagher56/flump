@@ -1,4 +1,4 @@
-import { fireEvent } from "@testing-library/react";
+import { fireEvent, within } from "@testing-library/react";
 import { describe, expect, test, vi } from "vitest";
 import customRender from "~/testUtils/customRender";
 import BankConnectionsList, { type BankConnectionsListProps } from "./BankConnectionsList";
@@ -63,15 +63,45 @@ describe("<BankConnectionsList />", () => {
     );
   });
 
-  test("allows disconnecting a connection after confirmation", () => {
-    window.confirm = vi.fn().mockReturnValue(true);
-    const { getAllByText } = customRender(<BankConnectionsList connections={mockConnections} />);
+  test("disconnect opens a confirm dialog and submits nothing until confirmed", () => {
+    const confirmSpy = vi.fn();
+    window.confirm = confirmSpy;
+    mockSubmit.mockClear();
+    const { getAllByText, getByRole } = customRender(
+      <BankConnectionsList connections={mockConnections} />,
+    );
 
-    const disconnectButtons = getAllByText("Disconnect");
-    fireEvent.click(disconnectButtons[0]);
-    expect(window.confirm).toHaveBeenCalled();
+    fireEvent.click(getAllByText("Disconnect")[0]);
+    const dialog = getByRole("alertdialog", { name: "Disconnect Monzo Bank?" });
+    expect(dialog.textContent).toContain(
+      "Synced accounts and transactions from this bank will be removed.",
+    );
+    expect(mockSubmit).not.toHaveBeenCalled();
+    expect(confirmSpy).not.toHaveBeenCalled();
+  });
+
+  test("cancelling the disconnect confirm submits nothing", () => {
+    mockSubmit.mockClear();
+    const { getAllByText, getByRole, queryByRole } = customRender(
+      <BankConnectionsList connections={mockConnections} />,
+    );
+    fireEvent.click(getAllByText("Disconnect")[0]);
+    fireEvent.click(getByRole("button", { name: "Cancel" }));
+    expect(queryByRole("alertdialog")).toBeNull();
+    expect(mockSubmit).not.toHaveBeenCalled();
+  });
+
+  test("confirming disconnect submits disconnectConnection", () => {
+    mockSubmit.mockClear();
+    const { getAllByText, getByRole } = customRender(
+      <BankConnectionsList connections={mockConnections} />,
+    );
+    fireEvent.click(getAllByText("Disconnect")[1]);
+    const dialog = getByRole("alertdialog", { name: "Disconnect HSBC UK?" });
+    fireEvent.click(within(dialog).getByRole("button", { name: "Disconnect" }));
+    expect(mockSubmit).toHaveBeenCalledTimes(1);
     expect(mockSubmit).toHaveBeenCalledWith(
-      { intent: "disconnectConnection", connectionId: "conn-1" },
+      { intent: "disconnectConnection", connectionId: "conn-2" },
       { method: "POST" },
     );
   });

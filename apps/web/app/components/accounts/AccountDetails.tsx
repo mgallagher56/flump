@@ -1,12 +1,13 @@
 import { css } from "@repo/ui/styled-system/css";
 import type { ChangeEvent, FC } from "react";
-import { useCallback, useMemo } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { FaTrashAlt } from "react-icons/fa";
 import { useFetcher, useLoaderData } from "react-router";
 import AccountDetailChart from "~/components/charts/AccountDetailChart";
 import FLPText from "~/components/core/typography/FLPText";
 import { useResponsive } from "~/context/ResponsiveContext";
+import { ConfirmDialog } from "~/features/feedback/components/ConfirmDialog";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
 import type { loader } from "~/routes/app.accounts.$account";
 import { isFutureMonth } from "~/utils/accounts";
@@ -31,7 +32,8 @@ const AccountDetails: FC<AccountDetailsProps> = ({
   const { t } = useTranslation();
   const { isMobile: contextIsMobile } = useResponsive();
   const isMobileVariant = propIsMobile ?? (variant === "mobile" ? true : contextIsMobile);
-  const { accountDetails = [] } = useLoaderData<typeof loader>();
+  const { accountDetails = [], account } = useLoaderData<typeof loader>();
+  const [yearToDelete, setYearToDelete] = useState<number | null>(null);
   const fetcher = useFetcher();
 
   const onRemoveYear = useCallback(
@@ -43,6 +45,7 @@ const AccountDetails: FC<AccountDetailsProps> = ({
         },
         { method: "POST" },
       );
+      setYearToDelete(null);
     },
     [fetcher],
   );
@@ -287,7 +290,7 @@ const AccountDetails: FC<AccountDetailsProps> = ({
                       className={deleteBtnStyle}
                       title={`Delete ${year}`}
                       type="button"
-                      onClick={() => onRemoveYear(year)}
+                      onClick={() => setYearToDelete(year)}
                     >
                       <FaTrashAlt size={12} />
                     </button>
@@ -360,6 +363,26 @@ const AccountDetails: FC<AccountDetailsProps> = ({
           </tr>
         </tbody>
       </table>
+      <ConfirmDialog
+        open={yearToDelete !== null}
+        onOpenChange={(open) => {
+          if (!open) setYearToDelete(null);
+        }}
+        title={`Delete ${yearToDelete ?? ""}?`}
+        description={
+          <>
+            This removes all monthly balances for{" "}
+            <span className={css({ fontVariantNumeric: "tabular-nums" })}>{yearToDelete}</span> from{" "}
+            {(account as { name?: string } | undefined)?.name || "this account"}. This can't be
+            undone.
+          </>
+        }
+        confirmLabel="Delete year"
+        tone="danger"
+        onConfirm={() => {
+          if (yearToDelete !== null) onRemoveYear(yearToDelete);
+        }}
+      />
     </div>
   );
 };

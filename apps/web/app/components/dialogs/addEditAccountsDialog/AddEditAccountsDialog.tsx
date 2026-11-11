@@ -17,6 +17,7 @@ import FLPSelect from "~/components/core/inputs/select/FLPSelect";
 import FLPBox from "~/components/core/structure/FLPBox";
 import FLPText from "~/components/core/typography/FLPText";
 import { type AccountType, AccountTypeEnum } from "~/containers/accounts/utils";
+import { ConfirmDialog } from "~/features/feedback/components/ConfirmDialog";
 import type { loader } from "~/routes/app.accounts._index";
 
 const { CURRENT, SAVING, MORTGAGE, CREDIT_CARD, LOAN, OWED, INVESTMENT, PENSION } = AccountTypeEnum;
@@ -120,6 +121,7 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
   const fetcher = useFetcher();
   const contentRef = useRef<HTMLDivElement>(null);
   const [modalOpen, setModalOpen] = useState(false);
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
   const [entryMethod, setEntryMethod] = useState<"manual" | "bank">("manual");
   const [selectedBank, setSelectedBank] = useState<string>("monzo");
   const [bankAuthType, setBankAuthType] = useState<"token" | "oauth">("token");
@@ -129,6 +131,7 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
 
   const handleCloseModal = useCallback(() => {
     setModalOpen(false);
+    setConfirmDeleteOpen(false);
     setBankError(null);
   }, []);
 
@@ -276,20 +279,16 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
     handleCloseModal();
   }, [accountId, formInput, fetcher, handleCloseModal]);
 
-  const handleRemoveAccount = useCallback(
-    (e: React.MouseEvent) => {
-      e.stopPropagation();
-      fetcher.submit(
-        {
-          intent: "delete",
-          accountId: accountId || "",
-        },
-        { method: "POST" },
-      );
-      handleCloseModal();
-    },
-    [accountId, fetcher, handleCloseModal],
-  );
+  const handleConfirmRemoveAccount = useCallback(() => {
+    fetcher.submit(
+      {
+        intent: "delete",
+        accountId: accountId || "",
+      },
+      { method: "POST" },
+    );
+    handleCloseModal();
+  }, [accountId, fetcher, handleCloseModal]);
 
   const selectedBankObj = POPULAR_BANKS.find((b) => b.id === selectedBank) ?? POPULAR_BANKS[0];
   const isDirectSync = !!selectedBankObj.directSync;
@@ -344,7 +343,13 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
       additionalActionBtns={
         isEditAccount ? (
           <FLPButtonGroup>
-            <FLPButton variant="destructive" onClick={handleRemoveAccount}>
+            <FLPButton
+              variant="destructive"
+              onClick={(e: React.MouseEvent) => {
+                e.stopPropagation();
+                setConfirmDeleteOpen(true);
+              }}
+            >
               {t("delete")}
             </FLPButton>
           </FLPButtonGroup>
@@ -375,6 +380,17 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
       onClose={handleCloseModal}
       onConfirm={submitAction}
     >
+      {isEditAccount && (
+        <ConfirmDialog
+          open={confirmDeleteOpen}
+          onOpenChange={setConfirmDeleteOpen}
+          title={`Delete ${selectedAccount.name || "this account"}?`}
+          description="This deletes the account and its full balance history."
+          confirmLabel="Delete account"
+          tone="danger"
+          onConfirm={handleConfirmRemoveAccount}
+        />
+      )}
       {!isEditAccount && (
         <div
           style={{
