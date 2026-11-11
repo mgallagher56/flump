@@ -6,6 +6,7 @@ export interface SignOptions {
   notBefore?: string;
   issuer?: string;
   noSub?: boolean;
+  noExp?: boolean;
 }
 
 export async function createTestJwks(): Promise<{
@@ -25,11 +26,13 @@ export async function createTestJwks(): Promise<{
   const jwks: JWTVerifyGetKey = async () => publicKey;
 
   const build = async (claims: object, key: typeof privateKey, opts: SignOptions = {}) => {
-    const jwt = new SignJWT({ ...claims } as Record<string, unknown>)
+    const payload = { ...claims } as Record<string, unknown>;
+    if (opts.noSub) delete payload.sub;
+    const jwt = new SignJWT(payload)
       .setProtectedHeader({ alg: opts.alg ?? "RS256", kid })
       .setIssuer(opts.issuer ?? issuer)
-      .setIssuedAt()
-      .setExpirationTime(opts.expiresIn ?? "1h");
+      .setIssuedAt();
+    if (!opts.noExp) jwt.setExpirationTime(opts.expiresIn ?? "1h");
     if (opts.notBefore) jwt.setNotBefore(opts.notBefore);
     return jwt.sign(key);
   };
