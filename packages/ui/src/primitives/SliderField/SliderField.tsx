@@ -26,7 +26,7 @@ export interface SliderFieldProps {
   disabled?: boolean;
 }
 
-const numberFormat = new Intl.NumberFormat("en-GB", { maximumFractionDigits: 20 });
+const numberFormat = new Intl.NumberFormat("en-GB", { maximumFractionDigits: 6 });
 
 export const SliderField: FC<SliderFieldProps> = ({
   label,

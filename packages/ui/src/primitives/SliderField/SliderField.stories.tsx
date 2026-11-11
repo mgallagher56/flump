@@ -55,6 +55,7 @@ export const Dark: Story = {
 
 export const FocusWithinPill: Story = {
   args: { value: 100 },
+  globals: { theme: "light" },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
     const pillInput = canvas.getByLabelText("Monthly Debt Overpayment input");
