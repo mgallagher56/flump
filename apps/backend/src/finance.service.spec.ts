@@ -59,4 +59,30 @@ describe("FinanceService", () => {
       );
     });
   });
+  describe("createTransaction", () => {
+    it("saves with the caller's userId and ignores client-supplied id and userId", async () => {
+      const { service, transactionRepo } = createService();
+
+      await service.createTransaction("userA", {
+        id: "other-id",
+        userId: "userB",
+        accountId: "acc-1",
+        amount: -5,
+        description: "Coffee",
+        category: "Food",
+        timestamp: "2026-01-01T10:00:00Z",
+      } as any);
+
+      const created = transactionRepo.create.mock.calls[0][0];
+      expect(created.userId).toBe("userA");
+      expect(created).not.toHaveProperty("id");
+      expect(created).toMatchObject({
+        accountId: "acc-1",
+        amount: -5,
+        description: "Coffee",
+        category: "Food",
+      });
+      expect(transactionRepo.save.mock.calls[0][0].userId).toBe("userA");
+    });
+  });
 });

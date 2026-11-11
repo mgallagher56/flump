@@ -13,6 +13,7 @@ import { AccountDetail } from "./entities/account-detail.entity";
 import { BankConnection } from "./entities/bank-connection.entity";
 import { Transaction } from "./entities/transaction.entity";
 import { UserProfile } from "./entities/user-profile.entity";
+import type { CreateTransactionDto } from "./finance.controller";
 import { BankProviderRegistry } from "./providers/provider.registry";
 
 @Injectable()
@@ -37,7 +38,12 @@ export class FinanceService {
   ) {
     this.accountIntakeService =
       accountIntakeService ??
-      new AccountIntakeService(accountRepository, accountDetailRepository, userProfileRepository);
+      new AccountIntakeService(
+        accountRepository,
+        accountDetailRepository,
+        userProfileRepository,
+        bankConnectionRepository,
+      );
   }
 
   async getAccounts(userId: string) {
@@ -82,9 +88,26 @@ export class FinanceService {
     });
   }
 
-  async createTransaction(userId: string, body: any) {
+  /**
+   * Allow-list of client-writable transaction fields. `id` and `userId` are
+   * never copied from a request body.
+   */
+  private pickTransactionFields(body: CreateTransactionDto): Partial<Transaction> {
+    const fields = {
+      accountId: body.accountId,
+      amount: body.amount,
+      description: body.description,
+      category: body.category,
+      timestamp: body.timestamp as Date | undefined,
+    };
+    return Object.fromEntries(
+      Object.entries(fields).filter(([, value]) => value !== undefined),
+    ) as Partial<Transaction>;
+  }
+
+  async createTransaction(userId: string, body: CreateTransactionDto) {
     const transaction = this.transactionRepository.create({
-      ...body,
+      ...this.pickTransactionFields(body),
       userId,
     });
     return this.transactionRepository.save(transaction);
