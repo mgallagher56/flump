@@ -8,6 +8,7 @@ import { InjectRepository } from "@nestjs/typeorm";
 import { In, Repository } from "typeorm";
 import { Account } from "./entities/account.entity";
 import { AccountDetail } from "./entities/account-detail.entity";
+import { BankConnection } from "./entities/bank-connection.entity";
 import { UserProfile } from "./entities/user-profile.entity";
 
 export type AccountType =
@@ -80,7 +81,29 @@ export class AccountIntakeService implements IAccountIntake {
     private readonly accountDetailRepository: Repository<AccountDetail>,
     @InjectRepository(UserProfile)
     private readonly userProfileRepository: Repository<UserProfile>,
+    @InjectRepository(BankConnection)
+    private readonly bankConnectionRepository: Repository<BankConnection>,
   ) {}
+
+  /**
+   * Allow-list of client-writable account fields. `id`, `userId` and
+   * `connectionId` are never copied from a request body.
+   */
+  private pickAccountFields(body: CreateAccountDto | UpdateAccountDto): Partial<Account> {
+    const fields = {
+      name: body.name,
+      type: body.type,
+      balance: body.balance,
+      currency: body.currency,
+      interestRate: body.interestRate,
+      monthlyContribution: body.monthlyContribution,
+      isCurrent: body.isCurrent,
+      externalAccountId: body.externalAccountId,
+    };
+    return Object.fromEntries(
+      Object.entries(fields).filter(([, value]) => value !== undefined),
+    ) as Partial<Account>;
+  }
 
   async getAccounts(userId: string): Promise<AccountWithDetails[]> {
     let accounts = await this.accountRepository.find({
@@ -228,10 +251,20 @@ export class AccountIntakeService implements IAccountIntake {
   }
 
   async createAccount(userId: string, body: CreateAccountDto): Promise<Account> {
+    const fields = this.pickAccountFields(body);
+    if (body.connectionId) {
+      const connection = await this.bankConnectionRepository.findOne({
+        where: { id: body.connectionId, userId },
+      });
+      if (!connection) {
+        throw new NotFoundException("Bank connection not found");
+      }
+      fields.connectionId = connection.id;
+    }
     const account: Account = this.accountRepository.create({
-      ...body,
+      ...fields,
       userId,
-    } as Partial<Account>);
+    });
     return this.accountRepository.save(account);
   }
 
@@ -243,7 +276,7 @@ export class AccountIntakeService implements IAccountIntake {
       throw new NotFoundException("Account not found");
     }
 
-    Object.assign(account, body);
+    Object.assign(account, this.pickAccountFields(body));
     return this.accountRepository.save(account);
   }
 
