@@ -1,5 +1,11 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { calculateUKTax, getTaxYearForDate, type TaxRecord } from "./tax-calculator.js";
+import {
+  calculateUKTax,
+  getMonthsForTaxYear,
+  getRecordValueForMonth,
+  getTaxYearForDate,
+  type TaxRecord,
+} from "./tax-calculator.js";
 import { getCurrentUKTaxYear, UK_NATIONAL_INSURANCE } from "./tax-rules.js";
 import { UK_TAX_VECTORS } from "./test-vectors/uk-tax.vectors.js";
 import { SUPPORTED_UK_TAX_YEARS } from "./types.js";
@@ -47,6 +53,40 @@ describe("getUkTaxYearForDate (6 April boundary, string based)", () => {
   it("legacy getTaxYearForDate delegates to the same boundary and keeps its signature", () => {
     expect(getTaxYearForDate("2026-04-05")).toBe("2025/26");
     expect(getTaxYearForDate("2026-04-06")).toBe("2026/27");
+  });
+});
+
+describe("month bucketing versus the 6 April date boundary (documented granularity)", () => {
+  const rec = (date: string): TaxRecord => ({
+    id: "r",
+    userId: "u",
+    name: "n",
+    source: "employment",
+    type: "income",
+    category: "salary",
+    amount: 100,
+    frequency: "one-off",
+    date,
+    endDate: null,
+    notes: null,
+    createdAt: "2024-01-01T00:00:00Z",
+    updatedAt: "2024-01-01T00:00:00Z",
+  });
+
+  it("getMonthsForTaxYear treats the whole of April as the first month of the year", () => {
+    const months = getMonthsForTaxYear("2024/25");
+    expect(months[0]).toBe("2024-04");
+    expect(months[11]).toBe("2025-03");
+    expect(months).toHaveLength(12);
+  });
+
+  it("a record dated 1-5 April is filed under the previous year by date but lands in April of the new year by month", () => {
+    expect(getTaxYearForDate("2024-04-05")).toBe("2023/24");
+    expect(getTaxYearForDate("2024-04-06")).toBe("2024/25");
+    // Month granularity: both fall in the 2024-04 bucket, which belongs to 2024/25.
+    expect(getRecordValueForMonth(rec("2024-04-05"), "2024-04")).toBe(100);
+    expect(getRecordValueForMonth(rec("2024-04-06"), "2024-04")).toBe(100);
+    expect(getMonthsForTaxYear("2023/24")).not.toContain("2024-04");
   });
 });
 

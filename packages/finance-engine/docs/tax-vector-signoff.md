@@ -326,7 +326,9 @@ Each needs an owner ruling or a primary source before sign-off.
 
 (e) UNVERIFIED: Class 2 NI (the 2023/24 small profits threshold is now 6,725, read on the GOV.UK rates and allowances page; Class 2 is not used by any calculation), Plan 5 thresholds for 2023/24 to 2025/26, and the personal allowance taper rate for 2020/21 to 2022/23.
 
-(f) Three apps/web tests now fail as a consequence of deliberate engine changes and need consumer-track follow-up:
+(g) Month versus date granularity (task C3): `getMonthsForTaxYear` and `getRecordValueForMonth` bucket by whole calendar month (all of April is the new tax year), while `getTaxYearForDate` puts 1 to 5 April in the previous year. A record dated 1 to 5 April is filed under the previous year by date but its April value is counted in the new year. Documented in code and covered by a test rather than reconciled, because records have monthly granularity. The web app now defaults new records to 6 April so it never creates such records itself.
+
+(f) RESOLVED (task C3): the three apps/web tests were updated (UKTaxCalculator expects 337.5 and 2250 + 337.5; TaxTrapAlertBanner and WealthCheckHeroWidget show effectiveMarginalRatePct, 62; TaxContainer fixtures use 2024-04-06). Original note: three apps/web tests now fail as a consequence of deliberate engine changes and need consumer-track follow-up:
 
 - UKTaxCalculator.test.tsx:61 expects 338 and gets 337.5 (employer NI pence rounding, D5-a).
 - TaxTrapAlertBanner.test.tsx:16 expects '62% Marginal Tax'; D7-a gives marginalRatePct 60 (effective 62).

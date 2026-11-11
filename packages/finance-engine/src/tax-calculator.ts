@@ -183,7 +183,12 @@ export function getNextTaxYear(taxYear: string): string {
   return `${nextStart}/${(nextStart + 1).toString().slice(-2)}`;
 }
 
-// Generate the 12 calendar months YYYY-MM for a tax year YYYY/YY
+// Generate the 12 calendar months YYYY-MM for a tax year YYYY/YY.
+// Known granularity limit: record values are bucketed by WHOLE calendar month,
+// so April belongs entirely to the new tax year, whereas getTaxYearForDate puts
+// 1-5 April in the previous year. A record dated 1-5 April is therefore filed
+// under the previous year by date but its April value lands in the new year's
+// months. Deliberate (records are monthly, not daily); see sign-off sheet known issue (g).
 export function getMonthsForTaxYear(taxYear: string): string[] {
   const parts = taxYear.split("/");
   const startYear = Number.parseInt(parts[0] || "0", 10);

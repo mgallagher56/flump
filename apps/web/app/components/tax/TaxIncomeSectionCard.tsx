@@ -104,9 +104,9 @@ export const TaxIncomeSectionCard: FC<TaxIncomeSectionCardProps> = ({
     e.preventDefault();
     if (!quickName.trim() || !quickAmount) return;
 
-    // Use April 1st of the selected tax year start
+    // Use 6 April (tax year start) of the selected tax year start
     const startYear = selectedTaxYear.split("/")[0];
-    const defaultDate = `${startYear}-04-01`;
+    const defaultDate = `${startYear}-04-06`;
 
     onQuickAdd({
       name: quickName.trim(),
