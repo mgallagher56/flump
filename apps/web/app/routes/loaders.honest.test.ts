@@ -75,6 +75,22 @@ describe("missing access token", () => {
     expect(globalThis.fetch).not.toHaveBeenCalled();
   });
 
+  it("profile loader rejects 401 without fetching", async () => {
+    globalThis.fetch = vi.fn();
+    const err = await caught(profileLoader(args()));
+    expect(err.init.status).toBe(401);
+    expect(err.data).toEqual({ kind: "unauthorised", endpoint: "/user-profile" });
+    expect(globalThis.fetch).not.toHaveBeenCalled();
+  });
+
+  it("account loader rejects 401 without fetching", async () => {
+    globalThis.fetch = vi.fn();
+    const err = await caught(accountLoader(args("http://localhost/x", { account: "a1" })));
+    expect(err.init.status).toBe(401);
+    expect(err.data).toEqual({ kind: "unauthorised", endpoint: "/accounts/a1" });
+    expect(globalThis.fetch).not.toHaveBeenCalled();
+  });
+
   it("app index loader rejects 401 without fetching", async () => {
     globalThis.fetch = vi.fn();
     const err = await caught(appIndexLoader(args()));

@@ -42,17 +42,20 @@ export const action = async (args: ActionFunctionArgs) => {
         ...(balance !== undefined ? { balance } : {}),
       });
     } else if (intent === "update") {
-      await send(`/accounts/${accountId}`, "PATCH", {
+      await send(`/accounts/${encodeURIComponent(String(accountId ?? ""))}`, "PATCH", {
         name,
         type,
         ...(balance !== undefined ? { balance } : {}),
       });
     } else if (intent === "delete") {
-      await send(`/accounts/${accountId}`, "DELETE");
+      await send(`/accounts/${encodeURIComponent(String(accountId ?? ""))}`, "DELETE");
     } else if (intent === "syncConnection") {
-      await send(`/bank-connections/${connectionId}/refresh`, "POST");
+      await send(
+        `/bank-connections/${encodeURIComponent(String(connectionId ?? ""))}/refresh`,
+        "POST",
+      );
     } else if (intent === "disconnectConnection") {
-      await send(`/bank-connections/${connectionId}`, "DELETE");
+      await send(`/bank-connections/${encodeURIComponent(String(connectionId ?? ""))}`, "DELETE");
     } else if (intent === "connectBank") {
       const institutionId = String(formData.get("institutionId") || "");
       const bankToken = formData.get("token");

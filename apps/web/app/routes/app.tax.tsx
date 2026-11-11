@@ -73,7 +73,7 @@ export const action = async (args: ActionFunctionArgs) => {
       const receiptMimeType = formData.get("receiptMimeType") || null;
       const receiptData = formData.get("receiptData") || null;
 
-      await backendFetch(`/tax-records/${id}`, {
+      await backendFetch(`/tax-records/${encodeURIComponent(String(id ?? ""))}`, {
         accessToken: token,
         method: "PATCH",
         body: {
@@ -93,7 +93,10 @@ export const action = async (args: ActionFunctionArgs) => {
       });
     } else if (intent === "delete-transaction") {
       const id = formData.get("id");
-      await backendFetch(`/tax-records/${id}`, { accessToken: token, method: "DELETE" });
+      await backendFetch(`/tax-records/${encodeURIComponent(String(id ?? ""))}`, {
+        accessToken: token,
+        method: "DELETE",
+      });
     } else if (intent === "delete-tax-year") {
       const recordIdsJson = formData.get("recordIds") as string | null;
       if (recordIdsJson) {
@@ -101,7 +104,10 @@ export const action = async (args: ActionFunctionArgs) => {
         if (!Array.isArray(recordIds)) throw new SyntaxError("recordIds must be an array");
         await Promise.all(
           recordIds.map((id) =>
-            backendFetch(`/tax-records/${id}`, { accessToken: token, method: "DELETE" }),
+            backendFetch(`/tax-records/${encodeURIComponent(String(id ?? ""))}`, {
+              accessToken: token,
+              method: "DELETE",
+            }),
           ),
         );
       }

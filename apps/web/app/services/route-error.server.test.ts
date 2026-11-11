@@ -73,6 +73,11 @@ describe("actionErrorResponse", () => {
     expect(JSON.stringify(res.data)).not.toMatch(/secret|accounts/);
   });
 
+  it("uses the exact 401 copy", () => {
+    const res: any = actionErrorResponse(new BackendError("unauthorised", "/x", 401));
+    expect(res.data.error).toBe("Your session has ended. Please sign in again.");
+  });
+
   it("falls back to the kind's status when the backend never answered", () => {
     const res: any = actionErrorResponse(new BackendError("unavailable", "/accounts"));
     expect(res.init.status).toBe(503);

@@ -61,13 +61,16 @@ export const action = async (args: ActionFunctionArgs) => {
           monthlyContribution !== "" ? Number(monthlyContribution) : null;
       }
 
-      await backendFetch(`/accounts/${accountId}`, {
+      await backendFetch(`/accounts/${encodeURIComponent(String(accountId ?? ""))}`, {
         accessToken: token,
         method: "PATCH",
         body: updatePayload,
       });
     } else if (intent === "deleteAccount") {
-      await backendFetch(`/accounts/${accountId}`, { accessToken: token, method: "DELETE" });
+      await backendFetch(`/accounts/${encodeURIComponent(String(accountId ?? ""))}`, {
+        accessToken: token,
+        method: "DELETE",
+      });
     } else if (intent === "updateSavingsSettings") {
       const savingsAllocationMode = formData.get("savingsAllocationMode");
       const monthlySavingsTarget = formData.get("monthlySavingsTarget");

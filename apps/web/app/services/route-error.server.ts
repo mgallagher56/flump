@@ -30,7 +30,7 @@ const ACTION_MESSAGE_BY_KIND: Record<BackendErrorKind, string> = {
   "not-found": "We couldn't find that. It may have been removed.",
   forbidden: "You don't have permission to do that.",
   client: "We couldn't save that. Check the details and try again.",
-  unauthorised: "Your session has expired. Please sign in again.",
+  unauthorised: "Your session has ended. Please sign in again.",
 };
 
 /**
