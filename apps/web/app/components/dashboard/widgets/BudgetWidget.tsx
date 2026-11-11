@@ -355,10 +355,10 @@ export const BudgetWidget: FC<BudgetWidgetProps> = ({
               fontSize: { base: "11px", md: "xs" },
             })}
           >
-            <span style={{ color: "#10b981", fontWeight: 600 }}>
+            <span style={{ color: "var(--colors-status-positive-text)", fontWeight: 600 }}>
               In: {formatCurrency(data.monthlyIncome)}
             </span>
-            <span style={{ color: "#ef4444", fontWeight: 600 }}>
+            <span style={{ color: "var(--colors-status-danger-text)", fontWeight: 600 }}>
               {data.budgetedSavings && data.budgetedSavings > 0
                 ? `Living: ${formatCurrency(data.livingExpenses ?? data.monthlyExpenses - data.budgetedSavings)}`
                 : `Out: ${formatCurrency(data.monthlyExpenses)}`}

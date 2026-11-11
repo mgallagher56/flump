@@ -163,8 +163,10 @@ export const SavingsSummaryCards: FC<SavingsSummaryCardsProps> = ({
           <FLPText color="text.muted" fontSize="xs" style={{ marginTop: "4px" }}>
             {savingsRate ? (
               <>
-                <span style={{ color: "#10b981", fontWeight: 600 }}>{savingsRate}%</span> of
-                take-home pay
+                <span style={{ color: "var(--colors-status-positive-text)", fontWeight: 600 }}>
+                  {savingsRate}%
+                </span>{" "}
+                of take-home pay
               </>
             ) : (
               "Total scheduled across accounts"

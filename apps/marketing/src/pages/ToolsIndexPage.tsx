@@ -242,7 +242,9 @@ export const ToolsIndexPage: FC = () => {
                   }}
                 >
                   <span>UK Marginal Income Tax Curve</span>
-                  <span style={{ color: "#ef4444", fontWeight: "700" }}>60% Peak Zone</span>
+                  <span style={{ color: "var(--colors-status-danger-text)", fontWeight: "700" }}>
+                    60% Peak Zone
+                  </span>
                 </div>
                 <div
                   style={{ display: "flex", gap: "3px", height: "36px", alignItems: "flex-end" }}
@@ -294,7 +296,9 @@ export const ToolsIndexPage: FC = () => {
                 >
                   <span>£12.5k</span>
                   <span>£50.2k</span>
-                  <span style={{ color: "#ef4444", fontWeight: "bold" }}>£100k–£125k</span>
+                  <span style={{ color: "var(--colors-status-danger-text)", fontWeight: "bold" }}>
+                    £100k–£125k
+                  </span>
                   <span>£125k+</span>
                 </div>
               </div>

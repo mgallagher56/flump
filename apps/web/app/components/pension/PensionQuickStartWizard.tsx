@@ -503,7 +503,11 @@ export const PensionQuickStartWizard: FC<PensionQuickStartWizardProps> = ({
               <FLPText color="text.muted" fontSize="xs" fontWeight="semibold">
                 EST. MONTHLY DRAWDOWN (4%)
               </FLPText>
-              <FLPHeading as="h3" size="lg" style={{ color: "#10b981", marginTop: "4px" }}>
+              <FLPHeading
+                as="h3"
+                size="lg"
+                style={{ color: "var(--colors-status-positive-text)", marginTop: "4px" }}
+              >
                 {formatCurrency(monthlyRetirementIncome)}
                 <span style={{ fontSize: "14px", fontWeight: "normal", color: "text.muted" }}>
                   /mo

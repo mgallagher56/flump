@@ -69,7 +69,7 @@ export const HowItWorksSection: FC = () => {
             <span
               style={{
                 fontSize: "12px",
-                color: "#10b981",
+                color: "var(--colors-status-positive-text)",
                 fontWeight: "600",
                 display: "flex",
                 alignItems: "center",
@@ -229,7 +229,15 @@ export const HowItWorksSection: FC = () => {
               }}
             >
               <div style={{ fontSize: "10px", color: "var(--colors-text-muted)" }}>Net worth</div>
-              <div style={{ fontSize: "12px", fontWeight: "bold", color: "#10b981" }}>£68.4k</div>
+              <div
+                style={{
+                  fontSize: "12px",
+                  fontWeight: "bold",
+                  color: "var(--colors-status-positive-text)",
+                }}
+              >
+                £68.4k
+              </div>
             </div>
             <div
               style={{
@@ -312,9 +320,25 @@ export const HowItWorksSection: FC = () => {
           >
             <span style={{ fontSize: "11px", fontWeight: "700", color: "#6363f1" }}>Tax Trap</span>
             <span style={{ color: "#94a3b8" }}>•</span>
-            <span style={{ fontSize: "11px", fontWeight: "700", color: "#f59e0b" }}>Mortgage</span>
+            <span
+              style={{
+                fontSize: "11px",
+                fontWeight: "700",
+                color: "var(--colors-status-warning-text)",
+              }}
+            >
+              Mortgage
+            </span>
             <span style={{ color: "#94a3b8" }}>•</span>
-            <span style={{ fontSize: "11px", fontWeight: "700", color: "#ef4444" }}>Avalanche</span>
+            <span
+              style={{
+                fontSize: "11px",
+                fontWeight: "700",
+                color: "var(--colors-status-danger-text)",
+              }}
+            >
+              Avalanche
+            </span>
           </div>
         </div>
       </div>

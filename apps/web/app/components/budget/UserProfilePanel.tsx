@@ -869,7 +869,7 @@ const UserProfilePanel: FC<UserProfilePanelProps> = ({ initialProfile, user }) =
 
           {/* Save */}
           {error && (
-            <FLPText color="destructive" fontSize="sm">
+            <FLPText color="status.danger.text" fontSize="sm">
               {error}
             </FLPText>
           )}

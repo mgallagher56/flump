@@ -189,7 +189,7 @@ const AccountDetailContainer: FC = () => {
       padding: "2px 8px",
       borderRadius: "full",
       backgroundColor: isUp ? "rgba(16, 185, 129, 0.1)" : "rgba(239, 68, 68, 0.1)",
-      color: isUp ? "success.500" : "destructive",
+      color: isUp ? "success.500" : "status.danger.text",
       display: "inline-flex",
       alignItems: "center",
       gap: "2px",
@@ -233,7 +233,7 @@ const AccountDetailContainer: FC = () => {
   if (!account) {
     return (
       <div className={containerStyle}>
-        <FLPText color="destructive">Account not found.</FLPText>
+        <FLPText color="status.danger.text">Account not found.</FLPText>
       </div>
     );
   }

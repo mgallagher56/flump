@@ -500,7 +500,7 @@ export const HomeDashboard: FC<HomeDashboardProps> = ({
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                color: "#ef4444",
+                color: "var(--colors-status-danger-text)",
                 flexShrink: 0,
               }}
             >
@@ -528,7 +528,13 @@ export const HomeDashboard: FC<HomeDashboardProps> = ({
               <div
                 style={{ marginTop: "4px", display: "flex", alignItems: "baseline", gap: "12px" }}
               >
-                <span style={{ fontSize: "24px", fontWeight: "bold", color: "#ef4444" }}>
+                <span
+                  style={{
+                    fontSize: "24px",
+                    fontWeight: "bold",
+                    color: "var(--colors-status-danger-text)",
+                  }}
+                >
                   {formatCurrency(financialStage.totalUnsecuredDebt || debtData?.totalDebt || 0)}
                 </span>
                 <span className={css({ fontSize: "13px", color: "text.muted" })}>

@@ -102,7 +102,7 @@ export const WebHowItWorksSection: FC = () => {
               marginTop: "auto",
               paddingTop: "12px",
               fontSize: "12px",
-              color: "#10b981",
+              color: "var(--colors-status-positive-text)",
               fontWeight: "600",
               display: "flex",
               alignItems: "center",

@@ -193,7 +193,7 @@ const EntryRow: FC<EntryRowProps> = ({ entry, symbol, onUpdate, onDelete, deleti
         cursor: "pointer",
         transition: "all 0.15s ease",
         _hover: {
-          color: "destructive",
+          color: "status.danger.text",
           backgroundColor: "rgba(239, 68, 68, 0.1)",
         },
       })}
@@ -888,7 +888,13 @@ const BudgetSetupWizard: FC<BudgetSetupWizardProps> = ({
                   marginTop: "16px",
                 }}
               >
-                <FaPiggyBank style={{ color: "#10b981", fontSize: "18px", flexShrink: 0 }} />
+                <FaPiggyBank
+                  style={{
+                    color: "var(--colors-status-positive-text)",
+                    fontSize: "18px",
+                    flexShrink: 0,
+                  }}
+                />
                 <FLPText fontSize="xs">
                   Tip: Want to track specific savings pots, AER rates, and compound growth? You can
                   manage and forecast multi-account savings anytime in the{" "}

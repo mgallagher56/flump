@@ -440,7 +440,7 @@ const OverpayVsSaveCompare: FC<OverpayVsSaveCompareProps> = ({
                 <FLPText fontSize="sm" color="text.muted">
                   Mortgage Interest Rate (Guaranteed Return):
                 </FLPText>
-                <FLPText fontSize="sm" fontWeight="bold" color="destructive">
+                <FLPText fontSize="sm" fontWeight="bold" color="status.danger.text">
                   {interestRate.toFixed(2)}%
                 </FLPText>
               </div>

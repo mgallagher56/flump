@@ -164,7 +164,7 @@ export const AddCategoryModal: FC<AddCategoryModalProps> = ({
                 }}
               />
               {error && (
-                <FLPText color="destructive" fontSize="xs" style={{ marginTop: "6px" }}>
+                <FLPText color="status.danger.text" fontSize="xs" style={{ marginTop: "6px" }}>
                   {error}
                 </FLPText>
               )}

@@ -231,9 +231,6 @@ describe("Architecture & Design System Laws", () => {
           "icon (graphic)",
         "apps/marketing/src/components/McpSpotlightSection/McpSpotlightSection.styles.ts":
           "bulletIcon recipe, applied to icon components only (graphic)",
-        // Known sites pending fixes. Remove each entry when the site moves to status.*.text.
-        "packages/ui/src/patterns/TaxTrapEscapeBanner/TaxTrapEscapeBanner.tsx":
-          "saving figure text, pending fix: must move to status.positive.text",
       };
       const repoRoot = path.resolve(__dirname, "../../../..");
       const roots = [path.join(repoRoot, "packages/ui/src")];
@@ -266,6 +263,40 @@ describe("Architecture & Design System Laws", () => {
       // Stale allowlist entries must be removed once the site is fixed.
       const stale = Object.keys(ALLOWED).filter((f) => !offenders.includes(f));
       expect(stale, `Allowlist entries no longer match: ${stale.join(", ")}`).toEqual([]);
+    });
+    const scanStatusText = (pattern: RegExp) => {
+      const repoRoot = path.resolve(__dirname, "../../../..");
+      const roots = ["packages/ui/src", "apps/web/app", "apps/marketing/src"].map((r) =>
+        path.join(repoRoot, r),
+      );
+      const offenders: string[] = [];
+      let scanned = 0;
+      const walk = (dir: string) => {
+        if (!fs.existsSync(dir)) return;
+        for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+          if (entry.name === "node_modules" || entry.name === "styled-system") continue;
+          const full = path.join(dir, entry.name);
+          if (entry.isDirectory()) walk(full);
+          else if (/\.(ts|tsx)$/.test(entry.name) && !/\.(test|stories)\.tsx?$/.test(entry.name)) {
+            scanned++;
+            if (pattern.test(fs.readFileSync(full, "utf-8")))
+              offenders.push(path.relative(repoRoot, full));
+          }
+        }
+      };
+      for (const root of roots) walk(root);
+      expect(scanned).toBeGreaterThan(100);
+      return offenders;
+    };
+    it("no status hex used as text colour", () => {
+      // #10b981 / #ef4444 / #f59e0b as `color` fail contrast; use status.*.text.
+      const offenders = scanStatusText(/\bcolor:\s*["'](#10b981|#ef4444|#f59e0b)["']/i);
+      expect(offenders, `status hex used as text colour: ${offenders.join(", ")}`).toEqual([]);
+    });
+    it("no bare destructive colour", () => {
+      // Bare `destructive` text is the 500 shade and fails AA; use status.danger.text.
+      const offenders = scanStatusText(/\bcolor:\s*["']destructive["']/);
+      expect(offenders, `bare destructive colour: ${offenders.join(", ")}`).toEqual([]);
     });
     it("no bare primary background (text/icon-bearing fills use primary.solid)", () => {
       // `primary` (indigo.400 in dark) is only 2.77:1 against white text, so a fill that carries

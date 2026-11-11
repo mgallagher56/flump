@@ -259,7 +259,9 @@ export const PensionWidget: FC<PensionWidgetProps> = ({
               style={{
                 fontSize: "10px",
                 fontWeight: 600,
-                color: data.isSalarySacrifice ? "#10b981" : "var(--colors-text-muted)",
+                color: data.isSalarySacrifice
+                  ? "var(--colors-status-positive-text)"
+                  : "var(--colors-text-muted)",
               }}
             >
               {data.isSalarySacrifice ? "Sal Sacrifice" : "Net Pay"}

@@ -496,7 +496,7 @@ const MortgageTracker: FC<MortgageTrackerProps> = ({
             >
               Total Interest Cost
             </FLPText>
-            <FLPHeading as="h4" color="destructive" mt={1} size="lg">
+            <FLPHeading as="h4" color="status.danger.text" mt={1} size="lg">
               {formatCurrency(totalInterest)}
             </FLPHeading>
           </div>

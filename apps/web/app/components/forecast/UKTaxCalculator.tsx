@@ -101,23 +101,23 @@ const UKTaxCalculator: FC<UKTaxCalculatorProps> = ({ initialSalary, onApplyIncre
   // Pie Chart Data
   const pieData = useMemo(() => {
     const data = [
-      { name: "Take-Home Pay", value: Math.round(taxResults.netPay), color: "#10B981" },
-      { name: "Income Tax", value: Math.round(taxResults.incomeTax), color: "#EF4444" },
-      { name: "National Insurance", value: Math.round(taxResults.ni), color: "#F59E0B" },
+      { name: "Take-Home Pay", value: Math.round(taxResults.netPay), fill: "#10B981" },
+      { name: "Income Tax", value: Math.round(taxResults.incomeTax), fill: "#EF4444" },
+      { name: "National Insurance", value: Math.round(taxResults.ni), fill: "#F59E0B" },
     ];
 
     if (taxResults.pension > 0) {
       data.push({
         name: "Pension contribution",
         value: Math.round(taxResults.pension),
-        color: "#8B5CF6",
+        fill: "#8B5CF6",
       });
     }
     if (taxResults.studentLoan > 0) {
       data.push({
         name: "Student Loan repayment",
         value: Math.round(taxResults.studentLoan),
-        color: "#3B82F6",
+        fill: "#3B82F6",
       });
     }
 
@@ -532,7 +532,10 @@ const UKTaxCalculator: FC<UKTaxCalculatorProps> = ({ initialSalary, onApplyIncre
                   )}
                   {taxResults.employerNiSaving > 0 && (
                     <tr>
-                      <td className={tdStyle} style={{ color: "#10b981" }}>
+                      <td
+                        className={tdStyle}
+                        style={{ color: "var(--colors-status-positive-text)" }}
+                      >
                         + Employer NI to Pension
                       </td>
                       <td className={tdStyle}>+{formatCurrency(taxResults.employerNiSaving)}</td>
@@ -543,7 +546,7 @@ const UKTaxCalculator: FC<UKTaxCalculatorProps> = ({ initialSalary, onApplyIncre
                   )}
                   {taxResults.incomeTax > 0 && (
                     <tr>
-                      <td className={tdStyle} style={{ color: "#ef4444" }}>
+                      <td className={tdStyle} style={{ color: "var(--colors-status-danger-text)" }}>
                         Income Tax
                       </td>
                       <td className={tdStyle}>-{formatCurrency(taxResults.incomeTax)}</td>
@@ -552,7 +555,10 @@ const UKTaxCalculator: FC<UKTaxCalculatorProps> = ({ initialSalary, onApplyIncre
                   )}
                   {taxResults.ni > 0 && (
                     <tr>
-                      <td className={tdStyle} style={{ color: "#f59e0b" }}>
+                      <td
+                        className={tdStyle}
+                        style={{ color: "var(--colors-status-warning-text)" }}
+                      >
                         National Insurance
                       </td>
                       <td className={tdStyle}>-{formatCurrency(taxResults.ni)}</td>
@@ -604,7 +610,7 @@ const UKTaxCalculator: FC<UKTaxCalculatorProps> = ({ initialSalary, onApplyIncre
                         isAnimationActive={!reducedMotion}
                       >
                         {pieData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.color} />
+                          <Cell key={`cell-${index}`} fill={entry.fill} />
                         ))}
                       </Pie>
                       <Tooltip
@@ -637,7 +643,7 @@ const UKTaxCalculator: FC<UKTaxCalculatorProps> = ({ initialSalary, onApplyIncre
                         width: "8px",
                         height: "8px",
                         borderRadius: "50%",
-                        backgroundColor: d.color,
+                        backgroundColor: d.fill,
                       }}
                     />
                     <FLPText

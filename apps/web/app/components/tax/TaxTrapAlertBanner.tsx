@@ -97,7 +97,7 @@ export const TaxTrapAlertBanner: FC<TaxTrapAlertBannerProps> = ({
               backgroundColor: trapAnalysis.isInTaxTrap
                 ? "rgba(239, 68, 68, 0.15)"
                 : "rgba(245, 158, 11, 0.15)",
-              color: trapAnalysis.isInTaxTrap ? "#ef4444" : "#d97706",
+              color: trapAnalysis.isInTaxTrap ? "var(--colors-status-danger-text)" : "#d97706",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
@@ -162,7 +162,7 @@ export const TaxTrapAlertBanner: FC<TaxTrapAlertBannerProps> = ({
             }}
           >
             <div style={{ color: "text.muted" }}>Personal Allowance Lost:</div>
-            <strong style={{ fontSize: "16px", color: "#ef4444" }}>
+            <strong style={{ fontSize: "16px", color: "var(--colors-status-danger-text)" }}>
               {formatGBP(trapAnalysis.lostPersonalAllowance)}
             </strong>
           </div>
@@ -223,7 +223,13 @@ export const TaxTrapAlertBanner: FC<TaxTrapAlertBannerProps> = ({
             <span style={{ fontSize: "11px", color: "var(--colors-text-muted)" }}>
               Annual Tax & NI Saved
             </span>
-            <div style={{ fontSize: "18px", fontWeight: 800, color: "#10b981" }}>
+            <div
+              style={{
+                fontSize: "18px",
+                fontWeight: 800,
+                color: "var(--colors-status-positive-text)",
+              }}
+            >
               {formatGBP(taxSaved)} / yr
             </div>
           </div>

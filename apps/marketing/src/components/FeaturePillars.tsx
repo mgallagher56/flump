@@ -70,7 +70,7 @@ export const FeaturePillars: FC = () => {
               style={{
                 fontSize: "12px",
                 fontWeight: "600",
-                color: "#ef4444",
+                color: "var(--colors-status-danger-text)",
                 fontFamily: "var(--fonts-mono, monospace)",
               }}
             >
@@ -232,7 +232,9 @@ export const FeaturePillars: FC = () => {
               }}
             >
               <span>Marginal rate curve</span>
-              <strong style={{ color: "#ef4444" }}>60% zone (£100k–£125k)</strong>
+              <strong style={{ color: "var(--colors-status-danger-text)" }}>
+                60% zone (£100k–£125k)
+              </strong>
             </div>
             <div style={{ display: "flex", alignItems: "flex-end", height: "30px", gap: "8px" }}>
               <div
@@ -287,7 +289,7 @@ export const FeaturePillars: FC = () => {
               style={{
                 fontSize: "12px",
                 fontWeight: "600",
-                color: "#f59e0b",
+                color: "var(--colors-status-warning-text)",
                 fontFamily: "var(--fonts-mono, monospace)",
               }}
             >
@@ -347,7 +349,9 @@ export const FeaturePillars: FC = () => {
               }}
             >
               <span>Term shortened</span>
-              <strong style={{ color: "#f59e0b" }}>-4 years 2 months</strong>
+              <strong style={{ color: "var(--colors-status-warning-text)" }}>
+                -4 years 2 months
+              </strong>
             </div>
             <div
               style={{
@@ -377,7 +381,7 @@ export const FeaturePillars: FC = () => {
               style={{
                 fontSize: "12px",
                 fontWeight: "600",
-                color: "#10b981",
+                color: "var(--colors-status-positive-text)",
                 fontFamily: "var(--fonts-mono, monospace)",
               }}
             >

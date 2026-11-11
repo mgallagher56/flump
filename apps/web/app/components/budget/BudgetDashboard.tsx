@@ -330,7 +330,7 @@ const BudgetDashboard: FC<BudgetDashboardProps> = ({
           <FLPText color="text.muted" fontSize="xs" fontWeight="semibold" textTransform="uppercase">
             Monthly Expenses
           </FLPText>
-          <FLPHeading as="h2" color="destructive" size="2xl" style={{ marginTop: "4px" }}>
+          <FLPHeading as="h2" color="status.danger.text" size="2xl" style={{ marginTop: "4px" }}>
             {fmt(totals.expenses)}
           </FLPHeading>
           <FLPText color="text.muted" fontSize="xs">
@@ -354,7 +354,9 @@ const BudgetDashboard: FC<BudgetDashboardProps> = ({
         >
           <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
             {totals.surplus < 0 && (
-              <FaExclamationTriangle style={{ color: "#ef4444", fontSize: "14px" }} />
+              <FaExclamationTriangle
+                style={{ color: "var(--colors-status-danger-text)", fontSize: "14px" }}
+              />
             )}
             <FLPText
               color="text.muted"
@@ -558,7 +560,7 @@ const BudgetDashboard: FC<BudgetDashboardProps> = ({
                 padding: "2px 8px",
                 borderRadius: "999px",
                 backgroundColor: "rgba(16, 185, 129, 0.15)",
-                color: "#10b981",
+                color: "var(--colors-status-positive-text)",
               }}
             >
               Safe-to-Spend
@@ -650,7 +652,10 @@ const BudgetDashboard: FC<BudgetDashboardProps> = ({
             }}
           >
             <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-              <FaExclamationTriangle size={16} style={{ color: "#ef4444", flexShrink: 0 }} />
+              <FaExclamationTriangle
+                size={16}
+                style={{ color: "var(--colors-status-danger-text)", flexShrink: 0 }}
+              />
               <strong style={{ fontSize: "14px", color: "var(--colors-text-primary, #0f172a)" }}>
                 UK FCA Priority Debt Guardrail Active
               </strong>
@@ -661,7 +666,7 @@ const BudgetDashboard: FC<BudgetDashboardProps> = ({
                   padding: "2px 8px",
                   borderRadius: "full",
                   backgroundColor: "rgba(239, 68, 68, 0.2)",
-                  color: "#ef4444",
+                  color: "var(--colors-status-danger-text)",
                 }}
               >
                 Deficit: -{fmt(totals.surplus)}/mo
@@ -758,7 +763,10 @@ const BudgetDashboard: FC<BudgetDashboardProps> = ({
             <span
               style={{
                 fontSize: "18px",
-                color: cashFlowSplit.billsWithCliffs.length > 0 ? "#ef4444" : "#6363f1",
+                color:
+                  cashFlowSplit.billsWithCliffs.length > 0
+                    ? "var(--colors-status-danger-text)"
+                    : "#6363f1",
               }}
             >
               {cashFlowSplit.billsWithCliffs.length > 0 ? <FiAlertTriangle /> : <FiCalendar />}

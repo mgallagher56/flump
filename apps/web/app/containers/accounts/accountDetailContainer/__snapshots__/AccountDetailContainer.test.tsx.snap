@@ -122,14 +122,63 @@ exports[`<AccountDetailContainer /> > should add new years when buttons are clic
         <div
           class="h_350px w_100% pt_16px"
         >
-          <div
-            class="recharts-responsive-container"
-            style="width: 100%; height: 100%; min-width: 0;"
+          <figure
+            aria-describedby="_r_5_"
+            aria-labelledby="_r_4_"
+            class="d_flex flex-d_column gap_12px m_0 w_100% h_100% gap_0 [&_>_h3]:sr_true [&_>_div[aria-hidden]]:flex_1 [&_>_div[aria-hidden]]:min-h_0"
           >
+            <h3
+              class="fs_md fw_semibold c_text.primary m_0"
+              id="_r_4_"
+            >
+              Account balance history
+            </h3>
             <div
-              style="width: 0px; height: 0px; overflow: visible;"
-            />
-          </div>
+              aria-hidden="true"
+            >
+              <div
+                class="recharts-responsive-container"
+                style="width: 100%; height: 100%; min-width: 0;"
+              >
+                <div
+                  style="width: 0px; height: 0px; overflow: visible;"
+                />
+              </div>
+            </div>
+            <figcaption
+              class="pos_absolute w_1px h_1px m_-1px p_0 ov_hidden clip_rect(0,_0,_0,_0) white-space_nowrap bd-w_0"
+              id="_r_5_"
+            >
+              Balance history from 1/21 to 12/23: £1,000 at the start and £1,000 at the end, across 24 monthly balances.
+            </figcaption>
+            <div
+              class="bdr_xl bd-w_1px border-style_solid bd-c_border.subtle bg-c_surface.card ov_hidden trs_border-color_0.2s_ease"
+            >
+              <button
+                aria-expanded="false"
+                class="w_100% d_flex ai_center jc_space-between p_14px_16px md:p_16px_20px bg-c_transparent bd_none cursor_pointer ta_left trs_background-color_0.15s_ease hover:bg-c_surface.subtle focusVisible:ring_2px_solid focusVisible:ring-c_border.focusRing focusVisible:ring-o_-2px"
+                type="button"
+              >
+                <div>
+                  <div
+                    style="display: flex; align-items: center; gap: 8px;"
+                  >
+                    <span
+                      class="fs_sm fw_semibold c_text.primary"
+                    >
+                      Show data
+                    </span>
+                  </div>
+                </div>
+                <span
+                  aria-hidden="true"
+                  class="fs_xs fw_semibold c_primary d_inline-flex ai_center gap_4px"
+                >
+                  ▼
+                </span>
+              </button>
+            </div>
+          </figure>
         </div>
       </div>
       <div
@@ -301,14 +350,63 @@ exports[`<AccountDetailContainer /> > should render 1`] = `
         <div
           class="h_350px w_100% pt_16px"
         >
-          <div
-            class="recharts-responsive-container"
-            style="width: 100%; height: 100%; min-width: 0;"
+          <figure
+            aria-describedby="_r_1_"
+            aria-labelledby="_r_0_"
+            class="d_flex flex-d_column gap_12px m_0 w_100% h_100% gap_0 [&_>_h3]:sr_true [&_>_div[aria-hidden]]:flex_1 [&_>_div[aria-hidden]]:min-h_0"
           >
+            <h3
+              class="fs_md fw_semibold c_text.primary m_0"
+              id="_r_0_"
+            >
+              Account balance history
+            </h3>
             <div
-              style="width: 0px; height: 0px; overflow: visible;"
-            />
-          </div>
+              aria-hidden="true"
+            >
+              <div
+                class="recharts-responsive-container"
+                style="width: 100%; height: 100%; min-width: 0;"
+              >
+                <div
+                  style="width: 0px; height: 0px; overflow: visible;"
+                />
+              </div>
+            </div>
+            <figcaption
+              class="pos_absolute w_1px h_1px m_-1px p_0 ov_hidden clip_rect(0,_0,_0,_0) white-space_nowrap bd-w_0"
+              id="_r_1_"
+            >
+              Balance history from 1/21 to 12/23: £1,000 at the start and £1,000 at the end, across 24 monthly balances.
+            </figcaption>
+            <div
+              class="bdr_xl bd-w_1px border-style_solid bd-c_border.subtle bg-c_surface.card ov_hidden trs_border-color_0.2s_ease"
+            >
+              <button
+                aria-expanded="false"
+                class="w_100% d_flex ai_center jc_space-between p_14px_16px md:p_16px_20px bg-c_transparent bd_none cursor_pointer ta_left trs_background-color_0.15s_ease hover:bg-c_surface.subtle focusVisible:ring_2px_solid focusVisible:ring-c_border.focusRing focusVisible:ring-o_-2px"
+                type="button"
+              >
+                <div>
+                  <div
+                    style="display: flex; align-items: center; gap: 8px;"
+                  >
+                    <span
+                      class="fs_sm fw_semibold c_text.primary"
+                    >
+                      Show data
+                    </span>
+                  </div>
+                </div>
+                <span
+                  aria-hidden="true"
+                  class="fs_xs fw_semibold c_primary d_inline-flex ai_center gap_4px"
+                >
+                  ▼
+                </span>
+              </button>
+            </div>
+          </figure>
         </div>
       </div>
       <div
@@ -472,14 +570,63 @@ exports[`<AccountDetailContainer /> > should render add current year button and 
         <div
           class="h_350px w_100% pt_16px"
         >
-          <div
-            class="recharts-responsive-container"
-            style="width: 100%; height: 100%; min-width: 0;"
+          <figure
+            aria-describedby="_r_d_"
+            aria-labelledby="_r_c_"
+            class="d_flex flex-d_column gap_12px m_0 w_100% h_100% gap_0 [&_>_h3]:sr_true [&_>_div[aria-hidden]]:flex_1 [&_>_div[aria-hidden]]:min-h_0"
           >
+            <h3
+              class="fs_md fw_semibold c_text.primary m_0"
+              id="_r_c_"
+            >
+              Account balance history
+            </h3>
             <div
-              style="width: 0px; height: 0px; overflow: visible;"
-            />
-          </div>
+              aria-hidden="true"
+            >
+              <div
+                class="recharts-responsive-container"
+                style="width: 100%; height: 100%; min-width: 0;"
+              >
+                <div
+                  style="width: 0px; height: 0px; overflow: visible;"
+                />
+              </div>
+            </div>
+            <figcaption
+              class="pos_absolute w_1px h_1px m_-1px p_0 ov_hidden clip_rect(0,_0,_0,_0) white-space_nowrap bd-w_0"
+              id="_r_d_"
+            >
+              Balance history from 1/21 to 12/23: £1,000 at the start and £1,000 at the end, across 24 monthly balances.
+            </figcaption>
+            <div
+              class="bdr_xl bd-w_1px border-style_solid bd-c_border.subtle bg-c_surface.card ov_hidden trs_border-color_0.2s_ease"
+            >
+              <button
+                aria-expanded="false"
+                class="w_100% d_flex ai_center jc_space-between p_14px_16px md:p_16px_20px bg-c_transparent bd_none cursor_pointer ta_left trs_background-color_0.15s_ease hover:bg-c_surface.subtle focusVisible:ring_2px_solid focusVisible:ring-c_border.focusRing focusVisible:ring-o_-2px"
+                type="button"
+              >
+                <div>
+                  <div
+                    style="display: flex; align-items: center; gap: 8px;"
+                  >
+                    <span
+                      class="fs_sm fw_semibold c_text.primary"
+                    >
+                      Show data
+                    </span>
+                  </div>
+                </div>
+                <span
+                  aria-hidden="true"
+                  class="fs_xs fw_semibold c_primary d_inline-flex ai_center gap_4px"
+                >
+                  ▼
+                </span>
+              </button>
+            </div>
+          </figure>
         </div>
       </div>
       <div

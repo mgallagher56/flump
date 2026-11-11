@@ -41,7 +41,7 @@ const ThemeToggle: FC = () => {
       type="button"
     >
       {theme === "dark" ? (
-        <FaSun style={{ color: "#f59e0b" }} />
+        <FaSun style={{ color: "var(--colors-status-warning-text)" }} />
       ) : (
         <FaMoon style={{ color: "#6363F1" }} />
       )}

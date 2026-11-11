@@ -41,17 +41,20 @@ export const GlobalBaselineScenarioBar: FC = () => {
   const stageLabels = {
     STAGE_1_DEBT_RECOVERY: {
       label: "Stage 1: Stabilise & Clear",
-      color: "#ef4444",
+      accent: "#ef4444",
+      text: "var(--colors-status-danger-text)",
       bg: "rgba(239, 68, 68, 0.1)",
     },
     STAGE_2_BUFFER_BUILD: {
       label: "Stage 2: Buffer & Protect",
-      color: "#d97706",
+      accent: "#d97706",
+      text: "var(--colors-status-warning-text)",
       bg: "rgba(217, 119, 6, 0.1)",
     },
     STAGE_3_WEALTH_OPTIMIZE: {
       label: "Stage 3: Build & Optimize",
-      color: "#10b981",
+      accent: "#10b981",
+      text: "var(--colors-status-positive-text)",
       bg: "rgba(16, 185, 129, 0.1)",
     },
   };
@@ -95,9 +98,9 @@ export const GlobalBaselineScenarioBar: FC = () => {
         >
           <span
             style={{
-              color: currentStageInfo.color,
+              color: currentStageInfo.text,
               backgroundColor: currentStageInfo.bg,
-              border: `1px solid ${currentStageInfo.color}33`,
+              border: `1px solid ${currentStageInfo.accent}33`,
               borderRadius: "9999px",
               padding: "4px 12px",
               fontSize: "12px",

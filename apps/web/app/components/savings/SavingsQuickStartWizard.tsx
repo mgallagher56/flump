@@ -231,8 +231,12 @@ export const SavingsQuickStartWizard: FC<SavingsQuickStartWizardProps> = ({
             }}
           >
             <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-              <FaCoins style={{ color: "#10b981" }} />
-              <FLPText fontSize="sm" fontWeight="semibold" style={{ color: "#10b981" }}>
+              <FaCoins style={{ color: "var(--colors-status-positive-text)" }} />
+              <FLPText
+                fontSize="sm"
+                fontWeight="semibold"
+                style={{ color: "var(--colors-status-positive-text)" }}
+              >
                 Annual Deposits: {formatCurrency(numericMonthly * 12)} / year
               </FLPText>
             </div>
@@ -277,7 +281,11 @@ export const SavingsQuickStartWizard: FC<SavingsQuickStartWizardProps> = ({
               <FLPText color="text.muted" fontSize="xs">
                 10-Year Projection
               </FLPText>
-              <FLPHeading as="h4" size="md" style={{ color: "#10b981", marginTop: "4px" }}>
+              <FLPHeading
+                as="h4"
+                size="md"
+                style={{ color: "var(--colors-status-positive-text)", marginTop: "4px" }}
+              >
                 {formatCurrency(projectedTenYear)}
               </FLPHeading>
               <FLPText color="text.muted" fontSize="xs">
@@ -290,7 +298,7 @@ export const SavingsQuickStartWizard: FC<SavingsQuickStartWizardProps> = ({
           </div>
 
           <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-            <FaCheckCircle style={{ color: "#10b981" }} />
+            <FaCheckCircle style={{ color: "var(--colors-status-positive-text)" }} />
             <FLPText fontSize="xs">
               Account <strong>{accountName}</strong> with {formatCurrency(numericBalance)} balance
               and +{formatCurrency(numericMonthly)}/mo is ready to save!

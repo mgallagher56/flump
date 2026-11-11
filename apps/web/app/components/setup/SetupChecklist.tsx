@@ -53,7 +53,7 @@ const STEP_DEFINITIONS = (props: SetupChecklistProps, navigate: ReturnType<typeo
     label: "Break down monthly outgoings",
     description:
       "Your baseline outgoings are active. Break them down into housing, bills, living, and wants to refine your emergency runway.",
-    icon: <FaWallet style={{ color: "#f59e0b" }} />,
+    icon: <FaWallet style={{ color: "var(--colors-status-warning-text)" }} />,
     isComplete: props.hasBudget || props.completedSteps.includes("budget"),
     actionLabel: "Drill down budget",
     onAction: props.onOpenBudgetWizard || (() => navigate("/app/budget")),
@@ -72,7 +72,7 @@ const STEP_DEFINITIONS = (props: SetupChecklistProps, navigate: ReturnType<typeo
     key: "savings",
     label: "Track savings and interest rates",
     description: "Record individual interest rates (AER) and set regular monthly savings targets.",
-    icon: <FaPiggyBank style={{ color: "#10b981" }} />,
+    icon: <FaPiggyBank style={{ color: "var(--colors-status-positive-text)" }} />,
     isComplete: !!props.hasSavings || props.completedSteps.includes("savings"),
     actionLabel: "Track savings",
     onAction: () => navigate("/app/savings"),
@@ -92,7 +92,7 @@ const STEP_DEFINITIONS = (props: SetupChecklistProps, navigate: ReturnType<typeo
     label: "Refine mortgage term and overpayment",
     description:
       "Simulate monthly overpayments, view your full amortisation curve, and compare ISA vs mortgage payoff.",
-    icon: <FaHome style={{ color: "#10b981" }} />,
+    icon: <FaHome style={{ color: "var(--colors-status-positive-text)" }} />,
     isComplete: props.hasMortgageAccount || props.completedSteps.includes("mortgage"),
     actionLabel: "Drill down mortgage",
     onAction: () => navigate("/app/mortgage"),
@@ -259,7 +259,7 @@ const SetupChecklist: FC<SetupChecklistProps> = (props) => {
             borderRadius: "sm",
             fontSize: "12px",
             transition: "color 0.15s",
-            _hover: { color: "destructive" },
+            _hover: { color: "status.danger.text" },
           })}
           aria-label="Dismiss setup checklist"
           title="Dismiss"
@@ -311,7 +311,9 @@ const SetupChecklist: FC<SetupChecklistProps> = (props) => {
             {/* Status icon */}
             <div style={{ marginTop: "2px", flexShrink: 0 }}>
               {step.isComplete ? (
-                <FaCheckCircle style={{ color: "#10b981", fontSize: "18px" }} />
+                <FaCheckCircle
+                  style={{ color: "var(--colors-status-positive-text)", fontSize: "18px" }}
+                />
               ) : (
                 <FaRegCircle style={{ color: "#a1a1aa", fontSize: "18px" }} />
               )}

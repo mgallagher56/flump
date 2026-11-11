@@ -26,7 +26,7 @@ exports[`<AccountDetails /> > should render 1`] = `
               </span>
               <button
                 aria-label="Delete 2023"
-                class="c_destructive cursor_pointer p_4px_8px bdr_md d_inline-flex ai_center jc_center ml_8px trs_background_0.2s [&:hover]:bg-c_rgba(239,_68,_68,_0.08)"
+                class="c_status.danger.text cursor_pointer p_4px_8px bdr_md d_inline-flex ai_center jc_center ml_8px trs_background_0.2s [&:hover]:bg-c_rgba(239,_68,_68,_0.08)"
                 title="Delete 2023"
                 type="button"
               >
@@ -57,7 +57,7 @@ exports[`<AccountDetails /> > should render 1`] = `
               </span>
               <button
                 aria-label="Delete 2021"
-                class="c_destructive cursor_pointer p_4px_8px bdr_md d_inline-flex ai_center jc_center ml_8px trs_background_0.2s [&:hover]:bg-c_rgba(239,_68,_68,_0.08)"
+                class="c_status.danger.text cursor_pointer p_4px_8px bdr_md d_inline-flex ai_center jc_center ml_8px trs_background_0.2s [&:hover]:bg-c_rgba(239,_68,_68,_0.08)"
                 title="Delete 2021"
                 type="button"
               >

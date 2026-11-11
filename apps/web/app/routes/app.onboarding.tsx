@@ -492,7 +492,9 @@ export default function OnboardingRoute() {
             }}
           >
             <div style={{ display: "flex", alignItems: "center", gap: "8px", fontWeight: "600" }}>
-              <FaCheckCircle style={{ color: "#10b981", flexShrink: 0 }} />
+              <FaCheckCircle
+                style={{ color: "var(--colors-status-positive-text)", flexShrink: 0 }}
+              />
               <span>
                 {!seedHasNumbers
                   ? "Your demo choices are remembered. Add your own numbers to continue."
@@ -1095,7 +1097,7 @@ export default function OnboardingRoute() {
                   <label htmlFor="baseline-savings" style={{ fontSize: "13px", fontWeight: 600 }}>
                     Total cash and ISA savings (£)
                   </label>
-                  <span style={{ fontWeight: 700, color: "#10b981" }}>
+                  <span style={{ fontWeight: 700, color: "var(--colors-status-positive-text)" }}>
                     £{cash.toLocaleString("en-GB")}
                   </span>
                 </div>
@@ -1176,7 +1178,10 @@ export default function OnboardingRoute() {
                     Total credit cards and personal loans (unsecured debt)
                   </label>
                   <span
-                    style={{ fontWeight: 700, color: unsecuredDebt > 0 ? "#ef4444" : "inherit" }}
+                    style={{
+                      fontWeight: 700,
+                      color: unsecuredDebt > 0 ? "var(--colors-status-danger-text)" : "inherit",
+                    }}
                   >
                     £{unsecuredDebt.toLocaleString()}
                   </span>
@@ -1282,7 +1287,10 @@ export default function OnboardingRoute() {
                   fontSize: "16px",
                   fontWeight: 800,
                   marginTop: "2px",
-                  color: monthlySurplus >= 0 ? "#10b981" : "#ef4444",
+                  color:
+                    monthlySurplus >= 0
+                      ? "var(--colors-status-positive-text)"
+                      : "var(--colors-status-danger-text)",
                 }}
               >
                 {monthlySurplus >= 0 ? "+" : ""}£{monthlySurplus.toLocaleString()}/mo
@@ -1304,7 +1312,10 @@ export default function OnboardingRoute() {
                   fontSize: "16px",
                   fontWeight: 800,
                   marginTop: "2px",
-                  color: startingNetWorth >= 0 ? "#10b981" : "#ef4444",
+                  color:
+                    startingNetWorth >= 0
+                      ? "var(--colors-status-positive-text)"
+                      : "var(--colors-status-danger-text)",
                 }}
               >
                 £{startingNetWorth.toLocaleString()}

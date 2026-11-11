@@ -842,7 +842,7 @@ export const PensionContainer: FC = () => {
                 <strong>Employer:</strong> {employerPercent}% (
                 {formatCurrency(standardMonthlyEmployerContrib)}/mo
                 {monthlyEmployerNiContrib > 0 && (
-                  <span style={{ color: "#10b981", marginLeft: "4px" }}>
+                  <span style={{ color: "var(--colors-status-positive-text)", marginLeft: "4px" }}>
                     + {formatCurrency(monthlyEmployerNiContrib)}/mo NI
                   </span>
                 )}

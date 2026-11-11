@@ -107,7 +107,7 @@ const badgeStyle = (type: string) =>
     fontWeight: "medium",
     backgroundColor:
       type === "Investment" ? "rgba(139, 92, 246, 0.12)" : "rgba(16, 185, 129, 0.12)",
-    color: type === "Investment" ? "#8b5cf6" : "#10b981",
+    color: type === "Investment" ? "#8b5cf6" : "status.positive.text",
   });
 
 const actionBtnStyle = css({
@@ -133,7 +133,7 @@ const deleteBtnStyle = css({
   borderRadius: "md",
   transition: "all 0.15s ease",
   _hover: {
-    color: "destructive",
+    color: "status.danger.text",
     backgroundColor: "rgba(239, 68, 68, 0.08)",
   },
 });
@@ -410,7 +410,11 @@ export const SavingsAccountsList: FC<SavingsAccountsListProps> = ({
                       <FLPText color="text.muted" fontSize="xs">
                         Est. Interest
                       </FLPText>
-                      <FLPText fontSize="xs" fontWeight="semibold" style={{ color: "#10b981" }}>
+                      <FLPText
+                        fontSize="xs"
+                        fontWeight="semibold"
+                        style={{ color: "var(--colors-status-positive-text)" }}
+                      >
                         ~{formatCurrency(Math.round(annualInterest))}/yr
                       </FLPText>
                     </div>
@@ -483,7 +487,12 @@ export const SavingsAccountsList: FC<SavingsAccountsListProps> = ({
                           {acc.type === "Investment" ? (
                             <FaChartLine style={{ color: "#8b5cf6", fontSize: "16px" }} />
                           ) : (
-                            <FaPiggyBank style={{ color: "#10b981", fontSize: "16px" }} />
+                            <FaPiggyBank
+                              style={{
+                                color: "var(--colors-status-positive-text)",
+                                fontSize: "16px",
+                              }}
+                            />
                           )}
                           <button
                             style={{
@@ -728,7 +737,10 @@ export const SavingsAccountsList: FC<SavingsAccountsListProps> = ({
                         /mo
                       </span>
                     </td>
-                    <td className={tdStyle} style={{ textAlign: "right", color: "#10b981" }}>
+                    <td
+                      className={tdStyle}
+                      style={{ textAlign: "right", color: "var(--colors-status-positive-text)" }}
+                    >
                       ~{formatCurrency(Math.round(summaryTotals.totalAnnualInt))}/yr
                     </td>
                     <td className={tdStyle} />
