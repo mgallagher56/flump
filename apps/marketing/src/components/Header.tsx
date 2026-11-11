@@ -311,7 +311,7 @@ export const Header: FC = () => {
             >
               <span>Pricing</span>
               <span style={{ fontSize: "12px", color: "var(--colors-text-muted, #94a3b8)" }}>
-                Free and Pro
+                Plans and pricing
               </span>
             </Link>
             <Link
@@ -323,7 +323,7 @@ export const Header: FC = () => {
             >
               <span>Security</span>
               <span style={{ fontSize: "12px", color: "var(--colors-text-muted, #94a3b8)" }}>
-                FCA AISP
+                Security and privacy
               </span>
             </Link>
             <Link

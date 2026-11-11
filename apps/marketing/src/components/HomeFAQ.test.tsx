@@ -24,4 +24,20 @@ describe("HomeFAQ", () => {
     fireEvent.click(secondButton);
     expect(secondButton.getAttribute("aria-expanded")).toBe("true");
   });
+
+  it("answers the payments question without regulatory claims", () => {
+    const { container } = render(<HomeFAQ />);
+    expect(
+      screen.getByText(
+        "No. Flump only reads the balances and transactions you choose to share. It has no feature to make payments, move money or change your account details.",
+      ),
+    ).toBeDefined();
+    expect(container.textContent ?? "").not.toMatch(/FCA|AISP|regulated by/);
+  });
+
+  it("asks 'Is Flump free?' without promising pricing", () => {
+    render(<HomeFAQ />);
+    expect(screen.getByRole("button", { name: /Is Flump free\?/i })).toBeDefined();
+    expect(screen.queryByText(/free tier/i)).toBeNull();
+  });
 });

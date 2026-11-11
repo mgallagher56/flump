@@ -1,11 +1,11 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import { HelmetProvider } from "react-helmet-async";
 import { BrowserRouter } from "react-router-dom";
 import { describe, expect, it } from "vitest";
 import { McpPage } from "./McpPage";
 
 describe("Marketing McpPage", () => {
-  it("renders the MCP hero, 6 value pillars, interactive setup tabs, and all 8 tools", () => {
+  it("renders the MCP hero, preview label, value pillars, preview setup, and all 8 tools", () => {
     render(
       <HelmetProvider>
         <BrowserRouter>
@@ -18,8 +18,9 @@ describe("Marketing McpPage", () => {
       screen.getByText(/Give your AI agent deterministic UK financial intelligence/i),
     ).toBeDefined();
     expect(screen.getByText("Zero AI hallucinations")).toBeDefined();
-    expect(screen.getByText("Strict PII anonymisation")).toBeDefined();
-    expect(screen.getByText("How to set up Flump MCP in 2 minutes")).toBeDefined();
+    expect(screen.getByText(/Institution names are replaced with generic labels/i)).toBeDefined();
+    expect(screen.getByText("Setting up Flump MCP (preview)")).toBeDefined();
+    expect(screen.getByTestId("mcp-preview-badge").textContent).toMatch(/preview/i);
     expect(screen.getByText("8 deterministic financial tools for AI agents")).toBeDefined();
 
     // Verify all 8 tools are rendered
@@ -32,13 +33,18 @@ describe("Marketing McpPage", () => {
     expect(screen.getByTestId("mcp-tool-evaluate_uk_student_loan")).toBeDefined();
     expect(screen.getByTestId("mcp-tool-query_transactions_and_spending")).toBeDefined();
 
-    // Verify interactive tab switching
-    expect(screen.getByTestId("setup-panel-desktop")).toBeDefined();
+    // Preview setup: no remote tab, no tablist, no npx or remote instructions
+    expect(screen.getByTestId("setup-panel-local")).toBeDefined();
+    expect(screen.getAllByText(/Local CLI \(preview\)/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Setup guide coming soon/).length).toBeGreaterThan(0);
+    expect(screen.queryByTestId("setup-tab-remote")).toBeNull();
+    expect(screen.queryByRole("tablist")).toBeNull();
+    expect(screen.queryByText(/npx @flump\/mcp|npx/)).toBeNull();
 
-    fireEvent.click(screen.getByTestId("setup-tab-cursor"));
-    expect(screen.getByTestId("setup-panel-cursor")).toBeDefined();
-
-    fireEvent.click(screen.getByTestId("setup-tab-remote"));
-    expect(screen.getByTestId("setup-panel-remote")).toBeDefined();
+    const text = document.body.textContent ?? "";
+    expect(text).not.toContain("mcp.flump.co.uk");
+    expect(text).not.toContain("oauth-protected-resource");
+    expect(text).not.toContain("OAuth 2.1");
+    expect(text).not.toMatch(/PII-scrubbed|Strict PII/i);
   });
 });

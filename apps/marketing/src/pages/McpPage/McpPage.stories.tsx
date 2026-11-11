@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react";
 import { HelmetProvider } from "react-helmet-async";
-import { expect, userEvent, within } from "storybook/test";
+import { expect, within } from "storybook/test";
 import { McpPage } from "./McpPage";
 
 const meta: Meta<typeof McpPage> = {
@@ -29,14 +29,9 @@ export const Default: Story = {
       canvas.getByText(/Give your AI agent deterministic UK financial intelligence/i),
     ).toBeInTheDocument();
 
-    // Switch setup tabs
-    const cursorTab = canvas.getByTestId("setup-tab-cursor");
-    await userEvent.click(cursorTab);
-    await expect(canvas.getByTestId("setup-panel-cursor")).toBeInTheDocument();
-
-    const remoteTab = canvas.getByTestId("setup-tab-remote");
-    await userEvent.click(remoteTab);
-    await expect(canvas.getByTestId("setup-panel-remote")).toBeInTheDocument();
+    await expect(canvas.getByTestId("mcp-preview-badge")).toBeInTheDocument();
+    await expect(canvas.getByTestId("setup-panel-local")).toBeInTheDocument();
+    await expect(canvas.queryByTestId("setup-tab-remote")).not.toBeInTheDocument();
 
     // Verify all 8 tools are rendered
     await expect(canvas.getByTestId("mcp-tool-simulate_debt_payoff")).toBeInTheDocument();

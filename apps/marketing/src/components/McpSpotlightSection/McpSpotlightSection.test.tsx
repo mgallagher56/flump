@@ -12,8 +12,14 @@ describe("McpSpotlightSection", () => {
     );
 
     expect(screen.getByTestId("mcp-spotlight-section")).toBeDefined();
-    expect(screen.getByText(/Connect Claude & Cursor directly to your UK finances/i)).toBeDefined();
-    expect(screen.getByText(/Strict PII anonymisation:/i)).toBeDefined();
+    expect(
+      screen.getByText(/Give Claude and Cursor deterministic UK tax and finance tools/i),
+    ).toBeDefined();
+    expect(screen.getByText(/Institution names are replaced with generic labels/i)).toBeDefined();
+    expect(screen.getByTestId("mcp-spotlight-preview-badge").textContent).toMatch(/preview/i);
+    expect(screen.queryByText(/npx/)).toBeNull();
+    expect(screen.getByText(/Setup guide coming soon/i)).toBeDefined();
+    expect(document.body.textContent).not.toMatch(/PII-scrubbed|Strict PII/i);
     expect(screen.getByText(/simulate_uk_tax_and_pension_sacrifice/i)).toBeDefined();
     expect(screen.getByText(/7100/)).toBeDefined();
     expect(screen.getByText(/8804/)).toBeDefined();

@@ -28,6 +28,24 @@ export const spotlightColumn = cva({
   },
 });
 
+export const previewBadge = cva({
+  base: {
+    display: "inline-flex",
+    alignItems: "center",
+    px: "3",
+    py: "1",
+    borderRadius: "full",
+    backgroundColor: "status.warning.bg",
+    color: "status.warning.text",
+    fontSize: "xs",
+    fontWeight: "bold",
+    letterSpacing: "0.02em",
+    borderWidth: "1px",
+    borderStyle: "solid",
+    borderColor: "status.warning.border",
+  },
+});
+
 export const spotlightBadge = cva({
   base: {
     display: "inline-flex",
