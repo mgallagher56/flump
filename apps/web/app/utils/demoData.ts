@@ -1,6 +1,7 @@
-import { getCurrentUKTaxYear } from "@flump/finance-engine";
+import { getCurrentUKTaxYear, PortfolioSnapshot } from "@flump/finance-engine";
 import type { UserProfile } from "~/hooks/useUserProfile";
 import { toMonthly } from "~/types/budget";
+import { buildDebtSummary } from "~/utils/debtSummary";
 import { calculateRunwayStats } from "~/utils/runwayStorage";
 
 export const DEMO_USER = {
@@ -547,14 +548,8 @@ export function getSandboxPersonaData(persona: "debt" | "medium" | "high" | "wea
         estimatedTaxDue: 4400,
         recordsCount: 1,
       },
-      debtData: {
-        totalDebt: 8000,
-        highInterestDebt: 5700,
-        highInterestCount: 2,
-        debtFreeDate: "September 2026",
-        interestSaved: 1420,
-        monthlyMinimumTotal: 265,
-      },
+      // Computed by the engine from the persona's own accounts, so the date is relative to now.
+      debtData: buildDebtSummary(new PortfolioSnapshot(debtAccounts, [])),
     };
   }
 
@@ -729,14 +724,7 @@ export function getSandboxPersonaData(persona: "debt" | "medium" | "high" | "wea
         estimatedTaxDue: 6486,
         recordsCount: 1,
       },
-      debtData: {
-        totalDebt: 0,
-        highInterestDebt: 0,
-        highInterestCount: 0,
-        debtFreeDate: "Debt Free",
-        interestSaved: 0,
-        monthlyMinimumTotal: 0,
-      },
+      debtData: null,
     };
   }
 
@@ -977,13 +965,6 @@ export function getSandboxPersonaData(persona: "debt" | "medium" | "high" | "wea
       estimatedTaxDue: 26800,
       recordsCount: 2,
     },
-    debtData: {
-      totalDebt: 0,
-      highInterestDebt: 0,
-      highInterestCount: 0,
-      debtFreeDate: "Debt Free",
-      interestSaved: 0,
-      monthlyMinimumTotal: 0,
-    },
+    debtData: null,
   };
 }

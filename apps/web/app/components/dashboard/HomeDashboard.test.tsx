@@ -12,6 +12,7 @@ vi.mock("react-router", () => ({
 }));
 
 const mockUpdateProfile = vi.fn().mockResolvedValue(undefined);
+const profileOverrides = vi.hoisted(() => ({ extraWidgets: [] as string[] }));
 
 vi.mock("~/hooks/useUserProfile", async (importOriginal) => {
   const actual: any = await importOriginal();
@@ -41,6 +42,7 @@ vi.mock("~/hooks/useUserProfile", async (importOriginal) => {
           "mortgage",
           "forecast",
           "tax",
+          ...profileOverrides.extraWidgets,
         ],
         dashboardWidgetOrder: [
           "accounts",
@@ -50,6 +52,7 @@ vi.mock("~/hooks/useUserProfile", async (importOriginal) => {
           "mortgage",
           "forecast",
           "tax",
+          ...profileOverrides.extraWidgets,
         ],
         dashboardWidgetSizes: { accounts: "wide" },
         dashboardWidgetConfig: {},
@@ -272,5 +275,36 @@ describe("HomeDashboard", () => {
     expect(screen.queryByText("Budget planner")).toBeNull();
     expect(screen.queryByText("Savings and investments")).toBeNull();
     expect(screen.queryByText("Pension and retirement")).toBeNull();
+  });
+
+  it("mortgage-only user does not see the debt widget", () => {
+    profileOverrides.extraWidgets = ["debt"];
+    const mortgageOnly = {
+      ...dummyProps,
+      checklistProps: { ...dummyProps.checklistProps, completedSteps: ["accounts"] },
+      accountsData: { ...dummyProps.accountsData, totalLiabilities: 200000 },
+      debtData: null,
+    };
+    render(<HomeDashboard {...mortgageOnly} />);
+    profileOverrides.extraWidgets = [];
+    expect(screen.queryByText("Debt payoff")).toBeNull();
+  });
+
+  it("shows the debt widget when there is consumer debt", () => {
+    profileOverrides.extraWidgets = ["debt"];
+    const withDebt = {
+      ...dummyProps,
+      debtData: {
+        totalDebt: 3000,
+        debtCount: 1,
+        highInterestCount: 1,
+        monthlyMinimumTotal: 90,
+        debtFreeDate: "March 2029",
+        debts: [],
+      },
+    };
+    render(<HomeDashboard {...withDebt} />);
+    profileOverrides.extraWidgets = [];
+    expect(screen.getByText("Debt payoff")).toBeDefined();
   });
 });

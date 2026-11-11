@@ -1,11 +1,11 @@
+import { EmptyState } from "@repo/ui";
 import { css } from "@repo/ui/styled-system/css";
 import type { FC } from "react";
-import { FaCalendarCheck, FaFire, FaPiggyBank } from "react-icons/fa";
-import { Link } from "react-router";
-import FLPButton from "~/components/core/buttons/FLPButton";
+import { FaCalendarCheck, FaFire } from "react-icons/fa";
 import FLPHeading from "~/components/core/typography/FLPHeading";
 import FLPText from "~/components/core/typography/FLPText";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
+import type { DebtSummary } from "~/utils/debtSummary";
 import { DashboardWidgetCard } from "../DashboardWidgetCard";
 
 export interface DebtWidgetProps {
@@ -19,7 +19,7 @@ export interface DebtWidgetProps {
   isLast?: boolean;
   dragProps?: any;
   config?: any;
-  data?: any;
+  data?: DebtSummary | null;
 }
 
 const contentStyle = css({
@@ -37,14 +37,46 @@ const statsGridStyle = css({
 
 const statBoxStyle = css({
   padding: "12px",
-  backgroundColor: "surface",
+  backgroundColor: "surface.subtle",
   borderRadius: "lg",
   border: "1px solid",
-  borderColor: "border",
+  borderColor: "border.subtle",
   display: "flex",
   flexDirection: "column",
   gap: "4px",
 });
+
+const tabularStyle = css({ fontVariantNumeric: "tabular-nums" });
+
+const headerRowStyle = css({
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "flex-start",
+});
+
+const highAprBadgeStyle = css({
+  padding: "3px 8px",
+  borderRadius: "full",
+  fontSize: "11px",
+  fontWeight: "semibold",
+  backgroundColor: "status.danger.bg",
+  color: "status.danger.text",
+  border: "1px solid",
+  borderColor: "status.danger.border",
+  display: "inline-flex",
+  alignItems: "center",
+  gap: "4px",
+  fontVariantNumeric: "tabular-nums",
+});
+
+const statLabelRowStyle = css({
+  display: "flex",
+  alignItems: "center",
+  gap: "6px",
+  color: "text.muted",
+});
+
+const footerStyle = css({ paddingTop: "4px" });
 
 export const DebtWidget: FC<DebtWidgetProps> = ({
   editMode,
@@ -57,14 +89,9 @@ export const DebtWidget: FC<DebtWidgetProps> = ({
   isLast,
   dragProps,
   config: _config = {},
-  data = {},
+  data = null,
 }) => {
   const { formatCurrency } = useFormatCurrency();
-
-  const totalDebt = data.totalDebt || 4650;
-  const debtFreeDate = data.debtFreeDate || "August 2026";
-  const interestSaved = data.interestSaved || 840;
-  const highInterestAccounts = data.highInterestCount || 2;
 
   return (
     <DashboardWidgetCard
@@ -80,85 +107,64 @@ export const DebtWidget: FC<DebtWidgetProps> = ({
       onToggleSize={onToggleSize}
     >
       <div className={contentStyle}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-          <div>
-            <FLPText color="text.muted" fontSize="xs">
-              Total Unsecured Debt
-            </FLPText>
-            <FLPHeading as="h3" color="text.primary" size="2xl">
-              {formatCurrency(totalDebt)}
-            </FLPHeading>
-          </div>
-          <span
-            style={{
-              padding: "3px 8px",
-              borderRadius: "9999px",
-              fontSize: "11px",
-              fontWeight: 600,
-              backgroundColor: "rgba(239, 68, 68, 0.12)",
-              color: "var(--colors-destructive-500, #ef4444)",
-              border: "1px solid rgba(239, 68, 68, 0.25)",
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "4px",
-            }}
-          >
-            <FaFire size={11} /> {highInterestAccounts} High APR Accounts
-          </span>
-        </div>
+        {data ? (
+          <>
+            <div className={headerRowStyle}>
+              <div>
+                <FLPText color="text.muted" fontSize="xs">
+                  Total unsecured debt
+                </FLPText>
+                <FLPHeading as="h3" color="text.primary" size="2xl">
+                  <span className={tabularStyle}>{formatCurrency(data.totalDebt)}</span>
+                </FLPHeading>
+              </div>
+              {data.highInterestCount > 0 ? (
+                <span className={highAprBadgeStyle}>
+                  <FaFire size={11} /> {data.highInterestCount} high APR{" "}
+                  {data.highInterestCount === 1 ? "account" : "accounts"}
+                </span>
+              ) : null}
+            </div>
 
-        <div className={statsGridStyle}>
-          <div className={statBoxStyle}>
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "6px",
-                color: "var(--colors-text-muted)",
-              }}
-            >
-              <FaCalendarCheck size={14} />
+            <div className={statsGridStyle}>
+              <div className={statBoxStyle}>
+                <div className={statLabelRowStyle}>
+                  <FaCalendarCheck size={14} />
+                  <FLPText color="text.muted" fontSize="xs">
+                    Debt-free date
+                  </FLPText>
+                </div>
+                <FLPText className={tabularStyle} fontSize="sm" fontWeight="bold">
+                  {data.debtFreeDate ?? "Not calculated"}
+                </FLPText>
+              </div>
+
+              <div className={statBoxStyle}>
+                <FLPText color="text.muted" fontSize="xs">
+                  {data.debts.some((d) => d.minimumPaymentEstimated)
+                    ? "Monthly minimums (estimated)"
+                    : "Monthly minimums"}
+                </FLPText>
+                <FLPText className={tabularStyle} fontSize="sm" fontWeight="bold">
+                  {formatCurrency(data.monthlyMinimumTotal)}
+                </FLPText>
+              </div>
+            </div>
+
+            <div className={footerStyle}>
               <FLPText color="text.muted" fontSize="xs">
-                Debt-Free Date
+                Debt-free date assumes minimum payments only.
               </FLPText>
             </div>
-            <FLPText fontSize="sm" fontWeight="bold">
-              {debtFreeDate}
-            </FLPText>
-          </div>
-
-          <div className={statBoxStyle}>
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "6px",
-                color: "var(--colors-text-muted)",
-              }}
-            >
-              <FaPiggyBank size={14} />
-              <FLPText color="text.muted" fontSize="xs">
-                Interest Saved
-              </FLPText>
-            </div>
-            <FLPText fontSize="sm" fontWeight="bold">
-              {formatCurrency(interestSaved)}
-            </FLPText>
-          </div>
-        </div>
-
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            paddingTop: "4px",
-          }}
-        >
-          <FLPText color="text.muted" fontSize="xs">
-            Avalanche payoff active (+£50/mo surplus)
-          </FLPText>
-        </div>
+          </>
+        ) : (
+          <EmptyState
+            description="Add a credit card, loan or overdraft on Accounts to see your payoff date."
+            headingLevel="h3"
+            id="debt-widget-empty"
+            title="No debts added"
+          />
+        )}
       </div>
     </DashboardWidgetCard>
   );
