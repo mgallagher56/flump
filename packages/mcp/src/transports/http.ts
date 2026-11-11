@@ -2,6 +2,7 @@ import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/
 import { WebStandardStreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js";
 import { McpRateLimiter } from "../auth/rate-limiter.js";
 import {
+  AuthenticationError,
   TokenVerifier,
   type TokenVerifierOptions,
   type VerifiedToken,
@@ -34,7 +35,7 @@ export class HttpMcpHandler {
    */
   async handleExpressRequest(req: any, res: any, parsedBody?: any): Promise<void> {
     try {
-      // 1. Verify Authentication (OAuth JWT or flump_pat_...)
+      // 1. Verify Authentication (flump_pat_... personal access token)
       const authHeader = req.headers?.authorization;
       const verified = await this.verifier.verifyAuthorizationHeader(authHeader);
 
@@ -60,11 +61,7 @@ export class HttpMcpHandler {
 
       await transport.handleRequest(req, res, parsedBody ?? req.body);
     } catch (err: any) {
-      const statusCode = err.message?.includes("Missing or malformed")
-        ? 401
-        : err.message?.includes("expired") || err.message?.includes("revoked")
-          ? 401
-          : 400;
+      const statusCode = err instanceof AuthenticationError ? 401 : 400;
 
       res.status(statusCode).json({
         error: "mcp_auth_error",
@@ -109,11 +106,7 @@ export class HttpMcpHandler {
 
       return await transport.handleRequest(request);
     } catch (err: any) {
-      const statusCode = err.message?.includes("Missing or malformed")
-        ? 401
-        : err.message?.includes("expired") || err.message?.includes("revoked")
-          ? 401
-          : 400;
+      const statusCode = err instanceof AuthenticationError ? 401 : 400;
 
       return new Response(
         JSON.stringify({

@@ -5,10 +5,6 @@ import type { McpService } from "./mcp.service";
 describe("McpController", () => {
   const mockMcpService = {
     getHttpHandler: vi.fn().mockReturnValue({
-      getOAuthMetadata: vi.fn().mockReturnValue({
-        resource: "https://mcp.flump.co.uk",
-        scopes_supported: ["mcp:read:anonymized", "mcp:simulate"],
-      }),
       handleExpressRequest: vi.fn().mockResolvedValue(undefined),
     }),
     listTokens: vi.fn().mockResolvedValue([
@@ -34,11 +30,6 @@ describe("McpController", () => {
   } as unknown as McpService;
 
   const controller = new McpController(mockMcpService);
-
-  it("serves OAuth protected resource metadata", () => {
-    const meta = controller.getOAuthMetadata();
-    expect(meta.resource).toBe("https://mcp.flump.co.uk");
-  });
 
   it("lists active AI connection tokens", async () => {
     const tokens = await controller.listTokens({ user: { id: "u_1" } });

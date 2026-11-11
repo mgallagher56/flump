@@ -17,13 +17,7 @@ import { McpService } from "./mcp.service";
 export class McpController {
   constructor(private readonly mcpService: McpService) {}
 
-  /**
-   * RFC 9728 / OAuth 2.1 Protected Resource Metadata
-   */
-  @Get(".well-known/oauth-protected-resource")
-  getOAuthMetadata() {
-    return this.mcpService.getHttpHandler().getOAuthMetadata();
-  }
+  // .well-known/oauth-protected-resource route removed while OAuth is off; re-enable with OAuth ticket.
 
   /**
    * Remote MCP Streamable HTTP / SSE Endpoint (JSON-RPC)

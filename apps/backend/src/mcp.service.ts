@@ -12,10 +12,12 @@ import {
   type McpTokenStoreAdapter,
   type McpUserDataProvider,
 } from "@flump/mcp";
-import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
+import { BadRequestException, Inject, Injectable, NotFoundException } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Between, In, LessThanOrEqual, MoreThanOrEqual, Repository } from "typeorm";
+import { AUTH_MODE } from "./auth/auth.module";
+import { DEV_BYPASS_TOKEN, DEV_USER } from "./auth/dev-bypass.verifier";
 import { Account } from "./entities/account.entity";
 import { AccountDetail } from "./entities/account-detail.entity";
 import { BudgetEntry } from "./entities/budget-entry.entity";
@@ -48,10 +50,12 @@ export class McpService implements McpTokenStoreAdapter, McpUserDataProvider {
     private readonly financeService: FinanceService,
     private readonly userProfileService: UserProfileService,
     private readonly configService: ConfigService,
+    @Inject(AUTH_MODE) authMode: "workos" | "dev",
   ) {
     this.httpHandler = new HttpMcpHandler({
       dataProvider: this,
       tokenStore: this,
+      ...(authMode === "dev" ? { devToken: DEV_BYPASS_TOKEN, devUserId: DEV_USER.id } : {}),
       expectedAudience: this.configService.get<string>("MCP_AUDIENCE") || "https://mcp.flump.co.uk",
       authServerUrl: this.configService.get<string>("AUTH_SERVER_URL") || "https://api.workos.com",
     });
