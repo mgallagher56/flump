@@ -2,6 +2,8 @@ import type { ReactElement } from "react";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 import { data } from "react-router";
 import AccountDetailContainer from "~/containers/accounts/accountDetailContainer/AccountDetailContainer";
+import { backendFetch } from "~/services/backend-client.server";
+import { throwRouteError } from "~/services/route-error.server";
 import { authHeader, getAuthSession } from "~/utils/auth.server";
 
 export const action = async (args: ActionFunctionArgs) => {
@@ -53,36 +55,18 @@ export const action = async (args: ActionFunctionArgs) => {
 };
 
 export const loader = async (args: LoaderFunctionArgs) => {
-  const { user, accessToken } = await getAuthSession(args, {
-    ensureSignedIn: true,
-  });
-  const authz = authHeader({ accessToken });
-
+  const { user, accessToken } = await getAuthSession(args, { ensureSignedIn: true });
   const accountId = args.params.account;
-  const apiUrl = process.env.VITE_API_URL || "http://localhost:4000";
 
   try {
-    const accountRes = await fetch(`${apiUrl}/accounts/${accountId}`, {
-      headers: {
-        ...authz,
-      },
+    const account = await backendFetch<any>(`/accounts/${accountId}`, {
+      accessToken,
+      signal: args.request.signal,
     });
-
-    if (!accountRes.ok) {
-      throw new Error("Failed to fetch data from API");
-    }
-
-    const account = await accountRes.json();
     const accountDetails = account.details || [];
-
     return data({ account, accountDetails, user });
   } catch (error) {
-    console.error("API fetch error in loader:", error);
-    return data({
-      account: null,
-      accountDetails: [],
-      user,
-    });
+    throwRouteError(error);
   }
 };
 

@@ -1,13 +1,16 @@
 import { render, screen } from "@testing-library/react";
 import { createRoutesStub, data } from "react-router";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 // The global test setup stubs parts of react-router; the root boundary needs the real router.
 vi.mock("react-router", async () => await vi.importActual("react-router"));
 vi.mock("./i18n.server", () => ({ default: { getLocale: vi.fn() } }));
 vi.mock("./utils/auth.server", () => ({ getAuthSession: vi.fn() }));
 
-import { ErrorBoundary } from "./root";
+import { apiConfig } from "./config.server";
+import i18next from "./i18n.server";
+import { ErrorBoundary, loader } from "./root";
+import { getAuthSession } from "./utils/auth.server";
 
 function RouteContent() {
   return <p>Route content</p>;
@@ -54,5 +57,44 @@ describe("root ErrorBoundary", () => {
     expect(document.body.textContent).not.toMatch(/secret token/);
     expect(document.querySelectorAll("html")).toHaveLength(1);
     expect(document.querySelectorAll("[style]")).toHaveLength(0);
+  });
+});
+
+describe("root loader", () => {
+  const args = { request: new Request("http://localhost/"), params: {}, context: {} } as any;
+
+  beforeEach(() => {
+    vi.mocked(i18next.getLocale).mockResolvedValue("en");
+    vi.mocked(getAuthSession).mockResolvedValue({ user: { id: "u" }, accessToken: "tok" } as any);
+    vi.spyOn(console, "error").mockImplementation(() => {});
+  });
+
+  it("keeps the shell up with a null profile when the backend is 503", async () => {
+    globalThis.fetch = vi.fn().mockRejectedValue(new Error("down"));
+    const result = await loader(args);
+    expect(result.userProfile).toBeNull();
+    expect(result.ENV.VITE_API_URL).toBe(apiConfig.apiBaseUrl);
+  });
+
+  it("logs only the kind and endpoint, never the token", async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue(new Response("x", { status: 500 }));
+    await loader(args);
+    const logged = JSON.stringify(vi.mocked(console.error).mock.calls);
+    expect(logged).toContain("/user-profile");
+    expect(logged).not.toContain("tok");
+  });
+
+  it("loads the profile on success", async () => {
+    globalThis.fetch = vi
+      .fn()
+      .mockResolvedValue(new Response(JSON.stringify({ annualSalary: 5 }), { status: 200 }));
+    const result = await loader(args);
+    expect(result.userProfile).toEqual({ annualSalary: 5 });
+  });
+
+  it("lets a redirect Response from the auth session pass through", async () => {
+    const r = new Response(null, { status: 302, headers: { Location: "/x" } });
+    vi.mocked(getAuthSession).mockRejectedValue(r);
+    await expect(loader(args)).rejects.toBe(r);
   });
 });
