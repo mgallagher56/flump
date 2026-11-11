@@ -192,6 +192,7 @@ Key environment configurations:
 Authentication environment contract (auth fails closed):
 
 - `WORKOS_CLIENT_ID`: **required in production** (backend). Without it the backend refuses to start and the error names the variable.
+- `WORKOS_ISSUER`: optional, comma-separated list of accepted token issuers. When set it REPLACES the defaults (`https://api.workos.com` and `https://api.workos.com/user_management/<WORKOS_CLIENT_ID>`); use it for custom auth domains. Decode one real access token and check its `iss` before the first deploy.
 - `AUTH_DEV_BYPASS=true`: **local development only.** It is honoured only when `NODE_ENV=development`, cannot be combined with `WORKOS_API_KEY`, and is refused in production by both the backend (at boot) and the web server (the check runs when its server code loads, so the process fails at startup). Errors name the variable, never its value.
 - `SESSION_SECRET`: required by the web server.
 - Never commit mock tokens: `bun run check:auth` fails CI if dev-session literals appear outside the dev-bypass allow-list.
