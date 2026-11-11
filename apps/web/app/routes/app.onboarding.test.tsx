@@ -163,6 +163,47 @@ describe("OnboardingRoute (3-Step Baseline Flow)", () => {
     clearOnboardingSeed();
   });
 
+  it("reads a salary-less demo seed: remembers choices, leaves salary empty, Finish disabled", () => {
+    persistOnboardingSeed({
+      mode: "WEALTH",
+      inferredStage: "STAGE_2_BUFFER_BUILD",
+      inferredModules: ["accounts", "budget", "forecast"],
+      timestamp: Date.now(),
+    } as any);
+    render(<OnboardingRoute />);
+    expect(screen.getByText(/your demo choices are remembered/i)).toBeDefined();
+    expect((screen.getByLabelText(/annual gross salary/i) as HTMLInputElement).value).toBe("");
+    fireEvent.click(screen.getByText("Next: Housing and outgoings →"));
+    fireEvent.click(screen.getByText("Next: Savings, pension and debt →"));
+    const finishBtn = screen.getByRole("button", { name: /finish setup and launch dashboard/i });
+    expect((finishBtn as HTMLButtonElement).disabled).toBe(true);
+    const hint = screen.getByTestId("finish-income-hint");
+    expect(hint.getAttribute("role")).toBe("status");
+    expect(finishBtn.getAttribute("aria-describedby")).toBe(hint.id);
+    clearOnboardingSeed();
+  });
+
+  it("seed banner launch button explains why it is disabled until income is entered", () => {
+    persistOnboardingSeed({ initialCashSavings: 2000, timestamp: Date.now() } as any);
+    render(<OnboardingRoute />);
+    const btn = screen.getByRole("button", { name: /launch dashboard with this baseline/i });
+    expect((btn as HTMLButtonElement).disabled).toBe(true);
+    const hint = screen.getByTestId("seed-income-hint");
+    expect(btn.getAttribute("aria-describedby")).toBe(hint.id);
+    clearOnboardingSeed();
+  });
+
+  it("net-income mode enables Finish once monthly take-home is entered", () => {
+    render(<OnboardingRoute />);
+    fireEvent.click(screen.getByRole("button", { name: /monthly net/i }));
+    typeInto(/monthly net|take-home/i, "3000");
+    fireEvent.click(screen.getByText("Next: Housing and outgoings →"));
+    fireEvent.click(screen.getByText("Next: Savings, pension and debt →"));
+    const finishBtn = screen.getByRole("button", { name: /finish setup and launch dashboard/i });
+    expect((finishBtn as HTMLButtonElement).disabled).toBe(false);
+    expect(screen.queryByTestId("finish-income-hint")).toBeNull();
+  });
+
   const typeInto = (label: RegExp, value: string) =>
     fireEvent.change(screen.getByLabelText(label), { target: { value } });
 

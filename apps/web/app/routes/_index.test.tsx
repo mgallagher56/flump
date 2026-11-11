@@ -4,26 +4,29 @@ import { describe, expect, it, vi } from "vitest";
 import { loadWorkspaceSnapshot } from "~/services/backend-client.server";
 import { default as Index, loader } from "./_index";
 
-vi.mock("react-router", () => ({
-  useNavigate: () => vi.fn(),
-  useLoaderData: vi.fn(),
-  redirect: (url: string) => ({ status: 302, url }),
-  Link: ({
-    children,
-    to,
-    style,
-    className,
-  }: {
-    children: ReactNode;
-    to: string;
-    style?: any;
-    className?: string;
-  }) => (
-    <a className={className} href={to} style={style}>
-      {children}
-    </a>
-  ),
-}));
+vi.mock("react-router", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("react-router")>();
+  return {
+    redirect: actual.redirect,
+    useNavigate: () => vi.fn(),
+    useLoaderData: vi.fn(),
+    Link: ({
+      children,
+      to,
+      style,
+      className,
+    }: {
+      children: ReactNode;
+      to: string;
+      style?: any;
+      className?: string;
+    }) => (
+      <a className={className} href={to} style={style}>
+        {children}
+      </a>
+    ),
+  };
+});
 
 vi.mock("~/utils/auth.server", () => ({
   getAuthSession: vi.fn().mockResolvedValue({ user: null, accessToken: null }),
@@ -47,9 +50,9 @@ import { useLoaderData } from "react-router";
 describe("_index route", () => {
   it("redirects signed-out ?demo=true to /sandbox", async () => {
     const request = new Request("http://localhost/?demo=true");
-    const result = (await loader({ request, params: {}, context: {} } as any)) as any;
+    const result = (await loader({ request, params: {}, context: {} } as any)) as Response;
     expect(result.status).toBe(302);
-    expect(result.url).toBe("/sandbox");
+    expect(result.headers.get("Location")).toBe("/sandbox");
   });
 
   it("signed-in ?demo=true returns the real workspace, never demo data", async () => {

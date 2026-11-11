@@ -142,6 +142,9 @@ export default function OnboardingRoute() {
   const [seed, setSeed] = useState<OnboardingSeedPayload | null>(null);
   const [showSeedBanner, setShowSeedBanner] = useState<boolean>(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const seedHasNumbers = Boolean(
+    seed && (seed.annualIncome || seed.annualGrossSalary || seed.initialCashSavings !== undefined),
+  );
 
   // Hydrate from seed on mount
   useEffect(() => {
@@ -150,12 +153,15 @@ export default function OnboardingRoute() {
       const parsed = readOnboardingSeed();
       if (!parsed) return;
       const isFresh = Date.now() - (parsed.timestamp || 0) < 24 * 60 * 60 * 1000;
-      if (
-        isFresh &&
-        (parsed.annualIncome || parsed.annualGrossSalary || parsed.initialCashSavings !== undefined)
-      ) {
+      const carriesNumbers = Boolean(
+        parsed.annualIncome || parsed.annualGrossSalary || parsed.initialCashSavings !== undefined,
+      );
+      const carriesChoices = Boolean(parsed.inferredModules?.length || parsed.inferredStage);
+      if (isFresh && (carriesNumbers || carriesChoices)) {
         setSeed(parsed);
         setShowSeedBanner(true);
+      }
+      if (isFresh && carriesNumbers) {
         const hydrated = hydrateBaselineFromSeed(parsed);
         // Only fields the seed actually carries are filled; anything else stays empty.
         if (parsed.annualIncome || parsed.annualGrossSalary) {
@@ -488,17 +494,31 @@ export default function OnboardingRoute() {
             <div style={{ display: "flex", alignItems: "center", gap: "8px", fontWeight: "600" }}>
               <FaCheckCircle style={{ color: "#10b981", flexShrink: 0 }} />
               <span>
-                {seed.annualIncome || seed.annualGrossSalary
-                  ? `We've pre-loaded your £${(seed.annualIncome ?? seed.annualGrossSalary ?? 0).toLocaleString("en-GB")} salary and savings baseline from the calculator.`
-                  : "We've pre-loaded your savings baseline from the calculator."}
+                {!seedHasNumbers
+                  ? "Your demo choices are remembered. Add your own numbers to continue."
+                  : seed.annualIncome || seed.annualGrossSalary
+                    ? `We've pre-loaded your £${(seed.annualIncome ?? seed.annualGrossSalary ?? 0).toLocaleString("en-GB")} salary and savings baseline from the calculator.`
+                    : "We've pre-loaded your savings baseline from the calculator."}
               </span>
             </div>
+            {!hasIncome && (
+              <FLPText
+                id="seed-income-hint"
+                data-testid="seed-income-hint"
+                role="status"
+                color="text.muted"
+                fontSize="xs"
+              >
+                Enter your income in step 1 to launch your dashboard.
+              </FLPText>
+            )}
             <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
               <FLPButton
                 size="sm"
                 variant="primary"
                 onClick={handleFinish}
                 disabled={isSubmitting || !hasIncome}
+                aria-describedby={!hasIncome ? "seed-income-hint" : undefined}
               >
                 {isSubmitting ? "Launching..." : "Launch dashboard with this baseline (10s) →"}
               </FLPButton>
@@ -1182,7 +1202,13 @@ export default function OnboardingRoute() {
               </div>
 
               {!hasIncome && (
-                <FLPText color="text.muted" fontSize="xs">
+                <FLPText
+                  id="finish-income-hint"
+                  data-testid="finish-income-hint"
+                  role="status"
+                  color="text.muted"
+                  fontSize="xs"
+                >
                   Enter your income in step 1 to finish setup.
                 </FLPText>
               )}
@@ -1195,6 +1221,7 @@ export default function OnboardingRoute() {
                   size="md"
                   variant="primary"
                   disabled={isSubmitting || !hasIncome}
+                  aria-describedby={!hasIncome ? "finish-income-hint" : undefined}
                   onClick={handleFinish}
                 >
                   {isSubmitting ? "Launching..." : "Finish setup and launch dashboard →"}

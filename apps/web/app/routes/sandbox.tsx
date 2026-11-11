@@ -217,7 +217,7 @@ export default function SandboxRoute() {
               Ready to use your own bank feeds & HMRC data?
             </span>
             <button type="button" className={saveButtonStyle} onClick={handleSaveAndCreateAccount}>
-              Save My Custom Numbers <FiArrowRight size={13} />
+              Save my numbers and create account <FiArrowRight size={13} />
             </button>
           </div>
         </div>

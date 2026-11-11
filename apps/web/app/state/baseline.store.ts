@@ -15,6 +15,11 @@ export const FINANCIAL_BASELINE_STORAGE_KEY = "flump_financial_baseline_v1";
 
 export { DEFAULT_FINANCIAL_BASELINE, hydrateBaselineFromSeed };
 
+/** True only when a seed carries a salary; without one hydrating would invent defaults. */
+export function seedCarriesSalary(seed: AnySeedPayload | null | undefined): boolean {
+  return Boolean(seed && (seed.annualIncome || seed.annualGrossSalary));
+}
+
 export type AnySeedPayload = OnboardingSeedPayload | Record<string, any>;
 
 /**
@@ -34,7 +39,7 @@ export class CookieSeedAdapter implements ProfilePersistenceAdapter {
       const saved = window.localStorage.getItem(FINANCIAL_BASELINE_STORAGE_KEY);
       if (saved) return JSON.parse(saved);
       const seed = readOnboardingSeed();
-      if (seed) return hydrateBaselineFromSeed(seed);
+      if (seed && seedCarriesSalary(seed)) return hydrateBaselineFromSeed(seed);
     } catch {
       return null;
     }
@@ -114,6 +119,7 @@ export function useFinancialBaseline() {
       const seed = defaultPersistenceAdapter.getSeed();
       if (
         seed &&
+        seedCarriesSalary(seed) &&
         (!baseline.userId ||
           baseline.annualGrossSalary === DEFAULT_FINANCIAL_BASELINE.annualGrossSalary)
       ) {
