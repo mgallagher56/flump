@@ -171,7 +171,7 @@ export const MortgageVsIsaCalculator: FC<MortgageVsIsaCalculatorProps> = ({
                   textAlign: "right",
                   color: "var(--colors-status-warning-solid)",
                   borderRadius: "6px",
-                  border: "1px solid var(--colors-border)",
+                  border: "1px solid var(--colors-border-input)",
                   backgroundColor: "var(--colors-surface)",
                 }}
               />
@@ -212,7 +212,7 @@ export const MortgageVsIsaCalculator: FC<MortgageVsIsaCalculatorProps> = ({
                   textAlign: "right",
                   color: "var(--colors-status-warning-solid)",
                   borderRadius: "6px",
-                  border: "1px solid var(--colors-border)",
+                  border: "1px solid var(--colors-border-input)",
                   backgroundColor: "var(--colors-surface)",
                 }}
               />
@@ -272,7 +272,7 @@ export const MortgageVsIsaCalculator: FC<MortgageVsIsaCalculatorProps> = ({
                   textAlign: "right",
                   color: "var(--colors-primary)",
                   borderRadius: "6px",
-                  border: "1px solid var(--colors-border)",
+                  border: "1px solid var(--colors-border-input)",
                   backgroundColor: "var(--colors-surface)",
                 }}
               />
@@ -318,7 +318,7 @@ export const MortgageVsIsaCalculator: FC<MortgageVsIsaCalculatorProps> = ({
                   textAlign: "right",
                   color: "var(--colors-status-positive-solid)",
                   borderRadius: "6px",
-                  border: "1px solid var(--colors-border)",
+                  border: "1px solid var(--colors-border-input)",
                   backgroundColor: "var(--colors-surface)",
                 }}
               />

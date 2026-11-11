@@ -125,7 +125,7 @@ export const Section24Calculator: FC<Section24CalculatorProps> = ({
                   textAlign: "right",
                   color: "var(--colors-status-info-solid)",
                   borderRadius: "6px",
-                  border: "1px solid var(--colors-border)",
+                  border: "1px solid var(--colors-border-input)",
                   backgroundColor: "var(--colors-surface)",
                 }}
               />
@@ -175,7 +175,7 @@ export const Section24Calculator: FC<Section24CalculatorProps> = ({
                   textAlign: "right",
                   color: "var(--colors-status-danger-solid)",
                   borderRadius: "6px",
-                  border: "1px solid var(--colors-border)",
+                  border: "1px solid var(--colors-border-input)",
                   backgroundColor: "var(--colors-surface)",
                 }}
               />
@@ -225,7 +225,7 @@ export const Section24Calculator: FC<Section24CalculatorProps> = ({
                   textAlign: "right",
                   color: "var(--colors-text-secondary)",
                   borderRadius: "6px",
-                  border: "1px solid var(--colors-border)",
+                  border: "1px solid var(--colors-border-input)",
                   backgroundColor: "var(--colors-surface)",
                 }}
               />
@@ -275,7 +275,7 @@ export const Section24Calculator: FC<Section24CalculatorProps> = ({
                   textAlign: "right",
                   color: "var(--colors-primary)",
                   borderRadius: "6px",
-                  border: "1px solid var(--colors-border)",
+                  border: "1px solid var(--colors-border-input)",
                   backgroundColor: "var(--colors-surface)",
                 }}
               />

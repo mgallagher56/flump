@@ -140,7 +140,7 @@ export const TaxTrapCalculator: FC<TaxTrapCalculatorProps> = ({
                 textAlign: "right",
                 color: "var(--colors-primary)",
                 borderRadius: "8px",
-                border: "1px solid var(--colors-border)",
+                border: "1px solid var(--colors-border-input)",
                 backgroundColor: "var(--colors-surface)",
               }}
             />
@@ -204,7 +204,7 @@ export const TaxTrapCalculator: FC<TaxTrapCalculatorProps> = ({
                 textAlign: "right",
                 color: "var(--colors-status-positive-solid)",
                 borderRadius: "8px",
-                border: "1px solid var(--colors-border)",
+                border: "1px solid var(--colors-border-input)",
                 backgroundColor: "var(--colors-surface)",
               }}
             />
