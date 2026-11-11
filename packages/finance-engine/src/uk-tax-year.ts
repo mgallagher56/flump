@@ -210,12 +210,12 @@ function unverifiedFor(year: UkTaxYear): string[] {
   }
   if (year === "2022/23") {
     notes.push(
-      "UNVERIFIED: NI figures are a full-year approximation of mid-year changes (class 1 13.25% / 3.25% and primary threshold 12,570 are not the year's annual blend; employer 14.53% is the directors' annual blend); Class 4 unconfirmed",
+      "UNVERIFIED: Class 1 NI is a full-year approximation of mid-year changes. Primary threshold 11,908 and rates 12.73% / 2.73% are the annual-method figures GOV.UK prints for directors, applied to all employees; per-period figures are PT 9,880 then 12,570 and 13.25% then 12%. Employer 14.53% is likewise the directors' annual blend (15.05% then 13.8%). Class 4 unconfirmed",
     );
   }
   if (year === "2023/24") {
     notes.push(
-      "UNVERIFIED: class 1 main rate 0.08 is wrong for 2023/24 (12% to 5 Jan 2024, then 10%); to be corrected in T3b",
+      "UNVERIFIED: Class 1 main rate 11.5% is a derived approximation of the mid-year change (12% to 5 Jan 2024, then 10%), (9*12 + 3*10)/12, not a figure printed on GOV.UK",
     );
   }
   if (year === "2023/24" || year === "2024/25" || year === "2025/26") {

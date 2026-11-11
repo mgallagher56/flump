@@ -363,6 +363,64 @@ describe("NI, Class 4, employer NI and student loan calculators", () => {
   });
 });
 
+describe("T3b NI table data: mid-year changes use the documented annual approach", () => {
+  it("UK_NATIONAL_INSURANCE 2023/24 class1 mainRate is not 0.08", () => {
+    // 2023/24: 12% to 5 Jan 2024, 10% from 6 Jan 2024 (GOV.UK employer page 2023 to 2024).
+    // Derived annual blend (9*12 + 3*10)/12 = 11.5%. 8% is the 2024/25 rate.
+    const c = getUkTaxYearRules("2023/24").ni.class1;
+    expect(c.mainRate).not.toBe(0.08);
+    expect(c.mainRate).toBeCloseTo(0.115, 10);
+    expect(c.upperRate).toBe(0.02);
+  });
+
+  it("2022/23 class1 uses the E2022 annual-method figures (PT 11,908, 12.73% / 2.73%)", () => {
+    // https://www.gov.uk/guidance/rates-and-thresholds-for-employers-2022-to-2023 (directors, whole year).
+    const c = getUkTaxYearRules("2022/23").ni.class1;
+    expect(c.primaryThreshold).toBe(11908);
+    expect(c.mainRate).toBeCloseTo(0.1273, 10);
+    expect(c.upperRate).toBeCloseTo(0.0273, 10);
+    expect(c.upperEarningsLimit).toBe(50270);
+  });
+
+  it("blended years are labelled as approximations and never verified", () => {
+    for (const y of ["2022/23", "2023/24"] as const) {
+      const r = getUkTaxYearRules(y);
+      expect(r.verified, y).toBe(false);
+      expect(r.unverified.join("\n"), y).toMatch(/approximation/i);
+    }
+    expect(getUkTaxYearRules("2023/24").unverified.join("\n")).not.toContain("is wrong");
+  });
+
+  it("calculateEmployeeNi matches every employeeNi vector for every year", () => {
+    let checked = 0;
+    for (const v of UK_TAX_VECTORS) {
+      if (v.kind !== "employeeNi") continue;
+      const input = v.input as { grossEarnings: number };
+      const actual = calculateEmployeeNi(input.grossEarnings, getUkTaxYearRules(v.taxYear));
+      expect(actual, v.id).toBeCloseTo(v.expected, 2);
+      checked++;
+    }
+    expect(checked).toBe(SUPPORTED_UK_TAX_YEARS.length * 2);
+  });
+
+  it("calculateEmployerNiSaving and calculateClass4Ni match their vectors for every year", () => {
+    for (const v of UK_TAX_VECTORS) {
+      const rules = getUkTaxYearRules(v.taxYear);
+      if (v.kind === "employerNiSaving") {
+        const i = v.input as { grossSalary: number; salarySacrifice: number };
+        expect(
+          calculateEmployerNiSaving(i.grossSalary, i.salarySacrifice, rules),
+          v.id,
+        ).toBeCloseTo(v.expected, 2);
+      }
+      if (v.kind === "class4") {
+        const i = v.input as { profits: number };
+        expect(calculateClass4Ni(i.profits, rules), v.id).toBeCloseTo(v.expected, 2);
+      }
+    }
+  });
+});
+
 describe("calculateUKTax dividend rates come from the per-year table", () => {
   const dividendRecord: TaxRecord = {
     id: "d1",
