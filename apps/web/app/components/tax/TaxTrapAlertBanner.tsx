@@ -118,7 +118,7 @@ export const TaxTrapAlertBanner: FC<TaxTrapAlertBannerProps> = ({
                   color: "#fff",
                 }}
               >
-                {trapAnalysis.marginalRatePct}% Marginal Tax
+                {trapAnalysis.effectiveMarginalRatePct}% Marginal Tax
               </span>
             </div>
             <FLPText

@@ -21,14 +21,14 @@ const mockRecords: TaxRecord[] = [
     category: "rental_income",
     amount: 1150,
     frequency: "monthly",
-    date: "2024-04-01",
+    date: "2024-04-06",
     endDate: "2025-03-31",
     notes: null,
     receiptFilename: null,
     receiptMimeType: null,
     receiptData: null,
-    createdAt: "2024-04-01T00:00:00Z",
-    updatedAt: "2024-04-01T00:00:00Z",
+    createdAt: "2024-04-06T00:00:00Z",
+    updatedAt: "2024-04-06T00:00:00Z",
   },
   {
     id: "rec-2",
@@ -39,14 +39,14 @@ const mockRecords: TaxRecord[] = [
     category: "rent_rates_insurance",
     amount: 45.57,
     frequency: "monthly",
-    date: "2024-04-01",
+    date: "2024-04-06",
     endDate: "2025-03-31",
     notes: null,
     receiptFilename: null,
     receiptMimeType: null,
     receiptData: null,
-    createdAt: "2024-04-01T00:00:00Z",
-    updatedAt: "2024-04-01T00:00:00Z",
+    createdAt: "2024-04-06T00:00:00Z",
+    updatedAt: "2024-04-06T00:00:00Z",
   },
   {
     id: "rec-3",
@@ -57,14 +57,14 @@ const mockRecords: TaxRecord[] = [
     category: "mortgage_interest",
     amount: 545,
     frequency: "monthly",
-    date: "2024-04-01",
+    date: "2024-04-06",
     endDate: "2025-03-31",
     notes: null,
     receiptFilename: null,
     receiptMimeType: null,
     receiptData: null,
-    createdAt: "2024-04-01T00:00:00Z",
-    updatedAt: "2024-04-01T00:00:00Z",
+    createdAt: "2024-04-06T00:00:00Z",
+    updatedAt: "2024-04-06T00:00:00Z",
   },
   {
     id: "rec-4",
@@ -93,14 +93,14 @@ const mockRecords: TaxRecord[] = [
     category: "savings_interest",
     amount: 80,
     frequency: "monthly",
-    date: "2024-04-01",
+    date: "2024-04-06",
     endDate: "2025-03-31",
     notes: null,
     receiptFilename: null,
     receiptMimeType: null,
     receiptData: null,
-    createdAt: "2024-04-01T00:00:00Z",
-    updatedAt: "2024-04-01T00:00:00Z",
+    createdAt: "2024-04-06T00:00:00Z",
+    updatedAt: "2024-04-06T00:00:00Z",
   },
   {
     id: "rec-6",
@@ -311,7 +311,7 @@ describe("TaxContainer & Calculation Tools", () => {
       const copied = buildCopiedRecordForTaxYear(source, "2025/26", 1200);
 
       expect(copied.name).toBe("Poplar Rent (2025/26)");
-      expect(copied.date).toBe("2025-04-01");
+      expect(copied.date).toBe("2025-04-06");
       expect(copied.endDate).toBe("2026-03-31");
       expect(copied.amount).toBe(1200);
       expect(copied.source).toBe("rental");

@@ -56,10 +56,10 @@ describe("<UKTaxCalculator />", () => {
     test("calculates employer NI savings when employer NI pass-through is enabled", () => {
       // £45,000 gross with 5% pension = £2,250 sacrifice
       // In 2026/27, employer NI rate is 15.0% on earnings above £5,000.
-      // £2,250 * 0.15 = £338 (rounded)
+      // £2,250 * 0.15 = £337.50 (pence kept, D5-a)
       const result = calculateUKTax(45000, 5, "none", "2026/27", true, true);
-      expect(result.employerNiSaving).toBe(338);
-      expect(result.totalPension).toBe(2250 + 338);
+      expect(result.employerNiSaving).toBe(337.5);
+      expect(result.totalPension).toBe(2250 + 337.5);
     });
   });
 });

@@ -159,9 +159,9 @@ const TaxContainer: FC = () => {
     setFormCategory(cats[0]?.id || "");
     setFormAmount("");
 
-    // Set date to April 1st of selectedTaxYear
+    // Set date to 6 April (tax year start) of selectedTaxYear
     const startYr = selectedTaxYear.split("/")[0] || new Date().getFullYear().toString();
-    setFormDate(`${startYr}-04-01`);
+    setFormDate(`${startYr}-04-06`);
 
     setFormFrequency("monthly");
     setFormEndDate("");
