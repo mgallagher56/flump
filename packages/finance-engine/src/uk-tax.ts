@@ -181,22 +181,18 @@ export function calculate100kTaxTrap(
 }
 
 /**
- * Calculates tax trap relief and marginal rate breakdown.
+ * Calculates tax trap relief and marginal rate breakdown (decision D7-a).
+ * `marginalRatePct` is the income tax rate only (60 in the England, Wales and
+ * Northern Ireland trap, 67.5 in Scotland) and `effectiveMarginalRatePct` adds
+ * employee NI (62 / 69.5). Both come from analyzeTaxTrap unchanged; this used
+ * to overwrite marginalRatePct with the NI-inclusive figure.
  */
 export function calculateTaxTrapRelief(
   grossIncome: number,
   _taxYear = getCurrentUKTaxYear(),
   region: UkTaxRegion = "ENGLAND_NI_WALES",
 ): TaxTrapAnalysis {
-  const analysis = analyzeTaxTrap(grossIncome, region);
-  return {
-    ...analysis,
-    marginalRatePct: analysis.isInTaxTrap
-      ? region === "SCOTLAND"
-        ? 69.5
-        : 62
-      : analysis.marginalRatePct,
-  };
+  return analyzeTaxTrap(grossIncome, region);
 }
 
 /**

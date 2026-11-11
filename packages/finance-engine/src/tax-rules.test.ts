@@ -50,8 +50,7 @@ describe("tax-rules", () => {
     const config23 = buildLegacyUKConfig("2023/24");
     expect(config23.personalAllowance).toBe(12570);
 
-    const fallbackConfig = buildLegacyUKConfig("1999/00");
-    expect(fallbackConfig.personalAllowance).toBe(12570);
+    expect(() => buildLegacyUKConfig("1999/00")).toThrow(UnsupportedUkTaxYearError);
   });
 
   it("calculates UK EWNI Income Tax on taxable amounts across bands", () => {

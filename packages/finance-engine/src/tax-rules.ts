@@ -617,10 +617,11 @@ export interface UKLegacyTaxYearConfig {
   class4HigherRate: number;
 }
 
-/** Maps from the new canonical data into the legacy TaxYearConfig shape. */
+/** Maps from the new canonical data into the legacy TaxYearConfig shape. Unknown years throw. */
 export function buildLegacyUKConfig(taxYear: string): UKLegacyTaxYearConfig {
-  const it = UK_EWNI_INCOME_TAX[taxYear] ?? UK_EWNI_INCOME_TAX["2024/25"]!;
-  const ni = UK_NATIONAL_INSURANCE[taxYear] ?? UK_NATIONAL_INSURANCE["2024/25"]!;
+  const it = UK_EWNI_INCOME_TAX[taxYear];
+  const ni = UK_NATIONAL_INSURANCE[taxYear];
+  if (!it || !ni) throw new UnsupportedUkTaxYearError(taxYear);
   return {
     personalAllowance: it.personalAllowance,
     basicRateBand: it.basicRateBandWidth,
