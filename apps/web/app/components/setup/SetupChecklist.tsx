@@ -261,6 +261,7 @@ const SetupChecklist: FC<SetupChecklistProps> = (props) => {
             transition: "color 0.15s",
             _hover: { color: "destructive" },
           })}
+          aria-label="Dismiss setup checklist"
           title="Dismiss"
           type="button"
           onClick={() => {

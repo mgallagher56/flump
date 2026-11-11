@@ -686,6 +686,7 @@ export const TaxIncomeSectionCard: FC<TaxIncomeSectionCardProps> = ({
                         <div style={{ display: "flex", justifyContent: "center", gap: "6px" }}>
                           <button
                             type="button"
+                            aria-label="Edit record"
                             title="Edit record"
                             onClick={() => onOpenEditModal(record)}
                             className={css({
@@ -705,6 +706,7 @@ export const TaxIncomeSectionCard: FC<TaxIncomeSectionCardProps> = ({
                           </button>
                           <button
                             type="button"
+                            aria-label="Delete record"
                             title="Delete record"
                             onClick={(e) => onDeleteRecord(record.id, e)}
                             className={css({

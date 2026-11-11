@@ -63,3 +63,13 @@ describe("<UKTaxCalculator />", () => {
     });
   });
 });
+
+describe("<UKTaxCalculator /> chart accessibility", () => {
+  test("exposes the allocation as a named figure and a legend with amounts", () => {
+    const { getByRole } = customRender(<UKTaxCalculator onApplyIncrease={vi.fn()} />);
+
+    const figure = getByRole("figure", { name: "Salary allocation" });
+    expect(figure.textContent).toContain("Where your £45,000 gross salary goes");
+    expect(figure.textContent).toMatch(/Take-Home Pay £[\d,]+/);
+  });
+});

@@ -6,6 +6,7 @@ import {
 import type { FC } from "react";
 import { useMemo, useState } from "react";
 import { Button } from "../../components/forms/Button.js";
+import { LiveRegion } from "../../primitives/LiveRegion";
 import {
   cardStyle,
   gridStyle,
@@ -57,6 +58,12 @@ export const DebtSnowballCalculator: FC<DebtSnowballCalculatorProps> = ({
   const comparison = useMemo(() => {
     return compareAvalancheAndSnowball(debts, extraPayment);
   }, [debts, extraPayment]);
+
+  const headline = comparison.avalanche.payoffAchievable
+    ? `Debt-free by ${comparison.avalanche.debtFreeDate}, total interest £${Math.round(
+        comparison.avalanche.totalInterest,
+      ).toLocaleString("en-GB")}`
+    : "These payments will not clear the debt";
 
   const handleSave = () => {
     const totalDebt = cardBalance + loanBalance;
@@ -266,6 +273,7 @@ export const DebtSnowballCalculator: FC<DebtSnowballCalculatorProps> = ({
         </div>
 
         <div className={resultsBoxStyle}>
+          <LiveRegion debounceMs={1000} message={headline} visuallyHidden />
           <div>
             <span
               style={{

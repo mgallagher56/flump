@@ -177,6 +177,7 @@ const EntryRow: FC<EntryRowProps> = ({ entry, symbol, onUpdate, onDelete, deleti
     <button
       type="button"
       disabled={deleting}
+      aria-label={`Remove ${entry.name}`}
       title={`Remove ${entry.name}`}
       onClick={() => onDelete(entry.id)}
       className={css({

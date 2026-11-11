@@ -80,6 +80,11 @@ const selectStyle = (isMobile?: boolean) =>
     outline: "none",
     cursor: "pointer",
     transition: "all 0.2s",
+    _focusVisible: {
+      outline: "2px solid",
+      outlineColor: "border.focusRing",
+      outlineOffset: "2px",
+    },
   });
 
 const BudgetCategoryTable: FC<BudgetCategoryTableProps> = ({
@@ -560,6 +565,7 @@ const BudgetCategoryTable: FC<BudgetCategoryTableProps> = ({
                           borderRadius: "md",
                           _hover: { color: "primary" },
                         })}
+                        aria-label={`Edit category ${entry.name}`}
                         title="Edit"
                         type="button"
                         onClick={() => startEdit(entry)}
@@ -578,6 +584,7 @@ const BudgetCategoryTable: FC<BudgetCategoryTableProps> = ({
                             borderRadius: "md",
                             _hover: { color: "destructive" },
                           })}
+                          aria-label={`Delete category ${entry.name}`}
                           title="Delete"
                           type="button"
                           onClick={() => setDeleteId(entry.id)}
@@ -672,6 +679,7 @@ const BudgetCategoryTable: FC<BudgetCategoryTableProps> = ({
                       transition: "color 0.15s",
                       _hover: { color: "primary" },
                     })}
+                    aria-label={`Edit category ${entry.name}`}
                     title="Edit"
                     type="button"
                     onClick={() => startEdit(entry)}
@@ -690,6 +698,7 @@ const BudgetCategoryTable: FC<BudgetCategoryTableProps> = ({
                         transition: "color 0.15s",
                         _hover: { color: "destructive" },
                       })}
+                      aria-label={`Delete category ${entry.name}`}
                       title="Delete"
                       type="button"
                       onClick={() => setDeleteId(entry.id)}

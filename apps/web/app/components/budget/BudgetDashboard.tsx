@@ -1,4 +1,5 @@
 import { calculateSafeToSpend } from "@flump/finance-engine";
+import { ChartFigure } from "@repo/ui";
 import { css } from "@repo/ui/styled-system/css";
 import { type FC, useMemo } from "react";
 import { FaArrowRight, FaBalanceScale, FaChartPie, FaExclamationTriangle } from "react-icons/fa";
@@ -11,6 +12,7 @@ import FLPHeading from "~/components/core/typography/FLPHeading";
 import FLPText from "~/components/core/typography/FLPText";
 import { useResponsive } from "~/context/ResponsiveContext";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
+import { usePrefersReducedMotion } from "~/hooks/usePrefersReducedMotion";
 import type { BudgetCategory, BudgetEntry } from "~/types/budget";
 import {
   CATEGORY_COLOURS,
@@ -80,6 +82,7 @@ const BudgetDashboard: FC<BudgetDashboardProps> = ({
 }) => {
   const { isMobile: contextIsMobile } = useResponsive();
   const { formatCurrency } = useFormatCurrency();
+  const reducedMotion = usePrefersReducedMotion();
   const isMobileVariant = propIsMobile ?? (variant === "mobile" ? true : contextIsMobile);
   const totals = useMemo(() => {
     const income = entries.filter((e) => e.isIncome).reduce((s, e) => s + toMonthly(e), 0);
@@ -853,70 +856,107 @@ const BudgetDashboard: FC<BudgetDashboardProps> = ({
           </div>
           {pieData.length > 0 ? (
             <div>
-              <div style={{ position: "relative" }}>
-                <ResponsiveContainer height={200} width="100%">
-                  <PieChart>
-                    <Pie
-                      cx="50%"
-                      cy="50%"
-                      data={pieData}
-                      dataKey="total"
-                      innerRadius={55}
-                      nameKey="label"
-                      outerRadius={85}
-                      paddingAngle={3}
-                    >
+              <ChartFigure
+                dataTable={
+                  <table>
+                    <caption>Monthly expenses by category</caption>
+                    <thead>
+                      <tr>
+                        <th scope="col">Category</th>
+                        <th scope="col">Per month</th>
+                        <th scope="col">Share</th>
+                      </tr>
+                    </thead>
+                    <tbody>
                       {pieData.map((d) => (
-                        <Cell key={d.cat} fill={d.colour} />
+                        <tr key={d.cat}>
+                          <th scope="row">{d.label}</th>
+                          <td style={{ fontVariantNumeric: "tabular-nums" }}>{fmt(d.total)}</td>
+                          <td style={{ fontVariantNumeric: "tabular-nums" }}>
+                            {totals.expenses > 0
+                              ? Math.round((d.total / totals.expenses) * 100)
+                              : 0}
+                            %
+                          </td>
+                        </tr>
                       ))}
-                    </Pie>
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: "var(--colors-surface)",
-                        border: "1px solid var(--colors-border)",
-                        borderRadius: "8px",
-                        color: "var(--colors-text-primary)",
+                    </tbody>
+                  </table>
+                }
+                summary={`Monthly expenses total ${fmt(totals.expenses)}. ${pieData
+                  .map(
+                    (d) =>
+                      `${d.label} ${fmt(d.total)} (${totals.expenses > 0 ? Math.round((d.total / totals.expenses) * 100) : 0}%)`,
+                  )
+                  .join(", ")}.`}
+                title="Expense breakdown by category"
+              >
+                <div style={{ position: "relative" }}>
+                  <ResponsiveContainer height={200} width="100%">
+                    <PieChart>
+                      <Pie
+                        cx="50%"
+                        cy="50%"
+                        data={pieData}
+                        dataKey="total"
+                        innerRadius={55}
+                        nameKey="label"
+                        outerRadius={85}
+                        paddingAngle={3}
+                        isAnimationActive={!reducedMotion}
+                      >
+                        {pieData.map((d) => (
+                          <Cell key={d.cat} fill={d.colour} />
+                        ))}
+                      </Pie>
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: "var(--colors-surface)",
+                          border: "1px solid var(--colors-border)",
+                          borderRadius: "8px",
+                          color: "var(--colors-text-primary)",
+                        }}
+                        formatter={(value: any) => [`${fmt(value)}/mo`, ""]}
+                      />
+                    </PieChart>
+                  </ResponsiveContainer>
+                  {/* Centered Donut Hole Metric */}
+                  <div
+                    style={{
+                      position: "absolute",
+                      top: "50%",
+                      left: "50%",
+                      transform: "translate(-50%, -50%)",
+                      textAlign: "center",
+                      pointerEvents: "none",
+                    }}
+                  >
+                    <span
+                      style={{
+                        fontSize: "12px",
+                        fontWeight: "600",
+                        color: "var(--colors-text-muted)",
+                        display: "block",
+                        lineHeight: "1.2",
                       }}
-                      formatter={(value: any) => [`${fmt(value)}/mo`, ""]}
-                    />
-                  </PieChart>
-                </ResponsiveContainer>
-                {/* Centered Donut Hole Metric */}
-                <div
-                  style={{
-                    position: "absolute",
-                    top: "50%",
-                    left: "50%",
-                    transform: "translate(-50%, -50%)",
-                    textAlign: "center",
-                    pointerEvents: "none",
-                  }}
-                >
-                  <span
-                    style={{
-                      fontSize: "12px",
-                      fontWeight: "600",
-                      color: "var(--colors-text-muted)",
-                      display: "block",
-                      lineHeight: "1.2",
-                    }}
-                  >
-                    Expenses
-                  </span>
-                  <strong
-                    style={{
-                      fontSize: "15px",
-                      fontWeight: "800",
-                      fontFamily: "var(--fonts-mono)",
-                      color: "var(--colors-text-primary)",
-                      lineHeight: "1.2",
-                    }}
-                    className="tabular-nums"
-                  >
-                    {fmt(totals.expenses)}
-                  </strong>
+                    >
+                      Expenses
+                    </span>
+                    <strong
+                      style={{
+                        fontSize: "15px",
+                        fontWeight: "800",
+                        fontFamily: "var(--fonts-mono)",
+                        color: "var(--colors-text-primary)",
+                        lineHeight: "1.2",
+                      }}
+                      className="tabular-nums"
+                    >
+                      {fmt(totals.expenses)}
+                    </strong>
+                  </div>
                 </div>
-              </div>
+              </ChartFigure>
               <div
                 className={css({
                   display: "flex",

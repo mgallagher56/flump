@@ -88,6 +88,7 @@ export const HomeFAQ: FC = () => {
                   aria-controls={`faq-answer-${idx}`}
                   aria-expanded={isOpen}
                   className={questionStyle}
+                  id={`faq-question-${idx}`}
                   type="button"
                   onClick={() => toggle(idx)}
                 >
@@ -99,9 +100,13 @@ export const HomeFAQ: FC = () => {
                   )}
                 </button>
                 {isOpen && (
-                  <div className={answerStyle} id={`faq-answer-${idx}`} role="region">
+                  <section
+                    aria-labelledby={`faq-question-${idx}`}
+                    className={answerStyle}
+                    id={`faq-answer-${idx}`}
+                  >
                     <p style={{ margin: 0 }}>{faq.a}</p>
-                  </div>
+                  </section>
                 )}
               </div>
             );

@@ -1,4 +1,5 @@
 import { calculateEmployerNISavings } from "@flump/finance-engine";
+import { ChartFigure } from "@repo/ui";
 import { css } from "@repo/ui/styled-system/css";
 import { type FC, useEffect, useMemo, useState } from "react";
 import {
@@ -25,6 +26,7 @@ import FLPCard from "~/components/core/cards/FLPCard";
 import FLPHeading from "~/components/core/typography/FLPHeading";
 import FLPText from "~/components/core/typography/FLPText";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
+import { usePrefersReducedMotion } from "~/hooks/usePrefersReducedMotion";
 
 export interface PensionForecasterCardProps {
   currentPotTotal: number;
@@ -238,6 +240,7 @@ export const PensionForecasterCard: FC<PensionForecasterCardProps> = ({
   onSyncToProfile,
 }) => {
   const { formatCurrency } = useFormatCurrency();
+  const reducedMotion = usePrefersReducedMotion();
 
   const defaultRate =
     portfolioReturnRate !== undefined && portfolioReturnRate > 0
@@ -1098,84 +1101,120 @@ export const PensionForecasterCard: FC<PensionForecasterCardProps> = ({
           </div>
 
           {/* Visual Stacked Area Chart */}
-          <div style={{ height: "360px", width: "100%", marginTop: "4px" }}>
-            <ResponsiveContainer height="100%" width="100%">
-              <AreaChart data={chartData} margin={{ top: 10, right: 30, left: 10, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="colorContribs" x1="0" x2="0" y1="0" y2="1">
-                    <stop offset="5%" stopColor="#6363f1" stopOpacity={0.4} />
-                    <stop offset="95%" stopColor="#6363f1" stopOpacity={0.05} />
-                  </linearGradient>
-                  <linearGradient id="colorGrowth" x1="0" x2="0" y1="0" y2="1">
-                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.45} />
-                    <stop offset="95%" stopColor="#10b981" stopOpacity={0.05} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" opacity={0.15} vertical={false} />
-                <XAxis dataKey="year" fontSize={12} stroke="var(--colors-text-muted)" />
-                <YAxis
-                  fontSize={12}
-                  stroke="var(--colors-text-muted)"
-                  tickFormatter={(val) =>
-                    `£${val >= 1000000 ? `${(val / 1000000).toFixed(1)}m` : `${Math.round(val / 1000)}k`}`
-                  }
-                />
-                <Tooltip
-                  content={({ active, payload, label }) => {
-                    if (active && payload?.length) {
-                      const point = payload[0]?.payload;
-                      return (
-                        <div
-                          style={{
-                            backgroundColor: "var(--colors-surface)",
-                            color: "var(--colors-text-primary)",
-                            border: "1px solid var(--colors-border)",
-                            padding: "12px",
-                            borderRadius: "8px",
-                            fontSize: "12px",
-                            boxShadow: "0 4px 12px rgba(0,0,0,0.18)",
-                          }}
-                        >
-                          <div style={{ fontWeight: "bold", marginBottom: "6px" }}>{label}</div>
-                          <div style={{ fontWeight: 700, marginBottom: "4px" }}>
-                            Total Projected Pot: {formatCurrency(point?.totalPot ?? 0)}
-                          </div>
-                          <div style={{ color: "#10b981", marginTop: "2px" }}>
-                            Compound Growth: +{formatCurrency(point?.growth ?? 0)}
-                          </div>
-                          <div style={{ color: "#6363f1", marginTop: "2px" }}>
-                            Cumulative Contributions: +{formatCurrency(point?.totalContribs ?? 0)}
-                          </div>
-                        </div>
-                      );
+          <ChartFigure
+            dataTable={
+              <table>
+                <caption>Projected pension pot by year</caption>
+                <thead>
+                  <tr>
+                    <th scope="col">Year</th>
+                    <th scope="col">Total pot</th>
+                    <th scope="col">Contributions</th>
+                    <th scope="col">Investment growth</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {chartData.map((row) => (
+                    <tr key={row.year}>
+                      <th scope="row">{row.year}</th>
+                      <td style={{ fontVariantNumeric: "tabular-nums" }}>
+                        {formatCurrency(row.totalPot)}
+                      </td>
+                      <td style={{ fontVariantNumeric: "tabular-nums" }}>
+                        {formatCurrency(row.totalContribs)}
+                      </td>
+                      <td style={{ fontVariantNumeric: "tabular-nums" }}>
+                        {formatCurrency(row.growth)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            }
+            summary={`Projected pension pot after ${horizonYears} years: ${formatCurrency(finalBalance)}, with ${formatCurrency(totalEmployeeContribs + totalEmployerContribs)} contributed over the period and ${formatCurrency(totalGrowth)} of investment growth.`}
+            title="Pension pot projection"
+          >
+            <div style={{ height: "360px", width: "100%", marginTop: "4px" }}>
+              <ResponsiveContainer height="100%" width="100%">
+                <AreaChart data={chartData} margin={{ top: 10, right: 30, left: 10, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="colorContribs" x1="0" x2="0" y1="0" y2="1">
+                      <stop offset="5%" stopColor="#6363f1" stopOpacity={0.4} />
+                      <stop offset="95%" stopColor="#6363f1" stopOpacity={0.05} />
+                    </linearGradient>
+                    <linearGradient id="colorGrowth" x1="0" x2="0" y1="0" y2="1">
+                      <stop offset="5%" stopColor="#10b981" stopOpacity={0.45} />
+                      <stop offset="95%" stopColor="#10b981" stopOpacity={0.05} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" opacity={0.15} vertical={false} />
+                  <XAxis dataKey="year" fontSize={12} stroke="var(--colors-text-muted)" />
+                  <YAxis
+                    fontSize={12}
+                    stroke="var(--colors-text-muted)"
+                    tickFormatter={(val) =>
+                      `£${val >= 1000000 ? `${(val / 1000000).toFixed(1)}m` : `${Math.round(val / 1000)}k`}`
                     }
-                    return null;
-                  }}
-                />
-                <Legend height={36} verticalAlign="top" />
-                <Area
-                  dataKey="totalContribs"
-                  fill="url(#colorContribs)"
-                  name="Cumulative Contributions (Projected)"
-                  stackId="1"
-                  stroke="#6363f1"
-                  strokeDasharray="5 5"
-                  strokeWidth={2}
-                  type="monotone"
-                />
-                <Area
-                  dataKey="growth"
-                  fill="url(#colorGrowth)"
-                  name="Compound Investment Growth (Projected)"
-                  stackId="1"
-                  stroke="#10b981"
-                  strokeDasharray="5 5"
-                  strokeWidth={2.5}
-                  type="monotone"
-                />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
+                  />
+                  <Tooltip
+                    content={({ active, payload, label }) => {
+                      if (active && payload?.length) {
+                        const point = payload[0]?.payload;
+                        return (
+                          <div
+                            style={{
+                              backgroundColor: "var(--colors-surface)",
+                              color: "var(--colors-text-primary)",
+                              border: "1px solid var(--colors-border)",
+                              padding: "12px",
+                              borderRadius: "8px",
+                              fontSize: "12px",
+                              boxShadow: "0 4px 12px rgba(0,0,0,0.18)",
+                            }}
+                          >
+                            <div style={{ fontWeight: "bold", marginBottom: "6px" }}>{label}</div>
+                            <div style={{ fontWeight: 700, marginBottom: "4px" }}>
+                              Total Projected Pot: {formatCurrency(point?.totalPot ?? 0)}
+                            </div>
+                            <div style={{ color: "#10b981", marginTop: "2px" }}>
+                              Compound Growth: +{formatCurrency(point?.growth ?? 0)}
+                            </div>
+                            <div style={{ color: "#6363f1", marginTop: "2px" }}>
+                              Cumulative Contributions: +{formatCurrency(point?.totalContribs ?? 0)}
+                            </div>
+                          </div>
+                        );
+                      }
+                      return null;
+                    }}
+                  />
+                  <Legend height={36} verticalAlign="top" />
+                  <Area
+                    dataKey="totalContribs"
+                    fill="url(#colorContribs)"
+                    name="Cumulative Contributions (Projected)"
+                    stackId="1"
+                    stroke="#6363f1"
+                    strokeDasharray="5 5"
+                    strokeWidth={2}
+                    type="monotone"
+                    isAnimationActive={!reducedMotion}
+                  />
+                  <Area
+                    dataKey="growth"
+                    fill="url(#colorGrowth)"
+                    name="Compound Investment Growth (Projected)"
+                    stackId="1"
+                    stroke="#10b981"
+                    strokeDasharray="5 5"
+                    strokeWidth={2.5}
+                    type="monotone"
+                    isAnimationActive={!reducedMotion}
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          </ChartFigure>
         </div>
       </div>
     </FLPCard>

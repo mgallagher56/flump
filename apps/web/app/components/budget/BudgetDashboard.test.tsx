@@ -97,3 +97,21 @@ describe("<BudgetDashboard /> month-to-date actuals", () => {
     expect(screen.queryByText(/Actual spending is not tracked yet/)).toBeNull();
   });
 });
+
+describe("<BudgetDashboard /> expense chart accessibility", () => {
+  it("exposes the expense breakdown as a named figure with the formatted total", () => {
+    customRender(
+      <BudgetDashboard
+        {...baseProps}
+        entries={[
+          income,
+          entry({}),
+          entry({ id: "e2", category: "expenses", name: "Dining", amount: 500 }),
+        ]}
+      />,
+    );
+
+    const figure = screen.getByRole("figure", { name: "Expense breakdown by category" });
+    expect(figure.textContent).toMatch(/Monthly expenses total £1,500/);
+  });
+});

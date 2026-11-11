@@ -36,3 +36,18 @@ describe("SavingsForecasterCard", () => {
     expect(screen.getByText("Starting Balance")).toBeDefined();
   });
 });
+
+describe("SavingsForecasterCard chart accessibility", () => {
+  it("exposes the projection as a named figure with the formatted headline", () => {
+    render(
+      <SavingsForecasterCard
+        monthlyContribution={200}
+        portfolioInterestRate={4.75}
+        startingBalance={10000}
+      />,
+    );
+
+    const figure = screen.getByRole("figure", { name: "Savings growth projection" });
+    expect(figure.textContent).toMatch(/Projected savings balance after 15 years: £[\d,]+/);
+  });
+});

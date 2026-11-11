@@ -53,6 +53,12 @@ describe("<Header />", () => {
     expect(baseElement).toMatchSnapshot();
   });
 
+  test("primary nav is labelled", () => {
+    mocks.mockUseLoaderData.mockReturnValue({ user: undefined });
+    customRender(<Header />);
+    expect(screen.getByRole("navigation", { name: "Primary" })).not.toBeNull();
+  });
+
   test("applies sticky navigation styles", () => {
     mocks.mockUseLoaderData.mockReturnValue({ user: undefined });
     const { container } = customRender(<Header />);

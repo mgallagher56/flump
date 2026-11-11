@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { css } from "../../../styled-system/css/index.js";
 import { Button } from "../../components/forms/Button.js";
 
+import { LiveRegion } from "../../primitives/LiveRegion";
 import {
   cardStyle,
   gridStyle,
@@ -27,6 +28,10 @@ export const OverdraftCostCalculator: FC<OverdraftCostCalculatorProps> = ({
   const cost = useMemo(() => {
     return calculateOverdraftCost(balance, earRate);
   }, [balance, earRate]);
+
+  const headline = `Overdraft costs £${Math.round(cost.annualPoundCost).toLocaleString(
+    "en-GB",
+  )} a year in interest`;
 
   const handleSave = () => {
     const payload = {
@@ -110,6 +115,7 @@ export const OverdraftCostCalculator: FC<OverdraftCostCalculatorProps> = ({
         </div>
 
         <div className={resultsBoxStyle}>
+          <LiveRegion debounceMs={1000} message={headline} visuallyHidden />
           <div>
             <span
               style={{

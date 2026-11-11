@@ -4,6 +4,7 @@ import {
   getCurrentUKTaxYear,
   UK_STUDENT_LOANS,
 } from "@flump/finance-engine";
+import { ChartFigure } from "@repo/ui";
 import { css } from "@repo/ui/styled-system/css";
 import { type FC, useEffect, useMemo, useState } from "react";
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
@@ -19,6 +20,7 @@ import FLPCheckbox from "~/components/core/inputs/checkbox/FLPCheckbox";
 import FLPHeading from "~/components/core/typography/FLPHeading";
 import FLPText from "~/components/core/typography/FLPText";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
+import { usePrefersReducedMotion } from "~/hooks/usePrefersReducedMotion";
 import { useUserProfile } from "~/hooks/useUserProfile";
 
 interface UKTaxCalculatorProps {
@@ -29,6 +31,7 @@ interface UKTaxCalculatorProps {
 const UKTaxCalculator: FC<UKTaxCalculatorProps> = ({ initialSalary, onApplyIncrease }) => {
   const { profile } = useUserProfile();
   const { formatCurrency, formatCurrencyDecimal } = useFormatCurrency();
+  const reducedMotion = usePrefersReducedMotion();
   const [grossSalary, setGrossSalary] = useState<number>(initialSalary ?? 45000);
   const [pensionPercent, setPensionPercent] = useState<number>(5);
   const [isSalarySacrifice, setIsSalarySacrifice] = useState<boolean>(
@@ -120,6 +123,11 @@ const UKTaxCalculator: FC<UKTaxCalculatorProps> = ({ initialSalary, onApplyIncre
 
     return data.filter((d) => d.value > 0);
   }, [taxResults]);
+
+  const pieTotal = pieData.reduce((sum, d) => sum + d.value, 0);
+  const pieSummary = `Where your ${formatCurrency(grossSalary)} gross salary goes: ${pieData
+    .map((d) => `${d.name} ${formatCurrency(d.value)}`)
+    .join(", ")}.`;
 
   // Styles
   const layoutGrid = css({
@@ -574,37 +582,42 @@ const UKTaxCalculator: FC<UKTaxCalculatorProps> = ({ initialSalary, onApplyIncre
             {/* Allocation Donut */}
             <div
               style={{
-                height: "200px",
+                minHeight: "200px",
                 display: "flex",
                 flexDirection: "column",
                 alignItems: "center",
                 justifyContent: "center",
               }}
             >
-              <ResponsiveContainer height="80%" width="100%">
-                <PieChart>
-                  <Pie
-                    cx="50%"
-                    cy="50%"
-                    data={pieData}
-                    dataKey="value"
-                    innerRadius={50}
-                    outerRadius={70}
-                    paddingAngle={3}
-                  >
-                    {pieData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip
-                    formatter={(value: any) => formatCurrency(value)}
-                    contentStyle={chartTooltipContentStyle}
-                    itemStyle={chartTooltipItemStyle}
-                    labelStyle={chartTooltipLabelStyle}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
-              {/* Pie Legends */}
+              <ChartFigure summary={pieSummary} title="Salary allocation">
+                <div style={{ height: "140px", width: "100%" }}>
+                  <ResponsiveContainer height="100%" width="100%">
+                    <PieChart>
+                      <Pie
+                        cx="50%"
+                        cy="50%"
+                        data={pieData}
+                        dataKey="value"
+                        innerRadius={50}
+                        outerRadius={70}
+                        paddingAngle={3}
+                        isAnimationActive={!reducedMotion}
+                      >
+                        {pieData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Pie>
+                      <Tooltip
+                        formatter={(value: any) => formatCurrency(value)}
+                        contentStyle={chartTooltipContentStyle}
+                        itemStyle={chartTooltipItemStyle}
+                        labelStyle={chartTooltipLabelStyle}
+                      />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+              </ChartFigure>
+              {/* Pie Legends: name, amount and share so series are not colour-only */}
               <div
                 style={{
                   display: "flex",
@@ -627,8 +640,17 @@ const UKTaxCalculator: FC<UKTaxCalculatorProps> = ({ initialSalary, onApplyIncre
                         backgroundColor: d.color,
                       }}
                     />
-                    <FLPText fontSize="10px" color="text.muted">
-                      {d.name}
+                    <FLPText
+                      fontSize="10px"
+                      color="text.muted"
+                      style={{ fontVariantNumeric: "tabular-nums" }}
+                    >
+                      {d.name}: {formatCurrency(d.value)} (
+                      {new Intl.NumberFormat("en-GB", {
+                        style: "percent",
+                        maximumFractionDigits: 0,
+                      }).format(pieTotal > 0 ? d.value / pieTotal : 0)}
+                      )
                     </FLPText>
                   </div>
                 ))}

@@ -5,6 +5,7 @@ import {
   getCurrentUKTaxYear,
   PortfolioSnapshot,
 } from "@flump/finance-engine";
+import { LiveRegion } from "@repo/ui";
 import { css } from "@repo/ui/styled-system/css";
 import { type FC, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -366,8 +367,17 @@ export const PensionContainer: FC = () => {
     await handleSyncContributions(newEmployeePct, employerPercent, effectiveSalary);
   };
 
+  // Headline outcome only; empty (nothing announced) when salary or contribution is not set.
+  const pensionHeadline =
+    netMonthlyCost > 0
+      ? `Your pension contribution costs ${formatCurrency(netMonthlyCost)} a month after ${formatCurrency(
+          taxReliefMonthly,
+        )} tax relief`
+      : "";
+
   return (
     <div className={containerStyle}>
+      <LiveRegion debounceMs={1000} message={pensionHeadline} visuallyHidden />
       {/* £100k-£125k 60% Marginal Tax Trap Optimizer Callout */}
       {taxTrap.isInTaxTrap && (
         <div

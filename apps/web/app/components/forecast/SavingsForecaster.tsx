@@ -1,3 +1,4 @@
+import { ChartFigure } from "@repo/ui";
 import { css } from "@repo/ui/styled-system/css";
 import { type FC, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -546,64 +547,94 @@ const SavingsForecaster: FC<SavingsForecasterProps> = ({
           </div>
 
           {/* Recharts Area Chart */}
-          <div style={{ height: "300px", width: "100%", marginTop: "16px" }}>
-            <ResponsiveContainer height="100%" width="100%">
-              <AreaChart
-                data={projectionData}
-                margin={{ top: 10, right: 10, left: -10, bottom: 0 }}
-              >
-                <defs>
-                  <linearGradient id="colorCurrent" x1="0" x2="0" y1="0" y2="1">
-                    <stop offset="5%" stopColor="#6363F1" stopOpacity={0.15} />
-                    <stop offset="95%" stopColor="#6363F1" stopOpacity={0.0} />
-                  </linearGradient>
-                  <linearGradient id="colorHypo" x1="0" x2="0" y1="0" y2="1">
-                    <stop offset="5%" stopColor="#10B981" stopOpacity={0.15} />
-                    <stop offset="95%" stopColor="#10B981" stopOpacity={0.0} />
-                  </linearGradient>
-                </defs>
-                <XAxis
-                  dataKey="yearLabel"
-                  fontSize={11}
-                  axisLine={false}
-                  tickLine={false}
-                  tickMargin={8}
-                />
-                <YAxis
-                  fontSize={11}
-                  axisLine={false}
-                  tickLine={false}
-                  tickMargin={8}
-                  tickFormatter={(val) => `£${val / 1000}k`}
-                />
-                <Tooltip
-                  formatter={(value: any) => formatCurrency(value)}
-                  contentStyle={chartTooltipContentStyle}
-                  itemStyle={chartTooltipItemStyle}
-                  labelStyle={chartTooltipLabelStyle}
-                />
-                <Area
-                  activeDot={{ r: 6 }}
-                  dataKey="Current Plan"
-                  fill="url(#colorCurrent)"
-                  stroke="#6363F1"
-                  strokeWidth={2}
-                  type="monotone"
-                  isAnimationActive={false}
-                />
-                <Area
-                  activeDot={{ r: 6 }}
-                  dataKey="Hypothetical Plan"
-                  fill="url(#colorHypo)"
-                  stroke="#10B981"
-                  strokeDasharray="5 5"
-                  strokeWidth={2}
-                  type="monotone"
-                  isAnimationActive={false}
-                />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
+          <ChartFigure
+            dataTable={
+              <table>
+                <caption>Projected balance by year for each savings plan</caption>
+                <thead>
+                  <tr>
+                    <th scope="col">Year</th>
+                    <th scope="col">Current plan</th>
+                    <th scope="col">Hypothetical plan</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {projectionData.map((row) => (
+                    <tr key={row.year}>
+                      <th scope="row">{row.yearLabel}</th>
+                      <td style={{ fontVariantNumeric: "tabular-nums" }}>
+                        {formatCurrency(row["Current Plan"])}
+                      </td>
+                      <td style={{ fontVariantNumeric: "tabular-nums" }}>
+                        {formatCurrency(row["Hypothetical Plan"])}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            }
+            summary={`After ${projectionYears} years the current plan reaches ${formatCurrency(totalA)} and the hypothetical plan reaches ${formatCurrency(totalB)}, a difference of ${formatCurrency(difference)}.`}
+            title="Savings plan comparison"
+          >
+            <div style={{ height: "300px", width: "100%", marginTop: "16px" }}>
+              <ResponsiveContainer height="100%" width="100%">
+                <AreaChart
+                  data={projectionData}
+                  margin={{ top: 10, right: 10, left: -10, bottom: 0 }}
+                >
+                  <defs>
+                    <linearGradient id="colorCurrent" x1="0" x2="0" y1="0" y2="1">
+                      <stop offset="5%" stopColor="#6363F1" stopOpacity={0.15} />
+                      <stop offset="95%" stopColor="#6363F1" stopOpacity={0.0} />
+                    </linearGradient>
+                    <linearGradient id="colorHypo" x1="0" x2="0" y1="0" y2="1">
+                      <stop offset="5%" stopColor="#10B981" stopOpacity={0.15} />
+                      <stop offset="95%" stopColor="#10B981" stopOpacity={0.0} />
+                    </linearGradient>
+                  </defs>
+                  <XAxis
+                    dataKey="yearLabel"
+                    fontSize={11}
+                    axisLine={false}
+                    tickLine={false}
+                    tickMargin={8}
+                  />
+                  <YAxis
+                    fontSize={11}
+                    axisLine={false}
+                    tickLine={false}
+                    tickMargin={8}
+                    tickFormatter={(val) => `£${val / 1000}k`}
+                  />
+                  <Tooltip
+                    formatter={(value: any) => formatCurrency(value)}
+                    contentStyle={chartTooltipContentStyle}
+                    itemStyle={chartTooltipItemStyle}
+                    labelStyle={chartTooltipLabelStyle}
+                  />
+                  <Area
+                    activeDot={{ r: 6 }}
+                    dataKey="Current Plan"
+                    fill="url(#colorCurrent)"
+                    stroke="#6363F1"
+                    strokeWidth={2}
+                    type="monotone"
+                    isAnimationActive={false}
+                  />
+                  <Area
+                    activeDot={{ r: 6 }}
+                    dataKey="Hypothetical Plan"
+                    fill="url(#colorHypo)"
+                    stroke="#10B981"
+                    strokeDasharray="5 5"
+                    strokeWidth={2}
+                    type="monotone"
+                    isAnimationActive={false}
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          </ChartFigure>
 
           {/* Result summary stats cards */}
           <div className={resultStatsGrid}>

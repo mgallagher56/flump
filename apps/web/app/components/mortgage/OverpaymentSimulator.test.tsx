@@ -70,3 +70,20 @@ describe("<OverpaymentSimulator />", () => {
     expect(text).not.toMatch(/\b0 months?\b/i);
   });
 });
+
+describe("<OverpaymentSimulator /> chart accessibility", () => {
+  test("exposes the projection as a named figure with the interest saved headline", () => {
+    const { getByRole } = customRender(
+      <OverpaymentSimulator
+        loanAmount={200000}
+        interestRate={4}
+        remainingTerm={25}
+        overpayment={200}
+        onOverpaymentChange={vi.fn()}
+      />,
+    );
+
+    const figure = getByRole("figure", { name: "Mortgage balance projection" });
+    expect(figure.textContent).toMatch(/Overpaying £200 a month saves £[\d,]+ in total interest/);
+  });
+});

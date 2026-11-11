@@ -9,8 +9,10 @@ vi.mock("./utils/auth.server", () => ({ getAuthSession: vi.fn() }));
 
 import { apiConfig } from "./config.server";
 import i18next from "./i18n.server";
-import { ErrorBoundary, loader } from "./root";
+import App, { ErrorBoundary, loader } from "./root";
 import { getAuthSession } from "./utils/auth.server";
+
+const NullFallback = () => null;
 
 function RouteContent() {
   return <p>Route content</p>;
@@ -57,6 +59,32 @@ describe("root ErrorBoundary", () => {
     expect(document.body.textContent).not.toMatch(/secret token/);
     expect(document.querySelectorAll("html")).toHaveLength(1);
     expect(document.querySelectorAll("[style]")).toHaveLength(0);
+  });
+});
+
+describe("root App landmarks", () => {
+  it("skip link targets the main landmark", async () => {
+    const Stub = createRoutesStub([
+      {
+        path: "/",
+        loader: () => ({
+          locale: "en",
+          user: null,
+          userProfile: null,
+          accessToken: undefined,
+          ENV: { VITE_API_URL: "http://localhost" },
+        }),
+        Component: App as any,
+        HydrateFallback: NullFallback,
+      },
+    ]);
+    render(<Stub initialEntries={["/"]} />, { container: document });
+
+    const link = await screen.findByRole("link", { name: "Skip to content" });
+    expect(link.getAttribute("href")).toBe("#main-content");
+    const main = document.getElementById("main-content");
+    expect(main?.tagName).toBe("MAIN");
+    expect(main?.getAttribute("tabindex")).toBe("-1");
   });
 });
 

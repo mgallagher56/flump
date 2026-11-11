@@ -31,6 +31,12 @@ describe("<BudgetCategoryTable />", () => {
     onDeleteCategory: vi.fn(),
   };
 
+  test("icon-only row actions have accessible names", () => {
+    const { getAllByRole } = customRender(<BudgetCategoryTable {...defaultProps} />);
+    expect(getAllByRole("button", { name: "Edit category Mortgage" }).length).toBeGreaterThan(0);
+    expect(getAllByRole("button", { name: "Delete category Mortgage" }).length).toBeGreaterThan(0);
+  });
+
   test("renders category table, rows, and allows adding new entry", async () => {
     const { getByText, getByPlaceholderText } = customRender(
       <BudgetCategoryTable {...defaultProps} />,

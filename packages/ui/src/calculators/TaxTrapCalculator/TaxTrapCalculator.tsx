@@ -3,6 +3,7 @@ import type { FC } from "react";
 import { useMemo, useState } from "react";
 import { FiAlertTriangle, FiArrowRight, FiCheckCircle } from "react-icons/fi";
 import { Button } from "../../components/forms/Button.js";
+import { LiveRegion } from "../../primitives/LiveRegion";
 import {
   cardStyle,
   inputGroupStyle,
@@ -40,6 +41,8 @@ export const TaxTrapCalculator: FC<TaxTrapCalculatorProps> = ({
   const isTrapZone = grossIncome > 100000;
   const netIncomeAfterSacrifice = Math.max(0, grossIncome - salarySacrifice);
   const childcareEligible = netIncomeAfterSacrifice <= 100000;
+
+  const headline = `Tax and NI saved £${totalTaxSaved.toLocaleString("en-GB")}`;
 
   const handleSave = () => {
     const payload = {
@@ -223,6 +226,7 @@ export const TaxTrapCalculator: FC<TaxTrapCalculatorProps> = ({
         />
       </div>
 
+      <LiveRegion debounceMs={1000} message={headline} visuallyHidden />
       <div className={metricsGridStyle}>
         <div className={metricCard}>
           <span style={{ fontSize: "12px", color: "var(--colors-text-muted)" }}>

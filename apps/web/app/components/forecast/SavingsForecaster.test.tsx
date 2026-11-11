@@ -33,3 +33,22 @@ describe("<SavingsForecaster />", () => {
     expect(getAllByDisplayValue("500").length).toBeGreaterThan(0);
   });
 });
+
+describe("<SavingsForecaster /> chart accessibility", () => {
+  test("exposes the comparison as a named figure with formatted totals", () => {
+    const { getByRole } = customRender(
+      <SavingsForecaster
+        currentSavingRate={250}
+        hypotheticalSavingRate={500}
+        startingBalance={10000}
+        onCurrentRateChange={vi.fn()}
+        onHypotheticalRateChange={vi.fn()}
+        onStartingBalanceChange={vi.fn()}
+      />,
+    );
+
+    const figure = getByRole("figure", { name: "Savings plan comparison" });
+    expect(figure.textContent).toMatch(/current plan reaches £[\d,]+/);
+    expect(figure.textContent).toMatch(/hypothetical plan reaches £[\d,]+/);
+  });
+});

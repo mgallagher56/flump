@@ -1,3 +1,4 @@
+import { VisuallyHidden } from "@repo/ui";
 import { css } from "@repo/ui/styled-system/css";
 import { useEffect } from "react";
 import type { LoaderFunctionArgs } from "react-router";
@@ -101,6 +102,9 @@ export default function App() {
       >
         <ThemeContext.Provider value={{ theme, toggleTheme }}>
           <ResponsiveProvider>
+            <VisuallyHidden as="a" focusable href="#main-content">
+              Skip to content
+            </VisuallyHidden>
             <Header />
             <div
               className={css({
@@ -110,6 +114,8 @@ export default function App() {
               })}
             >
               <main
+                id="main-content"
+                tabIndex={-1}
                 className={css({
                   paddingBottom: { base: user ? "72px" : "0", md: "0" },
                 })}

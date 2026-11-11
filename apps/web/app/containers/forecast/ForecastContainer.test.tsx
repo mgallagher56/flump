@@ -1,5 +1,5 @@
-import { fireEvent } from "@testing-library/react";
-import { vi } from "vitest";
+import { act, fireEvent } from "@testing-library/react";
+import { afterEach, vi } from "vitest";
 import customRender from "~/testUtils/customRender";
 import ForecastContainer from "./ForecastContainer";
 
@@ -67,5 +67,21 @@ describe("<ForecastContainer />", () => {
     fireEvent.click(getByText("Apply Raise"));
     expect(container.querySelector("#mock-forecaster")).toBeDefined();
     fireEvent.click(getByText("Clear Increase"));
+  });
+
+  describe("live region", () => {
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    test("announces the projected 10-year total once the loaded data settles", () => {
+      vi.useFakeTimers();
+      const { getByRole } = customRender(<ForecastContainer />);
+      const region = getByRole("status");
+      act(() => {
+        vi.advanceTimersByTime(1000);
+      });
+      expect(region.textContent).toMatch(/^Projected 10-year total £[\d,]+$/);
+    });
   });
 });

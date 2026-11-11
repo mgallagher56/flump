@@ -3,6 +3,7 @@ import type { FC } from "react";
 import { useMemo, useState } from "react";
 import { FiArrowRight, FiHome, FiTrendingUp } from "react-icons/fi";
 import { Button } from "../../components/forms/Button.js";
+import { LiveRegion } from "../../primitives/LiveRegion";
 import {
   cardStyle,
   inputGridStyle,
@@ -87,6 +88,10 @@ export const MortgageVsIsaCalculator: FC<MortgageVsIsaCalculatorProps> = ({
       isaNetAdvantage,
     };
   }, [mortgageBalance, interestRate, remainingYears, monthlyContribution, isaExpectedReturn]);
+
+  const headline = `Overpaying saves £${Math.round(simulation.interestSaved).toLocaleString(
+    "en-GB",
+  )} interest; the ISA would grow to £${Math.round(simulation.isaPot).toLocaleString("en-GB")}`;
 
   const handleSave = () => {
     const payload = {
@@ -349,6 +354,7 @@ export const MortgageVsIsaCalculator: FC<MortgageVsIsaCalculatorProps> = ({
       </div>
 
       {/* Results */}
+      <LiveRegion debounceMs={1000} message={headline} visuallyHidden />
       <div className={metricsGridStyle}>
         <div className={metricCard}>
           <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>

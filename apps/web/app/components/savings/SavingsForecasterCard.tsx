@@ -1,3 +1,4 @@
+import { ChartFigure } from "@repo/ui";
 import { css } from "@repo/ui/styled-system/css";
 import { type FC, useEffect, useMemo, useState } from "react";
 import { FaChartArea, FaCheckCircle, FaFlagCheckered, FaPercent, FaUndo } from "react-icons/fa";
@@ -260,7 +261,6 @@ export const SavingsForecasterCard: FC<SavingsForecasterCardProps> = ({
                   border: "1px solid var(--colors-border)",
                   backgroundColor: "var(--colors-surface)",
                   color: "var(--colors-primary)",
-                  outline: "none",
                   MozAppearance: "textfield",
                   appearance: "textfield",
                 }}
@@ -352,67 +352,101 @@ export const SavingsForecasterCard: FC<SavingsForecasterCardProps> = ({
       </div>
 
       {/* Projection Chart */}
-      <div style={{ height: "220px", width: "100%" }}>
-        <ResponsiveContainer height="100%" width="100%">
-          <AreaChart data={projectionData} margin={{ top: 8, right: 20, left: 10, bottom: 0 }}>
-            <defs>
-              <linearGradient id="colorTotal" x1="0" x2="0" y1="0" y2="1">
-                <stop offset="5%" stopColor="#6363f1" stopOpacity={0.4} />
-                <stop offset="95%" stopColor="#6363f1" stopOpacity={0.0} />
-              </linearGradient>
-              <linearGradient id="colorCash" x1="0" x2="0" y1="0" y2="1">
-                <stop offset="5%" stopColor="#10b981" stopOpacity={0.3} />
-                <stop offset="95%" stopColor="#10b981" stopOpacity={0.0} />
-              </linearGradient>
-            </defs>
-            <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.3} />
-            <XAxis dataKey="yearLabel" fontSize={11} stroke="var(--colors-text-muted)" />
-            <YAxis
-              fontSize={11}
-              stroke="var(--colors-text-muted)"
-              tickFormatter={(v) =>
-                v >= 1000 ? `${symbol}${(v / 1000).toFixed(0)}k` : `${symbol}${v}`
-              }
-            />
-            <Tooltip
-              formatter={(value: any) => [formatCurrency(Number(value) || 0), ""]}
-              contentStyle={{
-                backgroundColor: "var(--colors-surface, #1e293b)",
-                borderColor: "var(--colors-border, #334155)",
-                borderWidth: "1px",
-                borderStyle: "solid",
-                borderRadius: "10px",
-                fontSize: "12px",
-                color: "var(--colors-text-primary, #f8fafc)",
-                boxShadow: "0 10px 25px -5px rgba(0,0,0,0.4)",
-              }}
-              itemStyle={{ color: "var(--colors-text-primary, #f8fafc)" }}
-              labelStyle={{ color: "var(--colors-text-muted, #94a3b8)", fontWeight: 600 }}
-            />
-            <Legend wrapperStyle={{ fontSize: "12px", paddingTop: "6px" }} />
-            <Area
-              dataKey="Total Forecast"
-              fill="url(#colorTotal)"
-              name="Projected Total (Interest + Deposits)"
-              stroke="#6363f1"
-              strokeDasharray="5 5"
-              strokeWidth={2.5}
-              type="monotone"
-              isAnimationActive={false}
-            />
-            <Area
-              dataKey="Cash Contributions"
-              fill="url(#colorCash)"
-              name="Contributions Only (0% Interest)"
-              stroke="#10b981"
-              strokeDasharray="4 4"
-              strokeWidth={2}
-              type="monotone"
-              isAnimationActive={false}
-            />
-          </AreaChart>
-        </ResponsiveContainer>
-      </div>
+      <ChartFigure
+        dataTable={
+          <table>
+            <caption>Projected savings balance by year</caption>
+            <thead>
+              <tr>
+                <th scope="col">Year</th>
+                <th scope="col">Total forecast</th>
+                <th scope="col">Cash contributions</th>
+                <th scope="col">Interest earned</th>
+              </tr>
+            </thead>
+            <tbody>
+              {projectionData.map((row) => (
+                <tr key={row.year}>
+                  <th scope="row">{row.yearLabel}</th>
+                  <td style={{ fontVariantNumeric: "tabular-nums" }}>
+                    {formatCurrency(row["Total Forecast"])}
+                  </td>
+                  <td style={{ fontVariantNumeric: "tabular-nums" }}>
+                    {formatCurrency(row["Cash Contributions"])}
+                  </td>
+                  <td style={{ fontVariantNumeric: "tabular-nums" }}>
+                    {formatCurrency(row["Interest Earned"])}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        }
+        summary={`Projected savings balance after ${horizonYears} years: ${formatCurrency(finalTotal)}, made up of ${formatCurrency(totalContributed)} contributed and ${formatCurrency(totalInterestEarned)} interest earned, at ${interestRate}% a year.`}
+        title="Savings growth projection"
+      >
+        <div style={{ height: "220px", width: "100%" }}>
+          <ResponsiveContainer height="100%" width="100%">
+            <AreaChart data={projectionData} margin={{ top: 8, right: 20, left: 10, bottom: 0 }}>
+              <defs>
+                <linearGradient id="colorTotal" x1="0" x2="0" y1="0" y2="1">
+                  <stop offset="5%" stopColor="#6363f1" stopOpacity={0.4} />
+                  <stop offset="95%" stopColor="#6363f1" stopOpacity={0.0} />
+                </linearGradient>
+                <linearGradient id="colorCash" x1="0" x2="0" y1="0" y2="1">
+                  <stop offset="5%" stopColor="#10b981" stopOpacity={0.3} />
+                  <stop offset="95%" stopColor="#10b981" stopOpacity={0.0} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.3} />
+              <XAxis dataKey="yearLabel" fontSize={11} stroke="var(--colors-text-muted)" />
+              <YAxis
+                fontSize={11}
+                stroke="var(--colors-text-muted)"
+                tickFormatter={(v) =>
+                  v >= 1000 ? `${symbol}${(v / 1000).toFixed(0)}k` : `${symbol}${v}`
+                }
+              />
+              <Tooltip
+                formatter={(value: any) => [formatCurrency(Number(value) || 0), ""]}
+                contentStyle={{
+                  backgroundColor: "var(--colors-surface, #1e293b)",
+                  borderColor: "var(--colors-border, #334155)",
+                  borderWidth: "1px",
+                  borderStyle: "solid",
+                  borderRadius: "10px",
+                  fontSize: "12px",
+                  color: "var(--colors-text-primary, #f8fafc)",
+                  boxShadow: "0 10px 25px -5px rgba(0,0,0,0.4)",
+                }}
+                itemStyle={{ color: "var(--colors-text-primary, #f8fafc)" }}
+                labelStyle={{ color: "var(--colors-text-muted, #94a3b8)", fontWeight: 600 }}
+              />
+              <Legend wrapperStyle={{ fontSize: "12px", paddingTop: "6px" }} />
+              <Area
+                dataKey="Total Forecast"
+                fill="url(#colorTotal)"
+                name="Projected Total (Interest + Deposits)"
+                stroke="#6363f1"
+                strokeDasharray="5 5"
+                strokeWidth={2.5}
+                type="monotone"
+                isAnimationActive={false}
+              />
+              <Area
+                dataKey="Cash Contributions"
+                fill="url(#colorCash)"
+                name="Contributions Only (0% Interest)"
+                stroke="#10b981"
+                strokeDasharray="4 4"
+                strokeWidth={2}
+                type="monotone"
+                isAnimationActive={false}
+              />
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
+      </ChartFigure>
 
       {/* Projection Summary Metrics */}
       <div className={statsGridStyle}>
@@ -499,7 +533,6 @@ export const SavingsForecasterCard: FC<SavingsForecasterCardProps> = ({
                 border: "1px solid var(--colors-border)",
                 backgroundColor: "var(--colors-surface)",
                 color: "var(--colors-text-primary)",
-                outline: "none",
                 MozAppearance: "textfield",
                 appearance: "textfield",
               }}
