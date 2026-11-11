@@ -15,7 +15,7 @@ type Story = StoryObj<typeof Table>;
 
 export const Default: Story = {
   render: () => (
-    <Table>
+    <Table caption="Debts by APR">
       <THead>
         <tr>
           <Th>Debt Name</Th>
@@ -47,5 +47,12 @@ export const Default: Story = {
     const canvas = within(canvasElement);
     await expect(canvas.getByText("Barclaycard Platinum")).toBeInTheDocument();
     await expect(canvas.getByText("£3,200")).toBeInTheDocument();
+    await expect(canvas.getByRole("table", { name: "Debts by APR" })).toBeInTheDocument();
+    await expect(canvas.getAllByRole("columnheader")[0]).toHaveAttribute("scope", "col");
   },
+};
+
+export const Dark: Story = {
+  ...Default,
+  globals: { theme: "dark" },
 };
