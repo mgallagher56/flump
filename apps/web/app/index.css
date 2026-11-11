@@ -45,10 +45,10 @@
     outline-offset: 2px;
   }
 
-  /* The checked box carries a white tick, so it is a text/icon-bearing fill: primary-solid. */
+  /* The checked box carries a white tick, so its fill is primary-solid; the border stays primary. */
   input[type="checkbox"]:not([data-flp-checkbox]):checked {
     background-color: var(--colors-primary-solid, #4f46e5);
-    border-color: var(--colors-primary-solid, #4f46e5);
+    border-color: var(--colors-primary, #6363f1);
   }
 
   input[type="checkbox"]:not([data-flp-checkbox]):checked::before {

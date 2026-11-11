@@ -118,9 +118,9 @@ export const DebtContainer: FC = () => {
   const minimumEstimated = debts.some((d) => d.minimumPaymentEstimated === true);
 
   // Headline outcome only; empty (nothing announced) when there are no debts, an APR is unknown
-  // (figures would be invented) or the payments never clear the debt.
+  // (figures would be invented), minimum payments are estimated or the payments never clear the debt.
   const debtHeadline =
-    hasDebts && !aprUnknown && activeResult.payoffAchievable
+    hasDebts && !aprUnknown && !minimumEstimated && activeResult.payoffAchievable
       ? `Debt-free by ${activeResult.debtFreeDate}, total interest ${formatCurrency(activeResult.totalInterest)}`
       : "";
 

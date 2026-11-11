@@ -40,6 +40,28 @@ export const Focusable: Story = {
   },
 };
 
+export const SkipLink: Story = {
+  args: { as: "a", focusable: true, href: "#main", children: "Skip to main content" },
+  render: (args) => (
+    <div>
+      <VisuallyHidden {...args} />
+      <button type="button">Menu</button>
+      <main id="main" tabIndex={-1}>
+        Main content
+      </main>
+    </div>
+  ),
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const link = canvas.getByRole("link", { name: "Skip to main content" });
+    await userEvent.tab();
+    await expect(link).toHaveFocus();
+    await expect(link.getBoundingClientRect().width).toBeGreaterThan(1);
+    await userEvent.tab();
+    await expect(canvas.getByRole("button", { name: "Menu" })).toHaveFocus();
+  },
+};
+
 export const Dark: Story = {
   ...Focusable,
   globals: { theme: "dark" },

@@ -30,6 +30,8 @@ vi.mock("react-router", () => ({
               type: "Credit Card",
               balance: 3000,
               interestRate: 22.9,
+              monthlyContribution: 90,
+              monthlyContributionKnown: true,
             },
             {
               id: "acc-loan",
@@ -37,6 +39,8 @@ vi.mock("react-router", () => ({
               type: "Loan",
               balance: 4500,
               interestRate: 7.9,
+              monthlyContribution: 150,
+              monthlyContributionKnown: true,
             },
           ],
     debtInputs: loaderState.debtInputs,
@@ -278,5 +282,18 @@ describe("DebtContainer live region", () => {
       vi.advanceTimersByTime(1);
     });
     expect(region.textContent).toMatch(/^Debt-free by .+, total interest £[\d,]+$/);
+  });
+
+  it("keeps the headline empty when minimum payments are estimated", () => {
+    loaderState.accountsOverride = [
+      { id: "acc-cc", name: "Barclaycard", type: "Credit Card", balance: 3000, interestRate: 20 },
+    ];
+    render(<DebtContainer />);
+    const region = screen.getByRole("status");
+    fireEvent.change(screen.getAllByRole("slider")[0], { target: { value: "300" } });
+    act(() => {
+      vi.advanceTimersByTime(2000);
+    });
+    expect(region.textContent).toBe("");
   });
 });

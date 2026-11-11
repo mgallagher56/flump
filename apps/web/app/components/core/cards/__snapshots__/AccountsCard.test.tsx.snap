@@ -5,6 +5,7 @@ exports[`<AccountsCard /> > it renders an AccountsCard component with title as e
   <div>
     <div
       class="pos_relative trs_border-color_0.15s_ease,_box-shadow_0.15s_ease bd_1px_solid bd-c_border bdr_xl bg-c_surface c_text.primary bx-sh_card p_4 md:p_6 d_flex flex-d_column [&[data-interactive='true']:hover]:bd-c_primary [&[data-interactive='true']:hover]:bx-sh_cardHover  h_155px d_flex flex-d_column jc_space-between p_14px md:p_16px pos_relative ov_hidden bd-w_1px border-style_solid bd-c_border.subtle bdr_xl bg-c_surface trs_border-color_0.15s_ease,_box-shadow_0.15s_ease cursor_pointer hover:bd-c_primary hover:bx-sh_cardHover focusVisible:ring_2px_solid focusVisible:ring-c_primary focusVisible:ring-o_2px"
+      data-focus-managed=""
       data-interactive="true"
       data-variant="desktop"
       id="123456"
@@ -114,6 +115,7 @@ exports[`<AccountsCard with increasing values > should match snapshot for accoun
   <div>
     <div
       class="pos_relative trs_border-color_0.15s_ease,_box-shadow_0.15s_ease bd_1px_solid bd-c_border bdr_xl bg-c_surface c_text.primary bx-sh_card p_4 md:p_6 d_flex flex-d_column [&[data-interactive='true']:hover]:bd-c_primary [&[data-interactive='true']:hover]:bx-sh_cardHover  h_155px d_flex flex-d_column jc_space-between p_14px md:p_16px pos_relative ov_hidden bd-w_1px border-style_solid bd-c_border.subtle bdr_xl bg-c_surface trs_border-color_0.15s_ease,_box-shadow_0.15s_ease cursor_pointer hover:bd-c_primary hover:bx-sh_cardHover focusVisible:ring_2px_solid focusVisible:ring-c_primary focusVisible:ring-o_2px"
+      data-focus-managed=""
       data-interactive="true"
       data-variant="desktop"
       id="123456"

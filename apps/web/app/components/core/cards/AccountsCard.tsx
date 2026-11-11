@@ -251,6 +251,7 @@ const AccountsCard: FC<AccountsCardProp> = ({
       id={accountId}
       interactive={true}
       isMobile={isMobileVariant}
+      data-focus-managed=""
       role="button"
       tabIndex={0}
       onClick={handleClick}

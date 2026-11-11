@@ -17,6 +17,7 @@ exports[`<FLPInput /> > should render as expected 1`] = `
     >
       <input
         class="w_100% p_8px_14px min-h_40px fs_sm bdr_md bd_1px_solid bd-c_border.input bg-c_surface c_text.primary ring_none trs_border-color_0.15s_ease,_box-shadow_0.15s_ease fv-num_tabular-nums focus:bd-c_primary focus:bx-sh_0_0_0_2px_token(colors.primary,_#4f46e5) disabled:op_0.5 disabled:cursor_not-allowed [&[type='number']]:ap_textfield [&[type='number']]:fv-num_tabular-nums [&[type='number']]:[&::-webkit-outer-spin-button,_&::-webkit-inner-spin-button]:-webkit-appearance_none [&[type='number']]:[&::-webkit-outer-spin-button,_&::-webkit-inner-spin-button]:m_0 "
+        data-focus-managed=""
         id="_r_0_"
       />
     </div>
@@ -43,6 +44,7 @@ exports[`<FLPInput /> > should render as expected with error 1`] = `
         aria-describedby="_r_1_-error"
         aria-invalid="true"
         class="w_100% p_8px_14px min-h_40px fs_sm bdr_md bd_1px_solid bd-c_border.input bg-c_surface c_text.primary ring_none trs_border-color_0.15s_ease,_box-shadow_0.15s_ease fv-num_tabular-nums focus:bd-c_primary focus:bx-sh_0_0_0_2px_token(colors.primary,_#4f46e5) disabled:op_0.5 disabled:cursor_not-allowed [&[type='number']]:ap_textfield [&[type='number']]:fv-num_tabular-nums [&[type='number']]:[&::-webkit-outer-spin-button,_&::-webkit-inner-spin-button]:-webkit-appearance_none [&[type='number']]:[&::-webkit-outer-spin-button,_&::-webkit-inner-spin-button]:m_0 "
+        data-focus-managed=""
         id="_r_1_"
       />
       <span
@@ -74,6 +76,7 @@ exports[`<FLPInput /> > should render as expected with value 1`] = `
     >
       <input
         class="w_100% p_8px_14px min-h_40px fs_sm bdr_md bd_1px_solid bd-c_border.input bg-c_surface c_text.primary ring_none trs_border-color_0.15s_ease,_box-shadow_0.15s_ease fv-num_tabular-nums focus:bd-c_primary focus:bx-sh_0_0_0_2px_token(colors.primary,_#4f46e5) disabled:op_0.5 disabled:cursor_not-allowed [&[type='number']]:ap_textfield [&[type='number']]:fv-num_tabular-nums [&[type='number']]:[&::-webkit-outer-spin-button,_&::-webkit-inner-spin-button]:-webkit-appearance_none [&[type='number']]:[&::-webkit-outer-spin-button,_&::-webkit-inner-spin-button]:m_0 "
+        data-focus-managed=""
         id="_r_2_"
         value="Value"
       />
@@ -101,6 +104,7 @@ exports[`<FLPInput /> > should render as expected with value and error 1`] = `
         aria-describedby="_r_3_-error"
         aria-invalid="true"
         class="w_100% p_8px_14px min-h_40px fs_sm bdr_md bd_1px_solid bd-c_border.input bg-c_surface c_text.primary ring_none trs_border-color_0.15s_ease,_box-shadow_0.15s_ease fv-num_tabular-nums focus:bd-c_primary focus:bx-sh_0_0_0_2px_token(colors.primary,_#4f46e5) disabled:op_0.5 disabled:cursor_not-allowed [&[type='number']]:ap_textfield [&[type='number']]:fv-num_tabular-nums [&[type='number']]:[&::-webkit-outer-spin-button,_&::-webkit-inner-spin-button]:-webkit-appearance_none [&[type='number']]:[&::-webkit-outer-spin-button,_&::-webkit-inner-spin-button]:m_0 "
+        data-focus-managed=""
         id="_r_3_"
         value="Value"
       />
@@ -128,6 +132,7 @@ exports[`<FLPInput /> > should render as expected without a label 1`] = `
       <input
         aria-label="Test"
         class="w_100% p_8px_14px min-h_40px fs_sm bdr_md bd_1px_solid bd-c_border.input bg-c_surface c_text.primary ring_none trs_border-color_0.15s_ease,_box-shadow_0.15s_ease fv-num_tabular-nums focus:bd-c_primary focus:bx-sh_0_0_0_2px_token(colors.primary,_#4f46e5) disabled:op_0.5 disabled:cursor_not-allowed [&[type='number']]:ap_textfield [&[type='number']]:fv-num_tabular-nums [&[type='number']]:[&::-webkit-outer-spin-button,_&::-webkit-inner-spin-button]:-webkit-appearance_none [&[type='number']]:[&::-webkit-outer-spin-button,_&::-webkit-inner-spin-button]:m_0 "
+        data-focus-managed=""
         id="_r_4_"
       />
     </div>
@@ -152,6 +157,7 @@ exports[`<FLPInput /> > should render elements as a row 1`] = `
     >
       <input
         class="w_100% p_8px_14px min-h_40px fs_sm bdr_md bd_1px_solid bd-c_border.input bg-c_surface c_text.primary ring_none trs_border-color_0.15s_ease,_box-shadow_0.15s_ease fv-num_tabular-nums focus:bd-c_primary focus:bx-sh_0_0_0_2px_token(colors.primary,_#4f46e5) disabled:op_0.5 disabled:cursor_not-allowed [&[type='number']]:ap_textfield [&[type='number']]:fv-num_tabular-nums [&[type='number']]:[&::-webkit-outer-spin-button,_&::-webkit-inner-spin-button]:-webkit-appearance_none [&[type='number']]:[&::-webkit-outer-spin-button,_&::-webkit-inner-spin-button]:m_0 "
+        data-focus-managed=""
         id="_r_5_"
       />
     </div>

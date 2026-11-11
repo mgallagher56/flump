@@ -93,6 +93,7 @@ const FLPSelect: FC<FLPSelectProps> = ({
       )}
       <div style={{ flex: 1 }}>
         <select
+          data-focus-managed=""
           className={`${selectStyle} ${className || ""}`}
           id={id}
           style={style}

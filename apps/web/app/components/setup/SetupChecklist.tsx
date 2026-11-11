@@ -161,96 +161,100 @@ const SetupChecklist: FC<SetupChecklistProps> = (props) => {
         transition: "all 0.3s ease",
       })}
     >
-      {/* Header */}
+      {/* Header: the heading wraps the toggle so the landmark survives and the whole padded
+          header is the click target; the dismiss button sits beside it, not inside it. */}
       <div
         className={css({
+          position: "relative",
           display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          gap: "8px",
-          padding: { base: "12px 14px", md: "16px 20px" },
+          alignItems: "stretch",
           userSelect: "none",
           borderBottom: expanded ? "1px solid" : "none",
           borderColor: "border",
           _hover: { backgroundColor: "rgba(99,99,241,0.07)" },
         })}
       >
-        <button
-          aria-controls={panelId}
-          aria-expanded={expanded}
-          className={css({
-            flex: "1",
-            minWidth: 0,
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            gap: "12px",
-            textAlign: "left",
-            background: "none",
-            border: "none",
-            padding: 0,
-            margin: 0,
-            font: "inherit",
-            color: "inherit",
-            cursor: "pointer",
-          })}
-          type="button"
-          onClick={() => setExpanded(!expanded)}
-        >
-          <span style={{ display: "block" }}>
-            <span style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+        <h4 className={css({ flex: "1", minWidth: 0, margin: 0, font: "inherit" })}>
+          <button
+            aria-controls={panelId}
+            aria-expanded={expanded}
+            className={css({
+              width: "100%",
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              gap: "12px",
+              textAlign: "left",
+              background: "none",
+              border: "none",
+              padding: { base: "12px 44px 12px 14px", md: "16px 52px 16px 20px" },
+              margin: 0,
+              font: "inherit",
+              color: "inherit",
+              cursor: "pointer",
+            })}
+            type="button"
+            onClick={() => setExpanded(!expanded)}
+          >
+            <span style={{ display: "block" }}>
+              <span style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                <span
+                  className={css({
+                    fontSize: "sm",
+                    fontWeight: "semibold",
+                    color: "text.primary",
+                  })}
+                >
+                  Refine and drill down your baseline
+                </span>
+                <span
+                  className={css({
+                    fontSize: "xs",
+                    fontWeight: "bold",
+                    color: "primary",
+                    backgroundColor: "rgba(99,99,241,0.12)",
+                    padding: "2px 8px",
+                    borderRadius: "full",
+                  })}
+                >
+                  {completedCount} / {steps.length}
+                </span>
+              </span>
+              {/* Progress bar */}
               <span
                 className={css({
-                  fontSize: "sm",
-                  fontWeight: "semibold",
-                  color: "text.primary",
-                })}
-              >
-                Refine and drill down your baseline
-              </span>
-              <span
-                className={css({
-                  fontSize: "xs",
-                  fontWeight: "bold",
-                  color: "primary",
-                  backgroundColor: "rgba(99,99,241,0.12)",
-                  padding: "2px 8px",
-                  borderRadius: "full",
-                })}
-              >
-                {completedCount} / {steps.length}
-              </span>
-            </span>
-            {/* Progress bar */}
-            <span
-              className={css({
-                display: "block",
-                height: "4px",
-                borderRadius: "full",
-                backgroundColor: "border",
-                marginTop: "6px",
-                overflow: "hidden",
-                maxWidth: "300px",
-              })}
-            >
-              <span
-                style={{
                   display: "block",
-                  height: "100%",
-                  width: `${progressPct}%`,
-                  backgroundColor: "#6363f1",
+                  height: "4px",
                   borderRadius: "full",
-                  transition: "width 0.5s ease",
-                }}
-              />
+                  backgroundColor: "border",
+                  marginTop: "6px",
+                  overflow: "hidden",
+                  maxWidth: "300px",
+                })}
+              >
+                <span
+                  style={{
+                    display: "block",
+                    height: "100%",
+                    width: `${progressPct}%`,
+                    backgroundColor: "#6363f1",
+                    borderRadius: "full",
+                    transition: "width 0.5s ease",
+                  }}
+                />
+              </span>
             </span>
-          </span>
-          <span className={css({ color: "text.muted", fontSize: "sm", display: "flex" })}>
-            {expanded ? <FaChevronUp /> : <FaChevronDown />}
-          </span>
-        </button>
+            <span className={css({ color: "text.muted", fontSize: "sm", display: "flex" })}>
+              {expanded ? <FaChevronUp /> : <FaChevronDown />}
+            </span>
+          </button>
+        </h4>
         <button
           className={css({
+            position: "absolute",
+            top: "50%",
+            transform: "translateY(-50%)",
+            right: { base: "10px", md: "16px" },
             color: "text.muted",
             background: "none",
             border: "none",

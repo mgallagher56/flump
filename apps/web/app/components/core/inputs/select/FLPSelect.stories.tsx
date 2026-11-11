@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react";
 import { useState } from "react";
+import { expect, userEvent, within } from "storybook/test";
 import FLPSelect from "./FLPSelect";
 
 const meta: Meta<typeof FLPSelect> = {
@@ -49,5 +50,26 @@ export const RowLayout: Story = {
     flexDirection: "row",
     collection: sampleCollection,
     value: ["savings"],
+  },
+};
+
+export const WithError: Story = {
+  render: (args) => <InteractiveSelect {...args} />,
+  args: {
+    label: "Account Type",
+    collection: sampleCollection,
+    value: [""],
+    error: "Choose an account type.",
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const select = canvas.getByLabelText("Account Type");
+    await expect(select).toHaveAttribute("aria-invalid", "true");
+    const errorId = select.getAttribute("aria-describedby") ?? "";
+    await expect(canvasElement.querySelector(`[id="${errorId}"]`)).toHaveTextContent(
+      "Choose an account type.",
+    );
+    await userEvent.tab();
+    await expect(select).toHaveFocus();
   },
 };
