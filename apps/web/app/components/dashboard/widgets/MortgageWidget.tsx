@@ -1,5 +1,6 @@
 import { css } from "@repo/ui/styled-system/css";
 import type { FC } from "react";
+import { Link } from "react-router";
 import FLPHeading from "~/components/core/typography/FLPHeading";
 import FLPText from "~/components/core/typography/FLPText";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
@@ -15,8 +16,8 @@ export interface MortgageWidgetConfig {
 export interface MortgageWidgetProps {
   data: {
     mortgageBalance: number;
-    interestRate: number;
-    remainingTermYears: number;
+    interestRate: number | null;
+    remainingTermYears: number | null;
     hasMortgageAccount: boolean;
   };
   editMode: boolean;
@@ -31,6 +32,14 @@ export interface MortgageWidgetProps {
   isLast?: boolean;
   dragProps?: any;
 }
+
+const tabularStyle = css({ fontVariantNumeric: "tabular-nums" });
+
+const promptLinkStyle = css({
+  color: "primary",
+  fontWeight: "semibold",
+  textDecoration: "underline",
+});
 
 export const MortgageWidget: FC<MortgageWidgetProps> = ({
   data,
@@ -55,10 +64,12 @@ export const MortgageWidget: FC<MortgageWidgetProps> = ({
   // Repayment: M = P * [ i(1 + i)^n ] / [ (1 + i)^n – 1]
   // Interest Only: M = P * i
   const p = Math.abs(data.mortgageBalance);
-  const i = (data.interestRate || 4.5) / 100 / 12;
-  const n = (data.remainingTermYears || 25) * 12;
+  // Never assume a rate or term: without both, no payment is calculated.
+  const termKnown = data.interestRate != null && data.remainingTermYears != null;
+  const i = (data.interestRate ?? 0) / 100 / 12;
+  const n = (data.remainingTermYears ?? 0) * 12;
   let monthlyPayment = 0;
-  if (i > 0 && n > 0 && p > 0) {
+  if (termKnown && i > 0 && n > 0 && p > 0) {
     if (isInterestOnly) {
       monthlyPayment = p * i;
     } else {
@@ -241,6 +252,7 @@ export const MortgageWidget: FC<MortgageWidgetProps> = ({
               className={css({
                 fontSize: { base: "lg", sm: "xl", md: "2xl" },
                 lineHeight: "tight",
+                fontVariantNumeric: "tabular-nums",
               })}
             >
               {p > 0 ? formatCurrency(p) : "No Mortgage"}
@@ -251,16 +263,33 @@ export const MortgageWidget: FC<MortgageWidgetProps> = ({
               textAlign: { base: "left", sm: size === "wide" ? "right" : "left", md: "right" },
             })}
           >
-            <FLPText color="text.muted" fontSize="10px">
-              Rate: <strong>{data.interestRate.toFixed(2)}%</strong>
-            </FLPText>
-            <FLPText color="text.muted" fontSize="10px" style={{ marginTop: "1px" }}>
-              Term: <strong>{data.remainingTermYears} yrs</strong>
-            </FLPText>
+            {data.interestRate != null && (
+              <FLPText color="text.muted" fontSize="10px" className={tabularStyle}>
+                Rate: <strong>{data.interestRate.toFixed(2)}%</strong>
+              </FLPText>
+            )}
+            {data.remainingTermYears != null && (
+              <FLPText
+                color="text.muted"
+                fontSize="10px"
+                className={tabularStyle}
+                style={{ marginTop: "1px" }}
+              >
+                Term: <strong>{data.remainingTermYears} yrs</strong>
+              </FLPText>
+            )}
           </div>
         </div>
 
-        {showPayment && p > 0 && (
+        {p > 0 && !termKnown && (
+          <FLPText color="text.muted" fontSize="xs">
+            <Link className={promptLinkStyle} to="/app/mortgage">
+              Add your rate and term on Mortgage
+            </Link>
+          </FLPText>
+        )}
+
+        {showPayment && p > 0 && termKnown && (
           <div
             className={css({
               display: "flex",
@@ -279,7 +308,7 @@ export const MortgageWidget: FC<MortgageWidgetProps> = ({
               <span style={{ color: "var(--colors-text-muted)" }}>
                 {isInterestOnly ? "Payment (IO):" : "Monthly:"}
               </span>{" "}
-              <strong>{formatCurrency(monthlyPayment)}/mo</strong>
+              <strong className={tabularStyle}>{formatCurrency(monthlyPayment)}/mo</strong>
             </div>
             <div style={{ color: "var(--colors-primary)", fontWeight: 600 }}>
               +{formatCurrency(overpayment)} →

@@ -15,8 +15,8 @@ export interface PensionWidgetProps {
   data: {
     totalPensionBalance: number;
     potsCount: number;
-    employeePercent: number;
-    employerPercent: number;
+    employeePercent: number | null;
+    employerPercent: number | null;
     isSalarySacrifice: boolean;
     monthlyContributionEst: number;
   };
@@ -50,7 +50,8 @@ export const PensionWidget: FC<PensionWidgetProps> = ({
   const { formatCurrency } = useFormatCurrency();
   const targetAge = config.targetRetirementAge || 65;
   const showBadge = config.showSalarySacrificeBadge !== false;
-  const totalPercent = (data.employeePercent || 0) + (data.employerPercent || 0);
+  const ratesKnown = data.employeePercent != null && data.employerPercent != null;
+  const totalPercent = (data.employeePercent ?? 0) + (data.employerPercent ?? 0);
 
   return (
     <DashboardWidgetCard
@@ -194,29 +195,32 @@ export const PensionWidget: FC<PensionWidgetProps> = ({
             <FLPText color="text.muted" fontSize="10px">
               {data.potsCount} {data.potsCount === 1 ? "pot" : "pots"} tracked
             </FLPText>
-            <div
-              className={css({
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "4px",
-                mt: "2px",
-              })}
-            >
-              <span
+            {ratesKnown && (
+              <div
                 className={css({
-                  fontSize: "10px",
-                  fontWeight: "semibold",
-                  padding: "2px 6px",
-                  borderRadius: "full",
-                  backgroundColor: "surface.sunken",
-                  border: "1px solid",
-                  borderColor: "border.subtle",
-                  color: "text.primary",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "4px",
+                  mt: "2px",
                 })}
               >
-                {totalPercent}% Total Contrib
-              </span>
-            </div>
+                <span
+                  className={css({
+                    fontSize: "10px",
+                    fontWeight: "semibold",
+                    padding: "2px 6px",
+                    borderRadius: "full",
+                    backgroundColor: "surface.sunken",
+                    border: "1px solid",
+                    borderColor: "border.subtle",
+                    color: "text.primary",
+                    fontVariantNumeric: "tabular-nums",
+                  })}
+                >
+                  {totalPercent}% total contribution
+                </span>
+              </div>
+            )}
           </div>
         </div>
 
@@ -234,10 +238,14 @@ export const PensionWidget: FC<PensionWidgetProps> = ({
             gap: "6px",
           })}
         >
-          <div>
-            <span style={{ color: "var(--colors-text-muted)" }}>Rates: </span>
-            <strong>{data.employeePercent}%</strong> + <strong>{data.employerPercent}%</strong>
-          </div>
+          {ratesKnown ? (
+            <div className={css({ fontVariantNumeric: "tabular-nums" })}>
+              <span style={{ color: "var(--colors-text-muted)" }}>Rates: </span>
+              <strong>{data.employeePercent}%</strong> + <strong>{data.employerPercent}%</strong>
+            </div>
+          ) : (
+            <div style={{ color: "var(--colors-text-muted)" }}>Contribution rates not set</div>
+          )}
           {showBadge && (
             <span
               style={{

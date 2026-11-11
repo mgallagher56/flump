@@ -15,7 +15,7 @@ export interface SavingsWidgetProps {
   data: {
     totalSavingsBalance: number;
     totalMonthlyContributions: number;
-    weightedInterestRate: number;
+    weightedInterestRate: number | null;
     accountsCount: number;
   };
   editMode: boolean;
@@ -51,7 +51,7 @@ export const SavingsWidget: FC<SavingsWidgetProps> = ({
 
   // Simple compound interest calculation:
   // FV = P*(1+r/12)^(12*y) + PMT * [((1+r/12)^(12*y) - 1) / (r/12)]
-  const r = (data.weightedInterestRate || 5.0) / 100 / 12;
+  const r = (data.weightedInterestRate ?? 0) / 100 / 12;
   const n = horizonYears * 12;
   const p = data.totalSavingsBalance;
   const pmt = data.totalMonthlyContributions;
@@ -203,12 +203,14 @@ export const SavingsWidget: FC<SavingsWidgetProps> = ({
               textAlign: { base: "left", sm: size === "wide" ? "right" : "left", md: "right" },
             })}
           >
-            <FLPText color="text.muted" fontSize="10px">
-              Avg AER:{" "}
-              <strong style={{ color: "var(--colors-text-primary)" }}>
-                {data.weightedInterestRate.toFixed(2)}%
-              </strong>
-            </FLPText>
+            {data.weightedInterestRate != null && (
+              <FLPText color="text.muted" fontSize="10px">
+                Avg AER:{" "}
+                <strong style={{ color: "var(--colors-text-primary)" }}>
+                  {data.weightedInterestRate.toFixed(2)}%
+                </strong>
+              </FLPText>
+            )}
             <FLPText color="text.muted" fontSize="10px" style={{ marginTop: "1px" }}>
               Saving:{" "}
               <strong style={{ color: "var(--colors-text-primary)" }}>
