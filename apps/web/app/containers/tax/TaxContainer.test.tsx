@@ -292,6 +292,23 @@ describe("TaxContainer & Calculation Tools", () => {
     }
   });
 
+  it("files a record dated 1 April (old web default) under the year starting that April", () => {
+    // Month bucketing: 2024-04 is a 2024/25 month, so the record is listed in 2024/25
+    // (not 2023/24, which the 6 April date boundary would give), matching the totals.
+    mockLoaderRecords = [{ ...mockRecords[0], id: "rec-apr1", date: "2024-04-01" }];
+    const { unmount } = render(<TaxContainer />);
+
+    expect(screen.getByRole("button", { name: "2024/25" })).toBeDefined();
+    expect(screen.queryByRole("button", { name: "2023/24" })).toBeNull();
+
+    fireEvent.click(screen.getByRole("button", { name: "2024/25" }));
+    fireEvent.click(screen.getByText("Detailed Transaction Log"));
+    expect(screen.getByText("Poplar Rent (2024/25)")).toBeDefined();
+
+    unmount();
+    mockLoaderRecords = mockRecords;
+  });
+
   describe("Tax Helper Utilities", () => {
     it("correctly identifies previous and next tax years", () => {
       expect(getPreviousTaxYear("2025/26")).toBe("2024/25");

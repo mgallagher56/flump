@@ -3,7 +3,7 @@ import {
   getCategoriesForSource,
   getCurrentUKTaxYear,
   getPreviousTaxYear,
-  getTaxYearForDate,
+  getTaxYearForRecordDate,
   isRecordActiveInTaxYear,
   type TaxCalculationResult,
   type TaxRecord,
@@ -94,7 +94,7 @@ const TaxContainer: FC = () => {
 
   // Available Tax Years: current tax year only by default, plus any years with records
   const availableYears = useMemo(() => {
-    const fromRecords = initialRecords.map((r) => getTaxYearForDate(r.date));
+    const fromRecords = initialRecords.map((r) => getTaxYearForRecordDate(r.date));
     const set = new Set([currentTaxYear, ...fromRecords]);
     return Array.from(set).sort();
   }, [currentTaxYear, initialRecords]);
@@ -314,11 +314,13 @@ const TaxContainer: FC = () => {
   };
 
   const recordsInSelectedTaxYear = useMemo(() => {
-    return initialRecords.filter((r) => getTaxYearForDate(r.date) === selectedTaxYear);
+    return initialRecords.filter((r) => getTaxYearForRecordDate(r.date) === selectedTaxYear);
   }, [initialRecords, selectedTaxYear]);
 
   const handleDeleteTaxYear = (yearToDelete: string) => {
-    const yearRecords = initialRecords.filter((r) => getTaxYearForDate(r.date) === yearToDelete);
+    const yearRecords = initialRecords.filter(
+      (r) => getTaxYearForRecordDate(r.date) === yearToDelete,
+    );
     if (yearRecords.length === 0) {
       alert(`There are no records to delete for tax year ${yearToDelete}.`);
       return;

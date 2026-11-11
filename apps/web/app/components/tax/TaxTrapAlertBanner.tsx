@@ -1,4 +1,8 @@
-import { calculateTaxTrapRelief, getDisplayMarginalRatePct } from "@flump/finance-engine";
+import {
+  calculateSalarySacrificeSaving,
+  calculateTaxTrapRelief,
+  getDisplayMarginalRatePct,
+} from "@flump/finance-engine";
 import { css } from "@repo/ui/styled-system/css";
 import { type FC, useId, useMemo, useState } from "react";
 import { FiAlertTriangle, FiArrowRight, FiCheck } from "react-icons/fi";
@@ -55,7 +59,9 @@ export const TaxTrapAlertBanner: FC<TaxTrapAlertBannerProps> = ({
   }
 
   // Recalculate relief with custom sacrifice amount
-  const taxSaved = Math.round(sacrificeAmount * 0.62); // 40% income tax + 20% restored allowance + 2% NI
+  // Exact income tax + employee NI difference from the engine (band edges and the allowance
+  // taper are handled; a flat 62% is only right when the whole sacrifice sits in the taper zone).
+  const taxSaved = Math.round(calculateSalarySacrificeSaving(grossIncome, sacrificeAmount));
   const monthlySacrifice = Math.round(sacrificeAmount / 12);
   const monthlySaved = Math.round(taxSaved / 12);
   const effectiveCost = monthlySacrifice - monthlySaved;

@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { calculateUKTax, type TaxRecord } from "./tax-calculator.js";
+import {
+  buildCopiedRecordForTaxYear,
+  calculateUKTax,
+  getMonthsForTaxYear,
+  getTaxYearForRecordDate,
+  type TaxRecord,
+} from "./tax-calculator.js";
 import { calculateUKEWNIIncomeTaxOnTaxable, UK_EWNI_INCOME_TAX } from "./tax-rules.js";
 import { selectUkTaxVectors } from "./test-vectors/uk-tax.vectors.js";
 import { roundPence } from "./uk-tax-year.js";
@@ -126,5 +132,52 @@ describe("dividend vectors through calculateUKTax", () => {
       );
       expect(roundPence(r.dividendTaxDue), v.id).toBeCloseTo(v.expected, 2);
     }
+  });
+});
+
+describe("getTaxYearForRecordDate (whole-month bucketing, matches getMonthsForTaxYear)", () => {
+  it("files a record by its calendar month: April onwards starts the tax year, Jan-Mar ends it", () => {
+    // Month bucketing: tax year N/N+1 owns months N-04 .. (N+1)-03, so a 1-5 April date
+    // belongs to the year starting that April (unlike getTaxYearForDate's 6 April boundary).
+    expect(getTaxYearForRecordDate("2024-04-01")).toBe("2024/25");
+    expect(getTaxYearForRecordDate("2024-04-05")).toBe("2024/25");
+    expect(getTaxYearForRecordDate("2024-04-06")).toBe("2024/25");
+    expect(getTaxYearForRecordDate("2025-03-31")).toBe("2024/25");
+    expect(getTaxYearForRecordDate("2025-01-15")).toBe("2024/25");
+    expect(getTaxYearForRecordDate("2024-12-31")).toBe("2024/25");
+    expect(getTaxYearForRecordDate("2025-04-01")).toBe("2025/26");
+  });
+
+  it("agrees with getMonthsForTaxYear for every date's own month", () => {
+    for (const date of ["2024-04-01", "2024-04-05", "2025-03-31", "2026-01-02"]) {
+      const year = getTaxYearForRecordDate(date);
+      expect(getMonthsForTaxYear(year)).toContain(date.substring(0, 7));
+    }
+  });
+});
+
+describe("buildCopiedRecordForTaxYear derives the source year by month bucketing", () => {
+  const base = { ...dividendRecord(100, "2024-04-01"), name: "Salary (2024/25)" };
+
+  // Source year for all four dates is 2024/25 (see above); target 2025/26 => yearDiff 1,
+  // so each date moves forward exactly one year with day and month unchanged.
+  it.each([
+    ["2024-04-01", "2025-04-01"],
+    ["2024-04-05", "2025-04-05"],
+    ["2024-04-06", "2025-04-06"],
+    ["2025-03-31", "2026-03-31"],
+  ])("copies %s to 2025/26 as %s", (from, to) => {
+    const copy = buildCopiedRecordForTaxYear({ ...base, date: from }, "2025/26");
+    expect(copy.date).toBe(to);
+    expect(copy.name).toBe("Salary (2025/26)");
+    expect(copy.notes).toBe("Copied from 2024/25");
+  });
+
+  it("shifts endDate by the same whole-year difference", () => {
+    const copy = buildCopiedRecordForTaxYear(
+      { ...base, date: "2024-04-01", endDate: "2025-03-31" },
+      "2025/26",
+    );
+    expect(copy.endDate).toBe("2026-03-31");
   });
 });

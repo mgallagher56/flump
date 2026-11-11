@@ -3,7 +3,7 @@ import {
   getCurrentUKTaxYear,
   getNextTaxYear,
   getPreviousTaxYear,
-  getTaxYearForDate,
+  getTaxYearForRecordDate,
   isRecordActiveInTaxYear,
   type TaxRecord,
   type TaxSource,
@@ -178,7 +178,7 @@ export const CopyTaxYearModal: FC<CopyTaxYearModalProps> = ({
     const prevYr = getPreviousTaxYear(cur);
     const nextYr = getNextTaxYear(cur);
     const nextNextYr = getNextTaxYear(nextYr);
-    const fromRecords = records.map((r) => getTaxYearForDate(r.date));
+    const fromRecords = records.map((r) => getTaxYearForRecordDate(r.date));
     const set = new Set([...availableYears, ...fromRecords, prevYr, cur, nextYr, nextNextYr]);
     if (sourceYear) set.add(sourceYear);
     if (targetYear) set.add(targetYear);
