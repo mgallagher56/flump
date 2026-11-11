@@ -396,7 +396,7 @@ export const TaxIncomeSectionCard: FC<TaxIncomeSectionCardProps> = ({
           >
             <input
               type="text"
-              placeholder="Record name (e.g. Poplar Rent, Adobe Sub)"
+              placeholder="e.g. Flat rent, client retainer, interest"
               required
               value={quickName}
               onChange={(e) => setQuickName(e.target.value)}

@@ -864,7 +864,7 @@ const TaxContainer: FC = () => {
           {/* SECTION 2: Rental Property */}
           <TaxIncomeSectionCard
             source="rental"
-            title="Rental Property (e.g. Poplar)"
+            title="Rental property"
             subtitle="Tenancy rent, maintenance, service charges, and mortgage finance costs"
             icon={<FaHome />}
             colorScheme="amber"
@@ -1887,7 +1887,7 @@ const TaxContainer: FC = () => {
           <FLPBox display="flex" flexDirection="column" gap={4}>
             <FLPInput
               label="Transaction Name"
-              placeholder="e.g. Poplar Rent, Client Retainer, Interest"
+              placeholder="e.g. Flat rent, client retainer, interest"
               required
               value={formName}
               onChange={(e) => setFormName(e.target.value)}

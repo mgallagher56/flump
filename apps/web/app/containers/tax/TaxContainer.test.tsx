@@ -15,7 +15,7 @@ const mockRecords: TaxRecord[] = [
   {
     id: "rec-1",
     userId: "user-1",
-    name: "Poplar Rent (2024/25)",
+    name: "Flat rent (2024/25)",
     source: "rental",
     type: "income",
     category: "rental_income",
@@ -33,7 +33,7 @@ const mockRecords: TaxRecord[] = [
   {
     id: "rec-2",
     userId: "user-1",
-    name: "Curo Service Charge (2024/25)",
+    name: "Service charge (2024/25)",
     source: "rental",
     type: "expense",
     category: "rent_rates_insurance",
@@ -153,7 +153,7 @@ describe("TaxContainer & Calculation Tools", () => {
 
     expect(screen.getByText("Income & Self Assessment Tax Planner")).toBeDefined();
     expect(screen.getByText("Employment Income (PAYE)")).toBeDefined();
-    expect(screen.getByText("Rental Property (e.g. Poplar)")).toBeDefined();
+    expect(screen.getByText("Rental property")).toBeDefined();
     expect(screen.getByText("Self-Employed & Freelance Business")).toBeDefined();
     expect(screen.getByText("Savings & Dividend Income")).toBeDefined();
   });
@@ -178,7 +178,7 @@ describe("TaxContainer & Calculation Tools", () => {
     fireEvent.click(logTab);
 
     expect(screen.getByText("Showing 6 records")).toBeDefined();
-    expect(screen.getByText("Poplar Rent (2024/25)")).toBeDefined();
+    expect(screen.getByText("Flat rent (2024/25)")).toBeDefined();
   });
 
   it("opens the Copy / Populate New Year modal", () => {
@@ -382,7 +382,7 @@ describe("TaxContainer & Calculation Tools", () => {
     render(<TaxContainer />);
 
     fireEvent.click(screen.getByText("Detailed Transaction Log"));
-    fireEvent.click(screen.getByText("Poplar Rent (2024/25)"));
+    fireEvent.click(screen.getByText("Flat rent (2024/25)"));
 
     const saveBtn = screen.getByRole("button", { name: /Save Record/i, hidden: true });
     fireEvent.click(saveBtn);
@@ -416,7 +416,7 @@ describe("TaxContainer & Calculation Tools", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "2024/25" }));
     fireEvent.click(screen.getByText("Detailed Transaction Log"));
-    expect(screen.getByText("Poplar Rent (2024/25)")).toBeDefined();
+    expect(screen.getByText("Flat rent (2024/25)")).toBeDefined();
 
     unmount();
     mockLoaderRecords = mockRecords;
@@ -440,7 +440,7 @@ describe("TaxContainer & Calculation Tools", () => {
       const source = mockRecords[0];
       const copied = buildCopiedRecordForTaxYear(source, "2025/26", 1200);
 
-      expect(copied.name).toBe("Poplar Rent (2025/26)");
+      expect(copied.name).toBe("Flat rent (2025/26)");
       expect(copied.date).toBe("2025-04-06");
       expect(copied.endDate).toBe("2026-03-31");
       expect(copied.amount).toBe(1200);

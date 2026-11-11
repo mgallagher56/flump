@@ -6,6 +6,8 @@ import { useFormatCurrency } from "~/hooks/useFormatCurrency";
 import { DashboardWidgetCard } from "../DashboardWidgetCard";
 import { WidgetSettingsModal } from "../WidgetSettingsModal";
 
+const DEFAULT_RATES_LABEL = "Default: auto-enrolment minimum. Change in Profile";
+
 export interface PensionWidgetConfig {
   targetRetirementAge?: number;
   showSalarySacrificeBadge?: boolean;
@@ -51,6 +53,7 @@ export const PensionWidget: FC<PensionWidgetProps> = ({
   const targetAge = config.targetRetirementAge || 65;
   const showBadge = config.showSalarySacrificeBadge !== false;
   const ratesKnown = data.employeePercent != null && data.employerPercent != null;
+  const ratesAreDefault = data.employeePercent === 5 && data.employerPercent === 3;
   const totalPercent = (data.employeePercent ?? 0) + (data.employerPercent ?? 0);
 
   return (
@@ -240,11 +243,16 @@ export const PensionWidget: FC<PensionWidgetProps> = ({
         >
           {ratesKnown ? (
             <div className={css({ fontVariantNumeric: "tabular-nums" })}>
-              <span style={{ color: "var(--colors-text-muted)" }}>Rates: </span>
+              <span className={css({ color: "text.muted" })}>Rates: </span>
               <strong>{data.employeePercent}%</strong> + <strong>{data.employerPercent}%</strong>
+              {ratesAreDefault && (
+                <span className={css({ color: "text.muted", display: "block", fontSize: "10px" })}>
+                  {DEFAULT_RATES_LABEL}
+                </span>
+              )}
             </div>
           ) : (
-            <div style={{ color: "var(--colors-text-muted)" }}>Contribution rates not set</div>
+            <div className={css({ color: "text.muted" })}>Contribution rates not set</div>
           )}
           {showBadge && (
             <span
