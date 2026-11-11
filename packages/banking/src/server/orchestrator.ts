@@ -71,7 +71,8 @@ export class BankSyncOrchestrator {
   }
 
   /**
-   * Safely decrypts a banking token, returning plaintext if not encrypted.
+   * Decrypts a banking token. Throws if a non-empty token is not encrypted or cannot be
+   * decrypted (wrong key or corruption); empty input is returned unchanged.
    */
   static decryptToken(token: string): string {
     return safeDecryptBankingToken(token);

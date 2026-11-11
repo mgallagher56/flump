@@ -335,14 +335,13 @@ export class FinanceService {
   async syncProviderAccounts(
     connection: BankConnection,
     userId: string,
-    tokenOrEncryptedToken: string,
+    accessToken: string,
   ): Promise<number> {
     const provider = this.providerRegistry?.getProvider
       ? this.providerRegistry.getProvider(connection.institutionId)
       : null;
     if (!provider) return 0;
 
-    const accessToken = BankSyncOrchestrator.decryptToken(tokenOrEncryptedToken);
     const providerAccounts = await provider.fetchAccounts(accessToken);
     const now = new Date();
     const currentYear = now.getFullYear();
