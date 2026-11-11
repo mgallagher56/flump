@@ -20,7 +20,6 @@ apps/web/app/components/mortgage/RemortgageShockSim.tsx
 apps/web/app/components/navigation/GlobalBaselineScenarioBar.tsx
 apps/web/app/components/pension/PensionAccountsList.tsx
 apps/web/app/components/pension/PensionQuickStartWizard.tsx
-apps/web/app/components/savings/SavingsAccountsList.tsx
 apps/web/app/components/savings/SavingsQuickStartWizard.tsx
 apps/web/app/components/tax/CopyTaxYearModal.tsx
 apps/web/app/components/tax/PaymentsOnAccountCard.tsx
