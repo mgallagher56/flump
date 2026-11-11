@@ -1,13 +1,16 @@
 import type { Meta, StoryObj } from "@storybook/react";
 import { createRoutesStub, data } from "react-router";
-import { expect, userEvent, within } from "storybook/test";
+import { expect, fn, userEvent, within } from "storybook/test";
 import { RouteErrorBoundary } from "./RouteErrorBoundary";
+
+const loaderSpy = fn();
 
 const withThrow = (kind: string, status: number) => (): React.ReactElement => {
   const Stub = createRoutesStub([
     {
       path: "/",
       loader: () => {
+        loaderSpy();
         throw data({ kind }, { status });
       },
       Component: RouteContent,
@@ -35,9 +38,9 @@ export const Unavailable: Story = {
   render: withThrow("unavailable", 503),
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    const buttons = await canvas.findAllByRole("button", { name: "Try again" });
-    await expect(buttons.length).toBeGreaterThan(0);
-    await userEvent.hover(buttons[0] as HTMLElement);
+    loaderSpy.mockClear();
+    await userEvent.click(await canvas.findByRole("button", { name: "Try again" }));
+    await expect(loaderSpy).toHaveBeenCalled();
   },
 };
 

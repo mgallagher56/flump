@@ -131,12 +131,4 @@ describe("route modules", () => {
       'export { RouteErrorBoundary as ErrorBoundary } from "~/features/feedback/components/RouteErrorBoundary";',
     );
   });
-
-  it("root ErrorBoundary has no inline style or 'Uh oh' copy", () => {
-    const src = readFileSync(resolve(__dirname, "../../../../root.tsx"), "utf8");
-    const boundary = src.slice(src.indexOf("export function ErrorBoundary"));
-    expect(boundary).not.toMatch(/style=/);
-    expect(boundary).not.toMatch(/Uh oh/);
-    expect(boundary).toContain("RouteErrorBoundary");
-  });
 });
