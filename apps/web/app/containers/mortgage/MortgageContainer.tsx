@@ -26,6 +26,7 @@ import { useFormatCurrency } from "~/hooks/useFormatCurrency";
 import { useUserProfile } from "~/hooks/useUserProfile";
 import type { loader } from "~/routes/app.mortgage";
 import { useFinancialBaseline } from "~/state/baseline.store";
+import { monthlyMortgagePayment } from "~/utils/mortgagePayment";
 import { currentMonth, currentYear } from "~/utils/utils";
 
 const formatList = (items: string[]): string =>
@@ -100,15 +101,10 @@ const MortgageContainer: FC = () => {
     }
   };
 
-  const currentMonthlyPayment = useMemo(() => {
-    if (loanAmount <= 0 || interestRate <= 0 || remainingTerm <= 0) return 0;
-    const i = interestRate / 100 / 12;
-    if (mortgageType === "interest-only") {
-      return loanAmount * i;
-    }
-    const n = remainingTerm * 12;
-    return (loanAmount * i * (1 + i) ** n) / ((1 + i) ** n - 1);
-  }, [loanAmount, interestRate, remainingTerm, mortgageType]);
+  const currentMonthlyPayment = useMemo(
+    () => monthlyMortgagePayment(loanAmount, interestRate, remainingTerm, mortgageType),
+    [loanAmount, interestRate, remainingTerm, mortgageType],
+  );
 
   const missingMortgageDetails = [
     loanAmount > 0 ? null : "balance",
@@ -196,15 +192,10 @@ const MortgageContainer: FC = () => {
   };
 
   // Live BTL monthly payment calculation
-  const btlMonthlyPayment = useMemo(() => {
-    if (loanAmount <= 0 || interestRate <= 0) return 0;
-    const i = interestRate / 100 / 12;
-    if (mortgageType === "interest-only") {
-      return loanAmount * i;
-    }
-    const n = remainingTerm * 12;
-    return (loanAmount * i * (1 + i) ** n) / ((1 + i) ** n - 1);
-  }, [loanAmount, interestRate, remainingTerm, mortgageType]);
+  const btlMonthlyPayment = useMemo(
+    () => monthlyMortgagePayment(loanAmount, interestRate, remainingTerm, mortgageType),
+    [loanAmount, interestRate, remainingTerm, mortgageType],
+  );
 
   const btlMonthlyRent = profile.buyToLetMonthlyRental || 0;
   const btlPropertyValue = profile.buyToLetPropertyValue || 0;

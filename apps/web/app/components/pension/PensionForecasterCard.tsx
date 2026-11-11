@@ -653,6 +653,11 @@ export const PensionForecasterCard: FC<PensionForecasterCardProps> = ({
                 <FLPText color="text.muted" fontSize="xs">
                   Standard UK min: 3%
                 </FLPText>
+                {employeePercent === 5 && employerPercent === 3 ? (
+                  <FLPText color="text.muted" fontSize="xs" id="pension-default-rates-note">
+                    Default: auto-enrolment minimum. Change to match your payslip.
+                  </FLPText>
+                ) : null}
               </div>
 
               {/* 4. Investment Horizon */}

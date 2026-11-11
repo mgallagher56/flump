@@ -129,6 +129,7 @@ describe("_index route", () => {
     expect(data.debtData.totalDebt).toBe(2000);
     expect(data.debtData.highInterestCount).toBe(1);
     expect(data.debtData.monthlyMinimumTotal).toBe(80);
+    expect(data.debtData.monthlyMinimumEstimated).toBe(false);
     expect(JSON.stringify(data.debtData)).not.toContain("October 2026");
     expect(data.debtData).not.toHaveProperty("interestSaved");
   });
@@ -177,6 +178,49 @@ describe("_index route", () => {
   it("savings rate is null with no savings balance rather than a default", async () => {
     const data = await loadSignedIn({ userProfile: { onboardingCompleted: true } });
     expect(data.savingsData.weightedInterestRate).toBeNull();
+  });
+
+  it("take-home is null when salary is known but pension percent is unknown", async () => {
+    const data = await loadSignedIn({
+      userProfile: { onboardingCompleted: true, annualSalary: 50000, isSalarySacrifice: true },
+    });
+    expect(data.forecastData.estimatedTakeHome).toBeNull();
+    expect(data.pensionData.monthlyContributionEst).toBeNull();
+  });
+
+  it("take-home is null when salary-sacrifice status is unknown", async () => {
+    const data = await loadSignedIn({
+      userProfile: { onboardingCompleted: true, annualSalary: 50000, pensionPercent: 5 },
+    });
+    expect(data.forecastData.estimatedTakeHome).toBeNull();
+    expect(data.pensionData.isSalarySacrifice).toBeNull();
+  });
+
+  it("computes take-home and contribution estimate when salary, percent and status are known", async () => {
+    const data = await loadSignedIn({
+      userProfile: {
+        onboardingCompleted: true,
+        annualSalary: 60000,
+        pensionPercent: 5,
+        isSalarySacrifice: true,
+      },
+    });
+    expect(data.forecastData.estimatedTakeHome).toBeGreaterThan(0);
+    expect(data.pensionData.isSalarySacrifice).toBe(true);
+    expect(data.pensionData.monthlyContributionEst).toBe(250);
+  });
+
+  it("0% pension is known: contribution estimate is 0 and take-home is computed", async () => {
+    const data = await loadSignedIn({
+      userProfile: {
+        onboardingCompleted: true,
+        annualSalary: 60000,
+        pensionPercent: 0,
+        isSalarySacrifice: false,
+      },
+    });
+    expect(data.pensionData.monthlyContributionEst).toBe(0);
+    expect(data.forecastData.estimatedTakeHome).toBeGreaterThan(0);
   });
 
   it("renders LoggedOutHome when user is null", () => {

@@ -299,6 +299,7 @@ describe("HomeDashboard", () => {
         debtCount: 1,
         highInterestCount: 1,
         monthlyMinimumTotal: 90,
+        monthlyMinimumEstimated: false,
         debtFreeDate: "March 2029",
         debts: [],
       },

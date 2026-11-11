@@ -398,6 +398,12 @@ export const DebtContainer: FC = () => {
                   onChangeExtraPayment={setExtraPayment}
                   onSelectStrategy={setSelectedStrategy}
                 />
+                {monthlySurplus === null ? (
+                  <FLPText color="text.muted" fontSize="xs" id="surplus-unknown-note">
+                    Illustrative only: we do not know your monthly surplus, so these payoff results
+                    assume the overpayment you choose is affordable.
+                  </FLPText>
+                ) : null}
               </div>
               <div className={css({ gridColumn: { base: "span 1", lg: "span 7" } })}>
                 <DebtToWealthBridgeCard debts={debts} extraPayment={extraPayment} />

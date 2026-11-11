@@ -19,4 +19,12 @@ describe("SandboxTemplates", () => {
     render(<SandboxTemplates stage={3} />);
     expect(screen.getByText("Stage 3: Tax Trap Escape & Wealth Acceleration")).toBeDefined();
   });
+
+  it("labels every stage as sample data", () => {
+    for (const stage of [1, 2, 3] as const) {
+      const { unmount } = render(<SandboxTemplates stage={stage} />);
+      expect(screen.getByTestId("sample-data-label").textContent).toMatch(/Sample data/);
+      unmount();
+    }
+  });
 });

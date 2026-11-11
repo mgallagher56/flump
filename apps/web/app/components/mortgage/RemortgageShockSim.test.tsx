@@ -11,4 +11,9 @@ describe("RemortgageShockSim", () => {
     expect(screen.getByText(/projected payment shock/i)).toBeDefined();
     expect(screen.getByText(/target ltv tier: 75%/i)).toBeDefined();
   });
+
+  it("empty profile (zero balance and rate) shows no NaN or Infinity", () => {
+    const { container } = render(<RemortgageShockSim currentBalance={0} currentRate={0} />);
+    expect(container.textContent ?? "").not.toMatch(/NaN|Infinity/);
+  });
 });

@@ -11,8 +11,6 @@ const meta: Meta<typeof PayoffStrategyControls> = {
   args: {
     selectedStrategy: "avalanche",
     extraPayment: 50,
-    interestSaved: 2140,
-    monthsSaved: 14,
     onSelectStrategy: fn(),
     onChangeExtraPayment: fn(),
   },
@@ -29,4 +27,8 @@ export const Default: Story = {
     await userEvent.click(snowballBtn);
     await expect(args.onSelectStrategy).toHaveBeenCalledWith("snowball");
   },
+};
+
+export const WithSavings: Story = {
+  args: { interestSaved: 2140, monthsSaved: 14 },
 };

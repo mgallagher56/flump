@@ -73,6 +73,7 @@ describe("DebtContainer", () => {
     render(<DebtContainer />);
     expect(screen.getByText(/Wired to budget surplus: £420\/mo available/)).toBeDefined();
     expect(screen.queryByText(/Set up your budget to see your monthly surplus/)).toBeNull();
+    expect(screen.queryByTestId("surplus-unknown-note")).toBeNull();
   });
 
   it("shows the budget prompt when surplus is null", () => {
@@ -86,6 +87,7 @@ describe("DebtContainer", () => {
       const prompt = screen.getByText(/Set up your budget to see your monthly surplus/);
       expect(prompt.closest("a")?.getAttribute("href")).toBe("/app/budget");
       expect(screen.queryByText(/Wired to budget surplus/)).toBeNull();
+      expect(screen.getByTestId("surplus-unknown-note").textContent).toMatch(/Illustrative only/);
     } finally {
       loaderState.debtInputs = {
         monthlySurplus: 420,

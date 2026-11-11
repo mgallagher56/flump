@@ -19,8 +19,8 @@ export interface PensionWidgetProps {
     potsCount: number;
     employeePercent: number | null;
     employerPercent: number | null;
-    isSalarySacrifice: boolean;
-    monthlyContributionEst: number;
+    isSalarySacrifice: boolean | null;
+    monthlyContributionEst: number | null;
   };
   editMode: boolean;
   size: "normal" | "wide";
@@ -254,7 +254,7 @@ export const PensionWidget: FC<PensionWidgetProps> = ({
           ) : (
             <div className={css({ color: "text.muted" })}>Contribution rates not set</div>
           )}
-          {showBadge && (
+          {showBadge && data.isSalarySacrifice !== null && (
             <span
               style={{
                 fontSize: "10px",

@@ -60,4 +60,11 @@ describe("<OverpayVsSaveCompare />", () => {
     expect(getByText("Savings Parameters")).toBeDefined();
     expect(getByText("No Overpayment Budget Set")).toBeDefined();
   });
+
+  test("empty profile (all zeros) shows no NaN or Infinity", () => {
+    const { container } = customRender(
+      <OverpayVsSaveCompare {...defaultProps} interestRate={0} loanAmount={0} remainingTerm={0} />,
+    );
+    expect(container.textContent ?? "").not.toMatch(/NaN|Infinity/);
+  });
 });

@@ -11,6 +11,8 @@ export interface DebtSummary {
   debtCount: number;
   highInterestCount: number;
   monthlyMinimumTotal: number;
+  /** True when any minimum payment is an estimate rather than a stored figure. */
+  monthlyMinimumEstimated: boolean;
   /** Month and year the debts clear on minimum payments, or null when that is not achievable. */
   debtFreeDate: string | null;
   debts: DebtItem[];
@@ -41,6 +43,7 @@ export function buildDebtSummary(
     debtCount: debts.length,
     highInterestCount: debts.filter((d) => isHighInterestDebt(d)).length,
     monthlyMinimumTotal: debts.reduce((sum, d) => sum + (d.minimumPayment ?? 0), 0),
+    monthlyMinimumEstimated: debts.some((d) => d.minimumPaymentEstimated === true),
     debtFreeDate: !aprUnknown && minimumOnly.payoffAchievable ? minimumOnly.debtFreeDate : null,
     debts,
   };

@@ -105,4 +105,34 @@ describe("buildDebtSummary", () => {
     );
     expect(s?.debtFreeDate).toBeNull();
   });
+
+  it("flags monthly minimums as estimated only when some debt has no stored payment", () => {
+    const known = buildDebtSummary(
+      snap([
+        {
+          id: "c",
+          name: "Card",
+          type: "Credit Card",
+          balance: -2000,
+          interestRate: 20,
+          monthlyContribution: 60,
+        },
+      ]),
+    );
+    expect(known?.monthlyMinimumEstimated).toBe(false);
+    const mixed = buildDebtSummary(
+      snap([
+        {
+          id: "c",
+          name: "Card",
+          type: "Credit Card",
+          balance: -2000,
+          interestRate: 20,
+          monthlyContribution: 60,
+        },
+        { id: "l", name: "Loan", type: "Loan", balance: -4000, interestRate: 5 },
+      ]),
+    );
+    expect(mixed?.monthlyMinimumEstimated).toBe(true);
+  });
 });
