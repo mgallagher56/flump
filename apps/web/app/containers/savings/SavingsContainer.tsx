@@ -129,7 +129,7 @@ export const SavingsContainer: FC = () => {
   }, [savingsAccounts]);
 
   const weightedInterestRate = useMemo(() => {
-    const defaultRate = Number(profile.savingsDefaultInterestRate) || 5.0;
+    const defaultRate = Number(profile.savingsDefaultInterestRate ?? 0);
     if (totalSavingsBalance <= 0) {
       if (savingsAccounts.length === 0) return defaultRate;
       const sumRates = savingsAccounts.reduce(
@@ -178,7 +178,7 @@ export const SavingsContainer: FC = () => {
       }, 0);
     }
 
-    const monthlyRate = (weightedInterestRate || 5.0) / 100 / 12;
+    const monthlyRate = (weightedInterestRate ?? 0) / 100 / 12;
     let b = totalSavingsBalance;
     for (let m = 0; m < 120; m++) {
       b = b * (1 + monthlyRate) + totalMonthlySavings;

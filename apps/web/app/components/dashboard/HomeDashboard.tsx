@@ -469,7 +469,7 @@ export const HomeDashboard: FC<HomeDashboardProps> = ({
       <SetupChecklist {...checklistProps} enabledPages={enabledPages} />
 
       {/* Stage 1: Stabilize & Clear Hero Banner */}
-      {financialStage?.stage === "stabilize" && (
+      {financialStage?.stage === "stabilize" && (debtData?.totalDebt ?? 0) > 0 && (
         <div
           className={css({
             padding: "20px 24px",
@@ -515,7 +515,7 @@ export const HomeDashboard: FC<HomeDashboardProps> = ({
                 >
                   Stage 1: Stabilize & Clear
                 </span>
-                <span style={{ fontSize: "12px", color: "var(--colors-text-muted)" }}>
+                <span className={css({ fontSize: "12px", color: "text.muted" })}>
                   Priority: Eliminate High-Cost Unsecured Liabilities
                 </span>
               </div>
@@ -525,7 +525,7 @@ export const HomeDashboard: FC<HomeDashboardProps> = ({
                 <span style={{ fontSize: "24px", fontWeight: "bold", color: "#ef4444" }}>
                   {formatCurrency(financialStage.totalUnsecuredDebt || debtData?.totalDebt || 0)}
                 </span>
-                <span style={{ fontSize: "13px", color: "var(--colors-text-muted)" }}>
+                <span className={css({ fontSize: "13px", color: "text.muted" })}>
                   Unsecured Debt Remaining • Targeted Debt-Free:{" "}
                   {debtData?.debtFreeDate ?? "Not calculated"}
                 </span>

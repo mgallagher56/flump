@@ -136,6 +136,25 @@ describe("<MortgageContainer />", () => {
       expect(queryByText(/150,000/)).toBeNull();
     });
 
+    test("LTV milestones prompt instead of reading achieved when there is no property value", () => {
+      vi.mocked(useLoaderData).mockReturnValue(loaderWith({ interestRate: 3.9 }) as any);
+      const { getByText, queryByText } = customRender(<MortgageContainer />);
+      fireEvent.click(getByText("LTV milestones"));
+      expect(
+        getByText("Add your mortgage balance and property value to see LTV milestones."),
+      ).toBeDefined();
+      expect(queryByText(/Achieved/i)).toBeNull();
+      expect(queryByText(/Current LTV/)).toBeNull();
+    });
+
+    test("buy to let starts empty rather than prefilling 180,000", () => {
+      vi.mocked(useLoaderData).mockReturnValue({ accounts: [], accountDetails: [] } as any);
+      const { getByText, queryByText } = customRender(<MortgageContainer />);
+      fireEvent.click(getByText("Buy to let (BTL)"));
+      expect(queryByText(/180,000/)).toBeNull();
+      expect(queryByText(/250,000/)).toBeNull();
+    });
+
     test("uses the stored account rate and only asks for the term", () => {
       vi.mocked(useLoaderData).mockReturnValue(loaderWith({ interestRate: 3.9 }) as any);
       const { getByText } = customRender(<MortgageContainer />);

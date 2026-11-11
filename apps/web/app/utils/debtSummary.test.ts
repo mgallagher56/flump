@@ -60,8 +60,10 @@ describe("buildDebtSummary", () => {
           monthlyContribution: 100,
         },
       ]),
+      new Date("2026-01-15T00:00:00Z"),
     );
-    expect(s?.debtFreeDate).toMatch(/^[A-Z][a-z]+ \d{4}$/);
+    // 1,000 at 5% repaid at 100/mo clears in 11 months from January 2026.
+    expect(s?.debtFreeDate).toBe("December 2026");
     expect(JSON.stringify(s)).not.toContain("October 2026");
   });
 
@@ -75,6 +77,29 @@ describe("buildDebtSummary", () => {
           balance: -100000,
           interestRate: 30,
           monthlyContribution: 10,
+        },
+      ]),
+    );
+    expect(s?.debtFreeDate).toBeNull();
+  });
+
+  it("returns null when total consumer debt is zero", () => {
+    expect(
+      buildDebtSummary(
+        snap([{ id: "l", name: "Loan", type: "Loan", balance: 0, interestRate: 5 }]),
+      ),
+    ).toBeNull();
+  });
+
+  it("gives a null debt-free date when any debt has an unknown APR", () => {
+    const s = buildDebtSummary(
+      snap([
+        {
+          id: "l",
+          name: "Loan",
+          type: "Loan",
+          balance: -1000,
+          monthlyContribution: 100,
         },
       ]),
     );

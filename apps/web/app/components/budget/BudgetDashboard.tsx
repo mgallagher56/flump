@@ -215,7 +215,7 @@ const BudgetDashboard: FC<BudgetDashboardProps> = ({
     const flexibleBudget = flexibleItems.reduce((s, e) => s + toMonthly(e), 0);
 
     // Actuals are only ever real figures: entries without actualMtdGbp contribute nothing.
-    const hasActuals = entries.some((e) => e.actualMtdGbp !== undefined);
+    const hasActuals = entries.some((e) => e.actualMtdGbp != null);
     const priorityActual = priorityItems.reduce((s, e) => s + (e.actualMtdGbp ?? 0), 0);
     const flexibleActual = flexibleItems.reduce((s, e) => s + (e.actualMtdGbp ?? 0), 0);
 

@@ -307,4 +307,15 @@ describe("HomeDashboard", () => {
     profileOverrides.extraWidgets = [];
     expect(screen.getByText("Debt payoff")).toBeDefined();
   });
+
+  it("mortgage-only user does not see the Stage 1 unsecured debt banner", () => {
+    const mortgageOnly = {
+      ...dummyProps,
+      accountsData: { ...dummyProps.accountsData, totalLiabilities: 200000 },
+      debtData: null,
+    };
+    render(<HomeDashboard {...mortgageOnly} />);
+    expect(screen.queryByText(/Stage 1: Stabilize/)).toBeNull();
+    expect(screen.queryByText(/Unsecured Debt Remaining/)).toBeNull();
+  });
 });
