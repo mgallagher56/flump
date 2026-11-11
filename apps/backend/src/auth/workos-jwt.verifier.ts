@@ -35,6 +35,7 @@ export class WorkOsJwtVerifier implements TokenVerifier {
       const { payload } = await jwtVerify(token, this.jwks, {
         issuer: this.issuer,
         algorithms: this.allowedAlgs,
+        requiredClaims: ["exp"],
       });
       if (typeof payload.sub !== "string" || payload.sub.length === 0) {
         throw new Error("missing sub");

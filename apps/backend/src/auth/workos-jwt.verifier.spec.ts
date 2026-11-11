@@ -61,7 +61,13 @@ describe("WorkOsJwtVerifier", () => {
 
   it("rejects a token with no sub", async () => {
     const { t, verifier } = await setup();
-    const token = await t.sign({ email: "a@b.co" }, { noSub: true });
+    const token = await t.sign({ sub: "user_1", email: "a@b.co" }, { noSub: true });
+    await expect(verifier.verify(token)).rejects.toThrow("invalid token");
+  });
+
+  it("rejects a validly signed token with no exp", async () => {
+    const { t, verifier } = await setup();
+    const token = await t.sign({ sub: "user_1" }, { noExp: true });
     await expect(verifier.verify(token)).rejects.toThrow("invalid token");
   });
 
