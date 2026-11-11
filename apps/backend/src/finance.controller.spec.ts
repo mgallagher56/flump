@@ -138,6 +138,8 @@ describe("FinanceController & FinanceService", () => {
 
     // Delete account found & not found
     await expect(controller.deleteAccount(req, "missing")).rejects.toThrow(NotFoundException);
+    // Ownership check in FinanceService, then the delete lookup in AccountIntakeService.
+    mockAccountRepo.findOne.mockResolvedValueOnce({ id: "acc-1" });
     mockAccountRepo.findOne.mockResolvedValueOnce({ id: "acc-1" });
     const delRes = await controller.deleteAccount(req, "acc-1");
     expect(delRes.success).toBe(true);
