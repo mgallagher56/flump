@@ -140,3 +140,13 @@ describe("tax-rules", () => {
     expect(otherRes.netAnnual).toBe(50000);
   });
 });
+
+describe("calculateUKEWNIIncomeTaxOnTaxable additional-rate threshold (E4 T4)", () => {
+  it("taxable 125140 in 2025/26 is 42516, not 43144.50", () => {
+    expect(calculateUKEWNIIncomeTaxOnTaxable(125140, UK_EWNI_INCOME_TAX["2025/26"]!)).toBe(42516);
+  });
+
+  it("taxable 150000 in 2026/27 is 53703", () => {
+    expect(calculateUKEWNIIncomeTaxOnTaxable(150000, UK_EWNI_INCOME_TAX["2026/27"]!)).toBe(53703);
+  });
+});
