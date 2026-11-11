@@ -1,3 +1,4 @@
+import { existsSync, readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { colors, fontSizes, fonts, semanticTokens } from "./index";
 
@@ -291,19 +292,26 @@ const PASSING_PAIRS: Pair[] = [
       (bg): Pair => ({ fg, bg, themes: BOTH, min: 3, role: "graphic" }),
     ),
   ),
+  // J-01 (E8 T06, D1 option A): primary stays the accent (text/graphic); primary.solid and
+  // primary.hover are fills behind primary.foreground (text-labelled fills only).
+  ...["primary.solid", "primary.hover"].map(
+    (bg): Pair => ({ fg: "primary.foreground", bg, themes: BOTH, min: 4.5, role: "text" }),
+  ),
+  ...[...SURFACES.filter((s) => s !== "surface.DEFAULT"), "primary.subtle"].map(
+    (bg): Pair => ({
+      fg: "primary",
+      bg,
+      themes: BOTH,
+      min: 4.5,
+      role: "text",
+      under: "surface.card",
+    }),
+  ),
+  { fg: "primary", bg: "surface.card", themes: BOTH, min: 3, role: "graphic" },
 ];
 
 /** Known failures. Each row names the audit finding; fix the token then move the row to PASSING_PAIRS. */
-const KNOWN_FAILURES: { finding: string; pair: Pair }[] = [
-  {
-    finding: "J-01",
-    pair: { fg: "primary.foreground", bg: "primary", themes: ["dark"], min: 4.5, role: "text" },
-  },
-  {
-    finding: "J-01",
-    pair: { fg: "primary", bg: "surface.card", themes: ["dark"], min: 4.5, role: "text" },
-  },
-];
+const KNOWN_FAILURES: { finding: string; pair: Pair }[] = [];
 
 describe("Semantic token contrast matrix", () => {
   it("every semanticTokens.colors leaf defines base and _dark (except primary.foreground)", () => {
@@ -365,6 +373,24 @@ describe("Semantic token contrast matrix", () => {
     assertPair(pair);
   });
 
+  it("primary split reports computed ratios (accent vs solid)", () => {
+    const r = (fg: string, bg: string, theme: Theme) =>
+      pairContrast({ fg, bg, themes: [theme], min: 4.5, role: "text" }, theme);
+    // Before the split, dark primary was indigo.500: foreground on it was < 4.5.
+    expect(r("primary.foreground", "primary.solid", "dark")).toBeGreaterThanOrEqual(6.2);
+    expect(r("primary.foreground", "primary.hover", "dark")).toBeGreaterThanOrEqual(7.8);
+    expect(r("primary", "surface.card", "dark")).toBeGreaterThanOrEqual(5.8);
+    // solid is deliberately identical in both themes (white label keeps AA).
+    expect(resolveColor("primary.solid", "dark")).toBe(resolveColor("primary.solid", "light"));
+    expect(resolveColor("primary", "dark")).toBe(colors.indigo[400].value);
+  });
+
+  // Generated output is gitignored; skipped when `bun run generate` has not run.
+  const generatedTokens = new URL("../../styled-system/tokens/index.js", import.meta.url);
+  it.skipIf(!existsSync(generatedTokens))("panda codegen emits primary.solid", () => {
+    expect(readFileSync(generatedTokens, "utf8")).toContain('"colors.primary.solid"');
+  });
+
   it("border.input reaches 3:1 on every surface in both themes (reports ratios)", () => {
     for (const theme of BOTH) {
       for (const bg of ["card", "canvas", "sunken", "overlay", "subtle"]) {
@@ -377,11 +403,14 @@ describe("Semantic token contrast matrix", () => {
     }
   });
 
-  describe("known failures (flip by moving the row to PASSING_PAIRS)", () => {
-    for (const { finding, pair } of KNOWN_FAILURES) {
-      it.fails(`[${finding}] ${pair.fg} on ${pair.bg} >= ${pair.min} (${pair.themes.join(", ")})`, () => {
-        assertPair(pair);
-      });
-    }
-  });
+  describe.skipIf(KNOWN_FAILURES.length === 0)(
+    "known failures (flip by moving the row to PASSING_PAIRS)",
+    () => {
+      for (const { finding, pair } of KNOWN_FAILURES) {
+        it.fails(`[${finding}] ${pair.fg} on ${pair.bg} >= ${pair.min} (${pair.themes.join(", ")})`, () => {
+          assertPair(pair);
+        });
+      }
+    },
+  );
 });

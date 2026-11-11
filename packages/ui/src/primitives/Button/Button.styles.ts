@@ -24,7 +24,7 @@ export const buttonRecipe = cva({
   variants: {
     variant: {
       primary: {
-        bg: "primary",
+        bg: "primary.solid",
         color: "primary.foreground",
         _hover: { bg: "primary.hover" },
       },
