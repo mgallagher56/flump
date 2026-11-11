@@ -1,11 +1,14 @@
-export type BackendErrorKind =
-  | "unauthorised"
-  | "forbidden"
-  | "not-found"
-  | "client"
-  | "server"
-  | "unavailable"
-  | "bad-response";
+export const BACKEND_ERROR_KINDS = [
+  "unauthorised",
+  "forbidden",
+  "not-found",
+  "client",
+  "server",
+  "unavailable",
+  "bad-response",
+] as const;
+
+export type BackendErrorKind = (typeof BACKEND_ERROR_KINDS)[number];
 
 /** Serialisable payload thrown to route error boundaries. Never carries tokens, base URLs or bodies. */
 export interface RouteErrorPayload {

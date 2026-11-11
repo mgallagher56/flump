@@ -1,24 +1,14 @@
 import type { ReactElement } from "react";
 import { isRouteErrorResponse, useLocation, useRevalidator, useRouteError } from "react-router";
-import type { BackendErrorKind } from "../../../../services/backend-error";
+import { BACKEND_ERROR_KINDS, type BackendErrorKind } from "../../../../services/backend-error";
 import { RouteErrorState, type RouteErrorStateProps } from "../RouteErrorState";
-
-const KNOWN_KINDS: readonly BackendErrorKind[] = [
-  "unauthorised",
-  "forbidden",
-  "not-found",
-  "client",
-  "server",
-  "unavailable",
-  "bad-response",
-];
 
 const ACCOUNT_DETAIL = /^\/app\/accounts\/[^/]+/;
 
 function kindFromError(error: unknown): RouteErrorStateProps["kind"] {
   if (!isRouteErrorResponse(error)) return "unknown";
   const kind = (error.data as { kind?: unknown } | null)?.kind;
-  if (typeof kind === "string" && (KNOWN_KINDS as readonly string[]).includes(kind)) {
+  if (typeof kind === "string" && (BACKEND_ERROR_KINDS as readonly string[]).includes(kind)) {
     // A page the user may not open looks exactly like a page that does not exist.
     return kind === "forbidden" ? "not-found" : (kind as BackendErrorKind);
   }

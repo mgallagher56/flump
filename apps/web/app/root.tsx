@@ -12,6 +12,7 @@ import { useUserProfile } from "./hooks/useUserProfile";
 import i18next from "./i18n.server";
 import styles from "./index.css?url";
 import { ThemeContext } from "./ThemeContext";
+import { THEME_INIT_SCRIPT } from "./theme-init-script";
 import { getAuthSession } from "./utils/auth.server";
 
 export const links = () => [
@@ -81,23 +82,7 @@ export default function App() {
             __html: `window.ENV = ${JSON.stringify(ENV)};`,
           }}
         />
-        {/* Prevent flash of wrong theme by applying class synchronously */}
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              (function() {
-                try {
-                  var stored = localStorage.getItem('flump-theme');
-                  var theme = (stored === 'light' || stored === 'dark')
-                    ? stored
-                    : (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
-                  document.documentElement.classList.toggle('dark', theme === 'dark');
-                  document.documentElement.setAttribute('data-theme', theme);
-                } catch(e) {}
-              })();
-            `,
-          }}
-        />
+        <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
       </head>
       <body
         style={{
@@ -138,9 +123,10 @@ export default function App() {
 }
 
 export function ErrorBoundary() {
+  const { theme } = useTheme();
   // The root boundary replaces the whole document, so it must render html and body itself.
   return (
-    <html lang="en">
+    <html className={theme === "dark" ? "dark" : ""} data-theme={theme} lang="en">
       <head>
         <meta charSet="utf-8" />
         <meta content="width=device-width,initial-scale=1,viewport-fit=cover" name="viewport" />
@@ -148,6 +134,7 @@ export function ErrorBoundary() {
         <title>Something went wrong</title>
         <Meta />
         <Links />
+        <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
       </head>
       <body
         className={css({
