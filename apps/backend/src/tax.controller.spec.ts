@@ -1,6 +1,7 @@
 import { NotFoundException } from "@nestjs/common";
 import { describe, expect, it, vi } from "vitest";
 import { TaxController } from "./tax.controller";
+import { createInMemoryRepository } from "./testing/in-memory-repository";
 
 describe("TaxController", () => {
   it("should be defined", () => {
@@ -112,5 +113,30 @@ describe("TaxController", () => {
     await expect(controller.deleteTaxRecord(req, "missing")).rejects.toThrow(NotFoundException);
     mockRepo.findOne.mockResolvedValueOnce({ id: "r1" });
     expect(await controller.deleteTaxRecord(req, "r1")).toEqual({ success: true });
+  });
+
+  it("scopes tax records by owner: user B cannot get, update, delete or cap user A's record", async () => {
+    const original = { id: "r-A", userId: "userA", name: "Rent", amount: 100, endDate: null };
+    const taxRepo = createInMemoryRepository([original]);
+    const profileRepo = createInMemoryRepository([
+      { userId: "userB", hasResetFinancialData: true },
+    ]);
+    const controller = new TaxController(taxRepo as any, profileRepo as any);
+    const userA = { user: { id: "userA" } };
+    const userB = { user: { id: "userB" } };
+
+    await expect(controller.getTaxRecord(userB, "r-A")).rejects.toThrow(NotFoundException);
+    await expect(controller.updateTaxRecord(userB, "r-A", { amount: 1 })).rejects.toThrow(
+      NotFoundException,
+    );
+    await expect(controller.deleteTaxRecord(userB, "r-A")).rejects.toThrow(NotFoundException);
+    await controller.createBulkTaxRecords(userB, {
+      records: [],
+      capPreviousRecordIds: [{ id: "r-A", endDate: "2020-01-01" }],
+    });
+
+    expect(taxRepo.rows).toEqual([original]);
+    expect(await controller.getTaxRecords(userB)).toEqual([]);
+    expect((await controller.getTaxRecord(userA, "r-A")).name).toBe("Rent");
   });
 });
