@@ -203,7 +203,7 @@ export const semanticTokens = {
       DEFAULT: { value: { base: "{colors.slate.200}", _dark: "{colors.dark.border}" } },
       subtle: { value: { base: "rgba(15, 23, 42, 0.06)", _dark: "{colors.dark.borderSubtle}" } },
       strong: { value: { base: "{colors.slate.300}", _dark: "rgba(255, 255, 255, 0.16)" } },
-      input: { value: { base: "{colors.slate.300}", _dark: "{colors.dark.border}" } },
+      input: { value: { base: "{colors.slate.500}", _dark: "rgba(255, 255, 255, 0.40)" } },
       focusRing: { value: { base: "{colors.indigo.600}", _dark: "{colors.indigo.400}" } },
     },
 
