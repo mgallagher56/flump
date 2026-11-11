@@ -162,10 +162,20 @@ const SAVINGS: UkSavingsRules = { psaBasic: 1000, psaHigher: 500, psaAdditional:
 // https://www.gov.uk/government/publications/rates-and-allowances-income-tax/income-tax-rates-and-allowances-current-and-past
 // 2023/24 to 2026/27 are verified. 2026/27 ordinary and upper rates rose to
 // 10.75% and 35.75% from 6 April 2026 (additional stays 39.35%, allowance 500).
-// UNVERIFIED: 2020/21 to 2022/23 are not on those pages. They keep the values
-// tax-calculator.ts used before this change (allowance 2,000; 8.75% / 33.75% /
-// 39.35%) and must not be relied on.
-const PRE_2023_DIVIDENDS: UkDividendRules = {
+// 2020/21 to 2022/23 come from the point-in-time versions of ITA 2007 on
+// legislation.gov.uk, read for this change: s.8 rates and s.13A allowance (2,000, all three years).
+// 2020/21 and 2021/22 (s.8 at 06/04/2020 and 06/04/2021): 7.5% / 32.5% / 38.1%
+//   https://www.legislation.gov.uk/ukpga/2007/3/section/8/2021-04-06
+// 2022/23 (s.8 at 06/04/2022): 8.75% / 33.75% / 39.35%
+//   https://www.legislation.gov.uk/ukpga/2007/3/section/8/2022-04-06
+//   https://www.legislation.gov.uk/ukpga/2007/3/section/13A/2022-04-06
+const DIVIDENDS_2020_TO_2022: UkDividendRules = {
+  allowance: 2000,
+  basicRate: 0.075,
+  higherRate: 0.325,
+  additionalRate: 0.381,
+};
+const DIVIDENDS_2022_23: UkDividendRules = {
   allowance: 2000,
   basicRate: 0.0875,
   higherRate: 0.3375,
@@ -173,9 +183,9 @@ const PRE_2023_DIVIDENDS: UkDividendRules = {
 };
 
 const DIVIDENDS: Record<UkTaxYear, UkDividendRules> = {
-  "2020/21": PRE_2023_DIVIDENDS,
-  "2021/22": PRE_2023_DIVIDENDS,
-  "2022/23": PRE_2023_DIVIDENDS,
+  "2020/21": DIVIDENDS_2020_TO_2022,
+  "2021/22": DIVIDENDS_2020_TO_2022,
+  "2022/23": DIVIDENDS_2022_23,
   "2023/24": { allowance: 1000, basicRate: 0.0875, higherRate: 0.3375, additionalRate: 0.3935 },
   "2024/25": { allowance: 500, basicRate: 0.0875, higherRate: 0.3375, additionalRate: 0.3935 },
   "2025/26": { allowance: 500, basicRate: 0.0875, higherRate: 0.3375, additionalRate: 0.3935 },
@@ -194,7 +204,6 @@ function unverifiedFor(year: UkTaxYear): string[] {
   }
   if (PRE_2023.includes(year)) {
     notes.push(
-      "UNVERIFIED: dividends allowance and rates are not on the GOV.UK pages read; carried over from the previous code",
       "UNVERIFIED: personal allowance taper rate (GBP1 per GBP2) is not stated on the archived GOV.UK pages",
     );
   }

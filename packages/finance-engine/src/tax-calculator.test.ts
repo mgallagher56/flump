@@ -103,3 +103,28 @@ describe("EWNI income tax vectors through the shared band function", () => {
     }
   });
 });
+
+describe("dividend vectors through calculateUKTax", () => {
+  const vectors = selectUkTaxVectors({ kind: "dividends" });
+
+  it("has dividend vectors for every supported year", () => {
+    expect(vectors.length).toBeGreaterThanOrEqual(18);
+  });
+
+  it("dividendTaxDue matches every dividend vector in the catalogue", () => {
+    for (const v of vectors) {
+      const { employmentIncome, dividendIncome } = v.input as {
+        employmentIncome: number;
+        dividendIncome: number;
+      };
+      const date = `${v.taxYear.slice(0, 4)}-07-01`;
+      const r = calculateUKTax(
+        v.taxYear,
+        [dividendRecord(dividendIncome, date)],
+        employmentIncome,
+        100,
+      );
+      expect(roundPence(r.dividendTaxDue), v.id).toBeCloseTo(v.expected, 2);
+    }
+  });
+});
