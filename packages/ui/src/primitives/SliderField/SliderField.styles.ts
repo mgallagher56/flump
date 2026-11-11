@@ -37,7 +37,7 @@ export const sliderFieldValuePill = cva({
     backgroundColor: "surface.sunken",
     borderWidth: "1px",
     borderStyle: "solid",
-    borderColor: "border.subtle",
+    borderColor: "border.input",
     fontSize: "xs",
     fontWeight: "bold",
     color: "primary",

@@ -29,7 +29,7 @@ export const textInputStyle = css({
   padding: "10px 14px",
   borderRadius: "lg",
   border: "1px solid",
-  borderColor: "border",
+  borderColor: "border.input",
   backgroundColor: "surface.canvas",
   color: "text.primary",
   fontSize: "15px",
