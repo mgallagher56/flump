@@ -77,6 +77,52 @@ describe("_index route", () => {
     await expect(loader({ request, params: {}, context: {} } as any)).rejects.toBe(failure);
   });
 
+  const signedInSnapshot = (overrides: Record<string, unknown> = {}) => ({
+    user: { id: "u1", email: "real@example.com" },
+    accounts: [],
+    accountDetails: [],
+    budgetEntries: [],
+    taxRecords: [],
+    userProfile: { onboardingCompleted: true },
+    portfolioSnapshot: undefined,
+    ...overrides,
+  });
+
+  it("signed-in loader returns debtData null when the only liability is a mortgage", async () => {
+    vi.mocked(loadWorkspaceSnapshot).mockResolvedValueOnce(
+      signedInSnapshot({
+        accounts: [{ id: "m", name: "Home", type: "Mortgage", balance: -200000 }],
+      }) as any,
+    );
+    const request = new Request("http://localhost/");
+    const data = (await loader({ request, params: {}, context: {} } as any)) as any;
+    expect(data.debtData).toBeNull();
+  });
+
+  it("signed-in loader computes debtData from consumer debts with no invented figures", async () => {
+    vi.mocked(loadWorkspaceSnapshot).mockResolvedValueOnce(
+      signedInSnapshot({
+        accounts: [
+          {
+            id: "c",
+            name: "Card",
+            type: "Credit Card",
+            balance: -2000,
+            interestRate: 20,
+            monthlyContribution: 80,
+          },
+        ],
+      }) as any,
+    );
+    const request = new Request("http://localhost/");
+    const data = (await loader({ request, params: {}, context: {} } as any)) as any;
+    expect(data.debtData.totalDebt).toBe(2000);
+    expect(data.debtData.highInterestCount).toBe(1);
+    expect(data.debtData.monthlyMinimumTotal).toBe(80);
+    expect(JSON.stringify(data.debtData)).not.toContain("October 2026");
+    expect(data.debtData).not.toHaveProperty("interestSaved");
+  });
+
   it("renders LoggedOutHome when user is null", () => {
     vi.mocked(useLoaderData).mockReturnValue({
       isDemo: false,

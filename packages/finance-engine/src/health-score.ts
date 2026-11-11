@@ -239,6 +239,14 @@ export function calculateSafeToSpend(
 }
 
 /**
+ * A debt is high interest when its APR is at least 6.5% or it is an overdraft or credit card.
+ */
+export function isHighInterestDebt(d: DebtItem): boolean {
+  const n = normalizeDebtItem(d);
+  return n.interestRateApr >= 6.5 || n.debtType === "overdraft" || n.debtType === "credit_card";
+}
+
+/**
  * Adaptive Financial Lifecycle Stage Evaluator.
  */
 export function evaluateFinancialStage(params: {
@@ -253,9 +261,7 @@ export function evaluateFinancialStage(params: {
 
   const totalUnsecuredDebt = commercial.reduce((sum, d) => sum + d.balanceGbp, 0);
   const highInterestDebt = commercial
-    .filter(
-      (d) => d.interestRateApr >= 6.5 || d.debtType === "overdraft" || d.debtType === "credit_card",
-    )
+    .filter((d) => isHighInterestDebt(d))
     .reduce((sum, d) => sum + d.balanceGbp, 0);
 
   const emergencyRunwayMonths =
