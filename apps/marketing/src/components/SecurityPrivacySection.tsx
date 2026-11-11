@@ -40,13 +40,66 @@ const verificationBadge = css({
   fontWeight: "700",
   padding: "3px 8px",
   borderRadius: "full",
-  backgroundColor: "rgba(16, 185, 129, 0.2)",
-  color: "#34d399",
+  backgroundColor: "rgba(255, 255, 255, 0.12)",
+  color: "text.onContrast",
   display: "inline-flex",
   alignItems: "center",
   gap: "4px",
   width: "fit-content",
   fontFamily: "var(--fonts-mono, monospace)",
+});
+
+const diagramColumn = css({
+  width: "100%",
+  display: "flex",
+  flexDirection: "column",
+  gap: "16px",
+  padding: "28px 24px",
+});
+
+const diagramHeader = css({
+  display: "flex",
+  alignItems: "center",
+  gap: "8px",
+  borderBottom: "1px solid",
+  borderColor: "rgba(255, 255, 255, 0.12)",
+  paddingBottom: "12px",
+});
+
+const diagramHeaderIcon = css({ color: "text.onContrast", fontSize: "18px" });
+
+const diagramHeaderTitle = css({
+  fontSize: "13px",
+  fontWeight: "700",
+  letterSpacing: "0.02em",
+  color: "text.onContrast",
+  fontFamily: "var(--fonts-display, sans-serif)",
+});
+
+const nodeStyle = css({
+  padding: "12px 14px",
+  borderRadius: "10px",
+  backgroundColor: "rgba(255, 255, 255, 0.05)",
+  border: "1px solid",
+  borderColor: "rgba(255, 255, 255, 0.1)",
+});
+
+const dashedNodeStyle = css({
+  padding: "12px 14px",
+  borderRadius: "10px",
+  backgroundColor: "rgba(255, 255, 255, 0.03)",
+  border: "1px dashed",
+  borderColor: "rgba(255, 255, 255, 0.25)",
+});
+
+const nodeTitle = css({ fontSize: "12px", fontWeight: "600", color: "text.onContrast" });
+
+const nodeCaption = css({ fontSize: "11px", color: "rgba(255, 255, 255, 0.7)" });
+
+const flowArrow = css({
+  textAlign: "center",
+  color: "rgba(255, 255, 255, 0.6)",
+  fontSize: "14px",
 });
 
 export const SecurityPrivacySection: FC = () => {
@@ -59,139 +112,31 @@ export const SecurityPrivacySection: FC = () => {
       subtitle="Designed from the start to work fully without bank account linking or password sharing."
     >
       <div className={sectionGridLayout} data-testid="security-privacy-section">
-        {/* FCA AISP Read-Only Architecture Diagram */}
-        <div className={illustrationContainer} style={{ padding: "28px 24px" }}>
-          <div style={{ width: "100%", display: "flex", flexDirection: "column", gap: "16px" }}>
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                borderBottom: "1px solid rgba(255, 255, 255, 0.12)",
-                paddingBottom: "12px",
-              }}
-            >
-              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                <FiShield style={{ color: "#34d399", fontSize: "18px" }} />
-                <span
-                  style={{
-                    fontSize: "13px",
-                    fontWeight: "700",
-                    letterSpacing: "0.02em",
-                    color: "#ffffff",
-                    fontFamily: "var(--fonts-display, sans-serif)",
-                  }}
-                >
-                  FCA Open Banking Architecture
-                </span>
-              </div>
-              <span
-                style={{
-                  fontSize: "11px",
-                  fontWeight: "600",
-                  padding: "2px 8px",
-                  borderRadius: "999px",
-                  backgroundColor: "rgba(16, 185, 129, 0.15)",
-                  color: "#34d399",
-                  border: "1px solid rgba(52, 211, 153, 0.3)",
-                }}
-              >
-                AISP Read-Only
-              </span>
+        {/* Data flow diagram */}
+        <div className={illustrationContainer}>
+          <div className={diagramColumn}>
+            <div className={diagramHeader}>
+              <FiShield className={diagramHeaderIcon} />
+              <span className={diagramHeaderTitle}>How your data flows</span>
             </div>
 
-            {/* Architecture Node 1: UK Banks */}
-            <div
-              style={{
-                padding: "12px 14px",
-                borderRadius: "10px",
-                backgroundColor: "rgba(255, 255, 255, 0.05)",
-                border: "1px solid rgba(255, 255, 255, 0.1)",
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-              }}
-            >
-              <div>
-                <div style={{ fontSize: "12px", fontWeight: "600", color: "#ffffff" }}>
-                  UK Authorised Banks & Building Societies
-                </div>
-                <div style={{ fontSize: "11px", color: "rgba(255, 255, 255, 0.6)" }}>
-                  Open Banking OAuth 2.0 PKCE Handshake
-                </div>
-              </div>
-              <span style={{ fontSize: "11px", color: "#38bdf8", fontFamily: "monospace" }}>
-                TLS 1.3
-              </span>
+            <div className={nodeStyle}>
+              <div className={nodeTitle}>Your manual entries</div>
+              <div className={nodeCaption}>Numbers you type in yourself</div>
             </div>
 
-            {/* Flow Indicator with Directional Arrow */}
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: "8px",
-                color: "rgba(255, 255, 255, 0.4)",
-                fontSize: "11px",
-              }}
-            >
-              <span>↓ Read-only encrypted telemetry stream</span>
+            <div className={flowArrow}>↓</div>
+
+            <div className={nodeStyle}>
+              <div className={nodeTitle}>Flump planning engine (cannot make payments)</div>
+              <div className={nodeCaption}>Calculates tax, debt, mortgage and forecasts</div>
             </div>
 
-            {/* Architecture Node 2: Flump Local Sandbox */}
-            <div
-              style={{
-                padding: "12px 14px",
-                borderRadius: "10px",
-                backgroundColor: "rgba(99, 102, 241, 0.1)",
-                border: "1px solid rgba(99, 102, 241, 0.3)",
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-              }}
-            >
-              <div>
-                <div style={{ fontSize: "12px", fontWeight: "600", color: "#ffffff" }}>
-                  Flump Analytics & Tax Modeling Engine
-                </div>
-                <div style={{ fontSize: "11px", color: "rgba(255, 255, 255, 0.6)" }}>
-                  Zero access to initiate payments, transfers or alter accounts
-                </div>
-              </div>
-              <span
-                style={{
-                  fontSize: "10px",
-                  fontWeight: "700",
-                  padding: "2px 6px",
-                  borderRadius: "4px",
-                  backgroundColor: "rgba(239, 68, 68, 0.2)",
-                  color: "#f87171",
-                  border: "1px solid rgba(239, 68, 68, 0.4)",
-                }}
-              >
-                PISP Blocked
-              </span>
-            </div>
+            <div className={flowArrow}>↓</div>
 
-            {/* Architecture Node 3: Storage Isolation */}
-            <div
-              style={{
-                padding: "10px 14px",
-                borderRadius: "8px",
-                backgroundColor: "rgba(255, 255, 255, 0.03)",
-                border: "1px dashed rgba(255, 255, 255, 0.15)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                fontSize: "11px",
-                color: "rgba(255, 255, 255, 0.7)",
-              }}
-            >
-              <span>AES-256-GCM data at rest</span>
-              <span style={{ color: "#34d399", fontWeight: "600" }}>
-                ✓ Zero third-party ad brokers
-              </span>
+            <div className={dashedNodeStyle}>
+              <div className={nodeTitle}>Bank connection (coming soon)</div>
+              <div className={nodeCaption}>Not available yet</div>
             </div>
           </div>
         </div>
@@ -264,7 +209,7 @@ export const SecurityPrivacySection: FC = () => {
                 <FiLock />
               </div>
               <span className={verificationBadge}>
-                <FiCheckCircle size={12} /> Read-only access
+                <FiCheckCircle size={12} /> Coming soon
               </span>
             </div>
 
@@ -277,7 +222,7 @@ export const SecurityPrivacySection: FC = () => {
                 margin: 0,
               }}
             >
-              FCA Open Banking
+              Bank connection (coming soon)
             </h3>
             <p
               style={{
@@ -287,8 +232,7 @@ export const SecurityPrivacySection: FC = () => {
                 lineHeight: "1.5",
               }}
             >
-              Optional live account sync operates through FCA-regulated Open Banking APIs. We can
-              never move money or change account settings.
+              Flump cannot move money or change account settings.
             </p>
           </div>
 

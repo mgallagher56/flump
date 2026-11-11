@@ -13,6 +13,7 @@ import {
   payloadComment,
   payloadKey,
   payloadNum,
+  previewBadge,
   spotlightBadge,
   spotlightColumn,
   spotlightContainer,
@@ -51,19 +52,21 @@ export const McpSpotlightSection: FC = () => {
           <div className={`${spotlightColumn()} ${stack({ gap: "6" })}`}>
             <div>
               <span className={spotlightBadge()}>
-                <FiCpu /> Official Model Context Protocol (MCP) server
+                <FiCpu /> Model Context Protocol (MCP) server
+              </span>{" "}
+              <span className={previewBadge()} data-testid="mcp-spotlight-preview-badge">
+                Preview
               </span>
             </div>
 
             <h2 className={spotlightHeading()}>
-              Connect Claude &amp; Cursor directly to your UK finances
+              Give Claude and Cursor deterministic UK tax and finance tools
             </h2>
 
             <p className={spotlightLead()}>
               Stop copy-pasting numbers into ChatGPT. Flump's MCP server exposes 8 deterministic
-              financial simulation tools and 6 PII-scrubbed resources directly to Claude Desktop,
-              Cursor, and autonomous agents – guaranteeing <strong>zero hallucinations</strong> on
-              UK tax rules.
+              financial simulation tools directly to Claude Desktop, Cursor, and autonomous agents –
+              guaranteeing <strong>zero hallucinations</strong> on UK tax rules.
             </p>
 
             <div className={stack({ gap: "3" })}>
@@ -77,15 +80,15 @@ export const McpSpotlightSection: FC = () => {
               <div className={bulletRow()}>
                 <FiShield className={bulletIcon({ tone: "primary" })} size={18} />
                 <span>
-                  <strong>Strict PII anonymisation:</strong> Names and account numbers are
-                  completely stripped with optional bank masking.
+                  <strong>Generic labels:</strong> Institution names are replaced with generic
+                  labels by default.
                 </span>
               </div>
               <div className={bulletRow()}>
                 <FiTerminal className={bulletIcon({ tone: "info" })} size={18} />
                 <span>
-                  <strong>Zero-config local CLI:</strong> Runs via <code>npx @flump/mcp</code> with
-                  zero LLM token costs to Flump.
+                  <strong>Local CLI (preview):</strong> Run Flump MCP from source. Setup guide
+                  coming soon.
                 </span>
               </div>
             </div>
@@ -153,10 +156,11 @@ export const McpSpotlightSection: FC = () => {
               </div>
 
               <div className={terminalSummary()}>
-                <strong className={terminalSummaryStrong()}>Claude:</strong> Based on your Flump
-                baseline (£114,200 gross), sacrificing £14,200 into your pension reclaims £7,100 of
-                tapered Personal Allowance (restoring your full £12,570 allowance), saving you
-                £8,804 in Income Tax and NI at an effective 62% marginal relief rate.
+                <strong className={terminalSummaryStrong()}>Claude:</strong> Example based on a
+                Flump baseline of £114,200 gross (illustrative), sacrificing £14,200 into your
+                pension reclaims £7,100 of tapered Personal Allowance (restoring your full £12,570
+                allowance), saving you £8,804 in Income Tax and NI at an effective 62% marginal
+                relief rate.
               </div>
             </div>
           </div>

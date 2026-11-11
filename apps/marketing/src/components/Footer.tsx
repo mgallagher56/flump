@@ -1,8 +1,13 @@
 import { css } from "@repo/ui/styled-system/css";
 import { flex, grid, stack } from "@repo/ui/styled-system/patterns";
 import type { FC } from "react";
-import { FiExternalLink, FiLock, FiShield } from "react-icons/fi";
+import { FiExternalLink, FiShield } from "react-icons/fi";
 import { Link } from "react-router-dom";
+import {
+  COMPANY_ADDRESS_PLACEHOLDER,
+  COMPANY_NAME_PLACEHOLDER,
+  COMPANY_NUMBER_PLACEHOLDER,
+} from "../utils/placeholders";
 import { getAppUrl } from "../utils/url";
 
 const footerStyle = css({
@@ -65,22 +70,6 @@ export const Footer: FC = () => {
               The UK personal finance platform built for HMRC tax thresholds, pension optimisation,
               and clear debt payoff.
             </p>
-            <div className={flex({ gap: "3", align: "center" })}>
-              <span
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "6px",
-                  fontSize: "12px",
-                  color: "#a5b4fc",
-                  backgroundColor: "rgba(99, 102, 241, 0.15)",
-                  padding: "4px 8px",
-                  borderRadius: "6px",
-                }}
-              >
-                <FiLock size={12} /> 256-bit AES encryption
-              </span>
-            </div>
           </div>
 
           {/* Calculators */}
@@ -128,18 +117,9 @@ export const Footer: FC = () => {
 
           {/* Security & Compliance */}
           <div className={stack({ gap: "3" })}>
-            <h4 className={sectionTitleStyle}>Security and compliance</h4>
+            <h4 className={sectionTitleStyle}>Security and privacy</h4>
             <Link to="/security" className={linkStyle}>
-              FCA AISP read-only scope
-            </Link>
-            <Link to="/security" className={linkStyle}>
-              UK GDPR data policies
-            </Link>
-            <Link to="/security" className={linkStyle}>
-              Manual privacy mode
-            </Link>
-            <Link to="/security" className={linkStyle}>
-              Security architecture
+              Read-only by design
             </Link>
           </div>
         </div>
@@ -156,28 +136,19 @@ export const Footer: FC = () => {
         >
           <div className={flex({ gap: "2", align: "center", mb: "2", color: "#94a3b8" })}>
             <FiShield size={14} style={{ color: "#10b981" }} />
-            <strong style={{ color: "#cbd5e1" }}>
-              FCA Open Banking read-only and regulatory notice:
-            </strong>
+            <strong style={{ color: "#cbd5e1" }}>Important information</strong>
           </div>
           <p style={{ margin: "0 0 12px 0" }}>
-            Flump is a personal finance analytics, projection, and modelling platform. Flump
-            connects to UK financial institutions via regulated Open Banking Account Information
-            Services (AISP) on a strictly read-only basis. Flump cannot initiate payments, move
-            funds, or alter account configurations. Flump does not provide regulated financial, tax,
-            or investment advice. Tax calculations reflect UK HMRC rules for current tax years as
-            reference models.
+            Flump is a personal finance planning and modelling tool. It does not give regulated
+            financial, tax or investment advice, and it is not authorised by the Financial Conduct
+            Authority. Tax calculations follow HMRC rules for the current tax years and are for
+            reference.
           </p>
           <div className={flex({ justify: "space-between", flexWrap: "wrap", gap: "4" })}>
             <span>
-              © {currentYear} Flump Technologies Ltd. All rights reserved. Registered in England &
-              Wales.
+              © {currentYear} {COMPANY_NAME_PLACEHOLDER}. {COMPANY_NUMBER_PLACEHOLDER}.{" "}
+              {COMPANY_ADDRESS_PLACEHOLDER}.
             </span>
-            <div className={flex({ gap: "4" })}>
-              <Link to="/security" style={{ color: "#94a3b8", textDecoration: "none" }}>
-                Security & Data Policies
-              </Link>
-            </div>
           </div>
         </div>
       </div>

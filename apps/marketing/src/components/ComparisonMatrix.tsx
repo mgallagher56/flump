@@ -74,12 +74,6 @@ const rowStyle = css({
 export const ComparisonMatrix: FC = () => {
   const rows = [
     {
-      feature: "FCA Open Banking read-only sync (UK banks and cards)",
-      flump: true,
-      spreadsheet: false,
-      genericApp: "US-centric / incomplete",
-    },
-    {
       feature: "UK £100k–£125k Personal Allowance taper and childcare trap",
       flump: true,
       spreadsheet: "Complex manual formulas",

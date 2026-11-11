@@ -18,7 +18,7 @@ export const Default: Story = {
     const canvas = within(canvasElement);
 
     await expect(
-      canvas.getByText(/Connect Claude & Cursor directly to your UK finances/i),
+      canvas.getByText(/Give Claude and Cursor deterministic UK tax and finance tools/i),
     ).toBeInTheDocument();
 
     await expect(canvas.getByText(/simulate_uk_tax_and_pension_sacrifice/i)).toBeInTheDocument();

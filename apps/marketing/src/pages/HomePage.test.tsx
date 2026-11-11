@@ -49,4 +49,10 @@ describe("Marketing HomePage (Simplified 6-Section Narrative)", () => {
     expect(screen.getAllByText("Frequently asked questions").length).toBeGreaterThan(0);
     expect(screen.getByText("Browse free calculators")).toBeDefined();
   });
+
+  it("does not claim FCA Open Banking sync in the comparison matrix or elsewhere", () => {
+    const { container } = renderHome();
+    expect(screen.queryByText(/FCA Open Banking read-only sync/i)).toBeNull();
+    expect(container.textContent ?? "").not.toMatch(/AISP|PISP|FCA-regulated/);
+  });
 });

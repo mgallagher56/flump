@@ -40,7 +40,7 @@ const answerStyle = css({
 const FAQS = [
   {
     q: "Can Flump move my money or make payments?",
-    a: "No. Flump connects strictly through read-only Account Information Services (AISP) regulated by the Financial Conduct Authority (FCA). Flump cannot initiate payments, move money, or change your account details.",
+    a: "No. Flump only reads the balances and transactions you choose to share. It has no feature to make payments, move money or change your account details.",
   },
   {
     q: "Do I have to connect my bank accounts?",
@@ -55,8 +55,8 @@ const FAQS = [
     a: "Enter 6 rough numbers: your salary, housing, core bills, savings, pension balance, and debt. Flump calculates your net worth, weekly safe to spend, and emergency runway immediately. You can add detail whenever you want.",
   },
   {
-    q: "Is there a free tier?",
-    a: "Yes. Flump offers a free baseline tier with all core calculators, take-home pay tools, and dashboard summaries included. No credit card is required.",
+    q: "Is Flump free?",
+    a: "You can use Flump's planning tools today without a credit card. Pricing for any future paid plan has not been announced.",
   },
 ];
 

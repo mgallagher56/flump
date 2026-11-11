@@ -130,4 +130,19 @@ describe("Header", () => {
     expect(mobileNav).toBeDefined();
     expect(screen.getAllByText("Go to dashboard →").length).toBeGreaterThan(0);
   });
+
+  it("shows the Security sub-label in the mobile drawer without FCA wording", () => {
+    render(
+      <HelmetProvider>
+        <ThemeProvider>
+          <MemoryRouter>
+            <Header />
+          </MemoryRouter>
+        </ThemeProvider>
+      </HelmetProvider>,
+    );
+    fireEvent.click(screen.getByRole("button", { name: /open navigation menu/i }));
+    expect(screen.getByText("Security and privacy")).toBeDefined();
+    expect(screen.queryByText("FCA AISP")).toBeNull();
+  });
 });

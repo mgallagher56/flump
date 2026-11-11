@@ -59,6 +59,24 @@ export const heroBadge = cva({
   },
 });
 
+export const previewBadge = cva({
+  base: {
+    display: "inline-flex",
+    alignItems: "center",
+    px: "3",
+    py: "1",
+    borderRadius: "full",
+    backgroundColor: "status.warning.bg",
+    color: "status.warning.text",
+    fontSize: "xs",
+    fontWeight: "bold",
+    letterSpacing: "0.02em",
+    borderWidth: "1px",
+    borderStyle: "solid",
+    borderColor: "status.warning.border",
+  },
+});
+
 export const heroHeading = cva({
   base: {
     fontSize: { base: "4xl", md: "6xl" },
@@ -265,40 +283,6 @@ export const setupContainer = cva({
   },
 });
 
-export const tabButton = cva({
-  base: {
-    px: "4",
-    py: "2",
-    fontSize: "sm",
-    fontWeight: "semibold",
-    borderRadius: "lg",
-    borderWidth: "1px",
-    borderStyle: "solid",
-    cursor: "pointer",
-    transition: "all 0.15s ease",
-    _hover: {
-      color: "primary",
-    },
-  },
-  variants: {
-    active: {
-      true: {
-        borderColor: "primary.border",
-        backgroundColor: "primary.subtle",
-        color: "primary",
-      },
-      false: {
-        borderColor: "transparent",
-        backgroundColor: "transparent",
-        color: "text.secondary",
-      },
-    },
-  },
-  defaultVariants: {
-    active: false,
-  },
-});
-
 export const setupPanel = cva({
   base: {
     backgroundColor: "surface.card",
@@ -338,75 +322,6 @@ export const stepText = cva({
     lineHeight: "1.6",
     m: "0",
     fontVariantNumeric: "tabular-nums",
-  },
-});
-
-export const inlinePrimaryLink = cva({
-  base: {
-    color: "primary",
-    fontWeight: "semibold",
-    textDecoration: "underline",
-  },
-});
-
-export const pathList = cva({
-  base: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "2",
-    fontSize: "xs",
-    fontFamily: "mono",
-  },
-});
-
-export const pathItem = cva({
-  base: {
-    py: "2",
-    px: "3",
-    backgroundColor: "surface.sunken",
-    borderRadius: "md",
-    borderWidth: "1px",
-    borderStyle: "solid",
-    borderColor: "border.subtle",
-    color: "text.primary",
-  },
-});
-
-export const snippetBox = cva({
-  base: {
-    backgroundColor: "surface.contrast",
-    color: "text.onContrast",
-    fontFamily: "mono",
-    fontSize: "xs",
-    py: "4",
-    px: "5",
-    borderRadius: "xl",
-    borderWidth: "1px",
-    borderStyle: "solid",
-    borderColor: "border.strong",
-    overflowX: "auto",
-    lineHeight: "1.6",
-    m: "0",
-  },
-});
-
-export const copyButton = cva({
-  base: {
-    py: "1.5",
-    px: "3",
-    fontSize: "xs",
-    fontWeight: "semibold",
-    borderRadius: "md",
-    backgroundColor: "primary",
-    color: "primary.foreground",
-    borderWidth: "0",
-    cursor: "pointer",
-    display: "inline-flex",
-    alignItems: "center",
-    gap: "1.5",
-    _hover: {
-      backgroundColor: "primary.hover",
-    },
   },
 });
 

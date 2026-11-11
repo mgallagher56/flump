@@ -116,7 +116,7 @@ The following words and phrases must be removed or rewritten:
 | _Engineered for UK rules_                      | Built for UK rules / Designed for HMRC thresholds       |
 | _Zero-latency_                                 | Instant / fast                                          |
 | _Air-gapped privacy mode_                      | Manual mode / Private manual entry                      |
-| _Cryptographic bank-grade vault_               | 256-bit AES encryption                                  |
+| _Cryptographic bank-grade vault_               | Encrypted bank connection tokens                        |
 | _Crush your debt_                              | Pay off debt faster / Clear your debt                   |
 | _Defuse promotional cliffs_                    | Avoid high revert rates / Clear balances before 0% ends |
 | _Unlock instant insights_                      | See your numbers immediately                            |
@@ -129,6 +129,12 @@ The following words and phrases must be removed or rewritten:
 | _04 // WHY FLUMP_                              | Why Flump                                               |
 | _05 // TRUST & SECURITY_                       | Security and privacy                                    |
 | _06 // FAQ_                                    | Frequently asked questions                              |
+
+---
+
+## 7a. Claims
+
+No regulatory, security, pricing or feature claim may appear in copy without file:line or host evidence, and an approver listed in the E7 claim register ([docs/audit/plans/E7-claims-design.md](./audit/plans/E7-claims-design.md)). Regulatory statements (FCA, UK GDPR) are only added with the owner's explicit wording. Placeholder values come from `apps/marketing/src/utils/placeholders.ts`.
 
 ---
 

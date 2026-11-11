@@ -1,17 +1,8 @@
 import { Button } from "@repo/ui";
 import { flex, grid, stack } from "@repo/ui/styled-system/patterns";
-import { type FC, useState } from "react";
+import type { FC } from "react";
 import { Helmet } from "react-helmet-async";
-import {
-  FiCheck,
-  FiCpu,
-  FiEyeOff,
-  FiFileText,
-  FiLock,
-  FiRefreshCw,
-  FiShield,
-  FiTerminal,
-} from "react-icons/fi";
+import { FiCpu, FiEyeOff, FiLock, FiRefreshCw, FiShield, FiTerminal } from "react-icons/fi";
 import { Footer } from "../../components/Footer";
 import { Header } from "../../components/Header";
 import { getAppUrl } from "../../utils/url";
@@ -19,7 +10,6 @@ import {
   cardBody,
   cardSamplePrompt,
   cardTitle,
-  copyButton,
   ctaInner,
   ctaSection,
   featureCard,
@@ -29,12 +19,10 @@ import {
   heroLead,
   heroSection,
   iconBadge,
-  inlinePrimaryLink,
   linkReset,
   mainContent,
   pageShell,
-  pathItem,
-  pathList,
+  previewBadge,
   sectionContainer,
   sectionHeader,
   sectionHeading,
@@ -43,11 +31,9 @@ import {
   setupContainer,
   setupPanel,
   setupSection,
-  snippetBox,
   stepBlock,
   stepText,
   stepTitle,
-  tabButton,
   toolCodePill,
 } from "./McpPage.styles";
 
@@ -109,59 +95,15 @@ const MCP_TOOLS: ToolCatalogEntry[] = [
 ];
 
 export const McpPage: FC = () => {
-  const [activeSetupTab, setActiveSetupTab] = useState<"desktop" | "cursor" | "remote">("desktop");
-  const [copied, setCopied] = useState(false);
   const appUrl = getAppUrl();
-
-  const claudeDesktopConfig = JSON.stringify(
-    {
-      mcpServers: {
-        flump: {
-          command: "npx",
-          args: ["-y", "@flump/mcp"],
-          env: {
-            FLUMP_PAT: "flump_pat_YOUR_TOKEN_HERE",
-            FLUMP_API_URL: "https://mcp.flump.co.uk",
-          },
-        },
-      },
-    },
-    null,
-    2,
-  );
-
-  const cursorMcpConfig = JSON.stringify(
-    {
-      mcpServers: {
-        flump: {
-          command: "npx",
-          args: ["-y", "@flump/mcp"],
-          env: {
-            FLUMP_PAT: "flump_pat_YOUR_TOKEN_HERE",
-            FLUMP_API_URL: "https://mcp.flump.co.uk",
-          },
-        },
-      },
-    },
-    null,
-    2,
-  );
-
-  const handleCopySnippet = (text: string) => {
-    if (navigator.clipboard) {
-      navigator.clipboard.writeText(text);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    }
-  };
 
   return (
     <div className={pageShell()} id="mcp-marketing-page" data-testid="mcp-marketing-page">
       <Helmet>
-        <title>Flump for AI | Official Model Context Protocol (MCP) Server</title>
+        <title>Flump for AI | Model Context Protocol (MCP) Server (Preview)</title>
         <meta
           name="description"
-          content="Connect Claude Desktop, Cursor, ChatGPT, and AI agents directly to your UK finances. Mathematical accuracy without hallucinations, strict PII privacy, and zero token costs."
+          content="Preview: run the Flump Model Context Protocol (MCP) server locally and give AI agents deterministic UK financial calculations. Institution names are replaced with generic labels by default."
         />
         <link rel="canonical" href="https://flump.co.uk/mcp" />
       </Helmet>
@@ -173,7 +115,10 @@ export const McpPage: FC = () => {
         <section className={heroSection()}>
           <div className={`${heroInner()} ${stack({ gap: "6", align: "center" })}`}>
             <span className={heroBadge()}>
-              <FiCpu /> Official Model Context Protocol (MCP) server
+              <FiCpu /> Model Context Protocol (MCP) server
+            </span>
+            <span className={previewBadge()} data-testid="mcp-preview-badge">
+              Preview
             </span>
 
             <h1 className={heroHeading()}>
@@ -205,7 +150,7 @@ export const McpPage: FC = () => {
         <section className={sectionContainer()}>
           <div className={sectionHeader()}>
             <span className={sectionKicker()}>Why connect via Flump MCP?</span>
-            <h2 className={sectionHeading()}>Deterministic UK calculations and strict privacy</h2>
+            <h2 className={sectionHeading()}>Deterministic UK calculations and read-only tools</h2>
             <p className={sectionSubheading()}>
               Standard LLMs struggle with UK tax bands, NI tapering, and amortisation mathematics.
               Flump MCP replaces LLM guesswork with our deterministic UK financial engine.
@@ -231,11 +176,9 @@ export const McpPage: FC = () => {
               <div className={iconBadge({ tone: "positive" })}>
                 <FiShield />
               </div>
-              <h3 className={cardTitle()}>Strict PII anonymisation</h3>
+              <h3 className={cardTitle()}>Generic institution labels</h3>
               <p className={cardBody()}>
-                User names, emails, and account numbers are strictly scrubbed by default. A 1-click
-                privacy toggle transforms real institution names into generic labels (e.g. "Current
-                Account #1").
+                Institution names are replaced with generic labels by default.
               </p>
             </div>
 
@@ -257,11 +200,9 @@ export const McpPage: FC = () => {
               <div className={iconBadge({ tone: "info" })}>
                 <FiTerminal />
               </div>
-              <h3 className={cardTitle()}>Local STDIO &amp; remote HTTP</h3>
+              <h3 className={cardTitle()}>Local STDIO transport</h3>
               <p className={cardBody()}>
-                Run locally via <code>npx @flump/mcp</code> directly inside Claude Desktop or
-                Cursor, or connect remotely over OAuth 2.1 via{" "}
-                <code>https://mcp.flump.co.uk/mcp</code> for web agents.
+                Local CLI (preview): run Flump MCP from source. Setup guide coming soon.
               </p>
             </div>
 
@@ -296,198 +237,24 @@ export const McpPage: FC = () => {
         <section id="setup-guides" className={setupSection()}>
           <div className={setupContainer()}>
             <div className={sectionHeader()}>
-              <span className={sectionKicker()}>Quick integration</span>
-              <h2 className={sectionHeading()}>How to set up Flump MCP in 2 minutes</h2>
+              <span className={sectionKicker()}>Preview</span>
+              <h2 className={sectionHeading()}>Setting up Flump MCP (preview)</h2>
               <p className={sectionSubheading()}>
-                Choose your AI environment below for copy-and-paste instructions.
+                Flump MCP is in preview and is not yet packaged for one-step installation.
               </p>
             </div>
 
-            {/* Tab Selectors */}
-            <div
-              role="tablist"
-              aria-label="MCP client setup guides"
-              className={flex({
-                gap: "2",
-                justify: "center",
-                mb: "6",
-                flexWrap: "wrap",
-              })}
-            >
-              <button
-                type="button"
-                role="tab"
-                id="setup-tab-desktop"
-                data-testid="setup-tab-desktop"
-                aria-selected={activeSetupTab === "desktop"}
-                className={tabButton({ active: activeSetupTab === "desktop" })}
-                onClick={() => setActiveSetupTab("desktop")}
-              >
-                Claude Desktop
-              </button>
-              <button
-                type="button"
-                role="tab"
-                id="setup-tab-cursor"
-                data-testid="setup-tab-cursor"
-                aria-selected={activeSetupTab === "cursor"}
-                className={tabButton({ active: activeSetupTab === "cursor" })}
-                onClick={() => setActiveSetupTab("cursor")}
-              >
-                Cursor AI
-              </button>
-              <button
-                type="button"
-                role="tab"
-                id="setup-tab-remote"
-                data-testid="setup-tab-remote"
-                aria-selected={activeSetupTab === "remote"}
-                className={tabButton({ active: activeSetupTab === "remote" })}
-                onClick={() => setActiveSetupTab("remote")}
-              >
-                Claude Web &amp; ChatGPT
-              </button>
-            </div>
-
-            {/* Tab 1: Claude Desktop */}
-            {activeSetupTab === "desktop" && (
-              <div
-                className={setupPanel()}
-                id="setup-panel-desktop"
-                data-testid="setup-panel-desktop"
-              >
-                <div className={stepBlock()}>
-                  <h3 className={stepTitle()}>1. Generate your Personal Access Token</h3>
-                  <p className={stepText()}>
-                    Sign in to Flump and visit{" "}
-                    <a
-                      href={`${appUrl}/app/profile`}
-                      className={inlinePrimaryLink()}
-                      target="_blank"
-                      rel="noreferrer"
-                    >
-                      Profile &gt; AI &amp; MCP Access
-                    </a>
-                    . Click <strong>+ Generate New AI Connection Token</strong>.
-                  </p>
-                </div>
-
-                <div className={stepBlock()}>
-                  <h3 className={stepTitle()}>2. Locate your Claude Desktop configuration file</h3>
-                  <div className={pathList()}>
-                    <div className={pathItem()}>
-                      <strong>macOS:</strong>{" "}
-                      <code>~/Library/Application Support/Claude/claude_desktop_config.json</code>
-                    </div>
-                    <div className={pathItem()}>
-                      <strong>Windows:</strong>{" "}
-                      <code>%APPDATA%\Claude\claude_desktop_config.json</code>
-                    </div>
-                  </div>
-                </div>
-
-                <div className={stepBlock()}>
-                  <div className={flex({ justify: "space-between", align: "center", gap: "2" })}>
-                    <h3 className={stepTitle()}>3. Paste the configuration block</h3>
-                    <button
-                      type="button"
-                      id="copy-claude-snippet-btn"
-                      data-testid="copy-claude-snippet-btn"
-                      onClick={() => handleCopySnippet(claudeDesktopConfig)}
-                      className={copyButton()}
-                    >
-                      {copied ? <FiCheck /> : <FiFileText />}
-                      {copied ? "Copied" : "Copy snippet"}
-                    </button>
-                  </div>
-                  <pre className={snippetBox()}>{claudeDesktopConfig}</pre>
-                </div>
-
-                <div className={stepBlock()}>
-                  <h3 className={stepTitle()}>4. Restart Claude Desktop and prompt</h3>
-                  <p className={stepText()}>
-                    Quit and reopen Claude Desktop. The tools icon in Claude will confirm Flump's 8
-                    financial simulation tools are available. Try asking:{" "}
-                    <em>
-                      "Run a financial audit on my Flump baseline and check if I'm in the 60% tax
-                      trap."
-                    </em>
-                  </p>
-                </div>
-              </div>
-            )}
-
-            {/* Tab 2: Cursor AI */}
-            {activeSetupTab === "cursor" && (
-              <div
-                className={setupPanel()}
-                id="setup-panel-cursor"
-                data-testid="setup-panel-cursor"
-              >
-                <div className={stepBlock()}>
-                  <h3 className={stepTitle()}>1. Open Cursor MCP settings</h3>
-                  <p className={stepText()}>
-                    Open Cursor and navigate to{" "}
-                    <strong>Cursor Settings &gt; Features &gt; MCP</strong>. Click{" "}
-                    <strong>+ Add New MCP Server</strong>.
-                  </p>
-                </div>
-
-                <div className={stepBlock()}>
-                  <h3 className={stepTitle()}>
-                    2. Workspace configuration (<code>.cursor/mcp.json</code>)
-                  </h3>
-                  <p className={stepText()}>
-                    Alternatively, add this file directly to your project root under{" "}
-                    <code>.cursor/mcp.json</code>:
-                  </p>
-                  <pre className={snippetBox()}>{cursorMcpConfig}</pre>
-                </div>
-
-                <div className={stepBlock()}>
-                  <h3 className={stepTitle()}>3. Prompt in Cursor Composer</h3>
-                  <p className={stepText()}>
-                    In Cursor Chat or Composer, reference <code>@flump</code> or ask:{" "}
-                    <em>
-                      "Calculate my Self Assessment Section 24 landlord liability using Flump."
-                    </em>
-                  </p>
-                </div>
-              </div>
-            )}
-
-            {/* Tab 3: Remote MCP (Claude Web & ChatGPT) */}
-            {activeSetupTab === "remote" && (
-              <div
-                className={setupPanel()}
-                id="setup-panel-remote"
-                data-testid="setup-panel-remote"
-              >
-                <div className={stepBlock()}>
-                  <h3 className={stepTitle()}>Remote HTTP transport (RFC 9728 &amp; OAuth 2.1)</h3>
-                  <p className={stepText()}>
-                    Web AI agents (Claude.ai Web, Custom GPT Actions) connect remotely via HTTPS.
-                    Flump hosts streamable MCP endpoints protected by RFC 8707 scoped audience
-                    tokens.
-                  </p>
-                </div>
-
-                <div className={pathList()}>
-                  <div className={pathItem()}>
-                    <strong>Remote server URL:</strong> <code>https://mcp.flump.co.uk/mcp</code>
-                  </div>
-                  <div className={pathItem()}>
-                    <strong>OAuth protected resource metadata:</strong>{" "}
-                    <code>https://mcp.flump.co.uk/.well-known/oauth-protected-resource</code>
-                  </div>
-                </div>
-
+            <div className={setupPanel()} id="setup-panel-local" data-testid="setup-panel-local">
+              <div className={stepBlock()}>
+                <h3 className={stepTitle()}>Local CLI (preview)</h3>
                 <p className={stepText()}>
-                  Enter the Remote server URL in your web agent. During OAuth setup, authorise your
-                  Flump account to grant scoped, revocable access.
+                  Local CLI (preview): run Flump MCP from source. Setup guide coming soon.
+                </p>
+                <p className={stepText()}>
+                  In preview, the tools currently work against baseline sample data.
                 </p>
               </div>
-            )}
+            </div>
           </div>
         </section>
 
@@ -498,7 +265,7 @@ export const McpPage: FC = () => {
             <h2 className={sectionHeading()}>8 deterministic financial tools for AI agents</h2>
             <p className={sectionSubheading()}>
               Your connected AI agent can invoke any of these read-only tools with custom
-              parameters, backed by 6 baseline context resources and 3 starter prompts.
+              parameters.
             </p>
           </div>
 
