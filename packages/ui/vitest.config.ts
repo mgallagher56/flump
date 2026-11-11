@@ -19,6 +19,8 @@ export default defineConfig({
         "**/styled-system/**",
       ],
       reporter: ["text", "json-summary", "lcov"],
+      // Floors = floor(measured) - 1 (owner decision D6-a). Raise when a PR gains 2+ points.
+      thresholds: { statements: 85, branches: 64, functions: 75, lines: 86 },
     },
   },
 });

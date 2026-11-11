@@ -10,6 +10,7 @@
   "ignoreDeps": ["typescript-coverage-report"],
   "baseBranchPatterns": ["main"],
   "labels": ["dependencies"],
+  "osvVulnerabilityAlerts": true,
   "timezone": "Europe/London",
   "packageRules": [
     {
