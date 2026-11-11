@@ -95,9 +95,10 @@ describe("UK tax vector catalogue", () => {
     expect(get("ewni.incomeTax.2020-21.150000")).toBe(52500);
   });
 
-  it("flags taper-dependent pre-2023 vectors and Plan 5 pre-2026 as UNVERIFIED", () => {
+  it("keeps Plan 5 pre-2026 and approximated NI as UNVERIFIED; taper-dependent pre-2023 vectors are VERIFIED (ITA 2007 s.35)", () => {
     const status = (id: string) => UK_TAX_VECTORS.find((v) => v.id === id)?.status;
-    expect(status("ewni.incomeTax.2021-22.110000")).toBe("UNVERIFIED");
+    expect(status("ewni.incomeTax.2021-22.110000")).toBe("VERIFIED");
+    expect(status("scotland.incomeTax.2025-26.110000")).toBe("VERIFIED");
     expect(status("ewni.incomeTax.2025-26.110000")).toBe("VERIFIED");
     expect(status("studentLoan.2024-25.plan5.35000")).toBe("UNVERIFIED");
     expect(status("studentLoan.2026-27.plan5.35000")).toBe("VERIFIED");

@@ -107,3 +107,8 @@ Notes:
 - Matches verified: tax-rules.ts 2023/24 (lines 501-503, 505), 2024/25 (511-513, 515), 2026/27 (531-535), postgrad 21,000 and rates throughout, write-off years 25/30/30/40/30 in uk-tax.ts and debt-payoff.ts (simplified: the pre-2006/pre-2007 age-65 rules are not modelled).
 - Repo has no entries for 2020/21, 2021/22, 2022/23.
 - Repo Plan 5 25,000 in 2023/24-2025/26 is UNVERIFIED (employer pages for those years do not list Plan 5).
+
+## Plan 5 for 2023/24 to 2025/26 (sign-off update)
+
+- 25,000 is not on the employer pages for 2023/24, 2024/25 or 2025/26; it is on the 2026/27 page (VERIFIED). The three vectors `studentLoan.<2023-24|2024-25|2025-26>.plan5.35000` expect 900 ((35,000 - 25,000) x 9%) and stay UNVERIFIED.
+- Additional doubt: the earliest Plan 5 repayment starts the April after the borrower leaves the course (first Plan 5 entrants started courses from August 2023), so for 2023/24 and probably 2024/25 and 2025/26 a Plan 5 holder may owe nothing at all. Expecting 900 in those years is questionable even if the threshold were right. Needs an owner ruling (sheet item 12).

@@ -19,42 +19,42 @@ Note: the live "Previous years" collection and HMRC statistics pages (rates-of-i
 
 ### 2020/21
 
-| Figure                                            | Value                         | Source / where                                                            | Status                                               |
-| ------------------------------------------------- | ----------------------------- | ------------------------------------------------------------------------- | ---------------------------------------------------- |
-| Personal allowance                                | 12,500                        | [D20] opening text, "standard Personal Allowance"                         | VERIFIED                                             |
-| Taper threshold                                   | 100,000                       | [D20] allowance smaller if income over 100,000                            | VERIFIED                                             |
-| Taper rate                                        | not stated on page            | [D20] says no PA on taxable income over 125,000 (consistent with 1 per 2) | UNVERIFIED (rate itself); MEMORY ONLY: GBP1 per GBP2 |
-| PA fully lost at                                  | 125,000                       | [D20]                                                                     | VERIFIED                                             |
-| Basic rate                                        | 20%                           | [D20] band table                                                          | VERIFIED                                             |
-| Basic band upper limit (taxable, gross on std PA) | 50,000 (so band width 37,500) | [D20] band table: basic 12,501 to 50,000; width derived by subtraction    | VERIFIED (width derived)                             |
-| Higher rate                                       | 40%                           | [D20] band table                                                          | VERIFIED                                             |
-| Higher band                                       | 50,001 to 150,000             | [D20]                                                                     | VERIFIED                                             |
-| Additional threshold                              | 150,000                       | [D20] band table                                                          | VERIFIED                                             |
-| Additional rate                                   | 45%                           | [D20]                                                                     | VERIFIED                                             |
+| Figure                                            | Value                         | Source / where                                                            | Status                                                                                                                                                                                       |
+| ------------------------------------------------- | ----------------------------- | ------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Personal allowance                                | 12,500                        | [D20] opening text, "standard Personal Allowance"                         | VERIFIED                                                                                                                                                                                     |
+| Taper threshold                                   | 100,000                       | [D20] allowance smaller if income over 100,000                            | VERIFIED                                                                                                                                                                                     |
+| Taper rate                                        | not stated on page            | [D20] says no PA on taxable income over 125,000 (consistent with 1 per 2) | VERIFIED: ITA 2007 s.35(2)-(3) at 06/04/2020, one half of the excess over 100,000, allowance rounded up to a whole pound (https://www.legislation.gov.uk/ukpga/2007/3/section/35/2020-04-06) |
+| PA fully lost at                                  | 125,000                       | [D20]                                                                     | VERIFIED                                                                                                                                                                                     |
+| Basic rate                                        | 20%                           | [D20] band table                                                          | VERIFIED                                                                                                                                                                                     |
+| Basic band upper limit (taxable, gross on std PA) | 50,000 (so band width 37,500) | [D20] band table: basic 12,501 to 50,000; width derived by subtraction    | VERIFIED (width derived)                                                                                                                                                                     |
+| Higher rate                                       | 40%                           | [D20] band table                                                          | VERIFIED                                                                                                                                                                                     |
+| Higher band                                       | 50,001 to 150,000             | [D20]                                                                     | VERIFIED                                                                                                                                                                                     |
+| Additional threshold                              | 150,000                       | [D20] band table                                                          | VERIFIED                                                                                                                                                                                     |
+| Additional rate                                   | 45%                           | [D20]                                                                     | VERIFIED                                                                                                                                                                                     |
 
 ### 2021/22
 
-| Figure                      | Value                               | Source / where     | Status                                 |
-| --------------------------- | ----------------------------------- | ------------------ | -------------------------------------- |
-| Personal allowance          | 12,570                              | [D21] opening text | VERIFIED                               |
-| Taper threshold             | 100,000                             | [D21]              | VERIFIED                               |
-| Taper rate                  | not stated                          | [D21]              | UNVERIFIED; MEMORY ONLY: GBP1 per GBP2 |
-| PA fully lost at            | 125,140                             | [D21]              | VERIFIED                               |
-| Basic rate / upper limit    | 20% / 50,270 (width 37,700 derived) | [D21] band table   | VERIFIED                               |
-| Higher rate / band          | 40% / 50,271 to 150,000             | [D21]              | VERIFIED                               |
-| Additional threshold / rate | 150,000 / 45%                       | [D21]              | VERIFIED                               |
+| Figure                      | Value                               | Source / where     | Status                                                                                                           |
+| --------------------------- | ----------------------------------- | ------------------ | ---------------------------------------------------------------------------------------------------------------- |
+| Personal allowance          | 12,570                              | [D21] opening text | VERIFIED                                                                                                         |
+| Taper threshold             | 100,000                             | [D21]              | VERIFIED                                                                                                         |
+| Taper rate                  | not stated                          | [D21]              | VERIFIED: ITA 2007 s.35(2)-(3) at 06/04/2021 (https://www.legislation.gov.uk/ukpga/2007/3/section/35/2021-04-06) |
+| PA fully lost at            | 125,140                             | [D21]              | VERIFIED                                                                                                         |
+| Basic rate / upper limit    | 20% / 50,270 (width 37,700 derived) | [D21] band table   | VERIFIED                                                                                                         |
+| Higher rate / band          | 40% / 50,271 to 150,000             | [D21]              | VERIFIED                                                                                                         |
+| Additional threshold / rate | 150,000 / 45%                       | [D21]              | VERIFIED                                                                                                         |
 
 ### 2022/23
 
-| Figure                      | Value                               | Source / where   | Status                                 |
-| --------------------------- | ----------------------------------- | ---------------- | -------------------------------------- |
-| Personal allowance          | 12,570                              | [D22]            | VERIFIED                               |
-| Taper threshold             | 100,000                             | [D22]            | VERIFIED                               |
-| Taper rate                  | not stated                          | [D22]            | UNVERIFIED; MEMORY ONLY: GBP1 per GBP2 |
-| PA fully lost at            | 125,140                             | [D22]            | VERIFIED                               |
-| Basic rate / upper limit    | 20% / 50,270 (width 37,700 derived) | [D22] band table | VERIFIED                               |
-| Higher rate / band          | 40% / 50,271 to 150,000             | [D22]            | VERIFIED                               |
-| Additional threshold / rate | 150,000 / 45%                       | [D22]            | VERIFIED                               |
+| Figure                      | Value                               | Source / where   | Status                                                                                                           |
+| --------------------------- | ----------------------------------- | ---------------- | ---------------------------------------------------------------------------------------------------------------- |
+| Personal allowance          | 12,570                              | [D22]            | VERIFIED                                                                                                         |
+| Taper threshold             | 100,000                             | [D22]            | VERIFIED                                                                                                         |
+| Taper rate                  | not stated                          | [D22]            | VERIFIED: ITA 2007 s.35(2)-(3) at 06/04/2022 (https://www.legislation.gov.uk/ukpga/2007/3/section/35/2022-04-06) |
+| PA fully lost at            | 125,140                             | [D22]            | VERIFIED                                                                                                         |
+| Basic rate / upper limit    | 20% / 50,270 (width 37,700 derived) | [D22] band table | VERIFIED                                                                                                         |
+| Higher rate / band          | 40% / 50,271 to 150,000             | [D22]            | VERIFIED                                                                                                         |
+| Additional threshold / rate | 150,000 / 45%                       | [D22]            | VERIFIED                                                                                                         |
 
 ### 2023/24, 2024/25, 2025/26, 2026/27 (identical figures each year)
 
@@ -88,7 +88,7 @@ Note on basis: [A] bands are "income after allowances" (taxable income). With a 
 
 ## UNVERIFIED items
 
-1. Taper rate (GBP1 per GBP2) for 2020/21, 2021/22, 2022/23: archived pages do not state the rate. MEMORY ONLY: GBP1 per GBP2.
+1. RESOLVED (sign-off update): taper rate (GBP1 per GBP2) for 2020/21, 2021/22, 2022/23. The archived pages do not state it, but ITA 2007 s.35(2)-(3) point-in-time versions at 06/04/2020, 06/04/2021 and 06/04/2022 (legislation.gov.uk) all say the allowance is reduced by one half of adjusted net income over 100,000 and the result is rounded up to a whole pound. That matches `Math.floor` on the reduction. The six taper-dependent EWNI vectors (110,000 income tax and Gift Aid, 2020/21 to 2022/23) are VERIFIED and were recomputed independently by script.
 2. 2020/21 to 2022/23 on the official "rates and allowances" HMRC publication [A]: not on that page (only 2023/24 to 2026/27); figures above come from archived gov.uk/income-tax-rates captures instead.
 3. Scottish figures: out of scope, not fetched.
 4. Archive captures were fetched at timestamps nearest to those I requested; the 2021 capture at 20210601 failed with a redirect loop and 20211001 was used.
