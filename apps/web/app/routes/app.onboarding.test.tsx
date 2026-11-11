@@ -99,6 +99,7 @@ describe("OnboardingRoute (3-Step Baseline Flow)", () => {
 
   it("advances from Step 2 to Step 3 and finishes setup to launch dashboard", async () => {
     render(<OnboardingRoute />);
+    fireEvent.change(screen.getByLabelText(/annual gross salary/i), { target: { value: "45000" } });
 
     // Step 1 -> Step 2
     fireEvent.click(screen.getByText("Next: Housing and outgoings →"));
@@ -162,10 +163,16 @@ describe("OnboardingRoute (3-Step Baseline Flow)", () => {
     clearOnboardingSeed();
   });
 
-  const finish = () => {
+  const typeInto = (label: RegExp, value: string) =>
+    fireEvent.change(screen.getByLabelText(label), { target: { value } });
+
+  const finish = (opts: { cash?: string; pot?: string } = { cash: "5000", pot: "15000" }) => {
     render(<OnboardingRoute />);
+    typeInto(/annual gross salary/i, "45000");
     fireEvent.click(screen.getByText("Next: Housing and outgoings →"));
     fireEvent.click(screen.getByText("Next: Savings, pension and debt →"));
+    if (opts.cash) typeInto(/total cash and isa savings/i, opts.cash);
+    if (opts.pot) typeInto(/current pension pot/i, opts.pot);
     fireEvent.click(screen.getByRole("button", { name: /finish setup and launch dashboard/i }));
   };
 
@@ -275,5 +282,55 @@ describe("OnboardingRoute (3-Step Baseline Flow)", () => {
     finish();
     await screen.findByRole("alert");
     expect(posts(fetchMock, "/accounts")).toHaveLength(0);
+  });
+
+  it("starts with every numeric field empty and shows examples as placeholders", () => {
+    render(<OnboardingRoute />);
+    const age = screen.getByLabelText(/current age/i) as HTMLInputElement;
+    const salary = screen.getByLabelText(/annual gross salary/i) as HTMLInputElement;
+    expect(age.value).toBe("");
+    expect(salary.value).toBe("");
+    expect(age.placeholder).toMatch(/e\.g\./i);
+    expect(salary.placeholder).toMatch(/e\.g\./i);
+    fireEvent.click(screen.getByText("Next: Housing and outgoings →"));
+    expect((screen.getByLabelText(/monthly rent/i) as HTMLInputElement).value).toBe("");
+    fireEvent.click(screen.getByText("Next: Savings, pension and debt →"));
+    for (const label of [/total cash and isa savings/i, /current pension pot/i, /contribution/i]) {
+      const input = screen.getByLabelText(label) as HTMLInputElement;
+      expect(input.value).toBe("");
+      expect(input.placeholder).toMatch(/e\.g\./i);
+    }
+  });
+
+  it("keeps Finish disabled until income is entered", () => {
+    render(<OnboardingRoute />);
+    fireEvent.click(screen.getByText("Next: Housing and outgoings →"));
+    fireEvent.click(screen.getByText("Next: Savings, pension and debt →"));
+    const finishBtn = screen.getByRole("button", { name: /finish setup and launch dashboard/i });
+    expect((finishBtn as HTMLButtonElement).disabled).toBe(true);
+    fireEvent.click(screen.getByRole("button", { name: /back/i }));
+    fireEvent.click(screen.getByRole("button", { name: /back/i }));
+    typeInto(/annual gross salary/i, "45000");
+    fireEvent.click(screen.getByText("Next: Housing and outgoings →"));
+    fireEvent.click(screen.getByText("Next: Savings, pension and debt →"));
+    expect(
+      (
+        screen.getByRole("button", {
+          name: /finish setup and launch dashboard/i,
+        }) as HTMLButtonElement
+      ).disabled,
+    ).toBe(false);
+  });
+
+  it("creates no cash or pension accounts when those fields are left empty", async () => {
+    const fetchMock = vi.fn().mockImplementation(okFetch);
+    globalThis.fetch = fetchMock as any;
+    finish({});
+    await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith("/"));
+    expect(posts(fetchMock, "/accounts")).toHaveLength(0);
+    const profile = mockUpdateProfile.mock.calls[0][0];
+    expect(profile.totalCashSavings).toBeUndefined();
+    expect(profile.pensionPercent).toBeUndefined();
+    expect(profile.age).toBeUndefined();
   });
 });

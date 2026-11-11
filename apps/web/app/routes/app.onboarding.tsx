@@ -85,6 +85,8 @@ export const action = async (args: ActionFunctionArgs) => {
   return redirect("/");
 };
 
+const numOrNull = (value: string): number | null => (value === "" ? null : Number(value));
+
 const FINISH_ERROR = "We couldn't save your details. Check your connection and try again.";
 
 export default function OnboardingRoute() {
@@ -102,28 +104,39 @@ export default function OnboardingRoute() {
   const [step, setStep] = useState<1 | 2 | 3>(1);
 
   // Step 1: You & Income
-  const [age, setAge] = useState<number>(32);
+  const [age, setAge] = useState<number | null>(null);
   const [employmentType, setEmploymentType] = useState<"employed" | "self-employed">("employed");
   const [incomeMode, setIncomeMode] = useState<"gross" | "net">("gross");
-  const [grossSalary, setGrossSalary] = useState<number>(45000);
-  const [monthlyTakeHomeOverride, setMonthlyTakeHomeOverride] = useState<number>(2900);
+  const [grossSalary, setGrossSalary] = useState<number | null>(null);
+  const [monthlyTakeHomeOverride, setMonthlyTakeHomeOverride] = useState<number | null>(null);
   const [studentLoanPlan, setStudentLoanPlan] = useState<string>("NONE");
 
   // Step 2: Housing & Outgoings
   const [housingStatus, setHousingStatus] = useState<"renting" | "mortgage" | "own_outright">(
     "renting",
   );
-  const [monthlyHousingCost, setMonthlyHousingCost] = useState<number>(900);
+  const [monthlyHousingCost, setMonthlyHousingCost] = useState<number | null>(null);
   const [propertyValue, setPropertyValue] = useState<number>(0);
   const [mortgageBalance, setMortgageBalance] = useState<number>(0);
-  const [monthlyOtherOutgoings, setMonthlyOtherOutgoings] = useState<number>(1100);
+  const [monthlyOtherOutgoings, setMonthlyOtherOutgoings] = useState<number | null>(null);
 
   // Step 3: Savings, Pension & Debt
-  const [cashSavings, setCashSavings] = useState<number>(5000);
-  const [pensionPot, setPensionPot] = useState<number>(15000);
-  const [pensionPercent, setPensionPercent] = useState<number>(5);
-  const [isSalarySacrifice, setIsSalarySacrifice] = useState<boolean>(true);
+  const [cashSavings, setCashSavings] = useState<number | null>(null);
+  const [pensionPot, setPensionPot] = useState<number | null>(null);
+  const [pensionPercent, setPensionPercent] = useState<number | null>(null);
+  const [isSalarySacrifice, setIsSalarySacrifice] = useState<boolean | null>(null);
   const [unsecuredDebt, setUnsecuredDebt] = useState<number>(0);
+
+  // Empty fields are unknown, not zero: calculations use these derived values, saves use the raw ones.
+  const cash = cashSavings ?? 0;
+  const pot = pensionPot ?? 0;
+  const pensionPct = pensionPercent ?? 0;
+  const salary = grossSalary ?? 0;
+  const takeHomeNet = monthlyTakeHomeOverride ?? 0;
+  const housingCost = monthlyHousingCost ?? 0;
+  const otherOutgoings = monthlyOtherOutgoings ?? 0;
+  const sacrifice = isSalarySacrifice ?? false;
+  const hasIncome = incomeMode === "gross" ? salary > 0 : takeHomeNet > 0;
 
   // Seed banner from tools/calculators
   const [seed, setSeed] = useState<OnboardingSeedPayload | null>(null);
@@ -144,13 +157,20 @@ export default function OnboardingRoute() {
         setSeed(parsed);
         setShowSeedBanner(true);
         const hydrated = hydrateBaselineFromSeed(parsed);
-        setGrossSalary(hydrated.annualGrossSalary);
+        // Only fields the seed actually carries are filled; anything else stays empty.
+        if (parsed.annualIncome || parsed.annualGrossSalary) {
+          setGrossSalary(hydrated.annualGrossSalary);
+        }
         if (hydrated.age) setAge(hydrated.age);
         if (hydrated.employmentStatus === "SELF_EMPLOYED") setEmploymentType("self-employed");
-        setPensionPercent(hydrated.pensionContributionPct);
-        setIsSalarySacrifice(hydrated.isSalarySacrifice);
-        setCashSavings(hydrated.totalCashSavings);
-        setPensionPot(hydrated.totalPensionPot);
+        if (parsed.pensionContributionPct !== undefined) {
+          setPensionPercent(hydrated.pensionContributionPct);
+        }
+        if (parsed.isSalarySacrifice !== undefined || parsed.salarySacrifice !== undefined) {
+          setIsSalarySacrifice(hydrated.isSalarySacrifice);
+        }
+        if (hydrated.totalCashSavings > 0) setCashSavings(hydrated.totalCashSavings);
+        if (hydrated.totalPensionPot > 0) setPensionPot(hydrated.totalPensionPot);
         setMortgageBalance(hydrated.mortgageBalance);
         if (hydrated.mortgageBalance > 0) {
           setHousingStatus("mortgage");
@@ -161,8 +181,10 @@ export default function OnboardingRoute() {
           setHousingStatus("renting");
         }
         setUnsecuredDebt(hydrated.totalUnsecuredDebt);
-        setMonthlyHousingCost(hydrated.monthlyHousingCost);
-        setMonthlyOtherOutgoings(hydrated.monthlyOtherOutgoings);
+        if (hydrated.monthlyHousingCost > 0) setMonthlyHousingCost(hydrated.monthlyHousingCost);
+        if (hydrated.monthlyOtherOutgoings > 0) {
+          setMonthlyOtherOutgoings(hydrated.monthlyOtherOutgoings);
+        }
       }
     } catch (err) {
       console.error("Failed to read onboarding seed:", err);
@@ -173,15 +195,15 @@ export default function OnboardingRoute() {
   const liveTakeHome = useMemo(() => {
     if (incomeMode === "net") {
       return {
-        monthlyTakeHome: monthlyTakeHomeOverride,
-        annualTakeHome: monthlyTakeHomeOverride * 12,
+        monthlyTakeHome: takeHomeNet,
+        annualTakeHome: takeHomeNet * 12,
         trapAnalysis: { isInTaxTrap: false, marginalRatePct: 0 },
       };
     }
     const taxResult = calculateUkTax({
-      grossSalary,
-      pensionContributionPct: pensionPercent,
-      isSalarySacrifice,
+      grossSalary: salary,
+      pensionContributionPct: pensionPct,
+      isSalarySacrifice: sacrifice,
       studentLoanPlan: studentLoanPlan as any,
     });
     return {
@@ -189,43 +211,37 @@ export default function OnboardingRoute() {
       annualTakeHome: Math.round(taxResult.netTakeHomePayAnnualGbp),
       trapAnalysis: taxResult.taxTrap,
     };
-  }, [
-    incomeMode,
-    grossSalary,
-    pensionPercent,
-    isSalarySacrifice,
-    monthlyTakeHomeOverride,
-    studentLoanPlan,
-  ]);
+  }, [incomeMode, salary, pensionPct, sacrifice, takeHomeNet, studentLoanPlan]);
 
   // Live Summary Calculations
-  const monthlyHousing = housingStatus === "own_outright" ? 0 : monthlyHousingCost;
-  const totalOutgoings = monthlyHousing + monthlyOtherOutgoings;
+  const monthlyHousing = housingStatus === "own_outright" ? 0 : housingCost;
+  const totalOutgoings = monthlyHousing + otherOutgoings;
   const monthlySurplus = liveTakeHome.monthlyTakeHome - totalOutgoings;
   const homeEquity = housingStatus === "renting" ? 0 : Math.max(0, propertyValue - mortgageBalance);
-  const startingNetWorth = cashSavings + pensionPot + homeEquity - unsecuredDebt;
+  const startingNetWorth = cash + pot + homeEquity - unsecuredDebt;
 
   // Auto-inferred modules
   const inferredModules = useMemo<AppPageKey[]>(() => {
     const modules = new Set<AppPageKey>(["accounts", "budget", "savings", "forecast"]);
     if (unsecuredDebt > 0) modules.add("debt");
-    if (pensionPot > 0 || pensionPercent > 0) modules.add("pension");
+    if (pot > 0 || pensionPct > 0) modules.add("pension");
     if (housingStatus === "mortgage" || mortgageBalance > 0 || propertyValue > 0)
       modules.add("mortgage");
-    if (employmentType === "self-employed" || grossSalary >= 95000) modules.add("tax");
+    if (employmentType === "self-employed" || salary >= 95000) modules.add("tax");
     return Array.from(modules);
   }, [
     unsecuredDebt,
-    pensionPot,
-    pensionPercent,
+    pot,
+    pensionPct,
     housingStatus,
     mortgageBalance,
     propertyValue,
     employmentType,
-    grossSalary,
+    salary,
   ]);
 
   const handleFinish = async () => {
+    if (!hasIncome) return;
     setIsSubmitting(true);
     setClientError(null);
     const pagesToSave = inferredModules;
@@ -235,22 +251,22 @@ export default function OnboardingRoute() {
     try {
       // 1. Update UserProfile
       await updateProfile({
-        age,
-        annualSalary: incomeMode === "gross" ? grossSalary : monthlyTakeHomeOverride * 12,
+        age: age ?? undefined,
+        annualSalary: incomeMode === "gross" ? salary : takeHomeNet * 12,
         monthlyTakeHome: liveTakeHome.monthlyTakeHome,
         employmentType,
         studentLoanPlan,
         housingStatus,
         monthlyHousingCost: monthlyHousing,
-        monthlyOtherOutgoings,
-        totalCashSavings: cashSavings,
-        totalPensionPot: pensionPot,
+        monthlyOtherOutgoings: otherOutgoings,
+        totalCashSavings: cashSavings ?? undefined,
+        totalPensionPot: pensionPot ?? undefined,
         totalUnsecuredDebt: unsecuredDebt,
         hasMortgage: housingStatus === "mortgage" || mortgageBalance > 0,
         homeValue: propertyValue > 0 ? propertyValue : null,
         mortgageBalance: mortgageBalance > 0 ? mortgageBalance : null,
-        pensionPercent,
-        isSalarySacrifice,
+        pensionPercent: pensionPercent ?? undefined,
+        isSalarySacrifice: isSalarySacrifice ?? undefined,
         enabledPages: pagesToSave,
         dashboardWidgets,
         dashboardWidgetOrder,
@@ -258,10 +274,10 @@ export default function OnboardingRoute() {
 
       // 2. Update Central FinancialBaseline Store
       updateBaseline({
-        age,
+        ...(age !== null && { age }),
         employmentStatus: employmentType === "self-employed" ? "SELF_EMPLOYED" : "PAYE",
-        annualGrossSalary: incomeMode === "gross" ? grossSalary : monthlyTakeHomeOverride * 12,
-        monthlyTakeHomeOverride: incomeMode === "net" ? monthlyTakeHomeOverride : undefined,
+        annualGrossSalary: incomeMode === "gross" ? salary : takeHomeNet * 12,
+        monthlyTakeHomeOverride: incomeMode === "net" ? takeHomeNet : undefined,
         housingStatus:
           housingStatus === "renting"
             ? "RENTING"
@@ -271,17 +287,17 @@ export default function OnboardingRoute() {
         monthlyHousingCost: monthlyHousing,
         propertyValue,
         mortgageBalance,
-        monthlyOtherOutgoings,
-        totalCashSavings: cashSavings,
-        totalPensionPot: pensionPot,
+        monthlyOtherOutgoings: otherOutgoings,
+        totalCashSavings: cash,
+        totalPensionPot: pot,
         totalUnsecuredDebt: unsecuredDebt,
-        pensionContributionPct: pensionPercent,
-        isSalarySacrifice,
+        ...(pensionPercent !== null && { pensionContributionPct: pensionPercent }),
+        ...(isSalarySacrifice !== null && { isSalarySacrifice }),
         studentLoanPlan: studentLoanPlan as any,
         financialStage:
           unsecuredDebt > 0
             ? "STAGE_1_DEBT_RECOVERY"
-            : grossSalary >= 100000
+            : salary >= 100000
               ? "STAGE_3_WEALTH_OPTIMIZE"
               : "STAGE_2_BUFFER_BUILD",
         enabledModules: pagesToSave.filter((p): p is any => p !== "savings"),
@@ -333,8 +349,8 @@ export default function OnboardingRoute() {
         );
 
       const seedResults = await Promise.allSettled([
-        createAccountSafe("Cash and emergency savings", "Saving", cashSavings),
-        createAccountSafe("Workplace and personal pension", "Pension", pensionPot),
+        createAccountSafe("Cash and emergency savings", "Saving", cash),
+        createAccountSafe("Workplace and personal pension", "Pension", pot),
         ...(mortgageBalance > 0
           ? [createAccountSafe("Residential Mortgage", "Mortgage", mortgageBalance)]
           : []),
@@ -357,15 +373,8 @@ export default function OnboardingRoute() {
               ),
             ]
           : []),
-        ...(monthlyOtherOutgoings > 0
-          ? [
-              createBudgetEntrySafe(
-                "General living and outgoings",
-                "living",
-                monthlyOtherOutgoings,
-                false,
-              ),
-            ]
+        ...(otherOutgoings > 0
+          ? [createBudgetEntrySafe("General living and outgoings", "living", otherOutgoings, false)]
           : []),
       ]);
 
@@ -479,13 +488,18 @@ export default function OnboardingRoute() {
             <div style={{ display: "flex", alignItems: "center", gap: "8px", fontWeight: "600" }}>
               <FaCheckCircle style={{ color: "#10b981", flexShrink: 0 }} />
               <span>
-                We've pre-loaded your £
-                {(seed.annualIncome ?? seed.annualGrossSalary ?? grossSalary).toLocaleString()}{" "}
-                salary and savings baseline from the calculator.
+                {seed.annualIncome || seed.annualGrossSalary
+                  ? `We've pre-loaded your £${(seed.annualIncome ?? seed.annualGrossSalary ?? 0).toLocaleString("en-GB")} salary and savings baseline from the calculator.`
+                  : "We've pre-loaded your savings baseline from the calculator."}
               </span>
             </div>
             <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
-              <FLPButton size="sm" variant="primary" onClick={handleFinish} disabled={isSubmitting}>
+              <FLPButton
+                size="sm"
+                variant="primary"
+                onClick={handleFinish}
+                disabled={isSubmitting || !hasIncome}
+              >
                 {isSubmitting ? "Launching..." : "Launch dashboard with this baseline (10s) →"}
               </FLPButton>
               <FLPButton size="sm" variant="outline" onClick={() => setShowSeedBanner(false)}>
@@ -605,8 +619,9 @@ export default function OnboardingRoute() {
                     type="number"
                     min={18}
                     max={85}
-                    value={age}
-                    onChange={(e) => setAge(Number(e.target.value) || 0)}
+                    value={age ?? ""}
+                    placeholder="e.g. 32"
+                    onChange={(e) => setAge(numOrNull(e.target.value))}
                     style={{
                       padding: "8px 12px",
                       borderRadius: "8px",
@@ -723,8 +738,9 @@ export default function OnboardingRoute() {
                       id="baseline-income"
                       type="number"
                       step={1000}
-                      value={grossSalary}
-                      onChange={(e) => setGrossSalary(Number(e.target.value) || 0)}
+                      value={grossSalary ?? ""}
+                      placeholder="e.g. 45,000"
+                      onChange={(e) => setGrossSalary(numOrNull(e.target.value))}
                       style={{
                         padding: "10px 14px",
                         borderRadius: "8px",
@@ -768,8 +784,9 @@ export default function OnboardingRoute() {
                     id="baseline-income"
                     type="number"
                     step={100}
-                    value={monthlyTakeHomeOverride}
-                    onChange={(e) => setMonthlyTakeHomeOverride(Number(e.target.value) || 0)}
+                    value={monthlyTakeHomeOverride ?? ""}
+                    placeholder="e.g. 2,900"
+                    onChange={(e) => setMonthlyTakeHomeOverride(numOrNull(e.target.value))}
                     style={{
                       padding: "10px 14px",
                       borderRadius: "8px",
@@ -866,8 +883,6 @@ export default function OnboardingRoute() {
                     type="button"
                     onClick={() => {
                       setHousingStatus("mortgage");
-                      if (mortgageBalance === 0) setMortgageBalance(180000);
-                      if (propertyValue === 0) setPropertyValue(240000);
                     }}
                     style={{
                       padding: "10px",
@@ -893,7 +908,6 @@ export default function OnboardingRoute() {
                     onClick={() => {
                       setHousingStatus("own_outright");
                       setMortgageBalance(0);
-                      if (propertyValue === 0) setPropertyValue(280000);
                     }}
                     style={{
                       padding: "10px",
@@ -934,8 +948,9 @@ export default function OnboardingRoute() {
                     id="baseline-housing-cost"
                     type="number"
                     step={50}
-                    value={monthlyHousingCost}
-                    onChange={(e) => setMonthlyHousingCost(Number(e.target.value) || 0)}
+                    value={monthlyHousingCost ?? ""}
+                    placeholder="e.g. 900"
+                    onChange={(e) => setMonthlyHousingCost(numOrNull(e.target.value))}
                     style={{
                       padding: "10px 14px",
                       borderRadius: "8px",
@@ -1012,8 +1027,9 @@ export default function OnboardingRoute() {
                   id="baseline-other-outgoings"
                   type="number"
                   step={50}
-                  value={monthlyOtherOutgoings}
-                  onChange={(e) => setMonthlyOtherOutgoings(Number(e.target.value) || 0)}
+                  value={monthlyOtherOutgoings ?? ""}
+                  placeholder="e.g. 1,100"
+                  onChange={(e) => setMonthlyOtherOutgoings(numOrNull(e.target.value))}
                   style={{
                     padding: "10px 14px",
                     borderRadius: "8px",
@@ -1060,15 +1076,16 @@ export default function OnboardingRoute() {
                     Total cash and ISA savings (£)
                   </label>
                   <span style={{ fontWeight: 700, color: "#10b981" }}>
-                    £{cashSavings.toLocaleString()}
+                    £{cash.toLocaleString("en-GB")}
                   </span>
                 </div>
                 <input
                   id="baseline-savings"
                   type="number"
                   step={500}
-                  value={cashSavings}
-                  onChange={(e) => setCashSavings(Number(e.target.value) || 0)}
+                  value={cashSavings ?? ""}
+                  placeholder="e.g. 5,000"
+                  onChange={(e) => setCashSavings(numOrNull(e.target.value))}
                   style={{
                     padding: "10px 14px",
                     borderRadius: "8px",
@@ -1093,8 +1110,9 @@ export default function OnboardingRoute() {
                     id="baseline-pension-pot"
                     type="number"
                     step={1000}
-                    value={pensionPot}
-                    onChange={(e) => setPensionPot(Number(e.target.value) || 0)}
+                    value={pensionPot ?? ""}
+                    placeholder="e.g. 15,000"
+                    onChange={(e) => setPensionPot(numOrNull(e.target.value))}
                     style={{
                       padding: "8px 12px",
                       borderRadius: "8px",
@@ -1117,8 +1135,9 @@ export default function OnboardingRoute() {
                     min={0}
                     max={50}
                     step={1}
-                    value={pensionPercent}
-                    onChange={(e) => setPensionPercent(Number(e.target.value) || 0)}
+                    value={pensionPercent ?? ""}
+                    placeholder="e.g. 5"
+                    onChange={(e) => setPensionPercent(numOrNull(e.target.value))}
                     style={{
                       padding: "8px 12px",
                       borderRadius: "8px",
@@ -1162,6 +1181,12 @@ export default function OnboardingRoute() {
                 </FLPText>
               </div>
 
+              {!hasIncome && (
+                <FLPText color="text.muted" fontSize="xs">
+                  Enter your income in step 1 to finish setup.
+                </FLPText>
+              )}
+
               <div style={{ display: "flex", justifyContent: "space-between", marginTop: "8px" }}>
                 <FLPButton size="sm" variant="ghost" onClick={() => setStep(2)}>
                   <FaArrowLeft style={{ marginRight: "6px" }} /> Back
@@ -1169,7 +1194,7 @@ export default function OnboardingRoute() {
                 <FLPButton
                   size="md"
                   variant="primary"
-                  disabled={isSubmitting}
+                  disabled={isSubmitting || !hasIncome}
                   onClick={handleFinish}
                 >
                   {isSubmitting ? "Launching..." : "Finish setup and launch dashboard →"}

@@ -109,7 +109,9 @@ const inlineInputStyle = css({
   },
 });
 
-const ASSUMED_RATE_LABEL = "Assumed: auto-enrolment minimum";
+const ASSUMED_RATE_LABEL = "Default: auto-enrolment minimum. Change in Profile";
+const DEFAULT_GROWTH_NOTE =
+  "No growth rate is set on your pots, so the forecast uses a 5% placeholder. Edit a pot to set its rate.";
 
 const assumedLabelStyle = css({
   fontSize: "xs",
@@ -159,7 +161,7 @@ export const PensionContainer: FC = () => {
           interestRate:
             acc.interestRate !== undefined && acc.interestRate !== null
               ? Number(acc.interestRate)
-              : 5.0,
+              : null,
           isCurrent,
           monthlyContribution:
             isCurrent && acc.monthlyContribution !== undefined && acc.monthlyContribution !== null
@@ -182,22 +184,28 @@ export const PensionContainer: FC = () => {
       .reduce((sum, acc) => sum + (Number(acc.monthlyContribution) || 0), 0);
   }, [pensionAccounts]);
 
-  // Portfolio balance-weighted average return rate
-  const weightedReturnRate = useMemo(() => {
-    if (pensionAccounts.length === 0) return 5.0;
-    if (totalValue <= 0) {
-      const sumRates = pensionAccounts.reduce(
-        (sum, acc) => sum + (Number(acc.interestRate) || 5.0),
-        0,
-      );
-      return Number((sumRates / pensionAccounts.length).toFixed(1));
+  // Portfolio balance-weighted average return rate over pots that actually have a rate.
+  // A stored 0% is a real rate; only an unset rate is excluded.
+  const { weightedReturnRate, growthRateIsPlaceholder } = useMemo(() => {
+    const rated = pensionAccounts.filter((acc) => acc.interestRate !== null);
+    if (rated.length === 0) return { weightedReturnRate: 5.0, growthRateIsPlaceholder: true };
+    const ratedTotal = rated.reduce((sum, acc) => sum + (acc.balance || 0), 0);
+    if (ratedTotal <= 0) {
+      const sumRates = rated.reduce((sum, acc) => sum + (acc.interestRate ?? 0), 0);
+      return {
+        weightedReturnRate: Number((sumRates / rated.length).toFixed(1)),
+        growthRateIsPlaceholder: false,
+      };
     }
-    const weightedSum = pensionAccounts.reduce(
-      (sum, acc) => sum + (acc.balance || 0) * (Number(acc.interestRate) || 5.0),
+    const weightedSum = rated.reduce(
+      (sum, acc) => sum + (acc.balance || 0) * (acc.interestRate ?? 0),
       0,
     );
-    return Number((weightedSum / totalValue).toFixed(1));
-  }, [pensionAccounts, totalValue]);
+    return {
+      weightedReturnRate: Number((weightedSum / ratedTotal).toFixed(1)),
+      growthRateIsPlaceholder: false,
+    };
+  }, [pensionAccounts]);
 
   // Rates from profile
   const isReset = Boolean(profile.hasResetFinancialData ?? userProfile?.hasResetFinancialData);
@@ -205,11 +213,11 @@ export const PensionContainer: FC = () => {
   const storedSalary: number | null = profile.annualSalary ?? userProfile?.annualSalary ?? null;
   const hasSalary = storedSalary !== null && storedSalary > 0;
   const annualSalary = storedSalary ?? 0;
-  // The backend creates the profile row with the auto-enrolment minimums (5% and 3%). Until
-  // the profile is saved again, updatedAt still equals createdAt, so those rates are assumed.
-  const timestamps = userProfile?.createdAt ? userProfile : profile;
+  // The backend creates the profile row with the auto-enrolment minimums (5% and 3%), so
+  // that exact pair is flagged as a default the user may never have chosen.
   const ratesAssumed =
-    Boolean(timestamps?.createdAt) && timestamps.createdAt === timestamps.updatedAt;
+    (profile.pensionPercent ?? userProfile?.pensionPercent) === 5 &&
+    (profile.pensionEmployerPercent ?? userProfile?.pensionEmployerPercent) === 3;
   const employeePercent = isReset
     ? (profile.pensionPercent ?? userProfile?.pensionPercent ?? 0)
     : (profile.pensionPercent ?? userProfile?.pensionPercent ?? 5.0);
@@ -517,6 +525,11 @@ export const PensionContainer: FC = () => {
               }
         }
       >
+        {hasSalary && growthRateIsPlaceholder && pensionAccounts.length > 0 && (
+          <FLPText color="text.muted" fontSize="xs">
+            {DEFAULT_GROWTH_NOTE}
+          </FLPText>
+        )}
         {hasSalary ? (
           <PensionForecasterCard
             currentPotTotal={totalValue}

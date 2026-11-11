@@ -181,30 +181,43 @@ describe("PensionContainer", () => {
       expect(container.querySelector("#pension-forecast-salary")).toBeNull();
     });
 
-    it("unsaved profile shows the assumed label on contribution rates", () => {
+    it("backend default rates (5% + 3%) show the default label", () => {
       setProfile({
         annualSalary: 50000,
         pensionPercent: 5,
         pensionEmployerPercent: 3,
-        createdAt: "2026-11-01T09:00:00.000Z",
-        updatedAt: "2026-11-01T09:00:00.000Z",
         setupChecklistCompletedSteps: ["pension"],
       });
       render(<PensionContainer />);
-      expect(screen.getAllByText("Assumed: auto-enrolment minimum").length).toBe(2);
+      expect(screen.getAllByText("Default: auto-enrolment minimum. Change in Profile").length).toBe(
+        2,
+      );
     });
 
-    it("a saved profile does not show the assumed label", () => {
+    it("non-default rates do not show the default label", () => {
       setProfile({
         annualSalary: 50000,
-        pensionPercent: 5,
-        pensionEmployerPercent: 3,
-        createdAt: "2026-11-01T09:00:00.000Z",
-        updatedAt: "2026-11-05T10:30:00.000Z",
+        pensionPercent: 6,
+        pensionEmployerPercent: 4,
         setupChecklistCompletedSteps: ["pension"],
       });
       render(<PensionContainer />);
-      expect(screen.queryByText("Assumed: auto-enrolment minimum")).toBeNull();
+      expect(screen.queryByText(/Default: auto-enrolment minimum/)).toBeNull();
+    });
+
+    it("a pot with no growth rate is labelled as a placeholder, a 0% rate is kept", () => {
+      testLoaderData = {
+        accounts: [{ id: "p", name: "Pot", type: "Pension", balance: 1000, interestRate: null }],
+        accountDetails: [],
+        userProfile: { annualSalary: 50000, setupChecklistCompletedSteps: ["pension"] },
+      };
+      testProfileData = testLoaderData.userProfile;
+      const { unmount } = render(<PensionContainer />);
+      expect(screen.getByText(/No growth rate is set on your pots/)).toBeDefined();
+      unmount();
+      testLoaderData.accounts[0].interestRate = 0;
+      render(<PensionContainer />);
+      expect(screen.queryByText(/No growth rate is set on your pots/)).toBeNull();
     });
 
     it("keeps a saved 0% contribution rate as 0%", () => {
@@ -218,7 +231,7 @@ describe("PensionContainer", () => {
       });
       render(<PensionContainer />);
       expect(screen.getByText(/Employee:/).parentElement?.textContent).toContain("0%");
-      expect(screen.queryByText("Assumed: auto-enrolment minimum")).toBeNull();
+      expect(screen.queryByText(/Default: auto-enrolment minimum/)).toBeNull();
     });
   });
 });
