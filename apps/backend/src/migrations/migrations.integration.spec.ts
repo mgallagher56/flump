@@ -3,6 +3,7 @@ import { DataSource, type DataSourceOptions } from "typeorm";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { typeOrmOptionsFromEnv } from "../config/typeorm.options";
 import { assertSafeTestDatabase } from "../testing/assertSafeTestDatabase";
+import { resolveDbTestMode } from "../testing/dbTestMode";
 import { Baseline1794355200000 } from "./Baseline1794355200000";
 import { ClearBankTokens1794355300000 } from "./ClearBankTokens1794355300000";
 
@@ -11,7 +12,8 @@ import { ClearBankTokens1794355300000 } from "./ClearBankTokens1794355300000";
 //     -e POSTGRES_DB=flump_e3_test -p 55432:5432 postgres:18-alpine
 //   TEST_DATABASE_URL=postgres://postgres:postgres@localhost:55432/flump_e3_test \
 //     bunx vitest run src/migrations
-// Skipped when TEST_DATABASE_URL is unset; throws if it points at anything unsafe.
+// Skipped when TEST_DATABASE_URL is unset, unless REQUIRE_DB_TESTS=1 (CI), in which
+// case collection fails instead. Throws if the URL points at anything unsafe.
 const TEST_DATABASE_URL = process.env.TEST_DATABASE_URL;
 
 const ENTITY_TABLES = [
@@ -25,7 +27,7 @@ const ENTITY_TABLES = [
   "user_profiles",
 ];
 
-describe.skipIf(!TEST_DATABASE_URL)("migrations (real Postgres)", () => {
+describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Postgres)", () => {
   let ds: DataSource;
 
   beforeEach(async () => {
