@@ -11,6 +11,26 @@ import {
 } from "./baseline.store";
 import * as stateExports from "./index";
 
+describe("salary-less seeds", () => {
+  it("never fabricate a baseline", () => {
+    window.localStorage.clear();
+    const adapter = new CookieSeedAdapter();
+    adapter.saveSeed({
+      mode: "WEALTH",
+      inferredStage: "STAGE_2_BUFFER_BUILD",
+      inferredModules: ["accounts"],
+      timestamp: Date.now(),
+    });
+    expect(adapter.getBaseline()).toBeNull();
+    const { result } = renderHook(() => useFinancialBaseline());
+    expect(result.current.baseline.annualGrossSalary).toBe(
+      DEFAULT_FINANCIAL_BASELINE.annualGrossSalary,
+    );
+    expect(adapter.getSeed()).not.toBeNull();
+    adapter.clearSeed();
+  });
+});
+
 describe("Phase 2 Verification Gate: baseline.store & Onboarding Seed Hydration", () => {
   it("re-exports baseline and scenario stores from state/index.ts", () => {
     expect(stateExports.DEFAULT_FINANCIAL_BASELINE).toBeDefined();
