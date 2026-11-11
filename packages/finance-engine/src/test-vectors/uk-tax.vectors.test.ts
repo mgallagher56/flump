@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 import {
   runUkTaxVectors,
   selectUkTaxVectors,
-  UK_TAX_PENDING_OWNER_VECTORS,
   UK_TAX_VECTOR_YEARS,
   UK_TAX_VECTORS,
   type UkTaxVectorKind,
@@ -129,21 +128,14 @@ describe("runUkTaxVectors", () => {
   });
 });
 
-describe("Scottish Gift Aid owner-pending vectors (D9)", () => {
-  it("are kept out of the asserted catalogue", () => {
-    const pendingIds = new Set(UK_TAX_PENDING_OWNER_VECTORS.map((v) => v.id));
-    expect(pendingIds.size).toBe(UK_TAX_PENDING_OWNER_VECTORS.length);
-    for (const v of UK_TAX_VECTORS) expect(pendingIds.has(v.id), v.id).toBe(false);
-    expect(selectUkTaxVectors({ kind: "giftAid", region: "SCOTLAND" })).toEqual([]);
-  });
+describe("Scottish Gift Aid band-extension vectors (ITA 2007 s.414(2)(b))", () => {
+  const scot = () => selectUkTaxVectors({ kind: "giftAid", region: "SCOTLAND" });
 
-  it("cover 2025/26 and 2026/27 at 30k, 60k and 110k with a 1000 net gift, all UNVERIFIED", () => {
-    expect(UK_TAX_PENDING_OWNER_VECTORS).toHaveLength(6);
-    for (const v of UK_TAX_PENDING_OWNER_VECTORS) {
-      expect(v.region, v.id).toBe("SCOTLAND");
-      expect(v.kind, v.id).toBe("giftAid");
+  it("are in the asserted catalogue: 16 vectors, all UNVERIFIED, citing s.414", () => {
+    expect(scot()).toHaveLength(16);
+    for (const v of scot()) {
       expect(v.status, v.id).toBe("UNVERIFIED");
-      expect(v.unverifiedReason, v.id).toMatch(/^UNVERIFIED: .*owner ruling pending D9/);
+      expect(v.unverifiedReason, v.id).toMatch(/^UNVERIFIED: .*s\.414\(2\)\(b\)/);
       expect(v.confidence, v.id).toBe("medium");
       expect(v.signedOffBy, v.id).toBeNull();
       expect(v.source, v.id).toMatch(GOV_URL);
@@ -151,14 +143,40 @@ describe("Scottish Gift Aid owner-pending vectors (D9)", () => {
         "https://www.legislation.gov.uk/ukpga/2007/3/section/414",
       );
       expect(v.derivation, v.id).toContain("s.414(2)(b)");
-      expect(v.input.giftAidNet, v.id).toBe(1000);
     }
-    const get = (id: string) => UK_TAX_PENDING_OWNER_VECTORS.find((v) => v.id === id)?.expected;
+  });
+
+  it("cover 2020/21, 2025/26 and 2026/27, a basic/intermediate straddle and incomes above 125,140", () => {
+    const years = new Set(scot().map((v) => v.taxYear));
+    expect([...years].sort()).toEqual(["2020/21", "2025/26", "2026/27"]);
+    const ids = new Set(scot().map((v) => v.id));
+    // 2025/26 extended basic upper limit is 16171 taxable (gross 28741): 28000 below, 29000 above
+    expect(ids.has("scotland.giftAid.2025-26.28000.net1000")).toBe(true);
+    expect(ids.has("scotland.giftAid.2025-26.29000.net1000")).toBe(true);
+    // 2020/21 extended basic upper limit is 13908 taxable (gross 26408): 26000 below, 27000 above
+    expect(ids.has("scotland.giftAid.2020-21.26000.net1000")).toBe(true);
+    expect(ids.has("scotland.giftAid.2020-21.27000.net1000")).toBe(true);
+    expect(ids.has("scotland.giftAid.2025-26.130000.net1000")).toBe(true);
+    expect(ids.has("scotland.giftAid.2020-21.160000.net1000")).toBe(true);
+  });
+
+  it("hold the statute-derived expected values", () => {
+    const get = (id: string) => UK_TAX_VECTORS.find((v) => v.id === id)?.expected;
     expect(get("scotland.giftAid.2025-26.30000.net1000")).toBe(3470.32);
+    expect(get("scotland.giftAid.2025-26.28000.net1000")).toBe(3057.73);
+    expect(get("scotland.giftAid.2025-26.29000.net1000")).toBe(3260.32);
     expect(get("scotland.giftAid.2025-26.60000.net1000")).toBe(12938.8);
+    expect(get("scotland.giftAid.2025-26.70000.net4000")).toBe(16313.8);
     expect(get("scotland.giftAid.2025-26.110000.net1000")).toBe(36920.05);
+    expect(get("scotland.giftAid.2025-26.130000.net1000")).toBe(49716.1);
     expect(get("scotland.giftAid.2026-27.30000.net1000")).toBe(3446.33);
     expect(get("scotland.giftAid.2026-27.60000.net1000")).toBe(12907.05);
     expect(get("scotland.giftAid.2026-27.110000.net1000")).toBe(36888.3);
+    expect(get("scotland.giftAid.2020-21.30000.net1000")).toBe(3515.07);
+    expect(get("scotland.giftAid.2020-21.26000.net1000")).toBe(2679.15);
+    expect(get("scotland.giftAid.2020-21.27000.net1000")).toBe(2885.07);
+    expect(get("scotland.giftAid.2020-21.60000.net1000")).toBe(12879.07);
+    expect(get("scotland.giftAid.2020-21.110000.net1000")).toBe(35172.82);
+    expect(get("scotland.giftAid.2020-21.160000.net1000")).toBe(59441.57);
   });
 });

@@ -29,17 +29,6 @@ import {
   type UkTaxYearRules,
 } from "./uk-tax-year.js";
 
-/**
- * Owner decision D9-B (E4 T6). For Scottish taxpayers Gift Aid only feeds the
- * personal allowance taper (via adjusted net income). It does NOT extend the
- * Scottish bands. HMRC guidance on whether grossed-up Gift Aid extends the
- * Scottish bands was not verified, so the result may overstate tax for a
- * Scottish taxpayer who gives to charity. Carried on the calculateUkTax result
- * as `giftAidDisclaimer` for Scottish taxpayers with Gift Aid.
- */
-export const SCOTLAND_GIFT_AID_DISCLAIMER =
-  "Gift Aid band extension is not modelled for Scottish taxpayers: Gift Aid only affects the personal allowance taper here, so your Scottish income tax may be overstated.";
-
 export const UK_TAX_CONSTANTS = {
   PERSONAL_ALLOWANCE_DEFAULT: 12570,
   TAX_TRAP_LOWER_THRESHOLD: 100000,
@@ -145,8 +134,10 @@ function incomeTaxOnAdjustedNetIncome(
 }
 
 /**
- * Analyses the £100k - £125,140 60% UK Tax Trap for `taxYear` (default: the
- * current tax year; unsupported years throw UnsupportedUkTaxYearError).
+ * Analyses the £100k - £125,140 60% UK Tax Trap for `taxYear`. With no year
+ * argument it uses the current tax year if supported, otherwise falls back to the
+ * latest supported year (it does not throw); an explicitly passed unsupported
+ * year throws UnsupportedUkTaxYearError.
  *
  * Rates and escape savings are derived from the year's tables, not flat-rate
  * arithmetic. `marginalRatePct` is income tax only: the rate of the band that
@@ -312,7 +303,9 @@ export function calculateEwniIncomeTax(
  * using the year's Scottish band table (UK_SCOTLAND_INCOME_TAX). Bands are
  * thresholds on taxable income (income - personalAllowance), so a tapered
  * allowance raises taxable income and the advanced band starts at taxable
- * 62,430 regardless. Gift Aid never extends these bands (D9-B).
+ * 62,430 regardless. This helper takes no Gift Aid: calculateUkTax
+ * extends the Basic band's upper limit and the bands above it by the grossed-up
+ * gift (ITA 2007 s.414(2)(b)).
  * Sources: https://www.gov.uk/guidance/rates-and-thresholds-for-employers-YYYY-to-YYYY
  * (Scottish PAYE table for each year).
  */
@@ -430,16 +423,15 @@ export function calculateUkTax(input: UkTaxCalculationInput): UkTaxCalculationRe
   // Personal Allowance after taper (year-specific)
   const effectiveAllowance = calculatePersonalAllowanceForYear(adjustedNetIncome, rules);
 
-  // Income before allowance: Gift Aid does NOT reduce it (it extends the bands instead).
+  // Income before allowance: Gift Aid does NOT reduce it (it extends the bands instead; for Scotland
+  // the Basic upper limit and the bands above it, ITA 2007 s.414(2)(b)).
   const incomeBeforeAllowance = Math.max(0, totalGrossIncome - employeePensionContribution);
   const taxableIncome = Math.max(0, incomeBeforeAllowance - effectiveAllowance);
 
   // Income Tax
-  const incomeTax =
-    region === "SCOTLAND"
-      ? calculateScottishIncomeTax(incomeBeforeAllowance, effectiveAllowance, taxYear)
-      : calculateIncomeTaxOnTaxable(taxableIncome, rules, region, { bandExtension: grossGiftAid })
-          .total;
+  const incomeTax = calculateIncomeTaxOnTaxable(taxableIncome, rules, region, {
+    bandExtension: grossGiftAid,
+  }).total;
 
   // National Insurance (calculated on payroll gross pay)
   const nationalInsurance = calculateEmployeeNi(grossPayForNi, rules);
@@ -526,9 +518,6 @@ export function calculateUkTax(input: UkTaxCalculationInput): UkTaxCalculationRe
     effectiveTaxRatePct,
     taxTrap,
     allowances,
-    ...(region === "SCOTLAND" && netGiftAid > 0
-      ? { giftAidDisclaimer: SCOTLAND_GIFT_AID_DISCLAIMER }
-      : {}),
   };
 }
 
