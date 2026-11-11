@@ -309,7 +309,7 @@ describe("FinanceController & FinanceService", () => {
 
     // Sync with no accessToken
     mockBankConnRepo.findOne.mockResolvedValueOnce({ id: "c1", institutionId: "monzo" });
-    await expect(controller.syncBankConnection(req, "c1")).rejects.toThrow(/has no active token/);
+    await expect(controller.syncBankConnection(req, "c1")).rejects.toThrow(/reconnected/);
 
     // Sync with expiring token triggers refresh
     mockConfig.get.mockReturnValue("secret");
@@ -325,7 +325,7 @@ describe("FinanceController & FinanceService", () => {
     expect(syncRes.success).toBe(true);
     expect(mockProvider.exchangeCode).toHaveBeenCalled();
 
-    // Sync provider error returns success: false
+    // Sync provider error returns success: false with a generic message
     mockBankConnRepo.findOne.mockResolvedValueOnce({
       id: "c1",
       institutionId: "monzo",
@@ -335,7 +335,8 @@ describe("FinanceController & FinanceService", () => {
     mockProvider.fetchAccounts.mockRejectedValueOnce(new Error("timeout"));
     const failRes = await controller.syncBankConnection(req, "c1");
     expect(failRes.success).toBe(false);
-    expect(failRes.error).toBe("timeout");
+    expect(failRes.error).not.toContain("timeout");
+    expect(Object.keys(failRes.connection)).not.toContain("accessToken");
 
     // Delete connection not found & found
     await expect(controller.deleteBankConnection(req, "missing")).rejects.toThrow(
