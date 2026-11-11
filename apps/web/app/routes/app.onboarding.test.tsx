@@ -41,16 +41,20 @@ vi.mock("~/state/baseline.store", () => ({
   }),
 }));
 
+// Lists (GET) answer with an empty array; creates (POST) answer with a record.
+const okFetch = async (_url: string, init?: RequestInit) =>
+  new Response(init?.method === "POST" ? JSON.stringify({ success: true }) : "[]", { status: 200 });
+const posts = (fetchMock: ReturnType<typeof vi.fn>, suffix: string) =>
+  fetchMock.mock.calls.filter(
+    ([u, init]) => String(u).endsWith(suffix) && (init as RequestInit)?.method === "POST",
+  );
+
 describe("OnboardingRoute (3-Step Baseline Flow)", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockActionData = undefined;
     vi.stubGlobal("ENV", { VITE_API_URL: "https://api.example.test" });
-    globalThis.fetch = vi
-      .fn()
-      .mockImplementation(
-        async () => new Response(JSON.stringify({ success: true }), { status: 200 }),
-      );
+    globalThis.fetch = vi.fn().mockImplementation(okFetch);
   });
 
   it("shows a failed action's error in an alert", () => {
@@ -185,7 +189,7 @@ describe("OnboardingRoute (3-Step Baseline Flow)", () => {
       expect.objectContaining({ onboardingCompleted: true }),
     );
 
-    fetchMock.mockImplementation(async () => new Response("{}", { status: 200 }));
+    fetchMock.mockImplementation(okFetch);
     fireEvent.click(screen.getByRole("button", { name: /finish setup and launch dashboard/i }));
     await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith("/"));
     expect(screen.queryByRole("alert")).toBeNull();
@@ -193,16 +197,17 @@ describe("OnboardingRoute (3-Step Baseline Flow)", () => {
 
   it("retries only failed seed jobs after a partial success", async () => {
     let entriesOk = false;
-    const fetchMock = vi.fn().mockImplementation(async (url: string) => {
-      if (url.endsWith("/budget-entries") && !entriesOk) return new Response(null, { status: 503 });
-      return new Response("{}", { status: 200 });
+    const fetchMock = vi.fn().mockImplementation(async (url: string, init?: RequestInit) => {
+      if (url.endsWith("/budget-entries") && init?.method === "POST" && !entriesOk) {
+        return new Response(null, { status: 503 });
+      }
+      return okFetch(url, init);
     });
     globalThis.fetch = fetchMock as any;
     finish();
     await screen.findByRole("alert");
     expect(mockNavigate).not.toHaveBeenCalled();
-    const accountCalls = () =>
-      fetchMock.mock.calls.filter(([u]) => String(u).endsWith("/accounts")).length;
+    const accountCalls = () => posts(fetchMock, "/accounts").length;
     const accountsFirst = accountCalls();
     expect(accountsFirst).toBeGreaterThan(0);
 
@@ -211,5 +216,64 @@ describe("OnboardingRoute (3-Step Baseline Flow)", () => {
     await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith("/"));
     expect(accountCalls()).toBe(accountsFirst);
     expect(mockUpdateProfile).toHaveBeenLastCalledWith({ onboardingCompleted: true });
+  });
+
+  it("skips accounts and budget entries that already exist on the backend", async () => {
+    const fetchMock = vi.fn().mockImplementation(async (url: string, init?: RequestInit) => {
+      if (init?.method === "POST") return okFetch(url, init);
+      if (String(url).endsWith("/accounts")) {
+        return new Response(
+          JSON.stringify([{ name: "Cash and emergency savings" }, { name: "Unrelated" }]),
+          { status: 200 },
+        );
+      }
+      return new Response(JSON.stringify([{ title: "Monthly Take-Home Income" }]), { status: 200 });
+    });
+    globalThis.fetch = fetchMock as any;
+    finish();
+    await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith("/"));
+    const created = (suffix: string) =>
+      posts(fetchMock, suffix).map(([, init]) => JSON.parse((init as RequestInit).body as string));
+    expect(created("/accounts").map((a) => a.name)).not.toContain("Cash and emergency savings");
+    expect(created("/budget-entries").map((e) => e.title)).not.toContain(
+      "Monthly Take-Home Income",
+    );
+  });
+
+  it("creates everything when nothing exists yet", async () => {
+    const fetchMock = vi.fn().mockImplementation(okFetch);
+    globalThis.fetch = fetchMock as any;
+    finish();
+    await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith("/"));
+    const names = posts(fetchMock, "/accounts").map(
+      ([, init]) => JSON.parse((init as RequestInit).body as string).name,
+    );
+    expect(names).toContain("Cash and emergency savings");
+  });
+
+  it("does not seed or complete onboarding when the existing-records lookup fails", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockImplementation(async (url: string, init?: RequestInit) =>
+        init?.method === "POST" ? okFetch(url, init) : new Response(null, { status: 503 }),
+      );
+    globalThis.fetch = fetchMock as any;
+    finish();
+    expect((await screen.findByRole("alert")).textContent).toMatch(/couldn.t save your details/i);
+    expect(posts(fetchMock, "/accounts")).toHaveLength(0);
+    expect(posts(fetchMock, "/budget-entries")).toHaveLength(0);
+    expect(mockNavigate).not.toHaveBeenCalled();
+  });
+
+  it("treats a non-array lookup response as a failure instead of guessing", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockImplementation(async (url: string, init?: RequestInit) =>
+        init?.method === "POST" ? okFetch(url, init) : new Response("{}", { status: 200 }),
+      );
+    globalThis.fetch = fetchMock as any;
+    finish();
+    await screen.findByRole("alert");
+    expect(posts(fetchMock, "/accounts")).toHaveLength(0);
   });
 });
