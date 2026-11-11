@@ -8,11 +8,13 @@ import { FiArrowRight, FiLock } from "react-icons/fi";
 import {
   type LoaderFunctionArgs,
   type MetaFunction,
+  redirect,
   useNavigate,
   useSearchParams,
 } from "react-router";
 import { HomeDashboard } from "~/components/dashboard/HomeDashboard";
 import { financialBaselineAtom, writeOnboardingSeedCookie } from "~/state/baseline.store";
+import { getAuthSession } from "~/utils/auth.server";
 import { getSandboxPersonaData } from "~/utils/demoData";
 
 export const meta: MetaFunction = () => [
@@ -67,7 +69,15 @@ const saveButtonStyle = css({
   _hover: { opacity: 0.9 },
 });
 
-export const loader = async (_args: LoaderFunctionArgs) => {
+// The sandbox is for signed-out visitors only: signed-in users already have real data.
+export const loader = async (args: LoaderFunctionArgs) => {
+  try {
+    const { user } = await getAuthSession(args, { ensureSignedIn: false });
+    if (user) return redirect("/");
+  } catch (error) {
+    // Auth redirects and similar Responses must propagate; anything else means signed out.
+    if (error instanceof Response) throw error;
+  }
   return {};
 };
 
@@ -116,8 +126,6 @@ export default function SandboxRoute() {
   const handleSaveAndCreateAccount = () => {
     const seed: OnboardingSeedPayload = {
       mode: activePersona === "debt" ? "DEBT" : "WEALTH",
-      annualGrossSalary:
-        activePersona === "debt" ? 34000 : activePersona === "medium" ? 45000 : 115000,
       inferredStage:
         activePersona === "debt"
           ? "STAGE_1_DEBT_RECOVERY"
