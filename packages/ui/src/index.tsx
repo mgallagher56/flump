@@ -10,6 +10,7 @@ export * from "./foundations/SpacingAndRadii";
 export * from "./foundations/TypographyScale";
 export * from "./patterns/AllowanceProgressPill";
 export * from "./patterns/AppSectionDivider";
+export * from "./patterns/ChartFigure";
 export * from "./patterns/DebtToWealthChart";
 export * from "./patterns/GlobalBaselineBar";
 // Financial Patterns
