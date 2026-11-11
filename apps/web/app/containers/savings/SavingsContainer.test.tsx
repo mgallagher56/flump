@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 vi.mock("react-router", () => ({
@@ -82,10 +82,16 @@ describe("SavingsContainer", () => {
     expect(screen.getByText("Compound Interest Growth Forecaster")).toBeDefined();
   });
 
-  it("displays savings accounts in the list", () => {
+  it("displays savings accounts in the list and switches tabs", () => {
     render(<SavingsContainer />);
 
     expect(screen.getAllByText("High Yield Saver").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Vanguard ISA").length).toBeGreaterThan(0);
+
+    fireEvent.click(screen.getByRole("button", { name: /Savings & Investment Accounts/i }));
+    fireEvent.click(screen.getByRole("button", { name: /Annual Allowances & Setup/i }));
+    fireEvent.click(screen.getByRole("button", { name: /Growth Forecaster & Simulator/i }));
+
+    fireEvent.click(screen.getAllByRole("button", { name: /Add account/i })[0]);
   });
 });

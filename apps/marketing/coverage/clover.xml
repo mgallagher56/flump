@@ -1,0 +1,287 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<coverage generated="1794314644426" clover="3.2.0">
+  <project timestamp="1794314644426" name="All files">
+    <metrics statements="227" coveredstatements="200" conditionals="144" coveredconditionals="121" methods="63" coveredmethods="41" elements="434" coveredelements="362" complexity="0" loc="227" ncloc="227" packages="4" files="14" classes="14"/>
+    <package name="components">
+      <metrics statements="158" coveredstatements="133" conditionals="74" coveredconditionals="55" methods="48" coveredmethods="28"/>
+      <file name="BaselineSnapshotPreview.tsx" path="/Users/marcgallagher/.gemini/antigravity/worktrees/flump/increase_vitest_coverage/apps/marketing/src/components/BaselineSnapshotPreview.tsx">
+        <metrics statements="11" coveredstatements="11" conditionals="0" coveredconditionals="0" methods="1" coveredmethods="1"/>
+        <line num="6" count="1" type="stmt"/>
+        <line num="18" count="1" type="stmt"/>
+        <line num="30" count="1" type="stmt"/>
+        <line num="43" count="1" type="stmt"/>
+        <line num="52" count="1" type="stmt"/>
+        <line num="60" count="1" type="stmt"/>
+        <line num="67" count="1" type="stmt"/>
+        <line num="80" count="1" type="stmt"/>
+        <line num="95" count="1" type="stmt"/>
+        <line num="96" count="3" type="stmt"/>
+        <line num="97" count="3" type="stmt"/>
+      </file>
+      <file name="ComparisonMatrix.tsx" path="/Users/marcgallagher/.gemini/antigravity/worktrees/flump/increase_vitest_coverage/apps/marketing/src/components/ComparisonMatrix.tsx">
+        <metrics statements="10" coveredstatements="10" conditionals="6" coveredconditionals="5" methods="2" coveredmethods="2"/>
+        <line num="6" count="1" type="stmt"/>
+        <line num="18" count="1" type="stmt"/>
+        <line num="30" count="1" type="stmt"/>
+        <line num="45" count="1" type="stmt"/>
+        <line num="53" count="1" type="stmt"/>
+        <line num="67" count="1" type="stmt"/>
+        <line num="74" count="1" type="stmt"/>
+        <line num="75" count="3" type="stmt"/>
+        <line num="114" count="3" type="stmt"/>
+        <line num="142" count="18" type="stmt"/>
+      </file>
+      <file name="FeaturePillars.tsx" path="/Users/marcgallagher/.gemini/antigravity/worktrees/flump/increase_vitest_coverage/apps/marketing/src/components/FeaturePillars.tsx">
+        <metrics statements="6" coveredstatements="6" conditionals="0" coveredconditionals="0" methods="2" coveredmethods="2"/>
+        <line num="7" count="1" type="stmt"/>
+        <line num="24" count="1" type="stmt"/>
+        <line num="25" count="12" type="stmt"/>
+        <line num="37" count="1" type="stmt"/>
+        <line num="46" count="1" type="stmt"/>
+        <line num="47" count="3" type="stmt"/>
+      </file>
+      <file name="Footer.tsx" path="/Users/marcgallagher/.gemini/antigravity/worktrees/flump/increase_vitest_coverage/apps/marketing/src/components/Footer.tsx">
+        <metrics statements="7" coveredstatements="7" conditionals="0" coveredconditionals="0" methods="1" coveredmethods="1"/>
+        <line num="8" count="2" type="stmt"/>
+        <line num="19" count="2" type="stmt"/>
+        <line num="28" count="2" type="stmt"/>
+        <line num="36" count="2" type="stmt"/>
+        <line num="37" count="6" type="stmt"/>
+        <line num="38" count="6" type="stmt"/>
+        <line num="40" count="6" type="stmt"/>
+      </file>
+      <file name="Header.tsx" path="/Users/marcgallagher/.gemini/antigravity/worktrees/flump/increase_vitest_coverage/apps/marketing/src/components/Header.tsx">
+        <metrics statements="33" coveredstatements="25" conditionals="24" coveredconditionals="17" methods="15" coveredmethods="8"/>
+        <line num="11" count="3" type="stmt"/>
+        <line num="26" count="3" type="stmt"/>
+        <line num="35" count="3" type="stmt"/>
+        <line num="42" count="3" type="stmt"/>
+        <line num="50" count="3" type="stmt"/>
+        <line num="60" count="3" type="stmt"/>
+        <line num="79" count="3" type="stmt"/>
+        <line num="91" count="3" type="stmt"/>
+        <line num="109" count="3" type="stmt"/>
+        <line num="123" count="3" type="stmt"/>
+        <line num="124" count="22" type="stmt"/>
+        <line num="125" count="22" type="stmt"/>
+        <line num="126" count="22" type="stmt"/>
+        <line num="127" count="22" type="stmt"/>
+        <line num="129" count="22" type="stmt"/>
+        <line num="130" count="10" type="stmt"/>
+        <line num="133" count="22" type="stmt"/>
+        <line num="134" count="11" type="stmt"/>
+        <line num="137" count="22" type="stmt"/>
+        <line num="138" count="10" type="stmt"/>
+        <line num="139" count="0" type="cond" truecount="0" falsecount="2"/>
+        <line num="140" count="0" type="stmt"/>
+        <line num="143" count="10" type="stmt"/>
+        <line num="144" count="10" type="stmt"/>
+        <line num="147" count="22" type="stmt"/>
+        <line num="274" count="4" type="stmt"/>
+        <line num="292" count="0" type="stmt"/>
+        <line num="304" count="1" type="stmt"/>
+        <line num="316" count="0" type="stmt"/>
+        <line num="328" count="0" type="stmt"/>
+        <line num="351" count="0" type="stmt"/>
+        <line num="362" count="0" type="stmt"/>
+        <line num="371" count="0" type="stmt"/>
+      </file>
+      <file name="HomeFAQ.tsx" path="/Users/marcgallagher/.gemini/antigravity/worktrees/flump/increase_vitest_coverage/apps/marketing/src/components/HomeFAQ.tsx">
+        <metrics statements="12" coveredstatements="12" conditionals="6" coveredconditionals="6" methods="4" coveredmethods="4"/>
+        <line num="7" count="2" type="stmt"/>
+        <line num="17" count="2" type="stmt"/>
+        <line num="33" count="2" type="stmt"/>
+        <line num="40" count="2" type="stmt"/>
+        <line num="63" count="2" type="stmt"/>
+        <line num="64" count="6" type="stmt"/>
+        <line num="66" count="6" type="stmt"/>
+        <line num="67" count="2" type="cond" truecount="2" falsecount="0"/>
+        <line num="70" count="6" type="stmt"/>
+        <line num="81" count="30" type="stmt"/>
+        <line num="82" count="30" type="stmt"/>
+        <line num="89" count="2" type="stmt"/>
+      </file>
+      <file name="HowItWorksSection.tsx" path="/Users/marcgallagher/.gemini/antigravity/worktrees/flump/increase_vitest_coverage/apps/marketing/src/components/HowItWorksSection.tsx">
+        <metrics statements="5" coveredstatements="5" conditionals="0" coveredconditionals="0" methods="1" coveredmethods="1"/>
+        <line num="7" count="1" type="stmt"/>
+        <line num="26" count="1" type="stmt"/>
+        <line num="41" count="1" type="stmt"/>
+        <line num="50" count="1" type="stmt"/>
+        <line num="51" count="3" type="stmt"/>
+      </file>
+      <file name="InteractiveFinancialTeaser.tsx" path="/Users/marcgallagher/.gemini/antigravity/worktrees/flump/increase_vitest_coverage/apps/marketing/src/components/InteractiveFinancialTeaser.tsx">
+        <metrics statements="64" coveredstatements="47" conditionals="34" coveredconditionals="23" methods="20" coveredmethods="7"/>
+        <line num="13" count="1" type="stmt"/>
+        <line num="21" count="1" type="stmt"/>
+        <line num="31" count="1" type="stmt"/>
+        <line num="39" count="1" type="stmt"/>
+        <line num="40" count="6" type="stmt"/>
+        <line num="66" count="1" type="stmt"/>
+        <line num="70" count="1" type="stmt"/>
+        <line num="77" count="1" type="stmt"/>
+        <line num="84" count="1" type="stmt"/>
+        <line num="91" count="1" type="stmt"/>
+        <line num="97" count="1" type="stmt"/>
+        <line num="106" count="1" type="stmt"/>
+        <line num="124" count="1" type="stmt"/>
+        <line num="131" count="1" type="stmt"/>
+        <line num="132" count="12" type="stmt"/>
+        <line num="149" count="1" type="stmt"/>
+        <line num="160" count="1" type="stmt"/>
+        <line num="170" count="1" type="stmt"/>
+        <line num="178" count="1" type="stmt"/>
+        <line num="192" count="27" type="stmt"/>
+        <line num="199" count="1" type="stmt"/>
+        <line num="200" count="3" type="stmt"/>
+        <line num="201" count="3" type="stmt"/>
+        <line num="202" count="3" type="stmt"/>
+        <line num="203" count="3" type="stmt"/>
+        <line num="204" count="3" type="stmt"/>
+        <line num="206" count="3" type="stmt"/>
+        <line num="207" count="3" type="stmt"/>
+        <line num="208" count="3" type="stmt"/>
+        <line num="209" count="3" type="stmt"/>
+        <line num="210" count="3" type="stmt"/>
+        <line num="212" count="3" type="stmt"/>
+        <line num="213" count="3" type="stmt"/>
+        <line num="214" count="3" type="stmt"/>
+        <line num="216" count="3" type="stmt"/>
+        <line num="227" count="3" type="stmt"/>
+        <line num="228" count="3" type="stmt"/>
+        <line num="229" count="3" type="stmt"/>
+        <line num="230" count="3" type="stmt"/>
+        <line num="238" count="3" type="stmt"/>
+        <line num="239" count="3" type="stmt"/>
+        <line num="240" count="3" type="stmt"/>
+        <line num="242" count="3" type="stmt"/>
+        <line num="252" count="3" type="stmt"/>
+        <line num="253" count="0" type="stmt"/>
+        <line num="258" count="0" type="stmt"/>
+        <line num="259" count="0" type="stmt"/>
+        <line num="262" count="3" type="stmt"/>
+        <line num="263" count="0" type="stmt"/>
+        <line num="269" count="0" type="stmt"/>
+        <line num="270" count="0" type="stmt"/>
+        <line num="273" count="3" type="stmt"/>
+        <line num="337" count="0" type="stmt"/>
+        <line num="349" count="0" type="stmt"/>
+        <line num="379" count="0" type="cond" truecount="0" falsecount="2"/>
+        <line num="384" count="12" type="stmt"/>
+        <line num="388" count="0" type="stmt"/>
+        <line num="465" count="0" type="stmt"/>
+        <line num="501" count="0" type="cond" truecount="0" falsecount="2"/>
+        <line num="506" count="0" type="stmt"/>
+        <line num="510" count="0" type="stmt"/>
+        <line num="532" count="0" type="cond" truecount="0" falsecount="2"/>
+        <line num="549" count="0" type="cond" truecount="0" falsecount="2"/>
+        <line num="600" count="0" type="stmt"/>
+      </file>
+      <file name="SecurityPrivacySection.tsx" path="/Users/marcgallagher/.gemini/antigravity/worktrees/flump/increase_vitest_coverage/apps/marketing/src/components/SecurityPrivacySection.tsx">
+        <metrics statements="6" coveredstatements="6" conditionals="0" coveredconditionals="0" methods="1" coveredmethods="1"/>
+        <line num="6" count="1" type="stmt"/>
+        <line num="13" count="1" type="stmt"/>
+        <line num="26" count="1" type="stmt"/>
+        <line num="38" count="1" type="stmt"/>
+        <line num="52" count="1" type="stmt"/>
+        <line num="53" count="3" type="stmt"/>
+      </file>
+      <file name="ThemeToggle.tsx" path="/Users/marcgallagher/.gemini/antigravity/worktrees/flump/increase_vitest_coverage/apps/marketing/src/components/ThemeToggle.tsx">
+        <metrics statements="4" coveredstatements="4" conditionals="4" coveredconditionals="4" methods="1" coveredmethods="1"/>
+        <line num="6" count="4" type="stmt"/>
+        <line num="31" count="4" type="stmt"/>
+        <line num="32" count="22" type="stmt"/>
+        <line num="34" count="22" type="stmt"/>
+      </file>
+    </package>
+    <package name="context">
+      <metrics statements="34" coveredstatements="33" conditionals="14" coveredconditionals="12" methods="10" coveredmethods="8"/>
+      <file name="ThemeContext.tsx" path="/Users/marcgallagher/.gemini/antigravity/worktrees/flump/increase_vitest_coverage/apps/marketing/src/context/ThemeContext.tsx">
+        <metrics statements="34" coveredstatements="33" conditionals="14" coveredconditionals="12" methods="10" coveredmethods="8"/>
+        <line num="19" count="5" type="stmt"/>
+        <line num="21" count="5" type="stmt"/>
+        <line num="28" count="28" type="stmt"/>
+        <line num="32" count="9" type="cond" truecount="1" falsecount="1"/>
+        <line num="33" count="0" type="stmt"/>
+        <line num="35" count="9" type="stmt"/>
+        <line num="36" count="9" type="stmt"/>
+        <line num="37" count="9" type="cond" truecount="4" falsecount="0"/>
+        <line num="38" count="1" type="stmt"/>
+        <line num="40" count="8" type="cond" truecount="2" falsecount="0"/>
+        <line num="41" count="1" type="stmt"/>
+        <line num="46" count="7" type="stmt"/>
+        <line num="50" count="13" type="cond" truecount="1" falsecount="1"/>
+        <line num="51" count="13" type="stmt"/>
+        <line num="52" count="13" type="cond" truecount="2" falsecount="0"/>
+        <line num="53" count="4" type="stmt"/>
+        <line num="54" count="4" type="stmt"/>
+        <line num="56" count="9" type="stmt"/>
+        <line num="57" count="9" type="stmt"/>
+        <line num="61" count="5" type="stmt"/>
+        <line num="62" count="13" type="stmt"/>
+        <line num="64" count="13" type="stmt"/>
+        <line num="65" count="13" type="stmt"/>
+        <line num="68" count="13" type="stmt"/>
+        <line num="69" count="2" type="stmt"/>
+        <line num="70" count="2" type="stmt"/>
+        <line num="71" count="2" type="stmt"/>
+        <line num="77" count="13" type="stmt"/>
+        <line num="78" count="2" type="stmt"/>
+        <line num="79" count="2" type="cond" truecount="2" falsecount="0"/>
+        <line num="80" count="2" type="stmt"/>
+        <line num="81" count="2" type="stmt"/>
+        <line num="85" count="2" type="stmt"/>
+        <line num="89" count="13" type="stmt"/>
+      </file>
+    </package>
+    <package name="pages">
+      <metrics statements="11" coveredstatements="11" conditionals="21" coveredconditionals="21" methods="4" coveredmethods="4"/>
+      <file name="HomePage.tsx" path="/Users/marcgallagher/.gemini/antigravity/worktrees/flump/increase_vitest_coverage/apps/marketing/src/pages/HomePage.tsx">
+        <metrics statements="3" coveredstatements="3" conditionals="0" coveredconditionals="0" methods="1" coveredmethods="1"/>
+        <line num="18" count="1" type="stmt"/>
+        <line num="19" count="3" type="stmt"/>
+        <line num="21" count="3" type="stmt"/>
+      </file>
+      <file name="PricingPage.tsx" path="/Users/marcgallagher/.gemini/antigravity/worktrees/flump/increase_vitest_coverage/apps/marketing/src/pages/PricingPage.tsx">
+        <metrics statements="8" coveredstatements="8" conditionals="21" coveredconditionals="21" methods="3" coveredmethods="3"/>
+        <line num="11" count="1" type="stmt"/>
+        <line num="18" count="1" type="cond" truecount="1" falsecount="0"/>
+        <line num="19" count="6" type="stmt"/>
+        <line num="37" count="1" type="stmt"/>
+        <line num="38" count="3" type="stmt"/>
+        <line num="39" count="3" type="stmt"/>
+        <line num="41" count="3" type="stmt"/>
+        <line num="104" count="1" type="stmt"/>
+      </file>
+    </package>
+    <package name="utils">
+      <metrics statements="24" coveredstatements="23" conditionals="35" coveredconditionals="33" methods="1" coveredmethods="1"/>
+      <file name="url.ts" path="/Users/marcgallagher/.gemini/antigravity/worktrees/flump/increase_vitest_coverage/apps/marketing/src/utils/url.ts">
+        <metrics statements="24" coveredstatements="23" conditionals="35" coveredconditionals="33" methods="1" coveredmethods="1"/>
+        <line num="1" count="4" type="stmt"/>
+        <line num="3" count="52" type="cond" truecount="4" falsecount="0"/>
+        <line num="4" count="1" type="stmt"/>
+        <line num="8" count="51" type="cond" truecount="1" falsecount="1"/>
+        <line num="9" count="52" type="cond" truecount="2" falsecount="0"/>
+        <line num="10" count="1" type="stmt"/>
+        <line num="12" count="50" type="cond" truecount="3" falsecount="1"/>
+        <line num="13" count="0" type="stmt"/>
+        <line num="17" count="50" type="cond" truecount="4" falsecount="0"/>
+        <line num="18" count="45" type="stmt"/>
+        <line num="19" count="45" type="cond" truecount="4" falsecount="0"/>
+        <line num="20" count="42" type="stmt"/>
+        <line num="22" count="3" type="cond" truecount="2" falsecount="0"/>
+        <line num="23" count="1" type="stmt"/>
+        <line num="25" count="2" type="cond" truecount="2" falsecount="0"/>
+        <line num="26" count="1" type="stmt"/>
+        <line num="28" count="1" type="stmt"/>
+        <line num="32" count="5" type="cond" truecount="2" falsecount="0"/>
+        <line num="33" count="2" type="cond" truecount="2" falsecount="0"/>
+        <line num="37" count="3" type="cond" truecount="2" falsecount="0"/>
+        <line num="38" count="1" type="stmt"/>
+        <line num="40" count="2" type="cond" truecount="2" falsecount="0"/>
+        <line num="44" count="1" type="stmt"/>
+        <line num="47" count="1" type="stmt"/>
+      </file>
+    </package>
+  </project>
+</coverage>

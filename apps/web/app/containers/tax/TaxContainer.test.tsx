@@ -207,6 +207,91 @@ describe("TaxContainer & Calculation Tools", () => {
     mockLoaderRecords = mockRecords;
   });
 
+  it("renders Tax Trap & HMRC Reserve tab and syncs tax parameters", () => {
+    render(<TaxContainer />);
+
+    fireEvent.click(screen.getByText("Tax Trap & HMRC Reserve"));
+    expect(screen.getByText("Tax Parameters")).toBeDefined();
+    expect(screen.getByText(/Tax Calculations breakdown/i)).toBeDefined();
+
+    const salaryInputs = screen.getAllByRole("spinbutton");
+    if (salaryInputs.length >= 2) {
+      fireEvent.change(salaryInputs[0], { target: { value: "110000" } });
+      fireEvent.change(salaryInputs[1], { target: { value: "50" } });
+    }
+
+    const syncBtn = screen.getByRole("button", { name: /Sync parameters/i });
+    fireEvent.click(syncBtn);
+    expect(mockSubmit).toHaveBeenCalled();
+  });
+
+  it("opens Add Record modal and submits new record", () => {
+    render(<TaxContainer />);
+
+    const addRecordBtns = screen.getAllByRole("button", { name: /Add Record/i });
+    fireEvent.click(addRecordBtns[0]);
+
+    const nameInput = screen.getByLabelText("Transaction Name");
+    fireEvent.change(nameInput, { target: { value: "New Consulting Invoice" } });
+
+    const amountInput = screen.getByLabelText("Amount (£)");
+    fireEvent.change(amountInput, { target: { value: "1500" } });
+
+    const modalAddBtns = screen.getAllByRole("button", { name: /Add Record/i, hidden: true });
+    fireEvent.click(modalAddBtns[modalAddBtns.length - 1]);
+
+    expect(mockSubmit).toHaveBeenCalled();
+  });
+
+  it("filters Detailed Transaction Log, opens Edit Record modal, and deletes record", () => {
+    window.confirm = vi.fn(() => true);
+    render(<TaxContainer />);
+
+    fireEvent.click(screen.getByText("Detailed Transaction Log"));
+
+    // Click on a record row to open Edit modal
+    fireEvent.click(screen.getByText("Poplar Rent (2024/25)"));
+
+    const saveBtn = screen.getByRole("button", { name: /Save Record/i, hidden: true });
+    fireEvent.click(saveBtn);
+    expect(mockSubmit).toHaveBeenCalled();
+
+    // Delete record in log
+    const deleteBtns = screen.getAllByTitle("Delete record");
+    fireEvent.click(deleteBtns[0]);
+    expect(mockSubmit).toHaveBeenCalled();
+  });
+
+  it("executes Copy Tax Year modal action and Delete Tax Year button", () => {
+    window.confirm = vi.fn(() => true);
+    render(<TaxContainer />);
+
+    // Select 2024/25 fiscal year so records exist and Delete year button appears
+    const yearBtn = screen.queryByRole("button", { name: "2024/25" });
+    if (yearBtn) {
+      fireEvent.click(yearBtn);
+    }
+
+    const deleteYearBtn = screen.queryByRole("button", { name: /Delete 2024\/25/i });
+    if (deleteYearBtn) {
+      fireEvent.click(deleteYearBtn);
+      expect(mockSubmit).toHaveBeenCalled();
+    }
+
+    // Open Copy modal and execute copy
+    const copyBtn = screen.getAllByText(/Copy from/i)[0];
+    fireEvent.click(copyBtn);
+
+    const confirmCopyBtn = screen.queryByRole("button", {
+      name: /Copy .* Records/i,
+      hidden: true,
+    });
+    if (confirmCopyBtn) {
+      fireEvent.click(confirmCopyBtn);
+      expect(mockSubmit).toHaveBeenCalled();
+    }
+  });
+
   describe("Tax Helper Utilities", () => {
     it("correctly identifies previous and next tax years", () => {
       expect(getPreviousTaxYear("2025/26")).toBe("2024/25");

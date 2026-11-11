@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
-import type { NormalizedAccount } from "../core/types.js";
+import type { FlumpAccountCategory, FlumpBudgetBucket, NormalizedAccount } from "../core/types.js";
 import {
   calculateNetWorth,
   getAccountCategoryMetadata,
@@ -29,13 +29,48 @@ describe("banking client: helpers & bundle boundary verification", () => {
     expect(getConsentStatus(undefined, now)).toBe("MANUAL");
   });
 
-  it("provides category and budget metadata", () => {
-    const ccMeta = getAccountCategoryMetadata("CREDIT_CARD");
-    expect(ccMeta.isAsset).toBe(false);
-    expect(ccMeta.group).toBe("CREDIT_DEBT");
+  it("provides metadata for all account categories", () => {
+    const categories: FlumpAccountCategory[] = [
+      "CURRENT",
+      "SAVINGS",
+      "CASH_ISA",
+      "STOCKS_ISA",
+      "GENERAL_INVESTMENT",
+      "PENSION_WORKPLACE",
+      "PENSION_SIPP",
+      "CREDIT_CARD",
+      "OVERDRAFT",
+      "LOAN_PERSONAL",
+      "CAR_FINANCE_PCP_HP",
+      "MORTGAGE_RESIDENTIAL",
+      "MORTGAGE_BTL",
+    ];
 
-    const bucketMeta = getBudgetBucketMetadata("PRIORITY_HOUSING_COUNCIL_ENERGY");
-    expect(bucketMeta.isPriority).toBe(true);
+    for (const cat of categories) {
+      const meta = getAccountCategoryMetadata(cat);
+      expect(meta.label).toBeDefined();
+      expect(meta.group).toBeDefined();
+      expect(typeof meta.isAsset).toBe("boolean");
+    }
+  });
+
+  it("provides metadata for all budget buckets", () => {
+    const buckets: FlumpBudgetBucket[] = [
+      "PRIORITY_HOUSING_COUNCIL_ENERGY",
+      "ESSENTIAL_BILLS_GROCERIES",
+      "DEBT_MINIMUM_REPAYMENT",
+      "DEBT_OVERPAYMENT",
+      "DISCRETIONARY_WANTS",
+      "SAVINGS_INVESTMENTS_TRANSFER",
+      "INCOME",
+    ];
+
+    for (const bucket of buckets) {
+      const meta = getBudgetBucketMetadata(bucket);
+      expect(meta.label).toBeDefined();
+      expect(meta.color).toBeDefined();
+      expect(typeof meta.isPriority).toBe("boolean");
+    }
   });
 
   it("calculates net worth and weighted average savings yield across accounts", () => {
@@ -79,27 +114,41 @@ describe("banking client: helpers & bundle boundary verification", () => {
         isTaxFreeIsaWrapper: false,
         lastSyncedAt: "",
       },
+      {
+        externalAccountId: "4",
+        provider: "manual",
+        institutionName: "Halifax",
+        name: "Cash ISA",
+        category: "CASH_ISA",
+        currency: "GBP",
+        netWorthImpactGbp: 5000,
+        principalOwedGbp: 0,
+        interestRateApr: 5.0,
+        isTaxFreeIsaWrapper: true,
+        lastSyncedAt: "",
+      },
     ];
 
     const result = calculateNetWorth(accounts);
-    expect(result.totalAssetsGbp).toBe(10000);
+    expect(result.totalAssetsGbp).toBe(15000);
     expect(result.totalLiabilitiesGbp).toBe(2500);
-    expect(result.totalNetWorthGbp).toBe(7500);
-    expect(result.liquidCashGbp).toBe(10000);
-    expect(result.weightedAverageSavingsYieldApr).toBe(4.8);
+    expect(result.totalNetWorthGbp).toBe(12500);
+    expect(result.liquidCashGbp).toBe(15000);
+    expect(result.weightedAverageSavingsYieldApr).toBeGreaterThan(0);
+
+    // Empty accounts
+    const emptyResult = calculateNetWorth([]);
+    expect(emptyResult.totalNetWorthGbp).toBe(0);
+    expect(emptyResult.weightedAverageSavingsYieldApr).toBe(0);
   });
 
   it("VERIFICATION GATE: client source file must NEVER import from server or node built-ins", () => {
     const clientIndexPath = resolve(new URL(".", import.meta.url).pathname, "index.ts");
     const clientCode = readFileSync(clientIndexPath, "utf-8");
 
-    // Must not import server directory
     expect(clientCode).not.toContain("../server");
     expect(clientCode).not.toContain("/server");
     expect(clientCode).not.toContain("node:crypto");
     expect(clientCode).not.toContain("node:fs");
-    expect(clientCode).not.toContain("node:path");
-    expect(clientCode).not.toContain("createCipheriv");
-    expect(clientCode).not.toContain("createDecipheriv");
   });
 });

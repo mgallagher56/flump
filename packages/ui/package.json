@@ -25,7 +25,8 @@
     "build": "bun run generate && tsc",
     "lint": "biome check .",
     "check-types": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage"
   },
   "devDependencies": {
     "@pandacss/dev": "2.5.0",

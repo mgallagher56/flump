@@ -5,27 +5,49 @@ import ForecastContainer from "./ForecastContainer";
 
 // Mock child components to keep this integration/container test simple
 vi.mock("app/components/forecast/SavingsForecaster", () => ({
-  default: () => <div id="mock-forecaster">Mock Savings Forecaster</div>,
+  default: ({ onClearIncrease }: any) => (
+    <div id="mock-forecaster">
+      Mock Savings Forecaster
+      <button type="button" onClick={onClearIncrease}>
+        Clear Increase
+      </button>
+    </div>
+  ),
 }));
 
 vi.mock("app/components/forecast/UKTaxCalculator", () => ({
-  default: () => <div id="mock-calculator">Mock UK Tax Calculator</div>,
+  default: ({ onApplyIncrease }: any) => (
+    <div id="mock-calculator">
+      Mock UK Tax Calculator
+      <button type="button" onClick={() => onApplyIncrease(300)}>
+        Apply Raise
+      </button>
+    </div>
+  ),
 }));
 
 vi.mock("react-router", async () => {
   const actual: Record<string, unknown> = await vi.importActual("react-router");
+  const mockData = {
+    accounts: [{ id: "1", name: "Main current account", type: "Current", balance: 5000 }],
+    accountDetails: [
+      { account_id: "1", month: 11, year: 2023, value: 4500 },
+      { account_id: "1", month: 12, year: 2023, value: 5000 },
+    ],
+    userProfile: {
+      annualSalary: 105000,
+      setupChecklistCompletedSteps: ["forecast"],
+    },
+  };
   return {
     ...actual,
-    useLoaderData: vi.fn(() => ({
-      accounts: [{ id: "1", name: "Main current account", type: "Current", balance: 5000 }],
-      accountDetails: [{ account_id: "1", month: 12, year: 2023, value: 5000 }],
-    })),
+    useLoaderData: vi.fn(() => mockData),
   };
 });
 
 describe("<ForecastContainer />", () => {
-  test("renders correctly and allows tab switching", () => {
-    const { container, getByText, queryByText } = customRender(<ForecastContainer />);
+  test("renders correctly and allows tab switching and applying salary increase", () => {
+    const { container, getByText } = customRender(<ForecastContainer />);
     expect(container).toBeDefined();
 
     // Verify title and initial active tab (Savings Forecaster)
@@ -40,5 +62,10 @@ describe("<ForecastContainer />", () => {
     // Verify view switch
     expect(container.querySelector("#mock-calculator")).toBeDefined();
     expect(container.querySelector("#mock-forecaster")).toBeNull();
+
+    // Apply salary increase -> switches back to forecaster
+    fireEvent.click(getByText("Apply Raise"));
+    expect(container.querySelector("#mock-forecaster")).toBeDefined();
+    fireEvent.click(getByText("Clear Increase"));
   });
 });

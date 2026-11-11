@@ -2,29 +2,25 @@
 
 ## [1.22.0](https://github.com/mgallagher56/flump/compare/flump/marketing-v1.21.3...flump/marketing-v1.22.0) (2026-11-10)
 
-
 ### Features ✨
 
-* **design-system:** consolidate semantic tokens, enforce colocated architecture, and configure Storybook 10 suite ([b629a1b](https://github.com/mgallagher56/flump/commit/b629a1bf0fe89ea03bfab4eedb89f7ff882f007e))
-* **marketing,web:** add MCP marketing page, homepage spotlight and in-app setup instructions ([6fc69ac](https://github.com/mgallagher56/flump/commit/6fc69ac8c278129cb92ae98fc4165cfb21d8219f))
-
+- **design-system:** consolidate semantic tokens, enforce colocated architecture, and configure Storybook 10 suite ([b629a1b](https://github.com/mgallagher56/flump/commit/b629a1bf0fe89ea03bfab4eedb89f7ff882f007e))
+- **marketing,web:** add MCP marketing page, homepage spotlight and in-app setup instructions ([6fc69ac](https://github.com/mgallagher56/flump/commit/6fc69ac8c278129cb92ae98fc4165cfb21d8219f))
 
 ### Bug Fixes 🪲
 
-* **ci:** add @radix-ui/react-tabs to ui dependencies and fix backend account intake types ([7f996b1](https://github.com/mgallagher56/flump/commit/7f996b1f442b62ab255945438360a504f85a1114))
-* **docker:** include banking and finance-engine package.json in Dockerfiles ([83923df](https://github.com/mgallagher56/flump/commit/83923df4d914395482137681cd7380e547839df9))
-* **marketing:** resolve production web app URL and eliminate localhost fallback ([f024ebb](https://github.com/mgallagher56/flump/commit/f024ebba94d9f617c851005f0992ac1bd4ee0eae))
-
+- **ci:** add @radix-ui/react-tabs to ui dependencies and fix backend account intake types ([7f996b1](https://github.com/mgallagher56/flump/commit/7f996b1f442b62ab255945438360a504f85a1114))
+- **docker:** include banking and finance-engine package.json in Dockerfiles ([83923df](https://github.com/mgallagher56/flump/commit/83923df4d914395482137681cd7380e547839df9))
+- **marketing:** resolve production web app URL and eliminate localhost fallback ([f024ebb](https://github.com/mgallagher56/flump/commit/f024ebba94d9f617c851005f0992ac1bd4ee0eae))
 
 ### Refactor 🔥
 
-* **arch:** deepen modules, consolidate finance engine, and isolate banking seam ([d516793](https://github.com/mgallagher56/flump/commit/d5167938b6e343439c9bcdea944d49365162d66d))
-* **marketing:** align MCP components with colocated token laws and add agent component guidelines ([69929e3](https://github.com/mgallagher56/flump/commit/69929e3fdd9bce1908a7f62589454c1de7609439))
-
+- **arch:** deepen modules, consolidate finance engine, and isolate banking seam ([d516793](https://github.com/mgallagher56/flump/commit/d5167938b6e343439c9bcdea944d49365162d66d))
+- **marketing:** align MCP components with colocated token laws and add agent component guidelines ([69929e3](https://github.com/mgallagher56/flump/commit/69929e3fdd9bce1908a7f62589454c1de7609439))
 
 ### Tests 🧪
 
-* **web:** add test for AI & MCP profile tab and refine Radix tab events ([4c159aa](https://github.com/mgallagher56/flump/commit/4c159aaf0e771419d9f05cf9be8f1f069e632ae4))
+- **web:** add test for AI & MCP profile tab and refine Radix tab events ([4c159aa](https://github.com/mgallagher56/flump/commit/4c159aaf0e771419d9f05cf9be8f1f069e632ae4))
 
 ## 1.21.3 (2026-11-10)
 

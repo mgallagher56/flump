@@ -1,48 +1,56 @@
-import { render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { fireEvent, render, screen } from "@testing-library/react";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import SetupChecklist from "./SetupChecklist";
 
 const mockNavigate = vi.fn();
+
 vi.mock("react-router", () => ({
   useNavigate: () => mockNavigate,
 }));
 
-import SetupChecklist from "./SetupChecklist";
-
 describe("SetupChecklist", () => {
-  it("renders checklist with pension step", () => {
-    render(
-      <SetupChecklist
-        completedSteps={[]}
-        hasAccounts={true}
-        hasBudget={false}
-        hasMortgageAccount={false}
-        hasPension={false}
-        hasProfile={false}
-        hasRunForecast={false}
-        hasSavings={false}
-      />,
-    );
-
-    expect(screen.getByText("Refine pension schemes and employer match")).toBeDefined();
-    expect(screen.getByText("Refine pension →")).toBeDefined();
+  beforeEach(() => {
+    window.localStorage.clear();
+    mockNavigate.mockReset();
   });
 
-  it("marks pension step as completed when hasPension is true", () => {
+  it("expands checklist, triggers step navigation actions, and dismisses", () => {
     render(
       <SetupChecklist
-        completedSteps={[]}
-        hasAccounts={true}
-        hasBudget={false}
+        completedSteps={["budget"]}
+        hasAccounts={false}
+        hasBudget={true}
         hasMortgageAccount={false}
-        hasPension={true}
-        hasProfile={false}
+        hasProfile={true}
         hasRunForecast={false}
-        hasSavings={false}
+        variant="mobile"
       />,
     );
 
-    expect(screen.getByText("Refine pension schemes and employer match")).toBeDefined();
-    // Action button should not be present when completed
-    expect(screen.queryByText("Refine pension →")).toBeNull();
+    // Expand checklist
+    fireEvent.click(screen.getByText(/Refine and drill down your baseline/i));
+
+    // Click each incomplete step button
+    fireEvent.click(screen.getByRole("button", { name: /Add account detail/i }));
+    expect(mockNavigate).toHaveBeenCalledWith("/app/accounts");
+
+    fireEvent.click(screen.getByRole("button", { name: /Track savings/i }));
+    expect(mockNavigate).toHaveBeenCalledWith("/app/savings");
+
+    fireEvent.click(screen.getByRole("button", { name: /Refine pension/i }));
+    expect(mockNavigate).toHaveBeenCalledWith("/app/pension");
+
+    fireEvent.click(screen.getByRole("button", { name: /Drill down mortgage/i }));
+    expect(mockNavigate).toHaveBeenCalledWith("/app/mortgage");
+
+    fireEvent.click(screen.getByRole("button", { name: /Model scenarios/i }));
+    expect(mockNavigate).toHaveBeenCalledWith("/app/forecast");
+
+    fireEvent.click(screen.getByRole("button", { name: /Open tax tracker/i }));
+    expect(mockNavigate).toHaveBeenCalledWith("/app/tax");
+
+    // Dismiss checklist
+    fireEvent.click(screen.getByTitle("Dismiss"));
+    expect(window.localStorage.getItem("flump_setup_checklist_dismissed")).toBe("true");
   });
 });

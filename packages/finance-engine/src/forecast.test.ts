@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { calculateForecast } from "./forecast.js";
+import { calculateCompoundTrajectory, calculateForecast } from "./forecast.js";
 
 describe("forecast module", () => {
   it("projects 30-year compound growth baseline accurately", () => {
@@ -20,11 +20,12 @@ describe("forecast module", () => {
     expect(res.thirtyYearNetWorthBaselineGbp).toBeGreaterThan(res.tenYearNetWorthBaselineGbp);
   });
 
-  it("incorporates Life Event Scenarios (e.g. Buy Home, Have Child)", () => {
+  it("incorporates Life Event Scenarios (e.g. Buy Home, Have Child) and debt", () => {
     const res = calculateForecast({
       currentAge: 30,
       initialCashGbp: 30000,
       initialIsaGbp: 20000,
+      initialDebtGbp: 5000,
       monthlySavingsGbp: 800,
       scenarios: [
         {
@@ -35,12 +36,31 @@ describe("forecast module", () => {
           lumpSumCostGbp: 35000,
           ongoingMonthlyDeltaGbp: 300,
         },
+        {
+          id: "sc-2",
+          type: "CAREER_CHANGE",
+          title: "Career break",
+          startYear: 5,
+          lumpSumCostGbp: 60000,
+          ongoingMonthlyDeltaGbp: -200,
+        },
       ],
       projectionYears: 20,
     });
 
     const year4 = res.trajectory[4]!;
-    // Scenario net worth should reflect the property equity
     expect(year4.propertyEquityGbp).toBeGreaterThan(0);
+  });
+
+  it("calculates compound trajectory accurately", () => {
+    const res = calculateCompoundTrajectory(10000, 500, 5, 10);
+    expect(res.points.length).toBe(11);
+    expect(res.points[0].total).toBe(10000);
+    expect(res.endBalance).toBeGreaterThan(70000);
+    expect(res.totalInterest).toBeGreaterThan(0);
+    expect(res.totalContributions).toBe(10000 + 500 * 12 * 10);
+
+    const zeroRes = calculateCompoundTrajectory(0, 0, 0, 5);
+    expect(zeroRes.endBalance).toBe(0);
   });
 });
