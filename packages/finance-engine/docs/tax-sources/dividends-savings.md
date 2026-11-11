@@ -91,3 +91,11 @@ Dividend rates are not in tax-rules.ts or uk-tax.ts; they are only in tax-calcul
 3. tax-calculator.ts:499-505 PSA (1,000 / 500 / 0) agrees with S5. uk-tax.ts:18-20 constants (1000/500/0) agree with S5.
 4. Starting rate for savings (0%, band 5,000, tapering): no grep match for a starting-rate-for-savings implementation in tax-rules.ts, tax-calculator.ts or uk-tax.ts. Gap rather than a value disagreement; the engine may be over-taxing savings interest for low earners. (grep was keyword-based, not a full read.)
 5. tax-calculator.ts:503 higher-band PSA threshold uses a hardcoded 50270 / 50000 test; not a figure covered by this research.
+
+## Update (task C1): 2020/21 to 2022/23 verified
+
+Read on legislation.gov.uk (ITA 2007 point-in-time versions): s.8 at 06/04/2020 and 06/04/2021 give dividend ordinary / upper / additional 7.5% / 32.5% / 38.1%; s.8 at 06/04/2022 gives 8.75% / 33.75% / 39.35%; s.13A gives a dividend nil rate band of 2,000 at 06/04/2020, 06/04/2021 and 06/04/2022. These supersede the MEMORY ONLY rows above. tax-calculator.ts has no calculateDividendTax any more; calculateDividendTaxForStack reads rates from the per-year table in uk-tax-year.ts.
+
+- https://www.legislation.gov.uk/ukpga/2007/3/section/8/2021-04-06
+- https://www.legislation.gov.uk/ukpga/2007/3/section/8/2022-04-06
+- https://www.legislation.gov.uk/ukpga/2007/3/section/13A/2022-04-06

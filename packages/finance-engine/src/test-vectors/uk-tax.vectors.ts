@@ -3008,13 +3008,15 @@ export const UK_TAX_VECTORS: readonly UkTaxVector[] = [
       dividendIncome: 5000,
     },
     expected: 225,
-    source: "https://www.gov.uk/tax-on-dividends",
+    source: "https://www.legislation.gov.uk/ukpga/2007/3/section/8/2020-04-06",
+    additionalSources: [
+      "https://www.legislation.gov.uk/ukpga/2007/3/section/13A/2020-04-06",
+      "https://www.legislation.gov.uk/ukpga/2007/3/section/8/2021-04-06",
+    ],
     derivation:
       "Employment income 20000 less PA 12500 = 7500, inside the basic band 37500, so all dividends fall in the basic band. Dividend allowance 2000: taxable dividends 5000 - 2000 = 3000 x 7.5% = 225 (dividend tax only).",
-    confidence: "medium",
-    status: "UNVERIFIED",
-    unverifiedReason:
-      "UNVERIFIED: dividend allowance and rates for 2020/21-2022/23 are not on any page read (gov.uk table starts at 2023/24); memory only.",
+    confidence: "high",
+    status: "VERIFIED",
     signedOffBy: null,
   },
   {
@@ -3027,13 +3029,15 @@ export const UK_TAX_VECTORS: readonly UkTaxVector[] = [
       dividendIncome: 5000,
     },
     expected: 975,
-    source: "https://www.gov.uk/tax-on-dividends",
+    source: "https://www.legislation.gov.uk/ukpga/2007/3/section/8/2020-04-06",
+    additionalSources: [
+      "https://www.legislation.gov.uk/ukpga/2007/3/section/13A/2020-04-06",
+      "https://www.legislation.gov.uk/ukpga/2007/3/section/8/2021-04-06",
+    ],
     derivation:
       "Employment income 60000 less PA 12500 = 47500 already exceeds the basic band 37500, so all dividends fall in the higher band. Dividend allowance 2000: taxable dividends 5000 - 2000 = 3000 x 32.5% = 975 (dividend tax only).",
-    confidence: "medium",
-    status: "UNVERIFIED",
-    unverifiedReason:
-      "UNVERIFIED: dividend allowance and rates for 2020/21-2022/23 are not on any page read (gov.uk table starts at 2023/24); memory only.",
+    confidence: "high",
+    status: "VERIFIED",
     signedOffBy: null,
   },
   {
@@ -3046,13 +3050,12 @@ export const UK_TAX_VECTORS: readonly UkTaxVector[] = [
       dividendIncome: 5000,
     },
     expected: 225,
-    source: "https://www.gov.uk/tax-on-dividends",
+    source: "https://www.legislation.gov.uk/ukpga/2007/3/section/8/2021-04-06",
+    additionalSources: ["https://www.legislation.gov.uk/ukpga/2007/3/section/13A/2021-04-06"],
     derivation:
       "Employment income 20000 less PA 12570 = 7430, inside the basic band 37700, so all dividends fall in the basic band. Dividend allowance 2000: taxable dividends 5000 - 2000 = 3000 x 7.5% = 225 (dividend tax only).",
-    confidence: "medium",
-    status: "UNVERIFIED",
-    unverifiedReason:
-      "UNVERIFIED: dividend allowance and rates for 2020/21-2022/23 are not on any page read (gov.uk table starts at 2023/24); memory only.",
+    confidence: "high",
+    status: "VERIFIED",
     signedOffBy: null,
   },
   {
@@ -3065,13 +3068,12 @@ export const UK_TAX_VECTORS: readonly UkTaxVector[] = [
       dividendIncome: 5000,
     },
     expected: 975,
-    source: "https://www.gov.uk/tax-on-dividends",
+    source: "https://www.legislation.gov.uk/ukpga/2007/3/section/8/2021-04-06",
+    additionalSources: ["https://www.legislation.gov.uk/ukpga/2007/3/section/13A/2021-04-06"],
     derivation:
       "Employment income 60000 less PA 12570 = 47430 already exceeds the basic band 37700, so all dividends fall in the higher band. Dividend allowance 2000: taxable dividends 5000 - 2000 = 3000 x 32.5% = 975 (dividend tax only).",
-    confidence: "medium",
-    status: "UNVERIFIED",
-    unverifiedReason:
-      "UNVERIFIED: dividend allowance and rates for 2020/21-2022/23 are not on any page read (gov.uk table starts at 2023/24); memory only.",
+    confidence: "high",
+    status: "VERIFIED",
     signedOffBy: null,
   },
   {
@@ -3084,13 +3086,12 @@ export const UK_TAX_VECTORS: readonly UkTaxVector[] = [
       dividendIncome: 5000,
     },
     expected: 262.5,
-    source: "https://www.gov.uk/tax-on-dividends",
+    source: "https://www.legislation.gov.uk/ukpga/2007/3/section/8/2022-04-06",
+    additionalSources: ["https://www.legislation.gov.uk/ukpga/2007/3/section/13A/2022-04-06"],
     derivation:
       "Employment income 20000 less PA 12570 = 7430, inside the basic band 37700, so all dividends fall in the basic band. Dividend allowance 2000: taxable dividends 5000 - 2000 = 3000 x 8.75% = 262.5 (dividend tax only).",
-    confidence: "medium",
-    status: "UNVERIFIED",
-    unverifiedReason:
-      "UNVERIFIED: dividend allowance and rates for 2020/21-2022/23 are not on any page read (gov.uk table starts at 2023/24); memory only.",
+    confidence: "high",
+    status: "VERIFIED",
     signedOffBy: null,
   },
   {
@@ -3103,13 +3104,12 @@ export const UK_TAX_VECTORS: readonly UkTaxVector[] = [
       dividendIncome: 5000,
     },
     expected: 1012.5,
-    source: "https://www.gov.uk/tax-on-dividends",
+    source: "https://www.legislation.gov.uk/ukpga/2007/3/section/8/2022-04-06",
+    additionalSources: ["https://www.legislation.gov.uk/ukpga/2007/3/section/13A/2022-04-06"],
     derivation:
       "Employment income 60000 less PA 12570 = 47430 already exceeds the basic band 37700, so all dividends fall in the higher band. Dividend allowance 2000: taxable dividends 5000 - 2000 = 3000 x 33.75% = 1012.5 (dividend tax only).",
-    confidence: "medium",
-    status: "UNVERIFIED",
-    unverifiedReason:
-      "UNVERIFIED: dividend allowance and rates for 2020/21-2022/23 are not on any page read (gov.uk table starts at 2023/24); memory only.",
+    confidence: "high",
+    status: "VERIFIED",
     signedOffBy: null,
   },
   {

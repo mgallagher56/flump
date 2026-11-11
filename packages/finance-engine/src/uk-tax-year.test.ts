@@ -156,6 +156,28 @@ describe("getUkTaxYearRules", () => {
     }
   });
 
+  it("dividend table: 2020/21 to 2022/23 match ITA 2007 s.8 and s.13A point-in-time versions", () => {
+    const d = (y: (typeof SUPPORTED_UK_TAX_YEARS)[number]) => getUkTaxYearRules(y).dividends;
+    expect(d("2020/21")).toEqual({
+      allowance: 2000,
+      basicRate: 0.075,
+      higherRate: 0.325,
+      additionalRate: 0.381,
+    });
+    expect(d("2021/22")).toEqual({
+      allowance: 2000,
+      basicRate: 0.075,
+      higherRate: 0.325,
+      additionalRate: 0.381,
+    });
+    expect(d("2022/23")).toEqual({
+      allowance: 2000,
+      basicRate: 0.0875,
+      higherRate: 0.3375,
+      additionalRate: 0.3935,
+    });
+  });
+
   it("flags years with unverified figures instead of claiming they are verified", () => {
     for (const year of SUPPORTED_UK_TAX_YEARS) {
       const r = getUkTaxYearRules(year);
@@ -164,8 +186,10 @@ describe("getUkTaxYearRules", () => {
       if (year !== "2026/27") expect(r.verified, year).toBe(false);
       for (const note of r.unverified) expect(note, year).toMatch(/^UNVERIFIED: /);
     }
-    // The pre-2023 dividend table is carried over unchanged and is flagged.
-    expect(getUkTaxYearRules("2022/23").unverified.join("\n")).toContain("dividends");
+    // Pre-2023 dividends are verified from ITA 2007 s.8 / s.13A, so no dividend note remains.
+    for (const year of ["2020/21", "2021/22", "2022/23"] as const) {
+      expect(getUkTaxYearRules(year).unverified.join("\n"), year).not.toMatch(/dividend/i);
+    }
   });
 
   it("adds student loan tables for 2020/21 to 2022/23 from GOV.UK employer pages", () => {

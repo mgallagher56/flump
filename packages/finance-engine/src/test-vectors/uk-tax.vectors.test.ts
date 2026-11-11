@@ -7,7 +7,7 @@ import {
   type UkTaxVectorKind,
 } from "./uk-tax.vectors.js";
 
-const GOV_URL = /^https:\/\/www\.gov\.(uk|scot)\//;
+const GOV_URL = /^https:\/\/www\.(gov\.(uk|scot)|legislation\.gov\.uk)\//;
 
 describe("UK tax vector catalogue", () => {
   it("every vector cites a gov.uk or gov.scot source", () => {
