@@ -70,6 +70,29 @@ describe("ConfirmDialog", () => {
     expect(onConfirm).toHaveBeenCalledTimes(1);
   });
 
+  it("clears typed text when the parent closes and reopens the dialog", () => {
+    const props: ConfirmDialogProps = {
+      open: true,
+      onOpenChange: vi.fn(),
+      title: "Reset data?",
+      description: "This cannot be undone.",
+      confirmLabel: "Reset",
+      onConfirm: vi.fn(),
+      requireText: "RESET",
+    };
+    const { rerender } = render(<ConfirmDialog {...props} />);
+    fireEvent.change(screen.getByRole("textbox"), { target: { value: "RESET" } });
+    expect((screen.getByRole("button", { name: "Reset" }) as HTMLButtonElement).disabled).toBe(
+      false,
+    );
+    rerender(<ConfirmDialog {...props} open={false} />);
+    rerender(<ConfirmDialog {...props} open />);
+    expect((screen.getByRole("textbox") as HTMLInputElement).value).toBe("");
+    expect((screen.getByRole("button", { name: "Reset" }) as HTMLButtonElement).disabled).toBe(
+      true,
+    );
+  });
+
   const dangerBg = css({ bg: "status.danger.solid" });
   const primaryBg = css({ bg: "primary" });
 

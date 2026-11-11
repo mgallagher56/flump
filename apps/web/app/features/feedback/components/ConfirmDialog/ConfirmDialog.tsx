@@ -1,6 +1,6 @@
 import * as Dialog from "@radix-ui/react-dialog";
 import { Button } from "@repo/ui";
-import { type FC, type ReactNode, useId, useRef, useState } from "react";
+import { type FC, type ReactNode, useEffect, useId, useRef, useState } from "react";
 import {
   confirmActions,
   confirmContent,
@@ -46,12 +46,16 @@ export const ConfirmDialog: FC<ConfirmDialogProps> = ({
   const [typed, setTyped] = useState("");
   const inputId = useId();
 
+  // Parent-driven closes (e.g. after onConfirm resolves) keep this component mounted.
+  useEffect(() => {
+    if (!open) setTyped("");
+  }, [open]);
+
   const textMatches =
     requireText === undefined || typed.trim().toLowerCase() === requireText.trim().toLowerCase();
 
   const handleOpenChange = (next: boolean) => {
     if (pending && !next) return;
-    if (!next) setTyped("");
     onOpenChange(next);
   };
 
