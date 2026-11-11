@@ -34,6 +34,7 @@ import type { UserProfile } from "~/hooks/useUserProfile";
 import { useUserProfile } from "~/hooks/useUserProfile";
 import { apiFetch } from "~/services/api-client";
 import { backendFetch } from "~/services/backend-client.server";
+import { BackendError } from "~/services/backend-error";
 import { actionErrorResponse, throwRouteError } from "~/services/route-error.server";
 import { useFinancialBaseline } from "~/state/baseline.store";
 import { getAuthSession, requireAccessToken } from "~/utils/auth.server";
@@ -41,6 +42,7 @@ import { ALL_PAGE_KEYS, type AppPageKey, type DashboardWidgetKey } from "~/utils
 
 export const loader = async (args: LoaderFunctionArgs) => {
   const { user, accessToken } = await getAuthSession(args, { ensureSignedIn: true });
+  if (!accessToken) throwRouteError(new BackendError("unauthorised", "/user-profile"));
   try {
     const userProfile = await backendFetch<UserProfile>("/user-profile", {
       accessToken,

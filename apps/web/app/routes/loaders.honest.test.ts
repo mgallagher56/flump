@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 // The global test setup stubs parts of react-router; loaders need the real `data` and `redirect`.
 vi.mock("react-router", async () => await vi.importActual("react-router"));
@@ -35,9 +35,53 @@ async function caught(p: Promise<unknown>) {
   throw new Error("expected rejection");
 }
 
+const realFetch = globalThis.fetch;
+afterEach(() => {
+  globalThis.fetch = realFetch;
+});
+
 beforeEach(() => {
   vi.clearAllMocks();
   getAuthSession.mockResolvedValue(signedIn);
+});
+
+const unauthorisedContract = async (load: () => Promise<unknown>) => {
+  globalThis.fetch = respond(401);
+  const err = await caught(load());
+  expect(err).not.toBeInstanceOf(Response);
+  expect(err.init.status).toBe(401);
+  expect(err.data.kind).toBe("unauthorised");
+};
+
+describe("401 contract", () => {
+  it("profile loader rejects 401 unauthorised", () =>
+    unauthorisedContract(() => profileLoader(args())));
+  it("onboarding loader rejects 401 unauthorised", () =>
+    unauthorisedContract(() => onboardingLoader(args())));
+  it("account loader rejects 401 unauthorised", () =>
+    unauthorisedContract(() => accountLoader(args("http://localhost/x", { account: "a1" }))));
+});
+
+describe("missing access token", () => {
+  beforeEach(() => {
+    getAuthSession.mockResolvedValue({ user: { id: "u1" }, accessToken: undefined });
+  });
+
+  it("onboarding loader rejects 401 without fetching", async () => {
+    globalThis.fetch = vi.fn();
+    const err = await caught(onboardingLoader(args()));
+    expect(err.init.status).toBe(401);
+    expect(err.data).toEqual({ kind: "unauthorised", endpoint: "/user-profile" });
+    expect(globalThis.fetch).not.toHaveBeenCalled();
+  });
+
+  it("app index loader rejects 401 without fetching", async () => {
+    globalThis.fetch = vi.fn();
+    const err = await caught(appIndexLoader(args()));
+    expect(err.init.status).toBe(401);
+    expect(err.data.kind).toBe("unauthorised");
+    expect(globalThis.fetch).not.toHaveBeenCalled();
+  });
 });
 
 describe("app.profile loader", () => {
@@ -115,6 +159,21 @@ describe("account detail loader", () => {
     globalThis.fetch = respond(500);
     const err = await caught(accountLoader(args("http://localhost/x", { account: "a1" })));
     expect(err.init.status).toBe(502);
+  });
+
+  it("encodes the account id in the backend path", async () => {
+    globalThis.fetch = respond(200, { id: "a/b", details: [] });
+    await accountLoader(args("http://localhost/x", { account: "a/b?c" }));
+    expect((globalThis.fetch as any).mock.calls[0][0]).toBe(
+      `${apiConfig.apiBaseUrl}/accounts/a%2Fb%3Fc`,
+    );
+  });
+
+  it("treats an empty body as not-found rather than throwing a TypeError", async () => {
+    globalThis.fetch = respond(200, null);
+    const err = await caught(accountLoader(args("http://localhost/x", { account: "a1" })));
+    expect(err.init.status).toBe(404);
+    expect(err.data.kind).toBe("not-found");
   });
 
   it("calls the configured base URL and returns nested details", async () => {

@@ -99,6 +99,7 @@ const BudgetCategoryTable: FC<BudgetCategoryTableProps> = ({
   const [editingRow, setEditingRow] = useState<EditRow | null>(null);
   const [saving, setSaving] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const renderRenewalBadge = (entry: BudgetEntry) => {
     if (!entry.contractEndDate) return null;
@@ -211,9 +212,13 @@ const BudgetCategoryTable: FC<BudgetCategoryTableProps> = ({
 
   const handleConfirmDelete = async () => {
     if (!deleteId) return;
-    const id = deleteId;
-    setDeleteId(null);
-    await onDelete(id);
+    setDeleting(true);
+    try {
+      await onDelete(deleteId);
+    } finally {
+      setDeleting(false);
+      setDeleteId(null);
+    }
   };
 
   const formatAmount = (entry: BudgetEntry) => {
@@ -825,6 +830,7 @@ const BudgetCategoryTable: FC<BudgetCategoryTableProps> = ({
         onOpenChange={(open) => {
           if (!open) setDeleteId(null);
         }}
+        pending={deleting}
         title={`Delete ${entryToDelete?.name ?? "entry"}?`}
         description="This removes the entry from your budget. This can't be undone."
         confirmLabel="Delete entry"
