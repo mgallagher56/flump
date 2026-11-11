@@ -13,6 +13,7 @@ import type {
   UkTaxYear,
 } from "./types.js";
 import {
+  calculateEmployerNiSaving,
   calculateIncomeTaxOnTaxable,
   calculatePersonalAllowanceForYear,
   getUkTaxYearRules,
@@ -180,30 +181,19 @@ export function calculateTaxTrapRelief(
 }
 
 /**
- * Calculates Employer National Insurance savings on salary sacrifice.
- * UK Employer Class 1 NI secondary rate is 13.8% (or 15% from April 2025/2026).
+ * Employer Class 1 NI saved by salary sacrifice, from the per-year table
+ * (UK_EMPLOYER_NI_RATES via getUkTaxYearRules): the sacrificed amount that sat
+ * above the secondary threshold, times the secondary rate, rounded to pence.
+ * Unknown years throw UnsupportedUkTaxYearError.
+ * Source: https://www.gov.uk/guidance/rates-and-thresholds-for-employers-2025-to-2026
  */
 export function calculateEmployerNISavings(
   grossSalary: number,
   sacrificeAmount: number,
-  taxYearOrRate: string | number = 13.8,
+  taxYear: string = resolveUkTaxYear(),
 ): number {
-  if (grossSalary <= 0 || sacrificeAmount <= 0) return 0;
-
-  let rate: number;
-  let secondaryThreshold = 0;
-
-  if (typeof taxYearOrRate === "number") {
-    rate = taxYearOrRate / 100;
-  } else {
-    rate = taxYearOrRate === "2026/27" ? 0.15 : 0.138;
-    secondaryThreshold = taxYearOrRate === "2026/27" ? 5000 : 9100;
-  }
-
-  const earningsAboveSecondary =
-    secondaryThreshold > 0 ? Math.max(0, grossSalary - secondaryThreshold) : grossSalary;
-  const eligibleAmount = Math.min(sacrificeAmount, earningsAboveSecondary);
-  return Math.round(eligibleAmount * rate);
+  const rules = getUkTaxYearRules(resolveUkTaxYear(taxYear));
+  return calculateEmployerNiSaving(grossSalary, sacrificeAmount, rules);
 }
 
 /**

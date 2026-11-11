@@ -19,7 +19,7 @@ import {
   getTaxYearRemainingDays,
   SCOTLAND_GIFT_AID_DISCLAIMER,
 } from "./uk-tax.js";
-import { UnsupportedUkTaxYearError } from "./uk-tax-year.js";
+import { getCurrentUkTaxYear, UnsupportedUkTaxYearError } from "./uk-tax-year.js";
 
 afterEach(() => {
   vi.useRealTimers();
@@ -83,10 +83,47 @@ describe("uk-tax module", () => {
       expect(relief.estimatedTaxSaved).toBe(6200);
       expect(relief.lostPersonalAllowance).toBe(5000);
     });
+  });
 
-    it("calculateEmployerNISavings computes employer 13.8% NI relief", () => {
-      const savings = calculateEmployerNISavings(100000, 10000);
-      expect(savings).toBe(1380);
+  describe("calculateEmployerNISavings from the per-year table (E4 T7)", () => {
+    it("every employerNiSaving vector matches calculateEmployerNISavings", () => {
+      const vectors = selectUkTaxVectors({ kind: "employerNiSaving" });
+      const res = runUkTaxVectors(vectors, (v) => {
+        const i = v.input as { grossSalary: number; salarySacrifice: number };
+        return calculateEmployerNISavings(i.grossSalary, i.salarySacrifice, v.taxYear);
+      });
+      expect(res.checked).toBeGreaterThanOrEqual(9);
+      expect(res.failures).toEqual([]);
+    });
+
+    it("2025/26: 60000 salary, 3000 sacrifice gives 450 (15%, ST 5000)", () => {
+      expect(calculateEmployerNISavings(60000, 3000, "2025/26")).toBe(450);
+    });
+
+    it("2024/25: 60000, 3000 gives 414 (13.8%, ST 9100)", () => {
+      expect(calculateEmployerNISavings(60000, 3000, "2024/25")).toBe(414);
+    });
+
+    it("sacrifice capped at earnings above the secondary threshold (6000, 3000, 2026/27 gives 150)", () => {
+      // 1000 above ST 5000 x 15% = 150; the other 2000 of sacrifice saves nothing
+      expect(calculateEmployerNISavings(6000, 3000, "2026/27")).toBe(150);
+    });
+
+    it("rounds to pence, not whole pounds", () => {
+      // 2024/25: 1234.56 x 13.8% = 170.36928
+      expect(calculateEmployerNISavings(60000, 1234.56, "2024/25")).toBe(170.37);
+    });
+
+    it("defaults to the current tax year", () => {
+      expect(calculateEmployerNISavings(60000, 3000)).toBe(
+        calculateEmployerNISavings(60000, 3000, getCurrentUkTaxYear()),
+      );
+    });
+
+    it("throws UnsupportedUkTaxYearError for 2030/31", () => {
+      expect(() => calculateEmployerNISavings(60000, 3000, "2030/31")).toThrow(
+        UnsupportedUkTaxYearError,
+      );
     });
   });
 
