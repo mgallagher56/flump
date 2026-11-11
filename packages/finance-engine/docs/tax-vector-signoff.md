@@ -288,6 +288,7 @@ Taken from the implementer reports (T1 to T14), cross-checked against `git log m
 | I6   | analyzeTaxTrap (and calculate100kTaxTrap, calculateTaxTrapRelief) tax year                                  | year-blind; calculateTaxTrapRelief ignored its year argument          | takes taxYear (default resolveUkTaxYear()); unsupported year throws                  | n/a                                                                                                                                                    |
 
 T1 (vector catalogue) and T12's unverified list changed no figures. T1 introduced the catalogue only.
+| G | Scottish Gift Aid (no engine change) | n/a | none: six pending vectors added outside the asserted catalogue, tests skipped | https://www.legislation.gov.uk/ukpga/2007/3/section/414 |
 
 ## 3. Unverified items
 
@@ -295,12 +296,35 @@ Each needs an owner ruling or a primary source before sign-off.
 
 ### Rulings needed
 
-1. Pension treatment (net-pay versus relief at source). `UK_TAX_PENSION_TREATMENT` pins "net-pay" for every taxpayer. No GOV.UK source was consulted. No vector includes a pension contribution; the 5% pension case in the T5 tests is pinned as current behaviour only.
-2. D9-B Scottish Gift Aid. The engine models Gift Aid for Scotland only through the personal allowance taper (no band extension) and emits a disclaimer. There are no Scottish Gift Aid vectors. Whether HMRC extends Scottish bands by the gross gift is unconfirmed (gov.scot and mygov.scot pages returned 404).
-3. 2022/23 and 2023/24 Class 1 NI annual approximations. 2022/23 uses directors' annual-method figures (PT 11,908, 12.73% / 2.73%) for all employees. 2023/24 main rate 11.5% is printed on the GOV.UK 2023 to 2024 employer page as the directors' whole-year rate; applying it to ordinary employees (12% to 5 Jan 2024, then 10%) is an approximation (it equals the evenly paid blend (9*12+3*10)/12). Owner to choose blend or period method. Both are `verified:false`.
-4. 2022/23 employer NI: 14.53% is the directors' annual blend; the verified per-period rates are 15.05% to 5 Nov 2022 and 13.8% after. The 9,100 secondary threshold applied only from 6 Jul 2022. Vector employerNiSaving.2022-23.60000.3000 (expected 435.9) is unverified.
-5. Scottish 125,140 advanced/top boundary frame (taxable versus gross). The employer page labels it as earnings above the PAYE threshold, while gov.uk/scottish-income-tax gives it as gross income. The 150,000 higher/top boundary before 2023/24 has the same ambiguity. The 125140 and 150000 Scotland vectors are unverified.
-6. Effect of a tapered personal allowance on Scottish bands (bands applied to taxable income after the tapered PA). No page confirms it; the 100k and 110k Scottish vectors keep unverified status. Scottish trap rates 67.5 / 69.5 are verified only via the Advanced band.
+Each ruling gives the question, the options and what the engine does today. Rulings 1 and 2 have a coded behaviour that is not confirmed by a primary source.
+
+1. Pension treatment (net-pay versus relief at source).
+   - Question: how should an employee pension contribution reduce tax?
+   - Options: (a) net-pay for every scheme (deduct from taxable income); (b) net-pay only for net-pay and salary sacrifice schemes, and relief at source (extend the basic band by the grossed-up contribution) for relief at source schemes.
+   - Engine today: option (a). `UK_TAX_PENSION_TREATMENT` pins "net-pay" for every taxpayer, whether or not `isSalarySacrifice` is set. No GOV.UK source was consulted. No vector includes a pension contribution; the 5% pension case in the T5 tests is pinned as current behaviour only.
+2. D9 Scottish Gift Aid (owner ruling pending). Reviewer finding on PR 379.
+   - Statute (ITA 2007 s.414, read on legislation.gov.uk, revised version): s.414(2) says the Income Tax Acts apply "as if (a) the gift had been made after deduction of income tax at the basic rate, and (b) the basic rate limit and the higher rate limit (see section 10) and additionally, in the case of a Scottish taxpayer, the upper limit for the Scottish basic rate and the limits for any Scottish rates above the Scottish basic rate, were increased by an amount equal to the grossed up amount of the gift." s.414(3) is only a cross-reference to ITTOIA 2005 s.535(7) (top slicing relief on life insurance gains) and does not change the Scottish rule. The Scottish wording in (2)(b) was added by the Scotland Act 2016 consequential regulations (2017) and the 2018 Scottish Rates of Income Tax order, per the page's amendment notes. (The task brief cited (2) and (3); the Scottish rule is entirely in (2)(b).)
+   - Question: should Scottish taxpayers' Scottish band limits move up by the grossed-up gift (1000 net gives 1250), as for England, Wales and Northern Ireland?
+   - Options: (a) D9-B, Gift Aid only feeds adjusted net income for the allowance taper in Scotland, bands unchanged, disclaimer shown; (b) follow s.414(2)(b): raise the upper limit of the Scottish basic rate (20%) and of every Scottish rate above it by the grossed-up gift, leave the starter limit alone, keep the taper reduction too.
+   - Engine today: option (a) (`calculateUkTax` Scotland branch, `SCOTLAND_GIFT_AID_DISCLAIMER`). It overstates Scottish tax if (b) is right. Hand-derived (b) values with a 1000 net gift (engine today minus (b)): 2025/26 at 30,000 3470.32 (engine 3482.82, +12.50), at 60,000 12938.80 (engine 13213.80, +275.00), at 110,000 36920.05 (engine 37232.55, +312.50); 2026/27 at 30,000 3446.33 (engine 3451.07, +4.74), at 60,000 12907.05 (engine 13182.05, +275.00), at 110,000 36888.30 (engine 37200.80, +312.50).
+   - Catalogue: these are `UK_TAX_PENDING_OWNER_VECTORS` in `uk-tax.vectors.ts` (ids `scotland.giftAid.<year>.<income>.net1000`), status UNVERIFIED, deliberately outside `UK_TAX_VECTORS` and not counted in the vector table above. The test that runs them against `calculateUkTax` is `describe.skip` ("owner ruling pending D9") in `uk-tax.test.ts`; no engine behaviour was changed.
+   - Caveats: no HMRC guidance page confirming the Scottish application was read (earlier attempts returned 404); the 110,000 vectors also depend on the unconfirmed taper frame (ruling 6); the 125,140 advanced limit is used in the same taxable-income frame as the existing vectors (ruling 5).
+3. 2022/23 and 2023/24 Class 1 NI annual approximations.
+   - Question: annual-method approximation or period-by-period rates?
+   - Options: (a) annual blend; (b) period method (12% to 5 Jan 2024 then 10% for 2023/24; the per-period 2022/23 thresholds).
+   - Engine today: (a). 2022/23 uses directors' annual-method figures (PT 11,908, 12.73% / 2.73%) for all employees. 2023/24 main rate 11.5% is printed on the GOV.UK 2023 to 2024 employer page as the directors' whole-year rate; applying it to ordinary employees is an approximation (it equals the evenly paid blend (9*12+3*10)/12). Both are `verified:false`.
+4. 2022/23 employer NI.
+   - Question: blend or per-period rates?
+   - Options: (a) 14.53% annual blend; (b) 15.05% to 5 Nov 2022 then 13.8%, with the 9,100 secondary threshold applying only from 6 Jul 2022.
+   - Engine today: (a). Vector employerNiSaving.2022-23.60000.3000 (expected 435.9) is unverified.
+5. Scottish 125,140 advanced/top boundary frame (taxable versus gross).
+   - Question: is 125,140 a gross-income figure or a taxable-income-above-PA figure?
+   - Options: (a) taxable income above PA (employer page label); (b) gross income (gov.uk/scottish-income-tax).
+   - Engine today: (a), the same frame for the 150,000 higher/top boundary before 2023/24. The 125140 and 150000 Scotland vectors are unverified.
+6. Effect of a tapered personal allowance on Scottish bands.
+   - Question: are Scottish bands applied to taxable income after the tapered PA?
+   - Options: (a) yes, band widths do not move; (b) no, gross-income thresholds are fixed and the bands shift.
+   - Engine today: (a). No page confirms it; the 100k and 110k Scottish vectors keep unverified status. Scottish trap rates 67.5 / 69.5 are verified only via the Advanced band.
 
 ### Figures from memory only (not on the pages read)
 
@@ -316,7 +340,7 @@ Each needs an owner ruling or a primary source before sign-off.
 13. T5: typecheck of dependants (packages/mcp, apps/web, apps/marketing) was not completed (no node_modules in the worktree).
 14. T11: downstream compile status of apps/web, packages/ui, packages/mcp and apps/mobile-companion was not checked; the DebtContainer and DebtSummaryCards break is by inspection only. Root `bun run lint`, `bun run test` and `bun run build` were not run by T11.
 15. T8: whether `calculateUKEWNITakeHome` should compute the student loan on NI-able pay rather than gross minus pension is open.
-16. Not modelled (gaps, not figure disagreements): starting rate for savings; Scottish Gift Aid; the repo's remaining hard-coded 50270 / 50000 PSA higher-band test in tax-calculator.ts was replaced by T4 per its report.
+16. Not modelled (gaps, not figure disagreements): starting rate for savings; Scottish Gift Aid band extension (ruling 2, pending); the repo's remaining hard-coded 50270 / 50000 PSA higher-band test in tax-calculator.ts was replaced by T4 per its report.
 
 ## 4. Owner decisions applied
 
@@ -324,7 +348,7 @@ Each needs an owner ruling or a primary source before sign-off.
 - D5-a: same as D3-a; text not restated in the reports.
 - D7-a: tax trap rates stop being overwritten (commit 3363a58, F-06); T14 changed trap marginal rates to income tax only (60 EWNI, 67.5 Scotland).
 - D8-a: the tax year starts on 6 April, so 1 to 5 April belong to the previous year (T2); unknown tax years throw UnsupportedUkTaxYearError instead of falling back (T2, T7, T8, T14).
-- D9-B: Gift Aid for Scotland affects only the personal allowance taper, with a disclaimer; no band extension and no Scottish Gift Aid vectors (T5, T6).
+- D9-B: Gift Aid for Scotland affects only the personal allowance taper, with a disclaimer; no band extension (T5, T6). Challenged by the PR 379 reviewer against ITA 2007 s.414(2)(b): ruling 2 above is pending, with six UNVERIFIED Scottish Gift Aid vectors held outside the asserted catalogue.
 - Years in scope: 2020/21, 2021/22, 2022/23, 2023/24, 2024/25, 2025/26 and 2026/27 (`UK_TAX_VECTOR_YEARS`).
 
 ## 5. Known issues and open items

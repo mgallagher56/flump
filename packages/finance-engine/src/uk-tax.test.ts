@@ -7,6 +7,7 @@ import {
 import {
   runUkTaxVectors,
   selectUkTaxVectors,
+  UK_TAX_PENDING_OWNER_VECTORS,
   UK_TAX_PENSION_TREATMENT,
   UK_TAX_VECTORS,
 } from "./test-vectors/uk-tax.vectors.js";
@@ -639,5 +640,26 @@ describe("calculateUkTax result-boundary rounding (I7, D5-a)", () => {
       Math.round(((33333.33 * 4.4444) / 100) * 100) / 100,
     );
     expect(res.grossIncomeGbp).toBe(33444.44);
+  });
+});
+
+// Skipped on purpose: owner ruling pending D9. ITA 2007 s.414(2)(b) extends the upper limit of the
+// Scottish basic rate and the limits of the Scottish rates above it by the grossed-up gift, but the
+// engine (D9-B) uses Gift Aid only for the allowance taper in Scotland, so these hand-derived
+// UNVERIFIED vectors would fail today. Un-skip only after the owner rules for band extension and
+// the engine is changed. See docs/tax-vector-signoff.md, ruling 2.
+describe.skip("Scottish Gift Aid band extension vectors (owner ruling pending D9)", () => {
+  it("calculateUkTax matches the hand-derived extended-band income tax", () => {
+    const res = runUkTaxVectors(UK_TAX_PENDING_OWNER_VECTORS, (v) => {
+      const i = v.input as { grossIncome: number; giftAidNet: number };
+      return calculateUkTax({
+        grossSalary: i.grossIncome,
+        taxYear: v.taxYear as UkTaxYear,
+        region: "SCOTLAND",
+        giftAidContributionsGbp: i.giftAidNet,
+      }).incomeTaxGbp;
+    });
+    expect(res.checked).toBe(6);
+    expect(res.failures).toEqual([]);
   });
 });
