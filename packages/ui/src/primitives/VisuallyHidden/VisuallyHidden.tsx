@@ -1,10 +1,12 @@
-import type { FC, HTMLAttributes } from "react";
+import type { AnchorHTMLAttributes, FC, HTMLAttributes } from "react";
 import { cx } from "../../../styled-system/css";
 import { visuallyHiddenRecipe } from "./VisuallyHidden.styles";
 
-export type VisuallyHiddenElement = "span" | "div" | "caption" | "h2";
+export type VisuallyHiddenElement = "span" | "div" | "caption" | "h2" | "a";
 
-export interface VisuallyHiddenProps extends HTMLAttributes<HTMLElement> {
+export interface VisuallyHiddenProps
+  extends HTMLAttributes<HTMLElement>,
+    Pick<AnchorHTMLAttributes<HTMLAnchorElement>, "href"> {
   as?: VisuallyHiddenElement;
   focusable?: boolean;
 }

@@ -134,7 +134,7 @@ const Header: FC<HeaderProps> = ({ isMobile: propIsMobile, variant }): ReactElem
   return (
     <>
       <header className={headerStyles}>
-        <nav className={navStyles}>
+        <nav aria-label="Primary" className={navStyles}>
           <FLPBox className={menuStyles}>
             <HomeLogo />
             {!isMobileVariant && (

@@ -1,4 +1,5 @@
 import { calculateDebtToWealthBridge, type DebtItem } from "@flump/finance-engine";
+import { ChartFigure } from "@repo/ui";
 import { css } from "@repo/ui/styled-system/css";
 import { type FC, useMemo, useState } from "react";
 import {
@@ -166,64 +167,94 @@ export const DebtToWealthBridgeCard: FC<DebtToWealthBridgeCardProps> = ({
         </div>
 
         {/* Primary Visual Chart: Crossover Area Chart */}
-        <div style={{ width: "100%", height: 260, marginTop: "8px" }}>
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={chartData} margin={{ top: 10, right: 30, left: 10, bottom: 0 }}>
-              <defs>
-                <linearGradient id="debtGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#ef4444" stopOpacity={0.8} />
-                  <stop offset="95%" stopColor="#ef4444" stopOpacity={0.05} />
-                </linearGradient>
-                <linearGradient id="wealthGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#10b981" stopOpacity={0.8} />
-                  <stop offset="95%" stopColor="#10b981" stopOpacity={0.05} />
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
-              <XAxis
-                dataKey="name"
-                fontSize={11}
-                tickLine={false}
-                minTickGap={28}
-                interval="preserveStartEnd"
-              />
-              <YAxis
-                fontSize={11}
-                tickFormatter={(val) => `£${val >= 1000 ? `${Math.round(val / 1000)}k` : val}`}
-                tickLine={false}
-              />
-              <Tooltip
-                contentStyle={chartTooltipContentStyle}
-                itemStyle={chartTooltipItemStyle}
-                labelStyle={chartTooltipLabelStyle}
-                formatter={(val: any, name: any) => [
-                  formatCurrency(Number(val)),
-                  name === "debt" ? "Debt Remaining" : "Wealth in ISA",
-                ]}
-              />
-              <Area
-                type="monotone"
-                dataKey="debt"
-                stroke="#ef4444"
-                strokeWidth={2}
-                fillOpacity={1}
-                fill="url(#debtGradient)"
-                name="debt"
-                isAnimationActive={false}
-              />
-              <Area
-                type="monotone"
-                dataKey="wealth"
-                stroke="#10b981"
-                strokeWidth={2}
-                fillOpacity={1}
-                fill="url(#wealthGradient)"
-                name="wealth"
-                isAnimationActive={false}
-              />
-            </AreaChart>
-          </ResponsiveContainer>
-        </div>
+        <ChartFigure
+          dataTable={
+            <table>
+              <caption>Debt remaining and wealth accumulated over time</caption>
+              <thead>
+                <tr>
+                  <th scope="col">Month</th>
+                  <th scope="col">Debt remaining</th>
+                  <th scope="col">Wealth accumulated</th>
+                </tr>
+              </thead>
+              <tbody>
+                {chartData.map((row) => (
+                  <tr key={row.name}>
+                    <th scope="row">{row.name}</th>
+                    <td style={{ fontVariantNumeric: "tabular-nums" }}>
+                      {formatCurrency(row.debt)}
+                    </td>
+                    <td style={{ fontVariantNumeric: "tabular-nums" }}>
+                      {formatCurrency(row.wealth)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          }
+          summary={`Debt-free after ${debtFreePoint?.month ?? 0} months. By the end of the projection, ${formatCurrency(finalPoint?.wealthAccumulated || 0)} is accumulated in an ISA at ${returnRate}% a year.`}
+          title="Debt-to-wealth crossover"
+        >
+          <div style={{ width: "100%", height: 260, marginTop: "8px" }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={chartData} margin={{ top: 10, right: 30, left: 10, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="debtGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#ef4444" stopOpacity={0.8} />
+                    <stop offset="95%" stopColor="#ef4444" stopOpacity={0.05} />
+                  </linearGradient>
+                  <linearGradient id="wealthGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.8} />
+                    <stop offset="95%" stopColor="#10b981" stopOpacity={0.05} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
+                <XAxis
+                  dataKey="name"
+                  fontSize={11}
+                  tickLine={false}
+                  minTickGap={28}
+                  interval="preserveStartEnd"
+                />
+                <YAxis
+                  fontSize={11}
+                  tickFormatter={(val) => `£${val >= 1000 ? `${Math.round(val / 1000)}k` : val}`}
+                  tickLine={false}
+                />
+                <Tooltip
+                  contentStyle={chartTooltipContentStyle}
+                  itemStyle={chartTooltipItemStyle}
+                  labelStyle={chartTooltipLabelStyle}
+                  formatter={(val: any, name: any) => [
+                    formatCurrency(Number(val)),
+                    name === "debt" ? "Debt Remaining" : "Wealth in ISA",
+                  ]}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="debt"
+                  stroke="#ef4444"
+                  strokeWidth={2}
+                  fillOpacity={1}
+                  fill="url(#debtGradient)"
+                  name="debt"
+                  isAnimationActive={false}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="wealth"
+                  stroke="#10b981"
+                  strokeWidth={2}
+                  fillOpacity={1}
+                  fill="url(#wealthGradient)"
+                  name="wealth"
+                  isAnimationActive={false}
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </ChartFigure>
       </div>
     </FLPCard>
   );

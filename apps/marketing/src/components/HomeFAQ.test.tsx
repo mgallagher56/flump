@@ -25,6 +25,15 @@ describe("HomeFAQ", () => {
     expect(secondButton.getAttribute("aria-expanded")).toBe("true");
   });
 
+  it("question toggles are native buttons exposing the expanded state", () => {
+    render(<HomeFAQ />);
+    const button = screen.getByRole("button", { name: /Is Flump free\?/i });
+    expect(button.tagName).toBe("BUTTON");
+    expect(button.getAttribute("type")).toBe("button");
+    expect(button.getAttribute("aria-expanded")).toBe("false");
+    expect(screen.getByRole("region", { name: /Can Flump move my money/i })).toBeDefined();
+  });
+
   it("answers the payments question without regulatory claims", () => {
     const { container } = render(<HomeFAQ />);
     expect(

@@ -104,3 +104,21 @@ describe("PensionForecasterCard", () => {
     expect(screen.queryByTestId("pension-default-rates-note")).toBeNull();
   });
 });
+
+describe("PensionForecasterCard chart accessibility", () => {
+  it("exposes the projection as a named figure with the formatted headline", () => {
+    render(
+      <PensionForecasterCard
+        currentPotTotal={20000}
+        directMonthlyContrib={50}
+        initialEmployeePercent={5.0}
+        initialEmployerPercent={3.0}
+        initialSalary={50000}
+        portfolioReturnRate={5.5}
+      />,
+    );
+
+    const figure = screen.getByRole("figure", { name: "Pension pot projection" });
+    expect(figure.textContent).toMatch(/Projected pension pot after \d+ years: £[\d,]+/);
+  });
+});

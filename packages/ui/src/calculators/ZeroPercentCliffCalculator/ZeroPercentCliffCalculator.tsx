@@ -5,6 +5,7 @@ import { FaExclamationTriangle } from "react-icons/fa";
 import { css } from "../../../styled-system/css/index.js";
 import { Button } from "../../components/forms/Button.js";
 
+import { LiveRegion } from "../../primitives/LiveRegion";
 import {
   cardStyle,
   gridStyle,
@@ -29,6 +30,10 @@ export const ZeroPercentCliffCalculator: FC<ZeroPercentCliffCalculatorProps> = (
   const cliff = useMemo(() => {
     return calculateZeroPercentCliff(balance, months, revertApr);
   }, [balance, months, revertApr]);
+
+  const headline = `Pay £${Math.round(cliff.requiredMonthlyPayment).toLocaleString(
+    "en-GB",
+  )} a month to clear the balance before the 0% offer ends`;
 
   const handleSave = () => {
     const payload = {
@@ -127,6 +132,7 @@ export const ZeroPercentCliffCalculator: FC<ZeroPercentCliffCalculatorProps> = (
         </div>
 
         <div className={resultsBoxStyle}>
+          <LiveRegion debounceMs={1000} message={headline} visuallyHidden />
           <div>
             <span
               style={{

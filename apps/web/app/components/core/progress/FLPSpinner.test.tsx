@@ -20,4 +20,9 @@ describe("FLPSpinner", () => {
     );
     expect(container).toMatchSnapshot();
   });
+  test("is announced as a loading status and opts in to the reduced-motion pulse", () => {
+    const { getByRole } = customRender(<FLPSpinner />);
+    const spinner = getByRole("status", { name: "Loading" });
+    expect(spinner.hasAttribute("data-spinner")).toBe(true);
+  });
 });

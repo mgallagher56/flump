@@ -1,4 +1,5 @@
 import { PortfolioSnapshot } from "@flump/finance-engine";
+import { LiveRegion } from "@repo/ui";
 import { css } from "@repo/ui/styled-system/css";
 import { type FC, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -143,8 +144,15 @@ const ForecastContainer: FC = () => {
       },
     });
 
+  // Headline outcome only; empty (nothing announced) until a balance or saving rate is known.
+  const forecastHeadline =
+    startingBalance > 0 || currentSavingRate > 0
+      ? `Projected 10-year total ${formatCurrency(projected10Yr)}`
+      : "";
+
   return (
     <div className={containerStyle}>
+      <LiveRegion debounceMs={1000} message={forecastHeadline} visuallyHidden />
       {/* Title */}
       <div style={{ marginTop: "16px", marginBottom: "8px" }}>
         <FLPHeading as="h1" color="text.primary" size="2xl">

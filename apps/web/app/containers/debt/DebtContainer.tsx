@@ -5,7 +5,7 @@ import {
   evaluateFinancialStage,
   PortfolioSnapshot,
 } from "@flump/finance-engine";
-import { Button, EmptyState } from "@repo/ui";
+import { Button, EmptyState, LiveRegion } from "@repo/ui";
 import { css } from "@repo/ui/styled-system/css";
 import { type FC, useMemo, useState } from "react";
 import { FaBookOpen, FaCalculator, FaCreditCard, FaExclamationTriangle } from "react-icons/fa";
@@ -117,6 +117,13 @@ export const DebtContainer: FC = () => {
   const aprUnknown = debts.some((d) => d.aprKnown === false);
   const minimumEstimated = debts.some((d) => d.minimumPaymentEstimated === true);
 
+  // Headline outcome only; empty (nothing announced) when there are no debts, an APR is unknown
+  // (figures would be invented) or the payments never clear the debt.
+  const debtHeadline =
+    hasDebts && !aprUnknown && activeResult.payoffAchievable
+      ? `Debt-free by ${activeResult.debtFreeDate}, total interest ${formatCurrency(activeResult.totalInterest)}`
+      : "";
+
   const fetcher = useFetcher();
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const deleteOutcome = useFetcherOutcome(fetcher, { onSuccess: () => setConfirmDeleteId(null) });
@@ -174,6 +181,7 @@ export const DebtContainer: FC = () => {
 
   return (
     <div className={containerStyle}>
+      <LiveRegion debounceMs={1000} message={debtHeadline} visuallyHidden />
       {/* 0% Promotional Cliff & Overdraft Warning Alerts */}
       {promoAlerts.length > 0 && (
         <div

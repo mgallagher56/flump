@@ -1874,6 +1874,7 @@ const TaxContainer: FC = () => {
                               borderRadius: "sm",
                               "&:hover": { backgroundColor: "rgba(239, 68, 68, 0.1)" },
                             })}
+                            aria-label="Delete record"
                             title="Delete record"
                             type="button"
                             onClick={(e) => handleDeleteTransaction(record.id, e)}

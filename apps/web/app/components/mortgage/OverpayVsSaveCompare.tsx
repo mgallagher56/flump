@@ -1,3 +1,4 @@
+import { ChartFigure } from "@repo/ui";
 import { css } from "@repo/ui/styled-system/css";
 import { type FC, useMemo, useState } from "react";
 import { FaCheckCircle, FaCoins, FaInfoCircle, FaPercentage, FaSlidersH } from "react-icons/fa";
@@ -11,6 +12,7 @@ import FLPCard from "~/components/core/cards/FLPCard";
 import FLPHeading from "~/components/core/typography/FLPHeading";
 import FLPText from "~/components/core/typography/FLPText";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
+import { usePrefersReducedMotion } from "~/hooks/usePrefersReducedMotion";
 
 interface OverpayVsSaveCompareProps {
   loanAmount: number;
@@ -28,6 +30,7 @@ const OverpayVsSaveCompare: FC<OverpayVsSaveCompareProps> = ({
   mortgageType = "repayment",
 }) => {
   const { formatCurrency } = useFormatCurrency();
+  const reducedMotion = usePrefersReducedMotion();
   const isInterestOnly = mortgageType === "interest-only";
   const [savingsRate, setSavingsRate] = useState<number>(4.8); // Default 4.8% savings ROI
   const [taxBracket, setTaxBracket] = useState<string>("isa"); // 'isa' (0%), 'basic' (20%), 'higher' (40%), 'additional' (45%)
@@ -483,42 +486,84 @@ const OverpayVsSaveCompare: FC<OverpayVsSaveCompareProps> = ({
             </div>
 
             {/* Recharts Bar Chart */}
-            <div style={{ height: "260px", width: "100%", marginTop: "24px" }}>
-              <ResponsiveContainer height="100%" width="100%">
-                <BarChart data={chartData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
-                  <CartesianGrid
-                    strokeDasharray="3 3"
-                    vertical={false}
-                    stroke="var(--colors-border)"
-                  />
-                  <XAxis dataKey="name" fontSize={11} tickLine={false} />
-                  <YAxis
-                    fontSize={11}
-                    axisLine={false}
-                    tickLine={false}
-                    tickFormatter={(val) => `£${val / 1000}k`}
-                  />
-                  <Tooltip
-                    formatter={(value: any) => formatCurrency(value)}
-                    contentStyle={chartTooltipContentStyle}
-                    itemStyle={chartTooltipItemStyle}
-                    labelStyle={chartTooltipLabelStyle}
-                  />
-                  <Bar
-                    dataKey="Principal Contributed"
-                    fill="var(--colors-primary)"
-                    radius={[4, 4, 0, 0]}
-                    stackId="a"
-                  />
-                  <Bar
-                    dataKey={isOverpayBetter ? "Interest Saved" : "Interest Earned (Net)"}
-                    fill={isOverpayBetter ? "#ef4444" : "#10B981"}
-                    radius={[4, 4, 0, 0]}
-                    stackId="a"
-                  />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
+            <ChartFigure
+              dataTable={
+                <table>
+                  <caption>Overpaying the mortgage compared with saving</caption>
+                  <thead>
+                    <tr>
+                      <th scope="col">Option</th>
+                      <th scope="col">Principal contributed</th>
+                      <th scope="col">Interest saved or earned</th>
+                      <th scope="col">Total</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {chartData.map((row) => (
+                      <tr key={row.name}>
+                        <th scope="row">{row.name}</th>
+                        <td style={{ fontVariantNumeric: "tabular-nums" }}>
+                          {formatCurrency(row["Principal Contributed"])}
+                        </td>
+                        <td style={{ fontVariantNumeric: "tabular-nums" }}>
+                          {formatCurrency(
+                            "Interest Saved" in row
+                              ? row["Interest Saved"]
+                              : row["Interest Earned (Net)"],
+                          )}
+                        </td>
+                        <td style={{ fontVariantNumeric: "tabular-nums" }}>
+                          {formatCurrency(row.Total)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              }
+              summary={`Over ${actualHorizon} years, ${
+                isOverpayBetter ? "overpaying the mortgage" : "saving the money"
+              } comes out ahead by ${formatCurrency(difference)}. Overpaying is worth ${formatCurrency(debtReduction)} and saving is worth ${formatCurrency(savingsBalance)}.`}
+              title="Overpay or save comparison"
+            >
+              <div style={{ height: "260px", width: "100%", marginTop: "24px" }}>
+                <ResponsiveContainer height="100%" width="100%">
+                  <BarChart data={chartData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
+                    <CartesianGrid
+                      strokeDasharray="3 3"
+                      vertical={false}
+                      stroke="var(--colors-border)"
+                    />
+                    <XAxis dataKey="name" fontSize={11} tickLine={false} />
+                    <YAxis
+                      fontSize={11}
+                      axisLine={false}
+                      tickLine={false}
+                      tickFormatter={(val) => `£${val / 1000}k`}
+                    />
+                    <Tooltip
+                      formatter={(value: any) => formatCurrency(value)}
+                      contentStyle={chartTooltipContentStyle}
+                      itemStyle={chartTooltipItemStyle}
+                      labelStyle={chartTooltipLabelStyle}
+                    />
+                    <Bar
+                      dataKey="Principal Contributed"
+                      fill="var(--colors-primary)"
+                      radius={[4, 4, 0, 0]}
+                      stackId="a"
+                      isAnimationActive={!reducedMotion}
+                    />
+                    <Bar
+                      dataKey={isOverpayBetter ? "Interest Saved" : "Interest Earned (Net)"}
+                      fill={isOverpayBetter ? "#ef4444" : "#10B981"}
+                      radius={[4, 4, 0, 0]}
+                      stackId="a"
+                      isAnimationActive={!reducedMotion}
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </ChartFigure>
 
             {/* Side-by-side stats */}
             <div className={statsRow}>

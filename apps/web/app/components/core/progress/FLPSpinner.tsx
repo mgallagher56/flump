@@ -32,7 +32,13 @@ const FLPSpinner: FC<FLPSpinnerProps> = ({ size = "md", children }) => {
           to { transform: rotate(360deg); }
         }
       `}</style>
-      <div className={spinnerStyle} data-testid="flp-spinner" />
+      <div
+        className={spinnerStyle}
+        data-spinner
+        data-testid="flp-spinner"
+        role="status"
+        aria-label="Loading"
+      />
       {children}
     </div>
   );

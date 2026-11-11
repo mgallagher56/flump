@@ -1,5 +1,5 @@
-import { fireEvent, render, screen, within } from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { act, fireEvent, render, screen, within } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import DebtContainer from "./DebtContainer";
 
 const fetcherState = vi.hoisted(() => ({
@@ -252,5 +252,31 @@ describe("DebtContainer", () => {
     rerender(<DebtContainer />);
     expect(screen.getByRole("alert").textContent).toContain("We couldn't reach the server");
     expect(screen.getByRole("alertdialog")).toBeDefined();
+  });
+});
+
+describe("DebtContainer live region", () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    loaderState.accountsOverride = null;
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("announces the debt-free headline 1000ms after the overpayment slider changes", () => {
+    render(<DebtContainer />);
+    const region = screen.getByRole("status");
+    expect(region.textContent).toBe("");
+
+    fireEvent.change(screen.getAllByRole("slider")[0], { target: { value: "300" } });
+    act(() => {
+      vi.advanceTimersByTime(999);
+    });
+    expect(region.textContent).toBe("");
+    act(() => {
+      vi.advanceTimersByTime(1);
+    });
+    expect(region.textContent).toMatch(/^Debt-free by .+, total interest £[\d,]+$/);
   });
 });

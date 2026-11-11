@@ -1,4 +1,5 @@
 import { calculateLtvMilestones, PortfolioSnapshot } from "@flump/finance-engine";
+import { LiveRegion } from "@repo/ui";
 import { css } from "@repo/ui/styled-system/css";
 import { type FC, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -239,6 +240,12 @@ const MortgageContainer: FC = () => {
     [loanAmount, interestRate, remainingTerm, mortgageType],
   );
 
+  // Headline outcome only; empty (nothing announced) until balance, rate and term are all known.
+  const mortgageHeadline =
+    missingMortgageDetails.length === 0
+      ? `Monthly mortgage payment ${formatCurrency(currentMonthlyPayment)}`
+      : "";
+
   const btlMonthlyRent = profile.buyToLetMonthlyRental || 0;
   const btlPropertyValue = profile.buyToLetPropertyValue || 0;
   const btlGrossYield =
@@ -285,6 +292,7 @@ const MortgageContainer: FC = () => {
 
   return (
     <div className={containerStyle}>
+      <LiveRegion debounceMs={1000} message={mortgageHeadline} visuallyHidden />
       {/* Refinance Warning Banner */}
       {refinanceWarning && (
         <div

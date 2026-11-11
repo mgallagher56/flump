@@ -43,9 +43,9 @@ export default function AuthCallbackRoute() {
   if (data?.error) {
     return (
       <div style={{ textAlign: "center", padding: "80px 20px" }}>
-        <h2 style={{ fontSize: "1.5rem", fontWeight: "bold", marginBottom: "12px" }}>
+        <h1 style={{ fontSize: "1.5rem", fontWeight: "bold", marginBottom: "12px" }}>
           Authentication Could Not Be Completed
-        </h2>
+        </h1>
         <p style={{ color: "var(--colors-text-muted)", maxWidth: "480px", margin: "0 auto 24px" }}>
           {data.error.description ||
             data.error.message ||

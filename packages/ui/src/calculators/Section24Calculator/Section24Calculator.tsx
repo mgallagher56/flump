@@ -3,6 +3,7 @@ import type { FC } from "react";
 import { useMemo, useState } from "react";
 import { FiArrowRight } from "react-icons/fi";
 import { Button } from "../../components/forms/Button.js";
+import { LiveRegion } from "../../primitives/LiveRegion";
 import {
   cardStyle,
   inputGridStyle,
@@ -41,6 +42,10 @@ export const Section24Calculator: FC<Section24CalculatorProps> = ({
       netCashInPocket,
     };
   }, [rentalIncome, mortgageInterest, allowableExpenses, otherIncome]);
+
+  const headline = `Tax due £${Math.round(calc.finalTaxDue).toLocaleString(
+    "en-GB",
+  )} a year, leaving £${Math.round(calc.netCashInPocket).toLocaleString("en-GB")} cash in pocket`;
 
   const handleSave = () => {
     const payload = {
@@ -296,6 +301,7 @@ export const Section24Calculator: FC<Section24CalculatorProps> = ({
       </div>
 
       {/* Results */}
+      <LiveRegion debounceMs={1000} message={headline} visuallyHidden />
       <div className={metricsGridStyle}>
         <div className={metricCard}>
           <span

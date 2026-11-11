@@ -149,6 +149,11 @@ const inlineInputStyle = css({
   backgroundColor: "surface",
   color: "text.primary",
   outline: "none",
+  _focusVisible: {
+    outline: "2px solid",
+    outlineColor: "border.focusRing",
+    outlineOffset: "2px",
+  },
 });
 
 const editableCellStyle = css({

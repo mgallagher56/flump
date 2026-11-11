@@ -68,3 +68,19 @@ describe("<OverpayVsSaveCompare />", () => {
     expect(container.textContent ?? "").not.toMatch(/NaN|Infinity/);
   });
 });
+
+describe("<OverpayVsSaveCompare /> chart accessibility", () => {
+  test("exposes the comparison as a named figure with the formatted net gain", () => {
+    const { getByRole } = customRender(
+      <OverpayVsSaveCompare
+        loanAmount={250000}
+        interestRate={5}
+        remainingTerm={25}
+        overpayment={300}
+      />,
+    );
+
+    const figure = getByRole("figure", { name: "Overpay or save comparison" });
+    expect(figure.textContent).toMatch(/comes out ahead by £[\d,]+/);
+  });
+});

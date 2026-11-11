@@ -1,3 +1,4 @@
+import { ChartFigure } from "@repo/ui";
 import { css } from "@repo/ui/styled-system/css";
 import { type FC, useMemo } from "react";
 import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
@@ -375,61 +376,99 @@ const OverpaymentSimulator: FC<OverpaymentSimulatorProps> = ({
         </div>
 
         {/* Recharts Area Chart */}
-        <div style={{ height: "300px", width: "100%", marginTop: "24px" }}>
-          <ResponsiveContainer height="100%" width="100%">
-            <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
-              <defs>
-                <linearGradient id="colorStandard" x1="0" x2="0" y1="0" y2="1">
-                  <stop offset="5%" stopColor="#ef4444" stopOpacity={0.12} />
-                  <stop offset="95%" stopColor="#ef4444" stopOpacity={0.0} />
-                </linearGradient>
-                <linearGradient id="colorOverpay" x1="0" x2="0" y1="0" y2="1">
-                  <stop offset="5%" stopColor="#10B981" stopOpacity={0.15} />
-                  <stop offset="95%" stopColor="#10B981" stopOpacity={0.0} />
-                </linearGradient>
-              </defs>
-              <XAxis
-                dataKey="yearLabel"
-                fontSize={11}
-                axisLine={false}
-                tickLine={false}
-                tickMargin={8}
-              />
-              <YAxis
-                fontSize={11}
-                axisLine={false}
-                tickLine={false}
-                tickMargin={8}
-                tickFormatter={(val) => `£${val / 1000}k`}
-              />
-              <Tooltip
-                formatter={(value: any) => formatCurrency(value)}
-                contentStyle={chartTooltipContentStyle}
-                itemStyle={chartTooltipItemStyle}
-                labelStyle={chartTooltipLabelStyle}
-              />
-              <Area
-                activeDot={{ r: 6 }}
-                dataKey="Standard Plan"
-                fill="url(#colorStandard)"
-                stroke="#ef4444"
-                strokeWidth={2}
-                type="monotone"
-                isAnimationActive={false}
-              />
-              <Area
-                activeDot={{ r: 6 }}
-                dataKey="With Overpayment"
-                fill="url(#colorOverpay)"
-                stroke="#10B981"
-                strokeDasharray="5 5"
-                strokeWidth={2}
-                type="monotone"
-                isAnimationActive={false}
-              />
-            </AreaChart>
-          </ResponsiveContainer>
-        </div>
+        <ChartFigure
+          dataTable={
+            <table>
+              <caption>Mortgage balance by year, standard plan and with overpayment</caption>
+              <thead>
+                <tr>
+                  <th scope="col">Year</th>
+                  <th scope="col">Standard plan</th>
+                  <th scope="col">With overpayment</th>
+                </tr>
+              </thead>
+              <tbody>
+                {chartData.map((row) => (
+                  <tr key={row.yearLabel}>
+                    <th scope="row">{row.yearLabel}</th>
+                    <td style={{ fontVariantNumeric: "tabular-nums" }}>
+                      {formatCurrency(row["Standard Plan"])}
+                    </td>
+                    <td style={{ fontVariantNumeric: "tabular-nums" }}>
+                      {formatCurrency(row["With Overpayment"])}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          }
+          summary={`Mortgage balance over ${remainingTerm} years. ${
+            overpayment > 0 && interestSaved > 0
+              ? `Overpaying ${formatCurrency(overpayment)} a month saves ${formatCurrency(interestSaved)} in total interest${
+                  yearsSaved > 0 || remMonthsSaved > 0
+                    ? ` and clears the mortgage ${yearsSaved} years and ${remMonthsSaved} months sooner`
+                    : ""
+                }.`
+              : "Add a monthly overpayment to see the interest saved."
+          }`}
+          title="Mortgage balance projection"
+        >
+          <div style={{ height: "300px", width: "100%", marginTop: "24px" }}>
+            <ResponsiveContainer height="100%" width="100%">
+              <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="colorStandard" x1="0" x2="0" y1="0" y2="1">
+                    <stop offset="5%" stopColor="#ef4444" stopOpacity={0.12} />
+                    <stop offset="95%" stopColor="#ef4444" stopOpacity={0.0} />
+                  </linearGradient>
+                  <linearGradient id="colorOverpay" x1="0" x2="0" y1="0" y2="1">
+                    <stop offset="5%" stopColor="#10B981" stopOpacity={0.15} />
+                    <stop offset="95%" stopColor="#10B981" stopOpacity={0.0} />
+                  </linearGradient>
+                </defs>
+                <XAxis
+                  dataKey="yearLabel"
+                  fontSize={11}
+                  axisLine={false}
+                  tickLine={false}
+                  tickMargin={8}
+                />
+                <YAxis
+                  fontSize={11}
+                  axisLine={false}
+                  tickLine={false}
+                  tickMargin={8}
+                  tickFormatter={(val) => `£${val / 1000}k`}
+                />
+                <Tooltip
+                  formatter={(value: any) => formatCurrency(value)}
+                  contentStyle={chartTooltipContentStyle}
+                  itemStyle={chartTooltipItemStyle}
+                  labelStyle={chartTooltipLabelStyle}
+                />
+                <Area
+                  activeDot={{ r: 6 }}
+                  dataKey="Standard Plan"
+                  fill="url(#colorStandard)"
+                  stroke="#ef4444"
+                  strokeWidth={2}
+                  type="monotone"
+                  isAnimationActive={false}
+                />
+                <Area
+                  activeDot={{ r: 6 }}
+                  dataKey="With Overpayment"
+                  fill="url(#colorOverpay)"
+                  stroke="#10B981"
+                  strokeDasharray="5 5"
+                  strokeWidth={2}
+                  type="monotone"
+                  isAnimationActive={false}
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </ChartFigure>
 
         {/* Stats breakdown */}
         <div className={statsGrid}>

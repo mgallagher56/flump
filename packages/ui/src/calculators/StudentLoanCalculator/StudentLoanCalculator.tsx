@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { css } from "../../../styled-system/css/index.js";
 import { Button } from "../../components/forms/Button.js";
 
+import { LiveRegion } from "../../primitives/LiveRegion";
 import {
   cardStyle,
   gridStyle,
@@ -28,6 +29,10 @@ export const StudentLoanCalculator: FC<StudentLoanCalculatorProps> = ({
   const evaluation = useMemo(() => {
     return evaluateUkStudentLoan(plan, salary, balance);
   }, [plan, salary, balance]);
+
+  const headline = `Repayment £${Math.round(evaluation.monthlyRepayment).toLocaleString(
+    "en-GB",
+  )} a month, £${Math.round(evaluation.annualRepayment).toLocaleString("en-GB")} a year`;
 
   const handleSave = () => {
     const payload = {
@@ -127,6 +132,7 @@ export const StudentLoanCalculator: FC<StudentLoanCalculatorProps> = ({
         </div>
 
         <div className={resultsBoxStyle}>
+          <LiveRegion debounceMs={1000} message={headline} visuallyHidden />
           <div>
             <span
               style={{

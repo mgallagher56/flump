@@ -100,14 +100,14 @@
         "preset": "recommended",
         "useAltText": "error",
         "useAriaPropsForRole": "error",
-        "useButtonType": "warn",
-        "useKeyWithClickEvents": "warn",
+        "useButtonType": "error",
+        "useKeyWithClickEvents": "error",
         "useValidAriaRole": "error",
-        "noSvgWithoutTitle": "warn",
+        "noSvgWithoutTitle": "error",
         "useAnchorContent": "error",
-        "useFocusableInteractive": "warn",
-        "noStaticElementInteractions": "warn",
-        "useSemanticElements": "warn"
+        "useFocusableInteractive": "error",
+        "noStaticElementInteractions": "error",
+        "useSemanticElements": "error"
       }
     }
   },
