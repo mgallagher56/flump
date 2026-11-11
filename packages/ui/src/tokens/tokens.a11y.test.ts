@@ -311,7 +311,17 @@ const PASSING_PAIRS: Pair[] = [
 ];
 
 /** Known failures. Each row names the audit finding; fix the token then move the row to PASSING_PAIRS. */
-const KNOWN_FAILURES: { finding: string; pair: Pair }[] = [];
+const KNOWN_FAILURES: { finding: string; pair: Pair }[] = [
+  // Light chart.warning/series5 (warning.600) pass 3:1 on card (3.19) and canvas (3.04) but only
+  // reach ~2.91 on the sunken and subtle surfaces. Known gap: charts must not sit on these surfaces
+  // until the series colour is revisited (E14).
+  ...["chart.warning", "chart.series5"].flatMap((fg) =>
+    ["surface.sunken", "surface.subtle"].map((bg) => ({
+      finding: "E8-chart-warning-light-sunken",
+      pair: { fg, bg, themes: ["light"], min: 3, role: "graphic" } as Pair,
+    })),
+  ),
+];
 
 describe("Semantic token contrast matrix", () => {
   it("every semanticTokens.colors leaf defines base and _dark (except primary.foreground)", () => {
