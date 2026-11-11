@@ -3,6 +3,12 @@ import {
   getAvailableUKTaxYears,
   type UKLegacyTaxYearConfig,
 } from "./tax-rules.js";
+import {
+  getUkTaxYearForDate,
+  getUkTaxYearRules,
+  isSupportedUkTaxYear,
+  type UkDividendRules,
+} from "./uk-tax-year.js";
 
 export type TaxSource = "paye" | "self-employed" | "rental" | "savings";
 
@@ -144,14 +150,18 @@ export function getCategoriesForSource(source: TaxSource, type?: "income" | "exp
   return list;
 }
 
+/**
+ * Tax year ("YYYY/YY") containing a date. Delegates to getUkTaxYearForDate
+ * (6 April boundary, no local time). Non-ISO strings fall back to Date parsing
+ * so existing callers that pass full timestamps keep working.
+ */
 export function getTaxYearForDate(dateStr: string): string {
+  if (/^\d{4}-\d{2}-\d{2}/.test(dateStr)) return getUkTaxYearForDate(dateStr);
   const date = new Date(dateStr);
-  const year = date.getFullYear();
-  const month = date.getMonth() + 1; // 1-indexed
-  if (month >= 4) {
-    return `${year}/${(year + 1).toString().slice(-2)}`;
-  }
-  return `${year - 1}/${year.toString().slice(-2)}`;
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return getUkTaxYearForDate(
+    `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`,
+  );
 }
 
 export function getPreviousTaxYear(taxYear: string): string {
@@ -360,6 +370,9 @@ export function calculateUKTax(
 ): TaxCalculationResult {
   const config = TAX_YEARS[taxYear] ?? TAX_YEARS["2024/25"] ?? buildLegacyUKConfig("2024/25");
   const months = getMonthsForTaxYear(taxYear);
+  // Per-year dividend and savings tables (uk-tax-year.ts). Unknown years keep the
+  // legacy fallback to 2024/25 used for `config` above.
+  const yearRules = getUkTaxYearRules(isSupportedUkTaxYear(taxYear) ? taxYear : "2024/25");
 
   // 1. Calculate Gross Totals for all 4 sources
   let rentalIncomeGross = 0;
@@ -497,21 +510,15 @@ export function calculateUKTax(
 
   // Personal Savings Allowance (PSA)
   // Basic rate taxpayers: £1,000; Higher rate: £500; Additional rate: £0
-  let personalSavingsAllowance = 1000;
+  let personalSavingsAllowance = yearRules.savings.psaBasic;
   if (totalGrossIncome > config.higherRateLimit) {
-    personalSavingsAllowance = 0;
+    personalSavingsAllowance = yearRules.savings.psaAdditional;
   } else if (totalGrossIncome > (config.higherRateLimit === 125140 ? 50270 : 50000)) {
-    personalSavingsAllowance = 500;
+    personalSavingsAllowance = yearRules.savings.psaHigher;
   }
 
-  // Dividend Allowance
-  const startYr = Number.parseInt(taxYear.split("/")[0] || "0", 10);
-  let dividendAllowance = 500;
-  if (startYr <= 2022) {
-    dividendAllowance = 2000;
-  } else if (startYr === 2023) {
-    dividendAllowance = 1000;
-  }
+  // Dividend Allowance (per-year table)
+  const dividendAllowance = yearRules.dividends.allowance;
 
   const taxableSavingsInterest = Math.max(0, netTaxableSavingsInterest - personalSavingsAllowance);
   const taxableDividends = Math.max(0, dividendIncomeGross - dividendAllowance);
@@ -562,11 +569,16 @@ export function calculateUKTax(
     savingsTaxDue = Math.max(0, taxWithSavings - nonSavingsIncomeTaxBeforeCredit);
   }
 
-  // Dividend tax (stacked at top of all income, taxed at dividend rates: 8.75%, 33.75%, 39.35%)
+  // Dividend tax (stacked at top of all income, taxed at the year's dividend rates)
   let dividendTaxDue = 0;
   if (taxableDividends > 0) {
     const priorTaxable = nonSavingsTaxable + taxableSavingsInterest;
-    dividendTaxDue = calculateDividendTaxForStack(priorTaxable, taxableDividends, config);
+    dividendTaxDue = calculateDividendTaxForStack(
+      priorTaxable,
+      taxableDividends,
+      config,
+      yearRules.dividends,
+    );
   }
 
   const totalNonSavingsIncomeTax = Math.max(
@@ -650,15 +662,16 @@ function calculateDividendTaxForStack(
   priorTaxable: number,
   dividends: number,
   config: TaxYearConfig,
+  rates: UkDividendRules,
 ): number {
   if (dividends <= 0) return 0;
   const basicThreshold = config.basicRateBand;
   const higherThreshold =
     config.higherRateLimit - (config.personalAllowance === 12500 ? 12500 : 12570);
 
-  const basicDividendRate = 0.0875;
-  const higherDividendRate = 0.3375;
-  const additionalDividendRate = 0.3935;
+  const basicDividendRate = rates.basicRate;
+  const higherDividendRate = rates.higherRate;
+  const additionalDividendRate = rates.additionalRate;
 
   let tax = 0;
   const divStart = priorTaxable;

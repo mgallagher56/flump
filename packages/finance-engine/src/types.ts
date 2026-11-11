@@ -12,7 +12,21 @@ export type ActiveModule =
   | "forecast"
   | "tax";
 
-export type UkTaxYear = "2025/26" | "2026/27";
+/**
+ * UK tax years the engine supports (2020/21 to 2026/27). Any other year is
+ * rejected with UnsupportedUkTaxYearError (see uk-tax-year.ts).
+ */
+export const SUPPORTED_UK_TAX_YEARS = [
+  "2020/21",
+  "2021/22",
+  "2022/23",
+  "2023/24",
+  "2024/25",
+  "2025/26",
+  "2026/27",
+] as const;
+
+export type UkTaxYear = (typeof SUPPORTED_UK_TAX_YEARS)[number];
 
 export type UkTaxRegion = "ENGLAND_NI_WALES" | "SCOTLAND";
 

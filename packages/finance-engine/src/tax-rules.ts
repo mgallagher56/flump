@@ -22,6 +22,8 @@
  *   - Ireland: Revenue Commissioners (revenue.ie)
  */
 
+import { getUkCalendarDate, getUkTaxYearForDate } from "./uk-tax-year.js";
+
 // ---------------------------------------------------------------------------
 // Legal Disclaimer
 // ---------------------------------------------------------------------------
@@ -488,13 +490,46 @@ export interface UKStudentLoanYear {
   plans: {
     plan1: UKStudentLoanPlan;
     plan2: UKStudentLoanPlan;
-    plan4: UKStudentLoanPlan; // Scotland
-    plan5: UKStudentLoanPlan;
+    /** Scotland. Absent where the year's source page lists no Plan 4 threshold. */
+    plan4?: UKStudentLoanPlan;
+    /** Absent before Plan 5 existed (it starts in the 2023/24 era, first listed 2026/27). */
+    plan5?: UKStudentLoanPlan;
     postgrad: UKStudentLoanPlan;
   };
 }
 
 export const UK_STUDENT_LOANS: Record<string, UKStudentLoanYear> = {
+  // 2020/21 to 2022/23 added in E4 T2. Source for each year: the "Student loan and
+  // postgraduate loan recovery" table on
+  // https://www.gov.uk/guidance/rates-and-thresholds-for-employers-YYYY-to-YYYY
+  // (2020 to 2021, 2021 to 2022, 2022 to 2023). Plan 5 did not exist yet.
+  // UNVERIFIED: 2020/21 Plan 4 is not listed on the 2020 to 2021 page, so it is omitted, not guessed.
+  "2020/21": {
+    description: "Student Loans — 2020/21",
+    plans: {
+      plan1: { name: "Plan 1", threshold: 19390, rate: 0.09 },
+      plan2: { name: "Plan 2", threshold: 26575, rate: 0.09 },
+      postgrad: { name: "Postgrad", threshold: 21000, rate: 0.06 },
+    },
+  },
+  "2021/22": {
+    description: "Student Loans — 2021/22",
+    plans: {
+      plan1: { name: "Plan 1", threshold: 19895, rate: 0.09 },
+      plan2: { name: "Plan 2", threshold: 27295, rate: 0.09 },
+      plan4: { name: "Plan 4 (Scotland)", threshold: 25000, rate: 0.09 },
+      postgrad: { name: "Postgrad", threshold: 21000, rate: 0.06 },
+    },
+  },
+  "2022/23": {
+    description: "Student Loans — 2022/23",
+    plans: {
+      plan1: { name: "Plan 1", threshold: 20195, rate: 0.09 },
+      plan2: { name: "Plan 2", threshold: 27295, rate: 0.09 },
+      plan4: { name: "Plan 4 (Scotland)", threshold: 25375, rate: 0.09 },
+      postgrad: { name: "Postgrad", threshold: 21000, rate: 0.06 },
+    },
+  },
   "2023/24": {
     description: "Student Loans — 2023/24",
     plans: {
@@ -950,16 +985,13 @@ export function calculateIrishTakeHome(
 
 /**
  * Returns the current UK tax year key e.g. "2025/26".
- * UK tax year runs 6 April to 5 April.
+ * UK tax year runs 6 April to 5 April (D8: boundary now handled by uk-tax-year.ts).
  */
 export function getCurrentUKTaxYear(): string {
-  const now = new Date();
-  const month = now.getMonth() + 1; // 1-indexed
-  const year = now.getFullYear();
-  if (month >= 4) {
-    return `${year}/${(year + 1).toString().slice(-2)}`;
-  }
-  return `${year - 1}/${year.toString().slice(-2)}`;
+  // Delegates to the canonical resolver (6 April boundary, UK calendar date).
+  // Unlike getCurrentUkTaxYear it never throws, so existing callers keep working
+  // when the clock moves past the last supported year.
+  return getUkTaxYearForDate(getUkCalendarDate(new Date()));
 }
 
 /**
@@ -1116,8 +1148,8 @@ export function calculateUKEWNITakeHome(
 
   // 5. Student Loan
   let studentLoan = 0;
-  if (studentLoanPlan !== "none" && slRules.plans[studentLoanPlan]) {
-    const plan = slRules.plans[studentLoanPlan];
+  const plan = studentLoanPlan !== "none" ? slRules.plans[studentLoanPlan] : undefined;
+  if (plan) {
     if (adjustedGrossForTax > plan.threshold) {
       studentLoan = Math.round((adjustedGrossForTax - plan.threshold) * plan.rate);
     }
