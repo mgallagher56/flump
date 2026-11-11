@@ -9,7 +9,7 @@ import { Button, EmptyState } from "@repo/ui";
 import { css } from "@repo/ui/styled-system/css";
 import { type FC, useMemo, useState } from "react";
 import { FaBookOpen, FaCalculator, FaCreditCard, FaExclamationTriangle } from "react-icons/fa";
-import { Link, useLoaderData } from "react-router";
+import { Link, useFetcher, useLoaderData } from "react-router";
 import FLPButton from "~/components/core/buttons/FLPButton";
 import FLPHeading from "~/components/core/typography/FLPHeading";
 import FLPText from "~/components/core/typography/FLPText";
@@ -19,6 +19,9 @@ import DebtSummaryCards from "~/components/debt/DebtSummaryCards";
 import DebtToWealthBridgeCard from "~/components/debt/DebtToWealthBridgeCard";
 import PayoffStrategySwitcher from "~/components/debt/PayoffStrategySwitcher";
 import UkDebtInstrumentsCard from "~/components/debt/UkDebtInstrumentsCard";
+import { debtItemToAccountPayload } from "~/features/debt/utils/debtAccountMapping";
+import { ConfirmDialog } from "~/features/feedback/components/ConfirmDialog";
+import { useFetcherOutcome } from "~/features/feedback/hooks/useFetcherOutcome";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
 import { useUserProfile } from "~/hooks/useUserProfile";
 
@@ -54,7 +57,6 @@ export const DebtContainer: FC = () => {
   const { formatCurrency } = useFormatCurrency();
   const { profile } = useUserProfile();
 
-  const accounts = loaderData?.accounts || [];
   const debtInputs = loaderData?.debtInputs as
     | {
         monthlySurplus: number | null;
@@ -68,11 +70,14 @@ export const DebtContainer: FC = () => {
   // Tab state
   const [activeTab, setActiveTab] = useState<"simulator" | "accounts" | "instruments">("simulator");
 
-  // Initialise debts from the user's real liability accounts only
-  const [debts, setDebts] = useState<DebtItem[]>(() => {
-    const snapshot = new PortfolioSnapshot(accounts, loaderData?.accountDetails || []);
-    return snapshot.toDebtItems();
-  });
+  // Debts come straight from the user's liability accounts. Add, edit and delete persist through
+  // the route action, and the loader revalidation refreshes this list.
+  const accounts = loaderData?.accounts;
+  const accountDetails = loaderData?.accountDetails;
+  const debts = useMemo<DebtItem[]>(
+    () => new PortfolioSnapshot(accounts ?? [], accountDetails ?? []).toDebtItems(),
+    [accounts, accountDetails],
+  );
 
   const [selectedStrategy, setSelectedStrategy] = useState<"avalanche" | "snowball">("avalanche");
   const [extraPayment, setExtraPayment] = useState<number>(50);
@@ -109,20 +114,57 @@ export const DebtContainer: FC = () => {
   const totalMin = debts.reduce((sum, d) => sum + d.minimumPayment, 0);
   const hasDebts = debts.length > 0;
 
+  const fetcher = useFetcher();
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const deleteOutcome = useFetcherOutcome(fetcher, { onSuccess: () => setConfirmDeleteId(null) });
+  const debtToDelete = debts.find((d) => d.id === confirmDeleteId);
+  const failedResult = fetcher.data as { success?: boolean; error?: string } | undefined;
+  const saveError =
+    debtToDelete === undefined && failedResult?.success === false
+      ? (failedResult.error ?? "Something went wrong. Please try again.")
+      : null;
+
   const handleAddDebt = (newDebt: Omit<DebtItem, "id">) => {
-    const item: DebtItem = {
-      ...newDebt,
-      id: `debt-${Date.now()}`,
-    };
-    setDebts((prev) => [...prev, item]);
+    const payload = debtItemToAccountPayload(newDebt);
+    fetcher.submit(
+      {
+        intent: "createDebt",
+        name: payload.name,
+        type: payload.type,
+        balance: String(payload.balance),
+        interestRate: payload.interestRate === null ? "" : String(payload.interestRate),
+        monthlyContribution:
+          payload.monthlyContribution === null ? "" : String(payload.monthlyContribution),
+      },
+      { method: "POST", action: "/app/debt" },
+    );
   };
 
-  const handleDeleteDebt = (id: string) => {
-    setDebts((prev) => prev.filter((d) => d.id !== id));
+  const handleConfirmDelete = (id: string) => {
+    deleteOutcome.begin();
+    fetcher.submit(
+      { intent: "deleteDebt", accountId: id },
+      { method: "POST", action: "/app/debt" },
+    );
   };
 
   const handleUpdateDebt = (id: string, updates: Partial<DebtItem>) => {
-    setDebts((prev) => prev.map((d) => (d.id === id ? { ...d, ...updates } : d)));
+    const current = debts.find((d) => d.id === id);
+    if (!current) return;
+    const payload = debtItemToAccountPayload({ ...current, ...updates });
+    fetcher.submit(
+      {
+        intent: "updateDebt",
+        accountId: id,
+        name: payload.name,
+        type: payload.type,
+        balance: String(payload.balance),
+        interestRate: payload.interestRate === null ? "" : String(payload.interestRate),
+        monthlyContribution:
+          payload.monthlyContribution === null ? "" : String(payload.monthlyContribution),
+      },
+      { method: "POST", action: "/app/debt" },
+    );
   };
 
   return (
@@ -177,6 +219,23 @@ export const DebtContainer: FC = () => {
           ))}
         </div>
       )}
+
+      {saveError ? (
+        <p
+          role="alert"
+          className={css({
+            padding: "12px 16px",
+            borderRadius: "md",
+            border: "1px solid",
+            borderColor: "status.danger.border",
+            backgroundColor: "status.danger.bg",
+            color: "status.danger.text",
+            fontSize: "sm",
+          })}
+        >
+          {saveError}
+        </p>
+      ) : null}
 
       {/* 1. Header & Stage Notification */}
       <div
@@ -361,7 +420,7 @@ export const DebtContainer: FC = () => {
             <DebtAccountsList
               debts={debts}
               onAddDebt={() => setIsAddModalOpen(true)}
-              onDeleteDebt={handleDeleteDebt}
+              onDeleteDebt={(id) => setConfirmDeleteId(id)}
               onUpdateDebt={handleUpdateDebt}
             />
           </div>
@@ -384,6 +443,25 @@ export const DebtContainer: FC = () => {
       >
         <UkDebtInstrumentsCard />
       </div>
+
+      <ConfirmDialog
+        open={debtToDelete !== undefined}
+        onOpenChange={(open) => {
+          if (!open) {
+            setConfirmDeleteId(null);
+            deleteOutcome.dismiss();
+          }
+        }}
+        pending={deleteOutcome.pending}
+        error={deleteOutcome.error}
+        title={`Delete ${debtToDelete?.name ?? "debt"}?`}
+        description="This deletes the account and its history. This can't be undone."
+        confirmLabel="Delete debt"
+        tone="danger"
+        onConfirm={() => {
+          if (confirmDeleteId) handleConfirmDelete(confirmDeleteId);
+        }}
+      />
 
       {/* Add Debt Modal */}
       <AddDebtDialog

@@ -1,6 +1,11 @@
-import { fireEvent, render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { fireEvent, render, screen, within } from "@testing-library/react";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import DebtContainer from "./DebtContainer";
+
+const fetcherState = vi.hoisted(() => ({
+  submit: vi.fn(),
+  data: undefined as unknown,
+}));
 
 const loaderState = vi.hoisted(() => ({
   empty: false,
@@ -34,6 +39,13 @@ vi.mock("react-router", () => ({
     debtInputs: loaderState.debtInputs,
     userProfile: {},
   }),
+  useFetcher: () => ({
+    state: "idle",
+    get data() {
+      return fetcherState.data;
+    },
+    submit: fetcherState.submit,
+  }),
   useNavigate: () => vi.fn(),
   Link: ({ children, to }: any) => <a href={to}>{children}</a>,
 }));
@@ -52,6 +64,11 @@ vi.mock("~/hooks/useUserProfile", async (importOriginal) => {
 });
 
 describe("DebtContainer", () => {
+  beforeEach(() => {
+    fetcherState.submit.mockReset();
+    fetcherState.data = undefined;
+  });
+
   it("passes the loader surplus, not a hard-coded fallback", () => {
     render(<DebtContainer />);
     expect(screen.getByText(/Wired to budget surplus: £420\/mo available/)).toBeDefined();
@@ -128,15 +145,72 @@ describe("DebtContainer", () => {
     fireEvent.click(screen.getByRole("button", { name: /UK Debt Rules & Helplines/i }));
     fireEvent.click(screen.getByRole("button", { name: /Strategy & Payoff Simulator/i }));
 
-    // Open Add Debt Modal and submit a new debt
+    // Open Add Debt Modal and submit a new debt: it persists through the route action
     fireEvent.click(screen.getByRole("button", { name: /Add Debt/i }));
     const nameInput = screen.getByPlaceholderText(/Barclaycard Platinum/i);
     fireEvent.change(nameInput, { target: { value: "New Store Card" } });
     const form = nameInput.closest("form");
     if (form) fireEvent.submit(form);
-    expect(screen.getByText("New Store Card")).toBeDefined();
+    expect(fetcherState.submit).toHaveBeenCalledTimes(1);
+    const [fields, options] = fetcherState.submit.mock.calls[0] as [
+      Record<string, string>,
+      { method: string; action: string },
+    ];
+    expect(fields).toMatchObject({
+      intent: "createDebt",
+      name: "New Store Card",
+      type: "Credit Card",
+      balance: "-1000",
+    });
+    expect(options).toEqual({ method: "POST", action: "/app/debt" });
+  });
 
-    // Delete a debt item
+  it("asks for confirmation before deleting and only submits after confirming", () => {
+    render(<DebtContainer />);
+    fireEvent.click(screen.getByRole("button", { name: /Liability Accounts & Cards/i }));
     fireEvent.click(screen.getByRole("button", { name: /Delete Tesco Loan/i }));
+
+    const dialog = screen.getByRole("alertdialog");
+    expect(within(dialog).getByText(/Delete Tesco Loan\?/)).toBeDefined();
+    expect(fetcherState.submit).not.toHaveBeenCalled();
+
+    fireEvent.click(within(dialog).getByRole("button", { name: "Delete debt" }));
+    expect(fetcherState.submit).toHaveBeenCalledWith(
+      { intent: "deleteDebt", accountId: "acc-loan" },
+      { method: "POST", action: "/app/debt" },
+    );
+  });
+
+  it("does not submit when the delete confirmation is cancelled", () => {
+    render(<DebtContainer />);
+    fireEvent.click(screen.getByRole("button", { name: /Delete Tesco Loan/i }));
+    fireEvent.click(
+      within(screen.getByRole("alertdialog")).getByRole("button", { name: "Cancel" }),
+    );
+    expect(fetcherState.submit).not.toHaveBeenCalled();
+  });
+
+  it("shows a failed save as an alert when no confirmation is open", () => {
+    fetcherState.data = {
+      success: false,
+      error: "We couldn't save that. Check the details and try again.",
+    };
+    render(<DebtContainer />);
+    expect(screen.getByRole("alert").textContent).toContain("We couldn't save that");
+  });
+
+  it("surfaces a failed delete inline and keeps the dialog open", () => {
+    const { rerender } = render(<DebtContainer />);
+    fireEvent.click(screen.getByRole("button", { name: /Delete Tesco Loan/i }));
+    fireEvent.click(
+      within(screen.getByRole("alertdialog")).getByRole("button", { name: "Delete debt" }),
+    );
+    fetcherState.data = {
+      success: false,
+      error: "We couldn't reach the server. Please try again.",
+    };
+    rerender(<DebtContainer />);
+    expect(screen.getByRole("alert").textContent).toContain("We couldn't reach the server");
+    expect(screen.getByRole("alertdialog")).toBeDefined();
   });
 });
