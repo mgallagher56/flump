@@ -60,6 +60,24 @@ describe("uk-tax module", () => {
     });
   });
 
+  describe("tax trap default year after the last supported year", () => {
+    it("does not throw when the clock passes 6 April 2027 (falls back to the latest supported year)", () => {
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date("2027-04-06T12:00:00Z"));
+      expect(() => calculateTaxTrapRelief(110000)).not.toThrow();
+      expect(() => analyzeTaxTrap(110000)).not.toThrow();
+      expect(() => calculate100kTaxTrap(110000)).not.toThrow();
+      expect(calculateTaxTrapRelief(110000)).toEqual(calculateTaxTrapRelief(110000, "2026/27"));
+    });
+
+    it("still throws for an explicitly passed unsupported year", () => {
+      expect(() => calculateTaxTrapRelief(110000, "2027/28")).toThrow(UnsupportedUkTaxYearError);
+      expect(() => analyzeTaxTrap(110000, "ENGLAND_NI_WALES", "2027/28")).toThrow(
+        UnsupportedUkTaxYearError,
+      );
+    });
+  });
+
   describe("analyzeTaxTrap", () => {
     it("accurately identifies £110k earner in 60% tax trap", () => {
       const trap = analyzeTaxTrap(110000, "ENGLAND_NI_WALES");
