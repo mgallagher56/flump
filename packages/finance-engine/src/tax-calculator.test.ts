@@ -65,11 +65,13 @@ describe("calculateUKTax uses the shared EWNI band function", () => {
   });
 
   // 120000 salary + 10500 dividends: gross 130500, taper floor(30500/2)=15250 so PA 0. Non-dividend
-  // taxable 120000; taxable dividends 10500 - 500 = 10000 stack from 120000: higher band up to
-  // 125140 is 5140 x 33.75%, the remaining 4860 x 39.35% (2025/26 dividend rates).
+  // taxable 120000. Per HMRC the 500 dividend allowance still occupies band space, so dividends
+  // occupy 120000 to 130500: first 500 at 0%, then 125140 - 120500 = 4640 at 33.75% (higher) and
+  // 130500 - 125140 = 5360 at 39.35% (additional). 2025/26 dividend rates.
+  // Source: https://www.gov.uk/tax-on-dividends
   it("dividends straddling taxable 125140 split between higher and additional rates", () => {
     const r = calculateUKTax("2025/26", [dividendRecord(10500, "2025-06-01")], 120000, 100);
-    expect(r.dividendTaxDue).toBeCloseTo(5140 * 0.3375 + 4860 * 0.3935, 2);
+    expect(r.dividendTaxDue).toBeCloseTo(4640 * 0.3375 + 5360 * 0.3935, 2);
   });
 
   // PSA band is chosen from taxable income. 130000 salary: PA 0, taxable 130000 > 125140 -> PSA 0.

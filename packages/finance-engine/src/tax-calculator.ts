@@ -584,6 +584,7 @@ export function calculateUKTax(
     dividendTaxDue = calculateDividendTaxForStack(
       priorTaxable,
       taxableDividends,
+      Math.min(dividendIncomeGross, dividendAllowance),
       ewni,
       yearRules.dividends,
     );
@@ -658,6 +659,7 @@ function calculateIncomeTaxForTaxable(taxable: number, ewni: UKEWNIIncomeTaxYear
 function calculateDividendTaxForStack(
   priorTaxable: number,
   dividends: number,
+  allowanceUsed: number,
   ewni: UKEWNIIncomeTaxYear,
   rates: UkDividendRules,
 ): number {
@@ -671,8 +673,10 @@ function calculateDividendTaxForStack(
   const additionalDividendRate = rates.additionalRate;
 
   let tax = 0;
-  const divStart = priorTaxable;
-  const divEnd = priorTaxable + dividends;
+  // The dividend allowance (taxed at 0%) still occupies band space, so taxable dividends stack
+  // above priorTaxable + allowanceUsed. Source: https://www.gov.uk/tax-on-dividends
+  const divStart = priorTaxable + allowanceUsed;
+  const divEnd = divStart + dividends;
 
   // Portion falling in basic rate band (<= basicThreshold)
   if (divStart < basicThreshold) {
