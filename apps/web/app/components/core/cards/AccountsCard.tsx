@@ -108,8 +108,29 @@ const AccountsCard: FC<AccountsCardProp> = ({
     [accountId, navigate],
   );
 
+  // Events from inner controls (the edit button) and from portalled dialogs bubble
+  // through the React tree; only react to events that originate on the card itself.
+  const isFromInnerControl = (e: React.SyntheticEvent) => {
+    const target = e.target as Node;
+    return (
+      !e.currentTarget.contains(target) ||
+      (target instanceof Element && target.closest("button, a, input") !== null)
+    );
+  };
+
+  const handleClick = (e: React.MouseEvent) => {
+    if (isFromInnerControl(e)) return;
+    onViewClick();
+  };
+
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
+      if (
+        !e.currentTarget.contains(e.target as Node) ||
+        (e.target instanceof Element && e.target.closest("button, a, input") !== null)
+      ) {
+        return;
+      }
       if (e.key === "Enter" || e.key === " ") {
         e.preventDefault();
         onViewClick();
@@ -232,7 +253,7 @@ const AccountsCard: FC<AccountsCardProp> = ({
       isMobile={isMobileVariant}
       role="button"
       tabIndex={0}
-      onClick={onViewClick}
+      onClick={handleClick}
       onKeyDown={handleKeyDown}
     >
       <div>
@@ -243,13 +264,11 @@ const AccountsCard: FC<AccountsCardProp> = ({
               {name}
             </span>
           </div>
-          <div onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
-            <AddEditAccountsDialogBtn
-              accountId={accountId}
-              isEditAccount={true}
-              isIconButton={true}
-            />
-          </div>
+          <AddEditAccountsDialogBtn
+            accountId={accountId}
+            isEditAccount={true}
+            isIconButton={true}
+          />
         </div>
 
         <div className={balanceSectionStyle}>

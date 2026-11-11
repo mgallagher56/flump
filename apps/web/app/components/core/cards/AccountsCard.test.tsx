@@ -1,3 +1,4 @@
+import { fireEvent, screen } from "@testing-library/react";
 import mockUser from "__mocks__/user";
 import { vi } from "vitest";
 import { AccountTypeEnum } from "~/containers/accounts/utils";
@@ -9,7 +10,8 @@ import AccountsCard from "./AccountsCard";
 const mocks = vi.hoisted(() => ({
   mockUseLoaderData: vi.fn(),
   mockUseRevalidator: vi.fn(() => ({ revalidate: vi.fn() })),
-  mockUseNavigate: () => vi.fn(),
+  navigateSpy: vi.fn(),
+  mockUseNavigate: () => mocks.navigateSpy,
   mockFrom: vi.fn(() => ({
     delete: () => ({
       eq: () => ({
@@ -154,5 +156,34 @@ describe("<AccountsCard /> liabilities", () => {
 
     expect(getByText("£1,200")).toBeDefined();
     expect(queryByText("£-1,200")).toBeNull();
+  });
+});
+
+describe("<AccountsCard /> interactions", () => {
+  const renderCard = () => {
+    mocks.mockUseLoaderData.mockReturnValue({ user: mockUser, accountDetails: [] });
+    mocks.navigateSpy.mockClear();
+    return customRender(
+      <AccountsCard
+        accountId={"123456"}
+        name="My current account"
+        type={AccountTypeEnum.CURRENT}
+      />,
+    );
+  };
+
+  test("clicking the card navigates to the account", () => {
+    renderCard();
+    fireEvent.click(screen.getByText("My current account"));
+    expect(mocks.navigateSpy).toHaveBeenCalledWith("/app/accounts/123456");
+  });
+
+  test("the edit button does not navigate and its dialog clicks do not bubble to the card", () => {
+    renderCard();
+    const buttons = screen.getAllByRole("button");
+    const editBtn = buttons.find((b) => b.tagName === "BUTTON") as HTMLElement;
+    fireEvent.click(editBtn);
+    fireEvent.keyDown(editBtn, { key: "Enter" });
+    expect(mocks.navigateSpy).not.toHaveBeenCalled();
   });
 });

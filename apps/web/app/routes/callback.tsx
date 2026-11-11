@@ -56,8 +56,8 @@ export default function CallbackRoute() {
           style={{
             display: "inline-block",
             padding: "12px 24px",
-            backgroundColor: "var(--colors-primary)",
-            color: "#fff",
+            backgroundColor: "var(--colors-primary-solid)",
+            color: "var(--colors-primary-foreground)",
             borderRadius: "8px",
             textDecoration: "none",
             fontWeight: 600,

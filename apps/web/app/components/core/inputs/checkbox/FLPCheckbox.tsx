@@ -50,12 +50,16 @@ export const FLPCheckbox = forwardRef<HTMLInputElement, FLPCheckboxProps>(
       variant = "desktop",
       onChange,
       onCheckedChange,
+      "aria-describedby": ariaDescribedBy,
       ...props
     },
     ref,
   ) => {
     const generatedId = useId();
     const id = propId || generatedId;
+    const errorId = `${id}-error`;
+    const describedBy =
+      [ariaDescribedBy, error ? errorId : undefined].filter(Boolean).join(" ") || undefined;
 
     const { isMobile: contextIsMobile } = useResponsive();
     const isMobileVariant = propIsMobile ?? (variant === "mobile" ? true : contextIsMobile);
@@ -98,9 +102,9 @@ export const FLPCheckbox = forwardRef<HTMLInputElement, FLPCheckboxProps>(
       height: boxDimension,
       borderRadius: boxRadius,
       border: "1.5px solid",
-      borderColor: isChecked ? "primary" : "border",
-      backgroundColor: isChecked ? "primary" : "surface",
-      color: "#ffffff",
+      borderColor: isChecked ? "primary" : "border.input",
+      backgroundColor: isChecked ? "primary.solid" : "surface",
+      color: "primary.foreground",
       transition: "all 0.15s ease-in-out",
       boxShadow: "0 1px 2px rgba(0, 0, 0, 0.05)",
       marginTop: size === "sm" ? "1px" : "2px",
@@ -131,7 +135,7 @@ export const FLPCheckbox = forwardRef<HTMLInputElement, FLPCheckboxProps>(
 
     const errorCss = css({
       fontSize: "xs",
-      color: "destructive",
+      color: "status.danger.text",
       fontWeight: "medium",
       marginTop: "2px",
     });
@@ -173,6 +177,8 @@ export const FLPCheckbox = forwardRef<HTMLInputElement, FLPCheckboxProps>(
               }
             }}
             {...props}
+            aria-describedby={describedBy}
+            aria-invalid={error ? true : props["aria-invalid"]}
           />
           <div
             aria-hidden="true"
@@ -191,7 +197,11 @@ export const FLPCheckbox = forwardRef<HTMLInputElement, FLPCheckboxProps>(
           >
             {label && <span>{label}</span>}
             {description && <span className={descCss}>{description}</span>}
-            {error && <span className={errorCss}>{error}</span>}
+            {error && (
+              <span className={errorCss} id={errorId} role="alert">
+                {error}
+              </span>
+            )}
           </label>
         )}
       </div>

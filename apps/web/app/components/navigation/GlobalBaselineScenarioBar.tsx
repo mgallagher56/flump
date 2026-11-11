@@ -128,8 +128,8 @@ export const GlobalBaselineScenarioBar: FC = () => {
           {isActive && (
             <span
               className={css({
-                backgroundColor: "primary",
-                color: "white",
+                backgroundColor: "primary.solid",
+                color: "primary.foreground",
                 padding: "2px 8px",
                 borderRadius: "full",
                 fontSize: "11px",
@@ -204,8 +204,8 @@ export const GlobalBaselineScenarioBar: FC = () => {
                   borderRadius: "md",
                   fontSize: "xs",
                   fontWeight: "semibold",
-                  backgroundColor: "primary",
-                  color: "white",
+                  backgroundColor: "primary.solid",
+                  color: "primary.foreground",
                   border: "none",
                   cursor: "pointer",
                   _hover: { opacity: 0.9 },

@@ -285,6 +285,10 @@ const ConnectBankWizard: FC<ConnectBankWizardProps> = ({ onSuccess }) => {
   });
 
   const bankCardStyle = css({
+    font: "inherit",
+    color: "inherit",
+    textAlign: "left",
+    width: "100%",
     display: "flex",
     alignItems: "center",
     justifyContent: "space-between",
@@ -304,6 +308,10 @@ const ConnectBankWizard: FC<ConnectBankWizardProps> = ({ onSuccess }) => {
   });
 
   const methodCardStyle = css({
+    font: "inherit",
+    color: "inherit",
+    textAlign: "left",
+    width: "100%",
     padding: "16px",
     borderRadius: "lg",
     border: "1px solid",
@@ -389,12 +397,16 @@ const ConnectBankWizard: FC<ConnectBankWizardProps> = ({ onSuccess }) => {
           {step === "select" && (
             <>
               <div>
-                <FLPHeading as="h2" size="lg">
-                  Connect Bank Account
-                </FLPHeading>
-                <FLPText color="text.muted" fontSize="sm" style={{ marginTop: "4px" }}>
-                  Choose your bank or financial institution. Bank connection is a preview.
-                </FLPText>
+                <Dialog.Title asChild>
+                  <FLPHeading as="h2" size="lg">
+                    Connect Bank Account
+                  </FLPHeading>
+                </Dialog.Title>
+                <Dialog.Description asChild>
+                  <FLPText color="text.muted" fontSize="sm" style={{ marginTop: "4px" }}>
+                    Choose your bank or financial institution. Bank connection is a preview.
+                  </FLPText>
+                </Dialog.Description>
               </div>
 
               <div style={{ marginTop: "16px" }}>
@@ -409,17 +421,11 @@ const ConnectBankWizard: FC<ConnectBankWizardProps> = ({ onSuccess }) => {
 
               <div className={scrollContainerStyle}>
                 {filteredBanks.map((bank) => (
-                  <div
+                  <button
                     key={bank.id}
                     className={bankCardStyle}
-                    role="button"
-                    tabIndex={0}
+                    type="button"
                     onClick={() => handleSelectBank(bank)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" || e.key === " ") {
-                        handleSelectBank(bank);
-                      }
-                    }}
                   >
                     <div className={flexContainer} style={{ minWidth: 0, flex: 1 }}>
                       <div className={bankLogoCircleStyle(bank.color)}>{bank.name.charAt(0)}</div>
@@ -480,7 +486,7 @@ const ConnectBankWizard: FC<ConnectBankWizardProps> = ({ onSuccess }) => {
                       </div>
                     </div>
                     <FaChevronRight style={{ color: "#a1a1aa", fontSize: "14px", flexShrink: 0 }} />
-                  </div>
+                  </button>
                 ))}
                 {filteredBanks.length === 0 && (
                   <div style={{ textAlign: "center", padding: "32px 0" }}>
@@ -501,23 +507,23 @@ const ConnectBankWizard: FC<ConnectBankWizardProps> = ({ onSuccess }) => {
           {step === "method" && selectedBank && (
             <>
               <div>
-                <FLPHeading as="h2" size="lg">
-                  Choose Connection Mode
-                </FLPHeading>
-                <FLPText color="text.muted" fontSize="sm" style={{ marginTop: "4px" }}>
-                  Select how you want to connect to {selectedBank.name}.
-                </FLPText>
+                <Dialog.Title asChild>
+                  <FLPHeading as="h2" size="lg">
+                    Choose Connection Mode
+                  </FLPHeading>
+                </Dialog.Title>
+                <Dialog.Description asChild>
+                  <FLPText color="text.muted" fontSize="sm" style={{ marginTop: "4px" }}>
+                    Select how you want to connect to {selectedBank.name}.
+                  </FLPText>
+                </Dialog.Description>
               </div>
 
               <div className={scrollContainerStyle}>
-                <div
+                <button
                   className={methodCardStyle}
-                  role="button"
-                  tabIndex={0}
+                  type="button"
                   onClick={() => handleSelectMethod("pat")}
-                  onKeyDown={(e) =>
-                    (e.key === "Enter" || e.key === " ") && handleSelectMethod("pat")
-                  }
                 >
                   <div style={{ display: "flex", gap: "16px", alignItems: "flex-start" }}>
                     <FaKey
@@ -532,16 +538,12 @@ const ConnectBankWizard: FC<ConnectBankWizardProps> = ({ onSuccess }) => {
                       </FLPText>
                     </div>
                   </div>
-                </div>
+                </button>
 
-                <div
+                <button
                   className={methodCardStyle}
-                  role="button"
-                  tabIndex={0}
+                  type="button"
                   onClick={() => handleSelectMethod("oauth")}
-                  onKeyDown={(e) =>
-                    (e.key === "Enter" || e.key === " ") && handleSelectMethod("oauth")
-                  }
                 >
                   <div style={{ display: "flex", gap: "16px", alignItems: "flex-start" }}>
                     <FaGlobe
@@ -557,7 +559,7 @@ const ConnectBankWizard: FC<ConnectBankWizardProps> = ({ onSuccess }) => {
                       </FLPText>
                     </div>
                   </div>
-                </div>
+                </button>
               </div>
 
               <div style={{ display: "flex", justifyContent: "flex-start", marginTop: "12px" }}>
@@ -573,12 +575,16 @@ const ConnectBankWizard: FC<ConnectBankWizardProps> = ({ onSuccess }) => {
           {step === "tokenInput" && selectedBank && (
             <>
               <div>
-                <FLPHeading as="h2" size="lg">
-                  {selectedBank.name} Developer Token
-                </FLPHeading>
-                <FLPText color="text.muted" fontSize="sm" style={{ marginTop: "4px" }}>
-                  Preview: paste your own read-only access token from your provider.
-                </FLPText>
+                <Dialog.Title asChild>
+                  <FLPHeading as="h2" size="lg">
+                    {selectedBank.name} Developer Token
+                  </FLPHeading>
+                </Dialog.Title>
+                <Dialog.Description asChild>
+                  <FLPText color="text.muted" fontSize="sm" style={{ marginTop: "4px" }}>
+                    Preview: paste your own read-only access token from your provider.
+                  </FLPText>
+                </Dialog.Description>
               </div>
 
               <div className={scrollContainerStyle}>
@@ -640,12 +646,16 @@ const ConnectBankWizard: FC<ConnectBankWizardProps> = ({ onSuccess }) => {
           {step === "consent" && selectedBank && (
             <>
               <div>
-                <FLPHeading as="h2" size="lg">
-                  Link with {selectedBank.name}
-                </FLPHeading>
-                <FLPText color="text.muted" fontSize="sm" style={{ marginTop: "4px" }}>
-                  Review the secure sync authorizations requested.
-                </FLPText>
+                <Dialog.Title asChild>
+                  <FLPHeading as="h2" size="lg">
+                    Link with {selectedBank.name}
+                  </FLPHeading>
+                </Dialog.Title>
+                <Dialog.Description asChild>
+                  <FLPText color="text.muted" fontSize="sm" style={{ marginTop: "4px" }}>
+                    Review the secure sync authorizations requested.
+                  </FLPText>
+                </Dialog.Description>
               </div>
 
               <div className={scrollContainerStyle}>
@@ -740,12 +750,16 @@ const ConnectBankWizard: FC<ConnectBankWizardProps> = ({ onSuccess }) => {
                 })}
               />
               <div style={{ textAlign: "center" }}>
-                <FLPHeading as="h3" size="md">
-                  Connecting to {selectedBank.name}
-                </FLPHeading>
-                <FLPText color="text.muted" fontSize="sm" style={{ marginTop: "4px" }}>
-                  Establishing secure API link & parsing balances...
-                </FLPText>
+                <Dialog.Title asChild>
+                  <FLPHeading as="h3" size="md">
+                    Connecting to {selectedBank.name}
+                  </FLPHeading>
+                </Dialog.Title>
+                <Dialog.Description asChild>
+                  <FLPText color="text.muted" fontSize="sm" style={{ marginTop: "4px" }}>
+                    Establishing secure API link & parsing balances...
+                  </FLPText>
+                </Dialog.Description>
               </div>
             </div>
           )}
@@ -756,12 +770,16 @@ const ConnectBankWizard: FC<ConnectBankWizardProps> = ({ onSuccess }) => {
               <div className={loadingContainer}>
                 <FaCheckCircle className={successCheckStyle} />
                 <div style={{ textAlign: "center" }}>
-                  <FLPHeading as="h3" size="md">
-                    Successfully Connected!
-                  </FLPHeading>
-                  <FLPText color="text.muted" fontSize="sm" style={{ marginTop: "4px" }}>
-                    Your accounts from {selectedBank.name} are now synced.
-                  </FLPText>
+                  <Dialog.Title asChild>
+                    <FLPHeading as="h3" size="md">
+                      Successfully Connected!
+                    </FLPHeading>
+                  </Dialog.Title>
+                  <Dialog.Description asChild>
+                    <FLPText color="text.muted" fontSize="sm" style={{ marginTop: "4px" }}>
+                      Your accounts from {selectedBank.name} are now synced.
+                    </FLPText>
+                  </Dialog.Description>
                 </div>
               </div>
 
@@ -813,12 +831,16 @@ const ConnectBankWizard: FC<ConnectBankWizardProps> = ({ onSuccess }) => {
               <div className={loadingContainer}>
                 <div style={{ fontSize: "48px", color: "#ef4444" }}>⚠️</div>
                 <div style={{ textAlign: "center" }}>
-                  <FLPHeading as="h3" size="md" color="destructive">
-                    Connection Failed
-                  </FLPHeading>
-                  <FLPText color="text.muted" fontSize="sm" style={{ marginTop: "4px" }}>
-                    We couldn't connect to {selectedBank.name} API.
-                  </FLPText>
+                  <Dialog.Title asChild>
+                    <FLPHeading as="h3" size="md" color="destructive">
+                      Connection Failed
+                    </FLPHeading>
+                  </Dialog.Title>
+                  <Dialog.Description asChild>
+                    <FLPText color="text.muted" fontSize="sm" style={{ marginTop: "4px" }}>
+                      We couldn't connect to {selectedBank.name} API.
+                    </FLPText>
+                  </Dialog.Description>
                 </div>
               </div>
 
@@ -860,12 +882,16 @@ const ConnectBankWizard: FC<ConnectBankWizardProps> = ({ onSuccess }) => {
           {step === "unsupported" && selectedBank && (
             <>
               <div>
-                <FLPHeading as="h2" size="lg">
-                  {selectedBank.name}: bank connection
-                </FLPHeading>
-                <FLPText color="text.muted" fontSize="sm" style={{ marginTop: "4px" }}>
-                  Bank connection coming soon.
-                </FLPText>
+                <Dialog.Title asChild>
+                  <FLPHeading as="h2" size="lg">
+                    {selectedBank.name}: bank connection
+                  </FLPHeading>
+                </Dialog.Title>
+                <Dialog.Description asChild>
+                  <FLPText color="text.muted" fontSize="sm" style={{ marginTop: "4px" }}>
+                    Bank connection coming soon.
+                  </FLPText>
+                </Dialog.Description>
               </div>
 
               <div

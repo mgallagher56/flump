@@ -44,7 +44,7 @@ const pillStyle = (active: boolean) =>
     borderRadius: "full",
     border: "1px solid",
     borderColor: active ? "primary" : "border",
-    backgroundColor: active ? "primary" : "transparent",
+    backgroundColor: active ? "primary.solid" : "transparent",
     color: active ? "primary.foreground" : "text.primary",
     cursor: "pointer",
     transition: "all 0.15s ease",

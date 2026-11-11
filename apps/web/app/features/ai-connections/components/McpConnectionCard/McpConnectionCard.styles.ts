@@ -46,6 +46,11 @@ export const toggleSwitch = cva({
     transition: "all 0.2s ease",
     flexShrink: 0,
     outline: "none",
+    _focusVisible: {
+      outline: "2px solid",
+      outlineColor: "border.focusRing",
+      outlineOffset: "2px",
+    },
   },
   variants: {
     checked: {
@@ -55,7 +60,7 @@ export const toggleSwitch = cva({
       },
       false: {
         backgroundColor: "surface.sunken",
-        borderColor: "border.strong",
+        borderColor: "border.input",
       },
     },
   },

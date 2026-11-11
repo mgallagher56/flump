@@ -1,10 +1,11 @@
 import { css } from "@repo/ui/styled-system/css";
-import type { FC, SelectHTMLAttributes } from "react";
+import { type FC, type SelectHTMLAttributes, useId } from "react";
 import { useResponsive } from "~/context/ResponsiveContext";
 
 export interface FLPSelectProps
   extends Omit<SelectHTMLAttributes<HTMLSelectElement>, "value" | "onChange"> {
   label: string;
+  error?: string;
   isLabelHidden?: boolean;
   flexDirection?: "row" | "column";
   gap?: number | string;
@@ -29,8 +30,16 @@ const FLPSelect: FC<FLPSelectProps> = ({
   style,
   isMobile: propIsMobile,
   variant = "desktop",
+  error,
+  id: propId,
+  "aria-describedby": ariaDescribedBy,
   ...props
 }) => {
+  const generatedId = useId();
+  const id = propId ?? generatedId;
+  const errorId = `${id}-error`;
+  const describedBy =
+    [ariaDescribedBy, error ? errorId : undefined].filter(Boolean).join(" ") || undefined;
   const { isMobile: contextIsMobile } = useResponsive();
   const isMobileVariant = propIsMobile ?? (variant === "mobile" ? true : contextIsMobile);
   const resolvedDirection = isMobileVariant ? "column" : flexDirection;
@@ -56,7 +65,7 @@ const FLPSelect: FC<FLPSelectProps> = ({
     fontSize: isMobileVariant ? "16px" : "sm",
     borderRadius: "sm",
     border: "1px solid",
-    borderColor: "border",
+    borderColor: "border.input",
     backgroundColor: "surface",
     color: "text.primary",
     outline: "none",
@@ -68,21 +77,31 @@ const FLPSelect: FC<FLPSelectProps> = ({
     },
   });
 
+  const errorStyle = css({
+    color: "status.danger.text",
+    fontSize: "xs",
+    fontWeight: "medium",
+    marginTop: "4px",
+  });
+
   return (
     <div className={containerStyle} data-variant={isMobileVariant ? "mobile" : "desktop"}>
       {!isLabelHidden && (
-        <label className={labelStyle} htmlFor={label}>
+        <label className={labelStyle} htmlFor={id}>
           {label}
         </label>
       )}
       <div style={{ flex: 1 }}>
         <select
           className={`${selectStyle} ${className || ""}`}
-          id={label}
+          id={id}
           style={style}
           value={value?.[0] || ""}
           onChange={(e) => onValueChange({ value: [e.target.value] })}
           {...props}
+          aria-describedby={describedBy}
+          aria-invalid={error ? true : props["aria-invalid"]}
+          aria-label={isLabelHidden ? label : props["aria-label"]}
         >
           {collection.items.map((item) => (
             <option
@@ -97,6 +116,11 @@ const FLPSelect: FC<FLPSelectProps> = ({
             </option>
           ))}
         </select>
+        {error && (
+          <span className={errorStyle} id={errorId} role="alert">
+            {error}
+          </span>
+        )}
       </div>
     </div>
   );

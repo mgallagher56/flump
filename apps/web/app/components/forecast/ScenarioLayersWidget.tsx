@@ -171,8 +171,10 @@ export const ScenarioLayersWidget: FC<ScenarioLayersWidgetProps> = ({ onScenario
                   width: "32px",
                   height: "32px",
                   borderRadius: "8px",
-                  backgroundColor: isActive ? "var(--colors-primary)" : "var(--colors-surface)",
-                  color: isActive ? "#fff" : "var(--colors-text-muted)",
+                  backgroundColor: isActive
+                    ? "var(--colors-primary-solid)"
+                    : "var(--colors-surface)",
+                  color: isActive ? "var(--colors-primary-foreground)" : "var(--colors-text-muted)",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",

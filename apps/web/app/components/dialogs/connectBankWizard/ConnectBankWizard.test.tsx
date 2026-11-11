@@ -1,4 +1,4 @@
-import { fireEvent } from "@testing-library/react";
+import { fireEvent, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import customRender from "~/testUtils/customRender";
@@ -48,6 +48,24 @@ describe("<ConnectBankWizard />", () => {
       expect(getByText("We couldn't start the bank sign-in. Please try again.")).toBeDefined();
     },
   );
+
+  test("names the dialog on each step and uses buttons for choices", () => {
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    customRender(<ConnectBankWizard />);
+    fireEvent.click(screen.getByText("Connect Bank Account"));
+    expect(screen.getByRole("dialog", { name: /connect bank account/i })).toBeDefined();
+
+    const monzo = screen.getByRole("button", { name: /Monzo Bank/ });
+    expect(monzo.tagName).toBe("BUTTON");
+    fireEvent.click(monzo);
+    expect(screen.getByRole("dialog", { name: /choose connection mode/i })).toBeDefined();
+    expect(screen.getByRole("button", { name: /Personal Access Token/ })).toBeDefined();
+    expect(screen.getByRole("button", { name: /OAuth 2.0/ })).toBeDefined();
+
+    const radixWarnings = errorSpy.mock.calls.filter((c) => String(c[0]).includes("DialogContent"));
+    expect(radixWarnings).toHaveLength(0);
+    errorSpy.mockRestore();
+  });
 
   test("opens dialog and allows selecting a bank and proceeding through steps", async () => {
     const { getByText, getByPlaceholderText, queryByText } = customRender(<ConnectBankWizard />);

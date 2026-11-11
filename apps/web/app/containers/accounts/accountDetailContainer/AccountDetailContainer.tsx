@@ -2,7 +2,7 @@ import { css } from "@repo/ui/styled-system/css";
 import { type FC, useCallback, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { FaArrowLeft, FaCalendarPlus, FaChartArea, FaTable } from "react-icons/fa";
-import { useFetcher, useLoaderData, useNavigate } from "react-router";
+import { Link, useFetcher, useLoaderData } from "react-router";
 import AccountDetails from "~/components/accounts/AccountDetails";
 import FLPButton from "~/components/core/buttons/FLPButton";
 import FLPCard from "~/components/core/cards/FLPCard";
@@ -18,7 +18,6 @@ import { currentYear, emptyObject } from "~/utils/utils";
 const AccountDetailContainer: FC = () => {
   const { formatCurrency } = useFormatCurrency();
   const { t } = useTranslation();
-  const navigate = useNavigate();
   const { account, accountDetails = [] } = useLoaderData<typeof loader>();
   const fetcher = useFetcher();
   const isLoading = fetcher.state !== "idle";
@@ -155,6 +154,7 @@ const AccountDetailContainer: FC = () => {
     fontSize: "sm",
     fontWeight: "medium",
     cursor: "pointer",
+    textDecoration: "none",
     my: 4,
     width: "fit-content",
     "&:hover": {
@@ -241,10 +241,10 @@ const AccountDetailContainer: FC = () => {
   return (
     <div className={containerStyle}>
       {/* Back Link */}
-      <div className={backLinkStyle} onClick={() => navigate("/app/accounts")}>
+      <Link className={backLinkStyle} to="/app/accounts">
         <FaArrowLeft size={12} />
         Back to accounts
-      </div>
+      </Link>
 
       {/* Account Info Header Card */}
       <div className={headerCardStyle}>

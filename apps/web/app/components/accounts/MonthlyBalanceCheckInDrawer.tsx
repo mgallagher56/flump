@@ -157,16 +157,20 @@ export const MonthlyBalanceCheckInDrawer: FC<MonthlyBalanceCheckInDrawerProps> =
             })}
           >
             <div>
-              <FLPHeading as="h2" size="lg" color="text.primary">
-                60-Second Monthly Balance Check-In
-              </FLPHeading>
-              <FLPText fontSize="sm" color="text.muted" className={css({ marginTop: "4px" })}>
-                Quickly update all manual balances for{" "}
-                <strong>
-                  {currentMonthName} {currentYear}
-                </strong>{" "}
-                in one view.
-              </FLPText>
+              <Dialog.Title asChild>
+                <FLPHeading as="h2" size="lg" color="text.primary">
+                  60-Second Monthly Balance Check-In
+                </FLPHeading>
+              </Dialog.Title>
+              <Dialog.Description asChild>
+                <FLPText fontSize="sm" color="text.muted" className={css({ marginTop: "4px" })}>
+                  Quickly update all manual balances for{" "}
+                  <strong>
+                    {currentMonthName} {currentYear}
+                  </strong>{" "}
+                  in one view.
+                </FLPText>
+              </Dialog.Description>
             </div>
             <Dialog.Close asChild>
               <button

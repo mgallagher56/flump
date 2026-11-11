@@ -1,5 +1,5 @@
 import { css } from "@repo/ui/styled-system/css";
-import { type FC, useState } from "react";
+import { type FC, useId, useState } from "react";
 import {
   FaBalanceScale,
   FaChartLine,
@@ -17,7 +17,6 @@ import {
   FaWallet,
 } from "react-icons/fa";
 import { useNavigate } from "react-router";
-import FLPHeading from "~/components/core/typography/FLPHeading";
 import FLPText from "~/components/core/typography/FLPText";
 import { useResponsive } from "~/context/ResponsiveContext";
 
@@ -124,6 +123,7 @@ const SetupChecklist: FC<SetupChecklistProps> = (props) => {
   const navigate = useNavigate();
   const { isMobile: contextIsMobile } = useResponsive();
   const isMobileVariant = props.isMobile ?? (props.variant === "mobile" ? true : contextIsMobile);
+  const panelId = useId();
   const [expanded, setExpanded] = useState(false);
   const [dismissed, setDismissed] = useState(() => {
     if (typeof window !== "undefined") {
@@ -167,21 +167,47 @@ const SetupChecklist: FC<SetupChecklistProps> = (props) => {
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
+          gap: "8px",
           padding: { base: "12px 14px", md: "16px 20px" },
-          cursor: "pointer",
           userSelect: "none",
           borderBottom: expanded ? "1px solid" : "none",
           borderColor: "border",
           _hover: { backgroundColor: "rgba(99,99,241,0.07)" },
         })}
-        onClick={() => setExpanded(!expanded)}
       >
-        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-          <div>
-            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-              <FLPHeading as="h4" size="sm">
+        <button
+          aria-controls={panelId}
+          aria-expanded={expanded}
+          className={css({
+            flex: "1",
+            minWidth: 0,
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            gap: "12px",
+            textAlign: "left",
+            background: "none",
+            border: "none",
+            padding: 0,
+            margin: 0,
+            font: "inherit",
+            color: "inherit",
+            cursor: "pointer",
+          })}
+          type="button"
+          onClick={() => setExpanded(!expanded)}
+        >
+          <span style={{ display: "block" }}>
+            <span style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <span
+                className={css({
+                  fontSize: "sm",
+                  fontWeight: "semibold",
+                  color: "text.primary",
+                })}
+              >
                 Refine and drill down your baseline
-              </FLPHeading>
+              </span>
               <span
                 className={css({
                   fontSize: "xs",
@@ -194,10 +220,11 @@ const SetupChecklist: FC<SetupChecklistProps> = (props) => {
               >
                 {completedCount} / {steps.length}
               </span>
-            </div>
+            </span>
             {/* Progress bar */}
-            <div
+            <span
               className={css({
+                display: "block",
                 height: "4px",
                 borderRadius: "full",
                 backgroundColor: "border",
@@ -206,8 +233,9 @@ const SetupChecklist: FC<SetupChecklistProps> = (props) => {
                 maxWidth: "300px",
               })}
             >
-              <div
+              <span
                 style={{
+                  display: "block",
                   height: "100%",
                   width: `${progressPct}%`,
                   backgroundColor: "#6363f1",
@@ -215,42 +243,40 @@ const SetupChecklist: FC<SetupChecklistProps> = (props) => {
                   transition: "width 0.5s ease",
                 }}
               />
-            </div>
-          </div>
-        </div>
-        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-          <button
-            className={css({
-              color: "text.muted",
-              background: "none",
-              border: "none",
-              cursor: "pointer",
-              padding: "4px",
-              borderRadius: "sm",
-              fontSize: "12px",
-              transition: "color 0.15s",
-              _hover: { color: "destructive" },
-            })}
-            title="Dismiss"
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              setDismissed(true);
-              if (typeof window !== "undefined") {
-                window.localStorage.setItem("flump_setup_checklist_dismissed", "true");
-              }
-            }}
-          >
-            <FaTimes />
-          </button>
-          <div className={css({ color: "text.muted", fontSize: "sm" })}>
+            </span>
+          </span>
+          <span className={css({ color: "text.muted", fontSize: "sm", display: "flex" })}>
             {expanded ? <FaChevronUp /> : <FaChevronDown />}
-          </div>
-        </div>
+          </span>
+        </button>
+        <button
+          className={css({
+            color: "text.muted",
+            background: "none",
+            border: "none",
+            cursor: "pointer",
+            padding: "4px",
+            borderRadius: "sm",
+            fontSize: "12px",
+            transition: "color 0.15s",
+            _hover: { color: "destructive" },
+          })}
+          title="Dismiss"
+          type="button"
+          onClick={() => {
+            setDismissed(true);
+            if (typeof window !== "undefined") {
+              window.localStorage.setItem("flump_setup_checklist_dismissed", "true");
+            }
+          }}
+        >
+          <FaTimes />
+        </button>
       </div>
 
       {/* Step list */}
       <div
+        id={panelId}
         className={css({
           gridTemplateColumns: isMobileVariant ? "1fr" : { base: "1fr", md: "repeat(2, 1fr)" },
           gap: "0",

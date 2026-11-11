@@ -40,20 +40,23 @@
 
   input[type="checkbox"]:not([data-flp-checkbox]):focus-visible {
     border-color: var(--colors-primary, #6363f1);
-    box-shadow: 0 0 0 2px rgba(99, 99, 241, 0.35);
+    /* focusRing token (>= 3:1 on both themes); replaces the 1.60:1 rgba shadow. */
+    outline: 2px solid var(--colors-border-focus-ring, #4f46e5);
+    outline-offset: 2px;
   }
 
+  /* The checked box carries a white tick, so it is a text/icon-bearing fill: primary-solid. */
   input[type="checkbox"]:not([data-flp-checkbox]):checked {
-    background-color: var(--colors-primary, #6363f1);
-    border-color: var(--colors-primary, #6363f1);
+    background-color: var(--colors-primary-solid, #4f46e5);
+    border-color: var(--colors-primary-solid, #4f46e5);
   }
 
   input[type="checkbox"]:not([data-flp-checkbox]):checked::before {
     content: "";
     width: 9px;
     height: 5px;
-    border-left: 2px solid #ffffff;
-    border-bottom: 2px solid #ffffff;
+    border-left: 2px solid var(--colors-primary-foreground, #ffffff);
+    border-bottom: 2px solid var(--colors-primary-foreground, #ffffff);
     transform: rotate(-45deg) translate(0.5px, -0.5px);
   }
 
@@ -142,5 +145,77 @@
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
+  }
+
+  /* Spinners convey "loading", so they must keep moving. Replace rotation with a slow,
+     non-rotating pulse (opacity only) instead of freezing after one 0.01ms iteration. */
+  [data-spinner],
+  [data-spinner]::before,
+  [data-spinner]::after {
+    animation-name: flp-spinner-pulse !important;
+    animation-duration: 1.6s !important;
+    animation-iteration-count: infinite !important;
+    animation-timing-function: ease-in-out !important;
+  }
+
+  @keyframes flp-spinner-pulse {
+    0%,
+    100% {
+      opacity: 0.35;
+    }
+    50% {
+      opacity: 1;
+    }
+  }
+}
+
+/* Global keyboard focus indicator (unlayered, so it beats Panda's layered utilities and
+   silent `outline: none` removals). Design choices:
+   - :where() keeps specificity at zero for the selector part.
+   - Only outline style/width/colour are set; outline-offset is NOT, so components that set
+     their own offset (CollapsibleDrawer -2px, HomeFAQ -2px) keep it. Button, SegmentedTabs and
+     SliderField use the identical 2px solid focusRing, so they are unchanged.
+   - Opt-out: [data-focus-managed] (and its descendants) for widgets whose container draws the
+     ring via :focus-within (e.g. the SliderField pill input), avoiding a double ring.
+   - Dialog containers (tabindex="-1") are excluded. */
+:where(
+  a,
+  button,
+  input,
+  select,
+  textarea,
+  summary,
+  [role="button"],
+  [role="radio"],
+  [role="switch"],
+  [role="tab"],
+  [tabindex]:not([tabindex="-1"])
+):not(:where([data-focus-managed], [data-focus-managed] *)):focus-visible {
+  outline-style: solid;
+  outline-width: 2px;
+  outline-color: var(--colors-border-focus-ring);
+}
+
+/* Keep focused controls clear of the sticky header and the fixed mobile bottom bar (SC 2.4.11).
+   --header-height lives on :root because the header element cannot pass a custom property up to
+   html. Values approximate the sticky header (nav padding + content). */
+:root {
+  --header-height: 64px;
+}
+
+@media (min-width: 768px) {
+  :root {
+    --header-height: 72px;
+  }
+}
+
+html {
+  scroll-padding-top: var(--header-height, 64px);
+}
+
+/* MobileBottomBar (64px, fixed) is only shown below the md breakpoint (768px). */
+@media (max-width: 767.98px) {
+  html {
+    scroll-padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px));
   }
 }

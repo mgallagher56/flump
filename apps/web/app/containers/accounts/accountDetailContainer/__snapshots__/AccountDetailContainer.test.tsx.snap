@@ -6,8 +6,9 @@ exports[`<AccountDetailContainer /> > should add new years when buttons are clic
     <div
       class="d_flex flex-d_column gap_32px pb_48px"
     >
-      <div
-        class="d_inline-flex ai_center gap_8px c_text.muted fs_sm fw_medium cursor_pointer my_4 w_fit-content [&:hover]:c_primary"
+      <a
+        class="d_inline-flex ai_center gap_8px c_text.muted fs_sm fw_medium cursor_pointer td_none my_4 w_fit-content [&:hover]:c_primary"
+        href="/app/accounts"
       >
         <svg
           fill="currentColor"
@@ -23,7 +24,7 @@ exports[`<AccountDetailContainer /> > should add new years when buttons are clic
           />
         </svg>
         Back to accounts
-      </div>
+      </a>
       <div
         class="p_24px bdr_lg bg-c_card bd_1px_solid bd-c_border d_flex flex-d_column md:flex-d_row jc_space-between ai_flex-start md:ai_center gap_20px"
       >
@@ -184,8 +185,9 @@ exports[`<AccountDetailContainer /> > should render 1`] = `
     <div
       class="d_flex flex-d_column gap_32px pb_48px"
     >
-      <div
-        class="d_inline-flex ai_center gap_8px c_text.muted fs_sm fw_medium cursor_pointer my_4 w_fit-content [&:hover]:c_primary"
+      <a
+        class="d_inline-flex ai_center gap_8px c_text.muted fs_sm fw_medium cursor_pointer td_none my_4 w_fit-content [&:hover]:c_primary"
+        href="/app/accounts"
       >
         <svg
           fill="currentColor"
@@ -201,7 +203,7 @@ exports[`<AccountDetailContainer /> > should render 1`] = `
           />
         </svg>
         Back to accounts
-      </div>
+      </a>
       <div
         class="p_24px bdr_lg bg-c_card bd_1px_solid bd-c_border d_flex flex-d_column md:flex-d_row jc_space-between ai_flex-start md:ai_center gap_20px"
       >
@@ -362,8 +364,9 @@ exports[`<AccountDetailContainer /> > should render add current year button and 
     <div
       class="d_flex flex-d_column gap_32px pb_48px"
     >
-      <div
-        class="d_inline-flex ai_center gap_8px c_text.muted fs_sm fw_medium cursor_pointer my_4 w_fit-content [&:hover]:c_primary"
+      <a
+        class="d_inline-flex ai_center gap_8px c_text.muted fs_sm fw_medium cursor_pointer td_none my_4 w_fit-content [&:hover]:c_primary"
+        href="/app/accounts"
       >
         <svg
           fill="currentColor"
@@ -379,7 +382,7 @@ exports[`<AccountDetailContainer /> > should render add current year button and 
           />
         </svg>
         Back to accounts
-      </div>
+      </a>
       <div
         class="p_24px bdr_lg bg-c_card bd_1px_solid bd-c_border d_flex flex-d_column md:flex-d_row jc_space-between ai_flex-start md:ai_center gap_20px"
       >
@@ -513,8 +516,9 @@ exports[`<AccountDetailContainer /> > should toggle edit mode when button is cli
     <div
       class="d_flex flex-d_column gap_32px pb_48px"
     >
-      <div
-        class="d_inline-flex ai_center gap_8px c_text.muted fs_sm fw_medium cursor_pointer my_4 w_fit-content [&:hover]:c_primary"
+      <a
+        class="d_inline-flex ai_center gap_8px c_text.muted fs_sm fw_medium cursor_pointer td_none my_4 w_fit-content [&:hover]:c_primary"
+        href="/app/accounts"
       >
         <svg
           fill="currentColor"
@@ -530,7 +534,7 @@ exports[`<AccountDetailContainer /> > should toggle edit mode when button is cli
           />
         </svg>
         Back to accounts
-      </div>
+      </a>
       <div
         class="p_24px bdr_lg bg-c_card bd_1px_solid bd-c_border d_flex flex-d_column md:flex-d_row jc_space-between ai_flex-start md:ai_center gap_20px"
       >
