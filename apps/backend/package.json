@@ -3,16 +3,19 @@
   "version": "1.23.0",
   "private": true,
   "scripts": {
-    "dev": "bun --watch src/main.ts",
+    "dev": "NODE_ENV=development bun --watch src/main.ts",
     "build": "tsc",
     "format": "biome check --write .",
     "start": "node dist/main",
-    "start:dev": "bun --watch src/main.ts",
+    "start:dev": "NODE_ENV=development bun --watch src/main.ts",
     "start:prod": "node dist/main",
     "lint": "biome check .",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
-    "check-types": "tsc --noEmit"
+    "check-types": "tsc --noEmit",
+    "migration:run": "bun ./node_modules/typeorm/cli.js -d src/data-source.ts migration:run",
+    "migration:revert": "bun ./node_modules/typeorm/cli.js -d src/data-source.ts migration:revert",
+    "migration:generate": "bun ./node_modules/typeorm/cli.js -d src/data-source.ts migration:generate"
   },
   "dependencies": {
     "@flump/banking": "workspace:*",
