@@ -1,4 +1,13 @@
 import { createContext, type ReactElement, type ReactNode, useContext } from "react";
+// "react-router-real" is aliased in main.ts to the real package entry, because "react-router" itself is aliased to this mock.
+import { UNSAFE_DataRouterContext, useRevalidator as useRealRevalidator } from "react-router-real";
+
+export {
+  createRoutesStub,
+  data,
+  isRouteErrorResponse,
+  useRouteError,
+} from "react-router-real";
 
 export interface MockRouterContextType {
   loaderData: any;
@@ -52,7 +61,14 @@ export const useSearchParams = () => {
   return [params, setParams] as const;
 };
 
+// Inside a real data router (e.g. createRoutesStub) use the real hook so revalidation re-runs loaders;
+// otherwise fall back to the inert fake. The branch is stable for a given component instance.
 export const useRevalidator = () => {
+  const inDataRouter = useContext(UNSAFE_DataRouterContext) != null;
+  if (inDataRouter) {
+    // biome-ignore lint/correctness/useHookAtTopLevel: branch is stable per mounted instance
+    return useRealRevalidator();
+  }
   return { revalidate: () => {}, state: "idle" as const };
 };
 

@@ -29,11 +29,19 @@ const config: StorybookConfig = {
   async viteFinal(config) {
     return {
       ...config,
+      optimizeDeps: {
+        ...config.optimizeDeps,
+        include: [...(config.optimizeDeps?.include ?? []), "react-router-real"],
+      },
       resolve: {
         ...config.resolve,
         alias: {
           ...config.resolve?.alias,
           "~": resolve(__dirname, "../app"),
+          "react-router-real": resolve(
+            __dirname,
+            "../node_modules/react-router/dist/development/index.mjs",
+          ),
           "react-router": resolve(__dirname, "./react-router-mock.tsx"),
           "react-router-dom": resolve(__dirname, "./react-router-mock.tsx"),
           "@storybook/test": resolve(__dirname, "../node_modules/storybook/dist/test/index.js"),
