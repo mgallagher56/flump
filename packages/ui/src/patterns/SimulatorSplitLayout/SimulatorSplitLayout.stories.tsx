@@ -62,5 +62,13 @@ export const Default: Story = {
     const canvas = within(canvasElement);
     await expect(canvas.getByText("Payoff Parameters")).toBeInTheDocument();
     await expect(canvas.getByText("The Debt-to-Wealth Crossover Bridge")).toBeInTheDocument();
+    await expect(canvas.getByRole("region", { name: "Parameters" })).toBeInTheDocument();
+    await expect(canvas.getByRole("region", { name: "Results" })).toBeInTheDocument();
+    await expect(canvasElement.querySelector("main")).toBeNull();
   },
+};
+
+export const Dark: Story = {
+  ...Default,
+  globals: { theme: "dark" },
 };
