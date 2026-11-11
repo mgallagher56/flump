@@ -76,7 +76,7 @@ export const HomeCTA: FC = () => {
         </div>
 
         <FLPText color="text.muted" fontSize="xs">
-          Free manual tier · No credit card required · FCA Open Banking
+          Plan your finances with UK tax rules
         </FLPText>
       </div>
     </section>

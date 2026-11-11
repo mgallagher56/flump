@@ -1,6 +1,6 @@
 import { css } from "@repo/ui/styled-system/css";
 import type { FC } from "react";
-import { FiCheck, FiMinus, FiX } from "react-icons/fi";
+import { FiCheck } from "react-icons/fi";
 import FLPHeading from "~/components/core/typography/FLPHeading";
 import FLPText from "~/components/core/typography/FLPText";
 
@@ -23,7 +23,7 @@ const tableWrapperStyle = css({
   borderRadius: "2xl",
   border: "1px solid",
   borderColor: "border",
-  backgroundColor: "surface",
+  backgroundColor: "surface.card",
   boxShadow: "sm",
 });
 
@@ -39,7 +39,7 @@ const thStyle = css({
   fontWeight: "semibold",
   borderBottom: "1px solid",
   borderColor: "border",
-  backgroundColor: "rgba(0, 0, 0, 0.02)",
+  backgroundColor: "surface.subtle",
   color: "text.primary",
 });
 
@@ -48,7 +48,7 @@ const highlightThStyle = css({
   fontWeight: "bold",
   borderBottom: "1px solid",
   borderColor: "border",
-  backgroundColor: "rgba(99, 102, 241, 0.08)",
+  backgroundColor: "primary.subtle",
   color: "primary",
 });
 
@@ -56,7 +56,8 @@ const tdStyle = css({
   padding: "16px 20px",
   borderBottom: "1px solid",
   borderColor: "border",
-  color: "text.muted",
+  color: "text.primary",
+  fontWeight: "medium",
   verticalAlign: "middle",
 });
 
@@ -64,9 +65,7 @@ const highlightTdStyle = css({
   padding: "16px 20px",
   borderBottom: "1px solid",
   borderColor: "border",
-  backgroundColor: "rgba(99, 102, 241, 0.03)",
-  color: "text.primary",
-  fontWeight: "medium",
+  backgroundColor: "primary.subtle",
   verticalAlign: "middle",
 });
 
@@ -74,61 +73,16 @@ const checkBadge = css({
   display: "inline-flex",
   alignItems: "center",
   gap: "6px",
-  color: "#10b981",
+  color: "status.positive.text",
   fontWeight: "semibold",
 });
 
-const xBadge = css({
-  display: "inline-flex",
-  alignItems: "center",
-  gap: "6px",
-  color: "#ef4444",
-});
-
-const minusBadge = css({
-  display: "inline-flex",
-  alignItems: "center",
-  gap: "6px",
-  color: "text.muted",
-});
-
-const rows = [
-  {
-    feature: "HMRC tax-year tracking (6 Apr – 5 Apr)",
-    spreadsheets: "Manual maintenance",
-    genericApps: "Calendar year only (Jan–Dec)",
-    flump: "Automated UK tax ledger",
-  },
-  {
-    feature: "£100k Personal Allowance taper alert",
-    spreadsheets: "Complex nested formulas",
-    genericApps: "Not supported",
-    flump: "Built-in 60% tax trap engine",
-  },
-  {
-    feature: "Section 24 landlord relief restriction",
-    spreadsheets: "Fragile manual formulas",
-    genericApps: "Not supported",
-    flump: "20% basic rate credit built-in",
-  },
-  {
-    feature: "Mortgage overpayment vs ISA comparison",
-    spreadsheets: "Advanced custom modelling",
-    genericApps: "Not supported",
-    flump: "One-click comparison engine",
-  },
-  {
-    feature: "UK auto-enrolment pension rules",
-    spreadsheets: "Manual percentage updates",
-    genericApps: "Flat contribution only",
-    flump: "Qualifying earnings bands built-in",
-  },
-  {
-    feature: "Zero tracker telemetry and private mode",
-    spreadsheets: "Offline only",
-    genericApps: "Often sells or monetises financial data",
-    flump: "100% private and open source",
-  },
+const FEATURES = [
+  "UK £100k–£125k Personal Allowance taper and childcare trap",
+  "Section 24 buy-to-let finance cost disallowance",
+  "Workplace pension auto-enrolment and salary sacrifice",
+  "Debt avalanche vs snowball payoff schedules",
+  "Safe to spend allowance factoring emergency runway",
 ];
 
 export const ComparisonMatrix: FC = () => {
@@ -149,10 +103,10 @@ export const ComparisonMatrix: FC = () => {
           Why Flump
         </span>
         <FLPHeading as="h2" color="text.primary" id="comparison-heading" mb={3} size="3xl">
-          Engineered for UK reality, not generic budgets
+          Built for UK rules
         </FLPHeading>
         <FLPText color="text.muted" fontSize="md">
-          See how Flump compares to spreadsheets and generic US-first budgeting applications.
+          The UK-specific calculations Flump models.
         </FLPText>
       </div>
 
@@ -161,13 +115,7 @@ export const ComparisonMatrix: FC = () => {
           <thead>
             <tr>
               <th className={thStyle} scope="col">
-                Capability
-              </th>
-              <th className={thStyle} scope="col">
-                Spreadsheets
-              </th>
-              <th className={thStyle} scope="col">
-                Generic budget apps
+                Feature
               </th>
               <th className={highlightThStyle} scope="col">
                 Flump
@@ -175,24 +123,12 @@ export const ComparisonMatrix: FC = () => {
             </tr>
           </thead>
           <tbody>
-            {rows.map((row, idx) => (
-              <tr key={idx}>
-                <td className={tdStyle} style={{ fontWeight: "medium", color: "text.primary" }}>
-                  {row.feature}
-                </td>
-                <td className={tdStyle}>
-                  <span className={minusBadge}>
-                    <FiMinus aria-hidden="true" /> {row.spreadsheets}
-                  </span>
-                </td>
-                <td className={tdStyle}>
-                  <span className={xBadge}>
-                    <FiX aria-hidden="true" /> {row.genericApps}
-                  </span>
-                </td>
+            {FEATURES.map((feature) => (
+              <tr key={feature}>
+                <td className={tdStyle}>{feature}</td>
                 <td className={highlightTdStyle}>
                   <span className={checkBadge}>
-                    <FiCheck aria-hidden="true" size={16} /> {row.flump}
+                    <FiCheck aria-hidden="true" size={16} /> Modelled
                   </span>
                 </td>
               </tr>

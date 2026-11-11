@@ -37,10 +37,13 @@ const answerStyle = css({
   color: "text.secondary",
 });
 
+const chevronOpenStyle = css({ color: "primary", flexShrink: 0 });
+const chevronClosedStyle = css({ color: "text.muted", flexShrink: 0 });
+
 const FAQS = [
   {
     q: "Can Flump move my money or make payments?",
-    a: "No. Flump only reads the balances and transactions you choose to share. It has no feature to make payments, move money or change your account details.",
+    a: "No. Flump has no feature to make payments or move money.",
   },
   {
     q: "Do I have to connect my bank accounts?",
@@ -48,7 +51,7 @@ const FAQS = [
   },
   {
     q: "What makes Flump different from generic budgeting apps?",
-    a: "Most budgeting apps are built around US tax rules. Flump is built natively for UK personal finance: HMRC income tax bands, National Insurance, the £100k Personal Allowance taper, student loan plans (1, 2, 4, 5, Postgraduate), Section 24 buy-to-let calculations, and pension salary sacrifice.",
+    a: "Flump is built for UK personal finance: income tax bands, National Insurance, the £100k Personal Allowance taper, student loan plans (1, 2, 4, 5, Postgraduate), Section 24 buy-to-let calculations, and pension salary sacrifice.",
   },
   {
     q: "How does the 60-second baseline work?",
@@ -56,7 +59,7 @@ const FAQS = [
   },
   {
     q: "Is Flump free?",
-    a: "You can use Flump's planning tools today without a credit card. Pricing for any future paid plan has not been announced.",
+    a: "Pricing for Flump has not been announced.",
   },
 ];
 
@@ -73,7 +76,7 @@ export const HomeFAQ: FC = () => {
       tone="subtle"
       indexBadge="Frequently asked questions"
       title="Frequently asked questions"
-      subtitle="Everything you need to know about Flump, UK financial rules, and our privacy-first design."
+      subtitle="Answers about what Flump does and how its UK tax and finance tools work."
     >
       <div style={{ maxWidth: "780px", margin: "0 auto" }}>
         <div className={stack({ gap: "3" })}>
@@ -90,12 +93,9 @@ export const HomeFAQ: FC = () => {
                 >
                   <span>{faq.q}</span>
                   {isOpen ? (
-                    <FiChevronUp
-                      size={18}
-                      style={{ color: "var(--colors-primary, #6363f1)", flexShrink: 0 }}
-                    />
+                    <FiChevronUp size={18} className={chevronOpenStyle} />
                   ) : (
-                    <FiChevronDown size={18} style={{ color: "#94a3b8", flexShrink: 0 }} />
+                    <FiChevronDown size={18} className={chevronClosedStyle} />
                   )}
                 </button>
                 {isOpen && (

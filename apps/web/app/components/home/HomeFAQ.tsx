@@ -75,18 +75,17 @@ const contentPanelStyle = (isOpen: boolean) =>
 const faqItems = [
   {
     question: "Can Flump move my money or make payments?",
-    answer:
-      "No. Flump connects strictly through read-only Account Information Services (AISP) regulated by the Financial Conduct Authority (FCA). Flump cannot initiate payments, move money, or change your account details.",
+    answer: "No. Flump has no feature to make payments or move money.",
   },
   {
     question: "Do I have to connect my bank accounts?",
     answer:
-      "No. Flump is designed to work completely manually. You can enter rough totals for income, expenses, and savings in 60 seconds and use every tax, debt, mortgage, and forecasting tool without connecting a bank account.",
+      "No. Flump is manual-first. You can enter rough totals for income, expenses, and savings in 60 seconds and use the tax, debt, mortgage, and forecasting tools without connecting a bank account. Bank connection is coming soon.",
   },
   {
     question: "What makes Flump different from generic budgeting apps?",
     answer:
-      "Most budgeting apps are built around US tax rules. Flump is built natively for UK personal finance: HMRC income tax bands, National Insurance, the £100k Personal Allowance taper, student loan plans (1, 2, 4, 5, Postgraduate), Section 24 buy-to-let calculations, and pension salary sacrifice.",
+      "Flump is built for UK personal finance: UK income tax bands, National Insurance, the £100k Personal Allowance taper, student loan plans (1, 2, 4, 5, Postgraduate), Section 24 buy-to-let calculations, and pension salary sacrifice.",
   },
   {
     question: "How does the 60-second baseline work?",
@@ -96,7 +95,7 @@ const faqItems = [
   {
     question: "Is there a free tier?",
     answer:
-      "Yes. Flump offers a free baseline tier with all core calculators, take-home pay tools, and dashboard summaries included. No credit card is required.",
+      "The baseline calculators, take-home pay tools, and dashboard summaries are available to try. Pricing has not been announced yet.",
   },
 ];
 

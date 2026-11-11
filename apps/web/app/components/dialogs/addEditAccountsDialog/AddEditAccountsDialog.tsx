@@ -572,7 +572,8 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
           >
             <FaShieldAlt color="#10b981" size={14} style={{ flexShrink: 0 }} />
             <FLPText color="text.muted" fontSize="xs">
-              FCA regulated Open Banking. 256-bit encrypted read-only connection.
+              Paste a read-only access token from your provider. Flump has no feature to make
+              payments.
             </FLPText>
           </div>
 

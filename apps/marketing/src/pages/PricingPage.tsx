@@ -47,7 +47,7 @@ const toggleThumbStyle = css({
   height: "22px",
   borderRadius: "full",
   backgroundColor: "surface.card",
-  boxShadow: "0 1px 2px rgba(0,0,0,0.2)",
+  boxShadow: "sm",
   transition: "transform 0.2s ease",
 });
 
@@ -105,13 +105,13 @@ const checkStyle = css({ color: "status.positive.text", flexShrink: 0 });
 const pendingStyle = css({ color: "text.muted", flexShrink: 0 });
 
 const FREE_FEATURES = [
-  "Unlimited manual accounts and pots",
-  "Debt payoff (snowball and avalanche)",
-  "Safe to spend and emergency runway",
-  "5-year net worth forecast",
-  "Section 24 landlord tax calculations",
-  "£100k tax trap and 30-hour childcare calculator",
-  "30-year compounding net worth scenarios",
+  "£100k–£125k tax trap and childcare calculator",
+  "Debt snowball vs avalanche payoff",
+  "0% balance transfer payoff calculator",
+  "Section 24 landlord tax calculator",
+  "Mortgage overpayment vs Stocks and Shares ISA",
+  "Arranged overdraft cost and payoff modeller",
+  "Student loan overpay or invest calculator",
 ];
 
 export const PricingPage: FC = () => {
@@ -135,9 +135,10 @@ export const PricingPage: FC = () => {
         <section className={containerStyle}>
           <div style={{ textAlign: "center", marginBottom: "40px" }}>
             <span className={eyebrowStyle}>Pricing</span>
-            <h1 className={headingStyle}>Choose the plan for your financial journey</h1>
+            <h1 className={headingStyle}>Pricing</h1>
             <p className={introStyle}>
-              Every planning tool is free today. A paid plan is planned; its price is not set yet.
+              The calculators are free to use today. A paid plan is planned; its price is not set
+              yet.
             </p>
 
             <div className={flex({ justify: "center", align: "center", gap: "3", mt: "8" })}>
@@ -187,13 +188,10 @@ export const PricingPage: FC = () => {
             <div className={cardStyle} data-featured="false">
               <div>
                 <h2 className={planNameStyle}>Free</h2>
-                <p className={planDescStyle}>
-                  Every planning tool Flump has today, with complete control over your own data.
-                </p>
+                <p className={planDescStyle}>The calculators listed on the Flump tools page.</p>
 
                 <div className={priceRowStyle}>
-                  <span className={priceStyle}>£0</span>
-                  <span className={priceUnitStyle}>per month</span>
+                  <span className={priceStyle}>Free today</span>
                 </div>
                 <div style={{ height: "36px" }} />
 

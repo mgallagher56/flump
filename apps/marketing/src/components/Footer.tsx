@@ -1,7 +1,7 @@
 import { css } from "@repo/ui/styled-system/css";
 import { flex, grid, stack } from "@repo/ui/styled-system/patterns";
 import type { FC } from "react";
-import { FiExternalLink, FiShield } from "react-icons/fi";
+import { FiExternalLink } from "react-icons/fi";
 import { Link } from "react-router-dom";
 import {
   COMPANY_ADDRESS_PLACEHOLDER,
@@ -11,31 +11,61 @@ import {
 import { getAppUrl } from "../utils/url";
 
 const footerStyle = css({
-  backgroundColor: "slate.900",
-  color: "slate.300",
+  backgroundColor: "surface.contrast",
+  color: "text.onContrast",
   pt: "16",
   pb: "12",
   px: { base: "6", md: "12" },
   mt: "24",
   borderTop: "1px solid",
-  borderColor: "slate.800",
+  borderColor: "border.strong",
 });
 
 const sectionTitleStyle = css({
   fontSize: "xs",
   fontWeight: "700",
   letterSpacing: "0.02em",
-  color: "slate.400",
+  color: "text.onContrast",
   fontFamily: "display",
   mb: "4",
 });
 
 const linkStyle = css({
-  color: "slate.300",
+  color: "text.onContrast",
   textDecoration: "none",
   fontSize: "sm",
   transition: "color 0.15s ease",
-  _hover: { color: "#ffffff" },
+  _hover: { textDecoration: "underline" },
+});
+
+const brandStyle = css({
+  fontSize: "1.75rem",
+  fontWeight: "800",
+  letterSpacing: "-0.03em",
+  color: "text.onContrast",
+});
+
+const brandDotStyle = css({ color: "primary" });
+
+const taglineStyle = css({ fontSize: "14px", lineHeight: "1.6", color: "text.onContrast" });
+
+const legalStyle = css({
+  borderTop: "1px solid",
+  borderColor: "border.strong",
+  paddingTop: "24px",
+  fontSize: "12px",
+  lineHeight: "1.7",
+  color: "text.onContrast",
+});
+
+const placeholderStyle = css({
+  fontWeight: "600",
+  color: "status.warning.text",
+  backgroundColor: "status.warning.bg",
+  border: "1px solid",
+  borderColor: "status.warning.border",
+  borderRadius: "md",
+  padding: "1 2",
 });
 
 export const Footer: FC = () => {
@@ -55,26 +85,19 @@ export const Footer: FC = () => {
           {/* Brand Col */}
           <div style={{ gridColumn: "span 1" }} className={stack({ gap: "4" })}>
             <div className={flex({ align: "center", gap: "2" })}>
-              <span
-                style={{
-                  fontSize: "1.75rem",
-                  fontWeight: "800",
-                  letterSpacing: "-0.03em",
-                  color: "#ffffff",
-                }}
-              >
-                Flump<span style={{ color: "#818cf8" }}>.</span>
+              <span className={brandStyle}>
+                Flump<span className={brandDotStyle}>.</span>
               </span>
             </div>
-            <p style={{ fontSize: "14px", lineHeight: "1.6", color: "#94a3b8" }}>
-              The UK personal finance platform built for HMRC tax thresholds, pension optimisation,
-              and clear debt payoff.
+            <p className={taglineStyle}>
+              A UK personal finance planner for tax thresholds, pension optimisation and debt
+              payoff.
             </p>
           </div>
 
           {/* Calculators */}
           <div className={stack({ gap: "3" })}>
-            <h4 className={sectionTitleStyle}>Calculators</h4>
+            <h2 className={sectionTitleStyle}>Calculators</h2>
             <Link to="/tools/uk-100k-tax-trap-calculator" className={linkStyle}>
               £100k tax trap calculator
             </Link>
@@ -97,7 +120,7 @@ export const Footer: FC = () => {
 
           {/* Platform */}
           <div className={stack({ gap: "3" })}>
-            <h4 className={sectionTitleStyle}>Platform</h4>
+            <h2 className={sectionTitleStyle}>Platform</h2>
             <a href={`${appUrl}/sandbox`} className={linkStyle} target="_blank" rel="noreferrer">
               Live interactive demo <FiExternalLink style={{ display: "inline" }} size={11} />
             </a>
@@ -111,41 +134,23 @@ export const Footer: FC = () => {
               Sign in to web app
             </a>
             <a href={`${appUrl}/signUp`} className={linkStyle}>
-              Create free account
+              Create an account
             </a>
           </div>
 
-          {/* Security & Compliance */}
+          {/* Security and privacy */}
           <div className={stack({ gap: "3" })}>
-            <h4 className={sectionTitleStyle}>Security and privacy</h4>
+            <h2 className={sectionTitleStyle}>Security and privacy</h2>
             <Link to="/security" className={linkStyle}>
               Read-only by design
             </Link>
           </div>
         </div>
 
-        {/* Regulatory & Disclaimer Notice */}
-        <div
-          style={{
-            borderTop: "1px solid #1e293b",
-            paddingTop: "24px",
-            fontSize: "12px",
-            lineHeight: "1.7",
-            color: "#64748b",
-          }}
-        >
-          <div className={flex({ gap: "2", align: "center", mb: "2", color: "#94a3b8" })}>
-            <FiShield size={14} style={{ color: "#10b981" }} />
-            <strong style={{ color: "#cbd5e1" }}>Important information</strong>
-          </div>
-          <p style={{ margin: "0 0 12px 0" }}>
-            Flump is a personal finance planning and modelling tool. It does not give regulated
-            financial, tax or investment advice, and it is not authorised by the Financial Conduct
-            Authority. Tax calculations follow HMRC rules for the current tax years and are for
-            reference.
-          </p>
+        {/* Company details */}
+        <div className={legalStyle}>
           <div className={flex({ justify: "space-between", flexWrap: "wrap", gap: "4" })}>
-            <span>
+            <span className={placeholderStyle}>
               © {currentYear} {COMPANY_NAME_PLACEHOLDER}. {COMPANY_NUMBER_PLACEHOLDER}.{" "}
               {COMPANY_ADDRESS_PLACEHOLDER}.
             </span>

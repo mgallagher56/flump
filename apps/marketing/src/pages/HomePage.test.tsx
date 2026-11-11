@@ -21,7 +21,7 @@ describe("Marketing HomePage (Simplified 6-Section Narrative)", () => {
 
     // Verify clean baseline preview card is present
     expect(screen.getByTestId("baseline-snapshot-preview")).toBeDefined();
-    expect(screen.getByText("Your 60-second UK financial baseline")).toBeDefined();
+    expect(screen.getByText("Example 60-second UK financial baseline")).toBeDefined();
     expect(screen.getByText("£68,400")).toBeDefined();
     expect(screen.getByText("+£840")).toBeDefined();
     expect(screen.getAllByText("£195").length).toBeGreaterThan(0);
@@ -44,7 +44,7 @@ describe("Marketing HomePage (Simplified 6-Section Narrative)", () => {
   it("renders core outcome pillars, comparison matrix, security, and FAQ sections", () => {
     renderHome();
     expect(screen.getByText("Four pillars of your financial plan")).toBeDefined();
-    expect(screen.getByText("Built for UK rules, not spreadsheets")).toBeDefined();
+    expect(screen.getByText("Built for UK rules")).toBeDefined();
     expect(screen.getByTestId("security-privacy-section")).toBeDefined();
     expect(screen.getAllByText("Frequently asked questions").length).toBeGreaterThan(0);
     expect(screen.getByText("Browse free calculators")).toBeDefined();

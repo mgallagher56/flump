@@ -52,7 +52,6 @@ export interface CreatedTokenResult {
 
 export interface McpConnectionCardProps {
   initialTokens?: McpTokenItem[];
-  remoteMcpUrl?: string;
   onGenerateToken?: (
     name: string,
     anonymize: boolean,
@@ -65,14 +64,13 @@ export interface McpConnectionCardProps {
 
 export const McpConnectionCard: FC<McpConnectionCardProps> = ({
   initialTokens = [],
-  remoteMcpUrl = "https://mcp.flump.co.uk/mcp",
   onGenerateToken,
   onRevokeToken,
   onFetchContextPack,
   className,
 }) => {
   const [tokens, setTokens] = useState<McpTokenItem[]>(initialTokens);
-  const [activeTab, setActiveTab] = useState<string>("claude_desktop");
+  const [activeTab, setActiveTab] = useState<string>("local_cli");
   const [anonymizeInstitutions, setAnonymizeInstitutions] = useState<boolean>(true);
   const [showGenerateForm, setShowGenerateForm] = useState<boolean>(false);
   const [tokenName, setTokenName] = useState<string>("Claude Desktop");
@@ -80,8 +78,6 @@ export const McpConnectionCard: FC<McpConnectionCardProps> = ({
   const [generating, setGenerating] = useState<boolean>(false);
   const [newlyCreatedToken, setNewlyCreatedToken] = useState<string | null>(null);
 
-  const [copiedSnippet, setCopiedSnippet] = useState<boolean>(false);
-  const [copiedRemoteUrl, setCopiedRemoteUrl] = useState<boolean>(false);
   const [copiedToken, setCopiedToken] = useState<boolean>(false);
   const [exportingContextPack, setExportingContextPack] = useState<boolean>(false);
   const [exportedSuccess, setExportedSuccess] = useState<boolean>(false);
@@ -90,23 +86,6 @@ export const McpConnectionCard: FC<McpConnectionCardProps> = ({
     newlyCreatedToken ||
     tokens.find((t) => !t.isRevoked && !t.isExpired)?.tokenPrefix ||
     "flump_pat_YOUR_TOKEN_HERE";
-
-  const claudeDesktopSnippet = JSON.stringify(
-    {
-      mcpServers: {
-        flump: {
-          command: "npx",
-          args: ["-y", "@flump/mcp"],
-          env: {
-            FLUMP_PAT: activeTokenPlaceholder,
-            FLUMP_API_URL: "https://mcp.flump.co.uk",
-          },
-        },
-      },
-    },
-    null,
-    2,
-  );
 
   const handleCopy = (text: string, setCopied: (v: boolean) => void) => {
     if (navigator.clipboard) {
@@ -247,7 +226,7 @@ export const McpConnectionCard: FC<McpConnectionCardProps> = ({
                   margin: 0,
                 })}
               >
-                Model Context Protocol (MCP) & AI Connections
+                Model Context Protocol (MCP) & AI Connections (preview)
               </h3>
               <p
                 className={css({
@@ -256,8 +235,7 @@ export const McpConnectionCard: FC<McpConnectionCardProps> = ({
                   margin: "2px 0 0 0",
                 })}
               >
-                Connect Claude Desktop, ChatGPT, or Cursor directly to Flump with zero AI
-                hallucination.
+                Preview: MCP tools currently run against sample/baseline data.
               </p>
             </div>
           </div>
@@ -337,10 +315,10 @@ export const McpConnectionCard: FC<McpConnectionCardProps> = ({
             <span
               className={css({ fontSize: "xs", fontWeight: "semibold", color: "text.primary" })}
             >
-              Read-Only Safe
+              No payment features
             </span>
             <span className={css({ fontSize: "11px", color: "text.muted" })}>
-              Agents cannot move funds or change settings
+              Flump has no feature to make payments
             </span>
           </div>
 
@@ -618,8 +596,7 @@ export const McpConnectionCard: FC<McpConnectionCardProps> = ({
           <SegmentedTabs
             aria-label="MCP Client Setup Options"
             items={[
-              { value: "claude_desktop", label: "Claude Desktop / Cursor" },
-              { value: "remote_mcp", label: "Claude Web / ChatGPT (Remote MCP)" },
+              { value: "local_cli", label: "Local CLI (preview)" },
               {
                 value: "active_tokens",
                 label: `Active Tokens (${tokens.filter((t) => !t.isRevoked && !t.isExpired).length})`,
@@ -629,167 +606,29 @@ export const McpConnectionCard: FC<McpConnectionCardProps> = ({
             onValueChange={setActiveTab}
           />
 
-          {/* Tab A: Claude Desktop / Cursor */}
-          {activeTab === "claude_desktop" && (
-            <div className={stack({ gap: "3" })}>
-              <div
-                className={css({
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: "6px",
-                  padding: "12px 14px",
-                  borderRadius: "md",
-                  backgroundColor: "surface.sunken",
-                  borderWidth: "1px",
-                  borderStyle: "solid",
-                  borderColor: "border.subtle",
-                  fontSize: "xs",
-                })}
-              >
-                <span className={css({ fontWeight: "semibold", color: "text.primary" })}>
-                  Setup Instructions for Claude Desktop & Cursor:
-                </span>
-                <ol
-                  className={css({
-                    margin: 0,
-                    paddingLeft: "18px",
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: "4px",
-                    color: "text.secondary",
-                  })}
-                >
-                  <li>Generate your Personal Access Token above and copy the secret key.</li>
-                  <li>
-                    Locate or create your config file:
-                    <div
-                      className={css({
-                        mt: "2px",
-                        mb: "2px",
-                        fontFamily: "mono",
-                        fontSize: "11px",
-                      })}
-                    >
-                      • macOS Claude:{" "}
-                      <code>~/Library/Application Support/Claude/claude_desktop_config.json</code>
-                      <br />• Windows Claude:{" "}
-                      <code>%APPDATA%\Claude\claude_desktop_config.json</code>
-                      <br />• Cursor AI: <code>.cursor/mcp.json</code> or Settings &gt; Features
-                      &gt; MCP
-                    </div>
-                  </li>
-                  <li>
-                    Paste the configuration snippet below into your <code>mcpServers</code> object.
-                  </li>
-                  <li>
-                    Restart Claude Desktop or Cursor. Look for the hammer 🔨 icon confirming your 8
-                    tools are active!
-                  </li>
-                </ol>
-              </div>
-
-              <div
-                className={codeSnippetBox()}
-                id="claude-desktop-snippet"
-                data-testid="claude-desktop-snippet"
-              >
-                <button
-                  aria-label="Copy Claude Desktop config snippet"
-                  className={copyButton()}
-                  type="button"
-                  onClick={() => handleCopy(claudeDesktopSnippet, setCopiedSnippet)}
-                >
-                  {copiedSnippet ? <FaCheck /> : <FaCopy />}
-                  {copiedSnippet ? "Copied" : "Copy Config"}
-                </button>
-                <pre className={css({ m: "0" })}>{claudeDesktopSnippet}</pre>
-              </div>
-            </div>
-          )}
-
-          {/* Tab B: Claude Web / ChatGPT Remote MCP */}
-          {activeTab === "remote_mcp" && (
-            <div className={stack({ gap: "3" })}>
-              <div
-                className={css({
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: "6px",
-                  padding: "12px 14px",
-                  borderRadius: "md",
-                  backgroundColor: "surface.sunken",
-                  borderWidth: "1px",
-                  borderStyle: "solid",
-                  borderColor: "border.subtle",
-                  fontSize: "xs",
-                })}
-              >
-                <span className={css({ fontWeight: "semibold", color: "text.primary" })}>
-                  Setup Instructions for Web AI Agents (OAuth 2.1 & RFC 9728):
-                </span>
-                <ol
-                  className={css({
-                    margin: 0,
-                    paddingLeft: "18px",
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: "4px",
-                    color: "text.secondary",
-                  })}
-                >
-                  <li>Copy the Remote MCP Server URL below.</li>
-                  <li>
-                    In Claude.ai Web or ChatGPT Custom Actions, add a new MCP / OpenAPI server.
-                  </li>
-                  <li>
-                    Authenticate with your Flump account via OAuth 2.1 PKCE to authorize scoped
-                    access.
-                  </li>
-                </ol>
-              </div>
-
-              <div
-                className={css({
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  backgroundColor: "surface.sunken",
-                  padding: "10px 14px",
-                  borderRadius: "lg",
-                  borderWidth: "1px",
-                  borderStyle: "solid",
-                  borderColor: "border.subtle",
-                  fontFamily: "mono",
-                  fontSize: "xs",
-                  color: "text.primary",
-                })}
-                id="remote-mcp-url-box"
-                data-testid="remote-mcp-url-box"
-              >
-                <span>{remoteMcpUrl}</span>
-                <button
-                  aria-label="Copy Remote MCP URL"
-                  className={css({
-                    padding: "4px 8px",
-                    borderRadius: "sm",
-                    backgroundColor: "surface.card",
-                    border: "1px solid",
-                    borderColor: "border.subtle",
-                    cursor: "pointer",
-                    fontSize: "xs",
-                    color: "text.primary",
-                  })}
-                  type="button"
-                  onClick={() => handleCopy(remoteMcpUrl, setCopiedRemoteUrl)}
-                >
-                  {copiedRemoteUrl ? <FaCheck /> : <FaCopy />}
-                </button>
-              </div>
-              <span className={css({ fontSize: "11px", color: "text.muted" })}>
-                Protected Resource Metadata published at:{" "}
-                <code>
-                  {remoteMcpUrl.replace(/\/mcp$/, "")}/.well-known/oauth-protected-resource
-                </code>
+          {/* Tab A: Local CLI (preview) */}
+          {activeTab === "local_cli" && (
+            <div
+              className={css({
+                display: "flex",
+                flexDirection: "column",
+                gap: "6px",
+                padding: "12px 14px",
+                borderRadius: "md",
+                backgroundColor: "surface.sunken",
+                borderWidth: "1px",
+                borderStyle: "solid",
+                borderColor: "border.subtle",
+                fontSize: "xs",
+              })}
+              data-testid="local-cli-preview"
+              id="local-cli-preview"
+            >
+              <span className={css({ fontWeight: "semibold", color: "text.primary" })}>
+                Setting up Flump MCP (preview)
+              </span>
+              <span className={css({ color: "text.secondary" })}>
+                Local CLI (preview): run Flump MCP from source. Setup guide coming soon.
               </span>
             </div>
           )}
@@ -942,8 +781,8 @@ export const McpConnectionCard: FC<McpConnectionCardProps> = ({
                   margin: "2px 0 0 0",
                 })}
               >
-                Prefer not to connect a live agent? Export your deterministic snapshot to paste
-                directly into ChatGPT or Claude.
+                Prefer not to connect a live agent? Export your snapshot to paste into an AI
+                assistant of your choice.
               </p>
             </div>
           </div>

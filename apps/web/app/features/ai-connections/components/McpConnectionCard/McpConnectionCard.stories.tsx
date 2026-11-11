@@ -9,7 +9,6 @@ const meta: Meta<typeof McpConnectionCard> = {
     layout: "padded",
   },
   args: {
-    remoteMcpUrl: "https://mcp.flump.co.uk/mcp",
     onGenerateToken: fn().mockResolvedValue({
       id: "tok_play_1",
       name: "Cursor AI Agent",
@@ -72,7 +71,7 @@ export const WithActiveTokens: Story = {
 
     // 1. Verify header exists
     await expect(
-      canvas.getByText("Model Context Protocol (MCP) & AI Connections"),
+      canvas.getByText("Model Context Protocol (MCP) & AI Connections (preview)"),
     ).toBeInTheDocument();
 
     // 2. Toggle anonymization switch
@@ -80,10 +79,8 @@ export const WithActiveTokens: Story = {
     await expect(toggle).toBeInTheDocument();
     await userEvent.click(toggle);
 
-    // 3. Switch to Remote MCP tab
-    const remoteTab = canvas.getByRole("tab", { name: "Claude Web / ChatGPT (Remote MCP)" });
-    await userEvent.click(remoteTab);
-    await expect(canvas.getByTestId("remote-mcp-url-box")).toBeInTheDocument();
+    // 3. Local CLI preview tab is shown by default
+    await expect(canvas.getByTestId("local-cli-preview")).toBeInTheDocument();
 
     // 4. Switch to Active Tokens tab
     const activeTab = canvas.getByRole("tab", { name: /Active Tokens/i });

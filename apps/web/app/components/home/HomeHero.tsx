@@ -111,7 +111,7 @@ export const HomeHero: FC = () => {
         }}
       >
         <span className={badgeStyle}>
-          <span>🇬🇧</span> Built for UK personal finance and HMRC rules
+          <span>🇬🇧</span> Built for UK personal finance
         </span>
 
         <h1
@@ -239,11 +239,11 @@ export const HomeHero: FC = () => {
         <div className={trustBarContainer}>
           <div className={trustItem}>
             <FiCheckCircle aria-hidden="true" className={trustIconStyle} />
-            <span>FCA read-only Open Banking and 256-bit encryption</span>
+            <span>Manual-first, no bank login needed</span>
           </div>
           <div className={trustItem}>
             <FiPieChart aria-hidden="true" className={trustIconStyle} />
-            <span>Section 24 landlord and HMRC tax bands</span>
+            <span>Section 24 landlord and UK income tax bands</span>
           </div>
           <div className={trustItem}>
             <FiTrendingUp aria-hidden="true" className={trustIconStyle} />
@@ -251,7 +251,7 @@ export const HomeHero: FC = () => {
           </div>
           <div className={trustItem}>
             <FiLock aria-hidden="true" className={trustIconStyle} />
-            <span>No ad tracking or data selling</span>
+            <span>No feature to make payments or move money</span>
           </div>
         </div>
       </div>

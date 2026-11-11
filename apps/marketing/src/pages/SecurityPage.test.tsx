@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import { HelmetProvider } from "react-helmet-async";
 import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it } from "vitest";
@@ -16,9 +16,7 @@ const renderPage = () =>
 describe("SecurityPage", () => {
   it("renders the page heading", () => {
     renderPage();
-    expect(
-      screen.getByRole("heading", { level: 1, name: "Security built into the architecture" }),
-    ).toBeDefined();
+    expect(screen.getByRole("heading", { level: 1, name: "Security and privacy" })).toBeDefined();
   });
 
   it("does not offer an enquiry form that cannot send", () => {
@@ -37,30 +35,32 @@ describe("SecurityPage", () => {
     );
   });
 
-  it("describes read-only access", () => {
+  it("describes the no-payments design", () => {
     renderPage();
-    expect(screen.getByRole("heading", { name: "Read-only by design" })).toBeDefined();
-    expect(screen.getByText(/no feature to make payments/i)).toBeDefined();
+    expect(screen.getAllByText(/no feature to make payments/i).length).toBeGreaterThan(0);
   });
 
-  it("makes only supportable encryption claims", () => {
-    renderPage();
-    const text = document.body.textContent ?? "";
-    expect(text).not.toMatch(/TLS 1\.3|HSTS preload|All sensitive personal financial records/i);
-    expect(screen.getByText(/Bank connection tokens are encrypted at rest/i)).toBeDefined();
-  });
-
-  it("does not mention CSV imports", () => {
-    renderPage();
-    expect(document.body.textContent).not.toMatch(/CSV/i);
-  });
-
-  it("describes deletion without overclaiming", () => {
+  it("makes no encryption, erasure or data-selling claims", () => {
     renderPage();
     expect(document.body.textContent).not.toMatch(
-      /permanent erasure|one-click|purges all historical data/i,
+      /encrypt|AES|TLS|HSTS|CSV|delete all your|close your account|never sell|visible only/i,
     );
-    expect(screen.getByText(/delete all your financial data from your profile/i)).toBeDefined();
+  });
+
+  it("states bank connection is coming soon with sequential headings", () => {
+    renderPage();
+    expect(
+      screen.getByRole("heading", { level: 2, name: "Bank connection: coming soon" }),
+    ).toBeDefined();
+    expect(screen.getByRole("heading", { level: 2, name: "No payments, by design" })).toBeDefined();
+    expect(within(screen.getByRole("main")).queryAllByRole("heading", { level: 3 })).toHaveLength(
+      0,
+    );
+  });
+
+  it("labels the security email as a placeholder", () => {
+    renderPage();
+    expect(screen.getByText(/Placeholder address: not final/)).toBeDefined();
   });
 
   it("links to email security", () => {

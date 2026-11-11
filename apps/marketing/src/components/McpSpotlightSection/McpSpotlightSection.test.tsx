@@ -24,7 +24,13 @@ describe("McpSpotlightSection", () => {
     expect(screen.getByText(/7100/)).toBeDefined();
     expect(screen.getByText(/8804/)).toBeDefined();
 
-    const appLink = screen.getByRole("link", { name: /Generate token in app/i });
+    expect(screen.getByText("Example output")).toBeDefined();
+    expect(screen.getByText(/baseline sample data/i)).toBeDefined();
+    expect(document.body.textContent).not.toMatch(
+      /ChatGPT|zero hallucinations|directly|free|2025\/26/i,
+    );
+
+    const appLink = screen.getByRole("link", { name: /Open profile in app/i });
     expect(appLink.getAttribute("href")).toContain("/app/profile");
   });
 });

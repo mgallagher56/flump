@@ -320,8 +320,7 @@ export const InteractiveFinancialTeaser: FC = () => {
               lineHeight: "1.6",
             }}
           >
-            Enter your figures to see real HMRC marginal tax rates and mortgage amortisation
-            schedules.
+            Enter your figures to see UK marginal tax rates and mortgage amortisation schedules.
           </p>
         </div>
 
@@ -562,7 +561,7 @@ export const InteractiveFinancialTeaser: FC = () => {
                       {formatGBP(mortgageResults.totalInterestSaved)}
                     </div>
                     <span style={{ fontSize: "12px", color: "var(--colors-text-secondary)" }}>
-                      Guaranteed interest eliminated by overpaying £{monthlyOverpayment}/mo
+                      Illustrative interest eliminated by overpaying £{monthlyOverpayment}/mo
                     </span>
                   </div>
 

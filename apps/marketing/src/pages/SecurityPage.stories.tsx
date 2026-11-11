@@ -27,7 +27,7 @@ type Story = StoryObj<typeof SecurityPage>;
 const assertHeading: Story["play"] = async ({ canvasElement }) => {
   const canvas = within(canvasElement);
   await expect(
-    canvas.getByRole("heading", { level: 1, name: "Security built into the architecture" }),
+    canvas.getByRole("heading", { level: 1, name: "Security and privacy" }),
   ).toBeInTheDocument();
   await expect(canvas.queryByRole("dialog")).toBeNull();
 };

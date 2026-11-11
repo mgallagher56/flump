@@ -189,11 +189,11 @@ const PERSONAS: PersonaConfig[] = [
     title: "Clear high-interest debt and build positive wealth",
     badge: "Stage 1: Financial recovery",
     description:
-      "Generic debt trackers treat all debt identically. Flump orders your debts with mathematical precision (avalanche vs snowball), alerts you before 0% promotional rates expire, and shows the exact day your debt payments turn into positive wealth.",
+      "Generic debt trackers treat all debt identically. Flump orders your debts by avalanche or snowball, alerts you before 0% promotional rates expire, and shows the exact day your debt payments turn into positive wealth.",
     features: [
       "Avalanche vs snowball engine calculating exact interest saved and months shaved off",
       "0% balance transfer tracker with 60-day alerts and revert APR cost analysis",
-      "Debt-to-wealth crossover chart showing +£28,000 in positive wealth 5 years post-payoff",
+      "Debt-to-wealth crossover chart showing example +£28,000 in positive wealth 5 years post-payoff",
       "Safe to spend weekly cash allowance to protect your essentials and prevent month-end deficits",
     ],
     metricLabel: "Interest saved and time saved",
@@ -229,11 +229,11 @@ const PERSONAS: PersonaConfig[] = [
     title: "Navigate remortgage rates and compare overpayments with investing",
     badge: "For property owners",
     description:
-      "When your fixed-rate deal expires, jumping to a lender's standard variable rate can add hundreds to your monthly payment. Flump tracks your deal expiry, models milestone LTV bands, and mathematically compares overpaying against investing.",
+      "When your fixed-rate deal expires, jumping to a lender's standard variable rate can add hundreds to your monthly payment. Flump tracks your deal expiry, models milestone LTV bands, and compares overpaying against investing.",
     features: [
       "Deal expiry alerts and monthly jump forecasts into lender Standard Variable Rates",
       "Target LTV milestone tracker (such as 75% vs 80%) to unlock cheaper renewal tiers",
-      "Direct comparison of mortgage overpayment savings against tax-free Stocks and Shares ISA compounding",
+      "Side-by-side comparison of mortgage overpayment savings against tax-free Stocks and Shares ISA compounding",
     ],
     metricLabel: "Mortgage vs ISA spread",
     metricValue: "+£48,200",
@@ -391,7 +391,7 @@ export const FeaturePillars: FC = () => {
           <div>
             <div className={metricCardStyle}>
               <span style={{ fontSize: "12px", color: "#64748b", fontWeight: 600 }}>
-                {activePersona.metricLabel}
+                Example: {activePersona.metricLabel}
               </span>
               <span
                 style={{
@@ -456,7 +456,6 @@ export const FeaturePillars: FC = () => {
             <span className={tagPillStyle}>Multi-account ledger</span>
             <span className={tagPillStyle}>Asset allocation</span>
             <span className={tagPillStyle}>Liquid vs total net worth</span>
-            <span className={tagPillStyle}>Open Banking</span>
           </div>
         </div>
 
@@ -470,8 +469,8 @@ export const FeaturePillars: FC = () => {
               Mortgage optimisation and ISA comparison
             </FLPHeading>
             <FLPText color="text.muted" fontSize="sm" lineHeight="1.6">
-              Model amortisation schedules, evaluate interest saved by overpayments, and directly
-              compare paying down your mortgage against investing in a tax-sheltered ISA.
+              Model amortisation schedules, evaluate interest saved by overpayments, and compare
+              paying down your mortgage against investing in a tax-sheltered ISA.
             </FLPText>
           </div>
           <div className={tagListStyle}>

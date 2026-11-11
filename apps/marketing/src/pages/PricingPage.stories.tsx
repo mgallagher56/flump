@@ -24,6 +24,8 @@ type Story = StoryObj<typeof PricingPage>;
 
 const assertPricing: Story["play"] = async ({ canvasElement }) => {
   const canvas = within(canvasElement);
+  await expect(canvas.getByRole("heading", { level: 1, name: "Pricing" })).toBeInTheDocument();
+  await expect(canvas.getByText("Free today")).toBeInTheDocument();
   await expect(canvas.getByText("Placeholder price: not final")).toBeInTheDocument();
   await expect(canvas.getByText("£X")).toBeInTheDocument();
   await userEvent.click(canvas.getByRole("switch", { name: "Annual billing" }));

@@ -97,7 +97,7 @@ export const SecurityPrivacySection: FC = () => {
           <div className={illustrationContainer}>
             <img
               src="/illustrations/security-vault-shield.jpg"
-              alt="Security shield representing privacy protection and 256-bit encryption"
+              alt="Shield illustration representing security and privacy"
               loading="lazy"
               style={{
                 width: "100%",
@@ -135,7 +135,7 @@ export const SecurityPrivacySection: FC = () => {
               </div>
               <div>
                 <FLPHeading as="h3" color="text.primary" size="md">
-                  FCA Open Banking
+                  No payment features
                 </FLPHeading>
                 <FLPText
                   color="text.muted"
@@ -143,8 +143,8 @@ export const SecurityPrivacySection: FC = () => {
                   lineHeight="1.6"
                   style={{ marginTop: "4px" }}
                 >
-                  Optional live account sync operates through FCA-regulated Open Banking APIs. We
-                  can never move money or change account settings.
+                  Flump has no feature to make payments or move money. Bank connection is coming
+                  soon.
                 </FLPText>
               </div>
             </div>
@@ -155,7 +155,7 @@ export const SecurityPrivacySection: FC = () => {
               </div>
               <div>
                 <FLPHeading as="h3" color="text.primary" size="md">
-                  Zero data selling
+                  Your numbers, your choice
                 </FLPHeading>
                 <FLPText
                   color="text.muted"
@@ -163,8 +163,7 @@ export const SecurityPrivacySection: FC = () => {
                   lineHeight="1.6"
                   style={{ marginTop: "4px" }}
                 >
-                  We never sell your personal or financial records to credit card lenders, mortgage
-                  brokers, or third parties.
+                  Start with rough estimates and add detail only when you want to.
                 </FLPText>
               </div>
             </div>

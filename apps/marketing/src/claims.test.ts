@@ -22,6 +22,10 @@ const BANNED: Array<[RegExp, string]> = [
   [/£9\.99|£7\.99/, "P3"],
   [/Registered in England/, "H10"],
   [/Strict PII anonymisation/i, "A4"],
+  [/We never sell/i, "B"],
+  [/Zero ads/i, "B"],
+  [/not authorised by the Financial Conduct/i, "B"],
+  [/encrypted at rest/i, "A"],
 ];
 
 function files(dir: string): string[] {

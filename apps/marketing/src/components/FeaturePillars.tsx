@@ -4,6 +4,11 @@ import { grid } from "@repo/ui/styled-system/patterns";
 import type { FC } from "react";
 import { FiDollarSign, FiHome, FiPercent, FiTrendingUp } from "react-icons/fi";
 
+const positiveFigureStyle = css({
+  color: "status.positive.text",
+  fontVariantNumeric: "tabular-nums",
+});
+
 const bentoCardStyle = css({
   backgroundColor: "card",
   border: "1px solid",
@@ -126,7 +131,7 @@ export const FeaturePillars: FC = () => {
               }}
             >
               <span>Payoff trajectory</span>
-              <strong style={{ color: "#10b981" }}>-£1,420 interest saved</strong>
+              <strong className={positiveFigureStyle}>Example: -£1,420 interest saved</strong>
             </div>
             <svg
               viewBox="0 0 280 40"
@@ -170,7 +175,7 @@ export const FeaturePillars: FC = () => {
                 fontFamily: "var(--fonts-mono, monospace)",
               }}
             >
-              HMRC rules
+              UK tax rules
             </span>
           </div>
 
@@ -432,7 +437,7 @@ export const FeaturePillars: FC = () => {
               }}
             >
               <span>Emergency runway</span>
-              <strong style={{ color: "#10b981" }}>6.4 months (target met)</strong>
+              <strong className={positiveFigureStyle}>Example: 6.4 months</strong>
             </div>
             <div style={{ display: "flex", gap: "4px", height: "8px" }}>
               <div style={{ flex: 1, backgroundColor: "#10b981", borderRadius: "2px" }} />
