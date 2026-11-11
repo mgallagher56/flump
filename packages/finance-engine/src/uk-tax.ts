@@ -1,4 +1,8 @@
-import { calculateUKEWNITakeHome, getCurrentUKTaxYear } from "./tax-rules.js";
+import {
+  calculateScottishIncomeTaxOnTaxable,
+  calculateUKEWNITakeHome,
+  getCurrentUKTaxYear,
+} from "./tax-rules.js";
 import type {
   TaxTrapAnalysis,
   UkAllowancesStatus,
@@ -13,7 +17,19 @@ import {
   calculatePersonalAllowanceForYear,
   getUkTaxYearRules,
   resolveUkTaxYear,
+  roundPence,
 } from "./uk-tax-year.js";
+
+/**
+ * Owner decision D9-B (E4 T6). For Scottish taxpayers Gift Aid only feeds the
+ * personal allowance taper (via adjusted net income). It does NOT extend the
+ * Scottish bands. HMRC guidance on whether grossed-up Gift Aid extends the
+ * Scottish bands was not verified, so the result may overstate tax for a
+ * Scottish taxpayer who gives to charity. Carried on the calculateUkTax result
+ * as `giftAidDisclaimer` for Scottish taxpayers with Gift Aid.
+ */
+export const SCOTLAND_GIFT_AID_DISCLAIMER =
+  "Gift Aid band extension is not modelled for Scottish taxpayers: Gift Aid only affects the personal allowance taper here, so your Scottish income tax may be overstated.";
 
 export const UK_TAX_CONSTANTS = {
   PERSONAL_ALLOWANCE_DEFAULT: 12570,
@@ -213,58 +229,26 @@ export function calculateEwniIncomeTax(
 }
 
 /**
- * Calculates Scottish Income Tax.
+ * Calculates Scottish Income Tax on income before the personal allowance,
+ * using the year's Scottish band table (UK_SCOTLAND_INCOME_TAX). Bands are
+ * thresholds on taxable income (income - personalAllowance), so a tapered
+ * allowance raises taxable income and the advanced band starts at taxable
+ * 62,430 regardless. Gift Aid never extends these bands (D9-B).
+ * Sources: https://www.gov.uk/guidance/rates-and-thresholds-for-employers-YYYY-to-YYYY
+ * (Scottish PAYE table for each year).
  */
 export function calculateScottishIncomeTax(
   taxableIncome: number,
   personalAllowance: number,
+  taxYear: string = resolveUkTaxYear(),
 ): number {
-  if (taxableIncome <= personalAllowance) {
-    return 0;
-  }
-
-  const incomeAboveAllowance = taxableIncome - personalAllowance;
-  let tax = 0;
-
-  // Starter rate: 19% (£12,571 to £14,876 -> £2,306 width)
-  const starter = Math.min(incomeAboveAllowance, 2306);
-  tax += starter * 0.19;
-
-  // Basic rate: 20% (£14,877 to £26,561 -> £11,685 width)
-  if (incomeAboveAllowance > 2306) {
-    const basic = Math.min(incomeAboveAllowance - 2306, 11685);
-    tax += basic * 0.2;
-  }
-
-  // Intermediate rate: 21% (£26,562 to £43,662 -> £17,101 width)
-  if (incomeAboveAllowance > 13991) {
-    const intermediate = Math.min(incomeAboveAllowance - 13991, 17101);
-    tax += intermediate * 0.21;
-  }
-
-  // Higher rate: 42% (£43,663 to £75,000 -> £31,338 width)
-  if (incomeAboveAllowance > 31092) {
-    const higher = Math.min(incomeAboveAllowance - 31092, 31338);
-    tax += higher * 0.42;
-  }
-
-  // Advanced rate: 45% (£75,001 to £125,140 -> £50,140 width)
-  if (taxableIncome > 75000) {
-    const advancedTaxable =
-      Math.min(taxableIncome, UK_TAX_CONSTANTS.TAX_TRAP_UPPER_THRESHOLD) -
-      Math.max(75000, personalAllowance);
-    if (advancedTaxable > 0) {
-      tax += advancedTaxable * 0.45;
-    }
-  }
-
-  // Top rate: 48% over £125,140
-  if (taxableIncome > UK_TAX_CONSTANTS.TAX_TRAP_UPPER_THRESHOLD) {
-    const topTaxable = taxableIncome - UK_TAX_CONSTANTS.TAX_TRAP_UPPER_THRESHOLD;
-    tax += topTaxable * 0.48;
-  }
-
-  return Math.round(tax * 100) / 100;
+  const rules = getUkTaxYearRules(resolveUkTaxYear(taxYear));
+  return roundPence(
+    calculateScottishIncomeTaxOnTaxable(
+      Math.max(0, taxableIncome - personalAllowance),
+      rules.scotland,
+    ),
+  );
 }
 
 /**
@@ -378,7 +362,7 @@ export function calculateUkTax(input: UkTaxCalculationInput): UkTaxCalculationRe
   // Income Tax
   const incomeTax =
     region === "SCOTLAND"
-      ? calculateScottishIncomeTax(incomeBeforeAllowance, effectiveAllowance)
+      ? calculateScottishIncomeTax(incomeBeforeAllowance, effectiveAllowance, taxYear)
       : calculateIncomeTaxOnTaxable(taxableIncome, rules, region, { bandExtension: grossGiftAid })
           .total;
 
@@ -464,6 +448,9 @@ export function calculateUkTax(input: UkTaxCalculationInput): UkTaxCalculationRe
     effectiveTaxRatePct,
     taxTrap,
     allowances,
+    ...(region === "SCOTLAND" && netGiftAid > 0
+      ? { giftAidDisclaimer: SCOTLAND_GIFT_AID_DISCLAIMER }
+      : {}),
   };
 }
 

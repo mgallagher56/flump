@@ -18,7 +18,8 @@
  * - studentLoan: { grossIncome, plan } plan is plan1|plan2|plan4|plan5|postgrad
  * - dividends: { employmentIncome, dividendIncome }; expected is dividend tax only
  *
- * Scotland Gift Aid is deliberately absent (decision D9 pending).
+ * Scotland Gift Aid vectors are deliberately absent: decision D9-B models Gift Aid for Scotland only
+ * through the allowance taper (no band extension), so there is no verified figure to pin.
  */
 
 /**
@@ -1734,6 +1735,24 @@ export const UK_TAX_VECTORS: readonly UkTaxVector[] = [
     signedOffBy: null,
   },
   {
+    id: "scotland.incomeTax.2025-26.125140",
+    taxYear: "2025/26",
+    region: "SCOTLAND",
+    kind: "incomeTax",
+    input: {
+      grossIncome: 125140,
+    },
+    expected: 47733.3,
+    source: "https://www.gov.uk/guidance/rates-and-thresholds-for-employers-2025-to-2026",
+    derivation:
+      "Gross income 125140. Taper (125140 - 100000) / 2 = 12570, PA 12570 - 12570 = 0. Taxable 125140. Bands (taxable income above PA, upper bounds 2827/14921/31092/62430/125140): 2827 x 19% = 537.13; 12094 x 20% = 2418.8; 16171 x 21% = 3395.91; 31338 x 42% = 13161.96; 62710 x 45% = 28219.5; top 0 x 48% = 0. Total 47733.3.",
+    confidence: "medium",
+    status: "UNVERIFIED",
+    unverifiedReason:
+      "UNVERIFIED: frame (taxable income vs gross income) of the 125,140 advanced/top boundary is ambiguous between the two GOV.UK pages read; the allowance is fully tapered here so taxable income equals gross income.",
+    signedOffBy: null,
+  },
+  {
     id: "scotland.incomeTax.2025-26.150000",
     taxYear: "2025/26",
     region: "SCOTLAND",
@@ -1815,6 +1834,24 @@ export const UK_TAX_VECTORS: readonly UkTaxVector[] = [
     status: "UNVERIFIED",
     unverifiedReason:
       "UNVERIFIED: effect of the tapered personal allowance on Scottish bands is not confirmed by any page read (bands assumed to apply to taxable income after the tapered PA; memory only).",
+    signedOffBy: null,
+  },
+  {
+    id: "scotland.incomeTax.2026-27.125140",
+    taxYear: "2026/27",
+    region: "SCOTLAND",
+    kind: "incomeTax",
+    input: {
+      grossIncome: 125140,
+    },
+    expected: 47701.55,
+    source: "https://www.gov.uk/guidance/rates-and-thresholds-for-employers-2026-to-2027",
+    derivation:
+      "Gross income 125140. Taper (125140 - 100000) / 2 = 12570, PA 12570 - 12570 = 0. Taxable 125140. Bands (taxable income above PA, upper bounds 3967/16956/31092/62430/125140): 3967 x 19% = 753.73; 12989 x 20% = 2597.8; 14136 x 21% = 2968.56; 31338 x 42% = 13161.96; 62710 x 45% = 28219.5; top 0 x 48% = 0. Total 47701.55.",
+    confidence: "medium",
+    status: "UNVERIFIED",
+    unverifiedReason:
+      "UNVERIFIED: frame (taxable income vs gross income) of the 125,140 advanced/top boundary is ambiguous between the two GOV.UK pages read; the allowance is fully tapered here so taxable income equals gross income.",
     signedOffBy: null,
   },
   {

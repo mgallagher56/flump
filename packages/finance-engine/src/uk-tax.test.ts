@@ -17,6 +17,7 @@ import {
   calculateUKTakeHome,
   calculateUkTax,
   getTaxYearRemainingDays,
+  SCOTLAND_GIFT_AID_DISCLAIMER,
 } from "./uk-tax.js";
 import { UnsupportedUkTaxYearError } from "./uk-tax-year.js";
 
@@ -107,10 +108,38 @@ describe("uk-tax module", () => {
     });
   });
 
-  describe("calculateScottishIncomeTax", () => {
-    it("applies Scottish starter, basic, intermediate, and higher bands", () => {
-      const tax = calculateScottishIncomeTax(50000, 12570);
-      expect(tax).toBeGreaterThan(0);
+  describe("calculateScottishIncomeTax (per-year table, E4 T6)", () => {
+    it("2026/27 gross 50000 is 8982.05 (was a bare > 0 assertion)", () => {
+      // Source: https://www.gov.uk/guidance/rates-and-thresholds-for-employers-2026-to-2027
+      // Taxable 50000 - 12570 = 37430: 3967*.19 = 753.73; 12989*.2 = 2597.8;
+      // 14136*.21 = 2968.56; 6338*.42 = 2661.96. Total 8982.05.
+      expect(calculateScottishIncomeTax(50000, 12570, "2026/27")).toBe(8982.05);
+    });
+
+    it("2025/26 and 2026/27 differ at 30000 (the tax year is honoured)", () => {
+      const a = calculateScottishIncomeTax(30000, 12570, "2025/26");
+      const b = calculateScottishIncomeTax(30000, 12570, "2026/27");
+      // Taxable 17430. 2025/26: 2827*.19 + 12094*.2 + 2509*.21 = 537.13 + 2418.8 + 526.89 = 3482.82
+      // 2026/27: 3967*.19 + 12989*.2 + 474*.21 = 753.73 + 2597.8 + 99.54 = 3451.07
+      expect(a).toBe(3482.82);
+      expect(b).toBe(3451.07);
+    });
+
+    it("uses the year's band widths for 2023/24 (no advanced band, 42% to 125140)", () => {
+      // Taxable 50000 - 12570 = 37430: 2162*.19 + 10956*.2 + 17974*.21 + 6338*.42
+      // = 410.78 + 2191.2 + 3774.54 + 2661.96 = 9038.48
+      expect(calculateScottishIncomeTax(50000, 12570, "2023/24")).toBe(9038.48);
+    });
+
+    it("returns 0 at or below the personal allowance", () => {
+      expect(calculateScottishIncomeTax(12570, 12570, "2025/26")).toBe(0);
+      expect(calculateScottishIncomeTax(0, 12570, "2025/26")).toBe(0);
+    });
+
+    it("throws for an unsupported tax year", () => {
+      expect(() => calculateScottishIncomeTax(50000, 12570, "2030/31")).toThrow(
+        UnsupportedUkTaxYearError,
+      );
     });
   });
 
@@ -265,6 +294,63 @@ describe("uk-tax module", () => {
       });
       expect(res.checked).toBe(14);
       expect(res.failures).toEqual([]);
+    });
+  });
+
+  describe("calculateUkTax Scotland from the per-year table (E4 T6)", () => {
+    const scot = (grossSalary: number, taxYear: UkTaxYear = "2025/26", giftAid = 0) =>
+      calculateUkTax({
+        grossSalary,
+        taxYear,
+        region: "SCOTLAND",
+        giftAidContributionsGbp: giftAid,
+      });
+
+    it("every Scotland incomeTax vector matches calculateUkTax", () => {
+      const vectors = selectUkTaxVectors({ kind: "incomeTax", region: "SCOTLAND" });
+      const res = runUkTaxVectors(
+        vectors,
+        (v) =>
+          scot((v.input as { grossIncome: number }).grossIncome, v.taxYear as UkTaxYear)
+            .incomeTaxGbp,
+      );
+      expect(res.checked).toBeGreaterThanOrEqual(37);
+      expect(res.failures).toEqual([]);
+    });
+
+    it("taper region: 110000 in 2025/26 is 37513.80 and the advanced band starts at taxable 62430", () => {
+      const r = scot(110000);
+      expect(r.taxableIncomeGbp).toBe(102430);
+      expect(r.incomeTaxGbp).toBe(37513.8);
+    });
+
+    it("125140 in 2025/26 has no allowance and reaches the top of the advanced band", () => {
+      const r = scot(125140);
+      expect(r.taxableIncomeGbp).toBe(125140);
+      expect(r.incomeTaxGbp).toBe(47733.3);
+    });
+
+    it("Scotland Gift Aid only changes the allowance taper, not the bands (D9-B)", () => {
+      // 110000, 4000 net -> gross 5000. ANI 105000, taper 2500, PA 10070, taxable 99930.
+      // 2025/26: 537.13 + 2418.8 + 3395.91 + 13161.96 + (99930 - 62430)*.45 (16875) = 36388.8
+      const r = scot(110000, "2025/26", 4000);
+      expect(r.adjustedNetIncomeGbp).toBe(105000);
+      expect(r.taxableIncomeGbp).toBe(99930);
+      expect(r.incomeTaxGbp).toBe(36388.8);
+    });
+
+    it("Scotland Gift Aid below the taper start changes nothing", () => {
+      expect(scot(50000, "2026/27", 1000).incomeTaxGbp).toBe(8982.05);
+    });
+
+    it("carries the Gift Aid disclaimer only for Scotland with Gift Aid", () => {
+      expect(SCOTLAND_GIFT_AID_DISCLAIMER).toMatch(/band extension is not modelled/i);
+      expect(scot(50000, "2026/27", 1000).giftAidDisclaimer).toBe(SCOTLAND_GIFT_AID_DISCLAIMER);
+      expect(scot(50000, "2026/27").giftAidDisclaimer).toBeUndefined();
+      expect(
+        calculateUkTax({ grossSalary: 50000, taxYear: "2026/27", giftAidContributionsGbp: 1000 })
+          .giftAidDisclaimer,
+      ).toBeUndefined();
     });
   });
 
