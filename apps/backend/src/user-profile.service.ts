@@ -338,7 +338,7 @@ export class UserProfileService implements ProfileLifecycle {
     ) => {
       const accounts = await accountRepo.find({
         where: { userId },
-        select: ["id"],
+        select: { id: true },
       });
       if (accounts.length > 0) {
         const accountIds = accounts.map((a) => a.id);

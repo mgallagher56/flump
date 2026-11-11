@@ -214,7 +214,7 @@ export class AccountIntakeService implements IAccountIntake {
 
     const accounts = await this.accountRepository.find({
       where: { userId },
-      select: ["id"],
+      select: { id: true },
     });
     if (accounts.length === 0) {
       return [];

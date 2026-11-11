@@ -1,6 +1,5 @@
 import { BankSyncOrchestrator } from "@flump/banking/server";
 import { NotFoundException } from "@nestjs/common";
-import { Transaction } from "typeorm";
 import { describe, expect, it, vi } from "vitest";
 import { FinanceController } from "./finance.controller";
 import { FinanceService } from "./finance.service";
