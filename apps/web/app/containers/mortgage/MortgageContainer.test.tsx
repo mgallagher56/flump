@@ -1,4 +1,4 @@
-import { fireEvent } from "@testing-library/react";
+import { act, fireEvent } from "@testing-library/react";
 import { afterEach, vi } from "vitest";
 import customRender from "~/testUtils/customRender";
 import MortgageContainer from "./MortgageContainer";
@@ -248,6 +248,33 @@ describe("<MortgageContainer />", () => {
       loaderData = loaderWith({ interestRate: 3.9 });
       const { getByText } = customRender(<MortgageContainer />);
       expect(getByText("Add your mortgage term to see your figures.")).toBeDefined();
+    });
+  });
+
+  describe("live region", () => {
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    test("does not announce a headline on load", () => {
+      vi.useFakeTimers();
+      loaderData = {
+        accounts: [
+          {
+            id: "m1",
+            name: "HSBC Fixed Mortgage",
+            type: "Mortgage",
+            balance: -135400,
+            interestRate: 4.5,
+          },
+        ],
+        accountDetails: [{ account_id: "m1", month: 6, year: 2026, value: -135400 }],
+      };
+      const { getByRole } = customRender(<MortgageContainer />);
+      act(() => {
+        vi.advanceTimersByTime(5000);
+      });
+      expect(getByRole("status", { hidden: true }).textContent).toBe("");
     });
   });
 });

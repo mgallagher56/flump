@@ -21,6 +21,40 @@ describe("LiveRegion Primitive", () => {
     expect(screen.getByRole("status").textContent).toBe("");
   });
 
+  it("does not announce the first populated message after an empty mount", () => {
+    const { rerender } = render(<LiveRegion message="" />);
+    rerender(<LiveRegion message="Loaded headline" />);
+    act(() => {
+      vi.advanceTimersByTime(5000);
+    });
+    expect(screen.getByRole("status").textContent).toBe("");
+    rerender(<LiveRegion message="Changed headline" />);
+    act(() => {
+      vi.advanceTimersByTime(1000);
+    });
+    expect(screen.getByRole("status").textContent).toBe("Changed headline");
+  });
+
+  it("announces a return to the baseline value after a change", () => {
+    const { rerender } = render(<LiveRegion message="" />);
+    rerender(<LiveRegion message="A" />);
+    rerender(<LiveRegion message="B" />);
+    rerender(<LiveRegion message="A" />);
+    act(() => {
+      vi.advanceTimersByTime(1000);
+    });
+    expect(screen.getByRole("status").textContent).toBe("A");
+  });
+
+  it("announceInitial announces the first populated message", () => {
+    const { rerender } = render(<LiveRegion message="" announceInitial />);
+    rerender(<LiveRegion message="Now" announceInitial />);
+    act(() => {
+      vi.advanceTimersByTime(1000);
+    });
+    expect(screen.getByRole("status").textContent).toBe("Now");
+  });
+
   it("announces a later change after the debounce", () => {
     const { rerender } = render(<LiveRegion message="Hello" />);
     rerender(<LiveRegion message="Updated" />);

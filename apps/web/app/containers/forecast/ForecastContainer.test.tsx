@@ -5,9 +5,12 @@ import ForecastContainer from "./ForecastContainer";
 
 // Mock child components to keep this integration/container test simple
 vi.mock("app/components/forecast/SavingsForecaster", () => ({
-  default: ({ onClearIncrease }: any) => (
+  default: ({ onClearIncrease, onCurrentRateChange }: any) => (
     <div id="mock-forecaster">
       Mock Savings Forecaster
+      <button type="button" onClick={() => onCurrentRateChange(999)}>
+        Change Rate
+      </button>
       <button type="button" onClick={onClearIncrease}>
         Clear Increase
       </button>
@@ -74,10 +77,21 @@ describe("<ForecastContainer />", () => {
       vi.useRealTimers();
     });
 
-    test("announces the projected 10-year total once the loaded data settles", () => {
+    test("does not announce the load-time headline filled in by effects", () => {
       vi.useFakeTimers();
       const { getByRole } = customRender(<ForecastContainer />);
       const region = getByRole("status");
+      act(() => {
+        vi.advanceTimersByTime(5000);
+      });
+      expect(region.textContent).toBe("");
+    });
+
+    test("announces the projected 10-year total after the user changes an input", () => {
+      vi.useFakeTimers();
+      const { getByRole, getByText } = customRender(<ForecastContainer />);
+      const region = getByRole("status");
+      fireEvent.click(getByText("Change Rate"));
       act(() => {
         vi.advanceTimersByTime(1000);
       });

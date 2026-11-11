@@ -77,4 +77,25 @@ describe("SetupChecklist", () => {
     await user.keyboard("{Enter}");
     expect(toggle.getAttribute("aria-expanded")).toBe("false");
   });
+
+  it("keeps a heading landmark around the toggle without nesting interactive elements", () => {
+    render(
+      <SetupChecklist
+        completedSteps={["budget"]}
+        hasAccounts={false}
+        hasBudget={true}
+        hasMortgageAccount={false}
+        hasProfile={true}
+        hasRunForecast={false}
+        variant="mobile"
+      />,
+    );
+    const heading = screen.getByRole("heading", { name: /refine and drill down/i });
+    const toggle = screen.getByRole("button", { name: /refine and drill down/i });
+    expect(heading.contains(toggle)).toBe(true);
+    expect(toggle.querySelector("button, a, input")).toBeNull();
+    expect(
+      screen.getByRole("button", { name: "Dismiss setup checklist" }).closest("h4"),
+    ).toBeNull();
+  });
 });

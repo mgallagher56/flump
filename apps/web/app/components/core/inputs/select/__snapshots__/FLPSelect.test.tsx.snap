@@ -18,6 +18,7 @@ exports[`<FLPSelect /> > should render as expected 1`] = `
       >
         <select
           class="w_100% p_10px_14px fs_sm bdr_sm bd_1px_solid bd-c_border.input bg-c_surface c_text.primary ring_none trs_all_0.2s cursor_pointer focus:bd-c_primary focus:bx-sh_0_0_0_1px_token(colors.primary) "
+          data-focus-managed=""
           id="_r_0_"
         >
           <option
@@ -63,6 +64,7 @@ exports[`<FLPSelect /> > should render as expected as row 1`] = `
       >
         <select
           class="w_100% p_10px_14px fs_sm bdr_sm bd_1px_solid bd-c_border.input bg-c_surface c_text.primary ring_none trs_all_0.2s cursor_pointer focus:bd-c_primary focus:bx-sh_0_0_0_1px_token(colors.primary) "
+          data-focus-managed=""
           id="_r_1_"
         >
           <option

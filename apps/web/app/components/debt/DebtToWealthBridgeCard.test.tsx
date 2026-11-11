@@ -33,4 +33,24 @@ describe("<DebtToWealthBridgeCard />", () => {
     expect(figure.textContent).toMatch(/Debt-free after \d+ months/);
     expect(figure.textContent).toMatch(/£[\d,]+ is accumulated in an ISA/);
   });
+
+  test("uses neutral copy when the debt is not cleared within the projection", () => {
+    const { getByRole } = customRender(
+      <DebtToWealthBridgeCard
+        debts={[
+          {
+            id: "d1",
+            name: "Card",
+            balance: 5000,
+            apr: 40,
+            minimumPayment: 1,
+          },
+        ]}
+        extraPayment={0}
+      />,
+    );
+    const figure = getByRole("figure", { name: "Debt-to-wealth crossover" });
+    expect(figure.textContent).not.toMatch(/Debt-free after/);
+    expect(figure.textContent).toMatch(/Debt is not cleared within the projection/);
+  });
 });

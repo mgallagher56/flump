@@ -59,7 +59,14 @@ export const DebtToWealthBridgeCard: FC<DebtToWealthBridgeCardProps> = ({
     return calculateDebtToWealthBridge(debts, extraPayment, returnRate, 5);
   }, [debts, extraPayment, returnRate]);
 
-  const debtFreePoint = bridgePoints.find((p) => p.isPostDebtFree) || bridgePoints[0];
+  const firstPostDebtFree = bridgePoints.find((p) => p.isPostDebtFree);
+  const lastPreDebtFree = [...bridgePoints].reverse().find((p) => !p.isPostDebtFree);
+  // The engine caps the schedule, so a post-debt-free point alone does not prove the debt cleared.
+  const clearedPoint =
+    firstPostDebtFree && (lastPreDebtFree?.debtRemaining ?? 0) === 0
+      ? firstPostDebtFree
+      : undefined;
+  const debtFreePoint = clearedPoint || bridgePoints[0];
   const finalPoint = bridgePoints[bridgePoints.length - 1];
   const totalMonthlyCommitment = debts.reduce((sum, d) => sum + d.minimumPayment, 0) + extraPayment;
 
@@ -193,7 +200,11 @@ export const DebtToWealthBridgeCard: FC<DebtToWealthBridgeCardProps> = ({
               </tbody>
             </table>
           }
-          summary={`Debt-free after ${debtFreePoint?.month ?? 0} months. By the end of the projection, ${formatCurrency(finalPoint?.wealthAccumulated || 0)} is accumulated in an ISA at ${returnRate}% a year.`}
+          summary={
+            clearedPoint
+              ? `Debt-free after ${clearedPoint.month} months. By the end of the projection, ${formatCurrency(finalPoint?.wealthAccumulated || 0)} is accumulated in an ISA at ${returnRate}% a year.`
+              : "Debt is not cleared within the projection, so no wealth is accumulated in an ISA."
+          }
           title="Debt-to-wealth crossover"
         >
           <div style={{ width: "100%", height: 260, marginTop: "8px" }}>

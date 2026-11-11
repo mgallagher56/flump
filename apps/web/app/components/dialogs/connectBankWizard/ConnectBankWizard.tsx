@@ -19,6 +19,47 @@ import FLPHeading from "~/components/core/typography/FLPHeading";
 import FLPText from "~/components/core/typography/FLPText";
 import { isSafeRedirectUrl } from "~/utils/safeRedirectUrl";
 
+// Block-level text for use inside card buttons (a <p> or <div> is not valid button content).
+const cardTextStyles = {
+  title: css({
+    display: "block",
+    margin: 0,
+    lineHeight: 1.6,
+    fontSize: "md",
+    fontWeight: "semibold",
+    color: "text.secondary",
+  }),
+  method: css({
+    display: "block",
+    margin: 0,
+    lineHeight: 1.6,
+    fontSize: "sm",
+    fontWeight: "bold",
+    color: "text.secondary",
+  }),
+  muted: css({ display: "block", margin: 0, lineHeight: 1.6, fontSize: "xs", color: "text.muted" }),
+};
+
+const CardText: FC<{
+  fontWeight?: "semibold" | "bold";
+  fontSize?: "sm" | "xs";
+  color?: "text.muted";
+  style?: React.CSSProperties;
+  children: React.ReactNode;
+}> = ({ fontWeight, fontSize, color, style, children }) => {
+  const kind =
+    color === "text.muted"
+      ? "muted"
+      : fontSize === "sm" && fontWeight === "bold"
+        ? "method"
+        : "title";
+  return (
+    <span className={cardTextStyles[kind]} style={style}>
+      {children}
+    </span>
+  );
+};
+
 interface ConnectBankWizardProps {
   onSuccess?: () => void;
 }
@@ -427,11 +468,11 @@ const ConnectBankWizard: FC<ConnectBankWizardProps> = ({ onSuccess }) => {
                     type="button"
                     onClick={() => handleSelectBank(bank)}
                   >
-                    <div className={flexContainer} style={{ minWidth: 0, flex: 1 }}>
-                      <div className={bankLogoCircleStyle(bank.color)}>{bank.name.charAt(0)}</div>
-                      <div style={{ minWidth: 0, flex: 1, paddingRight: "8px" }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                          <FLPText
+                    <span className={flexContainer} style={{ minWidth: 0, flex: 1 }}>
+                      <span className={bankLogoCircleStyle(bank.color)}>{bank.name.charAt(0)}</span>
+                      <span style={{ display: "block", minWidth: 0, flex: 1, paddingRight: "8px" }}>
+                        <span style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                          <CardText
                             fontWeight="semibold"
                             style={{
                               whiteSpace: "nowrap",
@@ -440,7 +481,7 @@ const ConnectBankWizard: FC<ConnectBankWizardProps> = ({ onSuccess }) => {
                             }}
                           >
                             {bank.name}
-                          </FLPText>
+                          </CardText>
                           {bank.directSync ? (
                             <span
                               style={{
@@ -471,8 +512,8 @@ const ConnectBankWizard: FC<ConnectBankWizardProps> = ({ onSuccess }) => {
                               Soon
                             </span>
                           )}
-                        </div>
-                        <FLPText
+                        </span>
+                        <CardText
                           color="text.muted"
                           fontSize="xs"
                           style={{
@@ -482,9 +523,9 @@ const ConnectBankWizard: FC<ConnectBankWizardProps> = ({ onSuccess }) => {
                           }}
                         >
                           {bank.desc}
-                        </FLPText>
-                      </div>
-                    </div>
+                        </CardText>
+                      </span>
+                    </span>
                     <FaChevronRight style={{ color: "#a1a1aa", fontSize: "14px", flexShrink: 0 }} />
                   </button>
                 ))}
@@ -525,19 +566,19 @@ const ConnectBankWizard: FC<ConnectBankWizardProps> = ({ onSuccess }) => {
                   type="button"
                   onClick={() => handleSelectMethod("pat")}
                 >
-                  <div style={{ display: "flex", gap: "16px", alignItems: "flex-start" }}>
+                  <span style={{ display: "flex", gap: "16px", alignItems: "flex-start" }}>
                     <FaKey
                       style={{ color: selectedBank.color, fontSize: "20px", marginTop: "4px" }}
                     />
-                    <div>
-                      <FLPText fontWeight="bold" fontSize="sm">
+                    <span style={{ display: "block" }}>
+                      <CardText fontWeight="bold" fontSize="sm">
                         Personal Access Token (Recommended)
-                      </FLPText>
-                      <FLPText color="text.muted" fontSize="xs" style={{ marginTop: "2px" }}>
+                      </CardText>
+                      <CardText color="text.muted" fontSize="xs" style={{ marginTop: "2px" }}>
                         Preview: paste your own read-only access token from your provider.
-                      </FLPText>
-                    </div>
-                  </div>
+                      </CardText>
+                    </span>
+                  </span>
                 </button>
 
                 <button
@@ -545,20 +586,20 @@ const ConnectBankWizard: FC<ConnectBankWizardProps> = ({ onSuccess }) => {
                   type="button"
                   onClick={() => handleSelectMethod("oauth")}
                 >
-                  <div style={{ display: "flex", gap: "16px", alignItems: "flex-start" }}>
+                  <span style={{ display: "flex", gap: "16px", alignItems: "flex-start" }}>
                     <FaGlobe
                       style={{ color: selectedBank.color, fontSize: "20px", marginTop: "4px" }}
                     />
-                    <div>
-                      <FLPText fontWeight="bold" fontSize="sm">
+                    <span style={{ display: "block" }}>
+                      <CardText fontWeight="bold" fontSize="sm">
                         OAuth 2.0 Auth Flow
-                      </FLPText>
-                      <FLPText color="text.muted" fontSize="xs" style={{ marginTop: "2px" }}>
+                      </CardText>
+                      <CardText color="text.muted" fontSize="xs" style={{ marginTop: "2px" }}>
                         Redirect to {selectedBank.name}&apos;s secure portal to authorize read-only
                         access (requires server OAuth keys).
-                      </FLPText>
-                    </div>
-                  </div>
+                      </CardText>
+                    </span>
+                  </span>
                 </button>
               </div>
 

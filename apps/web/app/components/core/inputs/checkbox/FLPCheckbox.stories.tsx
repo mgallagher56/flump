@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react";
+import { expect, userEvent, within } from "storybook/test";
 import FLPCheckbox from "./FLPCheckbox";
 
 const meta: Meta<typeof FLPCheckbox> = {
@@ -34,6 +35,14 @@ export const WithError: Story = {
   args: {
     label: "I agree to the terms and privacy policy",
     error: "You must accept the terms before proceeding",
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const checkbox = canvas.getByRole("checkbox", { name: /I agree to the terms/ });
+    await expect(checkbox).toHaveAttribute("aria-invalid", "true");
+    await expect(canvas.getByRole("alert")).toHaveTextContent("You must accept the terms");
+    await userEvent.click(checkbox);
+    await expect(checkbox).toBeChecked();
   },
 };
 

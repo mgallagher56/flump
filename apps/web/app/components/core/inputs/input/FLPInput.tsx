@@ -97,6 +97,7 @@ const FLPInput: FC<FLPInputProps> = ({
       )}
       <div style={{ flex: 1 }}>
         <input
+          data-focus-managed=""
           className={`${inputStyle} ${className || ""}`}
           id={id}
           style={style}

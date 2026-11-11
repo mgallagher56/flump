@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react";
+import { expect, userEvent, within } from "storybook/test";
 import FLPInput from "./FLPInput";
 
 const meta: Meta<typeof FLPInput> = {
@@ -22,6 +23,34 @@ export const WithError: Story = {
     label: "Email Address",
     value: "invalid-email",
     error: "Please enter a valid email address.",
+  },
+};
+
+export const ErrorDescribedBy: Story = {
+  args: {
+    label: "Email Address",
+    defaultValue: "invalid-email",
+    error: "Please enter a valid email address.",
+    "aria-describedby": "email-hint",
+  },
+  render: (args) => (
+    <div>
+      <FLPInput {...args} />
+      <p id="email-hint">We only use this to send your statement.</p>
+    </div>
+  ),
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const input = canvas.getByLabelText("Email Address");
+    await expect(input).toHaveAttribute("aria-invalid", "true");
+    const describedBy = (input.getAttribute("aria-describedby") ?? "").split(" ");
+    await expect(describedBy).toContain("email-hint");
+    await expect(describedBy.length).toBe(2);
+    await expect(canvas.getByRole("alert")).toHaveTextContent(
+      "Please enter a valid email address.",
+    );
+    await userEvent.tab();
+    await expect(input).toHaveFocus();
   },
 };
 

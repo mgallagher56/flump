@@ -57,6 +57,12 @@ describe("apps/web index.css", () => {
     expect(css).not.toMatch(/border-left:\s*2px solid #ffffff/);
   });
 
+  it("checked checkbox border stays primary, not primary-solid", () => {
+    const checked = css.match(/:checked\s*\{[^}]*\}/)?.[0] ?? "";
+    expect(checked).toMatch(/border-color:\s*var\(--colors-primary,/);
+    expect(checked).not.toMatch(/border-color:\s*var\(--colors-primary-solid/);
+  });
+
   it("scroll-padding-top and scroll-padding-bottom are declared outside @layer", () => {
     expect(unlayered).toContain("scroll-padding-top");
     expect(unlayered).toContain("scroll-padding-bottom");
