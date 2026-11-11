@@ -1,6 +1,9 @@
 import {
   buildLegacyUKConfig,
+  calculateUKEWNIIncomeTaxOnTaxable,
   getAvailableUKTaxYears,
+  UK_EWNI_INCOME_TAX,
+  type UKEWNIIncomeTaxYear,
   type UKLegacyTaxYearConfig,
 } from "./tax-rules.js";
 import {
@@ -369,6 +372,8 @@ export function calculateUKTax(
   propertyOwnershipShare: number,
 ): TaxCalculationResult {
   const config = TAX_YEARS[taxYear] ?? TAX_YEARS["2024/25"] ?? buildLegacyUKConfig("2024/25");
+  // Unknown years keep the legacy fallback to 2024/25 (same as `config`).
+  const ewni = UK_EWNI_INCOME_TAX[taxYear] ?? UK_EWNI_INCOME_TAX["2024/25"]!;
   const months = getMonthsForTaxYear(taxYear);
   // Per-year dividend and savings tables (uk-tax-year.ts). Unknown years keep the
   // legacy fallback to 2024/25 used for `config` above.
@@ -506,14 +511,17 @@ export function calculateUKTax(
 
   // Baseline PAYE tax (assumed deducted under PAYE)
   const payeTaxable = Math.max(0, effectivePayeSalary - personalAllowance);
-  const payeTaxDue = calculateIncomeTaxForTaxable(payeTaxable, config);
+  const payeTaxDue = calculateIncomeTaxForTaxable(payeTaxable, ewni);
 
   // Personal Savings Allowance (PSA)
   // Basic rate taxpayers: £1,000; Higher rate: £500; Additional rate: £0
   let personalSavingsAllowance = yearRules.savings.psaBasic;
-  if (totalGrossIncome > config.higherRateLimit) {
+  // Band is chosen from taxable income (after the tapered personal allowance), against the
+  // shared EWNI thresholds: higher above basicRateBandWidth, additional above additionalRateThreshold.
+  const taxableForPsa = Math.max(0, totalGrossIncome - personalAllowance);
+  if (taxableForPsa > ewni.additionalRateThreshold) {
     personalSavingsAllowance = yearRules.savings.psaAdditional;
-  } else if (totalGrossIncome > (config.higherRateLimit === 125140 ? 50270 : 50000)) {
+  } else if (taxableForPsa > ewni.basicRateBandWidth) {
     personalSavingsAllowance = yearRules.savings.psaHigher;
   }
 
@@ -525,7 +533,7 @@ export function calculateUKTax(
 
   // Tax on non-savings + non-dividends
   const nonSavingsTaxable = Math.max(0, nonSavingsGross - personalAllowance);
-  const nonSavingsIncomeTaxBeforeCredit = calculateIncomeTaxForTaxable(nonSavingsTaxable, config);
+  const nonSavingsIncomeTaxBeforeCredit = calculateIncomeTaxForTaxable(nonSavingsTaxable, ewni);
 
   // Section 24 Rental Property Finance Tax Credit
   const maxCreditBase = Math.min(
@@ -537,7 +545,7 @@ export function calculateUKTax(
 
   // Allocate Income Tax components
   const totalTaxableExclRental = Math.max(0, effectivePayeSalary + seProfit - personalAllowance);
-  const incomeTaxExclRental = calculateIncomeTaxForTaxable(totalTaxableExclRental, config);
+  const incomeTaxExclRental = calculateIncomeTaxForTaxable(totalTaxableExclRental, ewni);
 
   const rentalPropertyTaxDueBeforeCredit = Math.max(
     0,
@@ -565,7 +573,7 @@ export function calculateUKTax(
   let savingsTaxDue = 0;
   if (taxableSavingsInterest > 0) {
     const totalWithSavings = nonSavingsTaxable + taxableSavingsInterest;
-    const taxWithSavings = calculateIncomeTaxForTaxable(totalWithSavings, config);
+    const taxWithSavings = calculateIncomeTaxForTaxable(totalWithSavings, ewni);
     savingsTaxDue = Math.max(0, taxWithSavings - nonSavingsIncomeTaxBeforeCredit);
   }
 
@@ -576,7 +584,7 @@ export function calculateUKTax(
     dividendTaxDue = calculateDividendTaxForStack(
       priorTaxable,
       taxableDividends,
-      config,
+      ewni,
       yearRules.dividends,
     );
   }
@@ -643,31 +651,20 @@ export function calculateUKTax(
   };
 }
 
-function calculateIncomeTaxForTaxable(taxable: number, config: TaxYearConfig): number {
-  if (taxable <= 0) return 0;
-
-  const basicBandTax = Math.min(taxable, config.basicRateBand) * 0.2;
-  const higherBandMaxTaxable =
-    config.higherRateLimit - (config.personalAllowance === 12500 ? 12500 : 12570);
-  const higherBandWidth = higherBandMaxTaxable - config.basicRateBand;
-
-  const higherBandTax =
-    Math.max(0, Math.min(taxable - config.basicRateBand, higherBandWidth)) * 0.4;
-  const additionalBandTax = Math.max(0, taxable - higherBandMaxTaxable) * 0.45;
-
-  return basicBandTax + higherBandTax + additionalBandTax;
+function calculateIncomeTaxForTaxable(taxable: number, ewni: UKEWNIIncomeTaxYear): number {
+  return calculateUKEWNIIncomeTaxOnTaxable(taxable, ewni);
 }
 
 function calculateDividendTaxForStack(
   priorTaxable: number,
   dividends: number,
-  config: TaxYearConfig,
+  ewni: UKEWNIIncomeTaxYear,
   rates: UkDividendRules,
 ): number {
   if (dividends <= 0) return 0;
-  const basicThreshold = config.basicRateBand;
-  const higherThreshold =
-    config.higherRateLimit - (config.personalAllowance === 12500 ? 12500 : 12570);
+  // Both are taxable-income thresholds (shared with calculateUKEWNIIncomeTaxOnTaxable).
+  const basicThreshold = ewni.basicRateBandWidth;
+  const higherThreshold = ewni.additionalRateThreshold;
 
   const basicDividendRate = rates.basicRate;
   const higherDividendRate = rates.higherRate;

@@ -80,8 +80,8 @@ export interface UKEWNIIncomeTaxYear {
   /** Higher income tax rate (40%) */
   higherRate: number;
   /**
-   * Threshold at which the additional rate begins.
-   * Was £150,000 until 2022/23; reduced to £125,140 from 2023/24.
+   * Taxable-income threshold (income after personal allowance) above which the additional
+   * rate applies. Was £150,000 until 2022/23; reduced to £125,140 from 2023/24.
    */
   additionalRateThreshold: number;
   /** Additional income tax rate (45%) */
@@ -1043,16 +1043,15 @@ export function calculateUKEWNIIncomeTaxOnTaxable(
 
   const basicBandTax = Math.min(taxableIncome, year.basicRateBandWidth) * year.basicRate;
 
-  const higherBandWidth =
-    year.additionalRateThreshold - year.personalAllowance - year.basicRateBandWidth;
+  // additionalRateThreshold is a TAXABLE-income figure (125,140 from 2023/24, 150,000 before),
+  // so the higher band spans basicRateBandWidth to additionalRateThreshold with no PA subtraction.
+  // Source: https://www.gov.uk/income-tax-rates
+  const higherBandWidth = year.additionalRateThreshold - year.basicRateBandWidth;
   const higherBandTax =
     Math.max(0, Math.min(taxableIncome - year.basicRateBandWidth, higherBandWidth)) *
     year.higherRate;
 
-  const additionalBandTaxable = Math.max(
-    0,
-    taxableIncome - year.basicRateBandWidth - higherBandWidth,
-  );
+  const additionalBandTaxable = Math.max(0, taxableIncome - year.additionalRateThreshold);
   const additionalBandTax = additionalBandTaxable * year.additionalRate;
 
   return basicBandTax + higherBandTax + additionalBandTax;
