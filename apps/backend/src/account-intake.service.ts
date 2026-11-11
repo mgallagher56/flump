@@ -106,56 +106,10 @@ export class AccountIntakeService implements IAccountIntake {
   }
 
   async getAccounts(userId: string): Promise<AccountWithDetails[]> {
-    let accounts = await this.accountRepository.find({
+    const accounts = await this.accountRepository.find({
       where: { userId },
       order: { createdAt: "ASC" },
     });
-
-    const profile = await this.userProfileRepository.findOne({ where: { userId } });
-
-    // Auto-seed mock data for development if the user has no accounts yet and has not reset data
-    if (accounts.length === 0 && !profile?.hasResetFinancialData) {
-      const defaultAccounts = [
-        {
-          userId,
-          name: "Main Checking",
-          type: "Current" as const,
-          balance: 2450.75,
-          currency: "GBP",
-        },
-        {
-          userId,
-          name: "High Yield Savings",
-          type: "Saving" as const,
-          balance: 15800.0,
-          currency: "GBP",
-          interestRate: 4.5,
-          monthlyContribution: 250.0,
-        },
-        {
-          userId,
-          name: "Cash ISA — Trading 212",
-          type: "Saving" as const,
-          balance: 42100.5,
-          currency: "GBP",
-          interestRate: 7.0,
-          monthlyContribution: 300.0,
-        },
-        {
-          userId,
-          name: "Workplace Pension — Nest",
-          type: "Pension" as const,
-          balance: 18500.0,
-          currency: "GBP",
-          interestRate: 5.5,
-          monthlyContribution: 433.0,
-          isCurrent: true,
-        },
-      ];
-
-      const seeded = await this.accountRepository.save(defaultAccounts);
-      accounts = seeded;
-    }
 
     const accountIds = accounts.map((a) => a.id);
     let details: AccountDetail[] = [];
