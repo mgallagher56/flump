@@ -92,6 +92,102 @@ describe("UserProfileService (Deep Module)", () => {
     expect(result.profile.annualSalary).toBeNull();
   });
 
+  describe("lazy profile creation", () => {
+    const uniqueViolation = () => Object.assign(new Error("duplicate key"), { code: "23505" });
+    const wrappedViolation = () => {
+      const err: any = new Error("duplicate key value violates unique constraint");
+      err.name = "QueryFailedError";
+      err.driverError = { code: "23505" };
+      return err;
+    };
+
+    it("getProfile recovers when a concurrent request created the profile (err.code)", async () => {
+      const existing = { id: "profile-9", userId: "user-123", currency: "GBP" };
+      mockUserProfileRepo.findOne.mockResolvedValueOnce(null).mockResolvedValueOnce(existing);
+      mockUserProfileRepo.save.mockRejectedValueOnce(uniqueViolation());
+
+      const result = await service.getProfile("user-123");
+
+      expect(result.id).toBe("profile-9");
+      expect(result.userId).toBe("user-123");
+      expect(mockUserProfileRepo.findOne).toHaveBeenCalledTimes(2);
+    });
+
+    it("recognises a TypeORM QueryFailedError via driverError.code", async () => {
+      const existing = { id: "profile-9", userId: "user-123" };
+      mockUserProfileRepo.findOne.mockResolvedValueOnce(null).mockResolvedValueOnce(existing);
+      mockUserProfileRepo.save.mockRejectedValueOnce(wrappedViolation());
+
+      const result = await service.getProfile("user-123");
+
+      expect(result.id).toBe("profile-9");
+    });
+
+    it("two concurrent getProfile calls resolve to the same profile id", async () => {
+      let stored: any = null;
+      mockUserProfileRepo.findOne.mockImplementation(async () => {
+        await Promise.resolve();
+        return stored;
+      });
+      mockUserProfileRepo.save.mockImplementation(async (entity: any) => {
+        await Promise.resolve();
+        if (stored) throw wrappedViolation();
+        stored = { id: "profile-1", ...entity };
+        return stored;
+      });
+
+      const [a, b] = await Promise.all([
+        service.getProfile("user-123"),
+        service.getProfile("user-123"),
+      ]);
+
+      expect(a.id).toBe("profile-1");
+      expect(b.id).toBe("profile-1");
+    });
+
+    it("other save errors still propagate", async () => {
+      mockUserProfileRepo.findOne.mockResolvedValue(null);
+      mockUserProfileRepo.save.mockRejectedValueOnce(
+        Object.assign(new Error("connection lost"), { code: "08006" }),
+      );
+
+      await expect(service.getProfile("user-123")).rejects.toThrow("connection lost");
+      expect(mockUserProfileRepo.findOne).toHaveBeenCalledTimes(1);
+    });
+
+    it("rethrows the violation when the row still cannot be re-read", async () => {
+      mockUserProfileRepo.findOne.mockResolvedValue(null);
+      mockUserProfileRepo.save.mockRejectedValueOnce(uniqueViolation());
+
+      await expect(service.getProfile("user-123")).rejects.toThrow("duplicate key");
+    });
+
+    it("updateProfile recovers from a concurrent create and applies the update", async () => {
+      const existing = { id: "profile-9", userId: "user-123", currency: "GBP" };
+      mockUserProfileRepo.findOne.mockResolvedValueOnce(null).mockResolvedValueOnce(existing);
+      mockUserProfileRepo.save
+        .mockRejectedValueOnce(uniqueViolation())
+        .mockImplementationOnce((entity: any) => Promise.resolve(entity));
+
+      const result = await service.updateProfile("user-123", { currency: "EUR" });
+
+      expect(result.id).toBe("profile-9");
+      expect(result.currency).toBe("EUR");
+    });
+
+    it("updateChecklist recovers from a concurrent create", async () => {
+      const existing = { id: "profile-9", userId: "user-123", setupChecklistCompletedSteps: [] };
+      mockUserProfileRepo.findOne.mockResolvedValueOnce(null).mockResolvedValueOnce(existing);
+      mockUserProfileRepo.save
+        .mockRejectedValueOnce(uniqueViolation())
+        .mockImplementationOnce((entity: any) => Promise.resolve(entity));
+
+      const result = await service.updateChecklist("user-123", "profile", true);
+
+      expect(result.setupChecklistCompletedSteps).toEqual(["profile"]);
+    });
+  });
+
   it("delegates name updates to the UserIdentityAdapter seam", async () => {
     mockUserProfileRepo.findOne.mockResolvedValueOnce({
       userId: "user-123",
