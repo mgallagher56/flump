@@ -1,4 +1,4 @@
-import { NotFoundException } from "@nestjs/common";
+import { BadRequestException, NotFoundException } from "@nestjs/common";
 import { describe, expect, it, vi } from "vitest";
 import { FinanceService } from "./finance.service";
 
@@ -61,7 +61,8 @@ describe("FinanceService", () => {
   });
   describe("createTransaction", () => {
     it("saves with the caller's userId and ignores client-supplied id and userId", async () => {
-      const { service, transactionRepo } = createService();
+      const { service, transactionRepo, accountRepo } = createService();
+      accountRepo.findOne.mockResolvedValue({ id: "acc-1", userId: "userA" });
 
       await service.createTransaction("userA", {
         id: "other-id",
@@ -83,6 +84,39 @@ describe("FinanceService", () => {
         category: "Food",
       });
       expect(transactionRepo.save.mock.calls[0][0].userId).toBe("userA");
+      expect(accountRepo.findOne).toHaveBeenCalledWith({
+        where: { id: "acc-1", userId: "userA" },
+      });
+    });
+
+    it("rejects a transaction against an account the caller does not own and saves nothing", async () => {
+      const { service, transactionRepo, accountRepo } = createService();
+      accountRepo.findOne.mockResolvedValue(null);
+
+      await expect(
+        service.createTransaction("userB", {
+          accountId: "acc-A",
+          amount: 1,
+          description: "x",
+          category: "y",
+        }),
+      ).rejects.toBeInstanceOf(NotFoundException);
+
+      expect(accountRepo.findOne).toHaveBeenCalledWith({
+        where: { id: "acc-A", userId: "userB" },
+      });
+      expect(transactionRepo.save).not.toHaveBeenCalled();
+    });
+
+    it("rejects a transaction with no accountId without querying", async () => {
+      const { service, transactionRepo, accountRepo } = createService();
+
+      await expect(
+        service.createTransaction("userA", { amount: 1, description: "x", category: "y" } as any),
+      ).rejects.toBeInstanceOf(BadRequestException);
+
+      expect(accountRepo.findOne).not.toHaveBeenCalled();
+      expect(transactionRepo.save).not.toHaveBeenCalled();
     });
   });
 });

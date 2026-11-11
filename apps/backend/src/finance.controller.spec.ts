@@ -424,26 +424,26 @@ describe("FinanceController & FinanceService", () => {
       expect(accountRepo.rows.filter((r) => r.userId === "userB")).toHaveLength(1);
     });
 
-    it("transaction: B sees none of A's transactions and cannot write into A's", async () => {
+    it("transaction: B sees none of A's transactions and cannot write into or against A's", async () => {
       const { controller, transactionRepo } = createScopedController();
 
       expect(await controller.getTransactions(userB)).toEqual([]);
       expect(await controller.getTransactions(userB, "acc-A")).toEqual([]);
 
-      await controller.createTransaction(userB, {
-        id: "tx-A",
-        userId: "userA",
-        accountId: "acc-A",
-        amount: 999,
-        description: "Forged",
-        category: "Other",
-      } as any);
+      await expect(
+        controller.createTransaction(userB, {
+          id: "tx-A",
+          userId: "userA",
+          accountId: "acc-A",
+          amount: 999,
+          description: "Forged",
+          category: "Other",
+        } as any),
+      ).rejects.toThrow(NotFoundException);
 
-      expect(transactionRepo.rows.find((r) => r.id === "tx-A")).toMatchObject({
-        userId: "userA",
-        amount: -5,
-        description: "Coffee",
-      });
+      expect(transactionRepo.rows).toEqual([
+        { id: "tx-A", userId: "userA", accountId: "acc-A", amount: -5, description: "Coffee" },
+      ]);
       expect(await controller.getTransactions(userA)).toHaveLength(1);
     });
 

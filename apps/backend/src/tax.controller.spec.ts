@@ -139,4 +139,71 @@ describe("TaxController", () => {
     expect(await controller.getTaxRecords(userB)).toEqual([]);
     expect((await controller.getTaxRecord(userA, "r-A")).name).toBe("Rent");
   });
+
+  describe("tax record writes ignore client-supplied ids and ownership", () => {
+    const setup = () => {
+      const victim = { id: "r-A", userId: "userA", name: "Rent", amount: 100, endDate: null };
+      const own = { id: "r-B", userId: "userB", name: "Mine", amount: 5, endDate: null };
+      const taxRepo = createInMemoryRepository([victim, own]);
+      const controller = new TaxController(taxRepo as any, {} as any);
+      return { victim, own, taxRepo, controller, userB: { user: { id: "userB" } } };
+    };
+
+    it("createTaxRecord: B posting A's id leaves A's row unchanged and gets a fresh row", async () => {
+      const { victim, taxRepo, controller, userB } = setup();
+
+      const created = await controller.createTaxRecord(userB, {
+        id: "r-A",
+        userId: "userA",
+        name: "Takeover",
+        amount: 1,
+      });
+
+      expect(taxRepo.rows.find((r) => r.id === "r-A")).toEqual(victim);
+      expect(created.id).not.toBe("r-A");
+      expect(created.userId).toBe("userB");
+      expect(created.name).toBe("Takeover");
+    });
+
+    it("createBulkTaxRecords: B bulk-posting A's id leaves A's row unchanged and gets a fresh row", async () => {
+      const { victim, taxRepo, controller, userB } = setup();
+
+      const created = await controller.createBulkTaxRecords(userB, {
+        records: [{ id: "r-A", userId: "userA", name: "Takeover", amount: 1 } as any],
+      });
+
+      expect(taxRepo.rows.find((r) => r.id === "r-A")).toEqual(victim);
+      expect(created[0].id).not.toBe("r-A");
+      expect(created[0].userId).toBe("userB");
+      expect(created[0].name).toBe("Takeover");
+    });
+
+    it("updateTaxRecord: PATCH with another id leaves both rows and ids unchanged but applies allowed fields", async () => {
+      const { victim, taxRepo, controller, userB } = setup();
+
+      const updated = await controller.updateTaxRecord(userB, "r-B", {
+        id: "r-A",
+        amount: 99,
+      });
+
+      expect(updated.id).toBe("r-B");
+      expect(taxRepo.rows.find((r) => r.id === "r-A")).toEqual(victim);
+      expect(taxRepo.rows.find((r) => r.id === "r-B")).toMatchObject({
+        userId: "userB",
+        amount: 99,
+      });
+      expect(taxRepo.rows).toHaveLength(2);
+    });
+
+    it("updateTaxRecord: PATCH with another userId does not change userId", async () => {
+      const { taxRepo, controller, userB } = setup();
+
+      await controller.updateTaxRecord(userB, "r-B", { userId: "other", name: "Renamed" });
+
+      expect(taxRepo.rows.find((r) => r.id === "r-B")).toMatchObject({
+        userId: "userB",
+        name: "Renamed",
+      });
+    });
+  });
 });
