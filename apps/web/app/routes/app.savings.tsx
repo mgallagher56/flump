@@ -2,7 +2,8 @@ import type { ReactElement } from "react";
 import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from "react-router";
 import { data } from "react-router";
 import SavingsContainer from "~/containers/savings/SavingsContainer";
-import { loadWorkspaceSnapshot } from "~/services/backend-client.server";
+import { backendFetch, loadWorkspaceSnapshot } from "~/services/backend-client.server";
+import { actionErrorResponse } from "~/services/route-error.server";
 import { getAuthSession, requireAccessToken } from "~/utils/auth.server";
 
 export const meta: MetaFunction = () => [{ title: "Savings & Forecasting | Flump" }];
@@ -17,8 +18,7 @@ export const action = async (args: ActionFunctionArgs) => {
   const intent = formData.get("intent");
   const accountId = formData.get("accountId");
 
-  const apiUrl = process.env.VITE_API_URL || "http://localhost:4000";
-  const authHeader = `Bearer ${requireAccessToken({ accessToken })}`;
+  const token = requireAccessToken({ accessToken });
 
   try {
     if (intent === "createSavingsAccount") {
@@ -28,13 +28,10 @@ export const action = async (args: ActionFunctionArgs) => {
       const interestRate = formData.get("interestRate");
       const monthlyContribution = formData.get("monthlyContribution");
 
-      const res = await fetch(`${apiUrl}/accounts`, {
+      await backendFetch(`/accounts`, {
+        accessToken: token,
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: authHeader,
-        },
-        body: JSON.stringify({
+        body: {
           name,
           type,
           balance: balance ? Number(balance) : 0,
@@ -43,10 +40,8 @@ export const action = async (args: ActionFunctionArgs) => {
             monthlyContribution !== null && monthlyContribution !== ""
               ? Number(monthlyContribution)
               : null,
-        }),
+        },
       });
-
-      if (!res.ok) throw new Error("Failed to create savings account");
     } else if (intent === "updateSavingsAccount") {
       const name = formData.get("name");
       const type = formData.get("type");
@@ -66,50 +61,32 @@ export const action = async (args: ActionFunctionArgs) => {
           monthlyContribution !== "" ? Number(monthlyContribution) : null;
       }
 
-      const res = await fetch(`${apiUrl}/accounts/${accountId}`, {
+      await backendFetch(`/accounts/${accountId}`, {
+        accessToken: token,
         method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: authHeader,
-        },
-        body: JSON.stringify(updatePayload),
+        body: updatePayload,
       });
-
-      if (!res.ok) throw new Error("Failed to update savings account");
     } else if (intent === "deleteAccount") {
-      const res = await fetch(`${apiUrl}/accounts/${accountId}`, {
-        method: "DELETE",
-        headers: {
-          Authorization: authHeader,
-        },
-      });
-
-      if (!res.ok) throw new Error("Failed to delete savings account");
+      await backendFetch(`/accounts/${accountId}`, { accessToken: token, method: "DELETE" });
     } else if (intent === "updateSavingsSettings") {
       const savingsAllocationMode = formData.get("savingsAllocationMode");
       const monthlySavingsTarget = formData.get("monthlySavingsTarget");
 
-      const res = await fetch(`${apiUrl}/user-profile`, {
+      await backendFetch(`/user-profile`, {
+        accessToken: token,
         method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: authHeader,
-        },
-        body: JSON.stringify({
+        body: {
           ...(savingsAllocationMode ? { savingsAllocationMode } : {}),
           ...(monthlySavingsTarget !== null
             ? { monthlySavingsTarget: Number(monthlySavingsTarget) }
             : {}),
-        }),
+        },
       });
-
-      if (!res.ok) throw new Error("Failed to update savings settings");
     }
 
     return data({ success: true });
   } catch (error) {
-    console.error("Action error in savings route:", error);
-    return data({ success: false, error: (error as Error).message }, { status: 500 });
+    return actionErrorResponse(error);
   }
 };
 

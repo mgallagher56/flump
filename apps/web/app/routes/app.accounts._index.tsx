@@ -3,8 +3,14 @@ import type { ReactElement } from "react";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 import { data } from "react-router";
 import AccountsContainer from "~/containers/accounts/accountsContainer/AccountsContainer";
-import { loadWorkspaceSnapshot } from "~/services/backend-client.server";
-import { authHeader, getAuthSession } from "~/utils/auth.server";
+import {
+  backendFetch,
+  type HttpMethod,
+  loadWorkspaceSnapshot,
+} from "~/services/backend-client.server";
+import { BackendError } from "~/services/backend-error";
+import { actionErrorResponse } from "~/services/route-error.server";
+import { getAuthSession, requireAccessToken } from "~/utils/auth.server";
 
 export function getBankOAuthUrl(institutionId: string, callbackUrl: string): string | null {
   return BankSyncOrchestrator.getOAuthUrl(institutionId, callbackUrl);
@@ -12,7 +18,7 @@ export function getBankOAuthUrl(institutionId: string, callbackUrl: string): str
 
 export const action = async (args: ActionFunctionArgs) => {
   const { accessToken } = await getAuthSession(args, { ensureSignedIn: true });
-  const authz = authHeader({ accessToken });
+  const token = requireAccessToken({ accessToken });
   const formData = await args.request.formData();
   const intent = formData.get("intent");
   const accountId = formData.get("accountId");
@@ -25,87 +31,43 @@ export const action = async (args: ActionFunctionArgs) => {
       ? Number(rawBalance)
       : undefined;
 
-  const apiUrl = process.env.VITE_API_URL || "http://localhost:4000";
+  const send = (endpoint: string, method: HttpMethod, body?: unknown) =>
+    backendFetch<any>(endpoint, { accessToken: token, method, body });
 
   try {
     if (intent === "create") {
-      const res = await fetch(`${apiUrl}/accounts`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...authz,
-        },
-        body: JSON.stringify({ name, type, ...(balance !== undefined ? { balance } : {}) }),
+      await send("/accounts", "POST", {
+        name,
+        type,
+        ...(balance !== undefined ? { balance } : {}),
       });
-      if (!res.ok) throw new Error("Failed to create account");
     } else if (intent === "update") {
-      const res = await fetch(`${apiUrl}/accounts/${accountId}`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          ...authz,
-        },
-        body: JSON.stringify({ name, type, ...(balance !== undefined ? { balance } : {}) }),
+      await send(`/accounts/${accountId}`, "PATCH", {
+        name,
+        type,
+        ...(balance !== undefined ? { balance } : {}),
       });
-      if (!res.ok) throw new Error("Failed to update account");
     } else if (intent === "delete") {
-      const res = await fetch(`${apiUrl}/accounts/${accountId}`, {
-        method: "DELETE",
-        headers: {
-          ...authz,
-        },
-      });
-      if (!res.ok) throw new Error("Failed to delete account");
+      await send(`/accounts/${accountId}`, "DELETE");
     } else if (intent === "syncConnection") {
-      const res = await fetch(`${apiUrl}/bank-connections/${connectionId}/refresh`, {
-        method: "POST",
-        headers: {
-          ...authz,
-        },
-      });
-      if (!res.ok) throw new Error("Failed to sync bank connection");
+      await send(`/bank-connections/${connectionId}/refresh`, "POST");
     } else if (intent === "disconnectConnection") {
-      const res = await fetch(`${apiUrl}/bank-connections/${connectionId}`, {
-        method: "DELETE",
-        headers: {
-          ...authz,
-        },
-      });
-      if (!res.ok) throw new Error("Failed to disconnect bank connection");
+      await send(`/bank-connections/${connectionId}`, "DELETE");
     } else if (intent === "connectBank") {
       const institutionId = String(formData.get("institutionId") || "");
-      const token = formData.get("token");
+      const bankToken = formData.get("token");
       const authType = formData.get("authType");
-      const isOAuth = authType === "oauth" || (!token && authType !== "token");
+      const isOAuth = authType === "oauth" || (!bankToken && authType !== "token");
 
       let backendData: any = null;
       try {
-        const res = await fetch(`${apiUrl}/bank-connections`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            ...authz,
-          },
-          body: JSON.stringify({
-            institutionId,
-            token: token ? String(token) : undefined,
-          }),
+        backendData = await send("/bank-connections", "POST", {
+          institutionId,
+          token: bankToken ? String(bankToken) : undefined,
         });
-
-        const text = await res.text();
-        try {
-          backendData = JSON.parse(text);
-        } catch {
-          backendData = { message: text };
-        }
-
-        if (!res.ok && !isOAuth) {
-          throw new Error(backendData.message || "Failed to connect bank");
-        }
-      } catch (fetchErr) {
-        if (!isOAuth) {
-          throw fetchErr;
-        }
+      } catch (connectErr) {
+        // OAuth connections may be completed through the provider redirect even if this call fails.
+        if (!isOAuth || !(connectErr instanceof BackendError)) throw connectErr;
       }
 
       if (isOAuth) {
@@ -130,8 +92,7 @@ export const action = async (args: ActionFunctionArgs) => {
     }
     return data({ success: true });
   } catch (error) {
-    console.error("Action error in accounts route:", error);
-    return data({ success: false, error: (error as Error).message }, { status: 400 });
+    return actionErrorResponse(error);
   }
 };
 

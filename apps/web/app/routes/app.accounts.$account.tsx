@@ -3,54 +3,43 @@ import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 import { data } from "react-router";
 import AccountDetailContainer from "~/containers/accounts/accountDetailContainer/AccountDetailContainer";
 import { backendFetch } from "~/services/backend-client.server";
-import { throwRouteError } from "~/services/route-error.server";
-import { authHeader, getAuthSession } from "~/utils/auth.server";
+import { actionErrorResponse, throwRouteError } from "~/services/route-error.server";
+import { getAuthSession, requireAccessToken } from "~/utils/auth.server";
 
 export const action = async (args: ActionFunctionArgs) => {
   const { accessToken } = await getAuthSession(args, { ensureSignedIn: true });
-  const authz = authHeader({ accessToken });
+  const token = requireAccessToken({ accessToken });
   const formData = await args.request.formData();
   const intent = formData.get("intent");
   const accountId = args.params.account;
   const year = formData.get("year");
 
-  const apiUrl = process.env.VITE_API_URL || "http://localhost:4000";
-
   try {
     if (intent === "deleteYear") {
-      const res = await fetch(`${apiUrl}/accounts/${accountId}/details/${year}`, {
+      await backendFetch(`/accounts/${accountId}/details/${year}`, {
+        accessToken: token,
         method: "DELETE",
-        headers: {
-          ...authz,
-        },
       });
-      if (!res.ok) throw new Error("Failed to delete year");
     } else if (intent === "addYear") {
-      const res = await fetch(`${apiUrl}/accounts/${accountId}/details/year`, {
+      await backendFetch(`/accounts/${accountId}/details/year`, {
+        accessToken: token,
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...authz,
-        },
-        body: JSON.stringify({ year: parseInt(year as string, 10) }),
+        body: { year: parseInt(year as string, 10) },
       });
-      if (!res.ok) throw new Error("Failed to add year");
     } else if (intent === "updateValues") {
       const values = JSON.parse(formData.get("values") as string);
-      const res = await fetch(`${apiUrl}/accounts/${accountId}/details`, {
+      await backendFetch(`/accounts/${accountId}/details`, {
+        accessToken: token,
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          ...authz,
-        },
-        body: JSON.stringify({ values }),
+        body: { values },
       });
-      if (!res.ok) throw new Error("Failed to update values");
     }
     return data({ success: true });
   } catch (error) {
-    console.error("Action error in account detail route:", error);
-    return data({ success: false, error: (error as Error).message }, { status: 500 });
+    if (error instanceof SyntaxError) {
+      return data({ success: false, error: "We couldn't read those values." }, { status: 400 });
+    }
+    return actionErrorResponse(error);
   }
 };
 

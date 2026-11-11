@@ -2,7 +2,9 @@ import type { ReactElement } from "react";
 import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from "react-router";
 import { data } from "react-router";
 import PensionContainer from "~/containers/pension/PensionContainer";
-import { loadWorkspaceSnapshot } from "~/services/backend-client.server";
+import { backendFetch, loadWorkspaceSnapshot } from "~/services/backend-client.server";
+import { BackendError } from "~/services/backend-error";
+import { actionErrorResponse } from "~/services/route-error.server";
 import { getAuthSession, requireAccessToken } from "~/utils/auth.server";
 
 export const meta: MetaFunction = () => [{ title: "Pension & Retirement | Flump" }];
@@ -17,8 +19,7 @@ export const action = async (args: ActionFunctionArgs) => {
   const intent = formData.get("intent");
   const accountId = formData.get("accountId");
 
-  const apiUrl = process.env.VITE_API_URL || "http://localhost:4000";
-  const authHeader = `Bearer ${requireAccessToken({ accessToken })}`;
+  const token = requireAccessToken({ accessToken });
 
   try {
     if (intent === "createPensionAccount") {
@@ -29,13 +30,10 @@ export const action = async (args: ActionFunctionArgs) => {
       const isCurrent = formData.get("isCurrent");
       const isCurrentBool = isCurrent !== null ? isCurrent === "true" : true;
 
-      const res = await fetch(`${apiUrl}/accounts`, {
+      await backendFetch(`/accounts`, {
+        accessToken: token,
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: authHeader,
-        },
-        body: JSON.stringify({
+        body: {
           name,
           type: "Pension",
           balance: balance ? Number(balance) : 0,
@@ -45,10 +43,8 @@ export const action = async (args: ActionFunctionArgs) => {
               ? Number(monthlyContribution)
               : null,
           isCurrent: isCurrentBool,
-        }),
+        },
       });
-
-      if (!res.ok) throw new Error("Failed to create pension account");
     } else if (intent === "updatePensionAccount") {
       const name = formData.get("name");
       const balance = formData.get("balance");
@@ -73,25 +69,13 @@ export const action = async (args: ActionFunctionArgs) => {
         updatePayload.monthlyContribution = null;
       }
 
-      const res = await fetch(`${apiUrl}/accounts/${accountId}`, {
+      await backendFetch(`/accounts/${accountId}`, {
+        accessToken: token,
         method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: authHeader,
-        },
-        body: JSON.stringify(updatePayload),
+        body: updatePayload,
       });
-
-      if (!res.ok) throw new Error("Failed to update pension account");
     } else if (intent === "deletePensionAccount") {
-      const res = await fetch(`${apiUrl}/accounts/${accountId}`, {
-        method: "DELETE",
-        headers: {
-          Authorization: authHeader,
-        },
-      });
-
-      if (!res.ok) throw new Error("Failed to delete pension account");
+      await backendFetch(`/accounts/${accountId}`, { accessToken: token, method: "DELETE" });
     } else if (intent === "updatePensionContributions") {
       const pensionPercent = formData.get("pensionPercent");
       const pensionEmployerPercent = formData.get("pensionEmployerPercent");
@@ -99,13 +83,10 @@ export const action = async (args: ActionFunctionArgs) => {
       const isSalarySacrifice = formData.get("isSalarySacrifice");
       const isSalarySacrificeEmployerNi = formData.get("isSalarySacrificeEmployerNi");
 
-      const res = await fetch(`${apiUrl}/user-profile`, {
+      await backendFetch(`/user-profile`, {
+        accessToken: token,
         method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: authHeader,
-        },
-        body: JSON.stringify({
+        body: {
           ...(pensionPercent !== null ? { pensionPercent: Number(pensionPercent) } : {}),
           ...(pensionEmployerPercent !== null
             ? { pensionEmployerPercent: Number(pensionEmployerPercent) }
@@ -117,10 +98,8 @@ export const action = async (args: ActionFunctionArgs) => {
           ...(isSalarySacrificeEmployerNi !== null
             ? { isSalarySacrificeEmployerNi: isSalarySacrificeEmployerNi === "true" }
             : {}),
-        }),
+        },
       });
-
-      if (!res.ok) throw new Error("Failed to update pension contributions");
     } else if (intent === "completePensionWizard") {
       const name = formData.get("name");
       const balance = formData.get("balance");
@@ -133,31 +112,23 @@ export const action = async (args: ActionFunctionArgs) => {
       const isSalarySacrificeEmployerNi = formData.get("isSalarySacrificeEmployerNi");
 
       // 1. Create initial pot
-      const accountRes = await fetch(`${apiUrl}/accounts`, {
+      await backendFetch(`/accounts`, {
+        accessToken: token,
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: authHeader,
-        },
-        body: JSON.stringify({
+        body: {
           name: name || "Workplace Pension",
           type: "Pension",
           balance: balance ? Number(balance) : 0,
           interestRate: interestRate ? Number(interestRate) : 5.0,
           monthlyContribution: monthlyContribution ? Number(monthlyContribution) : null,
-        }),
+        },
       });
 
-      if (!accountRes.ok) throw new Error("Failed to create initial pension account");
-
       // 2. Update user profile
-      const profileRes = await fetch(`${apiUrl}/user-profile`, {
+      await backendFetch(`/user-profile`, {
+        accessToken: token,
         method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: authHeader,
-        },
-        body: JSON.stringify({
+        body: {
           ...(annualSalary ? { annualSalary: Number(annualSalary) } : {}),
           ...(pensionPercent ? { pensionPercent: Number(pensionPercent) } : {}),
           ...(pensionEmployerPercent
@@ -169,26 +140,25 @@ export const action = async (args: ActionFunctionArgs) => {
           ...(isSalarySacrificeEmployerNi !== null
             ? { isSalarySacrificeEmployerNi: isSalarySacrificeEmployerNi === "true" }
             : {}),
-        }),
+        },
       });
-
-      if (!profileRes.ok) throw new Error("Failed to update profile during wizard");
 
       // 3. Mark checklist step complete
-      await fetch(`${apiUrl}/user-profile/checklist`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: authHeader,
-        },
-        body: JSON.stringify({ step: "pension", completed: true }),
-      });
+      try {
+        await backendFetch(`/user-profile/checklist`, {
+          accessToken: token,
+          method: "PATCH",
+          body: { step: "pension", completed: true },
+        });
+      } catch (checklistErr) {
+        // Best effort, as before: the pot and profile are saved, so a failed tick must not fail the wizard.
+        if (!(checklistErr instanceof BackendError)) throw checklistErr;
+      }
     }
 
     return data({ success: true });
   } catch (error) {
-    console.error("Action error in pension route:", error);
-    return data({ success: false, error: (error as Error).message }, { status: 500 });
+    return actionErrorResponse(error);
   }
 };
 

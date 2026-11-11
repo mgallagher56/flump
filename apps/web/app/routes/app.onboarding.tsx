@@ -32,9 +32,9 @@ import HomeLogo from "~/components/navigation/HomeLogo";
 import type { UserProfile } from "~/hooks/useUserProfile";
 import { useUserProfile } from "~/hooks/useUserProfile";
 import { backendFetch } from "~/services/backend-client.server";
-import { throwRouteError } from "~/services/route-error.server";
+import { actionErrorResponse, throwRouteError } from "~/services/route-error.server";
 import { useFinancialBaseline } from "~/state/baseline.store";
-import { authHeader, getAuthSession } from "~/utils/auth.server";
+import { getAuthSession, requireAccessToken } from "~/utils/auth.server";
 import { ALL_PAGE_KEYS, type AppPageKey, type DashboardWidgetKey } from "~/utils/pageConfig";
 
 export const loader = async (args: LoaderFunctionArgs) => {
@@ -52,8 +52,7 @@ export const loader = async (args: LoaderFunctionArgs) => {
 
 export const action = async (args: ActionFunctionArgs) => {
   const { accessToken } = await getAuthSession(args, { ensureSignedIn: true });
-  const authz = authHeader({ accessToken });
-  const apiUrl = process.env.VITE_API_URL || "http://localhost:4000";
+  const token = requireAccessToken({ accessToken });
   const formData = await args.request.formData();
   const rawEnabledPages = formData.get("enabledPages");
   const enabledPages: AppPageKey[] = rawEnabledPages
@@ -64,21 +63,19 @@ export const action = async (args: ActionFunctionArgs) => {
   const dashboardWidgetOrder: DashboardWidgetKey[] = [...enabledPages];
 
   try {
-    await fetch(`${apiUrl}/user-profile`, {
+    await backendFetch("/user-profile", {
+      accessToken: token,
       method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-        ...authz,
-      },
-      body: JSON.stringify({
+      body: {
         enabledPages,
         dashboardWidgets,
         dashboardWidgetOrder,
         onboardingCompleted: true,
-      }),
+      },
     });
   } catch (err) {
-    console.error("Failed to complete onboarding:", err);
+    // Redirecting home after a failed save would bounce straight back here: surface the error.
+    return actionErrorResponse(err);
   }
 
   return redirect("/");
