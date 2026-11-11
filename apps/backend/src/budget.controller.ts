@@ -172,16 +172,6 @@ const DEFAULT_BUDGET_SEEDS: DefaultSeed[] = [
     isEssential: true,
     isDefault: true,
   },
-  {
-    category: "income",
-    name: "Salary (Take Home)",
-    amount: 3000,
-    frequency: "monthly",
-    isIncome: true,
-    isPrimaryIncome: true,
-    isEssential: true,
-    isDefault: true,
-  },
 ];
 
 @Controller()
@@ -194,26 +184,27 @@ export class BudgetController {
     private readonly userProfileRepository: Repository<UserProfile>,
   ) {}
 
+  /**
+   * Explicit opt-in only (POST budget-entries/seed-defaults). Idempotent: a
+   * template the user already has (same name, isDefault true) is skipped.
+   */
   private async seedDefaults(userId: string): Promise<BudgetEntry[]> {
-    const entries = DEFAULT_BUDGET_SEEDS.map((seed) =>
-      this.budgetEntryRepository.create({ ...seed, userId }),
+    const existing = await this.budgetEntryRepository.find({ where: { userId } });
+    const haveDefault = new Set(existing.filter((e) => e.isDefault).map((e) => e.name));
+    const toCreate = DEFAULT_BUDGET_SEEDS.filter((seed) => !haveDefault.has(seed.name)).map(
+      (seed) => this.budgetEntryRepository.create({ ...seed, userId }),
     );
-    return this.budgetEntryRepository.save(entries);
+    if (toCreate.length === 0) return [];
+    return this.budgetEntryRepository.save(toCreate);
   }
 
   @Get("budget-entries")
   async getBudgetEntries(@Req() req: any): Promise<BudgetEntry[]> {
     const userId = req.user.id;
-    let entries = await this.budgetEntryRepository.find({
+    const entries = await this.budgetEntryRepository.find({
       where: { userId },
       order: { createdAt: "ASC" },
     });
-
-    const profile = await this.userProfileRepository.findOne({ where: { userId } });
-
-    if (entries.length === 0 && !profile?.hasResetFinancialData) {
-      entries = await this.seedDefaults(userId);
-    }
 
     return entries.map((entry) => ({
       ...entry,
@@ -347,15 +338,5 @@ export class BudgetController {
 
     await this.budgetEntryRepository.remove(entry);
     return { success: true };
-  }
-
-  @Post("budget-entries/reset")
-  async resetBudgetEntries(@Req() req: any): Promise<BudgetEntry[]> {
-    const userId = req.user.id;
-    const existing = await this.budgetEntryRepository.find({ where: { userId } });
-    if (existing.length > 0) {
-      await this.budgetEntryRepository.remove(existing);
-    }
-    return this.seedDefaults(userId);
   }
 }
