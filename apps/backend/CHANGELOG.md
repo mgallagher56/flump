@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.22.2](https://github.com/mgallagher56/flump/compare/flump/backend-v1.22.1...flump/backend-v1.22.2) (2026-11-11)
+
+
+### Miscellaneous 🙃
+
+* **backend:** fix user profile controller ([be5e275](https://github.com/mgallagher56/flump/commit/be5e275a1fb979d94010a5246c70be7c618eb782))
+
 ## [1.22.1](https://github.com/mgallagher56/flump/compare/flump/backend-v1.22.0...flump/backend-v1.22.1) (2026-11-11)
 
 
