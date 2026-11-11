@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.22.1](https://github.com/mgallagher56/flump/compare/flump/backend-v1.22.0...flump/backend-v1.22.1) (2026-11-11)
+
+
+### Bug Fixes 🪲
+
+* **backend:** fix dockerfile ([6f869cf](https://github.com/mgallagher56/flump/commit/6f869cf012ec42948fd2258ad44ea2d5219bf2c2))
+
 ## [1.22.0](https://github.com/mgallagher56/flump/compare/flump/backend-v1.21.3...flump/backend-v1.22.0) (2026-11-10)
 
 
