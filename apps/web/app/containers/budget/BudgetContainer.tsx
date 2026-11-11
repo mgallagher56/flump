@@ -14,6 +14,7 @@ import FLPHeading from "~/components/core/typography/FLPHeading";
 import FLPText from "~/components/core/typography/FLPText";
 import { useUserProfile } from "~/hooks/useUserProfile";
 import type { loader } from "~/routes/app.budget";
+import { apiFetch } from "~/services/api-client";
 import type { BudgetEntry } from "~/types/budget";
 import { CATEGORY_ICONS, CATEGORY_LABELS } from "~/types/budget";
 import {
@@ -143,43 +144,49 @@ const BudgetContainer: FC = () => {
     return total === 0;
   }, [entries]);
 
-  const apiUrl =
-    (typeof import.meta !== "undefined" && (import.meta as any).env?.VITE_API_URL) ??
-    (window as Window & { ENV?: { VITE_API_URL?: string } }).ENV?.VITE_API_URL ??
-    "http://localhost:4000";
-  const authHeader: Record<string, string> = accessToken
-    ? { Authorization: `Bearer ${accessToken}` }
-    : {};
+  const [actionError, setActionError] = useState<string | null>(null);
 
   const addEntry = async (
     entry: Omit<BudgetEntry, "id" | "userId" | "createdAt" | "updatedAt">,
   ) => {
-    const res = await fetch(`${apiUrl}/budget-entries`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", ...authHeader },
-      body: JSON.stringify(entry),
-    });
-    if (!res.ok) throw new Error("Failed to add entry");
-    const created = (await res.json()) as BudgetEntry;
-    setEntries((prev) => [...prev, created]);
+    try {
+      const created = await apiFetch<BudgetEntry>("/budget-entries", {
+        accessToken,
+        method: "POST",
+        body: entry,
+      });
+      setActionError(null);
+      setEntries((prev) => [...prev, created]);
+    } catch (err) {
+      setActionError("We couldn't add that entry. Please try again.");
+      throw err;
+    }
   };
 
   const updateEntry = async (id: string, update: Partial<BudgetEntry>) => {
-    const res = await fetch(`${apiUrl}/budget-entries/${id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json", ...authHeader },
-      body: JSON.stringify(update),
-    });
-    if (!res.ok) throw new Error("Failed to update entry");
-    const updated = (await res.json()) as BudgetEntry;
-    setEntries((prev) => prev.map((e) => (e.id === id ? updated : e)));
+    try {
+      const updated = await apiFetch<BudgetEntry>(`/budget-entries/${id}`, {
+        accessToken,
+        method: "PATCH",
+        body: update,
+      });
+      setActionError(null);
+      setEntries((prev) => prev.map((e) => (e.id === id ? updated : e)));
+    } catch (err) {
+      setActionError("We couldn't save your changes. Please try again.");
+      throw err;
+    }
   };
 
   const deleteEntry = async (id: string) => {
-    await fetch(`${apiUrl}/budget-entries/${id}`, {
-      method: "DELETE",
-      headers: authHeader,
-    });
+    try {
+      await apiFetch<void>(`/budget-entries/${id}`, { accessToken, method: "DELETE" });
+    } catch {
+      // Keep the row: the server still has it.
+      setActionError("We couldn't delete that entry. Please try again.");
+      return;
+    }
+    setActionError(null);
     setEntries((prev) => prev.filter((e) => e.id !== id));
   };
 
@@ -196,15 +203,15 @@ const BudgetContainer: FC = () => {
   const handleAddSuggestedDefaults = async () => {
     setIsSeedingDefaults(true);
     try {
-      const res = await fetch(`${apiUrl}/budget-entries/seed-defaults`, {
+      const updated = await apiFetch<BudgetEntry[]>("/budget-entries/seed-defaults", {
+        accessToken,
         method: "POST",
-        headers: { "Content-Type": "application/json", ...authHeader },
+        body: {},
       });
-      if (!res.ok) throw new Error("Failed to add suggested defaults");
-      const updated = (await res.json()) as BudgetEntry[];
+      setActionError(null);
       setEntries(updated);
-    } catch (err) {
-      console.error("Error adding suggested defaults:", err);
+    } catch {
+      setActionError("We couldn't add the suggested defaults. Please try again.");
     } finally {
       setIsSeedingDefaults(false);
     }
@@ -214,29 +221,25 @@ const BudgetContainer: FC = () => {
     const trimmed = catName.trim().toLowerCase();
     if (!trimmed) return;
 
+    let updatedCategories = Array.from(new Set([...customCategories, trimmed]));
     try {
-      const res = await fetch(`${apiUrl}/budget-entries/categories`, {
+      const data = await apiFetch<{ categories?: string[] }>("/budget-entries/categories", {
+        accessToken,
         method: "POST",
-        headers: { "Content-Type": "application/json", ...authHeader },
-        body: JSON.stringify({ category: trimmed }),
+        body: { category: trimmed },
       });
-      let updatedCategories: string[];
-      if (res.ok) {
-        const data = await res.json();
-        updatedCategories = data.categories || Array.from(new Set([...customCategories, trimmed]));
-      } else {
-        updatedCategories = Array.from(new Set([...customCategories, trimmed]));
-      }
-      setCustomCategories(updatedCategories);
-      await updateProfile({ customBudgetCategories: updatedCategories });
-      setActiveTab(trimmed);
+      updatedCategories = data?.categories || updatedCategories;
     } catch (err) {
       console.error("Error creating category:", err);
-      const updatedCategories = Array.from(new Set([...customCategories, trimmed]));
-      setCustomCategories(updatedCategories);
-      await updateProfile({ customBudgetCategories: updatedCategories });
-      setActiveTab(trimmed);
     }
+    setCustomCategories(updatedCategories);
+    try {
+      await updateProfile({ customBudgetCategories: updatedCategories });
+      setActionError(null);
+    } catch {
+      setActionError("We couldn't save your new category. Please try again.");
+    }
+    setActiveTab(trimmed);
   };
 
   const handleDeleteCategory = async (catToDelete: string) => {
@@ -333,6 +336,23 @@ const BudgetContainer: FC = () => {
           </FLPButton>
         </div>
       </div>
+
+      {actionError && (
+        <div
+          role="alert"
+          className={css({
+            padding: "12px 16px",
+            borderRadius: "12px",
+            fontSize: "sm",
+            backgroundColor: "status.danger.bg",
+            color: "status.danger.text",
+            border: "1px solid",
+            borderColor: "status.danger.border",
+          })}
+        >
+          {actionError}
+        </div>
+      )}
 
       {/* Unified Primary & Category Navigation Bar */}
       {activeTab !== "wizard" && (

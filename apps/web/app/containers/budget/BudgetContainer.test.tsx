@@ -63,20 +63,23 @@ import BudgetContainer from "./BudgetContainer";
 describe("BudgetContainer", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    global.fetch = vi.fn().mockResolvedValue({
-      ok: true,
-      json: () =>
-        Promise.resolve([
-          {
-            id: "b-1",
-            name: "Rent",
-            category: "housing",
-            amount: 1200,
-            frequency: "monthly",
-            isIncome: false,
-          },
-        ]),
-    }) as any;
+    vi.stubGlobal("ENV", { VITE_API_URL: "https://api.example.test" });
+    global.fetch = vi.fn().mockImplementation(
+      async () =>
+        new Response(
+          JSON.stringify([
+            {
+              id: "b-1",
+              name: "Rent",
+              category: "housing",
+              amount: 1200,
+              frequency: "monthly",
+              isIncome: false,
+            },
+          ]),
+          { status: 200 },
+        ),
+    ) as any;
   });
 
   it("renders the Budget Planner heading and custom category tab", () => {
@@ -173,5 +176,40 @@ describe("BudgetContainer", () => {
 
     // Open Setup Wizard
     fireEvent.click(screen.getByTestId("setup-wizard-btn"));
+  });
+
+  it("keeps the row and shows an error when deleting an entry fails", async () => {
+    const entry = {
+      id: "b-1",
+      userId: "u1",
+      name: "Mortgage",
+      category: "housing",
+      amount: 1200,
+      frequency: "monthly",
+      isIncome: false,
+      isPrimaryIncome: false,
+      isEssential: true,
+      notes: null,
+      isDefault: false,
+      createdAt: "",
+      updatedAt: "",
+    };
+    mockLoaderData = { ...mockLoaderData, budgetEntries: [entry] };
+    vi.stubGlobal("confirm", vi.fn().mockReturnValue(true));
+    global.fetch = vi.fn().mockResolvedValue(new Response(null, { status: 500 })) as any;
+
+    render(<BudgetContainer />);
+    fireEvent.click(screen.getByTestId("budget-tab-housing"));
+    const row = await screen.findByText("Mortgage");
+    const deleteBtn = screen.getAllByTitle("Delete")[0];
+    fireEvent.click(deleteBtn);
+
+    const alert = await screen.findByRole("alert");
+    expect(alert.textContent).toMatch(/couldn.t delete/i);
+    expect(global.fetch).toHaveBeenCalledWith(
+      "https://api.example.test/budget-entries/b-1",
+      expect.objectContaining({ method: "DELETE" }),
+    );
+    expect(screen.getByText("Mortgage")).toBe(row);
   });
 });
