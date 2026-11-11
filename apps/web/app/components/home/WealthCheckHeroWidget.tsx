@@ -5,6 +5,8 @@ import {
   calculateTaxTrapRelief,
   calculateUKTakeHome,
   type DebtItem,
+  estimateSalarySacrificeTaxSaving,
+  getDisplayMarginalRatePct,
   type OnboardingSeedPayload,
   persistOnboardingSeed,
 } from "@flump/finance-engine";
@@ -609,7 +611,7 @@ export const WealthCheckHeroWidget: FC = () => {
                 Marginal tax rate and relief
               </span>
               <div style={{ fontSize: "20px", fontWeight: "700", color: "text.primary" }}>
-                {trapAnalysis.effectiveMarginalRatePct}% marginal rate
+                {getDisplayMarginalRatePct(trapAnalysis)}% marginal rate
               </div>
               {trapAnalysis.isInTaxTrap ? (
                 <div
@@ -653,7 +655,7 @@ export const WealthCheckHeroWidget: FC = () => {
               <div style={{ fontSize: "20px", fontWeight: "700", color: "text.primary" }}>
                 {trapAnalysis.isInTaxTrap
                   ? `${formatCurrency(trapAnalysis.estimatedTaxSaved)} / yr reclaimed`
-                  : `${formatCurrency(Math.round(annualIncome * 0.05 * (trapAnalysis.effectiveMarginalRatePct / 100)))} / yr saved`}
+                  : `${formatCurrency(estimateSalarySacrificeTaxSaving(annualIncome, 5, trapAnalysis))} / yr saved`}
               </div>
               <div style={{ fontSize: "11px", color: "text.muted" }}>
                 {trapAnalysis.isInTaxTrap
