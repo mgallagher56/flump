@@ -17,6 +17,7 @@ import { BankSyncOrchestrator } from "@flump/banking/server";
 import { apiConfig } from "~/config.server";
 import { action as accountsAction } from "./app.accounts._index";
 import { action as accountAction } from "./app.accounts.$account";
+import { action as debtAction } from "./app.debt";
 import { action as onboardingAction } from "./app.onboarding";
 import { action as pensionAction } from "./app.pension";
 import { action as savingsAction } from "./app.savings";
@@ -36,6 +37,44 @@ interface Case {
 }
 
 const cases: Case[] = [
+  {
+    route: "debt",
+    action: debtAction,
+    intent: "createDebt",
+    fields: {
+      name: "Barclaycard",
+      type: "Credit Card",
+      balance: "1200",
+      interestRate: "",
+      monthlyContribution: "30",
+    },
+    method: "POST",
+    path: "/accounts",
+    body: {
+      name: "Barclaycard",
+      type: "Credit Card",
+      balance: -1200,
+      interestRate: null,
+      monthlyContribution: 30,
+    },
+  },
+  {
+    route: "debt",
+    action: debtAction,
+    intent: "updateDebt",
+    fields: { accountId: "d1", name: "Card", balance: "-900", interestRate: "0" },
+    method: "PATCH",
+    path: "/accounts/d1",
+    body: { name: "Card", balance: -900, interestRate: 0 },
+  },
+  {
+    route: "debt",
+    action: debtAction,
+    intent: "deleteDebt",
+    fields: { accountId: "d1" },
+    method: "DELETE",
+    path: "/accounts/d1",
+  },
   {
     route: "accounts",
     action: accountsAction,
