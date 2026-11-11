@@ -1,5 +1,6 @@
 import { fireEvent } from "@testing-library/react";
-import { vi } from "vitest";
+import { useLoaderData } from "react-router";
+import { afterEach, vi } from "vitest";
 import customRender from "~/testUtils/customRender";
 import MortgageContainer from "./MortgageContainer";
 
@@ -99,5 +100,46 @@ describe("<MortgageContainer />", () => {
 
     // Switch to LTV milestones tab
     fireEvent.click(getByText("LTV milestones"));
+  });
+
+  describe("with no stored rate or term", () => {
+    const loaderWith = (accountOverrides: Record<string, unknown> = {}) => ({
+      accounts: [
+        {
+          id: "m1",
+          name: "HSBC Fixed Mortgage",
+          type: "Mortgage",
+          balance: -135400,
+          ...accountOverrides,
+        },
+      ],
+      accountDetails: [{ account_id: "m1", month: 6, year: 2026, value: -135400 }],
+    });
+
+    afterEach(() => {
+      vi.mocked(useLoaderData).mockReset();
+    });
+
+    test("prompts for rate and term instead of assuming 4.5% over 25 years", () => {
+      vi.mocked(useLoaderData).mockReturnValue(loaderWith() as any);
+      const { getByText, queryByText } = customRender(<MortgageContainer />);
+      expect(getByText("Add your mortgage rate and term to see your figures.")).toBeDefined();
+      expect(queryByText(/150,000/)).toBeNull();
+    });
+
+    test("starts empty with no mortgage account instead of assuming £150,000", () => {
+      vi.mocked(useLoaderData).mockReturnValue({ accounts: [], accountDetails: [] } as any);
+      const { getByText, queryByText } = customRender(<MortgageContainer />);
+      expect(
+        getByText("Add your mortgage balance, rate and term to see your figures."),
+      ).toBeDefined();
+      expect(queryByText(/150,000/)).toBeNull();
+    });
+
+    test("uses the stored account rate and only asks for the term", () => {
+      vi.mocked(useLoaderData).mockReturnValue(loaderWith({ interestRate: 3.9 }) as any);
+      const { getByText } = customRender(<MortgageContainer />);
+      expect(getByText("Add your mortgage term to see your figures.")).toBeDefined();
+    });
   });
 });
