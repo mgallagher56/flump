@@ -23,7 +23,9 @@ export const ENTITIES: Function[] = [
 ];
 
 // Relative to this file so it resolves under both `bun src/...` (ts) and dist/ (js).
-const MIGRATIONS_GLOB = join(__dirname, "..", "migrations", "*{.ts,.js}");
+// Migration files end in a timestamp (Name1794355200000), so `*[0-9]` skips specs,
+// .d.ts and source maps that sit in the same folder.
+const MIGRATIONS_GLOB = join(__dirname, "..", "migrations", "*[0-9]{.ts,.js}");
 
 /**
  * The single source of TypeORM options (used by the Nest app and the CLI data source).
