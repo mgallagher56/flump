@@ -22,7 +22,11 @@
  *   - Ireland: Revenue Commissioners (revenue.ie)
  */
 
-import { getUkCalendarDate, getUkTaxYearForDate } from "./uk-tax-year.js";
+import {
+  getUkCalendarDate,
+  getUkTaxYearForDate,
+  UnsupportedUkTaxYearError,
+} from "./uk-tax-year.js";
 
 // ---------------------------------------------------------------------------
 // Legal Disclaimer
@@ -505,6 +509,21 @@ export interface UKStudentLoanYear {
     postgrad: UKStudentLoanPlan;
   };
 }
+
+/**
+ * Statutory write-off periods in years, by plan. Not tax-year dependent, so kept
+ * apart from UK_STUDENT_LOANS. Simplified: the age-65 rules for older Plan 1 and
+ * Plan 4 loans are not modelled.
+ * Source: https://www.gov.uk/repaying-your-student-loan/when-your-student-loan-gets-written-off-or-cancelled
+ * (current rules; per-tax-year variation not checked, so the dates by year are UNVERIFIED).
+ */
+export const STUDENT_LOAN_WRITE_OFF_YEARS = {
+  plan1: 25,
+  plan2: 30,
+  plan4: 30,
+  plan5: 40,
+  postgrad: 30,
+} as const satisfies Record<keyof UKStudentLoanYear["plans"], number>;
 
 export const UK_STUDENT_LOANS: Record<string, UKStudentLoanYear> = {
   // 2020/21 to 2022/23 added in E4 T2. Source for each year: the "Student loan and
@@ -1157,9 +1176,12 @@ export function calculateUKEWNITakeHome(
   ni = Math.round(ni);
 
   // 5. Student Loan
+  // Same per-year table (UK_STUDENT_LOANS) as calculateStudentLoanRepayment. A plan with no
+  // entry for the year throws rather than silently returning 0.
   let studentLoan = 0;
-  const plan = studentLoanPlan !== "none" ? slRules.plans[studentLoanPlan] : undefined;
-  if (plan) {
+  if (studentLoanPlan !== "none") {
+    const plan = slRules.plans[studentLoanPlan];
+    if (!plan) throw new UnsupportedUkTaxYearError(taxYear, `student loan ${studentLoanPlan}`);
     if (adjustedGrossForTax > plan.threshold) {
       studentLoan = Math.round((adjustedGrossForTax - plan.threshold) * plan.rate);
     }

@@ -14,6 +14,7 @@ import {
   UK_EWNI_INCOME_TAX,
   UK_SCOTLAND_INCOME_TAX,
 } from "./tax-rules.js";
+import { UnsupportedUkTaxYearError } from "./uk-tax-year.js";
 
 describe("tax-rules", () => {
   it("exports disclaimers", () => {
@@ -148,5 +149,34 @@ describe("calculateUKEWNIIncomeTaxOnTaxable additional-rate threshold (E4 T4)", 
 
   it("taxable 150000 in 2026/27 is 53703", () => {
     expect(calculateUKEWNIIncomeTaxOnTaxable(150000, UK_EWNI_INCOME_TAX["2026/27"]!)).toBe(53703);
+  });
+
+  describe("calculateUKEWNITakeHome student loan", () => {
+    // Plan 2 on 35,000, no pension: 2025/26 (35000-28470)*9% = 587.70 -> 588 (whole pounds);
+    // 2026/27 (35000-29385)*9% = 505.35 -> 505. Thresholds: GOV.UK employer rates pages.
+    it("reads the per-year student loan table", () => {
+      expect(
+        calculateUKEWNITakeHome(35000, "employed", 0, false, "2025/26", "plan2").studentLoan,
+      ).toBe(588);
+      expect(
+        calculateUKEWNITakeHome(35000, "employed", 0, false, "2026/27", "plan2").studentLoan,
+      ).toBe(505);
+    });
+
+    it("returns 0 for none and below threshold", () => {
+      expect(
+        calculateUKEWNITakeHome(35000, "employed", 0, false, "2026/27", "none").studentLoan,
+      ).toBe(0);
+      expect(
+        calculateUKEWNITakeHome(25000, "employed", 0, false, "2026/27", "plan2").studentLoan,
+      ).toBe(0);
+    });
+
+    it("throws when the plan has no verified entry for the year (no silent zero)", () => {
+      // 2020/21 page lists no Plan 4 threshold
+      expect(() =>
+        calculateUKEWNITakeHome(35000, "employed", 0, false, "2020/21", "plan4"),
+      ).toThrow(UnsupportedUkTaxYearError);
+    });
   });
 });
