@@ -115,7 +115,7 @@ describe("<TaxIncomeSectionCard />", () => {
 
     // Open Inline Quick-Add form and submit
     fireEvent.click(getByText(/Inline Quick-Add/i));
-    const nameInput = getByPlaceholderText(/Record name/i);
+    const nameInput = getByPlaceholderText(/e\.g\. flat rent/i);
     fireEvent.change(nameInput, { target: { value: "Domain Renewal" } });
     const amountInput = getByPlaceholderText(/Amount/i);
     fireEvent.change(amountInput, { target: { value: "45" } });
