@@ -37,12 +37,37 @@ export const sliderFieldValuePill = cva({
     backgroundColor: "surface.sunken",
     borderWidth: "1px",
     borderStyle: "solid",
-    borderColor: "border.subtle",
+    borderColor: "border.input",
     fontSize: "xs",
     fontWeight: "bold",
     color: "primary",
     fontVariantNumeric: "tabular-nums",
+    _focusWithin: {
+      outline: "2px solid",
+      outlineColor: "border.focusRing",
+      outlineOffset: "2px",
+    },
   },
+});
+
+export const sliderPillInput = cva({
+  base: {
+    width: "56px",
+    textAlign: "right",
+    border: "none",
+    backgroundColor: "transparent",
+    color: "primary",
+    fontWeight: "bold",
+    fontSize: "xs",
+    fontVariantNumeric: "tabular-nums",
+    p: "0",
+    // The focus indicator lives on the pill container via _focusWithin.
+    outline: "none",
+  },
+});
+
+export const sliderHelperText = cva({
+  base: { fontSize: "xs", color: "text.muted", lineHeight: "1.3" },
 });
 
 export const sliderInputTrack = cva({

@@ -12,6 +12,13 @@ describe("Button Primitive", () => {
     expect(handleClick).toHaveBeenCalledTimes(1);
   });
 
+  it("primary variant fills with primary.solid", () => {
+    render(<Button>Save</Button>);
+    const cls = screen.getByRole("button", { name: "Save" }).className;
+    expect(cls).toContain("bg_primary.solid");
+    expect(cls).not.toMatch(/(^|\s)bg_primary(\s|$)/);
+  });
+
   it("applies disabled attributes correctly", () => {
     render(<Button disabled>Disabled Action</Button>);
     const btn = screen.getByRole("button", { name: "Disabled Action" });

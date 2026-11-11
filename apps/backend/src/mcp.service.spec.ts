@@ -15,7 +15,9 @@ vi.mock("@flump/mcp", async (importOriginal) => {
 });
 
 import { DEV_BYPASS_TOKEN, DEV_USER } from "./auth/dev-bypass.verifier";
+import { FinanceService } from "./finance.service";
 import { McpService } from "./mcp.service";
+import { UserProfileService } from "./user-profile.service";
 
 function build(mode: "workos" | "dev") {
   const config = { get: vi.fn().mockReturnValue(undefined) };
@@ -50,5 +52,98 @@ describe("McpService dev token wiring", () => {
     build("workos");
     expect(handlerOptions[0].devToken).toBeUndefined();
     expect(handlerOptions[0].devUserId).toBeUndefined();
+  });
+});
+
+/** In-memory repository stand-in that records every write attempt. */
+function memoryRepo() {
+  const rows: any[] = [];
+  const writes = {
+    save: vi.fn(),
+    insert: vi.fn(),
+    upsert: vi.fn(),
+    update: vi.fn(),
+    delete: vi.fn(),
+    remove: vi.fn(),
+  };
+  const repo = {
+    rows,
+    writes,
+    create: (v: any) => ({ ...v }),
+    find: vi.fn(async () => [...rows]),
+    findOne: vi.fn(async (opts?: any) => {
+      const where = opts?.where ?? {};
+      return rows.find((r) => Object.entries(where).every(([k, v]) => r[k] === v)) ?? null;
+    }),
+    save: vi.fn(async (v: any) => {
+      writes.save(v);
+      const row = { id: `row-${rows.length + 1}`, ...v };
+      rows.push(row);
+      return row;
+    }),
+    insert: writes.insert,
+    upsert: writes.upsert,
+    update: writes.update,
+    delete: writes.delete,
+    remove: writes.remove,
+  };
+  return repo;
+}
+
+describe("McpService.getContextPack for a brand-new user", () => {
+  it("returns zero accounts and writes no account, detail, budget, tax or transaction rows", async () => {
+    const userId = "new-user";
+    const mcpTokens = memoryRepo();
+    const profiles = memoryRepo();
+    const accounts = memoryRepo();
+    const details = memoryRepo();
+    const budget = memoryRepo();
+    const tax = memoryRepo();
+    const transactions = memoryRepo();
+    const connections = memoryRepo();
+
+    const config = { get: vi.fn().mockReturnValue(undefined) };
+    const finance = new FinanceService(
+      accounts as never,
+      transactions as never,
+      details as never,
+      connections as never,
+      profiles as never,
+      {} as never,
+      config as never,
+    );
+    const profileService = new UserProfileService(
+      profiles as never,
+      accounts as never,
+      transactions as never,
+      details as never,
+      connections as never,
+      budget as never,
+      tax as never,
+    );
+    const service = new McpService(
+      mcpTokens as never,
+      profiles as never,
+      accounts as never,
+      details as never,
+      budget as never,
+      tax as never,
+      transactions as never,
+      finance,
+      profileService,
+      config as never,
+      "workos",
+    );
+
+    const { pack, markdown } = await service.getContextPack(userId);
+
+    expect(pack.portfolio.accounts).toHaveLength(0);
+    expect(typeof markdown).toBe("string");
+    for (const repo of [accounts, details, budget, tax, transactions, connections, mcpTokens]) {
+      for (const fn of Object.values(repo.writes)) expect(fn).not.toHaveBeenCalled();
+      expect(repo.rows).toHaveLength(0);
+    }
+    // The only permitted write: the lazily created, empty-defaults profile row.
+    expect(profiles.writes.save).toHaveBeenCalledTimes(1);
   });
 });

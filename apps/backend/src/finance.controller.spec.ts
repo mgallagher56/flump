@@ -103,17 +103,14 @@ describe("FinanceController & FinanceService", () => {
     };
   };
 
-  it("handles account CRUD and auto-seeding", async () => {
+  it("handles account CRUD without seeding", async () => {
     const { controller, mockAccountRepo, mockAccountDetailRepo } = createMocks();
     const req = { user: { id: "u1" } };
 
-    // Auto-seeds when empty and not reset
-    mockAccountDetailRepo.find.mockResolvedValueOnce([
-      { accountId: "acc-0", year: 2026, month: 1, value: 2450.75 },
-    ]);
-    const seeded = await controller.getAccounts(req);
-    expect(seeded.length).toBe(4);
-    expect(seeded[0].details).toHaveLength(1);
+    // An empty repository yields no accounts and nothing is written
+    const empty = await controller.getAccounts(req);
+    expect(empty).toHaveLength(0);
+    expect(mockAccountRepo.save).not.toHaveBeenCalled();
 
     // Get single account found & not found
     await expect(controller.getAccount(req, "missing")).rejects.toThrow(NotFoundException);

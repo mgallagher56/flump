@@ -18,7 +18,7 @@ Never create standalone, flat `.tsx` component files. Every component in `packag
   - `surface.*` (`canvas`, `card`, `sunken`, `subtle`, `overlay`, `contrast`)
   - `text.*` (`primary`, `secondary`, `muted`, `onContrast`)
   - `border.*` (`DEFAULT`, `subtle`, `strong`, `input`, `focusRing`)
-  - `primary.*` (`DEFAULT`, `hover`, `subtle`, `border`, `foreground`)
+  - `primary.*` (`DEFAULT`, `solid`, `hover`, `subtle`, `border`, `foreground`; `solid`/`hover` are fills behind `primary.foreground` only, graphic-only fills use `primary` or `chart.primary`)
   - `status.{positive|warning|danger|info|neutral}.{text|bg|border|solid}`
   - `chart.*` (`primary`, `wealth`, `debt`, `warning`, `accentPurple`, `accentCyan`, `grid`, `series1`..`series5`)
 - **Tabular Numbers on All Financial Data:** Every currency value, percentage, date, table cell, and slider badge MUST apply `fontVariantNumeric: 'tabular-nums'` (`tabular-nums`) and format numbers via standard UK formatting (`Intl.NumberFormat('en-GB')` / `useFormatCurrency()`).

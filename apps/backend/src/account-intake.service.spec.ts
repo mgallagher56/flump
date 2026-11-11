@@ -1,6 +1,7 @@
 import { NotFoundException } from "@nestjs/common";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { AccountIntakeService } from "./account-intake.service";
+import { createInMemoryRepository } from "./testing/in-memory-repository";
 
 describe("AccountIntakeService (Deep Module)", () => {
   let service: AccountIntakeService;
@@ -37,20 +38,45 @@ describe("AccountIntakeService (Deep Module)", () => {
     );
   });
 
-  it("auto-seeds canonical default accounts when user has no accounts and has not reset", async () => {
-    mockAccountRepo.find.mockResolvedValueOnce([]); // no existing accounts
-    mockAccountRepo.save.mockResolvedValueOnce([
-      { id: "acc-1", userId: "user-123", name: "Main Checking", type: "Current", balance: 2450.75 },
-    ]);
-    mockAccountDetailRepo.find.mockResolvedValueOnce([]);
+  it("returns [] and never saves for a user with no accounts", async () => {
+    mockAccountRepo.find.mockResolvedValueOnce([]);
 
     const accounts = await service.getAccounts("user-123");
 
-    expect(mockAccountRepo.save).toHaveBeenCalled();
-    expect(accounts.length).toBe(1);
-    expect(accounts[0].name).toBe("Main Checking");
-    expect(accounts[0].balance).toBe(2450.75);
-    expect(accounts[0].details).toEqual([]);
+    expect(accounts).toEqual([]);
+    expect(mockAccountRepo.save).not.toHaveBeenCalled();
+  });
+
+  it("getPortfolioSnapshot for a new user returns zero totals without writing", async () => {
+    mockAccountRepo.find.mockResolvedValue([]);
+
+    const snapshot = await service.getPortfolioSnapshot("user-123");
+
+    expect(snapshot.netWorth).toBe(0);
+    expect(snapshot.resolvedAccounts).toEqual([]);
+    expect(mockAccountRepo.save).not.toHaveBeenCalled();
+  });
+
+  it("concurrent getAccounts and getPortfolioSnapshot insert nothing", async () => {
+    const accountRepo = createInMemoryRepository();
+    const detailRepo = createInMemoryRepository();
+    const profileRepo = createInMemoryRepository();
+    const concurrent = new AccountIntakeService(
+      accountRepo as any,
+      detailRepo as any,
+      profileRepo as any,
+      mockBankConnectionRepo,
+    );
+
+    await Promise.all([
+      concurrent.getAccounts("user-123"),
+      concurrent.getPortfolioSnapshot("user-123"),
+      concurrent.getAccounts("user-123"),
+    ]);
+
+    expect(accountRepo.rows).toHaveLength(0);
+    expect(accountRepo.save).not.toHaveBeenCalled();
+    expect(profileRepo.save).not.toHaveBeenCalled();
   });
 
   it("retrieves account details scoped to user's accounts", async () => {

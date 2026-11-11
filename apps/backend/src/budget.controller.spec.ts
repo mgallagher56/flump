@@ -8,55 +8,56 @@ describe("BudgetController", () => {
     expect(BudgetController).toBeDefined();
   });
 
-  it("should not seed default budget entries if user hasResetFinancialData is true", async () => {
-    const mockBudgetRepo = {
-      find: vi.fn().mockResolvedValue([]),
-      create: vi.fn(),
-      save: vi.fn(),
-    };
-    const mockProfileRepo = {
-      findOne: vi.fn().mockResolvedValue({ hasResetFinancialData: true }),
-    };
+  it("getBudgetEntries returns [] for a new user and never saves", async () => {
+    const budgetRepo = createInMemoryRepository();
+    const profileRepo = createInMemoryRepository();
+    const controller = new BudgetController(budgetRepo as any, profileRepo as any);
 
-    const controller = new BudgetController(mockBudgetRepo as any, mockProfileRepo as any);
     const result = await controller.getBudgetEntries({ user: { id: "user-123" } });
 
     expect(result).toEqual([]);
-    expect(mockBudgetRepo.save).not.toHaveBeenCalled();
+    expect(budgetRepo.save).not.toHaveBeenCalled();
+    expect(budgetRepo.create).not.toHaveBeenCalled();
+    expect(budgetRepo.rows).toEqual([]);
   });
 
-  it("should seed default budget entries if empty and not reset", async () => {
-    const mockBudgetRepo = {
-      find: vi.fn().mockResolvedValue([]),
-      create: vi.fn((e) => e),
-      save: vi.fn((entries) => Promise.resolve(entries)),
-    };
-    const mockProfileRepo = {
-      findOne: vi.fn().mockResolvedValue(null),
-    };
+  it("seedDefaultBudgetEntries twice creates each template row once", async () => {
+    const budgetRepo = createInMemoryRepository();
+    const controller = new BudgetController(budgetRepo as any, createInMemoryRepository() as any);
+    const req = { user: { id: "user-123" } };
 
-    const controller = new BudgetController(mockBudgetRepo as any, mockProfileRepo as any);
-    const result = await controller.getBudgetEntries({ user: { id: "user-123" } });
+    const first = await controller.seedDefaultBudgetEntries(req);
+    const second = await controller.seedDefaultBudgetEntries(req);
 
-    expect(result.length).toBeGreaterThan(0);
-    expect(mockBudgetRepo.save).toHaveBeenCalled();
+    expect(first.length).toBeGreaterThan(0);
+    expect(second).toHaveLength(first.length);
+    expect(budgetRepo.rows).toHaveLength(first.length);
+    const names = budgetRepo.rows.map((r) => r.name);
+    expect(new Set(names).size).toBe(names.length);
   });
 
-  it("should seed defaults on explicit request via seedDefaultBudgetEntries", async () => {
-    const mockBudgetRepo = {
-      find: vi.fn().mockResolvedValue([{ id: "entry-1", name: "Rent", amount: 1200 }]),
-      create: vi.fn((e) => e),
-      save: vi.fn((entries) => Promise.resolve(entries)),
-    };
-    const mockProfileRepo = {
-      findOne: vi.fn().mockResolvedValue({ hasResetFinancialData: true }),
-    };
+  it("seedDefaultBudgetEntries keeps user entries and skips only existing default templates", async () => {
+    const budgetRepo = createInMemoryRepository([
+      { id: "u1", userId: "user-123", name: "Gym", isDefault: false, amount: 99 },
+      { id: "d1", userId: "user-123", name: "Gas", isDefault: true, amount: 61 },
+    ]);
+    const controller = new BudgetController(budgetRepo as any, createInMemoryRepository() as any);
 
-    const controller = new BudgetController(mockBudgetRepo as any, mockProfileRepo as any);
-    const result = await controller.seedDefaultBudgetEntries({ user: { id: "user-123" } });
+    await controller.seedDefaultBudgetEntries({ user: { id: "user-123" } });
 
-    expect(mockBudgetRepo.save).toHaveBeenCalled();
-    expect(result).toHaveLength(1);
+    expect(budgetRepo.rows.filter((r) => r.name === "Gas")).toHaveLength(1);
+    expect(budgetRepo.rows.filter((r) => r.name === "Gym")).toHaveLength(2);
+  });
+
+  it("suggested defaults contain no income entry", async () => {
+    const budgetRepo = createInMemoryRepository();
+    const controller = new BudgetController(budgetRepo as any, createInMemoryRepository() as any);
+
+    await controller.seedDefaultBudgetEntries({ user: { id: "user-123" } });
+
+    expect(budgetRepo.rows).toHaveLength(14);
+    expect(budgetRepo.rows.some((r) => r.isIncome || r.isPrimaryIncome)).toBe(false);
+    expect(budgetRepo.rows.some((r) => r.name === "Salary (Take Home)")).toBe(false);
   });
 
   it("should add custom category to user profile and validate input", async () => {
@@ -82,9 +83,8 @@ describe("BudgetController", () => {
     expect(result.categories).toEqual(["holidays"]);
   });
 
-  it("creates, updates, deletes, and resets budget entries", async () => {
+  it("creates, updates and deletes budget entries", async () => {
     const mockBudgetRepo = {
-      find: vi.fn().mockResolvedValue([{ id: "e1", amount: "100" }]),
       findOne: vi.fn(),
       create: vi.fn((e) => ({ id: "e-new", ...e })),
       save: vi.fn((e) => Promise.resolve(e)),
@@ -134,20 +134,17 @@ describe("BudgetController", () => {
     mockBudgetRepo.findOne.mockResolvedValueOnce({ id: "e1" });
     const delRes = await controller.deleteBudgetEntry(req, "e1");
     expect(delRes.success).toBe(true);
+  });
 
-    // Reset
-    const resetRes = await controller.resetBudgetEntries(req);
-    expect(mockBudgetRepo.remove).toHaveBeenCalled();
-    expect(resetRes.length).toBeGreaterThan(0);
+  it("has no reset route that re-seeds", () => {
+    expect((BudgetController.prototype as any).resetBudgetEntries).toBeUndefined();
   });
 
   it("scopes budget entries by owner: user B cannot list, update or delete user A's entry", async () => {
     const budgetRepo = createInMemoryRepository([
       { id: "e-A", userId: "userA", category: "housing", name: "Rent", amount: 1500 },
     ]);
-    const profileRepo = createInMemoryRepository([
-      { userId: "userB", hasResetFinancialData: true },
-    ]);
+    const profileRepo = createInMemoryRepository();
     const controller = new BudgetController(budgetRepo as any, profileRepo as any);
     const userA = { user: { id: "userA" } };
     const userB = { user: { id: "userB" } };

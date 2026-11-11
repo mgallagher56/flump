@@ -10,6 +10,14 @@ import { Transaction } from "./entities/transaction.entity";
 import { UserProfile } from "./entities/user-profile.entity";
 import { USER_IDENTITY_ADAPTER, type UserIdentityAdapter } from "./identity/identity.adapter";
 
+const PG_UNIQUE_VIOLATION = "23505";
+
+/** TypeORM wraps the pg error: QueryFailedError.driverError.code. Also accept a bare err.code. */
+function isUniqueViolation(err: unknown): boolean {
+  const e = err as { code?: unknown; driverError?: { code?: unknown } } | null | undefined;
+  return e?.code === PG_UNIQUE_VIOLATION || e?.driverError?.code === PG_UNIQUE_VIOLATION;
+}
+
 export interface ProfileLifecycle {
   getProfile(userId: string, email?: string): Promise<any>;
   updateProfile(userId: string, body: any, email?: string): Promise<any>;
@@ -144,69 +152,80 @@ export class UserProfileService implements ProfileLifecycle {
     };
   }
 
-  async getProfile(userId: string, email?: string): Promise<any> {
-    let profile = await this.userProfileRepository.findOne({ where: { userId } });
+  /**
+   * Lazily creates the profile row on first access. The row is empty defaults only (no
+   * fabricated financial data). Two parallel first requests can both miss findOne and
+   * both insert; user_id is unique, so the loser gets a unique violation (23505) and
+   * re-reads the winner's row. Any other error propagates unchanged.
+   */
+  private async findOrCreateProfile(
+    userId: string,
+    defaults: Partial<UserProfile>,
+  ): Promise<UserProfile> {
+    const existing = await this.userProfileRepository.findOne({ where: { userId } });
+    if (existing) return existing;
 
-    if (!profile) {
-      profile = await this.userProfileRepository.save(
-        this.userProfileRepository.create({
-          userId,
-          displayName: null,
-          firstName: null,
-          lastName: null,
-          avatarUrl: null,
-          currency: "GBP",
-          country: "GB",
-          employmentType: null,
-          annualSalary: null,
-          monthlyTakeHome: null,
-          hasSecondIncome: false,
-          secondIncomeMonthly: null,
-          hasRentalIncome: false,
-          rentalIncomeMonthly: null,
-          hasMortgage: false,
-          mortgageType: "repayment",
-          propertyOwnershipShare: 100.0,
-          hasBuyToLet: false,
-          buyToLetCount: 1,
-          buyToLetPropertyValue: null,
-          buyToLetMonthlyRental: null,
-          buyToLetMortgageBalance: null,
-          buyToLetMortgageRate: null,
-          buyToLetMortgageType: "interest-only",
-          pensionPercent: 5.0,
-          pensionEmployerPercent: 3.0,
-          isSalarySacrifice: true,
-          isSalarySacrificeEmployerNi: false,
-          monthlySavingsTarget: null,
-          savingsAllocationMode: "per_account",
-          savingsDefaultInterestRate: 5.0,
-          setupChecklistCompletedSteps: [],
-          enabledPages: ["accounts", "budget", "savings", "pension", "mortgage", "forecast", "tax"],
-          dashboardWidgets: [
-            "accounts",
-            "budget",
-            "savings",
-            "pension",
-            "mortgage",
-            "forecast",
-            "tax",
-          ],
-          dashboardWidgetOrder: [
-            "accounts",
-            "budget",
-            "savings",
-            "pension",
-            "mortgage",
-            "forecast",
-            "tax",
-          ],
-          dashboardWidgetSizes: { accounts: "wide" },
-          dashboardWidgetConfig: {},
-          onboardingCompleted: false,
-        }),
+    try {
+      return await this.userProfileRepository.save(
+        this.userProfileRepository.create({ ...defaults, userId }),
       );
+    } catch (err) {
+      if (!isUniqueViolation(err)) throw err;
+      const winner = await this.userProfileRepository.findOne({ where: { userId } });
+      if (!winner) throw err;
+      return winner;
     }
+  }
+
+  async getProfile(userId: string, email?: string): Promise<any> {
+    const profile = await this.findOrCreateProfile(userId, {
+      userId,
+      displayName: null,
+      firstName: null,
+      lastName: null,
+      avatarUrl: null,
+      currency: "GBP",
+      country: "GB",
+      employmentType: null,
+      annualSalary: null,
+      monthlyTakeHome: null,
+      hasSecondIncome: false,
+      secondIncomeMonthly: null,
+      hasRentalIncome: false,
+      rentalIncomeMonthly: null,
+      hasMortgage: false,
+      mortgageType: "repayment",
+      propertyOwnershipShare: 100.0,
+      hasBuyToLet: false,
+      buyToLetCount: 1,
+      buyToLetPropertyValue: null,
+      buyToLetMonthlyRental: null,
+      buyToLetMortgageBalance: null,
+      buyToLetMortgageRate: null,
+      buyToLetMortgageType: "interest-only",
+      pensionPercent: 5.0,
+      pensionEmployerPercent: 3.0,
+      isSalarySacrifice: true,
+      isSalarySacrificeEmployerNi: false,
+      monthlySavingsTarget: null,
+      savingsAllocationMode: "per_account",
+      savingsDefaultInterestRate: 5.0,
+      setupChecklistCompletedSteps: [],
+      enabledPages: ["accounts", "budget", "savings", "pension", "mortgage", "forecast", "tax"],
+      dashboardWidgets: ["accounts", "budget", "savings", "pension", "mortgage", "forecast", "tax"],
+      dashboardWidgetOrder: [
+        "accounts",
+        "budget",
+        "savings",
+        "pension",
+        "mortgage",
+        "forecast",
+        "tax",
+      ],
+      dashboardWidgetSizes: { accounts: "wide" },
+      dashboardWidgetConfig: {},
+      onboardingCompleted: false,
+    });
 
     return {
       ...this.formatProfile(profile),
@@ -215,37 +234,33 @@ export class UserProfileService implements ProfileLifecycle {
   }
 
   async updateProfile(userId: string, body: any, email?: string): Promise<any> {
-    let profile = await this.userProfileRepository.findOne({ where: { userId } });
-
-    if (!profile) {
-      profile = this.userProfileRepository.create({
-        userId,
-        displayName: null,
-        firstName: null,
-        lastName: null,
-        avatarUrl: null,
-        currency: "GBP",
-        country: "GB",
-        employmentType: null,
-        annualSalary: null,
-        monthlyTakeHome: null,
-        hasSecondIncome: false,
-        secondIncomeMonthly: null,
-        hasRentalIncome: false,
-        rentalIncomeMonthly: null,
-        hasMortgage: false,
-        propertyOwnershipShare: 100.0,
-        pensionPercent: 5.0,
-        pensionEmployerPercent: 3.0,
-        isSalarySacrifice: true,
-        isSalarySacrificeEmployerNi: false,
-        monthlySavingsTarget: null,
-        savingsAllocationMode: "per_account",
-        savingsDefaultInterestRate: 5.0,
-        setupChecklistCompletedSteps: [],
-        onboardingCompleted: false,
-      });
-    }
+    const profile = await this.findOrCreateProfile(userId, {
+      userId,
+      displayName: null,
+      firstName: null,
+      lastName: null,
+      avatarUrl: null,
+      currency: "GBP",
+      country: "GB",
+      employmentType: null,
+      annualSalary: null,
+      monthlyTakeHome: null,
+      hasSecondIncome: false,
+      secondIncomeMonthly: null,
+      hasRentalIncome: false,
+      rentalIncomeMonthly: null,
+      hasMortgage: false,
+      propertyOwnershipShare: 100.0,
+      pensionPercent: 5.0,
+      pensionEmployerPercent: 3.0,
+      isSalarySacrifice: true,
+      isSalarySacrificeEmployerNi: false,
+      monthlySavingsTarget: null,
+      savingsAllocationMode: "per_account",
+      savingsDefaultInterestRate: 5.0,
+      setupChecklistCompletedSteps: [],
+      onboardingCompleted: false,
+    });
 
     if (body.displayName !== undefined) profile.displayName = body.displayName ?? null;
     if (body.firstName !== undefined) profile.firstName = body.firstName ?? null;
@@ -421,33 +436,29 @@ export class UserProfileService implements ProfileLifecycle {
   }
 
   async updateChecklist(userId: string, step: string, completed: boolean): Promise<any> {
-    let profile = await this.userProfileRepository.findOne({ where: { userId } });
-
-    if (!profile) {
-      profile = this.userProfileRepository.create({
-        userId,
-        displayName: null,
-        currency: "GBP",
-        country: "GB",
-        employmentType: null,
-        annualSalary: null,
-        monthlyTakeHome: null,
-        hasSecondIncome: false,
-        secondIncomeMonthly: null,
-        hasRentalIncome: false,
-        rentalIncomeMonthly: null,
-        hasMortgage: false,
-        propertyOwnershipShare: 100.0,
-        pensionPercent: 5.0,
-        pensionEmployerPercent: 3.0,
-        isSalarySacrifice: true,
-        monthlySavingsTarget: null,
-        savingsAllocationMode: "per_account",
-        savingsDefaultInterestRate: 5.0,
-        setupChecklistCompletedSteps: [],
-        onboardingCompleted: false,
-      });
-    }
+    const profile = await this.findOrCreateProfile(userId, {
+      userId,
+      displayName: null,
+      currency: "GBP",
+      country: "GB",
+      employmentType: null,
+      annualSalary: null,
+      monthlyTakeHome: null,
+      hasSecondIncome: false,
+      secondIncomeMonthly: null,
+      hasRentalIncome: false,
+      rentalIncomeMonthly: null,
+      hasMortgage: false,
+      propertyOwnershipShare: 100.0,
+      pensionPercent: 5.0,
+      pensionEmployerPercent: 3.0,
+      isSalarySacrifice: true,
+      monthlySavingsTarget: null,
+      savingsAllocationMode: "per_account",
+      savingsDefaultInterestRate: 5.0,
+      setupChecklistCompletedSteps: [],
+      onboardingCompleted: false,
+    });
 
     const steps = Array.isArray(profile.setupChecklistCompletedSteps)
       ? [...profile.setupChecklistCompletedSteps]

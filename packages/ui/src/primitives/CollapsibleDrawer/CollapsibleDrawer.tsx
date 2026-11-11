@@ -7,6 +7,14 @@ export interface CollapsibleDrawerProps {
   badge?: ReactNode;
   subtitle?: string;
   defaultOpen?: boolean;
+  /**
+   * Trailing action text while open. Defaults to "Hide Schedule ▲". When either
+   * label is supplied the trailing text is a visual cue only (aria-hidden) and
+   * `title` alone names the button.
+   */
+  openLabel?: string;
+  /** Trailing action text while closed. Defaults to "View Full Schedule ▼". */
+  closedLabel?: string;
   children: ReactNode;
   className?: string;
 }
@@ -16,10 +24,13 @@ export const CollapsibleDrawer: FC<CollapsibleDrawerProps> = ({
   badge,
   subtitle,
   defaultOpen = false,
+  openLabel,
+  closedLabel,
   children,
   className,
 }) => {
   const [isOpen, setIsOpen] = useState(defaultOpen);
+  const customLabels = openLabel !== undefined || closedLabel !== undefined;
 
   return (
     <div className={cx(drawerContainer(), className)}>
@@ -46,6 +57,7 @@ export const CollapsibleDrawer: FC<CollapsibleDrawerProps> = ({
         </div>
 
         <span
+          aria-hidden={customLabels ? "true" : undefined}
           className={css({
             fontSize: "xs",
             fontWeight: "semibold",
@@ -55,7 +67,7 @@ export const CollapsibleDrawer: FC<CollapsibleDrawerProps> = ({
             gap: "4px",
           })}
         >
-          {isOpen ? "Hide Schedule ▲" : "View Full Schedule ▼"}
+          {isOpen ? (openLabel ?? "Hide Schedule ▲") : (closedLabel ?? "View Full Schedule ▼")}
         </span>
       </button>
 

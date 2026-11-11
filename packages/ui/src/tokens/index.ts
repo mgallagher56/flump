@@ -172,8 +172,9 @@ export const semanticTokens = {
   colors: {
     // 1. Brand & Interactive Primary
     primary: {
-      DEFAULT: { value: { base: "{colors.indigo.600}", _dark: "{colors.indigo.500}" } },
-      hover: { value: { base: "{colors.indigo.700}", _dark: "{colors.indigo.400}" } },
+      DEFAULT: { value: { base: "{colors.indigo.600}", _dark: "{colors.indigo.400}" } },
+      solid: { value: { base: "{colors.indigo.600}", _dark: "{colors.indigo.600}" } },
+      hover: { value: { base: "{colors.indigo.700}", _dark: "{colors.indigo.700}" } },
       subtle: { value: { base: "{colors.indigo.50}", _dark: "rgba(99, 102, 241, 0.12)" } },
       border: { value: { base: "{colors.indigo.200}", _dark: "rgba(99, 102, 241, 0.30)" } },
       foreground: { value: "#ffffff" },
@@ -203,7 +204,7 @@ export const semanticTokens = {
       DEFAULT: { value: { base: "{colors.slate.200}", _dark: "{colors.dark.border}" } },
       subtle: { value: { base: "rgba(15, 23, 42, 0.06)", _dark: "{colors.dark.borderSubtle}" } },
       strong: { value: { base: "{colors.slate.300}", _dark: "rgba(255, 255, 255, 0.16)" } },
-      input: { value: { base: "{colors.slate.300}", _dark: "{colors.dark.border}" } },
+      input: { value: { base: "{colors.slate.500}", _dark: "rgba(255, 255, 255, 0.40)" } },
       focusRing: { value: { base: "{colors.indigo.600}", _dark: "{colors.indigo.400}" } },
     },
 
@@ -225,7 +226,7 @@ export const semanticTokens = {
         text: { value: { base: "{colors.destructive.700}", _dark: "{colors.destructive.400}" } },
         bg: { value: { base: "{colors.destructive.50}", _dark: "rgba(239, 68, 68, 0.12)" } },
         border: { value: { base: "{colors.destructive.200}", _dark: "rgba(239, 68, 68, 0.30)" } },
-        solid: { value: { base: "{colors.destructive.600}", _dark: "{colors.destructive.500}" } },
+        solid: { value: { base: "{colors.destructive.600}", _dark: "{colors.destructive.600}" } },
       },
       info: {
         text: { value: { base: "{colors.info.700}", _dark: "{colors.info.400}" } },
@@ -246,14 +247,14 @@ export const semanticTokens = {
       primary: { value: { base: "{colors.indigo.600}", _dark: "{colors.indigo.400}" } },
       wealth: { value: { base: "{colors.success.600}", _dark: "{colors.success.400}" } },
       debt: { value: { base: "{colors.destructive.600}", _dark: "{colors.destructive.400}" } },
-      warning: { value: { base: "{colors.warning.500}", _dark: "{colors.warning.400}" } },
+      warning: { value: { base: "{colors.warning.600}", _dark: "{colors.warning.400}" } },
       accentPurple: { value: { base: "{colors.purple.600}", _dark: "{colors.purple.400}" } },
       accentCyan: { value: { base: "{colors.cyan.600}", _dark: "{colors.cyan.400}" } },
       series1: { value: { base: "{colors.indigo.600}", _dark: "{colors.indigo.400}" } },
       series2: { value: { base: "{colors.success.600}", _dark: "{colors.success.400}" } },
       series3: { value: { base: "{colors.purple.600}", _dark: "{colors.purple.400}" } },
       series4: { value: { base: "{colors.cyan.600}", _dark: "{colors.cyan.400}" } },
-      series5: { value: { base: "{colors.warning.500}", _dark: "{colors.warning.400}" } },
+      series5: { value: { base: "{colors.warning.600}", _dark: "{colors.warning.400}" } },
       grid: { value: { base: "rgba(15, 23, 42, 0.06)", _dark: "rgba(255, 255, 255, 0.06)" } },
     },
   },

@@ -15,6 +15,17 @@ export const createInMemoryRepository = (seed: Row[] = []) => {
   const rows: Row[] = seed.map((row) => ({ ...row }));
   let nextId = 1;
 
+  const saveOne = (data: Row): Row => {
+    const existing = data.id ? rows.findIndex((row) => row.id === data.id) : -1;
+    if (existing >= 0) {
+      rows[existing] = { ...rows[existing], ...data };
+      return { ...rows[existing] };
+    }
+    const created = { id: `new-${nextId++}`, ...data };
+    rows.push(created);
+    return { ...created };
+  };
+
   return {
     rows,
     find: vi.fn(async (options?: { where?: Row }) =>
@@ -25,16 +36,9 @@ export const createInMemoryRepository = (seed: Row[] = []) => {
       return found ? { ...found } : null;
     }),
     create: vi.fn((data: Row) => ({ ...data })),
-    save: vi.fn(async (data: Row) => {
-      const existing = data.id ? rows.findIndex((row) => row.id === data.id) : -1;
-      if (existing >= 0) {
-        rows[existing] = { ...rows[existing], ...data };
-        return { ...rows[existing] };
-      }
-      const created = { id: `new-${nextId++}`, ...data };
-      rows.push(created);
-      return { ...created };
-    }),
+    save: vi.fn(async (data: Row | Row[]) =>
+      Array.isArray(data) ? data.map(saveOne) : saveOne(data),
+    ),
     update: vi.fn(async (where: Row, patch: Row) => {
       for (const row of rows) {
         if (matches(row, where)) Object.assign(row, patch);

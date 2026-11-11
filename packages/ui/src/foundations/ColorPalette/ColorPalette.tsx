@@ -99,16 +99,28 @@ export const ColorPalette: FC = () => {
                   borderBottomColor: "border.subtle",
                 })}
               >
-                <th className={css({ p: "10px 14px", textAlign: "left", fontWeight: "semibold" })}>
+                <th
+                  scope="col"
+                  className={css({ p: "10px 14px", textAlign: "left", fontWeight: "semibold" })}
+                >
                   Namespace
                 </th>
-                <th className={css({ p: "10px 14px", textAlign: "left", fontWeight: "semibold" })}>
+                <th
+                  scope="col"
+                  className={css({ p: "10px 14px", textAlign: "left", fontWeight: "semibold" })}
+                >
                   Token Key
                 </th>
-                <th className={css({ p: "10px 14px", textAlign: "left", fontWeight: "semibold" })}>
+                <th
+                  scope="col"
+                  className={css({ p: "10px 14px", textAlign: "left", fontWeight: "semibold" })}
+                >
                   Light Mode Base
                 </th>
-                <th className={css({ p: "10px 14px", textAlign: "left", fontWeight: "semibold" })}>
+                <th
+                  scope="col"
+                  className={css({ p: "10px 14px", textAlign: "left", fontWeight: "semibold" })}
+                >
                   Dark Mode Value
                 </th>
               </tr>
