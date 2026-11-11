@@ -219,24 +219,47 @@ describe("<UserProfilePanel />", () => {
   it("opens reset financial data modal and requires typing RESET to confirm", async () => {
     render(<UserProfilePanel initialProfile={DEFAULT_PROFILE} />);
 
-    const resetTrigger = screen.getByTestId("reset-financial-data-trigger");
-    fireEvent.click(resetTrigger);
+    fireEvent.click(screen.getByTestId("reset-financial-data-trigger"));
 
-    expect(screen.getByRole("heading", { name: /Reset All Financial Data/i })).toBeDefined();
+    expect(screen.getByText("Reset all financial data")).toBeDefined();
 
-    const confirmBtn = screen.getByTestId("confirm-reset-btn") as HTMLButtonElement;
+    const confirmBtn = screen.getByRole("button", {
+      name: "Reset everything",
+    }) as HTMLButtonElement;
     expect(confirmBtn.disabled).toBe(true);
 
-    const confirmInput = screen.getByTestId("confirm-reset-input");
-    fireEvent.change(confirmInput, { target: { value: "RESET" } });
-
+    fireEvent.change(screen.getByLabelText(/to confirm/i), { target: { value: "reset" } });
     expect(confirmBtn.disabled).toBe(false);
 
     fireEvent.click(confirmBtn);
 
     await waitFor(() => {
-      expect(mockResetFinancialData).toHaveBeenCalled();
+      expect(mockResetFinancialData).toHaveBeenCalledTimes(1);
     });
+  });
+
+  it("shows a resetFinancialData rejection inside the dialog and keeps it open", async () => {
+    mockResetFinancialData.mockRejectedValueOnce(new Error("Reset failed on the server"));
+    render(<UserProfilePanel initialProfile={DEFAULT_PROFILE} />);
+
+    fireEvent.click(screen.getByTestId("reset-financial-data-trigger"));
+    fireEvent.change(screen.getByLabelText(/to confirm/i), { target: { value: "RESET" } });
+    fireEvent.click(screen.getByRole("button", { name: "Reset everything" }));
+
+    const alert = await screen.findByRole("alert");
+    expect(alert.textContent).toContain("Reset failed on the server");
+    expect(screen.getByRole("alertdialog")).toBeDefined();
+  });
+
+  it("cancelling the reset dialog does not call resetFinancialData", () => {
+    mockResetFinancialData.mockClear();
+    render(<UserProfilePanel initialProfile={DEFAULT_PROFILE} />);
+
+    fireEvent.click(screen.getByTestId("reset-financial-data-trigger"));
+    fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+
+    expect(mockResetFinancialData).not.toHaveBeenCalled();
+    expect(screen.queryByRole("alertdialog")).toBeNull();
   });
 
   it("switches to the AI & MCP Access tab and displays McpConnectionCard", () => {
