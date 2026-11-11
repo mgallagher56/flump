@@ -57,15 +57,17 @@ describe("ChartFigure Pattern", () => {
       ),
     });
     expect(screen.queryByRole("table")).toBeNull();
-    const toggle = screen.getByRole("button", { name: /show data/i });
+    const toggle = screen.getByRole("button", { name: "Show data" });
+    expect(toggle.textContent).not.toMatch(/schedule/i);
     fireEvent.click(toggle);
     expect(screen.getByRole("table")).toBeDefined();
+    expect(toggle.getAttribute("aria-expanded")).toBe("true");
     fireEvent.click(toggle);
     expect(screen.queryByRole("table")).toBeNull();
   });
 
   it("omits the drawer without a dataTable", () => {
     renderFigure();
-    expect(screen.queryByRole("button", { name: /show data/i })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Show data" })).toBeNull();
   });
 });

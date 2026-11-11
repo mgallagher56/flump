@@ -60,7 +60,7 @@ export const Default: Story = {
     await expect(canvas.getByRole("figure", { name: "Savings forecast" })).toBeInTheDocument();
     await expect(canvas.getByText(/£12,345 over 10 years/)).toBeInTheDocument();
     await expect(canvas.queryByRole("table")).toBeNull();
-    await userEvent.click(canvas.getByRole("button", { name: /show data/i }));
+    await userEvent.click(canvas.getByRole("button", { name: "Show data" }));
     await expect(canvas.getByRole("table")).toBeInTheDocument();
   },
 };
