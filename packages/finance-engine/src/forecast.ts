@@ -70,16 +70,15 @@ export function calculateForecast(input: ForecastInput): ForecastResult {
 
   for (let y = 1; y <= years; y++) {
     // 1. Grow Baseline
-    // Pay off debt if any
-    if (debtBaseline > 0) {
-      const debtPaymentYearly = Math.min(debtBaseline, monthlySavings * 12);
-      debtBaseline = Math.max(0, debtBaseline - debtPaymentYearly);
-    }
-
-    // Allocate savings to ISA (capped at £20k) and cash
+    // Debt payments come out of savings first; only the remainder is invested.
     const annualSavingsTotal = monthlySavings * 12;
-    const isaContribution = Math.min(20000, annualSavingsTotal);
-    const cashContribution = Math.max(0, annualSavingsTotal - isaContribution);
+    const debtPaymentYearly = Math.min(debtBaseline, annualSavingsTotal);
+    debtBaseline = Math.max(0, debtBaseline - debtPaymentYearly);
+    const investableSavings = annualSavingsTotal - debtPaymentYearly;
+
+    // Allocate remaining savings to ISA (capped at £20k) and cash
+    const isaContribution = Math.min(20000, investableSavings);
+    const cashContribution = Math.max(0, investableSavings - isaContribution);
 
     isaBaseline = (isaBaseline + isaContribution) * (1 + isaRate);
     cashBaseline = (cashBaseline + cashContribution) * (1 + cashRate);
@@ -112,21 +111,24 @@ export function calculateForecast(input: ForecastInput): ForecastResult {
       }
     }
 
-    // Apply scenario costs: deduct from cash/ISA or add to debt
-    let availableSavingsForScenario = Math.max(0, annualSavingsTotal - extraMonthlyCost * 12);
+    // Apply scenario costs: draw from cash, then ISA, then add to debt
+    const drawDown = (amount: number): void => {
+      const fromCash = Math.min(cashScenario, amount);
+      cashScenario -= fromCash;
+      const fromIsa = Math.min(isaScenario, amount - fromCash);
+      isaScenario -= fromIsa;
+      debtScenario += amount - fromCash - fromIsa;
+    };
+
     if (extraLumpSumCost > 0) {
-      if (cashScenario >= extraLumpSumCost) {
-        cashScenario -= extraLumpSumCost;
-      } else {
-        const remainingLump = extraLumpSumCost - cashScenario;
-        cashScenario = 0;
-        if (isaScenario >= remainingLump) {
-          isaScenario -= remainingLump;
-        } else {
-          debtScenario += remainingLump - isaScenario;
-          isaScenario = 0;
-        }
-      }
+      drawDown(extraLumpSumCost);
+    }
+
+    // Net annual cash flow after ongoing scenario costs; a deficit is funded, not dropped
+    const netSavingsForScenario = annualSavingsTotal - extraMonthlyCost * 12;
+    let availableSavingsForScenario = Math.max(0, netSavingsForScenario);
+    if (netSavingsForScenario < 0) {
+      drawDown(-netSavingsForScenario);
     }
 
     // Scenario debt paydown
@@ -161,8 +163,9 @@ export function calculateForecast(input: ForecastInput): ForecastResult {
     });
   }
 
-  const tenYearBaseline = trajectory[10]?.baselineNetWorthGbp ?? 0;
-  const tenYearScenario = trajectory[10]?.scenarioNetWorthGbp ?? 0;
+  const tenYearIndex = Math.min(10, years);
+  const tenYearBaseline = trajectory[tenYearIndex]?.baselineNetWorthGbp ?? 0;
+  const tenYearScenario = trajectory[tenYearIndex]?.scenarioNetWorthGbp ?? 0;
   const thirtyYearBaseline = trajectory[years]?.baselineNetWorthGbp ?? 0;
   const thirtyYearScenario = trajectory[years]?.scenarioNetWorthGbp ?? 0;
 
