@@ -65,6 +65,20 @@ describe("debt-payoff module", () => {
     });
   });
 
+  describe("sortDebtsByStrategy with unknown APR", () => {
+    it("puts aprKnown false debts last under AVALANCHE", () => {
+      const sorted = sortDebtsByStrategy(
+        [
+          { id: "u", name: "Unknown", balance: 100, apr: 0, aprKnown: false },
+          { id: "z", name: "Zero", balance: 100, apr: 0, aprKnown: true },
+          { id: "h", name: "High", balance: 100, apr: 20, aprKnown: true },
+        ],
+        "AVALANCHE",
+      );
+      expect(sorted.map((d) => d.id)).toEqual(["h", "z", "u"]);
+    });
+  });
+
   describe("sortDebtsByStrategy", () => {
     const debts = [
       { id: "1", name: "Low APR Large", balance: 5000, apr: 5 },

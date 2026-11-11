@@ -113,14 +113,34 @@ export const DebtAccountsList: FC<DebtAccountsListProps> = ({
                     <td style={{ color: "#ef4444", fontWeight: "600" }}>
                       {formatCurrency(debt.balance)}
                     </td>
-                    <td>
-                      <span
-                        style={{ fontWeight: "bold", color: debt.apr > 15 ? "#ef4444" : "#f59e0b" }}
-                      >
-                        {debt.apr}%
-                      </span>
+                    <td style={{ fontVariantNumeric: "tabular-nums" }}>
+                      {debt.aprKnown === false ? (
+                        <span style={{ color: "var(--colors-text-muted)" }}>APR not set</span>
+                      ) : (
+                        <span
+                          style={{
+                            fontWeight: "bold",
+                            color: debt.apr > 15 ? "#ef4444" : "#f59e0b",
+                          }}
+                        >
+                          {debt.apr}%
+                        </span>
+                      )}
                     </td>
-                    <td>{formatCurrency(debt.minimumPayment)}</td>
+                    <td style={{ fontVariantNumeric: "tabular-nums" }}>
+                      {formatCurrency(debt.minimumPayment)}
+                      {debt.minimumPaymentEstimated ? (
+                        <span
+                          style={{
+                            marginLeft: "6px",
+                            fontSize: "11px",
+                            color: "var(--colors-text-muted)",
+                          }}
+                        >
+                          estimated
+                        </span>
+                      ) : null}
+                    </td>
                     <td style={{ textAlign: "right" }}>
                       <button
                         aria-label={`Delete ${debt.name}`}

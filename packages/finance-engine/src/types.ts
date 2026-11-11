@@ -120,6 +120,10 @@ export interface DebtItem {
   balance?: number;
   apr?: number;
   minimumPayment?: number;
+  /** False when the APR is not stored (apr is then 0). Treated as known when undefined. */
+  aprKnown?: boolean;
+  /** True when minimumPayment is an estimate rather than a stored figure. */
+  minimumPaymentEstimated?: boolean;
   type?: DebtType;
   promotionalExpiryMonths?: number;
   balloonPayment?: { amount: number; dueMonths: number };

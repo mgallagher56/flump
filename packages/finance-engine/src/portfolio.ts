@@ -58,7 +58,11 @@ export interface ResolvedAccount {
   netWorthBalance: number; // Signed (+ for assets, - for liabilities)
   latestBalance: number; // Contextual balance (positive magnitude)
   interestRate: number;
+  /** False when the stored interest rate is null or missing (0 is a known rate). */
+  interestRateKnown: boolean;
   monthlyContribution: number;
+  /** False when no monthly contribution is stored. */
+  monthlyContributionKnown: boolean;
   currency: string;
   latestMonth?: number;
   latestYear?: number;
@@ -72,6 +76,11 @@ export interface MonthlyPortfolioHistoryPoint {
   netWorth: number;
   totalAssets: number;
   totalLiabilities: number;
+}
+
+function hasStoredNumber(value: number | string | null | undefined): boolean {
+  if (value === null || value === undefined || value === "") return false;
+  return Number.isFinite(Number(value));
 }
 
 export function categorizeAccountType(rawType?: string | null): AccountCategory {
@@ -158,7 +167,9 @@ export class PortfolioSnapshot {
       const nominalBalance = Math.abs(latestRawVal);
       const netWorthBalance = isLiability ? -nominalBalance : nominalBalance;
       const interestRate = Number(acc.interestRate) || 0;
+      const interestRateKnown = hasStoredNumber(acc.interestRate);
       const monthlyContribution = Number(acc.monthlyContribution) || 0;
+      const monthlyContributionKnown = hasStoredNumber(acc.monthlyContribution);
       const currency = acc.currency || "GBP";
 
       return {
@@ -172,7 +183,9 @@ export class PortfolioSnapshot {
         netWorthBalance,
         latestBalance: nominalBalance,
         interestRate,
+        interestRateKnown,
         monthlyContribution,
+        monthlyContributionKnown,
         currency,
         latestMonth,
         latestYear,
@@ -276,18 +289,26 @@ export class PortfolioSnapshot {
           type = "car_finance";
         }
 
-        // Standard UK estimated minimum payment (greater of £25 or 2.5% of balance)
-        const minimumPayment = Math.max(25, Math.round(a.nominalBalance * 0.025));
+        // A stored monthly contribution is the minimum payment. Otherwise estimate it with the
+        // standard UK rule (greater of £25 or 2.5% of balance) and flag it as estimated.
+        const minimumPaymentEstimated = !(a.monthlyContributionKnown && a.monthlyContribution > 0);
+        const minimumPayment = minimumPaymentEstimated
+          ? Math.max(25, Math.round(a.nominalBalance * 0.025))
+          : a.monthlyContribution;
+        // Never invent an APR: an unset rate is 0 with aprKnown false (0% is a known rate).
+        const apr = a.interestRateKnown ? a.interestRate : 0;
 
         return {
           id: a.id,
           name: a.name,
           balance: a.nominalBalance,
           balanceGbp: a.nominalBalance,
-          apr: a.interestRate > 0 ? a.interestRate : 19.9,
-          interestRateApr: a.interestRate > 0 ? a.interestRate : 19.9,
+          apr,
+          interestRateApr: apr,
+          aprKnown: a.interestRateKnown,
           minimumPayment,
           minimumPaymentGbp: minimumPayment,
+          minimumPaymentEstimated,
           type,
         };
       });

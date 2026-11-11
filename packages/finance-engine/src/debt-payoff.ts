@@ -61,6 +61,8 @@ export function normalizeDebtItem(
     promotionalExpiryMonths: item.promotionalExpiryMonths,
     balloonPayment: item.balloonPayment,
     studentLoanPlan: item.studentLoanPlan,
+    aprKnown: item.aprKnown,
+    minimumPaymentEstimated: item.minimumPaymentEstimated,
   };
 }
 
@@ -94,11 +96,17 @@ export function filterConsumerDebts(debts: DebtItem[]): {
  * - SNOWBALL: smallest balance first for fastest quick wins.
  */
 export function sortDebtsByStrategy(
-  debts: { id: string; name: string; balance: number; apr: number }[],
+  debts: { id: string; name: string; balance: number; apr: number; aprKnown?: boolean }[],
   strategy: DebtPayoffStrategy,
-): { id: string; name: string; balance: number; apr: number }[] {
+): { id: string; name: string; balance: number; apr: number; aprKnown?: boolean }[] {
   return [...debts].sort((a, b) => {
     if (strategy === "AVALANCHE") {
+      // Debts with an unset APR go last until the APR is entered.
+      const aUnknown = a.aprKnown === false;
+      const bUnknown = b.aprKnown === false;
+      if (aUnknown !== bUnknown) {
+        return aUnknown ? 1 : -1;
+      }
       if (b.apr !== a.apr) {
         return b.apr - a.apr;
       }
@@ -203,6 +211,7 @@ interface SimDebtState {
   name: string;
   balance: number;
   apr: number;
+  aprKnown?: boolean;
   minimumPayment: number;
   promoExpiryDate?: string;
   revertApr?: number;
@@ -238,6 +247,7 @@ function simulateSchedule(
     name: d.name,
     balance: Math.max(0, d.balanceGbp),
     apr: Math.max(0, d.interestRateApr),
+    aprKnown: d.aprKnown,
     minimumPayment: Math.max(5, d.minimumPaymentGbp),
     promoExpiryDate: d.promoAprExpiryDate,
     revertApr: d.revertApr,
