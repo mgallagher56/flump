@@ -8,6 +8,7 @@ import LoggedOutHome from "~/components/home/LoggedOutHome";
 import { loadWorkspaceSnapshot } from "~/services/backend-client.server";
 import { toMonthly } from "~/types/budget";
 import { getAuthSession } from "~/utils/auth.server";
+import { buildDebtSummary } from "~/utils/debtSummary";
 import { getDemoDashboardData, isDemoMode } from "~/utils/demoData";
 import { calculateRunwayStats } from "~/utils/runwayStorage";
 
@@ -235,14 +236,7 @@ export const loader = async (args: LoaderFunctionArgs) => {
       estimatedTaxDue,
       recordsCount: currentYearRecords.length,
     },
-    debtData: {
-      totalDebt: totalLiabilities,
-      highInterestDebt: totalLiabilities,
-      highInterestCount: totalLiabilities > 0 ? 2 : 0,
-      debtFreeDate: totalLiabilities > 0 ? "October 2026" : "Debt Free",
-      interestSaved: Math.round(totalLiabilities * 0.18),
-      monthlyMinimumTotal: Math.round(totalLiabilities * 0.025),
-    },
+    debtData: buildDebtSummary(portfolioSnapshot),
   };
 };
 
@@ -292,15 +286,6 @@ const Index = (): ReactElement => {
       rawAccountDetails: [],
     };
 
-    const safeDebtData = debtData || {
-      totalDebt: 0,
-      highInterestDebt: 0,
-      highInterestCount: 0,
-      debtFreeDate: "Debt Free",
-      interestSaved: 0,
-      monthlyMinimumTotal: 0,
-    };
-
     return (
       <>
         {isDemo && <DemoModeBanner />}
@@ -318,7 +303,7 @@ const Index = (): ReactElement => {
             hasTax: (taxData?.recordsCount ?? 0) > 0,
             completedSteps,
           }}
-          debtData={safeDebtData}
+          debtData={debtData ?? null}
           forecastData={forecastData}
           mortgageData={mortgageData}
           pensionData={pensionData}

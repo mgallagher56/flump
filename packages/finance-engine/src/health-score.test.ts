@@ -3,6 +3,7 @@ import {
   calculateFinancialHealthScore,
   calculateSafeToSpend,
   evaluateFinancialStage,
+  isHighInterestDebt,
 } from "./health-score.js";
 
 describe("health-score module", () => {
@@ -107,5 +108,18 @@ describe("health-score module", () => {
       expect(res.stage).toBe("optimize");
       expect(res.canonicalStage).toBe("STAGE_3_WEALTH_OPTIMIZE");
     });
+  });
+});
+
+describe("isHighInterestDebt", () => {
+  it("flags cards, overdrafts and APR of 6.5% or more", () => {
+    expect(isHighInterestDebt({ id: "a", name: "Card", apr: 22.9, type: "credit_card" })).toBe(
+      true,
+    );
+    expect(isHighInterestDebt({ id: "b", name: "OD", apr: 0, type: "overdraft" })).toBe(true);
+    expect(isHighInterestDebt({ id: "c", name: "Loan", apr: 6.5, type: "loan" })).toBe(true);
+  });
+  it("does not flag a 3% loan", () => {
+    expect(isHighInterestDebt({ id: "d", name: "Loan", apr: 3, type: "loan" })).toBe(false);
   });
 });
