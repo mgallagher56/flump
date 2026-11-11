@@ -11,3 +11,4 @@ export * from "./tax-calculator.js";
 export * from "./tax-rules.js";
 export * from "./types.js";
 export * from "./uk-tax.js";
+export * from "./uk-tax-year.js";
