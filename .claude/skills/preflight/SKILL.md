@@ -14,6 +14,6 @@ bun run test
 bun run build
 ```
 
-Note: `bun run lint` runs `biome check --write`, so it may modify files. Check `git status` afterwards and mention any auto-fixes.
+Note: `bun run lint` is check-only (`biome ci`) and never modifies files. If it reports formatting or lint errors, `bun run lint:fix` applies the safe fixes locally; check `git status` afterwards and mention any auto-fixes.
 
 Report a table of the four steps with pass/fail and the actual error output for any failure. Never claim a pass you did not observe. Do not commit, push or open a PR; this skill only verifies.

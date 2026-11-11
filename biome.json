@@ -15,7 +15,8 @@
       "!**/.turbo",
       "!**/.next",
       "!**/build",
-      "!**/styled-system"
+      "!**/styled-system",
+      "!**/CHANGELOG.md"
     ]
   },
   "overrides": [

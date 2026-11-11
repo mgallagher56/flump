@@ -15,7 +15,8 @@
   "scripts": {
     "build": "turbo run build",
     "dev": "turbo run dev",
-    "lint": "biome check --write .",
+    "lint": "biome ci .",
+    "lint:fix": "biome check --write .",
     "format": "biome check --write .",
     "test": "turbo run test && bun test ./scripts",
     "test:scripts": "bun test ./scripts",
