@@ -1,4 +1,10 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import {
+  runUkTaxVectors,
+  selectUkTaxVectors,
+  UK_TAX_PENSION_TREATMENT,
+} from "./test-vectors/uk-tax.vectors.js";
+import type { UkTaxYear } from "./types.js";
 import {
   analyzeTaxTrap,
   calculateEmployerNISavings,
@@ -12,6 +18,11 @@ import {
   calculateUkTax,
   getTaxYearRemainingDays,
 } from "./uk-tax.js";
+import { UnsupportedUkTaxYearError } from "./uk-tax-year.js";
+
+afterEach(() => {
+  vi.useRealTimers();
+});
 
 describe("uk-tax module", () => {
   describe("calculatePersonalAllowance", () => {
@@ -179,6 +190,81 @@ describe("uk-tax module", () => {
       const res = calculateUKTakeHome(45000, 5, true);
       expect(res.netAnnual).toBeGreaterThan(0);
       expect(res.trapAnalysis.isInTaxTrap).toBe(false);
+    });
+  });
+
+  describe("calculateUkTax EWNI on extended bands (E4 T5)", () => {
+    const tax = (grossSalary: number, taxYear: UkTaxYear = "2025/26", giftAid = 0) =>
+      calculateUkTax({ grossSalary, taxYear, giftAidContributionsGbp: giftAid });
+
+    it("110000 EWNI 2025/26 incomeTaxGbp is 33432 (was 31432)", () => {
+      expect(tax(110000).incomeTaxGbp).toBe(33432);
+    });
+
+    it("125140 gives 42516 and 150000 gives 53703", () => {
+      expect(tax(125140).incomeTaxGbp).toBe(42516);
+      expect(tax(150000).incomeTaxGbp).toBe(53703);
+    });
+
+    it("60000 with 1000 net Gift Aid gives 11182 (was 10682)", () => {
+      expect(tax(60000, "2025/26", 1000).incomeTaxGbp).toBe(11182);
+    });
+
+    it("Gift Aid restores allowance: 105000 with 4000 net Gift Aid gives ANI 100000 and PA 12570", () => {
+      const r = tax(105000, "2025/26", 4000);
+      expect(r.adjustedNetIncomeGbp).toBe(100000);
+      // Taxable = 105000 - 12570 (full allowance, no taper at ANI 100000) = 92430.
+      expect(r.taxableIncomeGbp).toBe(92430);
+      // Gross gift 5000 extends basic band to 42700: 42700*.2 = 8540; (92430-42700)*.4 = 19892.
+      expect(r.incomeTaxGbp).toBe(28432);
+    });
+
+    it("pension is deducted net-pay from taxable income (pinned, owner ruling pending)", () => {
+      expect(UK_TAX_PENSION_TREATMENT.pinned).toBe("net-pay");
+      // 60000 salary, 5% pension 3000: taxable 60000 - 3000 - 12570 = 44430.
+      // 37700*.2 = 7540; (44430-37700)*.4 = 2692; total 10232.
+      const r = calculateUkTax({
+        grossSalary: 60000,
+        pensionContributionPct: 5,
+        taxYear: "2025/26",
+      });
+      expect(r.incomeTaxGbp).toBe(10232);
+    });
+
+    it("default taxYear equals the current UK tax year", () => {
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date("2025-07-01T12:00:00Z"));
+      expect(calculateUkTax({ grossSalary: 30000 }).taxYear).toBe("2025/26");
+      vi.setSystemTime(new Date("2026-07-01T12:00:00Z"));
+      expect(calculateUkTax({ grossSalary: 30000 }).taxYear).toBe("2026/27");
+    });
+
+    it("unknown tax year throws", () => {
+      expect(() => calculateUkTax({ grossSalary: 30000, taxYear: "2030/31" as UkTaxYear })).toThrow(
+        UnsupportedUkTaxYearError,
+      );
+    });
+
+    it("every EWNI incomeTax vector matches calculateUkTax", () => {
+      const vectors = selectUkTaxVectors({ kind: "incomeTax", region: "ENGLAND_NI_WALES" });
+      const res = runUkTaxVectors(
+        vectors,
+        (v) =>
+          tax((v.input as { grossIncome: number }).grossIncome, v.taxYear as UkTaxYear)
+            .incomeTaxGbp,
+      );
+      expect(res.checked).toBeGreaterThan(20);
+      expect(res.failures).toEqual([]);
+    });
+
+    it("every EWNI giftAid vector matches calculateUkTax", () => {
+      const vectors = selectUkTaxVectors({ kind: "giftAid", region: "ENGLAND_NI_WALES" });
+      const res = runUkTaxVectors(vectors, (v) => {
+        const i = v.input as { grossIncome: number; giftAidNet: number };
+        return tax(i.grossIncome, v.taxYear as UkTaxYear, i.giftAidNet).incomeTaxGbp;
+      });
+      expect(res.checked).toBe(14);
+      expect(res.failures).toEqual([]);
     });
   });
 

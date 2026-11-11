@@ -21,6 +21,21 @@
  * Scotland Gift Aid is deliberately absent (decision D9 pending).
  */
 
+/**
+ * Pension treatment pinned by the engine's calculateUkTax (E4 T5), recorded here
+ * because no vector in this catalogue includes a pension contribution.
+ * calculateUkTax deducts the employee pension (grossSalary x pct) from adjusted
+ * net income and from taxable income for every taxpayer ("net-pay"), whether or
+ * not isSalarySacrifice is set. Real treatment differs: relief at source schemes
+ * extend the basic band by the grossed-up contribution instead. UNVERIFIED: not
+ * confirmed against GOV.UK for any year; owner ruling needed.
+ */
+export const UK_TAX_PENSION_TREATMENT = {
+  pinned: "net-pay",
+  status: "UNVERIFIED",
+  note: "UNVERIFIED: net-pay deduction from taxable income for all schemes is the current coded behaviour, not confirmed on GOV.UK; owner ruling pending.",
+} as const;
+
 export const UK_TAX_VECTOR_YEARS = [
   "2020/21",
   "2021/22",
