@@ -143,6 +143,8 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
   const [bankAuthType, setBankAuthType] = useState<"token" | "oauth">("token");
   const [bankToken, setBankToken] = useState<string>("");
   const [bankError, setBankError] = useState<string | null>(null);
+  const accountName = accounts.find((account) => account.id === accountId)?.name;
+  const editLabel = accountName ? `${t("editAccount")}: ${accountName}` : t("editAccount");
   const isConnecting = fetcher.state === "submitting" || fetcher.state === "loading";
 
   const handleCloseModal = useCallback(() => {
@@ -419,6 +421,7 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
       triggerBtn={
         isIconButton ? (
           <FLPButton
+            aria-label={editLabel}
             size="icon"
             variant="ghost"
             onClick={handleOpenModal}

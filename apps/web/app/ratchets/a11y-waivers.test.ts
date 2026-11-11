@@ -6,7 +6,7 @@ import { describe, expect, test } from "vitest";
 // `parameters.a11y.test = "todo"` (or `tags: ["!test"]` for play() failures that only show in a
 // real browser), each preceded by an `// E8 waiver: <rule>` comment. The count may only go down:
 // when you fix a story, remove its waiver and lower BASELINE. Never raise it.
-const BASELINE = 40;
+const BASELINE = 29;
 
 const ROOTS = [
   path.resolve(__dirname, "../.."),

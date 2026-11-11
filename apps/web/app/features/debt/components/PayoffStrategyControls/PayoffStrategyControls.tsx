@@ -94,7 +94,7 @@ export const PayoffStrategyControls: FC<PayoffStrategyControlsProps> = ({
         })}
       >
         <button
-          aria-label="Select Avalanche strategy"
+          aria-pressed={selectedStrategy === "avalanche"}
           className={cx(strategyCard({ active: selectedStrategy === "avalanche" }))}
           type="button"
           onClick={() => onSelectStrategy("avalanche")}
@@ -116,7 +116,7 @@ export const PayoffStrategyControls: FC<PayoffStrategyControlsProps> = ({
         </button>
 
         <button
-          aria-label="Select Snowball strategy"
+          aria-pressed={selectedStrategy === "snowball"}
           className={cx(strategyCard({ active: selectedStrategy === "snowball" }))}
           type="button"
           onClick={() => onSelectStrategy("snowball")}

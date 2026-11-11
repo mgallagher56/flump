@@ -147,19 +147,28 @@ exports[`<Header /> > renders correctly when user logged in 1`] = `
             href="/app/profile"
           >
             <span
-              class="pos_relative d_inline-flex ai_center jc_center va_middle ov_hidden us_none bdr_full flex-sh_0 bg-c_surface.muted bx-sh_0_0_0_2px_token(colors.border)"
-              data-testid="user-avatar"
-              id="user-avatar"
-              style="width: 26px; height: 26px;"
+              aria-hidden="true"
             >
               <span
-                class="w_100% h_100% d_flex ai_center jc_center bg_linear-gradient(135deg,_#4f46e5_0%,_#3b82f6_100%) c_#ffffff fw_semibold tt_uppercase ls_0.02em lh_1"
-                data-testid="user-avatar-fallback"
-                id="user-avatar-fallback"
-                style="font-size: 10px;"
+                class="pos_relative d_inline-flex ai_center jc_center va_middle ov_hidden us_none bdr_full flex-sh_0 bg-c_surface.muted bx-sh_0_0_0_2px_token(colors.border)"
+                data-testid="user-avatar"
+                id="user-avatar"
+                style="width: 26px; height: 26px;"
               >
-                MG
+                <span
+                  class="w_100% h_100% d_flex ai_center jc_center bg_linear-gradient(135deg,_#4f46e5_0%,_#3b82f6_100%) c_#ffffff fw_semibold tt_uppercase ls_0.02em lh_1"
+                  data-testid="user-avatar-fallback"
+                  id="user-avatar-fallback"
+                  style="font-size: 10px;"
+                >
+                  MG
+                </span>
               </span>
+            </span>
+            <span
+              class="sr_true"
+            >
+              User Profile
             </span>
           </a>
           <div>

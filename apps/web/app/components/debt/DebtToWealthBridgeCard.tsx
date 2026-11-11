@@ -205,6 +205,7 @@ export const DebtToWealthBridgeCard: FC<DebtToWealthBridgeCardProps> = ({
               ? `Debt-free after ${clearedPoint.month} months. By the end of the projection, ${formatCurrency(finalPoint?.wealthAccumulated || 0)} is accumulated in an ISA at ${returnRate}% a year.`
               : "Debt is not cleared within the projection, so no wealth is accumulated in an ISA."
           }
+          hideTitle
           title="Debt-to-wealth crossover"
         >
           <div style={{ width: "100%", height: 260, marginTop: "8px" }}>

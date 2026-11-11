@@ -22,11 +22,10 @@ interface AccountDetailChartProps {
   title?: string;
 }
 
-// Keep the figure filling its parent like the bare chart did; the title stays screen-reader only.
+// Keep the figure filling its parent like the bare chart did.
 const figureFill = css({
   height: "100%",
   gap: "0",
-  "& > h3": { srOnly: true },
   "& > div[aria-hidden]": { flex: "1", minHeight: "0" },
 });
 
@@ -81,6 +80,7 @@ const AccountDetailChart: FC<AccountDetailChartProps> = ({
         ) : undefined
       }
       summary={summary}
+      hideTitle
       title={title}
     >
       <ResponsiveContainer height="100%" width="100%">

@@ -1,6 +1,23 @@
 import type { Meta, StoryObj } from "@storybook/react";
 import { expect, fn, userEvent, within } from "@storybook/test";
-import { SliderField } from "./SliderField";
+import { useState } from "react";
+import { SliderField, type SliderFieldProps } from "./SliderField";
+
+// SliderField is controlled, so a static `value` arg would reset the pill after every keystroke
+// (typing "150" into a pill fixed at 50 yields 501, clamped to 500). Keep real state in the story.
+const StatefulSliderField = ({ value, onChange, ...rest }: SliderFieldProps) => {
+  const [current, setCurrent] = useState(value);
+  return (
+    <SliderField
+      {...rest}
+      value={current}
+      onChange={(next) => {
+        setCurrent(next);
+        onChange(next);
+      }}
+    />
+  );
+};
 
 const meta: Meta<typeof SliderField> = {
   title: "2. Primitives/SliderField",
@@ -18,14 +35,13 @@ const meta: Meta<typeof SliderField> = {
     unitSuffix: "/mo",
     onChange: fn(),
   },
+  render: (args) => <StatefulSliderField {...args} />,
 };
 
 export default meta;
 type Story = StoryObj<typeof SliderField>;
 
 export const Default: Story = {
-  // E8 waiver: play() fails under real-browser run, not an a11y rule
-  tags: ["!test"],
   play: async ({ canvasElement, args }) => {
     const canvas = within(canvasElement);
     const label = canvas.getByText("Monthly Debt Overpayment");

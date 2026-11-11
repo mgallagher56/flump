@@ -160,6 +160,22 @@ describe("<AccountsCard /> liabilities", () => {
 });
 
 describe("<AccountsCard /> interactions", () => {
+  test("the card is not itself a button and the name button navigates", () => {
+    mocks.mockUseLoaderData.mockReturnValue({ user: mockUser, accountDetails: [] });
+    mocks.navigateSpy.mockClear();
+    const { container } = customRender(
+      <AccountsCard
+        accountId={"123456"}
+        name="My current account"
+        type={AccountTypeEnum.CURRENT}
+      />,
+    );
+    expect(container.querySelector('[id="123456"]')?.getAttribute("role")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "My current account" }));
+    expect(mocks.navigateSpy).toHaveBeenCalledTimes(1);
+    expect(mocks.navigateSpy).toHaveBeenCalledWith("/app/accounts/123456");
+  });
+
   const renderCard = () => {
     mocks.mockUseLoaderData.mockReturnValue({ user: mockUser, accountDetails: [] });
     mocks.navigateSpy.mockClear();
@@ -180,8 +196,7 @@ describe("<AccountsCard /> interactions", () => {
 
   test("the edit button does not navigate and its dialog clicks do not bubble to the card", () => {
     renderCard();
-    const buttons = screen.getAllByRole("button");
-    const editBtn = buttons.find((b) => b.tagName === "BUTTON") as HTMLElement;
+    const editBtn = screen.getByRole("button", { name: /edit/i });
     fireEvent.click(editBtn);
     fireEvent.keyDown(editBtn, { key: "Enter" });
     expect(mocks.navigateSpy).not.toHaveBeenCalled();

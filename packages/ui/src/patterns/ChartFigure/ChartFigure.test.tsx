@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { visuallyHiddenRecipe } from "../../primitives/VisuallyHidden/VisuallyHidden.styles";
 import { ChartFigure } from "./ChartFigure";
@@ -41,6 +41,34 @@ describe("ChartFigure Pattern", () => {
     renderFigure();
     const wrapper = screen.getByTestId("chart").closest("[aria-hidden='true']");
     expect(wrapper).not.toBeNull();
+  });
+
+  it("hideTitle hides the heading visually but still names the figure", () => {
+    renderFigure({ hideTitle: true });
+    const heading = screen.getByRole("heading", { name: "Savings forecast" });
+    expect(heading.className).toBe(visuallyHiddenRecipe({ focusable: false }));
+    expect(screen.getByRole("figure", { name: "Savings forecast" })).toBeDefined();
+  });
+
+  it("title is visible by default", () => {
+    renderFigure();
+    expect(screen.getByRole("heading").className).not.toBe(
+      visuallyHiddenRecipe({ focusable: false }),
+    );
+  });
+
+  it("removes focusable chart content from the tab order, including late additions", async () => {
+    render(
+      <ChartFigure summary={SUMMARY} title="Savings forecast">
+        <svg data-testid="chart" ref={(el) => el?.setAttribute("tabindex", "0")}>
+          <title>chart</title>
+        </svg>
+      </ChartFigure>,
+    );
+    const svg = screen.getByTestId("chart");
+    expect(svg.getAttribute("tabindex")).toBe("-1");
+    svg.setAttribute("tabindex", "0");
+    await waitFor(() => expect(svg.getAttribute("tabindex")).toBe("-1"));
   });
 
   it("data table is reachable", () => {

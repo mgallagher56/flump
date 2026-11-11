@@ -897,6 +897,7 @@ const BudgetDashboard: FC<BudgetDashboardProps> = ({
                       `${d.label} ${fmt(d.total)} (${totals.expenses > 0 ? Math.round((d.total / totals.expenses) * 100) : 0}%)`,
                   )
                   .join(", ")}.`}
+                hideTitle
                 title="Expense breakdown by category"
               >
                 <div style={{ position: "relative" }}>

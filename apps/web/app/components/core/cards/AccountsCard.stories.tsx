@@ -27,14 +27,12 @@ const mockAccountDetails = [
 ];
 
 export const CurrentAccount: Story = {
-  // E8 waiver: aria-hidden-focus, button-name, nested-interactive
   args: {
     accountId: "acc-1",
     name: "Main checking account",
     type: AccountTypeEnum.CURRENT,
   },
   parameters: {
-    a11y: { test: "todo" },
     router: {
       loaderData: {
         accountDetails: mockAccountDetails,
@@ -45,14 +43,12 @@ export const CurrentAccount: Story = {
 };
 
 export const SavingsAccount: Story = {
-  // E8 waiver: aria-hidden-focus, button-name, nested-interactive
   args: {
     accountId: "acc-1",
     name: "Super Savings",
     type: AccountTypeEnum.SAVING,
   },
   parameters: {
-    a11y: { test: "todo" },
     router: {
       loaderData: {
         accountDetails: mockAccountDetails.map((d) => ({ ...d, value: d.value * 5 })),

@@ -73,3 +73,11 @@ export const Dark: Story = {
 export const HiddenSummary: Story = {
   args: { showSummary: false },
 };
+
+export const HiddenTitle: Story = {
+  args: { hideTitle: true },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await expect(canvas.getByRole("figure", { name: "Savings forecast" })).toBeInTheDocument();
+  },
+};

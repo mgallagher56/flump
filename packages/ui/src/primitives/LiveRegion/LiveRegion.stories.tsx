@@ -3,12 +3,17 @@ import { expect, waitFor, within } from "@storybook/test";
 import { type ComponentProps, useEffect, useState } from "react";
 import { LiveRegion } from "./LiveRegion";
 
-// The initial message is never announced, so stories mount empty and update the message afterwards.
+// The first populated message is a silent baseline, so stories emit a baseline message and then
+// the changed message, which is the one that gets announced.
 const UpdatingRegion = ({ message, ...rest }: ComponentProps<typeof LiveRegion>) => {
   const [current, setCurrent] = useState("");
   useEffect(() => {
-    const id = setTimeout(() => setCurrent(message), 10);
-    return () => clearTimeout(id);
+    const first = setTimeout(() => setCurrent("Calculating…"), 10);
+    const second = setTimeout(() => setCurrent(message), 100);
+    return () => {
+      clearTimeout(first);
+      clearTimeout(second);
+    };
   }, [message]);
   return <LiveRegion {...rest} message={current} />;
 };
@@ -25,8 +30,6 @@ export default meta;
 type Story = StoryObj<typeof LiveRegion>;
 
 export const Polite: Story = {
-  // E8 waiver: play() fails under real-browser run, not an a11y rule
-  tags: ["!test"],
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
     await waitFor(() =>
@@ -36,8 +39,6 @@ export const Polite: Story = {
 };
 
 export const Assertive: Story = {
-  // E8 waiver: play() fails under real-browser run, not an a11y rule
-  tags: ["!test"],
   args: { politeness: "assertive", message: "Could not save" },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
@@ -47,11 +48,18 @@ export const Assertive: Story = {
 
 export const Hidden: Story = {
   args: { visuallyHidden: true },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const region = canvas.getByRole("status");
+    // Still exposed to assistive tech and updated, but not visible on screen.
+    await waitFor(() => expect(region).toHaveTextContent("Debt-free by March 2031"));
+    await expect(region).not.toHaveAttribute("aria-hidden");
+    const { width, height } = region.getBoundingClientRect();
+    await expect(width <= 1 && height <= 1).toBe(true);
+  },
 };
 
 export const Dark: Story = {
   ...Polite,
-  // E8 waiver: play() fails under real-browser run, not an a11y rule
-  tags: ["!test"],
   globals: { theme: "dark" },
 };

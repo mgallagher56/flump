@@ -523,6 +523,7 @@ const OverpayVsSaveCompare: FC<OverpayVsSaveCompareProps> = ({
               summary={`Over ${actualHorizon} years, ${
                 isOverpayBetter ? "overpaying the mortgage" : "saving the money"
               } comes out ahead by ${formatCurrency(difference)}. Overpaying is worth ${formatCurrency(debtReduction)} and saving is worth ${formatCurrency(savingsBalance)}.`}
+              hideTitle
               title="Overpay or save comparison"
             >
               <div style={{ height: "260px", width: "100%", marginTop: "24px" }}>

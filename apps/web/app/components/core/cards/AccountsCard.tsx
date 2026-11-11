@@ -108,7 +108,7 @@ const AccountsCard: FC<AccountsCardProp> = ({
     [accountId, navigate],
   );
 
-  // Events from inner controls (the edit button) and from portalled dialogs bubble
+  // Events from inner controls (the name and edit buttons) and from portalled dialogs bubble
   // through the React tree; only react to events that originate on the card itself.
   const isFromInnerControl = (e: React.SyntheticEvent) => {
     const target = e.target as Node;
@@ -122,22 +122,6 @@ const AccountsCard: FC<AccountsCardProp> = ({
     if (isFromInnerControl(e)) return;
     onViewClick();
   };
-
-  const handleKeyDown = useCallback(
-    (e: React.KeyboardEvent) => {
-      if (
-        !e.currentTarget.contains(e.target as Node) ||
-        (e.target instanceof Element && e.target.closest("button, a, input") !== null)
-      ) {
-        return;
-      }
-      if (e.key === "Enter" || e.key === " ") {
-        e.preventDefault();
-        onViewClick();
-      }
-    },
-    [onViewClick],
-  );
 
   const isUp =
     prevAccountBalance !== undefined && currentBalance !== undefined
@@ -210,6 +194,19 @@ const AccountsCard: FC<AccountsCardProp> = ({
     textOverflow: "ellipsis",
     whiteSpace: "nowrap",
     letterSpacing: "-0.01em",
+    // Rendered as a <button>, so reset the native chrome.
+    display: "block",
+    maxWidth: "100%",
+    padding: "0",
+    border: "none",
+    backgroundColor: "transparent",
+    textAlign: "left",
+    cursor: "pointer",
+    _focusVisible: {
+      outline: "2px solid",
+      outlineColor: "border.focusRing",
+      outlineOffset: "2px",
+    },
   });
 
   const balanceSectionStyle = css({
@@ -251,19 +248,16 @@ const AccountsCard: FC<AccountsCardProp> = ({
       id={accountId}
       interactive={true}
       isMobile={isMobileVariant}
-      data-focus-managed=""
-      role="button"
-      tabIndex={0}
       onClick={handleClick}
-      onKeyDown={handleKeyDown}
     >
       <div>
         <div className={topRowStyle}>
           <div className={headerInfoStyle}>
             <span className={eyebrowStyle}>{`${type} ${t("account")}`}</span>
-            <span className={accountNameStyle} title={name}>
+            {/* The name is the keyboard/AT entry point; the card-wide click is a pointer convenience. */}
+            <button className={accountNameStyle} title={name} type="button" onClick={onViewClick}>
               {name}
-            </span>
+            </button>
           </div>
           <AddEditAccountsDialogBtn
             accountId={accountId}

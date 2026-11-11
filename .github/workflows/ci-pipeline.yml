@@ -32,7 +32,6 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
-      actions: write
       contents: read
 
     steps:
@@ -64,7 +63,6 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
-      actions: write
       contents: read
 
     steps:
@@ -88,7 +86,6 @@ jobs:
     timeout-minutes: 25
     # pull-requests: write is for the coverage report comment.
     permissions:
-      actions: write
       contents: read
       pull-requests: write
 
@@ -145,7 +142,6 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     permissions:
-      actions: write
       contents: read
 
     steps:
@@ -171,7 +167,6 @@ jobs:
     timeout-minutes: 20
     continue-on-error: true
     permissions:
-      actions: write
       contents: read
 
     steps:

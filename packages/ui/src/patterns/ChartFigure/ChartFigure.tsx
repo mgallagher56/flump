@@ -1,4 +1,4 @@
-import { type FC, type ReactNode, useId } from "react";
+import { type FC, type ReactNode, useEffect, useId, useRef } from "react";
 import { cx } from "../../../styled-system/css";
 import { CollapsibleDrawer } from "../../primitives/CollapsibleDrawer/CollapsibleDrawer";
 import { visuallyHiddenRecipe } from "../../primitives/VisuallyHidden/VisuallyHidden.styles";
@@ -9,8 +9,34 @@ import {
   chartFigureTitle,
 } from "./ChartFigure.styles";
 
+const FOCUSABLE = 'a[href], button, input, select, textarea, [tabindex]:not([tabindex="-1"])';
+
+// The chart wrapper is aria-hidden, so nothing inside it may be keyboard focusable (axe
+// aria-hidden-focus). Recharts' accessibilityLayer adds tabindex=0 to its svg. We take focusability
+// away rather than using `inert`, which would also kill the pointer hover tooltips.
+const useRemoveFromTabOrder = (ref: React.RefObject<HTMLElement | null>): void => {
+  useEffect(() => {
+    const root = ref.current;
+    if (!root) return;
+    const sweep = (): void => {
+      for (const el of root.querySelectorAll(FOCUSABLE)) el.setAttribute("tabindex", "-1");
+    };
+    sweep();
+    const observer = new MutationObserver(sweep);
+    observer.observe(root, {
+      subtree: true,
+      childList: true,
+      attributes: true,
+      attributeFilter: ["tabindex"],
+    });
+    return () => observer.disconnect();
+  }, [ref]);
+};
+
 export interface ChartFigureProps {
   title: string;
+  /** The title still names the figure for assistive tech, but is not shown (a nearby visible heading exists). */
+  hideTitle?: boolean;
   /** Text alternative for the chart. Callers format numbers with en-GB. */
   summary: string;
   /** Show the summary visually. Defaults to screen-reader only. */
@@ -24,6 +50,7 @@ export interface ChartFigureProps {
 
 export const ChartFigure: FC<ChartFigureProps> = ({
   title,
+  hideTitle = false,
   summary,
   showSummary = false,
   dataTable,
@@ -32,6 +59,8 @@ export const ChartFigure: FC<ChartFigureProps> = ({
 }) => {
   const titleId = useId();
   const summaryId = useId();
+  const chartRef = useRef<HTMLDivElement>(null);
+  useRemoveFromTabOrder(chartRef);
 
   return (
     <figure
@@ -39,10 +68,15 @@ export const ChartFigure: FC<ChartFigureProps> = ({
       aria-labelledby={titleId}
       className={cx(chartFigureRoot(), className)}
     >
-      <h3 className={chartFigureTitle()} id={titleId}>
+      <h3
+        className={hideTitle ? visuallyHiddenRecipe({ focusable: false }) : chartFigureTitle()}
+        id={titleId}
+      >
         {title}
       </h3>
-      <div aria-hidden="true">{children}</div>
+      <div aria-hidden="true" ref={chartRef}>
+        {children}
+      </div>
       {/* figcaption must be a direct child of figure, so hide it with the recipe class. */}
       <figcaption
         className={showSummary ? chartFigureSummary() : visuallyHiddenRecipe({ focusable: false })}
