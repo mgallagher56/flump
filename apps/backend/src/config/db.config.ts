@@ -87,6 +87,9 @@ export function resolveDbConfig(env: Env): DbConfig {
     ssl = useTls ? { rejectUnauthorized: true } : false;
   } else if (mode === "false") {
     ssl = false;
+    if (!isLocalHost(hostname)) {
+      warnings.push("DB_SSL=false disables TLS for a remote database; traffic is unencrypted");
+    }
   } else if (mode === "no-verify") {
     ssl = { rejectUnauthorized: false };
     warnings.push("DB_SSL=no-verify disables TLS certificate verification");

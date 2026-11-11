@@ -188,7 +188,10 @@ export class FinanceService {
       } catch (err) {
         savedConn.status = "error";
         await this.bankConnectionRepository.save(savedConn);
-        throw new BadRequestException(`Token sync verification failed: ${(err as Error).message}`);
+        console.error("Token sync verification failed:", (err as Error).message);
+        throw new BadRequestException(
+          "Token sync verification failed. Check the token and try again.",
+        );
       }
     }
 

@@ -199,7 +199,7 @@ describe("FinanceController & FinanceService", () => {
         { user: { id: "user-123" } },
         { institutionId: "starling", token: rawToken },
       ),
-    ).rejects.toThrow(/Token sync verification failed: API Down/);
+    ).rejects.toThrow(/^Token sync verification failed\. Check the token/);
   });
 
   it("should reject bank connection without token or OAuth credentials rather than seeding dummy data", async () => {

@@ -1,6 +1,7 @@
 import "reflect-metadata";
-import { DataSource, type DataSourceOptions } from "typeorm";
-import { typeOrmOptionsFromEnv } from "./config/typeorm.options";
+import { DataSource } from "typeorm";
+import { cliDataSourceOptions } from "./data-source.options";
 
-// TypeORM CLI data source (migration:run / revert / generate). Same options as the app.
-export default new DataSource(typeOrmOptionsFromEnv(process.env) as DataSourceOptions);
+// TypeORM CLI data source (migration:run / revert / generate). Same options as the app,
+// but never auto-runs migrations (see data-source.options.ts).
+export default new DataSource(cliDataSourceOptions(process.env));

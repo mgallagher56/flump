@@ -178,6 +178,21 @@ describe("FinanceService", () => {
       for (const field of TOKEN_FIELDS) expect(Object.keys(result.connection)).not.toContain(field);
     });
 
+    it("connectBank token path hides provider error text and saves status error", async () => {
+      const { service, provider, bankRepo } = createBankService([]);
+      provider.fetchAccounts.mockRejectedValueOnce(new Error("Bearer abc123 rejected"));
+      const spy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+      const error = await service
+        .connectBank("userA", { institutionId: "monzo", token: "raw-token" })
+        .catch((e) => e);
+
+      expect(error).toBeInstanceOf(BadRequestException);
+      expect(error.message).not.toContain("abc123");
+      expect(bankRepo.rows[0].status).toBe("error");
+      spy.mockRestore();
+    });
+
     it("sync success response has no token fields", async () => {
       const { service } = createBankService([makeConn()]);
 
