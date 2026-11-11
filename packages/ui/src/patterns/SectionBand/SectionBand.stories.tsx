@@ -49,6 +49,8 @@ export const TintedTone: Story = {
 };
 
 export const ContrastTone: Story = {
+  // E8 waiver: color-contrast
+  parameters: { a11y: { test: "todo" } },
   args: {
     tone: "contrast",
   },

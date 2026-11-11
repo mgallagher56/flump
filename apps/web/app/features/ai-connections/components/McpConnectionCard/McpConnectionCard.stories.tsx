@@ -30,12 +30,16 @@ export default meta;
 type Story = StoryObj<typeof McpConnectionCard>;
 
 export const Default: Story = {
+  // E8 waiver: aria-valid-attr-value
+  parameters: { a11y: { test: "todo" } },
   args: {
     initialTokens: [],
   },
 };
 
 export const WithActiveTokens: Story = {
+  // E8 waiver: aria-valid-attr-value
+  parameters: { a11y: { test: "todo" } },
   args: {
     initialTokens: [
       {

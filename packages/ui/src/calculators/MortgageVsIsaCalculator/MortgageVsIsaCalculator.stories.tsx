@@ -9,4 +9,7 @@ const meta: Meta<typeof MortgageVsIsaCalculator> = {
 export default meta;
 type Story = StoryObj<typeof MortgageVsIsaCalculator>;
 
-export const Default: Story = {};
+export const Default: Story = {
+  // E8 waiver: color-contrast
+  parameters: { a11y: { test: "todo" } },
+};

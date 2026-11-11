@@ -22,6 +22,7 @@
     "test:scripts": "bun test ./scripts",
     "test:coverage": "turbo run test:coverage",
     "test:storybook": "bun run --cwd apps/web test:storybook",
+    "test:storybook:dark": "bun run --cwd apps/web test:storybook:dark",
     "check-types": "turbo run check-types",
     "check:auth": "bash scripts/check-no-mock-auth.sh",
     "check:audit": "bun scripts/check-audit.ts",

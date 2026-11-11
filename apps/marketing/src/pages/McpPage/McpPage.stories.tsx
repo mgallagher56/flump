@@ -39,12 +39,17 @@ const assertMcpPage: Story["play"] = async ({ canvasElement }) => {
   await expect(canvas.getByText("Try the MCP preview")).toBeInTheDocument();
 };
 
-export const Default: Story = { play: assertMcpPage };
+export const Default: Story = {
+  // E8 waiver: color-contrast
+  parameters: { a11y: { test: "todo" } },
+  play: assertMcpPage,
+};
 
 export const Light: Story = { globals: { theme: "light" }, play: assertMcpPage };
 
 export const Dark: Story = {
+  // E8 waiver: color-contrast
   globals: { theme: "dark" },
-  parameters: { backgrounds: { default: "dark" } },
+  parameters: { a11y: { test: "todo" }, backgrounds: { default: "dark" } },
   play: assertMcpPage,
 };

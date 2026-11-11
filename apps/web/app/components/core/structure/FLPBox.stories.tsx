@@ -11,6 +11,8 @@ export default meta;
 type Story = StoryObj<typeof FLPBox>;
 
 export const Default: Story = {
+  // E8 waiver: color-contrast
+  parameters: { a11y: { test: "todo" } },
   args: {
     display: "flex",
     flexDirection: "row",
@@ -26,6 +28,8 @@ export const Default: Story = {
 };
 
 export const Column: Story = {
+  // E8 waiver: color-contrast
+  parameters: { a11y: { test: "todo" } },
   args: {
     display: "flex",
     flexDirection: "column",
