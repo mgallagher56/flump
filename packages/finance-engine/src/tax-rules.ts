@@ -390,10 +390,15 @@ export const UK_NATIONAL_INSURANCE: Record<string, UKNationalInsuranceYear> = {
     description: "UK National Insurance — 2022/23 (rates changed mid-year)",
     class1: {
       lowerEarningsLimit: 6396,
-      primaryThreshold: 12570,
+      // APPROXIMATION of mid-year changes (annual method). Per-period figures: PT 9,880 to 5 Jul 2022 then
+      // 12,570; main rate 13.25% to 5 Nov 2022 then 12%; additional rate 3.25% then 2%. We use the whole-year
+      // annual-method figures GOV.UK prints for directors: PT 11,908, 12.73% / 2.73% (7 months at the higher
+      // rate, 5 at the lower: (7*13.25 + 5*12)/12 = 12.73). 11,908 is HMRC's own annual figure, not a
+      // time-weighted average. Source: https://www.gov.uk/guidance/rates-and-thresholds-for-employers-2022-to-2023
+      primaryThreshold: 11908,
       upperEarningsLimit: 50270,
-      mainRate: 0.1325, // increased Apr–Oct 2022, then reduced Nov 2022 — we use the full-year blended effective rate approximation of 12%
-      upperRate: 0.0325,
+      mainRate: 0.1273,
+      upperRate: 0.0273,
     },
     class4: {
       lowerProfitsLimit: 11908, // raised mid-year (annualised average threshold)
@@ -409,7 +414,10 @@ export const UK_NATIONAL_INSURANCE: Record<string, UKNationalInsuranceYear> = {
       lowerEarningsLimit: 6396,
       primaryThreshold: 12570,
       upperEarningsLimit: 50270,
-      mainRate: 0.08, // reduced from 12% to 10% in Jan 2024, then to 8% in Apr 2024 (2024/25 full rate)
+      // APPROXIMATION: 12% from 6 Apr 2023 to 5 Jan 2024, 10% from 6 Jan 2024 (8% only starts 6 Apr 2024).
+      // 11.5% is derived arithmetic for evenly paid earnings, (9*12 + 3*10)/12, not a figure printed on GOV.UK.
+      // Source: https://www.gov.uk/guidance/rates-and-thresholds-for-employers-2023-to-2024
+      mainRate: 0.115,
       upperRate: 0.02,
     },
     class4: {
