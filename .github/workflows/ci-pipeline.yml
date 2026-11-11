@@ -176,5 +176,56 @@ jobs:
       - name: ⚙️ Setup Bun and install dependencies
         uses: ./.github/actions/bun-setup
 
-      - name: 🛡️ Audit dependencies (high and critical block)
-        run: bun run check:audit
+      # Policy: exit 1 (real high/critical advisory) fails pull_request runs only; on
+      # push-to-main and schedule it is reported loudly but does not fail the job, so
+      # Railway "Wait for CI" deploys are never blocked by a new upstream advisory.
+      # Exit 2 (registry outage / unreadable report, after one retry in the script) is a
+      # warning on every event: an outage is not the PR's fault and must not turn main red.
+      - name: 🛡️ Audit dependencies (high and critical block PRs)
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+        run: |
+          set +e
+          bun run check:audit 2>&1 | tee audit-output.txt
+          code=${PIPESTATUS[0]}
+          set -e
+          case "$code" in
+            0)
+              echo "### 🛡️ Dependency audit: clean" >> "$GITHUB_STEP_SUMMARY"
+              ;;
+            1)
+              {
+                echo "### 🛡️ Dependency audit: high or critical advisories found"
+                echo ""
+                echo '```'
+                cat audit-output.txt
+                echo '```'
+              } >> "$GITHUB_STEP_SUMMARY"
+              if [ "$EVENT_NAME" = "pull_request" ]; then
+                echo "::error title=Dependency audit::High or critical advisories found (see job summary). Fix, upgrade, or add a time-boxed audit-allowlist.json entry."
+                exit 1
+              fi
+              echo "::warning title=Dependency audit ($EVENT_NAME)::High or critical advisories found on ${GITHUB_REF_NAME}. Reported only so deploys are not blocked; triage promptly (see job summary)."
+              ;;
+            2)
+              {
+                echo "### 🛡️ Dependency audit: could not complete (exit $code)"
+                echo ""
+                echo '```'
+                cat audit-output.txt
+                echo '```'
+              } >> "$GITHUB_STEP_SUMMARY"
+              echo "::warning title=Dependency audit unavailable::bun audit could not produce a usable report after one retry (exit $code). Not failing the job; re-run or check the registry."
+              ;;
+            *)
+              {
+                echo "### 🛡️ Dependency audit: configuration error (exit $code)"
+                echo ""
+                echo '```'
+                cat audit-output.txt
+                echo '```'
+              } >> "$GITHUB_STEP_SUMMARY"
+              echo "::error title=Dependency audit configuration::Allow-list or report shape is invalid (exit $code). This is a repo bug, not an outage: fix audit-allowlist.json or scripts/lib/audit.ts."
+              exit 1
+              ;;
+          esac

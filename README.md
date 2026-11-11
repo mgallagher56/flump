@@ -336,6 +336,54 @@ bun run test
 
 ---
 
+## Dependency audit gate
+
+`bun run check:audit` (`scripts/check-audit.ts`) wraps `bun audit --json` and runs as the `🛡️ Dependency audit` CI job on pull requests, pushes to `main` and a weekly schedule (Mondays 06:17 UTC).
+
+- **Threshold**: `high` and `critical` advisories fail; `moderate` and `low` are ignored.
+- **Allow-list**: `audit-allowlist.json` is an array of `{ "id", "package", "severity", "reason", "expires" }`. `id` is the GHSA id (or the numeric id from `bun audit`), `expires` is an ISO `YYYY-MM-DD` date no more than 90 days away. Expired, malformed or reason-less entries fail the gate; entries whose advisory has disappeared produce a warning to remove them.
+- **Retry**: if `bun audit` yields no usable JSON (registry outage), the script waits 10 seconds and retries once. JSON that parsed is never retried.
+- **Exit codes**: `0` clean, `1` real advisory failures, `2` no usable report after the retry (or unreadable allow-list / unrecognised report shape).
+
+| Event                      | Exit 1 (advisories)                                           | Exit 2 (outage / unreadable)   |
+| :------------------------- | :------------------------------------------------------------ | :----------------------------- |
+| `pull_request`             | Job fails (`::error::` plus job summary)                      | `::warning::` only, job passes |
+| push to `main`, `schedule` | `::warning::` plus job summary listing advisories, job passes | `::warning::` only, job passes |
+
+Advisories only report on `main` and `schedule` so Railway "Wait for CI" deploys are never blocked by a new upstream advisory; check the job summary of the scheduled run and triage it. An outage is not the PR's fault, so exit 2 never fails a run. Exit 3 (a broken `audit-allowlist.json` or an unrecognised report shape) is a repo bug, not an outage, so it fails the job on every event.
+
+To add an allow entry, append to `audit-allowlist.json` with a concrete reason and an `expires` date at most 90 days out, then revisit it before it lapses:
+
+```json
+{
+  "id": "GHSA-xxxx-xxxx-xxxx",
+  "package": "example",
+  "severity": "high",
+  "reason": "No fixed version; dev-only",
+  "expires": "2027-01-31"
+}
+```
+
+---
+
+## Design law baselines (check:laws)
+
+`bun run check:laws` runs two ratchets that enforce the AGENTS.md design laws on `packages/ui/src`, `apps/web/app` and `apps/marketing/src` (tests, stories and the token definition file are skipped):
+
+- **Design tokens** (`scripts/check-design-tokens.ts`): counts raw hex/`rgb()`/`hsl()` colours and primitive scale tokens (`indigo.600`) inside string literals. Anchors such as `href="#faq"` are not colours.
+- **Tabular numbers** (`scripts/check-tabular-nums.ts`): flags files that format numbers (`useFormatCurrency`, `Intl.NumberFormat`, `toLocaleString`, `toFixed`) without `tabular-nums`. It is a file-wide heuristic, so `toFixed` is flagged even for non-financial numbers.
+
+Existing violations are recorded in `scripts/design-token-baseline.json` and `scripts/tabular-baseline.txt`. New files, and any file above its baseline, fail. Entries that have dropped or disappeared are stale and also fail, so the baselines can only shrink. After fixing violations, regenerate them:
+
+```bash
+bun scripts/check-design-tokens.ts --write-baseline
+bun scripts/check-tabular-nums.ts --write-baseline
+```
+
+Review the baseline diff before committing. It may only shrink; growing it needs a justification in the PR. The E9 colocation migration will move and rename baselined files, so baseline keys (file paths) will change at that point.
+
+---
+
 ## Contributing
 
 1. **Create a branch**:

@@ -23,6 +23,37 @@ describe("countTokenViolations", () => {
   });
 });
 
+describe("countTokenViolations scanner robustness", () => {
+  test("does not treat anchors and ids as hex colours", () => {
+    expect(
+      countTokenViolations(`<a href="#faq">x</a> <a href="#add">y</a> <a href="#fab">z</a>`),
+    ).toBe(0);
+    expect(countTokenViolations(`<a href="#cafe00">x</a> <i id="#abcdef" />`)).toBe(0);
+    expect(countTokenViolations(`<Link to="#add" />`)).toBe(0);
+    expect(countTokenViolations(`const t = "#faq"`)).toBe(0);
+  });
+  test("still counts real colours", () => {
+    expect(countTokenViolations(`const c = "#fff"`)).toBe(1);
+    expect(countTokenViolations(`const c = "#ff0000"`)).toBe(1);
+    expect(countTokenViolations(`const c = "#FF000080"`)).toBe(1);
+  });
+  test("ignores quotes in comments", () => {
+    const src = `// don't do this\n/* it's "#ff0000" in a comment */\nconst x = "#ff0000";`;
+    expect(countTokenViolations(src)).toBe(1);
+  });
+  test("apostrophes in JSX text do not hide later violations", () => {
+    expect(countTokenViolations(`<p>Don't</p> const x = "#ff0000"`)).toBe(1);
+    expect(
+      countTokenViolations(`<p>Users' data</p>\nconst a = "#ff0000";\nconst b = 'rgb(0,0,0)';`),
+    ).toBe(2);
+  });
+  test("single-quoted strings after operators and return still count", () => {
+    expect(countTokenViolations(`const a = cond ? '#ff0000' : "slate.800"; return '#00ff00'`)).toBe(
+      3,
+    );
+  });
+});
+
 describe("compareToBaseline", () => {
   test("passes when at baseline", () => {
     expect(compareToBaseline({ "a.ts": 2 }, { "a.ts": 2 })).toEqual({ failures: [], stale: [] });
@@ -69,5 +100,19 @@ describe("needsTabular", () => {
   });
   test("ignores files that format nothing", () => {
     expect(needsTabular(`export const x = 1`)).toBe(false);
+  });
+});
+
+describe("short hex inside CSS-like literals", () => {
+  test("counts short hex after whitespace, parenthesis or comma", () => {
+    expect(countTokenViolations('const a = "1px solid #fff";')).toBe(1);
+    expect(countTokenViolations('const a = "linear-gradient(#fff, #000)";')).toBe(2);
+  });
+  test("ignores prose numbers and anchors", () => {
+    expect(countTokenViolations('const a = "Issue #123";')).toBe(0);
+    expect(countTokenViolations('const a = "see #faq";')).toBe(0);
+  });
+  test("a `to` object key can hold a real colour", () => {
+    expect(countTokenViolations('const g = { from: "#ffffff", to: "#000000" };')).toBe(2);
   });
 });

@@ -1,8 +1,20 @@
 // Pure logic for the design-token ratchet (AGENTS.md section 2): components may
 // not use raw hex/rgb/hsl colours or primitive scale tokens such as "indigo.600".
 
-const STRING_LITERAL = /"[^"\n]*"|'[^'\n]*'|`[^`]*`/g;
-const HEX = /#(?:[0-9a-fA-F]{8}|[0-9a-fA-F]{6}|[0-9a-fA-F]{3,4})\b/g;
+// Hex rule: 6 or 8 digits match anywhere inside a literal ("1px solid #12345678").
+// 3 or 4 digits only match when the WHOLE literal is exactly that hex ("#fff"),
+// because short fragments such as "#faq" or "#add" are almost always anchors.
+// Any literal directly assigned to href/id/to/htmlFor/aria-* (`href="#fab"`,
+// `id: "#cafe"`) is treated as an anchor/identifier and never counts as a colour.
+const HEX_LONG = /#(?:[0-9a-fA-F]{8}|[0-9a-fA-F]{6})(?![0-9a-zA-Z_-])/g;
+const HEX_SHORT_WHOLE = /^#[0-9a-fA-F]{3,4}$/;
+// Short hex inside a longer CSS-like literal ("1px solid #fff", "linear-gradient(#fff, #000)"):
+// must follow whitespace, "(" or ",", and contain a letter or repeat one digit (#000), so "Issue #123" and anchors are ignored.
+const HEX_SHORT_INLINE =
+  /(?<=[\s(,])#(?=[0-9a-fA-F]{3,4}(?![\w-]))(?:[0-9a-fA-F]*[a-fA-F][0-9a-fA-F]*|(\d)\1{2,3})/g;
+/(?<=[\s(,])#(?=[0-9a-fA-F]{3,4}(?![\w-]))[0-9a-fA-F]*[a-fA-F][0-9a-fA-F]*/g;
+const ANCHOR_CONTEXT =
+  /(?:\b(?:href|id|htmlFor)|\baria-[\w-]+)\s*[=:]\s*\{?\s*$|\bto\s*=\s*\{?\s*$/;
 const COLOUR_FN = /\b(?:rgba?|hsla?)\(/g;
 
 const PRIMITIVES = [
@@ -42,11 +54,88 @@ const SCALE = "(?:50|100|200|300|400|500|600|700|800|900|950)";
 // chart.series1) never match.
 const PRIMITIVE = new RegExp(`(?<![\\w-])(?:${PRIMITIVES.join("|")})\\.${SCALE}(?![\\w-])`, "g");
 
+type Literal = { text: string; before: string };
+
+const KEYWORDS_BEFORE_STRING = new Set([
+  "return",
+  "case",
+  "typeof",
+  "in",
+  "of",
+  "else",
+  "default",
+  "yield",
+  "await",
+  "void",
+  "delete",
+  "new",
+  "throw",
+]);
+// A single quote only opens a string after one of these characters (or a keyword
+// such as `return`). This is what stops the apostrophe in JSX text or prose
+// ("Don't", "users' data") from pairing with a later quote and hiding literals.
+const SINGLE_QUOTE_OPENERS = "=([{,:?|&+-*/%<!;~^";
+
+function singleQuoteOpens(source: string, i: number): boolean {
+  let j = i - 1;
+  while (j >= 0 && /\s/.test(source[j] as string)) j--;
+  if (j < 0) return true;
+  const ch = source[j] as string;
+  if (ch === ">") return source[j - 1] === "=";
+  if (SINGLE_QUOTE_OPENERS.includes(ch)) return true;
+  if (/\w/.test(ch)) {
+    let k = j;
+    while (k >= 0 && /\w/.test(source[k] as string)) k--;
+    return KEYWORDS_BEFORE_STRING.has(source.slice(k + 1, j + 1));
+  }
+  return false;
+}
+
+// Small tokenizer: yields string literals, skipping // and /* */ comments.
+// Known limits: a "//" in JSX text (not after ":") is read as a comment; template
+// literals are read to the next backtick without parsing `${}`.
+export function extractStringLiterals(source: string): Literal[] {
+  const out: Literal[] = [];
+  let i = 0;
+  while (i < source.length) {
+    const c = source[i] as string;
+    const next = source[i + 1];
+    if (c === "/" && next === "/" && source[i - 1] !== ":") {
+      while (i < source.length && source[i] !== "\n") i++;
+    } else if (c === "/" && next === "*") {
+      const end = source.indexOf("*/", i + 2);
+      i = end === -1 ? source.length : end + 2;
+    } else if (c === '"' || c === "`" || (c === "'" && singleQuoteOpens(source, i))) {
+      let j = i + 1;
+      while (j < source.length && source[j] !== c) {
+        if (c !== "`" && source[j] === "\n") break;
+        if (source[j] === "\\" && c !== "`") j++;
+        j++;
+      }
+      if (source[j] === c) {
+        out.push({ text: source.slice(i + 1, j), before: source.slice(Math.max(0, i - 40), i) });
+        i = j + 1;
+      } else {
+        i++; // unterminated: treat the quote as plain text
+      }
+    } else {
+      i++;
+    }
+  }
+  return out;
+}
+
 export function countTokenViolations(source: string): number {
   // Only string literal contents are inspected, so comments and code never count.
   let total = 0;
-  for (const literal of source.match(STRING_LITERAL) ?? []) {
-    for (const re of [HEX, COLOUR_FN, PRIMITIVE]) total += literal.match(re)?.length ?? 0;
+  for (const { text, before } of extractStringLiterals(source)) {
+    if (!ANCHOR_CONTEXT.test(before)) {
+      total += text.match(HEX_LONG)?.length ?? 0;
+      if (HEX_SHORT_WHOLE.test(text)) total += 1;
+      else total += text.match(HEX_SHORT_INLINE)?.length ?? 0;
+    }
+    total += text.match(COLOUR_FN)?.length ?? 0;
+    total += text.match(PRIMITIVE)?.length ?? 0;
   }
   return total;
 }
