@@ -107,7 +107,13 @@ export const PaymentsOnAccountCard: FC<PaymentsOnAccountCardProps> = ({
           <div style={{ fontSize: "11px", fontWeight: 600, color: "var(--colors-text-muted)" }}>
             Monthly Tax Pot Set-Aside
           </div>
-          <div style={{ fontSize: "22px", fontWeight: 800, color: "#10b981" }}>
+          <div
+            style={{
+              fontSize: "22px",
+              fontWeight: 800,
+              color: "var(--colors-status-positive-text)",
+            }}
+          >
             {formatGBP(monthlyPotTransfer)}{" "}
             <span style={{ fontSize: "12px", fontWeight: 500, color: "var(--colors-text-muted)" }}>
               / mo

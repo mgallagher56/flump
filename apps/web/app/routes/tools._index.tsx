@@ -149,7 +149,7 @@ export const ToolsIndex: FC = () => {
                 display: "inline-flex",
                 alignItems: "center",
                 gap: "6px",
-                color: "#f59e0b",
+                color: "var(--colors-status-warning-text)",
                 fontWeight: 600,
                 fontSize: "13px",
               }}
@@ -210,7 +210,7 @@ export const ToolsIndex: FC = () => {
                 display: "inline-flex",
                 alignItems: "center",
                 gap: "6px",
-                color: "#ef4444",
+                color: "var(--colors-status-danger-text)",
                 fontWeight: 600,
                 fontSize: "13px",
               }}
@@ -242,7 +242,7 @@ export const ToolsIndex: FC = () => {
                 display: "inline-flex",
                 alignItems: "center",
                 gap: "6px",
-                color: "#10b981",
+                color: "var(--colors-status-positive-text)",
                 fontWeight: 600,
                 fontSize: "13px",
               }}
@@ -271,7 +271,7 @@ export const ToolsIndex: FC = () => {
                 display: "inline-flex",
                 alignItems: "center",
                 gap: "6px",
-                color: "#f59e0b",
+                color: "var(--colors-status-warning-text)",
                 fontWeight: 600,
                 fontSize: "13px",
               }}

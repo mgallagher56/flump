@@ -417,7 +417,7 @@ export const PayoffStrategySwitcher: FC<PayoffStrategySwitcherProps> = ({
                 style={{
                   fontSize: "11px",
                   backgroundColor: "rgba(239, 68, 68, 0.15)",
-                  color: "#ef4444",
+                  color: "var(--colors-status-danger-text)",
                   padding: "3px 8px",
                   borderRadius: "6px",
                   fontWeight: "bold",

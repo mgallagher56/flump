@@ -6,6 +6,7 @@ export {
   createRoutesStub,
   data,
   isRouteErrorResponse,
+  MemoryRouter,
   useRouteError,
 } from "react-router-real";
 

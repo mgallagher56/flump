@@ -431,7 +431,11 @@ export const PensionAccountsList: FC<PensionAccountsListProps> = ({
                       <FLPText color="text.muted" fontSize="xs">
                         Return
                       </FLPText>
-                      <FLPText fontSize="xs" fontWeight="semibold" style={{ color: "#10b981" }}>
+                      <FLPText
+                        fontSize="xs"
+                        fontWeight="semibold"
+                        style={{ color: "var(--colors-status-positive-text)" }}
+                      >
                         {rate.toFixed(1)}%/yr
                       </FLPText>
                     </div>
@@ -465,7 +469,7 @@ export const PensionAccountsList: FC<PensionAccountsListProps> = ({
                     <button
                       aria-label={`Delete ${acc.name}`}
                       className={actionBtnStyle}
-                      style={{ color: "#ef4444" }}
+                      style={{ color: "var(--colors-status-danger-text)" }}
                       type="button"
                       onClick={() => setAccountToDelete(acc)}
                     >
@@ -585,7 +589,7 @@ export const PensionAccountsList: FC<PensionAccountsListProps> = ({
                           <button
                             aria-label={`Delete ${acc.name}`}
                             className={actionBtnStyle}
-                            style={{ color: "#ef4444" }}
+                            style={{ color: "var(--colors-status-danger-text)" }}
                             title="Delete Pot"
                             type="button"
                             onClick={() => setAccountToDelete(acc)}

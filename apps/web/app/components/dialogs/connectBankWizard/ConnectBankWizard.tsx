@@ -448,7 +448,7 @@ const ConnectBankWizard: FC<ConnectBankWizardProps> = ({ onSuccess }) => {
                                 padding: "1px 5px",
                                 borderRadius: "4px",
                                 backgroundColor: "rgba(16, 185, 129, 0.15)",
-                                color: "#10b981",
+                                color: "var(--colors-status-positive-text)",
                                 fontWeight: 700,
                                 textTransform: "uppercase",
                                 flexShrink: 0,
@@ -829,10 +829,10 @@ const ConnectBankWizard: FC<ConnectBankWizardProps> = ({ onSuccess }) => {
           {step === "error" && selectedBank && (
             <>
               <div className={loadingContainer}>
-                <div style={{ fontSize: "48px", color: "#ef4444" }}>⚠️</div>
+                <div style={{ fontSize: "48px", color: "var(--colors-status-danger-text)" }}>⚠️</div>
                 <div style={{ textAlign: "center" }}>
                   <Dialog.Title asChild>
-                    <FLPHeading as="h3" size="md" color="destructive">
+                    <FLPHeading as="h3" size="md" color="status.danger.text">
                       Connection Failed
                     </FLPHeading>
                   </Dialog.Title>
@@ -857,7 +857,7 @@ const ConnectBankWizard: FC<ConnectBankWizardProps> = ({ onSuccess }) => {
                   <FLPText
                     fontSize="xs"
                     fontWeight="bold"
-                    color="destructive"
+                    color="status.danger.text"
                     textTransform="uppercase"
                     style={{ marginBottom: "4px" }}
                   >

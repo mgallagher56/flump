@@ -670,7 +670,10 @@ export const TaxIncomeSectionCard: FC<TaxIncomeSectionCardProps> = ({
                             })}
                           >
                             {record.receiptMimeType?.includes("pdf") ? (
-                              <FaFilePdf size={13} style={{ color: "#EF4444" }} />
+                              <FaFilePdf
+                                size={13}
+                                style={{ color: "var(--colors-status-danger-text)" }}
+                              />
                             ) : (
                               <FaFileImage size={13} style={{ color: "#3B82F6" }} />
                             )}
@@ -713,7 +716,7 @@ export const TaxIncomeSectionCard: FC<TaxIncomeSectionCardProps> = ({
                               padding: "4px 6px",
                               border: "none",
                               background: "none",
-                              color: "destructive",
+                              color: "status.danger.text",
                               cursor: "pointer",
                               borderRadius: "sm",
                               "&:hover": { backgroundColor: "rgba(239, 68, 68, 0.1)" },

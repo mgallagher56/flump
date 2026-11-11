@@ -238,10 +238,10 @@ export const AccountsWidget: FC<AccountsWidgetProps> = ({
                 mt: "2px",
               })}
             >
-              <span style={{ color: "#10b981", fontWeight: 600 }}>
+              <span style={{ color: "var(--colors-status-positive-text)", fontWeight: 600 }}>
                 +{formatCurrency(data.totalAssets)}
               </span>
-              <span style={{ color: "#ef4444", fontWeight: 600 }}>
+              <span style={{ color: "var(--colors-status-danger-text)", fontWeight: 600 }}>
                 -{formatCurrency(data.totalLiabilities)}
               </span>
             </div>

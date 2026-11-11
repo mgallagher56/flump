@@ -258,7 +258,7 @@ export const DashboardWidgetCard: FC<DashboardWidgetCardProps> = ({
                         background: "transparent",
                         color: "text.muted",
                         cursor: "pointer",
-                        _hover: { color: "destructive", borderColor: "destructive" },
+                        _hover: { color: "status.danger.text", borderColor: "destructive" },
                       })}
                       type="button"
                       onClick={onHide}

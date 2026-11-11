@@ -654,7 +654,7 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
                             padding: "1px 4px",
                             borderRadius: "4px",
                             backgroundColor: "rgba(16, 185, 129, 0.15)",
-                            color: "#10b981",
+                            color: "var(--colors-status-positive-text)",
                             fontWeight: 700,
                             flexShrink: 0,
                             textTransform: "uppercase",
@@ -900,7 +900,7 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
                 size={14}
                 style={{ marginTop: "2px", flexShrink: 0 }}
               />
-              <FLPText fontSize="xs" color="destructive">
+              <FLPText fontSize="xs" color="status.danger.text">
                 {bankError}
               </FLPText>
             </div>

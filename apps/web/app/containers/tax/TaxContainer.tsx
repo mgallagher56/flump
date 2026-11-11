@@ -1818,7 +1818,10 @@ const TaxContainer: FC = () => {
                               }}
                             >
                               {record.receiptMimeType?.includes("pdf") ? (
-                                <FaFilePdf size={14} style={{ color: "#EF4444" }} />
+                                <FaFilePdf
+                                  size={14}
+                                  style={{ color: "var(--colors-status-danger-text)" }}
+                                />
                               ) : (
                                 <FaFileImage size={14} style={{ color: "#3B82F6" }} />
                               )}
@@ -1869,7 +1872,7 @@ const TaxContainer: FC = () => {
                               padding: "6px",
                               border: "none",
                               background: "none",
-                              color: "destructive",
+                              color: "status.danger.text",
                               cursor: "pointer",
                               borderRadius: "sm",
                               "&:hover": { backgroundColor: "rgba(239, 68, 68, 0.1)" },
@@ -2047,7 +2050,7 @@ const TaxContainer: FC = () => {
                     style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "sm" }}
                   >
                     {receiptMimeType?.includes("pdf") ? (
-                      <FaFilePdf style={{ color: "#EF4444" }} />
+                      <FaFilePdf style={{ color: "var(--colors-status-danger-text)" }} />
                     ) : (
                       <FaFileImage style={{ color: "#3B82F6" }} />
                     )}
@@ -2066,7 +2069,7 @@ const TaxContainer: FC = () => {
                     className={css({
                       border: "none",
                       background: "none",
-                      color: "destructive",
+                      color: "status.danger.text",
                       fontSize: "xs",
                       cursor: "pointer",
                       "&:hover": { textDecoration: "underline" },
@@ -2167,7 +2170,10 @@ const TaxContainer: FC = () => {
                   width: "100%",
                 })}
               >
-                <FaFileAlt size={48} style={{ color: "#EF4444", marginBottom: "12px" }} />
+                <FaFileAlt
+                  size={48}
+                  style={{ color: "var(--colors-status-danger-text)", marginBottom: "12px" }}
+                />
                 <span style={{ fontSize: "sm", fontWeight: "semibold", marginBottom: "4px" }}>
                   {activeReceiptRecord.receiptFilename}
                 </span>

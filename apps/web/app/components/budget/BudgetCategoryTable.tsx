@@ -118,7 +118,7 @@ const BudgetCategoryTable: FC<BudgetCategoryTableProps> = ({
             padding: "1px 6px",
             borderRadius: "4px",
             backgroundColor: "rgba(239, 68, 68, 0.15)",
-            color: "#ef4444",
+            color: "var(--colors-status-danger-text)",
             fontWeight: 700,
           }}
         >
@@ -134,7 +134,7 @@ const BudgetCategoryTable: FC<BudgetCategoryTableProps> = ({
             padding: "1px 6px",
             borderRadius: "4px",
             backgroundColor: "rgba(245, 158, 11, 0.15)",
-            color: "#f59e0b",
+            color: "var(--colors-status-warning-text)",
             fontWeight: 700,
           }}
         >
@@ -275,7 +275,9 @@ const BudgetCategoryTable: FC<BudgetCategoryTableProps> = ({
             </FLPHeading>
             <FLPText color="text.muted" fontSize="xs">
               {entries.length} items · Total{" "}
-              <strong style={{ color: isIncome ? "#10b981" : "inherit" }}>
+              <strong
+                style={{ color: isIncome ? "var(--colors-status-positive-text)" : "inherit" }}
+              >
                 {formatCurrency(Number.isFinite(total) ? total : 0)}
                 /mo
               </strong>
@@ -487,7 +489,7 @@ const BudgetCategoryTable: FC<BudgetCategoryTableProps> = ({
                     <FLPText
                       fontSize="sm"
                       fontWeight="semibold"
-                      style={{ color: isIncome ? "#10b981" : undefined }}
+                      style={{ color: isIncome ? "var(--colors-status-positive-text)" : undefined }}
                     >
                       {formatAmount(entry)}
                     </FLPText>
@@ -517,7 +519,7 @@ const BudgetCategoryTable: FC<BudgetCategoryTableProps> = ({
                             padding: "1px 6px",
                             borderRadius: "4px",
                             backgroundColor: "rgba(16, 185, 129, 0.1)",
-                            color: "#10b981",
+                            color: "var(--colors-status-positive-text)",
                             fontWeight: 600,
                           }}
                         >
@@ -582,7 +584,7 @@ const BudgetCategoryTable: FC<BudgetCategoryTableProps> = ({
                             cursor: "pointer",
                             padding: "8px",
                             borderRadius: "md",
-                            _hover: { color: "destructive" },
+                            _hover: { color: "status.danger.text" },
                           })}
                           aria-label={`Delete category ${entry.name}`}
                           title="Delete"
@@ -619,7 +621,7 @@ const BudgetCategoryTable: FC<BudgetCategoryTableProps> = ({
                             padding: "1px 6px",
                             borderRadius: "4px",
                             backgroundColor: "rgba(16, 185, 129, 0.1)",
-                            color: "#10b981",
+                            color: "var(--colors-status-positive-text)",
                             fontWeight: 600,
                           }}
                         >
@@ -664,7 +666,10 @@ const BudgetCategoryTable: FC<BudgetCategoryTableProps> = ({
                   <FLPText
                     fontSize="sm"
                     fontWeight="semibold"
-                    style={{ color: isIncome ? "#10b981" : undefined, textAlign: "right" }}
+                    style={{
+                      color: isIncome ? "var(--colors-status-positive-text)" : undefined,
+                      textAlign: "right",
+                    }}
                   >
                     {formatAmount(entry)}
                   </FLPText>
@@ -696,7 +701,7 @@ const BudgetCategoryTable: FC<BudgetCategoryTableProps> = ({
                         padding: "4px",
                         borderRadius: "sm",
                         transition: "color 0.15s",
-                        _hover: { color: "destructive" },
+                        _hover: { color: "status.danger.text" },
                       })}
                       aria-label={`Delete category ${entry.name}`}
                       title="Delete"

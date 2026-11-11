@@ -440,7 +440,7 @@ const RunwayCalculator: FC<RunwayCalculatorProps> = ({
           <span
             style={{
               fontSize: "12px",
-              color: "#10b981",
+              color: "var(--colors-status-positive-text)",
               display: "inline-flex",
               alignItems: "center",
               gap: "5px",
@@ -544,7 +544,7 @@ const RunwayCalculator: FC<RunwayCalculatorProps> = ({
                       backgroundColor: "background",
                       cursor: "pointer",
                       color: "text.muted",
-                      _hover: { borderColor: "destructive", color: "destructive" },
+                      _hover: { borderColor: "destructive", color: "status.danger.text" },
                     })}
                     type="button"
                     onClick={() => setAllAccounts(false)}
@@ -604,7 +604,11 @@ const RunwayCalculator: FC<RunwayCalculatorProps> = ({
                         <FLPText
                           fontSize="sm"
                           fontWeight="semibold"
-                          style={{ color: isIncluded ? "#10b981" : "var(--colors-text-muted)" }}
+                          style={{
+                            color: isIncluded
+                              ? "var(--colors-status-positive-text)"
+                              : "var(--colors-text-muted)",
+                          }}
                         >
                           {fmt(bal)}
                         </FLPText>
@@ -638,7 +642,11 @@ const RunwayCalculator: FC<RunwayCalculatorProps> = ({
                   <FLPText fontSize="sm" color="text.muted">
                     Total pool
                   </FLPText>
-                  <FLPText fontSize="sm" fontWeight="bold" style={{ color: "#10b981" }}>
+                  <FLPText
+                    fontSize="sm"
+                    fontWeight="bold"
+                    style={{ color: "var(--colors-status-positive-text)" }}
+                  >
                     {fmt(totalSavings)}
                   </FLPText>
                 </div>
@@ -667,7 +675,7 @@ const RunwayCalculator: FC<RunwayCalculatorProps> = ({
                       padding: "2px 8px",
                       borderRadius: "12px",
                       backgroundColor: "rgba(16,185,129,0.12)",
-                      color: "#10b981",
+                      color: "var(--colors-status-positive-text)",
                       fontWeight: 600,
                     }}
                   >
@@ -685,7 +693,7 @@ const RunwayCalculator: FC<RunwayCalculatorProps> = ({
                       backgroundColor: "background",
                       cursor: "pointer",
                       color: "text.muted",
-                      _hover: { borderColor: "#10b981", color: "#10b981" },
+                      _hover: { borderColor: "#10b981", color: "status.positive.text" },
                     })}
                     type="button"
                     onClick={() => setAllIncome(true)}
@@ -702,7 +710,7 @@ const RunwayCalculator: FC<RunwayCalculatorProps> = ({
                       backgroundColor: "background",
                       cursor: "pointer",
                       color: "text.muted",
-                      _hover: { borderColor: "destructive", color: "destructive" },
+                      _hover: { borderColor: "destructive", color: "status.danger.text" },
                     })}
                     type="button"
                     onClick={() => setAllIncome(false)}
@@ -733,7 +741,11 @@ const RunwayCalculator: FC<RunwayCalculatorProps> = ({
                       <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
                         {isKept ? (
                           <FaCheckCircle
-                            style={{ color: "#10b981", fontSize: "14px", flexShrink: 0 }}
+                            style={{
+                              color: "var(--colors-status-positive-text)",
+                              fontSize: "14px",
+                              flexShrink: 0,
+                            }}
                           />
                         ) : (
                           <FaTimesCircle
@@ -747,14 +759,18 @@ const RunwayCalculator: FC<RunwayCalculatorProps> = ({
                           <FLPText fontSize="xs" color="text.muted">
                             <span
                               style={{
-                                color: isKept ? "#10b981" : "inherit",
+                                color: isKept ? "var(--colors-status-positive-text)" : "inherit",
                                 fontWeight: isKept ? 600 : 400,
                               }}
                             >
                               +{fmt(toMonthly(e))}/mo
                             </span>{" "}
                             ·{" "}
-                            <span style={{ color: isKept ? "#10b981" : "inherit" }}>
+                            <span
+                              style={{
+                                color: isKept ? "var(--colors-status-positive-text)" : "inherit",
+                              }}
+                            >
                               {isKept ? "kept" : "excluded"}
                             </span>
                           </FLPText>
@@ -822,7 +838,7 @@ const RunwayCalculator: FC<RunwayCalculatorProps> = ({
                       backgroundColor: "background",
                       cursor: "pointer",
                       color: "text.muted",
-                      _hover: { borderColor: "destructive", color: "destructive" },
+                      _hover: { borderColor: "destructive", color: "status.danger.text" },
                     })}
                     type="button"
                     onClick={() => setCategoryExpenses(catEntries, false)}
@@ -849,7 +865,9 @@ const RunwayCalculator: FC<RunwayCalculatorProps> = ({
                   >
                     <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                       {keptExpenses[e.id] ? (
-                        <FaTimesCircle style={{ color: "#ef4444", fontSize: "12px" }} />
+                        <FaTimesCircle
+                          style={{ color: "var(--colors-status-danger-text)", fontSize: "12px" }}
+                        />
                       ) : (
                         <FaCheckCircle style={{ color: "#a1a1aa", fontSize: "12px" }} />
                       )}
@@ -863,7 +881,9 @@ const RunwayCalculator: FC<RunwayCalculatorProps> = ({
                         <FLPText fontSize="xs" color="text.muted">
                           {fmt(toMonthly(e))}/mo ·{" "}
                           {e.isEssential ? (
-                            <span style={{ color: "#10b981" }}>essential</span>
+                            <span style={{ color: "var(--colors-status-positive-text)" }}>
+                              essential
+                            </span>
                           ) : (
                             <span>discretionary</span>
                           )}

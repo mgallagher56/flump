@@ -123,7 +123,13 @@ export const RemortgageShockSim: FC<RemortgageShockSimProps> = ({
             <div style={{ fontSize: "11px", fontWeight: 600, color: "var(--colors-text-muted)" }}>
               Projected Payment Shock
             </div>
-            <div style={{ fontSize: "22px", fontWeight: 800, color: "#ef4444" }}>
+            <div
+              style={{
+                fontSize: "22px",
+                fontWeight: 800,
+                color: "var(--colors-status-danger-text)",
+              }}
+            >
               +{formatGBP(monthlyShock)}{" "}
               <span
                 style={{ fontSize: "12px", fontWeight: 500, color: "var(--colors-text-muted)" }}

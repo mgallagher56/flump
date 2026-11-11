@@ -450,7 +450,9 @@ export const InteractiveFinancialTeaser: FC = () => {
                       style={{
                         fontWeight: "bold",
                         color:
-                          taxResults.effectiveTaxRate > 35 ? "#ef4444" : "var(--colors-primary)",
+                          taxResults.effectiveTaxRate > 35
+                            ? "var(--colors-status-danger-text)"
+                            : "var(--colors-primary)",
                       }}
                     >
                       {taxResults.effectiveTaxRate.toFixed(1)}%

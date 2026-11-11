@@ -432,7 +432,10 @@ export const InteractiveFinancialTeaser: FC = () => {
                   <span
                     style={{
                       fontWeight: "bold",
-                      color: taxResults.effectiveTaxRate > 35 ? "#ef4444" : "primary",
+                      color:
+                        taxResults.effectiveTaxRate > 35
+                          ? "var(--colors-status-danger-text)"
+                          : "primary",
                     }}
                   >
                     {taxResults.effectiveTaxRate.toFixed(1)}%
@@ -536,7 +539,10 @@ export const InteractiveFinancialTeaser: FC = () => {
               <div className={resultBoxStyle}>
                 <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
                   <span className={labelStyle}>Total interest saved</span>
-                  <div className={highlightValueStyle} style={{ color: "#10b981" }}>
+                  <div
+                    className={highlightValueStyle}
+                    style={{ color: "var(--colors-status-positive-text)" }}
+                  >
                     {formatGBP(mortgageResults.totalInterestSaved)}
                   </div>
                   <FLPText color="text.muted" fontSize="xs">

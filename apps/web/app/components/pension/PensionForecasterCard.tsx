@@ -503,8 +503,10 @@ export const PensionForecasterCard: FC<PensionForecasterCardProps> = ({
             >
               {isSynced ? (
                 <>
-                  <FaCheckCircle style={{ color: "#10b981", marginRight: "6px" }} /> Synced to
-                  Profile!
+                  <FaCheckCircle
+                    style={{ color: "var(--colors-status-positive-text)", marginRight: "6px" }}
+                  />{" "}
+                  Synced to Profile!
                 </>
               ) : (
                 <>
@@ -624,7 +626,7 @@ export const PensionForecasterCard: FC<PensionForecasterCardProps> = ({
               <div className={inputCardStyle}>
                 <label className={labelStyle} htmlFor="pension-forecast-employer-pct">
                   <span>Employer Contrib</span>
-                  <span style={{ color: "#f59e0b", fontWeight: "bold" }}>
+                  <span style={{ color: "var(--colors-status-warning-text)", fontWeight: "bold" }}>
                     {employerPercent}% ({formatCurrency(monthlyEmployer)}/mo)
                   </span>
                 </label>
@@ -838,7 +840,11 @@ export const PensionForecasterCard: FC<PensionForecasterCardProps> = ({
               })}
             >
               <FaExclamationTriangle
-                style={{ color: "#f59e0b", fontSize: "16px", flexShrink: 0 }}
+                style={{
+                  color: "var(--colors-status-warning-text)",
+                  fontSize: "16px",
+                  flexShrink: 0,
+                }}
               />
               <FLPText fontSize="xs">
                 <strong>UK Annual Allowance Notice:</strong> Projected inflow (
@@ -1176,7 +1182,12 @@ export const PensionForecasterCard: FC<PensionForecasterCardProps> = ({
                             <div style={{ fontWeight: 700, marginBottom: "4px" }}>
                               Total Projected Pot: {formatCurrency(point?.totalPot ?? 0)}
                             </div>
-                            <div style={{ color: "#10b981", marginTop: "2px" }}>
+                            <div
+                              style={{
+                                color: "var(--colors-status-positive-text)",
+                                marginTop: "2px",
+                              }}
+                            >
                               Compound Growth: +{formatCurrency(point?.growth ?? 0)}
                             </div>
                             <div style={{ color: "#6363f1", marginTop: "2px" }}>

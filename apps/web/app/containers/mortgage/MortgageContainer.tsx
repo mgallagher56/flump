@@ -1000,7 +1000,11 @@ const MortgageContainer: FC = () => {
             <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
               <FaExclamationTriangle color="#f59e0b" size={18} />
               <div>
-                <FLPHeading as="h4" size="xs" style={{ margin: 0, color: "#f59e0b" }}>
+                <FLPHeading
+                  as="h4"
+                  size="xs"
+                  style={{ margin: 0, color: "var(--colors-status-warning-text)" }}
+                >
                   Mortgage account missing
                 </FLPHeading>
                 <FLPText fontSize="xs" color="text.muted" style={{ margin: 0 }}>
@@ -1192,7 +1196,7 @@ const MortgageContainer: FC = () => {
                     style={{
                       fontSize: "13px",
                       fontWeight: "bold",
-                      color: m.isAchieved ? "#10b981" : "#d97706",
+                      color: m.isAchieved ? "var(--colors-status-positive-text)" : "#d97706",
                     }}
                   >
                     {m.targetLtvPct}% LTV tier
@@ -1201,7 +1205,7 @@ const MortgageContainer: FC = () => {
                     style={{
                       fontSize: "11px",
                       fontWeight: 700,
-                      color: m.isAchieved ? "#10b981" : "#d97706",
+                      color: m.isAchieved ? "var(--colors-status-positive-text)" : "#d97706",
                     }}
                   >
                     {m.isAchieved ? "✓ Unlocked" : "Locked"}

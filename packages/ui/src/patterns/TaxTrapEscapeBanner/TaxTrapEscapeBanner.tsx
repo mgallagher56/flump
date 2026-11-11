@@ -161,7 +161,7 @@ export const TaxTrapEscapeBanner: FC<TaxTrapEscapeBannerProps> = ({
                 fontFamily: "display",
                 fontSize: "md",
                 fontWeight: "bold",
-                color: "status.positive.solid",
+                color: "status.positive.text",
                 fontVariantNumeric: "tabular-nums",
               })}
             >

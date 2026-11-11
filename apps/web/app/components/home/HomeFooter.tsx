@@ -250,7 +250,13 @@ export const HomeFooter: FC = () => {
             </div>
 
             {feedbackSent ? (
-              <div style={{ color: "#10b981", fontWeight: 600, padding: "12px 0" }}>
+              <div
+                style={{
+                  color: "var(--colors-status-positive-text)",
+                  fontWeight: 600,
+                  padding: "12px 0",
+                }}
+              >
                 Thank you. Your message has been received.
               </div>
             ) : (

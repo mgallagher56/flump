@@ -212,7 +212,7 @@ const AccountDetails: FC<AccountDetailsProps> = ({
   });
 
   const deleteBtnStyle = css({
-    color: "destructive",
+    color: "status.danger.text",
     cursor: "pointer",
     padding: "4px 8px",
     borderRadius: "md",
@@ -232,7 +232,7 @@ const AccountDetails: FC<AccountDetailsProps> = ({
       display: "block",
       marginTop: "4px",
       fontWeight: "medium",
-      color: isZero ? "text.muted" : isUp ? "success.500" : "destructive",
+      color: isZero ? "text.muted" : isUp ? "success.500" : "status.danger.text",
     });
 
   if (!accountDetails || accountDetails.length === 0) {

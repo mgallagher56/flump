@@ -131,7 +131,10 @@ export const ScenarioLayersWidget: FC<ScenarioLayersWidgetProps> = ({ onScenario
               borderRadius: "full",
               backgroundColor:
                 netImpactAt30Yrs >= 0 ? "rgba(16, 185, 129, 0.1)" : "rgba(239, 68, 68, 0.1)",
-              color: netImpactAt30Yrs >= 0 ? "#10b981" : "#ef4444",
+              color:
+                netImpactAt30Yrs >= 0
+                  ? "var(--colors-status-positive-text)"
+                  : "var(--colors-status-danger-text)",
               fontSize: "12px",
               fontWeight: 700,
             }}
@@ -215,7 +218,10 @@ export const ScenarioLayersWidget: FC<ScenarioLayersWidgetProps> = ({ onScenario
                     fontSize: "11px",
                     fontWeight: 600,
                     marginTop: "6px",
-                    color: event.wealthDeltaAt30Yr >= 0 ? "#10b981" : "var(--colors-text-muted)",
+                    color:
+                      event.wealthDeltaAt30Yr >= 0
+                        ? "var(--colors-status-positive-text)"
+                        : "var(--colors-text-muted)",
                   }}
                 >
                   Estimated 30-Yr Impact: {formatGBP(event.wealthDeltaAt30Yr)}
