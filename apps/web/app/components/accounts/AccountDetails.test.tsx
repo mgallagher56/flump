@@ -6,6 +6,7 @@ import AccountDetails from "./AccountDetails";
 
 const mocks = vi.hoisted(() => ({
   mockFetcherSubmit: vi.fn(),
+  fetcherData: { current: null as unknown },
   mockAccountDetails: [
     {
       month: 1,
@@ -142,7 +143,7 @@ vi.mock("react-router", async () => {
     useFetcher: () => ({
       submit: mocks.mockFetcherSubmit,
       state: "idle",
-      data: null,
+      data: mocks.fetcherData.current,
       Form: "form",
     }),
   };
@@ -219,5 +220,30 @@ describe("<AccountDetails />", () => {
       },
       { method: "POST" },
     );
+  });
+
+  test("a failed year delete shows the error inline and keeps the dialog open; success closes it", () => {
+    mocks.mockFetcherSubmit.mockClear();
+    mocks.fetcherData.current = null;
+    const ui = () => (
+      <AccountDetails editedValues={emptyObject} isEditMode={false} onInputChange={vi.fn()} />
+    );
+    const { getByTitle, getByRole, queryByRole, rerender } = customRender(ui());
+    fireEvent.click(getByTitle("Delete 2023"));
+    fireEvent.click(getByRole("button", { name: "Delete year" }));
+
+    mocks.fetcherData.current = {
+      success: false,
+      error: "We couldn't reach the server. Please try again.",
+    };
+    rerender(ui());
+    expect(getByRole("alert").textContent).toBe("We couldn't reach the server. Please try again.");
+    expect(getByRole("alertdialog")).toBeDefined();
+
+    fireEvent.click(getByRole("button", { name: "Delete year" }));
+    mocks.fetcherData.current = { success: true };
+    rerender(ui());
+    expect(queryByRole("alertdialog")).toBeNull();
+    mocks.fetcherData.current = null;
   });
 });

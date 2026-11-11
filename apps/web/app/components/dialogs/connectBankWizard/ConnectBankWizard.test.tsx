@@ -1,9 +1,54 @@
 import { fireEvent } from "@testing-library/react";
-import { describe, expect, test, vi } from "vitest";
+import type { ReactNode } from "react";
+import { afterEach, describe, expect, test, vi } from "vitest";
 import customRender from "~/testUtils/customRender";
 import ConnectBankWizard from "./ConnectBankWizard";
 
+const fetcherState = vi.hoisted(() => ({ data: null as unknown }));
+
+vi.mock("react-router", async () => {
+  const actual: Record<string, unknown> = await vi.importActual("react-router");
+  return {
+    ...actual,
+    useFetcher: () => ({
+      submit: vi.fn(),
+      state: "idle",
+      data: fetcherState.data,
+      Form: ({ children }: { children: ReactNode }) => <form>{children}</form>,
+    }),
+  };
+});
+
 describe("<ConnectBankWizard />", () => {
+  afterEach(() => {
+    fetcherState.data = null;
+    vi.unstubAllGlobals();
+  });
+
+  test("navigates to an https OAuth redirect URL", () => {
+    const location = { href: "" };
+    vi.stubGlobal("location", location);
+    const { rerender } = customRender(<ConnectBankWizard />);
+    fetcherState.data = { success: true, oauth: true, redirectUrl: "https://bank.example.test/a" };
+    rerender(<ConnectBankWizard />);
+    expect(location.href).toBe("https://bank.example.test/a");
+  });
+
+  test.each(["javascript:alert(1)", "http://bank.example.test/a"])(
+    "rejects %s without navigating and shows the error step",
+    (redirectUrl) => {
+      const location = { href: "" };
+      vi.stubGlobal("location", location);
+      const { getByText, rerender } = customRender(<ConnectBankWizard />);
+      fireEvent.click(getByText("Connect Bank Account"));
+      fireEvent.click(getByText("Monzo Bank"));
+      fetcherState.data = { success: true, oauth: true, redirectUrl };
+      rerender(<ConnectBankWizard />);
+      expect(location.href).toBe("");
+      expect(getByText("We couldn't start the bank sign-in. Please try again.")).toBeDefined();
+    },
+  );
+
   test("opens dialog and allows selecting a bank and proceeding through steps", async () => {
     const { getByText, getByPlaceholderText, queryByText } = customRender(<ConnectBankWizard />);
 

@@ -46,6 +46,7 @@ import PaymentsOnAccountCard from "~/components/tax/PaymentsOnAccountCard";
 import TaxIncomeSectionCard from "~/components/tax/TaxIncomeSectionCard";
 import TaxTrapAlertBanner from "~/components/tax/TaxTrapAlertBanner";
 import { ConfirmDialog } from "~/features/feedback/components/ConfirmDialog";
+import { useFetcherOutcome } from "~/features/feedback/hooks/useFetcherOutcome";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
 import type { loader } from "~/routes/app.tax";
 import { useFinancialBaseline } from "~/state/baseline.store";
@@ -126,6 +127,12 @@ const TaxContainer: FC = () => {
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [transactionToDelete, setTransactionToDelete] = useState<string | null>(null);
   const [taxYearToDelete, setTaxYearToDelete] = useState<string | null>(null);
+  const deleteTransactionOutcome = useFetcherOutcome(fetcher, {
+    onSuccess: () => setTransactionToDelete(null),
+  });
+  const deleteTaxYearOutcome = useFetcherOutcome(fetcher, {
+    onSuccess: () => setTaxYearToDelete(null),
+  });
   const [editingRecord, setEditingRecord] = useState<TaxRecord | null>(null);
 
   // Form inputs
@@ -317,10 +324,12 @@ const TaxContainer: FC = () => {
   };
 
   const confirmDeleteTransaction = () => {
-    if (transactionToDelete) {
-      fetcher.submit({ intent: "delete-transaction", id: transactionToDelete }, { method: "POST" });
+    if (!transactionToDelete) {
+      setTransactionToDelete(null);
+      return;
     }
-    setTransactionToDelete(null);
+    deleteTransactionOutcome.begin();
+    fetcher.submit({ intent: "delete-transaction", id: transactionToDelete }, { method: "POST" });
   };
 
   const recordsInSelectedTaxYear = useMemo(() => {
@@ -334,21 +343,23 @@ const TaxContainer: FC = () => {
   };
 
   const confirmDeleteTaxYear = () => {
-    if (taxYearToDelete) {
-      const recordIds = initialRecords
-        .filter((r) => getTaxYearForRecordDate(r.date) === taxYearToDelete)
-        .map((r) => r.id);
-      if (recordIds.length > 0) {
-        fetcher.submit(
-          {
-            intent: "delete-tax-year",
-            recordIds: JSON.stringify(recordIds),
-          },
-          { method: "POST" },
-        );
-      }
+    const recordIds = taxYearToDelete
+      ? initialRecords
+          .filter((r) => getTaxYearForRecordDate(r.date) === taxYearToDelete)
+          .map((r) => r.id)
+      : [];
+    if (recordIds.length === 0) {
+      setTaxYearToDelete(null);
+      return;
     }
-    setTaxYearToDelete(null);
+    deleteTaxYearOutcome.begin();
+    fetcher.submit(
+      {
+        intent: "delete-tax-year",
+        recordIds: JSON.stringify(recordIds),
+      },
+      { method: "POST" },
+    );
   };
 
   const { formatCurrencyDecimal } = useFormatCurrency();
@@ -2207,8 +2218,13 @@ const TaxContainer: FC = () => {
       <ConfirmDialog
         open={transactionToDelete !== null}
         onOpenChange={(open) => {
-          if (!open) setTransactionToDelete(null);
+          if (!open) {
+            setTransactionToDelete(null);
+            deleteTransactionOutcome.dismiss();
+          }
         }}
+        pending={deleteTransactionOutcome.pending}
+        error={deleteTransactionOutcome.error}
         title="Delete transaction?"
         description="This removes the transaction record. This can't be undone."
         confirmLabel="Delete transaction"
@@ -2219,8 +2235,13 @@ const TaxContainer: FC = () => {
       <ConfirmDialog
         open={taxYearToDelete !== null}
         onOpenChange={(open) => {
-          if (!open) setTaxYearToDelete(null);
+          if (!open) {
+            setTaxYearToDelete(null);
+            deleteTaxYearOutcome.dismiss();
+          }
         }}
+        pending={deleteTaxYearOutcome.pending}
+        error={deleteTaxYearOutcome.error}
         title={
           <>
             Delete all <span className={numeric}>{recordsInSelectedTaxYear.length}</span> records

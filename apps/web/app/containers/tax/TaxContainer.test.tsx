@@ -8,7 +8,7 @@ import {
   isRecordActiveInTaxYear,
   type TaxRecord,
 } from "@flump/finance-engine";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 const mockRecords: TaxRecord[] = [
@@ -124,6 +124,7 @@ const mockRecords: TaxRecord[] = [
 
 let mockLoaderRecords: TaxRecord[] = mockRecords;
 const mockSubmit = vi.fn();
+const fetcherData = { current: null as unknown };
 
 vi.mock("react-router", () => ({
   useLoaderData: () => ({
@@ -140,6 +141,7 @@ vi.mock("react-router", () => ({
   useFetcher: () => ({
     submit: mockSubmit,
     state: "idle",
+    data: fetcherData.current,
   }),
 }));
 
@@ -270,6 +272,54 @@ describe("TaxContainer & Calculation Tools", () => {
       );
       expect(confirmSpy).not.toHaveBeenCalled();
       expect(alertSpy).not.toHaveBeenCalled();
+    });
+
+    it("a failed transaction delete shows the error inline and keeps the dialog open", () => {
+      stubDialogs();
+      fetcherData.current = null;
+      const { rerender } = render(<TaxContainer />);
+      fireEvent.click(screen.getByText("Detailed Transaction Log"));
+      fireEvent.click(screen.getAllByTitle("Delete record")[0]);
+      fireEvent.click(screen.getByRole("button", { name: "Delete transaction" }));
+
+      fetcherData.current = {
+        success: false,
+        error: "We couldn't reach the server. Please try again.",
+      };
+      rerender(<TaxContainer />);
+      expect(within(screen.getByRole("alertdialog")).getByRole("alert").textContent).toBe(
+        "We couldn't reach the server. Please try again.",
+      );
+
+      fireEvent.click(screen.getByRole("button", { name: "Delete transaction" }));
+      fetcherData.current = { success: true };
+      rerender(<TaxContainer />);
+      expect(screen.queryByRole("alertdialog")).toBeNull();
+      fetcherData.current = null;
+    });
+
+    it("a failed tax year delete shows the error inline and keeps the dialog open", () => {
+      stubDialogs();
+      fetcherData.current = null;
+      const { rerender } = render(<TaxContainer />);
+      fireEvent.click(screen.getByRole("button", { name: "2024/25" }));
+      fireEvent.click(screen.getByRole("button", { name: /Delete 2024\/25/i }));
+      fireEvent.click(screen.getByRole("button", { name: "Delete year" }));
+
+      fetcherData.current = {
+        success: false,
+        error: "We couldn't reach the server. Please try again.",
+      };
+      rerender(<TaxContainer />);
+      expect(within(screen.getByRole("alertdialog")).getByRole("alert").textContent).toBe(
+        "We couldn't reach the server. Please try again.",
+      );
+
+      fireEvent.click(screen.getByRole("button", { name: "Delete year" }));
+      fetcherData.current = { success: true };
+      rerender(<TaxContainer />);
+      expect(screen.queryByRole("alertdialog")).toBeNull();
+      fetcherData.current = null;
     });
 
     it("cancelling a transaction delete submits nothing", () => {

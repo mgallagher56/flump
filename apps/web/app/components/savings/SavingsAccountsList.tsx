@@ -16,6 +16,7 @@ import FLPText from "~/components/core/typography/FLPText";
 import type { Account } from "~/containers/accounts/types";
 import { useResponsive } from "~/context/ResponsiveContext";
 import { ConfirmDialog } from "~/features/feedback/components/ConfirmDialog";
+import { useFetcherOutcome } from "~/features/feedback/hooks/useFetcherOutcome";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
 import AddSavingsAccountDialog from "./AddSavingsAccountDialog";
 
@@ -181,6 +182,7 @@ export const SavingsAccountsList: FC<SavingsAccountsListProps> = ({
   const navigate = useNavigate();
   const [editingAccount, setEditingAccount] = useState<Account | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const deleteOutcome = useFetcherOutcome(fetcher, { onSuccess: () => setConfirmDeleteId(null) });
   const [inlineEdit, setInlineEdit] = useState<{
     accountId: string;
     field: "balance" | "interestRate" | "monthlyContribution";
@@ -188,6 +190,7 @@ export const SavingsAccountsList: FC<SavingsAccountsListProps> = ({
   } | null>(null);
 
   const handleConfirmDelete = (accountId: string) => {
+    deleteOutcome.begin();
     fetcher.submit(
       {
         intent: "deleteAccount",
@@ -195,7 +198,6 @@ export const SavingsAccountsList: FC<SavingsAccountsListProps> = ({
       },
       { method: "POST", action: "/app/savings" },
     );
-    setConfirmDeleteId(null);
   };
 
   const accountToDelete = confirmDeleteId
@@ -724,8 +726,13 @@ export const SavingsAccountsList: FC<SavingsAccountsListProps> = ({
       <ConfirmDialog
         open={accountToDelete !== undefined}
         onOpenChange={(open) => {
-          if (!open) setConfirmDeleteId(null);
+          if (!open) {
+            setConfirmDeleteId(null);
+            deleteOutcome.dismiss();
+          }
         }}
+        pending={deleteOutcome.pending}
+        error={deleteOutcome.error}
         title={`Delete ${accountToDelete?.name ?? "account"}?`}
         description="This deletes the savings account and its history. This can't be undone."
         confirmLabel="Delete account"

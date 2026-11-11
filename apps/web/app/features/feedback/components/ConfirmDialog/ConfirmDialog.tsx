@@ -5,6 +5,7 @@ import {
   confirmActions,
   confirmContent,
   confirmDescription,
+  confirmError,
   confirmField,
   confirmInput,
   confirmOverlay,
@@ -21,6 +22,8 @@ export interface ConfirmDialogProps {
   tone?: "danger" | "default";
   onConfirm: () => void | Promise<void>;
   pending?: boolean;
+  /** Failure copy from the last confirm attempt. Shown inline (role="alert"); the dialog stays open. */
+  error?: string | null;
   /** When set, the confirm button stays disabled until the input matches (case-insensitive). */
   requireText?: string;
 }
@@ -40,6 +43,7 @@ export const ConfirmDialog: FC<ConfirmDialogProps> = ({
   tone = "default",
   onConfirm,
   pending = false,
+  error,
   requireText,
 }) => {
   const cancelRef = useRef<HTMLButtonElement>(null);
@@ -87,6 +91,11 @@ export const ConfirmDialog: FC<ConfirmDialogProps> = ({
           <Dialog.Description asChild>
             <div className={confirmDescription()}>{description}</div>
           </Dialog.Description>
+          {error ? (
+            <p role="alert" className={confirmError()}>
+              {error}
+            </p>
+          ) : null}
           {requireText !== undefined ? (
             <label className={confirmField()} htmlFor={inputId}>
               <span>

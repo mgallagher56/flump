@@ -14,6 +14,7 @@ import FLPText from "~/components/core/typography/FLPText";
 import ConnectBankWizard from "~/components/dialogs/connectBankWizard/ConnectBankWizard";
 import { useResponsive } from "~/context/ResponsiveContext";
 import { ConfirmDialog } from "~/features/feedback/components/ConfirmDialog";
+import { useFetcherOutcome } from "~/features/feedback/hooks/useFetcherOutcome";
 
 interface BankConnection {
   id: string;
@@ -52,6 +53,9 @@ const BankConnectionsList: FC<BankConnectionsListProps> = ({
 }) => {
   const fetcher = useFetcher();
   const [disconnectTarget, setDisconnectTarget] = useState<BankConnection | null>(null);
+  const disconnectOutcome = useFetcherOutcome(fetcher, {
+    onSuccess: () => setDisconnectTarget(null),
+  });
   const revalidator = useRevalidator();
   const { isMobile: contextIsMobile } = useResponsive();
   const isMobileVariant = propIsMobile ?? (variant === "mobile" ? true : contextIsMobile);
@@ -62,11 +66,11 @@ const BankConnectionsList: FC<BankConnectionsListProps> = ({
 
   const handleConfirmDisconnect = () => {
     if (!disconnectTarget) return;
+    disconnectOutcome.begin();
     fetcher.submit(
       { intent: "disconnectConnection", connectionId: disconnectTarget.id },
       { method: "POST" },
     );
-    setDisconnectTarget(null);
   };
 
   const formatDate = (dateStr: string) => {
@@ -198,8 +202,13 @@ const BankConnectionsList: FC<BankConnectionsListProps> = ({
       <ConfirmDialog
         open={disconnectTarget !== null}
         onOpenChange={(open) => {
-          if (!open) setDisconnectTarget(null);
+          if (!open) {
+            setDisconnectTarget(null);
+            disconnectOutcome.dismiss();
+          }
         }}
+        pending={disconnectOutcome.pending}
+        error={disconnectOutcome.error}
         title={`Disconnect ${disconnectTarget?.institutionName ?? "this bank"}?`}
         description="Synced accounts and transactions from this bank will be removed."
         confirmLabel="Disconnect"

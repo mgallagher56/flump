@@ -1,3 +1,4 @@
+import { css } from "@repo/ui/styled-system/css";
 import { type FC, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -18,7 +19,9 @@ import FLPBox from "~/components/core/structure/FLPBox";
 import FLPText from "~/components/core/typography/FLPText";
 import { type AccountType, AccountTypeEnum } from "~/containers/accounts/utils";
 import { ConfirmDialog } from "~/features/feedback/components/ConfirmDialog";
+import { useFetcherOutcome } from "~/features/feedback/hooks/useFetcherOutcome";
 import type { loader } from "~/routes/app.accounts._index";
+import { isSafeRedirectUrl } from "~/utils/safeRedirectUrl";
 
 const { CURRENT, SAVING, MORTGAGE, CREDIT_CARD, LOAN, OWED, INVESTMENT, PENSION } = AccountTypeEnum;
 const accountTypeArray = [CURRENT, SAVING, INVESTMENT, PENSION, CREDIT_CARD, MORTGAGE, LOAN, OWED];
@@ -99,6 +102,19 @@ const POPULAR_BANKS = [
   },
 ];
 
+const saveErrorStyle = css({
+  marginTop: "12px",
+  paddingX: "12px",
+  paddingY: "8px",
+  fontSize: "sm",
+  color: "status.danger.text",
+  backgroundColor: "status.danger.bg",
+  borderWidth: "1px",
+  borderStyle: "solid",
+  borderColor: "status.danger.border",
+  borderRadius: "md",
+});
+
 interface AddEditAccountsDialogBtnProp {
   accountId?: string;
   isEditAccount?: boolean;
@@ -135,8 +151,22 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
     setBankError(null);
   }, []);
 
+  // Create, edit and delete keep the modal open until the action answers; only a success closes it.
+  const saveOutcome = useFetcherOutcome(fetcher, { onSuccess: handleCloseModal });
+  const deleteOutcome = useFetcherOutcome(fetcher, { onSuccess: handleCloseModal });
+  const { dismiss: dismissSave } = saveOutcome;
+  const { dismiss: dismissDelete } = deleteOutcome;
+  // Only the bank connection flow is handled by the effect below.
+  const bankFlowRef = useRef(false);
+
+  const handleDismiss = useCallback(() => {
+    handleCloseModal();
+    dismissSave();
+    dismissDelete();
+  }, [handleCloseModal, dismissSave, dismissDelete]);
+
   useEffect(() => {
-    if (!fetcher.data) return;
+    if (!bankFlowRef.current || !fetcher.data) return;
     const res = fetcher.data as {
       success?: boolean;
       oauth?: boolean;
@@ -146,6 +176,10 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
     };
 
     if (res.oauth && res.redirectUrl) {
+      if (!isSafeRedirectUrl(res.redirectUrl)) {
+        setBankError("We couldn't start the bank sign-in. Please try again.");
+        return;
+      }
       window.location.href = res.redirectUrl;
       return;
     }
@@ -195,6 +229,8 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
       setBankAuthType("token");
       setBankToken("");
       setBankError(null);
+      dismissSave();
+      dismissDelete();
       setFormInput({
         name: isEditAccount ? selectedAccount.name || "" : "",
         type: [isEditAccount ? selectedAccount.type || accountTypeArray[0] : accountTypeArray[0]],
@@ -205,7 +241,14 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
       });
       setModalOpen(true);
     },
-    [isEditAccount, selectedAccount.balance, selectedAccount.name, selectedAccount.type],
+    [
+      isEditAccount,
+      selectedAccount.balance,
+      selectedAccount.name,
+      selectedAccount.type,
+      dismissSave,
+      dismissDelete,
+    ],
   );
 
   const onChangeNameInput = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
@@ -224,6 +267,8 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
 
   const onAddAccount = useCallback(() => {
     const { name, type, balance } = formInput;
+    bankFlowRef.current = false;
+    saveOutcome.begin();
     fetcher.submit(
       {
         intent: "create",
@@ -233,11 +278,11 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
       },
       { method: "POST" },
     );
-    handleCloseModal();
-  }, [formInput, fetcher, handleCloseModal]);
+  }, [formInput, fetcher, saveOutcome.begin]);
 
   const onConnectBank = useCallback(() => {
     setBankError(null);
+    bankFlowRef.current = true;
     if (bankAuthType === "token") {
       if (!bankToken.trim()) {
         setBankError("Please enter your developer token.");
@@ -266,6 +311,8 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
 
   const onEditAccount = useCallback(() => {
     const { name, type, balance } = formInput;
+    bankFlowRef.current = false;
+    saveOutcome.begin();
     fetcher.submit(
       {
         intent: "update",
@@ -276,10 +323,11 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
       },
       { method: "POST" },
     );
-    handleCloseModal();
-  }, [accountId, formInput, fetcher, handleCloseModal]);
+  }, [accountId, formInput, fetcher, saveOutcome.begin]);
 
   const handleConfirmRemoveAccount = useCallback(() => {
+    bankFlowRef.current = false;
+    deleteOutcome.begin();
     fetcher.submit(
       {
         intent: "delete",
@@ -287,8 +335,7 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
       },
       { method: "POST" },
     );
-    handleCloseModal();
-  }, [accountId, fetcher, handleCloseModal]);
+  }, [accountId, fetcher, deleteOutcome.begin]);
 
   const selectedBankObj = POPULAR_BANKS.find((b) => b.id === selectedBank) ?? POPULAR_BANKS[0];
   const isDirectSync = !!selectedBankObj.directSync;
@@ -331,12 +378,20 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
       : t("addAccount");
 
   const isConfirmDisabled = useMemo(() => {
-    if (isConnecting) return true;
+    if (isConnecting || saveOutcome.pending || deleteOutcome.pending) return true;
     if (entryMethod === "bank" && isDirectSync && bankAuthType === "token" && !bankToken.trim()) {
       return true;
     }
     return false;
-  }, [isConnecting, entryMethod, isDirectSync, bankAuthType, bankToken]);
+  }, [
+    isConnecting,
+    saveOutcome.pending,
+    deleteOutcome.pending,
+    entryMethod,
+    isDirectSync,
+    bankAuthType,
+    bankToken,
+  ]);
 
   return (
     <FLPModal
@@ -355,7 +410,7 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
           </FLPButtonGroup>
         ) : undefined
       }
-      closeOnConfirm={entryMethod === "manual" || isEditAccount}
+      closeOnConfirm={false}
       confirmButton={{ id: accountId, text: confirmBtnText }}
       contentRef={contentRef}
       disabled={isConfirmDisabled}
@@ -377,13 +432,18 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
           </FLPButton>
         )
       }
-      onClose={handleCloseModal}
+      onClose={handleDismiss}
       onConfirm={submitAction}
     >
       {isEditAccount && (
         <ConfirmDialog
           open={confirmDeleteOpen}
-          onOpenChange={setConfirmDeleteOpen}
+          onOpenChange={(open) => {
+            setConfirmDeleteOpen(open);
+            if (!open) deleteOutcome.dismiss();
+          }}
+          pending={deleteOutcome.pending}
+          error={deleteOutcome.error}
           title={`Delete ${selectedAccount.name || "this account"}?`}
           description="This deletes the account and its full balance history."
           confirmLabel="Delete account"
@@ -479,6 +539,11 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
               onChange={onChangeBalanceInput}
             />
           </FLPBox>
+          {saveOutcome.error ? (
+            <p role="alert" className={saveErrorStyle}>
+              {saveOutcome.error}
+            </p>
+          ) : null}
         </form>
       ) : (
         <div

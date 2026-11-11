@@ -17,6 +17,7 @@ import FLPButton from "~/components/core/buttons/FLPButton";
 import FLPInput from "~/components/core/inputs/input/FLPInput";
 import FLPHeading from "~/components/core/typography/FLPHeading";
 import FLPText from "~/components/core/typography/FLPText";
+import { isSafeRedirectUrl } from "~/utils/safeRedirectUrl";
 
 interface ConnectBankWizardProps {
   onSuccess?: () => void;
@@ -153,6 +154,11 @@ const ConnectBankWizard: FC<ConnectBankWizardProps> = ({ onSuccess }) => {
     };
 
     if (res.oauth && res.redirectUrl) {
+      if (!isSafeRedirectUrl(res.redirectUrl)) {
+        setErrorMessage("We couldn't start the bank sign-in. Please try again.");
+        setStep("error");
+        return;
+      }
       window.location.href = res.redirectUrl;
       return;
     }

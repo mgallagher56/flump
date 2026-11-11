@@ -27,6 +27,18 @@ describe("ConfirmDialog", () => {
     expect(screen.getByText("This removes all monthly balances for 2024.")).toBeDefined();
   });
 
+  it("shows a failure as an inline alert and keeps the dialog open", () => {
+    setup({ error: "We couldn't reach the server. Please try again." });
+    const alert = screen.getByRole("alert");
+    expect(alert.textContent).toBe("We couldn't reach the server. Please try again.");
+    expect(screen.getByRole("alertdialog")).toBeDefined();
+  });
+
+  it("renders no alert without an error", () => {
+    setup();
+    expect(screen.queryByRole("alert")).toBeNull();
+  });
+
   it("focuses Cancel initially", () => {
     setup();
     expect(document.activeElement).toBe(screen.getByRole("button", { name: "Cancel" }));
