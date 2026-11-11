@@ -391,7 +391,7 @@ describe("Semantic token contrast matrix", () => {
     expect(readFileSync(generatedTokens, "utf8")).toContain('"colors.primary.solid"');
   });
 
-  it("border.input reaches 3:1 on every surface in both themes (reports ratios)", () => {
+  it("border.input reaches 3:1 on every surface in both themes", () => {
     for (const theme of BOTH) {
       for (const bg of ["card", "canvas", "sunken", "overlay", "subtle"]) {
         const r = pairContrast(
