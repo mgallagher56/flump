@@ -264,6 +264,12 @@ Taken from the implementer reports (T1 to T14), cross-checked against `git log m
 | T14  | same, SCOTLAND                                                                                        | 69.5                                                                  | 67.5 (45% Advanced + 22.5% taper)                                                    | 2025/26 employer page Scottish table                                        |
 | T14  | calculateUKTakeHome trapAnalysis.marginalRatePct, in trap                                             | 62                                                                    | 60                                                                                   | follows calculateTaxTrapRelief                                              |
 | T14  | effectiveMarginalRatePct (62 / 69.5), estimatedTaxSavedByEscapingGbp (6000), estimatedTaxSaved (6200) | same                                                                  | unchanged                                                                            | n/a                                                                         |
+| E4   | calculateUkTax nationalInsuranceGbp at 30,000, 2020/21                                                | 1394.40 (year-less 2024/25 constants)                                 | 2460                                                                                 | per-year table (UK_NATIONAL_INSURANCE), vector employeeNi.2020-21.30000     |
+| E4   | same, 2021/22                                                                                         | 1394.40                                                               | per-year table value (see employeeNi 2021-22 vectors)                                | per-year table                                                              |
+| E4   | same, 2022/23                                                                                         | 1394.40                                                               | 2303.11 (approximation, unverified, see ruling 3)                                    | per-year table                                                              |
+| E4   | same, 2023/24                                                                                         | 1394.40                                                               | 2004 (approximation, unverified, see ruling 3)                                       | per-year table                                                              |
+| E4   | calculateUkTax NI, other gross values, 2020/21 to 2023/24; net take-home and effective rate follow    | year-less 2024/25 constants                                           | per-year table via calculateEmployeeNi                                               | same                                                                        |
+| E4   | toStudentLoanPlanKey('constructor')                                                                   | 'constructor' (inherited property; downstream NaN)                    | undefined (Object.hasOwn)                                                            | n/a                                                                         |
 
 T1 (vector catalogue) and T12's unverified list changed no figures. T1 introduced the catalogue only.
 
@@ -304,5 +310,23 @@ Each needs an owner ruling or a primary source before sign-off.
 - D8-a: the tax year starts on 6 April, so 1 to 5 April belong to the previous year (T2); unknown tax years throw UnsupportedUkTaxYearError instead of falling back (T2, T7, T8, T14).
 - D9-B: Gift Aid for Scotland affects only the personal allowance taper, with a disclaimer; no band extension and no Scottish Gift Aid vectors (T5, T6).
 - Years in scope: 2020/21, 2021/22, 2022/23, 2023/24, 2024/25, 2025/26 and 2026/27 (`UK_TAX_VECTOR_YEARS`).
+
+## 5. Known issues and open items
+
+(a) Dividend rates 2020/21 and 2021/22. The engine uses 8.75% / 33.75% / 39.35%. The catalogue vectors use 7.5% / 32.5% / 38.1%, which are MEMORY ONLY / UNVERIFIED. Owner to rule. The engine is unchanged for those years, and the dividend vectors are not wired to an engine test.
+
+(b) `calculateUKEWNITakeHome` still rounds tax, NI, pension and student loan to whole pounds (up to about 1 pound difference versus `calculateUkTax`). D5-a is not fully applied to that wrapper.
+
+(c) Silent unknown-year fallbacks remain: `calculateUKTax` falls back to 2024/25, `calculateUKEWNITakeHome` falls back similarly, and uk-tax.ts:74 falls back to 2026/27. They were deliberately not changed to throw, to avoid breaking app callers outside this track.
+
+(d) `analyzeTaxTrap` and the PSA logic are year-blind. The 60/62 and 67.5/69.5 rates are valid from 2024/25 onward only; Scottish Higher 41/42% applies before 2024/25.
+
+(e) UNVERIFIED: Class 2 NI, Plan 5 thresholds for 2023/24 to 2025/26, and the personal allowance taper rate for 2020/21 to 2022/23.
+
+(f) Three apps/web tests now fail as a consequence of deliberate engine changes and need consumer-track follow-up:
+
+- UKTaxCalculator.test.tsx:61 expects 338 and gets 337.5 (employer NI pence rounding, D5-a).
+- TaxTrapAlertBanner.test.tsx:16 expects '62% Marginal Tax'; D7-a gives marginalRatePct 60 (effective 62).
+- TaxContainer.test.tsx:313 (D8-a: 1 April now belongs to the previous tax year).
 
 Owner sign-off: ____________________ Date: ____________

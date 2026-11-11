@@ -48,9 +48,6 @@ interface YearVector {
   unverified: string[];
 }
 
-const EMPLOYERS = (y: string) =>
-  `https://www.gov.uk/guidance/rates-and-thresholds-for-employers-${y}`;
-
 /**
  * Sources (all GOV.UK):
  * - Income tax 2023/24 to 2026/27:
@@ -58,7 +55,7 @@ const EMPLOYERS = (y: string) =>
  * - Income tax 2020/21 to 2022/23: UK Government Web Archive captures of https://www.gov.uk/income-tax-rates
  *   (20200901000000, 20211001000000, 20220801195953).
  * - NI and student loans: https://www.gov.uk/guidance/rates-and-thresholds-for-employers-YYYY-to-YYYY
- *   (see EMPLOYERS above), student loan table and employee NI table of each year's page.
+ *   (https://www.gov.uk/guidance/rates-and-thresholds-for-employers-YYYY-to-YYYY), student loan table and employee NI table of each year's page.
  * Basic band widths are derived by subtraction: upper limit of the basic band minus the
  * personal allowance (2020/21: 50,000 - 12,500 = 37,500; 2021/22 on: 50,270 - 12,570 = 37,700).
  */
@@ -131,7 +128,6 @@ const YEAR_VECTORS: Record<UkTaxYear, YearVector> = {
 describe("table values per supported tax year", () => {
   it("covers exactly the supported years", () => {
     expect(Object.keys(YEAR_VECTORS)).toEqual([...SUPPORTED_UK_TAX_YEARS]);
-    expect(EMPLOYERS("2025-to-2026")).toContain("2025-to-2026");
   });
 
   it.each(SUPPORTED_UK_TAX_YEARS)("%s income tax table equals the vector", (year) => {
@@ -258,11 +254,8 @@ describe("sweep 0..300000 step 250 per year, region and variant", () => {
     expect(performance.now() - t0).toBeLessThan(5000);
   });
 
-  // KNOWN DEFECT (reported by T14, not fixed here): calculateUkTax takes NI from the year-less
-  // calculateNationalInsurance (uk-tax.ts:266, constants for 2024/25 onward) instead of the per-year
-  // table that calculateEmployeeNi reads, so 2020/21 to 2023/24 NI is wrong in calculateUkTax.
-  // it.fails documents this: when the wiring is fixed this test starts failing and should become it().
-  it.fails("calculateUkTax NI equals the per-year Class 1 NI for every supported year", () => {
+  // calculateUkTax reads Class 1 NI from the per-year table (previously year-less; fixed in E4).
+  it("calculateUkTax NI equals the per-year Class 1 NI for every supported year", () => {
     for (const year of SUPPORTED_UK_TAX_YEARS) {
       const rules = getUkTaxYearRules(year);
       for (const gross of [20000, 60000, 120000]) {
