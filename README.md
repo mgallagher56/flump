@@ -186,7 +186,7 @@ Key environment configurations:
 
 - `VITE_WORKOS_CLIENT_ID`: Your WorkOS client identifier.
 - `VITE_WORKOS_REDIRECT_URI`: OAuth callback URL (default: `http://localhost:5173/callback`).
-- `VITE_API_URL`: Backend API endpoint (default: `http://localhost:3000`).
+- `VITE_API_URL`: Backend API endpoint (default: `http://localhost:4000`).
 - `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`: PostgreSQL credentials.
 
 Authentication environment contract (auth fails closed):
@@ -273,8 +273,8 @@ bun run dev
 ```
 
 - **Web Dashboard**: `http://localhost:5173`
-- **Backend API**: `http://localhost:3000`
-- **Marketing Site**: `http://localhost:4000`
+- **Backend API**: `http://localhost:4000`
+- **Marketing Site**: `http://localhost:3001`
 - **Supabase Studio**: `http://localhost:54323`
 
 To start an individual app:
