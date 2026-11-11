@@ -27,7 +27,7 @@ WHERE md5(
   "name" || '|' || to_char("amount", 'FM999999999990.00') || '|' || to_char("date", 'YYYY-MM-DD')
   || '|' || "frequency" || '|' || "category" || '|' || "source"
   || '|' || coalesce(to_char("end_date", 'YYYY-MM-DD'), '')
-) = ANY (ARRAY[ /* SEEDED_TAX_FINGERPRINTS from RemoveSeededExampleData1794355400000.ts */ ]::text[]);
+) = ANY (ARRAY[ /* paste the 62 hash strings from the exported SEEDED_TAX_FINGERPRINTS array in RemoveSeededExampleData1794355400000.ts, as quoted literals */ ]::text[]);
 
 -- Accounts that exactly equal a seed account and have nothing attached.
 SELECT count(*) AS exact_seed_accounts
