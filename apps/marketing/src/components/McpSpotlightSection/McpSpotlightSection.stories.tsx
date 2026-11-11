@@ -29,12 +29,17 @@ const assertSpotlight: Story["play"] = async ({ canvasElement }) => {
   await expect(canvas.getByText("Example output")).toBeInTheDocument();
 };
 
-export const Default: Story = { play: assertSpotlight };
+export const Default: Story = {
+  // E8 waiver: color-contrast
+  parameters: { a11y: { test: "todo" } },
+  play: assertSpotlight,
+};
 
 export const Light: Story = { globals: { theme: "light" }, play: assertSpotlight };
 
 export const Dark: Story = {
+  // E8 waiver: color-contrast
   globals: { theme: "dark" },
-  parameters: { backgrounds: { default: "dark" } },
+  parameters: { a11y: { test: "todo" }, backgrounds: { default: "dark" } },
   play: assertSpotlight,
 };

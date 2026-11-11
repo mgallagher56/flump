@@ -12,4 +12,7 @@ const meta: Meta<typeof SecurityPrivacySection> = {
 export default meta;
 type Story = StoryObj<typeof SecurityPrivacySection>;
 
-export const Default: Story = {};
+export const Default: Story = {
+  // E8 waiver: color-contrast
+  parameters: { a11y: { test: "todo" } },
+};

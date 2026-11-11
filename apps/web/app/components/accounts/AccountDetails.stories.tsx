@@ -20,12 +20,14 @@ const mockLoaderData = {
 };
 
 export const ViewMode: Story = {
+  // E8 waiver: color-contrast
   args: {
     isEditMode: false,
     editedValues: {},
     onInputChange: () => {},
   },
   parameters: {
+    a11y: { test: "todo" },
     router: {
       loaderData: mockLoaderData,
     },
@@ -33,6 +35,7 @@ export const ViewMode: Story = {
 };
 
 export const EditMode: Story = {
+  // E8 waiver: color-contrast
   args: {
     isEditMode: true,
     editedValues: {
@@ -45,6 +48,7 @@ export const EditMode: Story = {
     onInputChange: (e) => console.log("Input changed:", e.target.value),
   },
   parameters: {
+    a11y: { test: "todo" },
     router: {
       loaderData: mockLoaderData,
     },

@@ -20,6 +20,8 @@ export default meta;
 type Story = StoryObj<typeof PayoffStrategyControls>;
 
 export const Default: Story = {
+  // E8 waiver: label-content-name-mismatch
+  parameters: { a11y: { test: "todo" } },
   play: async ({ canvasElement, args }) => {
     const canvas = within(canvasElement);
     const snowballBtn = canvas.getByRole("button", { name: "Select Snowball strategy" });
@@ -30,5 +32,7 @@ export const Default: Story = {
 };
 
 export const WithSavings: Story = {
+  // E8 waiver: label-content-name-mismatch
+  parameters: { a11y: { test: "todo" } },
   args: { interestSaved: 2140, monthsSaved: 14 },
 };

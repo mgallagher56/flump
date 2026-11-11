@@ -14,10 +14,9 @@ export default meta;
 type Story = StoryObj<typeof SandboxTemplates>;
 
 export const Stage1DebtRecoveryDesktop: Story = {
+  // E8 waiver: color-contrast, heading-order, label-content-name-mismatch
   name: "Stage 1: Debt Recovery (Desktop 1440px)",
-  parameters: {
-    viewport: { defaultViewport: "desktop" },
-  },
+  parameters: { a11y: { test: "todo" }, viewport: { defaultViewport: "desktop" } },
   render: () => <Stage1View />,
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
@@ -27,18 +26,16 @@ export const Stage1DebtRecoveryDesktop: Story = {
 };
 
 export const Stage1DebtRecoveryMobile: Story = {
+  // E8 waiver: color-contrast, heading-order, label-content-name-mismatch
   name: "Stage 1: Debt Recovery (Mobile 375px)",
-  parameters: {
-    viewport: { defaultViewport: "mobile1" },
-  },
+  parameters: { a11y: { test: "todo" }, viewport: { defaultViewport: "mobile1" } },
   render: () => <Stage1View />,
 };
 
 export const Stage2CrossoverDesktop: Story = {
+  // E8 waiver: heading-order
   name: "Stage 2: Crossover Bridge (Desktop 1440px)",
-  parameters: {
-    viewport: { defaultViewport: "desktop" },
-  },
+  parameters: { a11y: { test: "todo" }, viewport: { defaultViewport: "desktop" } },
   render: () => <Stage2View />,
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
@@ -47,18 +44,16 @@ export const Stage2CrossoverDesktop: Story = {
 };
 
 export const Stage2CrossoverMobile: Story = {
+  // E8 waiver: heading-order
   name: "Stage 2: Crossover Bridge (Mobile 375px)",
-  parameters: {
-    viewport: { defaultViewport: "mobile1" },
-  },
+  parameters: { a11y: { test: "todo" }, viewport: { defaultViewport: "mobile1" } },
   render: () => <Stage2View />,
 };
 
 export const Stage3TaxTrapDesktop: Story = {
+  // E8 waiver: heading-order
   name: "Stage 3: Tax Trap Escape (Desktop 1440px)",
-  parameters: {
-    viewport: { defaultViewport: "desktop" },
-  },
+  parameters: { a11y: { test: "todo" }, viewport: { defaultViewport: "desktop" } },
   render: () => <Stage3View />,
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
@@ -69,9 +64,8 @@ export const Stage3TaxTrapDesktop: Story = {
 };
 
 export const Stage3TaxTrapMobile: Story = {
+  // E8 waiver: heading-order
   name: "Stage 3: Tax Trap Escape (Mobile 375px)",
-  parameters: {
-    viewport: { defaultViewport: "mobile1" },
-  },
+  parameters: { a11y: { test: "todo" }, viewport: { defaultViewport: "mobile1" } },
   render: () => <Stage3View />,
 };

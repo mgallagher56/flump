@@ -14,6 +14,8 @@ export default meta;
 type Story = StoryObj<typeof ColorPalette>;
 
 export const Default: Story = {
+  // E8 waiver: color-contrast
+  parameters: { a11y: { test: "todo" } },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
     await expect(canvas.getByText("Flump Color System & Semantic Tokens")).toBeInTheDocument();

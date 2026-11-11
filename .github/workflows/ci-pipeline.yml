@@ -162,6 +162,48 @@ jobs:
       - name: 🏗️ Build all packages
         run: bun run build
 
+  # E8 Storybook a11y gate. Non-required while it beds in (becomes required after 1-2 green
+  # weeks on main): continue-on-error keeps a failure here from turning the pipeline red.
+  storybook-a11y:
+    name: ♿ Storybook a11y (light + dark)
+    if: github.event_name != 'schedule'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    continue-on-error: true
+    permissions:
+      actions: write
+      contents: read
+
+    steps:
+      - name: ⬇️ Checkout repo
+        uses: actions/checkout@v7.0.1
+
+      - name: ⚙️ Setup Bun and install dependencies
+        uses: ./.github/actions/bun-setup
+
+      - name: 🗂️ Cache Playwright browsers
+        id: playwright-cache
+        uses: actions/cache@v6.1.0
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('bun.lock') }}
+
+      - name: 🌐 Install Chromium
+        working-directory: apps/web
+        run: |
+          if [ "${{ steps.playwright-cache.outputs.cache-hit }}" = "true" ]; then
+            bunx playwright install-deps chromium
+          else
+            bunx playwright install --with-deps chromium
+          fi
+
+      - name: ♿ Storybook a11y (light)
+        run: bun run --cwd apps/web test:storybook
+
+      - name: ♿ Storybook a11y (dark)
+        if: ${{ !cancelled() }}
+        run: bun run --cwd apps/web test:storybook:dark
+
   audit:
     name: 🛡️ Dependency audit
     runs-on: ubuntu-latest

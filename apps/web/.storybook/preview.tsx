@@ -21,6 +21,8 @@ i18n.use(initReactI18next).init({
 });
 
 const preview: Preview = {
+  // Humans get side-by-side; the test project sets VITE_SB_THEME so axe sees one theme tree.
+  initialGlobals: { theme: import.meta.env.VITE_SB_THEME ?? "side-by-side" },
   globalTypes: {
     theme: {
       description: "Theme selector for components",
@@ -45,14 +47,8 @@ const preview: Preview = {
       },
     },
     a11y: {
-      config: {
-        rules: [
-          {
-            id: "color-contrast",
-            enabled: true,
-          },
-        ],
-      },
+      // E8 gate: fail stories on axe violations. Waive per story only (see ratchets/a11y-waivers).
+      test: "error",
     },
     backgrounds: {
       default: "canvas",
