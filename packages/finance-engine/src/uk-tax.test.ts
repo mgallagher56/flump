@@ -7,7 +7,6 @@ import {
 import {
   runUkTaxVectors,
   selectUkTaxVectors,
-  UK_TAX_PENDING_OWNER_VECTORS,
   UK_TAX_PENSION_TREATMENT,
   UK_TAX_VECTORS,
 } from "./test-vectors/uk-tax.vectors.js";
@@ -24,7 +23,6 @@ import {
   calculateUKTakeHome,
   calculateUkTax,
   getTaxYearRemainingDays,
-  SCOTLAND_GIFT_AID_DISCLAIMER,
   STUDENT_LOAN_THRESHOLDS,
   toStudentLoanPlanKey,
 } from "./uk-tax.js";
@@ -548,27 +546,34 @@ describe("uk-tax module", () => {
       expect(r.incomeTaxGbp).toBe(47733.3);
     });
 
-    it("Scotland Gift Aid only changes the allowance taper, not the bands (D9-B)", () => {
+    it("Scotland Gift Aid extends the Basic band upper limit and the bands above it, and still tapers (s.414(2)(b))", () => {
       // 110000, 4000 net -> gross 5000. ANI 105000, taper 2500, PA 10070, taxable 99930.
-      // 2025/26: 537.13 + 2418.8 + 3395.91 + 13161.96 + (99930 - 62430)*.45 (16875) = 36388.8
+      // 2025/26 limits move by 5000: 2827 / 19921 / 36092 / 67430 / 130140.
+      // 537.13 + (19921 - 2827)*.2 (3418.8) + (36092 - 19921)*.21 (3395.91)
+      //   + (67430 - 36092)*.42 (13161.96) + (99930 - 67430)*.45 (14625) = 35138.8
       const r = scot(110000, "2025/26", 4000);
       expect(r.adjustedNetIncomeGbp).toBe(105000);
       expect(r.taxableIncomeGbp).toBe(99930);
-      expect(r.incomeTaxGbp).toBe(36388.8);
+      expect(r.incomeTaxGbp).toBe(35138.8);
     });
 
-    it("Scotland Gift Aid below the taper start changes nothing", () => {
-      expect(scot(50000, "2026/27", 1000).incomeTaxGbp).toBe(8982.05);
+    it("Scotland Gift Aid below the taper start still extends the bands", () => {
+      // 50000, 1000 net -> ext 1250, taxable 37430: 2026/27 limits 3967 / 18206 / 32342 / 63680.
+      // 753.73 + 14239*.2 (2847.8) + 14136*.21 (2968.56) + (37430 - 32342)*.42 (2136.96) = 8707.05
+      expect(scot(50000, "2026/27", 1000).incomeTaxGbp).toBe(8707.05);
+      expect(scot(50000, "2026/27").incomeTaxGbp).toBe(8982.05);
     });
 
-    it("carries the Gift Aid disclaimer only for Scotland with Gift Aid", () => {
-      expect(SCOTLAND_GIFT_AID_DISCLAIMER).toMatch(/band extension is not modelled/i);
-      expect(scot(50000, "2026/27", 1000).giftAidDisclaimer).toBe(SCOTLAND_GIFT_AID_DISCLAIMER);
-      expect(scot(50000, "2026/27").giftAidDisclaimer).toBeUndefined();
-      expect(
-        calculateUkTax({ grossSalary: 50000, taxYear: "2026/27", giftAidContributionsGbp: 1000 })
-          .giftAidDisclaimer,
-      ).toBeUndefined();
+    it("Scotland Gift Aid does not move the starter band", () => {
+      // 14000 taxable-ish income inside starter+basic only: the starter limit stays 2827.
+      const without = scot(16000, "2025/26").incomeTaxGbp;
+      const withGa = scot(16000, "2025/26", 1000).incomeTaxGbp;
+      // taxable 3430: 2827*.19 + 603*.2 identical either way (still inside the basic band)
+      expect(withGa).toBe(without);
+    });
+
+    it("no longer carries a Gift Aid disclaimer", () => {
+      expect(scot(50000, "2026/27", 1000)).not.toHaveProperty("giftAidDisclaimer");
     });
   });
 
@@ -643,14 +648,13 @@ describe("calculateUkTax result-boundary rounding (I7, D5-a)", () => {
   });
 });
 
-// Skipped on purpose: owner ruling pending D9. ITA 2007 s.414(2)(b) extends the upper limit of the
-// Scottish basic rate and the limits of the Scottish rates above it by the grossed-up gift, but the
-// engine (D9-B) uses Gift Aid only for the allowance taper in Scotland, so these hand-derived
-// UNVERIFIED vectors would fail today. Un-skip only after the owner rules for band extension and
-// the engine is changed. See docs/tax-vector-signoff.md, ruling 2.
-describe.skip("Scottish Gift Aid band extension vectors (owner ruling pending D9)", () => {
+// Owner ruling replacing D9-B: ITA 2007 s.414(2)(b) extends the upper limit of the Scottish basic
+// rate and the limits of the Scottish rates above it by the grossed-up gift. Vectors are UNVERIFIED
+// (hand-derived from the statute text); see docs/tax-vector-signoff.md.
+describe("Scottish Gift Aid band extension vectors (s.414(2)(b))", () => {
   it("calculateUkTax matches the hand-derived extended-band income tax", () => {
-    const res = runUkTaxVectors(UK_TAX_PENDING_OWNER_VECTORS, (v) => {
+    const vectors = selectUkTaxVectors({ kind: "giftAid", region: "SCOTLAND" });
+    const res = runUkTaxVectors(vectors, (v) => {
       const i = v.input as { grossIncome: number; giftAidNet: number };
       return calculateUkTax({
         grossSalary: i.grossIncome,
@@ -659,7 +663,7 @@ describe.skip("Scottish Gift Aid band extension vectors (owner ruling pending D9
         giftAidContributionsGbp: i.giftAidNet,
       }).incomeTaxGbp;
     });
-    expect(res.checked).toBe(6);
+    expect(res.checked).toBe(16);
     expect(res.failures).toEqual([]);
   });
 });

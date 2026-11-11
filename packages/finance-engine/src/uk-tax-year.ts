@@ -342,9 +342,11 @@ export interface IncomeTaxResult {
  * EWNI: basic rate up to basicRateBandWidth + ext, higher rate up to
  * additionalRateThreshold + ext (a taxable-income figure: 125,140 from 2023/24,
  * 150,000 before), additional rate above.
- * Scotland: walks rules.scotland.bands. `bandExtension` is ignored for
- * Scotland (decision D9-b, pending the tax reviewer: Gift Aid only affects the
- * allowance taper there).
+ * Scotland: walks rules.scotland.bands. `bandExtension` (grossed-up Gift Aid,
+ * ITA 2007 s.414(2)(b)) raises "the upper limit for the Scottish basic rate and
+ * the limits for any Scottish rates above the Scottish basic rate": the upper
+ * limit of the band named "Basic" and every limit (lower and upper) of the bands
+ * after it. Bands before Basic (Starter) are unchanged.
  */
 export function calculateIncomeTaxOnTaxable(
   taxable: number,
@@ -356,9 +358,16 @@ export function calculateIncomeTaxOnTaxable(
   const raw: { name: string; rate: number; taxable: number; tax: number }[] = [];
 
   if (region === "SCOTLAND") {
-    for (const band of rules.scotland.bands) {
-      const upper = band.to ?? Number.POSITIVE_INFINITY;
-      const inBand = Math.max(0, Math.min(income, upper) - band.from);
+    const ext = Math.max(0, opts.bandExtension ?? 0);
+    const bands = rules.scotland.bands;
+    const basicIdx = bands.findIndex((b) => b.name === "Basic");
+    for (const [i, band] of bands.entries()) {
+      const aboveBasic = basicIdx >= 0 && i > basicIdx;
+      const atOrAboveBasic = basicIdx >= 0 && i >= basicIdx;
+      const lower = band.from + (aboveBasic ? ext : 0);
+      const upper =
+        band.to === null ? Number.POSITIVE_INFINITY : band.to + (atOrAboveBasic ? ext : 0);
+      const inBand = Math.max(0, Math.min(income, upper) - lower);
       raw.push({ name: band.name, rate: band.rate, taxable: inBand, tax: inBand * band.rate });
     }
   } else {

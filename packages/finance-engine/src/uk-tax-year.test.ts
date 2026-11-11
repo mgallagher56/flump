@@ -345,11 +345,17 @@ describe("calculateIncomeTaxOnTaxable", () => {
     expect(calculateIncomeTaxOnTaxable(37430, r27, "SCOTLAND").total).toBeCloseTo(8982.05, 2);
   });
 
-  it("Scotland ignores bandExtension (D9-b: Gift Aid affects the taper only)", () => {
+  it("Scotland bandExtension widens Basic and every band above it, not Starter (s.414(2)(b))", () => {
     const r27 = getUkTaxYearRules("2026/27");
-    expect(
-      calculateIncomeTaxOnTaxable(37430, r27, "SCOTLAND", { bandExtension: 5000 }).total,
-    ).toBeCloseTo(8982.05, 2);
+    // limits 3967 / 16956 / 31092 / 62430 become 3967 / 21956 / 36092 / 67430 with ext 5000.
+    // 753.73 + (21956 - 3967)*.2 (3597.8) + (36092 - 21956)*.21 (2968.56)
+    //   + (37430 - 36092)*.42 (561.96) = 7882.05
+    const res = calculateIncomeTaxOnTaxable(37430, r27, "SCOTLAND", { bandExtension: 5000 });
+    expect(res.total).toBeCloseTo(7882.05, 2);
+    expect(res.bands[0]?.taxable).toBe(3967);
+    expect(res.bands[1]?.taxable).toBe(17989);
+    expect(res.bands[2]?.taxable).toBe(14136);
+    expect(res.bands[3]?.taxable).toBe(1338);
   });
 });
 
