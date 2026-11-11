@@ -198,51 +198,41 @@ export function projectCrossoverWealth(
   return projection;
 }
 
-/**
- * Core Debt Payoff Schedule Generator (Snowball & Avalanche).
- */
-export function calculateDebtSchedule(
-  debts: DebtItem[],
-  monthlyExtraBudgetGbp = 0,
-  strategy: DebtPayoffStrategy = "AVALANCHE",
-  options: DebtPayoffOptions = {},
-): DebtPayoffResult {
-  const { consumerDebts } = filterConsumerDebts(debts);
-  const referenceDate = options.referenceDate ?? new Date();
-  const maxMonths = options.maxMonths ?? 360;
-  const expectedReturn = options.expectedIsaAnnualReturnPct ?? 6.0;
+interface SimDebtState {
+  id: string;
+  name: string;
+  balance: number;
+  apr: number;
+  minimumPayment: number;
+  promoExpiryDate?: string;
+  revertApr?: number;
+  monthPaidOff?: number;
+}
 
-  const totalStartingDebt = consumerDebts.reduce((sum, d) => sum + Math.max(0, d.balanceGbp), 0);
+/** Internal shared simulation core (main run and minimum-only baseline). No recursion. */
+interface DebtSimulation {
+  schedule: DebtScheduleMonth[];
+  totalInterestPaid: number;
+  month: number;
+  simDate: Date;
+  activeDebts: SimDebtState[];
+  totalMonthlyCommitment: number;
+  remainingGbp: number;
+  firstQuickWinDate?: string;
+  firstQuickWinDebtName?: string;
+  firstQuickWinMonth?: number;
+}
 
-  if (totalStartingDebt <= 0 || consumerDebts.length === 0) {
-    const crossover = projectCrossoverWealth(monthlyExtraBudgetGbp, referenceDate, expectedReturn);
-    return {
-      strategy,
-      totalStartingDebtGbp: 0,
-      totalInterestPaidGbp: 0,
-      monthsToPayoff: 0,
-      debtFreeDate: formatMonthYear(referenceDate),
-      interestSavedVsMinimumGbp: 0,
-      promoCliffAlerts: [],
-      schedule: [],
-      crossoverProjection: crossover,
-      fiveYearPostDebtWealthGbp: crossover[crossover.length - 1]?.projectedWealthGbp ?? 0,
-    };
-  }
-
+function simulateSchedule(
+  consumerDebts: NormalizedDebtItem[],
+  monthlyExtraBudgetGbp: number,
+  strategy: DebtPayoffStrategy,
+  referenceDate: Date,
+  maxMonths: number,
+): DebtSimulation {
   // Track active balances
-  interface ActiveDebtState {
-    id: string;
-    name: string;
-    balance: number;
-    apr: number;
-    minimumPayment: number;
-    promoExpiryDate?: string;
-    revertApr?: number;
-    monthPaidOff?: number;
-  }
 
-  const activeDebts: ActiveDebtState[] = consumerDebts.map((d) => ({
+  const activeDebts: SimDebtState[] = consumerDebts.map((d) => ({
     id: d.id,
     name: d.name,
     balance: Math.max(0, d.balanceGbp),
@@ -377,6 +367,76 @@ export function calculateDebtSchedule(
     }
   }
 
+  const remainingGbp = activeDebts.reduce((sum, d) => sum + Math.max(0, d.balance), 0);
+  return {
+    schedule,
+    totalInterestPaid,
+    month,
+    simDate,
+    activeDebts,
+    totalMonthlyCommitment,
+    remainingGbp,
+    firstQuickWinDate,
+    firstQuickWinDebtName,
+    firstQuickWinMonth,
+  };
+}
+
+/** PayoffResult.debtFreeDate is a string; this label stands in when payoff is not achievable. */
+const NOT_ACHIEVABLE_LABEL = "Not payable at current payments";
+
+/**
+ * Core Debt Payoff Schedule Generator (Snowball & Avalanche).
+ */
+export function calculateDebtSchedule(
+  debts: DebtItem[],
+  monthlyExtraBudgetGbp = 0,
+  strategy: DebtPayoffStrategy = "AVALANCHE",
+  options: DebtPayoffOptions = {},
+): DebtPayoffResult {
+  const { consumerDebts } = filterConsumerDebts(debts);
+  const referenceDate = options.referenceDate ?? new Date();
+  const maxMonths = options.maxMonths ?? 360;
+  const expectedReturn = options.expectedIsaAnnualReturnPct ?? 6.0;
+
+  const totalStartingDebt = consumerDebts.reduce((sum, d) => sum + Math.max(0, d.balanceGbp), 0);
+
+  if (totalStartingDebt <= 0 || consumerDebts.length === 0) {
+    const crossover = projectCrossoverWealth(monthlyExtraBudgetGbp, referenceDate, expectedReturn);
+    return {
+      strategy,
+      totalStartingDebtGbp: 0,
+      totalInterestPaidGbp: 0,
+      monthsToPayoff: 0,
+      debtFreeDate: formatMonthYear(referenceDate),
+      payoffAchievable: true,
+      interestSavedVsMinimumGbp: 0,
+      promoCliffAlerts: [],
+      schedule: [],
+      crossoverProjection: crossover,
+      fiveYearPostDebtWealthGbp: crossover[crossover.length - 1]?.projectedWealthGbp ?? 0,
+    };
+  }
+
+  const main = simulateSchedule(
+    consumerDebts,
+    monthlyExtraBudgetGbp,
+    strategy,
+    referenceDate,
+    maxMonths,
+  );
+  const {
+    schedule,
+    totalInterestPaid,
+    month,
+    simDate,
+    activeDebts,
+    totalMonthlyCommitment,
+    firstQuickWinDate,
+    firstQuickWinDebtName,
+    firstQuickWinMonth,
+  } = main;
+
   const debtFreeDateFormatted = formatMonthYear(simDate);
 
   // Analyze promo cliffs
@@ -392,21 +452,29 @@ export function calculateDebtSchedule(
     }
   }
 
-  // Calculate interest saved vs paying minimums only
-  // Baseline minimums total interest approximation
-  let minOnlyInterest = 0;
-  for (const d of consumerDebts) {
-    const monthlyRate = d.interestRateApr / 100 / 12;
-    if (monthlyRate > 0) {
-      // Rough amortization with minimums
-      const estMonths = Math.min(360, Math.ceil(d.balanceGbp / Math.max(5, d.minimumPaymentGbp)));
-      minOnlyInterest += d.balanceGbp * monthlyRate * (estMonths / 2);
-    }
-  }
+  // Interest saved vs paying minimums only: simulate the minimum-only baseline with the
+  // same engine (zero extra budget). simulateSchedule never computes a baseline itself,
+  // so there is no recursion. If the baseline never clears within maxMonths, its interest
+  // is the interest accrued up to the cap, so the saving is a lower bound.
+  const baseline = simulateSchedule(consumerDebts, 0, strategy, referenceDate, maxMonths);
   const interestSavedVsMinimum = Math.max(
     0,
-    Math.round((minOnlyInterest - totalInterestPaid) * 100) / 100,
+    Math.round((baseline.totalInterestPaid - totalInterestPaid) * 100) / 100,
   );
+
+  // Achievability: the loop ends either cleared or capped at maxMonths. If capped, the
+  // balance is growing when the final month did not reduce the total outstanding.
+  const payoffAchievable = main.remainingGbp <= 0.01;
+  let unachievableReason: DebtPayoffResult["unachievableReason"];
+  if (!payoffAchievable) {
+    const previousRemaining =
+      schedule.length >= 2
+        ? (schedule[schedule.length - 2]?.remainingDebtGbp ?? 0)
+        : totalStartingDebt;
+    const lastRemaining = schedule[schedule.length - 1]?.remainingDebtGbp ?? main.remainingGbp;
+    unachievableReason =
+      lastRemaining >= previousRemaining ? "BALANCE_GROWING" : "MAX_MONTHS_REACHED";
+  }
 
   // 5-Year Crossover projection starting at month M+1
   const crossoverProjection = projectCrossoverWealth(
@@ -422,7 +490,9 @@ export function calculateDebtSchedule(
     totalStartingDebtGbp: Math.round(totalStartingDebt * 100) / 100,
     totalInterestPaidGbp: Math.round(totalInterestPaid * 100) / 100,
     monthsToPayoff: month,
-    debtFreeDate: debtFreeDateFormatted,
+    debtFreeDate: payoffAchievable ? debtFreeDateFormatted : null,
+    payoffAchievable,
+    unachievableReason,
     firstQuickWinDate,
     firstQuickWinDebtName,
     firstQuickWinMonth,
@@ -460,7 +530,9 @@ export function calculateAvalanche(debts: DebtItem[], extraMonthlyPayment = 0): 
 
   return {
     months: res.monthsToPayoff,
-    debtFreeDate: res.debtFreeDate,
+    debtFreeDate: res.debtFreeDate ?? NOT_ACHIEVABLE_LABEL,
+    payoffAchievable: res.payoffAchievable,
+    unachievableReason: res.unachievableReason,
     totalInterest: res.totalInterestPaidGbp,
     totalPaid: Math.round((res.totalStartingDebtGbp + res.totalInterestPaidGbp) * 100) / 100,
     quickWinDebtName: res.firstQuickWinDebtName,
@@ -495,7 +567,9 @@ export function calculateSnowball(debts: DebtItem[], extraMonthlyPayment = 0): P
 
   return {
     months: res.monthsToPayoff,
-    debtFreeDate: res.debtFreeDate,
+    debtFreeDate: res.debtFreeDate ?? NOT_ACHIEVABLE_LABEL,
+    payoffAchievable: res.payoffAchievable,
+    unachievableReason: res.unachievableReason,
     totalInterest: res.totalInterestPaidGbp,
     totalPaid: Math.round((res.totalStartingDebtGbp + res.totalInterestPaidGbp) * 100) / 100,
     quickWinDebtName: res.firstQuickWinDebtName,
