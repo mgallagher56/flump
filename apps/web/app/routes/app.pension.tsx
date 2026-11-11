@@ -69,13 +69,16 @@ export const action = async (args: ActionFunctionArgs) => {
         updatePayload.monthlyContribution = null;
       }
 
-      await backendFetch(`/accounts/${accountId}`, {
+      await backendFetch(`/accounts/${encodeURIComponent(String(accountId ?? ""))}`, {
         accessToken: token,
         method: "PATCH",
         body: updatePayload,
       });
     } else if (intent === "deletePensionAccount") {
-      await backendFetch(`/accounts/${accountId}`, { accessToken: token, method: "DELETE" });
+      await backendFetch(`/accounts/${encodeURIComponent(String(accountId ?? ""))}`, {
+        accessToken: token,
+        method: "DELETE",
+      });
     } else if (intent === "updatePensionContributions") {
       const pensionPercent = formData.get("pensionPercent");
       const pensionEmployerPercent = formData.get("pensionEmployerPercent");

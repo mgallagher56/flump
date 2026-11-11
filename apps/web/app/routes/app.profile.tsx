@@ -6,11 +6,13 @@ import UserProfilePanel from "~/components/budget/UserProfilePanel";
 import type { UserProfile } from "~/hooks/useUserProfile";
 import { useUserProfile } from "~/hooks/useUserProfile";
 import { backendFetch } from "~/services/backend-client.server";
+import { BackendError } from "~/services/backend-error";
 import { throwRouteError } from "~/services/route-error.server";
 import { getAuthSession } from "~/utils/auth.server";
 
 export const loader = async (args: LoaderFunctionArgs) => {
   const { user, accessToken } = await getAuthSession(args, { ensureSignedIn: true });
+  if (!accessToken) throwRouteError(new BackendError("unauthorised", "/user-profile"));
   try {
     const userProfile = await backendFetch<UserProfile>("/user-profile", {
       accessToken,

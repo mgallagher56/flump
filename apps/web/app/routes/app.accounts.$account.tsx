@@ -17,10 +17,13 @@ export const action = async (args: ActionFunctionArgs) => {
 
   try {
     if (intent === "deleteYear") {
-      await backendFetch(`/accounts/${accountId}/details/${year}`, {
-        accessToken: token,
-        method: "DELETE",
-      });
+      await backendFetch(
+        `/accounts/${accountId}/details/${encodeURIComponent(String(year ?? ""))}`,
+        {
+          accessToken: token,
+          method: "DELETE",
+        },
+      );
     } else if (intent === "addYear") {
       await backendFetch(`/accounts/${accountId}/details/year`, {
         accessToken: token,
@@ -47,6 +50,7 @@ export const action = async (args: ActionFunctionArgs) => {
 export const loader = async (args: LoaderFunctionArgs) => {
   const { user, accessToken } = await getAuthSession(args, { ensureSignedIn: true });
   const accountId = encodeURIComponent(args.params.account ?? "");
+  if (!accessToken) throwRouteError(new BackendError("unauthorised", `/accounts/${accountId}`));
 
   try {
     const account = await backendFetch<any>(`/accounts/${accountId}`, {

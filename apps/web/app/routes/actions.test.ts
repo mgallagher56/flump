@@ -515,3 +515,64 @@ describe("action edge cases", () => {
     ).rejects.toBe(redirectResponse);
   });
 });
+
+describe("path segment encoding", () => {
+  const run = async (action: Action, fields: Record<string, string>, params = {}) => {
+    const fetchMock = respond(200, {});
+    globalThis.fetch = fetchMock;
+    const form = new FormData();
+    for (const [k, v] of Object.entries(fields)) form.set(k, v);
+    await action({
+      request: new Request("http://localhost/app", { method: "POST", body: form }),
+      params,
+      context: {},
+    });
+    return fetchMock.mock.calls.map((c: any[]) => c[0] as string);
+  };
+  const base = apiConfig.apiBaseUrl;
+
+  it("encodes the account id and year in account detail", async () => {
+    const urls = await run(
+      accountAction,
+      { intent: "deleteYear", year: "../x?y" },
+      { account: "a/1" },
+    );
+    expect(urls).toEqual([`${base}/accounts/a%2F1/details/..%2Fx%3Fy`]);
+  });
+
+  it("encodes accountId and connectionId in the accounts route", async () => {
+    expect(await run(accountsAction, { intent: "delete", accountId: "a/../b" })).toEqual([
+      `${base}/accounts/a%2F..%2Fb`,
+    ]);
+    expect(
+      await run(accountsAction, { intent: "disconnectConnection", connectionId: "c/1" }),
+    ).toEqual([`${base}/bank-connections/c%2F1`]);
+    expect(await run(accountsAction, { intent: "syncConnection", connectionId: "c?1" })).toEqual([
+      `${base}/bank-connections/c%3F1/refresh`,
+    ]);
+  });
+
+  it("encodes accountId in savings and pension", async () => {
+    expect(await run(savingsAction, { intent: "deleteAccount", accountId: "s/1" })).toEqual([
+      `${base}/accounts/s%2F1`,
+    ]);
+    expect(await run(pensionAction, { intent: "deletePensionAccount", accountId: "p/1" })).toEqual([
+      `${base}/accounts/p%2F1`,
+    ]);
+  });
+
+  it("encodes record ids in tax deletes", async () => {
+    expect(await run(taxAction, { intent: "delete-transaction", id: "t/1" })).toEqual([
+      `${base}/tax-records/t%2F1`,
+    ]);
+    expect(
+      await run(taxAction, {
+        intent: "delete-tax-year",
+        recordIds: JSON.stringify(["a/1", "b?2"]),
+      }),
+    ).toEqual([`${base}/tax-records/a%2F1`, `${base}/tax-records/b%3F2`]);
+    expect(await run(taxAction, { intent: "update-transaction", id: "t/1" })).toEqual([
+      `${base}/tax-records/t%2F1`,
+    ]);
+  });
+});
