@@ -16,7 +16,10 @@ const renderPage = () =>
 describe("PricingPage", () => {
   it("links the free plan to sign-up without a plan parameter", () => {
     renderPage();
-    const href = screen.getByText("Get started free").closest("a")?.getAttribute("href");
+    const href = screen
+      .getAllByText("Get started")
+      .map((el) => el.closest("a")?.getAttribute("href"))
+      .find((h) => h?.endsWith("/signUp"));
     expect(href?.endsWith("/signUp")).toBe(true);
     expect(href).not.toContain("plan=");
     expect(screen.getByText("Pricing coming soon").closest("a")).toBeNull();

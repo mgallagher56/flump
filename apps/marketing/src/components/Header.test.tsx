@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { HelmetProvider } from "react-helmet-async";
 import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it } from "vitest";
@@ -75,7 +75,7 @@ describe("Header", () => {
     expect(toggleButton.getAttribute("aria-expanded")).toBe("true");
     const mobileNav = screen.getByRole("navigation", { name: /mobile navigation/i });
     expect(mobileNav).toBeDefined();
-    expect(screen.getByText("Get started free")).toBeDefined();
+    expect(within(mobileNav).getByText("Get started")).toBeDefined();
 
     // Close mobile menu by clicking toggle again
     fireEvent.click(toggleButton);

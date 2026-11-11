@@ -120,6 +120,17 @@ describe("McpConnectionCard Feature Component", () => {
     expect(screen.queryByText(/read-only safe/i)).toBeNull();
   });
 
+  it("describes calculations and anonymisation without overclaiming", () => {
+    const { container } = render(<McpConnectionCard />);
+    expect(
+      screen.getByText("Deterministic calculations from the Flump finance engine"),
+    ).toBeDefined();
+    expect(
+      screen.getByText("Institution names are replaced with generic labels by default"),
+    ).toBeDefined();
+    expect(container.textContent ?? "").not.toMatch(/hallucinat|PII Scrubbed|account numbers/i);
+  });
+
   it("renders the offline context pack exporter card", () => {
     const mockFetchPack = vi.fn().mockResolvedValue({
       pack: { metadata: { isAnonymized: true } },

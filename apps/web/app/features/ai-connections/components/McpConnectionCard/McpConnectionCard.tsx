@@ -272,7 +272,7 @@ export const McpConnectionCard: FC<McpConnectionCardProps> = ({
               Deterministic Math
             </span>
             <span className={css({ fontSize: "11px", color: "text.muted" })}>
-              Zero hallucinations via @flump/finance-engine
+              Deterministic calculations from the Flump finance engine
             </span>
           </div>
 
@@ -292,10 +292,10 @@ export const McpConnectionCard: FC<McpConnectionCardProps> = ({
             <span
               className={css({ fontSize: "xs", fontWeight: "semibold", color: "text.primary" })}
             >
-              PII Scrubbed
+              Institution names anonymised
             </span>
             <span className={css({ fontSize: "11px", color: "text.muted" })}>
-              Names, emails & account numbers removed
+              Institution names are replaced with generic labels by default
             </span>
           </div>
 

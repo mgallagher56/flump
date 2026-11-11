@@ -142,7 +142,7 @@ export const Footer: FC = () => {
           <div className={stack({ gap: "3" })}>
             <h2 className={sectionTitleStyle}>Security and privacy</h2>
             <Link to="/security" className={linkStyle}>
-              Read-only by design
+              Security and privacy
             </Link>
           </div>
         </div>

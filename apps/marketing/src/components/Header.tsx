@@ -380,7 +380,7 @@ export const Header: FC = () => {
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   <Button variant="primary" size="md" style={{ width: "100%" }}>
-                    Get started free
+                    Get started
                   </Button>
                 </a>
                 <a
