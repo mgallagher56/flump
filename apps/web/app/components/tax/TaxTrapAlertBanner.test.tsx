@@ -20,4 +20,10 @@ describe("TaxTrapAlertBanner", () => {
     fireEvent.click(applyBtn);
     expect(mockApply).toHaveBeenCalled();
   });
+
+  it("near the trap shows the 40% income tax rate and does not claim 62%", () => {
+    render(<TaxTrapAlertBanner grossIncome={97000} />);
+    expect(screen.getByText("40% Marginal Tax")).toBeDefined();
+    expect(screen.queryByText(/62%/)).toBeNull();
+  });
 });

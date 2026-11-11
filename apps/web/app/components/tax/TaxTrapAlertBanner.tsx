@@ -1,4 +1,4 @@
-import { calculateTaxTrapRelief } from "@flump/finance-engine";
+import { calculateTaxTrapRelief, getDisplayMarginalRatePct } from "@flump/finance-engine";
 import { css } from "@repo/ui/styled-system/css";
 import { type FC, useId, useMemo, useState } from "react";
 import { FiAlertTriangle, FiArrowRight, FiCheck } from "react-icons/fi";
@@ -118,7 +118,7 @@ export const TaxTrapAlertBanner: FC<TaxTrapAlertBannerProps> = ({
                   color: "#fff",
                 }}
               >
-                {trapAnalysis.effectiveMarginalRatePct}% Marginal Tax
+                {getDisplayMarginalRatePct(trapAnalysis)}% Marginal Tax
               </span>
             </div>
             <FLPText
@@ -126,10 +126,20 @@ export const TaxTrapAlertBanner: FC<TaxTrapAlertBannerProps> = ({
               fontSize="xs"
               style={{ marginTop: "4px", maxWidth: "680px" }}
             >
-              Between £100,000 and £125,140, HMRC reduces your Personal Allowance by £1 for every £2
-              of income. Combined with 40% higher rate tax and 2% National Insurance, you face an
-              effective <strong>62% marginal tax rate</strong> and lose 15–30 hours funded childcare
-              eligibility.
+              {trapAnalysis.isInTaxTrap ? (
+                <>
+                  Between £100,000 and £125,140, HMRC reduces your Personal Allowance by £1 for
+                  every £2 of income. Combined with 40% higher rate tax and 2% National Insurance,
+                  you face an effective <strong>62% marginal tax rate</strong> and lose 15–30 hours
+                  funded childcare eligibility.
+                </>
+              ) : (
+                <>
+                  Above £100,000, HMRC reduces your Personal Allowance by £1 for every £2 of income,
+                  which raises your marginal rate sharply. Pension contributions now can keep you
+                  below the threshold.
+                </>
+              )}
             </FLPText>
           </div>
         </div>

@@ -483,3 +483,24 @@ export function calculateUKTakeHome(
     trapAnalysis,
   };
 }
+
+/**
+ * Marginal rate to display to users. Inside the £100k trap this is the
+ * NI-inclusive effective rate (62 / 69.5); outside it stays the income tax
+ * rate only (20 / 40 / 45), as it was before the engine change.
+ */
+export function getDisplayMarginalRatePct(analysis: TaxTrapAnalysis): number {
+  return analysis.isInTaxTrap ? analysis.effectiveMarginalRatePct : analysis.marginalRatePct;
+}
+
+/**
+ * Estimated annual tax saved by sacrificing `contributionPct` of `annualIncome`
+ * into a pension, at the display marginal rate. Unrounded (pence preserved).
+ */
+export function estimateSalarySacrificeTaxSaving(
+  annualIncome: number,
+  contributionPct: number,
+  analysis: TaxTrapAnalysis,
+): number {
+  return annualIncome * (contributionPct / 100) * (getDisplayMarginalRatePct(analysis) / 100);
+}

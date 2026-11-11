@@ -491,3 +491,28 @@ describe("uk-tax module", () => {
     });
   });
 });
+
+import {
+  calculate100kTaxTrap,
+  estimateSalarySacrificeTaxSaving,
+  getDisplayMarginalRatePct,
+} from "./uk-tax.js";
+
+describe("display marginal rate (trap-only NI inclusion)", () => {
+  it("keeps the income-tax-only rate outside the trap", () => {
+    expect(getDisplayMarginalRatePct(calculate100kTaxTrap(30000))).toBe(20);
+    expect(getDisplayMarginalRatePct(calculate100kTaxTrap(60000))).toBe(40);
+    expect(getDisplayMarginalRatePct(calculate100kTaxTrap(97000))).toBe(40);
+    expect(getDisplayMarginalRatePct(calculate100kTaxTrap(150000))).toBe(45);
+  });
+
+  it("uses the NI-inclusive rate inside the trap", () => {
+    expect(getDisplayMarginalRatePct(calculate100kTaxTrap(110000))).toBe(62);
+    expect(getDisplayMarginalRatePct(calculate100kTaxTrap(110000, 0, true, "SCOTLAND"))).toBe(69.5);
+  });
+
+  it("estimates the 5% salary-sacrifice saving from the display rate", () => {
+    const a = calculate100kTaxTrap(40000);
+    expect(estimateSalarySacrificeTaxSaving(40000, 5, a)).toBe(400);
+  });
+});
