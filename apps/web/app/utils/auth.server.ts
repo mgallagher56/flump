@@ -18,6 +18,9 @@ export function isDevBypass(env: Record<string, string | undefined>): boolean {
   return env.NODE_ENV === "development";
 }
 
+// Fail at server start (this module is loaded by root.tsx and every loader), not on first auth failure.
+isDevBypass(process.env);
+
 export function requireAccessToken(session: { accessToken: string | null }): string {
   if (!session.accessToken) {
     throw redirect("/login");

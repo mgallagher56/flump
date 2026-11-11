@@ -1,12 +1,8 @@
 import type { RedirectFunction, Session } from "react-router";
 import { createCookieSessionStorage, redirect } from "react-router";
 import invariant from "tiny-invariant";
-import { isDevBypass } from "./utils/auth.server";
 
 invariant(process.env.SESSION_SECRET, "SESSION_SECRET must be set");
-
-// Fail at process start (not first request) if AUTH_DEV_BYPASS is enabled in production.
-isDevBypass(process.env);
 
 export const sessionStorage = createCookieSessionStorage({
   cookie: {
