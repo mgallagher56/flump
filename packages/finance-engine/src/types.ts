@@ -149,6 +149,9 @@ export interface PayoffScheduleMonth {
 export interface PayoffResult {
   months: number;
   debtFreeDate: string;
+  /** Added by C-13: false when the debts are never cleared within the simulation cap. */
+  payoffAchievable?: boolean;
+  unachievableReason?: "BALANCE_GROWING" | "MAX_MONTHS_REACHED";
   totalInterest: number;
   totalPaid: number;
   quickWinDebtName?: string;
@@ -274,7 +277,10 @@ export interface DebtPayoffResult {
   totalStartingDebtGbp: number;
   totalInterestPaidGbp: number;
   monthsToPayoff: number;
-  debtFreeDate: string; // 'Month YYYY'
+  /** 'Month YYYY'; null when payoffAchievable is false. */
+  debtFreeDate: string | null;
+  payoffAchievable: boolean;
+  unachievableReason?: "BALANCE_GROWING" | "MAX_MONTHS_REACHED";
   firstQuickWinDate?: string; // 'Month YYYY'
   firstQuickWinDebtName?: string;
   firstQuickWinMonth?: number;

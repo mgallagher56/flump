@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
+  calculateAvalanche,
   calculateDebtSchedule,
   calculateDebtToWealthBridge,
   calculateOverdraftCost,
@@ -83,6 +84,105 @@ describe("debt-payoff module", () => {
       expect(sorted[0]?.id).toBe("2"); // £500
       expect(sorted[1]?.id).toBe("3"); // £1,500
       expect(sorted[2]?.id).toBe("1"); // £5,000
+    });
+  });
+
+  describe("C-13 payoff achievability and simulated minimum-only baseline", () => {
+    const ref = new Date("2026-01-01T00:00:00Z");
+
+    // Independent reference loop (single debt, constant APR, no promo). Mirrors the documented
+    // engine rule: interest = round2(balance * apr/1200) added each month, then payment
+    // min(balance, payment). Returns total interest and months to clear (capped).
+    function refLoop(balance: number, aprPct: number, payment: number, cap = 360) {
+      let bal = balance;
+      let interest = 0;
+      let months = 0;
+      while (bal > 0.01 && months < cap) {
+        months++;
+        const i = Math.round(bal * (aprPct / 1200) * 100) / 100;
+        bal += i;
+        interest += i;
+        bal -= Math.min(bal, payment);
+      }
+      return { interest, months, bal };
+    }
+
+    const debt = (balanceGbp: number, apr: number, min: number): DebtItem[] => [
+      { id: "d", name: "D", balanceGbp, interestRateApr: apr, minimumPaymentGbp: min },
+    ];
+
+    it("10000 at 24.9% with minimum 5 is BALANCE_GROWING with null debtFreeDate", () => {
+      // Derivation: monthly interest = 10000 * 24.9/1200 = 207.50 > 5 payment, so the balance
+      // grows every month and never clears.
+      const res = calculateDebtSchedule(debt(10000, 24.9, 5), 0, "AVALANCHE", {
+        referenceDate: ref,
+      });
+      expect(res.payoffAchievable).toBe(false);
+      expect(res.unachievableReason).toBe("BALANCE_GROWING");
+      expect(res.debtFreeDate).toBeNull();
+      expect(res.monthsToPayoff).toBe(360);
+      expect(res.schedule[0]?.totalInterestGbp).toBe(207.5);
+      expect(res.schedule[0]?.remainingDebtGbp).toBe(10202.5);
+    });
+
+    it("5000 at 20%, min 150, extra 100: interest saved equals simulated baseline minus this run", () => {
+      // Derivation: total payment 250 -> n = ln(1/(1-r*P/pmt))/ln(1+r), r=20/1200:
+      // 1-83.333/250=0.66667, n=ln1.5/ln1.016667=24.53 -> 25 months; interest ~ 250*24.53-5000 ~ 1133.
+      // Baseline 150/month: 1-83.333/150=0.44444, n=49.06 -> 50 months; interest ~ 2359.
+      // Saved ~ 1226 (audit quotes about 1226.03); exact value from the reference loop below.
+      const withExtra = refLoop(5000, 20, 250);
+      const baseline = refLoop(5000, 20, 150);
+      expect(withExtra.months).toBe(25);
+      expect(baseline.months).toBe(50);
+      const expectedSaved = Math.round((baseline.interest - withExtra.interest) * 100) / 100;
+      expect(expectedSaved).toBeGreaterThan(1200);
+      expect(expectedSaved).toBeLessThan(1250);
+
+      const res = calculateDebtSchedule(debt(5000, 20, 150), 100, "AVALANCHE", {
+        referenceDate: ref,
+      });
+      expect(res.payoffAchievable).toBe(true);
+      expect(res.unachievableReason).toBeUndefined();
+      expect(res.monthsToPayoff).toBe(25);
+      expect(res.totalInterestPaidGbp).toBeCloseTo(withExtra.interest, 2);
+      expect(res.interestSavedVsMinimumGbp).toBeCloseTo(expectedSaved, 2);
+    });
+
+    it("cap reached with a shrinking balance gives MAX_MONTHS_REACHED", () => {
+      // 5000 at 20%, min 150 needs 50 months; capped at 12 it is still shrinking.
+      const reference = refLoop(5000, 20, 150, 12);
+      expect(reference.bal).toBeGreaterThan(0.01);
+      expect(reference.bal).toBeLessThan(5000);
+      const res = calculateDebtSchedule(debt(5000, 20, 150), 0, "AVALANCHE", {
+        referenceDate: ref,
+        maxMonths: 12,
+      });
+      expect(res.payoffAchievable).toBe(false);
+      expect(res.unachievableReason).toBe("MAX_MONTHS_REACHED");
+      expect(res.debtFreeDate).toBeNull();
+      expect(res.monthsToPayoff).toBe(12);
+      expect(res.schedule.at(-1)?.remainingDebtGbp).toBeCloseTo(reference.bal, 2);
+    });
+
+    it("payable debt keeps payoffAchievable true and the existing schedule", () => {
+      const res = calculateDebtSchedule(sampleDebts, 150, "AVALANCHE", { referenceDate: ref });
+      expect(res.payoffAchievable).toBe(true);
+      expect(res.unachievableReason).toBeUndefined();
+      expect(res.debtFreeDate).toEqual(expect.any(String));
+      expect(res.schedule.length).toBe(res.monthsToPayoff);
+    });
+
+    it("no consumer debt is achievable with a date", () => {
+      const res = calculateDebtSchedule([], 300, "AVALANCHE");
+      expect(res.payoffAchievable).toBe(true);
+      expect(res.debtFreeDate).toEqual(expect.any(String));
+    });
+
+    it("legacy PayoffResult wrappers expose the flag and a string date", () => {
+      const res = calculateAvalanche(debt(10000, 24.9, 5), 0);
+      expect(res.payoffAchievable).toBe(false);
+      expect(res.unachievableReason).toBe("BALANCE_GROWING");
+      expect(typeof res.debtFreeDate).toBe("string");
     });
   });
 
