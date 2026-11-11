@@ -3,15 +3,19 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mockUpdateProfile = vi.fn().mockResolvedValue({});
 const mockSetProfile = vi.fn();
-const mockMarkChecklistStep = vi.fn();
+const mockMarkChecklistStep = vi.fn().mockResolvedValue({});
 
-const mockLoaderData = {
-  accounts: [],
-  accountDetails: [],
+let mockLoaderData: any = {
+  accounts: [
+    { id: "acc-1", name: "Monzo", type: "Current", balance: 4500 },
+    { id: "acc-2", name: "Halifax Mortgage", type: "Mortgage", balance: -210000 },
+  ],
+  accountDetails: [{ account_id: "acc-1", month: 5, year: 2026, value: 4500 }],
   budgetEntries: [],
   userProfile: {
     customBudgetCategories: ["subscriptions"],
     hasResetFinancialData: true,
+    monthlyTakeHome: 3500,
   },
   accessToken: "mock-token",
 };
@@ -113,5 +117,61 @@ describe("BudgetContainer", () => {
     await waitFor(() => {
       expect(screen.getByTestId("budget-tab-holidays")).toBeDefined();
     });
+  });
+
+  it("navigates across wizard, runway, and category tabs and renders non-empty dashboard", async () => {
+    mockLoaderData = {
+      ...mockLoaderData,
+      budgetEntries: [
+        {
+          id: "b-1",
+          userId: "u1",
+          name: "Mortgage",
+          category: "housing",
+          amount: 1200,
+          frequency: "monthly",
+          isIncome: false,
+          isPrimaryIncome: false,
+          isEssential: true,
+          notes: null,
+          isDefault: false,
+          createdAt: "",
+          updatedAt: "",
+        },
+        {
+          id: "b-2",
+          userId: "u1",
+          name: "Salary",
+          category: "income",
+          amount: 4000,
+          frequency: "monthly",
+          isIncome: true,
+          isPrimaryIncome: true,
+          isEssential: false,
+          notes: null,
+          isDefault: false,
+          createdAt: "",
+          updatedAt: "",
+        },
+      ],
+    };
+
+    render(<BudgetContainer />);
+
+    // Switch to Runway tab
+    fireEvent.click(screen.getByTestId("budget-tab-runway"));
+    expect(mockMarkChecklistStep).toHaveBeenCalledWith("runway", true);
+
+    // Switch to Housing category tab
+    fireEvent.click(screen.getByTestId("budget-tab-housing"));
+
+    // Switch to custom category tab
+    fireEvent.click(screen.getByTestId("budget-tab-subscriptions"));
+
+    // Switch back to Overview
+    fireEvent.click(screen.getByTestId("budget-tab-overview"));
+
+    // Open Setup Wizard
+    fireEvent.click(screen.getByTestId("setup-wizard-btn"));
   });
 });

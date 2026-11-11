@@ -178,4 +178,85 @@ describe("UserProfileController", () => {
       expect(res.profile.customBudgetCategories).toEqual([]);
     });
   });
+
+  describe("checklist, password reset, and default profile creation", () => {
+    it("creates default profile when none exists on getUserProfile and updateUserProfile", async () => {
+      mockUserProfileRepo.findOne.mockResolvedValueOnce(null);
+      const createdProfile = await controller.getUserProfile({
+        user: { id: "u-new", email: "new@example.com" },
+      });
+      expect(createdProfile.userId).toBe("u-new");
+      expect(createdProfile.currency).toBe("GBP");
+
+      mockUserProfileRepo.findOne.mockResolvedValueOnce(null);
+      const updated = await controller.updateUserProfile(
+        { user: { id: "u-new", email: "new@example.com" } },
+        {
+          currency: "GBP",
+          country: "GB",
+          employmentType: "employed",
+          annualSalary: 60000,
+          monthlyTakeHome: 3500,
+          hasSecondIncome: true,
+          secondIncomeMonthly: 500,
+          hasRentalIncome: true,
+          rentalIncomeMonthly: 1000,
+          hasMortgage: true,
+          mortgageType: "repayment",
+          propertyOwnershipShare: 50,
+          hasBuyToLet: true,
+          buyToLetCount: 2,
+          buyToLetPropertyValue: 300000,
+          buyToLetMonthlyRental: 1200,
+          buyToLetMortgageBalance: 150000,
+          buyToLetMortgageRate: 4.5,
+          buyToLetMortgageType: "interest-only",
+          pensionPercent: 6,
+          pensionEmployerPercent: 4,
+          isSalarySacrifice: true,
+          isSalarySacrificeEmployerNi: true,
+          monthlySavingsTarget: 800,
+          savingsAllocationMode: "pro_rata",
+          savingsDefaultInterestRate: 4.5,
+          enabledPages: ["accounts"],
+          dashboardWidgets: ["accounts"],
+          dashboardWidgetOrder: ["accounts"],
+          dashboardWidgetSizes: { accounts: "wide" },
+          dashboardWidgetConfig: {},
+          customBudgetCategories: ["travel"],
+          onboardingCompleted: true,
+        },
+      );
+      expect(updated.annualSalary).toBe(60000);
+      expect(updated.onboardingCompleted).toBe(true);
+    });
+
+    it("updates checklist steps (adding and removing)", async () => {
+      mockUserProfileRepo.findOne.mockResolvedValueOnce(null);
+      const added = await controller.updateChecklist(
+        { user: { id: "u1" } },
+        { step: "connect_bank", completed: true },
+      );
+      expect(added.setupChecklistCompletedSteps).toContain("connect_bank");
+
+      mockUserProfileRepo.findOne.mockResolvedValueOnce({
+        userId: "u1",
+        setupChecklistCompletedSteps: ["connect_bank", "set_budget"],
+      });
+      const removed = await controller.updateChecklist(
+        { user: { id: "u1" } },
+        { step: "connect_bank", completed: false },
+      );
+      expect(removed.setupChecklistCompletedSteps).toEqual(["set_budget"]);
+    });
+
+    it("handles sendPasswordReset validation and success", async () => {
+      await expect(controller.sendPasswordReset({ user: {} }, {})).rejects.toThrow(
+        BadRequestException,
+      );
+
+      const res = await controller.sendPasswordReset({ user: { email: "jane@example.com" } }, {});
+      expect(res.success).toBe(true);
+    });
+  });
 });

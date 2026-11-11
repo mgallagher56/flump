@@ -78,4 +78,60 @@ describe("<TaxIncomeSectionCard />", () => {
     fireEvent.click(header);
     expect(getByText("Consulting Client A")).toBeDefined();
   });
+
+  test("supports inline quick-add, expense & receipt records, and copy modal", () => {
+    const expenseWithReceipt: TaxRecord = {
+      ...mockRecord,
+      id: "rec-2",
+      name: "Hosting Server Bill",
+      type: "expense",
+      amount: 120,
+      frequency: "one-off",
+      receiptFilename: "invoice.pdf",
+      receiptMimeType: "application/pdf",
+      receiptData: "data:application/pdf;base64,JVBERi0=",
+    };
+
+    const { getByText, getByPlaceholderText, getByTitle } = customRender(
+      <TaxIncomeSectionCard
+        {...defaultProps}
+        colorScheme="amber"
+        records={[mockRecord, expenseWithReceipt]}
+      />,
+    );
+
+    // Click View receipt button
+    const viewReceiptBtn = getByText("View");
+    fireEvent.click(viewReceiptBtn);
+    expect(defaultProps.onViewReceipt).toHaveBeenCalledWith(expenseWithReceipt);
+
+    // Click Copy from previous tax year
+    fireEvent.click(getByText(/Copy from 2023\/24/i));
+    expect(defaultProps.onOpenCopyModal).toHaveBeenCalledWith("self-employed");
+
+    // Click Add Expense
+    fireEvent.click(getByText(/Add Expense/i));
+    expect(defaultProps.onOpenAddModal).toHaveBeenCalledWith("self-employed", "expense");
+
+    // Open Inline Quick-Add form and submit
+    fireEvent.click(getByText(/Inline Quick-Add/i));
+    const nameInput = getByPlaceholderText(/Record name/i);
+    fireEvent.change(nameInput, { target: { value: "Domain Renewal" } });
+    const amountInput = getByPlaceholderText(/Amount/i);
+    fireEvent.change(amountInput, { target: { value: "45" } });
+
+    const quickAddForm = amountInput.closest("form");
+    if (quickAddForm) {
+      fireEvent.submit(quickAddForm);
+    }
+    expect(defaultProps.onQuickAdd).toHaveBeenCalledWith(
+      expect.objectContaining({
+        source: "self-employed",
+        type: "income",
+        name: "Domain Renewal",
+        amount: 45,
+        frequency: "monthly",
+      }),
+    );
+  });
 });

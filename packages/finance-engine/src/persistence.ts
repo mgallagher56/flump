@@ -115,21 +115,26 @@ export class BrowserStorageDriver implements SeedStorageDriver {
   }
 }
 
-let activeStorageDriver: SeedStorageDriver =
-  typeof window !== "undefined" ? new BrowserStorageDriver() : new InMemoryStorageDriver();
+const defaultBrowserDriver = new BrowserStorageDriver();
+const defaultMemoryDriver = new InMemoryStorageDriver();
+let customStorageDriver: SeedStorageDriver | null = null;
 
 /**
- * Sets the active storage driver (e.g. for testing in-memory without browser globals).
+ * Sets the active storage driver (pass null or undefined to reset to automatic environment detection).
  */
-export function setStorageDriver(driver: SeedStorageDriver): void {
-  activeStorageDriver = driver;
+export function setStorageDriver(driver: SeedStorageDriver | null = null): void {
+  customStorageDriver = driver;
 }
 
 /**
- * Gets the current storage driver.
+ * Gets the current storage driver, automatically selecting BrowserStorageDriver when browser globals exist.
  */
 export function getStorageDriver(): SeedStorageDriver {
-  return activeStorageDriver;
+  if (customStorageDriver) return customStorageDriver;
+  if (typeof window !== "undefined" || typeof document !== "undefined") {
+    return defaultBrowserDriver;
+  }
+  return defaultMemoryDriver;
 }
 
 /**
@@ -149,24 +154,27 @@ export function parseCookieValue(
  * Safely persists onboarding seed state across both localStorage and root cookies (.flump.co.uk).
  */
 export function persistOnboardingSeed(payload: any): void {
+  const driver = getStorageDriver();
   const encoded = encodeSeedPayload(payload);
-  activeStorageDriver.setItem(ONBOARDING_SEED_STORAGE_KEY, encoded);
-  activeStorageDriver.setCookie(ONBOARDING_SEED_STORAGE_KEY, encoded, 86400);
+  driver.setItem(ONBOARDING_SEED_STORAGE_KEY, encoded);
+  driver.setCookie(ONBOARDING_SEED_STORAGE_KEY, encoded, 86400);
 }
 
 /**
  * Safely reads the onboarding seed state from cookies or localStorage.
  */
 export function readOnboardingSeed(): any | null {
+  const driver = getStorageDriver();
+
   // 1. Try reading from cookie
-  const cookieVal = activeStorageDriver.getCookie(ONBOARDING_SEED_STORAGE_KEY);
+  const cookieVal = driver.getCookie(ONBOARDING_SEED_STORAGE_KEY);
   if (cookieVal) {
     const decoded = decodeSeedPayload(cookieVal);
     if (decoded) return decoded;
   }
 
   // 2. Fall back to localStorage
-  const raw = activeStorageDriver.getItem(ONBOARDING_SEED_STORAGE_KEY);
+  const raw = driver.getItem(ONBOARDING_SEED_STORAGE_KEY);
   if (raw) {
     const decoded = decodeSeedPayload(raw);
     if (decoded) return decoded;
@@ -193,8 +201,9 @@ export function readOnboardingSeedFromHeader(cookieHeader: string | null | undef
  * Safely clears the onboarding seed state from both localStorage and cookies.
  */
 export function clearOnboardingSeed(): void {
-  activeStorageDriver.removeItem(ONBOARDING_SEED_STORAGE_KEY);
-  activeStorageDriver.removeCookie(ONBOARDING_SEED_STORAGE_KEY);
+  const driver = getStorageDriver();
+  driver.removeItem(ONBOARDING_SEED_STORAGE_KEY);
+  driver.removeCookie(ONBOARDING_SEED_STORAGE_KEY);
 }
 
 /**
@@ -213,17 +222,18 @@ export function hasSessionPresenceCookie(rawCookie?: string): boolean {
   if (rawCookie !== undefined) {
     return parseCookieValue(rawCookie, SESSION_PRESENCE_COOKIE) === "1";
   }
-  return activeStorageDriver.getCookie(SESSION_PRESENCE_COOKIE) === "1";
+  return getStorageDriver().getCookie(SESSION_PRESENCE_COOKIE) === "1";
 }
 
 /**
  * Sets or clears the cross-domain presence cookie (flump_has_session=1) on .flump.co.uk.
  */
 export function setSessionPresenceCookie(active: boolean): void {
+  const driver = getStorageDriver();
   if (active) {
-    activeStorageDriver.setCookie(SESSION_PRESENCE_COOKIE, "1", 2592000);
+    driver.setCookie(SESSION_PRESENCE_COOKIE, "1", 2592000);
   } else {
-    activeStorageDriver.removeCookie(SESSION_PRESENCE_COOKIE);
+    driver.removeCookie(SESSION_PRESENCE_COOKIE);
   }
 }
 

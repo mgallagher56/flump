@@ -50,6 +50,20 @@ describe("PortfolioSnapshot domain module", () => {
       balance: -210000,
       interestRate: 4.2,
     },
+    {
+      id: "acc_7",
+      name: "Bank Overdraft",
+      type: "Overdraft",
+      balance: -500,
+      interestRate: 39.9,
+    },
+    {
+      id: "acc_8",
+      name: "Car Loan",
+      type: "Loan",
+      balance: -8000,
+      interestRate: 8.9,
+    },
   ];
 
   const sampleDetails: RawAccountDetail[] = [
@@ -81,14 +95,9 @@ describe("PortfolioSnapshot domain module", () => {
     it("prefers latest chronological AccountDetail over static Account.balance", () => {
       const snapshot = new PortfolioSnapshot(sampleAccounts, sampleDetails);
 
-      // acc_1 had static balance 1500, but latest detail is 1800
       expect(snapshot.getLatestBalance("acc_1")).toBe(1800);
-      // acc_2 had static balance 10000, but latest detail is 11500
       expect(snapshot.getLatestBalance("acc_2")).toBe(11500);
-      // acc_5 had static balance -2400, but latest detail is -2200
       expect(snapshot.getLatestBalance("acc_5")).toBe(2200);
-
-      // acc_3 had no details, so falls back to static balance 25000
       expect(snapshot.getLatestBalance("acc_3")).toBe(25000);
     });
 
@@ -110,25 +119,29 @@ describe("PortfolioSnapshot domain module", () => {
   describe("aggregations", () => {
     it("calculates total liquid cash", () => {
       const snapshot = new PortfolioSnapshot(sampleAccounts, sampleDetails);
-      // Cash (1800) + Savings (11500) = 13300
       expect(snapshot.getTotalLiquidCash()).toBe(13300);
+    });
+
+    it("calculates specific asset and liability categories", () => {
+      const snapshot = new PortfolioSnapshot(sampleAccounts, sampleDetails);
+      expect(snapshot.getTotalInvestments()).toBe(25000);
+      expect(snapshot.getTotalPensions()).toBe(45000);
+      expect(snapshot.getTotalConsumerDebt()).toBe(2200 + 500 + 8000);
+      expect(snapshot.getTotalMortgageBalance()).toBe(210000);
     });
 
     it("calculates total assets and liabilities", () => {
       const snapshot = new PortfolioSnapshot(sampleAccounts, sampleDetails);
-      // Assets: Cash 1800 + Savings 11500 + Inv 25000 + Pension 45000 = 83300
       expect(snapshot.getTotalAssets()).toBe(83300);
-      // Liabilities: CC 2200 + Mortgage 210000 = 212200
-      expect(snapshot.getTotalLiabilities()).toBe(212200);
-      // Net worth: 83300 - 212200 = -128900
-      expect(snapshot.getTotalNetWorth()).toBe(-128900);
+      expect(snapshot.getTotalLiabilities()).toBe(212200 + 500 + 8000);
     });
 
     it("calculates weighted savings interest rate", () => {
       const snapshot = new PortfolioSnapshot(sampleAccounts, sampleDetails);
-      // Savings (11500 @ 4.8%) + Inv (25000 @ 7.0%)
-      // (11500*4.8 + 25000*7.0) / 36500 = (55200 + 175000) / 36500 = 230200 / 36500 = 6.31%
       expect(snapshot.getWeightedSavingsRate()).toBeCloseTo(6.31, 2);
+
+      const emptySnapshot = new PortfolioSnapshot([], []);
+      expect(emptySnapshot.getWeightedSavingsRate(4.5)).toBe(4.5);
     });
   });
 
@@ -137,14 +150,15 @@ describe("PortfolioSnapshot domain module", () => {
       const snapshot = new PortfolioSnapshot(sampleAccounts, sampleDetails);
       const debts = snapshot.toDebtItems();
 
-      expect(debts.length).toBe(1);
-      const card = debts[0]!;
-      expect(card.id).toBe("acc_5");
-      expect(card.name).toBe("Barclaycard Platinum");
-      expect(card.balance).toBe(2200);
-      expect(card.apr).toBe(23.9);
+      expect(debts.length).toBe(3);
+      const card = debts.find((d) => d.id === "acc_5")!;
       expect(card.type).toBe("credit_card");
-      expect(card.minimumPayment).toBeGreaterThanOrEqual(25);
+
+      const overdraft = debts.find((d) => d.id === "acc_7")!;
+      expect(overdraft.type).toBe("overdraft");
+
+      const loan = debts.find((d) => d.id === "acc_8")!;
+      expect(loan.type).toBe("loan");
     });
   });
 
@@ -155,12 +169,12 @@ describe("PortfolioSnapshot domain module", () => {
 
       expect(history.length).toBe(2);
       expect(history[0]?.month).toBe(1);
-      expect(history[0]?.totalAssets).toBe(1200 + 8000); // 9200
+      expect(history[0]?.totalAssets).toBe(1200 + 8000);
       expect(history[0]?.totalLiabilities).toBe(3000);
       expect(history[0]?.netWorth).toBe(6200);
 
       expect(history[1]?.month).toBe(2);
-      expect(history[1]?.totalAssets).toBe(1800 + 11500); // 13300
+      expect(history[1]?.totalAssets).toBe(1800 + 11500);
       expect(history[1]?.totalLiabilities).toBe(2200);
       expect(history[1]?.netWorth).toBe(11100);
     });

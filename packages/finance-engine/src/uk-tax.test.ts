@@ -8,6 +8,7 @@ import {
   calculateScottishIncomeTax,
   calculateStudentLoanDeduction,
   calculateTaxTrapRelief,
+  calculateUKTakeHome,
   calculateUkTax,
   getTaxYearRemainingDays,
 } from "./uk-tax.js";
@@ -164,6 +165,20 @@ describe("uk-tax module", () => {
       expect(res.taxTrap.isInTaxTrap).toBe(true);
       expect(res.taxTrap.excessOver100kGbp).toBe(8000);
       expect(res.taxTrap.contributionRequiredToEscapeGbp).toBe(8000);
+    });
+
+    it("handles basic rate taxpayer allowances", () => {
+      const res = calculateUkTax({
+        grossSalary: 30000,
+      });
+      expect(res.allowances.personalSavingsAllowanceGbp).toBe(1000); // Basic rate
+      expect(res.allowances.marginalIncomeTaxBand).toBe("BASIC");
+    });
+
+    it("calculates UK take home with calculateUKTakeHome helper", () => {
+      const res = calculateUKTakeHome(45000, 5, true);
+      expect(res.netAnnual).toBeGreaterThan(0);
+      expect(res.trapAnalysis.isInTaxTrap).toBe(false);
     });
   });
 

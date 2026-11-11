@@ -53,7 +53,7 @@ describe("DebtContainer", () => {
     expect(screen.getByText(/UK Debt Rules & Specialised Instruments/i)).toBeDefined();
   });
 
-  it("allows switching UK instruments tabs", () => {
+  it("allows switching UK instruments tabs and managing liability accounts", () => {
     render(<DebtContainer />);
 
     const overdraftTab = screen.getByRole("button", { name: /Arranged Overdraft EAR Cost/i });
@@ -61,5 +61,21 @@ describe("DebtContainer", () => {
 
     expect(screen.getByText(/True Annual Overdraft Drain/i)).toBeDefined();
     expect(screen.getByText(/Average Arranged Overdraft Balance/i)).toBeDefined();
+
+    // Switch top-level container tabs
+    fireEvent.click(screen.getByRole("button", { name: /Liability Accounts & Cards/i }));
+    fireEvent.click(screen.getByRole("button", { name: /UK Debt Rules & Helplines/i }));
+    fireEvent.click(screen.getByRole("button", { name: /Strategy & Payoff Simulator/i }));
+
+    // Open Add Debt Modal and submit a new debt
+    fireEvent.click(screen.getByRole("button", { name: /Add Debt/i }));
+    const nameInput = screen.getByPlaceholderText(/Barclaycard Platinum/i);
+    fireEvent.change(nameInput, { target: { value: "New Store Card" } });
+    const form = nameInput.closest("form");
+    if (form) fireEvent.submit(form);
+    expect(screen.getByText("New Store Card")).toBeDefined();
+
+    // Delete a debt item
+    fireEvent.click(screen.getByRole("button", { name: /Delete Tesco Loan/i }));
   });
 });

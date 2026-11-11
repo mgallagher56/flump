@@ -73,6 +73,7 @@ export default defineConfig(({ mode }) => ({
       enabled: true,
       exclude: [
         "app/**/*.test.{js,ts,jsx,tsx}",
+        "app/**/*.stories.{js,ts,jsx,tsx}",
         "app/*.*",
         "app/**/*.config.{js,ts,jsx,tsx}",
         "app/routes/*.*",

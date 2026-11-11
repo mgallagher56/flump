@@ -71,4 +71,33 @@ describe("<MortgageContainer />", () => {
     expect(getByText("Gross monthly rent")).toBeDefined();
     expect(getByText("Estimated net cash flow")).toBeDefined();
   });
+
+  test("allows editing My Mortgage Information and switching to LTV milestones tab", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(JSON.stringify({}), { status: 200 }),
+    );
+    const { getByText, getByLabelText, getByRole } = customRender(<MortgageContainer />);
+
+    // Open Edit mode on My Mortgage Information card
+    fireEvent.click(getByRole("button", { name: /^Edit$/i }));
+
+    const balanceInput = getByLabelText("Remaining Balance (£)");
+    fireEvent.change(balanceInput, { target: { value: "130000" } });
+
+    const rateInput = getByLabelText("Interest Rate (%)");
+    fireEvent.change(rateInput, { target: { value: "4.5" } });
+
+    const termInput = getByLabelText("Remaining Term (Years)");
+    fireEvent.change(termInput, { target: { value: "18" } });
+
+    // Toggle Interest-Only and back to Repayment
+    fireEvent.click(getByRole("button", { name: "Interest-Only" }));
+    fireEvent.click(getByRole("button", { name: "Repayment" }));
+
+    // Save changes
+    fireEvent.click(getByRole("button", { name: /^Save$/i }));
+
+    // Switch to LTV milestones tab
+    fireEvent.click(getByText("LTV milestones"));
+  });
 });

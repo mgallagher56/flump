@@ -8,5 +8,16 @@ export default defineConfig({
     globals: true,
     include: ["src/**/*.{test,spec}.{ts,tsx}"],
     exclude: ["node_modules", "dist"],
+    coverage: {
+      provider: "v8",
+      include: ["src/**/*.{ts,tsx}"],
+      exclude: [
+        "src/index.tsx",
+        "src/**/index.ts",
+        "src/**/*.stories.{ts,tsx}",
+        "src/**/*.{test,spec}.{ts,tsx}",
+        "**/styled-system/**",
+      ],
+    },
   },
 });

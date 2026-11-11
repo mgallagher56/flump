@@ -47,4 +47,14 @@ describe("banking server: PlaidAdapter", () => {
     const salary = sync.added.find((t) => t.merchantOrDescription.includes("Payroll"));
     expect(salary?.amountGbp).toBe(2500); // Inflow positive
   });
+
+  it("creates link session and revokes connection", async () => {
+    const adapter = new PlaidAdapter();
+    const session = await adapter.createLinkSession("user_123", "conn_456");
+    expect(session.linkTokenOrUrl).toContain("user_123");
+    expect(session.expiresAt).toBeDefined();
+
+    const exchanged = await adapter.exchangePublicToken("public-sandbox-token");
+    await expect(adapter.revokeConnection(exchanged.accessTokenEncrypted)).resolves.toBeUndefined();
+  });
 });

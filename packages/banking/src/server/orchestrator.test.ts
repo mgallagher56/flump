@@ -40,13 +40,44 @@ describe("BankSyncOrchestrator", () => {
     const barclays = BankSyncOrchestrator.getMockInstitutionAccounts("barclays");
     const card = barclays.find((a) => a.type === "Credit Card");
     expect(card?.balance).toBeLessThan(0);
+
+    const unknown = BankSyncOrchestrator.getMockInstitutionAccounts("nonexistent_bank");
+    expect(unknown.length).toBeGreaterThan(0);
   });
 
-  it("generates 12 months history points", () => {
-    const history = BankSyncOrchestrator.generateMockHistory(1000, "Current", 2026, 11);
-    expect(history.length).toBe(12);
-    expect(history[0]?.year).toBe(2026);
-    expect(history[0]?.month).toBe(11);
+  it("generates 12 months history points across year boundaries for different account types", () => {
+    const historyCurrent = BankSyncOrchestrator.generateMockHistory(1000, "Current", 2026, 3);
+    expect(historyCurrent.length).toBe(12);
+    expect(historyCurrent[0]?.year).toBe(2026);
+    expect(historyCurrent[0]?.month).toBe(3);
+
+    const historyMortgage = BankSyncOrchestrator.generateMockHistory(-200000, "Mortgage", 2026, 1);
+    expect(historyMortgage.length).toBe(12);
+
+    const historySaving = BankSyncOrchestrator.generateMockHistory(5000, "Saving", 2026, 6);
+    expect(historySaving.length).toBe(12);
+
+    const historyCard = BankSyncOrchestrator.generateMockHistory(-1500, "Credit Card", 2026, 6);
+    expect(historyCard.length).toBe(12);
+  });
+
+  it("generates mock transactions for different account types", () => {
+    const now = new Date("2026-05-10T12:00:00Z");
+
+    const currentTxs = BankSyncOrchestrator.generateMockTransactions("Current", "Monzo", now);
+    expect(currentTxs.length).toBeGreaterThan(0);
+
+    const savingTxs = BankSyncOrchestrator.generateMockTransactions("Saving", "Monzo", now);
+    expect(savingTxs.length).toBe(1);
+
+    const mortgageTxs = BankSyncOrchestrator.generateMockTransactions("Mortgage", "Santander", now);
+    expect(mortgageTxs.length).toBe(1);
+
+    const cardTxs = BankSyncOrchestrator.generateMockTransactions("Credit Card", "Amex", now);
+    expect(cardTxs.length).toBe(1);
+
+    const otherTxs = BankSyncOrchestrator.generateMockTransactions("Other", "Unknown", now);
+    expect(otherTxs.length).toBe(0);
   });
 
   it("generates canonical OAuth URLs for banks", () => {

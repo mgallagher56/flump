@@ -80,6 +80,7 @@
     "format": "biome check --write .",
     "lint": "biome check .",
     "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
     "test:ui": "vitest --ui",
     "typecheck": "react-router typegen && tsc",
     "check-types": "bun run typecheck",

@@ -108,4 +108,26 @@ describe("Header", () => {
 
     expect(screen.queryByRole("navigation", { name: /mobile navigation/i })).toBeNull();
   });
+
+  it("renders mobile drawer with dashboard link when session is present", () => {
+    // biome-ignore lint/suspicious/noDocumentCookie: Cookie testing helper
+    document.cookie = "flump_has_session=1; path=/";
+
+    render(
+      <HelmetProvider>
+        <ThemeProvider>
+          <MemoryRouter>
+            <Header />
+          </MemoryRouter>
+        </ThemeProvider>
+      </HelmetProvider>,
+    );
+
+    const toggleButton = screen.getByRole("button", { name: /open navigation menu/i });
+    fireEvent.click(toggleButton);
+
+    const mobileNav = screen.getByRole("navigation", { name: /mobile navigation/i });
+    expect(mobileNav).toBeDefined();
+    expect(screen.getAllByText("Go to dashboard →").length).toBeGreaterThan(0);
+  });
 });

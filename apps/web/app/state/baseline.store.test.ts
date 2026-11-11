@@ -1,8 +1,70 @@
 import type { OnboardingSeedPayload } from "@flump/finance-engine";
+import { act, renderHook } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import { DEFAULT_FINANCIAL_BASELINE, hydrateBaselineFromSeed } from "./baseline.store";
+import {
+  CookieSeedAdapter,
+  DEFAULT_FINANCIAL_BASELINE,
+  FINANCIAL_BASELINE_STORAGE_KEY,
+  hydrateBaselineFromSeed,
+  useFinancialBaseline,
+  writeOnboardingSeedCookie,
+} from "./baseline.store";
+import * as stateExports from "./index";
 
 describe("Phase 2 Verification Gate: baseline.store & Onboarding Seed Hydration", () => {
+  it("re-exports baseline and scenario stores from state/index.ts", () => {
+    expect(stateExports.DEFAULT_FINANCIAL_BASELINE).toBeDefined();
+    expect(stateExports.useScenario).toBeDefined();
+  });
+
+  it("handles CookieSeedAdapter methods and useFinancialBaseline updates", () => {
+    const adapter = new CookieSeedAdapter();
+    window.localStorage.clear();
+    adapter.clearSeed();
+
+    expect(adapter.getBaseline()).toBeNull();
+
+    writeOnboardingSeedCookie({
+      mode: "DEBT",
+      annualGrossSalary: 44000,
+      totalUnsecuredDebt: 5000,
+      timestamp: Date.now(),
+    });
+    expect(adapter.getSeed()?.annualGrossSalary).toBe(44000);
+    expect(adapter.getBaseline()?.annualGrossSalary).toBe(44000);
+
+    adapter.saveBaseline({
+      ...DEFAULT_FINANCIAL_BASELINE,
+      annualGrossSalary: 72000,
+    });
+    expect(adapter.getBaseline()?.annualGrossSalary).toBe(72000);
+
+    window.localStorage.setItem(FINANCIAL_BASELINE_STORAGE_KEY, "{invalid_json");
+    expect(adapter.getBaseline()).toBeNull();
+    window.localStorage.clear();
+
+    adapter.saveSeed({
+      mode: "WEALTH",
+      annualGrossSalary: 88000,
+      timestamp: Date.now(),
+      inferredModules: ["accounts", "savings", "forecast"],
+    });
+
+    const { result } = renderHook(() => useFinancialBaseline());
+    act(() => {
+      result.current.updateBaseline({ annualGrossSalary: 61000 });
+    });
+    expect(result.current.baseline.annualGrossSalary).toBe(61000);
+
+    act(() => {
+      result.current.setBaseline({
+        ...DEFAULT_FINANCIAL_BASELINE,
+        annualGrossSalary: 80000,
+      });
+    });
+    expect(result.current.baseline.annualGrossSalary).toBe(80000);
+  });
+
   it("defaults to STAGE_2_BUFFER_BUILD with standard UK parameters", () => {
     expect(DEFAULT_FINANCIAL_BASELINE.taxYear).toBe("2025/26");
     expect(DEFAULT_FINANCIAL_BASELINE.ukRegion).toBe("ENGLAND_NI_WALES");
