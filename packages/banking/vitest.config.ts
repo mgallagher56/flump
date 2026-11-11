@@ -14,6 +14,8 @@ export default defineConfig({
         "src/**/index.ts",
       ],
       reporter: ["text", "json-summary", "lcov"],
+      // Floors = floor(measured) - 1 (owner decision D6-a). Raise when a PR gains 2+ points.
+      thresholds: { statements: 84, branches: 69, functions: 88, lines: 85 },
     },
   },
 });
