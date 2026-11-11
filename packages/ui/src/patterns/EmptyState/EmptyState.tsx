@@ -21,7 +21,7 @@ export const EmptyState: FC<EmptyStateProps> = ({
   const classes = emptyStateRecipe();
 
   return (
-    <section id={id} data-testid={id} className={classes.root}>
+    <section id={id} data-testid={id} className={classes.root} aria-labelledby={`${id}-title`}>
       {icon ? (
         <div
           id={`${id}-icon`}
