@@ -276,7 +276,7 @@ const PERSONAS: PersonaConfig[] = [
     metricLabel: "Financial independence runway",
     metricValue: "18.4 years",
     metricNote: "Liquid capital runway under current spending and compound ISA yields",
-    toolLink: "/?demo=true",
+    toolLink: "/sandbox",
     toolLinkLabel: "Explore live demo →",
   },
 ];

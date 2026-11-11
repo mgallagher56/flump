@@ -7,12 +7,8 @@ import { getAuthSession } from "~/utils/auth.server";
 import { isDemoMode } from "~/utils/demoData";
 
 export const loader = async (args: LoaderFunctionArgs) => {
-  if (isDemoMode(args.request.url)) {
-    return redirect("/?demo=true");
-  }
-
   const { user, accessToken } = await getAuthSession(args, { ensureSignedIn: false });
-  if (!user) return redirect("/login");
+  if (!user) return redirect(isDemoMode(args.request.url) ? "/sandbox" : "/login");
   if (!accessToken) throwRouteError(new BackendError("unauthorised", "/user-profile"));
 
   try {

@@ -45,20 +45,28 @@ vi.mock("~/components/home/LoggedOutHome", () => ({
 import { useLoaderData } from "react-router";
 
 describe("_index route", () => {
-  it("returns demo data when ?demo=true is present in the loader request", async () => {
+  it("redirects signed-out ?demo=true to /sandbox", async () => {
+    const request = new Request("http://localhost/?demo=true");
+    const result = (await loader({ request, params: {}, context: {} } as any)) as any;
+    expect(result.status).toBe(302);
+    expect(result.url).toBe("/sandbox");
+  });
+
+  it("signed-in ?demo=true returns the real workspace, never demo data", async () => {
+    vi.mocked(loadWorkspaceSnapshot).mockResolvedValueOnce({
+      user: { id: "u1", email: "real@example.com" },
+      accounts: [],
+      accountDetails: [],
+      budgetEntries: [],
+      taxRecords: [],
+      userProfile: { onboardingCompleted: true },
+      portfolioSnapshot: undefined,
+    } as any);
     const request = new Request("http://localhost/?demo=true");
     const data = (await loader({ request, params: {}, context: {} } as any)) as any;
-
-    expect(data.isDemo).toBe(true);
-    expect(data.user).toBeDefined();
-    expect(data.user.email).toBe("demo@flump.app");
-    expect(data.accountsData).toBeDefined();
-    expect(data.accountsData.totalAssets).toBeGreaterThan(0);
-    expect(data.budgetData).toBeDefined();
-    expect(data.savingsData).toBeDefined();
-    expect(data.mortgageData).toBeDefined();
-    expect(data.pensionData).toBeDefined();
-    expect(data.taxData).toBeDefined();
+    expect(data.user.email).toBe("real@example.com");
+    expect(JSON.stringify(data)).not.toContain("demo@flump.app");
+    expect(data).not.toHaveProperty("isDemo");
   });
 
   it("returns logged-out data when no session and not demo mode", async () => {
@@ -67,7 +75,6 @@ describe("_index route", () => {
 
     expect(data).toBeDefined();
     expect(data.user).toBeNull();
-    expect(data.isDemo).toBe(false);
   });
 
   it("rejects when the workspace snapshot fails instead of returning zeroed data", async () => {
@@ -171,31 +178,11 @@ describe("_index route", () => {
 
   it("renders LoggedOutHome when user is null", () => {
     vi.mocked(useLoaderData).mockReturnValue({
-      isDemo: false,
       user: null,
       accountsData: null,
     } as any);
 
     render(<Index />);
     expect(screen.getByTestId("mock-logged-out-home")).toBeDefined();
-  });
-
-  it("renders DemoModeBanner and HomeDashboard when isDemo is true", () => {
-    vi.mocked(useLoaderData).mockReturnValue({
-      isDemo: true,
-      user: { id: "demo-user", email: "demo@flump.app" },
-      accountsData: { netWorth: 100000 },
-      checklistProps: {},
-      forecastData: {},
-      mortgageData: {},
-      pensionData: {},
-      savingsData: {},
-      taxData: {},
-    } as any);
-
-    render(<Index />);
-
-    expect(screen.getByTestId("demo-mode-banner")).toBeDefined();
-    expect(screen.getByTestId("mock-home-dashboard")).toBeDefined();
   });
 });
