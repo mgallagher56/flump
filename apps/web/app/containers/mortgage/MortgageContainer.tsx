@@ -28,6 +28,9 @@ import type { loader } from "~/routes/app.mortgage";
 import { useFinancialBaseline } from "~/state/baseline.store";
 import { currentMonth, currentYear } from "~/utils/utils";
 
+const formatList = (items: string[]): string =>
+  items.length <= 1 ? items.join("") : `${items.slice(0, -1).join(", ")} and ${items.at(-1)}`;
+
 const MortgageContainer: FC = () => {
   const { t } = useTranslation();
   const { accounts = [], accountDetails = [], userProfile } = useLoaderData<typeof loader>();
@@ -50,20 +53,17 @@ const MortgageContainer: FC = () => {
   );
 
   // Shared mortgage states
-  const [loanAmount, setLoanAmount] = useState<number>(userProfile?.mortgageBalance || 150000);
-  const [interestRate, setInterestRate] = useState<number>(userProfile?.mortgageRate || 4.5);
-  const [remainingTerm, setRemainingTerm] = useState<number>(userProfile?.mortgageTermYears || 25);
+  // Unknown values start at 0 (empty): nothing is assumed, and the page prompts for them.
+  const [loanAmount, setLoanAmount] = useState<number>(userProfile?.mortgageBalance ?? 0);
+  const [interestRate, setInterestRate] = useState<number>(userProfile?.mortgageRate ?? 0);
+  const [remainingTerm, setRemainingTerm] = useState<number>(userProfile?.mortgageTermYears ?? 0);
   const [overpayment, setOverpayment] = useState<number>(200);
   const [isSaved, setIsSaved] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
-  const [editLoanAmount, setEditLoanAmount] = useState<number>(
-    userProfile?.mortgageBalance || 150000,
-  );
-  const [editInterestRate, setEditInterestRate] = useState<number>(
-    userProfile?.mortgageRate || 4.5,
-  );
+  const [editLoanAmount, setEditLoanAmount] = useState<number>(userProfile?.mortgageBalance ?? 0);
+  const [editInterestRate, setEditInterestRate] = useState<number>(userProfile?.mortgageRate ?? 0);
   const [editRemainingTerm, setEditRemainingTerm] = useState<number>(
-    userProfile?.mortgageTermYears || 25,
+    userProfile?.mortgageTermYears ?? 0,
   );
   const [editMortgageType, setEditMortgageType] = useState<"repayment" | "interest-only">(
     userProfile?.mortgageType || "repayment",
@@ -111,12 +111,18 @@ const MortgageContainer: FC = () => {
     return (loanAmount * i * (1 + i) ** n) / ((1 + i) ** n - 1);
   }, [loanAmount, interestRate, remainingTerm, mortgageType]);
 
+  const missingMortgageDetails = [
+    loanAmount > 0 ? null : "balance",
+    interestRate > 0 ? null : "rate",
+    remainingTerm > 0 ? null : "term",
+  ].filter((x): x is string => x !== null);
+
   const propertyValue =
     propertyCategory === "btl"
       ? profile.buyToLetPropertyValue || 250000
       : profile.homeValue || Math.round(loanAmount / 0.75);
 
-  const currentLtv = propertyValue > 0 ? (loanAmount / propertyValue) * 100 : 75;
+  const currentLtv = propertyValue > 0 ? (loanAmount / propertyValue) * 100 : 0;
 
   const ltvMilestones = useMemo(() => {
     return calculateLtvMilestones(propertyValue, loanAmount, profile.mortgageRenewalDate);
@@ -160,6 +166,13 @@ const MortgageContainer: FC = () => {
       if (bal > 0) {
         setLoanAmount(bal);
       }
+      // A stored account rate is real data; an unset rate stays empty.
+      const storedRate = Number(
+        accounts.find((a: any) => a.id === selectedAccountId)?.interestRate,
+      );
+      if (storedRate > 0) {
+        setInterestRate(storedRate);
+      }
     }
   }, [selectedAccountId, accounts, accountDetails, propertyCategory]);
 
@@ -175,8 +188,9 @@ const MortgageContainer: FC = () => {
       if (mortgageAccounts.length > 0) {
         setSelectedAccountId(mortgageAccounts[0].id);
       } else {
-        setLoanAmount(150000);
-        setInterestRate(4.5);
+        setLoanAmount(0);
+        setInterestRate(0);
+        setRemainingTerm(0);
       }
     }
   };
@@ -1010,6 +1024,12 @@ const MortgageContainer: FC = () => {
         </button>
       </div>
 
+      {missingMortgageDetails.length > 0 && propertyCategory === "residential" && (
+        <FLPText color="text.muted" fontSize="sm">
+          Add your mortgage {formatList(missingMortgageDetails)} to see your figures.
+        </FLPText>
+      )}
+
       {/* Selected Tab content */}
       {activeTab === "tracker" && (
         <MortgageTracker
@@ -1026,7 +1046,7 @@ const MortgageContainer: FC = () => {
           onSelectAccount={(id) => {
             setSelectedAccountId(id);
             if (!id) {
-              setLoanAmount(150000);
+              setLoanAmount(0);
             }
           }}
         />
