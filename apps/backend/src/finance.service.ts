@@ -106,6 +106,17 @@ export class FinanceService {
   }
 
   async createTransaction(userId: string, body: CreateTransactionDto) {
+    // accountId is a non-nullable column; an undefined id in a TypeORM where
+    // clause would match any row, so reject it before querying.
+    if (!body.accountId) {
+      throw new BadRequestException("accountId is required");
+    }
+    const account = await this.accountRepository.findOne({
+      where: { id: body.accountId, userId },
+    });
+    if (!account) {
+      throw new NotFoundException("Account not found");
+    }
     const transaction = this.transactionRepository.create({
       ...this.pickTransactionFields(body),
       userId,

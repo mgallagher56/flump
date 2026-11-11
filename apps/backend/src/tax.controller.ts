@@ -16,6 +16,33 @@ import { AuthGuard } from "./auth/auth.guard";
 import { TaxRecord } from "./entities/tax-record.entity";
 import { UserProfile } from "./entities/user-profile.entity";
 
+/**
+ * Allow-list of client-writable tax record fields. `id`, `userId`,
+ * `createdAt` and `updatedAt` are never copied from a request body.
+ */
+const TAX_RECORD_FIELDS = [
+  "type",
+  "source",
+  "category",
+  "name",
+  "amount",
+  "frequency",
+  "date",
+  "endDate",
+  "notes",
+  "receiptFilename",
+  "receiptMimeType",
+  "receiptData",
+] as const;
+
+const pickTaxRecordFields = (body: Partial<TaxRecord> | undefined): Partial<TaxRecord> => {
+  const picked: Record<string, unknown> = {};
+  for (const key of TAX_RECORD_FIELDS) {
+    if (body?.[key] !== undefined) picked[key] = body[key];
+  }
+  return picked as Partial<TaxRecord>;
+};
+
 @Controller("tax-records")
 @UseGuards(AuthGuard)
 export class TaxController {
@@ -763,7 +790,7 @@ export class TaxController {
 
     const created = this.taxRecordRepository.create(
       body.records.map((r) => ({
-        ...r,
+        ...pickTaxRecordFields(r),
         userId,
       })),
     );
@@ -774,9 +801,9 @@ export class TaxController {
   async createTaxRecord(@Req() req: any, @Body() body: any): Promise<TaxRecord> {
     const userId = req.user.id;
     const record = this.taxRecordRepository.create({
-      ...body,
+      ...pickTaxRecordFields(body),
       userId,
-    } as Partial<TaxRecord>);
+    });
     return this.taxRecordRepository.save(record);
   }
 
@@ -791,7 +818,7 @@ export class TaxController {
     if (!record) {
       throw new NotFoundException("Tax record not found");
     }
-    Object.assign(record, body);
+    Object.assign(record, pickTaxRecordFields(body));
     return this.taxRecordRepository.save(record);
   }
 
