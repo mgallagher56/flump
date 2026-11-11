@@ -9,7 +9,7 @@ import { Button, EmptyState } from "@repo/ui";
 import { css } from "@repo/ui/styled-system/css";
 import { type FC, useMemo, useState } from "react";
 import { FaBookOpen, FaCalculator, FaCreditCard, FaExclamationTriangle } from "react-icons/fa";
-import { useLoaderData } from "react-router";
+import { Link, useLoaderData } from "react-router";
 import FLPButton from "~/components/core/buttons/FLPButton";
 import FLPHeading from "~/components/core/typography/FLPHeading";
 import FLPText from "~/components/core/typography/FLPText";
@@ -55,8 +55,15 @@ export const DebtContainer: FC = () => {
   const { profile } = useUserProfile();
 
   const accounts = loaderData?.accounts || [];
-  const budgetData = loaderData?.budgetData;
-  const budgetSurplus = budgetData?.monthlySurplus || 150;
+  const debtInputs = loaderData?.debtInputs as
+    | {
+        monthlySurplus: number | null;
+        liquidSavings: number;
+        monthlyEssentialExpenses: number | null;
+      }
+    | undefined;
+  const monthlySurplus = debtInputs?.monthlySurplus ?? null;
+  const budgetSurplus = monthlySurplus ?? 0;
 
   // Tab state
   const [activeTab, setActiveTab] = useState<"simulator" | "accounts" | "instruments">("simulator");
@@ -76,10 +83,10 @@ export const DebtContainer: FC = () => {
     return evaluateFinancialStage({
       debts,
       monthlySurplus: budgetSurplus,
-      liquidSavings: 800,
-      monthlyEssentialExpenses: 1600,
+      liquidSavings: debtInputs?.liquidSavings ?? 0,
+      monthlyEssentialExpenses: debtInputs?.monthlyEssentialExpenses ?? 0,
     });
-  }, [debts, budgetSurplus]);
+  }, [debts, budgetSurplus, debtInputs?.liquidSavings, debtInputs?.monthlyEssentialExpenses]);
 
   // Strategy comparison and promotional cliff detection
   const comparison = useMemo(() => {
@@ -308,8 +315,22 @@ export const DebtContainer: FC = () => {
               })}
             >
               <div className={css({ gridColumn: { base: "span 1", lg: "span 5" } })}>
+                {monthlySurplus === null ? (
+                  <FLPText color="text.muted" fontSize="sm">
+                    <Link
+                      to="/app/budget"
+                      className={css({
+                        color: "primary",
+                        textDecoration: "underline",
+                        fontVariantNumeric: "tabular-nums",
+                      })}
+                    >
+                      Set up your budget to see your monthly surplus
+                    </Link>
+                  </FLPText>
+                ) : null}
                 <PayoffStrategySwitcher
-                  budgetSurplus={budgetSurplus}
+                  budgetSurplus={Math.max(0, budgetSurplus)}
                   comparison={comparison}
                   extraPayment={extraPayment}
                   selectedStrategy={selectedStrategy}

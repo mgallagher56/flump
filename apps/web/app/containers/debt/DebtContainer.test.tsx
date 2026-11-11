@@ -2,7 +2,14 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import DebtContainer from "./DebtContainer";
 
-const loaderState = vi.hoisted(() => ({ empty: false }));
+const loaderState = vi.hoisted(() => ({
+  empty: false,
+  debtInputs: { monthlySurplus: 420, liquidSavings: 2000, monthlyEssentialExpenses: 1500 } as {
+    monthlySurplus: number | null;
+    liquidSavings: number;
+    monthlyEssentialExpenses: number | null;
+  },
+}));
 
 vi.mock("react-router", () => ({
   useLoaderData: () => ({
@@ -24,9 +31,7 @@ vi.mock("react-router", () => ({
             interestRate: 7.9,
           },
         ],
-    budgetData: {
-      monthlySurplus: 150,
-    },
+    debtInputs: loaderState.debtInputs,
     userProfile: {},
   }),
   useNavigate: () => vi.fn(),
@@ -47,6 +52,32 @@ vi.mock("~/hooks/useUserProfile", async (importOriginal) => {
 });
 
 describe("DebtContainer", () => {
+  it("passes the loader surplus, not a hard-coded fallback", () => {
+    render(<DebtContainer />);
+    expect(screen.getByText(/Wired to budget surplus: £420\/mo available/)).toBeDefined();
+    expect(screen.queryByText(/Set up your budget to see your monthly surplus/)).toBeNull();
+  });
+
+  it("shows the budget prompt when surplus is null", () => {
+    loaderState.debtInputs = {
+      monthlySurplus: null,
+      liquidSavings: 0,
+      monthlyEssentialExpenses: null,
+    };
+    try {
+      render(<DebtContainer />);
+      const prompt = screen.getByText(/Set up your budget to see your monthly surplus/);
+      expect(prompt.closest("a")?.getAttribute("href")).toBe("/app/budget");
+      expect(screen.queryByText(/Wired to budget surplus/)).toBeNull();
+    } finally {
+      loaderState.debtInputs = {
+        monthlySurplus: 420,
+        liquidSavings: 2000,
+        monthlyEssentialExpenses: 1500,
+      };
+    }
+  });
+
   it("shows the empty state and no invented debts for a user without debt accounts", () => {
     loaderState.empty = true;
     try {
