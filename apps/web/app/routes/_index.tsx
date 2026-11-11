@@ -6,7 +6,6 @@ import { HomeDashboard } from "~/components/dashboard/HomeDashboard";
 import LoggedOutHome from "~/components/home/LoggedOutHome";
 import { loadWorkspaceSnapshot } from "~/services/backend-client.server";
 import { toMonthly } from "~/types/budget";
-import { getAuthSession } from "~/utils/auth.server";
 import { buildDebtSummary } from "~/utils/debtSummary";
 import { isDemoMode } from "~/utils/demoData";
 import { calculateRunwayStats } from "~/utils/runwayStorage";
@@ -294,30 +293,28 @@ const Index = (): ReactElement => {
     };
 
     return (
-      <>
-        <HomeDashboard
-          accountsData={safeAccountsData}
-          budgetData={safeBudgetData}
-          checklistProps={{
-            hasAccounts,
-            hasBudget,
-            hasMortgageAccount,
-            hasPension,
-            hasProfile,
-            hasRunForecast,
-            hasSavings,
-            hasTax: (taxData?.recordsCount ?? 0) > 0,
-            completedSteps,
-          }}
-          debtData={debtData ?? null}
-          forecastData={forecastData}
-          mortgageData={mortgageData}
-          pensionData={pensionData}
-          savingsData={savingsData}
-          taxData={taxData}
-          user={user}
-        />
-      </>
+      <HomeDashboard
+        accountsData={safeAccountsData}
+        budgetData={safeBudgetData}
+        checklistProps={{
+          hasAccounts,
+          hasBudget,
+          hasMortgageAccount,
+          hasPension,
+          hasProfile,
+          hasRunForecast,
+          hasSavings,
+          hasTax: (taxData?.recordsCount ?? 0) > 0,
+          completedSteps,
+        }}
+        debtData={debtData ?? null}
+        forecastData={forecastData}
+        mortgageData={mortgageData}
+        pensionData={pensionData}
+        savingsData={savingsData}
+        taxData={taxData}
+        user={user}
+      />
     );
   }
 
