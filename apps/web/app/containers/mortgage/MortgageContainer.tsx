@@ -91,7 +91,6 @@ const MortgageContainer: FC = () => {
         hasMortgage: true,
         mortgageBalance: editLoanAmount,
         mortgageType: editMortgageType,
-        homeValue: propertyValue,
       });
       setIsSaved(true);
       setIsEditing(false);
@@ -117,16 +116,17 @@ const MortgageContainer: FC = () => {
     remainingTerm > 0 ? null : "term",
   ].filter((x): x is string => x !== null);
 
+  // Property value is only ever what the user entered; it is never derived from the loan.
   const propertyValue =
-    propertyCategory === "btl"
-      ? profile.buyToLetPropertyValue || 250000
-      : profile.homeValue || Math.round(loanAmount / 0.75);
+    (propertyCategory === "btl" ? profile.buyToLetPropertyValue : profile.homeValue) ?? 0;
 
-  const currentLtv = propertyValue > 0 ? (loanAmount / propertyValue) * 100 : 0;
+  const hasLtvData = loanAmount > 0 && propertyValue > 0;
+  const currentLtv = hasLtvData ? (loanAmount / propertyValue) * 100 : 0;
 
   const ltvMilestones = useMemo(() => {
+    if (!hasLtvData) return [];
     return calculateLtvMilestones(propertyValue, loanAmount, profile.mortgageRenewalDate);
-  }, [propertyValue, loanAmount, profile.mortgageRenewalDate]);
+  }, [hasLtvData, propertyValue, loanAmount, profile.mortgageRenewalDate]);
 
   const refinanceWarning = useMemo(() => {
     if (!profile.mortgageRenewalDate) return null;
@@ -179,8 +179,8 @@ const MortgageContainer: FC = () => {
   const switchToCategory = (cat: "residential" | "btl") => {
     setPropertyCategory(cat);
     if (cat === "btl") {
-      setLoanAmount(profile.buyToLetMortgageBalance ?? 180000);
-      setInterestRate(profile.buyToLetMortgageRate ?? 5.2);
+      setLoanAmount(profile.buyToLetMortgageBalance ?? 0);
+      setInterestRate(profile.buyToLetMortgageRate ?? 0);
       setMortgageType(profile.buyToLetMortgageType ?? "interest-only");
       setSelectedAccountId(null);
     } else {
@@ -1052,7 +1052,15 @@ const MortgageContainer: FC = () => {
         />
       )}
 
-      {activeTab === "milestones" && (
+      {activeTab === "milestones" && !hasLtvData && (
+        <FLPCard>
+          <FLPText color="text.muted" fontSize="sm">
+            Add your mortgage balance and property value to see LTV milestones.
+          </FLPText>
+        </FLPCard>
+      )}
+
+      {activeTab === "milestones" && hasLtvData && (
         <div
           className={css({
             padding: "20px 24px",
