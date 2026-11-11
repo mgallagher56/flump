@@ -49,4 +49,15 @@ describe("WealthCheckHeroWidget", () => {
     );
     expect(mockNavigate).toHaveBeenCalledWith("/signUp");
   });
+
+  it("never shows invented fallback figures when nothing is calculated", () => {
+    render(<WealthCheckHeroWidget />);
+    // A budget equal to the minimum leaves no saving to show: nothing is made up.
+    fireEvent.change(screen.getByLabelText("Total card and loan liabilities"), {
+      target: { value: "0" },
+    });
+    expect(screen.queryByText(/720/)).toBeNull();
+    expect(screen.queryByText(/11,500/)).toBeNull();
+    expect(screen.getAllByText("Not calculated").length).toBeGreaterThanOrEqual(1);
+  });
 });
