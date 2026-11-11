@@ -190,7 +190,7 @@ const AccountsContainer: FC = () => {
       case MORTGAGE:
         return <FaHome className={iconStyle} style={{ color: "#dc2626" }} />;
       case OVERDRAFT:
-        return <FaExchangeAlt className={iconStyle} style={{ color: "#dc2626" }} />;
+        return <FaExchangeAlt className={`${iconStyle} ${css({ color: "status.danger.text" })}`} />;
       case LOAN:
         return <FaHandHoldingUsd className={iconStyle} style={{ color: "#9333ea" }} />;
       case OWED:
