@@ -17,7 +17,10 @@ describe("Marketing McpPage", () => {
     expect(
       screen.getByText(/Give your AI agent deterministic UK financial intelligence/i),
     ).toBeDefined();
-    expect(screen.getByText("Zero AI hallucinations")).toBeDefined();
+    expect(screen.getByText("Deterministic calculations")).toBeDefined();
+    expect(screen.getAllByText(/baseline sample data/i).length).toBeGreaterThan(0);
+    expect(screen.getByText("Try the MCP preview")).toBeDefined();
+    expect(screen.getByText(/90 days is preselected/)).toBeDefined();
     expect(screen.getByText(/Institution names are replaced with generic labels/i)).toBeDefined();
     expect(screen.getByText("Setting up Flump MCP (preview)")).toBeDefined();
     expect(screen.getByTestId("mcp-preview-badge").textContent).toMatch(/preview/i);
@@ -46,5 +49,8 @@ describe("Marketing McpPage", () => {
     expect(text).not.toContain("oauth-protected-resource");
     expect(text).not.toContain("OAuth 2.1");
     expect(text).not.toMatch(/PII-scrubbed|Strict PII/i);
+    expect(text).not.toMatch(
+      /ChatGPT|zero hallucinations|zero LLM|directly|No credit card|free read-only/i,
+    );
   });
 });

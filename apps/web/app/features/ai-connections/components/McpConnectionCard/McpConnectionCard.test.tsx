@@ -6,7 +6,9 @@ describe("McpConnectionCard Feature Component", () => {
   it("renders connection card and toggles anonymization switch", () => {
     render(<McpConnectionCard />);
 
-    expect(screen.getByText("Model Context Protocol (MCP) & AI Connections")).toBeDefined();
+    expect(
+      screen.getByText("Model Context Protocol (MCP) & AI Connections (preview)"),
+    ).toBeDefined();
     expect(screen.getByText("Anonymize Bank & Institution Names over MCP")).toBeDefined();
 
     const toggle = screen.getByRole("button", { name: "Toggle bank name anonymization" });
@@ -15,7 +17,7 @@ describe("McpConnectionCard Feature Component", () => {
     expect(toggle).toBeDefined();
   });
 
-  it("switches tabs between Claude Desktop, Remote MCP, and Active Tokens", () => {
+  it("switches tabs between Local CLI preview and Active Tokens", () => {
     const initialTokens = [
       {
         id: "tok_1",
@@ -34,13 +36,14 @@ describe("McpConnectionCard Feature Component", () => {
 
     render(<McpConnectionCard initialTokens={initialTokens} />);
 
-    // Default tab shows Claude Desktop config snippet
-    expect(screen.getByTestId("claude-desktop-snippet")).toBeDefined();
-
-    // Click Remote MCP tab
-    const remoteTab = screen.getByRole("tab", { name: "Claude Web / ChatGPT (Remote MCP)" });
-    fireEvent.keyDown(remoteTab, { key: "Enter", code: "Enter" });
-    expect(screen.getByTestId("remote-mcp-url-box")).toBeDefined();
+    // Default tab shows the Local CLI preview note, with no npx snippet or remote URL
+    expect(screen.getByText("Setting up Flump MCP (preview)")).toBeDefined();
+    expect(
+      screen.getByText("Local CLI (preview): run Flump MCP from source. Setup guide coming soon."),
+    ).toBeDefined();
+    expect(screen.queryByText(/npx/)).toBeNull();
+    expect(screen.queryByText(/OAuth 2\.1/)).toBeNull();
+    expect(screen.queryByRole("tab", { name: /Remote MCP/ })).toBeNull();
 
     // Click Active Tokens tab
     const activeTab = screen.getByRole("tab", { name: /Active Tokens/i });
@@ -109,6 +112,12 @@ describe("McpConnectionCard Feature Component", () => {
     await waitFor(() => {
       expect(mockRevoke).toHaveBeenCalledWith("tok_rev_1");
     });
+  });
+
+  it("states that Flump has no payment features", () => {
+    render(<McpConnectionCard />);
+    expect(screen.getByText("No payment features")).toBeDefined();
+    expect(screen.queryByText(/read-only safe/i)).toBeNull();
   });
 
   it("renders the offline context pack exporter card", () => {

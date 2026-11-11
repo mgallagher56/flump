@@ -16,7 +16,7 @@ describe("HomeHero", () => {
   it("renders the hero heading, CTA buttons, and trust bar badges", () => {
     render(<HomeHero />);
 
-    expect(screen.getByText(/Built for UK personal finance and HMRC rules/i)).toBeDefined();
+    expect(screen.getByText(/Built for UK personal finance/i)).toBeDefined();
     expect(
       screen.getByRole("heading", {
         level: 1,
@@ -33,9 +33,9 @@ describe("HomeHero", () => {
     expect(livePreviewLink).toBeDefined();
     expect(livePreviewLink.getAttribute("href")).toBe("/sandbox");
 
-    expect(screen.getByText(/FCA read-only Open Banking and 256-bit encryption/i)).toBeDefined();
-    expect(screen.getByText(/Section 24 landlord and HMRC tax bands/i)).toBeDefined();
+    expect(screen.getByText(/Manual-first, no bank login needed/i)).toBeDefined();
+    expect(screen.getByText(/Section 24 landlord and UK income tax bands/i)).toBeDefined();
     expect(screen.getByText(/£20k ISA and £60k pension allowances/i)).toBeDefined();
-    expect(screen.getByText(/No ad tracking or data selling/i)).toBeDefined();
+    expect(screen.getByText(/No feature to make payments or move money/i)).toBeDefined();
   });
 });

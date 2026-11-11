@@ -53,7 +53,7 @@ const MCP_TOOLS: ToolCatalogEntry[] = [
   {
     name: "simulate_uk_tax_and_pension_sacrifice",
     description:
-      "Calculates net take-home pay, NI savings, £100k–£125k tax trap escape, and Gift Aid tax reclamations for the 2025/26 and 2026/27 tax years.",
+      "Calculates net take-home pay, NI savings, £100k–£125k tax trap escape, and Gift Aid tax reclamations.",
     samplePrompt: "How much bonus should I sacrifice to reclaim my Personal Allowance?",
   },
   {
@@ -65,8 +65,8 @@ const MCP_TOOLS: ToolCatalogEntry[] = [
   {
     name: "calculate_self_assessment_and_section24",
     description:
-      "Calculates landlord Section 24 20% finance cost reducers and computes HMRC 31 Jan and 31 Jul Payments on Account (POA) reserves for Self Assessment.",
-    samplePrompt: "What should my monthly HMRC tax pot reserve be for buy-to-let rent?",
+      "Calculates landlord Section 24 20% finance cost reducers and computes 31 January and 31 July Payments on Account (POA) reserves for Self Assessment.",
+    samplePrompt: "What should my monthly tax pot reserve be for buy-to-let rent?",
   },
   {
     name: "project_wealth_scenario",
@@ -103,7 +103,7 @@ export const McpPage: FC = () => {
         <title>Flump for AI | Model Context Protocol (MCP) Server (Preview)</title>
         <meta
           name="description"
-          content="Preview: run the Flump Model Context Protocol (MCP) server locally and give AI agents deterministic UK financial calculations. Institution names are replaced with generic labels by default."
+          content="Preview: run the Flump Model Context Protocol (MCP) server from source and give AI agents deterministic UK financial calculations. Tools currently run against baseline sample data."
         />
         <link rel="canonical" href="https://flump.co.uk/mcp" />
       </Helmet>
@@ -126,15 +126,16 @@ export const McpPage: FC = () => {
             </h1>
 
             <p className={heroLead()}>
-              Connect Claude Desktop, Cursor, ChatGPT, or autonomous agents directly to Flump. Run
-              tax-trap escapes, debt avalanche simulations, and 30-year wealth projections with zero
-              hallucinations – at <strong>zero LLM token cost to Flump</strong>.
+              Flump MCP is a preview for MCP clients such as Claude Desktop and Cursor. Its tools
+              run tax-trap, debt avalanche and wealth projection simulations from a deterministic
+              calculation engine. In preview they use <strong>baseline sample data</strong>, not
+              your own figures.
             </p>
 
             <div className={flex({ gap: "4", flexWrap: "wrap", justify: "center", pt: "2" })}>
               <a href={`${appUrl}/app/profile`} className={linkReset()}>
                 <Button size="lg" variant="primary">
-                  Generate MCP token in app →
+                  Open your profile in the app →
                 </Button>
               </a>
               <a href="#setup-guides" className={linkReset()}>
@@ -152,8 +153,8 @@ export const McpPage: FC = () => {
             <span className={sectionKicker()}>Why connect via Flump MCP?</span>
             <h2 className={sectionHeading()}>Deterministic UK calculations and read-only tools</h2>
             <p className={sectionSubheading()}>
-              Standard LLMs struggle with UK tax bands, NI tapering, and amortisation mathematics.
-              Flump MCP replaces LLM guesswork with our deterministic UK financial engine.
+              General-purpose language models can get UK tax bands, NI tapering and amortisation
+              maths wrong. Flump MCP tools calculate these with a deterministic engine instead.
             </p>
           </div>
 
@@ -163,11 +164,10 @@ export const McpPage: FC = () => {
               <div className={iconBadge({ tone: "primary" })}>
                 <FiCpu />
               </div>
-              <h3 className={cardTitle()}>Zero AI hallucinations</h3>
+              <h3 className={cardTitle()}>Deterministic calculations</h3>
               <p className={cardBody()}>
-                Tools execute mathematical functions from <code>@flump/finance-engine</code>. Your
-                AI receives exact HMRC tax calculations, Section 24 relief, and debt payoff dates
-                rather than inventing numbers.
+                Tools run calculation functions from <code>@flump/finance-engine</code>, so the same
+                inputs always give the same tax, Section 24 and debt payoff results.
               </p>
             </div>
 
@@ -200,7 +200,7 @@ export const McpPage: FC = () => {
               <div className={iconBadge({ tone: "info" })}>
                 <FiTerminal />
               </div>
-              <h3 className={cardTitle()}>Local STDIO transport</h3>
+              <h3 className={cardTitle()}>Local CLI (preview)</h3>
               <p className={cardBody()}>
                 Local CLI (preview): run Flump MCP from source. Setup guide coming soon.
               </p>
@@ -225,9 +225,8 @@ export const McpPage: FC = () => {
               </div>
               <h3 className={cardTitle()}>1-click revocation &amp; expiry</h3>
               <p className={cardBody()}>
-                Personal Access Tokens default to 90 days and can be revoked immediately with one
-                click from your Flump profile. Audit counters track total tool invocations per
-                token.
+                Personal Access Tokens can expire (90 days is preselected when you create one) and
+                can be revoked from your Flump profile. Each token records its total tool calls.
               </p>
             </div>
           </div>
@@ -292,19 +291,20 @@ export const McpPage: FC = () => {
         {/* Final CTA */}
         <section className={ctaSection()}>
           <div className={ctaInner()}>
-            <h2 className={sectionHeading()}>Ready to connect your AI agent?</h2>
+            <h2 className={sectionHeading()}>Try the MCP preview</h2>
             <p className={sectionSubheading()}>
-              Generate your free read-only MCP token in seconds. No credit card required.
+              Generate a read-only MCP token in your Flump profile. The preview tools use sample
+              data.
             </p>
             <div className={flex({ gap: "4", justify: "center", flexWrap: "wrap", pt: "2" })}>
               <a href={`${appUrl}/app/profile`} className={linkReset()}>
                 <Button size="lg" variant="primary">
-                  Generate your token in Flump →
+                  Open your profile in the app →
                 </Button>
               </a>
               <a href={`${appUrl}/signUp`} className={linkReset()}>
                 <Button size="lg" variant="ghost">
-                  Create a free account
+                  Create an account
                 </Button>
               </a>
             </div>

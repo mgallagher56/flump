@@ -76,7 +76,7 @@ export const HomePage: FC = () => {
                 boxShadow: "0 2px 8px rgba(99, 102, 241, 0.15)",
               }}
             >
-              🇬🇧 Built for UK rules and HMRC thresholds
+              🇬🇧 Built for UK tax rules
             </span>
 
             <h1
@@ -202,8 +202,7 @@ export const HomePage: FC = () => {
                 lineHeight: "1.6",
               }}
             >
-              Start free with your 6-number baseline. No credit card, no bank login, and zero
-              complicated setup.
+              Start with your 6-number baseline. No bank login needed.
             </p>
             <div className={flex({ gap: "4", justify: "center", flexWrap: "wrap" })}>
               <a href={`${appUrl}/signUp`} style={{ textDecoration: "none" }}>

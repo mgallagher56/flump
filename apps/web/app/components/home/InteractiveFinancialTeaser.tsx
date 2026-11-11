@@ -540,7 +540,7 @@ export const InteractiveFinancialTeaser: FC = () => {
                     {formatGBP(mortgageResults.totalInterestSaved)}
                   </div>
                   <FLPText color="text.muted" fontSize="xs">
-                    Guaranteed interest eliminated by overpaying £{monthlyOverpayment}/mo
+                    Illustrative interest eliminated by overpaying £{monthlyOverpayment}/mo
                   </FLPText>
                 </div>
 

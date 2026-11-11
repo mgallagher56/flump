@@ -63,7 +63,7 @@ const STEP_DEFINITIONS = (props: SetupChecklistProps, navigate: ReturnType<typeo
     key: "accounts",
     label: "Connect bank or split savings accounts",
     description:
-      "Sync via FCA read-only Open Banking or add individual current accounts and savings pots.",
+      "Connect a supported bank (coming soon) or add current accounts and savings pots manually.",
     icon: <FaUniversity style={{ color: "#6363f1" }} />,
     isComplete: props.hasAccounts || props.completedSteps.includes("accounts"),
     actionLabel: "Add account detail",

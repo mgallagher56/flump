@@ -10,7 +10,13 @@ describe("SecurityPrivacySection", () => {
     expect(screen.getByText("Your manual entries")).toBeDefined();
     expect(screen.getByText("Flump planning engine (cannot make payments)")).toBeDefined();
     expect(screen.getAllByText("Bank connection (coming soon)").length).toBeGreaterThan(0);
-    expect(screen.getByText("Zero data selling")).toBeDefined();
+    expect(screen.getByText("Manual-first control")).toBeDefined();
+    expect(screen.getByText("Coming soon")).toBeDefined();
+  });
+
+  it("makes no data-selling or advertising claims", () => {
+    const { container } = render(<SecurityPrivacySection />);
+    expect(container.textContent ?? "").not.toMatch(/Zero ads|Zero data selling|never sell/i);
   });
 
   it("makes no regulatory or protocol claims", () => {

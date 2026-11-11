@@ -33,7 +33,7 @@ describe("FeaturePillars", () => {
 
     // Default persona view
     expect(screen.getByText(/clear high-interest debt and build positive wealth/i)).toBeDefined();
-    expect(screen.getByText(/interest saved and time saved/i)).toBeDefined();
+    expect(screen.getByText(/example: interest saved and time saved/i)).toBeDefined();
   });
 
   it("switches persona when a tab is clicked", () => {

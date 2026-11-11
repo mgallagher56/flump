@@ -64,17 +64,17 @@ export const McpSpotlightSection: FC = () => {
             </h2>
 
             <p className={spotlightLead()}>
-              Stop copy-pasting numbers into ChatGPT. Flump's MCP server exposes 8 deterministic
-              financial simulation tools directly to Claude Desktop, Cursor, and autonomous agents –
-              guaranteeing <strong>zero hallucinations</strong> on UK tax rules.
+              Flump's MCP server exposes 8 deterministic financial simulation tools to MCP clients
+              such as Claude Desktop and Cursor. In preview they run against{" "}
+              <strong>baseline sample data</strong>.
             </p>
 
             <div className={stack({ gap: "3" })}>
               <div className={bulletRow()}>
                 <FiCheckCircle className={bulletIcon({ tone: "positive" })} size={18} />
                 <span>
-                  <strong>Deterministic HMRC engine:</strong> Exact 2025/26 tax bands, £100k taper,
-                  and Section 24 relief.
+                  <strong>Deterministic engine:</strong> UK tax bands, £100k taper, and Section 24
+                  relief.
                 </span>
               </div>
               <div className={bulletRow()}>
@@ -101,7 +101,7 @@ export const McpSpotlightSection: FC = () => {
               </Link>
               <a href={`${appUrl}/app/profile`} className={linkReset()}>
                 <Button size="md" variant="outline">
-                  Generate token in app
+                  Open profile in app
                 </Button>
               </a>
             </div>
@@ -114,7 +114,7 @@ export const McpSpotlightSection: FC = () => {
                 <div className={terminalDot({ tone: "danger" })} />
                 <div className={terminalDot({ tone: "warning" })} />
                 <div className={terminalDot({ tone: "positive" })} />
-                <span className={terminalTitle()}>Claude Desktop • Prompting @flump MCP</span>
+                <span className={terminalTitle()}>Example output</span>
               </div>
 
               <div className={terminalPromptLine()}>
@@ -127,7 +127,7 @@ export const McpSpotlightSection: FC = () => {
 
               <div className={terminalPayloadBox()}>
                 <span className={payloadComment()}>
-                  {"// Deterministic response from @flump/finance-engine"}
+                  {"// Example output: illustrative figures, not your data"}
                 </span>
                 <br />
                 <span className={payloadBracket()}>{"{"}</span>
@@ -156,11 +156,11 @@ export const McpSpotlightSection: FC = () => {
               </div>
 
               <div className={terminalSummary()}>
-                <strong className={terminalSummaryStrong()}>Claude:</strong> Example based on a
-                Flump baseline of £114,200 gross (illustrative), sacrificing £14,200 into your
-                pension reclaims £7,100 of tapered Personal Allowance (restoring your full £12,570
-                allowance), saving you £8,804 in Income Tax and NI at an effective 62% marginal
-                relief rate.
+                <strong className={terminalSummaryStrong()}>Example output:</strong> for an
+                illustrative £114,200 gross salary, sacrificing £14,200 into a pension would reclaim
+                £7,100 of tapered Personal Allowance (restoring the full £12,570 allowance), saving
+                £8,804 in Income Tax and NI at an effective 62% marginal rate. These figures are an
+                example, not advice.
               </div>
             </div>
           </div>

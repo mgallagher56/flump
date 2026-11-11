@@ -116,11 +116,11 @@ export const BaselineSnapshotPreview: FC = () => {
               fontFamily: "var(--fonts-display)",
             }}
           >
-            Your 60-second UK financial baseline
+            Example 60-second UK financial baseline
           </strong>
         </div>
         <span className={pillBadgeStyle}>
-          <FiCheckCircle size={14} /> Instant summary
+          <FiCheckCircle size={14} /> Example summary, illustrative figures
         </span>
       </div>
 

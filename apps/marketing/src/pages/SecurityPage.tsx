@@ -2,14 +2,10 @@ import { css } from "@repo/ui/styled-system/css";
 import { grid } from "@repo/ui/styled-system/patterns";
 import type { FC } from "react";
 import { Helmet } from "react-helmet-async";
-import { FiEyeOff, FiLock, FiShield, FiTrash2 } from "react-icons/fi";
+import { FiClock, FiShield } from "react-icons/fi";
 import { Footer } from "../components/Footer";
 import { Header } from "../components/Header";
-import {
-  accountClosureMailto,
-  SECURITY_CONTACT_EMAIL,
-  securityMailto,
-} from "../utils/placeholders";
+import { securityMailto } from "../utils/placeholders";
 
 const containerStyle = css({
   maxWidth: "5xl",
@@ -40,8 +36,6 @@ const iconTileStyle = css({
 
 const iconTileTones = {
   positive: css({ backgroundColor: "status.positive.bg", color: "status.positive.text" }),
-  info: css({ backgroundColor: "status.info.bg", color: "status.info.text" }),
-  warning: css({ backgroundColor: "status.warning.bg", color: "status.warning.text" }),
   neutral: css({ backgroundColor: "status.neutral.bg", color: "status.neutral.text" }),
 };
 
@@ -85,6 +79,17 @@ const heroBodyStyle = css({
   margin: "12px auto 0",
 });
 
+const placeholderNoteStyle = css({
+  fontSize: "12px",
+  fontWeight: "600",
+  color: "status.warning.text",
+  backgroundColor: "status.warning.bg",
+  border: "1px solid",
+  borderColor: "status.warning.border",
+  borderRadius: "md",
+  padding: "1 2",
+});
+
 const contactRowStyle = css({ textAlign: "center", fontSize: "14px", color: "text.secondary" });
 
 export const SecurityPage: FC = () => {
@@ -94,7 +99,7 @@ export const SecurityPage: FC = () => {
         <title>Security and privacy | Flump</title>
         <meta
           name="description"
-          content="How Flump handles your data: manual-first planning, encrypted bank connection tokens and no data selling."
+          content="Flump has no feature to make payments or move money. Bank connection is coming soon."
         />
         <link rel="canonical" href="https://flump.co.uk/security" />
       </Helmet>
@@ -105,10 +110,9 @@ export const SecurityPage: FC = () => {
         <section className={containerStyle}>
           <div style={{ textAlign: "center", marginBottom: "40px" }}>
             <span className={eyebrowStyle}>Trust and transparency hub</span>
-            <h1 className={heroTitleStyle}>Security built into the architecture</h1>
+            <h1 className={heroTitleStyle}>Security and privacy</h1>
             <p className={heroBodyStyle}>
-              Flump is built around minimal data access. You choose what to enter, bank connection
-              tokens are encrypted, and your data is visible only to your account.
+              Flump has no feature to make payments or move money. Bank connection is coming soon.
             </p>
           </div>
 
@@ -117,47 +121,19 @@ export const SecurityPage: FC = () => {
               <div className={`${iconTileStyle} ${iconTileTones.positive}`}>
                 <FiShield />
               </div>
-              <h3 className={securityTitleStyle}>Read-only by design</h3>
+              <h2 className={securityTitleStyle}>No payments, by design</h2>
               <p className={securityDescStyle}>
-                Flump only reads balances and transactions. It has no feature to make payments, move
-                money or change your account settings. Bank connection is coming soon.
-              </p>
-            </div>
-
-            <div className={sectionCardStyle}>
-              <div className={`${iconTileStyle} ${iconTileTones.info}`}>
-                <FiLock />
-              </div>
-              <h3 className={securityTitleStyle}>Encryption</h3>
-              <p className={securityDescStyle}>
-                Bank connection tokens are encrypted at rest with AES-256-GCM. The marketing site is
-                served over HTTPS, and browsers are told to use HTTPS only.
-              </p>
-            </div>
-
-            <div className={sectionCardStyle}>
-              <div className={`${iconTileStyle} ${iconTileTones.warning}`}>
-                <FiEyeOff />
-              </div>
-              <h3 className={securityTitleStyle}>Private manual mode</h3>
-              <p className={securityDescStyle}>
-                Flump works fully with manual entries, giving you the same tax and wealth
-                projections without connecting a bank.
+                Flump has no feature to make payments or move money.
               </p>
             </div>
 
             <div className={sectionCardStyle}>
               <div className={`${iconTileStyle} ${iconTileTones.neutral}`}>
-                <FiTrash2 />
+                <FiClock />
               </div>
-              <h3 className={securityTitleStyle}>Your data, your choice</h3>
+              <h2 className={securityTitleStyle}>Bank connection: coming soon</h2>
               <p className={securityDescStyle}>
-                We never sell your data or transaction history. You can delete all your financial
-                data from your profile at any time. To close your account completely, email{" "}
-                <a className={linkStyle} href={accountClosureMailto()}>
-                  {SECURITY_CONTACT_EMAIL}
-                </a>
-                .
+                Bank connection is not available yet. You enter your own figures today.
               </p>
             </div>
           </div>
@@ -166,7 +142,8 @@ export const SecurityPage: FC = () => {
             Found a security issue?{" "}
             <a className={linkStyle} href={securityMailto()}>
               Email security
-            </a>
+            </a>{" "}
+            <span className={placeholderNoteStyle}>Placeholder address: not final</span>
           </p>
         </section>
       </main>

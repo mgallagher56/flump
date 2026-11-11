@@ -23,11 +23,17 @@ describe("Footer", () => {
     );
   });
 
-  it("shows the important information notice", () => {
+  it("makes no regulatory, HMRC or advice claims", () => {
+    const { container } = renderFooter();
+    expect(container.textContent ?? "").not.toMatch(
+      /Financial Conduct|authorised|HMRC|current tax years|Important information/i,
+    );
+  });
+
+  it("uses h2 section headings with no skipped levels", () => {
     renderFooter();
-    expect(screen.getByText("Important information")).toBeDefined();
-    expect(screen.getByText(/not authorised by the Financial Conduct Authority/i)).toBeDefined();
-    expect(screen.getByText(/Tax calculations follow HMRC rules/i)).toBeDefined();
+    expect(screen.getByRole("heading", { level: 2, name: "Calculators" })).toBeDefined();
+    expect(screen.queryAllByRole("heading", { level: 4 })).toHaveLength(0);
   });
 
   it("shows company placeholders and a single read-only link to /security", () => {

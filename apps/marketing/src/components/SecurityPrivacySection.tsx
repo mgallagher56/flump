@@ -1,7 +1,7 @@
 import { SectionBand } from "@repo/ui";
 import { css } from "@repo/ui/styled-system/css";
 import type { FC } from "react";
-import { FiCheckCircle, FiLock, FiShield, FiSlash } from "react-icons/fi";
+import { FiCheckCircle, FiClock, FiShield } from "react-icons/fi";
 
 const sectionGridLayout = css({
   display: "grid",
@@ -48,6 +48,41 @@ const verificationBadge = css({
   width: "fit-content",
   fontFamily: "var(--fonts-mono, monospace)",
 });
+
+const pillarHeaderRow = css({
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "center",
+});
+
+const pillarIconTile = css({
+  width: "38px",
+  height: "38px",
+  borderRadius: "10px",
+  backgroundColor: "surface.subtle",
+  color: "primary",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  fontSize: "16px",
+});
+
+const pillarTitle = css({
+  fontSize: "1.2rem",
+  fontWeight: "700",
+  color: "text.onContrast",
+  fontFamily: "var(--fonts-display, sans-serif)",
+  margin: 0,
+});
+
+const pillarBody = css({
+  fontSize: "14px",
+  color: "text.onContrast",
+  margin: 0,
+  lineHeight: "1.5",
+});
+
+const pillarList = css({ display: "flex", flexDirection: "column", gap: "14px" });
 
 const diagramColumn = css({
   width: "100%",
@@ -142,144 +177,36 @@ export const SecurityPrivacySection: FC = () => {
         </div>
 
         {/* Security Pillars List */}
-        <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
-          {/* Pillar 1 */}
+        <div className={pillarList}>
           <div className={cardStyle}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <div
-                style={{
-                  width: "38px",
-                  height: "38px",
-                  borderRadius: "10px",
-                  backgroundColor: "rgba(16, 185, 129, 0.2)",
-                  color: "#10b981",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontSize: "16px",
-                }}
-              >
+            <div className={pillarHeaderRow}>
+              <div className={pillarIconTile}>
                 <FiShield />
               </div>
               <span className={verificationBadge}>
                 <FiCheckCircle size={12} /> Private manual entry
               </span>
             </div>
-
-            <h3
-              style={{
-                fontSize: "1.2rem",
-                fontWeight: "700",
-                color: "#ffffff",
-                fontFamily: "var(--fonts-display, sans-serif)",
-                margin: 0,
-              }}
-            >
-              Manual-first control
-            </h3>
-            <p
-              style={{
-                fontSize: "14px",
-                color: "rgba(255, 255, 255, 0.75)",
-                margin: 0,
-                lineHeight: "1.5",
-              }}
-            >
+            <h3 className={pillarTitle}>Manual-first control</h3>
+            <p className={pillarBody}>
               Use all tax, debt, mortgage, and forecasting tools with rough estimates. No bank
               connection required.
             </p>
           </div>
 
-          {/* Pillar 2 */}
           <div className={cardStyle}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <div
-                style={{
-                  width: "38px",
-                  height: "38px",
-                  borderRadius: "10px",
-                  backgroundColor: "rgba(99, 102, 241, 0.2)",
-                  color: "#818cf8",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontSize: "16px",
-                }}
-              >
-                <FiLock />
+            <div className={pillarHeaderRow}>
+              <div className={pillarIconTile}>
+                <FiClock />
               </div>
               <span className={verificationBadge}>
-                <FiCheckCircle size={12} /> Coming soon
+                <FiClock size={12} /> Coming soon
               </span>
             </div>
-
-            <h3
-              style={{
-                fontSize: "1.2rem",
-                fontWeight: "700",
-                color: "#ffffff",
-                fontFamily: "var(--fonts-display, sans-serif)",
-                margin: 0,
-              }}
-            >
-              Bank connection (coming soon)
-            </h3>
-            <p
-              style={{
-                fontSize: "14px",
-                color: "rgba(255, 255, 255, 0.75)",
-                margin: 0,
-                lineHeight: "1.5",
-              }}
-            >
-              Flump cannot move money or change account settings.
-            </p>
-          </div>
-
-          {/* Pillar 3 */}
-          <div className={cardStyle}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <div
-                style={{
-                  width: "38px",
-                  height: "38px",
-                  borderRadius: "10px",
-                  backgroundColor: "rgba(245, 158, 11, 0.2)",
-                  color: "#fbbf24",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontSize: "16px",
-                }}
-              >
-                <FiSlash />
-              </div>
-              <span className={verificationBadge}>
-                <FiCheckCircle size={12} /> Zero ads
-              </span>
-            </div>
-
-            <h3
-              style={{
-                fontSize: "1.2rem",
-                fontWeight: "700",
-                color: "#ffffff",
-                fontFamily: "var(--fonts-display, sans-serif)",
-                margin: 0,
-              }}
-            >
-              Zero data selling
-            </h3>
-            <p
-              style={{
-                fontSize: "14px",
-                color: "rgba(255, 255, 255, 0.75)",
-                margin: 0,
-                lineHeight: "1.5",
-              }}
-            >
-              We never sell your personal or financial records to credit card lenders, mortgage
-              brokers, or third parties.
+            <h3 className={pillarTitle}>Bank connection (coming soon)</h3>
+            <p className={pillarBody}>
+              Bank connection is not available yet. Flump has no feature to make payments or move
+              money.
             </p>
           </div>
         </div>

@@ -48,18 +48,6 @@ const linkStyle = css({
   },
 });
 
-const disclaimerBoxStyle = css({
-  padding: "16px",
-  borderRadius: "xl",
-  backgroundColor: "surface",
-  border: "1px solid",
-  borderColor: "border",
-  fontSize: "xs",
-  lineHeight: "1.5",
-  marginBottom: "28px",
-  color: "text.muted",
-});
-
 const bottomRowStyle = css({
   display: "flex",
   flexDirection: { base: "column", sm: "row" },
@@ -218,14 +206,6 @@ export const HomeFooter: FC = () => {
             </li>
           </ul>
         </div>
-      </div>
-
-      <div className={disclaimerBoxStyle}>
-        <strong>Financial and legal disclaimer:</strong> Flump provides wealth forecasting, mortgage
-        scenario simulations, and UK tax liability estimations for educational and decision-support
-        purposes only. Flump is not an authorised or regulated financial advisory firm under the
-        Financial Conduct Authority (FCA). HMRC tax legislation changes annually; please verify all
-        tax filings with a certified tax accountant (CTA) or independent financial advisor (IFA).
       </div>
 
       <div className={bottomRowStyle}>

@@ -33,7 +33,7 @@ describe("LoggedOutHome", () => {
         name: /your complete uk financial picture in 60 seconds/i,
       }),
     ).toBeDefined();
-    expect(screen.getByText(/built for uk personal finance and hmrc rules/i)).toBeDefined();
+    expect(screen.getByText(/^\s*built for uk personal finance$/i)).toBeDefined();
     const heroCta = screen.getByRole("link", { name: /get your free baseline/i });
     expect(heroCta.getAttribute("href")).toBe("/signUp");
 
@@ -59,10 +59,8 @@ describe("LoggedOutHome", () => {
     ).toBeDefined();
 
     // 4. Comparison Matrix
-    expect(
-      screen.getByRole("heading", { level: 2, name: /engineered for uk reality/i }),
-    ).toBeDefined();
-    expect(screen.getByText(/section 24 landlord relief restriction/i)).toBeDefined();
+    expect(screen.getByRole("heading", { level: 2, name: /built for uk rules/i })).toBeDefined();
+    expect(screen.getByText(/section 24 buy-to-let finance cost disallowance/i)).toBeDefined();
 
     // 5. Security & Privacy
     expect(
@@ -82,7 +80,8 @@ describe("LoggedOutHome", () => {
     expect(bottomCta.getAttribute("href")).toBe("/signUp");
 
     // Footer
-    expect(screen.getByText(/financial and legal disclaimer:/i)).toBeDefined();
+    expect(screen.queryByText(/^disclaimer:/i)).toBeNull();
+    expect(screen.queryByText(/Financial Conduct Authority/i)).toBeNull();
   });
 
   it("toggles FAQ accordion questions and answers", () => {

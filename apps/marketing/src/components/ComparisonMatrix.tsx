@@ -1,7 +1,7 @@
 import { SectionBand } from "@repo/ui";
 import { css } from "@repo/ui/styled-system/css";
 import type { FC } from "react";
-import { FiCheck, FiX } from "react-icons/fi";
+import { FiCheck } from "react-icons/fi";
 
 const tableStyle = css({
   width: "100%",
@@ -65,119 +65,57 @@ const flumpTdStyle = css({
 });
 
 const rowStyle = css({
-  backgroundColor: { base: "#ffffff", _dark: "transparent" },
-  "&:nth-of-type(even)": {
-    backgroundColor: { base: "#fcfcfd", _dark: "rgba(255, 255, 255, 0.02)" },
-  },
+  backgroundColor: "surface.card",
+  "&:nth-of-type(even)": { backgroundColor: "surface.subtle" },
 });
 
-export const ComparisonMatrix: FC = () => {
-  const rows = [
-    {
-      feature: "UK £100k–£125k Personal Allowance taper and childcare trap",
-      flump: true,
-      spreadsheet: "Complex manual formulas",
-      genericApp: false,
-    },
-    {
-      feature: "Section 24 buy-to-let finance cost disallowance",
-      flump: true,
-      spreadsheet: false,
-      genericApp: false,
-    },
-    {
-      feature: "Workplace pension auto-enrolment and salary sacrifice",
-      flump: true,
-      spreadsheet: "Prone to formula drift",
-      genericApp: false,
-    },
-    {
-      feature: "Debt avalanche vs snowball payoff schedules",
-      flump: true,
-      spreadsheet: "Complex macro required",
-      genericApp: "Basic snowball only",
-    },
-    {
-      feature: "Safe to spend allowance factoring emergency runway",
-      flump: true,
-      spreadsheet: false,
-      genericApp: "Static backward budgets",
-    },
-  ];
+const featureCellStyle = css({ fontWeight: "600", color: "text.primary" });
 
+const builtInStyle = css({
+  display: "inline-flex",
+  alignItems: "center",
+  gap: "6px",
+  color: "status.positive.text",
+  fontWeight: "700",
+});
+
+const FEATURES = [
+  "UK £100k–£125k Personal Allowance taper and childcare trap",
+  "Section 24 buy-to-let finance cost disallowance",
+  "Workplace pension auto-enrolment and salary sacrifice",
+  "Debt avalanche vs snowball payoff schedules",
+  "Safe to spend allowance factoring emergency runway",
+];
+
+export const ComparisonMatrix: FC = () => {
   return (
     <SectionBand
       id="comparison"
       tone="canvas"
       indexBadge="Why Flump"
-      title="Built for UK rules, not spreadsheets"
-      subtitle="How Flump compares directly with spreadsheets and generic US-first budgeting applications."
+      title="Built for UK rules"
+      subtitle="The UK-specific calculations Flump models."
     >
       <div style={{ overflowX: "auto" }}>
         <table className={tableStyle}>
           <thead>
             <tr>
-              <th className={thStyle} style={{ width: "45%" }}>
+              <th className={thStyle} style={{ width: "70%" }}>
                 Feature
               </th>
-              <th className={flumpThStyle} style={{ width: "25%" }}>
-                Flump 🇬🇧
-              </th>
-              <th className={thStyle} style={{ width: "15%" }}>
-                Excel / Sheets
-              </th>
-              <th className={thStyle} style={{ width: "15%" }}>
-                Generic apps
+              <th className={flumpThStyle} style={{ width: "30%" }}>
+                Flump
               </th>
             </tr>
           </thead>
           <tbody>
-            {rows.map((row, idx) => (
-              <tr key={idx} className={rowStyle}>
-                <td
-                  className={tdStyle}
-                  style={{ fontWeight: "600", color: "var(--colors-text-primary, #1e293b)" }}
-                >
-                  {row.feature}
-                </td>
+            {FEATURES.map((feature) => (
+              <tr key={feature} className={rowStyle}>
+                <td className={`${tdStyle} ${featureCellStyle}`}>{feature}</td>
                 <td className={flumpTdStyle}>
-                  {row.flump === true ? (
-                    <span
-                      style={{
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: "6px",
-                        color: "#10b981",
-                        fontWeight: "700",
-                      }}
-                    >
-                      <FiCheck size={18} /> Built-in
-                    </span>
-                  ) : (
-                    row.flump
-                  )}
-                </td>
-                <td className={tdStyle}>
-                  {row.spreadsheet === false ? (
-                    <span style={{ color: "#94a3b8" }}>
-                      <FiX size={16} />
-                    </span>
-                  ) : (
-                    <span style={{ fontSize: "13px", color: "var(--colors-text-muted, #64748b)" }}>
-                      {row.spreadsheet}
-                    </span>
-                  )}
-                </td>
-                <td className={tdStyle}>
-                  {row.genericApp === false ? (
-                    <span style={{ color: "#94a3b8" }}>
-                      <FiX size={16} />
-                    </span>
-                  ) : (
-                    <span style={{ fontSize: "13px", color: "var(--colors-text-muted, #64748b)" }}>
-                      {row.genericApp}
-                    </span>
-                  )}
+                  <span className={builtInStyle}>
+                    <FiCheck size={18} aria-hidden="true" /> Modelled
+                  </span>
                 </td>
               </tr>
             ))}

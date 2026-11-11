@@ -271,7 +271,9 @@ describe("<UserProfilePanel />", () => {
     fireEvent.pointerDown(aiTab, { button: 0 });
     fireEvent.keyDown(aiTab, { key: "Enter", code: "Enter" });
 
-    expect(screen.getByText("Model Context Protocol (MCP) & AI Connections")).toBeDefined();
+    expect(
+      screen.getByText("Model Context Protocol (MCP) & AI Connections (preview)"),
+    ).toBeDefined();
     expect(screen.getByTestId("offline-context-pack-card")).toBeDefined();
   });
 });

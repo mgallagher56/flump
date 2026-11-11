@@ -4,15 +4,11 @@
  * Owner decisions: docs/audit/plans/DECISIONS.md (E7).
  */
 
-/** Security contact and manual account-closure route. `.invalid` can never resolve. */
+/** Security contact. `.invalid` can never resolve. */
 export const SECURITY_CONTACT_EMAIL = "security@example.invalid";
 
 export function securityMailto(subject = "Security enquiry"): string {
   return `mailto:${SECURITY_CONTACT_EMAIL}?subject=${encodeURIComponent(subject)}`;
-}
-
-export function accountClosureMailto(): string {
-  return securityMailto("Account closure request");
 }
 
 /** Pricing is not set. Shown on the pricing page exactly like this. */
