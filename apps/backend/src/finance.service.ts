@@ -65,6 +65,8 @@ export class FinanceService {
   }
 
   async deleteAccount(userId: string, id: string) {
+    // Throws NotFoundException unless the account belongs to the caller.
+    await this.accountIntakeService.getAccount(userId, id);
     await this.transactionRepository.delete({ accountId: id });
     return this.accountIntakeService.deleteAccount(userId, id);
   }
