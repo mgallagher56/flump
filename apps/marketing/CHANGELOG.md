@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.23.1](https://github.com/mgallagher56/flump/compare/flump/marketing-v1.23.0...flump/marketing-v1.23.1) (2026-11-11)
+
+
+### Bug Fixes 🪲
+
+* **web,marketing:** fix dockerfiles ([d9f8516](https://github.com/mgallagher56/flump/commit/d9f851690dcd3f376c7d0e1ccc6de48d73af909b))
+
 ## [1.23.0](https://github.com/mgallagher56/flump/compare/flump/marketing-v1.22.0...flump/marketing-v1.23.0) (2026-11-11)
 
 
