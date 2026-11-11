@@ -148,6 +148,29 @@ describe("debt-payoff module", () => {
       expect(res.interestSavedVsMinimumGbp).toBeCloseTo(expectedSaved, 2);
     });
 
+    it("multi-debt baseline is true minimum-only: freed minimums do not roll over", () => {
+      // Independent reference: each debt amortises alone on its own minimum, no rollover.
+      const debts: DebtItem[] = [
+        { id: "a", name: "A", balanceGbp: 600, interestRateApr: 18, minimumPaymentGbp: 100 },
+        { id: "b", name: "B", balanceGbp: 6000, interestRateApr: 24, minimumPaymentGbp: 160 },
+      ];
+      const baselineInterest =
+        Math.round((refLoop(600, 18, 100).interest + refLoop(6000, 24, 160).interest) * 100) / 100;
+
+      // The plan keeps the total commitment fixed (freed minimums roll into the target debt),
+      // so even at extra = 0 it beats paying each minimum in isolation.
+      const none = calculateDebtSchedule(debts, 0, "AVALANCHE", { referenceDate: ref });
+      const noneSaved = Math.round((baselineInterest - none.totalInterestPaidGbp) * 100) / 100;
+      expect(noneSaved).toBeGreaterThan(0);
+      expect(none.interestSavedVsMinimumGbp).toBeCloseTo(noneSaved, 1);
+
+      // extra = 50: saved = true minimum-only interest minus this run's interest.
+      const res = calculateDebtSchedule(debts, 50, "AVALANCHE", { referenceDate: ref });
+      const expectedSaved = Math.round((baselineInterest - res.totalInterestPaidGbp) * 100) / 100;
+      expect(expectedSaved).toBeGreaterThan(0);
+      expect(res.interestSavedVsMinimumGbp).toBeCloseTo(expectedSaved, 1);
+    });
+
     it("cap reached with a shrinking balance gives MAX_MONTHS_REACHED", () => {
       // 5000 at 20%, min 150 needs 50 months; capped at 12 it is still shrinking.
       const reference = refLoop(5000, 20, 150, 12);

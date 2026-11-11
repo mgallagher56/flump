@@ -229,6 +229,7 @@ function simulateSchedule(
   strategy: DebtPayoffStrategy,
   referenceDate: Date,
   maxMonths: number,
+  rolloverFreedMinimums = true,
 ): DebtSimulation {
   // Track active balances
 
@@ -320,7 +321,8 @@ function simulateSchedule(
     }
 
     // Allocate any extra available budget to priority target debt(s)
-    if (availableBudgetThisMonth > 0) {
+    // Minimum-only baseline (rollover off): freed minimums are not redirected to any debt.
+    if (rolloverFreedMinimums && availableBudgetThisMonth > 0) {
       for (const target of sortedRemaining) {
         const debtObj = activeDebts.find((x) => x.id === target.id);
         if (!debtObj || debtObj.balance <= 0.01) continue;
@@ -452,11 +454,11 @@ export function calculateDebtSchedule(
     }
   }
 
-  // Interest saved vs paying minimums only: simulate the minimum-only baseline with the
-  // same engine (zero extra budget). simulateSchedule never computes a baseline itself,
-  // so there is no recursion. If the baseline never clears within maxMonths, its interest
+  // Interest saved vs paying minimums only: simulate a true minimum-only baseline with the
+  // same engine (zero extra budget, no rollover: each debt pays only its own minimum until
+  // it clears). simulateSchedule never computes a baseline itself, so there is no recursion. If the baseline never clears within maxMonths, its interest
   // is the interest accrued up to the cap, so the saving is a lower bound.
-  const baseline = simulateSchedule(consumerDebts, 0, strategy, referenceDate, maxMonths);
+  const baseline = simulateSchedule(consumerDebts, 0, strategy, referenceDate, maxMonths, false);
   const interestSavedVsMinimum = Math.max(
     0,
     Math.round((baseline.totalInterestPaid - totalInterestPaid) * 100) / 100,
