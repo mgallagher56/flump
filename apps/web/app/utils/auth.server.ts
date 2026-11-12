@@ -2,6 +2,7 @@ import { authkitLoader } from "@workos-inc/authkit-react-router";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 import { redirect } from "react-router";
 import { safeErrorSummary } from "~/utils/safeErrorSummary";
+import { applySessionPolicy } from "~/utils/sessionPolicy.server";
 
 /** The only place a dev session token literal lives. Server-only. */
 export const DEV_ACCESS_TOKEN = "mock-session-token";
@@ -19,49 +20,11 @@ export function isDevBypass(env: Record<string, string | undefined>): boolean {
   return env.NODE_ENV === "development";
 }
 
-export const MAX_SESSION_COOKIE_AGE_SECONDS = 60 * 60 * 24 * 14;
-export const PRODUCTION_SESSION_COOKIE_NAME = "__Host-wos-session";
-
-/**
- * Session lifetime policy (E20-N19). Mutates `env` so authkit, which reads WORKOS_COOKIE_MAX_AGE
- * and WORKOS_COOKIE_NAME from it at request time, sees the policy values.
- * - Max-Age defaults to 14 days (authkit's own default is 400 days). Production fails boot above
- *   14 days; an unparseable value would silently become 400 days in authkit, so it is rejected too.
- * - Production requires an https WORKOS_REDIRECT_URI (authkit sets Secure from it).
- * - Production defaults the cookie name to `__Host-wos-session` (needs Secure, Path=/ and no Domain,
- *   all of which authkit applies once the redirect URI is https). Dev and test keep `wos-session`
- *   because `__Host-` cookies are rejected over plain http.
- */
-export function applySessionPolicy(env: Record<string, string | undefined>): void {
-  const production = env.NODE_ENV === "production";
-
-  const rawMaxAge = env.WORKOS_COOKIE_MAX_AGE?.trim();
-  if (!rawMaxAge) {
-    env.WORKOS_COOKIE_MAX_AGE = String(MAX_SESSION_COOKIE_AGE_SECONDS);
-  } else if (production) {
-    const maxAge = /^\d+$/.test(rawMaxAge) ? Number.parseInt(rawMaxAge, 10) : Number.NaN;
-    if (!Number.isFinite(maxAge) || maxAge <= 0 || maxAge > MAX_SESSION_COOKIE_AGE_SECONDS) {
-      throw new Error(
-        `WORKOS_COOKIE_MAX_AGE must be a positive number of seconds no greater than ${MAX_SESSION_COOKIE_AGE_SECONDS} (14 days) in production`,
-      );
-    }
-  }
-
-  if (production) {
-    let redirectProtocol: string | undefined;
-    try {
-      redirectProtocol = new URL(env.WORKOS_REDIRECT_URI ?? "").protocol;
-    } catch {
-      redirectProtocol = undefined;
-    }
-    if (redirectProtocol !== "https:") {
-      throw new Error("WORKOS_REDIRECT_URI must be an https URL in production");
-    }
-    if (!env.WORKOS_COOKIE_NAME?.trim()) {
-      env.WORKOS_COOKIE_NAME = PRODUCTION_SESSION_COOKIE_NAME;
-    }
-  }
-}
+export {
+  applySessionPolicy,
+  MAX_SESSION_COOKIE_AGE_SECONDS,
+  PRODUCTION_SESSION_COOKIE_NAME,
+} from "~/utils/sessionPolicy.server";
 
 // Fail at server start (this module is loaded by root.tsx and every loader), not on first auth failure.
 isDevBypass(process.env);
