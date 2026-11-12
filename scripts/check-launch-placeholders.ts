@@ -2,10 +2,10 @@
  * Fails a production build that still contains placeholder text (E24-T1).
  * Usage: bun scripts/check-launch-placeholders.ts <dir>... [--force]
  * A no-op unless FLUMP_LAUNCH is exactly "true" or --force is passed.
- * Exit: 0 ok or skipped, 1 placeholders found, 2 no directory given, 3 a directory is missing.
+ * Exit: 0 ok or skipped, 1 placeholders found, 2 no directory given, 3 a directory is missing or has no scannable files.
  */
 import { existsSync, statSync } from "node:fs";
-import { scanDirectories } from "./lib/launch-placeholders";
+import { collectBuildFiles, scanDirectories } from "./lib/launch-placeholders";
 
 const args = process.argv.slice(2);
 const force = args.includes("--force");
@@ -22,6 +22,11 @@ if (dirs.length === 0) {
 const missing = dirs.filter((d) => !existsSync(d) || !statSync(d).isDirectory());
 if (missing.length > 0) {
   console.error(`Launch placeholder guard: missing build directory: ${missing.join(", ")}`);
+  process.exit(3);
+}
+const empty = dirs.filter((d) => collectBuildFiles(d).length === 0);
+if (empty.length > 0) {
+  console.error(`Launch placeholder guard: no scannable files in: ${empty.join(", ")}`);
   process.exit(3);
 }
 
