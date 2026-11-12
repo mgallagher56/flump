@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <title>Flump</title>
+  <defs>
+    <radialGradient id="b" cx="42%" cy="30%" r="75%">
+      <stop offset="0" stop-color="#2ee86a"/>
+      <stop offset="0.55" stop-color="#1fb757"/>
+      <stop offset="1" stop-color="#0f7a3a"/>
+    </radialGradient>
+    <radialGradient id="s" cx="50%" cy="50%" r="50%">
+      <stop offset="0" stop-color="#000" stop-opacity="0.35"/>
+      <stop offset="1" stop-color="#000" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="h" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fff" stop-opacity="0.85"/>
+      <stop offset="1" stop-color="#fff" stop-opacity="0.15"/>
+    </linearGradient>
+  </defs>
+  <ellipse cx="100" cy="168" rx="62" ry="9" fill="url(#s)"/>
+  <path fill="url(#b)" d="M100 38c36 0 64 30 64 66 0 36-20 62-64 62s-64-26-64-62c0-36 28-66 64-66z"/>
+  <path fill="url(#h)" d="M78 52c14-9 38-9 50 3-14-3-34-1-50-3z"/>
+  <path fill="url(#h)" opacity="0.7" d="M52 92c4-16 16-28 28-34-8 12-8 22-12 34 2 14 8 24 6 32-12-8-26-18-22-32z"/>
+  <path fill="#fff" opacity="0.3" d="M146 82c8 10 12 24 8 40-6-8-10-20-8-40z"/>
+</svg>

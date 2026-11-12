@@ -114,7 +114,7 @@ const MobileNavDrawer: FC<MobileNavDrawerProps> = ({ isOpen, onClose, user }) =>
       >
         <div>
           <div className={drawerHeader()}>
-            <HomeLogo />
+            <HomeLogo decorative />
             <button
               aria-label="Close navigation menu"
               className={closeButton()}

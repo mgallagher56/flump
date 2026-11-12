@@ -125,9 +125,6 @@ export default defineConfig(({ mode }) => ({
               find: "react-helmet-async",
               replacement: marketingRequire.resolve("react-helmet-async"),
             },
-            // Public-dir assets imported from JS (e.g. "/images/flump_logo.png") only work in
-            // Storybook proper via staticDirs; point them at the real files under vitest.
-            { find: /^\/images\//, replacement: `${configDir}/public/images/` },
           ],
         },
         plugins: [storybookTest({ configDir: `${configDir}/.storybook` })],
