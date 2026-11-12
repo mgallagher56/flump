@@ -113,4 +113,28 @@ describe("server.ts wiring", () => {
       expect(idx, marker).toBeLessThan(ops);
     }
   });
+
+  it("404s /sitemap.xml unless indexing is on and SITE_URL is https", async () => {
+    for (const env of [
+      {},
+      { ALLOW_INDEXING: "true" },
+      { SITE_URL: "https://flump.example" },
+      { ALLOW_INDEXING: "true", SITE_URL: "http://flump.example" },
+    ]) {
+      const base = await start(env);
+      expect((await fetch(`${base}/sitemap.xml`)).status).toBe(404);
+    }
+  });
+
+  it("serves a generated /sitemap.xml with every canonical page", async () => {
+    const base = await start({ ALLOW_INDEXING: "true", SITE_URL: "https://flump.example/x" });
+    const res = await fetch(`${base}/sitemap.xml`);
+    expect(res.status).toBe(200);
+    expect(res.headers.get("content-type")).toContain("xml");
+    const body = await res.text();
+    expect(body).toContain("<loc>https://flump.example/</loc>");
+    expect(body).toContain("<loc>https://flump.example/pricing</loc>");
+    expect(body).toContain("<loc>https://flump.example/tools/uk-100k-tax-trap-calculator</loc>");
+    expect(body).not.toContain("overdraft-interest-calculator");
+  });
 });

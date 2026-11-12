@@ -1,4 +1,5 @@
 import express, { type RequestHandler, type Router } from "express";
+import { CANONICAL_TOOL_SLUGS, STATIC_PATHS } from "../src/utils/toolSlugs";
 import { buildSecurityTxt, normaliseSecurityContact } from "./security";
 
 type Env = Record<string, string | undefined>;
@@ -15,6 +16,23 @@ export function noindexMiddleware(env: Env = process.env): RequestHandler {
   };
 }
 
+/** Returns the origin from SITE_URL when it is a valid https URL, otherwise undefined. */
+export function normaliseSiteUrl(raw: string | undefined): string | undefined {
+  if (!raw) return undefined;
+  try {
+    const url = new URL(raw.trim());
+    return url.protocol === "https:" ? url.origin : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+export function buildSitemap(origin: string): string {
+  const paths = [...STATIC_PATHS, ...CANONICAL_TOOL_SLUGS.map((s) => `/tools/${s}`)];
+  const urls = paths.map((p) => `  <url><loc>${origin}${p}</loc></url>`).join("\n");
+  return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls}\n</urlset>\n`;
+}
+
 /** GET /healthz and GET /robots.txt. Must be mounted before static/SPA handlers. */
 export function opsRouter(env: Env = process.env): Router {
   const router = express.Router();
@@ -28,6 +46,17 @@ export function opsRouter(env: Env = process.env): Router {
       ? "User-agent: *\nAllow: /\n"
       : "User-agent: *\nDisallow: /\n";
     res.status(200).type("text/plain").send(body);
+  });
+
+  // Only published when indexing is on and SITE_URL is a valid https URL. Otherwise a real 404:
+  // the SPA catch-all would answer 404 with HTML anyway, but a plain-text 404 is cheaper for crawlers.
+  router.get("/sitemap.xml", (_req, res) => {
+    const origin = normaliseSiteUrl(env.SITE_URL);
+    if (!isIndexingAllowed(env) || !origin) {
+      res.status(404).type("text/plain").send("Not Found");
+      return;
+    }
+    res.status(200).type("application/xml").send(buildSitemap(origin));
   });
 
   return router;

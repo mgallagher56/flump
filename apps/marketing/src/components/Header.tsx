@@ -51,8 +51,8 @@ const ukBadgeStyle = css({
   fontSize: "xs",
   fontWeight: "700",
   letterSpacing: "0.02em",
-  backgroundColor: "surface.tinted",
-  color: "primary",
+  backgroundColor: "primary.solid",
+  color: "primary.foreground",
   padding: "2px 8px",
   borderRadius: "full",
 });

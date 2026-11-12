@@ -24,9 +24,9 @@ describe("ToolPage", () => {
     expect(screen.getByText("All UK calculators")).toBeTruthy();
   });
 
-  it("falls back to the first catalogue entry for an unknown slug", () => {
+  it("renders the not-found page for an unknown slug", () => {
     renderAt("/tools/not-a-real-tool");
-    expect(screen.getByRole("heading", { level: 1, name: TOOLS_CATALOG[0]?.title })).toBeTruthy();
+    expect(screen.getByRole("heading", { level: 1, name: "Page not found" })).toBeTruthy();
   });
 
   it("maps the legacy mortgage slug to the current catalogue entry", () => {

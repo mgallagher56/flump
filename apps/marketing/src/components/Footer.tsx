@@ -3,6 +3,7 @@ import { flex, grid, stack } from "@repo/ui/styled-system/patterns";
 import type { FC } from "react";
 import { FiExternalLink } from "react-icons/fi";
 import { Link } from "react-router-dom";
+import { showPlaceholders } from "../utils/flags";
 import {
   COMPANY_ADDRESS_PLACEHOLDER,
   COMPANY_NAME_PLACEHOLDER,
@@ -147,15 +148,17 @@ export const Footer: FC = () => {
           </div>
         </div>
 
-        {/* Company details */}
-        <div className={legalStyle}>
-          <div className={flex({ justify: "space-between", flexWrap: "wrap", gap: "4" })}>
-            <span className={placeholderStyle}>
-              © {currentYear} {COMPANY_NAME_PLACEHOLDER}. {COMPANY_NUMBER_PLACEHOLDER}.{" "}
-              {COMPANY_ADDRESS_PLACEHOLDER}.
-            </span>
+        {/* Company details: hidden until the owner supplies real values (R-09). */}
+        {showPlaceholders() && (
+          <div className={legalStyle}>
+            <div className={flex({ justify: "space-between", flexWrap: "wrap", gap: "4" })}>
+              <span className={placeholderStyle}>
+                © {currentYear} {COMPANY_NAME_PLACEHOLDER}. {COMPANY_NUMBER_PLACEHOLDER}.{" "}
+                {COMPANY_ADDRESS_PLACEHOLDER}.
+              </span>
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </footer>
   );

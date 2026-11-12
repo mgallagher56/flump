@@ -42,7 +42,7 @@ export const ThemeToggle: FC = () => {
       {theme === "dark" ? (
         <FiSun style={{ color: "var(--colors-status-warning-text)" }} aria-hidden="true" />
       ) : (
-        <FiMoon style={{ color: "#6363F1" }} aria-hidden="true" />
+        <FiMoon style={{ color: "var(--colors-primary)" }} aria-hidden="true" />
       )}
     </button>
   );

@@ -15,7 +15,9 @@ import { FiArrowLeft } from "react-icons/fi";
 import { Link, useParams } from "react-router-dom";
 import { Footer } from "../components/Footer";
 import { Header } from "../components/Header";
+import { isKnownToolSlug, TOOL_SLUG_ALIASES } from "../utils/toolSlugs";
 import { getAppUrl } from "../utils/url";
+import { NotFoundPage } from "./NotFoundPage";
 import { TOOLS_CATALOG } from "./ToolsIndexPage";
 
 const containerStyle = css({
@@ -28,12 +30,12 @@ const containerStyle = css({
 export const ToolPage: FC = () => {
   const { slug } = useParams<{ slug: string }>();
   const appUrl = getAppUrl();
-  const normalizedSlug =
-    slug === "mortgage-overpay-vs-isa-calculator" ? "mortgage-overpayment-vs-isa-calculator" : slug;
+  const normalizedSlug = slug ? (TOOL_SLUG_ALIASES[slug] ?? slug) : slug;
 
-  const toolMeta =
-    TOOLS_CATALOG.find((t) => t.slug === normalizedSlug) ??
-    (TOOLS_CATALOG[0] as (typeof TOOLS_CATALOG)[number]);
+  const toolMeta = TOOLS_CATALOG.find((t) => t.slug === normalizedSlug);
+  if (!toolMeta || !isKnownToolSlug(slug)) {
+    return <NotFoundPage />;
+  }
 
   const handleContinue = () => {
     if (typeof window !== "undefined") {
@@ -60,7 +62,7 @@ export const ToolPage: FC = () => {
                 display: "inline-flex",
                 alignItems: "center",
                 gap: "6px",
-                color: "#6366f1",
+                color: "var(--colors-primary)",
                 textDecoration: "none",
                 fontSize: "14px",
                 fontWeight: "600",

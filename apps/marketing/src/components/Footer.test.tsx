@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
   COMPANY_ADDRESS_PLACEHOLDER,
   COMPANY_NAME_PLACEHOLDER,
@@ -36,15 +36,24 @@ describe("Footer", () => {
     expect(screen.queryAllByRole("heading", { level: 4 })).toHaveLength(0);
   });
 
-  it("shows company placeholders and a single read-only link to /security", () => {
+  it("hides the placeholder company line by default", () => {
     const { container } = renderFooter();
-    const text = container.textContent ?? "";
-    expect(text).toContain(COMPANY_NAME_PLACEHOLDER);
-    expect(text).toContain(COMPANY_NUMBER_PLACEHOLDER);
-    expect(text).toContain(COMPANY_ADDRESS_PLACEHOLDER);
-    expect(text).not.toMatch(/Registered in England/i);
+    expect(container.textContent ?? "").not.toMatch(/PLACEHOLDER/);
     expect(screen.getByRole("link", { name: "Security and privacy" }).getAttribute("href")).toBe(
       "/security",
     );
+  });
+
+  it("shows the placeholder company line only when VITE_SHOW_PLACEHOLDERS=true", () => {
+    vi.stubEnv("VITE_SHOW_PLACEHOLDERS", "true");
+    try {
+      const text = renderFooter().container.textContent ?? "";
+      expect(text).toContain(COMPANY_NAME_PLACEHOLDER);
+      expect(text).toContain(COMPANY_NUMBER_PLACEHOLDER);
+      expect(text).toContain(COMPANY_ADDRESS_PLACEHOLDER);
+      expect(text).not.toMatch(/Registered in England/i);
+    } finally {
+      vi.unstubAllEnvs();
+    }
   });
 });

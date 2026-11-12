@@ -59,11 +59,20 @@ function applyTheme(theme: Theme) {
 }
 
 export const ThemeProvider: FC<{ children: ReactNode }> = ({ children }) => {
-  const [theme, setThemeState] = useState<Theme>(getInitialTheme);
+  // The first render must match the server ("light"), or hydration fails (React #418). The
+  // stored or system theme is read after mount; the inline script in index.html has already put
+  // the right class on <html>, so nothing flashes, and applyTheme waits until we have synced.
+  const [theme, setThemeState] = useState<Theme>("light");
+  const [synced, setSynced] = useState(false);
 
   useEffect(() => {
-    applyTheme(theme);
-  }, [theme]);
+    setThemeState(getInitialTheme());
+    setSynced(true);
+  }, []);
+
+  useEffect(() => {
+    if (synced) applyTheme(theme);
+  }, [theme, synced]);
 
   const setTheme = useCallback((next: Theme) => {
     setThemeState(next);

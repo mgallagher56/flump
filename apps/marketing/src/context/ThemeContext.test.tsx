@@ -61,4 +61,20 @@ describe("ThemeContext", () => {
     });
     expect(result.current.theme).toBe("light");
   });
+
+  it("renders the server default first, then syncs after mount (hydration safe)", () => {
+    localStorage.setItem("flump-theme", "dark");
+    const seen: string[] = [];
+    renderHook(
+      () => {
+        const ctx = useThemeContext();
+        seen.push(ctx.theme);
+        return ctx;
+      },
+      { wrapper: ThemeProvider },
+    );
+    expect(seen[0]).toBe("light");
+    expect(seen[seen.length - 1]).toBe("dark");
+    expect(document.documentElement.getAttribute("data-theme")).toBe("dark");
+  });
 });

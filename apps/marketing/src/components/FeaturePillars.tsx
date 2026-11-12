@@ -409,7 +409,7 @@ export const FeaturePillars: FC = () => {
                 lineHeight: "1.5",
               }}
             >
-              Know your exact weekly allowance after ring-fencing fixed bills and emergency savings.
+              Estimate your weekly allowance after ring-fencing fixed bills and emergency savings.
             </p>
           </div>
 
