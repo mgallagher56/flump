@@ -1,0 +1,593 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`MCP surface snapshot (E17-N1) > pins prompts/list 1`] = `
+[
+  {
+    "arguments": [],
+    "description": "Comprehensive UK personal financial health audit, evaluating net worth, emergency runway, high-APR debt burn, and tax efficiency.",
+    "name": "uk-financial-health-audit",
+    "title": undefined,
+  },
+  {
+    "arguments": [],
+    "description": "Analyzes whether gross salary + bonuses enter the UK £100k-£125,140 60% (or 69.5% Scottish) tax trap and models optimal pension sacrifice.",
+    "name": "escape-100k-tax-trap",
+    "title": undefined,
+  },
+  {
+    "arguments": [],
+    "description": "Inspects all credit cards, 0% promotional balance transfers, and arranged overdrafts, generating an aggressive Avalanche vs Snowball payoff plan.",
+    "name": "crush-high-apr-debt",
+    "title": undefined,
+  },
+]
+`;
+
+exports[`MCP surface snapshot (E17-N1) > pins resources/list 1`] = `
+[
+  {
+    "name": "executive-snapshot",
+    "uri": "flump://context/executive-snapshot",
+  },
+  {
+    "name": "baseline",
+    "uri": "flump://context/baseline",
+  },
+  {
+    "name": "uk-fiscal-guardrails",
+    "uri": "flump://rules/uk-fiscal-guardrails",
+  },
+  {
+    "name": "accounts",
+    "uri": "flump://context/accounts",
+  },
+  {
+    "name": "budget",
+    "uri": "flump://context/budget",
+  },
+  {
+    "name": "tax-ledger",
+    "uri": "flump://context/tax-ledger",
+  },
+]
+`;
+
+exports[`MCP surface snapshot (E17-N1) > pins tools/list > tool names 1`] = `
+[
+  "calculate_self_assessment_and_section24",
+  "compare_mortgage_overpay_vs_isa",
+  "evaluate_cashflow_runway_and_health",
+  "evaluate_uk_student_loan",
+  "project_wealth_scenario",
+  "query_transactions_and_spending",
+  "simulate_debt_payoff",
+  "simulate_uk_tax_and_pension_sacrifice",
+]
+`;
+
+exports[`MCP surface snapshot (E17-N1) > pins tools/list > tools/list 1`] = `
+[
+  {
+    "_meta": undefined,
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": true,
+    },
+    "description": "Simulates deterministic UK consumer debt payoff schedules (Avalanche vs Snowball), 0% promotional transfer cliff alerts, and 5-year post-debt ISA wealth crossover projections via @flump/finance-engine.",
+    "execution": {
+      "taskSupport": "forbidden",
+    },
+    "inputSchema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "properties": {
+        "customDebtsOverride": {
+          "description": "Optional hypothetical debt items to simulate instead of the user's active accounts",
+          "items": {
+            "properties": {
+              "balanceGbp": {
+                "minimum": 0,
+                "type": "number",
+              },
+              "debtType": {
+                "enum": [
+                  "credit_card",
+                  "overdraft",
+                  "loan",
+                  "car_finance",
+                  "bnpl",
+                  "other",
+                ],
+                "type": "string",
+              },
+              "id": {
+                "default": "custom_debt",
+                "type": "string",
+              },
+              "interestRateApr": {
+                "minimum": 0,
+                "type": "number",
+              },
+              "minimumPaymentGbp": {
+                "minimum": 0,
+                "type": "number",
+              },
+              "name": {
+                "type": "string",
+              },
+              "promoAprExpiryDate": {
+                "type": "string",
+              },
+              "revertApr": {
+                "type": "number",
+              },
+            },
+            "required": [
+              "name",
+              "balanceGbp",
+              "interestRateApr",
+              "minimumPaymentGbp",
+            ],
+            "type": "object",
+          },
+          "type": "array",
+        },
+        "monthlyExtraOverpaymentGbp": {
+          "default": 50,
+          "description": "Extra monthly cash surplus allocated towards debt overpayments in GBP",
+          "minimum": 0,
+          "type": "number",
+        },
+        "postDebtIsaReturnPct": {
+          "default": 6,
+          "description": "Projected annual compounding return percentage for the post-debt wealth bridge",
+          "maximum": 20,
+          "minimum": 0,
+          "type": "number",
+        },
+        "strategy": {
+          "default": "AVALANCHE",
+          "description": "Debt payoff algorithm to simulate (Avalanche = highest APR first, Snowball = lowest balance first)",
+          "enum": [
+            "AVALANCHE",
+            "SNOWBALL",
+            "COMPARE_BOTH",
+          ],
+          "type": "string",
+        },
+      },
+      "type": "object",
+    },
+    "name": "simulate_debt_payoff",
+    "title": undefined,
+  },
+  {
+    "_meta": undefined,
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": true,
+    },
+    "description": "Calculates UK income tax, National Insurance, Scottish bands, and the £100k-£125,140 60% tax trap. Simulates optimal pension salary sacrifice and Gift Aid contributions to reclaim the £12,570 Personal Allowance.",
+    "execution": {
+      "taskSupport": "forbidden",
+    },
+    "inputSchema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "properties": {
+        "bonusGbp": {
+          "default": 0,
+          "description": "One-off bonus or side income received in this tax year",
+          "minimum": 0,
+          "type": "number",
+        },
+        "employeePensionPct": {
+          "description": "Employee pension contribution percentage (e.g. 5, 10, 25)",
+          "maximum": 100,
+          "minimum": 0,
+          "type": "number",
+        },
+        "giftAidContributionsGbp": {
+          "default": 0,
+          "description": "Net annual Gift Aid charitable donations in GBP (grossed up by 1.25x to extend basic rate band and reclaim Personal Allowance)",
+          "minimum": 0,
+          "type": "number",
+        },
+        "hypotheticalGrossSalaryGbp": {
+          "description": "Gross annual PAYE salary in GBP (defaults to user baseline salary)",
+          "minimum": 0,
+          "type": "number",
+        },
+        "isSalarySacrifice": {
+          "default": true,
+          "description": "Whether pension contribution is via salary sacrifice (reduces National Insurance & Adjusted Net Income)",
+          "type": "boolean",
+        },
+        "region": {
+          "description": "UK tax region (Scotland applies distinct Scottish Income Tax bands)",
+          "enum": [
+            "ENGLAND_NI_WALES",
+            "SCOTLAND",
+          ],
+          "type": "string",
+        },
+        "taxYear": {
+          "description": "UK tax year to evaluate (defaults to 2025/26)",
+          "enum": [
+            "2025/26",
+            "2026/27",
+          ],
+          "type": "string",
+        },
+      },
+      "required": [
+        "employeePensionPct",
+      ],
+      "type": "object",
+    },
+    "name": "simulate_uk_tax_and_pension_sacrifice",
+    "title": undefined,
+  },
+  {
+    "_meta": undefined,
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": true,
+    },
+    "description": "Compares overpaying an active UK mortgage (interest saved and unlocking next 85%/80%/75%/60% LTV tiers) against compounding surplus cash inside a tax-free Stocks & Shares or Cash ISA.",
+    "execution": {
+      "taskSupport": "forbidden",
+    },
+    "inputSchema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "properties": {
+        "cashOrStocksIsaApyPct": {
+          "default": 6,
+          "description": "Expected annual return percentage inside a tax-free UK ISA (e.g. 5.0 for Cash ISA, 7.0 for Global Equities S&S ISA)",
+          "maximum": 20,
+          "minimum": 0,
+          "type": "number",
+        },
+        "hypotheticalMortgageBalanceGbp": {
+          "description": "Outstanding mortgage principal in GBP (defaults to user baseline)",
+          "minimum": 0,
+          "type": "number",
+        },
+        "hypotheticalMortgageRateApr": {
+          "description": "Current active mortgage APR percentage (defaults to 4.5%)",
+          "maximum": 20,
+          "minimum": 0,
+          "type": "number",
+        },
+        "hypotheticalPropertyValueGbp": {
+          "description": "Property market valuation in GBP (defaults to user baseline)",
+          "minimum": 0,
+          "type": "number",
+        },
+        "monthlySurplusToAllocateGbp": {
+          "default": 200,
+          "description": "Monthly surplus cash to allocate towards either mortgage overpayment or ISA compounding",
+          "minimum": 0,
+          "type": "number",
+        },
+        "remainingTermMonths": {
+          "description": "Remaining mortgage amortization term in months (defaults to 240 months / 20 years)",
+          "maximum": 480,
+          "minimum": 12,
+          "type": "number",
+        },
+        "targetRemortgageDate": {
+          "description": "ISO date 'YYYY-MM-DD' of next fixed-rate mortgage expiry to evaluate LTV tier unlocking",
+          "type": "string",
+        },
+      },
+      "type": "object",
+    },
+    "name": "compare_mortgage_overpay_vs_isa",
+    "title": undefined,
+  },
+  {
+    "_meta": undefined,
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": true,
+    },
+    "description": "Computes HMRC Self-Assessment tax liability, Section 24 landlord finance cost restrictions (20% basic rate tax credit), 31 Jan and 31 Jul Payments on Account, and required monthly tax pot set-aside.",
+    "execution": {
+      "taskSupport": "forbidden",
+    },
+    "inputSchema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "properties": {
+        "hypotheticalAllowableExpensesGbp": {
+          "description": "Annual allowable letting agent, maintenance, insurance and service charge expenses in GBP",
+          "minimum": 0,
+          "type": "number",
+        },
+        "hypotheticalBtlMortgageInterestGbp": {
+          "description": "Annual residential property finance/mortgage interest in GBP",
+          "minimum": 0,
+          "type": "number",
+        },
+        "hypotheticalBtlRentGbp": {
+          "description": "Annual gross Buy-to-Let rental income in GBP",
+          "minimum": 0,
+          "type": "number",
+        },
+        "hypotheticalFreelanceProfitGbp": {
+          "description": "Optional freelance/self-employed net profit in GBP",
+          "minimum": 0,
+          "type": "number",
+        },
+        "ownershipSharePct": {
+          "default": 100,
+          "description": "Percentage share of property ownership (e.g. 50% for joint ownership, 100% sole)",
+          "maximum": 100,
+          "minimum": 1,
+          "type": "number",
+        },
+        "taxYear": {
+          "default": "2024/25",
+          "description": "UK fiscal tax year for Self-Assessment (e.g. '2024/25', '2025/26')",
+          "type": "string",
+        },
+      },
+      "type": "object",
+    },
+    "name": "calculate_self_assessment_and_section24",
+    "title": undefined,
+  },
+  {
+    "_meta": undefined,
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": true,
+    },
+    "description": "Projects long-term (1-30+ year) UK net worth trajectories, compound ISA & pension growth, and models life event impacts (Home Purchase deposit, Nursery/Childcare costs, Remortgage rate shocks, Early retirement bridges).",
+    "execution": {
+      "taskSupport": "forbidden",
+    },
+    "inputSchema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "properties": {
+        "customScenarios": {
+          "description": "Custom life event overrides with explicit costs and years",
+          "items": {
+            "properties": {
+              "durationYears": {
+                "default": 1,
+                "minimum": 1,
+                "type": "number",
+              },
+              "id": {
+                "default": "custom_event",
+                "type": "string",
+              },
+              "lumpSumCostGbp": {
+                "default": 0,
+                "minimum": 0,
+                "type": "number",
+              },
+              "ongoingMonthlyDeltaGbp": {
+                "default": 0,
+                "type": "number",
+              },
+              "startYear": {
+                "minimum": 1,
+                "type": "number",
+              },
+              "title": {
+                "type": "string",
+              },
+              "type": {
+                "default": "BUY_HOME",
+                "enum": [
+                  "BUY_HOME",
+                  "HAVE_CHILD",
+                  "REMORTGAGE_SHOCK",
+                  "REMORTGAGE_RATE_SHOCK",
+                  "EARLY_RETIRE_57",
+                  "RETIRE_EARLY_BRIDGE",
+                ],
+                "type": "string",
+              },
+            },
+            "required": [
+              "title",
+              "startYear",
+            ],
+            "type": "object",
+          },
+          "type": "array",
+        },
+        "expectedReturnPct": {
+          "default": 6,
+          "description": "Expected annual ISA/investment portfolio return percentage",
+          "maximum": 15,
+          "minimum": 0,
+          "type": "number",
+        },
+        "horizonYears": {
+          "default": 30,
+          "description": "Projection time horizon in years (1 to 40 years)",
+          "maximum": 40,
+          "minimum": 1,
+          "type": "number",
+        },
+        "lifeEvents": {
+          "default": [],
+          "description": "Preset UK life events to apply to the trajectory",
+          "items": {
+            "enum": [
+              "BUY_HOME",
+              "HAVE_CHILD",
+              "REMORTGAGE_SHOCK",
+              "REMORTGAGE_RATE_SHOCK",
+              "EARLY_RETIRE_57",
+              "RETIRE_EARLY_BRIDGE",
+            ],
+            "type": "string",
+          },
+          "type": "array",
+        },
+        "monthlySavingsGbp": {
+          "default": 500,
+          "description": "Monthly surplus allocated to cash savings and ISA compounding",
+          "minimum": 0,
+          "type": "number",
+        },
+      },
+      "type": "object",
+    },
+    "name": "project_wealth_scenario",
+    "title": undefined,
+  },
+  {
+    "_meta": undefined,
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": true,
+    },
+    "description": "Evaluates the user's stage-weighted Financial Health Score (0-100), Adaptive Lifecycle Stage (STAGE_1_DEBT_RECOVERY, STAGE_2_BUFFER_BUILD, STAGE_3_WEALTH_OPTIMIZE), weekly Safe-to-Spend, and emergency runway months with optional what-if changes to expenses or liquid reserves.",
+    "execution": {
+      "taskSupport": "forbidden",
+    },
+    "inputSchema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "properties": {
+        "hypotheticalLiquidEmergencyFundGbp": {
+          "description": "Liquid cash emergency buffer in GBP",
+          "minimum": 0,
+          "type": "number",
+        },
+        "hypotheticalMonthlyEssentialExpensesGbp": {
+          "description": "Monthly essential bills in GBP (housing, council tax, groceries, utilities)",
+          "minimum": 0,
+          "type": "number",
+        },
+        "hypotheticalMonthlyIncomeGbp": {
+          "description": "Monthly net take-home pay in GBP (defaults to current budget/baseline)",
+          "minimum": 0,
+          "type": "number",
+        },
+      },
+      "type": "object",
+    },
+    "name": "evaluate_cashflow_runway_and_health",
+    "title": undefined,
+  },
+  {
+    "_meta": undefined,
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": true,
+    },
+    "description": "Evaluates whether a UK student loan (Plan 1, Plan 2, Plan 4 Scotland, Plan 5, or Postgraduate) should be voluntarily overpaid vs allowing statutory write-off after 25-40 years.",
+    "execution": {
+      "taskSupport": "forbidden",
+    },
+    "inputSchema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "properties": {
+        "annualSalaryGbp": {
+          "description": "Annual gross salary in GBP (defaults to user baseline)",
+          "minimum": 0,
+          "type": "number",
+        },
+        "currentBalanceGbp": {
+          "description": "Current outstanding loan balance in GBP",
+          "minimum": 0,
+          "type": "number",
+        },
+        "plan": {
+          "default": "PLAN_2",
+          "description": "UK student loan repayment plan",
+          "enum": [
+            "PLAN_1",
+            "PLAN_2",
+            "PLAN_4",
+            "PLAN_5",
+            "POSTGRAD",
+          ],
+          "type": "string",
+        },
+      },
+      "required": [
+        "currentBalanceGbp",
+      ],
+      "type": "object",
+    },
+    "name": "evaluate_uk_student_loan",
+    "title": undefined,
+  },
+  {
+    "_meta": undefined,
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": true,
+    },
+    "description": "Queries recent bank transactions with category rollups, spending velocity, and merchant data (PII-scrubbed based on token privacy scope).",
+    "execution": {
+      "taskSupport": "forbidden",
+    },
+    "inputSchema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "properties": {
+        "accountId": {
+          "description": "Filter by specific account ID",
+          "type": "string",
+        },
+        "category": {
+          "description": "Filter by transaction category (e.g. 'groceries', 'eating_out', 'transport', 'bills')",
+          "type": "string",
+        },
+        "endDate": {
+          "description": "Filter transactions on or before this ISO date 'YYYY-MM-DD'",
+          "type": "string",
+        },
+        "limit": {
+          "default": 30,
+          "description": "Maximum number of transaction records to return (defaults to 30)",
+          "maximum": 100,
+          "minimum": 1,
+          "type": "number",
+        },
+        "startDate": {
+          "description": "Filter transactions on or after this ISO date 'YYYY-MM-DD'",
+          "type": "string",
+        },
+      },
+      "type": "object",
+    },
+    "name": "query_transactions_and_spending",
+    "title": undefined,
+  },
+]
+`;
+
+exports[`per-tool output size (E17-N1) > calls every registered tool and pins the output size in bytes 1`] = `
+{
+  "calculate_self_assessment_and_section24": 1000,
+  "compare_mortgage_overpay_vs_isa": 1500,
+  "evaluate_cashflow_runway_and_health": 1500,
+  "evaluate_uk_student_loan": 500,
+  "project_wealth_scenario": 2000,
+  "query_transactions_and_spending": 500,
+  "simulate_debt_payoff": 37500,
+  "simulate_uk_tax_and_pension_sacrifice": 1000,
+}
+`;
