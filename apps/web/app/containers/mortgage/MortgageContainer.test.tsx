@@ -87,6 +87,32 @@ describe("<MortgageContainer />", () => {
     );
   });
 
+  test("tab keys move focus and wrap, are ignored with modifiers, and the panel is focusable", () => {
+    const { getByRole } = customRender(<MortgageContainer />);
+    const tracker = getByRole("tab", { name: /Mortgage tracker/ });
+    const milestones = getByRole("tab", { name: /LTV milestones/ });
+    const compare = getByRole("tab", { name: /Overpay vs save/ });
+    expect(getByRole("tabpanel").getAttribute("tabindex")).toBe("0");
+
+    tracker.focus();
+    for (const modifier of ["ctrlKey", "altKey", "metaKey", "shiftKey"] as const) {
+      fireEvent.keyDown(tracker, { key: "ArrowRight", [modifier]: true });
+      expect(tracker.getAttribute("aria-selected")).toBe("true");
+      expect(document.activeElement).toBe(tracker);
+    }
+
+    fireEvent.keyDown(tracker, { key: "ArrowRight" });
+    expect(document.activeElement).toBe(milestones);
+    fireEvent.keyDown(milestones, { key: "ArrowLeft" });
+    expect(document.activeElement).toBe(tracker);
+    fireEvent.keyDown(tracker, { key: "ArrowLeft" });
+    expect(document.activeElement).toBe(compare);
+    fireEvent.keyDown(compare, { key: "Home" });
+    expect(document.activeElement).toBe(tracker);
+    fireEvent.keyDown(tracker, { key: "End" });
+    expect(document.activeElement).toBe(compare);
+  });
+
   test("allows switching to Buy to let category and displays BTL overview", () => {
     const { getByText, queryByText } = customRender(<MortgageContainer />);
 

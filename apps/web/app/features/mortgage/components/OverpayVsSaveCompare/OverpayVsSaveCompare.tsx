@@ -106,7 +106,10 @@ export const OverpayVsSaveCompare: FC<OverpayVsSaveCompareProps> = ({
 
   // Comparison simulation
   const comparisonData = useMemo(() => {
-    const H = Math.min(horizonYears, horizonMax, remainingTerm);
+    // One rule: the simulated horizon is exactly what the slider shows (whole years, at least 1,
+    // capped at the remaining term rounded down). A term under a year simulates one year; the
+    // loan simply clears early because principal is capped at the balance.
+    const H = Math.min(horizonYears, horizonMax);
     const totalMonths = H * 12;
 
     const im = interestRate / 100 / 12;
@@ -265,7 +268,7 @@ export const OverpayVsSaveCompare: FC<OverpayVsSaveCompareProps> = ({
       </div>
 
       <SliderField
-        helperText="Assumption: how many years to compare. It cannot exceed your remaining term."
+        helperText="Assumption: how many whole years to compare. It cannot exceed your remaining term (rounded down, minimum 1 year)."
         label="Horizon (years)"
         max={horizonMax}
         min={1}

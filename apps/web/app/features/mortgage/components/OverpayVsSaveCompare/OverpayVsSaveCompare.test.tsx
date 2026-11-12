@@ -125,3 +125,29 @@ describe("<OverpayVsSaveCompare /> chart accessibility", () => {
     expect(figure.textContent).toMatch(/comes out ahead by £[\d,]+/);
   });
 });
+
+describe("<OverpayVsSaveCompare /> horizon rule", () => {
+  const props = { loanAmount: 250000, interestRate: 5, overpayment: 300 };
+
+  test("a remaining term under a year gives a 1-year slider and a 1-year simulation", () => {
+    const { getByLabelText, container } = customRender(
+      <OverpayVsSaveCompare {...props} remainingTerm={0.5} />,
+    );
+    const horizon = getByLabelText("Horizon (years) range slider") as HTMLInputElement;
+    expect(horizon.min).toBe("1");
+    expect(horizon.max).toBe("1");
+    expect(horizon.value).toBe("1");
+    expect(container.textContent ?? "").toContain("over a 1-year horizon");
+    expect(container.textContent ?? "").not.toMatch(/NaN|Infinity/);
+  });
+
+  test("the simulated horizon follows the slider and its max is the term rounded down", () => {
+    const { getByLabelText, container } = customRender(
+      <OverpayVsSaveCompare {...props} remainingTerm={7.9} />,
+    );
+    const horizon = getByLabelText("Horizon (years) range slider") as HTMLInputElement;
+    expect(horizon.max).toBe("7");
+    fireEvent.change(horizon, { target: { value: "5" } });
+    expect(container.textContent ?? "").toContain("over a 5-year horizon");
+  });
+});

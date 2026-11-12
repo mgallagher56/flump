@@ -78,4 +78,63 @@ describe("RemortgageShockSim", () => {
     ).toBe("8");
     expect(document.body.textContent).not.toBe(before);
   });
+
+  describe("reseeding from props", () => {
+    const term = () =>
+      screen.getByLabelText("Remaining term (years) range slider") as HTMLInputElement;
+    const year = () => screen.getByLabelText("Fixed rate end year") as HTMLSelectElement;
+    const month = () => screen.getByLabelText("Fixed rate end month") as HTMLSelectElement;
+    const base = { currentBalance: 280000, currentRate: 2.5 };
+
+    it("reseeds the term and fix date when the props change", () => {
+      const { rerender } = render(
+        <RemortgageShockSim {...base} fixEndDate="2099-10-01" remainingTermYears={18} />,
+      );
+      expect(term().value).toBe("18");
+      rerender(<RemortgageShockSim {...base} fixEndDate="2098-03-01" remainingTermYears={12} />);
+      expect(term().value).toBe("12");
+      expect(year().value).toBe("2098");
+      expect(month().value).toBe("3");
+    });
+
+    it("does not clobber a term or fix date the user has edited", () => {
+      const { rerender } = render(
+        <RemortgageShockSim {...base} fixEndDate="2099-10-01" remainingTermYears={18} />,
+      );
+      fireEvent.change(term(), { target: { value: "30" } });
+      fireEvent.change(year(), { target: { value: "2031" } });
+      fireEvent.change(month(), { target: { value: "6" } });
+      rerender(<RemortgageShockSim {...base} fixEndDate="2098-03-01" remainingTermYears={12} />);
+      expect(term().value).toBe("30");
+      expect(year().value).toBe("2031");
+      expect(month().value).toBe("6");
+    });
+
+    it("reseeds one value even when the other was edited", () => {
+      const { rerender } = render(
+        <RemortgageShockSim {...base} fixEndDate="2099-10-01" remainingTermYears={18} />,
+      );
+      fireEvent.change(term(), { target: { value: "30" } });
+      rerender(<RemortgageShockSim {...base} fixEndDate="2098-03-01" remainingTermYears={12} />);
+      expect(term().value).toBe("30");
+      expect(year().value).toBe("2098");
+    });
+
+    it("widens the term slider when the seeded term is outside 5 to 40", () => {
+      const { rerender } = render(<RemortgageShockSim {...base} remainingTermYears={3} />);
+      expect(term().value).toBe("3");
+      expect(term().min).toBe("3");
+      expect(term().max).toBe("40");
+      rerender(<RemortgageShockSim {...base} remainingTermYears={45} />);
+      expect(term().value).toBe("45");
+      expect(term().min).toBe("5");
+      expect(term().max).toBe("45");
+    });
+
+    it("rounds a sub-year term to one year so the slider and payments stay valid", () => {
+      const { container } = render(<RemortgageShockSim {...base} remainingTermYears={0.4} />);
+      expect(term().value).toBe("1");
+      expect(container.textContent ?? "").not.toMatch(/NaN|Infinity/);
+    });
+  });
 });
