@@ -1,3 +1,4 @@
+import { ProjectionNotice } from "@repo/ui";
 import {
   DebtSnowballCalculator,
   MortgageVsIsaCalculator,
@@ -68,6 +69,10 @@ export const ToolPage: FC = () => {
             >
               <FiArrowLeft /> All UK calculators
             </Link>
+          </div>
+
+          <div style={{ marginBottom: "24px" }}>
+            <ProjectionNotice />
           </div>
 
           <div style={{ marginBottom: "32px" }}>

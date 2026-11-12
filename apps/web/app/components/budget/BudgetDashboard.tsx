@@ -612,7 +612,7 @@ const BudgetDashboard: FC<BudgetDashboardProps> = ({
                 style={{ color: "var(--colors-status-danger-text)", flexShrink: 0 }}
               />
               <strong style={{ fontSize: "14px", color: "var(--colors-text-primary, #0f172a)" }}>
-                UK FCA Priority Debt Guardrail Active
+                Priority debt check active
               </strong>
               <span
                 style={{

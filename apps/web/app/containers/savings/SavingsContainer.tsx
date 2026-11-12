@@ -1,4 +1,5 @@
 import { PortfolioSnapshot } from "@flump/finance-engine";
+import { ProjectionNotice } from "@repo/ui";
 import { css } from "@repo/ui/styled-system/css";
 import { type FC, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -198,6 +199,7 @@ export const SavingsContainer: FC = () => {
   return (
     <div className={containerStyle}>
       {/* Page Header */}
+      <ProjectionNotice />
       <div className={headerContainerStyle}>
         <div>
           <FLPHeading as="h1" color="text.primary" size="2xl">

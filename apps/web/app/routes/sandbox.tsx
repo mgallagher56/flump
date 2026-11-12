@@ -1,5 +1,6 @@
 import type { OnboardingSeedPayload } from "@flump/finance-engine";
 import { persistOnboardingSeed } from "@flump/finance-engine";
+import { ProjectionNotice } from "@repo/ui";
 import { css } from "@repo/ui/styled-system/css";
 import { flex } from "@repo/ui/styled-system/patterns";
 import { useSetAtom } from "jotai";
@@ -160,6 +161,7 @@ export default function SandboxRoute() {
         margin: "0 auto",
       })}
     >
+      <ProjectionNotice />
       {/* Sticky Sandbox Header Banner */}
       <div className={bannerStyle}>
         <div

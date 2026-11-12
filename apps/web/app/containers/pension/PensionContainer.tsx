@@ -5,7 +5,7 @@ import {
   getCurrentUKTaxYear,
   PortfolioSnapshot,
 } from "@flump/finance-engine";
-import { LiveRegion } from "@repo/ui";
+import { LiveRegion, ProjectionNotice } from "@repo/ui";
 import { css } from "@repo/ui/styled-system/css";
 import { type FC, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -386,6 +386,7 @@ export const PensionContainer: FC = () => {
   return (
     <div className={containerStyle}>
       <LiveRegion debounceMs={1000} message={pensionHeadline} visuallyHidden />
+      <ProjectionNotice />
       {/* £100k-£125k Marginal Tax Trap Optimizer Callout */}
       {taxTrap.isInTaxTrap && (
         <div

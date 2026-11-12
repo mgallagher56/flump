@@ -1,4 +1,5 @@
 import { PortfolioSnapshot } from "@flump/finance-engine";
+import { ProjectionNotice } from "@repo/ui";
 import { css } from "@repo/ui/styled-system/css";
 import { type FC, useEffect, useMemo, useState } from "react";
 import { FaBalanceScale, FaChartBar, FaPlus, FaRocket } from "react-icons/fa";
@@ -309,6 +310,7 @@ const BudgetContainer: FC = () => {
       })}
     >
       {/* Page header */}
+      <ProjectionNotice />
       <div
         className={css({
           display: "flex",

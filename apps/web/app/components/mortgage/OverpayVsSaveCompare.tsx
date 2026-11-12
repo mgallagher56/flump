@@ -438,7 +438,7 @@ const OverpayVsSaveCompare: FC<OverpayVsSaveCompareProps> = ({
             >
               <div className={comparisonRow}>
                 <FLPText fontSize="sm" color="text.muted">
-                  Mortgage Interest Rate (Guaranteed Return):
+                  Mortgage interest rate (interest you avoid paying):
                 </FLPText>
                 <FLPText fontSize="sm" fontWeight="bold" color="status.danger.text">
                   {interestRate.toFixed(2)}%
@@ -628,10 +628,10 @@ const OverpayVsSaveCompare: FC<OverpayVsSaveCompareProps> = ({
                 style={{ color: "var(--colors-text-muted)", marginTop: "2px", flexShrink: 0 }}
               />
               <FLPText fontSize="xxs" color="text.muted" style={{ lineHeight: "1.4" }}>
-                <strong>Note:</strong> Mortgage interest savings are tax-free and guaranteed.
-                Savings interest is subject to tax if it exceeds your Personal Savings Allowance
-                (unless in an ISA). Always keep an emergency fund of liquid savings before making
-                illiquid mortgage overpayments.
+                <strong>Note:</strong> Interest you avoid paying on a mortgage is not taxed and does
+                not depend on market returns. Savings interest is subject to tax if it exceeds your
+                Personal Savings Allowance (unless in an ISA). Always keep an emergency fund of
+                liquid savings before making illiquid mortgage overpayments.
               </FLPText>
             </div>
           </>

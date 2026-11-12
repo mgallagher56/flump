@@ -10,6 +10,7 @@ import {
   type TaxRecord,
   type TaxSource,
 } from "@flump/finance-engine";
+import { ProjectionNotice } from "@repo/ui";
 import { css } from "@repo/ui/styled-system/css";
 import { type FC, type ReactNode, useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -513,6 +514,7 @@ const TaxContainer: FC = () => {
       })}
     >
       {/* Page Header */}
+      <ProjectionNotice className={css({ marginBottom: "16px" })} />
       <div
         className={css({
           display: "flex",

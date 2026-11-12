@@ -147,7 +147,7 @@ export const McpPage: FC = () => {
           </div>
         </section>
 
-        {/* Core Value Pillars / Architecture Guarantees */}
+        {/* Core Value Pillars / Architecture Principles */}
         <section className={sectionContainer()}>
           <div className={sectionHeader()}>
             <span className={sectionKicker()}>Why connect via Flump MCP?</span>

@@ -57,7 +57,7 @@ export function registerMortgageIsaTool(
     "compare_mortgage_overpay_vs_isa",
     {
       description:
-        "Compares overpaying an active UK mortgage (guaranteed interest savings and unlocking next 85%/80%/75%/60% LTV tiers) against compounding surplus cash inside a tax-free Stocks & Shares or Cash ISA.",
+        "Compares overpaying an active UK mortgage (interest saved and unlocking next 85%/80%/75%/60% LTV tiers) against compounding surplus cash inside a tax-free Stocks & Shares or Cash ISA.",
       inputSchema: mortgageIsaSchema,
       annotations: {
         readOnlyHint: true,
@@ -84,8 +84,9 @@ export function registerMortgageIsaTool(
               text: JSON.stringify(
                 {
                   message:
-                    "No active mortgage balance found. Allocating full surplus to tax-free ISA compounding.",
-                  recommendation: "Invest 100% of surplus in UK ISA / SIPP.",
+                    "No active mortgage balance found, so there is no overpayment to compare.",
+                  recommendation:
+                    "Not applicable: with no mortgage there is nothing to compare. This is a calculation, not advice.",
                 },
                 null,
                 2,
