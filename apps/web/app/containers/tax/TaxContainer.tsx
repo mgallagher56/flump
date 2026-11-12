@@ -537,35 +537,6 @@ const TaxContainer: FC = () => {
         </div>
       </div>
 
-      {/* Non-UK User Advice Banner */}
-      {userProfile?.country && userProfile.country !== "GB" && (
-        <div
-          className={css({
-            backgroundColor: "rgba(245, 158, 11, 0.05)",
-            border: "1px solid",
-            borderColor: "warning.500",
-            borderRadius: "md",
-            padding: "12px 16px",
-            marginBottom: "16px",
-            display: "flex",
-            alignItems: "center",
-            gap: "12px",
-            color: "text.primary",
-          })}
-        >
-          <FaInfoCircle className={css({ color: "warning.500", flexShrink: 0 })} size={18} />
-          <div>
-            <FLPText fontWeight="semibold" fontSize="sm" color="warning.500">
-              Tax Calculations Notice
-            </FLPText>
-            <FLPText fontSize="xs" color="text.muted" style={{ marginTop: "2px" }}>
-              Tax calculations are based on UK HMRC rules (England/Wales/NI). Multi-country tax
-              support is planned.
-            </FLPText>
-          </div>
-        </div>
-      )}
-
       <div
         className={css({
           display: "flex",

@@ -282,32 +282,6 @@ const UKTaxCalculator: FC<UKTaxCalculatorProps> = ({ initialSalary, onApplyIncre
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
-      {/* Non-UK user notice */}
-      {profile?.country && profile.country !== "GB" && (
-        <div
-          className={css({
-            backgroundColor: "rgba(245, 158, 11, 0.05)",
-            border: "1px solid",
-            borderColor: "warning.500",
-            borderRadius: "md",
-            padding: "16px",
-            display: "flex",
-            alignItems: "center",
-            gap: "12px",
-            color: "text.primary",
-          })}
-        >
-          <div>
-            <FLPText fontWeight="semibold" fontSize="sm" color="warning.500">
-              Tax Calculations Notice
-            </FLPText>
-            <FLPText fontSize="xs" color="text.muted" style={{ marginTop: "2px" }}>
-              Please note that tax calculations and rules on this platform are based on UK HMRC
-              laws/rules/taxes. We plan to onboard support for other countries soon.
-            </FLPText>
-          </div>
-        </div>
-      )}
       <div className={layoutGrid}>
         {/* Parameter Inputs (Left Column) */}
         <div className={controlPanelStyle}>
