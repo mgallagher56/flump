@@ -47,6 +47,7 @@ Then **freeze `main`** (no merges of any kind, including Dependabot/Renovate) un
 - [ ] Tools:
 
   ```bash
+  bun install --frozen-lockfile   # seed-cleanup-preview.ts imports the migration (needs workspace deps)
   brew install libpq
   export PATH="/opt/homebrew/opt/libpq/bin:$PATH"
   pg_dump --version        # must say 18.x
