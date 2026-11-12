@@ -343,7 +343,7 @@ describe("Architecture & Design System Laws", () => {
           count: 1,
           reason: "progress fill (graphic)",
         },
-        "apps/web/app/components/navigation/NavMenu.tsx": {
+        "apps/web/app/components/navigation/NavMenu/NavMenu.styles.ts": {
           count: 1,
           reason: "active child dot (graphic)",
         },

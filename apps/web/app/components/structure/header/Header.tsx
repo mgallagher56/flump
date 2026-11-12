@@ -1,10 +1,15 @@
-import { css } from "@repo/ui/styled-system/css";
+import { Icon } from "@repo/ui";
+import { Menu } from "lucide-react";
 import { type FC, type ReactElement, useMemo, useState } from "react";
-import { FaBars, FaBuilding, FaFileInvoiceDollar, FaPiggyBank, FaShieldAlt } from "react-icons/fa";
 import { Link, useLoaderData } from "react-router";
 import FLPBox from "~/components/core/structure/FLPBox";
 import HomeLogo from "~/components/navigation/HomeLogo";
-import NavMenu, { type NavRouteItem } from "~/components/navigation/NavMenu";
+import NavMenu from "~/components/navigation/NavMenu";
+import {
+  AUTH_NAV_ROUTES,
+  filterNavRoutes,
+  HOME_NAV_ROUTE,
+} from "~/components/navigation/navConfig";
 import ThemeToggle from "~/components/navigation/ThemeToggle";
 import UserAvatar from "~/components/navigation/UserAvatar";
 import UserLogin from "~/components/navigation/UserLogin";
@@ -21,56 +26,14 @@ import {
   menuStyles,
   mobileMenuButtonStyles,
   navStyles,
+  profileLink,
+  srOnly,
 } from "./styles";
 
 export interface HeaderProps {
   isMobile?: boolean;
   variant?: "desktop" | "mobile";
 }
-
-export const AUTH_DESKTOP_NAV_ROUTES: NavRouteItem[] = [
-  { key: "debt", route: "/app/debt" },
-  { key: "budget", route: "/app/budget" },
-  { key: "accounts", route: "/app/accounts" },
-  {
-    key: "wealth",
-    children: [
-      {
-        key: "savings",
-        route: "/app/savings",
-        description: "navSavingsDesc",
-        icon: <FaPiggyBank size={15} />,
-        badgeColor: "#10b981",
-      },
-      {
-        key: "pension",
-        route: "/app/pension",
-        description: "navPensionDesc",
-        icon: <FaShieldAlt size={15} />,
-        badgeColor: "#8b5cf6",
-      },
-      {
-        key: "mortgage",
-        route: "/app/mortgage",
-        description: "navMortgageDesc",
-        icon: <FaBuilding size={15} />,
-        badgeColor: "#f59e0b",
-      },
-    ],
-  },
-  {
-    key: "planning",
-    children: [
-      {
-        key: "tax",
-        route: "/app/tax",
-        description: "navTaxDesc",
-        icon: <FaFileInvoiceDollar size={15} />,
-        badgeColor: "#3b82f6",
-      },
-    ],
-  },
-];
 
 const Header: FC<HeaderProps> = ({ isMobile: propIsMobile, variant }): ReactElement<FC> => {
   const { user } = useLoaderData<typeof loader>();
@@ -86,26 +49,10 @@ const Header: FC<HeaderProps> = ({ isMobile: propIsMobile, variant }): ReactElem
   const isMobileVariant = propIsMobile ?? (variant === "mobile" ? true : contextIsMobile);
   const drawerOpen = isMobileDrawerOpen || localDrawerOpen;
 
-  const filteredAuthRoutes = useMemo(() => {
-    const enabled = profile.enabledPages || [];
-    return AUTH_DESKTOP_NAV_ROUTES.map((item) => {
-      if (item.children) {
-        const filteredChildren = item.children.filter((child) =>
-          isPageEnabled(enabled, child.key as any),
-        );
-        return {
-          ...item,
-          children: filteredChildren,
-        };
-      }
-      return item;
-    }).filter((item) => {
-      if (item.children) {
-        return item.children.length > 0;
-      }
-      return isPageEnabled(enabled, item.key as any);
-    });
-  }, [profile.enabledPages]);
+  const filteredAuthRoutes = useMemo(
+    () => filterNavRoutes(AUTH_NAV_ROUTES, profile.enabledPages || [], isPageEnabled),
+    [profile.enabledPages],
+  );
 
   const handleToggleDrawer = () => {
     toggleMobileDrawer();
@@ -125,7 +72,7 @@ const Header: FC<HeaderProps> = ({ isMobile: propIsMobile, variant }): ReactElem
             <HomeLogo />
             {!isMobileVariant && (
               <div className={desktopMenuLinksStyles}>
-                <NavMenu routes={[{ key: "home", route: "/" }]} />
+                <NavMenu routes={[HOME_NAV_ROUTE]} />
                 {!!user && <NavMenu routes={filteredAuthRoutes} />}
               </div>
             )}
@@ -133,26 +80,11 @@ const Header: FC<HeaderProps> = ({ isMobile: propIsMobile, variant }): ReactElem
           <FLPBox className={loginStyles}>
             <ThemeToggle />
             {!!user && (
-              <Link
-                className={css({
-                  display: "inline-flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  borderRadius: "full",
-                  outline: "none",
-                  transition: "transform 0.2s, box-shadow 0.2s",
-                  "&:hover": { transform: "scale(1.05)" },
-                  "&:focus-visible": {
-                    boxShadow: "0 0 0 2px token(colors.primary)",
-                  },
-                })}
-                title="User Profile"
-                to="/app/profile"
-              >
+              <Link className={profileLink} title="User Profile" to="/app/profile">
                 <span aria-hidden="true">
                   <UserAvatar bordered size={26} user={user} />
                 </span>
-                <span className={css({ srOnly: true })}>User Profile</span>
+                <span className={srOnly}>User Profile</span>
               </Link>
             )}
             <UserLogin />
@@ -162,11 +94,11 @@ const Header: FC<HeaderProps> = ({ isMobile: propIsMobile, variant }): ReactElem
               className={mobileMenuButtonStyles}
               data-testid="mobile-menu-toggle"
               id="mobile-menu-toggle"
-              style={isMobileVariant ? { display: "inline-flex" } : undefined}
+              data-mobile={isMobileVariant ? "true" : undefined}
               type="button"
               onClick={handleToggleDrawer}
             >
-              <FaBars size={18} />
+              <Icon icon={Menu} />
             </button>
           </FLPBox>
         </nav>
