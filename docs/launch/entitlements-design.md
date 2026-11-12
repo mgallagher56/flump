@@ -46,15 +46,14 @@ Neither option is chosen here.
 
 - Store only what billing needs: a provider customer reference, plan and entitlement state, and invoice references.
 - Do not store card numbers, bank details or full billing addresses in Flump's own database.
-- Add the billing provider to the processor register in `docs/legal/data-map.md` before any charge.
+- Add the billing provider to the E19 B3 processor register (planned `docs/legal/processors.md`) before any charge.
 
 ## Pricing page states
 
-The pricing page reads `PRICING.status` (E24-T4). E24-T4 renders the paid card and toggle only while `FLUMP_LAUNCH` is not true or `PRICING.status === 'set'`. Once a price is set, the page needs to show, for each state:
+The pricing page reads `PRICING.status` (E24-T4). Per state:
 
-- The price for each plan.
-- The entitlements each plan includes.
-- The terms link.
+- **`PRICING.status` is not `'set'` (free beta):** no paid card, no toggle, and no `£X` anywhere in the bundle. The paid card is rendered only while `FLUMP_LAUNCH` is not true or `PRICING.status === 'set'`, so CSS hiding is not enough. E24-T4 adds a launch-state test for this, and the T1 build-output check greps the built bundle for `£X`.
+- **`PRICING.status === 'set'`:** the price for each plan, the entitlements each plan includes, and the terms link.
 
 ## Preconditions before any build
 
