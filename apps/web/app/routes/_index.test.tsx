@@ -211,19 +211,6 @@ describe("_index route", () => {
     );
   });
 
-  it("Ireland needs only salary and employment type, and computes take-home", async () => {
-    const data = await loadSignedIn({
-      userProfile: {
-        onboardingCompleted: true,
-        annualSalary: 60000,
-        employmentType: "employed",
-        country: "IE",
-      },
-    });
-    expect(data.forecastData.takeHomeMissing).toBeUndefined();
-    expect(data.forecastData.estimatedTakeHome).toBeGreaterThan(0);
-  });
-
   it("treats empty strings as missing", async () => {
     const data = await loadSignedIn({
       userProfile: {
@@ -237,19 +224,6 @@ describe("_index route", () => {
     expect(data.forecastData.takeHomeMissing).toBe(
       "Add employment type, pension percentage and salary sacrifice status",
     );
-  });
-
-  it("says take-home is UK only for other countries", async () => {
-    const data = await loadSignedIn({
-      userProfile: {
-        onboardingCompleted: true,
-        annualSalary: 60000,
-        employmentType: "employed",
-        country: "US",
-      },
-    });
-    expect(data.forecastData.estimatedTakeHome).toBeNull();
-    expect(data.forecastData.takeHomeMissing).toBe("Take-home is only available for the UK");
   });
 
   it("only counts tax records dated in the current tax year", async () => {

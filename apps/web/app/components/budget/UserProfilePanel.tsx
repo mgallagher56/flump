@@ -1,9 +1,4 @@
-import {
-  calculateIrishTakeHome,
-  calculateUKEWNITakeHome,
-  getCurrentIrishTaxYear,
-  getCurrentUKTaxYear,
-} from "@flump/finance-engine";
+import { calculateUKEWNITakeHome, getCurrentUKTaxYear } from "@flump/finance-engine";
 import { SegmentedTabs } from "@repo/ui";
 import { css } from "@repo/ui/styled-system/css";
 import { type FC, useRef, useState } from "react";
@@ -34,38 +29,6 @@ interface UserProfilePanelProps {
   initialProfile: UserProfile;
   user?: any;
 }
-
-const COUNTRIES = [
-  { code: "GB", name: "United Kingdom", currency: "GBP" },
-  { code: "US", name: "United States", currency: "USD" },
-  { code: "DE", name: "Germany", currency: "EUR" },
-  { code: "FR", name: "France", currency: "EUR" },
-  { code: "IE", name: "Ireland", currency: "EUR" },
-  { code: "ES", name: "Spain", currency: "EUR" },
-  { code: "IT", name: "Italy", currency: "EUR" },
-  { code: "CA", name: "Canada", currency: "CAD" },
-  { code: "AU", name: "Australia", currency: "AUD" },
-  { code: "NZ", name: "New Zealand", currency: "NZD" },
-  { code: "JP", name: "Japan", currency: "JPY" },
-  { code: "IN", name: "India", currency: "INR" },
-  { code: "ZA", name: "South Africa", currency: "ZAR" },
-  { code: "SG", name: "Singapore", currency: "SGD" },
-  { code: "CH", name: "Switzerland", currency: "CHF" },
-] as const;
-
-const CURRENCIES = [
-  "GBP",
-  "USD",
-  "EUR",
-  "AUD",
-  "CAD",
-  "NZD",
-  "JPY",
-  "INR",
-  "ZAR",
-  "SGD",
-  "CHF",
-] as const;
 
 const inputStyle = css({
   width: "100%",
@@ -173,9 +136,8 @@ export interface TaxBreakdown {
 /**
  * calculateNetTakeHome — delegates to the canonical taxRules.ts helpers.
  *
- * For UK (GB): uses calculateUKEWNITakeHome (EWNI rates).
- * For Ireland (IE): uses calculateIrishTakeHome (USC + PRSI).
- * Returns null (unknown) when salary or employment type is missing, or the country is unsupported;
+ * UK only (E16 D6-B): uses calculateUKEWNITakeHome (EWNI rates).
+ * Returns null (unknown) when salary or employment type is missing;
  * it never returns gross pay as take-home.
  *
  * NOTE: These are estimates only. See TAX_DISCLAIMER in taxRules.ts.
@@ -185,7 +147,6 @@ export function calculateNetTakeHome(
   employmentType: string | null | undefined,
   pensionPercent = 5,
   isSalarySacrifice = true,
-  country = "GB",
 ): TaxBreakdown | null {
   // Unknown inputs are unknown: never fall back to gross as take-home.
   if (!annualSalary || annualSalary <= 0) return null;
@@ -193,42 +154,23 @@ export function calculateNetTakeHome(
   if (employmentType !== "employed" && employmentType !== "self-employed") return null;
   const empType = employmentType;
 
-  if (country === "GB") {
-    const result = calculateUKEWNITakeHome(
-      annualSalary,
-      empType,
-      pensionPercent,
-      isSalarySacrifice,
-      getCurrentUKTaxYear(),
-    );
-    return {
-      gross: result.gross,
-      pension: result.pension,
-      personalAllowance: result.personalAllowance,
-      taxableIncome: result.taxableIncome,
-      incomeTax: result.incomeTax,
-      ni: result.ni,
-      netAnnual: result.netAnnual,
-      monthlyTakeHome: result.monthlyTakeHome,
-    };
-  }
-
-  if (country === "IE") {
-    const result = calculateIrishTakeHome(annualSalary, getCurrentIrishTaxYear(), empType);
-    return {
-      gross: result.gross,
-      pension: 0, // Irish pension contribution not modelled in profile panel
-      personalAllowance: 0,
-      taxableIncome: 0,
-      incomeTax: result.incomeTax,
-      ni: result.usc + result.prsi, // combine USC and PRSI into the ni field
-      netAnnual: result.netAnnual,
-      monthlyTakeHome: result.monthlyTakeHome,
-    };
-  }
-
-  // Other countries have no supported rules, so take-home is unknown.
-  return null;
+  const result = calculateUKEWNITakeHome(
+    annualSalary,
+    empType,
+    pensionPercent,
+    isSalarySacrifice,
+    getCurrentUKTaxYear(),
+  );
+  return {
+    gross: result.gross,
+    pension: result.pension,
+    personalAllowance: result.personalAllowance,
+    taxableIncome: result.taxableIncome,
+    incomeTax: result.incomeTax,
+    ni: result.ni,
+    netAnnual: result.netAnnual,
+    monthlyTakeHome: result.monthlyTakeHome,
+  };
 }
 
 const UserProfilePanel: FC<UserProfilePanelProps> = ({ initialProfile, user }) => {
@@ -254,8 +196,8 @@ const UserProfilePanel: FC<UserProfilePanelProps> = ({ initialProfile, user }) =
       effectiveProfile.firstName ?? user?.firstName ?? user?.user_metadata?.first_name ?? null,
     lastName: effectiveProfile.lastName ?? user?.lastName ?? user?.user_metadata?.last_name ?? null,
     avatarUrl: effectiveProfile.avatarUrl,
-    country: effectiveProfile.country || "GB",
-    currency: effectiveProfile.currency,
+    country: "GB",
+    currency: "GBP",
     employmentType: effectiveProfile.employmentType,
     annualSalary: effectiveProfile.annualSalary,
     monthlyTakeHome: effectiveProfile.monthlyTakeHome,
@@ -639,57 +581,6 @@ const UserProfilePanel: FC<UserProfilePanelProps> = ({ initialProfile, user }) =
                   value={form.displayName ?? ""}
                   onChange={(e) => setForm((p) => ({ ...p, displayName: e.target.value || null }))}
                 />
-              </div>
-            </div>
-
-            <div
-              className={css({
-                display: "grid",
-                gridTemplateColumns: { base: "1fr", sm: "1fr 1fr" },
-                gap: "16px",
-              })}
-            >
-              <div className={fieldGroupStyle}>
-                <label className={labelStyle} htmlFor="country">
-                  Country
-                </label>
-                <select
-                  className={selectStyle}
-                  id="country"
-                  value={form.country ?? "GB"}
-                  onChange={(e) => {
-                    const countryCode = e.target.value;
-                    const matched = COUNTRIES.find((c) => c.code === countryCode);
-                    setForm((p) => ({
-                      ...p,
-                      country: countryCode,
-                      currency: matched ? matched.currency : p.currency,
-                    }));
-                  }}
-                >
-                  {COUNTRIES.map((c) => (
-                    <option key={c.code} value={c.code}>
-                      {c.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className={fieldGroupStyle}>
-                <label className={labelStyle} htmlFor="currency">
-                  Currency
-                </label>
-                <select
-                  className={selectStyle}
-                  id="currency"
-                  value={form.currency ?? "GBP"}
-                  onChange={(e) => setForm((p) => ({ ...p, currency: e.target.value }))}
-                >
-                  {CURRENCIES.map((c) => (
-                    <option key={c} value={c}>
-                      {c}
-                    </option>
-                  ))}
-                </select>
               </div>
             </div>
           </FLPCard>
