@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/react";
 import { expect, userEvent, within } from "@storybook/test";
 import { useState } from "react";
-import { CurrencyInput } from "../TextInput/CurrencyInput";
+import { CurrencyInput } from "../CurrencyInput/CurrencyInput";
 import { TextInput } from "../TextInput/TextInput";
 import { controlProps, FormField } from "./FormField";
 

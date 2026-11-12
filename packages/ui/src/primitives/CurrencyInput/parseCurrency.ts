@@ -19,5 +19,16 @@ export const parseCurrencyInput = (raw: string): number | null => {
   return Number.isFinite(parsed) ? parsed : null;
 };
 
-/** En-GB display text for a parsed amount (grouping, up to two decimals). */
-export const formatCurrencyInput = (value: number): string => display.format(value);
+/** Rounds to whole pence and removes negative zero, so "-0" and "-0.001" become 0. */
+export const roundToPennies = (value: number): number => {
+  const rounded = Math.round(Math.abs(value) * 100) / 100;
+  if (rounded === 0) return 0;
+  return value < 0 ? -rounded : rounded;
+};
+
+/**
+ * En-GB display text for an amount (grouping, up to two decimals). NaN and the infinities give an
+ * empty string; -0 and sub-penny values show as 0.
+ */
+export const formatCurrencyInput = (value: number): string =>
+  Number.isFinite(value) ? display.format(roundToPennies(value)) : "";

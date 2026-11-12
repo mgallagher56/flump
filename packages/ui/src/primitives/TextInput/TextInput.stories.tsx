@@ -1,10 +1,8 @@
 import type { Meta, StoryObj } from "@storybook/react";
 import { expect, fn, userEvent, within } from "@storybook/test";
-import { CurrencyInput } from "./CurrencyInput";
 import { TextInput } from "./TextInput";
 
 const onChange = fn();
-const onValueChange = fn();
 
 const meta: Meta<typeof TextInput> = {
   title: "2. Primitives/TextInput",
@@ -46,25 +44,4 @@ export const Disabled: Story = {
 export const Percentage: Story = {
   args: { "aria-label": "Interest rate", suffix: "%", inputMode: "decimal", placeholder: "4.5" },
   globals: { theme: "light" },
-};
-
-const currencyPlay: Story["play"] = async ({ canvasElement }) => {
-  const canvas = within(canvasElement);
-  const input = canvas.getByLabelText("Savings balance");
-  await userEvent.type(input, "1,234.5");
-  await expect(onValueChange).toHaveBeenLastCalledWith(1234.5);
-  await userEvent.clear(input);
-  await expect(onValueChange).toHaveBeenLastCalledWith(null);
-};
-
-export const Currency: Story = {
-  render: () => <CurrencyInput aria-label="Savings balance" onValueChange={onValueChange} />,
-  globals: { theme: "light" },
-  play: currencyPlay,
-};
-
-export const CurrencyDark: Story = {
-  render: () => <CurrencyInput aria-label="Savings balance" onValueChange={onValueChange} />,
-  globals: { theme: "dark" },
-  play: currencyPlay,
 };
