@@ -210,14 +210,31 @@ jobs:
   # E8 Storybook a11y gate. Non-required while it beds in: continue-on-error keeps a failure here
   # from turning the pipeline red.
   # Remove continue-on-error and make this job required on 2026-11-25 (owner: mgallagher56) if green on main for the two weeks before.
+  # Light, dark and the build smoke run as parallel matrix legs, each through turbo so an
+  # unchanged web app (and its workspace deps) replays from the remote cache.
   storybook-a11y:
-    name: ♿ Storybook a11y (light + dark)
+    name: ♿ Storybook ${{ matrix.name }}
     if: github.event_name != 'schedule'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     continue-on-error: true
     permissions:
+      actions: write
       contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: a11y (light)
+            task: test:storybook
+            browser: true
+          - name: a11y (dark)
+            task: test:storybook:dark
+            browser: true
+          # Smoke: the Storybook production build (--test) must still compile.
+          - name: build smoke
+            task: build-storybook:test
+            browser: false
 
     steps:
       - name: ⬇️ Checkout repo
@@ -225,8 +242,13 @@ jobs:
 
       - name: ⚙️ Setup Bun and install dependencies
         uses: ./.github/actions/bun-setup
+        with:
+          turbo: true
+          ghToken: ${{ secrets.GITHUB_TOKEN }}
+          turboToken: ${{ env.TURBO_TOKEN }}
 
       - name: 🗂️ Cache Playwright browsers
+        if: matrix.browser
         id: playwright-cache
         uses: actions/cache@v6.1.0
         with:
@@ -234,6 +256,7 @@ jobs:
           key: playwright-${{ runner.os }}-${{ hashFiles('bun.lock') }}
 
       - name: 🌐 Install Chromium
+        if: matrix.browser
         working-directory: apps/web
         run: |
           if [ "${{ steps.playwright-cache.outputs.cache-hit }}" = "true" ]; then
@@ -242,23 +265,10 @@ jobs:
             bunx playwright install --with-deps chromium
           fi
 
-      # The stories import workspace packages (e.g. @flump/finance-engine) through their built
-      # output, so build them (and run Panda codegen) first; without this Vite cannot resolve them.
-      - name: 🏗️ Build workspace dependencies of the web app
-        run: bunx turbo run generate build --filter='@flump/web^...'
-
-      - name: ♿ Storybook a11y (light)
-        run: bun run --cwd apps/web test:storybook
-
-      - name: ♿ Storybook a11y (dark)
-        if: ${{ !cancelled() }}
-        run: bun run --cwd apps/web test:storybook:dark
-
-      # Smoke: the Storybook production build (--test) must still compile. Independent of the
-      # test runs above, so it runs even if they failed.
-      - name: 📚 Storybook build smoke
-        if: ${{ !cancelled() }}
-        run: bun run --cwd apps/web build-storybook:test
+      # turbo.json makes these tasks depend on ^build and generate, so the workspace packages
+      # the stories import (e.g. @flump/finance-engine) are built (or replayed) first.
+      - name: ♿ Storybook ${{ matrix.name }}
+        run: bunx turbo run ${{ matrix.task }} --filter=@flump/web
 
   # A new workspace must never silently break the Railway images (E12 T2.23). The three
   # server Dockerfiles install only the workspaces they need; build them whenever a

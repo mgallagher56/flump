@@ -28,6 +28,18 @@
       "env": ["TEST_DATABASE_URL", "REQUIRE_DB_TESTS"],
       "outputs": ["coverage/**", "sonar-report.xml"]
     },
+    "test:storybook": {
+      "dependsOn": ["^build", "generate", "^generate"],
+      "outputs": []
+    },
+    "test:storybook:dark": {
+      "dependsOn": ["^build", "generate", "^generate"],
+      "outputs": []
+    },
+    "build-storybook:test": {
+      "dependsOn": ["^build", "generate", "^generate"],
+      "outputs": []
+    },
     "verify": {
       "dependsOn": ["^build"]
     },
