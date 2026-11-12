@@ -26,6 +26,35 @@ export const NO_SALARY_BASELINE: FinancialBaseline = {
   annualGrossSalary: 0,
 };
 
+/**
+ * Blanks only the engine-supplied default salary of a legacy baseline. A 45,000 salary with no
+ * userId is backed by nothing (no signed-in profile, no seed), so it becomes unknown (0). Every
+ * other field (region, pension, sacrifice flag, stage, modules, property share) is kept.
+ */
+export function migrateLegacyBaseline(legacy: FinancialBaseline): FinancialBaseline {
+  const invented =
+    legacy.annualGrossSalary === DEFAULT_FINANCIAL_BASELINE.annualGrossSalary && !legacy.userId;
+  return invented ? { ...legacy, annualGrossSalary: 0 } : legacy;
+}
+
+/** Moves a v1 baseline into v2 (unless v2 exists), then removes v1. */
+function migrateLegacyBaselines(): void {
+  for (const key of LEGACY_BASELINE_STORAGE_KEYS) {
+    const legacy = window.localStorage.getItem(key);
+    if (legacy && !window.localStorage.getItem(FINANCIAL_BASELINE_STORAGE_KEY)) {
+      try {
+        window.localStorage.setItem(
+          FINANCIAL_BASELINE_STORAGE_KEY,
+          JSON.stringify(migrateLegacyBaseline(JSON.parse(legacy))),
+        );
+      } catch {
+        // Unreadable legacy value: drop it.
+      }
+    }
+    window.localStorage.removeItem(key);
+  }
+}
+
 /** True only when a seed carries a salary; without one hydrating would invent defaults. */
 export function seedCarriesSalary(seed: AnySeedPayload | null | undefined): boolean {
   return Boolean(seed && (seed.annualIncome || seed.annualGrossSalary));
@@ -47,7 +76,7 @@ export class CookieSeedAdapter implements ProfilePersistenceAdapter {
   getBaseline(): FinancialBaseline | null {
     if (typeof window === "undefined") return null;
     try {
-      for (const key of LEGACY_BASELINE_STORAGE_KEYS) window.localStorage.removeItem(key);
+      migrateLegacyBaselines();
       const saved = window.localStorage.getItem(FINANCIAL_BASELINE_STORAGE_KEY);
       if (saved) return JSON.parse(saved);
       const seed = readOnboardingSeed();
