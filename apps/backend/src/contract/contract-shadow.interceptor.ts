@@ -96,12 +96,14 @@ export class ContractShadowInterceptor implements NestInterceptor {
     if (mode === "off" || context.getType() !== "http") return next.handle();
     let blocking: ValidationIssue[] = [];
     let enforced = false;
+    let rejectedRoute: RouteDefinition | undefined;
     try {
       const result = this.check(context.switchToHttp().getRequest<RequestLike>());
       if (mode === "enforce" && result) {
         const groups = resolveEnforcedGroups();
         enforced = groups === "all" || groups.has(result.group);
         blocking = result.blocking;
+        rejectedRoute = result.route;
       }
     } catch (error) {
       // A bug in the checker must never affect the request.
@@ -110,6 +112,16 @@ export class ContractShadowInterceptor implements NestInterceptor {
     if (enforced && blocking.length > 0) {
       // Paths and codes only, never values. Unknown keys never block: the web sends fields the
       // backend drops (E21 section 5.3) and they are stripped, not rejected.
+      // Own log line so the 400 rate can be watched when enforcement is switched on.
+      this.logger.warn(
+        JSON.stringify({
+          event: "contract_rejected",
+          method: rejectedRoute?.method,
+          pathTemplate: rejectedRoute ? `/${rejectedRoute.path}` : undefined,
+          routeId: rejectedRoute?.id,
+          issues: blocking.slice(0, MAX_ISSUES_LOGGED),
+        }),
+      );
       throw new BadRequestException({
         statusCode: 400,
         error: "Bad Request",
@@ -120,7 +132,9 @@ export class ContractShadowInterceptor implements NestInterceptor {
     return next.handle();
   }
 
-  private check(req: RequestLike): { group: string; blocking: ValidationIssue[] } | null {
+  private check(
+    req: RequestLike,
+  ): { group: string; route: RouteDefinition; blocking: ValidationIssue[] } | null {
     const path = typeof req.route?.path === "string" ? req.route.path.replace(/^\//, "") : null;
     if (path === null || !req.method) return null;
     const route = findRoute(req.method.toUpperCase(), path);
@@ -130,7 +144,7 @@ export class ContractShadowInterceptor implements NestInterceptor {
       ...this.validate(route, "query", route.query, req.query),
       ...this.validate(route, "body", route.body, req.body ?? {}),
     ];
-    return { group: route.group, blocking };
+    return { group: route.group, route, blocking };
   }
 
   private validate(

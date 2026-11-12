@@ -148,7 +148,7 @@ describe("log volume limits", () => {
 
     it("rejects invalid requests with 400, paths and codes only", () => {
       process.env.CONTRACT_MODE = "enforce";
-      vi.spyOn(Logger.prototype, "warn").mockImplementation(() => undefined);
+      const warn = vi.spyOn(Logger.prototype, "warn").mockImplementation(() => undefined);
       const next = { handle: vi.fn(() => of("handled")) };
       const context = {
         getType: () => "http",
@@ -163,6 +163,11 @@ describe("log volume limits", () => {
       expect(error?.getStatus()).toBe(400);
       expect(error.getResponse().issues).toEqual([{ path: "body.balance", code: "invalid_type" }]);
       expect(JSON.stringify(error.getResponse())).not.toContain("secret-name");
+      const rejected = warn.mock.calls
+        .map(([m]) => JSON.parse(String(m)))
+        .find((entry) => entry.event === "contract_rejected");
+      expect(rejected).toMatchObject({ routeId: "accounts.create", pathTemplate: "/accounts" });
+      expect(JSON.stringify(rejected)).not.toContain("secret-name");
       expect(next.handle).not.toHaveBeenCalled();
     });
 
