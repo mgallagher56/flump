@@ -30,6 +30,7 @@ export * from "./primitives/CollapsibleDrawer";
 export * from "./primitives/Icon";
 export * from "./primitives/KpiCard";
 export { LiveRegion, type LiveRegionProps } from "./primitives/LiveRegion";
+export * from "./primitives/Money";
 export * from "./primitives/ProgressBar";
 export * from "./primitives/SegmentedTabs";
 export * from "./primitives/SliderField";

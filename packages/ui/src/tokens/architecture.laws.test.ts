@@ -104,6 +104,17 @@ describe("Architecture & Design System Laws", () => {
       }
     });
 
+    it("registers the E15 phase 2 primitives and patterns (deliberately listed)", () => {
+      const primitives = getSubdirectories(PRIMITIVES_DIR);
+      for (const expected of ["Money"]) {
+        expect(primitives).toContain(expected);
+      }
+      const patterns = getSubdirectories(PATTERNS_DIR);
+      for (const expected of ["EmptyState", "KpiStrip"]) {
+        expect(patterns).toContain(expected);
+      }
+    });
+
     it("enforces colocated structure for all layout patterns", () => {
       const patterns = getSubdirectories(PATTERNS_DIR);
       expect(patterns.length).toBeGreaterThanOrEqual(9);
