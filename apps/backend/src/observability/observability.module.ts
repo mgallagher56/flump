@@ -1,6 +1,6 @@
 import { Module, OnApplicationShutdown } from "@nestjs/common";
 import { APP_FILTER } from "@nestjs/core";
-import * as Sentry from "@sentry/node";
+import { closeReporter } from "./report";
 import { SentryExceptionFilter } from "./sentry-exception.filter";
 
 @Module({
@@ -8,6 +8,6 @@ import { SentryExceptionFilter } from "./sentry-exception.filter";
 })
 export class ObservabilityModule implements OnApplicationShutdown {
   async onApplicationShutdown(): Promise<void> {
-    await Sentry.close(2000);
+    await closeReporter(2000);
   }
 }

@@ -1,6 +1,6 @@
 import { ArgumentsHost, Catch, HttpException } from "@nestjs/common";
 import { BaseExceptionFilter } from "@nestjs/core";
-import { reportException } from "./sentry";
+import { reportException } from "./report";
 
 const SAFE_REQUEST_ID = /^[A-Za-z0-9._-]{1,64}$/;
 
@@ -14,9 +14,14 @@ function requestIdOf(host: ArgumentsHost): string | undefined {
 @Catch()
 export class SentryExceptionFilter extends BaseExceptionFilter {
   override catch(exception: unknown, host: ArgumentsHost): void {
-    if (!(exception instanceof HttpException) || exception.getStatus() >= 500) {
-      reportException(exception, requestIdOf(host));
+    try {
+      if (!(exception instanceof HttpException) || exception.getStatus() >= 500) {
+        reportException(exception, requestIdOf(host));
+      }
+    } catch {
+      // Reporting must never change the HTTP response.
+    } finally {
+      super.catch(exception, host);
     }
-    super.catch(exception, host);
   }
 }

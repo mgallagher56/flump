@@ -7,10 +7,10 @@ import {
   UnauthorizedException,
 } from "@nestjs/common";
 import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
-import { reportException } from "./sentry";
+import { reportException } from "./report";
 import { SentryExceptionFilter } from "./sentry-exception.filter";
 
-vi.mock("./sentry", () => ({ reportException: vi.fn() }));
+vi.mock("./report", () => ({ reportException: vi.fn() }));
 
 const reply = { status: vi.fn().mockReturnThis(), json: vi.fn(), send: vi.fn() };
 const adapter = {
@@ -56,6 +56,14 @@ describe("SentryExceptionFilter", () => {
       expect(adapter.reply).toHaveBeenCalled();
     },
   );
+
+  it("still delegates when reporting throws", () => {
+    vi.mocked(reportException).mockImplementationOnce(() => {
+      throw new Error("sentry down");
+    });
+    expect(() => filter.catch(new Error("x"), host())).not.toThrow();
+    expect(adapter.reply).toHaveBeenCalled();
+  });
 
   it("drops an unsafe request id", () => {
     filter.catch(new Error("x"), host({ "x-request-id": "a b\n<script>" }));
