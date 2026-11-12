@@ -4,13 +4,6 @@
  * Owner decisions: docs/audit/plans/DECISIONS.md (E7).
  */
 
-/** Security contact. `.invalid` can never resolve. */
-export const SECURITY_CONTACT_EMAIL = "security@example.invalid";
-
-export function securityMailto(subject = "Security enquiry"): string {
-  return `mailto:${SECURITY_CONTACT_EMAIL}?subject=${encodeURIComponent(subject)}`;
-}
-
 /** Pricing is not set. Shown on the pricing page exactly like this. */
 export const PRICE_PLACEHOLDER = "£X";
 export const PRICE_PLACEHOLDER_ANNUAL = "£Y";

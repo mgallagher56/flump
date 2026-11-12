@@ -23,8 +23,12 @@ vi.mock("@workos-inc/authkit-react-router", () => ({
 
 import { loader } from "./callback";
 
-const callLoader = (url: string) =>
-  loader({ request: new Request(url), params: {}, context: {} } as any) as Promise<any>;
+const callLoader = (url: string, headers?: Record<string, string>) =>
+  loader({
+    request: new Request(url, { headers }),
+    params: {},
+    context: {},
+  } as any) as Promise<any>;
 
 const SESSION_COOKIE = "flump_has_session=1; Path=/; SameSite=Lax; Max-Age=2592000";
 
@@ -65,6 +69,20 @@ describe("callback loader", () => {
   it("gives evilflump.co.uk no Domain (Secure only, as it is https)", async () => {
     const res = await callLoader("https://evilflump.co.uk/callback?code=abc");
     expect(res.headers.getSetCookie()).toEqual([`${SESSION_COOKIE}; Secure`]);
+  });
+
+  it("adds Secure when x-forwarded-proto is https on a plain-http request", async () => {
+    const res = await callLoader("http://web.up.railway.app/callback?code=abc", {
+      "x-forwarded-proto": "https",
+    });
+    expect(res.headers.getSetCookie()).toEqual([`${SESSION_COOKIE}; Secure`]);
+  });
+
+  it("does not add Secure when x-forwarded-proto is http", async () => {
+    const res = await callLoader("http://localhost:3000/callback?code=abc", {
+      "x-forwarded-proto": "http",
+    });
+    expect(res.headers.getSetCookie()).toEqual([SESSION_COOKIE]);
   });
 
   describe("configure", () => {

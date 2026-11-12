@@ -6,6 +6,7 @@ import {
   hasSessionPresenceCookie,
   InMemoryProfileAdapter,
   InMemoryStorageDriver,
+  isFlumpHost,
   ONBOARDING_SEED_STORAGE_KEY,
   parseCookieValue,
   persistOnboardingSeed,
@@ -189,5 +190,29 @@ describe("Profile Persistence", () => {
     expect(adapter.getSeed()).toEqual(seed);
     adapter.clearSeed();
     expect(adapter.getSeed()).toBeNull();
+  });
+});
+
+describe("isFlumpHost", () => {
+  it.each([
+    ["flump.co.uk", true],
+    ["app.flump.co.uk", true],
+    ["FLUMP.CO.UK", true],
+    ["App.Flump.Co.Uk", true],
+    ["flump.co.uk.", true],
+    ["app.flump.co.uk.", true],
+    ["flump.co.uk:3000", true],
+    ["app.flump.co.uk:443", true],
+    ["flump.co.uk..", false],
+    ["evilflump.co.uk", false],
+    ["flump.co.uk.evil.example", false],
+    ["127.0.0.1", false],
+    ["127.0.0.1:3000", false],
+    ["[::1]", false],
+    ["[::1]:3000", false],
+    ["::1", false],
+    ["", false],
+  ])("isFlumpHost(%j) is %s", (host, expected) => {
+    expect(isFlumpHost(host)).toBe(expected);
   });
 });

@@ -14,7 +14,9 @@ const handleSignOut = async (request: Request) => {
   const response = await signOut(request, { returnTo: marketingUrl });
   const onFlumpHost = isFlumpHost(url.hostname);
   const cookieDomain = onFlumpHost ? "; Domain=.flump.co.uk" : "";
-  const secure = onFlumpHost || url.protocol === "https:" ? "; Secure" : "";
+  const behindHttpsProxy =
+    request.headers.get("x-forwarded-proto")?.split(",")[0]?.trim().toLowerCase() === "https";
+  const secure = onFlumpHost || url.protocol === "https:" || behindHttpsProxy ? "; Secure" : "";
   const clearPresenceCookie = `flump_has_session=; Path=/; SameSite=Lax; Max-Age=0${cookieDomain}${secure}`;
 
   if (response instanceof Response) {

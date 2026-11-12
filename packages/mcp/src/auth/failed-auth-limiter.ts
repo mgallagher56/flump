@@ -13,6 +13,33 @@ interface Entry {
   resetAt: number;
 }
 
+/**
+ * Normalise a client address into a limiter key: IPv4-mapped IPv6 (::ffff:a.b.c.d)
+ * becomes plain IPv4; other IPv6 addresses collapse to their /64 prefix so a client
+ * cannot dodge the limit by rotating within its own /64. Anything else is unchanged.
+ */
+export function normalizeIpKey(ip: string): string {
+  const mapped = /^::ffff:(\d{1,3}(?:\.\d{1,3}){3})$/i.exec(ip);
+  if (mapped?.[1]) return mapped[1];
+  if (!ip.includes(":")) return ip;
+  const addr = ip.split("%")[0] ?? ip;
+  const [head, tail] = addr.split("::");
+  const headParts = head ? head.split(":") : [];
+  const tailParts = tail === undefined ? [] : tail ? tail.split(":") : [];
+  const groups =
+    tail === undefined
+      ? headParts
+      : [
+          ...headParts,
+          ...Array(Math.max(0, 8 - headParts.length - tailParts.length)).fill("0"),
+          ...tailParts,
+        ];
+  if (groups.length !== 8) return ip;
+  const prefix = groups.slice(0, 4).map((g) => Number.parseInt(g || "0", 16).toString(16));
+  if (prefix.some((g) => g === "NaN")) return ip;
+  return `${prefix.join(":")}::/64`;
+}
+
 export class FailedAuthLimiter {
   private readonly entries = new Map<string, Entry>();
 
@@ -26,7 +53,13 @@ export class FailedAuthLimiter {
     return this.entries.size;
   }
 
-  check(ip: string, now = Date.now()): FailedAuthCheck {
+  /** Call after a successful authentication so valid clients behind a shared IP are not blocked. */
+  recordSuccess(ip: string): void {
+    this.entries.delete(normalizeIpKey(ip));
+  }
+
+  check(rawIp: string, now = Date.now()): FailedAuthCheck {
+    const ip = normalizeIpKey(rawIp);
     const entry = this.entries.get(ip);
     if (!entry || now >= entry.resetAt) {
       return { blocked: false, retryAfterSeconds: 0 };
@@ -40,7 +73,8 @@ export class FailedAuthLimiter {
     return { blocked: false, retryAfterSeconds: 0 };
   }
 
-  recordFailure(ip: string, now = Date.now()): void {
+  recordFailure(rawIp: string, now = Date.now()): void {
+    const ip = normalizeIpKey(rawIp);
     const entry = this.entries.get(ip);
     if (entry && now < entry.resetAt) {
       entry.count++;

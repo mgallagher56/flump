@@ -47,8 +47,16 @@ export class WorkOSIdentityAdapter implements UserIdentityAdapter {
     return user?.email ?? null;
   }
 
+  /**
+   * VERIFY BY TRIGGERING A RESET: @workos-inc/node 12.2.0 exposes only
+   * `createPasswordReset({ email })` (POST /user_management/password_reset). WorkOS
+   * documents it as creating a one-time token plus `password_reset_url`; there is no
+   * SDK "send reset email" call. Whether WorkOS also emails the user must be confirmed
+   * by triggering a reset against the real environment (see docs/security/owner-steps.md).
+   * If it does not, the returned URL must be emailed by our own mailer.
+   */
   async sendPasswordReset(email: string): Promise<void> {
-    if (!this.client) return;
+    if (!this.client) throw new Error("WorkOS client not configured");
     await this.client.userManagement.createPasswordReset({ email });
   }
 }

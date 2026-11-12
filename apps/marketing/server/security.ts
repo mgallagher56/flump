@@ -53,3 +53,42 @@ export function genericServerError(
   log("Raw SSR Error:", err);
   return "Internal Server Error";
 }
+
+/**
+ * Validates SECURITY_CONTACT: an email (becomes mailto:), a mailto: URI or an https URL.
+ * Anything else, including whitespace or control characters (header-injection into the file),
+ * returns null so the file is not served.
+ */
+export function normaliseSecurityContact(raw: string | undefined): string | null {
+  const value = raw?.trim();
+  if (!value) return null;
+  // biome-ignore lint/suspicious/noControlCharactersInRegex: rejecting control characters is the point
+  if (/[\s\u0000-\u001f\u007f]/.test(value)) return null;
+  if (/^https:\/\/[^/]+/i.test(value)) return value;
+  if (/^mailto:[^@]+@[^@]+\.[^@]+$/i.test(value)) return value;
+  if (/^[^@:/]+@[^@/:]+\.[^@/:]+$/.test(value)) return `mailto:${value}`;
+  return null;
+}
+
+/** RFC 9116 security.txt body. Expires one year after `now`. */
+export function buildSecurityTxt(contact: string, now: Date): string {
+  const expires = new Date(now);
+  expires.setUTCFullYear(expires.getUTCFullYear() + 1);
+  return [
+    `Contact: ${contact}`,
+    `Expires: ${expires.toISOString()}`,
+    "Preferred-Languages: en",
+    "Policy: https://flump.co.uk/security",
+    "Canonical: https://flump.co.uk/.well-known/security.txt",
+    "",
+  ].join("\n");
+}
+
+const THEME_MARKER = "<script data-flump-theme>";
+
+/** Adds the CSP nonce attribute to the inline theme script. `nonceAttr` is ` nonce="..."` or "". */
+export function injectThemeNonce(template: string, nonceAttr: string): string {
+  return template.replace(THEME_MARKER, `<script${nonceAttr}>`);
+}
+
+export { THEME_MARKER };

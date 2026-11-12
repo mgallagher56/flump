@@ -22,6 +22,11 @@ const WWW_AUTHENTICATE = 'Bearer realm="flump-mcp"';
 const GENERIC_BAD_REQUEST = { error: "bad_request", message: "Bad request" };
 
 /** Rightmost X-Forwarded-For entry (appended by the nearest trusted proxy), else "unknown". */
+/**
+ * SECURITY: takes the RIGHTMOST x-forwarded-for entry, which is the one appended by the
+ * trusted proxy. This is only safe behind Railway's edge (which appends the real client
+ * address); if the service is reachable any other way, the client controls this header.
+ */
 function clientIpFromHeaders(headers: Headers): string {
   const xff = headers.get("x-forwarded-for");
   const last = xff?.split(",").pop()?.trim();
@@ -65,6 +70,7 @@ export class HttpMcpHandler {
       // 1. Verify Authentication (flump_pat_... personal access token)
       const authHeader = req.headers?.authorization;
       const verified = await this.verifier.verifyAuthorizationHeader(authHeader);
+      this.failedAuthLimiter.recordSuccess(ip);
 
       // 2. Check rate limits
       const limitResult = this.rateLimiter.checkLimit(verified.userId);
@@ -126,6 +132,7 @@ export class HttpMcpHandler {
     try {
       const authHeader = request.headers.get("authorization") || undefined;
       const verified = await this.verifier.verifyAuthorizationHeader(authHeader);
+      this.failedAuthLimiter.recordSuccess(ip);
 
       const limitResult = this.rateLimiter.checkLimit(verified.userId);
       if (!limitResult.allowed) {

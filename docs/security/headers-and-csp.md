@@ -11,7 +11,7 @@ Status of what is implemented against what is planned. Design source: section 5 
 - Enforced `Content-Security-Policy`. In production `script-src` is `'self'` plus a per-request nonce (no `https:`) and `connect-src` is `'self'` (no `https:`, no `ws:`); the marketing site makes no cross-origin fetches. Development keeps `'unsafe-inline'`, `'unsafe-eval'`, `https:` and `ws:` for Vite HMR.
 - 500 responses return a generic body; the error is logged server-side only.
 - The app URL is resolved once at boot from `VITE_APP_URL`, then `APP_URL`, then the environment (never the request `Host` header).
-- `/.well-known/security.txt` is served as `text/plain` (placeholder contact; the owner must replace it).
+- `/.well-known/security.txt` is served as `text/plain` only when the `SECURITY_CONTACT` env var is set on the marketing service (email, `mailto:` or https URL); otherwise it returns 404. `Expires` is computed per request (now + 1 year).
 
 ### Backend (Q4, separate task in the same PR)
 

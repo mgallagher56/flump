@@ -27,8 +27,8 @@ function assertHttpOrigin(value: string): void {
 }
 
 /**
- * Resolve the CORS allow-list. In production the list is mandatory and has no
- * localhost fallback; elsewhere the dev defaults apply when unset.
+ * Resolve the CORS allow-list. In production a missing list allows no cross-origin
+ * origins (logged loudly, never a boot failure) and has no localhost fallback; elsewhere the dev defaults apply when unset.
  */
 export function resolveCorsOrigins(env: Record<string, string | undefined>): string[] {
   const origins = (env.CORS_ALLOWED_ORIGINS ?? "")
@@ -38,7 +38,10 @@ export function resolveCorsOrigins(env: Record<string, string | undefined>): str
 
   if (origins.length === 0) {
     if (env.NODE_ENV === "production") {
-      throw new Error("CORS_ALLOWED_ORIGINS is required in production (comma-separated origins)");
+      console.error(
+        "CORS_ALLOWED_ORIGINS is not set in production: NO cross-origin browser requests will be allowed. Set it to a comma-separated list of exact origins.",
+      );
+      return [];
     }
     return [...DEV_CORS_ORIGINS];
   }

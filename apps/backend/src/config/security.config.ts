@@ -18,6 +18,19 @@ export function parseTrustProxyHops(raw: string | undefined): number | undefined
 }
 
 /**
+ * `TRUST_PROXY_HOPS` overrides; otherwise 1 hop when on Railway (RAILWAY_ENVIRONMENT) or
+ * NODE_ENV=production, else unset. Railway terminates TLS at one edge proxy: without
+ * trusting it, req.ip is the proxy for every client. SECURITY: a hop count is only safe
+ * behind Railway's edge, which overwrites the client-supplied X-Forwarded-For; elsewhere a
+ * client can spoof its IP and evade the failed-auth limiter.
+ */
+export function resolveTrustProxyHops(env: Record<string, string | undefined>): number | undefined {
+  const explicit = parseTrustProxyHops(env.TRUST_PROXY_HOPS);
+  if (explicit !== undefined) return explicit;
+  return env.RAILWAY_ENVIRONMENT || env.NODE_ENV === "production" ? 1 : undefined;
+}
+
+/**
  * CORS, security headers, body limits and proxy trust for the JSON API.
  * The Nest app must be created with `bodyParser: false`: the parsers below
  * replace the default one (tax route first so its larger limit wins).
@@ -27,11 +40,7 @@ export function applySecurity(
   env: Record<string, string | undefined>,
 ): void {
   const origins = resolveCorsOrigins(env);
-  const trustProxyHops = parseTrustProxyHops(
-    // Railway terminates TLS at one edge proxy: without trusting it, req.ip is
-    // the proxy for every client and per-IP limits become one shared bucket.
-    env.TRUST_PROXY_HOPS ?? (env.NODE_ENV === "production" ? "1" : undefined),
-  );
+  const trustProxyHops = resolveTrustProxyHops(env);
 
   const instance = app.getHttpAdapter().getInstance();
   instance.disable("x-powered-by");

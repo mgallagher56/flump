@@ -298,6 +298,7 @@ Every box must be ticked. One unticked box means do not merge.
 - [ ] `DB_SSL` verified (G1.3), and set if needed (G6).
 - [ ] `BANKING_TOKEN_ENCRYPTION_KEY` on the backend is 32+ characters (G1.1); without it the release backend crash-loops at boot.
 - [ ] Draining set on backend and web, healthchecks on old-compatible paths (G6).
+- [ ] `CORS_ALLOWED_ORIGINS` set on the backend to the exact web origin(s). If unset the backend boots but allows no cross-origin requests and logs an error (G1.1 check).
 - [ ] You are not using the app, and will not until G8 smoke passes.
 
 ## G7. Merge and watch (20 min)

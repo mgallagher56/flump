@@ -1,3 +1,4 @@
+import { ServiceUnavailableException } from "@nestjs/common";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { InMemoryIdentityAdapter } from "./identity/identity.adapter";
 import { UserProfileService } from "./user-profile.service";
@@ -210,20 +211,49 @@ describe("UserProfileService (Deep Module)", () => {
     expect(identityAdapter.resetEmails).toEqual(["me@flump.co.uk"]);
   });
 
-  it("returns generic success when the user is unknown", async () => {
-    await expect(service.sendPasswordReset("nobody")).resolves.toEqual({ success: true });
+  it("fails (503) when the user's email cannot be resolved", async () => {
+    await expect(service.sendPasswordReset("nobody")).rejects.toBeInstanceOf(
+      ServiceUnavailableException,
+    );
     expect(identityAdapter.resetEmails).toEqual([]);
   });
 
-  it("returns generic success when the identity provider throws, without echoing the message", async () => {
+  it("fails (503) when no identity adapter is configured", async () => {
+    const bare = new UserProfileService(
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+    );
+    await expect(bare.sendPasswordReset("user-123")).rejects.toBeInstanceOf(
+      ServiceUnavailableException,
+    );
+  });
+
+  it("fails (503) with a generic message when the identity provider throws, logging only class and code", async () => {
     vi.spyOn(identityAdapter, "getUserEmail").mockRejectedValue(
       Object.assign(new Error("secret@pii.com not found"), { code: "entity_not_found" }),
     );
     const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
-    await expect(service.sendPasswordReset("user-123")).resolves.toEqual({ success: true });
+    const err = await service.sendPasswordReset("user-123").catch((e) => e);
+    expect(err).toBeInstanceOf(ServiceUnavailableException);
+    expect(JSON.stringify(err.getResponse())).not.toContain("pii.com");
     const logged = warn.mock.calls.flat().join(" ");
     expect(logged).toContain("entity_not_found");
     expect(logged).not.toContain("pii.com");
+    warn.mockRestore();
+  });
+
+  it("fails (503) when sending the reset throws", async () => {
+    identityAdapter.emails.set("user-123", "me@flump.co.uk");
+    vi.spyOn(identityAdapter, "sendPasswordReset").mockRejectedValue(new Error("boom me@x"));
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    await expect(service.sendPasswordReset("user-123")).rejects.toBeInstanceOf(
+      ServiceUnavailableException,
+    );
     warn.mockRestore();
   });
 });

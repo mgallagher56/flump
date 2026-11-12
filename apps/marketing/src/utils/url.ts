@@ -1,8 +1,15 @@
 const matchesDomain = (hostname: string, domain: string): boolean =>
   hostname === domain || hostname.endsWith(`.${domain}`);
 
-/** Exact apex or a real subdomain; "evilflump.co.uk" does not match. */
-export const isFlumpHost = (hostname: string): boolean => matchesDomain(hostname, "flump.co.uk");
+/**
+ * Keep identical to isFlumpHost in packages/finance-engine/src/persistence.ts (same test cases).
+ * Exact apex or a real subdomain; case-insensitive, ignores a port and one trailing dot.
+ */
+export const isFlumpHost = (hostname: string): boolean => {
+  const host = hostname.trim().toLowerCase();
+  const bare = host.startsWith("[") ? host : host.replace(/:\d+$/, "").replace(/\.$/, "");
+  return matchesDomain(bare, "flump.co.uk");
+};
 
 export const isRailwayHost = (hostname: string): boolean => matchesDomain(hostname, "railway.app");
 

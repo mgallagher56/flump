@@ -49,9 +49,24 @@ export class InMemoryStorageDriver implements SeedStorageDriver {
   }
 }
 
-/** True for `flump.co.uk` and its subdomains only (never lookalikes such as `evilflump.co.uk`). */
+/**
+ * Lowercases, strips a port (IPv6 literals stay bracketed) and one trailing dot, so
+ * "App.Flump.co.uk.:443" compares as "app.flump.co.uk".
+ */
+function normaliseHostname(hostname: string): string {
+  const host = hostname.trim().toLowerCase();
+  if (host.startsWith("[")) return host;
+  const withoutPort = host.replace(/:\d+$/, "");
+  return withoutPort.endsWith(".") ? withoutPort.slice(0, -1) : withoutPort;
+}
+
+/**
+ * True for `flump.co.uk` and its subdomains only (never lookalikes such as `evilflump.co.uk`).
+ * Case-insensitive; a port and one trailing dot are ignored; IP literals never match.
+ */
 export function isFlumpHost(hostname: string): boolean {
-  return hostname === "flump.co.uk" || hostname.endsWith(".flump.co.uk");
+  const host = normaliseHostname(hostname);
+  return host === "flump.co.uk" || host.endsWith(".flump.co.uk");
 }
 
 function getCookieDomainAttr(): string {

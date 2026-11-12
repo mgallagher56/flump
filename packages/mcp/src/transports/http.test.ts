@@ -134,4 +134,41 @@ describe("HttpMcpHandler hardening", () => {
     await h.handleExpressRequest({ headers: {} }, eres);
     expect(JSON.stringify(sent)).not.toContain("hunter2");
   });
+
+  it("clears the IP's failure count after a successful authentication (web)", async () => {
+    const limiter = new FailedAuthLimiter(2, 60_000);
+    const handler = new HttpMcpHandler({
+      dataProvider: {} as McpUserDataProvider,
+      devToken: "dev-secret",
+      failedAuthLimiter: limiter,
+      rateLimiter: {
+        checkLimit: () => ({ allowed: false, resetSeconds: 1, message: "x" }),
+      } as never,
+    });
+    limiter.recordFailure("7.7.7.7");
+    const res = await handler.handleWebRequest(webReq("Bearer dev-secret", "7.7.7.7"));
+    expect(res.status).toBe(429);
+    limiter.recordFailure("7.7.7.7");
+    expect(limiter.check("7.7.7.7").blocked).toBe(false);
+  });
+
+  it("clears the IP's failure count after a successful authentication (express)", async () => {
+    const limiter = new FailedAuthLimiter(2, 60_000);
+    const handler = new HttpMcpHandler({
+      dataProvider: {} as McpUserDataProvider,
+      devToken: "dev-secret",
+      failedAuthLimiter: limiter,
+      rateLimiter: {
+        checkLimit: () => ({ allowed: false, resetSeconds: 1, message: "x" }),
+      } as never,
+    });
+    limiter.recordFailure("7.7.7.8");
+    const res: any = { status: () => res, setHeader: () => res, json: () => res };
+    await handler.handleExpressRequest(
+      { ip: "7.7.7.8", headers: { authorization: "Bearer dev-secret" } },
+      res,
+    );
+    limiter.recordFailure("7.7.7.8");
+    expect(limiter.check("7.7.7.8").blocked).toBe(false);
+  });
 });

@@ -1,7 +1,0 @@
-# PLACEHOLDER: the Contact address below is not real and cannot receive mail.
-# The owner must replace it with a monitored address before launch.
-Contact: mailto:security@example.invalid
-Expires: 2027-11-01T00:00:00.000Z
-Preferred-Languages: en
-Policy: https://flump.co.uk/security
-Canonical: https://flump.co.uk/.well-known/security.txt
