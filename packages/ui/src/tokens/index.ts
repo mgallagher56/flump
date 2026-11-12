@@ -1,5 +1,5 @@
 import { elevationShadows } from "./elevation";
-import { densitySizes, densitySpacing } from "./layout";
+import { densityRadii, densitySizes, densitySpacing } from "./layout";
 
 export * from "./elevation";
 export * from "./layout";
@@ -178,13 +178,13 @@ export const radii = {
 
 export const shadows = {
   cardLight: {
-    value: "0 1px 2px rgba(15, 23, 42, 0.04)",
+    value: "0 1px 2px rgba(43, 38, 32, 0.06)",
   },
   cardHoverLight: {
-    value: "0 2px 8px -2px rgba(15, 23, 42, 0.06)",
+    value: "0 2px 8px -2px rgba(43, 38, 32, 0.1)",
   },
   floatingLight: {
-    value: "0 10px 25px -4px rgba(15, 23, 42, 0.08), 0 4px 10px -2px rgba(15, 23, 42, 0.04)",
+    value: "0 10px 25px -4px rgba(43, 38, 32, 0.14), 0 4px 10px -2px rgba(43, 38, 32, 0.07)",
   },
 } as const;
 
@@ -303,6 +303,7 @@ export const semanticTokens = {
     },
   },
   shadows: elevationShadows,
+  radii: densityRadii.radii,
   spacing: densitySpacing,
   sizes: densitySizes,
 };
