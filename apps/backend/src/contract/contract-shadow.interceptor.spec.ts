@@ -5,6 +5,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   ContractShadowInterceptor,
   resolveContractMode,
+  resolveEnforcedGroups,
   shouldLogOccurrence,
 } from "./contract-shadow.interceptor";
 
@@ -29,6 +30,7 @@ describe("ContractShadowInterceptor", () => {
   afterEach(() => {
     vi.restoreAllMocks();
     delete process.env.CONTRACT_MODE;
+    delete process.env.CONTRACT_ENFORCE_GROUPS;
   });
 
   it("logs a violation with paths and codes only, and passes the request through untouched", () => {
@@ -108,7 +110,7 @@ describe("ContractShadowInterceptor", () => {
   it("resolves the mode from env", () => {
     expect(resolveContractMode({})).toBe("shadow");
     expect(resolveContractMode({ CONTRACT_MODE: "OFF" })).toBe("off");
-    expect(resolveContractMode({ CONTRACT_MODE: "enforce" })).toBe("shadow");
+    expect(resolveContractMode({ CONTRACT_MODE: "enforce" })).toBe("enforce");
   });
 });
 
@@ -133,5 +135,73 @@ describe("log volume limits", () => {
     const [violation] = warnings(warn);
     expect(violation.issues).toHaveLength(20);
     for (const issue of violation.issues) expect(issue.path.length).toBeLessThanOrEqual(80);
+  });
+
+  describe("enforce mode", () => {
+    const badAccount = {
+      method: "POST",
+      route: { path: "/accounts" },
+      params: {},
+      query: {},
+      body: { name: "secret-name", type: "Current", balance: "oops" },
+    };
+
+    it("rejects invalid requests with 400, paths and codes only", () => {
+      process.env.CONTRACT_MODE = "enforce";
+      vi.spyOn(Logger.prototype, "warn").mockImplementation(() => undefined);
+      const next = { handle: vi.fn(() => of("handled")) };
+      const context = {
+        getType: () => "http",
+        switchToHttp: () => ({ getRequest: () => badAccount }),
+      };
+      let error: any;
+      try {
+        new ContractShadowInterceptor().intercept(context as never, next);
+      } catch (e) {
+        error = e;
+      }
+      expect(error?.getStatus()).toBe(400);
+      expect(error.getResponse().issues).toEqual([{ path: "body.balance", code: "invalid_type" }]);
+      expect(JSON.stringify(error.getResponse())).not.toContain("secret-name");
+      expect(next.handle).not.toHaveBeenCalled();
+    });
+
+    it("lets unknown keys through (the web sends fields the backend drops)", () => {
+      process.env.CONTRACT_MODE = "enforce";
+      vi.spyOn(Logger.prototype, "warn").mockImplementation(() => undefined);
+      const next = run(new ContractShadowInterceptor(), {
+        ...badAccount,
+        body: { name: "x", type: "Current", balance: 1, isDefault: true },
+      });
+      expect(next.handle).toHaveBeenCalledOnce();
+    });
+
+    it("only enforces the groups listed in CONTRACT_ENFORCE_GROUPS", () => {
+      process.env.CONTRACT_MODE = "enforce";
+      process.env.CONTRACT_ENFORCE_GROUPS = "budget";
+      vi.spyOn(Logger.prototype, "warn").mockImplementation(() => undefined);
+      const next = run(new ContractShadowInterceptor(), badAccount);
+      expect(next.handle).toHaveBeenCalledOnce();
+    });
+
+    it("resolves modes and groups, ignoring unknown group names", () => {
+      expect(resolveContractMode({ CONTRACT_MODE: " Enforce " })).toBe("enforce");
+      expect(resolveContractMode({})).toBe("shadow");
+      expect(resolveEnforcedGroups({})).toEqual(
+        new Set([
+          "accounts",
+          "budget",
+          "tax",
+          "profile",
+          "bank-connections",
+          "transactions",
+          "app",
+        ]),
+      );
+      expect(resolveEnforcedGroups({ CONTRACT_ENFORCE_GROUPS: "all" })).toBe("all");
+      expect(resolveEnforcedGroups({ CONTRACT_ENFORCE_GROUPS: "accounts, nope" })).toEqual(
+        new Set(["accounts"]),
+      );
+    });
   });
 });
