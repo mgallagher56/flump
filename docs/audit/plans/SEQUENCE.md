@@ -141,3 +141,12 @@ Fable's recommended order for a one-person owner using agents (an inference to v
 - **Defer or cut:** E12 beyond its first spikes (after launch and E21); E15 phase 3 for screens not confirmed kept; E17 build phases (keep context-pack export, flag the remote MCP endpoint); bank connections (flag off); E13, E14, the `es` locale and Irish tax (cut per E16); E9 colocation for files due to be deleted.
 - E21 (API contract and validation) blocks E12 M1 and the E17 build phases.
 - Merge PR 386 (E8 web sweeps) before anything else edits `apps/web/app`.
+
+## Added 2026-11-12: round 4 plans and parallel schedule
+
+E17, E18, E20, E24, E25 and E29 now have ticket plans: `E17-next-phases-plan.md`, `E18-no-owner-plan.md`, `E20-next-phases-plan.md`, `E24-plan.md`, `E25-plan.md` and `E29-plan.md`. `PARALLEL-SCHEDULE.md` sets out the lanes, the order for shared files and the path to inviting friends. The decisions behind them are in DECISIONS.md round 4.
+
+E29 is split into two parts:
+
+- **E29a** is free agent work. It gates the friends beta, the E25 copy and E26.
+- **E29b** is the lawyer's perimeter view. It is part of the fixed-fee launch engagement and gates public launch.
