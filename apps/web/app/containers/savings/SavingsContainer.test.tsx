@@ -73,7 +73,7 @@ vi.mock("recharts", async () => {
   };
 });
 
-import SavingsContainer from "./SavingsContainer";
+import SavingsContainer, { parsePayRise } from "./SavingsContainer";
 
 describe("SavingsContainer", () => {
   it("renders page header and main savings sections", () => {
@@ -107,10 +107,10 @@ describe("SavingsContainer", () => {
     window.location.hash = "";
   });
 
-  it("adds a pay rise handed over from Take-home pay to the forecaster", () => {
-    window.history.pushState({}, "", "/app/savings?payRise=150");
-    render(<SavingsContainer />);
-    expect(screen.getByText("Savings and compound growth")).toBeDefined();
-    window.history.pushState({}, "", "/");
+  it("parses a pay rise handed over from Take-home pay", () => {
+    expect(parsePayRise("?payRise=150.4")).toBe(150);
+    expect(parsePayRise("")).toBe(0);
+    expect(parsePayRise("?payRise=-5")).toBe(0);
+    expect(parsePayRise("?payRise=abc")).toBe(0);
   });
 });

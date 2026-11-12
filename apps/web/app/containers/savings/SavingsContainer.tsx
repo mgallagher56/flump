@@ -75,6 +75,12 @@ const segmentedTabStyle = (active: boolean) =>
     },
   });
 
+/** Monthly pay rise handed over from Take-home pay as `?payRise=`; 0 when absent or invalid. */
+export const parsePayRise = (search: string): number => {
+  const value = Number(new URLSearchParams(search).get("payRise"));
+  return Number.isFinite(value) && value > 0 ? Math.round(value) : 0;
+};
+
 export const SavingsContainer: FC = () => {
   const { t } = useTranslation();
   const loaderData = useLoaderData<any>();
@@ -104,8 +110,8 @@ export const SavingsContainer: FC = () => {
       navigate("/app/take-home", { replace: true });
       return;
     }
-    const payRise = Number(new URLSearchParams(window.location.search).get("payRise"));
-    if (Number.isFinite(payRise) && payRise > 0) setPayRiseMonthly(Math.round(payRise));
+    const payRise = parsePayRise(window.location.search);
+    if (payRise > 0) setPayRiseMonthly(payRise);
   }, [navigate]);
   const savingsAccounts = useMemo(() => {
     const snapshot = new PortfolioSnapshot(accounts, accountDetails);
