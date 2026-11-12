@@ -30,19 +30,19 @@ These are in addition to the round 3 item 9 friends preconditions (invite-only s
 
 | #   | Item                                                                                                                                                                                                    | Evidence (fill in) | Ticked |
 | --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------ | ------ |
-| F1  | An E29a copy pass: advice-language patterns in `apps/marketing/src/claims.test.ts` and an equivalent web guard in `apps/web/app/copy-guard.test.ts`, with the allow-list ratchet green (E29-T3, T4, T5) |                    | []     |
-| F2  | The widened Innovation Hub enquiry has been sent by the owner, covering projections, salary-sacrifice and pension outputs, and LLM replies through MCP (draft: E29-T11; date recorded above)            |                    | []     |
-| F3  | MCP and PAT creation limited to owner-allowlisted accounts until the DPIA draft exists (E29-T8; env: `MCP_ALLOWED_USER_IDS=<owner id>`, `MCP_OPEN_ACCESS` unset; never `MCP_ENABLED=false`)             |                    | []     |
-| F4  | A beta notice that says "guidance and calculations, not advice; unreviewed" is published (`BETA_NOTICE`, E29-T7; E19 C1 and C2)                                                                         |                    | []     |
+| F1  | An E29a copy pass: advice-language patterns in `apps/marketing/src/claims.test.ts` and an equivalent web guard in `apps/web/app/copy-guard.test.ts`, with the allow-list ratchet green (E29-T3, T4, T5) |                    | `[ ]`  |
+| F2  | The widened Innovation Hub enquiry has been sent by the owner, covering projections, salary-sacrifice and pension outputs, and LLM replies through MCP (draft: E29-T11; date recorded above)            |                    | `[ ]`  |
+| F3  | MCP and PAT creation limited to owner-allowlisted accounts until the DPIA draft exists (E29-T8; env: `MCP_ALLOWED_USER_IDS=<owner id>`, `MCP_OPEN_ACCESS` unset; never `MCP_ENABLED=false`)             |                    | `[ ]`  |
+| F4  | A beta notice that says "guidance and calculations, not advice; unreviewed" is published (`BETA_NOTICE`, E29-T7; E19 C1 and C2)                                                                         |                    | `[ ]`  |
 
 ## Gate 2: Before E25 copy ships
 
 | #   | Item                                                                            | Evidence (fill in) | Ticked |
 | --- | ------------------------------------------------------------------------------- | ------------------ | ------ |
-| C1  | The E29-T3 guard enforces the E29a rules and is green on the PR                 |                    | []     |
-| C2  | New copy meets R2, R5, R6 and R8, and the PR adds no allow-list entries         |                    | []     |
-| C3  | Tax figures carry the "unverified" notice until the E25 vectors are signed (R6) |                    | []     |
-| C4  | The owner has approved the copy (E7)                                            |                    | []     |
+| C1  | The E29-T3 guard enforces the E29a rules and is green on the PR                 |                    | `[ ]`  |
+| C2  | New copy meets R2, R5, R6 and R8, and the PR adds no allow-list entries         |                    | `[ ]`  |
+| C3  | Tax figures carry the "unverified" notice until the E25 vectors are signed (R6) |                    | `[ ]`  |
+| C4  | The owner has approved the copy (E7)                                            |                    | `[ ]`  |
 
 The E25 engine itself is not gated.
 
@@ -52,20 +52,20 @@ All of these must hold.
 
 | #   | Item                                                                                               | Evidence (fill in) | Ticked |
 | --- | -------------------------------------------------------------------------------------------------- | ------------------ | ------ |
-| E1  | The owner has signed the DPIA draft (`docs/legal/dpia-mcp.md`, E29-T9)                             |                    | []     |
-| E2  | Tool descriptions are worded as guidance and pass `assertDescriptionPolicy` (E29-T6; E17-N22 lint) |                    | []     |
-| E3  | Every response carries an "unverified" notice (`MCP_NOTICE` in the E17-N8 envelope)                |                    | []     |
-| E4  | Evals show no personal product recommendations (E17-N21 graders using the T6 policy function)      |                    | []     |
-| E5  | The Hub has replied, or 8 weeks have passed with no adverse signal (dates recorded above)          |                    | []     |
-| E6  | An audit log exists (E17-N17)                                                                      |                    | []     |
+| E1  | The owner has signed the DPIA draft (`docs/legal/dpia-mcp.md`, E29-T9)                             |                    | `[ ]`  |
+| E2  | Tool descriptions are worded as guidance and pass `assertDescriptionPolicy` (E29-T6; E17-N22 lint) |                    | `[ ]`  |
+| E3  | Every response carries an "unverified" notice (`MCP_NOTICE` in the E17-N8 envelope)                |                    | `[ ]`  |
+| E4  | Evals show no personal product recommendations (E17-N21 graders using the T6 policy function)      |                    | `[ ]`  |
+| E5  | The Hub has replied, or 8 weeks have passed with no adverse signal (dates recorded above)          |                    | `[ ]`  |
+| E6  | An audit log exists (E17-N17)                                                                      |                    | `[ ]`  |
 
 ## Gate 4: Public launch (E29b)
 
 | #   | Item                                                                                                                                                                                       | Evidence (fill in) | Ticked |
 | --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------ | ------ |
-| L1  | The lawyer's perimeter view is bought as part of the one fixed-fee solicitor engagement at launch, with the brief `docs/legal/fca-perimeter-brief.md` (E29-T11) and the Hub reply (if any) |                    | []     |
-| L2  | The solicitor confirms the T1 rules and the DPIA review                                                                                                                                    |                    | []     |
-| L3  | E26 for non-friends: the same Gate 3 items hold and L1 is done                                                                                                                             |                    | []     |
+| L1  | The lawyer's perimeter view is bought as part of the one fixed-fee solicitor engagement at launch, with the brief `docs/legal/fca-perimeter-brief.md` (E29-T11) and the Hub reply (if any) |                    | `[ ]`  |
+| L2  | The solicitor confirms the T1 rules and the DPIA review                                                                                                                                    |                    | `[ ]`  |
+| L3  | E26 for non-friends: the same Gate 3 items hold and L1 is done                                                                                                                             |                    | `[ ]`  |
 
 ## Triggers for a separate written FCA opinion
 
@@ -73,24 +73,24 @@ Buy a separate written opinion **only** if one of these happens. Record which in
 
 | #   | Trigger                                                         | Happened? |
 | --- | --------------------------------------------------------------- | --------- |
-| W1  | Bank connection goes public                                     | []        |
-| W2  | The Hub reply is adverse                                        | []        |
-| W3  | The solicitor will not cover the perimeter within the fixed fee | []        |
-| W4  | E26 gains write tools or names products                         | []        |
-| W5  | Charging starts                                                 | []        |
+| W1  | Bank connection goes public                                     | `[ ]`     |
+| W2  | The Hub reply is adverse                                        | `[ ]`     |
+| W3  | The solicitor will not cover the perimeter within the fixed fee | `[ ]`     |
+| W4  | E26 gains write tools or names products                         | `[ ]`     |
+| W5  | Charging starts                                                 | `[ ]`     |
 
 All money and engagement decisions are the owner's.
 
 ## Where the automated guards live
 
-| Guard                         | File                                                                  | Ticket | State at `5cfe3ef0`                                                               |
-| ----------------------------- | --------------------------------------------------------------------- | ------ | --------------------------------------------------------------------------------- |
-| Advice-language lexicon       | `packages/finance-engine/src/compliance/advice-lexicon.ts`            | E29-T3 | Not landed                                                                        |
-| Web copy guard and allow-list | `apps/web/app/copy-guard.test.ts`, `apps/web/app/advice-allowlist.ts` | E29-T3 | The file exists, with only "guarantee" and "FCA"; the advice guard has not landed |
-| Marketing claims guard        | `apps/marketing/src/claims.test.ts`                                   | E29-T3 | The file exists, without advice patterns                                          |
-| MCP output policy             | `packages/mcp/src/policy/output-policy.ts`                            | E29-T6 | Not landed                                                                        |
-| Canonical notices             | `packages/finance-engine/src/disclaimers.ts`                          | E29-T7 | Not landed                                                                        |
-| MCP and PAT allowlist         | `apps/backend/src/mcp-access.ts`                                      | E29-T8 | Not landed                                                                        |
+| Guard                         | File                                                                  | Ticket | State at `5cfe3ef0`                                                                        |
+| ----------------------------- | --------------------------------------------------------------------- | ------ | ------------------------------------------------------------------------------------------ |
+| Advice-language lexicon       | `packages/finance-engine/src/compliance/advice-lexicon.ts`            | E29-T3 | Not landed                                                                                 |
+| Web copy guard and allow-list | `apps/web/app/copy-guard.test.ts`, `apps/web/app/advice-allowlist.ts` | E29-T3 | `copy-guard.test.ts` exists (only "guarantee" and "FCA"); `advice-allowlist.ts` not landed |
+| Marketing claims guard        | `apps/marketing/src/claims.test.ts`                                   | E29-T3 | `claims.test.ts` exists, without advice patterns                                           |
+| MCP output policy             | `packages/mcp/src/policy/output-policy.ts`                            | E29-T6 | Not landed                                                                                 |
+| Canonical notices             | `packages/finance-engine/src/disclaimers.ts`                          | E29-T7 | Not landed                                                                                 |
+| MCP and PAT allowlist         | `apps/backend/src/mcp-access.ts`                                      | E29-T8 | Not landed                                                                                 |
 
 ## Requests to other lanes (from E29-T6)
 
