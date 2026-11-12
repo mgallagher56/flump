@@ -10,6 +10,12 @@ In the WorkOS dashboard, session settings:
 - Inactivity timeout: 24 hours.
 - Optionally enable TOTP as an MFA factor.
 
+Web boot (E20-N19) enforces the cookie side of this policy:
+
+- `WORKOS_COOKIE_MAX_AGE` defaults to `1209600` (14 days). Production refuses to boot above that or with a non-https `WORKOS_REDIRECT_URI`. Do not set a larger value on the host.
+- In production the session cookie is named `__Host-wos-session` (Secure, `Path=/`, no `Domain`; authkit never sets a domain). Set `WORKOS_COOKIE_NAME` only to override. Dev and test keep `wos-session`, because `__Host-` cookies are rejected over plain http.
+- The rename logs every signed-in user out once on the first deploy (old `wos-session` cookies are ignored). This is expected.
+
 ## 2. Confirm the redirect URI
 
 - Confirm `/callback` is the registered redirect URI in the WorkOS dashboard (for each environment).
