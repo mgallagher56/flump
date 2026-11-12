@@ -4,7 +4,7 @@ import { ResponsiveProvider } from "~/context/ResponsiveContext";
 import customRender from "~/testUtils/customRender";
 import MobileBottomBar from "./MobileBottomBar";
 
-const mocks = vi.hoisted(() => ({ active: "/app/savings" }));
+const mocks = vi.hoisted(() => ({ active: "/app/budget" }));
 
 vi.mock("react-router", async () => {
   const actual: Record<string, unknown> = await vi.importActual("react-router");
@@ -46,14 +46,25 @@ describe("<MobileBottomBar />", () => {
 });
 
 describe("<MobileBottomBar /> tabs", () => {
-  test("shows Debt and leaves opt-in Tax to the More drawer", () => {
+  test("shows Home, Accounts, Budget and Tax and pay in that order, then More", () => {
     customRender(
       <ResponsiveProvider initialIsMobile={true}>
         <MobileBottomBar isMobile user={{ id: "1" }} />
       </ResponsiveProvider>,
     );
-    expect(screen.getByText(/^debt$/i)).not.toBeNull();
-    expect(screen.queryByText(/^tax$/i)).toBeNull();
+    const hrefs = screen.getAllByRole("link").map((l) => l.getAttribute("href"));
+    expect(hrefs).toEqual(["/", "/app/accounts", "/app/budget", "/app/take-home"]);
+    expect(screen.getByTestId("mobile-bottom-bar-more")).not.toBeNull();
+  });
+
+  test("never reflows when modules are switched off", () => {
+    customRender(
+      <ResponsiveProvider initialIsMobile={true}>
+        <MobileBottomBar isMobile user={{ id: "1" }} />
+      </ResponsiveProvider>,
+    );
+    expect(screen.queryByRole("link", { name: /debt|savings/i })).toBeNull();
+    expect(screen.getAllByRole("link")).toHaveLength(4);
   });
 });
 
@@ -65,8 +76,8 @@ describe("<MobileBottomBar /> active route", () => {
       </ResponsiveProvider>,
     );
     const current = screen.getByRole("link", { current: "page" });
-    expect(current.getAttribute("href")).toBe("/app/savings");
-    const other = screen.getByRole("link", { name: /^budget$/i });
+    expect(current.getAttribute("href")).toBe("/app/budget");
+    const other = screen.getByRole("link", { name: /^accounts$/i });
     expect(other.className).not.toBe(current.className);
   });
 });
