@@ -114,16 +114,21 @@ export class ContractShadowInterceptor implements NestInterceptor {
     if (enforced && blocking.length > 0) {
       // Paths and codes only, never values. Unknown keys never block: the web sends fields the
       // backend drops (E21 section 5.3) and they are stripped, not rejected.
-      // Own log line so the 400 rate can be watched when enforcement is switched on.
-      this.logger.warn(
-        JSON.stringify({
-          event: "contract_rejected",
-          method: rejectedRoute?.method,
-          pathTemplate: rejectedRoute ? `/${rejectedRoute.path}` : undefined,
-          routeId: rejectedRoute?.id,
-          issues: blocking.slice(0, MAX_ISSUES_LOGGED),
-        }),
-      );
+      // Own log line so the 400 rate can be watched when enforcement is switched on. Unsampled on
+      // purpose (it is the rate meter), and it must never turn the 400 into a 500.
+      try {
+        this.logger.warn(
+          JSON.stringify({
+            event: "contract_rejected",
+            method: rejectedRoute?.method,
+            pathTemplate: rejectedRoute ? `/${rejectedRoute.path}` : undefined,
+            routeId: rejectedRoute?.id,
+            issues: blocking.slice(0, MAX_ISSUES_LOGGED),
+          }),
+        );
+      } catch {
+        // logging failure is ignored
+      }
       throw new BadRequestException({
         statusCode: 400,
         error: "Bad Request",
