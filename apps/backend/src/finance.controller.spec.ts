@@ -464,6 +464,17 @@ describe("FinanceController & FinanceService", () => {
     });
   });
 
+  it("registers both sync and refresh POST routes for bank-connections/:id", () => {
+    const proto = FinanceController.prototype as unknown as Record<string, object>;
+    const paths = Object.getOwnPropertyNames(proto)
+      .map((name) => proto[name])
+      .filter((fn) => typeof fn === "function" && Reflect.getMetadata("method", fn) === 1)
+      .map((fn) => Reflect.getMetadata("path", fn));
+    expect(paths).toEqual(
+      expect.arrayContaining(["bank-connections/:id/sync", "bank-connections/:id/refresh"]),
+    );
+  });
+
   it("registers both PUT and PATCH for accounts/:id", () => {
     // Stacked @Put/@Patch decorators on one handler only register one verb (RequestMethod: GET 0,
     // POST 1, PUT 2, DELETE 3, PATCH 4).

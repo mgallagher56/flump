@@ -299,6 +299,15 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
       expect(created.name).toBe("Legacy title");
     });
 
+    it("registers the bank-connection refresh route the accounts route calls", async () => {
+      const res = await fetch(`${baseUrl}/bank-connections/does-not-exist/refresh`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${DEV_TOKEN}` },
+      });
+      // A registered route answers from the service; an unregistered one says "Cannot POST".
+      expect((await res.json()).message).not.toMatch(/^Cannot POST/);
+    });
+
     it("rejects a budget entry with no name with a 400, not a 500", async () => {
       const res = await fetch(`${baseUrl}/budget-entries`, {
         method: "POST",

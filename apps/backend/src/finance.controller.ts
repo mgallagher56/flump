@@ -172,8 +172,12 @@ export class FinanceController {
     return this.financeService.connectBank(req.user.id, body);
   }
 
-  @Post("bank-connections/:id/sync")
   @Post("bank-connections/:id/refresh")
+  async refreshBankConnection(@Req() req: AuthenticatedRequest, @Param("id") id: string) {
+    return this.financeService.syncBankConnection(req.user.id, id);
+  }
+
+  @Post("bank-connections/:id/sync")
   async syncBankConnection(@Req() req: AuthenticatedRequest, @Param("id") id: string) {
     return this.financeService.syncBankConnection(req.user.id, id);
   }

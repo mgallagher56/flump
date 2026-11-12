@@ -328,8 +328,11 @@ export class BudgetController {
     }
 
     if (body.category !== undefined) entry.category = body.category;
-    const name = resolveEntryName(body);
-    if (name !== undefined) entry.name = name;
+    if (body.name !== undefined || body.title !== undefined) {
+      const name = resolveEntryName(body);
+      if (name === undefined) throw new BadRequestException("Budget entry name cannot be blank");
+      entry.name = name;
+    }
     if (body.amount !== undefined) entry.amount = body.amount;
     if (body.frequency !== undefined) entry.frequency = body.frequency;
     if (body.isIncome !== undefined) entry.isIncome = body.isIncome;
