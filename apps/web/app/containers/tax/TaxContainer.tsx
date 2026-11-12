@@ -51,6 +51,7 @@ import { useFetcherOutcome } from "~/features/feedback/hooks/useFetcherOutcome";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
 import type { loader } from "~/routes/app.tax";
 import { useFinancialBaseline } from "~/state/baseline.store";
+import { getKnownTrapRegion } from "~/utils/taxTrapCopy";
 
 const numeric = css({ fontVariantNumeric: "tabular-nums" });
 
@@ -998,7 +999,10 @@ const TaxContainer: FC = () => {
               alignItems: "start",
             })}
           >
-            <TaxTrapAlertBanner grossIncome={activeYearData?.totalGrossIncome || payeSalary} />
+            <TaxTrapAlertBanner
+              grossIncome={activeYearData?.totalGrossIncome || payeSalary}
+              region={getKnownTrapRegion(baseline.ukRegion)}
+            />
             {activeYearData && (
               <PaymentsOnAccountCard
                 annualSelfAssessmentTax={

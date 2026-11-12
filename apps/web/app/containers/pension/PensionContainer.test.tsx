@@ -195,6 +195,31 @@ describe("PensionContainer", () => {
       expect(container.textContent).not.toContain("effective 60% marginal tax rate");
     });
 
+    it("tax trap callout uses Scottish rates for a Scottish baseline, else labels the assumption", async () => {
+      const { getDefaultStore } = await import("jotai");
+      const { financialBaselineAtom, NO_SALARY_BASELINE } = await import("~/state/baseline.store");
+      const store = getDefaultStore();
+      const profile = {
+        annualSalary: 110000,
+        pensionPercent: 0,
+        pensionEmployerPercent: 0,
+        setupChecklistCompletedSteps: ["pension"],
+      };
+
+      store.set(financialBaselineAtom, { ...NO_SALARY_BASELINE, ukRegion: "SCOTLAND" });
+      setProfile(profile);
+      const scottish = render(<PensionContainer />);
+      expect(scottish.container.textContent).toContain("67.5% income tax, 69.5% including NI");
+      expect(screen.queryByText(/assuming England, Wales and Northern Ireland/i)).toBeNull();
+      scottish.unmount();
+
+      store.set(financialBaselineAtom, NO_SALARY_BASELINE);
+      setProfile(profile);
+      render(<PensionContainer />);
+      expect(screen.getByText(/assuming England, Wales and Northern Ireland/i)).toBeDefined();
+      expect(screen.getByRole("link", { name: "Set your region" })).toBeDefined();
+    });
+
     it("backend default rates (5% + 3%) show the default label", () => {
       setProfile({
         annualSalary: 50000,

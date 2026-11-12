@@ -1,3 +1,4 @@
+import type { UkTaxRegion } from "@flump/finance-engine";
 import {
   calculateSalarySacrificeSaving,
   calculateTaxTrapRelief,
@@ -9,10 +10,17 @@ import { FiAlertTriangle, FiArrowRight, FiCheck } from "react-icons/fi";
 import FLPButton from "~/components/core/buttons/FLPButton";
 import FLPHeading from "~/components/core/typography/FLPHeading";
 import FLPText from "~/components/core/typography/FLPText";
-import { getTaxTrapCopy } from "~/utils/taxTrapCopy";
+import {
+  getTaxTrapCopy,
+  REGION_ASSUMPTION_LABEL,
+  REGION_SETTINGS_ACTION,
+  REGION_SETTINGS_HREF,
+} from "~/utils/taxTrapCopy";
 
 export interface TaxTrapAlertBannerProps {
   grossIncome: number;
+  /** Known tax region; null or undefined means England, Wales and NI is assumed and labelled. */
+  region?: UkTaxRegion | null;
   onApplySacrifice?: (additionalMonthlySacrifice: number) => void;
 }
 
@@ -42,13 +50,15 @@ const formatGBP = (num: number) => `£${Math.max(0, Math.round(num)).toLocaleStr
 
 export const TaxTrapAlertBanner: FC<TaxTrapAlertBannerProps> = ({
   grossIncome,
+  region,
   onApplySacrifice,
 }) => {
+  const effectiveRegion: UkTaxRegion = region ?? "ENGLAND_NI_WALES";
   const sliderId = useId();
 
   const trapAnalysis = useMemo(() => {
-    return calculateTaxTrapRelief(grossIncome);
-  }, [grossIncome]);
+    return calculateTaxTrapRelief(grossIncome, undefined, effectiveRegion);
+  }, [grossIncome, effectiveRegion]);
 
   const trapCopy = getTaxTrapCopy(trapAnalysis);
   const defaultSacrifice = Math.min(25140, trapAnalysis.excessAbove100k);
@@ -63,7 +73,9 @@ export const TaxTrapAlertBanner: FC<TaxTrapAlertBannerProps> = ({
   // Recalculate relief with custom sacrifice amount
   // Exact income tax + employee NI difference from the engine (band edges and the allowance
   // taper are handled; a flat rate is only right when the whole sacrifice sits in the taper zone).
-  const taxSaved = Math.round(calculateSalarySacrificeSaving(grossIncome, sacrificeAmount));
+  const taxSaved = Math.round(
+    calculateSalarySacrificeSaving(grossIncome, sacrificeAmount, undefined, effectiveRegion),
+  );
   const monthlySacrifice = Math.round(sacrificeAmount / 12);
   const monthlySaved = Math.round(taxSaved / 12);
   const effectiveCost = monthlySacrifice - monthlySaved;
@@ -149,6 +161,17 @@ export const TaxTrapAlertBanner: FC<TaxTrapAlertBannerProps> = ({
                 </>
               )}
             </FLPText>
+            {!region && (
+              <FLPText color="text.muted" fontSize="xs" style={{ marginTop: "4px" }}>
+                {REGION_ASSUMPTION_LABEL}{" "}
+                <a
+                  href={REGION_SETTINGS_HREF}
+                  className={css({ color: "primary", textDecoration: "underline" })}
+                >
+                  {REGION_SETTINGS_ACTION}
+                </a>
+              </FLPText>
+            )}
           </div>
         </div>
 

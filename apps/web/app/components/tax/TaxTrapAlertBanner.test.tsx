@@ -29,6 +29,29 @@ describe("TaxTrapAlertBanner", () => {
     expect(container.textContent).not.toMatch(/effective 62% marginal tax rate/);
   });
 
+  it("uses Scottish rates when the region is Scotland, with no assumption label", () => {
+    const { container } = render(<TaxTrapAlertBanner grossIncome={110000} region="SCOTLAND" />);
+
+    expect(container.textContent).toContain("67.5% income tax, 69.5% including NI");
+    expect(screen.getByRole("heading", { level: 3 }).textContent).toContain("67.5%");
+    expect(screen.queryByText(/assuming England, Wales and Northern Ireland/i)).toBeNull();
+  });
+
+  it("labels the England, Wales and NI assumption and links to set the region when unknown", () => {
+    render(<TaxTrapAlertBanner grossIncome={110000} />);
+
+    expect(screen.getByText(/assuming England, Wales and Northern Ireland/i)).toBeDefined();
+    expect(screen.getByRole("link", { name: "Set your region" }).getAttribute("href")).toBe(
+      "/app/profile",
+    );
+  });
+
+  it("shows no assumption label when England, Wales and NI is the known region", () => {
+    render(<TaxTrapAlertBanner grossIncome={110000} region="ENGLAND_NI_WALES" />);
+
+    expect(screen.queryByText(/assuming England, Wales and Northern Ireland/i)).toBeNull();
+  });
+
   it("near the trap shows the 40% income tax rate and does not claim 62%", () => {
     render(<TaxTrapAlertBanner grossIncome={97000} />);
     expect(screen.getByText("40% Marginal Tax")).toBeDefined();
