@@ -56,7 +56,7 @@ describe("SandboxRoute", () => {
 
   it("does not render its own projection notice (HomeDashboard owns the single one)", () => {
     render(<SandboxRoute />);
-    expect(screen.queryByTestId("projection-notice")).toBeNull();
+    expect(document.querySelector('[data-testid="projection-notice"]')).toBeNull();
   });
 
   it("renders Persona A by default and switches between Persona B and Persona C", () => {
