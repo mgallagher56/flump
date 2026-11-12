@@ -13,7 +13,8 @@ RUN find apps packages -name node_modules -type d -prune -exec rm -rf {} + ; \
     find apps packages -type f ! -name package.json -delete ; \
     find apps packages -type d -empty -delete
 
-# Stage 1b: install only the workspaces this image needs
+# Stage 1b: install only the workspaces this image needs. Web also needs marketing:
+# apps/web/vite.config.mts resolves react-helmet-async via ../marketing/package.json.
 FROM base AS deps
 COPY package.json bun.lock ./
 COPY --from=manifests /app/apps ./apps
