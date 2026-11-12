@@ -223,6 +223,13 @@ export default function SandboxRoute() {
         </div>
       </div>
 
+      <p
+        className={css({ fontSize: "xs", color: "text.muted", px: "4", py: "2" })}
+        id="sandbox-sample-data-label"
+      >
+        Sample data: illustrative figures, not yours. Tax due and take-home here are examples.
+      </p>
+
       {/* Actual SPA Dashboard View */}
       <HomeDashboard
         userProfile={dashboardData.userProfile}

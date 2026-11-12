@@ -22,10 +22,14 @@ describe("<UKTaxCalculator /> without a salary", () => {
   ])(
     "renders 'Not set' and never an invented salary when initialSalary is %s",
     (_label, salary) => {
-      const { container, getAllByText } = customRender(
+      const { container, getAllByText, getAllByRole, getByLabelText } = customRender(
         <UKTaxCalculator initialSalary={salary} onApplyIncrease={vi.fn()} />,
       );
       expect(getAllByText("Not set").length).toBeGreaterThan(0);
+      expect(getByLabelText("Gross salary").getAttribute("aria-valuetext")).toBe("Not set");
+      expect(getAllByRole("link", { name: "Add salary" })[0].getAttribute("href")).toBe(
+        "/app/profile",
+      );
       expect(container.textContent).not.toContain("45,000");
       expect(container.textContent).not.toContain("Monthly Take-Home Pay £");
     },

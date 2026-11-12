@@ -10,7 +10,7 @@ import {
   type TaxSource,
 } from "@flump/finance-engine";
 import { css } from "@repo/ui/styled-system/css";
-import { type FC, useCallback, useEffect, useMemo, useState } from "react";
+import { type FC, type ReactNode, useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   FaBriefcase,
@@ -47,6 +47,7 @@ import PaymentsOnAccountCard from "~/components/tax/PaymentsOnAccountCard";
 import TaxIncomeSectionCard from "~/components/tax/TaxIncomeSectionCard";
 import TaxTrapAlertBanner from "~/components/tax/TaxTrapAlertBanner";
 import { ConfirmDialog } from "~/features/feedback/components/ConfirmDialog";
+import { NotSet } from "~/features/feedback/components/NotSet";
 import { useFetcherOutcome } from "~/features/feedback/hooks/useFetcherOutcome";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
 import type { loader } from "~/routes/app.tax";
@@ -56,8 +57,8 @@ import { getKnownTrapRegion } from "~/utils/taxTrapCopy";
 const numeric = css({ fontVariantNumeric: "tabular-nums" });
 
 /** Unknown PAYE salary renders "Not set", never £0. */
-const formatPaye = (value: number | undefined, format: (n: number) => string): string =>
-  value && value > 0 ? format(value) : "Not set";
+const formatPaye = (value: number | undefined, format: (n: number) => string): ReactNode =>
+  value && value > 0 ? format(value) : <NotSet actionLabel="Add salary" href="/app/profile" />;
 
 const TaxContainer: FC = () => {
   const { t } = useTranslation();
@@ -853,7 +854,11 @@ const TaxContainer: FC = () => {
                 <span>
                   Profile salary baseline:{" "}
                   <strong className={numeric}>
-                    {profileSalary > 0 ? `${formatCurrency(profileSalary)}/year` : "Not set"}
+                    {profileSalary > 0 ? (
+                      `${formatCurrency(profileSalary)}/year`
+                    ) : (
+                      <NotSet actionLabel="Add salary" href="/app/profile" />
+                    )}
                   </strong>
                   .
                   {activeYearData.payeIncomeGross > 0

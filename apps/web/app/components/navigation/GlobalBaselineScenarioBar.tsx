@@ -281,7 +281,10 @@ export const GlobalBaselineScenarioBar: FC = () => {
                 }
                 placeholder="Not set"
                 onChange={(e) =>
-                  updateOverrides({ annualGrossSalary: Number(e.target.value) || 0 })
+                  updateOverrides({
+                    // A cleared field clears the override; it never becomes a salary of 0.
+                    annualGrossSalary: e.target.value === "" ? undefined : Number(e.target.value),
+                  })
                 }
                 className={css({
                   width: "100%",

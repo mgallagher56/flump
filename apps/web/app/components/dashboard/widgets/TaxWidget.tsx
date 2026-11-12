@@ -2,6 +2,7 @@ import { css } from "@repo/ui/styled-system/css";
 import type { FC } from "react";
 import FLPHeading from "~/components/core/typography/FLPHeading";
 import FLPText from "~/components/core/typography/FLPText";
+import { NotSet } from "~/features/feedback/components/NotSet";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
 import { DashboardWidgetCard } from "../DashboardWidgetCard";
 import { WidgetSettingsModal } from "../WidgetSettingsModal";
@@ -191,11 +192,15 @@ export const TaxWidget: FC<TaxWidgetProps> = ({
                 fontVariantNumeric: "tabular-nums",
               })}
             >
-              {metricMode === "taxDue"
-                ? data.estimatedTaxDue === null
-                  ? "Not calculated yet"
-                  : formatCurrency(data.estimatedTaxDue)
-                : formatCurrency(data.netProfit)}
+              {metricMode === "taxDue" ? (
+                data.estimatedTaxDue === null ? (
+                  <NotSet actionLabel="Add income" href="/app/tax" label="Not calculated yet" />
+                ) : (
+                  formatCurrency(data.estimatedTaxDue)
+                )
+              ) : (
+                formatCurrency(data.netProfit)
+              )}
             </FLPHeading>
           </div>
           <div

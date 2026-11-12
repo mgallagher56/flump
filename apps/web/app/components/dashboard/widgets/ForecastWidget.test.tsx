@@ -29,6 +29,7 @@ describe("ForecastWidget take-home", () => {
 
     const notSet = screen.getByText("Not set");
     expect(notSet.className).toMatch(/tabular-nums/);
+    expect(screen.getByRole("link", { name: "Add" }).getAttribute("href")).toBe("/app/profile");
   });
 
   it("says what is missing when a salary exists but take-home cannot be computed", () => {

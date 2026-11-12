@@ -2,6 +2,7 @@ import { css } from "@repo/ui/styled-system/css";
 import type { FC } from "react";
 import FLPHeading from "~/components/core/typography/FLPHeading";
 import FLPText from "~/components/core/typography/FLPText";
+import { NotSet } from "~/features/feedback/components/NotSet";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
 import { DashboardWidgetCard } from "../DashboardWidgetCard";
 import { WidgetSettingsModal } from "../WidgetSettingsModal";
@@ -224,9 +225,7 @@ export const ForecastWidget: FC<ForecastWidgetProps> = ({
                 {formatCurrency(data.estimatedTakeHome)}/mo
               </strong>
             ) : (
-              <strong className={css({ fontVariantNumeric: "tabular-nums" })}>
-                {data.takeHomeMissing ?? "Not set"}
-              </strong>
+              <NotSet href="/app/profile" label={data.takeHomeMissing ?? "Not set"} />
             )}
           </div>
           <div style={{ color: "var(--colors-primary)", fontWeight: 600 }}>Runway →</div>
