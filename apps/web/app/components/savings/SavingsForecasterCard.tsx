@@ -43,7 +43,7 @@ const statsGridStyle = css({
   gap: "8px",
   padding: "10px 14px",
   borderRadius: "lg",
-  backgroundColor: "rgba(0, 0, 0, 0.02)",
+  backgroundColor: "color-mix(in srgb, var(--colors-surface-contrast) 2%, transparent)",
   border: "1px solid",
   borderColor: "border",
 });
@@ -217,7 +217,7 @@ export const SavingsForecasterCard: FC<SavingsForecasterCardProps> = ({
       >
         <div>
           <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-            <FaChartArea style={{ color: "#6363f1", fontSize: "18px" }} />
+            <FaChartArea style={{ color: "var(--colors-primary)", fontSize: "18px" }} />
             <FLPHeading as="h4" size="md">
               Compound Interest Growth Forecaster
             </FLPHeading>
@@ -391,12 +391,12 @@ export const SavingsForecasterCard: FC<SavingsForecasterCardProps> = ({
             <AreaChart data={projectionData} margin={{ top: 8, right: 20, left: 10, bottom: 0 }}>
               <defs>
                 <linearGradient id="colorTotal" x1="0" x2="0" y1="0" y2="1">
-                  <stop offset="5%" stopColor="#6363f1" stopOpacity={0.4} />
-                  <stop offset="95%" stopColor="#6363f1" stopOpacity={0.0} />
+                  <stop offset="5%" stopColor="var(--colors-primary)" stopOpacity={0.4} />
+                  <stop offset="95%" stopColor="var(--colors-primary)" stopOpacity={0.0} />
                 </linearGradient>
                 <linearGradient id="colorCash" x1="0" x2="0" y1="0" y2="1">
-                  <stop offset="5%" stopColor="#10b981" stopOpacity={0.3} />
-                  <stop offset="95%" stopColor="#10b981" stopOpacity={0.0} />
+                  <stop offset="5%" stopColor="var(--colors-chart-wealth)" stopOpacity={0.3} />
+                  <stop offset="95%" stopColor="var(--colors-chart-wealth)" stopOpacity={0.0} />
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.3} />
@@ -411,24 +411,25 @@ export const SavingsForecasterCard: FC<SavingsForecasterCardProps> = ({
               <Tooltip
                 formatter={(value: any) => [formatCurrency(Number(value) || 0), ""]}
                 contentStyle={{
-                  backgroundColor: "var(--colors-surface, #1e293b)",
-                  borderColor: "var(--colors-border, #334155)",
+                  backgroundColor: "var(--colors-surface)",
+                  borderColor: "var(--colors-border)",
                   borderWidth: "1px",
                   borderStyle: "solid",
                   borderRadius: "10px",
                   fontSize: "12px",
-                  color: "var(--colors-text-primary, #f8fafc)",
-                  boxShadow: "0 10px 25px -5px rgba(0,0,0,0.4)",
+                  color: "var(--colors-text-primary)",
+                  boxShadow:
+                    "0 10px 25px -5px color-mix(in srgb, var(--colors-surface-contrast) 40%, transparent)",
                 }}
-                itemStyle={{ color: "var(--colors-text-primary, #f8fafc)" }}
-                labelStyle={{ color: "var(--colors-text-muted, #94a3b8)", fontWeight: 600 }}
+                itemStyle={{ color: "var(--colors-text-primary)" }}
+                labelStyle={{ color: "var(--colors-text-muted)", fontWeight: 600 }}
               />
               <Legend wrapperStyle={{ fontSize: "12px", paddingTop: "6px" }} />
               <Area
                 dataKey="Total Forecast"
                 fill="url(#colorTotal)"
                 name="Projected Total (Interest + Deposits)"
-                stroke="#6363f1"
+                stroke="var(--colors-primary)"
                 strokeDasharray="5 5"
                 strokeWidth={2.5}
                 type="monotone"
@@ -438,7 +439,7 @@ export const SavingsForecasterCard: FC<SavingsForecasterCardProps> = ({
                 dataKey="Cash Contributions"
                 fill="url(#colorCash)"
                 name="Contributions Only (0% Interest)"
-                stroke="#10b981"
+                stroke="var(--colors-chart-wealth)"
                 strokeDasharray="4 4"
                 strokeWidth={2}
                 type="monotone"
@@ -559,7 +560,8 @@ export const SavingsForecasterCard: FC<SavingsForecasterCardProps> = ({
                   m.isCustom
                     ? {
                         borderColor: "var(--colors-primary)",
-                        backgroundColor: "rgba(99, 99, 241, 0.04)",
+                        backgroundColor:
+                          "color-mix(in srgb, var(--colors-primary) 4%, transparent)",
                       }
                     : undefined
                 }

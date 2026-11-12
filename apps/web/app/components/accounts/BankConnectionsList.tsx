@@ -141,11 +141,11 @@ const BankConnectionsList: FC<BankConnectionsListProps> = ({
     });
 
   const statusBadgeStyle = (status: string) => {
-    let bg = "rgba(16, 185, 129, 0.1)";
-    let color = "#10b981";
+    let bg = "color-mix(in srgb, var(--colors-chart-wealth) 10%, transparent)";
+    let color = "var(--colors-chart-wealth)";
     if (status === "error") {
-      bg = "rgba(239, 68, 68, 0.1)";
-      color = "#ef4444";
+      bg = "color-mix(in srgb, var(--colors-status-danger-text) 10%, transparent)";
+      color = "var(--colors-status-danger-text)";
     }
     return css({
       display: "inline-flex",
@@ -185,7 +185,7 @@ const BankConnectionsList: FC<BankConnectionsListProps> = ({
 
   const emptyIconStyle = css({
     fontSize: "48px",
-    color: "gray.300",
+    color: "border.strong",
   });
 
   // Nothing to manage and nothing the user may connect: leave the section out entirely.

@@ -94,8 +94,8 @@ const AccountDetailChart: FC<AccountDetailChartProps> = ({
         >
           <defs>
             <linearGradient id="colorValue" x1="0" x2="0" y1="0" y2="1">
-              <stop offset="5%" stopColor="#6363F1" stopOpacity={0.2} />
-              <stop offset="95%" stopColor="#6363F1" stopOpacity={0.0} />
+              <stop offset="5%" stopColor="var(--colors-primary)" stopOpacity={0.2} />
+              <stop offset="95%" stopColor="var(--colors-primary)" stopOpacity={0.0} />
             </linearGradient>
           </defs>
           {showAxes && (
@@ -144,7 +144,7 @@ const AccountDetailChart: FC<AccountDetailChartProps> = ({
             dataKey="Value"
             dot={false}
             fill="url(#colorValue)"
-            stroke="#6363F1"
+            stroke="var(--colors-primary)"
             strokeWidth={1.5}
             type={curve}
             isAnimationActive={!reducedMotion}

@@ -237,7 +237,7 @@ export const HomeFooter: FC = () => {
                 alignItems: "center",
                 gap: "8px",
                 padding: "10px 14px",
-                backgroundColor: "rgba(99, 102, 241, 0.08)",
+                backgroundColor: "color-mix(in srgb, var(--colors-primary) 8%, transparent)",
                 borderRadius: "8px",
                 fontSize: "14px",
                 color: "var(--colors-primary)",

@@ -429,7 +429,7 @@ const UserProfilePanel: FC<UserProfilePanelProps> = ({ initialProfile, user }) =
                   width: "36px",
                   height: "36px",
                   borderRadius: "full",
-                  backgroundColor: "rgba(99, 99, 241, 0.12)",
+                  backgroundColor: "color-mix(in srgb, var(--colors-primary) 12%, transparent)",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
@@ -653,7 +653,7 @@ const UserProfilePanel: FC<UserProfilePanelProps> = ({ initialProfile, user }) =
                     width: "40px",
                     height: "40px",
                     borderRadius: "full",
-                    backgroundColor: "rgba(99, 99, 241, 0.12)",
+                    backgroundColor: "color-mix(in srgb, var(--colors-primary) 12%, transparent)",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
@@ -686,8 +686,9 @@ const UserProfilePanel: FC<UserProfilePanelProps> = ({ initialProfile, user }) =
                     <span
                       className={css({
                         fontSize: "xs",
-                        color: "green.500",
-                        backgroundColor: "rgba(34, 197, 94, 0.12)",
+                        color: "status.positive.text",
+                        backgroundColor:
+                          "color-mix(in srgb, var(--colors-chart-wealth) 12%, transparent)",
                         padding: "2px 8px",
                         borderRadius: "full",
                         fontWeight: "medium",
@@ -783,7 +784,7 @@ const UserProfilePanel: FC<UserProfilePanelProps> = ({ initialProfile, user }) =
                   display: "flex",
                   alignItems: "center",
                   gap: "6px",
-                  color: "success.500",
+                  color: "status.positive.text",
                   fontSize: "sm",
                 })}
               >
@@ -802,11 +803,13 @@ const UserProfilePanel: FC<UserProfilePanelProps> = ({ initialProfile, user }) =
               marginTop: "16px",
               borderRadius: "xl",
               border: "1px solid",
-              borderColor: "rgba(239, 68, 68, 0.25)",
-              backgroundColor: "rgba(239, 68, 68, 0.02)",
+              borderColor: "color-mix(in srgb, var(--colors-status-danger-text) 25%, transparent)",
+              backgroundColor:
+                "color-mix(in srgb, var(--colors-status-danger-text) 2%, transparent)",
               overflow: "hidden",
               "&[open] summary": {
-                borderBottom: "1px solid rgba(239, 68, 68, 0.15)",
+                borderBottom:
+                  "1px solid color-mix(in srgb, var(--colors-status-danger-text) 15%, transparent)",
               },
             })}
           >
@@ -816,12 +819,15 @@ const UserProfilePanel: FC<UserProfilePanelProps> = ({ initialProfile, user }) =
                 cursor: "pointer",
                 fontSize: "xs",
                 fontWeight: "semibold",
-                color: "red.500",
+                color: "status.danger.text",
                 display: "flex",
                 alignItems: "center",
                 gap: "8px",
                 userSelect: "none",
-                _hover: { backgroundColor: "rgba(239, 68, 68, 0.05)" },
+                _hover: {
+                  backgroundColor:
+                    "color-mix(in srgb, var(--colors-status-danger-text) 5%, transparent)",
+                },
               })}
             >
               <FaExclamationTriangle />
@@ -836,7 +842,7 @@ const UserProfilePanel: FC<UserProfilePanelProps> = ({ initialProfile, user }) =
                   alignItems: { base: "flex-start", sm: "center" },
                   gap: "16px",
                   borderLeft: "4px solid",
-                  borderLeftColor: "red.500",
+                  borderLeftColor: "status.danger.text",
                   paddingLeft: "16px",
                 })}
               >
@@ -846,7 +852,7 @@ const UserProfilePanel: FC<UserProfilePanelProps> = ({ initialProfile, user }) =
                       display: "flex",
                       alignItems: "center",
                       gap: "8px",
-                      color: "red.500",
+                      color: "status.danger.text",
                       fontWeight: "semibold",
                       fontSize: "sm",
                       marginBottom: "4px",

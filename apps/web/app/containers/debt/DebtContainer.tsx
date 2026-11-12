@@ -44,7 +44,9 @@ const tabStyle = (active: boolean) =>
     cursor: "pointer",
     backgroundColor: active ? "card" : "transparent",
     color: active ? "text.primary" : "text.muted",
-    boxShadow: active ? "0 1px 2px rgba(0,0,0,0.06)" : "none",
+    boxShadow: active
+      ? "0 1px 2px color-mix(in srgb, var(--colors-surface-contrast) 6%, transparent)"
+      : "none",
     border: "1px solid",
     borderColor: active ? "border.subtle" : "transparent",
     transition: "all 0.15s ease",
@@ -189,9 +191,9 @@ export const DebtContainer: FC = () => {
           className={css({
             padding: "16px 20px",
             borderRadius: "xl",
-            backgroundColor: "rgba(239, 68, 68, 0.08)",
+            backgroundColor: "color-mix(in srgb, var(--colors-status-danger-text) 8%, transparent)",
             border: "1px solid",
-            borderColor: "rgba(239, 68, 68, 0.3)",
+            borderColor: "color-mix(in srgb, var(--colors-status-danger-text) 30%, transparent)",
             display: "flex",
             flexDirection: "column",
             gap: "10px",
@@ -218,9 +220,11 @@ export const DebtContainer: FC = () => {
             >
               <FLPText fontSize="xs" color="text.primary">
                 <strong>{alert.debtName}</strong> promotional 0% APR expires on{" "}
-                <strong>{alert.promoExpiryDate}</strong>. At current repayment rates, £
-                {alert.projectedBalanceAtExpiryGbp.toLocaleString()} will revert to{" "}
-                <strong>{alert.revertApr}% APR</strong>.
+                <strong>{alert.promoExpiryDate}</strong>. At current repayment rates,{" "}
+                <span className={css({ fontVariantNumeric: "tabular-nums" })}>
+                  {formatCurrency(alert.projectedBalanceAtExpiryGbp)}
+                </span>{" "}
+                will revert to <strong>{alert.revertApr}% APR</strong>.
               </FLPText>
               <FLPButton
                 size="sm"

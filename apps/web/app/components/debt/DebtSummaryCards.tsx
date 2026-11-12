@@ -81,7 +81,12 @@ export const DebtSummaryCards: FC<DebtSummaryCardsProps> = ({
             <FLPText color="text.muted" fontSize="sm">
               Total Unsecured Debt
             </FLPText>
-            <div className={iconBadgeStyle("rgba(239, 68, 68, 0.12)", "#ef4444")}>
+            <div
+              className={iconBadgeStyle(
+                "color-mix(in srgb, var(--colors-status-danger-text) 12%, transparent)",
+                "var(--colors-status-danger-text)",
+              )}
+            >
               <FaFire size={18} />
             </div>
           </div>
@@ -103,13 +108,26 @@ export const DebtSummaryCards: FC<DebtSummaryCardsProps> = ({
             <FLPText color="text.muted" fontSize="sm">
               Monthly Debt Budget
             </FLPText>
-            <div className={iconBadgeStyle("rgba(245, 158, 11, 0.12)", "#f59e0b")}>
+            <div
+              className={iconBadgeStyle(
+                "color-mix(in srgb, var(--colors-chart-warning) 12%, transparent)",
+                "var(--colors-chart-warning)",
+              )}
+            >
               <FaCoins size={18} />
             </div>
           </div>
           <FLPHeading as="h3" size="2xl" className="tabular-nums">
             {formatCurrency(monthlyMinimumTotal + extraPayment)}
-            <span style={{ fontSize: "14px", fontWeight: "normal", color: "#6b7280" }}>/mo</span>
+            <span
+              style={{
+                fontSize: "14px",
+                fontWeight: "normal",
+                color: "var(--colors-chart-baseline)",
+              }}
+            >
+              /mo
+            </span>
           </FLPHeading>
           <FLPText color="text.muted" fontSize="xs">
             {extraPayment > 0
@@ -127,7 +145,12 @@ export const DebtSummaryCards: FC<DebtSummaryCardsProps> = ({
             <FLPText color="text.muted" fontSize="sm">
               Debt-Free Horizon
             </FLPText>
-            <div className={iconBadgeStyle("rgba(16, 185, 129, 0.12)", "#10b981")}>
+            <div
+              className={iconBadgeStyle(
+                "color-mix(in srgb, var(--colors-chart-wealth) 12%, transparent)",
+                "var(--colors-chart-wealth)",
+              )}
+            >
               <FaCalendarCheck size={18} />
             </div>
           </div>
@@ -151,7 +174,12 @@ export const DebtSummaryCards: FC<DebtSummaryCardsProps> = ({
             <FLPText color="text.muted" fontSize="sm">
               Interest Saved ({strategy === "avalanche" ? "Avalanche" : "Snowball"})
             </FLPText>
-            <div className={iconBadgeStyle("rgba(99, 99, 241, 0.12)", "#6363f1")}>
+            <div
+              className={iconBadgeStyle(
+                "color-mix(in srgb, var(--colors-primary) 12%, transparent)",
+                "var(--colors-primary)",
+              )}
+            >
               <FaPiggyBank size={18} />
             </div>
           </div>

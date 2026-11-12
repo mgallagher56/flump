@@ -113,7 +113,7 @@ const BudgetDashboard: FC<BudgetDashboardProps> = ({
     return expenseCategories.map((cat) => ({
       cat,
       label: CATEGORY_LABELS[cat] || cat,
-      colour: CATEGORY_COLOURS[cat] || "#6363f1",
+      colour: CATEGORY_COLOURS[cat] || "var(--colors-primary)",
       icon: CATEGORY_ICONS[cat] || "📁",
       total: entries.filter((e) => e.category === cat).reduce((s, e) => s + toMonthly(e), 0),
       count: entries.filter((e) => e.category === cat).length,
@@ -162,7 +162,8 @@ const BudgetDashboard: FC<BudgetDashboardProps> = ({
     return formatCurrency(Math.abs(val));
   };
 
-  const surplusColour = totals.surplus >= 0 ? "#10b981" : "#ef4444";
+  const surplusColour =
+    totals.surplus >= 0 ? "var(--colors-chart-wealth)" : "var(--colors-status-danger-text)";
 
   const runwayStats = useMemo(() => {
     const activeSettings =
@@ -177,12 +178,32 @@ const BudgetDashboard: FC<BudgetDashboardProps> = ({
 
     const getStatus = (m: number) => {
       if (m < 3)
-        return { colour: "#ef4444", bg: "rgba(239, 68, 68, 0.1)", label: "Critical", emoji: "🔴" };
+        return {
+          colour: "var(--colors-status-danger-text)",
+          bg: "color-mix(in srgb, var(--colors-status-danger-text) 10%, transparent)",
+          label: "Critical",
+          emoji: "🔴",
+        };
       if (m < 6)
-        return { colour: "#f59e0b", bg: "rgba(245, 158, 11, 0.1)", label: "Caution", emoji: "🟡" };
+        return {
+          colour: "var(--colors-chart-warning)",
+          bg: "color-mix(in srgb, var(--colors-chart-warning) 10%, transparent)",
+          label: "Caution",
+          emoji: "🟡",
+        };
       if (m < 12)
-        return { colour: "#f97316", bg: "rgba(249, 115, 22, 0.1)", label: "Moderate", emoji: "🟠" };
-      return { colour: "#10b981", bg: "rgba(16, 185, 129, 0.1)", label: "Healthy", emoji: "🟢" };
+        return {
+          colour: "var(--colors-chart-warning)",
+          bg: "color-mix(in srgb, var(--colors-chart-warning) 1%, transparent)",
+          label: "Moderate",
+          emoji: "🟠",
+        };
+      return {
+        colour: "var(--colors-chart-wealth)",
+        bg: "color-mix(in srgb, var(--colors-chart-wealth) 10%, transparent)",
+        label: "Healthy",
+        emoji: "🟢",
+      };
     };
 
     const runwayMonths = stats.runwayMonths ?? Number.POSITIVE_INFINITY;
@@ -257,7 +278,7 @@ const BudgetDashboard: FC<BudgetDashboardProps> = ({
             borderRadius: "lg",
             border: "1px dashed",
             borderColor: "primary",
-            backgroundColor: "rgba(99,99,241,0.06)",
+            backgroundColor: "color-mix(in srgb, var(--colors-primary) 6%, transparent)",
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
@@ -301,7 +322,7 @@ const BudgetDashboard: FC<BudgetDashboardProps> = ({
           <FLPText color="text.muted" fontSize="xs" fontWeight="semibold" textTransform="uppercase">
             Monthly Income
           </FLPText>
-          <FLPHeading as="h2" color="success.500" size="2xl" style={{ marginTop: "4px" }}>
+          <FLPHeading as="h2" color="status.positive.text" size="2xl" style={{ marginTop: "4px" }}>
             {fmt(totals.income)}
           </FLPHeading>
           <FLPText color="text.muted" fontSize="xs">
@@ -333,8 +354,11 @@ const BudgetDashboard: FC<BudgetDashboardProps> = ({
             borderRadius: "xl",
             borderWidth: "1px",
             borderStyle: "solid",
-            borderColor: totals.surplus >= 0 ? "success.500" : "destructive",
-            backgroundColor: totals.surplus >= 0 ? "rgba(16,185,129,0.06)" : "rgba(239,68,68,0.06)",
+            borderColor: totals.surplus >= 0 ? "status.positive.text" : "destructive",
+            backgroundColor:
+              totals.surplus >= 0
+                ? "color-mix(in srgb, var(--colors-chart-wealth) 6%, transparent)"
+                : "color-mix(in srgb, var(--colors-status-danger-text) 6%, transparent)",
           })}
         >
           <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
@@ -365,8 +389,8 @@ const BudgetDashboard: FC<BudgetDashboardProps> = ({
         <div
           className={cardBase}
           style={{
-            borderColor: "rgba(99, 99, 241, 0.4)",
-            backgroundColor: "rgba(99, 99, 241, 0.04)",
+            borderColor: "color-mix(in srgb, var(--colors-primary) 40%, transparent)",
+            backgroundColor: "color-mix(in srgb, var(--colors-primary) 4%, transparent)",
           }}
         >
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
@@ -381,8 +405,8 @@ const BudgetDashboard: FC<BudgetDashboardProps> = ({
             <span
               style={{
                 fontSize: "10px",
-                backgroundColor: "rgba(99,99,241,0.15)",
-                color: "#6363f1",
+                backgroundColor: "color-mix(in srgb, var(--colors-primary) 15%, transparent)",
+                color: "var(--colors-primary)",
                 padding: "1px 6px",
                 borderRadius: "4px",
                 fontWeight: "bold",
@@ -419,8 +443,8 @@ const BudgetDashboard: FC<BudgetDashboardProps> = ({
             padding: isMobileVariant ? "16px" : "20px",
             borderRadius: "lg",
             border: "1px solid",
-            borderColor: "rgba(99, 102, 241, 0.3)",
-            backgroundColor: "rgba(99, 102, 241, 0.03)",
+            borderColor: "color-mix(in srgb, var(--colors-primary) 30%, transparent)",
+            backgroundColor: "color-mix(in srgb, var(--colors-primary) 3%, transparent)",
             display: "flex",
             flexDirection: "column",
             gap: "12px",
@@ -451,8 +475,8 @@ const BudgetDashboard: FC<BudgetDashboardProps> = ({
                 fontWeight: 700,
                 padding: "2px 8px",
                 borderRadius: "999px",
-                backgroundColor: "rgba(99, 102, 241, 0.15)",
-                color: "#6366f1",
+                backgroundColor: "color-mix(in srgb, var(--colors-primary) 15%, transparent)",
+                color: "var(--colors-primary)",
                 whiteSpace: "nowrap",
                 flexShrink: 0,
               }}
@@ -495,7 +519,7 @@ const BudgetDashboard: FC<BudgetDashboardProps> = ({
             <FLPText color="text.muted" fontSize="xs">
               {cashFlowSplit.priorityItems.length} priority items tracked
             </FLPText>
-            <FLPText color="success.500" fontSize="xs" fontWeight="semibold">
+            <FLPText color="status.positive.text" fontSize="xs" fontWeight="semibold">
               Protected against secondary credit claims
             </FLPText>
           </div>
@@ -507,8 +531,8 @@ const BudgetDashboard: FC<BudgetDashboardProps> = ({
             padding: isMobileVariant ? "16px" : "20px",
             borderRadius: "lg",
             border: "1px solid",
-            borderColor: "rgba(16, 185, 129, 0.3)",
-            backgroundColor: "rgba(16, 185, 129, 0.03)",
+            borderColor: "color-mix(in srgb, var(--colors-chart-wealth) 30%, transparent)",
+            backgroundColor: "color-mix(in srgb, var(--colors-chart-wealth) 3%, transparent)",
             display: "flex",
             flexDirection: "column",
             gap: "12px",
@@ -519,7 +543,7 @@ const BudgetDashboard: FC<BudgetDashboardProps> = ({
           >
             <div>
               <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                <FiCompass style={{ color: "#0ea5e9", fontSize: "16px" }} />
+                <FiCompass style={{ color: "var(--colors-status-info-text)", fontSize: "16px" }} />
                 <FLPHeading as="h3" size="sm">
                   Flexible and discretionary spend
                 </FLPHeading>
@@ -534,7 +558,7 @@ const BudgetDashboard: FC<BudgetDashboardProps> = ({
                 fontWeight: 700,
                 padding: "2px 8px",
                 borderRadius: "999px",
-                backgroundColor: "rgba(16, 185, 129, 0.15)",
+                backgroundColor: "color-mix(in srgb, var(--colors-chart-wealth) 15%, transparent)",
                 color: "var(--colors-status-positive-text)",
               }}
             >
@@ -589,9 +613,15 @@ const BudgetDashboard: FC<BudgetDashboardProps> = ({
           className={css({
             padding: "14px 18px",
             borderRadius: "lg",
-            backgroundColor: { base: "destructive.bg", _dark: "rgba(239, 68, 68, 0.12)" },
+            backgroundColor: {
+              base: "destructive.bg",
+              _dark: "color-mix(in srgb, var(--colors-status-danger-text) 12%, transparent)",
+            },
             border: "1px solid",
-            borderColor: { base: "destructive.border", _dark: "rgba(239, 68, 68, 0.35)" },
+            borderColor: {
+              base: "destructive.border",
+              _dark: "color-mix(in srgb, var(--colors-status-danger-text) 35%, transparent)",
+            },
             display: "flex",
             flexDirection: "column",
             gap: "8px",
@@ -611,7 +641,7 @@ const BudgetDashboard: FC<BudgetDashboardProps> = ({
                 size={16}
                 style={{ color: "var(--colors-status-danger-text)", flexShrink: 0 }}
               />
-              <strong style={{ fontSize: "14px", color: "var(--colors-text-primary, #0f172a)" }}>
+              <strong style={{ fontSize: "14px", color: "var(--colors-text-primary)" }}>
                 Priority debt check active
               </strong>
               <span
@@ -620,7 +650,8 @@ const BudgetDashboard: FC<BudgetDashboardProps> = ({
                   fontWeight: "700",
                   padding: "2px 8px",
                   borderRadius: "full",
-                  backgroundColor: "rgba(239, 68, 68, 0.2)",
+                  backgroundColor:
+                    "color-mix(in srgb, var(--colors-status-danger-text) 20%, transparent)",
                   color: "var(--colors-status-danger-text)",
                 }}
               >
@@ -631,7 +662,7 @@ const BudgetDashboard: FC<BudgetDashboardProps> = ({
           <p
             style={{
               fontSize: "13px",
-              color: "var(--colors-text-secondary, #475569)",
+              color: "var(--colors-text-secondary)",
               margin: 0,
               lineHeight: 1.5,
             }}
@@ -693,13 +724,13 @@ const BudgetDashboard: FC<BudgetDashboardProps> = ({
           borderRadius: "lg",
           backgroundColor:
             cashFlowSplit.billsWithCliffs.length > 0
-              ? "rgba(239, 68, 68, 0.06)"
-              : "rgba(245, 158, 11, 0.06)",
+              ? "color-mix(in srgb, var(--colors-status-danger-text) 6%, transparent)"
+              : "color-mix(in srgb, var(--colors-chart-warning) 6%, transparent)",
           border: "1px solid",
           borderColor:
             cashFlowSplit.billsWithCliffs.length > 0
-              ? "rgba(239, 68, 68, 0.3)"
-              : "rgba(245, 158, 11, 0.25)",
+              ? "color-mix(in srgb, var(--colors-status-danger-text) 30%, transparent)"
+              : "color-mix(in srgb, var(--colors-chart-warning) 25%, transparent)",
           display: "flex",
           flexDirection: "column",
           gap: "12px",
@@ -721,7 +752,7 @@ const BudgetDashboard: FC<BudgetDashboardProps> = ({
                 color:
                   cashFlowSplit.billsWithCliffs.length > 0
                     ? "var(--colors-status-danger-text)"
-                    : "#6363f1",
+                    : "var(--colors-primary)",
               }}
             >
               {cashFlowSplit.billsWithCliffs.length > 0 ? <FiAlertTriangle /> : <FiCalendar />}
@@ -736,8 +767,9 @@ const BudgetDashboard: FC<BudgetDashboardProps> = ({
                       fontSize: "12px",
                       padding: "2px 8px",
                       borderRadius: "999px",
-                      backgroundColor: "rgba(239, 68, 68, 0.15)",
-                      color: "#dc2626",
+                      backgroundColor:
+                        "color-mix(in srgb, var(--colors-status-danger-text) 15%, transparent)",
+                      color: "var(--colors-status-danger-text)",
                     }}
                   >
                     {cashFlowSplit.billsWithCliffs.length} renewal deadline
@@ -763,7 +795,8 @@ const BudgetDashboard: FC<BudgetDashboardProps> = ({
               flexWrap: "wrap",
               gap: "8px",
               paddingTop: "4px",
-              borderTop: "1px solid rgba(239, 68, 68, 0.15)",
+              borderTop:
+                "1px solid color-mix(in srgb, var(--colors-status-danger-text) 15%, transparent)",
             }}
           >
             {cashFlowSplit.billsWithCliffs.map((bill) => (
@@ -777,7 +810,8 @@ const BudgetDashboard: FC<BudgetDashboardProps> = ({
                   padding: "4px 10px",
                   borderRadius: "6px",
                   backgroundColor: "var(--colors-surface)",
-                  border: "1px solid rgba(239, 68, 68, 0.25)",
+                  border:
+                    "1px solid color-mix(in srgb, var(--colors-status-danger-text) 25%, transparent)",
                 }}
               >
                 <span style={{ fontWeight: 600 }}>{bill.name}</span>
@@ -788,7 +822,10 @@ const BudgetDashboard: FC<BudgetDashboardProps> = ({
                   style={{
                     fontSize: "11px",
                     fontWeight: 700,
-                    color: (bill.daysUntil ?? 0) <= 0 ? "#dc2626" : "#d97706",
+                    color:
+                      (bill.daysUntil ?? 0) <= 0
+                        ? "var(--colors-status-danger-text)"
+                        : "var(--colors-chart-warning)",
                   }}
                 >
                   {(bill.daysUntil ?? 0) <= 0
@@ -812,7 +849,7 @@ const BudgetDashboard: FC<BudgetDashboardProps> = ({
         {/* Pie Chart */}
         <FLPCard>
           <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "16px" }}>
-            <FaChartPie style={{ color: "#6363f1" }} />
+            <FaChartPie style={{ color: "var(--colors-primary)" }} />
             <FLPHeading as="h3" size="sm">
               Expense Breakdown
             </FLPHeading>
@@ -1023,7 +1060,7 @@ const BudgetDashboard: FC<BudgetDashboardProps> = ({
                 >
                   {fmt(ct.total)}/mo
                 </FLPText>
-                <FaArrowRight style={{ color: "#a1a1aa", fontSize: "12px" }} />
+                <FaArrowRight style={{ color: "var(--colors-chart-baseline)", fontSize: "12px" }} />
               </div>
             </button>
           ))}

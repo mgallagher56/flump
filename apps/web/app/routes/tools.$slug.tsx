@@ -395,8 +395,8 @@ export const ToolDetailPage: FC = () => {
             style={{
               padding: "4px 10px",
               borderRadius: "full",
-              backgroundColor: "rgba(99, 102, 241, 0.12)",
-              color: "#6366f1",
+              backgroundColor: "color-mix(in srgb, var(--colors-primary) 12%, transparent)",
+              color: "var(--colors-primary)",
               fontSize: "12px",
               fontWeight: 700,
               textTransform: "uppercase",

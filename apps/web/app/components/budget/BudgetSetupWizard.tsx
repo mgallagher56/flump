@@ -132,7 +132,7 @@ const EntryRow: FC<EntryRowProps> = ({ entry, symbol, onUpdate, onDelete, deleti
             cursor: "pointer",
             fontSize: "10px",
             fontWeight: "semibold",
-            color: entry.isEssential ? "success.500" : "text.muted",
+            color: entry.isEssential ? "status.positive.text" : "text.muted",
             _hover: { textDecoration: "underline" },
           })}
           title="Click to toggle essential vs discretionary"
@@ -194,7 +194,7 @@ const EntryRow: FC<EntryRowProps> = ({ entry, symbol, onUpdate, onDelete, deleti
         transition: "all 0.15s ease",
         _hover: {
           color: "status.danger.text",
-          backgroundColor: "rgba(239, 68, 68, 0.1)",
+          backgroundColor: "color-mix(in srgb, var(--colors-status-danger-text) 10%, transparent)",
         },
       })}
     >
@@ -476,7 +476,7 @@ const BudgetSetupWizard: FC<BudgetSetupWizardProps> = ({
           _hover: {
             borderColor: "primary",
             color: "primary",
-            backgroundColor: "rgba(99, 99, 241, 0.04)",
+            backgroundColor: "color-mix(in srgb, var(--colors-primary) 4%, transparent)",
           },
         })}
         type="button"
@@ -505,7 +505,7 @@ const BudgetSetupWizard: FC<BudgetSetupWizardProps> = ({
         borderColor: "border",
         overflow: "hidden",
         backgroundColor: "surface",
-        boxShadow: "0 8px 30px rgba(0,0,0,0.12)",
+        boxShadow: "0 8px 30px color-mix(in srgb, var(--colors-surface-contrast) 12%, transparent)",
       })}
     >
       {/* Progress bar */}
@@ -519,7 +519,7 @@ const BudgetSetupWizard: FC<BudgetSetupWizardProps> = ({
           style={{
             height: "100%",
             width: `${progressPct}%`,
-            backgroundColor: "#6363f1",
+            backgroundColor: "var(--colors-primary)",
             transition: "width 0.4s ease",
           }}
         />
@@ -550,7 +550,7 @@ const BudgetSetupWizard: FC<BudgetSetupWizardProps> = ({
                 padding: "10px 14px",
                 fontSize: "xs",
                 fontWeight: "semibold",
-                color: isCurrent ? "primary" : isDone ? "success.500" : "text.muted",
+                color: isCurrent ? "primary" : isDone ? "status.positive.text" : "text.muted",
                 borderBottom: isCurrent ? "2px solid" : "2px solid transparent",
                 borderBottomColor: isCurrent ? "primary" : "transparent",
                 flexShrink: 0,
@@ -599,8 +599,8 @@ const BudgetSetupWizard: FC<BudgetSetupWizardProps> = ({
               gap: "16px",
               padding: "20px",
               borderRadius: "lg",
-              backgroundColor: "rgba(99, 99, 241, 0.05)",
-              border: "1px solid rgba(99, 99, 241, 0.2)",
+              backgroundColor: "color-mix(in srgb, var(--colors-primary) 5%, transparent)",
+              border: "1px solid color-mix(in srgb, var(--colors-primary) 20%, transparent)",
             })}
           >
             {[
@@ -610,7 +610,9 @@ const BudgetSetupWizard: FC<BudgetSetupWizardProps> = ({
               "Unlock the Runway calculator to see how long you'd last if you lost your job",
             ].map((point) => (
               <div key={point} style={{ display: "flex", gap: "12px", alignItems: "flex-start" }}>
-                <FaCheckCircle style={{ color: "#6363f1", marginTop: "2px", flexShrink: 0 }} />
+                <FaCheckCircle
+                  style={{ color: "var(--colors-primary)", marginTop: "2px", flexShrink: 0 }}
+                />
                 <FLPText fontSize="sm">{point}</FLPText>
               </div>
             ))}
@@ -631,7 +633,7 @@ const BudgetSetupWizard: FC<BudgetSetupWizardProps> = ({
                 borderRadius: "xl",
                 border: "2px solid",
                 borderColor: "primary",
-                backgroundColor: "rgba(99, 99, 241, 0.05)",
+                backgroundColor: "color-mix(in srgb, var(--colors-primary) 5%, transparent)",
                 display: "flex",
                 flexDirection: "column",
                 justifyContent: "space-between",
@@ -786,8 +788,9 @@ const BudgetSetupWizard: FC<BudgetSetupWizardProps> = ({
                 className={css({
                   padding: "12px",
                   borderRadius: "md",
-                  backgroundColor: "rgba(16, 185, 129, 0.08)",
-                  border: "1px solid rgba(16, 185, 129, 0.25)",
+                  backgroundColor: "color-mix(in srgb, var(--colors-chart-wealth) 8%, transparent)",
+                  border:
+                    "1px solid color-mix(in srgb, var(--colors-chart-wealth) 25%, transparent)",
                   marginBottom: "8px",
                   display: "flex",
                   alignItems: "center",
@@ -796,7 +799,7 @@ const BudgetSetupWizard: FC<BudgetSetupWizardProps> = ({
                   flexWrap: "wrap",
                 })}
               >
-                <FLPText color="success.500" fontSize="xs">
+                <FLPText color="status.positive.text" fontSize="xs">
                   💡 Your profile has a monthly take-home of <strong>{fmt(monthlyTakeHome)}</strong>
                   . Update the salary entry below to match.
                 </FLPText>
@@ -806,13 +809,17 @@ const BudgetSetupWizard: FC<BudgetSetupWizardProps> = ({
                     className={css({
                       fontSize: "xs",
                       fontWeight: "semibold",
-                      color: "success.500",
+                      color: "status.positive.text",
                       backgroundColor: "surface",
-                      border: "1px solid rgba(16, 185, 129, 0.4)",
+                      border:
+                        "1px solid color-mix(in srgb, var(--colors-chart-wealth) 40%, transparent)",
                       borderRadius: "sm",
                       padding: "4px 10px",
                       cursor: "pointer",
-                      _hover: { backgroundColor: "rgba(16, 185, 129, 0.15)" },
+                      _hover: {
+                        backgroundColor:
+                          "color-mix(in srgb, var(--colors-chart-wealth) 15%, transparent)",
+                      },
                     })}
                     onClick={() => {
                       const primary =
@@ -883,8 +890,9 @@ const BudgetSetupWizard: FC<BudgetSetupWizardProps> = ({
                   gap: "10px",
                   padding: "12px 16px",
                   borderRadius: "8px",
-                  backgroundColor: "rgba(16, 185, 129, 0.08)",
-                  border: "1px solid rgba(16, 185, 129, 0.2)",
+                  backgroundColor: "color-mix(in srgb, var(--colors-chart-wealth) 8%, transparent)",
+                  border:
+                    "1px solid color-mix(in srgb, var(--colors-chart-wealth) 20%, transparent)",
                   marginTop: "16px",
                 }}
               >
@@ -918,12 +926,21 @@ const BudgetSetupWizard: FC<BudgetSetupWizardProps> = ({
         {currentStep === "summary" && (
           <div className={css({ display: "flex", flexDirection: "column", gap: "12px" })}>
             {[
-              { label: "Total Income", value: fmt(totalIncome), colour: "#10b981" },
-              { label: "Total Expenses", value: fmt(totalExpenses), colour: "#ef4444" },
+              {
+                label: "Total Income",
+                value: fmt(totalIncome),
+                colour: "var(--colors-chart-wealth)",
+              },
+              {
+                label: "Total Expenses",
+                value: fmt(totalExpenses),
+                colour: "var(--colors-status-danger-text)",
+              },
               {
                 label: surplus >= 0 ? "Monthly Surplus" : "Monthly Deficit",
                 value: `${surplus >= 0 ? "+" : "-"}${fmt(surplus)}`,
-                colour: surplus >= 0 ? "#10b981" : "#ef4444",
+                colour:
+                  surplus >= 0 ? "var(--colors-chart-wealth)" : "var(--colors-status-danger-text)",
                 big: true,
               },
             ].map((row) => (

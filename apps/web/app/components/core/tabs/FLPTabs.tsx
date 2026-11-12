@@ -75,7 +75,8 @@ const FLPTabs: FC<FLPTabsProps> = ({
           backgroundColor: "surface",
           color: "text.primary",
           fontWeight: "semibold",
-          boxShadow: "0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06)",
+          boxShadow:
+            "0 1px 3px color-mix(in srgb, var(--colors-surface-contrast) 10%, transparent), 0 1px 2px color-mix(in srgb, var(--colors-surface-contrast) 6%, transparent)",
         },
         _hover: {
           color: "text.primary",

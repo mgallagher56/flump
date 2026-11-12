@@ -23,13 +23,17 @@ const bannerContainerStyle = (isInTrap: boolean) =>
   css({
     borderRadius: "2xl",
     border: "1px solid",
-    borderColor: isInTrap ? "rgba(239, 68, 68, 0.4)" : "rgba(245, 158, 11, 0.4)",
-    backgroundColor: isInTrap ? "rgba(239, 68, 68, 0.04)" : "rgba(245, 158, 11, 0.04)",
+    borderColor: isInTrap
+      ? "color-mix(in srgb, var(--colors-status-danger-text) 40%, transparent)"
+      : "color-mix(in srgb, var(--colors-chart-warning) 40%, transparent)",
+    backgroundColor: isInTrap
+      ? "color-mix(in srgb, var(--colors-status-danger-text) 4%, transparent)"
+      : "color-mix(in srgb, var(--colors-chart-warning) 4%, transparent)",
     padding: { base: "18px 16px", md: "24px 28px" },
     display: "flex",
     flexDirection: "column",
     gap: "18px",
-    boxShadow: "0 4px 16px rgba(0, 0, 0, 0.04)",
+    boxShadow: "0 4px 16px color-mix(in srgb, var(--colors-surface-contrast) 4%, transparent)",
   });
 
 // Semantic status tokens keep the badge above 4.5:1 contrast in light and dark.
@@ -118,9 +122,11 @@ export const TaxTrapAlertBanner: FC<TaxTrapAlertBannerProps> = ({
               height: "36px",
               borderRadius: "10px",
               backgroundColor: trapAnalysis.isInTaxTrap
-                ? "rgba(239, 68, 68, 0.15)"
-                : "rgba(245, 158, 11, 0.15)",
-              color: trapAnalysis.isInTaxTrap ? "var(--colors-status-danger-text)" : "#d97706",
+                ? "color-mix(in srgb, var(--colors-status-danger-text) 15%, transparent)"
+                : "color-mix(in srgb, var(--colors-chart-warning) 15%, transparent)",
+              color: trapAnalysis.isInTaxTrap
+                ? "var(--colors-status-danger-text)"
+                : "var(--colors-chart-warning)",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
@@ -174,8 +180,10 @@ export const TaxTrapAlertBanner: FC<TaxTrapAlertBannerProps> = ({
             style={{
               padding: "8px 14px",
               borderRadius: "8px",
-              backgroundColor: "rgba(239, 68, 68, 0.08)",
-              border: "1px solid rgba(239, 68, 68, 0.2)",
+              backgroundColor:
+                "color-mix(in srgb, var(--colors-status-danger-text) 8%, transparent)",
+              border:
+                "1px solid color-mix(in srgb, var(--colors-status-danger-text) 20%, transparent)",
               fontSize: "12px",
               textAlign: "right",
             }}

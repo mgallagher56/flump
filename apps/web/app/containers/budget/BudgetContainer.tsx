@@ -270,7 +270,9 @@ const BudgetContainer: FC = () => {
       transition: "all 0.15s ease",
       color: active ? "text.primary" : "text.muted",
       backgroundColor: active ? "surface" : "transparent",
-      boxShadow: active ? "0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06)" : "none",
+      boxShadow: active
+        ? "0 1px 3px color-mix(in srgb, var(--colors-surface-contrast) 10%, transparent), 0 1px 2px color-mix(in srgb, var(--colors-surface-contrast) 6%, transparent)"
+        : "none",
       border: "1px solid",
       borderColor: active ? "border.subtle" : "transparent",
       "&:hover": {
@@ -291,7 +293,9 @@ const BudgetContainer: FC = () => {
       whiteSpace: "nowrap",
       transition: "all 0.15s ease",
       color: active ? "primary" : "text.secondary",
-      backgroundColor: active ? "rgba(99, 99, 241, 0.1)" : "surface.subtle",
+      backgroundColor: active
+        ? "color-mix(in srgb, var(--colors-primary) 10%, transparent)"
+        : "surface.subtle",
       border: "1px solid",
       borderColor: active ? "primary" : "border",
       "&:hover": {
@@ -451,7 +455,9 @@ const BudgetContainer: FC = () => {
                 borderColor: "primary",
                 borderRadius: "full",
                 transition: "all 0.15s ease",
-                _hover: { backgroundColor: "rgba(99,99,241,0.08)" },
+                _hover: {
+                  backgroundColor: "color-mix(in srgb, var(--colors-primary) 8%, transparent)",
+                },
               })}
               type="button"
               onClick={() => setIsAddCategoryOpen(true)}
@@ -497,7 +503,7 @@ const BudgetContainer: FC = () => {
                 width: "56px",
                 height: "56px",
                 borderRadius: "full",
-                backgroundColor: "rgba(99, 99, 241, 0.1)",
+                backgroundColor: "color-mix(in srgb, var(--colors-primary) 10%, transparent)",
                 color: "primary",
                 display: "flex",
                 alignItems: "center",

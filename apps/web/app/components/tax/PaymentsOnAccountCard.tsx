@@ -17,7 +17,7 @@ const cardStyle = css({
   display: "flex",
   flexDirection: "column",
   gap: "18px",
-  boxShadow: "0 4px 16px rgba(0, 0, 0, 0.04)",
+  boxShadow: "0 4px 16px color-mix(in srgb, var(--colors-surface-contrast) 4%, transparent)",
 });
 
 const gridLayout = css({
@@ -74,8 +74,8 @@ export const PaymentsOnAccountCard: FC<PaymentsOnAccountCardProps> = ({
                 width: "28px",
                 height: "28px",
                 borderRadius: "8px",
-                backgroundColor: "rgba(59, 130, 246, 0.12)",
-                color: "#3b82f6",
+                backgroundColor: "color-mix(in srgb, var(--colors-chart-series2) 12%, transparent)",
+                color: "var(--colors-chart-series2)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
@@ -99,8 +99,8 @@ export const PaymentsOnAccountCard: FC<PaymentsOnAccountCardProps> = ({
           style={{
             padding: "10px 16px",
             borderRadius: "12px",
-            backgroundColor: "rgba(16, 185, 129, 0.08)",
-            border: "1px solid rgba(16, 185, 129, 0.25)",
+            backgroundColor: "color-mix(in srgb, var(--colors-chart-wealth) 8%, transparent)",
+            border: "1px solid color-mix(in srgb, var(--colors-chart-wealth) 25%, transparent)",
             textAlign: "right",
           }}
         >
@@ -134,7 +134,9 @@ export const PaymentsOnAccountCard: FC<PaymentsOnAccountCardProps> = ({
         >
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <strong style={{ fontSize: "13px" }}>31 January Deadline</strong>
-            <span style={{ fontSize: "11px", color: "#d97706", fontWeight: 600 }}>
+            <span
+              style={{ fontSize: "11px", color: "var(--colors-chart-warning)", fontWeight: 600 }}
+            >
               {daysToJan31} days left
             </span>
           </div>
@@ -184,7 +186,7 @@ export const PaymentsOnAccountCard: FC<PaymentsOnAccountCardProps> = ({
           gap: "8px",
           fontSize: "12px",
           color: "var(--colors-text-muted)",
-          backgroundColor: "rgba(99, 102, 241, 0.05)",
+          backgroundColor: "color-mix(in srgb, var(--colors-primary) 5%, transparent)",
           padding: "10px 14px",
           borderRadius: "8px",
         }}

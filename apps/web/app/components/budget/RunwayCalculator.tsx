@@ -68,7 +68,7 @@ const STATUS_CONFIG: Record<
   },
   moderate: {
     colour: "var(--colors-warning-600)",
-    bg: "rgba(249,115,22,0.08)",
+    bg: "color-mix(in srgb, var(--colors-chart-warning) 08%, transparent)",
     label: "Moderate",
     emoji: "🟠",
   },
@@ -106,7 +106,7 @@ const knobStyle = (active: boolean) => ({
   borderRadius: "50%",
   backgroundColor: "white",
   transition: "left 0.2s ease",
-  boxShadow: "0 1px 3px rgba(0,0,0,0.3)",
+  boxShadow: "0 1px 3px color-mix(in srgb, var(--colors-surface-contrast) 30%, transparent)",
 });
 
 const smallInputStyle = css({
@@ -122,7 +122,7 @@ const smallInputStyle = css({
   transition: "border-color 0.15s ease, box-shadow 0.15s ease",
   _focus: {
     borderColor: "primary",
-    boxShadow: "0 0 0 2px rgba(99, 99, 241, 0.2)",
+    boxShadow: "0 0 0 2px color-mix(in srgb, var(--colors-primary) 20%, transparent)",
   },
 });
 
@@ -419,8 +419,8 @@ const RunwayCalculator: FC<RunwayCalculatorProps> = ({
         className={css({
           padding: "16px 20px",
           borderRadius: "lg",
-          backgroundColor: "rgba(99,99,241,0.06)",
-          border: "1px solid rgba(99,99,241,0.2)",
+          backgroundColor: "color-mix(in srgb, var(--colors-primary) 6%, transparent)",
+          border: "1px solid color-mix(in srgb, var(--colors-primary) 20%, transparent)",
           display: "flex",
           flexDirection: isMobile ? "column" : "row",
           gap: "12px",
@@ -429,7 +429,9 @@ const RunwayCalculator: FC<RunwayCalculatorProps> = ({
         })}
       >
         <div style={{ display: "flex", gap: "12px", alignItems: "flex-start" }}>
-          <FaInfoCircle style={{ color: "#6363f1", marginTop: "3px", flexShrink: 0 }} />
+          <FaInfoCircle
+            style={{ color: "var(--colors-primary)", marginTop: "3px", flexShrink: 0 }}
+          />
           <FLPText fontSize="sm" color="text.muted" style={{ lineHeight: "1.6" }}>
             Toggle the accounts you'd use, income you'd keep, and expenses you'd cut. All options
             are auto-saved so your custom runway scenario stays preserved. Primary salary is
@@ -447,7 +449,7 @@ const RunwayCalculator: FC<RunwayCalculatorProps> = ({
               fontWeight: 500,
               padding: "4px 8px",
               borderRadius: "6px",
-              backgroundColor: "rgba(16,185,129,0.1)",
+              backgroundColor: "color-mix(in srgb, var(--colors-chart-wealth) 10%, transparent)",
             }}
           >
             <FaCheckCircle size={12} /> Auto-saved
@@ -507,8 +509,8 @@ const RunwayCalculator: FC<RunwayCalculatorProps> = ({
                     fontSize: "11px",
                     padding: "2px 8px",
                     borderRadius: "12px",
-                    backgroundColor: "rgba(99,99,241,0.1)",
-                    color: "#6363f1",
+                    backgroundColor: "color-mix(in srgb, var(--colors-primary) 10%, transparent)",
+                    color: "var(--colors-primary)",
                     fontWeight: 600,
                   }}
                 >
@@ -572,20 +574,32 @@ const RunwayCalculator: FC<RunwayCalculatorProps> = ({
                         justifyContent: "space-between",
                         padding: "10px 12px",
                         borderRadius: "md",
-                        backgroundColor: isIncluded ? "rgba(99,99,241,0.06)" : "background",
+                        backgroundColor: isIncluded
+                          ? "color-mix(in srgb, var(--colors-primary) 6%, transparent)"
+                          : "background",
                         border: "1px solid",
-                        borderColor: isIncluded ? "rgba(99,99,241,0.4)" : "border",
+                        borderColor: isIncluded
+                          ? "color-mix(in srgb, var(--colors-primary) 40%, transparent)"
+                          : "border",
                         transition: "all 0.2s",
                       })}
                     >
                       <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
                         {isIncluded ? (
                           <FaCheckCircle
-                            style={{ color: "#6363f1", fontSize: "14px", flexShrink: 0 }}
+                            style={{
+                              color: "var(--colors-primary)",
+                              fontSize: "14px",
+                              flexShrink: 0,
+                            }}
                           />
                         ) : (
                           <FaTimesCircle
-                            style={{ color: "#a1a1aa", fontSize: "14px", flexShrink: 0 }}
+                            style={{
+                              color: "var(--colors-chart-baseline)",
+                              fontSize: "14px",
+                              flexShrink: 0,
+                            }}
                           />
                         )}
                         <div>
@@ -594,7 +608,9 @@ const RunwayCalculator: FC<RunwayCalculatorProps> = ({
                           </FLPText>
                           <FLPText color="text.muted" fontSize="xs">
                             <span>{acc.type}</span> ·{" "}
-                            <span style={{ color: isIncluded ? "#6363f1" : "inherit" }}>
+                            <span
+                              style={{ color: isIncluded ? "var(--colors-primary)" : "inherit" }}
+                            >
                               {isIncluded ? "included" : "excluded"}
                             </span>
                           </FLPText>
@@ -617,7 +633,9 @@ const RunwayCalculator: FC<RunwayCalculatorProps> = ({
                           aria-label={`Include ${acc.name} in savings pool`}
                           className={toggleBtnStyle}
                           style={{
-                            backgroundColor: isIncluded ? "#6363f1" : "rgba(161, 161, 170, 0.35)",
+                            backgroundColor: isIncluded
+                              ? "var(--colors-primary)"
+                              : "color-mix(in srgb, var(--colors-chart-baseline) 35%, transparent)",
                           }}
                           role="switch"
                           type="button"
@@ -674,7 +692,8 @@ const RunwayCalculator: FC<RunwayCalculatorProps> = ({
                       fontSize: "11px",
                       padding: "2px 8px",
                       borderRadius: "12px",
-                      backgroundColor: "rgba(16,185,129,0.12)",
+                      backgroundColor:
+                        "color-mix(in srgb, var(--colors-chart-wealth) 12%, transparent)",
                       color: "var(--colors-status-positive-text)",
                       fontWeight: 600,
                     }}
@@ -693,7 +712,10 @@ const RunwayCalculator: FC<RunwayCalculatorProps> = ({
                       backgroundColor: "background",
                       cursor: "pointer",
                       color: "text.muted",
-                      _hover: { borderColor: "#10b981", color: "status.positive.text" },
+                      _hover: {
+                        borderColor: "var(--colors-chart-wealth)",
+                        color: "status.positive.text",
+                      },
                     })}
                     type="button"
                     onClick={() => setAllIncome(true)}
@@ -732,9 +754,13 @@ const RunwayCalculator: FC<RunwayCalculatorProps> = ({
                         justifyContent: "space-between",
                         padding: "8px 12px",
                         borderRadius: "md",
-                        backgroundColor: isKept ? "rgba(16,185,129,0.06)" : "background",
+                        backgroundColor: isKept
+                          ? "color-mix(in srgb, var(--colors-chart-wealth) 6%, transparent)"
+                          : "background",
                         border: "1px solid",
-                        borderColor: isKept ? "rgba(16,185,129,0.35)" : "border",
+                        borderColor: isKept
+                          ? "color-mix(in srgb, var(--colors-chart-wealth) 35%, transparent)"
+                          : "border",
                         transition: "all 0.2s",
                       })}
                     >
@@ -749,7 +775,11 @@ const RunwayCalculator: FC<RunwayCalculatorProps> = ({
                           />
                         ) : (
                           <FaTimesCircle
-                            style={{ color: "#a1a1aa", fontSize: "14px", flexShrink: 0 }}
+                            style={{
+                              color: "var(--colors-chart-baseline)",
+                              fontSize: "14px",
+                              flexShrink: 0,
+                            }}
                           />
                         )}
                         <div>
@@ -781,7 +811,9 @@ const RunwayCalculator: FC<RunwayCalculatorProps> = ({
                         aria-label={`Keep ${e.name} income`}
                         className={toggleBtnStyle}
                         style={{
-                          backgroundColor: isKept ? "#10b981" : "rgba(161, 161, 170, 0.35)",
+                          backgroundColor: isKept
+                            ? "var(--colors-chart-wealth)"
+                            : "color-mix(in srgb, var(--colors-chart-baseline) 35%, transparent)",
                         }}
                         role="switch"
                         type="button"
@@ -857,9 +889,13 @@ const RunwayCalculator: FC<RunwayCalculatorProps> = ({
                       justifyContent: "space-between",
                       padding: "8px 10px",
                       borderRadius: "md",
-                      backgroundColor: keptExpenses[e.id] ? "rgba(239,68,68,0.05)" : "background",
+                      backgroundColor: keptExpenses[e.id]
+                        ? "color-mix(in srgb, var(--colors-status-danger-text) 5%, transparent)"
+                        : "background",
                       border: "1px solid",
-                      borderColor: keptExpenses[e.id] ? "rgba(239,68,68,0.3)" : "border",
+                      borderColor: keptExpenses[e.id]
+                        ? "color-mix(in srgb, var(--colors-status-danger-text) 30%, transparent)"
+                        : "border",
                       transition: "all 0.2s",
                     })}
                   >
@@ -869,7 +905,9 @@ const RunwayCalculator: FC<RunwayCalculatorProps> = ({
                           style={{ color: "var(--colors-status-danger-text)", fontSize: "12px" }}
                         />
                       ) : (
-                        <FaCheckCircle style={{ color: "#a1a1aa", fontSize: "12px" }} />
+                        <FaCheckCircle
+                          style={{ color: "var(--colors-chart-baseline)", fontSize: "12px" }}
+                        />
                       )}
                       <div>
                         <FLPText
@@ -896,8 +934,8 @@ const RunwayCalculator: FC<RunwayCalculatorProps> = ({
                       className={toggleBtnStyle}
                       style={{
                         backgroundColor: keptExpenses[e.id]
-                          ? "#ef4444"
-                          : "rgba(161, 161, 170, 0.35)",
+                          ? "var(--colors-status-danger-text)"
+                          : "color-mix(in srgb, var(--colors-chart-baseline) 35%, transparent)",
                       }}
                       role="switch"
                       type="button"
@@ -921,7 +959,8 @@ const RunwayCalculator: FC<RunwayCalculatorProps> = ({
               overflow: "hidden",
               border: "1px solid",
               borderColor: "border",
-              boxShadow: "0 8px 30px rgba(0,0,0,0.1)",
+              boxShadow:
+                "0 8px 30px color-mix(in srgb, var(--colors-surface-contrast) 10%, transparent)",
             })}
           >
             {/* Status banner */}
@@ -1029,16 +1068,16 @@ const RunwayCalculator: FC<RunwayCalculatorProps> = ({
               }}
             >
               {[
-                { label: "Savings pool", value: fmt(pool), colour: "#10b981" },
+                { label: "Savings pool", value: fmt(pool), colour: "var(--colors-chart-wealth)" },
                 {
                   label: "Kept income / mo",
                   value: `+${fmt(totalKeptIncome)}`,
-                  colour: "#10b981",
+                  colour: "var(--colors-chart-wealth)",
                 },
                 {
                   label: "Kept expenses / mo",
                   value: `-${fmt(totalSelectedExpenses)}`,
-                  colour: "#ef4444",
+                  colour: "var(--colors-status-danger-text)",
                 },
                 {
                   label: "Monthly burn rate",

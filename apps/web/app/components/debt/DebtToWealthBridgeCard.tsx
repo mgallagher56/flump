@@ -161,13 +161,13 @@ export const DebtToWealthBridgeCard: FC<DebtToWealthBridgeCardProps> = ({
             </FLPText>
             <FLPHeading
               as="h4"
-              color="green.600"
+              color="status.positive.text"
               size="lg"
               className={css({ fontVariantNumeric: "tabular-nums" })}
             >
               +{formatCurrency(finalPoint?.wealthAccumulated || 0)}
             </FLPHeading>
-            <FLPText color="green.700" fontSize="xs">
+            <FLPText color="status.positive.text" fontSize="xs">
               Invested in a tax-sheltered ISA
             </FLPText>
           </div>
@@ -213,12 +213,20 @@ export const DebtToWealthBridgeCard: FC<DebtToWealthBridgeCardProps> = ({
               <AreaChart data={chartData} margin={{ top: 10, right: 30, left: 10, bottom: 0 }}>
                 <defs>
                   <linearGradient id="debtGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#ef4444" stopOpacity={0.8} />
-                    <stop offset="95%" stopColor="#ef4444" stopOpacity={0.05} />
+                    <stop
+                      offset="5%"
+                      stopColor="var(--colors-status-danger-text)"
+                      stopOpacity={0.8}
+                    />
+                    <stop
+                      offset="95%"
+                      stopColor="var(--colors-status-danger-text)"
+                      stopOpacity={0.05}
+                    />
                   </linearGradient>
                   <linearGradient id="wealthGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.8} />
-                    <stop offset="95%" stopColor="#10b981" stopOpacity={0.05} />
+                    <stop offset="5%" stopColor="var(--colors-chart-wealth)" stopOpacity={0.8} />
+                    <stop offset="95%" stopColor="var(--colors-chart-wealth)" stopOpacity={0.05} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
@@ -246,7 +254,7 @@ export const DebtToWealthBridgeCard: FC<DebtToWealthBridgeCardProps> = ({
                 <Area
                   type="monotone"
                   dataKey="debt"
-                  stroke="#ef4444"
+                  stroke="var(--colors-status-danger-text)"
                   strokeWidth={2}
                   fillOpacity={1}
                   fill="url(#debtGradient)"
@@ -256,7 +264,7 @@ export const DebtToWealthBridgeCard: FC<DebtToWealthBridgeCardProps> = ({
                 <Area
                   type="monotone"
                   dataKey="wealth"
-                  stroke="#10b981"
+                  stroke="var(--colors-chart-wealth)"
                   strokeWidth={2}
                   fillOpacity={1}
                   fill="url(#wealthGradient)"

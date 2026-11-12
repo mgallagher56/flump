@@ -65,7 +65,7 @@ const FLPInput: FC<FLPInputProps> = ({
     fontVariantNumeric: "tabular-nums",
     _focus: {
       borderColor: "primary",
-      boxShadow: "0 0 0 2px token(colors.primary, #4f46e5)",
+      boxShadow: "0 0 0 2px token(colors.primary)",
     },
     _disabled: {
       opacity: 0.5,
