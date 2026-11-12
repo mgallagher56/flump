@@ -9,7 +9,7 @@ The rules are deliberately stricter than the likely legal line. Loosening a rule
 
 **Status of the rules.** Sign-off is recorded in the table at the end. Until the owner signs, the rules are the working standard for agents, not a settled position.
 
-**Scope.** Every surface that shows a computed result or explanatory text to a user: `apps/web`, `apps/marketing`, `packages/ui`, `packages/finance-engine` (strings that flow into the UI, the context pack and MCP), `packages/mcp` (tool descriptions, prompts, results), the AI context pack, emails and any future agent. Tax-rule explanations are in scope for R2 and R6 even though tax advice is not itself FCA-regulated, because the wording reaches the same reader.
+**Scope.** Every surface that shows a computed result or explanatory text to a user: `apps/web`, `apps/marketing`, `packages/ui`, `packages/finance-engine` (strings that flow into the UI, the context pack and MCP), `packages/mcp` (tool descriptions, prompts, results), the AI context pack, emails and any future agent. Tax-rule explanations are in scope for R2 and R6 treated here as in scope for wording, pending E29b, because the wording reaches the same reader.
 
 **Line references** below were checked against `origin/main` at `5cfe3ef0` on 2026-11-12. They will drift. The T3 guard allow-list (once it lands) is the live source of truth, and `advice-copy-inventory.md` (T2) is the dated snapshot.
 
