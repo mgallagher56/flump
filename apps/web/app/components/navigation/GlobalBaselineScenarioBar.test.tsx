@@ -3,6 +3,21 @@ import { describe, expect, it } from "vitest";
 import { GlobalBaselineScenarioBar } from "./GlobalBaselineScenarioBar";
 
 describe("GlobalBaselineScenarioBar", () => {
+  it("renders an empty 'Not set' salary input and never commits a zero salary", () => {
+    render(<GlobalBaselineScenarioBar />);
+    fireEvent.click(screen.getByRole("button", { name: /Update details/i }));
+
+    const salaryInput = screen.getByLabelText("Gross Annual Salary") as HTMLInputElement;
+    expect(salaryInput.value).toBe("");
+    expect(salaryInput.placeholder).toBe("Not set");
+
+    // Change only the pension, leaving salary unknown, then commit.
+    fireEvent.change(screen.getByLabelText("Pension Contribution"), { target: { value: "8" } });
+    fireEvent.click(screen.getByRole("button", { name: /Commit to Profile/i }));
+    expect(screen.queryByText(/£0\b/)).toBeNull();
+    expect(screen.getAllByText("Not set").length).toBeGreaterThan(0);
+  });
+
   it("shows 'Not set' rather than an invented salary when none is known", () => {
     render(<GlobalBaselineScenarioBar />);
 

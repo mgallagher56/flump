@@ -64,7 +64,10 @@ export const GlobalBaselineScenarioBar: FC = () => {
 
   const handleCommitScenario = () => {
     updateBaseline({
-      annualGrossSalary: effectiveBaseline.annualGrossSalary,
+      // An unknown (0) salary is never committed as a real one.
+      ...(effectiveBaseline.annualGrossSalary > 0
+        ? { annualGrossSalary: effectiveBaseline.annualGrossSalary }
+        : {}),
       pensionContributionPct: effectiveBaseline.pensionContributionPct,
       isSalarySacrifice: effectiveBaseline.isSalarySacrifice,
     });
@@ -273,7 +276,10 @@ export const GlobalBaselineScenarioBar: FC = () => {
                 type="number"
                 min="0"
                 step="500"
-                value={effectiveBaseline.annualGrossSalary}
+                value={
+                  effectiveBaseline.annualGrossSalary > 0 ? effectiveBaseline.annualGrossSalary : ""
+                }
+                placeholder="Not set"
                 onChange={(e) =>
                   updateOverrides({ annualGrossSalary: Number(e.target.value) || 0 })
                 }

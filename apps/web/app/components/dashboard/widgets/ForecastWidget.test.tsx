@@ -31,6 +31,18 @@ describe("ForecastWidget take-home", () => {
     expect(notSet.className).toMatch(/tabular-nums/);
   });
 
+  it("says what is missing when a salary exists but take-home cannot be computed", () => {
+    render(
+      <ForecastWidget
+        {...baseProps}
+        data={{ ...data, annualSalary: 60000, takeHomeMissing: "Add employment type" }}
+      />,
+    );
+
+    expect(screen.getByText("Add employment type").className).toMatch(/tabular-nums/);
+    expect(screen.queryByText("Not set")).toBeNull();
+  });
+
   it("shows the monthly figure when take-home is known", () => {
     render(<ForecastWidget {...baseProps} data={{ ...data, estimatedTakeHome: 3200 }} />);
 

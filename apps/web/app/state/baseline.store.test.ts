@@ -1,6 +1,6 @@
 import type { OnboardingSeedPayload } from "@flump/finance-engine";
 import { act, renderHook } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
   CookieSeedAdapter,
   DEFAULT_FINANCIAL_BASELINE,
@@ -161,5 +161,32 @@ describe("Phase 2 Verification Gate: baseline.store & Onboarding Seed Hydration"
     const baseline = hydrateBaselineFromSeed(rawSeed);
     expect(baseline.financialStage).toBe("STAGE_3_WEALTH_OPTIMIZE");
     expect(baseline.enabledModules).toContain("tax");
+  });
+});
+
+describe("stale invented baselines", () => {
+  it("drops a baseline persisted under the old key with the invented 45,000 salary", () => {
+    window.localStorage.clear();
+    window.localStorage.setItem(
+      "flump_financial_baseline_v1",
+      JSON.stringify({ ...DEFAULT_FINANCIAL_BASELINE, annualGrossSalary: 45000 }),
+    );
+    expect(FINANCIAL_BASELINE_STORAGE_KEY).not.toBe("flump_financial_baseline_v1");
+
+    expect(new CookieSeedAdapter().getBaseline()).toBeNull();
+    expect(window.localStorage.getItem("flump_financial_baseline_v1")).toBeNull();
+  });
+
+  it("boots the baseline atom with no salary when only the old key holds 45,000", async () => {
+    window.localStorage.clear();
+    window.localStorage.setItem(
+      "flump_financial_baseline_v1",
+      JSON.stringify({ ...DEFAULT_FINANCIAL_BASELINE, annualGrossSalary: 45000 }),
+    );
+    vi.resetModules();
+    const fresh = await import("./baseline.store");
+    const { getDefaultStore } = await import("jotai");
+    expect(getDefaultStore().get(fresh.financialBaselineAtom).annualGrossSalary).toBe(0);
+    window.localStorage.clear();
   });
 });

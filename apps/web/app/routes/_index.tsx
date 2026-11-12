@@ -18,6 +18,15 @@ export const handle = {
   i18n: ["common", "home"],
 };
 
+/** What the user must add for take-home to be computed. Undefined when the salary itself is unset. */
+function describeMissingTakeHome(profile: any): string | undefined {
+  if (!profile?.annualSalary) return undefined;
+  if (profile.employmentType !== "employed" && profile.employmentType !== "self-employed") {
+    return "Add employment type";
+  }
+  return "Add pension details";
+}
+
 export const loader = async (args: LoaderFunctionArgs) => {
   const {
     accounts,
@@ -248,6 +257,7 @@ export const loader = async (args: LoaderFunctionArgs) => {
       monthlySavingRate: Math.max(0, monthlyIncome - livingExpenses),
       annualSalary: userProfile?.annualSalary ?? null,
       estimatedTakeHome: takeHomeBreakdown?.monthlyTakeHome ?? null,
+      takeHomeMissing: takeHomeBreakdown ? undefined : describeMissingTakeHome(userProfile),
     },
     taxData: {
       taxYear: getCurrentUKTaxYear(),

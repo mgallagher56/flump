@@ -1,3 +1,4 @@
+import { fireEvent } from "@testing-library/react";
 import { vi } from "vitest";
 import customRender from "~/testUtils/customRender";
 import UKTaxCalculator, { calculateUKTax } from "./UKTaxCalculator";
@@ -29,6 +30,31 @@ describe("<UKTaxCalculator /> without a salary", () => {
       expect(container.textContent).not.toContain("Monthly Take-Home Pay £");
     },
   );
+});
+
+describe("<UKTaxCalculator /> editing the salary", () => {
+  test("clearing the input while typing keeps the results mounted and the field usable", () => {
+    const { container, getByRole } = customRender(
+      <UKTaxCalculator initialSalary={45000} onApplyIncrease={vi.fn()} />,
+    );
+    const input = container.querySelector('input[type="number"]') as HTMLInputElement;
+
+    fireEvent.change(input, { target: { value: "" } });
+    expect(input.value).toBe("");
+    expect(getByRole("figure", { name: "Salary allocation" })).toBeDefined();
+
+    fireEvent.change(input, { target: { value: "60000" } });
+    expect(input.value).toBe("60000");
+    expect(getByRole("figure", { name: "Salary allocation" }).textContent).toContain("£60,000");
+  });
+
+  test("typing a salary into an unset calculator reveals the results", () => {
+    const { container, queryByRole } = customRender(<UKTaxCalculator onApplyIncrease={vi.fn()} />);
+    expect(queryByRole("figure", { name: "Salary allocation" })).toBeNull();
+    const input = container.querySelector('input[type="number"]') as HTMLInputElement;
+    fireEvent.change(input, { target: { value: "50000" } });
+    expect(queryByRole("figure", { name: "Salary allocation" })).not.toBeNull();
+  });
 });
 
 describe("<UKTaxCalculator />", () => {

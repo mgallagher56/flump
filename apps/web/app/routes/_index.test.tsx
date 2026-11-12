@@ -187,7 +187,16 @@ describe("_index route", () => {
         },
       });
       expect(data.forecastData.estimatedTakeHome).toBeNull();
+      expect(data.forecastData.takeHomeMissing).toBe("Add employment type");
     }
+  });
+
+  it("names the missing pension details when salary and employment type are known", async () => {
+    const data = await loadSignedIn({
+      userProfile: { onboardingCompleted: true, annualSalary: 60000, employmentType: "employed" },
+    });
+    expect(data.forecastData.estimatedTakeHome).toBeNull();
+    expect(data.forecastData.takeHomeMissing).toBe("Add pension details");
   });
 
   it("computes take-home below gross for a known employment type", async () => {
@@ -208,6 +217,7 @@ describe("_index route", () => {
     const data = await loadSignedIn({ userProfile: { onboardingCompleted: true } });
     expect(data.forecastData.annualSalary).toBeNull();
     expect(data.forecastData.estimatedTakeHome).toBeNull();
+    expect(data.forecastData.takeHomeMissing).toBeUndefined();
   });
 
   it("mortgage rate comes from the account, term is null", async () => {

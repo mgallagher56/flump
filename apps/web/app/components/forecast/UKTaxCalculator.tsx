@@ -23,6 +23,8 @@ import { useFormatCurrency } from "~/hooks/useFormatCurrency";
 import { usePrefersReducedMotion } from "~/hooks/usePrefersReducedMotion";
 import { useUserProfile } from "~/hooks/useUserProfile";
 
+const tabularNums = css({ fontVariantNumeric: "tabular-nums" });
+
 interface UKTaxCalculatorProps {
   initialSalary?: number | null;
   onApplyIncrease: (monthlyIncrease: number) => void;
@@ -36,7 +38,16 @@ const UKTaxCalculator: FC<UKTaxCalculatorProps> = ({ initialSalary, onApplyIncre
   const [grossSalary, setGrossSalary] = useState<number>(
     initialSalary && initialSalary > 0 ? initialSalary : 0,
   );
+  // Raw input text, so clearing the field mid-edit keeps the last valid salary and results.
+  const [salaryInput, setSalaryInput] = useState<string>(
+    initialSalary && initialSalary > 0 ? String(initialSalary) : "",
+  );
   const salaryKnown = grossSalary > 0;
+  const updateSalary = (raw: string) => {
+    setSalaryInput(raw);
+    const value = Number(raw);
+    if (raw !== "" && Number.isFinite(value) && value > 0) setGrossSalary(value);
+  };
   const [pensionPercent, setPensionPercent] = useState<number>(5);
   const [isSalarySacrifice, setIsSalarySacrifice] = useState<boolean>(
     profile?.isSalarySacrifice ?? true,
@@ -54,6 +65,7 @@ const UKTaxCalculator: FC<UKTaxCalculatorProps> = ({ initialSalary, onApplyIncre
   useEffect(() => {
     if (initialSalary) {
       setGrossSalary(initialSalary);
+      setSalaryInput(String(initialSalary));
     }
   }, [initialSalary]);
 
@@ -320,15 +332,15 @@ const UKTaxCalculator: FC<UKTaxCalculatorProps> = ({ initialSalary, onApplyIncre
               min="10000"
               step="1000"
               type="range"
-              value={grossSalary}
-              onChange={(e) => setGrossSalary(Number(e.target.value))}
+              value={salaryKnown ? grossSalary : 10000}
+              onChange={(e) => updateSalary(e.target.value)}
             />
             <input
               className={numberInputStyle}
               type="number"
-              value={salaryKnown ? grossSalary : ""}
+              value={salaryInput}
               placeholder="Not set"
-              onChange={(e) => setGrossSalary(Number(e.target.value))}
+              onChange={(e) => updateSalary(e.target.value)}
             />
           </div>
 
@@ -737,13 +749,7 @@ const UKTaxCalculator: FC<UKTaxCalculatorProps> = ({ initialSalary, onApplyIncre
             >
               Monthly Take-Home Pay
             </FLPText>
-            <FLPHeading
-              as="h2"
-              color="text.primary"
-              mt={1}
-              size="2xl"
-              style={{ fontVariantNumeric: "tabular-nums" }}
-            >
+            <FLPHeading as="h2" color="text.primary" mt={1} size="2xl" className={tabularNums}>
               Not set
             </FLPHeading>
             <FLPText color="text.muted" fontSize="sm" style={{ marginTop: "8px" }}>
