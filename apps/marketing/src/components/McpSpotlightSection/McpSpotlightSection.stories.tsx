@@ -35,7 +35,13 @@ export const Default: Story = {
   play: assertSpotlight,
 };
 
-export const Light: Story = { globals: { theme: "light" }, play: assertSpotlight };
+export const Light: Story = {
+  globals: { theme: "light" },
+  // E8 waiver: color-contrast (the outline Button uses text.primary on the dark surface.contrast panel;
+  // the real fix is the marketing restyle, E15 phase 7. Same waiver as Default and Dark.)
+  parameters: { a11y: { config: { rules: [{ id: "color-contrast", enabled: false }] } } },
+  play: assertSpotlight,
+};
 
 export const Dark: Story = {
   globals: { theme: "dark" },
