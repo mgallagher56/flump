@@ -114,6 +114,8 @@ Rows come from the code (`process.env.X`, `env.X` and `configService.get("X")` i
 | `WORKOS_API_KEY`                      | production key                  | same as production           | copy           | yes     |
 | `WORKOS_CLIENT_ID`                    | client id                       | same as production           | copy           | no      |
 | `WORKOS_COOKIE_PASSWORD`              | 32+ character secret            | new secret                   | generate fresh | yes     |
+| `WORKOS_COOKIE_MAX_AGE`               | unset (14 days)                 | unset (14 days)              | unset          | no      |
+| `WORKOS_COOKIE_NAME`                  | unset (`__Host-wos-session`)    | unset (`__Host-wos-session`) | unset          | no      |
 | `WORKOS_REDIRECT_URI`                 | `<production web>/callback`     | `<staging web>/callback`     | generate fresh | no      |
 | `VITE_WORKOS_REDIRECT_URI`            | `<production web>/callback`     | `<staging web>/callback`     | generate fresh | no      |
 | `AUTH_DEV_BYPASS`                     | unset                           | unset                        | unset          | no      |
