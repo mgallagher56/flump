@@ -225,7 +225,11 @@ export const ForecastWidget: FC<ForecastWidgetProps> = ({
                 {formatCurrency(data.estimatedTakeHome)}/mo
               </strong>
             ) : (
-              <NotSet href="/app/profile" label={data.takeHomeMissing ?? "Not set"} />
+              <NotSet
+                href="/app/profile"
+                label={data.takeHomeMissing ?? "Not set"}
+                subject="take-home details"
+              />
             )}
           </div>
           <div style={{ color: "var(--colors-primary)", fontWeight: 600 }}>Runway →</div>

@@ -217,7 +217,7 @@ describe("PensionContainer", () => {
       setProfile(profile);
       render(<PensionContainer />);
       expect(screen.getByText(/assuming England, Wales and Northern Ireland/i)).toBeDefined();
-      expect(screen.getByRole("link", { name: "Set your region" })).toBeDefined();
+      expect(screen.queryByRole("link", { name: /region/i })).toBeNull();
     });
 
     it("backend default rates (5% + 3%) show the default label", () => {

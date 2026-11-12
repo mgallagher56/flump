@@ -194,7 +194,7 @@ export const TaxWidget: FC<TaxWidgetProps> = ({
             >
               {metricMode === "taxDue" ? (
                 data.estimatedTaxDue === null ? (
-                  <NotSet actionLabel="Add income" href="/app/tax" label="Not calculated yet" />
+                  <NotSet href="/app/tax" label="Not calculated yet" subject="income" />
                 ) : (
                   formatCurrency(data.estimatedTaxDue)
                 )

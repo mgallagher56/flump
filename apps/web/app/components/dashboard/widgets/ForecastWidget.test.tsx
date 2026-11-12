@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import { ForecastWidget } from "./ForecastWidget";
 
 vi.mock("react-router", () => ({
+  useInRouterContext: () => false,
   Link: ({ children, to }: any) => <a href={to}>{children}</a>,
 }));
 
@@ -29,7 +30,9 @@ describe("ForecastWidget take-home", () => {
 
     const notSet = screen.getByText("Not set");
     expect(notSet.className).toMatch(/tabular-nums/);
-    expect(screen.getByRole("link", { name: "Add" }).getAttribute("href")).toBe("/app/profile");
+    expect(screen.getByRole("link", { name: "Add take-home details" }).getAttribute("href")).toBe(
+      "/app/profile",
+    );
   });
 
   it("says what is missing when a salary exists but take-home cannot be computed", () => {

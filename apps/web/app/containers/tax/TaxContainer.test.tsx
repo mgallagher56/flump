@@ -129,6 +129,7 @@ const mockSubmit = vi.fn();
 const fetcherData = { current: null as unknown };
 
 vi.mock("react-router", () => ({
+  useInRouterContext: () => false,
   useLoaderData: () => ({
     records: mockLoaderRecords,
     userProfile: {

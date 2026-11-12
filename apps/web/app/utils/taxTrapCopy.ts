@@ -29,8 +29,6 @@ export function getTaxTrapCopy(analysis: TaxTrapAnalysis): TaxTrapCopy {
 }
 
 export const REGION_ASSUMPTION_LABEL = "Assuming England, Wales and Northern Ireland rates.";
-export const REGION_SETTINGS_HREF = "/app/profile";
-export const REGION_SETTINGS_ACTION = "Set your region";
 
 /**
  * Only Scotland can be known today: the baseline always carries a default ukRegion and region is

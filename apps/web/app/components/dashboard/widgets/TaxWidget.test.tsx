@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import { TaxWidget } from "./TaxWidget";
 
 vi.mock("react-router", () => ({
+  useInRouterContext: () => false,
   Link: ({ children, to }: any) => <a href={to}>{children}</a>,
 }));
 

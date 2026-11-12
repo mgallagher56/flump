@@ -18,10 +18,10 @@ export const notSetAction = cva({
   base: {
     fontSize: "xs",
     fontWeight: "semibold",
-    color: "primary",
+    color: "status.info.text",
     textDecoration: "underline",
     textUnderlineOffset: "2px",
-    _hover: { color: "primary.hover" },
+    _hover: { textDecorationThickness: "2px" },
     _focusVisible: { outline: "2px solid", outlineColor: "border.focusRing", outlineOffset: "2px" },
   },
 });
