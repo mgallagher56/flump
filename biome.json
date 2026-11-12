@@ -16,7 +16,8 @@
       "!**/.next",
       "!**/build",
       "!**/styled-system",
-      "!**/CHANGELOG.md"
+      "!**/CHANGELOG.md",
+      "!docs/audit"
     ]
   },
   "overrides": [
