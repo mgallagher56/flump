@@ -37,11 +37,12 @@ export const action = async (args: ActionFunctionArgs) => {
         body: {
           name,
           type: "Pension",
-          balance: balance ? Number(balance) : 0,
-          interestRate: interestRate !== null && interestRate !== "" ? Number(interestRate) : 5.0,
+          balance: balance ? roundTo2dp(Number(balance)) : 0,
+          interestRate:
+            interestRate !== null && interestRate !== "" ? roundTo2dp(Number(interestRate)) : 5.0,
           monthlyContribution:
             isCurrentBool && monthlyContribution !== null && monthlyContribution !== ""
-              ? Number(monthlyContribution)
+              ? roundTo2dp(Number(monthlyContribution))
               : null,
           isCurrent: isCurrentBool,
         },
@@ -55,16 +56,17 @@ export const action = async (args: ActionFunctionArgs) => {
 
       const updatePayload: Record<string, any> = {};
       if (name !== null && name !== undefined) updatePayload.name = name;
-      if (balance !== null && balance !== undefined) updatePayload.balance = Number(balance);
+      if (balance !== null && balance !== undefined)
+        updatePayload.balance = roundTo2dp(Number(balance));
       if (interestRate !== null && interestRate !== undefined) {
-        updatePayload.interestRate = interestRate !== "" ? Number(interestRate) : null;
+        updatePayload.interestRate = interestRate !== "" ? roundTo2dp(Number(interestRate)) : null;
       }
       if (isCurrent !== null && isCurrent !== undefined) {
         updatePayload.isCurrent = isCurrent === "true";
       }
       if (monthlyContribution !== null && monthlyContribution !== undefined) {
         updatePayload.monthlyContribution =
-          monthlyContribution !== "" ? Number(monthlyContribution) : null;
+          monthlyContribution !== "" ? roundTo2dp(Number(monthlyContribution)) : null;
       }
       if (updatePayload.isCurrent === false) {
         updatePayload.monthlyContribution = null;
@@ -95,9 +97,9 @@ export const action = async (args: ActionFunctionArgs) => {
             ? { pensionPercent: roundTo2dp(Number(pensionPercent)) }
             : {}),
           ...(pensionEmployerPercent !== null
-            ? { pensionEmployerPercent: Number(pensionEmployerPercent) }
+            ? { pensionEmployerPercent: roundTo2dp(Number(pensionEmployerPercent)) }
             : {}),
-          ...(annualSalary !== null ? { annualSalary: Number(annualSalary) } : {}),
+          ...(annualSalary !== null ? { annualSalary: roundTo2dp(Number(annualSalary)) } : {}),
           ...(isSalarySacrifice !== null
             ? { isSalarySacrifice: isSalarySacrifice === "true" }
             : {}),
@@ -124,9 +126,9 @@ export const action = async (args: ActionFunctionArgs) => {
         body: {
           name: name || "Workplace Pension",
           type: "Pension",
-          balance: balance ? Number(balance) : 0,
-          interestRate: interestRate ? Number(interestRate) : 5.0,
-          monthlyContribution: monthlyContribution ? Number(monthlyContribution) : null,
+          balance: balance ? roundTo2dp(Number(balance)) : 0,
+          interestRate: interestRate ? roundTo2dp(Number(interestRate)) : 5.0,
+          monthlyContribution: monthlyContribution ? roundTo2dp(Number(monthlyContribution)) : null,
         },
       });
 
@@ -135,10 +137,10 @@ export const action = async (args: ActionFunctionArgs) => {
         accessToken: token,
         method: "PATCH",
         body: {
-          ...(annualSalary ? { annualSalary: Number(annualSalary) } : {}),
-          ...(pensionPercent ? { pensionPercent: Number(pensionPercent) } : {}),
+          ...(annualSalary ? { annualSalary: roundTo2dp(Number(annualSalary)) } : {}),
+          ...(pensionPercent ? { pensionPercent: roundTo2dp(Number(pensionPercent)) } : {}),
           ...(pensionEmployerPercent
-            ? { pensionEmployerPercent: Number(pensionEmployerPercent) }
+            ? { pensionEmployerPercent: roundTo2dp(Number(pensionEmployerPercent)) }
             : {}),
           ...(isSalarySacrifice !== null
             ? { isSalarySacrifice: isSalarySacrifice === "true" }

@@ -10,6 +10,7 @@ import {
 import { BackendError } from "~/services/backend-error";
 import { actionErrorResponse } from "~/services/route-error.server";
 import { getAuthSession, requireAccessToken } from "~/utils/auth.server";
+import { roundTo2dp } from "~/utils/roundTo2dp";
 
 export const action = async (args: ActionFunctionArgs) => {
   const { accessToken } = await getAuthSession(args, { ensureSignedIn: true });
@@ -23,7 +24,7 @@ export const action = async (args: ActionFunctionArgs) => {
   const rawBalance = formData.get("balance");
   const balance =
     rawBalance !== null && rawBalance !== "" && Number.isFinite(Number(rawBalance))
-      ? Number(rawBalance)
+      ? roundTo2dp(Number(rawBalance))
       : undefined;
 
   const send = (endpoint: string, method: HttpMethod, body?: unknown) =>

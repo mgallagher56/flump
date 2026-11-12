@@ -5,6 +5,7 @@ import SavingsContainer from "~/containers/savings/SavingsContainer";
 import { backendFetch, loadWorkspaceSnapshot } from "~/services/backend-client.server";
 import { actionErrorResponse } from "~/services/route-error.server";
 import { getAuthSession, requireAccessToken } from "~/utils/auth.server";
+import { roundTo2dp } from "~/utils/roundTo2dp";
 
 export const meta: MetaFunction = () => [{ title: "Savings & Forecasting | Flump" }];
 
@@ -34,11 +35,12 @@ export const action = async (args: ActionFunctionArgs) => {
         body: {
           name,
           type,
-          balance: balance ? Number(balance) : 0,
-          interestRate: interestRate !== null && interestRate !== "" ? Number(interestRate) : null,
+          balance: balance ? roundTo2dp(Number(balance)) : 0,
+          interestRate:
+            interestRate !== null && interestRate !== "" ? roundTo2dp(Number(interestRate)) : null,
           monthlyContribution:
             monthlyContribution !== null && monthlyContribution !== ""
-              ? Number(monthlyContribution)
+              ? roundTo2dp(Number(monthlyContribution))
               : null,
         },
       });
@@ -52,13 +54,14 @@ export const action = async (args: ActionFunctionArgs) => {
       const updatePayload: Record<string, any> = {};
       if (name !== null && name !== undefined) updatePayload.name = name;
       if (type !== null && type !== undefined) updatePayload.type = type;
-      if (balance !== null && balance !== undefined) updatePayload.balance = Number(balance);
+      if (balance !== null && balance !== undefined)
+        updatePayload.balance = roundTo2dp(Number(balance));
       if (interestRate !== null && interestRate !== undefined) {
-        updatePayload.interestRate = interestRate !== "" ? Number(interestRate) : null;
+        updatePayload.interestRate = interestRate !== "" ? roundTo2dp(Number(interestRate)) : null;
       }
       if (monthlyContribution !== null && monthlyContribution !== undefined) {
         updatePayload.monthlyContribution =
-          monthlyContribution !== "" ? Number(monthlyContribution) : null;
+          monthlyContribution !== "" ? roundTo2dp(Number(monthlyContribution)) : null;
       }
 
       await backendFetch(`/accounts/${encodeURIComponent(String(accountId ?? ""))}`, {
@@ -81,7 +84,7 @@ export const action = async (args: ActionFunctionArgs) => {
         body: {
           ...(savingsAllocationMode ? { savingsAllocationMode } : {}),
           ...(monthlySavingsTarget !== null
-            ? { monthlySavingsTarget: Number(monthlySavingsTarget) }
+            ? { monthlySavingsTarget: roundTo2dp(Number(monthlySavingsTarget)) }
             : {}),
         },
       });

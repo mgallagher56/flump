@@ -83,6 +83,31 @@ describe("McpConnectionCard Feature Component", () => {
     expect(screen.getByText("flump_pat_secret_abc123456789")).toBeDefined();
   });
 
+  it("offers only expiring tokens and sends the chosen expiry", async () => {
+    const mockGenerate = vi.fn().mockResolvedValue({
+      id: "tok_exp",
+      name: "Client",
+      rawToken: "flump_pat_secret_zzz",
+      tokenPrefix: "flump_pat_zz...zzz",
+      scopes: ["mcp:read:anonymized"],
+      anonymizeInstitutions: true,
+      expiresAt: "2027-11-12T00:00:00.000Z",
+    });
+    render(<McpConnectionCard onGenerateToken={mockGenerate} />);
+    fireEvent.click(screen.getByTestId("generate-token-trigger"));
+    fireEvent.change(screen.getByLabelText("Connection / Client Name"), {
+      target: { value: "Client" },
+    });
+
+    const select = screen.getByLabelText("Token Expiry") as HTMLSelectElement;
+    expect(Array.from(select.options).map((o) => o.value)).toEqual(["30", "90", "365"]);
+    expect(screen.queryByText(/Never/)).toBeNull();
+
+    fireEvent.change(select, { target: { value: "365" } });
+    fireEvent.click(screen.getByTestId("confirm-generate-token"));
+    await waitFor(() => expect(mockGenerate).toHaveBeenCalledWith("Client", true, 365));
+  });
+
   it("revokes an active token on user click", async () => {
     const mockRevoke = vi.fn().mockResolvedValue(undefined);
     const initialTokens = [
