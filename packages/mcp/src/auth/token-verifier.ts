@@ -77,13 +77,14 @@ export class TokenVerifier {
    * Verifies an Authorization header: "Bearer flump_pat_..." or "Bearer <jwt>"
    */
   async verifyAuthorizationHeader(authHeader?: string): Promise<VerifiedToken> {
-    if (!authHeader?.startsWith("Bearer ")) {
+    const match = authHeader ? /^bearer\s+(.*)$/i.exec(authHeader) : null;
+    if (!match) {
       throw new AuthenticationError(
         "Missing or malformed Authorization header. Expected: Bearer <token>",
       );
     }
 
-    const token = authHeader.slice(7).trim();
+    const token = (match[1] ?? "").trim();
     if (!token) {
       throw new AuthenticationError("Empty Bearer token provided.");
     }

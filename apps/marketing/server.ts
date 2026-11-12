@@ -5,55 +5,27 @@ import { fileURLToPath } from "node:url";
 import express from "express";
 import { createServer as createViteServer, type ViteDevServer } from "vite";
 import { registerOps } from "./server/ops";
+import { buildCsp, genericServerError, resolveAppUrl } from "./server/security";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 async function createServer() {
   const app = express();
   const isProd = process.env.NODE_ENV === "production";
+  // Resolved once at boot. SSR reads it through getAppUrl() (process.env.VITE_APP_URL).
+  const resolvedAppUrl = resolveAppUrl();
+  process.env.VITE_APP_URL = resolvedAppUrl;
 
   // Security Headers Middleware
   app.use((_req, res, next) => {
     res.setHeader("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
 
+    let nonce: string | undefined;
     if (isProd) {
-      const nonce = crypto.randomBytes(16).toString("base64");
+      nonce = crypto.randomBytes(16).toString("base64");
       res.locals.nonce = nonce;
-
-      res.setHeader(
-        "Content-Security-Policy",
-        [
-          "default-src 'self'",
-          `script-src 'self' 'nonce-${nonce}' https:`,
-          "style-src 'self' 'unsafe-inline' https:",
-          "img-src 'self' data: https: blob:",
-          "font-src 'self' data: https:",
-          "connect-src 'self' https: ws:",
-          "object-src 'none'",
-          "base-uri 'self'",
-          "form-action 'self'",
-          "frame-ancestors 'none'",
-          "upgrade-insecure-requests",
-        ].join("; "),
-      );
-    } else {
-      res.setHeader(
-        "Content-Security-Policy",
-        [
-          "default-src 'self'",
-          "script-src 'self' 'unsafe-inline' 'unsafe-eval' https:",
-          "style-src 'self' 'unsafe-inline' https:",
-          "img-src 'self' data: https: blob:",
-          "font-src 'self' data: https:",
-          "connect-src 'self' https: ws:",
-          "object-src 'none'",
-          "base-uri 'self'",
-          "form-action 'self'",
-          "frame-ancestors 'none'",
-          "upgrade-insecure-requests",
-        ].join("; "),
-      );
     }
+    res.setHeader("Content-Security-Policy", buildCsp({ isProd, nonce }));
 
     res.setHeader("X-Frame-Options", "DENY");
     res.setHeader("X-Content-Type-Options", "nosniff");
@@ -80,6 +52,8 @@ async function createServer() {
     app.use(
       (await import("sirv")).default("dist/client", {
         extensions: [],
+        // Needed so /.well-known/security.txt is reachable (sirv hides dotfiles by default).
+        dotfiles: true,
       }) as any,
     );
   }
@@ -100,28 +74,7 @@ async function createServer() {
         render = (await import("./dist/server/entry-server.js")).render;
       }
 
-      const host = req.headers.host || "";
-      const isRailway = host.includes("railway.app");
-      const isLocal = host.includes("localhost") || host.includes("127.0.0.1");
-      const resolvedAppUrl =
-        process.env.VITE_APP_URL ||
-        process.env.APP_URL ||
-        (isLocal
-          ? "http://localhost:5173"
-          : isRailway
-            ? "https://web-production-845e6c.up.railway.app"
-            : "https://app.flump.co.uk");
-
-      const prevAppUrl = process.env.VITE_APP_URL;
-      process.env.VITE_APP_URL = resolvedAppUrl;
-
       const { html: appHtml, helmet } = render(url);
-
-      if (prevAppUrl !== undefined) {
-        process.env.VITE_APP_URL = prevAppUrl;
-      } else {
-        delete process.env.VITE_APP_URL;
-      }
 
       const nonceAttr = res.locals.nonce ? ` nonce="${res.locals.nonce}"` : "";
       const appUrlScript = `<script${nonceAttr}>window.__FLUMP_APP_URL__=${JSON.stringify(resolvedAppUrl)};</script>`;
@@ -139,13 +92,12 @@ async function createServer() {
 
       res.status(200).set({ "Content-Type": "text/html" }).end(html);
     } catch (e: any) {
-      console.error("Raw SSR Error:", e);
       try {
         !isProd && vite && vite.ssrFixStacktrace(e);
       } catch (traceError) {
         console.error("Failed to fix stacktrace:", traceError);
       }
-      res.status(500).end(e.stack);
+      res.status(500).type("text/plain").end(genericServerError(e));
     }
   });
 

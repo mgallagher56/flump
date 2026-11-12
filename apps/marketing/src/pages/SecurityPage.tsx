@@ -3,6 +3,7 @@ import { grid } from "@repo/ui/styled-system/patterns";
 import type { FC } from "react";
 import { Helmet } from "react-helmet-async";
 import { FiClock, FiShield } from "react-icons/fi";
+import { DisclosurePolicySection } from "../components/DisclosurePolicySection";
 import { Footer } from "../components/Footer";
 import { Header } from "../components/Header";
 import { securityMailto } from "../utils/placeholders";
@@ -137,6 +138,8 @@ export const SecurityPage: FC = () => {
               </p>
             </div>
           </div>
+
+          <DisclosurePolicySection />
 
           <p className={contactRowStyle}>
             Found a security issue?{" "}
