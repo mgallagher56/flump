@@ -1,4 +1,5 @@
 import { Column, Entity, PrimaryGeneratedColumn } from "typeorm";
+import { numericTransformer } from "./numeric.transformer";
 
 @Entity("account_details")
 export class AccountDetail {
@@ -11,7 +12,7 @@ export class AccountDetail {
   @Column()
   month: number;
 
-  @Column("decimal", { precision: 12, scale: 2 })
+  @Column("decimal", { precision: 12, scale: 2, transformer: numericTransformer })
   value: number;
 
   @Column()

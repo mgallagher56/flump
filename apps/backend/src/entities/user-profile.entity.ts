@@ -5,6 +5,7 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from "typeorm";
+import { numericTransformer } from "./numeric.transformer";
 
 @Entity("user_profiles")
 export class UserProfile {
@@ -35,10 +36,24 @@ export class UserProfile {
   @Column({ name: "employment_type", type: "varchar", nullable: true })
   employmentType: "employed" | "self-employed" | "other" | null;
 
-  @Column({ name: "annual_salary", type: "decimal", precision: 12, scale: 2, nullable: true })
+  @Column({
+    name: "annual_salary",
+    type: "decimal",
+    precision: 12,
+    scale: 2,
+    nullable: true,
+    transformer: numericTransformer,
+  })
   annualSalary: number | null;
 
-  @Column({ name: "monthly_take_home", type: "decimal", precision: 12, scale: 2, nullable: true })
+  @Column({
+    name: "monthly_take_home",
+    type: "decimal",
+    precision: 12,
+    scale: 2,
+    nullable: true,
+    transformer: numericTransformer,
+  })
   monthlyTakeHome: number | null;
 
   @Column({ name: "has_second_income", default: false })
@@ -50,6 +65,7 @@ export class UserProfile {
     precision: 12,
     scale: 2,
     nullable: true,
+    transformer: numericTransformer,
   })
   secondIncomeMonthly: number | null;
 
@@ -62,6 +78,7 @@ export class UserProfile {
     precision: 12,
     scale: 2,
     nullable: true,
+    transformer: numericTransformer,
   })
   rentalIncomeMonthly: number | null;
 
@@ -81,6 +98,7 @@ export class UserProfile {
     precision: 5,
     scale: 2,
     default: 100.0,
+    transformer: numericTransformer,
   })
   propertyOwnershipShare: number;
 
@@ -96,6 +114,7 @@ export class UserProfile {
     precision: 12,
     scale: 2,
     nullable: true,
+    transformer: numericTransformer,
   })
   buyToLetPropertyValue: number | null;
 
@@ -105,6 +124,7 @@ export class UserProfile {
     precision: 12,
     scale: 2,
     nullable: true,
+    transformer: numericTransformer,
   })
   buyToLetMonthlyRental: number | null;
 
@@ -114,6 +134,7 @@ export class UserProfile {
     precision: 12,
     scale: 2,
     nullable: true,
+    transformer: numericTransformer,
   })
   buyToLetMortgageBalance: number | null;
 
@@ -123,6 +144,7 @@ export class UserProfile {
     precision: 5,
     scale: 2,
     nullable: true,
+    transformer: numericTransformer,
   })
   buyToLetMortgageRate: number | null;
 
@@ -139,6 +161,7 @@ export class UserProfile {
     precision: 5,
     scale: 2,
     default: 5.0,
+    transformer: numericTransformer,
   })
   pensionPercent: number;
 
@@ -148,6 +171,7 @@ export class UserProfile {
     precision: 5,
     scale: 2,
     default: 3.0,
+    transformer: numericTransformer,
   })
   pensionEmployerPercent: number;
 
@@ -169,6 +193,7 @@ export class UserProfile {
     precision: 12,
     scale: 2,
     nullable: true,
+    transformer: numericTransformer,
   })
   monthlySavingsTarget: number | null;
 
@@ -185,6 +210,7 @@ export class UserProfile {
     precision: 5,
     scale: 2,
     default: 5.0,
+    transformer: numericTransformer,
   })
   savingsDefaultInterestRate: number;
 

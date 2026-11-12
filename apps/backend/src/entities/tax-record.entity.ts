@@ -5,6 +5,7 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from "typeorm";
+import { numericTransformer } from "./numeric.transformer";
 
 @Entity("tax_records")
 export class TaxRecord {
@@ -26,7 +27,7 @@ export class TaxRecord {
   @Column()
   name: string;
 
-  @Column({ type: "decimal", precision: 12, scale: 2 })
+  @Column({ type: "decimal", precision: 12, scale: 2, transformer: numericTransformer })
   amount: number;
 
   @Column({ type: "varchar", default: "one-off" })

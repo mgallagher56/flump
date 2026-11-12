@@ -162,6 +162,50 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
       expect(res.status, `${what}: ${res.status} ${JSON.stringify(res.body)}`).toBeLessThan(300);
     };
 
+    describe("decimal columns (E21 numeric transformer, audit B-05)", () => {
+      it("returns every decimal as a number and keeps null as null", async () => {
+        const created = await send("post", "/accounts", {
+          name: "Saver",
+          type: "Saving",
+          balance: 1204.5,
+          interestRate: 4.25,
+        });
+        expect2xx(created, "POST /accounts");
+        expect(created.body.balance).toBe(1204.5);
+        expect(created.body.interestRate).toBe(4.25);
+        expect(created.body.monthlyContribution).toBeNull();
+
+        const updated = await send("patch", `/accounts/${created.body.id}`, { balance: 10.1 });
+        expect2xx(updated, "PATCH /accounts/:id");
+        expect(updated.body.balance).toBe(10.1);
+
+        const detailsRows = (await get("/account-details")).body as Array<Record<string, unknown>>;
+        for (const row of detailsRows) expect(typeof row.value).toBe("number");
+
+        const tax = await send("post", "/tax-records", {
+          type: "income",
+          source: "paye",
+          category: "salary",
+          name: "Pay",
+          amount: 2500.75,
+          date: "2026-04-30",
+        });
+        expect2xx(tax, "POST /tax-records");
+        expect(tax.body.amount).toBe(2500.75);
+        const taxList = (await get("/tax-records")).body as Array<Record<string, unknown>>;
+        expect(taxList.map((r) => r.amount)).toEqual([2500.75]);
+
+        const tx = await send("post", "/transactions", {
+          accountId: created.body.id,
+          amount: -12.34,
+          description: "Coffee",
+          category: "food",
+        });
+        expect2xx(tx, "POST /transactions");
+        expect(tx.body.amount).toBe(-12.34);
+      });
+    });
+
     describe("onboarding", () => {
       it("accepts the profile, 4 accounts and 3 budget entries onboarding sends, and round-trips them", async () => {
         expect2xx(await send("patch", "/user-profile", ONBOARDING_PROFILE), "PATCH /user-profile");

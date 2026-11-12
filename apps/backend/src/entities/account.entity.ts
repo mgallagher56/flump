@@ -1,4 +1,5 @@
 import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn } from "typeorm";
+import { numericTransformer } from "./numeric.transformer";
 
 @Entity("accounts")
 export class Account {
@@ -24,13 +25,25 @@ export class Account {
     | "Investment"
     | "Pension";
 
-  @Column("decimal", { precision: 12, scale: 2 })
+  @Column("decimal", { precision: 12, scale: 2, transformer: numericTransformer })
   balance: number;
 
-  @Column("decimal", { name: "interest_rate", precision: 5, scale: 2, nullable: true })
+  @Column("decimal", {
+    name: "interest_rate",
+    precision: 5,
+    scale: 2,
+    nullable: true,
+    transformer: numericTransformer,
+  })
   interestRate: number | null;
 
-  @Column("decimal", { name: "monthly_contribution", precision: 12, scale: 2, nullable: true })
+  @Column("decimal", {
+    name: "monthly_contribution",
+    precision: 12,
+    scale: 2,
+    nullable: true,
+    transformer: numericTransformer,
+  })
   monthlyContribution: number | null;
 
   @Column({ name: "is_current", type: "boolean", default: true, nullable: true })
