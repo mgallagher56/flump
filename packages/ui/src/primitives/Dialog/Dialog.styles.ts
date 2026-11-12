@@ -5,7 +5,8 @@ export const dialogOverlayRecipe = cva({
     position: "fixed",
     inset: 0,
     backgroundColor: "surface.scrim",
-    zIndex: "modal",
+    // Above MobileBottomBar (80), the nav drawer (90/100) and every token layer, so a dialog is never covered.
+    zIndex: 200,
     display: "flex",
     alignItems: "center",
     justifyContent: "center",

@@ -199,7 +199,6 @@ export default function SandboxRoute() {
 
             {/* Persona Switcher */}
             <fieldset
-              aria-label="Sample persona"
               className={flex({
                 gap: "2",
                 flexWrap: "wrap",
@@ -208,6 +207,7 @@ export default function SandboxRoute() {
                 margin: 0,
               })}
             >
+              <legend className={css({ srOnly: true })}>Sample persona</legend>
               {PERSONAS.map((persona) => (
                 <button
                   key={persona.key}

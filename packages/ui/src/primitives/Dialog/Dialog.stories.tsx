@@ -38,6 +38,14 @@ export const Default: Story = {
     const body = within(canvasElement.ownerDocument.body);
     const dialog = await body.findByRole("dialog", { name: "Add liability account" });
     await expect(dialog).toHaveAttribute("aria-modal", "true");
+  },
+};
+
+/** Separate from Default so the a11y check still runs against an open dialog. */
+export const EscapeCloses: Story = {
+  play: async ({ canvasElement }) => {
+    const body = within(canvasElement.ownerDocument.body);
+    await body.findByRole("dialog", { name: "Add liability account" });
     await userEvent.keyboard("{Escape}");
     await waitFor(() => expect(body.queryByRole("dialog")).toBeNull());
   },

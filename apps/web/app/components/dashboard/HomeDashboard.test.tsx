@@ -138,6 +138,11 @@ describe("HomeDashboard", () => {
     expect(screen.getByText("Self Assessment")).toBeDefined();
   });
 
+  it("renders exactly one 'Guidance, not advice' projection notice", () => {
+    render(<HomeDashboard {...dummyProps} />);
+    expect(screen.getAllByTestId("projection-notice")).toHaveLength(1);
+  });
+
   it("toggles customize mode toolbar when button is clicked", () => {
     render(<HomeDashboard {...dummyProps} />);
     const customizeBtn = screen.getByText("Customize Dashboard");
