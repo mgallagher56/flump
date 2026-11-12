@@ -29,7 +29,7 @@ export interface HealthScoreInput {
 export function calculateFinancialHealthScore(input: HealthScoreInput): HealthScoreResult {
   const stage = input.stage;
   const components: HealthScoreComponent[] = [];
-  const recommendations: string[] = [];
+  const observations: string[] = [];
 
   const netIncome = Math.max(0, input.monthlyNetIncomeGbp ?? 0);
   const essentialBills = Math.max(1, input.monthlyEssentialBillsGbp ?? 1);
@@ -56,8 +56,8 @@ export function calculateFinancialHealthScore(input: HealthScoreInput): HealthSc
           : "Zero high-interest commercial debt.",
     });
     if (highInterestDebt > 0) {
-      recommendations.push(
-        "Prioritize high-interest cards and overdrafts with Avalanche strategy to eliminate interest burn.",
+      observations.push(
+        `£${Math.round(highInterestDebt).toLocaleString("en-GB")} of high-interest card and overdraft debt is accruing interest.`,
       );
     }
 
@@ -80,8 +80,8 @@ export function calculateFinancialHealthScore(input: HealthScoreInput): HealthSc
           : `Deficit of £${Math.abs(Math.round(surplus))}/mo. Priority bills are at risk.`,
     });
     if (surplus < 0) {
-      recommendations.push(
-        "Protect priority UK bills (Council Tax, rent/mortgage, utilities) before allocating money to unsecured debts.",
+      observations.push(
+        `Priority bills and minimum debt payments exceed net income by £${Math.abs(Math.round(surplus)).toLocaleString("en-GB")} a month.`,
       );
     }
 
@@ -97,8 +97,8 @@ export function calculateFinancialHealthScore(input: HealthScoreInput): HealthSc
           : `£${Math.round(emergencyFund)} / £1,000 starter buffer established.`,
     });
     if (emergencyFund < 1000) {
-      recommendations.push(
-        "Build a £1,000 mini-buffer in an instant-access account before aggressive overpayments.",
+      observations.push(
+        `Cash savings are £${Math.round(emergencyFund).toLocaleString("en-GB")}, against a £1,000 starter buffer.`,
       );
     }
   } else if (stage === "STAGE_2_BUFFER_BUILD") {
@@ -115,8 +115,8 @@ export function calculateFinancialHealthScore(input: HealthScoreInput): HealthSc
       comment: `${runwayMonths.toFixed(1)} months of essential expenses covered (Target: 3-6 months).`,
     });
     if (runwayMonths < 3) {
-      recommendations.push(
-        `Top up cash buffer to reach at least 3 months (£${Math.round(essentialBills * 3).toLocaleString()}) of runway.`,
+      observations.push(
+        `Cash covers ${runwayMonths.toFixed(1)} months of essential bills; 3 months would be £${Math.round(essentialBills * 3).toLocaleString("en-GB")}.`,
       );
     }
 
@@ -134,9 +134,7 @@ export function calculateFinancialHealthScore(input: HealthScoreInput): HealthSc
       comment: `Earning ${yieldApr.toFixed(1)}% AER on liquid savings.`,
     });
     if (yieldApr < 4.0) {
-      recommendations.push(
-        "Move low-yielding current account cash to a top-tier Cash ISA or high-yield notice account.",
-      );
+      observations.push(`Cash savings are earning ${yieldApr.toFixed(1)}% AER.`);
     }
 
     // 3. Debt-Free Maintenance (Weight 0.25)
@@ -163,7 +161,9 @@ export function calculateFinancialHealthScore(input: HealthScoreInput): HealthSc
       comment: `Utilized £${Math.round(isaUsed).toLocaleString()} / £20k ISA and £${Math.round(pensionUsed).toLocaleString()} / £60k Pension allowance.`,
     });
     if (isaRatio < 0.5) {
-      recommendations.push("Maximize remaining £20,000 UK ISA allowance before 5 April.");
+      observations.push(
+        `£${Math.round(Math.max(0, 20000 - isaUsed)).toLocaleString("en-GB")} of this tax year's ISA allowance is unused (resets 6 April).`,
+      );
     }
 
     // 2. £100k 60% Tax Trap Mitigation (Weight 0.35)
@@ -171,8 +171,8 @@ export function calculateFinancialHealthScore(input: HealthScoreInput): HealthSc
     let taxTrapScore = 100;
     if (adjIncome > 100000 && adjIncome <= 125140) {
       taxTrapScore = 40;
-      recommendations.push(
-        `Adjusted net income is £${Math.round(adjIncome).toLocaleString()}. Sacrifice £${Math.round(adjIncome - 100000).toLocaleString()} into pension to reclaim your £12,570 personal allowance.`,
+      observations.push(
+        `Adjusted net income is £${Math.round(adjIncome).toLocaleString("en-GB")}, in the £100,000 to £125,140 band where the personal allowance tapers.`,
       );
     } else if (adjIncome > 125140) {
       taxTrapScore = 70;
@@ -211,7 +211,9 @@ export function calculateFinancialHealthScore(input: HealthScoreInput): HealthSc
     stage,
     grade,
     components,
-    topRecommendations: recommendations.slice(0, 3),
+    observations: observations.slice(0, 3),
+    /** @deprecated Always empty; use `observations`. Removed after E15 migrates its consumers. */
+    topRecommendations: [],
   };
 }
 
@@ -282,8 +284,8 @@ export function evaluateFinancialStage(params: {
       emergencyRunwayMonths,
       starterBufferMet,
       primaryHeroMetric: "unsecured_debt",
-      headline: "Stage 1: Stabilise and clear",
-      subline: "Clear high-interest liabilities and achieve steady cash-flow margin.",
+      headline: "Unsecured debt present",
+      subline: "High-interest balances or a negative monthly surplus are present.",
     };
   }
 
@@ -298,8 +300,8 @@ export function evaluateFinancialStage(params: {
       emergencyRunwayMonths,
       starterBufferMet,
       primaryHeroMetric: "emergency_runway",
-      headline: "Stage 2: Buffer & Protect",
-      subline: "Build your £1,000 starter buffer and establish a 3–6 month emergency reserve.",
+      headline: "Building cash reserves",
+      subline: "Cash covers less than 3 months of essential expenses.",
     };
   }
 
@@ -313,7 +315,8 @@ export function evaluateFinancialStage(params: {
     emergencyRunwayMonths,
     starterBufferMet: true,
     primaryHeroMetric: "net_worth",
-    headline: "Stage 3: Build & Optimize",
-    subline: "Amplify compound wealth, optimize pensions, and eliminate mortgage interest.",
+    headline: "Reserves in place",
+    subline:
+      "No high-interest debt, a monthly surplus and at least 3 months of essential expenses in cash.",
   };
 }

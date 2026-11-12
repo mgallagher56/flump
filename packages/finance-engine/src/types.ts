@@ -202,7 +202,9 @@ export interface StudentLoanEvaluationResult {
   rate: number;
   writeOffYears: number;
   willLikelyRepayBeforeWriteOff: boolean;
+  /** @deprecated Use `projectedOutcome`. Kept until E15 migrates StudentLoanCalculator. */
   recommendation: "do_not_overpay" | "consider_overpaying";
+  projectedOutcome: "repaid_before_write_off" | "written_off_first";
   reasoning: string;
 }
 
@@ -527,6 +529,9 @@ export interface HealthScoreResult {
   stage: FinancialStage;
   grade: "CRITICAL" | "NEEDS_ATTENTION" | "GOOD" | "EXCELLENT";
   components: HealthScoreComponent[];
+  /** Neutral factual statements about the user's own figures (no actions). */
+  observations: string[];
+  /** @deprecated Always empty. Use `observations`. */
   topRecommendations: string[];
 }
 

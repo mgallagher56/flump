@@ -80,4 +80,13 @@ describe("FlumpAiContextPack Builder & Markdown Formatter", () => {
     const md = formatAiContextPackMarkdown(pack);
     expect(md).toBeDefined();
   });
+
+  it("renders neutral observations, with no action headings or optimised fallback", () => {
+    const pack = buildFlumpAiContextPack({ baseline: DEFAULT_FINANCIAL_BASELINE });
+    const md = formatAiContextPackMarkdown(pack);
+    expect(md).toContain("**Observations:**");
+    expect(md).not.toContain("Top Financial Actions");
+    expect(md).not.toContain("Baseline fully optimized");
+    expect(md).not.toMatch(/Recommendation:/i);
+  });
 });

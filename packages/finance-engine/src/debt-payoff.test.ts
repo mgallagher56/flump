@@ -319,6 +319,15 @@ describe("debt-payoff module", () => {
       expect(sl.writeOffYears).toBe(30);
     });
 
+    it("evaluateUkStudentLoan reports a projectedOutcome alongside the deprecated recommendation", () => {
+      const written = evaluateUkStudentLoan("plan2", 35000, 90000, "2025/26");
+      expect(written.projectedOutcome).toBe("written_off_first");
+      expect(written.recommendation).toBe("do_not_overpay");
+      const repaid = evaluateUkStudentLoan("plan2", 80000, 5000, "2025/26");
+      expect(repaid.projectedOutcome).toBe("repaid_before_write_off");
+      expect(repaid.recommendation).toBe("consider_overpaying");
+    });
+
     it("evaluateUkStudentLoan agrees for PLAN_2 and plan2 spellings", () => {
       for (const year of ["2024/25", "2025/26", "2026/27"]) {
         expect(evaluateUkStudentLoan("PLAN_2", 35000, 40000, year)).toEqual(

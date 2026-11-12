@@ -124,22 +124,15 @@ export const ADVICE_ALLOWLIST: AdviceAllowEntry[] = [
     owner: "E15",
   },
 
-  // Temporary: engine (E29-T5 rewrites).
-  ...[
-    ["packages/finance-engine/src/health-score.ts", "recommend"],
-    ["packages/finance-engine/src/health-score.ts", "top-tier"],
-    ["packages/finance-engine/src/health-score.ts", "maximise"],
-    ["packages/finance-engine/src/health-score.ts", "optimise-product"],
-    ["packages/finance-engine/src/types.ts", "recommend"],
-    ["packages/finance-engine/src/debt-payoff.ts", "recommend"],
-    ["packages/finance-engine/src/ai-context-pack.ts", "recommend"],
-  ].map(
-    ([file, patternId]): AdviceAllowEntry => ({
-      file: file as string,
-      patternId: patternId as string,
+  // Temporary: deprecated student-loan `recommendation` field (kept until E15 migrates
+  // StudentLoanCalculator to `projectedOutcome`, then delete the field and these entries).
+  ...["packages/finance-engine/src/types.ts", "packages/finance-engine/src/debt-payoff.ts"].map(
+    (file): AdviceAllowEntry => ({
+      file,
+      patternId: "recommend",
       kind: "temporary",
-      reason: "Engine recommendation wording and fields (neutral observations replace them).",
-      owner: "E29-T5",
+      reason: "Deprecated `recommendation` field, superseded by `projectedOutcome` (E29-T5).",
+      owner: "E15",
     }),
   ),
 

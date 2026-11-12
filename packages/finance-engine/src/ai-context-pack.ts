@@ -328,8 +328,8 @@ Generated: ${pack.metadata.generatedAt} | Anonymized: ${pack.metadata.isAnonymiz
 - **Current Financial Stage:** ${pack.stageEvaluation.headline} (${pack.stageEvaluation.canonicalStage})
 - **Overall Health Score:** ${pack.healthScore.overallScore}/100 [Grade: ${pack.healthScore.grade}]
 - **Primary Hero Focus:** ${pack.stageEvaluation.primaryHeroMetric}
-- **Top Financial Actions:**
-${pack.healthScore.topRecommendations.map((r) => `  * ${r}`).join("\n") || "  * Baseline fully optimized."}
+- **Observations:**
+${pack.healthScore.observations.map((o) => `  * ${o}`).join("\n") || "  * None."}
 
 ## 2. Net Worth & Assets
 - **Total Net Worth:** £${p.netWorth.toLocaleString("en-GB")}
@@ -364,7 +364,7 @@ ${
 }
 ${
   d.studentLoanEvaluation
-    ? `\n### UK Student Loan Status:\n- Plan: ${d.studentLoanEvaluation.plan.toUpperCase()} | Recommendation: ${d.studentLoanEvaluation.recommendation.toUpperCase()}\n- Detail: ${d.studentLoanEvaluation.reasoning}`
+    ? `\n### UK Student Loan Status:\n- Plan: ${d.studentLoanEvaluation.plan.toUpperCase()} | Projected outcome: ${d.studentLoanEvaluation.projectedOutcome}\n- Detail: ${d.studentLoanEvaluation.reasoning}`
     : ""
 }
 
