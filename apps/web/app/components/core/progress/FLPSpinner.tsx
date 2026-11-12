@@ -22,6 +22,7 @@ const FLPSpinner: FC<FLPSpinnerProps> = ({
   label = "Loading",
   decorative,
 }) => {
+  // With visible children the spinner defaults to decorative (the caller owns the live region).
   const isDecorative = decorative ?? children != null;
   const sizeMap = {
     xs: "12px",
