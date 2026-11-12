@@ -64,7 +64,6 @@
   "apps/web/app/containers/accounts/accountsContainer/AccountsContainer.tsx": 1,
   "apps/web/app/containers/budget/BudgetContainer.tsx": 1,
   "apps/web/app/containers/debt/DebtContainer.tsx": 1,
-  "apps/web/app/containers/forecast/ForecastContainer.tsx": 1,
   "apps/web/app/containers/mortgage/MortgageContainer.tsx": 1,
   "apps/web/app/containers/pension/PensionContainer.tsx": 1,
   "apps/web/app/containers/savings/SavingsContainer.tsx": 1,

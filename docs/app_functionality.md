@@ -23,7 +23,7 @@ Flump is a personal finance and tax planning app for UK users: you enter your ow
 ### 1.3 Tax, Salary and Savings Tools
 
 - **Take-home pay**: PAYE estimate from the UK tax-year rules (income tax bands, Personal Allowance, National Insurance, student loan, pension), by region (England/Wales/NI or Scotland). Needs a salary and region; otherwise it shows "Not set".
-- **Savings and compound interest forecasts**, and a **Forecast** view that is planned to merge into the Savings, Pension and Tax pages.
+- **Savings and compound interest forecasts**, with the former Forecast page merged into Savings (growth forecaster and take-home / pay-rise calculator tabs; `/app/forecast` redirects there).
 - **Pension** modelling and **Debt** payoff planning (strategy comparison), each with its own page.
 - **Tax-year rules** live in `packages/finance-engine`. Figures for each year are unverified until the owner signs off the test vectors; 2027/28 is not loaded yet and a fallback banner is planned.
 

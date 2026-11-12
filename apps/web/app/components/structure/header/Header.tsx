@@ -1,13 +1,6 @@
 import { css } from "@repo/ui/styled-system/css";
 import { type FC, type ReactElement, useMemo, useState } from "react";
-import {
-  FaBars,
-  FaBuilding,
-  FaChartLine,
-  FaFileInvoiceDollar,
-  FaPiggyBank,
-  FaShieldAlt,
-} from "react-icons/fa";
+import { FaBars, FaBuilding, FaFileInvoiceDollar, FaPiggyBank, FaShieldAlt } from "react-icons/fa";
 import { Link, useLoaderData } from "react-router";
 import FLPBox from "~/components/core/structure/FLPBox";
 import HomeLogo from "~/components/navigation/HomeLogo";
@@ -68,13 +61,6 @@ export const AUTH_DESKTOP_NAV_ROUTES: NavRouteItem[] = [
   {
     key: "planning",
     children: [
-      {
-        key: "forecast",
-        route: "/app/forecast",
-        description: "navForecastDesc",
-        icon: <FaChartLine size={15} />,
-        badgeColor: "#6363f1",
-      },
       {
         key: "tax",
         route: "/app/tax",

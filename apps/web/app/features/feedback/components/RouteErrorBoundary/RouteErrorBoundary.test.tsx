@@ -117,7 +117,6 @@ describe("route modules", () => {
     "app.accounts.$account",
     "app.budget",
     "app.debt",
-    "app.forecast",
     "app.mortgage",
     "app.pension",
     "app.profile",

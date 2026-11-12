@@ -45,7 +45,7 @@ describe("SetupChecklist", () => {
     expect(mockNavigate).toHaveBeenCalledWith("/app/mortgage");
 
     fireEvent.click(screen.getByRole("button", { name: /Model scenarios/i }));
-    expect(mockNavigate).toHaveBeenCalledWith("/app/forecast");
+    expect(mockNavigate).toHaveBeenCalledWith("/app/savings#forecast");
 
     fireEvent.click(screen.getByRole("button", { name: /Open tax tracker/i }));
     expect(mockNavigate).toHaveBeenCalledWith("/app/tax");

@@ -3,7 +3,6 @@ import { type FC, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import {
   FaBuilding,
-  FaChartLine,
   FaCoins,
   FaFileInvoiceDollar,
   FaHome,
@@ -142,10 +141,7 @@ const MobileNavDrawer: FC<MobileNavDrawerProps> = ({ isOpen, onClose, user }) =>
         },
         {
           key: "planning",
-          children: [
-            { key: "forecast", route: "/app/forecast", icon: <FaChartLine size={18} /> },
-            { key: "tax", route: "/app/tax", icon: <FaFileInvoiceDollar size={18} /> },
-          ],
+          children: [{ key: "tax", route: "/app/tax", icon: <FaFileInvoiceDollar size={18} /> }],
         },
       ]
     : [];
