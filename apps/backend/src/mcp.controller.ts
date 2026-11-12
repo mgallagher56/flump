@@ -12,6 +12,7 @@ import {
 } from "@nestjs/common";
 import { AuthGuard } from "./auth/auth.guard";
 import { McpService } from "./mcp.service";
+import { RateLimit } from "./security/rate-limit.decorator";
 
 @Controller()
 export class McpController {
