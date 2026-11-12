@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { evaluateSignoff } from "./signoff.js";
 import {
   runUkTaxVectors,
   selectUkTaxVectors,
@@ -22,11 +23,11 @@ describe("UK tax vector catalogue", () => {
     }
   });
 
-  it("every vector has a derivation, confidence and null sign-off", () => {
+  it("every vector has a derivation, confidence and a valid sign-off state", () => {
     for (const v of UK_TAX_VECTORS) {
       expect(v.derivation.trim().length, v.id).toBeGreaterThan(20);
       expect(["high", "medium"], v.id).toContain(v.confidence);
-      expect(v.signedOffBy, v.id).toBeNull();
+      expect(evaluateSignoff(v), v.id).not.toMatchObject({ state: "invalid" });
       expect(Number.isFinite(v.expected), v.id).toBe(true);
     }
   });
@@ -137,7 +138,8 @@ describe("Scottish Gift Aid band-extension vectors (ITA 2007 s.414(2)(b))", () =
       expect(v.status, v.id).toBe("UNVERIFIED");
       expect(v.unverifiedReason, v.id).toMatch(/^UNVERIFIED: .*s\.414\(2\)\(b\)/);
       expect(v.confidence, v.id).toBe("medium");
-      expect(v.signedOffBy, v.id).toBeNull();
+      // Ruling 2 (Gift Aid for Scottish taxpayers) is pending: never signed without a rulingRef.
+      expect(evaluateSignoff(v).state === "signed" ? v.rulingRef : "n/a", v.id).toBeTruthy();
       expect(v.source, v.id).toMatch(GOV_URL);
       expect(v.additionalSources, v.id).toContain(
         "https://www.legislation.gov.uk/ukpga/2007/3/section/414",

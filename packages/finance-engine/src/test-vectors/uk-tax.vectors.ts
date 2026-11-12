@@ -82,7 +82,18 @@ export interface UkTaxVector {
   status: UkTaxVectorStatus;
   /** Required when status is UNVERIFIED, starts with "UNVERIFIED:". */
   unverifiedReason?: string;
+  /**
+   * Owner sign-off. null until the owner signs. Only `scripts/tax-signoff.ts apply` may set
+   * these (the owner runs it; it refuses to run in CI). `signedOffHash` binds the sign-off to
+   * the vector's content: editing a signed vector invalidates it (see signoff.ts).
+   */
   signedOffBy: string | null;
+  /** ISO date (YYYY-MM-DD). Present only when signedOffBy is set. */
+  signedOffAt?: string;
+  /** sha256 of the vector content at sign-off. Present only when signedOffBy is set. */
+  signedOffHash?: string;
+  /** Written ruling that settles the judgement call behind an UNVERIFIED vector. Required to sign one. */
+  rulingRef?: string;
 }
 
 export interface UkTaxVectorFilter {
