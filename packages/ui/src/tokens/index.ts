@@ -28,16 +28,37 @@ export const colors = {
     900: { value: "#0f172a" },
     950: { value: "#020617" },
   },
-  // Special "Pro" Dark Mode
+  // E15 "Calm ledger" cool ink-blue neutrals (direction A). Light-theme surfaces, text and borders;
+  // the semantic surface/text/border tokens map onto these. Slate stays for compatibility.
+  ink: {
+    50: { value: "#f7f8fb" }, // canvas
+    100: { value: "#f0f2f7" }, // sunken
+    150: { value: "#eceef6" }, // subtle
+    200: { value: "#e9ebf2" }, // border.subtle
+    250: { value: "#dfe2ec" }, // border
+    300: { value: "#c3c8d8" }, // border.strong
+    500: { value: "#7d849c" }, // border.input, chart.baseline (mockup #858ca4 gave 2.9:1 on subtle)
+    600: { value: "#5d647c" }, // text.muted
+    700: { value: "#454b64" }, // text.secondary
+    800: { value: "#1b2040" }, // surface.contrast
+    900: { value: "#14172b" }, // text.primary
+  },
+  // Special "Pro" Dark Mode (cool ink-blue; stepped surfaces: sunken < canvas < card < overlay)
   dark: {
-    canvas: { value: "#0B0F17" },
-    subtle: { value: "#111622" },
-    surface: { value: "#141A26" },
-    surfaceSunken: { value: "#0D121D" },
-    surfaceOverlay: { value: "#182030" },
-    border: { value: "rgba(255, 255, 255, 0.08)" },
-    borderSubtle: { value: "rgba(255, 255, 255, 0.05)" },
-    contrast: { value: "#1E293B" },
+    canvas: { value: "#0d1220" },
+    subtle: { value: "#1a2238" },
+    surface: { value: "#131a2c" },
+    surfaceSunken: { value: "#0a0f1b" },
+    surfaceOverlay: { value: "#1a2238" },
+    border: { value: "#263050" },
+    borderSubtle: { value: "#1c2542" },
+    borderStrong: { value: "#3a4670" },
+    borderInput: { value: "#6b7699" },
+    contrast: { value: "#222b47" },
+    textPrimary: { value: "#eceff9" },
+    textSecondary: { value: "#b4bbd2" },
+    textMuted: { value: "#98a0ba" },
+    primary: { value: "#a5a8ff" },
   },
   // Shared Semantic Colors (WCAG compliant)
   success: {
@@ -172,90 +193,107 @@ export const semanticTokens = {
   colors: {
     // 1. Brand & Interactive Primary
     primary: {
-      DEFAULT: { value: { base: "{colors.indigo.600}", _dark: "{colors.indigo.400}" } },
+      DEFAULT: { value: { base: "{colors.indigo.600}", _dark: "{colors.dark.primary}" } },
       solid: { value: { base: "{colors.indigo.600}", _dark: "{colors.indigo.600}" } },
       hover: { value: { base: "{colors.indigo.700}", _dark: "{colors.indigo.700}" } },
-      subtle: { value: { base: "{colors.indigo.50}", _dark: "rgba(99, 102, 241, 0.12)" } },
-      border: { value: { base: "{colors.indigo.200}", _dark: "rgba(99, 102, 241, 0.30)" } },
+      subtle: { value: { base: "#eeefff", _dark: "#1d2050" } },
+      border: { value: { base: "#c7c9f7", _dark: "#3b3f8f" } },
       foreground: { value: "#ffffff" },
     },
 
     // 2. Layered Surfaces (Canonical surface namespace)
     surface: {
       DEFAULT: { value: { base: "#ffffff", _dark: "{colors.dark.surface}" } },
-      canvas: { value: { base: "{colors.slate.50}", _dark: "{colors.dark.canvas}" } },
+      canvas: { value: { base: "{colors.ink.50}", _dark: "{colors.dark.canvas}" } },
       card: { value: { base: "#ffffff", _dark: "{colors.dark.surface}" } },
-      sunken: { value: { base: "{colors.slate.100}", _dark: "{colors.dark.surfaceSunken}" } },
-      subtle: { value: { base: "{colors.slate.100}", _dark: "{colors.dark.subtle}" } },
+      sunken: { value: { base: "{colors.ink.100}", _dark: "{colors.dark.surfaceSunken}" } },
+      subtle: { value: { base: "{colors.ink.150}", _dark: "{colors.dark.subtle}" } },
       overlay: { value: { base: "#ffffff", _dark: "{colors.dark.surfaceOverlay}" } },
-      contrast: { value: { base: "{colors.slate.900}", _dark: "{colors.dark.contrast}" } },
+      contrast: { value: { base: "{colors.ink.800}", _dark: "{colors.dark.contrast}" } },
+      // Modal/drawer backdrop. A translucent backdrop, never a text surface: contrast is not
+      // asserted, only that it visibly dims the page (see tokens.a11y.test.ts).
+      scrim: { value: { base: "rgba(20, 23, 43, 0.4)", _dark: "rgba(5, 8, 16, 0.6)" } },
     },
 
     // 3. Typography Hierarchy
     text: {
-      primary: { value: { base: "{colors.slate.900}", _dark: "#f8fafc" } },
-      secondary: { value: { base: "{colors.slate.700}", _dark: "{colors.slate.300}" } },
-      muted: { value: { base: "{colors.slate.600}", _dark: "{colors.slate.400}" } },
-      onContrast: { value: { base: "#ffffff", _dark: "#f8fafc" } },
+      primary: { value: { base: "{colors.ink.900}", _dark: "{colors.dark.textPrimary}" } },
+      secondary: { value: { base: "{colors.ink.700}", _dark: "{colors.dark.textSecondary}" } },
+      muted: { value: { base: "{colors.ink.600}", _dark: "{colors.dark.textMuted}" } },
+      onContrast: { value: { base: "#f4f5fb", _dark: "#f8fafc" } },
     },
 
     // 4. Hairline & Interactive Borders
     border: {
-      DEFAULT: { value: { base: "{colors.slate.200}", _dark: "{colors.dark.border}" } },
-      subtle: { value: { base: "rgba(15, 23, 42, 0.06)", _dark: "{colors.dark.borderSubtle}" } },
-      strong: { value: { base: "{colors.slate.300}", _dark: "rgba(255, 255, 255, 0.16)" } },
-      input: { value: { base: "{colors.slate.500}", _dark: "rgba(255, 255, 255, 0.40)" } },
-      focusRing: { value: { base: "{colors.indigo.600}", _dark: "{colors.indigo.400}" } },
+      DEFAULT: { value: { base: "{colors.ink.250}", _dark: "{colors.dark.border}" } },
+      subtle: { value: { base: "{colors.ink.200}", _dark: "{colors.dark.borderSubtle}" } },
+      strong: { value: { base: "{colors.ink.300}", _dark: "{colors.dark.borderStrong}" } },
+      input: { value: { base: "{colors.ink.500}", _dark: "{colors.dark.borderInput}" } },
+      focusRing: { value: { base: "{colors.indigo.600}", _dark: "{colors.dark.primary}" } },
     },
 
-    // 5. Unified Financial & System Status (Merges financial.* and success/warning/destructive/info)
+    // 5. Unified Financial & System Status. Values refined from direction A (E15); every pair is
+    // covered by the contrast matrix in tokens.a11y.test.ts.
     status: {
       positive: {
-        text: { value: { base: "{colors.success.700}", _dark: "{colors.success.400}" } },
-        bg: { value: { base: "{colors.success.50}", _dark: "rgba(16, 185, 129, 0.12)" } },
-        border: { value: { base: "{colors.success.200}", _dark: "rgba(16, 185, 129, 0.28)" } },
-        solid: { value: { base: "{colors.success.600}", _dark: "{colors.success.500}" } },
+        text: { value: { base: "#0f6b52", _dark: "#5fd3a6" } },
+        bg: { value: { base: "#e6f4ee", _dark: "#0f2a26" } },
+        border: { value: { base: "#b5dccb", _dark: "#1d5a49" } },
+        solid: { value: { base: "#15855f", _dark: "#2fb88a" } },
       },
       warning: {
-        text: { value: { base: "{colors.warning.700}", _dark: "{colors.warning.400}" } },
-        bg: { value: { base: "{colors.warning.50}", _dark: "rgba(245, 158, 11, 0.12)" } },
-        border: { value: { base: "{colors.warning.200}", _dark: "rgba(245, 158, 11, 0.28)" } },
-        solid: { value: { base: "{colors.warning.600}", _dark: "{colors.warning.500}" } },
+        text: { value: { base: "#8a5a00", _dark: "#f0bf6a" } },
+        bg: { value: { base: "#fbf1dc", _dark: "#2b2210" } },
+        border: { value: { base: "#ecd49a", _dark: "#5c4719" } },
+        solid: { value: { base: "#b7791f", _dark: "#d99a2b" } },
       },
       danger: {
-        text: { value: { base: "{colors.destructive.700}", _dark: "{colors.destructive.400}" } },
-        bg: { value: { base: "{colors.destructive.50}", _dark: "rgba(239, 68, 68, 0.12)" } },
-        border: { value: { base: "{colors.destructive.200}", _dark: "rgba(239, 68, 68, 0.30)" } },
-        solid: { value: { base: "{colors.destructive.600}", _dark: "{colors.destructive.600}" } },
+        text: { value: { base: "#b42318", _dark: "#ff9a92" } },
+        bg: { value: { base: "#fdecea", _dark: "#2e1517" } },
+        border: { value: { base: "#f4c0ba", _dark: "#6b2a2d" } },
+        solid: { value: { base: "#d42a1e", _dark: "{colors.destructive.600}" } },
       },
       info: {
-        text: { value: { base: "{colors.info.700}", _dark: "{colors.info.400}" } },
-        bg: { value: { base: "{colors.info.50}", _dark: "rgba(14, 165, 233, 0.12)" } },
-        border: { value: { base: "{colors.info.200}", _dark: "rgba(14, 165, 233, 0.28)" } },
-        solid: { value: { base: "{colors.info.600}", _dark: "{colors.info.500}" } },
+        text: { value: { base: "#3730a3", _dark: "#a5a8ff" } },
+        bg: { value: { base: "#eef0ff", _dark: "#1b1e4a" } },
+        border: { value: { base: "#c7c9f7", _dark: "#3b3f8f" } },
+        solid: { value: { base: "#4f46e5", _dark: "#8f92ff" } },
       },
       neutral: {
-        text: { value: { base: "{colors.slate.700}", _dark: "{colors.slate.300}" } },
-        bg: { value: { base: "{colors.slate.100}", _dark: "rgba(148, 163, 184, 0.12)" } },
-        border: { value: { base: "{colors.slate.200}", _dark: "rgba(148, 163, 184, 0.25)" } },
-        solid: { value: { base: "{colors.slate.600}", _dark: "{colors.slate.500}" } },
+        text: { value: { base: "{colors.ink.700}", _dark: "{colors.dark.textSecondary}" } },
+        bg: { value: { base: "#eef0f5", _dark: "#1b2236" } },
+        border: { value: { base: "#d5d9e5", _dark: "#303a5c" } },
+        solid: { value: { base: "#6b7390", _dark: "#8790ad" } },
       },
     },
 
-    // 6. Semantic Data Visualization & Chart Series
+    // 6. Semantic Data Visualization & Chart Series. Liabilities use amber (chart.debt), never red:
+    // red is reserved for errors. series1..8 are ordered so adjacent pairs stay distinguishable
+    // under colour-vision deficiency (see the CVD test); still pair every series with a direct
+    // label, marker or dash so colour is never the only cue.
     chart: {
-      primary: { value: { base: "{colors.indigo.600}", _dark: "{colors.indigo.400}" } },
-      wealth: { value: { base: "{colors.success.600}", _dark: "{colors.success.400}" } },
-      debt: { value: { base: "{colors.destructive.600}", _dark: "{colors.destructive.400}" } },
-      warning: { value: { base: "{colors.warning.600}", _dark: "{colors.warning.400}" } },
-      accentPurple: { value: { base: "{colors.purple.600}", _dark: "{colors.purple.400}" } },
-      accentCyan: { value: { base: "{colors.cyan.600}", _dark: "{colors.cyan.400}" } },
-      series1: { value: { base: "{colors.indigo.600}", _dark: "{colors.indigo.400}" } },
-      series2: { value: { base: "{colors.success.600}", _dark: "{colors.success.400}" } },
-      series3: { value: { base: "{colors.purple.600}", _dark: "{colors.purple.400}" } },
-      series4: { value: { base: "{colors.cyan.600}", _dark: "{colors.cyan.400}" } },
-      series5: { value: { base: "{colors.warning.600}", _dark: "{colors.warning.400}" } },
-      grid: { value: { base: "rgba(15, 23, 42, 0.06)", _dark: "rgba(255, 255, 255, 0.06)" } },
+      primary: { value: { base: "{colors.indigo.600}", _dark: "#8f92ff" } },
+      wealth: { value: { base: "#0b8a6c", _dark: "#36c9a0" } },
+      debt: { value: { base: "#b7791f", _dark: "#e0a844" } },
+      warning: { value: { base: "#c2410c", _dark: "#f0883e" } },
+      accentPurple: { value: { base: "#7c5cd6", _dark: "#b79cff" } },
+      accentCyan: { value: { base: "#0e7490", _dark: "#4cc3e0" } },
+      series1: { value: { base: "{colors.indigo.600}", _dark: "#8f92ff" } },
+      series2: { value: { base: "#0b8a6c", _dark: "#36c9a0" } },
+      series3: { value: { base: "#b7791f", _dark: "#e0a844" } },
+      series4: { value: { base: "#7c5cd6", _dark: "#b79cff" } },
+      series5: { value: { base: "#0e7490", _dark: "#4cc3e0" } },
+      series6: { value: { base: "#a21caf", _dark: "#e468f5" } },
+      series7: { value: { base: "#c2410c", _dark: "#f0883e" } },
+      series8: { value: { base: "#64708f", _dark: "#8f9bbd" } },
+      // Forecast / projected values: draw dashed so it is not told apart by colour alone.
+      projection: { value: { base: "{colors.ink.600}", _dark: "{colors.dark.textMuted}" } },
+      // Confidence band: a low-alpha FILL behind lines, never a line itself. Verified only as
+      // alpha-composited difference from the card (>= 1.1:1) and that chart.primary stays >= 3:1 on it.
+      band: { value: { base: "rgba(79, 70, 229, 0.14)", _dark: "rgba(143, 146, 255, 0.18)" } },
+      // Reference lines (targets, zero line, prior year).
+      baseline: { value: { base: "{colors.ink.500}", _dark: "{colors.dark.borderInput}" } },
+      grid: { value: { base: "rgba(20, 23, 43, 0.07)", _dark: "rgba(255, 255, 255, 0.07)" } },
     },
   },
   shadows: {

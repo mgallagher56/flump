@@ -8,5 +8,13 @@ describe("ColorPalette Foundation", () => {
     expect(screen.getByText("Flump Color System & Semantic Tokens")).toBeDefined();
     expect(screen.getByText("Indigo (Brand)")).toBeDefined();
     expect(screen.getByText("Slate (Surfaces & Text)")).toBeDefined();
+    expect(screen.getByText("Ink (Cool Neutrals)")).toBeDefined();
+  });
+
+  it("shows the E15 keys in light and dark panels", () => {
+    render(<ColorPalette />);
+    expect(screen.getByText("New in E15 (Light & Dark)")).toBeDefined();
+    expect(screen.getAllByText("chart.series6")).toHaveLength(2);
+    expect(screen.getAllByText("surface.scrim")).toHaveLength(2);
   });
 });

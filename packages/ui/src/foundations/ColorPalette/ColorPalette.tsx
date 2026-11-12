@@ -30,9 +30,80 @@ function getContrast(hex1: string, hex2: string): string {
   }
 }
 
+// Literal token names keep Panda's static extraction working (no dynamic class building).
+const E15_KEYS = [
+  {
+    token: "surface.scrim",
+    note: "Modal backdrop",
+    fill: css({ backgroundColor: "surface.scrim" }),
+  },
+  { token: "chart.series6", fill: css({ backgroundColor: "chart.series6" }) },
+  { token: "chart.series7", fill: css({ backgroundColor: "chart.series7" }) },
+  { token: "chart.series8", fill: css({ backgroundColor: "chart.series8" }) },
+  {
+    token: "chart.projection",
+    note: "Draw dashed",
+    fill: css({ backgroundColor: "chart.projection" }),
+  },
+  { token: "chart.band", note: "Fill behind lines", fill: css({ backgroundColor: "chart.band" }) },
+  {
+    token: "chart.baseline",
+    note: "Reference line",
+    fill: css({ backgroundColor: "chart.baseline" }),
+  },
+] as const;
+
+/** Swatches for the E15 keys, rendered inside a themed wrapper so each panel resolves its own mode. */
+const NewKeyPanel: FC<{ theme: "light" | "dark" }> = ({ theme }) => (
+  <div
+    data-theme={theme}
+    className={css({
+      flex: "1 1 280px",
+      p: "16px",
+      borderRadius: "xl",
+      borderWidth: "1px",
+      borderStyle: "solid",
+      borderColor: "border",
+      backgroundColor: "surface.canvas",
+      color: "text.primary",
+    })}
+  >
+    <h3 className={css({ fontSize: "sm", fontWeight: "semibold", mb: "12px" })}>
+      {theme === "light" ? "Light" : "Dark"}
+    </h3>
+    <ul className={css({ display: "flex", flexDirection: "column", gap: "8px" })}>
+      {E15_KEYS.map((key) => (
+        <li key={key.token} className={css({ display: "flex", alignItems: "center", gap: "12px" })}>
+          <span
+            aria-hidden="true"
+            className={css({
+              width: "40px",
+              height: "24px",
+              borderRadius: "sm",
+              borderWidth: "1px",
+              borderStyle: "solid",
+              borderColor: "border",
+              backgroundColor: "surface.card",
+              position: "relative",
+              overflow: "hidden",
+            })}
+          >
+            <span className={`${css({ position: "absolute", inset: "0" })} ${key.fill}`} />
+          </span>
+          <code className={css({ fontFamily: "mono", fontSize: "xs" })}>{key.token}</code>
+          {"note" in key ? (
+            <span className={css({ fontSize: "xs", color: "text.muted" })}>{key.note}</span>
+          ) : null}
+        </li>
+      ))}
+    </ul>
+  </div>
+);
+
 export const ColorPalette: FC = () => {
   const primitivePalettes = [
     { name: "Indigo (Brand)", scale: colors.indigo },
+    { name: "Ink (Cool Neutrals)", scale: colors.ink },
     { name: "Slate (Surfaces & Text)", scale: colors.slate },
     { name: "Success", scale: colors.success },
     { name: "Warning", scale: colors.warning },
@@ -167,6 +238,24 @@ export const ColorPalette: FC = () => {
               )}
             </tbody>
           </table>
+        </div>
+      </section>
+
+      {/* New E15 keys, both themes */}
+      <section className={css({ mb: "40px" })}>
+        <h2
+          className={css({
+            fontFamily: "display",
+            fontSize: "lg",
+            fontWeight: "semibold",
+            mb: "12px",
+          })}
+        >
+          New in E15 (Light & Dark)
+        </h2>
+        <div className={css({ display: "flex", flexWrap: "wrap", gap: "16px" })}>
+          <NewKeyPanel theme="light" />
+          <NewKeyPanel theme="dark" />
         </div>
       </section>
 
