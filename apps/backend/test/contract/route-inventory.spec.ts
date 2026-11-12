@@ -212,10 +212,11 @@ describe("web to backend route inventory", () => {
   it("reads a plausible number of backend routes and web call sites", () => {
     // Sanity floor, not a contract: it only proves the extractor still finds most routes and web
     // call sites, so a silent drop in extraction fails here. It sits at the counts on 2026-11-12
-    // (42 routes, 51 call sites). Removing routes or calls on purpose means lowering it in the same
-    // PR; adding some means it can be raised.
+    // (42 routes, 50 call sites after E20-N5 deleted the dead HttpProfileAdapter, which held one).
+    // Removing routes or calls on purpose means lowering it in the same PR; adding some means it
+    // can be raised.
     expect(routes.length).toBeGreaterThanOrEqual(42);
-    expect(webCalls.length).toBeGreaterThanOrEqual(51);
+    expect(webCalls.length).toBeGreaterThanOrEqual(50);
     expect(routes).toContainEqual({ method: "PATCH", path: "/accounts/:p" });
     expect(routes).toContainEqual({ method: "POST", path: "/bank-connections/:p/refresh" });
   });
