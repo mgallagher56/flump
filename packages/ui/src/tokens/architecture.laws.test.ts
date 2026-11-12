@@ -77,6 +77,7 @@ describe("Architecture & Design System Laws", () => {
       for (const expected of [
         "ColorPalette",
         "DataVizPalette",
+        "DirectionCSignoff",
         "Elevation",
         "Motion",
         "SpacingAndRadii",
