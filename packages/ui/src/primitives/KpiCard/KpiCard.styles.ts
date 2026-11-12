@@ -7,12 +7,13 @@ export const kpiCardContainer = cva({
     borderWidth: "1px",
     borderStyle: "solid",
     borderColor: "border.subtle",
-    p: { base: "16px", md: "20px" },
+    p: "density.cardPad",
     display: "flex",
     flexDirection: "column",
     justifyContent: "space-between",
-    gap: "8px",
+    gap: "density.gap",
     height: "100%",
+    minWidth: 0,
     boxShadow: "card",
   },
 });
@@ -22,38 +23,73 @@ export const kpiEyebrow = cva({
     display: "flex",
     alignItems: "center",
     justifyContent: "space-between",
-    gap: "8px",
+    gap: "2",
   },
 });
 
 export const kpiLabel = cva({
   base: {
-    fontSize: "xs",
-    fontWeight: "semibold",
+    textStyle: "label.sm",
     color: "text.muted",
-    letterSpacing: "0.01em",
+    minWidth: 0,
+    overflowWrap: "anywhere",
+  },
+});
+
+export const kpiValueRow = cva({
+  base: {
+    display: "flex",
+    alignItems: "baseline",
+    flexWrap: "wrap",
+    gap: "2",
   },
 });
 
 export const kpiHeroValue = cva({
   base: {
-    fontFamily: "display",
-    fontSize: { base: "22px", md: "26px" },
-    fontWeight: "bold",
-    letterSpacing: "-0.02em",
+    textStyle: "numeric.kpi",
     fontVariantNumeric: "tabular-nums",
     color: "text.primary",
     margin: "0",
-    lineHeight: "1.2",
+    minWidth: 0,
+    overflowWrap: "anywhere",
   },
 });
 
 export const kpiSubtext = cva({
   base: {
-    fontSize: "xs",
+    textStyle: "body.sm",
     color: "text.muted",
-    lineHeight: "1.4",
     margin: "0",
-    pt: "4px",
+    pt: "1",
+  },
+});
+
+export const kpiLoadingBar = cva({
+  base: {
+    height: "2rem",
+    width: "60%",
+    borderRadius: "md",
+    backgroundColor: "surface.sunken",
+    _motionSafe: {
+      bgGradient: "to-r",
+      gradientFrom: "surface.sunken",
+      gradientVia: "surface.subtle",
+      gradientTo: "surface.sunken",
+      backgroundSize: "200% 100%",
+      animationName: "shimmer",
+      animationDuration: "slow",
+      animationTimingFunction: "standard",
+      animationIterationCount: "infinite",
+    },
+  },
+});
+
+export const kpiDeltaContent = cva({
+  base: {
+    display: "inline-flex",
+    alignItems: "center",
+    gap: "1",
+    fontVariantNumeric: "tabular-nums",
   },
 });

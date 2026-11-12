@@ -1,41 +1,118 @@
+import { ArrowDown, ArrowUp, type LucideIcon, Minus } from "lucide-react";
 import type { FC, ReactNode } from "react";
 import { cx } from "../../../styled-system/css";
+import { Icon } from "../Icon/Icon";
+import { Money } from "../Money/Money";
 import { StatusBadge, type StatusBadgeVariants } from "../StatusBadge/StatusBadge";
-import { kpiCardContainer, kpiEyebrow, kpiHeroValue, kpiLabel, kpiSubtext } from "./KpiCard.styles";
+import { VisuallyHidden } from "../VisuallyHidden/VisuallyHidden";
+import {
+  kpiCardContainer,
+  kpiDeltaContent,
+  kpiEyebrow,
+  kpiHeroValue,
+  kpiLabel,
+  kpiLoadingBar,
+  kpiSubtext,
+  kpiValueRow,
+} from "./KpiCard.styles";
+
+export type KpiDeltaDirection = "up" | "down" | "flat";
+/** `liability`: a falling balance is good news (positive tone), a rising one is danger. */
+export type KpiDeltaPolarity = "asset" | "liability";
+
+export interface KpiDelta {
+  direction: KpiDeltaDirection;
+  text: string;
+  polarity?: KpiDeltaPolarity;
+}
 
 export interface KpiCardProps {
   label: string;
-  value: ReactNode;
+  /** `null` or `undefined` renders "Not set" (never a zero). */
+  value?: ReactNode;
+  /** Legacy delta badge. Prefer `delta`, which adds an arrow so meaning never rests on colour. */
   deltaText?: string;
   deltaVariant?: StatusBadgeVariants["variant"];
+  delta?: KpiDelta;
   subtext?: ReactNode;
   action?: ReactNode;
+  /** Shows a skeleton in place of the value and marks the card busy. */
+  loading?: boolean;
+  /** Label used when `value` is null or undefined. */
+  notSetLabel?: string;
+  /** Call to action shown beside "Not set", e.g. an "Add" button. */
+  emptyAction?: ReactNode;
   className?: string;
 }
+
+const DELTA_ICON: Record<KpiDeltaDirection, LucideIcon> = {
+  up: ArrowUp,
+  down: ArrowDown,
+  flat: Minus,
+};
+
+const DELTA_SPOKEN: Record<KpiDeltaDirection, string> = {
+  up: "Up",
+  down: "Down",
+  flat: "No change",
+};
+
+export const deltaTone = (
+  direction: KpiDeltaDirection,
+  polarity: KpiDeltaPolarity = "asset",
+): NonNullable<StatusBadgeVariants["variant"]> => {
+  if (direction === "flat") return "neutral";
+  const good = polarity === "liability" ? direction === "down" : direction === "up";
+  return good ? "positive" : "danger";
+};
 
 export const KpiCard: FC<KpiCardProps> = ({
   label,
   value,
   deltaText,
   deltaVariant = "neutral",
+  delta,
   subtext,
   action,
+  loading = false,
+  notSetLabel = "Not set",
+  emptyAction,
   className,
 }) => {
+  const isEmpty = value === null || value === undefined;
+
   return (
-    <div className={cx(kpiCardContainer(), className)}>
+    <div aria-busy={loading || undefined} className={cx(kpiCardContainer(), className)}>
       <div className={kpiEyebrow()}>
         <span className={kpiLabel()}>{label}</span>
         {action && <div>{action}</div>}
       </div>
 
-      <div style={{ display: "flex", alignItems: "baseline", flexWrap: "wrap", gap: "8px" }}>
-        <div className={kpiHeroValue()}>{value}</div>
-        {deltaText && (
+      <div className={kpiValueRow()}>
+        {loading ? (
+          <>
+            <div aria-hidden="true" className={kpiLoadingBar()} />
+            <VisuallyHidden>Loading</VisuallyHidden>
+          </>
+        ) : isEmpty ? (
+          <Money notSetAction={emptyAction} notSetLabel={notSetLabel} value={null} />
+        ) : (
+          <div className={kpiHeroValue()}>{value}</div>
+        )}
+        {!loading && delta ? (
+          <StatusBadge size="sm" variant={deltaTone(delta.direction, delta.polarity)}>
+            <span className={kpiDeltaContent()}>
+              <Icon icon={DELTA_ICON[delta.direction]} size="sm" />
+              <VisuallyHidden>{DELTA_SPOKEN[delta.direction]}</VisuallyHidden>
+              <span>{delta.text}</span>
+            </span>
+          </StatusBadge>
+        ) : null}
+        {!loading && !delta && deltaText ? (
           <StatusBadge size="sm" variant={deltaVariant}>
             {deltaText}
           </StatusBadge>
-        )}
+        ) : null}
       </div>
 
       {subtext && <div className={kpiSubtext()}>{subtext}</div>}
