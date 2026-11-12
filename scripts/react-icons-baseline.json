@@ -39,7 +39,6 @@
   "apps/web/app/components/mortgage/MortgageTracker.tsx": 1,
   "apps/web/app/components/mortgage/OverpayVsSaveCompare.tsx": 1,
   "apps/web/app/components/mortgage/RemortgageShockSim.tsx": 1,
-  "apps/web/app/components/navigation/MobileBottomBar.tsx": 1,
   "apps/web/app/components/pension/AddPensionAccountDialog.tsx": 1,
   "apps/web/app/components/pension/PensionAccountsList.tsx": 1,
   "apps/web/app/components/pension/PensionForecasterCard.tsx": 1,

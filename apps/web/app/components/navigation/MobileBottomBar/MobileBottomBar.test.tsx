@@ -39,3 +39,15 @@ describe("<MobileBottomBar />", () => {
     expect(onMoreClick).toHaveBeenCalledTimes(1);
   });
 });
+
+describe("<MobileBottomBar /> tabs", () => {
+  test("shows Debt and leaves opt-in Tax to the More drawer", () => {
+    customRender(
+      <ResponsiveProvider initialIsMobile={true}>
+        <MobileBottomBar isMobile user={{ id: "1" }} />
+      </ResponsiveProvider>,
+    );
+    expect(screen.getByText(/^debt$/i)).not.toBeNull();
+    expect(screen.queryByText(/^tax$/i)).toBeNull();
+  });
+});

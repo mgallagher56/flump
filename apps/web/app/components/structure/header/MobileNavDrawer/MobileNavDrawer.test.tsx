@@ -48,3 +48,18 @@ describe("<MobileNavDrawer />", () => {
     expect(onClose).toHaveBeenCalledTimes(2);
   });
 });
+
+describe("<MobileNavDrawer /> keyboard", () => {
+  test("Escape closes the drawer and the close button receives focus", () => {
+    const onClose = vi.fn();
+    customRender(<MobileNavDrawer isOpen={true} user={{ id: "1" }} onClose={onClose} />);
+    expect(document.activeElement).toBe(screen.getByLabelText("Close navigation menu"));
+    fireEvent.keyDown(document, { key: "Escape" });
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  test("lists Debt for signed-in users", () => {
+    customRender(<MobileNavDrawer isOpen={true} user={{ id: "1" }} onClose={vi.fn()} />);
+    expect(screen.getAllByText("debt").length).toBeGreaterThan(0);
+  });
+});
