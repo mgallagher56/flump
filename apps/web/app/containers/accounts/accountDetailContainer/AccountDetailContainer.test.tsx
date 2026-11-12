@@ -175,66 +175,12 @@ describe("<AccountDetailContainer />", () => {
       "/app/accounts",
     );
   });
-  test("should add new years when buttons are clicked", () => {
-    const { baseElement, getByText } = customRender(<AccountDetailContainer />);
-
-    const addNextYearButton = getByText("addNextYear");
-    const addPrevYearButton = getByText("addPrevYear");
-    act(() => {
-      fireEvent.click(addNextYearButton);
-      fireEvent.click(addPrevYearButton);
-    });
-
-    expect(mocks.mockFetcherSubmit).toHaveBeenCalledTimes(2);
-    expect(baseElement).toMatchSnapshot("with new years added");
-  });
-
-  test("should toggle edit mode when button is clicked, changed value and save new value", () => {
-    const { baseElement, getByText, getAllByDisplayValue } = customRender(
-      <AccountDetailContainer />,
-    );
-    const editButton = getByText("edit");
-    act(() => {
-      fireEvent.click(editButton);
-    });
-    expect(baseElement).toMatchSnapshot("with edit mode enabled");
-
-    const firstInput = getAllByDisplayValue("1000")[0];
-    act(() => {
-      fireEvent.change(firstInput, { target: { value: "2000" } });
-    });
-
-    const saveButton = getByText("save");
-    act(() => {
-      fireEvent.click(saveButton);
-    });
-
-    expect(mocks.mockFetcherSubmit).toHaveBeenCalledWith(
-      expect.objectContaining({
-        intent: "updateValues",
-      }),
-      expect.anything(),
-    );
-  });
-
-  test("should render add current year button and add current year when clicked", () => {
-    mocks.mockUseLoaderData.mockReturnValueOnce({
-      account: {
-        id: "123456",
-        name: "My current account",
-        type: "CURRENT",
-        balance: 1000,
-      },
-      accountDetails: [],
-    });
-
-    const { baseElement, getByText } = customRender(<AccountDetailContainer />);
-    const addCurrentYearButton = getByText("addCurrentYear");
-    act(() => {
-      fireEvent.click(addCurrentYearButton);
-    });
-    expect(mocks.mockFetcherSubmit).toHaveBeenCalledTimes(1);
-    expect(baseElement).toMatchSnapshot("with current year added");
+  test("history is read-only: no edit, save or add-year controls", () => {
+    const { queryByText } = customRender(<AccountDetailContainer />);
+    for (const label of ["edit", "save", "addPrevYear", "addNextYear", "addCurrentYear"]) {
+      expect(queryByText(label)).toBeNull();
+    }
+    expect(mocks.mockFetcherSubmit).not.toHaveBeenCalled();
   });
 
   test("shows a negative stored liability balance as a positive amount owed", () => {

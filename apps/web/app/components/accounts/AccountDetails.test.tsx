@@ -1,7 +1,6 @@
 import { fireEvent } from "@testing-library/react";
 import { vi } from "vitest";
 import customRender from "~/testUtils/customRender";
-import { emptyObject } from "~/utils/utils";
 import AccountDetails from "./AccountDetails";
 
 const mocks = vi.hoisted(() => ({
@@ -157,93 +156,14 @@ vi.mock("~/hooks/useFormatCurrency", () => ({
 
 describe("<AccountDetails />", () => {
   test("should render", () => {
-    const { container } = customRender(
-      <AccountDetails editedValues={emptyObject} isEditMode={false} onInputChange={vi.fn()} />,
-    );
+    const { container } = customRender(<AccountDetails />);
     expect(container).toMatchSnapshot();
   });
 
-  test("should render in edit mode", () => {
-    const { container } = customRender(
-      <AccountDetails
-        editedValues={{
-          2023: {
-            1: "1000",
-          },
-        }}
-        isEditMode={true}
-        onInputChange={vi.fn()}
-      />,
-    );
-    expect(container).toMatchSnapshot();
-  });
-
-  test("opens a confirm dialog for deleting a year without submitting or using window.confirm", () => {
-    const confirmSpy = vi.fn();
-    window.confirm = confirmSpy;
-    mocks.mockFetcherSubmit.mockClear();
-    const { getByTitle, getByRole } = customRender(
-      <AccountDetails editedValues={emptyObject} isEditMode={false} onInputChange={vi.fn()} />,
-    );
-    fireEvent.click(getByTitle("Delete 2023"));
-    expect(getByRole("alertdialog", { name: "Delete 2023?" })).toBeDefined();
-    expect(getByRole("alertdialog").textContent).toContain(
-      "This removes all monthly balances for 2023 from Monzo Current. This can't be undone.",
-    );
+  test("is read-only: no inputs, delete-year buttons or edit controls", () => {
+    const { container, queryByTitle } = customRender(<AccountDetails />);
+    expect(container.querySelector("input")).toBeNull();
+    expect(queryByTitle("Delete 2023")).toBeNull();
     expect(mocks.mockFetcherSubmit).not.toHaveBeenCalled();
-    expect(confirmSpy).not.toHaveBeenCalled();
-  });
-
-  test("cancelling the year confirm submits nothing", () => {
-    mocks.mockFetcherSubmit.mockClear();
-    const { getByTitle, getByRole, queryByRole } = customRender(
-      <AccountDetails editedValues={emptyObject} isEditMode={false} onInputChange={vi.fn()} />,
-    );
-    fireEvent.click(getByTitle("Delete 2023"));
-    fireEvent.click(getByRole("button", { name: "Cancel" }));
-    expect(queryByRole("alertdialog")).toBeNull();
-    expect(mocks.mockFetcherSubmit).not.toHaveBeenCalled();
-  });
-
-  test("should remove year when the delete year confirmation is accepted", () => {
-    mocks.mockFetcherSubmit.mockClear();
-    const { getByTitle, getByRole } = customRender(
-      <AccountDetails editedValues={emptyObject} isEditMode={false} onInputChange={vi.fn()} />,
-    );
-    fireEvent.click(getByTitle("Delete 2023"));
-    fireEvent.click(getByRole("button", { name: "Delete year" }));
-    expect(mocks.mockFetcherSubmit).toHaveBeenCalledTimes(1);
-    expect(mocks.mockFetcherSubmit).toHaveBeenCalledWith(
-      {
-        intent: "deleteYear",
-        year: "2023",
-      },
-      { method: "POST" },
-    );
-  });
-
-  test("a failed year delete shows the error inline and keeps the dialog open; success closes it", () => {
-    mocks.mockFetcherSubmit.mockClear();
-    mocks.fetcherData.current = null;
-    const ui = () => (
-      <AccountDetails editedValues={emptyObject} isEditMode={false} onInputChange={vi.fn()} />
-    );
-    const { getByTitle, getByRole, queryByRole, rerender } = customRender(ui());
-    fireEvent.click(getByTitle("Delete 2023"));
-    fireEvent.click(getByRole("button", { name: "Delete year" }));
-
-    mocks.fetcherData.current = {
-      success: false,
-      error: "We couldn't reach the server. Please try again.",
-    };
-    rerender(ui());
-    expect(getByRole("alert").textContent).toBe("We couldn't reach the server. Please try again.");
-    expect(getByRole("alertdialog")).toBeDefined();
-
-    fireEvent.click(getByRole("button", { name: "Delete year" }));
-    mocks.fetcherData.current = { success: true };
-    rerender(ui());
-    expect(queryByRole("alertdialog")).toBeNull();
-    mocks.fetcherData.current = null;
   });
 });

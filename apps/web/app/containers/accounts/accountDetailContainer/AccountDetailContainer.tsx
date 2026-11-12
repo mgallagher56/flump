@@ -1,10 +1,8 @@
 import { css } from "@repo/ui/styled-system/css";
-import { type FC, useCallback, useMemo, useState } from "react";
-import { useTranslation } from "react-i18next";
-import { FaArrowLeft, FaCalendarPlus, FaChartArea, FaTable } from "react-icons/fa";
-import { Link, useFetcher, useLoaderData } from "react-router";
+import { type FC, useMemo, useState } from "react";
+import { FaArrowLeft, FaChartArea, FaTable } from "react-icons/fa";
+import { Link, useLoaderData } from "react-router";
 import AccountDetails from "~/components/accounts/AccountDetails";
-import FLPButton from "~/components/core/buttons/FLPButton";
 import FLPCard from "~/components/core/cards/FLPCard";
 import FLPBox from "~/components/core/structure/FLPBox";
 import FLPHeading from "~/components/core/typography/FLPHeading";
@@ -13,27 +11,12 @@ import { isLiabilityType, toDisplayBalance } from "~/containers/accounts/utils";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
 import type { loader } from "~/routes/app.accounts.$account";
 import { isFutureMonth } from "~/utils/accounts";
-import { currentYear, emptyObject } from "~/utils/utils";
 
 const AccountDetailContainer: FC = () => {
   const { formatCurrency } = useFormatCurrency();
-  const { t } = useTranslation();
   const { account, accountDetails = [] } = useLoaderData<typeof loader>();
-  const fetcher = useFetcher();
-  const isLoading = fetcher.state !== "idle";
 
   const [activeTab, setActiveTab] = useState<"chart" | "table">("chart");
-  const [isEditMode, setIsEditMode] = useState(false);
-  const [editedValues, setEditedValues] = useState<{ [key: string]: { [key: string]: string } }>(
-    emptyObject,
-  );
-
-  const availableYears = useMemo<number[]>(() => {
-    const yrs = (accountDetails?.map((d: any) => d.year) || []).filter(
-      (y: any) => typeof y === "number",
-    );
-    return Array.from(new Set(yrs)).sort((a: any, b: any) => b - a) as number[];
-  }, [accountDetails]);
 
   // Calculate Latest Balance & Change
   const balanceStats = useMemo(() => {
@@ -75,70 +58,6 @@ const AccountDetailContainer: FC = () => {
     };
   }, [account, accountDetails]);
 
-  const handleToggleEditMode = useCallback(() => {
-    setIsEditMode((prev) => {
-      const next = !prev;
-      if (next) {
-        setActiveTab("table"); // Automatically switch to table when editing
-      }
-      return next;
-    });
-  }, []);
-
-  const handleInputChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
-    const { value } = event.target;
-    const { month, year } = event.target.dataset;
-    setEditedValues((prev) => ({
-      ...prev,
-      [String(year)]: {
-        ...(prev?.[String(year)] ?? emptyObject),
-        [String(month)]: value,
-      },
-    }));
-  }, []);
-
-  const handleAddNewYear = useCallback(
-    (selectedYear: number, yearToAdd: "current" | "prev" | "next") => {
-      const nextYear = selectedYear + (yearToAdd === "prev" ? -1 : 1);
-      const targetYear = yearToAdd === "current" ? currentYear : nextYear;
-
-      fetcher.submit(
-        {
-          intent: "addYear",
-          year: targetYear.toString(),
-        },
-        { method: "POST" },
-      );
-    },
-    [fetcher],
-  );
-
-  const handleSaveValues = useCallback(
-    (event: { preventDefault: () => void }) => {
-      event.preventDefault();
-      const updatedValues = Object.entries(editedValues).flatMap(([year, values]) =>
-        Object.entries(values).map(([month, value]) => ({
-          month: parseInt(month, 10),
-          year: parseInt(year, 10),
-          value: parseFloat(value),
-        })),
-      );
-
-      fetcher.submit(
-        {
-          intent: "updateValues",
-          values: JSON.stringify(updatedValues),
-        },
-        { method: "POST" },
-      );
-
-      setIsEditMode(false);
-      setEditedValues(emptyObject);
-    },
-    [editedValues, fetcher],
-  );
-
-  // Styles
   const containerStyle = css({
     display: "flex",
     flexDirection: "column",
@@ -283,101 +202,32 @@ const AccountDetailContainer: FC = () => {
             )}
           </div>
         </div>
-
-        <FLPBox display="flex" gap={3}>
-          {isEditMode ? (
-            <>
-              <FLPButton
-                disabled={isLoading}
-                variant="outline"
-                onClick={() => {
-                  setIsEditMode(false);
-                  setEditedValues(emptyObject);
-                }}
-              >
-                Cancel
-              </FLPButton>
-              <FLPButton disabled={isLoading} onClick={handleSaveValues}>
-                {t("save")}
-              </FLPButton>
-            </>
-          ) : (
-            <FLPButton disabled={isLoading} variant="outline" onClick={handleToggleEditMode}>
-              {t("edit")}
-            </FLPButton>
-          )}
-        </FLPBox>
       </div>
 
       {/* Tabs Menu */}
-      {!isEditMode && (
-        <div className={tabContainerStyle}>
-          <button
-            className={tabBtnStyle(activeTab === "chart")}
-            type="button"
-            onClick={() => setActiveTab("chart")}
-          >
-            <FaChartArea size={14} />
-            History trend
-          </button>
-          <button
-            className={tabBtnStyle(activeTab === "table")}
-            type="button"
-            onClick={() => setActiveTab("table")}
-          >
-            <FaTable size={14} />
-            Values table
-          </button>
-        </div>
-      )}
+      <div className={tabContainerStyle}>
+        <button
+          className={tabBtnStyle(activeTab === "chart")}
+          type="button"
+          onClick={() => setActiveTab("chart")}
+        >
+          <FaChartArea size={14} />
+          History trend
+        </button>
+        <button
+          className={tabBtnStyle(activeTab === "table")}
+          type="button"
+          onClick={() => setActiveTab("table")}
+        >
+          <FaTable size={14} />
+          Values table
+        </button>
+      </div>
 
       {/* Details Display (Chart or Table) */}
       <FLPCard>
-        <AccountDetails
-          activeTab={activeTab}
-          editedValues={editedValues}
-          isEditMode={isEditMode}
-          onInputChange={handleInputChange}
-        />
+        <AccountDetails activeTab={activeTab} />
       </FLPCard>
-
-      {/* Year actions */}
-      {!isEditMode && (
-        <div className={actionsStyle}>
-          {availableYears?.length ? (
-            <>
-              <FLPButton
-                disabled={isLoading}
-                size="sm"
-                variant="outline"
-                onClick={() => handleAddNewYear(availableYears[availableYears.length - 1], "prev")}
-              >
-                <FaCalendarPlus style={{ marginRight: "6px" }} />
-                {t("addPrevYear")}
-              </FLPButton>
-              <FLPButton
-                disabled={isLoading}
-                size="sm"
-                variant="outline"
-                onClick={() => handleAddNewYear(availableYears[0], "next")}
-              >
-                <FaCalendarPlus style={{ marginRight: "6px" }} />
-                {t("addNextYear")}
-              </FLPButton>
-            </>
-          ) : (
-            <FLPButton
-              disabled={isLoading}
-              size="sm"
-              variant="outline"
-              onClick={() => handleAddNewYear(new Date().getFullYear(), "current")}
-            >
-              <FaCalendarPlus style={{ marginRight: "6px" }} />
-              {t("addCurrentYear")}
-            </FLPButton>
-          )}
-        </div>
-      )}
     </div>
   );
 };

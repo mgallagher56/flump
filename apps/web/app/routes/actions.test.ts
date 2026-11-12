@@ -16,7 +16,6 @@ vi.mock("~/i18n.server", () => ({ default: { getLocale: vi.fn().mockResolvedValu
 import { BankSyncOrchestrator } from "@flump/banking/server";
 import { apiConfig } from "~/config.server";
 import { action as accountsAction } from "./app.accounts._index";
-import { action as accountAction } from "./app.accounts.$account";
 import { action as debtAction } from "./app.debt";
 import { action as onboardingAction } from "./app.onboarding";
 import { action as pensionAction } from "./app.pension";
@@ -125,35 +124,6 @@ const cases: Case[] = [
     method: "POST",
     path: "/bank-connections",
     body: { institutionId: "inst", token: "bank-token" },
-  },
-  {
-    route: "account detail",
-    action: accountAction,
-    intent: "deleteYear",
-    fields: { year: "2024" },
-    params: { account: "a1" },
-    method: "DELETE",
-    path: "/accounts/a1/details/2024",
-  },
-  {
-    route: "account detail",
-    action: accountAction,
-    intent: "addYear",
-    fields: { year: "2025" },
-    params: { account: "a1" },
-    method: "POST",
-    path: "/accounts/a1/details/year",
-    body: { year: 2025 },
-  },
-  {
-    route: "account detail",
-    action: accountAction,
-    intent: "updateValues",
-    fields: { values: JSON.stringify([{ month: 1, balance: 5 }]) },
-    params: { account: "a1" },
-    method: "PUT",
-    path: "/accounts/a1/details",
-    body: { values: [{ month: 1, balance: 5 }] },
   },
   {
     route: "pension",
@@ -571,15 +541,6 @@ describe("path segment encoding", () => {
     return fetchMock.mock.calls.map((c: any[]) => c[0] as string);
   };
   const base = apiConfig.apiBaseUrl;
-
-  it("encodes the account id and year in account detail", async () => {
-    const urls = await run(
-      accountAction,
-      { intent: "deleteYear", year: "../x?y" },
-      { account: "a/1" },
-    );
-    expect(urls).toEqual([`${base}/accounts/a%2F1/details/..%2Fx%3Fy`]);
-  });
 
   it("encodes accountId and connectionId in the accounts route", async () => {
     expect(await run(accountsAction, { intent: "delete", accountId: "a/../b" })).toEqual([
