@@ -61,7 +61,7 @@ export const TypographyScale: FC = () => {
           Flump Typography Scale & Tabular Numbers
         </h1>
         <p className={css({ fontSize: "sm", color: "text.muted", mt: "4px" })}>
-          Font roles: heading (Plus Jakarta Sans), body and numeric (Inter), mono (JetBrains Mono).
+          Font roles: heading (Plus Jakarta Sans), body and numeric (Inter), mono (system stack).
           Each role is defined once in tokens/typography.ts.
         </p>
       </div>
@@ -106,7 +106,7 @@ export const TypographyScale: FC = () => {
               Mono (Tax Codes & Account Numbers)
             </div>
             <div className={css({ fontFamily: "mono", fontSize: "sm" })}>
-              JetBrains Mono — 1257L / 08-92-41 / 2024-25 TAX YEAR
+              System monospace — 1257L / 08-92-41 / 2024-25 TAX YEAR
             </div>
             <code className={css({ fontSize: "xs", color: "text.muted" })}>{fonts.mono.value}</code>
           </div>

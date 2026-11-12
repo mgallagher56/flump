@@ -29,9 +29,9 @@ A missing or unknown figure renders the text `Not set`, never `0`, `NaN`, `-` or
 
 ## Fonts
 
-Three roles, defined once in `fontFamilies` (`typography.ts`): `fonts.body`, `fonts.heading`, `fonts.numeric` (aliases body). Legacy `fonts.sans`, `fonts.display`, `fonts.mono` remain. The owner has not picked a typeface; Inter (body/numeric) and Plus Jakarta Sans (heading) are kept.
+Three roles, defined once in `fontFamilies` (`typography.ts`): `fonts.body`, `fonts.heading`, `fonts.numeric` (aliases body). Legacy `fonts.sans`, `fonts.display`, `fonts.mono` remain; `fonts.mono` is the system monospace stack (`ui-monospace, SFMono-Regular, Menlo, monospace`). JetBrains Mono was removed 2026-11-12: the app bundles exactly two fonts. The owner has not picked a typeface; Inter (body/numeric) and Plus Jakarta Sans (heading) are kept.
 
-Self-hosting: `@fontsource-variable/{inter,plus-jakarta-sans,jetbrains-mono}` (pinned 5.3.0) are dependencies of `packages/ui`, loaded by `packages/ui/src/fonts/fonts.css` (weight axis only, `font-display: swap`) and exported as `@repo/ui/fonts.css`. Apps adopt it in the later web-adoption task: add `import "@repo/ui/fonts.css";` to the root, and delete the Google Fonts `<link>` tags. Nothing is changed in `apps/web` or `apps/marketing` yet.
+Self-hosting: `@fontsource-variable/{inter,plus-jakarta-sans}` (pinned 5.3.0) are dependencies of `packages/ui`, loaded by `packages/ui/src/fonts/fonts.css` (weight axis only, `font-display: swap`) and exported as `@repo/ui/fonts.css`. Apps adopt it in the later web-adoption task: add `import "@repo/ui/fonts.css";` to the root, and delete the Google Fonts `<link>` tags. Nothing is changed in `apps/web` or `apps/marketing` yet.
 
 **Swap procedure:** (1) edit the relevant entry in `fontFamilies` in `typography.ts`; (2) change the matching `@import` in `fonts.css` and the dependency in `packages/ui/package.json`. Run `bun run --cwd packages/ui generate`.
 
@@ -122,7 +122,7 @@ The token scale stops at bold (700). Raw `fontWeight` usage above that, counted 
 | `extrabold` (string) | 0        | 3              | 0                     | 0        |
 | `black`              | 0        | 0              | 0                     | 0        |
 
-`apps/web/app/components/home/HomeHero.tsx:121` uses 900. Plus Jakarta Sans and JetBrains Mono variable axes top out at 800, so 900 clamps to 800 there (Inter does reach 900). Many 800 usages exist; web adoption should map them to `bold` (700) or add an explicit `extrabold` token rather than relying on clamping. Mobile-companion is React Native and unaffected by the web fonts.
+`apps/web/app/components/home/HomeHero.tsx:121` uses 900. Plus Jakarta Sans variable axis tops out at 800, so 900 clamps to 800 there (Inter does reach 900). Many 800 usages exist; web adoption should map them to `bold` (700) or add an explicit `extrabold` token rather than relying on clamping. Mobile-companion is React Native and unaffected by the web fonts.
 
 ### Colour-vision deficiency
 
