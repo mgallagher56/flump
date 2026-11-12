@@ -1,7 +1,7 @@
 ---
 
 name: decider
-description: Read-only decision agent. Use to choose between options, resolve open questions or recommend a position on a trade-off, given the options and evidence. Not for code, plans or research.
+description: Read-only decision agent for COMPLICATED decisions (competing options, high stakes, hard to reverse, legal/financial/security implications, conflicting evidence). Straightforward decisions go to planner (opus). Not for code, plans or research.
 tools: Read, Grep, Glob, Bash
 model: fable
 ---
