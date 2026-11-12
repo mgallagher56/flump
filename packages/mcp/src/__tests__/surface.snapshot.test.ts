@@ -54,7 +54,7 @@ describe("per-tool output size (E17-N1)", () => {
 
       const sizes: Record<string, number> = {};
       for (const [name, args] of Object.entries(TOOL_CALLS)) {
-        sizes[name] = (await h.callText(name, args)).length;
+        sizes[name] = Buffer.byteLength(await h.callText(name, args), "utf8");
       }
       // Rounded up to the nearest 500 bytes so trivial formatting changes do not churn it.
       const rounded = Object.fromEntries(
@@ -71,6 +71,11 @@ describe("default-leak table (E17-N1)", () => {
   /**
    * Which silent defaults leak into each tool's output for a user with no data. This table
    * shrinks as later tickets land; delete a value from a row when its default is removed.
+   *
+   * This table covers ECHOED values only. Defaults that are applied internally and never
+   * appear in the output (5000 cash, 0.72 take-home ratio, 19.9 APR, 4.5 rate, 240 months)
+   * are pinned by the "KNOWN LEAK" tests in `tools/*.tool.test.ts`, which show that omitting
+   * an input gives the same result as passing the default explicitly. 45000 belongs to N2.
    */
   const EXPECTED_LEAKS_FOR_EMPTY_USER: Record<string, Array<number | string>> = {
     calculate_self_assessment_and_section24: [],

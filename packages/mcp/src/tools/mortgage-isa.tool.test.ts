@@ -26,6 +26,16 @@ describe("compare_mortgage_overpay_vs_isa (E17-N1)", () => {
     expect(body.currentMortgage).toMatchObject({ balanceGbp: 220000, propertyValueGbp: 350000 });
   });
 
+  it("KNOWN LEAK: an omitted rate and term are treated as 4.5% over 240 months", async () => {
+    h = await connectTestClient(mortgageAndIsa);
+    const omitted = await h.callJson("compare_mortgage_overpay_vs_isa", {});
+    const explicit = await h.callJson("compare_mortgage_overpay_vs_isa", {
+      hypotheticalMortgageRateApr: 4.5,
+      remainingTermMonths: 240,
+    });
+    expect(omitted).toEqual(explicit);
+  });
+
   it("explicit zero balance returns the not-applicable message", async () => {
     h = await connectTestClient(mortgageAndIsa);
     const body = (await h.callJson("compare_mortgage_overpay_vs_isa", {

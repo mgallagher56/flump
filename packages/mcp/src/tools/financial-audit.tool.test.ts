@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { connectTestClient, type TestHarness } from "../testing/client.js";
-import { renterWithUnknownAprCard } from "../testing/personas.js";
+import { emptyUser, renterWithUnknownAprCard } from "../testing/personas.js";
 
 describe("financial audit tools (E17-N1)", () => {
   let h: TestHarness | undefined;
@@ -18,6 +18,24 @@ describe("financial audit tools (E17-N1)", () => {
     expect(body).toHaveProperty("healthScore.score");
     expect(body).toHaveProperty("financialStage.stage");
     expect(body).toHaveProperty("cashFlow.monthlyDebtMinimumsGbp");
+  });
+
+  it("KNOWN LEAK: with no take-home figure, income is assumed to be 72% of gross / 12", async () => {
+    h = await connectTestClient(renterWithUnknownAprCard);
+    const omitted = await h.callJson("evaluate_cashflow_runway_and_health", {});
+    const explicit = await h.callJson("evaluate_cashflow_runway_and_health", {
+      hypotheticalMonthlyIncomeGbp: (38000 / 12) * 0.72,
+    });
+    expect(omitted).toEqual(explicit);
+  });
+
+  it("KNOWN LEAK: with no savings figure, the emergency fund is assumed to be 5,000", async () => {
+    h = await connectTestClient(emptyUser);
+    const omitted = await h.callJson("evaluate_cashflow_runway_and_health", {});
+    const explicit = await h.callJson("evaluate_cashflow_runway_and_health", {
+      hypotheticalLiquidEmergencyFundGbp: 5000,
+    });
+    expect(omitted).toEqual(explicit);
   });
 
   it("evaluate_uk_student_loan evaluates the given plan and balance", async () => {
