@@ -6,6 +6,8 @@ Use this guide whenever creating, refactoring, or editing React UI components ac
 
 ## 1. Colocated 5-File Directory Structure
 
+> Feature-internal web components (used only inside one `apps/web/app/features/<domain>`) need only `.tsx`, `.styles.ts`, `.test.tsx` and `index.ts`; a story is required only if interactive and not covered by a parent story. `packages/ui` and shared components always need all five (AGENTS.md Law 1, D3-C).
+
 Create every component inside its own `PascalCase` directory with all 5 colocated files:
 
 ```text
