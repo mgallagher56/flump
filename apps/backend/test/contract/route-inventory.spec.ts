@@ -217,6 +217,24 @@ describe("web to backend route inventory", () => {
     // can be raised.
     expect(routes.length).toBeGreaterThanOrEqual(42);
     expect(webCalls.length).toBeGreaterThanOrEqual(50);
+    // Every call the browser makes through the same-origin /api proxy (E20-N4 allow-list) must still
+    // be seen by the extractor, so a changed call shape fails here instead of silently shrinking the
+    // inventory. Keep this list in step with apps/web/app/services/api-proxy.server.ts.
+    const seen = new Set(webCalls.map((c) => `${c.method} ${c.path}`));
+    for (const browserCall of [
+      "PATCH /user-profile",
+      "PATCH /user-profile/checklist",
+      "POST /user-profile/send-password-reset",
+      "POST /user-profile/reset-financial-data",
+      "POST /budget-entries",
+      "PATCH /budget-entries/:p",
+      "DELETE /budget-entries/:p",
+      "POST /budget-entries/seed-defaults",
+      "POST /budget-entries/categories",
+      "PATCH /accounts/:p",
+    ]) {
+      expect(seen, `extractor no longer sees ${browserCall}`).toContain(browserCall);
+    }
     expect(routes).toContainEqual({ method: "PATCH", path: "/accounts/:p" });
     expect(routes).toContainEqual({ method: "POST", path: "/bank-connections/:p/refresh" });
   });
