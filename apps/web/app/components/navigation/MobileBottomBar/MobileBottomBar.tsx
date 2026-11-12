@@ -32,7 +32,7 @@ const MobileBottomBar: FC<MobileBottomBarProps> = ({ user, isMobile, onMoreClick
     { key: "accounts", label: t("accounts", "Accounts"), to: "/app/accounts", icon: Scale },
   ] as const;
 
-  const tabs = rawTabs.filter((tab) => isPageEnabled(enabled, tab.key));
+  const tabs = rawTabs.filter((entry) => isPageEnabled(enabled, entry.key));
 
   return (
     <nav

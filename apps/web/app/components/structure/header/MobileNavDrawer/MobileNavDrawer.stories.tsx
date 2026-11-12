@@ -26,3 +26,11 @@ export const SignedIn: Story = {
 };
 
 export const SignedOut: Story = { args: { user: null } };
+
+export const Dark: Story = {
+  globals: { theme: "dark" },
+  play: async ({ canvasElement }) => {
+    const body = within(canvasElement.ownerDocument.body);
+    await expect(body.getByRole("dialog")).toBeInTheDocument();
+  },
+};

@@ -36,7 +36,7 @@ export const drawer = cva({
     boxShadow: "overlay",
     overflowY: "auto",
     _motionSafe: {
-      animationName: "slideUp",
+      animationName: "slideInRight",
       animationDuration: "base",
       animationTimingFunction: "enter",
     },

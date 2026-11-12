@@ -125,13 +125,7 @@ const DesktopDropdownGroup: FC<{
       </button>
 
       {isOpen && item.children && (
-        <div
-          aria-labelledby={triggerId}
-          className={flyoutPanel()}
-          data-testid={menuId}
-          id={menuId}
-          role="menu"
-        >
+        <div className={flyoutPanel()} data-testid={menuId} id={menuId}>
           {item.children.map((child) => {
             if (!child.route) return null;
             const isChildActive =

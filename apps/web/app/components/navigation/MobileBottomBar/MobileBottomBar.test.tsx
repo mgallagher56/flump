@@ -4,13 +4,18 @@ import { ResponsiveProvider } from "~/context/ResponsiveContext";
 import customRender from "~/testUtils/customRender";
 import MobileBottomBar from "./MobileBottomBar";
 
+const mocks = vi.hoisted(() => ({ active: "/app/savings" }));
+
 vi.mock("react-router", async () => {
   const actual: Record<string, unknown> = await vi.importActual("react-router");
   return {
     ...actual,
     NavLink: ({ children, to, className }: any) => (
       <a
-        className={typeof className === "function" ? className({ isActive: false }) : className}
+        aria-current={to === mocks.active ? "page" : undefined}
+        className={
+          typeof className === "function" ? className({ isActive: to === mocks.active }) : className
+        }
         href={to}
       >
         {children}
@@ -49,5 +54,19 @@ describe("<MobileBottomBar /> tabs", () => {
     );
     expect(screen.getByText(/^debt$/i)).not.toBeNull();
     expect(screen.queryByText(/^tax$/i)).toBeNull();
+  });
+});
+
+describe("<MobileBottomBar /> active route", () => {
+  test("only the current route's tab is highlighted", () => {
+    customRender(
+      <ResponsiveProvider initialIsMobile={true}>
+        <MobileBottomBar isMobile user={{ id: "1" }} />
+      </ResponsiveProvider>,
+    );
+    const current = screen.getByRole("link", { current: "page" });
+    expect(current.getAttribute("href")).toBe("/app/savings");
+    const other = screen.getByRole("link", { name: /^budget$/i });
+    expect(other.className).not.toBe(current.className);
   });
 });

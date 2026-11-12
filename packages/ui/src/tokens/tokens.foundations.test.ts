@@ -145,11 +145,12 @@ describe("E15 motion", () => {
     expect(Object.keys(easings).sort()).toEqual(["enter", "exit", "standard"]);
   });
 
-  it("defines the four keyframes", () => {
+  it("defines the five keyframes", () => {
     expect(Object.keys(motionKeyframes).sort()).toEqual([
       "fadeIn",
       "scaleIn",
       "shimmer",
+      "slideInRight",
       "slideUp",
     ]);
   });

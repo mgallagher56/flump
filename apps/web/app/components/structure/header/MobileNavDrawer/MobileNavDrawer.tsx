@@ -41,15 +41,52 @@ const MobileNavDrawer: FC<MobileNavDrawerProps> = ({ isOpen, onClose, user }) =>
     setMounted(true);
   }, []);
 
-  // Escape closes the drawer and focus moves into it when it opens.
+  const drawerRef = useRef<HTMLDivElement>(null);
+
+  // Modal behaviour: focus moves in on open, Tab wraps inside, Escape closes, and focus returns to
+  // whatever opened the drawer when it closes.
+  const openerRef = useRef<HTMLElement | null>(null);
+
+  // Remember the opener once per open (the portal remount must not overwrite it) and return to it.
+  useEffect(() => {
+    if (!isOpen) return;
+    openerRef.current = document.activeElement as HTMLElement | null;
+    return () => {
+      const opener = openerRef.current;
+      if (opener && typeof opener.focus === "function") opener.focus();
+    };
+  }, [isOpen]);
+
   useEffect(() => {
     if (!isOpen) return;
     closeRef.current?.focus();
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onClose();
+      if (event.key === "Escape") {
+        onClose();
+        return;
+      }
+      if (event.key !== "Tab" || !drawerRef.current) return;
+      const focusable = Array.from(
+        drawerRef.current.querySelectorAll<HTMLElement>(
+          'a[href], button:not([disabled]), input, select, textarea, [tabindex]:not([tabindex="-1"])',
+        ),
+      );
+      if (focusable.length === 0) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      const active = document.activeElement;
+      if (event.shiftKey && (active === first || !drawerRef.current.contains(active))) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && (active === last || !drawerRef.current.contains(active))) {
+        event.preventDefault();
+        first.focus();
+      }
     };
     document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("keydown", onKey);
+    };
   }, [isOpen, mounted, onClose]);
 
   if (!isOpen) return null;
@@ -66,8 +103,11 @@ const MobileNavDrawer: FC<MobileNavDrawerProps> = ({ isOpen, onClose, user }) =>
         id="mobile-drawer-backdrop"
         onClick={onClose}
       />
-      <aside
+      <div
+        ref={drawerRef}
         aria-label="Mobile Navigation Drawer"
+        aria-modal="true"
+        role="dialog"
         className={drawer()}
         data-testid="mobile-nav-drawer"
         id="mobile-nav-drawer"
@@ -105,7 +145,7 @@ const MobileNavDrawer: FC<MobileNavDrawerProps> = ({ isOpen, onClose, user }) =>
             <UserLogin />
           </div>
         </div>
-      </aside>
+      </div>
     </>
   );
 
