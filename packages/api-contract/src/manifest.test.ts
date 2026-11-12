@@ -64,7 +64,7 @@ describe("request schemas", () => {
   });
 
   it("never puts values in issues", () => {
-    const result = checkAgainst(body("accounts.create"), { name: "secret-name", balance: -5 });
+    const result = checkAgainst(body("accounts.create"), { name: "secret-name", balance: 1.005 });
     expect(JSON.stringify(result)).not.toContain("secret-name");
   });
 

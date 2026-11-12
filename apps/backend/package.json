@@ -18,6 +18,7 @@
     "migration:generate": "bun ./node_modules/typeorm/cli.js -d src/data-source.ts migration:generate"
   },
   "dependencies": {
+    "@flump/api-contract": "workspace:*",
     "@flump/banking": "workspace:*",
     "@flump/finance-engine": "workspace:*",
     "@flump/mcp": "workspace:*",

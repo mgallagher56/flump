@@ -1,5 +1,6 @@
 import { Module } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
+import { APP_INTERCEPTOR } from "@nestjs/core";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { AccountIntakeService } from "./account-intake.service";
 import { AppController } from "./app.controller";
@@ -8,6 +9,7 @@ import { AuthModule } from "./auth/auth.module";
 import { BudgetController } from "./budget.controller";
 import { AppConfigModule, BOOT_CONFIG } from "./config/config.module";
 import { ENTITIES, typeOrmOptionsFromEnv } from "./config/typeorm.options";
+import { ContractShadowInterceptor } from "./contract/contract-shadow.interceptor";
 import { FinanceController } from "./finance.controller";
 import { FinanceService } from "./finance.service";
 import { HealthController } from "./health/health.controller";
@@ -53,6 +55,7 @@ import { UserProfileService } from "./user-profile.service";
     StarlingProvider,
     Trading212Provider,
     BankProviderRegistry,
+    { provide: APP_INTERCEPTOR, useClass: ContractShadowInterceptor },
     {
       provide: USER_IDENTITY_ADAPTER,
       useClass: WorkOSIdentityAdapter,
