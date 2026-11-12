@@ -1,4 +1,5 @@
 export const REDACTED = "[redacted]";
+export const CIRCULAR = "[circular]";
 
 const SENSITIVE_KEY =
   /token|secret|password|passwd|authori[sz]ation|cookie|session|dsn|api.?key|balance|amount|salary|income|value|price|payment|contribution|iban|sort.?code|account.?number|receipt|email|name|phone|address|dob|birth|code|state/i;
@@ -18,6 +19,8 @@ const STRING_PATTERNS: readonly RegExp[] = [
 ];
 
 const MAX_DEPTH = 12;
+const MAX_NODES = 5000;
+const NUMBER_LIMIT = 1000;
 
 export function redactString(input: string): string {
   let out = input;
@@ -27,14 +30,35 @@ export function redactString(input: string): string {
   return out;
 }
 
-export function redactDeep(value: unknown, depth = 0): unknown {
+interface Walk {
+  seen: WeakSet<object>;
+  nodes: number;
+}
+
+function walk(value: unknown, depth: number, state: Walk): unknown {
   if (typeof value === "string") return redactString(value);
+  if (typeof value === "number") {
+    const risky =
+      Number.isFinite(value) && (!Number.isInteger(value) || Math.abs(value) >= NUMBER_LIMIT);
+    return risky ? REDACTED : value;
+  }
   if (value === null || typeof value !== "object") return value;
-  if (depth >= MAX_DEPTH) return REDACTED;
-  if (Array.isArray(value)) return value.map((item) => redactDeep(item, depth + 1));
+  if (state.seen.has(value)) return CIRCULAR;
+  state.seen.add(value);
+  state.nodes += 1;
+  if (depth >= MAX_DEPTH || state.nodes > MAX_NODES) return REDACTED;
+  if (value instanceof Error) {
+    return { name: redactString(value.name), message: redactString(value.message) };
+  }
+  if (value instanceof Map || value instanceof Set || value instanceof Date) return REDACTED;
+  if (Array.isArray(value)) return value.map((item) => walk(item, depth + 1, state));
   const out: Record<string, unknown> = {};
   for (const [key, child] of Object.entries(value)) {
-    out[key] = SENSITIVE_KEY.test(key) ? REDACTED : redactDeep(child, depth + 1);
+    out[key] = SENSITIVE_KEY.test(key) ? REDACTED : walk(child, depth + 1, state);
   }
   return out;
+}
+
+export function redactDeep(value: unknown): unknown {
+  return walk(value, 0, { seen: new WeakSet(), nodes: 0 });
 }

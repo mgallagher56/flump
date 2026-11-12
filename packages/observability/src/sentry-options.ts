@@ -1,6 +1,9 @@
 export interface SafeOptionsInput {
   sendDefaultPii?: unknown;
   tracesSampleRate?: unknown;
+  tracesSampler?: unknown;
+  profilesSampleRate?: unknown;
+  enableTracing?: unknown;
   replaysSessionSampleRate?: unknown;
   replaysOnErrorSampleRate?: unknown;
   includeLocalVariables?: unknown;
@@ -28,8 +31,15 @@ export function assertSafeOptions(opts: SafeOptionsInput): void {
   if (opts.sendDefaultPii !== false) {
     throw new Error("Unsafe Sentry options: sendDefaultPii must be false");
   }
-  if (isPositive(opts.tracesSampleRate)) {
-    throw new Error("Unsafe Sentry options: tracesSampleRate must be 0 or unset");
+  if (
+    isPositive(opts.tracesSampleRate) ||
+    opts.tracesSampler !== undefined ||
+    opts.enableTracing === true
+  ) {
+    throw new Error("Unsafe Sentry options: tracing must be disabled");
+  }
+  if (isPositive(opts.profilesSampleRate)) {
+    throw new Error("Unsafe Sentry options: profilesSampleRate must be 0 or unset");
   }
   if (
     isPositive(opts.replaysSessionSampleRate) ||

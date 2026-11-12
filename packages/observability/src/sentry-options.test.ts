@@ -20,7 +20,7 @@ describe("assertSafeOptions", () => {
   });
 
   it.each([0.1, 1, "0.5"])("rejects tracesSampleRate %j", (tracesSampleRate) => {
-    expect(() => assertSafeOptions({ ...safe, tracesSampleRate })).toThrow(/tracesSampleRate/);
+    expect(() => assertSafeOptions({ ...safe, tracesSampleRate })).toThrow(/tracing/);
   });
 
   it("allows unset or null tracesSampleRate", () => {
