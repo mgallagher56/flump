@@ -114,7 +114,10 @@ export default function App() {
                 id="main-content"
                 tabIndex={-1}
                 className={css({
-                  paddingBottom: { base: user ? "72px" : "0", md: "0" },
+                  paddingBottom: {
+                    base: user ? "calc(72px + env(safe-area-inset-bottom, 0px))" : "0",
+                    md: "0",
+                  },
                 })}
               >
                 <Outlet />

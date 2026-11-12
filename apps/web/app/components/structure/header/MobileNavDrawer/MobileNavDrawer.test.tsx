@@ -63,3 +63,39 @@ describe("<MobileNavDrawer /> keyboard", () => {
     expect(screen.getAllByText("debt").length).toBeGreaterThan(0);
   });
 });
+
+describe("<MobileNavDrawer /> modal behaviour", () => {
+  test("is exposed as a modal dialog", () => {
+    customRender(<MobileNavDrawer isOpen={true} user={{ id: "1" }} onClose={vi.fn()} />);
+    const dialog = screen.getByRole("dialog");
+    expect(dialog.getAttribute("aria-modal")).toBe("true");
+  });
+
+  test("Tab wraps from the last to the first control and Shift+Tab the other way", () => {
+    customRender(<MobileNavDrawer isOpen={true} user={{ id: "1" }} onClose={vi.fn()} />);
+    const dialog = screen.getByRole("dialog");
+    const focusable = Array.from(
+      dialog.querySelectorAll<HTMLElement>("a[href], button:not([disabled])"),
+    );
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    last.focus();
+    fireEvent.keyDown(document, { key: "Tab" });
+    expect(document.activeElement).toBe(first);
+    fireEvent.keyDown(document, { key: "Tab", shiftKey: true });
+    expect(document.activeElement).toBe(last);
+  });
+
+  test("returns focus to the opener when closed", () => {
+    const opener = document.createElement("button");
+    document.body.appendChild(opener);
+    opener.focus();
+    const { rerender } = customRender(
+      <MobileNavDrawer isOpen={true} user={{ id: "1" }} onClose={vi.fn()} />,
+    );
+    expect(document.activeElement).not.toBe(opener);
+    rerender(<MobileNavDrawer isOpen={false} user={{ id: "1" }} onClose={vi.fn()} />);
+    expect(document.activeElement).toBe(opener);
+    opener.remove();
+  });
+});

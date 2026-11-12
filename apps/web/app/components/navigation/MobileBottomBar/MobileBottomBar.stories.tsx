@@ -21,3 +21,10 @@ export const SignedIn: Story = {
     await expect(args.onMoreClick).toHaveBeenCalled();
   },
 };
+
+export const Dark: Story = {
+  globals: { theme: "dark" },
+  play: async ({ canvasElement }) => {
+    await expect(within(canvasElement).getByTestId("mobile-bottom-bar")).toBeInTheDocument();
+  },
+};

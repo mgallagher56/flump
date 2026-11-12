@@ -9,7 +9,7 @@ export const bar = cva({
     zIndex: 80,
     alignItems: "center",
     justifyContent: "space-around",
-    height: "64px",
+    height: "calc(64px + env(safe-area-inset-bottom, 0px))",
     paddingBottom: "env(safe-area-inset-bottom, 0px)",
     backgroundColor: "surface.overlay",
     backdropFilter: "blur(12px)",

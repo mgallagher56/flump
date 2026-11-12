@@ -89,7 +89,9 @@ const Header: FC<HeaderProps> = ({ isMobile: propIsMobile, variant }): ReactElem
             )}
             <UserLogin />
             <button
+              aria-controls="mobile-nav-drawer"
               aria-expanded={drawerOpen}
+              aria-haspopup="dialog"
               aria-label="Open navigation menu"
               className={mobileMenuButtonStyles}
               data-testid="mobile-menu-toggle"
