@@ -25,9 +25,9 @@ vi.mock("@flump/finance-engine", async (importOriginal) => ({
   persistOnboardingSeed: (seed: unknown) => persistSeed(seed),
 }));
 
-vi.mock("~/components/dashboard/HomeDashboard", () => ({
-  HomeDashboard: ({ accountsData, debtData }: any) => (
-    <div id="mock-dashboard">
+vi.mock("~/features/dashboard/components/HomeDashboard", () => ({
+  HomeDashboard: ({ accountsData, debtData, persistVisibility }: any) => (
+    <div id="mock-dashboard" data-persist-visibility={String(persistVisibility)}>
       <span id="net-worth" data-testid="net-worth">
         {accountsData?.netWorth}
       </span>
@@ -57,6 +57,14 @@ describe("SandboxRoute", () => {
   it("does not render its own projection notice (HomeDashboard owns the single one)", () => {
     render(<SandboxRoute />);
     expect(document.querySelector('[data-testid="projection-notice"]')).toBeNull();
+  });
+
+  it("never persists dashboard show or hide choices for sandbox users", () => {
+    mockSearchParams = new URLSearchParams();
+    const { container } = render(<SandboxRoute />);
+    expect(
+      container.querySelector("#mock-dashboard")?.getAttribute("data-persist-visibility"),
+    ).toBe("false");
   });
 
   it("renders Persona A by default and switches between Persona B and Persona C", () => {

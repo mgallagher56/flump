@@ -27,6 +27,10 @@ const MORTGAGE_FEATURES_DIR = path.resolve(
   __dirname,
   "../../../../apps/web/app/features/mortgage/components",
 );
+const DASHBOARD_FEATURES_DIR = path.resolve(
+  __dirname,
+  "../../../../apps/web/app/features/dashboard/components",
+);
 const MARKETING_COMPONENTS_DIR = path.resolve(
   __dirname,
   "../../../../apps/marketing/src/components",
@@ -153,6 +157,14 @@ describe("Architecture & Design System Laws", () => {
       }
       for (const comp of mortgageComponents) {
         verifyColocatedStructure(MORTGAGE_FEATURES_DIR, comp);
+      }
+    });
+
+    it("enforces colocated structure for every features/dashboard component (E15)", () => {
+      const dashboardComponents = getSubdirectories(DASHBOARD_FEATURES_DIR);
+      expect(dashboardComponents).toContain("HomeDashboard");
+      for (const comp of dashboardComponents) {
+        verifyColocatedStructure(DASHBOARD_FEATURES_DIR, comp);
       }
     });
 
@@ -381,10 +393,6 @@ describe("Architecture & Design System Laws", () => {
         "apps/web/app/components/setup/SetupChecklist.tsx": {
           count: 1,
           reason: "checklist progress fill (graphic)",
-        },
-        "apps/web/app/components/dashboard/HomeDashboard.tsx": {
-          count: 1,
-          reason: "8px badge dot, fallback colour (graphic)",
         },
         "apps/web/app/components/dashboard/widgets/AccountsWidget.tsx": {
           count: 1,

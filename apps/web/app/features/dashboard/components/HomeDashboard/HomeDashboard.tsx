@@ -1,0 +1,382 @@
+import { calculateSafeToSpend, evaluateFinancialStage } from "@flump/finance-engine";
+import { Button, Icon, PageHeader, ProjectionNotice, VisuallyHidden } from "@repo/ui";
+import { SlidersHorizontal } from "lucide-react";
+import { type FC, useMemo, useRef, useState } from "react";
+import { AccountsWidget } from "~/components/dashboard/widgets/AccountsWidget";
+import { BudgetWidget } from "~/components/dashboard/widgets/BudgetWidget";
+import { DebtWidget } from "~/components/dashboard/widgets/DebtWidget";
+import { ForecastWidget } from "~/components/dashboard/widgets/ForecastWidget";
+import { MortgageWidget } from "~/components/dashboard/widgets/MortgageWidget";
+import { PensionWidget } from "~/components/dashboard/widgets/PensionWidget";
+import { SavingsWidget } from "~/components/dashboard/widgets/SavingsWidget";
+import { TaxWidget } from "~/components/dashboard/widgets/TaxWidget";
+import SetupChecklist, { type SetupChecklistProps } from "~/components/setup/SetupChecklist";
+import { normalizeProfile, type UserProfile, useUserProfile } from "~/hooks/useUserProfile";
+import type { DebtSummary } from "~/utils/debtSummary";
+import {
+  ALL_PAGE_KEYS,
+  type AppPageKey,
+  type DashboardWidgetKey,
+  DEFAULT_DASHBOARD_WIDGETS,
+  DEFAULT_ENABLED_PAGES,
+} from "~/utils/pageConfig";
+import { DashboardEmptyState } from "../DashboardEmptyState";
+import { DashboardKpiStrip } from "../DashboardKpiStrip";
+import { StageCoachCard } from "../StageCoachCard";
+import { WidgetVisibilityPanel } from "../WidgetVisibilityPanel";
+import { dashboardPage, showHideButton, widgetGrid } from "./HomeDashboard.styles";
+
+export interface HomeDashboardProps {
+  user: any;
+  checklistProps: SetupChecklistProps;
+  userProfile?: Partial<UserProfile> | UserProfile;
+  accountsData: any;
+  budgetData: any;
+  savingsData: any;
+  pensionData: any;
+  mortgageData: any;
+  forecastData: any;
+  taxData: any;
+  debtData?: DebtSummary | null;
+  /**
+   * Whether show or hide choices are saved to the user's profile. `false` keeps them in this
+   * session only and never calls the backend (the signed-out sandbox).
+   */
+  persistVisibility?: boolean;
+  /** Illustrative persona data (the sandbox): swaps "Welcome back" for an "Example snapshot" heading. */
+  isSample?: boolean;
+}
+
+const finiteOrNull = (value: unknown): number | null =>
+  typeof value === "number" && Number.isFinite(value) ? value : null;
+
+export const HomeDashboard: FC<HomeDashboardProps> = ({
+  user: _user,
+  checklistProps,
+  userProfile,
+  accountsData,
+  budgetData,
+  savingsData,
+  pensionData,
+  mortgageData,
+  forecastData,
+  taxData,
+  debtData,
+  persistVisibility = true,
+  isSample = false,
+}) => {
+  const { profile: hookProfile, updateProfile } = useUserProfile();
+  const profile = useMemo(() => {
+    if (userProfile) {
+      return normalizeProfile(userProfile);
+    }
+    return hookProfile;
+  }, [userProfile, hookProfile]);
+
+  const [panelOpen, setPanelOpen] = useState(false);
+  const [visibilityError, setVisibilityError] = useState<string | null>(null);
+  // Optimistic copy of dashboardWidgets while a change is saving, or the whole truth when not saved.
+  const [visibilityOverride, setVisibilityOverride] = useState<DashboardWidgetKey[] | null>(null);
+
+  // An empty budget means surplus, essentials and runway are unknown, not zero.
+  const budgetKnown =
+    (budgetData?.monthlyIncome ?? 0) > 0 || (budgetData?.monthlyExpenses ?? 0) > 0;
+
+  // Financial Lifecycle Stage evaluation
+  const financialStage = useMemo(() => {
+    if (!debtData && !(accountsData?.totalLiabilities > 0)) {
+      return null;
+    }
+    const debts = debtData?.debts ?? [];
+    const stage = evaluateFinancialStage({
+      debts,
+      monthlySurplus: budgetData?.monthlySurplus ?? 0,
+      liquidSavings: savingsData?.totalSavingsBalance ?? accountsData?.typeTotals?.Saving ?? 0,
+      monthlyEssentialExpenses: budgetData?.monthlyExpenses ?? 0,
+    });
+    // Without a budget only the debt-driven stage is real; buffer/optimise depend on runway.
+    return budgetKnown || stage.stage === "stabilize" ? stage : null;
+  }, [debtData, accountsData, budgetData, savingsData, budgetKnown]);
+
+  // Safe-to-spend weekly allowance metric.
+  // TODO(E16 T-FIX-7): the 60/40 split of living costs here is unchanged from the old dashboard;
+  // E16 owns its definition. Do not alter the maths in this file.
+  const safeToSpend = useMemo(() => {
+    if (!budgetData || !budgetKnown) return null;
+    const income = budgetData.monthlyIncome || 0;
+    const living = budgetData.livingExpenses || budgetData.monthlyExpenses || 0;
+    const minDebt = debtData?.monthlyMinimumTotal || 0;
+    return calculateSafeToSpend(income, living * 0.6, minDebt, living * 0.4);
+  }, [budgetData, debtData, budgetKnown]);
+
+  // Enabled pages according to UserProfile, in the fixed canonical order.
+  const enabledPages = useMemo<AppPageKey[]>(() => {
+    return (profile.enabledPages as AppPageKey[]) || DEFAULT_ENABLED_PAGES;
+  }, [profile.enabledPages]);
+  const applicableKeys = useMemo<DashboardWidgetKey[]>(
+    () => ALL_PAGE_KEYS.filter((k) => enabledPages.includes(k)),
+    [enabledPages],
+  );
+
+  // Widgets the user has chosen to show.
+  const dashboardWidgets = useMemo<DashboardWidgetKey[]>(() => {
+    const raw =
+      visibilityOverride ??
+      ((profile.dashboardWidgets as DashboardWidgetKey[]) || DEFAULT_DASHBOARD_WIDGETS);
+    return raw.filter((k) => enabledPages.includes(k as AppPageKey));
+  }, [visibilityOverride, profile.dashboardWidgets, enabledPages]);
+
+  // Last list the backend confirmed (or, when not persisting, the last local choice). Used as the
+  // revert target so a failed save never resurrects state from before an earlier successful one.
+  const confirmedRef = useRef<DashboardWidgetKey[] | null>(null);
+  const saveSeqRef = useRef(0);
+
+  const handleToggleWidget = async (key: DashboardWidgetKey) => {
+    const shown = new Set(dashboardWidgets);
+    if (shown.has(key)) shown.delete(key);
+    else shown.add(key);
+    const next = applicableKeys.filter((k) => shown.has(k));
+    const seq = ++saveSeqRef.current;
+
+    setVisibilityError(null);
+    setVisibilityOverride(next);
+    if (!persistVisibility) {
+      confirmedRef.current = next;
+      return;
+    }
+    try {
+      // Only dashboardWidgets is written: order, sizes and per-widget config are left alone.
+      await updateProfile({ dashboardWidgets: next });
+      confirmedRef.current = next;
+      // A newer toggle owns the override now; otherwise the saved profile is the truth again.
+      if (seq === saveSeqRef.current && !userProfile) setVisibilityOverride(null);
+    } catch {
+      if (seq !== saveSeqRef.current) return;
+      setVisibilityOverride(confirmedRef.current);
+      setVisibilityError("We could not save that change. Try again.");
+    }
+  };
+
+  const isModuleConfigured = (key: DashboardWidgetKey): boolean => {
+    switch (key) {
+      case "accounts":
+        return Boolean(checklistProps.hasAccounts || (accountsData?.accountsCount ?? 0) > 0);
+      case "budget":
+        return Boolean(
+          checklistProps.hasBudget ||
+            budgetData?.monthlyIncome > 0 ||
+            budgetData?.monthlyExpenses > 0 ||
+            checklistProps.completedSteps?.includes("budget"),
+        );
+      case "savings":
+        return Boolean(
+          (savingsData?.accountsCount ?? 0) > 0 ||
+            checklistProps.hasSavings ||
+            checklistProps.completedSteps?.includes("savings"),
+        );
+      case "pension":
+        return Boolean(
+          (pensionData?.potsCount ?? 0) > 0 ||
+            checklistProps.hasPension ||
+            checklistProps.completedSteps?.includes("pension"),
+        );
+      case "mortgage":
+        return Boolean(
+          (mortgageData?.hasMortgageAccount && mortgageData?.mortgageBalance > 0) ||
+            checklistProps.hasMortgageAccount ||
+            checklistProps.completedSteps?.includes("mortgage"),
+        );
+      case "forecast":
+        return Boolean(
+          checklistProps.hasRunForecast || checklistProps.completedSteps?.includes("forecast"),
+        );
+      case "tax":
+        return Boolean(checklistProps.hasTax || (taxData?.recordsCount ?? 0) > 0);
+      case "debt":
+        return Boolean(
+          (debtData?.totalDebt ?? 0) > 0 || checklistProps.completedSteps?.includes("debt"),
+        );
+      default:
+        return false;
+    }
+  };
+
+  // Shown widgets that are set up, in the fixed canonical order.
+  const visibleWidgets = ALL_PAGE_KEYS.filter(
+    (k) => dashboardWidgets.includes(k) && isModuleConfigured(k),
+  );
+  const anyShown = dashboardWidgets.length > 0;
+
+  // KPI figures: unknown stays null (rendered "Not set"); only a real zero is £0.
+  const hasAccounts = Boolean(checklistProps.hasAccounts || (accountsData?.accountsCount ?? 0) > 0);
+  const savingsTotal =
+    (savingsData?.accountsCount ?? 0) > 0
+      ? finiteOrNull(savingsData?.totalSavingsBalance)
+      : finiteOrNull(accountsData?.typeTotals?.Saving);
+
+  // Widgets keep their own edit controls until PR2 to PR4 replace them; they are unreachable here.
+  const noop = () => {};
+  // Saved per-widget settings (read-only here) still apply; editing them is gone.
+  const widgetConfig = (key: DashboardWidgetKey) => profile.dashboardWidgetConfig?.[key] ?? {};
+  const commonProps = {
+    editMode: false,
+    size: "normal" as const,
+    onToggleSize: noop,
+    onHide: noop,
+    onMoveUp: noop,
+    onMoveDown: noop,
+  };
+
+  return (
+    <div className={dashboardPage()}>
+      <ProjectionNotice />
+      <PageHeader
+        actions={
+          <Button
+            aria-haspopup="dialog"
+            className={showHideButton()}
+            id="dashboard-show-hide"
+            size="sm"
+            variant="outline"
+            onClick={() => setPanelOpen(true)}
+          >
+            <Icon icon={SlidersHorizontal} size="sm" />
+            Show or hide widgets
+          </Button>
+        }
+        subtitle={
+          isSample
+            ? "Sample data: illustrative figures, not yours."
+            : "Your live financial snapshot across your active modules."
+        }
+        title={
+          isSample
+            ? "Example snapshot"
+            : `Welcome back${profile.displayName ? `, ${profile.displayName}` : ""}`
+        }
+      />
+
+      <DashboardKpiStrip
+        liquidCash={savingsTotal}
+        monthlySurplus={budgetKnown ? finiteOrNull(budgetData?.monthlySurplus) : null}
+        netWorth={hasAccounts ? finiteOrNull(accountsData?.netWorth) : null}
+        totalAssets={hasAccounts ? finiteOrNull(accountsData?.totalAssets) : null}
+        totalLiabilities={hasAccounts ? finiteOrNull(accountsData?.totalLiabilities) : null}
+        weeklySafeToSpend={safeToSpend ? finiteOrNull(safeToSpend.weeklyAllowance) : null}
+      />
+
+      {/* Onboarding Checklist */}
+      <SetupChecklist {...checklistProps} enabledPages={enabledPages} />
+
+      {financialStage?.stage === "stabilize" && (debtData?.totalDebt ?? 0) > 0 && (
+        <StageCoachCard
+          debtFreeDate={debtData?.debtFreeDate ?? null}
+          unsecuredDebt={financialStage.totalUnsecuredDebt || debtData?.totalDebt || 0}
+          weeklyAllowance={safeToSpend ? finiteOrNull(safeToSpend.weeklyAllowance) : null}
+        />
+      )}
+
+      {visibleWidgets.length === 0 ? (
+        <DashboardEmptyState
+          reason={anyShown ? "setup" : "hidden"}
+          onChooseWidgets={() => setPanelOpen(true)}
+        />
+      ) : (
+        <div className={widgetGrid()}>
+          <VisuallyHidden as="h2">Your widgets</VisuallyHidden>
+          {visibleWidgets.map((key) => {
+            switch (key) {
+              case "accounts":
+                return (
+                  <AccountsWidget
+                    key="accounts"
+                    {...commonProps}
+                    config={widgetConfig("accounts")}
+                    data={accountsData}
+                  />
+                );
+              case "budget":
+                return (
+                  <BudgetWidget
+                    key="budget"
+                    {...commonProps}
+                    config={widgetConfig("budget")}
+                    data={{
+                      ...budgetData,
+                      annualSalary:
+                        profile.annualSalary ?? forecastData?.annualSalary ?? taxData?.totalIncome,
+                    }}
+                  />
+                );
+              case "debt":
+                return (
+                  <DebtWidget
+                    key="debt"
+                    {...commonProps}
+                    config={widgetConfig("debt")}
+                    data={debtData}
+                  />
+                );
+              case "savings":
+                return (
+                  <SavingsWidget
+                    key="savings"
+                    {...commonProps}
+                    config={widgetConfig("savings")}
+                    data={savingsData}
+                  />
+                );
+              case "pension":
+                return (
+                  <PensionWidget
+                    key="pension"
+                    {...commonProps}
+                    config={widgetConfig("pension")}
+                    data={pensionData}
+                  />
+                );
+              case "mortgage":
+                return (
+                  <MortgageWidget
+                    key="mortgage"
+                    {...commonProps}
+                    config={widgetConfig("mortgage")}
+                    data={mortgageData}
+                  />
+                );
+              case "forecast":
+                return (
+                  <ForecastWidget
+                    key="forecast"
+                    {...commonProps}
+                    config={widgetConfig("forecast")}
+                    data={forecastData}
+                  />
+                );
+              case "tax":
+                return (
+                  <TaxWidget
+                    key="tax"
+                    {...commonProps}
+                    config={widgetConfig("tax")}
+                    data={taxData}
+                  />
+                );
+              default:
+                return null;
+            }
+          })}
+        </div>
+      )}
+
+      <WidgetVisibilityPanel
+        error={visibilityError}
+        open={panelOpen}
+        visibleKeys={dashboardWidgets}
+        widgetKeys={applicableKeys}
+        onOpenChange={setPanelOpen}
+        onToggle={handleToggleWidget}
+      />
+    </div>
+  );
+};

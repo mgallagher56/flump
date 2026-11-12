@@ -12,7 +12,7 @@ import {
   useNavigate,
   useSearchParams,
 } from "react-router";
-import { HomeDashboard } from "~/components/dashboard/HomeDashboard";
+import { HomeDashboard } from "~/features/dashboard/components/HomeDashboard";
 import { financialBaselineAtom, writeOnboardingSeedCookie } from "~/state/baseline.store";
 import { getAuthSession } from "~/utils/auth.server";
 import { getSandboxPersonaData } from "~/utils/demoData";
@@ -258,6 +258,8 @@ export default function SandboxRoute() {
 
       {/* Actual SPA Dashboard View */}
       <HomeDashboard
+        isSample
+        persistVisibility={false}
         userProfile={dashboardData.userProfile}
         accountsData={dashboardData.accountsData as any}
         budgetData={dashboardData.budgetData as any}
