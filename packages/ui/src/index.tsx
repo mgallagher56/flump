@@ -28,6 +28,7 @@ export * from "./patterns/TaxTrapEscapeBanner";
 export * from "./primitives/Button";
 export * from "./primitives/Card";
 export * from "./primitives/CollapsibleDrawer";
+export * from "./primitives/CurrencyInput";
 export * from "./primitives/FormField";
 export * from "./primitives/Icon";
 export * from "./primitives/KpiCard";
