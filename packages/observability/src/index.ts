@@ -1,0 +1,5 @@
+export { REDACTED, redactDeep, redactString } from "./redact.js";
+export type { ScrubBreadcrumb, ScrubEvent } from "./scrub-event.js";
+export { scrubBreadcrumb, scrubEvent } from "./scrub-event.js";
+export type { SafeOptionsInput } from "./sentry-options.js";
+export { assertSafeOptions } from "./sentry-options.js";
