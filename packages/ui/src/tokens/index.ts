@@ -245,7 +245,7 @@ export const semanticTokens = {
         text: { value: { base: "#3e6b12", _dark: "#a8d86a" } },
         bg: { value: { base: "#eaf3da", _dark: "#2a3316" } },
         border: { value: { base: "#bcd68f", _dark: "#4a6428" } },
-        solid: { value: { base: "#4e7d14", _dark: "#8cc152" } },
+        solid: { value: { base: "#3a5c08", _dark: "#c5de4c" } },
       },
       warning: {
         text: { value: { base: "#8a4a08", _dark: "#f2b873" } },
@@ -293,10 +293,10 @@ export const semanticTokens = {
       series7: { value: { base: "#94750f", _dark: "#e3b452" } },
       series8: { value: { base: "#7a7064", _dark: "#a59d90" } },
       // Forecast / projected values: draw dashed so it is not told apart by colour alone.
-      projection: { value: { base: "#9a5210", _dark: "#f5b987" } },
+      projection: { value: { base: "#6b3f2a", _dark: "#ffd2a8" } },
       // Confidence band: a low-alpha teal FILL behind lines, never a line itself. Verified only as
       // alpha-composited difference from the card (>= 1.1:1) and that chart.primary stays >= 3:1 on it.
-      band: { value: { base: "rgba(15, 107, 94, 0.14)", _dark: "rgba(92, 196, 174, 0.18)" } },
+      band: { value: { base: "rgba(15, 107, 94, 0.14)", _dark: "rgba(92, 196, 174, 0.15)" } },
       // Reference lines (targets, zero line, prior year).
       baseline: { value: { base: "{colors.sand.500}", _dark: "{colors.dark.borderInput}" } },
       grid: { value: { base: "rgba(43, 38, 32, 0.08)", _dark: "rgba(244, 239, 231, 0.08)" } },

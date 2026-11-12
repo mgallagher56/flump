@@ -47,69 +47,45 @@ Elevation keys `xs`, `card`, `raised`, `overlay`, `focus`, all with `_dark` (lig
 
 ## Colour changes
 
-New primitive `ink` scale (cool ink-blue). `surface.*`, `text.*`, `border.*` and neutral status now map to it; `slate` is kept for compatibility. `primary` light stays `#4f46e5`; dark primary and focus ring are `#a5a8ff`; `primary.solid`/`primary.hover` unchanged (white label stays AA). Status and chart values were refined from direction A and kept only where the matrix passes. Liabilities in charts use amber (`chart.debt`), not red.
+Colour values are defined once, in the "Round 5 palette" section at the end of this file (Direction C: teal, sand, warm charcoal). The earlier direction A values (indigo primary, ink-blue neutrals) no longer exist; `slate` and `indigo` primitives remain (indigo only for `status.info`). Liabilities in charts use apricot (`chart.debt`), never red.
 
-Deviations from the mockup values, forced by the contrast matrix: `border.input` light is `#7d849c` (mockup `#858ca4` measured 2.98:1 on sunken and 2.88:1 on subtle, below 3:1); `status.danger.solid` light is `#d42a1e` (mockup `#d92d20` gave 4.44:1 for `text.onContrast` against 4.5:1); dark `text.onContrast` stays `#f8fafc` (an `#eceff9` label on the dark danger fill was 4.2:1). Dark `surface.contrast` stays a dark fill (`#222b47`) rather than mockup A's inverted light fill, to keep consumers of `text.onContrast` safe.
+### New keys (since E15 T1)
 
-### New keys
+`surface.scrim`, `surface.hero` (round 5), `chart.series6..8`, `chart.projection`, `chart.band` and `chart.baseline`. Current values are in the round 5 semantic table. Rules that still hold: `surface.scrim` is a backdrop, never a text surface; `chart.band` is a fill behind lines only (composited at least 1.1:1 from the card, and `chart.primary` stays at least 3:1 on it); `chart.projection` is drawn dashed and is at least 15 deltaE from every series; `chart.baseline` is for reference lines.
 
-| Key                | Light                  | Dark                     | Notes                                                                                                                                             |
-| ------------------ | ---------------------- | ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `surface.scrim`    | `rgba(20,23,43,0.4)`   | `rgba(5,8,16,0.6)`       | Backdrop, never a text surface. Composited over card: dims by 2.5:1 light, 1.1:1 dark (dark modals also rely on `surface.overlay` and elevation). |
-| `chart.series6`    | `#a21caf`              | `#e468f5`                |                                                                                                                                                   |
-| `chart.series7`    | `#c2410c`              | `#f0883e`                | Same value as `chart.warning`.                                                                                                                    |
-| `chart.series8`    | `#64708f`              | `#8f9bbd`                |                                                                                                                                                   |
-| `chart.projection` | `#5d647c`              | `#98a0ba`                | Forecast line: draw dashed.                                                                                                                       |
-| `chart.band`       | `rgba(79,70,229,0.14)` | `rgba(143,146,255,0.18)` | Fill behind lines only. Composited difference from card at least 1.1:1; `chart.primary` line stays at least 3:1 on the composited band.           |
-| `chart.baseline`   | `#7d849c`              | `#6b7699`                | Reference lines.                                                                                                                                  |
+### Contrast checks (enforced by `tokens.a11y.test.ts`)
 
-`chart.series1..5`, `primary`, `wealth`, `debt` (amber), `warning` (orange) and the accents also changed values; see the table.
+Chart series, accents, projection and baseline are at least 3:1 on card, canvas, sunken, subtle and overlay in both themes (lowest measured: 3.07 light, 3.54 dark). Status fills (`status.*.solid`) are at least 3:1 on card, canvas, sunken and subtle:
 
-### Measured contrast (WCAG ratios; graphics need 3:1)
-
-| Key              | Light min (card, canvas) | Light min (all 5 surfaces) | Dark min (card, canvas) | Dark min (all 5 surfaces) |
-| ---------------- | ------------------------ | -------------------------- | ----------------------- | ------------------------- |
-| chart.series1    | 5.92                     | 5.43                       | 6.37                    | 5.81                      |
-| chart.series2    | 4.06                     | 3.73                       | 8.27                    | 7.53                      |
-| chart.series3    | 3.43                     | 3.14                       | 8.13                    | 7.41                      |
-| chart.series4    | 4.54                     | 4.16                       | 7.60                    | 6.93                      |
-| chart.series5    | 5.05                     | 4.62                       | 8.41                    | 7.66                      |
-| chart.series6    | 5.95                     | 5.46                       | 6.27                    | 5.71                      |
-| chart.series7    | 4.88                     | 4.47                       | 6.85                    | 6.24                      |
-| chart.series8    | 4.65                     | 4.26                       | 6.26                    | 5.71                      |
-| chart.primary    | 5.92                     | 5.43                       | 6.37                    | 5.81                      |
-| chart.wealth     | 4.06                     | 3.73                       | 8.27                    | 7.53                      |
-| chart.debt       | 3.43                     | 3.14                       | 8.13                    | 7.41                      |
-| chart.warning    | 4.88                     | 4.47                       | 6.85                    | 6.24                      |
-| chart.projection | 5.52                     | 5.06                       | 6.66                    | 6.07                      |
-| chart.baseline   | 3.50                     | 3.21                       | 3.86                    | 3.52                      |
-
-"All 5 surfaces" is card, canvas, sunken, subtle, overlay. The E8 light gap for chart warning/series5 on sunken and subtle is closed; `KNOWN_FAILURES` is now empty. Dark surface steps: canvas to card to overlay each at least 1.05:1 (sunken is a deliberate recess).
+| Fill     | Light min | Dark min |
+| -------- | --------- | -------- |
+| positive | 6.07      | 9.44     |
+| warning  | 3.35      | 6.30     |
+| danger   | 4.38      | 3.04     |
+| info     | 4.93      | 5.24     |
+| neutral  | 4.04      | 5.30     |
 
 ### Status fills and white text (primary.foreground)
 
-`primary.foreground` is white in both themes. Measured WCAG ratios of it on `status.*.solid`:
+`primary.foreground` is white in both themes. Measured ratios on `status.*.solid`:
 
 | Fill                    | Light | Dark | May carry white text? |
 | ----------------------- | ----- | ---- | --------------------- |
-| `status.positive.solid` | 4.61  | 2.52 | Light only            |
-| `status.warning.solid`  | 3.64  | 2.44 | Never                 |
-| `status.danger.solid`   | 5.06  | 4.83 | Both                  |
+| `status.positive.solid` | 7.74  | 1.51 | Light only            |
+| `status.warning.solid`  | 4.27  | 2.26 | Never                 |
+| `status.danger.solid`   | 5.58  | 4.69 | Both                  |
 | `status.info.solid`     | 6.29  | 2.72 | Light only            |
-| `status.neutral.solid`  | 4.69  | 3.17 | Light only            |
+| `status.neutral.solid`  | 5.15  | 2.68 | Light only            |
 
-**`warning.solid` and `positive.solid` (dark) must never carry white text** (warning 3.64 light / 2.44 dark; positive dark 2.52). The same applies to `info.solid` and `neutral.solid` in dark. These fills are graphics (3:1 on every page surface, asserted) or sit behind `text.*` tokens chosen per theme; if a labelled filled badge is needed, use `status.*.bg` with `status.*.text`. The allowed pairs are in `PRIMARY_FOREGROUND_OK` and the forbidden ones are asserted below 4.5 in `tokens.a11y.test.ts`.
+`warning.solid` (both themes) and `positive`, `info`, `neutral` solids in dark must never carry white text. Use `status.*.bg` with `status.*.text` for labelled badges. The allowed pairs are `PRIMARY_FOREGROUND_OK`; the forbidden ones are asserted below 4.5 in the tests. `text.onContrast` is also asserted at 4.5:1 on `surface.contrast`, `surface.hero` and `status.danger.solid`.
 
-Other pairs added to the matrix (all pass, none are known failures): `text.muted` on `status.*.bg` composited under the card (5.13 to 6.53, min 5.13 positive/danger light); `status.*.solid` on canvas, sunken and subtle as 3:1 graphics (lowest: warning light 3.43 / 3.25 / 3.14, danger dark 3.87 / 3.96 / 3.27); `border.focusRing` on sunken, subtle and overlay (lowest 5.43 light, 7.25 dark). `KNOWN_FAILURES` stays empty. A negative test proves the harness throws on a violating pair (`surface.card` on `surface.card`, 1:1).
+## Visible changes for users (round 5)
 
-## Visible changes for users
-
-- **Palette:** light and dark neutrals shift from slate to the cool ink-blue scale, so backgrounds, text and borders look slightly bluer and crisper. Dark surfaces step canvas, card, overlay.
-- **Form borders:** `border.input` is darker (3:1 on every surface), so inputs and sliders are easier to see.
-- **Status colours:** positive, warning, danger, info and neutral hues are refined; badges keep AA text contrast.
-- **Charts:** new series colours (eight in total) tuned for colour-blind readers; liabilities and debt are now amber instead of red; forecasts use a dashed projection colour and a faint band.
-- **Shadows and elevation:** shadows are themed; dark mode uses lighter surfaces with a hairline highlight instead of heavy drop shadows. Modals dim the page with a new scrim.
-- **Fonts:** self-hosted variable fonts replace the Google Fonts links once apps adopt `@repo/ui/fonts.css`.
+- **Palette:** warm sand (light) and warm charcoal (dark) neutrals replace the cool ink-blue; the accent and focus ring are teal; links, selected states and primary buttons are teal.
+- **Status colours:** positive is a leaf green clearly apart from the teal accent; info stays indigo; liabilities and debt are apricot.
+- **Charts:** eight series tuned for colour-blind readers (see below); forecasts use a dashed brown (light) or pale apricot (dark) projection line and a teal band.
+- **Hero:** a deep-teal headline block token (`surface.hero`) exists; screens adopt it in a later PR.
+- **Unchanged here:** radii, shadows, fonts and every component.
 
 ## Font weights
 
@@ -126,14 +102,14 @@ The token scale stops at bold (700). Raw `fontWeight` usage above that, counted 
 
 ### Colour-vision deficiency
 
-Adjacent series pairs are checked with Machado full-severity protan, deutan and tritan simulation and CIE76 deltaE. Threshold: 15 (a just-noticeable difference is about 2.3, so this is roughly six JNDs, enough to tell two thin lines apart). Measured minimum across adjacent pairs:
+Adjacent series pairs are checked with Machado full-severity protan, deutan and tritan simulation and CIE76 deltaE. Threshold: 15 (a just-noticeable difference is about 2.3, so this is roughly six JNDs). Measured minimum across adjacent pairs (series order: teal, sage, apricot, purple, rose, blue, olive-gold, grey):
 
 | Theme | Protanopia       | Deuteranopia     | Tritanopia       |
 | ----- | ---------------- | ---------------- | ---------------- |
-| Light | 39.3 (series5-6) | 17.6 (series5-6) | 28.3 (series4-5) |
-| Dark  | 27.0 (series4-5) | 17.9 (series4-5) | 27.7 (series6-7) |
+| Light | 17.9 (series5-6) | 24.6 (series1-2) | 18.2 (series7-8) |
+| Dark  | 16.1 (series1-2) | 18.8 (series1-2) | 21.8 (series1-2) |
 
-Non-adjacent series (for example 3 and 7, both warm) can look alike under CVD. Charts must still add direct labels, markers or dashes, so no pair relies on colour alone. `chart.projection` is only distinguished from `series8` by being dashed.
+Non-adjacent series (for example 3 and 7, both warm) can look alike under CVD; they are at least 15 apart under normal vision (tested). Charts must still add direct labels, markers or dashes so no pair relies on colour alone. `chart.projection` is at least 15 deltaE from every series under normal vision and is also drawn dashed.
 
 ## Round 5 palette (Direction C, shipped)
 
@@ -161,7 +137,7 @@ Source: the `--*` variables of `docs/design/e15/directions/c/index.html` (light 
 | `primary.hover`                              | `#0a564b`                                     | `#0a564b`                                     |
 | `primary.subtle` / `border`                  | `#e1f0eb` / `#9ccfc2`                         | `#1e3b35` / `#2e6055`                         |
 | `primary.foreground`                         | `#ffffff`                                     | `#ffffff`                                     |
-| `status.positive` text / bg / border / solid | `#3e6b12` / `#eaf3da` / `#bcd68f` / `#4e7d14` | `#a8d86a` / `#2a3316` / `#4a6428` / `#8cc152` |
+| `status.positive` text / bg / border / solid | `#3e6b12` / `#eaf3da` / `#bcd68f` / `#3a5c08` | `#a8d86a` / `#2a3316` / `#4a6428` / `#c5de4c` |
 | `status.warning`                             | `#8a4a08` / `#fcebd2` / `#ebc38a` / `#b06a10` | `#f2b873` / `#3b2c16` / `#6b4b1e` / `#e0a04a` |
 | `status.danger`                              | `#a13a2b` / `#fbe5e0` / `#e8b0a4` / `#b64030` | `#f4a593` / `#3d221d` / `#74403a` / `#be5337` |
 | `status.info` (indigo, unchanged)            | `#3730a3` / `#eef0ff` / `#c7c9f7` / `#4f46e5` | `#a5a8ff` / `#1b1e4a` / `#3b3f8f` / `#8f92ff` |
@@ -174,8 +150,8 @@ Source: the `--*` variables of `docs/design/e15/directions/c/index.html` (light 
 | `chart.accentCyan`, `series6`                | `#2f7fa0`                                     | `#6db5d6`                                     |
 | `chart.warning`, `series7`                   | `#94750f`                                     | `#e3b452`                                     |
 | `series8`                                    | `#7a7064`                                     | `#a59d90`                                     |
-| `chart.projection` (dashed)                  | `#9a5210`                                     | `#f5b987`                                     |
-| `chart.band` (teal alpha)                    | `rgba(15,107,94,.14)`                         | `rgba(92,196,174,.18)`                        |
+| `chart.projection` (dashed)                  | `#6b3f2a`                                     | `#ffd2a8`                                     |
+| `chart.band` (teal alpha)                    | `rgba(15,107,94,.14)`                         | `rgba(92,196,174,.15)`                        |
 | `chart.baseline`                             | `#867c6e`                                     | `#8f8678`                                     |
 | `chart.grid`                                 | `rgba(43,38,32,.08)`                          | `rgba(244,239,231,.08)`                       |
 
@@ -189,18 +165,19 @@ One deep-teal headline block per page (the headline figure). Text on it uses `te
 - `surface.sunken` light `#eae3d8` (mockup `#ece6dc`): canvas, subtle and sunken were 1.8 to 2.3 deltaE apart; now every surface pair is at least 2.0. `border.input` light `#867c6e` (mockup `#8c8274` gave under 3:1 on the darker sunken). `surface.overlay` dark `#36322d` (mockup `#312d28` was 1.5 deltaE from subtle).
 - Dark `surface.contrast` stays a dark fill (`#3a352f`), not the mockup's inverted light fill, because `text.onContrast` must be light on the dark `surface.hero`. Dark `text.onContrast` is `#fffdf9` (mockup `#1d1a17` is the inverted value): `status.danger.solid` dark has to be both at least 3:1 on `surface.subtle` and at least 4.5:1 under a light label, which only a near-white label allows (window of about 0.005 relative luminance, `#be5337`).
 - Status solids: `warning.solid` light `#b06a10` (mockup `#c77a1b` under 3:1 on canvas, subtle, sunken), `danger.solid` light `#b64030` and dark `#be5337` (mockup values fail the onContrast and white-label pairs), `neutral.solid` light `#766c5f` (white label), `positive` is new (see below).
-- Chart: `wealth` `#64885c` / `#9ad0a0` (mockup `#4a9a7c` was 2.7:1 on the darker sunken light surface, and the mockup dark `#93cba8` was 14.8 deltaE from primary); `debt` light `#c26a18` and `warning` `#94750f` to keep 3:1 on sunken; series4 to 6 reordered (purple, rose, blue) because purple next to blue collapses under protan simulation (11 deltaE); `chart.band` follows the mockup's alpha. The debt hue test now allows 25 to 50 degrees (apricot is about 29).
+- Chart: `wealth` `#64885c` / `#9ad0a0` (mockup `#4a9a7c` was 2.7:1 on the darker sunken light surface, and the mockup dark `#93cba8` was 14.8 deltaE from primary); `debt` light `#c26a18` and `warning` `#94750f` to keep 3:1 on sunken; series4 to 6 reordered (purple, rose, blue) because purple next to blue collapses under protan simulation (11 deltaE); `chart.band` uses the mockup's alpha (.14 light, .15 dark). `chart.grid` is an alpha of the text colour (`rgba(43,38,32,.08)` light, `rgba(244,239,231,.08)` dark) instead of the mockup's opaque `#e6dfd3` / `#3a352e`, so it composites over any surface; on the card it lands within a few levels of the mockup hex. `chart.projection` is `#6b3f2a` / `#ffd2a8` (the mockup's `#9a5210` / `#f5b987` was 14.8 / 14.6 deltaE from `chart.debt`). `status.positive.solid` is `#3a5c08` / `#c5de4c`, chosen so it is at least 15 deltaE from primary and wealth under protan, deutan and tritan. The debt hue test now allows 25 to 50 degrees (apricot is about 29).
 
 ### Distinctness measurements (CIE76 deltaE unless stated)
 
-| Pair                                                                  | Light                     | Dark                      |
-| --------------------------------------------------------------------- | ------------------------- | ------------------------- |
-| `chart.wealth` vs `chart.primary` (normal / protan / deutan / tritan) | 24.3 / 22.3 / 24.6 / 18.5 | 19.5 / 16.1 / 18.8 / 21.8 |
-| `status.positive.solid` vs `primary`                                  | 47.9                      | 47.7                      |
-| `status.positive.solid` vs `chart.wealth`                             | 30.2                      | 32.9                      |
-| `chart.debt` vs `chart.primary`                                       | 81.9                      | 71.1                      |
+| Pair                                                                          | Light                     | Dark                      |
+| ----------------------------------------------------------------------------- | ------------------------- | ------------------------- |
+| `chart.wealth` vs `chart.primary` (normal / protan / deutan / tritan)         | 24.3 / 22.3 / 24.6 / 18.5 | 19.5 / 16.1 / 18.8 / 21.8 |
+| `status.positive.solid` vs `primary` (normal / protan / deutan / tritan)      | 39.6 / 40.4 / 38.9 / 17.4 | 64.6 / 67.7 / 64.2 / 38.6 |
+| `status.positive.solid` vs `chart.wealth` (normal / protan / deutan / tritan) | 26.9 / 27.5 / 25.5 / 18.2 | 48.0 / 52.3 / 46.9 / 20.0 |
+| `chart.projection` vs nearest series                                          | 25.7 (series8)            | 25.9 (series3)            |
+| `chart.debt` vs `chart.primary`                                               | 81.9                      | 71.1                      |
 
-`status.positive.solid` hue is about 90 degrees (leaf), `primary` about 170 (teal). Adjacent series pairs still clear the CVD threshold of 15 (existing test); all eight series are pairwise at least 15 under normal vision.
+`status.positive.solid` hue is about 80 degrees (leaf), `primary` about 170 (teal). Adjacent series pairs still clear the CVD threshold of 15 (existing test); all eight series are pairwise at least 15 under normal vision.
 
 ### Page surface separation
 
