@@ -50,6 +50,11 @@ describe("TextInput", () => {
     expect(node).not.toBeNull();
   });
 
+  it.each(["sm", "md"] as const)("applies the coarse-pointer touch height on %s", (size) => {
+    const { container } = render(<TextInput aria-label="Name" size={size} />);
+    expect(container.firstElementChild?.className).toMatch(/pointer:_coarse\)\]:min-h_touch/);
+  });
+
   it("uses no inline styles", () => {
     const { container } = render(<TextInput aria-label="Name" size="sm" />);
     expect(container.querySelector("[style]")).toBeNull();
