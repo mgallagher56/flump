@@ -284,7 +284,7 @@ export function evaluateFinancialStage(params: {
       emergencyRunwayMonths,
       starterBufferMet,
       primaryHeroMetric: "unsecured_debt",
-      headline: "Unsecured debt present",
+      headline: "Debt or negative monthly surplus",
       subline: "High-interest balances or a negative monthly surplus are present.",
     };
   }
