@@ -766,6 +766,40 @@ describe("Round 5 page surface separation", () => {
   });
 });
 
+describe("Round 5 review follow-ups: projection and positive under CVD", () => {
+  it("chart.projection is at least 15 deltaE from every chart series and accent (normal vision, both themes)", () => {
+    for (const theme of BOTH) {
+      for (const other of [
+        ...CHART_SERIES,
+        "chart.primary",
+        "chart.accentPurple",
+        "chart.accentCyan",
+      ]) {
+        expect(
+          deltaE("chart.projection", other, theme),
+          `projection vs ${other} ${theme}`,
+        ).toBeGreaterThanOrEqual(15);
+      }
+    }
+  });
+
+  it("status.positive.solid is at least 15 deltaE from primary and chart.wealth under normal, protan, deutan and tritan simulation", () => {
+    for (const theme of BOTH) {
+      const pos = toRgb(resolveColor("status.positive.solid", theme));
+      for (const other of ["primary", "chart.primary", "chart.wealth"]) {
+        const o = toRgb(resolveColor(other, theme));
+        expect(deltaE("status.positive.solid", other, theme)).toBeGreaterThanOrEqual(15);
+        for (const kind of Object.keys(CVD)) {
+          expect(
+            deltaE76(pos, o, kind),
+            `positive.solid vs ${other} (${kind}, ${theme})`,
+          ).toBeGreaterThanOrEqual(MIN_CVD_DELTA_E);
+        }
+      }
+    }
+  });
+});
+
 describe("Round 5 hue and series separation", () => {
   const MIN_HUE_DELTA_E = 15;
 
