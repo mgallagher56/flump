@@ -55,6 +55,34 @@ describe("logout action", () => {
     expect(res.headers.getSetCookie()).toEqual([CLEAR_COOKIE]);
   });
 
+  it("appends the legacy wos-session clear without clobbering authkit cookies in production", async () => {
+    vi.stubEnv("NODE_ENV", "production");
+    vi.stubEnv("WORKOS_COOKIE_NAME", "__Host-wos-session");
+    mocks.signOut.mockResolvedValue(
+      new Response(null, {
+        status: 302,
+        headers: { "Set-Cookie": "__Host-wos-session=; Max-Age=0; Path=/" },
+      }),
+    );
+    const res = (await action(makeArgs("https://web.example.test/logout", "POST"))) as Response;
+    expect(res.headers.getSetCookie()).toEqual([
+      "__Host-wos-session=; Max-Age=0; Path=/",
+      `${CLEAR_COOKIE}; Secure`,
+      "wos-session=; Path=/; Max-Age=0; Secure; HttpOnly; SameSite=Lax",
+    ]);
+  });
+
+  it("does not add the legacy clear when the configured name is wos-session or outside production", async () => {
+    vi.stubEnv("NODE_ENV", "production");
+    vi.stubEnv("WORKOS_COOKIE_NAME", "wos-session");
+    let res = (await action(makeArgs("https://web.example.test/logout", "POST"))) as Response;
+    expect(res.headers.getSetCookie()).toEqual([`${CLEAR_COOKIE}; Secure`]);
+    vi.stubEnv("NODE_ENV", "development");
+    vi.stubEnv("WORKOS_COOKIE_NAME", "__Host-wos-session");
+    res = (await action(makeArgs("https://web.example.test/logout", "POST"))) as Response;
+    expect(res.headers.getSetCookie()).toEqual([`${CLEAR_COOKIE}; Secure`]);
+  });
+
   it("clears the presence cookie host-only with Secure on https hosts", async () => {
     const res = (await action(makeArgs("https://web.example.test/logout", "POST"))) as Response;
     expect(res.headers.getSetCookie()).toEqual([`${CLEAR_COOKIE}; Secure`]);

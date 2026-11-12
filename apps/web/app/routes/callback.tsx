@@ -1,6 +1,10 @@
 import { authLoader, configure } from "@workos-inc/authkit-react-router";
 import type { LoaderFunctionArgs } from "react-router";
 import { redirect, useLoaderData } from "react-router";
+import {
+  legacySessionCookieClear,
+  MAX_SESSION_COOKIE_AGE_SECONDS,
+} from "~/utils/sessionPolicy.server";
 
 const workosLoader = authLoader({
   returnPathname: "/app",
@@ -29,11 +33,13 @@ export const loader = async (args: LoaderFunctionArgs) => {
   const behindHttpsProxy =
     request.headers.get("x-forwarded-proto")?.split(",")[0]?.trim().toLowerCase() === "https";
   const secure = url.protocol === "https:" || behindHttpsProxy ? "; Secure" : "";
-  const sessionPresenceCookie = `flump_has_session=1; Path=/; SameSite=Lax; Max-Age=2592000${secure}`;
+  const sessionPresenceCookie = `flump_has_session=1; Path=/; SameSite=Lax; Max-Age=${MAX_SESSION_COOKIE_AGE_SECONDS}${secure}`;
 
   if (response instanceof Response) {
     const headers = new Headers(response.headers);
     headers.append("Set-Cookie", sessionPresenceCookie);
+    const legacyClear = legacySessionCookieClear(process.env);
+    if (legacyClear) headers.append("Set-Cookie", legacyClear);
     return new Response(response.body, {
       status: response.status,
       statusText: response.statusText,

@@ -2,6 +2,7 @@ import { signOut } from "@workos-inc/authkit-react-router";
 import type { ActionFunctionArgs } from "react-router";
 import { redirect } from "react-router";
 import { getMarketingUrl } from "~/utils/marketingUrl";
+import { legacySessionCookieClear } from "~/utils/sessionPolicy.server";
 
 const handleSignOut = async (request: Request) => {
   const url = new URL(request.url);
@@ -16,6 +17,8 @@ const handleSignOut = async (request: Request) => {
   if (response instanceof Response) {
     const headers = new Headers(response.headers);
     headers.append("Set-Cookie", clearPresenceCookie);
+    const legacyClear = legacySessionCookieClear(process.env);
+    if (legacyClear) headers.append("Set-Cookie", legacyClear);
     return new Response(response.body, {
       status: response.status,
       statusText: response.statusText,

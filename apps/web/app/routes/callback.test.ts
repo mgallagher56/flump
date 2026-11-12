@@ -30,7 +30,7 @@ const callLoader = (url: string, headers?: Record<string, string>) =>
     context: {},
   } as any) as Promise<any>;
 
-const SESSION_COOKIE = "flump_has_session=1; Path=/; SameSite=Lax; Max-Age=2592000";
+const SESSION_COOKIE = "flump_has_session=1; Path=/; SameSite=Lax; Max-Age=1209600";
 
 beforeEach(() => {
   vi.stubEnv("NODE_ENV", "development");
@@ -64,6 +64,23 @@ describe("callback loader", () => {
   it("sets a host-only presence cookie with Secure on https hosts", async () => {
     const res = await callLoader("https://app.example.test/callback?code=abc");
     expect(res.headers.getSetCookie()).toEqual([`${SESSION_COOKIE}; Secure`]);
+  });
+
+  it("appends the legacy wos-session clear after the presence cookie in production", async () => {
+    vi.stubEnv("NODE_ENV", "production");
+    vi.stubEnv("WORKOS_COOKIE_NAME", "__Host-wos-session");
+    mocks.workosLoader.mockResolvedValue(
+      new Response(null, {
+        status: 302,
+        headers: { "Set-Cookie": "__Host-wos-session=sealed; Path=/" },
+      }),
+    );
+    const res = await callLoader("https://app.example.test/callback?code=abc");
+    expect(res.headers.getSetCookie()).toEqual([
+      "__Host-wos-session=sealed; Path=/",
+      `${SESSION_COOKIE}; Secure`,
+      "wos-session=; Path=/; Max-Age=0; Secure; HttpOnly; SameSite=Lax",
+    ]);
   });
 
   it("adds Secure when x-forwarded-proto is https on a plain-http request", async () => {
