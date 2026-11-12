@@ -30,6 +30,11 @@ describe("buildCsp", () => {
     expect(prod).not.toMatch(/\bws:/);
   });
 
+  it("fonts and styles are self-hosted: no third-party font or stylesheet origins (E19 A3)", () => {
+    expect(directive(prod, "font-src")).toEqual(["'self'", "data:"]);
+    expect(directive(prod, "style-src")).toEqual(["'self'", "'unsafe-inline'"]);
+  });
+
   it("production keeps the framing and base protections", () => {
     expect(prod).toContain("frame-ancestors 'none'");
     expect(prod).toContain("object-src 'none'");

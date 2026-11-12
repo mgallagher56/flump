@@ -3,6 +3,7 @@ import i18n from "i18next";
 import { initReactI18next } from "react-i18next";
 import enCommon from "../public/locales/en/common.json";
 import { StorybookRouterContext } from "./react-router-mock";
+import "@repo/ui/fonts.css";
 import "../app/index.css";
 
 // Initialize i18next for Storybook
