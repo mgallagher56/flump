@@ -5,8 +5,11 @@ import { reportException } from "./report";
 const SAFE_REQUEST_ID = /^[A-Za-z0-9._-]{1,64}$/;
 
 function requestIdOf(host: ArgumentsHost): string | undefined {
-  const req = host.switchToHttp().getRequest<{ headers?: Record<string, unknown> }>();
-  const raw = req?.headers?.["x-request-id"] ?? req?.headers?.["x-railway-request-id"];
+  const req = host
+    .switchToHttp()
+    .getRequest<{ requestId?: unknown; headers?: Record<string, unknown> }>();
+  const raw =
+    req?.requestId ?? req?.headers?.["x-request-id"] ?? req?.headers?.["x-railway-request-id"];
   return typeof raw === "string" && SAFE_REQUEST_ID.test(raw) ? raw : undefined;
 }
 
