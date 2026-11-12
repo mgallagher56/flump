@@ -105,6 +105,9 @@ export const Link = ({ to, children, className, ...props }: any) => {
 
 export const NavLink = Link;
 
+// Stories render without a router, so components fall back to plain anchors.
+export const useInRouterContext = () => false;
+
 export const useMatches = () => {
   const context = useContext(StorybookRouterContext);
   return [
@@ -128,6 +131,7 @@ const mockReactRouter = {
   Link,
   NavLink,
   useMatches,
+  useInRouterContext,
   StorybookRouterContext,
 };
 

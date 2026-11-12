@@ -32,6 +32,20 @@ const bannerContainerStyle = (isInTrap: boolean) =>
     boxShadow: "0 4px 16px rgba(0, 0, 0, 0.04)",
   });
 
+// Semantic status tokens keep the badge above 4.5:1 contrast in light and dark.
+const marginalRateBadge = (isInTrap: boolean) =>
+  css({
+    fontSize: "11px",
+    fontWeight: "bold",
+    padding: "2px 8px",
+    borderRadius: "full",
+    border: "1px solid",
+    fontVariantNumeric: "tabular-nums",
+    backgroundColor: isInTrap ? "status.danger.bg" : "status.warning.bg",
+    borderColor: isInTrap ? "status.danger.border" : "status.warning.border",
+    color: isInTrap ? "status.danger.text" : "status.warning.text",
+  });
+
 const metricGridLayout = css({
   display: "grid",
   gridTemplateColumns: { base: "1fr", sm: "repeat(3, 1fr)" },
@@ -123,16 +137,7 @@ export const TaxTrapAlertBanner: FC<TaxTrapAlertBannerProps> = ({
                   ? `UK £100k–£125k ${trapCopy.incomeTaxRate} Tax Trap Active`
                   : "Approaching the £100,000 UK Tax Trap"}
               </FLPHeading>
-              <span
-                style={{
-                  fontSize: "11px",
-                  fontWeight: 700,
-                  padding: "2px 8px",
-                  borderRadius: "full",
-                  backgroundColor: trapAnalysis.isInTaxTrap ? "#ef4444" : "#d97706",
-                  color: "#fff",
-                }}
-              >
+              <span className={marginalRateBadge(trapAnalysis.isInTaxTrap)}>
                 {getDisplayMarginalRatePct(trapAnalysis)}% Marginal Tax
               </span>
             </div>
