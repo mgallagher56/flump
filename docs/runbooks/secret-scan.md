@@ -1,6 +1,8 @@
 # Secret scan (gitleaks)
 
-CI job `secret-scan` in `.github/workflows/security-scan.yml` scans the commit range of every PR and every push to `main` with gitleaks. It is advisory (no required checks), but Railway Wait-for-CI means a red push to `main` skips the deploy. Scheduled runs are skipped.
+CI job `secret-scan` in `.github/workflows/security-scan.yml` scans the commit range of every PR and every push to `main` with gitleaks. It is advisory (no required checks), but Railway Wait-for-CI means a red push to `main` skips the deploy. There is no schedule trigger today; the `if` guard is kept for appended jobs.
+
+If `main` was force-pushed, the push event's `BEFORE` commit may be unreachable and the job then errors (not a leak finding). Re-run after fixing, or scan locally.
 
 - Config: `.gitleaks.toml` (upstream defaults plus a small allowlist).
 - Accepted findings: `.gitleaksignore` (fingerprints, empty today).
