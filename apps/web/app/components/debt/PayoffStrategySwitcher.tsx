@@ -57,7 +57,9 @@ const pillButtonStyle = (active: boolean) =>
     gap: "8px",
     backgroundColor: active ? "card" : "transparent",
     color: active ? "text.primary" : "text.muted",
-    boxShadow: active ? "0 1px 2px rgba(0,0,0,0.06)" : "none",
+    boxShadow: active
+      ? "0 1px 2px color-mix(in srgb, var(--colors-surface-contrast) 6%, transparent)"
+      : "none",
     border: "1px solid",
     borderColor: active ? "border.subtle" : "transparent",
     transition: "all 0.15s ease",
@@ -100,7 +102,9 @@ const modeCardStyle = (active: boolean, clickable: boolean = false) =>
     borderWidth: active ? "2px" : "1px",
     borderStyle: "solid",
     borderColor: active ? "primary" : "border.subtle",
-    backgroundColor: active ? "rgba(99, 99, 241, 0.06)" : "surface.card",
+    backgroundColor: active
+      ? "color-mix(in srgb, var(--colors-primary) 6%, transparent)"
+      : "surface.card",
     display: "flex",
     flexDirection: "column",
     gap: "8px",
@@ -244,10 +248,10 @@ export const PayoffStrategySwitcher: FC<PayoffStrategySwitcherProps> = ({
 
           <div
             style={{
-              backgroundColor: "rgba(99, 99, 241, 0.08)",
+              backgroundColor: "color-mix(in srgb, var(--colors-primary) 8%, transparent)",
               padding: "10px 14px",
               borderRadius: "8px",
-              border: "1px dashed rgba(99, 99, 241, 0.3)",
+              border: "1px dashed color-mix(in srgb, var(--colors-primary) 30%, transparent)",
             }}
           >
             <FLPText color="text.primary" fontSize="sm" fontWeight="bold">
@@ -284,7 +288,7 @@ export const PayoffStrategySwitcher: FC<PayoffStrategySwitcherProps> = ({
               }}
             >
               <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                <FaBolt color="#f59e0b" size={14} />
+                <FaBolt color="var(--colors-chart-warning)" size={14} />
                 <FLPText fontSize="md" fontWeight="bold">
                   Avalanche (Highest APR)
                 </FLPText>
@@ -292,8 +296,9 @@ export const PayoffStrategySwitcher: FC<PayoffStrategySwitcherProps> = ({
               <span
                 style={{
                   fontSize: "11px",
-                  backgroundColor: "rgba(245, 158, 11, 0.15)",
-                  color: "#d97706",
+                  backgroundColor:
+                    "color-mix(in srgb, var(--colors-chart-warning) 15%, transparent)",
+                  color: "var(--colors-chart-warning)",
                   padding: "3px 8px",
                   borderRadius: "6px",
                   fontWeight: "bold",
@@ -320,7 +325,7 @@ export const PayoffStrategySwitcher: FC<PayoffStrategySwitcherProps> = ({
                   {formatCurrency(comparison.avalanche.totalInterest)}
                 </span>
               </FLPText>
-              <FLPText color="green.600" fontSize="xs" fontWeight="semibold">
+              <FLPText color="status.positive.text" fontSize="xs" fontWeight="semibold">
                 Saves{" "}
                 <span className={css({ fontVariantNumeric: "tabular-nums" })}>
                   {formatCurrency(comparison.interestSavedAvalancheVsMin)}
@@ -353,7 +358,7 @@ export const PayoffStrategySwitcher: FC<PayoffStrategySwitcherProps> = ({
               }}
             >
               <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                <FaSnowflake color="#3b82f6" size={14} />
+                <FaSnowflake color="var(--colors-chart-series2)" size={14} />
                 <FLPText fontSize="md" fontWeight="bold">
                   Snowball (Smallest Balance)
                 </FLPText>
@@ -361,8 +366,9 @@ export const PayoffStrategySwitcher: FC<PayoffStrategySwitcherProps> = ({
               <span
                 style={{
                   fontSize: "11px",
-                  backgroundColor: "rgba(59, 130, 246, 0.15)",
-                  color: "#3b82f6",
+                  backgroundColor:
+                    "color-mix(in srgb, var(--colors-chart-series2) 15%, transparent)",
+                  color: "var(--colors-chart-series2)",
                   padding: "3px 8px",
                   borderRadius: "6px",
                   fontWeight: "bold",
@@ -421,7 +427,8 @@ export const PayoffStrategySwitcher: FC<PayoffStrategySwitcherProps> = ({
               <span
                 style={{
                   fontSize: "11px",
-                  backgroundColor: "rgba(239, 68, 68, 0.15)",
+                  backgroundColor:
+                    "color-mix(in srgb, var(--colors-status-danger-text) 15%, transparent)",
                   color: "var(--colors-status-danger-text)",
                   padding: "3px 8px",
                   borderRadius: "6px",
@@ -443,7 +450,7 @@ export const PayoffStrategySwitcher: FC<PayoffStrategySwitcherProps> = ({
                   {comparison.minimumOnly.debtFreeDate} ({comparison.minimumOnly.months} mos)
                 </span>
               </FLPText>
-              <FLPText color="red.500" fontSize="sm">
+              <FLPText color="status.danger.text" fontSize="sm">
                 <strong>Total Interest:</strong>{" "}
                 <span className={css({ fontVariantNumeric: "tabular-nums" })}>
                   {formatCurrency(comparison.minimumOnly.totalInterest)}

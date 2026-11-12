@@ -1,3 +1,4 @@
+import { chartColor } from "@repo/ui";
 import { css } from "@repo/ui/styled-system/css";
 import { type FC, useId, useState } from "react";
 import {
@@ -63,7 +64,7 @@ const STEP_DEFINITIONS = (props: SetupChecklistProps, navigate: ReturnType<typeo
     label: "Connect bank or split savings accounts",
     description:
       "Connect a supported bank (coming soon) or add current accounts and savings pots manually.",
-    icon: <FaUniversity style={{ color: "#6363f1" }} />,
+    icon: <FaUniversity style={{ color: chartColor("primary") }} />,
     isComplete: props.hasAccounts || props.completedSteps.includes("accounts"),
     actionLabel: "Add account detail",
     onAction: props.onOpenConnectBank || (() => navigate("/app/accounts")),
@@ -82,7 +83,7 @@ const STEP_DEFINITIONS = (props: SetupChecklistProps, navigate: ReturnType<typeo
     label: "Refine pension schemes and employer match",
     description:
       "Add employer matching percentage and track multiple active or legacy UK pension pots.",
-    icon: <FaShieldAlt style={{ color: "#8b5cf6" }} />,
+    icon: <FaShieldAlt style={{ color: chartColor("accentPurple") }} />,
     isComplete: !!props.hasPension || props.completedSteps.includes("pension"),
     actionLabel: "Refine pension",
     onAction: () => navigate("/app/pension"),
@@ -102,7 +103,7 @@ const STEP_DEFINITIONS = (props: SetupChecklistProps, navigate: ReturnType<typeo
     label: "Explore 10–30 year scenarios",
     description:
       "Simulate pay rises, career breaks, or mortgage interest shocks on your net worth line.",
-    icon: <FaChartLine style={{ color: "#3b82f6" }} />,
+    icon: <FaChartLine style={{ color: chartColor("series2") }} />,
     isComplete: props.hasRunForecast || props.completedSteps.includes("forecast"),
     actionLabel: "Model scenarios",
     onAction: () => navigate("/app/savings#forecast"),
@@ -112,7 +113,7 @@ const STEP_DEFINITIONS = (props: SetupChecklistProps, navigate: ReturnType<typeo
     label: "Record self-employed or rental tax",
     description:
       "Log income and allowable expenses to view your estimated UK Self Assessment liability.",
-    icon: <FaFileInvoiceDollar style={{ color: "#3b82f6" }} />,
+    icon: <FaFileInvoiceDollar style={{ color: chartColor("series2") }} />,
     isComplete: Boolean(props.hasTax || props.completedSteps.includes("tax")),
     actionLabel: "Open tax tracker",
     onAction: () => navigate("/app/tax"),
@@ -155,7 +156,7 @@ const SetupChecklist: FC<SetupChecklistProps> = (props) => {
         borderRadius: "xl",
         border: "1px solid",
         borderColor: "primary",
-        backgroundColor: "rgba(99,99,241,0.04)",
+        backgroundColor: "primary.subtle",
         overflow: "hidden",
         marginBottom: { base: "14px", md: "24px" },
         transition: "all 0.3s ease",
@@ -171,7 +172,7 @@ const SetupChecklist: FC<SetupChecklistProps> = (props) => {
           userSelect: "none",
           borderBottom: expanded ? "1px solid" : "none",
           borderColor: "border",
-          _hover: { backgroundColor: "rgba(99,99,241,0.07)" },
+          _hover: { backgroundColor: "primary.subtle" },
         })}
       >
         <h4 className={css({ flex: "1", minWidth: 0, margin: 0, font: "inherit" })}>
@@ -212,7 +213,7 @@ const SetupChecklist: FC<SetupChecklistProps> = (props) => {
                     fontSize: "xs",
                     fontWeight: "bold",
                     color: "primary",
-                    backgroundColor: "rgba(99,99,241,0.12)",
+                    backgroundColor: "primary.subtle",
                     padding: "2px 8px",
                     borderRadius: "full",
                   })}
@@ -237,7 +238,7 @@ const SetupChecklist: FC<SetupChecklistProps> = (props) => {
                     display: "block",
                     height: "100%",
                     width: `${progressPct}%`,
-                    backgroundColor: "#6363f1",
+                    backgroundColor: chartColor("primary"),
                     borderRadius: "full",
                     transition: "width 0.5s ease",
                   }}
@@ -308,7 +309,7 @@ const SetupChecklist: FC<SetupChecklistProps> = (props) => {
               padding: { base: "10px 14px", md: "16px 20px" },
               borderBottom: "1px solid",
               borderColor: "border",
-              backgroundColor: step.isComplete ? "rgba(16,185,129,0.03)" : "transparent",
+              backgroundColor: step.isComplete ? "status.positive.bg" : "transparent",
               transition: "background-color 0.2s",
             })}
           >
@@ -319,7 +320,7 @@ const SetupChecklist: FC<SetupChecklistProps> = (props) => {
                   style={{ color: "var(--colors-status-positive-text)", fontSize: "18px" }}
                 />
               ) : (
-                <FaRegCircle style={{ color: "#a1a1aa", fontSize: "18px" }} />
+                <FaRegCircle style={{ color: chartColor("baseline"), fontSize: "18px" }} />
               )}
             </div>
 
@@ -351,8 +352,8 @@ const SetupChecklist: FC<SetupChecklistProps> = (props) => {
                   className={css({
                     fontSize: "xs",
                     fontWeight: "medium",
-                    color: "success.500",
-                    backgroundColor: "rgba(16, 185, 129, 0.08)",
+                    color: "status.positive.text",
+                    backgroundColor: "status.positive.bg",
                     padding: "3px 8px",
                     borderRadius: "md",
                     display: "inline-flex",
@@ -376,7 +377,7 @@ const SetupChecklist: FC<SetupChecklistProps> = (props) => {
                     cursor: "pointer",
                     transition: "all 0.15s",
                     _hover: {
-                      backgroundColor: "rgba(99,99,241,0.08)",
+                      backgroundColor: "primary.subtle",
                     },
                   })}
                   type="button"

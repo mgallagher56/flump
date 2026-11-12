@@ -170,7 +170,7 @@ const AccountDetails: FC<AccountDetailsProps> = ({
     "&:focus": {
       borderColor: "primary",
       outline: "none",
-      boxShadow: "0 0 0 2px rgba(99, 99, 241, 0.15)",
+      boxShadow: "0 0 0 2px color-mix(in srgb, var(--colors-primary) 15%, transparent)",
     },
   });
 
@@ -196,7 +196,7 @@ const AccountDetails: FC<AccountDetailsProps> = ({
     marginLeft: "8px",
     transition: "background 0.2s",
     "&:hover": {
-      backgroundColor: "rgba(239, 68, 68, 0.08)",
+      backgroundColor: "color-mix(in srgb, var(--colors-status-danger-text) 8%, transparent)",
     },
   });
 
@@ -206,7 +206,7 @@ const AccountDetails: FC<AccountDetailsProps> = ({
       display: "block",
       marginTop: "4px",
       fontWeight: "medium",
-      color: isZero ? "text.muted" : isUp ? "success.500" : "status.danger.text",
+      color: isZero ? "text.muted" : isUp ? "status.positive.text" : "status.danger.text",
     });
 
   if (!accountDetails || accountDetails.length === 0) {

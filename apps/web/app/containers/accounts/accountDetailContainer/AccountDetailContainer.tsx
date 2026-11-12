@@ -107,8 +107,10 @@ const AccountDetailContainer: FC = () => {
       fontWeight: "bold",
       padding: "2px 8px",
       borderRadius: "full",
-      backgroundColor: isUp ? "rgba(16, 185, 129, 0.1)" : "rgba(239, 68, 68, 0.1)",
-      color: isUp ? "success.500" : "status.danger.text",
+      backgroundColor: isUp
+        ? "color-mix(in srgb, var(--colors-chart-wealth) 10%, transparent)"
+        : "color-mix(in srgb, var(--colors-status-danger-text) 10%, transparent)",
+      color: isUp ? "status.positive.text" : "status.danger.text",
       display: "inline-flex",
       alignItems: "center",
       gap: "2px",
@@ -174,7 +176,7 @@ const AccountDetailContainer: FC = () => {
                 fontSize: "10px",
                 fontWeight: "bold",
                 textTransform: "uppercase",
-                backgroundColor: "rgba(99, 99, 241, 0.1)",
+                backgroundColor: "color-mix(in srgb, var(--colors-primary) 10%, transparent)",
                 color: "primary",
                 padding: "2px 8px",
                 borderRadius: "full",

@@ -69,11 +69,11 @@ export const BASE_CATEGORY_LABELS: Record<string, string> = {
 };
 
 export const BASE_CATEGORY_COLOURS: Record<string, string> = {
-  housing: "#6363f1",
-  bills: "#f59e0b",
-  expenses: "#ec4899",
-  savings: "#10b981",
-  income: "#3b82f6",
+  housing: "var(--colors-primary)",
+  bills: "var(--colors-chart-warning)",
+  expenses: "var(--colors-chart-series5)",
+  savings: "var(--colors-chart-wealth)",
+  income: "var(--colors-chart-series2)",
 };
 
 export const BASE_CATEGORY_ICONS: Record<string, string> = {
@@ -85,14 +85,14 @@ export const BASE_CATEGORY_ICONS: Record<string, string> = {
 };
 
 const CUSTOM_PALETTE = [
-  "#8b5cf6",
-  "#06b6d4",
-  "#f97316",
-  "#14b8a6",
-  "#e11d48",
-  "#84cc16",
-  "#a855f7",
-  "#0ea5e9",
+  "var(--colors-chart-accent-purple)",
+  "var(--colors-chart-accent-cyan)",
+  "var(--colors-chart-series1)",
+  "var(--colors-chart-series3)",
+  "var(--colors-chart-series4)",
+  "var(--colors-chart-series6)",
+  "var(--colors-chart-series7)",
+  "var(--colors-chart-series8)",
 ];
 
 export function getCategoryLabel(category: string): string {

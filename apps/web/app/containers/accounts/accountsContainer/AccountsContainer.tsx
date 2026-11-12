@@ -1,3 +1,4 @@
+import { chartColor } from "@repo/ui";
 import { css } from "@repo/ui/styled-system/css";
 import { type FC, Fragment, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -145,11 +146,11 @@ const AccountsContainer: FC = () => {
 
     // Institutional restrained palette
     const colorsMap: { [key: string]: string } = {
-      [CURRENT]: "#4f46e5", // Indigo
-      [SAVING]: "#059669", // Emerald
-      [INVESTMENT]: "#d97706", // Amber
-      [PENSION]: "#7c3aed", // Purple
-      [OWED]: "#64748b", // Slate
+      [CURRENT]: chartColor("primary"),
+      [SAVING]: chartColor("wealth"),
+      [INVESTMENT]: chartColor("accentCyan"),
+      [PENSION]: chartColor("accentPurple"),
+      [OWED]: chartColor("baseline"),
     };
 
     return Object.entries(typeTotals).map(([type, val]) => {
@@ -158,7 +159,7 @@ const AccountsContainer: FC = () => {
         type,
         value: val,
         percentage,
-        color: colorsMap[type] || "#4f46e5",
+        color: colorsMap[type] || chartColor("primary"),
       };
     });
   }, [accounts, accountDetails]);
@@ -172,23 +173,25 @@ const AccountsContainer: FC = () => {
 
     switch (type) {
       case CURRENT:
-        return <FaWallet className={iconStyle} style={{ color: "#4f46e5" }} />;
+        return <FaWallet className={iconStyle} style={{ color: chartColor("primary") }} />;
       case SAVING:
-        return <FaPiggyBank className={iconStyle} style={{ color: "#059669" }} />;
+        return <FaPiggyBank className={iconStyle} style={{ color: chartColor("wealth") }} />;
       case INVESTMENT:
-        return <FaChartLine className={iconStyle} style={{ color: "#d97706" }} />;
+        return <FaChartLine className={iconStyle} style={{ color: chartColor("accentCyan") }} />;
       case PENSION:
-        return <FaShieldAlt className={iconStyle} style={{ color: "#7c3aed" }} />;
+        return <FaShieldAlt className={iconStyle} style={{ color: chartColor("accentPurple") }} />;
       case CREDIT_CARD:
-        return <FaCreditCard className={iconStyle} style={{ color: "#e11d48" }} />;
+        return <FaCreditCard className={iconStyle} style={{ color: chartColor("debt") }} />;
       case MORTGAGE:
-        return <FaHome className={iconStyle} style={{ color: "#dc2626" }} />;
+        return <FaHome className={iconStyle} style={{ color: chartColor("debt") }} />;
       case OVERDRAFT:
         return <FaExchangeAlt className={`${iconStyle} ${css({ color: "status.danger.text" })}`} />;
       case LOAN:
-        return <FaHandHoldingUsd className={iconStyle} style={{ color: "#9333ea" }} />;
+        return (
+          <FaHandHoldingUsd className={iconStyle} style={{ color: chartColor("accentPurple") }} />
+        );
       case OWED:
-        return <FaUserFriends className={iconStyle} style={{ color: "#64748b" }} />;
+        return <FaUserFriends className={iconStyle} style={{ color: chartColor("baseline") }} />;
       default:
         return <FaExchangeAlt className={iconStyle} />;
     }

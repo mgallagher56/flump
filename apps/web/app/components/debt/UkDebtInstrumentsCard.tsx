@@ -50,7 +50,9 @@ const tabButtonStyle = (active: boolean) =>
     gap: "6px",
     backgroundColor: active ? "card" : "transparent",
     color: active ? "text.primary" : "text.muted",
-    boxShadow: active ? "0 1px 2px rgba(0,0,0,0.06)" : "none",
+    boxShadow: active
+      ? "0 1px 2px color-mix(in srgb, var(--colors-surface-contrast) 6%, transparent)"
+      : "none",
     border: "1px solid",
     borderColor: active ? "border.subtle" : "transparent",
     transition: "all 0.15s ease",
@@ -97,9 +99,9 @@ const resultBoxStyle = css({
 const alertBannerStyle = css({
   padding: "12px 16px",
   borderRadius: "md",
-  backgroundColor: "#fef2f2",
-  border: "1px solid #f87171",
-  color: "#991b1b",
+  backgroundColor: "var(--colors-status-danger-bg)",
+  border: "1px solid var(--colors-status-danger-border)",
+  color: "var(--colors-status-danger-text)",
   display: "flex",
   alignItems: "flex-start",
   gap: "10px",
@@ -109,9 +111,9 @@ const alertBannerStyle = css({
 const safeBannerStyle = css({
   padding: "12px 16px",
   borderRadius: "md",
-  backgroundColor: "#ecfdf5",
-  border: "1px solid #34d399",
-  color: "#065f46",
+  backgroundColor: "var(--colors-status-positive-bg)",
+  border: "1px solid var(--colors-status-positive-border)",
+  color: "var(--colors-status-positive-text)",
   display: "flex",
   alignItems: "flex-start",
   gap: "10px",
@@ -296,7 +298,7 @@ export const UkDebtInstrumentsCard: FC = () => {
                 }}
               >
                 <FLPText fontSize="sm">Estimated penalty interest if left unpaid year 1:</FLPText>
-                <FLPText color="red.600" fontSize="sm" fontWeight="bold">
+                <FLPText color="status.danger.text" fontSize="sm" fontWeight="bold">
                   {formatCurrency(cliffResult.penaltyInterestFirstYearIfUnpaid)}
                 </FLPText>
               </div>
@@ -343,19 +345,24 @@ export const UkDebtInstrumentsCard: FC = () => {
 
               <div
                 style={{
-                  backgroundColor: "#fef2f2",
+                  backgroundColor: "var(--colors-status-danger-bg)",
                   padding: "14px",
                   borderRadius: "8px",
-                  border: "1px solid #fecaca",
+                  border: "1px solid var(--colors-status-danger-border)",
                 }}
               >
-                <FLPText color="red.700" fontSize="xs">
+                <FLPText color="status.danger.text" fontSize="xs">
                   Living continuously in a {formatCurrency(overdraftBalance)} overdraft costs you:
                 </FLPText>
-                <FLPHeading as="h4" color="red.700" size="xl" style={{ marginTop: "4px" }}>
+                <FLPHeading
+                  as="h4"
+                  color="status.danger.text"
+                  size="xl"
+                  style={{ marginTop: "4px" }}
+                >
                   {formatCurrency(overdraftResult.annualPoundCost)} / year
                 </FLPHeading>
-                <FLPText color="red.600" fontSize="xs">
+                <FLPText color="status.danger.text" fontSize="xs">
                   (~{formatCurrency(overdraftResult.monthlyPoundCost)}/month in stealth interest
                   charges)
                 </FLPText>

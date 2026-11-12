@@ -52,7 +52,7 @@ const toolCardStyle = css({
   "&:hover": {
     borderColor: "primary",
     transform: "translateY(-3px)",
-    boxShadow: "0 12px 28px rgba(0, 0, 0, 0.08)",
+    boxShadow: "0 12px 28px color-mix(in srgb, var(--colors-surface-contrast) 8%, transparent)",
   },
 });
 
@@ -82,8 +82,8 @@ export const ToolsIndex: FC = () => {
             style={{
               padding: "4px 12px",
               borderRadius: "full",
-              backgroundColor: "rgba(99, 102, 241, 0.12)",
-              color: "#6366f1",
+              backgroundColor: "color-mix(in srgb, var(--colors-primary) 12%, transparent)",
+              color: "var(--colors-primary)",
               fontSize: "12px",
               fontWeight: 700,
               textTransform: "uppercase",
@@ -107,7 +107,12 @@ export const ToolsIndex: FC = () => {
           {/* Tool 1 */}
           <RouterLink className={toolCardStyle} to="/tools/uk-100k-tax-trap-calculator">
             <div>
-              <div className={iconBadgeStyle("rgba(99, 102, 241, 0.12)", "#6366f1")}>
+              <div
+                className={iconBadgeStyle(
+                  "color-mix(in srgb, var(--colors-primary) 12%, transparent)",
+                  "var(--colors-primary)",
+                )}
+              >
                 <FiPercent />
               </div>
               <FLPHeading as="h2" color="text.primary" mb={2} size="lg">
@@ -124,7 +129,7 @@ export const ToolsIndex: FC = () => {
                 display: "inline-flex",
                 alignItems: "center",
                 gap: "6px",
-                color: "#6366f1",
+                color: "var(--colors-primary)",
                 fontWeight: 600,
                 fontSize: "13px",
               }}
@@ -136,7 +141,12 @@ export const ToolsIndex: FC = () => {
           {/* Tool 2 */}
           <RouterLink className={toolCardStyle} to="/tools/mortgage-overpay-vs-isa">
             <div>
-              <div className={iconBadgeStyle("rgba(245, 158, 11, 0.12)", "#f59e0b")}>
+              <div
+                className={iconBadgeStyle(
+                  "color-mix(in srgb, var(--colors-chart-warning) 12%, transparent)",
+                  "var(--colors-chart-warning)",
+                )}
+              >
                 <FiHome />
               </div>
               <FLPHeading as="h2" color="text.primary" mb={2} size="lg">
@@ -165,7 +175,12 @@ export const ToolsIndex: FC = () => {
           {/* Tool 3 */}
           <RouterLink className={toolCardStyle} to="/tools/section-24-landlord-calculator">
             <div>
-              <div className={iconBadgeStyle("rgba(59, 130, 246, 0.12)", "#3b82f6")}>
+              <div
+                className={iconBadgeStyle(
+                  "color-mix(in srgb, var(--colors-chart-series2) 12%, transparent)",
+                  "var(--colors-chart-series2)",
+                )}
+              >
                 <FiDollarSign />
               </div>
               <FLPHeading as="h2" color="text.primary" mb={2} size="lg">
@@ -182,7 +197,7 @@ export const ToolsIndex: FC = () => {
                 display: "inline-flex",
                 alignItems: "center",
                 gap: "6px",
-                color: "#3b82f6",
+                color: "var(--colors-chart-series2)",
                 fontWeight: 600,
                 fontSize: "13px",
               }}
@@ -197,7 +212,12 @@ export const ToolsIndex: FC = () => {
             to="/tools/uk-debt-snowball-vs-avalanche-calculator"
           >
             <div>
-              <div className={iconBadgeStyle("rgba(239, 68, 68, 0.12)", "#ef4444")}>
+              <div
+                className={iconBadgeStyle(
+                  "color-mix(in srgb, var(--colors-status-danger-text) 12%, transparent)",
+                  "var(--colors-status-danger-text)",
+                )}
+              >
                 <FaFire />
               </div>
               <FLPHeading as="h2" color="text.primary" mb={2} size="lg">
@@ -229,7 +249,12 @@ export const ToolsIndex: FC = () => {
             to="/tools/0-percent-balance-transfer-payoff-calculator"
           >
             <div>
-              <div className={iconBadgeStyle("rgba(16, 185, 129, 0.12)", "#10b981")}>
+              <div
+                className={iconBadgeStyle(
+                  "color-mix(in srgb, var(--colors-chart-wealth) 12%, transparent)",
+                  "var(--colors-chart-wealth)",
+                )}
+              >
                 <FaCreditCard />
               </div>
               <FLPHeading as="h2" color="text.primary" mb={2} size="lg">
@@ -258,7 +283,12 @@ export const ToolsIndex: FC = () => {
           {/* Tool 6: Arranged Overdraft Cost */}
           <RouterLink className={toolCardStyle} to="/tools/overdraft-cost-and-payoff-calculator">
             <div>
-              <div className={iconBadgeStyle("rgba(245, 158, 11, 0.12)", "#f59e0b")}>
+              <div
+                className={iconBadgeStyle(
+                  "color-mix(in srgb, var(--colors-chart-warning) 12%, transparent)",
+                  "var(--colors-chart-warning)",
+                )}
+              >
                 <FaMoneyBillWave />
               </div>
               <FLPHeading as="h2" color="text.primary" mb={2} size="lg">
@@ -290,7 +320,12 @@ export const ToolsIndex: FC = () => {
             to="/tools/uk-student-loan-overpay-or-invest-calculator"
           >
             <div>
-              <div className={iconBadgeStyle("rgba(139, 92, 246, 0.12)", "#8b5cf6")}>
+              <div
+                className={iconBadgeStyle(
+                  "color-mix(in srgb, var(--colors-chart-accent-purple) 12%, transparent)",
+                  "var(--colors-chart-accent-purple)",
+                )}
+              >
                 <FaGraduationCap />
               </div>
               <FLPHeading as="h2" color="text.primary" mb={2} size="lg">
@@ -307,7 +342,7 @@ export const ToolsIndex: FC = () => {
                 display: "inline-flex",
                 alignItems: "center",
                 gap: "6px",
-                color: "#8b5cf6",
+                color: "var(--colors-chart-accent-purple)",
                 fontWeight: 600,
                 fontSize: "13px",
               }}

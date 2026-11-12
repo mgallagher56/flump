@@ -45,7 +45,7 @@ export const APP_PAGES: Record<AppPageKey, AppPageConfig> = {
     route: "/app/accounts",
     description: "Multi-account tracking, bank sync, and historical balance logs",
     category: "core",
-    badgeColor: "#6363f1",
+    badgeColor: "var(--colors-primary)",
   },
   budget: {
     key: "budget",
@@ -53,7 +53,7 @@ export const APP_PAGES: Record<AppPageKey, AppPageConfig> = {
     route: "/app/budget",
     description: "Income and expense categorisation, cash flow surplus, and runway calculator",
     category: "core",
-    badgeColor: "#f59e0b",
+    badgeColor: "var(--colors-chart-warning)",
   },
   debt: {
     key: "debt",
@@ -62,7 +62,7 @@ export const APP_PAGES: Record<AppPageKey, AppPageConfig> = {
     description:
       "Avalanche and snowball payoff engine, 0% promotional expiry tracker, and wealth bridge",
     category: "core",
-    badgeColor: "#ef4444",
+    badgeColor: "var(--colors-status-danger-text)",
   },
   savings: {
     key: "savings",
@@ -70,7 +70,7 @@ export const APP_PAGES: Record<AppPageKey, AppPageConfig> = {
     route: "/app/savings",
     description: "High-yield accounts, interest rate (AER) tracking, and compound growth",
     category: "wealth",
-    badgeColor: "#10b981",
+    badgeColor: "var(--colors-chart-wealth)",
   },
   pension: {
     key: "pension",
@@ -78,7 +78,7 @@ export const APP_PAGES: Record<AppPageKey, AppPageConfig> = {
     route: "/app/pension",
     description: "Workplace pots, employee and employer contributions, and salary sacrifice",
     category: "wealth",
-    badgeColor: "#8b5cf6",
+    badgeColor: "var(--colors-chart-accent-purple)",
   },
   mortgage: {
     key: "mortgage",
@@ -86,7 +86,7 @@ export const APP_PAGES: Record<AppPageKey, AppPageConfig> = {
     route: "/app/mortgage",
     description: "Loan amortisation, overpayment simulator, and savings comparison",
     category: "wealth",
-    badgeColor: "#f59e0b",
+    badgeColor: "var(--colors-chart-warning)",
   },
   forecast: {
     key: "forecast",
@@ -94,7 +94,7 @@ export const APP_PAGES: Record<AppPageKey, AppPageConfig> = {
     route: "/app/savings#forecast",
     description: "Multi-year growth projection for your savings and investments",
     category: "planning",
-    badgeColor: "#6363f1",
+    badgeColor: "var(--colors-primary)",
   },
   tax: {
     key: "tax",
@@ -102,7 +102,7 @@ export const APP_PAGES: Record<AppPageKey, AppPageConfig> = {
     route: "/app/tax",
     description: "Self-employed and rental property P&L logs with UK tax liability estimates",
     category: "planning",
-    badgeColor: "#3b82f6",
+    badgeColor: "var(--colors-chart-series2)",
   },
 };
 

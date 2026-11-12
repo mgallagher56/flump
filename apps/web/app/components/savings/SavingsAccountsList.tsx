@@ -86,7 +86,7 @@ const trStyle = css({
   borderColor: "border",
   transition: "background-color 0.15s ease",
   _hover: {
-    backgroundColor: "rgba(99, 99, 241, 0.03)",
+    backgroundColor: "color-mix(in srgb, var(--colors-primary) 3%, transparent)",
   },
 });
 
@@ -106,8 +106,10 @@ const badgeStyle = (type: string) =>
     fontSize: "xs",
     fontWeight: "medium",
     backgroundColor:
-      type === "Investment" ? "rgba(139, 92, 246, 0.12)" : "rgba(16, 185, 129, 0.12)",
-    color: type === "Investment" ? "#8b5cf6" : "status.positive.text",
+      type === "Investment"
+        ? "color-mix(in srgb, var(--colors-chart-accent-purple) 12%, transparent)"
+        : "color-mix(in srgb, var(--colors-chart-wealth) 12%, transparent)",
+    color: type === "Investment" ? "var(--colors-chart-accent-purple)" : "status.positive.text",
   });
 
 const actionBtnStyle = css({
@@ -120,7 +122,7 @@ const actionBtnStyle = css({
   transition: "all 0.15s ease",
   _hover: {
     color: "primary",
-    backgroundColor: "rgba(99, 99, 241, 0.08)",
+    backgroundColor: "color-mix(in srgb, var(--colors-primary) 8%, transparent)",
   },
 });
 
@@ -134,7 +136,7 @@ const deleteBtnStyle = css({
   transition: "all 0.15s ease",
   _hover: {
     color: "status.danger.text",
-    backgroundColor: "rgba(239, 68, 68, 0.08)",
+    backgroundColor: "color-mix(in srgb, var(--colors-status-danger-text) 8%, transparent)",
   },
 });
 
@@ -169,14 +171,14 @@ const editableCellStyle = css({
   margin: "-2px -6px",
   transition: "background-color 0.15s ease",
   _hover: {
-    backgroundColor: "rgba(99, 99, 241, 0.08)",
+    backgroundColor: "color-mix(in srgb, var(--colors-primary) 8%, transparent)",
   },
 });
 
 const tfootRowStyle = css({
   borderTop: "2px solid",
   borderColor: "border",
-  backgroundColor: "rgba(99, 99, 241, 0.03)",
+  backgroundColor: "color-mix(in srgb, var(--colors-primary) 3%, transparent)",
   fontWeight: "semibold",
 });
 
@@ -402,7 +404,11 @@ export const SavingsAccountsList: FC<SavingsAccountsListProps> = ({
                       <FLPText color="text.muted" fontSize="xs">
                         Monthly
                       </FLPText>
-                      <FLPText fontSize="xs" fontWeight="semibold" style={{ color: "#6363f1" }}>
+                      <FLPText
+                        fontSize="xs"
+                        fontWeight="semibold"
+                        style={{ color: "var(--colors-primary)" }}
+                      >
                         +{formatCurrency(monthly)}
                       </FLPText>
                     </div>
@@ -485,7 +491,12 @@ export const SavingsAccountsList: FC<SavingsAccountsListProps> = ({
                       <td className={tdStyle}>
                         <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
                           {acc.type === "Investment" ? (
-                            <FaChartLine style={{ color: "#8b5cf6", fontSize: "16px" }} />
+                            <FaChartLine
+                              style={{
+                                color: "var(--colors-chart-accent-purple)",
+                                fontSize: "16px",
+                              }}
+                            />
                           ) : (
                             <FaPiggyBank
                               style={{

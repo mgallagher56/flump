@@ -289,7 +289,7 @@ const ConnectBankWizard: FC<ConnectBankWizardProps> = ({ onSuccess }) => {
   const overlayStyle = css({
     position: "fixed",
     inset: 0,
-    backgroundColor: "rgba(0, 0, 0, 0.6)",
+    backgroundColor: "color-mix(in srgb, var(--colors-surface-contrast) 60%, transparent)",
     backdropFilter: "blur(4px)",
     zIndex: 50,
   });
@@ -303,7 +303,8 @@ const ConnectBankWizard: FC<ConnectBankWizardProps> = ({ onSuccess }) => {
     border: "1px solid",
     borderColor: "border",
     borderRadius: { base: "xl", md: "lg" },
-    boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.2)",
+    boxShadow:
+      "0 20px 25px -5px color-mix(in srgb, var(--colors-surface-contrast) 30%, transparent), 0 10px 10px -5px color-mix(in srgb, var(--colors-surface-contrast) 20%, transparent)",
     padding: { base: "18px 14px", md: "24px" },
     width: { base: "calc(100vw - 20px)", sm: "90vw" },
     maxWidth: { base: "calc(100vw - 20px)", md: "520px" },
@@ -363,7 +364,7 @@ const ConnectBankWizard: FC<ConnectBankWizardProps> = ({ onSuccess }) => {
     transition: "all 0.2s",
     _hover: {
       borderColor: "primary",
-      backgroundColor: "rgba(99, 99, 241, 0.04)",
+      backgroundColor: "color-mix(in srgb, var(--colors-primary) 4%, transparent)",
       transform: "translateY(-1px)",
     },
   });
@@ -399,7 +400,7 @@ const ConnectBankWizard: FC<ConnectBankWizardProps> = ({ onSuccess }) => {
   });
 
   const successCheckStyle = css({
-    color: "success.500",
+    color: "status.positive.text",
     fontSize: "48px",
     animation: "pulse 2s infinite",
   });
@@ -488,7 +489,8 @@ const ConnectBankWizard: FC<ConnectBankWizardProps> = ({ onSuccess }) => {
                                 fontSize: "9px",
                                 padding: "1px 5px",
                                 borderRadius: "4px",
-                                backgroundColor: "rgba(16, 185, 129, 0.15)",
+                                backgroundColor:
+                                  "color-mix(in srgb, var(--colors-chart-wealth) 15%, transparent)",
                                 color: "var(--colors-status-positive-text)",
                                 fontWeight: 700,
                                 textTransform: "uppercase",
@@ -503,7 +505,8 @@ const ConnectBankWizard: FC<ConnectBankWizardProps> = ({ onSuccess }) => {
                                 fontSize: "9px",
                                 padding: "1px 5px",
                                 borderRadius: "4px",
-                                backgroundColor: "rgba(156, 163, 175, 0.15)",
+                                backgroundColor:
+                                  "color-mix(in srgb, var(--colors-chart-baseline) 15%, transparent)",
                                 color: "var(--colors-text-muted)",
                                 fontWeight: 600,
                                 flexShrink: 0,
@@ -526,7 +529,13 @@ const ConnectBankWizard: FC<ConnectBankWizardProps> = ({ onSuccess }) => {
                         </CardText>
                       </span>
                     </span>
-                    <FaChevronRight style={{ color: "#a1a1aa", fontSize: "14px", flexShrink: 0 }} />
+                    <FaChevronRight
+                      style={{
+                        color: "var(--colors-chart-baseline)",
+                        fontSize: "14px",
+                        flexShrink: 0,
+                      }}
+                    />
                   </button>
                 ))}
                 {filteredBanks.length === 0 && (
@@ -727,7 +736,9 @@ const ConnectBankWizard: FC<ConnectBankWizardProps> = ({ onSuccess }) => {
 
                 <div className={bulletListStyle}>
                   <div className={bulletItemStyle}>
-                    <FaShieldAlt style={{ color: "#6363f1", marginTop: "3px", flexShrink: 0 }} />
+                    <FaShieldAlt
+                      style={{ color: "var(--colors-primary)", marginTop: "3px", flexShrink: 0 }}
+                    />
                     <div>
                       <FLPText fontWeight="semibold" fontSize="sm">
                         Account Overview
@@ -738,7 +749,9 @@ const ConnectBankWizard: FC<ConnectBankWizardProps> = ({ onSuccess }) => {
                     </div>
                   </div>
                   <div className={bulletItemStyle}>
-                    <FaUniversity style={{ color: "#6363f1", marginTop: "3px", flexShrink: 0 }} />
+                    <FaUniversity
+                      style={{ color: "var(--colors-primary)", marginTop: "3px", flexShrink: 0 }}
+                    />
                     <div>
                       <FLPText fontWeight="semibold" fontSize="sm">
                         Balances & Transactions
@@ -749,7 +762,9 @@ const ConnectBankWizard: FC<ConnectBankWizardProps> = ({ onSuccess }) => {
                     </div>
                   </div>
                   <div className={bulletItemStyle}>
-                    <FaLock style={{ color: "#6363f1", marginTop: "3px", flexShrink: 0 }} />
+                    <FaLock
+                      style={{ color: "var(--colors-primary)", marginTop: "3px", flexShrink: 0 }}
+                    />
                     <div>
                       <FLPText fontWeight="semibold" fontSize="sm">
                         Read-Only Access
@@ -849,7 +864,7 @@ const ConnectBankWizard: FC<ConnectBankWizardProps> = ({ onSuccess }) => {
                         borderColor: "border",
                       })}
                     >
-                      <FaUniversity style={{ color: "#6363f1" }} />
+                      <FaUniversity style={{ color: "var(--colors-primary)" }} />
                       <FLPText fontSize="sm" fontWeight="medium">
                         {accName}
                       </FLPText>
@@ -888,7 +903,8 @@ const ConnectBankWizard: FC<ConnectBankWizardProps> = ({ onSuccess }) => {
               <div className={scrollContainerStyle}>
                 <div
                   className={css({
-                    backgroundColor: "rgba(239, 68, 68, 0.05)",
+                    backgroundColor:
+                      "color-mix(in srgb, var(--colors-status-danger-text) 5%, transparent)",
                     border: "1px solid",
                     borderColor: "destructive",
                     borderRadius: "md",
@@ -950,7 +966,7 @@ const ConnectBankWizard: FC<ConnectBankWizardProps> = ({ onSuccess }) => {
               >
                 <div style={{ display: "flex", alignItems: "flex-start", gap: "10px" }}>
                   <FaShieldAlt
-                    color="#10b981"
+                    color="var(--colors-chart-wealth)"
                     size={18}
                     style={{ flexShrink: 0, marginTop: "2px" }}
                   />

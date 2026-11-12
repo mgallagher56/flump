@@ -568,14 +568,14 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
               gap: "8px",
               padding: "10px 14px",
               borderRadius: "8px",
-              backgroundColor: "rgba(16, 185, 129, 0.08)",
-              border: "1px solid rgba(16, 185, 129, 0.2)",
+              backgroundColor: "color-mix(in srgb, var(--colors-chart-wealth) 8%, transparent)",
+              border: "1px solid color-mix(in srgb, var(--colors-chart-wealth) 20%, transparent)",
               width: "100%",
               minWidth: 0,
               boxSizing: "border-box",
             }}
           >
-            <FaShieldAlt color="#10b981" size={14} style={{ flexShrink: 0 }} />
+            <FaShieldAlt color="var(--colors-chart-wealth)" size={14} style={{ flexShrink: 0 }} />
             <FLPText color="text.muted" fontSize="xs">
               Preview: paste your own read-only access token from your provider. Flump has no
               feature to make payments.
@@ -620,7 +620,7 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
                       ? "2px solid var(--colors-primary)"
                       : "1px solid var(--colors-border-subtle)",
                     backgroundColor: isSelected
-                      ? "rgba(99, 99, 241, 0.08)"
+                      ? "color-mix(in srgb, var(--colors-primary) 8%, transparent)"
                       : "var(--colors-surface)",
                     cursor: "pointer",
                     textAlign: "left",
@@ -658,7 +658,8 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
                             fontSize: "9px",
                             padding: "1px 4px",
                             borderRadius: "4px",
-                            backgroundColor: "rgba(16, 185, 129, 0.15)",
+                            backgroundColor:
+                              "color-mix(in srgb, var(--colors-chart-wealth) 15%, transparent)",
                             color: "var(--colors-status-positive-text)",
                             fontWeight: 700,
                             flexShrink: 0,
@@ -893,15 +894,17 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
                 gap: "8px",
                 padding: "10px 12px",
                 borderRadius: "8px",
-                backgroundColor: "rgba(239, 68, 68, 0.08)",
-                border: "1px solid rgba(239, 68, 68, 0.3)",
+                backgroundColor:
+                  "color-mix(in srgb, var(--colors-status-danger-text) 8%, transparent)",
+                border:
+                  "1px solid color-mix(in srgb, var(--colors-status-danger-text) 30%, transparent)",
                 width: "100%",
                 minWidth: 0,
                 boxSizing: "border-box",
               }}
             >
               <FaExclamationTriangle
-                color="#ef4444"
+                color="var(--colors-status-danger-text)"
                 size={14}
                 style={{ marginTop: "2px", flexShrink: 0 }}
               />

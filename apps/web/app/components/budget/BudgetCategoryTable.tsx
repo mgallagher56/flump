@@ -118,7 +118,8 @@ const BudgetCategoryTable: FC<BudgetCategoryTableProps> = ({
             fontSize: "10px",
             padding: "1px 6px",
             borderRadius: "4px",
-            backgroundColor: "rgba(239, 68, 68, 0.15)",
+            backgroundColor:
+              "color-mix(in srgb, var(--colors-status-danger-text) 15%, transparent)",
             color: "var(--colors-status-danger-text)",
             fontWeight: 700,
           }}
@@ -134,7 +135,7 @@ const BudgetCategoryTable: FC<BudgetCategoryTableProps> = ({
             fontSize: "10px",
             padding: "1px 6px",
             borderRadius: "4px",
-            backgroundColor: "rgba(245, 158, 11, 0.15)",
+            backgroundColor: "color-mix(in srgb, var(--colors-chart-warning) 15%, transparent)",
             color: "var(--colors-status-warning-text)",
             fontWeight: 700,
           }}
@@ -149,8 +150,8 @@ const BudgetCategoryTable: FC<BudgetCategoryTableProps> = ({
           fontSize: "10px",
           padding: "1px 6px",
           borderRadius: "4px",
-          backgroundColor: "rgba(107, 114, 128, 0.1)",
-          color: "#6b7280",
+          backgroundColor: "color-mix(in srgb, var(--colors-chart-baseline) 10%, transparent)",
+          color: "var(--colors-chart-baseline)",
           fontWeight: 500,
         }}
       >
@@ -354,7 +355,9 @@ const BudgetCategoryTable: FC<BudgetCategoryTableProps> = ({
                 borderBottom: "1px solid",
                 borderColor: "border",
                 transition: "background-color 0.15s",
-                _hover: { backgroundColor: "rgba(99, 99, 241, 0.03)" },
+                _hover: {
+                  backgroundColor: "color-mix(in srgb, var(--colors-primary) 3%, transparent)",
+                },
               })}
             >
               {isEditing ? (
@@ -519,7 +522,8 @@ const BudgetCategoryTable: FC<BudgetCategoryTableProps> = ({
                             fontSize: "10px",
                             padding: "1px 6px",
                             borderRadius: "4px",
-                            backgroundColor: "rgba(16, 185, 129, 0.1)",
+                            backgroundColor:
+                              "color-mix(in srgb, var(--colors-chart-wealth) 10%, transparent)",
                             color: "var(--colors-status-positive-text)",
                             fontWeight: 600,
                           }}
@@ -532,8 +536,9 @@ const BudgetCategoryTable: FC<BudgetCategoryTableProps> = ({
                             fontSize: "10px",
                             padding: "1px 6px",
                             borderRadius: "4px",
-                            backgroundColor: "rgba(156, 163, 175, 0.15)",
-                            color: "#9ca3af",
+                            backgroundColor:
+                              "color-mix(in srgb, var(--colors-chart-baseline) 15%, transparent)",
+                            color: "var(--colors-chart-baseline)",
                             fontWeight: 600,
                           }}
                         >
@@ -546,8 +551,9 @@ const BudgetCategoryTable: FC<BudgetCategoryTableProps> = ({
                             fontSize: "10px",
                             padding: "1px 6px",
                             borderRadius: "4px",
-                            backgroundColor: "rgba(59, 130, 246, 0.1)",
-                            color: "#3b82f6",
+                            backgroundColor:
+                              "color-mix(in srgb, var(--colors-chart-series2) 10%, transparent)",
+                            color: "var(--colors-chart-series2)",
                             fontWeight: 600,
                           }}
                         >
@@ -621,7 +627,8 @@ const BudgetCategoryTable: FC<BudgetCategoryTableProps> = ({
                             fontSize: "10px",
                             padding: "1px 6px",
                             borderRadius: "4px",
-                            backgroundColor: "rgba(16, 185, 129, 0.1)",
+                            backgroundColor:
+                              "color-mix(in srgb, var(--colors-chart-wealth) 10%, transparent)",
                             color: "var(--colors-status-positive-text)",
                             fontWeight: 600,
                           }}
@@ -634,8 +641,9 @@ const BudgetCategoryTable: FC<BudgetCategoryTableProps> = ({
                             fontSize: "10px",
                             padding: "1px 6px",
                             borderRadius: "4px",
-                            backgroundColor: "rgba(156, 163, 175, 0.15)",
-                            color: "#9ca3af",
+                            backgroundColor:
+                              "color-mix(in srgb, var(--colors-chart-baseline) 15%, transparent)",
+                            color: "var(--colors-chart-baseline)",
                             fontWeight: 600,
                           }}
                         >
@@ -648,8 +656,9 @@ const BudgetCategoryTable: FC<BudgetCategoryTableProps> = ({
                             fontSize: "10px",
                             padding: "1px 6px",
                             borderRadius: "4px",
-                            backgroundColor: "rgba(59, 130, 246, 0.1)",
-                            color: "#3b82f6",
+                            backgroundColor:
+                              "color-mix(in srgb, var(--colors-chart-series2) 10%, transparent)",
+                            color: "var(--colors-chart-series2)",
                             fontWeight: 600,
                           }}
                         >
@@ -729,7 +738,7 @@ const BudgetCategoryTable: FC<BudgetCategoryTableProps> = ({
               alignItems: isMobileVariant ? "stretch" : "center",
               gap: "12px",
               padding: isMobileVariant ? "14px" : "12px 20px",
-              backgroundColor: "rgba(99, 99, 241, 0.04)",
+              backgroundColor: "color-mix(in srgb, var(--colors-primary) 4%, transparent)",
               borderTop: "1px solid",
               borderColor: "border",
             })}

@@ -116,7 +116,12 @@ export const SavingsSummaryCards: FC<SavingsSummaryCardsProps> = ({
           <FLPText color="text.muted" fontSize="sm" fontWeight="medium">
             Total Savings Balance
           </FLPText>
-          <div className={iconContainerStyle("#10b981", "rgba(16, 185, 129, 0.12)")}>
+          <div
+            className={iconContainerStyle(
+              "var(--colors-chart-wealth)",
+              "color-mix(in srgb, var(--colors-chart-wealth) 12%, transparent)",
+            )}
+          >
             <FaPiggyBank />
           </div>
         </div>
@@ -141,7 +146,12 @@ export const SavingsSummaryCards: FC<SavingsSummaryCardsProps> = ({
           <FLPText color="text.muted" fontSize="sm" fontWeight="medium">
             Monthly Savings
           </FLPText>
-          <div className={iconContainerStyle("#6363f1", "rgba(99, 99, 241, 0.12)")}>
+          <div
+            className={iconContainerStyle(
+              "var(--colors-primary)",
+              "color-mix(in srgb, var(--colors-primary) 12%, transparent)",
+            )}
+          >
             <FaCoins />
           </div>
         </div>
@@ -180,7 +190,12 @@ export const SavingsSummaryCards: FC<SavingsSummaryCardsProps> = ({
           <FLPText color="text.muted" fontSize="sm" fontWeight="medium">
             Portfolio weighted AER
           </FLPText>
-          <div className={iconContainerStyle("#f59e0b", "rgba(245, 158, 11, 0.12)")}>
+          <div
+            className={iconContainerStyle(
+              "var(--colors-chart-warning)",
+              "color-mix(in srgb, var(--colors-chart-warning) 12%, transparent)",
+            )}
+          >
             <FaPercent />
           </div>
         </div>
@@ -205,7 +220,12 @@ export const SavingsSummaryCards: FC<SavingsSummaryCardsProps> = ({
           <FLPText color="text.muted" fontSize="sm" fontWeight="medium">
             10-Year Growth
           </FLPText>
-          <div className={iconContainerStyle("#8b5cf6", "rgba(139, 92, 246, 0.12)")}>
+          <div
+            className={iconContainerStyle(
+              "var(--colors-chart-accent-purple)",
+              "color-mix(in srgb, var(--colors-chart-accent-purple) 12%, transparent)",
+            )}
+          >
             <FaRocket />
           </div>
         </div>

@@ -99,14 +99,14 @@ export const MonthlyBalanceCheckInDrawer: FC<MonthlyBalanceCheckInDrawerProps> =
             borderRadius: "md",
             fontSize: "sm",
             fontWeight: "semibold",
-            backgroundColor: "rgba(99, 99, 241, 0.1)",
+            backgroundColor: "color-mix(in srgb, var(--colors-primary) 10%, transparent)",
             color: "primary",
             border: "1px solid",
-            borderColor: "rgba(99, 99, 241, 0.25)",
+            borderColor: "color-mix(in srgb, var(--colors-primary) 25%, transparent)",
             cursor: "pointer",
             transition: "all 0.15s ease",
             _hover: {
-              backgroundColor: "rgba(99, 99, 241, 0.18)",
+              backgroundColor: "color-mix(in srgb, var(--colors-primary) 18%, transparent)",
               borderColor: "primary",
             },
           })}
@@ -121,7 +121,7 @@ export const MonthlyBalanceCheckInDrawer: FC<MonthlyBalanceCheckInDrawerProps> =
           className={css({
             position: "fixed",
             inset: 0,
-            backgroundColor: "rgba(0, 0, 0, 0.6)",
+            backgroundColor: "color-mix(in srgb, var(--colors-surface-contrast) 60%, transparent)",
             backdropFilter: "blur(4px)",
             zIndex: 9999,
           })}
@@ -202,7 +202,7 @@ export const MonthlyBalanceCheckInDrawer: FC<MonthlyBalanceCheckInDrawerProps> =
                 gap: "12px",
               })}
             >
-              <FaCheckCircle className={css({ fontSize: "40px", color: "green.500" })} />
+              <FaCheckCircle className={css({ fontSize: "40px", color: "status.positive.text" })} />
               <FLPHeading as="h3" size="md">
                 Balances Updated Successfully!
               </FLPHeading>

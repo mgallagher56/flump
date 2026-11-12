@@ -27,7 +27,7 @@ const SUGGESTIONS = [
 const overlayStyle = css({
   position: "fixed",
   inset: 0,
-  backgroundColor: "rgba(0, 0, 0, 0.5)",
+  backgroundColor: "color-mix(in srgb, var(--colors-surface-contrast) 50%, transparent)",
   backdropFilter: "blur(2px)",
   zIndex: 100,
 });
@@ -47,7 +47,8 @@ const contentStyle = css({
   borderColor: "border",
   padding: { base: "20px 16px", md: "24px" },
   zIndex: 101,
-  boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.2), 0 10px 10px -5px rgba(0, 0, 0, 0.1)",
+  boxShadow:
+    "0 20px 25px -5px color-mix(in srgb, var(--colors-surface-contrast) 20%, transparent), 0 10px 10px -5px color-mix(in srgb, var(--colors-surface-contrast) 10%, transparent)",
 });
 
 const inputStyle = css({
@@ -136,7 +137,7 @@ export const AddCategoryModal: FC<AddCategoryModalProps> = ({
                 background: "none",
                 border: "none",
                 cursor: "pointer",
-                color: "#a1a1aa",
+                color: "var(--colors-chart-baseline)",
                 fontSize: "16px",
               }}
             >
@@ -189,12 +190,16 @@ export const AddCategoryModal: FC<AddCategoryModalProps> = ({
                         fontSize: "12px",
                         borderRadius: "14px",
                         border: "1px solid",
-                        borderColor: isExisting ? "#3f3f46" : "#6363f1",
+                        borderColor: isExisting
+                          ? "var(--colors-border-strong)"
+                          : "var(--colors-primary)",
                         backgroundColor:
                           categoryName.toLowerCase() === sug.toLowerCase()
-                            ? "rgba(99, 99, 241, 0.2)"
+                            ? "color-mix(in srgb, var(--colors-primary) 20%, transparent)"
                             : "transparent",
-                        color: isExisting ? "#71717a" : "var(--colors-text-primary)",
+                        color: isExisting
+                          ? "var(--colors-text-muted)"
+                          : "var(--colors-text-primary)",
                         cursor: isExisting ? "not-allowed" : "pointer",
                         opacity: isExisting ? 0.5 : 1,
                       }}

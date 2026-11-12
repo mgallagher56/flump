@@ -106,7 +106,7 @@ export const FLPCheckbox = forwardRef<HTMLInputElement, FLPCheckboxProps>(
       backgroundColor: isChecked ? "primary.solid" : "surface",
       color: "primary.foreground",
       transition: "all 0.15s ease-in-out",
-      boxShadow: "0 1px 2px rgba(0, 0, 0, 0.05)",
+      boxShadow: "0 1px 2px color-mix(in srgb, var(--colors-surface-contrast) 5%, transparent)",
       marginTop: size === "sm" ? "1px" : "2px",
       _hover: {
         borderColor: !disabled && !isChecked ? "primary" : undefined,

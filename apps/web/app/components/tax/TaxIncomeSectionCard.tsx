@@ -129,28 +129,28 @@ export const TaxIncomeSectionCard: FC<TaxIncomeSectionCardProps> = ({
 
   const colorTokens = {
     blue: {
-      border: "rgba(59, 130, 246, 0.3)",
-      badgeBg: "rgba(59, 130, 246, 0.12)",
-      badgeText: "#2563EB",
-      iconBg: "rgba(59, 130, 246, 0.15)",
+      border: "color-mix(in srgb, var(--colors-chart-series2) 30%, transparent)",
+      badgeBg: "color-mix(in srgb, var(--colors-chart-series2) 12%, transparent)",
+      badgeText: "var(--colors-status-info-text)",
+      iconBg: "color-mix(in srgb, var(--colors-chart-series2) 15%, transparent)",
     },
     emerald: {
-      border: "rgba(16, 185, 129, 0.3)",
-      badgeBg: "rgba(16, 185, 129, 0.12)",
-      badgeText: "#059669",
-      iconBg: "rgba(16, 185, 129, 0.15)",
+      border: "color-mix(in srgb, var(--colors-chart-wealth) 30%, transparent)",
+      badgeBg: "color-mix(in srgb, var(--colors-chart-wealth) 12%, transparent)",
+      badgeText: "var(--colors-chart-wealth)",
+      iconBg: "color-mix(in srgb, var(--colors-chart-wealth) 15%, transparent)",
     },
     amber: {
-      border: "rgba(245, 158, 11, 0.3)",
-      badgeBg: "rgba(245, 158, 11, 0.12)",
-      badgeText: "#D97706",
-      iconBg: "rgba(245, 158, 11, 0.15)",
+      border: "color-mix(in srgb, var(--colors-chart-warning) 30%, transparent)",
+      badgeBg: "color-mix(in srgb, var(--colors-chart-warning) 12%, transparent)",
+      badgeText: "var(--colors-chart-warning)",
+      iconBg: "color-mix(in srgb, var(--colors-chart-warning) 15%, transparent)",
     },
     purple: {
-      border: "rgba(139, 92, 246, 0.3)",
-      badgeBg: "rgba(139, 92, 246, 0.12)",
-      badgeText: "#7C3AED",
-      iconBg: "rgba(139, 92, 246, 0.15)",
+      border: "color-mix(in srgb, var(--colors-chart-accent-purple) 30%, transparent)",
+      badgeBg: "color-mix(in srgb, var(--colors-chart-accent-purple) 12%, transparent)",
+      badgeText: "var(--colors-chart-accent-purple)",
+      iconBg: "color-mix(in srgb, var(--colors-chart-accent-purple) 15%, transparent)",
     },
   }[colorScheme];
 
@@ -188,7 +188,9 @@ export const TaxIncomeSectionCard: FC<TaxIncomeSectionCardProps> = ({
           listStyle: "none",
           gap: { base: "12px", md: "16px" },
           "&::-webkit-details-marker": { display: "none" },
-          "&:hover": { backgroundColor: "rgba(0,0,0,0.015)" },
+          "&:hover": {
+            backgroundColor: "color-mix(in srgb, var(--colors-surface-contrast) 1.5%, transparent)",
+          },
         })}
       >
         {/* Left: Icon, Title, Subtitle */}
@@ -383,7 +385,7 @@ export const TaxIncomeSectionCard: FC<TaxIncomeSectionCardProps> = ({
               },
               gap: "8px",
               padding: { base: "10px", md: "12px" },
-              backgroundColor: "rgba(0,0,0,0.02)",
+              backgroundColor: "color-mix(in srgb, var(--colors-surface-contrast) 2%, transparent)",
               border: "1px solid",
               borderColor: "border",
               borderRadius: "md",
@@ -493,7 +495,7 @@ export const TaxIncomeSectionCard: FC<TaxIncomeSectionCardProps> = ({
             style={{
               padding: "24px",
               textAlign: "center",
-              backgroundColor: "rgba(0,0,0,0.01)",
+              backgroundColor: "color-mix(in srgb, var(--colors-surface-contrast) 1%, transparent)",
               borderRadius: "8px",
               border: "1px dashed var(--colors-border)",
             }}
@@ -542,7 +544,8 @@ export const TaxIncomeSectionCard: FC<TaxIncomeSectionCardProps> = ({
               <thead>
                 <tr
                   style={{
-                    backgroundColor: "rgba(0,0,0,0.02)",
+                    backgroundColor:
+                      "color-mix(in srgb, var(--colors-surface-contrast) 2%, transparent)",
                     borderBottom: "1px solid var(--colors-border)",
                   }}
                 >
@@ -580,7 +583,10 @@ export const TaxIncomeSectionCard: FC<TaxIncomeSectionCardProps> = ({
                         transition: "background-color 0.15s",
                       }}
                       className={css({
-                        "&:hover": { backgroundColor: "rgba(0,0,0,0.02)" },
+                        "&:hover": {
+                          backgroundColor:
+                            "color-mix(in srgb, var(--colors-surface-contrast) 2%, transparent)",
+                        },
                       })}
                     >
                       <td style={{ padding: "10px 14px", fontWeight: 600 }}>
@@ -675,7 +681,10 @@ export const TaxIncomeSectionCard: FC<TaxIncomeSectionCardProps> = ({
                                 style={{ color: "var(--colors-status-danger-text)" }}
                               />
                             ) : (
-                              <FaFileImage size={13} style={{ color: "#3B82F6" }} />
+                              <FaFileImage
+                                size={13}
+                                style={{ color: "var(--colors-chart-series2)" }}
+                              />
                             )}
                             View
                           </button>
@@ -701,7 +710,8 @@ export const TaxIncomeSectionCard: FC<TaxIncomeSectionCardProps> = ({
                               borderRadius: "sm",
                               "&:hover": {
                                 color: "text.primary",
-                                backgroundColor: "rgba(0,0,0,0.06)",
+                                backgroundColor:
+                                  "color-mix(in srgb, var(--colors-surface-contrast) 6%, transparent)",
                               },
                             })}
                           >
@@ -719,7 +729,10 @@ export const TaxIncomeSectionCard: FC<TaxIncomeSectionCardProps> = ({
                               color: "status.danger.text",
                               cursor: "pointer",
                               borderRadius: "sm",
-                              "&:hover": { backgroundColor: "rgba(239, 68, 68, 0.1)" },
+                              "&:hover": {
+                                backgroundColor:
+                                  "color-mix(in srgb, var(--colors-status-danger-text) 10%, transparent)",
+                              },
                             })}
                           >
                             <FaTrash size={12} />
