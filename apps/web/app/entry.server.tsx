@@ -11,8 +11,13 @@ import { ServerRouter } from "react-router";
 
 import i18n from "./i18n";
 import i18next from "./i18n.server";
+import { reportServerError } from "./observability/sentry.server";
 import { applyRobotsHeader } from "./utils/indexing.server";
-import { safeErrorSummary } from "./utils/safeErrorSummary";
+
+// Loader, action and middleware errors (render errors go through onError below).
+export function handleError(error: unknown, { request }: { request: Request }): void {
+  reportServerError(error, request);
+}
 
 // Reject/cancel all pending promises after 5 seconds
 export const streamTimeout = 5000;
@@ -72,8 +77,8 @@ export default async function handleRequest(
         onError: (error: unknown) => {
           didError = true;
 
-          // Never log the raw error: it can carry request data (E20-N3).
-          console.error(safeErrorSummary(error));
+          // Logs only a safe summary (E20-N3) and captures when Sentry is initialised (E18-N3).
+          reportServerError(error, request);
         },
       },
     );
