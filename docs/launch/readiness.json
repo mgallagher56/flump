@@ -5,8 +5,15 @@
       "text": "Staging environment exists and every release goes there first",
       "epic": "E18",
       "evidence": [
-        { "kind": "file", "path": "docs/runbooks/staging.md" },
-        { "kind": "owner", "label": "Staging environment live", "attestation": {} }
+        {
+          "kind": "file",
+          "path": "docs/runbooks/staging.md"
+        },
+        {
+          "kind": "owner",
+          "label": "Staging environment live",
+          "attestation": {}
+        }
       ]
     },
     {
@@ -14,9 +21,19 @@
       "text": "Automated backups on, and one restore drill documented",
       "epic": "E18",
       "evidence": [
-        { "kind": "file", "path": "docs/runbooks/backup-restore.md" },
-        { "kind": "file", "path": "docs/runbooks/drill-log.md" },
-        { "kind": "owner", "label": "Restore drill completed", "attestation": {} }
+        {
+          "kind": "file",
+          "path": "docs/runbooks/backup-restore.md"
+        },
+        {
+          "kind": "file",
+          "path": "docs/runbooks/drill-log.md"
+        },
+        {
+          "kind": "owner",
+          "label": "Restore drill completed",
+          "attestation": {}
+        }
       ]
     },
     {
@@ -24,16 +41,31 @@
       "text": "Healthchecks, error tracking, uptime alerts and a rollback runbook",
       "epic": "E18",
       "evidence": [
-        { "kind": "file", "path": "docs/runbooks/uptime-and-alerts.md" },
-        { "kind": "file", "path": "docs/runbooks/rollback.md" },
-        { "kind": "present", "pattern": "healthz", "paths": ["apps/marketing/server/ops.ts"] }
+        {
+          "kind": "file",
+          "path": "docs/runbooks/uptime-and-alerts.md"
+        },
+        {
+          "kind": "file",
+          "path": "docs/runbooks/rollback.md"
+        },
+        {
+          "kind": "present",
+          "pattern": "healthz",
+          "paths": ["apps/marketing/server/ops.ts"]
+        }
       ]
     },
     {
       "id": "e2e-new-user",
       "text": "New-user journey passes an automated end-to-end test (sign up, onboarding, add account, dashboard)",
       "epic": "E20",
-      "evidence": [{ "kind": "file", "path": "apps/web/e2e/new-user-journey.spec.ts" }]
+      "evidence": [
+        {
+          "kind": "file",
+          "path": "apps/web/e2e/new-user-journey.spec.ts"
+        }
+      ]
     },
     {
       "id": "tax-vectors-signed-off",
@@ -46,7 +78,11 @@
           "paths": ["apps", "packages"],
           "exclude": "\\.test\\.|\\.spec\\."
         },
-        { "kind": "owner", "label": "Tax vectors signed off", "attestation": {} }
+        {
+          "kind": "owner",
+          "label": "Tax vectors signed off",
+          "attestation": {}
+        }
       ]
     },
     {
@@ -54,8 +90,14 @@
       "text": "2027/28 handling defined; stale-rates banner in place",
       "epic": "E22",
       "evidence": [
-        { "kind": "command", "script": "check:tax-calendar" },
-        { "kind": "file", "path": "docs/runbooks/tax-year-update.md" }
+        {
+          "kind": "command",
+          "script": "check:tax-calendar"
+        },
+        {
+          "kind": "file",
+          "path": "docs/runbooks/tax-year-update.md"
+        }
       ]
     },
     {
@@ -70,8 +112,18 @@
         },
         {
           "kind": "present",
-          "pattern": "strict-transport-security",
-          "paths": ["apps/web/app", "apps/backend/src/config"]
+          "pattern": "strict-transport-security|hsts",
+          "paths": ["apps/marketing/server.ts"]
+        },
+        {
+          "kind": "present",
+          "pattern": "strict-transport-security|hsts",
+          "paths": ["apps/web/app/entry.server.tsx"]
+        },
+        {
+          "kind": "present",
+          "pattern": "strict-transport-security|hsts",
+          "paths": ["apps/backend/src"]
         }
       ]
     },
@@ -105,8 +157,16 @@
       "text": "Secrets from git history rotated (D-12); WorkOS issuer pinned; gitleaks in CI",
       "epic": "E1",
       "evidence": [
-        { "kind": "present", "pattern": "gitleaks", "paths": [".github/workflows"] },
-        { "kind": "owner", "label": "Historic secrets rotated", "attestation": {} }
+        {
+          "kind": "present",
+          "pattern": "gitleaks",
+          "paths": [".github/workflows"]
+        },
+        {
+          "kind": "owner",
+          "label": "Historic secrets rotated",
+          "attestation": {}
+        }
       ]
     },
     {
@@ -114,10 +174,26 @@
       "text": "Privacy policy, terms and cookie position published; ICO fee paid; DPIA done",
       "epic": "E19",
       "evidence": [
-        { "kind": "present", "pattern": "/privacy", "paths": ["apps/marketing/src/App.tsx"] },
-        { "kind": "present", "pattern": "/terms", "paths": ["apps/marketing/src/App.tsx"] },
-        { "kind": "owner", "label": "ICO fee paid", "attestation": {} },
-        { "kind": "owner", "label": "DPIA completed", "attestation": {} }
+        {
+          "kind": "present",
+          "pattern": "\"/privacy\"",
+          "paths": ["apps/marketing/src/utils/toolSlugs.ts"]
+        },
+        {
+          "kind": "present",
+          "pattern": "\"/terms\"",
+          "paths": ["apps/marketing/src/utils/toolSlugs.ts"]
+        },
+        {
+          "kind": "owner",
+          "label": "ICO fee paid",
+          "attestation": {}
+        },
+        {
+          "kind": "owner",
+          "label": "DPIA completed",
+          "attestation": {}
+        }
       ]
     },
     {
@@ -127,7 +203,7 @@
       "evidence": [
         {
           "kind": "present",
-          "pattern": "delete.*account|account.*delet",
+          "pattern": "deleteUser|workos[\\s\\S]{0,200}delete(User|Account)|delete(User|Account)[\\s\\S]{0,200}workos",
           "paths": ["apps/backend/src"],
           "exclude": "\\.spec\\."
         },
@@ -144,8 +220,15 @@
       "text": "Data region decided (EU or UK) or the transfer documented",
       "epic": "E19",
       "evidence": [
-        { "kind": "file", "path": "docs/runbooks/region-move.md" },
-        { "kind": "owner", "label": "Data region decision recorded", "attestation": {} }
+        {
+          "kind": "file",
+          "path": "docs/runbooks/region-move.md"
+        },
+        {
+          "kind": "owner",
+          "label": "Data region decision recorded",
+          "attestation": {}
+        }
       ]
     },
     {
@@ -153,7 +236,11 @@
       "text": "FCA perimeter view obtained; bank connect off or covered; \"guidance, not advice\" on all projections",
       "epic": "E29b",
       "evidence": [
-        { "kind": "owner", "label": "FCA perimeter view obtained (E29b)", "attestation": {} }
+        {
+          "kind": "owner",
+          "label": "FCA perimeter view obtained (E29b)",
+          "attestation": {}
+        }
       ]
     },
     {
@@ -163,16 +250,21 @@
       "evidence": [
         {
           "kind": "absent",
-          "pattern": "PLACEHOLDER|£X\\b|£Y\\b",
+          "pattern": "\"£X\"|\"£Y\"|\\[[^\\]]*PLACEHOLDER\\]",
           "paths": ["apps/marketing/src", "apps/web/app"],
-          "exclude": "\\.test\\.|\\.stories\\.|placeholders\\.ts$"
+          "exclude": "\\.test\\.|\\.stories\\.",
+          "flags": ""
         },
         {
           "kind": "owner",
           "label": "Security contact (SECURITY_CONTACT) set in production",
           "attestation": {}
         },
-        { "kind": "owner", "label": "Support mailbox monitored", "attestation": {} }
+        {
+          "kind": "owner",
+          "label": "Support mailbox monitored",
+          "attestation": {}
+        }
       ]
     },
     {
@@ -180,9 +272,20 @@
       "text": "Custom domain live; cookie domain logic corrected; noindex removed deliberately",
       "epic": "E24",
       "evidence": [
-        { "kind": "file", "path": "docs/runbooks/launch-domain-and-email.md" },
-        { "kind": "owner", "label": "Custom domain live", "attestation": {} },
-        { "kind": "owner", "label": "ALLOW_INDEXING enabled deliberately", "attestation": {} }
+        {
+          "kind": "file",
+          "path": "docs/runbooks/launch-domain-and-email.md"
+        },
+        {
+          "kind": "owner",
+          "label": "Custom domain live",
+          "attestation": {}
+        },
+        {
+          "kind": "owner",
+          "label": "ALLOW_INDEXING enabled deliberately",
+          "attestation": {}
+        }
       ]
     },
     {
@@ -190,8 +293,15 @@
       "text": "Pricing or free-beta position stated truthfully on the pricing page",
       "epic": "E24",
       "evidence": [
-        { "kind": "file", "path": "apps/marketing/src/pages/PricingPage.tsx" },
-        { "kind": "owner", "label": "Pricing position reviewed", "attestation": {} }
+        {
+          "kind": "file",
+          "path": "apps/marketing/src/pages/PricingPage.tsx"
+        },
+        {
+          "kind": "owner",
+          "label": "Pricing position reviewed",
+          "attestation": {}
+        }
       ]
     },
     {
@@ -207,7 +317,17 @@
         {
           "kind": "present",
           "pattern": "^USER ",
-          "paths": ["apps/web/Dockerfile", "apps/backend/Dockerfile"]
+          "paths": ["apps/web/Dockerfile"]
+        },
+        {
+          "kind": "present",
+          "pattern": "^USER ",
+          "paths": ["apps/backend/Dockerfile"]
+        },
+        {
+          "kind": "present",
+          "pattern": "^USER ",
+          "paths": ["apps/marketing/Dockerfile"]
         }
       ]
     },
@@ -216,23 +336,44 @@
       "text": "axe passes on kept screens in light and dark; accessibility statement published",
       "epic": "E15",
       "evidence": [
-        { "kind": "present", "pattern": "accessibility", "paths": ["apps/marketing/src/App.tsx"] },
-        { "kind": "owner", "label": "axe pass on kept screens", "attestation": {} }
+        {
+          "kind": "present",
+          "pattern": "\"/accessibility\"",
+          "paths": ["apps/marketing/src/utils/toolSlugs.ts"]
+        },
+        {
+          "kind": "owner",
+          "label": "axe pass on kept screens",
+          "attestation": {}
+        }
       ]
     },
     {
       "id": "e16-cuts",
       "text": "Features marked cut by E16 are removed or flagged off, not merely hidden",
       "epic": "E16",
-      "evidence": [{ "kind": "owner", "label": "E16 cuts verified", "attestation": {} }]
+      "evidence": [
+        {
+          "kind": "owner",
+          "label": "E16 cuts verified",
+          "attestation": {}
+        }
+      ]
     },
     {
       "id": "support-channel",
       "text": "Support channel live",
       "epic": "E24",
       "evidence": [
-        { "kind": "file", "path": "docs/runbooks/support-and-feedback.md" },
-        { "kind": "owner", "label": "Support channel live and answered", "attestation": {} }
+        {
+          "kind": "file",
+          "path": "docs/runbooks/support-and-feedback.md"
+        },
+        {
+          "kind": "owner",
+          "label": "Support channel live and answered",
+          "attestation": {}
+        }
       ]
     },
     {
@@ -265,15 +406,27 @@
       "id": "entitlements-design",
       "text": "Entitlements design present (deferred, docs only)",
       "epic": "E24",
-      "evidence": [{ "kind": "file", "path": "docs/launch/entitlements-design.md" }]
+      "evidence": [
+        {
+          "kind": "file",
+          "path": "docs/launch/entitlements-design.md"
+        }
+      ]
     },
     {
       "id": "signup-mode",
       "text": "Sign-up mode matches the WorkOS setting",
       "epic": "E24",
       "evidence": [
-        { "kind": "file", "path": "docs/runbooks/e19-closed-beta-signup.md" },
-        { "kind": "owner", "label": "WorkOS sign-up setting matches the app", "attestation": {} }
+        {
+          "kind": "file",
+          "path": "docs/runbooks/e19-closed-beta-signup.md"
+        },
+        {
+          "kind": "owner",
+          "label": "WorkOS sign-up setting matches the app",
+          "attestation": {}
+        }
       ]
     }
   ]

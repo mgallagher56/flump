@@ -1,10 +1,11 @@
 import { describe, expect, test } from "bun:test";
 import { spawnSync } from "node:child_process";
-import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import {
   type Context,
+  defaultContext,
   type Evidence,
   evaluateAll,
   evaluateEvidence,
@@ -53,6 +54,30 @@ describe("evidence kinds", () => {
     expect(status({ kind: "present", pattern: "PLACEHOLDER", paths: ["src"] })).toBe("pass");
     expect(status({ kind: "present", pattern: "zzz", paths: ["src"] })).toBe("fail");
     expect(status({ kind: "present", pattern: "hello", paths: ["doc.md"] })).toBe("pass");
+  });
+
+  test("flags: default is case-insensitive, empty flags is case-sensitive", () => {
+    writeFileSync(join(ctx.root, "src/form.tsx"), '<input placeholder="Search" />\n');
+    expect(status({ kind: "absent", pattern: "\\bPLACEHOLDER\\b", paths: ["src/form.tsx"] })).toBe(
+      "fail",
+    );
+    expect(
+      status({ kind: "absent", pattern: "\\bPLACEHOLDER\\b", paths: ["src/form.tsx"], flags: "" }),
+    ).toBe("pass");
+  });
+
+  test("html files are scanned", () => {
+    writeFileSync(
+      join(ctx.root, "index.html"),
+      "<script src='https://plausible.io/js'></script>\n",
+    );
+    expect(status({ kind: "absent", pattern: "plausible\\.io", paths: ["index.html"] })).toBe(
+      "fail",
+    );
+  });
+
+  test("multi-path present passes when any one file matches", () => {
+    expect(status({ kind: "present", pattern: "hello", paths: ["doc.md", "src"] })).toBe("pass");
   });
 
   test("command", () => {
@@ -151,6 +176,25 @@ describe("docs/launch/readiness.json", () => {
     const ids = readiness.items.map((i) => i.id);
     expect(new Set(ids).size).toBe(ids.length);
     for (const item of readiness.items) expect(item.evidence.length).toBeGreaterThan(0);
+  });
+
+  test("no-placeholders catches the real constants but not the HTML attribute", () => {
+    const result = evaluateItem(
+      readiness.items.find((i) => i.id === "no-placeholders")!,
+      defaultContext(repoRoot),
+    );
+    const absent = result.results[0];
+    expect(absent.status).toBe("fail");
+    expect(absent.detail).toContain("placeholders.ts");
+    expect(absent.detail).not.toContain("HomeFooter");
+  });
+
+  test("route and header evidence points at files that exist", () => {
+    for (const item of readiness.items)
+      for (const e of item.evidence)
+        if (e.kind === "present" && e.paths.length === 1) {
+          expect(existsSync(resolve(repoRoot, e.paths[0]))).toBe(true);
+        }
   });
 
   test("owner attestations are never pre-filled", () => {
