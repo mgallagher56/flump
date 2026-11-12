@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { compareToBaseline, countTokenViolations } from "./lib/design-tokens";
+import { countReactIconsImports } from "./lib/react-icons";
 import { shouldSkip } from "./lib/scan";
 import { needsTabular } from "./lib/tabular-nums";
 
@@ -114,5 +115,24 @@ describe("short hex inside CSS-like literals", () => {
   });
   test("a `to` object key can hold a real colour", () => {
     expect(countTokenViolations('const g = { from: "#ffffff", to: "#000000" };')).toBe(2);
+  });
+});
+
+describe("countReactIconsImports", () => {
+  test("counts named, aliased and multi-line imports per statement", () => {
+    const src = `import { FaBolt, FaSnowflake } from "react-icons/fa";\nimport {\n  FiHome,\n} from 'react-icons/fi';\nimport type { IconType } from "react-icons";`;
+    expect(countReactIconsImports(src)).toBe(3);
+  });
+  test("counts dynamic imports", () => {
+    expect(countReactIconsImports(`const m = await import("react-icons/fa");`)).toBe(1);
+  });
+  test("ignores lucide, comments and prose", () => {
+    const src = `import { Home } from "lucide-react";\n// import { FaBolt } from "react-icons/fa";\n/* from "react-icons/fi" */\nconst s = "use react-icons";`;
+    expect(countReactIconsImports(src)).toBe(0);
+  });
+  test("ratchets via compareToBaseline: cannot grow, must shrink", () => {
+    expect(compareToBaseline({ "a.tsx": 2 }, { "a.tsx": 1 }).failures).toHaveLength(1);
+    expect(compareToBaseline({ "new.tsx": 1 }, {}).failures).toHaveLength(1);
+    expect(compareToBaseline({ "a.tsx": 1 }, { "a.tsx": 2 }).stale).toHaveLength(1);
   });
 });

@@ -80,8 +80,23 @@ describe("Architecture & Design System Laws", () => {
       }
     });
 
+    it("keeps hooks/ as a component-free utility directories", () => {
+      // These hold plain TS (hooks, framework-free helpers), so the 5-file component law does not
+      // apply. They must not grow components: any non-test .tsx or .styles.ts belongs in a
+      // registered component directory instead.
+      for (const dir of ["hooks"]) {
+        const files = fs.readdirSync(path.join(UI_SRC, dir));
+        expect(files.length).toBeGreaterThan(0);
+        const offenders = files.filter(
+          (f) => (f.endsWith(".tsx") && !f.endsWith(".test.tsx")) || f.endsWith(".styles.ts"),
+        );
+        expect(offenders, `${dir}/ must not contain components`).toEqual([]);
+      }
+    });
+
     it("enforces colocated structure for all primitives", () => {
       const primitives = getSubdirectories(PRIMITIVES_DIR);
+      expect(primitives).toContain("Icon");
       expect(primitives.length).toBeGreaterThanOrEqual(9);
       for (const comp of primitives) {
         verifyColocatedStructure(PRIMITIVES_DIR, comp);
