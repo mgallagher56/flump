@@ -6,7 +6,6 @@
 
 import { CacheProvider } from "@emotion/react";
 import i18next from "i18next";
-import LanguageDetector from "i18next-browser-languagedetector";
 import Backend from "i18next-http-backend";
 import type { ReactElement, ReactNode } from "react";
 import { StrictMode, startTransition, useMemo, useState } from "react";
@@ -43,16 +42,11 @@ async function hydrate(): Promise<void> {
   if (!i18next.isInitialized)
     await i18next
       .use(initReactI18next)
-      .use(LanguageDetector)
       .use(Backend)
       .init({
         ...i18n,
         ns: getInitialNamespaces(),
         backend: { loadPath: "/locales/{{lng}}/{{ns}}.json" },
-        detection: {
-          order: ["htmlTag"],
-          caches: [],
-        },
       });
 
   startTransition(() => {

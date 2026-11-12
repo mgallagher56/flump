@@ -125,7 +125,6 @@
         "cross-env": "10.1.0",
         "d3-shape": "3.2.1",
         "i18next": "26.7.2",
-        "i18next-browser-languagedetector": "8.3.0",
         "i18next-fs-backend": "2.6.10",
         "i18next-http-backend": "4.0.10",
         "isbot": "5.2.2",
@@ -1714,8 +1713,6 @@
     "hyphenate-style-name": ["hyphenate-style-name@1.1.0", "", {}, "sha512-WDC/ui2VVRrz3jOVi+XtjqkDjiVjTtFaAGiW37k6b+ohyQ5wYDOGkvCZa8+H0nx3gyvv0+BST9xuOgIyGQ00gw=="],
 
     "i18next": ["i18next@26.7.2", "", { "peerDependencies": { "typescript": "^5 || ^6 || ^7" }, "optionalPeers": ["typescript"] }, "sha512-RsOY3BeaCDdkk52NeJSFAXELQ2rQXBO/tOub6L8ue2ICPfR/FRDWDOfEDg4xMPd1SqO5goVYQ6i72qWEUB/PPw=="],
-
-    "i18next-browser-languagedetector": ["i18next-browser-languagedetector@8.3.0", "", { "dependencies": { "@babel/runtime": "^7.29.2" } }, "sha512-t7FtF+VyQ+XSy+GI1O9TXWsMzP4U2u0m27yxJcCbG4LaAbTQa3CXFXgG3LvRivS+ZoYah8yPv5NhMl+Wg6I8Fg=="],
 
     "i18next-fs-backend": ["i18next-fs-backend@2.6.10", "", {}, "sha512-xxWaFUxLdNQxTTrsEfVHUD5h+i7fi7LWozPqqir6N+Oak/oB4HILt6pl5RLclv0QUsGI+ivQrVKBlrAFipFAEg=="],
 

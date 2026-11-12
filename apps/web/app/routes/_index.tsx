@@ -19,7 +19,7 @@ export const meta: MetaFunction = (): { title: string }[] => [
 ];
 
 export const handle = {
-  i18n: ["common", "home"],
+  i18n: ["common"],
 };
 
 type TakeHomeProfile = {
