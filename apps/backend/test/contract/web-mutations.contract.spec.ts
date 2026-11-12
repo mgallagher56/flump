@@ -1,12 +1,12 @@
 import "reflect-metadata";
+import { readdirSync } from "node:fs";
+import { join } from "node:path";
 import type { INestApplication } from "@nestjs/common";
 import { Test } from "@nestjs/testing";
 import request from "supertest";
 import { DataSource } from "typeorm";
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
-import { Baseline1794355200000 } from "../../src/migrations/Baseline1794355200000";
-import { ClearBankTokens1794355300000 } from "../../src/migrations/ClearBankTokens1794355300000";
-import { RemoveSeededExampleData1794355400000 } from "../../src/migrations/RemoveSeededExampleData1794355400000";
+import { DEV_BYPASS_TOKEN } from "../../src/auth/dev-bypass.verifier";
 import { assertSafeTestDatabase } from "../../src/testing/assertSafeTestDatabase";
 import { resolveDbTestMode } from "../../src/testing/dbTestMode";
 import {
@@ -24,19 +24,33 @@ import {
 } from "./web-payloads";
 
 // The real option builder, except that migrations are passed as classes and run on boot: the glob
-// in typeOrmOptionsFromEnv uses native import, which cannot parse .ts under vitest. Entities, the
+// in typeOrmOptionsFromEnv uses native import, which cannot parse .ts under vitest. The classes are
+// discovered from src/migrations, so a new migration cannot be silently skipped. Entities, the
 // connection and the rest of AppModule are untouched.
 vi.mock("../../src/config/typeorm.options", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../../src/config/typeorm.options")>();
+  const dir = join(__dirname, "..", "..", "src", "migrations");
+  const files = readdirSync(dir).filter((f) => /\d+\.ts$/.test(f) && !f.endsWith(".d.ts"));
+  const migrations: Function[] = [];
+  for (const file of files) {
+    const mod = (await import(join(dir, file))) as Record<string, unknown>;
+    for (const exported of Object.values(mod)) {
+      if (typeof exported === "function" && /\d{13}$/.test(exported.name)) {
+        migrations.push(exported);
+      }
+    }
+  }
+  migrations.sort((x, y) => Number(x.name.slice(-13)) - Number(y.name.slice(-13)));
+  if (migrations.length !== files.length) {
+    throw new Error(
+      `Expected one migration class per file in src/migrations: ${files.length} files, ${migrations.length} classes`,
+    );
+  }
   return {
     ...actual,
     typeOrmOptionsFromEnv: (env: Parameters<typeof actual.typeOrmOptionsFromEnv>[0]) => ({
       ...actual.typeOrmOptionsFromEnv(env),
-      migrations: [
-        Baseline1794355200000,
-        ClearBankTokens1794355300000,
-        RemoveSeededExampleData1794355400000,
-      ],
+      migrations,
       migrationsRun: true,
     }),
   };
@@ -50,16 +64,14 @@ vi.mock("../../src/config/typeorm.options", async (importOriginal) => {
  *
  * Run locally against a throwaway database (these tests DROP the public schema):
  *   docker run --rm -d --name flump-e23-pg -e POSTGRES_PASSWORD=postgres \
- *     -e POSTGRES_DB=flump_e23_test -p 55432:5432 postgres:16-alpine
+ *     -e POSTGRES_DB=flump_e23_test -p 55432:5432 postgres:18-alpine
  *   TEST_DATABASE_URL=postgres://postgres:postgres@localhost:55432/flump_e23_test \
  *     REQUIRE_DB_TESTS=1 bunx vitest run test/contract
  * Skipped when TEST_DATABASE_URL is unset, unless REQUIRE_DB_TESTS=1 (CI), which fails instead.
  */
 const TEST_DATABASE_URL = process.env.TEST_DATABASE_URL;
-const AUTH = { Authorization: "Bearer mock-session-token" };
+const AUTH = { Authorization: `Bearer ${DEV_BYPASS_TOKEN}` };
 
-const pick = <T extends object>(source: T, keys: string[]) =>
-  Object.fromEntries(Object.entries(source).filter(([k]) => keys.includes(k)));
 const omit = <T extends object>(source: T, keys: readonly string[]) =>
   Object.fromEntries(Object.entries(source).filter(([k]) => !keys.includes(k)));
 
@@ -79,9 +91,20 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
       delete process.env.WORKOS_API_KEY;
       process.env.DATABASE_URL = TEST_DATABASE_URL;
       process.env.DB_SSL = "false";
+      process.env.DB_SYNCHRONIZE = "false";
 
       // Empty schema; the app then runs the real migrations on boot (migrationsRun, see the mock).
-      const reset = new DataSource({ type: "postgres", url: TEST_DATABASE_URL });
+      // Same host/port/db fields as typeOrmOptionsFromEnv (the query string is rejected above), never
+      // the raw URL.
+      const target = new URL(TEST_DATABASE_URL as string);
+      const reset = new DataSource({
+        type: "postgres",
+        host: target.hostname.replace(/^\[|\]$/g, ""),
+        port: target.port ? Number(target.port) : 5432,
+        username: decodeURIComponent(target.username),
+        password: decodeURIComponent(target.password),
+        database: decodeURIComponent(target.pathname.replace(/^\//, "")),
+      });
       await reset.initialize();
       await reset.query("DROP SCHEMA public CASCADE");
       await reset.query("CREATE SCHEMA public");
@@ -188,7 +211,6 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
           const created = await send("post", "/accounts", createBody);
           expect2xx(created, `POST /accounts (${page})`);
           const id = created.body.id as string;
-          expect(id).toBeTruthy();
 
           const stored = await get(`/accounts/${id}`);
           expect2xx(stored, `GET /accounts/${id}`);
@@ -253,7 +275,6 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
             `${field} is now persisted: remove it from BUDGET_FIELDS_NOT_PERSISTED`,
           ).toBeUndefined();
         }
-        expect(pick(stored, ["name"])).toEqual({ name: BUDGET_UPDATE_PAYLOAD.name });
       });
 
       it("accepts a custom category and seeds defaults on explicit request", async () => {

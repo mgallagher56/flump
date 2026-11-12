@@ -2,9 +2,10 @@
  * The exact request bodies apps/web sends for onboarding, accounts and budget mutations
  * (E23 section 9.3). The backend contract test replays them against a real Postgres-backed app.
  *
- * Each payload has a twin assertion in the web tests that pins the same literal, so a change on
- * either side fails a test (a consumer-driven pair). Onboarding is pinned in
- * apps/web/app/routes/app.onboarding.test.tsx. Replace with shared zod schemas when E21 lands.
+ * Only the onboarding payloads are paired: apps/web/app/routes/app.onboarding.test.tsx imports them
+ * from this file and asserts the web still sends exactly those shapes, so a change on either side
+ * fails a test. The accounts and budget payloads are copied from the web source by hand and are not
+ * yet paired; they are to be replaced by shared zod schemas when E21 lands.
  *
  * Source of each shape:
  * - onboarding: apps/web/app/routes/app.onboarding.tsx + services/onboarding-seed.ts
