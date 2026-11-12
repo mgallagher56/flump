@@ -27,6 +27,10 @@ describe("v1AliasMiddleware", () => {
     expect(res.body.original).toBe("/v1/accounts/abc?x=1");
   });
 
+  it("matches the prefix case-insensitively, like Express routing", async () => {
+    expect((await request(makeApp()).get("/V1/accounts")).body.url).toBe("/accounts");
+  });
+
   it("leaves unversioned paths alone", async () => {
     expect((await request(makeApp()).get("/accounts")).body.url).toBe("/accounts");
   });
