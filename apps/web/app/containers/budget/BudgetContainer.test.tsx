@@ -209,7 +209,7 @@ describe("BudgetContainer", () => {
     const alert = await screen.findByRole("alert");
     expect(alert.textContent).toMatch(/couldn.t delete/i);
     expect(global.fetch).toHaveBeenCalledWith(
-      "https://api.example.test/budget-entries/b-1",
+      "/api/budget-entries/b-1",
       expect.objectContaining({ method: "DELETE" }),
     );
     expect(screen.getByText("Mortgage")).toBe(row);
