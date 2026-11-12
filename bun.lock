@@ -247,6 +247,16 @@
         "vitest": "5.1.0",
       },
     },
+    "packages/observability": {
+      "name": "@flump/observability",
+      "version": "1.0.0",
+      "devDependencies": {
+        "@repo/typescript-config": "workspace:*",
+        "@types/node": "26.6.6",
+        "typescript": "7.0.2",
+        "vitest": "5.1.0",
+      },
+    },
     "packages/typescript-config": {
       "name": "@repo/typescript-config",
       "version": "0.0.0",
@@ -603,6 +613,8 @@
     "@flump/format": ["@flump/format@workspace:packages/format"],
 
     "@flump/mcp": ["@flump/mcp@workspace:packages/mcp"],
+
+    "@flump/observability": ["@flump/observability@workspace:packages/observability"],
 
     "@flump/web": ["@flump/web@workspace:apps/web"],
 
