@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { ADVICE_PATTERNS } from "./compliance/advice-lexicon.js";
 import {
   calculateFinancialHealthScore,
   calculateSafeToSpend,
@@ -21,7 +22,91 @@ describe("health-score module", () => {
     expect(res.stage).toBe("STAGE_1_DEBT_RECOVERY");
     expect(res.components.length).toBe(3);
     expect(res.overallScore).toBeLessThan(75);
-    expect(res.topRecommendations.length).toBeGreaterThan(0);
+    expect(res.observations.length).toBeGreaterThan(0);
+    expect(res.topRecommendations).toEqual([]);
+  });
+
+  it("states the tapering band as an observation, not an action", () => {
+    const res = calculateFinancialHealthScore({
+      stage: "STAGE_3_WEALTH_OPTIMIZE",
+      adjustedNetIncomeGbp: 108000,
+      annualIsaContributionGbp: 5000,
+    });
+    expect(res.observations).toContain(
+      "Adjusted net income is £108,000, in the £100,000 to £125,140 band where the personal allowance tapers.",
+    );
+    expect(res.observations.join(" ")).toContain(
+      "£15,000 of this tax year's ISA allowance is unused",
+    );
+  });
+
+  it("never emits an observation or stage label matching ADVICE_PATTERNS", () => {
+    const stages = [
+      "STAGE_1_DEBT_RECOVERY",
+      "STAGE_2_BUFFER_BUILD",
+      "STAGE_3_WEALTH_OPTIMIZE",
+    ] as const;
+    const texts: string[] = [];
+    for (const stage of stages) {
+      for (const input of [
+        {
+          monthlyNetIncomeGbp: 1500,
+          monthlyEssentialBillsGbp: 1800,
+          highInterestDebtGbp: 8000,
+          emergencyFundGbp: 100,
+          cashSavingsYieldApr: 1,
+          annualIsaContributionGbp: 0,
+          adjustedNetIncomeGbp: 110000,
+        },
+        {
+          monthlyNetIncomeGbp: 4000,
+          monthlyEssentialBillsGbp: 2000,
+          emergencyFundGbp: 20000,
+          cashSavingsYieldApr: 5,
+          annualIsaContributionGbp: 20000,
+          adjustedNetIncomeGbp: 50000,
+        },
+      ]) {
+        texts.push(...calculateFinancialHealthScore({ stage, ...input }).observations);
+      }
+    }
+    for (const evaluation of [
+      evaluateFinancialStage({
+        debts: [
+          {
+            id: "1",
+            name: "Card",
+            balance: 2000,
+            apr: 24.9,
+            minimumPayment: 50,
+            type: "credit_card",
+          },
+        ],
+        monthlySurplus: 200,
+        liquidSavings: 500,
+        monthlyEssentialExpenses: 1500,
+      }),
+      evaluateFinancialStage({
+        debts: [],
+        monthlySurplus: 500,
+        liquidSavings: 2000,
+        monthlyEssentialExpenses: 1500,
+      }),
+      evaluateFinancialStage({
+        debts: [],
+        monthlySurplus: 1000,
+        liquidSavings: 6000,
+        monthlyEssentialExpenses: 1500,
+      }),
+    ]) {
+      texts.push(evaluation.headline, evaluation.subline);
+    }
+    expect(texts.length).toBeGreaterThan(6);
+    for (const text of texts) {
+      for (const { id, pattern } of ADVICE_PATTERNS) {
+        expect(pattern.test(text), `${id}: ${text}`).toBe(false);
+      }
+    }
   });
 
   it("weights emergency living runway for STAGE_2_BUFFER_BUILD", () => {
