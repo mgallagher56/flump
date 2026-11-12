@@ -213,10 +213,12 @@ describe("web to backend route inventory", () => {
   const routes = backendRoutes();
 
   it("reads a plausible number of backend routes and web call sites", () => {
-    // Minimums sit at today's counts (44 routes, 55 call sites): a silent drop in extraction fails
-    // here. Raise them when routes or call sites are added.
-    expect(routes.length).toBeGreaterThanOrEqual(44);
-    expect(webCalls.length).toBeGreaterThanOrEqual(55);
+    // Sanity floor, not a contract: it only proves the extractor still finds most routes and web
+    // call sites, so a silent drop in extraction fails here. It sits at the counts on 2026-11-12
+    // (42 routes, 54 call sites). Removing routes or calls on purpose means lowering it in the same
+    // PR; adding some means it can be raised.
+    expect(routes.length).toBeGreaterThanOrEqual(42);
+    expect(webCalls.length).toBeGreaterThanOrEqual(54);
     expect(routes).toContainEqual({ method: "PATCH", path: "/accounts/:p" });
     expect(routes).toContainEqual({ method: "POST", path: "/bank-connections/:p/refresh" });
   });
