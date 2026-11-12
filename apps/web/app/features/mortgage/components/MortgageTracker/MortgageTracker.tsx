@@ -200,21 +200,21 @@ export const MortgageTracker: FC<MortgageTrackerProps> = ({
         <KpiCard
           label={isInterestOnly ? "Monthly payment (interest)" : "Monthly payment"}
           subtext={monthlyPayment === null ? undefined : "a month"}
-          value={monthlyPayment === null ? null : <Money size="kpi" value={monthlyPayment} />}
+          value={monthlyPayment === null ? null : <Money size="lg" value={monthlyPayment} />}
         />
         <KpiCard
           label="Total interest cost"
-          value={totalInterest === null ? null : <Money size="kpi" value={totalInterest} />}
+          value={totalInterest === null ? null : <Money size="lg" value={totalInterest} />}
         />
         <KpiCard
           label="Total paid"
-          value={totalPaid === null ? null : <Money size="kpi" value={totalPaid} />}
+          value={totalPaid === null ? null : <Money size="lg" value={totalPaid} />}
         />
         {isInterestOnly && (
           <KpiCard
             label="Principal bullet due at term end"
             subtext="100% of principal remains outstanding at term completion."
-            value={loanAmount > 0 ? <Money size="kpi" value={loanAmount} /> : null}
+            value={loanAmount > 0 ? <Money size="lg" value={loanAmount} /> : null}
           />
         )}
       </KpiStrip>

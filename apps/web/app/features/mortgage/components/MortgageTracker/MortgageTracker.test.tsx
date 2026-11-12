@@ -76,7 +76,7 @@ describe("<MortgageTracker />", () => {
     );
 
     expect(getAllByText("Not set").length).toBeGreaterThanOrEqual(3);
-    expect(queryByText(/£0\b/)).toBeNull();
+    expect(queryByText(/£\s*0(?:[,.]0+)*(?!\d)/)).toBeNull();
     expect(container.textContent ?? "").not.toMatch(/NaN|Infinity/);
   });
 

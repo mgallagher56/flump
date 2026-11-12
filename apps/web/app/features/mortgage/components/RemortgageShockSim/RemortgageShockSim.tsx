@@ -36,6 +36,10 @@ export interface RemortgageShockSimProps {
   currentBalance: number;
   currentRate: number;
   propertyValue?: number;
+  /** ISO date the current fixed rate ends (profile renewal date), when known. */
+  fixEndDate?: string | null;
+  /** The user's remaining term in years, when known. Seeds the term assumption. */
+  remainingTermYears?: number;
 }
 
 const MONTHS = [
@@ -63,6 +67,8 @@ export const RemortgageShockSim: FC<RemortgageShockSimProps> = ({
   currentBalance,
   currentRate,
   propertyValue: rawPropertyValue,
+  fixEndDate,
+  remainingTermYears,
 }) => {
   const { formatCurrency } = useFormatCurrency();
 
@@ -74,18 +80,30 @@ export const RemortgageShockSim: FC<RemortgageShockSimProps> = ({
     balanceKnown && propertyValueKnown ? (currentBalance / propertyValue) * 100 : 0;
 
   const thisYear = new Date().getFullYear();
-  const [fixEndYear, setFixEndYear] = useState<number>(thisYear + 2);
-  const [fixEndMonth, setFixEndMonth] = useState<number>(10); // October
+  // The fix end date is only ever what the user (or their profile) supplied; nothing is assumed.
+  const initialEnd = /^(\d{4})-(\d{2})/.exec(fixEndDate ?? "");
+  const [fixEndYear, setFixEndYear] = useState<number | "">(
+    initialEnd ? Number(initialEnd[1]) : "",
+  );
+  const [fixEndMonth, setFixEndMonth] = useState<number | "">(
+    initialEnd ? Number(initialEnd[2]) : "",
+  );
   const [projectedNewRate, setProjectedNewRate] = useState<number>(5.2);
-  const [termYears, setTermYears] = useState<number>(25);
+  // The user's own term when known; otherwise an editable 25-year assumption.
+  const [termYears, setTermYears] = useState<number>(
+    remainingTermYears && remainingTermYears > 0 ? remainingTermYears : 25,
+  );
 
   const yearOptions = useMemo(() => {
     const years = Array.from({ length: 8 }, (_, i) => thisYear + i);
-    return years.includes(fixEndYear) ? years : [...years, fixEndYear].sort((a, b) => a - b);
+    return fixEndYear === "" || years.includes(fixEndYear)
+      ? years
+      : [...years, fixEndYear].sort((a, b) => a - b);
   }, [thisYear, fixEndYear]);
 
   // Months remaining on fix
-  const monthsRemaining = useMemo(() => {
+  const monthsRemaining = useMemo<number | null>(() => {
+    if (fixEndYear === "" || fixEndMonth === "") return null;
     const now = new Date();
     const currentY = now.getFullYear();
     const currentM = now.getMonth() + 1;
@@ -109,7 +127,8 @@ export const RemortgageShockSim: FC<RemortgageShockSimProps> = ({
   const nextTargetLtv = currentLtv > 75 ? 75 : currentLtv > 60 ? 60 : 50;
   const targetBalance = (propertyValue * nextTargetLtv) / 100;
   const requiredOverpaymentToReachTier = Math.max(0, currentBalance - targetBalance);
-  const monthlyOverpaymentNeeded = Math.round(requiredOverpaymentToReachTier / monthsRemaining);
+  const monthlyOverpaymentNeeded =
+    monthsRemaining === null ? null : Math.round(requiredOverpaymentToReachTier / monthsRemaining);
 
   const paymentsKnown = balanceKnown && rateKnown;
   const ltvKnown = balanceKnown && propertyValueKnown;
@@ -124,8 +143,9 @@ export const RemortgageShockSim: FC<RemortgageShockSimProps> = ({
             className={selectStyle}
             id="deal-end-month"
             value={fixEndMonth}
-            onChange={(e) => setFixEndMonth(Number(e.target.value))}
+            onChange={(e) => setFixEndMonth(e.target.value === "" ? "" : Number(e.target.value))}
           >
+            <option value="">Month</option>
             {MONTHS.map((m, i) => (
               <option key={m} value={i + 1}>
                 {m}
@@ -137,8 +157,9 @@ export const RemortgageShockSim: FC<RemortgageShockSimProps> = ({
             className={selectStyle}
             id="deal-end-year"
             value={fixEndYear}
-            onChange={(e) => setFixEndYear(Number(e.target.value))}
+            onChange={(e) => setFixEndYear(e.target.value === "" ? "" : Number(e.target.value))}
           >
+            <option value="">Year</option>
             {yearOptions.map((y) => (
               <option key={y} value={y}>
                 {y}
@@ -147,9 +168,11 @@ export const RemortgageShockSim: FC<RemortgageShockSimProps> = ({
           </select>
         </div>
         <p className={remainingText} id="remortgage-months-remaining">
-          {rateKnown
-            ? `${monthsRemaining} months remaining on current ${rateFormat.format(currentRate)}% fix`
-            : `${monthsRemaining} months remaining on your current fix`}
+          {monthsRemaining === null
+            ? "Fix end date not set. Choose a month and year to see the time left on your fix."
+            : rateKnown
+              ? `${monthsRemaining} months remaining on current ${rateFormat.format(currentRate)}% fix`
+              : `${monthsRemaining} months remaining on your current fix`}
         </p>
       </div>
 
@@ -183,12 +206,12 @@ export const RemortgageShockSim: FC<RemortgageShockSimProps> = ({
         <KpiCard
           label="Current payment (estimate)"
           subtext={<span className={kpiNote}>per month</span>}
-          value={paymentsKnown ? <Money size="kpi" value={currentMonthly} /> : null}
+          value={paymentsKnown ? <Money size="lg" value={currentMonthly} /> : null}
         />
         <KpiCard
           label="Payment at projected rate (estimate)"
           subtext={<span className={kpiNote}>per month</span>}
-          value={paymentsKnown ? <Money size="kpi" value={newMonthly} /> : null}
+          value={paymentsKnown ? <Money size="lg" value={newMonthly} /> : null}
         />
         <KpiCard
           label="Projected payment shock (estimate)"
@@ -197,7 +220,7 @@ export const RemortgageShockSim: FC<RemortgageShockSimProps> = ({
             paymentsKnown ? (
               <Money
                 signDisplay={monthlyShock > 0 ? "always" : "auto"}
-                size="kpi"
+                size="lg"
                 tone={monthlyShock > 0 ? "danger" : "default"}
                 value={monthlyShock}
               />
@@ -215,7 +238,9 @@ export const RemortgageShockSim: FC<RemortgageShockSimProps> = ({
             </h4>
             <p className={ltvBody}>
               {requiredOverpaymentToReachTier > 0
-                ? `Estimate: overpay ${formatCurrency(monthlyOverpaymentNeeded)}/mo before renewal to reach ${nextTargetLtv}% LTV. Lenders price some deals by LTV band, so this may open up lower rates. Check your lender's bands.`
+                ? monthlyOverpaymentNeeded === null
+                  ? `Estimate: you would need to overpay ${formatCurrency(requiredOverpaymentToReachTier)} in total to reach ${nextTargetLtv}% LTV. Set your fix end date to see a monthly figure. Check your lender's bands.`
+                  : `Estimate: overpay ${formatCurrency(monthlyOverpaymentNeeded)}/mo before renewal to reach ${nextTargetLtv}% LTV. Lenders price some deals by LTV band, so this may open up lower rates. Check your lender's bands.`
                 : `Already within the ${nextTargetLtv}% LTV bracket.`}
             </p>
           </div>

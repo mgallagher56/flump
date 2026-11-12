@@ -212,14 +212,14 @@ export const MortgageSummary: FC<MortgageSummaryProps> = ({
           <KpiCard
             emptyAction={addAction("remaining balance")}
             label="Remaining balance"
-            value={loanAmount > 0 ? <Money size="kpi" value={loanAmount} /> : null}
+            value={loanAmount > 0 ? <Money size="lg" value={loanAmount} /> : null}
           />
           <KpiCard
             emptyAction={addAction("interest rate")}
             label="Interest rate"
             value={
               interestRate > 0 ? (
-                <Num fractionDigits={2} kind="percent" size="kpi" value={interestRate} />
+                <Num fractionDigits={2} kind="percent" size="lg" value={interestRate} />
               ) : null
             }
           />
@@ -239,7 +239,7 @@ export const MortgageSummary: FC<MortgageSummaryProps> = ({
             subtext={typeLabel}
             value={
               monthlyPayment === null ? null : (
-                <Money fractionDigits={2} size="kpi" value={monthlyPayment} />
+                <Money fractionDigits={2} size="lg" value={monthlyPayment} />
               )
             }
           />

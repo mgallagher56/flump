@@ -85,7 +85,7 @@ export const OverpayVsSaveCompare: FC<OverpayVsSaveCompareProps> = ({
   const [horizonYears, setHorizonYears] = useState<number>(10); // Simulation horizon default 10 years
 
   const inputsKnown = loanAmount > 0 && interestRate > 0 && remainingTerm > 0;
-  const horizonMax = Math.max(1, Math.round(remainingTerm));
+  const horizonMax = Math.max(1, Math.floor(remainingTerm));
   const horizonValue = Math.min(horizonYears, horizonMax);
 
   // Tax bracket multiplier
@@ -106,7 +106,7 @@ export const OverpayVsSaveCompare: FC<OverpayVsSaveCompareProps> = ({
 
   // Comparison simulation
   const comparisonData = useMemo(() => {
-    const H = Math.min(horizonYears, remainingTerm);
+    const H = Math.min(horizonYears, horizonMax, remainingTerm);
     const totalMonths = H * 12;
 
     const im = interestRate / 100 / 12;
@@ -195,6 +195,7 @@ export const OverpayVsSaveCompare: FC<OverpayVsSaveCompareProps> = ({
     overpayment,
     netSavingsRate,
     horizonYears,
+    horizonMax,
     isInterestOnly,
   ]);
 
@@ -264,6 +265,7 @@ export const OverpayVsSaveCompare: FC<OverpayVsSaveCompareProps> = ({
       </div>
 
       <SliderField
+        helperText="Assumption: how many years to compare. It cannot exceed your remaining term."
         label="Horizon (years)"
         max={horizonMax}
         min={1}
@@ -457,7 +459,7 @@ export const OverpayVsSaveCompare: FC<OverpayVsSaveCompareProps> = ({
                       Includes {formatCurrency(mortgageInterestSaved)} interest saved (estimate).
                     </span>
                   }
-                  value={<Money size="kpi" value={debtReduction} />}
+                  value={<Money size="lg" value={debtReduction} />}
                 />
                 <KpiCard
                   label="Savings value"
@@ -467,7 +469,7 @@ export const OverpayVsSaveCompare: FC<OverpayVsSaveCompareProps> = ({
                       (estimate).
                     </span>
                   }
-                  value={<Money size="kpi" value={savingsBalance} />}
+                  value={<Money size="lg" value={savingsBalance} />}
                 />
               </KpiStrip>
             </>

@@ -69,6 +69,24 @@ describe("<MortgageContainer />", () => {
     expect(container.querySelector("#mock-simulator")).toBeNull();
   });
 
+  test("tabs expose tab semantics and respond to arrow keys", () => {
+    const { getByRole } = customRender(<MortgageContainer />);
+    expect(getByRole("tablist", { name: "Mortgage tools" })).toBeDefined();
+    const tracker = getByRole("tab", { name: /Mortgage tracker/ });
+    expect(tracker.getAttribute("aria-selected")).toBe("true");
+    const panel = getByRole("tabpanel");
+    expect(panel.getAttribute("aria-labelledby")).toBe(tracker.id);
+    expect(tracker.getAttribute("aria-controls")).toBe(panel.id);
+    fireEvent.keyDown(tracker, { key: "ArrowRight" });
+    const milestones = getByRole("tab", { name: /LTV milestones/ });
+    expect(milestones.getAttribute("aria-selected")).toBe("true");
+    expect(tracker.getAttribute("tabindex")).toBe("-1");
+    fireEvent.keyDown(milestones, { key: "End" });
+    expect(getByRole("tab", { name: /Overpay vs save/ }).getAttribute("aria-selected")).toBe(
+      "true",
+    );
+  });
+
   test("allows switching to Buy to let category and displays BTL overview", () => {
     const { getByText, queryByText } = customRender(<MortgageContainer />);
 
@@ -151,9 +169,26 @@ describe("<MortgageContainer />", () => {
   });
 
   test("the term field is labelled as not saved", () => {
-    const { getByText, getByRole } = customRender(<MortgageContainer />);
+    const { getByText, getByRole, getByLabelText } = customRender(<MortgageContainer />);
     fireEvent.click(getByRole("button", { name: /^Edit$/i }));
-    expect(getByText(/Not saved – enter each visit/)).toBeDefined();
+    const hint = getByText(/Not saved – enter each visit/);
+    expect(hint).toBeDefined();
+    // The hint is tied to the term field, not just nearby text.
+    const term = getByLabelText(/^Remaining term/);
+    expect(term.getAttribute("aria-describedby")).toContain(hint.id);
+  });
+
+  test("the remortgage simulator uses the user's real property value and fix date", () => {
+    loaderData = {
+      ...defaultLoaderData(),
+      userProfile: { homeValue: 350000, mortgageRenewalDate: "2099-10-01" },
+    };
+    const { getByText, queryByText } = customRender(<MortgageContainer />);
+    fireEvent.click(getByText("Overpayment simulator"));
+    fireEvent.click(getByText("Remortgage rate shock simulator"));
+    expect(queryByText("LTV not set")).toBeNull();
+    expect(getByText(/current LTV:/i)).toBeDefined();
+    expect(queryByText(/fix end date not set/i)).toBeNull();
   });
 
   test("shows an error and no success message when the account PATCH fails", async () => {

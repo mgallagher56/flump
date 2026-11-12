@@ -12,7 +12,8 @@ import {
 } from "./BtlOverview.styles";
 
 export interface BtlOverviewProps {
-  propertyCount: number;
+  /** `null` when the user has not said how many properties they let. */
+  propertyCount: number | null;
   /** Zero or less means no rent has been entered. */
   monthlyRent: number;
   grossYield: number | null;
@@ -48,7 +49,9 @@ export const BtlOverview: FC<BtlOverviewProps> = ({
               Buy to let portfolio overview
             </h3>
             <p className={btlSubtitle()}>
-              Managing {propertyCount} {propertyCount === 1 ? "property" : "properties"}
+              {propertyCount === null
+                ? "Number of properties not set"
+                : `Managing ${propertyCount} ${propertyCount === 1 ? "property" : "properties"}`}
             </p>
           </div>
         </div>
@@ -62,13 +65,13 @@ export const BtlOverview: FC<BtlOverviewProps> = ({
         <KpiCard
           emptyAction={configure}
           label="Gross monthly rent"
-          value={hasRent ? <Money size="kpi" value={monthlyRent} /> : null}
+          value={hasRent ? <Money size="lg" value={monthlyRent} /> : null}
         />
         <KpiCard
           label="Gross rental yield"
           value={
             grossYield === null ? null : (
-              <Num fractionDigits={2} kind="percent" size="kpi" value={grossYield} />
+              <Num fractionDigits={2} kind="percent" size="lg" value={grossYield} />
             )
           }
         />
@@ -77,7 +80,7 @@ export const BtlOverview: FC<BtlOverviewProps> = ({
           subtext={mortgageType === "interest-only" ? "Interest-only" : "Repayment"}
           value={
             monthlyPayment === null ? null : (
-              <Money fractionDigits={2} size="kpi" value={monthlyPayment} />
+              <Money fractionDigits={2} size="lg" value={monthlyPayment} />
             )
           }
         />
@@ -88,7 +91,7 @@ export const BtlOverview: FC<BtlOverviewProps> = ({
               <Money
                 fractionDigits={2}
                 signDisplay="always"
-                size="kpi"
+                size="lg"
                 tone={netCashflow >= 0 ? "positive" : "danger"}
                 value={netCashflow}
               />

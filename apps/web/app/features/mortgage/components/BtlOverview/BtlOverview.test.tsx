@@ -10,12 +10,13 @@ describe("<BtlOverview />", () => {
         monthlyPayment={null}
         monthlyRent={0}
         mortgageType="interest-only"
-        propertyCount={1}
+        propertyCount={null}
         onConfigure={vi.fn()}
       />,
     );
     expect(screen.getAllByText("Not set")).toHaveLength(4);
-    expect(screen.getByText("Managing 1 property")).toBeDefined();
+    expect(screen.getByText("Number of properties not set")).toBeDefined();
+    expect(screen.queryByText(/^Managing/)).toBeNull();
     expect(screen.getByText(/Section 24 rule:/)).toBeDefined();
   });
 
