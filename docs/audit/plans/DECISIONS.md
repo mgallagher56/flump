@@ -1,0 +1,87 @@
+# Owner decisions for epics E2, E4, E5, E7, E8, E11
+
+Recorded 2026-11-11 from the owner's answers to the questions in SEQUENCE.md. Anything not listed below follows the recommendation in the epic's draft plan (`E<n>-plan-draft.md`) and SEQUENCE.md.
+
+## Stated decisions
+
+| Epic | Decision | Effect on the plans |
+|---|---|---|
+| E2 | All production data is test data, apart from the owner's own account, which they use for testing. | The cleanup of seeded rows (E2 D3/D4) can delete exact-fingerprint seeded rows and rows owned by the old mock identities `user_mock` and `dev_user_123` without a per-row review. Still take a backup first; the owner's own rows must not match a fingerprint. The "export before delete" option (D4-C) is not needed. |
+| E4 | The owner signs off the tax test vectors. | The owner is the named reviewer. No tax fix merges before they have signed off its vectors. |
+| E4 | Supported tax years start from 2020/21. | Supersedes the draft's option b (verify 2023/24 to 2026/27, label older years unverified). The resolver supports 2020/21 to 2026/27, and unknown years throw. All seven years' vectors need the owner's sign-off, which is more work than the draft assumed. |
+| E7 | The owner signs off all marketing copy. | Removing a false claim and the new wording both merge on the owner's approval. Regulatory statements (FCA, GDPR) are still only added with the owner's explicit wording, never drafted as fact. |
+| E7 | Pricing is not set. Design the pricing page fully with the price as a placeholder. | Supersedes the draft's "single 'Flump is free' card". Keep the plan structure (cards, features, call to action) with an obvious placeholder price (for example "£X per month") and no trial or Pro claims that nothing implements. |
+| E7 | Use an obvious placeholder email address until the domain exists. | One placeholder (for example `security@example.invalid`) used for the security contact and the manual account-closure route, easy to grep and replace. Remove the fake enquiry form (E7 T2) as planned. |
+| E7 | Placeholder company details in the footer. | Obvious placeholders for company name, number and address, not invented real details. |
+| Mobile | The mobile app will be rebuilt from scratch, using the web app as the functional guide, covering everything the web app does. This is a separate, thorough plan for later. | New epic E12 (below). The mobile items in E2 (T16 mobile part), E4 (T16), E5 (T17) and E8 (D6) are dropped from those epics: do not fix the old app. |
+| All others | Follow the recommended decisions. | See SEQUENCE.md "Decisions needed from you". |
+
+## Still open
+
+- **E2 D6:** is the "Poplar/Curo" rental ledger that was committed to git history (from commit a640c2be) real data of the owner's, and is the repository, or will it be, public? If it is real and the repo may become public, history needs rewriting (a human task with `git filter-repo`). If not, it is deleted from the current tree only. No code task is blocked by this.
+
+## New epic: E12 Mobile rebuild (not planned yet)
+
+Goal: replace `apps/mobile-companion` with a new app built from scratch, implementing every feature of the web app, using the web app's routes and flows as the specification. To be planned separately and thoroughly before any build starts: feature inventory from the web app (routes, loaders, actions, calculators), shared logic via `packages/finance-engine` (no re-implemented maths, which is the B-07 finding), real authentication (the old app has only mock auth), accessibility and design tokens from day one, testing, and release. Until then the old app stays as it is and works only against a backend running in dev mode.
+
+## Updates, later the same day
+
+- **E2 D6 resolved: no git history rewrite.** The owner decided the information is not important enough for the effort. The rental ledger ("Poplar"/"Curo" seed data) is removed from the current files only (E2 T16 and the seed removal tasks); history is left alone. The 8 current files that still contain it are listed in the planning notes; they are cleaned as part of E2.
+- **E11 D7 resolved: no enforced checks.** The owner will not upgrade to GitHub Pro, so branch protection and required checks are not available on this private repo. The gates stay advisory on GitHub; Railway "Wait for CI" is the one enforced gate (deploys wait for checks). The E11 plan items that assume branch protection or code-owner review are dropped.
+- **Done by the owner:** the `RELEASE_PLEASE_TOKEN` Actions secret exists; Railway "Wait for CI" is on for backend, web and marketing (`checkSuites: true`, verified read-only).
+
+# Owner decisions, round 2 (2026-11-12): "make the recommended decisions for each"
+
+The owner delegated every open decision in the E12, E15, E16, E17, E18, E19, E20 and E23 plans to the plans' own recommendations. A Sonnet agent extracted each recommendation verbatim and classified it. **AUTO** = adopted now (reversible product, design, engineering or process choice that costs no money). **HOLD** = not decided by default (money, legal entity or solicitor, contacting third parties, real personal data, irreversible production action, or the plan gives no single recommendation). Earlier decisions in this file still stand (production data is test data; tax years from 2020/21; pricing, email and company details are placeholders; no history rewrite; no GitHub Pro so no required checks; backup skipped, see below).
+
+**Also decided this round:** the owner will NOT take a database backup before release PR 368 (managed backups need Railway Pro; data is test data). The runbook's free `pg_dump` remains an optional step. The cleanup preview counts must still be read before merging 368.
+
+## ADOPTED (AUTO)
+
+### E15 visual and UX
+D1 hybrid: Calm ledger (A) as the base, B's compact density for simulators, tables and the accounts list (via D9-C), C's coach card as a component. D2 keep indigo, refine neutrals. D3-C adopt ui primitives and patterns everywhere (E15 absorbs E9 for screens it touches; needs one AGENTS.md law edit, flag it when made). D4-B Mortgage pilot plus the app shell in parallel (but see conflict 1). D6-A Lucide. D7-A Vitest browser-mode screenshots, PR-only, never blocking on main. D8-A follow system theme with override. D9-C contextual density. D10-A approve the new colour-token batch (finalise after D1). D11a-B expressive marketing layer on the same tokens. D11b-A delete the duplicate web public home and redirect signed-out `/` to marketing. D12-A standalone HTML mockups. D13-A en-GB only: remove `es`, dead keys and the detector. D14-B owner reviews the pilot, then a batch at each phase end. D16 "Not set" (with an action) is the only rendering for unknown values; zeros only for real zeros.
+
+### E16 product review
+D1-A UK tax and wealth planner on your own numbers, with an AI companion. D2-A plan-only budget, actuals from CSV import later. D3-B Self Assessment ledger becomes an opt-in module. D4-A bank PAT connect (Monzo, Starling, T212) stays behind "Advanced / beta"; OAuth and open banking flagged off. D5-B merge the Forecast route into Savings, Pension and the Tax hub with a redirect. D6-B cut non-UK scope and Irish tax. D7-B marketing owns home, pricing and tool landing pages. D8-A finish MCP as a preview after E1; hide the fake token card meanwhile. D9-A first-party server-side events plus cookieless page counts (allow-list schema, no amounts), shipping only after E19's notice exists. D10-B adopt the law-compliant dead components (`PayoffStrategyControls`, `SandboxTemplates`) and delete the rest. D11-B dashboard show or hide only, with a default layout by persona. D12-B remove account-history edit UI (history comes from the check-in). D13-A interactive decision pack (done). D15-B mobile scope left to E12. D17-A fix the account write bugs before further E16 execution (done in PR 387).
+The pack's feature-level recommendations (keep, fix, merge, demote, cut, add for F01 to F45) are adopted EXCEPT that no cut or demotion is applied to a MOST VALUABLE row (F01, F02, F03, F04, F05, F07, F11, F31) until interviews (D14, HOLD) are done. Cuts and merges on NICE, BLOAT and NO VALUE rows may proceed: F09, F16, F17, F18, F19, F21, F22, F23, F24, F26, F27, F29, F30, F34, F37, F38, F43, F44, F45. F28 follows D16 below. Additions: F41 CSV import and F42 tax-year hub; F40 account deletion and export is built but legal wording is held.
+
+### E17 agent and API surface
+D1-A MCP is a preview until Phase 5 and the eval targets are met. D3-B low-risk writes behind `write:*` scopes with propose and confirm, audit and a 24-hour undo; no deletes (Phase 4, later; E19 DPIA, terms and "guidance not advice" copy must cover writes first). D4-B tax tools stay with `verification.status: "unverified"` and a notice in every response until vectors are signed off. D5-A default scopes `read:summary` and `simulate`, anonymised; expiry 7, 30, 90 (default) or 365 days; never "never". D6-A add the missing profile fields; tools return `missing[]` (interim: labelled assumptions). D7-A internal contract only; `/mcp` is the only third-party surface. D8-A `/v1` URI prefix with unversioned aliases deprecated for at least 6 months. D9-A zod in `@flump/api-contract`, OpenAPI generated from it, WorkOS AuthKit as the MCP authorisation server (re-check scope support before Phase 5). D11-A keep the offline context-pack export (anonymised by default). D13-A keep the `flump://` scheme.
+
+### E18 operations
+D2-A stay on Hobby, upgrade at public launch. D3-A one root release component; every service watches the root CHANGELOG. D4-A staging data is a restored production dump now, switching to synthetic before any friend is invited. D6-A boot-time migrations for PR 368, moving to the Railway pre-deploy command later. D7-A the combined release PR deploys all three services (the merge itself stays an owner action). D8-A Renovate only (the owner turns off Dependabot security updates in GitHub). D9-A daily and weekly backups plus a weekly encrypted offsite dump once the plan allows; PITR at public launch (a money item). D10-A Railway webhook to a Discord or Slack channel plus uptime alerts.
+
+### E19 privacy and legal (engineering parts only)
+D3-B bank connection on only for allowlisted owner accounts. D6-B inactive accounts deleted only on request during the beta. D7-A immediate hard delete. D8-A stop storing synced transactions. D9 no marketing analytics in the beta, cookieless counts at launch (after the PECR notice). D10-A no marketing email. D11-A JSON export first. D12-A 18+ self-declaration (wording reviewed with the terms).
+
+### E20 security
+D1-C proxy now (same-origin `/api` proxy with a strict allow-list, stop returning the token from loaders), retire proxy entries into route actions over time. D2-A remove in-app password change; "Change password" emails a WorkOS reset link. D3-B absolute 14 days, idle 24 hours, step-up for sensitive actions. D4 keep `react-router-serve` and add middleware, headers and rate limiting now (Cloudflare is HOLD until the custom domain exists). D5-A in-memory rate limits while there is one replica. D6-A receipts stay in Postgres, validated, excluded from lists, served through a download route. D7-A E20 enforces MCP scopes now with today's names. D8-B HSTS preload after the domain has been stable 3 months. D9-B keep the presence cookie, fix the domain check with a shared helper, add `Secure`. D10-A free security tooling now (the paid pen test is HOLD). D11-A self-host fonts. D12-A optional TOTP through AuthKit. D13-A backend stays public with CORS removed.
+
+### E23 core-journey correctness
+D-1-B backend `GET /financial-picture` built from the engine is the single source of truth. D-2-A P0-1 to P0-5 plus the in-flight fixes ship before PR 368. D-3-B store `birth_year`. D-4-C region required in onboarding; existing users get labelled England/Wales/NI assumptions plus a call to action. D-5-B student loan excluded from the headline net worth and shown as a separate income-contingent line; never in debt payoff. D-6-A safe-to-spend = take-home − essentials − debt minimums − planned savings, per week. D-7-A annual tax record belongs to the tax year containing `date` (backfill `end_date`; run the backfill only after a backup is taken, or the owner accepts the risk as for PR 368). D-8-A profile percentages for the workplace scheme, per-pot amounts only for personal or SIPP pots. D-9-A E23 does the numeric transformer (E21 adopts it). D-10-A dev bypass on a local dev host for the E2E suite. D-11 fast-check for portfolio and history properties, hand-written for tax.
+
+### E12 mobile
+D1-A, D3-A, D4-A (encrypted read-only cache 7 days, writes online only), D5-A, D6-A (behind the OFF flag), D8-A (no push in v1), D9-A (immediate deletion after typed confirmation), D10-A, D11-A, D12-C, D13-A, D14-A, D15-A, D16-A (native variant; flag the law edit), D17-A, D19-A (store builds ship with bank connection OFF), D20-A (privacy policy and web deletion route are release gates; policy text is held for the solicitor), D21-A (email and password plus magic link), D22-A (en-GB only), D23-A (extract `@flump/tokens`), D27 (reuse web's disclaimer, require email verification, MFA optional). Per E16, the E12 feature inventory is regenerated after E16's cuts before feature screens (M4 onwards) start; M0 to M3 may proceed.
+
+## Conflicts between plans, resolved
+1. **E15 pilot vs E16 vs E9:** run E15 phases 0 to 2 now (tokens, components). Start the Mortgage pilot only after E16's mortgage fix and merge tickets land; shell in parallel; dashboard last after the E16 widget set is settled. E9's page migration is superseded by E15 D3-C for kept screens (skip CUT rows); the colocation ratchet runs only on files E15 touches.
+2. **Law edits:** the AGENTS.md law 1 wording, section 2 token additions and the E12 native variant are made as ONE deliberate change, flagged in its PR.
+3. **Spanish/i18n:** en-GB only on web (remove `es` and the detector) and on mobile; E16's "dormant" is the weaker form of the same outcome.
+4. **Bank connection and synced transactions:** one flag, off for everyone except owner-allowlisted accounts; stop storing synced transactions.
+5. **MCP:** `birth_year` and required region (E23) win over E17's "age or date of birth"; E17's 13-month audit retention must appear in E19's retention schedule and be deleted with the account; E19's DPIA and terms must cover agent writes before E17 phase 4.
+6. **Instrumentation:** build E16's events behind a flag; ship only after E19's notice.
+7. **Region and staging order:** owner decides region, then staging is built in that region, then backups and drill, then any production migration.
+8. **Staging data:** switch staging to synthetic data before any friend is invited.
+9. **Error tracking:** one vendor and one DPA for E18, E12 and E20 (HOLD below).
+10. **Deletion and export:** immediate hard delete everywhere; JSON export with it; mobile follows the web endpoint.
+11. **Fonts:** self-host (family choice is HOLD).
+12. **No required checks (no GitHub Pro):** visual regression and the E2E gate stay advisory; only Railway Wait-for-CI is enforced.
+13. **Company details** stay placeholders until the entity decision (HOLD).
+
+## HOLD (not decided; needs the owner, a solicitor or money)
+
+**Owner alone:** E15 D5 typography (look at direction A: Inter plus Plus Jakarta, one variable family, or an editorial serif); E15 D15 confirm "I own the logo and am happy to recolour it"; E16 D14 run 3 to 5 interviews (P1 to P3) before any cut to a MOST VALUABLE row; E16 D16 confirm "stop storing synced transactions" (E19 D8-A already says so); E17 D2 confirm or register the npm `@flump` scope before publishing; E17 D10 set an LLM eval spend cap (a number); E18 D5 and E12 D7 approve one error-tracking vendor (Sentry EU suggested), create the org, accept the DPA; E18 D11 and E19 D4 choose the data region (EU West suggested) and run the migration after backups and staging; E19 D2 pick friends and a date once privacy notice, terms and deletion are live; E12 D25 store-compliance answers; E20 D4 Cloudflare once a custom domain exists; E20 owner tasks (confirm WorkOS redirect URI, decode a real token, rotate the D-12 secrets, review WorkOS session and MFA settings, check the Public Suffix List). E18 owner steps: create the alert channel and webhook; turn off Dependabot security updates.
+
+**Solicitor:** E19 D5 (FCA Innovation Hub first, then one firm on a fixed fee: FCA view and privacy pack); E19 D1 trading entity (limited company if the App Store or public launch is within six months); E17 D12 13-month audit retention; E12 D26 controller identity, ICO registration, DPAs, export obligation; E12 D18 ask Apple App Review about organisation accounts before incorporating; privacy policy, terms, disclaimer, age-gate wording (E19 phase B/C); F40 deletion and export legal review.
+
+**Money:** E18 D1 staging about $3 a month (staging itself is still recommended; the owner approves the spend and runs it); E19 D13 PI and cyber insurance before public launch; E12 D2 Apple about $99 a year and Google Play $25 once (after D18); E12 D24 cost table; E20 D10-B CREST pen test about £3k to £7.5k before public launch; Railway Pro and PITR at public launch; company registration fee.
