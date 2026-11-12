@@ -96,7 +96,7 @@ const AccountDetails: FC<AccountDetailsProps> = ({
   const months = useMemo(() => Array.from({ length: 12 }, (_, i) => 12 - i), []); // Dec to Jan
 
   const getMonthName = (monthNum: number) => {
-    return new Date(0, monthNum - 1).toLocaleString("default", { month: "long" });
+    return new Date(0, monthNum - 1).toLocaleString("en-GB", { month: "long" });
   };
 
   // Calculate annual stats
