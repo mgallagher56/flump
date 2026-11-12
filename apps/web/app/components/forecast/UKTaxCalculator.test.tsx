@@ -134,12 +134,13 @@ describe("<UKTaxCalculator /> estimate labelling and tax year", () => {
   test("labels take-home as an estimate for the tax year and keeps KPI values out of the heading outline", () => {
     vi.useFakeTimers({ toFake: ["Date"] });
     vi.setSystemTime(new Date("2026-11-12T12:00:00Z"));
-    const { getByText, getByRole, queryByText, queryAllByRole } = customRender(
+    const { getByText, getAllByRole, queryByText, queryAllByRole } = customRender(
       <UKTaxCalculator initialSalary={45000} onApplyIncrease={vi.fn()} />,
     );
 
     expect(getByText("Estimate for 2026/27, based on the figures you entered")).toBeDefined();
-    expect(getByRole("status", { name: "Take-home estimate for 2026/27" })).toBeDefined();
+    // One debounced live region with a short message, not the whole result block.
+    expect(getAllByRole("status")).toHaveLength(1);
     // Real 2026/27 rates: no "using older rates" banner.
     expect(queryByText(/Using .* rates/)).toBeNull();
     const headings = queryAllByRole("heading").map((h) => h.textContent);

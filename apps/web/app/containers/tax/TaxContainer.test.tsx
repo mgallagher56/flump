@@ -177,10 +177,13 @@ describe("TaxContainer & Calculation Tools", () => {
   it("labels every top KPI as an estimate for the tax year and keeps their values out of the heading outline", () => {
     render(<TaxContainer />);
 
-    const summary = screen.getByRole("status", { name: /^Tax summary for / });
-    expect(
-      summary.textContent?.match(/Estimate for \d{4}\/\d{2}, based on the figures you entered/g),
-    ).toHaveLength(4);
+    // The estimate note is shown once on the headline KPI, not repeated on pure-sum cards, and
+    // sits outside any live region.
+    const note = screen.getAllByText(
+      /Estimate for \d{4}\/\d{2}, based on the figures you entered/,
+    )[0];
+    expect(note.closest('[role="status"]')).toBeNull();
+    expect(screen.queryAllByRole("status")).toHaveLength(0);
     const headingTexts = screen.getAllByRole("heading").map((h) => h.textContent ?? "");
     expect(headingTexts.some((t) => t.includes("£"))).toBe(false);
   });

@@ -48,7 +48,8 @@ describe("PensionSummaryCards", () => {
         totalValue={25000}
       />,
     );
-    expect(screen.getByRole("status", { name: "Pension summary" })).toBeDefined();
+    // The page-level debounced LiveRegion announces results; the cards must not add their own.
+    expect(screen.queryAllByRole("status")).toHaveLength(0);
     expect(screen.queryAllByRole("heading")).toHaveLength(0);
     expect(screen.getByText("£25,000").tagName).toBe("P");
   });

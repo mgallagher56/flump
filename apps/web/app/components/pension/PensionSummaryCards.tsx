@@ -90,8 +90,6 @@ export const PensionSummaryCards: FC<PensionSummaryCardsProps> = ({
 
   return (
     <div
-      aria-label="Pension summary"
-      role="status"
       className={gridStyle(isMobileVariant)}
       data-variant={isMobileVariant ? "mobile" : "desktop"}
     >
