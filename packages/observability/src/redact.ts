@@ -4,12 +4,22 @@ export const CIRCULAR = "[circular]";
 const SENSITIVE_KEY =
   /token|secret|password|passwd|authori[sz]ation|cookie|session|dsn|api.?key|balance|amount|salary|income|value|price|payment|contribution|iban|sort.?code|account.?number|receipt|email|name|phone|address|dob|birth|code|state/i;
 
+const EMAIL_SOURCE = "[^\\s@/?#]{1,64}@[^\\s@/?#]{1,255}\\.[^\\s@/?#]{1,63}";
+
+/** True if the text contains something that looks like an email address. */
+export function hasEmail(text: string): boolean {
+  return new RegExp(EMAIL_SOURCE).test(text.slice(0, MAX_STRING_LENGTH));
+}
+
 // Order matters: specific shapes first, broad catch-alls last.
 const STRING_PATTERNS: readonly RegExp[] = [
-  /[^\s@/?#]{1,64}@[^\s@/?#]{1,255}\.[^\s@/?#]{1,63}/g,
+  new RegExp(EMAIL_SOURCE, "g"),
   /Bearer\s{1,8}\S+/gi,
   /eyJ[\w-]{1,2048}\.[\w-]{1,2048}\.[\w-]{0,2048}/g,
   /sk_(?:test|live)_\w+/g,
+  /\b[A-Za-z]{2}\d{2}(?: [A-Za-z0-9]{4}){4,7}(?: [A-Za-z0-9]{1,4})?\b/g,
+  /\b[A-Za-z]{2}\d{2}[A-Za-z0-9]{11,30}\b/g,
+  /\b\d{4}(?:[ -]\d{4}){3}\b/g,
   /\?[^\s#]*(?:#\S*)?/g,
   /[A-Za-z0-9+/_-]{32,}/g,
   /£\s?[\d,]+(?:\.\d+)?/g,
