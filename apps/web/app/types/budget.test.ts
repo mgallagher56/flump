@@ -57,9 +57,9 @@ describe("budget types & helpers", () => {
     expect(CATEGORY_LABELS.housing).toBe("Housing");
     expect(CATEGORY_LABELS.pets).toBe("Pets");
 
-    expect(getCategoryColour("housing")).toBe("#6363f1");
-    expect(getCategoryColour("pets")).toMatch(/^#/);
-    expect(CATEGORY_COLOURS.pets).toMatch(/^#/);
+    expect(getCategoryColour("housing")).toBe("var(--colors-primary)");
+    expect(getCategoryColour("pets")).toMatch(/^var\(--colors-/);
+    expect(CATEGORY_COLOURS.pets).toMatch(/^var\(--colors-/);
 
     expect(getCategoryIcon("housing")).toBe("🏠");
     expect(getCategoryIcon("pets")).toBe("📁");
