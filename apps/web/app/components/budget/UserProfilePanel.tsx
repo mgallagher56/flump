@@ -175,7 +175,8 @@ export interface TaxBreakdown {
  *
  * For UK (GB): uses calculateUKEWNITakeHome (EWNI rates).
  * For Ireland (IE): uses calculateIrishTakeHome (USC + PRSI).
- * For other countries: returns a simple salary / 12 estimate.
+ * Returns null (unknown) when salary or employment type is missing, or the country is unsupported;
+ * it never returns gross pay as take-home.
  *
  * NOTE: These are estimates only. See TAX_DISCLAIMER in taxRules.ts.
  */
@@ -185,22 +186,12 @@ export function calculateNetTakeHome(
   pensionPercent = 5,
   isSalarySacrifice = true,
   country = "GB",
-): TaxBreakdown {
-  const defaultResult: TaxBreakdown = {
-    gross: annualSalary || 0,
-    pension: 0,
-    personalAllowance: 0,
-    taxableIncome: 0,
-    incomeTax: 0,
-    ni: 0,
-    netAnnual: annualSalary || 0,
-    monthlyTakeHome: annualSalary ? Math.round(annualSalary / 12) : 0,
-  };
+): TaxBreakdown | null {
+  // Unknown inputs are unknown: never fall back to gross as take-home.
+  if (!annualSalary || annualSalary <= 0) return null;
 
-  if (!annualSalary || annualSalary <= 0) return defaultResult;
-
-  const empType =
-    employmentType === "employed" || employmentType === "self-employed" ? employmentType : null;
+  if (employmentType !== "employed" && employmentType !== "self-employed") return null;
+  const empType = employmentType;
 
   if (country === "GB") {
     const result = calculateUKEWNITakeHome(
@@ -236,8 +227,8 @@ export function calculateNetTakeHome(
     };
   }
 
-  // Other countries — simple gross / 12 estimate
-  return defaultResult;
+  // Other countries have no supported rules, so take-home is unknown.
+  return null;
 }
 
 const UserProfilePanel: FC<UserProfilePanelProps> = ({ initialProfile, user }) => {

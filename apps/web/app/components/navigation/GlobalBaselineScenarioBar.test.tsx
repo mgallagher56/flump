@@ -3,6 +3,13 @@ import { describe, expect, it } from "vitest";
 import { GlobalBaselineScenarioBar } from "./GlobalBaselineScenarioBar";
 
 describe("GlobalBaselineScenarioBar", () => {
+  it("shows 'Not set' rather than an invented salary when none is known", () => {
+    render(<GlobalBaselineScenarioBar />);
+
+    expect(screen.queryByText(/45,000/)).toBeNull();
+    expect(screen.getByText("Not set")).toBeTruthy();
+  });
+
   it("expands scenario details, adjusts salary/pension/sacrifice overrides, resets, and commits", () => {
     render(<GlobalBaselineScenarioBar />);
 

@@ -5,6 +5,7 @@ import {
   DEFAULT_PROFILE,
   HttpProfileAdapter,
   normalizeProfile,
+  profileToBaseline,
   useUserProfile,
 } from "./useUserProfile";
 
@@ -157,6 +158,13 @@ describe("useUserProfile & HttpProfileAdapter", () => {
       kind: "bad-response",
     });
     expect(result.current.profile).toBe(before);
+  });
+
+  it("maps a profile with no salary to a baseline with no salary, never 45,000", () => {
+    expect(profileToBaseline({ ...DEFAULT_PROFILE, annualSalary: null }).annualGrossSalary).toBe(0);
+    expect(profileToBaseline({ ...DEFAULT_PROFILE, annualSalary: 52000 }).annualGrossSalary).toBe(
+      52000,
+    );
   });
 
   it("exercises HttpProfileAdapter methods", async () => {

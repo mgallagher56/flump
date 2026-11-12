@@ -175,6 +175,41 @@ describe("_index route", () => {
     expect(absent.pensionData.employerPercent).toBeNull();
   });
 
+  it("never shows gross as take-home when the employment type is unknown", async () => {
+    for (const employmentType of [null, undefined, "other", "retired"]) {
+      const data = await loadSignedIn({
+        userProfile: {
+          onboardingCompleted: true,
+          annualSalary: 60000,
+          employmentType,
+          pensionPercent: 5,
+          isSalarySacrifice: true,
+        },
+      });
+      expect(data.forecastData.estimatedTakeHome).toBeNull();
+    }
+  });
+
+  it("computes take-home below gross for a known employment type", async () => {
+    const data = await loadSignedIn({
+      userProfile: {
+        onboardingCompleted: true,
+        annualSalary: 60000,
+        employmentType: "employed",
+        pensionPercent: 5,
+        isSalarySacrifice: true,
+      },
+    });
+    expect(data.forecastData.estimatedTakeHome).toBeGreaterThan(0);
+    expect(data.forecastData.estimatedTakeHome).toBeLessThan(5000);
+  });
+
+  it("a missing salary yields no salary and no take-home, never 45,000", async () => {
+    const data = await loadSignedIn({ userProfile: { onboardingCompleted: true } });
+    expect(data.forecastData.annualSalary).toBeNull();
+    expect(data.forecastData.estimatedTakeHome).toBeNull();
+  });
+
   it("mortgage rate comes from the account, term is null", async () => {
     const data = await loadSignedIn({
       accounts: [{ id: "m", name: "Home", type: "Mortgage", balance: -200000, interestRate: 3.9 }],
@@ -225,6 +260,7 @@ describe("_index route", () => {
       userProfile: {
         onboardingCompleted: true,
         annualSalary: 60000,
+        employmentType: "employed",
         pensionPercent: 5,
         isSalarySacrifice: true,
       },
@@ -239,6 +275,7 @@ describe("_index route", () => {
       userProfile: {
         onboardingCompleted: true,
         annualSalary: 60000,
+        employmentType: "employed",
         pensionPercent: 0,
         isSalarySacrifice: false,
       },

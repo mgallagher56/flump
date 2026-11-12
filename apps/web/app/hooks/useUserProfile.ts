@@ -258,6 +258,18 @@ function messageFrom(err: unknown, fallback: string): Error {
   return err instanceof Error ? err : new Error(fallback);
 }
 
+/**
+ * Profile to client baseline. The engine mapper fills a missing salary with its 45,000 default;
+ * the web baseline must carry no salary instead (0 = unknown, rendered as "Not set").
+ */
+export function profileToBaseline(profile: UserProfile | Partial<UserProfile>): FinancialBaseline {
+  const baseline = userProfileToFinancialBaseline(profile);
+  const salary = profile.annualSalary;
+  return salary === null || salary === undefined || Number(salary) <= 0
+    ? { ...baseline, annualGrossSalary: 0 }
+    : baseline;
+}
+
 export function useUserProfile() {
   const [profile, rawSetProfile] = useAtom(userProfileAtom);
   const [, rawSetBaseline] = useAtom(financialBaselineAtom);
@@ -275,7 +287,7 @@ export function useUserProfile() {
       const normalized = normalizeProfile(p);
       rawSetProfile(normalized);
       try {
-        rawSetBaseline(userProfileToFinancialBaseline(normalized));
+        rawSetBaseline(profileToBaseline(normalized));
       } catch {
         // Continue
       }
@@ -355,7 +367,7 @@ export class HttpProfileAdapter implements ProfilePersistenceAdapter {
     const profile = await apiFetch<UserProfile>("/user-profile", {
       accessToken: this.getAuthToken?.(),
     });
-    return userProfileToFinancialBaseline(profile);
+    return profileToBaseline(profile);
   }
 
   async saveBaseline(baseline: FinancialBaseline): Promise<void> {

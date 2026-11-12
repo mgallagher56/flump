@@ -32,7 +32,11 @@ const UKTaxCalculator: FC<UKTaxCalculatorProps> = ({ initialSalary, onApplyIncre
   const { profile } = useUserProfile();
   const { formatCurrency, formatCurrencyDecimal } = useFormatCurrency();
   const reducedMotion = usePrefersReducedMotion();
-  const [grossSalary, setGrossSalary] = useState<number>(initialSalary ?? 45000);
+  // No invented salary: until one is known (or typed in) the results render "Not set".
+  const [grossSalary, setGrossSalary] = useState<number>(
+    initialSalary && initialSalary > 0 ? initialSalary : 0,
+  );
+  const salaryKnown = grossSalary > 0;
   const [pensionPercent, setPensionPercent] = useState<number>(5);
   const [isSalarySacrifice, setIsSalarySacrifice] = useState<boolean>(
     profile?.isSalarySacrifice ?? true,
@@ -302,8 +306,12 @@ const UKTaxCalculator: FC<UKTaxCalculatorProps> = ({ initialSalary, onApplyIncre
               <FLPText fontSize="xs" fontWeight="semibold" textTransform="uppercase">
                 Gross Salary
               </FLPText>
-              <FLPText fontSize="sm" fontWeight="bold">
-                {formatCurrency(grossSalary)}
+              <FLPText
+                fontSize="sm"
+                fontWeight="bold"
+                style={{ fontVariantNumeric: "tabular-nums" }}
+              >
+                {salaryKnown ? formatCurrency(grossSalary) : "Not set"}
               </FLPText>
             </div>
             <input
@@ -318,7 +326,8 @@ const UKTaxCalculator: FC<UKTaxCalculatorProps> = ({ initialSalary, onApplyIncre
             <input
               className={numberInputStyle}
               type="number"
-              value={grossSalary}
+              value={salaryKnown ? grossSalary : ""}
+              placeholder="Not set"
               onChange={(e) => setGrossSalary(Number(e.target.value))}
             />
           </div>
@@ -399,312 +408,349 @@ const UKTaxCalculator: FC<UKTaxCalculatorProps> = ({ initialSalary, onApplyIncre
         </div>
 
         {/* Results (Right Column) */}
-        <FLPCard>
-          {/* Large monthly take home summary */}
-          <div className={takeHomeHeaderCard}>
-            <div>
-              <FLPText
-                color="text.muted"
-                fontSize="xs"
-                fontWeight="semibold"
-                textTransform="uppercase"
-              >
-                Monthly Take-Home Pay
-              </FLPText>
-              <FLPHeading as="h2" color="success.500" mt={1} size="2xl">
-                {formatCurrencyDecimal(taxResults.netPay / 12)}
-              </FLPHeading>
-            </div>
-            <div style={{ textAlign: "right" }}>
-              <FLPText
-                color="text.muted"
-                fontSize="xs"
-                fontWeight="semibold"
-                textTransform="uppercase"
-              >
-                Annual Take-Home Pay
-              </FLPText>
-              <FLPHeading as="h3" color="text.primary" mt={1} size="lg">
-                {formatCurrency(taxResults.netPay)}
-              </FLPHeading>
-            </div>
-          </div>
-
-          {/* Smaller rates break-down cards */}
-          <div className={statsRowGrid}>
-            <div
-              style={{
-                padding: "12px",
-                border: "1px solid",
-                borderColor: "border",
-                borderRadius: "md",
-              }}
-            >
-              <FLPText color="text.muted" fontSize="10px" textTransform="uppercase">
-                Weekly Net
-              </FLPText>
-              <FLPHeading as="h5" size="sm" mt={1}>
-                {formatCurrencyDecimal(taxResults.netPay / 52)}
-              </FLPHeading>
-            </div>
-            <div
-              style={{
-                padding: "12px",
-                border: "1px solid",
-                borderColor: "border",
-                borderRadius: "md",
-              }}
-            >
-              <FLPText color="text.muted" fontSize="10px" textTransform="uppercase">
-                Daily Net (5d)
-              </FLPText>
-              <FLPHeading as="h5" size="sm" mt={1}>
-                {formatCurrencyDecimal(taxResults.netPay / 260)}
-              </FLPHeading>
-            </div>
-            <div
-              style={{
-                padding: "12px",
-                border: "1px solid",
-                borderColor: "border",
-                borderRadius: "md",
-              }}
-            >
-              <FLPText color="text.muted" fontSize="10px" textTransform="uppercase">
-                Effective Tax Rate
-              </FLPText>
-              <FLPHeading as="h5" size="sm" mt={1}>
-                {Math.round(((grossSalary - taxResults.netPay) / grossSalary) * 100)}%
-              </FLPHeading>
-            </div>
-            <div
-              style={{
-                padding: "12px",
-                border: "1px solid",
-                borderColor: "border",
-                borderRadius: "md",
-              }}
-            >
-              <FLPText color="text.muted" fontSize="10px" textTransform="uppercase">
-                Qualifying Gross
-              </FLPText>
-              <FLPHeading as="h5" size="sm" mt={1}>
-                {formatCurrency(taxResults.adjustedGross)}
-              </FLPHeading>
-            </div>
-          </div>
-
-          {/* Donut and Table section */}
-          <div
-            className={css({
-              display: "grid",
-              gridTemplateColumns: { base: "1fr", md: "1.2fr 1fr" },
-              gap: "24px",
-              alignItems: "center",
-            })}
-          >
-            <div>
-              <FLPHeading as="h4" size="sm">
-                Salary Deductions Breakdown
-              </FLPHeading>
-              <table className={breakdownTable}>
-                <thead>
-                  <tr>
-                    <th className={thStyle}>Deduction</th>
-                    <th className={thStyle}>Annual</th>
-                    <th className={thStyle}>Monthly</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td className={tdStyle}>Gross Income</td>
-                    <td className={tdStyle}>{formatCurrency(grossSalary)}</td>
-                    <td className={tdStyle}>{formatCurrency(grossSalary / 12)}</td>
-                  </tr>
-                  {taxResults.pension > 0 && (
-                    <tr>
-                      <td className={tdStyle} style={{ color: "#8b5cf6" }}>
-                        Pension {isSalarySacrifice ? "(Sacrifice)" : "(Relief at source)"}
-                      </td>
-                      <td className={tdStyle}>-{formatCurrency(taxResults.pension)}</td>
-                      <td className={tdStyle}>-{formatCurrency(taxResults.pension / 12)}</td>
-                    </tr>
-                  )}
-                  {taxResults.employerNiSaving > 0 && (
-                    <tr>
-                      <td
-                        className={tdStyle}
-                        style={{ color: "var(--colors-status-positive-text)" }}
-                      >
-                        + Employer NI to Pension
-                      </td>
-                      <td className={tdStyle}>+{formatCurrency(taxResults.employerNiSaving)}</td>
-                      <td className={tdStyle}>
-                        +{formatCurrency(taxResults.employerNiSaving / 12)}
-                      </td>
-                    </tr>
-                  )}
-                  {taxResults.incomeTax > 0 && (
-                    <tr>
-                      <td className={tdStyle} style={{ color: "var(--colors-status-danger-text)" }}>
-                        Income Tax
-                      </td>
-                      <td className={tdStyle}>-{formatCurrency(taxResults.incomeTax)}</td>
-                      <td className={tdStyle}>-{formatCurrency(taxResults.incomeTax / 12)}</td>
-                    </tr>
-                  )}
-                  {taxResults.ni > 0 && (
-                    <tr>
-                      <td
-                        className={tdStyle}
-                        style={{ color: "var(--colors-status-warning-text)" }}
-                      >
-                        National Insurance
-                      </td>
-                      <td className={tdStyle}>-{formatCurrency(taxResults.ni)}</td>
-                      <td className={tdStyle}>-{formatCurrency(taxResults.ni / 12)}</td>
-                    </tr>
-                  )}
-                  {taxResults.studentLoan > 0 && (
-                    <tr>
-                      <td className={tdStyle} style={{ color: "#3b82f6" }}>
-                        Student Loan
-                      </td>
-                      <td className={tdStyle}>-{formatCurrency(taxResults.studentLoan)}</td>
-                      <td className={tdStyle}>-{formatCurrency(taxResults.studentLoan / 12)}</td>
-                    </tr>
-                  )}
-                  <tr
-                    style={{ borderTop: "2px solid", borderTopColor: "border", fontWeight: "bold" }}
-                  >
-                    <td className={tdStyle}>Net Take-Home</td>
-                    <td className={tdStyle}>{formatCurrency(taxResults.netPay)}</td>
-                    <td className={tdStyle}>{formatCurrency(taxResults.netPay / 12)}</td>
-                  </tr>
-                </tbody>
-              </table>
+        {salaryKnown ? (
+          <FLPCard>
+            {/* Large monthly take home summary */}
+            <div className={takeHomeHeaderCard}>
+              <div>
+                <FLPText
+                  color="text.muted"
+                  fontSize="xs"
+                  fontWeight="semibold"
+                  textTransform="uppercase"
+                >
+                  Monthly Take-Home Pay
+                </FLPText>
+                <FLPHeading as="h2" color="success.500" mt={1} size="2xl">
+                  {formatCurrencyDecimal(taxResults.netPay / 12)}
+                </FLPHeading>
+              </div>
+              <div style={{ textAlign: "right" }}>
+                <FLPText
+                  color="text.muted"
+                  fontSize="xs"
+                  fontWeight="semibold"
+                  textTransform="uppercase"
+                >
+                  Annual Take-Home Pay
+                </FLPText>
+                <FLPHeading as="h3" color="text.primary" mt={1} size="lg">
+                  {formatCurrency(taxResults.netPay)}
+                </FLPHeading>
+              </div>
             </div>
 
-            {/* Allocation Donut */}
-            <div
-              style={{
-                minHeight: "200px",
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <ChartFigure summary={pieSummary} title="Salary allocation">
-                <div style={{ height: "140px", width: "100%" }}>
-                  <ResponsiveContainer height="100%" width="100%">
-                    <PieChart>
-                      <Pie
-                        cx="50%"
-                        cy="50%"
-                        data={pieData}
-                        dataKey="value"
-                        innerRadius={50}
-                        outerRadius={70}
-                        paddingAngle={3}
-                        isAnimationActive={!reducedMotion}
-                      >
-                        {pieData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.fill} />
-                        ))}
-                      </Pie>
-                      <Tooltip
-                        formatter={(value: any) => formatCurrency(value)}
-                        contentStyle={chartTooltipContentStyle}
-                        itemStyle={chartTooltipItemStyle}
-                        labelStyle={chartTooltipLabelStyle}
-                      />
-                    </PieChart>
-                  </ResponsiveContainer>
-                </div>
-              </ChartFigure>
-              {/* Pie Legends: name, amount and share so series are not colour-only */}
+            {/* Smaller rates break-down cards */}
+            <div className={statsRowGrid}>
               <div
                 style={{
-                  display: "flex",
-                  flexWrap: "wrap",
-                  gap: "8px",
-                  justifyContent: "center",
-                  marginTop: "10px",
+                  padding: "12px",
+                  border: "1px solid",
+                  borderColor: "border",
+                  borderRadius: "md",
                 }}
               >
-                {pieData.map((d) => (
-                  <div
-                    key={d.name}
-                    style={{ display: "flex", alignItems: "center", gap: "4px", fontSize: "10px" }}
-                  >
-                    <div
-                      style={{
-                        width: "8px",
-                        height: "8px",
-                        borderRadius: "50%",
-                        backgroundColor: d.fill,
-                      }}
-                    />
-                    <FLPText
-                      fontSize="10px"
-                      color="text.muted"
-                      style={{ fontVariantNumeric: "tabular-nums" }}
-                    >
-                      {d.name}: {formatCurrency(d.value)} (
-                      {new Intl.NumberFormat("en-GB", {
-                        style: "percent",
-                        maximumFractionDigits: 0,
-                      }).format(pieTotal > 0 ? d.value / pieTotal : 0)}
-                      )
-                    </FLPText>
-                  </div>
-                ))}
+                <FLPText color="text.muted" fontSize="10px" textTransform="uppercase">
+                  Weekly Net
+                </FLPText>
+                <FLPHeading as="h5" size="sm" mt={1}>
+                  {formatCurrencyDecimal(taxResults.netPay / 52)}
+                </FLPHeading>
               </div>
-            </div>
-          </div>
-
-          {/* Hypothetical Salary Increase Tool */}
-          <div className={raiseCardStyle}>
-            <div style={{ flex: 1 }}>
-              <FLPHeading as="h4" size="sm">
-                Salary Increase Impact
-              </FLPHeading>
-              <FLPText color="text.muted" fontSize="xs" style={{ marginTop: "4px" }}>
-                Input a raise to compute how much more take-home pay you can save monthly.
-              </FLPText>
-
               <div
-                style={{ display: "flex", alignItems: "center", gap: "16px", marginTop: "12px" }}
+                style={{
+                  padding: "12px",
+                  border: "1px solid",
+                  borderColor: "border",
+                  borderRadius: "md",
+                }}
               >
-                <div style={{ flex: 1 }}>
-                  <FLPText fontSize="10px" fontWeight="semibold" textTransform="uppercase">
-                    Raise Amount (GBP)
-                  </FLPText>
-                  <input
-                    className={numberInputStyle}
-                    style={{ marginTop: "4px" }}
-                    type="number"
-                    value={salaryIncrease}
-                    onChange={(e) => setSalaryIncrease(Number(e.target.value))}
-                  />
-                </div>
-                <div>
-                  <FLPText fontSize="10px" fontWeight="semibold" textTransform="uppercase">
-                    Net Monthly Increase
-                  </FLPText>
-                  <FLPHeading as="h5" size="md" color="success.500" mt={1}>
-                    +{formatCurrency(monthlyIncrease)}/mo
-                  </FLPHeading>
+                <FLPText color="text.muted" fontSize="10px" textTransform="uppercase">
+                  Daily Net (5d)
+                </FLPText>
+                <FLPHeading as="h5" size="sm" mt={1}>
+                  {formatCurrencyDecimal(taxResults.netPay / 260)}
+                </FLPHeading>
+              </div>
+              <div
+                style={{
+                  padding: "12px",
+                  border: "1px solid",
+                  borderColor: "border",
+                  borderRadius: "md",
+                }}
+              >
+                <FLPText color="text.muted" fontSize="10px" textTransform="uppercase">
+                  Effective Tax Rate
+                </FLPText>
+                <FLPHeading as="h5" size="sm" mt={1}>
+                  {Math.round(((grossSalary - taxResults.netPay) / grossSalary) * 100)}%
+                </FLPHeading>
+              </div>
+              <div
+                style={{
+                  padding: "12px",
+                  border: "1px solid",
+                  borderColor: "border",
+                  borderRadius: "md",
+                }}
+              >
+                <FLPText color="text.muted" fontSize="10px" textTransform="uppercase">
+                  Qualifying Gross
+                </FLPText>
+                <FLPHeading as="h5" size="sm" mt={1}>
+                  {formatCurrency(taxResults.adjustedGross)}
+                </FLPHeading>
+              </div>
+            </div>
+
+            {/* Donut and Table section */}
+            <div
+              className={css({
+                display: "grid",
+                gridTemplateColumns: { base: "1fr", md: "1.2fr 1fr" },
+                gap: "24px",
+                alignItems: "center",
+              })}
+            >
+              <div>
+                <FLPHeading as="h4" size="sm">
+                  Salary Deductions Breakdown
+                </FLPHeading>
+                <table className={breakdownTable}>
+                  <thead>
+                    <tr>
+                      <th className={thStyle}>Deduction</th>
+                      <th className={thStyle}>Annual</th>
+                      <th className={thStyle}>Monthly</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td className={tdStyle}>Gross Income</td>
+                      <td className={tdStyle}>{formatCurrency(grossSalary)}</td>
+                      <td className={tdStyle}>{formatCurrency(grossSalary / 12)}</td>
+                    </tr>
+                    {taxResults.pension > 0 && (
+                      <tr>
+                        <td className={tdStyle} style={{ color: "#8b5cf6" }}>
+                          Pension {isSalarySacrifice ? "(Sacrifice)" : "(Relief at source)"}
+                        </td>
+                        <td className={tdStyle}>-{formatCurrency(taxResults.pension)}</td>
+                        <td className={tdStyle}>-{formatCurrency(taxResults.pension / 12)}</td>
+                      </tr>
+                    )}
+                    {taxResults.employerNiSaving > 0 && (
+                      <tr>
+                        <td
+                          className={tdStyle}
+                          style={{ color: "var(--colors-status-positive-text)" }}
+                        >
+                          + Employer NI to Pension
+                        </td>
+                        <td className={tdStyle}>+{formatCurrency(taxResults.employerNiSaving)}</td>
+                        <td className={tdStyle}>
+                          +{formatCurrency(taxResults.employerNiSaving / 12)}
+                        </td>
+                      </tr>
+                    )}
+                    {taxResults.incomeTax > 0 && (
+                      <tr>
+                        <td
+                          className={tdStyle}
+                          style={{ color: "var(--colors-status-danger-text)" }}
+                        >
+                          Income Tax
+                        </td>
+                        <td className={tdStyle}>-{formatCurrency(taxResults.incomeTax)}</td>
+                        <td className={tdStyle}>-{formatCurrency(taxResults.incomeTax / 12)}</td>
+                      </tr>
+                    )}
+                    {taxResults.ni > 0 && (
+                      <tr>
+                        <td
+                          className={tdStyle}
+                          style={{ color: "var(--colors-status-warning-text)" }}
+                        >
+                          National Insurance
+                        </td>
+                        <td className={tdStyle}>-{formatCurrency(taxResults.ni)}</td>
+                        <td className={tdStyle}>-{formatCurrency(taxResults.ni / 12)}</td>
+                      </tr>
+                    )}
+                    {taxResults.studentLoan > 0 && (
+                      <tr>
+                        <td className={tdStyle} style={{ color: "#3b82f6" }}>
+                          Student Loan
+                        </td>
+                        <td className={tdStyle}>-{formatCurrency(taxResults.studentLoan)}</td>
+                        <td className={tdStyle}>-{formatCurrency(taxResults.studentLoan / 12)}</td>
+                      </tr>
+                    )}
+                    <tr
+                      style={{
+                        borderTop: "2px solid",
+                        borderTopColor: "border",
+                        fontWeight: "bold",
+                      }}
+                    >
+                      <td className={tdStyle}>Net Take-Home</td>
+                      <td className={tdStyle}>{formatCurrency(taxResults.netPay)}</td>
+                      <td className={tdStyle}>{formatCurrency(taxResults.netPay / 12)}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Allocation Donut */}
+              <div
+                style={{
+                  minHeight: "200px",
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <ChartFigure summary={pieSummary} title="Salary allocation">
+                  <div style={{ height: "140px", width: "100%" }}>
+                    <ResponsiveContainer height="100%" width="100%">
+                      <PieChart>
+                        <Pie
+                          cx="50%"
+                          cy="50%"
+                          data={pieData}
+                          dataKey="value"
+                          innerRadius={50}
+                          outerRadius={70}
+                          paddingAngle={3}
+                          isAnimationActive={!reducedMotion}
+                        >
+                          {pieData.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={entry.fill} />
+                          ))}
+                        </Pie>
+                        <Tooltip
+                          formatter={(value: any) => formatCurrency(value)}
+                          contentStyle={chartTooltipContentStyle}
+                          itemStyle={chartTooltipItemStyle}
+                          labelStyle={chartTooltipLabelStyle}
+                        />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+                </ChartFigure>
+                {/* Pie Legends: name, amount and share so series are not colour-only */}
+                <div
+                  style={{
+                    display: "flex",
+                    flexWrap: "wrap",
+                    gap: "8px",
+                    justifyContent: "center",
+                    marginTop: "10px",
+                  }}
+                >
+                  {pieData.map((d) => (
+                    <div
+                      key={d.name}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "4px",
+                        fontSize: "10px",
+                      }}
+                    >
+                      <div
+                        style={{
+                          width: "8px",
+                          height: "8px",
+                          borderRadius: "50%",
+                          backgroundColor: d.fill,
+                        }}
+                      />
+                      <FLPText
+                        fontSize="10px"
+                        color="text.muted"
+                        style={{ fontVariantNumeric: "tabular-nums" }}
+                      >
+                        {d.name}: {formatCurrency(d.value)} (
+                        {new Intl.NumberFormat("en-GB", {
+                          style: "percent",
+                          maximumFractionDigits: 0,
+                        }).format(pieTotal > 0 ? d.value / pieTotal : 0)}
+                        )
+                      </FLPText>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
 
-            <FLPButton onClick={() => onApplyIncrease(monthlyIncrease)}>
-              Apply to Savings Forecaster
-            </FLPButton>
-          </div>
-        </FLPCard>
+            {/* Hypothetical Salary Increase Tool */}
+            <div className={raiseCardStyle}>
+              <div style={{ flex: 1 }}>
+                <FLPHeading as="h4" size="sm">
+                  Salary Increase Impact
+                </FLPHeading>
+                <FLPText color="text.muted" fontSize="xs" style={{ marginTop: "4px" }}>
+                  Input a raise to compute how much more take-home pay you can save monthly.
+                </FLPText>
+
+                <div
+                  style={{ display: "flex", alignItems: "center", gap: "16px", marginTop: "12px" }}
+                >
+                  <div style={{ flex: 1 }}>
+                    <FLPText fontSize="10px" fontWeight="semibold" textTransform="uppercase">
+                      Raise Amount (GBP)
+                    </FLPText>
+                    <input
+                      className={numberInputStyle}
+                      style={{ marginTop: "4px" }}
+                      type="number"
+                      value={salaryIncrease}
+                      onChange={(e) => setSalaryIncrease(Number(e.target.value))}
+                    />
+                  </div>
+                  <div>
+                    <FLPText fontSize="10px" fontWeight="semibold" textTransform="uppercase">
+                      Net Monthly Increase
+                    </FLPText>
+                    <FLPHeading as="h5" size="md" color="success.500" mt={1}>
+                      +{formatCurrency(monthlyIncrease)}/mo
+                    </FLPHeading>
+                  </div>
+                </div>
+              </div>
+
+              <FLPButton onClick={() => onApplyIncrease(monthlyIncrease)}>
+                Apply to Savings Forecaster
+              </FLPButton>
+            </div>
+          </FLPCard>
+        ) : (
+          <FLPCard>
+            <FLPText
+              color="text.muted"
+              fontSize="xs"
+              fontWeight="semibold"
+              textTransform="uppercase"
+            >
+              Monthly Take-Home Pay
+            </FLPText>
+            <FLPHeading
+              as="h2"
+              color="text.primary"
+              mt={1}
+              size="2xl"
+              style={{ fontVariantNumeric: "tabular-nums" }}
+            >
+              Not set
+            </FLPHeading>
+            <FLPText color="text.muted" fontSize="sm" style={{ marginTop: "8px" }}>
+              Add your gross salary to see your take-home pay.
+            </FLPText>
+          </FLPCard>
+        )}
       </div>
 
       {/* Disclaimer footer */}
