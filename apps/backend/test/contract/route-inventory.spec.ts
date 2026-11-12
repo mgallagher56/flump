@@ -105,35 +105,56 @@ function normalisePath(raw: string): string {
 const CALL_RE =
   /\b(backendFetch|apiFetch)\s*(?:<[^()]*>)?\s*\(\s*(?:(["'`])((?:\\.|(?!\2)[^\\])*)\2|([A-Za-z_.$]+))/g;
 
-function extractWebCalls(text: string, rel: string): { calls: Call[]; dynamic: string[] } {
+const VERB_LITERAL = /^"(GET|POST|PATCH|PUT|DELETE)"$/;
+
+/**
+ * Anything the extractor cannot read with certainty is reported in `problems` instead of guessed:
+ * concatenated paths and non-literal method values would otherwise be silently skipped or
+ * mistaken for GET.
+ */
+function extractWebCalls(
+  text: string,
+  rel: string,
+): { calls: Call[]; dynamic: string[]; problems: string[] } {
   const calls: Call[] = [];
   const dynamic: string[] = [];
+  const problems: string[] = [];
   const matches = [...text.matchAll(CALL_RE)];
   matches.forEach((m, i) => {
+    const start = m.index ?? 0;
     const end = matches[i + 1]?.index ?? text.length;
-    const window = text.slice(m.index ?? 0, Math.min(end, (m.index ?? 0) + 700));
+    const window = text.slice(start, Math.min(end, start + 700));
     if (m[3] === undefined) {
       dynamic.push(`${rel}:${m[4]}`);
       return;
     }
+    if (/^\s*\+/.test(text.slice(start + m[0].length))) {
+      problems.push(`${rel}: concatenated path after "${m[3]}"`);
+    }
+    if (/\bmethod\s*:\s*[^"\s]/.test(window) || /\bmethod\s*[,}]/.test(window)) {
+      problems.push(`${rel}: non-literal method for "${m[3]}"`);
+    }
     const method = (/method:\s*"(GET|POST|PATCH|PUT|DELETE)"/.exec(window)?.[1] ?? "GET") as Method;
-    calls.push({ method, path: normalisePath(m[3]), source: `${rel}` });
+    calls.push({ method, path: normalisePath(m[3]), source: rel });
   });
 
   for (const w of WRAPPERS.filter((x) => x.file === rel)) {
     const re = new RegExp(
-      `\\b${w.name}\\s*(?:<[^()]*>)?\\s*\\(\\s*(["'\`])((?:\\\\.|(?!\\1)[^\\\\])*)\\1(?:\\s*,\\s*"(GET|POST|PATCH|PUT|DELETE)")?`,
+      `\\b${w.name}\\s*(?:<[^()]*>)?\\s*\\(\\s*(["'\`])((?:\\\\.|(?!\\1)[^\\\\])*)\\1(?:\\s*,\\s*([^,)\\s]+))?(\\s*\\+)?`,
       "g",
     );
     for (const m of text.matchAll(re)) {
-      calls.push({
-        method: (w.methodArg ? (m[3] ?? "GET") : "GET") as Method,
-        path: normalisePath(m[2]),
-        source: rel,
-      });
+      if (m[4]) problems.push(`${rel}: concatenated path after "${m[2]}"`);
+      let method: Method = "GET";
+      if (w.methodArg && m[3] !== undefined) {
+        const lit = VERB_LITERAL.exec(m[3]);
+        if (lit) method = lit[1] as Method;
+        else problems.push(`${rel}: non-literal method ${m[3]} for "${m[2]}"`);
+      }
+      calls.push({ method, path: normalisePath(m[2]), source: rel });
     }
   }
-  return { calls, dynamic };
+  return { calls, dynamic, problems };
 }
 
 const VERBS: Record<number, Method> = {
@@ -168,17 +189,15 @@ function backendRoutes(): Array<{ method: Method; path: string }> {
 }
 
 /**
- * Express matches the first registered route, and literal segments shadow params only by order.
- * Here a call matches when some route has the same verb and the same segment count, where each
- * segment is equal or either side is a parameter.
+ * A call matches when some route has the same verb and segment count, and every segment is equal
+ * or the route segment is a parameter. A parameter in the call never matches a literal route
+ * segment (that would hide a route that only exists as a literal).
  */
 function matches(route: { method: Method; path: string }, call: Call): boolean {
   if (route.method !== call.method) return false;
   const r = route.path.split("/");
   const c = call.path.split("/");
-  return (
-    r.length === c.length && r.every((seg, i) => seg === c[i] || seg === ":p" || c[i] === ":p")
-  );
+  return r.length === c.length && r.every((seg, i) => seg === c[i] || seg === ":p");
 }
 
 const webFiles = walk(WEB_APP_DIR);
@@ -188,13 +207,16 @@ const extracted = webFiles.map((f) => {
 });
 const webCalls = extracted.flatMap((e) => e.calls);
 const webDynamic = extracted.flatMap((e) => e.dynamic);
+const webProblems = extracted.flatMap((e) => e.problems);
 
 describe("web to backend route inventory", () => {
   const routes = backendRoutes();
 
   it("reads a plausible number of backend routes and web call sites", () => {
-    expect(routes.length).toBeGreaterThan(30);
-    expect(webCalls.length).toBeGreaterThan(40);
+    // Minimums sit at today's counts (44 routes, 55 call sites): a silent drop in extraction fails
+    // here. Raise them when routes or call sites are added.
+    expect(routes.length).toBeGreaterThanOrEqual(44);
+    expect(webCalls.length).toBeGreaterThanOrEqual(55);
     expect(routes).toContainEqual({ method: "PATCH", path: "/accounts/:p" });
     expect(routes).toContainEqual({ method: "POST", path: "/bank-connections/:p/refresh" });
   });
@@ -233,6 +255,21 @@ describe("web to backend route inventory", () => {
         `${k.method} ${k.path} is no longer called by the web: remove it from KNOWN_MISSING`,
       ).toBe(true);
     }
+  });
+
+  it("reads every call site with certainty (no concatenated paths or non-literal methods)", () => {
+    expect(webProblems).toEqual([]);
+  });
+
+  it("flags what it cannot read with certainty", () => {
+    const bad = extractWebCalls(
+      'backendFetch("/a/" + id, { method: "POST" }); apiFetch("/b", { method: verb }); apiFetch("/c", { method });',
+      "x.ts",
+    );
+    expect(bad.problems).toHaveLength(3);
+    const good = extractWebCalls('apiFetch("/b", { accessToken, method: "PATCH", body });', "x.ts");
+    expect(good.problems).toEqual([]);
+    expect(good.calls).toEqual([{ method: "PATCH", path: "/b", source: "x.ts" }]);
   });
 
   it("every non-literal call site is on the known-dynamic allow-list", () => {
