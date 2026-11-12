@@ -13,6 +13,14 @@ const meta: Meta<typeof TypographyScale> = {
 export default meta;
 type Story = StoryObj<typeof TypographyScale>;
 
+export const Dark: Story = {
+  globals: { theme: "dark" },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await expect(canvas.getByText("Text Styles")).toBeInTheDocument();
+  },
+};
+
 export const Default: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);

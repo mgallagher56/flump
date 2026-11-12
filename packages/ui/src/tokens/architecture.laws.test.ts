@@ -64,7 +64,17 @@ describe("Architecture & Design System Laws", () => {
   describe("1. Colocated Component Directory Law", () => {
     it("enforces colocated structure for all foundations", () => {
       const foundations = getSubdirectories(FOUNDATIONS_DIR);
-      expect(foundations.length).toBeGreaterThanOrEqual(3);
+      expect(foundations.length).toBeGreaterThanOrEqual(5);
+      // E15 registered foundations (new directories must be listed here deliberately).
+      for (const expected of [
+        "ColorPalette",
+        "Elevation",
+        "Motion",
+        "SpacingAndRadii",
+        "TypographyScale",
+      ]) {
+        expect(foundations).toContain(expected);
+      }
       for (const comp of foundations) {
         verifyColocatedStructure(FOUNDATIONS_DIR, comp);
       }

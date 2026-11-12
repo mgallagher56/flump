@@ -21,6 +21,8 @@ export default defineConfig({
   conditions: {
     extend: {
       dark: ".dark &, [data-theme='dark'] &",
+      // Also declared in panda.preset.ts so consumers of the preset get it; kept here for clarity.
+      compact: "[data-density=compact] &",
     },
   },
   theme: {

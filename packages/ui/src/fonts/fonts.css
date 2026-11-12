@@ -1,0 +1,11 @@
+/*
+ * Self-hosted variable fonts (font-display: swap is set by each @fontsource-variable stylesheet).
+ * Apps import this once: `import "@repo/ui/fonts.css";` and drop their Google Fonts <link> tags.
+ *
+ * FONT SWAP PROCEDURE: change the @fontsource-variable import below and the matching entry in
+ * `fontFamilies` (src/tokens/typography.ts). Nothing else names a typeface.
+ * Only the weight axis ("wght.css") is loaded: no italic, no optical-size axis.
+ */
+@import "@fontsource-variable/inter/wght.css";
+@import "@fontsource-variable/plus-jakarta-sans/wght.css";
+@import "@fontsource-variable/jetbrains-mono/wght.css";

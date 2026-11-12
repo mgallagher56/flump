@@ -9,4 +9,12 @@ describe("SpacingAndRadii Foundation", () => {
     expect(screen.getByText("4px Geometric Spacing Scale")).toBeDefined();
     expect(screen.getByText("Border Radii Scale")).toBeDefined();
   });
+
+  it("renders both density panels", () => {
+    render(<SpacingAndRadii />);
+    expect(screen.getByTestId("density-comfortable").getAttribute("data-density")).toBe(
+      "comfortable",
+    );
+    expect(screen.getByTestId("density-compact").getAttribute("data-density")).toBe("compact");
+  });
 });

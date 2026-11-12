@@ -1,3 +1,11 @@
+import { elevationShadows } from "./elevation";
+import { densitySizes, densitySpacing } from "./layout";
+
+export * from "./elevation";
+export * from "./layout";
+export * from "./motion";
+export * from "./typography";
+
 export const colors = {
   // Core Brand
   indigo: {
@@ -119,18 +127,6 @@ export const colors = {
   },
 } as const;
 
-export const fonts = {
-  display: {
-    value: "'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
-  },
-  sans: {
-    value: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
-  },
-  mono: {
-    value: "'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
-  },
-} as const;
-
 export const fontSizes = {
   xs: { value: "0.75rem" }, // 12px minimum floor
   sm: { value: "0.875rem" }, // 14px
@@ -174,9 +170,6 @@ export const radii = {
 } as const;
 
 export const shadows = {
-  xs: {
-    value: "0 1px 2px rgba(15, 23, 42, 0.04)",
-  },
   cardLight: {
     value: "0 1px 2px rgba(15, 23, 42, 0.04)",
   },
@@ -296,24 +289,7 @@ export const semanticTokens = {
       grid: { value: { base: "rgba(20, 23, 43, 0.07)", _dark: "rgba(255, 255, 255, 0.07)" } },
     },
   },
-  shadows: {
-    card: {
-      value: {
-        base: "{shadows.cardLight}",
-        _dark: "inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 8px 24px rgba(0,0,0,0.4)",
-      },
-    },
-    cardHover: {
-      value: {
-        base: "{shadows.cardHoverLight}",
-        _dark: "inset 0 1px 0 rgba(255, 255, 255, 0.12), 0 16px 32px rgba(0,0,0,0.5)",
-      },
-    },
-    floating: {
-      value: {
-        base: "{shadows.floatingLight}",
-        _dark: "inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 20px 40px rgba(0,0,0,0.5)",
-      },
-    },
-  },
+  shadows: elevationShadows,
+  spacing: densitySpacing,
+  sizes: densitySizes,
 };

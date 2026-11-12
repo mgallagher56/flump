@@ -3,6 +3,36 @@ import { css } from "../../../styled-system/css";
 import { fontSizes, fonts } from "../../tokens";
 import { specimenRow, specimenSection } from "./TypographyScale.styles";
 
+// Literal textStyle names so Panda can extract each class statically.
+const TEXT_STYLE_SPECIMENS = [
+  { name: "display", sample: "Know where you stand", cls: css({ textStyle: "display" }) },
+  { name: "heading.xl", sample: "Your net worth", cls: css({ textStyle: "heading.xl" }) },
+  { name: "heading.lg", sample: "Mortgage overpayment", cls: css({ textStyle: "heading.lg" }) },
+  { name: "heading.md", sample: "Upcoming payments", cls: css({ textStyle: "heading.md" }) },
+  { name: "heading.sm", sample: "Account details", cls: css({ textStyle: "heading.sm" }) },
+  {
+    name: "body.lg",
+    sample: "Overpaying £200 a month would clear the mortgage 4 years sooner.",
+    cls: css({ textStyle: "body.lg" }),
+  },
+  {
+    name: "body.md",
+    sample: "Overpaying £200 a month would clear the mortgage 4 years sooner.",
+    cls: css({ textStyle: "body.md" }),
+  },
+  {
+    name: "body.sm",
+    sample: "Overpaying £200 a month would clear the mortgage 4 years sooner.",
+    cls: css({ textStyle: "body.sm" }),
+  },
+  { name: "label.md", sample: "Monthly overpayment", cls: css({ textStyle: "label.md" }) },
+  { name: "label.sm", sample: "UPDATED 12 NOV 2026", cls: css({ textStyle: "label.sm" }) },
+  { name: "numeric.kpi", sample: "£1,240,500", cls: css({ textStyle: "numeric.kpi" }) },
+  { name: "numeric.lg", sample: "£85,200.00", cls: css({ textStyle: "numeric.lg" }) },
+  { name: "numeric.md", sample: "£1,450.50", cls: css({ textStyle: "numeric.md" }) },
+  { name: "numeric.sm", sample: "29.90%", cls: css({ textStyle: "numeric.sm" }) },
+] as const;
+
 export const TypographyScale: FC = () => {
   const tabularSpecimens = [
     { label: "High Net Worth", valueA: "£1,240,500", valueB: "£85,200" },
@@ -31,7 +61,8 @@ export const TypographyScale: FC = () => {
           Flump Typography Scale & Tabular Numbers
         </h1>
         <p className={css({ fontSize: "sm", color: "text.muted", mt: "4px" })}>
-          3-Tier Font Stack: Plus Jakarta Sans (Display), Inter (Sans), JetBrains Mono (Code/Mono).
+          Font roles: heading (Plus Jakarta Sans), body and numeric (Inter), mono (JetBrains Mono).
+          Each role is defined once in tokens/typography.ts.
         </p>
       </div>
 
@@ -80,6 +111,40 @@ export const TypographyScale: FC = () => {
             <code className={css({ fontSize: "xs", color: "text.muted" })}>{fonts.mono.value}</code>
           </div>
         </div>
+      </div>
+
+      {/* Text styles (E15) */}
+      <div className={specimenSection()}>
+        <h2
+          className={css({
+            fontFamily: "display",
+            fontSize: "lg",
+            fontWeight: "semibold",
+            mb: "8px",
+          })}
+        >
+          Text Styles
+        </h2>
+        <p className={css({ fontSize: "xs", color: "text.muted", mb: "16px" })}>
+          Use <code>textStyle</code> instead of assembling size, weight and line height by hand.
+          Numeric styles carry tabular-nums.
+        </p>
+        {TEXT_STYLE_SPECIMENS.map((spec) => (
+          <div key={spec.name} className={specimenRow()}>
+            <span className={spec.cls}>{spec.sample}</span>
+            <code
+              className={css({
+                fontFamily: "mono",
+                fontSize: "xs",
+                color: "text.muted",
+                flexShrink: 0,
+                ml: "16px",
+              })}
+            >
+              {spec.name}
+            </code>
+          </div>
+        ))}
       </div>
 
       {/* Font Size Hierarchy */}
