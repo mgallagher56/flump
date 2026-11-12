@@ -28,9 +28,9 @@ export function assertSafeTestDatabase(url: string, env: Record<string, string |
       `Refusing destructive DB tests: host "${host}" is not local (localhost, 127.0.0.1 or ::1).`,
     );
   }
-  if (!/test/i.test(database) && env.ALLOW_DESTRUCTIVE_DB_TESTS !== "1") {
+  if (!/(^|[_-])test($|[_-])/i.test(database) && env.ALLOW_DESTRUCTIVE_DB_TESTS !== "1") {
     throw new Error(
-      `Refusing destructive DB tests: database "${database}" does not look like a test database. Use a name containing "test" or set ALLOW_DESTRUCTIVE_DB_TESTS=1.`,
+      `Refusing destructive DB tests: database "${database}" does not look like a test database. Use a name with "test" as a whole word delimited by _ or - (e.g. flump_ci_test) or set ALLOW_DESTRUCTIVE_DB_TESTS=1.`,
     );
   }
 }
