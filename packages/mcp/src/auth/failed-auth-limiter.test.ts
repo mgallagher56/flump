@@ -33,11 +33,24 @@ describe("FailedAuthLimiter", () => {
     const l = new FailedAuthLimiter(3, 60_000);
     l.recordFailure("1.1.1.1", 0);
     l.recordFailure("1.1.1.1", 0);
-    l.recordSuccess("1.1.1.1");
+    l.recordSuccess("1.1.1.1", 0);
     l.recordFailure("1.1.1.1", 1);
     l.recordFailure("1.1.1.1", 1);
     expect(l.check("1.1.1.1", 2).blocked).toBe(false);
     expect(l.size).toBe(1);
+  });
+
+  it("clears failures at most once per window so a valid token cannot reset the limit forever", () => {
+    const l = new FailedAuthLimiter(3, 60_000);
+    for (let round = 0; round < 5; round++) {
+      l.recordFailure("1.1.1.1", round);
+      l.recordFailure("1.1.1.1", round);
+      l.recordSuccess("1.1.1.1", round);
+    }
+    l.recordFailure("1.1.1.1", 10);
+    l.recordFailure("1.1.1.1", 10);
+    l.recordFailure("1.1.1.1", 10);
+    expect(l.check("1.1.1.1", 11).blocked).toBe(true);
   });
 
   it("keys IPv6 by /64 prefix", () => {

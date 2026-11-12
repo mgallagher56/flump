@@ -11,6 +11,7 @@ export interface FailedAuthCheck {
 interface Entry {
   count: number;
   resetAt: number;
+  cleared?: boolean;
 }
 
 /**
@@ -53,9 +54,16 @@ export class FailedAuthLimiter {
     return this.entries.size;
   }
 
-  /** Call after a successful authentication so valid clients behind a shared IP are not blocked. */
-  recordSuccess(ip: string): void {
-    this.entries.delete(normalizeIpKey(ip));
+  /**
+   * Call after a successful authentication so valid clients behind a shared IP are not blocked.
+   * Clears the failure count at most once per window: otherwise an attacker holding any valid
+   * token could interleave one valid request between guesses and never reach the limit.
+   */
+  recordSuccess(ip: string, now = Date.now()): void {
+    const entry = this.entries.get(normalizeIpKey(ip));
+    if (!entry || now >= entry.resetAt || entry.cleared) return;
+    entry.count = 0;
+    entry.cleared = true;
   }
 
   check(rawIp: string, now = Date.now()): FailedAuthCheck {
