@@ -296,3 +296,22 @@ describe("calculateNetTakeHome", () => {
     expect(result?.netAnnual).toBeLessThan(60000);
   });
 });
+
+describe("Self Assessment module toggle", () => {
+  it("is off by default and opting in adds tax to pages, widgets and order", async () => {
+    mockUpdateProfile.mockClear();
+    render(<UserProfilePanel initialProfile={DEFAULT_PROFILE} />);
+    const toggle = screen.getByTestId("self-assessment-module-toggle") as HTMLInputElement;
+    expect(toggle.checked).toBe(false);
+    fireEvent.click(toggle);
+    await waitFor(() => {
+      expect(mockUpdateProfile).toHaveBeenCalledWith(
+        expect.objectContaining({
+          enabledPages: expect.arrayContaining(["tax"]),
+          dashboardWidgets: expect.arrayContaining(["tax"]),
+          dashboardWidgetOrder: expect.arrayContaining(["tax"]),
+        }),
+      );
+    });
+  });
+});

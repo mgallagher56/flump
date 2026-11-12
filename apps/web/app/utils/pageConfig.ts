@@ -119,8 +119,15 @@ export const DASHBOARD_WIDGET_METAS: Record<DashboardWidgetKey, DashboardWidgetM
 
 export const ALL_DASHBOARD_WIDGET_KEYS: DashboardWidgetKey[] = [...ALL_PAGE_KEYS];
 
-export const DEFAULT_ENABLED_PAGES: AppPageKey[] = [...ALL_PAGE_KEYS];
-export const DEFAULT_DASHBOARD_WIDGETS: DashboardWidgetKey[] = [...ALL_PAGE_KEYS];
+/**
+ * Opt-in modules are off by default and switched on in Profile (or by onboarding when the user is
+ * self-employed). Self Assessment is the only one today (E16 D3-B).
+ */
+export const OPT_IN_PAGE_KEYS: AppPageKey[] = ["tax"];
+export const DEFAULT_ENABLED_PAGES: AppPageKey[] = ALL_PAGE_KEYS.filter(
+  (k) => !OPT_IN_PAGE_KEYS.includes(k),
+);
+export const DEFAULT_DASHBOARD_WIDGETS: DashboardWidgetKey[] = [...DEFAULT_ENABLED_PAGES];
 export const DEFAULT_WIDGET_SIZES: Record<string, "normal" | "wide"> = {
   accounts: "normal",
   budget: "normal",
@@ -134,7 +141,7 @@ export const DEFAULT_WIDGET_SIZES: Record<string, "normal" | "wide"> = {
 
 export function isPageEnabled(enabledPages: string[] | null | undefined, key: AppPageKey): boolean {
   if (!enabledPages || !Array.isArray(enabledPages) || enabledPages.length === 0) {
-    return true; // Default to enabled
+    return DEFAULT_ENABLED_PAGES.includes(key); // Nothing stored: the default set, without opt-in modules
   }
   return enabledPages.includes(key);
 }

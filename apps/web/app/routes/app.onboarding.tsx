@@ -39,7 +39,11 @@ import { buildOnboardingSeedJobs } from "~/services/onboarding-seed";
 import { actionErrorResponse, throwRouteError } from "~/services/route-error.server";
 import { useFinancialBaseline } from "~/state/baseline.store";
 import { getAuthSession, requireAccessToken } from "~/utils/auth.server";
-import { ALL_PAGE_KEYS, type AppPageKey, type DashboardWidgetKey } from "~/utils/pageConfig";
+import {
+  type AppPageKey,
+  type DashboardWidgetKey,
+  DEFAULT_ENABLED_PAGES,
+} from "~/utils/pageConfig";
 
 export const loader = async (args: LoaderFunctionArgs) => {
   const { user, accessToken } = await getAuthSession(args, { ensureSignedIn: true });
@@ -62,7 +66,7 @@ export const action = async (args: ActionFunctionArgs) => {
   const rawEnabledPages = formData.get("enabledPages");
   const enabledPages: AppPageKey[] = rawEnabledPages
     ? JSON.parse(rawEnabledPages as string)
-    : ALL_PAGE_KEYS;
+    : DEFAULT_ENABLED_PAGES;
 
   const dashboardWidgets: DashboardWidgetKey[] = [...enabledPages];
   const dashboardWidgetOrder: DashboardWidgetKey[] = [...enabledPages];
@@ -234,7 +238,8 @@ export default function OnboardingRoute() {
     if (pot > 0 || pensionPct > 0) modules.add("pension");
     if (housingStatus === "mortgage" || mortgageBalance > 0 || propertyValue > 0)
       modules.add("mortgage");
-    if (employmentType === "self-employed" || salary >= 95000) modules.add("tax");
+    // Self Assessment is opt-in: only self-employed users get it by default.
+    if (employmentType === "self-employed") modules.add("tax");
     return Array.from(modules);
   }, [
     unsecuredDebt,

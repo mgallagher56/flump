@@ -329,6 +329,26 @@ const UserProfilePanel: FC<UserProfilePanelProps> = ({ initialProfile, user }) =
     }
   };
 
+  // Self Assessment is an opt-in module (E16 D3-B): a page, nav entry and dashboard widget.
+  const selfAssessmentOn = (profile.enabledPages ?? []).includes("tax");
+  const [moduleSaving, setModuleSaving] = useState(false);
+  const handleToggleSelfAssessment = async (on: boolean) => {
+    const withTax = (list: string[] | undefined) => {
+      const base = (list ?? []).filter((k) => k !== "tax");
+      return on ? [...base, "tax"] : base;
+    };
+    setModuleSaving(true);
+    try {
+      await updateProfile({
+        enabledPages: withTax(profile.enabledPages),
+        dashboardWidgets: withTax(profile.dashboardWidgets),
+        dashboardWidgetOrder: withTax(profile.dashboardWidgetOrder),
+      });
+    } finally {
+      setModuleSaving(false);
+    }
+  };
+
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -583,6 +603,37 @@ const UserProfilePanel: FC<UserProfilePanelProps> = ({ initialProfile, user }) =
                 />
               </div>
             </div>
+          </FLPCard>
+
+          {/* Optional modules */}
+          <FLPCard>
+            <label
+              className={css({
+                display: "flex",
+                alignItems: "flex-start",
+                gap: "12px",
+                cursor: "pointer",
+              })}
+              htmlFor="self-assessment-module-toggle"
+            >
+              <input
+                checked={selfAssessmentOn}
+                data-testid="self-assessment-module-toggle"
+                disabled={moduleSaving}
+                id="self-assessment-module-toggle"
+                onChange={(e) => handleToggleSelfAssessment(e.target.checked)}
+                type="checkbox"
+              />
+              <span>
+                <FLPText color="text.primary" fontSize="sm" fontWeight="semibold">
+                  Self Assessment module
+                </FLPText>
+                <FLPText color="text.muted" fontSize="xs">
+                  Income and expense records by tax year, for self-employed or rental income. Adds
+                  Tax to your menu and dashboard.
+                </FLPText>
+              </span>
+            </label>
           </FLPCard>
 
           {/* Email & Account Security Card */}
