@@ -65,4 +65,22 @@ tx_004,04/02/2026,12:00:00,Direct Debit,Octopus Energy,,Bills,-110.00,GBP,-110.0
     const sync = await parser.syncTransactions(exchanged.accessTokenEncrypted);
     expect(sync.added.length).toBe(4);
   });
+
+  it("creates a csv upload link session and revokes without error", async () => {
+    const parser = new CsvStatementParser();
+    const link = await parser.createLinkSession("user 1");
+    expect(link.linkTokenOrUrl).toBe("csv://upload?userId=user%201");
+    expect(new Date(link.expiresAt).getTime()).toBeGreaterThan(Date.now());
+    await expect(parser.revokeConnection("ignored")).resolves.toBeUndefined();
+  });
+
+  it("parses a generic HSBC-style statement (date, description, amount, balance)", () => {
+    const csv = `Date,Description,Amount,Balance
+09/02/2026,Co-op Food,-12.30,500.00
+10/02/2026,Salary,2000.00,2487.70`;
+    const { transactions } = parseBankCsvContent(csv);
+    expect(transactions).toHaveLength(2);
+    expect(transactions[0]?.amountGbp).toBe(-12.3);
+    expect(transactions[1]?.amountGbp).toBe(2000);
+  });
 });
