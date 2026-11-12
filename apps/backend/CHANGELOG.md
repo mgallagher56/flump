@@ -1,5 +1,85 @@
 # Changelog
 
+## [1.24.0](https://github.com/mgallagher56/flump/compare/flump/backend-v1.23.0...flump/backend-v1.24.0) (2026-11-12)
+
+
+### Features ✨
+
+* **backend:** add /health liveness and /health/ready readiness; enable graceful shutdown hooks ([ab4dad9](https://github.com/mgallagher56/flump/commit/ab4dad9ba0a15cf63402fc383d975a72ac911064))
+* **backend:** add baseline and bank-token-clear migrations ([03513fe](https://github.com/mgallagher56/flump/commit/03513fec90c86900b8ea93b44cb48bc4e72e4f3e))
+* **backend:** add database config resolver with TLS and strict-environment rules ([4ea4d96](https://github.com/mgallagher56/flump/commit/4ea4d96b30f7fb9a5c48671353fcc83efa6892c3))
+* **backend:** add WorkOS JWT and dev-bypass token verifiers with boot validation ([1f25c32](https://github.com/mgallagher56/flump/commit/1f25c32548b3b7b2ba415f3f98966721b4b6f57f))
+* **backend:** remove TCP proxy, validate CORS, add helmet and body limits, own-email password reset ([330e6ca](https://github.com/mgallagher56/flump/commit/330e6caa50e36cb9b87614183e9186022166acf1))
+* **backend:** RemoveSeededExampleData migration deletes seeded rows and mock identity data ([d1877b1](https://github.com/mgallagher56/flump/commit/d1877b111e61e5713201f4fc683e84e1dfd4c484))
+
+
+### Bug Fixes 🪲
+
+* **backend:** accept both WorkOS issuer forms, allow WORKOS_ISSUER override, log failing claim, pin jose ([10b9e25](https://github.com/mgallagher56/flump/commit/10b9e25e595d6282c0018c42871b0bfc0b4b6e47))
+* **backend:** allow-list tax record writes and verify transaction account ownership ([fe3c9ef](https://github.com/mgallagher56/flump/commit/fe3c9ef26d18a1b33c2bd0f2bddc4ff3087a3f2a))
+* **backend:** check account ownership before deleting its transactions ([9b02818](https://github.com/mgallagher56/flump/commit/9b028180b4f48407ae70f06f66d78ab50d9d4da4))
+* **backend:** getBudgetEntries never seeds, seed-defaults idempotent, drop reset route ([ed4c2a8](https://github.com/mgallagher56/flump/commit/ed4c2a85c566ce638b2765cbb269c876cfa43345))
+* **backend:** guard destructive migration tests and make the token clear run once ([0831a45](https://github.com/mgallagher56/flump/commit/0831a457701188bc73e30302b1270211c30b1902))
+* **backend:** ignore client-supplied ids and ownership on account and transaction writes ([9b80210](https://github.com/mgallagher56/flump/commit/9b8021090d6a07f25b7016f208cfcd08060e53b2))
+* **backend:** never seed accounts on getAccounts or getPortfolioSnapshot ([a956d7e](https://github.com/mgallagher56/flump/commit/a956d7e361ad70b8027e8486650a56f5bd8c3e0b))
+* **backend:** never seed tax records on getTaxRecords, add no-seed guard spec ([b33c7ae](https://github.com/mgallagher56/flump/commit/b33c7ae290aa7ce153be9cfab89e0009be59c7cc))
+* **backend:** race-safe lazy profile creation ([bb22354](https://github.com/mgallagher56/flump/commit/bb2235401095c851f4bdb5d2f90d8ab7d2c2e623))
+* **backend:** register bank-connections refresh route, reject blank budget name on PATCH ([5a31449](https://github.com/mgallagher56/flump/commit/5a31449b2cb13ce810139ef42e135a2bca22307c))
+* **backend:** reject query strings in assertSafeTestDatabase URLs ([6c716f3](https://github.com/mgallagher56/flump/commit/6c716f3cfe85bd1c1c6396a285065e4456f28d50))
+* **backend:** require exp claim and make test helper noSub real ([ce5aa44](https://github.com/mgallagher56/flump/commit/ce5aa44c9959ff8684691b318678cd175d45f196))
+* **backend:** stop returning bank tokens and handle cleared or undecryptable connections ([277a835](https://github.com/mgallagher56/flump/commit/277a835365dd8932bb07f36cd9e481937a5366fe))
+* **backend:** validate database and banking config at boot from a single options source ([2a8ed2a](https://github.com/mgallagher56/flump/commit/2a8ed2add8a65eb43b7bbb0a634d6040710f4070))
+* **backend:** verify WorkOS tokens and fail closed, drop mock auth and callback bypass ([3053656](https://github.com/mgallagher56/flump/commit/30536567bb0698e2909fe7756fc0cff093f95406))
+* **backend:** warn on plaintext remote DB, document dev schema setup, keep CLI from auto-running migrations ([96d80e2](https://github.com/mgallagher56/flump/commit/96d80e2cfcc0f6ae31b54df9192bb3c081357833))
+* **banking:** require the encryption key outside development and throw on failed decrypt ([560eb84](https://github.com/mgallagher56/flump/commit/560eb84166c78f475ae407c76efd70dfcb585f77))
+* **deps:** update typeorm to v1 ([ad4cd80](https://github.com/mgallagher56/flump/commit/ad4cd80637c9e59d1dd39728446799cc96eaa54f))
+* **mcp:** accept only personal access tokens and return 401 for every auth failure ([1195e94](https://github.com/mgallagher56/flump/commit/1195e94f4e1b60b6a05f9df160a5166df8972b4c))
+* **security:** address PR 390 review (honest reset errors, limiter reset and /64 keys, trust-proxy env, CORS warn-and-deny, SECURITY_CONTACT-gated security.txt, isFlumpHost cases) ([5bd34ea](https://github.com/mgallagher56/flump/commit/5bd34ea20bb6ab22bee5b4b929a2b6d05022ccf1))
+* **security:** trust one proxy hop in production, nonce marketing theme script, ledger and stale rule ([cb4c1c2](https://github.com/mgallagher56/flump/commit/cb4c1c2e5b8ed52ade52f31f4942fb04923da15c))
+* **ui,backend:** name EmptyState landmark, clarify README hash placeholder ([e9eb297](https://github.com/mgallagher56/flump/commit/e9eb2973f5e34584bf5bd31867dddecef896744a))
+* web-to-backend contract bugs (account currency, budget entry name, PATCH accounts) ([c4d709b](https://github.com/mgallagher56/flump/commit/c4d709b7aba398be55313255c397319031aea8f5))
+
+
+### Build 🛠️
+
+* **test:** add coverage include lists per workspace and untrack committed coverage output ([e9d78fd](https://github.com/mgallagher56/flump/commit/e9d78fd3f1144308ad30899dc6f26dfbdfbc19e6))
+
+
+### CI 🤖
+
+* allow-list the seed-cleanup migration in check:auth, drop mock ids from README ([900aaf0](https://github.com/mgallagher56/flump/commit/900aaf04a0e909ca609552d5309fee8e0127660a))
+* run the real-Postgres migration suite in CI and pass its env through turbo ([09cca20](https://github.com/mgallagher56/flump/commit/09cca20fd1bf8d084c71f29c114ff5e8253a0776))
+
+
+### Documentation 📙
+
+* add pre-deploy checklist and make example secret placeholders fail loudly ([fd91d3a](https://github.com/mgallagher56/flump/commit/fd91d3a1f32f5cc80c95efcb49ea5fef19b83690))
+* document database, TLS, banking key and migrations configuration ([32333c7](https://github.com/mgallagher56/flump/commit/32333c766bebda1c9a050e5b59981c9396fb5583))
+
+
+### Tests 🧪
+
+* **backend:** add cross-user access tests for account, transaction, connection, budget and tax resources ([a842568](https://github.com/mgallagher56/flump/commit/a842568ca859b3c4590a98bc12d5de6fa94e5401))
+* **backend:** add web-to-backend route inventory guard (E23 P0-2) ([9fc27ba](https://github.com/mgallagher56/flump/commit/9fc27ba7e643111cb7d30d8ee70de1c9a1b33ba9))
+* **backend:** derive migration list from src/migrations via shared discoverMigrations helper ([ba123d7](https://github.com/mgallagher56/flump/commit/ba123d7648be5968479208b0182025c825c1ab32))
+* **backend:** fail collection when REQUIRE_DB_TESTS=1 and no test database is set ([00e6709](https://github.com/mgallagher56/flump/commit/00e67098ba395a68defc8e4b88e78e6629a11ee0))
+* **backend:** harden contract test (split-field reset, discovered migrations, honest pairing) ([fa11e76](https://github.com/mgallagher56/flump/commit/fa11e7612f06ebc3727e6633af4102c37c7e7540))
+* **backend:** load discovered migrations lazily (no top-level await, hoisted vi.mock safe) ([c18685b](https://github.com/mgallagher56/flump/commit/c18685b4ab37cc96cfd493257e10e91b93dda260))
+* **backend:** lower route-inventory sanity floors to the real counts ([1b2de34](https://github.com/mgallagher56/flump/commit/1b2de34820d2add1a0f373b3fac33b70e38df61c))
+* **backend:** MCP context pack for a new user writes no accounts or data ([e6371b6](https://github.com/mgallagher56/flump/commit/e6371b6d1dd8db88711bba5d4857a42c75e66c25))
+* **backend:** require 'test' as a whole word in the safe test database name ([983c7c1](https://github.com/mgallagher56/flump/commit/983c7c1f8e0b06e2a650dc9b215646eda4370c1d))
+* **backend:** run vitest files serially so real-Postgres suites do not race ([f1db970](https://github.com/mgallagher56/flump/commit/f1db97049ccc7388dc9ae5409995288159e2c3e8))
+* **backend:** tighten route inventory (no guessing, strict param matching, pinned counts) ([7ca7a70](https://github.com/mgallagher56/flump/commit/7ca7a70667bffe6f8d6e4cd9e4d7d072bac0ab2b))
+* **backend:** web-to-backend contract test on real Postgres (E23 P0-3) ([94d783c](https://github.com/mgallagher56/flump/commit/94d783c91eb5602e0547441e8b0276cc350de645))
+* **ci:** route tests, audit gate, token and tabular-nums ratchets, coverage floors ([e96cf81](https://github.com/mgallagher56/flump/commit/e96cf81e8e858030899848f57a8a1d7904e86fdc))
+* coverage tasks (turbo otherwise strips them and the suite skips). ([09cca20](https://github.com/mgallagher56/flump/commit/09cca20fd1bf8d084c71f29c114ff5e8253a0776))
+* keep web onboarding twin literal (web tsconfig cannot import backend files); no Function type ([89da968](https://github.com/mgallagher56/flump/commit/89da968b9bd4f31f088b2ee5a436b553a017c3f8))
+
+
+### Miscellaneous 🙃
+
+* **backend:** type-check test/ via tsconfig.test.json in check-types ([13830e9](https://github.com/mgallagher56/flump/commit/13830e9c5ba182ddd662785c24f0c8d93aabd9b9))
+
 ## [1.23.0](https://github.com/mgallagher56/flump/compare/flump/backend-v1.22.2...flump/backend-v1.23.0) (2026-11-11)
 
 

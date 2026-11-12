@@ -1,5 +1,5 @@
 {
-  "apps/web": "1.25.1",
-  "apps/backend": "1.23.0",
-  "apps/marketing": "1.23.1"
+  "apps/web": "1.26.0",
+  "apps/backend": "1.24.0",
+  "apps/marketing": "1.24.0"
 }

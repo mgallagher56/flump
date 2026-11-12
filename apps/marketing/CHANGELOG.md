@@ -1,5 +1,49 @@
 # Changelog
 
+## [1.24.0](https://github.com/mgallagher56/flump/compare/flump/marketing-v1.23.1...flump/marketing-v1.24.0) (2026-11-12)
+
+
+### Features ✨
+
+* **security:** marketing CSP and generic 500, security.txt, MCP generic errors and failed-auth limiter, security docs ([1a60214](https://github.com/mgallagher56/flump/commit/1a602141db071a83e6f422977fedbed3ba6e93fb))
+* status text colours use status.*.text tokens (E8 T35), storybook router mock exports MemoryRouter ([ace97cb](https://github.com/mgallagher56/flump/commit/ace97cb0a5247021750fcdbf7f30c3f801ca1e31))
+* Storybook a11y gate (vitest browser project, light/dark runs, waiver ratchet, non-required CI job) ([c4e5ed4](https://github.com/mgallagher56/flump/commit/c4e5ed400534c471c89af3691c19bd07dc6d97b2))
+* **web,marketing:** add healthz, robots.txt and X-Robots-Tag noindex unless ALLOW_INDEXING=true ([529bcab](https://github.com/mgallagher56/flump/commit/529bcab1080392421a4a35bb8175961b8a59d7a2))
+* **web:** E8 form-field a11y, primary.solid sweep, focus/scroll css, keyboard and dialog fixes ([c857b78](https://github.com/mgallagher56/flump/commit/c857b78561cae6a1c1c996c5cd2cd0cbb2f77a6d))
+* **web:** E8 landmarks, chart figures, live regions, icon-button labels, a11y lint rules to error ([5066d00](https://github.com/mgallagher56/flump/commit/5066d00b559d76f276302826b299d014af380ca3))
+
+
+### Bug Fixes 🪲
+
+* **ci:** refresh stale design-token baseline, add ToolPage tests for marketing branch floor ([f9c3599](https://github.com/mgallagher56/flump/commit/f9c35995f1e33cf3ec947484f4033369e06d5bd1))
+* **marketing:** give the McpSpotlightSection outline button readable text on the contrast panel ([020453c](https://github.com/mgallagher56/flump/commit/020453cd2a30e4573a22488fd8b94a518b48c638))
+* **marketing:** remove fake security enquiry form and false confirmation ([8f2a133](https://github.com/mgallagher56/flump/commit/8f2a13320d8731b639c674acb8e0444475a7f569))
+* **marketing:** remove unsupported FCA, security, pricing and MCP claims (E7) ([6278f57](https://github.com/mgallagher56/flump/commit/6278f571a71e6abf59ec4025d27067cbe7003092))
+* **marketing:** use the secondary Button on the McpSpotlightSection contrast panel ([250b225](https://github.com/mgallagher56/flump/commit/250b225a421116c4b9b408369c9c530ddb74b862))
+* **ops:** address PR review (owner id checks, mock-identity review, backup verification, recovery commands, robots/ALLOW_INDEXING, CI runs ops tests) ([841a8a1](https://github.com/mgallagher56/flump/commit/841a8a160b6327419533e3c58b21964cda27316a))
+* round-2 review (rule-scoped a11y waivers, tab-order sweep, storybook alias, spinner, labels) ([a7e68f0](https://github.com/mgallagher56/flump/commit/a7e68f08d4d9acc8381203a4c9a488539401d1c1))
+* **security:** address PR 390 review (honest reset errors, limiter reset and /64 keys, trust-proxy env, CORS warn-and-deny, SECURITY_CONTACT-gated security.txt, isFlumpHost cases) ([5bd34ea](https://github.com/mgallagher56/flump/commit/5bd34ea20bb6ab22bee5b4b929a2b6d05022ccf1))
+* **security:** trust one proxy hop in production, nonce marketing theme script, ledger and stale rule ([cb4c1c2](https://github.com/mgallagher56/flump/commit/cb4c1c2e5b8ed52ade52f31f4942fb04923da15c))
+* **web,marketing:** apply owner copy decisions, remove legal statements, align web copy (E7) ([32f9d2f](https://github.com/mgallagher56/flump/commit/32f9d2f56035b11474cfc31691e515eb41f59695))
+* **web,marketing:** round 3 copy fixes, bank dialog copy, claims guards (E7) ([16ae682](https://github.com/mgallagher56/flump/commit/16ae682f314c19c6f2d6434010151d1dd04f6516))
+* **web,ui:** add RouteErrorBoundary styles file to satisfy colocation law, include scanned app files in ui test cache inputs ([e45a5dc](https://github.com/mgallagher56/flump/commit/e45a5dc52dcf83df64be9682a4562f32e25865fa))
+
+
+### Build 🛠️
+
+* **test:** add coverage include lists per workspace and untrack committed coverage output ([e9d78fd](https://github.com/mgallagher56/flump/commit/e9d78fd3f1144308ad30899dc6f26dfbdfbc19e6))
+
+
+### Tests 🧪
+
+* **ci:** route tests, audit gate, token and tabular-nums ratchets, coverage floors ([e96cf81](https://github.com/mgallagher56/flump/commit/e96cf81e8e858030899848f57a8a1d7904e86fdc))
+* **marketing:** waive color-contrast on McpSpotlightSection Light story like Default/Dark ([c6f931e](https://github.com/mgallagher56/flump/commit/c6f931e454dd8340d54192c0d2ce6a6509a2583a))
+
+
+### Miscellaneous 🙃
+
+* **marketing:** revert incidental tsbuildinfo changes ([11acd0f](https://github.com/mgallagher56/flump/commit/11acd0fe0e6b392ff90c3fb1e16fc8d4c7dda205))
+
 ## [1.23.1](https://github.com/mgallagher56/flump/compare/flump/marketing-v1.23.0...flump/marketing-v1.23.1) (2026-11-11)
 
 
