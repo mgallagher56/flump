@@ -22,11 +22,8 @@ describe("taxTrapCopy", () => {
     const analysis = calculateTaxTrapRelief(110000, undefined, "SCOTLAND");
     const copy = getTaxTrapCopy(analysis);
 
-    expect(copy.breakdown).toBe(
-      `${formatTrapRate(analysis.marginalRatePct)} income tax, ${formatTrapRate(
-        analysis.effectiveMarginalRatePct,
-      )} including NI`,
-    );
-    expect(copy.breakdown).not.toBe("60% income tax, 62% including NI");
+    expect(copy.incomeTaxRate).toBe("67.5%");
+    expect(copy.effectiveRate).toBe("69.5%");
+    expect(copy.breakdown).toBe("67.5% income tax, 69.5% including NI");
   });
 });

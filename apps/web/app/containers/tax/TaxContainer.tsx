@@ -54,6 +54,10 @@ import { useFinancialBaseline } from "~/state/baseline.store";
 
 const numeric = css({ fontVariantNumeric: "tabular-nums" });
 
+/** Unknown PAYE salary renders "Not set", never £0. */
+const formatPaye = (value: number | undefined, format: (n: number) => string): string =>
+  value && value > 0 ? format(value) : "Not set";
+
 const TaxContainer: FC = () => {
   const { t } = useTranslation();
   const fetcher = useFetcher();
@@ -692,8 +696,8 @@ const TaxContainer: FC = () => {
             {formatCurrency(activeYearData.totalGrossIncome)}
           </FLPHeading>
           <FLPText color="text.muted" fontSize="xs" className={css({ marginTop: "4px" })}>
-            PAYE ({formatCurrency(activeYearData.effectivePayeSalary)}) + Business + Rental +
-            Savings.
+            PAYE ({formatPaye(activeYearData.effectivePayeSalary, formatCurrency)}) + Business +
+            Rental + Savings.
           </FLPText>
         </FLPCard>
 
@@ -1074,8 +1078,8 @@ const TaxContainer: FC = () => {
               <FLPBox display="flex" flexDirection="column" gap={3} style={{ fontSize: "13px" }}>
                 <div style={{ display: "flex", justifyContent: "space-between" }}>
                   <FLPText color="text.muted">PAYE regular salary:</FLPText>
-                  <FLPText fontWeight="semibold">
-                    {formatCurrency(activeYearData.effectivePayeSalary)}
+                  <FLPText fontWeight="semibold" className={numeric}>
+                    {formatPaye(activeYearData.effectivePayeSalary, formatCurrency)}
                   </FLPText>
                 </div>
                 <div style={{ display: "flex", justifyContent: "space-between" }}>
@@ -1507,7 +1511,10 @@ const TaxContainer: FC = () => {
                           year === selectedTaxYear ? "2px solid var(--colors-primary)" : "none",
                       }}
                     >
-                      {formatCurrency(calculatedTaxYearsData[year]?.effectivePayeSalary || 0)}
+                      {formatPaye(
+                        calculatedTaxYearsData[year]?.effectivePayeSalary,
+                        formatCurrency,
+                      )}
                     </td>
                   ))}
                 </tr>

@@ -17,6 +17,8 @@ export interface ForecastWidgetProps {
     monthlySavingRate: number;
     annualSalary: number | null;
     estimatedTakeHome: number | null;
+    /** What to add when take-home cannot be computed although a salary exists. */
+    takeHomeMissing?: string;
   };
   editMode: boolean;
   size: "normal" | "wide";
@@ -222,7 +224,9 @@ export const ForecastWidget: FC<ForecastWidgetProps> = ({
                 {formatCurrency(data.estimatedTakeHome)}/mo
               </strong>
             ) : (
-              <strong className={css({ fontVariantNumeric: "tabular-nums" })}>Not set</strong>
+              <strong className={css({ fontVariantNumeric: "tabular-nums" })}>
+                {data.takeHomeMissing ?? "Not set"}
+              </strong>
             )}
           </div>
           <div style={{ color: "var(--colors-primary)", fontWeight: 600 }}>Runway →</div>

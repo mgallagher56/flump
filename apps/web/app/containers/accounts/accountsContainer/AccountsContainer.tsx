@@ -28,7 +28,6 @@ import type { Account } from "~/containers/accounts/types";
 import { AccountTypeEnum, isAccountTypeValid } from "~/containers/accounts/utils";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
 import type { loader } from "~/routes/app.accounts._index";
-import { useFinancialBaseline } from "~/state/baseline.store";
 import { isFutureMonth, monthYearSort } from "~/utils/accounts";
 import { currentMonth, currentYear } from "~/utils/utils";
 
@@ -41,12 +40,6 @@ const AccountsContainer: FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const initialTab = searchParams.get("tab") || "all";
   const [activeTab, setActiveTab] = useState(initialTab);
-
-  const { baseline } = useFinancialBaseline();
-  const dynamicSavingsContribution =
-    baseline.annualGrossSalary > 0
-      ? Math.max(150, Math.round((baseline.annualGrossSalary * 0.1) / 12))
-      : 250;
 
   const {
     accounts = [],
