@@ -58,7 +58,7 @@ const CASES: {
     element: <TaxTrapCalculator />,
     control: () => screen.getByRole("slider", { name: /Total Gross UK Income/i }),
     value: "105000",
-    expected: /Tax and NI saved £[\d,]+/,
+    expected: /Estimated tax and NI saved £[\d,]+/,
   },
   {
     name: "ZeroPercentCliffCalculator",

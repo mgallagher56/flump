@@ -1,10 +1,10 @@
 import {
   calculateEmployerNISavings,
   calculateUKEWNITakeHome,
-  getCurrentUKTaxYear,
+  getUkTaxYearContext,
   UK_STUDENT_LOANS,
 } from "@flump/finance-engine";
-import { ChartFigure } from "@repo/ui";
+import { ChartFigure, TaxRatesStatusBanner } from "@repo/ui";
 import { css, cx } from "@repo/ui/styled-system/css";
 import { type FC, useEffect, useMemo, useState } from "react";
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
@@ -19,6 +19,7 @@ import TaxDisclaimerButton from "~/components/core/dialogs/TaxDisclaimerButton";
 import FLPCheckbox from "~/components/core/inputs/checkbox/FLPCheckbox";
 import FLPHeading from "~/components/core/typography/FLPHeading";
 import FLPText from "~/components/core/typography/FLPText";
+import TaxEstimateNote from "~/components/tax/TaxEstimateNote";
 import { NotSet } from "~/features/feedback/components/NotSet";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
 import { usePrefersReducedMotion } from "~/hooks/usePrefersReducedMotion";
@@ -61,8 +62,11 @@ const UKTaxCalculator: FC<UKTaxCalculatorProps> = ({ initialSalary, onApplyIncre
   const [studentLoanPlan, setStudentLoanPlan] = useState<string>("none");
   const [salaryIncrease, setSalaryIncrease] = useState<number>(5000);
 
-  const taxYear = getCurrentUKTaxYear();
-  const studentLoanPlans = UK_STUDENT_LOANS[taxYear]?.plans ?? UK_STUDENT_LOANS["2025/26"].plans;
+  // One decision about which rates apply today. When the calendar is past the latest supported
+  // year the banner below says "Using {ratesYear} rates"; there is no silent fallback.
+  const ratesContext = useMemo(() => getUkTaxYearContext(), []);
+  const taxYear = ratesContext.ratesYear;
+  const studentLoanPlans = UK_STUDENT_LOANS[taxYear].plans;
 
   // Sync initialSalary from profile when loaded
   useEffect(() => {
@@ -120,23 +124,35 @@ const UKTaxCalculator: FC<UKTaxCalculatorProps> = ({ initialSalary, onApplyIncre
   // Pie Chart Data
   const pieData = useMemo(() => {
     const data = [
-      { name: "Take-Home Pay", value: Math.round(taxResults.netPay), fill: "#10B981" },
-      { name: "Income Tax", value: Math.round(taxResults.incomeTax), fill: "#EF4444" },
-      { name: "National Insurance", value: Math.round(taxResults.ni), fill: "#F59E0B" },
+      {
+        name: "Take-Home Pay",
+        value: Math.round(taxResults.netPay),
+        fill: "var(--colors-chart-wealth)",
+      },
+      {
+        name: "Income Tax",
+        value: Math.round(taxResults.incomeTax),
+        fill: "var(--colors-chart-warning)",
+      },
+      {
+        name: "National Insurance",
+        value: Math.round(taxResults.ni),
+        fill: "var(--colors-chart-debt)",
+      },
     ];
 
     if (taxResults.pension > 0) {
       data.push({
         name: "Pension contribution",
         value: Math.round(taxResults.pension),
-        fill: "#8B5CF6",
+        fill: "var(--colors-chart-accent-purple)",
       });
     }
     if (taxResults.studentLoan > 0) {
       data.push({
         name: "Student Loan repayment",
         value: Math.round(taxResults.studentLoan),
-        fill: "#3B82F6",
+        fill: "var(--colors-chart-primary)",
       });
     }
 
@@ -222,9 +238,9 @@ const UKTaxCalculator: FC<UKTaxCalculatorProps> = ({ initialSalary, onApplyIncre
   const takeHomeHeaderCard = css({
     padding: "24px",
     borderRadius: "lg",
-    backgroundColor: "rgba(16, 185, 129, 0.08)",
+    backgroundColor: "status.positive.bg",
     border: "1px solid",
-    borderColor: "success.500",
+    borderColor: "status.positive.border",
     display: "flex",
     flexDirection: { base: "column", sm: "row" },
     justifyContent: "space-between",
@@ -282,6 +298,7 @@ const UKTaxCalculator: FC<UKTaxCalculatorProps> = ({ initialSalary, onApplyIncre
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
+      <TaxRatesStatusBanner {...ratesContext} />
       <div className={layoutGrid}>
         {/* Parameter Inputs (Left Column) */}
         <div className={controlPanelStyle}>
@@ -401,34 +418,44 @@ const UKTaxCalculator: FC<UKTaxCalculatorProps> = ({ initialSalary, onApplyIncre
         {/* Results (Right Column) */}
         {salaryKnown ? (
           <FLPCard>
-            {/* Large monthly take home summary */}
-            <div className={takeHomeHeaderCard}>
-              <div>
-                <FLPText
-                  color="text.muted"
-                  fontSize="xs"
-                  fontWeight="semibold"
-                  textTransform="uppercase"
-                >
-                  Monthly Take-Home Pay
-                </FLPText>
-                <FLPHeading as="h2" color="success.500" mt={1} size="2xl">
-                  {formatCurrencyDecimal(taxResults.netPay / 12)}
-                </FLPHeading>
+            <div aria-label={`Take-home estimate for ${taxYear}`} role="status">
+              {/* Large monthly take home summary */}
+              <div className={takeHomeHeaderCard}>
+                <div>
+                  <FLPText
+                    color="text.muted"
+                    fontSize="xs"
+                    fontWeight="semibold"
+                    textTransform="uppercase"
+                  >
+                    Estimated monthly take-home
+                  </FLPText>
+                  <FLPHeading
+                    as="p"
+                    className={tabularNums}
+                    color="status.positive.text"
+                    mt={1}
+                    size="2xl"
+                  >
+                    {formatCurrencyDecimal(taxResults.netPay / 12)}
+                  </FLPHeading>
+                </div>
+                <div style={{ textAlign: "right" }}>
+                  <FLPText
+                    color="text.muted"
+                    fontSize="xs"
+                    fontWeight="semibold"
+                    textTransform="uppercase"
+                  >
+                    Estimated annual take-home
+                  </FLPText>
+                  <FLPHeading as="p" className={tabularNums} color="text.primary" mt={1} size="lg">
+                    {formatCurrency(taxResults.netPay)}
+                  </FLPHeading>
+                </div>
               </div>
-              <div style={{ textAlign: "right" }}>
-                <FLPText
-                  color="text.muted"
-                  fontSize="xs"
-                  fontWeight="semibold"
-                  textTransform="uppercase"
-                >
-                  Annual Take-Home Pay
-                </FLPText>
-                <FLPHeading as="h3" color="text.primary" mt={1} size="lg">
-                  {formatCurrency(taxResults.netPay)}
-                </FLPHeading>
-              </div>
+
+              <TaxEstimateNote className={css({ marginBottom: "16px" })} taxYear={taxYear} />
             </div>
 
             {/* Smaller rates break-down cards */}
@@ -444,7 +471,7 @@ const UKTaxCalculator: FC<UKTaxCalculatorProps> = ({ initialSalary, onApplyIncre
                 <FLPText color="text.muted" fontSize="10px" textTransform="uppercase">
                   Weekly Net
                 </FLPText>
-                <FLPHeading as="h5" size="sm" mt={1}>
+                <FLPHeading as="p" className={tabularNums} size="sm" mt={1}>
                   {formatCurrencyDecimal(taxResults.netPay / 52)}
                 </FLPHeading>
               </div>
@@ -459,7 +486,7 @@ const UKTaxCalculator: FC<UKTaxCalculatorProps> = ({ initialSalary, onApplyIncre
                 <FLPText color="text.muted" fontSize="10px" textTransform="uppercase">
                   Daily Net (5d)
                 </FLPText>
-                <FLPHeading as="h5" size="sm" mt={1}>
+                <FLPHeading as="p" className={tabularNums} size="sm" mt={1}>
                   {formatCurrencyDecimal(taxResults.netPay / 260)}
                 </FLPHeading>
               </div>
@@ -474,7 +501,7 @@ const UKTaxCalculator: FC<UKTaxCalculatorProps> = ({ initialSalary, onApplyIncre
                 <FLPText color="text.muted" fontSize="10px" textTransform="uppercase">
                   Effective Tax Rate
                 </FLPText>
-                <FLPHeading as="h5" size="sm" mt={1}>
+                <FLPHeading as="p" className={tabularNums} size="sm" mt={1}>
                   {Math.round(((grossSalary - taxResults.netPay) / grossSalary) * 100)}%
                 </FLPHeading>
               </div>
@@ -489,7 +516,7 @@ const UKTaxCalculator: FC<UKTaxCalculatorProps> = ({ initialSalary, onApplyIncre
                 <FLPText color="text.muted" fontSize="10px" textTransform="uppercase">
                   Qualifying Gross
                 </FLPText>
-                <FLPHeading as="h5" size="sm" mt={1}>
+                <FLPHeading as="p" className={tabularNums} size="sm" mt={1}>
                   {formatCurrency(taxResults.adjustedGross)}
                 </FLPHeading>
               </div>
@@ -524,7 +551,10 @@ const UKTaxCalculator: FC<UKTaxCalculatorProps> = ({ initialSalary, onApplyIncre
                     </tr>
                     {taxResults.pension > 0 && (
                       <tr>
-                        <td className={tdStyle} style={{ color: "#8b5cf6" }}>
+                        <td
+                          className={tdStyle}
+                          style={{ color: "var(--colors-chart-accent-purple)" }}
+                        >
                           Pension {isSalarySacrifice ? "(Sacrifice)" : "(Relief at source)"}
                         </td>
                         <td className={tdStyle}>-{formatCurrency(taxResults.pension)}</td>
@@ -571,7 +601,7 @@ const UKTaxCalculator: FC<UKTaxCalculatorProps> = ({ initialSalary, onApplyIncre
                     )}
                     {taxResults.studentLoan > 0 && (
                       <tr>
-                        <td className={tdStyle} style={{ color: "#3b82f6" }}>
+                        <td className={tdStyle} style={{ color: "var(--colors-status-info-text)" }}>
                           Student Loan
                         </td>
                         <td className={tdStyle}>-{formatCurrency(taxResults.studentLoan)}</td>
@@ -585,7 +615,7 @@ const UKTaxCalculator: FC<UKTaxCalculatorProps> = ({ initialSalary, onApplyIncre
                         fontWeight: "bold",
                       }}
                     >
-                      <td className={tdStyle}>Net Take-Home</td>
+                      <td className={tdStyle}>Estimated net take-home</td>
                       <td className={tdStyle}>{formatCurrency(taxResults.netPay)}</td>
                       <td className={tdStyle}>{formatCurrency(taxResults.netPay / 12)}</td>
                     </tr>
@@ -706,7 +736,13 @@ const UKTaxCalculator: FC<UKTaxCalculatorProps> = ({ initialSalary, onApplyIncre
                     <FLPText fontSize="10px" fontWeight="semibold" textTransform="uppercase">
                       Net Monthly Increase
                     </FLPText>
-                    <FLPHeading as="h5" size="md" color="success.500" mt={1}>
+                    <FLPHeading
+                      as="p"
+                      className={tabularNums}
+                      size="md"
+                      color="status.positive.text"
+                      mt={1}
+                    >
                       +{formatCurrency(monthlyIncrease)}/mo
                     </FLPHeading>
                   </div>
@@ -726,9 +762,9 @@ const UKTaxCalculator: FC<UKTaxCalculatorProps> = ({ initialSalary, onApplyIncre
               fontWeight="semibold"
               textTransform="uppercase"
             >
-              Monthly Take-Home Pay
+              Estimated monthly take-home
             </FLPText>
-            <FLPHeading as="h2" color="text.primary" mt={1} size="2xl" className={tabularNums}>
+            <FLPHeading as="p" color="text.primary" mt={1} size="2xl" className={tabularNums}>
               <NotSet href="/app/profile" subject="salary" />
             </FLPHeading>
             <FLPText color="text.muted" fontSize="sm" style={{ marginTop: "8px" }}>
@@ -768,7 +804,7 @@ export const calculateUKTax = (
   isSalarySacrifice: boolean = true,
   isEmployerNi: boolean = false,
 ) => {
-  const year = taxYear ?? getCurrentUKTaxYear();
+  const year = taxYear ?? getUkTaxYearContext().ratesYear;
   const planKey =
     studentLoanPlan !== "none"
       ? (studentLoanPlan as keyof (typeof UK_STUDENT_LOANS)[string]["plans"])

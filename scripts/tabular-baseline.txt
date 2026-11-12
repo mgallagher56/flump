@@ -20,6 +20,5 @@ apps/web/app/routes/app.onboarding.tsx
 packages/ui/src/calculators/DebtSnowballCalculator/DebtSnowballCalculator.tsx
 packages/ui/src/calculators/OverdraftCostCalculator/OverdraftCostCalculator.tsx
 packages/ui/src/calculators/StudentLoanCalculator/StudentLoanCalculator.tsx
-packages/ui/src/calculators/TaxTrapCalculator/TaxTrapCalculator.tsx
 packages/ui/src/calculators/ZeroPercentCliffCalculator/ZeroPercentCliffCalculator.tsx
 packages/ui/src/foundations/ColorPalette/ColorPalette.tsx

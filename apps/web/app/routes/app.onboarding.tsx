@@ -408,7 +408,7 @@ export default function OnboardingRoute() {
           <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
             <HomeLogo />
             <div>
-              <FLPHeading as="h3" color="blue.500" size="sm">
+              <FLPHeading as="h3" color="text.primary" size="sm">
                 Flump financial baseline
               </FLPHeading>
               <FLPText color="text.muted" fontSize="xs">

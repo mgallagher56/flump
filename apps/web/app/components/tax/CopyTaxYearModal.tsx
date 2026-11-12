@@ -192,7 +192,7 @@ export const CopyTaxYearModal: FC<CopyTaxYearModalProps> = ({
           className={css({
             position: "fixed",
             inset: 0,
-            backgroundColor: "rgba(0, 0, 0, 0.6)",
+            backgroundColor: "var(--colors-surface-scrim)",
             backdropFilter: "blur(4px)",
             zIndex: 50,
           })}
@@ -207,7 +207,7 @@ export const CopyTaxYearModal: FC<CopyTaxYearModalProps> = ({
             border: "1px solid",
             borderColor: "border",
             borderRadius: { base: "xl", md: "lg" },
-            boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.3)",
+            boxShadow: "var(--shadows-floating)",
             padding: { base: "18px 14px", md: "24px" },
             width: { base: "calc(100vw - 20px)", sm: "92vw" },
             maxWidth: { base: "calc(100vw - 20px)", md: "780px" },
@@ -231,7 +231,7 @@ export const CopyTaxYearModal: FC<CopyTaxYearModalProps> = ({
           >
             <div>
               <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                <FaCopy style={{ color: "var(--colors-blue-500)", fontSize: "18px" }} />
+                <FaCopy style={{ color: "var(--colors-status-info-text)", fontSize: "18px" }} />
                 <Dialog.Title asChild>
                   <FLPHeading as="h2" size="md">
                     Copy Figures & Populate Tax Year
@@ -253,7 +253,10 @@ export const CopyTaxYearModal: FC<CopyTaxYearModalProps> = ({
                   cursor: "pointer",
                   padding: "4px",
                   borderRadius: "sm",
-                  "&:hover": { color: "text.primary", backgroundColor: "rgba(0,0,0,0.05)" },
+                  "&:hover": {
+                    color: "text.primary",
+                    backgroundColor: "var(--colors-surface-subtle)",
+                  },
                 })}
               >
                 <FaTimes size={16} />
@@ -268,7 +271,7 @@ export const CopyTaxYearModal: FC<CopyTaxYearModalProps> = ({
               gridTemplateColumns: { base: "1fr", md: "1.4fr 1fr 1fr" },
               gap: "12px",
               padding: "14px",
-              backgroundColor: "rgba(0,0,0,0.02)",
+              backgroundColor: "var(--colors-surface-sunken)",
               border: "1px solid",
               borderColor: "border",
               borderRadius: "md",
@@ -417,8 +420,8 @@ export const CopyTaxYearModal: FC<CopyTaxYearModalProps> = ({
                   fontWeight: "semibold",
                   borderRadius: "sm",
                   border: "1px solid token(colors.border)",
-                  backgroundColor: recurringOnly ? "rgba(59, 130, 246, 0.1)" : "surface",
-                  color: recurringOnly ? "blue.500" : "text.muted",
+                  backgroundColor: recurringOnly ? "var(--colors-status-info-bg)" : "surface",
+                  color: recurringOnly ? "status.info.text" : "text.muted",
                   cursor: "pointer",
                 })}
               >
@@ -453,7 +456,7 @@ export const CopyTaxYearModal: FC<CopyTaxYearModalProps> = ({
                   border: "1px solid token(colors.border)",
                   backgroundColor: "surface",
                   cursor: "pointer",
-                  "&:hover": { backgroundColor: "rgba(0,0,0,0.04)" },
+                  "&:hover": { backgroundColor: "var(--colors-surface-subtle)" },
                 })}
               >
                 0% (Keep Same)
@@ -468,7 +471,7 @@ export const CopyTaxYearModal: FC<CopyTaxYearModalProps> = ({
                   border: "1px solid token(colors.border)",
                   backgroundColor: "surface",
                   cursor: "pointer",
-                  "&:hover": { backgroundColor: "rgba(0,0,0,0.04)" },
+                  "&:hover": { backgroundColor: "var(--colors-surface-subtle)" },
                 })}
               >
                 +2%
@@ -483,7 +486,7 @@ export const CopyTaxYearModal: FC<CopyTaxYearModalProps> = ({
                   border: "1px solid token(colors.border)",
                   backgroundColor: "surface",
                   cursor: "pointer",
-                  "&:hover": { backgroundColor: "rgba(0,0,0,0.04)" },
+                  "&:hover": { backgroundColor: "var(--colors-surface-subtle)" },
                 })}
               >
                 +5%
@@ -585,7 +588,9 @@ export const CopyTaxYearModal: FC<CopyTaxYearModalProps> = ({
                         key={record.id}
                         style={{
                           borderBottom: "1px solid var(--colors-border)",
-                          backgroundColor: st.selected ? "transparent" : "rgba(0,0,0,0.02)",
+                          backgroundColor: st.selected
+                            ? "transparent"
+                            : "var(--colors-surface-sunken)",
                           opacity: st.selected ? 1 : 0.6,
                         }}
                       >
@@ -635,20 +640,20 @@ export const CopyTaxYearModal: FC<CopyTaxYearModalProps> = ({
                               textTransform: "uppercase",
                               backgroundColor:
                                 record.source === "rental"
-                                  ? "rgba(245, 158, 11, 0.12)"
+                                  ? "var(--colors-status-warning-bg)"
                                   : record.source === "self-employed"
-                                    ? "rgba(16, 185, 129, 0.12)"
+                                    ? "var(--colors-status-positive-bg)"
                                     : record.source === "savings"
-                                      ? "rgba(139, 92, 246, 0.12)"
-                                      : "rgba(59, 130, 246, 0.12)",
+                                      ? "var(--colors-surface-subtle)"
+                                      : "var(--colors-status-info-bg)",
                               color:
                                 record.source === "rental"
-                                  ? "warning.500"
+                                  ? "status.warning.text"
                                   : record.source === "self-employed"
-                                    ? "success.500"
+                                    ? "status.positive.text"
                                     : record.source === "savings"
-                                      ? "purple.500"
-                                      : "blue.500",
+                                      ? "chart.accentPurple"
+                                      : "status.info.text",
                             })}
                           >
                             {record.source}
@@ -697,7 +702,7 @@ export const CopyTaxYearModal: FC<CopyTaxYearModalProps> = ({
                               borderRadius: "sm",
                               border: "1px solid token(colors.border)",
                               backgroundColor: "surface",
-                              color: isIncome ? "success.500" : "text.primary",
+                              color: isIncome ? "status.positive.text" : "text.primary",
                               fontWeight: "semibold",
                             })}
                           />

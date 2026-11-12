@@ -17,6 +17,9 @@ export interface TaxTrapCalculatorProps {
   ctaText?: string;
 }
 
+const gbp = (value: number) => `£${value.toLocaleString("en-GB")}`;
+const TAX_YEAR = "2026/27";
+
 export const TaxTrapCalculator: FC<TaxTrapCalculatorProps> = ({
   onSaveAndContinue,
   ctaText = "Save scenario and continue free →",
@@ -42,7 +45,7 @@ export const TaxTrapCalculator: FC<TaxTrapCalculatorProps> = ({
   const netIncomeAfterSacrifice = Math.max(0, grossIncome - salarySacrifice);
   const childcareEligible = netIncomeAfterSacrifice <= 100000;
 
-  const headline = `Tax and NI saved £${totalTaxSaved.toLocaleString("en-GB")}`;
+  const headline = `Estimated tax and NI saved £${totalTaxSaved.toLocaleString("en-GB")}`;
 
   const handleSave = () => {
     const payload = {
@@ -68,7 +71,7 @@ export const TaxTrapCalculator: FC<TaxTrapCalculatorProps> = ({
             style={{
               padding: "3px 10px",
               borderRadius: "9999px",
-              backgroundColor: "rgba(99, 102, 241, 0.12)",
+              backgroundColor: "var(--colors-primary-subtle)",
               color: "var(--colors-primary)",
               fontSize: "12px",
               fontWeight: 700,
@@ -86,8 +89,8 @@ export const TaxTrapCalculator: FC<TaxTrapCalculatorProps> = ({
                 gap: "4px",
                 padding: "3px 10px",
                 borderRadius: "9999px",
-                backgroundColor: "rgba(239, 68, 68, 0.12)",
-                color: "var(--colors-status-danger-solid)",
+                backgroundColor: "var(--colors-status-danger-bg)",
+                color: "var(--colors-status-danger-text)",
                 fontSize: "12px",
                 fontWeight: 700,
               }}
@@ -205,7 +208,7 @@ export const TaxTrapCalculator: FC<TaxTrapCalculatorProps> = ({
                 fontSize: "15px",
                 fontWeight: 700,
                 textAlign: "right",
-                color: "var(--colors-status-positive-solid)",
+                color: "var(--colors-status-positive-text)",
                 borderRadius: "8px",
                 border: "1px solid var(--colors-border-input)",
                 backgroundColor: "var(--colors-surface)",
@@ -238,8 +241,9 @@ export const TaxTrapCalculator: FC<TaxTrapCalculatorProps> = ({
               fontWeight: 800,
               color:
                 isTrapZone && salarySacrifice < analysis.excessAbove100k
-                  ? "var(--colors-status-danger-solid)"
-                  : "var(--colors-status-positive-solid)",
+                  ? "var(--colors-status-danger-text)"
+                  : "var(--colors-status-positive-text)",
+              fontVariantNumeric: "tabular-nums",
             }}
           >
             {isTrapZone && salarySacrifice < analysis.excessAbove100k ? "62.0%" : "42.0%"}
@@ -251,19 +255,20 @@ export const TaxTrapCalculator: FC<TaxTrapCalculatorProps> = ({
 
         <div className={metricCard}>
           <span style={{ fontSize: "12px", color: "var(--colors-text-muted)" }}>
-            Tax and NI saved
+            Estimated tax and NI saved
           </span>
           <span
             style={{
               fontSize: "24px",
               fontWeight: 800,
-              color: "var(--colors-status-positive-solid)",
+              color: "var(--colors-status-positive-text)",
+              fontVariantNumeric: "tabular-nums",
             }}
           >
-            £{totalTaxSaved.toLocaleString()}
+            {gbp(totalTaxSaved)}
           </span>
           <span style={{ fontSize: "11px", color: "var(--colors-text-muted)" }}>
-            Guaranteed immediate relief
+            Estimate, not a guarantee
           </span>
         </div>
 
@@ -271,14 +276,34 @@ export const TaxTrapCalculator: FC<TaxTrapCalculatorProps> = ({
           <span style={{ fontSize: "12px", color: "var(--colors-text-muted)" }}>
             Personal allowance reclaimed
           </span>
-          <span style={{ fontSize: "24px", fontWeight: 800, color: "var(--colors-primary)" }}>
-            £{allowanceReclaimed.toLocaleString()}
+          <span
+            style={{
+              fontSize: "24px",
+              fontWeight: 800,
+              color: "var(--colors-primary)",
+              fontVariantNumeric: "tabular-nums",
+            }}
+          >
+            {gbp(allowanceReclaimed)}
           </span>
           <span style={{ fontSize: "11px", color: "var(--colors-text-muted)" }}>
-            of £{analysis.lostPersonalAllowance.toLocaleString()} lost allowance
+            of {gbp(analysis.lostPersonalAllowance)} lost allowance
           </span>
         </div>
       </div>
+
+      <p
+        data-testid="tax-trap-estimate-note"
+        style={{
+          fontSize: "12px",
+          color: "var(--colors-text-muted)",
+          margin: "-8px 0 16px 0",
+          fontVariantNumeric: "tabular-nums",
+        }}
+      >
+        Estimate for {TAX_YEAR}, based on the figures you entered. Assumes {TAX_YEAR} England, Wales
+        and Northern Ireland rates; Scotland differs.
+      </p>
 
       <div
         style={{
@@ -288,9 +313,9 @@ export const TaxTrapCalculator: FC<TaxTrapCalculatorProps> = ({
           padding: "12px 16px",
           borderRadius: "12px",
           backgroundColor: childcareEligible
-            ? "rgba(16, 185, 129, 0.08)"
-            : "rgba(239, 68, 68, 0.08)",
-          border: `1px solid ${childcareEligible ? "rgba(16, 185, 129, 0.2)" : "rgba(239, 68, 68, 0.2)"}`,
+            ? "var(--colors-status-positive-bg)"
+            : "var(--colors-status-danger-bg)",
+          border: `1px solid ${childcareEligible ? "var(--colors-status-positive-border)" : "var(--colors-status-danger-border)"}`,
           marginBottom: "24px",
         }}
       >

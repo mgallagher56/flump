@@ -6,7 +6,7 @@ export const cardStyle = css({
   borderColor: "border",
   borderRadius: "2xl",
   padding: { base: "20px", sm: "32px" },
-  boxShadow: "0 8px 30px rgba(0, 0, 0, 0.06)",
+  boxShadow: "floating",
   marginBottom: "40px",
 });
 
