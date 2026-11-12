@@ -41,7 +41,7 @@ describe("runStdio", () => {
     const connect = vi.fn();
     await expect(
       runStdio({ FLUMP_PAT: PAT }, fetchImpl as unknown as typeof fetch, connect),
-    ).rejects.toThrow(/ECONNREFUSED/);
+    ).rejects.toThrow(/Could not reach Flump API at/);
     expect(connect).not.toHaveBeenCalled();
   });
 
@@ -60,5 +60,51 @@ describe("runStdio", () => {
       }),
     );
     expect(connect).toHaveBeenCalledTimes(1);
+  });
+
+  it("rejects on timeout, passes an abort signal and never connects", async () => {
+    const fetchImpl = vi.fn(async (_url: string, init?: RequestInit) => {
+      expect(init?.signal).toBeInstanceOf(AbortSignal);
+      throw new DOMException("The operation timed out", "TimeoutError");
+    });
+    const connect = vi.fn();
+    await expect(
+      runStdio({ FLUMP_PAT: PAT }, fetchImpl as unknown as typeof fetch, connect),
+    ).rejects.toThrow(/Could not reach Flump API/);
+    expect(connect).not.toHaveBeenCalled();
+  });
+
+  it("rejects a 200 response with a non-JSON body", async () => {
+    const fetchImpl = vi.fn(async () => new Response("<html>oops</html>", { status: 200 }));
+    const connect = vi.fn();
+    await expect(
+      runStdio({ FLUMP_PAT: PAT }, fetchImpl as unknown as typeof fetch, connect),
+    ).rejects.toThrow(/not valid JSON/);
+    expect(connect).not.toHaveBeenCalled();
+  });
+
+  it("rejects a response with no baseline.userId", async () => {
+    const fetchImpl = vi.fn(async () => json({ baseline: {} }));
+    const connect = vi.fn();
+    await expect(
+      runStdio({ FLUMP_PAT: PAT }, fetchImpl as unknown as typeof fetch, connect),
+    ).rejects.toThrow(PatRejectedError);
+    expect(connect).not.toHaveBeenCalled();
+  });
+
+  it("never includes the PAT in thrown errors", async () => {
+    const failures: Array<typeof fetch> = [
+      (async () => {
+        throw new Error(`boom ${PAT}`);
+      }) as unknown as typeof fetch,
+      (async () => json({}, 401)) as unknown as typeof fetch,
+      (async () => new Response("nope", { status: 200 })) as unknown as typeof fetch,
+      (async () => json({ baseline: {} })) as unknown as typeof fetch,
+    ];
+    for (const fetchImpl of failures) {
+      const err = await runStdio({ FLUMP_PAT: PAT }, fetchImpl, vi.fn()).catch((e) => e);
+      expect(err).toBeInstanceOf(Error);
+      expect(String(err.message)).not.toContain(PAT);
+    }
   });
 });
