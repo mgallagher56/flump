@@ -251,6 +251,50 @@ jobs:
         if: ${{ !cancelled() }}
         run: bun run --cwd apps/web build-storybook:test
 
+  # A new workspace must never silently break the Railway images (E12 T2.23). The three
+  # server Dockerfiles install only the workspaces they need; build them whenever a
+  # manifest, the lockfile or a Dockerfile changes.
+  docker-build:
+    name: 🐳 Docker images
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    permissions:
+      contents: read
+
+    steps:
+      - name: ⬇️ Checkout repo
+        uses: actions/checkout@v7.0.1
+        with:
+          fetch-depth: 0
+
+      - name: 🔎 Did a manifest, lockfile or Dockerfile change?
+        id: changed
+        run: |
+          if git diff --name-only "origin/${{ github.base_ref }}...HEAD" \
+            | grep -E '(^|/)package\.json$|^bun\.lock$|(^|/)Dockerfile$|^\.dockerignore$'; then
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "run=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: 🐳 Build backend, web and marketing images
+        if: steps.changed.outputs.run == 'true'
+        run: |
+          set -e
+          for app in backend web marketing; do
+            docker build -f "apps/$app/Dockerfile" -t "flump-$app-ci" .
+          done
+
+      - name: 🚫 No Expo or React Native in server images
+        if: steps.changed.outputs.run == 'true'
+        run: |
+          set -e
+          for app in backend web marketing; do
+            n=$(docker run --rm --entrypoint sh "flump-$app-ci" -c 'ls /app/node_modules | grep -cE "^(expo|react-native)$" || true')
+            [ "$n" = "0" ] || { echo "$app image contains Expo/React Native"; exit 1; }
+          done
+
   audit:
     name: 🛡️ Dependency audit
     runs-on: ubuntu-latest
