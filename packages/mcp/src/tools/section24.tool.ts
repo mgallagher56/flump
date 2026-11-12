@@ -1,4 +1,9 @@
-import { calculateSection24Tax, calculateUKTax } from "@flump/finance-engine";
+import {
+  calculateSection24Tax,
+  calculateUKTax,
+  isSupportedUkTaxYear,
+  SUPPORTED_UK_TAX_YEARS,
+} from "@flump/finance-engine";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import type { McpServerContext } from "../types.js";
@@ -56,10 +61,25 @@ export function registerSection24Tool(
       },
     },
     async (args) => {
+      const taxYear = args.taxYear;
+      if (!isSupportedUkTaxYear(taxYear)) {
+        // calculateUKTax is strict (E22): reject an unsupported year as a tool error, never guess.
+        return {
+          isError: true,
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify({
+                error: "UNSUPPORTED_TAX_YEAR",
+                message: `Tax year "${taxYear}" is not supported. Supported years: ${SUPPORTED_UK_TAX_YEARS.join(", ")}.`,
+              }),
+            },
+          ],
+        };
+      }
       const ctx = await getContext();
       const rawData = await ctx.dataProvider.getUserFinancialData(ctx.token.userId);
       const b = rawData.baseline;
-      const taxYear = args.taxYear;
 
       // 1. Check if user has stored multi-year tax records
       const hasStoredRecords = rawData.taxRecords && rawData.taxRecords.length > 0;
@@ -90,7 +110,7 @@ export function registerSection24Tool(
         mortgageInterestGbp: mortgageInterest,
         otherTaxableIncomeGbp: otherIncome,
         ownershipSharePct: args.ownershipSharePct,
-        taxYear: taxYear as any,
+        taxYear,
       });
 
       return {
