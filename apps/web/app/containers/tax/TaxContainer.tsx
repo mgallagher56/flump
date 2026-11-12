@@ -107,7 +107,9 @@ const TaxContainer: FC = () => {
   // Available Tax Years: current tax year only by default, plus any years with records
   const availableYears = useMemo(() => {
     const fromRecords = initialRecords.map((r) => getTaxYearForRecordDate(r.date));
-    const set = new Set([currentTaxYear, ...fromRecords]);
+    // Only years the engine can compute are selectable. A record in an unsupported year stays
+    // in the records list but never borrows another year's numbers (E22).
+    const set = new Set([currentTaxYear, ...fromRecords].filter(isSupportedUkTaxYear));
     return Array.from(set).sort();
   }, [currentTaxYear, initialRecords]);
 
