@@ -7,7 +7,7 @@
 Never create standalone, flat `.tsx` component files. Every component in `packages/ui`, `apps/web/app/features/*/components`, and new feature sections/pages in `apps/marketing/src/{components|pages}` MUST live in its own PascalCase directory with colocated files. The required set depends on where the component lives (E15 decision D3-C):
 
 - **`packages/ui` and shared components** (anything imported by more than one feature or app): all five files.
-- **Feature-internal components** (`apps/web/app/features/<domain>/components/*` used only inside that feature): `ComponentName.tsx`, `ComponentName.styles.ts`, `ComponentName.test.tsx` and `index.ts`. A `ComponentName.stories.tsx` is required only if the component is interactive and not already covered by a story or test of its parent; promote it to the full five files when a second feature imports it.
+- **Feature-internal components** (new components in `apps/web/app/features/<domain>/components/*` used only inside that feature): `ComponentName.tsx`, `ComponentName.styles.ts`, `ComponentName.test.tsx` and `index.ts`. A `ComponentName.stories.tsx` is required only if the component is interactive and not already covered by a story or test of its parent; promote it to the full five files when a second feature imports it. This relaxation takes effect as the E15 phase 3 web adoption lands; until then `architecture.laws.test.ts` still enforces all five files for every directory it lists (debt, sandbox, ai-connections, feedback, calculators, patterns, primitives, marketing), and that test is not loosened by this edit.
 
 The five files:
 
@@ -17,7 +17,7 @@ The five files:
 - `ComponentName/ComponentName.test.tsx` (Vitest unit test)
 - `ComponentName/index.ts` (Barrel export)
 
-Web pages adopt `@repo/ui` primitives and patterns instead of the legacy `FLP*` layer and inline styles.
+Direction of travel (E15 phase 3 target, not yet enforced): web pages move from the legacy `FLP*` layer and inline styles to `@repo/ui` primitives and patterns.
 
 ## 2. DESIGN TOKEN & STYLING LAWS
 
