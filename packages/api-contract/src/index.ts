@@ -6,5 +6,7 @@ export * from "./domains/profile.js";
 export * from "./domains/tax.js";
 export * from "./domains/transactions.js";
 export * from "./manifest.js";
+export * from "./openapi.js";
 export * from "./primitives.js";
 export * from "./validate.js";
+export * from "./version.js";
