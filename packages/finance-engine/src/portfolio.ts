@@ -32,6 +32,8 @@ export interface RawAccount {
   balance?: number | string;
   interestRate?: number | string | null;
   monthlyContribution?: number | string | null;
+  termMonths?: number | null;
+  fixedRateEndDate?: string | null;
   currency?: string;
   isCurrent?: boolean;
   [key: string]: any;

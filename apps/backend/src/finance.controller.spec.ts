@@ -1,5 +1,5 @@
 import { BankSyncOrchestrator } from "@flump/banking/server";
-import { NotFoundException } from "@nestjs/common";
+import { BadRequestException, NotFoundException } from "@nestjs/common";
 import { describe, expect, it, vi } from "vitest";
 import { FinanceController } from "./finance.controller";
 import { FinanceService } from "./finance.service";
@@ -142,6 +142,37 @@ describe("FinanceController & FinanceService", () => {
     const delRes = await controller.deleteAccount(req, "acc-1");
     expect(delRes.success).toBe(true);
     expect(mockAccountDetailRepo.delete).toHaveBeenCalledWith({ accountId: "acc-1" });
+  });
+
+  it("passes mortgage term fields through create and update, and rejects invalid ones", async () => {
+    const { controller, mockAccountRepo } = createMocks();
+    const req = { user: { id: "u1" } };
+
+    const created = await controller.createAccount(req, {
+      name: "Home",
+      type: "Mortgage",
+      balance: 250000,
+      termMonths: 300,
+      fixedRateEndDate: "2029-06-30",
+    });
+    expect(created).toMatchObject({ termMonths: 300, fixedRateEndDate: "2029-06-30" });
+
+    mockAccountRepo.findOne.mockResolvedValueOnce({ id: "acc-1", termMonths: 300 });
+    const updated = await controller.updateAccount(req, "acc-1", { termMonths: null });
+    expect(updated.termMonths).toBeNull();
+
+    await expect(
+      controller.createAccount(req, {
+        name: "Home",
+        type: "Mortgage",
+        balance: 1,
+        termMonths: 601,
+      }),
+    ).rejects.toThrow(BadRequestException);
+    mockAccountRepo.findOne.mockResolvedValueOnce({ id: "acc-1" });
+    await expect(
+      controller.updateAccount(req, "acc-1", { fixedRateEndDate: "not-a-date" }),
+    ).rejects.toThrow(BadRequestException);
   });
 
   it("handles transactions and bank connections listing", async () => {

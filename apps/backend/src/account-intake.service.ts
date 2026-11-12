@@ -3,7 +3,7 @@ import {
   PortfolioSnapshot,
   type ResolvedAccount,
 } from "@flump/finance-engine";
-import { Injectable, NotFoundException } from "@nestjs/common";
+import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { In, Repository } from "typeorm";
 import { Account } from "./entities/account.entity";
@@ -37,6 +37,10 @@ export interface CreateAccountDto {
   currency?: string;
   interestRate?: number | null;
   monthlyContribution?: number | null;
+  /** Mortgage term in months (1..600). Meaningful for Mortgage accounts; null otherwise. */
+  termMonths?: number | null;
+  /** End of the fixed-rate period, ISO date (YYYY-MM-DD). Meaningful for Mortgage accounts. */
+  fixedRateEndDate?: string | null;
   isCurrent?: boolean;
   connectionId?: string | null;
   externalAccountId?: string | null;
@@ -59,6 +63,35 @@ export interface PortfolioSnapshotResponse {
 }
 
 export const DEFAULT_ACCOUNT_CURRENCY = "GBP";
+
+export const MIN_TERM_MONTHS = 1;
+export const MAX_TERM_MONTHS = 600;
+
+function validateTermMonths(value: unknown): number | null | undefined {
+  if (value === undefined || value === null) return value;
+  if (
+    typeof value !== "number" ||
+    !Number.isInteger(value) ||
+    value < MIN_TERM_MONTHS ||
+    value > MAX_TERM_MONTHS
+  ) {
+    throw new BadRequestException(
+      `termMonths must be an integer between ${MIN_TERM_MONTHS} and ${MAX_TERM_MONTHS}, or null`,
+    );
+  }
+  return value;
+}
+
+function validateFixedRateEndDate(value: unknown): string | null | undefined {
+  if (value === undefined || value === null) return value;
+  if (typeof value === "string" && /^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    const parsed = new Date(`${value}T00:00:00.000Z`);
+    if (!Number.isNaN(parsed.getTime()) && parsed.toISOString().slice(0, 10) === value) {
+      return value;
+    }
+  }
+  throw new BadRequestException("fixedRateEndDate must be an ISO date (YYYY-MM-DD) or null");
+}
 
 export interface DeleteAccountResponse {
   success: boolean;
@@ -99,6 +132,8 @@ export class AccountIntakeService implements IAccountIntake {
       currency: body.currency,
       interestRate: body.interestRate,
       monthlyContribution: body.monthlyContribution,
+      termMonths: validateTermMonths(body.termMonths),
+      fixedRateEndDate: validateFixedRateEndDate(body.fixedRateEndDate),
       isCurrent: body.isCurrent,
       externalAccountId: body.externalAccountId,
     };
