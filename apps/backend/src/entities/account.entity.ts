@@ -46,6 +46,12 @@ export class Account {
   })
   monthlyContribution: number | null;
 
+  @Column({ name: "term_months", type: "integer", nullable: true })
+  termMonths: number | null;
+
+  @Column({ name: "fixed_rate_end_date", type: "date", nullable: true })
+  fixedRateEndDate: string | null;
+
   @Column({ name: "is_current", type: "boolean", default: true, nullable: true })
   isCurrent: boolean;
 

@@ -5,6 +5,7 @@ import { typeOrmOptionsFromEnv } from "../config/typeorm.options";
 import { assertSafeTestDatabase } from "../testing/assertSafeTestDatabase";
 import { resolveDbTestMode } from "../testing/dbTestMode";
 import { discoverMigrations, type MigrationClass } from "../testing/discoverMigrations";
+import { AddMortgageTermColumns1794355600000 } from "./AddMortgageTermColumns1794355600000";
 import { Baseline1794355200000 } from "./Baseline1794355200000";
 import { ClearBankTokens1794355300000 } from "./ClearBankTokens1794355300000";
 import { DeleteSyncedTransactions1794355500000 } from "./DeleteSyncedTransactions1794355500000";
@@ -550,6 +551,61 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
     it("succeeds on an empty database and its down migration is a safe no-op", async () => {
       await expect(ds.runMigrations()).resolves.toHaveLength(MIGRATIONS.length);
       await expect(new DeleteSyncedTransactions1794355500000().down()).resolves.toBeUndefined();
+    });
+  });
+
+  describe("AddMortgageTermColumns1794355600000", () => {
+    const MIGRATION = "AddMortgageTermColumns1794355600000";
+
+    const termColumns = (): Promise<unknown[]> =>
+      ds.query(
+        `SELECT column_name, data_type, is_nullable FROM information_schema.columns
+         WHERE table_schema = 'public' AND table_name = 'accounts'
+           AND column_name IN ('term_months', 'fixed_rate_end_date')
+         ORDER BY column_name`,
+      );
+
+    it("adds nullable integer and date columns and leaves existing rows NULL", async () => {
+      await ds.runMigrations();
+      await ds.query(`DELETE FROM migrations WHERE name = '${MIGRATION}'`);
+      await ds.query('ALTER TABLE "accounts" DROP COLUMN "term_months"');
+      await ds.query('ALTER TABLE "accounts" DROP COLUMN "fixed_rate_end_date"');
+      await ds.query(
+        `INSERT INTO accounts (user_id, name, type, balance, currency)
+         VALUES ('u1', 'Home', 'Mortgage', 200000, 'GBP')`,
+      );
+
+      await ds.runMigrations();
+
+      expect(await termColumns()).toEqual([
+        { column_name: "fixed_rate_end_date", data_type: "date", is_nullable: "YES" },
+        { column_name: "term_months", data_type: "integer", is_nullable: "YES" },
+      ]);
+      expect(await ds.query("SELECT term_months, fixed_rate_end_date FROM accounts")).toEqual([
+        { term_months: null, fixed_rate_end_date: null },
+      ]);
+      expect(await applied()).toContain(MIGRATION);
+    });
+
+    it("is idempotent when the columns already exist (synchronize-built database)", async () => {
+      await ds.synchronize();
+      await expect(runUpInTransaction(new AddMortgageTermColumns1794355600000())).resolves.toBe(
+        undefined,
+      );
+      expect(await termColumns()).toHaveLength(2);
+    });
+
+    it("down drops both columns", async () => {
+      await ds.runMigrations();
+      const runner = ds.createQueryRunner();
+      try {
+        await runner.startTransaction();
+        await new AddMortgageTermColumns1794355600000().down(runner);
+        await runner.commitTransaction();
+      } finally {
+        await runner.release();
+      }
+      expect(await termColumns()).toEqual([]);
     });
   });
 });

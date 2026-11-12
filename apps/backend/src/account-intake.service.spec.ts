@@ -1,4 +1,4 @@
-import { NotFoundException } from "@nestjs/common";
+import { BadRequestException, NotFoundException } from "@nestjs/common";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { AccountIntakeService } from "./account-intake.service";
 import { createInMemoryRepository } from "./testing/in-memory-repository";
@@ -133,6 +133,81 @@ describe("AccountIntakeService (Deep Module)", () => {
     expect(mockAccountDetailRepo.delete).toHaveBeenCalledWith({ accountId: "acc-1" });
     expect(mockAccountRepo.remove).toHaveBeenCalled();
   });
+  describe("mortgage term fields", () => {
+    const mortgage = { name: "Home", type: "Mortgage", balance: 200000, currency: "GBP" };
+
+    it("createAccount persists a valid termMonths and fixedRateEndDate", async () => {
+      await service.createAccount("userA", {
+        ...mortgage,
+        termMonths: 300,
+        fixedRateEndDate: "2028-02-29",
+      });
+
+      expect(mockAccountRepo.create.mock.calls[0][0]).toMatchObject({
+        termMonths: 300,
+        fixedRateEndDate: "2028-02-29",
+      });
+    });
+
+    it("accepts the 1 and 600 bounds and explicit nulls, and allows them on any type", async () => {
+      await service.createAccount("userA", { ...mortgage, termMonths: 1 });
+      await service.createAccount("userA", { ...mortgage, termMonths: 600 });
+      await service.createAccount("userA", {
+        name: "Cash",
+        type: "Saving",
+        balance: 1,
+        termMonths: null,
+        fixedRateEndDate: null,
+      });
+
+      expect(mockAccountRepo.create.mock.calls[2][0]).toMatchObject({
+        termMonths: null,
+        fixedRateEndDate: null,
+      });
+    });
+
+    it("omits the fields when not supplied so an update leaves them untouched", async () => {
+      mockAccountRepo.findOne.mockResolvedValueOnce({ id: "a1", userId: "userA", termMonths: 240 });
+      await service.updateAccount("userA", "a1", { balance: 5 });
+      expect(mockAccountRepo.save.mock.calls.at(-1)[0]).toMatchObject({ termMonths: 240 });
+    });
+
+    it("updateAccount can clear both fields with null", async () => {
+      mockAccountRepo.findOne.mockResolvedValueOnce({
+        id: "a1",
+        userId: "userA",
+        termMonths: 240,
+        fixedRateEndDate: "2030-01-01",
+      });
+      await service.updateAccount("userA", "a1", { termMonths: null, fixedRateEndDate: null });
+      expect(mockAccountRepo.save.mock.calls.at(-1)[0]).toMatchObject({
+        termMonths: null,
+        fixedRateEndDate: null,
+      });
+    });
+
+    it.each([0, -1, 601, 12.5, "300", Number.NaN])("rejects termMonths %s", async (termMonths) => {
+      await expect(
+        service.createAccount("userA", { ...mortgage, termMonths } as any),
+      ).rejects.toBeInstanceOf(BadRequestException);
+      expect(mockAccountRepo.save).not.toHaveBeenCalled();
+    });
+
+    it.each(["2028-13-01", "2028-02-30", "01/02/2028", "2028-02-01T00:00:00Z", 20280201, ""])(
+      "rejects fixedRateEndDate %s",
+      async (fixedRateEndDate) => {
+        await expect(
+          service.createAccount("userA", { ...mortgage, fixedRateEndDate } as any),
+        ).rejects.toBeInstanceOf(BadRequestException);
+        mockAccountRepo.findOne.mockResolvedValueOnce({ id: "a1", userId: "userA" });
+        await expect(
+          service.updateAccount("userA", "a1", { fixedRateEndDate } as any),
+        ).rejects.toBeInstanceOf(BadRequestException);
+        expect(mockAccountRepo.save).not.toHaveBeenCalled();
+      },
+    );
+  });
+
   describe("account writes ignore client-supplied ids and ownership", () => {
     const valid = { name: "Savings", type: "Saving", balance: 100, currency: "GBP" };
 
