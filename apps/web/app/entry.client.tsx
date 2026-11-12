@@ -4,39 +4,15 @@
  * For more information, see https://remix.run/docs/en/main/file-conventions/entry.client
  */
 
-import { CacheProvider } from "@emotion/react";
 import i18next from "i18next";
 import Backend from "i18next-http-backend";
-import type { ReactElement, ReactNode } from "react";
-import { StrictMode, startTransition, useMemo, useState } from "react";
+import { StrictMode, startTransition } from "react";
 import { hydrateRoot } from "react-dom/client";
 import { I18nextProvider, initReactI18next } from "react-i18next";
 import { HydratedRouter } from "react-router/dom";
 import { getInitialNamespaces } from "remix-i18next/client";
 
-import { ClientStyleContext } from "./context";
-import createEmotionCache, { defaultCache } from "./createEmotionCache";
 import i18n from "./i18n";
-
-interface ClientCacheProviderProps {
-  children: ReactNode;
-}
-
-function ClientCacheProvider({ children }: ClientCacheProviderProps): ReactElement<ReactElement> {
-  const [cache, setCache] = useState(defaultCache);
-
-  function reset(): void {
-    setCache(createEmotionCache());
-  }
-
-  const value = useMemo(() => ({ reset }), [reset]);
-
-  return (
-    <ClientStyleContext.Provider value={value}>
-      <CacheProvider value={cache}>{children}</CacheProvider>
-    </ClientStyleContext.Provider>
-  );
-}
 
 async function hydrate(): Promise<void> {
   if (!i18next.isInitialized)
@@ -54,9 +30,7 @@ async function hydrate(): Promise<void> {
       document,
       <I18nextProvider i18n={i18next}>
         <StrictMode>
-          <ClientCacheProvider>
-            <HydratedRouter />
-          </ClientCacheProvider>
+          <HydratedRouter />
         </StrictMode>
       </I18nextProvider>,
     );
