@@ -1,16 +1,6 @@
-import {
-  clearOnboardingSeed,
-  type FinancialBaseline,
-  financialBaselineToUserProfileUpdate,
-  type OnboardingSeedPayload,
-  type ProfilePersistenceAdapter,
-  persistOnboardingSeed,
-  readOnboardingSeed,
-  userProfileToFinancialBaseline,
-} from "@flump/finance-engine";
+import { type FinancialBaseline, userProfileToFinancialBaseline } from "@flump/finance-engine";
 import { atom, useAtom } from "jotai";
 import { useCallback } from "react";
-import { useRouteLoaderData } from "react-router";
 import { apiFetch } from "~/services/api-client";
 import { BackendError } from "~/services/backend-error";
 import { financialBaselineAtom } from "~/state/baseline.store";
@@ -263,15 +253,6 @@ export function profileToBaseline(profile: UserProfile | Partial<UserProfile>): 
 export function useUserProfile() {
   const [profile, rawSetProfile] = useAtom(userProfileAtom);
   const [, rawSetBaseline] = useAtom(financialBaselineAtom);
-  let rootData: { accessToken?: string | null } | undefined;
-  try {
-    // biome-ignore lint/correctness/useHookAtTopLevel: fallback when rendered outside DataRouter in unit tests
-    rootData = useRouteLoaderData<{ accessToken?: string | null }>("root");
-  } catch {
-    rootData = undefined;
-  }
-  const accessToken = rootData?.accessToken;
-
   const setProfile = useCallback(
     (p: UserProfile | Partial<UserProfile>) => {
       const normalized = normalizeProfile(p);
@@ -288,25 +269,23 @@ export function useUserProfile() {
   const updateProfile = useCallback(
     async (updates: UserProfileUpdate): Promise<void> => {
       const updated = await apiFetch<UserProfile>("/user-profile", {
-        accessToken,
         method: "PATCH",
         body: updates,
       });
       setProfile(updated);
     },
-    [setProfile, accessToken],
+    [setProfile],
   );
 
   const markChecklistStep = useCallback(
     async (step: string, completed: boolean): Promise<void> => {
       const updated = await apiFetch<UserProfile>("/user-profile/checklist", {
-        accessToken,
         method: "PATCH",
         body: { step, completed },
       });
       setProfile(updated);
     },
-    [setProfile, accessToken],
+    [setProfile],
   );
 
   const sendPasswordResetEmail = useCallback(async (): Promise<{
@@ -317,18 +296,17 @@ export function useUserProfile() {
       // The server resolves the caller's own email; no body is sent.
       return await apiFetch<{ success: boolean; message?: string }>(
         "/user-profile/send-password-reset",
-        { accessToken, method: "POST" },
+        { method: "POST" },
       );
     } catch (err) {
       throw messageFrom(err, "Failed to send password reset email");
     }
-  }, [accessToken]);
+  }, []);
 
   const resetFinancialData = useCallback(async (): Promise<void> => {
     let result: { profile?: UserProfile } | undefined;
     try {
       result = await apiFetch<{ profile?: UserProfile }>("/user-profile/reset-financial-data", {
-        accessToken,
         method: "POST",
         body: {},
       });
@@ -338,7 +316,7 @@ export function useUserProfile() {
     if (result?.profile) {
       setProfile(result.profile);
     }
-  }, [setProfile, accessToken]);
+  }, [setProfile]);
 
   return {
     profile,
@@ -348,36 +326,4 @@ export function useUserProfile() {
     sendPasswordResetEmail,
     resetFinancialData,
   };
-}
-
-export class HttpProfileAdapter implements ProfilePersistenceAdapter {
-  constructor(private getAuthToken?: () => string | null | undefined) {}
-
-  async getBaseline(): Promise<FinancialBaseline | null> {
-    const profile = await apiFetch<UserProfile>("/user-profile", {
-      accessToken: this.getAuthToken?.(),
-    });
-    return profileToBaseline(profile);
-  }
-
-  async saveBaseline(baseline: FinancialBaseline): Promise<void> {
-    await apiFetch<unknown>("/user-profile", {
-      accessToken: this.getAuthToken?.(),
-      method: "PATCH",
-      body: financialBaselineToUserProfileUpdate(baseline),
-      allowEmpty: true,
-    });
-  }
-
-  getSeed(): OnboardingSeedPayload | null {
-    return readOnboardingSeed();
-  }
-
-  saveSeed(seed: OnboardingSeedPayload): void {
-    persistOnboardingSeed(seed);
-  }
-
-  clearSeed(): void {
-    clearOnboardingSeed();
-  }
 }
