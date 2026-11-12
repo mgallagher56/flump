@@ -33,9 +33,9 @@ export function buildCsp({ isProd, nonce }: CspOptions): string {
   return [
     "default-src 'self'",
     scriptSrc,
-    "style-src 'self' 'unsafe-inline' https:",
+    "style-src 'self' 'unsafe-inline'",
     "img-src 'self' data: https: blob:",
-    "font-src 'self' data: https:",
+    "font-src 'self' data:",
     connectSrc,
     "object-src 'none'",
     "base-uri 'self'",

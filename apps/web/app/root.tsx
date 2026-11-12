@@ -12,6 +12,7 @@ import { useTheme } from "./hooks/useTheme";
 import type { UserProfile } from "./hooks/useUserProfile";
 import { useUserProfile } from "./hooks/useUserProfile";
 import i18next from "./i18n.server";
+import "@repo/ui/fonts.css";
 import styles from "./index.css?url";
 import { backendFetch } from "./services/backend-client.server";
 import { BackendError } from "./services/backend-error";
@@ -20,15 +21,7 @@ import { THEME_INIT_SCRIPT } from "./theme-init-script";
 import { getAuthSession } from "./utils/auth.server";
 import { watchLogoutForms } from "./utils/userStorage";
 
-export const links = () => [
-  { rel: "preconnect", href: "https://fonts.googleapis.com" },
-  { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
-  {
-    rel: "stylesheet",
-    href: "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800;900&display=swap",
-  },
-  { rel: "stylesheet", href: styles },
-];
+export const links = () => [{ rel: "stylesheet", href: styles }];
 
 export const loader = async (args: LoaderFunctionArgs) => {
   const locale = await i18next.getLocale(args.request);
