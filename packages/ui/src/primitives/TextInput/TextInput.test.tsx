@@ -1,6 +1,7 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import { CurrencyInput, parseCurrencyInput } from "./CurrencyInput";
+import { CurrencyInput } from "./CurrencyInput";
+import { parseCurrencyInput } from "./parseCurrency";
 import { TextInput } from "./TextInput";
 
 describe("TextInput", () => {
