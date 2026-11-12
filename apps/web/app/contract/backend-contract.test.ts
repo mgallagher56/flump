@@ -33,7 +33,7 @@ vi.mock("~/utils/auth.server", () => ({
 vi.mock("~/i18n.server", () => ({ default: { getLocale: vi.fn().mockResolvedValue("en") } }));
 
 import { apiConfig } from "~/config.server";
-import { apiFetch } from "~/services/api-client";
+import { backendFetch } from "~/services/backend-client.server";
 import { buildOnboardingSeedJobs } from "~/services/onboarding-seed";
 import { action as accountsAction } from "../routes/app.accounts._index";
 import { action as debtAction } from "../routes/app.debt";
@@ -160,16 +160,15 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
       if (Date.now() >= deadline) throw new Error(`backend did not start:\n${backendLog}`);
 
       apiConfig.apiBaseUrl = baseUrl;
-      (globalThis as unknown as { window: unknown }).window = { ENV: { VITE_API_URL: baseUrl } };
     }, 90_000);
 
     afterAll(async () => {
       backend?.kill("SIGTERM");
-      if (backend) await new Promise((r) => backend.once("exit", r));
+      if (backend && backend.exitCode === null) await new Promise((r) => backend.once("exit", r));
       await dropDatabase();
     });
 
-    const get = <T>(endpoint: string) => apiFetch<T>(endpoint, { accessToken: DEV_TOKEN });
+    const get = <T>(endpoint: string) => backendFetch<T>(endpoint, { accessToken: DEV_TOKEN });
     const form = (fields: Record<string, string>) => {
       const body = new FormData();
       for (const [k, v] of Object.entries(fields)) body.set(k, v);
@@ -179,7 +178,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
       action({ request: form(fields), params: {}, context: {} });
 
     const createAccount = (name: string) =>
-      apiFetch<Row>("/accounts", {
+      backendFetch<Row>("/accounts", {
         accessToken: DEV_TOKEN,
         method: "POST",
         body: { name, type: "Saving", balance: 100, isCurrent: true },
@@ -199,7 +198,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
         otherOutgoings: 900,
       });
       for (const job of jobs.filter((j) => j.enabled)) {
-        await apiFetch(job.endpoint, {
+        await backendFetch(job.endpoint, {
           accessToken: DEV_TOKEN,
           method: "POST",
           body: job.payload,
@@ -267,7 +266,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
     });
 
     it("creates, updates and deletes budget entries with the BudgetContainer payloads", async () => {
-      const created = await apiFetch<Row>("/budget-entries", {
+      const created = await backendFetch<Row>("/budget-entries", {
         accessToken: DEV_TOKEN,
         method: "POST",
         body: {
@@ -280,23 +279,22 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
       });
       expect(created).toMatchObject({ name: "Gym", amount: 40 });
 
-      const updated = await apiFetch<Row>(`/budget-entries/${created.id}`, {
+      const updated = await backendFetch<Row>(`/budget-entries/${created.id}`, {
         accessToken: DEV_TOKEN,
         method: "PATCH",
         body: { name: "Gym membership", amount: 45 },
       });
       expect(updated).toMatchObject({ name: "Gym membership", amount: 45 });
 
-      await apiFetch<void>(`/budget-entries/${created.id}`, {
+      await backendFetch<void>(`/budget-entries/${created.id}`, {
         accessToken: DEV_TOKEN,
         method: "DELETE",
-        allowEmpty: true,
       });
       expect((await get<Row[]>("/budget-entries")).some((e) => e.id === created.id)).toBe(false);
     });
 
     it("accepts `title` as an alias for the budget entry name", async () => {
-      const created = await apiFetch<Row>("/budget-entries", {
+      const created = await backendFetch<Row>("/budget-entries", {
         accessToken: DEV_TOKEN,
         method: "POST",
         body: { title: "Legacy title", category: "living", amount: 12, isIncome: false },
