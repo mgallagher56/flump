@@ -1,7 +1,8 @@
 export default {
-  supportedLngs: ["en", "es"],
+  supportedLngs: ["en"],
   fallbackLng: "en",
+  lng: "en",
   defaultNS: "common",
-  ns: ["common", "home"],
+  ns: ["common"],
   react: { useSuspense: false },
 };
