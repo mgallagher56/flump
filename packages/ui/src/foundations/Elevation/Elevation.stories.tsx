@@ -15,6 +15,9 @@ const play: Story["play"] = async ({ canvasElement }) => {
   const canvas = within(canvasElement);
   await expect(canvas.getAllByRole("heading", { name: "Elevation" })[0]).toBeInTheDocument();
   await expect(canvas.getAllByTestId("elevation-overlay")[0]).toBeInTheDocument();
+  const radius = (id: string) =>
+    Number.parseFloat(getComputedStyle(canvas.getByTestId(id)).borderTopLeftRadius);
+  await expect(radius("elevation-card-compact")).toBeLessThan(radius("elevation-card"));
 };
 
 export const Default: Story = { globals: { theme: "light" }, play };

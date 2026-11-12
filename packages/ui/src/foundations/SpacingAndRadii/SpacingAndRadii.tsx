@@ -1,7 +1,14 @@
 import type { FC } from "react";
 import { css } from "../../../styled-system/css";
-import { radii, spacing } from "../../tokens";
+import { densityRadii, radii, spacing } from "../../tokens";
 import { gridBox, scaleItem } from "./SpacingAndRadii.styles";
+
+/** Static literals so Panda can extract each alias (it cannot see a dynamic `borderRadius: alias`). */
+const ALIAS_RADIUS = {
+  control: css.raw({ borderRadius: "control" }),
+  card: css.raw({ borderRadius: "card" }),
+  tray: css.raw({ borderRadius: "tray" }),
+} as const;
 
 const DENSITIES = ["comfortable", "compact"] as const;
 
@@ -13,17 +20,43 @@ const DensityPanel: FC<{ density: (typeof DENSITIES)[number] }> = ({ density }) 
     className={css({
       flex: "1 1 280px",
       p: "density.cardPad",
-      borderRadius: "xl",
+      borderRadius: "card",
       borderWidth: "1px",
       borderStyle: "solid",
       borderColor: "border.subtle",
       backgroundColor: "surface.card",
+      boxShadow: "card",
       display: "flex",
       flexDirection: "column",
       gap: "density.gap",
     })}
   >
     <h3 className={css({ textStyle: "heading.sm", textTransform: "capitalize" })}>{density}</h3>
+    <div className={css({ display: "flex", gap: "density.gap" })}>
+      {(["control", "card", "tray"] as const).map((alias) => (
+        <div
+          key={alias}
+          data-testid={`radius-${alias}-${density}`}
+          className={css(
+            {
+              flex: "1",
+              py: "density.rowPadY",
+              textAlign: "center",
+              backgroundColor: "surface.subtle",
+              borderWidth: "1px",
+              borderStyle: "solid",
+              borderColor: "border.DEFAULT",
+              textStyle: "label.sm",
+              fontVariantNumeric: "tabular-nums",
+              color: "text.secondary",
+            },
+            ALIAS_RADIUS[alias],
+          )}
+        >
+          {alias}
+        </div>
+      ))}
+    </div>
     {["Monthly overpayment", "Interest rate"].map((label) => (
       <div
         key={label}
@@ -133,7 +166,8 @@ export const SpacingAndRadii: FC = () => {
         </h2>
         <p className={css({ fontSize: "xs", color: "text.muted", mb: "12px" })}>
           Set <code>data-density="compact"</code> on any ancestor for simulators, tables and account
-          lists. Touch targets stay at 44px.
+          lists. Touch targets stay at 44px. Radii follow density: cards 16px (comfortable) to 8px
+          (compact), trays 24px to 12px, controls 8px to 6px.
         </p>
         <div className={css({ display: "flex", flexWrap: "wrap", gap: "16px" })}>
           {DENSITIES.map((density) => (
@@ -175,6 +209,19 @@ export const SpacingAndRadii: FC = () => {
             </div>
           ))}
         </div>
+        <h3 className={css({ textStyle: "heading.sm", mt: "20px", mb: "8px" })}>
+          Density-aware radii (comfortable / compact)
+        </h3>
+        <ul className={css({ textStyle: "body.sm", fontVariantNumeric: "tabular-nums" })}>
+          {Object.entries(densityRadii.radii).map(([step, token]) => {
+            const v = token.value as { base: string; _compact: string };
+            return (
+              <li key={step} data-testid={`radii-row-${step}`}>
+                <code>radii.{step}</code>: {v.base} / {v._compact}
+              </li>
+            );
+          })}
+        </ul>
       </section>
 
       {/* Elevation & Shadows */}

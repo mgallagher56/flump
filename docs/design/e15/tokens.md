@@ -43,7 +43,26 @@ Self-hosting: `@fontsource-variable/{inter,plus-jakarta-sans}` (pinned 5.3.0) ar
 
 Durations: instant 0ms, fast 120ms, base 200ms, slow 320ms. Easings: standard, enter, exit. Keyframes: `fadeIn`, `slideUp`, `scaleIn`, `shimmer`. z-index (one scale, every preset-panda key redefined so nothing leaks through with a stale value): hide -1, base 0, docked 5, sticky 10, header 20, banner 25, dropdown 30, overlay 40, modal 50, popover 55, toast 60, tooltip 65, skipLink 70. No app or package consumes the z-index tokens yet: every existing `zIndex` is a numeric literal (for example 50/60 in dialogs, 80/90/100 in mobile nav, 1000 in AddDebtDialog, 9999/10000 in WidgetSettingsModal and MonthlyBalanceCheckInDrawer), so nothing breaks, but those literals do not follow this scale and should move to tokens during web adoption.
 
-Elevation keys `xs`, `card`, `raised`, `overlay`, `focus`, all with `_dark` (lighter surface plus a hairline inset highlight, black shadow alpha at most 0.4). `cardHover` and `floating` remain as aliases. The primitive `shadows.xs` moved into the semantic set (same name, now themed).
+Elevation keys `xs`, `card`, `raised`, `overlay`, `focus`, all with `_dark`. `cardHover` and `floating` remain as aliases. The primitive `shadows.xs` moved into the semantic set (same name, now themed).
+
+Round 5 treatment: light shadows are warm-tinted with the warm charcoal ink (`rgba(43, 38, 32, a)`, also the primitive `cardLight`/`cardHoverLight`/`floatingLight`), never blue-grey slate; strength rises xs < raised < overlay. Dark elevates by lighter surface (the `surface.*` dark steps) plus a hairline: an inset top highlight and a 1px outer ring (`0 0 0 1px rgba(255,255,255,.05)`), with a modest black shadow (alpha at most 0.3, was 0.4). Parity is enforced by `tokens.foundations.test.ts` (every key has `_dark`, warm ink only, ring present).
+
+## Radii (round 5, tied to density)
+
+Semantic `radii` (`densityRadii` in `layout.ts`, registered under `semanticTokens.radii`) reuse the primitive key names, so every existing `borderRadius: "xl"` / `rounded: "md"` picks up the new look with no component edit. `base` is comfortable, `_compact` is the `[data-density=compact] &` condition.
+
+| Key       | Comfortable | Compact | Note                                                   |
+| --------- | ----------- | ------- | ------------------------------------------------------ |
+| `sm`      | 6px         | 4px     |                                                        |
+| `md`      | 8px         | 6px     | buttons, inputs, slider badge                          |
+| `lg`      | 12px        | 8px     | segmented tab thumb                                    |
+| `xl`      | 16px        | 8px     | Card, KpiCard, Table, CollapsibleDrawer, SegmentedTabs |
+| `2xl`     | 24px        | 12px    | section trays, dialogs                                 |
+| `control` | 8px         | 6px     | additive alias of `md`                                 |
+| `card`    | 16px        | 8px     | additive alias of `xl`                                 |
+| `tray`    | 24px        | 12px    | additive alias of `2xl`                                |
+
+Aliases repeat literal values rather than `{radii.xl}`: a CSS variable that references another variable is resolved where it is declared (`:root`), so a reference would not follow `data-density` on a descendant. `xs`, `none` and `full` are unchanged. Compact is strictly tighter than comfortable at every step, and ordering holds within each density (tests). Known follow-ups: hard-coded `px` radii in `packages/ui/src/calculators/*` (4, 6, 8, 10, 12px literals) and in `apps/web` inline styles do not follow density (migrate to `card`, `tray` or `control`); this belongs to the screen migration (no screen changes in this PR).
 
 ## Colour changes
 

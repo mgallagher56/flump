@@ -10,9 +10,9 @@ export const elevationGrid = cva({
 
 export const elevationCard = cva({
   base: {
-    p: "20px",
+    p: "density.cardPad",
     minHeight: "112px",
-    borderRadius: "xl",
+    borderRadius: "card",
     borderWidth: "1px",
     borderStyle: "solid",
     borderColor: "border.subtle",

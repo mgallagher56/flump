@@ -62,3 +62,25 @@ export const densitySizes = {
     },
   },
 } as const;
+
+/**
+ * Round 5 radii, tied to density. Same keys as the primitive `radii` scale so every existing
+ * `borderRadius: "xl"` consumer picks up the new look with no component edit. Comfortable is
+ * `base`, compact (`[data-density=compact] &`) is `_compact`. Cards sit at `xl` (16 to 24px
+ * comfortable across `xl`/`2xl`, 8 to 12px compact); controls at `md`. Additive aliases `card`,
+ * `tray` and `control` name the intent for new code; they repeat literal values (not `{radii.xl}`)
+ * because a CSS var that references another var resolves where it is declared, so a reference
+ * would not follow `data-density` on a descendant.
+ */
+export const densityRadii = {
+  radii: {
+    sm: { value: { base: "6px", _compact: "4px" } },
+    md: { value: { base: "8px", _compact: "6px" } },
+    lg: { value: { base: "12px", _compact: "8px" } },
+    xl: { value: { base: "16px", _compact: "8px" } },
+    "2xl": { value: { base: "24px", _compact: "12px" } },
+    control: { value: { base: "8px", _compact: "6px" } },
+    card: { value: { base: "16px", _compact: "8px" } },
+    tray: { value: { base: "24px", _compact: "12px" } },
+  },
+} as const;

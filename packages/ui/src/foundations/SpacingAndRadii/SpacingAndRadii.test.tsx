@@ -17,4 +17,15 @@ describe("SpacingAndRadii Foundation", () => {
     );
     expect(screen.getByTestId("density-compact").getAttribute("data-density")).toBe("compact");
   });
+
+  it("lists every density-aware radius with its comfortable and compact value", () => {
+    render(<SpacingAndRadii />);
+    expect(screen.getByTestId("radii-row-xl").textContent).toBe("radii.xl: 16px / 8px");
+    expect(screen.getByTestId("radii-row-2xl").textContent).toBe("radii.2xl: 24px / 12px");
+    for (const density of ["comfortable", "compact"]) {
+      for (const alias of ["control", "card", "tray"]) {
+        expect(screen.getByTestId(`radius-${alias}-${density}`)).toBeDefined();
+      }
+    }
+  });
 });
