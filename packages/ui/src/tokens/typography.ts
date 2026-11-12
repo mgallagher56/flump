@@ -11,7 +11,7 @@ const SYSTEM_SANS = "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans
 export const fontFamilies = {
   body: `'Inter Variable', 'Inter', ${SYSTEM_SANS}`,
   heading: `'Plus Jakarta Sans Variable', 'Plus Jakarta Sans', ${SYSTEM_SANS}`,
-  mono: "'JetBrains Mono Variable', 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
+  mono: "ui-monospace, SFMono-Regular, Menlo, monospace",
 } as const;
 
 export const fonts = {

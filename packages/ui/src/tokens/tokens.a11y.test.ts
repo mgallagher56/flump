@@ -33,7 +33,8 @@ describe("Tokens & Typography A11y Suite", () => {
   it("provides 3-tier font stack definitions", () => {
     expect(fonts.display.value).toContain("Plus Jakarta Sans");
     expect(fonts.sans.value).toContain("Inter");
-    expect(fonts.mono.value).toContain("JetBrains Mono");
+    expect(fonts.mono.value).toContain("ui-monospace");
+    expect(fonts.mono.value).not.toMatch(/jetbrains/i);
   });
 
   it("enforces the 6 canonical semantic token namespaces and eliminates redundancies", () => {

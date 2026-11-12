@@ -227,14 +227,14 @@ describe("E15 preset wiring", () => {
 
 describe("E15 self-hosted fonts", () => {
   const root = path.resolve(__dirname, "../..");
-  it("fonts.css imports the three variable fonts and is exported from the package", () => {
+  it("fonts.css imports the two variable fonts and is exported from the package", () => {
     const css = readFileSync(path.join(root, "src/fonts/fonts.css"), "utf8");
-    for (const pkg of ["inter", "plus-jakarta-sans", "jetbrains-mono"]) {
+    for (const pkg of ["inter", "plus-jakarta-sans"]) {
       expect(css).toContain(`@fontsource-variable/${pkg}/wght.css`);
     }
     const pkgJson = JSON.parse(readFileSync(path.join(root, "package.json"), "utf8"));
     expect(pkgJson.exports["./fonts.css"]).toBe("./src/fonts/fonts.css");
-    for (const dep of ["inter", "plus-jakarta-sans", "jetbrains-mono"]) {
+    for (const dep of ["inter", "plus-jakarta-sans"]) {
       expect(pkgJson.dependencies[`@fontsource-variable/${dep}`]).toMatch(/^\d+\.\d+\.\d+$/);
     }
   });

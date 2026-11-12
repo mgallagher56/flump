@@ -41,7 +41,6 @@
 
   .tabular-nums,
   [data-tabular-nums] {
-    font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
     font-variant-numeric: tabular-nums;
     letter-spacing: -0.01em;
   }
