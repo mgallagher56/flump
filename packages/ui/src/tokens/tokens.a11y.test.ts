@@ -108,21 +108,6 @@ describe("Tokens & Typography A11y Suite", () => {
       4.5,
     );
   });
-
-  it("verifies semantic status color contrasts meet WCAG standards on their badges", () => {
-    // Success badge light: text on light green bg
-    expect(
-      getContrastRatio(colors.success[700].value, colors.success[50].value),
-    ).toBeGreaterThanOrEqual(4.5);
-    // Warning badge light: text on light amber bg
-    expect(
-      getContrastRatio(colors.warning[700].value, colors.warning[50].value),
-    ).toBeGreaterThanOrEqual(4.5);
-    // Danger badge light: text on light red bg
-    expect(
-      getContrastRatio(colors.destructive[700].value, colors.destructive[50].value),
-    ).toBeGreaterThanOrEqual(4.5);
-  });
 });
 
 // ---------------------------------------------------------------------------
@@ -279,6 +264,18 @@ const CHART_LINES = [
   ...CHART_SERIES,
 ];
 
+/**
+ * Which status fills may carry primary.foreground (white) text, per theme. Measured ratios are in
+ * docs/design/e15/tokens.md. Everything not listed here is forbidden and asserted below.
+ */
+const PRIMARY_FOREGROUND_OK: Record<string, Theme[]> = {
+  positive: ["light"],
+  warning: [],
+  danger: ["light", "dark"],
+  info: ["light"],
+  neutral: ["light"],
+};
+
 const PASSING_PAIRS: Pair[] = [
   ...TEXTS.flatMap((fg) =>
     SURFACES.map((bg): Pair => ({ fg, bg, themes: BOTH, min: 4.5, role: "text" })),
@@ -347,6 +344,41 @@ const PASSING_PAIRS: Pair[] = [
     }),
   ),
   { fg: "primary", bg: "surface.card", themes: BOTH, min: 3, role: "graphic" },
+  // Review follow-up: muted text on a status badge fill (bg is rgba, composited under surface.card).
+  ...STATUSES.map(
+    (s): Pair => ({
+      fg: "text.muted",
+      bg: `status.${s}.bg`,
+      themes: BOTH,
+      min: 4.5,
+      role: "text",
+      under: "surface.card",
+    }),
+  ),
+  // Status fills are graphics (3:1) on every page surface, not only the card.
+  ...STATUSES.flatMap((s) =>
+    ["surface.canvas", "surface.sunken", "surface.subtle"].map(
+      (bg): Pair => ({ fg: `status.${s}.solid`, bg, themes: BOTH, min: 3, role: "graphic" }),
+    ),
+  ),
+  // The focus ring is a UI component indicator (3:1) on the recessed and raised surfaces too.
+  ...["surface.sunken", "surface.subtle", "surface.overlay"].map(
+    (bg): Pair => ({ fg: "border.focusRing", bg, themes: BOTH, min: 3, role: "ui" }),
+  ),
+  // primary.foreground (white) on a status fill: only the fills in PRIMARY_FOREGROUND_OK.
+  ...Object.entries(PRIMARY_FOREGROUND_OK).flatMap(([s, themes]) =>
+    themes.length
+      ? [
+          {
+            fg: "primary.foreground",
+            bg: `status.${s}.solid`,
+            themes,
+            min: 4.5,
+            role: "text",
+          } as Pair,
+        ]
+      : [],
+  ),
 ];
 
 /** Known failures. Each row names the audit finding; fix the token then move the row to PASSING_PAIRS. */
@@ -443,6 +475,54 @@ describe("Semantic token contrast matrix", () => {
         );
         expect(r).toBeGreaterThanOrEqual(3);
       }
+    }
+  });
+
+  it("the harness fails on a deliberately violating pair (surface.card on surface.card is 1:1)", () => {
+    const bad: Pair = {
+      fg: "surface.card",
+      bg: "surface.card",
+      themes: BOTH,
+      min: 3,
+      role: "ui",
+    };
+    expect(() => assertPair(bad)).toThrow();
+    expect(pairContrast(bad, "light")).toBeCloseTo(1, 5);
+    // and a near-identical but distinct pair still fails the text threshold
+    expect(() =>
+      assertPair({
+        fg: "surface.canvas",
+        bg: "surface.sunken",
+        themes: BOTH,
+        min: 4.5,
+        role: "text",
+      }),
+    ).toThrow();
+  });
+
+  it("primary.foreground must NOT be used on forbidden status fills (measured < 4.5:1)", () => {
+    const forbidden: [string, Theme][] = [];
+    for (const s of STATUSES) {
+      for (const theme of BOTH) {
+        if (!PRIMARY_FOREGROUND_OK[s].includes(theme)) forbidden.push([s, theme]);
+      }
+    }
+    // warning (both themes) and positive/info/neutral in dark are the documented no-white-text fills.
+    expect(forbidden.map(([s, t]) => `${s}.${t}`).sort()).toEqual(
+      ["info.dark", "neutral.dark", "positive.dark", "warning.dark", "warning.light"].sort(),
+    );
+    for (const [s, theme] of forbidden) {
+      const ratio = pairContrast(
+        {
+          fg: "primary.foreground",
+          bg: `status.${s}.solid`,
+          themes: [theme],
+          min: 4.5,
+          role: "text",
+        },
+        theme,
+      );
+      expect(ratio, `${s}.solid ${theme}`).toBeLessThan(4.5);
     }
   });
 
