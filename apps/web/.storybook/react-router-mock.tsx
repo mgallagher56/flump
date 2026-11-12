@@ -107,10 +107,7 @@ export const Link = ({ to, children, className, ...props }: any) => {
 export const NavLink = ({ className, children, end: _end, ...props }: any) => {
   const state = { isActive: false, isPending: false, isTransitioning: false };
   return (
-    <Link
-      {...props}
-      className={typeof className === "function" ? className(state) : className}
-    >
+    <Link {...props} className={typeof className === "function" ? className(state) : className}>
       {typeof children === "function" ? children(state) : children}
     </Link>
   );
