@@ -17,7 +17,7 @@ const cardStyle = css({
   display: "flex",
   flexDirection: "column",
   gap: "18px",
-  boxShadow: "0 4px 16px color-mix(in srgb, var(--colors-surface-contrast) 4%, transparent)",
+  boxShadow: "var(--shadows-card)",
 });
 
 const gridLayout = css({
@@ -75,7 +75,7 @@ export const PaymentsOnAccountCard: FC<PaymentsOnAccountCardProps> = ({
                 height: "28px",
                 borderRadius: "8px",
                 backgroundColor: "color-mix(in srgb, var(--colors-chart-series2) 12%, transparent)",
-                color: "var(--colors-chart-series2)",
+                color: "var(--colors-status-info-text)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
@@ -135,7 +135,11 @@ export const PaymentsOnAccountCard: FC<PaymentsOnAccountCardProps> = ({
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <strong style={{ fontSize: "13px" }}>31 January Deadline</strong>
             <span
-              style={{ fontSize: "11px", color: "var(--colors-chart-warning)", fontWeight: 600 }}
+              style={{
+                fontSize: "11px",
+                color: "var(--colors-status-warning-text)",
+                fontWeight: 600,
+              }}
             >
               {daysToJan31} days left
             </span>

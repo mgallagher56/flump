@@ -121,7 +121,7 @@ export const MonthlyBalanceCheckInDrawer: FC<MonthlyBalanceCheckInDrawerProps> =
           className={css({
             position: "fixed",
             inset: 0,
-            backgroundColor: "color-mix(in srgb, var(--colors-surface-contrast) 60%, transparent)",
+            backgroundColor: "var(--colors-surface-scrim)",
             backdropFilter: "blur(4px)",
             zIndex: 9999,
           })}

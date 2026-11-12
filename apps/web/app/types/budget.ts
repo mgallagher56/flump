@@ -1,3 +1,5 @@
+import { seriesColor } from "@repo/ui";
+
 export type BudgetCategory = "housing" | "bills" | "expenses" | "savings" | "income" | string;
 
 export interface BudgetEntry {
@@ -69,11 +71,11 @@ export const BASE_CATEGORY_LABELS: Record<string, string> = {
 };
 
 export const BASE_CATEGORY_COLOURS: Record<string, string> = {
-  housing: "var(--colors-primary)",
-  bills: "var(--colors-chart-warning)",
-  expenses: "var(--colors-chart-series5)",
-  savings: "var(--colors-chart-wealth)",
-  income: "var(--colors-chart-series2)",
+  housing: seriesColor(0),
+  bills: seriesColor(2),
+  expenses: seriesColor(4),
+  savings: seriesColor(1),
+  income: seriesColor(3),
 };
 
 export const BASE_CATEGORY_ICONS: Record<string, string> = {
@@ -84,16 +86,9 @@ export const BASE_CATEGORY_ICONS: Record<string, string> = {
   income: "💼",
 };
 
-const CUSTOM_PALETTE = [
-  "var(--colors-chart-accent-purple)",
-  "var(--colors-chart-accent-cyan)",
-  "var(--colors-chart-series1)",
-  "var(--colors-chart-series3)",
-  "var(--colors-chart-series4)",
-  "var(--colors-chart-series6)",
-  "var(--colors-chart-series7)",
-  "var(--colors-chart-series8)",
-];
+// Only eight chart series are distinguishable; base categories take series1-5 and custom categories
+// share series6-8 (hash-picked), so labels must always accompany the colour.
+export const CUSTOM_PALETTE = [seriesColor(5), seriesColor(6), seriesColor(7)];
 
 export function getCategoryLabel(category: string): string {
   if (BASE_CATEGORY_LABELS[category]) return BASE_CATEGORY_LABELS[category];

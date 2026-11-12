@@ -23,7 +23,7 @@ export interface AddDebtDialogProps {
 const overlayStyle = css({
   position: "fixed",
   inset: 0,
-  backgroundColor: "color-mix(in srgb, var(--colors-surface-contrast) 60%, transparent)",
+  backgroundColor: "var(--colors-surface-scrim)",
   backdropFilter: "blur(4px)",
   display: "flex",
   alignItems: "center",
@@ -43,7 +43,7 @@ const modalStyle = css({
   display: "flex",
   flexDirection: "column",
   gap: "16px",
-  boxShadow: "0 20px 25px -5px color-mix(in srgb, var(--colors-surface-contrast) 20%, transparent)",
+  boxShadow: "var(--shadows-floating)",
 });
 
 const fieldStyle = css({

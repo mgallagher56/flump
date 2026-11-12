@@ -43,7 +43,7 @@ const statsGridStyle = css({
   gap: "8px",
   padding: "10px 14px",
   borderRadius: "lg",
-  backgroundColor: "color-mix(in srgb, var(--colors-surface-contrast) 2%, transparent)",
+  backgroundColor: "var(--colors-surface-sunken)",
   border: "1px solid",
   borderColor: "border",
 });
@@ -418,8 +418,7 @@ export const SavingsForecasterCard: FC<SavingsForecasterCardProps> = ({
                   borderRadius: "10px",
                   fontSize: "12px",
                   color: "var(--colors-text-primary)",
-                  boxShadow:
-                    "0 10px 25px -5px color-mix(in srgb, var(--colors-surface-contrast) 40%, transparent)",
+                  boxShadow: "var(--shadows-floating)",
                 }}
                 itemStyle={{ color: "var(--colors-text-primary)" }}
                 labelStyle={{ color: "var(--colors-text-muted)", fontWeight: 600 }}

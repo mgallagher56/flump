@@ -137,19 +137,19 @@ export const TaxIncomeSectionCard: FC<TaxIncomeSectionCardProps> = ({
     emerald: {
       border: "color-mix(in srgb, var(--colors-chart-wealth) 30%, transparent)",
       badgeBg: "color-mix(in srgb, var(--colors-chart-wealth) 12%, transparent)",
-      badgeText: "var(--colors-chart-wealth)",
+      badgeText: "var(--colors-status-positive-text)",
       iconBg: "color-mix(in srgb, var(--colors-chart-wealth) 15%, transparent)",
     },
     amber: {
       border: "color-mix(in srgb, var(--colors-chart-warning) 30%, transparent)",
       badgeBg: "color-mix(in srgb, var(--colors-chart-warning) 12%, transparent)",
-      badgeText: "var(--colors-chart-warning)",
+      badgeText: "var(--colors-status-warning-text)",
       iconBg: "color-mix(in srgb, var(--colors-chart-warning) 15%, transparent)",
     },
     purple: {
       border: "color-mix(in srgb, var(--colors-chart-accent-purple) 30%, transparent)",
       badgeBg: "color-mix(in srgb, var(--colors-chart-accent-purple) 12%, transparent)",
-      badgeText: "var(--colors-chart-accent-purple)",
+      badgeText: "var(--colors-text-secondary)",
       iconBg: "color-mix(in srgb, var(--colors-chart-accent-purple) 15%, transparent)",
     },
   }[colorScheme];
@@ -189,7 +189,7 @@ export const TaxIncomeSectionCard: FC<TaxIncomeSectionCardProps> = ({
           gap: { base: "12px", md: "16px" },
           "&::-webkit-details-marker": { display: "none" },
           "&:hover": {
-            backgroundColor: "color-mix(in srgb, var(--colors-surface-contrast) 1.5%, transparent)",
+            backgroundColor: "var(--colors-surface-sunken)",
           },
         })}
       >
@@ -385,7 +385,7 @@ export const TaxIncomeSectionCard: FC<TaxIncomeSectionCardProps> = ({
               },
               gap: "8px",
               padding: { base: "10px", md: "12px" },
-              backgroundColor: "color-mix(in srgb, var(--colors-surface-contrast) 2%, transparent)",
+              backgroundColor: "var(--colors-surface-sunken)",
               border: "1px solid",
               borderColor: "border",
               borderRadius: "md",
@@ -495,7 +495,7 @@ export const TaxIncomeSectionCard: FC<TaxIncomeSectionCardProps> = ({
             style={{
               padding: "24px",
               textAlign: "center",
-              backgroundColor: "color-mix(in srgb, var(--colors-surface-contrast) 1%, transparent)",
+              backgroundColor: "var(--colors-surface-sunken)",
               borderRadius: "8px",
               border: "1px dashed var(--colors-border)",
             }}
@@ -544,8 +544,7 @@ export const TaxIncomeSectionCard: FC<TaxIncomeSectionCardProps> = ({
               <thead>
                 <tr
                   style={{
-                    backgroundColor:
-                      "color-mix(in srgb, var(--colors-surface-contrast) 2%, transparent)",
+                    backgroundColor: "var(--colors-surface-sunken)",
                     borderBottom: "1px solid var(--colors-border)",
                   }}
                 >
@@ -584,8 +583,7 @@ export const TaxIncomeSectionCard: FC<TaxIncomeSectionCardProps> = ({
                       }}
                       className={css({
                         "&:hover": {
-                          backgroundColor:
-                            "color-mix(in srgb, var(--colors-surface-contrast) 2%, transparent)",
+                          backgroundColor: "var(--colors-surface-sunken)",
                         },
                       })}
                     >
@@ -683,7 +681,7 @@ export const TaxIncomeSectionCard: FC<TaxIncomeSectionCardProps> = ({
                             ) : (
                               <FaFileImage
                                 size={13}
-                                style={{ color: "var(--colors-chart-series2)" }}
+                                style={{ color: "var(--colors-status-info-text)" }}
                               />
                             )}
                             View
@@ -710,8 +708,7 @@ export const TaxIncomeSectionCard: FC<TaxIncomeSectionCardProps> = ({
                               borderRadius: "sm",
                               "&:hover": {
                                 color: "text.primary",
-                                backgroundColor:
-                                  "color-mix(in srgb, var(--colors-surface-contrast) 6%, transparent)",
+                                backgroundColor: "var(--colors-surface-sunken)",
                               },
                             })}
                           >

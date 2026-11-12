@@ -1,9 +1,11 @@
 import { describe, expect, it } from "vitest";
 import {
+  BASE_CATEGORY_COLOURS,
   type BudgetEntry,
   CATEGORY_COLOURS,
   CATEGORY_ICONS,
   CATEGORY_LABELS,
+  CUSTOM_PALETTE,
   getCategoryColour,
   getCategoryIcon,
   getCategoryLabel,
@@ -57,9 +59,12 @@ describe("budget types & helpers", () => {
     expect(CATEGORY_LABELS.housing).toBe("Housing");
     expect(CATEGORY_LABELS.pets).toBe("Pets");
 
-    expect(getCategoryColour("housing")).toBe("var(--colors-primary)");
+    expect(getCategoryColour("housing")).toBe("var(--colors-chart-series1)");
     expect(getCategoryColour("pets")).toMatch(/^var\(--colors-/);
     expect(CATEGORY_COLOURS.pets).toMatch(/^var\(--colors-/);
+
+    const palette = [...Object.values(BASE_CATEGORY_COLOURS), ...CUSTOM_PALETTE];
+    expect(new Set(palette).size).toBe(palette.length);
 
     expect(getCategoryIcon("housing")).toBe("🏠");
     expect(getCategoryIcon("pets")).toBe("📁");

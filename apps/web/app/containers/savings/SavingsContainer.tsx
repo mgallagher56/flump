@@ -68,9 +68,7 @@ const segmentedTabStyle = (active: boolean) =>
     borderRadius: "lg",
     border: "none",
     cursor: "pointer",
-    boxShadow: active
-      ? "0 1px 3px color-mix(in srgb, var(--colors-surface-contrast) 10%, transparent), 0 1px 2px color-mix(in srgb, var(--colors-surface-contrast) 6%, transparent)"
-      : "none",
+    boxShadow: active ? "var(--shadows-card)" : "none",
     transition: "all 0.15s ease",
     _hover: {
       color: "text.primary",

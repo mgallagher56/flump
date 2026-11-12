@@ -52,7 +52,7 @@ const toolCardStyle = css({
   "&:hover": {
     borderColor: "primary",
     transform: "translateY(-3px)",
-    boxShadow: "0 12px 28px color-mix(in srgb, var(--colors-surface-contrast) 8%, transparent)",
+    boxShadow: "var(--shadows-floating)",
   },
 });
 
@@ -197,7 +197,7 @@ export const ToolsIndex: FC = () => {
                 display: "inline-flex",
                 alignItems: "center",
                 gap: "6px",
-                color: "var(--colors-chart-series2)",
+                color: "var(--colors-status-info-text)",
                 fontWeight: 600,
                 fontSize: "13px",
               }}
@@ -342,7 +342,7 @@ export const ToolsIndex: FC = () => {
                 display: "inline-flex",
                 alignItems: "center",
                 gap: "6px",
-                color: "var(--colors-chart-accent-purple)",
+                color: "var(--colors-text-secondary)",
                 fontWeight: 600,
                 fontSize: "13px",
               }}

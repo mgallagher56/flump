@@ -33,7 +33,7 @@ const bannerContainerStyle = (isInTrap: boolean) =>
     display: "flex",
     flexDirection: "column",
     gap: "18px",
-    boxShadow: "0 4px 16px color-mix(in srgb, var(--colors-surface-contrast) 4%, transparent)",
+    boxShadow: "var(--shadows-card)",
   });
 
 // Semantic status tokens keep the badge above 4.5:1 contrast in light and dark.

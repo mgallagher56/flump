@@ -106,7 +106,7 @@ const knobStyle = (active: boolean) => ({
   borderRadius: "50%",
   backgroundColor: "white",
   transition: "left 0.2s ease",
-  boxShadow: "0 1px 3px color-mix(in srgb, var(--colors-surface-contrast) 30%, transparent)",
+  boxShadow: "var(--shadows-card)",
 });
 
 const smallInputStyle = css({
@@ -596,7 +596,7 @@ const RunwayCalculator: FC<RunwayCalculatorProps> = ({
                         ) : (
                           <FaTimesCircle
                             style={{
-                              color: "var(--colors-chart-baseline)",
+                              color: "var(--colors-text-muted)",
                               fontSize: "14px",
                               flexShrink: 0,
                             }}
@@ -776,7 +776,7 @@ const RunwayCalculator: FC<RunwayCalculatorProps> = ({
                         ) : (
                           <FaTimesCircle
                             style={{
-                              color: "var(--colors-chart-baseline)",
+                              color: "var(--colors-text-muted)",
                               fontSize: "14px",
                               flexShrink: 0,
                             }}
@@ -906,7 +906,7 @@ const RunwayCalculator: FC<RunwayCalculatorProps> = ({
                         />
                       ) : (
                         <FaCheckCircle
-                          style={{ color: "var(--colors-chart-baseline)", fontSize: "12px" }}
+                          style={{ color: "var(--colors-text-muted)", fontSize: "12px" }}
                         />
                       )}
                       <div>
@@ -959,8 +959,7 @@ const RunwayCalculator: FC<RunwayCalculatorProps> = ({
               overflow: "hidden",
               border: "1px solid",
               borderColor: "border",
-              boxShadow:
-                "0 8px 30px color-mix(in srgb, var(--colors-surface-contrast) 10%, transparent)",
+              boxShadow: "var(--shadows-floating)",
             })}
           >
             {/* Status banner */}
@@ -1068,11 +1067,15 @@ const RunwayCalculator: FC<RunwayCalculatorProps> = ({
               }}
             >
               {[
-                { label: "Savings pool", value: fmt(pool), colour: "var(--colors-chart-wealth)" },
+                {
+                  label: "Savings pool",
+                  value: fmt(pool),
+                  colour: "var(--colors-status-positive-text)",
+                },
                 {
                   label: "Kept income / mo",
                   value: `+${fmt(totalKeptIncome)}`,
-                  colour: "var(--colors-chart-wealth)",
+                  colour: "var(--colors-status-positive-text)",
                 },
                 {
                   label: "Kept expenses / mo",

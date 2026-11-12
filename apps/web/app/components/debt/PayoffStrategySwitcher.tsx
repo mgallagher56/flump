@@ -57,9 +57,7 @@ const pillButtonStyle = (active: boolean) =>
     gap: "8px",
     backgroundColor: active ? "card" : "transparent",
     color: active ? "text.primary" : "text.muted",
-    boxShadow: active
-      ? "0 1px 2px color-mix(in srgb, var(--colors-surface-contrast) 6%, transparent)"
-      : "none",
+    boxShadow: active ? "var(--shadows-card)" : "none",
     border: "1px solid",
     borderColor: active ? "border.subtle" : "transparent",
     transition: "all 0.15s ease",
@@ -298,7 +296,7 @@ export const PayoffStrategySwitcher: FC<PayoffStrategySwitcherProps> = ({
                   fontSize: "11px",
                   backgroundColor:
                     "color-mix(in srgb, var(--colors-chart-warning) 15%, transparent)",
-                  color: "var(--colors-chart-warning)",
+                  color: "var(--colors-status-warning-text)",
                   padding: "3px 8px",
                   borderRadius: "6px",
                   fontWeight: "bold",
@@ -368,7 +366,7 @@ export const PayoffStrategySwitcher: FC<PayoffStrategySwitcherProps> = ({
                   fontSize: "11px",
                   backgroundColor:
                     "color-mix(in srgb, var(--colors-chart-series2) 15%, transparent)",
-                  color: "var(--colors-chart-series2)",
+                  color: "var(--colors-status-info-text)",
                   padding: "3px 8px",
                   borderRadius: "6px",
                   fontWeight: "bold",
