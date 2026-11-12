@@ -31,7 +31,7 @@ export const Populated: Story = {
 };
 
 export const NotSet: Story = {
-  args: { monthlyRent: 0, grossYield: null, monthlyPayment: null, propertyCount: 1 },
+  args: { monthlyRent: 0, grossYield: null, monthlyPayment: null, propertyCount: null },
   play: async ({ canvasElement }) => {
     await expect(within(canvasElement).getAllByText("Not set").length).toBeGreaterThan(0);
   },

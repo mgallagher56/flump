@@ -77,7 +77,7 @@ describe("<OverpayVsSaveCompare /> unknown inputs and caveats", () => {
     );
     expect(getByTestId("overpay-compare-mortgage-rate").textContent).toContain("Not set");
     expect(getByText("Mortgage details not set")).toBeDefined();
-    expect(container.textContent ?? "").not.toMatch(/0\.00%|£0\b/);
+    expect(container.textContent ?? "").not.toMatch(/0\.00%|£\s*0(?:[,.]0+)*(?!\d)/);
   });
 
   test("shows the early repayment charge caveat beside the comparison", () => {

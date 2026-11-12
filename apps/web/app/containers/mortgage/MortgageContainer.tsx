@@ -31,6 +31,7 @@ import {
   pageRoot,
   tabButton,
   tabList,
+  tabPanel,
 } from "./MortgageContainer.styles";
 
 const formatList = (items: string[]): string =>
@@ -63,7 +64,7 @@ const MortgageContainer: FC = () => {
   const [loanAmount, setLoanAmount] = useState<number>(userProfile?.mortgageBalance ?? 0);
   const [interestRate, setInterestRate] = useState<number>(0);
   const [remainingTerm, setRemainingTerm] = useState<number>(0);
-  const [overpayment, setOverpayment] = useState<number>(200);
+  const [overpayment, setOverpayment] = useState<number>(0);
   const [isEditing, setIsEditing] = useState(false);
   const [editLoanAmount, setEditLoanAmount] = useState<number>(userProfile?.mortgageBalance ?? 0);
   // Held as strings so a cleared field stays empty instead of showing 0.
@@ -227,7 +228,6 @@ const MortgageContainer: FC = () => {
     btlPropertyValue > 0 && btlMonthlyRent > 0
       ? ((btlMonthlyRent * 12) / btlPropertyValue) * 100
       : null;
-  const btlNetCashflow = btlMonthlyRent - btlMonthlyPayment;
 
   const editPayment =
     editLoanAmount > 0 && Number(editInterestRate) > 0 && Number(editRemainingTerm) > 0
@@ -321,25 +321,47 @@ const MortgageContainer: FC = () => {
           monthlyPayment={btlKnownPayment}
           monthlyRent={btlMonthlyRent}
           mortgageType={mortgageType}
-          propertyCount={profile.buyToLetCount ?? 1}
+          propertyCount={profile.buyToLetCount ?? null}
           onConfigure={() => navigate("/app/profile")}
         />
       )}
 
-      <fieldset aria-label="Mortgage tools" className={tabList()}>
-        {tabs.map((tab) => (
+      {/* Roving-tabindex tabs on plain buttons (Radix Tabs ignore click in jsdom). */}
+      <div aria-label="Mortgage tools" className={tabList()} role="tablist">
+        {tabs.map((tab, index) => (
           <button
-            aria-pressed={activeTab === tab.id}
+            aria-controls={`mortgage-panel-${tab.id}`}
+            aria-selected={activeTab === tab.id}
             className={tabButton({ active: activeTab === tab.id })}
+            id={`mortgage-tab-${tab.id}`}
             key={tab.id}
+            role="tab"
+            tabIndex={activeTab === tab.id ? 0 : -1}
             type="button"
             onClick={() => setActiveTab(tab.id)}
+            onKeyDown={(event) => {
+              const last = tabs.length - 1;
+              const next =
+                event.key === "ArrowRight"
+                  ? (index + 1) % tabs.length
+                  : event.key === "ArrowLeft"
+                    ? (index + last) % tabs.length
+                    : event.key === "Home"
+                      ? 0
+                      : event.key === "End"
+                        ? last
+                        : null;
+              if (next === null) return;
+              event.preventDefault();
+              setActiveTab(tabs[next].id);
+              document.getElementById(`mortgage-tab-${tabs[next].id}`)?.focus();
+            }}
           >
             <Icon icon={tab.icon} size="sm" />
             {tab.label}
           </button>
         ))}
-      </fieldset>
+      </div>
 
       {missingMortgageDetails.length > 0 && propertyCategory === "residential" && (
         <div className={missingPrompt()}>
@@ -350,78 +372,91 @@ const MortgageContainer: FC = () => {
         </div>
       )}
 
-      {activeTab === "tracker" && (
-        <MortgageTracker
-          interestRate={interestRate}
-          loanAmount={loanAmount}
-          mortgageAccounts={propertyCategory === "residential" ? mortgageAccounts : []}
-          mortgageType={mortgageType}
-          remainingTerm={remainingTerm}
-          selectedAccountId={selectedAccountId}
-          onInterestRateChange={setInterestRate}
-          onLoanAmountChange={setLoanAmount}
-          onMortgageTypeChange={setMortgageType}
-          onRemainingTermChange={setRemainingTerm}
-          onSelectAccount={(id) => {
-            setSelectedAccountId(id);
-            if (!id) {
-              setLoanAmount(0);
-            }
-          }}
-        />
-      )}
+      <div
+        aria-labelledby={`mortgage-tab-${activeTab}`}
+        className={tabPanel()}
+        id={`mortgage-panel-${activeTab}`}
+        role="tabpanel"
+      >
+        {activeTab === "tracker" && (
+          <MortgageTracker
+            interestRate={interestRate}
+            loanAmount={loanAmount}
+            mortgageAccounts={propertyCategory === "residential" ? mortgageAccounts : []}
+            mortgageType={mortgageType}
+            remainingTerm={remainingTerm}
+            selectedAccountId={selectedAccountId}
+            onInterestRateChange={setInterestRate}
+            onLoanAmountChange={setLoanAmount}
+            onMortgageTypeChange={setMortgageType}
+            onRemainingTermChange={setRemainingTerm}
+            onSelectAccount={(id) => {
+              setSelectedAccountId(id);
+              if (!id) {
+                setLoanAmount(0);
+              }
+            }}
+          />
+        )}
 
-      {activeTab === "milestones" && !hasLtvData && (
-        <EmptyState
-          description="Add your mortgage balance and property value to see LTV milestones."
-          headingLevel="h3"
-          size="sm"
-          title="LTV milestones not available"
-        />
-      )}
+        {activeTab === "milestones" && !hasLtvData && (
+          <EmptyState
+            description="Add your mortgage balance and property value to see LTV milestones."
+            headingLevel="h3"
+            size="sm"
+            title="LTV milestones not available"
+          />
+        )}
 
-      {activeTab === "milestones" && hasLtvData && (
-        <LtvMilestones
-          currentLtv={currentLtv}
-          loanAmount={loanAmount}
-          milestones={ltvMilestones}
-          ownershipSharePct={baseline.propertyOwnershipSharePct ?? 100}
-          propertyValue={propertyValue}
-          onApplyOverpayment={(amount) => {
-            setOverpayment(amount);
-            setActiveTab("simulator");
-          }}
-        />
-      )}
+        {activeTab === "milestones" && hasLtvData && (
+          <LtvMilestones
+            currentLtv={currentLtv}
+            loanAmount={loanAmount}
+            milestones={ltvMilestones}
+            ownershipSharePct={baseline.propertyOwnershipSharePct ?? 100}
+            propertyValue={propertyValue}
+            onApplyOverpayment={(amount) => {
+              setOverpayment(amount);
+              setActiveTab("simulator");
+            }}
+          />
+        )}
 
-      {activeTab === "simulator" && (
-        <>
-          <CollapsibleDrawer
-            subtitle="Model the monthly payment increase when your current fixed-rate deal expires"
-            title="Remortgage rate shock simulator"
-          >
-            <RemortgageShockSim currentBalance={loanAmount} currentRate={interestRate} />
-          </CollapsibleDrawer>
-          <OverpaymentSimulator
+        {activeTab === "simulator" && (
+          <>
+            <CollapsibleDrawer
+              subtitle="Model the monthly payment increase when your current fixed-rate deal expires"
+              title="Remortgage rate shock simulator"
+            >
+              <RemortgageShockSim
+                currentBalance={loanAmount}
+                currentRate={interestRate}
+                fixEndDate={profile.mortgageRenewalDate}
+                propertyValue={propertyValue || undefined}
+                remainingTermYears={remainingTerm > 0 ? remainingTerm : undefined}
+              />
+            </CollapsibleDrawer>
+            <OverpaymentSimulator
+              interestRate={interestRate}
+              loanAmount={loanAmount}
+              mortgageType={mortgageType}
+              overpayment={overpayment}
+              remainingTerm={remainingTerm}
+              onOverpaymentChange={setOverpayment}
+            />
+          </>
+        )}
+
+        {activeTab === "compare" && (
+          <OverpayVsSaveCompare
             interestRate={interestRate}
             loanAmount={loanAmount}
             mortgageType={mortgageType}
             overpayment={overpayment}
             remainingTerm={remainingTerm}
-            onOverpaymentChange={setOverpayment}
           />
-        </>
-      )}
-
-      {activeTab === "compare" && (
-        <OverpayVsSaveCompare
-          interestRate={interestRate}
-          loanAmount={loanAmount}
-          mortgageType={mortgageType}
-          overpayment={overpayment}
-          remainingTerm={remainingTerm}
-        />
-      )}
+        )}
+      </div>
     </div>
   );
 };

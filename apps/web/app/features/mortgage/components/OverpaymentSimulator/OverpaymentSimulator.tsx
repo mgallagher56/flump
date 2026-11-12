@@ -360,7 +360,7 @@ export const OverpaymentSimulator: FC<OverpaymentSimulatorProps> = ({
         <KpiCard
           label="Interest saved"
           subtext="Estimate"
-          value={interestSaved === null ? null : <Money size="kpi" value={interestSaved} />}
+          value={interestSaved === null ? null : <Money size="lg" value={interestSaved} />}
         />
         <KpiCard
           label="Time shaved off"
@@ -376,7 +376,7 @@ export const OverpaymentSimulator: FC<OverpaymentSimulatorProps> = ({
           subtext="Estimate"
           value={
             simulation === null ? null : showBulletReduced ? (
-              <Money size="kpi" value={simulation.principalReduced} />
+              <Money size="lg" value={simulation.principalReduced} />
             ) : (
               <span className={durationValue}>{formatDuration(simulation.newTermMonths)}</span>
             )

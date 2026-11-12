@@ -28,9 +28,6 @@ export const tabList = cva({
   base: {
     margin: 0,
     padding: 0,
-    borderTopWidth: 0,
-    borderLeftWidth: 0,
-    borderRightWidth: 0,
     display: "flex",
     gap: "4px",
     borderBottomWidth: "1px",
@@ -84,4 +81,8 @@ export const missingPrompt = cva({
     textStyle: "body.md",
     color: "text.secondary",
   },
+});
+
+export const tabPanel = cva({
+  base: { display: "flex", flexDirection: "column", gap: "20px", minWidth: 0 },
 });
