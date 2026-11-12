@@ -98,8 +98,8 @@ const IconGallery = () => (
         </li>
       ))}
     </ul>
-    <section aria-labelledby="icon-a11y" className={css({ display: "grid", gap: "8px" })}>
-      <h2 id="icon-a11y" className={css({ textStyle: "heading.sm" })}>
+    <section aria-labelledby="icon-accessibility" className={css({ display: "grid", gap: "8px" })}>
+      <h2 id="icon-accessibility" className={css({ textStyle: "heading.sm" })}>
         Accessibility
       </h2>
       <p className={css({ textStyle: "body.sm", color: "text.secondary" })}>

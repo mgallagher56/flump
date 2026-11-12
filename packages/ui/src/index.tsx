@@ -4,7 +4,8 @@ export { styled } from "../styled-system/jsx";
 export * from "../styled-system/patterns";
 // Calculators
 export * from "./calculators/index.js";
-// Hooks
+// Hooks and chart helpers
+export * from "./charts";
 // Foundations
 export * from "./foundations/ColorPalette";
 export * from "./foundations/SpacingAndRadii";

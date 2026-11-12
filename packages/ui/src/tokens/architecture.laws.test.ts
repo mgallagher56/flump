@@ -68,6 +68,7 @@ describe("Architecture & Design System Laws", () => {
       // E15 registered foundations (new directories must be listed here deliberately).
       for (const expected of [
         "ColorPalette",
+        "DataVizPalette",
         "Elevation",
         "Motion",
         "SpacingAndRadii",
@@ -80,11 +81,11 @@ describe("Architecture & Design System Laws", () => {
       }
     });
 
-    it("keeps hooks/ as a component-free utility directories", () => {
+    it("keeps hooks/ and charts/ as component-free utility directories", () => {
       // These hold plain TS (hooks, framework-free helpers), so the 5-file component law does not
       // apply. They must not grow components: any non-test .tsx or .styles.ts belongs in a
       // registered component directory instead.
-      for (const dir of ["hooks"]) {
+      for (const dir of ["hooks", "charts"]) {
         const files = fs.readdirSync(path.join(UI_SRC, dir));
         expect(files.length).toBeGreaterThan(0);
         const offenders = files.filter(

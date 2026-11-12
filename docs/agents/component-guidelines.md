@@ -35,20 +35,70 @@ Author all component styles in `ComponentName.styles.ts` using Panda CSS `cva` o
 
 Use **only** these 6 semantic token namespaces (`packages/ui/src/tokens/index.ts`):
 
-| Namespace   | Allowed Tokens                                                                                                                                     | Typical Usage                                                                                                                                                                                                  |
-| :---------- | :------------------------------------------------------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `surface.*` | `surface.canvas`, `surface.card`, `surface.sunken`, `surface.subtle`, `surface.overlay`, `surface.contrast`                                        | Page backgrounds, elevated cards, inset code/tablewells, dark hero callouts                                                                                                                                    |
-| `text.*`    | `text.primary`, `text.secondary`, `text.muted`, `text.onContrast`                                                                                  | Headings, body copy, captions, text on `surface.contrast`                                                                                                                                                      |
-| `border.*`  | `border.DEFAULT`, `border.subtle`, `border.strong`, `border.input`, `border.focusRing`                                                             | Card borders, table dividers, form inputs, focus rings                                                                                                                                                         |
-| `primary.*` | `primary` (`DEFAULT`), `primary.solid`, `primary.hover`, `primary.subtle`, `primary.border`, `primary.foreground`                                  | Brand CTAs, active tabs, accent badges, primary links. `primary.solid` (and `primary.hover`): fill behind `primary.foreground` only (text-labelled fills); graphic-only fills use `primary` or `chart.primary` |
-| `status.*`  | `status.{positive\|warning\|danger\|info\|neutral}.{text\|bg\|border\|solid}`                                                                      | Semantic badges, alerts, trend indicators, status dots                                                                                                                                                         |
-| `chart.*`   | `chart.primary`, `chart.wealth`, `chart.debt`, `chart.warning`, `chart.accentPurple`, `chart.accentCyan`, `chart.grid`, `chart.series1`..`series5` | Data visualisations and chart series                                                                                                                                                                           |
+| Namespace   | Allowed Tokens                                                                                                                                                                                         | Typical Usage                                                                                                                                                                                                  |
+| :---------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `surface.*` | `surface.canvas`, `surface.card`, `surface.sunken`, `surface.subtle`, `surface.overlay`, `surface.contrast`                                                                                            | Page backgrounds, elevated cards, inset code/tablewells, dark hero callouts                                                                                                                                    |
+| `text.*`    | `text.primary`, `text.secondary`, `text.muted`, `text.onContrast`                                                                                                                                      | Headings, body copy, captions, text on `surface.contrast`                                                                                                                                                      |
+| `border.*`  | `border.DEFAULT`, `border.subtle`, `border.strong`, `border.input`, `border.focusRing`                                                                                                                 | Card borders, table dividers, form inputs, focus rings                                                                                                                                                         |
+| `primary.*` | `primary` (`DEFAULT`), `primary.solid`, `primary.hover`, `primary.subtle`, `primary.border`, `primary.foreground`                                                                                      | Brand CTAs, active tabs, accent badges, primary links. `primary.solid` (and `primary.hover`): fill behind `primary.foreground` only (text-labelled fills); graphic-only fills use `primary` or `chart.primary` |
+| `status.*`  | `status.{positive\|warning\|danger\|info\|neutral}.{text\|bg\|border\|solid}`                                                                                                                          | Semantic badges, alerts, trend indicators, status dots                                                                                                                                                         |
+| `chart.*`   | `chart.primary`, `chart.wealth`, `chart.debt`, `chart.warning`, `chart.accentPurple`, `chart.accentCyan`, `chart.grid`, `chart.series1`..`series8`, `chart.projection`, `chart.band`, `chart.baseline` | Data visualisations and chart series (see `docs/design/data-viz.md`)                                                                                                                                           |
 
 ### Styling Rules
 
 - **Use `cva` variants instead of inline styles**: Express dynamic state (`active`, `tone`, `size`) via `cva` variants rather than `style={{ ... }}` props, raw hex codes, `var(--colors-...)`, or primitive scale tokens (`slate.*`, `indigo.*`, `emerald.*`).
 - **Tabular numerals on financial data**: Set `fontVariantNumeric: "tabular-nums"` on every recipe displaying currency figures, percentages, dates, tax bands, or slider badges.
 - **Asset vs liability polarity**: Style decreasing liability balances (`Mortgage`, `Loan`, `Credit Card`) with `status.positive.*` and increasing liability balances with `status.danger.*`, while keeping the directional arrow (`↑` / `↓`) faithful to the numeric change.
+
+### New colour keys (E15)
+
+| Key                        | Use                                                             |
+| :------------------------- | :-------------------------------------------------------------- |
+| `surface.scrim`            | Modal and drawer backdrop only. Never a text surface.           |
+| `chart.series6`..`series8` | Extra series colours. Pair with a marker, dash or direct label. |
+| `chart.projection`         | Forecast line. Always dashed.                                   |
+| `chart.band`               | Confidence-band fill behind lines. Never a line.                |
+| `chart.baseline`           | Reference lines (targets, zero line, prior year).               |
+
+Full values and measured contrast are in `docs/design/e15/tokens.md`.
+
+### Typography (`textStyle`)
+
+Use `textStyle` instead of ad hoc `fontSize` / `fontWeight` / `lineHeight`: `display`, `heading.{xl,lg,md,sm}`, `body.{lg,md,sm}`, `label.{md,sm}`, `numeric.{kpi,lg,md,sm}`. The numeric styles already set `tabular-nums` and the numeric font; use them for currency, percentages and dates (and still apply `fontVariantNumeric: "tabular-nums"` explicitly where the style is not used, as the check scripts look for it).
+
+### Motion
+
+Animate only under `_motionSafe` so the operating-system reduced-motion setting wins, using the duration and easing tokens (`fast`, `base`, `slow`; `standard`, `enter`, `exit`) and the shared keyframes (`fadeIn`, `slideUp`, `scaleIn`, `shimmer`). For charts, call `useChartAnimation({ isDragging })` (false under reduced motion or while dragging); `usePrefersReducedMotion()` is available for other JavaScript-driven motion.
+
+```ts
+css({
+  _motionSafe: {
+    animationName: "fadeIn",
+    animationDuration: "slow",
+    animationTimingFunction: "enter",
+  },
+});
+```
+
+### Elevation
+
+Use the semantic shadow keys `xs`, `card`, `raised`, `overlay`, `focus` (`boxShadow: "card"`). They are themed for dark mode. Do not write raw `boxShadow` values.
+
+### Icons
+
+Use the Lucide `Icon` primitive (`import { Icon } from "@repo/ui"`, glyphs from `lucide-react`). Do not add `react-icons` imports: `bun run check:laws` fails if a file gains one (baseline `scripts/react-icons-baseline.json` can only shrink). Icons are decorative (`aria-hidden`) unless they carry meaning alone, in which case pass `label`. Icon-only buttons take the label on the button. Mapping table: `docs/design/e15/iconography.md`.
+
+### Prop vocabulary
+
+Components expose `variant` (visual treatment: `solid | subtle | outline`), `tone` (meaning: `neutral | positive | warning | danger | info`) and `size` (`sm | md | lg`). Do not introduce `kind`, `color`, `intent` or a visual `type` prop.
+
+### Density
+
+Compact density is a Panda condition: `_compact` (`[data-density=compact] &`). Put `data-density="compact"` on a section (simulators, tables, account lists), then use `py: "density.rowPadY"`, `height: "density.control.md"` and the other `spacing.density.*` / `sizes.density.*` tokens, which switch with the condition. Keep 44px touch targets (`sizes.touch`) on coarse pointers.
+
+### Unknown values: "Not set"
+
+A missing or unknown figure renders the text `Not set`, never `0`, `NaN`, `-` or an empty cell. Applies to KPIs, table cells, form read-outs and chart tooltips.
 
 ---
 
