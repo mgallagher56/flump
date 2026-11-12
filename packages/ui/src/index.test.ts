@@ -16,6 +16,9 @@ describe("UI package exports", () => {
     expect(UI.EmptyState).toBeDefined();
     expect(UI.Money).toBeDefined();
     expect(UI.CoachCard).toBeDefined();
+    expect(UI.FormField).toBeDefined();
+    expect(UI.TextInput).toBeDefined();
+    expect(UI.CurrencyInput).toBeDefined();
     expect(UI.Num).toBeDefined();
     expect(UI.colors).toBeDefined();
   });
