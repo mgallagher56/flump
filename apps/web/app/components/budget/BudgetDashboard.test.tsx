@@ -47,54 +47,23 @@ const income = entry({
   isEssential: false,
 });
 
-describe("<BudgetDashboard /> month-to-date actuals", () => {
-  const withoutActuals = [
+describe("<BudgetDashboard /> plan-only budget (no actuals)", () => {
+  const entries = [
     income,
     entry({}),
     entry({ id: "e2", category: "expenses", name: "Dining", amount: 500, isEssential: false }),
   ];
 
-  it("does not render MTD Settled Actuals when no entry has actuals", () => {
-    customRender(<BudgetDashboard {...baseProps} entries={withoutActuals} />);
+  it("shows no month-to-date actuals and no connect-a-bank prompt", () => {
+    customRender(<BudgetDashboard {...baseProps} entries={entries} />);
     expect(screen.queryByText("MTD Settled Actuals")).toBeNull();
+    expect(screen.queryByText(/Actual spending is not tracked yet/)).toBeNull();
   });
 
   it("never shows 92% of a £1,000 priority budget (£920)", () => {
-    customRender(<BudgetDashboard {...baseProps} entries={withoutActuals} />);
+    customRender(<BudgetDashboard {...baseProps} entries={entries} />);
     expect(screen.queryByText("£920")).toBeNull();
     expect(screen.queryByText("£390")).toBeNull();
-  });
-
-  it("shows the connect-a-bank prompt linking to /app/accounts", () => {
-    customRender(<BudgetDashboard {...baseProps} entries={withoutActuals} />);
-    const prompt = screen.getByText(/Actual spending is not tracked yet/);
-    expect(prompt.textContent?.replace(/\s+/g, " ")).toBe(
-      "Actual spending is not tracked yet. Connect a bank on Accounts to compare plan with reality.",
-    );
-    const link = screen.getByRole("link", { name: /accounts/i });
-    expect(link.getAttribute("href")).toBe("/app/accounts");
-  });
-
-  it("renders actuals when actualMtdGbp is set and hides the prompt", () => {
-    customRender(
-      <BudgetDashboard
-        {...baseProps}
-        entries={[
-          income,
-          entry({ actualMtdGbp: 850 }),
-          entry({
-            id: "e3",
-            name: "Council tax",
-            category: "bills",
-            amount: 150,
-            actualMtdGbp: 150,
-          }),
-        ]}
-      />,
-    );
-    expect(screen.getAllByText("MTD Settled Actuals").length).toBeGreaterThan(0);
-    expect(screen.getByText("£1,000")).toBeTruthy();
-    expect(screen.queryByText(/Actual spending is not tracked yet/)).toBeNull();
   });
 });
 

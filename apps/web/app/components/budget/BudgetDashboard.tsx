@@ -4,7 +4,6 @@ import { css } from "@repo/ui/styled-system/css";
 import { type FC, useMemo } from "react";
 import { FaArrowRight, FaBalanceScale, FaChartPie, FaExclamationTriangle } from "react-icons/fa";
 import { FiAlertTriangle, FiCalendar, FiCompass, FiShield } from "react-icons/fi";
-import { Link } from "react-router";
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
 import FLPButton from "~/components/core/buttons/FLPButton";
 import FLPCard from "~/components/core/cards/FLPCard";
@@ -58,12 +57,6 @@ export interface BudgetDashboardProps {
 }
 
 const tabularStyle = css({ fontVariantNumeric: "tabular-nums" });
-
-const actualsLinkStyle = css({
-  color: "primary",
-  fontWeight: "semibold",
-  textDecoration: "underline",
-});
 
 const EXPENSE_CATEGORIES: BudgetCategory[] = ["housing", "bills", "expenses"];
 
@@ -217,11 +210,6 @@ const BudgetDashboard: FC<BudgetDashboardProps> = ({
     const priorityBudget = priorityItems.reduce((s, e) => s + toMonthly(e), 0);
     const flexibleBudget = flexibleItems.reduce((s, e) => s + toMonthly(e), 0);
 
-    // Actuals are only ever real figures: entries without actualMtdGbp contribute nothing.
-    const hasActuals = entries.some((e) => e.actualMtdGbp != null);
-    const priorityActual = priorityItems.reduce((s, e) => s + (e.actualMtdGbp ?? 0), 0);
-    const flexibleActual = flexibleItems.reduce((s, e) => s + (e.actualMtdGbp ?? 0), 0);
-
     const billsWithCliffs = entries
       .filter((e) => !e.isIncome && e.category === "bills" && e.contractEndDate)
       .map((e) => ({
@@ -235,9 +223,6 @@ const BudgetDashboard: FC<BudgetDashboardProps> = ({
       flexibleItems,
       priorityBudget,
       flexibleBudget,
-      priorityActual,
-      flexibleActual,
-      hasActuals,
       billsWithCliffs,
     };
   }, [entries]);
@@ -479,7 +464,7 @@ const BudgetDashboard: FC<BudgetDashboardProps> = ({
           <div
             style={{
               display: "grid",
-              gridTemplateColumns: cashFlowSplit.hasActuals ? "1fr 1fr" : "1fr",
+              gridTemplateColumns: "1fr",
               gap: "12px",
               padding: "10px 12px",
               borderRadius: "8px",
@@ -504,16 +489,6 @@ const BudgetDashboard: FC<BudgetDashboardProps> = ({
                 </span>
               </FLPHeading>
             </div>
-            {cashFlowSplit.hasActuals && (
-              <div>
-                <FLPText color="text.muted" fontSize="xs">
-                  MTD Settled Actuals
-                </FLPText>
-                <FLPHeading as="h4" className={tabularStyle} size="md" style={{ marginTop: "2px" }}>
-                  {fmt(cashFlowSplit.priorityActual)}
-                </FLPHeading>
-              </div>
-            )}
           </div>
 
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
@@ -570,7 +545,7 @@ const BudgetDashboard: FC<BudgetDashboardProps> = ({
           <div
             style={{
               display: "grid",
-              gridTemplateColumns: cashFlowSplit.hasActuals ? "1fr 1fr" : "1fr",
+              gridTemplateColumns: "1fr",
               gap: "12px",
               padding: "10px 12px",
               borderRadius: "8px",
@@ -595,16 +570,6 @@ const BudgetDashboard: FC<BudgetDashboardProps> = ({
                 </span>
               </FLPHeading>
             </div>
-            {cashFlowSplit.hasActuals && (
-              <div>
-                <FLPText color="text.muted" fontSize="xs">
-                  MTD Settled Actuals
-                </FLPText>
-                <FLPHeading as="h4" className={tabularStyle} size="md" style={{ marginTop: "2px" }}>
-                  {fmt(cashFlowSplit.flexibleActual)}
-                </FLPHeading>
-              </div>
-            )}
           </div>
 
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
@@ -617,16 +582,6 @@ const BudgetDashboard: FC<BudgetDashboardProps> = ({
           </div>
         </div>
       </div>
-
-      {!cashFlowSplit.hasActuals && (
-        <FLPText color="text.muted" fontSize="sm">
-          Actual spending is not tracked yet. Connect a bank on{" "}
-          <Link className={actualsLinkStyle} to="/app/accounts">
-            Accounts
-          </Link>{" "}
-          to compare plan with reality.
-        </FLPText>
-      )}
 
       {/* Priority vs. Non-Priority Debt Guardrail Alert (Compact with Progressive Disclosure) */}
       {totals.surplus < 0 && (
