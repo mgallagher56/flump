@@ -4,11 +4,10 @@ import { css } from "@repo/ui/styled-system/css";
 import { type FC, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { FaPiggyBank, FaPlus } from "react-icons/fa";
-import { useLoaderData } from "react-router";
+import { useLoaderData, useNavigate } from "react-router";
 import FLPButton from "~/components/core/buttons/FLPButton";
 import FLPHeading from "~/components/core/typography/FLPHeading";
 import FLPText from "~/components/core/typography/FLPText";
-import UKTaxCalculator from "~/components/forecast/UKTaxCalculator";
 import AddSavingsAccountDialog from "~/components/savings/AddSavingsAccountDialog";
 import AnnualAllowancePill from "~/components/savings/AnnualAllowancePill";
 import SavingsAccountsList, {
@@ -19,7 +18,6 @@ import SavingsSummaryCards from "~/components/savings/SavingsSummaryCards";
 import type { Account } from "~/containers/accounts/types";
 import { useUserProfile } from "~/hooks/useUserProfile";
 import type { loader } from "~/routes/app.savings";
-import { useFinancialBaseline } from "~/state/baseline.store";
 import { currentMonth, currentYear } from "~/utils/utils";
 
 const containerStyle = css({
@@ -93,14 +91,22 @@ export const SavingsContainer: FC = () => {
   }, [userProfile, setProfile]);
 
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<"forecaster" | "accounts" | "allowance" | "takehome">(
-    "forecaster",
-  );
-  // Monthly extra from the take-home calculator's "apply to forecast", added to real contributions.
+  const [activeTab, setActiveTab] = useState<"forecaster" | "accounts" | "allowance">("forecaster");
+  // Monthly extra from the take-home calculator's "apply to forecast" (arrives as ?payRise=), added
+  // to real contributions.
   const [payRiseMonthly, setPayRiseMonthly] = useState(0);
-  const { baseline } = useFinancialBaseline();
-  const effectiveSalary =
-    baseline.annualGrossSalary > 0 ? baseline.annualGrossSalary : Number(profile.annualSalary || 0);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    // Take-home pay moved to its own page (T-IA-3): old #takehome links go there.
+    if (window.location.hash === "#takehome") {
+      navigate("/app/take-home", { replace: true });
+      return;
+    }
+    const payRise = Number(new URLSearchParams(window.location.search).get("payRise"));
+    if (Number.isFinite(payRise) && payRise > 0) setPayRiseMonthly(Math.round(payRise));
+  }, [navigate]);
   const savingsAccounts = useMemo(() => {
     const snapshot = new PortfolioSnapshot(accounts, accountDetails);
     return accounts
@@ -253,13 +259,6 @@ export const SavingsContainer: FC = () => {
           >
             Annual Allowances & Setup
           </button>
-          <button
-            type="button"
-            onClick={() => setActiveTab("takehome")}
-            className={segmentedTabStyle(activeTab === "takehome")}
-          >
-            Take-home & pay rise
-          </button>
         </div>
       </div>
 
@@ -324,29 +323,6 @@ export const SavingsContainer: FC = () => {
           type="isa"
           currentAmount={totalSavingsBalance}
           savingsInterest={estimatedAnnualInterest}
-        />
-      </div>
-
-      {/* Tab 4: UK take-home and pay-rise calculator (moved here from the old Forecast page) */}
-      <div
-        style={
-          activeTab === "takehome"
-            ? { display: "flex", flexDirection: "column", gap: "20px" }
-            : {
-                height: 0,
-                overflow: "hidden",
-                opacity: 0,
-                position: "absolute",
-                pointerEvents: "none",
-              }
-        }
-      >
-        <UKTaxCalculator
-          initialSalary={effectiveSalary}
-          onApplyIncrease={(monthlyIncrease) => {
-            setPayRiseMonthly(Math.round(monthlyIncrease));
-            setActiveTab("forecaster");
-          }}
         />
       </div>
 

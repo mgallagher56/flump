@@ -1,6 +1,8 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
+const mockNavigate = vi.hoisted(() => vi.fn());
+
 vi.mock("react-router", () => ({
   useInRouterContext: () => false,
   useLoaderData: () => ({
@@ -31,7 +33,7 @@ vi.mock("react-router", () => ({
       setupChecklistCompletedSteps: [],
     },
   }),
-  useNavigate: () => vi.fn(),
+  useNavigate: () => mockNavigate,
   useFetcher: () => ({
     submit: vi.fn(),
     state: "idle",
@@ -91,10 +93,24 @@ describe("SavingsContainer", () => {
 
     fireEvent.click(screen.getByRole("button", { name: /Savings & Investment Accounts/i }));
     fireEvent.click(screen.getByRole("button", { name: /Annual Allowances & Setup/i }));
-    fireEvent.click(screen.getByRole("button", { name: /Take-home & pay rise/i }));
-    expect(screen.getAllByText(/take-home/i).length).toBeGreaterThan(0);
+    expect(screen.queryByRole("button", { name: /Take-home & pay rise/i })).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: /Growth Forecaster & Simulator/i }));
 
     fireEvent.click(screen.getAllByRole("button", { name: /Add account/i })[0]);
+  });
+
+  it("redirects the old #takehome link to the Take-home pay page", () => {
+    window.location.hash = "#takehome";
+    mockNavigate.mockClear();
+    render(<SavingsContainer />);
+    expect(mockNavigate).toHaveBeenCalledWith("/app/take-home", { replace: true });
+    window.location.hash = "";
+  });
+
+  it("adds a pay rise handed over from Take-home pay to the forecaster", () => {
+    window.history.pushState({}, "", "/app/savings?payRise=150");
+    render(<SavingsContainer />);
+    expect(screen.getByText("Savings and compound growth")).toBeDefined();
+    window.history.pushState({}, "", "/");
   });
 });

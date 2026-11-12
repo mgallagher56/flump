@@ -1,5 +1,6 @@
 import {
   Building2,
+  Calculator,
   Coins,
   FileText,
   House,
@@ -16,6 +17,8 @@ export interface NavRouteItem {
   route?: string;
   icon?: LucideIcon;
   description?: string;
+  /** Not a switchable module: always shown (e.g. Take-home pay). */
+  alwaysOn?: boolean;
   children?: NavRouteItem[];
 }
 
@@ -57,6 +60,13 @@ export const AUTH_NAV_ROUTES: NavRouteItem[] = [
     key: "planning",
     children: [
       {
+        key: "takeHome",
+        route: "/app/take-home",
+        description: "navTakeHomeDesc",
+        icon: Calculator,
+        alwaysOn: true,
+      },
+      {
         key: "tax",
         route: "/app/tax",
         description: "navTaxDesc",
@@ -77,7 +87,9 @@ export function filterNavRoutes(
       item.children
         ? {
             ...item,
-            children: item.children.filter((c) => isEnabled(enabled, c.key as AppPageKey)),
+            children: item.children.filter(
+              (c) => c.alwaysOn || isEnabled(enabled, c.key as AppPageKey),
+            ),
           }
         : item,
     )
