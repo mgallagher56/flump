@@ -27,7 +27,11 @@ export function applySecurity(
   env: Record<string, string | undefined>,
 ): void {
   const origins = resolveCorsOrigins(env);
-  const trustProxyHops = parseTrustProxyHops(env.TRUST_PROXY_HOPS);
+  const trustProxyHops = parseTrustProxyHops(
+    // Railway terminates TLS at one edge proxy: without trusting it, req.ip is
+    // the proxy for every client and per-IP limits become one shared bucket.
+    env.TRUST_PROXY_HOPS ?? (env.NODE_ENV === "production" ? "1" : undefined),
+  );
 
   const instance = app.getHttpAdapter().getInstance();
   instance.disable("x-powered-by");

@@ -88,7 +88,9 @@ async function createServer() {
 
       const html = template
         .replace(`<!--app-html-->`, appHtml)
-        .replace(`<!--head-meta-->`, helmetMeta);
+        .replace(`<!--head-meta-->`, helmetMeta)
+        // The inline theme script needs the CSP nonce in production.
+        .replace("<script data-flump-theme>", `<script${nonceAttr}>`);
 
       res.status(200).set({ "Content-Type": "text/html" }).end(html);
     } catch (e: any) {

@@ -196,7 +196,7 @@ Flump is a monorepo managed with Turborepo (`turbo`) and Bun.
 ### 19. WorkOS AuthKit & React Router v7 Authentication
 
 - **`DataWithResponseInit` Handling**: In React Router v7, `authkitLoader` returns a `DataWithResponseInit` object rather than a web `Response`. Unpack `response.data` or conditionally check `typeof response.json === 'function'` before attempting JSON deserialization.
-- **Callback Route Alignment**: Ensure `apps/web/app/routes/callback.tsx` exists and matches `WORKOS_REDIRECT_URI=http://localhost:5173/callback`. Also retain `auth.callback.tsx` to handle `/auth/callback`.
+- **Callback Route Alignment**: Ensure `apps/web/app/routes/callback.tsx` exists and matches `WORKOS_REDIRECT_URI=http://localhost:5173/callback`. The duplicate `auth.callback.tsx` route was removed; `/auth/callback` is no longer served.
 - **No Naked Resource Route Loaders**: Callback routes must check for `?code=` query parameters and redirect to `/login` if missing to avoid `Response.json(undefined)` errors. Always include a default React export (`export default function CallbackRoute() { return null; }`).
 - **Pass Request to Auth URLs**: Always pass the incoming `request` and target pathname to `getSignInUrl("/app", request)` and `getSignUpUrl("/app", request)` to ensure PKCE cookies and HTTPS/HTTP flags match the client environment.
 
