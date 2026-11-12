@@ -26,6 +26,7 @@ import { TaxRecord } from "./entities/tax-record.entity";
 import { Transaction } from "./entities/transaction.entity";
 import { UserProfile } from "./entities/user-profile.entity";
 import { FinanceService } from "./finance.service";
+import { isMcpUserAllowed, readMcpAccessConfig } from "./mcp-access";
 import { UserProfileService } from "./user-profile.service";
 
 @Injectable()
@@ -70,6 +71,8 @@ export class McpService implements McpTokenStoreAdapter, McpUserDataProvider {
   async findTokenByHash(tokenHash: string): Promise<McpTokenRecord | null> {
     const found = await this.mcpTokenRepository.findOne({ where: { tokenHash } });
     if (!found) return null;
+    // E29-T8: a token whose owner is not allowlisted is unusable until MCP is opened.
+    if (!isMcpUserAllowed(readMcpAccessConfig(process.env), found.userId)) return null;
     return {
       id: found.id,
       userId: found.userId,
