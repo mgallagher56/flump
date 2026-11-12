@@ -149,6 +149,7 @@ export class FinanceController {
   }
 
   @Delete("accounts/:id")
+  @RateLimit("destructive")
   async deleteAccount(@Req() req: AuthenticatedRequest, @Param("id") id: string) {
     return this.financeService.deleteAccount(req.user.id, id);
   }
@@ -175,24 +176,28 @@ export class FinanceController {
   }
 
   @Post("bank-connections")
+  @RateLimit("bank")
   @UseGuards(BankConnectionsEnabledGuard)
   async connectBank(@Req() req: AuthenticatedRequest, @Body() body: ConnectBankDto) {
     return this.financeService.connectBank(req.user.id, body);
   }
 
   @Post("bank-connections/:id/refresh")
+  @RateLimit("bank")
   @UseGuards(BankConnectionsEnabledGuard)
   async refreshBankConnection(@Req() req: AuthenticatedRequest, @Param("id") id: string) {
     return this.financeService.syncBankConnection(req.user.id, id);
   }
 
   @Post("bank-connections/:id/sync")
+  @RateLimit("bank")
   @UseGuards(BankConnectionsEnabledGuard)
   async syncBankConnection(@Req() req: AuthenticatedRequest, @Param("id") id: string) {
     return this.financeService.syncBankConnection(req.user.id, id);
   }
 
   @Delete("bank-connections/:id")
+  @RateLimit("destructive")
   async deleteBankConnection(@Req() req: AuthenticatedRequest, @Param("id") id: string) {
     return this.financeService.deleteBankConnection(req.user.id, id);
   }

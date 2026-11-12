@@ -3,6 +3,7 @@ import { join } from "node:path";
 import { Controller, Get, HttpStatus, Res } from "@nestjs/common";
 import type { Response } from "express";
 import { DataSource } from "typeorm";
+import { SkipRateLimit } from "../security/rate-limit.decorator";
 
 const READINESS_TIMEOUT_MS = 2000;
 // TypeORM's default migrations table (typeorm.options.ts sets no migrationsTableName).
@@ -27,6 +28,7 @@ function readCommit(): string {
 }
 
 @Controller("health")
+@SkipRateLimit()
 export class HealthController {
   constructor(private readonly dataSource: DataSource) {}
 

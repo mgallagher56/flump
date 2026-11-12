@@ -69,11 +69,13 @@ export class UserProfileController {
 
   /** Body is intentionally ignored: the reset goes to the caller's own email. */
   @Post("user-profile/send-password-reset")
+  @RateLimit("credential")
   async sendPasswordReset(@Req() req: any): Promise<{ success: true }> {
     return this.userProfileService.sendPasswordReset(req.user.id);
   }
 
   @Post("user-profile/reset-financial-data")
+  @RateLimit("destructive")
   async resetFinancialData(@Req() req: any): Promise<any> {
     return this.userProfileService.resetFinancialData(req.user.id, req.user?.email);
   }
