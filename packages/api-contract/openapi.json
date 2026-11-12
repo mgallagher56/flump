@@ -1,0 +1,2045 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Flump API",
+    "version": "1.0.0",
+    "description": "Generated from @flump/api-contract. Do not edit by hand."
+  },
+  "servers": [
+    {
+      "url": "/"
+    }
+  ],
+  "paths": {
+    "/v1/accounts": {
+      "get": {
+        "operationId": "accounts.list",
+        "tags": ["accounts"],
+        "responses": {
+          "200": {
+            "description": "Success. Response schemas are not yet part of the contract."
+          },
+          "400": {
+            "description": "Request failed validation."
+          },
+          "401": {
+            "description": "Missing or invalid credentials."
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "post": {
+        "operationId": "accounts.create",
+        "tags": ["accounts"],
+        "responses": {
+          "200": {
+            "description": "Success. Response schemas are not yet part of the contract."
+          },
+          "400": {
+            "description": "Request failed validation."
+          },
+          "401": {
+            "description": "Missing or invalid credentials."
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 120
+                  },
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "Current",
+                      "Saving",
+                      "Mortgage",
+                      "Loan",
+                      "Credit Card",
+                      "Owed",
+                      "Investment",
+                      "Pension"
+                    ]
+                  },
+                  "balance": {
+                    "type": "number"
+                  },
+                  "currency": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "pattern": "^[A-Z]{3}$"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "interestRate": {
+                    "anyOf": [
+                      {
+                        "type": "number",
+                        "minimum": 0,
+                        "maximum": 100
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "monthlyContribution": {
+                    "type": ["number", "null"]
+                  },
+                  "isCurrent": {
+                    "type": "boolean"
+                  },
+                  "connectionId": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "format": "uuid",
+                        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "externalAccountId": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "maxLength": 255
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                },
+                "required": ["name", "type", "balance"]
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v1/account-details": {
+      "get": {
+        "operationId": "accounts.listDetails",
+        "tags": ["accounts"],
+        "responses": {
+          "200": {
+            "description": "Success. Response schemas are not yet part of the contract."
+          },
+          "400": {
+            "description": "Request failed validation."
+          },
+          "401": {
+            "description": "Missing or invalid credentials."
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v1/accounts/{id}": {
+      "get": {
+        "operationId": "accounts.get",
+        "tags": ["accounts"],
+        "responses": {
+          "200": {
+            "description": "Success. Response schemas are not yet part of the contract."
+          },
+          "400": {
+            "description": "Request failed validation."
+          },
+          "401": {
+            "description": "Missing or invalid credentials."
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            }
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "put": {
+        "operationId": "accounts.replace",
+        "tags": ["accounts"],
+        "deprecated": true,
+        "description": "Deprecated alias of accounts.update.",
+        "responses": {
+          "200": {
+            "description": "Success. Response schemas are not yet part of the contract."
+          },
+          "400": {
+            "description": "Request failed validation."
+          },
+          "401": {
+            "description": "Missing or invalid credentials."
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 120
+                  },
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "Current",
+                      "Saving",
+                      "Mortgage",
+                      "Loan",
+                      "Credit Card",
+                      "Owed",
+                      "Investment",
+                      "Pension"
+                    ]
+                  },
+                  "balance": {
+                    "type": "number"
+                  },
+                  "currency": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "pattern": "^[A-Z]{3}$"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "interestRate": {
+                    "anyOf": [
+                      {
+                        "type": "number",
+                        "minimum": 0,
+                        "maximum": 100
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "monthlyContribution": {
+                    "type": ["number", "null"]
+                  },
+                  "isCurrent": {
+                    "type": "boolean"
+                  },
+                  "externalAccountId": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "maxLength": 255
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "patch": {
+        "operationId": "accounts.update",
+        "tags": ["accounts"],
+        "responses": {
+          "200": {
+            "description": "Success. Response schemas are not yet part of the contract."
+          },
+          "400": {
+            "description": "Request failed validation."
+          },
+          "401": {
+            "description": "Missing or invalid credentials."
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 120
+                  },
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "Current",
+                      "Saving",
+                      "Mortgage",
+                      "Loan",
+                      "Credit Card",
+                      "Owed",
+                      "Investment",
+                      "Pension"
+                    ]
+                  },
+                  "balance": {
+                    "type": "number"
+                  },
+                  "currency": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "pattern": "^[A-Z]{3}$"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "interestRate": {
+                    "anyOf": [
+                      {
+                        "type": "number",
+                        "minimum": 0,
+                        "maximum": 100
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "monthlyContribution": {
+                    "type": ["number", "null"]
+                  },
+                  "isCurrent": {
+                    "type": "boolean"
+                  },
+                  "externalAccountId": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "maxLength": 255
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "delete": {
+        "operationId": "accounts.remove",
+        "tags": ["accounts"],
+        "responses": {
+          "200": {
+            "description": "Success. Response schemas are not yet part of the contract."
+          },
+          "400": {
+            "description": "Request failed validation."
+          },
+          "401": {
+            "description": "Missing or invalid credentials."
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            }
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v1/accounts/{id}/details": {
+      "get": {
+        "operationId": "accounts.getDetails",
+        "tags": ["accounts"],
+        "responses": {
+          "200": {
+            "description": "Success. Response schemas are not yet part of the contract."
+          },
+          "400": {
+            "description": "Request failed validation."
+          },
+          "401": {
+            "description": "Missing or invalid credentials."
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            }
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v1/portfolio-snapshot": {
+      "get": {
+        "operationId": "accounts.portfolioSnapshot",
+        "tags": ["accounts"],
+        "responses": {
+          "200": {
+            "description": "Success. Response schemas are not yet part of the contract."
+          },
+          "400": {
+            "description": "Request failed validation."
+          },
+          "401": {
+            "description": "Missing or invalid credentials."
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v1/transactions": {
+      "get": {
+        "operationId": "transactions.list",
+        "tags": ["transactions"],
+        "responses": {
+          "200": {
+            "description": "Success. Response schemas are not yet part of the contract."
+          },
+          "400": {
+            "description": "Request failed validation."
+          },
+          "401": {
+            "description": "Missing or invalid credentials."
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "post": {
+        "operationId": "transactions.create",
+        "tags": ["transactions"],
+        "responses": {
+          "200": {
+            "description": "Success. Response schemas are not yet part of the contract."
+          },
+          "400": {
+            "description": "Request failed validation."
+          },
+          "401": {
+            "description": "Missing or invalid credentials."
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "accountId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                  },
+                  "amount": {
+                    "type": "number"
+                  },
+                  "description": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 255
+                  },
+                  "category": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64
+                  },
+                  "timestamp": {
+                    "type": "string"
+                  }
+                },
+                "required": ["accountId", "amount", "description", "category"]
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v1/bank-connections": {
+      "get": {
+        "operationId": "bankConnections.list",
+        "tags": ["bank-connections"],
+        "responses": {
+          "200": {
+            "description": "Success. Response schemas are not yet part of the contract."
+          },
+          "400": {
+            "description": "Request failed validation."
+          },
+          "401": {
+            "description": "Missing or invalid credentials."
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "post": {
+        "operationId": "bankConnections.connect",
+        "tags": ["bank-connections"],
+        "responses": {
+          "200": {
+            "description": "Success. Response schemas are not yet part of the contract."
+          },
+          "400": {
+            "description": "Request failed validation."
+          },
+          "401": {
+            "description": "Missing or invalid credentials."
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "institutionId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64
+                  },
+                  "token": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 512
+                  },
+                  "code": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 2048
+                  }
+                },
+                "required": ["institutionId"]
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v1/bank-connections/capability": {
+      "get": {
+        "operationId": "bankConnections.capability",
+        "tags": ["bank-connections"],
+        "responses": {
+          "200": {
+            "description": "Success. Response schemas are not yet part of the contract."
+          },
+          "400": {
+            "description": "Request failed validation."
+          },
+          "401": {
+            "description": "Missing or invalid credentials."
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v1/bank-connections/{id}/refresh": {
+      "post": {
+        "operationId": "bankConnections.refresh",
+        "tags": ["bank-connections"],
+        "responses": {
+          "200": {
+            "description": "Success. Response schemas are not yet part of the contract."
+          },
+          "400": {
+            "description": "Request failed validation."
+          },
+          "401": {
+            "description": "Missing or invalid credentials."
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            }
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v1/bank-connections/{id}/sync": {
+      "post": {
+        "operationId": "bankConnections.sync",
+        "tags": ["bank-connections"],
+        "deprecated": true,
+        "description": "Deprecated alias of bankConnections.refresh.",
+        "responses": {
+          "200": {
+            "description": "Success. Response schemas are not yet part of the contract."
+          },
+          "400": {
+            "description": "Request failed validation."
+          },
+          "401": {
+            "description": "Missing or invalid credentials."
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            }
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v1/bank-connections/{id}": {
+      "delete": {
+        "operationId": "bankConnections.remove",
+        "tags": ["bank-connections"],
+        "responses": {
+          "200": {
+            "description": "Success. Response schemas are not yet part of the contract."
+          },
+          "400": {
+            "description": "Request failed validation."
+          },
+          "401": {
+            "description": "Missing or invalid credentials."
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            }
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v1/budget-entries": {
+      "get": {
+        "operationId": "budget.list",
+        "tags": ["budget"],
+        "responses": {
+          "200": {
+            "description": "Success. Response schemas are not yet part of the contract."
+          },
+          "400": {
+            "description": "Request failed validation."
+          },
+          "401": {
+            "description": "Missing or invalid credentials."
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "post": {
+        "operationId": "budget.create",
+        "tags": ["budget"],
+        "responses": {
+          "200": {
+            "description": "Success. Response schemas are not yet part of the contract."
+          },
+          "400": {
+            "description": "Request failed validation."
+          },
+          "401": {
+            "description": "Missing or invalid credentials."
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "category": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64
+                  },
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 120
+                  },
+                  "title": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 120
+                  },
+                  "amount": {
+                    "type": "number"
+                  },
+                  "frequency": {
+                    "type": "string",
+                    "enum": ["monthly", "annual", "weekly"]
+                  },
+                  "isIncome": {
+                    "type": "boolean"
+                  },
+                  "isEssential": {
+                    "type": "boolean"
+                  },
+                  "notes": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "maxLength": 2000
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                },
+                "required": ["category", "amount"]
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v1/budget-entries/seed-defaults": {
+      "post": {
+        "operationId": "budget.seedDefaults",
+        "tags": ["budget"],
+        "responses": {
+          "200": {
+            "description": "Success. Response schemas are not yet part of the contract."
+          },
+          "400": {
+            "description": "Request failed validation."
+          },
+          "401": {
+            "description": "Missing or invalid credentials."
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v1/budget-entries/categories": {
+      "post": {
+        "operationId": "budget.addCategory",
+        "tags": ["budget"],
+        "responses": {
+          "200": {
+            "description": "Success. Response schemas are not yet part of the contract."
+          },
+          "400": {
+            "description": "Request failed validation."
+          },
+          "401": {
+            "description": "Missing or invalid credentials."
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "category": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64
+                  }
+                },
+                "required": ["category"]
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v1/budget-entries/{id}": {
+      "patch": {
+        "operationId": "budget.update",
+        "tags": ["budget"],
+        "responses": {
+          "200": {
+            "description": "Success. Response schemas are not yet part of the contract."
+          },
+          "400": {
+            "description": "Request failed validation."
+          },
+          "401": {
+            "description": "Missing or invalid credentials."
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "category": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64
+                  },
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 120
+                  },
+                  "title": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 120
+                  },
+                  "amount": {
+                    "type": "number"
+                  },
+                  "frequency": {
+                    "type": "string",
+                    "enum": ["monthly", "annual", "weekly"]
+                  },
+                  "isIncome": {
+                    "type": "boolean"
+                  },
+                  "isEssential": {
+                    "type": "boolean"
+                  },
+                  "notes": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "maxLength": 2000
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "delete": {
+        "operationId": "budget.remove",
+        "tags": ["budget"],
+        "responses": {
+          "200": {
+            "description": "Success. Response schemas are not yet part of the contract."
+          },
+          "400": {
+            "description": "Request failed validation."
+          },
+          "401": {
+            "description": "Missing or invalid credentials."
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            }
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v1/tax-records": {
+      "get": {
+        "operationId": "tax.list",
+        "tags": ["tax"],
+        "responses": {
+          "200": {
+            "description": "Success. Response schemas are not yet part of the contract."
+          },
+          "400": {
+            "description": "Request failed validation."
+          },
+          "401": {
+            "description": "Missing or invalid credentials."
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "post": {
+        "operationId": "tax.create",
+        "tags": ["tax"],
+        "responses": {
+          "200": {
+            "description": "Success. Response schemas are not yet part of the contract."
+          },
+          "400": {
+            "description": "Request failed validation."
+          },
+          "401": {
+            "description": "Missing or invalid credentials."
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "enum": ["income", "expense"]
+                  },
+                  "source": {
+                    "type": "string",
+                    "enum": ["paye", "self-employed", "rental", "savings"]
+                  },
+                  "category": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64
+                  },
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 120
+                  },
+                  "amount": {
+                    "type": "number"
+                  },
+                  "frequency": {
+                    "type": "string",
+                    "enum": ["one-off", "monthly", "annual"]
+                  },
+                  "date": {
+                    "type": "string"
+                  },
+                  "endDate": {
+                    "type": ["string", "null"]
+                  },
+                  "notes": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "maxLength": 2000
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "receiptFilename": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "maxLength": 255
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "receiptMimeType": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "enum": ["image/png", "image/jpeg", "image/webp", "application/pdf"]
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "receiptData": {
+                    "type": ["string", "null"]
+                  }
+                },
+                "required": ["type", "source", "category", "name", "amount", "date"]
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v1/tax-records/{id}": {
+      "get": {
+        "operationId": "tax.get",
+        "tags": ["tax"],
+        "responses": {
+          "200": {
+            "description": "Success. Response schemas are not yet part of the contract."
+          },
+          "400": {
+            "description": "Request failed validation."
+          },
+          "401": {
+            "description": "Missing or invalid credentials."
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            }
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "patch": {
+        "operationId": "tax.update",
+        "tags": ["tax"],
+        "responses": {
+          "200": {
+            "description": "Success. Response schemas are not yet part of the contract."
+          },
+          "400": {
+            "description": "Request failed validation."
+          },
+          "401": {
+            "description": "Missing or invalid credentials."
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "enum": ["income", "expense"]
+                  },
+                  "source": {
+                    "type": "string",
+                    "enum": ["paye", "self-employed", "rental", "savings"]
+                  },
+                  "category": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64
+                  },
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 120
+                  },
+                  "amount": {
+                    "type": "number"
+                  },
+                  "frequency": {
+                    "type": "string",
+                    "enum": ["one-off", "monthly", "annual"]
+                  },
+                  "date": {
+                    "type": "string"
+                  },
+                  "endDate": {
+                    "type": ["string", "null"]
+                  },
+                  "notes": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "maxLength": 2000
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "receiptFilename": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "maxLength": 255
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "receiptMimeType": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "enum": ["image/png", "image/jpeg", "image/webp", "application/pdf"]
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "receiptData": {
+                    "type": ["string", "null"]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "delete": {
+        "operationId": "tax.remove",
+        "tags": ["tax"],
+        "responses": {
+          "200": {
+            "description": "Success. Response schemas are not yet part of the contract."
+          },
+          "400": {
+            "description": "Request failed validation."
+          },
+          "401": {
+            "description": "Missing or invalid credentials."
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            }
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v1/tax-records/bulk": {
+      "post": {
+        "operationId": "tax.bulkCreate",
+        "tags": ["tax"],
+        "responses": {
+          "200": {
+            "description": "Success. Response schemas are not yet part of the contract."
+          },
+          "400": {
+            "description": "Request failed validation."
+          },
+          "401": {
+            "description": "Missing or invalid credentials."
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "records": {
+                    "maxItems": 500,
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "type": {
+                          "type": "string",
+                          "enum": ["income", "expense"]
+                        },
+                        "source": {
+                          "type": "string",
+                          "enum": ["paye", "self-employed", "rental", "savings"]
+                        },
+                        "category": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 64
+                        },
+                        "name": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 120
+                        },
+                        "amount": {
+                          "type": "number"
+                        },
+                        "frequency": {
+                          "type": "string",
+                          "enum": ["one-off", "monthly", "annual"]
+                        },
+                        "date": {
+                          "type": "string"
+                        },
+                        "endDate": {
+                          "type": ["string", "null"]
+                        },
+                        "notes": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "maxLength": 2000
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "receiptFilename": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "maxLength": 255
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "receiptMimeType": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "enum": ["image/png", "image/jpeg", "image/webp", "application/pdf"]
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "receiptData": {
+                          "type": ["string", "null"]
+                        }
+                      },
+                      "required": ["type", "source", "category", "name", "amount", "date"]
+                    }
+                  },
+                  "capPreviousRecordIds": {
+                    "maxItems": 500,
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "format": "uuid",
+                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                    }
+                  }
+                },
+                "required": ["records"]
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v1/user-profile": {
+      "get": {
+        "operationId": "profile.get",
+        "tags": ["profile"],
+        "responses": {
+          "200": {
+            "description": "Success. Response schemas are not yet part of the contract."
+          },
+          "400": {
+            "description": "Request failed validation."
+          },
+          "401": {
+            "description": "Missing or invalid credentials."
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "patch": {
+        "operationId": "profile.update",
+        "tags": ["profile"],
+        "responses": {
+          "200": {
+            "description": "Success. Response schemas are not yet part of the contract."
+          },
+          "400": {
+            "description": "Request failed validation."
+          },
+          "401": {
+            "description": "Missing or invalid credentials."
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "displayName": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "maxLength": 120
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "firstName": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "maxLength": 120
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "lastName": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "maxLength": 120
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "avatarUrl": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "maxLength": 262208
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "currency": {
+                    "type": "string",
+                    "minLength": 3,
+                    "maxLength": 3
+                  },
+                  "country": {
+                    "type": "string",
+                    "minLength": 2,
+                    "maxLength": 2
+                  },
+                  "employmentType": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "enum": ["employed", "self-employed", "other"]
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "annualSalary": {
+                    "type": ["number", "null"]
+                  },
+                  "monthlyTakeHome": {
+                    "type": ["number", "null"]
+                  },
+                  "hasSecondIncome": {
+                    "type": "boolean"
+                  },
+                  "secondIncomeMonthly": {
+                    "type": ["number", "null"]
+                  },
+                  "hasRentalIncome": {
+                    "type": "boolean"
+                  },
+                  "rentalIncomeMonthly": {
+                    "type": ["number", "null"]
+                  },
+                  "hasMortgage": {
+                    "type": "boolean"
+                  },
+                  "mortgageType": {
+                    "type": "string",
+                    "enum": ["repayment", "interest-only"]
+                  },
+                  "propertyOwnershipShare": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100
+                  },
+                  "hasBuyToLet": {
+                    "type": "boolean"
+                  },
+                  "buyToLetCount": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 1000
+                  },
+                  "buyToLetPropertyValue": {
+                    "type": ["number", "null"]
+                  },
+                  "buyToLetMonthlyRental": {
+                    "type": ["number", "null"]
+                  },
+                  "buyToLetMortgageBalance": {
+                    "type": ["number", "null"]
+                  },
+                  "buyToLetMortgageRate": {
+                    "anyOf": [
+                      {
+                        "type": "number",
+                        "minimum": 0,
+                        "maximum": 100
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "buyToLetMortgageType": {
+                    "type": "string",
+                    "enum": ["repayment", "interest-only"]
+                  },
+                  "pensionPercent": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100
+                  },
+                  "pensionEmployerPercent": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100
+                  },
+                  "isSalarySacrifice": {
+                    "type": "boolean"
+                  },
+                  "isSalarySacrificeEmployerNi": {
+                    "type": "boolean"
+                  },
+                  "monthlySavingsTarget": {
+                    "type": ["number", "null"]
+                  },
+                  "savingsAllocationMode": {
+                    "type": "string",
+                    "enum": ["total", "per_account"]
+                  },
+                  "savingsDefaultInterestRate": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100
+                  },
+                  "enabledPages": {
+                    "maxItems": 20,
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 64
+                    }
+                  },
+                  "dashboardWidgets": {
+                    "maxItems": 20,
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 64
+                    }
+                  },
+                  "dashboardWidgetOrder": {
+                    "maxItems": 20,
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 64
+                    }
+                  },
+                  "dashboardWidgetSizes": {
+                    "type": "object",
+                    "propertyNames": {
+                      "type": "string"
+                    },
+                    "additionalProperties": {
+                      "type": "string",
+                      "enum": ["normal", "wide"]
+                    }
+                  },
+                  "dashboardWidgetConfig": {
+                    "type": "object",
+                    "propertyNames": {
+                      "type": "string"
+                    },
+                    "additionalProperties": {}
+                  },
+                  "customBudgetCategories": {
+                    "maxItems": 50,
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 64
+                    }
+                  },
+                  "onboardingCompleted": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v1/user-profile/send-password-reset": {
+      "post": {
+        "operationId": "profile.sendPasswordReset",
+        "tags": ["profile"],
+        "responses": {
+          "200": {
+            "description": "Success. Response schemas are not yet part of the contract."
+          },
+          "400": {
+            "description": "Request failed validation."
+          },
+          "401": {
+            "description": "Missing or invalid credentials."
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v1/user-profile/reset-financial-data": {
+      "post": {
+        "operationId": "profile.resetFinancialData",
+        "tags": ["profile"],
+        "responses": {
+          "200": {
+            "description": "Success. Response schemas are not yet part of the contract."
+          },
+          "400": {
+            "description": "Request failed validation."
+          },
+          "401": {
+            "description": "Missing or invalid credentials."
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v1/user-profile/checklist": {
+      "patch": {
+        "operationId": "profile.updateChecklist",
+        "tags": ["profile"],
+        "responses": {
+          "200": {
+            "description": "Success. Response schemas are not yet part of the contract."
+          },
+          "400": {
+            "description": "Request failed validation."
+          },
+          "401": {
+            "description": "Missing or invalid credentials."
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "step": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64
+                  },
+                  "completed": {
+                    "type": "boolean"
+                  }
+                },
+                "required": ["step", "completed"]
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v1/mcp-tokens": {
+      "get": {
+        "operationId": "mcpTokens.list",
+        "tags": ["mcp-tokens"],
+        "responses": {
+          "200": {
+            "description": "Success. Response schemas are not yet part of the contract."
+          },
+          "400": {
+            "description": "Request failed validation."
+          },
+          "401": {
+            "description": "Missing or invalid credentials."
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "post": {
+        "operationId": "mcpTokens.create",
+        "tags": ["mcp-tokens"],
+        "responses": {
+          "200": {
+            "description": "Success. Response schemas are not yet part of the contract."
+          },
+          "400": {
+            "description": "Request failed validation."
+          },
+          "401": {
+            "description": "Missing or invalid credentials."
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64
+                  },
+                  "expiryDays": {
+                    "type": "number"
+                  },
+                  "anonymizeInstitutions": {
+                    "type": "boolean"
+                  }
+                },
+                "required": ["name"]
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v1/mcp-tokens/{id}": {
+      "delete": {
+        "operationId": "mcpTokens.revoke",
+        "tags": ["mcp-tokens"],
+        "responses": {
+          "200": {
+            "description": "Success. Response schemas are not yet part of the contract."
+          },
+          "400": {
+            "description": "Request failed validation."
+          },
+          "401": {
+            "description": "Missing or invalid credentials."
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            }
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v1/mcp-tokens/context-pack": {
+      "get": {
+        "operationId": "mcpTokens.contextPack",
+        "tags": ["mcp-tokens"],
+        "responses": {
+          "200": {
+            "description": "Success. Response schemas are not yet part of the contract."
+          },
+          "400": {
+            "description": "Request failed validation."
+          },
+          "401": {
+            "description": "Missing or invalid credentials."
+          }
+        },
+        "parameters": [
+          {
+            "name": "anonymize",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v1/mcp": {
+      "post": {
+        "operationId": "mcp.post",
+        "tags": ["app"],
+        "responses": {
+          "200": {
+            "description": "Success. Response schemas are not yet part of the contract."
+          },
+          "400": {
+            "description": "Request failed validation."
+          },
+          "401": {
+            "description": "Missing or invalid credentials."
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "get": {
+        "operationId": "mcp.get",
+        "tags": ["app"],
+        "responses": {
+          "200": {
+            "description": "Success. Response schemas are not yet part of the contract."
+          },
+          "400": {
+            "description": "Request failed validation."
+          },
+          "401": {
+            "description": "Missing or invalid credentials."
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v1/": {
+      "get": {
+        "operationId": "app.hello",
+        "tags": ["app"],
+        "responses": {
+          "200": {
+            "description": "Success. Response schemas are not yet part of the contract."
+          },
+          "400": {
+            "description": "Request failed validation."
+          }
+        },
+        "security": []
+      }
+    },
+    "/v1/health": {
+      "get": {
+        "operationId": "app.health",
+        "tags": ["app"],
+        "responses": {
+          "200": {
+            "description": "Success. Response schemas are not yet part of the contract."
+          },
+          "400": {
+            "description": "Request failed validation."
+          }
+        },
+        "security": []
+      }
+    },
+    "/v1/health/ready": {
+      "get": {
+        "operationId": "app.ready",
+        "tags": ["app"],
+        "responses": {
+          "200": {
+            "description": "Success. Response schemas are not yet part of the contract."
+          },
+          "400": {
+            "description": "Request failed validation."
+          }
+        },
+        "security": []
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    }
+  }
+}
