@@ -10,9 +10,9 @@ Source: E24-T7 in `docs/audit/plans/E24-plan.md`. Domain, DNS and env details ar
 
 Run the steps in order. Stop at the first failure and do not go on.
 
-1. Run `bun run check:launch --strict`. It must pass.
-2. Swap the placeholders for real contact details (E24-T8). Company details stay placeholders until the entity decision is made (D5).
-3. Set `FLUMP_LAUNCH=true` on the web and marketing services. The build guard must pass. A failing guard means the launch build still contains placeholder pricing or company text.
+1. Run `bun run check:launch --strict`. It must pass. (Planned, E24-T1; does not exist yet.)
+2. Swap the placeholders for real contact details (E24-T8). For the friends beta, the footer carries a truthful sole-trader operator line with the name the owner supplies (E24-T12, `LEGAL_ENTITY.kind`). Company details wait for incorporation, so the company-details guard keeps blocking until then (round 4 D5).
+3. Set `FLUMP_LAUNCH=true` (planned, E24-T1; does not exist yet) on the web and marketing services. The build guard must pass. A failing guard means the launch build still contains placeholder pricing or company text.
 4. Set `SITE_URL` on marketing.
 5. Set `ALLOW_INDEXING=true` on marketing **only**. The web app stays noindex permanently (round 4 decision D3).
 6. The owner submits the sitemap to Google Search Console and Bing (O9).
@@ -25,6 +25,6 @@ Run the steps in order. Stop at the first failure and do not go on.
 
 ## Checks after each change
 
-- After step 3, confirm the build output has no paid-price text. A `FLUMP_LAUNCH=true` build lists only the company and price hits that the owner has approved.
+- After step 3 (`FLUMP_LAUNCH` is planned, E24-T1), confirm the build output has no paid-price text. A `FLUMP_LAUNCH=true` build lists only the company and price hits that the owner has approved.
 - After step 5, confirm `robots` output on marketing allows indexing and the web app still sends `noindex`.
 - After step 7, confirm the notice URL loads and the analytics middleware sets no cookie.
