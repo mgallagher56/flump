@@ -51,8 +51,9 @@ export class HealthController {
         ]),
         timeout,
       ]);
-      // Fewer executed than loaded means a migration is pending: not ready.
-      if (Number(rows?.[0]?.n) < this.dataSource.migrations.length) {
+      // Fewer executed than loaded means a migration is pending: not ready. Negated >= so a
+      // malformed result (NaN) also reads as not ready.
+      if (!(Number(rows?.[0]?.n) >= this.dataSource.migrations.length)) {
         res.status(HttpStatus.SERVICE_UNAVAILABLE);
         return { status: "unavailable" };
       }
