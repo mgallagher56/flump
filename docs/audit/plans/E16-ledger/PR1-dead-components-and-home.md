@@ -11,7 +11,7 @@ Authority: owner round 2 and 3 in [DECISIONS.md](../DECISIONS.md) (E16 D10-B, D1
 - `PayoffStrategyControls` and `SandboxTemplates` (F45, D10-B: adopt, not delete). Wiring them onto Debt is in PR 5.
 
 ## Behaviour change
-- Signed-out `GET /` on the web app now redirects (302) to the marketing site (`VITE_MARKETING_URL`, else `http://localhost:3001` locally, else `https://flump.co.uk`). `?demo=true` still goes to `/sandbox`. The helper `utils/marketingUrl.ts` is shared with logout.
+- Signed-out `GET /` on the web app now redirects (302) to the marketing site (`VITE_MARKETING_URL`, else `http://localhost:3001` locally, else the deployed marketing site on Railway). `?demo=true` still goes to `/sandbox`. The helper `utils/marketingUrl.ts` is shared with logout.
 
 ## Ratchets re-baselined (the cut is the reason)
 - `scripts/design-token-baseline.json`, `tabular-baseline.txt`, `react-icons-baseline.json`: only entries for deleted files were removed (29 lines, no additions).

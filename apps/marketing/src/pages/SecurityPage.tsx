@@ -82,7 +82,6 @@ export const SecurityPage: FC = () => {
           name="description"
           content="Flump has no feature to make payments or move money. Bank connection is coming soon."
         />
-        <link rel="canonical" href="https://flump.co.uk/security" />
       </Helmet>
 
       <Header />

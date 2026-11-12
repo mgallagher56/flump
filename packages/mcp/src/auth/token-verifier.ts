@@ -54,7 +54,7 @@ export class TokenVerifier {
 
   constructor(options: TokenVerifierOptions = {}) {
     this.tokenStore = options.tokenStore;
-    this.expectedAudience = options.expectedAudience ?? "https://mcp.flump.co.uk";
+    this.expectedAudience = options.expectedAudience ?? "flump-mcp";
     this.authServerUrl = options.authServerUrl ?? "https://api.workos.com";
     this.devToken = options.devToken || undefined;
     this.devUserId = options.devUserId ?? "dev_user";
@@ -69,7 +69,6 @@ export class TokenVerifier {
       authorization_servers: [this.authServerUrl],
       scopes_supported: ["mcp:read:anonymized", "mcp:read:full", "mcp:simulate"],
       bearer_methods_supported: ["header"],
-      resource_documentation: "https://flump.co.uk/docs/mcp",
     };
   }
 

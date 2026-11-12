@@ -15,11 +15,11 @@ describe("loadApiConfig", () => {
   });
 
   it("strips trailing slashes", () => {
-    expect(loadApiConfig({ VITE_API_URL: "https://api.flump.co.uk/" })).toEqual({
-      apiBaseUrl: "https://api.flump.co.uk",
+    expect(loadApiConfig({ VITE_API_URL: "https://api.example.test/" })).toEqual({
+      apiBaseUrl: "https://api.example.test",
     });
-    expect(loadApiConfig({ VITE_API_URL: "https://api.flump.co.uk///" }).apiBaseUrl).toBe(
-      "https://api.flump.co.uk",
+    expect(loadApiConfig({ VITE_API_URL: "https://api.example.test///" }).apiBaseUrl).toBe(
+      "https://api.example.test",
     );
   });
 
@@ -40,8 +40,9 @@ describe("loadApiConfig", () => {
 
   it("accepts a valid URL in production", () => {
     expect(
-      loadApiConfig({ NODE_ENV: "production", VITE_API_URL: "https://api.flump.co.uk" }).apiBaseUrl,
-    ).toBe("https://api.flump.co.uk");
+      loadApiConfig({ NODE_ENV: "production", VITE_API_URL: "https://api.example.test" })
+        .apiBaseUrl,
+    ).toBe("https://api.example.test");
   });
 
   it("throws for a value that is not a URL", () => {

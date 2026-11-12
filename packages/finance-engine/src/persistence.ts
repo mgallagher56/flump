@@ -7,7 +7,7 @@ export const ONBOARDING_SEED_STORAGE_KEY = "flump_onboarding_seed";
 export const SESSION_PRESENCE_COOKIE = "flump_has_session";
 /**
  * The seed carries salary, debts and savings, and the cookie is readable by script and sent with
- * every request on .flump.co.uk, so it lives for one hour (long enough to finish sign-up).
+ * every request to the host, so it lives for one hour (long enough to finish sign-up).
  */
 export const ONBOARDING_SEED_MAX_AGE_SECONDS = 3600;
 
@@ -66,35 +66,6 @@ export class InMemoryStorageDriver implements SeedStorageDriver {
 }
 
 /**
- * Lowercases, strips a port (IPv6 literals stay bracketed) and one trailing dot, so
- * "App.Flump.co.uk.:443" compares as "app.flump.co.uk".
- */
-function normaliseHostname(hostname: string): string {
-  const host = hostname.trim().toLowerCase();
-  if (host.startsWith("[")) return host;
-  const withoutPort = host.replace(/:\d+$/, "");
-  return withoutPort.endsWith(".") ? withoutPort.slice(0, -1) : withoutPort;
-}
-
-/**
- * True for `flump.co.uk` and its subdomains only (never lookalikes such as `evilflump.co.uk`).
- * Case-insensitive; a port and one trailing dot are ignored; IP literals never match.
- */
-export function isFlumpHost(hostname: string): boolean {
-  const host = normaliseHostname(hostname);
-  return host === "flump.co.uk" || host.endsWith(".flump.co.uk");
-}
-
-function getCookieDomainAttr(): string {
-  if (typeof window === "undefined" || !window.location) return "";
-  const host = window.location.hostname;
-  if (isFlumpHost(host)) {
-    return "; domain=.flump.co.uk";
-  }
-  return "";
-}
-
-/**
  * Browser storage driver accessing localStorage and document.cookie safely.
  */
 export class BrowserStorageDriver implements SeedStorageDriver {
@@ -133,7 +104,7 @@ export class BrowserStorageDriver implements SeedStorageDriver {
   setCookie(name: string, value: string, maxAgeSeconds: number, domain?: string): void {
     if (typeof document === "undefined") return;
     try {
-      const domainAttr = domain ? `; domain=${domain}` : getCookieDomainAttr();
+      const domainAttr = domain ? `; domain=${domain}` : "";
       document.cookie = `${name}=${encodeURIComponent(value)}; path=/; max-age=${maxAgeSeconds}; SameSite=Lax${domainAttr}${secureAttr()}`;
     } catch {
       // Ignore
@@ -143,7 +114,7 @@ export class BrowserStorageDriver implements SeedStorageDriver {
   removeCookie(name: string, domain?: string): void {
     if (typeof document === "undefined") return;
     try {
-      const domainAttr = domain ? `; domain=${domain}` : getCookieDomainAttr();
+      const domainAttr = domain ? `; domain=${domain}` : "";
       document.cookie = `${name}=; path=/; max-age=0; SameSite=Lax${domainAttr}${secureAttr()}`;
     } catch {
       // Ignore
@@ -187,7 +158,7 @@ export function parseCookieValue(
 }
 
 /**
- * Safely persists onboarding seed state across both localStorage and root cookies (.flump.co.uk).
+ * Safely persists onboarding seed state across both localStorage and root cookies (host-only).
  */
 export function persistOnboardingSeed(payload: any): void {
   const driver = getStorageDriver();
@@ -262,7 +233,7 @@ export function hasSessionPresenceCookie(rawCookie?: string): boolean {
 }
 
 /**
- * Sets or clears the cross-domain presence cookie (flump_has_session=1) on .flump.co.uk.
+ * Sets or clears the presence cookie (flump_has_session=1), host-only unless a domain is passed.
  */
 export function setSessionPresenceCookie(active: boolean): void {
   const driver = getStorageDriver();

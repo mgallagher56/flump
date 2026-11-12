@@ -550,7 +550,7 @@ Source: independent Fable review of the epic portfolio against `main` at e4ff6c3
 
 - **Severity:** Critical.
 - **Blocked by:** none (E5 done).
-- **Done when:** the access token is no longer returned to browser JS (moving the remaining browser mutations into route actions, the E5 D3 option B follow-up); CSP, HSTS and frame headers on web and backend; rate limiting beyond `packages/mcp` (for example `@nestjs/throttler`); password change needs re-authentication and the reset-email `email` body parameter is dropped; receipt upload MIME validation and no `href={receiptData}` data-URL links; logout cannot be triggered by GET and the `endsWith("flump.co.uk")` cookie-domain check is fixed; MCP scopes enforced (D-17); minor items D-09, D-13 to D-16 (TCP proxy on port 3000, `e.stack` in marketing responses, CORS defaults, CSP wildcard); threat model written.
+- **Done when:** the access token is no longer returned to browser JS (moving the remaining browser mutations into route actions, the E5 D3 option B follow-up); CSP, HSTS and frame headers on web and backend; rate limiting beyond `packages/mcp` (for example `@nestjs/throttler`); password change needs re-authentication and the reset-email `email` body parameter is dropped; receipt upload MIME validation and no `href={receiptData}` data-URL links; logout cannot be triggered by GET and the `endsWith(<old domain>)` cookie-domain check is fixed; MCP scopes enforced (D-17); minor items D-09, D-13 to D-16 (TCP proxy on port 3000, `e.stack` in marketing responses, CORS defaults, CSP wildcard); threat model written.
 - **Notes:** the "follow-up security epic" promised in SEQUENCE.md (E5 D3) was never created.
 - **Labels:** needs-triage
 

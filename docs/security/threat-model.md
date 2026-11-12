@@ -4,23 +4,23 @@ Source: section 2 of `docs/audit/plans/E20-plan-draft.md`. This is a living summ
 
 ## Assets
 
-| Asset                                                  | Location                                               | Notes                                                                       |
-| ------------------------------------------------------ | ------------------------------------------------------ | --------------------------------------------------------------------------- |
-| `wos-session` sealed cookie (access and refresh token) | Browser cookie, sealed with `WORKOS_COOKIE_PASSWORD`   | HttpOnly, `SameSite=Lax`, `Secure` only when `WORKOS_REDIRECT_URI` is https |
-| WorkOS access token (JWT)                              | Web server, and browser loader data today              | Removal from the browser is planned (Phase 1)                               |
-| MCP personal access tokens                             | SHA-256 hash in `mcp_tokens`; raw value shown once     | 128-bit random                                                              |
-| Bank provider tokens                                   | AES-256-GCM in `bank_connections`                      | No key id, so the key cannot yet be rotated                                 |
-| Secrets                                                | Railway environment                                    | Rotation (D-12) still open                                                  |
-| Financial data and PII                                 | Postgres                                               | Receipts are stored as base64 text and may contain addresses and EXIF GPS   |
-| Onboarding seed (salary)                               | Non-HttpOnly cookie on `.flump.co.uk` and localStorage |                                                                             |
-| Calculation integrity and agent context                | Postgres, MCP outputs                                  | Prompt-injection target                                                     |
+| Asset                                                  | Location                                             | Notes                                                                       |
+| ------------------------------------------------------ | ---------------------------------------------------- | --------------------------------------------------------------------------- |
+| `wos-session` sealed cookie (access and refresh token) | Browser cookie, sealed with `WORKOS_COOKIE_PASSWORD` | HttpOnly, `SameSite=Lax`, `Secure` only when `WORKOS_REDIRECT_URI` is https |
+| WorkOS access token (JWT)                              | Web server, and browser loader data today            | Removal from the browser is planned (Phase 1)                               |
+| MCP personal access tokens                             | SHA-256 hash in `mcp_tokens`; raw value shown once   | 128-bit random                                                              |
+| Bank provider tokens                                   | AES-256-GCM in `bank_connections`                    | No key id, so the key cannot yet be rotated                                 |
+| Secrets                                                | Railway environment                                  | Rotation (D-12) still open                                                  |
+| Financial data and PII                                 | Postgres                                             | Receipts are stored as base64 text and may contain addresses and EXIF GPS   |
+| Onboarding seed (salary)                               | Non-HttpOnly cookie (host-only) and localStorage     |                                                                             |
+| Calculation integrity and agent context                | Postgres, MCP outputs                                | Prompt-injection target                                                     |
 
 ## Actors
 
 - A1 anonymous internet attacker
 - A2 authenticated malicious tenant
 - A3 XSS attacker (stored data or compromised dependency)
-- A4 same-site attacker on any `*.flump.co.uk` host (and possibly other `*.up.railway.app` apps if that suffix is not on the Public Suffix List; to verify)
+- A4 same-site attacker on any `sibling` host (and possibly other `*.up.railway.app` apps if that suffix is not on the Public Suffix List; to verify)
 - A5 compromised or prompt-injected AI client holding a PAT
 - A6 hostile third-party data source (for example bank merchant descriptions)
 - A7 compromised dependency, CI action or container image

@@ -56,7 +56,7 @@ export class McpService implements McpTokenStoreAdapter, McpUserDataProvider {
       dataProvider: this,
       tokenStore: this,
       ...(authMode === "dev" ? { devToken: DEV_BYPASS_TOKEN, devUserId: DEV_USER.id } : {}),
-      expectedAudience: this.configService.get<string>("MCP_AUDIENCE") || "https://mcp.flump.co.uk",
+      expectedAudience: this.configService.get<string>("MCP_AUDIENCE") || "flump-mcp",
       authServerUrl: this.configService.get<string>("AUTH_SERVER_URL") || "https://api.workos.com",
     });
   }

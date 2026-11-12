@@ -78,7 +78,7 @@ describe("UserProfileService (Deep Module)", () => {
       annualSalary: 95000,
     });
 
-    const result = await service.resetFinancialData("user-123", "user@flump.co.uk");
+    const result = await service.resetFinancialData("user-123", "user@example.com");
 
     expect(mockDataSource.transaction).toHaveBeenCalledTimes(1);
     expect(mockAccountRepo.delete).toHaveBeenCalledWith({ userId: "user-123" });
@@ -204,11 +204,11 @@ describe("UserProfileService (Deep Module)", () => {
   });
 
   it("sends the reset to the caller's own email, never a supplied one", async () => {
-    identityAdapter.emails.set("user-123", "me@flump.co.uk");
+    identityAdapter.emails.set("user-123", "me@example.com");
     const res = await (service as any).sendPasswordReset("user-123", "victim@x");
 
     expect(res).toEqual({ success: true });
-    expect(identityAdapter.resetEmails).toEqual(["me@flump.co.uk"]);
+    expect(identityAdapter.resetEmails).toEqual(["me@example.com"]);
   });
 
   it("fails (503) when the user's email cannot be resolved", async () => {
@@ -248,7 +248,7 @@ describe("UserProfileService (Deep Module)", () => {
   });
 
   it("fails (503) when sending the reset throws", async () => {
-    identityAdapter.emails.set("user-123", "me@flump.co.uk");
+    identityAdapter.emails.set("user-123", "me@example.com");
     vi.spyOn(identityAdapter, "sendPasswordReset").mockRejectedValue(new Error("boom me@x"));
     const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
     await expect(service.sendPasswordReset("user-123")).rejects.toBeInstanceOf(

@@ -28,15 +28,15 @@ describe("resolveCorsOrigins", () => {
     expect(
       resolveCorsOrigins({
         NODE_ENV: "production",
-        CORS_ALLOWED_ORIGINS: " https://app.flump.co.uk , ,http://localhost:5173,",
+        CORS_ALLOWED_ORIGINS: " https://app.example.test , ,http://localhost:5173,",
       }),
-    ).toEqual(["https://app.flump.co.uk", "http://localhost:5173"]);
+    ).toEqual(["https://app.example.test", "http://localhost:5173"]);
   });
 
   it("rejects values that are not bare http(s) origins", () => {
     for (const bad of [
       "*",
-      "app.flump.co.uk",
+      "app.example.test",
       "ftp://x.com",
       "https://x.com/path",
       "https://x.com/",

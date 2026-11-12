@@ -38,10 +38,10 @@ describe("static security.txt", () => {
 
 describe("normaliseSecurityContact", () => {
   it.each([
-    ["security@flump.co.uk", "mailto:security@flump.co.uk"],
-    ["mailto:security@flump.co.uk", "mailto:security@flump.co.uk"],
-    ["https://flump.co.uk/report", "https://flump.co.uk/report"],
-    ["  https://flump.co.uk/report  ", "https://flump.co.uk/report"],
+    ["security@example.com", "mailto:security@example.com"],
+    ["mailto:security@example.com", "mailto:security@example.com"],
+    ["https://example.test/report", "https://example.test/report"],
+    ["  https://example.test/report  ", "https://example.test/report"],
   ])("accepts %j", (input, expected) => {
     expect(normaliseSecurityContact(input)).toBe(expected);
   });
@@ -62,12 +62,12 @@ describe("normaliseSecurityContact", () => {
 
 describe("buildSecurityTxt", () => {
   const now = new Date("2026-11-12T10:00:00.000Z");
-  const text = buildSecurityTxt("mailto:security@flump.co.uk", now);
+  const text = buildSecurityTxt("mailto:security@example.com", now);
 
   it("has the RFC 9116 fields", () => {
-    expect(text).toMatch(/^Contact: mailto:security@flump\.co\.uk$/m);
+    expect(text).toMatch(/^Contact: mailto:security@example\.com$/m);
     expect(text).toMatch(/^Preferred-Languages: en$/m);
-    expect(text).toMatch(/^Canonical: https:\/\/flump\.co\.uk\/\.well-known\/security\.txt$/m);
+    expect(text).not.toMatch(/^(Policy|Canonical):/m);
     expect(text).not.toMatch(/example\.invalid|PLACEHOLDER/);
   });
 
@@ -93,14 +93,14 @@ describe("GET /.well-known/security.txt", () => {
 
   it("serves text/plain with the contact when SECURITY_CONTACT is set", async () => {
     const base = await start(
-      { SECURITY_CONTACT: "security@flump.co.uk" },
+      { SECURITY_CONTACT: "security@example.com" },
       () => new Date("2026-01-01T00:00:00.000Z"),
     );
     const res = await fetch(`${base}/.well-known/security.txt`);
     expect(res.status).toBe(200);
     expect(res.headers.get("content-type")).toMatch(/^text\/plain/);
     const body = await res.text();
-    expect(body).toMatch(/^Contact: mailto:security@flump\.co\.uk$/m);
+    expect(body).toMatch(/^Contact: mailto:security@example\.com$/m);
     expect(body).toMatch(/^Expires: 2027-01-01T00:00:00\.000Z$/m);
   });
 });

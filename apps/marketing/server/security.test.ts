@@ -60,11 +60,13 @@ describe("resolveAppUrl", () => {
     expect(resolveAppUrl({})).toBe("http://localhost:5173");
   });
 
-  it("uses the Railway web URL on Railway, and the canonical app otherwise in production", () => {
+  it("uses the Railway web URL on Railway, and the same Railway web URL otherwise in production", () => {
     expect(
       resolveAppUrl({ NODE_ENV: "production", RAILWAY_PUBLIC_DOMAIN: "x.up.railway.app" }),
     ).toBe("https://web-production-845e6c.up.railway.app");
-    expect(resolveAppUrl({ NODE_ENV: "production" })).toBe("https://app.flump.co.uk");
+    expect(resolveAppUrl({ NODE_ENV: "production" })).toBe(
+      "https://web-production-845e6c.up.railway.app",
+    );
   });
 });
 

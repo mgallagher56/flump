@@ -21,7 +21,7 @@ E1 made identity unforgeable and E5 unified the API client. The remaining risk i
    - There are no rate limits outside `/mcp`, and no CSP or frame headers on the web app.
 3. **Small but real web bugs:**
    - `GET /logout` signs the user out.
-   - An `endsWith("flump.co.uk")` cookie-domain check also matches `evilflump.co.uk`.
+   - An `endsWith(<old domain>)` cookie-domain check also matches a lookalike host.
    - Two identical callback routes.
    - A dead second session module.
    - A per-request global `configure()` mutation.
@@ -51,7 +51,7 @@ E1 made identity unforgeable and E5 unified the API client. The remaining risk i
 | Bank provider tokens | AES-256-GCM in `bank_connections` | No key id, so the key cannot be rotated (V, `packages/banking/src/server/crypto.ts:7,38`) |
 | Secrets | Railway env: `WORKOS_API_KEY`, `WORKOS_COOKIE_PASSWORD`, `BANKING_TOKEN_ENCRYPTION_KEY`, DB URL | D-12 rotation still open (I) |
 | Financial data and PII | Postgres: balances, salary, tax records, **receipts as base64 text** (`tax-record.entity.ts:44-51`), notes, avatar data URL (`user-profile.entity.ts:26-27`) | Receipts may hold addresses, UTRs and EXIF GPS |
-| Onboarding seed (salary) | Non-HttpOnly cookie on `.flump.co.uk` plus localStorage | V, `packages/finance-engine/src/persistence.ts:94-101`; `apps/web/app/state/baseline.store.ts:14,39-52` |
+| Onboarding seed (salary) | Non-HttpOnly cookie (host-only) plus localStorage | V, `packages/finance-engine/src/persistence.ts:94-101`; `apps/web/app/state/baseline.store.ts:14,39-52` |
 | Integrity of calculations and of the agent context | Postgres; MCP outputs | Prompt-injection target |
 
 ### 2.2 Actors
@@ -59,7 +59,7 @@ E1 made identity unforgeable and E5 unified the API client. The remaining risk i
 - **A1.** Anonymous internet attacker.
 - **A2.** Authenticated malicious tenant (user B).
 - **A3.** XSS attacker, through stored data or a compromised dependency.
-- **A4.** Same-site attacker: any `*.flump.co.uk` host including the marketing apex, and possibly other `*.up.railway.app` apps if that suffix is not on the Public Suffix List (I, verify).
+- **A4.** Same-site attacker: any `sibling` host including the marketing apex, and possibly other `*.up.railway.app` apps if that suffix is not on the Public Suffix List (I, verify).
 - **A5.** A compromised or prompt-injected AI client holding a PAT.
 - **A6.** A hostile third-party data source, such as bank merchant descriptions.
 - **A7.** A compromised dependency, CI action or container image.
@@ -187,7 +187,7 @@ E1 made identity unforgeable and E5 unified the API client. The remaining risk i
 | G7 | **Receipt upload:** client `FileReader.readAsDataURL` with no type or size checks (`TaxContainer.tsx:235-247`; `accept` is a hint only, `:2080-2081`). The web action forwards it as-is (`app.tax.tsx:39-41,72-74`). The backend allow-lists the fields but does not validate them (`tax.controller.ts:33-35`). The column is unbounded text. Rendering: `href={receiptData}` (`TaxContainer.tsx:2157`) and `src` (`:2177`). Receipts are included in every `GET /tax-records` list (E17 3.7). Nest's JSON body limit is not set (`main.ts:8-10`). The default is presumably Express's 100 kb, which would make larger receipts fail today (I, verify with a 200 kB POST). | V (limit I) |
 | G8 | **Avatar:** client-only checks (`utils/avatar.ts` `processImageFile`: `startsWith("image/")`, 5 MB, re-encoded through canvas, but `img.onerror` resolves the **raw** data URL). The backend stores any string (`user-profile.service.ts:268`). Rendered only in `<img src>` (`UserAvatar.tsx:34-39,106`), also from `user.profilePictureUrl` (a third-party https host). | V |
 | G9 | **Logout over GET:** `logout._index.tsx:29-31`. The only logout UI is a link (`components/navigation/UserLogin.tsx:29`). | V |
-| G10 | **Cookie-domain suffix bug:** `url.hostname.endsWith("flump.co.uk")` in `logout._index.tsx:13`, `callback.tsx:25`, `auth.callback.tsx:25`. The presence cookie has no `Secure`. The correct check already exists in `packages/finance-engine/src/persistence.ts:52-59`. The cookie is read by `apps/marketing/src/components/Header.tsx:130`. | V |
+| G10 | **Cookie-domain suffix bug:** `url.hostname.endsWith(<old domain>)` in `logout._index.tsx:13`, `callback.tsx:25`, `auth.callback.tsx:25`. The presence cookie has no `Secure`. The correct check already exists in `packages/finance-engine/src/persistence.ts:52-59`. The cookie is read by `apps/marketing/src/components/Header.tsx:130`. | V |
 | G11 | **Duplicate callback routes:** `callback.tsx` and `auth.callback.tsx` differ only in the component name (diff run). `/auth/callback` is also the bank-OAuth fallback (`app.accounts._index.tsx:80-81`), so a bank `code` would go to WorkOS `authLoader`, which is broken by design. `.env.example` files register `/callback` (D-16). | V |
 | G12 | **Dead `session.server.ts`.** Nothing imports it (grep). It requires `SESSION_SECRET` at import. | V |
 | G13 | **MCP scopes not enforced:** only `anonymizeInstitutions` is read by tools (`tools/debt-simulator.tool.ts:86`, `financial-audit.tool.ts:251`, resources). `scopes` are only defaulted in `token-verifier.ts:135`. PAT creation takes `body` with `expiryDays` and `anonymizeInstitutions` unvalidated (`mcp.controller.ts:49-65`). `expiryDays` null means never expires (`mcp.service.ts:193-196`). | V |
@@ -202,7 +202,7 @@ E1 made identity unforgeable and E5 unified the API client. The remaining risk i
 | G22 | **Emotion is vestigial:** referenced only in `entry.server.tsx:3-4,45-58`, `entry.client.tsx` and `createEmotionCache.ts` (grep). It injects `<style>` tags with no nonce, which hurts CSP. | V |
 | G23 | **Third-party fonts:** Google Fonts CSS and fonts (`root.tsx:22-27`). | V |
 | G24 | **Marketing CSP:** `script-src 'self' 'nonce-…' https:` (`server.ts:26`) and `connect-src https: ws:` (`:30`). Per-request `process.env.VITE_APP_URL` mutation based on Host (`:97-118`, a race). HSTS `includeSubDomains`, no preload (`:16`). | V |
-| G25 | **Salary in a non-HttpOnly cookie** on `.flump.co.uk` (onboarding seed), readable by every subdomain (`persistence.ts:94-101`). | V |
+| G25 | **Salary in a non-HttpOnly cookie** (onboarding seed), now host-only (`persistence.ts:94-101`). | V |
 
 ---
 
@@ -333,7 +333,7 @@ This is decision D8. Preload applies to the apex and **all** subdomains and is s
 - Production `WORKOS_REDIRECT_URI` must be https so that `Secure` is set (V, library logic). Add a web boot check.
 - Set `WORKOS_COOKIE_MAX_AGE` to match the WorkOS absolute session length (D3).
 - Consider `WORKOS_COOKIE_NAME=__Host-wos-session`. The `__Host-` prefix requires `Secure`, `Path=/` and no `Domain`, which defends against cookie tossing from sibling subdomains. Changing it logs everyone out once.
-- Presence cookie (D9-B): one shared `isFlumpHost(hostname)` helper (exact `flump.co.uk` or `.flump.co.uk` suffix, moved from `persistence.ts:52-59`), `Secure` in production, and `Domain` taken from an env `COOKIE_DOMAIN` rather than from Host.
+- Presence cookie (D9-B): one shared `isFlumpHost(hostname)` helper (exact-or-suffix host match, moved from `persistence.ts:52-59`), `Secure` in production, and `Domain` taken from an env `COOKIE_DOMAIN` rather than from Host.
 - The onboarding seed cookie carries salary on the parent domain (G25). Shorten its Max-Age, clear it after onboarding, or move it to a query handoff. Coordinate with the E19 cookie position.
 
 ---
@@ -547,7 +547,7 @@ Routes in scope (V, from the controllers): finance (17), budget (6), tax (6), us
 
 **Q2. Cookie domain, duplicate callback and dev-only `configure()` (Tier A, S, sonnet)**
 - **Files:** `routes/callback.tsx`; delete `routes/auth.callback.tsx` and its test; `routes/login._index.tsx`, `signUp._index.tsx`, `logout._index.tsx`; shared helper `isFlumpHost` moved to `packages/finance-engine/src/persistence.ts` and exported; `app.accounts._index.tsx:80-81` stops building a `/auth/callback` bank URL (E16 cuts bank OAuth; return a "not available" error).
-- **Acceptance:** `evilflump.co.uk` gets no `Domain`. `app.flump.co.uk` gets `Domain=.flump.co.uk; Secure`. `configure()` runs only when `NODE_ENV==="development"`. The E11 test that pinned the bug is flipped.
+- **Acceptance:** a lookalike host gets no `Domain`. Cookies are host-only, with `Secure` on https. `configure()` runs only when `NODE_ENV==="development"`. The E11 test that pinned the bug is flipped.
 - **Depends on:** the owner confirms `/callback` is the URI registered in WorkOS.
 - **Risk:** the wrong callback is deleted. Mitigation: the owner checks the dashboard first.
 
@@ -576,7 +576,7 @@ Routes in scope (V, from the controllers): finance (17), budget (6), tax (6), us
 - **Files:** `apps/web/react-router.config.ts` (middleware flag), `app/root.tsx` (middleware export), new `app/security/headers.server.ts` and `csrf.server.ts` plus tests; `entry.server.tsx` `handleDataRequest`.
 - **Acceptance:**
   - document and `.data` responses carry the 5.1 Phase 0 set plus enforced `frame-ancestors 'none'`;
-  - a POST with `Origin: https://evil.example` or `https://marketing.flump.co.uk` gets 403;
+  - a POST with `Origin: https://evil.example` or `https://marketing.example.test` gets 403;
   - a same-origin POST passes;
   - missing `Origin` with `Sec-Fetch-Site: same-origin` passes; missing both on a non-GET gets 403 (decide whether old browsers matter).
 - **Verify:** route tests; `curl -sI $STAGING_WEB/app | grep -iE "strict-transport|x-frame|content-security"`.

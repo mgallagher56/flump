@@ -238,9 +238,9 @@ Laws touched: AGENTS.md section 5 (the lint gate's meaning changes; the four com
 - Tests:
   - 'redirects to /login when code is missing': response.status 302 and Location '/login'; workosLoaderMock not called
   - 'appends flump_has_session cookie without Domain on localhost': Set-Cookie contains 'flump_has_session=1' and 'Max-Age=2592000', not 'Domain='
-  - 'adds Domain=.flump.co.uk on app.flump.co.uk'
-  - 'pins current behaviour for evilflump.co.uk' (documents the endsWith gap; flag to E1/D owner rather than fix silently)
-  - 'calls configure with a localhost redirect URI only on localhost': configureMock called once on localhost, not on app.flump.co.uk
+  - 'sets a host-only cookie on the web app'
+  - 'pins current behaviour for a lookalike host' (documents the endsWith gap; flag to E1/D owner rather than fix silently)
+  - 'calls configure with a localhost redirect URI only on localhost': configureMock called once on localhost, not on the web app
   - 'preserves upstream status and existing Set-Cookie headers'
 
 ### 10. T9: Tests for the logout loader and action (effort S)
@@ -249,7 +249,7 @@ Laws touched: AGENTS.md section 5 (the lint gate's meaning changes; the four com
 - Interfaces: Mock signOut(request, { returnTo }) returning a Response.
 - Tests:
   - 'signs out with returnTo VITE_MARKETING_URL when set'
-  - 'falls back to http://localhost:3001 on localhost and https://flump.co.uk elsewhere'
+  - 'falls back to http://localhost:3001 on localhost and the deployed marketing site elsewhere'
   - 'clears flump_has_session with Max-Age=0' on both loader and action
   - 'keeps WorkOS Set-Cookie headers' (both cookies present)
 
@@ -452,7 +452,7 @@ Owner checklist (cannot be done in code): required status checks per D7; a relea
 - bun audit found 21 advisories (7 high), all transitive. Most highs are undici and @fastify/busboy via vitest-github-actions-reporter, a web devDependency used only as a reporter. Vitest has a built-in github-actions reporter. (`docs/audit/00-baseline.md:74-79; apps/web/package.json:73; apps/web/vite.config.mts:11,101`)
 - The zod <4.6.6 advisory is partly stale: @flump/mcp now pins zod 4.6.6 (the @modelcontextprotocol/sdk transitive path still needs re-checking). (`packages/mcp/package.json:38`)
 - No route test covers auth.callback, callback, logout, login, signUp or any mutating action. Route test files exist only for $feature._index, _index, app.onboarding, sandbox and tools. 30 loader/action exports were found under routes/. (`apps/web/app/routes/ (listing); auth.callback.tsx:9; callback.tsx:9; logout._index.tsx:29,33; app.accounts._index.tsx:13,138; app.tax.tsx:8,147; app.savings.tsx:14,116; app.pension.tsx:14,195; app.accounts.$account.tsx:7,55; app.onboarding.tsx:38,55`)
-- The callback loader redirects to /login without `code`, calls the global WorkOS `configure()` for localhost hosts, and appends a flump_has_session cookie with Domain=.flump.co.uk when hostname.endsWith('flump.co.uk'). That check also matches a host such as evilflump.co.uk, which a test should pin. Logout clears the same cookie. (`apps/web/app/routes/auth.callback.tsx:10-36; apps/web/app/routes/logout._index.tsx:4-27`)
+- The callback loader redirects to /login without `code`, calls the global WorkOS `configure()` for localhost hosts, and appends a flump_has_session cookie with a Domain attribute when hostname.endsWith(<old domain>). That check also matches a host such as a lookalike host, which a test should pin. Logout clears the same cookie. (`apps/web/app/routes/auth.callback.tsx:10-36; apps/web/app/routes/logout._index.tsx:4-27`)
 - Actions build the Authorization header with authHeader(), which throws redirect('/login') when there is no access token (E1). backend-client tests do not assert the Authorization header, and fetchJson silently returns fallbacks on non-OK responses or exceptions (an E5 concern). (`apps/web/app/utils/auth.server.ts:24-33; apps/web/app/routes/app.accounts._index.tsx:14-15,32-40; apps/web/app/services/backend-client.server.ts:70-81; apps/web/app/services/backend-client.server.test.ts:65-107`)
 - auth.server.ts runs isDevBypass(process.env) at import. The web dev bypass session is used only when authkitLoader throws and NODE_ENV=development with AUTH_DEV_BYPASS=true. The backend dev mode requires AUTH_DEV_BYPASS=true, NODE_ENV=development and no WORKOS_API_KEY. (`apps/web/app/utils/auth.server.ts:13-22,63-72; apps/backend/src/auth/auth.config.ts:6-21`)
 - Storybook has @storybook/addon-vitest and addon-a11y registered, but no Vitest storybook project exists. The a11y config enables only color-contrast with no `test` mode. test:storybook is only `storybook build --test` and is not in CI. Stories from packages/ui and apps/marketing load through the web Storybook. (`apps/web/.storybook/main.ts:12-23; apps/web/.storybook/preview.tsx:47-55; apps/web/package.json:90`)

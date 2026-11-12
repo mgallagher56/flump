@@ -11,7 +11,7 @@ export function resolveAppUrl(env: Env = process.env): string {
   if (env.APP_URL) return env.APP_URL;
   if (env.NODE_ENV !== "production") return "http://localhost:5173";
   if (env.RAILWAY_PUBLIC_DOMAIN) return RAILWAY_WEB_URL;
-  return "https://app.flump.co.uk";
+  return "https://web-production-845e6c.up.railway.app";
 }
 
 interface CspOptions {
@@ -78,8 +78,6 @@ export function buildSecurityTxt(contact: string, now: Date): string {
     `Contact: ${contact}`,
     `Expires: ${expires.toISOString()}`,
     "Preferred-Languages: en",
-    "Policy: https://flump.co.uk/security",
-    "Canonical: https://flump.co.uk/.well-known/security.txt",
     "",
   ].join("\n");
 }

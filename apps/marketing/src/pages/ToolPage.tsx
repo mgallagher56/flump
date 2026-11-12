@@ -46,7 +46,6 @@ export const ToolPage: FC = () => {
       <Helmet>
         <title>{toolMeta.title} | Free UK Calculator | Flump</title>
         <meta name="description" content={toolMeta.desc} />
-        <link rel="canonical" href={`https://flump.co.uk/tools/${toolMeta.slug}`} />
       </Helmet>
 
       <Header />

@@ -6,7 +6,7 @@ You are refactoring and expanding **Flump**, a UK-native personal finance, debt 
 
 ### Core Architectural Shifts Required:
 
-1. **Strict Target Separation (`apps/marketing` vs `apps/web`):** Split the logged-out acquisition/SEO experience (`flump.co.uk`) from the authenticated stateful application (`app.flump.co.uk`) within the Turborepo monorepo.
+1. **Strict Target Separation (`apps/marketing` vs `apps/web`):** Split the logged-out acquisition/SEO experience (the marketing site) from the authenticated stateful application (the web app) within the Turborepo monorepo.
 2. **Full-Lifecycle Financial Stage Engine:** Support users across three distinct financial stages:
    - `STAGE_1_DEBT_RECOVERY` (High-interest debt payoff, Priority vs Non-Priority UK bill protection, Safe-to-Spend).
    - `STAGE_2_BUFFER_BUILD` (Starter £1k buffer, 3–6 month Emergency Runway, Cash ISA / high-yield savings).
@@ -26,7 +26,7 @@ Ensure the workspace adheres to the following package and app boundaries:
 ```text
 flump/
 ├── apps/
-│   ├── marketing/               # Public SEO & Acquisition site (flump.co.uk)
+│   ├── marketing/               # Public SEO & Acquisition site (the marketing site)
 │   │   └── src/
 │   │       ├── pages/
 │   │       │   ├── index.tsx    # Dual-Mode Hero, 4-Persona Tabs, Scenario Layers, Matrix
@@ -39,7 +39,7 @@ flump/
 │   │           ├── PersonaSwitcher.tsx
 │   │           └── ScenarioLayersPreview.tsx
 │   │
-│   ├── web/                     # Authenticated SPA & Live Sandbox (app.flump.co.uk)
+│   ├── web/                     # Authenticated SPA & Live Sandbox (the web app)
 │   │   └── src/
 │   │       ├── routes/
 │   │       │   ├── login.tsx
@@ -381,8 +381,8 @@ Build a high-speed Static/SSR page importing calculations directly from `@flump/
 - Headline: _"Get out of the red. Build into the black."_
 - Mode Toggle Tab A (`Clear Debt & Stabilize`): Inputs for Total Unsecured Debt, Avg APR, Monthly Repayment Budget. Outputs Debt-Free Date, Interest Saved, and 3-Year Post-Debt Wealth.
 - Mode Toggle Tab B (`Build Wealth & Optimize Tax`): Inputs for UK Gross Salary, Current Pot, Monthly Contribution. Outputs 10-Yr Net Worth, Marginal Tax Band (with 60% trap warning), and Salary Sacrifice Tax Saved.
-- **Primary CTA:** Writes `OnboardingSeedPayload` to root cookie `flump_onboarding_seed` (`Domain=.flump.co.uk; Path=/; Max-Age=86400; SameSite=Lax; Secure`) and redirects to `https://app.flump.co.uk/signup`.
-- **Secondary CTA:** Links directly to `https://app.flump.co.uk/sandbox`.
+- **Primary CTA:** Writes `OnboardingSeedPayload` to root cookie `flump_onboarding_seed` (`Path=/; Max-Age=3600; SameSite=Lax; Secure, host-only`) and redirects to the web app's `/signup`.
+- **Secondary CTA:** Links directly to the web app's `/sandbox`.
 
 2. **4-Tab Interactive Persona Switcher:**
 
@@ -416,7 +416,7 @@ Execute this plan sequentially. After each phase, run typecheck, unit tests, and
 - _Verification Gate:_ `pnpm --filter @flump/finance-engine test` and `pnpm --filter @flump/banking typecheck` must pass with zero client imports of `./server`.
 
 - **Phase 2: State Consolidation & Progressive Onboarding (`apps/web`)**
-- _Deliverables:_ Create `baseline.store.ts`, remove duplicate profile/module wizards, merge `/app/savings` into `/app/accounts`, and implement the 3-step `/onboarding` route with `.flump.co.uk` seed cookie hydration.
+- _Deliverables:_ Create `baseline.store.ts`, remove duplicate profile/module wizards, merge `/app/savings` into `/app/accounts`, and implement the 3-step `/onboarding` route with host-only seed cookie hydration.
 - _Verification Gate:_ Verify that signing up with a mocked `flump_onboarding_seed` cookie pre-fills `FinancialBaseline`, assigns the proper `FinancialStage`, and lands on the stage-adapted Home Dashboard in under 3 clicks.
 
 - **Phase 3: Debt Crusher (`/app/debt`), Module Upgrades & `/sandbox**`
@@ -425,4 +425,4 @@ Execute this plan sequentially. After each phase, run typecheck, unit tests, and
 
 - **Phase 4: Dedicated Marketing Site (`apps/marketing`)**
 - _Deliverables:_ Build `/`, `/pricing`, `/security`, and the 5 `/tools/[slug]` SEO pages using `@flump/finance-engine` and `@flump/ui`.
-- _Verification Gate:_ Confirm zero WorkOS SDK code is bundled into `apps/marketing` and verify cross-subdomain cookie handoff from `flump.co.uk` to `app.flump.co.uk/onboarding`.
+- _Verification Gate:_ Confirm zero WorkOS SDK code is bundled into `apps/marketing` and verify cookie handoff (host-only cookies; superseded, see E21 domain removal) from the marketing site to the web app's `/onboarding`.

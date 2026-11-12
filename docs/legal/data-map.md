@@ -28,15 +28,15 @@ in PR 421.
 
 ## Browser storage
 
-| Key                                              | Type                                       | Content                                                            | Lifetime / clearing                                             |
-| ------------------------------------------------ | ------------------------------------------ | ------------------------------------------------------------------ | --------------------------------------------------------------- |
-| WorkOS AuthKit session cookie                    | httpOnly cookie                            | Encrypted session                                                  | Library-controlled                                              |
-| `flump_onboarding_seed`                          | Cookie on `.flump.co.uk` plus localStorage | Salary, debts, savings, pension pot, age from the marketing teaser | **1 hour**, `Secure` on https; removed on `/logout` form submit |
-| `flump_has_session`                              | Cookie on `.flump.co.uk`                   | `1`                                                                | 30 days; used by marketing Header, callback and logout          |
-| `flump-theme`                                    | localStorage                               | `light` or `dark`                                                  | Device preference, kept                                         |
-| `flump_financial_baseline_v2` (and legacy `_v1`) | localStorage                               | Full financial baseline                                            | Removed on `/logout` form submit                                |
-| `flump_runway_calculator_settings`               | localStorage                               | Calculator settings                                                | Removed on `/logout` form submit                                |
-| `flump_setup_checklist_dismissed`                | localStorage                               | Boolean                                                            | Removed on `/logout` form submit                                |
+| Key                                              | Type                                 | Content                                                            | Lifetime / clearing                                             |
+| ------------------------------------------------ | ------------------------------------ | ------------------------------------------------------------------ | --------------------------------------------------------------- |
+| WorkOS AuthKit session cookie                    | httpOnly cookie                      | Encrypted session                                                  | Library-controlled                                              |
+| `flump_onboarding_seed`                          | Cookie (host-only) plus localStorage | Salary, debts, savings, pension pot, age from the marketing teaser | **1 hour**, `Secure` on https; removed on `/logout` form submit |
+| `flump_has_session`                              | Cookie (host-only)                   | `1`                                                                | 30 days; used by marketing Header, callback and logout          |
+| `flump-theme`                                    | localStorage                         | `light` or `dark`                                                  | Device preference, kept                                         |
+| `flump_financial_baseline_v2` (and legacy `_v1`) | localStorage                         | Full financial baseline                                            | Removed on `/logout` form submit                                |
+| `flump_runway_calculator_settings`               | localStorage                         | Calculator settings                                                | Removed on `/logout` form submit                                |
+| `flump_setup_checklist_dismissed`                | localStorage                         | Boolean                                                            | Removed on `/logout` form submit                                |
 
 Fonts are self-hosted, so no request to Google Fonts. No analytics or trackers were found.
 

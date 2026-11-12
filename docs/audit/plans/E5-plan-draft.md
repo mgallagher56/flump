@@ -92,7 +92,7 @@ AGENTS.md laws touched: colocated component law and token law (RouteErrorState, 
 - Interfaces: export function loadApiConfig(env: Record<string, string | undefined>): { apiBaseUrl: string }; export const apiConfig: { apiBaseUrl: string } (computed at import)
 - Tests:
   - loadApiConfig returns 'http://localhost:4000' when VITE_API_URL is unset and NODE_ENV=development
-  - loadApiConfig strips a trailing slash: 'https://api.flump.co.uk/' -> 'https://api.flump.co.uk'
+  - loadApiConfig strips a trailing slash: 'https://api.example.test/' -> 'https://api.example.test'
   - loadApiConfig throws /VITE_API_URL must be set in production/ when unset and NODE_ENV=production
   - loadApiConfig throws /VITE_API_URL/ for 'not a url' and for 'ftp://x'
   - boot: import('./config.server') rejects with NODE_ENV=production and no VITE_API_URL (pattern from auth.server.boot.test.ts:16-20)

@@ -19,7 +19,7 @@ Dropped per DECISIONS D7: branch protection, code-owner rules. Out of scope: T16
 - Not acted on: design-token scan is a regex over string literals (apostrophe in comments can hide a literal; 3-4 char "#add" matches); counts are per file so swap add/remove passes; audit ignores bun audit stderr/exit (empty/non-JSON exits 2, but `{}` on a network error would pass; unverified offline); moderate advisories not shown; weekly failure only notifies by default email; audit job also blocks unrelated PRs when a new advisory appears; mcp floors are low; callback tests duplicate (source files are duplicates too).
 
 ## Follow-ups
-- evilflump.co.uk matches endsWith("flump.co.uk") in auth.callback/callback/logout (cookie Domain); pinned, not fixed.
+- a lookalike host matches endsWith(<old domain>) in auth.callback/callback/logout (cookie Domain); pinned, not fixed.
 - GET /logout signs out (logout CSRF); pinned, not fixed (E1).
 - callback.tsx and auth.callback.tsx are duplicate routes.
 - Local bun is 1.3.5, CI 1.4.4: audit JSON shape captured on 1.3.5.

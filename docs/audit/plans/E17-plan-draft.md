@@ -118,7 +118,7 @@ None takes arguments such as month or tax year.
 
 | Area | State | Gap |
 |---|---|---|
-| Verifier (`token-verifier.ts:79-147`) | PAT, plus exact dev token in dev mode. The OAuth branch throws "OAuth tokens are not enabled". Errors map to 401 | Bearer scheme is case-sensitive (`:80`, E1 follow-up). No `WWW-Authenticate` header. The `expectedAudience` default `https://mcp.flump.co.uk` (`:57`) is a placeholder host |
+| Verifier (`token-verifier.ts:79-147`) | PAT, plus exact dev token in dev mode. The OAuth branch throws "OAuth tokens are not enabled". Errors map to 401 | Bearer scheme is case-sensitive (`:80`, E1 follow-up). No `WWW-Authenticate` header. The `expectedAudience` default `the default audience string (now `flump-mcp`)` (`:57`) is a placeholder host |
 | Scopes | `mcp:read:anonymized`, `mcp:read:full`, `mcp:simulate` stored as a simple-array (`mcp-token.entity.ts:21`) | **Not enforced anywhere** (D-17). `POST /mcp-tokens` accepts `anonymizeInstitutions: false` with no extra confirmation |
 | Token create (`mcp.service.ts:169-219`) | Random 16 bytes as hex, hash stored, raw token returned once | `body: any`, so `expiryDays` and `name` are unvalidated (D-08). `expiryDays` null means **never expires**. No checksum for secret scanning |
 | Usage | `recordUsage` on every verify (`:84-87`) | Counts initialize and list calls as "tool calls". Fire-and-forget. No audit trail |
@@ -151,7 +151,7 @@ Cross-cutting: no global prefix or versioning (`main.ts`). No `ValidationPipe`, 
 ### 3.8 Web and marketing
 
 - **Web:** `McpConnectionCard` is labelled preview. It says "MCP tools currently run against sample/baseline data", which is true for stdio and half-true for remote. It shows a misleading "Official MCP SDK v1.0" badge, mints mock tokens, and revoke is local only.
-- **Marketing** (after E7): `McpPage.tsx` and `McpSpotlightSection.tsx` say "Preview" and "baseline sample data", and keep the 8-tool catalogue. "Rate limits ... per token" (`McpPage.tsx:216`) is inaccurate: the limit is per user. "Each token records its total tool calls" (`:229`) is inaccurate: it counts requests. `apps/marketing/src/claims.test.ts:9-34` bans `npx @flump/mcp`, `mcp.flump.co.uk`, `oauth-protected-resource`, `\bnpx\b` and "Strict PII anonymisation". Any distribution copy in E17 must edit that list with owner sign-off.
+- **Marketing** (after E7): `McpPage.tsx` and `McpSpotlightSection.tsx` say "Preview" and "baseline sample data", and keep the 8-tool catalogue. "Rate limits ... per token" (`McpPage.tsx:216`) is inaccurate: the limit is per user. "Each token records its total tool calls" (`:229`) is inaccurate: it counts requests. `apps/marketing/src/claims.test.ts:9-34` bans `npx @flump/mcp`, `the MCP host`, `oauth-protected-resource`, `\bnpx\b` and "Strict PII anonymisation". Any distribution copy in E17 must edit that list with owner sign-off.
 
 ### 3.9 Defect list (input to Phase 0)
 
