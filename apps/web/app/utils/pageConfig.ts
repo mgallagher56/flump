@@ -41,7 +41,7 @@ export const ALL_PAGE_KEYS: AppPageKey[] = [
 export const APP_PAGES: Record<AppPageKey, AppPageConfig> = {
   accounts: {
     key: "accounts",
-    label: "Accounts and net worth",
+    label: "Accounts",
     route: "/app/accounts",
     description: "Multi-account tracking, bank sync, and historical balance logs",
     category: "core",
@@ -49,7 +49,7 @@ export const APP_PAGES: Record<AppPageKey, AppPageConfig> = {
   },
   budget: {
     key: "budget",
-    label: "Budget planner",
+    label: "Budget",
     route: "/app/budget",
     description: "Income and expense categorisation, cash flow surplus, and runway calculator",
     category: "core",
@@ -57,7 +57,7 @@ export const APP_PAGES: Record<AppPageKey, AppPageConfig> = {
   },
   debt: {
     key: "debt",
-    label: "Debt payoff",
+    label: "Debt",
     route: "/app/debt",
     description:
       "Avalanche and snowball payoff engine, 0% promotional expiry tracker, and wealth bridge",
@@ -66,7 +66,7 @@ export const APP_PAGES: Record<AppPageKey, AppPageConfig> = {
   },
   savings: {
     key: "savings",
-    label: "Savings and investments",
+    label: "Savings",
     route: "/app/savings",
     description: "High-yield accounts, interest rate (AER) tracking, and compound growth",
     category: "wealth",
@@ -74,7 +74,7 @@ export const APP_PAGES: Record<AppPageKey, AppPageConfig> = {
   },
   pension: {
     key: "pension",
-    label: "Pension and retirement",
+    label: "Pension",
     route: "/app/pension",
     description: "Workplace pots, employee and employer contributions, and salary sacrifice",
     category: "wealth",
@@ -82,7 +82,7 @@ export const APP_PAGES: Record<AppPageKey, AppPageConfig> = {
   },
   mortgage: {
     key: "mortgage",
-    label: "Mortgage tools",
+    label: "Mortgage",
     route: "/app/mortgage",
     description: "Loan amortisation, overpayment simulator, and savings comparison",
     category: "wealth",
@@ -90,7 +90,7 @@ export const APP_PAGES: Record<AppPageKey, AppPageConfig> = {
   },
   forecast: {
     key: "forecast",
-    label: "Wealth forecaster",
+    label: "Growth forecast",
     route: "/app/savings#forecast",
     description: "Multi-year wealth projection and PAYE take-home estimation",
     category: "planning",
@@ -98,7 +98,7 @@ export const APP_PAGES: Record<AppPageKey, AppPageConfig> = {
   },
   tax: {
     key: "tax",
-    label: "Tax and Self Assessment",
+    label: "Self Assessment",
     route: "/app/tax",
     description: "Self-employed and rental property P&L logs with UK tax liability estimates",
     category: "planning",

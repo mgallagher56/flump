@@ -137,7 +137,7 @@ const MobileNavDrawer: FC<MobileNavDrawerProps> = ({ isOpen, onClose, user }) =>
           {!!user && (
             <Link className={profileLink()} to="/app/profile" onClick={onClose}>
               <UserAvatar bordered size={24} user={user} />
-              <span>User Profile</span>
+              <span>Settings</span>
             </Link>
           )}
           <div className={footerRow()}>

@@ -382,7 +382,7 @@ exports[`<Header /> > renders correctly when user logged in 1`] = `
             <span
               class="sr_true"
             >
-              User Profile
+              Settings
             </span>
           </a>
           <div>
