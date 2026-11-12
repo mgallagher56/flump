@@ -156,11 +156,28 @@ describe("E15 motion", () => {
 });
 
 describe("E15 layout", () => {
-  it("zIndex layers ascend base < sticky < header < dropdown < overlay < modal < toast", () => {
-    const order = ["base", "sticky", "header", "dropdown", "overlay", "modal", "toast"] as const;
+  it("zIndex defines every preset-panda key plus header, in one strictly increasing order", () => {
+    const order = [
+      "hide",
+      "base",
+      "docked",
+      "sticky",
+      "header",
+      "banner",
+      "dropdown",
+      "overlay",
+      "modal",
+      "popover",
+      "toast",
+      "tooltip",
+      "skipLink",
+    ] as const;
+    // every key preset-panda defines must be overridden so none leaks through with a stale value
+    for (const key of order) expect(zIndex, key).toHaveProperty(key);
+    expect(Object.keys(zIndex).sort()).toEqual([...order].sort());
     const values = order.map((k) => Number(zIndex[k].value));
-    expect([...values].sort((a, b) => a - b)).toEqual(values);
-    expect(new Set(values).size).toBe(values.length);
+    expect(values).toEqual([-1, 0, 5, 10, 20, 25, 30, 40, 50, 55, 60, 65, 70]);
+    for (let i = 1; i < values.length; i++) expect(values[i]).toBeGreaterThan(values[i - 1]);
   });
 
   it("sizes provide control heights, compact heights and a 44px touch target", () => {

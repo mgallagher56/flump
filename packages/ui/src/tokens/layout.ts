@@ -5,14 +5,25 @@
  * `density.*` semantic tokens (the `compact` Panda condition, defined in panda.config.ts).
  * Compact is for simulators, tables and account lists; touch targets (`sizes.touch`) never shrink.
  */
+/**
+ * Single stacking scale. Panda's preset-panda also defines zIndex keys (hide, base, docked,
+ * dropdown, sticky, banner, overlay, modal, popover, skipLink, toast, tooltip) with different
+ * values, so EVERY one of those keys is redefined here (plus `header`) to keep one consistent order.
+ */
 export const zIndex = {
+  hide: { value: "-1" },
   base: { value: "0" },
+  docked: { value: "5" },
   sticky: { value: "10" },
   header: { value: "20" },
+  banner: { value: "25" },
   dropdown: { value: "30" },
   overlay: { value: "40" },
   modal: { value: "50" },
+  popover: { value: "55" },
   toast: { value: "60" },
+  tooltip: { value: "65" },
+  skipLink: { value: "70" },
 } as const;
 
 export const sizes = {
