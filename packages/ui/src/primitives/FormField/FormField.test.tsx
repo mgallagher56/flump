@@ -53,8 +53,9 @@ describe("FormField", () => {
   it("shows a required marker that is not read twice", () => {
     const { container } = renderField({ required: true });
     expect(container.querySelector("[aria-hidden='true']")?.textContent).toBe("*");
-    const input = screen.getByRole("textbox", { name: "Monthly overpayment (required)" });
+    const input = screen.getByRole("textbox", { name: "Monthly overpayment" });
     expect(input.hasAttribute("required")).toBe(true);
+    expect(screen.queryByText(/\(required\)/)).toBeNull();
   });
 
   it("honours an explicit id and generates unique ids otherwise", () => {
@@ -68,6 +69,14 @@ describe("FormField", () => {
     );
     const ids = Array.from(second.container.querySelectorAll("input")).map((i) => i.id);
     expect(new Set(ids).size).toBe(2);
+  });
+
+  it("pairs id and data-testid on the root and strips colons from generated ids", () => {
+    const { container } = renderField();
+    const root = container.firstElementChild;
+    expect(root?.id).toMatch(/-field$/);
+    expect(root?.getAttribute("data-testid")).toBe(root?.id);
+    expect(screen.getByLabelText("Monthly overpayment").id).not.toContain(":");
   });
 
   it("keeps the control focusable by label click order (keyboard reachable)", () => {

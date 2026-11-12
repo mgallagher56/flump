@@ -2,7 +2,6 @@ import { AlertCircle } from "lucide-react";
 import { type FC, type ReactNode, useId } from "react";
 import { cx } from "../../../styled-system/css";
 import { Icon } from "../Icon/Icon";
-import { VisuallyHidden } from "../VisuallyHidden/VisuallyHidden";
 import { formFieldRecipe } from "./FormField.styles";
 
 /** Attributes the control must spread (or map) onto its input element. */
@@ -44,23 +43,26 @@ export const FormField: FC<FormFieldProps> = ({
   className,
 }) => {
   const generatedId = useId();
-  const controlId = id ?? generatedId;
+  const controlId = id ?? generatedId.replace(/:/g, "");
   const hintId = hint ? `${controlId}-hint` : undefined;
   const errorId = error ? `${controlId}-error` : undefined;
   const describedBy = [hintId, errorId].filter(Boolean).join(" ") || undefined;
   const classes = formFieldRecipe();
 
   return (
-    <div className={cx(classes.root, className)} data-testid={`${controlId}-field`}>
+    <div
+      className={cx(classes.root, className)}
+      data-testid={`${controlId}-field`}
+      id={`${controlId}-field`}
+    >
       <label className={classes.label} htmlFor={controlId}>
         {label}
         {required ? (
-          <>
-            <span aria-hidden="true" className={classes.required}>
-              *
-            </span>
-            <VisuallyHidden> (required)</VisuallyHidden>
-          </>
+          // Visual marker only: the control keeps the native `required` attribute, which assistive
+          // technology announces, so the marker is hidden to avoid a double announcement.
+          <span aria-hidden="true" className={classes.required}>
+            *
+          </span>
         ) : null}
       </label>
       {children({ id: controlId, describedBy, invalid: Boolean(error), required })}
