@@ -5,15 +5,12 @@ apps/web/app/components/budget/BudgetCategoryTable.tsx
 apps/web/app/components/budget/BudgetSetupWizard.tsx
 apps/web/app/components/budget/RunwayCalculator.tsx
 apps/web/app/components/dashboard/widgets/AccountsWidget.tsx
-apps/web/app/components/dashboard/widgets/ForecastWidget.tsx
 apps/web/app/components/dashboard/widgets/SavingsWidget.tsx
-apps/web/app/components/dashboard/widgets/TaxWidget.tsx
 apps/web/app/components/debt/UkDebtInstrumentsCard.tsx
 apps/web/app/components/forecast/ScenarioLayersWidget.tsx
 apps/web/app/components/home/InteractiveFinancialTeaser.tsx
 apps/web/app/components/mortgage/MortgageTracker.tsx
 apps/web/app/components/mortgage/RemortgageShockSim.tsx
-apps/web/app/components/navigation/GlobalBaselineScenarioBar.tsx
 apps/web/app/components/pension/PensionAccountsList.tsx
 apps/web/app/components/pension/PensionQuickStartWizard.tsx
 apps/web/app/components/savings/SavingsQuickStartWizard.tsx
