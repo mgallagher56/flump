@@ -1,7 +1,7 @@
 import { fireEvent } from "@testing-library/react";
 import { describe, expect, test, vi } from "vitest";
 import customRender from "~/testUtils/customRender";
-import OverpaymentSimulator from "./OverpaymentSimulator";
+import { OVERPAYMENT_ERC_NOTE, OverpaymentSimulator } from "./OverpaymentSimulator";
 
 describe("<OverpaymentSimulator />", () => {
   const defaultProps = {
@@ -19,9 +19,9 @@ describe("<OverpaymentSimulator />", () => {
 
     expect(getByText("Overpayment")).toBeDefined();
     expect(getByText("Amortisation projection")).toBeDefined();
-    expect(getByText("Time Shaved Off")).toBeDefined();
-    expect(getByText("Interest Saved")).toBeDefined();
-    expect(getByText(/Total Monthly Outflow:/i)).toBeDefined();
+    expect(getByText("Time shaved off")).toBeDefined();
+    expect(getByText("Interest saved")).toBeDefined();
+    expect(getByText(/Total monthly outflow:/i)).toBeDefined();
 
     // Verify slider change
     const slider = document.querySelector("input[type='range']") as HTMLInputElement;
@@ -44,7 +44,7 @@ describe("<OverpaymentSimulator />", () => {
 
     expect(getByText("Amortisation projection")).toBeDefined();
     expect(getByText(/Scheduled Interest Payment:/i)).toBeDefined();
-    expect(getByText("Bullet Balance Reduced")).toBeDefined();
+    expect(getByText("Bullet balance reduced")).toBeDefined();
   });
 
   test("handles zero values cleanly without NaN errors", () => {
@@ -68,6 +68,52 @@ describe("<OverpaymentSimulator />", () => {
     const text = container.textContent ?? "";
     expect(text).not.toMatch(/NaN|Infinity/);
     expect(text).not.toMatch(/\b0 months?\b/i);
+  });
+});
+
+describe("<OverpaymentSimulator /> unknown inputs and copy", () => {
+  test("shows Not set for the results when the mortgage details are missing", () => {
+    const { getAllByText, getByText } = customRender(
+      <OverpaymentSimulator
+        loanAmount={0}
+        interestRate={0}
+        remainingTerm={0}
+        overpayment={0}
+        onOverpaymentChange={vi.fn()}
+      />,
+    );
+    expect(getAllByText("Not set").length).toBeGreaterThanOrEqual(5);
+    expect(getByText("Mortgage details not set")).toBeDefined();
+  });
+
+  test("shows the early repayment charge caveat beside the overpayment control", () => {
+    const { getByText } = customRender(
+      <OverpaymentSimulator
+        loanAmount={200000}
+        interestRate={4}
+        remainingTerm={25}
+        overpayment={200}
+        onOverpaymentChange={vi.fn()}
+      />,
+    );
+    expect(getByText(OVERPAYMENT_ERC_NOTE)).toBeDefined();
+  });
+
+  test("drives the overpayment through the named range slider", () => {
+    const onOverpaymentChange = vi.fn();
+    const { getByLabelText } = customRender(
+      <OverpaymentSimulator
+        loanAmount={200000}
+        interestRate={4}
+        remainingTerm={25}
+        overpayment={200}
+        onOverpaymentChange={onOverpaymentChange}
+      />,
+    );
+    fireEvent.change(getByLabelText("Monthly overpayment range slider"), {
+      target: { value: "500" },
+    });
+    expect(onOverpaymentChange).toHaveBeenCalledWith(500);
   });
 });
 

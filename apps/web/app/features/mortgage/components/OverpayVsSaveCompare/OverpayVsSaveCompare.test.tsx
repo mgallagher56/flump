@@ -1,7 +1,7 @@
 import { fireEvent } from "@testing-library/react";
 import { describe, expect, test } from "vitest";
 import customRender from "~/testUtils/customRender";
-import OverpayVsSaveCompare from "./OverpayVsSaveCompare";
+import { OverpayVsSaveCompare } from "./OverpayVsSaveCompare";
 
 describe("<OverpayVsSaveCompare />", () => {
   const defaultProps = {
@@ -14,28 +14,29 @@ describe("<OverpayVsSaveCompare />", () => {
   test("renders comparison header, parameters, and chart", () => {
     const { getByText } = customRender(<OverpayVsSaveCompare {...defaultProps} />);
 
-    expect(getByText("Savings Parameters")).toBeDefined();
+    expect(getByText("Savings parameters")).toBeDefined();
     expect(getByText(/Verdict: Overpay Mortgage/i)).toBeDefined();
-    expect(getByText("Mortgage Overpay vs. Savings Comparison")).toBeDefined();
+    expect(getByText("Mortgage overpay vs. savings comparison")).toBeDefined();
     expect(getByText(/Savings Interest Rate/i)).toBeDefined();
     expect(getByText(/Savings Tax Bracket/i)).toBeDefined();
     expect(getByText(/Horizon \(Years\)/i)).toBeDefined();
   });
 
   test("allows changing savings rate slider and tax wrapper select", () => {
-    const { getByDisplayValue } = customRender(<OverpayVsSaveCompare {...defaultProps} />);
+    const { getByDisplayValue, getByLabelText } = customRender(
+      <OverpayVsSaveCompare {...defaultProps} />,
+    );
 
     // Change tax bracket
     const select = document.querySelector("select") as HTMLSelectElement;
     expect(select).toBeDefined();
     fireEvent.change(select, { target: { value: "higher" } });
-    expect(getByDisplayValue("Higher Rate (40% Tax)")).toBeDefined();
+    expect(getByDisplayValue("Higher rate (40% tax)")).toBeDefined();
 
     // Change horizon slider
-    const sliders = document.querySelectorAll("input[type='range']");
-    if (sliders.length > 1) {
-      fireEvent.change(sliders[1], { target: { value: "15" } });
-    }
+    const horizon = getByLabelText("Horizon (years) range slider") as HTMLInputElement;
+    fireEvent.change(horizon, { target: { value: "15" } });
+    expect(horizon.value).toBe("15");
   });
 
   test("renders interest-only mortgage variation and when saving beats overpaying", () => {
@@ -49,7 +50,7 @@ describe("<OverpayVsSaveCompare />", () => {
     );
 
     expect(getByText(/Verdict: Save in Account \/ ISA/i)).toBeDefined();
-    expect(getByText("Mortgage Overpay vs. Savings Comparison")).toBeDefined();
+    expect(getByText("Mortgage overpay vs. savings comparison")).toBeDefined();
   });
 
   test("handles zero parameters cleanly", () => {
@@ -57,8 +58,8 @@ describe("<OverpayVsSaveCompare />", () => {
       <OverpayVsSaveCompare loanAmount={0} interestRate={0} remainingTerm={0} overpayment={0} />,
     );
 
-    expect(getByText("Savings Parameters")).toBeDefined();
-    expect(getByText("No Overpayment Budget Set")).toBeDefined();
+    expect(getByText("Savings parameters")).toBeDefined();
+    expect(getByText("No overpayment budget set")).toBeDefined();
   });
 
   test("empty profile (all zeros) shows no NaN or Infinity", () => {
@@ -66,6 +67,46 @@ describe("<OverpayVsSaveCompare />", () => {
       <OverpayVsSaveCompare {...defaultProps} interestRate={0} loanAmount={0} remainingTerm={0} />,
     );
     expect(container.textContent ?? "").not.toMatch(/NaN|Infinity/);
+  });
+});
+
+describe("<OverpayVsSaveCompare /> unknown inputs and caveats", () => {
+  test("renders Not set rather than 0% when the mortgage details are missing", () => {
+    const { getByText, getByTestId, container } = customRender(
+      <OverpayVsSaveCompare loanAmount={0} interestRate={0} overpayment={300} remainingTerm={0} />,
+    );
+    expect(getByTestId("overpay-compare-mortgage-rate").textContent).toContain("Not set");
+    expect(getByText("Mortgage details not set")).toBeDefined();
+    expect(container.textContent ?? "").not.toMatch(/0\.00%|£0\b/);
+  });
+
+  test("shows the early repayment charge caveat beside the comparison", () => {
+    const { getByTestId } = customRender(
+      <OverpayVsSaveCompare
+        loanAmount={250000}
+        interestRate={5}
+        overpayment={300}
+        remainingTerm={25}
+      />,
+    );
+    expect(getByTestId("overpay-compare-erc-caveat").textContent).toMatch(
+      /early repayment charge \(ERC\) may apply/,
+    );
+  });
+
+  test("moving the savings rate slider updates the net savings rate", () => {
+    const { getByLabelText, getByTestId } = customRender(
+      <OverpayVsSaveCompare
+        loanAmount={250000}
+        interestRate={5}
+        overpayment={300}
+        remainingTerm={25}
+      />,
+    );
+    fireEvent.change(getByLabelText("Savings interest rate range slider"), {
+      target: { value: "6" },
+    });
+    expect(getByTestId("overpay-compare-net-rate").textContent).toContain("6.00%");
   });
 });
 

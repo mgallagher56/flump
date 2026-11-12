@@ -23,6 +23,10 @@ const FEEDBACK_FEATURES_DIR = path.resolve(
   __dirname,
   "../../../../apps/web/app/features/feedback/components",
 );
+const MORTGAGE_FEATURES_DIR = path.resolve(
+  __dirname,
+  "../../../../apps/web/app/features/mortgage/components",
+);
 const MARKETING_COMPONENTS_DIR = path.resolve(
   __dirname,
   "../../../../apps/marketing/src/components",
@@ -130,6 +134,25 @@ describe("Architecture & Design System Laws", () => {
         for (const comp of debtComponents) {
           verifyColocatedStructure(DEBT_FEATURES_DIR, comp);
         }
+      }
+    });
+
+    it("enforces colocated structure for features/mortgage components (E15 pilot)", () => {
+      const mortgageComponents = getSubdirectories(MORTGAGE_FEATURES_DIR);
+      for (const expected of [
+        "BtlOverview",
+        "LtvMilestones",
+        "MortgageAlerts",
+        "MortgageSummary",
+        "MortgageTracker",
+        "OverpayVsSaveCompare",
+        "OverpaymentSimulator",
+        "RemortgageShockSim",
+      ]) {
+        expect(mortgageComponents).toContain(expected);
+      }
+      for (const comp of mortgageComponents) {
+        verifyColocatedStructure(MORTGAGE_FEATURES_DIR, comp);
       }
     });
 
