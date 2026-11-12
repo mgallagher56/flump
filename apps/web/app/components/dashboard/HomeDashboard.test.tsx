@@ -129,13 +129,13 @@ describe("HomeDashboard", () => {
   it("renders welcome header and widgets for all enabled pages", () => {
     render(<HomeDashboard {...dummyProps} />);
     expect(screen.getByText(/Welcome back, Alex/i)).toBeDefined();
-    expect(screen.getByText("Accounts and net worth")).toBeDefined();
-    expect(screen.getByText("Budget planner")).toBeDefined();
-    expect(screen.getByText("Savings and investments")).toBeDefined();
-    expect(screen.getByText("Pension and retirement")).toBeDefined();
-    expect(screen.getByText("Mortgage tools")).toBeDefined();
-    expect(screen.getByText("Wealth forecaster")).toBeDefined();
-    expect(screen.getByText("Tax and Self Assessment")).toBeDefined();
+    expect(screen.getByText("Accounts")).toBeDefined();
+    expect(screen.getByText("Budget")).toBeDefined();
+    expect(screen.getByText("Savings")).toBeDefined();
+    expect(screen.getByText("Pension")).toBeDefined();
+    expect(screen.getByText("Mortgage")).toBeDefined();
+    expect(screen.getByText("Growth forecast")).toBeDefined();
+    expect(screen.getByText("Self Assessment")).toBeDefined();
   });
 
   it("toggles customize mode toolbar when button is clicked", () => {
@@ -156,7 +156,7 @@ describe("HomeDashboard", () => {
 
   it("opens per-widget settings modal when cog icon is clicked", () => {
     render(<HomeDashboard {...dummyProps} />);
-    const accountsCog = screen.getByLabelText("Customize Accounts and net worth widget");
+    const accountsCog = screen.getByLabelText("Customize Accounts widget");
     fireEvent.click(accountsCog);
 
     expect(screen.getByText("Accounts Widget Settings")).toBeDefined();
@@ -186,8 +186,8 @@ describe("HomeDashboard", () => {
       ),
     ).toBeDefined();
 
-    // Click "Add" button for Debt payoff
-    const addBtn = screen.getByLabelText("Enable Debt payoff widget");
+    // Click "Add" button for Debt
+    const addBtn = screen.getByLabelText("Enable Debt widget");
     fireEvent.click(addBtn);
 
     // Verify updateProfile was called with debt added to widgets and at the bottom of the order
@@ -227,14 +227,14 @@ describe("HomeDashboard", () => {
     render(<HomeDashboard {...unconfiguredProps} />);
 
     // Widgets should NOT be visible
-    expect(screen.queryByText("Accounts and net worth")).toBeNull();
-    expect(screen.queryByText("Budget planner")).toBeNull();
-    expect(screen.queryByText("Savings and investments")).toBeNull();
-    expect(screen.queryByText("Pension and retirement")).toBeNull();
-    expect(screen.queryByText("Debt payoff")).toBeNull();
-    expect(screen.queryByText("Mortgage tools")).toBeNull();
-    expect(screen.queryByText("Wealth forecaster")).toBeNull();
-    expect(screen.queryByText("Tax and Self Assessment")).toBeNull();
+    expect(screen.queryByText("Accounts")).toBeNull();
+    expect(screen.queryByText("Budget")).toBeNull();
+    expect(screen.queryByText("Savings")).toBeNull();
+    expect(screen.queryByText("Pension")).toBeNull();
+    expect(screen.queryByText("Debt")).toBeNull();
+    expect(screen.queryByText("Mortgage")).toBeNull();
+    expect(screen.queryByText("Growth forecast")).toBeNull();
+    expect(screen.queryByText("Self Assessment")).toBeNull();
 
     // Inviting setup prompt should be displayed
     expect(screen.getByText("Ready to Build Your Dashboard")).toBeDefined();
@@ -270,12 +270,12 @@ describe("HomeDashboard", () => {
     render(<HomeDashboard {...partiallyConfiguredProps} />);
 
     // Accounts is configured -> displayed
-    expect(screen.getByText("Accounts and net worth")).toBeDefined();
+    expect(screen.getByText("Accounts")).toBeDefined();
 
     // Budget, Savings, Pension are unconfigured -> not displayed
-    expect(screen.queryByText("Budget planner")).toBeNull();
-    expect(screen.queryByText("Savings and investments")).toBeNull();
-    expect(screen.queryByText("Pension and retirement")).toBeNull();
+    expect(screen.queryByText("Budget")).toBeNull();
+    expect(screen.queryByText("Savings")).toBeNull();
+    expect(screen.queryByText("Pension")).toBeNull();
   });
 
   it("mortgage-only user does not see the debt widget", () => {
@@ -288,7 +288,7 @@ describe("HomeDashboard", () => {
     };
     render(<HomeDashboard {...mortgageOnly} />);
     profileOverrides.extraWidgets = [];
-    expect(screen.queryByText("Debt payoff")).toBeNull();
+    expect(screen.queryByText("Debt")).toBeNull();
   });
 
   it("shows the debt widget when there is consumer debt", () => {
@@ -307,7 +307,7 @@ describe("HomeDashboard", () => {
     };
     render(<HomeDashboard {...withDebt} />);
     profileOverrides.extraWidgets = [];
-    expect(screen.getByText("Debt payoff")).toBeDefined();
+    expect(screen.getByText("Debt")).toBeDefined();
   });
 
   it("mortgage-only user does not see the Stage 1 unsecured debt banner", () => {

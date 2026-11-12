@@ -80,11 +80,11 @@ const Header: FC<HeaderProps> = ({ isMobile: propIsMobile, variant }): ReactElem
           <FLPBox className={loginStyles}>
             <ThemeToggle />
             {!!user && (
-              <Link className={profileLink} title="User Profile" to="/app/profile">
+              <Link className={profileLink} title="Settings" to="/app/profile">
                 <span aria-hidden="true">
                   <UserAvatar bordered size={26} user={user} />
                 </span>
-                <span className={srOnly}>User Profile</span>
+                <span className={srOnly}>Settings</span>
               </Link>
             )}
             <UserLogin />
