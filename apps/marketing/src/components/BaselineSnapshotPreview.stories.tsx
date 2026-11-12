@@ -14,5 +14,5 @@ type Story = StoryObj<typeof BaselineSnapshotPreview>;
 
 export const Default: Story = {
   // E8 waiver: color-contrast
-  parameters: { a11y: { test: "todo" } },
+  parameters: { a11y: { config: { rules: [{ id: "color-contrast", enabled: false }] } } },
 };

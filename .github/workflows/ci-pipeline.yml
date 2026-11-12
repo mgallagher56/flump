@@ -32,6 +32,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
+      actions: write
       contents: read
 
     steps:
@@ -63,6 +64,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
+      actions: write
       contents: read
 
     steps:
@@ -86,6 +88,7 @@ jobs:
     timeout-minutes: 25
     # pull-requests: write is for the coverage report comment.
     permissions:
+      actions: write
       contents: read
       pull-requests: write
 
@@ -142,6 +145,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     permissions:
+      actions: write
       contents: read
 
     steps:
@@ -158,8 +162,9 @@ jobs:
       - name: 🏗️ Build all packages
         run: bun run build
 
-  # E8 Storybook a11y gate. Non-required while it beds in (becomes required after 1-2 green
-  # weeks on main): continue-on-error keeps a failure here from turning the pipeline red.
+  # E8 Storybook a11y gate. Non-required while it beds in: continue-on-error keeps a failure here
+  # from turning the pipeline red.
+  # Remove continue-on-error and make this job required on 2026-11-25 (owner: mgallagher56) if green on main for the two weeks before.
   storybook-a11y:
     name: ♿ Storybook a11y (light + dark)
     if: github.event_name != 'schedule'
@@ -203,6 +208,12 @@ jobs:
       - name: ♿ Storybook a11y (dark)
         if: ${{ !cancelled() }}
         run: bun run --cwd apps/web test:storybook:dark
+
+      # Smoke: the Storybook production build (--test) must still compile. Independent of the
+      # test runs above, so it runs even if they failed.
+      - name: 📚 Storybook build smoke
+        if: ${{ !cancelled() }}
+        run: bun run --cwd apps/web build-storybook:test
 
   audit:
     name: 🛡️ Dependency audit

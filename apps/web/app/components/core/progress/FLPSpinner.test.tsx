@@ -25,4 +25,28 @@ describe("FLPSpinner", () => {
     const spinner = getByRole("status", { name: "Loading" });
     expect(spinner.hasAttribute("data-spinner")).toBe(true);
   });
+  test("a custom label names the status", () => {
+    const { getByRole } = customRender(<FLPSpinner label="Saving" />);
+    expect(getByRole("status", { name: "Saving" })).toBeDefined();
+  });
+  test("is hidden from assistive tech when a visible label is present", () => {
+    const { queryByRole, container } = customRender(
+      <FLPSpinner>
+        <FLPText>Processing...</FLPText>
+      </FLPSpinner>,
+    );
+    expect(queryByRole("status")).toBeNull();
+    expect(container.querySelector("[data-spinner]")?.getAttribute("aria-hidden")).toBe("true");
+  });
+  test("decorative hides it, and decorative={false} keeps it with a label present", () => {
+    const hidden = customRender(<FLPSpinner decorative />);
+    expect(hidden.queryByRole("status")).toBeNull();
+    hidden.unmount();
+    const shown = customRender(
+      <FLPSpinner decorative={false}>
+        <FLPText>Processing...</FLPText>
+      </FLPSpinner>,
+    );
+    expect(shown.getByRole("status", { name: "Loading" })).toBeDefined();
+  });
 });

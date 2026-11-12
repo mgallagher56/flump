@@ -317,6 +317,7 @@ const AccountDetails: FC<AccountDetailsProps> = ({
                   <td key={`${year}-${month}`} className={tdStyle}>
                     {isEditMode ? (
                       <input
+                        aria-label={`${getMonthName(month)} ${year}`}
                         className={inputStyle}
                         data-month={month}
                         data-year={year}

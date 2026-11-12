@@ -125,6 +125,17 @@ export const PayoffStrategySwitcher: FC<PayoffStrategySwitcherProps> = ({
   const { formatCurrency } = useFormatCurrency();
   const groupName = useId();
 
+  // These are native radios, so arrowing between them checks (and so selects) the next one: that
+  // is standard radiogroup behaviour and we keep it rather than rebuilding roving tabindex.
+  // Selecting a strategy is cheap and reversible. The only other effect, seeding a 50 extra
+  // payment so a strategy is visibly active, is guarded by `extraPayment === 0`, so it happens at
+  // most once however many times the arrow keys are pressed, and choosing the "minimum only" card
+  // resets it to 0.
+  const chooseStrategy = (strategy: "avalanche" | "snowball") => {
+    onSelectStrategy(strategy);
+    if (extraPayment === 0) onChangeExtraPayment(50);
+  };
+
   const activeResult =
     selectedStrategy === "avalanche" ? comparison.avalanche : comparison.snowball;
   const monthsSaved = Math.max(0, comparison.minimumOnly.months - activeResult.months);
@@ -260,10 +271,7 @@ export const PayoffStrategySwitcher: FC<PayoffStrategySwitcherProps> = ({
                 checked={selectedStrategy === "avalanche" && extraPayment > 0}
                 name={groupName}
                 type="radio"
-                onChange={() => {
-                  onSelectStrategy("avalanche");
-                  if (extraPayment === 0) onChangeExtraPayment(50);
-                }}
+                onChange={() => chooseStrategy("avalanche")}
               />
             </VisuallyHidden>
             <div
@@ -332,10 +340,7 @@ export const PayoffStrategySwitcher: FC<PayoffStrategySwitcherProps> = ({
                 checked={selectedStrategy === "snowball" && extraPayment > 0}
                 name={groupName}
                 type="radio"
-                onChange={() => {
-                  onSelectStrategy("snowball");
-                  if (extraPayment === 0) onChangeExtraPayment(50);
-                }}
+                onChange={() => chooseStrategy("snowball")}
               />
             </VisuallyHidden>
             <div

@@ -12,7 +12,7 @@ type Story = StoryObj<typeof FLPBox>;
 
 export const Default: Story = {
   // E8 waiver: color-contrast
-  parameters: { a11y: { test: "todo" } },
+  parameters: { a11y: { config: { rules: [{ id: "color-contrast", enabled: false }] } } },
   args: {
     display: "flex",
     flexDirection: "row",
@@ -29,7 +29,7 @@ export const Default: Story = {
 
 export const Column: Story = {
   // E8 waiver: color-contrast
-  parameters: { a11y: { test: "todo" } },
+  parameters: { a11y: { config: { rules: [{ id: "color-contrast", enabled: false }] } } },
   args: {
     display: "flex",
     flexDirection: "column",

@@ -13,10 +13,17 @@ export interface LiveRegionProps {
   className?: string;
 }
 
-// Mounted empty; the first populated message (whether present at mount or filled in by a load-time
-// effect after an empty mount) is a silent baseline, not an update, unless `announceInitial` is set.
-// Text is inserted after the debounce once the message changes so screen readers detect it.
-// Identical consecutive messages leave the state (and DOM) untouched, so they are not re-announced.
+// Mounted empty. Text is inserted after the debounce once the message changes so screen readers
+// detect it. Identical consecutive messages leave the state (and DOM) untouched, so they are not
+// re-announced.
+//
+// Trade-off: the first non-empty message after an empty mount (whether present at mount or filled
+// in by a load-time effect, for example a headline derived from loader data) is treated as a
+// silent baseline, not an update. That stops every page load announcing its own initial content.
+// What is lost: if the first value of a headline is produced by a user action (a headline that
+// starts empty and only becomes non-empty when the user first moves a control), that first
+// announcement is swallowed and only later changes are spoken. Pass `announceInitial` for regions
+// where that matters; it also announces load-time content, so use it deliberately.
 export const LiveRegion: FC<LiveRegionProps> = ({
   message,
   politeness = "polite",

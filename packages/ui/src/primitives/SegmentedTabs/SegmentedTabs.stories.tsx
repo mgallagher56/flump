@@ -24,7 +24,7 @@ type Story = StoryObj<typeof SegmentedTabs>;
 
 export const Default: Story = {
   // E8 waiver: aria-valid-attr-value
-  parameters: { a11y: { test: "todo" } },
+  parameters: { a11y: { config: { rules: [{ id: "aria-valid-attr-value", enabled: false }] } } },
   play: async ({ canvasElement, args }) => {
     const canvas = within(canvasElement);
     const avalancheTab = canvas.getByRole("tab", { name: "Avalanche (Highest APR)" });
