@@ -140,13 +140,13 @@ export class UserProfileService implements ProfileLifecycle {
         : [],
       enabledPages: Array.isArray(profile.enabledPages)
         ? profile.enabledPages
-        : ["accounts", "budget", "savings", "pension", "mortgage", "forecast", "tax"],
+        : ["accounts", "budget", "savings", "pension", "mortgage", "forecast"],
       dashboardWidgets: Array.isArray(profile.dashboardWidgets)
         ? profile.dashboardWidgets
-        : ["accounts", "budget", "savings", "pension", "mortgage", "forecast", "tax"],
+        : ["accounts", "budget", "savings", "pension", "mortgage", "forecast"],
       dashboardWidgetOrder: Array.isArray(profile.dashboardWidgetOrder)
         ? profile.dashboardWidgetOrder
-        : ["accounts", "budget", "savings", "pension", "mortgage", "forecast", "tax"],
+        : ["accounts", "budget", "savings", "pension", "mortgage", "forecast"],
       dashboardWidgetSizes: profile.dashboardWidgetSizes || {
         accounts: "wide",
       },
@@ -216,17 +216,9 @@ export class UserProfileService implements ProfileLifecycle {
       savingsAllocationMode: "per_account",
       savingsDefaultInterestRate: 5.0,
       setupChecklistCompletedSteps: [],
-      enabledPages: ["accounts", "budget", "savings", "pension", "mortgage", "forecast", "tax"],
-      dashboardWidgets: ["accounts", "budget", "savings", "pension", "mortgage", "forecast", "tax"],
-      dashboardWidgetOrder: [
-        "accounts",
-        "budget",
-        "savings",
-        "pension",
-        "mortgage",
-        "forecast",
-        "tax",
-      ],
+      enabledPages: ["accounts", "budget", "savings", "pension", "mortgage", "forecast"],
+      dashboardWidgets: ["accounts", "budget", "savings", "pension", "mortgage", "forecast"],
+      dashboardWidgetOrder: ["accounts", "budget", "savings", "pension", "mortgage", "forecast"],
       dashboardWidgetSizes: { accounts: "wide" },
       dashboardWidgetConfig: {},
       onboardingCompleted: false,

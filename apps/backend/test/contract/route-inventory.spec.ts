@@ -31,18 +31,15 @@ interface Call {
 /**
  * Web calls whose backend route does not exist yet. Each entry carries an expiry date: once the
  * date passes the test fails, forcing the entry to be fixed or consciously renewed.
- * G-04: per-year account details are not implemented in the backend; owned by E16 T-CUT-4.
+ * Empty now: the G-04 per-year account-details calls were removed with the history edit UI
+ * (E16 PR 7, F29), so nothing calls a missing route.
  */
 const KNOWN_MISSING: ReadonlyArray<{
   method: Method;
   path: string;
   reason: string;
   expires: string;
-}> = [
-  { method: "DELETE", path: "/accounts/:p/details/:p", reason: "G-04", expires: "2027-03-31" },
-  { method: "POST", path: "/accounts/:p/details/year", reason: "G-04", expires: "2027-03-31" },
-  { method: "PUT", path: "/accounts/:p/details", reason: "G-04", expires: "2027-03-31" },
-];
+}> = [];
 
 /**
  * Call sites whose endpoint is not a string literal, so a regex cannot see the path. They are
@@ -215,10 +212,10 @@ describe("web to backend route inventory", () => {
   it("reads a plausible number of backend routes and web call sites", () => {
     // Sanity floor, not a contract: it only proves the extractor still finds most routes and web
     // call sites, so a silent drop in extraction fails here. It sits at the counts on 2026-11-12
-    // (42 routes, 54 call sites). Removing routes or calls on purpose means lowering it in the same
+    // (42 routes, 51 call sites). Removing routes or calls on purpose means lowering it in the same
     // PR; adding some means it can be raised.
     expect(routes.length).toBeGreaterThanOrEqual(42);
-    expect(webCalls.length).toBeGreaterThanOrEqual(54);
+    expect(webCalls.length).toBeGreaterThanOrEqual(51);
     expect(routes).toContainEqual({ method: "PATCH", path: "/accounts/:p" });
     expect(routes).toContainEqual({ method: "POST", path: "/bank-connections/:p/refresh" });
   });
