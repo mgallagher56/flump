@@ -1,5 +1,5 @@
 import "reflect-metadata";
-import type { INestApplication } from "@nestjs/common";
+import { type INestApplication, Logger } from "@nestjs/common";
 import { Test } from "@nestjs/testing";
 import request from "supertest";
 import { DataSource } from "typeorm";
@@ -65,6 +65,8 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
   () => {
     let app: INestApplication;
     let dataSource: DataSource;
+    // Shadow-mode violations (E21) seen while the web payloads are replayed.
+    const shadowViolations = new Set<string>();
     const savedEnv = { ...process.env };
 
     beforeAll(async () => {
@@ -96,6 +98,21 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
       await reset.query('CREATE EXTENSION IF NOT EXISTS "uuid-ossp"');
       await reset.destroy();
 
+      const warn = Logger.prototype.warn;
+      vi.spyOn(Logger.prototype, "warn").mockImplementation(function (this: Logger, ...args) {
+        try {
+          const entry = JSON.parse(String(args[0]));
+          if (entry.event === "contract_violation") {
+            for (const issue of entry.issues) {
+              shadowViolations.add(`${entry.routeId} ${entry.part} ${issue.path} ${issue.code}`);
+            }
+          }
+        } catch {
+          // not a contract log line
+        }
+        return warn.apply(this, args as never);
+      });
+
       // Module factories read process.env at compile(), after the env above is in place.
       const moduleRef = await Test.createTestingModule({ imports: [AppModule] }).compile();
       app = moduleRef.createNestApplication({ rawBody: true });
@@ -104,6 +121,19 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
     }, 60_000);
 
     afterAll(async () => {
+      // E21 shadow validator: the only mismatches between web payloads and the contract schemas
+      // are the fields the backend drops. Shrink-only: remove entries as web or backend are fixed.
+      expect([...shadowViolations].sort()).toEqual(
+        [
+          "budget.create body contractEndDate unrecognized_keys",
+          "budget.create body isDefault unrecognized_keys",
+          "budget.create body isPrimaryIncome unrecognized_keys",
+          "budget.update body contractEndDate unrecognized_keys",
+          ...PROFILE_FIELDS_NOT_PERSISTED.map(
+            (field) => `profile.update body ${field} unrecognized_keys`,
+          ),
+        ].sort(),
+      );
       await app?.close();
       for (const key of Object.keys(process.env)) {
         if (!(key in savedEnv)) delete process.env[key];

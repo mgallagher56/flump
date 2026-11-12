@@ -14,6 +14,7 @@ import {
   UpdateTaxRecordRequest,
 } from "./domains/tax.js";
 import { CreateTransactionRequest } from "./domains/transactions.js";
+import { Uuid } from "./primitives.js";
 
 export type HttpMethod = "GET" | "POST" | "PATCH" | "PUT" | "DELETE";
 
@@ -50,7 +51,7 @@ export type ContractGroup = (typeof CONTRACT_GROUPS)[number];
 
 export const defineRoute = <const R extends RouteDefinition>(route: R): R => route;
 
-const IdParams = z.object({ id: z.string().min(1) });
+const IdParams = z.object({ id: Uuid });
 const AnonymizeQuery = z.object({ anonymize: z.string().optional() });
 
 export const routes = {

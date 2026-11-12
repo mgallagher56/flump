@@ -21,6 +21,7 @@
       "name": "backend",
       "version": "1.23.0",
       "dependencies": {
+        "@flump/api-contract": "workspace:*",
         "@flump/banking": "workspace:*",
         "@flump/finance-engine": "workspace:*",
         "@flump/mcp": "workspace:*",

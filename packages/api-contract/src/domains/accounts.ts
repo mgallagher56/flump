@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { Currency, MoneyNonNegative, Name, Percent, Uuid } from "../primitives.js";
+import { Currency, Money, MoneyNonNegative, Name, Percent, Uuid } from "../primitives.js";
 
 export const ACCOUNT_TYPES = [
   "Current",
@@ -20,7 +20,8 @@ export const AccountType = z.enum(ACCOUNT_TYPES);
 export const CreateAccountRequest = z.object({
   name: Name,
   type: AccountType,
-  balance: MoneyNonNegative,
+  /** Signed: the web debt page sends negative balances for cards and loans (E23 C-15 owns the policy). */
+  balance: Money,
   currency: Currency.nullish(),
   interestRate: Percent.nullish(),
   monthlyContribution: MoneyNonNegative.nullish(),
@@ -37,7 +38,7 @@ export const CreateAccountRequest = z.object({
 export const UpdateAccountRequest = z.object({
   name: Name.optional(),
   type: AccountType.optional(),
-  balance: MoneyNonNegative.optional(),
+  balance: Money.optional(),
   currency: Currency.nullish(),
   interestRate: Percent.nullish(),
   monthlyContribution: MoneyNonNegative.nullish(),
