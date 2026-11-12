@@ -29,6 +29,7 @@ import { Transaction } from "./entities/transaction.entity";
 import { UserProfile } from "./entities/user-profile.entity";
 import { FinanceService } from "./finance.service";
 import { BankProviderRegistry } from "./providers/provider.registry";
+import { RateLimit } from "./security/rate-limit.decorator";
 
 export interface AuthenticatedUser {
   id: string;

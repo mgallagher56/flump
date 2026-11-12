@@ -20,6 +20,7 @@ import { BudgetEntry } from "./entities/budget-entry.entity";
 import { TaxRecord } from "./entities/tax-record.entity";
 import { Transaction } from "./entities/transaction.entity";
 import { UserProfile } from "./entities/user-profile.entity";
+import { RateLimit } from "./security/rate-limit.decorator";
 import { UserProfileService } from "./user-profile.service";
 
 @Controller()
