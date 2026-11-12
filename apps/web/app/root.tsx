@@ -47,7 +47,15 @@ export const loader = async (args: LoaderFunctionArgs) => {
     }
   }
 
+  // Best-effort server guess so SSR output matches a phone's first client render.
+  const clientHint = args.request.headers.get("sec-ch-ua-mobile");
+  const isMobileClient =
+    clientHint !== null
+      ? clientHint === "?1"
+      : /Mobi|Android|iPhone|iPod/i.test(args.request.headers.get("user-agent") ?? "");
+
   return {
+    isMobileClient,
     locale,
     user,
     userProfile,
@@ -59,7 +67,7 @@ export const loader = async (args: LoaderFunctionArgs) => {
 };
 
 export default function App() {
-  const { locale, user, userProfile, ENV } = useLoaderData<typeof loader>();
+  const { locale, user, userProfile, ENV, isMobileClient } = useLoaderData<typeof loader>();
   const { theme, preference, setPreference, toggleTheme } = useTheme();
   const { setProfile } = useUserProfile();
 
@@ -98,7 +106,7 @@ export default function App() {
         }}
       >
         <ThemeContext.Provider value={{ theme, preference, setPreference, toggleTheme }}>
-          <ResponsiveProvider>
+          <ResponsiveProvider serverIsMobile={isMobileClient}>
             <VisuallyHidden as="a" focusable href="#main-content">
               Skip to content
             </VisuallyHidden>

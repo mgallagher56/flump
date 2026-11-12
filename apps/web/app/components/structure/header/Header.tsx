@@ -69,7 +69,7 @@ const Header: FC<HeaderProps> = ({ isMobile: propIsMobile, variant }): ReactElem
       <header className={headerStyles}>
         <nav aria-label="Primary" className={navStyles}>
           <FLPBox className={menuStyles}>
-            <HomeLogo decorative />
+            <HomeLogo decorative={!isMobileVariant} />
             {!isMobileVariant && (
               <div className={desktopMenuLinksStyles}>
                 <NavMenu routes={[HOME_NAV_ROUTE]} />

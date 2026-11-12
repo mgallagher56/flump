@@ -1,4 +1,12 @@
-import { createContext, type FC, type ReactNode, useCallback, useContext, useState } from "react";
+import {
+  createContext,
+  type FC,
+  type ReactNode,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
 import useIsMobile from "~/hooks/useIsMobile";
 
 export interface ResponsiveContextValue {
@@ -18,9 +26,15 @@ const ResponsiveContext = createContext<ResponsiveContextValue>({
 export const ResponsiveProvider: FC<{
   children: ReactNode;
   initialIsMobile?: boolean;
-}> = ({ children, initialIsMobile }) => {
+  /** Server guess (user agent) for the SSR and hydration render only; replaced by the real viewport after mount. */
+  serverIsMobile?: boolean;
+}> = ({ children, initialIsMobile, serverIsMobile }) => {
   const detectedIsMobile = useIsMobile();
-  const isMobile = initialIsMobile !== undefined ? initialIsMobile : detectedIsMobile;
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+  const viewportIsMobile =
+    !mounted && serverIsMobile !== undefined ? serverIsMobile : detectedIsMobile;
+  const isMobile = initialIsMobile !== undefined ? initialIsMobile : viewportIsMobile;
   const [isMobileDrawerOpen, setMobileDrawerOpen] = useState(false);
 
   const toggleMobileDrawer = useCallback(() => {
