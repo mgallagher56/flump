@@ -15,7 +15,6 @@
   "apps/marketing/src/pages/SecurityPage.tsx": 1,
   "apps/marketing/src/pages/ToolPage.tsx": 1,
   "apps/marketing/src/pages/ToolsIndexPage.tsx": 1,
-  "apps/web/app/components/accounts/AccountDetails.tsx": 1,
   "apps/web/app/components/accounts/BankConnectionsList.tsx": 1,
   "apps/web/app/components/accounts/MonthlyBalanceCheckInDrawer.tsx": 1,
   "apps/web/app/components/budget/AddCategoryModal.tsx": 1,

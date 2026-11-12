@@ -1,31 +1,22 @@
 import { css } from "@repo/ui/styled-system/css";
-import type { ChangeEvent, FC } from "react";
-import { useCallback, useMemo, useState } from "react";
+import type { FC } from "react";
+import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import { FaTrashAlt } from "react-icons/fa";
-import { useFetcher, useLoaderData } from "react-router";
+import { useLoaderData } from "react-router";
 import AccountDetailChart from "~/components/charts/AccountDetailChart";
 import FLPText from "~/components/core/typography/FLPText";
 import { useResponsive } from "~/context/ResponsiveContext";
-import { ConfirmDialog } from "~/features/feedback/components/ConfirmDialog";
-import { useFetcherOutcome } from "~/features/feedback/hooks/useFetcherOutcome";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
 import type { loader } from "~/routes/app.accounts.$account";
 import { isFutureMonth } from "~/utils/accounts";
 
 export interface AccountDetailsProps {
-  onInputChange: (event: ChangeEvent<HTMLInputElement>) => void;
-  editedValues: { [key: string]: { [key: string]: string } };
-  isEditMode: boolean;
   activeTab?: "chart" | "table";
   isMobile?: boolean;
   variant?: "desktop" | "mobile";
 }
 
 const AccountDetails: FC<AccountDetailsProps> = ({
-  onInputChange,
-  editedValues,
-  isEditMode,
   activeTab = "table",
   isMobile: propIsMobile,
   variant = "desktop",
@@ -34,24 +25,6 @@ const AccountDetails: FC<AccountDetailsProps> = ({
   const { isMobile: contextIsMobile } = useResponsive();
   const isMobileVariant = propIsMobile ?? (variant === "mobile" ? true : contextIsMobile);
   const { accountDetails = [], account } = useLoaderData<typeof loader>();
-  const [yearToDelete, setYearToDelete] = useState<number | null>(null);
-  const fetcher = useFetcher();
-  const deleteOutcome = useFetcherOutcome(fetcher, { onSuccess: () => setYearToDelete(null) });
-
-  const onRemoveYear = useCallback(
-    (year: number) => {
-      deleteOutcome.begin();
-      fetcher.submit(
-        {
-          intent: "deleteYear",
-          year: year.toString(),
-        },
-        { method: "POST" },
-      );
-    },
-    [fetcher, deleteOutcome.begin],
-  );
-
   // Chronological sorting for chart & MoM change calculations
   const { sortedDetails, balanceMap, changeMap, uniqueYears } = useMemo(() => {
     const sorted = [...accountDetails].sort((a: any, b: any) => {
@@ -167,6 +140,7 @@ const AccountDetails: FC<AccountDetailsProps> = ({
   });
 
   const tdStyle = css({
+    fontVariantNumeric: "tabular-nums",
     padding: isMobileVariant ? "10px 8px" : "12px 16px",
     borderBottom: "1px solid",
     borderBottomColor: "border",
@@ -246,7 +220,7 @@ const AccountDetails: FC<AccountDetailsProps> = ({
   }
 
   // Render Chart Tab
-  if (activeTab === "chart" && !isEditMode) {
+  if (activeTab === "chart") {
     const chartDetails = sortedDetails.filter((d: any) => !isFutureMonth(d.month, d.year));
     return (
       <div className={chartContainerStyle}>
@@ -286,17 +260,6 @@ const AccountDetails: FC<AccountDetailsProps> = ({
                   }}
                 >
                   <span>{year}</span>
-                  {!isEditMode && (
-                    <button
-                      aria-label={`Delete ${year}`}
-                      className={deleteBtnStyle}
-                      title={`Delete ${year}`}
-                      type="button"
-                      onClick={() => setYearToDelete(year)}
-                    >
-                      <FaTrashAlt size={12} />
-                    </button>
-                  )}
                 </div>
               </th>
             ))}
@@ -315,31 +278,16 @@ const AccountDetails: FC<AccountDetailsProps> = ({
 
                 return (
                   <td key={`${year}-${month}`} className={tdStyle}>
-                    {isEditMode ? (
-                      <input
-                        aria-label={`${getMonthName(month)} ${year}`}
-                        className={inputStyle}
-                        data-month={month}
-                        data-year={year}
-                        type="number"
-                        step="any"
-                        value={editedValues?.[year]?.[month] ?? value}
-                        onChange={onInputChange}
-                      />
-                    ) : (
-                      <>
-                        <span>{formatCurrency(value)}</span>
-                        {changeInfo?.hasPrev && (
-                          <span
-                            className={changeStyle(changeInfo.change >= 0, changeInfo.change === 0)}
-                          >
-                            {formatCurrency(changeInfo.change, {
-                              signDisplay: "always",
-                            })}{" "}
-                            ({changeInfo.percent}%)
-                          </span>
-                        )}
-                      </>
+                    <span>{formatCurrency(value)}</span>
+                    {changeInfo?.hasPrev && (
+                      <span
+                        className={changeStyle(changeInfo.change >= 0, changeInfo.change === 0)}
+                      >
+                        {formatCurrency(changeInfo.change, {
+                          signDisplay: "always",
+                        })}{" "}
+                        ({changeInfo.percent}%)
+                      </span>
                     )}
                   </td>
                 );
@@ -366,31 +314,6 @@ const AccountDetails: FC<AccountDetailsProps> = ({
           </tr>
         </tbody>
       </table>
-      <ConfirmDialog
-        open={yearToDelete !== null}
-        onOpenChange={(open) => {
-          if (!open) {
-            setYearToDelete(null);
-            deleteOutcome.dismiss();
-          }
-        }}
-        pending={deleteOutcome.pending}
-        error={deleteOutcome.error}
-        title={`Delete ${yearToDelete ?? ""}?`}
-        description={
-          <>
-            This removes all monthly balances for{" "}
-            <span className={css({ fontVariantNumeric: "tabular-nums" })}>{yearToDelete}</span> from{" "}
-            {(account as { name?: string } | undefined)?.name || "this account"}. This can't be
-            undone.
-          </>
-        }
-        confirmLabel="Delete year"
-        tone="danger"
-        onConfirm={() => {
-          if (yearToDelete !== null) onRemoveYear(yearToDelete);
-        }}
-      />
     </div>
   );
 };

@@ -24,589 +24,6 @@ exports[`<AccountDetails /> > should render 1`] = `
               <span>
                 2023
               </span>
-              <button
-                aria-label="Delete 2023"
-                class="c_status.danger.text cursor_pointer p_4px_8px bdr_md d_inline-flex ai_center jc_center ml_8px trs_background_0.2s [&:hover]:bg-c_rgba(239,_68,_68,_0.08)"
-                title="Delete 2023"
-                type="button"
-              >
-                <svg
-                  fill="currentColor"
-                  height="12"
-                  stroke="currentColor"
-                  stroke-width="0"
-                  viewBox="0 0 448 512"
-                  width="12"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    d="M32 464a48 48 0 0 0 48 48h288a48 48 0 0 0 48-48V128H32zm272-256a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zm-96 0a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zm-96 0a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zM432 32H312l-9.4-18.7A24 24 0 0 0 281.1 0H166.8a23.72 23.72 0 0 0-21.4 13.3L136 32H16A16 16 0 0 0 0 48v32a16 16 0 0 0 16 16h416a16 16 0 0 0 16-16V48a16 16 0 0 0-16-16z"
-                  />
-                </svg>
-              </button>
-            </div>
-          </th>
-          <th
-            class="p_16px fw_bold ta_right bd-b_2px_solid bd-b-c_border c_text.primary va_middle [&:first-child]:ta_left [&:first-child]:w_160px"
-          >
-            <div
-              style="display: flex; align-items: center; justify-content: flex-end; gap: 8px;"
-            >
-              <span>
-                2021
-              </span>
-              <button
-                aria-label="Delete 2021"
-                class="c_status.danger.text cursor_pointer p_4px_8px bdr_md d_inline-flex ai_center jc_center ml_8px trs_background_0.2s [&:hover]:bg-c_rgba(239,_68,_68,_0.08)"
-                title="Delete 2021"
-                type="button"
-              >
-                <svg
-                  fill="currentColor"
-                  height="12"
-                  stroke="currentColor"
-                  stroke-width="0"
-                  viewBox="0 0 448 512"
-                  width="12"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    d="M32 464a48 48 0 0 0 48 48h288a48 48 0 0 0 48-48V128H32zm272-256a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zm-96 0a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zm-96 0a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zM432 32H312l-9.4-18.7A24 24 0 0 0 281.1 0H166.8a23.72 23.72 0 0 0-21.4 13.3L136 32H16A16 16 0 0 0 0 48v32a16 16 0 0 0 16 16h416a16 16 0 0 0 16-16V48a16 16 0 0 0-16-16z"
-                  />
-                </svg>
-              </button>
-            </div>
-          </th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td
-            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
-          >
-            December
-          </td>
-          <td
-            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
-          >
-            <span>
-              £1,000
-            </span>
-            <span
-              class="fs_10px d_block mt_4px fw_medium c_text.muted"
-            >
-              £0
-               
-              (
-              0
-              %)
-            </span>
-          </td>
-          <td
-            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
-          >
-            <span>
-              £1,000
-            </span>
-            <span
-              class="fs_10px d_block mt_4px fw_medium c_text.muted"
-            >
-              £0
-               
-              (
-              0
-              %)
-            </span>
-          </td>
-        </tr>
-        <tr>
-          <td
-            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
-          >
-            November
-          </td>
-          <td
-            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
-          >
-            <span>
-              £1,000
-            </span>
-            <span
-              class="fs_10px d_block mt_4px fw_medium c_text.muted"
-            >
-              £0
-               
-              (
-              0
-              %)
-            </span>
-          </td>
-          <td
-            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
-          >
-            <span>
-              £1,000
-            </span>
-            <span
-              class="fs_10px d_block mt_4px fw_medium c_text.muted"
-            >
-              £0
-               
-              (
-              0
-              %)
-            </span>
-          </td>
-        </tr>
-        <tr>
-          <td
-            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
-          >
-            October
-          </td>
-          <td
-            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
-          >
-            <span>
-              £1,000
-            </span>
-            <span
-              class="fs_10px d_block mt_4px fw_medium c_text.muted"
-            >
-              £0
-               
-              (
-              0
-              %)
-            </span>
-          </td>
-          <td
-            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
-          >
-            <span>
-              £1,000
-            </span>
-            <span
-              class="fs_10px d_block mt_4px fw_medium c_text.muted"
-            >
-              £0
-               
-              (
-              0
-              %)
-            </span>
-          </td>
-        </tr>
-        <tr>
-          <td
-            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
-          >
-            September
-          </td>
-          <td
-            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
-          >
-            <span>
-              £1,000
-            </span>
-            <span
-              class="fs_10px d_block mt_4px fw_medium c_text.muted"
-            >
-              £0
-               
-              (
-              0
-              %)
-            </span>
-          </td>
-          <td
-            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
-          >
-            <span>
-              £1,000
-            </span>
-            <span
-              class="fs_10px d_block mt_4px fw_medium c_text.muted"
-            >
-              £0
-               
-              (
-              0
-              %)
-            </span>
-          </td>
-        </tr>
-        <tr>
-          <td
-            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
-          >
-            August
-          </td>
-          <td
-            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
-          >
-            <span>
-              £1,000
-            </span>
-            <span
-              class="fs_10px d_block mt_4px fw_medium c_text.muted"
-            >
-              £0
-               
-              (
-              0
-              %)
-            </span>
-          </td>
-          <td
-            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
-          >
-            <span>
-              £1,000
-            </span>
-            <span
-              class="fs_10px d_block mt_4px fw_medium c_text.muted"
-            >
-              £0
-               
-              (
-              0
-              %)
-            </span>
-          </td>
-        </tr>
-        <tr>
-          <td
-            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
-          >
-            July
-          </td>
-          <td
-            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
-          >
-            <span>
-              £1,000
-            </span>
-            <span
-              class="fs_10px d_block mt_4px fw_medium c_text.muted"
-            >
-              £0
-               
-              (
-              0
-              %)
-            </span>
-          </td>
-          <td
-            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
-          >
-            <span>
-              £1,000
-            </span>
-            <span
-              class="fs_10px d_block mt_4px fw_medium c_text.muted"
-            >
-              £0
-               
-              (
-              0
-              %)
-            </span>
-          </td>
-        </tr>
-        <tr>
-          <td
-            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
-          >
-            June
-          </td>
-          <td
-            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
-          >
-            <span>
-              £1,000
-            </span>
-            <span
-              class="fs_10px d_block mt_4px fw_medium c_text.muted"
-            >
-              £0
-               
-              (
-              0
-              %)
-            </span>
-          </td>
-          <td
-            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
-          >
-            <span>
-              £1,000
-            </span>
-            <span
-              class="fs_10px d_block mt_4px fw_medium c_text.muted"
-            >
-              £0
-               
-              (
-              0
-              %)
-            </span>
-          </td>
-        </tr>
-        <tr>
-          <td
-            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
-          >
-            May
-          </td>
-          <td
-            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
-          >
-            <span>
-              £1,000
-            </span>
-            <span
-              class="fs_10px d_block mt_4px fw_medium c_text.muted"
-            >
-              £0
-               
-              (
-              0
-              %)
-            </span>
-          </td>
-          <td
-            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
-          >
-            <span>
-              £1,000
-            </span>
-            <span
-              class="fs_10px d_block mt_4px fw_medium c_text.muted"
-            >
-              £0
-               
-              (
-              0
-              %)
-            </span>
-          </td>
-        </tr>
-        <tr>
-          <td
-            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
-          >
-            April
-          </td>
-          <td
-            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
-          >
-            <span>
-              £1,000
-            </span>
-            <span
-              class="fs_10px d_block mt_4px fw_medium c_text.muted"
-            >
-              £0
-               
-              (
-              0
-              %)
-            </span>
-          </td>
-          <td
-            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
-          >
-            <span>
-              £1,000
-            </span>
-            <span
-              class="fs_10px d_block mt_4px fw_medium c_text.muted"
-            >
-              £0
-               
-              (
-              0
-              %)
-            </span>
-          </td>
-        </tr>
-        <tr>
-          <td
-            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
-          >
-            March
-          </td>
-          <td
-            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
-          >
-            <span>
-              £1,000
-            </span>
-            <span
-              class="fs_10px d_block mt_4px fw_medium c_text.muted"
-            >
-              £0
-               
-              (
-              0
-              %)
-            </span>
-          </td>
-          <td
-            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
-          >
-            <span>
-              £1,000
-            </span>
-            <span
-              class="fs_10px d_block mt_4px fw_medium c_text.muted"
-            >
-              £0
-               
-              (
-              0
-              %)
-            </span>
-          </td>
-        </tr>
-        <tr>
-          <td
-            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
-          >
-            February
-          </td>
-          <td
-            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
-          >
-            <span>
-              £1,000
-            </span>
-            <span
-              class="fs_10px d_block mt_4px fw_medium c_text.muted"
-            >
-              £0
-               
-              (
-              0
-              %)
-            </span>
-          </td>
-          <td
-            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
-          >
-            <span>
-              £1,000
-            </span>
-            <span
-              class="fs_10px d_block mt_4px fw_medium c_text.muted"
-            >
-              £0
-               
-              (
-              0
-              %)
-            </span>
-          </td>
-        </tr>
-        <tr>
-          <td
-            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
-          >
-            January
-          </td>
-          <td
-            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
-          >
-            <span>
-              £1,000
-            </span>
-            <span
-              class="fs_10px d_block mt_4px fw_medium c_text.muted"
-            >
-              £0
-               
-              (
-              0
-              %)
-            </span>
-          </td>
-          <td
-            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
-          >
-            <span>
-              £1,000
-            </span>
-          </td>
-        </tr>
-        <tr
-          class="bg-c_surface fw_bold bd-t_2px_solid bd-t-c_border [&_td]:c_text.primary [&_td]:p_16px"
-        >
-          <td
-            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
-          >
-            Year-End Balance
-          </td>
-          <td
-            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
-          >
-            £1,000
-          </td>
-          <td
-            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
-          >
-            £1,000
-          </td>
-        </tr>
-        <tr
-          class="bg-c_surface fw_bold bd-t_2px_solid bd-t-c_border [&_td]:c_text.primary [&_td]:p_16px"
-        >
-          <td
-            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
-          >
-            Monthly Average
-          </td>
-          <td
-            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
-          >
-            £1,000
-          </td>
-          <td
-            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
-          >
-            £1,000
-          </td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
-</div>
-`;
-
-exports[`<AccountDetails /> > should render in edit mode 1`] = `
-<div>
-  <div
-    class="w_100% ov-x_auto"
-  >
-    <table
-      class="w_100% bd-cl_collapse mt_8px fs_sm"
-    >
-      <thead>
-        <tr>
-          <th
-            class="p_16px fw_bold ta_right bd-b_2px_solid bd-b-c_border c_text.primary va_middle [&:first-child]:ta_left [&:first-child]:w_160px"
-          >
-            Month
-          </th>
-          <th
-            class="p_16px fw_bold ta_right bd-b_2px_solid bd-b-c_border c_text.primary va_middle [&:first-child]:ta_left [&:first-child]:w_160px"
-          >
-            <div
-              style="display: flex; align-items: center; justify-content: flex-end; gap: 8px;"
-            >
-              <span>
-                2023
-              </span>
             </div>
           </th>
           <th
@@ -625,415 +42,478 @@ exports[`<AccountDetails /> > should render in edit mode 1`] = `
       <tbody>
         <tr>
           <td
-            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+            class="fv-num_tabular-nums p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
           >
             December
           </td>
           <td
-            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+            class="fv-num_tabular-nums p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
           >
-            <input
-              aria-label="December 2023"
-              class="w_100% max-w_140px p_8px_12px bdr_sm bd_1px_solid bd-c_border ta_right fs_sm bg-c_background c_text.primary [&:focus]:bd-c_primary [&:focus]:ring_none [&:focus]:bx-sh_0_0_0_2px_rgba(99,_99,_241,_0.15)"
-              data-month="12"
-              data-year="2023"
-              step="any"
-              type="number"
-              value="1000"
-            />
+            <span>
+              £1,000
+            </span>
+            <span
+              class="fs_10px d_block mt_4px fw_medium c_text.muted"
+            >
+              £0
+               
+              (
+              0
+              %)
+            </span>
           </td>
           <td
-            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+            class="fv-num_tabular-nums p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
           >
-            <input
-              aria-label="December 2021"
-              class="w_100% max-w_140px p_8px_12px bdr_sm bd_1px_solid bd-c_border ta_right fs_sm bg-c_background c_text.primary [&:focus]:bd-c_primary [&:focus]:ring_none [&:focus]:bx-sh_0_0_0_2px_rgba(99,_99,_241,_0.15)"
-              data-month="12"
-              data-year="2021"
-              step="any"
-              type="number"
-              value="1000"
-            />
+            <span>
+              £1,000
+            </span>
+            <span
+              class="fs_10px d_block mt_4px fw_medium c_text.muted"
+            >
+              £0
+               
+              (
+              0
+              %)
+            </span>
           </td>
         </tr>
         <tr>
           <td
-            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+            class="fv-num_tabular-nums p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
           >
             November
           </td>
           <td
-            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+            class="fv-num_tabular-nums p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
           >
-            <input
-              aria-label="November 2023"
-              class="w_100% max-w_140px p_8px_12px bdr_sm bd_1px_solid bd-c_border ta_right fs_sm bg-c_background c_text.primary [&:focus]:bd-c_primary [&:focus]:ring_none [&:focus]:bx-sh_0_0_0_2px_rgba(99,_99,_241,_0.15)"
-              data-month="11"
-              data-year="2023"
-              step="any"
-              type="number"
-              value="1000"
-            />
+            <span>
+              £1,000
+            </span>
+            <span
+              class="fs_10px d_block mt_4px fw_medium c_text.muted"
+            >
+              £0
+               
+              (
+              0
+              %)
+            </span>
           </td>
           <td
-            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+            class="fv-num_tabular-nums p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
           >
-            <input
-              aria-label="November 2021"
-              class="w_100% max-w_140px p_8px_12px bdr_sm bd_1px_solid bd-c_border ta_right fs_sm bg-c_background c_text.primary [&:focus]:bd-c_primary [&:focus]:ring_none [&:focus]:bx-sh_0_0_0_2px_rgba(99,_99,_241,_0.15)"
-              data-month="11"
-              data-year="2021"
-              step="any"
-              type="number"
-              value="1000"
-            />
+            <span>
+              £1,000
+            </span>
+            <span
+              class="fs_10px d_block mt_4px fw_medium c_text.muted"
+            >
+              £0
+               
+              (
+              0
+              %)
+            </span>
           </td>
         </tr>
         <tr>
           <td
-            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+            class="fv-num_tabular-nums p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
           >
             October
           </td>
           <td
-            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+            class="fv-num_tabular-nums p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
           >
-            <input
-              aria-label="October 2023"
-              class="w_100% max-w_140px p_8px_12px bdr_sm bd_1px_solid bd-c_border ta_right fs_sm bg-c_background c_text.primary [&:focus]:bd-c_primary [&:focus]:ring_none [&:focus]:bx-sh_0_0_0_2px_rgba(99,_99,_241,_0.15)"
-              data-month="10"
-              data-year="2023"
-              step="any"
-              type="number"
-              value="1000"
-            />
+            <span>
+              £1,000
+            </span>
+            <span
+              class="fs_10px d_block mt_4px fw_medium c_text.muted"
+            >
+              £0
+               
+              (
+              0
+              %)
+            </span>
           </td>
           <td
-            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+            class="fv-num_tabular-nums p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
           >
-            <input
-              aria-label="October 2021"
-              class="w_100% max-w_140px p_8px_12px bdr_sm bd_1px_solid bd-c_border ta_right fs_sm bg-c_background c_text.primary [&:focus]:bd-c_primary [&:focus]:ring_none [&:focus]:bx-sh_0_0_0_2px_rgba(99,_99,_241,_0.15)"
-              data-month="10"
-              data-year="2021"
-              step="any"
-              type="number"
-              value="1000"
-            />
+            <span>
+              £1,000
+            </span>
+            <span
+              class="fs_10px d_block mt_4px fw_medium c_text.muted"
+            >
+              £0
+               
+              (
+              0
+              %)
+            </span>
           </td>
         </tr>
         <tr>
           <td
-            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+            class="fv-num_tabular-nums p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
           >
             September
           </td>
           <td
-            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+            class="fv-num_tabular-nums p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
           >
-            <input
-              aria-label="September 2023"
-              class="w_100% max-w_140px p_8px_12px bdr_sm bd_1px_solid bd-c_border ta_right fs_sm bg-c_background c_text.primary [&:focus]:bd-c_primary [&:focus]:ring_none [&:focus]:bx-sh_0_0_0_2px_rgba(99,_99,_241,_0.15)"
-              data-month="9"
-              data-year="2023"
-              step="any"
-              type="number"
-              value="1000"
-            />
+            <span>
+              £1,000
+            </span>
+            <span
+              class="fs_10px d_block mt_4px fw_medium c_text.muted"
+            >
+              £0
+               
+              (
+              0
+              %)
+            </span>
           </td>
           <td
-            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+            class="fv-num_tabular-nums p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
           >
-            <input
-              aria-label="September 2021"
-              class="w_100% max-w_140px p_8px_12px bdr_sm bd_1px_solid bd-c_border ta_right fs_sm bg-c_background c_text.primary [&:focus]:bd-c_primary [&:focus]:ring_none [&:focus]:bx-sh_0_0_0_2px_rgba(99,_99,_241,_0.15)"
-              data-month="9"
-              data-year="2021"
-              step="any"
-              type="number"
-              value="1000"
-            />
+            <span>
+              £1,000
+            </span>
+            <span
+              class="fs_10px d_block mt_4px fw_medium c_text.muted"
+            >
+              £0
+               
+              (
+              0
+              %)
+            </span>
           </td>
         </tr>
         <tr>
           <td
-            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+            class="fv-num_tabular-nums p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
           >
             August
           </td>
           <td
-            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+            class="fv-num_tabular-nums p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
           >
-            <input
-              aria-label="August 2023"
-              class="w_100% max-w_140px p_8px_12px bdr_sm bd_1px_solid bd-c_border ta_right fs_sm bg-c_background c_text.primary [&:focus]:bd-c_primary [&:focus]:ring_none [&:focus]:bx-sh_0_0_0_2px_rgba(99,_99,_241,_0.15)"
-              data-month="8"
-              data-year="2023"
-              step="any"
-              type="number"
-              value="1000"
-            />
+            <span>
+              £1,000
+            </span>
+            <span
+              class="fs_10px d_block mt_4px fw_medium c_text.muted"
+            >
+              £0
+               
+              (
+              0
+              %)
+            </span>
           </td>
           <td
-            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+            class="fv-num_tabular-nums p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
           >
-            <input
-              aria-label="August 2021"
-              class="w_100% max-w_140px p_8px_12px bdr_sm bd_1px_solid bd-c_border ta_right fs_sm bg-c_background c_text.primary [&:focus]:bd-c_primary [&:focus]:ring_none [&:focus]:bx-sh_0_0_0_2px_rgba(99,_99,_241,_0.15)"
-              data-month="8"
-              data-year="2021"
-              step="any"
-              type="number"
-              value="1000"
-            />
+            <span>
+              £1,000
+            </span>
+            <span
+              class="fs_10px d_block mt_4px fw_medium c_text.muted"
+            >
+              £0
+               
+              (
+              0
+              %)
+            </span>
           </td>
         </tr>
         <tr>
           <td
-            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+            class="fv-num_tabular-nums p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
           >
             July
           </td>
           <td
-            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+            class="fv-num_tabular-nums p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
           >
-            <input
-              aria-label="July 2023"
-              class="w_100% max-w_140px p_8px_12px bdr_sm bd_1px_solid bd-c_border ta_right fs_sm bg-c_background c_text.primary [&:focus]:bd-c_primary [&:focus]:ring_none [&:focus]:bx-sh_0_0_0_2px_rgba(99,_99,_241,_0.15)"
-              data-month="7"
-              data-year="2023"
-              step="any"
-              type="number"
-              value="1000"
-            />
+            <span>
+              £1,000
+            </span>
+            <span
+              class="fs_10px d_block mt_4px fw_medium c_text.muted"
+            >
+              £0
+               
+              (
+              0
+              %)
+            </span>
           </td>
           <td
-            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+            class="fv-num_tabular-nums p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
           >
-            <input
-              aria-label="July 2021"
-              class="w_100% max-w_140px p_8px_12px bdr_sm bd_1px_solid bd-c_border ta_right fs_sm bg-c_background c_text.primary [&:focus]:bd-c_primary [&:focus]:ring_none [&:focus]:bx-sh_0_0_0_2px_rgba(99,_99,_241,_0.15)"
-              data-month="7"
-              data-year="2021"
-              step="any"
-              type="number"
-              value="1000"
-            />
+            <span>
+              £1,000
+            </span>
+            <span
+              class="fs_10px d_block mt_4px fw_medium c_text.muted"
+            >
+              £0
+               
+              (
+              0
+              %)
+            </span>
           </td>
         </tr>
         <tr>
           <td
-            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+            class="fv-num_tabular-nums p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
           >
             June
           </td>
           <td
-            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+            class="fv-num_tabular-nums p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
           >
-            <input
-              aria-label="June 2023"
-              class="w_100% max-w_140px p_8px_12px bdr_sm bd_1px_solid bd-c_border ta_right fs_sm bg-c_background c_text.primary [&:focus]:bd-c_primary [&:focus]:ring_none [&:focus]:bx-sh_0_0_0_2px_rgba(99,_99,_241,_0.15)"
-              data-month="6"
-              data-year="2023"
-              step="any"
-              type="number"
-              value="1000"
-            />
+            <span>
+              £1,000
+            </span>
+            <span
+              class="fs_10px d_block mt_4px fw_medium c_text.muted"
+            >
+              £0
+               
+              (
+              0
+              %)
+            </span>
           </td>
           <td
-            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+            class="fv-num_tabular-nums p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
           >
-            <input
-              aria-label="June 2021"
-              class="w_100% max-w_140px p_8px_12px bdr_sm bd_1px_solid bd-c_border ta_right fs_sm bg-c_background c_text.primary [&:focus]:bd-c_primary [&:focus]:ring_none [&:focus]:bx-sh_0_0_0_2px_rgba(99,_99,_241,_0.15)"
-              data-month="6"
-              data-year="2021"
-              step="any"
-              type="number"
-              value="1000"
-            />
+            <span>
+              £1,000
+            </span>
+            <span
+              class="fs_10px d_block mt_4px fw_medium c_text.muted"
+            >
+              £0
+               
+              (
+              0
+              %)
+            </span>
           </td>
         </tr>
         <tr>
           <td
-            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+            class="fv-num_tabular-nums p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
           >
             May
           </td>
           <td
-            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+            class="fv-num_tabular-nums p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
           >
-            <input
-              aria-label="May 2023"
-              class="w_100% max-w_140px p_8px_12px bdr_sm bd_1px_solid bd-c_border ta_right fs_sm bg-c_background c_text.primary [&:focus]:bd-c_primary [&:focus]:ring_none [&:focus]:bx-sh_0_0_0_2px_rgba(99,_99,_241,_0.15)"
-              data-month="5"
-              data-year="2023"
-              step="any"
-              type="number"
-              value="1000"
-            />
+            <span>
+              £1,000
+            </span>
+            <span
+              class="fs_10px d_block mt_4px fw_medium c_text.muted"
+            >
+              £0
+               
+              (
+              0
+              %)
+            </span>
           </td>
           <td
-            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+            class="fv-num_tabular-nums p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
           >
-            <input
-              aria-label="May 2021"
-              class="w_100% max-w_140px p_8px_12px bdr_sm bd_1px_solid bd-c_border ta_right fs_sm bg-c_background c_text.primary [&:focus]:bd-c_primary [&:focus]:ring_none [&:focus]:bx-sh_0_0_0_2px_rgba(99,_99,_241,_0.15)"
-              data-month="5"
-              data-year="2021"
-              step="any"
-              type="number"
-              value="1000"
-            />
+            <span>
+              £1,000
+            </span>
+            <span
+              class="fs_10px d_block mt_4px fw_medium c_text.muted"
+            >
+              £0
+               
+              (
+              0
+              %)
+            </span>
           </td>
         </tr>
         <tr>
           <td
-            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+            class="fv-num_tabular-nums p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
           >
             April
           </td>
           <td
-            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+            class="fv-num_tabular-nums p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
           >
-            <input
-              aria-label="April 2023"
-              class="w_100% max-w_140px p_8px_12px bdr_sm bd_1px_solid bd-c_border ta_right fs_sm bg-c_background c_text.primary [&:focus]:bd-c_primary [&:focus]:ring_none [&:focus]:bx-sh_0_0_0_2px_rgba(99,_99,_241,_0.15)"
-              data-month="4"
-              data-year="2023"
-              step="any"
-              type="number"
-              value="1000"
-            />
+            <span>
+              £1,000
+            </span>
+            <span
+              class="fs_10px d_block mt_4px fw_medium c_text.muted"
+            >
+              £0
+               
+              (
+              0
+              %)
+            </span>
           </td>
           <td
-            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+            class="fv-num_tabular-nums p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
           >
-            <input
-              aria-label="April 2021"
-              class="w_100% max-w_140px p_8px_12px bdr_sm bd_1px_solid bd-c_border ta_right fs_sm bg-c_background c_text.primary [&:focus]:bd-c_primary [&:focus]:ring_none [&:focus]:bx-sh_0_0_0_2px_rgba(99,_99,_241,_0.15)"
-              data-month="4"
-              data-year="2021"
-              step="any"
-              type="number"
-              value="1000"
-            />
+            <span>
+              £1,000
+            </span>
+            <span
+              class="fs_10px d_block mt_4px fw_medium c_text.muted"
+            >
+              £0
+               
+              (
+              0
+              %)
+            </span>
           </td>
         </tr>
         <tr>
           <td
-            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+            class="fv-num_tabular-nums p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
           >
             March
           </td>
           <td
-            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+            class="fv-num_tabular-nums p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
           >
-            <input
-              aria-label="March 2023"
-              class="w_100% max-w_140px p_8px_12px bdr_sm bd_1px_solid bd-c_border ta_right fs_sm bg-c_background c_text.primary [&:focus]:bd-c_primary [&:focus]:ring_none [&:focus]:bx-sh_0_0_0_2px_rgba(99,_99,_241,_0.15)"
-              data-month="3"
-              data-year="2023"
-              step="any"
-              type="number"
-              value="1000"
-            />
+            <span>
+              £1,000
+            </span>
+            <span
+              class="fs_10px d_block mt_4px fw_medium c_text.muted"
+            >
+              £0
+               
+              (
+              0
+              %)
+            </span>
           </td>
           <td
-            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+            class="fv-num_tabular-nums p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
           >
-            <input
-              aria-label="March 2021"
-              class="w_100% max-w_140px p_8px_12px bdr_sm bd_1px_solid bd-c_border ta_right fs_sm bg-c_background c_text.primary [&:focus]:bd-c_primary [&:focus]:ring_none [&:focus]:bx-sh_0_0_0_2px_rgba(99,_99,_241,_0.15)"
-              data-month="3"
-              data-year="2021"
-              step="any"
-              type="number"
-              value="1000"
-            />
+            <span>
+              £1,000
+            </span>
+            <span
+              class="fs_10px d_block mt_4px fw_medium c_text.muted"
+            >
+              £0
+               
+              (
+              0
+              %)
+            </span>
           </td>
         </tr>
         <tr>
           <td
-            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+            class="fv-num_tabular-nums p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
           >
             February
           </td>
           <td
-            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+            class="fv-num_tabular-nums p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
           >
-            <input
-              aria-label="February 2023"
-              class="w_100% max-w_140px p_8px_12px bdr_sm bd_1px_solid bd-c_border ta_right fs_sm bg-c_background c_text.primary [&:focus]:bd-c_primary [&:focus]:ring_none [&:focus]:bx-sh_0_0_0_2px_rgba(99,_99,_241,_0.15)"
-              data-month="2"
-              data-year="2023"
-              step="any"
-              type="number"
-              value="1000"
-            />
+            <span>
+              £1,000
+            </span>
+            <span
+              class="fs_10px d_block mt_4px fw_medium c_text.muted"
+            >
+              £0
+               
+              (
+              0
+              %)
+            </span>
           </td>
           <td
-            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+            class="fv-num_tabular-nums p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
           >
-            <input
-              aria-label="February 2021"
-              class="w_100% max-w_140px p_8px_12px bdr_sm bd_1px_solid bd-c_border ta_right fs_sm bg-c_background c_text.primary [&:focus]:bd-c_primary [&:focus]:ring_none [&:focus]:bx-sh_0_0_0_2px_rgba(99,_99,_241,_0.15)"
-              data-month="2"
-              data-year="2021"
-              step="any"
-              type="number"
-              value="1000"
-            />
+            <span>
+              £1,000
+            </span>
+            <span
+              class="fs_10px d_block mt_4px fw_medium c_text.muted"
+            >
+              £0
+               
+              (
+              0
+              %)
+            </span>
           </td>
         </tr>
         <tr>
           <td
-            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+            class="fv-num_tabular-nums p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
           >
             January
           </td>
           <td
-            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+            class="fv-num_tabular-nums p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
           >
-            <input
-              aria-label="January 2023"
-              class="w_100% max-w_140px p_8px_12px bdr_sm bd_1px_solid bd-c_border ta_right fs_sm bg-c_background c_text.primary [&:focus]:bd-c_primary [&:focus]:ring_none [&:focus]:bx-sh_0_0_0_2px_rgba(99,_99,_241,_0.15)"
-              data-month="1"
-              data-year="2023"
-              step="any"
-              type="number"
-              value="1000"
-            />
+            <span>
+              £1,000
+            </span>
+            <span
+              class="fs_10px d_block mt_4px fw_medium c_text.muted"
+            >
+              £0
+               
+              (
+              0
+              %)
+            </span>
           </td>
           <td
-            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+            class="fv-num_tabular-nums p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
           >
-            <input
-              aria-label="January 2021"
-              class="w_100% max-w_140px p_8px_12px bdr_sm bd_1px_solid bd-c_border ta_right fs_sm bg-c_background c_text.primary [&:focus]:bd-c_primary [&:focus]:ring_none [&:focus]:bx-sh_0_0_0_2px_rgba(99,_99,_241,_0.15)"
-              data-month="1"
-              data-year="2021"
-              step="any"
-              type="number"
-              value="1000"
-            />
+            <span>
+              £1,000
+            </span>
           </td>
         </tr>
         <tr
           class="bg-c_surface fw_bold bd-t_2px_solid bd-t-c_border [&_td]:c_text.primary [&_td]:p_16px"
         >
           <td
-            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+            class="fv-num_tabular-nums p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
           >
             Year-End Balance
           </td>
           <td
-            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+            class="fv-num_tabular-nums p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
           >
             £1,000
           </td>
           <td
-            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+            class="fv-num_tabular-nums p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
           >
             £1,000
           </td>
@@ -1042,17 +522,17 @@ exports[`<AccountDetails /> > should render in edit mode 1`] = `
           class="bg-c_surface fw_bold bd-t_2px_solid bd-t-c_border [&_td]:c_text.primary [&_td]:p_16px"
         >
           <td
-            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+            class="fv-num_tabular-nums p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
           >
             Monthly Average
           </td>
           <td
-            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+            class="fv-num_tabular-nums p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
           >
             £1,000
           </td>
           <td
-            class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
+            class="fv-num_tabular-nums p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
           >
             £1,000
           </td>
