@@ -65,3 +65,12 @@ describe("coverage configuration", () => {
     expect(tracked).toEqual([]);
   });
 });
+
+describe("tax-year calendar guard (E22)", () => {
+  test("CI runs the guard and the root script exists", () => {
+    const { scripts } = readJson("package.json");
+    expect(scripts["check:tax-calendar"]).toBe("bun scripts/check-tax-year-calendar.ts");
+    const ci = readFileSync(resolve(repoRoot, ".github/workflows/ci-pipeline.yml"), "utf8");
+    expect(ci).toContain("bun run check:tax-calendar");
+  });
+});

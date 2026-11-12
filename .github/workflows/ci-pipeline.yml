@@ -55,6 +55,37 @@ jobs:
       - name: 📐 Check design laws
         run: bun run check:laws
 
+      # Policy (E22): exit 1 (next tax year's rates missing or unconfirmed in time) fails
+      # pull_request and schedule runs. On push to main it is only a warning, so Railway
+      # "Wait for CI" deploys are never blocked by the calendar. Exit 3 is a warning anywhere.
+      - name: 📅 Tax-year calendar guard
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+        run: |
+          set +e
+          bun run check:tax-calendar 2>&1 | tee tax-calendar.txt
+          code=${PIPESTATUS[0]}
+          set -e
+          {
+            echo "### 📅 Tax-year calendar guard"
+            echo '```'
+            cat tax-calendar.txt
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          case "$code" in
+            0) ;;
+            3) echo "::warning title=Tax-year calendar::Next tax year's rates are due soon (see job summary and docs/runbooks/tax-year-update.md)." ;;
+            1)
+              if [ "$EVENT_NAME" = "push" ]; then
+                echo "::warning title=Tax-year calendar::Next tax year's rates are overdue. Failing PRs and the weekly run; not failing push to main."
+              else
+                echo "::error title=Tax-year calendar::The next UK tax year's rates are missing or unconfirmed. See docs/runbooks/tax-year-update.md."
+                exit 1
+              fi
+              ;;
+            *) echo "::error title=Tax-year calendar::Guard script crashed (exit $code)."; exit 1 ;;
+          esac
+
       - name: 🧪 Test repo scripts
         run: bun run test:scripts
 

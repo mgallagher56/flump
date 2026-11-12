@@ -26,6 +26,8 @@
     "check-types": "turbo run check-types",
     "check:auth": "bash scripts/check-no-mock-auth.sh",
     "check:audit": "bun scripts/check-audit.ts",
+    "check:tax-calendar": "bun scripts/check-tax-year-calendar.ts",
+    "tax:signoff": "bun scripts/tax-signoff.ts",
     "check:laws": "bun scripts/check-design-tokens.ts && bun scripts/check-tabular-nums.ts && bun scripts/check-react-icons.ts",
     "verify": "turbo run verify",
     "prepare": "husky"
