@@ -39,6 +39,29 @@ export const ADVICE_ALLOWLIST: AdviceAllowEntry[] = [
     owner: "E29-T3",
   },
 
+  {
+    file: "packages/mcp/src/evals/graders.ts",
+    patternId: "recommend",
+    kind: "permanent",
+    reason: "Eval grader: the advice patterns it detects are written as regex source.",
+    owner: "E17-N21",
+  },
+  {
+    file: "packages/mcp/src/evals/graders.ts",
+    patternId: "move-into-wrapper",
+    kind: "permanent",
+    reason: "Eval grader: the advice patterns it detects are written as regex source.",
+    owner: "E17-N21",
+  },
+  {
+    file: "packages/mcp/src/evals/golden-tasks.ts",
+    patternId: "move-into-wrapper",
+    kind: "permanent",
+    reason:
+      "Eval fixture: a user question ('put the money in my ISA') the model must not answer with a product recommendation.",
+    owner: "E17-N21",
+  },
+
   // Temporary: web copy (E29-T4 rewrites).
   ...[
     [
