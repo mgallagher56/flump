@@ -8,4 +8,19 @@ describe("TypographyScale Foundation", () => {
     expect(screen.getByText("Flump Typography Scale & Tabular Numbers")).toBeDefined();
     expect(screen.getByText("Tabular Numbers Alignment Test")).toBeDefined();
   });
+
+  it("renders every text style specimen", () => {
+    render(<TypographyScale />);
+    expect(screen.getByText("Text Styles")).toBeDefined();
+    for (const name of [
+      "display",
+      "heading.xl",
+      "body.md",
+      "label.sm",
+      "numeric.kpi",
+      "numeric.sm",
+    ]) {
+      expect(screen.getByText(name)).toBeDefined();
+    }
+  });
 });

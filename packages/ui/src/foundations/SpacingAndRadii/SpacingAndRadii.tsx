@@ -3,6 +3,63 @@ import { css } from "../../../styled-system/css";
 import { radii, spacing } from "../../tokens";
 import { gridBox, scaleItem } from "./SpacingAndRadii.styles";
 
+const DENSITIES = ["comfortable", "compact"] as const;
+
+/** One panel per density. `data-density` flips the density.* semantic tokens for its subtree. */
+const DensityPanel: FC<{ density: (typeof DENSITIES)[number] }> = ({ density }) => (
+  <div
+    data-density={density}
+    data-testid={`density-${density}`}
+    className={css({
+      flex: "1 1 280px",
+      p: "density.cardPad",
+      borderRadius: "xl",
+      borderWidth: "1px",
+      borderStyle: "solid",
+      borderColor: "border.subtle",
+      backgroundColor: "surface.card",
+      display: "flex",
+      flexDirection: "column",
+      gap: "density.gap",
+    })}
+  >
+    <h3 className={css({ textStyle: "heading.sm", textTransform: "capitalize" })}>{density}</h3>
+    {["Monthly overpayment", "Interest rate"].map((label) => (
+      <div
+        key={label}
+        className={css({
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: "12px",
+          py: "density.rowPadY",
+          borderBottomWidth: "1px",
+          borderBottomStyle: "solid",
+          borderBottomColor: "border.subtle",
+          textStyle: "body.sm",
+        })}
+      >
+        <span>{label}</span>
+        <span
+          className={css({
+            display: "inline-flex",
+            alignItems: "center",
+            height: "density.control.md",
+            px: "density.controlPadX",
+            borderRadius: "md",
+            borderWidth: "1px",
+            borderStyle: "solid",
+            borderColor: "border.input",
+            textStyle: "numeric.sm",
+          })}
+        >
+          {label === "Interest rate" ? "4.60%" : "£200.00"}
+        </span>
+      </div>
+    ))}
+  </div>
+);
+
 export const SpacingAndRadii: FC = () => {
   return (
     <div
@@ -58,6 +115,29 @@ export const SpacingAndRadii: FC = () => {
                 {val.value}
               </span>
             </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Density */}
+      <section className={css({ mb: "36px" })}>
+        <h2
+          className={css({
+            fontFamily: "display",
+            fontSize: "lg",
+            fontWeight: "semibold",
+            mb: "8px",
+          })}
+        >
+          Density (Comfortable &amp; Compact)
+        </h2>
+        <p className={css({ fontSize: "xs", color: "text.muted", mb: "12px" })}>
+          Set <code>data-density="compact"</code> on any ancestor for simulators, tables and account
+          lists. Touch targets stay at 44px.
+        </p>
+        <div className={css({ display: "flex", flexWrap: "wrap", gap: "16px" })}>
+          {DENSITIES.map((density) => (
+            <DensityPanel key={density} density={density} />
           ))}
         </div>
       </section>
