@@ -77,29 +77,36 @@ describe("Tokens & Typography A11y Suite", () => {
     ).toEqual([100, 400, 500, 600]);
   });
 
-  it("verifies Light Mode primary text contrast exceeds WCAG AAA (7.0:1) on canvas", () => {
-    const textPrimary = colors.slate[900].value;
-    const canvasBg = "#ffffff";
-    const contrast = getContrastRatio(textPrimary, canvasBg);
-    expect(contrast).toBeGreaterThanOrEqual(7.0); // AAA standard
+  it("verifies Light Mode primary text contrast exceeds WCAG AAA (7.0:1) on canvas and card", () => {
+    for (const bg of ["surface.canvas", "surface.card"]) {
+      const r = contrast(
+        resolveColor("text.primary", "light"),
+        resolveColor(bg, "light"),
+        "#ffffff",
+      );
+      expect(r).toBeGreaterThanOrEqual(7.0);
+    }
   });
 
   it("verifies Light Mode secondary & muted text contrast exceeds WCAG AA (4.5:1)", () => {
-    const textSecondary = colors.slate[700].value;
-    const textMuted = colors.slate[600].value;
-    const canvasBg = "#ffffff";
-
-    expect(getContrastRatio(textSecondary, canvasBg)).toBeGreaterThanOrEqual(4.5);
-    expect(getContrastRatio(textMuted, canvasBg)).toBeGreaterThanOrEqual(4.5);
+    for (const fg of ["text.secondary", "text.muted"]) {
+      const r = contrast(
+        resolveColor(fg, "light"),
+        resolveColor("surface.canvas", "light"),
+        "#ffffff",
+      );
+      expect(r).toBeGreaterThanOrEqual(4.5);
+    }
   });
 
   it("verifies Dark Mode text contrast meets WCAG AA (4.5:1)", () => {
-    const textPrimaryDark = "#f8fafc";
-    const textMutedDark = colors.slate[400].value;
-    const darkCanvas = colors.dark.canvas.value;
-
-    expect(getContrastRatio(textPrimaryDark, darkCanvas)).toBeGreaterThanOrEqual(7.0);
-    expect(getContrastRatio(textMutedDark, darkCanvas)).toBeGreaterThanOrEqual(4.5);
+    const canvas = resolveColor("surface.canvas", "dark");
+    expect(contrast(resolveColor("text.primary", "dark"), canvas, canvas)).toBeGreaterThanOrEqual(
+      7.0,
+    );
+    expect(contrast(resolveColor("text.muted", "dark"), canvas, canvas)).toBeGreaterThanOrEqual(
+      4.5,
+    );
   });
 
   it("verifies semantic status color contrasts meet WCAG standards on their badges", () => {
