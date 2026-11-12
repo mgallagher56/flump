@@ -4,16 +4,16 @@ import customRender from "~/testUtils/customRender";
 import MortgageContainer from "./MortgageContainer";
 
 // Mock sub-components to keep container unit test focused
-vi.mock("app/components/mortgage/MortgageTracker", () => ({
-  default: () => <div id="mock-tracker">Mock Mortgage Tracker</div>,
+vi.mock("~/features/mortgage/components/MortgageTracker", () => ({
+  MortgageTracker: () => <div id="mock-tracker">Mock Mortgage Tracker</div>,
 }));
 
-vi.mock("app/components/mortgage/OverpaymentSimulator", () => ({
-  default: () => <div id="mock-simulator">Mock Overpayment Simulator</div>,
+vi.mock("~/features/mortgage/components/OverpaymentSimulator", () => ({
+  OverpaymentSimulator: () => <div id="mock-simulator">Mock Overpayment Simulator</div>,
 }));
 
-vi.mock("app/components/mortgage/OverpayVsSaveCompare", () => ({
-  default: () => <div id="mock-compare">Mock Overpay vs Save Compare</div>,
+vi.mock("~/features/mortgage/components/OverpayVsSaveCompare", () => ({
+  OverpayVsSaveCompare: () => <div id="mock-compare">Mock Overpay vs Save Compare</div>,
 }));
 
 const defaultLoaderData = () => ({
@@ -93,17 +93,17 @@ describe("<MortgageContainer />", () => {
     // Open Edit mode on My Mortgage Information card
     fireEvent.click(getByRole("button", { name: /^Edit$/i }));
 
-    const balanceInput = getByLabelText("Remaining Balance (£)");
+    const balanceInput = getByLabelText(/^Remaining balance/);
     fireEvent.change(balanceInput, { target: { value: "130000" } });
 
-    const rateInput = getByLabelText("Interest Rate (%)");
+    const rateInput = getByLabelText(/^Interest rate/);
     fireEvent.change(rateInput, { target: { value: "4.5" } });
 
-    const termInput = getByLabelText(/^Remaining Term \(Years\)/);
+    const termInput = getByLabelText(/^Remaining term/);
     fireEvent.change(termInput, { target: { value: "18" } });
 
     // Toggle Interest-Only and back to Repayment
-    fireEvent.click(getByRole("button", { name: "Interest-Only" }));
+    fireEvent.click(getByRole("button", { name: "Interest-only" }));
     fireEvent.click(getByRole("button", { name: "Repayment" }));
 
     // Save changes
@@ -130,8 +130,8 @@ describe("<MortgageContainer />", () => {
       <MortgageContainer />,
     );
     fireEvent.click(getByRole("button", { name: /^Edit$/i }));
-    fireEvent.change(getByLabelText("Interest Rate (%)"), { target: { value: "4.5" } });
-    fireEvent.change(getByLabelText(/^Remaining Term \(Years\)/), { target: { value: "18" } });
+    fireEvent.change(getByLabelText(/^Interest rate/), { target: { value: "4.5" } });
+    fireEvent.change(getByLabelText(/^Remaining term/), { target: { value: "18" } });
     fireEvent.click(getByRole("button", { name: /^Save$/i }));
     await findByText(/Saved/);
 
@@ -151,9 +151,9 @@ describe("<MortgageContainer />", () => {
   });
 
   test("the term field is labelled as not saved", () => {
-    const { getByLabelText, getByRole } = customRender(<MortgageContainer />);
+    const { getByText, getByRole } = customRender(<MortgageContainer />);
     fireEvent.click(getByRole("button", { name: /^Edit$/i }));
-    expect(getByLabelText(/Not saved — enter each visit/)).toBeDefined();
+    expect(getByText(/Not saved – enter each visit/)).toBeDefined();
   });
 
   test("shows an error and no success message when the account PATCH fails", async () => {
@@ -167,7 +167,7 @@ describe("<MortgageContainer />", () => {
       <MortgageContainer />,
     );
     fireEvent.click(getByRole("button", { name: /^Edit$/i }));
-    fireEvent.change(getByLabelText("Interest Rate (%)"), { target: { value: "4.5" } });
+    fireEvent.change(getByLabelText(/^Interest rate/), { target: { value: "4.5" } });
     fireEvent.click(getByRole("button", { name: /^Save$/i }));
     expect((await findByRole("alert")).textContent).toMatch(/could not save/i);
     expect(queryByText(/Saved/)).toBeNull();
@@ -176,8 +176,8 @@ describe("<MortgageContainer />", () => {
   test("blanking the rate and term fields leaves them empty rather than 0 or 1", () => {
     const { getByLabelText, getByRole } = customRender(<MortgageContainer />);
     fireEvent.click(getByRole("button", { name: /^Edit$/i }));
-    const term = getByLabelText(/^Remaining Term \(Years\)/) as HTMLInputElement;
-    const rate = getByLabelText("Interest Rate (%)") as HTMLInputElement;
+    const term = getByLabelText(/^Remaining term/) as HTMLInputElement;
+    const rate = getByLabelText(/^Interest rate/) as HTMLInputElement;
     expect(rate.value).toBe("");
     fireEvent.change(term, { target: { value: "18" } });
     fireEvent.change(rate, { target: { value: "4.5" } });
@@ -192,7 +192,7 @@ describe("<MortgageContainer />", () => {
     loaderData = { accounts: [], accountDetails: [] };
     const { getByRole, getByLabelText } = customRender(<MortgageContainer />);
     fireEvent.click(getByRole("button", { name: "Add mortgage details" }));
-    expect(getByLabelText("Interest Rate (%)")).toBeDefined();
+    expect(getByLabelText(/^Interest rate/)).toBeDefined();
   });
 
   describe("with no stored rate or term", () => {

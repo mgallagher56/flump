@@ -1,7 +1,7 @@
 import { fireEvent } from "@testing-library/react";
 import { vi } from "vitest";
 import customRender from "~/testUtils/customRender";
-import MortgageTracker from "./MortgageTracker";
+import { MortgageTracker } from "./MortgageTracker";
 
 describe("<MortgageTracker />", () => {
   const defaultProps = {
@@ -61,12 +61,29 @@ describe("<MortgageTracker />", () => {
 
     // Verify interest-only monthly payment (150,000 * 0.045 / 12 = £562.50 -> approx £563/mo)
     expect(getByText(/£563/)).toBeDefined();
-    expect(getByText("Principal Bullet Due at Term End")).toBeDefined();
+    expect(getByText("Principal bullet due at term end")).toBeDefined();
     expect(getByText("100% of principal remains outstanding at term completion.")).toBeDefined();
 
     // Click Repayment
     const repaymentBtn = getByText("Repayment");
     fireEvent.click(repaymentBtn);
     expect(onMortgageTypeChange).toHaveBeenCalledWith("repayment");
+  });
+
+  test("renders Not set, not zero, when the inputs are unknown", () => {
+    const { container, getAllByText, queryByText } = customRender(
+      <MortgageTracker {...defaultProps} loanAmount={0} interestRate={0} remainingTerm={0} />,
+    );
+
+    expect(getAllByText("Not set").length).toBeGreaterThanOrEqual(3);
+    expect(queryByText(/£0\b/)).toBeNull();
+    expect(container.textContent ?? "").not.toMatch(/NaN|Infinity/);
+  });
+
+  test("slider range inputs are named and update via the shared slider field", () => {
+    const { getByLabelText } = customRender(<MortgageTracker {...defaultProps} />);
+    const slider = getByLabelText("Interest rate range slider");
+    fireEvent.change(slider, { target: { value: "6" } });
+    expect(defaultProps.onInterestRateChange).toHaveBeenCalledWith(6);
   });
 });

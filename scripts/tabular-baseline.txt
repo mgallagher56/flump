@@ -7,8 +7,6 @@ apps/web/app/components/budget/RunwayCalculator.tsx
 apps/web/app/components/dashboard/widgets/AccountsWidget.tsx
 apps/web/app/components/dashboard/widgets/SavingsWidget.tsx
 apps/web/app/components/debt/UkDebtInstrumentsCard.tsx
-apps/web/app/components/mortgage/MortgageTracker.tsx
-apps/web/app/components/mortgage/RemortgageShockSim.tsx
 apps/web/app/components/pension/PensionAccountsList.tsx
 apps/web/app/components/pension/PensionQuickStartWizard.tsx
 apps/web/app/components/tax/CopyTaxYearModal.tsx
