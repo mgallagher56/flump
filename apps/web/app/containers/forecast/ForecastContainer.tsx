@@ -15,6 +15,7 @@ import { useFormatCurrency } from "~/hooks/useFormatCurrency";
 import { useUserProfile } from "~/hooks/useUserProfile";
 import type { loader } from "~/routes/app.forecast";
 import { useFinancialBaseline } from "~/state/baseline.store";
+import { getKnownTrapRegion } from "~/utils/taxTrapCopy";
 import { currentMonth, currentYear } from "~/utils/utils";
 
 const ForecastContainer: FC = () => {
@@ -293,7 +294,12 @@ const ForecastContainer: FC = () => {
       </div>
 
       {/* Contextual £100k-£125k Tax Trap Alert Banner */}
-      {effectiveSalary >= 95000 && <TaxTrapAlertBanner grossIncome={effectiveSalary} />}
+      {effectiveSalary >= 95000 && (
+        <TaxTrapAlertBanner
+          grossIncome={effectiveSalary}
+          region={getKnownTrapRegion(baseline.ukRegion)}
+        />
+      )}
 
       {/* Render selected tab */}
       {activeTab === "forecaster" ? (

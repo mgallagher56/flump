@@ -1,4 +1,4 @@
-import type { TaxTrapAnalysis } from "@flump/finance-engine";
+import type { TaxTrapAnalysis, UkTaxRegion } from "@flump/finance-engine";
 
 /**
  * Tax trap copy for every surface. The two rates come from the engine's named fields
@@ -26,4 +26,16 @@ export function getTaxTrapCopy(analysis: TaxTrapAnalysis): TaxTrapCopy {
     effectiveRate,
     breakdown: `${incomeTaxRate} income tax, ${effectiveRate} including NI`,
   };
+}
+
+export const REGION_ASSUMPTION_LABEL = "Assuming England, Wales and Northern Ireland rates.";
+export const REGION_SETTINGS_HREF = "/app/profile";
+export const REGION_SETTINGS_ACTION = "Set your region";
+
+/**
+ * Only Scotland can be known today: the baseline always carries a default ukRegion and region is
+ * not yet captured (E23 T-FIX-2), so England, Wales and NI is an assumption until it is.
+ */
+export function getKnownTrapRegion(ukRegion: UkTaxRegion | undefined | null): UkTaxRegion | null {
+  return ukRegion === "SCOTLAND" ? "SCOTLAND" : null;
 }

@@ -27,7 +27,13 @@ import { useFormatCurrency } from "~/hooks/useFormatCurrency";
 import { useUserProfile } from "~/hooks/useUserProfile";
 import type { loader } from "~/routes/app.pension";
 import { useFinancialBaseline } from "~/state/baseline.store";
-import { getTaxTrapCopy } from "~/utils/taxTrapCopy";
+import {
+  getKnownTrapRegion,
+  getTaxTrapCopy,
+  REGION_ASSUMPTION_LABEL,
+  REGION_SETTINGS_ACTION,
+  REGION_SETTINGS_HREF,
+} from "~/utils/taxTrapCopy";
 import { currentMonth, currentYear } from "~/utils/utils";
 
 const containerStyle = css({
@@ -352,9 +358,15 @@ export const PensionContainer: FC = () => {
     baseline.pensionContributionPct > 0 ? baseline.pensionContributionPct : employeePercent;
   const effectiveIsSalarySacrifice = baseline.isSalarySacrifice ?? isSalarySacrifice;
 
+  const knownRegion = getKnownTrapRegion(baseline.ukRegion);
   const taxTrap = useMemo(() => {
-    return calculate100kTaxTrap(effectiveSalary, effectiveEmployeePct, effectiveIsSalarySacrifice);
-  }, [effectiveSalary, effectiveEmployeePct, effectiveIsSalarySacrifice]);
+    return calculate100kTaxTrap(
+      effectiveSalary,
+      effectiveEmployeePct,
+      effectiveIsSalarySacrifice,
+      knownRegion ?? "ENGLAND_NI_WALES",
+    );
+  }, [effectiveSalary, effectiveEmployeePct, effectiveIsSalarySacrifice, knownRegion]);
   const trapCopy = getTaxTrapCopy(taxTrap);
 
   const handleOptimizeTaxTrap = async (contributionReq: number) => {
@@ -417,6 +429,17 @@ export const PensionContainer: FC = () => {
             marginal rate of {trapCopy.breakdown} and{" "}
             {formatCurrency(taxTrap.estimatedTaxSavedByEscapingGbp)} in additional tax.
           </FLPText>
+          {!knownRegion && (
+            <FLPText fontSize="xs" color="text.muted">
+              {REGION_ASSUMPTION_LABEL}{" "}
+              <a
+                href={REGION_SETTINGS_HREF}
+                className={css({ color: "primary", textDecoration: "underline" })}
+              >
+                {REGION_SETTINGS_ACTION}
+              </a>
+            </FLPText>
+          )}
           <div
             style={{
               padding: "10px 14px",
