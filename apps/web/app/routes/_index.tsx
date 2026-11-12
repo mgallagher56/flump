@@ -30,6 +30,8 @@ type TakeHomeProfile = {
   country?: string | null;
 } | null;
 
+const isBlank = (value: unknown): boolean => value === null || value === undefined || value === "";
+
 /**
  * What the user must add for take-home to be computed, all at once. Undefined when the salary
  * itself is unset (the widget then just says "Not set").
@@ -42,8 +44,11 @@ export function describeMissingTakeHome(profile: TakeHomeProfile | undefined): s
   if (profile.employmentType !== "employed" && profile.employmentType !== "self-employed") {
     missing.push("employment type");
   }
-  if (profile.pensionPercent == null) missing.push("pension percentage");
-  if (profile.isSalarySacrifice == null) missing.push("salary sacrifice status");
+  // Ireland's take-home ignores pension inputs, so they are only required for the UK.
+  if (country === "GB") {
+    if (isBlank(profile.pensionPercent)) missing.push("pension percentage");
+    if (profile.isSalarySacrifice == null) missing.push("salary sacrifice status");
+  }
   if (missing.length === 0) return undefined;
   const list =
     missing.length === 1
@@ -192,10 +197,12 @@ export const loader = async (args: LoaderFunctionArgs) => {
   const estimatedTaxDue: number | null = null;
 
   // Estimated take-home: only when salary, pension percent and salary-sacrifice status are all known.
-  const pensionPercentKnown = userProfile?.pensionPercent != null;
+  const pensionPercentKnown = !isBlank(userProfile?.pensionPercent);
   const salarySacrificeKnown = userProfile?.isSalarySacrifice != null;
+  const takeHomeInputsKnown =
+    userProfile?.country === "IE" || (pensionPercentKnown && salarySacrificeKnown);
   const takeHomeBreakdown =
-    userProfile?.annualSalary && pensionPercentKnown && salarySacrificeKnown
+    userProfile?.annualSalary && takeHomeInputsKnown
       ? calculateNetTakeHome(
           userProfile.annualSalary,
           userProfile.employmentType,
