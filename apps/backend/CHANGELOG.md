@@ -1,5 +1,23 @@
 # Changelog
 
+## [1.25.0](https://github.com/mgallagher56/flump/compare/flump/backend-v1.24.0...flump/backend-v1.25.0) (2026-11-12)
+
+
+### Features ✨
+
+* **api-contract:** add @flump/api-contract with request schemas and route manifest ([98515fa](https://github.com/mgallagher56/flump/commit/98515faa0b41cde3a367195e73f8d301b3bc7752))
+* **backend:** numeric transformer for decimal columns ([b675557](https://github.com/mgallagher56/flump/commit/b6755577f26b7655a6597bbbd34b843e4d40a14a))
+* **backend:** shadow-mode request validation against @flump/api-contract ([32e0281](https://github.com/mgallagher56/flump/commit/32e02812d9a9326210ccb3765ef72554352595bc))
+* **e19:** bank connection owner-only, stop storing synced transactions ([04842ef](https://github.com/mgallagher56/flump/commit/04842ef09d59e3b9a398d85adfd771c523288f05))
+* **e19:** browser storage minimisation and log hygiene ([a36ad79](https://github.com/mgallagher56/flump/commit/a36ad798021863e19f6d796fe426060dc5cc8df6))
+* **e19:** closed-beta allowlist guard and invite-only page ([e7f0ae9](https://github.com/mgallagher56/flump/commit/e7f0ae9e3a3d76f0cf4b9f8d47c8ad2d695df7c4))
+
+
+### Bug Fixes 🪲
+
+* backend and engine agree Self Assessment is off by default; repair main tests ([d4a2d09](https://github.com/mgallagher56/flump/commit/d4a2d09a7c845f5b3e7af67b9bc5825927419ae6))
+* **backend:** bound shadow log volume and scale the money tolerance ([b825301](https://github.com/mgallagher56/flump/commit/b8253013cdcc05ab2c133475ad6be8d7211558ad))
+
 ## [1.24.0](https://github.com/mgallagher56/flump/compare/flump/backend-v1.23.0...flump/backend-v1.24.0) (2026-11-12)
 
 

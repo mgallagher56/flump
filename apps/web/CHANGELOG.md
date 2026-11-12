@@ -1,5 +1,45 @@
 # Changelog
 
+## [1.27.0](https://github.com/mgallagher56/flump/compare/flump/web-v1.26.0...flump/web-v1.27.0) (2026-11-12)
+
+
+### Features ✨
+
+* **api-contract:** add @flump/api-contract with request schemas and route manifest ([98515fa](https://github.com/mgallagher56/flump/commit/98515faa0b41cde3a367195e73f8d301b3bc7752))
+* **e19:** bank connection owner-only, stop storing synced transactions ([04842ef](https://github.com/mgallagher56/flump/commit/04842ef09d59e3b9a398d85adfd771c523288f05))
+* **e19:** browser storage minimisation and log hygiene ([a36ad79](https://github.com/mgallagher56/flump/commit/a36ad798021863e19f6d796fe426060dc5cc8df6))
+* **e19:** closed-beta allowlist guard and invite-only page ([e7f0ae9](https://github.com/mgallagher56/flump/commit/e7f0ae9e3a3d76f0cf4b9f8d47c8ad2d695df7c4))
+* **e19:** guidance-not-advice notice and neutral copy ([5219922](https://github.com/mgallagher56/flump/commit/521992232369d6338bc4f5fac6c4c86c04127276))
+* **e19:** self-host fonts, drop Google Fonts ([390e6f8](https://github.com/mgallagher56/flump/commit/390e6f827efb2689dc66c763cafafd19d79af224))
+* **engine:** tax-year context and one strict resolver policy (E22) ([3f5750c](https://github.com/mgallagher56/flump/commit/3f5750c5c9ff132228617a7cde21a375ab7cfc23))
+* **web:** make Self Assessment an opt-in module ([76e6d5e](https://github.com/mgallagher56/flump/commit/76e6d5ecc64fa9f8d98741c2bd97611e06c889e1))
+* **web:** shell header and nav on Lucide icons and semantic tokens ([4f6d5ef](https://github.com/mgallagher56/flump/commit/4f6d5ef0d99b03b9c0076f1ba1176713cc33f464))
+* **web:** system/light/dark theme preference with Lucide ThemeToggle ([24e6247](https://github.com/mgallagher56/flump/commit/24e624795026c2a2efe90143c262ddb5673e7811))
+* **web:** visible 'using 2026/27 rates' banner and 2027/28 owner checklist (E22) ([73776bd](https://github.com/mgallagher56/flump/commit/73776bd643aaa327b6756bb6c01914acfda2c1e8))
+
+
+### Bug Fixes 🪲
+
+* backend and engine agree Self Assessment is off by default; repair main tests ([d4a2d09](https://github.com/mgallagher56/flump/commit/d4a2d09a7c845f5b3e7af67b9bc5825927419ae6))
+* section24 tool rejects unsupported years, tax page lists only supported years, refresh sign-off notes (E22) ([54c65e0](https://github.com/mgallagher56/flump/commit/54c65e0404ac095292f0ca9db42d5011a3cf3236))
+* **web:** type the selectable tax years as strings ([0c56820](https://github.com/mgallagher56/flump/commit/0c568209933627e35acf9f43c18394a916e75ab8))
+
+
+### Documentation 📙
+
+* **audit:** E16 ledger for PR7 ([bfd4ffb](https://github.com/mgallagher56/flump/commit/bfd4ffbfadea8c64e0be2664e5a84ce20b82fd9b))
+
+
+### Refactor 🔥
+
+* remove fake MCP token, Plaid/sandbox adapters and budget actuals ([bef3b85](https://github.com/mgallagher56/flump/commit/bef3b85182994ec2a5954cc33e683175272b74e0))
+* UK only, cut Irish tax and country/currency selectors ([a30e1c1](https://github.com/mgallagher56/flump/commit/a30e1c13ae3bd97a37ee434b4dca25b6efd06aa3))
+* **web:** delete dead components and duplicate signed-out home; redirect signed-out / to marketing ([682e5f4](https://github.com/mgallagher56/flump/commit/682e5f40fcf40c9b0e4507b2c1a33cc5340fc47e))
+* **web:** en-GB only, remove es locale, language detector and dead keys ([f5d6cd4](https://github.com/mgallagher56/flump/commit/f5d6cd4439d6bb66c234e1777a2b43ade45c9480))
+* **web:** make account history read-only, drop dead edit actions ([0378fb7](https://github.com/mgallagher56/flump/commit/0378fb7ac1184b1b818f3f84cc0699c78d0c2880))
+* **web:** merge Forecast into Savings and redirect /app/forecast ([564ab2d](https://github.com/mgallagher56/flump/commit/564ab2df27fa82ef7ed3e3762bc60321eb6a95ea))
+* **web:** remove stale non-UK banners; note mobile IE scope in ledger ([9c013ec](https://github.com/mgallagher56/flump/commit/9c013ec4fa4447a690e3478047f10b1c1555669b))
+
 ## [1.26.0](https://github.com/mgallagher56/flump/compare/flump/web-v1.25.1...flump/web-v1.26.0) (2026-11-12)
 
 

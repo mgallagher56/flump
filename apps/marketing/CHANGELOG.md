@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.25.0](https://github.com/mgallagher56/flump/compare/flump/marketing-v1.24.0...flump/marketing-v1.25.0) (2026-11-12)
+
+
+### Features ✨
+
+* **api-contract:** add @flump/api-contract with request schemas and route manifest ([98515fa](https://github.com/mgallagher56/flump/commit/98515faa0b41cde3a367195e73f8d301b3bc7752))
+* **e19:** guidance-not-advice notice and neutral copy ([5219922](https://github.com/mgallagher56/flump/commit/521992232369d6338bc4f5fac6c4c86c04127276))
+* **e19:** self-host fonts, drop Google Fonts ([390e6f8](https://github.com/mgallagher56/flump/commit/390e6f827efb2689dc66c763cafafd19d79af224))
+
 ## [1.24.0](https://github.com/mgallagher56/flump/compare/flump/marketing-v1.23.1...flump/marketing-v1.24.0) (2026-11-12)
 
 
