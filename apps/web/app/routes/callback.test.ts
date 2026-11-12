@@ -56,18 +56,13 @@ describe("callback loader", () => {
     expect(mocks.configure).not.toHaveBeenCalled();
   });
 
-  it("sets the presence cookie without a Domain on localhost", async () => {
+  it("sets the presence cookie host-only (no Domain) on localhost", async () => {
     const res = await callLoader("http://localhost:3000/callback?code=abc");
     expect(res.headers.getSetCookie()).toEqual([SESSION_COOKIE]);
   });
 
-  it("sets Domain=.flump.co.uk and Secure on app.flump.co.uk", async () => {
-    const res = await callLoader("https://app.flump.co.uk/callback?code=abc");
-    expect(res.headers.getSetCookie()).toEqual([`${SESSION_COOKIE}; Domain=.flump.co.uk; Secure`]);
-  });
-
-  it("gives evilflump.co.uk no Domain (Secure only, as it is https)", async () => {
-    const res = await callLoader("https://evilflump.co.uk/callback?code=abc");
+  it("sets a host-only presence cookie with Secure on https hosts", async () => {
+    const res = await callLoader("https://app.example.test/callback?code=abc");
     expect(res.headers.getSetCookie()).toEqual([`${SESSION_COOKIE}; Secure`]);
   });
 
@@ -110,17 +105,17 @@ describe("callback loader", () => {
       expect(mocks.configure).not.toHaveBeenCalled();
     });
 
-    it("is not called on app.flump.co.uk", async () => {
-      await callLoader("https://app.flump.co.uk/callback?code=abc");
+    it("is not called on app.example.test", async () => {
+      await callLoader("https://app.example.test/callback?code=abc");
       expect(mocks.configure).not.toHaveBeenCalled();
     });
 
-    it("never resets: after a later app.flump.co.uk request the last-installed callback still returns the localhost redirect URI", async () => {
+    it("never resets: after a later app.example.test request the last-installed callback still returns the localhost redirect URI", async () => {
       await callLoader("http://localhost:3000/callback?code=abc");
       expect(mocks.configure).toHaveBeenCalledTimes(1);
       const installed = mocks.configure.mock.calls[0][0] as (key: string) => unknown;
 
-      await callLoader("https://app.flump.co.uk/callback?code=def");
+      await callLoader("https://app.example.test/callback?code=def");
       // Nothing re-configured or reset WorkOS state on the production request, so the last
       // callback WorkOS holds is still the localhost one (global state leak, pinned).
       expect(mocks.configure).toHaveBeenCalledTimes(1);
@@ -161,7 +156,7 @@ describe("callback loader", () => {
     it("rejects when the WorkOS loader rejects, so no presence cookie can be set", async () => {
       const boom = new Error("token exchange failed");
       mocks.workosLoader.mockRejectedValue(boom);
-      await expect(callLoader("https://app.flump.co.uk/callback?code=abc")).rejects.toBe(boom);
+      await expect(callLoader("https://app.example.test/callback?code=abc")).rejects.toBe(boom);
     });
 
     it.each([

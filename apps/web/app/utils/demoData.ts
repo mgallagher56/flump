@@ -113,7 +113,7 @@ export function getSandboxPersonaData(persona: "debt" | "medium" | "high" | "wea
       persona: "debt" as const,
       user: {
         id: "demo-persona-debt",
-        email: "persona-debt@flump.co.uk",
+        email: "persona-debt@example.com",
         name: "Sam Jordan",
         firstName: "Sam",
         lastName: "Jordan",
@@ -288,7 +288,7 @@ export function getSandboxPersonaData(persona: "debt" | "medium" | "high" | "wea
       persona: "medium" as const,
       user: {
         id: "demo-persona-medium",
-        email: "jordan@flump.co.uk",
+        email: "jordan@example.com",
         name: "Jordan Taylor",
         firstName: "Jordan",
         lastName: "Taylor",
@@ -522,7 +522,7 @@ export function getSandboxPersonaData(persona: "debt" | "medium" | "high" | "wea
     persona: "high" as const,
     user: {
       id: "demo-persona-high",
-      email: "morgan@flump.co.uk",
+      email: "morgan@example.com",
       name: "Morgan Vance",
       firstName: "Morgan",
       lastName: "Vance",

@@ -419,7 +419,7 @@ iOS: `eas submit` to TestFlight (internal testers first, then external beta afte
 |---|---|---|---|
 | development | local backend (`http://localhost:4000` via LAN IP or `10.0.2.2`); the app does not use the backend dev bypass | staging client id | the only profile besides `e2e` allowed cleartext, and only for local hosts |
 | preview | staging API if one exists, else production with a test user | staging or production client | internal |
-| production | production API (value to confirm; E5 sample used `https://api.flump.co.uk`) | production client id | store |
+| production | production API (value to confirm; E5 sample used `https://api.example.test`) | production client id | store |
 
 A WorkOS staging environment is an owner action (D3).
 
@@ -453,7 +453,7 @@ All four repo commands green; bundle greps clean; Android Maestro green; VoiceOv
 | EAS Update | free tier with limits | UNCONFIRMED |
 | WorkOS AuthKit | already in use for web; native sign-in uses the same plan | UNCONFIRMED whether mobile affects billing |
 | GitHub Actions | Linux minutes for Android e2e; macOS at 10 times (iOS e2e kept manual) | confident |
-| Domain for privacy policy, universal links and the API | owner already has `flump.co.uk` per E5 sample | UNCONFIRMED |
+| Domain for privacy policy, universal links and the API | domain ownership not confirmed | UNCONFIRMED |
 | Legal advice on financial promotion, AISP and store listings (D19) | varies | owner |
 | Crash reporting vendor, if adopted (D7) | free tiers exist | UNCONFIRMED |
 

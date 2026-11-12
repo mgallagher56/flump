@@ -30,7 +30,7 @@ The site has SSR with react-helmet-async and a canonical plus description on eve
 
 - Severity: P1
 - Location: apps/marketing/src/App.tsx:22; apps/marketing/src/pages/ToolPage.tsx:30-32; apps/marketing/server.ts:134
-- Evidence: `<Route path="*" element={<HomePage />} />` serves the home page (canonical `https://flump.co.uk/`) for any path. In ToolPage, `TOOLS_CATALOG.find(...) ?? TOOLS_CATALOG[0]` means `/tools/anything` renders the tax-trap page metadata and canonical, with no calculator body. The server never sets 404.
+- Evidence: `<Route path="*" element={<HomePage />} />` serves the home page (canonical `the marketing site`) for any path. In ToolPage, `TOOLS_CATALOG.find(...) ?? TOOLS_CATALOG[0]` means `/tools/anything` renders the tax-trap page metadata and canonical, with no calculator body. The server never sets 404.
 - Impact: Infinite duplicate URLs for crawlers, wasted crawl budget, and mistyped links look valid. Search Console will report soft-404s.
 - Recommendation: Add a real NotFound route and set 404 from SSR (static router context or a `notFound` flag from `render`). For tool pages, 404 when the slug is not in the catalog.
 - Effort: M
@@ -93,7 +93,7 @@ The site has SSR with react-helmet-async and a canonical plus description on eve
 
 - Severity: P1
 - Location: apps/marketing/src/pages/McpPage/McpPage.tsx:262; apps/marketing/src/components/McpSpotlightSection/McpSpotlightSection.tsx:87; packages/mcp/package.json:2-4
-- Evidence: package.json has `"name": "@flump/mcp"` and `"private": true`, so it cannot be published to npm as configured. The page also advertises `https://mcp.flump.co.uk/mcp` as a live remote endpoint; the string appears only as the expected token audience in `packages/mcp/src/auth/token-verifier.ts:45` and in tests, and I found no deployment config for that host.
+- Evidence: package.json has `"name": "@flump/mcp"` and `"private": true`, so it cannot be published to npm as configured. The page also advertises `a remote MCP URL` as a live remote endpoint; the string appears only as the expected token audience in `packages/mcp/src/auth/token-verifier.ts:45` and in tests, and I found no deployment config for that host.
 - Impact: The headline setup instructions fail for a new user ("2 minutes" setup guide). Also the MCP auth findings (D-03) make "read-only guardrails" and "OAuth 2.1" claims shaky for the remote path.
 - Recommendation: Publish the package (and remove `private`), or change the instructions to the real install path. Confirm the remote host exists before showing it.
 - Effort: S
@@ -129,7 +129,7 @@ The site has SSR with react-helmet-async and a canonical plus description on eve
 
 - Severity: P3
 - Location: apps/marketing/src/pages/*.tsx canonical lines; apps/marketing/index.html:5; apps/marketing/src/pages/SecurityPage.tsx:157,255; apps/marketing/src/components/Footer.tsx:89-104
-- Evidence: Canonicals are literal `https://flump.co.uk/...` even when served from the Railway host (server.ts:100-108 knows about `railway.app`), so staging pages canonicalise to production. The favicon `/vite.svg` is not in `public/` (see M-02). On SecurityPage an `h3` (line 157) precedes the first `h2` (line 255). The footer links six of the seven tools; the student-loan calculator is reachable only from `/tools`. Static assets are served by sirv with default options (server.ts:75-77), and the HTML has no `Cache-Control`.
+- Evidence: Canonicals are literal absolute URLs on the old production domain even when served from the Railway host (server.ts:100-108 knows about `railway.app`), so staging pages canonicalise to production. The favicon `/vite.svg` is not in `public/` (see M-02). On SecurityPage an `h3` (line 157) precedes the first `h2` (line 255). The footer links six of the seven tools; the student-loan calculator is reachable only from `/tools`. Static assets are served by sirv with default options (server.ts:75-77), and the HTML has no `Cache-Control`.
 - Impact: Minor: staging duplicates, missing favicon, weaker heading outline, one calculator one click deeper, no long-lived asset caching.
 - Recommendation: Derive the canonical origin from one env value, add a favicon, fix the heading order, add the seventh tool to the footer, pass `maxAge` and `immutable` for hashed assets to sirv.
 - Effort: S

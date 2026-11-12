@@ -72,7 +72,7 @@ Approver codes: **O** is the owner. **O+L** is the owner plus legal (FCA status,
 | # | Claim (file:line) | Current reality (evidence) | Verdict | Proposed wording (en-GB, sentence case) | Approver | Action |
 |---|---|---|---|---|---|---|
 | A1 | "Runs via `npx @flump/mcp`" (McpSpotlightSection.tsx:87; McpPage.tsx:117-147,262) | The package is private and depends on workspace:* (packages/mcp/package.json:4,36). | false | Under D5 c: "Local CLI (preview): run Flump MCP from source. Setup guide coming soon." | O | reword |
-| A2 | FLUMP_API_URL https://mcp.flump.co.uk; remote URL and ".well-known/oauth-protected-resource"; "OAuth 2.1" (McpPage.tsx:124,141,262-264,467-487) | No host deploy config. The OAuth route was removed by E1 (mcp.controller.ts:20). | false | none | O | **R** the remote tab and URLs |
+| A2 | FLUMP_API_URL the default audience string (now `flump-mcp`); remote URL and ".well-known/oauth-protected-resource"; "OAuth 2.1" (McpPage.tsx:124,141,262-264,467-487) | No host deploy config. The OAuth route was removed by E1 (mcp.controller.ts:20). | false | none | O | **R** the remote tab and URLs |
 | A3 | Implied "your data in Claude" via PAT | The stdio CLI's PAT call gets 401 and silently returns default baseline data (stdio.ts:8-40; mcp.controller.ts:79-80). | false today | Do not claim personal-data access until the E1 follow-up is fixed. | O | reword |
 | A4 | "Strict PII anonymisation: names and account numbers ... stripped", "6 PII-scrubbed resources" (McpSpotlightSection.tsx:64,80-81; McpPage.tsx:234-237) | Audit finding M-11 (P2, not in E7): only institution names are relabelled. | partly | "Institution names are replaced with generic labels by default." | O | reword (fold in per D7) |
 
@@ -278,7 +278,7 @@ Approver codes: **O** is the owner. **O+L** is the owner plus legal (FCA status,
 
 - Files: `apps/marketing/src/pages/McpPage/McpPage.tsx`, `apps/marketing/src/pages/McpPage/McpPage.test.tsx`, `apps/marketing/src/pages/McpPage/McpPage.stories.tsx`, `apps/marketing/src/components/McpSpotlightSection/McpSpotlightSection.tsx`, `apps/marketing/src/components/McpSpotlightSection/McpSpotlightSection.test.tsx`, `apps/marketing/src/components/McpSpotlightSection/McpSpotlightSection.stories.tsx`
 - Tests:
-  - McpPage.test: queryByText(/npx @flump\/mcp/) is null, and textContent does not contain 'mcp.flump.co.uk' or 'oauth-protected-resource'
+  - McpPage.test: queryByText(/npx @flump\/mcp/) is null, and textContent does not contain 'the MCP host' or 'oauth-protected-resource'
   - McpPage.test: queryByTestId('setup-tab-remote') is null (replacing the :40-41 remote-tab clicks), and the 8 tool testids at :25-32 still pass
   - McpPage.test: replace 'Strict PII anonymisation' (:21) with getByText(/Institution names are replaced with generic labels/i), and change 'How to set up Flump MCP in 2 minutes' (:22) to the approved heading
   - McpSpotlightSection.test: replace /Strict PII anonymisation:/ (:16) and assert queryByText(/npx/) is null. The stories' play() assertions at :21-26 keep the heading and tool name
@@ -317,7 +317,7 @@ Approver codes: **O** is the owner. **O+L** is the owner plus legal (FCA status,
 ## Review focus
 
 - Helmet title and meta strings carry claims (SecurityPage.tsx:85-88, PricingPage.tsx:44-47, McpPage.tsx:164) but are invisible in screen tests. Assert them through a HelmetProvider context, or check the SSR output.
-- Copy duplicated across the two public homes. Every marketing component has a web twin under apps/web/app/components/home. A fix in one app only leaves the claim live at app.flump.co.uk/ (routes/_index.tsx:357).
+- Copy duplicated across the two public homes. Every marketing component has a web twin under apps/web/app/components/home. A fix in one app only leaves the claim live at the web app root (routes/_index.tsx:357).
 - Removing false claims must not add new unverified positive ones. Examples: 'not authorised by the FCA', erasure-by-email, 'database encrypted at rest', or a response-time promise all need the D0 legal path.
 - 'Read-only' wording: the code has no payment methods (provider.interface.ts:25-33), but a pasted Monzo or Starling token may carry write scopes. Say 'Flump has no feature to move money', not 'the token is read-only'.
 - Removing the modal must not leave dead imports or unused styles; Biome will fail. Watch the state hooks, FiMail, FiSend, FiX, flex, stack and modalOverlayStyle.
@@ -411,8 +411,8 @@ These are copy-only changes with no flags or migrations.
 - No CSV import route or UI exists. The CSV parser exists only in the banking package. (`packages/banking/src/server/adapters/csv.ts; apps/web/app/components/home/WebHowItWorksSection.tsx:98 is the only csv hit in web`)
 - The Pro-only features named on Pricing (the £100k tax trap and Section 24 tools) are offered free as public tools. (`apps/marketing/src/pages/ToolsIndexPage.tsx:95; apps/marketing/src/pages/PricingPage.tsx:263,369,381`)
 - @flump/mcp is private and depends on workspace:* @flump/finance-engine, so `npx @flump/mcp` cannot work as configured. (`packages/mcp/package.json:2-4,35-36`)
-- The marketing pages instruct `npx -y @flump/mcp` with FLUMP_API_URL https://mcp.flump.co.uk. (`apps/marketing/src/pages/McpPage/McpPage.tsx:117-147,262-264; apps/marketing/src/components/McpSpotlightSection/McpSpotlightSection.tsx:87`)
-- mcp.flump.co.uk appears only as a default audience string. No deploy config exists for an MCP host; the only tracked Dockerfiles are for backend, web and marketing. (`apps/backend/src/mcp.service.ts:59; packages/mcp/src/auth/token-verifier.ts:57; git ls-files Dockerfiles`)
+- The marketing pages instruct `npx -y @flump/mcp` with FLUMP_API_URL the default audience string (now `flump-mcp`). (`apps/marketing/src/pages/McpPage/McpPage.tsx:117-147,262-264; apps/marketing/src/components/McpSpotlightSection/McpSpotlightSection.tsx:87`)
+- the MCP host appears only as a default audience string. No deploy config exists for an MCP host; the only tracked Dockerfiles are for backend, web and marketing. (`apps/backend/src/mcp.service.ts:59; packages/mcp/src/auth/token-verifier.ts:57; git ls-files Dockerfiles`)
 - Changed by E1: the .well-known/oauth-protected-resource route was removed and MCP OAuth is off (PAT only). The remote 'OAuth 2.1' instructions and the advertised metadata URL are therefore now false. (`apps/backend/src/mcp.controller.ts:20; docs/audit/plans/E1-auth-design.md:23,64`)
 - The stdio CLI fetches `${apiUrl}/mcp-tokens/context-pack` with the PAT. That route is behind AuthGuard, which accepts only WorkOS JWTs, so the call returns 401. The CLI then silently falls back to default baseline data. The E1 ledger records this as needing its own ticket. (`packages/mcp/src/transports/stdio.ts:8-40; apps/backend/src/mcp.controller.ts:79-80; docs/audit/plans/E1-auth-ledger.md:76`)
 - The home SecurityPrivacySection diagram labels are 'FCA Open Banking Architecture', 'AISP Read-Only', 'Open Banking OAuth 2.0 PKCE Handshake', 'TLS 1.3', 'PISP Blocked' and 'AES-256-GCM data at rest'. The pillar reads 'Optional live account sync operates through FCA-regulated Open Banking APIs'. (`apps/marketing/src/components/SecurityPrivacySection.tsx:85,99,120,124,139,173,191,280-291`)
@@ -441,8 +441,8 @@ These are copy-only changes with no flags or migrations.
 - **unclear**: Pricing toggle, £7.99/£9.99, billed £95.88/yr — Not opened.
 - **unclear**: Pricing lists CSV imports, FCA Open Banking auto-sync etc. — Not opened.
 - **unclear**: Pro-only features named on Pricing are offered free as public tools — ToolsIndexPage.tsx:95 shows the £100k tax trap tool in TOOLS_CATALOG; Section 24 not opened.
-- **unclear**: Marketing pages instruct npx -y @flump/mcp with FLUMP_API_URL https://mcp.flump.co.uk — Not opened.
-- **false**: mcp.flump.co.uk appears only as default audience; only tracked Dockerfiles are backend, web, marketing — git ls-files shows four Dockerfiles: apps/backend/Dockerfile, apps/marketing/Dockerfile, apps/web/.gitpod.Dockerfile, apps/web/Dockerfile (the extra is a Gitpod dev image, not an MCP deploy). Audience defaults confirmed at mcp.service.ts:59 and token-verifier.ts:57.
+- **unclear**: Marketing pages instruct npx -y @flump/mcp with FLUMP_API_URL the default audience string (now `flump-mcp`) — Not opened.
+- **false**: the MCP host appears only as default audience; only tracked Dockerfiles are backend, web, marketing — git ls-files shows four Dockerfiles: apps/backend/Dockerfile, apps/marketing/Dockerfile, apps/web/.gitpod.Dockerfile, apps/web/Dockerfile (the extra is a Gitpod dev image, not an MCP deploy). Audience defaults confirmed at mcp.service.ts:59 and token-verifier.ts:57.
 - **unclear**: Home SecurityPrivacySection diagram labels and pillar text — Not opened.
 - **unclear**: Home FAQ claims AISP regulated by FCA; 'free baseline tier' — Not opened.
 - **unclear**: Comparison matrix ticks FCA Open Banking read-only sync for Flump — Not opened.

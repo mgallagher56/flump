@@ -1,4 +1,3 @@
-import { isFlumpHost } from "@flump/finance-engine";
 import { signOut } from "@workos-inc/authkit-react-router";
 import type { ActionFunctionArgs } from "react-router";
 import { redirect } from "react-router";
@@ -9,12 +8,10 @@ const handleSignOut = async (request: Request) => {
   const marketingUrl = getMarketingUrl(request.url);
 
   const response = await signOut(request, { returnTo: marketingUrl });
-  const onFlumpHost = isFlumpHost(url.hostname);
-  const cookieDomain = onFlumpHost ? "; Domain=.flump.co.uk" : "";
   const behindHttpsProxy =
     request.headers.get("x-forwarded-proto")?.split(",")[0]?.trim().toLowerCase() === "https";
-  const secure = onFlumpHost || url.protocol === "https:" || behindHttpsProxy ? "; Secure" : "";
-  const clearPresenceCookie = `flump_has_session=; Path=/; SameSite=Lax; Max-Age=0${cookieDomain}${secure}`;
+  const secure = url.protocol === "https:" || behindHttpsProxy ? "; Secure" : "";
+  const clearPresenceCookie = `flump_has_session=; Path=/; SameSite=Lax; Max-Age=0${secure}`;
 
   if (response instanceof Response) {
     const headers = new Headers(response.headers);

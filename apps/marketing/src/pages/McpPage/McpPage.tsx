@@ -105,7 +105,6 @@ export const McpPage: FC = () => {
           name="description"
           content="Preview: run the Flump Model Context Protocol (MCP) server from source and give AI agents deterministic UK financial calculations. Tools currently run against baseline sample data."
         />
-        <link rel="canonical" href="https://flump.co.uk/mcp" />
       </Helmet>
 
       <Header />

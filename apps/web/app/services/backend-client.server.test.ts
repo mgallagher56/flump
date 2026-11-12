@@ -4,7 +4,7 @@ import { loadWorkspaceSnapshot } from "./backend-client.server";
 vi.mock("~/utils/auth.server", async (importOriginal) => ({
   ...(await importOriginal<typeof import("~/utils/auth.server")>()),
   getAuthSession: vi.fn().mockResolvedValue({
-    user: { id: "user_test", email: "test@flump.co.uk" },
+    user: { id: "user_test", email: "test@example.com" },
     accessToken: "test_token_123",
   }),
 }));

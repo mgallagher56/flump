@@ -1,16 +1,6 @@
 const matchesDomain = (hostname: string, domain: string): boolean =>
   hostname === domain || hostname.endsWith(`.${domain}`);
 
-/**
- * Keep identical to isFlumpHost in packages/finance-engine/src/persistence.ts (same test cases).
- * Exact apex or a real subdomain; case-insensitive, ignores a port and one trailing dot.
- */
-export const isFlumpHost = (hostname: string): boolean => {
-  const host = hostname.trim().toLowerCase();
-  const bare = host.startsWith("[") ? host : host.replace(/:\d+$/, "").replace(/\.$/, "");
-  return matchesDomain(bare, "flump.co.uk");
-};
-
 export const isRailwayHost = (hostname: string): boolean => matchesDomain(hostname, "railway.app");
 
 export const getAppUrl = (): string => {
@@ -37,10 +27,7 @@ export const getAppUrl = (): string => {
     if (isRailwayHost(hostname)) {
       return "https://web-production-845e6c.up.railway.app";
     }
-    if (isFlumpHost(hostname)) {
-      return "https://app.flump.co.uk";
-    }
-    return "https://app.flump.co.uk";
+    return "https://web-production-845e6c.up.railway.app";
   }
 
   // 4. Server-side development & environment checks (Bun / Node / Vite SSR)
@@ -56,7 +43,7 @@ export const getAppUrl = (): string => {
     env?.NODE_ENV === "production" ||
     (typeof import.meta !== "undefined" && import.meta.env?.PROD)
   ) {
-    return "https://app.flump.co.uk";
+    return "https://web-production-845e6c.up.railway.app";
   }
 
   return "http://localhost:5173";

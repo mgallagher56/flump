@@ -150,7 +150,6 @@ export const ToolsIndexPage: FC = () => {
           name="description"
           content="Free standalone UK personal finance calculators: £100k tax trap, debt avalanche vs snowball, Section 24 landlord tax, and mortgage vs ISA."
         />
-        <link rel="canonical" href="https://flump.co.uk/tools" />
       </Helmet>
 
       <Header />

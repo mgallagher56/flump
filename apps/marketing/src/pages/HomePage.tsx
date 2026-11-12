@@ -26,7 +26,6 @@ export const HomePage: FC = () => {
           name="description"
           content="Get your complete UK financial picture in 60 seconds. Know your net worth, safe to spend, emergency runway, and tax savings – built specifically for UK rules."
         />
-        <link rel="canonical" href="https://flump.co.uk/" />
       </Helmet>
 
       <Header />

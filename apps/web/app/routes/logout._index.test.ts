@@ -15,7 +15,6 @@ const makeArgs = (url: string, method = "GET", headers?: Record<string, string>)
   ({ request: new Request(url, { method, headers }), params: {}, context: {} }) as any;
 
 const CLEAR_COOKIE = "flump_has_session=; Path=/; SameSite=Lax; Max-Age=0";
-const CLEAR_COOKIE_SECURE_DOMAIN = `${CLEAR_COOKIE}; Domain=.flump.co.uk; Secure`;
 
 beforeEach(() => {
   mocks.signOut.mockReset();
@@ -44,30 +43,32 @@ describe("logout action", () => {
     },
   );
 
-  it("falls back to https://flump.co.uk elsewhere", async () => {
-    await action(makeArgs("https://app.flump.co.uk/logout", "POST"));
-    expect(mocks.signOut.mock.calls[0][1]).toEqual({ returnTo: "https://flump.co.uk" });
+  it("falls back to the deployed marketing site elsewhere, not the request origin", async () => {
+    await action(makeArgs("https://web.example.test/logout", "POST"));
+    expect(mocks.signOut.mock.calls[0][1]).toEqual({
+      returnTo: "https://marketing-production-d21f.up.railway.app",
+    });
   });
 
-  it("clears the presence cookie without a Domain on localhost", async () => {
+  it("clears the presence cookie host-only (no Domain) on localhost", async () => {
     const res = (await action(makeArgs("http://localhost:3000/logout", "POST"))) as Response;
     expect(res.headers.getSetCookie()).toEqual([CLEAR_COOKIE]);
   });
 
-  it("clears the presence cookie with Domain=.flump.co.uk and Secure on flump.co.uk hosts", async () => {
-    const res = (await action(makeArgs("https://app.flump.co.uk/logout", "POST"))) as Response;
-    expect(res.headers.getSetCookie()).toEqual([CLEAR_COOKIE_SECURE_DOMAIN]);
+  it("clears the presence cookie host-only with Secure on https hosts", async () => {
+    const res = (await action(makeArgs("https://web.example.test/logout", "POST"))) as Response;
+    expect(res.headers.getSetCookie()).toEqual([`${CLEAR_COOKIE}; Secure`]);
   });
 
   it("keeps WorkOS Set-Cookie headers and status", async () => {
     const upstream = new Response(null, { status: 302, statusText: "Found" });
     upstream.headers.append("Set-Cookie", "wos-session=; Max-Age=0; Path=/");
-    upstream.headers.set("Location", "https://flump.co.uk");
+    upstream.headers.set("Location", "https://marketing.example.test");
     mocks.signOut.mockResolvedValue(upstream);
 
     const res = (await action(makeArgs("http://localhost:3000/logout", "POST"))) as Response;
     expect(res.status).toBe(302);
-    expect(res.headers.get("Location")).toBe("https://flump.co.uk");
+    expect(res.headers.get("Location")).toBe("https://marketing.example.test");
     expect(res.headers.getSetCookie()).toEqual(["wos-session=; Max-Age=0; Path=/", CLEAR_COOKIE]);
   });
 
@@ -75,11 +76,6 @@ describe("logout action", () => {
     const data = { ok: true };
     mocks.signOut.mockResolvedValue(data);
     expect(await action(makeArgs("http://localhost:3000/logout", "POST"))).toBe(data);
-  });
-
-  it("does not give lookalike hosts a Domain, and adds Secure on https", async () => {
-    const res = (await action(makeArgs("https://evilflump.co.uk/logout", "POST"))) as Response;
-    expect(res.headers.getSetCookie()).toEqual([`${CLEAR_COOKIE}; Secure`]);
   });
 
   it("adds Secure when x-forwarded-proto is https on a plain-http request", async () => {

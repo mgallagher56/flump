@@ -93,12 +93,12 @@ describe("TokenVerifier", () => {
 
   it("returns RFC 9728 OAuth Protected Resource Metadata", () => {
     const verifier = new TokenVerifier({
-      expectedAudience: "https://mcp.flump.co.uk",
+      expectedAudience: "flump-mcp",
       authServerUrl: "https://api.workos.com",
     });
 
     const meta = verifier.getOAuthProtectedResourceMetadata();
-    expect(meta.resource).toBe("https://mcp.flump.co.uk");
+    expect(meta.resource).toBe("flump-mcp");
     expect(meta.scopes_supported).toContain("mcp:read:anonymized");
     expect(meta.scopes_supported).toContain("mcp:simulate");
   });

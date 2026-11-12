@@ -126,7 +126,6 @@ export const PricingPage: FC = () => {
           name="description"
           content="Flump's planning tools are free to use while pricing is being finalised. Paid plan prices are placeholders and not final."
         />
-        <link rel="canonical" href="https://flump.co.uk/pricing" />
       </Helmet>
 
       <Header />
