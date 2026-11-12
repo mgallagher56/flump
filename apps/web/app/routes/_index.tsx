@@ -27,7 +27,6 @@ type TakeHomeProfile = {
   employmentType?: string | null;
   pensionPercent?: number | string | null;
   isSalarySacrifice?: boolean | null;
-  country?: string | null;
 } | null;
 
 const isBlank = (value: unknown): boolean => value === null || value === undefined || value === "";
@@ -38,17 +37,12 @@ const isBlank = (value: unknown): boolean => value === null || value === undefin
  */
 export function describeMissingTakeHome(profile: TakeHomeProfile | undefined): string | undefined {
   if (!profile?.annualSalary) return undefined;
-  const country = profile.country || "GB";
-  if (country !== "GB" && country !== "IE") return "Take-home is only available for the UK";
   const missing: string[] = [];
   if (profile.employmentType !== "employed" && profile.employmentType !== "self-employed") {
     missing.push("employment type");
   }
-  // Ireland's take-home ignores pension inputs, so they are only required for the UK.
-  if (country === "GB") {
-    if (isBlank(profile.pensionPercent)) missing.push("pension percentage");
-    if (profile.isSalarySacrifice == null) missing.push("salary sacrifice status");
-  }
+  if (isBlank(profile.pensionPercent)) missing.push("pension percentage");
+  if (profile.isSalarySacrifice == null) missing.push("salary sacrifice status");
   if (missing.length === 0) return undefined;
   const list =
     missing.length === 1
@@ -199,8 +193,7 @@ export const loader = async (args: LoaderFunctionArgs) => {
   // Estimated take-home: only when salary, pension percent and salary-sacrifice status are all known.
   const pensionPercentKnown = !isBlank(userProfile?.pensionPercent);
   const salarySacrificeKnown = userProfile?.isSalarySacrifice != null;
-  const takeHomeInputsKnown =
-    userProfile?.country === "IE" || (pensionPercentKnown && salarySacrificeKnown);
+  const takeHomeInputsKnown = pensionPercentKnown && salarySacrificeKnown;
   const takeHomeBreakdown =
     userProfile?.annualSalary && takeHomeInputsKnown
       ? calculateNetTakeHome(
@@ -208,7 +201,6 @@ export const loader = async (args: LoaderFunctionArgs) => {
           userProfile.employmentType,
           Number(userProfile.pensionPercent),
           Boolean(userProfile.isSalarySacrifice),
-          userProfile.country || "GB",
         )
       : null;
   const monthlyContributionEst =

@@ -1,50 +1,25 @@
 import { act, renderHook } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import { getCurrencySymbol, useFormatCurrency } from "./useFormatCurrency";
+import { useFormatCurrency } from "./useFormatCurrency";
 import { DEFAULT_PROFILE, useUserProfile } from "./useUserProfile";
 
-describe("useFormatCurrency & getCurrencySymbol", () => {
-  it("returns expected currency symbols for all supported currencies", () => {
-    expect(getCurrencySymbol("USD")).toBe("$");
-    expect(getCurrencySymbol("CAD")).toBe("$");
-    expect(getCurrencySymbol("AUD")).toBe("$");
-    expect(getCurrencySymbol("NZD")).toBe("$");
-    expect(getCurrencySymbol("SGD")).toBe("$");
-    expect(getCurrencySymbol("EUR")).toBe("€");
-    expect(getCurrencySymbol("JPY")).toBe("¥");
-    expect(getCurrencySymbol("INR")).toBe("₹");
-    expect(getCurrencySymbol("ZAR")).toBe("R");
-    expect(getCurrencySymbol("CHF")).toBe("CHF");
-    expect(getCurrencySymbol("GBP")).toBe("£");
+describe("useFormatCurrency", () => {
+  it("formats whole pounds and pence in en-GB", () => {
+    const { result } = renderHook(() => useFormatCurrency());
+    expect(result.current.currency).toBe("GBP");
+    expect(result.current.symbol).toBe("£");
+    expect(result.current.formatCurrency(1234)).toBe("£1,234");
+    expect(result.current.formatCurrencyDecimal(1234.56)).toBe("£1,234.56");
   });
 
-  it("formats currency and decimals across all supported locales", () => {
+  it("ignores a stored non-GBP profile currency", () => {
     const { result: profileHook } = renderHook(() => useUserProfile());
-    const currencies = [
-      "GBP",
-      "USD",
-      "EUR",
-      "AUD",
-      "CAD",
-      "NZD",
-      "JPY",
-      "INR",
-      "ZAR",
-      "SGD",
-      "CHF",
-    ];
-
-    for (const curr of currencies) {
-      act(() => {
-        profileHook.current.setProfile({ ...DEFAULT_PROFILE, currency: curr });
-      });
-      const { result } = renderHook(() => useFormatCurrency());
-      expect(result.current.currency).toBe(curr);
-      expect(result.current.symbol).toBe(getCurrencySymbol(curr));
-      expect(result.current.formatCurrency(1234)).toContain("1");
-      expect(result.current.formatCurrencyDecimal(1234.56)).toContain("1");
-    }
-
+    act(() => {
+      profileHook.current.setProfile({ ...DEFAULT_PROFILE, currency: "USD" });
+    });
+    const { result } = renderHook(() => useFormatCurrency());
+    expect(result.current.currency).toBe("GBP");
+    expect(result.current.formatCurrency(1234)).toBe("£1,234");
     act(() => {
       profileHook.current.setProfile(DEFAULT_PROFILE);
     });

@@ -199,24 +199,20 @@ describe("<UserProfilePanel />", () => {
     );
   });
 
-  it("allows user to update country and currency preferences", async () => {
+  it("has no country or currency selector (UK only)", () => {
     render(<UserProfilePanel initialProfile={DEFAULT_PROFILE} />);
+    expect(screen.queryByLabelText(/Country/i)).toBeNull();
+    expect(screen.queryByLabelText(/Currency/i)).toBeNull();
+  });
 
-    const countrySelect = screen.getByLabelText(/Country/i) as HTMLSelectElement;
-    const currencySelect = screen.getByLabelText(/Currency/i) as HTMLSelectElement;
-
-    fireEvent.change(countrySelect, { target: { value: "US" } });
-    fireEvent.change(currencySelect, { target: { value: "USD" } });
-
-    const saveBtn = screen.getByRole("button", { name: /Save Profile/i });
-    fireEvent.click(saveBtn);
-
+  it("always saves country GB and currency GBP", async () => {
+    render(
+      <UserProfilePanel initialProfile={{ ...DEFAULT_PROFILE, country: "US", currency: "USD" }} />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: /Save Profile/i }));
     await waitFor(() => {
       expect(mockUpdateProfile).toHaveBeenCalledWith(
-        expect.objectContaining({
-          country: "US",
-          currency: "USD",
-        }),
+        expect.objectContaining({ country: "GB", currency: "GBP" }),
       );
     });
   });
@@ -285,9 +281,9 @@ describe("<UserProfilePanel />", () => {
 
 describe("calculateNetTakeHome", () => {
   it("returns null, never gross, when the employment type is unknown", () => {
-    expect(calculateNetTakeHome(60000, null, 5, true, "GB")).toBeNull();
-    expect(calculateNetTakeHome(60000, "other", 5, true, "GB")).toBeNull();
-    expect(calculateNetTakeHome(60000, undefined, 5, true, "IE")).toBeNull();
+    expect(calculateNetTakeHome(60000, null, 5, true)).toBeNull();
+    expect(calculateNetTakeHome(60000, "other", 5, true)).toBeNull();
+    expect(calculateNetTakeHome(60000, undefined, 5, true)).toBeNull();
   });
 
   it("returns null when salary is missing", () => {
@@ -296,7 +292,7 @@ describe("calculateNetTakeHome", () => {
   });
 
   it("returns a net figure below gross for a known type", () => {
-    const result = calculateNetTakeHome(60000, "employed", 5, true, "GB");
+    const result = calculateNetTakeHome(60000, "employed", 5, true);
     expect(result?.netAnnual).toBeLessThan(60000);
   });
 });

@@ -1,15 +1,11 @@
 import { describe, expect, it } from "vitest";
 import {
   buildLegacyUKConfig,
-  calculateIrishTakeHome,
   calculateScottishIncomeTaxOnTaxable,
   calculateUKEWNIIncomeTaxOnTaxable,
   calculateUKEWNITakeHome,
-  getAvailableIrishTaxYears,
   getAvailableUKTaxYears,
-  getCurrentIrishTaxYear,
   getCurrentUKTaxYear,
-  getIrishTaxYearForDate,
   TAX_DISCLAIMER,
   UK_EWNI_INCOME_TAX,
   UK_SCOTLAND_INCOME_TAX,
@@ -28,18 +24,8 @@ describe("tax-rules", () => {
     expect(ukYears.length).toBeGreaterThan(0);
     expect(ukYears).toContain("2024/25");
 
-    const irishYears = getAvailableIrishTaxYears();
-    expect(irishYears.length).toBeGreaterThan(0);
-    expect(irishYears).toContain("2024");
-
     const currentUK = getCurrentUKTaxYear();
     expect(typeof currentUK).toBe("string");
-
-    const currentIrish = getCurrentIrishTaxYear();
-    expect(typeof currentIrish).toBe("string");
-
-    expect(getIrishTaxYearForDate("2024-06-15")).toBe("2024");
-    expect(getIrishTaxYearForDate("2025-01-01")).toBe("2025");
   });
 
   it("builds legacy UK config", () => {
@@ -112,31 +98,6 @@ describe("tax-rules", () => {
     expect(zeroRes.incomeTax).toBe(0);
 
     const otherRes = calculateUKEWNITakeHome(50000, "other", 0, false, "2024/25");
-    expect(otherRes.netAnnual).toBe(50000);
-  });
-
-  it("calculates Irish take home correctly", () => {
-    // Single employed earner
-    const singleRes = calculateIrishTakeHome(50000, "2024", "employed");
-    expect(singleRes.gross).toBe(50000);
-    expect(singleRes.incomeTax).toBeGreaterThan(0);
-    expect(singleRes.usc).toBeGreaterThan(0);
-    expect(singleRes.prsi).toBeGreaterThan(0);
-    expect(singleRes.netAnnual).toBeGreaterThan(0);
-
-    // Self-employed earner
-    const selfEmployedRes = calculateIrishTakeHome(70000, "2024", "self-employed");
-    expect(selfEmployedRes.prsi).toBeGreaterThan(0);
-
-    // Low income exempt from USC (< threshold)
-    const lowIncomeRes = calculateIrishTakeHome(12000, "2024", "employed");
-    expect(lowIncomeRes.usc).toBe(0);
-
-    // Zero gross or other
-    const zeroRes = calculateIrishTakeHome(0, "2024", "employed");
-    expect(zeroRes.netAnnual).toBe(0);
-
-    const otherRes = calculateIrishTakeHome(50000, "2024", "other");
     expect(otherRes.netAnnual).toBe(50000);
   });
 });

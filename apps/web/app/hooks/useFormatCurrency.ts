@@ -1,82 +1,31 @@
-import { useAtomValue } from "jotai";
-import { userProfileAtom } from "./useUserProfile";
-
-export function getCurrencySymbol(curr: string): string {
-  switch (curr) {
-    case "USD":
-    case "CAD":
-    case "AUD":
-    case "NZD":
-    case "SGD":
-      return "$";
-    case "EUR":
-      return "€";
-    case "JPY":
-      return "¥";
-    case "INR":
-      return "₹";
-    case "ZAR":
-      return "R";
-    case "CHF":
-      return "CHF";
-    default:
-      return "£";
-  }
-}
+/**
+ * Flump is UK-only (E16 D6-B): every amount is GBP, formatted for en-GB, whatever the stored
+ * profile currency column says.
+ */
+const CURRENCY = "GBP";
+const LOCALE = "en-GB";
 
 export function useFormatCurrency() {
-  const profile = useAtomValue(userProfileAtom);
-  const currency = profile?.currency || "GBP";
-
-  const getLocale = (curr: string) => {
-    switch (curr) {
-      case "USD":
-        return "en-US";
-      case "EUR":
-        return "de-DE";
-      case "AUD":
-        return "en-AU";
-      case "CAD":
-        return "en-CA";
-      case "NZD":
-        return "en-NZ";
-      case "JPY":
-        return "ja-JP";
-      case "INR":
-        return "en-IN";
-      case "ZAR":
-        return "en-ZA";
-      case "SGD":
-        return "en-SG";
-      case "CHF":
-        return "de-CH";
-      default:
-        return "en-GB";
-    }
-  };
-
-  const formatCurrency = (val: number, options?: Intl.NumberFormatOptions) => {
-    return Intl.NumberFormat(getLocale(currency), {
+  const formatCurrency = (val: number, options?: Intl.NumberFormatOptions) =>
+    Intl.NumberFormat(LOCALE, {
       style: "currency",
-      currency: currency,
+      currency: CURRENCY,
       maximumFractionDigits: 0,
       ...options,
     }).format(val);
-  };
 
-  const formatCurrencyDecimal = (val: number, options?: Intl.NumberFormatOptions) => {
-    return Intl.NumberFormat(getLocale(currency), {
+  const formatCurrencyDecimal = (val: number, options?: Intl.NumberFormatOptions) =>
+    Intl.NumberFormat(LOCALE, {
       style: "currency",
-      currency: currency,
+      currency: CURRENCY,
       maximumFractionDigits: 2,
       ...options,
     }).format(val);
-  };
 
   return {
     formatCurrency,
     formatCurrencyDecimal,
-    currency,
-    symbol: getCurrencySymbol(currency),
+    currency: CURRENCY,
+    symbol: "£",
   };
 }
