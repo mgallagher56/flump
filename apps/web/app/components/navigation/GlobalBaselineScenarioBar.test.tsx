@@ -18,6 +18,20 @@ describe("GlobalBaselineScenarioBar", () => {
     expect(screen.getAllByText("Not set").length).toBeGreaterThan(0);
   });
 
+  it("a cleared salary override stays undefined: input is empty and no zero salary appears", () => {
+    render(<GlobalBaselineScenarioBar />);
+    fireEvent.click(screen.getByRole("button", { name: /Update details/i }));
+    const salaryInput = screen.getByLabelText("Gross Annual Salary") as HTMLInputElement;
+
+    fireEvent.change(salaryInput, { target: { value: "85000" } });
+    expect(salaryInput.value).toBe("85000");
+
+    fireEvent.change(salaryInput, { target: { value: "" } });
+    expect(salaryInput.value).toBe("");
+    expect(screen.queryByText(/£0\b/)).toBeNull();
+    expect(screen.getAllByText("Not set").length).toBeGreaterThan(0);
+  });
+
   it("shows 'Not set' rather than an invented salary when none is known", () => {
     render(<GlobalBaselineScenarioBar />);
 
