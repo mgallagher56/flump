@@ -47,6 +47,7 @@ import FLPHeading from "~/components/core/typography/FLPHeading";
 import FLPText from "~/components/core/typography/FLPText";
 import CopyTaxYearModal from "~/components/tax/CopyTaxYearModal";
 import PaymentsOnAccountCard from "~/components/tax/PaymentsOnAccountCard";
+import TaxEstimateNote from "~/components/tax/TaxEstimateNote";
 import TaxIncomeSectionCard from "~/components/tax/TaxIncomeSectionCard";
 import TaxTrapAlertBanner from "~/components/tax/TaxTrapAlertBanner";
 import { ConfirmDialog } from "~/features/feedback/components/ConfirmDialog";
@@ -413,7 +414,7 @@ const TaxContainer: FC = () => {
       cursor: "pointer",
       backgroundColor: active ? "surface" : "transparent",
       color: active ? "text.primary" : "text.muted",
-      boxShadow: active ? "0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06)" : "none",
+      boxShadow: active ? "var(--shadows-card)" : "none",
       border: "1px solid",
       borderColor: active ? "border.subtle" : "transparent",
       transition: "all 0.15s ease",
@@ -465,7 +466,7 @@ const TaxContainer: FC = () => {
     padding: "10px 14px",
     fontWeight: "bold",
     color: "text.primary",
-    backgroundColor: "rgba(0,0,0,0.02)",
+    backgroundColor: "var(--colors-surface-sunken)",
     borderBottom: "1px solid",
     borderColor: "border",
     fontVariantNumeric: "tabular-nums",
@@ -482,7 +483,7 @@ const TaxContainer: FC = () => {
   const trStyle = css({
     transition: "background 0.2s",
     "&:hover": {
-      backgroundColor: "rgba(0,0,0,0.01)",
+      backgroundColor: "var(--colors-surface-sunken)",
     },
   });
 
@@ -653,7 +654,7 @@ const TaxContainer: FC = () => {
       </div>
 
       {/* Top 4-KPI Row (Single sleek row on desktop) */}
-      <div className={cardsGrid}>
+      <div aria-label={`Tax summary for ${selectedTaxYear}`} className={cardsGrid} role="status">
         <FLPCard
           className={css({
             padding: "16px",
@@ -667,12 +668,13 @@ const TaxContainer: FC = () => {
           <FLPText color="text.muted" fontSize="xs" fontWeight="semibold" textTransform="uppercase">
             Estimated Self Assessment due ({selectedTaxYear})
           </FLPText>
-          <FLPHeading as="h2" color="blue.500" mt={2} size="xl" className="tabular-nums">
+          <FLPHeading as="p" color="status.info.text" mt={2} size="xl" className="tabular-nums">
             {formatCurrency(activeYearData.netAdditionalTaxToPay)}
           </FLPHeading>
           <FLPText color="text.muted" fontSize="xs" className={css({ marginTop: "4px" })}>
             Additional tax & Class 4 NI on top of PAYE deductions.
           </FLPText>
+          <TaxEstimateNote className={css({ marginTop: "4px" })} taxYear={selectedTaxYear} />
         </FLPCard>
 
         <FLPCard
@@ -688,13 +690,14 @@ const TaxContainer: FC = () => {
           <FLPText color="text.muted" fontSize="xs" fontWeight="semibold" textTransform="uppercase">
             Total Gross Income ({selectedTaxYear})
           </FLPText>
-          <FLPHeading as="h2" color="success.500" mt={2} size="xl" className="tabular-nums">
+          <FLPHeading as="p" color="status.positive.text" mt={2} size="xl" className="tabular-nums">
             {formatCurrency(activeYearData.totalGrossIncome)}
           </FLPHeading>
           <FLPText color="text.muted" fontSize="xs" className={css({ marginTop: "4px" })}>
             PAYE ({formatPaye(activeYearData.effectivePayeSalary, formatCurrency)}) + Business +
             Rental + Savings.
           </FLPText>
+          <TaxEstimateNote className={css({ marginTop: "4px" })} taxYear={selectedTaxYear} />
         </FLPCard>
 
         <FLPCard
@@ -710,13 +713,14 @@ const TaxContainer: FC = () => {
           <FLPText color="text.muted" fontSize="xs" fontWeight="semibold" textTransform="uppercase">
             Rental Profit Share ({selectedTaxYear})
           </FLPText>
-          <FLPHeading as="h2" color="warning.500" mt={2} size="xl" className="tabular-nums">
+          <FLPHeading as="p" color="status.warning.text" mt={2} size="xl" className="tabular-nums">
             {formatCurrency(activeYearData.rentalProfitPostInterestShare)}
           </FLPHeading>
           <FLPText color="text.muted" fontSize="xs" className={css({ marginTop: "4px" })}>
             {propertyOwnershipShare}% share of total property profit{" "}
             {formatCurrency(activeYearData.rentalProfitPostInterest)}.
           </FLPText>
+          <TaxEstimateNote className={css({ marginTop: "4px" })} taxYear={selectedTaxYear} />
         </FLPCard>
 
         <FLPCard
@@ -732,12 +736,13 @@ const TaxContainer: FC = () => {
           <FLPText color="text.muted" fontSize="xs" fontWeight="semibold" textTransform="uppercase">
             Self-Employed Profit ({selectedTaxYear})
           </FLPText>
-          <FLPHeading as="h2" color="purple.500" mt={2} size="xl" className="tabular-nums">
+          <FLPHeading as="p" color="chart.accentPurple" mt={2} size="xl" className="tabular-nums">
             {formatCurrency(activeYearData.seProfit)}
           </FLPHeading>
           <FLPText color="text.muted" fontSize="xs" className={css({ marginTop: "4px" })}>
             Turnover {formatCurrency(activeYearData.seIncomeGross)} less allowable costs.
           </FLPText>
+          <TaxEstimateNote className={css({ marginTop: "4px" })} taxYear={selectedTaxYear} />
         </FLPCard>
       </div>
 
@@ -834,8 +839,8 @@ const TaxContainer: FC = () => {
               <div
                 style={{
                   padding: "10px 14px",
-                  backgroundColor: "rgba(59, 130, 246, 0.05)",
-                  border: "1px solid rgba(59, 130, 246, 0.2)",
+                  backgroundColor: "var(--colors-status-info-bg)",
+                  border: "1px solid var(--colors-status-info-border)",
                   borderRadius: "6px",
                   fontSize: "12px",
                   display: "flex",
@@ -891,8 +896,8 @@ const TaxContainer: FC = () => {
               <div
                 style={{
                   padding: "10px 14px",
-                  backgroundColor: "rgba(245, 158, 11, 0.05)",
-                  border: "1px solid rgba(245, 158, 11, 0.2)",
+                  backgroundColor: "var(--colors-status-warning-bg)",
+                  border: "1px solid var(--colors-status-warning-border)",
                   borderRadius: "6px",
                   fontSize: "12px",
                 }}
@@ -900,7 +905,7 @@ const TaxContainer: FC = () => {
                 <span>
                   Ownership share: <strong>{propertyOwnershipShare}%</strong>. Section 24 finance
                   credit:{" "}
-                  <strong style={{ color: "var(--colors-success-500)" }}>
+                  <strong style={{ color: "var(--colors-status-positive-text)" }}>
                     -{formatCurrency(activeYearData.rentalPropertyTaxCredit)}
                   </strong>{" "}
                   (20% basic rate relief).
@@ -930,8 +935,8 @@ const TaxContainer: FC = () => {
               <div
                 style={{
                   padding: "10px 14px",
-                  backgroundColor: "rgba(16, 185, 129, 0.05)",
-                  border: "1px solid rgba(16, 185, 129, 0.2)",
+                  backgroundColor: "var(--colors-status-positive-bg)",
+                  border: "1px solid var(--colors-status-positive-border)",
                   borderRadius: "6px",
                   fontSize: "12px",
                 }}
@@ -967,8 +972,8 @@ const TaxContainer: FC = () => {
               <div
                 style={{
                   padding: "10px 14px",
-                  backgroundColor: "rgba(139, 92, 246, 0.05)",
-                  border: "1px solid rgba(139, 92, 246, 0.2)",
+                  backgroundColor: "var(--colors-surface-subtle)",
+                  border: "1px solid var(--colors-border)",
                   borderRadius: "6px",
                   fontSize: "12px",
                 }}
@@ -1143,7 +1148,7 @@ const TaxContainer: FC = () => {
                   style={{
                     display: "flex",
                     justifyContent: "space-between",
-                    color: "var(--colors-success-500)",
+                    color: "var(--colors-status-positive-text)",
                   }}
                 >
                   <FLPText>Section 24 Tax Credit:</FLPText>
@@ -1180,11 +1185,12 @@ const TaxContainer: FC = () => {
                     fontSize: "14px",
                   }}
                 >
-                  <FLPText color="blue.500">Self Assessment due:</FLPText>
-                  <FLPText color="blue.500">
+                  <FLPText color="status.info.text">Estimated Self Assessment due:</FLPText>
+                  <FLPText color="status.info.text" className="tabular-nums">
                     {formatCurrency(activeYearData.netAdditionalTaxToPay)}
                   </FLPText>
                 </div>
+                <TaxEstimateNote taxYear={selectedTaxYear} />
               </FLPBox>
             </FLPCard>
           </div>
@@ -1247,7 +1253,10 @@ const TaxContainer: FC = () => {
                 <tr className={trStyle}>
                   <td
                     className={tdStyle}
-                    style={{ fontWeight: "bold", backgroundColor: "rgba(245,158,11,0.04)" }}
+                    style={{
+                      fontWeight: "bold",
+                      backgroundColor: "var(--colors-status-warning-bg)",
+                    }}
                   >
                     Rental Property (100% Share)
                   </td>
@@ -1256,7 +1265,7 @@ const TaxContainer: FC = () => {
                       key={year}
                       className={tdStyle}
                       style={{
-                        backgroundColor: "rgba(245,158,11,0.04)",
+                        backgroundColor: "var(--colors-status-warning-bg)",
                         borderLeft:
                           year === selectedTaxYear ? "2px solid var(--colors-primary)" : "none",
                       }}
@@ -1273,7 +1282,7 @@ const TaxContainer: FC = () => {
                       className={tdStyle}
                       style={{
                         textAlign: "right",
-                        color: "var(--colors-success-500)",
+                        color: "var(--colors-status-positive-text)",
                         borderLeft:
                           year === selectedTaxYear ? "2px solid var(--colors-primary)" : "none",
                       }}
@@ -1322,7 +1331,7 @@ const TaxContainer: FC = () => {
                     </td>
                   ))}
                 </tr>
-                <tr className={trStyle} style={{ backgroundColor: "rgba(0,0,0,0.02)" }}>
+                <tr className={trStyle} style={{ backgroundColor: "var(--colors-surface-sunken)" }}>
                   <td className={tdStyle} style={{ fontWeight: "bold", paddingLeft: "24px" }}>
                     Total Rental Profit (Post-Interest)
                   </td>
@@ -1346,7 +1355,10 @@ const TaxContainer: FC = () => {
                 <tr className={trStyle}>
                   <td
                     className={tdStyle}
-                    style={{ fontWeight: "bold", backgroundColor: "rgba(16,185,129,0.04)" }}
+                    style={{
+                      fontWeight: "bold",
+                      backgroundColor: "var(--colors-status-positive-bg)",
+                    }}
                   >
                     Self-Employed (Sole Trader)
                   </td>
@@ -1355,7 +1367,7 @@ const TaxContainer: FC = () => {
                       key={year}
                       className={tdStyle}
                       style={{
-                        backgroundColor: "rgba(16,185,129,0.04)",
+                        backgroundColor: "var(--colors-status-positive-bg)",
                         borderLeft:
                           year === selectedTaxYear ? "2px solid var(--colors-primary)" : "none",
                       }}
@@ -1372,7 +1384,7 @@ const TaxContainer: FC = () => {
                       className={tdStyle}
                       style={{
                         textAlign: "right",
-                        color: "var(--colors-success-500)",
+                        color: "var(--colors-status-positive-text)",
                         borderLeft:
                           year === selectedTaxYear ? "2px solid var(--colors-primary)" : "none",
                       }}
@@ -1400,7 +1412,7 @@ const TaxContainer: FC = () => {
                     </td>
                   ))}
                 </tr>
-                <tr className={trStyle} style={{ backgroundColor: "rgba(0,0,0,0.02)" }}>
+                <tr className={trStyle} style={{ backgroundColor: "var(--colors-surface-sunken)" }}>
                   <td className={tdStyle} style={{ fontWeight: "bold", paddingLeft: "24px" }}>
                     Self-Employed Net Profit
                   </td>
@@ -1424,7 +1436,7 @@ const TaxContainer: FC = () => {
                 <tr className={trStyle}>
                   <td
                     className={tdStyle}
-                    style={{ fontWeight: "bold", backgroundColor: "rgba(139,92,246,0.04)" }}
+                    style={{ fontWeight: "bold", backgroundColor: "var(--colors-surface-subtle)" }}
                   >
                     Savings & Investments
                   </td>
@@ -1433,7 +1445,7 @@ const TaxContainer: FC = () => {
                       key={year}
                       className={tdStyle}
                       style={{
-                        backgroundColor: "rgba(139,92,246,0.04)",
+                        backgroundColor: "var(--colors-surface-subtle)",
                         borderLeft:
                           year === selectedTaxYear ? "2px solid var(--colors-primary)" : "none",
                       }}
@@ -1483,7 +1495,7 @@ const TaxContainer: FC = () => {
                 <tr className={trStyle}>
                   <td
                     className={tdStyle}
-                    style={{ fontWeight: "bold", backgroundColor: "rgba(99,99,241,0.04)" }}
+                    style={{ fontWeight: "bold", backgroundColor: "var(--colors-primary-subtle)" }}
                   >
                     Tax Profile & Liabilities
                   </td>
@@ -1492,7 +1504,7 @@ const TaxContainer: FC = () => {
                       key={year}
                       className={tdStyle}
                       style={{
-                        backgroundColor: "rgba(99,99,241,0.04)",
+                        backgroundColor: "var(--colors-primary-subtle)",
                         borderLeft:
                           year === selectedTaxYear ? "2px solid var(--colors-primary)" : "none",
                       }}
@@ -1569,7 +1581,7 @@ const TaxContainer: FC = () => {
                       className={tdStyle}
                       style={{
                         textAlign: "right",
-                        color: "var(--colors-success-500)",
+                        color: "var(--colors-status-positive-text)",
                         borderLeft:
                           year === selectedTaxYear ? "2px solid var(--colors-primary)" : "none",
                       }}
@@ -1578,7 +1590,7 @@ const TaxContainer: FC = () => {
                     </td>
                   ))}
                 </tr>
-                <tr className={trStyle} style={{ backgroundColor: "rgba(99,99,241,0.06)" }}>
+                <tr className={trStyle} style={{ backgroundColor: "var(--colors-primary-subtle)" }}>
                   <td className={tdStyle} style={{ fontWeight: "bold", paddingLeft: "24px" }}>
                     Self Assessment tax & NI due
                   </td>
@@ -1589,7 +1601,7 @@ const TaxContainer: FC = () => {
                       style={{
                         textAlign: "right",
                         fontWeight: "bold",
-                        color: "var(--colors-blue-500)",
+                        color: "var(--colors-status-info-text)",
                         borderLeft:
                           year === selectedTaxYear ? "2px solid var(--colors-primary)" : "none",
                       }}
@@ -1783,20 +1795,20 @@ const TaxContainer: FC = () => {
                               textTransform: "uppercase",
                               backgroundColor:
                                 record.source === "rental"
-                                  ? "rgba(245, 158, 11, 0.12)"
+                                  ? "var(--colors-status-warning-bg)"
                                   : record.source === "self-employed"
-                                    ? "rgba(16, 185, 129, 0.12)"
+                                    ? "var(--colors-status-positive-bg)"
                                     : record.source === "savings"
-                                      ? "rgba(139, 92, 246, 0.12)"
-                                      : "rgba(59, 130, 246, 0.12)",
+                                      ? "var(--colors-surface-subtle)"
+                                      : "var(--colors-status-info-bg)",
                               color:
                                 record.source === "rental"
-                                  ? "warning.500"
+                                  ? "status.warning.text"
                                   : record.source === "self-employed"
-                                    ? "success.500"
+                                    ? "status.positive.text"
                                     : record.source === "savings"
-                                      ? "purple.500"
-                                      : "blue.500",
+                                      ? "chart.accentPurple"
+                                      : "status.info.text",
                             })}
                           >
                             {record.source}
@@ -1837,7 +1849,10 @@ const TaxContainer: FC = () => {
                                   style={{ color: "var(--colors-status-danger-text)" }}
                                 />
                               ) : (
-                                <FaFileImage size={14} style={{ color: "#3B82F6" }} />
+                                <FaFileImage
+                                  size={14}
+                                  style={{ color: "var(--colors-status-info-solid)" }}
+                                />
                               )}
                               View
                             </button>
@@ -1853,7 +1868,7 @@ const TaxContainer: FC = () => {
                             textAlign: "right",
                             fontWeight: "semibold",
                             color: isIncome
-                              ? "var(--colors-success-500)"
+                              ? "var(--colors-status-positive-text)"
                               : "var(--colors-text-primary)",
                           }}
                         >
@@ -1889,7 +1904,7 @@ const TaxContainer: FC = () => {
                               color: "status.danger.text",
                               cursor: "pointer",
                               borderRadius: "sm",
-                              "&:hover": { backgroundColor: "rgba(239, 68, 68, 0.1)" },
+                              "&:hover": { backgroundColor: "var(--colors-status-danger-bg)" },
                             })}
                             aria-label="Delete record"
                             title="Delete record"
@@ -2057,7 +2072,7 @@ const TaxContainer: FC = () => {
                     padding: "8px 12px",
                     borderRadius: "sm",
                     border: "1px solid token(colors.border)",
-                    backgroundColor: "rgba(0,0,0,0.02)",
+                    backgroundColor: "var(--colors-surface-sunken)",
                   })}
                 >
                   <div
@@ -2066,7 +2081,7 @@ const TaxContainer: FC = () => {
                     {receiptMimeType?.includes("pdf") ? (
                       <FaFilePdf style={{ color: "var(--colors-status-danger-text)" }} />
                     ) : (
-                      <FaFileImage style={{ color: "#3B82F6" }} />
+                      <FaFileImage style={{ color: "var(--colors-status-info-solid)" }} />
                     )}
                     <span
                       style={{
@@ -2109,7 +2124,7 @@ const TaxContainer: FC = () => {
                       backgroundColor: "surface",
                       cursor: "pointer",
                       transition: "background 0.2s",
-                      "&:hover": { backgroundColor: "rgba(0,0,0,0.02)" },
+                      "&:hover": { backgroundColor: "var(--colors-surface-sunken)" },
                     })}
                   >
                     <FaUpload /> Upload File
@@ -2134,7 +2149,7 @@ const TaxContainer: FC = () => {
                       backgroundColor: "surface",
                       cursor: "pointer",
                       transition: "background 0.2s",
-                      "&:hover": { backgroundColor: "rgba(0,0,0,0.02)" },
+                      "&:hover": { backgroundColor: "var(--colors-surface-sunken)" },
                     })}
                   >
                     <FaCamera /> Take Photo

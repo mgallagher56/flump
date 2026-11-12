@@ -36,4 +36,20 @@ describe("PensionSummaryCards", () => {
     expect(screen.getByText(/Net cost: £135\/mo \(£53 tax relief\)/i)).toBeDefined();
     expect(screen.getByText("Employer (3.0%)")).toBeDefined();
   });
+
+  it("announces results as a status region and keeps KPI values out of the heading outline", () => {
+    render(
+      <PensionSummaryCards
+        employeePercent={5}
+        employerPercent={3}
+        monthlyEmployeeContrib={188}
+        monthlyEmployerContrib={113}
+        potsCount={1}
+        totalValue={25000}
+      />,
+    );
+    expect(screen.getByRole("status", { name: "Pension summary" })).toBeDefined();
+    expect(screen.queryAllByRole("heading")).toHaveLength(0);
+    expect(screen.getByText("£25,000").tagName).toBe("P");
+  });
 });

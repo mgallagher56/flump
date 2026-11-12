@@ -25,7 +25,7 @@ exports[`FLPHeading > renders as expected 1`] = `
 exports[`FLPHeading > renders as expected with a color 1`] = `
 <div>
   <h2
-    class="c_text.primary ff_var(--fonts-display,_'Plus_Jakarta_Sans',_sans-serif) ls_-0.025em fs_1rem fw_bold lh_tight m_0 "
+    class="c_status.info.text ff_var(--fonts-display,_'Plus_Jakarta_Sans',_sans-serif) ls_-0.025em fs_1rem fw_bold lh_tight m_0 "
     style="font-size: 1rem;"
   >
     Lorem, ipsum dolor sit amet consectetur adipisicing elit. Nemo quaerat repellendus numquam et esse ut labore molestias nihil optio expedita atque, quas eligendi corrupti quasi impedit suscipit sunt.

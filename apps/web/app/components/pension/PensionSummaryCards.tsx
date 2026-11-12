@@ -90,6 +90,8 @@ export const PensionSummaryCards: FC<PensionSummaryCardsProps> = ({
 
   return (
     <div
+      aria-label="Pension summary"
+      role="status"
       className={gridStyle(isMobileVariant)}
       data-variant={isMobileVariant ? "mobile" : "desktop"}
     >
@@ -104,7 +106,7 @@ export const PensionSummaryCards: FC<PensionSummaryCardsProps> = ({
           </div>
         </div>
         <div>
-          <FLPHeading as="h3" className="tabular-nums" isMobile={isMobileVariant} size="lg">
+          <FLPHeading as="p" className="tabular-nums" isMobile={isMobileVariant} size="lg">
             {formatCurrency(totalValue)}
           </FLPHeading>
           <FLPText color="text.muted" fontSize="xs" style={{ marginTop: "4px" }}>
@@ -127,7 +129,7 @@ export const PensionSummaryCards: FC<PensionSummaryCardsProps> = ({
           </div>
         </div>
         <div>
-          <FLPHeading as="h3" className="tabular-nums" isMobile={isMobileVariant} size="lg">
+          <FLPHeading as="p" className="tabular-nums" isMobile={isMobileVariant} size="lg">
             {formatCurrency(totalMonthlyContrib)}
             <span
               style={{ fontSize: "14px", fontWeight: "normal", color: "var(--colors-text-muted)" }}
@@ -157,7 +159,7 @@ export const PensionSummaryCards: FC<PensionSummaryCardsProps> = ({
           </div>
         </div>
         <div>
-          <FLPHeading as="h3" className="tabular-nums" isMobile={isMobileVariant} size="lg">
+          <FLPHeading as="p" className="tabular-nums" isMobile={isMobileVariant} size="lg">
             {formatCurrency(monthlyEmployeeContrib)}
             <span
               style={{ fontSize: "14px", fontWeight: "normal", color: "var(--colors-text-muted)" }}
@@ -184,7 +186,7 @@ export const PensionSummaryCards: FC<PensionSummaryCardsProps> = ({
           </div>
         </div>
         <div>
-          <FLPHeading as="h3" className="tabular-nums" isMobile={isMobileVariant} size="lg">
+          <FLPHeading as="p" className="tabular-nums" isMobile={isMobileVariant} size="lg">
             {formatCurrency(monthlyEmployerContrib)}
             <span
               style={{ fontSize: "14px", fontWeight: "normal", color: "var(--colors-text-muted)" }}

@@ -3,7 +3,7 @@ import type { FC, HTMLAttributes } from "react";
 import { useResponsive } from "~/context/ResponsiveContext";
 
 export interface FLPHeadingProps extends HTMLAttributes<HTMLHeadingElement> {
-  as?: "h1" | "h2" | "h3" | "h4" | "h5" | "h6";
+  as?: "h1" | "h2" | "h3" | "h4" | "h5" | "h6" | "p";
   color?: string;
   size?: "xs" | "sm" | "md" | "lg" | "xl" | "2xl" | "3xl" | "4xl";
   mt?: number | string;
@@ -39,8 +39,7 @@ const FLPHeading: FC<FLPHeadingProps> = ({
     "4xl": isMobileVariant ? "2rem" : "3rem",
   };
 
-  const resolvedColor =
-    color === "primary" ? "primary" : color === "blue.500" ? "text.primary" : color;
+  const resolvedColor = color;
 
   const headingStyle = css({
     color: resolvedColor,

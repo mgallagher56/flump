@@ -125,3 +125,47 @@ describe("<UKTaxCalculator /> chart accessibility", () => {
     expect(figure.textContent).toMatch(/Take-Home Pay £[\d,]+/);
   });
 });
+
+describe("<UKTaxCalculator /> estimate labelling and tax year", () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  test("labels take-home as an estimate for the tax year and keeps KPI values out of the heading outline", () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-11-12T12:00:00Z"));
+    const { getByText, getByRole, queryByText, queryAllByRole } = customRender(
+      <UKTaxCalculator initialSalary={45000} onApplyIncrease={vi.fn()} />,
+    );
+
+    expect(getByText("Estimate for 2026/27, based on the figures you entered")).toBeDefined();
+    expect(getByRole("status", { name: "Take-home estimate for 2026/27" })).toBeDefined();
+    // Real 2026/27 rates: no "using older rates" banner.
+    expect(queryByText(/Using .* rates/)).toBeNull();
+    const headings = queryAllByRole("heading").map((h) => h.textContent);
+    expect(headings.some((t) => /£/.test(t ?? ""))).toBe(false);
+  });
+
+  test("offers the 2026/27 student loan thresholds, not last year's", () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-11-12T12:00:00Z"));
+    const { getByRole } = customRender(
+      <UKTaxCalculator initialSalary={45000} onApplyIncrease={vi.fn()} />,
+    );
+    const options = Array.from(getByRole("combobox").querySelectorAll("option")).map(
+      (o) => o.textContent,
+    );
+    expect(options.some((t) => t?.includes("Plan 2") && t.includes("£29,385"))).toBe(true);
+    expect(options.some((t) => t?.includes("£28,470"))).toBe(false);
+  });
+
+  test("says which rates are used when the calendar is past the latest supported year", () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2027-06-01T12:00:00Z"));
+    const { getByText } = customRender(
+      <UKTaxCalculator initialSalary={45000} onApplyIncrease={vi.fn()} />,
+    );
+    expect(getByText(/Using 2026\/27 rates/)).toBeDefined();
+    expect(getByText(/^Estimate for 2026\/27/)).toBeDefined();
+  });
+});

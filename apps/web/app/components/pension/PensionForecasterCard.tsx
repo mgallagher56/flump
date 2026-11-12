@@ -1,4 +1,4 @@
-import { calculateEmployerNISavings } from "@flump/finance-engine";
+import { calculateEmployerNISavings, getUkTaxYearContext } from "@flump/finance-engine";
 import { ChartFigure } from "@repo/ui";
 import { css } from "@repo/ui/styled-system/css";
 import { type FC, useEffect, useMemo, useState } from "react";
@@ -25,6 +25,7 @@ import FLPButton from "~/components/core/buttons/FLPButton";
 import FLPCard from "~/components/core/cards/FLPCard";
 import FLPHeading from "~/components/core/typography/FLPHeading";
 import FLPText from "~/components/core/typography/FLPText";
+import TaxEstimateNote from "~/components/tax/TaxEstimateNote";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
 import { usePrefersReducedMotion } from "~/hooks/usePrefersReducedMotion";
 
@@ -52,6 +53,8 @@ const UK_ANNUAL_ALLOWANCE = 60000;
 const UK_LUMP_SUM_ALLOWANCE = 268275;
 const UK_STATE_PENSION_ANNUAL = 11502;
 const INFLATION_RATE = 2.5;
+// Drawdown rate behind the "estimated retirement income" figure. Shown next to the figure.
+const SAFE_WITHDRAWAL_RATE = 0.04;
 
 // PLSA UK Retirement Living Standards (Single Person, monthly)
 const PLSA_MINIMUM = 1200; // £14,400/yr
@@ -67,7 +70,7 @@ const cardStyle = css({
   display: "flex",
   flexDirection: "column",
   gap: "20px",
-  boxShadow: "0 4px 20px -2px rgba(0, 0, 0, 0.05)",
+  boxShadow: "var(--shadows-card)",
 });
 
 const outcomeGridStyle = css({
@@ -153,9 +156,7 @@ const presetBtnStyle = (active: boolean) =>
     borderRadius: "full",
     fontSize: "xs",
     fontWeight: active ? "semibold" : "medium",
-    backgroundColor: active
-      ? "primary"
-      : { base: "rgba(0, 0, 0, 0.04)", _dark: "rgba(255, 255, 255, 0.06)" },
+    backgroundColor: active ? "primary.solid" : "surface.subtle",
     color: active ? "primary.foreground" : "text.primary",
     border: "none",
     cursor: "pointer",
@@ -185,15 +186,9 @@ const assumptionsSummaryStyle = css({
   color: "text.muted",
   textTransform: "uppercase",
   letterSpacing: "0.04em",
-  backgroundColor: {
-    base: "rgba(0, 0, 0, 0.02)",
-    _dark: "rgba(255, 255, 255, 0.02)",
-  },
+  backgroundColor: "surface.sunken",
   "&:hover": {
-    backgroundColor: {
-      base: "rgba(0, 0, 0, 0.04)",
-      _dark: "rgba(255, 255, 255, 0.04)",
-    },
+    backgroundColor: "surface.subtle",
   },
   "&::-webkit-details-marker": {
     display: "none",
@@ -207,17 +202,17 @@ const togglePillStyle = (active: boolean) =>
     borderRadius: "full",
     fontSize: "xs",
     fontWeight: active ? "semibold" : "medium",
-    backgroundColor: active ? "rgba(139, 92, 246, 0.14)" : "surface",
-    color: active ? "var(--colors-purple-500)" : "text.secondary",
+    backgroundColor: active ? "var(--colors-surface-subtle)" : "surface",
+    color: active ? "var(--colors-chart-accent-purple)" : "text.secondary",
     border: "1px solid",
-    borderColor: active ? "var(--colors-purple-500)" : "border",
+    borderColor: active ? "var(--colors-chart-accent-purple)" : "border",
     cursor: "pointer",
     transition: "all 0.15s ease",
     display: "inline-flex",
     alignItems: "center",
     gap: "6px",
     _hover: {
-      borderColor: "var(--colors-purple-500)",
+      borderColor: "var(--colors-chart-accent-purple)",
     },
   });
 
@@ -392,7 +387,7 @@ export const PensionForecasterCard: FC<PensionForecasterCardProps> = ({
   // 25% Tax-Free Lump Sum (capped at UK £268,275 LSA) & 4% Safe Withdrawal Rate
   const taxFreeLumpSum = Math.min(Math.round(finalBalance * 0.25), UK_LUMP_SUM_ALLOWANCE);
   const drawdownPotAfterLumpSum = Math.max(0, finalBalance - taxFreeLumpSum);
-  const baseAnnualDrawdown = Math.round(finalBalance * 0.04);
+  const baseAnnualDrawdown = Math.round(finalBalance * SAFE_WITHDRAWAL_RATE);
   const annualRetirementIncome =
     baseAnnualDrawdown + (includeStatePension ? UK_STATE_PENSION_ANNUAL : 0);
   const monthlyRetirementIncome = Math.round(annualRetirementIncome / 12);
@@ -400,15 +395,15 @@ export const PensionForecasterCard: FC<PensionForecasterCardProps> = ({
   // PLSA Standard status
   const plsaStandard = useMemo(() => {
     if (monthlyRetirementIncome >= PLSA_COMFORTABLE) {
-      return { label: "Comfortable Standard", color: "var(--colors-success-500)" };
+      return { label: "Comfortable Standard", color: "var(--colors-status-positive-text)" };
     }
     if (monthlyRetirementIncome >= PLSA_MODERATE) {
-      return { label: "Moderate Standard", color: "var(--colors-info-500)" };
+      return { label: "Moderate Standard", color: "var(--colors-status-info-text)" };
     }
     if (monthlyRetirementIncome >= PLSA_MINIMUM) {
-      return { label: "Minimum Standard", color: "var(--colors-warning-500)" };
+      return { label: "Minimum Standard", color: "var(--colors-status-warning-text)" };
     }
-    return { label: "Below PLSA Minimum", color: "var(--colors-destructive-500)" };
+    return { label: "Below PLSA Minimum", color: "var(--colors-status-danger-text)" };
   }, [monthlyRetirementIncome]);
 
   const plsaProgressPct = Math.min(100, (monthlyRetirementIncome / PLSA_COMFORTABLE) * 100);
@@ -474,8 +469,8 @@ export const PensionForecasterCard: FC<PensionForecasterCardProps> = ({
               className={css({
                 fontSize: "xs",
                 fontWeight: "bold",
-                color: "#8b5cf6",
-                backgroundColor: "rgba(139, 92, 246, 0.12)",
+                color: "var(--colors-chart-accent-purple)",
+                backgroundColor: "var(--colors-surface-subtle)",
                 padding: "2px 8px",
                 borderRadius: "full",
               })}
@@ -539,7 +534,9 @@ export const PensionForecasterCard: FC<PensionForecasterCardProps> = ({
           {/* Core Levers (Inputs Deck) */}
           <div className={controlsDeckStyle}>
             <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-              <FaSlidersH style={{ color: "#8b5cf6", fontSize: "14px" }} />
+              <FaSlidersH
+                style={{ color: "var(--colors-chart-accent-purple)", fontSize: "14px" }}
+              />
               <FLPText fontSize="xs" fontWeight="bold" textTransform="uppercase" color="text.muted">
                 Forecaster Parameters
               </FLPText>
@@ -588,7 +585,7 @@ export const PensionForecasterCard: FC<PensionForecasterCardProps> = ({
               <div className={inputCardStyle}>
                 <label className={labelStyle} htmlFor="pension-forecast-employee-pct">
                   <span>Employee Contrib</span>
-                  <span style={{ color: "#6363f1", fontWeight: "bold" }}>
+                  <span style={{ color: "var(--colors-chart-primary)", fontWeight: "bold" }}>
                     {employeePercent}% ({formatCurrency(monthlyEmployee)}/mo)
                   </span>
                 </label>
@@ -669,7 +666,7 @@ export const PensionForecasterCard: FC<PensionForecasterCardProps> = ({
               <div className={inputCardStyle}>
                 <label className={labelStyle} htmlFor="pension-forecast-horizon">
                   <span>Horizon to Retirement</span>
-                  <span style={{ color: "#8b5cf6", fontWeight: "bold" }}>
+                  <span style={{ color: "var(--colors-chart-accent-purple)", fontWeight: "bold" }}>
                     {horizonYears} {horizonYears === 1 ? "Year" : "Years"}
                   </span>
                 </label>
@@ -798,7 +795,7 @@ export const PensionForecasterCard: FC<PensionForecasterCardProps> = ({
               className={css({
                 padding: "12px 16px",
                 borderRadius: "lg",
-                backgroundColor: "rgba(99, 99, 241, 0.08)",
+                backgroundColor: "var(--colors-primary-subtle)",
                 border: "1px solid",
                 borderColor: "primary",
                 display: "flex",
@@ -809,7 +806,9 @@ export const PensionForecasterCard: FC<PensionForecasterCardProps> = ({
               })}
             >
               <div style={{ display: "flex", alignItems: "center", gap: "10px", flex: 1 }}>
-                <FaLightbulb style={{ color: "#6363f1", fontSize: "16px", flexShrink: 0 }} />
+                <FaLightbulb
+                  style={{ color: "var(--colors-chart-primary)", fontSize: "16px", flexShrink: 0 }}
+                />
                 <FLPText fontSize="xs">
                   <strong>UK £100k Tax Trap Detected:</strong> Your adjusted income is{" "}
                   {formatCurrency(adjustedNetIncome)}/yr (60% effective marginal tax). Increasing
@@ -832,8 +831,8 @@ export const PensionForecasterCard: FC<PensionForecasterCardProps> = ({
               className={css({
                 padding: "12px 16px",
                 borderRadius: "lg",
-                backgroundColor: "rgba(245, 158, 11, 0.1)",
-                border: "1px solid #f59e0b",
+                backgroundColor: "var(--colors-status-warning-bg)",
+                border: "1px solid var(--colors-chart-debt)",
                 display: "flex",
                 alignItems: "center",
                 gap: "10px",
@@ -864,8 +863,8 @@ export const PensionForecasterCard: FC<PensionForecasterCardProps> = ({
                   style={{
                     fontSize: "11px",
                     fontWeight: 600,
-                    color: "#8b5cf6",
-                    backgroundColor: "rgba(139, 92, 246, 0.12)",
+                    color: "var(--colors-chart-accent-purple)",
+                    backgroundColor: "var(--colors-surface-subtle)",
                     padding: "1px 7px",
                     borderRadius: "999px",
                     textTransform: "none",
@@ -948,14 +947,14 @@ export const PensionForecasterCard: FC<PensionForecasterCardProps> = ({
           })}
         >
           {/* Outcome Cards (Top Results) */}
-          <div className={outcomeGridStyle}>
+          <div aria-label="Pension projection results" className={outcomeGridStyle} role="status">
             {/* Card 1: Projected Pot */}
             <div className={heroCardStyle}>
               <div>
                 <FLPText color="text.muted" fontSize="xs" fontWeight="semibold">
                   PROJECTED POT ({horizonYears} YRS)
                 </FLPText>
-                <FLPHeading as="h4" className="tabular-nums" size="lg" style={{ marginTop: "4px" }}>
+                <FLPHeading as="p" className="tabular-nums" size="lg" style={{ marginTop: "4px" }}>
                   {formatCurrency(finalBalance)}
                 </FLPHeading>
               </div>
@@ -987,7 +986,7 @@ export const PensionForecasterCard: FC<PensionForecasterCardProps> = ({
                   style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}
                 >
                   <FLPText color="text.muted" fontSize="xs" fontWeight="semibold">
-                    EST. RETIREMENT INCOME (4%)
+                    EST. RETIREMENT INCOME (4% DRAWDOWN)
                   </FLPText>
                   <span
                     style={{
@@ -995,7 +994,7 @@ export const PensionForecasterCard: FC<PensionForecasterCardProps> = ({
                       fontWeight: 700,
                       padding: "2px 8px",
                       borderRadius: "999px",
-                      backgroundColor: "rgba(99, 99, 241, 0.08)",
+                      backgroundColor: "var(--colors-primary-subtle)",
                       color: "var(--colors-text-muted)",
                       border: "1px solid var(--colors-border-subtle)",
                     }}
@@ -1003,7 +1002,7 @@ export const PensionForecasterCard: FC<PensionForecasterCardProps> = ({
                     {plsaStandard.label}
                   </span>
                 </div>
-                <FLPHeading as="h4" className="tabular-nums" size="lg" style={{ marginTop: "4px" }}>
+                <FLPHeading as="p" className="tabular-nums" size="lg" style={{ marginTop: "4px" }}>
                   {formatCurrency(monthlyRetirementIncome)}
                   <span
                     style={{
@@ -1072,7 +1071,7 @@ export const PensionForecasterCard: FC<PensionForecasterCardProps> = ({
                     YOUR CONTRIBUTIONS
                   </FLPText>
                   <FLPHeading
-                    as="h4"
+                    as="p"
                     className="tabular-nums"
                     size="sm"
                     style={{ marginTop: "2px" }}
@@ -1089,7 +1088,7 @@ export const PensionForecasterCard: FC<PensionForecasterCardProps> = ({
                     EMPLOYER & COMPOUND GROWTH
                   </FLPText>
                   <FLPHeading
-                    as="h4"
+                    as="p"
                     className="tabular-nums"
                     size="sm"
                     style={{ marginTop: "2px" }}
@@ -1105,6 +1104,11 @@ export const PensionForecasterCard: FC<PensionForecasterCardProps> = ({
               </div>
             </div>
           </div>
+
+          <TaxEstimateNote
+            assumption={`Assumes a ${SAFE_WITHDRAWAL_RATE * 100}% annual drawdown rate, a ${formatCurrency(UK_LUMP_SUM_ALLOWANCE)} lump sum allowance, a ${formatCurrency(UK_ANNUAL_ALLOWANCE)} annual allowance and a ${formatCurrency(UK_STATE_PENSION_ANNUAL)}/yr state pension when included. These are fixed figures, not looked up for your tax year.`}
+            taxYear={getUkTaxYearContext().ratesYear}
+          />
 
           {/* Visual Stacked Area Chart */}
           <ChartFigure
@@ -1146,12 +1150,20 @@ export const PensionForecasterCard: FC<PensionForecasterCardProps> = ({
                 <AreaChart data={chartData} margin={{ top: 10, right: 30, left: 10, bottom: 0 }}>
                   <defs>
                     <linearGradient id="colorContribs" x1="0" x2="0" y1="0" y2="1">
-                      <stop offset="5%" stopColor="#6363f1" stopOpacity={0.4} />
-                      <stop offset="95%" stopColor="#6363f1" stopOpacity={0.05} />
+                      <stop offset="5%" stopColor="var(--colors-chart-primary)" stopOpacity={0.4} />
+                      <stop
+                        offset="95%"
+                        stopColor="var(--colors-chart-primary)"
+                        stopOpacity={0.05}
+                      />
                     </linearGradient>
                     <linearGradient id="colorGrowth" x1="0" x2="0" y1="0" y2="1">
-                      <stop offset="5%" stopColor="#10b981" stopOpacity={0.45} />
-                      <stop offset="95%" stopColor="#10b981" stopOpacity={0.05} />
+                      <stop offset="5%" stopColor="var(--colors-chart-wealth)" stopOpacity={0.45} />
+                      <stop
+                        offset="95%"
+                        stopColor="var(--colors-chart-wealth)"
+                        stopOpacity={0.05}
+                      />
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" opacity={0.15} vertical={false} />
@@ -1176,7 +1188,7 @@ export const PensionForecasterCard: FC<PensionForecasterCardProps> = ({
                               padding: "12px",
                               borderRadius: "8px",
                               fontSize: "12px",
-                              boxShadow: "0 4px 12px rgba(0,0,0,0.18)",
+                              boxShadow: "var(--shadows-floating)",
                             }}
                           >
                             <div style={{ fontWeight: "bold", marginBottom: "6px" }}>{label}</div>
@@ -1191,7 +1203,7 @@ export const PensionForecasterCard: FC<PensionForecasterCardProps> = ({
                             >
                               Compound Growth: +{formatCurrency(point?.growth ?? 0)}
                             </div>
-                            <div style={{ color: "#6363f1", marginTop: "2px" }}>
+                            <div style={{ color: "var(--colors-chart-primary)", marginTop: "2px" }}>
                               Cumulative Contributions: +{formatCurrency(point?.totalContribs ?? 0)}
                             </div>
                           </div>
@@ -1206,7 +1218,7 @@ export const PensionForecasterCard: FC<PensionForecasterCardProps> = ({
                     fill="url(#colorContribs)"
                     name="Cumulative Contributions (Projected)"
                     stackId="1"
-                    stroke="#6363f1"
+                    stroke="var(--colors-chart-primary)"
                     strokeDasharray="5 5"
                     strokeWidth={2}
                     type="monotone"
@@ -1217,7 +1229,7 @@ export const PensionForecasterCard: FC<PensionForecasterCardProps> = ({
                     fill="url(#colorGrowth)"
                     name="Compound Investment Growth (Projected)"
                     stackId="1"
-                    stroke="#10b981"
+                    stroke="var(--colors-chart-wealth)"
                     strokeDasharray="5 5"
                     strokeWidth={2.5}
                     type="monotone"

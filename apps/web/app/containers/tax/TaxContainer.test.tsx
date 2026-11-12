@@ -174,6 +174,17 @@ describe("TaxContainer & Calculation Tools", () => {
     expect(screen.getByText("P&L & Tax Comparison Table")).toBeDefined();
   });
 
+  it("labels every top KPI as an estimate for the tax year and keeps their values out of the heading outline", () => {
+    render(<TaxContainer />);
+
+    const summary = screen.getByRole("status", { name: /^Tax summary for / });
+    expect(
+      summary.textContent?.match(/Estimate for \d{4}\/\d{2}, based on the figures you entered/g),
+    ).toHaveLength(4);
+    const headingTexts = screen.getAllByRole("heading").map((h) => h.textContent ?? "");
+    expect(headingTexts.some((t) => t.includes("£"))).toBe(false);
+  });
+
   it("allows switching tabs to Detailed Transaction Log", () => {
     render(<TaxContainer />);
 

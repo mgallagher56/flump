@@ -79,7 +79,7 @@ const segmentedTabStyle = (active: boolean) =>
     borderRadius: "lg",
     border: "none",
     cursor: "pointer",
-    boxShadow: active ? "0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06)" : "none",
+    boxShadow: active ? "var(--shadows-card)" : "none",
     transition: "all 0.15s ease",
     _hover: {
       color: "text.primary",
@@ -92,8 +92,8 @@ const inlineEditGridStyle = css({
   gap: "12px",
   padding: "14px",
   borderRadius: "lg",
-  backgroundColor: "rgba(99, 99, 241, 0.04)",
-  border: "1px solid rgba(99, 99, 241, 0.2)",
+  backgroundColor: "var(--colors-primary-subtle)",
+  border: "1px solid var(--colors-primary-border)",
 });
 
 const inlineInputStyle = css({
@@ -394,8 +394,8 @@ export const PensionContainer: FC = () => {
           className={css({
             padding: "16px 20px",
             borderRadius: "lg",
-            backgroundColor: "rgba(245, 158, 11, 0.08)",
-            border: "1px solid rgba(245, 158, 11, 0.35)",
+            backgroundColor: "var(--colors-status-warning-bg)",
+            border: "1px solid var(--colors-status-warning-border)",
             display: "flex",
             flexDirection: "column",
             gap: "10px",
@@ -403,7 +403,7 @@ export const PensionContainer: FC = () => {
         >
           <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
             <span style={{ fontSize: "20px" }}>⚠️</span>
-            <FLPHeading as="h3" size="sm" style={{ color: "#b45309" }}>
+            <FLPHeading as="h3" size="sm" style={{ color: "var(--colors-status-warning-text)" }}>
               £100k–£125,140 {trapCopy.incomeTaxRate} marginal tax trap active
             </FLPHeading>
             <span
@@ -412,8 +412,8 @@ export const PensionContainer: FC = () => {
                 fontWeight: 700,
                 padding: "2px 8px",
                 borderRadius: "999px",
-                backgroundColor: "#fef3c7",
-                color: "#b45309",
+                backgroundColor: "var(--colors-status-warning-bg)",
+                color: "var(--colors-status-warning-text)",
               }}
             >
               {trapCopy.breakdown}
@@ -435,7 +435,7 @@ export const PensionContainer: FC = () => {
               padding: "10px 14px",
               borderRadius: "6px",
               backgroundColor: "var(--colors-surface)",
-              border: "1px solid rgba(245, 158, 11, 0.3)",
+              border: "1px solid var(--colors-status-warning-border)",
               display: "flex",
               alignItems: "center",
               justifyContent: "space-between",
@@ -472,8 +472,8 @@ export const PensionContainer: FC = () => {
               className={css({
                 fontSize: "xs",
                 fontWeight: "bold",
-                color: "#8b5cf6",
-                backgroundColor: "rgba(139, 92, 246, 0.12)",
+                color: "var(--colors-chart-accent-purple)",
+                backgroundColor: "var(--colors-surface-subtle)",
                 padding: "2px 8px",
                 borderRadius: "full",
               })}
@@ -650,7 +650,9 @@ export const PensionContainer: FC = () => {
             }}
           >
             <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-              <FaShieldAlt style={{ color: "#8b5cf6", fontSize: "16px" }} />
+              <FaShieldAlt
+                style={{ color: "var(--colors-chart-accent-purple)", fontSize: "16px" }}
+              />
               <FLPHeading as="h4" size="sm">
                 Current Contributions Breakdown (UK Auto-Enrolment)
               </FLPHeading>
@@ -804,7 +806,7 @@ export const PensionContainer: FC = () => {
             <div
               style={{
                 width: `${(employeePercent / (employeePercent + employerPercent || 1)) * 100}%`,
-                backgroundColor: "#6363f1",
+                backgroundColor: "var(--colors-chart-primary)",
                 transition: "width 0.4s ease",
               }}
               title={`Employee: ${employeePercent}%`}
@@ -812,7 +814,7 @@ export const PensionContainer: FC = () => {
             <div
               style={{
                 width: `${(employerPercent / (employeePercent + employerPercent || 1)) * 100}%`,
-                backgroundColor: "#f59e0b",
+                backgroundColor: "var(--colors-chart-debt)",
                 transition: "width 0.4s ease",
               }}
               title={`Employer: ${employerPercent}%`}
@@ -836,7 +838,7 @@ export const PensionContainer: FC = () => {
                     width: "10px",
                     height: "10px",
                     borderRadius: "50%",
-                    backgroundColor: "#6363f1",
+                    backgroundColor: "var(--colors-chart-primary)",
                     display: "inline-block",
                   }}
                 />
@@ -850,7 +852,7 @@ export const PensionContainer: FC = () => {
                     width: "10px",
                     height: "10px",
                     borderRadius: "50%",
-                    backgroundColor: "#f59e0b",
+                    backgroundColor: "var(--colors-chart-debt)",
                     display: "inline-block",
                   }}
                 />
