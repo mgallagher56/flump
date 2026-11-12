@@ -47,6 +47,13 @@ describe("SandboxRoute", () => {
     ]);
   });
 
+  it("labels the persona dashboard figures as sample data", () => {
+    render(<SandboxRoute />);
+    expect(screen.getByTestId("sandbox-sample-data-label").textContent).toMatch(
+      /Sample data: illustrative figures, not yours/,
+    );
+  });
+
   it("renders Persona A by default and switches between Persona B and Persona C", () => {
     mockSearchParams = new URLSearchParams();
     render(<SandboxRoute />);

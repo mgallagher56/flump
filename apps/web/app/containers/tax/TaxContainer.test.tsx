@@ -200,6 +200,9 @@ describe("TaxContainer & Calculation Tools", () => {
 
     expect(container.textContent).toMatch(/Profile salary baseline:\s*Not set/);
     expect(container.textContent).not.toContain("45,000");
+    const links = screen.getAllByRole("link", { name: "Add salary" });
+    expect(links.length).toBeGreaterThan(0);
+    expect(links[0].getAttribute("href")).toBe("/app/profile");
 
     unmount();
     mockProfileSalary = 60000;

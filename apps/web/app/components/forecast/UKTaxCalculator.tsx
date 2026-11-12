@@ -5,7 +5,7 @@ import {
   UK_STUDENT_LOANS,
 } from "@flump/finance-engine";
 import { ChartFigure } from "@repo/ui";
-import { css } from "@repo/ui/styled-system/css";
+import { css, cx } from "@repo/ui/styled-system/css";
 import { type FC, useEffect, useMemo, useState } from "react";
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
 import {
@@ -19,11 +19,14 @@ import TaxDisclaimerButton from "~/components/core/dialogs/TaxDisclaimerButton";
 import FLPCheckbox from "~/components/core/inputs/checkbox/FLPCheckbox";
 import FLPHeading from "~/components/core/typography/FLPHeading";
 import FLPText from "~/components/core/typography/FLPText";
+import { NotSet } from "~/features/feedback/components/NotSet";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
 import { usePrefersReducedMotion } from "~/hooks/usePrefersReducedMotion";
 import { useUserProfile } from "~/hooks/useUserProfile";
 
 const tabularNums = css({ fontVariantNumeric: "tabular-nums" });
+// Unknown salary: the thumb parks at the minimum but is visibly not a chosen value.
+const unsetSliderStyle = css({ opacity: 0.45 });
 
 interface UKTaxCalculatorProps {
   initialSalary?: number | null;
@@ -318,16 +321,18 @@ const UKTaxCalculator: FC<UKTaxCalculatorProps> = ({ initialSalary, onApplyIncre
               <FLPText fontSize="xs" fontWeight="semibold" textTransform="uppercase">
                 Gross Salary
               </FLPText>
-              <FLPText
-                fontSize="sm"
-                fontWeight="bold"
-                style={{ fontVariantNumeric: "tabular-nums" }}
-              >
-                {salaryKnown ? formatCurrency(grossSalary) : "Not set"}
+              <FLPText fontSize="sm" fontWeight="bold" className={tabularNums}>
+                {salaryKnown ? (
+                  formatCurrency(grossSalary)
+                ) : (
+                  <NotSet actionLabel="Add salary" href="/app/profile" />
+                )}
               </FLPText>
             </div>
             <input
-              className={sliderStyle}
+              aria-label="Gross salary"
+              aria-valuetext={salaryKnown ? formatCurrency(grossSalary) : "Not set"}
+              className={cx(sliderStyle, salaryKnown ? undefined : unsetSliderStyle)}
               max="250000"
               min="10000"
               step="1000"
@@ -750,7 +755,7 @@ const UKTaxCalculator: FC<UKTaxCalculatorProps> = ({ initialSalary, onApplyIncre
               Monthly Take-Home Pay
             </FLPText>
             <FLPHeading as="h2" color="text.primary" mt={1} size="2xl" className={tabularNums}>
-              Not set
+              <NotSet actionLabel="Add salary" href="/app/profile" />
             </FLPHeading>
             <FLPText color="text.muted" fontSize="sm" style={{ marginTop: "8px" }}>
               Add your gross salary to see your take-home pay.

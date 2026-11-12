@@ -32,6 +32,7 @@ describe("TaxWidget", () => {
     const notCalculated = screen.getByText("Not calculated yet");
     expect(notCalculated).toBeDefined();
     expect(notCalculated.className).toMatch(/tabular-nums/);
+    expect(screen.getByRole("link", { name: "Add income" }).getAttribute("href")).toBe("/app/tax");
     expect(screen.queryByText("£0.00")).toBeNull();
     expect(screen.queryByText("£0")).toBeNull();
   });
