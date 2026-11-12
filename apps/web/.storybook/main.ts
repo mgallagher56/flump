@@ -44,7 +44,10 @@ const config: StorybookConfig = {
           ),
           "react-router": resolve(__dirname, "./react-router-mock.tsx"),
           "react-router-dom": resolve(__dirname, "./react-router-mock.tsx"),
+          // Stories in apps/marketing and packages/ui cannot resolve `storybook/test` themselves
+          // (they do not depend on storybook), so pin both spellings to the one copy.
           "@storybook/test": resolve(__dirname, "../node_modules/storybook/dist/test/index.js"),
+          "storybook/test": resolve(__dirname, "../node_modules/storybook/dist/test/index.js"),
         },
       },
     };

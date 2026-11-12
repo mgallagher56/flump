@@ -41,15 +41,18 @@ const assertMcpPage: Story["play"] = async ({ canvasElement }) => {
 
 export const Default: Story = {
   // E8 waiver: color-contrast
-  parameters: { a11y: { test: "todo" } },
+  parameters: { a11y: { config: { rules: [{ id: "color-contrast", enabled: false }] } } },
   play: assertMcpPage,
 };
 
 export const Light: Story = { globals: { theme: "light" }, play: assertMcpPage };
 
 export const Dark: Story = {
-  // E8 waiver: color-contrast
   globals: { theme: "dark" },
-  parameters: { a11y: { test: "todo" }, backgrounds: { default: "dark" } },
+  parameters: {
+    // E8 waiver: color-contrast
+    a11y: { config: { rules: [{ id: "color-contrast", enabled: false }] } },
+    backgrounds: { default: "dark" },
+  },
   play: assertMcpPage,
 };

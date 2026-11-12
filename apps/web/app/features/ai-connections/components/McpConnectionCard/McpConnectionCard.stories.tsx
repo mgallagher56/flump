@@ -31,7 +31,7 @@ type Story = StoryObj<typeof McpConnectionCard>;
 
 export const Default: Story = {
   // E8 waiver: aria-valid-attr-value
-  parameters: { a11y: { test: "todo" } },
+  parameters: { a11y: { config: { rules: [{ id: "aria-valid-attr-value", enabled: false }] } } },
   args: {
     initialTokens: [],
   },
@@ -39,7 +39,7 @@ export const Default: Story = {
 
 export const WithActiveTokens: Story = {
   // E8 waiver: aria-valid-attr-value
-  parameters: { a11y: { test: "todo" } },
+  parameters: { a11y: { config: { rules: [{ id: "aria-valid-attr-value", enabled: false }] } } },
   args: {
     initialTokens: [
       {

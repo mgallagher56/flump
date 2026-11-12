@@ -19,7 +19,11 @@ const useRemoveFromTabOrder = (ref: React.RefObject<HTMLElement | null>): void =
     const root = ref.current;
     if (!root) return;
     const sweep = (): void => {
-      for (const el of root.querySelectorAll(FOCUSABLE)) el.setAttribute("tabindex", "-1");
+      // Only write when the value changes: setAttribute with an unchanged value still queues a
+      // mutation record, which would re-trigger this observer in an endless loop.
+      for (const el of root.querySelectorAll(FOCUSABLE)) {
+        if (el.getAttribute("tabindex") !== "-1") el.setAttribute("tabindex", "-1");
+      }
     };
     sweep();
     const observer = new MutationObserver(sweep);

@@ -633,6 +633,7 @@ exports[`<AccountDetails /> > should render in edit mode 1`] = `
             class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
           >
             <input
+              aria-label="December 2023"
               class="w_100% max-w_140px p_8px_12px bdr_sm bd_1px_solid bd-c_border ta_right fs_sm bg-c_background c_text.primary [&:focus]:bd-c_primary [&:focus]:ring_none [&:focus]:bx-sh_0_0_0_2px_rgba(99,_99,_241,_0.15)"
               data-month="12"
               data-year="2023"
@@ -645,6 +646,7 @@ exports[`<AccountDetails /> > should render in edit mode 1`] = `
             class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
           >
             <input
+              aria-label="December 2021"
               class="w_100% max-w_140px p_8px_12px bdr_sm bd_1px_solid bd-c_border ta_right fs_sm bg-c_background c_text.primary [&:focus]:bd-c_primary [&:focus]:ring_none [&:focus]:bx-sh_0_0_0_2px_rgba(99,_99,_241,_0.15)"
               data-month="12"
               data-year="2021"
@@ -664,6 +666,7 @@ exports[`<AccountDetails /> > should render in edit mode 1`] = `
             class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
           >
             <input
+              aria-label="November 2023"
               class="w_100% max-w_140px p_8px_12px bdr_sm bd_1px_solid bd-c_border ta_right fs_sm bg-c_background c_text.primary [&:focus]:bd-c_primary [&:focus]:ring_none [&:focus]:bx-sh_0_0_0_2px_rgba(99,_99,_241,_0.15)"
               data-month="11"
               data-year="2023"
@@ -676,6 +679,7 @@ exports[`<AccountDetails /> > should render in edit mode 1`] = `
             class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
           >
             <input
+              aria-label="November 2021"
               class="w_100% max-w_140px p_8px_12px bdr_sm bd_1px_solid bd-c_border ta_right fs_sm bg-c_background c_text.primary [&:focus]:bd-c_primary [&:focus]:ring_none [&:focus]:bx-sh_0_0_0_2px_rgba(99,_99,_241,_0.15)"
               data-month="11"
               data-year="2021"
@@ -695,6 +699,7 @@ exports[`<AccountDetails /> > should render in edit mode 1`] = `
             class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
           >
             <input
+              aria-label="October 2023"
               class="w_100% max-w_140px p_8px_12px bdr_sm bd_1px_solid bd-c_border ta_right fs_sm bg-c_background c_text.primary [&:focus]:bd-c_primary [&:focus]:ring_none [&:focus]:bx-sh_0_0_0_2px_rgba(99,_99,_241,_0.15)"
               data-month="10"
               data-year="2023"
@@ -707,6 +712,7 @@ exports[`<AccountDetails /> > should render in edit mode 1`] = `
             class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
           >
             <input
+              aria-label="October 2021"
               class="w_100% max-w_140px p_8px_12px bdr_sm bd_1px_solid bd-c_border ta_right fs_sm bg-c_background c_text.primary [&:focus]:bd-c_primary [&:focus]:ring_none [&:focus]:bx-sh_0_0_0_2px_rgba(99,_99,_241,_0.15)"
               data-month="10"
               data-year="2021"
@@ -726,6 +732,7 @@ exports[`<AccountDetails /> > should render in edit mode 1`] = `
             class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
           >
             <input
+              aria-label="September 2023"
               class="w_100% max-w_140px p_8px_12px bdr_sm bd_1px_solid bd-c_border ta_right fs_sm bg-c_background c_text.primary [&:focus]:bd-c_primary [&:focus]:ring_none [&:focus]:bx-sh_0_0_0_2px_rgba(99,_99,_241,_0.15)"
               data-month="9"
               data-year="2023"
@@ -738,6 +745,7 @@ exports[`<AccountDetails /> > should render in edit mode 1`] = `
             class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
           >
             <input
+              aria-label="September 2021"
               class="w_100% max-w_140px p_8px_12px bdr_sm bd_1px_solid bd-c_border ta_right fs_sm bg-c_background c_text.primary [&:focus]:bd-c_primary [&:focus]:ring_none [&:focus]:bx-sh_0_0_0_2px_rgba(99,_99,_241,_0.15)"
               data-month="9"
               data-year="2021"
@@ -757,6 +765,7 @@ exports[`<AccountDetails /> > should render in edit mode 1`] = `
             class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
           >
             <input
+              aria-label="August 2023"
               class="w_100% max-w_140px p_8px_12px bdr_sm bd_1px_solid bd-c_border ta_right fs_sm bg-c_background c_text.primary [&:focus]:bd-c_primary [&:focus]:ring_none [&:focus]:bx-sh_0_0_0_2px_rgba(99,_99,_241,_0.15)"
               data-month="8"
               data-year="2023"
@@ -769,6 +778,7 @@ exports[`<AccountDetails /> > should render in edit mode 1`] = `
             class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
           >
             <input
+              aria-label="August 2021"
               class="w_100% max-w_140px p_8px_12px bdr_sm bd_1px_solid bd-c_border ta_right fs_sm bg-c_background c_text.primary [&:focus]:bd-c_primary [&:focus]:ring_none [&:focus]:bx-sh_0_0_0_2px_rgba(99,_99,_241,_0.15)"
               data-month="8"
               data-year="2021"
@@ -788,6 +798,7 @@ exports[`<AccountDetails /> > should render in edit mode 1`] = `
             class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
           >
             <input
+              aria-label="July 2023"
               class="w_100% max-w_140px p_8px_12px bdr_sm bd_1px_solid bd-c_border ta_right fs_sm bg-c_background c_text.primary [&:focus]:bd-c_primary [&:focus]:ring_none [&:focus]:bx-sh_0_0_0_2px_rgba(99,_99,_241,_0.15)"
               data-month="7"
               data-year="2023"
@@ -800,6 +811,7 @@ exports[`<AccountDetails /> > should render in edit mode 1`] = `
             class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
           >
             <input
+              aria-label="July 2021"
               class="w_100% max-w_140px p_8px_12px bdr_sm bd_1px_solid bd-c_border ta_right fs_sm bg-c_background c_text.primary [&:focus]:bd-c_primary [&:focus]:ring_none [&:focus]:bx-sh_0_0_0_2px_rgba(99,_99,_241,_0.15)"
               data-month="7"
               data-year="2021"
@@ -819,6 +831,7 @@ exports[`<AccountDetails /> > should render in edit mode 1`] = `
             class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
           >
             <input
+              aria-label="June 2023"
               class="w_100% max-w_140px p_8px_12px bdr_sm bd_1px_solid bd-c_border ta_right fs_sm bg-c_background c_text.primary [&:focus]:bd-c_primary [&:focus]:ring_none [&:focus]:bx-sh_0_0_0_2px_rgba(99,_99,_241,_0.15)"
               data-month="6"
               data-year="2023"
@@ -831,6 +844,7 @@ exports[`<AccountDetails /> > should render in edit mode 1`] = `
             class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
           >
             <input
+              aria-label="June 2021"
               class="w_100% max-w_140px p_8px_12px bdr_sm bd_1px_solid bd-c_border ta_right fs_sm bg-c_background c_text.primary [&:focus]:bd-c_primary [&:focus]:ring_none [&:focus]:bx-sh_0_0_0_2px_rgba(99,_99,_241,_0.15)"
               data-month="6"
               data-year="2021"
@@ -850,6 +864,7 @@ exports[`<AccountDetails /> > should render in edit mode 1`] = `
             class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
           >
             <input
+              aria-label="May 2023"
               class="w_100% max-w_140px p_8px_12px bdr_sm bd_1px_solid bd-c_border ta_right fs_sm bg-c_background c_text.primary [&:focus]:bd-c_primary [&:focus]:ring_none [&:focus]:bx-sh_0_0_0_2px_rgba(99,_99,_241,_0.15)"
               data-month="5"
               data-year="2023"
@@ -862,6 +877,7 @@ exports[`<AccountDetails /> > should render in edit mode 1`] = `
             class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
           >
             <input
+              aria-label="May 2021"
               class="w_100% max-w_140px p_8px_12px bdr_sm bd_1px_solid bd-c_border ta_right fs_sm bg-c_background c_text.primary [&:focus]:bd-c_primary [&:focus]:ring_none [&:focus]:bx-sh_0_0_0_2px_rgba(99,_99,_241,_0.15)"
               data-month="5"
               data-year="2021"
@@ -881,6 +897,7 @@ exports[`<AccountDetails /> > should render in edit mode 1`] = `
             class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
           >
             <input
+              aria-label="April 2023"
               class="w_100% max-w_140px p_8px_12px bdr_sm bd_1px_solid bd-c_border ta_right fs_sm bg-c_background c_text.primary [&:focus]:bd-c_primary [&:focus]:ring_none [&:focus]:bx-sh_0_0_0_2px_rgba(99,_99,_241,_0.15)"
               data-month="4"
               data-year="2023"
@@ -893,6 +910,7 @@ exports[`<AccountDetails /> > should render in edit mode 1`] = `
             class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
           >
             <input
+              aria-label="April 2021"
               class="w_100% max-w_140px p_8px_12px bdr_sm bd_1px_solid bd-c_border ta_right fs_sm bg-c_background c_text.primary [&:focus]:bd-c_primary [&:focus]:ring_none [&:focus]:bx-sh_0_0_0_2px_rgba(99,_99,_241,_0.15)"
               data-month="4"
               data-year="2021"
@@ -912,6 +930,7 @@ exports[`<AccountDetails /> > should render in edit mode 1`] = `
             class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
           >
             <input
+              aria-label="March 2023"
               class="w_100% max-w_140px p_8px_12px bdr_sm bd_1px_solid bd-c_border ta_right fs_sm bg-c_background c_text.primary [&:focus]:bd-c_primary [&:focus]:ring_none [&:focus]:bx-sh_0_0_0_2px_rgba(99,_99,_241,_0.15)"
               data-month="3"
               data-year="2023"
@@ -924,6 +943,7 @@ exports[`<AccountDetails /> > should render in edit mode 1`] = `
             class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
           >
             <input
+              aria-label="March 2021"
               class="w_100% max-w_140px p_8px_12px bdr_sm bd_1px_solid bd-c_border ta_right fs_sm bg-c_background c_text.primary [&:focus]:bd-c_primary [&:focus]:ring_none [&:focus]:bx-sh_0_0_0_2px_rgba(99,_99,_241,_0.15)"
               data-month="3"
               data-year="2021"
@@ -943,6 +963,7 @@ exports[`<AccountDetails /> > should render in edit mode 1`] = `
             class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
           >
             <input
+              aria-label="February 2023"
               class="w_100% max-w_140px p_8px_12px bdr_sm bd_1px_solid bd-c_border ta_right fs_sm bg-c_background c_text.primary [&:focus]:bd-c_primary [&:focus]:ring_none [&:focus]:bx-sh_0_0_0_2px_rgba(99,_99,_241,_0.15)"
               data-month="2"
               data-year="2023"
@@ -955,6 +976,7 @@ exports[`<AccountDetails /> > should render in edit mode 1`] = `
             class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
           >
             <input
+              aria-label="February 2021"
               class="w_100% max-w_140px p_8px_12px bdr_sm bd_1px_solid bd-c_border ta_right fs_sm bg-c_background c_text.primary [&:focus]:bd-c_primary [&:focus]:ring_none [&:focus]:bx-sh_0_0_0_2px_rgba(99,_99,_241,_0.15)"
               data-month="2"
               data-year="2021"
@@ -974,6 +996,7 @@ exports[`<AccountDetails /> > should render in edit mode 1`] = `
             class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
           >
             <input
+              aria-label="January 2023"
               class="w_100% max-w_140px p_8px_12px bdr_sm bd_1px_solid bd-c_border ta_right fs_sm bg-c_background c_text.primary [&:focus]:bd-c_primary [&:focus]:ring_none [&:focus]:bx-sh_0_0_0_2px_rgba(99,_99,_241,_0.15)"
               data-month="1"
               data-year="2023"
@@ -986,6 +1009,7 @@ exports[`<AccountDetails /> > should render in edit mode 1`] = `
             class="p_12px_16px bd-b_1px_solid bd-b-c_border ta_right va_middle [&:first-child]:ta_left [&:first-child]:fw_semibold [&:first-child]:c_text.primary"
           >
             <input
+              aria-label="January 2021"
               class="w_100% max-w_140px p_8px_12px bdr_sm bd_1px_solid bd-c_border ta_right fs_sm bg-c_background c_text.primary [&:focus]:bd-c_primary [&:focus]:ring_none [&:focus]:bx-sh_0_0_0_2px_rgba(99,_99,_241,_0.15)"
               data-month="1"
               data-year="2021"

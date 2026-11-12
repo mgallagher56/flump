@@ -1,5 +1,5 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { visuallyHiddenRecipe } from "../../primitives/VisuallyHidden/VisuallyHidden.styles";
 import { ChartFigure } from "./ChartFigure";
 
@@ -97,5 +97,43 @@ describe("ChartFigure Pattern", () => {
   it("omits the drawer without a dataTable", () => {
     renderFigure();
     expect(screen.queryByRole("button", { name: "Show data" })).toBeNull();
+  });
+
+  it("removes focusable children from the tab order without a mutation loop", async () => {
+    const original = Element.prototype.setAttribute;
+    let tabindexWrites = 0;
+    const spy = vi.spyOn(Element.prototype, "setAttribute").mockImplementation(function (
+      this: Element,
+      name: string,
+      value: string,
+    ) {
+      if (name !== "tabindex") return original.call(this, name, value);
+      tabindexWrites += 1;
+      // Past the budget, stop writing so a regression ends instead of looping forever.
+      if (tabindexWrites > 20) return;
+      return original.call(this, name, value);
+    });
+    try {
+      render(
+        <ChartFigure summary={SUMMARY} title="Savings forecast">
+          <button type="button">point</button>
+          <input aria-label="x" />
+          <a href="/x">savings detail</a>
+          <button tabIndex={-1} type="button">
+            already out
+          </button>
+        </ChartFigure>,
+      );
+      await new Promise((resolve) => setTimeout(resolve, 20));
+      // One write each for the button, input and link, plus React's own write for the element
+      // rendered with tabIndex={-1}; none from the sweep for that one, and none from the observer
+      // re-firing on its own writes.
+      expect(tabindexWrites).toBe(4);
+    } finally {
+      spy.mockRestore();
+    }
+    for (const el of document.querySelectorAll("button, input, a")) {
+      expect(el.getAttribute("tabindex")).toBe("-1");
+    }
   });
 });

@@ -321,7 +321,7 @@ export const HomeDashboard: FC<HomeDashboardProps> = ({
         })}
       >
         <div>
-          <FLPHeading as="h1" color="primary" size="xl">
+          <FLPHeading as="h1" color="text.primary" size="xl">
             Welcome back{profile.displayName ? `, ${profile.displayName}` : ""}
           </FLPHeading>
           <FLPText color="text.muted" fontSize="sm" style={{ marginTop: "2px" }}>
@@ -430,7 +430,7 @@ export const HomeDashboard: FC<HomeDashboardProps> = ({
               <FLPHeading
                 as="h3"
                 size="xl"
-                color="primary"
+                color="text.primary"
                 className="tabular-nums"
                 style={{ marginTop: "4px" }}
               >

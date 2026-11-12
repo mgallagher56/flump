@@ -152,6 +152,10 @@ const ForecastContainer: FC = () => {
 
   return (
     <div className={containerStyle}>
+      {/* announceInitial stays at its default (off): the first headline comes from the load-time
+          pre-population effect above, which should not be announced on every page load. The
+          headline only starts empty for users with no balance or savings data; for them the first
+          user-entered value is a silent baseline and later changes are announced (accepted). */}
       <LiveRegion debounceMs={1000} message={forecastHeadline} visuallyHidden />
       {/* Title */}
       <div style={{ marginTop: "16px", marginBottom: "8px" }}>

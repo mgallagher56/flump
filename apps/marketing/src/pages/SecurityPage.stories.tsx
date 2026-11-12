@@ -38,8 +38,11 @@ export const Light: Story = {
 };
 
 export const Dark: Story = {
-  // E8 waiver: color-contrast
   globals: { theme: "dark" },
-  parameters: { a11y: { test: "todo" }, backgrounds: { default: "dark" } },
+  parameters: {
+    // E8 waiver: color-contrast
+    a11y: { config: { rules: [{ id: "color-contrast", enabled: false }] } },
+    backgrounds: { default: "dark" },
+  },
   play: assertHeading,
 };

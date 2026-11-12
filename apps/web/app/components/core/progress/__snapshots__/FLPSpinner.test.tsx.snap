@@ -36,11 +36,10 @@ exports[`FLPSpinner > renders as expected with a label 1`] = `
       
     </style>
     <div
-      aria-label="Loading"
+      aria-hidden="true"
       class="d_inline-block w_24px h_24px bd_2px_solid_rgba(255,_255,_255,_0.2) bd-t-c_primary bdr_50% anim_spin_0.8s_linear_infinite"
       data-spinner="true"
       data-testid="flp-spinner"
-      role="status"
     />
     <p
       class="ff_var(--fonts-body,_'Inter',_sans-serif) fs_md fw_normal lh_1.6 ls_normal c_text.secondary m_0 "
