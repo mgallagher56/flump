@@ -102,8 +102,12 @@ export class AccountIntakeService implements IAccountIntake {
       isCurrent: body.isCurrent,
       externalAccountId: body.externalAccountId,
     };
+    // currency is NOT NULL: null or "" means "not provided" (create defaults it, update keeps it).
     return Object.fromEntries(
-      Object.entries(fields).filter(([, value]) => value !== undefined),
+      Object.entries(fields).filter(
+        ([key, value]) =>
+          value !== undefined && !(key === "currency" && (value === null || value === "")),
+      ),
     ) as Partial<Account>;
   }
 

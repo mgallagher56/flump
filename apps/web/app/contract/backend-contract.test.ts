@@ -52,7 +52,7 @@ function resolveDbTestMode(env: Record<string, string | undefined>): "run" | "sk
   return "skip";
 }
 
-// The suite drops the public schema: refuse anything that is not a local, test-named database.
+// The suite creates and drops `<database>_contract`: refuse anything that is not a local, test-named database.
 function assertSafeTestDatabase(url: string): void {
   const parsed = new URL(url);
   const database = decodeURIComponent(parsed.pathname.replace(/^\//, ""));
@@ -178,6 +178,13 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
     const run = (action: (args: any) => Promise<any>, fields: Record<string, string>) =>
       action({ request: form(fields), params: {}, context: {} });
 
+    const createAccount = (name: string) =>
+      apiFetch<Row>("/accounts", {
+        accessToken: DEV_TOKEN,
+        method: "POST",
+        body: { name, type: "Saving", balance: 100, isCurrent: true },
+      });
+
     type Row = { id: string; name: string; balance?: number; amount?: number; currency?: string };
 
     it("seeds the onboarding baseline accounts and budget entries", async () => {
@@ -234,13 +241,11 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
     });
 
     it("updates an account with PATCH, as the accounts route and monthly check-in do", async () => {
-      const [target] = (await get<Row[]>("/accounts")).filter(
-        (a) => a.name === "Cash and emergency savings",
-      );
+      const target = await createAccount("Contract PATCH target");
       const result = await run(accountsAction, {
         intent: "update",
         accountId: target.id,
-        name: "Cash and emergency savings",
+        name: "Contract PATCH target",
         type: "Saving",
         balance: "4321",
       });
@@ -251,7 +256,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
     });
 
     it("also accepts PUT for account updates", async () => {
-      const [target] = await get<Row[]>("/accounts");
+      const target = await createAccount("Contract PUT target");
       const res = await fetch(`${baseUrl}/accounts/${target.id}`, {
         method: "PUT",
         headers: { Authorization: `Bearer ${DEV_TOKEN}`, "Content-Type": "application/json" },
@@ -300,11 +305,12 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
     });
 
     it("registers the bank-connection refresh route the accounts route calls", async () => {
-      const res = await fetch(`${baseUrl}/bank-connections/does-not-exist/refresh`, {
+      const res = await fetch(`${baseUrl}/bank-connections/${crypto.randomUUID()}/refresh`, {
         method: "POST",
         headers: { Authorization: `Bearer ${DEV_TOKEN}` },
       });
-      // A registered route answers from the service; an unregistered one says "Cannot POST".
+      // Registered: the service answers 404 "not found". Unregistered: Nest's "Cannot POST ..." 404.
+      expect(res.status).toBe(404);
       expect((await res.json()).message).not.toMatch(/^Cannot POST/);
     });
 
