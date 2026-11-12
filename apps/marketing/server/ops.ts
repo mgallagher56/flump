@@ -42,8 +42,9 @@ export function opsRouter(env: Env = process.env): Router {
   });
 
   router.get("/robots.txt", (_req, res) => {
+    const origin = normaliseSiteUrl(env.SITE_URL);
     const body = isIndexingAllowed(env)
-      ? "User-agent: *\nAllow: /\n"
+      ? `User-agent: *\nAllow: /\n${origin ? `Sitemap: ${origin}/sitemap.xml\n` : ""}`
       : "User-agent: *\nDisallow: /\n";
     res.status(200).type("text/plain").send(body);
   });

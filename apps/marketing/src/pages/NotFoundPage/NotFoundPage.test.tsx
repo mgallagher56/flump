@@ -49,6 +49,8 @@ describe("resolveStatus", () => {
     "/pricing",
     "/security?x=1",
     "/mcp",
+    "/Pricing",
+    "/TOOLS/UK-100k-Tax-Trap-Calculator",
     "/tools/uk-100k-tax-trap-calculator",
     "/tools/overdraft-interest-calculator",
   ])("200 for %s", (url) => {

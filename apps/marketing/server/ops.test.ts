@@ -52,6 +52,17 @@ describe("ops routes", () => {
     expect(await res.text()).toBe("User-agent: *\nAllow: /\n");
   });
 
+  it("adds a Sitemap line to robots.txt only when indexing is on and SITE_URL is https", async () => {
+    const on = await start({ ALLOW_INDEXING: "true", SITE_URL: "https://flump.example/x" });
+    expect(await (await fetch(`${on}/robots.txt`)).text()).toBe(
+      "User-agent: *\nAllow: /\nSitemap: https://flump.example/sitemap.xml\n",
+    );
+    const bad = await start({ ALLOW_INDEXING: "true", SITE_URL: "http://flump.example" });
+    expect(await (await fetch(`${bad}/robots.txt`)).text()).toBe("User-agent: *\nAllow: /\n");
+    const off = await start({ SITE_URL: "https://flump.example" });
+    expect(await (await fetch(`${off}/robots.txt`)).text()).toBe("User-agent: *\nDisallow: /\n");
+  });
+
   it("keeps disallow for ALLOW_INDEXING=1 and TRUE", async () => {
     for (const v of ["1", "TRUE"]) {
       const base = await start({ ALLOW_INDEXING: v });
