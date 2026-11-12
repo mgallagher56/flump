@@ -7,6 +7,7 @@ import { KpiStrip } from "../../patterns/KpiStrip/KpiStrip";
 import { PageHeader } from "../../patterns/PageHeader/PageHeader";
 import { Button } from "../../primitives/Button/Button";
 import { Icon } from "../../primitives/Icon/Icon";
+import { Illustration } from "../../primitives/Illustration/Illustration";
 import { KpiCard } from "../../primitives/KpiCard/KpiCard";
 import { formatMoney, Money } from "../../primitives/Money/Money";
 import { StatusBadge } from "../../primitives/StatusBadge/StatusBadge";
@@ -30,15 +31,6 @@ import {
   heroSample,
   heroTop,
   hideNarrow,
-  illApricot,
-  illDots,
-  illLeaf,
-  illSage,
-  illSand,
-  illStem,
-  illTeal,
-  illTealSoft,
-  illustrationRoot,
   legendItem,
   legendList,
   legendSwatch,
@@ -95,27 +87,6 @@ const ACCOUNTS: { name: string; kind: string; balance: number; change: number }[
   { name: "Everyday credit card", kind: "Card", balance: -1860.75, change: 95 },
   { name: "Car finance", kind: "Loan", balance: -4340, change: 210 },
 ];
-
-const Illustration: FC = () => (
-  <svg
-    aria-hidden="true"
-    className={illustrationRoot}
-    focusable="false"
-    role="presentation"
-    viewBox="0 0 240 180"
-  >
-    <ellipse className={illSand} cx="120" cy="152" rx="106" ry="18" />
-    <circle className={illApricot} cx="190" cy="40" r="34" opacity="0.4" />
-    <circle className={illApricot} cx="190" cy="40" r="20" />
-    <path d="M52 96C80 62 118 54 148 44" className={illDots} />
-    <rect className={illSage} height="44" rx="14" width="52" x="26" y="108" />
-    <rect className={illTealSoft} height="68" rx="14" width="52" x="84" y="84" />
-    <rect className={illTeal} height="94" rx="14" width="52" x="142" y="58" />
-    <path d="M168 58V38" className={illStem} />
-    <path className={illSage} d="M168 44c-13 0-19-6-19-17 12 0 19 6 19 17z" />
-    <path className={illLeaf} d="M168 38c11 0 17-5 17-14-11 0-17 5-17 14z" />
-  </svg>
-);
 
 const SampleChart: FC = () => (
   <div className={chartWrap()}>
@@ -333,7 +304,7 @@ export const DirectionCSignoff: FC<DirectionCSignoffProps> = ({ onFinishSetup })
           description="Goals you add will appear here. This is sample data, so nothing has been saved."
           headingLevel="h3"
           id="signoff-empty"
-          illustration={<Illustration />}
+          illustration={<Illustration scene="onboarding" size="lg" />}
           title="No goals yet"
         />
       </div>

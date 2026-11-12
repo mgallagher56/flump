@@ -1,6 +1,5 @@
+import { FlumpLogo } from "@repo/ui";
 import { Link } from "react-router";
-
-import logo from "~/assets/flump_logo.svg";
 
 interface HomeLogoProps {
   /**
@@ -16,11 +15,11 @@ const HomeLogo = ({ decorative = false }: HomeLogoProps) => {
     <div className="home-logo">
       {decorative ? (
         <Link aria-hidden="true" tabIndex={-1} to="/">
-          <img alt="" height={50} src={logo} width={50} />
+          <FlumpLogo size="md" />
         </Link>
       ) : (
         <Link aria-label="Flump home" to="/">
-          <img alt="" height={50} src={logo} width={50} />
+          <FlumpLogo size="md" />
         </Link>
       )}
     </div>

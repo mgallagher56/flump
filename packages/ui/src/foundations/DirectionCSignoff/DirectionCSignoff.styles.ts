@@ -199,25 +199,3 @@ export const hideNarrow = cva({
 export const emptyWrap = cva({
   base: { maxWidth: "560px" },
 });
-
-/** Illustration colours come from semantic tokens only. */
-export const illustrationRoot = css({ width: "100%", maxWidth: "240px", height: "auto" });
-export const illSand = css({ fill: "surface.sunken" });
-export const illApricot = css({ fill: "chart.debt" });
-export const illSage = css({ fill: "chart.wealth" });
-export const illTealSoft = css({ fill: "primary.border" });
-export const illTeal = css({ fill: "primary.solid" });
-export const illLeaf = css({ fill: "primary" });
-export const illDots = css({
-  stroke: "text.muted",
-  fill: "none",
-  strokeWidth: "3",
-  strokeLinecap: "round",
-  strokeDasharray: "1 9",
-});
-export const illStem = css({
-  stroke: "chart.wealth",
-  fill: "none",
-  strokeWidth: "4",
-  strokeLinecap: "round",
-});

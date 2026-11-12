@@ -115,7 +115,14 @@ describe("Architecture & Design System Laws", () => {
 
     it("registers the E15 phase 2 primitives and patterns (deliberately listed)", () => {
       const primitives = getSubdirectories(PRIMITIVES_DIR);
-      for (const expected of ["CurrencyInput", "FormField", "Money", "TextInput"]) {
+      for (const expected of [
+        "CurrencyInput",
+        "FlumpLogo",
+        "FormField",
+        "Illustration",
+        "Money",
+        "TextInput",
+      ]) {
         expect(primitives).toContain(expected);
       }
       const patterns = getSubdirectories(PATTERNS_DIR);
