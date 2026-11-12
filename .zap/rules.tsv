@@ -1,0 +1,5 @@
+# ZAP baseline (passive) rule overrides. Columns are tab separated: rule id, action (IGNORE|INFO|WARN|FAIL), name.
+# The scan is advisory (E20-N27); nothing here is a required check. Rules not listed use the ZAP default (WARN).
+# Add a row only with a written reason in the PR that adds it.
+# 10027 fires on every bundled JS comment in the production build and carries no signal here.
+10027	IGNORE	(Information Disclosure - Suspicious Comments)

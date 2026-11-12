@@ -1,10 +1,10 @@
 name: 🔐 Security Scan
 
-# Advisory scanners, one job per tool so more can be appended (E20-N27: ZAP,
-# Semgrep). None of these are required checks; a red run is a prompt to triage.
-# There is no schedule trigger today; the if-guard on each job is kept for
-# appended jobs. gitleaks scans a commit range, and the full-history scan is a
-# manual local command (docs/runbooks/secret-scan.md).
+# Advisory scanners, one job per tool. None of these are required checks; a red
+# run is a prompt to triage. The weekly schedule and workflow_dispatch run only
+# the ZAP job; gitleaks and Semgrep run on push and pull_request. gitleaks scans
+# a commit range, and the full-history scan is a manual local command
+# (docs/runbooks/secret-scan.md).
 
 on:
   push:
@@ -13,6 +13,9 @@ on:
   pull_request:
     branches:
       - main
+  schedule:
+    - cron: "17 3 * * 1" # Mondays 03:17 UTC, ZAP baseline only
+  workflow_dispatch:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -25,7 +28,7 @@ permissions:
 jobs:
   secret-scan:
     name: 🔑 Secret scan (gitleaks)
-    if: github.event_name != 'schedule'
+    if: github.event_name == 'push' || github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
@@ -61,3 +64,112 @@ jobs:
             --config /repo/.gitleaks.toml \
             ${RANGE:+--log-opts="$RANGE"} \
             --redact --exit-code 1
+
+  semgrep:
+    name: 🔎 SAST (Semgrep CE, report-only)
+    if: github.event_name == 'push' || github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+
+    steps:
+      - name: ⬇️ Checkout repo
+        # actions/checkout v7.0.1
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+
+      - name: 🔎 Run Semgrep CE
+        env:
+          # Semgrep CE 1.185.0 (multi-arch index digest).
+          SEMGREP_IMAGE: semgrep/semgrep:1.185.0@sha256:67518c174185a2043fdbed16c70631b79209499b3671178e7194379b48295a0d
+        run: |
+          set -u
+          # Report-only: findings are printed and written to semgrep.sarif but
+          # never fail the job (no --error flag). Metrics are off.
+          status=0
+          docker run --rm -v "$PWD:/src" -w /src "$SEMGREP_IMAGE" \
+            semgrep scan --metrics=off --sarif --output=/src/semgrep.sarif \
+            --config p/owasp-top-ten --config p/typescript \
+            --config p/react --config p/nodejsscan \
+            --exclude node_modules --exclude dist --exclude build \
+            --exclude .turbo --exclude coverage || status=$?
+          echo "semgrep exit code: $status (advisory, not failing the job)"
+          exit 0
+
+      - name: 📦 Upload Semgrep report
+        if: always()
+        # actions/upload-artifact v7.0.2
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        with:
+          name: semgrep-report
+          path: semgrep.sarif
+          if-no-files-found: ignore
+          retention-days: 30
+
+  zap-baseline:
+    name: 🕷️ DAST (ZAP baseline, passive)
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+
+    steps:
+      - name: ⬇️ Checkout repo
+        # actions/checkout v7.0.1
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+
+      - name: 🎯 Check target URLs
+        id: targets
+        env:
+          ZAP_TARGET_URLS: ${{ vars.ZAP_TARGET_URLS }}
+        run: |
+          set -eu
+          if [ -z "$(printf '%s' "$ZAP_TARGET_URLS" | tr -d '[:space:],')" ]; then
+            echo "::notice title=ZAP skipped::Repository variable ZAP_TARGET_URLS is not set (owner step), so there is nothing to scan."
+            echo "run=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: 🕷️ Run ZAP baseline scan
+        if: steps.targets.outputs.run == 'true'
+        env:
+          ZAP_TARGET_URLS: ${{ vars.ZAP_TARGET_URLS }}
+          # ZAP 2.17.0 (multi-arch index digest).
+          ZAP_IMAGE: ghcr.io/zaproxy/zaproxy:2.17.0@sha256:9624669db72f54d86c4b46a7064518bd9bf79d8c61a4c31befa9923489f328af
+        run: |
+          set -u
+          mkdir -p zap-out
+          cp .zap/rules.tsv zap-out/rules.tsv
+          chmod 777 zap-out # the container runs as the unprivileged zap user
+          i=0
+          # Space, comma or newline separated list of https URLs.
+          for url in $(printf '%s' "$ZAP_TARGET_URLS" | tr ',' ' '); do
+            case "$url" in
+              https://*) ;;
+              *) echo "::warning title=ZAP target ignored::Only https:// targets are scanned"; continue ;;
+            esac
+            i=$((i + 1))
+            echo "Scanning target $i"
+            # Passive baseline only. -I keeps warnings from failing the job.
+            docker run --rm -v "$PWD/zap-out:/zap/wrk:rw" "$ZAP_IMAGE" \
+              zap-baseline.py -t "$url" -c rules.tsv -I \
+              -r "report-$i.html" -J "report-$i.json" || \
+              echo "::warning title=ZAP target $i::scan exited non-zero (advisory)"
+          done
+          rm -f zap-out/rules.tsv
+
+      - name: 📦 Upload ZAP report
+        if: steps.targets.outputs.run == 'true'
+        # actions/upload-artifact v7.0.2
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        with:
+          name: zap-baseline-report
+          path: zap-out/
+          if-no-files-found: warn
+          retention-days: 30
