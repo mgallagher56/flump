@@ -88,6 +88,7 @@ jobs:
 
       # Advisory (E24-T10): report mode always exits 0. Strict mode is for launch day only.
       - name: 🚦 Launch-readiness report
+        continue-on-error: true
         run: |
           {
             echo "### 🚦 Launch-readiness checklist (advisory)"

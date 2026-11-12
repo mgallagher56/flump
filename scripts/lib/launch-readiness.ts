@@ -11,8 +11,8 @@ export type Attestation = { by: string; date: string; note: string };
 
 export type Evidence =
   | { kind: "file"; path: string }
-  | { kind: "absent"; pattern: string; paths: string[]; exclude?: string }
-  | { kind: "present"; pattern: string; paths: string[]; exclude?: string }
+  | { kind: "absent"; pattern: string; paths: string[]; exclude?: string; flags?: string }
+  | { kind: "present"; pattern: string; paths: string[]; exclude?: string; flags?: string }
   | { kind: "command"; script: string }
   | { kind: "owner"; label: string; attestation: Partial<Attestation> };
 
@@ -29,7 +29,7 @@ export type Context = {
   runScript: (script: string) => number;
 };
 
-const SCANNED_EXTENSIONS = /\.(ts|tsx|js|jsx|json|md|yml|yaml)$/;
+const SCANNED_EXTENSIONS = /\.(ts|tsx|js|jsx|html|json|md|yml|yaml)$/;
 const SKIPPED_DIRS = new Set(["node_modules", "build", "dist", ".turbo", ".git", "coverage"]);
 
 export function defaultContext(root: string): Context {
@@ -55,14 +55,19 @@ function collectFiles(root: string, relPath: string, out: string[]): void {
   }
 }
 
-/** Files under `paths` whose content matches `pattern` (excluding paths matching `exclude`). */
+/**
+ * Files under `paths` whose content matches `pattern` (excluding paths matching `exclude`).
+ * Default flags are "im"; set `flags` on the evidence to override (e.g. "" for case-sensitive).
+ * A multi-path `present` passes when any one file matches: use one evidence per path to require all.
+ */
 export function findMatches(
   root: string,
   pattern: string,
   paths: string[],
   exclude?: string,
+  flags = "im",
 ): string[] {
-  const re = new RegExp(pattern, "im");
+  const re = new RegExp(pattern, flags);
   const skip = exclude ? new RegExp(exclude) : undefined;
   const files: string[] = [];
   for (const path of paths) collectFiles(root, path, files);
@@ -92,7 +97,13 @@ export function evaluateEvidence(evidence: Evidence, ctx: Context): EvidenceResu
       };
     }
     case "absent": {
-      const hits = findMatches(ctx.root, evidence.pattern, evidence.paths, evidence.exclude);
+      const hits = findMatches(
+        ctx.root,
+        evidence.pattern,
+        evidence.paths,
+        evidence.exclude,
+        evidence.flags,
+      );
       return {
         evidence,
         status: hits.length === 0 ? "pass" : "fail",
@@ -103,7 +114,13 @@ export function evaluateEvidence(evidence: Evidence, ctx: Context): EvidenceResu
       };
     }
     case "present": {
-      const hits = findMatches(ctx.root, evidence.pattern, evidence.paths, evidence.exclude);
+      const hits = findMatches(
+        ctx.root,
+        evidence.pattern,
+        evidence.paths,
+        evidence.exclude,
+        evidence.flags,
+      );
       return {
         evidence,
         status: hits.length > 0 ? "pass" : "fail",

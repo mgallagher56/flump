@@ -73,6 +73,8 @@ describe("launch-readiness checklist (E24-T10)", () => {
     const ci = readFileSync(resolve(repoRoot, ".github/workflows/ci-pipeline.yml"), "utf8");
     expect(ci).toContain("bun run check:launch");
     expect(ci).toContain("--markdown");
+    const step = ci.slice(ci.indexOf("Launch-readiness report"));
+    expect(step.slice(0, step.indexOf("Test repo scripts"))).toContain("continue-on-error: true");
   });
 });
 
