@@ -1,5 +1,6 @@
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 import { apiConfig } from "~/config.server";
+import { expectedOrigin } from "~/security/csrf.server";
 import { getAuthSession } from "~/utils/auth.server";
 import { BackendError, kindFromStatus } from "./backend-error";
 
@@ -83,18 +84,6 @@ export function normaliseApiPath(rawPathname: string): string | null {
 
 export function matchAllowList(method: string, path: string): boolean {
   return COMPILED.some((rule) => rule.methods.includes(method) && rule.regex.test(path));
-}
-
-function expectedOrigin(request: Request): string {
-  const url = new URL(request.url);
-  const proto =
-    request.headers.get("x-forwarded-proto")?.split(",")[0]?.trim().toLowerCase() ||
-    url.protocol.replace(":", "");
-  const host =
-    request.headers.get("x-forwarded-host")?.split(",")[0]?.trim() ||
-    request.headers.get("host") ||
-    url.host;
-  return `${proto}://${host}`;
 }
 
 function json(status: number, body: unknown, headers?: Headers): Response {
