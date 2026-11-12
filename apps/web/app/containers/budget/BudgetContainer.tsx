@@ -270,9 +270,7 @@ const BudgetContainer: FC = () => {
       transition: "all 0.15s ease",
       color: active ? "text.primary" : "text.muted",
       backgroundColor: active ? "surface" : "transparent",
-      boxShadow: active
-        ? "0 1px 3px color-mix(in srgb, var(--colors-surface-contrast) 10%, transparent), 0 1px 2px color-mix(in srgb, var(--colors-surface-contrast) 6%, transparent)"
-        : "none",
+      boxShadow: active ? "var(--shadows-card)" : "none",
       border: "1px solid",
       borderColor: active ? "border.subtle" : "transparent",
       "&:hover": {

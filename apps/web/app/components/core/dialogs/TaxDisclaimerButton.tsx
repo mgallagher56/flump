@@ -24,7 +24,7 @@ const TaxDisclaimerButton: FC<TaxDisclaimerButtonProps> = ({ showShortText = fal
   const overlayStyle = css({
     position: "fixed",
     inset: 0,
-    backgroundColor: "color-mix(in srgb, var(--colors-surface-contrast) 60%, transparent)",
+    backgroundColor: "var(--colors-surface-scrim)",
     backdropFilter: "blur(4px)",
     zIndex: 50,
   });
@@ -38,8 +38,7 @@ const TaxDisclaimerButton: FC<TaxDisclaimerButtonProps> = ({ showShortText = fal
     border: "1px solid",
     borderColor: "border",
     borderRadius: { base: "xl", md: "lg" },
-    boxShadow:
-      "0 20px 25px -5px color-mix(in srgb, var(--colors-surface-contrast) 30%, transparent), 0 10px 10px -5px color-mix(in srgb, var(--colors-surface-contrast) 20%, transparent)",
+    boxShadow: "var(--shadows-floating)",
     padding: { base: "20px 16px", md: "28px" },
     width: { base: "calc(100vw - 20px)", sm: "90vw" },
     maxWidth: { base: "calc(100vw - 20px)", md: "640px" },

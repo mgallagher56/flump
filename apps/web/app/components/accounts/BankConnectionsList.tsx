@@ -141,10 +141,10 @@ const BankConnectionsList: FC<BankConnectionsListProps> = ({
     });
 
   const statusBadgeStyle = (status: string) => {
-    let bg = "color-mix(in srgb, var(--colors-chart-wealth) 10%, transparent)";
-    let color = "var(--colors-chart-wealth)";
+    let bg = "var(--colors-status-positive-bg)";
+    let color = "var(--colors-status-positive-text)";
     if (status === "error") {
-      bg = "color-mix(in srgb, var(--colors-status-danger-text) 10%, transparent)";
+      bg = "var(--colors-status-danger-bg)";
       color = "var(--colors-status-danger-text)";
     }
     return css({

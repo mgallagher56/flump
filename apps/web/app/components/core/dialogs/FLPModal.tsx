@@ -56,7 +56,7 @@ const FLPModal: FC<FLPModalProps> = ({
   const overlayStyle = css({
     position: "fixed",
     inset: 0,
-    backgroundColor: "color-mix(in srgb, var(--colors-surface-contrast) 60%, transparent)",
+    backgroundColor: "var(--colors-surface-scrim)",
     backdropFilter: "blur(4px)",
     zIndex: 50,
   });
@@ -72,8 +72,7 @@ const FLPModal: FC<FLPModalProps> = ({
     border: "1px solid",
     borderColor: "border",
     borderRadius: { base: "xl", md: "lg" },
-    boxShadow:
-      "0 20px 25px -5px color-mix(in srgb, var(--colors-surface-contrast) 30%, transparent), 0 10px 10px -5px color-mix(in srgb, var(--colors-surface-contrast) 20%, transparent)",
+    boxShadow: "var(--shadows-floating)",
     padding: { base: "20px 16px", md: "24px" },
     width: { base: "calc(100vw - 20px)", sm: "92vw", md: "90vw" },
     maxWidth: { base: "calc(100vw - 20px)", sm: "520px", md: "520px" },
@@ -96,7 +95,7 @@ const FLPModal: FC<FLPModalProps> = ({
     borderColor: "border",
     borderTopLeftRadius: "16px",
     borderTopRightRadius: "16px",
-    boxShadow: "0 -10px 30px color-mix(in srgb, var(--colors-surface-contrast) 35%, transparent)",
+    boxShadow: "var(--shadows-floating)",
     padding: "16px 16px calc(24px + env(safe-area-inset-bottom, 0px))",
     width: "100%",
     maxHeight: "88vh",

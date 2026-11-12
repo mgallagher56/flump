@@ -50,9 +50,7 @@ const tabButtonStyle = (active: boolean) =>
     gap: "6px",
     backgroundColor: active ? "card" : "transparent",
     color: active ? "text.primary" : "text.muted",
-    boxShadow: active
-      ? "0 1px 2px color-mix(in srgb, var(--colors-surface-contrast) 6%, transparent)"
-      : "none",
+    boxShadow: active ? "var(--shadows-card)" : "none",
     border: "1px solid",
     borderColor: active ? "border.subtle" : "transparent",
     transition: "all 0.15s ease",

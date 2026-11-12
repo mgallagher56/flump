@@ -151,7 +151,7 @@ const BudgetCategoryTable: FC<BudgetCategoryTableProps> = ({
           padding: "1px 6px",
           borderRadius: "4px",
           backgroundColor: "color-mix(in srgb, var(--colors-chart-baseline) 10%, transparent)",
-          color: "var(--colors-chart-baseline)",
+          color: "var(--colors-text-muted)",
           fontWeight: 500,
         }}
       >
@@ -538,7 +538,7 @@ const BudgetCategoryTable: FC<BudgetCategoryTableProps> = ({
                             borderRadius: "4px",
                             backgroundColor:
                               "color-mix(in srgb, var(--colors-chart-baseline) 15%, transparent)",
-                            color: "var(--colors-chart-baseline)",
+                            color: "var(--colors-text-muted)",
                             fontWeight: 600,
                           }}
                         >
@@ -553,7 +553,7 @@ const BudgetCategoryTable: FC<BudgetCategoryTableProps> = ({
                             borderRadius: "4px",
                             backgroundColor:
                               "color-mix(in srgb, var(--colors-chart-series2) 10%, transparent)",
-                            color: "var(--colors-chart-series2)",
+                            color: "var(--colors-status-info-text)",
                             fontWeight: 600,
                           }}
                         >
@@ -643,7 +643,7 @@ const BudgetCategoryTable: FC<BudgetCategoryTableProps> = ({
                             borderRadius: "4px",
                             backgroundColor:
                               "color-mix(in srgb, var(--colors-chart-baseline) 15%, transparent)",
-                            color: "var(--colors-chart-baseline)",
+                            color: "var(--colors-text-muted)",
                             fontWeight: 600,
                           }}
                         >
@@ -658,7 +658,7 @@ const BudgetCategoryTable: FC<BudgetCategoryTableProps> = ({
                             borderRadius: "4px",
                             backgroundColor:
                               "color-mix(in srgb, var(--colors-chart-series2) 10%, transparent)",
-                            color: "var(--colors-chart-series2)",
+                            color: "var(--colors-status-info-text)",
                             fontWeight: 600,
                           }}
                         >

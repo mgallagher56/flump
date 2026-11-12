@@ -27,7 +27,7 @@ const SUGGESTIONS = [
 const overlayStyle = css({
   position: "fixed",
   inset: 0,
-  backgroundColor: "color-mix(in srgb, var(--colors-surface-contrast) 50%, transparent)",
+  backgroundColor: "var(--colors-surface-scrim)",
   backdropFilter: "blur(2px)",
   zIndex: 100,
 });
@@ -47,8 +47,7 @@ const contentStyle = css({
   borderColor: "border",
   padding: { base: "20px 16px", md: "24px" },
   zIndex: 101,
-  boxShadow:
-    "0 20px 25px -5px color-mix(in srgb, var(--colors-surface-contrast) 20%, transparent), 0 10px 10px -5px color-mix(in srgb, var(--colors-surface-contrast) 10%, transparent)",
+  boxShadow: "var(--shadows-floating)",
 });
 
 const inputStyle = css({
@@ -137,7 +136,7 @@ export const AddCategoryModal: FC<AddCategoryModalProps> = ({
                 background: "none",
                 border: "none",
                 cursor: "pointer",
-                color: "var(--colors-chart-baseline)",
+                color: "var(--colors-text-muted)",
                 fontSize: "16px",
               }}
             >

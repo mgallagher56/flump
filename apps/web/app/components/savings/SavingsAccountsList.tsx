@@ -109,7 +109,7 @@ const badgeStyle = (type: string) =>
       type === "Investment"
         ? "color-mix(in srgb, var(--colors-chart-accent-purple) 12%, transparent)"
         : "color-mix(in srgb, var(--colors-chart-wealth) 12%, transparent)",
-    color: type === "Investment" ? "var(--colors-chart-accent-purple)" : "status.positive.text",
+    color: type === "Investment" ? "var(--colors-text-secondary)" : "status.positive.text",
   });
 
 const actionBtnStyle = css({
@@ -493,7 +493,7 @@ export const SavingsAccountsList: FC<SavingsAccountsListProps> = ({
                           {acc.type === "Investment" ? (
                             <FaChartLine
                               style={{
-                                color: "var(--colors-chart-accent-purple)",
+                                color: "var(--colors-text-secondary)",
                                 fontSize: "16px",
                               }}
                             />

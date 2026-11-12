@@ -163,7 +163,7 @@ const BudgetDashboard: FC<BudgetDashboardProps> = ({
   };
 
   const surplusColour =
-    totals.surplus >= 0 ? "var(--colors-chart-wealth)" : "var(--colors-status-danger-text)";
+    totals.surplus >= 0 ? "var(--colors-status-positive-text)" : "var(--colors-status-danger-text)";
 
   const runwayStats = useMemo(() => {
     const activeSettings =
@@ -180,27 +180,27 @@ const BudgetDashboard: FC<BudgetDashboardProps> = ({
       if (m < 3)
         return {
           colour: "var(--colors-status-danger-text)",
-          bg: "color-mix(in srgb, var(--colors-status-danger-text) 10%, transparent)",
+          bg: "var(--colors-status-danger-bg)",
           label: "Critical",
           emoji: "🔴",
         };
       if (m < 6)
         return {
-          colour: "var(--colors-chart-warning)",
-          bg: "color-mix(in srgb, var(--colors-chart-warning) 10%, transparent)",
+          colour: "var(--colors-status-warning-text)",
+          bg: "var(--colors-status-warning-bg)",
           label: "Caution",
           emoji: "🟡",
         };
       if (m < 12)
         return {
-          colour: "var(--colors-chart-warning)",
-          bg: "color-mix(in srgb, var(--colors-chart-warning) 1%, transparent)",
+          colour: "var(--colors-status-info-text)",
+          bg: "var(--colors-status-info-bg)",
           label: "Moderate",
           emoji: "🟠",
         };
       return {
-        colour: "var(--colors-chart-wealth)",
-        bg: "color-mix(in srgb, var(--colors-chart-wealth) 10%, transparent)",
+        colour: "var(--colors-status-positive-text)",
+        bg: "var(--colors-status-positive-bg)",
         label: "Healthy",
         emoji: "🟢",
       };
@@ -357,7 +357,7 @@ const BudgetDashboard: FC<BudgetDashboardProps> = ({
             borderColor: totals.surplus >= 0 ? "status.positive.text" : "destructive",
             backgroundColor:
               totals.surplus >= 0
-                ? "color-mix(in srgb, var(--colors-chart-wealth) 6%, transparent)"
+                ? "color-mix(in srgb, var(--colors-status-positive-text) 6%, transparent)"
                 : "color-mix(in srgb, var(--colors-status-danger-text) 6%, transparent)",
           })}
         >
@@ -531,8 +531,9 @@ const BudgetDashboard: FC<BudgetDashboardProps> = ({
             padding: isMobileVariant ? "16px" : "20px",
             borderRadius: "lg",
             border: "1px solid",
-            borderColor: "color-mix(in srgb, var(--colors-chart-wealth) 30%, transparent)",
-            backgroundColor: "color-mix(in srgb, var(--colors-chart-wealth) 3%, transparent)",
+            borderColor: "color-mix(in srgb, var(--colors-status-positive-text) 30%, transparent)",
+            backgroundColor:
+              "color-mix(in srgb, var(--colors-status-positive-text) 3%, transparent)",
             display: "flex",
             flexDirection: "column",
             gap: "12px",
@@ -558,7 +559,8 @@ const BudgetDashboard: FC<BudgetDashboardProps> = ({
                 fontWeight: 700,
                 padding: "2px 8px",
                 borderRadius: "999px",
-                backgroundColor: "color-mix(in srgb, var(--colors-chart-wealth) 15%, transparent)",
+                backgroundColor:
+                  "color-mix(in srgb, var(--colors-status-positive-text) 15%, transparent)",
                 color: "var(--colors-status-positive-text)",
               }}
             >
@@ -1060,7 +1062,7 @@ const BudgetDashboard: FC<BudgetDashboardProps> = ({
                 >
                   {fmt(ct.total)}/mo
                 </FLPText>
-                <FaArrowRight style={{ color: "var(--colors-chart-baseline)", fontSize: "12px" }} />
+                <FaArrowRight style={{ color: "var(--colors-text-muted)", fontSize: "12px" }} />
               </div>
             </button>
           ))}

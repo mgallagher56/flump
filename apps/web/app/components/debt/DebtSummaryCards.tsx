@@ -123,7 +123,7 @@ export const DebtSummaryCards: FC<DebtSummaryCardsProps> = ({
               style={{
                 fontSize: "14px",
                 fontWeight: "normal",
-                color: "var(--colors-chart-baseline)",
+                color: "var(--colors-text-muted)",
               }}
             >
               /mo

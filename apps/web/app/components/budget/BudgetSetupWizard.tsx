@@ -505,7 +505,7 @@ const BudgetSetupWizard: FC<BudgetSetupWizardProps> = ({
         borderColor: "border",
         overflow: "hidden",
         backgroundColor: "surface",
-        boxShadow: "0 8px 30px color-mix(in srgb, var(--colors-surface-contrast) 12%, transparent)",
+        boxShadow: "var(--shadows-floating)",
       })}
     >
       {/* Progress bar */}
@@ -788,9 +788,10 @@ const BudgetSetupWizard: FC<BudgetSetupWizardProps> = ({
                 className={css({
                   padding: "12px",
                   borderRadius: "md",
-                  backgroundColor: "color-mix(in srgb, var(--colors-chart-wealth) 8%, transparent)",
+                  backgroundColor:
+                    "color-mix(in srgb, var(--colors-status-positive-text) 8%, transparent)",
                   border:
-                    "1px solid color-mix(in srgb, var(--colors-chart-wealth) 25%, transparent)",
+                    "1px solid color-mix(in srgb, var(--colors-status-positive-text) 25%, transparent)",
                   marginBottom: "8px",
                   display: "flex",
                   alignItems: "center",
@@ -812,13 +813,13 @@ const BudgetSetupWizard: FC<BudgetSetupWizardProps> = ({
                       color: "status.positive.text",
                       backgroundColor: "surface",
                       border:
-                        "1px solid color-mix(in srgb, var(--colors-chart-wealth) 40%, transparent)",
+                        "1px solid color-mix(in srgb, var(--colors-status-positive-text) 40%, transparent)",
                       borderRadius: "sm",
                       padding: "4px 10px",
                       cursor: "pointer",
                       _hover: {
                         backgroundColor:
-                          "color-mix(in srgb, var(--colors-chart-wealth) 15%, transparent)",
+                          "color-mix(in srgb, var(--colors-status-positive-text) 15%, transparent)",
                       },
                     })}
                     onClick={() => {
@@ -890,9 +891,10 @@ const BudgetSetupWizard: FC<BudgetSetupWizardProps> = ({
                   gap: "10px",
                   padding: "12px 16px",
                   borderRadius: "8px",
-                  backgroundColor: "color-mix(in srgb, var(--colors-chart-wealth) 8%, transparent)",
+                  backgroundColor:
+                    "color-mix(in srgb, var(--colors-status-positive-text) 8%, transparent)",
                   border:
-                    "1px solid color-mix(in srgb, var(--colors-chart-wealth) 20%, transparent)",
+                    "1px solid color-mix(in srgb, var(--colors-status-positive-text) 20%, transparent)",
                   marginTop: "16px",
                 }}
               >
@@ -929,7 +931,7 @@ const BudgetSetupWizard: FC<BudgetSetupWizardProps> = ({
               {
                 label: "Total Income",
                 value: fmt(totalIncome),
-                colour: "var(--colors-chart-wealth)",
+                colour: "var(--colors-status-positive-text)",
               },
               {
                 label: "Total Expenses",
@@ -940,7 +942,9 @@ const BudgetSetupWizard: FC<BudgetSetupWizardProps> = ({
                 label: surplus >= 0 ? "Monthly Surplus" : "Monthly Deficit",
                 value: `${surplus >= 0 ? "+" : "-"}${fmt(surplus)}`,
                 colour:
-                  surplus >= 0 ? "var(--colors-chart-wealth)" : "var(--colors-status-danger-text)",
+                  surplus >= 0
+                    ? "var(--colors-status-positive-text)"
+                    : "var(--colors-status-danger-text)",
                 big: true,
               },
             ].map((row) => (
