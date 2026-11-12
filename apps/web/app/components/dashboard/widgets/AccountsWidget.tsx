@@ -81,7 +81,7 @@ export const AccountsWidget: FC<AccountsWidgetProps> = ({
       onToggleSize={onToggleSize}
       renderSettings={(isOpen, onClose) => (
         <WidgetSettingsModal
-          description="Customize what metrics and accounts appear on your accounts widget."
+          description="Customise what metrics and accounts appear on your accounts widget."
           isOpen={isOpen}
           title="Accounts Widget Settings"
           onClose={onClose}
@@ -157,6 +157,7 @@ export const AccountsWidget: FC<AccountsWidgetProps> = ({
                 border: "none",
                 cursor: "pointer",
                 position: "relative",
+                _after: { content: '""', position: "absolute", inset: "-10px 0" },
               })}
               onClick={() => onUpdateConfig?.({ ...config, showAllocationBar: !showBar })}
             >

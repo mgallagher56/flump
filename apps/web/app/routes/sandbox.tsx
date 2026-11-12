@@ -1,6 +1,5 @@
 import type { OnboardingSeedPayload } from "@flump/finance-engine";
 import { persistOnboardingSeed } from "@flump/finance-engine";
-import { ProjectionNotice } from "@repo/ui";
 import { css } from "@repo/ui/styled-system/css";
 import { flex } from "@repo/ui/styled-system/patterns";
 import { useSetAtom } from "jotai";
@@ -24,14 +23,15 @@ export const meta: MetaFunction = () => [
 ];
 
 const bannerStyle = css({
-  position: "sticky",
+  // Sticky only from md up: on phones the banner would otherwise cover a third of the screen.
+  position: { base: "static", md: "sticky" },
   top: 0,
   zIndex: 40,
   backgroundColor: "surface",
   color: "text.primary",
-  padding: "10px 16px",
+  padding: { base: "8px 12px", md: "10px 16px" },
   borderRadius: "lg",
-  boxShadow: "0 2px 8px rgba(0, 0, 0, 0.08)",
+  boxShadow: "card",
   border: "1px solid",
   borderColor: "border",
   transition: "background-color 0.2s ease, border-color 0.2s ease",
@@ -41,6 +41,8 @@ const pillStyle = (active: boolean) =>
   css({
     fontSize: "12px",
     fontWeight: "700",
+    // 44px hit area (WCAG 2.5.8) without a taller visual chip on desktop.
+    minHeight: "44px",
     padding: "5px 12px",
     borderRadius: "full",
     border: "1px solid",
@@ -59,6 +61,7 @@ const saveButtonStyle = css({
   color: "text.onContrast",
   border: "none",
   borderRadius: "lg",
+  minHeight: "44px",
   padding: "6px 14px",
   fontSize: "12px",
   fontWeight: "700",
@@ -81,6 +84,12 @@ export const loader = async (args: LoaderFunctionArgs) => {
   }
   return {};
 };
+
+const PERSONAS = [
+  { key: "debt", label: "Clearing £8k debt" },
+  { key: "medium", label: "£45k earner, no debt" },
+  { key: "high", label: "£100k high earner" },
+] as const;
 
 export default function SandboxRoute() {
   const navigate = useNavigate();
@@ -153,15 +162,15 @@ export default function SandboxRoute() {
       className={css({
         display: "flex",
         flexDirection: "column",
-        gap: "6",
-        paddingTop: "4",
+        gap: { base: "3", md: "6" },
+        paddingTop: { base: "2", md: "4" },
         paddingBottom: "12",
         width: "100%",
         maxWidth: "1536px",
         margin: "0 auto",
       })}
     >
-      <ProjectionNotice />
+      {/* The single "Guidance, not advice" ProjectionNotice is rendered by HomeDashboard. */}
       {/* Sticky Sandbox Header Banner */}
       <div className={bannerStyle}>
         <div
@@ -185,48 +194,63 @@ export default function SandboxRoute() {
               })}
             >
               <FiLock size={14} className={css({ color: "primary" })} />
-              LIVE DEMO SANDBOX (READ-ONLY)
+              Demo sandbox (read-only)
             </span>
 
             {/* Persona Switcher */}
-            <div className={flex({ gap: "2", flexWrap: "wrap" })}>
-              <button
-                type="button"
-                className={pillStyle(activePersona === "debt")}
-                onClick={() => setActivePersona("debt")}
-              >
-                Persona A: Clearing £8k Debt
-              </button>
-              <button
-                type="button"
-                className={pillStyle(activePersona === "medium")}
-                onClick={() => setActivePersona("medium")}
-              >
-                Persona B: £45k Earner (No Debt)
-              </button>
-              <button
-                type="button"
-                className={pillStyle(activePersona === "high")}
-                onClick={() => setActivePersona("high")}
-              >
-                Persona C: £100k High Earner
-              </button>
-            </div>
+            <fieldset
+              aria-label="Sample persona"
+              className={flex({
+                gap: "2",
+                flexWrap: "wrap",
+                border: "none",
+                padding: 0,
+                margin: 0,
+              })}
+            >
+              {PERSONAS.map((persona) => (
+                <button
+                  key={persona.key}
+                  type="button"
+                  aria-pressed={activePersona === persona.key}
+                  className={pillStyle(activePersona === persona.key)}
+                  onClick={() => setActivePersona(persona.key)}
+                >
+                  {persona.label}
+                </button>
+              ))}
+            </fieldset>
           </div>
 
           <div className={flex({ align: "center", gap: "3" })}>
-            <span className={css({ fontSize: "11px", color: "text.muted" })}>
+            <span
+              className={css({
+                fontSize: "11px",
+                color: "text.muted",
+                display: { base: "none", md: "inline" },
+              })}
+            >
               Ready to use your own bank feeds & HMRC data?
             </span>
-            <button type="button" className={saveButtonStyle} onClick={handleSaveAndCreateAccount}>
-              Save my numbers and create account <FiArrowRight size={13} />
+            <button
+              type="button"
+              aria-label="Save my numbers and create account"
+              className={saveButtonStyle}
+              onClick={handleSaveAndCreateAccount}
+            >
+              Save my numbers <FiArrowRight size={13} />
             </button>
           </div>
         </div>
       </div>
 
       <p
-        className={css({ fontSize: "xs", color: "text.muted", px: "4", py: "2" })}
+        className={css({
+          fontSize: "xs",
+          color: "text.muted",
+          px: { base: "1", md: "4" },
+          py: { base: "0", md: "2" },
+        })}
         id="sandbox-sample-data-label"
       >
         Sample data: illustrative figures, not yours. Tax due and take-home here are examples.

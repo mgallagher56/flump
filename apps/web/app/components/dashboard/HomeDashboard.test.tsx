@@ -156,7 +156,7 @@ describe("HomeDashboard", () => {
 
   it("opens per-widget settings modal when cog icon is clicked", () => {
     render(<HomeDashboard {...dummyProps} />);
-    const accountsCog = screen.getByLabelText("Customize Accounts widget");
+    const accountsCog = screen.getByLabelText("Customise Accounts widget");
     fireEvent.click(accountsCog);
 
     expect(screen.getByText("Accounts Widget Settings")).toBeDefined();
