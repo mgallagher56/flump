@@ -13,11 +13,13 @@ const observabilityBuilt = existsSync(
 test.skipIf(!observabilityBuilt)(
   "Sentry envelope under Bun carries the exception and no sentinels",
   async () => {
-    const { assertEnvelopeClean, runEnvelopeScenario } = await import(
+    const { assertEnvelopeClean, assertNestLoggerRestored, runEnvelopeScenario } = await import(
       "../../apps/backend/test/support/sentry-envelope"
     );
     const result = await runEnvelopeScenario();
     expect(() => assertEnvelopeClean(result)).not.toThrow();
+    // The scenario boots a Nest app with logger:false; later test files in this process must still see Nest logs.
+    expect(() => assertNestLoggerRestored()).not.toThrow();
   },
   30_000,
 );

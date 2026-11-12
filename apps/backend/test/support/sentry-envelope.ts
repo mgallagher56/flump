@@ -1,6 +1,12 @@
 import { createServer } from "node:http";
 import type { AddressInfo } from "node:net";
-import { BadRequestException, Controller, type INestApplication, Post } from "@nestjs/common";
+import {
+  BadRequestException,
+  Controller,
+  type INestApplication,
+  Logger,
+  Post,
+} from "@nestjs/common";
 import { Test } from "@nestjs/testing";
 import * as Sentry from "@sentry/node";
 import request from "supertest";
@@ -68,6 +74,11 @@ export async function runEnvelopeScenario(
   await new Promise<void>((resolve) => sink.listen(0, "127.0.0.1", resolve));
   const port = (sink.address() as AddressInfo).port;
 
+  // createNestApplication({ logger: false }) sets Nest's static Logger instance to undefined for
+  // the whole process. Under `bun test ./scripts` every test file shares one process, so keep the
+  // current instance and restore it, or later tests that read Nest's stdout (seed-cleanup-preview)
+  // see nothing.
+  const previousLogger = Logger.staticInstanceRef;
   let app: INestApplication | undefined;
   try {
     initSentry({ SENTRY_DSN: `http://public@127.0.0.1:${port}/1`, ...extraEnv });
@@ -89,6 +100,7 @@ export async function runEnvelopeScenario(
     return { status: res.status, envelopes };
   } finally {
     await app?.close();
+    if (previousLogger) Logger.overrideLogger(previousLogger);
     await Sentry.close(2000);
     await new Promise<void>((resolve) => sink.close(() => resolve()));
   }
@@ -112,4 +124,25 @@ export function assertEnvelopeClean(result: EnvelopeResult, expectedMessage = WI
   }
   if (!all.includes(expectedMessage)) throw new Error(`envelope lacks ${expectedMessage}`);
   if (!all.includes("req-envelope-1")) throw new Error("request id tag missing");
+}
+
+/**
+ * Throws if Nest's static Logger no longer writes to stdout. Run after `runEnvelopeScenario` so a
+ * regression that leaves the logger silenced for the rest of a shared test process is caught here.
+ */
+export function assertNestLoggerRestored(): void {
+  let out = "";
+  const original = process.stdout.write;
+  process.stdout.write = ((chunk: unknown) => {
+    out += String(chunk);
+    return true;
+  }) as typeof process.stdout.write;
+  try {
+    new Logger("EnvelopeLoggerCheck").log("logger-restored-check");
+  } finally {
+    process.stdout.write = original;
+  }
+  if (!out.includes("logger-restored-check")) {
+    throw new Error("Nest Logger stayed silenced after the envelope scenario");
+  }
 }
