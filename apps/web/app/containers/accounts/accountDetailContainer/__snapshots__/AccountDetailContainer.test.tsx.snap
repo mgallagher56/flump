@@ -33,7 +33,7 @@ exports[`<AccountDetailContainer /> > should render 1`] = `
             class="d_flex ai_center gap_2 "
           >
             <span
-              class="fs_10px fw_bold tt_uppercase bg-c_rgba(99,_99,_241,_0.1) c_primary p_2px_8px bdr_full"
+              class="fs_10px fw_bold tt_uppercase bg-c_color-mix(in_srgb,_var(--colors-primary)_10%,_transparent) c_primary p_2px_8px bdr_full"
             >
               CURRENT
             </span>
@@ -54,7 +54,7 @@ exports[`<AccountDetailContainer /> > should render 1`] = `
               £1,000
             </h2>
             <span
-              class="fs_xs fw_bold p_2px_8px bdr_full bg-c_rgba(16,_185,_129,_0.1) c_success.500 d_inline-flex ai_center gap_2px"
+              class="fs_xs fw_bold p_2px_8px bdr_full bg-c_color-mix(in_srgb,_var(--colors-chart-wealth)_10%,_transparent) c_status.positive.text d_inline-flex ai_center gap_2px"
             >
               ↑
                

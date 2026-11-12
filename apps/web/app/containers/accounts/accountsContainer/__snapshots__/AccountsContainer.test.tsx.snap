@@ -25,7 +25,7 @@ exports[`<AccountsContainer /> > should render as expected when accounts exist 1
       <button
         aria-expanded="false"
         aria-haspopup="dialog"
-        class="d_inline-flex ai_center gap_8px p_8px_16px bdr_md fs_sm fw_semibold bg-c_rgba(99,_99,_241,_0.1) c_primary bd_1px_solid bd-c_rgba(99,_99,_241,_0.25) cursor_pointer trs_all_0.15s_ease hover:bg-c_rgba(99,_99,_241,_0.18) hover:bd-c_primary"
+        class="d_inline-flex ai_center gap_8px p_8px_16px bdr_md fs_sm fw_semibold bg-c_color-mix(in_srgb,_var(--colors-primary)_10%,_transparent) c_primary bd_1px_solid bd-c_color-mix(in_srgb,_var(--colors-primary)_25%,_transparent) cursor_pointer trs_all_0.15s_ease hover:bg-c_color-mix(in_srgb,_var(--colors-primary)_18%,_transparent) hover:bd-c_primary"
         data-state="closed"
         type="button"
       >
@@ -76,7 +76,7 @@ exports[`<AccountsContainer /> > should render as expected when accounts exist 1
         <button
           aria-controls="radix-_r_f_-content-overview"
           aria-selected="false"
-          class="p_8px_18px min-h_38px d_inline-flex ai_center jc_center gap_6px white-space_nowrap fs_sm fw_medium c_text.muted bg-c_transparent bdr_lg bd_none cursor_pointer trs_all_0.15s_ease [&[data-state='active']]:bg-c_surface [&[data-state='active']]:c_text.primary [&[data-state='active']]:fw_semibold [&[data-state='active']]:bx-sh_0_1px_3px_rgba(0,_0,_0,_0.1),_0_1px_2px_rgba(0,_0,_0,_0.06) hover:c_text.primary focusVisible:ring_2px_solid focusVisible:ring-c_primary focusVisible:ring-o_2px"
+          class="p_8px_18px min-h_38px d_inline-flex ai_center jc_center gap_6px white-space_nowrap fs_sm fw_medium c_text.muted bg-c_transparent bdr_lg bd_none cursor_pointer trs_all_0.15s_ease [&[data-state='active']]:bg-c_surface [&[data-state='active']]:c_text.primary [&[data-state='active']]:fw_semibold [&[data-state='active']]:bx-sh_0_1px_3px_color-mix(in_srgb,_var(--colors-surface-contrast)_10%,_transparent),_0_1px_2px_color-mix(in_srgb,_var(--colors-surface-contrast)_6%,_transparent) hover:c_text.primary focusVisible:ring_2px_solid focusVisible:ring-c_primary focusVisible:ring-o_2px"
           data-orientation="horizontal"
           data-radix-collection-item=""
           data-state="inactive"
@@ -90,7 +90,7 @@ exports[`<AccountsContainer /> > should render as expected when accounts exist 1
         <button
           aria-controls="radix-_r_f_-content-all-accounts"
           aria-selected="true"
-          class="p_8px_18px min-h_38px d_inline-flex ai_center jc_center gap_6px white-space_nowrap fs_sm fw_medium c_text.muted bg-c_transparent bdr_lg bd_none cursor_pointer trs_all_0.15s_ease [&[data-state='active']]:bg-c_surface [&[data-state='active']]:c_text.primary [&[data-state='active']]:fw_semibold [&[data-state='active']]:bx-sh_0_1px_3px_rgba(0,_0,_0,_0.1),_0_1px_2px_rgba(0,_0,_0,_0.06) hover:c_text.primary focusVisible:ring_2px_solid focusVisible:ring-c_primary focusVisible:ring-o_2px"
+          class="p_8px_18px min-h_38px d_inline-flex ai_center jc_center gap_6px white-space_nowrap fs_sm fw_medium c_text.muted bg-c_transparent bdr_lg bd_none cursor_pointer trs_all_0.15s_ease [&[data-state='active']]:bg-c_surface [&[data-state='active']]:c_text.primary [&[data-state='active']]:fw_semibold [&[data-state='active']]:bx-sh_0_1px_3px_color-mix(in_srgb,_var(--colors-surface-contrast)_10%,_transparent),_0_1px_2px_color-mix(in_srgb,_var(--colors-surface-contrast)_6%,_transparent) hover:c_text.primary focusVisible:ring_2px_solid focusVisible:ring-c_primary focusVisible:ring-o_2px"
           data-orientation="horizontal"
           data-radix-collection-item=""
           data-state="active"
@@ -140,7 +140,7 @@ exports[`<AccountsContainer /> > should render as expected when accounts exist 1
                   height="1em"
                   stroke="currentColor"
                   stroke-width="0"
-                  style="color: #4f46e5;"
+                  style="color: var(--colors-chart-primary);"
                   viewBox="0 0 512 512"
                   width="1em"
                   xmlns="http://www.w3.org/2000/svg"
@@ -179,7 +179,7 @@ exports[`<AccountsContainer /> > should render as expected when accounts exist 1
                   height="1em"
                   stroke="currentColor"
                   stroke-width="0"
-                  style="color: #059669;"
+                  style="color: var(--colors-chart-wealth);"
                   viewBox="0 0 576 512"
                   width="1em"
                   xmlns="http://www.w3.org/2000/svg"
@@ -219,7 +219,7 @@ exports[`<AccountsContainer /> > should render as expected when accounts exist 1
                   height="1em"
                   stroke="currentColor"
                   stroke-width="0"
-                  style="color: #dc2626;"
+                  style="color: var(--colors-chart-debt);"
                   viewBox="0 0 576 512"
                   width="1em"
                   xmlns="http://www.w3.org/2000/svg"
@@ -257,7 +257,7 @@ exports[`<AccountsContainer /> > should render as expected when accounts exist 1
                   height="1em"
                   stroke="currentColor"
                   stroke-width="0"
-                  style="color: #9333ea;"
+                  style="color: var(--colors-chart-accent-purple);"
                   viewBox="0 0 576 512"
                   width="1em"
                   xmlns="http://www.w3.org/2000/svg"
@@ -295,7 +295,7 @@ exports[`<AccountsContainer /> > should render as expected when accounts exist 1
                   height="1em"
                   stroke="currentColor"
                   stroke-width="0"
-                  style="color: #64748b;"
+                  style="color: var(--colors-chart-baseline);"
                   viewBox="0 0 640 512"
                   width="1em"
                   xmlns="http://www.w3.org/2000/svg"
@@ -350,7 +350,7 @@ exports[`<AccountsContainer /> > should render as expected when no accounts exis
       <button
         aria-expanded="false"
         aria-haspopup="dialog"
-        class="d_inline-flex ai_center gap_8px p_8px_16px bdr_md fs_sm fw_semibold bg-c_rgba(99,_99,_241,_0.1) c_primary bd_1px_solid bd-c_rgba(99,_99,_241,_0.25) cursor_pointer trs_all_0.15s_ease hover:bg-c_rgba(99,_99,_241,_0.18) hover:bd-c_primary"
+        class="d_inline-flex ai_center gap_8px p_8px_16px bdr_md fs_sm fw_semibold bg-c_color-mix(in_srgb,_var(--colors-primary)_10%,_transparent) c_primary bd_1px_solid bd-c_color-mix(in_srgb,_var(--colors-primary)_25%,_transparent) cursor_pointer trs_all_0.15s_ease hover:bg-c_color-mix(in_srgb,_var(--colors-primary)_18%,_transparent) hover:bd-c_primary"
         data-state="closed"
         type="button"
       >
@@ -401,7 +401,7 @@ exports[`<AccountsContainer /> > should render as expected when no accounts exis
         <button
           aria-controls="radix-_r_6_-content-overview"
           aria-selected="false"
-          class="p_8px_18px min-h_38px d_inline-flex ai_center jc_center gap_6px white-space_nowrap fs_sm fw_medium c_text.muted bg-c_transparent bdr_lg bd_none cursor_pointer trs_all_0.15s_ease [&[data-state='active']]:bg-c_surface [&[data-state='active']]:c_text.primary [&[data-state='active']]:fw_semibold [&[data-state='active']]:bx-sh_0_1px_3px_rgba(0,_0,_0,_0.1),_0_1px_2px_rgba(0,_0,_0,_0.06) hover:c_text.primary focusVisible:ring_2px_solid focusVisible:ring-c_primary focusVisible:ring-o_2px"
+          class="p_8px_18px min-h_38px d_inline-flex ai_center jc_center gap_6px white-space_nowrap fs_sm fw_medium c_text.muted bg-c_transparent bdr_lg bd_none cursor_pointer trs_all_0.15s_ease [&[data-state='active']]:bg-c_surface [&[data-state='active']]:c_text.primary [&[data-state='active']]:fw_semibold [&[data-state='active']]:bx-sh_0_1px_3px_color-mix(in_srgb,_var(--colors-surface-contrast)_10%,_transparent),_0_1px_2px_color-mix(in_srgb,_var(--colors-surface-contrast)_6%,_transparent) hover:c_text.primary focusVisible:ring_2px_solid focusVisible:ring-c_primary focusVisible:ring-o_2px"
           data-orientation="horizontal"
           data-radix-collection-item=""
           data-state="inactive"
@@ -415,7 +415,7 @@ exports[`<AccountsContainer /> > should render as expected when no accounts exis
         <button
           aria-controls="radix-_r_6_-content-all-accounts"
           aria-selected="true"
-          class="p_8px_18px min-h_38px d_inline-flex ai_center jc_center gap_6px white-space_nowrap fs_sm fw_medium c_text.muted bg-c_transparent bdr_lg bd_none cursor_pointer trs_all_0.15s_ease [&[data-state='active']]:bg-c_surface [&[data-state='active']]:c_text.primary [&[data-state='active']]:fw_semibold [&[data-state='active']]:bx-sh_0_1px_3px_rgba(0,_0,_0,_0.1),_0_1px_2px_rgba(0,_0,_0,_0.06) hover:c_text.primary focusVisible:ring_2px_solid focusVisible:ring-c_primary focusVisible:ring-o_2px"
+          class="p_8px_18px min-h_38px d_inline-flex ai_center jc_center gap_6px white-space_nowrap fs_sm fw_medium c_text.muted bg-c_transparent bdr_lg bd_none cursor_pointer trs_all_0.15s_ease [&[data-state='active']]:bg-c_surface [&[data-state='active']]:c_text.primary [&[data-state='active']]:fw_semibold [&[data-state='active']]:bx-sh_0_1px_3px_color-mix(in_srgb,_var(--colors-surface-contrast)_10%,_transparent),_0_1px_2px_color-mix(in_srgb,_var(--colors-surface-contrast)_6%,_transparent) hover:c_text.primary focusVisible:ring_2px_solid focusVisible:ring-c_primary focusVisible:ring-o_2px"
           data-orientation="horizontal"
           data-radix-collection-item=""
           data-state="active"
