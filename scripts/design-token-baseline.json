@@ -11,7 +11,6 @@
   "apps/web/app/components/accounts/BankConnectionsList.tsx": 13,
   "apps/web/app/components/core/dialogs/TaxDisclaimerButton.tsx": 3,
   "apps/web/app/components/dashboard/DashboardWidgetCard.tsx": 5,
-  "apps/web/app/components/dashboard/HomeDashboard.tsx": 10,
   "apps/web/app/components/dashboard/widgets/AccountsWidget.tsx": 12,
   "apps/web/app/components/dashboard/widgets/BudgetWidget.tsx": 15,
   "apps/web/app/components/dashboard/widgets/ForecastWidget.tsx": 2,

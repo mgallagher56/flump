@@ -6,7 +6,7 @@ import {
 import type { ReactElement } from "react";
 import { type LoaderFunctionArgs, type MetaFunction, redirect, useLoaderData } from "react-router";
 import { calculateNetTakeHome } from "~/components/budget/UserProfilePanel";
-import { HomeDashboard } from "~/components/dashboard/HomeDashboard";
+import { HomeDashboard } from "~/features/dashboard/components/HomeDashboard";
 import { loadWorkspaceSnapshot } from "~/services/backend-client.server";
 import { toMonthly } from "~/types/budget";
 import { buildDebtSummary } from "~/utils/debtSummary";

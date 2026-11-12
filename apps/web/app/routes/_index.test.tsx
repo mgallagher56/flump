@@ -38,7 +38,7 @@ vi.mock("~/services/backend-client.server", async (importOriginal) => {
   return { ...actual, loadWorkspaceSnapshot: vi.fn(actual.loadWorkspaceSnapshot) };
 });
 
-vi.mock("~/components/dashboard/HomeDashboard", () => ({
+vi.mock("~/features/dashboard/components/HomeDashboard", () => ({
   HomeDashboard: () => <div id="mock-home-dashboard">Mock Dashboard</div>,
 }));
 
