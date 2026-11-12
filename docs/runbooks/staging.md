@@ -76,6 +76,9 @@ Rows come from the code (`process.env.X`, `env.X` and `configService.get("X")` i
 | `BANK_CONNECTIONS_ALLOWED_USER_IDS`                                                                                        | allow-list                                                                                                                                                                                                                                           | staging user ids only                                          | generate fresh                    | no                   |
 | `BETA_ALLOWED_EMAILS`                                                                                                      | beta allow-list                                                                                                                                                                                                                                      | same as production                                             | copy                              | no                   |
 | `BETA_ALLOWED_USER_IDS`                                                                                                    | beta allow-list                                                                                                                                                                                                                                      | same as production                                             | copy                              | no                   |
+| `MCP_ENABLED`                                                                                                              | global MCP kill switch; `false` turns MCP off                                                                                                                                                                                                        | same as production                                             | copy                              | no                   |
+| `MCP_OPEN_ACCESS`                                                                                                          | `true` opens MCP to every user; set explicitly, never leave unset in production                                                                                                                                                                      | `false`                                                        | generate fresh                    | no                   |
+| `MCP_ALLOWED_USER_IDS`                                                                                                     | comma-separated WorkOS user ids allowed to use MCP                                                                                                                                                                                                   | staging test user ids                                          | generate fresh                    | no                   |
 | `RAILWAY_DEPLOYMENT_DRAINING_SECONDS`                                                                                      | `15`                                                                                                                                                                                                                                                 | `15`                                                           | copy                              | no                   |
 | `SENTRY_DSN`                                                                                                               | production DSN (after N2/N3/N4)                                                                                                                                                                                                                      | staging DSN (after N2/N3/N4)                                   | generate fresh                    | yes                  |
 | `SENTRY_ENVIRONMENT`                                                                                                       | `production` (after N2/N3/N4)                                                                                                                                                                                                                        | `staging` (after N2/N3/N4)                                     | generate fresh                    | no                   |
@@ -120,16 +123,18 @@ Rows come from the code (`process.env.X`, `env.X` and `configService.get("X")` i
 
 ### 4.3 Marketing
 
-| Name                      | Production                            | Staging            | Source           | Secret? |
-| ------------------------- | ------------------------------------- | ------------------ | ---------------- | ------- |
-| `NODE_ENV`                | `production`                          | `production`       | copy             | no      |
-| `PORT`                    | Railway-injected                      | Railway-injected   | unset (platform) | no      |
-| `VITE_APP_URL`            | production web URL                    | staging web URL    | generate fresh   | no      |
-| `SECURITY_CONTACT`        | security contact address              | same as production | copy             | no      |
-| `ALLOW_INDEXING`          | `true` only at public launch          | unset              | unset            | no      |
-| `APP_URL`                 | fallback when `VITE_APP_URL` is unset | unset              | unset            | no      |
-| `RAILWAY_PUBLIC_DOMAIN`   | Railway-injected                      | Railway-injected   | unset (platform) | no      |
-| `RAILWAY_SERVICE_WEB_URL` | Railway-injected                      | Railway-injected   | unset (platform) | no      |
+| Name                      | Production                                                           | Staging            | Source           | Secret? |
+| ------------------------- | -------------------------------------------------------------------- | ------------------ | ---------------- | ------- |
+| `NODE_ENV`                | `production`                                                         | `production`       | copy             | no      |
+| `PORT`                    | Railway-injected                                                     | Railway-injected   | unset (platform) | no      |
+| `VITE_APP_URL`            | production web URL                                                   | staging web URL    | generate fresh   | no      |
+| `SECURITY_CONTACT`        | security contact address                                             | same as production | copy             | no      |
+| `SITE_URL`                | public https origin, used for sitemap and robots when indexing is on | unset              | unset            | no      |
+| `VITE_SHOW_PLACEHOLDERS`  | unset (build-time; `true` previews placeholder copy)                 | unset              | unset            | no      |
+| `ALLOW_INDEXING`          | `true` only at public launch                                         | unset              | unset            | no      |
+| `APP_URL`                 | fallback when `VITE_APP_URL` is unset                                | unset              | unset            | no      |
+| `RAILWAY_PUBLIC_DOMAIN`   | Railway-injected                                                     | Railway-injected   | unset (platform) | no      |
+| `RAILWAY_SERVICE_WEB_URL` | Railway-injected                                                     | Railway-injected   | unset (platform) | no      |
 
 ## 5. WorkOS
 
