@@ -4,12 +4,17 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import express from "express";
 import { createServer as createViteServer, type ViteDevServer } from "vite";
+import { registerOps } from "./server/ops";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 async function createServer() {
   const app = express();
   const isProd = process.env.NODE_ENV === "production";
+
+  // Ops routes (/healthz, /robots.txt) and the noindex header MUST come before vite
+  // middlewares, sirv and the SPA catch-all, or the catch-all serves HTML for them.
+  registerOps(app);
 
   // Security Headers Middleware
   app.use((_req, res, next) => {
