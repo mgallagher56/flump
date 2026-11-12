@@ -154,7 +154,8 @@ describe("Phase 2 Verification Gate: baseline.store & Onboarding Seed Hydration"
 
     const baseline = hydrateBaselineFromSeed(rawSeed);
     expect(baseline.financialStage).toBe("STAGE_3_WEALTH_OPTIMIZE");
-    expect(baseline.enabledModules).toContain("tax");
+    // Self Assessment is opt-in: a high salary alone no longer switches it on.
+    expect(baseline.enabledModules).not.toContain("tax");
   });
 });
 

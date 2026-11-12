@@ -350,7 +350,8 @@ export function hydrateBaselineFromSeed(seed: AnySeedPayload, userId = ""): Fina
     if (housingStatus === "MORTGAGE" || mortgageBalance > 0) {
       enabledModules.push("mortgage");
     }
-    if (employmentStatus === "SELF_EMPLOYED" || annualGrossSalary >= 95000) {
+    // Self Assessment is opt-in (E16 D3-B): inferred on only for self-employed users.
+    if (employmentStatus === "SELF_EMPLOYED") {
       enabledModules.push("tax");
     }
     enabledModules = Array.from(new Set(enabledModules));
