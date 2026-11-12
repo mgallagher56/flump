@@ -144,11 +144,11 @@ export const DashboardWidgetCard: FC<DashboardWidgetCardProps> = ({
             </div>
 
             <div style={{ display: "flex", alignItems: "center", gap: "4px", flexShrink: 0 }}>
-              {/* Widget specific customization button */}
+              {/* Widget-specific customisation button */}
               {renderSettings && (
                 <button
-                  aria-label={`Customize ${page.label} widget`}
-                  title="Customize widget"
+                  aria-label={`Customise ${page.label} widget`}
+                  title="Customise widget"
                   className={css({
                     display: "inline-flex",
                     alignItems: "center",
@@ -162,6 +162,9 @@ export const DashboardWidgetCard: FC<DashboardWidgetCardProps> = ({
                     color: "text.muted",
                     cursor: "pointer",
                     transition: "all 0.15s ease",
+                    // Compact visual size; the pseudo-element extends the hit area to 44px (WCAG 2.5.8).
+                    position: "relative",
+                    _after: { content: '""', position: "absolute", inset: "-10px" },
                     _hover: {
                       color: "primary",
                       borderColor: "primary",
@@ -283,6 +286,9 @@ export const DashboardWidgetCard: FC<DashboardWidgetCardProps> = ({
                     padding: { base: "4px 6px", sm: "4px 8px" },
                     borderRadius: "md",
                     transition: "background 0.15s ease",
+                    // Compact visual size; the pseudo-element extends the hit area to 44px (WCAG 2.5.8).
+                    position: "relative",
+                    _after: { content: '""', position: "absolute", inset: "-10px" },
                     _hover: { backgroundColor: "rgba(99, 99, 241, 0.08)" },
                   })}
                 >

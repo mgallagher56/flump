@@ -54,24 +54,30 @@ describe("SandboxRoute", () => {
     );
   });
 
+  it("does not render its own projection notice (HomeDashboard owns the single one)", () => {
+    render(<SandboxRoute />);
+    expect(screen.queryByTestId("projection-notice")).toBeNull();
+  });
+
   it("renders Persona A by default and switches between Persona B and Persona C", () => {
     mockSearchParams = new URLSearchParams();
     render(<SandboxRoute />);
 
-    expect(screen.getByText(/LIVE DEMO SANDBOX \(READ-ONLY\)/i)).toBeDefined();
-    expect(screen.getByText("Persona A: Clearing £8k Debt")).toBeDefined();
-    expect(screen.getByText("Persona B: £45k Earner (No Debt)")).toBeDefined();
-    expect(screen.getByText("Persona C: £100k High Earner")).toBeDefined();
+    expect(screen.getByText(/Demo sandbox \(read-only\)/i)).toBeDefined();
+    expect(screen.getByText("Clearing £8k debt")).toBeDefined();
+    expect(screen.getByText("£45k earner, no debt")).toBeDefined();
+    expect(screen.getByText("£100k high earner")).toBeDefined();
 
     expect(screen.getByTestId("total-debt").textContent).toBe("8000");
+    expect(screen.getByText("Clearing £8k debt").getAttribute("aria-pressed")).toBe("true");
 
     // Switch to Persona B (£45k earner, no debt)
-    fireEvent.click(screen.getByText("Persona B: £45k Earner (No Debt)"));
+    fireEvent.click(screen.getByText("£45k earner, no debt"));
     expect(screen.getByTestId("total-debt").textContent).toBe("0");
     expect(screen.getByTestId("net-worth").textContent).toBe("43300");
 
     // Switch to Persona C (£100k high earner)
-    fireEvent.click(screen.getByText("Persona C: £100k High Earner"));
+    fireEvent.click(screen.getByText("£100k high earner"));
     expect(screen.getByTestId("total-debt").textContent).toBe("0");
     expect(screen.getByTestId("net-worth").textContent).toBe("441500");
   });
@@ -88,7 +94,7 @@ describe("SandboxRoute", () => {
     mockSearchParams = new URLSearchParams();
     render(<SandboxRoute />);
 
-    const saveBtn = screen.getByText(/Save my numbers and create account/i);
+    const saveBtn = screen.getByRole("button", { name: /Save my numbers and create account/i });
     fireEvent.click(saveBtn);
 
     expect(mockNavigate).toHaveBeenCalledWith("/signUp");
@@ -97,7 +103,7 @@ describe("SandboxRoute", () => {
   it("save seed carries modules and stage but no salary", () => {
     mockSearchParams = new URLSearchParams();
     render(<SandboxRoute />);
-    fireEvent.click(screen.getByText(/Save my numbers and create account/i));
+    fireEvent.click(screen.getByRole("button", { name: /Save my numbers and create account/i }));
     const seed = persistSeed.mock.calls.at(-1)?.[0];
     expect(seed.inferredModules.length).toBeGreaterThan(0);
     expect(seed.inferredStage).toBeDefined();

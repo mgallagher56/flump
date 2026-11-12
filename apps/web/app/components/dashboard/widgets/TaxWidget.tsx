@@ -67,7 +67,7 @@ export const TaxWidget: FC<TaxWidgetProps> = ({
       onToggleSize={onToggleSize}
       renderSettings={(isOpen, onClose) => (
         <WidgetSettingsModal
-          description="Customize the primary tax metric and income filter."
+          description="Customise the primary tax metric and income filter."
           isOpen={isOpen}
           title="Tax Widget Settings"
           onClose={onClose}

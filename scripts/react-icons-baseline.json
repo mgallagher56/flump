@@ -27,7 +27,6 @@
   "apps/web/app/components/core/disclosure/CollapsibleSection.tsx": 1,
   "apps/web/app/components/dashboard/DashboardWidgetCard.tsx": 1,
   "apps/web/app/components/dashboard/HomeDashboard.tsx": 1,
-  "apps/web/app/components/dashboard/WidgetSettingsModal.tsx": 1,
   "apps/web/app/components/dashboard/widgets/DebtWidget.tsx": 1,
   "apps/web/app/components/debt/DebtAccountsList.tsx": 1,
   "apps/web/app/components/debt/DebtSummaryCards.tsx": 1,

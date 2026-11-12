@@ -130,6 +130,7 @@ export const PensionWidget: FC<PensionWidgetProps> = ({
                 border: "none",
                 cursor: "pointer",
                 position: "relative",
+                _after: { content: '""', position: "absolute", inset: "-10px 0" },
               })}
               onClick={() => onUpdateConfig?.({ ...config, showSalarySacrificeBadge: !showBadge })}
             >
@@ -264,7 +265,7 @@ export const PensionWidget: FC<PensionWidgetProps> = ({
                   : "var(--colors-text-muted)",
               }}
             >
-              {data.isSalarySacrifice ? "Sal Sacrifice" : "Net Pay"}
+              {data.isSalarySacrifice ? "Salary sacrifice" : "Net pay"}
             </span>
           )}
         </div>

@@ -11,7 +11,7 @@ describe("Debt Components: AddDebtDialog, PayoffStrategySwitcher, UkDebtInstrume
     const onClose = vi.fn();
     const onAddDebt = vi.fn();
 
-    const { rerender, container } = render(
+    const { rerender } = render(
       <AddDebtDialog isOpen={false} onAddDebt={onAddDebt} onClose={onClose} />,
     );
     expect(screen.queryByText("Add liability account")).toBeNull();
@@ -29,7 +29,7 @@ describe("Debt Components: AddDebtDialog, PayoffStrategySwitcher, UkDebtInstrume
     fireEvent.change(numberInputs[1], { target: { value: "19.9" } });
     fireEvent.change(numberInputs[2], { target: { value: "90" } });
 
-    const form = container.querySelector("form");
+    const form = document.querySelector("form");
     if (form) fireEvent.submit(form);
 
     expect(onAddDebt).toHaveBeenCalledWith({
@@ -60,14 +60,14 @@ describe("Debt Components: AddDebtDialog, PayoffStrategySwitcher, UkDebtInstrume
     });
 
     it("needs only a name and balance; blank APR and minimum are flagged unknown", () => {
-      const { onAddDebt, container } = open();
+      const { onAddDebt } = open();
       fireEvent.change(screen.getByPlaceholderText(/Barclaycard Platinum/i), {
         target: { value: "Klarna" },
       });
       fireEvent.change(screen.getByLabelText("Outstanding balance (£)"), {
         target: { value: "250" },
       });
-      fireEvent.submit(container.querySelector("form") as HTMLFormElement);
+      fireEvent.submit(document.querySelector("form") as HTMLFormElement);
 
       expect(onAddDebt).toHaveBeenCalledTimes(1);
       const submitted = onAddDebt.mock.calls[0][0];
@@ -85,7 +85,7 @@ describe("Debt Components: AddDebtDialog, PayoffStrategySwitcher, UkDebtInstrume
     });
 
     it("treats an explicit 0 APR as a real rate", () => {
-      const { onAddDebt, container } = open();
+      const { onAddDebt } = open();
       fireEvent.change(screen.getByPlaceholderText(/Barclaycard Platinum/i), {
         target: { value: "0% card" },
       });
@@ -93,7 +93,7 @@ describe("Debt Components: AddDebtDialog, PayoffStrategySwitcher, UkDebtInstrume
         target: { value: "900" },
       });
       fireEvent.change(screen.getByLabelText("APR (%)"), { target: { value: "0" } });
-      fireEvent.submit(container.querySelector("form") as HTMLFormElement);
+      fireEvent.submit(document.querySelector("form") as HTMLFormElement);
 
       const submitted = onAddDebt.mock.calls[0][0];
       expect(submitted.aprKnown).toBe(true);
@@ -101,11 +101,11 @@ describe("Debt Components: AddDebtDialog, PayoffStrategySwitcher, UkDebtInstrume
     });
 
     it("does not submit without a balance", () => {
-      const { onAddDebt, container } = open();
+      const { onAddDebt } = open();
       fireEvent.change(screen.getByPlaceholderText(/Barclaycard Platinum/i), {
         target: { value: "Klarna" },
       });
-      fireEvent.submit(container.querySelector("form") as HTMLFormElement);
+      fireEvent.submit(document.querySelector("form") as HTMLFormElement);
       expect(onAddDebt).not.toHaveBeenCalled();
     });
   });
@@ -124,7 +124,7 @@ describe("Debt Components: AddDebtDialog, PayoffStrategySwitcher, UkDebtInstrume
 
     it("offers no balance field and sends only the changed fields", () => {
       const onEditDebt = vi.fn();
-      const { container } = render(
+      render(
         <AddDebtDialog
           debt={debt}
           isOpen
@@ -135,14 +135,14 @@ describe("Debt Components: AddDebtDialog, PayoffStrategySwitcher, UkDebtInstrume
       );
       expect(screen.queryByLabelText("Outstanding balance (£)")).toBeNull();
       fireEvent.change(screen.getByLabelText("APR (%)"), { target: { value: "" } });
-      fireEvent.submit(container.querySelector("form") as HTMLFormElement);
+      fireEvent.submit(document.querySelector("form") as HTMLFormElement);
       expect(onEditDebt).toHaveBeenCalledWith("d1", { apr: 0, aprKnown: false });
     });
 
     it("sends nothing when nothing changed", () => {
       const onEditDebt = vi.fn();
       const onClose = vi.fn();
-      const { container } = render(
+      render(
         <AddDebtDialog
           debt={debt}
           isOpen
@@ -151,7 +151,7 @@ describe("Debt Components: AddDebtDialog, PayoffStrategySwitcher, UkDebtInstrume
           onEditDebt={onEditDebt}
         />,
       );
-      fireEvent.submit(container.querySelector("form") as HTMLFormElement);
+      fireEvent.submit(document.querySelector("form") as HTMLFormElement);
       expect(onEditDebt).not.toHaveBeenCalled();
       expect(onClose).toHaveBeenCalled();
     });
@@ -249,5 +249,26 @@ describe("Debt Components: AddDebtDialog, PayoffStrategySwitcher, UkDebtInstrume
     const studentInputs = screen.getAllByRole("spinbutton");
     fireEvent.change(studentInputs[0], { target: { value: "120000" } });
     fireEvent.change(studentInputs[1], { target: { value: "15000" } });
+  });
+});
+
+describe("AddDebtDialog accessibility (R-15)", () => {
+  it("is a modal dialog with an accessible name, closes on Escape and labels its close button", () => {
+    const onClose = vi.fn();
+    render(<AddDebtDialog isOpen onAddDebt={vi.fn()} onClose={onClose} />);
+    const dialog = screen.getByRole("dialog", { name: "Add liability account" });
+    expect(dialog.getAttribute("aria-modal")).toBe("true");
+    expect(dialog.contains(document.activeElement)).toBe(true);
+
+    fireEvent.keyDown(dialog, { key: "Escape", code: "Escape" });
+    expect(onClose).toHaveBeenCalledTimes(1);
+
+    fireEvent.click(screen.getByRole("button", { name: "Close" }));
+    expect(onClose).toHaveBeenCalledTimes(2);
+  });
+
+  it("uses UK spelling in its description", () => {
+    render(<AddDebtDialog isOpen onAddDebt={vi.fn()} onClose={vi.fn()} />);
+    expect(screen.getByText(/payoff optimisation/)).toBeDefined();
   });
 });

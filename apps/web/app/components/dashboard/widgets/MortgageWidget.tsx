@@ -91,7 +91,7 @@ export const MortgageWidget: FC<MortgageWidgetProps> = ({
       onToggleSize={onToggleSize}
       renderSettings={(isOpen, onClose) => (
         <WidgetSettingsModal
-          description="Customize mortgage calculation and overpayment simulation defaults."
+          description="Customise mortgage calculation and overpayment simulation defaults."
           isOpen={isOpen}
           title="Mortgage Widget Settings"
           onClose={onClose}
@@ -197,6 +197,7 @@ export const MortgageWidget: FC<MortgageWidgetProps> = ({
                 border: "none",
                 cursor: "pointer",
                 position: "relative",
+                _after: { content: '""', position: "absolute", inset: "-10px 0" },
               })}
               onClick={() => onUpdateConfig?.({ ...config, showMonthlyPayment: !showPayment })}
             >

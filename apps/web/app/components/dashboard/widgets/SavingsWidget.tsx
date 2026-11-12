@@ -138,6 +138,7 @@ export const SavingsWidget: FC<SavingsWidgetProps> = ({
                 border: "none",
                 cursor: "pointer",
                 position: "relative",
+                _after: { content: '""', position: "absolute", inset: "-10px 0" },
               })}
               onClick={() => onUpdateConfig?.({ ...config, showCompoundReturn: !showReturn })}
             >

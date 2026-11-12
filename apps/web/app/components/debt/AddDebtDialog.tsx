@@ -1,8 +1,8 @@
 import type { DebtItem } from "@flump/finance-engine";
+import { Dialog } from "@repo/ui";
 import { css } from "@repo/ui/styled-system/css";
 import { type FC, useState } from "react";
 import FLPButton from "~/components/core/buttons/FLPButton";
-import FLPHeading from "~/components/core/typography/FLPHeading";
 import FLPText from "~/components/core/typography/FLPText";
 
 export interface AddDebtDialogProps {
@@ -19,32 +19,6 @@ export interface AddDebtDialogProps {
   /** Called in edit mode with only the fields that changed. */
   onEditDebt?: (id: string, updates: Partial<DebtItem>) => void;
 }
-
-const overlayStyle = css({
-  position: "fixed",
-  inset: 0,
-  backgroundColor: "var(--colors-surface-scrim)",
-  backdropFilter: "blur(4px)",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  zIndex: 1000,
-  padding: "16px",
-});
-
-const modalStyle = css({
-  width: "100%",
-  maxWidth: "480px",
-  backgroundColor: "surface.card",
-  borderRadius: "xl",
-  border: "1px solid",
-  borderColor: "border",
-  padding: "24px",
-  display: "flex",
-  flexDirection: "column",
-  gap: "16px",
-  boxShadow: "var(--shadows-floating)",
-});
 
 const fieldStyle = css({
   display: "flex",
@@ -137,119 +111,115 @@ export const AddDebtDialog: FC<AddDebtDialogProps> = ({
     onClose();
   };
 
+  const description = isEdit
+    ? "Leave the APR or minimum payment blank if you don't know it yet."
+    : "Log an unsecured debt, credit card, or overdraft for payoff optimisation. Only the name and balance are required.";
+
   return (
-    // biome-ignore lint/a11y/noStaticElementInteractions: Backdrop click to dismiss
-    // biome-ignore lint/a11y/useKeyWithClickEvents: Backdrop click to dismiss
-    <div className={overlayStyle} onClick={onClose}>
-      {/* biome-ignore lint/a11y/noStaticElementInteractions: Prevent dialog click propagation */}
-      {/* biome-ignore lint/a11y/useKeyWithClickEvents: Prevent dialog click propagation */}
-      <div className={modalStyle} onClick={(e) => e.stopPropagation()}>
-        <div>
-          <FLPHeading as="h3" size="lg">
-            {isEdit ? "Edit debt" : "Add liability account"}
-          </FLPHeading>
-          <FLPText color="text.muted" fontSize="xs">
-            {isEdit
-              ? "Leave the APR or minimum payment blank if you don't know it yet."
-              : "Log an unsecured debt, credit card, or overdraft for payoff optimization. Only the name and balance are required."}
-          </FLPText>
+    <Dialog
+      open={isOpen}
+      onOpenChange={(open) => {
+        if (!open) onClose();
+      }}
+      title={isEdit ? "Edit debt" : "Add liability account"}
+      description={description}
+      closeLabel="Close"
+      id="add-debt-dialog"
+    >
+      <form
+        onSubmit={handleSubmit}
+        style={{ display: "flex", flexDirection: "column", gap: "14px" }}
+      >
+        <div className={fieldStyle}>
+          <FLPText fontSize="sm">Account / creditor name</FLPText>
+          <input
+            required
+            aria-label="Account / creditor name"
+            className={inputStyle}
+            placeholder="e.g. Barclaycard Platinum, Klarna, Overdraft"
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+          />
         </div>
 
-        <form
-          onSubmit={handleSubmit}
-          style={{ display: "flex", flexDirection: "column", gap: "14px" }}
-        >
+        {isEdit ? null : (
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+            <div className={fieldStyle}>
+              <FLPText fontSize="sm">Type</FLPText>
+              <select
+                aria-label="Debt Type"
+                className={inputStyle}
+                value={type}
+                onChange={(e) => setType(e.target.value as DebtItem["type"])}
+              >
+                <option value="credit_card">Credit card</option>
+                <option value="loan">Personal loan</option>
+                <option value="overdraft">Arranged overdraft</option>
+                <option value="bnpl">Buy-now-pay-later</option>
+                <option value="car_finance">Car finance / HP</option>
+                <option value="other">Other liability</option>
+              </select>
+            </div>
+
+            <div className={fieldStyle}>
+              <FLPText fontSize="sm">Outstanding balance (£)</FLPText>
+              <input
+                required
+                aria-label="Outstanding balance (£)"
+                className={inputStyle}
+                min="0.01"
+                step="any"
+                type="number"
+                value={balance}
+                onChange={(e) => setBalance(e.target.value)}
+              />
+            </div>
+          </div>
+        )}
+
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
           <div className={fieldStyle}>
-            <FLPText fontSize="sm">Account / creditor name</FLPText>
+            <FLPText fontSize="sm">APR (%), optional</FLPText>
             <input
-              required
-              aria-label="Account / creditor name"
+              aria-label="APR (%)"
               className={inputStyle}
-              placeholder="e.g. Barclaycard Platinum, Klarna, Overdraft"
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
+              min="0"
+              placeholder="Not set"
+              step="any"
+              type="number"
+              value={apr}
+              onChange={(e) => setApr(e.target.value)}
             />
           </div>
 
-          {isEdit ? null : (
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
-              <div className={fieldStyle}>
-                <FLPText fontSize="sm">Type</FLPText>
-                <select
-                  aria-label="Debt Type"
-                  className={inputStyle}
-                  value={type}
-                  onChange={(e) => setType(e.target.value as DebtItem["type"])}
-                >
-                  <option value="credit_card">Credit card</option>
-                  <option value="loan">Personal loan</option>
-                  <option value="overdraft">Arranged overdraft</option>
-                  <option value="bnpl">Buy-now-pay-later</option>
-                  <option value="car_finance">Car finance / HP</option>
-                  <option value="other">Other liability</option>
-                </select>
-              </div>
-
-              <div className={fieldStyle}>
-                <FLPText fontSize="sm">Outstanding balance (£)</FLPText>
-                <input
-                  required
-                  aria-label="Outstanding balance (£)"
-                  className={inputStyle}
-                  min="0.01"
-                  step="any"
-                  type="number"
-                  value={balance}
-                  onChange={(e) => setBalance(e.target.value)}
-                />
-              </div>
-            </div>
-          )}
-
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
-            <div className={fieldStyle}>
-              <FLPText fontSize="sm">APR (%), optional</FLPText>
-              <input
-                aria-label="APR (%)"
-                className={inputStyle}
-                min="0"
-                placeholder="Not set"
-                step="any"
-                type="number"
-                value={apr}
-                onChange={(e) => setApr(e.target.value)}
-              />
-            </div>
-
-            <div className={fieldStyle}>
-              <FLPText fontSize="sm">Monthly minimum (£), optional</FLPText>
-              <input
-                aria-label="Monthly minimum (£)"
-                className={inputStyle}
-                min="0"
-                placeholder="Not set"
-                step="any"
-                type="number"
-                value={minimumPayment}
-                onChange={(e) => setMinimumPayment(e.target.value)}
-              />
-            </div>
+          <div className={fieldStyle}>
+            <FLPText fontSize="sm">Monthly minimum (£), optional</FLPText>
+            <input
+              aria-label="Monthly minimum (£)"
+              className={inputStyle}
+              min="0"
+              placeholder="Not set"
+              step="any"
+              type="number"
+              value={minimumPayment}
+              onChange={(e) => setMinimumPayment(e.target.value)}
+            />
           </div>
+        </div>
 
-          <div
-            style={{ display: "flex", justifyContent: "flex-end", gap: "10px", marginTop: "10px" }}
-          >
-            <FLPButton type="button" variant="outline" onClick={onClose}>
-              Cancel
-            </FLPButton>
-            <FLPButton type="submit" variant="primary">
-              {isEdit ? "Save changes" : "Add liability"}
-            </FLPButton>
-          </div>
-        </form>
-      </div>
-    </div>
+        <div
+          style={{ display: "flex", justifyContent: "flex-end", gap: "10px", marginTop: "10px" }}
+        >
+          <FLPButton type="button" variant="outline" onClick={onClose}>
+            Cancel
+          </FLPButton>
+          <FLPButton type="submit" variant="primary">
+            {isEdit ? "Save changes" : "Add liability"}
+          </FLPButton>
+        </div>
+      </form>
+    </Dialog>
   );
 };
 

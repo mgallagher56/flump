@@ -79,7 +79,7 @@ export const ForecastWidget: FC<ForecastWidgetProps> = ({
       onToggleSize={onToggleSize}
       renderSettings={(isOpen, onClose) => (
         <WidgetSettingsModal
-          description="Customize the multi-year wealth projection time horizon and growth assumptions."
+          description="Customise the multi-year wealth projection time horizon and growth assumptions."
           isOpen={isOpen}
           title="Forecast Widget Settings"
           onClose={onClose}
