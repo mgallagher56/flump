@@ -105,7 +105,7 @@ describe("scanner self-test", () => {
   it("flags a fixture that breaks every rule", () => {
     const fixture = [
       'const apiUrl = process.env.VITE_API_URL || "http://localhost:4000";',
-      "const res = await fetch(`" + D + "{apiUrl}/accounts`);",
+      ["const res = await fetch(`", D, "{apiUrl}/accounts`);"].join(""),
       "const other = import.meta.env.VITE_API_URL;",
     ].join("\n");
     const rules = new Set(scanSource("routes/fixture.tsx", fixture).map((o) => o.rule));
@@ -116,8 +116,8 @@ describe("scanner self-test", () => {
     const cases = [
       "(import.meta as any).env?.VITE_API_URL",
       "(window as Window).ENV?.VITE_API_URL",
-      "await fetch(`" + D + "{this.getBaseUrl()}/user-profile`, {",
-      "fetch(`" + D + "{apiConfig.apiBaseUrl}/x`)",
+      ["await fetch(`", D, "{this.getBaseUrl()}/user-profile`, {"].join(""),
+      ["fetch(`", D, "{apiConfig.apiBaseUrl}/x`)"].join(""),
     ];
     for (const line of cases) {
       expect(scanSource("routes/fixture.tsx", line), line).not.toHaveLength(0);
@@ -133,9 +133,14 @@ describe("scanner self-test", () => {
     const line = 'const u = process.env.VITE_API_URL ?? "http://localhost:4000";';
     expect(scanSource("config.server.ts", line)).toEqual([]);
     expect(
-      scanSource("services/backend-client.server.ts", "fetch(`" + D + "{apiConfig.apiBaseUrl}/x`)"),
+      scanSource(
+        "services/backend-client.server.ts",
+        ["fetch(`", D, "{apiConfig.apiBaseUrl}/x`)"].join(""),
+      ),
     ).toEqual([]);
-    expect(scanSource("services/api-client.ts", "fetch(`" + D + "{apiBaseUrl}/x`)")).toEqual([]);
+    expect(
+      scanSource("services/api-client.ts", ["fetch(`", D, "{apiBaseUrl}/x`)"].join("")),
+    ).toEqual([]);
   });
 
   it("walks real files", () => {
