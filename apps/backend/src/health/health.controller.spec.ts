@@ -9,8 +9,15 @@ function makeRes() {
   return { status: vi.fn(), setHeader: vi.fn() };
 }
 
-function makeController(query: () => Promise<unknown>) {
-  const dataSource = { query: vi.fn(query) };
+function makeController(
+  query: () => Promise<unknown>,
+  migrations: { loaded?: number; executed?: () => Promise<unknown> } = {},
+) {
+  const { loaded = 1, executed = async () => [{ n: loaded }] } = migrations;
+  const dataSource = {
+    migrations: Array.from({ length: loaded }, () => ({})),
+    query: vi.fn((sql: string) => (sql.includes("FROM migrations") ? executed() : query())),
+  };
   return { controller: new HealthController(dataSource as never), dataSource };
 }
 
@@ -85,6 +92,41 @@ describe("HealthController", () => {
     const { controller } = makeController(async () => []);
     await controller.ready(makeRes() as never);
     expect(vi.getTimerCount()).toBe(0);
+  });
+
+  it("returns 503 with the same body when a migration is pending", async () => {
+    const { controller, dataSource } = makeController(async () => [], {
+      loaded: 3,
+      executed: async () => [{ n: 2 }],
+    });
+    const res = makeRes();
+    const body = await controller.ready(res as never);
+    expect(dataSource.query).toHaveBeenCalledWith("SELECT count(*)::int AS n FROM migrations");
+    expect(res.status).toHaveBeenCalledWith(503);
+    expect(body).toEqual({ status: "unavailable" });
+  });
+
+  it("returns 200 when executed migrations equal loaded migrations", async () => {
+    const { controller } = makeController(async () => [], {
+      loaded: 3,
+      executed: async () => [{ n: 3 }],
+    });
+    const res = makeRes();
+    const body = await controller.ready(res as never);
+    expect(res.status).not.toHaveBeenCalled();
+    expect(body).toMatchObject({ status: "ok" });
+  });
+
+  it("returns 503 when the migrations table is missing", async () => {
+    const { controller } = makeController(async () => [], {
+      executed: async () => {
+        throw new Error('relation "migrations" does not exist');
+      },
+    });
+    const res = makeRes();
+    const body = await controller.ready(res as never);
+    expect(res.status).toHaveBeenCalledWith(503);
+    expect(body).toEqual({ status: "unavailable" });
   });
 
   it("has no AuthGuard metadata on the class or handlers", () => {
