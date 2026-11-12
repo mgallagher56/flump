@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { typeOrmOptionsFromEnv } from "../config/typeorm.options";
 import { assertSafeTestDatabase } from "../testing/assertSafeTestDatabase";
 import { resolveDbTestMode } from "../testing/dbTestMode";
+import { discoverMigrations } from "../testing/discoverMigrations";
 import { Baseline1794355200000 } from "./Baseline1794355200000";
 import { ClearBankTokens1794355300000 } from "./ClearBankTokens1794355300000";
 import {
@@ -23,6 +24,9 @@ import {
 // CI runs this suite against the Postgres 18 service container in the vitest job
 // (.github/workflows/ci-pipeline.yml); turbo.json passes the variables through.
 const TEST_DATABASE_URL = process.env.TEST_DATABASE_URL;
+
+// Discovered from src/migrations (shared with the contract test) so a new migration is never skipped.
+const MIGRATIONS = await discoverMigrations();
 
 const ENTITY_TABLES = [
   "account_details",
@@ -50,11 +54,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
     // which cannot parse .ts under vitest (the glob is exercised by the compiled dist).
     ds = new DataSource({
       ...options,
-      migrations: [
-        Baseline1794355200000,
-        ClearBankTokens1794355300000,
-        RemoveSeededExampleData1794355400000,
-      ],
+      migrations: MIGRATIONS,
       synchronize: false,
       migrationsRun: false,
     });
@@ -139,11 +139,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
     const second = await ds.runMigrations();
     expect(second).toEqual([]);
     expect(await columns()).toEqual(before);
-    expect(await applied()).toEqual([
-      "Baseline1794355200000",
-      "ClearBankTokens1794355300000",
-      "RemoveSeededExampleData1794355400000",
-    ]);
+    expect(await applied()).toEqual(MIGRATIONS.map((m) => m.name));
   });
 
   it("leaves a synchronize-built database unchanged and records the baseline as applied", async () => {

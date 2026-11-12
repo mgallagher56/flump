@@ -1,6 +1,4 @@
 import "reflect-metadata";
-import { readdirSync } from "node:fs";
-import { join } from "node:path";
 import type { INestApplication } from "@nestjs/common";
 import { Test } from "@nestjs/testing";
 import request from "supertest";
@@ -10,6 +8,7 @@ import { AppModule } from "../../src/app.module";
 import { DEV_BYPASS_TOKEN } from "../../src/auth/dev-bypass.verifier";
 import { assertSafeTestDatabase } from "../../src/testing/assertSafeTestDatabase";
 import { resolveDbTestMode } from "../../src/testing/dbTestMode";
+import { discoverMigrations } from "../../src/testing/discoverMigrations";
 import {
   ACCOUNT_CREATE_PAYLOADS,
   ACCOUNT_UPDATE_PAYLOADS,
@@ -30,23 +29,7 @@ import {
 // connection and the rest of AppModule are untouched.
 vi.mock("../../src/config/typeorm.options", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../../src/config/typeorm.options")>();
-  const dir = join(__dirname, "..", "..", "src", "migrations");
-  const files = readdirSync(dir).filter((f) => /\d+\.ts$/.test(f) && !f.endsWith(".d.ts"));
-  const migrations: Array<new (...args: never[]) => unknown> = [];
-  for (const file of files) {
-    const mod = (await import(join(dir, file))) as Record<string, unknown>;
-    for (const exported of Object.values(mod)) {
-      if (typeof exported === "function" && /\d{13}$/.test(exported.name)) {
-        migrations.push(exported as (typeof migrations)[number]);
-      }
-    }
-  }
-  migrations.sort((x, y) => Number(x.name.slice(-13)) - Number(y.name.slice(-13)));
-  if (migrations.length !== files.length) {
-    throw new Error(
-      `Expected one migration class per file in src/migrations: ${files.length} files, ${migrations.length} classes`,
-    );
-  }
+  const migrations = await discoverMigrations();
   return {
     ...actual,
     typeOrmOptionsFromEnv: (env: Parameters<typeof actual.typeOrmOptionsFromEnv>[0]) => ({
