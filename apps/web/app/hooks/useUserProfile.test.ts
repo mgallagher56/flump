@@ -50,14 +50,15 @@ describe("useUserProfile", () => {
     expect(result.current.profile.annualSalary).toBe(75000);
   });
 
-  test("rejects without calling the API when there is no access token", async () => {
+  test("does not need a browser access token: it calls the same-origin proxy", async () => {
     mockRootData = { accessToken: null };
+    (global.fetch as any).mockResolvedValueOnce(jsonRes({}));
     const { result } = renderHook(() => useUserProfile());
 
-    await expect(result.current.updateProfile({ displayName: "X" })).rejects.toThrow(
-      /unauthorised/i,
-    );
-    expect(global.fetch).not.toHaveBeenCalled();
+    await result.current.updateProfile({ displayName: "X" });
+    const [url, init] = (global.fetch as any).mock.calls[0];
+    expect(url).toBe("/api/user-profile");
+    expect(init.headers.Authorization).toBeUndefined();
   });
 
   test("updateProfile rejects with an unavailable BackendError on 503", async () => {
