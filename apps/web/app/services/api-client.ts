@@ -3,7 +3,8 @@ import { BackendError, kindFromStatus } from "./backend-error";
 export type HttpMethod = "GET" | "POST" | "PATCH" | "PUT" | "DELETE";
 
 export interface ApiFetchOptions {
-  accessToken: string | null | undefined;
+  /** Deprecated and ignored: the session cookie authenticates `/api`. Kept so call sites compile. */
+  accessToken?: string | null;
   method?: HttpMethod;
   body?: unknown;
   /** Caller cancellation. A caller abort is rethrown as is, never reported as a backend failure. */
@@ -16,26 +17,17 @@ export interface ApiFetchOptions {
 
 const DEFAULT_TIMEOUT_MS = 15000;
 
-function baseUrl(endpoint: string): string {
-  const env =
-    typeof window === "undefined"
-      ? undefined
-      : (window as Window & { ENV?: { VITE_API_URL?: string } }).ENV;
-  const url = env?.VITE_API_URL;
-  if (!url) throw new BackendError("unavailable", endpoint);
-  return url.replace(/\/+$/, "");
-}
+/** Same-origin proxy prefix (E20-N4). The server attaches the credentials. */
+const API_BASE = "/api";
 
 /**
- * Browser-side API client. Reads the base URL from `window.ENV.VITE_API_URL` only and throws
+ * Browser-side API client. Calls the same-origin `/api` proxy with no token and throws
  * `BackendError` for every failure so callers can show honest, generic messages.
  */
-export async function apiFetch<T>(endpoint: string, opts: ApiFetchOptions): Promise<T> {
-  const { accessToken, method = "GET", body, signal, timeoutMs = DEFAULT_TIMEOUT_MS } = opts;
-  if (!accessToken) throw new BackendError("unauthorised", endpoint);
-  const base = baseUrl(endpoint);
+export async function apiFetch<T>(endpoint: string, opts: ApiFetchOptions = {}): Promise<T> {
+  const { method = "GET", body, signal, timeoutMs = DEFAULT_TIMEOUT_MS } = opts;
 
-  const headers: Record<string, string> = { Authorization: `Bearer ${accessToken}` };
+  const headers: Record<string, string> = { "X-Flump-Request": "1" };
   if (body !== undefined) headers["Content-Type"] = "application/json";
 
   // A manual AbortController combines the timeout and the caller signal (same as backendFetch).
@@ -48,8 +40,9 @@ export async function apiFetch<T>(endpoint: string, opts: ApiFetchOptions): Prom
   try {
     let res: Response;
     try {
-      res = await fetch(`${base}${endpoint}`, {
+      res = await fetch(`${API_BASE}${endpoint}`, {
         method,
+        credentials: "same-origin",
         headers,
         body: body === undefined ? undefined : JSON.stringify(body),
         signal: controller.signal,

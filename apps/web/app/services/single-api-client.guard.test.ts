@@ -33,7 +33,11 @@ const RULES: Rule[] = [
   {
     id: "direct-api-fetch",
     pattern: /\bfetch\(\s*(?:`\$\{)?(?:apiUrl|apiBaseUrl|this\.getBaseUrl\(\)|apiConfig)/,
-    exempt: ["services/backend-client.server.ts", "services/api-client.ts"],
+    exempt: [
+      "services/backend-client.server.ts",
+      "services/api-client.ts",
+      "services/api-proxy.server.ts",
+    ],
   },
 ];
 
