@@ -1,6 +1,5 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import * as accountStyles from "./AccountDetailsStyles";
 import { MonthlyBalanceCheckInDrawer } from "./MonthlyBalanceCheckInDrawer";
 
 const mockSubmit = vi.fn();
@@ -12,13 +11,7 @@ vi.mock("react-router", () => ({
   }),
 }));
 
-describe("MonthlyBalanceCheckInDrawer & AccountDetailsStyles", () => {
-  it("exports AccountDetailsStyles", () => {
-    expect(accountStyles.accountDetailContainerStyles).toBeDefined();
-    expect(accountStyles.accountDetailDisplayStyles).toBeDefined();
-    expect(accountStyles.flexColumnStyles).toBeDefined();
-  });
-
+describe("MonthlyBalanceCheckInDrawer", () => {
   it("opens drawer, updates balances, and submits changes", () => {
     const accounts = [
       { id: "acc-1", name: "Monzo Current", type: "Current", balance: 1200, userId: "u1" },

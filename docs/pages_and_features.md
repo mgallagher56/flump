@@ -18,6 +18,7 @@ flump.co.uk (Marketing / apps/marketing)
 └── /guides/:slug           # UK Financial Playbooks with embedded calculator components
 
 app.flump.co.uk (Web Application / apps/web)
+├── /                       # Signed-in: dashboard home. Signed-out: redirected to the marketing site (the web app has no public landing page)
 ├── /sandbox                # Read-only demo for signed-out visitors (three personas; signed-in users are redirected home)
 ├── /login, /signUp         # WorkOS AuthKit integration
 ├── /callback               # Session hydration & root cookie onboarding seed reading (no demo or seeded financial data)

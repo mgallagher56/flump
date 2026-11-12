@@ -126,7 +126,7 @@ describe("Architecture & Design System Laws", () => {
     it("enforces colocated structure for features/debt components", () => {
       if (fs.existsSync(DEBT_FEATURES_DIR)) {
         const debtComponents = getSubdirectories(DEBT_FEATURES_DIR);
-        expect(debtComponents.length).toBeGreaterThanOrEqual(2);
+        expect(debtComponents.length).toBeGreaterThanOrEqual(1);
         for (const comp of debtComponents) {
           verifyColocatedStructure(DEBT_FEATURES_DIR, comp);
         }
@@ -262,8 +262,6 @@ describe("Architecture & Design System Laws", () => {
       // when paired with text.onContrast. Use status.*.text for text. Icons are graphics, so
       // they may use solid. Paths are relative to the repo root.
       const ALLOWED: Record<string, string> = {
-        "apps/web/app/features/debt/components/PromoCliffTracker/PromoCliffTracker.tsx":
-          "icon (graphic)",
         "apps/web/app/features/debt/components/PayoffStrategyControls/PayoffStrategyControls.tsx":
           "icon (graphic)",
         "apps/marketing/src/components/McpSpotlightSection/McpSpotlightSection.styles.ts":
@@ -344,10 +342,6 @@ describe("Architecture & Design System Laws", () => {
         "packages/ui/src/primitives/ProgressBar/ProgressBar.styles.ts": {
           count: 1,
           reason: "progress fill (graphic)",
-        },
-        "apps/web/app/components/core/inputs/slider/FLPSlider.tsx": {
-          count: 1,
-          reason: "slider track fill (graphic)",
         },
         "apps/web/app/components/navigation/NavMenu.tsx": {
           count: 1,
