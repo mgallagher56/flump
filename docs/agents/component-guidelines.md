@@ -175,3 +175,5 @@ Run this exact sequence before committing or updating a pull request:
    bun run test
    bun run build
    ```
+
+> Chart helpers in `packages/ui/src/charts` (`chartColor`) are the only sanctioned place that emits `var(--colors-chart-*)`, for SVG attributes and chart libraries. Components must not write `var(--colors-*)` themselves.

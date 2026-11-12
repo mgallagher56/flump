@@ -12,7 +12,7 @@ export function capSeriesWithOther<T extends SeriesItem>(
   max = 6,
   otherLabel = "Other",
 ): Array<T | SeriesItem> {
-  const limit = Math.max(1, Math.trunc(max));
+  const limit = Math.max(1, Number.isFinite(max) ? Math.trunc(max) : 6);
   if (items.length <= limit) return [...items];
   const ranked = items
     .map((item, index) => ({ item, index }))

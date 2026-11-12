@@ -18,7 +18,13 @@ const UNITS = [
 export function formatAxisCurrency(value: number, opts: FormatAxisCurrencyOptions = {}): string {
   if (!Number.isFinite(value)) return "";
   const abs = Math.abs(value);
-  const maxDigits = Math.max(0, Math.min(4, Math.trunc(opts.maxFractionDigits ?? 1)));
+  const maxDigits = Math.max(
+    0,
+    Math.min(
+      4,
+      Math.trunc(Number.isFinite(opts.maxFractionDigits) ? (opts.maxFractionDigits as number) : 1),
+    ),
+  );
 
   let index = UNITS.findIndex((u) => abs >= u.divisor);
   if (index === -1) index = UNITS.length - 1;
