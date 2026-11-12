@@ -1,4 +1,4 @@
-import { isSensitiveKey, REDACTED, redactString } from "./redact.js";
+import { hasEmail, isSensitiveKey, MAX_STRING_LENGTH, REDACTED, redactString } from "./redact.js";
 
 type Json = Record<string, unknown>;
 
@@ -28,6 +28,7 @@ const MAX_URL = 2048;
 const CONTEXT_ALLOW = new Set(["os", "browser", "runtime", "device", "app", "culture", "trace"]);
 // name/version of these contexts describe software, not people.
 const SOFTWARE_CONTEXTS = new Set(["os", "browser", "runtime"]);
+const SOFTWARE_TAGS = new Set(["os.name", "browser.name"]);
 const SOFTWARE_KEYS = new Set(["name", "version"]);
 
 const isObject = (v: unknown): v is Json => typeof v === "object" && v !== null;
@@ -41,28 +42,71 @@ function stripQueryAndHash(url: string): string {
   return url.slice(0, MAX_URL).replace(/[?#].*$/s, "");
 }
 
-const ORIGIN = /^[a-z][a-z0-9+.-]*:\/\/[^/]*/i;
+const URL_PARTS = /^([a-z][a-z0-9+.-]*:\/\/)([^/?#]*)(.*)$/is;
+const SAFE_ID = /^[\w.@+:-]{1,200}$/;
+
+/** Redacts one path segment, including percent-encoded forms such as %40 and %2540. */
+function redactSegment(segment: string): string {
+  let decoded = segment;
+  for (let i = 0; i < 2; i++) {
+    let next: string;
+    try {
+      next = decodeURIComponent(decoded);
+    } catch {
+      return REDACTED;
+    }
+    if (next === decoded) break;
+    if (next.includes("@")) return REDACTED;
+    decoded = next;
+  }
+  if (decoded !== segment && redactString(decoded) !== decoded) return REDACTED;
+  return redactString(segment);
+}
 
 /** Redacts each path segment on its own, so long but harmless paths keep their shape. */
 function redactPath(path: string): string {
   return path
     .split(/([\\/])/)
-    .map((part) => redactString(part))
+    .map((part) => redactSegment(part))
     .join("");
+}
+
+/** Splits a URL into a userinfo-free origin (if any) and its query-free path. */
+function splitUrl(url: string): { origin: string; path: string } {
+  const text = url.slice(0, MAX_URL);
+  const parts = URL_PARTS.exec(text);
+  if (parts === null) return { origin: "", path: stripQueryAndHash(text) };
+  // Userinfo ends at the LAST '@' of the authority, so passwords containing '@' do not leak.
+  const [, scheme = "", authority = "", rest = ""] = parts;
+  return { origin: scheme + authority.replace(/^.*@/s, ""), path: stripQueryAndHash(rest) };
 }
 
 /** Full URL with userinfo, query and hash removed and path segments redacted. */
 function cleanUrl(url: string): string {
-  const bare = stripQueryAndHash(url);
-  const origin = ORIGIN.exec(bare)?.[0];
-  if (origin === undefined) return redactPath(bare);
-  const host = origin.replace(/^([a-z][a-z0-9+.-]*:\/\/)(?:[^@]*@)?/i, "$1");
-  return host + redactPath(bare.slice(origin.length));
+  const { origin, path } = splitUrl(url);
+  return origin + redactPath(path);
 }
 
 /** Path only: origin (and so userinfo), query and hash removed, then redacted. */
 function cleanPath(url: string): string {
-  return redactPath(stripQueryAndHash(url).replace(ORIGIN, ""));
+  return redactPath(splitUrl(url).path);
+}
+
+/** Transaction names: URL- or path-looking tokens get path cleaning, the rest plain redaction. */
+function cleanTransaction(name: string): string {
+  return name
+    .slice(0, MAX_STRING_LENGTH)
+    .split(/(\s+)/)
+    .map((token) =>
+      /^(?:[a-z][a-z0-9+.-]*:\/\/|\/)/i.test(token) ? cleanUrl(token) : redactString(token),
+    )
+    .join("");
+}
+
+/** Short identifier fields: charset-constrained and never an email. */
+function ident(value: unknown): string | undefined {
+  const v = str(value);
+  return v !== undefined && SAFE_ID.test(v) && !hasEmail(v) ? v : undefined;
 }
 
 /** Repo-relative tail of a file path: no home directories, no absolute prefixes. */
@@ -71,7 +115,7 @@ function cleanFilename(file: string): string {
     .slice(0, MAX_URL)
     .replace(/^file:\/\//i, "")
     .replace(/^.*[\\/](node_modules[\\/])/s, "$1")
-    .replace(/^.*?(?:[\\/]Users[\\/][^\\/]+[\\/]|[\\/]home[\\/][^\\/]+[\\/])/s, "");
+    .replace(/^.*?(?:[\\/]users[\\/][^\\/]+[\\/]|[\\/]home[\\/][^\\/]+[\\/])/is, "");
   return redactPath(tail);
 }
 
@@ -107,7 +151,7 @@ function scrubTags(tags: unknown): Json | undefined {
   const out: Json = {};
   for (const [key, value] of Object.entries(tags)) {
     if (typeof value !== "string") continue;
-    out[key] = isSensitiveKey(key) ? REDACTED : redactString(value);
+    out[key] = isSensitiveKey(key) && !SOFTWARE_TAGS.has(key) ? REDACTED : redactString(value);
   }
   return out;
 }
@@ -158,7 +202,7 @@ function scrubSdk(sdk: unknown): Json | undefined {
 function scrubEventUnsafe(e: Json): Json {
   const out: Json = {};
   for (const key of ["event_id", "level", "platform", "release", "environment", "type"]) {
-    set(out, key, str(e[key]));
+    set(out, key, ident(e[key]));
   }
   if (typeof e.timestamp === "number" || typeof e.timestamp === "string") {
     out.timestamp = e.timestamp;
@@ -170,7 +214,7 @@ function scrubEventUnsafe(e: Json): Json {
   const message = str(e.message);
   if (message !== undefined) out.message = redactString(message);
   const transaction = str(e.transaction);
-  if (transaction !== undefined) out.transaction = redactString(transaction);
+  if (transaction !== undefined) out.transaction = cleanTransaction(transaction);
   if (isObject(e.logentry)) {
     const logentry: Json = {};
     const lm = str(e.logentry.message);
@@ -220,8 +264,8 @@ function scrubBreadcrumbUnsafe(crumb: Json): Json | null {
     if (v !== undefined) kept[key] = cleanPath(v);
   }
   const out: Json = { category };
-  set(out, "type", str(crumb.type));
-  set(out, "level", str(crumb.level));
+  set(out, "type", ident(crumb.type));
+  set(out, "level", ident(crumb.level));
   if (typeof crumb.timestamp === "number" && Number.isFinite(crumb.timestamp)) {
     out.timestamp = crumb.timestamp;
   }
