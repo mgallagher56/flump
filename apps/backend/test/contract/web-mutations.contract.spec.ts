@@ -32,12 +32,12 @@ vi.mock("../../src/config/typeorm.options", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../../src/config/typeorm.options")>();
   const dir = join(__dirname, "..", "..", "src", "migrations");
   const files = readdirSync(dir).filter((f) => /\d+\.ts$/.test(f) && !f.endsWith(".d.ts"));
-  const migrations: Function[] = [];
+  const migrations: Array<new (...args: never[]) => unknown> = [];
   for (const file of files) {
     const mod = (await import(join(dir, file))) as Record<string, unknown>;
     for (const exported of Object.values(mod)) {
       if (typeof exported === "function" && /\d{13}$/.test(exported.name)) {
-        migrations.push(exported);
+        migrations.push(exported as (typeof migrations)[number]);
       }
     }
   }
