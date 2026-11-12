@@ -16,6 +16,7 @@ import { HealthController } from "./health/health.controller";
 import { USER_IDENTITY_ADAPTER, WorkOSIdentityAdapter } from "./identity/identity.adapter";
 import { McpController } from "./mcp.controller";
 import { McpService } from "./mcp.service";
+import { ObservabilityModule } from "./observability/observability.module";
 import { MonzoProvider } from "./providers/monzo.provider";
 import { BankProviderRegistry } from "./providers/provider.registry";
 import { StarlingProvider } from "./providers/starling.provider";
@@ -31,6 +32,7 @@ import { UserProfileService } from "./user-profile.service";
     AuthModule,
     AppConfigModule,
     SecurityModule,
+    ObservabilityModule,
     TypeOrmModule.forRootAsync({
       // Injecting BOOT_CONFIG makes boot validation run before any connection attempt.
       inject: [BOOT_CONFIG],

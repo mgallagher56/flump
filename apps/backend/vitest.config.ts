@@ -17,6 +17,7 @@ export default defineConfig({
         "src/**/*.d.ts",
         "src/**/__fixtures__/**",
         "src/main.ts",
+        "src/instrument.ts",
         "src/migrations/**",
       ],
       reporter: ["text", "json-summary", "lcov"],
