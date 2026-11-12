@@ -1,26 +1,6 @@
 import { type ChangeEvent, type FC, useEffect, useState } from "react";
+import { ALLOWED_CHARS, formatCurrencyInput, parseCurrencyInput } from "./parseCurrency";
 import { TextInput, type TextInputProps } from "./TextInput";
-
-const GROUPED = /^-?(?:\d{1,3}(?:,\d{3})+|\d+)(?:\.\d*)?$/;
-const DECIMAL_ONLY = /^-?\.\d+$/;
-const ALLOWED_CHARS = /^[\d,.\s£-]*$/;
-
-const display = new Intl.NumberFormat("en-GB", {
-  minimumFractionDigits: 0,
-  maximumFractionDigits: 2,
-});
-
-/**
- * Parses what a person types into a money field. Empty, whitespace and anything that is not a
- * well-formed number (including "abc") give `null`, never 0.
- */
-export const parseCurrencyInput = (raw: string): number | null => {
-  const cleaned = raw.replace(/[£\s]/g, "");
-  if (cleaned === "") return null;
-  if (!GROUPED.test(cleaned) && !DECIMAL_ONLY.test(cleaned)) return null;
-  const parsed = Number(cleaned.replace(/,/g, ""));
-  return Number.isFinite(parsed) ? parsed : null;
-};
 
 export interface CurrencyInputProps
   extends Omit<TextInputProps, "value" | "defaultValue" | "onChange" | "type" | "inputMode"> {
@@ -38,7 +18,7 @@ export const CurrencyInput: FC<CurrencyInputProps> = ({
   ...rest
 }) => {
   const [text, setText] = useState(() =>
-    value === null || value === undefined ? "" : display.format(value),
+    value === null || value === undefined ? "" : formatCurrencyInput(value),
   );
 
   // Follow external changes, but never clobber text that already parses to the same number
@@ -48,7 +28,7 @@ export const CurrencyInput: FC<CurrencyInputProps> = ({
     setText((current) => {
       const parsed = parseCurrencyInput(current);
       if (value === null) return parsed === null ? current : "";
-      return parsed === value ? current : display.format(value);
+      return parsed === value ? current : formatCurrencyInput(value);
     });
   }, [value]);
 
@@ -65,7 +45,7 @@ export const CurrencyInput: FC<CurrencyInputProps> = ({
       inputMode="decimal"
       onBlur={(event) => {
         const parsed = parseCurrencyInput(text);
-        if (parsed !== null) setText(display.format(parsed));
+        if (parsed !== null) setText(formatCurrencyInput(parsed));
         onBlur?.(event);
       }}
       onChange={handleChange}
