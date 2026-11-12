@@ -53,6 +53,15 @@ describe("backendFetch", () => {
     expect(err.message).not.toContain("tok");
   });
 
+  it("maps a closed-beta refusal (403 not_invited) to not-invited", async () => {
+    fetchMock.mockResolvedValue(
+      new Response(JSON.stringify({ statusCode: 403, error: "not_invited" }), { status: 403 }),
+    );
+    const err = await rejection(backendFetch("/accounts", { accessToken: "tok" }));
+    expect(err.kind).toBe("not-invited");
+    expect(err.status).toBe(403);
+  });
+
   it("maps a network failure to unavailable with no status", async () => {
     fetchMock.mockRejectedValue(new TypeError("fetch failed"));
     const err = await rejection(backendFetch("/x", { accessToken: "t", retries: 0 }));

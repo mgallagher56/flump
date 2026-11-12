@@ -1,5 +1,10 @@
-import { type ExecutionContext, Logger, UnauthorizedException } from "@nestjs/common";
-import { beforeAll, describe, expect, it } from "vitest";
+import {
+  type ExecutionContext,
+  ForbiddenException,
+  Logger,
+  UnauthorizedException,
+} from "@nestjs/common";
+import { afterEach, beforeAll, describe, expect, it } from "vitest";
 import { AuthGuard } from "./auth.guard";
 import { DEV_BYPASS_TOKEN, DevBypassVerifier } from "./dev-bypass.verifier";
 import { createTestJwks } from "./testing/test-jwks";
@@ -89,5 +94,36 @@ describe("AuthGuard", () => {
   it("no longer bypasses auth for /bank-connections/callback", async () => {
     const request: Req = { path: "/bank-connections/callback", headers: {} };
     await expect(guard.canActivate(ctx(request))).rejects.toBeInstanceOf(UnauthorizedException);
+  });
+
+  describe("closed beta allowlist", () => {
+    const original = { ...process.env };
+    afterEach(() => {
+      process.env = { ...original };
+    });
+
+    const verifierFor = (user: { id: string; email?: string }): TokenVerifier => ({
+      verify: async () => user,
+    });
+    const run = (user: { id: string; email?: string }) =>
+      new AuthGuard(verifierFor(user)).canActivate(ctx({ headers: { authorization: "Bearer x" } }));
+
+    it("does not restrict anyone when no allowlist is configured", async () => {
+      delete process.env.BETA_ALLOWED_EMAILS;
+      delete process.env.BETA_ALLOWED_USER_IDS;
+      await expect(run({ id: "anyone" })).resolves.toBe(true);
+    });
+
+    it("lets listed emails and ids in and refuses everyone else with not_invited", async () => {
+      process.env.BETA_ALLOWED_EMAILS = "Owner@Example.com";
+      process.env.BETA_ALLOWED_USER_IDS = "user_friend";
+      await expect(run({ id: "u1", email: "owner@example.com" })).resolves.toBe(true);
+      await expect(run({ id: "user_friend" })).resolves.toBe(true);
+
+      const err = await run({ id: "stranger", email: "x@y.com" }).catch((e) => e);
+      expect(err).toBeInstanceOf(ForbiddenException);
+      expect(err.getResponse()).toMatchObject({ error: "not_invited" });
+      await expect(run({ id: "no-email" })).rejects.toBeInstanceOf(ForbiddenException);
+    });
   });
 });

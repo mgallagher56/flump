@@ -1,6 +1,7 @@
 export const BACKEND_ERROR_KINDS = [
   "unauthorised",
   "forbidden",
+  "not-invited",
   "not-found",
   "client",
   "server",

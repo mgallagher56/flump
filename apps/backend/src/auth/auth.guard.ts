@@ -1,10 +1,12 @@
 import {
   type CanActivate,
   type ExecutionContext,
+  ForbiddenException,
   Inject,
   Injectable,
   UnauthorizedException,
 } from "@nestjs/common";
+import { isBetaUserAllowed } from "./beta-access";
 import { TOKEN_VERIFIER, type TokenVerifier } from "./token-verifier";
 
 @Injectable()
@@ -27,6 +29,14 @@ export class AuthGuard implements CanActivate {
       request.user = await this.verifier.verify(parts[1]);
     } catch {
       throw new UnauthorizedException("Authentication failed");
+    }
+    // Closed beta (E19 A7): a valid sign-in is not enough when an allowlist is configured.
+    if (!isBetaUserAllowed(process.env, request.user)) {
+      throw new ForbiddenException({
+        statusCode: 403,
+        error: "not_invited",
+        message: "This account has not been invited to the Flump beta.",
+      });
     }
     return true;
   }
