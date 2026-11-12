@@ -1,24 +1,16 @@
 import { act, renderHook } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { DEFAULT_FINANCIAL_BASELINE } from "~/state/baseline.store";
 import {
   DEFAULT_PROFILE,
-  HttpProfileAdapter,
   normalizeProfile,
   profileToBaseline,
   useUserProfile,
 } from "./useUserProfile";
 
-const mockRootData = { accessToken: "test-token" };
-vi.mock("react-router", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("react-router")>()),
-  useRouteLoaderData: () => mockRootData,
-}));
-
 const jsonRes = (body: unknown, status = 200) =>
   new Response(body === undefined ? null : JSON.stringify(body), { status });
 
-describe("useUserProfile & HttpProfileAdapter", () => {
+describe("useUserProfile", () => {
   const originalFetch = global.fetch;
 
   beforeEach(() => {
@@ -165,27 +157,5 @@ describe("useUserProfile & HttpProfileAdapter", () => {
     expect(profileToBaseline({ ...DEFAULT_PROFILE, annualSalary: 52000 }).annualGrossSalary).toBe(
       52000,
     );
-  });
-
-  it("exercises HttpProfileAdapter methods", async () => {
-    const adapter = new HttpProfileAdapter(() => "custom-token");
-
-    (global.fetch as any).mockResolvedValueOnce(
-      jsonRes({ ...DEFAULT_PROFILE, annualSalary: 68000 }),
-    );
-    const baseline = await adapter.getBaseline();
-    expect(baseline?.annualGrossSalary).toBe(68000);
-
-    (global.fetch as any).mockResolvedValueOnce(jsonRes(undefined, 503));
-    await expect(adapter.getBaseline()).rejects.toMatchObject({ kind: "server" });
-
-    (global.fetch as any).mockResolvedValueOnce(jsonRes(undefined, 204));
-    await adapter.saveBaseline(DEFAULT_FINANCIAL_BASELINE);
-    expect(global.fetch).toHaveBeenCalled();
-
-    adapter.saveSeed({ mode: "WEALTH", annualGrossSalary: 90000, timestamp: Date.now() });
-    expect(adapter.getSeed()?.annualGrossSalary).toBe(90000);
-    adapter.clearSeed();
-    expect(adapter.getSeed()).toBeNull();
   });
 });

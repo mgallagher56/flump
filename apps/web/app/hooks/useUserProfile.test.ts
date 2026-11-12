@@ -2,18 +2,11 @@ import { act, renderHook } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { DEFAULT_PROFILE, normalizeProfile, useUserProfile } from "./useUserProfile";
 
-let mockRootData: { accessToken?: string | null } | undefined = { accessToken: "test-token" };
-vi.mock("react-router", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("react-router")>()),
-  useRouteLoaderData: () => mockRootData,
-}));
-
 const jsonRes = (body: unknown, status = 200) =>
   new Response(body === undefined ? null : JSON.stringify(body), { status });
 
 describe("useUserProfile", () => {
   beforeEach(() => {
-    mockRootData = { accessToken: "test-token" };
     vi.stubGlobal("fetch", vi.fn());
     vi.stubGlobal("ENV", { VITE_API_URL: "https://api.example.test" });
   });
@@ -50,8 +43,7 @@ describe("useUserProfile", () => {
     expect(result.current.profile.annualSalary).toBe(75000);
   });
 
-  test("does not need a browser access token: it calls the same-origin proxy", async () => {
-    mockRootData = { accessToken: null };
+  test("never sends a browser access token: it calls the same-origin proxy", async () => {
     (global.fetch as any).mockResolvedValueOnce(jsonRes({}));
     const { result } = renderHook(() => useUserProfile());
 
