@@ -295,7 +295,10 @@ export function buildCopiedRecordForTaxYear(
     const parts = dStr.split("-");
     if (parts.length !== 3) return dStr;
     const y = Number.parseInt(parts[0] || "0", 10) + yearDiff;
-    return `${y}-${parts[1]}-${parts[2]}`;
+    // 29 Feb has no equivalent in a non-leap year: use 28 Feb rather than an invalid date.
+    const isLeapYear = (y % 4 === 0 && y % 100 !== 0) || y % 400 === 0;
+    const day = parts[1] === "02" && parts[2] === "29" && !isLeapYear ? "28" : parts[2];
+    return `${y}-${parts[1]}-${day}`;
   };
 
   const newDate = shiftDateString(record.date) || record.date;

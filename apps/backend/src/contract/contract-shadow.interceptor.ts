@@ -27,13 +27,11 @@ export const resolveContractMode = (env: NodeJS.ProcessEnv = process.env): Contr
 };
 
 /**
- * Groups held back from the default enforce set until web and contract agree:
- * - mcp-tokens: the token card sends `expiryDays: null` for "never expires" (E17 D5-A).
- * - tax: receipt uploads accept `image/*` but the contract allows png, jpeg, webp and pdf only
- *   (HEIC photos would 400), and copying a 29 Feb record into a non-leap year yields an invalid date.
- * Drop an entry once its mismatch is fixed.
+ * Groups held back from the default enforce set until web and contract agree. Empty now that the
+ * MCP token card no longer offers "never expires" and the tax receipt, leap-day and decimal
+ * mismatches are fixed on the web side. Add a group here to hold it back again.
  */
-export const HELD_BACK_GROUPS: readonly string[] = ["mcp-tokens", "tax"];
+export const HELD_BACK_GROUPS: readonly string[] = [];
 
 /**
  * Groups enforced when the mode is `enforce`: `CONTRACT_ENFORCE_GROUPS` is a comma-separated list

@@ -59,12 +59,14 @@ describe("web payloads in enforce mode", () => {
     expect(passes("POST", "/budget-entries/categories", BUDGET_CATEGORY_PAYLOAD)).toBe(true);
   });
 
-  it("keeps the MCP token 'never expires' request working while mcp-tokens is held back", () => {
-    expect(passes("POST", "/mcp-tokens", { name: "Claude", expiryDays: null })).toBe(true);
+  it("accepts the MCP token create payloads the card sends (30, 90 or 365 days)", () => {
+    for (const expiryDays of [30, 90, 365]) {
+      expect(passes("POST", "/mcp-tokens", { name: "Claude", expiryDays })).toBe(true);
+    }
+    expect(() => passes("POST", "/mcp-tokens", { name: "Claude", expiryDays: null })).toThrow();
   });
 
   it("accepts the tax bulk copy payload web sends once the tax group is enforced", () => {
-    process.env.CONTRACT_ENFORCE_GROUPS = "tax";
     const capped = [{ id: ID, endDate: "2026-04-05" }];
     expect(passes("POST", "/tax-records/bulk", { records: [], capPreviousRecordIds: capped })).toBe(
       true,

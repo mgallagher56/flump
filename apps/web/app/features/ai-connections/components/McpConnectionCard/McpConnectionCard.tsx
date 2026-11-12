@@ -55,7 +55,7 @@ export interface McpConnectionCardProps {
   onGenerateToken?: (
     name: string,
     anonymize: boolean,
-    expiryDays: number | null,
+    expiryDays: number,
   ) => Promise<CreatedTokenResult>;
   onRevokeToken?: (tokenId: string) => Promise<void>;
   onFetchContextPack?: (anonymize: boolean) => Promise<{ pack: any; markdown: string }>;
@@ -99,7 +99,8 @@ export const McpConnectionCard: FC<McpConnectionCardProps> = ({
     if (!tokenName.trim()) return;
     setGenerating(true);
     try {
-      const expiryDays = expirySelection === "30" ? 30 : expirySelection === "90" ? 90 : null;
+      // The API only issues expiring tokens (E17 D5-A): 30, 90 or 365 days.
+      const expiryDays = expirySelection === "30" ? 30 : expirySelection === "365" ? 365 : 90;
 
       // Tokens are only ever issued by the backend. With no handler wired there is nothing to
       // create (E16 D8-A: the old client-side random token was fake and has been removed).
@@ -578,7 +579,7 @@ export const McpConnectionCard: FC<McpConnectionCardProps> = ({
                 >
                   <option value="30">30 Days</option>
                   <option value="90">90 Days (Recommended)</option>
-                  <option value="never">Never (Persistent)</option>
+                  <option value="365">1 Year</option>
                 </select>
               </div>
             </div>
