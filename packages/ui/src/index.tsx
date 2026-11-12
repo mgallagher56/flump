@@ -28,6 +28,7 @@ export * from "./patterns/TaxTrapEscapeBanner";
 export * from "./primitives/Button";
 export * from "./primitives/Card";
 export * from "./primitives/CollapsibleDrawer";
+export * from "./primitives/FormField";
 export * from "./primitives/Icon";
 export * from "./primitives/KpiCard";
 export { LiveRegion, type LiveRegionProps } from "./primitives/LiveRegion";
@@ -37,6 +38,7 @@ export * from "./primitives/SegmentedTabs";
 export * from "./primitives/SliderField";
 export * from "./primitives/StatusBadge";
 export * from "./primitives/Table";
+export * from "./primitives/TextInput";
 // Explicit names shadow Panda's generated visually-hidden JSX pattern (star-export ambiguity).
 export { VisuallyHidden, type VisuallyHiddenProps } from "./primitives/VisuallyHidden";
 
