@@ -125,7 +125,12 @@ export const McpSpotlightSection: FC = () => {
                 ⚡ Calling tool: <code>simulate_uk_tax_and_pension_sacrifice</code>
               </div>
 
-              <div className={terminalPayloadBox()}>
+              <section
+                className={terminalPayloadBox()}
+                aria-label="Example tool output"
+                // biome-ignore lint/a11y/noNoninteractiveTabindex: scrollable region must be keyboard-focusable (axe scrollable-region-focusable)
+                tabIndex={0}
+              >
                 <span className={payloadComment()}>
                   {"// Example output: illustrative figures, not your data"}
                 </span>
@@ -153,7 +158,7 @@ export const McpSpotlightSection: FC = () => {
                 <span className={payloadNum()}>14200</span>
                 <br />
                 <span className={payloadBracket()}>{"}"}</span>
-              </div>
+              </section>
 
               <div className={terminalSummary()}>
                 <strong className={terminalSummaryStrong()}>Example output:</strong> for an
