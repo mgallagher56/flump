@@ -20,9 +20,12 @@ const adapter = {
   getRequestMethod: () => "GET",
 };
 
-function host(headers: Record<string, unknown> = {}): ArgumentsHost {
+function host(headers: Record<string, unknown> = {}, requestId?: string): ArgumentsHost {
   return {
-    switchToHttp: () => ({ getRequest: () => ({ headers }), getResponse: () => reply }),
+    switchToHttp: () => ({
+      getRequest: () => ({ headers, requestId }),
+      getResponse: () => reply,
+    }),
     getType: () => "http",
     getArgByIndex: () => reply,
   } as unknown as ArgumentsHost;
@@ -63,6 +66,16 @@ describe("SentryExceptionFilter", () => {
     });
     expect(() => filter.catch(new Error("x"), host())).not.toThrow();
     expect(adapter.reply).toHaveBeenCalled();
+  });
+
+  it("prefers the id stored on the request by the request-context middleware", () => {
+    filter.catch(new Error("x"), host({ "x-request-id": "header-id" }, "mw-id"));
+    expect(reportException).toHaveBeenCalledWith(expect.any(Error), "mw-id");
+  });
+
+  it("sanitises the stored id too", () => {
+    filter.catch(new Error("x"), host({}, "bad id\n"));
+    expect(reportException).toHaveBeenCalledWith(expect.any(Error), undefined);
   });
 
   it("drops an unsafe request id", () => {
