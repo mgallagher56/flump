@@ -13,7 +13,7 @@ import { useCallback, useEffect } from "react";
 
 // v2: v1 baselines could hold the engine's invented 45,000 default salary, so they are dropped.
 export const FINANCIAL_BASELINE_STORAGE_KEY = "flump_financial_baseline_v2";
-const LEGACY_BASELINE_STORAGE_KEYS = ["flump_financial_baseline_v1"];
+export const LEGACY_BASELINE_STORAGE_KEYS = ["flump_financial_baseline_v1"];
 
 export { DEFAULT_FINANCIAL_BASELINE, hydrateBaselineFromSeed };
 

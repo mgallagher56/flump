@@ -7,6 +7,7 @@ import {
   InMemoryProfileAdapter,
   InMemoryStorageDriver,
   isFlumpHost,
+  ONBOARDING_SEED_MAX_AGE_SECONDS,
   ONBOARDING_SEED_STORAGE_KEY,
   parseCookieValue,
   persistOnboardingSeed,
@@ -112,6 +113,31 @@ describe("Profile Persistence", () => {
 
       const read = readOnboardingSeed();
       expect(read).toEqual(samplePayload);
+    });
+
+    it("writes the seed cookie for one hour and adds Secure only on https", () => {
+      const writes: string[] = [];
+      const doc = (globalThis as any).document;
+      const original = Object.getOwnPropertyDescriptor(doc, "cookie") as PropertyDescriptor;
+      Object.defineProperty(doc, "cookie", {
+        configurable: true,
+        get: original.get,
+        set(val: string) {
+          writes.push(val);
+          original.set?.call(doc, val);
+        },
+      });
+
+      expect(ONBOARDING_SEED_MAX_AGE_SECONDS).toBe(3600);
+      persistOnboardingSeed(samplePayload);
+      expect(writes[0]).toContain("max-age=3600");
+      expect(writes[0]).not.toContain("; Secure");
+
+      (globalThis as any).window.location.protocol = "https:";
+      persistOnboardingSeed(samplePayload);
+      expect(writes[1]).toContain("; Secure");
+      clearOnboardingSeed();
+      expect(writes[writes.length - 1]).toContain("max-age=0");
     });
 
     it("falls back to localStorage if cookie is empty", () => {
