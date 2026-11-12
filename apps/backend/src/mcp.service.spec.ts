@@ -206,7 +206,7 @@ describe("McpService.findTokenByHash allowlist (E29-T8)", () => {
     }
   });
 
-  it("returns null for every token while the kill switch is on, and logs a denial", async () => {
+  it("returns null for every token while the kill switch is on, even with open access", async () => {
     process.env = {
       ...original,
       NODE_ENV: "production",
