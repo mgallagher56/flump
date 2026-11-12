@@ -340,6 +340,7 @@ const MortgageContainer: FC = () => {
             type="button"
             onClick={() => setActiveTab(tab.id)}
             onKeyDown={(event) => {
+              if (event.ctrlKey || event.altKey || event.metaKey || event.shiftKey) return;
               const last = tabs.length - 1;
               const next =
                 event.key === "ArrowRight"
@@ -377,6 +378,8 @@ const MortgageContainer: FC = () => {
         className={tabPanel()}
         id={`mortgage-panel-${activeTab}`}
         role="tabpanel"
+        // biome-ignore lint/a11y/noNoninteractiveTabindex: WAI-ARIA APG tabpanel pattern, so keyboard users can reach a panel with no focusable content
+        tabIndex={0}
       >
         {activeTab === "tracker" && (
           <MortgageTracker

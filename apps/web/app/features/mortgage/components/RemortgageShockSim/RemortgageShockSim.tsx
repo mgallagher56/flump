@@ -9,7 +9,7 @@ import {
   StatusBadge,
 } from "@repo/ui";
 import { Clock, Home } from "lucide-react";
-import { type FC, useMemo, useState } from "react";
+import { type FC, useEffect, useMemo, useRef, useState } from "react";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
 import {
   fieldGroup,
@@ -63,6 +63,24 @@ const ltvFormat = new Intl.NumberFormat("en-GB", {
   maximumFractionDigits: 1,
 });
 
+const DEFAULT_TERM_YEARS = 25;
+const DEFAULT_TERM_MIN = 5;
+const DEFAULT_TERM_MAX = 40;
+
+/** The term slider works in whole years, so a known term is rounded and kept to at least 1. */
+const seedTerm = (remainingTermYears?: number): number =>
+  remainingTermYears && remainingTermYears > 0
+    ? Math.max(1, Math.round(remainingTermYears))
+    : DEFAULT_TERM_YEARS;
+
+const parseFixEnd = (fixEndDate?: string | null) => {
+  const match = /^(\d{4})-(\d{2})/.exec(fixEndDate ?? "");
+  return {
+    year: match ? Number(match[1]) : ("" as const),
+    month: match ? Number(match[2]) : ("" as const),
+  };
+};
+
 export const RemortgageShockSim: FC<RemortgageShockSimProps> = ({
   currentBalance,
   currentRate,
@@ -81,18 +99,29 @@ export const RemortgageShockSim: FC<RemortgageShockSimProps> = ({
 
   const thisYear = new Date().getFullYear();
   // The fix end date is only ever what the user (or their profile) supplied; nothing is assumed.
-  const initialEnd = /^(\d{4})-(\d{2})/.exec(fixEndDate ?? "");
-  const [fixEndYear, setFixEndYear] = useState<number | "">(
-    initialEnd ? Number(initialEnd[1]) : "",
-  );
-  const [fixEndMonth, setFixEndMonth] = useState<number | "">(
-    initialEnd ? Number(initialEnd[2]) : "",
-  );
+  const [fixEndYear, setFixEndYear] = useState<number | "">(() => parseFixEnd(fixEndDate).year);
+  const [fixEndMonth, setFixEndMonth] = useState<number | "">(() => parseFixEnd(fixEndDate).month);
   const [projectedNewRate, setProjectedNewRate] = useState<number>(5.2);
   // The user's own term when known; otherwise an editable 25-year assumption.
-  const [termYears, setTermYears] = useState<number>(
-    remainingTermYears && remainingTermYears > 0 ? remainingTermYears : 25,
-  );
+  const [termYears, setTermYears] = useState<number>(() => seedTerm(remainingTermYears));
+
+  // Props reseed the sim when they change, unless the user has since edited that value.
+  const fixEndEdited = useRef(false);
+  const termEdited = useRef(false);
+  useEffect(() => {
+    if (fixEndEdited.current) return;
+    const next = parseFixEnd(fixEndDate);
+    setFixEndYear(next.year);
+    setFixEndMonth(next.month);
+  }, [fixEndDate]);
+  useEffect(() => {
+    if (termEdited.current) return;
+    setTermYears(seedTerm(remainingTermYears));
+  }, [remainingTermYears]);
+
+  // Widen the slider when the seeded term falls outside the usual 5 to 40 years.
+  const termMin = Math.min(DEFAULT_TERM_MIN, termYears);
+  const termMax = Math.max(DEFAULT_TERM_MAX, termYears);
 
   const yearOptions = useMemo(() => {
     const years = Array.from({ length: 8 }, (_, i) => thisYear + i);
@@ -143,7 +172,10 @@ export const RemortgageShockSim: FC<RemortgageShockSimProps> = ({
             className={selectStyle}
             id="deal-end-month"
             value={fixEndMonth}
-            onChange={(e) => setFixEndMonth(e.target.value === "" ? "" : Number(e.target.value))}
+            onChange={(e) => {
+              fixEndEdited.current = true;
+              setFixEndMonth(e.target.value === "" ? "" : Number(e.target.value));
+            }}
           >
             <option value="">Month</option>
             {MONTHS.map((m, i) => (
@@ -157,7 +189,10 @@ export const RemortgageShockSim: FC<RemortgageShockSimProps> = ({
             className={selectStyle}
             id="deal-end-year"
             value={fixEndYear}
-            onChange={(e) => setFixEndYear(e.target.value === "" ? "" : Number(e.target.value))}
+            onChange={(e) => {
+              fixEndEdited.current = true;
+              setFixEndYear(e.target.value === "" ? "" : Number(e.target.value));
+            }}
           >
             <option value="">Year</option>
             {yearOptions.map((y) => (
@@ -190,12 +225,15 @@ export const RemortgageShockSim: FC<RemortgageShockSimProps> = ({
       <SliderField
         helperText="Assumption: the term used to estimate your monthly payments."
         label="Remaining term (years)"
-        max={40}
-        min={5}
+        max={termMax}
+        min={termMin}
         step={1}
         unitSuffix="yrs"
         value={termYears}
-        onChange={setTermYears}
+        onChange={(value) => {
+          termEdited.current = true;
+          setTermYears(value);
+        }}
       />
     </div>
   );
