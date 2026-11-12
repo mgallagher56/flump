@@ -4,13 +4,14 @@ import {
   getCurrentUKTaxYear,
   getPreviousTaxYear,
   getTaxYearForRecordDate,
+  getUkTaxYearContext,
   isRecordActiveInTaxYear,
   isSupportedUkTaxYear,
   type TaxCalculationResult,
   type TaxRecord,
   type TaxSource,
 } from "@flump/finance-engine";
-import { ProjectionNotice } from "@repo/ui";
+import { ProjectionNotice, TaxRatesStatusBanner } from "@repo/ui";
 import { css } from "@repo/ui/styled-system/css";
 import { type FC, type ReactNode, useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -70,6 +71,9 @@ const TaxContainer: FC = () => {
     userProfile,
     accounts = [],
   } = useLoaderData<typeof loader>();
+
+  // Which year's rates apply today, and whether that is a fallback (E22)
+  const ratesContext = useMemo(() => getUkTaxYearContext(), []);
 
   // Current UK Tax Year
   const currentTaxYear = getCurrentUKTaxYear();
@@ -513,6 +517,8 @@ const TaxContainer: FC = () => {
         paddingBottom: { base: "24px", md: "48px" },
       })}
     >
+      <TaxRatesStatusBanner {...ratesContext} />
+
       {/* Page Header */}
       <ProjectionNotice className={css({ marginBottom: "16px" })} />
       <div

@@ -24,6 +24,7 @@ export * from "./patterns/PageHeader";
 export * from "./patterns/ProjectionNotice";
 export * from "./patterns/SectionBand";
 export * from "./patterns/SimulatorSplitLayout";
+export * from "./patterns/TaxRatesStatusBanner";
 export * from "./patterns/TaxTrapEscapeBanner";
 // Primitives
 export * from "./primitives/Button";
