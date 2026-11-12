@@ -83,6 +83,16 @@ describe("Money", () => {
     expect(formatMoney(1000, { currency: "EUR" }).text).toBe("€1,000");
   });
 
+  it("falls back to GBP for an invalid currency code", () => {
+    expect(formatMoney(1000, { currency: "NOPE" }).text).toBe("£1,000");
+    expect(formatMoney(1000, { currency: "" }).text).toBe("£1,000");
+  });
+
+  it("applies the size to the Not set rendering", () => {
+    const { container } = render(<Money size="kpi" value={null} />);
+    expect(container.firstElementChild?.className).toContain("textStyle_numeric.kpi");
+  });
+
   it("applies tabular-nums via the recipe class", () => {
     const { container } = render(<Money size="kpi" value={5} />);
     expect(container.firstElementChild?.className).toContain("fv-num_tabular-nums");
