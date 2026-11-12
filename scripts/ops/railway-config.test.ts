@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
+import { routes } from "../../packages/api-contract/src/manifest";
 
 const ROOT = resolve(import.meta.dir, "../..");
 const read = (p: string) => readFileSync(resolve(ROOT, p), "utf8");
@@ -20,7 +21,7 @@ const SECRET_LIKE = [
   /-----BEGIN [A-Z ]*PRIVATE KEY-----/,
   /postgres(ql)?:\/\//i,
   /\b(password|secret|api[_-]?key|token)\b"?\s*:/i,
-  /[A-Za-z0-9+/]{40,}={0,2}/,
+  /"[A-Za-z0-9+_-]{32,}={0,2}"/, // long opaque value; paths/globs contain "/", "*" or "."
 ];
 
 describe.each(SERVICES)("railway.json (%s)", (service) => {
@@ -36,8 +37,8 @@ describe.each(SERVICES)("railway.json (%s)", (service) => {
     const path = cfg.deploy?.healthcheckPath as string;
     expect(path).toBeDefined();
     if (service === "backend") {
-      const manifest = read("packages/api-contract/src/manifest.ts");
-      expect(manifest).toContain(`path: "${path.slice(1)}"`);
+      expect(routes.app.ready.method).toBe("GET");
+      expect(`/${routes.app.ready.path}`).toBe(path);
     } else if (service === "web") {
       expect(path).toBe("/healthz");
       expect(existsSync(resolve(ROOT, "apps/web/app/routes/healthz.ts"))).toBe(true);
