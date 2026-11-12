@@ -10,6 +10,7 @@ import { AppConfigModule, BOOT_CONFIG } from "./config/config.module";
 import { ENTITIES, typeOrmOptionsFromEnv } from "./config/typeorm.options";
 import { FinanceController } from "./finance.controller";
 import { FinanceService } from "./finance.service";
+import { HealthController } from "./health/health.controller";
 import { USER_IDENTITY_ADAPTER, WorkOSIdentityAdapter } from "./identity/identity.adapter";
 import { McpController } from "./mcp.controller";
 import { McpService } from "./mcp.service";
@@ -35,6 +36,7 @@ import { UserProfileService } from "./user-profile.service";
   ],
   controllers: [
     AppController,
+    HealthController,
     FinanceController,
     UserProfileController,
     BudgetController,

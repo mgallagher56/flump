@@ -29,6 +29,8 @@ async function bootstrap() {
     origin: corsOrigins,
     credentials: true,
   });
+  // Close the TypeORM pool (and other providers) on SIGTERM/SIGINT.
+  app.enableShutdownHooks();
   const port = Number(configService.get("PORT") ?? 4000);
   await app.listen(port, "0.0.0.0");
 
