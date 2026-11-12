@@ -613,3 +613,56 @@ Source: independent Fable review of the epic portfolio against `main` at e4ff6c3
 - [ ] Docker images build in CI, run non-root, and shared-package changes trigger a deploy
 - [ ] axe passes on kept screens in light and dark; accessibility statement published
 - [ ] Features marked cut by E16 are removed or flagged off, not merely hidden
+
+# Added 2026-11-12 from the UK market research (E25 to E29)
+
+Source: [docs/research/market-research-2026-11.md](../research/market-research-2026-11.md) section 8. The numbers E25 to E29 do not collide with E1 to E24, so they are kept as proposed. Plans: [E25](plans/E25-plan.md) and [E29](plans/E29-plan.md) are ticketed; E26, E27 and E28 are not planned yet (E26 waits on E25 and E29). The E19 portability addendum (last subsection) extends E19 rather than opening an epic.
+
+## E25. UK tax-year rules and marginal-rate what-if planner
+
+- **Severity:** P1 for direction (lead differentiator; correctness is a launch gate).
+- **Blocked by:** E4 (owner sign-off of tax vectors) and E22 (tax-year maintenance) for any shipped figure; design can start now.
+- **Done when:** every tax rule is versioned by tax year with a source URL and test vector; one engine answers "what happens to my take-home if my gross changes by X" across the £100k taper, High Income Child Benefit Charge, salary sacrifice (including the April 2029 £2,000 cap), Plan 2 and Plan 5 student loans, and Scottish bands; marginal-rate and cliff views shown on the home and calculator pages with an "as at tax year" label; marketing calculators and the app share one engine; all copy is guidance, not advice.
+- **Notes:** the lead opportunity (backlog #1). Evidence: HMRC-derived counts of 698,000 in the 60% band and 2.29m by 2028-29. Do not model a household-basis child benefit charge or any Budget 2026 change until confirmed on gov.uk. Scotland is a correctness requirement, not a demand-led feature.
+- **Labels:** needs-triage
+
+## E26. Tax-aware agent tools (extension of E17)
+
+- **Severity:** P2 (differentiator; depends on E25 and E29).
+- **Blocked by:** E17 design, E25 engine, E29 compliance gate.
+- **Done when:** MCP tools and prompts expose the E25 engine ("what if I sacrifice £X", "show my marginal rate", "explain my take-home") with read-only default scopes, explicit consent for any write, an audit log and per-tool descriptions worded as guidance; an eval harness proves models select tools correctly and do not output personal product recommendations; a DPIA covers disclosure to the model provider and transfers; marketing claims match what ships.
+- **Notes:** supply side is crowded with unofficial community servers and none is official, but demand for MCP specifically is unproven; measure beta usage before investing beyond the first tools. Fold into E17 if the owner prefers one epic.
+- **Labels:** needs-triage
+
+## E27. UK retirement and pension projection
+
+- **Severity:** P2.
+- **Blocked by:** E4 vectors for pension tax rules; E29 for projection wording.
+- **Done when:** projection shows contributions, tax relief, UFPLS and PCLS options, state pension and the effect of inheritance tax on unused pensions from 6 April 2027, with assumptions visible and editable; manual pension entry with links out to MoneyHelper, no dashboard connection claimed; self-employed saving gap shown for self-employed users.
+- **Notes:** ProjectionLab already models UK UFPLS and PCLS, so Flump's angle is the link to take-home and the ledger, not scenario depth. Pensions Dashboards public launch is expected in FY2027-28 (UNVERIFIED), and third-party access is unlikely.
+- **Labels:** needs-triage
+
+## E28. MTD for Income Tax discovery spike
+
+- **Severity:** P3 (spike with a dated decision).
+- **Blocked by:** none for discovery; a submission build needs HMRC recognition work.
+- **Done when:** a written decision before April 2027 on one of three paths: (a) record and quarterly estimate with export to bridging software only, (b) HMRC-recognised submission, (c) do nothing; evidence from at least five beta self-employed or landlord users; the ledger's labels never claim "MTD-compliant" unless the digital-links and fraud-prevention requirements are met.
+- **Notes:** segment size is verified (2.88m landlords; MTD live April 2026, phase 2 April 2027), but no direct demand for Flump was found and the market is crowded and cheap (FreeAgent free with some bank accounts). Scope counts in press conflict; use gov.uk or ICAEW.
+- **Labels:** needs-triage
+
+## E29. Advice-boundary and AI compliance gate
+
+- **Severity:** Critical for the friends beta (gates E25 copy and E26).
+- **Blocked by:** owner and legal input.
+- **Done when:** a lawyer's FCA perimeter opinion covers projections, salary-sacrifice and pension "optimise" outputs and LLM replies through MCP; a copy review applies "guidance, not advice" wording and removes "you should" language on investments, pensions and mortgages; no segment-based nudges (targeted support is regulated); an MCP DPIA covers lawful basis for disclosure to the model provider, transfers, Article 9 inference, retention and no training on user data; Consumer Duty principles adopted voluntarily.
+- **Notes:** extends E19, which currently asks for the perimeter view at launch; the research suggests it is needed before the friends beta. Targeted support went live 6 April 2026.
+- **Round 4 split (DECISIONS.md):**
+  - **E29a** is free: copy rules, the advice-language guard, disclaimers, the MCP DPIA draft and a widened Innovation Hub enquiry. It gates the friends beta, the E25 copy and E26.
+  - **E29b** is the lawyer's perimeter view, inside the launch fixed-fee engagement. It gates public launch and opening E26 to non-friends.
+  - E26 and E27 are blocked by E29a, and by E29b before non-friends.
+- **Labels:** needs-triage
+
+### Addendum to E19: portability
+
+Add to E19 (opus review: effort S, so fold in rather than a new epic): full JSON and CSV export of every user-owned dataset, CSV import for users arriving from other apps, and an honest statement of what happens to user data if the service closes. Do not publish a "shutdown-proof" claim without a run-off plan.
+

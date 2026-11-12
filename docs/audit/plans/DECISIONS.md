@@ -113,3 +113,107 @@ The owner asked for a Fable review of every remaining HOLD item and said "take t
 **This week:** run item 17; raise the Railway limit to $25 and take the first offsite dump; restrict sign-up; reserve the npm org; buy the domain and set Cloudflare DNS and email forwarding; confirm items 1, 2, 4 and 14 (recorded here as confirmed by delegation).
 **This month:** staging and the EU West move; Sentry EU org and DPA; ICO fee; FCA Innovation Hub enquiry; sign 2024/25 to 2026/27 vectors and book the accountant hour; check the 2027/28 figures; publish the beta notice and terms; invite 3 to 5 friends and run the interviews.
 **At launch or on trigger:** incorporate; solicitor pack; insurance; Apple and Google accounts; Railway Pro and PITR; Cloudflare proxy, custom domains and WorkOS Production; npm publish and nightly evals; pen test only on a trigger.
+
+# Round 4 (2026-11-12): decisions made while planning E17, E18, E20, E24, E25 and E29
+
+The owner delegated these to agents. Straightforward decisions (low stakes, reversible) went to an Opus planner. Complicated ones went to a Fable decider. Nobody asked the owner. Rounds 1 to 3 still stand. Legal points are pragmatic sequencing, not legal advice. The plans these belong to are `E17-next-phases-plan.md`, `E18-no-owner-plan.md`, `E20-next-phases-plan.md`, `E24-plan.md`, `E25-plan.md` and `E29-plan.md`. Each plan opens with a "Round 4 overrides" box listing what changed in it.
+
+## Straightforward (Opus)
+
+| ID | Decision | Effect on tickets |
+|---|---|---|
+| E24 D1 page counts | **A.** Marketing counts page views with allow-listed log lines and a rollup script. Cloudflare zone analytics becomes a free cross-check after the proxy cutover. | E24-T9 as planned. No Umami, no beacon. |
+| E24 D3 web indexing | **A.** The web app stays noindex permanently. Marketing owns every public page (E16 D7-B). | No change to `apps/web/app/utils/indexing.server.ts`. One `.env.example` line in E24-T6. |
+| E24 D4 replies from support@ | **A.** Gmail "send mail as" through a free SMTP relay for the beta. | Documented in E24-T7. The owner sets it up. |
+| E17 OD1 E23 picture in MCP | **A.** E17-N10 adopts it. E23 P2-3 is closed by reference. | E17-N10 after E23 P1-4/P1-7. |
+| E17 OD3 canonical MCP URL | **`/mcp`.** `/v1/mcp` stays as an alias. | Future Sunset headers (E21) exempt `/mcp`. |
+| E17 OD4 read tools before the E23 picture | **Yes**, built on `PortfolioSnapshot` with `missing[]`. | E17-N9 can start now. N10 swaps in the picture later. |
+| E17 OD5 transaction search | **A.** Dropped from the v2 catalogue until F41 CSV import exists. | E20-N17 keeps today's entry until E17-N15 removes it. |
+| E18 OD-1 trace sampling | **A.** `tracesSampleRate: 0`. | `assertSafeOptions` enforces it. |
+| E18 OD-2 user on Sentry events | **A.** Omit `user`. | `scrubEvent` deletes it. |
+| E18 OD-3 EU West Postgres move | **A.** Create a new EU West database, restore the final dump into it, then repoint `DATABASE_URL`. The old service is the rollback. | The `region-move.md` runbook follows path A. |
+| E20 OD1 non-GET without Origin or Sec-Fetch-Site | **Reject with 403.** | E20-N1 tests it. |
+| E20 OD2 rate limiter | **`@nestjs/throttler` if its peer range includes Nest 12.4.1, otherwise an in-house fixed-window store.** | E20-N13 step 1 runs a spike and records the result in the PR. |
+| E20 OD3 cookie rename | **Now:** `__Host-wos-session`. Everything is test data, so the forced re-login costs nothing. | E20-N19, serialised with E20-N2. |
+
+## Ticket ownership between plans (Opus)
+
+| Overlap | Owner |
+|---|---|
+| PAT lifecycle | **E20-N16** owns the validation rules: 90-day default, {7, 30, 90, 365} allowed, null and 0 rejected, name 1 to 64 characters, `anonymizeInstitutions:false` rejected, and the `McpConnectionCard` options. **E17-N16** owns the checksum format, `DELETE /mcp-tokens` and its manifest entry. Order: E17-N6, E20-N16, E17-N7, E17-N16, E17-N15. |
+| gitleaks | **E18-N7** creates a new `.github/workflows/security-scan.yml` with the gitleaks job. It does not edit `ci-pipeline.yml`. **E20-N27** appends ZAP and Semgrep jobs to that file and depends on E18-N7. |
+| `apps/web/app/entry.server.tsx` | **E20-N3** goes first: it removes Emotion, and line 84 becomes `safeErrorSummary`. **E18-N3** goes next: `reportServerError` and `handleError`. **E20-N11** (nonce and CSP) goes last. |
+| MCP scopes and limiter | Order: **E20-N17** (`packages/mcp/src/auth/scopes.ts` with today's names), then **E17-N8** (the `define-tool` hook absorbs the facade), then **E17-N15** (v2 rename). Limiter keying (`http.ts:75,136`) belongs to **E17-N6**. The per-user aggregate across tokens has no ticket and is an optional add-on to E17-N6. |
+| Receipt data in MCP | **E20-N15** sets `select:false` on `receiptData`. **E17-N7** keeps the explicit column select, which also drops `receiptFilename` and `receiptMimeType`. |
+| `/mcp` cross-user tests | **E20-N23** covers isolation and revoked tokens. **E17-N23** covers audit rows, usage, expiry and 429. |
+| Redaction helper | `@flump/observability` (E18-N1) is the canonical scrubber. E20 logging reuses it and adds no second helper. |
+
+## Complicated (Fable)
+
+1. **E24 D2 pricing: A, a free beta with no price.**
+   - During the friends beta, E24-T4 keeps the paid card with its placeholder badge and a disabled CTA.
+   - At launch, `PRICING.status: "not-set"` removes the paid card and the toggle. The `£X`/`£Y` strings must be absent from the launch bundle: the T1 guard checks the build output, so hiding them is not enough.
+   - Revisit only when the owner wants to charge. The order then is: incorporate, entitlements (T11), billing, reviewed terms, insurance, then `status: "set"`.
+2. **E24 D5 footer identity: two stages.**
+   - **Friends beta:** a truthful operator line, "Flump is run by [owner's name], a sole trader. Private, invite-only beta.", plus the contact email. No company number and no registered office. The owner supplies the name, and agents never invent it.
+   - **Public launch:** the limited company's name, number and registered office, filled in when the company is incorporated. The launch guard keeps blocking until then, with no allow-list.
+   - A new small E24 ticket (or part of T2) adds `OPERATOR_NAME_PLACEHOLDER` and `LEGAL_ENTITY.kind`.
+   - The owner decides whether a postal address appears during the beta. The recommendation is email only, which is an accepted low-stakes risk.
+   - The solicitor confirms the wording at launch.
+3. **E18 OD-4 morgan access log with OAuth `?code=`: A, accepted for the beta.**
+   - E18 adds an "Access logs" section to `docs/security/logging-policy.md`. It states the rule that no secrets or personal data go in web query strings.
+   - A guard test lists the allowed `searchParams.get` keys. The Sentry scrubber strips query strings.
+   - At the custom-domain cutover, a custom `@react-router/express` server with an allow-listed access log replaces `react-router-serve`. That amends E20 D4 at that point.
+   - This moves earlier if logs leave Railway, if a route starts taking tokens or personal data in a query string, or if web request ids are needed.
+4. **E20 OD4 step-up mechanism:**
+   - **Default:** (a) AuthKit forced re-login, with freshness checked server-side.
+   - **Fallback:** (b) a Magic Auth email code.
+   - **Never:** (c) password re-entry.
+   - The N20 spike must answer seven questions in writing (see `E20-next-phases-plan.md`, Round 4 overrides). The first is the pass/fail test: can AuthKit force a credential prompt while its own session is live? If it cannot, use (b) with no further decision round.
+   - Step-up does not gate the friends beta, because bank connect is owner-only and un-anonymising a PAT is rejected. It must land before self-serve account deletion (F40).
+5. **E29 timing: split into E29a and E29b.**
+   - **E29a (free):** copy rules, an advice-language guard, disclaimers, a draft MCP DPIA and a widened Innovation Hub enquiry. It gates the friends beta, E25 copy and E26.
+   - **E29b (the lawyer's perimeter view):** it goes inside the launch fixed-fee solicitor engagement, so rounds 3 items 15 and 16 stand. It gates public launch and E26 for non-friends.
+   - **Before friends,** in addition to round 3 item 9:
+     - the E29a copy pass and guard;
+     - the widened Hub enquiry, covering projections, salary-sacrifice and pension outputs, and LLM replies via MCP;
+     - MCP and PAT creation off for friends (owner-allowlisted) until the DPIA draft exists;
+     - the beta notice saying "guidance and calculations, not advice; unreviewed".
+   - **Before E26 ships to friends:**
+     - the DPIA signed by the owner;
+     - tool descriptions worded as guidance;
+     - the unverified notice in every response;
+     - evals showing no personal product recommendations;
+     - the Hub reply received, or 8 weeks passed with no adverse signal;
+     - an audit log.
+   - **A separate written FCA opinion only on a trigger:** bank connection goes public, an adverse Hub reply, the solicitor will not cover the perimeter within the fixed fee, E26 gains writes or names products, or charging starts.
+
+## Owner actions added by round 4
+
+- Supply the footer display name.
+- Decide whether a postal address appears during the beta.
+- Approve the E24 copy (T2 to T4).
+- Send the widened Innovation Hub enquiry.
+- Sign the MCP DPIA draft.
+- Approve widening the launch solicitor's scope to include a perimeter view.
+- Do the WorkOS dashboard check needed for the step-up spike.
+- No new spend.
+
+## Round 4 addendum: E25, E29 and overlaps between plans (Opus, straightforward)
+
+| ID | Decision | Effect on tickets |
+|---|---|---|
+| E25 D1 verification scope | **(b) by feature within a year.** The features are `core`, `hicbc`, `whatIf` and `scheduled`. `core` is the existing `uk-tax.vectors.ts` catalogue. | Adding E25 vectors never un-signs a year the owner has already signed. |
+| E25 D2 April 2029 salary-sacrifice NI cap | **(a) opt-in toggle, off by default**, always labelled "Illustration ... Not yet law; may change." | E25-T7 adds a test that the cap is never applied implicitly. In E25-T10 the toggle sits under "More details". |
+| E25 D3 live TaxTrapCalculator | **(b) engine figures now, labelled "Unverified estimate".** New E25 surfaces stay gated. | E25-T11. |
+| E25 D4 HICBC and pension-method inputs | **(a) held in the session or scenario only.** No profile columns. | Revisit when E26 needs these inputs. |
+| E25 D5 childcare £100k cliff | **(a) non-monetary marker** (Tax-Free Childcare and extended hours, per parent; sourced from gov.uk). | E25-T4 `kind: "nonMonetary"`, excluded from take-home and properties. E25-T11 deletes the false "All funded hours revoked". |
+| E29 OD1 pension button | **A: "Model this contribution" pre-fills the form and never saves.** | E29-T4 test: `handleSyncContributions` is not called. |
+| E29 OD2 lifecycle stages | **A: keep the enums for layout defaults only; drop all stage action text.** | E29-T5; E15 handoff for the dashboard hero. |
+| E29 OD3 context-pack download | **A: counts as MCP and is gated.** | E29-T8 guards `mcp.controller.ts:80` as well as `:49`. |
+| MCP environment variables | **`MCP_ENABLED`** stays the global kill switch (E20-N18). It defaults to true. When false, `/mcp`, PAT create and the context pack return 503 for everyone. **`MCP_OPEN_ACCESS`** (E29-T8, bank-connection pattern) plus **`MCP_ALLOWED_USER_IDS`**: when false or unset in production, only allowlisted users get access; everyone else gets 404 `feature_disabled`. Check order: kill switch, then auth, then allowlist. | E29-T8 lands first and creates `readMcpAccessConfig(env)` in `apps/backend/src/mcp-access.ts`; E20-N18 reuses it. E29 owner step 3 becomes: set `MCP_ALLOWED_USER_IDS=<owner id>` and leave `MCP_OPEN_ACCESS` unset. Do **not** set `MCP_ENABLED=false`. |
+| `apps/web/app/copy-guard.test.ts` | **E29-T3 owns it.** | E25-T9 drops its guard edit. E25-T9 to T11 merge after E29-T3 and add no allow-list entries. |
+| `packages/finance-engine/src/tax-year-verification.ts` | **E17-N5 owns the file.** Signature: `type TaxVerification = { status: "verified" \| "unverified"; detail: string }`; `getTaxYearVerification(year)` equals the `core` feature. E25-T8 appends `getTaxFeatureVerification(year, feature)`. Both are built on `yearVerification`, exported by E25-T8. | Whichever ticket lands first creates the file with exactly this signature. |
+| `TaxTrapCalculator` directory | **E25-T11 owns all 5 files, including the copy.** It must meet E29 R2, R5, R6 and R8. | Remove it from E29-T3's E15-owned allow-list entries. E15 keeps `TaxTrapEscapeBanner` and the other `packages/ui` copy. |
+| One-engine guard | E25-T15 folds into E23 P2-2 / E4 T17 if that ticket has landed, and otherwise creates `scripts/check-one-tax-engine.ts`, which P2-2 absorbs later. Either way: one `check:laws` entry, one baseline that only shrinks, and no new `ci-pipeline.yml` step. | E25-T15. |
+| `financial-audit.tool.ts:113` | Order: E17-N1, then E17-N3, then E29-T5's one-line `observations` change, then E17-N11 deletes the tool. If the E29-T5 engine work is ready first, ship it with a `topRecommendations` alias that returns `[]`, and follow with the one-line change. | E29-T5 is not blocked by E17. |
