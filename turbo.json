@@ -8,6 +8,7 @@
     },
     "build": {
       "dependsOn": ["^build", "^generate"],
+      "env": ["FLUMP_LAUNCH"],
       "inputs": ["$TURBO_DEFAULT$", ".env*"],
       "outputs": ["dist/**", "build/**", "!.next/cache/**"]
     },

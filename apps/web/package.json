@@ -73,7 +73,7 @@
   },
   "scripts": {
     "dev": "react-router dev",
-    "build": "react-router build",
+    "build": "react-router build && bun ../../scripts/check-launch-placeholders.ts build",
     "start": "react-router-serve ./build/server/index.js",
     "format": "biome check --write .",
     "lint": "biome check .",
