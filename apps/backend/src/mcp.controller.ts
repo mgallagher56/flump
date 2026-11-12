@@ -70,6 +70,7 @@ export class McpController {
    * Revoke an active AI Connection token
    */
   @Delete("mcp-tokens/:id")
+  @RateLimit("destructive")
   @UseGuards(AuthGuard)
   async revokeToken(@Req() req: any, @Param("id") id: string) {
     const userId = req.user.id;

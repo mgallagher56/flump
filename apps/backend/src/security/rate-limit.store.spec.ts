@@ -55,6 +55,16 @@ describe("RateLimitStore", () => {
     expect(store.hit("k", windows, MIN).allowed).toBe(true); // second hourly slot still free
   });
 
+  it("never grows past the cap, evicting the oldest buckets first", () => {
+    const store = new RateLimitStore(3);
+    const windows = [{ limit: 1, windowMs: MIN }];
+    for (let i = 0; i < 10; i++) store.hit(`k${i}`, windows, i);
+    expect(store.size()).toBe(3);
+    // k9 is still counted; k0 was evicted.
+    expect(store.hit("k9", windows, 20).allowed).toBe(false);
+    expect(store.hit("k0", windows, 20).allowed).toBe(true);
+  });
+
   it("drops expired buckets so memory stays bounded", () => {
     const store = new RateLimitStore();
     const windows = [{ limit: 1, windowMs: MIN }];
