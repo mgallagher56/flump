@@ -32,6 +32,11 @@ export const StorybookRouterContext = createContext<MockRouterContextType>({
   location: { pathname: "/", search: "", hash: "", state: null, key: "default" },
 });
 
+// Plain <form> stand-in so stories render without a data router.
+export const Form = ({ children, ...props }: { children?: ReactNode; [key: string]: any }) => (
+  <form {...props}>{children}</form>
+);
+
 export const useLoaderData = () => {
   const context = useContext(StorybookRouterContext);
   return context.loaderData;

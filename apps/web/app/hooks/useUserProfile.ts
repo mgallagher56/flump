@@ -307,33 +307,20 @@ export function useUserProfile() {
     [setProfile, accessToken],
   );
 
-  const changePassword = useCallback(
-    async (newPassword: string): Promise<{ success: boolean; message: string }> => {
-      try {
-        return await apiFetch<{ success: boolean; message: string }>(
-          "/user-profile/change-password",
-          { accessToken, method: "POST", body: { newPassword } },
-        );
-      } catch (err) {
-        throw messageFrom(err, "Failed to update password");
-      }
-    },
-    [accessToken],
-  );
-
-  const sendPasswordResetEmail = useCallback(
-    async (email?: string): Promise<{ success: boolean; message: string }> => {
-      try {
-        return await apiFetch<{ success: boolean; message: string }>(
-          "/user-profile/send-password-reset",
-          { accessToken, method: "POST", body: { email } },
-        );
-      } catch (err) {
-        throw messageFrom(err, "Failed to send password reset email");
-      }
-    },
-    [accessToken],
-  );
+  const sendPasswordResetEmail = useCallback(async (): Promise<{
+    success: boolean;
+    message?: string;
+  }> => {
+    try {
+      // The server resolves the caller's own email; no body is sent.
+      return await apiFetch<{ success: boolean; message?: string }>(
+        "/user-profile/send-password-reset",
+        { accessToken, method: "POST" },
+      );
+    } catch (err) {
+      throw messageFrom(err, "Failed to send password reset email");
+    }
+  }, [accessToken]);
 
   const resetFinancialData = useCallback(async (): Promise<void> => {
     let result: { profile?: UserProfile } | undefined;
@@ -356,7 +343,6 @@ export function useUserProfile() {
     setProfile,
     updateProfile,
     markChecklistStep,
-    changePassword,
     sendPasswordResetEmail,
     resetFinancialData,
   };

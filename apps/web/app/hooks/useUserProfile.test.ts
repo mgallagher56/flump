@@ -121,17 +121,6 @@ describe("useUserProfile", () => {
     );
   });
 
-  test("changePassword sends POST request", async () => {
-    (global.fetch as any).mockResolvedValueOnce(
-      jsonRes({ success: true, message: "Password updated" }),
-    );
-
-    const { result } = renderHook(() => useUserProfile());
-
-    const response = await result.current.changePassword("newSecretPassword123!");
-    expect(response.success).toBe(true);
-  });
-
   test("sendPasswordResetEmail sends request", async () => {
     (global.fetch as any).mockResolvedValueOnce(
       jsonRes({ success: true, message: "Reset email sent" }),
@@ -139,8 +128,9 @@ describe("useUserProfile", () => {
 
     const { result } = renderHook(() => useUserProfile());
 
-    const response = await result.current.sendPasswordResetEmail("test@example.com");
+    const response = await result.current.sendPasswordResetEmail();
     expect(response.success).toBe(true);
+    expect("changePassword" in result.current).toBe(false);
   });
 
   test("resetFinancialData sends reset request", async () => {

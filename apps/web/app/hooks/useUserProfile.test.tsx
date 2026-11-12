@@ -74,7 +74,7 @@ describe("useUserProfile & HttpProfileAdapter", () => {
     expect(norm.isSalarySacrificeEmployerNi).toBe(true);
   });
 
-  it("updates profile, checklist, password, and resets financial data via API", async () => {
+  it("updates profile, checklist, and resets financial data via API", async () => {
     const { result } = renderHook(() => useUserProfile());
 
     // updateProfile success
@@ -102,23 +102,13 @@ describe("useUserProfile & HttpProfileAdapter", () => {
     (global.fetch as any).mockResolvedValueOnce(jsonRes(undefined, 503));
     await expect(result.current.markChecklistStep("budget", false)).rejects.toThrow(/server/);
 
-    // changePassword success & failure
-    (global.fetch as any).mockResolvedValueOnce(
-      jsonRes({ success: true, message: "Password updated" }),
-    );
-    const pwRes = await result.current.changePassword("NewSecret123!");
-    expect(pwRes.success).toBe(true);
-
-    (global.fetch as any).mockResolvedValueOnce(jsonRes({ message: "Weak password" }, 400));
-    await expect(result.current.changePassword("123")).rejects.toThrow("Weak password");
-
     // sendPasswordResetEmail success & failure
     (global.fetch as any).mockResolvedValueOnce(jsonRes({ success: true, message: "Reset sent" }));
-    const resetRes = await result.current.sendPasswordResetEmail("user@example.com");
+    const resetRes = await result.current.sendPasswordResetEmail();
     expect(resetRes.success).toBe(true);
 
     (global.fetch as any).mockResolvedValueOnce(jsonRes({}, 400));
-    await expect(result.current.sendPasswordResetEmail("user@example.com")).rejects.toThrow(
+    await expect(result.current.sendPasswordResetEmail()).rejects.toThrow(
       "Failed to send password reset email",
     );
 
@@ -137,16 +127,16 @@ describe("useUserProfile & HttpProfileAdapter", () => {
 
   it("shows backend text only for 4xx other than 401 and 403", async () => {
     const { result } = renderHook(() => useUserProfile());
-    (global.fetch as any).mockResolvedValueOnce(jsonRes({ message: "Weak password" }, 422));
-    await expect(result.current.changePassword("1")).rejects.toThrow("Weak password");
     for (const status of [401, 403, 500, 503]) {
       (global.fetch as any).mockResolvedValueOnce(
         jsonRes({ message: "Internal stack trace" }, status),
       );
-      await expect(result.current.changePassword("1")).rejects.toThrow("Failed to update password");
+      await expect(result.current.sendPasswordResetEmail()).rejects.toThrow(
+        "Failed to send password reset email",
+      );
     }
     (global.fetch as any).mockResolvedValueOnce(jsonRes({ message: "boom" }, 500));
-    await expect(result.current.sendPasswordResetEmail("a@b.co")).rejects.toThrow(
+    await expect(result.current.sendPasswordResetEmail()).rejects.toThrow(
       "Failed to send password reset email",
     );
     (global.fetch as any).mockResolvedValueOnce(jsonRes({ message: "boom" }, 403));

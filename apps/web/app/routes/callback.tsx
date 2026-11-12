@@ -1,3 +1,4 @@
+import { isFlumpHost } from "@flump/finance-engine";
 import { authLoader, configure } from "@workos-inc/authkit-react-router";
 import type { LoaderFunctionArgs } from "react-router";
 import { redirect, useLoaderData } from "react-router";
@@ -12,7 +13,10 @@ export const loader = async (args: LoaderFunctionArgs) => {
     return redirect("/login");
   }
 
-  if (url.hostname === "localhost" || url.hostname === "127.0.0.1") {
+  if (
+    process.env.NODE_ENV === "development" &&
+    (url.hostname === "localhost" || url.hostname === "127.0.0.1")
+  ) {
     configure((key: string) => {
       if (key === "WORKOS_REDIRECT_URI") {
         return `${url.origin}/callback`;
@@ -22,8 +26,10 @@ export const loader = async (args: LoaderFunctionArgs) => {
   }
 
   const response = await workosLoader(args);
-  const cookieDomain = url.hostname.endsWith("flump.co.uk") ? "; Domain=.flump.co.uk" : "";
-  const sessionPresenceCookie = `flump_has_session=1; Path=/; SameSite=Lax; Max-Age=2592000${cookieDomain}`;
+  const onFlumpHost = isFlumpHost(url.hostname);
+  const cookieDomain = onFlumpHost ? "; Domain=.flump.co.uk" : "";
+  const secure = onFlumpHost || url.protocol === "https:" ? "; Secure" : "";
+  const sessionPresenceCookie = `flump_has_session=1; Path=/; SameSite=Lax; Max-Age=2592000${cookieDomain}${secure}`;
 
   if (response instanceof Response) {
     const headers = new Headers(response.headers);

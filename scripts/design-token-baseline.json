@@ -16,7 +16,7 @@
   "apps/web/app/components/budget/BudgetDashboard.tsx": 47,
   "apps/web/app/components/budget/BudgetSetupWizard.tsx": 22,
   "apps/web/app/components/budget/RunwayCalculator.tsx": 32,
-  "apps/web/app/components/budget/UserProfilePanel.tsx": 17,
+  "apps/web/app/components/budget/UserProfilePanel.tsx": 12,
   "apps/web/app/components/charts/AccountDetailChart.tsx": 3,
   "apps/web/app/components/charts/chartTheme.ts": 6,
   "apps/web/app/components/core/dialogs/FLPModal.tsx": 4,

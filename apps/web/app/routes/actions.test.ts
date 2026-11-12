@@ -397,7 +397,7 @@ describe.each(cases)("$route action, intent $intent", (c) => {
 });
 
 describe("accounts action, connectBank", () => {
-  it("still resolves an OAuth redirect when the backend call fails", async () => {
+  it("returns a not-available error for OAuth even when the backend call fails", async () => {
     globalThis.fetch = respond(503);
     const form = new FormData();
     form.set("intent", "connectBank");
@@ -408,9 +408,12 @@ describe("accounts action, connectBank", () => {
       params: {},
       context: {},
     } as any);
-    // The failed backend call is tolerated; with no provider URL available it falls through.
-    expect(res.data).toEqual({ success: true });
-    expect(res.init?.status).toBeUndefined();
+    // The failed backend call is tolerated; bank OAuth is cut so there is no redirect to offer.
+    expect(res.data).toEqual({
+      success: false,
+      error: "Bank connections via OAuth are not available.",
+    });
+    expect(res.init?.status).toBe(501);
   });
 
   it("returns the backend redirect URL for OAuth", async () => {
@@ -535,23 +538,22 @@ describe("action edge cases", () => {
     expect(res.data).toEqual({ success: true });
   });
 
-  it("an auth redirect thrown inside the try block propagates", async () => {
-    const redirectResponse = new Response(null, { status: 302, headers: { Location: "/login" } });
-    vi.spyOn(BankSyncOrchestrator, "getOAuthUrl").mockImplementation(() => {
-      throw redirectResponse;
-    });
+  it("OAuth bank connections return a clear not-available error", async () => {
     globalThis.fetch = respond(200, {});
     const form = new FormData();
     form.set("intent", "connectBank");
     form.set("institutionId", "inst");
     form.set("authType", "oauth");
-    await expect(
-      accountsAction({
-        request: new Request("http://localhost/app", { method: "POST", body: form }),
-        params: {},
-        context: {},
-      } as any),
-    ).rejects.toBe(redirectResponse);
+    const res: any = await accountsAction({
+      request: new Request("http://localhost/app", { method: "POST", body: form }),
+      params: {},
+      context: {},
+    } as any);
+    expect(res.init?.status ?? res.status).toBe(501);
+    expect(res.data).toEqual({
+      success: false,
+      error: "Bank connections via OAuth are not available.",
+    });
   });
 });
 
