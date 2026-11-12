@@ -47,6 +47,12 @@ function copyFor(kind: RouteErrorStateProps["kind"]): Copy {
         heading: "You don't have access to this",
         body: "Your account can't open this page. If you think that's wrong, contact support.",
       };
+    case "not-invited":
+      return {
+        badge: "Invite only",
+        heading: "Flump is invite-only for now",
+        body: "You're signed in, but this account hasn't been invited to the beta yet. Sign out and use an invited account, or ask the person who invited you.",
+      };
     case "not-found":
       return {
         badge: "Not found",
@@ -68,7 +74,11 @@ export const RouteErrorState: FC<RouteErrorStateProps> = ({
   className,
 }) => {
   const copy = copyFor(kind);
-  const showRetry = kind !== "unauthorised" && kind !== "forbidden" && kind !== "not-found";
+  const showRetry =
+    kind !== "unauthorised" &&
+    kind !== "forbidden" &&
+    kind !== "not-found" &&
+    kind !== "not-invited";
 
   return (
     <section className={cx(errorStateContainer(), className)} role="alert" id="route-error-state">
@@ -80,6 +90,13 @@ export const RouteErrorState: FC<RouteErrorStateProps> = ({
           <form method="post" action={signInAction}>
             <Button type="submit" variant="primary">
               Sign in again
+            </Button>
+          </form>
+        ) : null}
+        {kind === "not-invited" ? (
+          <form method="post" action={signInAction}>
+            <Button type="submit" variant="primary">
+              Sign out
             </Button>
           </form>
         ) : null}

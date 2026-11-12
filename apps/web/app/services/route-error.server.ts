@@ -7,6 +7,7 @@ const STATUS_BY_KIND: Record<BackendErrorKind, number> = {
   "bad-response": 502,
   "not-found": 404,
   forbidden: 403,
+  "not-invited": 403,
   client: 400,
   unauthorised: 401,
 };
@@ -29,6 +30,7 @@ const ACTION_MESSAGE_BY_KIND: Record<BackendErrorKind, string> = {
   "bad-response": "Something went wrong on our side. Please try again.",
   "not-found": "We couldn't find that. It may have been removed.",
   forbidden: "You don't have permission to do that.",
+  "not-invited": "This account has not been invited to the Flump beta yet.",
   client: "We couldn't save that. Check the details and try again.",
   unauthorised: "Your session has ended. Please sign in again.",
 };

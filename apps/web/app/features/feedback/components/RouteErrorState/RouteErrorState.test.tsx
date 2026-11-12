@@ -59,10 +59,18 @@ describe("RouteErrorState", () => {
     expect(screen.getByRole("heading", { name: "You don't have access to this" })).toBeDefined();
   });
 
+  it("renders an invite-only state with a sign out action", () => {
+    render(<RouteErrorState kind="not-invited" onRetry={() => {}} />);
+    expect(screen.getByRole("heading", { name: "Flump is invite-only for now" })).toBeDefined();
+    expect(screen.getByRole("button", { name: "Sign out" })).toBeDefined();
+    expect(screen.queryByRole("button", { name: "Try again" })).toBeNull();
+  });
+
   it("never renders an exclamation mark", () => {
     const kinds = [
       "unauthorised",
       "forbidden",
+      "not-invited",
       "not-found",
       "client",
       "server",

@@ -75,7 +75,13 @@ export async function backendFetch<T>(endpoint: string, opts: BackendFetchOption
           throw new BackendError("bad-response", endpoint, res.status);
         }
       }
-      failure = new BackendError(kindFromStatus(res.status), endpoint, res.status);
+      let kind = kindFromStatus(res.status);
+      if (res.status === 403) {
+        // The backend marks a closed-beta refusal (E19 A7) so the UI can explain it.
+        const refusal = await res.json().catch(() => null);
+        if ((refusal as { error?: unknown } | null)?.error === "not_invited") kind = "not-invited";
+      }
+      failure = new BackendError(kind, endpoint, res.status);
     } catch (err) {
       if (err instanceof BackendError) {
         failure = err;
