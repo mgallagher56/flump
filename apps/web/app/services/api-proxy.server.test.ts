@@ -57,11 +57,11 @@ describe("allow-list", () => {
         "POST /user-profile/send-password-reset",
         "POST /user-profile/reset-financial-data",
         "GET,POST /budget-entries",
-        "PATCH,DELETE /budget-entries/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        "PATCH,DELETE /budget-entries/[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}",
         "POST /budget-entries/seed-defaults",
         "POST /budget-entries/categories",
         "GET,POST /accounts",
-        "PATCH /accounts/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        "PATCH /accounts/[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}",
       ]
     `);
   });
@@ -80,6 +80,7 @@ describe("allow-list", () => {
     ["GET", "/accounts"],
     ["POST", "/accounts"],
     ["PATCH", `/accounts/${UUID}`],
+    ["PATCH", `/accounts/${UUID.toUpperCase()}`],
   ])("passes %s %s through to the backend with the bearer token", async (method, path) => {
     const fetchImpl = vi.fn(async () => new Response('{"ok":1}', { status: 200 }));
     const body = method === "GET" || method === "DELETE" ? undefined : '{"a":1}';
@@ -104,6 +105,11 @@ describe("allow-list", () => {
     ["GET", `/api/accounts/${UUID}/extra`],
     ["GET", "/api/"],
     ["GET", "/api"],
+    ["GET", "/api/ACCOUNTS"],
+    ["PATCH", "/api/USER-PROFILE"],
+    ["POST", "/api/Budget-Entries/Seed-Defaults"],
+    ["GET", "/api/accounts%252e"],
+    ["GET", "/api/%252e%252e/accounts"],
   ])("returns 404 for %s %s", async (method, path) => {
     const fetchImpl = vi.fn();
     const res = await run(req(method, path), { fetchImpl: fetchImpl as never });
@@ -186,6 +192,46 @@ describe("CSRF checks", () => {
   });
 });
 
+describe("Sec-Fetch-Site and Origin null", () => {
+  it("403 for Origin: null", async () => {
+    const res = await run(
+      req("POST", "/api/accounts", { body: "{}", headers: { Origin: "null" } }),
+    );
+    expect(res.status).toBe(403);
+  });
+
+  it.each(["cross-site", "same-site"])("403 for Sec-Fetch-Site %s", async (site) => {
+    const fetchImpl = vi.fn();
+    const get = await run(req("GET", "/api/accounts", { headers: { "Sec-Fetch-Site": site } }), {
+      fetchImpl: fetchImpl as never,
+    });
+    expect(get.status).toBe(403);
+    const post = await run(
+      req("POST", "/api/accounts", { body: "{}", headers: { "Sec-Fetch-Site": site } }),
+      { fetchImpl: fetchImpl as never },
+    );
+    expect(post.status).toBe(403);
+    expect(fetchImpl).not.toHaveBeenCalled();
+  });
+
+  it("allows same-origin, and none only for GET", async () => {
+    const same = { "Sec-Fetch-Site": "same-origin" };
+    expect((await run(req("POST", "/api/accounts", { body: "{}", headers: same }))).status).toBe(
+      200,
+    );
+    const none = { "Sec-Fetch-Site": "none", Origin: null };
+    expect((await run(req("GET", "/api/accounts", { headers: none }))).status).toBe(200);
+    const post = await run(
+      req("POST", "/api/accounts", { body: "{}", headers: { "Sec-Fetch-Site": "none" } }),
+    );
+    expect(post.status).toBe(403);
+  });
+
+  it("is not required when the header is absent (non-browser same-origin clients)", async () => {
+    expect((await run(req("GET", "/api/accounts"))).status).toBe(200);
+  });
+});
+
 describe("session", () => {
   it("401 with no session, without calling the backend", async () => {
     const fetchImpl = vi.fn();
@@ -247,6 +293,26 @@ describe("body handling", () => {
       duplex: "half",
     });
     expect((await run(request)).status).toBe(413);
+  });
+
+  it("400 (not an uncaught error) when the body stream errors mid-way", async () => {
+    const fetchImpl = vi.fn();
+    const stream = new ReadableStream({
+      start(controller) {
+        controller.enqueue(new TextEncoder().encode('{"a":'));
+        controller.error(new Error("client aborted"));
+      },
+    });
+    const request = new Request(`${ORIGIN}/api/accounts`, {
+      method: "POST",
+      headers: { "X-Flump-Request": "1", Origin: ORIGIN, "Content-Type": "application/json" },
+      body: stream,
+      // @ts-expect-error duplex is required for stream bodies in Node
+      duplex: "half",
+    });
+    const res = await run(request, { fetchImpl: fetchImpl as never });
+    expect(res.status).toBe(400);
+    expect(fetchImpl).not.toHaveBeenCalled();
   });
 
   it("accepts a body at the cap", async () => {
