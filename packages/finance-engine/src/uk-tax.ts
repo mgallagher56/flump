@@ -66,7 +66,7 @@ export const STUDENT_LOAN_THRESHOLDS: Record<
   string,
   { threshold: number; rate: number; writeOffYears: number }
 > = (() => {
-  const year = UK_STUDENT_LOANS[getCurrentUKTaxYear()] ?? UK_STUDENT_LOANS["2026/27"]!;
+  const year = UK_STUDENT_LOANS[resolveUkTaxYear()]!;
   const out: Record<string, { threshold: number; rate: number; writeOffYears: number }> = {};
   for (const [key, plan] of Object.entries(year.plans)) {
     const entry = {
@@ -157,8 +157,7 @@ function incomeTaxOnAdjustedNetIncome(
  * year still throws UnsupportedUkTaxYearError. Recorded as known issue (c).
  */
 function defaultTrapTaxYear(): string {
-  const current = getCurrentUKTaxYear();
-  return isSupportedUkTaxYear(current) ? current : (SUPPORTED_UK_TAX_YEARS.at(-1) ?? "2026/27");
+  return resolveUkTaxYear();
 }
 
 export function analyzeTaxTrap(
@@ -535,12 +534,7 @@ export function calculateUKTakeHome(
     taxYear,
   );
 
-  // calculateUKEWNITakeHome falls back to 2026/27 for an unsupported year (open item (b)/(c));
-  // keep the same fallback here so the trap analysis does not throw where the take-home does not.
-  const trapAnalysis = calculateTaxTrapRelief(
-    grossSalary,
-    isSupportedUkTaxYear(taxYear) ? taxYear : "2026/27",
-  );
+  const trapAnalysis = calculateTaxTrapRelief(grossSalary, taxYear);
 
   return {
     ...result,

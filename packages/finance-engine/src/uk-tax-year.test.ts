@@ -6,9 +6,14 @@ import {
   getTaxYearForDate,
   type TaxRecord,
 } from "./tax-calculator.js";
-import { getCurrentUKTaxYear, UK_NATIONAL_INSURANCE } from "./tax-rules.js";
+import {
+  calculateUKEWNITakeHome,
+  getCurrentUKTaxYear,
+  UK_NATIONAL_INSURANCE,
+} from "./tax-rules.js";
 import { UK_TAX_VECTORS } from "./test-vectors/uk-tax.vectors.js";
 import { SUPPORTED_UK_TAX_YEARS } from "./types.js";
+import { calculateUKTakeHome, calculateUkTax } from "./uk-tax.js";
 import {
   calculateClass4Ni,
   calculateEmployeeNi,
@@ -16,7 +21,12 @@ import {
   calculateIncomeTaxOnTaxable,
   calculatePersonalAllowanceForYear,
   calculateStudentLoanRepayment,
+  classifyUkTaxYear,
+  formatTaxYearLabel,
   getCurrentUkTaxYear,
+  getFirstUnsupportedUkTaxYear,
+  getLatestSupportedUkTaxYear,
+  getUkTaxYearContext,
   getUkTaxYearForDate,
   getUkTaxYearRules,
   resolveUkTaxYear,

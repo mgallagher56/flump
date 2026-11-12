@@ -10,6 +10,7 @@ import {
   getUkTaxYearForDate,
   getUkTaxYearRules,
   isSupportedUkTaxYear,
+  resolveUkTaxYear,
   type UkDividendRules,
 } from "./uk-tax-year.js";
 
@@ -399,13 +400,14 @@ export function calculateUKTax(
   payeSalary: number,
   propertyOwnershipShare: number,
 ): TaxCalculationResult {
-  const config = TAX_YEARS[taxYear] ?? TAX_YEARS["2024/25"] ?? buildLegacyUKConfig("2024/25");
-  // Unknown years keep the legacy fallback to 2024/25 (same as `config`).
-  const ewni = UK_EWNI_INCOME_TAX[taxYear] ?? UK_EWNI_INCOME_TAX["2024/25"]!;
+  // Strict (E22): an unsupported year throws UnsupportedUkTaxYearError instead of
+  // silently using 2024/25. Callers should check classifyUkTaxYear() first.
+  resolveUkTaxYear(taxYear);
+  const config = TAX_YEARS[taxYear] ?? buildLegacyUKConfig(taxYear);
+  const ewni = UK_EWNI_INCOME_TAX[taxYear]!;
   const months = getMonthsForTaxYear(taxYear);
-  // Per-year dividend and savings tables (uk-tax-year.ts). Unknown years keep the
-  // legacy fallback to 2024/25 used for `config` above.
-  const yearRules = getUkTaxYearRules(isSupportedUkTaxYear(taxYear) ? taxYear : "2024/25");
+  // Per-year dividend and savings tables (uk-tax-year.ts).
+  const yearRules = getUkTaxYearRules(resolveUkTaxYear(taxYear));
 
   // 1. Calculate Gross Totals for all 4 sources
   let rentalIncomeGross = 0;

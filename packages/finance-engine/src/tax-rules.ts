@@ -21,7 +21,9 @@
 
 import {
   getUkCalendarDate,
+  getUkTaxYearContext,
   getUkTaxYearForDate,
+  resolveUkTaxYear,
   UnsupportedUkTaxYearError,
 } from "./uk-tax-year.js";
 
@@ -638,14 +640,13 @@ export function buildLegacyUKConfig(taxYear: string): UKLegacyTaxYearConfig {
 // ---------------------------------------------------------------------------
 
 /**
- * Returns the current UK tax year key e.g. "2025/26".
- * UK tax year runs 6 April to 5 April (D8: boundary now handled by uk-tax-year.ts).
+ * Returns the tax year whose RATES apply today, e.g. "2025/26". Never throws once the clock
+ * passes the last supported year: it then returns the latest supported year (see
+ * getUkTaxYearContext, which also says it is a fallback so the UI can show a banner).
+ * @deprecated Use getUkTaxYearContext() so `isFallback` is not lost.
  */
 export function getCurrentUKTaxYear(): string {
-  // Delegates to the canonical resolver (6 April boundary, UK calendar date).
-  // Unlike getCurrentUkTaxYear it never throws, so existing callers keep working
-  // when the clock moves past the last supported year.
-  return getUkTaxYearForDate(getUkCalendarDate(new Date()));
+  return getUkTaxYearContext().ratesYear;
 }
 
 /** Returns all supported UK tax year keys in chronological order. */
@@ -723,12 +724,12 @@ export function calculateUKEWNITakeHome(
   taxYear: string,
   studentLoanPlan: keyof UKStudentLoanYear["plans"] | "none" = "none",
 ): UKTakeHomeResult {
-  // Unsupported years fall back to 2026/27 rather than throwing: callers pass
-  // getCurrentUKTaxYear(), which never throws once the clock passes the last supported year,
-  // so throwing here would crash the UI. Recorded in tax-vector-signoff.md known issues.
-  const itRules = UK_EWNI_INCOME_TAX[taxYear] ?? UK_EWNI_INCOME_TAX["2026/27"]!;
-  const niRules = UK_NATIONAL_INSURANCE[taxYear] ?? UK_NATIONAL_INSURANCE["2026/27"]!;
-  const slRules = UK_STUDENT_LOANS[taxYear] ?? UK_STUDENT_LOANS["2026/27"]!;
+  // Strict (E22): an unsupported year throws UnsupportedUkTaxYearError. Only
+  // getUkTaxYearContext() may substitute a year, and it says so (isFallback).
+  const year = resolveUkTaxYear(taxYear);
+  const itRules = UK_EWNI_INCOME_TAX[year]!;
+  const niRules = UK_NATIONAL_INSURANCE[year]!;
+  const slRules = UK_STUDENT_LOANS[year]!;
 
   const defaultResult: UKTakeHomeResult = {
     gross,
