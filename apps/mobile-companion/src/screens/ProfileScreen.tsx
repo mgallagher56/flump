@@ -21,7 +21,6 @@ const COUNTRIES = [
   { code: "US", name: "United States", currency: "USD" },
   { code: "DE", name: "Germany", currency: "EUR" },
   { code: "FR", name: "France", currency: "EUR" },
-  { code: "IE", name: "Ireland", currency: "EUR" },
   { code: "ES", name: "Spain", currency: "EUR" },
   { code: "IT", name: "Italy", currency: "EUR" },
   { code: "CA", name: "Canada", currency: "CAD" },
@@ -107,66 +106,12 @@ const calculateNetTakeHome = (
 
   if (!gross || gross <= 0) return defaultResult;
 
-  if (country !== "GB" && country !== "IE") {
+  if (country !== "GB") {
     return defaultResult;
   }
 
   if (employmentType !== "employed" && employmentType !== "self-employed") {
     return defaultResult;
-  }
-
-  if (country === "IE") {
-    // Republic of Ireland 2026 calculations
-    const standardBandSingle = 44000;
-    const standardRate = 0.2;
-    const higherRate = 0.4;
-    const personalCredit = 2000;
-    const employeeCredit = 2000; // employed gets employee credit; self-employed gets earned income credit (same amount: 2000)
-
-    // 1. Income Tax
-    const standardBandIncome = Math.min(gross, standardBandSingle);
-    const higherBandIncome = Math.max(0, gross - standardBandSingle);
-    const grossTax = standardBandIncome * standardRate + higherBandIncome * higherRate;
-    const credits = personalCredit + employeeCredit;
-    const incomeTax = Math.max(0, grossTax - credits);
-
-    // 2. USC
-    let usc = 0;
-    if (gross > 13000) {
-      const uscBand1 = Math.min(gross, 12012) * 0.005;
-      const uscBand2 = Math.max(0, Math.min(gross, 28700) - 12012) * 0.02;
-      const uscBand3 = Math.max(0, Math.min(gross, 70044) - 28700) * 0.03;
-      const uscBand4 = Math.max(0, gross - 70044) * 0.08;
-      usc = uscBand1 + uscBand2 + uscBand3 + uscBand4;
-    }
-
-    // 3. PRSI (Rate: 4.35% = 0.0435)
-    let prsi = 0;
-    if (employmentType === "employed") {
-      if (gross > 18304) {
-        prsi = gross * 0.0435;
-      }
-    } else if (employmentType === "self-employed") {
-      if (gross > 5000) {
-        prsi = Math.max(500, gross * 0.0435);
-      }
-    }
-
-    const roundedIncomeTax = Math.round(incomeTax);
-    const roundedNI = Math.round(usc + prsi);
-    const netAnnual = Math.max(0, gross - roundedIncomeTax - roundedNI);
-    const monthlyTakeHome = Math.round(netAnnual / 12);
-
-    return {
-      gross,
-      pension: 0,
-      personalAllowance: 0,
-      taxableIncome: 0,
-      incomeTax: roundedIncomeTax,
-      ni: roundedNI,
-      netAnnual,
-      monthlyTakeHome,
-    };
   }
 
   // 1. Pension
@@ -282,7 +227,7 @@ export default function ProfileScreen() {
   const calculatedTakeHome = calculatedBreakdown ? calculatedBreakdown.monthlyTakeHome : 0;
 
   const isTakeHomeOverridden =
-    (country === "GB" || country === "IE") &&
+    country === "GB" &&
     parsedSalary > 0 &&
     parsedTakeHome > 0 &&
     parsedTakeHome !== calculatedTakeHome;
@@ -664,9 +609,7 @@ export default function ProfileScreen() {
                         </Text>
                       </View>
                       <View style={styles.breakdownRow}>
-                        <Text style={styles.breakdownLabel}>
-                          {country === "IE" ? "USC & PRSI" : "National Insurance"}
-                        </Text>
+                        <Text style={styles.breakdownLabel}>National Insurance</Text>
                         <Text style={[styles.breakdownValue, { color: "#ef4444" }]}>
                           -{getCurrencySymbol(currency)}
                           {calculatedBreakdown.ni.toLocaleString()}
