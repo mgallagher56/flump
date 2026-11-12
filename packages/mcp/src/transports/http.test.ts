@@ -1,8 +1,9 @@
 import { describe, expect, it } from "vitest";
+import { FailedAuthLimiter } from "../auth/failed-auth-limiter.js";
 import type { McpUserDataProvider } from "../types.js";
 import { HttpMcpHandler } from "./http.js";
 
-const handler = new HttpMcpHandler({ dataProvider: {} as McpUserDataProvider });
+const newHandler = () => new HttpMcpHandler({ dataProvider: {} as McpUserDataProvider });
 const PAT = "flump_pat_0123456789abcdef0123456789abcdef";
 const unsignedJwt = `eyJhbGciOiJub25lIn0.${Buffer.from('{"sub":"x"}').toString("base64")}.sig`;
 
@@ -18,19 +19,25 @@ const headers: Array<[string, string | undefined]> = [
 describe("HttpMcpHandler auth failures", () => {
   for (const [name, header] of headers) {
     it(`web request: ${name} is 401`, async () => {
+      const handler = newHandler();
       const req = new Request("http://localhost/mcp", {
         method: "POST",
         headers: header ? { authorization: header } : {},
       });
       const res = await handler.handleWebRequest(req);
       expect(res.status).toBe(401);
+      expect(res.headers.get("www-authenticate")).toMatch(/^Bearer/);
     });
 
     it(`express request: ${name} is 401`, async () => {
+      const handler = newHandler();
       let status = 0;
       const res: any = {
         status(code: number) {
           status = code;
+          return this;
+        },
+        setHeader() {
           return this;
         },
         json() {
@@ -41,4 +48,90 @@ describe("HttpMcpHandler auth failures", () => {
       expect(status).toBe(401);
     });
   }
+});
+
+describe("HttpMcpHandler hardening", () => {
+  const webReq = (auth: string, ip = "9.9.9.9") =>
+    new Request("http://localhost/mcp", {
+      method: "POST",
+      headers: { authorization: auth, "x-forwarded-for": ip },
+    });
+
+  it("accepts a lower-case bearer scheme as a well-formed header (fails on the token, not the scheme)", async () => {
+    const res = await newHandler().handleWebRequest(webReq("bearer mock-session-token"));
+    const body = await res.json();
+    expect(body.message).not.toMatch(/malformed/i);
+  });
+
+  it("returns 429 with Retry-After on the 11th failed attempt from one IP", async () => {
+    const h = new HttpMcpHandler({
+      dataProvider: {} as McpUserDataProvider,
+      failedAuthLimiter: new FailedAuthLimiter(10, 60_000),
+    });
+    for (let i = 0; i < 10; i++) {
+      expect((await h.handleWebRequest(webReq(`Bearer ${PAT}`))).status).toBe(401);
+    }
+    const res = await h.handleWebRequest(webReq(`Bearer ${PAT}`));
+    expect(res.status).toBe(429);
+    expect(Number(res.headers.get("retry-after"))).toBeGreaterThan(0);
+    // another IP is unaffected
+    expect((await h.handleWebRequest(webReq(`Bearer ${PAT}`, "8.8.8.8"))).status).toBe(401);
+  });
+
+  it("express: 11th failure is 429 with Retry-After", async () => {
+    const h = new HttpMcpHandler({ dataProvider: {} as McpUserDataProvider });
+    const call = async () => {
+      const out: { status: number; headers: Record<string, string> } = { status: 0, headers: {} };
+      const res: any = {
+        status(c: number) {
+          out.status = c;
+          return this;
+        },
+        setHeader(k: string, v: string) {
+          out.headers[k.toLowerCase()] = v;
+          return this;
+        },
+        json() {
+          return this;
+        },
+      };
+      await h.handleExpressRequest(
+        { ip: "7.7.7.7", headers: { authorization: `Bearer ${PAT}` } },
+        res,
+      );
+      return out;
+    };
+    for (let i = 0; i < 10; i++) expect((await call()).status).toBe(401);
+    const last = await call();
+    expect(last.status).toBe(429);
+    expect(Number(last.headers["retry-after"])).toBeGreaterThan(0);
+  });
+
+  it("non-auth errors return a generic 400 with no err.message", async () => {
+    const h = new HttpMcpHandler({ dataProvider: {} as McpUserDataProvider });
+    (h as any).verifier = {
+      verifyAuthorizationHeader: async () => {
+        throw new Error("internal db password=hunter2");
+      },
+    };
+    const res = await h.handleWebRequest(webReq(`Bearer ${PAT}`));
+    expect(res.status).toBe(400);
+    expect(await res.text()).not.toContain("hunter2");
+
+    let sent: any;
+    const eres: any = {
+      status() {
+        return this;
+      },
+      setHeader() {
+        return this;
+      },
+      json(b: unknown) {
+        sent = b;
+        return this;
+      },
+    };
+    await h.handleExpressRequest({ headers: {} }, eres);
+    expect(JSON.stringify(sent)).not.toContain("hunter2");
+  });
 });

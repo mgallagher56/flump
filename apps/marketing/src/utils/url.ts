@@ -1,3 +1,11 @@
+const matchesDomain = (hostname: string, domain: string): boolean =>
+  hostname === domain || hostname.endsWith(`.${domain}`);
+
+/** Exact apex or a real subdomain; "evilflump.co.uk" does not match. */
+export const isFlumpHost = (hostname: string): boolean => matchesDomain(hostname, "flump.co.uk");
+
+export const isRailwayHost = (hostname: string): boolean => matchesDomain(hostname, "railway.app");
+
 export const getAppUrl = (): string => {
   // 1. Injected global override (e.g. from SSR HTML template)
   if (typeof window !== "undefined" && (window as any).__FLUMP_APP_URL__) {
@@ -19,10 +27,10 @@ export const getAppUrl = (): string => {
     if (hostname === "localhost" || hostname === "127.0.0.1") {
       return "http://localhost:5173";
     }
-    if (hostname.endsWith("railway.app")) {
+    if (isRailwayHost(hostname)) {
       return "https://web-production-845e6c.up.railway.app";
     }
-    if (hostname.endsWith("flump.co.uk")) {
+    if (isFlumpHost(hostname)) {
       return "https://app.flump.co.uk";
     }
     return "https://app.flump.co.uk";

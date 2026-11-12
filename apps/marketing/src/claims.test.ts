@@ -31,6 +31,10 @@ const BANNED: Array<[RegExp, string]> = [
   [/hallucinat/i, "E"],
   [/\bnpx\b/, "E"],
   [/No credit card/i, "E"],
+  [
+    /safe harbou?r|we will not (take|pursue) legal/i,
+    "E20 Q13 (no legal promise in disclosure copy)",
+  ],
 ];
 
 function files(dir: string): string[] {

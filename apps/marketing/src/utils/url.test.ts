@@ -76,3 +76,19 @@ describe("getAppUrl", () => {
     expect(getAppUrl()).toBe("http://localhost:5173");
   });
 });
+
+describe("isFlumpHost", () => {
+  it("matches the apex and real subdomains only", async () => {
+    const { isFlumpHost } = await import("./url");
+    expect(isFlumpHost("flump.co.uk")).toBe(true);
+    expect(isFlumpHost("www.flump.co.uk")).toBe(true);
+    expect(isFlumpHost("evilflump.co.uk")).toBe(false);
+    expect(isFlumpHost("flump.co.uk.evil.example")).toBe(false);
+  });
+
+  it("does not treat a lookalike railway suffix as Railway", async () => {
+    const { isRailwayHost } = await import("./url");
+    expect(isRailwayHost("web.up.railway.app")).toBe(true);
+    expect(isRailwayHost("evilrailway.app")).toBe(false);
+  });
+});

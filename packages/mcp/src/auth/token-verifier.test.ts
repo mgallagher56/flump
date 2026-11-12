@@ -114,4 +114,13 @@ describe("TokenVerifier (PAT-only)", () => {
       AuthenticationError,
     );
   });
+
+  it("treats the Bearer scheme case-insensitively", async () => {
+    const verifier = new TokenVerifier({ devToken: "dev-secret" });
+    for (const scheme of ["bearer", "BEARER", "BeArEr"]) {
+      await expect(
+        verifier.verifyAuthorizationHeader(`${scheme} dev-secret`),
+      ).resolves.toMatchObject({ type: "dev" });
+    }
+  });
 });

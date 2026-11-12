@@ -73,4 +73,12 @@ describe("SecurityPage", () => {
     renderPage();
     expect(screen.queryByText(/1 business day/i)).toBeNull();
   });
+
+  it("includes a disclosure policy that links to security.txt", () => {
+    renderPage();
+    expect(
+      screen.getByRole("heading", { level: 2, name: "Reporting a security issue" }),
+    ).toBeDefined();
+    expect(screen.getByRole("link", { name: "security.txt" })).toBeDefined();
+  });
 });
