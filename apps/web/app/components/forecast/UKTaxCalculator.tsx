@@ -4,7 +4,7 @@ import {
   getUkTaxYearContext,
   UK_STUDENT_LOANS,
 } from "@flump/finance-engine";
-import { ChartFigure, TaxRatesStatusBanner } from "@repo/ui";
+import { ChartFigure, LiveRegion, TaxRatesStatusBanner } from "@repo/ui";
 import { css, cx } from "@repo/ui/styled-system/css";
 import { type FC, useEffect, useMemo, useState } from "react";
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
@@ -299,6 +299,13 @@ const UKTaxCalculator: FC<UKTaxCalculatorProps> = ({ initialSalary, onApplyIncre
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
       <TaxRatesStatusBanner {...ratesContext} />
+      {salaryKnown && (
+        <LiveRegion
+          debounceMs={1000}
+          message={`Estimated monthly take-home ${formatCurrencyDecimal(taxResults.netPay / 12)}`}
+          visuallyHidden
+        />
+      )}
       <div className={layoutGrid}>
         {/* Parameter Inputs (Left Column) */}
         <div className={controlPanelStyle}>
@@ -418,7 +425,7 @@ const UKTaxCalculator: FC<UKTaxCalculatorProps> = ({ initialSalary, onApplyIncre
         {/* Results (Right Column) */}
         {salaryKnown ? (
           <FLPCard>
-            <div aria-label={`Take-home estimate for ${taxYear}`} role="status">
+            <div>
               {/* Large monthly take home summary */}
               <div className={takeHomeHeaderCard}>
                 <div>
@@ -551,10 +558,7 @@ const UKTaxCalculator: FC<UKTaxCalculatorProps> = ({ initialSalary, onApplyIncre
                     </tr>
                     {taxResults.pension > 0 && (
                       <tr>
-                        <td
-                          className={tdStyle}
-                          style={{ color: "var(--colors-chart-accent-purple)" }}
-                        >
+                        <td className={tdStyle} style={{ color: "var(--colors-primary)" }}>
                           Pension {isSalarySacrifice ? "(Sacrifice)" : "(Relief at source)"}
                         </td>
                         <td className={tdStyle}>-{formatCurrency(taxResults.pension)}</td>

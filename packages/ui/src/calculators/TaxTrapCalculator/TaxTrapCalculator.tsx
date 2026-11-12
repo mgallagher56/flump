@@ -15,14 +15,18 @@ import {
 export interface TaxTrapCalculatorProps {
   onSaveAndContinue?: (payload: any) => void;
   ctaText?: string;
+  /** Tax year the figures are for. Defaults to the year the trap maths is written for. */
+  taxYear?: string;
 }
 
 const gbp = (value: number) => `£${value.toLocaleString("en-GB")}`;
-const TAX_YEAR = "2026/27";
+// TODO: derive from the engine (getUkTaxYearContext) once calculateTaxTrapRelief takes a year.
+const DEFAULT_TAX_YEAR = "2026/27";
 
 export const TaxTrapCalculator: FC<TaxTrapCalculatorProps> = ({
   onSaveAndContinue,
   ctaText = "Save scenario and continue free →",
+  taxYear: TAX_YEAR = DEFAULT_TAX_YEAR,
 }) => {
   const [grossIncome, setGrossIncome] = useState<number>(115000);
   const [salarySacrifice, setSalarySacrifice] = useState<number>(10000);
@@ -79,7 +83,7 @@ export const TaxTrapCalculator: FC<TaxTrapCalculatorProps> = ({
               letterSpacing: "0.05em",
             }}
           >
-            UK 2026/27 Tax Engine
+            UK {TAX_YEAR} Tax Engine
           </span>
           {isTrapZone && (
             <span

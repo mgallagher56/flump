@@ -483,7 +483,7 @@ const TaxContainer: FC = () => {
   const trStyle = css({
     transition: "background 0.2s",
     "&:hover": {
-      backgroundColor: "var(--colors-surface-sunken)",
+      backgroundColor: "var(--colors-surface-subtle)",
     },
   });
 
@@ -654,7 +654,7 @@ const TaxContainer: FC = () => {
       </div>
 
       {/* Top 4-KPI Row (Single sleek row on desktop) */}
-      <div aria-label={`Tax summary for ${selectedTaxYear}`} className={cardsGrid} role="status">
+      <div className={cardsGrid}>
         <FLPCard
           className={css({
             padding: "16px",
@@ -697,7 +697,6 @@ const TaxContainer: FC = () => {
             PAYE ({formatPaye(activeYearData.effectivePayeSalary, formatCurrency)}) + Business +
             Rental + Savings.
           </FLPText>
-          <TaxEstimateNote className={css({ marginTop: "4px" })} taxYear={selectedTaxYear} />
         </FLPCard>
 
         <FLPCard
@@ -720,7 +719,6 @@ const TaxContainer: FC = () => {
             {propertyOwnershipShare}% share of total property profit{" "}
             {formatCurrency(activeYearData.rentalProfitPostInterest)}.
           </FLPText>
-          <TaxEstimateNote className={css({ marginTop: "4px" })} taxYear={selectedTaxYear} />
         </FLPCard>
 
         <FLPCard
@@ -742,7 +740,6 @@ const TaxContainer: FC = () => {
           <FLPText color="text.muted" fontSize="xs" className={css({ marginTop: "4px" })}>
             Turnover {formatCurrency(activeYearData.seIncomeGross)} less allowable costs.
           </FLPText>
-          <TaxEstimateNote className={css({ marginTop: "4px" })} taxYear={selectedTaxYear} />
         </FLPCard>
       </div>
 
@@ -1799,7 +1796,7 @@ const TaxContainer: FC = () => {
                                   : record.source === "self-employed"
                                     ? "var(--colors-status-positive-bg)"
                                     : record.source === "savings"
-                                      ? "var(--colors-surface-subtle)"
+                                      ? "var(--colors-status-neutral-bg)"
                                       : "var(--colors-status-info-bg)",
                               color:
                                 record.source === "rental"
@@ -1807,7 +1804,7 @@ const TaxContainer: FC = () => {
                                   : record.source === "self-employed"
                                     ? "status.positive.text"
                                     : record.source === "savings"
-                                      ? "chart.accentPurple"
+                                      ? "status.neutral.text"
                                       : "status.info.text",
                             })}
                           >

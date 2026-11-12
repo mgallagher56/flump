@@ -644,7 +644,7 @@ export const CopyTaxYearModal: FC<CopyTaxYearModalProps> = ({
                                   : record.source === "self-employed"
                                     ? "var(--colors-status-positive-bg)"
                                     : record.source === "savings"
-                                      ? "var(--colors-surface-subtle)"
+                                      ? "var(--colors-status-neutral-bg)"
                                       : "var(--colors-status-info-bg)",
                               color:
                                 record.source === "rental"
@@ -652,7 +652,7 @@ export const CopyTaxYearModal: FC<CopyTaxYearModalProps> = ({
                                   : record.source === "self-employed"
                                     ? "status.positive.text"
                                     : record.source === "savings"
-                                      ? "chart.accentPurple"
+                                      ? "status.neutral.text"
                                       : "status.info.text",
                             })}
                           >

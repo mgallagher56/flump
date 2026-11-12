@@ -1,4 +1,4 @@
-import { calculateEmployerNISavings, getUkTaxYearContext } from "@flump/finance-engine";
+import { calculateEmployerNISavings } from "@flump/finance-engine";
 import { ChartFigure } from "@repo/ui";
 import { css } from "@repo/ui/styled-system/css";
 import { type FC, useEffect, useMemo, useState } from "react";
@@ -25,7 +25,6 @@ import FLPButton from "~/components/core/buttons/FLPButton";
 import FLPCard from "~/components/core/cards/FLPCard";
 import FLPHeading from "~/components/core/typography/FLPHeading";
 import FLPText from "~/components/core/typography/FLPText";
-import TaxEstimateNote from "~/components/tax/TaxEstimateNote";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
 import { usePrefersReducedMotion } from "~/hooks/usePrefersReducedMotion";
 
@@ -202,17 +201,17 @@ const togglePillStyle = (active: boolean) =>
     borderRadius: "full",
     fontSize: "xs",
     fontWeight: active ? "semibold" : "medium",
-    backgroundColor: active ? "var(--colors-surface-subtle)" : "surface",
-    color: active ? "var(--colors-chart-accent-purple)" : "text.secondary",
+    backgroundColor: active ? "var(--colors-primary-subtle)" : "surface",
+    color: active ? "var(--colors-primary)" : "text.primary",
     border: "1px solid",
-    borderColor: active ? "var(--colors-chart-accent-purple)" : "border",
+    borderColor: active ? "var(--colors-primary-border)" : "border",
     cursor: "pointer",
     transition: "all 0.15s ease",
     display: "inline-flex",
     alignItems: "center",
     gap: "6px",
     _hover: {
-      borderColor: "var(--colors-chart-accent-purple)",
+      borderColor: "var(--colors-primary-border)",
     },
   });
 
@@ -469,8 +468,8 @@ export const PensionForecasterCard: FC<PensionForecasterCardProps> = ({
               className={css({
                 fontSize: "xs",
                 fontWeight: "bold",
-                color: "var(--colors-chart-accent-purple)",
-                backgroundColor: "var(--colors-surface-subtle)",
+                color: "var(--colors-primary)",
+                backgroundColor: "var(--colors-primary-subtle)",
                 padding: "2px 8px",
                 borderRadius: "full",
               })}
@@ -666,7 +665,7 @@ export const PensionForecasterCard: FC<PensionForecasterCardProps> = ({
               <div className={inputCardStyle}>
                 <label className={labelStyle} htmlFor="pension-forecast-horizon">
                   <span>Horizon to Retirement</span>
-                  <span style={{ color: "var(--colors-chart-accent-purple)", fontWeight: "bold" }}>
+                  <span style={{ color: "var(--colors-text-primary)", fontWeight: "bold" }}>
                     {horizonYears} {horizonYears === 1 ? "Year" : "Years"}
                   </span>
                 </label>
@@ -863,8 +862,8 @@ export const PensionForecasterCard: FC<PensionForecasterCardProps> = ({
                   style={{
                     fontSize: "11px",
                     fontWeight: 600,
-                    color: "var(--colors-chart-accent-purple)",
-                    backgroundColor: "var(--colors-surface-subtle)",
+                    color: "var(--colors-primary)",
+                    backgroundColor: "var(--colors-primary-subtle)",
                     padding: "1px 7px",
                     borderRadius: "999px",
                     textTransform: "none",
@@ -947,7 +946,7 @@ export const PensionForecasterCard: FC<PensionForecasterCardProps> = ({
           })}
         >
           {/* Outcome Cards (Top Results) */}
-          <div aria-label="Pension projection results" className={outcomeGridStyle} role="status">
+          <div className={outcomeGridStyle}>
             {/* Card 1: Projected Pot */}
             <div className={heroCardStyle}>
               <div>
@@ -1105,10 +1104,22 @@ export const PensionForecasterCard: FC<PensionForecasterCardProps> = ({
             </div>
           </div>
 
-          <TaxEstimateNote
-            assumption={`Assumes a ${SAFE_WITHDRAWAL_RATE * 100}% annual drawdown rate, a ${formatCurrency(UK_LUMP_SUM_ALLOWANCE)} lump sum allowance, a ${formatCurrency(UK_ANNUAL_ALLOWANCE)} annual allowance and a ${formatCurrency(UK_STATE_PENSION_ANNUAL)}/yr state pension when included. These are fixed figures, not looked up for your tax year.`}
-            taxYear={getUkTaxYearContext().ratesYear}
-          />
+          <p
+            data-testid="pension-estimate-note"
+            style={{
+              margin: 0,
+              fontSize: "12px",
+              lineHeight: 1.5,
+              color: "var(--colors-text-muted)",
+              fontVariantNumeric: "tabular-nums",
+            }}
+          >
+            Projection based on the figures you entered. It assumes a {SAFE_WITHDRAWAL_RATE * 100}%
+            annual drawdown rate and uses fixed allowances that are not updated each tax year: a{" "}
+            {formatCurrency(UK_LUMP_SUM_ALLOWANCE)} lump sum allowance, a{" "}
+            {formatCurrency(UK_ANNUAL_ALLOWANCE)} annual allowance and a{" "}
+            {formatCurrency(UK_STATE_PENSION_ANNUAL)}/yr state pension when included.
+          </p>
 
           {/* Visual Stacked Area Chart */}
           <ChartFigure

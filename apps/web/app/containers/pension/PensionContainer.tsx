@@ -472,8 +472,8 @@ export const PensionContainer: FC = () => {
               className={css({
                 fontSize: "xs",
                 fontWeight: "bold",
-                color: "var(--colors-chart-accent-purple)",
-                backgroundColor: "var(--colors-surface-subtle)",
+                color: "var(--colors-primary)",
+                backgroundColor: "var(--colors-primary-subtle)",
                 padding: "2px 8px",
                 borderRadius: "full",
               })}
