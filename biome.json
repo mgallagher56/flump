@@ -17,7 +17,8 @@
       "!**/build",
       "!**/styled-system",
       "!**/CHANGELOG.md",
-      "!docs/audit"
+      "!docs/audit",
+      "!docs/design/**/*.html"
     ]
   },
   "overrides": [

@@ -584,7 +584,7 @@ exports[`per-tool output size (E17-N1) > calls every registered tool and pins th
   "calculate_self_assessment_and_section24": 1000,
   "compare_mortgage_overpay_vs_isa": 1500,
   "evaluate_cashflow_runway_and_health": 1500,
-  "evaluate_uk_student_loan": 500,
+  "evaluate_uk_student_loan": 1000,
   "project_wealth_scenario": 2000,
   "query_transactions_and_spending": 500,
   "simulate_debt_payoff": 37500,
