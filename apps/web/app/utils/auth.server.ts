@@ -1,6 +1,7 @@
 import { authkitLoader } from "@workos-inc/authkit-react-router";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 import { redirect } from "react-router";
+import { safeErrorSummary } from "~/utils/safeErrorSummary";
 
 /** The only place a dev session token literal lives. Server-only. */
 export const DEV_ACCESS_TOKEN = "mock-session-token";
@@ -67,7 +68,7 @@ export async function getAuthSession(
       throw error;
     }
     if (isDevBypass(process.env)) {
-      console.warn("authkitLoader failed, using dev bypass session:", error);
+      console.warn("authkitLoader failed, using dev bypass session:", safeErrorSummary(error));
       return { user: DEV_SESSION_USER, accessToken: DEV_ACCESS_TOKEN };
     }
     throw error;
