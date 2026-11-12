@@ -122,6 +122,7 @@ describe("route modules", () => {
     "app.profile",
     "app.savings",
     "app.tax",
+    "app.take-home",
     "app.onboarding",
   ];
   it.each(routes)("%s exports the shared ErrorBoundary", (route) => {

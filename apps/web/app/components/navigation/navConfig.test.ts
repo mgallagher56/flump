@@ -14,14 +14,16 @@ describe("navConfig", () => {
     expect(keys(AUTH_NAV_ROUTES)).toContain("debt");
   });
 
-  it("hides the opt-in Tax module and its empty group by default", () => {
+  it("hides the opt-in Tax module but keeps Take-home pay in its group by default", () => {
     const routes = filterNavRoutes(AUTH_NAV_ROUTES, [], isPageEnabled);
     expect(keys(routes)).not.toContain("tax");
-    expect(routes.find((r) => r.key === "planning")).toBeUndefined();
+    expect(routes.find((r) => r.key === "planning")?.children?.map((c) => c.key)).toEqual([
+      "takeHome",
+    ]);
   });
 
   it("shows Tax once the module is enabled", () => {
     const routes = filterNavRoutes(AUTH_NAV_ROUTES, ["budget", "tax"], isPageEnabled);
-    expect(keys(routes)).toEqual(["budget", "tax"]);
+    expect(keys(routes)).toEqual(["budget", "takeHome", "tax"]);
   });
 });
