@@ -20,11 +20,11 @@ import { useFormatCurrency } from "~/hooks/useFormatCurrency";
 import { normalizeProfile, type UserProfile, useUserProfile } from "~/hooks/useUserProfile";
 import type { DebtSummary } from "~/utils/debtSummary";
 import {
-  ALL_PAGE_KEYS,
   type AppPageKey,
   DASHBOARD_WIDGET_METAS,
   type DashboardWidgetKey,
   DEFAULT_DASHBOARD_WIDGETS,
+  DEFAULT_ENABLED_PAGES,
   DEFAULT_WIDGET_SIZES,
 } from "~/utils/pageConfig";
 import { AccountsWidget } from "./widgets/AccountsWidget";
@@ -106,7 +106,7 @@ export const HomeDashboard: FC<HomeDashboardProps> = ({
 
   // Enabled pages according to UserProfile
   const enabledPages = useMemo<AppPageKey[]>(() => {
-    return (profile.enabledPages as AppPageKey[]) || ALL_PAGE_KEYS;
+    return (profile.enabledPages as AppPageKey[]) || DEFAULT_ENABLED_PAGES;
   }, [profile.enabledPages]);
 
   // Candidate widgets applicable to the user
@@ -194,7 +194,7 @@ export const HomeDashboard: FC<HomeDashboardProps> = ({
   const handleResetLayout = async () => {
     await updateProfile({
       dashboardWidgets: [...enabledPages],
-      dashboardWidgetOrder: [...ALL_PAGE_KEYS],
+      dashboardWidgetOrder: [...enabledPages],
       dashboardWidgetSizes: { ...DEFAULT_WIDGET_SIZES },
       dashboardWidgetConfig: {},
     });
