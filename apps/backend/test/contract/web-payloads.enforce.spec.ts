@@ -37,6 +37,7 @@ describe("web payloads in enforce mode", () => {
   });
   afterEach(() => {
     delete process.env.CONTRACT_MODE;
+    delete process.env.CONTRACT_ENFORCE_GROUPS;
     vi.restoreAllMocks();
   });
 
@@ -60,6 +61,18 @@ describe("web payloads in enforce mode", () => {
 
   it("keeps the MCP token 'never expires' request working while mcp-tokens is held back", () => {
     expect(passes("POST", "/mcp-tokens", { name: "Claude", expiryDays: null })).toBe(true);
+  });
+
+  it("accepts the tax bulk copy payload web sends once the tax group is enforced", () => {
+    process.env.CONTRACT_ENFORCE_GROUPS = "tax";
+    const capped = [{ id: ID, endDate: "2026-04-05" }];
+    expect(passes("POST", "/tax-records/bulk", { records: [], capPreviousRecordIds: capped })).toBe(
+      true,
+    );
+    expect(() =>
+      passes("POST", "/tax-records/bulk", { records: [], capPreviousRecordIds: [ID] }),
+    ).toThrow();
+    delete process.env.CONTRACT_ENFORCE_GROUPS;
   });
 
   it("rejects a malformed id on an enforced route", () => {
