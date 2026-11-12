@@ -66,7 +66,7 @@ export const loader = async (args: LoaderFunctionArgs) => {
 
 export default function App() {
   const { locale, user, userProfile, ENV } = useLoaderData<typeof loader>();
-  const { theme, toggleTheme } = useTheme();
+  const { theme, preference, setPreference, toggleTheme } = useTheme();
   const { setProfile } = useUserProfile();
 
   useEffect(() => {
@@ -100,7 +100,7 @@ export default function App() {
           transition: "background-color 0.2s ease, color 0.2s ease",
         }}
       >
-        <ThemeContext.Provider value={{ theme, toggleTheme }}>
+        <ThemeContext.Provider value={{ theme, preference, setPreference, toggleTheme }}>
           <ResponsiveProvider>
             <VisuallyHidden as="a" focusable href="#main-content">
               Skip to content

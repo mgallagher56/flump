@@ -50,7 +50,6 @@
   "apps/web/app/components/mortgage/RemortgageShockSim.tsx": 7,
   "apps/web/app/components/navigation/MobileBottomBar.tsx": 3,
   "apps/web/app/components/navigation/NavMenu.tsx": 5,
-  "apps/web/app/components/navigation/ThemeToggle.tsx": 1,
   "apps/web/app/components/navigation/UserAvatar.tsx": 3,
   "apps/web/app/components/pension/AddPensionAccountDialog.tsx": 1,
   "apps/web/app/components/pension/PensionAccountsList.tsx": 15,
