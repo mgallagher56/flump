@@ -149,3 +149,25 @@ Staging uses the **same WorkOS environment as production** for now. Add the stag
 ## 7. Staleness guard
 
 `bun test ./scripts/ops` runs `env-matrix.test.ts`. It collects every variable name read in `apps/backend`, `apps/web` and `apps/marketing` (excluding tests) plus a short list of variables read indirectly (libraries and Railway), and fails when one is missing from the table of the service that reads it (section 4.1, 4.2 or 4.3). It cannot see dynamically named variables. Names that only tests or build tools use live in the test's documented ignore list.
+
+## 8. Switch to synthetic data
+
+Do this before any friend or tester signs in to staging. The restore drill (`restore-to-staging.sh`) puts a copy of production, including real people's rows, into staging. `scripts/ops/seed-synthetic.ts` replaces all of it with made-up personas (P1 Sam, P2 Priya, P3 Gareth, P5 Alex; every name starts with `Synthetic`, see `scripts/ops/synthetic-personas.ts`).
+
+**What the script does.** It refuses (exit 2, nothing written) unless `STAGING_PGURL` is a plain single-host URL, differs from `PGURL` when that is also set, and the database comment is `flump-staging` (section 1, checked on the same connection that writes). In one transaction it locks the user-data tables, deletes every row of `transactions`, `account_details`, `accounts`, `bank_connections`, `budget_entries`, `mcp_tokens`, `tax_records` and `user_profiles` (never `migrations`), then inserts the chosen personas with parameterised SQL. It also refuses if the schema has a table it does not know, so a new table has to be added to the script on purpose. It prints table counts only, and running it twice gives the same result. `scripts/ops/seed-synthetic.test.ts` runs it after all migrations in CI, so a renamed or new required column fails CI, not your run.
+
+**Owner steps (in order).**
+
+1. In the WorkOS dashboard (shared environment, section 5) create one test user per persona you want (for example `synthetic-p1@...` on an address you control). Copy each user id (`user_...`).
+2. Open a tunnel to the **staging** Postgres only and run, from the repo root:
+
+   ```bash
+   STAGING_PGURL='<staging url>' PGURL='<production url, optional safety check>' \
+     bun scripts/ops/seed-synthetic.ts --persona P1=<id> --persona P2=<id> --persona P3=<id> --persona P5=<id>
+   ```
+
+   It ends with `== OK: synthetic seed complete` and the row counts.
+3. Sign in to staging as each test user and check the dashboard shows that persona's numbers.
+4. Delete any Railway volume backups or snapshots taken while staging held the restored production dump, and delete local copies of the dump you no longer need (`~/flump-backups`). The seed removes the rows but not the old backups.
+5. Confirm production holds nothing of the owner's that staging should not: run `scripts/ops/prod-counts.sql` against **staging** with the owner id and check it reports 0 rows for the owner id.
+6. From now on the drill is: dump, then local `restore-drill.sh`, then re-run the seed on staging. Do not restore production data into staging again.
