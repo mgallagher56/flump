@@ -21,6 +21,14 @@ describe("TaxTrapAlertBanner", () => {
     expect(mockApply).toHaveBeenCalled();
   });
 
+  it("trap copy names both rates from the engine and never contradicts itself", () => {
+    const { container } = render(<TaxTrapAlertBanner grossIncome={115000} />);
+
+    expect(screen.getByRole("heading", { level: 3 }).textContent).toContain("60%");
+    expect(container.textContent).toContain("60% income tax, 62% including NI");
+    expect(container.textContent).not.toMatch(/effective 62% marginal tax rate/);
+  });
+
   it("near the trap shows the 40% income tax rate and does not claim 62%", () => {
     render(<TaxTrapAlertBanner grossIncome={97000} />);
     expect(screen.getByText("40% Marginal Tax")).toBeDefined();

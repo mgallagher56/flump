@@ -27,6 +27,7 @@ import { useFormatCurrency } from "~/hooks/useFormatCurrency";
 import { useUserProfile } from "~/hooks/useUserProfile";
 import type { loader } from "~/routes/app.pension";
 import { useFinancialBaseline } from "~/state/baseline.store";
+import { getTaxTrapCopy } from "~/utils/taxTrapCopy";
 import { currentMonth, currentYear } from "~/utils/utils";
 
 const containerStyle = css({
@@ -354,6 +355,7 @@ export const PensionContainer: FC = () => {
   const taxTrap = useMemo(() => {
     return calculate100kTaxTrap(effectiveSalary, effectiveEmployeePct, effectiveIsSalarySacrifice);
   }, [effectiveSalary, effectiveEmployeePct, effectiveIsSalarySacrifice]);
+  const trapCopy = getTaxTrapCopy(taxTrap);
 
   const handleOptimizeTaxTrap = async (contributionReq: number) => {
     if (!effectiveSalary || effectiveSalary <= 0) return;
@@ -378,7 +380,7 @@ export const PensionContainer: FC = () => {
   return (
     <div className={containerStyle}>
       <LiveRegion debounceMs={1000} message={pensionHeadline} visuallyHidden />
-      {/* £100k-£125k 60% Marginal Tax Trap Optimizer Callout */}
+      {/* £100k-£125k Marginal Tax Trap Optimizer Callout */}
       {taxTrap.isInTaxTrap && (
         <div
           className={css({
@@ -394,7 +396,7 @@ export const PensionContainer: FC = () => {
           <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
             <span style={{ fontSize: "20px" }}>⚠️</span>
             <FLPHeading as="h3" size="sm" style={{ color: "#b45309" }}>
-              £100k–£125,140 60% marginal tax trap active
+              £100k–£125,140 {trapCopy.incomeTaxRate} marginal tax trap active
             </FLPHeading>
             <span
               style={{
@@ -406,13 +408,13 @@ export const PensionContainer: FC = () => {
                 color: "#b45309",
               }}
             >
-              60% effective marginal rate
+              {trapCopy.breakdown}
             </span>
           </div>
           <FLPText fontSize="xs" color="text.secondary">
             Your adjusted net income is <strong>{formatCurrency(taxTrap.adjustedNetIncome)}</strong>
-            . Every £2 earned above £100k reduces your Personal Allowance by £1, resulting in an
-            effective 60% marginal tax rate and{" "}
+            . Every £2 earned above £100k reduces your Personal Allowance by £1, resulting in a
+            marginal rate of {trapCopy.breakdown} and{" "}
             {formatCurrency(taxTrap.estimatedTaxSavedByEscapingGbp)} in additional tax.
           </FLPText>
           <div
