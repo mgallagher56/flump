@@ -6,15 +6,15 @@ const SENSITIVE_KEY =
 
 // Order matters: specific shapes first, broad catch-alls last.
 const STRING_PATTERNS: readonly RegExp[] = [
-  /[^\s@/?#]+@[^\s@/?#]+\.[^\s@/?#]+/g,
-  /Bearer\s+\S+/gi,
-  /eyJ[\w-]+\.[\w-]+\.[\w-]*/g,
+  /[^\s@/?#]{1,64}@[^\s@/?#]{1,255}\.[^\s@/?#]{1,63}/g,
+  /Bearer\s{1,8}\S+/gi,
+  /eyJ[\w-]{1,2048}\.[\w-]{1,2048}\.[\w-]{0,2048}/g,
   /sk_(?:test|live)_\w+/g,
   /\?[^\s#]*(?:#\S*)?/g,
   /[A-Za-z0-9+/_-]{32,}/g,
   /£\s?[\d,]+(?:\.\d+)?/g,
   /\b\d{2}-\d{2}-\d{2}\b/g,
-  /\b\d+\.\d{2}\b/g,
+  /\b\d{1,15}\.\d{2}\b/g,
   /\d{6,}/g,
 ];
 
@@ -22,8 +22,18 @@ const MAX_DEPTH = 12;
 const MAX_NODES = 5000;
 const NUMBER_LIMIT = 1000;
 
+export const MAX_STRING_LENGTH = 8192;
+const TRUNCATED = "[truncated]";
+
+/** True for object keys whose values must never leave the process. */
+export function isSensitiveKey(key: string): boolean {
+  return SENSITIVE_KEY.test(key);
+}
+
 export function redactString(input: string): string {
-  let out = input;
+  // Truncate before any regex runs so adversarial input cannot cause slow matching.
+  let out =
+    input.length > MAX_STRING_LENGTH ? `${input.slice(0, MAX_STRING_LENGTH)}${TRUNCATED}` : input;
   for (const pattern of STRING_PATTERNS) {
     out = out.replace(pattern, REDACTED);
   }
@@ -42,6 +52,9 @@ function walk(value: unknown, depth: number, state: Walk): unknown {
       Number.isFinite(value) && (!Number.isInteger(value) || Math.abs(value) >= NUMBER_LIMIT);
     return risky ? REDACTED : value;
   }
+  if (typeof value === "bigint" || typeof value === "symbol" || typeof value === "function") {
+    return REDACTED;
+  }
   if (value === null || typeof value !== "object") return value;
   if (state.seen.has(value)) return CIRCULAR;
   state.seen.add(value);
@@ -54,7 +67,7 @@ function walk(value: unknown, depth: number, state: Walk): unknown {
   if (Array.isArray(value)) return value.map((item) => walk(item, depth + 1, state));
   const out: Record<string, unknown> = {};
   for (const [key, child] of Object.entries(value)) {
-    out[key] = SENSITIVE_KEY.test(key) ? REDACTED : walk(child, depth + 1, state);
+    out[key] = isSensitiveKey(key) ? REDACTED : walk(child, depth + 1, state);
   }
   return out;
 }

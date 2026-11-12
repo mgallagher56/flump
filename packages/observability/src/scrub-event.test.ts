@@ -24,7 +24,7 @@ function fixture() {
     extra: { anything: bodyText },
     user: { id: "u1", email, username: personName, ip_address: "1.2.3.4" },
     request: {
-      url: `https://app.example.com/callback?code=${oauthCode}&state=x#frag-sentinel`,
+      url: `https://usr:pw-sentinel@app.example.com/callback?code=${oauthCode}&state=x#frag-sentinel`,
       method: "POST",
       data: { body: bodyText },
       cookies: { "wos-session": sessionCookie },
@@ -38,8 +38,9 @@ function fixture() {
     contexts: {
       app: { refresh: workosRefresh, bank_token: bankToken, name: personName },
       trace: { note: `pat ${mcpPat} hash ${mcpPatHash} key ${encKey}` },
+      custom: { leak: email },
     },
-    tags: { sort_code: sortCode, detail: `acct ${accountNumber} ${sortCode}` },
+    tags: { sort_code: sortCode, detail: `acct ${accountNumber} ${sortCode}`, n: 5 },
     logentry: { message: `hit ${email}`, formatted: `hit ${money}`, params: [bodyText] },
     exception: {
       values: [
@@ -52,6 +53,7 @@ function fixture() {
                 filename: "dist/main.js",
                 lineno: 42,
                 function: "handler",
+                context_line: `const t = "${bankToken}"`,
                 vars: { token: bankToken },
               },
             ],
@@ -79,6 +81,7 @@ const SENTINELS = [
   bodyText,
   "host-sentinel",
   "frag-sentinel",
+  "pw-sentinel",
   "1.2.3.4",
 ];
 
@@ -92,43 +95,42 @@ describe("scrubEvent", () => {
     expect(out).not.toHaveProperty("user");
     expect(out).not.toHaveProperty("server_name");
     expect(out).not.toHaveProperty("extra");
-    expect(out.request).toEqual({
+    expect(out?.request).toEqual({
       url: "https://app.example.com/callback",
       method: "POST",
       headers: { "user-agent": "UA/1.0" },
     });
   });
 
-  it("keeps exception type and stack frames but drops frame vars", () => {
-    const out = scrubEvent(fixture());
-    const ex = out.exception?.values?.[0];
-    expect(ex?.type).toBe("TypeError");
-    expect(ex?.stacktrace?.frames?.[0]).toEqual({
+  it("keeps exception type and stack frames but drops source and vars", () => {
+    const frame = (
+      (scrubEvent(fixture())?.exception?.values ?? []) as {
+        type: string;
+        stacktrace: { frames: unknown[] };
+      }[]
+    )[0];
+    expect(frame?.type).toBe("TypeError");
+    expect(frame?.stacktrace.frames[0]).toEqual({
       filename: "dist/main.js",
       lineno: 42,
       function: "handler",
     });
   });
 
-  it("redacts contexts and tags by key and by pattern", () => {
-    const out = scrubEvent(fixture());
-    expect(out.contexts).toMatchObject({ app: { name: "[redacted]" } });
-    expect(out.tags).toMatchObject({ sort_code: "[redacted]" });
-  });
-
-  it("handles a bare event and capitalised user-agent", () => {
+  it("handles bare and partial events", () => {
     expect(scrubEvent({})).toEqual({});
-    const out = scrubEvent({ request: { headers: { "User-Agent": "UA/2" } } });
-    expect(out.request).toEqual({ headers: { "user-agent": "UA/2" } });
-    expect(scrubEvent({ request: {} }).request).toEqual({});
-    expect(scrubEvent({ logentry: {}, exception: { values: [{}] } })).toEqual({
-      logentry: {},
-      exception: { values: [{}] },
+    expect(scrubEvent({ request: {} })?.request).toEqual({});
+    expect(scrubEvent({ request: { headers: { "User-Agent": "UA/2" } } })?.request).toEqual({
+      headers: { "user-agent": "UA/2" },
     });
-  });
-
-  it("drops a non-string user-agent", () => {
-    expect(scrubEvent({ request: { headers: { "user-agent": 5 } } }).request).toEqual({});
+    expect(scrubEvent({ request: { headers: { "user-agent": 5 } } })?.request).toEqual({});
+    expect(scrubEvent({ request: { url: "/relative/12345678?x" } })?.request).toEqual({
+      url: "/relative/[redacted]",
+    });
+    expect(scrubEvent({ logentry: {} })?.logentry).toEqual({});
+    expect(scrubEvent({ timestamp: "2026-01-01T00:00:00Z" })?.timestamp).toBe(
+      "2026-01-01T00:00:00Z",
+    );
   });
 });
 
@@ -165,14 +167,12 @@ describe("scrubBreadcrumb", () => {
       timestamp: 1,
       data: { method: "GET", status_code: 200, url: "/v1/items" },
     });
-    expect(JSON.stringify(out)).not.toContain(oauthCode);
-    expect(JSON.stringify(out)).not.toContain(bodyText);
   });
 
   it("reduces navigation from/to to paths", () => {
     const out = scrubBreadcrumb({
       category: "navigation",
-      data: { from: "/a?x=1", to: "https://app.example.com/b#c" },
+      data: { from: "/a?x=1", to: "https://u:p@app.example.com/b#c" },
     });
     expect(out).toEqual({ category: "navigation", data: { from: "/a", to: "/b" } });
   });
