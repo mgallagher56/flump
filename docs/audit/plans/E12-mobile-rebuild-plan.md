@@ -721,7 +721,7 @@ Goal: the remaining web pages. The engine supports 2020/21 to 2026/27 and throws
 
 ### M9. Release
 
-- [ ] **T9.1 EAS profiles and environments (M) [P0].** `eas.json`, `app.config.ts` per environment, bundle id (D2), Face ID usage string, minimal Android permissions, `userInterfaceStyle: "automatic"`, icons for light and dark. Acceptance: `eas build --profile preview` installs on both platforms. Deps: D2, D3, D18.
+- [ ] **T9.1 EAS profiles and environments (M) [P0].** `eas.json`, `app.config.ts` per environment, bundle id and Android package `io.github.mgallagher56.flump` (D2), Face ID usage string, minimal Android permissions, `userInterfaceStyle: "automatic"`, icons for light and dark. Acceptance: `eas build --profile preview` installs on both platforms. Deps: D2, D3, D18.
 - [ ] **T9.2 release-please and versioning (S) [P0].** Add `apps/mobile` to config and manifest; `app.config.ts` reads the version; tag-triggered or manual build workflow. Deps: T9.1.
 - [ ] **T9.3 Store assets and metadata (M) [P0].** Screenshots taken from the reviewer test account's sample data (no real data), UK English descriptions, support and privacy URLs; **no mention of bank sync** while D19 is open. Deps: T9.6, owner text.
 - [ ] **T9.4 Privacy labels and Play Data safety (S) [P0].** Match the owner's D7 choice. Deps: T9.3.
@@ -793,9 +793,9 @@ Format follows `docs/audit/plans/E5-plan-draft.md`. Each lists options, a recomm
    - Blocks: T9.1, T9.7, T9.8
 
 2. **D2. Developer accounts and the app identifier.**
-   - A. Enrol in the Apple Developer Program (about $99 a year) and Google Play ($25 once) now, as decided in D18, and pick a reverse-DNS bundle id such as `uk.co.flump.app` (the old app used `com.flump.companion`).
+   - A. Enrol in the Apple Developer Program (about $99 a year) and Google Play ($25 once) now, as decided in D18, and use the bundle id and Android package `io.github.mgallagher56.flump` (reverse-DNS on the owner's GitHub handle, because the owner does not own a `flump` domain; the old app used `com.flump.companion`, which is not reused).
    - B. Enrol later and build simulator and emulator versions only until M8.
-   - Recommendation: A before M9. T0.2 and T0.3 do **not** need store accounts (the redirect scheme is independent of the bundle id); T9.1 does. The bundle id cannot change after a listing.
+   - Recommendation: A before M9. T0.2 and T0.3 do **not** need store accounts (the redirect scheme is independent of the bundle id); T9.1 does. The bundle id `io.github.mgallagher56.flump` cannot change after a listing, and it survives a later transfer to a company developer account.
    - Blocks: T9.1
 
 3. **D3. WorkOS native setup.**
