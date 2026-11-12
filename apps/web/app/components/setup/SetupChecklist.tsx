@@ -105,7 +105,7 @@ const STEP_DEFINITIONS = (props: SetupChecklistProps, navigate: ReturnType<typeo
     icon: <FaChartLine style={{ color: "#3b82f6" }} />,
     isComplete: props.hasRunForecast || props.completedSteps.includes("forecast"),
     actionLabel: "Model scenarios",
-    onAction: () => navigate("/app/forecast"),
+    onAction: () => navigate("/app/savings#forecast"),
   },
   {
     key: "tax",

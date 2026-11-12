@@ -5,7 +5,7 @@ const LEGACY_REDIRECTS: Record<string, string> = {
   accounts: "/app/accounts",
   budget: "/app/budget",
   debt: "/app/debt",
-  forecast: "/app/forecast",
+  forecast: "/app/savings#forecast",
   mortgage: "/app/mortgage",
   onboarding: "/app/onboarding",
   pension: "/app/pension",

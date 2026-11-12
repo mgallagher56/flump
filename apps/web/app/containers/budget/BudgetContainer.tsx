@@ -577,7 +577,7 @@ const BudgetContainer: FC = () => {
           entries={entries}
           savedSettings={runwaySettings}
           onSaveSettings={handleUpdateRunwaySettings}
-          onNavigateToForecast={() => navigate("/app/forecast")}
+          onNavigateToForecast={() => navigate("/app/savings#forecast")}
         />
       )}
 

@@ -7,7 +7,7 @@ describe("$feature._index redirect route", () => {
       { feature: "accounts", expected: "/app/accounts" },
       { feature: "budget", expected: "/app/budget" },
       { feature: "debt", expected: "/app/debt" },
-      { feature: "forecast", expected: "/app/forecast" },
+      { feature: "forecast", expected: "/app/savings#forecast" },
       { feature: "mortgage", expected: "/app/mortgage" },
       { feature: "onboarding", expected: "/app/onboarding" },
       { feature: "pension", expected: "/app/pension" },

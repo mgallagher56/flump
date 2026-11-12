@@ -91,7 +91,7 @@ export const APP_PAGES: Record<AppPageKey, AppPageConfig> = {
   forecast: {
     key: "forecast",
     label: "Wealth forecaster",
-    route: "/app/forecast",
+    route: "/app/savings#forecast",
     description: "Multi-year wealth projection and PAYE take-home estimation",
     category: "planning",
     badgeColor: "#6363f1",
