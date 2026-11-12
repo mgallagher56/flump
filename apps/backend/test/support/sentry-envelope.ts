@@ -5,6 +5,7 @@ import {
   Controller,
   type INestApplication,
   Logger,
+  type LoggerService,
   Post,
 } from "@nestjs/common";
 import { Test } from "@nestjs/testing";
@@ -78,7 +79,9 @@ export async function runEnvelopeScenario(
   // the whole process. Under `bun test ./scripts` every test file shares one process, so keep the
   // current instance and restore it, or later tests that read Nest's stdout (seed-cleanup-preview)
   // see nothing.
-  const previousLogger = Logger.staticInstanceRef;
+  // staticInstanceRef is protected in Nest's typings; read it through a cast.
+  const previousLogger = (Logger as unknown as { staticInstanceRef?: LoggerService })
+    .staticInstanceRef;
   let app: INestApplication | undefined;
   try {
     initSentry({ SENTRY_DSN: `http://public@127.0.0.1:${port}/1`, ...extraEnv });
