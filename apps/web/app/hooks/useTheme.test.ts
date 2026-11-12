@@ -114,4 +114,39 @@ describe("useTheme", () => {
     expect(document.documentElement.classList.contains("dark")).toBe(false);
     expect(localStorage.getItem("flump-theme")).toBe("light");
   });
+  test("setPreference('system') clears the override and follows the system theme", () => {
+    localStorage.setItem("flump-theme", "dark");
+    const { result } = renderHook(() => useTheme());
+    expect(result.current.preference).toBe("dark");
+
+    act(() => {
+      result.current.setPreference("system");
+    });
+
+    expect(result.current.preference).toBe("system");
+    expect(result.current.theme).toBe("light");
+    expect(localStorage.getItem("flump-theme")).toBeNull();
+  });
+
+  test("follows live system changes only while the preference is system", () => {
+    let listener: ((event: { matches: boolean }) => void) | undefined;
+    vi.stubGlobal(
+      "matchMedia",
+      vi.fn().mockImplementation((query) => ({
+        matches: false,
+        media: query,
+        addEventListener: (_: string, fn: (event: { matches: boolean }) => void) => {
+          listener = fn;
+        },
+        removeEventListener: vi.fn(),
+      })),
+    );
+    const { result } = renderHook(() => useTheme());
+    act(() => listener?.({ matches: true }));
+    expect(result.current.theme).toBe("dark");
+
+    act(() => result.current.setPreference("light"));
+    act(() => listener?.({ matches: true }));
+    expect(result.current.theme).toBe("light");
+  });
 });
