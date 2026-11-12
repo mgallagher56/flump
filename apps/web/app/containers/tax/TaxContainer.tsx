@@ -5,6 +5,7 @@ import {
   getPreviousTaxYear,
   getTaxYearForRecordDate,
   isRecordActiveInTaxYear,
+  isSupportedUkTaxYear,
   type TaxCalculationResult,
   type TaxRecord,
   type TaxSource,
@@ -263,6 +264,9 @@ const TaxContainer: FC = () => {
   const calculatedTaxYearsData = useMemo(() => {
     const results: Record<string, TaxCalculationResult> = {};
     for (const year of availableYears) {
+      // Unsupported years (before 2020/21 or beyond the latest supported year) are not
+      // computed: calculateUKTax is strict and would throw (E22).
+      if (!isSupportedUkTaxYear(year)) continue;
       results[year] = calculateUKTax(year, initialRecords, payeSalary, propertyOwnershipShare);
     }
     return results;

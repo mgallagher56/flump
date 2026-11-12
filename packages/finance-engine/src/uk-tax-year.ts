@@ -128,9 +128,92 @@ export function getCurrentUkTaxYear(now: Date = new Date()): UkTaxYear {
   return year;
 }
 
-/** undefined means the current year; any year the engine does not support throws. */
+/** Latest tax year the engine has rates for. */
+export function getLatestSupportedUkTaxYear(): UkTaxYear {
+  return SUPPORTED_UK_TAX_YEARS[SUPPORTED_UK_TAX_YEARS.length - 1] as UkTaxYear;
+}
+
+/** The tax year straight after the latest supported one (the first year the engine lacks). */
+export function getFirstUnsupportedUkTaxYear(): string {
+  const latest = getLatestSupportedUkTaxYear();
+  return yearLabel(Number.parseInt(latest.slice(0, 4), 10) + 1);
+}
+
+/**
+ * The ONE place that decides which rates "today" uses.
+ *
+ * `calendarYear` is the tax year the clock is in (may be unsupported). `ratesYear` is the
+ * supported year whose rates are used. When the clock is past the latest supported year
+ * `isFallback` is true and the UI must say so (TaxRatesStatusBanner). Before the earliest
+ * supported year there is nothing sensible to fall back to, so it throws.
+ */
+export interface UkTaxYearContext {
+  calendarYear: string;
+  ratesYear: UkTaxYear;
+  isFallback: boolean;
+  reason?: "after-latest-supported";
+}
+
+export function getUkTaxYearContext(now: Date = new Date()): UkTaxYearContext {
+  const calendarYear = getUkTaxYearForDate(getUkCalendarDate(now));
+  if (isSupportedUkTaxYear(calendarYear)) {
+    return { calendarYear, ratesYear: calendarYear, isFallback: false };
+  }
+  if (compareTaxYearLabels(calendarYear, getLatestSupportedUkTaxYear()) > 0) {
+    return {
+      calendarYear,
+      ratesYear: getLatestSupportedUkTaxYear(),
+      isFallback: true,
+      reason: "after-latest-supported",
+    };
+  }
+  throw new UnsupportedUkTaxYearError(calendarYear);
+}
+
+function compareTaxYearLabels(a: string, b: string): number {
+  return Number.parseInt(a.slice(0, 4), 10) - Number.parseInt(b.slice(0, 4), 10);
+}
+
+export type UkTaxYearClassification =
+  | { kind: "supported" }
+  | { kind: "fallback"; ratesYear: UkTaxYear }
+  | { kind: "unsupported"; reason: "before-earliest" | "too-far-ahead" | "malformed" };
+
+/**
+ * How an explicit year (a record, a selector, an MCP argument) will be treated.
+ * Only the year straight after the latest supported one may use the latest rates (with a
+ * visible banner); everything else unsupported must be rejected, never substituted.
+ */
+export function classifyUkTaxYear(year: string): UkTaxYearClassification {
+  if (isSupportedUkTaxYear(year)) return { kind: "supported" };
+  const m = /^(\d{4})\/(\d{2})$/.exec(year);
+  if (!m || (Number(m[1]) + 1) % 100 !== Number(m[2])) {
+    return { kind: "unsupported", reason: "malformed" };
+  }
+  if (year === getFirstUnsupportedUkTaxYear()) {
+    return { kind: "fallback", ratesYear: getLatestSupportedUkTaxYear() };
+  }
+  return compareTaxYearLabels(year, getLatestSupportedUkTaxYear()) > 0
+    ? { kind: "unsupported", reason: "too-far-ahead" }
+    : { kind: "unsupported", reason: "before-earliest" };
+}
+
+/** Human label, e.g. "2026/27" -> "6 April 2026 to 5 April 2027". */
+export function formatTaxYearLabel(year: string, long = false): string {
+  if (!long) return year;
+  const start = Number.parseInt(year.slice(0, 4), 10);
+  return `6 April ${start} to 5 April ${start + 1}`;
+}
+
+/**
+ * Strict resolver used by every calculator.
+ * - undefined: the current year per getUkTaxYearContext (falls back to the latest supported
+ *   year after it, never throws once past the last year).
+ * - a supported year: itself.
+ * - anything else: throws UnsupportedUkTaxYearError. No calculator substitutes a year on its own.
+ */
 export function resolveUkTaxYear(year?: string, now?: Date): UkTaxYear {
-  if (year === undefined) return getCurrentUkTaxYear(now);
+  if (year === undefined) return getUkTaxYearContext(now).ratesYear;
   if (!isSupportedUkTaxYear(year)) throw new UnsupportedUkTaxYearError(year);
   return year;
 }
