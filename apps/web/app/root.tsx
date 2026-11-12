@@ -18,6 +18,7 @@ import { BackendError } from "./services/backend-error";
 import { ThemeContext } from "./ThemeContext";
 import { THEME_INIT_SCRIPT } from "./theme-init-script";
 import { getAuthSession } from "./utils/auth.server";
+import { watchLogoutForms } from "./utils/userStorage";
 
 export const links = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -68,6 +69,9 @@ export default function App() {
   const { locale, user, userProfile, ENV } = useLoaderData<typeof loader>();
   const { theme, toggleTheme } = useTheme();
   const { setProfile } = useUserProfile();
+
+  // Sign-out wipes this browser's per-user storage (E19 A6); covers every form posting to /logout.
+  useEffect(() => watchLogoutForms(), []);
 
   useEffect(() => {
     if (userProfile) {

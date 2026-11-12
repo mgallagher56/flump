@@ -1,6 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { WorkOS } from "@workos-inc/node";
+import { safeErrorSummary } from "../log-safe";
 
 /**
  * Port decoupling user identity operations from third-party auth SDKs.
@@ -37,7 +38,7 @@ export class WorkOSIdentityAdapter implements UserIdentityAdapter {
         lastName: lastName || undefined,
       });
     } catch (err: any) {
-      console.warn("WorkOS name sync warning:", err?.message || err);
+      console.warn("WorkOS name sync warning:", safeErrorSummary(err));
     }
   }
 

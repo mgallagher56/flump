@@ -199,6 +199,25 @@ describe("FinanceController & FinanceService", () => {
     ).rejects.toThrow(/^Token sync verification failed\. Check the token/);
   });
 
+  it("logs a failed token sync without the token or the provider response body (E19 A5)", async () => {
+    const { controller, mockProvider } = createMocks();
+    const logged = vi.spyOn(console, "error").mockImplementation(() => {});
+    mockProvider.fetchAccounts.mockRejectedValueOnce(
+      new Error('Failed to fetch Starling accounts: {"balance":987654,"token":"tok-secret-xyz"}'),
+    );
+    await expect(
+      controller.connectBank(
+        { user: { id: "user-123" } },
+        { institutionId: "starling", token: "tok-secret-xyz" },
+      ),
+    ).rejects.toThrow();
+    const output = JSON.stringify(logged.mock.calls);
+    expect(output).toContain("Failed to fetch Starling accounts");
+    expect(output).not.toContain("tok-secret-xyz");
+    expect(output).not.toContain("987654");
+    logged.mockRestore();
+  });
+
   it("should reject bank connection without token or OAuth credentials rather than seeding dummy data", async () => {
     const { controller, mockAccountRepo, mockRegistry } = createMocks();
     mockRegistry.getProvider.mockReturnValue(null);

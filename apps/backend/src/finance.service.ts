@@ -15,6 +15,7 @@ import { BankConnection } from "./entities/bank-connection.entity";
 import { Transaction } from "./entities/transaction.entity";
 import { UserProfile } from "./entities/user-profile.entity";
 import type { CreateTransactionDto } from "./finance.controller";
+import { safeErrorSummary } from "./log-safe";
 import { BankProviderRegistry } from "./providers/provider.registry";
 
 @Injectable()
@@ -188,7 +189,7 @@ export class FinanceService {
       } catch (err) {
         savedConn.status = "error";
         await this.bankConnectionRepository.save(savedConn);
-        console.error("Token sync verification failed:", (err as Error).message);
+        console.error("Token sync verification failed:", safeErrorSummary(err));
         throw new BadRequestException(
           "Token sync verification failed. Check the token and try again.",
         );
@@ -266,7 +267,10 @@ export class FinanceService {
         BankSyncOrchestrator.decryptToken(connection.accessToken as string);
         if (connection.refreshToken) BankSyncOrchestrator.decryptToken(connection.refreshToken);
       } catch (err) {
-        console.error(`Stored tokens unusable for ${connection.institutionName}:`, err);
+        console.error(
+          `Stored tokens unusable for ${connection.institutionName}:`,
+          safeErrorSummary(err),
+        );
         await this.failNeedingReconnect(connection);
       }
 
@@ -321,7 +325,7 @@ export class FinanceService {
           message: `Sync'd ${accountsCount} accounts.`,
         };
       } catch (err) {
-        console.error(`API Sync failed for ${connection.institutionName}:`, err);
+        console.error(`API Sync failed for ${connection.institutionName}:`, safeErrorSummary(err));
         connection.status = "error";
         await this.bankConnectionRepository.save(connection);
         // Provider error text is logged, not returned: it can echo credentials or internals.

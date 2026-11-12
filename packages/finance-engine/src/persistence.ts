@@ -5,6 +5,22 @@ export { InMemoryProfileAdapter, type ProfilePersistenceAdapter } from "./profil
 
 export const ONBOARDING_SEED_STORAGE_KEY = "flump_onboarding_seed";
 export const SESSION_PRESENCE_COOKIE = "flump_has_session";
+/**
+ * The seed carries salary, debts and savings, and the cookie is readable by script and sent with
+ * every request on .flump.co.uk, so it lives for one hour (long enough to finish sign-up).
+ */
+export const ONBOARDING_SEED_MAX_AGE_SECONDS = 3600;
+
+/** Cookies are Secure on https pages, so the seed never travels over plain http. */
+function secureAttr(): string {
+  try {
+    return typeof window !== "undefined" && window.location?.protocol === "https:"
+      ? "; Secure"
+      : "";
+  } catch {
+    return "";
+  }
+}
 
 /**
  * Storage driver interface decoupling persistence mechanics from browser globals.
@@ -118,7 +134,7 @@ export class BrowserStorageDriver implements SeedStorageDriver {
     if (typeof document === "undefined") return;
     try {
       const domainAttr = domain ? `; domain=${domain}` : getCookieDomainAttr();
-      document.cookie = `${name}=${encodeURIComponent(value)}; path=/; max-age=${maxAgeSeconds}; SameSite=Lax${domainAttr}`;
+      document.cookie = `${name}=${encodeURIComponent(value)}; path=/; max-age=${maxAgeSeconds}; SameSite=Lax${domainAttr}${secureAttr()}`;
     } catch {
       // Ignore
     }
@@ -128,7 +144,7 @@ export class BrowserStorageDriver implements SeedStorageDriver {
     if (typeof document === "undefined") return;
     try {
       const domainAttr = domain ? `; domain=${domain}` : getCookieDomainAttr();
-      document.cookie = `${name}=; path=/; max-age=0; SameSite=Lax${domainAttr}`;
+      document.cookie = `${name}=; path=/; max-age=0; SameSite=Lax${domainAttr}${secureAttr()}`;
     } catch {
       // Ignore
     }
@@ -177,7 +193,7 @@ export function persistOnboardingSeed(payload: any): void {
   const driver = getStorageDriver();
   const encoded = encodeSeedPayload(payload);
   driver.setItem(ONBOARDING_SEED_STORAGE_KEY, encoded);
-  driver.setCookie(ONBOARDING_SEED_STORAGE_KEY, encoded, 86400);
+  driver.setCookie(ONBOARDING_SEED_STORAGE_KEY, encoded, ONBOARDING_SEED_MAX_AGE_SECONDS);
 }
 
 /**

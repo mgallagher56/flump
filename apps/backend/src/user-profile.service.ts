@@ -15,6 +15,7 @@ import { TaxRecord } from "./entities/tax-record.entity";
 import { Transaction } from "./entities/transaction.entity";
 import { UserProfile } from "./entities/user-profile.entity";
 import { USER_IDENTITY_ADAPTER, type UserIdentityAdapter } from "./identity/identity.adapter";
+import { safeErrorSummary } from "./log-safe";
 
 const PG_UNIQUE_VIOLATION = "23505";
 
@@ -328,7 +329,7 @@ export class UserProfileService implements ProfileLifecycle {
           body.lastName !== undefined ? body.lastName : profile.lastName || undefined,
         );
       } catch (err: any) {
-        console.warn("Identity name sync warning:", err?.message || err);
+        console.warn("Identity name sync warning:", safeErrorSummary(err));
       }
     }
 
