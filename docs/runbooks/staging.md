@@ -106,24 +106,27 @@ Rows come from the code (`process.env.X`, `env.X` and `configService.get("X")` i
 
 ### 4.2 Web
 
-| Name                                  | Production                      | Staging                      | Source         | Secret? |
-| ------------------------------------- | ------------------------------- | ---------------------------- | -------------- | ------- |
-| `NODE_ENV`                            | `production`                    | `production`                 | copy           | no      |
-| `VITE_API_URL`                        | production backend URL          | staging backend URL          | generate fresh | no      |
-| `VITE_MARKETING_URL`                  | production marketing URL        | staging marketing URL        | generate fresh | no      |
-| `WORKOS_API_KEY`                      | production key                  | same as production           | copy           | yes     |
-| `WORKOS_CLIENT_ID`                    | client id                       | same as production           | copy           | no      |
-| `WORKOS_COOKIE_PASSWORD`              | 32+ character secret            | new secret                   | generate fresh | yes     |
-| `WORKOS_COOKIE_MAX_AGE`               | unset (14 days)                 | unset (14 days)              | unset          | no      |
-| `WORKOS_COOKIE_NAME`                  | unset (`__Host-wos-session`)    | unset (`__Host-wos-session`) | unset          | no      |
-| `WORKOS_REDIRECT_URI`                 | `<production web>/callback`     | `<staging web>/callback`     | generate fresh | no      |
-| `VITE_WORKOS_REDIRECT_URI`            | `<production web>/callback`     | `<staging web>/callback`     | generate fresh | no      |
-| `AUTH_DEV_BYPASS`                     | unset                           | unset                        | unset          | no      |
-| `VITE_SB_THEME`                       | Storybook only, unset           | unset                        | unset          | no      |
-| `ALLOW_INDEXING`                      | `true` only at public launch    | unset                        | unset          | no      |
-| `SENTRY_DSN`                          | production DSN (after N2/N3/N4) | staging DSN (after N2/N3/N4) | generate fresh | yes     |
-| `SENTRY_ENVIRONMENT`                  | `production` (after N2/N3/N4)   | `staging` (after N2/N3/N4)   | generate fresh | no      |
-| `RAILWAY_DEPLOYMENT_DRAINING_SECONDS` | `15`                            | `15`                         | copy           | no      |
+| Name                                  | Production                                                               | Staging                      | Source           | Secret? |
+| ------------------------------------- | ------------------------------------------------------------------------ | ---------------------------- | ---------------- | ------- |
+| `NODE_ENV`                            | `production`                                                             | `production`                 | copy             | no      |
+| `VITE_API_URL`                        | production backend URL                                                   | staging backend URL          | generate fresh   | no      |
+| `VITE_MARKETING_URL`                  | production marketing URL                                                 | staging marketing URL        | generate fresh   | no      |
+| `WORKOS_API_KEY`                      | production key                                                           | same as production           | copy             | yes     |
+| `WORKOS_CLIENT_ID`                    | client id                                                                | same as production           | copy             | no      |
+| `WORKOS_COOKIE_PASSWORD`              | 32+ character secret                                                     | new secret                   | generate fresh   | yes     |
+| `WORKOS_COOKIE_MAX_AGE`               | unset (14 days)                                                          | unset (14 days)              | unset            | no      |
+| `WORKOS_COOKIE_NAME`                  | unset (`__Host-wos-session`)                                             | unset (`__Host-wos-session`) | unset            | no      |
+| `WORKOS_REDIRECT_URI`                 | `<production web>/callback`                                              | `<staging web>/callback`     | generate fresh   | no      |
+| `VITE_WORKOS_REDIRECT_URI`            | `<production web>/callback`                                              | `<staging web>/callback`     | generate fresh   | no      |
+| `AUTH_DEV_BYPASS`                     | unset                                                                    | unset                        | unset            | no      |
+| `VITE_SB_THEME`                       | Storybook only, unset                                                    | unset                        | unset            | no      |
+| `ALLOW_INDEXING`                      | `true` only at public launch                                             | unset                        | unset            | no      |
+| `SENTRY_DSN`                          | production DSN (after N2/N3/N4)                                          | staging DSN (after N2/N3/N4) | generate fresh   | yes     |
+| `SENTRY_ENVIRONMENT`                  | `production` (after N2/N3/N4)                                            | `staging` (after N2/N3/N4)   | generate fresh   | no      |
+| `SENTRY_RELEASE`                      | optional, defaults to the first 7 characters of `RAILWAY_GIT_COMMIT_SHA` | same                         | unset            | no      |
+| `RAILWAY_ENVIRONMENT_NAME`            | set by Railway (`production`); `SENTRY_ENVIRONMENT` fallback             | set by Railway               | unset (platform) | no      |
+| `RAILWAY_GIT_COMMIT_SHA`              | set by Railway; Sentry release fallback                                  | set by Railway               | unset (platform) | no      |
+| `RAILWAY_DEPLOYMENT_DRAINING_SECONDS` | `15`                                                                     | `15`                         | copy             | no      |
 
 ### 4.3 Marketing
 

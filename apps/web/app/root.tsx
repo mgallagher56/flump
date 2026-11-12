@@ -14,6 +14,7 @@ import { useUserProfile } from "./hooks/useUserProfile";
 import i18next from "./i18n.server";
 import "@repo/ui/fonts.css";
 import styles from "./index.css?url";
+import { sentryPublicEnv } from "./observability/env";
 import { securityMiddleware } from "./security/middleware.server";
 import { backendFetch } from "./services/backend-client.server";
 import { BackendError } from "./services/backend-error";
@@ -65,6 +66,7 @@ export const loader = async (args: LoaderFunctionArgs) => {
     accessToken,
     ENV: {
       VITE_API_URL: apiConfig.apiBaseUrl,
+      ...sentryPublicEnv(process.env),
     },
   };
 };
