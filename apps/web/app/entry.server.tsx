@@ -1,7 +1,5 @@
 import { resolve } from "node:path";
 import { PassThrough } from "node:stream";
-import { CacheProvider as EmotionCacheProvider } from "@emotion/react";
-import createEmotionServer from "@emotion/server/create-instance";
 import { createReadableStreamFromReadable } from "@react-router/node";
 import { createInstance } from "i18next";
 import Backend from "i18next-fs-backend";
@@ -11,10 +9,10 @@ import { I18nextProvider, initReactI18next } from "react-i18next";
 import type { EntryContext } from "react-router";
 import { ServerRouter } from "react-router";
 
-import createEmotionCache from "./createEmotionCache";
 import i18n from "./i18n";
 import i18next from "./i18n.server";
 import { applyRobotsHeader } from "./utils/indexing.server";
+import { safeErrorSummary } from "./utils/safeErrorSummary";
 
 // Reject/cancel all pending promises after 5 seconds
 export const streamTimeout = 5000;
@@ -43,21 +41,14 @@ export default async function handleRequest(
 
   return new Promise((resolve, reject) => {
     let didError = false;
-    const emotionCache = createEmotionCache();
 
     const { pipe, abort } = renderToPipeableStream(
       <I18nextProvider i18n={instance}>
-        <EmotionCacheProvider value={emotionCache}>
-          <ServerRouter context={reactRouterContext} url={request.url} />
-        </EmotionCacheProvider>
+        <ServerRouter context={reactRouterContext} url={request.url} />
       </I18nextProvider>,
       {
         [callbackName]: () => {
           const reactBody = new PassThrough();
-          const emotionServer = createEmotionServer(emotionCache);
-
-          const bodyWithStyles = emotionServer.renderStylesToNodeStream() as PassThrough;
-          reactBody.pipe(bodyWithStyles);
 
           responseHeaders.set("Content-Type", "text/html");
           // Covers every HTML document response (including error boundaries). Data
@@ -67,7 +58,7 @@ export default async function handleRequest(
           applyRobotsHeader(responseHeaders);
 
           resolve(
-            new Response(createReadableStreamFromReadable(bodyWithStyles), {
+            new Response(createReadableStreamFromReadable(reactBody), {
               headers: responseHeaders,
               status: didError ? 500 : responseStatusCode,
             }),
@@ -81,7 +72,8 @@ export default async function handleRequest(
         onError: (error: unknown) => {
           didError = true;
 
-          console.error(error);
+          // Never log the raw error: it can carry request data (E20-N3).
+          console.error(safeErrorSummary(error));
         },
       },
     );
