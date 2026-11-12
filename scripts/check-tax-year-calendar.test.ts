@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+import { getUkCalendarDate, getUkTaxYearForDate } from "../packages/finance-engine/src/uk-tax-year";
 import {
   evaluateTaxYearCalendar,
   exitCodeFor,
@@ -67,8 +68,13 @@ describe("check-tax-year-calendar CLI", () => {
     expect(run("2026-12-02T12:00:00Z")).toBe(3);
     expect(run("2027-03-01T12:00:00Z")).toBe(1);
   });
-  test("uses the Europe/London date: 5 April 23:30Z is already 6 April in BST (new tax year, 2027/28 missing)", () => {
-    expect(run("2027-04-05T23:30:00Z")).toBe(1);
+  test("uses the Europe/London date, not UTC", () => {
+    // 22:30Z on 5 April is 23:30 BST on 5 April (still 2026/27); 23:30Z is 00:30 BST on 6 April (2027/28).
+    const yearAt = (iso: string) => getUkTaxYearForDate(getUkCalendarDate(new Date(iso)));
+    expect(yearAt("2027-04-05T22:30:00Z")).toBe("2026/27");
+    expect(yearAt("2027-04-05T23:30:00Z")).toBe("2027/28");
+    // Either way 2027/28 is missing in this repo state, so the CLI fails in both.
     expect(run("2027-04-05T22:30:00Z")).toBe(1);
+    expect(run("2027-04-05T23:30:00Z")).toBe(1);
   });
 });
