@@ -16,7 +16,7 @@ type Story = StoryObj<typeof MobileBottomBar>;
 export const SignedIn: Story = {
   play: async ({ canvasElement, args }) => {
     const canvas = within(canvasElement);
-    await expect(canvas.getByText(/^debt$/i)).toBeInTheDocument();
+    await expect(canvas.getByRole("link", { name: /home/i })).toBeInTheDocument();
     await userEvent.click(canvas.getByTestId("mobile-bottom-bar-more"));
     await expect(args.onMoreClick).toHaveBeenCalled();
   },
