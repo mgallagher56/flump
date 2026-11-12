@@ -2,8 +2,9 @@ name: 🔐 Security Scan
 
 # Advisory scanners, one job per tool so more can be appended (E20-N27: ZAP,
 # Semgrep). None of these are required checks; a red run is a prompt to triage.
-# Scheduled runs are skipped here: gitleaks scans a commit range, and the
-# full-history scan is a manual local command (docs/runbooks/secret-scan.md).
+# There is no schedule trigger today; the if-guard on each job is kept for
+# appended jobs. gitleaks scans a commit range, and the full-history scan is a
+# manual local command (docs/runbooks/secret-scan.md).
 
 on:
   push:

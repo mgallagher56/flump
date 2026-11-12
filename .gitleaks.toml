@@ -12,13 +12,19 @@ paths = [
 ]
 
 # Dummy MCP personal-access-token fixtures (sequential or hand-typed values, not
-# real tokens). Scoped to the generic rule and to these test/story files so a
-# real token anywhere else, or any other rule, still fails the scan.
+# real tokens). Allowed only when ALL hold: generic rule, one of these test/story
+# files, and the line contains flump_pat_. A real token anywhere else, or any
+# other rule, still fails the scan.
 [[allowlists]]
 description = "Fake flump_pat_ fixtures in tests and stories"
+condition = "AND"
 targetRules = ["generic-api-key"]
 paths = [
-  '''apps/backend/src/mcp\.controller\.spec\.ts$''',
-  '''apps/web/app/features/ai-connections/components/McpConnectionCard/McpConnectionCard\.(stories|test)\.tsx$''',
-  '''packages/mcp/src/mcp\.test\.ts$''',
+  '''^apps/backend/src/mcp\.controller\.spec\.ts$''',
+  '''^apps/web/app/features/ai-connections/components/McpConnectionCard/McpConnectionCard\.(stories|test)\.tsx$''',
+  '''^packages/mcp/src/mcp\.test\.ts$''',
+]
+regexTarget = "line"
+regexes = [
+  '''flump_pat_''',
 ]
