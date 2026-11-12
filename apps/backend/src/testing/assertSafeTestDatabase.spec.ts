@@ -14,6 +14,22 @@ describe("assertSafeTestDatabase", () => {
     ).not.toThrow();
   });
 
+  it("accepts 'test' only as a whole word delimited by _ or -", () => {
+    for (const name of ["flump_ci_test", "test", "flump-test", "test_db", "flump_e23_test"]) {
+      expect(() =>
+        assertSafeTestDatabase(`postgres://postgres:s3cret@localhost:55432/${name}`, {}),
+      ).not.toThrow();
+    }
+  });
+
+  it("rejects names that merely contain the letters 'test' (latest, contest)", () => {
+    for (const name of ["latest", "contest", "flump_latest", "attestation"]) {
+      expect(() =>
+        assertSafeTestDatabase(`postgres://postgres:s3cret@localhost:55432/${name}`, {}),
+      ).toThrow(/ALLOW_DESTRUCTIVE_DB_TESTS/);
+    }
+  });
+
   it("rejects a local host with a non-test database name", () => {
     expect(() =>
       assertSafeTestDatabase("postgres://postgres:s3cret@localhost:55432/postgres", {}),
