@@ -5,6 +5,8 @@ import type { Response } from "express";
 import { DataSource } from "typeorm";
 
 const READINESS_TIMEOUT_MS = 2000;
+// TypeORM's default migrations table (typeorm.options.ts sets no migrationsTableName).
+const MIGRATIONS_COUNT_SQL = "SELECT count(*)::int AS n FROM migrations";
 
 // Read via fs (not a JSON import) because tsconfig rootDir is ./src. The relative path
 // resolves to apps/backend/package.json from both src/health and dist/health.
@@ -42,7 +44,18 @@ export class HealthController {
       const timeout = new Promise<never>((_, reject) => {
         timer = setTimeout(() => reject(new Error("timeout")), READINESS_TIMEOUT_MS);
       });
-      await Promise.race([this.dataSource.query("SELECT 1"), timeout]);
+      const [, rows] = await Promise.race([
+        Promise.all([
+          this.dataSource.query("SELECT 1"),
+          this.dataSource.query(MIGRATIONS_COUNT_SQL),
+        ]),
+        timeout,
+      ]);
+      // Fewer executed than loaded means a migration is pending: not ready.
+      if (Number(rows?.[0]?.n) < this.dataSource.migrations.length) {
+        res.status(HttpStatus.SERVICE_UNAVAILABLE);
+        return { status: "unavailable" };
+      }
       return { status: "ok", version: VERSION, commit: readCommit() };
     } catch {
       res.status(HttpStatus.SERVICE_UNAVAILABLE);
