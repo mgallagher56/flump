@@ -66,6 +66,16 @@ describe("coverage configuration", () => {
   });
 });
 
+describe("launch-readiness checklist (E24-T10)", () => {
+  test("CI runs the advisory report and the root script exists", () => {
+    const { scripts } = readJson("package.json");
+    expect(scripts["check:launch"]).toBe("bun scripts/check-launch-readiness.ts");
+    const ci = readFileSync(resolve(repoRoot, ".github/workflows/ci-pipeline.yml"), "utf8");
+    expect(ci).toContain("bun run check:launch");
+    expect(ci).toContain("--markdown");
+  });
+});
+
 describe("tax-year calendar guard (E22)", () => {
   test("CI runs the guard and the root script exists", () => {
     const { scripts } = readJson("package.json");
