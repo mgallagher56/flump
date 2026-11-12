@@ -1,5 +1,7 @@
+import { isFlumpHost } from "@flump/finance-engine";
 import { signOut } from "@workos-inc/authkit-react-router";
-import type { LoaderFunctionArgs } from "react-router";
+import type { ActionFunctionArgs } from "react-router";
+import { redirect } from "react-router";
 
 const handleSignOut = async (request: Request) => {
   const url = new URL(request.url);
@@ -10,8 +12,10 @@ const handleSignOut = async (request: Request) => {
       : "https://flump.co.uk");
 
   const response = await signOut(request, { returnTo: marketingUrl });
-  const cookieDomain = url.hostname.endsWith("flump.co.uk") ? "; Domain=.flump.co.uk" : "";
-  const clearPresenceCookie = `flump_has_session=; Path=/; SameSite=Lax; Max-Age=0${cookieDomain}`;
+  const onFlumpHost = isFlumpHost(url.hostname);
+  const cookieDomain = onFlumpHost ? "; Domain=.flump.co.uk" : "";
+  const secure = onFlumpHost || url.protocol === "https:" ? "; Secure" : "";
+  const clearPresenceCookie = `flump_has_session=; Path=/; SameSite=Lax; Max-Age=0${cookieDomain}${secure}`;
 
   if (response instanceof Response) {
     const headers = new Headers(response.headers);
@@ -26,11 +30,10 @@ const handleSignOut = async (request: Request) => {
   return response;
 };
 
-export const loader = async ({ request }: LoaderFunctionArgs) => {
-  return handleSignOut(request);
-};
+// GET must never sign out or set cookies (logout CSRF); sign-out is POST-only.
+export const loader = async () => redirect("/");
 
-export const action = async ({ request }: LoaderFunctionArgs) => {
+export const action = async ({ request }: ActionFunctionArgs) => {
   return handleSignOut(request);
 };
 

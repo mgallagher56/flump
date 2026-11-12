@@ -49,10 +49,15 @@ export class InMemoryStorageDriver implements SeedStorageDriver {
   }
 }
 
+/** True for `flump.co.uk` and its subdomains only (never lookalikes such as `evilflump.co.uk`). */
+export function isFlumpHost(hostname: string): boolean {
+  return hostname === "flump.co.uk" || hostname.endsWith(".flump.co.uk");
+}
+
 function getCookieDomainAttr(): string {
   if (typeof window === "undefined" || !window.location) return "";
   const host = window.location.hostname;
-  if (host === "flump.co.uk" || host.endsWith(".flump.co.uk")) {
+  if (isFlumpHost(host)) {
     return "; domain=.flump.co.uk";
   }
   return "";

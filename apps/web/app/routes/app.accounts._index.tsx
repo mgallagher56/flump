@@ -1,4 +1,3 @@
-import { BankSyncOrchestrator } from "@flump/banking/server";
 import type { ReactElement } from "react";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 import { data } from "react-router";
@@ -11,10 +10,6 @@ import {
 import { BackendError } from "~/services/backend-error";
 import { actionErrorResponse } from "~/services/route-error.server";
 import { getAuthSession, requireAccessToken } from "~/utils/auth.server";
-
-export function getBankOAuthUrl(institutionId: string, callbackUrl: string): string | null {
-  return BankSyncOrchestrator.getOAuthUrl(institutionId, callbackUrl);
-}
 
 export const action = async (args: ActionFunctionArgs) => {
   const { accessToken } = await getAuthSession(args, { ensureSignedIn: true });
@@ -78,19 +73,12 @@ export const action = async (args: ActionFunctionArgs) => {
           return data({ success: true, oauth: true, redirectUrl: backendData.redirectUrl });
         }
 
-        const origin = new URL(args.request.url).origin;
-        const callbackUrl = `${origin}/auth/callback`;
-        const oauthUrl = getBankOAuthUrl(institutionId, callbackUrl);
-
-        if (oauthUrl) {
-          return data({
-            success: true,
-            oauth: true,
-            redirectUrl: oauthUrl,
-          });
-        }
+        // Bank OAuth is cut (E16): the /auth/callback route no longer exists.
+        return data(
+          { success: false, error: "Bank connections via OAuth are not available." },
+          { status: 501 },
+        );
       }
-
       return data(backendData || { success: true });
     }
     return data({ success: true });

@@ -4,7 +4,6 @@ import {
   getCurrentIrishTaxYear,
   getCurrentUKTaxYear,
 } from "@flump/finance-engine";
-import * as Dialog from "@radix-ui/react-dialog";
 import { SegmentedTabs } from "@repo/ui";
 import { css } from "@repo/ui/styled-system/css";
 import { type FC, useRef, useState } from "react";
@@ -16,8 +15,6 @@ import {
   FaExclamationTriangle,
   FaHome,
   FaKey,
-  FaLock,
-  FaTimes,
   FaTrash,
   FaUser,
 } from "react-icons/fa";
@@ -244,14 +241,8 @@ export function calculateNetTakeHome(
 }
 
 const UserProfilePanel: FC<UserProfilePanelProps> = ({ initialProfile, user }) => {
-  const {
-    profile,
-    setProfile,
-    updateProfile,
-    changePassword,
-    sendPasswordResetEmail,
-    resetFinancialData,
-  } = useUserProfile();
+  const { profile, setProfile, updateProfile, sendPasswordResetEmail, resetFinancialData } =
+    useUserProfile();
   const { updateBaseline } = useFinancialBaseline();
 
   let navigate: (to: string) => void;
@@ -297,13 +288,9 @@ const UserProfilePanel: FC<UserProfilePanelProps> = ({ initialProfile, user }) =
     isSalarySacrificeEmployerNi: effectiveProfile.isSalarySacrificeEmployerNi ?? false,
   });
 
-  // Change Password state
-  const [passwordModalOpen, setPasswordModalOpen] = useState(false);
-  const [newPassword, setNewPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
+  // Password reset state
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [passwordSuccess, setPasswordSuccess] = useState<string | null>(null);
-  const [changingPassword, setChangingPassword] = useState(false);
   const [sendingResetEmail, setSendingResetEmail] = useState(false);
 
   // Reset Financial Data state
@@ -360,45 +347,13 @@ const UserProfilePanel: FC<UserProfilePanelProps> = ({ initialProfile, user }) =
     }
   };
 
-  const handleChangePassword = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setPasswordError(null);
-    setPasswordSuccess(null);
-
-    if (!newPassword || newPassword.length < 8) {
-      setPasswordError("New password must be at least 8 characters long.");
-      return;
-    }
-    if (newPassword !== confirmPassword) {
-      setPasswordError("Passwords do not match.");
-      return;
-    }
-
-    setChangingPassword(true);
-    try {
-      const res = await changePassword(newPassword);
-      setPasswordSuccess(res.message || "Password changed successfully!");
-      setNewPassword("");
-      setConfirmPassword("");
-      setTimeout(() => {
-        setPasswordModalOpen(false);
-        setPasswordSuccess(null);
-      }, 2000);
-    } catch (err: any) {
-      setPasswordError(err?.message || "Failed to update password. Please try again.");
-    } finally {
-      setChangingPassword(false);
-    }
-  };
-
   const handleSendResetEmail = async () => {
     setPasswordError(null);
     setPasswordSuccess(null);
     setSendingResetEmail(true);
     try {
-      const targetEmail = user?.email || profile.email || undefined;
-      const res = await sendPasswordResetEmail(targetEmail);
-      setPasswordSuccess(res.message || "Password reset email sent to your address!");
+      const res = await sendPasswordResetEmail();
+      setPasswordSuccess(res.message || "We'll email you a link to reset your password.");
     } catch (err: any) {
       setPasswordError(err?.message || "Failed to send reset email. Please try again.");
     } finally {
@@ -817,17 +772,32 @@ const UserProfilePanel: FC<UserProfilePanelProps> = ({ initialProfile, user }) =
                 size="sm"
                 id="change-password-trigger"
                 data-testid="change-password-trigger"
-                onClick={() => {
-                  setPasswordError(null);
-                  setPasswordSuccess(null);
-                  setNewPassword("");
-                  setConfirmPassword("");
-                  setPasswordModalOpen(true);
-                }}
+                disabled={sendingResetEmail}
+                onClick={handleSendResetEmail}
               >
                 <FaKey style={{ marginRight: "6px" }} />
-                Change Password
+                {sendingResetEmail ? "Sending email..." : "Change Password"}
               </FLPButton>
+              {passwordSuccess ? (
+                <p
+                  role="status"
+                  id="password-reset-status"
+                  data-testid="password-reset-status"
+                  className={css({ fontSize: "sm", color: "status.positive.text", width: "100%" })}
+                >
+                  {passwordSuccess}
+                </p>
+              ) : null}
+              {passwordError ? (
+                <p
+                  role="alert"
+                  id="password-reset-error"
+                  data-testid="password-reset-error"
+                  className={css({ fontSize: "sm", color: "status.danger.text", width: "100%" })}
+                >
+                  {passwordError}
+                </p>
+              ) : null}
             </div>
           </FLPCard>
 
@@ -980,194 +950,6 @@ const UserProfilePanel: FC<UserProfilePanelProps> = ({ initialProfile, user }) =
           <McpConnectionCard />
         </div>
       )}
-
-      {/* Change Password Dialog */}
-      <Dialog.Root open={passwordModalOpen} onOpenChange={setPasswordModalOpen}>
-        <Dialog.Portal>
-          <Dialog.Overlay
-            className={css({
-              position: "fixed",
-              inset: 0,
-              backgroundColor: "rgba(0, 0, 0, 0.6)",
-              backdropFilter: "blur(4px)",
-              zIndex: 50,
-            })}
-          />
-          <Dialog.Content
-            className={css({
-              position: "fixed",
-              top: "50%",
-              left: "50%",
-              transform: "translate(-50%, -50%)",
-              backgroundColor: "surface",
-              border: "1px solid",
-              borderColor: "border",
-              borderRadius: "lg",
-              boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.3)",
-              padding: "24px",
-              width: "92vw",
-              maxWidth: "460px",
-              zIndex: 51,
-              outline: "none",
-              color: "text.primary",
-            })}
-          >
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                marginBottom: "16px",
-              }}
-            >
-              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                <FaLock style={{ color: "var(--colors-blue-500)", fontSize: "16px" }} />
-                <Dialog.Title asChild>
-                  <FLPHeading as="h2" size="md">
-                    Change Password
-                  </FLPHeading>
-                </Dialog.Title>
-              </div>
-              <Dialog.Close asChild>
-                <button
-                  type="button"
-                  aria-label="Close"
-                  className={css({
-                    border: "none",
-                    background: "transparent",
-                    color: "text.muted",
-                    cursor: "pointer",
-                    padding: "4px",
-                    borderRadius: "sm",
-                    _hover: { color: "text.primary" },
-                  })}
-                >
-                  <FaTimes />
-                </button>
-              </Dialog.Close>
-            </div>
-
-            <Dialog.Description asChild>
-              <FLPText color="text.muted" fontSize="xs" style={{ marginBottom: "16px" }}>
-                Enter your new password below. It must be at least 8 characters long.
-              </FLPText>
-            </Dialog.Description>
-
-            {passwordSuccess ? (
-              <div
-                className={css({
-                  padding: "16px",
-                  borderRadius: "md",
-                  backgroundColor: "rgba(34, 197, 94, 0.12)",
-                  color: "green.500",
-                  fontSize: "sm",
-                  fontWeight: "medium",
-                  textAlign: "center",
-                })}
-              >
-                {passwordSuccess}
-              </div>
-            ) : (
-              <form onSubmit={handleChangePassword}>
-                <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
-                  <div className={fieldGroupStyle}>
-                    <label className={labelStyle} htmlFor="modal-new-password-input">
-                      New Password
-                    </label>
-                    <input
-                      id="modal-new-password-input"
-                      data-testid="modal-new-password-input"
-                      type="password"
-                      placeholder="At least 8 characters"
-                      className={inputStyle}
-                      value={newPassword}
-                      onChange={(e) => setNewPassword(e.target.value)}
-                      required
-                      minLength={8}
-                    />
-                  </div>
-
-                  <div className={fieldGroupStyle}>
-                    <label className={labelStyle} htmlFor="modal-confirm-password-input">
-                      Confirm New Password
-                    </label>
-                    <input
-                      id="modal-confirm-password-input"
-                      data-testid="modal-confirm-password-input"
-                      type="password"
-                      placeholder="Re-enter new password"
-                      className={inputStyle}
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                      required
-                      minLength={8}
-                    />
-                  </div>
-
-                  {passwordError && (
-                    <div
-                      data-testid="password-error"
-                      className={css({ color: "red.500", fontSize: "xs" })}
-                    >
-                      {passwordError}
-                    </div>
-                  )}
-
-                  <div
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                      marginTop: "8px",
-                      flexWrap: "wrap",
-                      gap: "10px",
-                    }}
-                  >
-                    <button
-                      type="button"
-                      data-testid="send-reset-email-btn"
-                      disabled={sendingResetEmail}
-                      onClick={handleSendResetEmail}
-                      className={css({
-                        border: "none",
-                        background: "none",
-                        color: "primary",
-                        fontSize: "xs",
-                        textDecoration: "underline",
-                        cursor: "pointer",
-                        padding: 0,
-                      })}
-                    >
-                      {sendingResetEmail ? "Sending email..." : "Send reset link by email"}
-                    </button>
-
-                    <div style={{ display: "flex", gap: "8px" }}>
-                      <FLPButton
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setPasswordModalOpen(false)}
-                      >
-                        Cancel
-                      </FLPButton>
-                      <FLPButton
-                        type="submit"
-                        variant="primary"
-                        size="sm"
-                        id="submit-change-password-btn"
-                        data-testid="submit-change-password-btn"
-                        disabled={changingPassword}
-                      >
-                        {changingPassword ? "Updating..." : "Update Password"}
-                      </FLPButton>
-                    </div>
-                  </div>
-                </div>
-              </form>
-            )}
-          </Dialog.Content>
-        </Dialog.Portal>
-      </Dialog.Root>
 
       {/* Reset Financial Data Dialog */}
       <ConfirmDialog

@@ -4,7 +4,10 @@ import { redirect } from "react-router";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const reqUrl = new URL(request.url);
-  if (reqUrl.hostname === "localhost" || reqUrl.hostname === "127.0.0.1") {
+  if (
+    process.env.NODE_ENV === "development" &&
+    (reqUrl.hostname === "localhost" || reqUrl.hostname === "127.0.0.1")
+  ) {
     configure((key: string) => {
       if (key === "WORKOS_REDIRECT_URI") {
         return `${reqUrl.origin}/callback`;

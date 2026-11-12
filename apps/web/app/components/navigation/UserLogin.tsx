@@ -1,7 +1,8 @@
 import { css } from "@repo/ui/styled-system/css";
 import type { FC } from "react";
 import { useTranslation } from "react-i18next";
-import { useLoaderData } from "react-router";
+import { Form, useLoaderData } from "react-router";
+import FLPButton from "~/components/core/buttons/FLPButton";
 import FLPButtonGroup from "~/components/core/buttons/FLPButtonGroup";
 import FLPLinkButton from "~/components/core/buttons/FLPLinkButton";
 import type { loader } from "~/root";
@@ -26,7 +27,11 @@ const UserLogin: FC<UserLoginProps> = ({ className, size = "sm" }) => {
   return (
     <FLPButtonGroup className={className}>
       {user ? (
-        <FLPLinkButton className={loginBtnStyle} size={size} text={t("logOut")} to="/logout" />
+        <Form method="post" action="/logout">
+          <FLPButton className={loginBtnStyle} size={size} type="submit" variant="ghost">
+            {t("logOut")}
+          </FLPButton>
+        </Form>
       ) : (
         <>
           <FLPLinkButton className={loginBtnStyle} size={size} text={t("signUp")} to="/signup" />

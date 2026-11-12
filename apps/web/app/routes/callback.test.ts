@@ -29,6 +29,7 @@ const callLoader = (url: string) =>
 const SESSION_COOKIE = "flump_has_session=1; Path=/; SameSite=Lax; Max-Age=2592000";
 
 beforeEach(() => {
+  vi.stubEnv("NODE_ENV", "development");
   mocks.workosLoader.mockReset();
   mocks.configure.mockReset();
   mocks.workosLoader.mockResolvedValue(new Response(null, { status: 302 }));
@@ -56,16 +57,14 @@ describe("callback loader", () => {
     expect(res.headers.getSetCookie()).toEqual([SESSION_COOKIE]);
   });
 
-  it("sets Domain=.flump.co.uk on app.flump.co.uk", async () => {
+  it("sets Domain=.flump.co.uk and Secure on app.flump.co.uk", async () => {
     const res = await callLoader("https://app.flump.co.uk/callback?code=abc");
-    expect(res.headers.getSetCookie()).toEqual([`${SESSION_COOKIE}; Domain=.flump.co.uk`]);
+    expect(res.headers.getSetCookie()).toEqual([`${SESSION_COOKIE}; Domain=.flump.co.uk; Secure`]);
   });
 
-  it("PINS current behaviour: evilflump.co.uk also gets the Domain", async () => {
-    // Known endsWith gap: hostname.endsWith("flump.co.uk") matches lookalike hosts.
-    // Flagged for follow-up, intentionally not fixed here.
+  it("gives evilflump.co.uk no Domain (Secure only, as it is https)", async () => {
     const res = await callLoader("https://evilflump.co.uk/callback?code=abc");
-    expect(res.headers.getSetCookie()).toEqual([`${SESSION_COOKIE}; Domain=.flump.co.uk`]);
+    expect(res.headers.getSetCookie()).toEqual([`${SESSION_COOKIE}; Secure`]);
   });
 
   describe("configure", () => {
@@ -85,6 +84,12 @@ describe("callback loader", () => {
       await callLoader("http://localhost:3000/callback?code=abc");
       const getValue = mocks.configure.mock.calls[0][0] as (key: string) => unknown;
       expect(getValue("SOME_OTHER_KEY")).toBe("value");
+    });
+
+    it("is not called outside NODE_ENV=development, even on localhost", async () => {
+      vi.stubEnv("NODE_ENV", "production");
+      await callLoader("http://localhost:3000/callback?code=abc");
+      expect(mocks.configure).not.toHaveBeenCalled();
     });
 
     it("is not called on app.flump.co.uk", async () => {

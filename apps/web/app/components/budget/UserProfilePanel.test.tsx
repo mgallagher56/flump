@@ -6,9 +6,6 @@ import UserProfilePanel from "./UserProfilePanel";
 
 const mockUpdateProfile = vi.fn().mockResolvedValue(undefined);
 const mockSetProfile = vi.fn();
-const mockChangePassword = vi
-  .fn()
-  .mockResolvedValue({ success: true, message: "Password updated successfully" });
 const mockSendResetEmail = vi
   .fn()
   .mockResolvedValue({ success: true, message: "Reset email sent" });
@@ -23,7 +20,6 @@ vi.mock("~/hooks/useUserProfile", async () => {
       setProfile: mockSetProfile,
       updateProfile: mockUpdateProfile,
       markChecklistStep: vi.fn(),
-      changePassword: mockChangePassword,
       sendPasswordResetEmail: mockSendResetEmail,
       resetFinancialData: mockResetFinancialData,
     }),
@@ -173,25 +169,34 @@ describe("<UserProfilePanel />", () => {
     expect(emailDisplay.textContent).toContain("Verified");
   });
 
-  it("opens change password dialog and changes password successfully", async () => {
+  it("sends a password reset email directly when Change Password is clicked", async () => {
     render(
       <UserProfilePanel initialProfile={DEFAULT_PROFILE} user={{ email: "user@example.com" }} />,
     );
 
-    const changePasswordTrigger = screen.getByTestId("change-password-trigger");
-    fireEvent.click(changePasswordTrigger);
-
-    const newPassInput = screen.getByTestId("modal-new-password-input");
-    const confirmPassInput = screen.getByTestId("modal-confirm-password-input");
-    const submitBtn = screen.getByTestId("submit-change-password-btn");
-
-    fireEvent.change(newPassInput, { target: { value: "newSecretPassword123" } });
-    fireEvent.change(confirmPassInput, { target: { value: "newSecretPassword123" } });
-    fireEvent.click(submitBtn);
+    fireEvent.click(screen.getByTestId("change-password-trigger"));
 
     await waitFor(() => {
-      expect(mockChangePassword).toHaveBeenCalledWith("newSecretPassword123");
+      expect(mockSendResetEmail).toHaveBeenCalledTimes(1);
     });
+    expect(mockSendResetEmail).toHaveBeenCalledWith();
+    expect(screen.queryByTestId("modal-new-password-input")).toBeNull();
+    expect((await screen.findByTestId("password-reset-status")).textContent).toBe(
+      "Reset email sent",
+    );
+  });
+
+  it("shows an error when the reset email fails", async () => {
+    mockSendResetEmail.mockRejectedValueOnce(new Error("Failed to send password reset email"));
+    render(
+      <UserProfilePanel initialProfile={DEFAULT_PROFILE} user={{ email: "user@example.com" }} />,
+    );
+
+    fireEvent.click(screen.getByTestId("change-password-trigger"));
+
+    expect((await screen.findByTestId("password-reset-error")).textContent).toBe(
+      "Failed to send password reset email",
+    );
   });
 
   it("allows user to update country and currency preferences", async () => {
