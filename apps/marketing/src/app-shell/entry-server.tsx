@@ -6,15 +6,18 @@ import { StaticRouter } from "react-router-dom";
 export interface ServerEntryConfig {
   App: React.ComponentType;
   providers?: React.ComponentType<{ children: React.ReactNode }>[];
+  /** Maps a request URL to the HTTP status of the response. Defaults to 200. */
+  resolveStatus?: (url: string) => number;
 }
 
 export interface RenderResult {
   html: string;
   helmet: any;
+  status: number;
 }
 
 export function createServerEntry(config: ServerEntryConfig) {
-  const { App, providers = [] } = config;
+  const { App, providers = [], resolveStatus } = config;
 
   return function render(url: string): RenderResult {
     const helmetContext = {};
@@ -30,6 +33,10 @@ export function createServerEntry(config: ServerEntryConfig) {
       </HelmetProvider>,
     );
 
-    return { html, helmet: (helmetContext as any).helmet };
+    return {
+      html,
+      helmet: (helmetContext as any).helmet,
+      status: resolveStatus ? resolveStatus(url) : 200,
+    };
   };
 }

@@ -63,7 +63,7 @@ async function createServer() {
 
     try {
       let template: string;
-      let render: (url: string) => { html: string; helmet: any };
+      let render: (url: string) => { html: string; helmet: any; status?: number };
       if (!isProd && vite) {
         template = fs.readFileSync(path.resolve(__dirname, "index.html"), "utf-8");
         template = await vite.transformIndexHtml(url, template);
@@ -74,7 +74,7 @@ async function createServer() {
         render = (await import("./dist/server/entry-server.js")).render;
       }
 
-      const { html: appHtml, helmet } = render(url);
+      const { html: appHtml, helmet, status } = render(url);
 
       const nonceAttr = res.locals.nonce ? ` nonce="${res.locals.nonce}"` : "";
       const appUrlScript = `<script${nonceAttr}>window.__FLUMP_APP_URL__=${JSON.stringify(resolvedAppUrl)};</script>`;
@@ -92,7 +92,10 @@ async function createServer() {
         nonceAttr,
       );
 
-      res.status(200).set({ "Content-Type": "text/html" }).end(html);
+      res
+        .status(status ?? 200)
+        .set({ "Content-Type": "text/html" })
+        .end(html);
     } catch (e: any) {
       try {
         !isProd && vite && vite.ssrFixStacktrace(e);

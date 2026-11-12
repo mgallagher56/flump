@@ -1,7 +1,7 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { HelmetProvider } from "react-helmet-async";
 import { MemoryRouter } from "react-router-dom";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { PricingPage } from "./PricingPage";
 
 const renderPage = () =>
@@ -15,6 +15,7 @@ const renderPage = () =>
 
 describe("PricingPage", () => {
   it("links the free plan to sign-up without a plan parameter", () => {
+    vi.stubEnv("VITE_SHOW_PLACEHOLDERS", "true");
     renderPage();
     const href = screen
       .getAllByText("Get started")
@@ -24,6 +25,7 @@ describe("PricingPage", () => {
     expect(href).not.toContain("plan=");
     expect(screen.getByText("Pricing coming soon").closest("a")).toBeNull();
     expect((screen.getByText("Pricing coming soon") as HTMLButtonElement).disabled).toBe(true);
+    vi.unstubAllEnvs();
   });
 
   it("uses a plain heading and an honest free card", () => {
@@ -33,13 +35,25 @@ describe("PricingPage", () => {
     expect(screen.queryByText(/financial journey/i)).toBeNull();
   });
 
-  it("shows only an obvious placeholder price", () => {
-    renderPage();
-    expect(screen.getByText("£X")).toBeDefined();
-    expect(screen.getByText("Placeholder price: not final")).toBeDefined();
-    fireEvent.click(screen.getByRole("switch", { name: "Annual billing" }));
-    expect(screen.getByText("£Y")).toBeDefined();
-    expect(screen.queryByText(/£7\.99|£9\.99|£95\.88|14-day|Save 20%/)).toBeNull();
+  it("hides the placeholder price card and billing toggle by default", () => {
+    const { container } = renderPage();
+    expect(container.textContent).not.toMatch(/£X|£Y|Placeholder price|Pricing coming soon/);
+    expect(screen.queryByRole("switch", { name: "Annual billing" })).toBeNull();
+    expect(screen.getByText("Free today")).toBeDefined();
+  });
+
+  it("shows only an obvious placeholder price when VITE_SHOW_PLACEHOLDERS=true", () => {
+    vi.stubEnv("VITE_SHOW_PLACEHOLDERS", "true");
+    try {
+      renderPage();
+      expect(screen.getByText("£X")).toBeDefined();
+      expect(screen.getByText("Placeholder price: not final")).toBeDefined();
+      fireEvent.click(screen.getByRole("switch", { name: "Annual billing" }));
+      expect(screen.getByText("£Y")).toBeDefined();
+      expect(screen.queryByText(/£7\.99|£9\.99|£95\.88|14-day|Save 20%/)).toBeNull();
+    } finally {
+      vi.unstubAllEnvs();
+    }
   });
 
   it("claims only shipped features", () => {
@@ -47,7 +61,6 @@ describe("PricingPage", () => {
     expect(container.textContent).not.toMatch(/CSV|auto-categorisation|FCA|real-time/i);
     expect(screen.getByText("Section 24 landlord tax calculator")).toBeDefined();
     expect(screen.getByText("£100k–£125k tax trap and childcare calculator")).toBeDefined();
-    expect(screen.getByText("Bank connection (coming soon)")).toBeDefined();
     expect(container.textContent).not.toMatch(/30-year|£0|per month, free/i);
   });
 

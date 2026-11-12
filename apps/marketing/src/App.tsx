@@ -2,6 +2,7 @@ import { Route, Routes } from "react-router-dom";
 import { ThemeProvider } from "./context/ThemeContext";
 import { HomePage } from "./pages/HomePage";
 import { McpPage } from "./pages/McpPage";
+import { NotFoundPage } from "./pages/NotFoundPage";
 import { PricingPage } from "./pages/PricingPage";
 import { SecurityPage } from "./pages/SecurityPage";
 import { ToolPage } from "./pages/ToolPage";
@@ -17,7 +18,7 @@ export default function App() {
         <Route path="/pricing" element={<PricingPage />} />
         <Route path="/security" element={<SecurityPage />} />
         <Route path="/mcp" element={<McpPage />} />
-        <Route path="*" element={<HomePage />} />
+        <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </ThemeProvider>
   );

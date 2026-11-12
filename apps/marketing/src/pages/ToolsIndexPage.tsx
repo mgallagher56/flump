@@ -93,7 +93,7 @@ export const TOOLS_CATALOG = [
   {
     slug: "uk-100k-tax-trap-calculator",
     title: "£100k–£125k tax trap and childcare calculator",
-    desc: "Model how the Personal Allowance taper creates an effective 60% marginal rate and calculate the exact pension salary sacrifice to reclaim your allowance and 30 hours free childcare.",
+    desc: "Model how the Personal Allowance taper creates an effective 60% marginal rate and estimate the pension salary sacrifice to reclaim your allowance and 30 hours free childcare.",
     icon: <FiPercent size={22} color="#6363f1" />,
     badge: "HMRC income tax",
   },
@@ -107,7 +107,7 @@ export const TOOLS_CATALOG = [
   {
     slug: "0-percent-balance-transfer-payoff-calculator",
     title: "0% balance transfer payoff calculator",
-    desc: "Calculate the exact monthly repayment needed to clear transfer balances before your promotional 0% window ends and standard APR applies.",
+    desc: "Estimate the monthly repayment needed to clear transfer balances before your promotional 0% window ends and standard APR applies.",
     icon: <FiCreditCard size={22} color="#f59e0b" />,
     badge: "Credit cards",
   },
@@ -338,8 +338,8 @@ export const ToolsIndexPage: FC = () => {
                   }}
                 >
                   Model how Personal Allowance reduction combined with student loan and childcare
-                  loss creates a 60%+ marginal tax trap – and calculate the exact salary sacrifice
-                  to bridge across it safely.
+                  loss creates a 60%+ marginal tax trap – and estimate the salary sacrifice to
+                  bridge across it safely.
                 </p>
                 <div className={ctaLinkStyle} style={{ marginTop: "4px" }}>
                   Run £100k tax trap simulation <FiArrowRight />

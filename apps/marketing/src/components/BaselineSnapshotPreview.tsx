@@ -269,7 +269,7 @@ export const BaselineSnapshotPreview: FC = () => {
             className="tabular-nums"
             style={{ fontSize: "12px", color: "var(--colors-text-muted)" }}
           >
-            Gross take-home: £4,200/mo
+            Estimated take-home: £4,200/mo
           </span>
         </div>
 
