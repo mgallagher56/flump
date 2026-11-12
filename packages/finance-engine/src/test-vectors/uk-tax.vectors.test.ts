@@ -8,6 +8,13 @@ import {
   type UkTaxVectorKind,
 } from "./uk-tax.vectors.js";
 
+/**
+ * Vector ids the owner has signed off. Empty until the owner signs (DECISIONS E4): an unreviewed
+ * edit that signs a vector fails here. The owner adds ids to this list in the same commit as
+ * the sign-off (`bun run tax:signoff apply`).
+ */
+const OWNER_SIGNED_IDS: readonly string[] = [];
+
 const GOV_URL = /^https:\/\/www\.(gov\.(uk|scot)|legislation\.gov\.uk)\//;
 
 describe("UK tax vector catalogue", () => {
@@ -28,6 +35,7 @@ describe("UK tax vector catalogue", () => {
       expect(v.derivation.trim().length, v.id).toBeGreaterThan(20);
       expect(["high", "medium"], v.id).toContain(v.confidence);
       expect(evaluateSignoff(v), v.id).not.toMatchObject({ state: "invalid" });
+      expect(v.signedOffBy !== null, v.id).toBe(OWNER_SIGNED_IDS.includes(v.id));
       expect(Number.isFinite(v.expected), v.id).toBe(true);
     }
   });
@@ -138,8 +146,8 @@ describe("Scottish Gift Aid band-extension vectors (ITA 2007 s.414(2)(b))", () =
       expect(v.status, v.id).toBe("UNVERIFIED");
       expect(v.unverifiedReason, v.id).toMatch(/^UNVERIFIED: .*s\.414\(2\)\(b\)/);
       expect(v.confidence, v.id).toBe("medium");
-      // Ruling 2 (Gift Aid for Scottish taxpayers) is pending: never signed without a rulingRef.
-      expect(evaluateSignoff(v).state === "signed" ? v.rulingRef : "n/a", v.id).toBeTruthy();
+      // Ruling 2 (Gift Aid for Scottish taxpayers) is pending: unsigned until the owner rules.
+      expect(v.signedOffBy === null || OWNER_SIGNED_IDS.includes(v.id), v.id).toBe(true);
       expect(v.source, v.id).toMatch(GOV_URL);
       expect(v.additionalSources, v.id).toContain(
         "https://www.legislation.gov.uk/ukpga/2007/3/section/414",
