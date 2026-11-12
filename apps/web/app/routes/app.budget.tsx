@@ -5,10 +5,10 @@ import BudgetContainer from "~/containers/budget/BudgetContainer";
 import { loadWorkspaceSnapshot } from "~/services/backend-client.server";
 
 export const loader = async (args: LoaderFunctionArgs) => {
-  const { accounts, accountDetails, budgetEntries, userProfile, user, accessToken } =
+  const { accounts, accountDetails, budgetEntries, userProfile, user } =
     await loadWorkspaceSnapshot(args, { includeBudget: true });
 
-  return data({ accounts, accountDetails, budgetEntries, userProfile, user, accessToken });
+  return data({ accounts, accountDetails, budgetEntries, userProfile, user });
 };
 
 const BudgetRoute = (): ReactElement => {

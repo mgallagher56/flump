@@ -18,7 +18,6 @@ let mockLoaderData: any = {
     hasResetFinancialData: true,
     monthlyTakeHome: 3500,
   },
-  accessToken: "mock-token",
 };
 
 const mockProfileData = {

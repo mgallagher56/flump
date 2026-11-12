@@ -43,7 +43,6 @@ const BudgetContainer: FC = () => {
     accountDetails = [],
     budgetEntries = [],
     userProfile,
-    accessToken,
   } = useLoaderData<typeof loader>();
 
   const navigate = useNavigate();
@@ -152,7 +151,6 @@ const BudgetContainer: FC = () => {
   ) => {
     try {
       const created = await apiFetch<BudgetEntry>("/budget-entries", {
-        accessToken,
         method: "POST",
         body: entry,
       });
@@ -167,7 +165,6 @@ const BudgetContainer: FC = () => {
   const updateEntry = async (id: string, update: Partial<BudgetEntry>) => {
     try {
       const updated = await apiFetch<BudgetEntry>(`/budget-entries/${id}`, {
-        accessToken,
         method: "PATCH",
         body: update,
       });
@@ -182,7 +179,6 @@ const BudgetContainer: FC = () => {
   const deleteEntry = async (id: string) => {
     try {
       await apiFetch<void>(`/budget-entries/${id}`, {
-        accessToken,
         method: "DELETE",
         allowEmpty: true,
       });
@@ -209,7 +205,6 @@ const BudgetContainer: FC = () => {
     setIsSeedingDefaults(true);
     try {
       const updated = await apiFetch<BudgetEntry[]>("/budget-entries/seed-defaults", {
-        accessToken,
         method: "POST",
         body: {},
       });
@@ -229,7 +224,6 @@ const BudgetContainer: FC = () => {
     let updatedCategories = Array.from(new Set([...customCategories, trimmed]));
     try {
       const data = await apiFetch<{ categories?: string[] }>("/budget-entries/categories", {
-        accessToken,
         method: "POST",
         body: { category: trimmed },
       });
