@@ -58,6 +58,15 @@ describe("applySecurity", () => {
     expect(app.set).not.toHaveBeenCalledWith("trust proxy", expect.anything());
   });
 
+  it("trusts one proxy hop by default in production", () => {
+    const app = fakeApp();
+    applySecurity(app as never, {
+      NODE_ENV: "production",
+      CORS_ALLOWED_ORIGINS: "https://a.example",
+    });
+    expect(app.set).toHaveBeenCalledWith("trust proxy", 1);
+  });
+
   it("throws at boot in production without CORS_ALLOWED_ORIGINS", () => {
     expect(() => applySecurity(fakeApp() as never, { NODE_ENV: "production" })).toThrow(
       /CORS_ALLOWED_ORIGINS/,

@@ -30,3 +30,7 @@ Set `CORS_ALLOWED_ORIGINS` on the backend (comma-separated exact origins, for ex
 2. Record the `iss` value and the claim names.
 3. Set `WORKOS_ISSUER` on the backend and the web app, staging first. A wrong value makes every login return 401.
 4. The implementer then makes backend boot require `WORKOS_ISSUER` in production.
+
+## Backend proxy trust
+
+The backend trusts one proxy hop (`trust proxy` = 1) by default when `NODE_ENV=production`, matching Railway's single edge proxy, so `req.ip` is the real client address (used by the MCP failed-auth limiter). Override with `TRUST_PROXY_HOPS` if the topology changes (for example Cloudflare in front adds a hop).
