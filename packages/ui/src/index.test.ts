@@ -14,6 +14,8 @@ describe("UI package exports", () => {
     expect(UI.SectionBand).toBeDefined();
     expect(UI.AppSectionDivider).toBeDefined();
     expect(UI.EmptyState).toBeDefined();
+    expect(UI.Money).toBeDefined();
+    expect(UI.Num).toBeDefined();
     expect(UI.colors).toBeDefined();
   });
 
