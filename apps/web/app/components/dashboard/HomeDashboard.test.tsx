@@ -119,7 +119,7 @@ const dummyProps = {
     totalIncome: 12000,
     totalExpenses: 2000,
     netProfit: 10000,
-    estimatedTaxDue: 2900,
+    estimatedTaxDue: null,
     recordsCount: 5,
   },
 };
