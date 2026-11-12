@@ -21,7 +21,6 @@ export interface HttpTransportOptions extends TokenVerifierOptions {
 const WWW_AUTHENTICATE = 'Bearer realm="flump-mcp"';
 const GENERIC_BAD_REQUEST = { error: "bad_request", message: "Bad request" };
 
-/** Rightmost X-Forwarded-For entry (appended by the nearest trusted proxy), else "unknown". */
 /**
  * SECURITY: takes the RIGHTMOST x-forwarded-for entry, which is the one appended by the
  * trusted proxy. This is only safe behind Railway's edge (which appends the real client
