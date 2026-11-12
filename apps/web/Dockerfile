@@ -2,20 +2,23 @@
 FROM oven/bun:1-slim AS base
 WORKDIR /app
 
-# Stage 1: Install all dependencies
+# Stage 1a: workspace manifests only. Every workspace's package.json is needed so
+# the frozen lockfile resolves, and a glob keeps this correct when workspaces are
+# added (apps/*, packages/*). Everything but package.json is stripped so this layer
+# only changes when a manifest changes.
+FROM base AS manifests
+COPY apps ./apps
+COPY packages ./packages
+RUN find apps packages -name node_modules -type d -prune -exec rm -rf {} + ; \
+    find apps packages -type f ! -name package.json -delete ; \
+    find apps packages -type d -empty -delete
+
+# Stage 1b: install only the workspaces this image needs
 FROM base AS deps
 COPY package.json bun.lock ./
-COPY apps/web/package.json ./apps/web/
-COPY apps/backend/package.json ./apps/backend/
-COPY apps/marketing/package.json ./apps/marketing/
-COPY apps/mobile-companion/package.json ./apps/mobile-companion/
-COPY packages/api-contract/package.json ./packages/api-contract/
-COPY packages/banking/package.json ./packages/banking/
-COPY packages/mcp/package.json ./packages/mcp/package.json
-COPY packages/finance-engine/package.json ./packages/finance-engine/
-COPY packages/typescript-config/package.json ./packages/typescript-config/
-COPY packages/ui/package.json ./packages/ui/
-RUN bun install --frozen-lockfile --ignore-scripts
+COPY --from=manifests /app/apps ./apps
+COPY --from=manifests /app/packages ./packages
+RUN bun install --frozen-lockfile --ignore-scripts --filter './' --filter '@flump/web' --filter 'marketing' --filter './packages/*'
 
 # Stage 2: Build the application
 FROM deps AS build
