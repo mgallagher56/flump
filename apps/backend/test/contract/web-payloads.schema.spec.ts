@@ -71,4 +71,13 @@ describe("web payloads against @flump/api-contract schemas", () => {
     );
     expect(violations("budget.addCategory", BUDGET_CATEGORY_PAYLOAD)).toEqual([]);
   });
+
+  it("MCP token create: web's 'never expires' choice sends expiryDays null, which the contract rejects (E17 D5-A)", () => {
+    // McpConnectionCard sends null for "no expiry". It is real traffic, not noise: expect this line
+    // in the shadow log until the card drops the option.
+    expect(violations("mcpTokens.create", { name: "Claude", expiryDays: null })).toEqual([
+      "expiryDays:invalid_type",
+    ]);
+    expect(violations("mcpTokens.create", { name: "Claude", expiryDays: 30 })).toEqual([]);
+  });
 });

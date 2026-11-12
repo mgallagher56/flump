@@ -2,7 +2,11 @@ import "reflect-metadata";
 import { Logger } from "@nestjs/common";
 import { of } from "rxjs";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { ContractShadowInterceptor, resolveContractMode } from "./contract-shadow.interceptor";
+import {
+  ContractShadowInterceptor,
+  resolveContractMode,
+  shouldLogOccurrence,
+} from "./contract-shadow.interceptor";
 
 const run = (
   interceptor: ContractShadowInterceptor,
@@ -105,5 +109,29 @@ describe("ContractShadowInterceptor", () => {
     expect(resolveContractMode({})).toBe("shadow");
     expect(resolveContractMode({ CONTRACT_MODE: "OFF" })).toBe("off");
     expect(resolveContractMode({ CONTRACT_MODE: "enforce" })).toBe("shadow");
+  });
+});
+
+describe("log volume limits", () => {
+  afterEach(() => vi.restoreAllMocks());
+
+  it("logs only the 1st, 2nd and 10th occurrence, then every 100th", () => {
+    const logged = Array.from({ length: 300 }, (_, i) => i + 1).filter(shouldLogOccurrence);
+    expect(logged).toEqual([1, 2, 10, 100, 200, 300]);
+  });
+
+  it("caps logged issues at 20 and truncates long paths", () => {
+    const warn = vi.spyOn(Logger.prototype, "warn").mockImplementation(() => undefined);
+    const body = Object.fromEntries(
+      Array.from({ length: 40 }, (_, i) => [`${"k".repeat(200)}${i}`, 1]),
+    );
+    run(new ContractShadowInterceptor(), {
+      method: "POST",
+      route: { path: "/accounts" },
+      body: { name: "x", type: "Current", balance: 1, ...body },
+    });
+    const [violation] = warnings(warn);
+    expect(violation.issues).toHaveLength(20);
+    for (const issue of violation.issues) expect(issue.path.length).toBeLessThanOrEqual(80);
   });
 });

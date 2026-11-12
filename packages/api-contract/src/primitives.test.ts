@@ -2,12 +2,18 @@ import { describe, expect, it } from "vitest";
 import { IsoDate, Money, MoneyNonNegative, Percent } from "./primitives.js";
 
 describe("Money", () => {
-  it.each([0, 12, 1204.5, -3.25, 0.07, 9999999999.99])("accepts %s", (v) => {
-    expect(Money.safeParse(v).success).toBe(true);
-  });
-  it.each([1.005, Number.NaN, Number.POSITIVE_INFINITY, "12", null, 1e10])("rejects %s", (v) => {
-    expect(Money.safeParse(v).success).toBe(false);
-  });
+  it.each([0, 12, 1204.5, -3.25, 0.07, 9999999999.99, 1234567890.12, 8765432109.87])(
+    "accepts %s",
+    (v) => {
+      expect(Money.safeParse(v).success).toBe(true);
+    },
+  );
+  it.each([1.005, 1234567890.125, Number.NaN, Number.POSITIVE_INFINITY, "12", null, 1e10])(
+    "rejects %s",
+    (v) => {
+      expect(Money.safeParse(v).success).toBe(false);
+    },
+  );
   it("MoneyNonNegative rejects negatives", () => {
     expect(MoneyNonNegative.safeParse(-1).success).toBe(false);
   });
