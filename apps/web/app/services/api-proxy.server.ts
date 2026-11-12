@@ -9,7 +9,8 @@ import { BackendError, kindFromStatus } from "./backend-error";
  * server-side. It is a strict allow-list, not a relay: anything not listed is a 404.
  */
 
-const UUID = "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}";
+// Hex digits match in either case; the literal path segments are case-sensitive.
+const UUID = "[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}";
 
 export interface ProxyRule {
   methods: readonly string[];
@@ -33,7 +34,7 @@ export const API_ALLOW_LIST: readonly ProxyRule[] = [
 
 const COMPILED = API_ALLOW_LIST.map((rule) => ({
   methods: rule.methods,
-  regex: new RegExp(`^${rule.pattern}$`, "i"),
+  regex: new RegExp(`^${rule.pattern}$`),
 }));
 
 export const MAX_BODY_BYTES = 64 * 1024;
@@ -181,6 +182,15 @@ export async function handleApiProxy(
 
   // 2. CSRF: custom header always, same-origin Origin on writes (and on any request that sends one).
   if (request.headers.get("x-flump-request") !== "1") return json(403, {});
+  // Defence in depth: a browser that sends Sec-Fetch-Site must say same-origin (or none, GET only).
+  const fetchSite = request.headers.get("sec-fetch-site");
+  if (
+    fetchSite !== null &&
+    fetchSite !== "same-origin" &&
+    !(fetchSite === "none" && !WRITE_METHODS.has(method))
+  ) {
+    return json(403, {});
+  }
   const origin = request.headers.get("origin");
   if (origin !== null ? origin !== expectedOrigin(request) : WRITE_METHODS.has(method)) {
     return json(403, {});
@@ -208,7 +218,13 @@ export async function handleApiProxy(
   // 5. Body: capped, JSON only.
   let body: string | undefined;
   if (method !== "GET" && method !== "HEAD") {
-    const text = await readCappedBody(request);
+    let text: string;
+    try {
+      text = await readCappedBody(request);
+    } catch {
+      // The client aborted or the stream failed mid-body.
+      return json(400, {}, cookieHeaders);
+    }
     if (text === "too-large") return json(413, {}, cookieHeaders);
     if (text !== "") {
       const type = request.headers.get("content-type") ?? "";
