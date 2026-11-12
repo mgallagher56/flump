@@ -155,6 +155,31 @@ describe("AccountIntakeService (Deep Module)", () => {
       expect(mockAccountRepo.create.mock.calls[0][0]).toMatchObject({ currency: "GBP" });
     });
 
+    it("updateAccount treats null or empty currency as unset and keeps the stored one", async () => {
+      for (const currency of [null, ""]) {
+        mockAccountRepo.findOne.mockResolvedValueOnce({
+          id: "a1",
+          userId: "userA",
+          currency: "USD",
+        });
+        await service.updateAccount("userA", "a1", { balance: 9, currency } as any);
+        const saved = mockAccountRepo.save.mock.calls.at(-1)[0];
+        expect(saved).toMatchObject({ balance: 9, currency: "USD" });
+      }
+    });
+
+    it("updateAccount looks the account up by id and caller, so another user gets 404", async () => {
+      mockAccountRepo.findOne.mockResolvedValueOnce(null);
+
+      await expect(service.updateAccount("userB", "a1", { balance: 1 })).rejects.toThrow(
+        NotFoundException,
+      );
+      expect(mockAccountRepo.findOne).toHaveBeenCalledWith({
+        where: { id: "a1", userId: "userB" },
+      });
+      expect(mockAccountRepo.save).not.toHaveBeenCalled();
+    });
+
     it("createAccount rejects a connectionId owned by another user", async () => {
       mockBankConnectionRepo.findOne.mockResolvedValue(null);
 

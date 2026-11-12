@@ -487,4 +487,16 @@ describe("FinanceController & FinanceService", () => {
       .map((fn) => Reflect.getMetadata("method", fn));
     expect(verbs).toEqual(expect.arrayContaining([2, 4]));
   });
+
+  it("returns 404 for another user's account on both PUT and PATCH", async () => {
+    const { controller } = createMocks();
+    const userB = { user: { id: "userB" } } as any;
+
+    await expect(controller.replaceAccount(userB, "acc-of-userA", { balance: 1 })).rejects.toThrow(
+      NotFoundException,
+    );
+    await expect(controller.updateAccount(userB, "acc-of-userA", { balance: 1 })).rejects.toThrow(
+      NotFoundException,
+    );
+  });
 });
