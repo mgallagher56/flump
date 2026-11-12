@@ -9,6 +9,7 @@ import { FiAlertTriangle, FiArrowRight, FiCheck } from "react-icons/fi";
 import FLPButton from "~/components/core/buttons/FLPButton";
 import FLPHeading from "~/components/core/typography/FLPHeading";
 import FLPText from "~/components/core/typography/FLPText";
+import { getTaxTrapCopy } from "~/utils/taxTrapCopy";
 
 export interface TaxTrapAlertBannerProps {
   grossIncome: number;
@@ -49,6 +50,7 @@ export const TaxTrapAlertBanner: FC<TaxTrapAlertBannerProps> = ({
     return calculateTaxTrapRelief(grossIncome);
   }, [grossIncome]);
 
+  const trapCopy = getTaxTrapCopy(trapAnalysis);
   const defaultSacrifice = Math.min(25140, trapAnalysis.excessAbove100k);
   const [sacrificeAmount, setSacrificeAmount] = useState<number>(defaultSacrifice);
   const [applied, setApplied] = useState(false);
@@ -60,7 +62,7 @@ export const TaxTrapAlertBanner: FC<TaxTrapAlertBannerProps> = ({
 
   // Recalculate relief with custom sacrifice amount
   // Exact income tax + employee NI difference from the engine (band edges and the allowance
-  // taper are handled; a flat 62% is only right when the whole sacrifice sits in the taper zone).
+  // taper are handled; a flat rate is only right when the whole sacrifice sits in the taper zone).
   const taxSaved = Math.round(calculateSalarySacrificeSaving(grossIncome, sacrificeAmount));
   const monthlySacrifice = Math.round(sacrificeAmount / 12);
   const monthlySaved = Math.round(taxSaved / 12);
@@ -111,7 +113,7 @@ export const TaxTrapAlertBanner: FC<TaxTrapAlertBannerProps> = ({
             <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
               <FLPHeading as="h3" size="sm">
                 {trapAnalysis.isInTaxTrap
-                  ? "UK £100k–£125k 60% Tax Trap Active"
+                  ? `UK £100k–£125k ${trapCopy.incomeTaxRate} Tax Trap Active`
                   : "Approaching the £100,000 UK Tax Trap"}
               </FLPHeading>
               <span
@@ -135,8 +137,8 @@ export const TaxTrapAlertBanner: FC<TaxTrapAlertBannerProps> = ({
               {trapAnalysis.isInTaxTrap ? (
                 <>
                   Between £100,000 and £125,140, HMRC reduces your Personal Allowance by £1 for
-                  every £2 of income. Combined with 40% higher rate tax and 2% National Insurance,
-                  you face an effective <strong>62% marginal tax rate</strong> and lose 15–30 hours
+                  every £2 of income. Combined with higher rate tax and National Insurance, you face
+                  a marginal rate of <strong>{trapCopy.breakdown}</strong> and lose 15–30 hours
                   funded childcare eligibility.
                 </>
               ) : (

@@ -181,6 +181,20 @@ describe("PensionContainer", () => {
       expect(container.querySelector("#pension-forecast-salary")).toBeNull();
     });
 
+    it("tax trap callout reads both engine rates and never says 60% alone", () => {
+      setProfile({
+        annualSalary: 110000,
+        pensionPercent: 0,
+        pensionEmployerPercent: 0,
+        setupChecklistCompletedSteps: ["pension"],
+      });
+      const { container } = render(<PensionContainer />);
+
+      expect(container.textContent).toContain("60% marginal tax trap active");
+      expect(container.textContent).toContain("60% income tax, 62% including NI");
+      expect(container.textContent).not.toContain("effective 60% marginal tax rate");
+    });
+
     it("backend default rates (5% + 3%) show the default label", () => {
       setProfile({
         annualSalary: 50000,
