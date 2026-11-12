@@ -8,6 +8,7 @@ import {
   isMcpUserAllowed,
   McpAllowlistGuard,
   McpKillSwitchGuard,
+  mcpOpenAccessBootWarning,
   readMcpAccessConfig,
 } from "./mcp-access";
 
@@ -34,6 +35,24 @@ describe("readMcpAccessConfig", () => {
     expect(readMcpAccessConfig({ NODE_ENV: "test", MCP_OPEN_ACCESS: "false" }).openAccess).toBe(
       false,
     );
+  });
+});
+
+describe("fail-closed default and boot warning", () => {
+  it("is closed by default on Railway even without NODE_ENV=production", () => {
+    expect(readMcpAccessConfig({ RAILWAY_ENVIRONMENT: "production" }).openAccess).toBe(false);
+    expect(
+      readMcpAccessConfig({ RAILWAY_ENVIRONMENT: "production", MCP_OPEN_ACCESS: "true" })
+        .openAccess,
+    ).toBe(true);
+  });
+
+  it("warns only when open by default without an explicit flag", () => {
+    expect(mcpOpenAccessBootWarning({ NODE_ENV: "development" })).toMatch(/MCP_OPEN_ACCESS/);
+    expect(
+      mcpOpenAccessBootWarning({ NODE_ENV: "development", MCP_OPEN_ACCESS: "true" }),
+    ).toBeNull();
+    expect(mcpOpenAccessBootWarning({ NODE_ENV: "production" })).toBeNull();
   });
 });
 

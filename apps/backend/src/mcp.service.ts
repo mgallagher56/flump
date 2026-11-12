@@ -12,7 +12,7 @@ import {
   type McpTokenStoreAdapter,
   type McpUserDataProvider,
 } from "@flump/mcp";
-import { BadRequestException, Inject, Injectable, NotFoundException } from "@nestjs/common";
+import { BadRequestException, Inject, Injectable, Logger, NotFoundException } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Between, In, LessThanOrEqual, MoreThanOrEqual, Repository } from "typeorm";
@@ -26,11 +26,17 @@ import { TaxRecord } from "./entities/tax-record.entity";
 import { Transaction } from "./entities/transaction.entity";
 import { UserProfile } from "./entities/user-profile.entity";
 import { FinanceService } from "./finance.service";
-import { isMcpUserAllowed, readMcpAccessConfig } from "./mcp-access";
+import {
+  isMcpUserAllowed,
+  isProductionLike,
+  mcpOpenAccessBootWarning,
+  readMcpAccessConfig,
+} from "./mcp-access";
 import { UserProfileService } from "./user-profile.service";
 
 @Injectable()
 export class McpService implements McpTokenStoreAdapter, McpUserDataProvider {
+  private readonly logger = new Logger(McpService.name);
   private httpHandler: HttpMcpHandler;
 
   constructor(
@@ -53,10 +59,16 @@ export class McpService implements McpTokenStoreAdapter, McpUserDataProvider {
     private readonly configService: ConfigService,
     @Inject(AUTH_MODE) authMode: "workos" | "dev",
   ) {
+    const warning = mcpOpenAccessBootWarning(process.env);
+    if (warning) this.logger.warn(warning);
     this.httpHandler = new HttpMcpHandler({
       dataProvider: this,
       tokenStore: this,
-      ...(authMode === "dev" ? { devToken: DEV_BYPASS_TOKEN, devUserId: DEV_USER.id } : {}),
+      // Defence in depth: the dev bypass token is never emitted in a production-like process,
+      // even if authMode were somehow "dev" (resolveAuthMode already refuses that at boot).
+      ...(authMode === "dev" && !isProductionLike(process.env)
+        ? { devToken: DEV_BYPASS_TOKEN, devUserId: DEV_USER.id }
+        : {}),
       expectedAudience: this.configService.get<string>("MCP_AUDIENCE") || "flump-mcp",
       authServerUrl: this.configService.get<string>("AUTH_SERVER_URL") || "https://api.workos.com",
     });
@@ -71,8 +83,15 @@ export class McpService implements McpTokenStoreAdapter, McpUserDataProvider {
   async findTokenByHash(tokenHash: string): Promise<McpTokenRecord | null> {
     const found = await this.mcpTokenRepository.findOne({ where: { tokenHash } });
     if (!found) return null;
-    // E29-T8: a token whose owner is not allowlisted is unusable until MCP is opened.
-    if (!isMcpUserAllowed(readMcpAccessConfig(process.env), found.userId)) return null;
+    // E29-T8: a token is unusable while the kill switch is on, or when its owner is not
+    // allowlisted and MCP is not open. Listing and revoking tokens stays ungated on purpose so
+    // users can revoke during an outage. The /mcp handlers are gated by E20-N18, not here.
+    const access = readMcpAccessConfig(process.env);
+    if (!access.enabled) return null;
+    if (!isMcpUserAllowed(access, found.userId)) {
+      this.logger.warn(`mcp_token_denied tokenId=${found.id} userId=${found.userId}`);
+      return null;
+    }
     return {
       id: found.id,
       userId: found.userId,
