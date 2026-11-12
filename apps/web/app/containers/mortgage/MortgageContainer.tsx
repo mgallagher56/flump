@@ -1,5 +1,5 @@
 import { calculateLtvMilestones, PortfolioSnapshot } from "@flump/finance-engine";
-import { LiveRegion } from "@repo/ui";
+import { LiveRegion, ProjectionNotice } from "@repo/ui";
 import { css } from "@repo/ui/styled-system/css";
 import { type FC, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -293,6 +293,7 @@ const MortgageContainer: FC = () => {
   return (
     <div className={containerStyle}>
       <LiveRegion debounceMs={1000} message={mortgageHeadline} visuallyHidden />
+      <ProjectionNotice />
       {/* Refinance Warning Banner */}
       {refinanceWarning && (
         <div

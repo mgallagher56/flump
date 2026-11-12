@@ -1,3 +1,4 @@
+import { ProjectionNotice } from "@repo/ui";
 import { css } from "@repo/ui/styled-system/css";
 import type { FC } from "react";
 import { FiArrowLeft, FiChevronRight } from "react-icons/fi";
@@ -93,7 +94,7 @@ const TOOLS_DATA: Record<string, ToolContent> = {
       "Should you overpay your UK mortgage or invest into a tax-sheltered Stocks & Shares ISA? Accurately model interest saved vs compound investment returns over 5 to 25 years.",
     title: "Mortgage Overpayment vs. Stocks & Shares ISA Calculator",
     subtitle:
-      "A mathematical and psychological comparison: evaluate guaranteed interest savings on home equity against the tax-free compounding potential of global equities inside a UK ISA.",
+      "A mathematical and psychological comparison: compare the interest saved by overpaying a mortgage with the possible tax-free growth of global equities inside a UK ISA.",
     category: "Mortgages & Investing",
     component: "mortgage-isa",
     guideSections: [
@@ -101,7 +102,7 @@ const TOOLS_DATA: Record<string, ToolContent> = {
         heading: "The Great Debate: Paying Down Debt vs. Compounding in an ISA",
         body: [
           "Deciding whether to overpay a mortgage or invest spare monthly cash into a Stocks & Shares ISA is one of the most significant wealth decisions a UK homeowner faces.",
-          "Overpaying a mortgage yields a guaranteed, tax-free return equal to your mortgage interest rate. For example, overpaying on a 4.5% mortgage delivers an effective risk-free return of 4.5%. Conversely, investing in a low-cost global index fund inside an ISA has historically returned 7% to 9% nominal annualized over 10+ year horizons, completely free of UK Capital Gains and Dividend Tax.",
+          "Overpaying a mortgage reduces the interest you pay, which works out like a return equal to your mortgage rate (check for early repayment charges first). For example, overpaying on a 4.5% mortgage avoids interest at 4.5%. Investing in a global index fund inside an ISA may grow by more or less than that, and gains and income inside an ISA are free of UK tax. Past performance is not a guide to the future and your capital is at risk.",
         ],
       },
       {
@@ -124,8 +125,8 @@ const TOOLS_DATA: Record<string, ToolContent> = {
         a: "Most UK lenders permit up to 10% of the outstanding balance to be overpaid per 12-month period without Early Repayment Charges (ERC). Always check your mortgage offer document before making large lump-sum payments.",
       },
       {
-        q: "Is ISA investment growth guaranteed?",
-        a: "No. Stocks & Shares ISAs involve investment risk and values fluctuate in the short term. However, over 10 to 20-year time horizons, globally diversified equity index funds have historically outperformed mortgage rates comfortably.",
+        q: "Can money in a Stocks & Shares ISA lose value?",
+        a: "Yes. Stocks & Shares ISAs involve investment risk. Values can fall as well as rise, and you may get back less than you put in.",
       },
       {
         q: "Can I do both?",
@@ -196,7 +197,7 @@ const TOOLS_DATA: Record<string, ToolContent> = {
       {
         heading: "Avalanche vs. Snowball: Which UK Payoff Method is Superior?",
         body: [
-          "The Debt Avalanche strategy targets the account with the highest APR first while paying minimums on the rest. Mathematically, it guarantees you pay the least total interest and become debt-free in the shortest possible timeframe.",
+          "The Debt Avalanche strategy targets the account with the highest APR first while paying minimums on the rest. On the figures you enter, it results in the least total interest paid and the shortest time to clear the debts, if you keep to the plan.",
           "The Debt Snowball strategy targets the smallest balance first regardless of interest rate. While it costs slightly more in overall interest, it delivers quick psychological wins that keep borrowers committed to their repayment plans.",
         ],
       },
@@ -259,7 +260,7 @@ const TOOLS_DATA: Record<string, ToolContent> = {
       {
         heading: "The True Cost of a 39.9% EAR Bank Overdraft",
         body: [
-          "Since FCA regulatory reforms abolished daily fixed overdraft charges, almost all major UK banks (Barclays, HSBC, Lloyds, NatWest, Santander) standardized on single interest rates around 39.9% EAR.",
+          "Most major UK banks now charge a single interest rate on arranged overdrafts, commonly around 39.9% EAR. Check your own bank's rate.",
           "Living continuously in a £1,000 overdraft costs approximately £399 per year in stealth interest deducted directly from your wages.",
         ],
       },
@@ -267,7 +268,7 @@ const TOOLS_DATA: Record<string, ToolContent> = {
     faqs: [
       {
         q: "Is an arranged overdraft considered high-priority debt?",
-        a: "Yes. Because EAR rates reach ~40%, clearing an overdraft delivers an immediate guaranteed 40% tax-free return on your money.",
+        a: "It is often one of the most expensive debts people hold. At an EAR of around 40%, paying off an overdraft avoids interest at that rate, which is usually higher than savings rates. This is general information, not a recommendation for your situation.",
       },
     ],
   },
@@ -386,6 +387,9 @@ export const ToolDetailPage: FC = () => {
         </div>
 
         {/* Page Header */}
+        <div style={{ marginBottom: "24px", maxWidth: "800px" }}>
+          <ProjectionNotice />
+        </div>
         <div style={{ marginBottom: "32px", maxWidth: "800px" }}>
           <span
             style={{

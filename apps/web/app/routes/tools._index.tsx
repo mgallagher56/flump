@@ -1,3 +1,4 @@
+import { ProjectionNotice } from "@repo/ui";
 import { css } from "@repo/ui/styled-system/css";
 import type { FC } from "react";
 import { FaCreditCard, FaFire, FaGraduationCap, FaMoneyBillWave } from "react-icons/fa";
@@ -73,6 +74,9 @@ export const ToolsIndex: FC = () => {
   return (
     <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
       <div className={containerStyle} style={{ flex: 1 }}>
+        <div style={{ marginBottom: "24px" }}>
+          <ProjectionNotice />
+        </div>
         <div className={heroHeaderStyle}>
           <span
             style={{
@@ -139,8 +143,8 @@ export const ToolsIndex: FC = () => {
                 Mortgage overpay vs ISA calculator
               </FLPHeading>
               <FLPText color="text.muted" fontSize="sm" lineHeight="1.6">
-                Compare guaranteed interest savings from mortgage overpayments against compound
-                growth in a UK Stocks and Shares ISA.
+                Compare the interest saved by overpaying a mortgage with possible growth in a UK
+                Stocks and Shares ISA.
               </FLPText>
             </div>
             <div

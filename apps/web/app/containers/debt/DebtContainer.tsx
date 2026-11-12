@@ -5,7 +5,7 @@ import {
   evaluateFinancialStage,
   PortfolioSnapshot,
 } from "@flump/finance-engine";
-import { Button, EmptyState, LiveRegion } from "@repo/ui";
+import { Button, EmptyState, LiveRegion, ProjectionNotice } from "@repo/ui";
 import { css } from "@repo/ui/styled-system/css";
 import { type FC, useMemo, useState } from "react";
 import { FaBookOpen, FaCalculator, FaCreditCard, FaExclamationTriangle } from "react-icons/fa";
@@ -182,6 +182,7 @@ export const DebtContainer: FC = () => {
   return (
     <div className={containerStyle}>
       <LiveRegion debounceMs={1000} message={debtHeadline} visuallyHidden />
+      <ProjectionNotice />
       {/* 0% Promotional Cliff & Overdraft Warning Alerts */}
       {promoAlerts.length > 0 && (
         <div

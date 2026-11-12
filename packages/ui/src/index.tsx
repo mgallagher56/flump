@@ -21,6 +21,7 @@ export * from "./patterns/GlobalBaselineBar";
 // Financial Patterns
 export * from "./patterns/KpiStrip";
 export * from "./patterns/PageHeader";
+export * from "./patterns/ProjectionNotice";
 export * from "./patterns/SectionBand";
 export * from "./patterns/SimulatorSplitLayout";
 export * from "./patterns/TaxTrapEscapeBanner";

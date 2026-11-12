@@ -1,4 +1,5 @@
 import { calculateSafeToSpend, evaluateFinancialStage } from "@flump/finance-engine";
+import { ProjectionNotice } from "@repo/ui";
 import { css } from "@repo/ui/styled-system/css";
 import { type FC, useMemo, useState } from "react";
 import {
@@ -307,6 +308,7 @@ export const HomeDashboard: FC<HomeDashboardProps> = ({
         gap: { base: "16px", md: "24px" },
       })}
     >
+      <ProjectionNotice />
       {/* Top Header & Quick Customize Bar */}
       <div
         className={css({

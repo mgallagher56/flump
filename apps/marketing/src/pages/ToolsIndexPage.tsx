@@ -121,7 +121,7 @@ export const TOOLS_CATALOG = [
   {
     slug: "mortgage-overpayment-vs-isa-calculator",
     title: "Mortgage overpayment vs Stocks and Shares ISA",
-    desc: "Compare the guaranteed return of paying down your UK mortgage against compounding equity market returns over 5–25 years.",
+    desc: "Compare the interest saved by paying down your UK mortgage with possible equity market growth over 5–25 years. Guidance, not advice.",
     icon: <FiTrendingUp size={22} color="#10b981" />,
     badge: "Mortgages and wealth",
   },
