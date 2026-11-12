@@ -43,5 +43,9 @@ export const UpdateTaxRecordRequest = CreateTaxRecordRequest.partial();
 
 export const BulkCreateTaxRecordsRequest = z.object({
   records: z.array(CreateTaxRecordRequest).max(500),
-  capPreviousRecordIds: z.array(z.uuid()).max(500).optional(),
+  /** Web sends `{id, endDate}` pairs (CopyTaxYearModal), and the controller reads both fields. */
+  capPreviousRecordIds: z
+    .array(z.object({ id: z.uuid(), endDate: IsoDate }))
+    .max(500)
+    .optional(),
 });

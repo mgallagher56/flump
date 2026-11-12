@@ -188,15 +188,7 @@ describe("log volume limits", () => {
       expect(resolveContractMode({ CONTRACT_MODE: " Enforce " })).toBe("enforce");
       expect(resolveContractMode({})).toBe("shadow");
       expect(resolveEnforcedGroups({})).toEqual(
-        new Set([
-          "accounts",
-          "budget",
-          "tax",
-          "profile",
-          "bank-connections",
-          "transactions",
-          "app",
-        ]),
+        new Set(["accounts", "budget", "profile", "bank-connections", "transactions", "app"]),
       );
       expect(resolveEnforcedGroups({ CONTRACT_ENFORCE_GROUPS: "all" })).toBe("all");
       expect(resolveEnforcedGroups({ CONTRACT_ENFORCE_GROUPS: "accounts, nope" })).toEqual(
