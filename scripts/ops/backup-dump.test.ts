@@ -126,7 +126,7 @@ describe("backup-dump.sh output (stub tools)", () => {
     expect(r.stdout).toMatch(/dump_seconds: \d+/);
     expect(statSync(outDir).mode & 0o777).toBe(0o700);
     const files = readdirSync(outDir).sort();
-    expect(files.some((f) => /^flump-pre-test-\d{8}T\d{4}Z\.dump$/.test(f))).toBe(true);
+    expect(files.some((f) => /^flump-pre-test-\d{8}T\d{6}Z\.dump$/.test(f))).toBe(true);
     expect(files.some((f) => f.endsWith(".schema.sql"))).toBe(true);
     expect(files.some((f) => f.endsWith(".sha256"))).toBe(true);
     expect(files.some((f) => f.includes("partial") || f.includes(".tmp"))).toBe(false);

@@ -27,8 +27,11 @@ export async function assertStagingMarker(db: MarkerQueryable): Promise<void> {
   }
 }
 
-// "host:port/db" with no credentials; localhost is normalised to 127.0.0.1. Throws on a
-// non-postgres URL. Two URLs that give the same target are the same database.
+// "host:port/db" with no credentials; localhost, 127.0.0.1 and [::1] all normalise to 127.0.0.1.
+// Throws on anything that is not a plain single-host postgres URL: a comma in the host list or a
+// query parameter that can override the target (host, hostaddr, port, dbname, service).
+const OVERRIDE_PARAMS = new Set(["host", "hostaddr", "port", "dbname", "service"]);
+
 export function connectionTarget(url: string): string {
   let parsed: URL;
   try {
@@ -39,10 +42,22 @@ export function connectionTarget(url: string): string {
   if (parsed.protocol !== "postgres:" && parsed.protocol !== "postgresql:") {
     throw new Error("Not a postgres URL.");
   }
+  const authority = url.slice(url.indexOf("://") + 3).split("/")[0] ?? "";
+  if (authority.includes(",") || parsed.hostname.includes(",")) {
+    throw new Error("Multi-host postgres URLs are not accepted.");
+  }
+  for (const key of parsed.searchParams.keys()) {
+    if (OVERRIDE_PARAMS.has(key.toLowerCase())) {
+      throw new Error(
+        `The URL parameter '${key.toLowerCase()}' can override the target; refusing.`,
+      );
+    }
+  }
   const database = decodeURIComponent(parsed.pathname.replace(/^\//, ""));
   if (!parsed.hostname || !database) throw new Error("The URL needs a host and a database.");
-  const host = parsed.hostname.toLowerCase() === "localhost" ? "127.0.0.1" : parsed.hostname;
-  return `${host.toLowerCase()}:${parsed.port || "5432"}/${database}`;
+  const lower = parsed.hostname.toLowerCase();
+  const host = ["localhost", "[::1]", "::1", "127.0.0.1"].includes(lower) ? "127.0.0.1" : lower;
+  return `${host}:${parsed.port || "5432"}/${database}`;
 }
 
 export function assertDistinctTargets(productionUrl: string, stagingUrl: string): void {

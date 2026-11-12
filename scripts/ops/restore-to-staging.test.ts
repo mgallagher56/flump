@@ -1,5 +1,13 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
-import { chmodSync, existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import {
+  chmodSync,
+  existsSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  statSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { assertSafeTestDatabase } from "../../apps/backend/src/testing/assertSafeTestDatabase";
@@ -40,7 +48,18 @@ case "$*" in
 esac
 cat >/dev/null; echo "accounts|1"`,
 );
-const stubRestore = stub("pg-restore-stub", `echo pg_restore >> "$STUB_LOG"; cat >/dev/null`);
+// Fails (when STUB_RESTORE_FAIL=1) the way pg_restore does: an error line that echoes the URL,
+// then CONTEXT/Command lines that carry row data.
+const stubRestore = stub(
+  "pg-restore-stub",
+  `echo pg_restore >> "$STUB_LOG"; cat >/dev/null
+if [ "\${STUB_RESTORE_FAIL:-0}" = 1 ]; then
+  echo "pg_restore: error: connection to $2 failed" >&2
+  echo "CONTEXT:  COPY accounts, line 1: SECRETROW-123" >&2
+  echo "Command was: COPY public.accounts FROM stdin; SECRETROW-123" >&2
+  exit 1
+fi`,
+);
 
 let counter = 0;
 function run(args: string[], env: Record<string, string> = {}, stdin = "") {
@@ -127,7 +146,44 @@ describe("restore-to-staging.sh guard refusals (no database)", () => {
 
   test("refuses a non-postgres URL", () => {
     const r = run([import.meta.path], { STAGING_PGURL: "mysql://u:s3cretstg@h/db" });
-    expectRefusal(r, "not a postgres:// URL");
+    expectRefusal(r, "not a plain single-host postgres:// URL");
+  });
+
+  test.each([
+    [
+      "a host= override",
+      "postgres://u:s3cretstg@stg.example.com/flump_staging?host=prod.example.com",
+    ],
+    ["a dbname= override", "postgres://u:s3cretstg@stg.example.com/x?sslmode=require&dbname=flump"],
+    ["a port= override", "postgres://u:s3cretstg@stg.example.com/flump_staging?PORT=5433"],
+    ["a service= override", "postgres://u:s3cretstg@stg.example.com/flump_staging?service=prod"],
+    [
+      "a hostaddr= override",
+      "postgres://u:s3cretstg@stg.example.com/flump_staging?hostaddr=10.0.0.1",
+    ],
+    [
+      "multiple hosts",
+      "postgres://u:s3cretstg@stg.example.com:5432,prod.example.com:5432/flump_staging",
+    ],
+  ])("refuses a staging URL with %s, before any tool runs", (_label, staging) => {
+    const r = run([import.meta.path], { STAGING_PGURL: staging });
+    expectRefusal(r, "not a plain single-host postgres:// URL");
+    expect(r.calls).toEqual([]);
+  });
+
+  test("refuses a PGURL with an override parameter too", () => {
+    const r = run([import.meta.path], { PGURL: `${PROD}?dbname=other` });
+    expectRefusal(r, "PGURL is not a plain single-host");
+  });
+
+  test("treats [::1], ::1-style brackets, localhost and 127.0.0.1 as the same host", () => {
+    for (const host of ["[::1]", "LOCALHOST", "127.0.0.1"]) {
+      const r = run([import.meta.path], {
+        PGURL: "postgres://a:s3cretprod@localhost:5432/flump",
+        STAGING_PGURL: `postgres://b:s3cretstg@${host}:5432/flump`,
+      });
+      expectRefusal(r, "same host, port and database");
+    }
   });
 
   test("requires an owner id", () => {
@@ -172,6 +228,40 @@ describe("restore-to-staging.sh guard refusals (no database)", () => {
   );
 });
 
+describe("restore-to-staging.sh failure and output handling (stub tools)", () => {
+  test("a failing pg_restore shows only the first error line, redacted, no row context", () => {
+    const r = run([import.meta.path], { STUB_RESTORE_FAIL: "1" });
+    expect(r.exitCode).toBe(1);
+    expect(r.stderr).toContain("pg_restore failed");
+    expect(r.stderr).toContain("pg_restore: error: connection to [redacted] failed");
+    expect(r.stderr).toContain("nothing was restored");
+    for (const secret of [...SECRETS, "SECRETROW", "CONTEXT", "Command was"]) {
+      expect(r.out).not.toContain(secret);
+    }
+  });
+
+  test("after --replace a failed restore says staging is EMPTY, not unchanged", () => {
+    const r = run(
+      ["--replace", import.meta.path],
+      { STUB_RESTORE_FAIL: "1", STUB_COUNT: "9" },
+      "restore-into-staging\n",
+    );
+    expect(r.exitCode).toBe(1);
+    expect(r.stderr).toContain("staging is now EMPTY");
+    expect(r.stderr).not.toContain("unchanged");
+    expect(r.out).not.toContain("SECRETROW");
+  });
+
+  test("output files are private (0600)", () => {
+    const outDir = join(work, `out-${counter}`);
+    const r = run(["--out-dir", outDir, import.meta.path]);
+    expect(r.exitCode).toBe(0);
+    for (const f of ["staging-counts.txt", "staging-verify.txt"]) {
+      expect(statSync(join(outDir, f)).mode & 0o777).toBe(0o600);
+    }
+  });
+});
+
 describe("lib-staging.sh helpers (sourceable)", () => {
   const sh = (script: string, env: Record<string, string> = {}) => {
     const proc = Bun.spawnSync(["bash", "-c", `. "${LIB}"; ${script}`], {
@@ -201,6 +291,28 @@ describe("lib-staging.sh helpers (sourceable)", () => {
       `conn_target "postgres://u:pw@LocalHost/db?x=1"; conn_target "postgres://u:p@w@h.example.com:6543/d"`,
     );
     expect(r.stdout.trim().split("\n")).toEqual(["127.0.0.1:5432/db", "h.example.com:6543/d"]);
+  });
+
+  test("conn_target handles bracketed IPv6 and rejects overrides and multi-host URLs", () => {
+    const ok = sh(
+      `conn_target "postgres://u:p@[::1]:6543/db"; conn_target "postgres://u:p@[::1]/db"; conn_target "postgres://u:p@[2001:db8::1]:5432/db"`,
+    );
+    expect(ok.stdout.trim().split("\n")).toEqual([
+      "127.0.0.1:6543/db",
+      "127.0.0.1:5432/db",
+      "[2001:db8::1]:5432/db",
+    ]);
+    for (const bad of [
+      "postgres://u:p@h/db?host=x",
+      "postgres://u:p@h/db?a=1&PORT=5",
+      "postgres://u:p@h/db?dbname=x",
+      "postgres://u:p@h/db?service=x",
+      "postgres://u:p@h1,h2/db",
+      "postgres://u:p@h:5x/db",
+    ]) {
+      expect(sh(`conn_target "${bad}"`).exitCode).toBe(1);
+    }
+    expect(sh(`assert_staging_marker "postgres://u:p@h/db?host=prod"`).exitCode).toBe(2);
   });
 });
 
@@ -456,6 +568,21 @@ describe.skipIf(!DB_TESTS_ENABLED)("backup-dump + restore-to-staging (real Postg
     expect(missing.out).toContain("mcp_tokens|missing");
   });
 
+  test("verify-restore.sql fails when no serial sequences are found", async () => {
+    expect(restore(["--replace", dump], "restore-into-staging\n").exitCode).toBe(0);
+    await staging((c) =>
+      c.query(`DO $$ DECLARE r record; BEGIN
+        FOR r IN SELECT table_name, column_name FROM information_schema.columns
+                 WHERE table_schema = 'public' AND column_default LIKE 'nextval(%' LOOP
+          EXECUTE format('ALTER TABLE public.%I ALTER COLUMN %I DROP DEFAULT', r.table_name, r.column_name);
+        END LOOP; END $$`),
+    );
+    const none = stagingPsql(VERIFY_SQL, { expected_migrations: "1" });
+    expect(none.exitCode).not.toBe(0);
+    expect(none.out).toContain("sequences_checked|0");
+    expect(none.out).toContain("RESULT|FAIL");
+  });
+
   test("verify-restore.sql is read-only and needs expected_migrations", () => {
     const code = VERIFY_SQL.split("\n")
       .filter((line) => !line.trimStart().startsWith("--"))
@@ -484,5 +611,21 @@ describe.skipIf(!DB_TESTS_ENABLED)("backup-dump + restore-to-staging (real Postg
 describe("script hygiene", () => {
   test.each([RESTORE, BACKUP, LIB])("%s never enables xtrace", (file) => {
     expect(readFileSync(file, "utf8")).not.toMatch(/set -[a-z]*x|set -o xtrace/);
+  });
+
+  test.each([RESTORE, BACKUP])("%s turns tracing off and drops BASH_XTRACEFD", (file) => {
+    const text = readFileSync(file, "utf8");
+    expect(text).toContain("set +x\nunset BASH_XTRACEFD");
+  });
+
+  test("scripts that are run with tracing requested still print no secrets", () => {
+    const proc = Bun.spawnSync(["bash", "-x", RESTORE, "--owner", "x", "/nonexistent.dump"], {
+      env: { ...process.env, PGURL: PROD, STAGING_PGURL: STAGING, SHELLOPTS: "xtrace" },
+      stdout: "pipe",
+      stderr: "pipe",
+    });
+    const out = proc.stdout.toString() + proc.stderr.toString();
+    expect(out).not.toContain("s3cretprod");
+    expect(out).not.toContain("s3cretstg");
   });
 });

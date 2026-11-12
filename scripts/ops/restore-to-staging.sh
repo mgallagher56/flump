@@ -24,7 +24,11 @@
 #   PSQL / PG_RESTORE         tool commands (default psql / pg_restore; may be wrappers)
 #
 # Never prints PGURL or STAGING_PGURL (tool errors are shown with both URLs removed).
+# Never trace: xtrace would print connection strings.
+set +x
+unset BASH_XTRACEFD
 set -euo pipefail
+umask 077
 
 here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=lib-staging.sh
@@ -38,6 +42,7 @@ before_counts=""
 expected_migrations=""
 out_dir="."
 replace=0
+replaced=0
 dump=""
 
 usage() {
@@ -135,6 +140,19 @@ fail_with_log() {
   exit 1
 }
 
+# pg_restore failures: show only the first "pg_restore: error:" line (never CONTEXT/Command lines,
+# which can carry row data), with both URLs removed.
+fail_restore() {
+  local line
+  echo "ERROR: $1" >&2
+  line="$(grep -m1 '^pg_restore: error:' "$logfile" || true)"
+  if [ -n "$line" ]; then
+    line="${line//"$STAGING_PGURL"/[redacted]}"
+    printf '  %s\n' "${line//"$PGURL"/[redacted]}" >&2
+  fi
+  exit 1
+}
+
 staging_psql() { "${psql_cmd[@]}" "$STAGING_PGURL" -X -v ON_ERROR_STOP=1 "$@"; }
 
 object_count="$(staging_psql -A -t -q -c \
@@ -157,13 +175,19 @@ if [ "$object_count" != "0" ]; then
   fi
   staging_psql -q -c "DROP SCHEMA public CASCADE; CREATE SCHEMA public;" </dev/null 2>"$logfile" ||
     fail_with_log "could not recreate the staging public schema"
+  replaced=1
 fi
 
 mkdir -p "$out_dir"
 echo "restore: restoring $(basename "$dump") into the staging database"
 start="$(date +%s)"
 "${pg_restore_cmd[@]}" --dbname "$STAGING_PGURL" --no-owner --exit-on-error --single-transaction \
-  <"$dump" >"$logfile" 2>&1 || fail_with_log "pg_restore failed (single transaction: staging is unchanged)"
+  <"$dump" >"$logfile" 2>&1 || {
+  if [ "$replaced" -eq 1 ]; then
+    fail_restore "pg_restore failed; the restore rolled back, but --replace had already emptied the staging public schema, so staging is now EMPTY (fix the cause and re-run with --replace)"
+  fi
+  fail_restore "pg_restore failed (single transaction: nothing was restored; the schema was empty before)"
+}
 restore_seconds=$(($(date +%s) - start))
 echo "restore_seconds: $restore_seconds"
 

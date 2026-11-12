@@ -31,6 +31,35 @@ describe("connectionTarget and assertDistinctTargets", () => {
     expect(() => connectionTarget("not a url")).toThrow();
   });
 
+  test("treat localhost, 127.0.0.1 and [::1] as the same host", () => {
+    for (const host of ["localhost", "127.0.0.1", "[::1]", "LocalHost"]) {
+      expect(connectionTarget(`postgres://u:p@${host}:5433/db`)).toBe("127.0.0.1:5433/db");
+    }
+    expect(connectionTarget("postgres://u:p@[2001:db8::1]/db")).toBe("[2001:db8::1]:5432/db");
+    expect(() =>
+      assertDistinctTargets("postgres://a:b@[::1]:5432/flump", "postgres://c:d@localhost/flump"),
+    ).toThrow("same database");
+  });
+
+  test("reject override parameters and multi-host URLs", () => {
+    for (const bad of [
+      "postgres://u:p@h/db?host=x",
+      "postgres://u:p@h/db?sslmode=require&PORT=5",
+      "postgres://u:p@h/db?dbname=x",
+      "postgres://u:p@h/db?service=x",
+      "postgres://u:p@h/db?hostaddr=10.0.0.1",
+      "postgres://u:p@h1:5432,h2:5432/db",
+    ]) {
+      expect(() => connectionTarget(bad)).toThrow();
+    }
+    expect(() =>
+      assertDistinctTargets(
+        "postgres://a:b@prod.example.com/flump",
+        "postgres://c:d@stg.example.com/s?host=prod.example.com",
+      ),
+    ).toThrow();
+  });
+
   test("refuse missing, equal and same-target URLs, never echoing them", () => {
     const prod = "postgres://a:secretone@prod.example.com:5432/flump";
     expect(() => assertDistinctTargets("", prod)).toThrow("required");
