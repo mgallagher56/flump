@@ -3,7 +3,6 @@ import { useFocusEffect } from "@react-navigation/native";
 import React, { useCallback, useMemo, useState } from "react";
 import {
   ActivityIndicator,
-  Modal,
   RefreshControl,
   ScrollView,
   StyleSheet,
@@ -14,7 +13,7 @@ import {
 import { api } from "../api/client";
 import { useTheme } from "../ThemeContext";
 import { radii, spacing } from "../theme";
-import type { Account, AccountDetail, BankConnection, BudgetEntry, Transaction } from "../types";
+import type { Account, AccountDetail, BudgetEntry, Transaction } from "../types";
 
 interface DashboardScreenProps {
   setActiveTab: (
@@ -30,26 +29,21 @@ export default function DashboardScreen({ setActiveTab }: DashboardScreenProps) 
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [accountDetails, setAccountDetails] = useState<AccountDetail[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [bankConnections, setBankConnections] = useState<BankConnection[]>([]);
   const [budgetEntries, setBudgetEntries] = useState<BudgetEntry[]>([]);
   const [profile, setProfile] = useState<any>(null);
-  const [isConnectModalVisible, setIsConnectModalVisible] = useState(false);
-  const [connectingId, setConnectingId] = useState<string | null>(null);
 
   const fetchData = async () => {
     try {
-      const [accs, details, txs, conns, budget, userProfile] = await Promise.all([
+      const [accs, details, txs, budget, userProfile] = await Promise.all([
         api.getAccounts(),
         api.getAccountDetails(),
         api.getTransactions(),
-        api.getBankConnections(),
         api.getBudgetEntries(),
         api.getUserProfile(),
       ]);
       setAccounts(accs);
       setAccountDetails(details);
       setTransactions(txs);
-      setBankConnections(conns);
       setBudgetEntries(budget);
       setProfile(userProfile);
     } catch (err) {
@@ -200,19 +194,6 @@ export default function DashboardScreen({ setActiveTab }: DashboardScreenProps) 
     };
   }, [budgetEntries, accounts, accountDetails]);
 
-  const handleConnectBank = async (institutionId: string) => {
-    setConnectingId(institutionId);
-    try {
-      await api.connectBank(institutionId);
-      await fetchData();
-      setIsConnectModalVisible(false);
-    } catch (err) {
-      console.warn(err);
-    } finally {
-      setConnectingId(null);
-    }
-  };
-
   const formatCurrency = (val: number) => {
     const currency = profile?.currency || "GBP";
     const getLocale = (curr: string) => {
@@ -304,54 +285,6 @@ export default function DashboardScreen({ setActiveTab }: DashboardScreenProps) 
               <Text style={styles.liabilityVal}>{formatCurrency(stats.liabilities)}</Text>
             </View>
           </View>
-        </View>
-
-        {/* Bank Connection Empty state or sync status */}
-        <View style={styles.section}>
-          {bankConnections.length === 0 ? (
-            <View style={styles.connectCard}>
-              <View style={styles.cardHeader}>
-                <View style={styles.iconBox}>
-                  <FontAwesome name="bank" size={20} color={colors.indigo[600]} />
-                </View>
-                <View style={styles.badge}>
-                  <Text style={styles.badgeText}>Recommended</Text>
-                </View>
-              </View>
-              <Text style={styles.cardTitle}>Connect your Bank Accounts</Text>
-              <Text style={styles.cardDesc}>
-                Sync balances and transactions automatically for current, savings, and mortgage
-                accounts.
-              </Text>
-              <TouchableOpacity
-                onPress={() => setIsConnectModalVisible(true)}
-                style={styles.syncButton}
-              >
-                <Text style={styles.syncButtonText}>Sync Bank Account</Text>
-              </TouchableOpacity>
-            </View>
-          ) : (
-            <View style={styles.syncStatusCard}>
-              <View style={styles.rowItems}>
-                <View style={styles.emeraldIconBox}>
-                  <FontAwesome name="check-circle" size={16} color={colors.success[500]} />
-                </View>
-                <View>
-                  <Text style={styles.syncTitle}>Bank Sync Active</Text>
-                  <Text style={styles.syncDesc}>
-                    {bankConnections.length} bank connection(s) configured
-                  </Text>
-                </View>
-              </View>
-              <TouchableOpacity
-                onPress={() => setIsConnectModalVisible(true)}
-                style={styles.manageButton}
-                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-              >
-                <Text style={styles.manageButtonText}>Manage</Text>
-              </TouchableOpacity>
-            </View>
-          )}
         </View>
 
         {/* Feature Integration Quick Widgets */}
@@ -472,99 +405,6 @@ export default function DashboardScreen({ setActiveTab }: DashboardScreenProps) 
           </View>
         </View>
       </ScrollView>
-
-      {/* Connect Bank Wizard Modal */}
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={isConnectModalVisible}
-        onRequestClose={() => setIsConnectModalVisible(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Link Bank Account</Text>
-              <TouchableOpacity
-                onPress={() => setIsConnectModalVisible(false)}
-                style={styles.modalCloseButton}
-                hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-              >
-                <FontAwesome name="times" size={18} color={colors.slate[400]} />
-              </TouchableOpacity>
-            </View>
-
-            <Text style={styles.modalDesc}>
-              Select your institution to connect. We will retrieve account balances and transactions
-              securely using open banking.
-            </Text>
-
-            {/* Bank list */}
-            <ScrollView style={{ maxHeight: 300 }}>
-              <View style={{ gap: 12 }}>
-                {[
-                  { id: "hsbc", name: "HSBC Bank" },
-                  { id: "barclays", name: "Barclays Bank" },
-                  { id: "monzo", name: "Monzo Bank" },
-                  { id: "starling", name: "Starling Bank" },
-                  { id: "revolut", name: "Revolut" },
-                  { id: "chase", name: "Chase" },
-                ].map((bank) => {
-                  const isConnecting = connectingId === bank.id;
-                  const isConnected = bankConnections.some((c) => c.institutionId === bank.id);
-
-                  return (
-                    <TouchableOpacity
-                      key={bank.id}
-                      disabled={isConnecting || isConnected}
-                      onPress={() => handleConnectBank(bank.id)}
-                      style={[
-                        styles.bankItem,
-                        isConnected ? styles.bankItemConnected : styles.bankItemNormal,
-                      ]}
-                    >
-                      <View style={styles.rowItems}>
-                        <FontAwesome
-                          name="bank"
-                          size={16}
-                          color={colors.indigo[600]}
-                          style={{ marginRight: 12 }}
-                        />
-                        <Text style={styles.syncTitle}>{bank.name}</Text>
-                      </View>
-                      {isConnecting ? (
-                        <ActivityIndicator size="small" color={colors.indigo[600]} />
-                      ) : isConnected ? (
-                        <Text style={styles.connectedText}>Connected</Text>
-                      ) : (
-                        <FontAwesome name="chevron-right" size={12} color={colors.slate[500]} />
-                      )}
-                    </TouchableOpacity>
-                  );
-                })}
-              </View>
-            </ScrollView>
-
-            <View style={styles.modalFooter}>
-              {bankConnections.length > 0 && (
-                <TouchableOpacity
-                  onPress={async () => {
-                    for (const conn of bankConnections) {
-                      await api.deleteBankConnection(conn.id);
-                    }
-                    await fetchData();
-                  }}
-                  style={styles.disconnectButton}
-                >
-                  <Text style={styles.disconnectButtonText}>Disconnect All Bank Connections</Text>
-                </TouchableOpacity>
-              )}
-              <Text style={styles.emptyStateText}>
-                Secure SSL encryption • Read-only transaction access
-              </Text>
-            </View>
-          </View>
-        </View>
-      </Modal>
     </View>
   );
 }
