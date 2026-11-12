@@ -22,6 +22,13 @@ export type ContractMode = "off" | "shadow";
 export const resolveContractMode = (env: NodeJS.ProcessEnv = process.env): ContractMode =>
   env.CONTRACT_MODE?.trim().toLowerCase() === "off" ? "off" : "shadow";
 
+const MAX_ISSUES_LOGGED = 20;
+const MAX_PATH_CHARS = 80;
+
+/** Log the 1st, 2nd and 10th occurrence per route, then every 100th, so a bad client cannot flood the log. */
+export const shouldLogOccurrence = (count: number): boolean =>
+  count === 1 || count === 2 || count === 10 || (count >= 100 && count % 100 === 0);
+
 export interface ContractViolation {
   event: "contract_violation";
   routeId: string;
@@ -84,13 +91,16 @@ export class ContractShadowInterceptor implements NestInterceptor {
     if (result.ok) return;
     const count = (this.counts.get(route.id) ?? 0) + 1;
     this.counts.set(route.id, count);
+    if (!shouldLogOccurrence(count)) return;
     const violation: ContractViolation = {
       event: "contract_violation",
       routeId: route.id,
       method: route.method,
       pathTemplate: `/${route.path}`,
       part,
-      issues: result.issues,
+      issues: result.issues
+        .slice(0, MAX_ISSUES_LOGGED)
+        .map((issue) => ({ ...issue, path: issue.path.slice(0, MAX_PATH_CHARS) })),
       count,
     };
     this.logger.warn(JSON.stringify(violation));

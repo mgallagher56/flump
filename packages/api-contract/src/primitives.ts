@@ -1,11 +1,17 @@
 import { z } from "zod";
 
+/** True when `v` has at most 2 decimal places. The tolerance scales with magnitude, because float error grows with it. */
+export const hasAtMostTwoDecimals = (v: number): boolean => {
+  const scaled = v * 100;
+  return Math.abs(scaled - Math.round(scaled)) <= Math.max(1e-6, Math.abs(scaled) * 1e-12);
+};
+
 /** Money: a finite JSON number in pounds with at most 2 decimal places (E21 decision D3-A). */
 export const Money = z
   .number()
   .finite()
   .refine((v) => Math.abs(v) < 1e10, "must be below 10 billion")
-  .refine((v) => Math.abs(Math.round(v * 100) - v * 100) < 1e-6, "at most 2 decimal places");
+  .refine(hasAtMostTwoDecimals, "at most 2 decimal places");
 
 /** Non-negative money (balances: liabilities are stored positive, sign comes from the type). */
 export const MoneyNonNegative = Money.refine((v) => v >= 0, "must not be negative");
@@ -16,7 +22,7 @@ export const Percent = z
   .finite()
   .min(0)
   .max(100)
-  .refine((v) => Math.abs(Math.round(v * 100) - v * 100) < 1e-6, "at most 2 decimal places");
+  .refine(hasAtMostTwoDecimals, "at most 2 decimal places");
 
 export const Uuid = z.uuid();
 
