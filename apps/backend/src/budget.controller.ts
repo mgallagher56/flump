@@ -174,6 +174,14 @@ const DEFAULT_BUDGET_SEEDS: DefaultSeed[] = [
   },
 ];
 
+/** The entry name from `name`, or its `title` alias; undefined when neither is a non-blank string. */
+function resolveEntryName(body: { name?: unknown; title?: unknown }): string | undefined {
+  for (const candidate of [body.name, body.title]) {
+    if (typeof candidate === "string" && candidate.trim() !== "") return candidate.trim();
+  }
+  return undefined;
+}
+
 @Controller()
 @UseGuards(AuthGuard)
 export class BudgetController {
@@ -262,7 +270,9 @@ export class BudgetController {
     @Body()
     body: {
       category: BudgetCategory;
-      name: string;
+      name?: string;
+      /** Alias for `name`, accepted for older clients. */
+      title?: string;
       amount: number;
       frequency?: BudgetFrequency;
       isIncome?: boolean;
@@ -271,10 +281,14 @@ export class BudgetController {
     },
   ): Promise<BudgetEntry> {
     const userId = req.user.id;
+    const name = resolveEntryName(body);
+    if (name === undefined) {
+      throw new BadRequestException("Budget entry name is required");
+    }
     const entry = this.budgetEntryRepository.create({
       userId,
       category: body.category,
-      name: body.name,
+      name,
       amount: body.amount,
       frequency: body.frequency ?? "monthly",
       isIncome: body.isIncome ?? false,
@@ -298,6 +312,7 @@ export class BudgetController {
     body: {
       category?: BudgetCategory;
       name?: string;
+      title?: string;
       amount?: number;
       frequency?: BudgetFrequency;
       isIncome?: boolean;
@@ -313,7 +328,8 @@ export class BudgetController {
     }
 
     if (body.category !== undefined) entry.category = body.category;
-    if (body.name !== undefined) entry.name = body.name;
+    const name = resolveEntryName(body);
+    if (name !== undefined) entry.name = name;
     if (body.amount !== undefined) entry.amount = body.amount;
     if (body.frequency !== undefined) entry.frequency = body.frequency;
     if (body.isIncome !== undefined) entry.isIncome = body.isIncome;

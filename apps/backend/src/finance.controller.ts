@@ -127,7 +127,17 @@ export class FinanceController {
     return this.financeService.createAccount(req.user.id, body);
   }
 
+  // Stacking @Put and @Patch on one handler registers only the top decorator's verb, so each
+  // verb gets its own handler. The web app uses PATCH; PUT stays for existing clients.
   @Put("accounts/:id")
+  async replaceAccount(
+    @Req() req: AuthenticatedRequest,
+    @Param("id") id: string,
+    @Body() body: UpdateAccountDto,
+  ) {
+    return this.financeService.updateAccount(req.user.id, id, body);
+  }
+
   @Patch("accounts/:id")
   async updateAccount(
     @Req() req: AuthenticatedRequest,

@@ -35,6 +35,7 @@ import { useUserProfile } from "~/hooks/useUserProfile";
 import { apiFetch } from "~/services/api-client";
 import { backendFetch } from "~/services/backend-client.server";
 import { BackendError } from "~/services/backend-error";
+import { buildOnboardingSeedJobs } from "~/services/onboarding-seed";
 import { actionErrorResponse, throwRouteError } from "~/services/route-error.server";
 import { useFinancialBaseline } from "~/state/baseline.store";
 import { getAuthSession, requireAccessToken } from "~/utils/auth.server";
@@ -313,76 +314,41 @@ export default function OnboardingRoute() {
       // Jobs that already succeeded are remembered so a retry never creates duplicates. The
       // backend is also asked what already exists, so a retry after a reload, a crash or a lost
       // response skips records an earlier attempt created. A failed lookup stops here (no guessing).
-      const existingNames = async (endpoint: string, field: "name" | "title") => {
+      const existingNames = async (endpoint: string) => {
         const rows = await apiFetch<Array<Record<string, unknown>>>(endpoint, { accessToken });
         if (!Array.isArray(rows)) throw new BackendError("bad-response", endpoint);
-        return rows.flatMap((row) =>
-          typeof row[field] === "string" ? [row[field] as string] : [],
-        );
+        return rows.flatMap((row) => (typeof row.name === "string" ? [row.name] : []));
       };
       const [existingAccounts, existingEntries] = await Promise.all([
-        existingNames("/accounts", "name"),
-        existingNames("/budget-entries", "title"),
+        existingNames("/accounts"),
+        existingNames("/budget-entries"),
       ]);
       for (const name of existingAccounts) seededRef.current.add(`account:${name}`);
-      for (const title of existingEntries) seededRef.current.add(`entry:${title}`);
+      for (const name of existingEntries) seededRef.current.add(`entry:${name}`);
 
-      const runSeed = async (key: string, endpoint: string, payload: unknown, enabled: boolean) => {
-        if (!enabled || seededRef.current.has(key)) return;
-        await apiFetch<unknown>(endpoint, { accessToken, method: "POST", body: payload });
-        seededRef.current.add(key);
-      };
+      const seedJobs = buildOnboardingSeedJobs({
+        cash,
+        pensionPot: pot,
+        mortgageBalance,
+        unsecuredDebt,
+        monthlyTakeHome: liveTakeHome.monthlyTakeHome,
+        housingStatus,
+        monthlyHousing,
+        otherOutgoings,
+      });
 
-      const createAccountSafe = (name: string, type: string, balance: number) =>
-        runSeed(
-          `account:${name}`,
-          "/accounts",
-          { name, type, balance, isCurrent: true },
-          balance > 0,
-        );
-
-      const createBudgetEntrySafe = (
-        title: string,
-        category: string,
-        amount: number,
-        isIncome: boolean,
-      ) =>
-        runSeed(
-          `entry:${title}`,
-          "/budget-entries",
-          { title, category, amount, isIncome, frequency: "monthly" },
-          amount > 0,
-        );
-
-      const seedResults = await Promise.allSettled([
-        createAccountSafe("Cash and emergency savings", "Saving", cash),
-        createAccountSafe("Workplace and personal pension", "Pension", pot),
-        ...(mortgageBalance > 0
-          ? [createAccountSafe("Residential Mortgage", "Mortgage", mortgageBalance)]
-          : []),
-        ...(unsecuredDebt > 0
-          ? [createAccountSafe("Cards and loans baseline", "Credit Card", unsecuredDebt)]
-          : []),
-        createBudgetEntrySafe(
-          "Monthly Take-Home Income",
-          "income",
-          liveTakeHome.monthlyTakeHome,
-          true,
-        ),
-        ...(monthlyHousing > 0
-          ? [
-              createBudgetEntrySafe(
-                housingStatus === "mortgage" ? "Mortgage Payment" : "Rent Payment",
-                "housing",
-                monthlyHousing,
-                false,
-              ),
-            ]
-          : []),
-        ...(otherOutgoings > 0
-          ? [createBudgetEntrySafe("General living and outgoings", "living", otherOutgoings, false)]
-          : []),
-      ]);
+      // Every enabled job runs even if one fails, so a retry only repeats what is missing.
+      const seedResults = await Promise.allSettled(
+        seedJobs.map(async (job) => {
+          if (!job.enabled || seededRef.current.has(job.key)) return;
+          await apiFetch<unknown>(job.endpoint, {
+            accessToken,
+            method: "POST",
+            body: job.payload,
+          });
+          seededRef.current.add(job.key);
+        }),
+      );
 
       if (seedResults.some((r) => r.status === "rejected")) {
         setClientError(FINISH_ERROR);

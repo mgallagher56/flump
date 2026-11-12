@@ -58,6 +58,8 @@ export interface PortfolioSnapshotResponse {
   currency: string;
 }
 
+export const DEFAULT_ACCOUNT_CURRENCY = "GBP";
+
 export interface DeleteAccountResponse {
   success: boolean;
 }
@@ -217,6 +219,8 @@ export class AccountIntakeService implements IAccountIntake {
     }
     const account: Account = this.accountRepository.create({
       ...fields,
+      // accounts.currency is NOT NULL and the DTO leaves it optional, so default it here.
+      currency: fields.currency ?? DEFAULT_ACCOUNT_CURRENCY,
       userId,
     });
     return this.accountRepository.save(account);
