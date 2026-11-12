@@ -13,6 +13,8 @@ Scripts: `scripts/ops/backup-dump.sh`, `scripts/ops/restore-to-staging.sh`, `scr
 
 Drill targets: `restore_seconds` under 30 minutes; dump age at drill at most 24 h.
 
+> **Argv exposure:** the connection URLs are passed to `psql`, `pg_dump` and `pg_restore` as command-line arguments, so other local users can see them in `ps` while a script runs. Run these on your own Mac only, never on a shared machine. The scripts turn off shell tracing (`set +x`) so URLs never reach a trace, and show tool errors with the URLs removed (for `pg_restore` only the first `pg_restore: error:` line, never row context).
+
 ## 1. Take a dump
 
 Get a tunnel URL (do not echo it):
@@ -23,15 +25,15 @@ export PGURL='<paste, do not share>'
 bash scripts/ops/backup-dump.sh --owner '<your WorkOS user id>' [--age-recipient age1...]
 ```
 
-It writes to `~/flump-backups` (directory `0700`, files `0600`):
+It writes to `~/flump-backups` (a directory the script creates is `0700`; an existing one is left alone; files are `0600`):
 
-| File                            | What                                                              |
-| ------------------------------- | ----------------------------------------------------------------- |
-| `flump-prod-<stamp>.dump`       | `pg_dump --format=custom --no-owner`                              |
-| `flump-prod-<stamp>.schema.sql` | schema only                                                       |
-| `flump-prod-<stamp>.counts.txt` | `prod-counts.sql` output taken at dump time (with `--owner`)      |
-| `flump-prod-<stamp>.sha256`     | checksums of the files above                                      |
-| `flump-prod-<stamp>.dump.age`   | encrypted copy (with `--age-recipient`); **upload only this one** |
+| File                            | What                                                                                                                                                      |
+| ------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `flump-prod-<stamp>.dump`       | `pg_dump --format=custom --no-owner`                                                                                                                      |
+| `flump-prod-<stamp>.schema.sql` | schema only                                                                                                                                               |
+| `flump-prod-<stamp>.counts.txt` | `prod-counts.sql` output taken just before the dump (with `--owner`); rows written in between show up as a diff, so use a quiet window for an exact match |
+| `flump-prod-<stamp>.sha256`     | checksums of the files above                                                                                                                              |
+| `flump-prod-<stamp>.dump.age`   | encrypted copy (with `--age-recipient`); **upload only this one**                                                                                         |
 
 It prints `dump_seconds`, `dump_bytes` and `table_data_entries` (the `pg_restore --list` count of `TABLE DATA`; expect one per table, 9 today including `migrations`). Timing today (166 MB database): well under a minute; note yours in the drill log. The dump holds financial data, encrypted bank tokens and PAT hashes: keep it on FileVault disk plus an encrypted external drive, and encrypt with `age` before any cloud upload. Keep offsite copies at least 30 days.
 
@@ -61,7 +63,7 @@ The script refuses (exit 2, nothing changed) unless all of these hold:
 - The staging database comment is exactly `flump-staging`.
 - The staging `public` schema is empty. If it is not, re-run with `--replace`: it drops and recreates `public` (only) after you type `restore-into-staging`.
 
-Then it runs `pg_restore --no-owner --exit-on-error --single-transaction` (all or nothing), prints `restore_seconds`, writes `staging-counts.txt` and `staging-verify.txt` (in `--out-dir`, default the current directory), and diffs the counts against `--before-counts`. Exit 0 means both the diff and `verify-restore.sql` are clean. `verify-restore.sql` checks: expected tables present (`to_regclass`), `migrations` rows equal the timestamped files in `apps/backend/src/migrations` (override with `--expected-migrations N` when the dump predates newer migrations), every serial sequence is at or past `max(id)`, and prints foreign key and index counts.
+Then it runs `pg_restore --no-owner --exit-on-error --single-transaction` (all or nothing, but after `--replace` a failed restore leaves staging empty: fix the cause and re-run with `--replace`), prints `restore_seconds`, writes `staging-counts.txt` and `staging-verify.txt` (in `--out-dir`, default the current directory), and diffs the counts against `--before-counts`. Exit 0 means both the diff and `verify-restore.sql` are clean. `verify-restore.sql` checks: expected tables present (`to_regclass`), `migrations` rows equal the timestamped files in `apps/backend/src/migrations` (override with `--expected-migrations N` when the dump predates newer migrations), every serial sequence is at or past `max(id)`, and prints foreign key and index counts.
 
 ### Pass criteria (all four)
 

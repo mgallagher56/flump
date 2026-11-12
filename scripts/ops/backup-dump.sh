@@ -10,13 +10,16 @@
 #   PGURL                 production connection URL (required; never printed)
 #   --out-dir DIR         default ~/flump-backups (created 0700; every file is written 0600)
 #   --label NAME          file name label, letters digits - _ only (default "prod")
-#   --owner ID | OWNER    if given, also writes <base>.counts.txt (prod-counts.sql output) so the
-#                         restore drill can diff counts against "just before the dump"
+#   --owner ID | OWNER    if given, also writes <base>.counts.txt (prod-counts.sql output, taken just
+#                         before pg_dump; not atomic with it) for the restore drill's counts diff
 #   --age-recipient KEY   also write <dump>.age encrypted to this age public key; upload ONLY that
 #   PG_DUMP / PG_RESTORE / PSQL   tool commands (default pg_dump / pg_restore / psql; may be wrappers)
 #
 # Writes <base>.dump (custom format, --no-owner), <base>.schema.sql, <base>.sha256 and prints
 # dump_seconds, dump_bytes and table_data_entries. Never prints PGURL, row data or token values.
+# Never trace: xtrace would print the connection string.
+set +x
+unset BASH_XTRACEFD
 set -euo pipefail
 umask 077
 
@@ -114,12 +117,15 @@ else
   sha256() { shasum -a 256 "$@"; }
 fi
 
-mkdir -p "$out_dir"
-chmod 700 "$out_dir"
-stamp="$(date -u +%Y%m%dT%H%MZ)"
+# Only tighten the directory when this script creates it (never chmod a directory you own already).
+if [ ! -d "$out_dir" ]; then
+  mkdir -p "$out_dir"
+  chmod 700 "$out_dir"
+fi
+stamp="$(date -u +%Y%m%dT%H%M%SZ)"
 base="flump-${label}-${stamp}"
 logfile="$(mktemp)"
-trap 'rm -f "$logfile"' EXIT
+trap 'rm -f "$logfile" "$out_dir/$base.dump.partial" "$out_dir/$base.list.tmp"' EXIT
 
 # Tool errors can echo the connection string; show them only with it removed.
 fail_with_log() {
@@ -130,6 +136,14 @@ fail_with_log() {
   done < <(tail -n 8 "$logfile")
   exit 1
 }
+
+# Counts are taken just BEFORE the dump. They are not atomic with it: rows written between the
+# two steps make the restore drill's counts diff differ. Stop writes (or use a quiet window) for
+# an exact comparison.
+if [ -n "$owner" ]; then
+  "${psql_cmd[@]}" "$PGURL" -X -v ON_ERROR_STOP=1 -v "owner=$owner" -f - <"$counts_sql" \
+    >"$out_dir/$base.counts.txt" 2>"$logfile" || fail_with_log "prod-counts.sql failed"
+fi
 
 echo "backup: dumping to $out_dir/$base.dump"
 start="$(date +%s)"
@@ -151,11 +165,6 @@ dump_seconds=$(($(date +%s) - start))
   }
 table_data="$(grep -c ' TABLE DATA ' "$out_dir/$base.list.tmp" || true)"
 rm -f "$out_dir/$base.list.tmp"
-
-if [ -n "$owner" ]; then
-  "${psql_cmd[@]}" "$PGURL" -X -v ON_ERROR_STOP=1 -v "owner=$owner" -f - <"$counts_sql" \
-    >"$out_dir/$base.counts.txt" 2>"$logfile" || fail_with_log "prod-counts.sql failed"
-fi
 
 if [ -n "$recipient" ]; then
   age -r "$recipient" -o "$out_dir/$base.dump.age" "$out_dir/$base.dump" 2>"$logfile" ||

@@ -10,6 +10,7 @@
 --   1. every expected table exists (to_regclass)
 --   2. migrations rows equal expected_migrations (the timestamped files in apps/backend/src/migrations)
 --   3. every serial/identity sequence has last_value >= max(column), so the next insert cannot collide
+--      (zero sequences found also fails: the baseline has serial ids, so none means a broken restore)
 --   4. prints foreign key and index counts (compare with the same query on the source schema)
 
 \set ON_ERROR_STOP on
@@ -76,7 +77,7 @@ SELECT 'foreign_keys|' || count(*) FROM pg_constraint c
 SELECT 'indexes|' || count(*) FROM pg_indexes WHERE schemaname = 'public';
 
 \echo '== result'
-SELECT (:missing_tables + :migrations_mismatch + :sequences_behind > 0) AS failed \gset
+SELECT (:missing_tables + :migrations_mismatch + :sequences_behind + (:sequences_checked = 0)::int > 0) AS failed \gset
 \if :failed
   \echo 'RESULT|FAIL'
   DO $$ BEGIN RAISE EXCEPTION 'verify-restore: one or more checks failed'; END $$;

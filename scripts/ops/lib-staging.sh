@@ -9,14 +9,18 @@
 # Never prints a connection string, user or password: only a generic message.
 # Tools: PSQL (default psql; a command with arguments is allowed, e.g. a wrapper script).
 #
+# Not covered: libpq environment variables (PGHOST etc.) and ~/.pg_service.conf are not read here.
+#
 # This file only defines functions and a variable; it does not set shell options or exit on load.
 
 STAGING_MARKER="flump-staging"
 
-# conn_target <url>: prints "host:port/db" (host lower-cased, localhost normalised to
-# 127.0.0.1, default port 5432, no credentials, no query string). Returns 1 if unparseable.
+# conn_target <url>: prints "host:port/db" (host lower-cased; localhost, 127.0.0.1 and [::1] all
+# normalise to 127.0.0.1; default port 5432; no credentials, no query string). Returns 1 when the
+# URL is not a plain single-host postgres URL: a comma in the authority (multi-host) or a query
+# parameter that can override the target (host, hostaddr, port, dbname, service) is refused.
 conn_target() {
-  local url="$1" rest authority path hostport host port db
+  local url="$1" rest authority path query hostport host port db lower_query
   case "$url" in
     postgres://* | postgresql://*) ;;
     *) return 1 ;;
@@ -24,15 +28,35 @@ conn_target() {
   rest="${url#*://}"
   authority="${rest%%/*}"
   [ "$authority" != "$rest" ] || return 1
+  case "$authority" in *,*) return 1 ;; esac
   path="${rest#*/}"
   db="${path%%\?*}"
+  query=""
+  case "$path" in *\?*) query="${path#*\?}" ;; esac
+  lower_query="$(printf '%s' "$query" | tr '[:upper:]' '[:lower:]')"
+  case "&$lower_query" in
+    *'&host='* | *'&hostaddr='* | *'&port='* | *'&dbname='* | *'&service='*) return 1 ;;
+  esac
   hostport="${authority##*@}"
-  host="${hostport%%:*}"
-  port="${hostport#*:}"
-  [ "$port" != "$hostport" ] || port=5432
+  case "$hostport" in
+    \[*\]*)
+      host="${hostport%%]*}]"
+      port="${hostport#*]}"
+      port="${port#:}"
+      ;;
+    *)
+      host="${hostport%%:*}"
+      port="${hostport#*:}"
+      [ "$port" != "$hostport" ] || port=""
+      ;;
+  esac
+  [ -n "$port" ] || port=5432
+  case "$port" in *[!0-9]*) return 1 ;; esac
   { [ -n "$host" ] && [ -n "$db" ]; } || return 1
   host="$(printf '%s' "$host" | tr '[:upper:]' '[:lower:]')"
-  [ "$host" != "localhost" ] || host="127.0.0.1"
+  case "$host" in
+    localhost | '[::1]' | 127.0.0.1) host="127.0.0.1" ;;
+  esac
   printf '%s:%s/%s\n' "$host" "$port" "$db"
 }
 
@@ -53,11 +77,11 @@ assert_distinct_targets() {
     exit 2
   fi
   prod_target="$(conn_target "$prod")" || {
-    echo "ERROR: PGURL is not a postgres:// URL" >&2
+    echo "ERROR: PGURL is not a plain single-host postgres:// URL (no host=, port=, dbname=, service= parameters)" >&2
     exit 2
   }
   staging_target="$(conn_target "$staging")" || {
-    echo "ERROR: STAGING_PGURL is not a postgres:// URL" >&2
+    echo "ERROR: STAGING_PGURL is not a plain single-host postgres:// URL (no host=, port=, dbname=, service= parameters)" >&2
     exit 2
   }
   if [ "$prod_target" = "$staging_target" ]; then
@@ -73,6 +97,10 @@ assert_staging_marker() {
   read -r -a psql_cmd <<<"${PSQL:-psql}"
   if [ -z "$url" ]; then
     echo "ERROR: no staging URL given to the marker check" >&2
+    exit 2
+  fi
+  if ! conn_target "$url" >/dev/null; then
+    echo "ERROR: the staging URL is not a plain single-host postgres:// URL; refusing" >&2
     exit 2
   fi
   comment="$("${psql_cmd[@]}" "$url" -X -A -t -q -v ON_ERROR_STOP=1 -c \
