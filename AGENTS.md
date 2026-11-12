@@ -22,7 +22,7 @@ Direction of travel (E15 phase 3 target, not yet enforced): web pages move from 
 ## 2. DESIGN TOKEN & STYLING LAWS
 
 - **Zero Raw Hex/RGB or Primitive Token Leaks:** Components may NEVER use hardcoded hex values (`#141A26`) or raw primitive scale tokens (`indigo.600`, `slate.800`, `success.500`, `purple.500`, `cyan.400`). Always use the 6 canonical semantic namespaces:
-  - `surface.*` (`canvas`, `card`, `sunken`, `subtle`, `overlay`, `contrast`, `scrim`; `scrim` is a modal backdrop, never a text surface)
+  - `surface.*` (`canvas`, `card`, `sunken`, `subtle`, `overlay`, `contrast`, `scrim`, `hero`; `scrim` is a modal backdrop, never a text surface; `hero` is the single deep-teal headline block per page, added by DECISIONS round 5, text on it uses `text.onContrast`)
   - `text.*` (`primary`, `secondary`, `muted`, `onContrast`)
   - `border.*` (`DEFAULT`, `subtle`, `strong`, `input`, `focusRing`)
   - `primary.*` (`DEFAULT`, `solid`, `hover`, `subtle`, `border`, `foreground`; `solid`/`hover` are fills behind `primary.foreground` only, graphic-only fills use `primary` or `chart.primary`)

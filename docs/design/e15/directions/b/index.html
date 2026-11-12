@@ -1,0 +1,975 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Flump Direction B Instrument Panel</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* Dark-first: dark values on bare :root. Light values under the guarded pattern. */
+:root{
+  color-scheme:dark;
+  --surface-canvas:#0b0d12;--surface-card:#12151c;--surface-sunken:#0e1016;--surface-subtle:#181c25;--surface-overlay:#1c212b;--surface-contrast:#e8eaf0;
+  --text-primary:#e8eaf0;--text-secondary:#a9b0bf;--text-muted:#8a92a3;--text-on-contrast:#0b0d12;
+  --border-default:#262b37;--border-subtle:#1d212b;--border-strong:#3a4150;--border-input:#666f83;--border-focus-ring:#67e8f9;
+  --primary:#9d90ff;--primary-solid:#6556f0;--primary-hover:#5a4be0;--primary-subtle:#1e1b3d;--primary-border:#4a42a8;--primary-foreground:#ffffff;
+  --status-positive-text:#3ddc97;--status-positive-bg:#0f2a21;--status-positive-border:#1f6b4c;--status-positive-solid:#22c55e;
+  --status-warning-text:#fbbf24;--status-warning-bg:#2d2209;--status-warning-border:#7a5a10;--status-warning-solid:#f59e0b;
+  --status-danger-text:#ff7a85;--status-danger-bg:#2e1015;--status-danger-border:#7f2733;--status-danger-solid:#ef4444;
+  --status-info-text:#5cc8ff;--status-info-bg:#0e2433;--status-info-border:#1d5a80;--status-info-solid:#38bdf8;
+  --status-neutral-text:#a9b0bf;--status-neutral-bg:#1a1e27;--status-neutral-border:#333a48;--status-neutral-solid:#6b7385;
+  --chart-primary:#8b7cff;--chart-wealth:#22d3ee;--chart-debt:#f5a524;--chart-warning:#fbbf24;--chart-grid:#232834;
+  --chart-series1:#22d3ee;--chart-series2:#f5a524;--chart-series3:#8b7cff;--chart-series4:#3ddc97;--chart-series5:#f472b6;
+  --new-chart-projection:#a9b0bf;--new-surface-scrim:#05060acc;--new-chart-area-wealth:#22d3ee26;--new-chart-crosshair:#67e8f9;
+  --font-sans:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  --r:4px;--dur:110ms;
+}
+@media (prefers-color-scheme:light){:root:not([data-theme="dark"]){
+  color-scheme:light;
+  --surface-canvas:#f4f5f8;--surface-card:#ffffff;--surface-sunken:#eef0f4;--surface-subtle:#f7f8fa;--surface-overlay:#ffffff;--surface-contrast:#12151c;
+  --text-primary:#12151c;--text-secondary:#4a5163;--text-muted:#5c6475;--text-on-contrast:#f4f5f8;
+  --border-default:#d5d9e2;--border-subtle:#e6e9ef;--border-strong:#b3bac8;--border-input:#7d8698;--border-focus-ring:#5b4be0;
+  --primary:#5b4be0;--primary-solid:#5b4be0;--primary-hover:#4a3bc8;--primary-subtle:#eceaff;--primary-border:#b9b1f7;--primary-foreground:#ffffff;
+  --status-positive-text:#0b7a4b;--status-positive-bg:#e4f6ec;--status-positive-border:#9bd7b6;--status-positive-solid:#16a06a;
+  --status-warning-text:#8a5300;--status-warning-bg:#fff3d9;--status-warning-border:#e9c26a;--status-warning-solid:#d98a00;
+  --status-danger-text:#b4232f;--status-danger-bg:#fde9eb;--status-danger-border:#f0aab0;--status-danger-solid:#d92d3a;
+  --status-info-text:#0b6a99;--status-info-bg:#e3f3fb;--status-info-border:#9ccbe4;--status-info-solid:#1089c4;
+  --status-neutral-text:#4a5163;--status-neutral-bg:#eef0f4;--status-neutral-border:#c5cad6;--status-neutral-solid:#7d8698;
+  --chart-primary:#5b4be0;--chart-wealth:#0e8fae;--chart-debt:#b76e00;--chart-warning:#a86400;--chart-grid:#e3e6ed;
+  --chart-series1:#0e8fae;--chart-series2:#b76e00;--chart-series3:#5b4be0;--chart-series4:#0b8a56;--chart-series5:#c0307f;
+  --new-chart-projection:#4a5163;--new-surface-scrim:#12151ca6;--new-chart-area-wealth:#0e8fae26;--new-chart-crosshair:#5b4be0;
+}}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --surface-canvas:#0b0d12;--surface-card:#12151c;--surface-sunken:#0e1016;--surface-subtle:#181c25;--surface-overlay:#1c212b;--surface-contrast:#e8eaf0;
+  --text-primary:#e8eaf0;--text-secondary:#a9b0bf;--text-muted:#8a92a3;--text-on-contrast:#0b0d12;
+  --border-default:#262b37;--border-subtle:#1d212b;--border-strong:#3a4150;--border-input:#666f83;--border-focus-ring:#67e8f9;
+  --primary:#9d90ff;--primary-solid:#6556f0;--primary-hover:#5a4be0;--primary-subtle:#1e1b3d;--primary-border:#4a42a8;--primary-foreground:#ffffff;
+  --status-positive-text:#3ddc97;--status-positive-bg:#0f2a21;--status-positive-border:#1f6b4c;--status-positive-solid:#22c55e;
+  --status-warning-text:#fbbf24;--status-warning-bg:#2d2209;--status-warning-border:#7a5a10;--status-warning-solid:#f59e0b;
+  --status-danger-text:#ff7a85;--status-danger-bg:#2e1015;--status-danger-border:#7f2733;--status-danger-solid:#ef4444;
+  --status-info-text:#5cc8ff;--status-info-bg:#0e2433;--status-info-border:#1d5a80;--status-info-solid:#38bdf8;
+  --status-neutral-text:#a9b0bf;--status-neutral-bg:#1a1e27;--status-neutral-border:#333a48;--status-neutral-solid:#6b7385;
+  --chart-primary:#8b7cff;--chart-wealth:#22d3ee;--chart-debt:#f5a524;--chart-warning:#fbbf24;--chart-grid:#232834;
+  --chart-series1:#22d3ee;--chart-series2:#f5a524;--chart-series3:#8b7cff;--chart-series4:#3ddc97;--chart-series5:#f472b6;
+  --new-chart-projection:#a9b0bf;--new-surface-scrim:#05060acc;--new-chart-area-wealth:#22d3ee26;--new-chart-crosshair:#67e8f9;
+}
+:root[data-theme="light"]{
+  color-scheme:light;
+  --surface-canvas:#f4f5f8;--surface-card:#ffffff;--surface-sunken:#eef0f4;--surface-subtle:#f7f8fa;--surface-overlay:#ffffff;--surface-contrast:#12151c;
+  --text-primary:#12151c;--text-secondary:#4a5163;--text-muted:#5c6475;--text-on-contrast:#f4f5f8;
+  --border-default:#d5d9e2;--border-subtle:#e6e9ef;--border-strong:#b3bac8;--border-input:#7d8698;--border-focus-ring:#5b4be0;
+  --primary:#5b4be0;--primary-solid:#5b4be0;--primary-hover:#4a3bc8;--primary-subtle:#eceaff;--primary-border:#b9b1f7;--primary-foreground:#ffffff;
+  --status-positive-text:#0b7a4b;--status-positive-bg:#e4f6ec;--status-positive-border:#9bd7b6;--status-positive-solid:#16a06a;
+  --status-warning-text:#8a5300;--status-warning-bg:#fff3d9;--status-warning-border:#e9c26a;--status-warning-solid:#d98a00;
+  --status-danger-text:#b4232f;--status-danger-bg:#fde9eb;--status-danger-border:#f0aab0;--status-danger-solid:#d92d3a;
+  --status-info-text:#0b6a99;--status-info-bg:#e3f3fb;--status-info-border:#9ccbe4;--status-info-solid:#1089c4;
+  --status-neutral-text:#4a5163;--status-neutral-bg:#eef0f4;--status-neutral-border:#c5cad6;--status-neutral-solid:#7d8698;
+  --chart-primary:#5b4be0;--chart-wealth:#0e8fae;--chart-debt:#b76e00;--chart-warning:#a86400;--chart-grid:#e3e6ed;
+  --chart-series1:#0e8fae;--chart-series2:#b76e00;--chart-series3:#5b4be0;--chart-series4:#0b8a56;--chart-series5:#c0307f;
+  --new-chart-projection:#4a5163;--new-surface-scrim:#12151ca6;--new-chart-area-wealth:#0e8fae26;--new-chart-crosshair:#5b4be0;
+}
+
+*,*::before,*::after{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--surface-canvas);color:var(--text-primary);font:400 14px/1.5 var(--font-sans)}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+h1,h2,h3,p{margin:0}
+:focus-visible{outline:2px solid var(--border-focus-ring);outline-offset:2px}
+[hidden]{display:none!important}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.num{font-family:var(--font-mono);font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.cap{font:500 12px/1.3 var(--font-mono);text-transform:uppercase;letter-spacing:.08em;color:var(--text-muted)}
+.muted{color:var(--text-muted)}
+.sym{position:absolute;width:0;height:0;overflow:hidden}
+.ic{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.ic.sm{width:16px;height:16px}
+
+/* ---------- page chrome (outside the device frame) ---------- */
+.chrome{max-width:1280px;margin:0 auto;padding:20px 16px 0}
+.chrome-top{display:flex;flex-wrap:wrap;gap:16px;justify-content:space-between;align-items:flex-end}
+.chrome h1{font:600 22px/1.2 var(--font-sans);margin-top:4px}
+.toolbar{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+.seg{display:inline-flex;border:1px solid var(--border-input);border-radius:var(--r);overflow:hidden;background:var(--surface-sunken)}
+.seg label,.seg button{position:relative;display:flex;align-items:center;gap:6px;min-height:var(--ctl,34px);padding:0 12px;border:0;background:transparent;color:var(--text-secondary);font:500 13px var(--font-sans);cursor:pointer;transition:background var(--dur) linear,color var(--dur) linear}
+.seg>*+*{border-left:1px solid var(--border-input)}
+.seg [aria-pressed="true"],.seg input:checked+span{background:var(--primary-subtle);color:var(--primary)}
+.seg label span{display:flex;align-items:center;gap:6px;min-height:calc(var(--ctl,34px) - 2px);margin:-0px}
+.seg label{padding:0}.seg label span{padding:0 14px;width:100%;justify-content:center}
+.seg input:focus-visible+span{outline:2px solid var(--border-focus-ring);outline-offset:-2px}
+.seg button:hover,.seg label:hover span{color:var(--text-primary)}
+.tabs{display:flex;gap:0;margin-top:16px;border-bottom:1px solid var(--border-default);overflow-x:auto}
+.tabs button{background:none;border:0;border-bottom:2px solid transparent;padding:10px 16px;min-height:44px;color:var(--text-secondary);font:500 13px var(--font-mono);text-transform:uppercase;letter-spacing:.06em;white-space:nowrap;margin-bottom:-1px}
+.tabs button[aria-current="true"]{color:var(--primary);border-bottom-color:var(--primary)}
+.tabs button:hover{color:var(--text-primary)}
+.stage{margin-top:0;padding:24px 16px;background:var(--surface-sunken);border-bottom:1px solid var(--border-default)}
+.stage-cap{max-width:1280px;margin:0 auto 8px;display:flex;justify-content:space-between}
+.frame{container:frame/inline-size;max-width:1280px;margin:0 auto;border:2px solid var(--border-strong);border-radius:8px;overflow:clip;background:var(--surface-canvas)}
+.frame[data-w="375"]{max-width:375px}
+.chip{display:inline-flex;align-items:center;gap:6px;height:24px;padding:0 8px;border:1px solid var(--status-info-border);background:var(--status-info-bg);color:var(--status-info-text);border-radius:var(--r);font:500 12px var(--font-mono);text-transform:uppercase;letter-spacing:.06em;white-space:nowrap}
+.chip::before{content:"";width:6px;height:6px;background:currentColor;animation:blink 1.2s steps(2) infinite}
+@keyframes blink{50%{opacity:.25}}
+@media (max-width:480px){.vp,.stage-cap{display:none}.stage{padding:0}.frame{border-width:0;border-radius:0;max-width:none!important}.chrome h1{font-size:19px}}
+
+/* ---------- app shell (inside the frame) ---------- */
+.app{--ctl:44px;--gut:16px;min-height:640px;display:flex;flex-direction:column}
+@container frame (min-width:720px){.app{--ctl:34px;--gut:24px}}
+.hdr{display:flex;align-items:center;gap:16px;height:52px;padding:0 var(--gut);border-bottom:1px solid var(--border-default);background:var(--surface-card)}
+.logo{display:flex;align-items:center;gap:8px;font:600 16px var(--font-mono);letter-spacing:-.02em}
+.logo i{display:grid;place-items:center;width:24px;height:24px;border-radius:var(--r);background:var(--primary-solid);color:var(--primary-foreground);font:600 14px var(--font-mono);font-style:normal}
+.nav{display:none;gap:2px;margin-left:12px}
+.nav button{height:52px;padding:0 12px;background:none;border:0;border-bottom:2px solid transparent;color:var(--text-secondary);font:500 13px var(--font-sans);margin-bottom:-1px;transition:color var(--dur) linear}
+.nav button:hover{color:var(--text-primary)}
+.nav button[aria-current="page"]{color:var(--text-primary);border-bottom-color:var(--primary)}
+.hdr-r{margin-left:auto;display:flex;align-items:center;gap:12px}
+.avatar{display:grid;place-items:center;width:28px;height:28px;border:1px solid var(--border-strong);border-radius:var(--r);font:500 12px var(--font-mono);background:var(--surface-subtle)}
+@container frame (min-width:720px){.nav{display:flex}.tabbar{display:none!important}}
+.tabbar{display:grid;grid-template-columns:repeat(5,1fr);position:sticky;bottom:0;margin-top:auto;background:var(--surface-card);border-top:1px solid var(--border-default);padding-bottom:env(safe-area-inset-bottom);z-index:5}
+.tabbar button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-height:56px;background:none;border:0;color:var(--text-secondary);font:500 12px var(--font-sans)}
+.tabbar button[aria-current="page"]{color:var(--primary);box-shadow:inset 0 2px 0 var(--primary)}
+.main{padding:20px var(--gut) 32px;display:grid;gap:16px;align-content:start;flex:1}
+.view[hidden]{display:none}
+.view{display:grid;gap:16px}
+.pghead{display:flex;flex-wrap:wrap;gap:8px 16px;justify-content:space-between;align-items:flex-end}
+.pghead h2{font:600 24px/1.2 var(--font-sans);letter-spacing:-.01em;margin-top:4px}
+
+/* panels */
+.panel{background:var(--surface-card);border:1px solid var(--border-default);border-radius:var(--r);min-width:0}
+.panel-h{display:flex;justify-content:space-between;align-items:center;gap:12px;min-height:36px;padding:6px 12px;border-bottom:1px solid var(--border-subtle)}
+.panel-b{padding:12px 16px 16px}
+.panel-b.tight{padding:0}
+
+/* KPI strip */
+.kpis{display:grid;grid-template-columns:repeat(2,1fr);gap:1px;background:var(--border-default);border:1px solid var(--border-default);border-radius:var(--r);overflow:hidden}
+@container frame (min-width:960px){.kpis{grid-template-columns:repeat(4,1fr)}}
+.kpi{background:var(--surface-card);padding:12px;display:grid;gap:4px;align-content:start;min-width:0}
+@container frame (min-width:720px){.kpi{padding:14px 16px}}
+.kpi .v{font:500 22px/1.15 var(--font-mono);font-variant-numeric:tabular-nums;letter-spacing:-.02em;white-space:nowrap}
+@container frame (min-width:720px){.kpi .v{font-size:28px}}
+.kpi .d{display:flex;flex-wrap:wrap;gap:2px 6px;align-items:center;font:400 12px/1.35 var(--font-mono);color:var(--text-secondary)}
+.kpi svg.spark{display:block;width:100%;height:28px;margin-top:6px}
+.delta{display:inline-flex;align-items:center;gap:2px;font:500 12px var(--font-mono);font-variant-numeric:tabular-nums}
+.delta.pos{color:var(--status-positive-text)}
+.delta.neu{color:var(--status-neutral-text)}
+.ticks{display:flex;gap:2px;margin-top:8px;height:12px}
+.ticks i{flex:1;background:var(--chart-wealth);opacity:var(--f,1)}
+.ticks i.off{background:var(--border-strong);opacity:1}
+.split{display:flex;height:12px;margin-top:8px;gap:2px}
+.split i{display:block;height:100%}
+
+/* layout grids (container queries) */
+.g-dash{display:grid;gap:16px}
+@container frame (min-width:960px){.g-dash{grid-template-columns:7fr 5fr}}
+.g-3{display:grid;gap:16px}
+@container frame (min-width:720px){.g-3{grid-template-columns:repeat(3,1fr)}}
+.split-layout{display:grid;gap:16px}
+@container frame (min-width:960px){.split-layout{grid-template-columns:5fr 7fr;align-items:start}.ctrl{position:sticky;top:16px}}
+
+/* coach */
+.coach{display:grid;gap:12px;border-left:3px solid var(--primary);padding:14px 16px;background:var(--surface-card);border-top:1px solid var(--border-default);border-right:1px solid var(--border-default);border-bottom:1px solid var(--border-default);border-radius:var(--r)}
+@container frame (min-width:720px){.coach{grid-template-columns:1fr auto;align-items:center;gap:24px}}
+.coach h3{font:600 17px/1.35 var(--font-sans);margin-top:4px}
+.coach p{color:var(--text-secondary);max-width:68ch;margin-top:4px}
+.stats{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.stat{display:inline-flex;gap:6px;align-items:baseline;padding:2px 8px;border:1px solid var(--border-default);border-radius:var(--r);background:var(--surface-sunken);font:500 13px var(--font-mono);font-variant-numeric:tabular-nums}
+.stat small{font:400 12px var(--font-sans);color:var(--text-secondary)}
+
+/* buttons / fields */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:var(--ctl);padding:0 14px;border:1px solid var(--border-input);border-radius:var(--r);background:transparent;color:var(--text-primary);font:500 13px var(--font-sans);white-space:nowrap;transition:background var(--dur) linear,border-color var(--dur) linear}
+.btn:hover{background:var(--surface-subtle);border-color:var(--text-muted)}
+.btn.primary{background:var(--primary-solid);border-color:var(--primary-solid);color:var(--primary-foreground)}
+.btn.primary:hover{background:var(--primary-hover);border-color:var(--primary-hover)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn:disabled:hover{background:transparent;border-color:var(--border-input)}
+.btn.sm{min-height:var(--ctl);padding:0 10px}
+.link{background:none;border:0;padding:0;min-height:var(--ctl);color:var(--primary);font:500 13px var(--font-sans);text-decoration:underline;text-underline-offset:3px}
+.link:hover{color:var(--text-primary)}
+.btns{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.field{display:grid;gap:6px}
+.lbl{font:500 13px var(--font-sans);color:var(--text-secondary)}
+.in{width:100%;height:var(--ctl);padding:0 10px;background:var(--surface-sunken);border:1px solid var(--border-input);border-radius:var(--r);color:var(--text-primary);font:500 14px var(--font-mono);font-variant-numeric:tabular-nums}
+.in:hover{border-color:var(--text-muted)}
+select.in{appearance:none;padding-right:32px;font-family:var(--font-sans);font-weight:500}
+.wrap{position:relative}
+.wrap>.ic{position:absolute;right:10px;top:50%;margin-top:-8px;pointer-events:none;color:var(--text-muted)}
+.pre{position:relative}.pre b{position:absolute;left:10px;top:50%;transform:translateY(-50%);font:500 14px var(--font-mono);color:var(--text-muted)}
+.pre .in{padding-left:24px}
+.hint{font:400 12px/1.4 var(--font-sans);color:var(--text-muted)}
+
+/* slider field */
+.sf{display:grid;gap:4px}
+.sf-h{display:flex;justify-content:space-between;align-items:center;gap:8px}
+output.pill{display:inline-flex;align-items:center;height:26px;padding:0 8px;border:1px solid var(--border-input);border-radius:var(--r);background:var(--surface-sunken);font:500 13px var(--font-mono);font-variant-numeric:tabular-nums;color:var(--text-primary)}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:var(--ctl);margin:0;background:transparent;--p:50%}
+input[type=range]::-webkit-slider-runnable-track{height:4px;background:linear-gradient(to right,var(--chart-primary) var(--p),var(--border-strong) var(--p))}
+input[type=range]::-moz-range-track{height:4px;background:var(--border-strong)}
+input[type=range]::-moz-range-progress{height:4px;background:var(--chart-primary)}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;height:20px;margin-top:-8px;background:var(--surface-contrast);border:0;border-radius:2px}
+input[type=range]::-moz-range-thumb{width:12px;height:20px;background:var(--surface-contrast);border:0;border-radius:2px}
+.sf-m{display:flex;justify-content:space-between;font:400 12px var(--font-mono);color:var(--text-muted);margin-top:-6px}
+.ctrl-body{display:grid;gap:14px}
+.sumbar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 12px}
+.sumbar .num{font-size:13px;color:var(--text-secondary)}
+@container frame (max-width:959px){.ctrl:not(.open) .ctrl-body{display:none}.ctrl.open .sumbar{border-bottom:1px solid var(--border-subtle)}.ctrl-body{padding:12px 16px 16px}}
+@container frame (min-width:960px){.sumbar{display:none}.ctrl-body{padding:14px 16px 16px}}
+
+/* results */
+.headline{padding:14px 16px;border-left:3px solid var(--chart-primary)}
+.headline h3{font:600 20px/1.3 var(--font-sans);letter-spacing:-.01em;margin-top:4px}
+.headline h3 span{display:block;font:400 14px/1.4 var(--font-mono);color:var(--text-secondary);margin-top:4px}
+.legend{display:flex;flex-wrap:wrap;gap:6px 18px;font:400 12px var(--font-mono);color:var(--text-secondary);margin-top:8px}
+.legend span{display:inline-flex;align-items:center;gap:8px}
+.legend svg{width:28px;height:8px}
+.chart{width:100%;position:relative}
+.chart svg{display:block;max-width:100%;touch-action:pan-y}
+.chart text.ax{font:400 12px var(--font-mono);fill:var(--text-muted)}
+.chart text.lab{font:500 12px var(--font-mono);fill:var(--text-primary)}
+.chart .g{stroke:var(--chart-grid);stroke-width:1}
+.chart .g2{stroke-dasharray:2 4}
+.chart .axl{stroke:var(--border-strong);stroke-width:1}
+.chart .ln-w{fill:none;stroke:var(--chart-wealth);stroke-width:2;stroke-linejoin:round}
+.chart .ar-w{fill:var(--new-chart-area-wealth);stroke:none}
+.chart .pt{fill:var(--surface-card);stroke:var(--chart-wealth);stroke-width:1.5}
+.chart .xh{stroke:var(--new-chart-crosshair);stroke-width:1;stroke-dasharray:3 3}
+.chart .tag{fill:var(--surface-overlay);stroke:var(--new-chart-crosshair)}
+.chart .s-a{fill:none;stroke:var(--chart-debt);stroke-width:2}
+.chart .s-b{fill:none;stroke:var(--chart-primary);stroke-width:2;stroke-dasharray:7 4}
+.chart .drop{stroke:var(--new-chart-projection);stroke-width:1;stroke-dasharray:2 3}
+.chart .mk-a{fill:var(--chart-debt)}.chart .mk-b{fill:var(--chart-primary)}
+.readout{font:500 13px var(--font-mono);font-variant-numeric:tabular-nums;color:var(--text-secondary);white-space:nowrap}
+.cap-note{font:400 12px/1.5 var(--font-sans);color:var(--text-secondary);margin-top:8px}
+details.drawer summary{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:44px;padding:0 16px;cursor:pointer;list-style:none;font:500 13px var(--font-sans)}
+details.drawer summary::-webkit-details-marker{display:none}
+details.drawer summary .ic{transition:transform var(--dur) linear;color:var(--text-muted)}
+details.drawer[open] summary .ic{transform:rotate(180deg)}
+details.drawer[open] summary{border-bottom:1px solid var(--border-subtle)}
+.tbl-wrap{overflow:auto;max-height:340px}
+table.t{width:100%;border-collapse:collapse;font:400 13px var(--font-mono);font-variant-numeric:tabular-nums}
+table.t th,table.t td{padding:6px 12px;text-align:right;border-bottom:1px solid var(--border-subtle);white-space:nowrap}
+table.t th:first-child,table.t td:first-child{text-align:left}
+table.t th{font:500 12px var(--font-mono);text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted);background:var(--surface-sunken);position:sticky;top:0}
+.callout{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border:1px solid var(--status-warning-border);background:var(--status-warning-bg);color:var(--status-warning-text);border-radius:var(--r);font-size:13px}
+.callout .ic{margin-top:1px}
+
+/* account rows */
+.rows{display:grid}
+.row{display:grid;grid-template-columns:1fr auto;gap:2px 12px;padding:8px 0;border-bottom:1px solid var(--border-subtle);align-items:baseline}
+.row:last-child{border-bottom:0}
+.row .n{font-weight:500;grid-column:1;grid-row:1;min-width:0}
+.row .s{font:400 12px var(--font-mono);color:var(--text-muted);grid-column:1;grid-row:2}
+.row .a{font:500 14px var(--font-mono);font-variant-numeric:tabular-nums;text-align:right;grid-column:2;grid-row:1}
+.bar{grid-column:1/-1;grid-row:3;height:4px;background:var(--surface-sunken);margin-top:4px}
+.bar i{display:block;height:100%;min-width:2px;width:var(--w)}
+.grp{display:flex;justify-content:space-between;align-items:baseline;margin:14px 0 2px}
+.grp:first-child{margin-top:0}
+.grp .num{font-size:16px;font-weight:500}
+.compare{display:grid;gap:8px;margin-bottom:6px}
+.cmp{display:grid;grid-template-columns:88px 1fr auto;gap:10px;align-items:center;font:400 12px var(--font-mono)}
+.cmp .b{height:12px;background:var(--surface-sunken)}.cmp .b i{display:block;height:100%;width:var(--w)}
+.wd .big{font:500 24px/1.2 var(--font-mono);font-variant-numeric:tabular-nums;letter-spacing:-.02em;margin:2px 0 8px}
+.wd .row{padding:6px 0}
+
+/* onboarding */
+.stepper{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border-default);border:1px solid var(--border-default);border-radius:var(--r);overflow:hidden;list-style:none;margin:0;padding:0}
+.stepper li{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--surface-card);color:var(--text-muted);min-width:0}
+.stepper li b{display:grid;place-items:center;flex:none;width:24px;height:24px;border:1px solid var(--border-strong);border-radius:var(--r);font:500 12px var(--font-mono)}
+.stepper li span{font:500 13px/1.25 var(--font-sans)}
+.stepper li[aria-current="step"]{color:var(--text-primary);background:var(--primary-subtle);box-shadow:inset 0 -2px 0 var(--primary)}
+.stepper li[aria-current="step"] b{background:var(--primary-solid);border-color:var(--primary-solid);color:var(--primary-foreground)}
+@container frame (max-width:719px){.stepper li span{display:none}.stepper li[aria-current="step"] span{display:block}.stepper{grid-template-columns:1fr 1fr 2.4fr}}
+.form{display:grid;gap:16px}
+.two{display:grid;gap:16px}
+@container frame (min-width:720px){.two{grid-template-columns:1fr 1fr}}
+.pv{display:grid;gap:0}
+.pv .r{display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:12px 0;border-bottom:1px solid var(--border-subtle)}
+.pv .r:last-child{border-bottom:0}
+.pv .r .num{font-size:24px;font-weight:500;letter-spacing:-.02em}
+.live{display:inline-flex;align-items:center;gap:6px;font:500 12px var(--font-mono);color:var(--status-positive-text);text-transform:uppercase;letter-spacing:.06em}
+.live::before{content:"";width:6px;height:6px;background:currentColor;animation:blink 1.2s steps(2) infinite}
+.foot{display:flex;flex-wrap:wrap;gap:12px;justify-content:space-between;align-items:center;padding-top:16px;border-top:1px solid var(--border-subtle)}
+
+/* states */
+.g-2{display:grid;gap:16px}
+@container frame (min-width:720px){.g-2{grid-template-columns:1fr 1fr}}
+.state{padding:32px 24px;display:grid;gap:12px;justify-items:start;align-content:start;min-height:300px}
+.state .badge{display:grid;place-items:center;width:44px;height:44px;border:1px solid var(--border-strong);border-radius:var(--r);background:var(--surface-sunken);color:var(--text-secondary)}
+.state.err .badge{border-color:var(--status-danger-border);background:var(--status-danger-bg);color:var(--status-danger-text)}
+.state h3{font:600 20px/1.3 var(--font-sans)}
+.state p{color:var(--text-secondary);max-width:46ch}
+.state .ref{font:400 12px var(--font-mono);color:var(--text-muted);margin-top:4px}
+
+
+/* heavy data */
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.fchip{display:inline-flex;align-items:center;min-height:var(--ctl);padding:0 12px;border:1px solid var(--border-input);border-radius:var(--r);background:transparent;color:var(--text-secondary);font:500 13px var(--font-sans);transition:background var(--dur) linear}
+.fchip[aria-pressed="true"]{background:var(--primary-subtle);border-color:var(--primary-border);color:var(--primary)}
+.fchip:hover{color:var(--text-primary)}
+.tools{display:grid;gap:10px}
+@container frame (min-width:720px){.tools{grid-template-columns:1fr 220px}}
+.acct{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 16px;padding:10px 16px;border-bottom:1px solid var(--border-subtle);align-items:start}
+.acct:last-child{border-bottom:0}
+.acct .nm{min-width:0;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;border-radius:2px}
+.acct .nm:hover,.acct .nm:focus-visible{white-space:normal;overflow:visible}
+@container frame (max-width:719px){.acct .nm{white-space:normal;overflow-wrap:anywhere}}
+.acct .bal{grid-column:2;grid-row:1;font:500 15px var(--font-mono);font-variant-numeric:tabular-nums;white-space:nowrap;text-align:right;display:flex;gap:6px;align-items:center;justify-content:flex-end}
+.acct .meta{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:4px 12px;font:400 12px var(--font-mono);color:var(--text-muted)}
+.acct.od .bal{color:var(--status-danger-text)}
+.badge-od{display:inline-flex;align-items:center;gap:4px;height:22px;padding:0 6px;border:1px solid var(--status-danger-border);background:var(--status-danger-bg);color:var(--status-danger-text);border-radius:var(--r);font:600 12px var(--font-mono);text-transform:uppercase;letter-spacing:.04em}
+.gh{display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:8px 16px;background:var(--surface-sunken);border-bottom:1px solid var(--border-default);border-top:1px solid var(--border-default)}
+.gh .num{font-size:16px;font-weight:500}
+.gh:first-child{border-top:0}
+.bl{display:grid;gap:8px}
+.bli{display:grid;grid-template-columns:minmax(80px,140px) 1fr auto;gap:12px;align-items:center;font:400 13px var(--font-sans)}
+.bli .b{height:14px;background:var(--surface-sunken);border-left:1px solid var(--border-strong)}
+.bli .b i{display:block;height:100%;width:var(--w);background:var(--chart-primary)}
+.bli.oth .b i{background:repeating-linear-gradient(135deg,var(--chart-primary) 0 3px,var(--surface-card) 3px 6px);border:1px solid var(--chart-primary)}
+.bli .num{font-size:13px;font-weight:500}
+@container frame (max-width:519px){.bli{grid-template-columns:1fr auto;gap:4px 12px}.bli .b{grid-column:1/-1;grid-row:2}}
+.lg-sw{display:inline-block;width:20px;height:10px;margin-right:6px;vertical-align:middle;background:var(--chart-primary)}
+.lg-sw.h{background:repeating-linear-gradient(135deg,var(--chart-primary) 0 3px,var(--surface-card) 3px 6px);border:1px solid var(--chart-primary)}
+.empty-msg{padding:20px 16px;color:var(--text-secondary)}
+.more{display:flex;justify-content:center;padding:8px;border-top:1px solid var(--border-subtle)}
+
+/* ---------- documentation sections ---------- */
+.docs{max-width:1280px;margin:0 auto;padding:32px 16px 64px;display:grid;gap:40px}
+.docs h2{font:600 20px/1.2 var(--font-sans);margin:4px 0 12px}
+.docs p,.docs li{color:var(--text-secondary);max-width:80ch}
+.docs ul{padding-left:20px;margin:8px 0}
+.dgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+.scroll{overflow-x:auto;border:1px solid var(--border-default);border-radius:var(--r)}
+.scroll table.t th,.scroll table.t td{text-align:left}
+.sw{display:inline-block;width:20px;height:20px;border:1px solid var(--border-strong);border-radius:2px;vertical-align:middle;margin-right:6px}
+.pass{color:var(--status-positive-text);font-weight:600}.fail{color:var(--status-danger-text);font-weight:600}
+.box{padding:12px 14px;border:1px solid var(--border-default);border-radius:var(--r);background:var(--surface-card);display:grid;gap:6px;align-content:start}
+.box h3{font:500 12px var(--font-mono);text-transform:uppercase;letter-spacing:.08em;color:var(--text-muted)}
+.box .row{padding:4px 0}
+.palette{display:flex;flex-wrap:wrap;gap:6px}
+.palette i{width:56px;height:36px;border:1px solid var(--border-strong);border-radius:2px;display:block}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+</style>
+
+<svg class="sym" aria-hidden="true" focusable="false"><defs>
+<symbol id="i-home" viewBox="0 0 24 24"><path d="M3 11l9-8 9 8M5 10v10h14V10M10 20v-6h4v6"/></symbol>
+<symbol id="i-budget" viewBox="0 0 24 24"><path d="M3 7h16a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V7zm0 0l12-3v3M17 14h2"/></symbol>
+<symbol id="i-bank" viewBox="0 0 24 24"><path d="M3 10l9-6 9 6M5 10v8M9 10v8M15 10v8M19 10v8M3 20h18"/></symbol>
+<symbol id="i-trend" viewBox="0 0 24 24"><path d="M3 17l6-6 4 4 8-8M15 7h6v6"/></symbol>
+<symbol id="i-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/></symbol>
+<symbol id="i-card" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18M7 15h4"/></symbol>
+<symbol id="i-more" viewBox="0 0 24 24"><path d="M5 12h.01M12 12h.01M19 12h.01" stroke-width="3"/></symbol>
+<symbol id="i-up" viewBox="0 0 24 24"><path d="M12 19V5M6 11l6-6 6 6"/></symbol>
+<symbol id="i-down" viewBox="0 0 24 24"><path d="M12 5v14M6 13l6 6 6-6"/></symbol>
+<symbol id="i-chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></symbol>
+<symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></symbol>
+<symbol id="i-moon" viewBox="0 0 24 24"><path d="M21 13A9 9 0 1111 3a7 7 0 0010 10z"/></symbol>
+<symbol id="i-monitor" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="12" rx="1"/><path d="M8 20h8M12 16v4"/></symbol>
+<symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+<symbol id="i-alert" viewBox="0 0 24 24"><path d="M12 3l10 18H2L12 3zM12 10v5M12 18h.01"/></symbol>
+<symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5h.01"/></symbol>
+<symbol id="i-refresh" viewBox="0 0 24 24"><path d="M20 12a8 8 0 11-2.3-5.7M20 4v5h-5"/></symbol>
+<symbol id="i-inbox" viewBox="0 0 24 24"><path d="M3 13l3-8h12l3 8v6H3v-6zM3 13h5l1 3h6l1-3h5"/></symbol>
+<symbol id="i-sliders" viewBox="0 0 24 24"><path d="M4 6h9M17 6h3M4 18h3M11 18h9M13 4v4M7 16v4M4 12h3M11 12h9M9 10v4"/></symbol>
+</defs></svg>
+
+<div class="chrome">
+  <div class="chrome-top">
+    <div>
+      <div class="cap">E15 phase 0 / Direction B</div>
+      <h1>Instrument panel</h1>
+    </div>
+    <div class="toolbar">
+      <span class="chip">Sample data</span>
+      <div class="seg" role="group" aria-label="Theme" id="themeSeg">
+        <button type="button" data-t="light" aria-pressed="false"><svg class="ic sm"><use href="#i-sun"/></svg>Light</button>
+        <button type="button" data-t="dark" aria-pressed="false"><svg class="ic sm"><use href="#i-moon"/></svg>Dark</button>
+        <button type="button" data-t="system" aria-pressed="true"><svg class="ic sm"><use href="#i-monitor"/></svg>System</button>
+      </div>
+      <div class="seg vp" role="group" aria-label="Preview width" id="vpSeg">
+        <button type="button" data-w="1280" aria-pressed="true">1280</button>
+        <button type="button" data-w="375" aria-pressed="false">375</button>
+      </div>
+    </div>
+  </div>
+  <div class="tabs" id="frameTabs" role="group" aria-label="Frames">
+    <button type="button" data-v="dashboard">Dashboard</button>
+    <button type="button" data-v="mortgage">Mortgage</button>
+    <button type="button" data-v="onboarding">Onboarding</button>
+    <button type="button" data-v="states">Empty and error</button>
+    <button type="button" data-v="heavy">Heavy data</button>
+  </div>
+</div>
+
+<div class="stage">
+  <div class="stage-cap cap"><span id="frameCap">Preview frame / 1280 px</span><span>Layout driven by container queries</span></div>
+  <div class="frame" id="frame" data-w="1280">
+  <div class="app" id="app">
+    <header class="hdr">
+      <div class="logo"><i>f</i>flump</div>
+      <nav class="nav" aria-label="Primary">
+        <button type="button" data-n="home">Home</button>
+        <button type="button" data-n="budget">Budget</button>
+        <button type="button" data-n="accounts">Accounts</button>
+        <button type="button" data-n="wealth">Wealth</button>
+        <button type="button" data-n="planning">Planning</button>
+      </nav>
+      <div class="hdr-r"><span class="chip">Sample data</span><span class="avatar" aria-label="Signed in as Sam">S</span></div>
+    </header>
+
+    <main class="main">
+    <!-- ===== Frame 1: Dashboard ===== -->
+    <section class="view" data-view="dashboard" aria-label="Dashboard">
+      <div class="pghead">
+        <div><div class="cap">Overview</div><h2>Welcome back, Sam</h2></div>
+        <span class="chip">Sample data</span>
+      </div>
+
+      <div class="kpis" role="list" aria-label="Key figures">
+        <div class="kpi" role="listitem">
+          <span class="cap">Net worth</span>
+          <span class="v">£97,750</span>
+          <span class="d"><span class="delta pos"><svg class="ic sm"><use href="#i-up"/></svg>+£1,120</span><span>vs last month</span></span>
+          <svg class="spark" id="spNW" viewBox="0 0 120 28" preserveAspectRatio="none" role="img" aria-label="Net worth trend over 12 months, rising"></svg>
+        </div>
+        <div class="kpi" role="listitem">
+          <span class="cap">Monthly surplus</span>
+          <span class="v">£610</span>
+          <span class="d"><span class="delta pos"><svg class="ic sm"><use href="#i-up"/></svg>+£610</span><span>after outgoings</span></span>
+          <div class="split" role="img" aria-label="£2,150 of £2,760 take-home goes on outgoings; £610 is surplus"><i style="width:77.9%;background:var(--status-neutral-solid)"></i><i style="flex:1;background:var(--chart-wealth)"></i></div>
+        </div>
+        <div class="kpi" role="listitem">
+          <span class="cap">Weekly safe to spend</span>
+          <span class="v">£140</span>
+          <span class="d"><span class="delta neu">per week</span><span>from £610 a month</span></span>
+          <div class="ticks" role="img" aria-label="Four and a bit weeks in a month"><i></i><i></i><i></i><i></i><i style="--f:.3"></i></div>
+        </div>
+        <div class="kpi" role="listitem">
+          <span class="cap">Liquid cash and buffer</span>
+          <span class="v">£17,550</span>
+          <span class="d"><span class="delta neu">about 8 months</span><span>of outgoings</span></span>
+          <div class="ticks" role="img" aria-label="8 of 12 months of outgoings covered"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i class="off"></i><i class="off"></i><i class="off"></i><i class="off"></i></div>
+        </div>
+      </div>
+
+      <div class="coach">
+        <div>
+          <div class="cap">Next best step</div>
+          <h3>Clear the Amex Everyday card first.</h3>
+          <p>At 27.9% APR it costs about £26 a month in interest. An extra £50 a month clears both cards 48 months sooner and saves £2,465.</p>
+          <div class="stats"><span class="stat">£26<small>interest a month</small></span><span class="stat">48<small>months sooner</small></span><span class="stat">£2,465<small>saved</small></span></div>
+        </div>
+        <button type="button" class="btn primary">See debt plan<svg class="ic sm"><use href="#i-up" transform="rotate(45 12 12)"/></svg></button>
+      </div>
+
+      <div class="g-dash">
+        <section class="panel" aria-labelledby="nwT">
+          <div class="panel-h"><h3 class="cap" id="nwT">Net worth / 12 months</h3><span class="readout" id="nwRead">Now: £97,750</span></div>
+          <div class="panel-b"><div class="chart" id="nw"></div>
+            <div class="legend"><span><svg viewBox="0 0 28 8" aria-hidden="true"><line x1="0" y1="4" x2="28" y2="4" stroke="var(--chart-wealth)" stroke-width="2"/></svg>Net worth (assets less liabilities owed)</span></div>
+          </div>
+        </section>
+        <section class="panel" aria-labelledby="acT">
+          <div class="panel-h"><h3 class="cap" id="acT">Accounts / assets vs owed</h3></div>
+          <div class="panel-b">
+            <div class="compare" role="img" aria-label="Assets £283,250, liabilities owed £185,500, net worth £97,750">
+              <div class="cmp"><span>Assets</span><span class="b"><i style="--w:100%;background:var(--chart-wealth)"></i></span><span class="num">£283,250</span></div>
+              <div class="cmp"><span>Owed</span><span class="b"><i style="--w:65.5%;background:var(--chart-debt)"></i></span><span class="num">£185,500</span></div>
+              <div class="cmp"><span>Net</span><span class="b"><i style="--w:34.5%;background:var(--chart-primary)"></i></span><span class="num">£97,750</span></div>
+            </div>
+            <div class="rows">
+              <div class="grp"><span class="cap">Assets</span><span class="num">£283,250</span></div>
+              <div class="row"><span class="n">Home value</span><span class="a">£240,000</span><span class="bar"><i style="--w:84.7%;background:var(--chart-wealth)"></i></span></div>
+              <div class="row"><span class="n">Workplace pension</span><span class="a">£18,500</span><span class="bar"><i style="--w:6.5%;background:var(--chart-wealth)"></i></span></div>
+              <div class="row"><span class="n">Cash ISA</span><span class="a">£9,000</span><span class="s">4.5% interest</span></div>
+              <div class="row"><span class="n">Stocks and shares ISA</span><span class="a">£7,200</span></div>
+              <div class="row"><span class="n">Easy-access saver</span><span class="a">£6,400</span><span class="s">4.1% interest</span></div>
+              <div class="row"><span class="n">Current account</span><span class="a">£2,150</span></div>
+              <div class="grp"><span class="cap">Liabilities (owed)</span><span class="num">£185,500</span></div>
+              <div class="row"><span class="n">Home mortgage</span><span class="a">£182,000 owed</span><span class="s">4.6% · 24 years left · repayment</span></div>
+              <div class="row"><span class="n">Barclaycard</span><span class="a">£2,400 owed</span><span class="s">22.9% APR</span></div>
+              <div class="row"><span class="n">Amex Everyday</span><span class="a">£1,100 owed</span><span class="s">27.9% APR</span></div>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <div class="g-3">
+        <section class="panel wd" aria-labelledby="wdD">
+          <div class="panel-h"><h3 class="cap" id="wdD">Debt</h3><span class="chip" style="border-color:var(--status-warning-border);background:var(--status-warning-bg);color:var(--status-warning-text)">2 cards</span></div>
+          <div class="panel-b"><div class="cap">Owed on cards</div><div class="big">£3,500</div>
+            <div class="row"><span class="n">Amex Everyday</span><span class="a">£1,100</span><span class="s">27.9% APR</span></div>
+            <div class="row"><span class="n">Barclaycard</span><span class="a">£2,400</span><span class="s">22.9% APR</span></div>
+            <button type="button" class="btn sm" style="margin-top:10px">View debts</button></div>
+        </section>
+        <section class="panel wd" aria-labelledby="wdM">
+          <div class="panel-h"><h3 class="cap" id="wdM">Mortgage</h3><span class="readout">4.6%</span></div>
+          <div class="panel-b"><div class="cap">Owed</div><div class="big">£182,000</div>
+            <div class="row"><span class="n">Monthly payment</span><span class="a">£1,045</span><span class="s">Repayment</span></div>
+            <div class="row"><span class="n">Term left</span><span class="a">24 years</span></div>
+            <button type="button" class="btn sm" style="margin-top:10px" data-go="mortgage">Open simulator</button></div>
+        </section>
+        <section class="panel wd" aria-labelledby="wdP">
+          <div class="panel-h"><h3 class="cap" id="wdP">Pension</h3><span class="readout">Workplace</span></div>
+          <div class="panel-b"><div class="cap">Pot value</div><div class="big">£18,500</div>
+            <div class="row"><span class="n">Part of net worth</span><span class="a">£97,750</span><span class="s">Counted as an asset</span></div>
+            <div class="row"><span class="n">Salary</span><span class="a">£42,000</span><span class="s">Gross, a year</span></div>
+            <button type="button" class="btn sm" style="margin-top:10px">View pension</button></div>
+        </section>
+      </div>
+    </section>
+
+    <!-- ===== Frame 2: Mortgage ===== -->
+    <section class="view" data-view="mortgage" aria-label="Mortgage simulator" hidden>
+      <div class="pghead">
+        <div><div class="cap">Planning / Mortgage</div><h2>Mortgage simulator</h2></div>
+        <span class="chip">Sample data</span>
+      </div>
+      <div class="split-layout">
+        <section class="panel ctrl" id="ctrl" aria-label="Simulator parameters">
+          <div class="sumbar">
+            <span class="num">£182,000 · 4.6% · 24 yrs · £200/mo</span>
+            <button type="button" class="btn sm" id="adjust" aria-expanded="false" aria-controls="ctrlBody"><svg class="ic sm"><use href="#i-sliders"/></svg>Adjust</button>
+          </div>
+          <div class="panel-h" style="display:flex"><h3 class="cap">Parameters</h3><span class="hint">Outcome figures stay fixed in this mockup</span></div>
+          <div class="ctrl-body" id="ctrlBody">
+            <div class="field"><span class="lbl" id="typeL">Mortgage type</span>
+              <div class="seg" role="radiogroup" aria-labelledby="typeL" style="display:flex">
+                <label style="flex:1"><input class="sr" type="radio" name="mt" checked><span>Repayment</span></label>
+                <label style="flex:1"><input class="sr" type="radio" name="mt"><span>Interest only</span></label>
+              </div></div>
+            <div class="sf"><div class="sf-h"><label class="lbl" for="r1">Outstanding balance</label><output class="pill" for="r1" id="o1">£182,000</output></div>
+              <input type="range" id="r1" min="50000" max="400000" step="1000" value="182000" data-f="gbp"><div class="sf-m"><span>£50k</span><span>£400k</span></div></div>
+            <div class="sf"><div class="sf-h"><label class="lbl" for="r2">Interest rate</label><output class="pill" for="r2" id="o2">4.6%</output></div>
+              <input type="range" id="r2" min="0.5" max="8" step="0.1" value="4.6" data-f="pct"><div class="sf-m"><span>0.5%</span><span>8%</span></div></div>
+            <div class="sf"><div class="sf-h"><label class="lbl" for="r3">Remaining term</label><output class="pill" for="r3" id="o3">24 years</output></div>
+              <input type="range" id="r3" min="1" max="35" step="1" value="24" data-f="yrs"><div class="sf-m"><span>1 year</span><span>35 years</span></div></div>
+            <div class="sf"><div class="sf-h"><label class="lbl" for="r4">Monthly overpayment</label><output class="pill" for="r4" id="o4">£200</output></div>
+              <input type="range" id="r4" min="0" max="1000" step="10" value="200" data-f="gbp"><div class="sf-m"><span>£0</span><span>£1,000</span></div></div>
+          </div>
+        </section>
+        <div style="display:grid;gap:16px;min-width:0">
+          <div class="kpis" role="list" aria-label="Mortgage outcome">
+            <div class="kpi" role="listitem"><span class="cap">Monthly payment</span><span class="v">£1,045</span><span class="d"><span>Repayment, 24 years</span></span></div>
+            <div class="kpi" role="listitem"><span class="cap">Interest, no overpay</span><span class="v">£118,900</span><div class="split" role="img" aria-label="Full bar"><i style="flex:1;background:var(--chart-debt)"></i></div></div>
+            <div class="kpi" role="listitem"><span class="cap">Interest, overpaying</span><span class="v">£85,400</span><div class="split" role="img" aria-label="72% of the no-overpayment interest"><i style="width:71.8%;background:var(--chart-primary)"></i><i style="flex:1;background:var(--surface-sunken)"></i></div></div>
+            <div class="kpi" role="listitem"><span class="cap">Interest saved</span><span class="v">£33,500</span><span class="d"><span class="delta pos"><svg class="ic sm"><use href="#i-down"/></svg>-£33,500</span><span>less interest</span></span></div>
+          </div>
+          <div class="panel headline"><div class="cap">Result</div><h3>Mortgage-free 6 years 1 month sooner <span>(Sep 2044 instead of Nov 2050)</span></h3></div>
+          <section class="panel" aria-labelledby="mcT">
+            <div class="panel-h"><h3 class="cap" id="mcT">Remaining balance / years</h3><span class="chip" style="border-color:var(--border-strong);background:var(--surface-subtle);color:var(--text-secondary)">Projection</span></div>
+            <div class="panel-b"><div class="chart" id="mc"></div>
+              <div class="legend"><span><svg viewBox="0 0 28 8" aria-hidden="true"><line x1="0" y1="4" x2="28" y2="4" stroke="var(--chart-debt)" stroke-width="2"/></svg>No overpayment (solid)</span><span><svg viewBox="0 0 28 8" aria-hidden="true"><line x1="0" y1="4" x2="28" y2="4" stroke="var(--chart-primary)" stroke-width="2" stroke-dasharray="7 4"/></svg>£200 a month overpayment (dashed)</span></div>
+              <p class="cap-note">Assumes the rate stays at 4.6% for the whole term. Projection, not a forecast.</p>
+            </div>
+          </section>
+          <details class="panel drawer">
+            <summary>Year-by-year schedule (24 rows)<svg class="ic"><use href="#i-chev"/></svg></summary>
+            <div class="tbl-wrap"><table class="t"><thead><tr><th scope="col">Year</th><th scope="col">Interest paid</th><th scope="col">Balance, no overpay</th><th scope="col">Balance, overpaying</th></tr></thead><tbody id="sched"></tbody></table></div>
+          </details>
+          <div class="callout"><svg class="ic"><use href="#i-info"/></svg><span>Check your lender's early repayment charge before overpaying more than 10% a year.</span></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== Frame 3: Onboarding ===== -->
+    <section class="view" data-view="onboarding" aria-label="Onboarding" hidden>
+      <div class="pghead">
+        <div><div class="cap">Setup</div><h2>Step 1 of 3: You and income</h2></div>
+        <span class="chip">Sample data</span>
+      </div>
+      <ol class="stepper" aria-label="Progress">
+        <li aria-current="step"><b>1</b><span>You and income</span></li>
+        <li><b>2</b><span>Housing and outgoings</span></li>
+        <li><b>3</b><span>Savings and debt</span></li>
+      </ol>
+      <div class="split-layout" style="grid-template-columns:unset">
+        <div class="g-dash" style="align-items:start">
+          <section class="panel" aria-label="About you">
+            <div class="panel-h"><h3 class="cap">About you</h3></div>
+            <form class="panel-b form" onsubmit="return false">
+              <div class="two">
+                <div class="field"><label class="lbl" for="age">Age</label><input class="in" id="age" type="number" inputmode="numeric" value="34" min="16" max="100"></div>
+                <div class="field"><label class="lbl" for="emp">Employment</label><div class="wrap"><select class="in" id="emp"><option>Employed</option><option>Self-employed</option><option>Not working</option><option>Retired</option></select><svg class="ic sm"><use href="#i-chev"/></svg></div></div>
+              </div>
+              <div class="field"><span class="lbl" id="salL">Annual gross salary</span>
+                <div class="seg" role="radiogroup" aria-label="Income basis" style="display:flex">
+                  <label style="flex:1"><input class="sr" type="radio" name="basis" checked><span>Annual gross</span></label>
+                  <label style="flex:1"><input class="sr" type="radio" name="basis"><span>Monthly net</span></label>
+                </div>
+                <div class="pre"><b aria-hidden="true">£</b><input class="in" id="sal" aria-labelledby="salL" inputmode="numeric" value="42,000"></div>
+                <span class="hint">Before tax and National Insurance.</span></div>
+              <div class="field"><label class="lbl" for="sl">Student loan plan</label><div class="wrap"><select class="in" id="sl"><option>None</option><option>Plan 1</option><option>Plan 2</option><option>Plan 4</option><option>Plan 5</option><option>Postgraduate</option></select><svg class="ic sm"><use href="#i-chev"/></svg></div></div>
+              <div class="foot">
+                <button type="button" class="link">Skip for now</button>
+                <div class="btns"><button type="button" class="btn" disabled>Back</button><button type="button" class="btn primary">Next: housing and outgoings</button></div>
+              </div>
+            </form>
+          </section>
+          <section class="panel" aria-labelledby="pvT">
+            <div class="panel-h"><h3 class="cap" id="pvT">Live preview</h3><span class="live">Updates as you type</span></div>
+            <div class="panel-b pv">
+              <div class="r"><span>Net take-home</span><span class="num">£2,760<small class="hint"> /mo</small></span></div>
+              <div class="r"><span>Monthly surplus</span><span class="num" style="color:var(--status-positive-text)">+£610<small class="hint"> /mo</small></span></div>
+              <div class="r"><span>Starting net worth</span><span class="num">£97,750</span></div>
+              <p class="hint" style="margin-top:8px">Take-home less £2,150 outgoings gives your surplus. Net worth is £283,250 assets less £185,500 owed.</p>
+            </div>
+          </section>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== Frame 4: Empty and error ===== -->
+    <section class="view" data-view="states" aria-label="Empty and error states" hidden>
+      <div class="pghead">
+        <div><div class="cap">Wealth / Debt</div><h2>Debts</h2></div>
+        <span class="chip">Sample data</span>
+      </div>
+      <div class="g-2">
+        <section class="panel" aria-labelledby="emT">
+          <div class="panel-h"><span class="cap">State / empty</span></div>
+          <div class="state">
+            <span class="badge"><svg class="ic"><use href="#i-inbox"/></svg></span>
+            <h3 id="emT">No debts yet</h3>
+            <p>Add a card, loan or overdraft and Flump will work out which to clear first and how much interest you could save.</p>
+            <div class="btns"><button type="button" class="btn primary"><svg class="ic sm"><use href="#i-plus"/></svg>Add a debt</button><button type="button" class="btn">Learn how payoff plans work</button></div>
+          </div>
+        </section>
+        <section class="panel" aria-labelledby="erT" role="alert">
+          <div class="panel-h"><span class="cap">State / route error</span></div>
+          <div class="state err">
+            <span class="badge"><svg class="ic"><use href="#i-alert"/></svg></span>
+            <h3 id="erT">We couldn't load your debts</h3>
+            <p>This is usually temporary. Your figures are safe. Try again in a moment.</p>
+            <div class="btns"><button type="button" class="btn primary"><svg class="ic sm"><use href="#i-refresh"/></svg>Try again</button><button type="button" class="btn" data-go="dashboard">Back to home</button></div>
+            <span class="ref">Reference: sample-404</span>
+          </div>
+        </section>
+      </div>
+    </section>
+
+    <!-- ===== Frame 5: Heavy data ===== -->
+    <section class="view" data-view="heavy" aria-label="Heavy data" hidden>
+      <div class="pghead">
+        <div><div class="cap">Accounts / 34 accounts</div><h2>Accounts</h2></div>
+        <span class="chip">Sample data</span>
+      </div>
+      <div class="kpis" role="list" aria-label="Totals">
+        <div class="kpi" role="listitem"><span class="cap">Net worth</span><span class="v">£648,794</span><span class="d"><span>about £0.6m</span></span></div>
+        <div class="kpi" role="listitem"><span class="cap">Assets</span><span class="v">£1,491,744</span><span class="d"><span>about £1.5m</span></span></div>
+        <div class="kpi" role="listitem"><span class="cap">Owed</span><span class="v">£842,950</span><span class="d"><span>about £0.8m</span></span></div>
+        <div class="kpi" role="listitem"><span class="cap">Accounts</span><span class="v">34</span><span class="d"><span>12 shown below</span></span></div>
+      </div>
+      <section class="panel" aria-labelledby="avoT">
+        <div class="panel-h"><h3 class="cap" id="avoT">Assets vs owed / £m</h3></div>
+        <div class="panel-b"><div class="chart" id="hv"></div></div>
+      </section>
+      <section class="panel" aria-labelledby="alT">
+        <div class="panel-h"><h3 class="cap" id="alT">Accounts</h3><span class="readout" id="hvCount">12 of 34 shown</span></div>
+        <div class="panel-b" style="border-bottom:1px solid var(--border-subtle)">
+          <div class="tools">
+            <div class="field"><label class="lbl" for="hvQ">Search accounts</label><input class="in" id="hvQ" type="search" placeholder="Name or type" autocomplete="off"></div>
+            <div class="field"><label class="lbl" for="hvS">Sort by</label><div class="wrap"><select class="in" id="hvS"><option value="bal">Balance, largest first</option><option value="name">Name, A to Z</option></select><svg class="ic sm"><use href="#i-chev"/></svg></div></div>
+          </div>
+          <div class="chips" role="group" aria-label="Filter by type" id="hvF" style="margin-top:10px">
+            <button type="button" class="fchip" data-f="all" aria-pressed="true">All</button>
+            <button type="button" class="fchip" data-f="current" aria-pressed="false">Current</button>
+            <button type="button" class="fchip" data-f="savings" aria-pressed="false">Savings</button>
+            <button type="button" class="fchip" data-f="investments" aria-pressed="false">Investments</button>
+            <button type="button" class="fchip" data-f="pensions" aria-pressed="false">Pensions</button>
+            <button type="button" class="fchip" data-f="mortgages" aria-pressed="false">Mortgages</button>
+            <button type="button" class="fchip" data-f="cards" aria-pressed="false">Cards and loans</button>
+          </div>
+        </div>
+        <div class="grp-wrap" data-g="assets"><div class="gh"><span class="cap">Assets</span><span class="num">£1,491,744</span></div><div class="gl">
+<div class="acct od" data-type="current" data-bal="-486"><span class="nm" tabindex="0" title="Joint household current account with Marcus (Nationwide FlexDirect)" aria-label="Joint household current account with Marcus (Nationwide FlexDirect)">Joint household current account with Marcus (Nationwide FlexDirect)</span><span class="bal"><span class="badge-od"><svg class="ic sm"><use href="#i-alert"/></svg>Overdrawn</span>-£486</span><span class="meta"><span>Current account</span><span>Overdrawn by £486</span></span></div>
+<div class="acct" data-type="current" data-bal="0"><span class="nm" tabindex="0" title="Business float - Gallagher &amp; Partners Consulting Ltd trading account" aria-label="Business float - Gallagher &amp; Partners Consulting Ltd trading account">Business float - Gallagher &amp; Partners Consulting Ltd trading account</span><span class="bal">£0</span><span class="meta"><span>Current account</span></span></div>
+<div class="acct" data-type="current" data-bal="0"><span class="nm" tabindex="0" title="Zero balance dormant account" aria-label="Zero balance dormant account">Zero balance dormant account</span><span class="bal">£0</span><span class="meta"><span>Current account</span><span>Dormant</span></span></div>
+<div class="acct" data-type="savings" data-bal="25000"><span class="nm" tabindex="0" title="Marcus by Goldman Sachs 1-Year Fixed Rate Saver (matures 14 Mar 2027)" aria-label="Marcus by Goldman Sachs 1-Year Fixed Rate Saver (matures 14 Mar 2027)">Marcus by Goldman Sachs 1-Year Fixed Rate Saver (matures 14 Mar 2027)</span><span class="bal">£25,000</span><span class="meta"><span>Savings</span><span>4.6% interest</span></span></div>
+<div class="acct" data-type="savings" data-bal="50000"><span class="nm" tabindex="0" title="Premium Bonds" aria-label="Premium Bonds">Premium Bonds</span><span class="bal">£50,000</span><span class="meta"><span>Savings</span></span></div>
+<div class="acct" data-type="investments" data-bal="84231.77"><span class="nm" tabindex="0" title="Vanguard FTSE Global All Cap Index Fund - Accumulation (S&amp;S ISA)" aria-label="Vanguard FTSE Global All Cap Index Fund - Accumulation (S&amp;S ISA)">Vanguard FTSE Global All Cap Index Fund - Accumulation (S&amp;S ISA)</span><span class="bal">£84,231.77</span><span class="meta"><span>Investments</span><span>Stocks and shares ISA</span></span></div>
+<div class="acct" data-type="pensions" data-bal="142300"><span class="nm" tabindex="0" title="Employer DC pension - Aviva Workplace (Gallagher &amp; Partners)" aria-label="Employer DC pension - Aviva Workplace (Gallagher &amp; Partners)">Employer DC pension - Aviva Workplace (Gallagher &amp; Partners)</span><span class="bal">£142,300</span><span class="meta"><span>Pension</span><span>Workplace</span></span></div>
+</div></div>
+        <div class="grp-wrap" data-g="owed"><div class="gh"><span class="cap">Owed</span><span class="num">£842,950</span></div><div class="gl">
+<div class="acct" data-type="mortgages" data-bal="318500"><span class="nm" tabindex="0" title="Residential mortgage - Halifax 5-year fix (ends Jan 2029)" aria-label="Residential mortgage - Halifax 5-year fix (ends Jan 2029)">Residential mortgage - Halifax 5-year fix (ends Jan 2029)</span><span class="bal">£318,500 owed</span><span class="meta"><span>Mortgage</span><span>4.29%</span></span></div>
+<div class="acct" data-type="mortgages" data-bal="145000"><span class="nm" tabindex="0" title="Buy-to-let mortgage 1 - Paragon interest-only" aria-label="Buy-to-let mortgage 1 - Paragon interest-only">Buy-to-let mortgage 1 - Paragon interest-only</span><span class="bal">£145,000 owed</span><span class="meta"><span>Mortgage</span><span>5.4%, interest-only</span></span></div>
+<div class="acct" data-type="cards" data-bal="6800"><span class="nm" tabindex="0" title="Santander Zero 0% Balance Transfer card (promo ends Mar 2027)" aria-label="Santander Zero 0% Balance Transfer card (promo ends Mar 2027)">Santander Zero 0% Balance Transfer card (promo ends Mar 2027)</span><span class="bal">£6,800 owed</span><span class="meta"><span>Card</span><span>0% APR</span></span></div>
+<div class="acct" data-type="cards" data-bal="1999.99"><span class="nm" tabindex="0" title="John Lewis Partnership Card" aria-label="John Lewis Partnership Card">John Lewis Partnership Card</span><span class="bal">£1,999.99 owed</span><span class="meta"><span>Card</span><span>29.9% APR</span></span></div>
+<div class="acct" data-type="cards" data-bal="41250"><span class="nm" tabindex="0" title="Student Loan Plan 2" aria-label="Student Loan Plan 2">Student Loan Plan 2</span><span class="bal">£41,250 owed</span><span class="meta"><span>Loan</span></span></div>
+</div></div>
+        <p class="empty-msg" id="hvEmpty" hidden>No accounts match. Clear the search or choose All.</p>
+      </section>
+      <div class="g-2">
+        <section class="panel" aria-labelledby="bgT">
+          <div class="panel-h"><h3 class="cap" id="bgT">Budget / 15 categories, largest first</h3><span class="readout">£4,435 / mo</span></div>
+          <div class="panel-b"><div class="bl">
+<div class="bli"><span>Housing</span><span class="b"><i style="--w:100.0%"></i></span><span class="num">£2,140</span></div>
+<div class="bli"><span>Groceries</span><span class="b"><i style="--w:28.5%"></i></span><span class="num">£610</span></div>
+<div class="bli"><span>Transport</span><span class="b"><i style="--w:15.9%"></i></span><span class="num">£340</span></div>
+<div class="bli"><span>Utilities</span><span class="b"><i style="--w:13.1%"></i></span><span class="num">£280</span></div>
+<div class="bli"><span>Eating out</span><span class="b"><i style="--w:9.8%"></i></span><span class="num">£210</span></div>
+<div class="bli"><span>Insurance</span><span class="b"><i style="--w:8.9%"></i></span><span class="num">£190</span></div>
+<div class="bli oth"><span>Other (9 categories)</span><span class="b"><i style="--w:31.1%"></i></span><span class="num">£665</span></div>
+</div>
+            <div class="legend"><span><i class="lg-sw"></i>Solid bar: one category</span><span><i class="lg-sw h"></i>Hatched bar: 9 smaller categories grouped as Other</span></div>
+          </div>
+        </section>
+        <details class="panel drawer" style="align-self:start">
+          <summary>Year-by-year schedule<svg class="ic"><use href="#i-chev"/></svg></summary>
+          <div class="tbl-wrap"><table class="t"><thead><tr><th scope="col">Year</th><th scope="col">Balance</th><th scope="col">Interest</th><th scope="col">Overpayment</th></tr></thead><tbody id="hvT"></tbody></table></div>
+          <div class="more"><button type="button" class="btn sm" id="hvMore" aria-expanded="false">Show all 24</button></div>
+        </details>
+      </div>
+    </section>
+    </main>
+
+    <nav class="tabbar" aria-label="Primary mobile">
+      <button type="button" data-b="home"><svg class="ic"><use href="#i-home"/></svg>Home</button>
+      <button type="button" data-b="budget"><svg class="ic"><use href="#i-budget"/></svg>Budget</button>
+      <button type="button" data-b="debt"><svg class="ic"><use href="#i-card"/></svg>Debt</button>
+      <button type="button" data-b="accounts"><svg class="ic"><use href="#i-bank"/></svg>Accounts</button>
+      <button type="button" data-b="more"><svg class="ic"><use href="#i-more"/></svg>More</button>
+    </nav>
+  </div>
+  </div>
+</div>
+
+<div class="docs">
+  <section aria-labelledby="tokT">
+    <div class="cap">1</div><h2 id="tokT">Token sketch</h2>
+    <p>Palette primitives mapped to the repo semantic names. Values below are read live from the CSS custom properties of both themes. Dark is the default on bare <span class="num">:root</span>.</p>
+    <div class="scroll" style="margin-top:12px"><table class="t" id="tokTbl"><thead><tr><th scope="col">Token</th><th scope="col">Dark</th><th scope="col">Light</th></tr></thead><tbody></tbody></table></div>
+    <div class="dgrid" style="margin-top:16px">
+      <div class="box"><h3>Type pair</h3>
+        <div style="font:600 28px/1.2 var(--font-mono);letter-spacing:-.02em">£97,750</div><span class="hint">Numeric: IBM Plex Mono 500, tabular, -0.01em</span>
+        <div style="font:600 24px/1.2 var(--font-sans)">Display 24 / 600</div>
+        <div style="font:600 17px/1.3 var(--font-sans)">Heading 17 / 600</div>
+        <div style="font:400 14px/1.5 var(--font-sans)">Body 14 / 400, IBM Plex Sans</div>
+        <div class="cap">Caption 12 mono caps +0.08em</div></div>
+      <div class="box"><h3>Radius scale</h3>
+        <div class="btns"><span class="sw" style="border-radius:2px;width:36px;height:36px"></span><span class="sw" style="border-radius:4px;width:36px;height:36px"></span><span class="sw" style="border-radius:6px;width:36px;height:36px"></span><span class="sw" style="border-radius:8px;width:36px;height:36px"></span></div>
+        <span class="hint">2 bars and thumbs, 4 default (controls, panels, chips), 6 overlays, 8 device frame only. No pills.</span></div>
+      <div class="box"><h3>Elevation</h3>
+        <span class="hint">No shadows. Depth is step-up surface plus a 1px hairline: canvas, sunken, card, subtle, overlay. Focus is a 2px ring with 2px offset.</span>
+        <div class="btns"><span class="sw" style="width:44px;background:var(--surface-canvas)"></span><span class="sw" style="width:44px;background:var(--surface-card)"></span><span class="sw" style="width:44px;background:var(--surface-subtle)"></span><span class="sw" style="width:44px;background:var(--surface-overlay)"></span></div></div>
+      <div class="box"><h3>Spacing and density</h3>
+        <span class="hint">4px base: 4, 8, 12, 16, 24. Panel header 36px, KPI cell 14/16 padding. Controls 34px on desktop, 44px under 720px container width. Gutters 24px wide, 16px narrow. Tables 6px row padding.</span></div>
+      <div class="box"><h3>Motion</h3>
+        <span class="hint">90 to 140ms, linear only (colour and chevron rotation). Live dots use steps(2) blink at 1.2s. No entrance animation, no easing curves. Everything off under prefers-reduced-motion.</span></div>
+      <div class="box"><h3>Chart palette</h3>
+        <div class="palette" id="chartPal"></div>
+        <span class="hint">Cyan assets and net worth, amber liabilities and balances, violet for the user's own scenario. Never red for debt reduction. Dashed means projection or alternative.</span></div>
+    </div>
+  </section>
+
+  <section aria-labelledby="ccT">
+    <div class="cap">2</div><h2 id="ccT">Contrast check</h2>
+    <p>Computed in the browser from the real CSS variables, for both themes (the script briefly sets <span class="num">data-theme</span> to read each set, then restores yours). Text needs 4.5:1; graphics and input borders need 3:1. Current theme: <b id="curTheme" class="num"></b>.</p>
+    <div class="scroll" style="margin-top:12px"><table class="t" id="ccTbl"><thead><tr><th scope="col">Pair</th><th scope="col">Need</th><th scope="col">Dark</th><th scope="col">Light</th></tr></thead><tbody></tbody></table></div>
+    <p id="ccSum" class="num" style="margin-top:8px"></p>
+  </section>
+
+  <section aria-labelledby="ntT">
+    <div class="cap">3</div><h2 id="ntT">New tokens this direction needs</h2>
+    <div class="scroll"><table class="t"><thead><tr><th scope="col">Token</th><th scope="col">Used for</th></tr></thead><tbody>
+      <tr><td class="num">--new-chart-projection</td><td>Drop lines and the Projection label colour on dashed forecast series; lets projections read as secondary without a new series hue.</td></tr>
+      <tr><td class="num">--new-chart-area-wealth</td><td>Translucent fill under the net worth line (cyan at about 15% alpha, per theme).</td></tr>
+      <tr><td class="num">--new-chart-crosshair</td><td>Hover crosshair and value tag outline, brighter than grid so the active reading is unmistakable.</td></tr>
+      <tr><td class="num">--new-surface-scrim</td><td>Backdrop behind sheets and dialogs. Defined for completeness; not visible in these four frames.</td></tr>
+      <tr><td class="num">--new-font-mono (not colour)</td><td>Font stack for numerals and captions (IBM Plex Mono). Declared as <span class="num">--font-mono</span> in this file.</td></tr>
+      <tr><td class="num">--new-radius-sharp (not colour)</td><td>4px default radius (<span class="num">--r</span>) replacing the softer app radius; 2px for bars and thumbs.</td></tr>
+      <tr><td class="num">--new-motion-fast (not colour)</td><td>110ms linear duration (<span class="num">--dur</span>) used for every transition.</td></tr>
+    </tbody></table></div>
+  </section>
+
+  <section aria-labelledby="raT">
+    <div class="cap">4</div><h2 id="raT">Rationale and trade-offs</h2>
+    <ul>
+      <li><b>Every number traceable to inputs.</b> Hairline grids, axis ticks on every month and year, and mono tabular numerals make each figure scannable and comparable. KPI cells show their working: a split bar for outgoings against surplus, a month meter for the buffer, a real sparkline for net worth only (no invented trends for other KPIs).</li>
+      <li><b>Show the next action.</b> The coach card carries a 3px primary rule and breaks the sentence into three stat chips, so the saving is readable before the prose.</li>
+      <li><b>Calm by default, detail on demand.</b> Dense, but progressive: the schedule sits in a closed drawer, the mortgage controls fold into a summary bar plus Adjust at phone width, and hover crosshairs reveal month values.</li>
+      <li><b>Build cost across 12 screens: M.</b> Colour tokens are an S swap. The M comes from re-skinning type (mono numerals and caps captions everywhere), a new KPI cell with micro-visuals, and a chart component with crosshair grid, dashed projections and annotations (L on its own). Sharp radii and no shadows simplify Panda recipes rather than complicate them.</li>
+      <li><b>Mobile fit.</b> Dashboard KPIs become a 2x2 compact grid (chosen over a scroll strip so all four figures are seen at once). A 5-tab bar replaces the top nav, controls reach 44px, charts redraw at true pixel width so axis text stays 12px.</li>
+      <li><b>Risks.</b> Dark-first density can feel cold or intimidating for a nervous first-time user; the amber for liabilities is not a conventional colour for debt and needs the "owed" wording to carry meaning; heavy mono use reduces warmth, so copy must stay plain-spoken. Light theme is fully designed but is the secondary experience.</li>
+    </ul>
+  </section>
+</div>
+
+<script>
+(function(){
+const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelectorAll(s)];
+const root=document.documentElement, frame=$('#frame'), NS='http://www.w3.org/2000/svg';
+const gbp=n=>'£'+Math.round(n).toLocaleString('en-GB');
+const S=(n,a,p)=>{const e=document.createElementNS(NS,n);for(const k in a)e.setAttribute(k,a[k]);if(p)p.append(e);return e};
+const T=(p,x,y,t,anchor,cls)=>{const e=S('text',{x,y,class:cls||'ax','text-anchor':anchor||'start'},p);e.textContent=t;return e};
+
+/* ----- theme ----- */
+function setTheme(t){
+  if(t==='system')root.removeAttribute('data-theme');else root.setAttribute('data-theme',t);
+  $$('#themeSeg button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.t===t));
+  updateCurrent();
+}
+$$('#themeSeg button').forEach(b=>b.addEventListener('click',()=>setTheme(b.dataset.t)));
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change',updateCurrent);
+function currentTheme(){return root.getAttribute('data-theme')||(matchMedia('(prefers-color-scheme: light)').matches?'light':'dark')}
+
+/* ----- viewport ----- */
+$$('#vpSeg button').forEach(b=>b.addEventListener('click',()=>{
+  frame.dataset.w=b.dataset.w;$('#frameCap').textContent='Preview frame / '+b.dataset.w+' px';
+  $$('#vpSeg button').forEach(x=>x.setAttribute('aria-pressed',x===b));
+}));
+
+/* ----- frames ----- */
+const NAVMAP={dashboard:['home','home'],mortgage:['planning','more'],onboarding:[null,null],states:['wealth','debt'],heavy:['accounts','accounts']};
+function show(v){
+  if(!NAVMAP[v])v='dashboard';
+  $$('.view').forEach(s=>s.hidden=s.dataset.view!==v);
+  $$('#frameTabs button').forEach(b=>b.setAttribute('aria-current',b.dataset.v===v?'true':'false'));
+  $$('.nav button').forEach(b=>b.toggleAttribute('aria-current',false));
+  $$('.nav button,.tabbar button').forEach(b=>{const k=b.dataset.n||b.dataset.b;const m=NAVMAP[v];if(k&&(k===m[0]||k===m[1]))b.setAttribute('aria-current','page');else b.removeAttribute('aria-current')});
+  if(location.hash!=='#'+v)history.replaceState(null,'','#'+v);
+  requestAnimationFrame(drawAll);
+}
+$$('#frameTabs button').forEach(b=>b.addEventListener('click',()=>show(b.dataset.v)));
+$$('[data-go]').forEach(b=>b.addEventListener('click',()=>show(b.dataset.go)));
+addEventListener('hashchange',()=>show(location.hash.slice(1)));
+
+/* ----- sliders ----- */
+const FMT={gbp:v=>gbp(v),pct:v=>(+v).toFixed(1)+'%',yrs:v=>v+(v==1?' year':' years')};
+$$('input[type=range]').forEach(r=>{
+  const o=$('#o'+r.id.slice(1));
+  const up=()=>{o.textContent=FMT[r.dataset.f](r.value);r.style.setProperty('--p',((r.value-r.min)/(r.max-r.min)*100)+'%')};
+  r.addEventListener('input',up);up();
+});
+$('#adjust').addEventListener('click',e=>{const c=$('#ctrl');const o=c.classList.toggle('open');e.currentTarget.setAttribute('aria-expanded',o)});
+
+/* ----- sparkline ----- */
+const NW=[84300,85100,86000,87200,88100,89600,91000,92300,93900,95200,96630,97750];
+(function(){
+  const s=$('#spNW'),mn=Math.min(...NW),mx=Math.max(...NW);
+  const pts=NW.map((v,i)=>[2+i*116/11,26-(v-mn)/(mx-mn)*24]);
+  S('path',{d:'M'+pts.map(p=>p.join(',')).join('L')+'L118,28L2,28Z',fill:'var(--new-chart-area-wealth)'},s);
+  S('path',{d:'M'+pts.map(p=>p.join(',')).join('L'),fill:'none',stroke:'var(--chart-wealth)','stroke-width':1.75,'vector-effect':'non-scaling-stroke'},s);
+})();
+
+/* ----- net worth chart ----- */
+function drawNW(){
+  const host=$('#nw');const W=host.clientWidth;if(W<60)return;host.textContent='';
+  const sm=W<520,H=sm?230:270,ml=sm?46:54,mr=sm?18:26,mt=16,mb=30,iw=W-ml-mr,ih=H-mt-mb;
+  const svg=S('svg',{width:W,height:H,viewBox:`0 0 ${W} ${H}`,role:'img','aria-label':'Net worth rose from £84,300 to £97,750 over 12 months, up £1,120 on last month'},host);
+  const x=i=>ml+iw*i/11,y=v=>mt+ih*(1-(v-80000)/20000);
+  for(let v=80000;v<=100000;v+=5000){S('line',{x1:ml,x2:ml+iw,y1:y(v),y2:y(v),class:'g'},svg);T(svg,ml-8,y(v)+4,'£'+v/1000+'k','end')}
+  NW.forEach((_,i)=>S('line',{x1:x(i),x2:x(i),y1:mt,y2:mt+ih,class:'g g2'},svg));
+  S('line',{x1:ml,x2:ml,y1:mt,y2:mt+ih,class:'axl'},svg);S('line',{x1:ml,x2:ml+iw,y1:mt+ih,y2:mt+ih,class:'axl'},svg);
+  const d=NW.map((v,i)=>[x(i),y(v)]),L='M'+d.map(p=>p.map(n=>n.toFixed(1)).join(',')).join('L');
+  S('path',{d:L+`L${x(11)},${mt+ih}L${x(0)},${mt+ih}Z`,class:'ar-w'},svg);S('path',{d:L,class:'ln-w'},svg);
+  d.forEach(p=>S('rect',{x:p[0]-2.5,y:p[1]-2.5,width:5,height:5,class:'pt'},svg));
+  T(svg,x(0),H-8,sm?'-11m':'11 months ago','start');T(svg,x(5),H-8,sm?'-6m':'6 months ago','middle');T(svg,x(11),H-8,'Now','end');
+  const xh=S('g',{},svg);
+  function cross(i){
+    xh.textContent='';const px=d[i][0],py=d[i][1];
+    S('line',{x1:px,x2:px,y1:mt,y2:mt+ih,class:'xh'},xh);S('line',{x1:ml,x2:ml+iw,y1:py,y2:py,class:'xh'},xh);
+    S('rect',{x:px-4,y:py-4,width:8,height:8,fill:'var(--chart-wealth)'},xh);
+    const t=gbp(NW[i]),w=t.length*7.6+14,tx=Math.min(Math.max(px-w/2,ml+2),ml+iw-w-2),ty=py>mt+34?py-32:py+12;
+    S('rect',{x:tx,y:ty,width:w,height:22,rx:2,class:'tag'},xh);T(xh,tx+w/2,ty+15,t,'middle','lab');
+    const lab=i===11?'Now':(11-i)+' mo ago';
+    $('#nwRead').textContent=lab+': '+t+(i?'  ('+(NW[i]>=NW[i-1]?'+':'-')+gbp(Math.abs(NW[i]-NW[i-1]))+')':'');
+  }
+  cross(11);
+  svg.addEventListener('pointermove',e=>{const r=svg.getBoundingClientRect();cross(Math.max(0,Math.min(11,Math.round((e.clientX-r.left-ml)/iw*11))))});
+  svg.addEventListener('pointerleave',()=>cross(11));
+}
+
+/* ----- mortgage chart ----- */
+const B0=182000,R=0.046/12,N=288,PMT=B0*R*Math.pow(1+R,N)/(Math.pow(1+R,N)-1);
+const bal=(m,p)=>{const g=Math.pow(1+R,m);return Math.max(0,B0*g-p*(g-1)/R)};
+function drawMC(){
+  const host=$('#mc');const W=host.clientWidth;if(W<60)return;host.textContent='';
+  const sm=W<520,H=sm?260:300,ml=sm?46:56,mr=sm?16:24,mt=24,mb=30,iw=W-ml-mr,ih=H-mt-mb;
+  const svg=S('svg',{width:W,height:H,viewBox:`0 0 ${W} ${H}`,role:'img','aria-label':'Remaining balance by year. Without overpayment the balance reaches zero at year 24; with a £200 monthly overpayment it reaches zero at year 17.9.'},host);
+  const x=yr=>ml+iw*yr/24,y=v=>mt+ih*(1-v/200000);
+  for(let v=0;v<=200000;v+=50000){S('line',{x1:ml,x2:ml+iw,y1:y(v),y2:y(v),class:'g'},svg);T(svg,ml-8,y(v)+4,v?'£'+v/1000+'k':'£0','end')}
+  for(let yr=0;yr<=24;yr++)S('line',{x1:x(yr),x2:x(yr),y1:mt,y2:mt+ih,class:'g'+(yr%4?' g2':'')},svg);
+  for(let yr=0;yr<=24;yr+=4)T(svg,x(yr),H-8,sm&&yr%8?'':String(yr),yr===0?'start':yr===24?'end':'middle');
+  T(svg,ml+iw,H-8-0,'','');
+  S('line',{x1:ml,x2:ml,y1:mt,y2:mt+ih,class:'axl'},svg);S('line',{x1:ml,x2:ml+iw,y1:mt+ih,y2:mt+ih,class:'axl'},svg);
+  const path=p=>{let s='M'+x(0)+','+y(B0);for(let m=3;m<=N;m+=3){const b=bal(m,p);s+=`L${x(m/12).toFixed(1)},${y(b).toFixed(1)}`;if(b<=0)break}return s};
+  S('path',{d:path(PMT),class:'s-a'},svg);S('path',{d:path(PMT+200),class:'s-b'},svg);
+  const x179=x(17.9);
+  S('line',{x1:x179,x2:x179,y1:y(0),y2:y(0)-40,class:'drop'},svg);S('rect',{x:x179-4,y:y(0)-4,width:8,height:8,class:'mk-b'},svg);
+  S('rect',{x:x(24)-4,y:y(0)-4,width:8,height:8,class:'mk-a'},svg);
+  T(svg,x179-6,y(0)-46,sm?'17.9 yrs':'Free at 17.9 yrs','end','lab');
+  T(svg,x(24),y(0)-12,'24 yrs','end','lab');
+  T(svg,ml+8,mt+14,'PROJECTION','start');
+  T(svg,ml+iw,H-8,'','end');
+}
+(function(){ // schedule rows
+  const tb=$('#sched');let h='';
+  for(let yr=1;yr<=24;yr++){const a=bal(12*(yr-1),PMT),b=bal(12*yr,PMT);h+=`<tr><td>${yr}</td><td>${gbp(12*PMT-(a-b))}</td><td>${gbp(b)}</td><td>${gbp(bal(12*yr,PMT+200))}</td></tr>`}
+  tb.innerHTML=h;
+})();
+
+/* ----- heavy data ----- */
+(function(){
+  let f='all';const q=$('#hvQ'),so=$('#hvS'),rows=$$('.acct');
+  function run(){
+    const t=q.value.trim().toLowerCase();let n=0;
+    $$('.gl').forEach(gl=>{
+      const arr=$$('.acct',gl).sort((a,b)=>so.value==='name'?a.querySelector('.nm').textContent.localeCompare(b.querySelector('.nm').textContent):(+b.dataset.bal)-(+a.dataset.bal));
+      arr.forEach(r=>{gl.append(r);const ok=(f==='all'||r.dataset.type===f)&&(!t||r.textContent.toLowerCase().includes(t));r.hidden=!ok;if(ok)n++});
+      gl.parentElement.hidden=!$$('.acct:not([hidden])',gl).length;
+    });
+    $('#hvCount').textContent=n+' of 34 shown';$('#hvEmpty').hidden=n>0;
+  }
+  q.addEventListener('input',run);so.addEventListener('change',run);
+  $$('#hvF button').forEach(b=>b.addEventListener('click',()=>{f=b.dataset.f;$$('#hvF button').forEach(x=>x.setAttribute('aria-pressed',x===b));run()}));
+  run();
+  const tb=$('#hvT');let h='';
+  for(let yr=1;yr<=24;yr++){const a=bal(12*(yr-1),PMT+200),b=bal(12*yr,PMT+200),pay=Math.min(12*(PMT+200),a*Math.pow(1+R,12)*0+12*(PMT+200));h+=`<tr${yr>8?' class="x" hidden':''}><td>${yr}</td><td>${gbp(b)}</td><td>${gbp(Math.max(0,12*(PMT+200)-(a-b)))}</td><td>${yr<=18?'£2,400':'£0'}</td></tr>`}
+  tb.innerHTML=h;
+  $('#hvMore').addEventListener('click',e=>{const o=e.currentTarget.getAttribute('aria-expanded')==='true';$$('.x',tb).forEach(r=>r.hidden=o);e.currentTarget.setAttribute('aria-expanded',!o);e.currentTarget.textContent=o?'Show all 24':'Show first 8'});
+})();
+function drawHV(){
+  const host=$('#hv');const W=host.clientWidth;if(W<60)return;host.textContent='';
+  const sm=W<520,ml=sm?64:84,mr=20,H=130,iw=W-ml-mr,x=v=>ml+iw*v/1.6;
+  const svg=S('svg',{width:W,height:H,viewBox:`0 0 ${W} ${H}`,role:'img','aria-label':'Assets £1.5m, owed £0.8m, net worth £0.6m, on a £m axis'},host);
+  [0,.4,.8,1.2,1.6].forEach(v=>{S('line',{x1:x(v),x2:x(v),y1:6,y2:H-26,class:'g'},svg);T(svg,x(v),H-8,v?'£'+v.toFixed(1)+'m':'£0',v===0?'start':v===1.6?'end':'middle')});
+  [['Assets',1.491744,'var(--chart-wealth)','£1.5m'],['Owed',.84295,'var(--chart-debt)','£0.8m'],['Net',.648794,'var(--chart-primary)','£0.6m']].forEach((r,i)=>{
+    const y=10+i*30;T(svg,ml-8,y+14,r[0],'end','lab');S('rect',{x:ml,y,width:x(r[1])-ml,height:20,fill:r[2]},svg);
+    const tx=x(r[1])+8>W-60?x(r[1])-8:x(r[1])+8;const t=T(svg,tx,y+15,r[3],tx<x(r[1])?'end':'start','lab');if(tx<x(r[1]))t.setAttribute('style','fill:var(--surface-canvas)')});
+}
+function drawAll(){drawNW();drawMC();drawHV()}
+new ResizeObserver(()=>drawAll()).observe(frame);
+document.fonts&&document.fonts.ready.then(drawAll);
+
+/* ----- token table and contrast ----- */
+const TOK=['surface-canvas','surface-card','surface-sunken','surface-subtle','surface-overlay','surface-contrast','text-primary','text-secondary','text-muted','text-on-contrast','border-default','border-subtle','border-strong','border-input','border-focus-ring','primary','primary-solid','primary-hover','primary-subtle','primary-border','primary-foreground']
+ .concat(['positive','warning','danger','info','neutral'].flatMap(s=>['text','bg','border','solid'].map(k=>`status-${s}-${k}`)))
+ .concat(['primary','wealth','debt','warning','grid','series1','series2','series3','series4','series5'].map(k=>'chart-'+k))
+ .concat(['new-chart-projection','new-chart-area-wealth','new-chart-crosshair','new-surface-scrim']);
+function readTokens(){
+  const prev=root.getAttribute('data-theme'),out={};
+  ['dark','light'].forEach(t=>{root.setAttribute('data-theme',t);const cs=getComputedStyle(root);out[t]={};TOK.forEach(n=>out[t][n]=cs.getPropertyValue('--'+n).trim())});
+  prev===null?root.removeAttribute('data-theme'):root.setAttribute('data-theme',prev);return out;
+}
+const V=readTokens();
+$('#tokTbl tbody').innerHTML=TOK.map(n=>`<tr><td class="num">--${n}</td><td><span class="sw" style="background:${V.dark[n]}"></span><span class="num">${V.dark[n]}</span></td><td><span class="sw" style="background:${V.light[n]}"></span><span class="num">${V.light[n]}</span></td></tr>`).join('');
+$('#chartPal').innerHTML=['chart-wealth','chart-debt','chart-primary','chart-series4','chart-series5','chart-grid'].map(n=>`<i title="--${n}" style="background:var(--${n})"></i>`).join('');
+const lum=h=>{const c=[1,3,5].map(i=>parseInt(h.slice(i,i+2),16)/255).map(v=>v<=.03928?v/12.92:Math.pow((v+.055)/1.055,2.4));return .2126*c[0]+.7152*c[1]+.0722*c[2]};
+const ratio=(a,b)=>{const x=lum(a),y=lum(b);return (Math.max(x,y)+.05)/(Math.min(x,y)+.05)};
+const PAIRS=[];
+['text-primary','text-secondary','text-muted'].forEach(t=>['surface-canvas','surface-card','surface-sunken'].forEach(s=>PAIRS.push([`${t} on ${s}`,t,s,4.5])));
+PAIRS.push(['primary-foreground on primary-solid','primary-foreground','primary-solid',4.5],['primary-foreground on primary-hover','primary-foreground','primary-hover',4.5],['primary (links) on surface-card','primary','surface-card',4.5],['primary on primary-subtle','primary','primary-subtle',4.5]);
+['positive','warning','danger','info','neutral'].forEach(s=>PAIRS.push([`status-${s}-text on status-${s}-bg`,`status-${s}-text`,`status-${s}-bg`,4.5]));
+['chart-wealth','chart-debt','chart-primary','chart-series1','chart-series2','chart-series3','chart-series4','chart-series5'].forEach(c=>PAIRS.push([`${c} vs surface-card`,c,'surface-card',3]));
+PAIRS.push(['border-input vs surface-card','border-input','surface-card',3],['border-input vs surface-sunken','border-input','surface-sunken',3],['border-focus-ring vs surface-canvas','border-focus-ring','surface-canvas',3]);
+let fails=0;
+$('#ccTbl tbody').innerHTML=PAIRS.map(([l,f,b,m])=>{
+  const cell=t=>{const r=ratio(V[t][f],V[t][b]),ok=r>=m;if(!ok)fails++;return `<td class="num ${ok?'pass':'fail'}">${r.toFixed(2)}:1 ${ok?'PASS':'FAIL'}</td>`};
+  return `<tr><td class="num">${l}</td><td class="num">${m}:1</td>${cell('dark')}${cell('light')}</tr>`}).join('');
+$('#ccSum').textContent=fails?fails+' pair(s) below threshold':'All '+PAIRS.length*2+' checks pass AA in both themes.';
+function updateCurrent(){$('#curTheme').textContent=currentTheme()}
+updateCurrent();
+show(location.hash.slice(1)||'dashboard');
+})();
+</script>
+
+</body></html>

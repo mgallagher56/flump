@@ -134,3 +134,7 @@ Adjacent series pairs are checked with Machado full-severity protan, deutan and 
 | Dark  | 27.0 (series4-5) | 17.9 (series4-5) | 27.7 (series6-7) |
 
 Non-adjacent series (for example 3 and 7, both warm) can look alike under CVD. Charts must still add direct labels, markers or dashes, so no pair relies on colour alone. `chart.projection` is only distinguished from `series8` by being dashed.
+
+## Round 5 direction (planned, not yet implemented)
+
+DECISIONS round 5 moves the palette to Direction C's look: teal-green primary (`primary.DEFAULT` light `#0F6B5E`, dark `#5CC4AE`; `primary.solid` stays deep teal in both themes), sand and warm-charcoal neutrals, a yellower leaf-green `status.positive`, `chart.band` as a teal alpha, and a new `surface.hero` token (one deep-teal headline block per page). The hexes above are the recommendation's stand-ins: the token PR must re-run the full contrast matrix with the mockup's real values and keep `KNOWN_FAILURES` empty. This document is updated by that PR. Until then the tables above describe the shipped tokens.

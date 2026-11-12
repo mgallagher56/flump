@@ -1,0 +1,891 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Flump Direction A Calm Ledger</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Newsreader:opsz,wght@6..72,400;6..72,500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --font-ui:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --new-font-display:'Newsreader','Source Serif 4',Georgia,'Times New Roman',serif;
+  --new-dur:200ms;--new-dur-fast:160ms;--new-ease:cubic-bezier(.2,.6,.2,1);
+  --radius-sm:6px;--radius:8px;--radius-lg:10px;
+  color-scheme:light;
+  --surface-canvas:#f7f8fb;--surface-card:#ffffff;--surface-sunken:#f0f2f7;--surface-subtle:#eceef6;--surface-overlay:#ffffff;
+  --surface-contrast:#1b2040;
+  --text-primary:#14172b;--text-secondary:#454b64;--text-muted:#5d647c;--text-on-contrast:#f4f5fb;
+  --border-default:#dfe2ec;--border-subtle:#e9ebf2;--border-strong:#c3c8d8;--border-input:#858ca4;--border-focus-ring:#4f46e5;
+  --primary:#4f46e5;--primary-solid:#4f46e5;--primary-hover:#4338ca;--primary-subtle:#eeefff;--primary-border:#c7c9f7;--primary-foreground:#ffffff;
+  --status-positive-text:#0f6b52;--status-positive-bg:#e6f4ee;--status-positive-border:#b5dccb;--status-positive-solid:#15855f;
+  --status-warning-text:#8a5a00;--status-warning-bg:#fbf1dc;--status-warning-border:#ecd49a;--status-warning-solid:#b7791f;
+  --status-danger-text:#b42318;--status-danger-bg:#fdecea;--status-danger-border:#f4c0ba;--status-danger-solid:#d92d20;
+  --status-info-text:#3730a3;--status-info-bg:#eef0ff;--status-info-border:#c7c9f7;--status-info-solid:#4f46e5;
+  --status-neutral-text:#454b64;--status-neutral-bg:#eef0f5;--status-neutral-border:#d5d9e5;--status-neutral-solid:#6b7390;
+  --chart-primary:#4f46e5;--chart-wealth:#0b8a6c;--chart-debt:#b7791f;--chart-warning:#c2410c;--chart-grid:#e3e6ef;
+  --chart-series1:#4f46e5;--chart-series2:#0b8a6c;--chart-series3:#b7791f;--chart-series4:#7c5cd6;--chart-series5:#0e7490;
+  --new-chart-projection:#5d647c;--new-surface-scrim:rgba(20,23,43,.4);--new-shadow-overlay:0 8px 24px rgba(20,23,43,.12);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  color-scheme:dark;
+  --surface-canvas:#0d1220;--surface-card:#131a2c;--surface-sunken:#0a0f1b;--surface-subtle:#1a2238;--surface-overlay:#1a2238;
+  --surface-contrast:#e8ebf7;
+  --text-primary:#eceff9;--text-secondary:#b4bbd2;--text-muted:#98a0ba;--text-on-contrast:#12172b;
+  --border-default:#263050;--border-subtle:#1c2542;--border-strong:#3a4670;--border-input:#6b7699;--border-focus-ring:#a5a8ff;
+  --primary:#a5a8ff;--primary-solid:#5b52f0;--primary-hover:#4f46e5;--primary-subtle:#1d2050;--primary-border:#3b3f8f;--primary-foreground:#ffffff;
+  --status-positive-text:#5fd3a6;--status-positive-bg:#0f2a26;--status-positive-border:#1d5a49;--status-positive-solid:#2fb88a;
+  --status-warning-text:#f0bf6a;--status-warning-bg:#2b2210;--status-warning-border:#5c4719;--status-warning-solid:#d99a2b;
+  --status-danger-text:#ff9a92;--status-danger-bg:#2e1517;--status-danger-border:#6b2a2d;--status-danger-solid:#f2564d;
+  --status-info-text:#a5a8ff;--status-info-bg:#1b1e4a;--status-info-border:#3b3f8f;--status-info-solid:#8f92ff;
+  --status-neutral-text:#b4bbd2;--status-neutral-bg:#1b2236;--status-neutral-border:#303a5c;--status-neutral-solid:#8790ad;
+  --chart-primary:#8f92ff;--chart-wealth:#36c9a0;--chart-debt:#e0a844;--chart-warning:#f0883e;--chart-grid:#222b47;
+  --chart-series1:#8f92ff;--chart-series2:#36c9a0;--chart-series3:#e0a844;--chart-series4:#b79cff;--chart-series5:#4cc3e0;
+  --new-chart-projection:#98a0ba;--new-surface-scrim:rgba(5,8,16,.6);--new-shadow-overlay:0 8px 24px rgba(0,0,0,.45);
+}}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --surface-canvas:#0d1220;--surface-card:#131a2c;--surface-sunken:#0a0f1b;--surface-subtle:#1a2238;--surface-overlay:#1a2238;
+  --surface-contrast:#e8ebf7;
+  --text-primary:#eceff9;--text-secondary:#b4bbd2;--text-muted:#98a0ba;--text-on-contrast:#12172b;
+  --border-default:#263050;--border-subtle:#1c2542;--border-strong:#3a4670;--border-input:#6b7699;--border-focus-ring:#a5a8ff;
+  --primary:#a5a8ff;--primary-solid:#5b52f0;--primary-hover:#4f46e5;--primary-subtle:#1d2050;--primary-border:#3b3f8f;--primary-foreground:#ffffff;
+  --status-positive-text:#5fd3a6;--status-positive-bg:#0f2a26;--status-positive-border:#1d5a49;--status-positive-solid:#2fb88a;
+  --status-warning-text:#f0bf6a;--status-warning-bg:#2b2210;--status-warning-border:#5c4719;--status-warning-solid:#d99a2b;
+  --status-danger-text:#ff9a92;--status-danger-bg:#2e1517;--status-danger-border:#6b2a2d;--status-danger-solid:#f2564d;
+  --status-info-text:#a5a8ff;--status-info-bg:#1b1e4a;--status-info-border:#3b3f8f;--status-info-solid:#8f92ff;
+  --status-neutral-text:#b4bbd2;--status-neutral-bg:#1b2236;--status-neutral-border:#303a5c;--status-neutral-solid:#8790ad;
+  --chart-primary:#8f92ff;--chart-wealth:#36c9a0;--chart-debt:#e0a844;--chart-warning:#f0883e;--chart-grid:#222b47;
+  --chart-series1:#8f92ff;--chart-series2:#36c9a0;--chart-series3:#e0a844;--chart-series4:#b79cff;--chart-series5:#4cc3e0;
+  --new-chart-projection:#98a0ba;--new-surface-scrim:rgba(5,8,16,.6);--new-shadow-overlay:0 8px 24px rgba(0,0,0,.45);
+}
+
+*,*::before,*::after{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--surface-canvas);color:var(--text-primary);font-family:var(--font-ui);font-size:15px;line-height:1.55;font-variant-numeric:tabular-nums lining-nums;-webkit-font-smoothing:antialiased}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+a{color:var(--primary);text-underline-offset:3px}
+:focus-visible{outline:2px solid var(--border-focus-ring);outline-offset:2px;border-radius:var(--radius-sm)}
+h1,h2,h3,p{margin:0}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+svg.i{width:20px;height:20px;flex:none;fill:none;stroke:currentColor;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round}
+.num{font-variant-numeric:tabular-nums lining-nums}
+
+/* ---------- page chrome (outside the device frame) ---------- */
+.pagebar{display:flex;flex-wrap:wrap;align-items:center;gap:12px 20px;padding:14px 24px;border-bottom:1px solid var(--border-default);background:var(--surface-card)}
+.pb-title{font-family:var(--new-font-display);font-size:20px;font-weight:500;margin-right:auto}
+.pb-title small{font-family:var(--font-ui);font-size:13px;color:var(--text-secondary);margin-left:10px;font-weight:400}
+.pb-controls{max-width:100%;display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center}
+.seg{max-width:100%;flex-wrap:wrap;display:inline-flex;padding:3px;gap:2px;background:var(--surface-sunken);border:1px solid var(--border-default);border-radius:var(--radius)}
+.seg button{min-height:34px;padding:0 14px;border:0;border-radius:var(--radius-sm);background:transparent;color:var(--text-secondary);font-size:14px;font-weight:500;display:inline-flex;align-items:center;gap:6px;transition:background-color var(--new-dur-fast) var(--new-ease),color var(--new-dur-fast) var(--new-ease)}
+.seg button svg.i{width:16px;height:16px}
+.seg button[aria-pressed="true"]{background:var(--surface-card);color:var(--text-primary);box-shadow:0 0 0 1px var(--border-strong)}
+.seg button:hover:not([aria-pressed="true"]){color:var(--text-primary)}
+.chip{display:inline-flex;align-items:center;gap:6px;min-height:24px;padding:0 10px;border-radius:999px;font-size:12px;font-weight:600;letter-spacing:.02em;background:var(--status-info-bg);color:var(--status-info-text);border:1px solid var(--status-info-border);white-space:nowrap}
+.stage{display:flex;justify-content:center;padding:28px 16px}
+.device{width:100%;max-width:1280px;border:1px solid var(--border-strong);border-radius:14px;overflow:clip;background:var(--surface-canvas);transition:max-width var(--new-dur) var(--new-ease)}
+.device.phone{max-width:395px;border:10px solid var(--surface-contrast);border-radius:38px}
+.frame{container:frame/inline-size;background:var(--surface-canvas)}
+
+/* ---------- app shell ---------- */
+.app{min-height:640px;display:flex;flex-direction:column}
+.appbar{display:flex;align-items:center;gap:20px;padding:12px 16px;background:var(--surface-card);border-bottom:1px solid var(--border-default)}
+.brand{display:flex;align-items:center;gap:10px;font-family:var(--new-font-display);font-size:22px;font-weight:500;letter-spacing:-.01em;margin-right:auto}
+.brand svg{width:28px;height:28px}
+.topnav{display:none;gap:4px;margin-right:auto}
+.nav-link{min-height:44px;padding:0 14px;border:0;border-radius:var(--radius);background:transparent;color:var(--text-secondary);font-size:15px;font-weight:500;transition:color var(--new-dur-fast) var(--new-ease),background-color var(--new-dur-fast) var(--new-ease);position:relative}
+.nav-link:hover{color:var(--text-primary);background:var(--surface-sunken)}
+.nav-link[aria-current="page"]{color:var(--text-primary)}
+.nav-link[aria-current="page"]::after{content:"";position:absolute;left:14px;right:14px;bottom:4px;height:2px;border-radius:1px;background:var(--primary)}
+.avatar{width:44px;height:44px;border-radius:50%;border:1px solid var(--border-strong);background:var(--surface-sunken);font-weight:600;font-size:14px;display:grid;place-items:center}
+.view{flex:1;padding:24px 16px 40px}
+.view[hidden]{display:none}
+.tabbar{position:sticky;bottom:0;display:grid;grid-template-columns:repeat(5,1fr);background:var(--surface-card);border-top:1px solid var(--border-default);padding-bottom:env(safe-area-inset-bottom)}
+.tab{min-height:60px;border:0;background:transparent;color:var(--text-secondary);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:12px;font-weight:500}
+.tab[aria-current="page"]{color:var(--primary)}
+.tab[aria-current="page"] svg{stroke-width:2.25}
+
+/* ---------- type ---------- */
+.display{font-family:var(--new-font-display);font-weight:400;font-size:32px;line-height:1.12;letter-spacing:-.015em}
+.lede{color:var(--text-secondary);margin-top:6px;font-size:15px}
+.pagehead{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px;margin-bottom:24px}
+.sec{margin-top:40px}
+.sec-h{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:12px}
+.sec-h h2{font-family:var(--new-font-display);font-weight:500;font-size:22px;letter-spacing:-.01em;line-height:1.2}
+.sec-h .sub{font-size:13px;color:var(--text-secondary)}
+.eyebrow{font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--text-secondary)}
+.muted{color:var(--text-muted)}
+.tlink{display:inline-flex;align-items:center;gap:6px;min-height:44px;font-weight:500;font-size:14px;color:var(--primary);text-decoration:none;background:none;border:0;padding:0}
+.tlink:hover{text-decoration:underline}
+
+/* ---------- buttons ---------- */
+.btn{min-height:44px;padding:0 18px;border-radius:var(--radius);border:1px solid transparent;font-weight:500;font-size:15px;display:inline-flex;align-items:center;justify-content:center;gap:8px;transition:background-color var(--new-dur-fast) var(--new-ease),border-color var(--new-dur-fast) var(--new-ease)}
+.btn-primary{background:var(--primary-solid);color:var(--primary-foreground)}
+.btn-primary:hover{background:var(--primary-hover)}
+.btn-secondary{background:var(--surface-card);border-color:var(--border-strong);color:var(--text-primary)}
+.btn-secondary:hover{background:var(--surface-sunken)}
+.btn[disabled]{opacity:1;background:var(--surface-sunken);color:var(--text-muted);border-color:var(--border-default);cursor:not-allowed}
+
+/* ---------- KPI strip ---------- */
+.kpis{display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid var(--border-default)}
+.kpi{padding:16px 12px 16px 0;border-top:1px solid var(--border-default);min-width:0}
+.kpi:nth-child(even){padding-left:16px;border-left:1px solid var(--border-subtle)}
+.kpi-l{font-size:13px;font-weight:500;color:var(--text-secondary)}
+.kpi-v{font-family:var(--new-font-display);font-size:28px;line-height:1.15;letter-spacing:-.015em;margin:4px 0 2px;font-variant-numeric:tabular-nums lining-nums}
+.kpi-m{font-size:13px;color:var(--text-secondary);line-height:1.4}
+.delta{display:inline-flex;align-items:center;gap:3px;font-weight:600;color:var(--status-positive-text)}
+.delta svg.i{width:14px;height:14px;stroke-width:2.25}
+.kpis.tight .kpi:nth-child(n){padding:14px 12px}
+.kpis.tight .kpi-v{font-size:26px}
+
+/* ---------- coach ---------- */
+.coach{display:grid;gap:16px;padding:20px;border:1px solid var(--primary-border);background:var(--primary-subtle);border-radius:var(--radius-lg);margin-top:24px}
+.coach-body{display:flex;gap:14px}
+.coach-ico{width:36px;height:36px;border-radius:50%;background:var(--surface-card);border:1px solid var(--primary-border);color:var(--primary);display:grid;place-items:center;flex:none}
+.coach h2{font-family:var(--new-font-display);font-weight:500;font-size:21px;line-height:1.25;margin:2px 0 6px;letter-spacing:-.01em}
+.coach p{color:var(--text-secondary);max-width:62ch}
+
+/* ---------- chart ---------- */
+.chart{width:100%;min-height:200px}
+.chart svg{display:block;overflow:visible}
+.legend{display:flex;flex-wrap:wrap;gap:6px 22px;font-size:13px;color:var(--text-secondary);margin-bottom:8px}
+.legend span{display:inline-flex;align-items:center;gap:8px}
+.legend svg{width:30px;height:8px}
+.proj{font-size:12px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--new-chart-projection)}
+.cap{font-size:13px;color:var(--text-secondary);margin-top:8px}
+
+/* ---------- accounts ---------- */
+.cmp{display:grid;gap:10px;margin-bottom:24px}
+.cmp-row{display:grid;grid-template-columns:84px 1fr auto;gap:12px;align-items:center;font-size:14px}
+.cmp-bar{height:10px;border-radius:5px;background:var(--surface-sunken);overflow:hidden}
+.cmp-bar i{display:block;height:100%;border-radius:5px}
+.cols{display:grid;gap:32px}
+.acct-h{display:flex;justify-content:space-between;align-items:baseline;padding-bottom:8px;border-bottom:1px solid var(--border-strong)}
+.acct-h h3{font-size:14px;font-weight:600}
+.acct-h .t{font-family:var(--new-font-display);font-size:26px;letter-spacing:-.01em}
+.rows{list-style:none;margin:0;padding:0}
+.rows li{display:flex;justify-content:space-between;gap:12px;padding:12px 0;border-bottom:1px solid var(--border-subtle);align-items:baseline}
+.rows .n{font-weight:500}
+.rows .d{display:block;font-size:13px;color:var(--text-secondary);font-weight:400}
+.rows .a{font-weight:500;white-space:nowrap}
+.owed{font-size:12px;color:var(--text-secondary);font-weight:400;margin-left:4px}
+
+/* ---------- widgets ---------- */
+.widgets{display:grid;gap:8px}
+.widget{padding:16px 0 4px;border-top:1px solid var(--border-strong);display:flex;flex-direction:column;gap:4px}
+.w-h{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:var(--text-secondary)}
+.w-v{font-family:var(--new-font-display);font-size:28px;letter-spacing:-.015em;line-height:1.15}
+.w-t{font-size:14px;color:var(--text-secondary)}
+
+/* ---------- mortgage ---------- */
+.split{display:grid;gap:24px}
+.sumbar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 14px;border:1px solid var(--border-default);background:var(--surface-card);border-radius:var(--radius-lg)}
+.sumbar b{display:block;font-weight:600}
+.sumbar small{font-size:13px;color:var(--text-secondary)}
+.controls{background:var(--surface-card);border:1px solid var(--border-default);border-radius:var(--radius-lg);padding:20px;display:grid;gap:8px}
+.seg-f{display:grid;grid-template-columns:1fr 1fr;padding:3px;gap:3px;background:var(--surface-sunken);border:1px solid var(--border-default);border-radius:var(--radius)}
+.seg-f button{min-height:44px;border:0;border-radius:var(--radius-sm);background:transparent;color:var(--text-secondary);font-weight:500;font-size:14px}
+.seg-f button[aria-pressed="true"]{background:var(--surface-card);color:var(--text-primary);box-shadow:0 0 0 1px var(--border-strong)}
+.field{display:grid;gap:2px}
+.field-h{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.field label,.flabel{font-size:14px;font-weight:500}
+output.pill{min-width:72px;text-align:right;padding:3px 10px;border-radius:var(--radius-sm);background:var(--surface-sunken);border:1px solid var(--border-default);font-weight:600;font-size:14px}
+.range-note{display:flex;justify-content:space-between;font-size:12px;color:var(--text-muted)}
+input[type=range]{appearance:none;-webkit-appearance:none;width:100%;height:44px;margin:0;background:transparent;cursor:pointer}
+input[type=range]::-webkit-slider-runnable-track{height:4px;border-radius:2px;background:linear-gradient(to right,var(--primary) var(--p,50%),var(--border-strong) var(--p,50%))}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;margin-top:-9px;border-radius:50%;background:var(--surface-card);border:2px solid var(--primary);transition:transform var(--new-dur-fast) var(--new-ease)}
+input[type=range]:active::-webkit-slider-thumb{transform:scale(1.1)}
+input[type=range]::-moz-range-track{height:4px;border-radius:2px;background:var(--border-strong)}
+input[type=range]::-moz-range-progress{height:4px;border-radius:2px;background:var(--primary)}
+input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;background:var(--surface-card);border:2px solid var(--primary)}
+input[type=range]:focus-visible{outline:2px solid var(--border-focus-ring);outline-offset:0;border-radius:var(--radius-sm)}
+.headline{font-family:var(--new-font-display);font-size:28px;line-height:1.18;letter-spacing:-.015em;font-weight:400}
+.headline small{display:block;margin-top:6px;font-family:var(--font-ui);font-size:15px;letter-spacing:0;color:var(--text-secondary)}
+.note{display:flex;gap:10px;align-items:flex-start;padding:12px 14px;border-radius:var(--radius);background:var(--status-warning-bg);border:1px solid var(--status-warning-border);color:var(--status-warning-text);font-size:14px;margin-top:20px}
+.note svg{margin-top:1px}
+details.drawer{margin-top:20px;border-top:1px solid var(--border-strong);border-bottom:1px solid var(--border-default)}
+details.drawer summary{list-style:none;display:flex;align-items:center;justify-content:space-between;min-height:48px;cursor:pointer;font-weight:500}
+details.drawer summary::-webkit-details-marker{display:none}
+details.drawer summary svg{transition:transform var(--new-dur) var(--new-ease)}
+details.drawer[open] summary svg{transform:rotate(180deg)}
+.tbl-wrap{overflow-x:auto;padding-bottom:12px}
+table.sched{width:100%;border-collapse:collapse;font-size:14px}
+table.sched th,table.sched td{text-align:right;padding:8px 10px;border-bottom:1px solid var(--border-subtle)}
+table.sched th:first-child,table.sched td:first-child{text-align:left}
+table.sched th{font-size:12px;font-weight:600;color:var(--text-secondary);letter-spacing:.04em;text-transform:uppercase}
+
+/* ---------- onboarding ---------- */
+.stepper{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;list-style:none;margin:20px 0 28px;padding:0}
+.step{border-top:3px solid var(--border-default);padding-top:10px;font-size:13px;color:var(--text-secondary);line-height:1.35}
+.step b{display:block;font-size:12px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--text-muted);margin-bottom:2px}
+.step[aria-current="step"]{border-color:var(--primary);color:var(--text-primary);font-weight:600}
+.step[aria-current="step"] b{color:var(--primary)}
+.onb{display:grid;gap:28px}
+.form{display:grid;gap:20px}
+.form .row2{display:grid;gap:20px}
+.input,.select{width:100%;min-height:44px;padding:0 12px;border:1px solid var(--border-input);border-radius:var(--radius);background:var(--surface-card);font-size:16px;font-variant-numeric:tabular-nums lining-nums}
+.select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%23858ca4' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;padding-right:38px}
+.input:focus-visible,.select:focus-visible{outline:2px solid var(--border-focus-ring);outline-offset:1px}
+.prefix{position:relative}
+.prefix span{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text-secondary);font-size:16px}
+.prefix .input{padding-left:28px}
+.hint{font-size:13px;color:var(--text-secondary);margin-top:6px}
+.preview{background:var(--surface-sunken);border:1px solid var(--border-default);border-radius:var(--radius-lg);padding:24px;align-self:start}
+.pv-row{display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:14px 0;border-bottom:1px solid var(--border-default)}
+.pv-row:last-of-type{border-bottom:0}
+.pv-row span{color:var(--text-secondary);font-size:14px}
+.pv-row b{font-family:var(--new-font-display);font-weight:400;font-size:26px;letter-spacing:-.01em}
+.pv-row.big b{font-size:34px}
+.actions{display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin-top:8px}
+.actions .tlink{margin-left:auto}
+
+/* ---------- states ---------- */
+.panels{display:grid;gap:20px}
+.panel{border:1px solid var(--border-default);background:var(--surface-card);border-radius:var(--radius-lg);padding:28px 24px;display:flex;flex-direction:column;align-items:flex-start;gap:10px}
+.panel .tag{font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted)}
+.panel h2{font-family:var(--new-font-display);font-weight:500;font-size:26px;letter-spacing:-.01em;line-height:1.2}
+.panel p{color:var(--text-secondary);max-width:46ch}
+.badge-ico{width:48px;height:48px;border-radius:50%;display:grid;place-items:center;margin-top:8px}
+.badge-ico svg.i{width:24px;height:24px}
+.panel .btns{display:flex;flex-wrap:wrap;gap:12px;margin-top:10px}
+.ref{font-size:13px;color:var(--text-muted);margin-top:6px}
+
+
+/* ---------- heavy data ---------- */
+.scale{display:grid;gap:14px}
+.scale-row .top{display:flex;justify-content:space-between;align-items:baseline;gap:12px;font-size:14px;margin-bottom:6px;flex-wrap:wrap}
+.scale-row .top b{font-weight:600}
+.track{height:12px;border-radius:6px;background:var(--surface-sunken);overflow:hidden}
+.track i{display:block;height:100%;border-radius:6px}
+.axis{position:relative;height:22px;border-top:1px solid var(--border-strong);margin-top:2px}
+.axis span{position:absolute;top:4px;font-size:12px;color:var(--text-muted);transform:translateX(-50%);white-space:nowrap}
+.axis span:first-child{transform:none}.axis span:last-child{transform:translateX(-100%)}
+.toolbar{display:grid;gap:12px;margin-bottom:16px}
+.tb-top{display:grid;gap:12px}
+.search{position:relative}
+.search svg{position:absolute;left:12px;top:12px;color:var(--text-muted);pointer-events:none}
+.search .input{padding-left:40px}
+.sortf{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:500}
+.sortf .select{width:auto;min-width:190px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.fchip{min-height:44px;padding:0 14px;border-radius:999px;border:1px solid var(--border-strong);background:var(--surface-card);font-size:14px;font-weight:500;display:inline-flex;align-items:center;gap:6px;transition:background-color var(--new-dur-fast) var(--new-ease)}
+.fchip svg{width:16px;height:16px;display:none}
+.fchip[aria-pressed="true"]{background:var(--primary-subtle);border-color:var(--primary);color:var(--primary);font-weight:600}
+.fchip[aria-pressed="true"] svg{display:block}
+.grp{margin-top:24px}
+.grp:first-of-type{margin-top:8px}
+.acc{list-style:none;margin:0;padding:0}
+.acc li{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 16px;padding:12px 0;border-bottom:1px solid var(--border-subtle);align-items:start}
+.nm{display:block;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:500;border-radius:var(--radius-sm)}
+.nm:focus,.nm:hover{white-space:normal;overflow:visible}
+.acc .mt{grid-column:1;font-size:13px;color:var(--text-secondary)}
+.acc .bal{grid-column:2;grid-row:1/span 2;text-align:right;font-weight:600;white-space:nowrap;font-variant-numeric:tabular-nums lining-nums}
+.acc .bal small{display:block;font-size:12px;font-weight:400;color:var(--text-secondary)}
+.od{display:inline-flex;align-items:center;gap:4px;margin-left:8px;padding:0 8px;min-height:22px;border-radius:999px;font-size:12px;font-weight:600;background:var(--status-warning-bg);color:var(--status-warning-text);border:1px solid var(--status-warning-border);vertical-align:middle}
+.od svg{width:14px;height:14px}
+.empty-r{padding:20px 0;color:var(--text-secondary)}
+.hv{display:grid;gap:40px}
+.bud{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.bud li{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 12px;font-size:14px;align-items:baseline}
+.bud .bar{grid-column:1/-1;height:10px;border-radius:5px;background:var(--surface-sunken);overflow:hidden}
+.bud .bar i{display:block;height:100%;border-radius:5px;background:var(--chart-primary)}
+.bud .bar i.oth{background:repeating-linear-gradient(135deg,var(--chart-primary) 0 4px,var(--surface-card) 4px 7px);outline:1px solid var(--chart-primary);outline-offset:-1px}
+.bud .amt{font-weight:600}
+.bud .pc{font-weight:400;color:var(--text-secondary);margin-left:6px;font-size:13px}
+.key{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:13px;color:var(--text-secondary);margin-bottom:12px}
+.key span{display:inline-flex;align-items:center;gap:8px}
+.key i{display:inline-block;width:26px;height:10px;border-radius:3px;background:var(--chart-primary)}
+.key i.oth{background:repeating-linear-gradient(135deg,var(--chart-primary) 0 4px,var(--surface-card) 4px 7px);outline:1px solid var(--chart-primary);outline-offset:-1px}
+table.dense td,table.dense th{padding:6px 10px}
+
+/* ---------- container-driven responsiveness ---------- */
+@container frame (min-width:640px){
+  .tb-top{grid-template-columns:1fr auto}
+  .cols{grid-template-columns:1fr 1fr;gap:48px}
+  .widgets{grid-template-columns:repeat(3,1fr);gap:32px}
+  .panels{grid-template-columns:1fr 1fr}
+  .coach{grid-template-columns:1fr auto;align-items:center}
+}
+@container frame (min-width:880px){
+  .topnav{display:flex}
+  .tabbar,.sumbar{display:none}
+  .appbar{padding:10px 48px}
+  .view{padding:44px 48px 64px}
+  .display{font-size:42px}
+  .kpis{grid-template-columns:repeat(4,1fr)}
+  .kpi:nth-child(n){padding:20px 24px;border-left:1px solid var(--border-subtle)}
+  .kpi:first-child{padding-left:0;border-left:0}
+  .kpis.three{grid-template-columns:repeat(3,1fr)}
+  .nm{max-width:44ch}
+  .kpi-v{font-size:34px}
+  .split{grid-template-columns:5fr 7fr;gap:56px;align-items:start}
+  .split .side{position:sticky;top:16px}
+  .onb{grid-template-columns:7fr 5fr;gap:56px}
+  .hv{grid-template-columns:7fr 5fr;gap:56px;align-items:start}
+  .form .row2{grid-template-columns:1fr 1fr}
+  .headline{font-size:32px}
+}
+@container frame (max-width:879px){
+  .kpis.three{grid-template-columns:1fr}
+  .kpis.three .kpi:nth-child(n){padding:14px 0;border-left:0}
+  .controls:not(.open){display:none}
+  .controls{margin-top:12px}
+}
+@container frame (max-width:480px){
+  .actions .btn-primary{flex:1 1 100%;order:-1}
+  .actions .btn-secondary{flex:1 1 100%}
+  .actions .tlink{margin-left:0;width:100%;justify-content:center}
+  .cmp-row{grid-template-columns:70px 1fr auto}
+  .nm{white-space:normal;overflow:visible;overflow-wrap:anywhere}
+  .sortf{flex-wrap:wrap}.sortf .select{flex:1}
+  .appbar .chip{display:none}
+}
+
+/* ---------- documentation sections below the frame ---------- */
+.docs{max-width:1180px;margin:0 auto;padding:16px 24px 80px}
+.doc{margin-top:56px}
+.doc h2{font-family:var(--new-font-display);font-weight:500;font-size:30px;letter-spacing:-.015em;margin-bottom:6px}
+.doc h3{font-size:14px;font-weight:600;margin:28px 0 10px;color:var(--text-secondary);letter-spacing:.05em;text-transform:uppercase}
+.doc p,.doc li{color:var(--text-secondary);max-width:78ch}
+.doc ul{padding-left:20px;margin:8px 0}
+.tw{overflow-x:auto;border:1px solid var(--border-default);border-radius:var(--radius-lg);background:var(--surface-card)}
+table.t{width:100%;border-collapse:collapse;font-size:13px}
+table.t th,table.t td{text-align:left;padding:8px 12px;border-bottom:1px solid var(--border-subtle);white-space:nowrap;vertical-align:middle}
+table.t th{font-size:12px;font-weight:600;color:var(--text-secondary);background:var(--surface-sunken);position:sticky;top:0}
+table.t tr:last-child td{border-bottom:0}
+.sw{display:inline-block;width:18px;height:18px;border-radius:5px;border:1px solid var(--border-strong);vertical-align:middle;margin-right:8px}
+code,.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px}
+.pass{color:var(--status-positive-text);font-weight:600}
+.fail{color:var(--status-danger-text);font-weight:600}
+.grid3{display:grid;gap:20px;grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
+.spec{padding:16px 0;border-top:1px solid var(--border-strong)}
+.spec p{margin-top:6px}
+.cur{background:var(--primary-subtle);color:var(--primary)!important}
+.radius-demo{display:flex;gap:14px;flex-wrap:wrap}
+.radius-demo div{width:72px;height:48px;border:1px solid var(--border-strong);background:var(--surface-sunken);display:grid;place-items:center;font-size:12px;color:var(--text-secondary)}
+.palette{display:flex;gap:10px;flex-wrap:wrap}
+.palette div{font-size:12px;color:var(--text-secondary)}
+.palette i{display:block;width:84px;height:28px;border-radius:var(--radius-sm);margin-bottom:4px}
+
+@media (max-width:640px){
+  .pagebar{padding:12px 16px}
+  .pb-title small{display:block;margin:0}
+  #vp{display:none}
+  .stage{padding:0}
+  .device,.device.phone{max-width:none;border-width:0;border-radius:0}
+  .docs{padding:16px}
+}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{transition:none!important;animation:none!important}}
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+ <defs>
+  <symbol id="i-home" viewBox="0 0 24 24"><path d="M3 11l9-8 9 8M5 10v10h5v-6h4v6h5V10"/></symbol>
+  <symbol id="i-budget" viewBox="0 0 24 24"><path d="M3 7h15a3 3 0 013 3v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7zm0 0V6a2 2 0 012-2h11M16 14h2"/></symbol>
+  <symbol id="i-accounts" viewBox="0 0 24 24"><path d="M3 10l9-6 9 6M5 10v8M9 10v8M15 10v8M19 10v8M3 20h18"/></symbol>
+  <symbol id="i-wealth" viewBox="0 0 24 24"><path d="M3 17l6-6 4 4 8-8M15 7h6v6"/></symbol>
+  <symbol id="i-plan" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/></symbol>
+  <symbol id="i-debt" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18M7 15h4"/></symbol>
+  <symbol id="i-more" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.2"/><circle cx="12" cy="12" r="1.2"/><circle cx="19" cy="12" r="1.2"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><path d="M11 4a7 7 0 100 14 7 7 0 000-14zM21 21l-4.3-4.3"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></symbol>
+  <symbol id="i-up" viewBox="0 0 24 24"><path d="M12 19V5M6 11l6-6 6 6"/></symbol>
+  <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+  <symbol id="i-chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></symbol>
+  <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></symbol>
+  <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 019.5 4 8 8 0 1020 14.5z"/></symbol>
+  <symbol id="i-monitor" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></symbol>
+  <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></symbol>
+  <symbol id="i-alert" viewBox="0 0 24 24"><path d="M12 3l10 18H2L12 3zM12 10v5M12 18h.01"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M20 11a8 8 0 00-14-4L4 9M4 4v5h5M4 13a8 8 0 0014 4l2-2M20 20v-5h-5"/></symbol>
+  <symbol id="i-book" viewBox="0 0 24 24"><path d="M4 5a2 2 0 012-2h13v16H6a2 2 0 00-2 2V5zM4 19a2 2 0 002 2h13"/></symbol>
+  <symbol id="i-bulb" viewBox="0 0 24 24"><path d="M9 18h6M10 21h4M12 3a6 6 0 00-4 10.5c.7.7 1 1.5 1 2.5h6c0-1 .3-1.8 1-2.5A6 6 0 0012 3z"/></symbol>
+  <symbol id="i-hourglass" viewBox="0 0 24 24"><path d="M6 3h12M6 21h12M7 3c0 5 5 6 5 9s-5 4-5 9M17 3c0 5-5 6-5 9s5 4 5 9"/></symbol>
+ </defs>
+</svg>
+
+<div class="page">
+ <header class="pagebar">
+  <div class="pb-title">Flump<small>Direction A: Calm ledger</small></div>
+  <span class="chip">Sample data</span>
+  <div class="pb-controls">
+   <div class="seg" id="tabs" role="group" aria-label="Frame">
+    <button type="button" data-frame="dashboard" aria-pressed="true">Dashboard</button>
+    <button type="button" data-frame="mortgage" aria-pressed="false">Mortgage</button>
+    <button type="button" data-frame="onboarding" aria-pressed="false">Onboarding</button>
+    <button type="button" data-frame="states" aria-pressed="false">Empty and error</button>
+    <button type="button" data-frame="heavy" aria-pressed="false">Heavy data</button>
+   </div>
+   <div class="seg" id="vp" role="group" aria-label="Preview width">
+    <button type="button" data-w="1280" aria-pressed="true">1280</button>
+    <button type="button" data-w="375" aria-pressed="false">375</button>
+   </div>
+   <div class="seg" id="theme" role="group" aria-label="Theme">
+    <button type="button" data-t="light" aria-pressed="false"><svg class="i"><use href="#i-sun"/></svg>Light</button>
+    <button type="button" data-t="dark" aria-pressed="false"><svg class="i"><use href="#i-moon"/></svg>Dark</button>
+    <button type="button" data-t="system" aria-pressed="true"><svg class="i"><use href="#i-monitor"/></svg>System</button>
+   </div>
+  </div>
+ </header>
+
+ <div class="stage">
+  <div class="device" id="device">
+   <div class="frame" id="frame">
+    <div class="app">
+     <header class="appbar">
+      <div class="brand"><svg viewBox="0 0 28 28" aria-hidden="true"><rect width="28" height="28" rx="8" fill="var(--primary-solid)"/><path d="M9 20V9h9M9 14.5h7" stroke="var(--primary-foreground)" stroke-width="2" stroke-linecap="round" fill="none"/></svg>Flump</div>
+      <nav class="topnav" aria-label="Main">
+       <button type="button" class="nav-link" data-nav="home">Home</button>
+       <button type="button" class="nav-link" data-nav="budget">Budget</button>
+       <button type="button" class="nav-link" data-nav="accounts">Accounts</button>
+       <button type="button" class="nav-link" data-nav="wealth">Wealth</button>
+       <button type="button" class="nav-link" data-nav="planning">Planning</button>
+      </nav>
+      <span class="chip">Sample data</span>
+      <button type="button" class="avatar" aria-label="Account menu, Sam">S</button>
+     </header>
+
+     <!-- ===== Frame 1: Dashboard ===== -->
+     <section class="view" id="v-dashboard" aria-labelledby="h-dash">
+      <div class="pagehead"><div><h1 class="display" id="h-dash">Welcome back, Sam</h1><p class="lede">Here is where your money stands this month.</p></div><span class="chip">Sample data</span></div>
+      <div class="kpis" role="list">
+       <div class="kpi" role="listitem"><div class="kpi-l">Net worth</div><div class="kpi-v">£97,750</div><div class="kpi-m"><span class="delta"><svg class="i"><use href="#i-up"/></svg>+£1,120</span> vs last month</div></div>
+       <div class="kpi" role="listitem"><div class="kpi-l">Monthly surplus</div><div class="kpi-v">£610</div><div class="kpi-m">£2,760 in, £2,150 out</div></div>
+       <div class="kpi" role="listitem"><div class="kpi-l">Weekly safe to spend</div><div class="kpi-v">£140</div><div class="kpi-m">After bills and savings</div></div>
+       <div class="kpi" role="listitem"><div class="kpi-l">Liquid cash and buffer</div><div class="kpi-v">£17,550</div><div class="kpi-m">About 8 months of outgoings</div></div>
+      </div>
+
+      <aside class="coach" aria-label="Next best step">
+       <div class="coach-body">
+        <span class="coach-ico"><svg class="i"><use href="#i-bulb"/></svg></span>
+        <div><div class="eyebrow" style="color:var(--primary)">Next best step</div>
+         <h2>Clear the Amex Everyday card first.</h2>
+         <p>At 27.9% APR it costs about £26 a month in interest. An extra £50 a month clears both cards 48 months sooner and saves £2,465.</p></div>
+       </div>
+       <button type="button" class="btn btn-primary">See debt plan<svg class="i"><use href="#i-arrow"/></svg></button>
+      </aside>
+
+      <div class="sec">
+       <div class="sec-h"><h2>Net worth over time</h2><span class="sub">Dec 2025 to Nov 2026</span></div>
+       <div class="chart" data-chart="nw" role="group" aria-label="Net worth chart"></div>
+       <p class="cap">Net worth rose from £84,300 to £97,750 over 12 months, a gain of £13,450.</p>
+      </div>
+
+      <div class="sec">
+       <div class="sec-h"><h2>Accounts</h2><button type="button" class="tlink">All accounts<svg class="i"><use href="#i-arrow"/></svg></button></div>
+       <div class="cmp" aria-label="Assets compared with amount owed">
+        <div class="cmp-row"><span>Assets</span><div class="cmp-bar"><i style="width:100%;background:var(--chart-primary)"></i></div><b>£283,250</b></div>
+        <div class="cmp-row"><span>Owed</span><div class="cmp-bar"><i style="width:65.5%;background:var(--chart-debt)"></i></div><b>£185,500</b></div>
+       </div>
+       <div class="cols">
+        <div><div class="acct-h"><h3>Assets</h3><span class="t">£283,250</span></div><ul class="rows" id="assets"></ul></div>
+        <div><div class="acct-h"><h3>Liabilities <span class="owed">owed</span></h3><span class="t">£185,500</span></div><ul class="rows" id="liabs"></ul></div>
+       </div>
+      </div>
+
+      <div class="sec">
+       <div class="widgets">
+        <div class="widget"><div class="w-h"><svg class="i"><use href="#i-debt"/></svg>Debt</div><div class="w-v">£3,500 <span class="owed">owed</span></div><p class="w-t">Two cards. Amex Everyday at 27.9% APR is the one to clear first.</p><button type="button" class="tlink">Open debt plan<svg class="i"><use href="#i-arrow"/></svg></button></div>
+        <div class="widget"><div class="w-h"><svg class="i"><use href="#i-home"/></svg>Mortgage</div><div class="w-v">£182,000 <span class="owed">owed</span></div><p class="w-t">4.6% repayment, 24 years left. £1,045 a month.</p><button type="button" class="tlink">Try overpaying<svg class="i"><use href="#i-arrow"/></svg></button></div>
+        <div class="widget"><div class="w-h"><svg class="i"><use href="#i-hourglass"/></svg>Pension</div><div class="w-v">£18,500</div><p class="w-t">Workplace pension, counted in your net worth.</p><button type="button" class="tlink">Open pension planner<svg class="i"><use href="#i-arrow"/></svg></button></div>
+       </div>
+      </div>
+     </section>
+
+     <!-- ===== Frame 2: Mortgage ===== -->
+     <section class="view" id="v-mortgage" aria-labelledby="h-mort" hidden>
+      <div class="pagehead"><div><h1 class="display" id="h-mort">Mortgage</h1><p class="lede">See what overpaying could save you.</p></div><span class="chip">Sample data</span></div>
+      <div class="split">
+       <div class="side">
+        <div class="sumbar"><div><b id="sb1">£182,000 at 4.6%</b><small id="sb2">24 years left, £200 a month extra</small></div><button type="button" class="btn btn-secondary" id="adjust" aria-expanded="false" aria-controls="controls">Adjust</button></div>
+        <form class="controls" id="controls" onsubmit="return false">
+         <div><span class="flabel" id="lbl-type">Mortgage type</span>
+          <div class="seg-f" role="group" aria-labelledby="lbl-type" style="margin-top:8px"><button type="button" aria-pressed="true">Repayment</button><button type="button" aria-pressed="false">Interest only</button></div></div>
+         <div class="field"><div class="field-h"><label for="r-bal">Outstanding balance</label><output class="pill" for="r-bal" id="o-bal"></output></div><input type="range" id="r-bal" min="50000" max="400000" step="1000" value="182000"><div class="range-note"><span>£50k</span><span>£400k</span></div></div>
+         <div class="field"><div class="field-h"><label for="r-rate">Interest rate</label><output class="pill" for="r-rate" id="o-rate"></output></div><input type="range" id="r-rate" min="0.5" max="8" step="0.1" value="4.6"><div class="range-note"><span>0.5%</span><span>8%</span></div></div>
+         <div class="field"><div class="field-h"><label for="r-term">Remaining term</label><output class="pill" for="r-term" id="o-term"></output></div><input type="range" id="r-term" min="1" max="35" step="1" value="24"><div class="range-note"><span>1 year</span><span>35 years</span></div></div>
+         <div class="field"><div class="field-h"><label for="r-over">Monthly overpayment</label><output class="pill" for="r-over" id="o-over"></output></div><input type="range" id="r-over" min="0" max="1000" step="25" value="200"><div class="range-note"><span>£0</span><span>£1,000</span></div></div>
+        </form>
+       </div>
+       <div class="main">
+        <div class="kpis tight" role="list">
+         <div class="kpi" role="listitem"><div class="kpi-l">Monthly payment</div><div class="kpi-v">£1,045</div><div class="kpi-m">Before overpayment</div></div>
+         <div class="kpi" role="listitem"><div class="kpi-l">Total interest, no overpayment</div><div class="kpi-v">£118,900</div></div>
+         <div class="kpi" role="listitem"><div class="kpi-l">Total interest with overpayment</div><div class="kpi-v">£85,400</div></div>
+         <div class="kpi" role="listitem"><div class="kpi-l">Interest saved</div><div class="kpi-v">£33,500</div><div class="kpi-m"><span class="delta"><svg class="i"><use href="#i-up"/></svg>Saved</span> by overpaying</div></div>
+        </div>
+        <h2 class="headline" style="margin-top:32px">Mortgage-free 6 years 1 month sooner<small>Sep 2044 instead of Nov 2050</small></h2>
+        <div style="margin-top:20px">
+         <div class="legend" aria-label="Chart legend">
+          <span><svg viewBox="0 0 30 8"><line x1="0" y1="4" x2="30" y2="4" style="stroke:var(--chart-debt);stroke-width:2.5"/></svg>No overpayment</span>
+          <span><svg viewBox="0 0 30 8"><line x1="0" y1="4" x2="30" y2="4" style="stroke:var(--chart-primary);stroke-width:2.5;stroke-dasharray:6 4"/></svg>With £200 a month overpayment <span class="proj">Projection</span></span>
+         </div>
+         <div class="chart" data-chart="mort" role="group" aria-label="Remaining mortgage balance over 24 years"></div>
+         <p class="cap">Assumes the rate stays at 4.6% for the whole term. Projection, not a forecast.</p>
+        </div>
+        <details class="drawer"><summary>Year-by-year schedule (24 rows)<svg class="i"><use href="#i-chev"/></svg></summary><div class="tbl-wrap"><table class="sched"><thead><tr><th scope="col">Year</th><th scope="col">Balance, no overpayment</th><th scope="col">Balance, with overpayment</th></tr></thead><tbody id="sched"></tbody></table></div></details>
+        <div class="note" role="note"><svg class="i"><use href="#i-info"/></svg><span>Check your lender's early repayment charge before overpaying more than 10% a year.</span></div>
+       </div>
+      </div>
+     </section>
+
+     <!-- ===== Frame 3: Onboarding ===== -->
+     <section class="view" id="v-onboarding" aria-labelledby="h-onb" hidden>
+      <div class="pagehead" style="margin-bottom:0"><div><div class="eyebrow">Step 1 of 3: You and income</div><h1 class="display" id="h-onb" style="margin-top:6px">Let's start with you</h1><p class="lede">A few details give you a first picture of your money. You can change them later.</p></div><span class="chip">Sample data</span></div>
+      <ol class="stepper" aria-label="Progress">
+       <li class="step" aria-current="step"><b>Step 1</b>You and income</li>
+       <li class="step"><b>Step 2</b>Housing and outgoings</li>
+       <li class="step"><b>Step 3</b>Savings and debt</li>
+      </ol>
+      <div class="onb">
+       <form class="form" onsubmit="return false">
+        <div class="row2">
+         <div><label class="flabel" for="age">Age</label><input class="input" id="age" type="number" inputmode="numeric" value="34" min="16" max="100" style="margin-top:8px"></div>
+         <div><label class="flabel" for="emp">Employment</label><select class="select" id="emp" style="margin-top:8px"><option>Employed</option><option>Self-employed</option><option>Not working</option><option>Retired</option></select></div>
+        </div>
+        <div>
+         <div class="field-h" style="margin-bottom:8px;flex-wrap:wrap"><label class="flabel" for="sal">Annual gross salary</label>
+          <div class="seg-f" role="group" aria-label="Income basis" style="grid-template-columns:auto auto"><button type="button" aria-pressed="true" style="padding:0 14px">Annual gross</button><button type="button" aria-pressed="false" style="padding:0 14px">Monthly net</button></div></div>
+         <div class="prefix"><span aria-hidden="true">£</span><input class="input" id="sal" inputmode="numeric" value="42,000" aria-describedby="sal-h"></div>
+         <p class="hint" id="sal-h">Before tax and National Insurance.</p>
+        </div>
+        <div><label class="flabel" for="sl">Student loan plan</label><select class="select" id="sl" style="margin-top:8px"><option>None</option><option>Plan 1</option><option>Plan 2</option><option>Plan 4</option><option>Plan 5</option><option>Postgraduate</option></select></div>
+        <div class="actions"><button type="button" class="btn btn-secondary" disabled>Back</button><button type="button" class="btn btn-primary">Next: housing and outgoings<svg class="i"><use href="#i-arrow"/></svg></button><button type="button" class="tlink">Skip for now</button></div>
+       </form>
+       <aside class="preview" aria-label="Live preview">
+        <div class="eyebrow">Live preview</div><p class="hint" style="margin:2px 0 8px">Updates as you type.</p>
+        <div class="pv-row"><span>Net take-home</span><b>£2,760<span class="owed">/mo</span></b></div>
+        <div class="pv-row"><span>Monthly surplus</span><b>+£610<span class="owed">/mo</span></b></div>
+        <div class="pv-row big"><span>Starting net worth</span><b>£97,750</b></div>
+       </aside>
+      </div>
+     </section>
+
+     <!-- ===== Frame 4: Empty and error ===== -->
+     <section class="view" id="v-states" aria-labelledby="h-states" hidden>
+      <div class="pagehead"><div><h1 class="display" id="h-states">Debt</h1><p class="lede">Two states of this page, shown side by side for review.</p></div><span class="chip">Sample data</span></div>
+      <div class="panels">
+       <section class="panel" aria-labelledby="p-empty"><span class="tag">Empty state</span><span class="badge-ico" style="background:var(--primary-subtle);color:var(--primary);border:1px solid var(--primary-border)"><svg class="i"><use href="#i-debt"/></svg></span>
+        <h2 id="p-empty">No debts yet</h2><p>Add a credit card, loan or any balance you owe. Flump will show what it costs you each month and the quickest way to clear it.</p>
+        <div class="btns"><button type="button" class="btn btn-primary"><svg class="i"><use href="#i-plus"/></svg>Add a debt</button><button type="button" class="btn btn-secondary"><svg class="i"><use href="#i-book"/></svg>Learn how payoff plans work</button></div></section>
+       <section class="panel" aria-labelledby="p-err" role="alert"><span class="tag">Route error</span><span class="badge-ico" style="background:var(--status-warning-bg);color:var(--status-warning-text);border:1px solid var(--status-warning-border)"><svg class="i"><use href="#i-alert"/></svg></span>
+        <h2 id="p-err">We couldn't load your debts</h2><p>This is usually temporary. Your figures are safe. Try again in a moment.</p>
+        <div class="btns"><button type="button" class="btn btn-primary"><svg class="i"><use href="#i-refresh"/></svg>Try again</button><button type="button" class="btn btn-secondary">Back to home</button></div>
+        <p class="ref">Reference: sample-404</p></section>
+      </div>
+     </section>
+
+     <!-- ===== Frame 5: Heavy data ===== -->
+     <section class="view" id="v-heavy" aria-labelledby="h-heavy" hidden>
+      <div class="pagehead"><div><h1 class="display" id="h-heavy">Accounts</h1><p class="lede">34 accounts, grouped as assets and amounts owed.</p></div><span class="chip">Sample data</span></div>
+      <div class="kpis tight three" role="list">
+       <div class="kpi" role="listitem"><div class="kpi-l">Net worth</div><div class="kpi-v">£648,794</div><div class="kpi-m">About £0.65m</div></div>
+       <div class="kpi" role="listitem"><div class="kpi-l">Assets</div><div class="kpi-v">£1,491,744</div><div class="kpi-m">About £1.5m</div></div>
+       <div class="kpi" role="listitem"><div class="kpi-l">Owed</div><div class="kpi-v">£842,950</div><div class="kpi-m">About £0.84m</div></div>
+      </div>
+      <div class="sec" style="margin-top:28px">
+       <div class="scale" aria-label="Assets compared with amount owed, axis in millions of pounds">
+        <div class="scale-row"><div class="top"><span>Assets</span><b>£1,491,744</b></div><div class="track"><i style="width:93.2%;background:var(--chart-primary)"></i></div></div>
+        <div class="scale-row"><div class="top"><span>Owed</span><b>£842,950</b></div><div class="track"><i style="width:52.7%;background:var(--chart-debt)"></i></div></div>
+        <div class="axis" aria-hidden="true"><span style="left:0">£0m</span><span style="left:25%">£0.4m</span><span style="left:50%">£0.8m</span><span style="left:75%">£1.2m</span><span style="left:100%">£1.6m</span></div>
+       </div>
+      </div>
+      <div class="sec hv">
+       <div>
+        <div class="sec-h"><h2>All accounts</h2><span class="sub" id="acc-count"></span></div>
+        <div class="toolbar">
+         <div class="tb-top">
+          <div class="search"><label class="sr" for="q">Search accounts</label><svg class="i"><use href="#i-search"/></svg><input class="input" id="q" type="search" placeholder="Search accounts" autocomplete="off"></div>
+          <div class="sortf"><label for="sort">Sort by</label><select class="select" id="sort"><option value="bal">Balance, largest first</option><option value="name">Name, A to Z</option><option value="type">Type</option></select></div>
+         </div>
+         <div class="chips" role="group" aria-label="Filter by type" id="chips"></div>
+        </div>
+        <div id="acc-groups" aria-live="polite"></div>
+       </div>
+       <div>
+        <div class="sec-h"><h2>Budget by category</h2><span class="sub">15 categories, £2,154 a month</span></div>
+        <div class="key" aria-hidden="true"><span><i></i>Single category</span><span><i class="oth"></i>Other (grouped)</span></div>
+        <ul class="bud" id="bud"></ul>
+        <p class="cap">Largest first. The six biggest are named; the remaining nine are grouped as Other.</p>
+        <details class="drawer"><summary>Year-by-year (24 years)<svg class="i"><use href="#i-chev"/></svg></summary>
+         <div class="tbl-wrap"><table class="sched dense"><thead><tr><th scope="col">Year</th><th scope="col">Balance</th><th scope="col">Interest</th><th scope="col">Overpayment</th></tr></thead><tbody id="yy"></tbody></table>
+          <button type="button" class="tlink" id="yy-more" aria-expanded="false">Show all 24</button></div>
+        </details>
+       </div>
+      </div>
+     </section>
+
+     <nav class="tabbar" aria-label="Primary">
+      <button type="button" class="tab" data-tab="home"><svg class="i"><use href="#i-home"/></svg>Home</button>
+      <button type="button" class="tab" data-tab="budget"><svg class="i"><use href="#i-budget"/></svg>Budget</button>
+      <button type="button" class="tab" data-tab="debt"><svg class="i"><use href="#i-debt"/></svg>Debt</button>
+      <button type="button" class="tab" data-tab="accounts"><svg class="i"><use href="#i-accounts"/></svg>Accounts</button>
+      <button type="button" class="tab" data-tab="more"><svg class="i"><use href="#i-more"/></svg>More</button>
+     </nav>
+    </div>
+   </div>
+  </div>
+ </div>
+
+ <div class="docs">
+  <p class="muted" style="font-size:13px">Dashboard KPI strip choice at 375: a compact 2x2 grid with hairline rules, so all four figures stay visible without horizontal scrolling.</p>
+
+  <section class="doc" id="doc-tokens">
+   <h2>Token sketch</h2>
+   <p>Palette primitives mapped to the repo semantic names. Values are read live from the CSS custom properties in both themes.</p>
+   <h3>Semantic tokens</h3>
+   <div class="tw"><table class="t" id="tok-table"><thead><tr><th>Token</th><th>Light</th><th>Dark</th><th>Primitive intent</th></tr></thead><tbody></tbody></table></div>
+   <h3>Type pair and scale</h3>
+   <div class="grid3">
+    <div class="spec"><div class="display" style="font-size:40px">Display 40</div><p><b>Newsreader</b> 400, page titles at 42 desktop and 32 mobile, tracking -0.015em. Falls back to Source Serif 4, then Georgia.</p></div>
+    <div class="spec"><div style="font-family:var(--new-font-display);font-size:34px;letter-spacing:-.015em">£97,750</div><p><b>Numeric</b> Newsreader with <code>tabular-nums lining-nums</code>: KPI 34 desktop, 28 mobile; widget figures 28.</p></div>
+    <div class="spec"><div style="font-family:var(--new-font-display);font-size:22px;font-weight:500">Heading 22 / 26</div><p><b>Heading</b> Newsreader 500 for section titles; Inter 600 14 for small labels.</p></div>
+    <div class="spec"><div style="font-size:15px">Body 15 / 1.55, Inter 400</div><p><b>Body</b> Inter 15 for UI and copy, 14 for table cells and rows, 13 for captions.</p></div>
+    <div class="spec"><div style="font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase">Caption 12, tracking +0.06em</div><p><b>Floor</b> No text below 12px anywhere.</p></div>
+   </div>
+   <h3>Radius, elevation, spacing, motion</h3>
+   <div class="grid3">
+    <div class="spec"><div class="radius-demo"><div style="border-radius:6px">6</div><div style="border-radius:8px">8</div><div style="border-radius:10px">10</div><div style="border-radius:999px">pill</div></div><p>8px base. 6 for pills and chips inside controls, 10 for the few boxed panels, full radius only for chips and avatars.</p></div>
+    <div class="spec"><div style="padding:16px;border-radius:10px;background:var(--surface-overlay);box-shadow:var(--new-shadow-overlay)" class="mono">--new-shadow-overlay</div><p>Cards use a 1px hairline and no shadow. One soft layer, reserved for overlays (menus, dialogs).</p></div>
+    <div class="spec"><p><b>Spacing</b> 4px base: 4, 8, 12, 16, 24, 32, 48. Comfortable density: 44px controls, 12px row padding, 40px between sections, 48px page gutters at desktop and 16px at mobile.</p></div>
+    <div class="spec"><p><b>Motion</b> 160ms for hover and press, 200ms for expand and width changes. Easing <code>cubic-bezier(.2,.6,.2,1)</code> (ease-out). No count-up, no parallax; all transitions drop under <code>prefers-reduced-motion</code>.</p></div>
+   </div>
+   <h3>Chart palette</h3>
+   <div class="palette" id="chart-pal"></div>
+   <p style="margin-top:10px">Assets and net worth are indigo, wealth is teal-green, amounts owed are muted amber (never red for a shrinking balance). Projections are dashed and labelled.</p>
+  </section>
+
+  <section class="doc" id="doc-contrast">
+   <h2>Contrast check</h2>
+   <p>Computed live from the CSS variables for both themes. Text pairs need 4.5:1, graphics and input borders need 3:1. Current theme column is highlighted: <b id="cur-theme"></b>.</p>
+   <div class="tw" style="margin-top:12px"><table class="t" id="con-table"><thead><tr><th>Pair</th><th>Need</th><th id="h-l">Light ratio</th><th>Light</th><th id="h-d">Dark ratio</th><th>Dark</th></tr></thead><tbody></tbody></table></div>
+  </section>
+
+  <section class="doc" id="doc-new">
+   <h2>New tokens this direction needs</h2>
+   <div class="tw"><table class="t"><thead><tr><th>Token</th><th>Purpose</th></tr></thead><tbody>
+    <tr><td class="mono">--new-font-display</td><td style="white-space:normal">Serif display family for page titles, KPI figures and section headings (Newsreader).</td></tr>
+    <tr><td class="mono">--new-chart-projection</td><td style="white-space:normal">Colour for the "Projection" label and projected-line captions, AA on card in both themes.</td></tr>
+    <tr><td class="mono">--new-surface-scrim</td><td style="white-space:normal">Backdrop behind dialogs and the mobile Adjust sheet.</td></tr>
+    <tr><td class="mono">--new-shadow-overlay</td><td style="white-space:normal">The single soft shadow allowed, for overlays only.</td></tr>
+    <tr><td class="mono">--new-dur / --new-dur-fast / --new-ease</td><td style="white-space:normal">Motion tokens: 200ms, 160ms, ease-out curve.</td></tr>
+   </tbody></table></div>
+  </section>
+
+  <section class="doc" id="doc-rationale">
+   <h2>Rationale and trade-offs</h2>
+   <h3>Fit with principles</h3>
+   <ul>
+    <li><b>Every number traceable to inputs.</b> Captions sit directly under figures and charts and restate the arithmetic in plain words ("rose from £84,300 to £97,750"), and the serif figures are the largest thing on screen so the eye lands on the number, then its source.</li>
+    <li><b>Show the next action.</b> The coach card is the only tinted block on the dashboard, placed straight after the KPIs, with a single primary button.</li>
+    <li><b>Calm by default, detail on demand.</b> Rules and whitespace group content instead of boxes; schedules live in a collapsed drawer; the mobile mortgage controls collapse behind Adjust.</li>
+   </ul>
+   <h3>Build cost across 12 screens</h3>
+   <p><b>M.</b> The semantic token remap is small and the layout primitives stay. The cost is the serif display face (font loading, a numeric style variant for KPI, chart axis and table figures) and restyling cards to rules, which touches every screen once but changes no behaviour.</p>
+   <h3>Mobile fit</h3>
+   <p>KPI strip becomes a 2x2 grid with rules, tab bar replaces the top nav, mortgage controls collapse to a summary bar with Adjust, charts redraw with fewer ticks. All controls are 44px or taller.</p>
+   <h3>Risks</h3>
+   <ul>
+    <li>Hairline borders are quiet in bright sunlight; input borders are held at 3:1 to compensate.</li>
+    <li>Amber for debt is calmer than red but signals urgency less; the 27.9% APR card needs explicit text and ordering, not colour.</li>
+    <li>Webfont swap can shift KPI widths; self-hosting with a size-adjusted fallback is advised.</li>
+    <li>Fewer boxes means less obvious tap targets for widgets, so each carries a visible text link.</li>
+   </ul>
+  </section>
+ </div>
+</div>
+
+<script>
+(function(){
+  var $=function(s,r){return (r||document).querySelector(s)},$$=function(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s))};
+  var root=document.documentElement;
+  var fmt=function(n){return '£'+Math.round(n).toLocaleString('en-GB')};
+
+  /* ---- data lists ---- */
+  var ASSETS=[['Home value','',240000],['Current account','',2150],['Easy-access saver','4.1%',6400],['Cash ISA','4.5%',9000],['Stocks and shares ISA','',7200],['Workplace pension','',18500]];
+  var LIABS=[['Home mortgage','4.6%, 24 years left, repayment',182000],['Barclaycard','22.9% APR',2400],['Amex Everyday','27.9% APR',1100]];
+  function rows(el,list,owed){el.innerHTML=list.map(function(r){return '<li><span class="n">'+r[0]+(r[1]?'<span class="d">'+r[1]+'</span>':'')+'</span><span class="a">'+fmt(r[2])+(owed?'<span class="owed">owed</span>':'')+'</span></li>'}).join('')}
+  rows($('#assets'),ASSETS,false);rows($('#liabs'),LIABS,true);
+
+  /* ---- frames ---- */
+  var NAVMAP={dashboard:['home','home'],mortgage:['planning','more'],onboarding:[null,null],states:['planning','debt'],heavy:['accounts','accounts']};
+  function show(name){
+    if(!NAVMAP[name])name='dashboard';
+    $$('.view').forEach(function(v){v.hidden=v.id!=='v-'+name});
+    $$('#tabs button').forEach(function(b){b.setAttribute('aria-pressed',String(b.dataset.frame===name))});
+    $$('.nav-link').forEach(function(b){b.dataset.nav===NAVMAP[name][0]?b.setAttribute('aria-current','page'):b.removeAttribute('aria-current')});
+    $$('.tab').forEach(function(b){b.dataset.tab===NAVMAP[name][1]?b.setAttribute('aria-current','page'):b.removeAttribute('aria-current')});
+    if(location.hash!=='#'+name)history.replaceState(null,'','#'+name);
+    drawAll(true);
+  }
+  $$('#tabs button').forEach(function(b){b.addEventListener('click',function(){show(b.dataset.frame)})});
+  window.addEventListener('hashchange',function(){show(location.hash.slice(1))});
+
+  $$('#vp button').forEach(function(b){b.addEventListener('click',function(){
+    $$('#vp button').forEach(function(x){x.setAttribute('aria-pressed',String(x===b))});
+    $('#device').classList.toggle('phone',b.dataset.w==='375');
+  })});
+
+  function setTheme(t){
+    t==='system'?root.removeAttribute('data-theme'):root.setAttribute('data-theme',t);
+    $$('#theme button').forEach(function(b){b.setAttribute('aria-pressed',String(b.dataset.t===t))});
+    renderContrast();
+  }
+  $$('#theme button').forEach(function(b){b.addEventListener('click',function(){setTheme(b.dataset.t)})});
+  if(window.matchMedia)window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change',function(){renderContrast()});
+
+  /* ---- mortgage controls ---- */
+  var ctl={bal:$('#r-bal'),rate:$('#r-rate'),term:$('#r-term'),over:$('#r-over')};
+  function upd(){
+    var b=+ctl.bal.value,r=+ctl.rate.value,t=+ctl.term.value,o=+ctl.over.value;
+    $('#o-bal').textContent=fmt(b);$('#o-rate').textContent=r.toFixed(1)+'%';$('#o-term').textContent=t+(t===1?' year':' years');$('#o-over').textContent=fmt(o);
+    $('#sb1').textContent=fmt(b)+' at '+r.toFixed(1)+'%';$('#sb2').textContent=t+' years left, '+fmt(o)+' a month extra';
+    Object.keys(ctl).forEach(function(k){var e=ctl[k];e.style.setProperty('--p',((e.value-e.min)/(e.max-e.min)*100)+'%')});
+  }
+  Object.keys(ctl).forEach(function(k){ctl[k].addEventListener('input',upd)});upd();
+  $('#adjust').addEventListener('click',function(){var c=$('#controls'),o=c.classList.toggle('open');this.setAttribute('aria-expanded',String(o));this.textContent=o?'Done':'Adjust'});
+  $$('.seg-f button, .seg-f').forEach(function(){});
+  $$('.seg-f').forEach(function(g){$$('button',g).forEach(function(b){b.addEventListener('click',function(){$$('button',g).forEach(function(x){x.setAttribute('aria-pressed',String(x===b))})})})});
+
+  /* ---- fixed illustrative balance curves (24y at 4.6%, with and without 200 a month extra) ---- */
+  function curve(P,rate,pay,maxYears){
+    var i=rate/12,B=P,pts=[[0,P]],k=0;
+    while(B>0&&k<maxYears*12){B=B*(1+i)-pay;k++;if(B<=0){pts.push([k/12,0]);break}if(k%3===0)pts.push([k/12,B])}
+    return pts;
+  }
+  var P=182000,I=0.046/12,N=288,PAY=P*I/(1-Math.pow(1+I,-N));
+  var base=curve(P,0.046,PAY,24.5),over=curve(P,0.046,PAY+200,24.5);
+  base[base.length-1]=[24,0];
+  function balAt(pts,y){var b=0;for(var j=0;j<pts.length;j++){if(pts[j][0]<=y+1e-9)b=pts[j][1]}return pts[pts.length-1][0]<=y?0:b}
+  var sched='';for(var y=1;y<=24;y++){sched+='<tr><td>Year '+y+'</td><td>'+fmt(balAt(base,y))+'</td><td>'+fmt(balAt(over,y))+'</td></tr>'}
+  $('#sched').innerHTML=sched;
+
+  /* ---- hand-drawn SVG charts, drawn to scale at the real container width ---- */
+  var NW=[84300,85100,86000,87200,88100,89600,91000,92300,93900,95200,96630,97750];
+  var MON=['Dec','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov'];
+  function draw(el,o){
+    var W=Math.floor(el.clientWidth);if(!W)return;
+    var nar=W<460,H=nar?220:272,m={l:nar?46:56,r:nar?16:24,t:20,b:34};
+    var X=function(v){return m.l+(v-o.x0)/(o.x1-o.x0)*(W-m.l-m.r)},Y=function(v){return H-m.b-(v-o.y0)/(o.y1-o.y0)*(H-m.t-m.b)};
+    var id='g'+Math.random().toString(36).slice(2,7);
+    var s='<svg width="'+W+'" height="'+H+'" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="'+o.label+'"><defs><linearGradient id="'+id+'" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--chart-primary);stop-opacity:.22"/><stop offset="1" style="stop-color:var(--chart-primary);stop-opacity:0"/></linearGradient></defs>';
+    o.yt.forEach(function(t){s+='<line x1="'+m.l+'" x2="'+(W-m.r)+'" y1="'+Y(t[0])+'" y2="'+Y(t[0])+'" style="stroke:var(--chart-grid);stroke-width:1"/><text x="'+(m.l-10)+'" y="'+(Y(t[0])+4)+'" text-anchor="end" style="fill:var(--text-muted);font:12px Inter,sans-serif;font-variant-numeric:tabular-nums">'+t[1]+'</text>'});
+    (nar?o.xtn:o.xt).forEach(function(t){var a=t[0]<=o.x0+1e-9?'start':t[0]>=o.x1-1e-9?'end':'middle';s+='<text x="'+X(t[0])+'" y="'+(H-10)+'" text-anchor="'+a+'" style="fill:var(--text-muted);font:12px Inter,sans-serif;font-variant-numeric:tabular-nums">'+t[1]+'</text>'});
+    s+='<line x1="'+m.l+'" x2="'+(W-m.r)+'" y1="'+Y(o.y0)+'" y2="'+Y(o.y0)+'" style="stroke:var(--border-strong);stroke-width:1"/>';
+    o.series.forEach(function(se){
+      var d=se.pts.map(function(p,j){return (j?'L':'M')+X(p[0]).toFixed(1)+' '+Y(p[1]).toFixed(1)}).join('');
+      if(se.area)s+='<path d="'+d+'L'+X(se.pts[se.pts.length-1][0]).toFixed(1)+' '+Y(o.y0)+'L'+X(se.pts[0][0]).toFixed(1)+' '+Y(o.y0)+'Z" fill="url(#'+id+')"/>';
+      s+='<path d="'+d+'" fill="none" stroke-linejoin="round" stroke-linecap="round" style="stroke:'+se.color+';stroke-width:2.5'+(se.dash?';stroke-dasharray:7 5':'')+'"/>';
+    });
+    (o.marks||[]).forEach(function(k){s+='<circle cx="'+X(k.x)+'" cy="'+Y(k.y)+'" r="4.5" style="fill:var(--surface-card);stroke:'+k.color+';stroke-width:2.5"/><text x="'+(X(k.x)+(k.dx||0))+'" y="'+(Y(k.y)+(k.dy||-12))+'" text-anchor="'+(k.a||'middle')+'" style="fill:var(--text-primary);font:600 13px Inter,sans-serif;font-variant-numeric:tabular-nums">'+k.t+'</text>'});
+    el.innerHTML=s+'</svg>';el._w=W;
+  }
+  var CH={
+    nw:function(el){return {label:'Net worth over 12 months, rising from £84,300 in December 2025 to £97,750 in November 2026',x0:0,x1:11,y0:80000,y1:100000,
+      yt:[[80000,'£80k'],[85000,'£85k'],[90000,'£90k'],[95000,'£95k'],[100000,'£100k']],
+      xt:[1,3,5,7,9,11].map(function(i){return [i,MON[i]]}),xtn:[3,7,11].map(function(i){return [i,MON[i]]}),
+      series:[{pts:NW.map(function(v,i){return [i,v]}),color:'var(--chart-primary)',area:true}],
+      marks:[{x:0,y:84300,t:'£84,300',a:'start',dx:-4,dy:-12,color:'var(--chart-primary)'},{x:11,y:97750,t:'£97,750',a:'end',dx:4,dy:-12,color:'var(--chart-primary)'}]}},
+    mort:function(){return {label:'Remaining mortgage balance over 24 years. Without overpayment it reaches zero at year 24; with £200 a month it reaches zero at year 17.9.',x0:0,x1:24,y0:0,y1:200000,
+      yt:[0,50000,100000,150000,200000].map(function(v){return [v,v?'£'+v/1000+'k':'£0']}),
+      xt:[0,4,8,12,16,20,24].map(function(v){return [v,v+(v===24?' yrs':'')]}),xtn:[0,8,16,24].map(function(v){return [v,v+(v===24?' yrs':'')]}),
+      series:[{pts:base,color:'var(--chart-debt)'},{pts:over,color:'var(--chart-primary)',dash:true}],
+      marks:[{x:17.9,y:0,t:'17.9 yrs',a:'middle',dy:-20,color:'var(--chart-primary)'},{x:24,y:0,t:'Debt free',a:'end',dx:6,dy:-20,color:'var(--chart-debt)'}]}}
+  };
+  function drawAll(force){$$('.chart').forEach(function(el){var f=CH[el.dataset.chart];if(!el.clientWidth)return;if(force||el._w!==Math.floor(el.clientWidth))draw(el,f(el))})}
+  if(window.ResizeObserver){var ro=new ResizeObserver(function(){drawAll(false)});$$('.chart').forEach(function(el){ro.observe(el)})}
+  window.addEventListener('resize',function(){drawAll(false)});
+
+  /* ---- docs: tokens and contrast, read from the live CSS ---- */
+  var TOK=[['surface-canvas','paper, cool white'],['surface-card','paper-0'],['surface-sunken','paper-100'],['surface-subtle','paper-200'],['surface-overlay','paper-0 / ink-700'],['surface-contrast','ink-800 / ink-50'],
+   ['text-primary','ink-900'],['text-secondary','ink-600'],['text-muted','ink-500'],['text-on-contrast','ink-50 / ink-900'],
+   ['border-default','hairline'],['border-subtle','hairline soft'],['border-strong','hairline firm'],['border-input','ink-400 (3:1)'],['border-focus-ring','indigo-600 / indigo-300'],
+   ['primary','indigo-600 / indigo-300'],['primary-solid','indigo-600 / indigo-500'],['primary-hover','indigo-700'],['primary-subtle','indigo-50 / indigo-950'],['primary-border','indigo-200 / indigo-800'],['primary-foreground','white'],
+   ['status-positive-text','teal-700 / teal-300'],['status-positive-bg','teal-50 / teal-950'],['status-positive-border','teal-200'],['status-positive-solid','teal-600'],
+   ['status-warning-text','amber-800 / amber-300'],['status-warning-bg','amber-50 / amber-950'],['status-warning-border','amber-200'],['status-warning-solid','amber-600'],
+   ['status-danger-text','red-700 / red-300'],['status-danger-bg','red-50 / red-950'],['status-danger-border','red-200'],['status-danger-solid','red-600'],
+   ['status-info-text','indigo-800 / indigo-300'],['status-info-bg','indigo-50'],['status-info-border','indigo-200'],['status-info-solid','indigo-600'],
+   ['status-neutral-text','ink-600'],['status-neutral-bg','paper-100'],['status-neutral-border','hairline'],['status-neutral-solid','ink-400'],
+   ['chart-primary','indigo (assets, net worth)'],['chart-wealth','teal-green (wealth)'],['chart-debt','muted amber (owed)'],['chart-warning','burnt orange'],['chart-grid','hairline grid'],
+   ['chart-series1','indigo'],['chart-series2','teal'],['chart-series3','amber'],['chart-series4','violet'],['chart-series5','cyan'],
+   ['new-chart-projection','ink-500'],['new-surface-scrim','ink scrim']];
+  var NAMES=TOK.map(function(t){return t[0]});
+  function readTheme(t){
+    var prev=root.getAttribute('data-theme');root.setAttribute('data-theme',t);
+    var cs=getComputedStyle(root),o={};NAMES.forEach(function(n){o[n]=cs.getPropertyValue('--'+n).trim()});
+    prev===null?root.removeAttribute('data-theme'):root.setAttribute('data-theme',prev);return o;
+  }
+  var TL=readTheme('light'),TD=readTheme('dark');
+  $('#tok-table tbody').innerHTML=TOK.map(function(t){var n=t[0];return '<tr><td class="mono">--'+n+'</td><td><span class="sw" style="background:'+TL[n]+'"></span><span class="mono">'+TL[n]+'</span></td><td><span class="sw" style="background:'+TD[n]+'"></span><span class="mono">'+TD[n]+'</span></td><td>'+t[1]+'</td></tr>'}).join('');
+  $('#chart-pal').innerHTML=['chart-primary','chart-wealth','chart-debt','chart-warning','chart-series4','chart-series5'].map(function(n){return '<div><i style="background:var(--'+n+')"></i><span class="mono">'+n+'</span></div>'}).join('');
+  function lum(h){var m=/^#?([0-9a-f]{6})$/i.exec(h);if(!m)return null;var v=parseInt(m[1],16),c=[v>>16&255,v>>8&255,v&255].map(function(x){x/=255;return x<=.03928?x/12.92:Math.pow((x+.055)/1.055,2.4)});return .2126*c[0]+.7152*c[1]+.0722*c[2]}
+  function ratio(a,b){var x=lum(a),y=lum(b);if(x===null||y===null)return 0;var hi=Math.max(x,y),lo=Math.min(x,y);return (hi+.05)/(lo+.05)}
+  var PAIRS=[];
+  ['text-primary','text-secondary','text-muted'].forEach(function(f){['surface-canvas','surface-card','surface-sunken'].forEach(function(b){PAIRS.push([f,b,4.5])})});
+  PAIRS.push(['primary-foreground','primary-solid',4.5],['primary','primary-subtle',4.5],['primary','surface-card',4.5],['new-chart-projection','surface-card',4.5]);
+  ['positive','warning','danger','info','neutral'].forEach(function(s){PAIRS.push(['status-'+s+'-text','status-'+s+'-bg',4.5])});
+  ['chart-primary','chart-wealth','chart-debt','chart-warning','chart-series1','chart-series2','chart-series3','chart-series4','chart-series5','border-input'].forEach(function(f){PAIRS.push([f,'surface-card',3])});
+  function renderContrast(){
+    var cur=root.getAttribute('data-theme')||((window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches)?'dark':'light');
+    $('#cur-theme').textContent=cur;
+    $('#h-l').className=cur==='light'?'cur':'';$('#h-d').className=cur==='dark'?'cur':'';
+    var all=true;
+    $('#con-table tbody').innerHTML=PAIRS.map(function(p){
+      var l=ratio(TL[p[0]],TL[p[1]]),d=ratio(TD[p[0]],TD[p[1]]);
+      var lp=l>=p[2],dp=d>=p[2];if(!lp||!dp)all=false;
+      return '<tr><td><span class="sw" style="background:'+TL[p[1]]+';box-shadow:inset 0 0 0 6px '+TL[p[0]]+'"></span><span class="mono">'+p[0]+' on '+p[1]+'</span></td><td>'+p[2]+':1</td><td class="num '+(cur==='light'?'cur':'')+'">'+l.toFixed(2)+'</td><td class="'+(lp?'pass':'fail')+'">'+(lp?'PASS':'FAIL')+'</td><td class="num '+(cur==='dark'?'cur':'')+'">'+d.toFixed(2)+'</td><td class="'+(dp?'pass':'fail')+'">'+(dp?'PASS':'FAIL')+'</td></tr>';
+    }).join('');
+    $('#con-table').dataset.allPass=String(all);
+  }
+
+  /* ---- heavy data frame ---- */
+  var minus='\u2212';
+  var money=function(n){var a=Math.abs(n),s=(a%1?a.toLocaleString('en-GB',{minimumFractionDigits:2,maximumFractionDigits:2}):a.toLocaleString('en-GB'));return (n<0?minus:'')+'£'+s};
+  var ACC=[
+   ['Joint household current account with Marcus (Nationwide FlexDirect)',-486,'cur','a','Current account'],
+   ['Business float - Gallagher & Partners Consulting Ltd trading account',0,'cur','a','Current account'],
+   ['Zero balance dormant account',0,'cur','a','Current account'],
+   ['Marcus by Goldman Sachs 1-Year Fixed Rate Saver (matures 14 Mar 2027)',25000,'sav','a','Savings, 4.6%'],
+   ['Premium Bonds',50000,'sav','a','Savings'],
+   ['Vanguard FTSE Global All Cap Index Fund - Accumulation (S&S ISA)',84231.77,'inv','a','Investments'],
+   ['Employer DC pension - Aviva Workplace (Gallagher & Partners)',142300,'pen','a','Pension'],
+   ['Residential mortgage - Halifax 5-year fix (ends Jan 2029)',318500,'mor','o','Mortgage, 4.29%'],
+   ['Buy-to-let mortgage 1 - Paragon interest-only',145000,'mor','o','Mortgage, 5.4%'],
+   ['Santander Zero 0% Balance Transfer card (promo ends Mar 2027)',6800,'crd','o','Credit card, 0% promotional'],
+   ['John Lewis Partnership Card',1999.99,'crd','o','Credit card, 29.9% APR'],
+   ['Student Loan Plan 2',41250,'loa','o','Student loan']];
+  var TYPES=[['all','All'],['cur','Current'],['sav','Savings'],['inv','Investments'],['pen','Pensions'],['mor','Mortgages'],['crd','Cards'],['loa','Loans']];
+  var st={q:'',t:'all',s:'bal'};
+  var esc=function(x){return x.replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;')};
+  function chips(){$('#chips').innerHTML=TYPES.map(function(t){return '<button type="button" class="fchip" data-t="'+t[0]+'" aria-pressed="'+(st.t===t[0])+'"><svg class="i"><use href="#i-check"/></svg>'+t[1]+'</button>'}).join('')}
+  function acc(){
+    var list=ACC.filter(function(r){return (st.t==='all'||r[2]===st.t)&&(!st.q||r[0].toLowerCase().indexOf(st.q.toLowerCase())>-1)});
+    list.sort(function(a,b){return st.s==='name'?a[0].localeCompare(b[0]):st.s==='type'?a[2].localeCompare(b[2])||b[1]-a[1]:b[1]-a[1]});
+    var out='';
+    [['a','Assets','£1,491,744',false],['o','Liabilities <span class="owed">owed</span>','£842,950',true]].forEach(function(g){
+      var rs=list.filter(function(r){return r[3]===g[0]});
+      out+='<div class="grp"><div class="acct-h"><h3>'+g[1]+'</h3><span class="t">'+g[2]+'</span></div>';
+      out+=rs.length?'<ul class="acc">'+rs.map(function(r){var od=r[1]<0;
+        return '<li><span class="nm" tabindex="0" title="'+esc(r[0])+'">'+esc(r[0])+'</span><span class="mt">'+r[4]+(od?'<span class="od"><svg class="i"><use href="#i-alert"/></svg>Overdrawn</span>':'')+'</span><span class="bal">'+money(r[1])+(g[3]?'<small>owed</small>':od?'<small>overdrawn</small>':'')+'</span></li>'}).join('')+'</ul>':'<p class="empty-r">No accounts match in this group.</p>';
+      out+='</div>'});
+    $('#acc-groups').innerHTML=out;
+    $('#acc-count').textContent='Showing '+list.length+' of 34 accounts';
+  }
+  chips();acc();
+  $('#chips').addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;st.t=b.dataset.t;chips();acc();var n=$('#chips [data-t="'+st.t+'"]');if(n)n.focus()});
+  $('#q').addEventListener('input',function(){st.q=this.value;acc()});
+  $('#sort').addEventListener('change',function(){st.s=this.value;acc()});
+  var BUD=[['Housing',1230],['Savings',400],['Council tax',140],['Energy',95],['Groceries',54],['Broadband and mobile',50]],OTH=185,TOT=2154;
+  $('#bud').innerHTML=BUD.map(function(b){return '<li><span>'+b[0]+'</span><span class="amt">'+fmt(b[1])+'<span class="pc">'+(b[1]/TOT*100).toFixed(1)+'%</span></span><div class="bar"><i style="width:'+(b[1]/1230*100)+'%"></i></div></li>'}).join('')+'<li><span>Other (9 categories)</span><span class="amt">'+fmt(OTH)+'<span class="pc">'+(OTH/TOT*100).toFixed(1)+'%</span></span><div class="bar"><i class="oth" style="width:'+(OTH/1230*100)+'%"></i></div></li>';
+  var yb=P,yy=[];
+  for(var yr=1;yr<=24;yr++){var paid=0,intr=0,ov=0;for(var mo=0;mo<12&&yb>0;mo++){var it=yb*I;intr+=it;var pay=Math.min(PAY+200,yb+it);yb=yb+it-pay;ov+=200}yy.push([yr,Math.max(yb,0),intr,ov])}
+  function yyr(all){$('#yy').innerHTML=yy.slice(0,all?24:8).map(function(r){return '<tr><td>Year '+r[0]+'</td><td>'+fmt(r[1])+'</td><td>'+fmt(r[2])+'</td><td>'+fmt(r[3])+'</td></tr>'}).join('')}
+  yyr(false);
+  $('#yy-more').addEventListener('click',function(){var all=this.getAttribute('aria-expanded')!=='true';this.setAttribute('aria-expanded',String(all));this.textContent=all?'Show first 8':'Show all 24';yyr(all)});
+  renderContrast();
+  show(location.hash.slice(1)||'dashboard');
+  if(document.fonts&&document.fonts.ready)document.fonts.ready.then(function(){drawAll(true)});
+})();
+</script>
+
+</body></html>

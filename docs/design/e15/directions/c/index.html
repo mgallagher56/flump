@@ -1,0 +1,1200 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Flump Direction C Warm Guide</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Figtree:wght@400;500;600;700&display=swap">
+<style>
+:root{
+  color-scheme:light;
+  --surface-canvas:#F5F1EA;--surface-card:#FFFDF9;--surface-sunken:#ECE6DC;--surface-subtle:#F0EBE2;--surface-overlay:#FFFFFF;--surface-contrast:#22302C;
+  --text-primary:#2B2620;--text-secondary:#564F46;--text-muted:#6A6258;--text-on-contrast:#F6F1E8;
+  --border-default:#DCD4C8;--border-subtle:#E8E1D6;--border-strong:#B5AB9C;--border-input:#8C8274;--border-focus-ring:#0F6B5E;
+  --primary:#0F6B5E;--primary-solid:#0F6B5E;--primary-hover:#0A564B;--primary-subtle:#E1F0EB;--primary-border:#9CCFC2;--primary-foreground:#FFFFFF;
+  --status-positive-text:#1E6B3E;--status-positive-bg:#E3F1E7;--status-positive-border:#A5D2B4;--status-positive-solid:#2E8B57;
+  --status-warning-text:#8A4A08;--status-warning-bg:#FCEBD2;--status-warning-border:#EBC38A;--status-warning-solid:#C77A1B;
+  --status-danger-text:#A13A2B;--status-danger-bg:#FBE5E0;--status-danger-border:#E8B0A4;--status-danger-solid:#C0503E;
+  --status-info-text:#1F5F7A;--status-info-bg:#E0EFF5;--status-info-border:#A6CFE0;--status-info-solid:#2F7FA0;
+  --status-neutral-text:#564F46;--status-neutral-bg:#ECE6DC;--status-neutral-border:#C9C0B2;--status-neutral-solid:#8C8274;
+  --chart-primary:#0F6B5E;--chart-wealth:#4A9A7C;--chart-debt:#C96F1A;--chart-warning:#B8791F;--chart-grid:#E6DFD3;
+  --chart-series1:#0F6B5E;--chart-series2:#4A9A7C;--chart-series3:#C96F1A;--chart-series4:#7E67A8;--chart-series5:#2F7FA0;
+  --new-surface-coach:#DDEFE8;--new-surface-coach-end:#F8F0E1;
+  --new-chart-projection:#9A5210;--new-chart-area-opacity:.14;
+  --new-illus-sage:#CFE5D8;--new-illus-apricot:#F6D6B0;--new-illus-sand:#EADFCC;
+  --new-shadow-1:0 1px 2px rgba(70,50,25,.05),0 4px 14px rgba(70,50,25,.05);
+  --new-shadow-2:0 2px 4px rgba(70,50,25,.05),0 12px 32px rgba(70,50,25,.09);
+  --new-shadow-3:0 4px 8px rgba(70,50,25,.06),0 24px 56px rgba(70,50,25,.14);
+  --new-radius-sm:12px;--new-radius-md:16px;--new-radius-lg:20px;--new-radius-xl:24px;
+  --new-ease-spring:cubic-bezier(.34,1.45,.64,1);--new-dur-1:200ms;--new-dur-2:320ms;
+  --font-body:'Figtree',ui-rounded,system-ui,-apple-system,'Segoe UI',sans-serif;
+  --font-head:'Bricolage Grotesque','Figtree',ui-rounded,system-ui,sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  color-scheme:dark;
+  --surface-canvas:#1D1A17;--surface-card:#272320;--surface-sunken:#171412;--surface-subtle:#2E2A26;--surface-overlay:#312D28;--surface-contrast:#F2EDE4;
+  --text-primary:#F4EFE7;--text-secondary:#CBC3B7;--text-muted:#A59D90;--text-on-contrast:#1D1A17;
+  --border-default:#3B362F;--border-subtle:#302C27;--border-strong:#5C554A;--border-input:#8F8678;--border-focus-ring:#6FD0BA;
+  --primary:#6FD0BA;--primary-solid:#5CC4AE;--primary-hover:#7ED5C2;--primary-subtle:#1E3B35;--primary-border:#2E6055;--primary-foreground:#0C2823;
+  --status-positive-text:#86D6A6;--status-positive-bg:#1F3626;--status-positive-border:#35603F;--status-positive-solid:#5CB985;
+  --status-warning-text:#F2B873;--status-warning-bg:#3B2C16;--status-warning-border:#6B4B1E;--status-warning-solid:#E0A04A;
+  --status-danger-text:#F4A593;--status-danger-bg:#3D221D;--status-danger-border:#74403A;--status-danger-solid:#E2705C;
+  --status-info-text:#8CC8E2;--status-info-bg:#1B3039;--status-info-border:#2F5666;--status-info-solid:#5AA9CB;
+  --status-neutral-text:#CBC3B7;--status-neutral-bg:#2E2A26;--status-neutral-border:#4A443B;--status-neutral-solid:#A59D90;
+  --chart-primary:#5CC4AE;--chart-wealth:#93CBA8;--chart-debt:#EDA45F;--chart-warning:#E3B452;--chart-grid:#3A352E;
+  --chart-series1:#5CC4AE;--chart-series2:#93CBA8;--chart-series3:#EDA45F;--chart-series4:#B7A0E0;--chart-series5:#6DB5D6;
+  --new-surface-coach:#1F3A34;--new-surface-coach-end:#2F2A22;
+  --new-chart-projection:#F5B987;--new-chart-area-opacity:.15;
+  --new-illus-sage:#2F5247;--new-illus-apricot:#6B4B2B;--new-illus-sand:#3D372E;
+  --new-shadow-1:0 1px 0 rgba(255,255,255,.03) inset,0 6px 18px rgba(0,0,0,.28);
+  --new-shadow-2:0 1px 0 rgba(255,255,255,.04) inset,0 14px 36px rgba(0,0,0,.38);
+  --new-shadow-3:0 1px 0 rgba(255,255,255,.04) inset,0 28px 64px rgba(0,0,0,.5);
+}}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --surface-canvas:#1D1A17;--surface-card:#272320;--surface-sunken:#171412;--surface-subtle:#2E2A26;--surface-overlay:#312D28;--surface-contrast:#F2EDE4;
+  --text-primary:#F4EFE7;--text-secondary:#CBC3B7;--text-muted:#A59D90;--text-on-contrast:#1D1A17;
+  --border-default:#3B362F;--border-subtle:#302C27;--border-strong:#5C554A;--border-input:#8F8678;--border-focus-ring:#6FD0BA;
+  --primary:#6FD0BA;--primary-solid:#5CC4AE;--primary-hover:#7ED5C2;--primary-subtle:#1E3B35;--primary-border:#2E6055;--primary-foreground:#0C2823;
+  --status-positive-text:#86D6A6;--status-positive-bg:#1F3626;--status-positive-border:#35603F;--status-positive-solid:#5CB985;
+  --status-warning-text:#F2B873;--status-warning-bg:#3B2C16;--status-warning-border:#6B4B1E;--status-warning-solid:#E0A04A;
+  --status-danger-text:#F4A593;--status-danger-bg:#3D221D;--status-danger-border:#74403A;--status-danger-solid:#E2705C;
+  --status-info-text:#8CC8E2;--status-info-bg:#1B3039;--status-info-border:#2F5666;--status-info-solid:#5AA9CB;
+  --status-neutral-text:#CBC3B7;--status-neutral-bg:#2E2A26;--status-neutral-border:#4A443B;--status-neutral-solid:#A59D90;
+  --chart-primary:#5CC4AE;--chart-wealth:#93CBA8;--chart-debt:#EDA45F;--chart-warning:#E3B452;--chart-grid:#3A352E;
+  --chart-series1:#5CC4AE;--chart-series2:#93CBA8;--chart-series3:#EDA45F;--chart-series4:#B7A0E0;--chart-series5:#6DB5D6;
+  --new-surface-coach:#1F3A34;--new-surface-coach-end:#2F2A22;
+  --new-chart-projection:#F5B987;--new-chart-area-opacity:.15;
+  --new-illus-sage:#2F5247;--new-illus-apricot:#6B4B2B;--new-illus-sand:#3D372E;
+  --new-shadow-1:0 1px 0 rgba(255,255,255,.03) inset,0 6px 18px rgba(0,0,0,.28);
+  --new-shadow-2:0 1px 0 rgba(255,255,255,.04) inset,0 14px 36px rgba(0,0,0,.38);
+  --new-shadow-3:0 1px 0 rgba(255,255,255,.04) inset,0 28px 64px rgba(0,0,0,.5);
+}
+
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--surface-canvas);color:var(--text-primary);font:400 16px/1.5 var(--font-body);font-variant-numeric:tabular-nums;-webkit-font-smoothing:antialiased}
+h1,h2,h3,h4,p{margin:0}
+h1,h2,h3{font-family:var(--font-head);letter-spacing:-.015em;line-height:1.15}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+a{color:var(--primary)}
+:focus-visible{outline:3px solid var(--border-focus-ring);outline-offset:2px;border-radius:8px}
+.i{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.sr{position:absolute!important;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+/* ---------- page chrome (outside the device frame) ---------- */
+.stage{padding:0 0 64px}
+.chrome{max-width:1280px;margin:0 auto;padding:28px 24px 20px;display:flex;flex-wrap:wrap;gap:16px 24px;align-items:flex-end;justify-content:space-between}
+.chrome h1{font-size:28px}
+.chrome p{color:var(--text-secondary);font-size:15px;margin-top:4px;max-width:46ch}
+.chrome-r{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+.seg{display:inline-flex;gap:4px;padding:4px;background:var(--surface-sunken);border-radius:999px;border:1px solid var(--border-subtle)}
+.seg button,.seg label span{display:inline-flex;align-items:center;justify-content:center;min-height:40px;padding:0 16px;border-radius:999px;border:0;background:transparent;color:var(--text-secondary);font-weight:600;font-size:14px;cursor:pointer;transition:transform var(--new-dur-1) var(--new-ease-spring),box-shadow var(--new-dur-1)}
+.seg button[aria-pressed="true"],.seg button[aria-selected="true"],.seg input:checked+span{background:var(--surface-card);color:var(--text-primary);box-shadow:var(--new-shadow-1)}
+.seg button:active,.seg label span:active{transform:scale(.96)}
+.seg input{position:absolute;opacity:0;width:1px;height:1px}
+.seg input:focus-visible+span{outline:3px solid var(--border-focus-ring);outline-offset:2px}
+.tabs-row{max-width:1280px;margin:0 auto;padding:0 24px 20px;overflow-x:auto}
+.tabs-row .seg{min-width:max-content}
+.frame-wrap{padding:0 24px}
+.frame{container:app/inline-size;width:100%;max-width:1280px;margin:0 auto;border:1px solid var(--border-strong);border-radius:28px;overflow:clip;background:var(--surface-canvas);box-shadow:var(--new-shadow-3);transition:max-width var(--new-dur-2) var(--new-ease-spring)}
+.frame.phone{max-width:395px;border:10px solid var(--surface-contrast);border-radius:46px}
+@media (max-width:700px){
+  .chrome{padding:20px 16px 12px}.tabs-row{padding:0 16px 14px}.frame-wrap{padding:0}
+  .vp-toggle{display:none}
+  .frame,.frame.phone{max-width:none;border:0;border-radius:0;box-shadow:none;border-top:1px solid var(--border-strong)}
+}
+
+/* ---------- app shell (container-query driven) ---------- */
+.app{--pad-x:40px;--fs-h1:36px;--fs-h2:22px;--fs-kpi:32px;--card-pad:24px;--gap:32px;color:var(--text-primary);min-height:100%}
+.appbar{background:color-mix(in srgb,var(--surface-canvas) 88%,transparent);backdrop-filter:blur(14px);border-bottom:1px solid var(--border-subtle);position:sticky;top:0;z-index:5}
+.appbar-in{display:flex;align-items:center;gap:20px;padding:12px var(--pad-x);min-height:72px}
+.logo{display:inline-flex;align-items:center;gap:10px;text-decoration:none;color:var(--text-primary);font:700 22px var(--font-head);letter-spacing:-.02em;border-radius:12px}
+.logo svg{width:34px;height:34px}
+.nav{display:flex;gap:4px;margin-left:12px;flex:1}
+.navlink{display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 16px;border:0;border-radius:999px;background:transparent;color:var(--text-secondary);font-weight:600;font-size:15px;transition:transform var(--new-dur-1) var(--new-ease-spring),background var(--new-dur-1)}
+.navlink:hover{background:var(--surface-sunken);color:var(--text-primary)}
+.navlink[aria-current="page"]{background:var(--primary-subtle);color:var(--primary)}
+.navlink:active{transform:scale(.96)}
+.appbar-r{display:flex;align-items:center;gap:12px;margin-left:auto}
+.avatar{width:44px;height:44px;border-radius:50%;border:2px solid var(--primary-border);background:var(--primary-subtle);color:var(--primary);font-weight:700}
+.chip{display:inline-flex;align-items:center;gap:8px;padding:4px 12px;min-height:28px;border-radius:999px;background:var(--status-warning-bg);color:var(--status-warning-text);border:1px solid var(--status-warning-border);font-size:13px;font-weight:600;white-space:nowrap}
+.chip::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--status-warning-solid)}
+.chip.plain{background:var(--surface-sunken);color:var(--text-secondary);border-color:var(--border-default)}
+.chip.plain::before{display:none}
+.tabbar{display:none}
+.page{padding:32px var(--pad-x) 56px;display:flex;flex-direction:column;gap:var(--gap)}
+.page.enter{animation:rise var(--new-dur-2) var(--new-ease-spring)}
+@keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.pagehead{display:flex;gap:16px;justify-content:space-between;align-items:flex-start;flex-wrap:wrap}
+.pagehead h1{font-size:var(--fs-h1)}
+.pagehead p{color:var(--text-secondary);margin-top:8px;max-width:56ch;font-size:17px}
+.sec>h2{font-size:var(--fs-h2);margin-bottom:16px}
+.sec>h2 small{display:block;font:400 15px/1.4 var(--font-body);color:var(--text-secondary);letter-spacing:0;margin-top:4px}
+
+.card{background:var(--surface-card);border:1px solid var(--border-subtle);border-radius:var(--new-radius-lg);box-shadow:var(--new-shadow-1);padding:var(--card-pad)}
+.card h3{font-size:19px}
+.card-sub{color:var(--text-secondary);font-size:14px;margin-top:4px}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:48px;padding:0 24px;border-radius:16px;border:1.5px solid transparent;font-weight:700;font-size:16px;text-decoration:none;transition:transform var(--new-dur-1) var(--new-ease-spring),box-shadow var(--new-dur-1),background var(--new-dur-1)}
+.btn:hover{transform:translateY(-2px)}
+.btn:active{transform:scale(.97)}
+.btn-primary{background:var(--primary-solid);color:var(--primary-foreground);box-shadow:0 2px 0 rgba(0,0,0,.08),0 8px 18px color-mix(in srgb,var(--primary-solid) 28%,transparent)}
+.btn-primary:hover{background:var(--primary-hover)}
+.btn-secondary{background:var(--surface-card);color:var(--text-primary);border-color:var(--border-strong)}
+.btn-secondary:hover{background:var(--surface-subtle)}
+.btn[disabled]{opacity:1;background:var(--surface-sunken);color:var(--text-muted);border-color:var(--border-default);box-shadow:none;cursor:not-allowed;transform:none}
+.link{display:inline-flex;align-items:center;gap:6px;min-height:44px;padding:0 4px;background:none;border:0;color:var(--primary);font-weight:700;font-size:15px;border-radius:10px}
+.link:hover{text-decoration:underline;text-underline-offset:4px}
+.link .i{width:18px;height:18px;transition:transform var(--new-dur-1) var(--new-ease-spring)}
+.link:hover .i{transform:translateX(3px)}
+
+/* coach hero */
+.coach{display:grid;grid-template-columns:1fr 240px;gap:32px;align-items:center;padding:40px;border-radius:var(--new-radius-xl);background:linear-gradient(135deg,var(--new-surface-coach),var(--new-surface-coach-end));border:1px solid var(--primary-border);box-shadow:var(--new-shadow-2)}
+.eyebrow{display:inline-flex;align-items:center;gap:8px;color:var(--primary);font-weight:700;font-size:14px;letter-spacing:.02em}
+.coach h3{font-size:32px;margin:10px 0 10px}
+.coach p.lead{color:var(--text-secondary);font-size:17px;max-width:54ch}
+.wins{display:flex;flex-wrap:wrap;gap:12px;margin:20px 0}
+.win{padding:12px 18px;border-radius:var(--new-radius-md);background:color-mix(in srgb,var(--surface-card) 78%,transparent);border:1px solid var(--border-subtle)}
+.win b{display:block;font:700 22px/1.2 var(--font-body)}
+.win span{font-size:13px;color:var(--text-secondary)}
+.coach-act{display:flex;flex-wrap:wrap;gap:12px 20px;align-items:center}
+.coach-act small{color:var(--text-secondary);font-size:14px}
+.art{width:100%;height:auto;max-width:240px;justify-self:center}
+.il-sage{fill:var(--new-illus-sage)}.il-apricot{fill:var(--new-illus-apricot)}.il-sand{fill:var(--new-illus-sand)}
+
+/* kpis */
+.kpis{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin:0;padding:0;list-style:none}
+.kpi{padding:var(--card-pad);border-radius:var(--new-radius-lg)}
+.kpi-top{display:flex;align-items:center;gap:10px;color:var(--text-secondary);font-weight:600;font-size:14px;line-height:1.25}
+.kpi-ic{width:36px;height:36px;border-radius:12px;background:var(--primary-subtle);color:var(--primary);display:grid;place-items:center;flex:none}
+.kpi-v{font:700 var(--fs-kpi)/1.1 var(--font-body);margin:14px 0 6px;letter-spacing:-.015em}
+.kpi-s{font-size:13px;color:var(--text-secondary);line-height:1.4}
+.delta{display:inline-flex;align-items:center;gap:4px;font-weight:700;font-size:13px;color:var(--status-positive-text)}
+.delta .i{width:16px;height:16px;stroke-width:2.2}
+
+.cols{display:grid;gap:24px;align-items:start}
+.legend{display:flex;flex-wrap:wrap;gap:8px 18px;margin:12px 0 4px;font-size:14px;color:var(--text-secondary)}
+.legend span{display:inline-flex;align-items:center;gap:8px}
+.legend svg{width:30px;height:10px;overflow:visible}
+.chart{position:relative;width:100%;margin-top:8px}
+.chart svg{display:block;overflow:visible}
+.chart text{font:500 12px var(--font-body);fill:var(--text-muted);font-variant-numeric:tabular-nums}
+.chart .grid{stroke:var(--chart-grid);stroke-width:1}
+.chart .ln{fill:none;stroke-width:3.5;stroke-linecap:round;stroke-linejoin:round}
+.ln-nw{stroke:var(--chart-primary)}.ln-debt{stroke:var(--chart-debt)}.ln-proj{stroke:var(--new-chart-projection)}
+.st-nw{stop-color:var(--chart-primary)}.st-debt{stop-color:var(--new-chart-projection)}
+.chart .dot-nw{fill:var(--chart-primary);stroke:var(--surface-card);stroke-width:3}
+.chart .dot-debt{fill:var(--chart-debt);stroke:var(--surface-card);stroke-width:3}
+.chart .dot-proj{fill:var(--new-chart-projection);stroke:var(--surface-card);stroke-width:3}
+.chart text.mark{fill:var(--text-primary);font-weight:700;font-size:13px}
+.chart text.axis-t{fill:var(--text-secondary)}
+
+/* accounts */
+.split-bar{display:grid;gap:10px;margin:18px 0 8px}
+.sb-row{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;align-items:center;font-size:14px;color:var(--text-secondary)}
+.sb-row b{font-size:20px;color:var(--text-primary)}
+.sb-track{grid-column:1/-1;height:12px;border-radius:999px;background:var(--surface-sunken);overflow:hidden}
+.sb-fill{height:100%;border-radius:999px}
+.sb-own{background:var(--chart-wealth)}.sb-owe{background:var(--chart-debt)}
+.acc-h{font:700 15px var(--font-body);margin:22px 0 4px;display:flex;justify-content:space-between;gap:12px}
+.acc-h span{font-weight:600;color:var(--text-secondary)}
+.rows{list-style:none;margin:0;padding:0}
+.rows li{display:flex;justify-content:space-between;gap:16px;align-items:baseline;padding:11px 0;border-top:1px solid var(--border-subtle);font-size:15px}
+.rows li:first-child{border-top:0}
+.rows em{display:block;font-style:normal;font-size:13px;color:var(--text-muted)}
+.rows b{font-weight:600;white-space:nowrap}
+
+/* widgets */
+.widgets{display:grid;grid-template-columns:1fr;gap:16px}
+.widget{display:flex;flex-direction:column;gap:6px}
+.widget-h{display:flex;align-items:center;gap:12px;font-weight:700;font-size:16px}
+.w-ic{width:40px;height:40px;border-radius:14px;display:grid;place-items:center}
+.w-debt{background:var(--status-warning-bg);color:var(--status-warning-text)}
+.w-home{background:var(--primary-subtle);color:var(--primary)}
+.w-pen{background:var(--status-positive-bg);color:var(--status-positive-text)}
+.widget .big{font:700 28px/1.15 var(--font-body);margin-top:10px}
+.widget p{color:var(--text-secondary);font-size:14px;flex:1}
+.mini{height:10px;border-radius:999px;background:var(--surface-sunken);overflow:hidden;margin:8px 0 6px;display:flex;gap:2px}
+.mini i{display:block;height:100%}
+
+/* mortgage */
+.split{display:grid;gap:24px;align-items:start}
+.controls{display:flex;flex-direction:column;gap:22px}
+.field label,.field .lab{font-weight:600;font-size:15px}
+.field-h{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.pill{min-width:84px;text-align:center;padding:6px 14px;border-radius:999px;background:var(--primary-subtle);color:var(--primary);border:1px solid var(--primary-border);font-weight:700;font-size:15px}
+.rng{display:flex;justify-content:space-between;font-size:12px;color:var(--text-muted);margin-top:-6px}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:44px;margin:0;background:transparent;--pct:50%}
+input[type=range]::-webkit-slider-runnable-track{height:10px;border-radius:999px;background:linear-gradient(to right,var(--primary-solid) var(--pct),var(--border-strong) var(--pct))}
+input[type=range]::-moz-range-track{height:10px;border-radius:999px;background:var(--border-strong)}
+input[type=range]::-moz-range-progress{height:10px;border-radius:999px;background:var(--primary-solid)}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:28px;height:28px;margin-top:-9px;border-radius:50%;background:var(--surface-card);border:4px solid var(--primary-solid);box-shadow:0 2px 8px rgba(0,0,0,.2);transition:transform var(--new-dur-1) var(--new-ease-spring)}
+input[type=range]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;background:var(--surface-card);border:4px solid var(--primary-solid);box-shadow:0 2px 8px rgba(0,0,0,.2)}
+input[type=range]:active::-webkit-slider-thumb{transform:scale(1.15)}
+.adjustbar{display:none;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px;border-radius:var(--new-radius-lg)}
+.adjustbar p{font-size:14px;color:var(--text-secondary);line-height:1.4}
+.adjustbar b{display:block;color:var(--text-primary);font-size:16px}
+.hero-out{background:linear-gradient(135deg,var(--new-surface-coach),var(--new-surface-coach-end));border-color:var(--primary-border);border-radius:var(--new-radius-xl);padding:calc(var(--card-pad) + 4px)}
+.hero-out h2{font-size:clamp(26px,4cqi,34px);margin:8px 0 6px}
+.hero-out p{color:var(--text-secondary);font-size:16px}
+.out{container:out/inline-size;display:flex;flex-direction:column;gap:20px;min-width:0}
+.kpis.m{gap:12px}
+.kpis.m .kpi{padding:16px}
+.kpis.m .kpi-v{font-size:24px;margin:8px 0 2px}
+.kpis.m .kpi-top{font-size:13px}
+.callout{display:flex;gap:12px;align-items:flex-start;padding:14px 16px;border-radius:var(--new-radius-md);background:var(--status-info-bg);border:1px solid var(--status-info-border);color:var(--status-info-text);font-size:15px}
+.callout .i{margin-top:2px}
+details.drawer{padding:0;overflow:hidden}
+details.drawer summary{list-style:none;display:flex;justify-content:space-between;align-items:center;gap:12px;min-height:56px;padding:0 var(--card-pad);font-weight:700;cursor:pointer}
+details.drawer summary::-webkit-details-marker{display:none}
+details.drawer summary .i{transition:transform var(--new-dur-2) var(--new-ease-spring)}
+details.drawer[open] summary .i{transform:rotate(180deg)}
+.tbl-wrap{overflow-x:auto;max-height:340px;border-top:1px solid var(--border-subtle)}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{padding:10px 14px;text-align:right;border-bottom:1px solid var(--border-subtle);white-space:nowrap}
+th:first-child,td:first-child{text-align:left}
+thead th{position:sticky;top:0;background:var(--surface-subtle);font-weight:700;color:var(--text-secondary);z-index:1}
+
+/* onboarding */
+.stepper{display:flex;align-items:center;gap:0;list-style:none;margin:0;padding:0}
+.stepper li{display:flex;align-items:center;gap:10px;font-weight:600;color:var(--text-secondary);font-size:15px;flex:none}
+.stepper li+li::before{content:"";width:clamp(24px,6cqi,72px);height:3px;border-radius:3px;background:var(--border-default);margin-right:10px}
+.stepper .n{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;border:2px solid var(--border-strong);font-weight:700;background:var(--surface-card)}
+.stepper [aria-current="step"]{color:var(--text-primary)}
+.stepper [aria-current="step"] .n{background:var(--primary-solid);border-color:var(--primary-solid);color:var(--primary-foreground);box-shadow:0 0 0 5px var(--primary-subtle)}
+.ob{display:grid;gap:24px;align-items:start}
+.form{display:flex;flex-direction:column;gap:22px}
+.form h2{font-size:28px}
+.form .intro{color:var(--text-secondary);margin-top:6px}
+.input{width:100%;min-height:52px;padding:0 16px;border-radius:14px;border:1.5px solid var(--border-input);background:var(--surface-card);font-size:16px;margin-top:8px;transition:box-shadow var(--new-dur-1)}
+.input:focus-visible{outline:3px solid var(--border-focus-ring);outline-offset:1px}
+select.input{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%238C8274' stroke-width='2' stroke-linecap='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;padding-right:44px}
+.pre{position:relative}
+.pre span{position:absolute;left:16px;top:8px;height:52px;display:grid;place-items:center;font-weight:600;color:var(--text-secondary)}
+.pre .input{padding-left:34px}
+.hint{font-size:13px;color:var(--text-muted);margin-top:6px}
+.twin{display:grid;gap:22px}
+.form-act{display:flex;flex-wrap:wrap;gap:12px 20px;align-items:center;justify-content:space-between;padding-top:8px;border-top:1px solid var(--border-subtle)}
+.form-act .grp{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+.preview{background:linear-gradient(160deg,var(--new-surface-coach),var(--new-surface-coach-end));border-color:var(--primary-border);border-radius:var(--new-radius-xl)}
+.preview h3{margin:8px 0 4px;font-size:22px}
+.live{display:inline-flex;gap:8px;align-items:center;font-size:13px;font-weight:600;color:var(--text-secondary)}
+.live::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--status-positive-solid);animation:pulse 2s ease-in-out infinite}
+@keyframes pulse{50%{transform:scale(1.6);opacity:.5}}
+.pv{display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:14px 0;border-top:1px solid var(--primary-border)}
+.pv:first-of-type{border-top:0;margin-top:6px}
+.pv span{color:var(--text-secondary);font-size:15px}
+.pv b{font-size:24px;font-weight:700;white-space:nowrap}
+.pv b small{font-size:14px;font-weight:600;color:var(--text-secondary)}
+
+/* states */
+.pair{display:grid;gap:24px}
+.state{display:flex;flex-direction:column;align-items:center;text-align:center;gap:10px;padding:40px calc(var(--card-pad) + 4px);min-height:100%}
+.state .art2{width:170px;height:auto;margin-bottom:8px}
+.state h3{font-size:24px}
+.state p{color:var(--text-secondary);max-width:38ch}
+.state .acts{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin-top:12px}
+.state .ref{font-size:13px;color:var(--text-muted);margin-top:8px}
+.cap{font-size:13px;font-weight:700;color:var(--text-muted);letter-spacing:.04em;text-transform:uppercase;margin-bottom:10px}
+.note-live{font-size:14px;color:var(--text-secondary);min-height:21px}
+
+
+/* heavy data */
+.sum3{display:grid;grid-template-columns:1fr;gap:12px;margin:0;padding:0;list-style:none}
+.sum3 .kpi-v{font-size:clamp(24px,3.2cqi,30px)}
+.tools{display:flex;flex-direction:column;gap:14px;margin:16px 0 8px}
+.tools-r{display:flex;flex-wrap:wrap;gap:12px}
+.sf{position:relative;flex:1 1 220px}
+.sf .i{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--text-muted);margin-top:4px}
+.sf .input{padding-left:44px;margin-top:0}
+.sortf{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:600;color:var(--text-secondary)}
+.sortf select{margin-top:0;min-width:180px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.fchip{min-height:44px;padding:0 16px;border-radius:999px;border:1.5px solid var(--border-strong);background:var(--surface-card);font-weight:600;font-size:14px;color:var(--text-secondary);display:inline-flex;align-items:center;gap:6px;transition:transform var(--new-dur-1) var(--new-ease-spring)}
+.fchip:active{transform:scale(.95)}
+.fchip[aria-pressed="true"]{background:var(--primary-subtle);border-color:var(--primary);color:var(--primary)}
+.fchip[aria-pressed="true"]::before{content:"";width:14px;height:14px;background:currentColor;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='3' stroke-linecap='round'%3E%3Cpath d='M5 12.5l4.5 4.5L19 7.5'/%3E%3C/svg%3E") center/contain no-repeat;-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='3' stroke-linecap='round'%3E%3Cpath d='M5 12.5l4.5 4.5L19 7.5'/%3E%3C/svg%3E") center/contain no-repeat}
+.grp-h{display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:14px 0 6px;margin-top:10px;border-bottom:2px solid var(--border-default);font-weight:700}
+.grp-h b{font-size:20px}.grp-h span{font-size:14px;font-weight:600;color:var(--text-secondary)}
+.acc{list-style:none;margin:0;padding:0}
+.acc li{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 16px;align-items:center;padding:12px 0;border-bottom:1px solid var(--border-subtle)}
+.acc .nm{display:block;font-weight:600;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border-radius:6px}
+.acc .nm:hover,.acc .nm:focus{white-space:normal;overflow:visible}
+.acc .meta{grid-column:1;font-size:13px;color:var(--text-muted);display:flex;flex-wrap:wrap;gap:4px 10px;align-items:center}
+.acc .bal{grid-row:1/span 2;grid-column:2;text-align:right;font-weight:700;font-size:17px;white-space:nowrap}
+.acc .bal small{display:block;font-size:12px;font-weight:600;color:var(--text-muted)}
+.badge{display:inline-flex;align-items:center;gap:4px;padding:2px 10px;border-radius:999px;font-size:12px;font-weight:700;background:var(--status-warning-bg);color:var(--status-warning-text);border:1px solid var(--status-warning-border)}
+.badge .i{width:14px;height:14px;stroke-width:2.2}
+.none{padding:20px 0;color:var(--text-secondary);text-align:center}
+.bars{list-style:none;margin:16px 0 0;padding:0;display:flex;flex-direction:column;gap:12px}
+.bars li{display:grid;grid-template-columns:28px minmax(0,1fr) auto;gap:2px 12px;align-items:center;font-size:15px}
+.bars .rk{width:28px;height:28px;border-radius:50%;background:var(--surface-sunken);display:grid;place-items:center;font-size:13px;font-weight:700;color:var(--text-secondary)}
+.bars .lb{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bars .am{font-weight:700;white-space:nowrap;text-align:right}.bars .am small{font-weight:500;color:var(--text-muted);margin-left:6px}
+.bars .tr{grid-column:2/-1;height:12px;border-radius:999px;background:var(--surface-sunken);overflow:hidden}
+.bars .tr i{display:block;height:100%;border-radius:999px;background:var(--chart-primary)}
+.bars .oth .tr i{background:repeating-linear-gradient(135deg,var(--chart-wealth) 0 6px,transparent 6px 10px);border:1.5px solid var(--chart-wealth)}
+.keyrow{display:flex;flex-wrap:wrap;gap:8px 20px;font-size:14px;color:var(--text-secondary);margin-top:16px}
+.keyrow span{display:inline-flex;align-items:center;gap:8px}
+.keyrow i{width:30px;height:12px;border-radius:999px;display:block}
+.k-solid{background:var(--chart-primary)}.k-hatch{background:repeating-linear-gradient(135deg,var(--chart-wealth) 0 6px,transparent 6px 10px);border:1.5px solid var(--chart-wealth)}
+.dense td,.dense th{padding:8px 14px}
+.showall{display:flex;justify-content:center;padding:10px;border-top:1px solid var(--border-subtle)}
+details.mini-d{margin-top:12px;font-size:14px;color:var(--text-secondary)}
+details.mini-d summary{min-height:44px;display:flex;align-items:center;cursor:pointer;font-weight:600;color:var(--primary)}
+
+/* ---------- container breakpoints ---------- */
+@container app (min-width:900px){
+  .coach{grid-template-columns:1fr 240px}
+  .kpis{grid-template-columns:repeat(4,1fr);gap:16px}
+  .cols.nw{grid-template-columns:7fr 5fr}
+  .widgets{grid-template-columns:repeat(3,1fr)}
+  .split{grid-template-columns:5fr 7fr}
+  .controls-card{position:sticky;top:96px}
+  .ob{grid-template-columns:7fr 5fr}
+  .preview{position:sticky;top:96px}
+  .pair{grid-template-columns:1fr 1fr}
+  .twin{grid-template-columns:1fr 1fr}
+  .sum3{grid-template-columns:repeat(3,1fr);gap:16px}
+  .tools{flex-direction:row;flex-wrap:wrap;align-items:center;justify-content:space-between}
+  .cols.hv{grid-template-columns:7fr 5fr}
+}
+@container app (max-width:899px){
+  .app{--pad-x:24px;--fs-h1:32px;--fs-h2:21px;--fs-kpi:28px;--card-pad:22px;--gap:28px}
+  .nav,.appbar-r .chip.desktop-only{display:none}
+  .appbar-in{min-height:64px}
+  .tabbar{display:grid;grid-template-columns:repeat(5,1fr);position:sticky;bottom:0;z-index:6;background:color-mix(in srgb,var(--surface-card) 94%,transparent);backdrop-filter:blur(14px);border-top:1px solid var(--border-default);padding:6px 8px calc(6px + env(safe-area-inset-bottom));box-shadow:0 -8px 24px rgba(70,50,25,.08)}
+  .tab{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-height:56px;border:0;background:transparent;border-radius:16px;color:var(--text-secondary);font-size:12px;font-weight:600;transition:transform var(--new-dur-1) var(--new-ease-spring)}
+  .tab[aria-current="page"]{color:var(--primary);background:var(--primary-subtle)}
+  .tab:active{transform:scale(.94)}
+  .coach{grid-template-columns:1fr;padding:28px;gap:8px}
+  .coach .art{order:-1;max-width:150px;justify-self:start}
+  .coach h3{font-size:28px}
+  .adjustbar{display:flex}
+  .controls-card{display:none}
+  .controls-card.open{display:block}
+  .app[data-frame="onboarding"] .tabbar{display:none}
+}
+@container app (max-width:599px){
+  .app{--pad-x:16px;--fs-h1:28px;--fs-h2:20px;--fs-kpi:24px;--card-pad:18px;--gap:24px}
+  .pagehead p{font-size:16px}
+  .kpis{gap:10px}
+  .kpi{padding:14px}
+  .kpi-top{font-size:13px;gap:8px}
+  .kpi-ic{width:32px;height:32px;border-radius:10px}
+  .kpi-v{margin:10px 0 4px}
+  .kpi-s{font-size:12px}
+  .coach{padding:22px 20px}
+  .coach h3{font-size:25px}
+  .coach p.lead{font-size:16px}
+  .win{flex:1 1 130px;padding:10px 14px}
+  .win b{font-size:19px}
+  .coach-act .btn{width:100%}
+  .stepper li:not([aria-current="step"]) .t{display:none}
+  .stepper li+li::before{width:20px;margin-right:6px}
+  .stepper li{gap:8px}
+  .form h2{font-size:24px}
+  .form-act{flex-direction:column-reverse;align-items:stretch}
+  .form-act .grp{flex-direction:column-reverse;align-items:stretch}
+  .form-act .btn,.form-act .link{width:100%;justify-content:center}
+  .state{padding:28px 20px}
+  .acc .nm{white-space:normal;overflow:visible;word-break:break-word}
+  .acc li{padding:14px 0}
+  .tools-r,.sortf,.sortf select{width:100%}
+  .sortf{flex-direction:column;align-items:flex-start}
+  .logo{font-size:20px}
+}
+@container out (min-width:560px){.kpis.m{grid-template-columns:repeat(4,1fr)}}
+
+/* ---------- docs below the frame ---------- */
+.docs{max-width:1100px;margin:56px auto 0;padding:0 24px;display:flex;flex-direction:column;gap:40px}
+.docs h2{font-size:28px;margin-bottom:6px}
+.docs h3{font-size:18px;margin:26px 0 10px}
+.docs p,.docs li{color:var(--text-secondary);font-size:16px}
+.docs p+p{margin-top:10px}
+.docs ul{padding-left:20px;margin:8px 0}
+.docs li{margin:6px 0}
+.docs .lede{max-width:70ch;margin-bottom:16px}
+.docs .card{padding:24px}
+.docs .scroll{overflow-x:auto;border:1px solid var(--border-subtle);border-radius:var(--new-radius-md);background:var(--surface-card)}
+.docs table{font-size:14px}
+.docs td code,.docs code{font:500 13px ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--text-primary)}
+.sw{display:inline-flex;gap:6px}
+.sw i{width:26px;height:26px;border-radius:8px;border:1px solid var(--border-strong);display:block}
+.res{display:inline-block;padding:2px 10px;border-radius:999px;font-weight:700;font-size:12px}
+.res.pass{background:var(--status-positive-bg);color:var(--status-positive-text)}
+.res.fail{background:var(--status-danger-bg);color:var(--status-danger-text)}
+td.cur,th.cur{background:var(--primary-subtle)}
+.grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px}
+.spec .d{font:700 40px/1.1 var(--font-head);color:var(--text-primary)}
+.spec .h{font:700 24px/1.2 var(--font-head);color:var(--text-primary)}
+.spec .b{font:400 16px/1.5 var(--font-body);color:var(--text-primary)}
+.spec .nn{font:700 32px/1.1 var(--font-body);color:var(--text-primary)}
+.spec small{display:block;color:var(--text-muted);font-size:13px;margin-bottom:6px}
+.radii{display:flex;flex-wrap:wrap;gap:16px;align-items:flex-end}
+.radii div{width:92px;height:72px;background:var(--primary-subtle);border:1.5px solid var(--primary-border);display:grid;place-items:center;font-size:13px;font-weight:600;color:var(--primary)}
+.elev{display:flex;flex-wrap:wrap;gap:20px}
+.elev div{width:140px;height:84px;border-radius:var(--new-radius-lg);background:var(--surface-card);display:grid;place-items:center;font-size:13px;font-weight:600;color:var(--text-secondary);border:1px solid var(--border-subtle)}
+.chartsw{display:flex;flex-wrap:wrap;gap:10px}
+.chartsw div{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text-secondary)}
+.chartsw i{width:34px;height:12px;border-radius:999px;display:block}
+.tone{display:inline-block;min-width:140px}
+.demo-spring{display:inline-flex;margin-top:8px}
+
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}
+}
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <symbol id="i-home" viewBox="0 0 24 24"><path d="M4 11l8-7 8 7v8a1 1 0 0 1-1 1h-4v-6H9v6H5a1 1 0 0 1-1-1z"/></symbol>
+  <symbol id="i-budget" viewBox="0 0 24 24"><path d="M3 7h15a3 3 0 0 1 3 3v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2zM3 7l11-3v3M16 13.5h2"/></symbol>
+  <symbol id="i-bank" viewBox="0 0 24 24"><path d="M3 10l9-6 9 6M5 10v8M9.5 10v8M14.5 10v8M19 10v8M3 20h18"/></symbol>
+  <symbol id="i-trend" viewBox="0 0 24 24"><path d="M3 17l6-6 4 4 8-8M15 7h6v6"/></symbol>
+  <symbol id="i-compass" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/></symbol>
+  <symbol id="i-card" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="M3 10h18M7 15h3"/></symbol>
+  <symbol id="i-more" viewBox="0 0 24 24"><circle cx="5.5" cy="12" r="1.2"/><circle cx="12" cy="12" r="1.2"/><circle cx="18.5" cy="12" r="1.2"/></symbol>
+  <symbol id="i-chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></symbol>
+  <symbol id="i-up" viewBox="0 0 24 24"><path d="M12 19V5M6 11l6-6 6 6"/></symbol>
+  <symbol id="i-right" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+  <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></symbol>
+  <symbol id="i-leaf" viewBox="0 0 24 24"><path d="M5 19c0-8 4-13 14-14 0 9-4 14-12 14M5 19c3-5 6-8 10-10"/></symbol>
+  <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M20 11a8 8 0 0 0-14-4M4 5v4h4M4 13a8 8 0 0 0 14 4M20 19v-4h-4"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 4.5-3.2 7.5-8 9-4.8-1.5-8-4.5-8-9V6z"/></symbol>
+  <symbol id="i-sliders" viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></symbol>
+  <symbol id="i-alert" viewBox="0 0 24 24"><path d="M12 4l9 16H3zM12 10v4M12 17h.01"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4 4"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></symbol>
+</svg>
+
+<div class="stage">
+  <header class="chrome">
+    <div>
+      <h1>Direction C: Warm guide</h1>
+      <p>Friendly and coach-like. Sand-tinted neutrals with a deep teal-green primary, big soft shapes, plain-language headings.</p>
+    </div>
+    <div class="chrome-r">
+      <span class="chip">Sample data</span>
+      <div class="seg" role="group" aria-label="Theme">
+        <button type="button" data-theme-set="light" aria-pressed="false">Light</button>
+        <button type="button" data-theme-set="dark" aria-pressed="false">Dark</button>
+        <button type="button" data-theme-set="system" aria-pressed="true">System</button>
+      </div>
+      <div class="seg vp-toggle" role="group" aria-label="Preview width">
+        <button type="button" data-vp="1280" aria-pressed="true">1280</button>
+        <button type="button" data-vp="375" aria-pressed="false">375</button>
+      </div>
+    </div>
+  </header>
+  <div class="tabs-row">
+    <div class="seg" role="tablist" aria-label="Frames">
+      <button type="button" role="tab" id="t-dashboard" data-frame="dashboard" aria-controls="p-dashboard" aria-selected="true">Dashboard</button>
+      <button type="button" role="tab" id="t-mortgage" data-frame="mortgage" aria-controls="p-mortgage" aria-selected="false" tabindex="-1">Mortgage</button>
+      <button type="button" role="tab" id="t-onboarding" data-frame="onboarding" aria-controls="p-onboarding" aria-selected="false" tabindex="-1">Onboarding</button>
+      <button type="button" role="tab" id="t-states" data-frame="states" aria-controls="p-states" aria-selected="false" tabindex="-1">Empty and error</button>
+      <button type="button" role="tab" id="t-heavy" data-frame="heavy" aria-controls="p-heavy" aria-selected="false" tabindex="-1">Heavy data</button>
+    </div>
+  </div>
+
+  <div class="frame-wrap"><div class="frame" id="frame"><div class="app" id="app" data-frame="dashboard">
+
+    <header class="appbar"><div class="appbar-in">
+      <a class="logo" href="#dashboard" aria-label="Flump home">
+        <svg viewBox="0 0 34 34" aria-hidden="true"><rect width="34" height="34" rx="11" fill="var(--primary-solid)"/><path d="M9 25c0-8 4-13 16-14 0 10-5 14-12 14-1 0-3-.2-4 0z" fill="var(--primary-foreground)"/><path d="M9 25c3-5 7-8 11-10" stroke="var(--primary-solid)" stroke-width="1.8" stroke-linecap="round" fill="none"/></svg>
+        <span>flump</span>
+      </a>
+      <nav class="nav" aria-label="Primary" id="nav">
+        <button class="navlink" type="button" data-nav="dashboard"><svg class="i"><use href="#i-home"/></svg>Home</button>
+        <button class="navlink" type="button" data-nav="budget"><svg class="i"><use href="#i-budget"/></svg>Budget</button>
+        <button class="navlink" type="button" data-nav="heavy"><svg class="i"><use href="#i-bank"/></svg>Accounts</button>
+        <button class="navlink" type="button" data-nav="states"><svg class="i"><use href="#i-trend"/></svg>Wealth</button>
+        <button class="navlink" type="button" data-nav="mortgage"><svg class="i"><use href="#i-compass"/></svg>Planning</button>
+      </nav>
+      <div class="appbar-r"><span class="chip">Sample data</span><button class="avatar" type="button" aria-label="Account menu for Sam">S</button></div>
+    </div></header>
+
+    <!-- ===== Frame 1: Dashboard ===== -->
+    <main class="page" id="p-dashboard" role="tabpanel" aria-labelledby="t-dashboard">
+      <div class="pagehead">
+        <div>
+          <h1>Welcome back, Sam</h1>
+          <p>You are £1,120 better off than last month. Here is where you stand and what we would do next.</p>
+        </div>
+        <span class="chip">Sample data</span>
+      </div>
+
+      <section class="sec" aria-labelledby="h-next">
+        <h2 id="h-next">What to do next</h2>
+        <article class="coach">
+          <div>
+            <span class="eyebrow"><svg class="i"><use href="#i-leaf"/></svg>Your next best step</span>
+            <h3>Clear the Amex Everyday card first</h3>
+            <p class="lead">At 27.9% APR it costs about £26 a month in interest, so it is the best place for your next pound to go.</p>
+            <div class="wins" role="list" aria-label="What an extra £50 a month does">
+              <div class="win" role="listitem"><b>48 months sooner</b><span>Both cards cleared with an extra £50 a month</span></div>
+              <div class="win" role="listitem"><b>£2,465 saved</b><span>In interest over the plan</span></div>
+            </div>
+            <div class="coach-act">
+              <button class="btn btn-primary" type="button">See debt plan<svg class="i"><use href="#i-right"/></svg></button>
+              <small>No pressure. You can change the plan any time.</small>
+            </div>
+          </div>
+          <svg class="art" viewBox="0 0 240 180" role="img" aria-label="Illustration: three rising steps with a small plant on top">
+            <ellipse cx="120" cy="152" rx="106" ry="18" class="il-sand"/>
+            <circle cx="190" cy="40" r="34" class="il-apricot" opacity=".4"/>
+            <circle cx="190" cy="40" r="20" class="il-apricot"/>
+            <path d="M52 96C80 62 118 54 148 44" fill="none" stroke="var(--text-muted)" stroke-width="3" stroke-linecap="round" stroke-dasharray="1 9"/>
+            <rect x="26" y="108" width="52" height="44" rx="14" class="il-sage"/>
+            <rect x="84" y="84" width="52" height="68" rx="14" fill="var(--primary-border)"/>
+            <rect x="142" y="58" width="52" height="94" rx="14" fill="var(--primary-solid)"/>
+            <path d="M168 58V38" stroke="var(--chart-wealth)" stroke-width="4" stroke-linecap="round"/>
+            <path d="M168 44c-13 0-19-6-19-17 12 0 19 6 19 17z" fill="var(--chart-wealth)"/>
+            <path d="M168 38c11 0 17-5 17-14-11 0-17 5-17 14z" fill="var(--primary)"/>
+            <circle cx="46" cy="132" r="5" fill="var(--primary-solid)" opacity=".5"/><circle cx="104" cy="112" r="5" fill="var(--primary-solid)" opacity=".5"/>
+          </svg>
+        </article>
+      </section>
+
+      <section class="sec" aria-labelledby="h-stand">
+        <h2 id="h-stand">Where you stand</h2>
+        <ul class="kpis">
+          <li class="card kpi">
+            <div class="kpi-top"><span class="kpi-ic"><svg class="i"><use href="#i-trend"/></svg></span>Net worth</div>
+            <div class="kpi-v">£97,750</div>
+            <div class="kpi-s"><span class="delta"><svg class="i"><use href="#i-up"/></svg>Up £1,120</span> since last month</div>
+          </li>
+          <li class="card kpi">
+            <div class="kpi-top"><span class="kpi-ic"><svg class="i"><use href="#i-budget"/></svg></span>Monthly surplus</div>
+            <div class="kpi-v">£610</div>
+            <div class="kpi-s">£2,760 coming in, £2,150 going out</div>
+          </li>
+          <li class="card kpi">
+            <div class="kpi-top"><span class="kpi-ic"><svg class="i"><use href="#i-shield"/></svg></span>Weekly safe to spend</div>
+            <div class="kpi-v">£140</div>
+            <div class="kpi-s">Comfortable to spend this week</div>
+          </li>
+          <li class="card kpi">
+            <div class="kpi-top"><span class="kpi-ic"><svg class="i"><use href="#i-bank"/></svg></span>Liquid cash and buffer</div>
+            <div class="kpi-v">£17,550</div>
+            <div class="kpi-s">About 8 months of outgoings</div>
+          </li>
+        </ul>
+      </section>
+
+      <section class="cols nw" aria-label="Net worth and accounts">
+        <article class="card">
+          <h3>Your net worth over the past year</h3>
+          <p class="card-sub">Up £13,450 in 12 months, from £84,300 to £97,750.</p>
+          <div class="chart" id="nwChart" role="img" aria-label="Line chart of net worth over 12 months, rising steadily from £84,300 in December to £97,750 in November."></div>
+        </article>
+        <article class="card">
+          <h3>What you own and owe</h3>
+          <div class="split-bar">
+            <div class="sb-row"><span>You own</span><b style="text-align:right">£283,250</b><div class="sb-track" aria-hidden="true"><div class="sb-fill sb-own" style="width:100%"></div></div></div>
+            <div class="sb-row"><span>You owe</span><b style="text-align:right">£185,500</b><div class="sb-track" aria-hidden="true"><div class="sb-fill sb-owe" style="width:65.5%"></div></div></div>
+          </div>
+          <div class="acc-h">Assets <span>£283,250</span></div>
+          <ul class="rows">
+            <li>Home value<b>£240,000</b></li>
+            <li>Workplace pension<b>£18,500</b></li>
+            <li><span>Cash ISA<em>4.5% interest</em></span><b>£9,000</b></li>
+            <li>Stocks and shares ISA<b>£7,200</b></li>
+            <li><span>Easy-access saver<em>4.1% interest</em></span><b>£6,400</b></li>
+            <li>Current account<b>£2,150</b></li>
+          </ul>
+          <div class="acc-h">Liabilities <span>£185,500 owed</span></div>
+          <ul class="rows">
+            <li><span>Home mortgage<em>4.6%, 24 years left, repayment</em></span><b>£182,000 owed</b></li>
+            <li><span>Barclaycard<em>22.9% APR</em></span><b>£2,400 owed</b></li>
+            <li><span>Amex Everyday<em>27.9% APR</em></span><b>£1,100 owed</b></li>
+          </ul>
+        </article>
+      </section>
+
+      <section class="sec" aria-labelledby="h-plans">
+        <h2 id="h-plans">Your plans at a glance</h2>
+        <div class="widgets">
+          <article class="card widget">
+            <div class="widget-h"><span class="w-ic w-debt"><svg class="i"><use href="#i-card"/></svg></span>Debt</div>
+            <div class="big">£3,500 owed</div>
+            <div class="mini" role="img" aria-label="Barclaycard £2,400 and Amex Everyday £1,100"><i style="width:68.6%;background:var(--chart-debt)"></i><i style="width:31.4%;background:var(--new-chart-projection)"></i></div>
+            <p>Two cards. The Amex Everyday card at 27.9% APR is the one to clear first.</p>
+            <div><button class="link" type="button">See debt plan<svg class="i"><use href="#i-right"/></svg></button></div>
+          </article>
+          <article class="card widget">
+            <div class="widget-h"><span class="w-ic w-home"><svg class="i"><use href="#i-home"/></svg></span>Mortgage</div>
+            <div class="big">£182,000 owed</div>
+            <p>4.6% repayment, 24 years left. An extra £200 a month could finish 6 years 1 month sooner.</p>
+            <div><button class="link" type="button" data-goto="mortgage">Try overpayments<svg class="i"><use href="#i-right"/></svg></button></div>
+          </article>
+          <article class="card widget">
+            <div class="widget-h"><span class="w-ic w-pen"><svg class="i"><use href="#i-leaf"/></svg></span>Pension</div>
+            <div class="big">£18,500</div>
+            <p>Your workplace pension. See how it could look when you retire.</p>
+            <div><button class="link" type="button">Open pension planner<svg class="i"><use href="#i-right"/></svg></button></div>
+          </article>
+        </div>
+      </section>
+    </main>
+
+    <!-- ===== Frame 2: Mortgage ===== -->
+    <main class="page" id="p-mortgage" role="tabpanel" aria-labelledby="t-mortgage" hidden>
+      <div class="pagehead">
+        <div>
+          <h1>Mortgage overpayments</h1>
+          <p>See how a little extra each month changes your finish date. Move the sliders and take your time.</p>
+        </div>
+        <span class="chip">Sample data</span>
+      </div>
+
+      <div class="card adjustbar" id="adjustbar">
+        <p><b>£182,000 at 4.6% over 24 years</b>£200 a month extra</p>
+        <button class="btn btn-secondary" type="button" id="adjustBtn" aria-expanded="false" aria-controls="controls"><svg class="i"><use href="#i-sliders"/></svg>Adjust</button>
+      </div>
+
+      <div class="split">
+        <section class="card controls-card" id="controls" aria-label="Mortgage details">
+          <div class="controls">
+            <h2 style="font-size:22px">Your mortgage</h2>
+            <div class="field">
+              <div class="field-h"><label for="r-bal">Outstanding balance</label><output class="pill" for="r-bal" id="o-bal">£182,000</output></div>
+              <input type="range" id="r-bal" min="50000" max="400000" step="1000" value="182000" data-fmt="gbp">
+              <div class="rng"><span>£50,000</span><span>£400,000</span></div>
+            </div>
+            <div class="field">
+              <div class="field-h"><label for="r-rate">Interest rate</label><output class="pill" for="r-rate" id="o-rate">4.6%</output></div>
+              <input type="range" id="r-rate" min="0.5" max="8" step="0.1" value="4.6" data-fmt="pct">
+              <div class="rng"><span>0.5%</span><span>8%</span></div>
+            </div>
+            <div class="field">
+              <div class="field-h"><label for="r-term">Remaining term</label><output class="pill" for="r-term" id="o-term">24 years</output></div>
+              <input type="range" id="r-term" min="1" max="35" step="1" value="24" data-fmt="yrs">
+              <div class="rng"><span>1 year</span><span>35 years</span></div>
+            </div>
+            <div class="field">
+              <div class="field-h"><label for="r-over">Monthly overpayment</label><output class="pill" for="r-over" id="o-over">£200</output></div>
+              <input type="range" id="r-over" min="0" max="1000" step="25" value="200" data-fmt="gbp">
+              <div class="rng"><span>£0</span><span>£1,000</span></div>
+            </div>
+            <div class="field">
+              <span class="lab" id="lab-type">Mortgage type</span>
+              <div class="seg" role="radiogroup" aria-labelledby="lab-type" style="display:flex;margin-top:8px">
+                <label style="flex:1"><input type="radio" name="mt" value="repay" checked><span style="width:100%">Repayment</span></label>
+                <label style="flex:1"><input type="radio" name="mt" value="io"><span style="width:100%">Interest only</span></label>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <div class="out">
+          <article class="card hero-out">
+            <span class="eyebrow"><svg class="i"><use href="#i-leaf"/></svg>What this could mean</span>
+            <h2>Mortgage-free 6 years 1 month sooner</h2>
+            <p>Sep 2044 instead of Nov 2050. A steady £200 a month does the heavy lifting.</p>
+          </article>
+          <ul class="kpis m">
+            <li class="card kpi"><div class="kpi-top">Monthly payment</div><div class="kpi-v">£1,045</div></li>
+            <li class="card kpi"><div class="kpi-top">Total interest, no overpayment</div><div class="kpi-v">£118,900</div></li>
+            <li class="card kpi"><div class="kpi-top">Total interest with overpayment</div><div class="kpi-v">£85,400</div></li>
+            <li class="card kpi"><div class="kpi-top">Interest saved</div><div class="kpi-v">£33,500</div></li>
+          </ul>
+          <article class="card">
+            <div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:center">
+              <h3>How your balance falls</h3><span class="chip plain">Projection</span>
+            </div>
+            <div class="legend">
+              <span><svg viewBox="0 0 30 10" aria-hidden="true"><line x1="2" y1="5" x2="28" y2="5" stroke="var(--chart-debt)" stroke-width="3.5" stroke-linecap="round"/></svg>No overpayment, ends Nov 2050 (solid)</span>
+              <span><svg viewBox="0 0 30 10" aria-hidden="true"><line x1="2" y1="5" x2="28" y2="5" stroke="var(--new-chart-projection)" stroke-width="3.5" stroke-linecap="round" stroke-dasharray="7 6"/></svg>With £200 a month extra, ends Sep 2044 (dashed)</span>
+            </div>
+            <div class="chart" id="mChart" role="img" aria-label="Line chart of remaining mortgage balance over 24 years. Without overpayment the balance falls from £182,000 to zero at year 24. With £200 a month extra it reaches zero at about year 17.9."></div>
+            <p class="card-sub" style="margin-top:10px">Assumes the rate stays at 4.6% for the whole term. Projection, not a forecast.</p>
+          </article>
+          <div class="callout"><svg class="i"><use href="#i-info"/></svg><p>Check your lender's early repayment charge before overpaying more than 10% a year.</p></div>
+          <details class="card drawer">
+            <summary>Year-by-year schedule (24 rows)<svg class="i"><use href="#i-chev"/></svg></summary>
+            <div class="tbl-wrap"><table>
+              <thead><tr><th scope="col">Year</th><th scope="col">Balance owed, no overpayment</th><th scope="col">Balance owed, with £200 extra</th></tr></thead>
+              <tbody id="sched"></tbody>
+            </table></div>
+          </details>
+        </div>
+      </div>
+    </main>
+
+    <!-- ===== Frame 3: Onboarding ===== -->
+    <main class="page" id="p-onboarding" role="tabpanel" aria-labelledby="t-onboarding" hidden>
+      <div class="pagehead" style="align-items:center">
+        <ol class="stepper" aria-label="Setup progress">
+          <li aria-current="step"><span class="n">1</span><span class="t">You and income</span></li>
+          <li><span class="n">2</span><span class="t">Housing and outgoings</span></li>
+          <li><span class="n">3</span><span class="t">Savings and debt</span></li>
+        </ol>
+        <span class="chip">Sample data</span>
+      </div>
+      <div class="ob">
+        <form class="card form" onsubmit="return false" aria-labelledby="h-ob">
+          <div>
+            <p class="eyebrow">Step 1 of 3</p>
+            <h2 id="h-ob">Step 1 of 3: You and income</h2>
+            <p class="intro">Let's start with a few basics. We use them to work out your take-home pay. You can change anything later.</p>
+          </div>
+          <div class="twin">
+            <div><label for="f-age" style="font-weight:600">Age</label><input class="input" id="f-age" type="number" inputmode="numeric" value="34" min="16" max="100"></div>
+            <div><label for="f-emp" style="font-weight:600">Employment</label>
+              <select class="input" id="f-emp"><option selected>Employed</option><option>Self-employed</option><option>Part-time</option><option>Not working</option><option>Retired</option></select></div>
+          </div>
+          <div>
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
+              <label for="f-sal" style="font-weight:600">Annual gross salary</label>
+              <div class="seg" role="radiogroup" aria-label="Salary basis">
+                <label><input type="radio" name="sb" checked><span>Annual gross</span></label>
+                <label><input type="radio" name="sb"><span>Monthly net</span></label>
+              </div>
+            </div>
+            <div class="pre"><span aria-hidden="true">£</span><input class="input" id="f-sal" inputmode="numeric" value="42,000" aria-describedby="h-sal"></div>
+            <p class="hint" id="h-sal">Before tax and deductions. Your payslip or contract will show it.</p>
+          </div>
+          <div><label for="f-sl" style="font-weight:600">Student loan plan</label>
+            <select class="input" id="f-sl"><option selected>None</option><option>Plan 1</option><option>Plan 2</option><option>Plan 4</option><option>Plan 5</option><option>Postgraduate</option></select></div>
+          <div class="form-act">
+            <button class="btn btn-secondary" type="button" disabled>Back</button>
+            <div class="grp"><button class="link" type="button">Skip for now</button><button class="btn btn-primary" type="button">Next: housing and outgoings<svg class="i"><use href="#i-right"/></svg></button></div>
+          </div>
+        </form>
+        <aside class="card preview" aria-labelledby="h-pv">
+          <span class="live">Updates as you type</span>
+          <h3 id="h-pv">Your starting picture</h3>
+          <div class="pv"><span>Net take-home</span><b>£2,760<small>/mo</small></b></div>
+          <div class="pv"><span>Monthly surplus</span><b style="color:var(--status-positive-text)">+£610<small>/mo</small></b></div>
+          <div class="pv"><span>Starting net worth</span><b>£97,750</b></div>
+          <p class="hint" style="margin-top:8px">Nothing is saved until you finish. Take your time.</p>
+        </aside>
+      </div>
+    </main>
+
+    <!-- ===== Frame 4: Empty and error ===== -->
+    <main class="page" id="p-states" role="tabpanel" aria-labelledby="t-states" hidden>
+      <div class="pagehead">
+        <div><h1>Debt</h1><p>Two friendly ways a page can look when there is nothing to show yet, or something goes wrong.</p></div>
+        <span class="chip">Sample data</span>
+      </div>
+      <div class="pair">
+        <div>
+          <p class="cap">Empty state: Debt page</p>
+          <section class="card state" aria-labelledby="h-empty">
+            <svg class="art2" viewBox="0 0 170 130" role="img" aria-label="Illustration: an empty tray with a small plant">
+              <ellipse cx="85" cy="112" rx="70" ry="12" class="il-sand"/>
+              <rect x="34" y="62" width="102" height="48" rx="18" class="il-sage"/>
+              <path d="M34 82c0-10 8-18 18-18h66c10 0 18 8 18 18" fill="var(--primary-border)" opacity=".6"/>
+              <path d="M85 62V40" stroke="var(--chart-wealth)" stroke-width="4" stroke-linecap="round"/>
+              <path d="M85 48c-12 0-18-6-18-16 11 0 18 5 18 16z" fill="var(--chart-wealth)"/>
+              <path d="M85 42c10 0 16-5 16-13-10 0-16 5-16 13z" fill="var(--primary)"/>
+              <circle cx="132" cy="30" r="9" class="il-apricot"/><circle cx="38" cy="38" r="5" class="il-apricot"/>
+            </svg>
+            <h3 id="h-empty">No debts yet</h3>
+            <p>When you add a card, loan or mortgage, we will show which to clear first and how soon you could be free of it. If you have none, that is great news.</p>
+            <div class="acts"><button class="btn btn-primary" type="button"><svg class="i"><use href="#i-plus"/></svg>Add a debt</button><button class="btn btn-secondary" type="button">Learn how payoff plans work</button></div>
+          </section>
+        </div>
+        <div>
+          <p class="cap">Route error</p>
+          <section class="card state" role="alert" aria-labelledby="h-err">
+            <svg class="art2" viewBox="0 0 170 130" aria-hidden="true">
+              <ellipse cx="85" cy="112" rx="70" ry="12" class="il-sand"/>
+              <circle cx="62" cy="68" r="22" class="il-apricot"/><circle cx="90" cy="54" r="28" class="il-apricot"/><circle cx="116" cy="68" r="20" class="il-apricot"/>
+              <rect x="40" y="66" width="96" height="24" rx="12" class="il-apricot"/>
+              <path d="M72 78h26" stroke="var(--status-warning-text)" stroke-width="4" stroke-linecap="round"/>
+              <path d="M62 102v6M85 102v6M108 102v6" stroke="var(--text-muted)" stroke-width="3" stroke-linecap="round"/>
+            </svg>
+            <h3 id="h-err">We couldn't load your debts</h3>
+            <p>This is usually temporary. Your figures are safe. Try again in a moment.</p>
+            <div class="acts"><button class="btn btn-primary" type="button" id="retry"><svg class="i"><use href="#i-refresh"/></svg>Try again</button><button class="btn btn-secondary" type="button" data-goto="dashboard">Back to home</button></div>
+            <p class="note-live" id="retryNote" role="status" aria-live="polite"></p>
+            <p class="ref">Reference: sample-404</p>
+          </section>
+        </div>
+      </div>
+    </main>
+
+    <!-- ===== Frame 5: Heavy data ===== -->
+    <main class="page" id="p-heavy" role="tabpanel" aria-labelledby="t-heavy" hidden>
+      <div class="pagehead">
+        <div><h1>Accounts</h1><p>34 accounts, all in one place. Search, filter or sort to find what you need.</p></div>
+        <span class="chip">Sample data</span>
+      </div>
+      <ul class="sum3">
+        <li class="card kpi"><div class="kpi-top">Net worth</div><div class="kpi-v">£648,794</div><div class="kpi-s">About £0.6m</div></li>
+        <li class="card kpi"><div class="kpi-top">Assets</div><div class="kpi-v">£1,491,744</div><div class="kpi-s">About £1.5m</div></li>
+        <li class="card kpi"><div class="kpi-top">Owed</div><div class="kpi-v">£842,950</div><div class="kpi-s">About £0.8m</div></li>
+      </ul>
+
+      <section class="card" aria-labelledby="h-acc">
+        <h3 id="h-acc">All accounts</h3>
+        <p class="card-sub" id="accCount">Showing 12 of 34 accounts</p>
+        <div class="tools">
+          <div class="tools-r">
+            <div class="sf"><svg class="i"><use href="#i-search"/></svg><input class="input" id="accQ" type="search" placeholder="Search accounts" aria-label="Search accounts"></div>
+            <label class="sortf">Sort by<select class="input" id="accSort"><option value="bal">Largest balance</option><option value="name">Name A to Z</option><option value="type">Type</option></select></label>
+          </div>
+          <div class="chips" role="group" aria-label="Filter by type" id="accChips">
+            <button class="fchip" type="button" data-f="all" aria-pressed="true">All</button>
+            <button class="fchip" type="button" data-f="cash" aria-pressed="false">Cash</button>
+            <button class="fchip" type="button" data-f="savings" aria-pressed="false">Savings</button>
+            <button class="fchip" type="button" data-f="investments" aria-pressed="false">Investments</button>
+            <button class="fchip" type="button" data-f="pensions" aria-pressed="false">Pensions</button>
+            <button class="fchip" type="button" data-f="mortgages" aria-pressed="false">Mortgages</button>
+            <button class="fchip" type="button" data-f="cards" aria-pressed="false">Cards</button>
+            <button class="fchip" type="button" data-f="loans" aria-pressed="false">Loans</button>
+          </div>
+        </div>
+        <div class="grp-h"><b>Assets</b><span>Total £1,491,744</span></div>
+        <ul class="acc" id="accA"></ul>
+        <div class="grp-h"><b>Owed</b><span>Total £842,950 owed</span></div>
+        <ul class="acc" id="accO"></ul>
+        <p class="none" id="accNone" hidden>No accounts match. Try a different search or filter.</p>
+      </section>
+
+      <section class="cols hv" aria-label="Spending and trends">
+        <article class="card">
+          <h3>Where this month's money went</h3>
+          <p class="card-sub">15 categories, largest first. The smallest 9 are grouped as Other. Total £4,843.</p>
+          <ol class="bars" id="bars"></ol>
+          <div class="keyrow" aria-label="How to read the bars"><span><i class="k-solid"></i>Solid bar: one category</span><span><i class="k-hatch"></i>Striped bar: 9 categories grouped</span></div>
+          <details class="mini-d"><summary>See the 9 categories in Other</summary><ul class="rows" id="otherList"></ul></details>
+        </article>
+        <article class="card">
+          <h3>Assets and amounts owed</h3>
+          <p class="card-sub">Last 12 months, in £m.</p>
+          <div class="chart" id="hChart" role="img" aria-label="Line chart in millions of pounds over 12 months. Assets rise from about £1.4m to £1.5m. Amounts owed ease from about £0.9m to £0.8m."></div>
+        </article>
+      </section>
+
+      <details class="card drawer" id="yrDrawer">
+        <summary>Year-by-year (24 rows)<svg class="i"><use href="#i-chev"/></svg></summary>
+        <div class="tbl-wrap"><table class="dense">
+          <thead><tr><th scope="col">Year</th><th scope="col">Balance</th><th scope="col">Interest</th><th scope="col">Overpayment</th></tr></thead>
+          <tbody id="yrBody"></tbody>
+        </table></div>
+        <div class="showall"><button class="btn btn-secondary" type="button" id="showAll" aria-expanded="false" style="min-height:44px">Show all 24</button></div>
+      </details>
+    </main>
+
+    <nav class="tabbar" aria-label="Primary mobile" id="tabbar">
+      <button class="tab" type="button" data-nav="dashboard"><svg class="i"><use href="#i-home"/></svg>Home</button>
+      <button class="tab" type="button" data-nav="budget"><svg class="i"><use href="#i-budget"/></svg>Budget</button>
+      <button class="tab" type="button" data-nav="states"><svg class="i"><use href="#i-card"/></svg>Debt</button>
+      <button class="tab" type="button" data-nav="heavy"><svg class="i"><use href="#i-bank"/></svg>Accounts</button>
+      <button class="tab" type="button" data-nav="mortgage"><svg class="i"><use href="#i-more"/></svg>More</button>
+    </nav>
+  </div></div></div>
+
+  <div class="docs">
+    <section aria-labelledby="d-tok">
+      <h2 id="d-tok">Token sketch</h2>
+      <p class="lede">Warm sand neutrals plus a deep teal-green primary. Values below are read live from the CSS custom properties for both themes. Projected change to D2: the primary hue moves from indigo (about 250 degrees) to teal-green (about 170 degrees), so <code>primary.*</code> and <code>chart.primary</code> are re-cut, <code>chart.wealth</code> becomes sage, <code>chart.debt</code> becomes apricot (not red), and <code>chart.accentCyan</code> is retired because teal now covers it. Positive status green is kept clearly yellower than the teal so brand and "good news" do not blur.</p>
+      <div class="scroll"><table id="tokTbl"><thead><tr><th scope="col">Token</th><th scope="col">Light</th><th scope="col">Dark</th><th scope="col">Swatch (L / D)</th></tr></thead><tbody></tbody></table></div>
+
+      <h3>Type</h3>
+      <div class="grid3 spec">
+        <div class="card"><small>Display: Bricolage Grotesque 700, 40/44, tracking -0.015em</small><div class="d">Welcome back</div></div>
+        <div class="card"><small>Heading: Bricolage Grotesque 700, 22 to 32</small><div class="h">What to do next</div></div>
+        <div class="card"><small>Body: Figtree 400, 16/24 (small 13 to 14, never under 12)</small><div class="b">Your figures are safe. Try again in a moment.</div></div>
+        <div class="card"><small>Numeric: Figtree 700 with tabular figures, 24 to 32</small><div class="nn">£97,750</div></div>
+      </div>
+      <p style="margin-top:14px">Rounded humanist forms do the "friendly" work. Figtree has real tabular figures, so tables and KPIs align without a separate mono face. Bricolage is used only for headings and the wordmark, keeping the payload to two families.</p>
+
+      <h3>Radius, elevation, spacing and motion</h3>
+      <div class="radii"><div style="border-radius:10px">10 chip</div><div style="border-radius:12px">12 icon</div><div style="border-radius:16px">16 control</div><div style="border-radius:20px">20 card</div><div style="border-radius:24px">24 hero</div><div style="border-radius:999px">pill</div></div>
+      <div class="elev" style="margin-top:20px"><div style="box-shadow:var(--new-shadow-1)">Shadow 1: card</div><div style="box-shadow:var(--new-shadow-2)">Shadow 2: hero</div><div style="box-shadow:var(--new-shadow-3)">Shadow 3: frame</div></div>
+      <ul>
+        <li><b>Spacing and density:</b> comfortable to spacious. 4px base unit; card padding 24 (18 on phones), section gap 32 (24 on phones), page gutter 40 / 24 / 16. Controls are 48 to 52px tall everywhere, not only on touch.</li>
+        <li><b>Motion:</b> springy but short. 200ms for hover and press (<code>cubic-bezier(.34,1.45,.64,1)</code>), 320ms for panel entrance and drawer chevron. Presses squash to 0.96 to 0.97. All animation and transitions are removed under <code>prefers-reduced-motion</code>.</li>
+        <li><b>Charts:</b> soft round line caps and joins, 3.5px strokes, area fill at most 0.15 opacity, dashed projections with a "Projection" label, teal and sage for assets, apricot for liabilities, no red.</li>
+      </ul>
+      <div class="chartsw" style="margin-top:8px">
+        <div><i style="background:var(--chart-primary)"></i>chart.primary</div><div><i style="background:var(--chart-wealth)"></i>chart.wealth</div><div><i style="background:var(--chart-debt)"></i>chart.debt</div><div><i style="background:var(--chart-warning)"></i>chart.warning</div>
+        <div><i style="background:var(--chart-series4)"></i>series4</div><div><i style="background:var(--chart-series5)"></i>series5</div><div><i style="background:var(--new-chart-projection)"></i>new-chart-projection</div><div><i style="background:var(--chart-grid)"></i>chart.grid</div>
+      </div>
+    </section>
+
+    <section aria-labelledby="d-con">
+      <h2 id="d-con">Contrast check</h2>
+      <p class="lede">Computed live in this page from the actual CSS variables, for both themes. Text pairs need 4.5:1, graphics and input borders need 3:1. The current theme column is highlighted. <b id="conSum"></b></p>
+      <div class="scroll"><table id="conTbl"><thead><tr><th scope="col">Pair</th><th scope="col">Needs</th><th scope="col" id="thL">Light ratio</th><th scope="col">Light</th><th scope="col" id="thD">Dark ratio</th><th scope="col">Dark</th></tr></thead><tbody></tbody></table></div>
+    </section>
+
+    <section aria-labelledby="d-new">
+      <h2 id="d-new">New tokens this direction needs</h2>
+      <p class="lede">Everything not in the repo's semantic list is prefixed <code>--new-</code>.</p>
+      <div class="scroll"><table id="newTbl"><thead><tr><th scope="col">Token</th><th scope="col">Light</th><th scope="col">Dark</th><th scope="col">Used for</th></tr></thead><tbody></tbody></table></div>
+    </section>
+
+    <section aria-labelledby="d-rat">
+      <h2 id="d-rat">Rationale and trade-offs</h2>
+      <div class="card">
+        <h3 style="margin-top:0">Fit with principles</h3>
+        <ul>
+          <li><b>Every number traceable to inputs:</b> the coach card breaks its claim into three visible facts (APR, interest per month, what £50 changes) rather than one persuasive sentence, and the preview panel in onboarding shows take-home, surplus and net worth together so the link between inputs and outputs is obvious.</li>
+          <li><b>Show the next action:</b> the coach card is the first thing under the greeting and the only filled primary button in the dashboard viewport. This is the strongest of the three directions on this principle.</li>
+          <li><b>Calm by default, detail on demand:</b> generous whitespace, soft shadows, plain headings ("Where you stand", "What to do next"). The 24-row schedule sits in a closed drawer. Reassuring micro-copy ("Your figures are safe", "No pressure") lowers anxiety around debt.</li>
+        </ul>
+        <h3>Build cost across 12 screens: M</h3>
+        <p>Tokens, radii and shadows are a global swap (cheap), and the spacious density needs no new layout primitives. The cost is in craft: a coach card with an illustration slot, about six abstract SVG illustrations for empty and error states, a custom range input, a smoothed chart line with rounded caps in the chart library, and reviewing every page for the larger padding. It is not L because nothing structural changes in <code>KpiStrip</code>, <code>SimulatorSplitLayout</code> or <code>CollapsibleDrawer</code>.</p>
+        <h3>Mobile fit</h3>
+        <p>Strong. 48 to 56px targets are already the default, the KPI strip becomes a 2x2 compact grid (chosen over horizontal scroll so all four numbers are visible without gesture discovery), the coach card collapses to a stacked layout with a small illustration, and the mortgage controls fold into an "Adjust" summary bar. Cost: pages are taller than in a dense direction, so users scroll more.</p>
+        <h3>Risks</h3>
+        <ul>
+          <li>The soft, friendly tone can feel less authoritative on serious topics such as debt and tax. Copy must stay precise even when it is warm.</li>
+          <li>Lower density hides secondary data. Power users may want a compact mode (a spacing token swap would cover it).</li>
+          <li>Apricot for liabilities sits near the warning status colour. Meaning is carried by wording ("owed") and position, not hue alone, but the two should be reviewed together.</li>
+          <li>Teal brand next to a green "positive" status needs the hue gap kept; a colour-blind simulation pass is recommended.</li>
+          <li>Two web fonts add payload. Falling back to <code>ui-rounded</code> keeps the feel acceptable if they fail to load.</li>
+        </ul>
+      </div>
+    </section>
+  </div>
+</div>
+
+<script>
+(function(){
+const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelectorAll(s)];
+const root=document.documentElement, frame=$('#frame'), app=$('#app');
+const gbp=n=>'£'+Math.round(n).toLocaleString('en-GB');
+
+/* ---- theme ---- */
+function curTheme(){const a=root.getAttribute('data-theme');return a||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light')}
+function setTheme(t){
+  t==='system'?root.removeAttribute('data-theme'):root.setAttribute('data-theme',t);
+  $$('[data-theme-set]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.themeSet===t)));
+  markCurrent();
+}
+$$('[data-theme-set]').forEach(b=>b.addEventListener('click',()=>setTheme(b.dataset.themeSet)));
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change',markCurrent);
+
+/* ---- viewport toggle ---- */
+$$('[data-vp]').forEach(b=>b.addEventListener('click',()=>{
+  frame.classList.toggle('phone',b.dataset.vp==='375');
+  $$('[data-vp]').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));
+  setTimeout(drawAll,340);
+}));
+
+/* ---- frames ---- */
+const FRAMES=['dashboard','mortgage','onboarding','states','heavy'];
+const NAVMAP={dashboard:'dashboard',mortgage:'mortgage',states:'states',heavy:'heavy',onboarding:null};
+function showFrame(f,noHash){
+  if(!FRAMES.includes(f))f='dashboard';
+  FRAMES.forEach(n=>{
+    const p=$('#p-'+n),t=$('#t-'+n),on=n===f;
+    p.hidden=!on;t.setAttribute('aria-selected',String(on));t.tabIndex=on?0:-1;
+    if(on){p.classList.remove('enter');void p.offsetWidth;p.classList.add('enter')}
+  });
+  app.dataset.frame=f;
+  $$('[data-nav]').forEach(b=>{b.dataset.nav===NAVMAP[f]?b.setAttribute('aria-current','page'):b.removeAttribute('aria-current')});
+  if(!noHash&&location.hash!=='#'+f)history.replaceState(null,'','#'+f);
+  drawAll();
+}
+$$('[role=tab]').forEach(t=>{
+  t.addEventListener('click',()=>showFrame(t.dataset.frame));
+  t.addEventListener('keydown',e=>{
+    const i=FRAMES.indexOf(t.dataset.frame);let n=null;
+    if(e.key==='ArrowRight')n=(i+1)%5;if(e.key==='ArrowLeft')n=(i+4)%5;
+    if(n!==null){e.preventDefault();showFrame(FRAMES[n]);$('#t-'+FRAMES[n]).focus()}
+  });
+});
+$$('[data-nav],[data-goto]').forEach(b=>b.addEventListener('click',()=>{const g=b.dataset.goto||b.dataset.nav;if(FRAMES.includes(g))showFrame(g)}));
+window.addEventListener('hashchange',()=>showFrame(location.hash.slice(1),true));
+
+/* ---- mortgage controls ---- */
+$$('input[type=range]').forEach(r=>{
+  const out=$('#o-'+r.id.slice(2));
+  const f={gbp:v=>gbp(v),pct:v=>(+v).toFixed(1)+'%',yrs:v=>v+(v==1?' year':' years')}[r.dataset.fmt];
+  const upd=()=>{out.textContent=f(r.value);r.style.setProperty('--pct',((r.value-r.min)/(r.max-r.min)*100)+'%')};
+  r.addEventListener('input',upd);upd();
+});
+$('#adjustBtn').addEventListener('click',e=>{
+  const c=$('#controls'),o=c.classList.toggle('open');
+  e.currentTarget.setAttribute('aria-expanded',String(o));
+});
+$('#retry').addEventListener('click',()=>{$('#retryNote').textContent='Still not reaching the server in this sample. Your figures are safe.'});
+
+/* ---- amortisation (the displayed numbers are fixed; curves are drawn from the same inputs) ---- */
+const P=182000,R=0.046/12,N=288,PMT=P*R/(1-Math.pow(1+R,-N));
+function curve(extra){
+  const pts=[[0,P]];let b=P;
+  for(let m=1;m<=N;m++){b=b*(1+R)-(PMT+extra);if(b<=0){pts.push([m/12,0]);break}pts.push([m/12,b])}
+  return pts;
+}
+const C0=curve(0),C1=curve(200);
+function balAt(c,yr){const x=yr;for(let i=0;i<c.length;i++){if(c[i][0]>=x-1e-9)return c[i][1]}return 0}
+$('#sched').innerHTML=Array.from({length:24},(_,i)=>{const y=i+1;return `<tr><td>Year ${y}</td><td>${gbp(balAt(C0,y))}</td><td>${gbp(balAt(C1,y))}</td></tr>`}).join('');
+
+/* ---- hand-rolled chart renderer (inline SVG, drawn to scale at current width) ---- */
+const NS='http://www.w3.org/2000/svg';
+function E(n,a,p){const e=document.createElementNS(NS,n);for(const k in a)e.setAttribute(k,a[k]);p&&p.appendChild(e);return e}
+function d(p,smooth){
+  if(!smooth)return 'M'+p.map(q=>q[0].toFixed(1)+' '+q[1].toFixed(1)).join('L');
+  let s=`M${p[0][0].toFixed(1)} ${p[0][1].toFixed(1)}`;
+  for(let i=0;i<p.length-1;i++){
+    const a=p[i-1]||p[i],b=p[i],c=p[i+1],e=p[i+2]||c;
+    s+=`C${(b[0]+(c[0]-a[0])/6).toFixed(1)} ${(b[1]+(c[1]-a[1])/6).toFixed(1)} ${(c[0]-(e[0]-b[0])/6).toFixed(1)} ${(c[1]-(e[1]-b[1])/6).toFixed(1)} ${c[0].toFixed(1)} ${c[1].toFixed(1)}`;
+  }
+  return s;
+}
+function chart(host,c){
+  const w=Math.round(host.clientWidth);if(!w)return;
+  const h=c.h(w),m={l:c.ml,r:c.mr||18,t:16,b:c.xTitle?54:32},pw=w-m.l-m.r,ph=h-m.t-m.b;
+  const X=v=>m.l+(v-c.x0)/(c.x1-c.x0)*pw,Y=v=>m.t+ph-(v-c.y0)/(c.y1-c.y0)*ph;
+  host.textContent='';
+  const svg=E('svg',{width:w,height:h,viewBox:`0 0 ${w} ${h}`,'aria-hidden':'true'},host);
+  const defs=E('defs',{},svg);
+  c.yt.forEach(([v,t])=>{
+    E('line',{x1:m.l,x2:w-m.r,y1:Y(v),y2:Y(v),class:'grid','stroke-linecap':'round'},svg);
+    E('text',{x:m.l-10,y:Y(v)+4,'text-anchor':'end'},svg).textContent=t;
+  });
+  c.xt(w).forEach(([v,t])=>{E('text',{x:X(v),y:h-m.b+22,'text-anchor':'middle'},svg).textContent=t});
+  if(c.xTitle)E('text',{x:m.l+pw/2,y:h-6,'text-anchor':'middle',class:'axis-t'},svg).textContent=c.xTitle;
+  c.series.forEach((s,i)=>{
+    const p=s.pts.map(q=>[X(q[0]),Y(q[1])]);
+    if(s.area){
+      const id=c.id+i,g=E('linearGradient',{id,x1:0,y1:0,x2:0,y2:1},defs);
+      E('stop',{offset:'0','stop-opacity':'.15',class:s.st,style:'stop-opacity:'+getComputedStyle(root).getPropertyValue('--new-chart-area-opacity')},g);
+      E('stop',{offset:'1','stop-opacity':'0',class:s.st,style:'stop-opacity:0'},g);
+      E('path',{d:d(p,s.smooth)+`L${p[p.length-1][0]} ${Y(c.y0)}L${p[0][0]} ${Y(c.y0)}Z`,fill:`url(#${id})`},svg);
+    }
+    const ln=E('path',{d:d(p,s.smooth),class:'ln '+s.cls},svg);
+    if(s.dash)ln.setAttribute('stroke-dasharray',s.dash);
+  });
+  (c.marks||[]).forEach(k=>{
+    E('circle',{cx:X(k.x),cy:Y(k.y),r:6.5,class:k.cls},svg);
+    if(k.label)E('text',{x:X(k.x)+(k.dx||0),y:Y(k.y)+(k.dy||-14),'text-anchor':k.anchor||'middle',class:'mark'},svg).textContent=k.label;
+  });
+}
+const NW=[84300,85100,86000,87200,88100,89600,91000,92300,93900,95200,96630,97750];
+const MON=['Dec','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov'];
+
+/* ---- heavy data frame ---- */
+const ACC=[
+ ['Joint household current account with Marcus (Nationwide FlexDirect)','cash',-486,null,'Current account','A'],
+ ['Business float - Gallagher & Partners Consulting Ltd trading account','cash',0,null,'Business account','A'],
+ ['Zero balance dormant account','cash',0,null,'Current account','A'],
+ ['Marcus by Goldman Sachs 1-Year Fixed Rate Saver (matures 14 Mar 2027)','savings',25000,'4.6%','Savings','A'],
+ ['Premium Bonds','savings',50000,null,'Savings','A'],
+ ['Vanguard FTSE Global All Cap Index Fund - Accumulation (S&S ISA)','investments',84231.77,null,'Investments','A'],
+ ['Employer DC pension - Aviva Workplace (Gallagher & Partners)','pensions',142300,null,'Pension','A'],
+ ['Residential mortgage - Halifax 5-year fix (ends Jan 2029)','mortgages',318500,'4.29%','Mortgage','O'],
+ ['Buy-to-let mortgage 1 - Paragon interest-only','mortgages',145000,'5.4%','Mortgage','O'],
+ ['Santander Zero 0% Balance Transfer card (promo ends Mar 2027)','cards',6800,'0%','Credit card','O'],
+ ['John Lewis Partnership Card','cards',1999.99,'29.9%','Credit card','O'],
+ ['Student Loan Plan 2','loans',41250,null,'Student loan','O']];
+const TYPES=['cash','savings','investments','pensions','mortgages','cards','loans'];
+const money=n=>'£'+n.toLocaleString('en-GB',{minimumFractionDigits:n%1?2:0,maximumFractionDigits:2});
+const esc=t=>t.replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
+let fType='all';
+function renderAcc(){
+  const q=$('#accQ').value.trim().toLowerCase(),sort=$('#accSort').value;let shown=0;
+  ['A','O'].forEach(g=>{
+    let rows=ACC.filter(a=>a[5]===g&&(fType==='all'||a[1]===fType)&&a[0].toLowerCase().includes(q));
+    rows.sort(sort==='name'?(x,y)=>x[0].localeCompare(y[0]):sort==='type'?(x,y)=>TYPES.indexOf(x[1])-TYPES.indexOf(y[1])||Math.abs(y[2])-Math.abs(x[2]):(x,y)=>Math.abs(y[2])-Math.abs(x[2]));
+    shown+=rows.length;
+    $(g==='A'?'#accA':'#accO').innerHTML=rows.map(a=>{
+      const neg=a[2]<0,n=esc(a[0]);
+      const bal=neg?`-${money(-a[2])}`:g==='O'?`${money(a[2])}<small>owed</small>`:money(a[2]);
+      const meta=[a[4]].concat(a[3]?[a[3]+(g==='O'?' rate':' interest')]:[]);
+      return `<li><span class="nm" tabindex="0" title="${n}">${n}</span><span class="meta">${meta.join(' &middot; ')}${neg?'<span class="badge"><svg class="i"><use href="#i-alert"/></svg>Overdrawn</span>':''}</span><span class="bal">${bal}</span></li>`}).join('');
+  });
+  $('#accNone').hidden=shown>0;
+  $('#accCount').textContent=`Showing ${shown} of 34 accounts`;
+}
+$('#accQ').addEventListener('input',renderAcc);$('#accSort').addEventListener('change',renderAcc);
+$$('#accChips .fchip').forEach(b=>b.addEventListener('click',()=>{fType=b.dataset.f;$$('#accChips .fchip').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));renderAcc()}));
+renderAcc();
+const CAT=[['Mortgage and rent',1840],['Groceries',620],['Childcare',540],['Transport',310],['Energy and water',265],['Eating out',240],['Holidays',200],['Insurance',185],['Clothing',120],['Gifts',110],['Subscriptions',96],['Hobbies',90],['Phone and broadband',88],['Health',75],['Pets',64]];
+const TOT=CAT.reduce((s,c)=>s+c[1],0),OTH=CAT.slice(6),OSUM=OTH.reduce((s,c)=>s+c[1],0);
+const BR=CAT.slice(0,6).map(c=>[c[0],c[1],false]).concat([['Other (9 categories)',OSUM,true]]);
+$('#bars').innerHTML=BR.map((c,i)=>`<li class="${c[2]?'oth':''}"><span class="rk" aria-hidden="true">${c[2]?'+':i+1}</span><span class="lb" title="${c[0]}">${c[0]}</span><span class="am">${gbp(c[1])}<small>${Math.round(c[1]/TOT*100)}%</small></span><span class="tr"><i style="width:${c[1]/BR[0][1]*100}%"></i></span></li>`).join('');
+$('#otherList').innerHTML=OTH.map(c=>`<li>${c[0]}<b>${gbp(c[1])}</b></li>`).join('');
+/* yearly table: £318,500 at 4.29% over 24 years with £200 a month overpayment */
+(function(){
+  const r=.0429/12,n=288,pm=318500*r/(1-Math.pow(1+r,-n))+200;let b=318500,rows=[];
+  for(let y=1;y<=24;y++){let it=0,op=0;for(let m=0;m<12&&b>0;m++){const i=b*r;it+=i;const pay=Math.min(pm,b+i);op+=Math.min(200,Math.max(0,pay-(pm-200)));b=b+i-pay}rows.push([y,Math.max(b,0),it,op])}
+  $('#yrBody').innerHTML=rows.map((x,i)=>`<tr data-x="${i>=8?1:0}"${i>=8?' hidden':''}><td>Year ${x[0]}</td><td>${gbp(x[1])}</td><td>${gbp(x[2])}</td><td>${gbp(x[3])}</td></tr>`).join('');
+  $('#showAll').addEventListener('click',e=>{const o=e.currentTarget.getAttribute('aria-expanded')!=='true';e.currentTarget.setAttribute('aria-expanded',String(o));e.currentTarget.textContent=o?'Show first 8':'Show all 24';$$('#yrBody [data-x="1"]').forEach(t=>t.hidden=!o)});
+})();
+const HA=Array.from({length:12},(_,i)=>1402000+(1491744-1402000)*i/11+(i%3-1)*3000*(i<11?1:0)),HO=Array.from({length:12},(_,i)=>868000-(868000-842950)*i/11);
+HA[11]=1491744;HO[11]=842950;
+function drawAll(){
+  const a=$('#nwChart'),b=$('#mChart');
+  if(a&&a.offsetParent!==null||a.clientWidth)chart(a,{id:'nw',ml:50,h:w=>w<460?230:280,x0:0,x1:11,y0:80000,y1:100000,
+    yt:[[80000,'£80k'],[85000,'£85k'],[90000,'£90k'],[95000,'£95k'],[100000,'£100k']],
+    xt:w=>MON.map((t,i)=>[i,t]).filter(q=>w>=460||q[0]%2===1),
+    series:[{pts:NW.map((v,i)=>[i,v]),cls:'ln-nw',area:true,smooth:true,st:'st-nw'}],
+    marks:[{x:11,y:97750,cls:'dot-nw',label:'£97,750',anchor:'end',dx:-4,dy:-16}]});
+  const hc=$('#hChart');
+  if(hc&&hc.clientWidth)chart(hc,{id:'hv',ml:56,mr:60,h:w=>w<460?240:290,x0:0,x1:11,y0:0,y1:1600000,
+    yt:[0,400000,800000,1200000,1600000].map(v=>[v,v?'£'+(v/1e6).toFixed(1)+'m':'£0']),
+    xt:w=>MON.map((t,i)=>[i,t]).filter(q=>w>=520||q[0]%3===1),
+    series:[{pts:HA.map((v,i)=>[i,v]),cls:'ln-nw',smooth:true},{pts:HO.map((v,i)=>[i,v]),cls:'ln-debt',smooth:true}],
+    marks:[{x:11,y:HA[11],cls:'dot-nw',label:'Assets £1.5m',anchor:'end',dx:-4,dy:-14},{x:11,y:HO[11],cls:'dot-debt',label:'Owed £0.8m',anchor:'end',dx:-4,dy:26}]});
+  if(b&&b.clientWidth)chart(b,{id:'mt',ml:50,h:w=>w<460?250:320,x0:0,x1:24,y0:0,y1:200000,xTitle:'Years from now',
+    yt:[[0,'£0'],[50000,'£50k'],[100000,'£100k'],[150000,'£150k'],[200000,'£200k']],
+    xt:w=>[0,4,8,12,16,20,24].map(v=>[v,String(v)]),
+    series:[{pts:C0,cls:'ln-debt'},{pts:C1,cls:'ln-proj',dash:'9 9',area:true,st:'st-debt'}],
+    marks:[{x:17.9,y:0,cls:'dot-proj'},{x:24,y:0,cls:'dot-debt'}]});
+}
+if('ResizeObserver' in window){const ro=new ResizeObserver(drawAll);ro.observe($('#nwChart'));ro.observe($('#mChart'));ro.observe($('#hChart'))}
+addEventListener('resize',drawAll);
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change',drawAll);
+
+/* ---- token tables + live contrast (reads both themes by toggling data-theme synchronously) ---- */
+const TOK=['surface-canvas','surface-card','surface-sunken','surface-subtle','surface-overlay','surface-contrast','text-primary','text-secondary','text-muted','text-on-contrast','border-default','border-subtle','border-strong','border-input','border-focus-ring','primary','primary-solid','primary-hover','primary-subtle','primary-border','primary-foreground',
+ 'status-positive-text','status-positive-bg','status-positive-border','status-positive-solid','status-warning-text','status-warning-bg','status-warning-border','status-warning-solid','status-danger-text','status-danger-bg','status-danger-border','status-danger-solid','status-info-text','status-info-bg','status-info-border','status-info-solid','status-neutral-text','status-neutral-bg','status-neutral-border','status-neutral-solid',
+ 'chart-primary','chart-wealth','chart-debt','chart-warning','chart-grid','chart-series1','chart-series2','chart-series3','chart-series4','chart-series5'];
+const NEW=[['new-surface-coach','Start of the coach and hero-card gradient (soft teal tint).'],['new-surface-coach-end','End of the coach gradient (warm sand) so the hero reads as a distinct, friendly object.'],
+ ['new-chart-projection','Dashed projection line and its legend swatch for liabilities (deeper apricot, 3:1 on card).'],['new-chart-area-opacity','Area fill cap (0.14 light, 0.15 dark); keeps fills soft.'],
+ ['new-illus-sage','Illustration tint: sage shapes.'],['new-illus-apricot','Illustration tint: apricot shapes (sun, cloud, dots).'],['new-illus-sand','Illustration tint: sand ground shadow.'],
+ ['new-shadow-1','Card shadow, two soft layers (light); inset highlight plus drop (dark).'],['new-shadow-2','Hero and elevated card shadow.'],['new-shadow-3','Device frame and popover shadow.'],
+ ['new-radius-sm','12px: icon tiles and small controls.'],['new-radius-md','16px: inputs, buttons, callouts.'],['new-radius-lg','20px: standard cards.'],['new-radius-xl','24px: hero and preview cards.'],
+ ['new-ease-spring','Springy easing for presses and hovers.'],['new-dur-1','200ms: hover and press.'],['new-dur-2','320ms: panel entrance, drawer chevron.']];
+function readTheme(t,names){
+  const prev=root.getAttribute('data-theme');root.setAttribute('data-theme',t);
+  const cs=getComputedStyle(root),o={};names.forEach(n=>o[n]=cs.getPropertyValue('--'+n).trim());
+  prev===null?root.removeAttribute('data-theme'):root.setAttribute('data-theme',prev);return o;
+}
+const NAMES=TOK.concat(NEW.map(n=>n[0]));
+const L=readTheme('light',NAMES),D=readTheme('dark',NAMES);
+$('#tokTbl tbody').innerHTML=TOK.map(n=>`<tr><td><code>--${n}</code></td><td><code>${L[n]}</code></td><td><code>${D[n]}</code></td><td><span class="sw"><i style="background:${L[n]}"></i><i style="background:${D[n]}"></i></span></td></tr>`).join('');
+$('#newTbl tbody').innerHTML=NEW.map(([n,u])=>{const sw=/^#/.test(L[n])?`<span class="sw"><i style="background:${L[n]}"></i></span> `:'';const swd=/^#/.test(D[n])?`<span class="sw"><i style="background:${D[n]}"></i></span> `:'';
+  return `<tr><td><code>--${n}</code></td><td style="white-space:normal;max-width:260px">${sw}<code>${L[n]}</code></td><td style="white-space:normal;max-width:260px">${swd}<code>${D[n]}</code></td><td style="white-space:normal;text-align:left;min-width:220px">${u}</td></tr>`}).join('');
+function lum(h){h=h.replace('#','');if(h.length===3)h=h.replace(/./g,'$&$&');const c=[0,2,4].map(i=>parseInt(h.substr(i,2),16)/255).map(v=>v<=.03928?v/12.92:Math.pow((v+.055)/1.055,2.4));return .2126*c[0]+.7152*c[1]+.0722*c[2]}
+function ratio(a,b){const x=lum(a),y=lum(b);return (Math.max(x,y)+.05)/(Math.min(x,y)+.05)}
+const PAIRS=[];
+['canvas','card','sunken'].forEach(s=>['primary','secondary','muted'].forEach(t=>PAIRS.push([`text-${t}`,`surface-${s}`,4.5,`text.${t} on surface.${s}`])));
+PAIRS.push(['primary-foreground','primary-solid',4.5,'primary.foreground on primary.solid'],['primary','surface-card',4.5,'primary (link text) on surface.card'],['primary','primary-subtle',4.5,'primary on primary.subtle'],['text-on-contrast','surface-contrast',4.5,'text.onContrast on surface.contrast']);
+['positive','warning','danger','info','neutral'].forEach(s=>PAIRS.push([`status-${s}-text`,`status-${s}-bg`,4.5,`status.${s}.text on .bg`]));
+PAIRS.push(['text-primary','new-surface-coach',4.5,'text.primary on coach gradient start'],['text-secondary','new-surface-coach-end',4.5,'text.secondary on coach gradient end'],['text-secondary','new-surface-coach',4.5,'text.secondary on coach gradient start']);
+['chart-primary','chart-wealth','chart-debt','chart-warning','chart-series1','chart-series2','chart-series3','chart-series4','chart-series5','new-chart-projection'].forEach(n=>PAIRS.push([n,'surface-card',3,`${n.replace('chart-','chart.')} vs surface.card`]));
+PAIRS.push(['border-input','surface-card',3,'border.input vs surface.card'],['border-focus-ring','surface-card',3,'border.focusRing vs surface.card'],['border-focus-ring','surface-canvas',3,'border.focusRing vs surface.canvas'],['primary-solid','surface-card',3,'primary.solid (slider fill, thumb) vs card']);
+const need=Array.from(new Set(PAIRS.flat().filter(x=>typeof x==='string'&&!x.includes(' ')&&!x.includes('.')))).filter(x=>L[x]!==undefined);
+$('#conTbl tbody').innerHTML=PAIRS.map(([f,b,min,label])=>{
+  const rl=ratio(L[f],L[b]),rd=ratio(D[f],D[b]);
+  const c=(r)=>`<td><span class="res ${r>=min?'pass':'fail'}">${r>=min?'PASS':'FAIL'}</span></td>`;
+  return `<tr><td>${label}</td><td>${min}:1</td><td data-t="L">${rl.toFixed(2)}:1</td>${c(rl)}<td data-t="D">${rd.toFixed(2)}:1</td>${c(rd)}</tr>`;
+}).join('');
+const fails=PAIRS.filter(([f,b,m])=>ratio(L[f],L[b])<m||ratio(D[f],D[b])<m).length;
+$('#conSum').textContent=fails?`${fails} of ${PAIRS.length} pairs fail in at least one theme.`:`All ${PAIRS.length} pairs pass in both themes.`;
+function markCurrent(){
+  const t=curTheme();
+  $$('#conTbl tr').forEach(tr=>[...tr.children].forEach((td,i)=>td.classList.toggle('cur',t==='light'?(i===2||i===3):(i===4||i===5))));
+  $('#thL').classList.toggle('cur',t==='light');$('#thD').classList.toggle('cur',t==='dark');
+  drawAll();
+}
+
+showFrame(location.hash.slice(1)||'dashboard',true);
+markCurrent();
+})();
+</script>
+
+</body></html>
