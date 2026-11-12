@@ -1962,7 +1962,7 @@
         },
         "security": [
           {
-            "bearerAuth": []
+            "patAuth": []
           }
         ]
       },
@@ -1982,7 +1982,7 @@
         },
         "security": [
           {
-            "bearerAuth": []
+            "patAuth": []
           }
         ]
       }
@@ -2039,6 +2039,11 @@
         "type": "http",
         "scheme": "bearer",
         "bearerFormat": "JWT"
+      },
+      "patAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "Personal access token (MCP)."
       }
     }
   }

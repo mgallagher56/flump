@@ -16,7 +16,7 @@
     "build": "tsc",
     "lint": "biome check .",
     "check-types": "tsc --noEmit",
-    "openapi": "bun scripts/generate-openapi.ts",
+    "openapi": "bun scripts/generate-openapi.ts && biome format --write openapi.json",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage"
   },

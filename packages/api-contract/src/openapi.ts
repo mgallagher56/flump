@@ -60,7 +60,8 @@ const operationFor = (route: RouteDefinition): JsonObject => {
       content: { "application/json": { schema: toJsonSchema(route.body) } },
     };
   }
-  operation.security = route.auth === "public" ? [] : [{ bearerAuth: [] }];
+  operation.security =
+    route.auth === "public" ? [] : [{ [route.auth === "pat" ? "patAuth" : "bearerAuth"]: [] }];
   return operation;
 };
 
@@ -81,7 +82,10 @@ export const buildOpenApiDocument = (): JsonObject => {
     servers: [{ url: "/" }],
     paths,
     components: {
-      securitySchemes: { bearerAuth: { type: "http", scheme: "bearer", bearerFormat: "JWT" } },
+      securitySchemes: {
+        bearerAuth: { type: "http", scheme: "bearer", bearerFormat: "JWT" },
+        patAuth: { type: "http", scheme: "bearer", description: "Personal access token (MCP)." },
+      },
     },
   };
 };
