@@ -164,29 +164,80 @@ describe("Phase 2 Verification Gate: baseline.store & Onboarding Seed Hydration"
   });
 });
 
-describe("stale invented baselines", () => {
-  it("drops a baseline persisted under the old key with the invented 45,000 salary", () => {
+describe("legacy v1 baseline migration", () => {
+  const V1 = "flump_financial_baseline_v1";
+
+  it("blanks only the invented 45,000 salary and keeps every other field", () => {
     window.localStorage.clear();
     window.localStorage.setItem(
-      "flump_financial_baseline_v1",
-      JSON.stringify({ ...DEFAULT_FINANCIAL_BASELINE, annualGrossSalary: 45000 }),
+      V1,
+      JSON.stringify({
+        ...DEFAULT_FINANCIAL_BASELINE,
+        annualGrossSalary: 45000,
+        ukRegion: "SCOTLAND",
+        pensionContributionPct: 9,
+        isSalarySacrifice: false,
+        propertyOwnershipSharePct: 50,
+      }),
     );
-    expect(FINANCIAL_BASELINE_STORAGE_KEY).not.toBe("flump_financial_baseline_v1");
+    expect(FINANCIAL_BASELINE_STORAGE_KEY).not.toBe(V1);
 
-    expect(new CookieSeedAdapter().getBaseline()).toBeNull();
-    expect(window.localStorage.getItem("flump_financial_baseline_v1")).toBeNull();
+    const migrated = new CookieSeedAdapter().getBaseline();
+    expect(migrated?.annualGrossSalary).toBe(0);
+    expect(migrated?.ukRegion).toBe("SCOTLAND");
+    expect(migrated?.pensionContributionPct).toBe(9);
+    expect(migrated?.isSalarySacrifice).toBe(false);
+    expect(migrated?.propertyOwnershipSharePct).toBe(50);
+    expect(window.localStorage.getItem(V1)).toBeNull();
+    expect(window.localStorage.getItem(FINANCIAL_BASELINE_STORAGE_KEY)).not.toBeNull();
   });
 
-  it("boots the baseline atom with no salary when only the old key holds 45,000", async () => {
+  it("keeps a real salary and a salary backed by a userId", () => {
     window.localStorage.clear();
     window.localStorage.setItem(
-      "flump_financial_baseline_v1",
+      V1,
+      JSON.stringify({ ...DEFAULT_FINANCIAL_BASELINE, annualGrossSalary: 52000 }),
+    );
+    expect(new CookieSeedAdapter().getBaseline()?.annualGrossSalary).toBe(52000);
+
+    window.localStorage.clear();
+    window.localStorage.setItem(
+      V1,
+      JSON.stringify({ ...DEFAULT_FINANCIAL_BASELINE, annualGrossSalary: 45000, userId: "u1" }),
+    );
+    expect(new CookieSeedAdapter().getBaseline()?.annualGrossSalary).toBe(45000);
+  });
+
+  it("never overwrites an existing v2 baseline", () => {
+    window.localStorage.clear();
+    window.localStorage.setItem(
+      FINANCIAL_BASELINE_STORAGE_KEY,
+      JSON.stringify({ ...DEFAULT_FINANCIAL_BASELINE, annualGrossSalary: 61000 }),
+    );
+    window.localStorage.setItem(
+      V1,
       JSON.stringify({ ...DEFAULT_FINANCIAL_BASELINE, annualGrossSalary: 45000 }),
+    );
+    expect(new CookieSeedAdapter().getBaseline()?.annualGrossSalary).toBe(61000);
+    expect(window.localStorage.getItem(V1)).toBeNull();
+  });
+
+  it("boots the baseline atom with no salary but keeps the Scottish region", async () => {
+    window.localStorage.clear();
+    window.localStorage.setItem(
+      V1,
+      JSON.stringify({
+        ...DEFAULT_FINANCIAL_BASELINE,
+        annualGrossSalary: 45000,
+        ukRegion: "SCOTLAND",
+      }),
     );
     vi.resetModules();
     const fresh = await import("./baseline.store");
     const { getDefaultStore } = await import("jotai");
-    expect(getDefaultStore().get(fresh.financialBaselineAtom).annualGrossSalary).toBe(0);
+    const baseline = getDefaultStore().get(fresh.financialBaselineAtom);
+    expect(baseline.annualGrossSalary).toBe(0);
+    expect(baseline.ukRegion).toBe("SCOTLAND");
     window.localStorage.clear();
   });
 });
