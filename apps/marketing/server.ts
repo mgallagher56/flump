@@ -12,10 +12,6 @@ async function createServer() {
   const app = express();
   const isProd = process.env.NODE_ENV === "production";
 
-  // Ops routes (/healthz, /robots.txt) and the noindex header MUST come before vite
-  // middlewares, sirv and the SPA catch-all, or the catch-all serves HTML for them.
-  registerOps(app);
-
   // Security Headers Middleware
   app.use((_req, res, next) => {
     res.setHeader("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
@@ -66,6 +62,11 @@ async function createServer() {
 
     next();
   });
+
+  // Ops routes (/healthz, /robots.txt) and the noindex header come after the security headers
+  // (so they get HSTS, nosniff etc.) but MUST stay before vite middlewares, sirv and the SPA
+  // catch-all, or the catch-all serves HTML for them.
+  registerOps(app);
 
   let vite: ViteDevServer | undefined;
   if (!isProd) {

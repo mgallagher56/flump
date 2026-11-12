@@ -2,10 +2,13 @@
 // RemoveSeededExampleData migration would delete. It never deletes and never selects row data.
 //
 // Usage (bun, from the repo root):
-//   bun scripts/ops/seed-cleanup-preview.ts | psql "$PGURL" -v ON_ERROR_STOP=1 -f -
 //   bun scripts/ops/seed-cleanup-preview.ts | psql "$PGURL" -v owner='<WorkOS user id>' -f -
-// With -v owner=..., an extra "owner overlap" section counts the owner's own rows that match
-// each seed fingerprint (review these before deploying: they would be deleted too).
+// The owner id is REQUIRED (same rules as prod-counts.sql): unset, empty, a placeholder
+// (contains < or >, or starts with your/owner/user_xxx/changeme/todo/placeholder/xxx) or a
+// retired mock id aborts with a non-zero exit. The "owner overlap" section counts the owner's own
+// rows that match each seed fingerprint (review these before deploying: they would be deleted too).
+// A successful run ends with the line "== OK: preview complete". If that line is missing the
+// pipeline failed (a failed `bun` piped into psql prints nothing).
 //
 // The constants come from the migration itself. The two jsonb predicates below are copies of
 // the migration's WHERE clauses (they are not exported); scripts/ops/seed-cleanup-preview.test.ts
@@ -87,6 +90,26 @@ export function buildPreviewSql(options: PreviewOptions = {}): string {
 \\pset format unaligned
 \\pset tuples_only on
 SET client_encoding = 'UTF8';
+
+-- The owner id is required: abort (non-zero exit) when it is unset, empty, a placeholder or a mock id.
+\\if :{?owner}
+\\else
+  \\echo 'ERROR: pass the owner id: psql ... -v owner=<your WorkOS user id> -f -'
+  DO $$ BEGIN RAISE EXCEPTION 'psql variable owner is required (-v owner=...)'; END $$;
+\\endif
+SELECT :'owner' = '' AS owner_empty \\gset
+\\if :owner_empty
+  \\echo 'ERROR: owner must not be empty'
+  DO $$ BEGIN RAISE EXCEPTION 'psql variable owner must not be empty'; END $$;
+\\endif
+SELECT (lower(:'owner') ~ '[<>]'
+  OR lower(:'owner') ~ '^(your|owner|user_xxx|changeme|todo|placeholder|xxx)'
+  OR lower(:'owner') = ANY(${MOCK})) AS owner_placeholder \\gset
+\\if :owner_placeholder
+  \\echo 'ERROR: owner looks like a placeholder or a mock id; pass your real WorkOS user id'
+  DO $$ BEGIN RAISE EXCEPTION 'psql variable owner is a placeholder or mock id'; END $$;
+\\endif
+
 BEGIN READ ONLY;
 
 \\echo '== would remove (labels match the migration log line)'
@@ -104,16 +127,13 @@ SELECT 'summary|taxRecords=' || (SELECT count(*) FROM "tax_records" WHERE ${TAX_
 \\echo '== mock identity rows per table (after seed matches are excluded)'
 ${mockLines}
 
-\\if :{?owner}
 \\echo '== owner overlap: the owner''s own rows matching a seed fingerprint (review before deploy)'
 SELECT 'owner.taxRecords|' || (SELECT count(*) FROM "tax_records" WHERE "user_id" = :'owner' AND ${TAX_MATCH});
 SELECT 'owner.accounts|' || (SELECT count(DISTINCT a."id") FROM ${ACCOUNT_MATCH_FROM} AND a."user_id" = :'owner');
 SELECT 'owner.budgetEntries|' || (SELECT count(DISTINCT b."id") FROM ${BUDGET_MATCH_FROM} AND b."user_id" = :'owner');
-\\else
-\\echo '== owner overlap skipped (pass -v owner=<WorkOS user id> to include it)'
-\\endif
 
 ROLLBACK;
+\\echo '== OK: preview complete'
 `;
 }
 

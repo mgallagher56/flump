@@ -1,16 +1,22 @@
 // Shared helpers for the DB-backed ops tests (not a test file itself).
 //
 // Runs against the throwaway database in TEST_DATABASE_URL only. psql is run through the PSQL
-// environment variable when set (a command, e.g. a wrapper), else a local `psql`, else
+// environment variable when set (a command, e.g. a wrapper), else a local `psql` (present on
+// GitHub's ubuntu runners), else
 // `docker exec -i $E18_PG_CONTAINER psql` (default container e18-a01-pg) so the tests work on
 // machines without libpq.
 import type { Client } from "pg";
 import { assertSafeTestDatabase } from "../../apps/backend/src/testing/assertSafeTestDatabase";
+import { resolveDbTestMode } from "../../apps/backend/src/testing/dbTestMode";
 
 // Read through a local alias: these are test-only variables, not Turborepo task inputs.
 const env: Record<string, string | undefined> = process.env;
 
 export const TEST_DATABASE_URL = env.TEST_DATABASE_URL;
+
+// Throws at import (so collection fails) when REQUIRE_DB_TESTS=1 but TEST_DATABASE_URL is
+// missing, instead of silently skipping the real-Postgres suites (same rule as the backend).
+export const DB_TESTS_ENABLED = resolveDbTestMode(env) === "run";
 
 export function guardTestDatabase(): string {
   if (!TEST_DATABASE_URL) throw new Error("TEST_DATABASE_URL is not set");

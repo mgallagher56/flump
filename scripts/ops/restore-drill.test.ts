@@ -1,5 +1,7 @@
 import { describe, expect, test } from "bun:test";
-import { resolve } from "node:path";
+import { chmodSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join, resolve } from "node:path";
 
 const SCRIPT = resolve(import.meta.dir, "restore-drill.sh");
 
@@ -45,12 +47,71 @@ describe("restore-drill.sh argument checks", () => {
     },
   );
 
-  test("never echoes the drill password or a connection string", () => {
-    const result = run(["--owner", "x", import.meta.path], {
-      DRILL_HOST: "db.example.com",
-      DRILL_PASSWORD: "super-secret-drill-pw",
+  test("refuses a non-local DRILL_URL and a PGURL that names the drill target", () => {
+    const remote = run(["--owner", "x", import.meta.path], {
+      DRILL_URL: "postgres://u:p@db.example.com:5432/x",
     });
-    expect(result.stdout + result.stderr).not.toContain("super-secret-drill-pw");
-    expect(result.stdout + result.stderr).not.toContain("postgres://");
+    expect(remote.exitCode).toBe(2);
+    expect(remote.stderr).toContain("non-local DRILL_URL");
+
+    const same = run(["--owner", "x", import.meta.path], {
+      DRILL_PORT: "55433",
+      DRILL_DB: "flump_drill",
+      PGURL: "postgres://postgres:pw@localhost:55433/flump_drill",
+    });
+    expect(same.exitCode).toBe(2);
+    expect(same.stderr).toContain("PGURL");
+
+    const equal = run(["--owner", "x", import.meta.path], {
+      DRILL_URL: "postgres://u:p@localhost:5432/x",
+      PGURL: "postgres://u:p@localhost:5432/x",
+    });
+    expect(equal.exitCode).toBe(2);
+    expect(equal.stderr).toContain("equals PGURL");
+  });
+});
+
+// Drives the script past the point where the password is in use, with a fake `docker` on PATH
+// (no real Docker needed): the container starts with the password, then pg_restore fails and its
+// log contains the password. The script must keep that out of stdout/stderr.
+describe("restore-drill.sh secrets", () => {
+  const PASSWORD = "super-secret-drill-pw";
+
+  test("never echoes the drill password or a connection string, even when the restore fails", () => {
+    const dir = mkdtempSync(join(tmpdir(), "drill-test-"));
+    try {
+      const fake = join(dir, "docker");
+      writeFileSync(
+        fake,
+        `#!/usr/bin/env bash
+case "$1" in
+  container) exit 1 ;;
+  exec)
+    case "$*" in
+      *pg_restore*) echo "pg_restore: error: password ${PASSWORD} postgres://postgres:${PASSWORD}@localhost/x" >&2; exit 1 ;;
+    esac
+    exit 0 ;;
+  *) exit 0 ;;
+esac
+`,
+      );
+      chmodSync(fake, 0o755);
+      const out = join(dir, "out", "counts.txt");
+      const result = run(["--owner", "x", "--out", out, import.meta.path], {
+        PATH: `${dir}:${process.env.PATH ?? ""}`,
+        DRILL_PASSWORD: PASSWORD,
+        DRILL_USE_DOCKER_TOOLS: "1",
+      });
+      // It reached the restore step (and failed there), so the password path was exercised.
+      expect(result.exitCode).toBe(1);
+      expect(result.stderr).toContain("pg_restore failed");
+      const logged = readFileSync(`${out}.restore-error.log`, "utf8");
+      expect(logged).toContain(PASSWORD);
+      const terminal = result.stdout + result.stderr;
+      expect(terminal).not.toContain(PASSWORD);
+      expect(terminal).not.toContain("postgres://");
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
   });
 });

@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { runPsql, TEST_DATABASE_URL, withClient } from "./db-test-support";
+import { DB_TESTS_ENABLED, runPsql, withClient } from "./db-test-support";
 import {
   buildSyntheticDatabase,
   OWNER,
@@ -33,7 +33,7 @@ describe("prod-counts.sql (static)", () => {
   });
 });
 
-describe.skipIf(!TEST_DATABASE_URL)("prod-counts.sql (real Postgres)", () => {
+describe.skipIf(!DB_TESTS_ENABLED)("prod-counts.sql (real Postgres)", () => {
   const run = () => runPsql(SQL, { owner: OWNER });
 
   beforeAll(async () => {
@@ -104,6 +104,15 @@ describe.skipIf(!TEST_DATABASE_URL)("prod-counts.sql (real Postgres)", () => {
     const empty = runPsql(SQL, { owner: "" });
     expect(empty.exitCode).not.toBe(0);
   });
+
+  test.each(["<WorkOS user id>", "your-id", "Owner", "user_xxx", "changeme", "user_mock"])(
+    "rejects the placeholder owner %j",
+    (owner) => {
+      const result = runPsql(SQL, { owner });
+      expect(result.exitCode).not.toBe(0);
+      expect(result.stdout).not.toContain("per-table row counts");
+    },
+  );
 
   test("leaves the data unchanged", async () => {
     const before = await withClient(tableCounts);

@@ -26,6 +26,13 @@ SELECT :'owner' = '' AS owner_empty \gset
   \echo 'ERROR: owner must not be empty'
   DO $$ BEGIN RAISE EXCEPTION 'psql variable owner must not be empty'; END $$;
 \endif
+SELECT (lower(:'owner') ~ '[<>]'
+  OR lower(:'owner') ~ '^(your|owner|user_xxx|changeme|todo|placeholder|xxx)'
+  OR lower(:'owner') IN ('user_mock', 'dev_user_123')) AS owner_placeholder \gset
+\if :owner_placeholder
+  \echo 'ERROR: owner looks like a placeholder or a mock id; pass your real WorkOS user id'
+  DO $$ BEGIN RAISE EXCEPTION 'psql variable owner is a placeholder or mock id'; END $$;
+\endif
 
 SELECT to_regclass('public.bank_connections') IS NOT NULL AS has_bank_connections \gset
 

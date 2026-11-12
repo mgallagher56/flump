@@ -100,4 +100,17 @@ describe("server.ts wiring", () => {
       expect(ops, marker).toBeLessThan(idx);
     }
   });
+
+  it("mounts ops after the security headers middleware so ops responses get them", () => {
+    const ops = source.indexOf("registerOps(app)");
+    for (const marker of [
+      "Strict-Transport-Security",
+      "Content-Security-Policy",
+      "X-Content-Type-Options",
+    ]) {
+      const idx = source.indexOf(marker);
+      expect(idx, marker).toBeGreaterThan(-1);
+      expect(idx, marker).toBeLessThan(ops);
+    }
+  });
 });

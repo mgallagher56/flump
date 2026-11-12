@@ -132,6 +132,11 @@ jobs:
       - name: ⚡ Run vitest with coverage floors
         run: bun run test:coverage
 
+      # Ops script tests (scripts/ops): the DB-backed ones run against the Postgres service above
+      # through the runner's own psql. REQUIRE_DB_TESTS=1 makes them fail instead of skip.
+      - name: 🧰 Run ops script tests
+        run: bun test ./scripts/ops
+
       - name: "Report Coverage"
         if: always()
         uses: davelosert/vitest-coverage-report-action@v2.13.2
