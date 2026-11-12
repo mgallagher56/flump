@@ -57,6 +57,13 @@ const UNITS: Array<[Unit, number]> = [
   ["minute", 60_000],
 ];
 
+const SINGULAR: Partial<Record<Unit, [past: string, future: string]>> = {
+  day: ["yesterday", "tomorrow"],
+  week: ["last week", "next week"],
+  month: ["last month", "next month"],
+  year: ["last year", "next year"],
+};
+
 /** Relative phrase for `from` as seen at `now` (inject `now` for determinism). */
 export function formatRelativeTime(
   from: DateInput,
@@ -72,16 +79,13 @@ export function formatRelativeTime(
   const unit: Unit = entry ? entry[0] : "second";
   const amount = entry ? Math.trunc(diff / entry[1]) : 0;
 
-  if (typeof Intl !== "undefined" && typeof Intl.RelativeTimeFormat === "function") {
-    try {
-      return new Intl.RelativeTimeFormat("en-GB", { numeric: "auto" }).format(amount, unit);
-    } catch {
-      // fall through to the plain-English fallback
-    }
-  }
-
+  // Always hand-rolled (mimicking Intl numeric:"auto") so output is identical on every engine.
   if (amount === 0) return "just now";
   const n = Math.abs(amount);
+  if (n === 1) {
+    const special = SINGULAR[unit];
+    if (special) return amount < 0 ? special[0] : special[1];
+  }
   const label = `${n} ${unit}${n === 1 ? "" : "s"}`;
   return amount < 0 ? `${label} ago` : `in ${label}`;
 }

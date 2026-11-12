@@ -26,11 +26,14 @@ export function isFiniteNumber(value: number | null | undefined): value is numbe
   return typeof value === "number" && Number.isFinite(value);
 }
 
+const MAX_CACHED_FORMATTERS = 50;
 const formatterCache = new Map<string, Intl.NumberFormat>();
 
 function cached(key: string, make: () => Intl.NumberFormat): Intl.NumberFormat {
   let f = formatterCache.get(key);
   if (!f) {
+    // Bound memory: keys include caller-supplied currency codes.
+    if (formatterCache.size >= MAX_CACHED_FORMATTERS) formatterCache.clear();
     f = make();
     formatterCache.set(key, f);
   }
@@ -51,7 +54,7 @@ function plainNumber(abs: number, minFraction: number, maxFraction: number): str
 function currencySymbolPrefix(abs: number, currency: string): string | null {
   try {
     return cached(
-      `c:${currency}`,
+      `cs:${currency}`,
       () =>
         new Intl.NumberFormat(LOCALE, {
           style: "currency",
@@ -68,7 +71,7 @@ function currencyDigits(currency: string): number {
   try {
     return (
       cached(
-        `c:${currency}`,
+        `cd:${currency}`,
         () => new Intl.NumberFormat(LOCALE, { style: "currency", currency }),
       ).resolvedOptions().maximumFractionDigits ?? 2
     );
@@ -103,7 +106,10 @@ function compactParts(abs: number): { scaled: number; suffix: string } {
       return { scaled, suffix };
     }
   }
-  return { scaled: Math.round(abs), suffix: "" };
+  const rounded = Math.round(abs);
+  // 999.5 rounds to 1,000: promote to the next unit rather than showing "£1000".
+  if (rounded >= 1e3) return { scaled: rounded / 1e3, suffix: "k" };
+  return { scaled: rounded, suffix: "" };
 }
 
 /**
@@ -112,9 +118,10 @@ function compactParts(abs: number): { scaled: number; suffix: string } {
  */
 export function formatCurrency(
   value: number | null | undefined,
-  currency = "GBP",
+  currencyCode = "GBP",
   options: FormatCurrencyOptions = {},
 ): string {
+  const currency = currencyCode || "GBP";
   const { placeholder = DEFAULT_PLACEHOLDER, compact = false } = options;
   if (!isFiniteNumber(value)) return placeholder;
 
@@ -143,11 +150,15 @@ export function formatPercent(
 ): string {
   const { placeholder = DEFAULT_PLACEHOLDER, fractionDigits = 1, fraction = false } = options;
   if (!isFiniteNumber(value)) return placeholder;
+  // Intl throws outside 0..20 (and on NaN): clamp so formatting never throws.
+  const digits = Number.isFinite(fractionDigits)
+    ? Math.min(20, Math.max(0, Math.trunc(fractionDigits)))
+    : 1;
   const points = fraction ? value * 100 : value;
   const abs = Math.abs(points);
-  const isZero = Math.round(abs * 10 ** fractionDigits) === 0;
+  const isZero = Math.round(abs * 10 ** digits) === 0;
   const sign = points < 0 && !isZero ? MINUS : "";
-  return `${sign}${plainNumber(abs, 0, fractionDigits)}%`;
+  return `${sign}${plainNumber(abs, 0, digits)}%`;
 }
 
 const SPOKEN: Record<string, { major: [string, string]; minor: [string, string] }> = {
@@ -165,8 +176,10 @@ export function speakCurrency(
   const { placeholder = "not set" } = options;
   if (!isFiniteNumber(value)) return placeholder;
 
-  const code = currency.toUpperCase();
+  const code = (currency || "GBP").toUpperCase();
   const names = SPOKEN[code];
+  // Always 2 minor units (even for 0-/3-decimal currencies such as JPY/KWD): only
+  // GBP/USD/EUR have spoken names, and unknown codes just read "<amount> CODE".
   const totalMinor = Math.round(Math.abs(value) * 100);
   const major = Math.floor(totalMinor / 100);
   const minor = totalMinor % 100;

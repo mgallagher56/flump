@@ -45,6 +45,25 @@ describe("formatCurrency", () => {
     expect(formatCurrency(0, "GBP", { compact: true })).toBe("£0");
     expect(formatCurrency(null, "GBP", { compact: true })).toBe("Not set");
   });
+  it("rounds up across unit boundaries when compacting", () => {
+    expect(formatCurrency(999.5, "GBP", { compact: true })).toBe("£1k");
+    expect(formatCurrency(999.4, "GBP", { compact: true })).toBe("£999");
+    expect(formatCurrency(999_950, "GBP", { compact: true })).toBe("£1m");
+    expect(formatCurrency(999_950_000, "GBP", { compact: true })).toBe("£1bn");
+  });
+  it("uses the narrow symbol for USD regardless of call order", () => {
+    expect(formatCurrency(5, "USD")).toBe("$5.00");
+    expect(formatCurrency(1500, "USD", { compact: true })).toBe("$1.5k");
+    expect(formatCurrency(5, "USD")).toBe("$5.00");
+  });
+  it("falls back to GBP for an empty currency code", () => {
+    expect(formatCurrency(5, "")).toBe("£5.00");
+    expect(speakCurrency(5, "")).toBe("5 pounds");
+  });
+  it("stays correct after the formatter cache is exercised heavily", () => {
+    for (let i = 0; i < 120; i++) formatPercent(1.5, { fractionDigits: i % 20 });
+    expect(formatCurrency(1234.5)).toBe("£1,234.50");
+  });
 });
 
 describe("formatPercent", () => {
@@ -61,6 +80,12 @@ describe("formatPercent", () => {
     expect(formatPercent(null)).toBe("Not set");
     expect(formatPercent(Number.NaN, { placeholder: "-" })).toBe("-");
     expect(formatPercent(-0.001)).toBe("0%");
+  });
+  it("clamps fractionDigits so it never throws", () => {
+    expect(() => formatPercent(1.5, { fractionDigits: 100 })).not.toThrow();
+    expect(() => formatPercent(1.5, { fractionDigits: -3 })).not.toThrow();
+    expect(() => formatPercent(1.5, { fractionDigits: Number.NaN })).not.toThrow();
+    expect(formatPercent(4.56, { fractionDigits: -3 })).toBe("5%");
   });
 });
 

@@ -98,7 +98,9 @@ export function createApiClient(options: ApiClientOptions): ApiClient {
   function refreshOnce(): Promise<RefreshOutcome> {
     if (!refreshing) {
       const onUnauthorised = options.onUnauthorised;
-      const run = onUnauthorised ? onUnauthorised() : Promise.resolve<RefreshOutcome>("ended");
+      const run = onUnauthorised
+        ? Promise.resolve().then(onUnauthorised)
+        : Promise.resolve<RefreshOutcome>("ended");
       refreshing = run
         .catch((): RefreshOutcome => "retryable")
         .finally(() => {
@@ -106,6 +108,38 @@ export function createApiClient(options: ApiClientOptions): ApiClient {
         });
     }
     return refreshing;
+  }
+
+  /** Waits for the shared refresh, bounded by the caller's signal and `timeoutMs`. */
+  function waitForRefresh(path: string, signal?: AbortSignal): Promise<RefreshOutcome> {
+    return new Promise<RefreshOutcome>((resolve, reject) => {
+      let timer: ReturnType<typeof setTimeout> | undefined;
+      const onAbort = () => finish(() => reject(signal?.reason));
+      const finish = (settle: () => void) => {
+        clearTimeout(timer);
+        signal?.removeEventListener("abort", onAbort);
+        settle();
+      };
+      if (signal?.aborted) return onAbort();
+      signal?.addEventListener("abort", onAbort, { once: true });
+      timer = setTimeout(
+        () => finish(() => reject(new BackendError("unavailable", path))),
+        timeoutMs,
+      );
+      refreshOnce().then(
+        (outcome) => finish(() => resolve(outcome)),
+        (cause) =>
+          finish(() => reject(new BackendError("unavailable", path, undefined, { cause }))),
+      );
+    });
+  }
+
+  async function readToken(path: string): Promise<string | null> {
+    try {
+      return (await options.getAccessToken()) || null;
+    } catch (cause) {
+      throw new BackendError("unavailable", path, undefined, { cause });
+    }
   }
 
   async function attempt<T>(
@@ -193,7 +227,7 @@ export function createApiClient(options: ApiClientOptions): ApiClient {
   const isUnauthorised = (e: unknown) => e instanceof BackendError && e.status === 401;
 
   async function request<T = unknown>(path: string, opts: RequestOptions<T> = {}): Promise<T> {
-    const token = (await options.getAccessToken()) || null;
+    const token = await readToken(path);
     if (!token) throw new BackendError("unauthorised", path);
     try {
       return await attempt(path, token, opts);
@@ -202,12 +236,12 @@ export function createApiClient(options: ApiClientOptions): ApiClient {
     }
 
     // A request that raced a refresh may hold a stale token: retry with the new one, no second refresh.
-    let current = (await options.getAccessToken()) || null;
+    let current = await readToken(path);
     if (current === token || !current) {
-      const outcome = await refreshOnce();
-      if (outcome === "retryable") throw new BackendError("unavailable", path, 401);
+      const outcome = await waitForRefresh(path, opts.signal);
+      if (outcome === "retryable") throw new BackendError("unavailable", path);
       if (outcome === "ended") throw new BackendError("unauthorised", path, 401);
-      current = (await options.getAccessToken()) || null;
+      current = await readToken(path);
       if (!current) throw new BackendError("unauthorised", path, 401);
     }
     // Retry exactly once; a second 401 propagates as `unauthorised`.
