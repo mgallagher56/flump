@@ -13,7 +13,7 @@
 #   DRILL_PORT              host port (default 55433)
 #   DRILL_PASSWORD          local-only password (default drill_local_only)
 #   DRILL_DB                database name (default flump_drill)
-#   DRILL_HOST              must be localhost, 127.0.0.1 or ::1 (anything else is refused)
+#   DRILL_HOST              must be localhost or 127.0.0.1 (anything else, including ::1, is refused)
 #   DRILL_IMAGE             image (default postgres:18-alpine)
 #   PSQL / PG_RESTORE       host tool commands; if a tool is missing from PATH the script runs
 #                           it inside the drill container via docker exec instead
@@ -75,9 +75,9 @@ done
   exit 2
 }
 case "$host" in
-  localhost | 127.0.0.1 | ::1) ;;
+  localhost | 127.0.0.1) ;;
   *)
-    echo "ERROR: refusing non-local DRILL_HOST (only localhost, 127.0.0.1 or ::1)" >&2
+    echo "ERROR: refusing non-local DRILL_HOST (only localhost or 127.0.0.1; IPv6 ::1 is not supported)" >&2
     exit 2
     ;;
 esac
@@ -87,6 +87,7 @@ case "$port" in
     exit 2
     ;;
 esac
+mkdir -p "$(dirname "$out")"
 command -v docker >/dev/null || {
   echo "ERROR: docker is required" >&2
   exit 2
@@ -165,7 +166,6 @@ if [ "$restore_status" -ne 0 ]; then
 fi
 echo "drill: restore_seconds=$((end - start))"
 
-mkdir -p "$(dirname "$out")"
 run_psql -v ON_ERROR_STOP=1 -v owner="$owner" -f - <"$counts_sql" >"$out"
 echo "drill: counts written to $out ($(wc -l <"$out" | tr -d ' ') lines)"
 

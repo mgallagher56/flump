@@ -32,3 +32,8 @@ coverage/
 dist/
 build/
 styled-system/
+
+# local ops drill output (restore-drill.sh defaults)
+drill-before.txt
+drill-after.txt
+*.restore-error.log
