@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { connectTestClient, type TestHarness } from "../testing/client.js";
-import { mortgageAndIsa } from "../testing/personas.js";
+import { emptyUser, mortgageAndIsa } from "../testing/personas.js";
 
 describe("project_wealth_scenario (E17-N1)", () => {
   let h: TestHarness | undefined;
@@ -17,6 +17,17 @@ describe("project_wealth_scenario (E17-N1)", () => {
     };
     expect(body.appliedScenariosCount).toBe(0);
     expect(body.trajectorySummary.map((t) => t.year)).toEqual([0, 5, 10]);
+  });
+
+  it("KNOWN LEAK: missing cash and pension are assumed to be 5,000 and 15,000", async () => {
+    h = await connectTestClient(emptyUser);
+    const omitted = await h.callJson("project_wealth_scenario", { horizonYears: 10 });
+    await h.close();
+    h = await connectTestClient({
+      baseline: { ...emptyUser.baseline, totalCashSavings: 5000, totalPensionPot: 15000 },
+    });
+    const explicit = await h.callJson("project_wealth_scenario", { horizonYears: 10 });
+    expect(omitted).toEqual(explicit);
   });
 
   it("applies a preset life event and lowers the scenario net worth", async () => {

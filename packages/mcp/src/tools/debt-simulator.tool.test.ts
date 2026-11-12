@@ -28,19 +28,17 @@ describe("simulate_debt_payoff (E17-N1)", () => {
   it("KNOWN LEAK: a card with no APR is simulated at 19.9% (removed by a later ticket)", async () => {
     h = await connectTestClient(renterWithUnknownAprCard);
     const unknown = await h.callJson("simulate_debt_payoff", {});
-    const explicit = await h.callJson("simulate_debt_payoff", {
-      customDebtsOverride: [
-        {
-          name: "Test Credit Card",
-          balanceGbp: 2400,
-          interestRateApr: 19.9,
-          minimumPaymentGbp: 60,
-        },
-      ],
+    await h.close();
+
+    // Same card with the APR stated explicitly: nothing else about the input differs.
+    h = await connectTestClient({
+      ...renterWithUnknownAprCard,
+      accounts: renterWithUnknownAprCard.accounts?.map((a) =>
+        a.id === "cc_1" ? { ...a, interestRate: 19.9 } : a,
+      ),
     });
-    expect((unknown as Record<string, unknown>).totalInterestPaidGbp).toBe(
-      (explicit as Record<string, unknown>).totalInterestPaidGbp,
-    );
+    const explicit = await h.callJson("simulate_debt_payoff", {});
+    expect(unknown).toEqual(explicit);
   });
 
   it("reports no debt for an empty user without leaking defaults", async () => {
