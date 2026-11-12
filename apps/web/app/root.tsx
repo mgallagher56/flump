@@ -14,6 +14,7 @@ import { useUserProfile } from "./hooks/useUserProfile";
 import i18next from "./i18n.server";
 import "@repo/ui/fonts.css";
 import styles from "./index.css?url";
+import { securityMiddleware } from "./security/middleware.server";
 import { backendFetch } from "./services/backend-client.server";
 import { BackendError } from "./services/backend-error";
 import { ThemeContext } from "./ThemeContext";
@@ -22,6 +23,8 @@ import { getAuthSession } from "./utils/auth.server";
 import { watchLogoutForms } from "./utils/userStorage";
 
 export const links = () => [{ rel: "stylesheet", href: styles }];
+
+export const middleware = [securityMiddleware];
 
 export const loader = async (args: LoaderFunctionArgs) => {
   const locale = await i18next.getLocale(args.request);
