@@ -1,5 +1,5 @@
 # Use official Bun image as base
-FROM oven/bun:1-slim AS base
+FROM oven/bun:1.4.4-slim AS base
 WORKDIR /app
 
 # Stage 1a: workspace manifests only. Every workspace's package.json is needed so
@@ -31,12 +31,20 @@ FROM base AS runner
 ENV NODE_ENV=production
 WORKDIR /app
 
-COPY --from=build /app/node_modules ./node_modules
-COPY --from=build /app/packages ./packages
-COPY --from=build /app/apps/marketing ./apps/marketing
-COPY --from=build /app/package.json ./package.json
+COPY --from=build --chown=bun:bun /app/node_modules ./node_modules
+COPY --from=build --chown=bun:bun /app/packages ./packages
+COPY --from=build --chown=bun:bun /app/apps/marketing ./apps/marketing
+COPY --from=build --chown=bun:bun /app/package.json ./package.json
 
 WORKDIR /app/apps/marketing
 EXPOSE 3001
 
-CMD ["bun", "run", "start"]
+USER bun
+
+# Liveness probe for local runs and CI (Railway ignores Docker HEALTHCHECK).
+HEALTHCHECK --interval=30s --timeout=3s --start-period=15s CMD ["bun", "-e", "fetch('http://127.0.0.1:'+(process.env.PORT||3001)+'/healthz').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+
+# Exec form so SIGTERM reaches the server directly.
+# server.ts installs no signal handlers and bun as PID 1 ignores SIGTERM by default,
+# so a one-line preload exits cleanly on SIGTERM/SIGINT without touching app code.
+CMD ["bun", "-e", "for (const s of ['SIGTERM','SIGINT']) process.on(s, () => process.exit(0)); await import('./server.ts')"]

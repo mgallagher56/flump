@@ -8,3 +8,21 @@ build
 *.log
 .DS_Store
 **/node_modules
+
+# Secrets and local env files must never enter the build context
+**/.env
+**/.env.*
+!**/.env.example
+
+# Build outputs and non-runtime content
+**/coverage
+**/storybook-static
+docs
+.github
+.husky
+.claude
+.agents
+
+# Mobile is not in any server image; the manifests stage still needs its package.json
+apps/mobile-companion/**
+!apps/mobile-companion/package.json

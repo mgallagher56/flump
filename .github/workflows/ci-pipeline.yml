@@ -297,6 +297,20 @@ jobs:
             [ "$n" = "0" ] || { echo "$app image contains Expo/React Native"; exit 1; }
           done
 
+      - name: 🔒 Image hardening (non-root, healthcheck, no env files)
+        if: steps.changed.outputs.run == 'true'
+        run: |
+          set -e
+          for app in backend web marketing; do
+            img="flump-$app-ci"
+            uid=$(docker run --rm --entrypoint id "$img" -u)
+            [ "$uid" != "0" ] || { echo "$app image runs as root"; exit 1; }
+            hc=$(docker inspect -f '{{.Config.Healthcheck}}' "$img")
+            case "$hc" in ""|"<nil>") echo "$app image has no HEALTHCHECK"; exit 1 ;; esac
+            envs=$(docker run --rm --entrypoint find "$img" /app -name '.env*' ! -name '.env.example')
+            [ -z "$envs" ] || { echo "$app image contains env files:"; echo "$envs"; exit 1; }
+          done
+
   audit:
     name: 🛡️ Dependency audit
     runs-on: ubuntu-latest
