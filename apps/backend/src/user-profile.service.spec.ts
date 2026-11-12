@@ -202,17 +202,28 @@ describe("UserProfileService (Deep Module)", () => {
     ]);
   });
 
-  it("delegates password updates and validation to the UserIdentityAdapter", async () => {
-    await service.updatePassword("user-123", "new-secure-password");
+  it("sends the reset to the caller's own email, never a supplied one", async () => {
+    identityAdapter.emails.set("user-123", "me@flump.co.uk");
+    const res = await (service as any).sendPasswordReset("user-123", "victim@x");
 
-    expect(identityAdapter.updatedPasswords).toEqual([
-      { userId: "user-123", newPassword: "new-secure-password" },
-    ]);
+    expect(res).toEqual({ success: true });
+    expect(identityAdapter.resetEmails).toEqual(["me@flump.co.uk"]);
   });
 
-  it("delegates password reset requests to the UserIdentityAdapter", async () => {
-    await service.sendPasswordReset("test@flump.co.uk");
+  it("returns generic success when the user is unknown", async () => {
+    await expect(service.sendPasswordReset("nobody")).resolves.toEqual({ success: true });
+    expect(identityAdapter.resetEmails).toEqual([]);
+  });
 
-    expect(identityAdapter.resetEmails).toEqual(["test@flump.co.uk"]);
+  it("returns generic success when the identity provider throws, without echoing the message", async () => {
+    vi.spyOn(identityAdapter, "getUserEmail").mockRejectedValue(
+      Object.assign(new Error("secret@pii.com not found"), { code: "entity_not_found" }),
+    );
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    await expect(service.sendPasswordReset("user-123")).resolves.toEqual({ success: true });
+    const logged = warn.mock.calls.flat().join(" ");
+    expect(logged).toContain("entity_not_found");
+    expect(logged).not.toContain("pii.com");
+    warn.mockRestore();
   });
 });

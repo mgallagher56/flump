@@ -22,8 +22,7 @@ export interface ProfileLifecycle {
   getProfile(userId: string, email?: string): Promise<any>;
   updateProfile(userId: string, body: any, email?: string): Promise<any>;
   resetFinancialData(userId: string, email?: string): Promise<any>;
-  updatePassword(userId: string, newPassword: string): Promise<any>;
-  sendPasswordReset(email: string): Promise<any>;
+  sendPasswordReset(userId: string): Promise<any>;
   updateChecklist(userId: string, step: string, completed: boolean): Promise<any>;
 }
 
@@ -480,37 +479,23 @@ export class UserProfileService implements ProfileLifecycle {
     return this.formatProfile(saved);
   }
 
-  async updatePassword(userId: string, newPassword: string): Promise<any> {
-    if (!newPassword || newPassword.length < 8) {
-      throw new BadRequestException("Password must be at least 8 characters");
-    }
-
-    if (this.identityAdapter) {
+  /**
+   * Emails a WorkOS password-reset link to the caller's own address. The
+   * address is resolved server-side from the user id (never from the request),
+   * and the response is always generic so it cannot be used as an oracle.
+   */
+  async sendPasswordReset(userId: string): Promise<{ success: true }> {
+    if (this.identityAdapter && userId) {
       try {
-        await this.identityAdapter.updatePassword(userId, newPassword);
-      } catch (err: any) {
-        throw new BadRequestException(
-          err?.message || "Failed to update password with authentication provider",
+        const email = await this.identityAdapter.getUserEmail(userId);
+        if (email) await this.identityAdapter.sendPasswordReset(email);
+      } catch (err: unknown) {
+        const e = err as { name?: string; code?: string } | null;
+        console.warn(
+          `Password reset failed: ${e?.name ?? "Error"}${e?.code ? ` (${e.code})` : ""}`,
         );
       }
     }
-
-    return { success: true, message: "Password updated successfully" };
-  }
-
-  async sendPasswordReset(email: string): Promise<any> {
-    if (!email) {
-      throw new BadRequestException("Email is required to send password reset");
-    }
-
-    if (this.identityAdapter) {
-      try {
-        await this.identityAdapter.sendPasswordReset(email);
-      } catch (err: any) {
-        throw new BadRequestException(err?.message || "Failed to send password reset email");
-      }
-    }
-
-    return { success: true, message: "Password reset email sent" };
+    return { success: true };
   }
 }
