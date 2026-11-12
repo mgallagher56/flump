@@ -79,7 +79,8 @@ export const KpiCard: FC<KpiCardProps> = ({
   emptyAction,
   className,
 }) => {
-  const isEmpty = value === null || value === undefined;
+  const isEmpty =
+    value === null || value === undefined || (typeof value === "number" && !Number.isFinite(value));
 
   return (
     <div aria-busy={loading || undefined} className={cx(kpiCardContainer(), className)}>
@@ -95,7 +96,7 @@ export const KpiCard: FC<KpiCardProps> = ({
             <VisuallyHidden>Loading</VisuallyHidden>
           </>
         ) : isEmpty ? (
-          <Money notSetAction={emptyAction} notSetLabel={notSetLabel} value={null} />
+          <Money notSetAction={emptyAction} notSetLabel={notSetLabel} size="kpi" value={null} />
         ) : (
           <div className={kpiHeroValue()}>{value}</div>
         )}
