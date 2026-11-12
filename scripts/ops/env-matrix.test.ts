@@ -20,17 +20,23 @@ const IGNORED: Record<string, string> = {
 };
 
 /** Read indirectly (configService, libraries, the platform), so a source grep misses them. */
-const INDIRECT = [
-  "PORT",
-  "BANKING_TOKEN_ENCRYPTION_KEY",
-  "WORKOS_COOKIE_PASSWORD",
-  "WORKOS_REDIRECT_URI",
-  "VITE_WORKOS_REDIRECT_URI",
-  "RAILWAY_DEPLOYMENT_DRAINING_SECONDS",
-  "SENTRY_DSN",
-  "SENTRY_ENVIRONMENT",
-  "LOG_FORMAT",
-];
+const INDIRECT: Record<string, (typeof APPS)[number][]> = {
+  PORT: ["backend", "marketing"],
+  BANKING_TOKEN_ENCRYPTION_KEY: ["backend"],
+  WORKOS_COOKIE_PASSWORD: ["web"],
+  WORKOS_REDIRECT_URI: ["web"],
+  VITE_WORKOS_REDIRECT_URI: ["web"],
+  RAILWAY_DEPLOYMENT_DRAINING_SECONDS: ["backend", "web"],
+  SENTRY_DSN: ["backend", "web"],
+  SENTRY_ENVIRONMENT: ["backend", "web"],
+  LOG_FORMAT: ["backend"],
+};
+
+const SECTION_HEADING: Record<(typeof APPS)[number], string> = {
+  backend: "### 4.1 Backend",
+  web: "### 4.2 Web",
+  marketing: "### 4.3 Marketing",
+};
 
 const SKIP_DIRS = new Set([
   "node_modules",
@@ -74,22 +80,45 @@ function collectNames(): Map<string, Set<string>> {
         for (const match of text.matchAll(pattern)) {
           const name = match[1] as string;
           if (!found.has(name)) found.set(name, new Set());
-          found.get(name)?.add(`apps/${app}`);
+          found.get(name)?.add(app);
         }
       }
     }
   }
-  for (const name of INDIRECT) {
-    if (!found.has(name)) found.set(name, new Set(["indirect"]));
+  for (const [name, apps] of Object.entries(INDIRECT)) {
+    for (const app of apps) {
+      if (!found.has(name)) found.set(name, new Set());
+      found.get(name)?.add(app);
+    }
   }
   return found;
 }
 
+/** The table rows of one service's section (its heading up to the next heading). */
+function sectionRows(doc: string, app: (typeof APPS)[number]): string {
+  const start = doc.indexOf(SECTION_HEADING[app]);
+  if (start === -1) throw new Error(`staging.md has no "${SECTION_HEADING[app]}" heading`);
+  const rest = doc.slice(start + 1);
+  const next = rest.search(/\n#{2,3} /);
+  const section = next === -1 ? rest : rest.slice(0, next);
+  return section
+    .split("\n")
+    .filter((line) => line.startsWith("|"))
+    .join("\n");
+}
+
+/** Names (with the app that reads them) missing from that app's table. */
 function missingFrom(doc: string, names: Map<string, Set<string>>): string[] {
-  return [...names.entries()]
-    .filter(([name]) => !(name in IGNORED))
-    .filter(([name]) => !doc.includes(`\`${name}\``))
-    .map(([name, where]) => `${name} (${[...where].join(", ")})`);
+  const missing: string[] = [];
+  for (const [name, apps] of names) {
+    if (name in IGNORED) continue;
+    for (const app of apps) {
+      if (!sectionRows(doc, app as (typeof APPS)[number]).includes(`\`${name}\``)) {
+        missing.push(`${name} (${app})`);
+      }
+    }
+  }
+  return missing;
 }
 
 describe("staging runbook env matrix", () => {
@@ -113,7 +142,12 @@ describe("staging runbook env matrix", () => {
   });
 
   test("the check reports a name that the document lacks", () => {
-    const fake = new Map([["NOT_A_REAL_FLUMP_VARIABLE", new Set(["apps/backend"])]]);
-    expect(missingFrom(doc, fake)).toEqual(["NOT_A_REAL_FLUMP_VARIABLE (apps/backend)"]);
+    const fake = new Map([["NOT_A_REAL_FLUMP_VARIABLE", new Set(["backend"])]]);
+    expect(missingFrom(doc, fake)).toEqual(["NOT_A_REAL_FLUMP_VARIABLE (backend)"]);
+  });
+
+  test("a name documented only under another service does not count", () => {
+    const wrongService = new Map([["WORKOS_COOKIE_PASSWORD", new Set(["backend"])]]);
+    expect(missingFrom(doc, wrongService)).toEqual(["WORKOS_COOKIE_PASSWORD (backend)"]);
   });
 });
