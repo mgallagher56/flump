@@ -1,6 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
+import { AuthGuard } from "./auth/auth.guard";
 import { McpController } from "./mcp.controller";
 import type { McpService } from "./mcp.service";
+import { McpAllowlistGuard, McpKillSwitchGuard } from "./mcp-access";
 
 describe("McpController", () => {
   const mockMcpService = {
@@ -54,5 +56,25 @@ describe("McpController", () => {
   it("exports the offline context pack", async () => {
     const res = await controller.getContextPack({ user: { id: "u_1" } }, "true");
     expect(res.markdown).toBeDefined();
+  });
+
+  describe("guard wiring (E29-T8)", () => {
+    const guardsOf = (method: keyof McpController) =>
+      Reflect.getMetadata("__guards__", McpController.prototype[method]) as unknown[];
+
+    it("gates token creation and the context pack in order: kill switch, auth, allowlist", () => {
+      const expected = [McpKillSwitchGuard, AuthGuard, McpAllowlistGuard];
+      expect(guardsOf("createToken")).toEqual(expected);
+      expect(guardsOf("getContextPack")).toEqual(expected);
+    });
+
+    it("leaves list and revoke without the allowlist so users can always revoke", () => {
+      for (const method of ["listTokens", "revokeToken"] as const) {
+        const guards = guardsOf(method);
+        expect(guards).toEqual([AuthGuard]);
+        expect(guards).not.toContain(McpAllowlistGuard);
+        expect(guards).not.toContain(McpKillSwitchGuard);
+      }
+    });
   });
 });
