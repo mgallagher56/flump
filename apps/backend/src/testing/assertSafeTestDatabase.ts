@@ -16,6 +16,13 @@ export function assertSafeTestDatabase(url: string, env: Record<string, string |
     throw new Error("TEST_DATABASE_URL is not a valid URL; refusing to run destructive DB tests.");
   }
 
+  // libpq-style parameters (host, hostaddr, ...) in the query could override the hostname checked
+  // below, so no query string is accepted at all.
+  if (url.includes("?")) {
+    throw new Error(
+      "Refusing destructive DB tests: TEST_DATABASE_URL must not contain a query string.",
+    );
+  }
   if (!LOCAL_HOSTS.has(host)) {
     throw new Error(
       `Refusing destructive DB tests: host "${host}" is not local (localhost, 127.0.0.1 or ::1).`,

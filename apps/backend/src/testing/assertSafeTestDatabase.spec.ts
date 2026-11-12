@@ -56,4 +56,12 @@ describe("assertSafeTestDatabase", () => {
       expect(message).not.toContain("postgres://");
     }
   });
+
+  it("rejects any query string, which could redirect the real connection (host, hostaddr, ...)", () => {
+    for (const q of ["?host=prod.example.com", "?hostaddr=10.0.0.5", "?sslmode=disable", "?"]) {
+      expect(() =>
+        assertSafeTestDatabase(`postgres://u:p@localhost:55432/flump_e3_test${q}`, {}),
+      ).toThrow(/query/i);
+    }
+  });
 });
