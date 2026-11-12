@@ -452,35 +452,8 @@ export class FinanceService {
         await this.accountDetailRepository.save(targetDetail);
       }
 
-      try {
-        const providerTxs = await provider.fetchTransactions(accessToken, pa.externalAccountId);
-        for (const pt of providerTxs) {
-          const exists = this.transactionRepository.findOne
-            ? await this.transactionRepository.findOne({
-                where: {
-                  accountId: savedAcc.id,
-                  userId,
-                  amount: pt.amount,
-                  description: pt.description,
-                  timestamp: pt.timestamp,
-                },
-              })
-            : null;
-
-          if (!exists && this.transactionRepository.save) {
-            await this.transactionRepository.save({
-              accountId: savedAcc.id,
-              userId,
-              amount: pt.amount,
-              description: pt.description,
-              category: pt.category,
-              timestamp: pt.timestamp,
-            });
-          }
-        }
-      } catch (_txErr) {
-        // Skip transactions if provider fetch fails (e.g. pots)
-      }
+      // E19 D8-A: synced transactions are deliberately not stored. Balances are enough for
+      // net worth and debt, and merchant descriptions are high-risk personal data.
     }
 
     return providerAccounts.length;

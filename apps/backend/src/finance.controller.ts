@@ -21,6 +21,7 @@ import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
 import { type CreateAccountDto, type UpdateAccountDto } from "./account-intake.service";
 import { AuthGuard } from "./auth/auth.guard";
+import { BankConnectionsEnabledGuard, isBankConnectionAllowed } from "./bank-connections.access";
 import { Account } from "./entities/account.entity";
 import { AccountDetail } from "./entities/account-detail.entity";
 import { BankConnection } from "./entities/bank-connection.entity";
@@ -167,17 +168,26 @@ export class FinanceController {
     return this.financeService.getBankConnections(req.user.id);
   }
 
+  // Lets the web app hide the connect entry points for accounts that cannot use them.
+  @Get("bank-connections/capability")
+  getBankConnectionCapability(@Req() req: AuthenticatedRequest) {
+    return { enabled: isBankConnectionAllowed(process.env, req.user.id) };
+  }
+
   @Post("bank-connections")
+  @UseGuards(BankConnectionsEnabledGuard)
   async connectBank(@Req() req: AuthenticatedRequest, @Body() body: ConnectBankDto) {
     return this.financeService.connectBank(req.user.id, body);
   }
 
   @Post("bank-connections/:id/refresh")
+  @UseGuards(BankConnectionsEnabledGuard)
   async refreshBankConnection(@Req() req: AuthenticatedRequest, @Param("id") id: string) {
     return this.financeService.syncBankConnection(req.user.id, id);
   }
 
   @Post("bank-connections/:id/sync")
+  @UseGuards(BankConnectionsEnabledGuard)
   async syncBankConnection(@Req() req: AuthenticatedRequest, @Param("id") id: string) {
     return this.financeService.syncBankConnection(req.user.id, id);
   }

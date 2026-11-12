@@ -29,7 +29,7 @@ vi.mock("react-router", async () => {
 
 describe("<AddAccountDialogBtn", () => {
   test("should render add account dialog when trigger button is clicked", async () => {
-    mocks.mockUseLoaderData.mockReturnValue({ user: mockUser });
+    mocks.mockUseLoaderData.mockReturnValue({ user: mockUser, bankConnectionsEnabled: true });
     const { baseElement, getByText, getAllByText, user } = customRender(
       <AddEditAccountsDialogBtn accountId="123456" />,
     );
@@ -57,7 +57,7 @@ describe("<AddAccountDialogBtn", () => {
   });
 
   test("should render popular banks including Trading 212 with live open banking enabled", async () => {
-    mocks.mockUseLoaderData.mockReturnValue({ user: mockUser });
+    mocks.mockUseLoaderData.mockReturnValue({ user: mockUser, bankConnectionsEnabled: true });
     const { getByText, getByPlaceholderText, user } = customRender(
       <AddEditAccountsDialogBtn accountId="123456" />,
     );
@@ -99,7 +99,7 @@ describe("<AddAccountDialogBtn", () => {
   });
 
   test("should submit real bank connection credentials for direct sync bank", async () => {
-    mocks.mockUseLoaderData.mockReturnValue({ user: mockUser });
+    mocks.mockUseLoaderData.mockReturnValue({ user: mockUser, bankConnectionsEnabled: true });
     const { getByText, getByPlaceholderText, user } = customRender(
       <AddEditAccountsDialogBtn accountId="123456" />,
     );
@@ -128,7 +128,7 @@ describe("<AddAccountDialogBtn", () => {
   });
 
   test("should submit OAuth portal request when clicking Authorize button", async () => {
-    mocks.mockUseLoaderData.mockReturnValue({ user: mockUser });
+    mocks.mockUseLoaderData.mockReturnValue({ user: mockUser, bankConnectionsEnabled: true });
     const { getByText, user } = customRender(<AddEditAccountsDialogBtn accountId="123456" />);
     await user.click(getByText("addAccount"));
     await user.click(getByText("Connect to Bank"));
@@ -147,5 +147,12 @@ describe("<AddAccountDialogBtn", () => {
       },
       { method: "POST", action: "/app/accounts" },
     );
+  });
+
+  test("hides the bank connection option when bank connection is not enabled for the account", async () => {
+    mocks.mockUseLoaderData.mockReturnValue({ user: mockUser, bankConnectionsEnabled: false });
+    const { queryByText, getByText, user } = customRender(<AddEditAccountsDialogBtn />);
+    await user.click(getByText("addAccount"));
+    expect(queryByText("Connect to Bank")).toBeNull();
   });
 });

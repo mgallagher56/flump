@@ -7,6 +7,7 @@ import { resolveDbTestMode } from "../testing/dbTestMode";
 import { discoverMigrations, type MigrationClass } from "../testing/discoverMigrations";
 import { Baseline1794355200000 } from "./Baseline1794355200000";
 import { ClearBankTokens1794355300000 } from "./ClearBankTokens1794355300000";
+import { DeleteSyncedTransactions1794355500000 } from "./DeleteSyncedTransactions1794355500000";
 import {
   RemoveSeededExampleData1794355400000,
   SEEDED_ACCOUNTS,
@@ -202,7 +203,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
   });
 
   it("succeeds with zero bank connections", async () => {
-    await expect(ds.runMigrations()).resolves.toHaveLength(3);
+    await expect(ds.runMigrations()).resolves.toHaveLength(MIGRATIONS.length);
     expect(await ds.query("SELECT count(*)::int AS n FROM bank_connections")).toEqual([{ n: 0 }]);
   });
 
@@ -478,7 +479,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
     });
 
     it("succeeds with zero rows in every table", async () => {
-      await expect(ds.runMigrations()).resolves.toHaveLength(3);
+      await expect(ds.runMigrations()).resolves.toHaveLength(MIGRATIONS.length);
       expect(await applied()).toContain(MIGRATION);
     });
 
@@ -489,6 +490,66 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
       await runUpInTransaction(new RemoveSeededExampleData1794355400000());
 
       expect(await ids("tax_records")).toEqual([kept]);
+    });
+  });
+
+  describe("DeleteSyncedTransactions1794355500000", () => {
+    const MIGRATION = "DeleteSyncedTransactions1794355500000";
+
+    const insertAccountWithTx = async (
+      name: string,
+      connectionId: string | null,
+    ): Promise<string> => {
+      const rows: { id: string }[] = await ds.query(
+        `INSERT INTO accounts (user_id, name, type, balance, currency, connection_id)
+         VALUES ('u1', $1, 'Current', 10, 'GBP', $2) RETURNING id`,
+        [name, connectionId],
+      );
+      await ds.query(
+        `INSERT INTO transactions (account_id, user_id, amount, description, category)
+         VALUES ($1, 'u1', -5, $2, 'Food')`,
+        [rows[0].id, `tx on ${name}`],
+      );
+      return rows[0].id;
+    };
+
+    const prepare = async (): Promise<string> => {
+      await ds.runMigrations();
+      await ds.query(`DELETE FROM migrations WHERE name = '${MIGRATION}'`);
+      const conn: { id: string }[] = await ds.query(
+        `INSERT INTO bank_connections (user_id, institution_id, institution_name, status)
+         VALUES ('u1', 'monzo', 'Monzo', 'connected') RETURNING id`,
+      );
+      return conn[0].id;
+    };
+
+    it("deletes transactions on bank-synced accounts and keeps manual ones", async () => {
+      const connectionId = await prepare();
+      await insertAccountWithTx("Synced", connectionId);
+      await insertAccountWithTx("Manual", null);
+
+      await ds.runMigrations();
+
+      expect(await ds.query("SELECT description FROM transactions")).toEqual([
+        { description: "tx on Manual" },
+      ]);
+      expect(await ds.query("SELECT count(*)::int AS n FROM accounts")).toEqual([{ n: 2 }]);
+      expect(await applied()).toContain(MIGRATION);
+    });
+
+    it("runs once: a second instance does not delete rows added after the first run", async () => {
+      const connectionId = await prepare();
+      await ds.runMigrations();
+      await insertAccountWithTx("Synced", connectionId);
+
+      await runUpInTransaction(new DeleteSyncedTransactions1794355500000());
+
+      expect(await ds.query("SELECT count(*)::int AS n FROM transactions")).toEqual([{ n: 1 }]);
+    });
+
+    it("succeeds on an empty database and its down migration is a safe no-op", async () => {
+      await expect(ds.runMigrations()).resolves.toHaveLength(MIGRATIONS.length);
+      await expect(new DeleteSyncedTransactions1794355500000().down()).resolves.toBeUndefined();
     });
   });
 });
