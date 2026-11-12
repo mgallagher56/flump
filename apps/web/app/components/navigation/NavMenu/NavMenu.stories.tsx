@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react";
-import { AUTH_DESKTOP_NAV_ROUTES } from "~/components/structure/header/Header";
+import { AUTH_NAV_ROUTES } from "~/components/navigation/navConfig";
 import NavMenu from "./NavMenu";
 
 const meta: Meta<typeof NavMenu> = {
@@ -22,6 +22,6 @@ export const Default: Story = {
 
 export const GroupedPillars: Story = {
   args: {
-    routes: [{ key: "home", route: "/" }, ...AUTH_DESKTOP_NAV_ROUTES],
+    routes: [{ key: "home", route: "/" }, ...AUTH_NAV_ROUTES],
   },
 };

@@ -4,11 +4,11 @@ exports[`<Header /> > renders as expected by default 1`] = `
 <body>
   <div>
     <header
-      class="pos_sticky top_0 z_50 w_100% bg-c_rgba(255,_255,_255,_0.92) dark:bg-c_rgba(11,_15,_23,_0.92) bkdp_blur(12px) bd-b-w_1px bd-b-c_border border-bottom-style_solid trs_background-color_0.2s_ease,_border-color_0.2s_ease"
+      class="pos_sticky top_0 z_50 w_100% bg-c_surface.overlay bkdp_blur(12px) bd-b-w_1px bd-b-c_border.subtle border-bottom-style_solid motionSafe:trs-prop_background-color,_border-color motionSafe:trs-dur_base motionSafe:trs-tmf_standard"
     >
       <nav
         aria-label="Primary"
-        class="d_flex ai_center jc_space-between w_100% max-w_1536px m_0_auto py_3 md:py_4 px_12px md:px_24px"
+        class="d_flex ai_center jc_space-between w_100% max-w_1536px m_0_auto py_3 md:py_3 px_12px md:px_24px"
       >
         <div
           class=" d_flex gap_4 ai_center jc_start"
@@ -156,22 +156,33 @@ exports[`<Header /> > renders as expected by default 1`] = `
           <button
             aria-expanded="false"
             aria-label="Open navigation menu"
-            class="d_inline-flex md:d_none ai_center jc_center w_40px h_40px bdr_lg bd_1px_solid bd-c_border bg-c_surface c_text.primary cursor_pointer trs_all_0.2s_ease hover:bd-c_primary hover:c_primary"
+            class="d_inline-flex md:d_none ai_center jc_center w_44px h_44px bdr_lg bd-w_1px border-style_solid bd-c_border.subtle bg-c_surface.card c_text.primary cursor_pointer motionSafe:trs-prop_border-color,_color motionSafe:trs-dur_fast motionSafe:trs-tmf_standard hover:bd-c_primary.border hover:c_primary focusVisible:ring_2px_solid focusVisible:ring-c_border.focusRing focusVisible:ring-o_2px [&[data-mobile='true']]:d_inline-flex"
             data-testid="mobile-menu-toggle"
             id="mobile-menu-toggle"
             type="button"
           >
             <svg
-              fill="currentColor"
-              height="18"
+              aria-hidden="true"
+              class="lucide lucide-menu d_inline-block flex-sh_0 c_currentColor va_middle w_20px h_20px"
+              fill="none"
+              focusable="false"
+              height="20"
               stroke="currentColor"
-              stroke-width="0"
-              viewBox="0 0 448 512"
-              width="18"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="20"
               xmlns="http://www.w3.org/2000/svg"
             >
               <path
-                d="M16 132h416c8.837 0 16-7.163 16-16V76c0-8.837-7.163-16-16-16H16C7.163 60 0 67.163 0 76v40c0 8.837 7.163 16 16 16zm0 160h416c8.837 0 16-7.163 16-16v-40c0-8.837-7.163-16-16-16H16c-8.837 0-16 7.163-16 16v40c0 8.837 7.163 16 16 16zm0 160h416c8.837 0 16-7.163 16-16v-40c0-8.837-7.163-16-16-16H16c-8.837 0-16 7.163-16 16v40c0 8.837 7.163 16 16 16z"
+                d="M4 5h16"
+              />
+              <path
+                d="M4 12h16"
+              />
+              <path
+                d="M4 19h16"
               />
             </svg>
           </button>
@@ -186,11 +197,11 @@ exports[`<Header /> > renders correctly when user logged in 1`] = `
 <body>
   <div>
     <header
-      class="pos_sticky top_0 z_50 w_100% bg-c_rgba(255,_255,_255,_0.92) dark:bg-c_rgba(11,_15,_23,_0.92) bkdp_blur(12px) bd-b-w_1px bd-b-c_border border-bottom-style_solid trs_background-color_0.2s_ease,_border-color_0.2s_ease"
+      class="pos_sticky top_0 z_50 w_100% bg-c_surface.overlay bkdp_blur(12px) bd-b-w_1px bd-b-c_border.subtle border-bottom-style_solid motionSafe:trs-prop_background-color,_border-color motionSafe:trs-dur_base motionSafe:trs-tmf_standard"
     >
       <nav
         aria-label="Primary"
-        class="d_flex ai_center jc_space-between w_100% max-w_1536px m_0_auto py_3 md:py_4 px_12px md:px_24px"
+        class="d_flex ai_center jc_space-between w_100% max-w_1536px m_0_auto py_3 md:py_3 px_12px md:px_24px"
       >
         <div
           class=" d_flex gap_4 ai_center jc_start"
@@ -378,22 +389,33 @@ exports[`<Header /> > renders correctly when user logged in 1`] = `
           <button
             aria-expanded="false"
             aria-label="Open navigation menu"
-            class="d_inline-flex md:d_none ai_center jc_center w_40px h_40px bdr_lg bd_1px_solid bd-c_border bg-c_surface c_text.primary cursor_pointer trs_all_0.2s_ease hover:bd-c_primary hover:c_primary"
+            class="d_inline-flex md:d_none ai_center jc_center w_44px h_44px bdr_lg bd-w_1px border-style_solid bd-c_border.subtle bg-c_surface.card c_text.primary cursor_pointer motionSafe:trs-prop_border-color,_color motionSafe:trs-dur_fast motionSafe:trs-tmf_standard hover:bd-c_primary.border hover:c_primary focusVisible:ring_2px_solid focusVisible:ring-c_border.focusRing focusVisible:ring-o_2px [&[data-mobile='true']]:d_inline-flex"
             data-testid="mobile-menu-toggle"
             id="mobile-menu-toggle"
             type="button"
           >
             <svg
-              fill="currentColor"
-              height="18"
+              aria-hidden="true"
+              class="lucide lucide-menu d_inline-block flex-sh_0 c_currentColor va_middle w_20px h_20px"
+              fill="none"
+              focusable="false"
+              height="20"
               stroke="currentColor"
-              stroke-width="0"
-              viewBox="0 0 448 512"
-              width="18"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="20"
               xmlns="http://www.w3.org/2000/svg"
             >
               <path
-                d="M16 132h416c8.837 0 16-7.163 16-16V76c0-8.837-7.163-16-16-16H16C7.163 60 0 67.163 0 76v40c0 8.837 7.163 16 16 16zm0 160h416c8.837 0 16-7.163 16-16v-40c0-8.837-7.163-16-16-16H16c-8.837 0-16 7.163-16 16v40c0 8.837 7.163 16 16 16zm0 160h416c8.837 0 16-7.163 16-16v-40c0-8.837-7.163-16-16-16H16c-8.837 0-16 7.163-16 16v40c0 8.837 7.163 16 16 16z"
+                d="M4 5h16"
+              />
+              <path
+                d="M4 12h16"
+              />
+              <path
+                d="M4 19h16"
               />
             </svg>
           </button>
@@ -408,11 +430,11 @@ exports[`<Header /> > renders without ColorModeSwitch 1`] = `
 <body>
   <div>
     <header
-      class="pos_sticky top_0 z_50 w_100% bg-c_rgba(255,_255,_255,_0.92) dark:bg-c_rgba(11,_15,_23,_0.92) bkdp_blur(12px) bd-b-w_1px bd-b-c_border border-bottom-style_solid trs_background-color_0.2s_ease,_border-color_0.2s_ease"
+      class="pos_sticky top_0 z_50 w_100% bg-c_surface.overlay bkdp_blur(12px) bd-b-w_1px bd-b-c_border.subtle border-bottom-style_solid motionSafe:trs-prop_background-color,_border-color motionSafe:trs-dur_base motionSafe:trs-tmf_standard"
     >
       <nav
         aria-label="Primary"
-        class="d_flex ai_center jc_space-between w_100% max-w_1536px m_0_auto py_3 md:py_4 px_12px md:px_24px"
+        class="d_flex ai_center jc_space-between w_100% max-w_1536px m_0_auto py_3 md:py_3 px_12px md:px_24px"
       >
         <div
           class=" d_flex gap_4 ai_center jc_start"
@@ -560,22 +582,33 @@ exports[`<Header /> > renders without ColorModeSwitch 1`] = `
           <button
             aria-expanded="false"
             aria-label="Open navigation menu"
-            class="d_inline-flex md:d_none ai_center jc_center w_40px h_40px bdr_lg bd_1px_solid bd-c_border bg-c_surface c_text.primary cursor_pointer trs_all_0.2s_ease hover:bd-c_primary hover:c_primary"
+            class="d_inline-flex md:d_none ai_center jc_center w_44px h_44px bdr_lg bd-w_1px border-style_solid bd-c_border.subtle bg-c_surface.card c_text.primary cursor_pointer motionSafe:trs-prop_border-color,_color motionSafe:trs-dur_fast motionSafe:trs-tmf_standard hover:bd-c_primary.border hover:c_primary focusVisible:ring_2px_solid focusVisible:ring-c_border.focusRing focusVisible:ring-o_2px [&[data-mobile='true']]:d_inline-flex"
             data-testid="mobile-menu-toggle"
             id="mobile-menu-toggle"
             type="button"
           >
             <svg
-              fill="currentColor"
-              height="18"
+              aria-hidden="true"
+              class="lucide lucide-menu d_inline-block flex-sh_0 c_currentColor va_middle w_20px h_20px"
+              fill="none"
+              focusable="false"
+              height="20"
               stroke="currentColor"
-              stroke-width="0"
-              viewBox="0 0 448 512"
-              width="18"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="20"
               xmlns="http://www.w3.org/2000/svg"
             >
               <path
-                d="M16 132h416c8.837 0 16-7.163 16-16V76c0-8.837-7.163-16-16-16H16C7.163 60 0 67.163 0 76v40c0 8.837 7.163 16 16 16zm0 160h416c8.837 0 16-7.163 16-16v-40c0-8.837-7.163-16-16-16H16c-8.837 0-16 7.163-16 16v40c0 8.837 7.163 16 16 16zm0 160h416c8.837 0 16-7.163 16-16v-40c0-8.837-7.163-16-16-16H16c-8.837 0-16 7.163-16 16v40c0 8.837 7.163 16 16 16z"
+                d="M4 5h16"
+              />
+              <path
+                d="M4 12h16"
+              />
+              <path
+                d="M4 19h16"
               />
             </svg>
           </button>

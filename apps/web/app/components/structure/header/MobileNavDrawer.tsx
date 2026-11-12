@@ -1,19 +1,16 @@
+import { Icon } from "@repo/ui";
 import { css } from "@repo/ui/styled-system/css";
+import { X } from "lucide-react";
 import { type FC, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
-import {
-  FaBuilding,
-  FaCoins,
-  FaFileInvoiceDollar,
-  FaHome,
-  FaPiggyBank,
-  FaTimes,
-  FaUniversity,
-  FaWallet,
-} from "react-icons/fa";
 import { Link } from "react-router";
 import HomeLogo from "~/components/navigation/HomeLogo";
-import NavMenu, { type NavRouteItem } from "~/components/navigation/NavMenu";
+import NavMenu from "~/components/navigation/NavMenu";
+import {
+  AUTH_NAV_ROUTES,
+  filterNavRoutes,
+  HOME_NAV_ROUTE,
+} from "~/components/navigation/navConfig";
 import ThemeToggle from "~/components/navigation/ThemeToggle";
 import UserAvatar from "~/components/navigation/UserAvatar";
 import UserLogin from "~/components/navigation/UserLogin";
@@ -125,41 +122,7 @@ const MobileNavDrawer: FC<MobileNavDrawerProps> = ({ isOpen, onClose, user }) =>
   if (!isOpen) return null;
 
   const enabled = profile.enabledPages || [];
-  const baseRoutes: NavRouteItem[] = [{ key: "home", route: "/", icon: <FaHome size={18} /> }];
-
-  const rawAuthRoutes: NavRouteItem[] = user
-    ? [
-        { key: "budget", route: "/app/budget", icon: <FaWallet size={18} /> },
-        { key: "accounts", route: "/app/accounts", icon: <FaUniversity size={18} /> },
-        {
-          key: "wealth",
-          children: [
-            { key: "savings", route: "/app/savings", icon: <FaPiggyBank size={18} /> },
-            { key: "pension", route: "/app/pension", icon: <FaCoins size={18} /> },
-            { key: "mortgage", route: "/app/mortgage", icon: <FaBuilding size={18} /> },
-          ],
-        },
-        {
-          key: "planning",
-          children: [{ key: "tax", route: "/app/tax", icon: <FaFileInvoiceDollar size={18} /> }],
-        },
-      ]
-    : [];
-
-  const authRoutes = rawAuthRoutes
-    .map((item) => {
-      if (item.children) {
-        return {
-          ...item,
-          children: item.children.filter((child) => isPageEnabled(enabled, child.key as any)),
-        };
-      }
-      return item;
-    })
-    .filter((item) => {
-      if (item.children) return item.children.length > 0;
-      return isPageEnabled(enabled, item.key as any);
-    });
+  const authRoutes = user ? filterNavRoutes(AUTH_NAV_ROUTES, enabled, isPageEnabled) : [];
 
   const drawerContent = (
     <>
@@ -185,12 +148,12 @@ const MobileNavDrawer: FC<MobileNavDrawerProps> = ({ isOpen, onClose, user }) =>
               type="button"
               onClick={onClose}
             >
-              <FaTimes size={18} />
+              <Icon icon={X} />
             </button>
           </div>
           <NavMenu
             isMobile
-            routes={[...baseRoutes, ...authRoutes]}
+            routes={[HOME_NAV_ROUTE, ...authRoutes]}
             variant="mobile"
             onNavigate={onClose}
           />
