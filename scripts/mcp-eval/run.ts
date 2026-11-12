@@ -28,6 +28,7 @@ import {
 
 export const MAX_GBP_CEILING = 2;
 export const DEFAULT_MODEL = "claude-haiku-4-5";
+export const HAIKU_MODEL_PATTERN = /^claude-haiku-[\w.-]+$/;
 const API_URL = "https://api.anthropic.com/v1/messages";
 const MAX_OUTPUT_TOKENS = 1024;
 
@@ -60,10 +61,20 @@ export function parseArgs(argv: readonly string[], env: Record<string, string | 
     const arg = argv[i] as string;
     if (arg === "--max-gbp") maxGbpRaw = argv[++i];
     else if (arg.startsWith("--max-gbp=")) maxGbpRaw = arg.slice("--max-gbp=".length);
-    else if (arg === "--task") taskIds.push(argv[++i] as string);
-    else throw new Error(`Unknown argument: ${arg}`);
+    else if (arg === "--task") {
+      const id = argv[++i];
+      if (!id || id.startsWith("--")) throw new Error("--task requires a task id");
+      taskIds.push(id);
+    } else throw new Error(`Unknown argument: ${arg}`);
   }
+  const known = new Set(GOLDEN_TASKS.map((t) => t.id));
+  const unknown = taskIds.filter((id) => !known.has(id));
+  if (unknown.length) throw new Error(`Unknown task id: ${unknown.join(", ")}`);
   const model = env.MCP_EVAL_MODEL || DEFAULT_MODEL;
+  // The cost table above is Haiku-tier pricing only, so refuse anything else.
+  if (!HAIKU_MODEL_PATTERN.test(model)) {
+    throw new Error(`MCP_EVAL_MODEL must be a Haiku-tier model (claude-haiku-*), got "${model}"`);
+  }
   if (!env.MCP_EVAL_API_KEY) return { mode: "dry", taskIds, model };
 
   if (maxGbpRaw === undefined) {

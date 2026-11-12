@@ -29,6 +29,22 @@ describe("parseArgs", () => {
     expect(a).toMatchObject({ mode: "live", maxGbp: 1.5, taskIds: ["J1-01"] });
   });
 
+  test("--task without a value is rejected", () => {
+    expect(() => parseArgs(["--task"], {})).toThrow(/requires a task id/);
+    expect(() => parseArgs(["--task", "--max-gbp"], {})).toThrow(/requires a task id/);
+  });
+
+  test("an unknown task id is rejected", () => {
+    expect(() => parseArgs(["--task", "J99-01"], {})).toThrow(/Unknown task id: J99-01/);
+  });
+
+  test("a non-Haiku MCP_EVAL_MODEL is rejected, a Haiku one accepted", () => {
+    expect(() => parseArgs([], { MCP_EVAL_MODEL: "claude-opus-4-1" })).toThrow(/Haiku-tier/);
+    expect(parseArgs([], { MCP_EVAL_MODEL: "claude-haiku-4-5-20251001" }).model).toBe(
+      "claude-haiku-4-5-20251001",
+    );
+  });
+
   test("an unknown flag is rejected", () => {
     expect(() => parseArgs(["--nope"], {})).toThrow(/Unknown argument/);
   });
