@@ -1,5 +1,5 @@
 # Use official Bun image as base
-FROM oven/bun:1-slim AS base
+FROM oven/bun:1.4.4-slim AS base
 WORKDIR /app
 
 # Stage 1a: workspace manifests only. Every workspace's package.json is needed so
@@ -31,12 +31,18 @@ FROM base AS runner
 ENV NODE_ENV=production
 WORKDIR /app
 
-COPY --from=build /app/node_modules ./node_modules
-COPY --from=build /app/packages ./packages
-COPY --from=build /app/apps/backend ./apps/backend
-COPY --from=build /app/package.json ./package.json
+COPY --from=build --chown=bun:bun /app/node_modules ./node_modules
+COPY --from=build --chown=bun:bun /app/packages ./packages
+COPY --from=build --chown=bun:bun /app/apps/backend ./apps/backend
+COPY --from=build --chown=bun:bun /app/package.json ./package.json
 
 WORKDIR /app/apps/backend
 EXPOSE 4000
 
+USER bun
+
+# Liveness probe for local runs and CI (Railway ignores Docker HEALTHCHECK).
+HEALTHCHECK --interval=30s --timeout=3s --start-period=15s CMD ["bun", "-e", "fetch('http://127.0.0.1:'+(process.env.PORT||4000)+'/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+
+# Exec form so SIGTERM reaches the server directly.
 CMD ["bun", "dist/main.js"]
