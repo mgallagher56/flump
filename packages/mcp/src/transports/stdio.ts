@@ -22,6 +22,8 @@ type ContextPackResponse = {
   taxRecords?: BuildContextPackInput["taxRecords"];
 };
 
+const REQUEST_TIMEOUT_MS = 10_000;
+
 type Connect = (server: ReturnType<typeof createFlumpMcpServer>) => Promise<void>;
 
 const connectStdio: Connect = async (server) => {
@@ -46,12 +48,18 @@ export async function runStdio(
     try {
       res = await fetchImpl(`${apiUrl}/mcp-tokens/context-pack`, {
         headers: { Authorization: `Bearer ${pat}`, "Content-Type": "application/json" },
+        signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
       });
     } catch (err) {
-      throw new Error(`Could not reach Flump API at ${apiUrl}: ${String(err)}`);
+      const reason = err instanceof Error ? err.name : "error";
+      throw new Error(`Could not reach Flump API at ${apiUrl} (${reason})`);
     }
     if (!res.ok) throw new PatRejectedError();
-    return (await res.json()) as ContextPackResponse;
+    try {
+      return (await res.json()) as ContextPackResponse;
+    } catch {
+      throw new Error(`Flump API at ${apiUrl} returned a response that is not valid JSON`);
+    }
   };
 
   // Fail fast, before the transport opens, if the PAT does not work.
