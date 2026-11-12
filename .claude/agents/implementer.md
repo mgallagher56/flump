@@ -1,7 +1,7 @@
 ---
 
 name: implementer
-description: Implementation, refactoring and code review tasks in the Flump monorepo. Use for any subagent work that writes code or needs careful reasoning.
+description: Implementation, refactoring and code review tasks in the Flump monorepo. Use for any subagent work that writes code or docs, reviews code, or does more complicated investigation.
 model: sonnet
 ---
 

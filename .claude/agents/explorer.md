@@ -1,7 +1,7 @@
 ---
 
 name: explorer
-description: Read-only codebase search and exploration. Use for finding files, symbols, usages and conventions across the Flump monorepo when only the conclusion is needed.
+description: Read-only codebase search and simple investigation. Use for finding files, symbols, usages and conventions across the Flump monorepo when only the conclusion is needed. Complicated investigation goes to implementer.
 tools: Read, Grep, Glob, Bash
 model: haiku
 ---
