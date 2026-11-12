@@ -1,5 +1,6 @@
 export * from "./ai-context-pack.js";
 export * from "./debt-payoff.js";
+export * from "./disclaimers.js";
 export * from "./forecast.js";
 export * from "./health-score.js";
 export * from "./mortgage.js";
