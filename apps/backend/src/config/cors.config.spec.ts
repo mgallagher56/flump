@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { DEV_CORS_ORIGINS, resolveCorsOrigins } from "./cors.config";
 
 describe("resolveCorsOrigins", () => {
@@ -7,10 +7,20 @@ describe("resolveCorsOrigins", () => {
     expect(resolveCorsOrigins({})).toEqual(DEV_CORS_ORIGINS);
   });
 
-  it("throws in production when CORS_ALLOWED_ORIGINS is missing or empty", () => {
-    expect(() => resolveCorsOrigins({ NODE_ENV: "production" })).toThrow(/CORS_ALLOWED_ORIGINS/);
+  it("allows no cross-origin origins, with a loud error, in production when unset or empty", () => {
+    const err = vi.spyOn(console, "error").mockImplementation(() => {});
+    expect(resolveCorsOrigins({ NODE_ENV: "production" })).toEqual([]);
+    expect(resolveCorsOrigins({ NODE_ENV: "production", CORS_ALLOWED_ORIGINS: " , ," })).toEqual(
+      [],
+    );
+    expect(err).toHaveBeenCalledTimes(2);
+    expect(String(err.mock.calls[0][0])).toContain("CORS_ALLOWED_ORIGINS");
+    err.mockRestore();
+  });
+
+  it("still rejects malformed entries in production", () => {
     expect(() =>
-      resolveCorsOrigins({ NODE_ENV: "production", CORS_ALLOWED_ORIGINS: " , ," }),
+      resolveCorsOrigins({ NODE_ENV: "production", CORS_ALLOWED_ORIGINS: "not-an-origin" }),
     ).toThrow(/CORS_ALLOWED_ORIGINS/);
   });
 

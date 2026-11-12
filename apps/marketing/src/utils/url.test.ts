@@ -78,6 +78,29 @@ describe("getAppUrl", () => {
 });
 
 describe("isFlumpHost", () => {
+  it.each([
+    ["flump.co.uk", true],
+    ["app.flump.co.uk", true],
+    ["FLUMP.CO.UK", true],
+    ["App.Flump.Co.Uk", true],
+    ["flump.co.uk.", true],
+    ["app.flump.co.uk.", true],
+    ["flump.co.uk:3000", true],
+    ["app.flump.co.uk:443", true],
+    ["flump.co.uk..", false],
+    ["evilflump.co.uk", false],
+    ["flump.co.uk.evil.example", false],
+    ["127.0.0.1", false],
+    ["127.0.0.1:3000", false],
+    ["[::1]", false],
+    ["[::1]:3000", false],
+    ["::1", false],
+    ["", false],
+  ])("isFlumpHost(%j) is %s", async (host, expected) => {
+    const { isFlumpHost } = await import("./url");
+    expect(isFlumpHost(host)).toBe(expected);
+  });
+
   it("matches the apex and real subdomains only", async () => {
     const { isFlumpHost } = await import("./url");
     expect(isFlumpHost("flump.co.uk")).toBe(true);

@@ -8,7 +8,8 @@ const workosLoader = authLoader({
 });
 
 export const loader = async (args: LoaderFunctionArgs) => {
-  const url = new URL(args.request.url);
+  const request = args.request;
+  const url = new URL(request.url);
   if (!url.searchParams.get("code")) {
     return redirect("/login");
   }
@@ -28,7 +29,9 @@ export const loader = async (args: LoaderFunctionArgs) => {
   const response = await workosLoader(args);
   const onFlumpHost = isFlumpHost(url.hostname);
   const cookieDomain = onFlumpHost ? "; Domain=.flump.co.uk" : "";
-  const secure = onFlumpHost || url.protocol === "https:" ? "; Secure" : "";
+  const behindHttpsProxy =
+    request.headers.get("x-forwarded-proto")?.split(",")[0]?.trim().toLowerCase() === "https";
+  const secure = onFlumpHost || url.protocol === "https:" || behindHttpsProxy ? "; Secure" : "";
   const sessionPresenceCookie = `flump_has_session=1; Path=/; SameSite=Lax; Max-Age=2592000${cookieDomain}${secure}`;
 
   if (response instanceof Response) {

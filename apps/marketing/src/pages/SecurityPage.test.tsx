@@ -58,15 +58,12 @@ describe("SecurityPage", () => {
     );
   });
 
-  it("labels the security email as a placeholder", () => {
+  it("does not present a dead security address as real", () => {
     renderPage();
-    expect(screen.getByText(/Placeholder address: not final/)).toBeDefined();
-  });
-
-  it("links to email security", () => {
-    renderPage();
-    const link = screen.getByRole("link", { name: "Email security" });
-    expect(link.getAttribute("href")?.startsWith("mailto:")).toBe(true);
+    expect(screen.queryByRole("link", { name: "Email security" })).toBeNull();
+    expect(document.body.textContent).not.toMatch(/example\.invalid|Placeholder address/i);
+    const hrefs = screen.queryAllByRole("link").map((l) => l.getAttribute("href") ?? "");
+    expect(hrefs.some((h) => h.startsWith("mailto:"))).toBe(false);
   });
 
   it("makes no response-time promise", () => {
@@ -74,11 +71,11 @@ describe("SecurityPage", () => {
     expect(screen.queryByText(/1 business day/i)).toBeNull();
   });
 
-  it("includes a disclosure policy that links to security.txt", () => {
+  it("includes a disclosure policy saying a contact is not yet available", () => {
     renderPage();
     expect(
       screen.getByRole("heading", { level: 2, name: "Reporting a security issue" }),
     ).toBeDefined();
-    expect(screen.getByRole("link", { name: "security.txt" })).toBeDefined();
+    expect(screen.getByText(/security contact is not available yet/i)).toBeDefined();
   });
 });

@@ -1,4 +1,10 @@
-import { BadRequestException, Inject, Injectable, Optional } from "@nestjs/common";
+import {
+  BadRequestException,
+  Inject,
+  Injectable,
+  Optional,
+  ServiceUnavailableException,
+} from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { DataSource, In, Repository } from "typeorm";
 import { Account } from "./entities/account.entity";
@@ -480,21 +486,28 @@ export class UserProfileService implements ProfileLifecycle {
   }
 
   /**
-   * Emails a WorkOS password-reset link to the caller's own address. The
-   * address is resolved server-side from the user id (never from the request),
-   * and the response is always generic so it cannot be used as an oracle.
+   * Triggers a WorkOS password reset for the caller's own address. The address is
+   * resolved server-side from the user id (never from the request). Failures are
+   * reported honestly as a generic 503 (no provider message is echoed; only the
+   * error class/code is logged) so the UI can show its error state.
    */
   async sendPasswordReset(userId: string): Promise<{ success: true }> {
-    if (this.identityAdapter && userId) {
-      try {
-        const email = await this.identityAdapter.getUserEmail(userId);
-        if (email) await this.identityAdapter.sendPasswordReset(email);
-      } catch (err: unknown) {
-        const e = err as { name?: string; code?: string } | null;
-        console.warn(
-          `Password reset failed: ${e?.name ?? "Error"}${e?.code ? ` (${e.code})` : ""}`,
-        );
+    const fail = (): never => {
+      throw new ServiceUnavailableException("Password reset is unavailable. Please try again.");
+    };
+    if (!this.identityAdapter || !userId) return fail();
+    try {
+      const email = await this.identityAdapter.getUserEmail(userId);
+      if (!email) {
+        console.warn("Password reset failed: email not resolved");
+        return fail();
       }
+      await this.identityAdapter.sendPasswordReset(email);
+    } catch (err: unknown) {
+      if (err instanceof ServiceUnavailableException) throw err;
+      const e = err as { name?: string; code?: string } | null;
+      console.warn(`Password reset failed: ${e?.name ?? "Error"}${e?.code ? ` (${e.code})` : ""}`);
+      return fail();
     }
     return { success: true };
   }

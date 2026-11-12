@@ -232,9 +232,10 @@ describe("UserProfileController", () => {
       expect(removed.setupChecklistCompletedSteps).toEqual(["set_budget"]);
     });
 
-    it("handles sendPasswordReset success", async () => {
-      const res = await controller.sendPasswordReset({ user: { id: "u1" } });
-      expect(res).toEqual({ success: true });
+    it("rejects sendPasswordReset (503) when no identity provider is configured", async () => {
+      await expect(controller.sendPasswordReset({ user: { id: "u1" } })).rejects.toMatchObject({
+        status: 503,
+      });
     });
   });
 });

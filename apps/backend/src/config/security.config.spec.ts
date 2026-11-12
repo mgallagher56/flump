@@ -3,6 +3,7 @@ import {
   applySecurity,
   DEFAULT_JSON_LIMIT,
   parseTrustProxyHops,
+  resolveTrustProxyHops,
   TAX_JSON_LIMIT,
 } from "./security.config";
 
@@ -19,6 +20,17 @@ describe("parseTrustProxyHops", () => {
     for (const bad of ["abc", "-1", "1.5", "true"]) {
       expect(() => parseTrustProxyHops(bad)).toThrow(/TRUST_PROXY_HOPS/);
     }
+  });
+});
+
+describe("resolveTrustProxyHops", () => {
+  it("defaults to 1 on Railway or production, else undefined", () => {
+    expect(resolveTrustProxyHops({ RAILWAY_ENVIRONMENT: "x" })).toBe(1);
+    expect(resolveTrustProxyHops({ NODE_ENV: "production" })).toBe(1);
+    expect(resolveTrustProxyHops({ NODE_ENV: "development" })).toBeUndefined();
+  });
+  it("prefers TRUST_PROXY_HOPS", () => {
+    expect(resolveTrustProxyHops({ NODE_ENV: "production", TRUST_PROXY_HOPS: "3" })).toBe(3);
   });
 });
 
@@ -67,10 +79,27 @@ describe("applySecurity", () => {
     expect(app.set).toHaveBeenCalledWith("trust proxy", 1);
   });
 
-  it("throws at boot in production without CORS_ALLOWED_ORIGINS", () => {
-    expect(() => applySecurity(fakeApp() as never, { NODE_ENV: "production" })).toThrow(
-      /CORS_ALLOWED_ORIGINS/,
-    );
+  it("does not throw in production without CORS_ALLOWED_ORIGINS and allows no origins", () => {
+    const err = vi.spyOn(console, "error").mockImplementation(() => {});
+    const app = fakeApp();
+    expect(() => applySecurity(app as never, { NODE_ENV: "production" })).not.toThrow();
+    expect(app.enableCors).toHaveBeenCalledWith(expect.objectContaining({ origin: [] }));
+    err.mockRestore();
+  });
+
+  it("trusts one hop by default when RAILWAY_ENVIRONMENT is set", () => {
+    const app = fakeApp();
+    applySecurity(app as never, { RAILWAY_ENVIRONMENT: "production" });
+    expect(app.set).toHaveBeenCalledWith("trust proxy", 1);
+  });
+
+  it("lets TRUST_PROXY_HOPS override the default, including 0", () => {
+    const a = fakeApp();
+    applySecurity(a as never, { RAILWAY_ENVIRONMENT: "production", TRUST_PROXY_HOPS: "2" });
+    expect(a.set).toHaveBeenCalledWith("trust proxy", 2);
+    const b = fakeApp();
+    applySecurity(b as never, { NODE_ENV: "production", TRUST_PROXY_HOPS: "0" });
+    expect(b.set).toHaveBeenCalledWith("trust proxy", 0);
   });
 
   it("exposes limits", () => {

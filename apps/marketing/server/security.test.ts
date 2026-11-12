@@ -1,5 +1,14 @@
+// @vitest-environment node
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 import { describe, expect, it, vi } from "vitest";
-import { buildCsp, genericServerError, resolveAppUrl } from "./security";
+import {
+  buildCsp,
+  genericServerError,
+  injectThemeNonce,
+  resolveAppUrl,
+  THEME_MARKER,
+} from "./security";
 
 const directive = (csp: string, name: string) =>
   csp
@@ -62,5 +71,23 @@ describe("genericServerError", () => {
     expect(body).toBe("Internal Server Error");
     expect(body).not.toContain("secret detail");
     expect(log).toHaveBeenCalledWith("Raw SSR Error:", err);
+  });
+});
+
+describe("injectThemeNonce", () => {
+  const index = readFileSync(fileURLToPath(new URL("../index.html", import.meta.url)), "utf-8");
+
+  it("index.html contains the theme script marker exactly once", () => {
+    expect(index.split(THEME_MARKER)).toHaveLength(2);
+  });
+
+  it("adds the nonce to the theme script and leaves no marker behind", () => {
+    const html = injectThemeNonce(index, ' nonce="abc123"');
+    expect(html).toContain('<script nonce="abc123">');
+    expect(html).not.toContain("data-flump-theme");
+  });
+
+  it("emits a plain script tag with no nonce", () => {
+    expect(injectThemeNonce(index, "")).toContain("<script>");
   });
 });

@@ -29,7 +29,3 @@ export const disclosureList = cva({
     marginBottom: "12px",
   },
 });
-
-export const disclosureLink = cva({
-  base: { color: "primary", textDecoration: "underline", fontWeight: "600" },
-});

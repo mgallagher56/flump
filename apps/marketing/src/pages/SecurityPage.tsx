@@ -6,7 +6,6 @@ import { FiClock, FiShield } from "react-icons/fi";
 import { DisclosurePolicySection } from "../components/DisclosurePolicySection";
 import { Footer } from "../components/Footer";
 import { Header } from "../components/Header";
-import { securityMailto } from "../utils/placeholders";
 
 const containerStyle = css({
   maxWidth: "5xl",
@@ -53,12 +52,6 @@ const securityDescStyle = css({
   lineHeight: "1.7",
 });
 
-const linkStyle = css({
-  color: "primary",
-  textDecoration: "underline",
-  fontWeight: "600",
-});
-
 const eyebrowStyle = css({
   fontSize: "12px",
   fontWeight: "600",
@@ -79,19 +72,6 @@ const heroBodyStyle = css({
   maxWidth: "620px",
   margin: "12px auto 0",
 });
-
-const placeholderNoteStyle = css({
-  fontSize: "12px",
-  fontWeight: "600",
-  color: "status.warning.text",
-  backgroundColor: "status.warning.bg",
-  border: "1px solid",
-  borderColor: "status.warning.border",
-  borderRadius: "md",
-  padding: "1 2",
-});
-
-const contactRowStyle = css({ textAlign: "center", fontSize: "14px", color: "text.secondary" });
 
 export const SecurityPage: FC = () => {
   return (
@@ -140,14 +120,6 @@ export const SecurityPage: FC = () => {
           </div>
 
           <DisclosurePolicySection />
-
-          <p className={contactRowStyle}>
-            Found a security issue?{" "}
-            <a className={linkStyle} href={securityMailto()}>
-              Email security
-            </a>{" "}
-            <span className={placeholderNoteStyle}>Placeholder address: not final</span>
-          </p>
         </section>
       </main>
 

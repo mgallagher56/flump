@@ -11,8 +11,8 @@ import { action, loader } from "./logout._index";
 // The global test setup stubs react-router; the loader needs the real `redirect`.
 vi.mock("react-router", async () => await vi.importActual("react-router"));
 
-const makeArgs = (url: string, method = "GET") =>
-  ({ request: new Request(url, { method }), params: {}, context: {} }) as any;
+const makeArgs = (url: string, method = "GET", headers?: Record<string, string>) =>
+  ({ request: new Request(url, { method, headers }), params: {}, context: {} }) as any;
 
 const CLEAR_COOKIE = "flump_has_session=; Path=/; SameSite=Lax; Max-Age=0";
 const CLEAR_COOKIE_SECURE_DOMAIN = `${CLEAR_COOKIE}; Domain=.flump.co.uk; Secure`;
@@ -80,6 +80,20 @@ describe("logout action", () => {
   it("does not give lookalike hosts a Domain, and adds Secure on https", async () => {
     const res = (await action(makeArgs("https://evilflump.co.uk/logout", "POST"))) as Response;
     expect(res.headers.getSetCookie()).toEqual([`${CLEAR_COOKIE}; Secure`]);
+  });
+
+  it("adds Secure when x-forwarded-proto is https on a plain-http request", async () => {
+    const res = (await action(
+      makeArgs("http://web.up.railway.app/logout", "POST", { "x-forwarded-proto": "https" }),
+    )) as Response;
+    expect(res.headers.getSetCookie()).toEqual([`${CLEAR_COOKIE}; Secure`]);
+  });
+
+  it("does not add Secure when x-forwarded-proto is http", async () => {
+    const res = (await action(
+      makeArgs("http://localhost:3000/logout", "POST", { "x-forwarded-proto": "http" }),
+    )) as Response;
+    expect(res.headers.getSetCookie()).toEqual([CLEAR_COOKIE]);
   });
 });
 

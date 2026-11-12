@@ -15,10 +15,7 @@ const assertSection: Story["play"] = async ({ canvasElement }) => {
   await expect(
     canvas.getByRole("heading", { level: 2, name: "Reporting a security issue" }),
   ).toBeInTheDocument();
-  await expect(canvas.getByRole("link", { name: "security.txt" })).toHaveAttribute(
-    "href",
-    "/.well-known/security.txt",
-  );
+  await expect(canvas.getByText(/not available yet/i)).toBeInTheDocument();
 };
 
 export const Light: Story = { globals: { theme: "light" }, play: assertSection };

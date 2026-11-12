@@ -5,7 +5,7 @@ import { fileURLToPath } from "node:url";
 import express from "express";
 import { createServer as createViteServer, type ViteDevServer } from "vite";
 import { registerOps } from "./server/ops";
-import { buildCsp, genericServerError, resolveAppUrl } from "./server/security";
+import { buildCsp, genericServerError, injectThemeNonce, resolveAppUrl } from "./server/security";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -52,7 +52,7 @@ async function createServer() {
     app.use(
       (await import("sirv")).default("dist/client", {
         extensions: [],
-        // Needed so /.well-known/security.txt is reachable (sirv hides dotfiles by default).
+        // Keep /.well-known/* reachable (sirv hides dotfiles by default).
         dotfiles: true,
       }) as any,
     );
@@ -86,11 +86,11 @@ async function createServer() {
         ${appUrlScript}
       `;
 
-      const html = template
-        .replace(`<!--app-html-->`, appHtml)
-        .replace(`<!--head-meta-->`, helmetMeta)
-        // The inline theme script needs the CSP nonce in production.
-        .replace("<script data-flump-theme>", `<script${nonceAttr}>`);
+      // The inline theme script needs the CSP nonce in production.
+      const html = injectThemeNonce(
+        template.replace(`<!--app-html-->`, appHtml).replace(`<!--head-meta-->`, helmetMeta),
+        nonceAttr,
+      );
 
       res.status(200).set({ "Content-Type": "text/html" }).end(html);
     } catch (e: any) {
