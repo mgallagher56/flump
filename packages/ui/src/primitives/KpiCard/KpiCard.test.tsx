@@ -26,6 +26,21 @@ describe("KpiCard Primitive", () => {
     expect(screen.getByText("Not set")).toBeDefined();
   });
 
+  it.each([Number.NaN, Number.POSITIVE_INFINITY])("treats numeric %s as empty", (value) => {
+    render(<KpiCard label="Net worth" value={value} />);
+    expect(screen.getByText("Not set")).toBeDefined();
+  });
+
+  it("keeps an empty string as given", () => {
+    render(<KpiCard label="Net worth" value="" />);
+    expect(screen.queryByText("Not set")).toBeNull();
+  });
+
+  it("sizes the Not set text like a KPI value", () => {
+    const { container } = render(<KpiCard label="Net worth" value={null} />);
+    expect(container.innerHTML).toContain("textStyle_numeric.kpi");
+  });
+
   it("renders a real zero value as given", () => {
     render(<KpiCard label="Debt" value="£0" />);
     expect(screen.getByText("£0")).toBeDefined();
