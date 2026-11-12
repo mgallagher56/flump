@@ -67,27 +67,10 @@ export class UserProfileController {
     return this.userProfileService.updateProfile(req.user.id, updateData, req.user?.email);
   }
 
-  @Post("user-profile/change-password")
-  async changePassword(
-    @Req() req: any,
-    @Body() body: { newPassword?: string; password?: string },
-  ): Promise<any> {
-    const password = body?.newPassword || body?.password || "";
-    return this.userProfileService.updatePassword(req.user.id, password);
-  }
-
-  @Post("user-profile/update-password")
-  async updatePasswordAlias(
-    @Req() req: any,
-    @Body() body: { newPassword?: string; password?: string },
-  ): Promise<any> {
-    return this.changePassword(req, body);
-  }
-
+  /** Body is intentionally ignored: the reset goes to the caller's own email. */
   @Post("user-profile/send-password-reset")
-  async sendPasswordReset(@Req() req: any, @Body() body?: { email?: string }): Promise<any> {
-    const email = body?.email || req.user?.email;
-    return this.userProfileService.sendPasswordReset(email);
+  async sendPasswordReset(@Req() req: any): Promise<{ success: true }> {
+    return this.userProfileService.sendPasswordReset(req.user.id);
   }
 
   @Post("user-profile/reset-financial-data")

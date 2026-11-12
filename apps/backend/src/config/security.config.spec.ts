@@ -1,0 +1,71 @@
+import { describe, expect, it, vi } from "vitest";
+import {
+  applySecurity,
+  DEFAULT_JSON_LIMIT,
+  parseTrustProxyHops,
+  TAX_JSON_LIMIT,
+} from "./security.config";
+
+describe("parseTrustProxyHops", () => {
+  it("is undefined when unset or blank", () => {
+    expect(parseTrustProxyHops(undefined)).toBeUndefined();
+    expect(parseTrustProxyHops("")).toBeUndefined();
+  });
+  it("parses non-negative integers", () => {
+    expect(parseTrustProxyHops("1")).toBe(1);
+    expect(parseTrustProxyHops("0")).toBe(0);
+  });
+  it("rejects invalid values", () => {
+    for (const bad of ["abc", "-1", "1.5", "true"]) {
+      expect(() => parseTrustProxyHops(bad)).toThrow(/TRUST_PROXY_HOPS/);
+    }
+  });
+});
+
+describe("applySecurity", () => {
+  function fakeApp() {
+    const use = vi.fn();
+    const set = vi.fn();
+    const disable = vi.fn();
+    const enableCors = vi.fn();
+    return {
+      use,
+      enableCors,
+      getHttpAdapter: () => ({ getInstance: () => ({ set, disable }) }),
+      set,
+      disable,
+    };
+  }
+
+  it("sets cors without credentials, trust proxy, and registers middleware", () => {
+    const app = fakeApp();
+    applySecurity(app as never, {
+      NODE_ENV: "production",
+      CORS_ALLOWED_ORIGINS: "https://a.example",
+      TRUST_PROXY_HOPS: "1",
+    });
+    expect(app.enableCors).toHaveBeenCalledWith(
+      expect.objectContaining({ origin: ["https://a.example"], credentials: false }),
+    );
+    expect(app.set).toHaveBeenCalledWith("trust proxy", 1);
+    // helmet + tax json + default json
+    expect(app.use).toHaveBeenCalledTimes(3);
+  });
+
+  it("does not set trust proxy when unset", () => {
+    const app = fakeApp();
+    applySecurity(app as never, {});
+    expect(app.set).not.toHaveBeenCalledWith("trust proxy", expect.anything());
+  });
+
+  it("throws at boot in production without CORS_ALLOWED_ORIGINS", () => {
+    expect(() => applySecurity(fakeApp() as never, { NODE_ENV: "production" })).toThrow(
+      /CORS_ALLOWED_ORIGINS/,
+    );
+  });
+
+  it("exposes limits", () => {
+    expect(DEFAULT_JSON_LIMIT).toBe("1mb");
+    expect(TAX_JSON_LIMIT).toBe("8mb");
+  });
+});

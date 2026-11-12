@@ -7,7 +7,8 @@ import { WorkOS } from "@workos-inc/node";
  */
 export interface UserIdentityAdapter {
   updateName(userId: string, firstName?: string, lastName?: string): Promise<void>;
-  updatePassword(userId: string, newPassword: string): Promise<void>;
+  /** Returns the user's own email from the identity provider, or null if unknown. */
+  getUserEmail(userId: string): Promise<string | null>;
   sendPasswordReset(email: string): Promise<void>;
 }
 
@@ -40,12 +41,10 @@ export class WorkOSIdentityAdapter implements UserIdentityAdapter {
     }
   }
 
-  async updatePassword(userId: string, newPassword: string): Promise<void> {
-    if (!this.client) return;
-    await this.client.userManagement.updateUser({
-      userId,
-      password: newPassword,
-    });
+  async getUserEmail(userId: string): Promise<string | null> {
+    if (!this.client) return null;
+    const user = await this.client.userManagement.getUser(userId);
+    return user?.email ?? null;
   }
 
   async sendPasswordReset(email: string): Promise<void> {
@@ -59,15 +58,15 @@ export class WorkOSIdentityAdapter implements UserIdentityAdapter {
  */
 export class InMemoryIdentityAdapter implements UserIdentityAdapter {
   public updatedNames: Array<{ userId: string; firstName?: string; lastName?: string }> = [];
-  public updatedPasswords: Array<{ userId: string; newPassword: string }> = [];
+  public emails = new Map<string, string>();
   public resetEmails: string[] = [];
 
   async updateName(userId: string, firstName?: string, lastName?: string): Promise<void> {
     this.updatedNames.push({ userId, firstName, lastName });
   }
 
-  async updatePassword(userId: string, newPassword: string): Promise<void> {
-    this.updatedPasswords.push({ userId, newPassword });
+  async getUserEmail(userId: string): Promise<string | null> {
+    return this.emails.get(userId) ?? null;
   }
 
   async sendPasswordReset(email: string): Promise<void> {

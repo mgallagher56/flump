@@ -1,4 +1,3 @@
-import { BadRequestException } from "@nestjs/common";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { UserProfileController } from "./user-profile.controller";
 
@@ -112,23 +111,6 @@ describe("UserProfileController", () => {
       expect(result.firstName).toBe("Jane");
       expect(result.lastName).toBe("Smith");
       expect(result.email).toBe("jane@example.com");
-    });
-  });
-
-  describe("changePassword", () => {
-    it("throws BadRequestException if password is shorter than 8 characters", async () => {
-      await expect(
-        controller.changePassword({ user: { id: "user-123" } }, { newPassword: "123" }),
-      ).rejects.toThrow(BadRequestException);
-    });
-
-    it("succeeds when password is valid", async () => {
-      const res = await controller.changePassword(
-        { user: { id: "user-123" } },
-        { newPassword: "securePassword123!" },
-      );
-      expect(res.success).toBe(true);
-      expect(res.message).toBe("Password updated successfully");
     });
   });
 
@@ -250,13 +232,9 @@ describe("UserProfileController", () => {
       expect(removed.setupChecklistCompletedSteps).toEqual(["set_budget"]);
     });
 
-    it("handles sendPasswordReset validation and success", async () => {
-      await expect(controller.sendPasswordReset({ user: {} }, {})).rejects.toThrow(
-        BadRequestException,
-      );
-
-      const res = await controller.sendPasswordReset({ user: { email: "jane@example.com" } }, {});
-      expect(res.success).toBe(true);
+    it("handles sendPasswordReset success", async () => {
+      const res = await controller.sendPasswordReset({ user: { id: "u1" } });
+      expect(res).toEqual({ success: true });
     });
   });
 });
