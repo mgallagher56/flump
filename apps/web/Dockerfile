@@ -25,6 +25,8 @@ RUN bun install --frozen-lockfile --ignore-scripts --filter './' --filter '@flum
 FROM deps AS build
 COPY . .
 ENV NODE_ENV=production
+# Launch guard (E24-T1): Railway passes the FLUMP_LAUNCH service variable only if declared here.
+ARG FLUMP_LAUNCH
 RUN bun run --cwd apps/web prepare && bun turbo run build --filter=@flump/web...
 
 # Stage 3: Create final production image
