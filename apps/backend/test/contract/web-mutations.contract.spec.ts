@@ -8,7 +8,6 @@ import { AppModule } from "../../src/app.module";
 import { DEV_BYPASS_TOKEN } from "../../src/auth/dev-bypass.verifier";
 import { assertSafeTestDatabase } from "../../src/testing/assertSafeTestDatabase";
 import { resolveDbTestMode } from "../../src/testing/dbTestMode";
-import { discoverMigrations } from "../../src/testing/discoverMigrations";
 import {
   ACCOUNT_CREATE_PAYLOADS,
   ACCOUNT_UPDATE_PAYLOADS,
@@ -29,6 +28,8 @@ import {
 // connection and the rest of AppModule are untouched.
 vi.mock("../../src/config/typeorm.options", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../../src/config/typeorm.options")>();
+  // Imported inside the factory: vi.mock is hoisted above top-level imports.
+  const { discoverMigrations } = await import("../../src/testing/discoverMigrations.js");
   const migrations = await discoverMigrations();
   return {
     ...actual,
