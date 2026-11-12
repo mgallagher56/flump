@@ -1,5 +1,6 @@
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
+import { ADVICE_PATTERNS, findAdviceHits } from "@flump/finance-engine";
 import { describe, expect, it } from "vitest";
 
 /**
@@ -50,5 +51,37 @@ describe("claims guard", () => {
   it.each(BANNED)("source contains no %s (register row %s)", (pattern, row) => {
     const hits = sources.filter(([, text]) => pattern.test(text)).map(([f]) => f);
     expect(hits, `Banned phrase ${pattern} (E7 register ${row}) found`).toEqual([]);
+  });
+});
+
+/**
+ * Advice-language ratchet (E29-T3). Rows map to advice boundary rule ids (R1 to R8,
+ * docs/compliance/advice-boundary-policy.md) instead of E7 register rows. A new hit fails, and so
+ * does a stale entry below, so the list only shrinks. Rewrites are E29-T4.
+ */
+const ADVICE_ALLOWLIST: Array<{ file: string; patternId: string; owner: string }> = [
+  { file: "pages/ToolsIndexPage.tsx", patternId: "optimal", owner: "E29-T4" },
+];
+
+describe("advice-language guard", () => {
+  const found = new Set<string>();
+  for (const [f, text] of files(join(__dirname)).map(
+    (p) => [p, readFileSync(p, "utf8")] as const,
+  )) {
+    const rel = f.slice(__dirname.length + 1);
+    for (const hit of findAdviceHits(text)) found.add(`${rel}::${hit.id}`);
+  }
+  const allowed = new Set(ADVICE_ALLOWLIST.map((e) => `${e.file}::${e.patternId}`));
+
+  it("uses the shared lexicon", () => {
+    expect(ADVICE_PATTERNS.length).toBeGreaterThan(0);
+  });
+
+  it("has no advice wording outside the allow-list", () => {
+    expect([...found].filter((k) => !allowed.has(k))).toEqual([]);
+  });
+
+  it("has no stale allow-list entries", () => {
+    expect([...allowed].filter((k) => !found.has(k))).toEqual([]);
   });
 });
