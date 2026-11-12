@@ -42,10 +42,6 @@ vi.mock("~/components/dashboard/HomeDashboard", () => ({
   HomeDashboard: () => <div id="mock-home-dashboard">Mock Dashboard</div>,
 }));
 
-vi.mock("~/components/home/LoggedOutHome", () => ({
-  default: () => <div id="mock-logged-out-home">Mock Logged Out Home</div>,
-}));
-
 import { useLoaderData } from "react-router";
 
 describe("_index route", () => {
@@ -86,14 +82,6 @@ describe("_index route", () => {
     const request = new Request("http://localhost/");
     const data = (await loader({ request, params: {}, context: {} } as any)) as any;
     expect(data.taxData.estimatedTaxDue).toBeNull();
-  });
-
-  it("returns logged-out data when no session and not demo mode", async () => {
-    const request = new Request("http://localhost/");
-    const data = (await loader({ request, params: {}, context: {} } as any)) as any;
-
-    expect(data).toBeDefined();
-    expect(data.user).toBeNull();
   });
 
   it("rejects when the workspace snapshot fails instead of returning zeroed data", async () => {
@@ -338,13 +326,10 @@ describe("_index route", () => {
     expect(data.forecastData.estimatedTakeHome).toBeGreaterThan(0);
   });
 
-  it("renders LoggedOutHome when user is null", () => {
-    vi.mocked(useLoaderData).mockReturnValue({
-      user: null,
-      accountsData: null,
-    } as any);
-
-    render(<Index />);
-    expect(screen.getByTestId("mock-logged-out-home")).toBeDefined();
+  it("redirects signed-out visitors to the marketing site", async () => {
+    const request = new Request("http://localhost/");
+    const result = (await loader({ request, params: {}, context: {} } as any)) as Response;
+    expect(result.status).toBe(302);
+    expect(result.headers.get("Location")).toBe("http://localhost:3001");
   });
 });

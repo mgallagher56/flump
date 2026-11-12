@@ -7,11 +7,11 @@ import type { ReactElement } from "react";
 import { type LoaderFunctionArgs, type MetaFunction, redirect, useLoaderData } from "react-router";
 import { calculateNetTakeHome } from "~/components/budget/UserProfilePanel";
 import { HomeDashboard } from "~/components/dashboard/HomeDashboard";
-import LoggedOutHome from "~/components/home/LoggedOutHome";
 import { loadWorkspaceSnapshot } from "~/services/backend-client.server";
 import { toMonthly } from "~/types/budget";
 import { buildDebtSummary } from "~/utils/debtSummary";
 import { isDemoMode } from "~/utils/demoData";
+import { getMarketingUrl } from "~/utils/marketingUrl";
 import { calculateRunwayStats } from "~/utils/runwayStorage";
 
 export const meta: MetaFunction = (): { title: string }[] => [
@@ -72,25 +72,8 @@ export const loader = async (args: LoaderFunctionArgs) => {
     if (isDemoMode(args.request.url)) {
       return redirect("/sandbox");
     }
-    return {
-      user: null,
-      hasAccounts: false,
-      hasBudget: false,
-      hasSavings: false,
-      hasPension: false,
-      hasMortgageAccount: false,
-      hasProfile: false,
-      hasRunForecast: false,
-      completedSteps: [] as string[],
-      accountsData: null,
-      budgetData: null,
-      savingsData: null,
-      pensionData: null,
-      mortgageData: null,
-      forecastData: null,
-      taxData: null,
-      debtData: null,
-    };
+    // The signed-out home lives on the marketing site; the app has no public landing page.
+    return redirect(getMarketingUrl(args.request.url));
   }
 
   if (userProfile && userProfile.onboardingCompleted === false) {
@@ -371,7 +354,7 @@ const Index = (): ReactElement => {
     );
   }
 
-  return <LoggedOutHome />;
+  return null;
 };
 
 export default Index;

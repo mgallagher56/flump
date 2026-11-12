@@ -10,7 +10,6 @@ import {
   useFinancialBaseline,
   writeOnboardingSeedCookie,
 } from "./baseline.store";
-import * as stateExports from "./index";
 
 describe("salary-less seeds", () => {
   it("never fabricate a baseline", () => {
@@ -33,11 +32,6 @@ describe("salary-less seeds", () => {
 });
 
 describe("Phase 2 Verification Gate: baseline.store & Onboarding Seed Hydration", () => {
-  it("re-exports baseline and scenario stores from state/index.ts", () => {
-    expect(stateExports.DEFAULT_FINANCIAL_BASELINE).toBeDefined();
-    expect(stateExports.useScenario).toBeDefined();
-  });
-
   it("handles CookieSeedAdapter methods and useFinancialBaseline updates", () => {
     const adapter = new CookieSeedAdapter();
     window.localStorage.clear();

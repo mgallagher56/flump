@@ -2,14 +2,11 @@ import { isFlumpHost } from "@flump/finance-engine";
 import { signOut } from "@workos-inc/authkit-react-router";
 import type { ActionFunctionArgs } from "react-router";
 import { redirect } from "react-router";
+import { getMarketingUrl } from "~/utils/marketingUrl";
 
 const handleSignOut = async (request: Request) => {
   const url = new URL(request.url);
-  const marketingUrl =
-    process.env.VITE_MARKETING_URL ||
-    (url.hostname === "localhost" || url.hostname === "127.0.0.1"
-      ? "http://localhost:3001"
-      : "https://flump.co.uk");
+  const marketingUrl = getMarketingUrl(request.url);
 
   const response = await signOut(request, { returnTo: marketingUrl });
   const onFlumpHost = isFlumpHost(url.hostname);
