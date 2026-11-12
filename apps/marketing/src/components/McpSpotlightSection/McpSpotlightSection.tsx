@@ -1,4 +1,5 @@
 import { Button } from "@repo/ui";
+import { css } from "@repo/ui/styled-system/css";
 import { flex, grid, stack } from "@repo/ui/styled-system/patterns";
 import type { FC } from "react";
 import { FiCheckCircle, FiCpu, FiShield, FiTerminal } from "react-icons/fi";
@@ -30,6 +31,13 @@ import {
   terminalTitle,
   terminalToolLine,
 } from "./McpSpotlightSection.styles";
+
+// The outline Button defaults to text.primary, which is invisible on the dark surface.contrast panel.
+const outlineOnContrast = css({
+  color: "text.onContrast",
+  borderColor: "border.strong",
+  _hover: { color: "text.primary" },
+});
 
 export const McpSpotlightSection: FC = () => {
   const appUrl = getAppUrl();
@@ -100,7 +108,7 @@ export const McpSpotlightSection: FC = () => {
                 </Button>
               </Link>
               <a href={`${appUrl}/app/profile`} className={linkReset()}>
-                <Button size="md" variant="outline">
+                <Button size="md" variant="outline" className={outlineOnContrast}>
                   Open profile in app
                 </Button>
               </a>
