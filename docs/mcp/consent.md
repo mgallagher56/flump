@@ -13,17 +13,19 @@ Used at token creation (AI connections) and on any future OAuth consent page.
 
 You are about to let **[CLIENT NAME]** read parts of your Flump data. It will be able to see:
 
-| Data category         | What the assistant can see                                                                          |
-| --------------------- | --------------------------------------------------------------------------------------------------- |
-| Accounts              | Account balances and types. Names are replaced with generic labels unless you turn anonymising off. |
-| Budget                | Your budget summary and entries.                                                                    |
-| Debts                 | Debts, rates and payments.                                                                          |
-| Forecast and planning | Net worth forecasts, pension and mortgage inputs you have saved.                                    |
-| Profile basics        | Region, birth year and similar planning inputs.                                                     |
+| Data category         | What the assistant can see                                                                                                                                              |
+| --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Accounts              | Account balances and types. Bank and card institution names are replaced with generic labels unless you turn anonymising off.                                           |
+| Budget                | Your budget summary and entries. Entries are sent with their free-text notes, and transaction descriptions are also sent, until E17 N4 and N9 exclude notes by default. |
+| Debts                 | Debts, rates and payments.                                                                                                                                              |
+| Forecast and planning | Net worth forecasts, pension and mortgage inputs you have saved.                                                                                                        |
+| Profile basics        | Region, birth year and similar planning inputs.                                                                                                                         |
 
 **Client:** [CLIENT NAME] (the app or tool holding this token). Only connect clients you trust.
 
 **Revocation stops future access only.** When you revoke this connection, the assistant can no longer read your Flump data. Anything it has already read stays with that assistant and its provider, and Flump cannot take it back.
+
+Flump does not control what the AI provider does with data it has read, including training or retention.
 
 **Guidance, not advice.** Flump gives information and guidance. It is not regulated financial advice. [PLACEHOLDER: wording to match the E29 disclaimer.]
 
