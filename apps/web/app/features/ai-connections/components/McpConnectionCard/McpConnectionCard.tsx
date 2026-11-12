@@ -101,22 +101,14 @@ export const McpConnectionCard: FC<McpConnectionCardProps> = ({
     try {
       const expiryDays = expirySelection === "30" ? 30 : expirySelection === "90" ? 90 : null;
 
-      let result: CreatedTokenResult;
-      if (onGenerateToken) {
-        result = await onGenerateToken(tokenName.trim(), anonymizeInstitutions, expiryDays);
-      } else {
-        // Fallback generator for mockup/testing
-        const mockRaw = `flump_pat_${Math.random().toString(36).slice(2)}${Math.random().toString(36).slice(2)}`;
-        result = {
-          id: `tok_${Date.now()}`,
-          name: tokenName.trim(),
-          rawToken: mockRaw,
-          tokenPrefix: `flump_pat_${mockRaw.slice(10, 14)}...${mockRaw.slice(-4)}`,
-          scopes: ["mcp:read:anonymized", "mcp:simulate"],
-          anonymizeInstitutions,
-          expiresAt: expiryDays ? new Date(Date.now() + expiryDays * 86400000).toISOString() : null,
-        };
-      }
+      // Tokens are only ever issued by the backend. With no handler wired there is nothing to
+      // create (E16 D8-A: the old client-side random token was fake and has been removed).
+      if (!onGenerateToken) return;
+      const result: CreatedTokenResult = await onGenerateToken(
+        tokenName.trim(),
+        anonymizeInstitutions,
+        expiryDays,
+      );
 
       setNewlyCreatedToken(result.rawToken);
       setTokens((prev) => [
@@ -466,7 +458,15 @@ export const McpConnectionCard: FC<McpConnectionCardProps> = ({
         )}
 
         {/* Generate Token Form or Trigger */}
-        {!showGenerateForm ? (
+        {!onGenerateToken ? (
+          <p
+            className={css({ fontSize: "sm", color: "text.muted" })}
+            data-testid="token-creation-unavailable"
+          >
+            Connection tokens are not available yet. Use the offline context pack below to share an
+            anonymised summary with an AI assistant.
+          </p>
+        ) : !showGenerateForm ? (
           <div className={flex({ justify: "flex-start" })}>
             <Button
               id="generate-token-trigger"

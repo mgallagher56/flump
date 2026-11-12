@@ -13,7 +13,6 @@ export interface BudgetEntry {
   notes: string | null;
   isDefault: boolean;
   contractEndDate?: string | null;
-  actualMtdGbp?: number;
   createdAt: string;
   updatedAt: string;
 }
