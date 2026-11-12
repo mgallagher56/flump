@@ -1,4 +1,8 @@
-import { getCurrentUKTaxYear, PortfolioSnapshot } from "@flump/finance-engine";
+import {
+  getCurrentUKTaxYear,
+  getTaxYearForRecordDate,
+  PortfolioSnapshot,
+} from "@flump/finance-engine";
 import type { ReactElement } from "react";
 import { type LoaderFunctionArgs, type MetaFunction, redirect, useLoaderData } from "react-router";
 import { calculateNetTakeHome } from "~/components/budget/UserProfilePanel";
@@ -18,13 +22,34 @@ export const handle = {
   i18n: ["common", "home"],
 };
 
-/** What the user must add for take-home to be computed. Undefined when the salary itself is unset. */
-function describeMissingTakeHome(profile: any): string | undefined {
+type TakeHomeProfile = {
+  annualSalary?: number | string | null;
+  employmentType?: string | null;
+  pensionPercent?: number | string | null;
+  isSalarySacrifice?: boolean | null;
+  country?: string | null;
+} | null;
+
+/**
+ * What the user must add for take-home to be computed, all at once. Undefined when the salary
+ * itself is unset (the widget then just says "Not set").
+ */
+export function describeMissingTakeHome(profile: TakeHomeProfile | undefined): string | undefined {
   if (!profile?.annualSalary) return undefined;
+  const country = profile.country || "GB";
+  if (country !== "GB" && country !== "IE") return "Take-home is only available for the UK";
+  const missing: string[] = [];
   if (profile.employmentType !== "employed" && profile.employmentType !== "self-employed") {
-    return "Add employment type";
+    missing.push("employment type");
   }
-  return "Add pension details";
+  if (profile.pensionPercent == null) missing.push("pension percentage");
+  if (profile.isSalarySacrifice == null) missing.push("salary sacrifice status");
+  if (missing.length === 0) return undefined;
+  const list =
+    missing.length === 1
+      ? missing[0]
+      : `${missing.slice(0, -1).join(", ")} and ${missing[missing.length - 1]}`;
+  return `Add ${list}`;
 }
 
 export const loader = async (args: LoaderFunctionArgs) => {
@@ -150,7 +175,12 @@ export const loader = async (args: LoaderFunctionArgs) => {
   const mortgageTermYears: number | null = null;
 
   // Tax data
-  const currentYearRecords = Array.isArray(taxRecords) ? taxRecords : [];
+  // Only records dated in the current tax year (an annual record belongs to the year containing
+  // its date, decision D-7-A); other years must not leak into the headline figures.
+  const currentTaxYear = getCurrentUKTaxYear();
+  const currentYearRecords = (Array.isArray(taxRecords) ? taxRecords : []).filter(
+    (r: any) => getTaxYearForRecordDate(r.date) === currentTaxYear,
+  );
   const totalTaxIncome = currentYearRecords
     .filter((r: any) => r.type === "income")
     .reduce((sum: number, r: any) => sum + (Number(r.amount) || 0), 0);
