@@ -1,0 +1,24 @@
+# gitleaks configuration (CI: .github/workflows/security-scan.yml).
+# Extends the upstream default rule set; add repo-specific allowlists below.
+title = "Flump gitleaks config"
+
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Paths that never hold real secrets"
+paths = [
+  '''(^|/)bun\.lock$''',
+]
+
+# Dummy MCP personal-access-token fixtures (sequential or hand-typed values, not
+# real tokens). Scoped to the generic rule and to these test/story files so a
+# real token anywhere else, or any other rule, still fails the scan.
+[[allowlists]]
+description = "Fake flump_pat_ fixtures in tests and stories"
+targetRules = ["generic-api-key"]
+paths = [
+  '''apps/backend/src/mcp\.controller\.spec\.ts$''',
+  '''apps/web/app/features/ai-connections/components/McpConnectionCard/McpConnectionCard\.(stories|test)\.tsx$''',
+  '''packages/mcp/src/mcp\.test\.ts$''',
+]
