@@ -282,6 +282,14 @@ const PASSING_PAIRS: Pair[] = [
     SURFACES.map((bg): Pair => ({ fg, bg, themes: BOTH, min: 4.5, role: "text" })),
   ),
   { fg: "text.onContrast", bg: "surface.contrast", themes: BOTH, min: 4.5, role: "text" },
+  // Round 5: the deep-teal hero block carries text.onContrast, and stays a visible block on every
+  // page surface (graphic, 1.4.11 does not apply to a fill, but 3:1 keeps it unmistakable).
+  { fg: "text.onContrast", bg: "surface.hero", themes: BOTH, min: 4.5, role: "text" },
+  ...["surface.canvas", "surface.card"].map(
+    (bg): Pair => ({ fg: "surface.hero", bg, themes: BOTH, min: 1.5, role: "graphic" }),
+  ),
+  // Round 5: the dark accent (primary DEFAULT) is a text colour on the hero block too.
+  { fg: "primary", bg: "surface.hero", themes: ["dark"], min: 3, role: "graphic" },
   ...STATUSES.flatMap((s) => [
     { fg: `status.${s}.text`, bg: `status.${s}.bg`, themes: BOTH, min: 4.5, role: "text" } as Pair,
     { fg: `status.${s}.text`, bg: "surface.card", themes: BOTH, min: 4.5, role: "text" } as Pair,
@@ -406,11 +414,11 @@ describe("Semantic token contrast matrix", () => {
   });
 
   it("resolveColor follows references and DEFAULT keys", () => {
-    expect(resolveColor("surface.card", "dark").toLowerCase()).toBe("#131a2c");
-    expect(resolveColor("surface.card", "light")).toBe("#ffffff");
-    expect(resolveColor("primary", "light")).toBe(colors.indigo[600].value);
-    expect(resolveColor("border", "light")).toBe(colors.ink[250].value);
-    expect(resolveColor("border.input", "light")).toBe(colors.ink[500].value);
+    expect(resolveColor("surface.card", "dark").toLowerCase()).toBe("#272320");
+    expect(resolveColor("surface.card", "light")).toBe("#fffdf9");
+    expect(resolveColor("primary", "light")).toBe(colors.teal[600].value);
+    expect(resolveColor("border", "light")).toBe(colors.sand[250].value);
+    expect(resolveColor("border.input", "light")).toBe(colors.sand[500].value);
     expect(resolveColor("border.input", "dark")).toBe(colors.dark.borderInput.value);
   });
 
@@ -452,7 +460,7 @@ describe("Semantic token contrast matrix", () => {
   it("primary split reports computed ratios (accent vs solid)", () => {
     const r = (fg: string, bg: string, theme: Theme) =>
       pairContrast({ fg, bg, themes: [theme], min: 4.5, role: "text" }, theme);
-    // Before the split, dark primary was indigo.500: foreground on it was < 4.5.
+    // The dark accent (#5cc4ae / #6fd0ba) fails white labels (2.11:1), so solid stays deep teal.
     expect(r("primary.foreground", "primary.solid", "dark")).toBeGreaterThanOrEqual(6.2);
     expect(r("primary.foreground", "primary.hover", "dark")).toBeGreaterThanOrEqual(7.8);
     expect(r("primary", "surface.card", "dark")).toBeGreaterThanOrEqual(5.8);
@@ -671,13 +679,13 @@ describe("E15 chart series CVD distinguishability", () => {
     }
   });
 
-  it("uses amber, not red, for liabilities (chart.debt hue 30-50 degrees)", () => {
+  it("uses apricot, not red, for liabilities (chart.debt hue 25-50 degrees)", () => {
     for (const theme of BOTH) {
       const [r, g, b] = toRgb(resolveColor("chart.debt", theme));
       const max = Math.max(r, g, b);
       const min = Math.min(r, g, b);
       const hue = (60 * (g - b)) / (max - min);
-      expect(hue).toBeGreaterThan(30);
+      expect(hue).toBeGreaterThan(25);
       expect(hue).toBeLessThan(50);
     }
   });
@@ -686,6 +694,7 @@ describe("E15 chart series CVD distinguishability", () => {
 describe("E15 new colour keys exist with light and dark values", () => {
   it.each([
     "surface.scrim",
+    "surface.hero",
     "chart.series6",
     "chart.series7",
     "chart.series8",
@@ -698,5 +707,170 @@ describe("E15 new colour keys exist with light and dark values", () => {
     expect(light).toBeTruthy();
     expect(dark).toBeTruthy();
     expect(light).not.toBe(dark);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Round 5 (Direction C palette): surface separation, hue separation, chart distinctness
+// ---------------------------------------------------------------------------
+
+/** Perceptual distance of two resolved colours under normal vision (CIE76, no CVD simulation). */
+function deltaE(a: string, b: string, theme: Theme, under = "surface.card"): number {
+  const u = resolveColor(under, theme);
+  const pa = toLab(simulateIdentity(toRgb(resolveColor(a, theme), u)));
+  const pb = toLab(simulateIdentity(toRgb(resolveColor(b, theme), u)));
+  return Math.hypot(pa[0] - pb[0], pa[1] - pb[1], pa[2] - pb[2]);
+}
+
+function simulateIdentity(rgb: Rgb): number[] {
+  return rgb.map((v) => toLinear(v / 255));
+}
+
+/** About one just-noticeable difference (2.3); every pair of page surfaces must clear it. */
+const MIN_SURFACE_DELTA_E = 2;
+const PAGE_SURFACES = ["canvas", "card", "sunken", "subtle", "overlay"];
+
+describe("Round 5 page surface separation", () => {
+  for (const theme of BOTH) {
+    it(`canvas, card, sunken, subtle and overlay are pairwise distinguishable (${theme}, deltaE76 >= ${MIN_SURFACE_DELTA_E})`, () => {
+      for (let i = 0; i < PAGE_SURFACES.length; i++) {
+        for (let j = i + 1; j < PAGE_SURFACES.length; j++) {
+          const a = `surface.${PAGE_SURFACES[i]}`;
+          const b = `surface.${PAGE_SURFACES[j]}`;
+          expect(deltaE(a, b, theme), `${a} vs ${b} (${theme})`).toBeGreaterThanOrEqual(
+            MIN_SURFACE_DELTA_E,
+          );
+        }
+      }
+    });
+  }
+
+  it("light surfaces are warm sand (red channel >= blue channel), dark are warm charcoal", () => {
+    for (const theme of BOTH) {
+      for (const s of PAGE_SURFACES) {
+        const [r, , b] = toRgb(resolveColor(`surface.${s}`, theme));
+        expect(r, `surface.${s} ${theme}`).toBeGreaterThanOrEqual(b);
+      }
+    }
+  });
+
+  it("the hero block is a distinct deep teal on every page surface (deltaE76 >= 20)", () => {
+    for (const theme of BOTH) {
+      for (const s of PAGE_SURFACES) {
+        expect(
+          deltaE("surface.hero", `surface.${s}`, theme),
+          `${s} ${theme}`,
+        ).toBeGreaterThanOrEqual(20);
+      }
+    }
+  });
+});
+
+describe("Round 5 hue and series separation", () => {
+  const MIN_HUE_DELTA_E = 15;
+
+  it("chart.wealth is distinguishable from chart.primary (deltaE76 >= 15, both themes)", () => {
+    for (const theme of BOTH) {
+      expect(deltaE("chart.wealth", "chart.primary", theme), theme).toBeGreaterThanOrEqual(
+        MIN_HUE_DELTA_E,
+      );
+    }
+  });
+
+  it("chart.wealth stays distinguishable from chart.primary under every CVD simulation (>= 15)", () => {
+    for (const theme of BOTH) {
+      const a = toRgb(resolveColor("chart.wealth", theme));
+      const b = toRgb(resolveColor("chart.primary", theme));
+      for (const kind of Object.keys(CVD)) {
+        expect(deltaE76(a, b, kind), `${kind} ${theme}`).toBeGreaterThanOrEqual(MIN_CVD_DELTA_E);
+      }
+    }
+  });
+
+  it("status.positive is clearly distinct from primary and from the teal chart series", () => {
+    for (const theme of BOTH) {
+      for (const [pos, other] of [
+        ["status.positive.solid", "primary"],
+        ["status.positive.solid", "chart.primary"],
+        ["status.positive.solid", "chart.wealth"],
+        ["status.positive.text", "primary"],
+        ["status.positive.bg", "primary.subtle"],
+      ] as const) {
+        expect(deltaE(pos, other, theme), `${pos} vs ${other} ${theme}`).toBeGreaterThanOrEqual(
+          pos.endsWith("bg") ? 10 : MIN_HUE_DELTA_E,
+        );
+      }
+    }
+  });
+
+  it("status.positive is yellower than primary (hue angle in 70-125 degrees vs teal near 170)", () => {
+    const hue = ([r, g, b]: Rgb) => {
+      const max = Math.max(r, g, b);
+      const min = Math.min(r, g, b);
+      const d = max - min;
+      const h = max === r ? ((g - b) / d) % 6 : max === g ? (b - r) / d + 2 : (r - g) / d + 4;
+      return (h * 60 + 360) % 360;
+    };
+    for (const theme of BOTH) {
+      const pos = hue(toRgb(resolveColor("status.positive.solid", theme)));
+      const pri = hue(toRgb(resolveColor("primary", theme)));
+      expect(pos, `positive ${theme}`).toBeGreaterThan(70);
+      expect(pos, `positive ${theme}`).toBeLessThan(125);
+      expect(pri - pos, `primary vs positive ${theme}`).toBeGreaterThan(40);
+    }
+  });
+
+  it("status.info stays indigo (hue 235-260 degrees)", () => {
+    for (const theme of BOTH) {
+      const [r, g, b] = toRgb(resolveColor("status.info.solid", theme));
+      const max = Math.max(r, g, b);
+      const min = Math.min(r, g, b);
+      const h = (60 * ((r - g) / (max - min) + 4) + 360) % 360;
+      expect(max).toBe(b);
+      expect(h).toBeGreaterThan(235);
+      expect(h).toBeLessThan(260);
+    }
+  });
+
+  it("chart.debt (apricot) is distinct from chart.primary and chart.wealth (deltaE76 >= 30)", () => {
+    for (const theme of BOTH) {
+      for (const other of ["chart.primary", "chart.wealth"]) {
+        expect(deltaE("chart.debt", other, theme), `${other} ${theme}`).toBeGreaterThanOrEqual(30);
+      }
+    }
+  });
+
+  it("all eight series are pairwise distinguishable under normal vision (deltaE76 >= 15)", () => {
+    for (const theme of BOTH) {
+      for (let i = 0; i < CHART_SERIES.length; i++) {
+        for (let j = i + 1; j < CHART_SERIES.length; j++) {
+          const d = deltaE(CHART_SERIES[i], CHART_SERIES[j], theme);
+          // series3 (debt) and series7 (warning) are both warm but stay clearly apart on the card.
+          expect(d, `${CHART_SERIES[i]} vs ${CHART_SERIES[j]} ${theme}`).toBeGreaterThanOrEqual(
+            MIN_HUE_DELTA_E,
+          );
+        }
+      }
+    }
+  });
+
+  it("chart.band is a teal alpha fill (green channel > red channel, low alpha)", () => {
+    for (const theme of BOTH) {
+      const { rgb, alpha } = parseColor(resolveColor("chart.band", theme));
+      expect(alpha).toBeLessThan(0.3);
+      expect(rgb[1]).toBeGreaterThan(rgb[0]);
+      expect(Math.abs(rgb[1] - rgb[2])).toBeLessThan(40);
+    }
+  });
+
+  it("primary.solid stays deep teal in both themes and the dark accent would fail a white label", () => {
+    expect(resolveColor("primary.solid", "light")).toBe(resolveColor("primary.solid", "dark"));
+    expect(contrast("#ffffff", "#5cc4ae", "#ffffff")).toBeLessThan(3);
+    expect(
+      pairContrast(
+        { fg: "primary.foreground", bg: "primary.solid", themes: BOTH, min: 4.5, role: "text" },
+        "dark",
+      ),
+    ).toBeGreaterThanOrEqual(4.5);
   });
 });

@@ -1,6 +1,6 @@
 # E15 design tokens: architecture note
 
-Scope: `packages/ui/src/tokens/` and `packages/ui/panda.preset.ts`. Direction: A "Calm ledger" (indigo kept, cool ink-blue neutrals), with B's compact density available for simulators, tables and account lists. System theme is the default; `data-theme="light|dark"` overrides.
+Scope: `packages/ui/src/tokens/` and `packages/ui/panda.preset.ts`. Direction: round 5 hybrid, Direction C's "Warm guide" palette (teal, sand, warm charcoal) on A's structure, with B's compact density available for simulators, tables and account lists. System theme is the default; `data-theme="light|dark"` overrides.
 
 ## Layers
 
@@ -135,6 +135,73 @@ Adjacent series pairs are checked with Machado full-severity protan, deutan and 
 
 Non-adjacent series (for example 3 and 7, both warm) can look alike under CVD. Charts must still add direct labels, markers or dashes, so no pair relies on colour alone. `chart.projection` is only distinguished from `series8` by being dashed.
 
-## Round 5 direction (planned, not yet implemented)
+## Round 5 palette (Direction C, shipped)
 
-DECISIONS round 5 moves the palette to Direction C's look: teal-green primary (`primary.DEFAULT` light `#0F6B5E`, dark `#5CC4AE`; `primary.solid` stays deep teal in both themes), sand and warm-charcoal neutrals, a yellower leaf-green `status.positive`, `chart.band` as a teal alpha, and a new `surface.hero` token (one deep-teal headline block per page). The hexes above are the recommendation's stand-ins: the token PR must re-run the full contrast matrix with the mockup's real values and keep `KNOWN_FAILURES` empty. This document is updated by that PR. Until then the tables above describe the shipped tokens.
+Source: the `--*` variables of `docs/design/e15/directions/c/index.html` (light `:root`, dark `[data-theme="dark"]`). Primitives: `sand` (replaces `ink`), `teal`, the warm `dark.*` set; `indigo` stays for `status.info` only. Component code is unchanged: semantic names are the same, plus the new `surface.hero`.
+
+**Supersedes** the "Colour changes" and "Measured contrast" tables above for the colour values (they describe direction A). Contrast figures that matter are re-asserted by `tokens.a11y.test.ts`.
+
+### Semantic table (light / dark)
+
+| Token                                        | Light                                         | Dark                                          |
+| -------------------------------------------- | --------------------------------------------- | --------------------------------------------- |
+| `surface.canvas`                             | `#f5f1ea`                                     | `#1d1a17`                                     |
+| `surface.card`                               | `#fffdf9`                                     | `#272320`                                     |
+| `surface.sunken`                             | `#eae3d8`                                     | `#171412`                                     |
+| `surface.subtle`                             | `#f0ebe2`                                     | `#2e2a26`                                     |
+| `surface.overlay`                            | `#ffffff`                                     | `#36322d`                                     |
+| `surface.contrast`                           | `#22302c`                                     | `#3a352f`                                     |
+| `surface.hero` (new)                         | `#12483f`                                     | `#1b5448`                                     |
+| `surface.scrim`                              | `rgba(43,38,32,.4)`                           | `rgba(8,6,4,.6)`                              |
+| `text.primary` / `secondary` / `muted`       | `#2b2620` / `#564f46` / `#6a6258`             | `#f4efe7` / `#cbc3b7` / `#a59d90`             |
+| `text.onContrast`                            | `#f6f1e8`                                     | `#fffdf9`                                     |
+| `border` / `subtle` / `strong` / `input`     | `#dcd4c8` / `#e8e1d6` / `#b5ab9c` / `#867c6e` | `#3b362f` / `#302c27` / `#5c554a` / `#8f8678` |
+| `border.focusRing`, `primary`                | `#0f6b5e`                                     | `#6fd0ba`                                     |
+| `primary.solid`                              | `#0f6b5e`                                     | `#0f6b5e` (deep teal in both themes)          |
+| `primary.hover`                              | `#0a564b`                                     | `#0a564b`                                     |
+| `primary.subtle` / `border`                  | `#e1f0eb` / `#9ccfc2`                         | `#1e3b35` / `#2e6055`                         |
+| `primary.foreground`                         | `#ffffff`                                     | `#ffffff`                                     |
+| `status.positive` text / bg / border / solid | `#3e6b12` / `#eaf3da` / `#bcd68f` / `#4e7d14` | `#a8d86a` / `#2a3316` / `#4a6428` / `#8cc152` |
+| `status.warning`                             | `#8a4a08` / `#fcebd2` / `#ebc38a` / `#b06a10` | `#f2b873` / `#3b2c16` / `#6b4b1e` / `#e0a04a` |
+| `status.danger`                              | `#a13a2b` / `#fbe5e0` / `#e8b0a4` / `#b64030` | `#f4a593` / `#3d221d` / `#74403a` / `#be5337` |
+| `status.info` (indigo, unchanged)            | `#3730a3` / `#eef0ff` / `#c7c9f7` / `#4f46e5` | `#a5a8ff` / `#1b1e4a` / `#3b3f8f` / `#8f92ff` |
+| `status.neutral`                             | `#564f46` / `#ece6dc` / `#c9c0b2` / `#766c5f` | `#cbc3b7` / `#2e2a26` / `#4a443b` / `#a59d90` |
+| `chart.primary`, `series1`                   | `#0f6b5e`                                     | `#5cc4ae`                                     |
+| `chart.wealth`, `series2`                    | `#64885c`                                     | `#9ad0a0`                                     |
+| `chart.debt` (apricot), `series3`            | `#c26a18`                                     | `#eda45f`                                     |
+| `chart.accentPurple`, `series4`              | `#7e67a8`                                     | `#a98fe0`                                     |
+| `series5`                                    | `#b03f6a`                                     | `#e58aa2`                                     |
+| `chart.accentCyan`, `series6`                | `#2f7fa0`                                     | `#6db5d6`                                     |
+| `chart.warning`, `series7`                   | `#94750f`                                     | `#e3b452`                                     |
+| `series8`                                    | `#7a7064`                                     | `#a59d90`                                     |
+| `chart.projection` (dashed)                  | `#9a5210`                                     | `#f5b987`                                     |
+| `chart.band` (teal alpha)                    | `rgba(15,107,94,.14)`                         | `rgba(92,196,174,.18)`                        |
+| `chart.baseline`                             | `#867c6e`                                     | `#8f8678`                                     |
+| `chart.grid`                                 | `rgba(43,38,32,.08)`                          | `rgba(244,239,231,.08)`                       |
+
+### `surface.hero`
+
+One deep-teal headline block per page (the headline figure). Text on it uses `text.onContrast`: 9.22:1 light, 8.58:1 dark (asserted at 4.5:1). The block is at least 1.5:1 against canvas and card and at least 20 deltaE from every page surface. Not for KPI cards, chart areas or full-page bands.
+
+### Deviations from the mockup values (forced by the matrix, `KNOWN_FAILURES` stays empty)
+
+- `primary` dark is the mockup's real `#6fd0ba`, not the plan's stand-in `#5cc4ae` (which is the mockup's dark `primary-solid`); `chart.primary` dark is `#5cc4ae`. `primary.solid` is deep teal in both themes (white on `#5cc4ae` is 2.11:1), so the mockup's dark `primary-solid` and `primary-foreground` (`#0c2823`) are not used.
+- `surface.sunken` light `#eae3d8` (mockup `#ece6dc`): canvas, subtle and sunken were 1.8 to 2.3 deltaE apart; now every surface pair is at least 2.0. `border.input` light `#867c6e` (mockup `#8c8274` gave under 3:1 on the darker sunken). `surface.overlay` dark `#36322d` (mockup `#312d28` was 1.5 deltaE from subtle).
+- Dark `surface.contrast` stays a dark fill (`#3a352f`), not the mockup's inverted light fill, because `text.onContrast` must be light on the dark `surface.hero`. Dark `text.onContrast` is `#fffdf9` (mockup `#1d1a17` is the inverted value): `status.danger.solid` dark has to be both at least 3:1 on `surface.subtle` and at least 4.5:1 under a light label, which only a near-white label allows (window of about 0.005 relative luminance, `#be5337`).
+- Status solids: `warning.solid` light `#b06a10` (mockup `#c77a1b` under 3:1 on canvas, subtle, sunken), `danger.solid` light `#b64030` and dark `#be5337` (mockup values fail the onContrast and white-label pairs), `neutral.solid` light `#766c5f` (white label), `positive` is new (see below).
+- Chart: `wealth` `#64885c` / `#9ad0a0` (mockup `#4a9a7c` was 2.7:1 on the darker sunken light surface, and the mockup dark `#93cba8` was 14.8 deltaE from primary); `debt` light `#c26a18` and `warning` `#94750f` to keep 3:1 on sunken; series4 to 6 reordered (purple, rose, blue) because purple next to blue collapses under protan simulation (11 deltaE); `chart.band` follows the mockup's alpha. The debt hue test now allows 25 to 50 degrees (apricot is about 29).
+
+### Distinctness measurements (CIE76 deltaE unless stated)
+
+| Pair                                                                  | Light                     | Dark                      |
+| --------------------------------------------------------------------- | ------------------------- | ------------------------- |
+| `chart.wealth` vs `chart.primary` (normal / protan / deutan / tritan) | 24.3 / 22.3 / 24.6 / 18.5 | 19.5 / 16.1 / 18.8 / 21.8 |
+| `status.positive.solid` vs `primary`                                  | 47.9                      | 47.7                      |
+| `status.positive.solid` vs `chart.wealth`                             | 30.2                      | 32.9                      |
+| `chart.debt` vs `chart.primary`                                       | 81.9                      | 71.1                      |
+
+`status.positive.solid` hue is about 90 degrees (leaf), `primary` about 170 (teal). Adjacent series pairs still clear the CVD threshold of 15 (existing test); all eight series are pairwise at least 15 under normal vision.
+
+### Page surface separation
+
+Every pair of canvas, card, sunken, subtle and overlay is at least 2.0 deltaE (about one just-noticeable difference) in both themes; light card and overlay (`#fffdf9` vs `#ffffff`) are the closest pair at 2.2, and rely on elevation for separation. Light surfaces are warm (red channel at least blue), as are dark.

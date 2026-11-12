@@ -37,6 +37,11 @@ const E15_KEYS = [
     note: "Modal backdrop",
     fill: css({ backgroundColor: "surface.scrim" }),
   },
+  {
+    token: "surface.hero",
+    note: "Headline block, text.onContrast",
+    fill: css({ backgroundColor: "surface.hero" }),
+  },
   { token: "chart.series6", fill: css({ backgroundColor: "chart.series6" }) },
   { token: "chart.series7", fill: css({ backgroundColor: "chart.series7" }) },
   { token: "chart.series8", fill: css({ backgroundColor: "chart.series8" }) },
@@ -102,8 +107,9 @@ const NewKeyPanel: FC<{ theme: "light" | "dark" }> = ({ theme }) => (
 
 export const ColorPalette: FC = () => {
   const primitivePalettes = [
-    { name: "Indigo (Brand)", scale: colors.indigo },
-    { name: "Ink (Cool Neutrals)", scale: colors.ink },
+    { name: "Indigo (Info)", scale: colors.indigo },
+    { name: "Sand (Warm Neutrals)", scale: colors.sand },
+    { name: "Teal (Brand)", scale: colors.teal },
     { name: "Slate (Surfaces & Text)", scale: colors.slate },
     { name: "Success", scale: colors.success },
     { name: "Warning", scale: colors.warning },

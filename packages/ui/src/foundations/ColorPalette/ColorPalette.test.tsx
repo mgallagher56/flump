@@ -6,9 +6,9 @@ describe("ColorPalette Foundation", () => {
   it("renders header and canonical semantic tokens table", () => {
     render(<ColorPalette />);
     expect(screen.getByText("Flump Color System & Semantic Tokens")).toBeDefined();
-    expect(screen.getByText("Indigo (Brand)")).toBeDefined();
+    expect(screen.getByText("Indigo (Info)")).toBeDefined();
     expect(screen.getByText("Slate (Surfaces & Text)")).toBeDefined();
-    expect(screen.getByText("Ink (Cool Neutrals)")).toBeDefined();
+    expect(screen.getByText("Sand (Warm Neutrals)")).toBeDefined();
   });
 
   it("shows the E15 keys in light and dark panels", () => {
