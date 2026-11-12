@@ -60,8 +60,8 @@ describe("applySecurity", () => {
       expect.objectContaining({ origin: ["https://a.example"], credentials: false }),
     );
     expect(app.set).toHaveBeenCalledWith("trust proxy", 1);
-    // helmet + tax json + default json
-    expect(app.use).toHaveBeenCalledTimes(3);
+    // v1 alias + helmet + tax json + default json
+    expect(app.use).toHaveBeenCalledTimes(4);
   });
 
   it("does not set trust proxy when unset", () => {

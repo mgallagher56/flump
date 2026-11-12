@@ -2,6 +2,7 @@ import type { INestApplication } from "@nestjs/common";
 import { json } from "express";
 import helmet from "helmet";
 import { resolveCorsOrigins } from "./cors.config";
+import { v1AliasMiddleware } from "./v1-alias.middleware";
 
 export const DEFAULT_JSON_LIMIT = "1mb";
 /** Tax-record routes receive base64 receipts, so they get a larger body limit. */
@@ -46,6 +47,8 @@ export function applySecurity(
   instance.disable("x-powered-by");
   if (trustProxyHops !== undefined) instance.set("trust proxy", trustProxyHops);
 
+  // First, so every later middleware and route sees the canonical (unversioned) path.
+  app.use(v1AliasMiddleware);
   app.enableCors({ origin: origins, credentials: false });
   app.use(
     helmet({
