@@ -149,6 +149,12 @@ describe("AccountIntakeService (Deep Module)", () => {
       expect(saved.id).toBe("acc-new");
     });
 
+    it("createAccount defaults the currency to GBP when the body omits it", async () => {
+      await service.createAccount("userA", { name: "Cash", type: "Saving", balance: 5 } as any);
+
+      expect(mockAccountRepo.create.mock.calls[0][0]).toMatchObject({ currency: "GBP" });
+    });
+
     it("createAccount rejects a connectionId owned by another user", async () => {
       mockBankConnectionRepo.findOne.mockResolvedValue(null);
 

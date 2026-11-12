@@ -103,6 +103,17 @@ describe("BudgetController", () => {
     expect(created.amount).toBe(1500);
     expect(created.frequency).toBe("monthly");
 
+    // `title` is accepted as an alias for `name`; a missing name is a 400
+    const aliased = await controller.createBudgetEntry(req, {
+      category: "income",
+      title: "Salary",
+      amount: 10,
+    });
+    expect(aliased.name).toBe("Salary");
+    await expect(
+      controller.createBudgetEntry(req, { category: "income", amount: 10 }),
+    ).rejects.toThrow(BadRequestException);
+
     // Update not found & found
     mockBudgetRepo.findOne.mockResolvedValueOnce(null);
     await expect(controller.updateBudgetEntry(req, "missing", { amount: 200 })).rejects.toThrow(

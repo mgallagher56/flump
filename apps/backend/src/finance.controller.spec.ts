@@ -463,4 +463,17 @@ describe("FinanceController & FinanceService", () => {
       expect(await controller.getBankConnections(userA)).toHaveLength(1);
     });
   });
+
+  it("registers both PUT and PATCH for accounts/:id", () => {
+    // Stacked @Put/@Patch decorators on one handler only register one verb (RequestMethod: GET 0,
+    // POST 1, PUT 2, DELETE 3, PATCH 4).
+    const proto = FinanceController.prototype as unknown as Record<string, object>;
+    const verbs = Object.getOwnPropertyNames(proto)
+      .map((name) => proto[name])
+      .filter(
+        (fn) => typeof fn === "function" && Reflect.getMetadata("path", fn) === "accounts/:id",
+      )
+      .map((fn) => Reflect.getMetadata("method", fn));
+    expect(verbs).toEqual(expect.arrayContaining([2, 4]));
+  });
 });

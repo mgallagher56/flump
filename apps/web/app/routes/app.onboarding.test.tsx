@@ -275,7 +275,7 @@ describe("OnboardingRoute (3-Step Baseline Flow)", () => {
           { status: 200 },
         );
       }
-      return new Response(JSON.stringify([{ title: "Monthly Take-Home Income" }]), { status: 200 });
+      return new Response(JSON.stringify([{ name: "Monthly Take-Home Income" }]), { status: 200 });
     });
     globalThis.fetch = fetchMock as any;
     finish();
@@ -283,9 +283,7 @@ describe("OnboardingRoute (3-Step Baseline Flow)", () => {
     const created = (suffix: string) =>
       posts(fetchMock, suffix).map(([, init]) => JSON.parse((init as RequestInit).body as string));
     expect(created("/accounts").map((a) => a.name)).not.toContain("Cash and emergency savings");
-    expect(created("/budget-entries").map((e) => e.title)).not.toContain(
-      "Monthly Take-Home Income",
-    );
+    expect(created("/budget-entries").map((e) => e.name)).not.toContain("Monthly Take-Home Income");
   });
 
   it("creates everything when nothing exists yet", async () => {
