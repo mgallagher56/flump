@@ -9,6 +9,7 @@ COPY apps/backend/package.json ./apps/backend/
 COPY apps/web/package.json ./apps/web/
 COPY apps/marketing/package.json ./apps/marketing/
 COPY apps/mobile-companion/package.json ./apps/mobile-companion/
+COPY packages/api-contract/package.json ./packages/api-contract/
 COPY packages/banking/package.json ./packages/banking/
 COPY packages/mcp/package.json ./packages/mcp/package.json
 COPY packages/finance-engine/package.json ./packages/finance-engine/
