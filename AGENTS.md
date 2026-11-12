@@ -4,7 +4,12 @@
 
 > **Detailed Reference**: Before creating or editing any component in `packages/ui`, `apps/web`, or `apps/marketing`, read [`docs/agents/component-guidelines.md`](./docs/agents/component-guidelines.md).
 
-Never create standalone, flat `.tsx` component files. Every component in `packages/ui`, `apps/web/app/features/*/components`, and new feature sections/pages in `apps/marketing/src/{components|pages}` MUST live in its own PascalCase directory with colocated files:
+Never create standalone, flat `.tsx` component files. Every component in `packages/ui`, `apps/web/app/features/*/components`, and new feature sections/pages in `apps/marketing/src/{components|pages}` MUST live in its own PascalCase directory with colocated files. The required set depends on where the component lives (E15 decision D3-C):
+
+- **`packages/ui` and shared components** (anything imported by more than one feature or app): all five files.
+- **Feature-internal components** (`apps/web/app/features/<domain>/components/*` used only inside that feature): `ComponentName.tsx`, `ComponentName.styles.ts`, `ComponentName.test.tsx` and `index.ts`. A `ComponentName.stories.tsx` is required only if the component is interactive and not already covered by a story or test of its parent; promote it to the full five files when a second feature imports it.
+
+The five files:
 
 - `ComponentName/ComponentName.tsx` (Component implementation)
 - `ComponentName/ComponentName.styles.ts` (Panda CSS `cva` or `sva` recipes—no inline style soup)
@@ -12,15 +17,17 @@ Never create standalone, flat `.tsx` component files. Every component in `packag
 - `ComponentName/ComponentName.test.tsx` (Vitest unit test)
 - `ComponentName/index.ts` (Barrel export)
 
+Web pages adopt `@repo/ui` primitives and patterns instead of the legacy `FLP*` layer and inline styles.
+
 ## 2. DESIGN TOKEN & STYLING LAWS
 
 - **Zero Raw Hex/RGB or Primitive Token Leaks:** Components may NEVER use hardcoded hex values (`#141A26`) or raw primitive scale tokens (`indigo.600`, `slate.800`, `success.500`, `purple.500`, `cyan.400`). Always use the 6 canonical semantic namespaces:
-  - `surface.*` (`canvas`, `card`, `sunken`, `subtle`, `overlay`, `contrast`)
+  - `surface.*` (`canvas`, `card`, `sunken`, `subtle`, `overlay`, `contrast`, `scrim`; `scrim` is a modal backdrop, never a text surface)
   - `text.*` (`primary`, `secondary`, `muted`, `onContrast`)
   - `border.*` (`DEFAULT`, `subtle`, `strong`, `input`, `focusRing`)
   - `primary.*` (`DEFAULT`, `solid`, `hover`, `subtle`, `border`, `foreground`; `solid`/`hover` are fills behind `primary.foreground` only, graphic-only fills use `primary` or `chart.primary`)
   - `status.{positive|warning|danger|info|neutral}.{text|bg|border|solid}`
-  - `chart.*` (`primary`, `wealth`, `debt`, `warning`, `accentPurple`, `accentCyan`, `grid`, `series1`..`series5`)
+  - `chart.*` (`primary`, `wealth`, `debt`, `warning`, `accentPurple`, `accentCyan`, `grid`, `series1`..`series8`, `projection`, `band`, `baseline`)
 - **Tabular Numbers on All Financial Data:** Every currency value, percentage, date, table cell, and slider badge MUST apply `fontVariantNumeric: 'tabular-nums'` (`tabular-nums`) and format numbers via standard UK formatting (`Intl.NumberFormat('en-GB')` / `useFormatCurrency()`).
 
 ## 3. PROGRESSIVE DISCLOSURE & LAYOUT LAWS
