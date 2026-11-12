@@ -13,16 +13,16 @@ const meta: Meta<typeof CoachCard> = {
   component: CoachCard,
   parameters: { layout: "padded" },
   args: {
-    eyebrow: "Next best step",
-    title: "Claim your full employer pension match",
+    eyebrow: "Housekeeping",
+    title: "Finish setting up",
     description:
-      "Your employer matches contributions up to 5% of salary. You currently contribute 3%, so you may be leaving up to £1,300 a year unclaimed.",
+      "Two details are missing: your workplace pension balance and the interest rate on one card. Adding them makes your totals more complete. No pressure, you can change this any time.",
     headingLevel: "h2",
     icon: <Icon icon={Lightbulb} />,
-    primaryAction: <Button onClick={onPrimary}>Review contributions</Button>,
-    secondaryAction: <Button variant="secondary">Remind me later</Button>,
+    primaryAction: <Button onClick={onPrimary}>Add missing details</Button>,
+    secondaryAction: <Button variant="secondary">Not now</Button>,
     onDismiss,
-    dismissLabel: "Dismiss suggestion",
+    dismissLabel: "Dismiss reminder",
   },
 };
 
@@ -31,17 +31,15 @@ type Story = StoryObj<typeof CoachCard>;
 
 const play: Story["play"] = async ({ canvasElement }) => {
   const canvas = within(canvasElement);
-  await expect(
-    canvas.getByRole("region", { name: "Claim your full employer pension match" }),
-  ).toBeInTheDocument();
+  await expect(canvas.getByRole("region", { name: "Finish setting up" })).toBeInTheDocument();
 
   // Keyboard focus order: primary, secondary, then dismiss.
   await userEvent.tab();
-  await expect(canvas.getByRole("button", { name: "Review contributions" })).toHaveFocus();
+  await expect(canvas.getByRole("button", { name: "Add missing details" })).toHaveFocus();
   await userEvent.tab();
-  await expect(canvas.getByRole("button", { name: "Remind me later" })).toHaveFocus();
+  await expect(canvas.getByRole("button", { name: "Not now" })).toHaveFocus();
   await userEvent.tab();
-  const dismiss = canvas.getByRole("button", { name: "Dismiss suggestion" });
+  const dismiss = canvas.getByRole("button", { name: "Dismiss reminder" });
   await expect(dismiss).toHaveFocus();
 
   await userEvent.keyboard("{Enter}");

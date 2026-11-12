@@ -18,7 +18,10 @@ export interface CoachCardProps {
   id?: string;
 }
 
-/** The quiet "next best step" banner. A named region so assistive tech can jump to it. */
+/**
+ * The quiet housekeeping banner ("Finish setting up", "What your numbers show"). App chores only:
+ * never a money instruction. A named region so assistive tech can jump to it.
+ */
 export const CoachCard: FC<CoachCardProps> = ({
   eyebrow,
   title,
