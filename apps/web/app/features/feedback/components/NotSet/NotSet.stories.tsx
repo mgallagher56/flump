@@ -6,7 +6,7 @@ const meta: Meta<typeof NotSet> = {
   title: "3. Financial Patterns & Sections/NotSet",
   component: NotSet,
   // The Storybook decorator renders every story side by side in Light and Dark by default.
-  args: { href: "/app/profile", actionLabel: "Add salary" },
+  args: { href: "/app/profile", subject: "salary" },
 };
 
 export default meta;
@@ -20,4 +20,6 @@ export const Default: Story = {
   },
 };
 
-export const CustomLabel: Story = { args: { label: "Not calculated yet", href: "/app/tax" } };
+export const CustomLabel: Story = {
+  args: { label: "Not calculated yet", href: "/app/tax", subject: "income" },
+};

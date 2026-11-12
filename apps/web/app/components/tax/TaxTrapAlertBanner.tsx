@@ -10,12 +10,7 @@ import { FiAlertTriangle, FiArrowRight, FiCheck } from "react-icons/fi";
 import FLPButton from "~/components/core/buttons/FLPButton";
 import FLPHeading from "~/components/core/typography/FLPHeading";
 import FLPText from "~/components/core/typography/FLPText";
-import {
-  getTaxTrapCopy,
-  REGION_ASSUMPTION_LABEL,
-  REGION_SETTINGS_ACTION,
-  REGION_SETTINGS_HREF,
-} from "~/utils/taxTrapCopy";
+import { getTaxTrapCopy, REGION_ASSUMPTION_LABEL } from "~/utils/taxTrapCopy";
 
 export interface TaxTrapAlertBannerProps {
   grossIncome: number;
@@ -162,14 +157,8 @@ export const TaxTrapAlertBanner: FC<TaxTrapAlertBannerProps> = ({
               )}
             </FLPText>
             {!region && (
-              <FLPText color="text.muted" fontSize="xs" style={{ marginTop: "4px" }}>
-                {REGION_ASSUMPTION_LABEL}{" "}
-                <a
-                  href={REGION_SETTINGS_HREF}
-                  className={css({ color: "primary", textDecoration: "underline" })}
-                >
-                  {REGION_SETTINGS_ACTION}
-                </a>
+              <FLPText color="text.muted" fontSize="xs" className={css({ marginTop: "4px" })}>
+                {REGION_ASSUMPTION_LABEL}
               </FLPText>
             )}
           </div>

@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import { HomeDashboard } from "./HomeDashboard";
 
 vi.mock("react-router", () => ({
+  useInRouterContext: () => false,
   Link: ({ children, to, className }: any) => (
     <a className={className} href={to}>
       {children}

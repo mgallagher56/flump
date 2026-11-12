@@ -325,7 +325,7 @@ const UKTaxCalculator: FC<UKTaxCalculatorProps> = ({ initialSalary, onApplyIncre
                 {salaryKnown ? (
                   formatCurrency(grossSalary)
                 ) : (
-                  <NotSet actionLabel="Add salary" href="/app/profile" />
+                  <NotSet href="/app/profile" subject="salary" />
                 )}
               </FLPText>
             </div>
@@ -755,7 +755,7 @@ const UKTaxCalculator: FC<UKTaxCalculatorProps> = ({ initialSalary, onApplyIncre
               Monthly Take-Home Pay
             </FLPText>
             <FLPHeading as="h2" color="text.primary" mt={1} size="2xl" className={tabularNums}>
-              <NotSet actionLabel="Add salary" href="/app/profile" />
+              <NotSet href="/app/profile" subject="salary" />
             </FLPHeading>
             <FLPText color="text.muted" fontSize="sm" style={{ marginTop: "8px" }}>
               Add your gross salary to see your take-home pay.

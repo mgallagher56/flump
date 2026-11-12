@@ -58,7 +58,7 @@ const numeric = css({ fontVariantNumeric: "tabular-nums" });
 
 /** Unknown PAYE salary renders "Not set", never £0. */
 const formatPaye = (value: number | undefined, format: (n: number) => string): ReactNode =>
-  value && value > 0 ? format(value) : <NotSet actionLabel="Add salary" href="/app/profile" />;
+  value && value > 0 ? format(value) : <NotSet href="/app/profile" subject="salary" />;
 
 const TaxContainer: FC = () => {
   const { t } = useTranslation();
@@ -857,7 +857,7 @@ const TaxContainer: FC = () => {
                     {profileSalary > 0 ? (
                       `${formatCurrency(profileSalary)}/year`
                     ) : (
-                      <NotSet actionLabel="Add salary" href="/app/profile" />
+                      <NotSet href="/app/profile" subject="salary" />
                     )}
                   </strong>
                   .

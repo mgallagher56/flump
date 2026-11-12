@@ -41,9 +41,8 @@ describe("TaxTrapAlertBanner", () => {
     render(<TaxTrapAlertBanner grossIncome={110000} />);
 
     expect(screen.getByText(/assuming England, Wales and Northern Ireland/i)).toBeDefined();
-    expect(screen.getByRole("link", { name: "Set your region" }).getAttribute("href")).toBe(
-      "/app/profile",
-    );
+    // Region cannot be set anywhere yet (E23 T-FIX-2 adds the link), so no dead-end link.
+    expect(screen.queryByRole("link", { name: /region/i })).toBeNull();
   });
 
   it("shows no assumption label when England, Wales and NI is the known region", () => {
