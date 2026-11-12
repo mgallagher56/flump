@@ -6,6 +6,7 @@ import { Test } from "@nestjs/testing";
 import request from "supertest";
 import { DataSource } from "typeorm";
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+import { AppModule } from "../../src/app.module";
 import { DEV_BYPASS_TOKEN } from "../../src/auth/dev-bypass.verifier";
 import { assertSafeTestDatabase } from "../../src/testing/assertSafeTestDatabase";
 import { resolveDbTestMode } from "../../src/testing/dbTestMode";
@@ -111,8 +112,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
       await reset.query('CREATE EXTENSION IF NOT EXISTS "uuid-ossp"');
       await reset.destroy();
 
-      // Imported lazily so the env above is in place before module factories run.
-      const { AppModule } = await import("../../src/app.module");
+      // Module factories read process.env at compile(), after the env above is in place.
       const moduleRef = await Test.createTestingModule({ imports: [AppModule] }).compile();
       app = moduleRef.createNestApplication({ rawBody: true });
       await app.init();
