@@ -14,6 +14,7 @@ import { ServerRouter } from "react-router";
 import createEmotionCache from "./createEmotionCache";
 import i18n from "./i18n";
 import i18next from "./i18n.server";
+import { applyRobotsHeader } from "./utils/indexing.server";
 
 // Reject/cancel all pending promises after 5 seconds
 export const streamTimeout = 5000;
@@ -59,6 +60,11 @@ export default async function handleRequest(
           reactBody.pipe(bodyWithStyles);
 
           responseHeaders.set("Content-Type", "text/html");
+          // Covers every HTML document response (including error boundaries). Data
+          // (.data) requests and resource routes skip entry.server, so resource
+          // routes call applyRobotsHeader themselves; data responses are not indexable
+          // documents, so no root `headers` export is needed.
+          applyRobotsHeader(responseHeaders);
 
           resolve(
             new Response(createReadableStreamFromReadable(bodyWithStyles), {
