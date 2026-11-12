@@ -88,10 +88,24 @@ export const action = async (args: ActionFunctionArgs) => {
 };
 
 export const loader = async (args: LoaderFunctionArgs) => {
-  const { accounts, accountDetails, bankConnections, user } = await loadWorkspaceSnapshot(args, {
-    includeConnections: true,
-  });
-  return data({ accounts, accountDetails, bankConnections, user });
+  const { accounts, accountDetails, bankConnections, user, accessToken } =
+    await loadWorkspaceSnapshot(args, {
+      includeConnections: true,
+    });
+  // Bank connection is owner-only (E19 D3-B). Failing closed: any error hides the entry points.
+  let bankConnectionsEnabled = false;
+  if (accessToken) {
+    try {
+      const capability = await backendFetch<{ enabled?: boolean }>("/bank-connections/capability", {
+        accessToken,
+        signal: args.request.signal,
+      });
+      bankConnectionsEnabled = capability?.enabled === true;
+    } catch {
+      bankConnectionsEnabled = false;
+    }
+  }
+  return data({ accounts, accountDetails, bankConnections, bankConnectionsEnabled, user });
 };
 
 const Accounts = (): ReactElement<ReactElement> => {

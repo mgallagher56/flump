@@ -30,7 +30,7 @@ const accounts = [{ id: "123456", name: "Monzo Current", type: "Current", balanc
 
 describe("AddEditAccountsDialog action outcomes", () => {
   beforeEach(() => {
-    mocks.mockUseLoaderData.mockReturnValue({ accounts });
+    mocks.mockUseLoaderData.mockReturnValue({ accounts, bankConnectionsEnabled: true });
     mocks.mockFetcherSubmit.mockClear();
     mocks.fetcher.state = "idle";
     mocks.fetcher.data = null;

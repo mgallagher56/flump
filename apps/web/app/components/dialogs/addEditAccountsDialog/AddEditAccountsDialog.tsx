@@ -130,8 +130,10 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
 }) => {
   const {
     accounts = [],
+    bankConnectionsEnabled = false,
   }: {
     accounts?: { id?: string; name?: string; type?: AccountType; balance?: number }[];
+    bankConnectionsEnabled?: boolean;
   } = useLoaderData<typeof loader>();
   const { t } = useTranslation();
   const fetcher = useFetcher();
@@ -454,7 +456,7 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
           onConfirm={handleConfirmRemoveAccount}
         />
       )}
-      {!isEditAccount && (
+      {!isEditAccount && bankConnectionsEnabled && (
         <div
           style={{
             display: "flex",

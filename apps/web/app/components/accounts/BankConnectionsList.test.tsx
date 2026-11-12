@@ -136,7 +136,7 @@ describe("<BankConnectionsList />", () => {
   });
 
   test("renders empty state when there are no connections", () => {
-    const { getByText } = customRender(<BankConnectionsList connections={[]} />);
+    const { getByText } = customRender(<BankConnectionsList connections={[]} canConnect />);
     expect(getByText("No Connected Banks")).toBeDefined();
   });
 
@@ -145,5 +145,19 @@ describe("<BankConnectionsList />", () => {
       <BankConnectionsList connections={mockConnections} variant="mobile" />,
     );
     expect(getByText("Monzo Bank")).toBeDefined();
+  });
+
+  test("shows no connect entry point unless connecting is enabled for the account", () => {
+    const { queryByText, getByText } = customRender(
+      <BankConnectionsList connections={mockConnections} />,
+    );
+    expect(queryByText("Connect Bank")).toBeNull();
+    expect(getByText("Monzo Bank")).toBeDefined();
+  });
+
+  test("renders nothing when there are no connections and connecting is not enabled", () => {
+    const { container } = customRender(<BankConnectionsList connections={[]} />);
+    expect(container.textContent).not.toContain("Bank Connections");
+    expect(container.textContent).not.toContain("No Connected Banks");
   });
 });

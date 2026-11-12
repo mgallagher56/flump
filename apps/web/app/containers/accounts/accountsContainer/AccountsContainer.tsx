@@ -45,6 +45,7 @@ const AccountsContainer: FC = () => {
     accounts = [],
     accountDetails = [],
     bankConnections = [],
+    bankConnectionsEnabled = false,
   } = useLoaderData<typeof loader>();
 
   // Calculate Net Worth, Assets, Liabilities, Liquid Cash, and Weighted Yield
@@ -571,7 +572,10 @@ const AccountsContainer: FC = () => {
                   )}
 
                   <div className={css({ marginTop: "8px" })}>
-                    <BankConnectionsList connections={bankConnections} />
+                    <BankConnectionsList
+                      connections={bankConnections}
+                      canConnect={bankConnectionsEnabled}
+                    />
                   </div>
                 </FLPBox>
               ),

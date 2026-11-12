@@ -29,6 +29,8 @@ export interface BankConnectionsListProps {
   connections: BankConnection[];
   isMobile?: boolean;
   variant?: "desktop" | "mobile";
+  /** Bank connection is owner-only (E19 D3-B); without this the connect entry points are hidden. */
+  canConnect?: boolean;
 }
 
 const INSTITUTION_COLORS: { [key: string]: string } = {
@@ -50,6 +52,7 @@ const BankConnectionsList: FC<BankConnectionsListProps> = ({
   connections = [],
   isMobile: propIsMobile,
   variant = "desktop",
+  canConnect = false,
 }) => {
   const fetcher = useFetcher();
   const [disconnectTarget, setDisconnectTarget] = useState<BankConnection | null>(null);
@@ -185,6 +188,9 @@ const BankConnectionsList: FC<BankConnectionsListProps> = ({
     color: "gray.300",
   });
 
+  // Nothing to manage and nothing the user may connect: leave the section out entirely.
+  if (!canConnect && connections.length === 0) return null;
+
   return (
     <div className={containerStyle}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
@@ -196,7 +202,7 @@ const BankConnectionsList: FC<BankConnectionsListProps> = ({
             Manage your connected bank credentials and balance feeds.
           </FLPText>
         </div>
-        <ConnectBankWizard onSuccess={() => revalidator.revalidate()} />
+        {canConnect && <ConnectBankWizard onSuccess={() => revalidator.revalidate()} />}
       </div>
 
       <ConfirmDialog
@@ -302,9 +308,11 @@ const BankConnectionsList: FC<BankConnectionsListProps> = ({
               savings, mortgages, credit cards, and investments.
             </FLPText>
           </div>
-          <div style={{ marginTop: "8px" }}>
-            <ConnectBankWizard onSuccess={() => revalidator.revalidate()} />
-          </div>
+          {canConnect && (
+            <div style={{ marginTop: "8px" }}>
+              <ConnectBankWizard onSuccess={() => revalidator.revalidate()} />
+            </div>
+          )}
         </div>
       )}
     </div>

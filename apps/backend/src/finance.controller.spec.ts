@@ -499,4 +499,14 @@ describe("FinanceController & FinanceService", () => {
       NotFoundException,
     );
   });
+
+  it("bank sync stores no transactions (E19 D8-A)", async () => {
+    const { controller, mockProvider, mockTransactionRepo } = createMocks();
+    await controller.connectBank(
+      { user: { id: "user-123" } },
+      { institutionId: "monzo", token: "tok" },
+    );
+    expect(mockProvider.fetchTransactions).not.toHaveBeenCalled();
+    expect(mockTransactionRepo.save).not.toHaveBeenCalled();
+  });
 });

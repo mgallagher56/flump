@@ -166,6 +166,14 @@ export const routes = {
       ownership: "user",
       group: "bank-connections",
     }),
+    capability: defineRoute({
+      id: "bankConnections.capability",
+      method: "GET",
+      path: "bank-connections/capability",
+      auth: "user",
+      ownership: "user",
+      group: "bank-connections",
+    }),
     connect: defineRoute({
       id: "bankConnections.connect",
       method: "POST",
