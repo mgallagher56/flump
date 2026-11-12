@@ -1,11 +1,23 @@
 import { expect, test } from "bun:test";
-import {
-  assertEnvelopeClean,
-  runEnvelopeScenario,
-} from "../../apps/backend/test/support/sentry-envelope";
+import { existsSync } from "node:fs";
+
+// The backend resolves @flump/observability from its built dist, and the helper below
+// imports the backend at module load. Jobs that run `bun test ./scripts` before building
+// workspace packages (the Lint job) therefore skip this test and must not import the
+// helper statically; the Vitest job builds first, so the check still runs in CI.
+const observabilityBuilt = existsSync(
+  new URL("../../packages/observability/dist/index.js", import.meta.url),
+);
 
 // Proves the Sentry SDK transport and exception filter under Bun (the production runtime).
-test("Sentry envelope under Bun carries the exception and no sentinels", async () => {
-  const result = await runEnvelopeScenario();
-  expect(() => assertEnvelopeClean(result)).not.toThrow();
-}, 30_000);
+test.skipIf(!observabilityBuilt)(
+  "Sentry envelope under Bun carries the exception and no sentinels",
+  async () => {
+    const { assertEnvelopeClean, runEnvelopeScenario } = await import(
+      "../../apps/backend/test/support/sentry-envelope"
+    );
+    const result = await runEnvelopeScenario();
+    expect(() => assertEnvelopeClean(result)).not.toThrow();
+  },
+  30_000,
+);
