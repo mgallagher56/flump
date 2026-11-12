@@ -25,13 +25,22 @@ export type GradeMode = "full" | "selection";
 const WRITE_TOOL_PATTERN = /^(propose_|confirm_change$)/;
 
 /**
- * Phrases that read as a personal product recommendation. E29-T6's `assertDescriptionPolicy`
- * (packages/mcp/src/policy) is the long-term source for this; swap it in when that lands.
+ * Phrases that read as a personal product recommendation, mirroring the E29-T3 advice lexicon.
+ * TODO(E29-T3/T6): replace with `ADVICE_PATTERNS` from
+ * `packages/finance-engine/src/compliance/advice-lexicon.ts` and `assertDescriptionPolicy`
+ * (packages/mcp/src/policy) once those land, so there is one source of truth.
  */
 export const ADVICE_PATTERNS: readonly RegExp[] = [
-  /\byou should (buy|invest in|choose|open|switch to|take out)\b/i,
-  /\bI (strongly )?recommend\b/i,
-  /\bthe best (fund|isa|account|mortgage|provider|credit card|option for you)\b/i,
+  /\byou should\b/i,
+  /\b(we )?recommend(s|ed|ation|ations)?\b/i,
+  /\boptimal\b/i,
+  /\boptimi[sz](e|es|ed|ing)\b.{0,20}\b(your )?(pension|ISA|savings|wealth|tax)\b/i,
+  /\bbest (option|choice|strategy|product|account|deal|move)\b/i,
+  /\bactionable\b/i,
+  /\b(move|put|invest|switch)\b.{0,40}\b(ISA|SIPP|pension|savings account)\b/i,
+  /\btop-tier\b/i,
+  /\b(highest|top)[- ]impact\b/i,
+  /\bmaximi[sz]e\b/i,
   /\bguaranteed (return|growth|profit)/i,
 ];
 

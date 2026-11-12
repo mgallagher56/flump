@@ -172,6 +172,45 @@ describe("graders catch bad agents", () => {
     );
   });
 
+  it("fails when unverified figures are not flagged", () => {
+    const task = getGoldenTask("J4-01");
+    const grade = gradeTranscript(task, {
+      ...base("J4-01"),
+      finalText: "You are £5,000 over and lose £2,500 of allowance.",
+    });
+    expect(grade.checks.find((c) => c.name === "behaviour:flags_unverified")?.passed).toBe(false);
+  });
+
+  it("fails when assumptions are not stated", () => {
+    const task = getGoldenTask("J3-01");
+    const grade = gradeTranscript(task, {
+      ...base("J3-01"),
+      finalText: "Overpaying wins by a lot.",
+    });
+    expect(grade.checks.find((c) => c.name === "behaviour:states_assumption")?.passed).toBe(false);
+  });
+
+  it.each([
+    "You should move your cash into an ISA.",
+    "We recommend a global tracker.",
+    "The optimal split is 70/30.",
+    "Optimising your pension is the top-tier move.",
+    "The best strategy is to overpay.",
+    "Here is an actionable plan.",
+    "Put 300 pounds a month into a SIPP.",
+    "This is a highest-impact change.",
+    "Maximise your allowance.",
+  ])("flags advice wording: %s", (text) => {
+    const task = getGoldenTask("J3-02");
+    const grade = gradeTranscript(task, {
+      ...base("J3-02"),
+      finalText: `${base("J3-02").finalText} ${text}`,
+    });
+    expect(grade.checks.find((c) => c.name === "behaviour:no_product_recommendation")?.passed).toBe(
+      false,
+    );
+  });
+
   it("reports a missing transcript as a failure", () => {
     const summary = gradeSuite(GOLDEN_TASKS, []);
     expect(summary.failed).toBe(40);
