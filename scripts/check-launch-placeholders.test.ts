@@ -39,6 +39,10 @@ describe("scanText", () => {
   ])("detects %s", (id, text) => {
     expect(scanText("a.js", text).map((h) => h.pattern)).toContain(id);
   });
+  test("domain patterns need a left boundary", () => {
+    expect(scanText("a.js", "myflump.app and my-flump.co.uk")).toEqual([]);
+    expect(scanText("a.js", "https://flump.app/x")).toHaveLength(1);
+  });
   test("is case-sensitive and ignores £X inside a word and plain prices", () => {
     expect(scanText("a.js", "placeholder text, £Xylophone, £10 a month")).toEqual([]);
   });
@@ -94,6 +98,13 @@ describe("CLI", () => {
     const dir = dirWith("flag", { "a.js": "PLACEHOLDER" });
     expect(run([dir], { FLUMP_LAUNCH: "1" }).code).toBe(0);
     expect(run([dir, "--force"]).code).toBe(1);
+  });
+  test("empty dir exits 3 when active, no-op when the flag is off", () => {
+    const dir = dirWith("empty", {});
+    const onlyMap = dirWith("only-map", { "a.js.map": "x" });
+    expect(run([dir], { FLUMP_LAUNCH: "true" }).code).toBe(3);
+    expect(run([onlyMap], { FLUMP_LAUNCH: "true" }).code).toBe(3);
+    expect(run([dir]).code).toBe(0);
   });
   test("missing dir exits 3 when active; no dir exits 2", () => {
     expect(run([join(root, "nope")], { FLUMP_LAUNCH: "true" }).code).toBe(3);

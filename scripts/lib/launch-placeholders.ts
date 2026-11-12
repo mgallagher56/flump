@@ -16,8 +16,8 @@ export const PLACEHOLDER_PATTERNS: PlaceholderPattern[] = [
   { id: "example.invalid", regex: /example\.invalid/ },
   { id: "£X/£Y price", regex: /£[XY]\b/ },
   { id: "\\u00a3X/\\u00a3Y price", regex: /\\u00a3[XY]\b/i },
-  { id: "unowned domain flump.app", regex: /flump\.app/ },
-  { id: "unowned domain flump.co.uk", regex: /flump\.co\.uk/ },
+  { id: "unowned domain flump.app", regex: /(?<![\w.-])flump\.app/ },
+  { id: "unowned domain flump.co.uk", regex: /(?<![\w.-])flump\.co\.uk/ },
 ];
 
 export interface AllowEntry {
