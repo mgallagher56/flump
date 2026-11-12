@@ -1,6 +1,6 @@
 # Uptime checks and alert routing
 
-Owner setup guide (E18-N12, owner tasks O-08 and O-09). Nothing here is configured by an agent: it needs accounts, so every step is for the owner. Labels: **V** means verified against code or docs on 2026-11-12, **unverified** means confirm before relying on it.
+Owner setup guide (E18-N12). Nothing here is configured by an agent: it needs accounts, so every step is for the owner. Labels: **V** means verified against code or docs on 2026-11-12, **unverified** means confirm before relying on it.
 
 ## 1. Monitors
 
@@ -12,11 +12,11 @@ Create one monitor per service in an uptime tool (Better Stack Uptime or UptimeR
 | Web       | `/healthz`      | HTTP 200, body contains `"ok"` | Resource route, no backend call (`apps/web/app/routes/healthz.ts`).                                                                                              |
 | Marketing | `/healthz`      | HTTP 200, body contains `"ok"` | Express ops router (`apps/marketing/server/ops.ts`).                                                                                                             |
 
-- Interval: 3 to 5 minutes. Keyword check on `ok` (the 503 body contains `unavailable`, not `ok`, so the keyword also guards against a wrong 200).
+- Interval: 3 to 5 minutes. Keyword check on `"status":"ok"` (keep the quotes). It catches a 200 from the wrong thing; the backend's 503 body is `{"status":"unavailable"}`, which fails both checks.
 - Alert only after 2 consecutive failures (about 6 to 10 minutes) to keep noise down.
 - The backend liveness path `/health` is DB-free. Use it only for Railway's own healthcheck, not for uptime: it stays green during a database outage.
 - Staging monitors are optional. Staging has no URL defaults by design (`scripts/ops/smoke.sh staging` needs `BACKEND_URL`, `WEB_URL` and `MARKETING_URL`).
-- Run `bash scripts/ops/smoke.sh production` after setup to confirm the same URLs answer before pointing a monitor at them.
+- Run `MARKETING_URL=https://<marketing-domain> bash scripts/ops/smoke.sh production` after setup to confirm the same URLs answer before pointing a monitor at them.
 
 ### Backup heartbeat (future, A-16)
 
@@ -37,7 +37,7 @@ Railway facts (V, docs.railway.com/observability/webhooks and /deployments/deplo
 - After 10 automatic restarts a deployment becomes Crashed, and Railway sends webhooks and emails to project members.
 - The only event type string the webhook docs spell out is `"Deployment.failed"`. The exact string for a crash (likely `Deployment.crashed`) is **unverified**: choose the events in the webhook form, trigger Test Webhook, and read the `type` field in the payload before relying on a filter. If unsure, leave events unfiltered and tolerate the noise at first.
 - Discord and Slack have provider-specific webhook URL formats (Railway docs, "Muxers"): paste the channel's webhook URL directly.
-- Railway has no log-based alerts (inference). Use Sentry for errors. CPU, RAM and disk Monitors need the Pro plan (draft E18, V).
+- Railway has no log-based alerts (inference). Use Sentry for errors. CPU, RAM and disk Monitors need the Pro plan (from the E18 draft, not re-checked here).
 
 ### Setup steps (owner)
 
@@ -49,12 +49,12 @@ Railway facts (V, docs.railway.com/observability/webhooks and /deployments/deplo
 
 Do these once after setup, and again after changing a route.
 
-| Alert           | How to test                                                                                                                                                                                                    | Pass when                                                                  |
-| --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
-| Railway webhook | Webhook form, Test Webhook (10 s timeout; or the Railway MCP `test-webhook` tool)                                                                                                                              | The sample payload appears in the channel and the form shows a 2xx status. |
-| Uptime          | Use the tool's "send test notification". For a real check, add a temporary monitor on a path that returns 404 (for example `/healthz-test`) and delete it afterwards. Do not stop production services to test. | Email and push both arrive within 10 minutes.                              |
-| Sentry          | Use the alert rule's "Send test notification", or send a test event from staging only.                                                                                                                         | Email and channel message arrive.                                          |
-| Heartbeat       | Skip a ping once the backup cron exists.                                                                                                                                                                       | Alert arrives after the grace period.                                      |
+| Alert           | How to test                                                                                                                                                                                                                                                                                                     | Pass when                                                                  |
+| --------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| Railway webhook | Webhook form, Test Webhook (10 s timeout; or the Railway MCP `test-webhook` tool)                                                                                                                                                                                                                               | The sample payload appears in the channel and the form shows a 2xx status. |
+| Uptime          | Use the tool's "send test notification". For a real check, add a temporary monitor on a backend or web URL that returns 404 (for example `<backend-url>/health/nope`). Do not use marketing: its SPA catch-all returns 200 for unknown paths and delete it afterwards. Do not stop production services to test. | Email and push both arrive within 10 minutes.                              |
+| Sentry          | Use the alert rule's "Send test notification", or send a test event from staging only.                                                                                                                                                                                                                          | Email and channel message arrive.                                          |
+| Heartbeat       | Skip a ping once the backup cron exists.                                                                                                                                                                                                                                                                        | Alert arrives after the grace period.                                      |
 
 ## 4. Noise budget
 
