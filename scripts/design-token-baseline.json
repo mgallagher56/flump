@@ -79,7 +79,7 @@
   "apps/web/app/components/tax/CopyTaxYearModal.tsx": 19,
   "apps/web/app/components/tax/PaymentsOnAccountCard.tsx": 7,
   "apps/web/app/components/tax/TaxIncomeSectionCard.tsx": 24,
-  "apps/web/app/components/tax/TaxTrapAlertBanner.tsx": 13,
+  "apps/web/app/components/tax/TaxTrapAlertBanner.tsx": 10,
   "apps/web/app/containers/accounts/accountDetailContainer/AccountDetailContainer.tsx": 4,
   "apps/web/app/containers/accounts/accountsContainer/AccountsContainer.tsx": 14,
   "apps/web/app/containers/budget/BudgetContainer.tsx": 5,
