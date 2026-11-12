@@ -86,6 +86,14 @@ jobs:
             *) echo "::error title=Tax-year calendar::Guard script crashed (exit $code)."; exit 1 ;;
           esac
 
+      # Advisory (E24-T10): report mode always exits 0. Strict mode is for launch day only.
+      - name: 🚦 Launch-readiness report
+        run: |
+          {
+            echo "### 🚦 Launch-readiness checklist (advisory)"
+            bun run check:launch -- --markdown
+          } >> "$GITHUB_STEP_SUMMARY"
+
       - name: 🧪 Test repo scripts
         run: bun run test:scripts
 
