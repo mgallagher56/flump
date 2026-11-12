@@ -1,5 +1,126 @@
 # Changelog
 
+## [1.26.0](https://github.com/mgallagher56/flump/compare/flump/web-v1.25.1...flump/web-v1.26.0) (2026-11-12)
+
+
+### Features ✨
+
+* status text colours use status.*.text tokens (E8 T35), storybook router mock exports MemoryRouter ([ace97cb](https://github.com/mgallagher56/flump/commit/ace97cb0a5247021750fcdbf7f30c3f801ca1e31))
+* Storybook a11y gate (vitest browser project, light/dark runs, waiver ratchet, non-required CI job) ([c4e5ed4](https://github.com/mgallagher56/flump/commit/c4e5ed400534c471c89af3691c19bd07dc6d97b2))
+* **web,marketing:** add healthz, robots.txt and X-Robots-Tag noindex unless ALLOW_INDEXING=true ([529bcab](https://github.com/mgallagher56/flump/commit/529bcab1080392421a4a35bb8175961b8a59d7a2))
+* **web:** add BackendError and backendFetch with timeout and GET-only retry ([88ff9b9](https://github.com/mgallagher56/flump/commit/88ff9b968e078fed5a32b219151d09e203f2ab3f))
+* **web:** add ConfirmDialog alertdialog component ([4d602e2](https://github.com/mgallagher56/flump/commit/4d602e2b3028fb899b7c143aca56871e61cee614))
+* **web:** add RouteErrorBoundary and restyle root error boundary ([7e31266](https://github.com/mgallagher56/flump/commit/7e31266ca9e5afb55d52a9a6d5a50b1001ed7f12))
+* **web:** add RouteErrorState component with unauthorised sign-in variant ([bdbc14c](https://github.com/mgallagher56/flump/commit/bdbc14c39740cedfe7d63486b5f2ba2719038ab5))
+* **web:** add throwRouteError mapping BackendError to route responses ([2a539d3](https://github.com/mgallagher56/flump/commit/2a539d30babd6214758b04f6eca7afd8aa6ccd50))
+* **web:** add validated API base URL config and fix docs to backend port 4000 ([ea4af91](https://github.com/mgallagher56/flump/commit/ea4af91ffe2250ba54bbbd48e88dd79c54f0989e))
+* **web:** adopt ConfirmDialog for account, year and bank disconnect deletes ([1cdd02e](https://github.com/mgallagher56/flump/commit/1cdd02e22524fa365f247596bac7cf0f811e899a))
+* **web:** adopt ConfirmDialog for savings, pension and budget deletes ([71a98a1](https://github.com/mgallagher56/flump/commit/71a98a18639ac174e2cf750874c17bc0272e24d6))
+* **web:** adopt ConfirmDialog for tax deletes and profile reset ([dd3726e](https://github.com/mgallagher56/flump/commit/dd3726e302726db81c85f3064b2eb706221127d2))
+* **web:** browser apiFetch client and useUserProfile on it ([5c67514](https://github.com/mgallagher56/flump/commit/5c67514e6e92a0aac66fe6743de4d75d38c09d13))
+* **web:** budget container and onboarding seeding on apiFetch with visible errors ([2bfd98c](https://github.com/mgallagher56/flump/commit/2bfd98c9ddd75fe27af1660a72a8ad01894b46e6))
+* **web:** dashboard debt summary computed by the engine, consumer debt only ([d0e7424](https://github.com/mgallagher56/flump/commit/d0e74242df64a86e89f8c3f4395915d637f53562))
+* **web:** debt page shows an empty state instead of invented debts ([a574175](https://github.com/mgallagher56/flump/commit/a57417535291f6a4e1b646e89d6a28050515241a))
+* **web:** E8 form-field a11y, primary.solid sweep, focus/scroll css, keyboard and dialog fixes ([c857b78](https://github.com/mgallagher56/flump/commit/c857b78561cae6a1c1c996c5cd2cd0cbb2f77a6d))
+* **web:** E8 landmarks, chart figures, live regions, icon-button labels, a11y lint rules to error ([5066d00](https://github.com/mgallagher56/flump/commit/5066d00b559d76f276302826b299d014af380ca3))
+* **web:** honest loaders via backendFetch for snapshot, profile, onboarding, app index, account detail and root ([7221bab](https://github.com/mgallagher56/flump/commit/7221bab0c5e527109fae0cb3d3094a86865bf365))
+* **web:** link every 'Not set' to where it can be set, label sandbox sample data (E23 P0-4 review) ([a78ca2d](https://github.com/mgallagher56/flump/commit/a78ca2dc34ffcba758ae9a70a18ffd165a8cbeb0))
+* **web:** persist debts through /accounts with delete confirmation ([74b2dc6](https://github.com/mgallagher56/flump/commit/74b2dc6c69991fc2500b3113b9bd9624f08f33c4))
+* **web:** POST-only logout, isFlumpHost cookie domain, dev-only configure, drop duplicate callback and dead session module, replace in-app password change with reset email ([eadff90](https://github.com/mgallagher56/flump/commit/eadff90f26c3905b2afc0090b5e21bd5af429a97))
+* **web:** retire ?demo=true dashboard; demo is the single /sandbox experience ([d292fdb](https://github.com/mgallagher56/flump/commit/d292fdbd42eb0dceebfa0c366b7761457be150d3))
+* **web:** route actions on backendFetch with generic action errors ([953c419](https://github.com/mgallagher56/flump/commit/953c419a40f76e628caea564ee9de94a00d0a90b))
+
+
+### Bug Fixes 🪲
+
+* **backend:** register bank-connections refresh route, reject blank budget name on PATCH ([5a31449](https://github.com/mgallagher56/flump/commit/5a31449b2cb13ce810139ef42e135a2bca22307c))
+* ChartFigure focus and hideTitle, honest stories, AccountsCard semantics, storybook config cleanup ([63cfbd4](https://github.com/mgallagher56/flump/commit/63cfbd41e84178b91383d714e5b89bbd33c04a46))
+* **ci:** audit outage policy, stricter route tests, scanner fixes, baseline docs ([1fd71ea](https://github.com/mgallagher56/flump/commit/1fd71ea57639b694f3170d5b668662dcf002af38))
+* **finance-engine,web:** record-date year bucketing, exact salary sacrifice saving, sheet fixes ([bfe7eef](https://github.com/mgallagher56/flump/commit/bfe7eef88367e15cd0405e90cd1188a4d4354a46))
+* **finance-engine:** toDebtItems never invents an APR and flags estimated minimums ([77b501e](https://github.com/mgallagher56/flump/commit/77b501eac288756abc00dd39845af7200d450e77))
+* **ops:** address PR review (owner id checks, mock-identity review, backup verification, recovery commands, robots/ALLOW_INDEXING, CI runs ops tests) ([841a8a1](https://github.com/mgallagher56/flump/commit/841a8a160b6327419533e3c58b21964cda27316a))
+* round-2 review (rule-scoped a11y waivers, tab-order sweep, storybook alias, spinner, labels) ([a7e68f0](https://github.com/mgallagher56/flump/commit/a7e68f08d4d9acc8381203a4c9a488539401d1c1))
+* **security:** address PR 390 review (honest reset errors, limiter reset and /64 keys, trust-proxy env, CORS warn-and-deny, SECURITY_CONTACT-gated security.txt, isFlumpHost cases) ([5bd34ea](https://github.com/mgallagher56/flump/commit/5bd34ea20bb6ab22bee5b4b929a2b6d05022ccf1))
+* **ui:** split primary into accent and solid fill roles for AA button contrast ([f440f38](https://github.com/mgallagher56/flump/commit/f440f38b791d34138f340443d030698d42290636))
+* web-to-backend contract bugs (account currency, budget entry name, PATCH accounts) ([c4d709b](https://github.com/mgallagher56/flump/commit/c4d709b7aba398be55313255c397319031aea8f5))
+* **web,marketing:** apply owner copy decisions, remove legal statements, align web copy (E7) ([32f9d2f](https://github.com/mgallagher56/flump/commit/32f9d2f56035b11474cfc31691e515eb41f59695))
+* **web,marketing:** round 3 copy fixes, bank dialog copy, claims guards (E7) ([16ae682](https://github.com/mgallagher56/flump/commit/16ae682f314c19c6f2d6434010151d1dd04f6516))
+* **web,ui:** add RouteErrorBoundary styles file to satisfy colocation law, include scanned app files in ui test cache inputs ([e45a5dc](https://github.com/mgallagher56/flump/commit/e45a5dc52dcf83df64be9682a4562f32e25865fa))
+* **web:** address E8 review findings (live region baseline, honest summaries, focus, markup, stories) ([91ef397](https://github.com/mgallagher56/flump/commit/91ef3979fbb5fa9db94c8a9b67ebd4d4dfcf1f51))
+* **web:** bound apiFetch with timeout and abort, reject empty bodies, limit backend detail to client errors ([d0e8b49](https://github.com/mgallagher56/flump/commit/d0e8b49f0314ee1194cf13e90bd0235534625d6b))
+* **web:** budget dashboard hides invented month-to-date actuals ([6166883](https://github.com/mgallagher56/flump/commit/61668830bb12b24cfdaf6892dc869df9aafc6a00))
+* **web:** debt loader supplies real surplus, savings and essentials instead of literals ([cee7b21](https://github.com/mgallagher56/flump/commit/cee7b21b021dc7e2eecd3d8ce922a3e0a40bae54))
+* **web:** debt review fixes — liabilities display positive, no fabricated debt defaults, edit debt ([c4d8da3](https://github.com/mgallagher56/flump/commit/c4d8da37e5ca22db1491a41be44a9ee16f717e22))
+* **web:** debt summary cards show Not calculated for unknown APR, flag estimated minimums, no stage/runway/safe-to-spend from an empty budget ([dbdb9b7](https://github.com/mgallagher56/flump/commit/dbdb9b735cf184e4dd0815294de9d0c630e5be2d))
+* **web:** DebtWidget and HomeDashboard show no fallback debt figures ([7c582c4](https://github.com/mgallagher56/flump/commit/7c582c40623a1a4aca4d45262f8d3baf6ce906d7))
+* **web:** default new tax records to 6 April, show effective trap rate, fix three web tests; document month bucketing ([8fd4e7f](https://github.com/mgallagher56/flump/commit/8fd4e7fc59665c51c1d069e5ed37a9258308a278))
+* **web:** drive tax trap copy from the engine's two named rates (E23 P0-5, D11) ([94ddf0c](https://github.com/mgallagher56/flump/commit/94ddf0c5e3a185e4270f077f27fac52ba27e8e88))
+* **web:** drop invented wealth-check fallbacks; add debt, pension and mortgage widget stories ([cf79d44](https://github.com/mgallagher56/flump/commit/cf79d440d1ecea4059ebf28eb25d6ca02f81dc70))
+* **web:** drop stale 45,000 baselines and give every salary consumer an unknown branch (E23 P0-4 review) ([4730607](https://github.com/mgallagher56/flump/commit/4730607a2a3a67781a08f5b10ea620d4ed86d279))
+* **web:** drop unused import and useless fragment in home route ([e37f37e](https://github.com/mgallagher56/flump/commit/e37f37e4e1b90f4711e3bae57ddee1be99ec1978))
+* **web:** en-GB month names in AccountDetails labels; document FLPSpinner decorative default ([7c23ac7](https://github.com/mgallagher56/flump/commit/7c23ac78b32b1bc357091529b50f8d101e0c69bf))
+* **web:** encode route action path segments, guard missing token in loaders, reword 401 copy ([eaa7f6c](https://github.com/mgallagher56/flump/commit/eaa7f6ce742b10d514c1f92691c3ab4fb6fa06a4))
+* **web:** enforce dev-bypass refusal when the server loads; fail the guard script on scan errors ([c91b7a7](https://github.com/mgallagher56/flump/commit/c91b7a74c72e49b77ecf57b710b051eb3fc6aed1))
+* **web:** hide invented tax due figure on dashboard (E23 P0-1, D15) ([f4002ab](https://github.com/mgallagher56/flump/commit/f4002ab03042c468b72ff15458682b38ea4e2f10))
+* **web:** home loader no longer invents pension, mortgage or savings figures ([94ea8c2](https://github.com/mgallagher56/flump/commit/94ea8c20a80fab36b4bdb22a1e13bfbcee9d873e))
+* **web:** Ireland take-home needs no pension inputs; blank strings count as missing ([7ec0b0b](https://github.com/mgallagher56/flump/commit/7ec0b0bdf8726544a8d7839b4265e98955a1e014))
+* **web:** keep sandbox hand-off choices, explain disabled launch buttons, no fabricated baseline from salary-less seeds ([666564e](https://github.com/mgallagher56/flump/commit/666564ec98a95bc995e6d84e72d73f92f6a17442))
+* **web:** make P0 stories pass the Storybook a11y gate and build ([2510096](https://github.com/mgallagher56/flump/commit/2510096ee8e99573cdb485f8ff7fd3fdddcb935d))
+* **web:** make RouteErrorBoundary and RouteErrorState stories render in Storybook ([05f2d21](https://github.com/mgallagher56/flump/commit/05f2d21ba43db8351dc838a702d706ff0bb313ac))
+* **web:** migrate v1 baseline to v2 instead of discarding it (E23 P0-4 review) ([2ab68af](https://github.com/mgallagher56/flump/commit/2ab68af60ea52830847ae8402b6d4384ab038929))
+* **web:** mortgage page starts empty and prompts instead of assuming 150000, 25 years, 4.5% ([ae3db96](https://github.com/mgallagher56/flump/commit/ae3db967b2e4e3a46d400ba5da32e8a3e1b53894))
+* **web:** mortgage save persists only what the backend stores; blank inputs stay empty; wealth-check zero vs unknown ([1af60a4](https://github.com/mgallagher56/flump/commit/1af60a4ece6ea1ebbaee332fae6b02c8e54dcacb))
+* **web:** neutral tax copy and fixtures; drop seeding claims from docs ([bcb73bc](https://github.com/mgallagher56/flump/commit/bcb73bc8aaa95f5f0e8cfc7c2e4eec54b78e977b))
+* **web:** never show gross as take-home or an invented 45,000 salary (E23 P0-4, D09, D13) ([224c8a1](https://github.com/mgallagher56/flump/commit/224c8a17d1bd1a47b5daf69711686b6b619b7231))
+* **web:** no invented mortgage LTV/BTL values, savings 0% kept, debt summary honest, mortgage-only banner ([2c6df88](https://github.com/mgallagher56/flump/commit/2c6df8868b6763ae6dba10caa17098fe535a1a32))
+* **web:** no invented take-home/pension figures, no default interest-saved badge, honest debt and mortgage empty states ([aee0d4e](https://github.com/mgallagher56/flump/commit/aee0d4ef9b231353922f84b6403129cdb50f3b99))
+* **web:** NotSet uses router Link, named links and info text token; drop dead-end region link ([ad77373](https://github.com/mgallagher56/flump/commit/ad773736cc8af6f919b33f8b9877c3123337b34a))
+* **web:** onboarding seeding skips accounts and budget entries that already exist ([d60b0f7](https://github.com/mgallagher56/flump/commit/d60b0f744cc907b37cad8aafe201cef836081563))
+* **web:** onboarding starts empty; Finish needs income and only filled fields create records ([55ba225](https://github.com/mgallagher56/flump/commit/55ba225df0bcdfb59f1962e87c255563d1818e49))
+* **web:** pass tax region into the trap banner and pension callout, label the England assumption (E23 P0-5 review) ([202364c](https://github.com/mgallagher56/flump/commit/202364cbe463b91c91f53894d973e141828934e3))
+* **web:** pension drops the 45000 salary default and labels assumed contribution rates ([3852ac7](https://github.com/mgallagher56/flump/commit/3852ac7642702b0b944cb225cfa819835ce34ae7))
+* **web:** remove mock session fallbacks and require a real access token ([c713d2d](https://github.com/mgallagher56/flump/commit/c713d2dc63c400deffd38c88f5f514687c533ac4))
+* **web:** reset ConfirmDialog typed text whenever it closes ([50723cd](https://github.com/mgallagher56/flump/commit/50723cdfe7c74f3381544281a7b539e78c6a0510))
+* **web:** sandbox is signed-out only and its save seed carries no salary ([62670c0](https://github.com/mgallagher56/flump/commit/62670c02f4ab7e1412e9068485ddb071bf0f6f10))
+* **web:** send onboardingCompleted only after seeding succeeds ([8fdcc86](https://github.com/mgallagher56/flump/commit/8fdcc867f077c65591098e6661b6ee4731a78321))
+* **web:** show income-tax-only marginal rate outside the 100k trap, move salary-sacrifice estimate into engine ([e3282d9](https://github.com/mgallagher56/flump/commit/e3282d9fd6f5febffe970dd543178428ef1694d1))
+* **web:** surface failed confirmed deletes inline, close account modal only on success, validate OAuth redirect URLs ([c33c9e6](https://github.com/mgallagher56/flump/commit/c33c9e66540e2ba8647f920e16935f6756adb46d))
+* **web:** tax JSON 400s, onboarding action error alert, stronger action tests ([03cc3c5](https://github.com/mgallagher56/flump/commit/03cc3c5932f2f6d0751bb4a7f12861f63a83ad92))
+* **web:** theme the root error document, share backend error kinds, test root boundary ([9018c35](https://github.com/mgallagher56/flump/commit/9018c35acc7da971bec20a67069c65a18a679627))
+* **web:** token-missing guards, 401 contract tests, fetch restore, account id encoding, pending budget delete ([3682b5a](https://github.com/mgallagher56/flump/commit/3682b5aeabd5327bb48eeadb4087026da818721d))
+* **web:** type take-home missing hints and filter dashboard tax records to the current year (E23 P0-4/P0-1 review) ([0aaf3f6](https://github.com/mgallagher56/flump/commit/0aaf3f6ea49274aa0bfe3b0cc69be0b4f72cf073))
+* **web:** use Button destructive variant for ConfirmDialog danger tone ([d8265e7](https://github.com/mgallagher56/flump/commit/d8265e7175cfac00a488d0f77e3c8caff7ff1048))
+* **web:** use status token for overdraft icon, shrink design-law baselines for cleaned files ([e4ff6c3](https://github.com/mgallagher56/flump/commit/e4ff6c39d2d96a7cdb0a30b3e59cc734459a098f))
+* **web:** wire mortgage rate/term from profile into dashboard, save them, no 1-year term on blank, empty-state CTA ([3cda997](https://github.com/mgallagher56/flump/commit/3cda99709305cec490608743914e01e1b3f46123))
+
+
+### Build 🛠️
+
+* **test:** use Vitest's built-in github-actions reporter ([6b5511a](https://github.com/mgallagher56/flump/commit/6b5511a89b4f14c81b78945073efc11946973535))
+
+
+### Documentation 📙
+
+* add pre-deploy checklist and make example secret placeholders fail loudly ([fd91d3a](https://github.com/mgallagher56/flump/commit/fd91d3a1f32f5cc80c95efcb49ea5fef19b83690))
+* document database, TLS, banking key and migrations configuration ([32333c7](https://github.com/mgallagher56/flump/commit/32333c766bebda1c9a050e5b59981c9396fb5583))
+
+
+### Tests 🧪
+
+* **backend:** harden contract test (split-field reset, discovered migrations, honest pairing) ([fa11e76](https://github.com/mgallagher56/flump/commit/fa11e7612f06ebc3727e6633af4102c37c7e7540))
+* **ci:** route tests, audit gate, token and tabular-nums ratchets, coverage floors ([e96cf81](https://github.com/mgallagher56/flump/commit/e96cf81e8e858030899848f57a8a1d7904e86fdc))
+* keep web onboarding twin literal (web tsconfig cannot import backend files); no Function type ([89da968](https://github.com/mgallagher56/flump/commit/89da968b9bd4f31f088b2ee5a436b553a017c3f8))
+* **web:** add single API client ratchet guard ([fae863d](https://github.com/mgallagher56/flump/commit/fae863dbae5d1428da1dc4b9d25827a8f12b17c1))
+* **web:** cover cleared what-if salary override staying undefined ([9059557](https://github.com/mgallagher56/flump/commit/9059557c5dd53a60f592e5c6ecee27546e62a537))
+* **web:** pin exact onboarding payloads for the backend contract pair (E23 P0-3) ([144755b](https://github.com/mgallagher56/flump/commit/144755bf157e860bc5c7b74449d9f82c7c7ff739))
+* **web:** router Link mock and notes field for budget dashboard tests ([747d67c](https://github.com/mgallagher56/flump/commit/747d67cc2c5e238740d359468d1795ca3cbeb574))
+* **web:** tax income card placeholder matches neutral copy ([73e4d59](https://github.com/mgallagher56/flump/commit/73e4d592612d5ee1a360e6feba8a049d9fc6cbb8))
+
+
+### Miscellaneous 🙃
+
+* add mock-auth guard script, document auth environment, enforce web dev-bypass at startup ([542d048](https://github.com/mgallagher56/flump/commit/542d04897b4d7a3dbb03a0bcadb3e09110344c0c))
+
 ## [1.25.1](https://github.com/mgallagher56/flump/compare/flump/web-v1.25.0...flump/web-v1.25.1) (2026-11-11)
 
 
