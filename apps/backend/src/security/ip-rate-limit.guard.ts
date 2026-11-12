@@ -1,5 +1,6 @@
 import { type CanActivate, type ExecutionContext, Inject, Injectable } from "@nestjs/common";
 import { Reflector } from "@nestjs/core";
+import { clientKey } from "./client-key";
 import { IP_RATE_LIMIT, isExemptPath, RATE_LIMIT_SKIP } from "./rate-limit.decorator";
 import { rejectRateLimited } from "./rate-limit.http";
 import { RateLimitStore } from "./rate-limit.store";
@@ -29,7 +30,7 @@ export class IpRateLimitGuard implements CanActivate {
     const req = http.getRequest();
     if (isExemptPath(req.path ?? req.url)) return true;
 
-    const decision = this.store.hit(`ip:${req.ip ?? "unknown"}`, IP_RATE_LIMIT);
+    const decision = this.store.hit(`ip:${clientKey(req.ip)}`, IP_RATE_LIMIT);
     if (!decision.allowed) {
       rejectRateLimited(
         http.getResponse(),

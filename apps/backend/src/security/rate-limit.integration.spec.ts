@@ -122,12 +122,29 @@ describe("rate limiting (E20-N13)", () => {
     const mcp = await burst(350, "POST", "/mcp");
     expect(mcp.every((r) => r.status === 201)).toBe(true);
   });
+});
 
-  it("applies the per-IP ceiling to non-exempt routes", async () => {
-    // Health and mcp above did not consume the IP budget, earlier tests used about 26 of 300.
-    const results = await burst(320, "GET", "/things");
-    const limited = results.filter((r) => r.status === 429);
-    expect(limited.length).toBeGreaterThan(0);
-    expect(limited[0].headers.get("retry-after")).not.toBeNull();
+describe("per-IP ceiling (E20-N13)", () => {
+  it("allows exactly 300 requests per minute, then returns 429 with Retry-After", async () => {
+    const moduleRef = await Test.createTestingModule({
+      imports: [SecurityModule],
+      controllers: [ProbeController],
+    }).compile();
+    const fresh = moduleRef.createNestApplication();
+    await fresh.listen(0, "127.0.0.1");
+    try {
+      const url = `${await fresh.getUrl()}/things`;
+      let status: number[] = [];
+      for (let sent = 0; sent < 300; sent += 20) {
+        const batch = await Promise.all(Array.from({ length: 20 }, () => fetch(url)));
+        status = status.concat(batch.map((r) => r.status));
+      }
+      expect(status.every((c) => c === 200)).toBe(true);
+      const blocked = await fetch(url);
+      expect(blocked.status).toBe(429);
+      expect(Number(blocked.headers.get("retry-after"))).toBeGreaterThan(0);
+    } finally {
+      await fresh.close();
+    }
   });
 });

@@ -15,6 +15,7 @@ interface Bucket {
 }
 
 const SWEEP_EVERY = 500;
+export const DEFAULT_MAX_ENTRIES = 50_000;
 
 /**
  * Fixed-window, in-memory counters (E20-N13). One bucket per key and window length. A request is
@@ -24,6 +25,8 @@ const SWEEP_EVERY = 500;
 export class RateLimitStore {
   private readonly buckets = new Map<string, Bucket>();
   private hits = 0;
+
+  constructor(private readonly maxEntries = DEFAULT_MAX_ENTRIES) {}
 
   hit(key: string, windows: readonly RateLimitWindow[], now = Date.now()): RateLimitDecision {
     if (++this.hits % SWEEP_EVERY === 0) this.sweep(now);
@@ -44,9 +47,20 @@ export class RateLimitStore {
     }
     for (const { id, bucket } of current) {
       bucket.count++;
+      if (!this.buckets.has(id)) this.makeRoom(now);
       this.buckets.set(id, bucket);
     }
     return { allowed: true, retryAfterSeconds: 0 };
+  }
+
+  /** Bounds memory: drop expired buckets, then the oldest-inserted ones, once at the cap. */
+  private makeRoom(now: number): void {
+    if (this.buckets.size < this.maxEntries) return;
+    this.sweep(now);
+    for (const id of this.buckets.keys()) {
+      if (this.buckets.size < this.maxEntries) break;
+      this.buckets.delete(id);
+    }
   }
 
   sweep(now = Date.now()): void {

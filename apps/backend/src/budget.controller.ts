@@ -16,6 +16,7 @@ import { Repository } from "typeorm";
 import { AuthGuard } from "./auth/auth.guard";
 import { BudgetEntry } from "./entities/budget-entry.entity";
 import { UserProfile } from "./entities/user-profile.entity";
+import { RateLimit } from "./security/rate-limit.decorator";
 
 type BudgetCategory = "housing" | "bills" | "expenses" | "savings" | "income" | string;
 type BudgetFrequency = "monthly" | "annual" | "weekly";
@@ -347,6 +348,7 @@ export class BudgetController {
   }
 
   @Delete("budget-entries/:id")
+  @RateLimit("destructive")
   async deleteBudgetEntry(@Req() req: any, @Param("id") id: string): Promise<{ success: boolean }> {
     const userId = req.user.id;
     const entry = await this.budgetEntryRepository.findOne({ where: { id, userId } });

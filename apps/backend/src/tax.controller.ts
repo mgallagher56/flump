@@ -15,6 +15,7 @@ import { Repository } from "typeorm";
 import { AuthGuard } from "./auth/auth.guard";
 import { TaxRecord } from "./entities/tax-record.entity";
 import { UserProfile } from "./entities/user-profile.entity";
+import { RateLimit } from "./security/rate-limit.decorator";
 
 /**
  * Allow-list of client-writable tax record fields. `id`, `userId`,
@@ -73,6 +74,7 @@ export class TaxController {
   }
 
   @Post("bulk")
+  @RateLimit("bank")
   async createBulkTaxRecords(
     @Req() req: any,
     @Body()
@@ -130,6 +132,7 @@ export class TaxController {
   }
 
   @Delete(":id")
+  @RateLimit("destructive")
   async deleteTaxRecord(@Req() req: any, @Param("id") id: string): Promise<{ success: boolean }> {
     const userId = req.user.id;
     const record = await this.taxRecordRepository.findOne({ where: { id, userId } });
