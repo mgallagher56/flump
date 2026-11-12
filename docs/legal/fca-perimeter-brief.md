@@ -21,7 +21,7 @@ How to read the references: `path:line` was checked on 2026-11-12. **[V-code]** 
 
 - OAuth endpoints for HSBC, Barclays, Revolut and Santander are configured (`apps/backend/src/providers/open-banking-standard.provider.ts:21-44`; the E19 plan also named NatWest, Lloyds and Chase, so the solicitor should treat the list as indicative).
 - The service builds a redirect URI `${BACKEND_URL}/bank-connections/callback` only when a client id and secret are configured for the institution (`apps/backend/src/finance.service.ts:200-209`).
-- I found **no route handling `bank-connections/callback`** in `apps/backend/src/finance.controller.ts` (it has `bank-connections` routes at `:166,172,176-190` only). So the OAuth flow does not complete. This is the E19 D-05 finding, re-checked.
+- No route found handling `bank-connections/callback` at `73dc5227`: `apps/backend/src/finance.controller.ts` has `bank-connections` routes at `:166,172,176-190` only. So the OAuth flow appears not to complete. This is the E19 D-05 finding, re-checked.
 
 ### Fact 3. Where bank connect is offered [V-code]
 
