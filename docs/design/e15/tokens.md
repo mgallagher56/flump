@@ -41,7 +41,7 @@ Self-hosting: `@fontsource-variable/{inter,plus-jakarta-sans,jetbrains-mono}` (p
 
 ## Motion and elevation
 
-Durations: instant 0ms, fast 120ms, base 200ms, slow 320ms. Easings: standard, enter, exit. Keyframes: `fadeIn`, `slideUp`, `scaleIn`, `shimmer`. z-index: base 0, sticky 10, header 20, dropdown 30, overlay 40, modal 50, toast 60.
+Durations: instant 0ms, fast 120ms, base 200ms, slow 320ms. Easings: standard, enter, exit. Keyframes: `fadeIn`, `slideUp`, `scaleIn`, `shimmer`. z-index (one scale, every preset-panda key redefined so nothing leaks through with a stale value): hide -1, base 0, docked 5, sticky 10, header 20, banner 25, dropdown 30, overlay 40, modal 50, popover 55, toast 60, tooltip 65, skipLink 70. No app or package consumes the z-index tokens yet: every existing `zIndex` is a numeric literal (for example 50/60 in dialogs, 80/90/100 in mobile nav, 1000 in AddDebtDialog, 9999/10000 in WidgetSettingsModal and MonthlyBalanceCheckInDrawer), so nothing breaks, but those literals do not follow this scale and should move to tokens during web adoption.
 
 Elevation keys `xs`, `card`, `raised`, `overlay`, `focus`, all with `_dark` (lighter surface plus a hairline inset highlight, black shadow alpha at most 0.4). `cardHover` and `floating` remain as aliases. The primitive `shadows.xs` moved into the semantic set (same name, now themed).
 
@@ -85,6 +85,44 @@ Deviations from the mockup values, forced by the contrast matrix: `border.input`
 | chart.baseline   | 3.50                     | 3.21                       | 3.86                    | 3.52                      |
 
 "All 5 surfaces" is card, canvas, sunken, subtle, overlay. The E8 light gap for chart warning/series5 on sunken and subtle is closed; `KNOWN_FAILURES` is now empty. Dark surface steps: canvas to card to overlay each at least 1.05:1 (sunken is a deliberate recess).
+
+### Status fills and white text (primary.foreground)
+
+`primary.foreground` is white in both themes. Measured WCAG ratios of it on `status.*.solid`:
+
+| Fill                    | Light | Dark | May carry white text? |
+| ----------------------- | ----- | ---- | --------------------- |
+| `status.positive.solid` | 4.61  | 2.52 | Light only            |
+| `status.warning.solid`  | 3.64  | 2.44 | Never                 |
+| `status.danger.solid`   | 5.06  | 4.83 | Both                  |
+| `status.info.solid`     | 6.29  | 2.72 | Light only            |
+| `status.neutral.solid`  | 4.69  | 3.17 | Light only            |
+
+**`warning.solid` and `positive.solid` (dark) must never carry white text** (warning 3.64 light / 2.44 dark; positive dark 2.52). The same applies to `info.solid` and `neutral.solid` in dark. These fills are graphics (3:1 on every page surface, asserted) or sit behind `text.*` tokens chosen per theme; if a labelled filled badge is needed, use `status.*.bg` with `status.*.text`. The allowed pairs are in `PRIMARY_FOREGROUND_OK` and the forbidden ones are asserted below 4.5 in `tokens.a11y.test.ts`.
+
+Other pairs added to the matrix (all pass, none are known failures): `text.muted` on `status.*.bg` composited under the card (5.13 to 6.53, min 5.13 positive/danger light); `status.*.solid` on canvas, sunken and subtle as 3:1 graphics (lowest: warning light 3.43 / 3.25 / 3.14, danger dark 3.87 / 3.96 / 3.27); `border.focusRing` on sunken, subtle and overlay (lowest 5.43 light, 7.25 dark). `KNOWN_FAILURES` stays empty. A negative test proves the harness throws on a violating pair (`surface.card` on `surface.card`, 1:1).
+
+## Visible changes for users
+
+- **Palette:** light and dark neutrals shift from slate to the cool ink-blue scale, so backgrounds, text and borders look slightly bluer and crisper. Dark surfaces step canvas, card, overlay.
+- **Form borders:** `border.input` is darker (3:1 on every surface), so inputs and sliders are easier to see.
+- **Status colours:** positive, warning, danger, info and neutral hues are refined; badges keep AA text contrast.
+- **Charts:** new series colours (eight in total) tuned for colour-blind readers; liabilities and debt are now amber instead of red; forecasts use a dashed projection colour and a faint band.
+- **Shadows and elevation:** shadows are themed; dark mode uses lighter surfaces with a hairline highlight instead of heavy drop shadows. Modals dim the page with a new scrim.
+- **Fonts:** self-hosted variable fonts replace the Google Fonts links once apps adopt `@repo/ui/fonts.css`.
+
+## Font weights
+
+The token scale stops at bold (700). Raw `fontWeight` usage above that, counted with grep over `apps` and `packages` (excluding generated output):
+
+| Weight               | apps/web | apps/marketing | apps/mobile-companion | packages |
+| -------------------- | -------- | -------------- | --------------------- | -------- |
+| 800                  | 20       | 15             | 18                    | 11       |
+| 900                  | 1        | 2              | 13                    | 0        |
+| `extrabold` (string) | 0        | 3              | 0                     | 0        |
+| `black`              | 0        | 0              | 0                     | 0        |
+
+`apps/web/app/components/home/HomeHero.tsx:121` uses 900. Plus Jakarta Sans and JetBrains Mono variable axes top out at 800, so 900 clamps to 800 there (Inter does reach 900). Many 800 usages exist; web adoption should map them to `bold` (700) or add an explicit `extrabold` token rather than relying on clamping. Mobile-companion is React Native and unaffected by the web fonts.
 
 ### Colour-vision deficiency
 
