@@ -1,6 +1,11 @@
 import { clearOnboardingSeed, persistOnboardingSeed } from "@flump/finance-engine";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  ONBOARDING_ACCOUNTS,
+  ONBOARDING_BUDGET_ENTRIES,
+  ONBOARDING_PROFILE,
+} from "../../../backend/test/contract/web-payloads";
 import OnboardingRoute from "./app.onboarding";
 
 const mockUpdateProfile = vi.fn().mockResolvedValue(undefined);
@@ -373,9 +378,9 @@ describe("OnboardingRoute (3-Step Baseline Flow)", () => {
     expect(profile.age).toBeUndefined();
   });
 
-  // Consumer half of the web-to-backend contract pair (E23 P0-3). The same literals live in
-  // apps/backend/test/contract/web-payloads.ts, which the backend posts to a real Postgres-backed
-  // app. If either side changes shape, the other test fails. Replaced by shared zod schemas in E21.
+  // Consumer half of the web-to-backend contract pair (E23 P0-3). The payloads are imported from
+  // apps/backend/test/contract/web-payloads.ts, which the backend replays against a real
+  // Postgres-backed app. Replaced by shared zod schemas in E21.
   it("sends the exact onboarding payloads the backend contract test replays", async () => {
     const fetchMock = vi.fn().mockImplementation(okFetch);
     globalThis.fetch = fetchMock as any;
@@ -397,71 +402,12 @@ describe("OnboardingRoute (3-Step Baseline Flow)", () => {
 
     const body = (suffix: string) =>
       posts(fetchMock, suffix).map(([, init]) => JSON.parse((init as RequestInit).body as string));
-    expect(body("/accounts")).toEqual([
-      { name: "Cash and emergency savings", type: "Saving", balance: 5000, isCurrent: true },
-      { name: "Workplace and personal pension", type: "Pension", balance: 15000, isCurrent: true },
-      { name: "Residential Mortgage", type: "Mortgage", balance: 200000, isCurrent: true },
-      { name: "Cards and loans baseline", type: "Credit Card", balance: 2000, isCurrent: true },
-    ]);
-    expect(body("/budget-entries")).toEqual([
-      {
-        name: "Monthly Take-Home Income",
-        category: "income",
-        amount: 2843,
-        isIncome: true,
-        frequency: "monthly",
-      },
-      {
-        name: "Mortgage Payment",
-        category: "housing",
-        amount: 900,
-        isIncome: false,
-        frequency: "monthly",
-      },
-      {
-        name: "General living and outgoings",
-        category: "living",
-        amount: 700,
-        isIncome: false,
-        frequency: "monthly",
-      },
-    ]);
+    expect(body("/accounts")).toEqual(ONBOARDING_ACCOUNTS);
+    expect(body("/budget-entries")).toEqual(ONBOARDING_BUDGET_ENTRIES);
     // JSON round trip: undefined fields are dropped on the wire, exactly as the backend sees them.
-    expect(JSON.parse(JSON.stringify(mockUpdateProfile.mock.calls[0][0]))).toEqual({
-      annualSalary: 45000,
-      monthlyTakeHome: 2843,
-      employmentType: "employed",
-      studentLoanPlan: "NONE",
-      housingStatus: "mortgage",
-      monthlyHousingCost: 900,
-      monthlyOtherOutgoings: 700,
-      totalCashSavings: 5000,
-      totalPensionPot: 15000,
-      totalUnsecuredDebt: 2000,
-      hasMortgage: true,
-      homeValue: 300000,
-      mortgageBalance: 200000,
-      pensionPercent: 5,
-      enabledPages: ["accounts", "budget", "savings", "forecast", "debt", "pension", "mortgage"],
-      dashboardWidgets: [
-        "accounts",
-        "budget",
-        "savings",
-        "forecast",
-        "debt",
-        "pension",
-        "mortgage",
-      ],
-      dashboardWidgetOrder: [
-        "accounts",
-        "budget",
-        "savings",
-        "forecast",
-        "debt",
-        "pension",
-        "mortgage",
-      ],
-    });
+    expect(JSON.parse(JSON.stringify(mockUpdateProfile.mock.calls[0][0]))).toEqual(
+      ONBOARDING_PROFILE,
+    );
     expect(mockUpdateProfile).toHaveBeenLastCalledWith({ onboardingCompleted: true });
   });
 });
