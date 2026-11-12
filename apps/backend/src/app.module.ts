@@ -20,6 +20,7 @@ import { MonzoProvider } from "./providers/monzo.provider";
 import { BankProviderRegistry } from "./providers/provider.registry";
 import { StarlingProvider } from "./providers/starling.provider";
 import { Trading212Provider } from "./providers/trading212.provider";
+import { SecurityModule } from "./security/security.module";
 import { TaxController } from "./tax.controller";
 import { UserProfileController } from "./user-profile.controller";
 import { UserProfileService } from "./user-profile.service";
@@ -29,6 +30,7 @@ import { UserProfileService } from "./user-profile.service";
     ConfigModule.forRoot({ isGlobal: true }),
     AuthModule,
     AppConfigModule,
+    SecurityModule,
     TypeOrmModule.forRootAsync({
       // Injecting BOOT_CONFIG makes boot validation run before any connection attempt.
       inject: [BOOT_CONFIG],

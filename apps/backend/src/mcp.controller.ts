@@ -47,6 +47,7 @@ export class McpController {
    * Generate a new Personal Access Token (PAT)
    */
   @Post("mcp-tokens")
+  @RateLimit("tokenMint")
   @UseGuards(AuthGuard)
   async createToken(
     @Req() req: any,
