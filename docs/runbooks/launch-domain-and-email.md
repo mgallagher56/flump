@@ -49,7 +49,7 @@ Set these at launch, in the Railway environment for each service.
 - `SECURITY_CONTACT`: `security@<domain>`. Set this now (O4).
 - `SITE_URL`: the canonical origin, set at launch.
 - `ALLOW_INDEXING`: set to `true` at launch only (see [launch-day.md](./launch-day.md)).
-- `FLUMP_LAUNCH`: set to `true` at launch.
+- `FLUMP_LAUNCH`: set to `true` at launch (planned, E24-T1; does not exist yet).
 - Analytics variables: `ANALYTICS_MODE` and `ANALYTICS_NOTICE_URL`, only after the notice is live (O4 and T9).
 
 **Web**
@@ -67,9 +67,9 @@ Set these at launch, in the Railway environment for each service.
 
 The code falls back to Railway hostnames when an env var is missing. Each fallback must be overridden before launch, or the production build may point at the wrong origin.
 
-- `security.ts:3`, `security.ts:13-14`
-- `url.ts:27-30`
-- `marketingUrl.ts:12`
+- `apps/marketing/server/security.ts:3`, `apps/marketing/server/security.ts:13-14`
+- `apps/marketing/src/utils/url.ts:27-30`
+- `apps/web/app/utils/marketingUrl.ts:12`
 
 Confirm each one reads its env var first in the production build. Do not remove the fallbacks in this runbook. Changing them is a code change with its own ticket.
 
