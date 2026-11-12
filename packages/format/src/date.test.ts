@@ -27,35 +27,33 @@ describe("formatRelativeTime", () => {
   const HOUR = 60 * MIN;
   const DAY = 24 * HOUR;
 
-  it("formats past and future with Intl", () => {
-    expect(formatRelativeTime(ago(30_000), now)).toBe("now");
+  it("formats past and future in plain English", () => {
+    expect(formatRelativeTime(ago(30_000), now)).toBe("just now");
+    expect(formatRelativeTime(ago(-30_000), now)).toBe("just now");
+    expect(formatRelativeTime(ago(MIN), now)).toBe("1 minute ago");
     expect(formatRelativeTime(ago(5 * MIN), now)).toBe("5 minutes ago");
+    expect(formatRelativeTime(ago(HOUR), now)).toBe("1 hour ago");
     expect(formatRelativeTime(ago(3 * HOUR), now)).toBe("3 hours ago");
     expect(formatRelativeTime(ago(DAY), now)).toBe("yesterday");
     expect(formatRelativeTime(ago(-DAY), now)).toBe("tomorrow");
     expect(formatRelativeTime(ago(3 * DAY), now)).toBe("3 days ago");
+    expect(formatRelativeTime(ago(7 * DAY), now)).toBe("last week");
+    expect(formatRelativeTime(ago(-7 * DAY), now)).toBe("next week");
     expect(formatRelativeTime(ago(14 * DAY), now)).toBe("2 weeks ago");
+    expect(formatRelativeTime(ago(30 * DAY), now)).toBe("last month");
     expect(formatRelativeTime(ago(90 * DAY), now)).toBe("3 months ago");
+    expect(formatRelativeTime(ago(-30 * DAY), now)).toBe("next month");
+    expect(formatRelativeTime(ago(365 * DAY), now)).toBe("last year");
+    expect(formatRelativeTime(ago(-365 * DAY), now)).toBe("next year");
     expect(formatRelativeTime(ago(800 * DAY), now)).toBe("2 years ago");
     expect(formatRelativeTime(ago(-2 * HOUR), now)).toBe("in 2 hours");
+    expect(formatRelativeTime(ago(-5 * MIN), now)).toBe("in 5 minutes");
+    expect(formatRelativeTime(ago(-MIN), now)).toBe("in 1 minute");
   });
   it("accepts strings and returns placeholder for invalid", () => {
     expect(formatRelativeTime("2026-11-12T11:00:00Z", now)).toBe("1 hour ago");
     expect(formatRelativeTime("nope", now)).toBe("Not set");
     expect(formatRelativeTime(null, now)).toBe("Not set");
-  });
-  it("falls back to plain English when Intl.RelativeTimeFormat is missing", () => {
-    const original = Intl.RelativeTimeFormat;
-    (Intl as unknown as { RelativeTimeFormat: unknown }).RelativeTimeFormat = undefined;
-    try {
-      expect(formatRelativeTime(ago(30_000), now)).toBe("just now");
-      expect(formatRelativeTime(ago(MIN), now)).toBe("1 minute ago");
-      expect(formatRelativeTime(ago(5 * MIN), now)).toBe("5 minutes ago");
-      expect(formatRelativeTime(ago(DAY), now)).toBe("1 day ago");
-      expect(formatRelativeTime(ago(-2 * HOUR), now)).toBe("in 2 hours");
-    } finally {
-      (Intl as unknown as { RelativeTimeFormat: unknown }).RelativeTimeFormat = original;
-    }
   });
 });
 

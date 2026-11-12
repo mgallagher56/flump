@@ -337,6 +337,108 @@ describe("401 single-flight refresh", () => {
     await expect(client.request("/x")).rejects.toMatchObject({ kind: "unauthorised" });
   });
 
+  it("maps a synchronously throwing onUnauthorised to unavailable and clears the refresh", async () => {
+    const onUnauthorised = vi.fn((): Promise<"refreshed"> => {
+      throw new Error("sync boom");
+    });
+    const { client, fetchMock } = setup({ onUnauthorised });
+    fetchMock.mockResolvedValue(respond(401));
+    for (let i = 0; i < 2; i++) {
+      const err = (await client.request("/x").catch((e) => e)) as BackendError;
+      expect(err.kind).toBe("unavailable");
+    }
+    expect(onUnauthorised).toHaveBeenCalledTimes(2);
+  });
+
+  it("reports unavailable without a 401 status when refresh is retryable", async () => {
+    const { client, fetchMock } = setup({ onUnauthorised: async () => "retryable" });
+    fetchMock.mockResolvedValue(respond(401));
+    const err = (await client.request("/x").catch((e) => e)) as BackendError;
+    expect(err.kind).toBe("unavailable");
+    expect(err.status).toBeUndefined();
+  });
+
+  it("maps a throwing getAccessToken to unavailable before the request", async () => {
+    const { client, fetchMock } = setup({
+      getAccessToken: () => {
+        throw new Error("keychain");
+      },
+    });
+    const err = (await client.request("/x").catch((e) => e)) as BackendError;
+    expect(err).toBeInstanceOf(BackendError);
+    expect(err.kind).toBe("unavailable");
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("maps a throwing getAccessToken in the post-401 re-read to unavailable", async () => {
+    let calls = 0;
+    const { client, fetchMock } = setup({
+      getAccessToken: async () => {
+        if (calls++ === 0) return "tok";
+        throw new Error("keychain");
+      },
+    });
+    fetchMock.mockResolvedValue(respond(401));
+    const err = (await client.request("/x").catch((e) => e)) as BackendError;
+    expect(err).toBeInstanceOf(BackendError);
+    expect(err.kind).toBe("unavailable");
+  });
+
+  it("maps a throwing getAccessToken after a refresh to unavailable", async () => {
+    let calls = 0;
+    const { client, fetchMock } = setup({
+      getAccessToken: async () => {
+        if (calls++ < 2) return "old";
+        throw new Error("keychain");
+      },
+      onUnauthorised: async () => "refreshed",
+    });
+    fetchMock.mockResolvedValue(respond(401));
+    const err = (await client.request("/x").catch((e) => e)) as BackendError;
+    expect(err.kind).toBe("unavailable");
+  });
+
+  it("bounds a hung refresh by timeoutMs and reports unavailable", async () => {
+    vi.useFakeTimers();
+    const { client, fetchMock } = setup({
+      timeoutMs: 100,
+      onUnauthorised: () => new Promise<never>(() => {}),
+    });
+    fetchMock.mockResolvedValue(respond(401));
+    const pending = client.request("/x").catch((e) => e);
+    await vi.advanceTimersByTimeAsync(200);
+    const err = (await pending) as BackendError;
+    vi.useRealTimers();
+    expect(err.kind).toBe("unavailable");
+    expect(err.status).toBeUndefined();
+  });
+
+  it("rethrows the caller abort as is while waiting on a hung refresh", async () => {
+    const controller = new AbortController();
+    const { client, fetchMock } = setup({
+      onUnauthorised: () => new Promise<never>(() => {}),
+    });
+    fetchMock.mockResolvedValue(respond(401));
+    const pending = client.request("/x", { signal: controller.signal }).catch((e) => e);
+    await new Promise((r) => setTimeout(r, 10));
+    const reason = new Error("caller-abort");
+    controller.abort(reason);
+    expect(await pending).toBe(reason);
+  });
+
+  it("rethrows an already aborted caller signal while waiting on refresh", async () => {
+    const controller = new AbortController();
+    const reason = new Error("early");
+    const { client, fetchMock } = setup({
+      onUnauthorised: async () => {
+        controller.abort(reason);
+        return "refreshed";
+      },
+    });
+    fetchMock.mockResolvedValue(respond(401));
+    expect(await client.request("/x", { signal: controller.signal }).catch((e) => e)).toBe(reason);
+  });
+
   it("is unauthorised without an onUnauthorised handler", async () => {
     const { client, fetchMock } = setup();
     fetchMock.mockResolvedValue(respond(401));

@@ -60,4 +60,23 @@ describe("messages", () => {
   it("equals web's strings for every kind", () => {
     expect(ACTION_MESSAGE_BY_KIND).toEqual(WEB_MESSAGES);
   });
+
+  it("lists exactly these eight kinds, each with an action message", () => {
+    const kinds = [
+      "unauthorised",
+      "forbidden",
+      "not-invited",
+      "not-found",
+      "client",
+      "server",
+      "unavailable",
+      "bad-response",
+    ];
+    expect([...BACKEND_ERROR_KINDS].sort()).toEqual([...kinds].sort());
+    for (const kind of BACKEND_ERROR_KINDS) {
+      expect(ACTION_MESSAGE_BY_KIND[kind]).toEqual(expect.any(String));
+      expect(ACTION_MESSAGE_BY_KIND[kind].length).toBeGreaterThan(0);
+    }
+    expect(Object.keys(ACTION_MESSAGE_BY_KIND).sort()).toEqual([...kinds].sort());
+  });
 });
