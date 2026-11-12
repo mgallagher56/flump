@@ -149,4 +149,17 @@ describe("useTheme", () => {
     act(() => listener?.({ matches: true }));
     expect(result.current.theme).toBe("light");
   });
+
+  test("first render uses the server default, then syncs the stored preference", () => {
+    localStorage.setItem("flump-theme", "light");
+    const themes: string[] = [];
+    const { result } = renderHook(() => {
+      const value = useTheme();
+      themes.push(value.theme);
+      return value;
+    });
+    expect(themes[0]).toBe("dark");
+    expect(result.current.theme).toBe("light");
+    expect(document.documentElement.getAttribute("data-theme")).toBe("light");
+  });
 });

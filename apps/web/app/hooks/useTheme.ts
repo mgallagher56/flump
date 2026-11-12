@@ -30,9 +30,19 @@ function applyTheme(theme: Theme) {
 }
 
 export function useTheme() {
-  const [preference, setPreferenceState] = useState<ThemePreference>(readPreference);
-  const [system, setSystem] = useState<Theme>(systemTheme);
+  // Initial state must equal what the server renders (system preference, dark) so hydration
+  // matches; the stored preference and live system theme are read in an effect after mount. The
+  // inline THEME_INIT_SCRIPT already painted the right theme on <html> in the meantime.
+  const [preference, setPreferenceState] = useState<ThemePreference>("system");
+  const [system, setSystem] = useState<Theme>("dark");
+  const [synced, setSynced] = useState(false);
   const theme: Theme = preference === "system" ? system : preference;
+
+  useEffect(() => {
+    setPreferenceState(readPreference());
+    setSystem(systemTheme());
+    setSynced(true);
+  }, []);
 
   // Follow live operating-system changes while no manual override is set.
   useEffect(() => {
@@ -45,8 +55,8 @@ export function useTheme() {
   }, []);
 
   useEffect(() => {
-    applyTheme(theme);
-  }, [theme]);
+    if (synced) applyTheme(theme);
+  }, [theme, synced]);
 
   const setPreference = useCallback((next: ThemePreference) => {
     setPreferenceState(next);
