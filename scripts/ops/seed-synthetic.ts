@@ -157,6 +157,7 @@ export async function seedSynthetic(
   const entries = validateAssignment(assignment);
   await db.query("BEGIN");
   try {
+    await db.query("SET LOCAL lock_timeout = '10s'"); // never wait forever on the backend
     await assertStagingMarker(db); // same connection and transaction as the writes
     // Block concurrent writers (the running backend) until we commit.
     await db.query(
@@ -192,7 +193,8 @@ export async function seedSynthetic(
     await db.query("COMMIT");
     return counts;
   } catch (error) {
-    await db.query("ROLLBACK");
+    // A failed ROLLBACK (for example a dead connection) must not hide the original error.
+    await db.query("ROLLBACK").catch(() => undefined);
     throw error;
   }
 }

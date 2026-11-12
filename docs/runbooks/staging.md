@@ -162,9 +162,11 @@ Do this before any friend or tester signs in to staging. The restore drill (`res
 2. Open a tunnel to the **staging** Postgres only and run, from the repo root:
 
    ```bash
-   STAGING_PGURL='<staging url>' PGURL='<production url, optional safety check>' \
-     bun scripts/ops/seed-synthetic.ts --persona P1=<id> --persona P2=<id> --persona P3=<id> --persona P5=<id>
+   export STAGING_PGURL='<staging url>'   # set it in the shell session, not inline in a logged command
+   bun scripts/ops/seed-synthetic.ts --persona P1=<id> --persona P2=<id> --persona P3=<id> --persona P5=<id>
    ```
+
+   `PGURL` (the production URL) is optional. If you want the extra "staging is not production" check, export it from your password manager; otherwise leave it unset. Never type the production URL on a command line, where shell history keeps it. The real protection is the database marker: the script cannot write to any database whose comment is not `flump-staging`, so never put that comment on production.
 
    It ends with `== OK: synthetic seed complete` and the row counts.
 3. Sign in to staging as each test user and check the dashboard shows that persona's numbers.

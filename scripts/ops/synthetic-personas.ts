@@ -139,7 +139,7 @@ export const SYNTHETIC_PERSONAS: Record<PersonaKey, SyntheticPersona> = {
       {
         name: "Synthetic P2 Mortgage",
         type: "Mortgage",
-        balance: -240000,
+        balance: 240000, // mortgages are stored positive; Loan and Credit Card are negative
         interestRate: 4.1,
         termMonths: 240,
         fixedRateEndDate: "2028-03-31",
@@ -211,7 +211,7 @@ export const SYNTHETIC_PERSONAS: Record<PersonaKey, SyntheticPersona> = {
       {
         name: "Synthetic P3 Mortgage",
         type: "Mortgage",
-        balance: -28000,
+        balance: 28000,
         interestRate: 3.2,
         termMonths: 36,
         fixedRateEndDate: "2027-09-30",
@@ -238,7 +238,7 @@ export const SYNTHETIC_PERSONAS: Record<PersonaKey, SyntheticPersona> = {
       monthlyTakeHome: 4300,
       hasRentalIncome: true,
       rentalIncomeMonthly: 650,
-      enabledPages: ALL_PAGES,
+      enabledPages: [...ALL_PAGES, "tax"],
     },
     accounts: [
       { name: "Synthetic P5 Current", type: "Current", balance: 5200 },

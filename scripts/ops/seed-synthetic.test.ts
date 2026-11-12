@@ -54,7 +54,7 @@ describe("argument and persona validation (no database)", () => {
       },
     };
     await expect(seedSynthetic(fake, { P1: P1_ID })).rejects.toThrow("flump-staging");
-    expect(calls).toEqual(["BEGIN", "SELECT", "ROLLBACK"]); // nothing deleted or inserted
+    expect(calls).toEqual(["BEGIN", "SET", "SELECT", "ROLLBACK"]); // nothing deleted or inserted
   });
 });
 
