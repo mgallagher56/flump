@@ -3,7 +3,7 @@ import type { NextFunction, Request, Response } from "express";
 /** Version prefix for the stable API surface (E21 phase 2). The unversioned routes keep working. */
 export const API_VERSION_PREFIX = "/v1";
 
-const V1_PATTERN = /^\/v1(?=\/|\?|$)/;
+const V1_PATTERN = /^\/v1(?=\/|\?|$)/i;
 
 /**
  * Strips a leading `/v1` from the request URL so `/v1/accounts` is served by the same handler as
