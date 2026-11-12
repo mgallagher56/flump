@@ -1,10 +1,10 @@
 import "reflect-metadata";
 import { DataSource, type DataSourceOptions } from "typeorm";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { typeOrmOptionsFromEnv } from "../config/typeorm.options";
 import { assertSafeTestDatabase } from "../testing/assertSafeTestDatabase";
 import { resolveDbTestMode } from "../testing/dbTestMode";
-import { discoverMigrations } from "../testing/discoverMigrations";
+import { discoverMigrations, type MigrationClass } from "../testing/discoverMigrations";
 import { Baseline1794355200000 } from "./Baseline1794355200000";
 import { ClearBankTokens1794355300000 } from "./ClearBankTokens1794355300000";
 import {
@@ -26,7 +26,7 @@ import {
 const TEST_DATABASE_URL = process.env.TEST_DATABASE_URL;
 
 // Discovered from src/migrations (shared with the contract test) so a new migration is never skipped.
-const MIGRATIONS = await discoverMigrations();
+let MIGRATIONS: MigrationClass[] = [];
 
 const ENTITY_TABLES = [
   "account_details",
@@ -41,6 +41,10 @@ const ENTITY_TABLES = [
 
 describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Postgres)", () => {
   let ds: DataSource;
+
+  beforeAll(async () => {
+    MIGRATIONS = await discoverMigrations();
+  });
 
   beforeEach(async () => {
     // Before any connection or schema drop.
