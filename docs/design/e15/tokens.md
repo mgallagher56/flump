@@ -62,7 +62,7 @@ Semantic `radii` (`densityRadii` in `layout.ts`, registered under `semanticToken
 | `card`    | 16px        | 8px     | additive alias of `xl`                                 |
 | `tray`    | 24px        | 12px    | additive alias of `2xl`                                |
 
-Aliases repeat literal values rather than `{radii.xl}`: a CSS variable that references another variable is resolved where it is declared (`:root`), so a reference would not follow `data-density` on a descendant. `xs`, `none` and `full` are unchanged. Compact is strictly tighter than comfortable at every step, and ordering holds within each density (tests). Known follow-ups: hard-coded `px` radii in `packages/ui/src/calculators/*` (4, 6, 8, 10, 12px literals) and in `apps/web` inline styles do not follow density (migrate to `card`, `tray` or `control`); this belongs to the screen migration (no screen changes in this PR).
+Aliases repeat literal values rather than `{radii.xl}`: a CSS variable that references another variable is resolved where it is declared (`:root`), so a reference would not follow `data-density` on a descendant. `xs`, `none` and `full` are unchanged. Compact is no larger than comfortable for every key (tighter for all current keys), and ordering `sm <= md <= lg <= xl <= 2xl` holds non-strictly within each density: in compact `lg` and `xl` are both 8px (tests in `tokens.foundations.test.ts`). Known follow-ups: hard-coded `px` radii in `packages/ui/src/calculators/*` (4, 6, 8, 10, 12px literals) and in `apps/web` inline styles do not follow density (migrate to `card`, `tray` or `control`); this belongs to the screen migration (no screen changes in this PR).
 
 ## Colour changes
 

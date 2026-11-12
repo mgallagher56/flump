@@ -3,6 +3,7 @@ import path from "node:path";
 import { describe, expect, it } from "vitest";
 import flumpPreset from "../../panda.preset";
 import {
+  densityRadii,
   densitySizes,
   densitySpacing,
   durations,
@@ -11,7 +12,9 @@ import {
   fontFamilies,
   fonts,
   motionKeyframes,
+  radii,
   semanticTokens,
+  shadows,
   sizes,
   textStyles,
   zIndex,
@@ -120,15 +123,78 @@ describe("E15 elevation", () => {
     }
   });
 
+  it("light elevation values use only the warm ink 43, 38, 32 (no cool slate or blue)", () => {
+    const lights = [
+      ...Object.entries(elevationShadows)
+        .filter(([key]) => key !== "focus")
+        .map(([key, t]) => [key, (t.value as Record<string, string>).base] as const),
+      ...Object.entries(shadows).map(([key, t]) => [key, t.value] as const),
+    ].filter(([, v]) => v.includes("rgba("));
+    expect(lights.length).toBeGreaterThanOrEqual(6);
+    for (const [key, value] of lights) {
+      for (const m of value.matchAll(/rgba\((\d+), (\d+), (\d+),/g)) {
+        expect(m.slice(1, 4).map(Number), key).toEqual([43, 38, 32]);
+      }
+    }
+  });
+
+  it("every dark elevation key (except focus) has the 1px hairline ring", () => {
+    for (const [key, token] of Object.entries(elevationShadows)) {
+      if (key === "focus") continue;
+      expect((token.value as Record<string, string>)._dark, key).toContain(
+        "0 0 0 1px rgba(255, 255, 255",
+      );
+    }
+  });
+
   it("dark elevation is a hairline highlight, not a heavy black shadow", () => {
     for (const [key, token] of Object.entries(elevationShadows)) {
       if (key === "focus") continue;
       const dark = (token.value as Record<string, string>)._dark;
       expect(dark, key).toContain("inset 0 1px 0 rgba(255, 255, 255");
       for (const m of dark.matchAll(/rgba\(0, 0, 0, ([\d.]+)\)/g)) {
-        expect(Number(m[1]), `${key} black alpha`).toBeLessThanOrEqual(0.4);
+        expect(Number(m[1]), `${key} black alpha`).toBeLessThanOrEqual(0.3);
       }
     }
+  });
+});
+
+describe("E15 radii (round 5, tied to density)", () => {
+  const sem = densityRadii.radii;
+  const px = (v: string) => Number.parseFloat(v);
+  const pair = (k: keyof typeof sem) => sem[k].value as { base: string; _compact: string };
+
+  it("every semantic radius has a compact value no larger than its comfortable base", () => {
+    for (const k of Object.keys(sem) as (keyof typeof sem)[]) {
+      expect(px(pair(k)._compact), k).toBeLessThanOrEqual(px(pair(k).base));
+    }
+  });
+
+  it("comfortable cards and trays are 16 and 24px, compact 8 and 12px; aliases match", () => {
+    expect([pair("xl").base, pair("2xl").base]).toEqual(["16px", "24px"]);
+    expect([pair("xl")._compact, pair("2xl")._compact]).toEqual(["8px", "12px"]);
+    expect(pair("card")).toEqual(pair("xl"));
+    expect(pair("tray")).toEqual(pair("2xl"));
+    expect(pair("control")).toEqual(pair("md"));
+  });
+
+  it("ordering sm <= md <= lg <= xl <= 2xl holds (non-strictly) within each density", () => {
+    const steps = ["sm", "md", "lg", "xl", "2xl"] as const;
+    for (const mode of ["base", "_compact"] as const) {
+      for (let i = 1; i < steps.length; i++) {
+        expect(px(pair(steps[i])[mode]), `${mode} ${steps[i]}`).toBeGreaterThanOrEqual(
+          px(pair(steps[i - 1])[mode]),
+        );
+      }
+    }
+  });
+
+  it("is additive: primitive radii keep every key and the preset wires the semantic set", () => {
+    for (const k of ["none", "xs", "sm", "md", "lg", "xl", "2xl", "full"]) {
+      expect(radii).toHaveProperty(k);
+    }
+    expect((flumpPreset as any).theme.extend.semanticTokens.radii).toBe(densityRadii.radii);
+    expect(semanticTokens.radii).toBe(densityRadii.radii);
   });
 });
 
