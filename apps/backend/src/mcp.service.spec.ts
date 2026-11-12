@@ -147,3 +147,63 @@ describe("McpService.getContextPack for a brand-new user", () => {
     expect(profiles.writes.save).toHaveBeenCalledTimes(1);
   });
 });
+
+describe("McpService.findTokenByHash allowlist (E29-T8)", () => {
+  const row = {
+    id: "tok_1",
+    userId: "friend",
+    tokenHash: "h",
+    scopes: [],
+    anonymizeInstitutions: true,
+    expiresAt: null,
+    revokedAt: null,
+  };
+  function withRepo() {
+    const nothing = {} as never;
+    const repo = { findOne: vi.fn().mockResolvedValue(row) };
+    return new McpService(
+      repo as never,
+      nothing,
+      nothing,
+      nothing,
+      nothing,
+      nothing,
+      nothing,
+      nothing,
+      nothing,
+      { get: vi.fn() } as never,
+      "workos",
+    );
+  }
+  const original = process.env;
+
+  it("returns null for a token whose owner is not allowlisted in production", async () => {
+    process.env = {
+      ...original,
+      NODE_ENV: "production",
+      MCP_ALLOWED_USER_IDS: "owner",
+      MCP_OPEN_ACCESS: "",
+    };
+    try {
+      expect(await withRepo().findTokenByHash("h")).toBeNull();
+    } finally {
+      process.env = original;
+    }
+  });
+
+  it("returns the record for an allowlisted owner or when open", async () => {
+    try {
+      process.env = {
+        ...original,
+        NODE_ENV: "production",
+        MCP_ALLOWED_USER_IDS: "friend",
+        MCP_OPEN_ACCESS: "",
+      };
+      expect((await withRepo().findTokenByHash("h"))?.id).toBe("tok_1");
+      process.env = { ...original, NODE_ENV: "production", MCP_OPEN_ACCESS: "true" };
+      expect((await withRepo().findTokenByHash("h"))?.id).toBe("tok_1");
+    } finally {
+      process.env = original;
+    }
+  });
+});

@@ -12,6 +12,7 @@ import {
 } from "@nestjs/common";
 import { AuthGuard } from "./auth/auth.guard";
 import { McpService } from "./mcp.service";
+import { McpAllowlistGuard, McpKillSwitchGuard } from "./mcp-access";
 import { RateLimit } from "./security/rate-limit.decorator";
 
 @Controller()
@@ -49,7 +50,7 @@ export class McpController {
    */
   @Post("mcp-tokens")
   @RateLimit("tokenMint")
-  @UseGuards(AuthGuard)
+  @UseGuards(McpKillSwitchGuard, AuthGuard, McpAllowlistGuard)
   async createToken(
     @Req() req: any,
     @Body()
@@ -81,7 +82,7 @@ export class McpController {
    * Offline AI Context Pack Exporter (.json and .md)
    */
   @Get("mcp-tokens/context-pack")
-  @UseGuards(AuthGuard)
+  @UseGuards(McpKillSwitchGuard, AuthGuard, McpAllowlistGuard)
   async getContextPack(@Req() req: any, @Query("anonymize") anonymize?: string) {
     const userId = req.user.id;
     const shouldAnonymize = anonymize !== "false";
