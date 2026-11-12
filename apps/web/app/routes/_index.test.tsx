@@ -72,6 +72,21 @@ describe("_index route", () => {
     expect(data).not.toHaveProperty("isDemo");
   });
 
+  it("never invents an estimated tax due figure from tax records", async () => {
+    vi.mocked(loadWorkspaceSnapshot).mockResolvedValueOnce({
+      user: { id: "u1", email: "real@example.com" },
+      accounts: [],
+      accountDetails: [],
+      budgetEntries: [],
+      taxRecords: [{ type: "income", amount: 100000, date: "2019-05-01", frequency: "annual" }],
+      userProfile: { onboardingCompleted: true },
+      portfolioSnapshot: undefined,
+    } as any);
+    const request = new Request("http://localhost/");
+    const data = (await loader({ request, params: {}, context: {} } as any)) as any;
+    expect(data.taxData.estimatedTaxDue).toBeNull();
+  });
+
   it("returns logged-out data when no session and not demo mode", async () => {
     const request = new Request("http://localhost/");
     const data = (await loader({ request, params: {}, context: {} } as any)) as any;

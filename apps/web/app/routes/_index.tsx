@@ -149,7 +149,8 @@ export const loader = async (args: LoaderFunctionArgs) => {
     .filter((r: any) => r.type === "expense")
     .reduce((sum: number, r: any) => sum + (Number(r.amount) || 0), 0);
   const netProfit = Math.max(0, totalTaxIncome - totalTaxExpenses);
-  const estimatedTaxDue = netProfit > 0 ? netProfit * 0.29 : 0; // standard approx 20% tax + 9% Class 4 NI
+  // Not calculated yet: the old flat 29% across every year's records was an invented figure.
+  const estimatedTaxDue: number | null = null;
 
   // Estimated take-home: only when salary, pension percent and salary-sacrifice status are all known.
   const pensionPercentKnown = userProfile?.pensionPercent != null;

@@ -17,7 +17,8 @@ export interface TaxWidgetProps {
     totalIncome: number;
     totalExpenses: number;
     netProfit: number;
-    estimatedTaxDue: number;
+    /** `null` until a real current-year estimate exists. Never an invented figure. */
+    estimatedTaxDue: number | null;
     recordsCount: number;
   };
   editMode: boolean;
@@ -187,9 +188,14 @@ export const TaxWidget: FC<TaxWidgetProps> = ({
               className={css({
                 fontSize: { base: "lg", sm: "xl", md: "2xl" },
                 lineHeight: "tight",
+                fontVariantNumeric: "tabular-nums",
               })}
             >
-              {formatCurrency(metricMode === "taxDue" ? data.estimatedTaxDue : data.netProfit)}
+              {metricMode === "taxDue"
+                ? data.estimatedTaxDue === null
+                  ? "Not calculated yet"
+                  : formatCurrency(data.estimatedTaxDue)
+                : formatCurrency(data.netProfit)}
             </FLPHeading>
           </div>
           <div
