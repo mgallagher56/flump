@@ -14,3 +14,8 @@ export function applyRobotsHeader(headers: Headers, env: Env = process.env): Hea
   }
   return headers;
 }
+
+/** robots.txt body: Allow only when ALLOW_INDEXING is exactly "true" (same rule as marketing). */
+export function robotsTxt(env: Env = process.env): string {
+  return isIndexingAllowed(env) ? "User-agent: *\nAllow: /\n" : "User-agent: *\nDisallow: /\n";
+}

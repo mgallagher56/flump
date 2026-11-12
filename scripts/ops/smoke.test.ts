@@ -184,4 +184,34 @@ describe("smoke.sh", () => {
     expect(await prod.exited).toBe(2);
     expect(await new Response(prod.stderr).text()).toContain("MARKETING_URL");
   });
+
+  test("ALLOW_INDEXING=true expects no noindex header and Allow: /", async () => {
+    const allowRobots = {
+      headers: { "content-type": "text/plain" },
+      body: "User-agent: *\nAllow: /\n",
+    };
+    const web = { ...goodWeb(), "/": { body: "<html></html>" }, "/robots.txt": allowRobots };
+    const marketing = {
+      ...goodMarketing(),
+      "/": { body: "<html></html>" },
+      "/robots.txt": allowRobots,
+    };
+    const ok = await smoke(goodBackend(), web, marketing, { ALLOW_INDEXING: "true" });
+    expect(ok.exitCode).toBe(0);
+    expect(ok.stdout).toContain("PASS web /robots.txt Allow: /");
+
+    // The default (noindex) fixtures fail in allow mode, and allow fixtures fail by default.
+    const wrongMode = await smoke(goodBackend(), goodWeb(), goodMarketing(), {
+      ALLOW_INDEXING: "true",
+    });
+    expect(wrongMode.exitCode).toBe(1);
+    const defaultMode = await smoke(goodBackend(), web, marketing);
+    expect(defaultMode.exitCode).toBe(1);
+  });
+
+  test("ALLOW_INDEXING other than exactly true keeps the noindex expectations", async () => {
+    const result = await smoke(goodBackend(), goodWeb(), goodMarketing(), { ALLOW_INDEXING: "1" });
+    expect(result.exitCode).toBe(0);
+    expect(result.stdout).toContain("Disallow: /");
+  });
 });

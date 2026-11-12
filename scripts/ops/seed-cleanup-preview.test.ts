@@ -5,7 +5,7 @@ import {
   RemoveSeededExampleData1794355400000,
   SEEDED_TAX_FINGERPRINTS,
 } from "../../apps/backend/src/migrations/RemoveSeededExampleData1794355400000";
-import { runInTransaction, runPsql, TEST_DATABASE_URL, withClient } from "./db-test-support";
+import { DB_TESTS_ENABLED, runInTransaction, runPsql, withClient } from "./db-test-support";
 import { buildPreviewSql } from "./seed-cleanup-preview";
 import {
   buildSyntheticDatabase,
@@ -38,8 +38,18 @@ describe("seed-cleanup-preview (SQL generation)", () => {
 
   test("is read-only: no mutating statements, wrapped in a READ ONLY transaction", () => {
     expect(sql).toContain("BEGIN READ ONLY;");
-    expect(sql.trimEnd().endsWith("ROLLBACK;")).toBe(true);
+    expect(sql.trimEnd().endsWith("\\echo '== OK: preview complete'")).toBe(true);
+    expect(sql.indexOf("ROLLBACK;")).toBeGreaterThan(sql.indexOf("BEGIN READ ONLY;"));
+    expect(sql.indexOf("== OK: preview complete")).toBeGreaterThan(sql.indexOf("ROLLBACK;"));
     expect(sql).not.toMatch(/^\s*(DELETE|UPDATE|INSERT|DROP|TRUNCATE|ALTER)\b/im);
+  });
+
+  test("requires and validates the owner before any count runs", () => {
+    expect(sql).not.toContain("owner overlap skipped");
+    const guard = sql.indexOf("owner is required");
+    expect(guard).toBeGreaterThan(-1);
+    expect(guard).toBeLessThan(sql.indexOf("BEGIN READ ONLY;"));
+    expect(sql).toContain("placeholder");
   });
 
   test("embeds the migration's fingerprints and predicates, none hardcoded here", () => {
@@ -68,10 +78,9 @@ describe("seed-cleanup-preview (SQL generation)", () => {
   });
 });
 
-describe.skipIf(!TEST_DATABASE_URL)("seed-cleanup-preview (real Postgres)", () => {
+describe.skipIf(!DB_TESTS_ENABLED)("seed-cleanup-preview (real Postgres)", () => {
   let fingerprints: string[] = [];
   let previewOut = "";
-  let previewNoOwnerOut = "";
   let countsBefore: Record<string, number> = {};
   let countsAfter: Record<string, number> = {};
   let logged = "";
@@ -87,7 +96,6 @@ describe.skipIf(!TEST_DATABASE_URL)("seed-cleanup-preview (real Postgres)", () =
 
       const preview = buildPreviewSql({ taxFingerprints: fingerprints });
       previewOut = runPsql(preview, { owner: OWNER }).stdout;
-      previewNoOwnerOut = runPsql(preview).stdout;
       previewDidNotChange =
         JSON.stringify(await tableCounts(client)) === JSON.stringify(countsBefore);
 
@@ -186,10 +194,41 @@ describe.skipIf(!TEST_DATABASE_URL)("seed-cleanup-preview (real Postgres)", () =
     expect(parse(previewOut, "owner.taxRecords")).toBe(1);
     expect(parse(previewOut, "owner.accounts")).toBe(1);
     expect(parse(previewOut, "owner.budgetEntries")).toBe(1);
-    expect(previewNoOwnerOut).not.toContain("owner.taxRecords");
-    expect(previewNoOwnerOut).toContain("owner overlap skipped");
     expect(ownerPlainTaxRowsAfter).toBe(2);
     expect(sentinelRowsAfter).toBeGreaterThanOrEqual(5);
+  });
+
+  test("a valid owner passes and the output ends with the OK marker", () => {
+    expect(previewOut.trimEnd().split("\n").at(-1)).toBe("== OK: preview complete");
+    expect(previewOut).toContain("summary|");
+  });
+
+  test("a missing owner aborts non-zero with a clear message and no counts", () => {
+    const result = runPsql(buildPreviewSql({ taxFingerprints: fingerprints }));
+    expect(result.exitCode).not.toBe(0);
+    expect(result.stderr).toContain("owner");
+    expect(result.stdout).not.toContain("summary|");
+    expect(result.stdout).not.toContain("== OK: preview complete");
+  });
+
+  test.each([
+    "",
+    "<WorkOS user id>",
+    "your-user-id",
+    "YOUR_ID",
+    "owner",
+    "user_xxx",
+    "changeme",
+    "TODO",
+    "placeholder",
+    "xxx",
+    "user_mock",
+    "dev_user_123",
+  ])("owner %j is rejected non-zero with no counts", (owner) => {
+    const result = runPsql(buildPreviewSql({ taxFingerprints: fingerprints }), { owner });
+    expect(result.exitCode).not.toBe(0);
+    expect(result.stdout).not.toContain("summary|");
+    expect(result.stdout).not.toContain("== OK: preview complete");
   });
 
   test("the preview itself changed nothing and printed no row values", () => {

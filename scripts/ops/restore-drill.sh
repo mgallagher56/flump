@@ -14,10 +14,14 @@
 #   DRILL_PASSWORD          local-only password (default drill_local_only)
 #   DRILL_DB                database name (default flump_drill)
 #   DRILL_HOST              must be localhost or 127.0.0.1 (anything else, including ::1, is refused)
+#   DRILL_URL               not used to connect, but if set it must point at localhost/127.0.0.1
+#   PGURL                   if set (your production URL), the script refuses when it names the same
+#                           host:port/db as the drill target, or equals DRILL_URL
 #   DRILL_IMAGE             image (default postgres:18-alpine)
 #   PSQL / PG_RESTORE       host tool commands; if a tool is missing from PATH the script runs
 #                           it inside the drill container via docker exec instead
-#   DRILL_USE_DOCKER_TOOLS  set to 1 to always use the container's tools
+#   DRILL_USE_DOCKER_TOOLS  set to 1 to always use the container's tools (also used automatically
+#                           when the host pg_restore is an older major than the drill image)
 #
 # Prints the restore time in seconds and counts-file path. Never prints row data, the dump
 # contents or any connection string. Removes the container on exit unless --keep.
@@ -74,13 +78,45 @@ done
   echo "ERROR: dump file not found: $dump" >&2
   exit 2
 }
-case "$host" in
-  localhost | 127.0.0.1) ;;
-  *)
-    echo "ERROR: refusing non-local DRILL_HOST (only localhost or 127.0.0.1; IPv6 ::1 is not supported)" >&2
-    exit 2
-    ;;
-esac
+
+# Guard: the drill must only ever touch a throwaway LOCAL database. Called before anything is
+# started or restored. Never prints connection strings or passwords.
+assert_local_drill_target() {
+  case "$host" in
+    localhost | 127.0.0.1) ;;
+    *)
+      echo "ERROR: refusing non-local DRILL_HOST (only localhost or 127.0.0.1; IPv6 ::1 is not supported)" >&2
+      exit 2
+      ;;
+  esac
+  if [ -n "${DRILL_URL:-}" ]; then
+    local rest="${DRILL_URL#*://}"
+    rest="${rest#*@}"
+    rest="${rest%%[/?]*}"
+    case "${rest%%:*}" in
+      localhost | 127.0.0.1) ;;
+      *)
+        echo "ERROR: refusing non-local DRILL_URL (only localhost or 127.0.0.1)" >&2
+        exit 2
+        ;;
+    esac
+    if [ -n "${PGURL:-}" ] && [ "$DRILL_URL" = "$PGURL" ]; then
+      echo "ERROR: refusing: DRILL_URL equals PGURL (the drill must never target production)" >&2
+      exit 2
+    fi
+  fi
+  if [ -n "${PGURL:-}" ]; then
+    local pg_rest="${PGURL#*://}"
+    pg_rest="${pg_rest#*@}"
+    pg_rest="${pg_rest%%\?*}"
+    if [ "$pg_rest" = "${host}:${port}/${db}" ] || [ "$pg_rest" = "localhost:${port}/${db}" ] ||
+      [ "$pg_rest" = "127.0.0.1:${port}/${db}" ]; then
+      echo "ERROR: refusing: PGURL names the same host:port/db as the drill target" >&2
+      exit 2
+    fi
+  fi
+}
+assert_local_drill_target
 case "$port" in
   '' | *[!0-9]*)
     echo "ERROR: DRILL_PORT must be a number" >&2
@@ -114,6 +150,14 @@ use_docker=0
 if [ "${DRILL_USE_DOCKER_TOOLS:-0}" = "1" ] || ! command -v "${psql_host[0]}" >/dev/null ||
   ! command -v "${restore_host[0]}" >/dev/null; then
   use_docker=1
+else
+  # A host pg_restore older than the server that made the dump cannot read it (e.g. a runner's
+  # client 16 vs a 18 dump): use the container's tools then.
+  image_major="$(printf '%s' "$image" | sed -n 's/^[^:]*:\([0-9][0-9]*\).*/\1/p')"
+  host_major="$("${restore_host[@]}" --version 2>/dev/null | sed -n 's/[^0-9]*\([0-9][0-9]*\).*/\1/p' | head -n 1)"
+  if [ -z "$host_major" ] || [ "$host_major" -lt "${image_major:-18}" ]; then
+    use_docker=1
+  fi
 fi
 
 drill_url="postgres://postgres:${password}@${host}:${port}/${db}"
@@ -146,6 +190,7 @@ done
 }
 
 echo "drill: restoring $(basename "$dump") ($([ "$use_docker" -eq 1 ] && echo "container tools" || echo "host tools"))"
+assert_local_drill_target
 start="$(date +%s)"
 restore_status=0
 if [ "$use_docker" -eq 1 ]; then

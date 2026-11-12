@@ -13,8 +13,17 @@ describe("robots.txt loader", () => {
     expect(res.headers.get("X-Robots-Tag")).toBe("noindex, nofollow");
   });
 
-  it("omits the header when ALLOW_INDEXING=true", () => {
+  it("allows everything and omits the header when ALLOW_INDEXING=true", async () => {
     vi.stubEnv("ALLOW_INDEXING", "true");
-    expect(loader().headers.has("X-Robots-Tag")).toBe(false);
+    const res = loader();
+    expect(await res.text()).toBe("User-agent: *\nAllow: /\n");
+    expect(res.headers.has("X-Robots-Tag")).toBe(false);
+  });
+
+  it.each(["1", "TRUE"])("stays disallow with the header for ALLOW_INDEXING=%s", async (value) => {
+    vi.stubEnv("ALLOW_INDEXING", value);
+    const res = loader();
+    expect(await res.text()).toBe("User-agent: *\nDisallow: /\n");
+    expect(res.headers.get("X-Robots-Tag")).toBe("noindex, nofollow");
   });
 });

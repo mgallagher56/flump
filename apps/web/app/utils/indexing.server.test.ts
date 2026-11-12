@@ -1,6 +1,6 @@
 // @vitest-environment node
 import { describe, expect, it } from "vitest";
-import { applyRobotsHeader, isIndexingAllowed } from "./indexing.server";
+import { applyRobotsHeader, isIndexingAllowed, robotsTxt } from "./indexing.server";
 
 describe("isIndexingAllowed", () => {
   it("is false by default", () => {
@@ -29,5 +29,17 @@ describe("applyRobotsHeader", () => {
     const headers = new Headers();
     applyRobotsHeader(headers, { ALLOW_INDEXING: value });
     expect(headers.get("X-Robots-Tag")).toBe("noindex, nofollow");
+  });
+});
+
+describe("robotsTxt", () => {
+  it("disallows everything by default", () => {
+    expect(robotsTxt({})).toBe("User-agent: *\nDisallow: /\n");
+  });
+  it("allows everything only for exactly 'true'", () => {
+    expect(robotsTxt({ ALLOW_INDEXING: "true" })).toBe("User-agent: *\nAllow: /\n");
+  });
+  it.each(["1", "TRUE", "yes", ""])("keeps Disallow for ALLOW_INDEXING=%j", (value) => {
+    expect(robotsTxt({ ALLOW_INDEXING: value })).toBe("User-agent: *\nDisallow: /\n");
   });
 });

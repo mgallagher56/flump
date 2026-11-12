@@ -7,10 +7,13 @@
 #   bash scripts/ops/smoke.sh local
 #   BACKEND_URL=... WEB_URL=... MARKETING_URL=... bash scripts/ops/smoke.sh env
 #   EXPECTED_COMMIT=<sha or 7-char prefix> bash scripts/ops/smoke.sh production
+#   ALLOW_INDEXING=true bash scripts/ops/smoke.sh production   # expect indexing ALLOWED
 #
 # Targets: production | staging | local | env. BACKEND_URL, WEB_URL and MARKETING_URL always
 # override the target's defaults. production has no built-in marketing URL (not recorded
 # anywhere in the repo): set MARKETING_URL. staging has no defaults: set all three.
+# By default web and marketing must be noindex (X-Robots-Tag, robots.txt Disallow: /). With
+# ALLOW_INDEXING=true (exactly) the checks flip: no noindex header and robots.txt Allow: /.
 # Prints PASS/FAIL lines with the path and status only (never bodies). Exit 1 if any check
 # fails (404, wrong header, connection failure), 2 on usage errors.
 set -euo pipefail
@@ -87,9 +90,27 @@ expect_noindex() {
   fi
 }
 
+allow_indexing=0
+[ "${ALLOW_INDEXING:-}" = "true" ] && allow_indexing=1
+
+expect_indexable() {
+  if grep -iE '^x-robots-tag:.*noindex' "$workdir/headers" >/dev/null; then
+    fail "$1 $2 X-Robots-Tag noindex present (indexing expected to be allowed)"
+  else
+    pass "$1 $2 no noindex header"
+  fi
+}
+
 check_robots() {
   fetch "$2" /robots.txt
-  if [ "$STATUS" = "200" ] && grep -E '^Disallow:[[:space:]]*/[[:space:]]*$' "$workdir/body" >/dev/null; then
+  if [ "$allow_indexing" -eq 1 ]; then
+    if [ "$STATUS" = "200" ] && grep -E '^Allow:[[:space:]]*/[[:space:]]*$' "$workdir/body" >/dev/null &&
+      ! grep -E '^Disallow:[[:space:]]*/[[:space:]]*$' "$workdir/body" >/dev/null; then
+      pass "$1 /robots.txt Allow: /"
+    else
+      fail "$1 /robots.txt (status $STATUS) lacks Allow: /"
+    fi
+  elif [ "$STATUS" = "200" ] && grep -E '^Disallow:[[:space:]]*/[[:space:]]*$' "$workdir/body" >/dev/null; then
     pass "$1 /robots.txt Disallow: /"
   else
     fail "$1 /robots.txt (status $STATUS) lacks Disallow: /"
@@ -122,14 +143,14 @@ fi
 expect_200 web "$WEB_URL" /healthz
 expect_200 web "$WEB_URL" /ping
 fetch "$WEB_URL" /
-expect_noindex web /
+if [ "$allow_indexing" -eq 1 ]; then expect_indexable web /; else expect_noindex web /; fi
 check_robots web "$WEB_URL"
 
 # Marketing
 expect_200 marketing "$MARKETING_URL" /healthz
 fetch "$MARKETING_URL" /
 if [ "$STATUS" = "200" ]; then pass "marketing / ($STATUS)"; else fail "marketing / (status $STATUS, want 200)"; fi
-expect_noindex marketing /
+if [ "$allow_indexing" -eq 1 ]; then expect_indexable marketing /; else expect_noindex marketing /; fi
 check_robots marketing "$MARKETING_URL"
 
 if [ "$failures" -gt 0 ]; then
