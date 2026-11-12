@@ -35,6 +35,8 @@ export const tab = cva({
     justifyContent: "center",
     gap: "1",
     flex: 1,
+    minWidth: 0,
+    textAlign: "center",
     height: "100%",
     minHeight: "48px",
     textStyle: "label.sm",

@@ -103,7 +103,18 @@ export const Link = ({ to, children, className, ...props }: any) => {
   );
 };
 
-export const NavLink = Link;
+// NavLink accepts className/children as functions of its active state; stories never match a route.
+export const NavLink = ({ className, children, end: _end, ...props }: any) => {
+  const state = { isActive: false, isPending: false, isTransitioning: false };
+  return (
+    <Link
+      {...props}
+      className={typeof className === "function" ? className(state) : className}
+    >
+      {typeof children === "function" ? children(state) : children}
+    </Link>
+  );
+};
 
 // Stories render without a router, so components fall back to plain anchors.
 export const useInRouterContext = () => false;
