@@ -21,9 +21,9 @@ export const action = async (args: ActionFunctionArgs) => {
         accessToken: token,
         method: "PATCH",
         body: {
-          annualSalary: annualSalary ? Number.parseFloat(annualSalary as string) : null,
+          annualSalary: annualSalary ? roundTo2dp(Number.parseFloat(annualSalary as string)) : null,
           propertyOwnershipShare: propertyOwnershipShare
-            ? Number.parseFloat(propertyOwnershipShare as string)
+            ? roundTo2dp(Number.parseFloat(propertyOwnershipShare as string))
             : 100.0,
         },
       });

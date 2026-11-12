@@ -6,9 +6,12 @@ import { buildDebtInputs } from "~/features/debt/utils/debtInputs";
 import { backendFetch, loadWorkspaceSnapshot } from "~/services/backend-client.server";
 import { actionErrorResponse } from "~/services/route-error.server";
 import { getAuthSession, requireAccessToken } from "~/utils/auth.server";
+import { roundTo2dp } from "~/utils/roundTo2dp";
 
 const optionalNumber = (value: FormDataEntryValue | null): number | null =>
-  value !== null && value !== "" && Number.isFinite(Number(value)) ? Number(value) : null;
+  value !== null && value !== "" && Number.isFinite(Number(value))
+    ? roundTo2dp(Number(value))
+    : null;
 
 /** Liabilities are stored as minus the amount owed (E4 D2-A), whatever sign the client sends. */
 const storedLiabilityBalance = (value: FormDataEntryValue | null): number => {
