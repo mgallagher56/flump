@@ -23,7 +23,28 @@ const getFormatter = (options: Intl.NumberFormatOptions): Intl.NumberFormat => {
   return formatter;
 };
 
-/** Rounds to the display precision and removes negative zero so "-£0" can never appear. */
+const validCurrencies = new Map<string, boolean>();
+
+/** An invalid ISO 4217 code makes Intl throw a RangeError; fall back to GBP instead. */
+const safeCurrency = (currency: string): string => {
+  let ok = validCurrencies.get(currency);
+  if (ok === undefined) {
+    try {
+      new Intl.NumberFormat("en-GB", { style: "currency", currency });
+      ok = true;
+    } catch {
+      ok = false;
+    }
+    validCurrencies.set(currency, ok);
+  }
+  return ok ? currency : "GBP";
+};
+
+/**
+ * Rounds to the display precision and removes negative zero so "-£0" can never appear. */
+// Note: Math.round on the scaled value follows binary floating point, so 1.005 at two decimal
+// places rounds to 1.00 (it is stored as 1.00499...). Acceptable for display; do not use for
+// settlement maths.
 const normalise = (value: number, fractionDigits: number): number => {
   const factor = 10 ** fractionDigits;
   const rounded = Math.round(Math.abs(value) * factor) / factor;
@@ -65,7 +86,13 @@ export const formatMoney = (
     signDisplay = "auto",
     fractionDigits = 0,
   }: { currency?: string; signDisplay?: SignDisplay; fractionDigits?: 0 | 2 } = {},
-): Formatted => formatWith(value, { style: "currency", currency }, fractionDigits, signDisplay);
+): Formatted =>
+  formatWith(
+    value,
+    { style: "currency", currency: safeCurrency(currency) },
+    fractionDigits,
+    signDisplay,
+  );
 
 export const formatNumber = (
   value: number,
@@ -89,6 +116,7 @@ export const formatNumber = (
 };
 
 interface UnknownProps {
+  size: MoneySize;
   notSetLabel: string;
   notSetAction?: ReactNode;
   className?: string;
@@ -96,9 +124,9 @@ interface UnknownProps {
   testId?: string;
 }
 
-const NotSet: FC<UnknownProps> = ({ notSetLabel, notSetAction, className, id, testId }) => (
+const NotSet: FC<UnknownProps> = ({ size, notSetLabel, notSetAction, className, id, testId }) => (
   <span
-    className={cx(moneyRecipe({ tone: "muted" }), className)}
+    className={cx(moneyRecipe({ size, tone: "muted" }), className)}
     data-testid={testId ?? id}
     data-unknown="true"
     id={id}
@@ -164,6 +192,7 @@ export const Money: FC<MoneyProps> = ({
         id={id}
         notSetAction={notSetAction}
         notSetLabel={notSetLabel}
+        size={size}
         testId={testId}
       />
     );
@@ -214,6 +243,7 @@ export const Num: FC<NumProps> = ({
         id={id}
         notSetAction={notSetAction}
         notSetLabel={notSetLabel}
+        size={size}
         testId={testId}
       />
     );
