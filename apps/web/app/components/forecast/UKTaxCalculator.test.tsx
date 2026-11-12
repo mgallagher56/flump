@@ -13,11 +13,31 @@ vi.mock("recharts", async () => {
   };
 });
 
+describe("<UKTaxCalculator /> without a salary", () => {
+  test.each([
+    ["undefined", undefined],
+    ["null", null],
+    ["zero", 0],
+  ])(
+    "renders 'Not set' and never an invented salary when initialSalary is %s",
+    (_label, salary) => {
+      const { container, getAllByText } = customRender(
+        <UKTaxCalculator initialSalary={salary} onApplyIncrease={vi.fn()} />,
+      );
+      expect(getAllByText("Not set").length).toBeGreaterThan(0);
+      expect(container.textContent).not.toContain("45,000");
+      expect(container.textContent).not.toContain("Monthly Take-Home Pay £");
+    },
+  );
+});
+
 describe("<UKTaxCalculator />", () => {
   test("renders correctly with gross salary and elements", () => {
-    const { container, getAllByText } = customRender(<UKTaxCalculator onApplyIncrease={vi.fn()} />);
+    const { container, getAllByText } = customRender(
+      <UKTaxCalculator initialSalary={45000} onApplyIncrease={vi.fn()} />,
+    );
     expect(container).toBeDefined();
-    // Default gross £45,000 is rendered multiple times (inputs and breakdown)
+    // Gross £45,000 is rendered multiple times (inputs and breakdown)
     expect(getAllByText("£45,000").length).toBeGreaterThan(0);
     expect(container.textContent).toContain("Salary Sacrifice (saves NI)");
     expect(container.textContent).toContain("Pass on Employer NI");
@@ -66,7 +86,9 @@ describe("<UKTaxCalculator />", () => {
 
 describe("<UKTaxCalculator /> chart accessibility", () => {
   test("exposes the allocation as a named figure and a legend with amounts", () => {
-    const { getByRole } = customRender(<UKTaxCalculator onApplyIncrease={vi.fn()} />);
+    const { getByRole } = customRender(
+      <UKTaxCalculator initialSalary={45000} onApplyIncrease={vi.fn()} />,
+    );
 
     const figure = getByRole("figure", { name: "Salary allocation" });
     expect(figure.textContent).toContain("Where your £45,000 gross salary goes");

@@ -201,28 +201,32 @@ export const ForecastWidget: FC<ForecastWidgetProps> = ({
           </div>
         </div>
 
-        {data.estimatedTakeHome && (
-          <div
-            className={css({
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              padding: { base: "6px 10px", md: "10px 14px" },
-              borderRadius: "lg",
-              backgroundColor: "surface.sunken",
-              border: "1px solid",
-              borderColor: "border.subtle",
-              fontSize: { base: "10px", md: "xs" },
-              gap: "6px",
-            })}
-          >
-            <div>
-              <span style={{ color: "var(--colors-text-muted)" }}>Take-Home:</span>{" "}
-              <strong>{formatCurrency(data.estimatedTakeHome)}/mo</strong>
-            </div>
-            <div style={{ color: "var(--colors-primary)", fontWeight: 600 }}>Runway →</div>
+        <div
+          className={css({
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            padding: { base: "6px 10px", md: "10px 14px" },
+            borderRadius: "lg",
+            backgroundColor: "surface.sunken",
+            border: "1px solid",
+            borderColor: "border.subtle",
+            fontSize: { base: "10px", md: "xs" },
+            gap: "6px",
+          })}
+        >
+          <div>
+            <span style={{ color: "var(--colors-text-muted)" }}>Take-Home:</span>{" "}
+            {data.estimatedTakeHome ? (
+              <strong className={css({ fontVariantNumeric: "tabular-nums" })}>
+                {formatCurrency(data.estimatedTakeHome)}/mo
+              </strong>
+            ) : (
+              <strong className={css({ fontVariantNumeric: "tabular-nums" })}>Not set</strong>
+            )}
           </div>
-        )}
+          <div style={{ color: "var(--colors-primary)", fontWeight: 600 }}>Runway →</div>
+        </div>
       </div>
     </DashboardWidgetCard>
   );

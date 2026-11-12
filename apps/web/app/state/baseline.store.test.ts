@@ -6,6 +6,7 @@ import {
   DEFAULT_FINANCIAL_BASELINE,
   FINANCIAL_BASELINE_STORAGE_KEY,
   hydrateBaselineFromSeed,
+  NO_SALARY_BASELINE,
   useFinancialBaseline,
   writeOnboardingSeedCookie,
 } from "./baseline.store";
@@ -23,9 +24,9 @@ describe("salary-less seeds", () => {
     });
     expect(adapter.getBaseline()).toBeNull();
     const { result } = renderHook(() => useFinancialBaseline());
-    expect(result.current.baseline.annualGrossSalary).toBe(
-      DEFAULT_FINANCIAL_BASELINE.annualGrossSalary,
-    );
+    // No stored or seeded salary: the store must never supply the engine's 45,000 default.
+    expect(result.current.baseline.annualGrossSalary).toBe(0);
+    expect(NO_SALARY_BASELINE.annualGrossSalary).toBe(0);
     expect(adapter.getSeed()).not.toBeNull();
     adapter.clearSeed();
   });

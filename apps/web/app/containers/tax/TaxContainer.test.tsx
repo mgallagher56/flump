@@ -124,6 +124,7 @@ const mockRecords: TaxRecord[] = [
 ];
 
 let mockLoaderRecords: TaxRecord[] = mockRecords;
+let mockProfileSalary: number | null = 60000;
 const mockSubmit = vi.fn();
 const fetcherData = { current: null as unknown };
 
@@ -131,7 +132,7 @@ vi.mock("react-router", () => ({
   useLoaderData: () => ({
     records: mockLoaderRecords,
     userProfile: {
-      annualSalary: 60000,
+      annualSalary: mockProfileSalary,
       propertyOwnershipShare: 100,
       country: "GB",
     },
@@ -191,6 +192,17 @@ describe("TaxContainer & Calculation Tools", () => {
     expect(screen.getByText("Copy Figures & Populate Tax Year")).toBeDefined();
     expect(screen.getByText("Source Year")).toBeDefined();
     expect(screen.getByText("Target Year")).toBeDefined();
+  });
+
+  it("renders 'Not set' for the profile salary baseline when no salary is stored, never 45,000", () => {
+    mockProfileSalary = null;
+    const { container, unmount } = render(<TaxContainer />);
+
+    expect(container.textContent).toMatch(/Profile salary baseline:\s*Not set/);
+    expect(container.textContent).not.toContain("45,000");
+
+    unmount();
+    mockProfileSalary = 60000;
   });
 
   it("shows ONLY the current UK tax year when records are empty (financial data reset)", () => {

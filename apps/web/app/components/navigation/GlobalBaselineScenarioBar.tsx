@@ -19,7 +19,8 @@ export const GlobalBaselineScenarioBar: FC = () => {
     if (
       profile?.annualSalary &&
       profile.annualSalary > 0 &&
-      baseline.annualGrossSalary === DEFAULT_FINANCIAL_BASELINE.annualGrossSalary
+      (baseline.annualGrossSalary === DEFAULT_FINANCIAL_BASELINE.annualGrossSalary ||
+        !(baseline.annualGrossSalary > 0))
     ) {
       updateBaseline({
         annualGrossSalary: profile.annualSalary,
@@ -115,7 +116,12 @@ export const GlobalBaselineScenarioBar: FC = () => {
           >
             <FaCoins className={css({ color: "amber.500" })} />
             <span>
-              Salary: <strong>£{effectiveBaseline.annualGrossSalary.toLocaleString()}</strong>
+              Salary:{" "}
+              <strong className={css({ fontVariantNumeric: "tabular-nums" })}>
+                {effectiveBaseline.annualGrossSalary > 0
+                  ? `£${effectiveBaseline.annualGrossSalary.toLocaleString("en-GB")}`
+                  : "Not set"}
+              </strong>
             </span>
             <span className={css({ color: "border" })}>•</span>
             <span>

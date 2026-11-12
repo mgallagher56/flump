@@ -15,6 +15,15 @@ export const FINANCIAL_BASELINE_STORAGE_KEY = "flump_financial_baseline_v1";
 
 export { DEFAULT_FINANCIAL_BASELINE, hydrateBaselineFromSeed };
 
+/**
+ * Initial client baseline (SSR and nothing stored). The engine default carries an invented
+ * 45,000 salary, so this clears it: 0 means "no salary known" and renders as "Not set".
+ */
+export const NO_SALARY_BASELINE: FinancialBaseline = {
+  ...DEFAULT_FINANCIAL_BASELINE,
+  annualGrossSalary: 0,
+};
+
 /** True only when a seed carries a salary; without one hydrating would invent defaults. */
 export function seedCarriesSalary(seed: AnySeedPayload | null | undefined): boolean {
   return Boolean(seed && (seed.annualIncome || seed.annualGrossSalary));
@@ -75,15 +84,15 @@ export const defaultPersistenceAdapter = new CookieSeedAdapter();
  */
 function getInitialBaseline(): FinancialBaseline {
   if (typeof window === "undefined") {
-    return DEFAULT_FINANCIAL_BASELINE;
+    return NO_SALARY_BASELINE;
   }
 
   const loaded = defaultPersistenceAdapter.getBaseline();
   if (loaded) {
-    return { ...DEFAULT_FINANCIAL_BASELINE, ...loaded };
+    return { ...NO_SALARY_BASELINE, ...loaded };
   }
 
-  return DEFAULT_FINANCIAL_BASELINE;
+  return NO_SALARY_BASELINE;
 }
 
 export const financialBaselineAtom = atom<FinancialBaseline>(getInitialBaseline());
@@ -120,8 +129,7 @@ export function useFinancialBaseline() {
       if (
         seed &&
         seedCarriesSalary(seed) &&
-        (!baseline.userId ||
-          baseline.annualGrossSalary === DEFAULT_FINANCIAL_BASELINE.annualGrossSalary)
+        (!baseline.userId || !(baseline.annualGrossSalary > 0))
       ) {
         const hydrated = hydrateBaselineFromSeed(seed, baseline.userId);
         setBaseline(hydrated);

@@ -846,7 +846,11 @@ const TaxContainer: FC = () => {
                 }}
               >
                 <span>
-                  Profile salary baseline: <strong>{formatCurrency(profileSalary)}/year</strong>.
+                  Profile salary baseline:{" "}
+                  <strong className={numeric}>
+                    {profileSalary > 0 ? `${formatCurrency(profileSalary)}/year` : "Not set"}
+                  </strong>
+                  .
                   {activeYearData.payeIncomeGross > 0
                     ? ` Currently using ${formatCurrency(activeYearData.effectivePayeSalary)} from detailed payslip records.`
                     : " No payslip items logged; automatically using profile salary."}
