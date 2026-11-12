@@ -14,6 +14,7 @@ export * from "./hooks";
 export * from "./patterns/AllowanceProgressPill";
 export * from "./patterns/AppSectionDivider";
 export * from "./patterns/ChartFigure";
+export * from "./patterns/CoachCard";
 export * from "./patterns/DebtToWealthChart";
 export * from "./patterns/EmptyState";
 export * from "./patterns/GlobalBaselineBar";
