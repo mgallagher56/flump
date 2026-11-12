@@ -179,6 +179,16 @@
         "vitest-sonar-reporter": "3.0.0",
       },
     },
+    "packages/api-client": {
+      "name": "@flump/api-client",
+      "version": "0.0.0",
+      "devDependencies": {
+        "@repo/typescript-config": "workspace:*",
+        "@types/node": "26.6.6",
+        "typescript": "7.0.2",
+        "vitest": "5.1.0",
+      },
+    },
     "packages/api-contract": {
       "name": "@flump/api-contract",
       "version": "1.0.0",
@@ -205,6 +215,16 @@
     "packages/finance-engine": {
       "name": "@flump/finance-engine",
       "version": "1.0.0",
+      "devDependencies": {
+        "@repo/typescript-config": "workspace:*",
+        "@types/node": "26.6.6",
+        "typescript": "7.0.2",
+        "vitest": "5.1.0",
+      },
+    },
+    "packages/format": {
+      "name": "@flump/format",
+      "version": "0.0.0",
       "devDependencies": {
         "@repo/typescript-config": "workspace:*",
         "@types/node": "26.6.6",
@@ -599,11 +619,15 @@
 
     "@expo/xcpretty": ["@expo/xcpretty@4.4.7", "", { "dependencies": { "@babel/code-frame": "^7.20.0", "chalk": "^4.1.0", "js-yaml": "^4.1.0" }, "bin": { "excpretty": "build/cli.js" } }, "sha512-EbxYllZ7/ozONVZd425cm4XnolfW+AmSFT5aP7Jdno6oc3WrYQcHz2CO20z/2rwWwYgztmV2PXvYH+BQ8YFjqg=="],
 
+    "@flump/api-client": ["@flump/api-client@workspace:packages/api-client"],
+
     "@flump/api-contract": ["@flump/api-contract@workspace:packages/api-contract"],
 
     "@flump/banking": ["@flump/banking@workspace:packages/banking"],
 
     "@flump/finance-engine": ["@flump/finance-engine@workspace:packages/finance-engine"],
+
+    "@flump/format": ["@flump/format@workspace:packages/format"],
 
     "@flump/mcp": ["@flump/mcp@workspace:packages/mcp"],
 
