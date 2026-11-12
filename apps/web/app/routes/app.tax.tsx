@@ -5,6 +5,7 @@ import TaxContainer from "~/containers/tax/TaxContainer";
 import { backendFetch, loadWorkspaceSnapshot } from "~/services/backend-client.server";
 import { actionErrorResponse } from "~/services/route-error.server";
 import { getAuthSession, requireAccessToken } from "~/utils/auth.server";
+import { roundTo2dp } from "~/utils/roundTo2dp";
 
 export const action = async (args: ActionFunctionArgs) => {
   const { accessToken } = await getAuthSession(args, { ensureSignedIn: true });
@@ -48,7 +49,7 @@ export const action = async (args: ActionFunctionArgs) => {
           source,
           type,
           category,
-          amount: amount ? Number.parseFloat(amount as string) : 0,
+          amount: amount ? roundTo2dp(Number.parseFloat(amount as string)) : 0,
           date,
           frequency,
           endDate,
@@ -81,7 +82,7 @@ export const action = async (args: ActionFunctionArgs) => {
           source,
           type,
           category,
-          amount: amount ? Number.parseFloat(amount as string) : 0,
+          amount: amount ? roundTo2dp(Number.parseFloat(amount as string)) : 0,
           date,
           frequency,
           endDate,

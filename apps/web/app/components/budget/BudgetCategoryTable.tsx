@@ -16,6 +16,7 @@ import {
   getDaysUntilContractEnd,
   toMonthly,
 } from "~/types/budget";
+import { roundTo2dp } from "~/utils/roundTo2dp";
 
 export interface BudgetCategoryTableProps {
   category: BudgetCategory;
@@ -187,7 +188,7 @@ const BudgetCategoryTable: FC<BudgetCategoryTableProps> = ({
       if (editingRow.id) {
         await onUpdate(editingRow.id, {
           name: editingRow.name.trim(),
-          amount: Number(editingRow.amount),
+          amount: roundTo2dp(Number(editingRow.amount)),
           frequency: editingRow.frequency,
           notes: editingRow.notes || null,
           isEssential: editingRow.isEssential,
@@ -197,7 +198,7 @@ const BudgetCategoryTable: FC<BudgetCategoryTableProps> = ({
         await onAdd({
           category,
           name: editingRow.name.trim(),
-          amount: Number(editingRow.amount),
+          amount: roundTo2dp(Number(editingRow.amount)),
           frequency: editingRow.frequency,
           isIncome,
           isPrimaryIncome: false,

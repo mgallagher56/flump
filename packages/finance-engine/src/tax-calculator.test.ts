@@ -173,6 +173,12 @@ describe("buildCopiedRecordForTaxYear derives the source year by month bucketing
     expect(copy.notes).toBe("Copied from 2024/25");
   });
 
+  it("copies 29 Feb to 28 Feb in a non-leap year and keeps it in a leap year", () => {
+    const leapSource = { ...base, date: "2023-04-06", endDate: "2024-02-29" };
+    expect(buildCopiedRecordForTaxYear(leapSource, "2024/25").endDate).toBe("2025-02-28");
+    expect(buildCopiedRecordForTaxYear(leapSource, "2027/28").endDate).toBe("2028-02-29");
+  });
+
   it("shifts endDate by the same whole-year difference", () => {
     const copy = buildCopiedRecordForTaxYear(
       { ...base, date: "2024-04-01", endDate: "2025-03-31" },

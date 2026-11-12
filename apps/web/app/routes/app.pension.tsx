@@ -6,6 +6,7 @@ import { backendFetch, loadWorkspaceSnapshot } from "~/services/backend-client.s
 import { BackendError } from "~/services/backend-error";
 import { actionErrorResponse } from "~/services/route-error.server";
 import { getAuthSession, requireAccessToken } from "~/utils/auth.server";
+import { roundTo2dp } from "~/utils/roundTo2dp";
 
 export const meta: MetaFunction = () => [{ title: "Pension & Retirement | Flump" }];
 
@@ -90,7 +91,9 @@ export const action = async (args: ActionFunctionArgs) => {
         accessToken: token,
         method: "PATCH",
         body: {
-          ...(pensionPercent !== null ? { pensionPercent: Number(pensionPercent) } : {}),
+          ...(pensionPercent !== null
+            ? { pensionPercent: roundTo2dp(Number(pensionPercent)) }
+            : {}),
           ...(pensionEmployerPercent !== null
             ? { pensionEmployerPercent: Number(pensionEmployerPercent) }
             : {}),

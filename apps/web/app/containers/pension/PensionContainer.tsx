@@ -27,6 +27,7 @@ import { useFormatCurrency } from "~/hooks/useFormatCurrency";
 import { useUserProfile } from "~/hooks/useUserProfile";
 import type { loader } from "~/routes/app.pension";
 import { useFinancialBaseline } from "~/state/baseline.store";
+import { roundTo2dp } from "~/utils/roundTo2dp";
 import { getKnownTrapRegion, getTaxTrapCopy, REGION_ASSUMPTION_LABEL } from "~/utils/taxTrapCopy";
 import { currentMonth, currentYear } from "~/utils/utils";
 
@@ -317,8 +318,8 @@ export const PensionContainer: FC = () => {
   ) => {
     try {
       await updateProfile({
-        pensionPercent: newEmployeePct,
-        pensionEmployerPercent: newEmployerPct,
+        pensionPercent: roundTo2dp(newEmployeePct),
+        pensionEmployerPercent: roundTo2dp(newEmployerPct),
         ...(newSalary ? { annualSalary: newSalary } : {}),
         ...(newSalarySacrifice !== undefined ? { isSalarySacrifice: newSalarySacrifice } : {}),
         ...(newEmployerNi !== undefined ? { isSalarySacrificeEmployerNi: newEmployerNi } : {}),
@@ -333,8 +334,8 @@ export const PensionContainer: FC = () => {
     try {
       await updateProfile({
         ...(editSalary > 0 ? { annualSalary: editSalary } : {}),
-        pensionPercent: editEmployeePct,
-        pensionEmployerPercent: editEmployerPct,
+        pensionPercent: roundTo2dp(editEmployeePct),
+        pensionEmployerPercent: roundTo2dp(editEmployerPct),
         isSalarySacrifice: editSalarySacrifice,
         isSalarySacrificeEmployerNi: editSalarySacrifice && editSalarySacrificeEmployerNi,
       });
