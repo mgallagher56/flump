@@ -1,3 +1,4 @@
+import { Logger } from "@nestjs/common";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const handlerOptions: any[] = [];
@@ -46,6 +47,20 @@ describe("McpService dev token wiring", () => {
     build("dev");
     expect(handlerOptions[0].devToken).toBe(DEV_BYPASS_TOKEN);
     expect(handlerOptions[0].devUserId).toBe(DEV_USER.id);
+  });
+
+  it("never passes dev options in a production-like process, even in dev mode", () => {
+    const original = process.env;
+    try {
+      process.env = { ...original, NODE_ENV: "production" };
+      build("dev");
+      process.env = { ...original, NODE_ENV: "development", RAILWAY_ENVIRONMENT: "x" };
+      build("dev");
+    } finally {
+      process.env = original;
+    }
+    expect(handlerOptions[0].devToken).toBeUndefined();
+    expect(handlerOptions[1].devToken).toBeUndefined();
   });
 
   it("passes no dev options in workos mode", () => {
@@ -187,6 +202,39 @@ describe("McpService.findTokenByHash allowlist (E29-T8)", () => {
     try {
       expect(await withRepo().findTokenByHash("h")).toBeNull();
     } finally {
+      process.env = original;
+    }
+  });
+
+  it("returns null for every token while the kill switch is on, and logs a denial", async () => {
+    process.env = {
+      ...original,
+      NODE_ENV: "production",
+      MCP_ENABLED: "false",
+      MCP_OPEN_ACCESS: "true",
+    };
+    try {
+      expect(await withRepo().findTokenByHash("h")).toBeNull();
+    } finally {
+      process.env = original;
+    }
+  });
+
+  it("logs the denial with token id and user id, never the hash", async () => {
+    process.env = {
+      ...original,
+      NODE_ENV: "production",
+      MCP_ALLOWED_USER_IDS: "owner",
+      MCP_OPEN_ACCESS: "",
+    };
+    const warn = vi.spyOn(Logger.prototype, "warn").mockImplementation(() => undefined);
+    try {
+      await withRepo().findTokenByHash("secret-hash");
+      const msgs = warn.mock.calls.map((c) => String(c[0]));
+      expect(msgs.some((m) => m.includes("tok_1") && m.includes("friend"))).toBe(true);
+      expect(msgs.some((m) => m.includes("secret-hash"))).toBe(false);
+    } finally {
+      warn.mockRestore();
       process.env = original;
     }
   });

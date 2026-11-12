@@ -19,6 +19,16 @@ describe("resolveAuthMode", () => {
     expect(() => resolveAuthMode({ AUTH_DEV_BYPASS: "true", NODE_ENV: "production" })).toThrow();
   });
 
+  it("throws when bypass is requested on Railway", () => {
+    expect(() =>
+      resolveAuthMode({
+        AUTH_DEV_BYPASS: "true",
+        NODE_ENV: "development",
+        RAILWAY_ENVIRONMENT: "production",
+      }),
+    ).toThrow(/RAILWAY_ENVIRONMENT/);
+  });
+
   it("throws when bypass is requested alongside a WorkOS API key", () => {
     let message = "";
     try {

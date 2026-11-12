@@ -8,10 +8,24 @@ import {
 
 type Env = Record<string, string | undefined>;
 
+/** Production-like: NODE_ENV=production or running on Railway (same detection as security.config.ts). */
+export function isProductionLike(env: Env): boolean {
+  return env.NODE_ENV === "production" || Boolean(env.RAILWAY_ENVIRONMENT);
+}
+
+/** Warning for a non-production process where MCP is open only because the flag is unset. */
+export function mcpOpenAccessBootWarning(env: Env): string | null {
+  const config = readMcpAccessConfig(env);
+  if (config.openAccess && env.MCP_OPEN_ACCESS === undefined) {
+    return "MCP is open to every user because MCP_OPEN_ACCESS is not set; set it explicitly (true or false).";
+  }
+  return null;
+}
+
 export interface McpAccessConfig {
   /** Global kill switch (E20-N18). False only when `MCP_ENABLED=false`. */
   enabled: boolean;
-  /** `MCP_OPEN_ACCESS`: true opens MCP to everyone. Unset means off in production, on elsewhere. */
+  /** `MCP_OPEN_ACCESS`: true opens MCP to everyone. Unset means off in production-like environments, on elsewhere. */
   openAccess: boolean;
   /** `MCP_ALLOWED_USER_IDS`: comma-separated WorkOS user ids. */
   allowedUserIds: string[];
@@ -29,8 +43,7 @@ export function readMcpAccessConfig(env: Env): McpAccessConfig {
     .filter(Boolean);
   const enabled = env.MCP_ENABLED?.trim().toLowerCase() !== "false";
   const flag = env.MCP_OPEN_ACCESS?.trim().toLowerCase();
-  const openAccess =
-    flag === "true" ? true : flag === "false" ? false : env.NODE_ENV !== "production";
+  const openAccess = flag === "true" ? true : flag === "false" ? false : !isProductionLike(env);
   return { enabled, openAccess, allowedUserIds };
 }
 

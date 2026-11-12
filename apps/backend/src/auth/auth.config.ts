@@ -8,6 +8,9 @@ export function resolveAuthMode(env: Record<string, string | undefined>): "worko
     if (env.NODE_ENV !== "development") {
       throw new Error("AUTH_DEV_BYPASS is only permitted when NODE_ENV is development");
     }
+    if (env.RAILWAY_ENVIRONMENT) {
+      throw new Error("AUTH_DEV_BYPASS is not permitted when RAILWAY_ENVIRONMENT is set");
+    }
     if (env.WORKOS_API_KEY) {
       throw new Error("AUTH_DEV_BYPASS must not be combined with WORKOS_API_KEY");
     }
