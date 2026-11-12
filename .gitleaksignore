@@ -1,0 +1,3 @@
+# gitleaks fingerprints to ignore, one per line (format: commit:file:rule:line).
+# Add an entry only after the leaked secret has been rotated (see
+# docs/runbooks/secret-scan.md). Empty by design.
