@@ -117,6 +117,17 @@ describe("HealthController", () => {
     expect(body).toMatchObject({ status: "ok" });
   });
 
+  it.each([[[]], [[{}]], [[{ n: null }]]])(
+    "returns 503 when the migrations count result is malformed (%j)",
+    async (rows) => {
+      const { controller } = makeController(async () => [], { executed: async () => rows });
+      const res = makeRes();
+      const body = await controller.ready(res as never);
+      expect(res.status).toHaveBeenCalledWith(503);
+      expect(body).toEqual({ status: "unavailable" });
+    },
+  );
+
   it("returns 503 when the migrations table is missing", async () => {
     const { controller } = makeController(async () => [], {
       executed: async () => {
