@@ -50,7 +50,12 @@ export const textInputRecipe = sva({
   },
   variants: {
     size: {
-      sm: { root: { minHeight: "density.control.sm" } },
+      sm: {
+        root: {
+          minHeight: "density.control.sm",
+          "@media (pointer: coarse)": { minHeight: "touch" },
+        },
+      },
       md: {
         root: {
           minHeight: "density.control.md",
