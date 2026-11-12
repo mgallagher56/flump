@@ -1,3 +1,4 @@
+import { getCurrentUKTaxYear } from "@flump/finance-engine";
 import { render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
@@ -196,7 +197,48 @@ describe("_index route", () => {
       userProfile: { onboardingCompleted: true, annualSalary: 60000, employmentType: "employed" },
     });
     expect(data.forecastData.estimatedTakeHome).toBeNull();
-    expect(data.forecastData.takeHomeMissing).toBe("Add pension details");
+    expect(data.forecastData.takeHomeMissing).toBe(
+      "Add pension percentage and salary sacrifice status",
+    );
+  });
+
+  it("lists every missing take-home input at once", async () => {
+    const data = await loadSignedIn({
+      userProfile: { onboardingCompleted: true, annualSalary: 60000 },
+    });
+    expect(data.forecastData.takeHomeMissing).toBe(
+      "Add employment type, pension percentage and salary sacrifice status",
+    );
+  });
+
+  it("says take-home is UK only for other countries", async () => {
+    const data = await loadSignedIn({
+      userProfile: {
+        onboardingCompleted: true,
+        annualSalary: 60000,
+        employmentType: "employed",
+        country: "US",
+      },
+    });
+    expect(data.forecastData.estimatedTakeHome).toBeNull();
+    expect(data.forecastData.takeHomeMissing).toBe("Take-home is only available for the UK");
+  });
+
+  it("only counts tax records dated in the current tax year", async () => {
+    const currentYear = getCurrentUKTaxYear();
+    const startYear = Number(currentYear.slice(0, 4));
+    const data = await loadSignedIn({
+      taxRecords: [
+        { type: "income", amount: 20000, date: `${startYear}-06-01`, frequency: "one-off" },
+        { type: "expense", amount: 5000, date: `${startYear}-07-01`, frequency: "one-off" },
+        { type: "income", amount: 90000, date: "2019-05-01", frequency: "annual" },
+        { type: "income", amount: 11000, date: `${startYear - 1}-06-01`, frequency: "one-off" },
+      ],
+    });
+    expect(data.taxData.totalIncome).toBe(20000);
+    expect(data.taxData.totalExpenses).toBe(5000);
+    expect(data.taxData.netProfit).toBe(15000);
+    expect(data.taxData.recordsCount).toBe(2);
   });
 
   it("computes take-home below gross for a known employment type", async () => {
