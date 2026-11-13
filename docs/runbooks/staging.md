@@ -111,6 +111,8 @@ Rows come from the code (`process.env.X`, `env.X` and `configService.get("X")` i
 | Name                                  | Production                                                               | Staging                      | Source           | Secret? |
 | ------------------------------------- | ------------------------------------------------------------------------ | ---------------------------- | ---------------- | ------- |
 | `NODE_ENV`                            | `production`                                                             | `production`                 | copy             | no      |
+| `PORT`                                | Railway-injected                                                         | Railway-injected             | unset (platform) | no      |
+| `HOST`                                | unset (binds all interfaces)                                             | unset (binds all interfaces) | unset            | no      |
 | `VITE_API_URL`                        | production backend URL                                                   | staging backend URL          | generate fresh   | no      |
 | `VITE_MARKETING_URL`                  | production marketing URL                                                 | staging marketing URL        | generate fresh   | no      |
 | `WORKOS_API_KEY`                      | production key                                                           | same as production           | copy             | yes     |

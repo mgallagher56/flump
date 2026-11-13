@@ -103,7 +103,9 @@ describe.skipIf(!buildReady)("web express server (built)", () => {
         WORKOS_API_KEY: `test_${randomBytes(8).toString("hex")}`,
         WORKOS_CLIENT_ID: `client_${randomBytes(8).toString("hex")}`,
         WORKOS_COOKIE_PASSWORD: cookiePassword,
-        WORKOS_REDIRECT_URI: `${base}/callback`,
+        // Production boot requires an https redirect URI and VITE_API_URL; both are fake.
+        WORKOS_REDIRECT_URI: "https://web.example.invalid/callback",
+        VITE_API_URL: "https://api.example.invalid",
       },
     });
     child.stdout?.on("data", (d) => {
