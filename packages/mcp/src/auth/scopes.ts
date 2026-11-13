@@ -7,7 +7,8 @@
  * construction otherwise, and a runtime lookup of an unlisted name is denied.
  *
  * Known limit: `RegisteredTool.update({ callback })` replaces the handler and
- * bypasses the guard. Nothing calls it today; E17-N8 (define-tool) must handle it.
+ * bypasses the guard on facade-registered tools. Nothing calls it today. Tools built with
+ * `defineFlumpTool` (E17-N8) check scopes themselves and throw if `update({ callback })` is used.
  */
 
 export const MCP_SCOPES = ["mcp:read:anonymized", "mcp:read:full", "mcp:simulate"] as const;
