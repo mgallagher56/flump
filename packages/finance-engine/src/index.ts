@@ -7,6 +7,7 @@ export * from "./forecast.js";
 export * from "./health-score.js";
 export * from "./mortgage.js";
 export * from "./persistence.js";
+export * from "./picture/index.js";
 export * from "./portfolio.js";
 export * from "./profile.js";
 export * from "./section24.js";

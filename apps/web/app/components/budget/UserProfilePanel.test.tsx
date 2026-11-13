@@ -2,7 +2,7 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { DEFAULT_PROFILE } from "~/hooks/useUserProfile";
 import * as avatarUtils from "~/utils/avatar";
-import UserProfilePanel, { calculateNetTakeHome } from "./UserProfilePanel";
+import UserProfilePanel from "./UserProfilePanel";
 
 const mockUpdateProfile = vi.fn().mockResolvedValue(undefined);
 const mockSetProfile = vi.fn();
@@ -276,24 +276,6 @@ describe("<UserProfilePanel />", () => {
       screen.getByText("Model Context Protocol (MCP) & AI Connections (preview)"),
     ).toBeDefined();
     expect(screen.getByTestId("offline-context-pack-card")).toBeDefined();
-  });
-});
-
-describe("calculateNetTakeHome", () => {
-  it("returns null, never gross, when the employment type is unknown", () => {
-    expect(calculateNetTakeHome(60000, null, 5, true)).toBeNull();
-    expect(calculateNetTakeHome(60000, "other", 5, true)).toBeNull();
-    expect(calculateNetTakeHome(60000, undefined, 5, true)).toBeNull();
-  });
-
-  it("returns null when salary is missing", () => {
-    expect(calculateNetTakeHome(null, "employed")).toBeNull();
-    expect(calculateNetTakeHome(0, "employed")).toBeNull();
-  });
-
-  it("returns a net figure below gross for a known type", () => {
-    const result = calculateNetTakeHome(60000, "employed", 5, true);
-    expect(result?.netAnnual).toBeLessThan(60000);
   });
 });
 

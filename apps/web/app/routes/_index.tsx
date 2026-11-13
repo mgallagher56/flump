@@ -1,11 +1,14 @@
 import {
+  type FactKey,
   getCurrentUKTaxYear,
   getTaxYearForRecordDate,
+  isKnown,
   PortfolioSnapshot,
+  profileFactsFromProfile,
+  selectTakeHome,
 } from "@flump/finance-engine";
 import type { ReactElement } from "react";
 import { type LoaderFunctionArgs, type MetaFunction, redirect, useLoaderData } from "react-router";
-import { calculateNetTakeHome } from "~/components/budget/UserProfilePanel";
 import { HomeDashboard } from "~/features/dashboard/components/HomeDashboard";
 import { loadWorkspaceSnapshot } from "~/services/backend-client.server";
 import { toMonthly } from "~/types/budget";
@@ -22,32 +25,27 @@ export const handle = {
   i18n: ["common"],
 };
 
-type TakeHomeProfile = {
-  annualSalary?: number | string | null;
-  employmentType?: string | null;
-  pensionPercent?: number | string | null;
-  isSalarySacrifice?: boolean | null;
-} | null;
+type TakeHomeProfile = Parameters<typeof profileFactsFromProfile>[0];
 
-const isBlank = (value: unknown): boolean => value === null || value === undefined || value === "";
+const MISSING_LABELS: Partial<Record<FactKey, string>> = {
+  employmentType: "employment type",
+  pensionPercent: "pension percentage",
+  isSalarySacrifice: "salary sacrifice status",
+};
 
 /**
  * What the user must add for take-home to be computed, all at once. Undefined when the salary
  * itself is unset (the widget then just says "Not set").
  */
 export function describeMissingTakeHome(profile: TakeHomeProfile | undefined): string | undefined {
-  if (!profile?.annualSalary) return undefined;
-  const missing: string[] = [];
-  if (profile.employmentType !== "employed" && profile.employmentType !== "self-employed") {
-    missing.push("employment type");
-  }
-  if (isBlank(profile.pensionPercent)) missing.push("pension percentage");
-  if (profile.isSalarySacrifice == null) missing.push("salary sacrifice status");
-  if (missing.length === 0) return undefined;
+  const figure = selectTakeHome(profileFactsFromProfile(profile));
+  if (isKnown(figure) || figure.missing.includes("annualSalary")) return undefined;
+  const labels = figure.missing.flatMap((key) => MISSING_LABELS[key] ?? []);
+  if (labels.length === 0) return undefined;
   const list =
-    missing.length === 1
-      ? missing[0]
-      : `${missing.slice(0, -1).join(", ")} and ${missing[missing.length - 1]}`;
+    labels.length === 1
+      ? labels[0]
+      : `${labels.slice(0, -1).join(", ")} and ${labels[labels.length - 1]}`;
   return `Add ${list}`;
 }
 
@@ -173,19 +171,13 @@ export const loader = async (args: LoaderFunctionArgs) => {
   // Not calculated yet: the old flat 29% across every year's records was an invented figure.
   const estimatedTaxDue: number | null = null;
 
-  // Estimated take-home: only when salary, pension percent and salary-sacrifice status are all known.
-  const pensionPercentKnown = !isBlank(userProfile?.pensionPercent);
-  const salarySacrificeKnown = userProfile?.isSalarySacrifice != null;
-  const takeHomeInputsKnown = pensionPercentKnown && salarySacrificeKnown;
-  const takeHomeBreakdown =
-    userProfile?.annualSalary && takeHomeInputsKnown
-      ? calculateNetTakeHome(
-          userProfile.annualSalary,
-          userProfile.employmentType,
-          Number(userProfile.pensionPercent),
-          Boolean(userProfile.isSalarySacrifice),
-        )
-      : null;
+  // Estimated take-home comes from the engine's one selector; unknown stays unknown.
+  const takeHomeFigure = selectTakeHome(profileFactsFromProfile(userProfile));
+  const takeHome = isKnown(takeHomeFigure) ? takeHomeFigure.value : null;
+  const pensionPercentKnown =
+    userProfile?.pensionPercent !== null &&
+    userProfile?.pensionPercent !== undefined &&
+    String(userProfile.pensionPercent) !== "";
   const monthlyContributionEst =
     userProfile?.annualSalary && pensionPercentKnown
       ? Math.round(
@@ -268,8 +260,9 @@ export const loader = async (args: LoaderFunctionArgs) => {
       totalAssets,
       monthlySavingRate: Math.max(0, monthlyIncome - livingExpenses),
       annualSalary: userProfile?.annualSalary ?? null,
-      estimatedTakeHome: takeHomeBreakdown?.monthlyTakeHome ?? null,
-      takeHomeMissing: takeHomeBreakdown ? undefined : describeMissingTakeHome(userProfile),
+      estimatedTakeHome: takeHome?.monthly ?? null,
+      takeHomeMissing: takeHome ? undefined : describeMissingTakeHome(userProfile),
+      takeHomeAssumptions: isKnown(takeHomeFigure) ? takeHomeFigure.assumptions : undefined,
     },
     taxData: {
       taxYear: getCurrentUKTaxYear(),

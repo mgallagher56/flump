@@ -120,7 +120,7 @@ export function normalizeStudentLoanPlan(plan?: string | null): UkStudentLoanPla
  * The engine applies one plan. A postgraduate loan repays alongside an undergraduate plan, so
  * the undergraduate plan wins until the engine sums concurrent plans (E23 D07 follow-up).
  */
-function pickEnginePlan(plans: string[]): string | null {
+export function pickEnginePlan(plans: string[]): string | null {
   return plans.find((plan) => normalizeStudentLoanPlan(plan) !== "POSTGRAD") ?? plans[0] ?? null;
 }
 

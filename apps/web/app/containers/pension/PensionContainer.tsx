@@ -1,9 +1,11 @@
 import {
   calculate100kTaxTrap,
   calculateEmployerNISavings,
-  calculateUKEWNITakeHome,
   getCurrentUKTaxYear,
+  isKnown,
   PortfolioSnapshot,
+  profileFactsFromProfile,
+  selectTakeHome,
 } from "@flump/finance-engine";
 import { LiveRegion, ProjectionNotice } from "@repo/ui";
 import { css } from "@repo/ui/styled-system/css";
@@ -237,7 +239,7 @@ export const PensionContainer: FC = () => {
   const isSalarySacrificeEmployerNi = isReset
     ? (profile.isSalarySacrificeEmployerNi ?? userProfile?.isSalarySacrificeEmployerNi ?? false)
     : (profile.isSalarySacrificeEmployerNi ?? userProfile?.isSalarySacrificeEmployerNi ?? false);
-  const employmentType = profile.employmentType ?? userProfile?.employmentType ?? "employed";
+  const employmentType = profile.employmentType ?? userProfile?.employmentType ?? null;
 
   const monthlyEmployeeContrib = (annualSalary * (employeePercent / 100)) / 12;
   const standardMonthlyEmployerContrib = (annualSalary * (employerPercent / 100)) / 12;
@@ -257,29 +259,35 @@ export const PensionContainer: FC = () => {
     if (annualSalary <= 0 || employeePercent <= 0) {
       return { netMonthlyCost: 0, taxReliefMonthly: 0 };
     }
-    const empType =
-      employmentType === "employed" || employmentType === "self-employed"
-        ? employmentType
-        : "employed";
-    const taxYear = getCurrentUKTaxYear();
-    const withoutPension = calculateUKEWNITakeHome(
+    // Region and student-loan plans come from the profile, so a Scottish or Plan 2 user gets
+    // the right relief. An unknown employment type or setting gives no relief figure.
+    const stored: Record<string, unknown> = { ...userProfile };
+    for (const [key, value] of Object.entries(profile)) {
+      if (value !== null && value !== undefined) stored[key] = value;
+    }
+    const facts = {
+      ...profileFactsFromProfile(stored),
       annualSalary,
-      empType,
-      0,
+      employmentType: employmentType ?? null,
       isSalarySacrifice,
-      taxYear,
-    ).monthlyTakeHome;
-    const withPension = calculateUKEWNITakeHome(
-      annualSalary,
-      empType,
-      employeePercent,
-      isSalarySacrifice,
-      taxYear,
-    ).monthlyTakeHome;
-    const netCost = Math.max(0, withoutPension - withPension);
+    };
+    const withoutPension = selectTakeHome(facts, { overrides: { pensionPercent: 0 } });
+    const withPension = selectTakeHome(facts, { overrides: { pensionPercent: employeePercent } });
+    if (!isKnown(withoutPension) || !isKnown(withPension)) {
+      return { netMonthlyCost: 0, taxReliefMonthly: 0 };
+    }
+    const netCost = Math.max(0, (withoutPension.value.annual - withPension.value.annual) / 12);
     const relief = Math.max(0, Math.round(monthlyEmployeeContrib - netCost));
     return { netMonthlyCost: netCost, taxReliefMonthly: relief };
-  }, [annualSalary, employeePercent, employmentType, isSalarySacrifice, monthlyEmployeeContrib]);
+  }, [
+    annualSalary,
+    employeePercent,
+    employmentType,
+    isSalarySacrifice,
+    monthlyEmployeeContrib,
+    profile,
+    userProfile,
+  ]);
 
   // Inline editing state for the Contributions Breakdown card
   const [isEditingRates, setIsEditingRates] = useState(false);
