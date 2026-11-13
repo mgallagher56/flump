@@ -1,62 +1,34 @@
 import * as RadixDialog from "@radix-ui/react-dialog";
 import { X } from "lucide-react";
-import { type FC, type ReactNode, useEffect, useRef } from "react";
+import type { FC, ReactNode } from "react";
 import { cx } from "../../../styled-system/css";
 import { Icon } from "../Icon";
+import { visuallyHiddenRecipe } from "../VisuallyHidden/VisuallyHidden.styles";
 import {
   dialogCloseRecipe,
   dialogContentRecipe,
   dialogDescriptionRecipe,
+  dialogFooterRecipe,
   dialogHeaderRecipe,
   dialogOverlayRecipe,
   dialogTitleRecipe,
 } from "./Dialog.styles";
-
-const FOCUSABLE = "button, a[href], input, select, textarea, summary, [tabindex]";
-let lastPointerTarget: EventTarget | null = null;
-let trackingPointer = false;
-
-/**
- * Safari and Firefox on macOS do not focus a button on click, so the opener can be `body` when a
- * dialog opens. Track the last pointer target (registered lazily, once, to stay tree-shake safe)
- * so focus can still be returned to it.
- */
-const trackPointerTarget = () => {
-  if (trackingPointer || typeof document === "undefined") return;
-  trackingPointer = true;
-  const record = (event: Event) => {
-    lastPointerTarget = event.target;
-  };
-  document.addEventListener("pointerdown", record, true);
-  document.addEventListener("click", record, true);
-};
-
-const resolveOpener = (): HTMLElement | null => {
-  const active = document.activeElement;
-  if (active instanceof HTMLElement && active !== document.body) return active;
-  if (lastPointerTarget instanceof Element) {
-    const el = lastPointerTarget.closest<HTMLElement>(FOCUSABLE);
-    if (el?.isConnected) return el;
-  }
-  return null;
-};
-
-/** Opener is gone (for example it unmounted): land on the main landmark rather than `body`. */
-const focusMainLandmark = () => {
-  const main = document.querySelector<HTMLElement>("main");
-  if (!main) return;
-  const hadTabIndex = main.hasAttribute("tabindex");
-  if (!hadTabIndex) main.setAttribute("tabindex", "-1");
-  main.focus({ preventScroll: true });
-  if (!hadTabIndex) main.removeAttribute("tabindex");
-};
+import { useDialogFocusReturn } from "./useDialogFocusReturn";
 
 export interface DialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  /** Required: every dialog is named (J-04). Plain sentence case. */
   title: string;
+  /** Keep the title for assistive tech but do not draw it. Use sparingly. */
+  hideTitle?: boolean;
   description?: string;
   children: ReactNode;
+  /**
+   * Action row, primary action last. Right-aligned from `sm` up; stacked full width on a phone
+   * with the primary action on top.
+   */
+  footer?: ReactNode;
   size?: "sm" | "md" | "lg";
   /** Accessible name for the close button. */
   closeLabel?: string;
@@ -74,16 +46,17 @@ export const Dialog: FC<DialogProps> = ({
   open,
   onOpenChange,
   title,
+  hideTitle = false,
   description,
   children,
+  footer,
   size = "md",
   closeLabel = "Close",
   id,
   className,
 }) => {
   // Controlled dialogs have no Radix Trigger, so remember what had focus and restore it on close.
-  const returnFocusRef = useRef<HTMLElement | null>(null);
-  useEffect(trackPointerTarget, []);
+  const focusReturn = useDialogFocusReturn();
   return (
     <RadixDialog.Root open={open} onOpenChange={onOpenChange}>
       <RadixDialog.Portal>
@@ -92,26 +65,17 @@ export const Dialog: FC<DialogProps> = ({
             id={id}
             data-testid={id}
             aria-modal="true"
-            onOpenAutoFocus={() => {
-              returnFocusRef.current = resolveOpener();
-            }}
-            onCloseAutoFocus={(event) => {
-              const target = returnFocusRef.current;
-              returnFocusRef.current = null;
-              // Only restore when focus has nowhere better to be (body), so a late close can never
-              // steal focus from something the user has already moved to.
-              const active = document.activeElement;
-              if (active && active !== document.body) return;
-              event.preventDefault();
-              if (target?.isConnected) target.focus();
-              else if (target) focusMainLandmark();
-            }}
+            {...focusReturn}
             {...(description ? {} : { "aria-describedby": undefined })}
             className={cx(dialogContentRecipe({ size }), className)}
           >
             <div className={dialogHeaderRecipe()}>
               <div>
-                <RadixDialog.Title className={dialogTitleRecipe()}>{title}</RadixDialog.Title>
+                <RadixDialog.Title
+                  className={hideTitle ? visuallyHiddenRecipe() : dialogTitleRecipe()}
+                >
+                  {title}
+                </RadixDialog.Title>
                 {description ? (
                   <RadixDialog.Description className={dialogDescriptionRecipe()}>
                     {description}
@@ -125,6 +89,7 @@ export const Dialog: FC<DialogProps> = ({
               </RadixDialog.Close>
             </div>
             {children}
+            {footer ? <div className={dialogFooterRecipe()}>{footer}</div> : null}
           </RadixDialog.Content>
         </RadixDialog.Overlay>
       </RadixDialog.Portal>
