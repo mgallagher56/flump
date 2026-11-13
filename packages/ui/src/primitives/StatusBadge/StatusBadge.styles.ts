@@ -6,12 +6,12 @@ export const statusBadgeRecipe = cva({
     alignItems: "center",
     gap: "4px",
     borderRadius: "full",
-    fontWeight: "semibold",
+    fontWeight: "bold",
     borderWidth: "1px",
     borderStyle: "solid",
     fontVariantNumeric: "tabular-nums",
     whiteSpace: "nowrap",
-    lineHeight: "1",
+    lineHeight: "1.2",
   },
   variants: {
     variant: {
@@ -48,19 +48,29 @@ export const statusBadgeRecipe = cva({
     },
     size: {
       sm: {
-        px: "8px",
-        py: "3px",
+        px: "10px",
+        py: "2px",
         fontSize: "xs",
       },
       md: {
-        px: "10px",
+        px: "12px",
         py: "4px",
-        fontSize: "xs",
+        fontSize: "sm",
       },
     },
   },
   defaultVariants: {
     variant: "neutral",
     size: "sm",
+  },
+});
+
+/** Wraps the icon so a Lucide `<Icon size="sm">` sits at badge scale. Decorative only. */
+export const statusBadgeIcon = cva({
+  base: {
+    display: "inline-flex",
+    alignItems: "center",
+    flex: "none",
+    "& svg": { width: "14px", height: "14px", strokeWidth: "2.2" },
   },
 });

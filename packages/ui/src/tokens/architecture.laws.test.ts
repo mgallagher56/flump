@@ -117,12 +117,14 @@ describe("Architecture & Design System Laws", () => {
       const primitives = getSubdirectories(PRIMITIVES_DIR);
       for (const expected of [
         "CurrencyInput",
+        "DataList",
         "FlumpLogo",
         "FormField",
         "Heading",
         "Illustration",
         "Money",
         "PercentInput",
+        "Stepper",
         "Text",
         "TextInput",
       ]) {
@@ -388,6 +390,10 @@ describe("Architecture & Design System Laws", () => {
         "packages/ui/src/primitives/ProgressBar/ProgressBar.styles.ts": {
           count: 1,
           reason: "progress fill (graphic)",
+        },
+        "packages/ui/src/primitives/Stepper/Stepper.styles.ts": {
+          count: 3,
+          reason: "step connector and phone progress segments (graphic, no text)",
         },
         "apps/web/app/components/navigation/NavMenu/NavMenu.styles.ts": {
           count: 1,

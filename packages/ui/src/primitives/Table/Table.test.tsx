@@ -75,6 +75,17 @@ describe("Table Primitive", () => {
     expect(caption?.textContent).toBe("Debts by APR");
   });
 
+  it("draws the caption when showCaption is set", () => {
+    render(
+      <Table caption="Debts by APR" showCaption>
+        <TBody />
+      </Table>,
+    );
+    const caption = screen.getByText("Debts by APR");
+    expect(caption.tagName).toBe("CAPTION");
+    expect(screen.getByRole("table", { name: "Debts by APR" })).toBeDefined();
+  });
+
   it("renders no caption when none is given", () => {
     const { container } = render(
       <Table>
@@ -82,5 +93,62 @@ describe("Table Primitive", () => {
       </Table>,
     );
     expect(container.querySelector("caption")).toBeNull();
+  });
+
+  it("aligns numeric and explicitly aligned cells without inline styles", () => {
+    const { container } = render(
+      <Table>
+        <THead>
+          <tr>
+            <Th numeric>Balance</Th>
+            <Th align="center">Status</Th>
+          </tr>
+        </THead>
+        <TBody>
+          <tr>
+            <Td numeric>£1</Td>
+            <Td align="center">Ok</Td>
+            <Td>Left</Td>
+          </tr>
+        </TBody>
+      </Table>,
+    );
+    expect(container.querySelector("[style]")).toBeNull();
+    expect(screen.getByText("Balance").className).toContain("ta_end");
+    expect(screen.getByText("Status").className).toContain("ta_center");
+    expect(screen.getByText("£1").className).toContain("ta_end");
+    expect(screen.getByText("£1").className).toContain("tabular-nums");
+    expect(screen.getByText("Left").className).toContain("ta_start");
+  });
+
+  it("renders a two-line cell with a muted secondary line", () => {
+    render(
+      <Table>
+        <TBody>
+          <tr>
+            <Td secondary="Current account">Monzo Joint</Td>
+          </tr>
+        </TBody>
+      </Table>,
+    );
+    expect(screen.getByText("Monzo Joint")).toBeDefined();
+    expect(screen.getByText("Current account")).toBeDefined();
+  });
+
+  it("exposes the stacked label on cells as data-label", () => {
+    render(
+      <Table>
+        <TBody>
+          <tr>
+            <Td label="Balance" numeric>
+              £1
+            </Td>
+            <Td>No label</Td>
+          </tr>
+        </TBody>
+      </Table>,
+    );
+    expect(screen.getByText("£1").getAttribute("data-label")).toBe("Balance");
+    expect(screen.getByText("No label").hasAttribute("data-label")).toBe(false);
   });
 });
