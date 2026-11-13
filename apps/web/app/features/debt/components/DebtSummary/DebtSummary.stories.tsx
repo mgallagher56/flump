@@ -10,11 +10,8 @@ const meta: Meta<typeof DebtSummary> = {
     totalDebt: 8400,
     highInterestDebt: 5200,
     monthlyMinimumTotal: 210,
-    extraPayment: 50,
     debtFreeDate: "Aug 2028",
-    totalInterestSaved: 640,
-    monthsShaved: 7,
-    strategy: "avalanche",
+    totalInterest: 640,
   },
 };
 
@@ -42,7 +39,9 @@ export const PaymentsNeverClear: Story = {
   args: { payoffAchievable: false },
   play: async ({ canvasElement }) => {
     await expect(canvasElement.querySelectorAll("[data-tone='hero']").length).toBe(0);
-    await expect(canvasElement.textContent).toContain("Your payments do not clear the debt yet");
+    await expect(canvasElement.textContent).toContain(
+      "Your minimum payments do not clear the debt yet",
+    );
   },
 };
 
