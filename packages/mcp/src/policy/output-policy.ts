@@ -34,18 +34,6 @@ export class OutputPolicyError extends Error {
 /** Keys that imply a personal recommendation or an outcome guarantee. */
 export const BANNED_KEY_PATTERN = /recommend|favou?rsOption|^best|guaranteed/i;
 
-/**
- * Permanent allow-list of banned-key matches, each with a reason. Never loosen the pattern.
- * `recommendedMonthlyTaxSetAsideGbp` is a tax set-aside figure (HMRC), not an FCA product
- * recommendation; a rename to a neutral key is suggested to E17-N12.
- */
-export const PERMANENT_KEY_ALLOW_LIST: ReadonlyArray<{ key: string; reason: string }> = [
-  {
-    key: "recommendedMonthlyTaxSetAsideGbp",
-    reason: "Tax set-aside figure, not an FCA product recommendation. Rename suggested to N12.",
-  },
-];
-
 /** Providers and platforms the MCP must never name in output (no product steering). */
 export const PROVIDER_NAMES: readonly string[] = [
   "Vanguard",
@@ -98,8 +86,7 @@ function walk(value: unknown, path: string, out: PolicyViolation[]): void {
   } else if (value && typeof value === "object") {
     for (const [key, v] of Object.entries(value)) {
       const keyPath = `${path}.${key}`;
-      const allowed = PERMANENT_KEY_ALLOW_LIST.some((a) => a.key === key);
-      if (!allowed && BANNED_KEY_PATTERN.test(key)) {
+      if (BANNED_KEY_PATTERN.test(key)) {
         out.push({ kind: "banned-key", path: keyPath, detail: key, text: key });
       }
       walk(v, keyPath, out);

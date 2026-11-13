@@ -61,16 +61,14 @@ exports[`MCP surface snapshot (E17-N1) > pins resources/list 1`] = `
 exports[`MCP surface snapshot (E17-N1) > pins tools/list > tool names 1`] = `
 [
   "calculate_self_assessment_and_section24",
-  "compare_mortgage_overpay_vs_isa",
-  "evaluate_cashflow_runway_and_health",
-  "evaluate_uk_student_loan",
+  "compare_mortgage_overpay_vs_invest",
+  "evaluate_student_loan_overpayment",
   "get_budget_summary",
   "get_debt_overview",
   "get_financial_snapshot",
   "get_net_worth_history",
   "list_accounts",
-  "project_wealth_scenario",
-  "query_transactions_and_spending",
+  "project_net_worth",
   "simulate_debt_payoff",
   "simulate_uk_tax_and_pension_sacrifice",
 ]
@@ -78,101 +76,6 @@ exports[`MCP surface snapshot (E17-N1) > pins tools/list > tool names 1`] = `
 
 exports[`MCP surface snapshot (E17-N1) > pins tools/list > tools/list 1`] = `
 [
-  {
-    "_meta": undefined,
-    "annotations": {
-      "destructiveHint": false,
-      "idempotentHint": true,
-      "openWorldHint": false,
-      "readOnlyHint": true,
-    },
-    "description": "Simulates deterministic UK consumer debt payoff schedules (Avalanche vs Snowball), 0% promotional transfer cliff alerts, and 5-year post-debt ISA wealth crossover projections via @flump/finance-engine.",
-    "execution": {
-      "taskSupport": "forbidden",
-    },
-    "inputSchema": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "properties": {
-        "customDebtsOverride": {
-          "description": "Optional hypothetical debt items to simulate instead of the user's active accounts",
-          "items": {
-            "properties": {
-              "balanceGbp": {
-                "minimum": 0,
-                "type": "number",
-              },
-              "debtType": {
-                "enum": [
-                  "credit_card",
-                  "overdraft",
-                  "loan",
-                  "car_finance",
-                  "bnpl",
-                  "other",
-                ],
-                "type": "string",
-              },
-              "id": {
-                "default": "custom_debt",
-                "type": "string",
-              },
-              "interestRateApr": {
-                "minimum": 0,
-                "type": "number",
-              },
-              "minimumPaymentGbp": {
-                "minimum": 0,
-                "type": "number",
-              },
-              "name": {
-                "type": "string",
-              },
-              "promoAprExpiryDate": {
-                "type": "string",
-              },
-              "revertApr": {
-                "type": "number",
-              },
-            },
-            "required": [
-              "name",
-              "balanceGbp",
-              "interestRateApr",
-              "minimumPaymentGbp",
-            ],
-            "type": "object",
-          },
-          "type": "array",
-        },
-        "monthlyExtraOverpaymentGbp": {
-          "default": 50,
-          "description": "Extra monthly cash surplus allocated towards debt overpayments in GBP",
-          "minimum": 0,
-          "type": "number",
-        },
-        "postDebtIsaReturnPct": {
-          "default": 6,
-          "description": "Projected annual compounding return percentage for the post-debt wealth bridge",
-          "maximum": 20,
-          "minimum": 0,
-          "type": "number",
-        },
-        "strategy": {
-          "default": "AVALANCHE",
-          "description": "Debt payoff algorithm to simulate (Avalanche = highest APR first, Snowball = lowest balance first)",
-          "enum": [
-            "AVALANCHE",
-            "SNOWBALL",
-            "COMPARE_BOTH",
-          ],
-          "type": "string",
-        },
-      },
-      "type": "object",
-    },
-    "name": "simulate_debt_payoff",
-    "title": "Simulate UK debt payoff",
-  },
   {
     "_meta": undefined,
     "annotations": {
@@ -254,66 +157,6 @@ exports[`MCP surface snapshot (E17-N1) > pins tools/list > tools/list 1`] = `
       "openWorldHint": false,
       "readOnlyHint": true,
     },
-    "description": "Compares overpaying an active UK mortgage (interest saved and unlocking next 85%/80%/75%/60% LTV tiers) against compounding surplus cash inside a tax-free Stocks & Shares or Cash ISA.",
-    "execution": {
-      "taskSupport": "forbidden",
-    },
-    "inputSchema": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "properties": {
-        "cashOrStocksIsaApyPct": {
-          "default": 6,
-          "description": "Expected annual return percentage inside a tax-free UK ISA (e.g. 5.0 for Cash ISA, 7.0 for Global Equities S&S ISA)",
-          "maximum": 20,
-          "minimum": 0,
-          "type": "number",
-        },
-        "hypotheticalMortgageBalanceGbp": {
-          "description": "Outstanding mortgage principal in GBP (defaults to user baseline)",
-          "minimum": 0,
-          "type": "number",
-        },
-        "hypotheticalMortgageRateApr": {
-          "description": "Current active mortgage APR percentage (defaults to 4.5%)",
-          "maximum": 20,
-          "minimum": 0,
-          "type": "number",
-        },
-        "hypotheticalPropertyValueGbp": {
-          "description": "Property market valuation in GBP (defaults to user baseline)",
-          "minimum": 0,
-          "type": "number",
-        },
-        "monthlySurplusToAllocateGbp": {
-          "default": 200,
-          "description": "Monthly surplus cash to allocate towards either mortgage overpayment or ISA compounding",
-          "minimum": 0,
-          "type": "number",
-        },
-        "remainingTermMonths": {
-          "description": "Remaining mortgage amortization term in months (defaults to 240 months / 20 years)",
-          "maximum": 480,
-          "minimum": 12,
-          "type": "number",
-        },
-        "targetRemortgageDate": {
-          "description": "ISO date 'YYYY-MM-DD' of next fixed-rate mortgage expiry to evaluate LTV tier unlocking",
-          "type": "string",
-        },
-      },
-      "type": "object",
-    },
-    "name": "compare_mortgage_overpay_vs_isa",
-    "title": "Compare mortgage overpayment with ISA",
-  },
-  {
-    "_meta": undefined,
-    "annotations": {
-      "destructiveHint": false,
-      "idempotentHint": true,
-      "openWorldHint": false,
-      "readOnlyHint": true,
-    },
     "description": "Computes HMRC Self-Assessment tax liability, Section 24 landlord finance cost restrictions (20% basic rate tax credit), 31 Jan and 31 Jul Payments on Account, and required monthly tax pot set-aside.",
     "execution": {
       "taskSupport": "forbidden",
@@ -366,239 +209,6 @@ exports[`MCP surface snapshot (E17-N1) > pins tools/list > tools/list 1`] = `
     },
     "name": "calculate_self_assessment_and_section24",
     "title": "Self Assessment and Section 24 calculator",
-  },
-  {
-    "_meta": undefined,
-    "annotations": {
-      "destructiveHint": false,
-      "idempotentHint": true,
-      "openWorldHint": false,
-      "readOnlyHint": true,
-    },
-    "description": "Projects long-term (1-30+ year) UK net worth trajectories, compound ISA & pension growth, and models life event impacts (Home Purchase deposit, Nursery/Childcare costs, Remortgage rate shocks, Early retirement bridges).",
-    "execution": {
-      "taskSupport": "forbidden",
-    },
-    "inputSchema": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "properties": {
-        "customScenarios": {
-          "description": "Custom life event overrides with explicit costs and years",
-          "items": {
-            "properties": {
-              "durationYears": {
-                "default": 1,
-                "minimum": 1,
-                "type": "number",
-              },
-              "id": {
-                "default": "custom_event",
-                "type": "string",
-              },
-              "lumpSumCostGbp": {
-                "default": 0,
-                "minimum": 0,
-                "type": "number",
-              },
-              "ongoingMonthlyDeltaGbp": {
-                "default": 0,
-                "type": "number",
-              },
-              "startYear": {
-                "minimum": 1,
-                "type": "number",
-              },
-              "title": {
-                "type": "string",
-              },
-              "type": {
-                "default": "BUY_HOME",
-                "enum": [
-                  "BUY_HOME",
-                  "HAVE_CHILD",
-                  "REMORTGAGE_SHOCK",
-                  "REMORTGAGE_RATE_SHOCK",
-                  "EARLY_RETIRE_57",
-                  "RETIRE_EARLY_BRIDGE",
-                ],
-                "type": "string",
-              },
-            },
-            "required": [
-              "title",
-              "startYear",
-            ],
-            "type": "object",
-          },
-          "type": "array",
-        },
-        "expectedReturnPct": {
-          "default": 6,
-          "description": "Expected annual ISA/investment portfolio return percentage",
-          "maximum": 15,
-          "minimum": 0,
-          "type": "number",
-        },
-        "horizonYears": {
-          "default": 30,
-          "description": "Projection time horizon in years (1 to 40 years)",
-          "maximum": 40,
-          "minimum": 1,
-          "type": "number",
-        },
-        "lifeEvents": {
-          "default": [],
-          "description": "Preset UK life events to apply to the trajectory",
-          "items": {
-            "enum": [
-              "BUY_HOME",
-              "HAVE_CHILD",
-              "REMORTGAGE_SHOCK",
-              "REMORTGAGE_RATE_SHOCK",
-              "EARLY_RETIRE_57",
-              "RETIRE_EARLY_BRIDGE",
-            ],
-            "type": "string",
-          },
-          "type": "array",
-        },
-        "monthlySavingsGbp": {
-          "default": 500,
-          "description": "Monthly surplus allocated to cash savings and ISA compounding",
-          "minimum": 0,
-          "type": "number",
-        },
-      },
-      "type": "object",
-    },
-    "name": "project_wealth_scenario",
-    "title": "Project wealth scenario",
-  },
-  {
-    "_meta": undefined,
-    "annotations": {
-      "destructiveHint": false,
-      "idempotentHint": true,
-      "openWorldHint": false,
-      "readOnlyHint": true,
-    },
-    "description": "Evaluates the user's stage-weighted Financial Health Score (0-100), Adaptive Lifecycle Stage (STAGE_1_DEBT_RECOVERY, STAGE_2_BUFFER_BUILD, STAGE_3_WEALTH_OPTIMIZE), weekly Safe-to-Spend, and emergency runway months with optional what-if changes to expenses or liquid reserves.",
-    "execution": {
-      "taskSupport": "forbidden",
-    },
-    "inputSchema": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "properties": {
-        "hypotheticalLiquidEmergencyFundGbp": {
-          "description": "Liquid cash emergency buffer in GBP",
-          "minimum": 0,
-          "type": "number",
-        },
-        "hypotheticalMonthlyEssentialExpensesGbp": {
-          "description": "Monthly essential bills in GBP (housing, council tax, groceries, utilities)",
-          "minimum": 0,
-          "type": "number",
-        },
-        "hypotheticalMonthlyIncomeGbp": {
-          "description": "Monthly net take-home pay in GBP (defaults to current budget/baseline)",
-          "minimum": 0,
-          "type": "number",
-        },
-      },
-      "type": "object",
-    },
-    "name": "evaluate_cashflow_runway_and_health",
-    "title": "Cashflow runway and financial health",
-  },
-  {
-    "_meta": undefined,
-    "annotations": {
-      "destructiveHint": false,
-      "idempotentHint": true,
-      "openWorldHint": false,
-      "readOnlyHint": true,
-    },
-    "description": "Evaluates whether a UK student loan (Plan 1, Plan 2, Plan 4 Scotland, Plan 5, or Postgraduate) should be voluntarily overpaid vs allowing statutory write-off after 25-40 years.",
-    "execution": {
-      "taskSupport": "forbidden",
-    },
-    "inputSchema": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "properties": {
-        "annualSalaryGbp": {
-          "description": "Annual gross salary in GBP (defaults to user baseline)",
-          "minimum": 0,
-          "type": "number",
-        },
-        "currentBalanceGbp": {
-          "description": "Current outstanding loan balance in GBP",
-          "minimum": 0,
-          "type": "number",
-        },
-        "plan": {
-          "description": "UK student loan repayment plan",
-          "enum": [
-            "PLAN_1",
-            "PLAN_2",
-            "PLAN_4",
-            "PLAN_5",
-            "POSTGRAD",
-          ],
-          "type": "string",
-        },
-      },
-      "required": [
-        "plan",
-        "currentBalanceGbp",
-      ],
-      "type": "object",
-    },
-    "name": "evaluate_uk_student_loan",
-    "title": "UK student loan evaluation",
-  },
-  {
-    "_meta": undefined,
-    "annotations": {
-      "destructiveHint": false,
-      "idempotentHint": true,
-      "openWorldHint": false,
-      "readOnlyHint": true,
-    },
-    "description": "Queries recent bank transactions with category rollups, spending velocity, and merchant data (PII-scrubbed based on token privacy scope).",
-    "execution": {
-      "taskSupport": "forbidden",
-    },
-    "inputSchema": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "properties": {
-        "accountId": {
-          "description": "Filter by specific account ID",
-          "type": "string",
-        },
-        "category": {
-          "description": "Filter by transaction category (e.g. 'groceries', 'eating_out', 'transport', 'bills')",
-          "type": "string",
-        },
-        "endDate": {
-          "description": "Filter transactions on or before this ISO date 'YYYY-MM-DD'",
-          "type": "string",
-        },
-        "limit": {
-          "default": 30,
-          "description": "Maximum number of transaction records to return (defaults to 30)",
-          "maximum": 100,
-          "minimum": 1,
-          "type": "number",
-        },
-        "startDate": {
-          "description": "Filter transactions on or after this ISO date 'YYYY-MM-DD'",
-          "type": "string",
-        },
-      },
-      "type": "object",
-    },
-    "name": "query_transactions_and_spending",
-    "title": "Transactions and spending query",
   },
   {
     "_meta": undefined,
@@ -1809,23 +1419,1301 @@ exports[`MCP surface snapshot (E17-N1) > pins tools/list > tools/list 1`] = `
     },
     "title": "Debt overview",
   },
+  {
+    "_meta": undefined,
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": true,
+    },
+    "description": "Sets the interest saved by overpaying a recorded mortgage by a fixed monthly amount beside the growth on the same amount invested at an expected annual return. Reads the mortgage balance, interest rate and remaining term from the mortgage account; anything not recorded is listed in missing[] and the comparison is left null rather than guessed. The expected return is required and is a single constant rate. The result states both outcomes and their difference; it does not choose between them.",
+    "execution": {
+      "taskSupport": "forbidden",
+    },
+    "inputSchema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "properties": {
+        "expectedReturnPct": {
+          "description": "Assumed constant annual return on the invested amount, as a percentage (5 means 5%). Supplied by the user or agent; there is no default.",
+          "maximum": 30,
+          "minimum": 0,
+          "type": "number",
+        },
+        "monthlyAmountGbp": {
+          "description": "Monthly amount in GBP to compare (up to 100,000)",
+          "maximum": 100000,
+          "minimum": 0,
+          "type": "number",
+        },
+        "mortgageAccountId": {
+          "description": "Mortgage account id from list_accounts. Needed only when there is more than one.",
+          "maxLength": 40,
+          "type": "string",
+        },
+        "responseFormat": {
+          "default": "concise",
+          "description": "concise (default) keeps the answer short; detailed returns the full breakdown",
+          "enum": [
+            "concise",
+            "detailed",
+          ],
+          "type": "string",
+        },
+      },
+      "required": [
+        "monthlyAmountGbp",
+        "expectedReturnPct",
+      ],
+      "type": "object",
+    },
+    "name": "compare_mortgage_overpay_vs_invest",
+    "outputSchema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "additionalProperties": false,
+      "properties": {
+        "asOf": {
+          "format": "date-time",
+          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$",
+          "type": "string",
+        },
+        "assumptions": {
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "field": {
+                "type": "string",
+              },
+              "reason": {
+                "type": "string",
+              },
+              "source": {
+                "enum": [
+                  "agent_supplied",
+                  "default",
+                  "user_profile",
+                  "derived",
+                ],
+                "type": "string",
+              },
+              "value": {
+                "type": [
+                  "number",
+                  "string",
+                ],
+              },
+            },
+            "required": [
+              "field",
+              "source",
+            ],
+            "type": "object",
+          },
+          "type": "array",
+        },
+        "currency": {
+          "const": "GBP",
+          "type": "string",
+        },
+        "missing": {
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "askUser": {
+                "type": "string",
+              },
+              "field": {
+                "type": "string",
+              },
+              "why": {
+                "type": "string",
+              },
+            },
+            "required": [
+              "field",
+              "why",
+              "askUser",
+            ],
+            "type": "object",
+          },
+          "type": "array",
+        },
+        "nextCursor": {
+          "type": [
+            "string",
+            "null",
+          ],
+        },
+        "notice": {
+          "type": "string",
+        },
+        "provenance": {
+          "additionalProperties": {
+            "type": "string",
+          },
+          "propertyNames": {
+            "type": "string",
+          },
+          "type": "object",
+        },
+        "result": {
+          "additionalProperties": false,
+          "properties": {
+            "comparison": {
+              "anyOf": [
+                {
+                  "additionalProperties": false,
+                  "properties": {
+                    "invest": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "growthGbp": {
+                          "type": "number",
+                        },
+                        "potAtEndOfTermGbp": {
+                          "type": "number",
+                        },
+                        "totalContributedGbp": {
+                          "type": "number",
+                        },
+                      },
+                      "required": [
+                        "potAtEndOfTermGbp",
+                        "totalContributedGbp",
+                        "growthGbp",
+                      ],
+                      "type": "object",
+                    },
+                    "investGrowthMinusInterestSavedGbp": {
+                      "type": "number",
+                    },
+                    "mortgageBalanceGbp": {
+                      "type": "number",
+                    },
+                    "mortgageRatePct": {
+                      "type": "number",
+                    },
+                    "overpay": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "interestSavedGbp": {
+                          "type": "number",
+                        },
+                        "monthsSaved": {
+                          "type": "number",
+                        },
+                        "newPayoffDate": {
+                          "type": "string",
+                        },
+                        "totalPaidInOverpaymentsGbp": {
+                          "type": "number",
+                        },
+                      },
+                      "required": [
+                        "interestSavedGbp",
+                        "monthsSaved",
+                        "newPayoffDate",
+                        "totalPaidInOverpaymentsGbp",
+                      ],
+                      "type": "object",
+                    },
+                    "standardMonthlyPaymentGbp": {
+                      "type": "number",
+                    },
+                    "termMonths": {
+                      "type": "number",
+                    },
+                  },
+                  "required": [
+                    "mortgageBalanceGbp",
+                    "mortgageRatePct",
+                    "termMonths",
+                    "standardMonthlyPaymentGbp",
+                    "overpay",
+                    "invest",
+                    "investGrowthMinusInterestSavedGbp",
+                  ],
+                  "type": "object",
+                },
+                {
+                  "type": "null",
+                },
+              ],
+            },
+            "expectedReturnPct": {
+              "type": "number",
+            },
+            "monthlyAmountGbp": {
+              "type": "number",
+            },
+            "mortgageAccountId": {
+              "type": [
+                "string",
+                "null",
+              ],
+            },
+            "notes": {
+              "items": {
+                "type": "string",
+              },
+              "type": "array",
+            },
+          },
+          "required": [
+            "mortgageAccountId",
+            "monthlyAmountGbp",
+            "expectedReturnPct",
+            "comparison",
+            "notes",
+          ],
+          "type": "object",
+        },
+        "schemaVersion": {
+          "const": "2.0",
+          "type": "string",
+        },
+        "taxYear": {
+          "type": "string",
+        },
+        "truncated": {
+          "type": "boolean",
+        },
+        "verification": {
+          "additionalProperties": false,
+          "properties": {
+            "detail": {
+              "type": "string",
+            },
+            "status": {
+              "enum": [
+                "verified",
+                "unverified",
+              ],
+              "type": "string",
+            },
+          },
+          "required": [
+            "status",
+            "detail",
+          ],
+          "type": "object",
+        },
+      },
+      "required": [
+        "schemaVersion",
+        "asOf",
+        "currency",
+        "result",
+        "provenance",
+        "assumptions",
+        "missing",
+        "truncated",
+        "nextCursor",
+      ],
+      "type": "object",
+    },
+    "title": "Compare mortgage overpayment with investing",
+  },
+  {
+    "_meta": undefined,
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": true,
+    },
+    "description": "Simulates paying off the user's recorded consumer debts (up to 20) with an optional extra monthly amount, under the avalanche (highest APR first) and snowball (smallest balance first) orderings, against minimum payments only. Debts with no recorded APR are left out and listed in missing[] unless an APR is supplied in debts[]; an APR is never guessed. Minimum payments that are not recorded are estimated and flagged. includeSchedule adds a yearly or monthly (at most 24 months) table for the first strategy. Student loans and mortgages are not included.",
+    "execution": {
+      "taskSupport": "forbidden",
+    },
+    "inputSchema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "properties": {
+        "debts": {
+          "description": "APR or minimum payment to use for specific debts, when not recorded",
+          "items": {
+            "properties": {
+              "accountId": {
+                "description": "Debt id from get_debt_overview",
+                "maxLength": 40,
+                "type": "string",
+              },
+              "aprPct": {
+                "description": "APR as a percentage (22.9 means 22.9%)",
+                "maximum": 100,
+                "minimum": 0,
+                "type": "number",
+              },
+              "minimumPaymentGbp": {
+                "description": "Monthly minimum payment in GBP",
+                "maximum": 100000,
+                "minimum": 0,
+                "type": "number",
+              },
+            },
+            "required": [
+              "accountId",
+            ],
+            "type": "object",
+          },
+          "maxItems": 20,
+          "type": "array",
+        },
+        "extraMonthlyGbp": {
+          "description": "Extra amount paid each month on top of the minimums, in GBP. Omit for none.",
+          "maximum": 100000,
+          "minimum": 0,
+          "type": "number",
+        },
+        "includeSchedule": {
+          "default": "none",
+          "description": "Payment schedule detail; monthly stops after 24 months",
+          "enum": [
+            "none",
+            "yearly",
+            "monthly",
+          ],
+          "type": "string",
+        },
+        "responseFormat": {
+          "default": "concise",
+          "description": "concise (default) keeps the answer short; detailed returns the full breakdown",
+          "enum": [
+            "concise",
+            "detailed",
+          ],
+          "type": "string",
+        },
+        "strategy": {
+          "default": "compare",
+          "description": "Ordering to simulate; compare returns avalanche, snowball and minimum-only",
+          "enum": [
+            "avalanche",
+            "snowball",
+            "compare",
+          ],
+          "type": "string",
+        },
+      },
+      "type": "object",
+    },
+    "name": "simulate_debt_payoff",
+    "outputSchema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "additionalProperties": false,
+      "properties": {
+        "asOf": {
+          "format": "date-time",
+          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$",
+          "type": "string",
+        },
+        "assumptions": {
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "field": {
+                "type": "string",
+              },
+              "reason": {
+                "type": "string",
+              },
+              "source": {
+                "enum": [
+                  "agent_supplied",
+                  "default",
+                  "user_profile",
+                  "derived",
+                ],
+                "type": "string",
+              },
+              "value": {
+                "type": [
+                  "number",
+                  "string",
+                ],
+              },
+            },
+            "required": [
+              "field",
+              "source",
+            ],
+            "type": "object",
+          },
+          "type": "array",
+        },
+        "currency": {
+          "const": "GBP",
+          "type": "string",
+        },
+        "missing": {
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "askUser": {
+                "type": "string",
+              },
+              "field": {
+                "type": "string",
+              },
+              "why": {
+                "type": "string",
+              },
+            },
+            "required": [
+              "field",
+              "why",
+              "askUser",
+            ],
+            "type": "object",
+          },
+          "type": "array",
+        },
+        "nextCursor": {
+          "type": [
+            "string",
+            "null",
+          ],
+        },
+        "notice": {
+          "type": "string",
+        },
+        "provenance": {
+          "additionalProperties": {
+            "type": "string",
+          },
+          "propertyNames": {
+            "type": "string",
+          },
+          "type": "object",
+        },
+        "result": {
+          "additionalProperties": false,
+          "properties": {
+            "debtsExcludedUnknownApr": {
+              "items": {
+                "type": "string",
+              },
+              "type": "array",
+            },
+            "debtsIncluded": {
+              "type": "number",
+            },
+            "extraMonthlyGbp": {
+              "type": "number",
+            },
+            "notes": {
+              "items": {
+                "type": "string",
+              },
+              "type": "array",
+            },
+            "schedule": {
+              "items": {
+                "additionalProperties": false,
+                "properties": {
+                  "interestGbp": {
+                    "type": "number",
+                  },
+                  "paymentsGbp": {
+                    "type": "number",
+                  },
+                  "period": {
+                    "type": "string",
+                  },
+                  "principalGbp": {
+                    "type": "number",
+                  },
+                  "remainingDebtGbp": {
+                    "type": "number",
+                  },
+                },
+                "required": [
+                  "period",
+                  "paymentsGbp",
+                  "interestGbp",
+                  "principalGbp",
+                  "remainingDebtGbp",
+                ],
+                "type": "object",
+              },
+              "type": "array",
+            },
+            "scheduleStrategy": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "avalanche",
+                    "snowball",
+                  ],
+                  "type": "string",
+                },
+                {
+                  "type": "null",
+                },
+              ],
+            },
+            "scheduleTruncated": {
+              "type": "boolean",
+            },
+            "simulated": {
+              "type": "boolean",
+            },
+            "startingDebtGbp": {
+              "type": "number",
+            },
+            "strategies": {
+              "items": {
+                "additionalProperties": false,
+                "properties": {
+                  "debtFreeDate": {
+                    "type": [
+                      "string",
+                      "null",
+                    ],
+                  },
+                  "interestSavedVsMinimumGbp": {
+                    "type": "number",
+                  },
+                  "monthsToPayoff": {
+                    "type": [
+                      "number",
+                      "null",
+                    ],
+                  },
+                  "payoffAchievable": {
+                    "type": "boolean",
+                  },
+                  "strategy": {
+                    "enum": [
+                      "avalanche",
+                      "snowball",
+                      "minimum_only",
+                    ],
+                    "type": "string",
+                  },
+                  "totalInterestPaidGbp": {
+                    "type": "number",
+                  },
+                },
+                "required": [
+                  "strategy",
+                  "payoffAchievable",
+                  "monthsToPayoff",
+                  "debtFreeDate",
+                  "totalInterestPaidGbp",
+                  "interestSavedVsMinimumGbp",
+                ],
+                "type": "object",
+              },
+              "type": "array",
+            },
+          },
+          "required": [
+            "simulated",
+            "debtsIncluded",
+            "debtsExcludedUnknownApr",
+            "startingDebtGbp",
+            "extraMonthlyGbp",
+            "strategies",
+            "scheduleStrategy",
+            "notes",
+          ],
+          "type": "object",
+        },
+        "schemaVersion": {
+          "const": "2.0",
+          "type": "string",
+        },
+        "taxYear": {
+          "type": "string",
+        },
+        "truncated": {
+          "type": "boolean",
+        },
+        "verification": {
+          "additionalProperties": false,
+          "properties": {
+            "detail": {
+              "type": "string",
+            },
+            "status": {
+              "enum": [
+                "verified",
+                "unverified",
+              ],
+              "type": "string",
+            },
+          },
+          "required": [
+            "status",
+            "detail",
+          ],
+          "type": "object",
+        },
+      },
+      "required": [
+        "schemaVersion",
+        "asOf",
+        "currency",
+        "result",
+        "provenance",
+        "assumptions",
+        "missing",
+        "truncated",
+        "nextCursor",
+      ],
+      "type": "object",
+    },
+    "title": "Simulate debt payoff",
+  },
+  {
+    "_meta": undefined,
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": true,
+    },
+    "description": "Projects net worth year by year from the recorded account balances, with and without up to 10 events that each carry an explicit one-off and/or monthly cost. The expected investment return is required. Monthly saving defaults to the budget surplus when a budget exists and is otherwise reported in missing[] and set to zero. Cash, pension and property growth use fixed stated rates unless supplied. Mortgage repayments are not modelled, so equity grows only with property growth. Concise format returns every fifth year; detailed adds the balance breakdown.",
+    "execution": {
+      "taskSupport": "forbidden",
+    },
+    "inputSchema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "properties": {
+        "cashInterestPct": {
+          "description": "Annual interest on cash, as a percentage. Defaults to 4.",
+          "maximum": 30,
+          "minimum": 0,
+          "type": "number",
+        },
+        "events": {
+          "default": [],
+          "items": {
+            "properties": {
+              "becomesPropertyEquity": {
+                "default": false,
+                "description": "True when the one-off cost buys property (it then counts as equity, not spend)",
+                "type": "boolean",
+              },
+              "durationYears": {
+                "default": 1,
+                "description": "Years the monthly cost lasts",
+                "maximum": 40,
+                "minimum": 1,
+                "type": "integer",
+              },
+              "label": {
+                "description": "Short name, for example Car",
+                "maxLength": 40,
+                "minLength": 1,
+                "type": "string",
+              },
+              "lumpSumCostGbp": {
+                "default": 0,
+                "description": "One-off cost at the start, in GBP",
+                "maximum": 10000000,
+                "minimum": 0,
+                "type": "number",
+              },
+              "monthlyCostGbp": {
+                "default": 0,
+                "description": "Extra cost each month while it lasts, in GBP",
+                "maximum": 100000,
+                "minimum": 0,
+                "type": "number",
+              },
+              "startYear": {
+                "description": "Years from now when it starts",
+                "maximum": 40,
+                "minimum": 1,
+                "type": "integer",
+              },
+            },
+            "required": [
+              "label",
+              "startYear",
+            ],
+            "type": "object",
+          },
+          "maxItems": 10,
+          "type": "array",
+        },
+        "expectedReturnPct": {
+          "description": "Assumed constant annual return on investments, as a percentage (5 means 5%). No default.",
+          "maximum": 30,
+          "minimum": 0,
+          "type": "number",
+        },
+        "horizonYears": {
+          "default": 10,
+          "maximum": 40,
+          "minimum": 1,
+          "type": "integer",
+        },
+        "monthlySavingGbp": {
+          "description": "Amount saved each month, in GBP. Defaults to the budget surplus.",
+          "maximum": 100000,
+          "minimum": 0,
+          "type": "number",
+        },
+        "pensionReturnPct": {
+          "description": "Annual pension growth, as a percentage. Defaults to 6.5.",
+          "maximum": 30,
+          "minimum": 0,
+          "type": "number",
+        },
+        "propertyGrowthPct": {
+          "description": "Annual property growth, as a percentage. Defaults to 2.5.",
+          "maximum": 30,
+          "minimum": 0,
+          "type": "number",
+        },
+        "responseFormat": {
+          "default": "concise",
+          "description": "concise (default) keeps the answer short; detailed returns the full breakdown",
+          "enum": [
+            "concise",
+            "detailed",
+          ],
+          "type": "string",
+        },
+      },
+      "required": [
+        "expectedReturnPct",
+      ],
+      "type": "object",
+    },
+    "name": "project_net_worth",
+    "outputSchema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "additionalProperties": false,
+      "properties": {
+        "asOf": {
+          "format": "date-time",
+          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$",
+          "type": "string",
+        },
+        "assumptions": {
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "field": {
+                "type": "string",
+              },
+              "reason": {
+                "type": "string",
+              },
+              "source": {
+                "enum": [
+                  "agent_supplied",
+                  "default",
+                  "user_profile",
+                  "derived",
+                ],
+                "type": "string",
+              },
+              "value": {
+                "type": [
+                  "number",
+                  "string",
+                ],
+              },
+            },
+            "required": [
+              "field",
+              "source",
+            ],
+            "type": "object",
+          },
+          "type": "array",
+        },
+        "currency": {
+          "const": "GBP",
+          "type": "string",
+        },
+        "missing": {
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "askUser": {
+                "type": "string",
+              },
+              "field": {
+                "type": "string",
+              },
+              "why": {
+                "type": "string",
+              },
+            },
+            "required": [
+              "field",
+              "why",
+              "askUser",
+            ],
+            "type": "object",
+          },
+          "type": "array",
+        },
+        "nextCursor": {
+          "type": [
+            "string",
+            "null",
+          ],
+        },
+        "notice": {
+          "type": "string",
+        },
+        "provenance": {
+          "additionalProperties": {
+            "type": "string",
+          },
+          "propertyNames": {
+            "type": "string",
+          },
+          "type": "object",
+        },
+        "result": {
+          "additionalProperties": false,
+          "properties": {
+            "endBaselineNetWorthGbp": {
+              "type": "number",
+            },
+            "endScenarioNetWorthGbp": {
+              "type": "number",
+            },
+            "eventsApplied": {
+              "items": {
+                "additionalProperties": false,
+                "properties": {
+                  "durationYears": {
+                    "type": "number",
+                  },
+                  "label": {
+                    "type": "string",
+                  },
+                  "lumpSumCostGbp": {
+                    "type": "number",
+                  },
+                  "monthlyCostGbp": {
+                    "type": "number",
+                  },
+                  "startYear": {
+                    "type": "number",
+                  },
+                },
+                "required": [
+                  "label",
+                  "startYear",
+                  "durationYears",
+                  "lumpSumCostGbp",
+                  "monthlyCostGbp",
+                ],
+                "type": "object",
+              },
+              "type": "array",
+            },
+            "horizonYears": {
+              "type": "number",
+            },
+            "notes": {
+              "items": {
+                "type": "string",
+              },
+              "type": "array",
+            },
+            "points": {
+              "items": {
+                "additionalProperties": false,
+                "properties": {
+                  "baselineNetWorthGbp": {
+                    "type": "number",
+                  },
+                  "cashGbp": {
+                    "type": "number",
+                  },
+                  "debtGbp": {
+                    "type": "number",
+                  },
+                  "investmentsGbp": {
+                    "type": "number",
+                  },
+                  "pensionGbp": {
+                    "type": "number",
+                  },
+                  "propertyEquityGbp": {
+                    "type": "number",
+                  },
+                  "scenarioNetWorthGbp": {
+                    "type": "number",
+                  },
+                  "year": {
+                    "type": "number",
+                  },
+                },
+                "required": [
+                  "year",
+                  "baselineNetWorthGbp",
+                  "scenarioNetWorthGbp",
+                ],
+                "type": "object",
+              },
+              "type": "array",
+            },
+            "startingNetWorthGbp": {
+              "type": "number",
+            },
+          },
+          "required": [
+            "horizonYears",
+            "startingNetWorthGbp",
+            "endBaselineNetWorthGbp",
+            "endScenarioNetWorthGbp",
+            "eventsApplied",
+            "points",
+            "notes",
+          ],
+          "type": "object",
+        },
+        "schemaVersion": {
+          "const": "2.0",
+          "type": "string",
+        },
+        "taxYear": {
+          "type": "string",
+        },
+        "truncated": {
+          "type": "boolean",
+        },
+        "verification": {
+          "additionalProperties": false,
+          "properties": {
+            "detail": {
+              "type": "string",
+            },
+            "status": {
+              "enum": [
+                "verified",
+                "unverified",
+              ],
+              "type": "string",
+            },
+          },
+          "required": [
+            "status",
+            "detail",
+          ],
+          "type": "object",
+        },
+      },
+      "required": [
+        "schemaVersion",
+        "asOf",
+        "currency",
+        "result",
+        "provenance",
+        "assumptions",
+        "missing",
+        "truncated",
+        "nextCursor",
+      ],
+      "type": "object",
+    },
+    "title": "Project net worth",
+  },
+  {
+    "_meta": undefined,
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": true,
+    },
+    "description": "Shows what a UK student loan repays each year at a given salary under the stated plan, and whether the projection clears the balance before the statutory write-off or writes it off first. The plan is required because it is not stored; balance and salary default to recorded values and are listed in missing[] when neither recorded nor supplied. The result describes the projected outcome; it does not say whether to overpay.",
+    "execution": {
+      "taskSupport": "forbidden",
+    },
+    "inputSchema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "properties": {
+        "annualSalaryGbp": {
+          "description": "Annual gross salary in GBP. Defaults to the salary on the profile.",
+          "maximum": 10000000,
+          "minimum": 0,
+          "type": "number",
+        },
+        "balanceGbp": {
+          "description": "Outstanding loan balance in GBP. Defaults to the recorded student loan balance.",
+          "maximum": 10000000,
+          "minimum": 0,
+          "type": "number",
+        },
+        "plan": {
+          "description": "Repayment plan: plan1, plan2, plan4 (Scotland), plan5 or postgrad",
+          "enum": [
+            "plan1",
+            "plan2",
+            "plan4",
+            "plan5",
+            "postgrad",
+          ],
+          "type": "string",
+        },
+        "responseFormat": {
+          "default": "concise",
+          "description": "concise (default) keeps the answer short; detailed returns the full breakdown",
+          "enum": [
+            "concise",
+            "detailed",
+          ],
+          "type": "string",
+        },
+      },
+      "required": [
+        "plan",
+      ],
+      "type": "object",
+    },
+    "name": "evaluate_student_loan_overpayment",
+    "outputSchema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "additionalProperties": false,
+      "properties": {
+        "asOf": {
+          "format": "date-time",
+          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$",
+          "type": "string",
+        },
+        "assumptions": {
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "field": {
+                "type": "string",
+              },
+              "reason": {
+                "type": "string",
+              },
+              "source": {
+                "enum": [
+                  "agent_supplied",
+                  "default",
+                  "user_profile",
+                  "derived",
+                ],
+                "type": "string",
+              },
+              "value": {
+                "type": [
+                  "number",
+                  "string",
+                ],
+              },
+            },
+            "required": [
+              "field",
+              "source",
+            ],
+            "type": "object",
+          },
+          "type": "array",
+        },
+        "currency": {
+          "const": "GBP",
+          "type": "string",
+        },
+        "missing": {
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "askUser": {
+                "type": "string",
+              },
+              "field": {
+                "type": "string",
+              },
+              "why": {
+                "type": "string",
+              },
+            },
+            "required": [
+              "field",
+              "why",
+              "askUser",
+            ],
+            "type": "object",
+          },
+          "type": "array",
+        },
+        "nextCursor": {
+          "type": [
+            "string",
+            "null",
+          ],
+        },
+        "notice": {
+          "type": "string",
+        },
+        "provenance": {
+          "additionalProperties": {
+            "type": "string",
+          },
+          "propertyNames": {
+            "type": "string",
+          },
+          "type": "object",
+        },
+        "result": {
+          "additionalProperties": false,
+          "properties": {
+            "annualRepaymentGbp": {
+              "type": [
+                "number",
+                "null",
+              ],
+            },
+            "annualSalaryGbp": {
+              "type": [
+                "number",
+                "null",
+              ],
+            },
+            "balanceGbp": {
+              "type": [
+                "number",
+                "null",
+              ],
+            },
+            "monthlyRepaymentGbp": {
+              "type": [
+                "number",
+                "null",
+              ],
+            },
+            "notes": {
+              "items": {
+                "type": "string",
+              },
+              "type": "array",
+            },
+            "plan": {
+              "enum": [
+                "plan1",
+                "plan2",
+                "plan4",
+                "plan5",
+                "postgrad",
+              ],
+              "type": "string",
+            },
+            "projectedOutcome": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "repaid_before_write_off",
+                    "written_off_first",
+                  ],
+                  "type": "string",
+                },
+                {
+                  "type": "null",
+                },
+              ],
+            },
+            "repaymentRatePct": {
+              "type": [
+                "number",
+                "null",
+              ],
+            },
+            "repaymentThresholdGbp": {
+              "type": [
+                "number",
+                "null",
+              ],
+            },
+            "writeOffYears": {
+              "type": [
+                "number",
+                "null",
+              ],
+            },
+          },
+          "required": [
+            "plan",
+            "balanceGbp",
+            "annualSalaryGbp",
+            "repaymentThresholdGbp",
+            "repaymentRatePct",
+            "annualRepaymentGbp",
+            "monthlyRepaymentGbp",
+            "writeOffYears",
+            "projectedOutcome",
+            "notes",
+          ],
+          "type": "object",
+        },
+        "schemaVersion": {
+          "const": "2.0",
+          "type": "string",
+        },
+        "taxYear": {
+          "type": "string",
+        },
+        "truncated": {
+          "type": "boolean",
+        },
+        "verification": {
+          "additionalProperties": false,
+          "properties": {
+            "detail": {
+              "type": "string",
+            },
+            "status": {
+              "enum": [
+                "verified",
+                "unverified",
+              ],
+              "type": "string",
+            },
+          },
+          "required": [
+            "status",
+            "detail",
+          ],
+          "type": "object",
+        },
+      },
+      "required": [
+        "schemaVersion",
+        "asOf",
+        "currency",
+        "result",
+        "provenance",
+        "assumptions",
+        "missing",
+        "truncated",
+        "nextCursor",
+      ],
+      "type": "object",
+    },
+    "title": "Student loan repayment outlook",
+  },
 ]
 `;
 
 exports[`per-tool output size (E17-N1) > calls every registered tool and pins the output size in bytes 1`] = `
 {
   "calculate_self_assessment_and_section24": 1000,
-  "compare_mortgage_overpay_vs_isa": 1500,
-  "evaluate_cashflow_runway_and_health": 2000,
-  "evaluate_uk_student_loan": 500,
+  "compare_mortgage_overpay_vs_invest": 1000,
+  "evaluate_student_loan_overpayment": 1500,
   "get_budget_summary": 1000,
   "get_debt_overview": 1000,
   "get_financial_snapshot": 1500,
   "get_net_worth_history": 1000,
   "list_accounts": 1000,
-  "project_wealth_scenario": 1500,
-  "query_transactions_and_spending": 500,
-  "simulate_debt_payoff": 1500,
+  "project_net_worth": 2000,
+  "simulate_debt_payoff": 1000,
   "simulate_uk_tax_and_pension_sacrifice": 1500,
 }
 `;

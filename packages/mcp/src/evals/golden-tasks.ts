@@ -8,8 +8,8 @@ import {
 } from "./types.js";
 
 /**
- * Tool names from the E17 draft section 6.4 (catalogue v2). Several are not live yet (N9, N11 and
- * N12 make them so); the golden tasks target the final names. A test pins every name used below
+ * Tool names from the E17 draft section 6.4 (catalogue v2). The read tools (N9) and simulate tools (N11) are live; the
+ * tax tools (N12), search_transactions and the write tools are not yet. The golden tasks target the final names. A test pins every name used below
  * to this list, so drift shows up as a failing test rather than a silent mismatch.
  */
 export const CATALOGUE_V2_TOOLS = [

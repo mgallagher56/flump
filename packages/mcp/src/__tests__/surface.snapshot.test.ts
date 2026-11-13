@@ -35,14 +35,12 @@ describe("MCP surface snapshot (E17-N1)", () => {
 
 /** Minimal valid arguments per tool, so each can be called through the SDK client. */
 const TOOL_CALLS: Record<string, Record<string, unknown>> = {
-  simulate_debt_payoff: { strategy: "COMPARE_BOTH" },
   simulate_uk_tax_and_pension_sacrifice: { employeePensionPct: 5 },
-  compare_mortgage_overpay_vs_isa: {},
   calculate_self_assessment_and_section24: { taxYear: "2025/26" },
-  project_wealth_scenario: {},
-  evaluate_cashflow_runway_and_health: {},
-  evaluate_uk_student_loan: { plan: "PLAN_5", currentBalanceGbp: 30000 },
-  query_transactions_and_spending: {},
+  compare_mortgage_overpay_vs_invest: { monthlyAmountGbp: 300, expectedReturnPct: 5 },
+  simulate_debt_payoff: {},
+  project_net_worth: { expectedReturnPct: 5 },
+  evaluate_student_loan_overpayment: { plan: "plan5", balanceGbp: 30000, annualSalaryGbp: 40000 },
   get_financial_snapshot: {},
   get_net_worth_history: {},
   list_accounts: {},
@@ -80,23 +78,19 @@ describe("default-leak table (E17-N1)", () => {
    * E17-N5: every default is now also disclosed in the response `assumptions[]`, which is why the
    * values below appear as echoed JSON values. They disappear when later tickets remove the defaults.
    *
-   * This table covers ECHOED values only. Defaults that are applied internally and never
-   * appear in the output (5000 cash, 0.72 take-home ratio, 19.9 APR, 4.5 rate, 240 months)
-   * are pinned by the "KNOWN LEAK" tests in `tools/*.tool.test.ts`, which show that omitting
-   * an input gives the same result as passing the default explicitly. 45000 belongs to N2.
+   * This table covers ECHOED values only. E17-N11 removed the tools that substituted silent defaults, so every row
+   * is now empty. 45000 belongs to N2.
    */
   const EXPECTED_LEAKS_FOR_EMPTY_USER: Record<string, Array<number | string>> = {
     calculate_self_assessment_and_section24: [],
-    compare_mortgage_overpay_vs_isa: [350000, 220000, 4.5, 240],
-    evaluate_cashflow_runway_and_health: [5000],
-    evaluate_uk_student_loan: [],
+    compare_mortgage_overpay_vs_invest: [],
+    evaluate_student_loan_overpayment: [],
     get_budget_summary: [],
     get_debt_overview: [],
     get_financial_snapshot: [],
     get_net_worth_history: [],
     list_accounts: [],
-    project_wealth_scenario: [5000, 15000],
-    query_transactions_and_spending: [],
+    project_net_worth: [],
     simulate_debt_payoff: [],
     simulate_uk_tax_and_pension_sacrifice: [],
   };

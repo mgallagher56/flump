@@ -141,7 +141,7 @@ export function registerSection24Tool(
                 firstPaymentOnAccount31JanGbp: s24Result.firstPaymentOnAccount31JanGbp,
                 totalDue31JanGbp: s24Result.totalDue31JanGbp,
                 secondPaymentOnAccount31JulyGbp: s24Result.secondPaymentOnAccount31JulyGbp,
-                recommendedMonthlyTaxSetAsideGbp: s24Result.recommendedMonthlyTaxSetAsideGbp,
+                monthlySetAsideEstimateGbp: s24Result.recommendedMonthlyTaxSetAsideGbp,
               },
               storedLedgerSummary: saLedger
                 ? {
