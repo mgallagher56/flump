@@ -1,6 +1,6 @@
 import { KpiCard, KpiStrip, Money } from "@repo/ui";
 import type { FC } from "react";
-import { figure, perMonth } from "./PensionSummary.styles";
+import { figure, perMonth, rateValue } from "./PensionSummary.styles";
 
 export interface PensionSummaryProps {
   totalValue: number;
@@ -64,7 +64,7 @@ export const PensionSummary: FC<PensionSummaryProps> = ({
             : "Add a pension pot to see its value"
         }
         tone="hero"
-        value={hasPots ? <Money size="lg" tone="onContrast" value={totalValue} /> : null}
+        value={hasPots ? <Money size="kpi" tone="onContrast" value={totalValue} /> : null}
       />
       <KpiCard
         label="Going in each month"
@@ -120,7 +120,14 @@ export const PensionSummary: FC<PensionSummaryProps> = ({
               ? "A 5% placeholder: no growth rate is set on your pots"
               : "Average across your pots, weighted by value"
         }
-        value={hasPots ? <span className={figure}>{pct(weightedReturnRate)} a year</span> : null}
+        value={
+          hasPots ? (
+            <span className={figure}>
+              <span className={rateValue}>{pct(weightedReturnRate)}</span>{" "}
+              <span className={perMonth}>a year</span>
+            </span>
+          ) : null
+        }
       />
     </KpiStrip>
   );
