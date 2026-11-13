@@ -4,7 +4,7 @@ export const chartFigureRoot = cva({
   base: {
     display: "flex",
     flexDirection: "column",
-    gap: "12px",
+    gap: "3",
     margin: "0",
     width: "100%",
   },
@@ -12,6 +12,7 @@ export const chartFigureRoot = cva({
 
 export const chartFigureTitle = cva({
   base: {
+    fontFamily: "display",
     fontSize: "md",
     fontWeight: "semibold",
     color: "text.primary",
@@ -33,4 +34,12 @@ export const chartFigureData = cva({
   base: {
     fontVariantNumeric: "tabular-nums",
   },
+});
+
+export const chartFigureNotice = cva({
+  base: { margin: "0" },
+});
+
+export const chartFigureLegend = cva({
+  base: { margin: "0" },
 });

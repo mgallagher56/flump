@@ -15,6 +15,8 @@ export * from "./patterns/AllowanceProgressPill";
 export * from "./patterns/AppSectionDivider";
 export * from "./patterns/AppShell";
 export * from "./patterns/ChartFigure";
+export * from "./patterns/ChartLegend";
+export * from "./patterns/ChartTooltipContent";
 export * from "./patterns/CoachCard";
 export * from "./patterns/ConfirmDialog";
 export * from "./patterns/DebtToWealthChart";

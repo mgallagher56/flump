@@ -4,6 +4,8 @@ import { CollapsibleDrawer } from "../../primitives/CollapsibleDrawer/Collapsibl
 import { visuallyHiddenRecipe } from "../../primitives/VisuallyHidden/VisuallyHidden.styles";
 import {
   chartFigureData,
+  chartFigureLegend,
+  chartFigureNotice,
   chartFigureRoot,
   chartFigureSummary,
   chartFigureTitle,
@@ -45,6 +47,10 @@ export interface ChartFigureProps {
   summary: string;
   /** Show the summary visually. Defaults to screen-reader only. */
   showSummary?: boolean;
+  /** Sample-data or projection notice (for example `<ProjectionNotice>`), shown above the chart. */
+  notice?: ReactNode;
+  /** A `<ChartLegend>` (or similar key), shown below the chart and exposed to assistive tech. */
+  legend?: ReactNode;
   /** Optional accessible data table, revealed via a "Show data" drawer. */
   dataTable?: ReactNode;
   /** The chart itself (for example a Recharts SVG). Hidden from assistive tech. */
@@ -57,6 +63,8 @@ export const ChartFigure: FC<ChartFigureProps> = ({
   hideTitle = false,
   summary,
   showSummary = false,
+  notice,
+  legend,
   dataTable,
   children,
   className,
@@ -78,9 +86,11 @@ export const ChartFigure: FC<ChartFigureProps> = ({
       >
         {title}
       </h3>
+      {notice ? <div className={chartFigureNotice()}>{notice}</div> : null}
       <div aria-hidden="true" ref={chartRef}>
         {children}
       </div>
+      {legend ? <div className={chartFigureLegend()}>{legend}</div> : null}
       {/* figcaption must be a direct child of figure, so hide it with the recipe class. */}
       <figcaption
         className={showSummary ? chartFigureSummary() : visuallyHiddenRecipe({ focusable: false })}
