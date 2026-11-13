@@ -1,4 +1,4 @@
-import { cva } from "@repo/ui/styled-system/css";
+import { css, cva } from "@repo/ui/styled-system/css";
 
 export const strategyContainer = cva({
   base: {
@@ -42,3 +42,48 @@ export const strategyCard = cva({
     },
   },
 });
+
+export const strategyHeading = css({
+  fontFamily: "display",
+  fontSize: "md",
+  fontWeight: "bold",
+  color: "text.primary",
+  margin: "0",
+});
+
+export const strategySubheading = css({ fontSize: "xs", color: "text.muted", mt: "2px", mb: "0" });
+
+export const impactRow = css({
+  backgroundColor: "primary.subtle",
+  p: "10px 14px",
+  borderRadius: "lg",
+  borderWidth: "1px",
+  borderStyle: "dashed",
+  borderColor: "primary.border",
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "center",
+  flexWrap: "wrap",
+  gap: "8px",
+  fontVariantNumeric: "tabular-nums",
+});
+
+export const impactTitle = css({ fontSize: "xs", fontWeight: "semibold", color: "text.primary" });
+
+export const strategyGrid = css({
+  display: "grid",
+  gridTemplateColumns: { base: "1fr", sm: "repeat(2, 1fr)" },
+  gap: "12px",
+});
+
+export const strategyCardTitle = css({
+  display: "inline-flex",
+  alignItems: "center",
+  gap: "6px",
+  fontWeight: "bold",
+  fontSize: "xs",
+  color: "text.primary",
+  textAlign: "left",
+});
+
+export const strategyCardHint = css({ fontSize: "xs", color: "text.muted", textAlign: "left" });

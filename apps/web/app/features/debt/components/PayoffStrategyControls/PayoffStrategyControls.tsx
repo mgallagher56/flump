@@ -1,8 +1,18 @@
-import { SliderField, StatusBadge } from "@repo/ui";
-import { css, cx } from "@repo/ui/styled-system/css";
+import { Icon, SliderField, StatusBadge } from "@repo/ui";
+import { cx } from "@repo/ui/styled-system/css";
+import { Snowflake, Zap } from "lucide-react";
 import type { FC } from "react";
-import { FaBolt, FaSnowflake } from "react-icons/fa";
-import { strategyCard, strategyContainer } from "./PayoffStrategyControls.styles";
+import {
+  impactRow,
+  impactTitle,
+  strategyCard,
+  strategyCardHint,
+  strategyCardTitle,
+  strategyContainer,
+  strategyGrid,
+  strategyHeading,
+  strategySubheading,
+} from "./PayoffStrategyControls.styles";
 
 export interface PayoffStrategyControlsProps {
   selectedStrategy: "avalanche" | "snowball";
@@ -23,33 +33,27 @@ export const PayoffStrategyControls: FC<PayoffStrategyControlsProps> = ({
   monthsSaved,
   className,
 }) => {
+  const money = new Intl.NumberFormat("en-GB", {
+    style: "currency",
+    currency: "GBP",
+    maximumFractionDigits: 0,
+  });
   return (
     <div className={cx(strategyContainer(), className)}>
       <div>
-        <h3
-          className={css({
-            fontFamily: "display",
-            fontSize: "md",
-            fontWeight: "bold",
-            color: "text.primary",
-            margin: "0",
-          })}
-        >
-          Payoff Strategy: Avalanche vs. Snowball
-        </h3>
-        <p className={css({ fontSize: "xs", color: "text.muted", mt: "2px", mb: "0" })}>
-          Choose the mathematical engine that matches your financial psychology.
+        <h3 className={strategyHeading}>Payoff order</h3>
+        <p className={strategySubheading}>
+          Compare paying the highest rate first with paying the smallest balance first.
         </p>
       </div>
 
-      {/* Overpayment Slider */}
       <SliderField
         helperText={
           monthsSaved !== undefined && monthsSaved > 0
-            ? `Puts you ${monthsSaved} months ahead of minimum repayments.`
-            : "Slide to allocate surplus cash."
+            ? `${monthsSaved} months sooner than minimum payments.`
+            : "Move the slider to model an extra payment."
         }
-        label="Monthly Debt Overpayment"
+        label="Extra payment each month"
         max={600}
         min={0}
         step={10}
@@ -59,72 +63,40 @@ export const PayoffStrategyControls: FC<PayoffStrategyControlsProps> = ({
         onChange={onChangeExtraPayment}
       />
 
-      {/* Impact Callout */}
       {interestSaved !== undefined && (
-        <div
-          className={css({
-            backgroundColor: "primary.subtle",
-            p: "10px 14px",
-            borderRadius: "lg",
-            borderWidth: "1px",
-            borderStyle: "dashed",
-            borderColor: "primary.border",
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            flexWrap: "wrap",
-            gap: "8px",
-          })}
-        >
-          <span className={css({ fontSize: "xs", fontWeight: "semibold", color: "text.primary" })}>
-            Total Projected Interest Saved
-          </span>
+        <div className={impactRow}>
+          <span className={impactTitle}>Interest saved versus minimum payments</span>
           <StatusBadge data-testid="interest-saved-badge" size="sm" variant="positive">
-            £{interestSaved.toLocaleString("en-GB")} Saved
+            {money.format(interestSaved)} saved
           </StatusBadge>
         </div>
       )}
 
-      {/* Avalanche vs Snowball Toggles */}
-      <div
-        className={css({
-          display: "grid",
-          gridTemplateColumns: { base: "1fr", sm: "repeat(2, 1fr)" },
-          gap: "12px",
-        })}
-      >
+      <div className={strategyGrid}>
         <button
           aria-pressed={selectedStrategy === "avalanche"}
-          className={cx(strategyCard({ active: selectedStrategy === "avalanche" }))}
+          className={strategyCard({ active: selectedStrategy === "avalanche" })}
           type="button"
           onClick={() => onSelectStrategy("avalanche")}
         >
-          <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-            <FaBolt className={css({ color: "status.warning.solid" })} size={13} />
-            <span className={css({ fontWeight: "bold", fontSize: "xs", color: "text.primary" })}>
-              Avalanche (Highest APR)
-            </span>
-          </div>
-          <span className={css({ fontSize: "11px", color: "text.muted", textAlign: "left" })}>
-            Pays the highest interest rate first.
+          <span className={strategyCardTitle}>
+            <Icon icon={Zap} size="sm" />
+            Highest rate first (avalanche)
           </span>
+          <span className={strategyCardHint}>Pays the debt with the highest APR first.</span>
         </button>
 
         <button
           aria-pressed={selectedStrategy === "snowball"}
-          className={cx(strategyCard({ active: selectedStrategy === "snowball" }))}
+          className={strategyCard({ active: selectedStrategy === "snowball" })}
           type="button"
           onClick={() => onSelectStrategy("snowball")}
         >
-          <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-            <FaSnowflake className={css({ color: "primary" })} size={13} />
-            <span className={css({ fontWeight: "bold", fontSize: "xs", color: "text.primary" })}>
-              Snowball (Smallest Pot)
-            </span>
-          </div>
-          <span className={css({ fontSize: "11px", color: "text.muted", textAlign: "left" })}>
-            Pays the smallest balance first.
+          <span className={strategyCardTitle}>
+            <Icon icon={Snowflake} size="sm" />
+            Smallest balance first (snowball)
           </span>
+          <span className={strategyCardHint}>Pays the smallest balance first.</span>
         </button>
       </div>
     </div>

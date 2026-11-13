@@ -4,6 +4,8 @@ import { RotateCcw, SlidersHorizontal } from "lucide-react";
 import type { FC, ReactNode } from "react";
 import {
   basisLine,
+  footerLine,
+  footerLink,
   zoneHeader,
   zoneHeading,
   zoneRoot,
@@ -16,6 +18,8 @@ export interface DebtScenarioZoneProps {
   /** True once any scenario input differs from the saved figures. */
   isModified: boolean;
   onReset: () => void;
+  /** Opens the saved details (the normal edit form). It never carries scenario values across. */
+  onUpdateDetails?: () => void;
   children: ReactNode;
   className?: string;
 }
@@ -30,6 +34,7 @@ export const DebtScenarioZone: FC<DebtScenarioZoneProps> = ({
   basis,
   isModified,
   onReset,
+  onUpdateDetails,
   children,
   className,
 }) => (
@@ -57,6 +62,13 @@ export const DebtScenarioZone: FC<DebtScenarioZoneProps> = ({
     <ProjectionNotice />
     <p className={basisLine}>{basis}</p>
     {children}
+    {onUpdateDetails ? (
+      <p className={footerLine}>
+        <button className={footerLink} type="button" onClick={onUpdateDetails}>
+          Update your details
+        </button>
+      </p>
+    ) : null}
   </section>
 );
 
