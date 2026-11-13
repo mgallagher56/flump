@@ -25,6 +25,8 @@ export function generateSheet(year: string, vectors: readonly UkTaxVector[]): st
     `bun run tax:signoff apply --year ${year} --sheet <this file>`,
     "```",
     "",
+    "Convention: takeHome vectors with children are net of the HICBC charge and exclude the Child Benefit received.",
+    "",
     `${ys.length} vectors. Already signed ones are marked and skipped.`,
     "",
   ];

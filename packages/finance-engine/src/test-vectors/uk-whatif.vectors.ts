@@ -13,6 +13,7 @@
  * - hicbc: { adjustedNetIncome, children }; expected is the High Income Child Benefit Charge. Individual basis,
  *   claimant is the higher earner. Child Benefit is assumed to be 52 weeks (owner ruling pending).
  * - takeHome: { salary, pensionMethod, pensionAmount, studentLoanPlans, children }; expected is annual take-home.
+ *   Convention: with children, take-home is net of the HICBC charge and excludes the Child Benefit received.
  * - whatIfDelta: { salary, deltaGross, children }; expected is the change in annual take-home.
  * - scottishMarginal: { salary, deltaGross }; expected is the change in take-home inside a Scottish band.
  * - studentLoanMulti: { grossIncome, plans }; plans joined with "+"; expected is total annual repayment.
@@ -84,7 +85,7 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
       "https://www.gov.uk/government/publications/rates-and-allowances-tax-credits-child-benefit-and-guardians-allowance/tax-credits-child-benefit-and-guardians-allowance",
     ],
     derivation:
-      "Individual basis, claimant is the higher earner. Child Benefit 21.05/week x 52 = 1094.6; charge percentage min(100, floor((ANI 49999 - 50000) / 100)) = 0%; charge 1094.6 x 0% = 0. Rule: 1% of Child Benefit per full 100 of ANI over 50,000, tax years up to 2023/24 (GOV.UK child-benefit-tax-charge). The percentage is floored to a whole number per full step and capped at 100%. Weekly rate for 1 child(ren): eldest 21.05.",
+      "Individual basis, claimant is the higher earner. Child Benefit 21.05/week x 52 = 1094.6; charge percentage: ANI 49999 is not over 50000, so no steps over the threshold, 0%; charge 1094.6 x 0% = 0. Rule: 1% of Child Benefit per full 100 of ANI over 50,000, tax years up to 2023/24 (GOV.UK child-benefit-tax-charge). The percentage is floored to a whole number per full step and capped at 100%. Weekly rate for 1 child(ren): eldest 21.05.",
     confidence: "medium",
     status: "UNVERIFIED",
     unverifiedReason:
@@ -184,7 +185,7 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
       "https://www.gov.uk/government/publications/rates-and-allowances-tax-credits-child-benefit-and-guardians-allowance/tax-credits-child-benefit-and-guardians-allowance",
     ],
     derivation:
-      "Individual basis, claimant is the higher earner. Child Benefit 21.15/week x 52 = 1099.8; charge percentage min(100, floor((ANI 49999 - 50000) / 100)) = 0%; charge 1099.8 x 0% = 0. Rule: 1% of Child Benefit per full 100 of ANI over 50,000, tax years up to 2023/24 (GOV.UK child-benefit-tax-charge). The percentage is floored to a whole number per full step and capped at 100%. Weekly rate for 1 child(ren): eldest 21.15.",
+      "Individual basis, claimant is the higher earner. Child Benefit 21.15/week x 52 = 1099.8; charge percentage: ANI 49999 is not over 50000, so no steps over the threshold, 0%; charge 1099.8 x 0% = 0. Rule: 1% of Child Benefit per full 100 of ANI over 50,000, tax years up to 2023/24 (GOV.UK child-benefit-tax-charge). The percentage is floored to a whole number per full step and capped at 100%. Weekly rate for 1 child(ren): eldest 21.15.",
     confidence: "medium",
     status: "UNVERIFIED",
     unverifiedReason:
@@ -285,7 +286,7 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
       "https://www.legislation.gov.uk/uksi/2023/237/made",
     ],
     derivation:
-      "Individual basis, claimant is the higher earner. Child Benefit 21.8/week x 52 = 1133.6; charge percentage min(100, floor((ANI 49999 - 50000) / 100)) = 0%; charge 1133.6 x 0% = 0. Rule: 1% of Child Benefit per full 100 of ANI over 50,000, tax years up to 2023/24 (GOV.UK child-benefit-tax-charge). The percentage is floored to a whole number per full step and capped at 100%. Weekly rate for 1 child(ren): eldest 21.8.",
+      "Individual basis, claimant is the higher earner. Child Benefit 21.8/week x 52 = 1133.6; charge percentage: ANI 49999 is not over 50000, so no steps over the threshold, 0%; charge 1133.6 x 0% = 0. Rule: 1% of Child Benefit per full 100 of ANI over 50,000, tax years up to 2023/24 (GOV.UK child-benefit-tax-charge). The percentage is floored to a whole number per full step and capped at 100%. Weekly rate for 1 child(ren): eldest 21.8.",
     confidence: "medium",
     status: "UNVERIFIED",
     unverifiedReason:
@@ -390,7 +391,7 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
       "https://www.legislation.gov.uk/uksi/2023/237/made",
     ],
     derivation:
-      "Individual basis, claimant is the higher earner. Child Benefit 24/week x 52 = 1248; charge percentage min(100, floor((ANI 49999 - 50000) / 100)) = 0%; charge 1248 x 0% = 0. Rule: 1% of Child Benefit per full 100 of ANI over 50,000, tax years up to 2023/24 (GOV.UK child-benefit-tax-charge). The percentage is floored to a whole number per full step and capped at 100%. Weekly rate for 1 child(ren): eldest 24.",
+      "Individual basis, claimant is the higher earner. Child Benefit 24/week x 52 = 1248; charge percentage: ANI 49999 is not over 50000, so no steps over the threshold, 0%; charge 1248 x 0% = 0. Rule: 1% of Child Benefit per full 100 of ANI over 50,000, tax years up to 2023/24 (GOV.UK child-benefit-tax-charge). The percentage is floored to a whole number per full step and capped at 100%. Weekly rate for 1 child(ren): eldest 24.",
     confidence: "medium",
     status: "UNVERIFIED",
     unverifiedReason:
@@ -495,7 +496,7 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
       "https://www.legislation.gov.uk/uksi/2024/247/made",
     ],
     derivation:
-      "Individual basis, claimant is the higher earner. Child Benefit 25.6/week x 52 = 1331.2; charge percentage min(100, floor((ANI 59999 - 60000) / 200)) = 0%; charge 1331.2 x 0% = 0. Rule: 1% of Child Benefit per full 200 of ANI over 60,000, tax years from 2024/25 (GOV.UK child-benefit-tax-charge). The percentage is floored to a whole number per full step and capped at 100%. Weekly rate for 1 child(ren): eldest 25.6.",
+      "Individual basis, claimant is the higher earner. Child Benefit 25.6/week x 52 = 1331.2; charge percentage: ANI 59999 is not over 60000, so no steps over the threshold, 0%; charge 1331.2 x 0% = 0. Rule: 1% of Child Benefit per full 200 of ANI over 60,000, tax years from 2024/25 (GOV.UK child-benefit-tax-charge). The percentage is floored to a whole number per full step and capped at 100%. Weekly rate for 1 child(ren): eldest 25.6.",
     confidence: "medium",
     status: "UNVERIFIED",
     unverifiedReason:
@@ -599,7 +600,7 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
       "https://www.gov.uk/government/publications/rates-and-allowances-tax-credits-child-benefit-and-guardians-allowance/tax-credits-child-benefit-and-guardians-allowance",
     ],
     derivation:
-      "Individual basis, claimant is the higher earner. Child Benefit 26.05/week x 52 = 1354.6; charge percentage min(100, floor((ANI 59999 - 60000) / 200)) = 0%; charge 1354.6 x 0% = 0. Rule: 1% of Child Benefit per full 200 of ANI over 60,000, tax years from 2024/25 (GOV.UK child-benefit-tax-charge). The percentage is floored to a whole number per full step and capped at 100%. Weekly rate for 1 child(ren): eldest 26.05.",
+      "Individual basis, claimant is the higher earner. Child Benefit 26.05/week x 52 = 1354.6; charge percentage: ANI 59999 is not over 60000, so no steps over the threshold, 0%; charge 1354.6 x 0% = 0. Rule: 1% of Child Benefit per full 200 of ANI over 60,000, tax years from 2024/25 (GOV.UK child-benefit-tax-charge). The percentage is floored to a whole number per full step and capped at 100%. Weekly rate for 1 child(ren): eldest 26.05.",
     confidence: "medium",
     status: "UNVERIFIED",
     unverifiedReason:
@@ -699,7 +700,7 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
       "https://www.gov.uk/government/publications/rates-and-allowances-tax-credits-child-benefit-and-guardians-allowance/tax-credits-child-benefit-and-guardians-allowance",
     ],
     derivation:
-      "Individual basis, claimant is the higher earner. Child Benefit 27.05/week x 52 = 1406.6; charge percentage min(100, floor((ANI 59999 - 60000) / 200)) = 0%; charge 1406.6 x 0% = 0. Rule: 1% of Child Benefit per full 200 of ANI over 60,000, tax years from 2024/25 (GOV.UK child-benefit-tax-charge). The percentage is floored to a whole number per full step and capped at 100%. Weekly rate for 1 child(ren): eldest 27.05.",
+      "Individual basis, claimant is the higher earner. Child Benefit 27.05/week x 52 = 1406.6; charge percentage: ANI 59999 is not over 60000, so no steps over the threshold, 0%; charge 1406.6 x 0% = 0. Rule: 1% of Child Benefit per full 200 of ANI over 60,000, tax years from 2024/25 (GOV.UK child-benefit-tax-charge). The percentage is floored to a whole number per full step and capped at 100%. Weekly rate for 1 child(ren): eldest 27.05.",
     confidence: "medium",
     status: "UNVERIFIED",
     unverifiedReason:
@@ -1230,7 +1231,7 @@ export const UK_WHATIF_VECTORS: readonly UkWhatIfVector[] = [
       "https://www.gov.uk/government/publications/rates-and-allowances-tax-credits-child-benefit-and-guardians-allowance/tax-credits-child-benefit-and-guardians-allowance",
     ],
     derivation:
-      "Change in annual take-home for +1000 gross. At 60000: PA 12570 (no taper at ANI 60000); taxable 60000 - 12570 = 47430; basic 37700 x 20% = 7540; higher 9730 x 40% = 3892; additional 0 x 45% = 0; income tax 11432; NI on 60000: 37700 x 8% + 9730 x 2% = 3210.6; HICBC Child Benefit 27.05/week x 52 = 1406.6; charge percentage min(100, floor((ANI 60000 - 60000) / 200)) = 0%; charge 1406.6 x 0% = 0. Take-home = 60000 - tax 11432 - NI 3210.6 - HICBC 0 = 45357.4. At 61000: PA 12570 (no taper at ANI 61000); taxable 61000 - 12570 = 48430; basic 37700 x 20% = 7540; higher 10730 x 40% = 4292; additional 0 x 45% = 0; income tax 11832; NI on 61000: 37700 x 8% + 10730 x 2% = 3230.6; HICBC Child Benefit 27.05/week x 52 = 1406.6; charge percentage min(100, floor((ANI 61000 - 60000) / 200)) = 5%; charge 1406.6 x 5% = 70.33. Take-home = 61000 - tax 11832 - NI 3230.6 - HICBC 70.33 = 45867.07. Delta = 1000 - tax change 400 - NI change 20 - HICBC change 70.33 = 509.67 (effective marginal rate 49.03%).",
+      "Change in annual take-home for +1000 gross. At 60000: PA 12570 (no taper at ANI 60000); taxable 60000 - 12570 = 47430; basic 37700 x 20% = 7540; higher 9730 x 40% = 3892; additional 0 x 45% = 0; income tax 11432; NI on 60000: 37700 x 8% + 9730 x 2% = 3210.6; HICBC Child Benefit 27.05/week x 52 = 1406.6; charge percentage: ANI 60000 is not over 60000, so no steps over the threshold, 0%; charge 1406.6 x 0% = 0. Take-home = 60000 - tax 11432 - NI 3210.6 - HICBC 0 = 45357.4. At 61000: PA 12570 (no taper at ANI 61000); taxable 61000 - 12570 = 48430; basic 37700 x 20% = 7540; higher 10730 x 40% = 4292; additional 0 x 45% = 0; income tax 11832; NI on 61000: 37700 x 8% + 10730 x 2% = 3230.6; HICBC Child Benefit 27.05/week x 52 = 1406.6; charge percentage min(100, floor((ANI 61000 - 60000) / 200)) = 5%; charge 1406.6 x 5% = 70.33. Take-home = 61000 - tax 11832 - NI 3230.6 - HICBC 70.33 = 45867.07. Delta = 1000 - tax change 400 - NI change 20 - HICBC change 70.33 = 509.67 (effective marginal rate 49.03%).",
     confidence: "medium",
     status: "UNVERIFIED",
     unverifiedReason:
