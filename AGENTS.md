@@ -107,4 +107,3 @@ Every token an agent reads is paid for again on each later turn of that session,
 - **Do not poll.** Wait for the notification from a background command, subagent or session instead of re-checking it. Run long commands in the background.
 - **Pick the cheapest model that fits** (section 6), and give mechanical work to `sonnet`.
 - **Keep command output short.** Use `rtk` (section 7), `--json` with a `-q` filter on `gh`, and `| tail` or `| head` on anything long.
-
