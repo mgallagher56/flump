@@ -81,7 +81,7 @@ describe("DebtContainer", () => {
 
   it("passes the loader surplus, not a hard-coded fallback", () => {
     render(<DebtContainer />);
-    expect(screen.getByText(/Wired to budget surplus: £420\/mo available/)).toBeDefined();
+    expect(screen.getByText(/Your budget surplus is £420 a month/)).toBeDefined();
     expect(screen.queryByText(/Set up your budget to see your monthly surplus/)).toBeNull();
     expect(screen.queryByTestId("surplus-unknown-note")).toBeNull();
   });
@@ -144,7 +144,9 @@ describe("DebtContainer", () => {
     try {
       render(<DebtContainer />);
       openTab(/UK debt rules and help/i);
-      expect(screen.getByText(/UK Debt Rules & Specialised Instruments/i)).toBeDefined();
+      expect(
+        screen.getByRole("heading", { level: 2, name: "UK debt rules and help" }),
+      ).toBeDefined();
     } finally {
       loaderState.empty = false;
     }
@@ -153,34 +155,37 @@ describe("DebtContainer", () => {
   it("renders debt payoff overview and active liabilities", () => {
     render(<DebtContainer />);
 
-    expect(screen.getByText("Your debts")).toBeDefined();
+    expect(screen.getByRole("heading", { level: 1, name: "Your debts" })).toBeDefined();
     expect(screen.getByText("Total you owe")).toBeDefined();
-    expect(screen.getByText(/Payoff Strategy: Avalanche vs. Snowball/i)).toBeDefined();
-    expect(screen.getByText(/The Debt-to-Wealth Crossover Bridge/i)).toBeDefined();
-    expect(screen.getByText(/UK Debt Rules & Specialised Instruments/i)).toBeDefined();
+    expect(screen.getByRole("heading", { level: 3, name: "Payoff order" })).toBeDefined();
+    expect(
+      screen.getByText(/What if the money that clears your debts went into savings instead/),
+    ).toBeDefined();
+    expect(
+      screen.getByRole("heading", { hidden: true, level: 2, name: "UK debt rules and help" }),
+    ).toBeDefined();
   });
 
   it("allows switching UK instruments tabs and managing liability accounts", () => {
     render(<DebtContainer />);
 
     openTab(/UK debt rules and help/i);
-    const overdraftTab = screen.getByRole("button", { name: /Arranged Overdraft EAR Cost/i });
+    const overdraftTab = screen.getByRole("tab", { name: /Arranged overdraft cost/i });
     fireEvent.click(overdraftTab);
 
     expect(screen.getByText(/Annual overdraft interest cost/i)).toBeDefined();
-    expect(screen.getByText(/Average Arranged Overdraft Balance/i)).toBeDefined();
+    expect(screen.getByLabelText(/Average arranged overdraft balance/i)).toBeDefined();
 
     // Switch top-level container tabs
     openTab(/Your debts \(/i);
     openTab(/UK debt rules and help/i);
-    openTab(/Payoff plan/i);
 
     // Open Add Debt Modal and submit a new debt: it persists through the route action
     openTab(/Your debts \(/i);
     fireEvent.click(screen.getByRole("button", { name: /Add Debt/i }));
-    const nameInput = screen.getByPlaceholderText(/Barclaycard Platinum/i);
+    const nameInput = screen.getByLabelText(/^Name of the debt/);
     fireEvent.change(nameInput, { target: { value: "New Store Card" } });
-    fireEvent.change(screen.getByLabelText("Outstanding balance (£)"), {
+    fireEvent.change(screen.getByLabelText(/^Balance you owe/), {
       target: { value: "1000" },
     });
     const form = nameInput.closest("form");
@@ -229,23 +234,25 @@ describe("DebtContainer", () => {
     );
   });
 
-  it("keeps inactive panels out of the accessibility tree", () => {
+  it("keeps the inactive UK rules panel out of the accessibility tree", () => {
     render(<DebtContainer />);
-    expect(screen.queryByRole("button", { name: /Delete Tesco Loan/i })).toBeNull();
-    openTab(/Your debts \(/i);
     expect(screen.getByRole("button", { name: /Delete Tesco Loan/i })).toBeDefined();
-    expect(screen.getByRole("tab", { name: /Your debts \(/i }).getAttribute("aria-selected")).toBe(
-      "true",
-    );
+    expect(screen.queryByRole("tab", { name: /Arranged overdraft cost/i })).toBeNull();
+    openTab(/UK debt rules and help/i);
+    expect(screen.getByRole("tab", { name: /Arranged overdraft cost/i })).toBeDefined();
+    expect(screen.queryByRole("button", { name: /Delete Tesco Loan/i })).toBeNull();
   });
 
   it("moves between tabs with the arrow keys", () => {
     render(<DebtContainer />);
-    const first = screen.getByRole("tab", { name: /Payoff plan/i });
+    const first = screen.getByRole("tab", { name: /Your debts \(/i });
+    expect(first.getAttribute("aria-selected")).toBe("true");
     fireEvent.keyDown(first, { key: "ArrowRight" });
-    expect(screen.getByRole("tab", { name: /Your debts \(/i }).getAttribute("aria-selected")).toBe(
-      "true",
-    );
+    expect(
+      screen.getByRole("tab", { name: /UK debt rules and help/i }).getAttribute("aria-selected"),
+    ).toBe("true");
+    fireEvent.keyDown(first, { key: "Home" });
+    expect(first.getAttribute("aria-selected")).toBe("true");
     fireEvent.keyDown(first, { key: "End" });
     expect(
       screen.getByRole("tab", { name: /UK debt rules and help/i }).getAttribute("aria-selected"),
@@ -310,7 +317,7 @@ describe("DebtContainer live region", () => {
     act(() => {
       vi.advanceTimersByTime(1);
     });
-    expect(region.textContent).toMatch(/^Debt-free by .+, total interest £[\d,]+$/);
+    expect(region.textContent).toMatch(/^Illustration: debt-free by .+, total interest £[\d,]+$/);
   });
 
   it("keeps the headline empty when minimum payments are estimated", () => {
@@ -324,5 +331,62 @@ describe("DebtContainer live region", () => {
       vi.advanceTimersByTime(2000);
     });
     expect(region.textContent).toBe("");
+  });
+});
+
+describe("DebtContainer scenario zone", () => {
+  beforeEach(() => {
+    fetcherState.submit.mockClear();
+    loaderState.accountsOverride = null;
+  });
+
+  const kpiText = () => document.querySelector("[data-tone='hero']")?.parentElement?.textContent;
+
+  it("starts the extra payment at £0 and shows the saved basis line", () => {
+    render(<DebtContainer />);
+    const zone = screen.getByRole("region", { name: "Model a change to your debts" });
+    expect(zone.textContent).toContain("Illustration, not saved");
+    expect(zone.textContent).toContain(
+      "Starting from your figures: £7,500 owed across 2 debts, £240 a month in minimums",
+    );
+    const slider = within(zone).getByRole("slider", { name: /Extra payment each month/i });
+    expect((slider as HTMLInputElement).value).toBe("0");
+    expect(within(zone).queryByRole("button", { name: "Reset to saved figures" })).toBeNull();
+  });
+
+  it("changing the extra payment or order leaves the KPI strip unchanged and makes no request", () => {
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+    render(<DebtContainer />);
+    const before = kpiText();
+    expect(before).toContain("Paying the minimums only");
+
+    fireEvent.change(screen.getByRole("slider", { name: /Extra payment each month/i }), {
+      target: { value: "300" },
+    });
+    fireEvent.click(screen.getByRole("radio", { name: /Smallest balance first/ }));
+    fireEvent.click(screen.getByRole("button", { name: /Match surplus/ }));
+
+    expect(kpiText()).toBe(before);
+    expect(document.querySelectorAll("[data-tone='hero']")).toHaveLength(1);
+    expect(fetcherState.submit).not.toHaveBeenCalled();
+    expect(fetchSpy).not.toHaveBeenCalled();
+    fetchSpy.mockRestore();
+  });
+
+  it("offers Reset to saved figures once modified and restores £0", () => {
+    render(<DebtContainer />);
+    const slider = () =>
+      screen.getByRole("slider", { name: /Extra payment each month/i }) as HTMLInputElement;
+    fireEvent.change(slider(), { target: { value: "300" } });
+    fireEvent.click(screen.getByRole("button", { name: "Reset to saved figures" }));
+    expect(slider().value).toBe("0");
+    expect(screen.queryByRole("button", { name: "Reset to saved figures" })).toBeNull();
+  });
+
+  it("keeps fact inputs out of the zone: balances and APRs are edited in Your debts only", () => {
+    render(<DebtContainer />);
+    const zone = screen.getByRole("region", { name: "Model a change to your debts" });
+    expect(within(zone).queryByRole("textbox", { name: /APR|balance|minimum/i })).toBeNull();
+    expect(zone.textContent).not.toMatch(/sandbox|apply to my/i);
   });
 });

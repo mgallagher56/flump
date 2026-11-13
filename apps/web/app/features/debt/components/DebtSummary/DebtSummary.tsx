@@ -5,36 +5,32 @@ import { figure, perMonth } from "./DebtSummary.styles";
 export interface DebtSummaryProps {
   totalDebt: number;
   highInterestDebt: number;
+  /** Sum of the saved minimum payments. */
   monthlyMinimumTotal: number;
-  extraPayment: number;
+  /** Finish date when paying the minimums only. */
   debtFreeDate: string;
-  totalInterestSaved: number;
-  monthsShaved: number;
-  strategy: "avalanche" | "snowball";
-  /** True when any debt has no stored APR: payoff date and interest saved cannot be calculated. */
+  /** Total interest when paying the minimums only. */
+  totalInterest: number;
+  /** True when any debt has no stored APR: payoff date and interest cannot be calculated. */
   aprUnknown?: boolean;
   /** True when any minimum payment is an estimate rather than a stored figure. */
   minimumEstimated?: boolean;
-  /** False when the payments never clear the debt. */
+  /** False when the minimum payments never clear the debt. */
   payoffAchievable?: boolean;
 }
 
-const pluralMonths = (n: number) => `${n} month${n === 1 ? "" : "s"}`;
-
 /**
- * Debt page KPI strip (E15 T3.3). Four cards at most. "Debt-free by" is the page's single
- * `surface.hero` block; it falls back to a plain "Not set" card when an APR is missing,
- * because a 0% stand-in would invent an optimistic date.
+ * Debt page KPI strip (E15 T3.3). Saved figures only: it never reads the scenario zone's extra
+ * payment or payoff order, so every figure assumes minimum payments. Four cards at most.
+ * "Debt-free by" is the page's single `surface.hero` block; it falls back to a plain "Not set"
+ * card when an APR is missing, because a 0% stand-in would invent an optimistic date.
  */
 export const DebtSummary: FC<DebtSummaryProps> = ({
   totalDebt,
   highInterestDebt,
   monthlyMinimumTotal,
-  extraPayment,
   debtFreeDate,
-  totalInterestSaved,
-  monthsShaved,
-  strategy,
+  totalInterest,
   aprUnknown = false,
   minimumEstimated = false,
   payoffAchievable = true,
@@ -42,8 +38,7 @@ export const DebtSummary: FC<DebtSummaryProps> = ({
   const canProject = !aprUnknown && payoffAchievable;
   const notCalculatedNote = aprUnknown
     ? "Add each debt's APR to calculate this"
-    : "Your payments do not clear the debt yet";
-  const orderLabel = strategy === "avalanche" ? "highest rate first" : "smallest balance first";
+    : "Your minimum payments do not clear the debt yet";
 
   return (
     <KpiStrip columns={4}>
@@ -51,11 +46,7 @@ export const DebtSummary: FC<DebtSummaryProps> = ({
         label="Debt-free by"
         subtext={
           canProject
-            ? `${
-                monthsShaved > 0
-                  ? `${pluralMonths(monthsShaved)} sooner than minimum payments`
-                  : "Paying the minimums only"
-              }${minimumEstimated ? " (estimated: some minimums are estimates)" : ""}`
+            ? `Paying the minimums only${minimumEstimated ? " (estimated: some minimums are estimates)" : ""}`
             : notCalculatedNote
         }
         tone="hero"
@@ -77,20 +68,18 @@ export const DebtSummary: FC<DebtSummaryProps> = ({
       />
       <KpiCard
         label="Paying each month"
-        subtext={`${
-          extraPayment > 0 ? "Minimums plus your extra payment" : "Minimum payments only"
-        }${minimumEstimated ? " (minimums estimated)" : ""}`}
+        subtext={`Minimum payments only${minimumEstimated ? " (minimums estimated)" : ""}`}
         value={
           <span className={figure}>
-            <Money size="lg" value={monthlyMinimumTotal + extraPayment} />
+            <Money size="lg" value={monthlyMinimumTotal} />
             <span className={perMonth}>a month</span>
           </span>
         }
       />
       <KpiCard
-        label="Interest saved"
-        subtext={canProject ? `Versus minimums, paying ${orderLabel}` : notCalculatedNote}
-        value={canProject ? <Money size="lg" value={totalInterestSaved} /> : null}
+        label="Interest to pay"
+        subtext={canProject ? "Total, paying the minimums only" : notCalculatedNote}
+        value={canProject ? <Money size="lg" value={totalInterest} /> : null}
       />
     </KpiStrip>
   );

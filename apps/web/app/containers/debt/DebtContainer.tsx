@@ -12,18 +12,18 @@ import {
   Illustration,
   LiveRegion,
   PageHeader,
-  ProjectionNotice,
   SimulatorSplitLayout,
 } from "@repo/ui";
-import { BookOpen, Calculator, CreditCard, TriangleAlert } from "lucide-react";
+import { BookOpen, CreditCard, type LucideIcon, TriangleAlert } from "lucide-react";
 import { type FC, useMemo, useState } from "react";
 import { Link, useFetcher, useLoaderData } from "react-router";
-import AddDebtDialog from "~/components/debt/AddDebtDialog";
-import DebtAccountsList from "~/components/debt/DebtAccountsList";
-import DebtToWealthBridgeCard from "~/components/debt/DebtToWealthBridgeCard";
-import PayoffStrategySwitcher from "~/components/debt/PayoffStrategySwitcher";
-import UkDebtInstrumentsCard from "~/components/debt/UkDebtInstrumentsCard";
+import { AddDebtDialog } from "~/features/debt/components/AddDebtDialog";
+import { DebtAccountsList } from "~/features/debt/components/DebtAccountsList";
+import { DebtScenarioZone } from "~/features/debt/components/DebtScenarioZone";
 import { DebtSummary } from "~/features/debt/components/DebtSummary";
+import { DebtToWealthBridgeCard } from "~/features/debt/components/DebtToWealthBridgeCard";
+import { PayoffStrategySwitcher } from "~/features/debt/components/PayoffStrategySwitcher";
+import { UkDebtInstrumentsCard } from "~/features/debt/components/UkDebtInstrumentsCard";
 import { debtItemToAccountPayload } from "~/features/debt/utils/debtAccountMapping";
 import { ConfirmDialog } from "~/features/feedback/components/ConfirmDialog";
 import { useFetcherOutcome } from "~/features/feedback/hooks/useFetcherOutcome";
@@ -43,7 +43,7 @@ import {
   tabList,
 } from "./DebtContainer.styles";
 
-type DebtTab = "simulator" | "accounts" | "instruments";
+type DebtTab = "accounts" | "instruments";
 
 export const DebtContainer: FC = () => {
   const loaderData = useLoaderData<any>();
@@ -61,7 +61,7 @@ export const DebtContainer: FC = () => {
   const budgetSurplus = monthlySurplus ?? 0;
 
   // Tab state
-  const [activeTab, setActiveTab] = useState<DebtTab>("simulator");
+  const [activeTab, setActiveTab] = useState<DebtTab>("accounts");
 
   // Debts come straight from the user's liability accounts. Add, edit and delete persist through
   // the route action, and the loader revalidation refreshes this list.
@@ -72,8 +72,16 @@ export const DebtContainer: FC = () => {
     [accounts, accountDetails],
   );
 
+  // Scenario state: container memory only. It never reaches the KPI strip, the saved list, the
+  // URL, storage or the network, and it starts at £0 (no invented or surplus-based default).
+  // TODO(E15 scenario zone): replace with `useScenarioState` and the shared `ScenarioZone`.
   const [selectedStrategy, setSelectedStrategy] = useState<"avalanche" | "snowball">("avalanche");
-  const [extraPayment, setExtraPayment] = useState<number>(50);
+  const [extraPayment, setExtraPayment] = useState<number>(0);
+  const isScenarioModified = extraPayment !== 0 || selectedStrategy !== "avalanche";
+  const resetScenario = () => {
+    setExtraPayment(0);
+    setSelectedStrategy("avalanche");
+  };
   const [isAddModalOpen, setIsAddModalOpen] = useState<boolean>(false);
 
   // Financial stage evaluation
@@ -91,15 +99,10 @@ export const DebtContainer: FC = () => {
     return compareAvalancheAndSnowball(debts, extraPayment);
   }, [debts, extraPayment]);
 
-  const scheduleResult = useMemo(() => {
-    return calculateDebtSchedule(
-      debts,
-      extraPayment,
-      selectedStrategy.toUpperCase() as "AVALANCHE" | "SNOWBALL",
-    );
-  }, [debts, extraPayment, selectedStrategy]);
-
-  const promoAlerts = scheduleResult.promoCliffAlerts.filter((a) => a.hasCliffRisk);
+  // Saved figures: minimum payments only. Used by the KPI strip and the 0% promo alert.
+  const savedComparison = useMemo(() => compareAvalancheAndSnowball(debts, 0), [debts]);
+  const savedSchedule = useMemo(() => calculateDebtSchedule(debts, 0, "AVALANCHE"), [debts]);
+  const promoAlerts = savedSchedule.promoCliffAlerts.filter((a) => a.hasCliffRisk);
 
   const activeResult =
     selectedStrategy === "avalanche" ? comparison.avalanche : comparison.snowball;
@@ -110,11 +113,16 @@ export const DebtContainer: FC = () => {
   const aprUnknown = debts.some((d) => d.aprKnown === false);
   const minimumEstimated = debts.some((d) => d.minimumPaymentEstimated === true);
 
-  // Headline outcome only; empty (nothing announced) when there are no debts, an APR is unknown
-  // (figures would be invented), minimum payments are estimated or the payments never clear the debt.
+  // Scenario outcome only; empty (nothing announced) until the extra payment is above £0, when
+  // there are no debts, an APR is unknown (figures would be invented), minimum payments are
+  // estimated or the payments never clear the debt.
   const debtHeadline =
-    hasDebts && !aprUnknown && !minimumEstimated && activeResult.payoffAchievable
-      ? `Debt-free by ${activeResult.debtFreeDate}, total interest ${formatCurrency(activeResult.totalInterest)}`
+    hasDebts &&
+    extraPayment > 0 &&
+    !aprUnknown &&
+    !minimumEstimated &&
+    activeResult.payoffAchievable
+      ? `Illustration: debt-free by ${activeResult.debtFreeDate}, total interest ${formatCurrency(activeResult.totalInterest)}`
       : "";
 
   const fetcher = useFetcher();
@@ -151,10 +159,8 @@ export const DebtContainer: FC = () => {
     );
   };
 
-  // Sends only the fields that changed. Balance is deliberately never sent:
-  // PortfolioSnapshot prefers the latest accountDetails value over
-  // account.balance, so a balance edit on an account with history would not
-  // apply. The edit dialog is limited to name, APR and minimum payment.
+  // Sends only the fields that changed. Balance is not sent: the edit dialog is limited to name,
+  // APR and minimum payment.
   const handleUpdateDebt = (id: string, updates: Partial<DebtItem>) => {
     const current = debts.find((d) => d.id === id);
     if (!current) return;
@@ -172,16 +178,15 @@ export const DebtContainer: FC = () => {
     fetcher.submit(fields, { method: "POST", action: "/app/debt" });
   };
 
-  const tabItems: { id: DebtTab; label: string; icon: typeof Calculator }[] = [
-    ...(hasDebts
-      ? [
-          { id: "simulator" as const, label: "Payoff plan", icon: Calculator },
-          { id: "accounts" as const, label: `Your debts (${debts.length})`, icon: CreditCard },
-        ]
-      : [{ id: "simulator" as const, label: "Your debts", icon: CreditCard }]),
+  const tabItems: { id: DebtTab; label: string; icon: LucideIcon }[] = [
+    {
+      id: "accounts",
+      label: hasDebts ? `Your debts (${debts.length})` : "Your debts",
+      icon: CreditCard,
+    },
     { id: "instruments", label: "UK debt rules and help", icon: BookOpen },
   ];
-  const selectedTab: DebtTab = !hasDebts && activeTab === "accounts" ? "simulator" : activeTab;
+  const selectedTab: DebtTab = activeTab;
   const panelProps = (id: DebtTab) => ({
     "aria-labelledby": `debt-tab-${id}`,
     hidden: selectedTab !== id,
@@ -224,12 +229,10 @@ export const DebtContainer: FC = () => {
 
   return (
     <div className={pageRoot}>
-      <LiveRegion debounceMs={1000} message={debtHeadline} visuallyHidden />
       <PageHeader
         subtitle="See how long your debts could take to clear, compare payoff orders and keep track of 0% offers."
         title="Your debts"
       />
-      <ProjectionNotice />
 
       {promoAlerts.length > 0 && (
         <section aria-labelledby="debt-promo-alert-title" className={promoAlert()}>
@@ -267,27 +270,13 @@ export const DebtContainer: FC = () => {
       {hasDebts ? (
         <DebtSummary
           aprUnknown={aprUnknown}
-          debtFreeDate={activeResult.debtFreeDate}
-          extraPayment={extraPayment}
+          debtFreeDate={savedComparison.minimumOnly.debtFreeDate}
           highInterestDebt={stageEval.highInterestDebt}
           minimumEstimated={minimumEstimated}
           monthlyMinimumTotal={totalMin}
-          monthsShaved={
-            selectedStrategy === "avalanche"
-              ? comparison.monthsShavedAvalancheVsMin
-              : Math.max(0, comparison.minimumOnly.months - comparison.snowball.months)
-          }
-          payoffAchievable={activeResult.payoffAchievable}
-          strategy={selectedStrategy}
+          payoffAchievable={savedComparison.minimumOnly.payoffAchievable}
           totalDebt={totalDebt}
-          totalInterestSaved={
-            selectedStrategy === "avalanche"
-              ? comparison.interestSavedAvalancheVsMin
-              : Math.max(
-                  0,
-                  comparison.minimumOnly.totalInterest - comparison.snowball.totalInterest,
-                )
-          }
+          totalInterest={savedComparison.minimumOnly.totalInterest}
         />
       ) : null}
 
@@ -331,8 +320,15 @@ export const DebtContainer: FC = () => {
         ))}
       </div>
 
-      {!hasDebts ? (
-        <div {...panelProps("simulator")}>
+      <div {...panelProps("accounts")}>
+        {hasDebts ? (
+          <DebtAccountsList
+            debts={debts}
+            onAddDebt={() => setIsAddModalOpen(true)}
+            onDeleteDebt={(id) => setConfirmDeleteId(id)}
+            onUpdateDebt={handleUpdateDebt}
+          />
+        ) : (
           <EmptyState
             action={
               <Button type="button" onClick={() => setIsAddModalOpen(true)}>
@@ -343,30 +339,27 @@ export const DebtContainer: FC = () => {
             illustration={<Illustration scene="empty-accounts" />}
             title="No debts yet"
           />
-        </div>
-      ) : null}
+        )}
+      </div>
 
-      {/* Panels stay mounted (hidden) so in-progress edits survive a tab switch. */}
+      {/* The scenario zone stays mounted so the illustration survives a tab switch. */}
       {hasDebts ? (
-        <>
-          <div {...panelProps("simulator")}>
-            <SimulatorSplitLayout
-              content={<DebtToWealthBridgeCard debts={debts} extraPayment={extraPayment} />}
-              contentLabel="Debt payoff results"
-              controls={controls}
-              controlsLabel="Payoff settings"
-              controlsSpan={5}
-            />
-          </div>
-          <div {...panelProps("accounts")}>
-            <DebtAccountsList
-              debts={debts}
-              onAddDebt={() => setIsAddModalOpen(true)}
-              onDeleteDebt={(id) => setConfirmDeleteId(id)}
-              onUpdateDebt={handleUpdateDebt}
-            />
-          </div>
-        </>
+        <DebtScenarioZone
+          basis={`Starting from your figures: ${formatCurrency(totalDebt)} owed across ${debts.length} ${
+            debts.length === 1 ? "debt" : "debts"
+          }, ${formatCurrency(totalMin)} a month in minimums`}
+          isModified={isScenarioModified}
+          onReset={resetScenario}
+        >
+          <LiveRegion announceInitial debounceMs={1000} message={debtHeadline} visuallyHidden />
+          <SimulatorSplitLayout
+            content={<DebtToWealthBridgeCard debts={debts} extraPayment={extraPayment} />}
+            contentLabel="Debt payoff results"
+            controls={controls}
+            controlsLabel="Payoff settings"
+            controlsSpan={5}
+          />
+        </DebtScenarioZone>
       ) : null}
 
       <div {...panelProps("instruments")}>
