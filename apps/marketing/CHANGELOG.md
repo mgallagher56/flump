@@ -1,5 +1,30 @@
 # Changelog
 
+## [1.29.0](https://github.com/mgallagher56/flump/compare/flump/marketing-v1.28.0...flump/marketing-v1.29.0) (2026-11-13)
+
+
+### Features ✨
+
+* **marketing:** contact page, closed-beta sign-up CTAs, neutral copy (E24-T2, E24-T3, E29-T4) ([0494641](https://github.com/mgallagher56/flump/commit/049464105f7d3894d55af29eaebef50b4ff21e27))
+* **marketing:** majority positioning, new hero and home order (E31 PR-A) ([6fdd3f3](https://github.com/mgallagher56/flump/commit/6fdd3f34db6fc2d597111bc5332b746ab6e41dea))
+* **marketing:** truthful free-beta pricing page and pricing.ts (E24-T4) ([fa98b9c](https://github.com/mgallagher56/flump/commit/fa98b9c31a88c6c6264c2f6070f6e5c9f47b7c30))
+
+
+### Bug Fixes 🪲
+
+* cover multi-line font-family lists, storybook and snapshots ([a530dd9](https://github.com/mgallagher56/flump/commit/a530dd97bdc522fbccff2825ebe690989e9d7783))
+* **marketing:** apply decider copy edits to pricing page, fix CI (E24-T4) ([1d64f9d](https://github.com/mgallagher56/flump/commit/1d64f9d4c17a36a67869292c1e12d72622c17761))
+* **marketing:** contact page placeholder note, privacy section, neutral MCP sample copy ([db7b394](https://github.com/mgallagher56/flump/commit/db7b3943a9a42caf31c2b144f34e7bb42564d9f2))
+* **marketing:** invite-mode calculators no longer save figures to local storage ([4f0e93f](https://github.com/mgallagher56/flump/commit/4f0e93f75b87805d1651b1063758fa7c5818d13f))
+* **marketing:** review fixes for E31 PR-A (R6 unverified label, claims, aria-live) ([60d4dee](https://github.com/mgallagher56/flump/commit/60d4deeb45c053d596128054747e57e95e454082))
+* name the self-hosted Inter and Plus Jakarta Sans variable families first ([cc01ada](https://github.com/mgallagher56/flump/commit/cc01ada4e8972cab7059ba87525f1f5966bdd8ea))
+* swap remaining undefined --colors-background uses and widen the canvas ratchet ([5195d83](https://github.com/mgallagher56/flump/commit/5195d835840f7c6304a2763577fd98eec5604ba3))
+
+
+### Miscellaneous 🙃
+
+* refresh law baselines and use Lucide icons in new marketing sections (E31 PR-A) ([ffceb66](https://github.com/mgallagher56/flump/commit/ffceb664df7235fa71dea3d1e77123e06ef3b47a))
+
 ## [1.28.0](https://github.com/mgallagher56/flump/compare/flump/marketing-v1.27.0...flump/marketing-v1.28.0) (2026-11-13)
 
 

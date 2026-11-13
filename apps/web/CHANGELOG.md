@@ -1,5 +1,140 @@
 # Changelog
 
+## [1.31.0](https://github.com/mgallagher56/flump/compare/flump/web-v1.30.0...flump/web-v1.31.0) (2026-11-13)
+
+
+### Features ✨
+
+* **e23:** Property, Student Loan and Overdraft account types, student loan plan, no invented property value (D18, D19) ([cbfbb3d](https://github.com/mgallagher56/flump/commit/cbfbb3db83738cfbef49a8d23e5d2d06edfe5733))
+* **mcp:** PAT lifecycle defaults and no receipt blobs in MCP data (E20-N16) ([913028a](https://github.com/mgallagher56/flump/commit/913028a222271261e13f9881c33ff8584590ff0d))
+* **ui:** Button refresh, IconButton, ButtonLink, form field upgrades and PercentInput (E15 T2.1, T2.2a) ([6e0e205](https://github.com/mgallagher56/flump/commit/6e0e20544120b2b627b433ef359c528369eabe10))
+* **ui:** chart kit with ChartLegend, ChartTooltipContent and recharts adapters (E15 T2.11) ([d01c4ec](https://github.com/mgallagher56/flump/commit/d01c4eccfbc44e444ab391cb98ddd92ea1c5b80f))
+* **ui:** Dialog refresh, new Sheet, ConfirmDialog promoted to ui (E15 T2.5) ([62da907](https://github.com/mgallagher56/flump/commit/62da907f3ed29120df369b8af105c32f8a84df44))
+* **ui:** ScenarioZone pattern and useScenarioState hook (E15 T2.x) ([7585df6](https://github.com/mgallagher56/flump/commit/7585df619ee2cb0c864d2ac88213b5fcc31bc167))
+* **web:** account menu with Settings, Connect AI, Free calculators, Log out (T-IA-6) ([923e6b8](https://github.com/mgallagher56/flump/commit/923e6b826d6edc27be8c17d324b952150fe81fb1))
+* **web:** Accounts list and detail on Direction C, Your account zone (E15 T3.9) ([1ee40f6](https://github.com/mgallagher56/flump/commit/1ee40f61ea7691ca5f497c8e5e60c95563b85d4d))
+* **web:** adopt the ui app shell and bring the dashboard to Direction C (E15 T3.0, T3.1) ([510b3ff](https://github.com/mgallagher56/flump/commit/510b3ffcd64f2a065125de2defb584c9617e9ac0))
+* **web:** budget dashboard and category table to Direction C (E15 T3.8) ([5f36522](https://github.com/mgallagher56/flump/commit/5f365222c8d18b0b111e5e158afe47632ff85c47))
+* **web:** budget setup wizard and runway calculator to Direction C (E15 T3.8) ([0209389](https://github.com/mgallagher56/flump/commit/0209389f0818cffd6f5e9ba71e5fa7e4ee3a66a7))
+* **web:** debt scenario zone, saved-only KPIs, payoff order and bridge (E15 T3.3, part 2) ([d28cd22](https://github.com/mgallagher56/flump/commit/d28cd228e89e21ff78e6f7b3b4dd3cd05509391d))
+* **web:** Direction C debt page shell and KPI strip (E15 T3.3, part 1) ([e737e68](https://github.com/mgallagher56/flump/commit/e737e688c15f97fd0aee55fa561ad8a0e71d6c31))
+* **web:** Direction C debts list, add-debt dialog and UK rules (E15 T3.3, part 2) ([87830cc](https://github.com/mgallagher56/flump/commit/87830ccccc655362ea9c15aa68788b98899aaa80))
+* **web:** Direction C overpayment simulator, headline first (E15 T3.4) ([2bda7ef](https://github.com/mgallagher56/flump/commit/2bda7efba6438ea9941c61f7e07f575359722ce1))
+* **web:** Direction C pension page shell and KPI strip (E15 T3.5, part 1) ([5b2ebe1](https://github.com/mgallagher56/flump/commit/5b2ebe14b7c003751e12f1a61f997f32d8919a81))
+* **web:** Direction C pension pots list and add dialog (E15 T3.5, part 3) ([769603a](https://github.com/mgallagher56/flump/commit/769603ad7bddd0f2d3445f089cd0c2a9e67e921c))
+* **web:** Direction C pension scenario zone and forecaster (E15 T3.5, part 2) ([d251c71](https://github.com/mgallagher56/flump/commit/d251c71c1da9c0e4e3002ed58a676621780c3cdd))
+* **web:** Direction C tax screen, split per tab, record dialog, paginated records (E15 T3.7) ([43bd421](https://github.com/mgallagher56/flump/commit/43bd421bb8b831899e9aafba953e3eaefd9e3dd6))
+* **web:** nonce plumbing, report-only CSP and /csp-report (E20-N11) ([e509aa8](https://github.com/mgallagher56/flump/commit/e509aa84705844e3f9c5d0febbbd17e58ecf6fa5))
+* **web:** onboarding in Direction C, split into step components (E15 T3.2) ([f9491cd](https://github.com/mgallagher56/flump/commit/f9491cd753915163efe737e1e58f6ae9456d0c81))
+* **web:** restrictive default CSP for non-document responses outside the middleware, plan for N12 ([4e10e68](https://github.com/mgallagher56/flump/commit/4e10e68d72e1cf5447a2bbd5f07bc707a2704a62))
+* **web:** savings forecaster in Direction C (E15 T3.6 B) ([0ec177e](https://github.com/mgallagher56/flump/commit/0ec177eef6db0da9442978d8c8e17505460e3651))
+* **web:** savings overview in Direction C (E15 T3.6 A) ([f5b83ca](https://github.com/mgallagher56/flump/commit/f5b83ca097f35a8dd9c9b46c996f361ba8060445))
+* **web:** Self Assessment moves to /app/self-assessment, /app/tax redirects (T-IA-7) ([3828174](https://github.com/mgallagher56/flump/commit/3828174f6bd164e169a05c5acf2a39138a35e758))
+* **web:** split profile into Profile, Security and Data tabs in Direction C (E15 T3.10) ([a36bba0](https://github.com/mgallagher56/flump/commit/a36bba0f117ab44f8baa417c1aa78036589e2770))
+* **web:** split saved mortgage details from the scenario zone ([c9a6508](https://github.com/mgallagher56/flump/commit/c9a6508e6c8c94f32d7c08de39cfdaa94ee4e76c))
+* **web:** take-home to Direction C with a scenario zone, savings pay rise via router state, runway scenarios session-only (E15 T3.x) ([7549485](https://github.com/mgallagher56/flump/commit/7549485ab899ef30d53fe195aa95176e8aed3a1a))
+* **web:** tax leftovers to Direction C, review fixes (E15 T3.x) ([9bfadb3](https://github.com/mgallagher56/flump/commit/9bfadb3c0de65891445227ce4138d18af8eeaf2e))
+* **web:** unsaved-changes guard and settings tab helpers (E15 T3.10) ([a960940](https://github.com/mgallagher56/flump/commit/a960940d2f67cf0ecfa2e1075ccb3acd81e590ff))
+* **web:** wire stored mortgage term and drop root accessToken read (E15 follow-ups, unblocks E20-N9) ([c816fb1](https://github.com/mgallagher56/flump/commit/c816fb1c4495f3de23af83b0136ae8b03db5cc4e))
+
+
+### Bug Fixes 🪲
+
+* cover multi-line font-family lists, storybook and snapshots ([a530dd9](https://github.com/mgallagher56/flump/commit/a530dd97bdc522fbccff2825ebe690989e9d7783))
+* **deps:** update dependency i18next to v27 ([7397b07](https://github.com/mgallagher56/flump/commit/7397b07f358ef16c2bf1f1667665720f9ce806a7))
+* **e23:** count annual tax records once in the tax year of their date, backfill and set end_date ([21cd450](https://github.com/mgallagher56/flump/commit/21cd450c0c03a7c4aa3de3d3e75b5a7e6fd095c4))
+* **e23:** explicit focus-visible style on the check-in success panel (focus ratchet) ([ff7e3da](https://github.com/mgallagher56/flump/commit/ff7e3da28ec4cc48266c7d9854f8d0125e7ea289))
+* **e23:** review fixes for check-in (UK month in bank sync, id case, balance validation, a11y) ([3b147d4](https://github.com/mgallagher56/flump/commit/3b147d44da9f2423294d53eaa68766b38955d3bb))
+* **e23:** send the monthly check-in as one request, show success only on 2xx and the net worth change (D23) ([1e4727d](https://github.com/mgallagher56/flump/commit/1e4727d0ff0683b5318e76390331ac236d124f5f))
+* **e23:** student loan as liability display, engine-derived account totals, plan handling, unknown property value ([f7def9d](https://github.com/mgallagher56/flump/commit/f7def9d5a34f52aaab6a1abb8b5527027521867a))
+* **finance-engine:** balance is now, carry history forward, keep asset signs; add fast-check properties (D17, D22) ([d2c811d](https://github.com/mgallagher56/flump/commit/d2c811db03edd105c2b6ad03682933308582dd9d))
+* **finance-engine:** keep overdrafts out of debt items and liquid cash, clamp runway, signed AI pack and provider balances (C-15 review) ([bf3d61e](https://github.com/mgallagher56/flump/commit/bf3d61e5054cc282eeafbd2073cc430cc2cfb475))
+* **finance-engine:** Owed is money owed to the user, an asset, not a debt ([d75877f](https://github.com/mgallagher56/flump/commit/d75877fc66c21ce677ec7628c03be5d076ac1121))
+* **mcp:** PAT review follow-ups (E20-N16) ([7eb300b](https://github.com/mgallagher56/flump/commit/7eb300b5379b8a97f417a707826ab8a7da535f33))
+* name the self-hosted Inter and Plus Jakarta Sans variable families first ([cc01ada](https://github.com/mgallagher56/flump/commit/cc01ada4e8972cab7059ba87525f1f5966bdd8ea))
+* swap remaining undefined --colors-background uses and widen the canvas ratchet ([5195d83](https://github.com/mgallagher56/flump/commit/5195d835840f7c6304a2763577fd98eec5604ba3))
+* **tax:** cap bulk tax-record requests at 500 and chunk web callers (E20) ([0609b69](https://github.com/mgallagher56/flump/commit/0609b698c86cf184f1e7ec3be8c152ef3b9a3e16))
+* **tax:** order bulk chunks creates-first, validate before caps, add bulkWrite rate class (E20) ([8973e58](https://github.com/mgallagher56/flump/commit/8973e5883660c08d5f96845955c91db4ac4f9155))
+* **ui:** address T2.10 review (sticky offset, summary-only collapse, a11y, parsing, snapshot) ([ddc530c](https://github.com/mgallagher56/flump/commit/ddc530c3679367be64a021834e408696a11cf95b))
+* **ui:** button link sizing, pending DOM, per-field numeric parsing, Direction C shadow (E15 T2.1, T2.2a) ([356ec83](https://github.com/mgallagher56/flump/commit/356ec83df6dcc77a42e0f114d75c840799a65be6))
+* **ui:** coherent template data, dark stories, ids, Switch hint, chart ink rules (E15 T2.11, T2.13 review) ([5929c4f](https://github.com/mgallagher56/flump/commit/5929c4f312aa704f4752dc333f4c2370f29c0691))
+* **ui:** drop duplicate arrow glyphs from ChartFigure drawer labels (E15 T2.10) ([d7a77f5](https://github.com/mgallagher56/flump/commit/d7a77f5604a5f7d1a7fa21a758a3e274658b17e7))
+* **ui:** drop the TaxTrap story a11y waiver and tighten the waiver baseline ([988f7f2](https://github.com/mgallagher56/flump/commit/988f7f2b40df4bc8387a79dbb33bfdca81703405))
+* **ui:** harden useScenarioState equality and stability, ScenarioZone ids (E15 T2.x) ([bb6194c](https://github.com/mgallagher56/flump/commit/bb6194c5ad2497d9e4113d575dbdb4f975c9e76c))
+* **ui:** Sheet centring without transform, ConfirmDialog id prop, dark stories and screenshots (E15 T2.5) ([03e1698](https://github.com/mgallagher56/flump/commit/03e1698c781d997e8ba76494914494590269dc22))
+* **web:** account menu trigger name matches its visible content; stories use role queries (T-IA-6) ([138474d](https://github.com/mgallagher56/flump/commit/138474db6aa016f26dc5cf996fae85681f0223c1))
+* **web:** Accounts review fixes: sentence-case wizard copy, heading levels, Num percent, bank list labels, stories (E15 T3.9) ([d74628a](https://github.com/mgallagher56/flump/commit/d74628a3efc5a209d2da81929f90284701b6c46e))
+* **web:** AI deep link works when already on settings; 44px menu trigger, pointerdown, Tab focus (T-IA-6) ([712806e](https://github.com/mgallagher56/flump/commit/712806edf39db1a82dfc14dacb4c35ad679e9a50))
+* **web:** anchor the Saving button name in the FinishSummary story ([a29bbc7](https://github.com/mgallagher56/flump/commit/a29bbc74746c763ecf71ba0707692f5bd35426fb))
+* **web:** bank list button names pass axe, shrink design baselines after the Accounts cleanup (E15 T3.9) ([5496be7](https://github.com/mgallagher56/flump/commit/5496be7c01a4bf400d18eb46c536feae49bf6e53))
+* **web:** debt KPIs use the standard 'Not set' label so 375px does not overflow ([b4155be](https://github.com/mgallagher56/flump/commit/b4155be718a1591ef5afa6452d49fd63f9197bd1))
+* **web:** debt part 2 review follow-ups (E15 T3.3) ([75af596](https://github.com/mgallagher56/flump/commit/75af596e093d31c323b5c10db4ab692982f46794))
+* **web:** debt shell review follow-ups (E15 T3.3) ([9d93480](https://github.com/mgallagher56/flump/commit/9d9348049969a7f5a664035c63da0743305921ab))
+* **web:** drop remix-i18next from the hydration test and the root handle ([08f900e](https://github.com/mgallagher56/flump/commit/08f900ee99fdd25b862f35bba73cbc1b6efd8f86))
+* **web:** drop the advice allow-list entry for the deleted mortgage-isa tool (E17-N11) ([d6aa998](https://github.com/mgallagher56/flump/commit/d6aa998da7e83a88405fa4b2483435b22ce63ef2))
+* **web:** exact Sentry connect-src, origin validation, global report cap (E20-N11 review) ([972a52a](https://github.com/mgallagher56/flump/commit/972a52aa9081c7d650e15c1e2b45d8cb5f288c50))
+* **web:** fold expiry play test into Default story to keep the a11y waiver count (E20-N16) ([42bbf34](https://github.com/mgallagher56/flump/commit/42bbf347312b30af78eeec04fe6ce1f8f67440b8))
+* **web:** header nav labels never wrap; menu collapses to the drawer below lg ([8dbcc9e](https://github.com/mgallagher56/flump/commit/8dbcc9eafbc2f5ab7fc164b3034eb99e1c084634))
+* **web:** light-mode page canvas follows surface.canvas ([0c46dbc](https://github.com/mgallagher56/flump/commit/0c46dbc5b92cbc2be743866cc5d6a9b091aa2782))
+* **web:** logout guards on the sealed session cookie instead of refreshing the session ([fae6677](https://github.com/mgallagher56/flump/commit/fae66778f2b0ac6f28883711a1ee4a4e82cd9a9e))
+* **web:** logout with no or expired session clears cookies instead of 500 ([012c062](https://github.com/mgallagher56/flump/commit/012c062ab2702d46c07083e3c743184fb562cfd5))
+* **web:** mortgage review follow-ups (E15 T3.4) ([e3d0933](https://github.com/mgallagher56/flump/commit/e3d0933015d228b0589f5aa93ed8e85fa6a71a47))
+* **web:** mortgage review follow-ups (en-GB term and rate, slider caps, story a11y) ([4cc921a](https://github.com/mgallagher56/flump/commit/4cc921a652396c3f03075a7ae28ebe92beceec92))
+* **web:** NavigationProgress story uses the Storybook router mock ([db0e6dc](https://github.com/mgallagher56/flump/commit/db0e6dc3631185696b0cd5fc8a04c37f588b946a))
+* **web:** never inline fonts as data URIs so font-src 'self' holds ([3cb3a98](https://github.com/mgallagher56/flump/commit/3cb3a982385d8d0cdb88757ad35b302ea101bd38))
+* **web:** pension contribution links to the pension details; remove the display name field ([1371d2d](https://github.com/mgallagher56/flump/commit/1371d2d4722e08e99e29c9bc61f475694f211054))
+* **web:** pension deep link opens the rules tab and focuses the details card ([6016dc9](https://github.com/mgallagher56/flump/commit/6016dc91653410fedc8a033d67b6c024a0b77fc7))
+* **web:** pension hero reads at KPI scale, growth rate matches the money cards ([23f3447](https://github.com/mgallagher56/flump/commit/23f344722f3b73b602cf17f7798f9c40ccbfd36d))
+* **web:** pension KPIs use 'Not set' and en-GB percentage formatting (E15 T3.5) ([3b44b8e](https://github.com/mgallagher56/flump/commit/3b44b8e444fa6290e8b184a7edadd4417abbe623))
+* **web:** pension scenario copy nit (E15 T3.5) ([ea162cd](https://github.com/mgallagher56/flump/commit/ea162cdc1db37cf1c4bd6f440789443580a6d2da))
+* **web:** pension shell review follow-ups (E15 T3.5) ([17e078d](https://github.com/mgallagher56/flump/commit/17e078db839e6f1125db88c1e2a9263bf8cc5e42))
+* **web:** preload common i18n namespace on every route, fixing React [#418](https://github.com/mgallagher56/flump/issues/418) on /tools and /sandbox ([c9f0e39](https://github.com/mgallagher56/flump/commit/c9f0e399bea7e4e9f835b6c3ef9526b29b046e93))
+* **web:** remove the last browser accessToken read from MortgageContainer (E20-N9) ([3d739cd](https://github.com/mgallagher56/flump/commit/3d739cdfb8c6eb1205f30c63ab6c9e27d615ed42))
+* **web:** settings review follow-ups (E15 T3.10) ([a23c522](https://github.com/mgallagher56/flump/commit/a23c522fd98ca461839f012a3cfd1dd20f4a76be))
+* **web:** shell review fixes (story queries, paired test ids, widget headings) and allow-list cleanup ([fe253c6](https://github.com/mgallagher56/flump/commit/fe253c6b735d69b9c1b09644c51bf0023fd3b5fb))
+* **web:** sort pension container imports after the rebase ([c969022](https://github.com/mgallagher56/flump/commit/c9690228177d11c0deee6e0a64e4bf43e7073db9))
+* **web:** tax page heading matches the Self Assessment nav label (E15 T3.7) ([1e8bbe0](https://github.com/mgallagher56/flump/commit/1e8bbe0bed03c5deaa7760251e1f0188f89cc651))
+* **web:** tax review follow-ups (E15 T3.7) ([48f992a](https://github.com/mgallagher56/flump/commit/48f992af69f2c7eac18a2b05c3d31f179cfd7554))
+* **web:** the CSP writeHead hook never throws; clarify the N12 plan and what to watch ([f19641c](https://github.com/mgallagher56/flump/commit/f19641c9de37239d419148aa99a02d89874c6f00))
+
+
+### CI 🤖
+
+* declare backend package build as dependency of web test:coverage ([9b5902c](https://github.com/mgallagher56/flump/commit/9b5902cc0d000e8b310b9406cc1aa6abff746388))
+* web test:coverage depends on backend#build (turbo has no pkg#^task form) ([faf359c](https://github.com/mgallagher56/flump/commit/faf359c20e5b77b8d959f67de7c4f94ee93cce6f))
+
+
+### Documentation 📙
+
+* **design:** mortgage scenario zone before/after frames, hero balance at lg ([5874e2e](https://github.com/mgallagher56/flump/commit/5874e2e96cd5b4ee5f57cdaca11cde0f2c0a5aba))
+* **design:** settings screen frames at 375 and 1280, light and dark (E15 T3.10) ([d100ca1](https://github.com/mgallagher56/flump/commit/d100ca1e378f8704ea685d51adf28ddf5474d073))
+
+
+### Refactor 🔥
+
+* **web:** debt page uses the shared ScenarioZone and useScenarioState (E15 T3.3) ([2bd49eb](https://github.com/mgallagher56/flump/commit/2bd49eb485b7ab7a904b494dc104e495c9e72d7a))
+* **web:** pension page uses the shared ScenarioZone and useScenarioState (E15 T3.5) ([3fc0458](https://github.com/mgallagher56/flump/commit/3fc045822175adb045ad2206c4a4f21b58dd2ef3))
+* **web:** use shared ScenarioZone, add take-home stories (E15 T3.x) ([1077b2e](https://github.com/mgallagher56/flump/commit/1077b2ebcf89daaadb4db3c08fe75e330aa835ab))
+* **web:** use the shared ScenarioZone and useScenarioState on the mortgage page ([770acf2](https://github.com/mgallagher56/flump/commit/770acf2ac3df9bfca70790d50e4d5f9f95ffac37))
+
+
+### Tests 🧪
+
+* **web:** cover the debt 'Update your details' footer (E15 T3.3) ([d4d8b5a](https://github.com/mgallagher56/flump/commit/d4d8b5aa410d4bcfe9c7260e1a95fbd4636ba7eb))
+* **web:** cover the pension zone footer, announcement and scroll target (E15 T3.5) ([03a93b2](https://github.com/mgallagher56/flump/commit/03a93b210e8a3e1a14d4abc27e6a72dcd96827bf))
+* **web:** drop the page-composition story (needs an a11y waiver the ratchet forbids) ([1ea4f66](https://github.com/mgallagher56/flump/commit/1ea4f66ff3069e6b3214104989d9de44b1c23aac))
+* **web:** guard hasSealedSession against authkit's own session cookie format ([d9139ec](https://github.com/mgallagher56/flump/commit/d9139ec69529fe4cf431cdf7b82edf2e4ea5369e))
+* **web:** note authkit config is process-global in the cookie format test ([e487dd8](https://github.com/mgallagher56/flump/commit/e487dd8590af3c18c292dd9933609b881c5055d9))
+* **web:** overpayment stories expect a plain outcome card, not the hero surface ([bb9c23b](https://github.com/mgallagher56/flump/commit/bb9c23bf0892c3d3da149acec6d5f2787cf31a1c))
+* **web:** settings tab tests, unsaved-changes guard tests and stories (E15 T3.10) ([0fabb96](https://github.com/mgallagher56/flump/commit/0fabb9663c1fcdcbfdf9637ffe951ef06a914ad7))
+* **web:** update header snapshots for the lg breakpoint ([1dfb445](https://github.com/mgallagher56/flump/commit/1dfb4450ec0de88c7ab21671bdcc65186af2b348))
+
+
+### Miscellaneous 🙃
+
+* **deps:** remove remix-i18next and unused dependencies ([7993050](https://github.com/mgallagher56/flump/commit/7993050a6bc09253e9edce084ca7925b875129b1))
+* **web:** drop test:ui script now that @vitest/ui is removed ([32a146c](https://github.com/mgallagher56/flump/commit/32a146ccf834f8d4f6d30c4236fb010c4927ce7e))
+
 ## [1.30.0](https://github.com/mgallagher56/flump/compare/flump/web-v1.29.1...flump/web-v1.30.0) (2026-11-13)
 
 

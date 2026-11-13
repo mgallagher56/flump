@@ -1,5 +1,52 @@
 # Changelog
 
+## [1.29.0](https://github.com/mgallagher56/flump/compare/flump/backend-v1.28.0...flump/backend-v1.29.0) (2026-11-13)
+
+
+### Features ✨
+
+* **e23:** batch balance check-in endpoint, current-month history upsert and unique account_details month (D22, D23) ([6f13595](https://github.com/mgallagher56/flump/commit/6f1359509c5371f7ba7f439472886b5cca88afc7))
+* **e23:** Property, Student Loan and Overdraft account types, student loan plan, no invented property value (D18, D19) ([cbfbb3d](https://github.com/mgallagher56/flump/commit/cbfbb3db83738cfbef49a8d23e5d2d06edfe5733))
+* **e30:** monthly snapshots PR1 (backend and engine) and E30 plan ([52531c5](https://github.com/mgallagher56/flump/commit/52531c5878d5812522cc74c58d910593ff742920))
+* **mcp:** PAT lifecycle defaults and no receipt blobs in MCP data (E20-N16) ([913028a](https://github.com/mgallagher56/flump/commit/913028a222271261e13f9881c33ff8584590ff0d))
+* **mcp:** validate Origin and add MCP_ENABLED kill switch on /mcp (E20-N18) ([c1b308f](https://github.com/mgallagher56/flump/commit/c1b308ff48cb3326db318dd8668f80ea1f9b96d1))
+* **web:** onboarding in Direction C, split into step components (E15 T3.2) ([f9491cd](https://github.com/mgallagher56/flump/commit/f9491cd753915163efe737e1e58f6ae9456d0c81))
+
+
+### Bug Fixes 🪲
+
+* **e23:** count annual tax records once in the tax year of their date, backfill and set end_date ([21cd450](https://github.com/mgallagher56/flump/commit/21cd450c0c03a7c4aa3de3d3e75b5a7e6fd095c4))
+* **e23:** derive the annual end date from its date on every write; 400 on a malformed date ([1a2ebed](https://github.com/mgallagher56/flump/commit/1a2ebed04387d8ea92c59c67e36fd9def6e39d1f))
+* **e23:** review fixes for check-in (UK month in bank sync, id case, balance validation, a11y) ([3b147d4](https://github.com/mgallagher56/flump/commit/3b147d44da9f2423294d53eaa68766b38955d3bb))
+* **e23:** student loan as liability display, engine-derived account totals, plan handling, unknown property value ([f7def9d](https://github.com/mgallagher56/flump/commit/f7def9d5a34f52aaab6a1abb8b5527027521867a))
+* **e30:** post-rebase review fixes (atomic sync write, liability deltas, one sign rule, account.id, single clock read) ([f8030b0](https://github.com/mgallagher56/flump/commit/f8030b03f4e53a9d972a7ff32fd102151aff24c4))
+* **e30:** review fixes (lower-case ids, liability sign, in-tx authz, lock order, migration dates) ([c216cd6](https://github.com/mgallagher56/flump/commit/c216cd6c267b821d0fe53043550ebdb91117beae))
+* **finance-engine:** keep overdrafts out of debt items and liquid cash, clamp runway, signed AI pack and provider balances (C-15 review) ([bf3d61e](https://github.com/mgallagher56/flump/commit/bf3d61e5054cc282eeafbd2073cc430cc2cfb475))
+* **finance-engine:** Owed is money owed to the user, an asset, not a debt ([d75877f](https://github.com/mgallagher56/flump/commit/d75877fc66c21ce677ec7628c03be5d076ac1121))
+* **mcp:** ignore null and * in MCP_ALLOWED_ORIGINS, tighten warning test (E20-N18) ([fae2498](https://github.com/mgallagher56/flump/commit/fae249881f7fe76984b9ee426fd0cc71f88d1494))
+* **mcp:** PAT review follow-ups (E20-N16) ([7eb300b](https://github.com/mgallagher56/flump/commit/7eb300b5379b8a97f417a707826ab8a7da535f33))
+* **mcp:** reject non-string Origin, warn on bad MCP_ALLOWED_ORIGINS, more gate tests (E20-N18) ([b4c8cd8](https://github.com/mgallagher56/flump/commit/b4c8cd88523f3ae89c773d93a4f080775d3eb425))
+* **tax:** cap bulk tax-record requests at 500 and chunk web callers (E20) ([0609b69](https://github.com/mgallagher56/flump/commit/0609b698c86cf184f1e7ec3be8c152ef3b9a3e16))
+* **tax:** order bulk chunks creates-first, validate before caps, add bulkWrite rate class (E20) ([8973e58](https://github.com/mgallagher56/flump/commit/8973e5883660c08d5f96845955c91db4ac4f9155))
+
+
+### Refactor 🔥
+
+* **mcp:** split McpService into token and agent-data services (E17-N7) ([ed9e7a8](https://github.com/mgallagher56/flump/commit/ed9e7a825a7ed1a63f96f2661a1e25e0e2eb9b31))
+
+
+### Tests 🧪
+
+* **e20-n23:** IDOR matrix for tax, user-profile, mcp-tokens and MCP across users ([26a672a](https://github.com/mgallagher56/flump/commit/26a672aa2d8bccf24fd83ca8d8657830ecfb1650))
+* **e20-n23:** track authn and idor coverage separately, assert 400 and UUID pipe on revoke ([9561ffb](https://github.com/mgallagher56/flump/commit/9561ffb79bbeb1a689b4bce6b8a2a2077888e3eb))
+* **e23:** authz matrix row and cross-user test for PATCH /accounts/balances ([d8ea001](https://github.com/mgallagher56/flump/commit/d8ea001387e9339760fe5fbc05146db448d011cd))
+* **e30:** align migration tests with E23 unique index and new NOT NULL columns ([3409b9c](https://github.com/mgallagher56/flump/commit/3409b9cf843c7968b443b405f92b94a345efc314))
+
+
+### Miscellaneous 🙃
+
+* **deps:** remove remix-i18next and unused dependencies ([7993050](https://github.com/mgallagher56/flump/commit/7993050a6bc09253e9edce084ca7925b875129b1))
+
 ## [1.28.0](https://github.com/mgallagher56/flump/compare/flump/backend-v1.27.0...flump/backend-v1.28.0) (2026-11-13)
 
 
