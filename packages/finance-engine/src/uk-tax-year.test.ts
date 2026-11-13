@@ -191,7 +191,8 @@ describe("getUkTaxYearRules", () => {
       expect(r.dividends.additionalRate, year).toBeGreaterThan(0);
       expect(r.giftAidGrossUp).toBe(1.25);
       expect(r.sources.length, year).toBeGreaterThan(0);
-      for (const s of r.sources) expect(s, year).toMatch(/^https:\/\/www\.gov\.uk\//);
+      for (const s of r.sources)
+        expect(s, year).toMatch(/^https:\/\/www\.(gov\.uk|legislation\.gov\.uk)\//);
     }
   });
 

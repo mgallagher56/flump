@@ -4,6 +4,12 @@
  */
 import type { UkTaxVector } from "./uk-tax.vectors.js";
 
+/**
+ * Anything with the vector fields the sign-off covers: the core catalogue (`UkTaxVector`) and the E25
+ * what-if catalogue (`UkWhatIfVector`, other `kind` values) both qualify.
+ */
+export type SignableVector = Omit<UkTaxVector, "kind"> & { kind: string };
+
 export const SIGNOFF_OWNER = "owner";
 
 function stableInput(input: UkTaxVector["input"]): string {
@@ -15,7 +21,7 @@ function stableInput(input: UkTaxVector["input"]): string {
 }
 
 /** Hash of everything that gives a vector its meaning. Changing any of it invalidates a sign-off. */
-export function vectorSignoffHash(v: UkTaxVector): string {
+export function vectorSignoffHash(v: SignableVector): string {
   const canonical = [
     v.id,
     v.taxYear,
@@ -33,7 +39,7 @@ export type SignoffState =
   | { state: "signed" }
   | { state: "invalid"; reason: string };
 
-export function evaluateSignoff(v: UkTaxVector): SignoffState {
+export function evaluateSignoff(v: SignableVector): SignoffState {
   if (v.signedOffBy === null) {
     if (v.signedOffAt !== undefined || v.signedOffHash !== undefined) {
       return { state: "invalid", reason: "signedOffAt/signedOffHash set without signedOffBy" };
@@ -65,7 +71,7 @@ export function evaluateSignoff(v: UkTaxVector): SignoffState {
 /** "verified" only when every vector for the year is validly signed (no vectors = unverified). */
 export function yearVerification(
   year: string,
-  vectors: readonly UkTaxVector[],
+  vectors: readonly SignableVector[],
 ): "verified" | "unverified" {
   const ys = vectors.filter((v) => v.taxYear === year);
   return ys.length > 0 && ys.every((v) => evaluateSignoff(v).state === "signed")

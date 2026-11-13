@@ -4,9 +4,12 @@
  */
 import {
   SIGNOFF_OWNER,
+  type SignableVector,
   vectorSignoffHash,
 } from "../../packages/finance-engine/src/test-vectors/signoff";
-import type { UkTaxVector } from "../../packages/finance-engine/src/test-vectors/uk-tax.vectors";
+
+/** Core (`uk-tax.vectors.ts`) and E25 what-if (`uk-whatif.vectors.ts`) vectors are both accepted. */
+type UkTaxVector = SignableVector;
 
 const VECTOR_FILE_SIGNED_NULL = "signedOffBy: null,";
 

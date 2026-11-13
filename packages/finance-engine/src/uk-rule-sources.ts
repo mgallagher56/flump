@@ -28,7 +28,9 @@ export type UkRuleKey =
   | "giftAid"
   | "pensionAnnualAllowance"
   | "isaAllowance"
-  | "statePension";
+  | "statePension"
+  | "hicbc"
+  | "childBenefit";
 
 export type UkRuleStatus = "verified" | "unverified";
 
@@ -60,6 +62,8 @@ export const UK_RULE_KEYS: readonly UkRuleKey[] = [
   "pensionAnnualAllowance",
   "isaAllowance",
   "statePension",
+  "hicbc",
+  "childBenefit",
 ];
 
 const INCOME_TAX_PAST =
@@ -77,6 +81,36 @@ const ANNUAL_ALLOWANCE =
   "https://www.gov.uk/government/publications/rates-and-allowances-pension-schemes/pension-schemes-rates";
 // Page text read for E25-T1: "In the 2026 to 2027 tax year, the maximum you can save in ISAs is £20,000".
 const ISA = "https://www.gov.uk/individual-savings-accounts";
+
+// High Income Child Benefit Charge. The page states both regimes: over 50,000 and 1% per 100 for tax years
+// up to and including 2023 to 2024; over 60,000 and 1% per 200 from 2024 to 2025 (read for E25-T2, 2026-11-13).
+const HICBC_PAGE = "https://www.gov.uk/child-benefit-tax-charge";
+// Weekly rates table (E25-T2, 2026-11-13): 2025 to 2026 26.05 / 17.25; 2026 to 2027 27.05 / 17.90.
+const CHILD_BENEFIT_RATES =
+  "https://www.gov.uk/government/publications/rates-and-allowances-tax-credits-child-benefit-and-guardians-allowance/tax-credits-child-benefit-and-guardians-allowance";
+// Uprating regulations (read 2026-11-13): 2023 regs 21.80 -> 24.00 and 14.45 -> 15.90 (so 2022/23 was 21.80 / 14.45);
+// 2024 regs 24.00 -> 25.60 and 15.90 -> 16.95.
+const CHILD_BENEFIT_REGS_2023 = "https://www.legislation.gov.uk/uksi/2023/237/made";
+const CHILD_BENEFIT_REGS_2024 = "https://www.legislation.gov.uk/uksi/2024/247/made";
+
+function childBenefitSource(year: UkTaxYear): UkRuleSource {
+  switch (year) {
+    case "2020/21":
+    case "2021/22":
+      return unverified(
+        CHILD_BENEFIT_RATES,
+        "Child Benefit weekly rates (eldest or only child and other children) for this year are not on a GOV.UK page reached; the cited table starts at 2025 to 2026",
+      );
+    case "2022/23":
+      return verified(CHILD_BENEFIT_REGS_2023, [CHILD_BENEFIT_RATES]);
+    case "2023/24":
+      return verified(CHILD_BENEFIT_REGS_2023, [CHILD_BENEFIT_RATES]);
+    case "2024/25":
+      return verified(CHILD_BENEFIT_REGS_2024, [CHILD_BENEFIT_RATES]);
+    default:
+      return verified(CHILD_BENEFIT_RATES);
+  }
+}
 
 const PRE_2023: readonly UkTaxYear[] = ["2020/21", "2021/22", "2022/23"];
 
@@ -247,6 +281,8 @@ function buildYear(year: UkTaxYear): UkRuleSources {
           "ISA allowance 20,000 is only confirmed for 2026/27 on GOV.UK, not for this year",
         ),
     statePension: UK_STATE_PENSION_SOURCES[year],
+    hicbc: verified(HICBC_PAGE),
+    childBenefit: childBenefitSource(year),
   };
 }
 
