@@ -35,4 +35,12 @@ describe("pageview-rollup", () => {
   test("empty input renders nothing", () => {
     expect(render(rollup([]))).toBe("");
   });
+
+  test("rejects keys with control characters, bad shapes or excess length", () => {
+    const bad = ["/a\nb", "/a\tb", "/a\u001bb", "/UPPER", "//x", "/a/", "x", `/${"a".repeat(100)}`];
+    expect(render(rollup(bad.map((k) => line(k, "2026-11-13"))))).toBe("");
+    expect(render(rollup([line("/tools/a-b", "2026-11-13"), line("other", "2026-11-13")]))).toBe(
+      "2026-11-13\t/tools/a-b\t1\n2026-11-13\tother\t1",
+    );
+  });
 });
