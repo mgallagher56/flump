@@ -178,14 +178,14 @@ describe("docs/launch/readiness.json", () => {
     for (const item of readiness.items) expect(item.evidence.length).toBeGreaterThan(0);
   });
 
-  test("no-placeholders catches the real constants but not the HTML attribute", () => {
+  test("no-placeholders catches isPlaceholder business details but not the HTML attribute", () => {
     const result = evaluateItem(
       readiness.items.find((i) => i.id === "no-placeholders")!,
       defaultContext(repoRoot),
     );
-    const absent = result.results[0];
+    const absent = result.results[1];
     expect(absent.status).toBe("fail");
-    expect(absent.detail).toContain("placeholders.ts");
+    expect(absent.detail).toContain("business-details");
     expect(absent.detail).not.toContain("HomeFooter");
   });
 
