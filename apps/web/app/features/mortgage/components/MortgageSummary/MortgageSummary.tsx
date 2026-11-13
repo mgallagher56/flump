@@ -49,6 +49,8 @@ export interface MortgageSummaryProps {
   editPayment: number | null;
   saveMessage: string | null;
   saveError: string | null;
+  /** True when the term is stored on a linked mortgage account, so it persists between visits. */
+  termSaved?: boolean;
   onStartEditing: () => void;
   onCancelEditing: () => void;
   onSave: () => void;
@@ -73,6 +75,7 @@ export const MortgageSummary: FC<MortgageSummaryProps> = ({
   editPayment,
   saveMessage: savedText,
   saveError: errorText,
+  termSaved = false,
   onStartEditing,
   onCancelEditing,
   onSave,
@@ -167,7 +170,10 @@ export const MortgageSummary: FC<MortgageSummaryProps> = ({
                 />
               )}
             </FormField>
-            <FormField hint="Not saved – enter each visit" label="Remaining term (years)">
+            <FormField
+              hint={termSaved ? "Stored on your mortgage account" : "Not saved – enter each visit"}
+              label="Remaining term (years)"
+            >
               {(field) => (
                 <TextInput
                   {...controlProps(field)}

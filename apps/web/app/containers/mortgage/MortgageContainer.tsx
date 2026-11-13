@@ -10,7 +10,7 @@ import {
 } from "@repo/ui";
 import { Building2, Coins, Home, LineChart, Percent } from "lucide-react";
 import { type FC, useEffect, useMemo, useState } from "react";
-import { useLoaderData, useNavigate, useRouteLoaderData } from "react-router";
+import { useLoaderData, useNavigate } from "react-router";
 import { BtlOverview } from "~/features/mortgage/components/BtlOverview";
 import { LtvMilestones } from "~/features/mortgage/components/LtvMilestones";
 import { MortgageAlerts } from "~/features/mortgage/components/MortgageAlerts";
@@ -43,8 +43,6 @@ const MortgageContainer: FC = () => {
   const { profile, setProfile, updateProfile } = useUserProfile();
   const { formatCurrency } = useFormatCurrency();
   const { baseline } = useFinancialBaseline();
-  const rootData = useRouteLoaderData("root") as { accessToken?: string | null } | undefined;
-  const accessToken = rootData?.accessToken;
 
   // Sync profile from loader into atom
   useEffect(() => {
@@ -79,7 +77,7 @@ const MortgageContainer: FC = () => {
   const startEditing = () => {
     setEditLoanAmount(loanAmount);
     setEditInterestRate(interestRate > 0 ? String(interestRate) : "");
-    setEditRemainingTerm(remainingTerm > 0 ? String(remainingTerm) : "");
+    setEditRemainingTerm(remainingTerm > 0 ? String(Math.round(remainingTerm * 100) / 100) : "");
     setSaveError(null);
     setEditMortgageType(mortgageType);
     setIsEditing(true);
@@ -91,7 +89,10 @@ const MortgageContainer: FC = () => {
 
   const handleSaveMortgageDetails = async () => {
     const rate = Math.max(0, Number(editInterestRate));
-    const term = Math.max(0, Number(editRemainingTerm));
+    // Term is stored in whole months (1..600), so clamp once and show what is stored.
+    const rawTerm = Math.max(0, Number(editRemainingTerm));
+    const termMonths = rawTerm > 0 ? Math.min(600, Math.max(1, Math.round(rawTerm * 12))) : 0;
+    const term = termMonths / 12;
     setLoanAmount(editLoanAmount);
     setInterestRate(rate);
     setRemainingTerm(term);
@@ -102,13 +103,14 @@ const MortgageContainer: FC = () => {
       // The profile stores only whether there is a mortgage and its type. Balance, rate and
       // term are not profile fields, so they are not sent.
       await updateProfile({ hasMortgage: true, mortgageType: editMortgageType });
-      if (selectedAccountId && propertyCategory === "residential" && rate > 0) {
-        await apiFetch(`/accounts/${selectedAccountId}`, {
-          accessToken,
-          method: "PATCH",
-          body: { interestRate: rate },
-        });
-        saved.push("interest rate");
+      if (selectedAccountId && propertyCategory === "residential" && (rate > 0 || termMonths > 0)) {
+        // The proxy adds the session; the browser never holds a token. Term is stored in months.
+        const body: { interestRate?: number; termMonths?: number } = {};
+        if (rate > 0) body.interestRate = rate;
+        if (termMonths > 0) body.termMonths = termMonths;
+        await apiFetch(`/accounts/${selectedAccountId}`, { method: "PATCH", body });
+        if (body.interestRate !== undefined) saved.push("interest rate");
+        if (body.termMonths !== undefined) saved.push("term");
       }
       setSaveMessage(`Saved ${formatList(saved)}`);
       setIsEditing(false);
@@ -187,6 +189,13 @@ const MortgageContainer: FC = () => {
       );
       if (storedRate > 0) {
         setInterestRate(storedRate);
+      }
+      // A stored term (months) is real data; an unset term stays empty.
+      const storedTermMonths = Number(
+        accounts.find((a: any) => a.id === selectedAccountId)?.termMonths,
+      );
+      if (storedTermMonths > 0) {
+        setRemainingTerm(storedTermMonths / 12);
       }
     }
   }, [selectedAccountId, accounts, accountDetails, propertyCategory]);
@@ -306,6 +315,7 @@ const MortgageContainer: FC = () => {
         remainingTerm={remainingTerm}
         saveError={saveError}
         saveMessage={saveMessage}
+        termSaved={propertyCategory === "residential" && !!selectedAccountId}
         onCancelEditing={cancelEditing}
         onEditInterestRateChange={setEditInterestRate}
         onEditLoanAmountChange={setEditLoanAmount}
