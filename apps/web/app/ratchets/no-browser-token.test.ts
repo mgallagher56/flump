@@ -42,8 +42,13 @@ const APP_DIR = path.resolve(__dirname, "..");
  *   passes it on. E20-N9 removes it.
  * - api-client.ts keeps the deprecated, ignored optional `accessToken` option so that call site
  *   still compiles. E20-N9 removes it together with MortgageContainer.
+ * - AddEditAccountsDialog.tsx and ConnectBankWizard.tsx only contain the placeholder text for the
+ *   bank provider token a user pastes in themselves ("Bearer token starting with eyJ...").
+ *   It is not the Flump session token and no code reads it from the session.
  */
 const ACCESS_TOKEN_ALLOW_LIST = [
+  "components/dialogs/addEditAccountsDialog/AddEditAccountsDialog.tsx",
+  "components/dialogs/connectBankWizard/ConnectBankWizard.tsx",
   "containers/mortgage/MortgageContainer.tsx",
   "services/api-client.ts",
 ];
@@ -70,22 +75,25 @@ const isServerOrTest = (file: string) =>
  */
 const isServerEntry = (rel: string) => rel === "root.tsx" || rel.startsWith("routes/");
 
+/** Token-like identifiers, case-insensitive, so `session.accessToken`-style aliases are caught. */
+const TOKEN_IDENTIFIER = /accessToken|access_token|bearer/i;
+
 const filesMentioningAccessToken = (): string[] =>
   walk(APP_DIR)
     .filter((file) => !isServerOrTest(file))
     .map((file) => path.relative(APP_DIR, file).split(path.sep).join("/"))
     .filter((rel) => !isServerEntry(rel))
-    .filter((rel) => fs.readFileSync(path.join(APP_DIR, rel), "utf8").includes("accessToken"))
+    .filter((rel) => TOKEN_IDENTIFIER.test(fs.readFileSync(path.join(APP_DIR, rel), "utf8")))
     .sort();
 
 describe("no access token in browser-reachable source", () => {
-  it("only the allow-listed files mention accessToken", () => {
+  it("only the allow-listed files mention a token identifier", () => {
     expect(filesMentioningAccessToken()).toEqual([...ACCESS_TOKEN_ALLOW_LIST].sort());
   });
 
   it("the allow-list holds no stale entries", () => {
     for (const rel of ACCESS_TOKEN_ALLOW_LIST) {
-      expect(fs.readFileSync(path.join(APP_DIR, rel), "utf8")).toContain("accessToken");
+      expect(fs.readFileSync(path.join(APP_DIR, rel), "utf8")).toMatch(TOKEN_IDENTIFIER);
     }
   });
 });
@@ -106,8 +114,47 @@ const modules: Record<string, RouteModule> = {
   ),
 };
 
-/** Loaders that cannot be exercised generically, each with the reason. Never skipped silently. */
+/**
+ * Loaders that cannot be exercised generically, each with the reason. Never skipped silently.
+ * Empty today: every loader is run on the happy-path fixtures below.
+ */
 const NOT_EXERCISED: Record<string, string> = {};
+
+/**
+ * Loaders that legitimately THROW on the happy-path fixtures (their success path does not exist
+ * or is not reachable generically). Their thrown value is still scanned for the sentinel. A loader
+ * not listed here must return; a listed loader that stops throwing is a stale entry and fails.
+ */
+const ERROR_PATH_ONLY: Record<string, string> = {
+  "routes/$.tsx": "catch-all route: its loader always throws a 404 Response",
+};
+
+/** Realistic per-endpoint backend fixtures (shapes the existing loader tests use). */
+const profileFixture = {
+  id: "p1",
+  onboardingCompleted: true,
+  enabledPages: ["accounts", "budget"],
+  taxYear: "2025/26",
+  grossIncome: 45000,
+};
+const accountFixture = {
+  id: "a1",
+  name: "Current",
+  type: "Current",
+  balance: 1000,
+  details: [],
+};
+const backendFixture = (endpoint: string): unknown => {
+  if (endpoint === "/accounts" || endpoint === "/account-details") {
+    return endpoint === "/accounts" ? [accountFixture] : [];
+  }
+  if (/^\/accounts\/[^/]+$/.test(endpoint)) return accountFixture;
+  if (endpoint === "/user-profile") return profileFixture;
+  if (endpoint === "/bank-connections/capability") return { enabled: false };
+  if (endpoint === "/portfolio-snapshot") return null;
+  if (["/budget-entries", "/tax-records", "/bank-connections"].includes(endpoint)) return [];
+  return {};
+};
 
 /** Serialises whatever a loader returned or threw the way a page could expose it. */
 async function serialise(value: unknown): Promise<string> {
@@ -128,16 +175,26 @@ async function serialise(value: unknown): Promise<string> {
   return parts.join("\n");
 }
 
-async function runLoader(loader: Loader, url: string): Promise<string> {
+interface Outcome {
+  serialised: string;
+  threw: boolean;
+}
+
+async function runLoader(loader: Loader, url: string): Promise<Outcome> {
   const args = {
     request: new Request(url, { headers: { "x-flump-request": "1", origin: new URL(url).origin } }),
-    params: { account: "a1", slug: "mortgage-vs-isa", feature: "accounts", "*": "accounts" },
+    params: {
+      account: "a1",
+      slug: "uk-100k-tax-trap-calculator",
+      feature: "accounts",
+      "*": "accounts",
+    },
     context: {},
   };
   try {
-    return await serialise(await loader(args));
+    return { serialised: await serialise(await loader(args)), threw: false };
   } catch (error) {
-    return await serialise(error);
+    return { serialised: await serialise(error), threw: true };
   }
 }
 
@@ -162,7 +219,13 @@ describe("loader data never contains the access token", () => {
     });
     vi.stubGlobal(
       "fetch",
-      vi.fn(async () => new Response(JSON.stringify({}), { status: 200 })),
+      vi.fn(async (input: RequestInfo | URL) => {
+        const { pathname } = new URL(input instanceof Request ? input.url : String(input));
+        return new Response(JSON.stringify(backendFixture(pathname)), {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        });
+      }),
     );
     vi.spyOn(console, "error").mockImplementation(() => {});
   });
@@ -187,13 +250,27 @@ describe("loader data never contains the access token", () => {
   for (const [key, mod] of withLoader) {
     if (key in NOT_EXERCISED) continue;
     it(`${key} does not serialise the token`, async () => {
-      const serialised = await runLoader(mod.loader as Loader, urlFor(key));
+      const { serialised, threw } = await runLoader(mod.loader as Loader, urlFor(key));
       expect(serialised).not.toContain(SENTINEL);
+      // The success return is only checked if the loader reaches it.
+      if (key in ERROR_PATH_ONLY) {
+        expect(threw, `${key} is in ERROR_PATH_ONLY but no longer throws: remove it`).toBe(true);
+      } else {
+        expect(threw, `${key} threw on the happy path: ${serialised.slice(0, 300)}`).toBe(false);
+      }
     });
   }
 
+  it("lists every ERROR_PATH_ONLY loader with a reason", () => {
+    for (const [key, reason] of Object.entries(ERROR_PATH_ONLY)) {
+      expect(modules[key]?.loader, `${key} is listed but has no loader`).toBeTypeOf("function");
+      expect(reason.length).toBeGreaterThan(10);
+    }
+  });
+
   it("the sweep really authenticates: the root loader sends the sentinel to the backend", async () => {
-    await runLoader(modules["root.tsx"].loader as Loader, "http://localhost/");
+    const { threw } = await runLoader(modules["root.tsx"].loader as Loader, "http://localhost/");
+    expect(threw).toBe(false);
     expect(getAuthSession).toHaveBeenCalled();
     const calls = (globalThis.fetch as unknown as ReturnType<typeof vi.fn>).mock.calls;
     const sent = JSON.stringify(calls.map((call) => (call[1] as RequestInit | undefined)?.headers));
@@ -211,7 +288,7 @@ describe("positive control", () => {
       const { accessToken } = await getAuthSession();
       return { user: { id: "u1" }, accessToken };
     };
-    expect(await runLoader(leaking, "http://localhost/")).toContain(SENTINEL);
+    expect((await runLoader(leaking, "http://localhost/")).serialised).toContain(SENTINEL);
   });
 
   it("detects a loader that throws the token inside an error", async () => {
@@ -219,7 +296,7 @@ describe("positive control", () => {
       const { accessToken } = await getAuthSession();
       throw new Error(`failed with ${accessToken}`);
     };
-    expect(await runLoader(leaking, "http://localhost/")).toContain(SENTINEL);
+    expect((await runLoader(leaking, "http://localhost/")).serialised).toContain(SENTINEL);
   });
 
   it("detects a loader that returns the token in a Response header", async () => {
@@ -227,6 +304,21 @@ describe("positive control", () => {
       const { accessToken } = await getAuthSession();
       return new Response("ok", { headers: { "x-leak": accessToken } });
     };
-    expect(await runLoader(leaking, "http://localhost/")).toContain(SENTINEL);
+    expect((await runLoader(leaking, "http://localhost/")).serialised).toContain(SENTINEL);
+  });
+
+  it("detects a loader that leaks only in its success return while its error path is clean", async () => {
+    const leaking: Loader = async (args) => {
+      const { accessToken } = await getAuthSession();
+      const { request } = args as { request: Request };
+      if (new URL(request.url).searchParams.has("fail")) throw new Error("clean failure");
+      return { ok: true, nested: { deep: [accessToken] } };
+    };
+    const failed = await runLoader(leaking, "http://localhost/?fail=1");
+    expect(failed.threw).toBe(true);
+    expect(failed.serialised).not.toContain(SENTINEL);
+    const happy = await runLoader(leaking, "http://localhost/");
+    expect(happy.threw).toBe(false);
+    expect(happy.serialised).toContain(SENTINEL);
   });
 });
