@@ -380,8 +380,6 @@ describe("Architecture & Design System Laws", () => {
       // when paired with text.onContrast. Use status.*.text for text. Icons are graphics, so
       // they may use solid. Paths are relative to the repo root.
       const ALLOWED: Record<string, string> = {
-        "apps/web/app/features/debt/components/PayoffStrategyControls/PayoffStrategyControls.tsx":
-          "icon (graphic)",
         "apps/marketing/src/components/McpSpotlightSection/McpSpotlightSection.styles.ts":
           "bulletIcon recipe, applied to icon components only (graphic)",
       };
