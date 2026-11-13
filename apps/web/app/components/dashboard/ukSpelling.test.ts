@@ -26,7 +26,7 @@ const ENGINE_STAGE_KEY = /"stabilize"/g;
 
 const files = [
   ...collect(DASHBOARD_FEATURE_DIR),
-  path.join(APP_DIR, "components/debt/AddDebtDialog.tsx"),
+  path.join(APP_DIR, "features/debt/components/AddDebtDialog/AddDebtDialog.tsx"),
   path.join(APP_DIR, "routes/sandbox.tsx"),
 ];
 

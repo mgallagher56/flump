@@ -1,0 +1,57 @@
+import type { DebtItem } from "@flump/finance-engine";
+import type { Meta, StoryObj } from "@storybook/react";
+import { expect, fn, userEvent, within } from "storybook/test";
+import { DebtAccountsList } from "./DebtAccountsList";
+
+const debts: DebtItem[] = [
+  {
+    id: "d1",
+    name: "Barclaycard Platinum",
+    type: "credit_card",
+    balance: 3000,
+    apr: 22.9,
+    minimumPayment: 90,
+  },
+  {
+    id: "d2",
+    name: "Tesco Loan",
+    type: "loan",
+    balance: 4500,
+    apr: 0,
+    aprKnown: false,
+    minimumPayment: 120,
+    minimumPaymentEstimated: true,
+  },
+];
+
+const meta: Meta<typeof DebtAccountsList> = {
+  title: "3. Financial Patterns & Sections/DebtAccountsList",
+  component: DebtAccountsList,
+  parameters: { layout: "padded" },
+  args: { debts, onAddDebt: fn(), onDeleteDebt: fn(), onUpdateDebt: fn() },
+};
+
+export default meta;
+type Story = StoryObj<typeof DebtAccountsList>;
+
+// The Storybook decorator renders light and dark side by side, so queries use the "all" variants.
+/** Shows the "Not set" APR and estimated-minimum markers. */
+export const WithUnknownAprAndEstimatedMinimum: Story = {
+  play: async ({ canvasElement, args }) => {
+    const canvas = within(canvasElement);
+    await expect(canvas.getAllByText("Not set").length).toBeGreaterThan(0);
+    await expect(canvas.getAllByText("estimated").length).toBeGreaterThan(0);
+    await userEvent.click(
+      canvas.getAllByRole("button", { name: "Delete Tesco Loan" })[0] as HTMLElement,
+    );
+    await expect(args.onDeleteDebt).toHaveBeenCalledWith("d2");
+  },
+};
+
+export const Empty: Story = {
+  args: { debts: [] },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await expect(canvas.getAllByText("No active debts recorded.").length).toBeGreaterThan(0);
+  },
+};
