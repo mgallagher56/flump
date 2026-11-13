@@ -1,4 +1,4 @@
-import { type FC, Fragment, type ReactNode } from "react";
+import type { FC, ReactNode } from "react";
 import { cx, type RecipeVariantProps } from "../../../styled-system/css";
 import { kpiStripGrid } from "./KpiStrip.styles";
 
@@ -15,7 +15,7 @@ interface KpiStripBaseProps extends KpiStripVariants {
   className?: string;
 }
 
-/** Pass either `children` (free form) or `items` (a tuple of up to four, so the cap is typed). */
+/** Pass either `children` (free form) or `items` (a tuple of up to four, so the cap is typed; give each element a `key`). */
 export type KpiStripProps = KpiStripBaseProps &
   ({ children: ReactNode; items?: never } | { items: KpiStripItems; children?: never });
 
@@ -30,9 +30,7 @@ export const KpiStrip: FC<KpiStripProps> = ({ children, items, columns, classNam
       className={cx(kpiStripGrid({ columns: resolvedColumns }), className)}
       data-density="compact"
     >
-      {items
-        ? items.map((item, index) => <Fragment key={`kpi-${index}`}>{item}</Fragment>)
-        : children}
+      {items ?? children}
     </div>
   );
 };

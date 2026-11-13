@@ -9,7 +9,7 @@ describe("Card Primitive", () => {
   });
 });
 
-describe("Card as and tone", () => {
+describe("Card as and surface", () => {
   it("renders a div by default", () => {
     const { container } = render(<Card>Body</Card>);
     expect(container.firstElementChild?.tagName).toBe("DIV");
@@ -20,12 +20,12 @@ describe("Card as and tone", () => {
     expect(container.firstElementChild?.tagName).toBe(as.toUpperCase());
   });
 
-  it("changes classes for subtle and sunken tones", () => {
+  it("changes classes for subtle and sunken surfaces", () => {
     const { container } = render(
       <>
         <Card>a</Card>
-        <Card tone="subtle">b</Card>
-        <Card tone="sunken">c</Card>
+        <Card surface="subtle">b</Card>
+        <Card surface="sunken">c</Card>
       </>,
     );
     const classes = Array.from(container.children).map((el) => el.className);

@@ -12,10 +12,17 @@ export type CardProps = HTMLAttributes<HTMLElement> &
     as?: CardElement;
   };
 
-export const Card = ({ as = "div", className, elevation, padding, tone, ...props }: CardProps) => {
+export const Card = ({
+  as = "div",
+  className,
+  elevation,
+  padding,
+  surface,
+  ...props
+}: CardProps) => {
   const Component = as as ElementType;
   return (
-    <Component className={cx(cardRecipe({ elevation, padding, tone }), className)} {...props} />
+    <Component className={cx(cardRecipe({ elevation, padding, surface }), className)} {...props} />
   );
 };
 

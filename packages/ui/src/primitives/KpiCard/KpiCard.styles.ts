@@ -3,11 +3,12 @@ import { cva } from "../../../styled-system/css";
 export const kpiCardContainer = cva({
   base: {
     backgroundColor: "surface.card",
-    borderRadius: "xl",
+    borderRadius: "card",
     borderWidth: "1px",
     borderStyle: "solid",
     borderColor: "border.subtle",
     p: "density.cardPad",
+    containerType: "inline-size",
     display: "flex",
     flexDirection: "column",
     justifyContent: "space-between",
@@ -129,11 +130,11 @@ export const kpiDeltaContent = cva({
   },
 });
 
-/** A numeric value may wrap inside a narrow (2x2 phone) card instead of overflowing it. */
+/** The figure scales with the card so a long value stays on one line, even at 375px in a 2x2 strip. */
 export const kpiMoney = cva({
   base: {
     minWidth: 0,
-    whiteSpace: "normal",
-    overflowWrap: "anywhere",
+    // Digits never wrap: the size follows the card width (container query units), 16px to 32px.
+    fontSize: "clamp(1rem, 12cqi, 2rem)",
   },
 });
