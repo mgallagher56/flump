@@ -7,7 +7,7 @@ import {
   resolveUkTaxYear,
   UnsupportedUkTaxYearError,
 } from "../../uk-tax-year.js";
-import { type Figure, known, unknown } from "../figure.js";
+import { type Figure, figureKnown, figureUnknown } from "../figure.js";
 import type { FactKey, ProfileFacts } from "../input.js";
 
 export interface TakeHome {
@@ -42,8 +42,11 @@ export function selectTakeHome(
     missing.push("employmentType");
   }
   if (f.pensionPercent === null) missing.push("pensionPercent");
-  if (f.isSalarySacrifice === null) missing.push("isSalarySacrifice");
-  if (missing.length > 0) return unknown(missing, "not-set");
+  // Salary sacrifice is a payroll arrangement: only employees are asked about it.
+  if (f.employmentType !== "self-employed" && f.isSalarySacrifice === null) {
+    missing.push("isSalarySacrifice");
+  }
+  if (missing.length > 0) return figureUnknown(missing, "not-set");
 
   const salary = f.annualSalary as number;
   const pensionPercent = f.pensionPercent as number;
@@ -52,7 +55,7 @@ export function selectTakeHome(
   try {
     taxYear = resolveUkTaxYear(opts.taxYear);
   } catch (error) {
-    if (error instanceof UnsupportedUkTaxYearError) return unknown([], "unsupported-year");
+    if (error instanceof UnsupportedUkTaxYearError) return figureUnknown([], "unsupported-year");
     throw error;
   }
 
@@ -85,7 +88,7 @@ export function selectTakeHome(
     salary - pension - result.incomeTaxGbp - nationalInsurance - result.studentLoanDeductionGbp;
   const annual = Math.round(annualRaw);
 
-  return known<TakeHome>(
+  return figureKnown<TakeHome>(
     {
       monthly: Math.round(annualRaw / 12),
       annual,

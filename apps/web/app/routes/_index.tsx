@@ -2,7 +2,7 @@ import {
   type FactKey,
   getCurrentUKTaxYear,
   getTaxYearForRecordDate,
-  isKnown,
+  isFigureKnown,
   PortfolioSnapshot,
   profileFactsFromProfile,
   selectTakeHome,
@@ -39,7 +39,7 @@ const MISSING_LABELS: Partial<Record<FactKey, string>> = {
  */
 export function describeMissingTakeHome(profile: TakeHomeProfile | undefined): string | undefined {
   const figure = selectTakeHome(profileFactsFromProfile(profile));
-  if (isKnown(figure) || figure.missing.includes("annualSalary")) return undefined;
+  if (isFigureKnown(figure) || figure.missing.includes("annualSalary")) return undefined;
   const labels = figure.missing.flatMap((key) => MISSING_LABELS[key] ?? []);
   if (labels.length === 0) return undefined;
   const list =
@@ -173,7 +173,7 @@ export const loader = async (args: LoaderFunctionArgs) => {
 
   // Estimated take-home comes from the engine's one selector; unknown stays unknown.
   const takeHomeFigure = selectTakeHome(profileFactsFromProfile(userProfile));
-  const takeHome = isKnown(takeHomeFigure) ? takeHomeFigure.value : null;
+  const takeHome = isFigureKnown(takeHomeFigure) ? takeHomeFigure.value : null;
   const pensionPercentKnown =
     userProfile?.pensionPercent !== null &&
     userProfile?.pensionPercent !== undefined &&
@@ -262,7 +262,7 @@ export const loader = async (args: LoaderFunctionArgs) => {
       annualSalary: userProfile?.annualSalary ?? null,
       estimatedTakeHome: takeHome?.monthly ?? null,
       takeHomeMissing: takeHome ? undefined : describeMissingTakeHome(userProfile),
-      takeHomeAssumptions: isKnown(takeHomeFigure) ? takeHomeFigure.assumptions : undefined,
+      takeHomeAssumptions: isFigureKnown(takeHomeFigure) ? takeHomeFigure.assumptions : undefined,
     },
     taxData: {
       taxYear: getCurrentUKTaxYear(),

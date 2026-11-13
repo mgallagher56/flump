@@ -11,7 +11,7 @@ export type Figure<T> =
   | { status: "known"; value: T; provenance: FigureProvenance; assumptions?: string[] }
   | { status: "unknown"; missing: FactKey[]; reason?: FigureUnknownReason };
 
-export function known<T>(
+export function figureKnown<T>(
   value: T,
   provenance: FigureProvenance = "derived",
   assumptions?: string[],
@@ -21,10 +21,13 @@ export function known<T>(
     : { status: "known", value, provenance };
 }
 
-export function unknown<T = never>(missing: FactKey[], reason?: FigureUnknownReason): Figure<T> {
+export function figureUnknown<T = never>(
+  missing: FactKey[],
+  reason?: FigureUnknownReason,
+): Figure<T> {
   return reason ? { status: "unknown", missing, reason } : { status: "unknown", missing };
 }
 
-export function isKnown<T>(fig: Figure<T>): fig is Extract<Figure<T>, { status: "known" }> {
+export function isFigureKnown<T>(fig: Figure<T>): fig is Extract<Figure<T>, { status: "known" }> {
   return fig.status === "known";
 }
