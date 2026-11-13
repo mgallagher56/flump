@@ -10,6 +10,8 @@ export const trigger = cva({
     alignItems: "center",
     justifyContent: "center",
     gap: "1",
+    minWidth: "44px",
+    minHeight: "44px",
     padding: "1",
     borderRadius: "full",
     borderWidth: "0",

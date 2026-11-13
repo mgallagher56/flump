@@ -12,7 +12,7 @@ import {
   FaTrash,
   FaUser,
 } from "react-icons/fa";
-import { useNavigate } from "react-router";
+import { useLocation, useNavigate } from "react-router";
 import FLPButton from "~/components/core/buttons/FLPButton";
 import FLPCard from "~/components/core/cards/FLPCard";
 import FLPHeading from "~/components/core/typography/FLPHeading";
@@ -197,10 +197,17 @@ const UserProfilePanel: FC<UserProfilePanelProps> = ({ initialProfile, user }) =
   );
 
   // Deep link from the account menu (?tab=ai_connections). Read after mount so SSR markup matches.
+  let search = "";
+  try {
+    // biome-ignore lint/correctness/useHookAtTopLevel: fallback when rendered outside Router in unit tests
+    search = useLocation().search;
+  } catch {
+    search = typeof window !== "undefined" ? window.location.search : "";
+  }
   useEffect(() => {
-    const tab = parseProfileTab(window.location.search);
+    const tab = parseProfileTab(search);
     if (tab) setActiveTab(tab);
-  }, []);
+  }, [search]);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploadingImage, setUploadingImage] = useState(false);

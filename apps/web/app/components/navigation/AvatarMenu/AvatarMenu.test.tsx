@@ -65,10 +65,21 @@ describe("<AvatarMenu />", () => {
   it("closes on an outside click and after choosing a link", () => {
     customRender(<AvatarMenu user={{ id: "1" }} />);
     open();
-    fireEvent.mouseDown(document.body);
+    fireEvent.pointerDown(document.body);
     expect(screen.queryByRole("menu")).toBeNull();
     open();
     fireEvent.click(screen.getAllByRole("menuitem")[0]);
     expect(screen.queryByRole("menu")).toBeNull();
+  });
+
+  it("toggles on repeated clicks and closes on Tab with focus back on the trigger", () => {
+    customRender(<AvatarMenu user={{ id: "1" }} />);
+    open();
+    open();
+    expect(screen.queryByRole("menu")).toBeNull();
+    open();
+    fireEvent.keyDown(screen.getByRole("menu"), { key: "Tab" });
+    expect(screen.queryByRole("menu")).toBeNull();
+    expect(document.activeElement).toBe(screen.getByTestId("avatar-menu-trigger"));
   });
 });
