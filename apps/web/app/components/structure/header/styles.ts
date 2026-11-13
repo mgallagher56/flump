@@ -35,10 +35,13 @@ export const menuStyles = css({
   justifyContent: "start",
 });
 
+// Labels never wrap: below lg the menu collapses into the drawer instead of squeezing the labels.
 export const desktopMenuLinksStyles = css({
-  display: { base: "none", md: "flex" },
-  gap: "4",
+  display: { base: "none", lg: "flex" },
+  gap: { lg: "1", xl: "3" },
   alignItems: "center",
+  whiteSpace: "nowrap",
+  minWidth: 0,
 });
 
 export const loginStyles = css({
@@ -61,7 +64,7 @@ export const profileLink = css({
 export const srOnly = css({ srOnly: true });
 
 export const mobileMenuButtonStyles = css({
-  display: { base: "inline-flex", md: "none" },
+  display: { base: "inline-flex", lg: "none" },
   alignItems: "center",
   justifyContent: "center",
   width: "44px",
