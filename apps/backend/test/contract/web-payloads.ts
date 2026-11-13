@@ -8,7 +8,7 @@
  * yet paired; they are to be replaced by shared zod schemas when E21 lands.
  *
  * Source of each shape:
- * - onboarding: apps/web/app/routes/app.onboarding.tsx + services/onboarding-seed.ts
+ * - onboarding: apps/web/app/features/onboarding/useFinishOnboarding.ts + services/onboarding-seed.ts
  * - accounts: routes/app.accounts._index.tsx, app.savings.tsx, app.pension.tsx, app.debt.tsx,
  *   containers/mortgage/MortgageContainer.tsx
  * - budget: components/budget/BudgetCategoryTable.tsx + BudgetSetupWizard.tsx

@@ -84,6 +84,12 @@ export const useToast = (): ToastApi => {
   return api;
 };
 
+/**
+ * Like `useToast`, but returns `null` outside a `<ToastProvider>` instead of throwing. For
+ * components that also render in isolation (stories, tests) and can do without a toast.
+ */
+export const useOptionalToast = (): ToastApi | null => useContext(ToastContext);
+
 interface ToastEntry extends ToastOptions {
   id: string;
 }

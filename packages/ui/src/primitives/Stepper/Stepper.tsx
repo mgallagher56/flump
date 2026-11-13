@@ -20,6 +20,14 @@ import {
 
 export type StepState = "complete" | "current" | "upcoming";
 
+/**
+ * A state a caller can give a step other than the current one. `skipped` reads "Skipped" and is
+ * drawn like an upcoming step, so a step the user passed without finishing is never shown as done.
+ */
+export type StepStateOverride = "complete" | "upcoming" | "skipped";
+
+type DisplayState = StepState | "skipped";
+
 export interface StepperStep {
   id: string;
   /** Short step name, for example "Housing and outgoings". */
@@ -30,27 +38,42 @@ export interface StepperProps {
   steps: StepperStep[];
   /** The current step, counting from 1. Earlier steps are complete, later ones upcoming. */
   current: number;
+  /**
+   * Optional per-step overrides, keyed by step id, for flows that can be done out of order. Steps
+   * not listed keep the default (earlier complete, later upcoming). The current step is always
+   * current; an override for it is ignored.
+   */
+  states?: Partial<Record<string, StepStateOverride>>;
   /** Accessible name for the step list. Defaults to "Setup progress". */
   label?: string;
   className?: string;
 }
 
-const statusWords: Record<StepState, string> = {
+const statusWords: Record<DisplayState, string> = {
   complete: "Complete",
   current: "Current step",
   upcoming: "Up next",
+  skipped: "Skipped",
 };
+
+/** The recipe variant a state is drawn with. */
+const visualState = (state: DisplayState): StepState => (state === "skipped" ? "upcoming" : state);
 
 export const Stepper: FC<StepperProps> = ({
   steps,
   current,
+  states,
   label = "Setup progress",
   className,
 }) => {
   const total = steps.length;
   const currentIndex = Math.min(Math.max(Math.round(current), 1), Math.max(total, 1)) - 1;
-  const stateOf = (index: number): StepState =>
-    index < currentIndex ? "complete" : index === currentIndex ? "current" : "upcoming";
+  const stateOf = (index: number): DisplayState => {
+    if (index === currentIndex) return "current";
+    const override = states?.[steps[index]?.id ?? ""];
+    if (override) return override;
+    return index < currentIndex ? "complete" : "upcoming";
+  };
   const currentStep = steps[currentIndex];
 
   return (
@@ -63,13 +86,14 @@ export const Stepper: FC<StepperProps> = ({
         {currentStep ? <p className={stepperCompactName()}>{currentStep.label}</p> : null}
         <ul aria-hidden="true" className={stepperSegments()}>
           {steps.map((step, index) => (
-            <li className={stepperSegment({ state: stateOf(index) })} key={step.id} />
+            <li className={stepperSegment({ state: visualState(stateOf(index)) })} key={step.id} />
           ))}
         </ul>
       </div>
       <ol aria-label={label} className={stepperList()}>
         {steps.map((step, index) => {
           const state = stateOf(index);
+          const visual = visualState(state);
           return (
             <li
               aria-current={state === "current" ? "step" : undefined}
@@ -77,11 +101,11 @@ export const Stepper: FC<StepperProps> = ({
               data-state={state}
               key={step.id}
             >
-              <span aria-hidden="true" className={stepperMarker({ state })}>
+              <span aria-hidden="true" className={stepperMarker({ state: visual })}>
                 {state === "complete" ? <Icon icon={Check} size="md" /> : index + 1}
               </span>
               <span className={stepperText()}>
-                <span className={stepperLabel({ state })}>
+                <span className={stepperLabel({ state: visual })}>
                   <VisuallyHidden>{`Step ${index + 1} of ${total}: `}</VisuallyHidden>
                   {step.label}
                 </span>

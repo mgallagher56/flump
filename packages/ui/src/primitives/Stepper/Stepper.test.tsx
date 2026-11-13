@@ -43,4 +43,34 @@ describe("Stepper", () => {
     const list = screen.getByRole("list", { name: "Onboarding" });
     expect(within(list).getAllByRole("listitem")[2]?.getAttribute("aria-current")).toBe("step");
   });
+
+  it("keeps the default states when no overrides are given", () => {
+    render(<Stepper current={3} steps={steps} />);
+    expect(screen.getAllByText("Complete")).toHaveLength(2);
+    expect(screen.queryByText("Skipped")).toBeNull();
+  });
+
+  it("applies per-step overrides and never overrides the current step", () => {
+    render(
+      <Stepper
+        current={2}
+        states={{ you: "skipped", home: "complete", save: "complete" }}
+        steps={steps}
+      />,
+    );
+    const list = screen.getByRole("list", { name: "Setup progress" });
+    const items = within(list).getAllByRole("listitem");
+    expect(items[0]?.getAttribute("data-state")).toBe("skipped");
+    expect(within(items[0] as HTMLElement).getByText("Skipped")).toBeDefined();
+    expect(items[1]?.getAttribute("aria-current")).toBe("step");
+    expect(within(items[1] as HTMLElement).getByText("Current step")).toBeDefined();
+    expect(items[2]?.getAttribute("data-state")).toBe("complete");
+    expect(within(items[2] as HTMLElement).getByText("Complete")).toBeDefined();
+  });
+
+  it("can mark an earlier step upcoming instead of complete", () => {
+    render(<Stepper current={3} states={{ home: "upcoming" }} steps={steps} />);
+    expect(screen.getAllByText("Complete")).toHaveLength(1);
+    expect(screen.getByText("Up next")).toBeDefined();
+  });
 });

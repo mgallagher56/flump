@@ -1,0 +1,87 @@
+import { act, renderHook } from "@testing-library/react";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { deriveOnboardingSummary } from "./deriveOnboardingSummary";
+import { INITIAL_VALUES, type OnboardingValues } from "./types";
+import { FINISH_ERROR, PARTIAL_FINISH_ERROR, useFinishOnboarding } from "./useFinishOnboarding";
+
+const { navigate, updateProfile, apiFetch } = vi.hoisted(() => ({
+  navigate: vi.fn(),
+  updateProfile: vi.fn(),
+  apiFetch: vi.fn(),
+}));
+
+vi.mock("react-router", () => ({ useNavigate: () => navigate }));
+vi.mock("~/hooks/useUserProfile", () => ({ useUserProfile: () => ({ updateProfile }) }));
+vi.mock("~/services/api-client", () => ({
+  apiFetch: (...args: unknown[]) => apiFetch(...args),
+}));
+vi.mock("./notify", () => ({ useOnboardingNotify: () => vi.fn() }));
+vi.mock("@flump/finance-engine", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@flump/finance-engine")>()),
+  clearOnboardingSeed: vi.fn(),
+}));
+
+const values: OnboardingValues = {
+  ...INITIAL_VALUES,
+  incomeMode: "net",
+  monthlyTakeHome: 3000,
+  taxRegion: "ENGLAND",
+  cashSavings: 5000,
+};
+
+const setup = () => renderHook(() => useFinishOnboarding(values, deriveOnboardingSummary(values)));
+
+/** Lookups return no existing rows; every POST rejects. */
+const seedingFails = () =>
+  apiFetch.mockImplementation((_endpoint: string, init?: { method?: string }) =>
+    init?.method === "POST" ? Promise.reject(new Error("offline")) : Promise.resolve([]),
+  );
+
+describe("useFinishOnboarding", () => {
+  beforeEach(() => {
+    navigate.mockReset();
+    updateProfile.mockReset();
+    apiFetch.mockReset();
+    vi.spyOn(console, "error").mockImplementation(() => {});
+  });
+
+  it("starts idle with nothing saved", () => {
+    const { result } = setup();
+    expect(result.current.saveState).toBe("idle");
+    expect(result.current.profileSaved).toBe(false);
+    expect(result.current.error).toBeNull();
+  });
+
+  it("reports nothing confirmed when the profile save fails", async () => {
+    updateProfile.mockRejectedValue(new Error("offline"));
+    const { result } = setup();
+    await act(() => result.current.finish());
+    expect(result.current.error).toBe(FINISH_ERROR);
+    expect(result.current.profileSaved).toBe(false);
+    expect(result.current.saveState).toBe("unconfirmed");
+    expect(navigate).not.toHaveBeenCalled();
+  });
+
+  it("reports a partial save when the profile saved but seeding failed", async () => {
+    updateProfile.mockResolvedValue(undefined);
+    seedingFails();
+    const { result } = setup();
+    await act(() => result.current.finish());
+    expect(result.current.error).toBe(PARTIAL_FINISH_ERROR);
+    expect(result.current.profileSaved).toBe(true);
+    expect(result.current.saveState).toBe("partial");
+    // onboardingCompleted is never set after a failed seed.
+    expect(updateProfile).toHaveBeenCalledTimes(1);
+    expect(navigate).not.toHaveBeenCalled();
+  });
+
+  it("navigates home once everything is saved", async () => {
+    updateProfile.mockResolvedValue(undefined);
+    apiFetch.mockResolvedValue([]);
+    const { result } = setup();
+    await act(() => result.current.finish());
+    expect(result.current.error).toBeNull();
+    expect(updateProfile).toHaveBeenLastCalledWith({ onboardingCompleted: true });
+    expect(navigate).toHaveBeenCalledWith("/");
+  });
+});
