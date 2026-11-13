@@ -2,16 +2,26 @@ import { calculateZeroPercentCliff, persistOnboardingSeed } from "@flump/finance
 import type { FC } from "react";
 import { useMemo, useState } from "react";
 import { FaExclamationTriangle } from "react-icons/fa";
-import { css } from "../../../styled-system/css/index.js";
-import { Button } from "../../components/forms/Button.js";
-
+import { Button } from "../../primitives/Button";
 import { LiveRegion } from "../../primitives/LiveRegion";
 import {
+  alertHeadingStyle,
+  badgeRecipe,
+  calloutBodyRecipe,
+  calloutRecipe,
+  calloutTitleRecipe,
   cardStyle,
+  ctaStyle,
+  fieldLabelStyle,
+  figureRecipe,
   gridStyle,
+  headerStyle,
   inputGroupStyle,
+  introStyle,
+  noteStyle,
   resultsBoxStyle,
   textInputStyle,
+  titleStyle,
 } from "./ZeroPercentCliffCalculator.styles.js";
 
 export interface ZeroPercentCliffCalculatorProps {
@@ -52,33 +62,10 @@ export const ZeroPercentCliffCalculator: FC<ZeroPercentCliffCalculatorProps> = (
 
   return (
     <div className={cardStyle} data-testid="zero-percent-cliff-tool">
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "flex-start",
-          flexWrap: "wrap",
-          gap: "12px",
-        }}
-      >
+      <div className={headerStyle}>
         <div>
-          <h2
-            style={{
-              fontSize: "1.25rem",
-              fontWeight: 700,
-              margin: "0 0 4px 0",
-              color: "var(--colors-text-primary)",
-            }}
-          >
-            0% balance transfer promotional expiry calculator
-          </h2>
-          <p
-            style={{
-              fontSize: "0.875rem",
-              color: "var(--colors-text-muted)",
-              margin: 0,
-            }}
-          >
+          <h2 className={titleStyle}>0% balance transfer promotional expiry calculator</h2>
+          <p className={introStyle}>
             Calculate the exact monthly repayment needed to clear your card before the 0%
             promotional window expires.
           </p>
@@ -88,9 +75,7 @@ export const ZeroPercentCliffCalculator: FC<ZeroPercentCliffCalculatorProps> = (
       <div className={gridStyle}>
         <div>
           <div className={inputGroupStyle}>
-            <span style={{ fontSize: "14px", fontWeight: "bold" }}>
-              Current 0% card balance (£)
-            </span>
+            <span className={fieldLabelStyle}>Current 0% card balance (£)</span>
             <input
               aria-label="0% card balance"
               className={textInputStyle}
@@ -102,9 +87,7 @@ export const ZeroPercentCliffCalculator: FC<ZeroPercentCliffCalculatorProps> = (
           </div>
 
           <div className={inputGroupStyle}>
-            <span style={{ fontSize: "14px", fontWeight: "bold" }}>
-              Months remaining on 0% offer
-            </span>
+            <span className={fieldLabelStyle}>Months remaining on 0% offer</span>
             <input
               aria-label="Months remaining on 0% offer"
               className={textInputStyle}
@@ -117,9 +100,7 @@ export const ZeroPercentCliffCalculator: FC<ZeroPercentCliffCalculatorProps> = (
           </div>
 
           <div className={inputGroupStyle}>
-            <span style={{ fontSize: "14px", fontWeight: "bold" }}>
-              Revert APR after offer ends (%)
-            </span>
+            <span className={fieldLabelStyle}>Revert APR after offer ends (%)</span>
             <input
               aria-label="Revert APR"
               className={textInputStyle}
@@ -134,74 +115,30 @@ export const ZeroPercentCliffCalculator: FC<ZeroPercentCliffCalculatorProps> = (
         <div className={resultsBoxStyle}>
           <LiveRegion debounceMs={1000} message={headline} visuallyHidden />
           <div>
-            <span
-              style={{
-                fontSize: "11px",
-                backgroundColor: "var(--colors-status-positive-bg)",
-                color: "var(--colors-status-positive-text)",
-                padding: "2px 8px",
-                borderRadius: "4px",
-                fontWeight: "bold",
-              }}
-            >
-              Target monthly payment
-            </span>
-            <div
-              style={{
-                fontSize: "28px",
-                fontWeight: "bold",
-                color: "var(--colors-status-positive-solid)",
-                marginTop: "4px",
-              }}
-            >
-              £{Math.round(cliff.requiredMonthlyPayment)} / month
+            <span className={badgeRecipe({ tone: "positive" })}>Target monthly payment</span>
+            <div className={figureRecipe({ tone: "positive" })}>
+              £{Math.round(cliff.requiredMonthlyPayment).toLocaleString("en-GB")} / month
             </div>
-            <p
-              style={{
-                fontSize: "12px",
-                color: "var(--colors-text-muted)",
-                margin: "4px 0 0 0",
-              }}
-            >
-              Clears the entire £{balance.toLocaleString()} balance across {months} months without
-              paying £1 in interest.
+            <p className={noteStyle}>
+              Clears the entire £{balance.toLocaleString("en-GB")} balance across {months} months
+              without paying £1 in interest.
             </p>
           </div>
 
-          <div
-            style={{
-              padding: "14px",
-              backgroundColor: "var(--colors-status-danger-bg)",
-              borderRadius: "10px",
-              border: "1px solid var(--colors-status-danger-border)",
-            }}
-          >
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "8px",
-                color: "var(--colors-status-danger-text)",
-              }}
-            >
-              <FaExclamationTriangle size={16} />
-              <strong style={{ fontSize: "13px" }}>Revert APR alert</strong>
+          <div className={calloutRecipe({ tone: "danger" })}>
+            <div className={alertHeadingStyle}>
+              <FaExclamationTriangle aria-hidden="true" size={16} />
+              <strong className={calloutTitleRecipe({ tone: "danger" })}>Revert APR alert</strong>
             </div>
-            <p
-              style={{
-                color: "var(--colors-status-danger-text)",
-                fontSize: "12px",
-                margin: "4px 0 0 0",
-              }}
-            >
+            <p className={calloutBodyRecipe({ tone: "danger" })}>
               If you pay only minimums, you will reach the {revertApr}% revert date with ~£
-              {Math.round(cliff.balanceRemainingIfMinimum).toLocaleString()} unpaid, costing £
-              {Math.round(cliff.penaltyInterestFirstYearIfUnpaid).toLocaleString()} in first-year
-              interest.
+              {Math.round(cliff.balanceRemainingIfMinimum).toLocaleString("en-GB")} unpaid, costing
+              £{Math.round(cliff.penaltyInterestFirstYearIfUnpaid).toLocaleString("en-GB")} in
+              first-year interest.
             </p>
           </div>
 
-          <Button onClick={handleSave} size="md" style={{ width: "100%" }}>
+          <Button className={ctaStyle} onClick={handleSave} size="md">
             {ctaText}
           </Button>
         </div>

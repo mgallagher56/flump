@@ -17,21 +17,17 @@ describe("calculator text inputs use the input boundary token", () => {
   });
 });
 
-describe("inline calculator number inputs use the input boundary token", () => {
-  const files = [
-    "MortgageVsIsaCalculator/MortgageVsIsaCalculator.tsx",
-    "Section24Calculator/Section24Calculator.tsx",
-    "TaxTrapCalculator/TaxTrapCalculator.tsx",
-    "DebtSnowballCalculator/DebtSnowballCalculator.tsx",
+describe("number inputs in calculators use the input boundary token via styles files", () => {
+  const dirs = [
+    "MortgageVsIsaCalculator",
+    "Section24Calculator",
+    "TaxTrapCalculator",
+    "DebtSnowballCalculator",
   ];
-  it.each(files)("%s has no <input> styled with the decorative border", (file) => {
-    const src = readFileSync(join(__dirname, file), "utf8");
-    const inputs = src.match(/<input[\s\S]*?\/>/g) ?? [];
-    const inline = inputs.filter((i) => i.includes("style={{") && i.includes('type="number"'));
-    expect(inline.length).toBeGreaterThan(0);
-    for (const input of inline) {
-      expect(input).not.toContain('"1px solid var(--colors-border)"');
-      expect(input).toContain("var(--colors-border-input)");
-    }
+  it.each(dirs)("%s has no inline styles and uses border.input", (dir) => {
+    const tsx = readFileSync(join(__dirname, dir, `${dir}.tsx`), "utf8");
+    const styles = readFileSync(join(__dirname, dir, `${dir}.styles.ts`), "utf8");
+    expect(tsx).not.toContain("style={{");
+    expect(styles).toContain('"border.input"');
   });
 });

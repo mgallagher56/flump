@@ -10,3 +10,11 @@ export default meta;
 type Story = StoryObj<typeof OverdraftCostCalculator>;
 
 export const Default: Story = {};
+
+export const Dark: Story = {
+  globals: { theme: "dark" },
+};
+
+export const Light: Story = {
+  globals: { theme: "light" },
+};

@@ -1,4 +1,4 @@
-import { css } from "../../../styled-system/css/index.js";
+import { css, cva } from "../../../styled-system/css/index.js";
 
 export const cardStyle = css({
   backgroundColor: "surface.card",
@@ -45,3 +45,158 @@ export const resultsBoxStyle = css({
   flexDirection: "column",
   gap: "18px",
 });
+
+export const headerRowStyle = css({
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "flex-start",
+  flexWrap: "wrap",
+  gap: "3",
+});
+
+export const titleStyle = css({
+  textStyle: "heading.md",
+  color: "text.primary",
+  margin: 0,
+  marginBottom: "1",
+});
+
+export const introStyle = css({
+  textStyle: "body.sm",
+  color: "text.muted",
+  margin: 0,
+});
+
+export const liabilityCardStyle = css({
+  padding: "3",
+  backgroundColor: "primary.subtle",
+  borderRadius: "lg",
+  marginBottom: "4",
+});
+
+export const liabilityTitleStyle = css({
+  textStyle: "label.md",
+  color: "text.primary",
+  marginBottom: "2",
+});
+
+export const liabilityFieldsStyle = css({
+  display: "grid",
+  gridTemplateColumns: "repeat(3, 1fr)",
+  gap: "3",
+});
+
+export const fieldLabelStyle = css({
+  textStyle: "label.sm",
+  color: "text.secondary",
+});
+
+export const surplusRowStyle = css({
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "center",
+});
+
+export const surplusLabelStyle = css({
+  textStyle: "label.md",
+  color: "text.primary",
+});
+
+export const pillWrapStyle = css({
+  position: "relative",
+  display: "inline-flex",
+  alignItems: "center",
+});
+
+export const pillPrefixStyle = css({
+  position: "absolute",
+  left: "2",
+  textStyle: "label.sm",
+  color: "text.muted",
+});
+
+export const pillSuffixStyle = css({
+  textStyle: "label.sm",
+  color: "text.muted",
+  marginLeft: "1",
+});
+
+export const pillInputStyle = css({
+  width: "20",
+  paddingY: "1",
+  paddingRight: "2",
+  paddingLeft: "6",
+  textStyle: "label.md",
+  fontWeight: "bold",
+  fontVariantNumeric: "tabular-nums",
+  textAlign: "right",
+  color: "primary",
+  borderRadius: "md",
+  border: "1px solid",
+  borderColor: "border.input",
+  backgroundColor: "surface.card",
+});
+
+export const rangeStyle = css({
+  width: "100%",
+  accentColor: "primary",
+});
+
+export const tagStyle = cva({
+  base: {
+    textStyle: "label.sm",
+    fontWeight: "bold",
+    paddingX: "2",
+    paddingY: "1",
+    borderRadius: "sm",
+  },
+  variants: {
+    tone: {
+      warning: { backgroundColor: "status.warning.bg", color: "status.warning.text" },
+      info: { backgroundColor: "status.info.bg", color: "status.info.text" },
+    },
+  },
+});
+
+export const heroFigureStyle = css({
+  textStyle: "numeric.lg",
+  fontVariantNumeric: "tabular-nums",
+  color: "status.positive.text",
+  marginTop: "1",
+});
+
+export const captionStyle = css({
+  textStyle: "body.sm",
+  fontVariantNumeric: "tabular-nums",
+  color: "text.muted",
+  margin: 0,
+  marginTop: "1",
+});
+
+export const savedBoxStyle = css({
+  padding: "3",
+  backgroundColor: "surface.card",
+  borderRadius: "lg",
+  border: "1px solid",
+  borderColor: "border",
+});
+
+export const savedLabelStyle = css({
+  textStyle: "body.sm",
+  color: "text.muted",
+});
+
+export const savedFigureStyle = css({
+  textStyle: "numeric.md",
+  fontVariantNumeric: "tabular-nums",
+  color: "status.danger.text",
+  marginTop: "1",
+});
+
+export const snowballWinStyle = css({
+  textStyle: "heading.sm",
+  color: "text.primary",
+  marginTop: "1",
+});
+
+export const ctaStyle = css({ width: "100%" });
