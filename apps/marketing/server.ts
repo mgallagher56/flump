@@ -8,6 +8,7 @@ import { createServer as createViteServer, type ViteDevServer } from "vite";
 import { analyticsMiddleware } from "./server/analytics";
 import { buildHeadMeta } from "./server/headMeta";
 import { registerOps } from "./server/ops";
+import { rateLimit } from "./server/rateLimit";
 import { buildCsp, genericServerError, injectThemeNonce, resolveAppUrl } from "./server/security";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -17,6 +18,8 @@ async function createServer() {
   assertLaunchReady(process.env);
   const app = express();
   const isProd = process.env.NODE_ENV === "production";
+  // Railway terminates TLS one hop in front; needed so req.ip is the client, not the proxy.
+  if (isProd) app.set("trust proxy", 1);
   // Resolved once at boot. SSR reads it through getAppUrl() (process.env.VITE_APP_URL).
   const resolvedAppUrl = resolveAppUrl();
   process.env.VITE_APP_URL = resolvedAppUrl;
@@ -66,6 +69,9 @@ async function createServer() {
   // Cookieless page counts (E24-T9): off unless ANALYTICS_MODE=log and ANALYTICS_NOTICE_URL are
   // set. After sirv so assets never reach it, before the SSR catch-all.
   app.use(analyticsMiddleware());
+
+  // Health, ops and static assets are handled above, so only SSR renders are limited.
+  app.use(rateLimit({ windowMs: 60_000, max: 120 }));
 
   app.use(async (req, res) => {
     const url = req.originalUrl;
