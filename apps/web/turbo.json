@@ -1,4 +1,6 @@
 {
+  // The commit sha is part of the build env on purpose: it is embedded as the app version, so a
+  // new commit must not reuse a cached web build. Only this app is affected, not package builds.
   "$schema": "https://turborepo.com/schema.json",
   "extends": ["//"],
   "tasks": {

@@ -9,7 +9,9 @@
 
 const SHA_PATTERN = /^[0-9a-f]{7,40}$/i;
 const VERSION_PATTERN = /^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/;
-const EXPLICIT_PATTERN = /^[0-9A-Za-z.+-]{1,64}$/;
+// An explicit override must itself look like a release string (semver with an optional
+// `+<sha>` or `+dev`), so an arbitrary token set by mistake is never inlined into the bundle.
+const EXPLICIT_PATTERN = /^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\+(?:[0-9a-f]{7,40}|dev))?$/;
 
 export const DEV_VERSION = "dev";
 
