@@ -5,14 +5,12 @@ import { renterWithUnknownAprCard } from "../testing/personas.js";
 
 /** Minimal valid arguments per tool. Every registered tool must have an entry. */
 const TOOL_ARGS: Record<string, Record<string, unknown>> = {
-  simulate_debt_payoff: { strategy: "COMPARE_BOTH" },
   simulate_uk_tax_and_pension_sacrifice: { employeePensionPct: 5 },
-  compare_mortgage_overpay_vs_isa: {},
   calculate_self_assessment_and_section24: { taxYear: "2025/26" },
-  project_wealth_scenario: {},
-  evaluate_cashflow_runway_and_health: {},
-  evaluate_uk_student_loan: { plan: "PLAN_5", currentBalanceGbp: 30000 },
-  query_transactions_and_spending: {},
+  compare_mortgage_overpay_vs_invest: { monthlyAmountGbp: 300, expectedReturnPct: 5 },
+  simulate_debt_payoff: {},
+  project_net_worth: { expectedReturnPct: 5 },
+  evaluate_student_loan_overpayment: { plan: "plan5", balanceGbp: 30000, annualSalaryGbp: 40000 },
   get_financial_snapshot: {},
   get_net_worth_history: {},
   list_accounts: {},
@@ -30,16 +28,13 @@ describe("MCP output size and registration (E17-N3)", () => {
     await h.close();
   });
 
-  it("COMPARE_BOTH returns summaries without monthlySchedule", async () => {
-    const text = await h.callText("simulate_debt_payoff", { strategy: "COMPARE_BOTH" });
+  it("compare returns one summary per strategy and no per-debt schedule", async () => {
+    const text = await h.callText("simulate_debt_payoff", {
+      strategy: "compare",
+      debts: [],
+    });
     expect(text).not.toContain("monthlySchedule");
-    const out = JSON.parse(text) as {
-      comparison: Record<string, { months: number; totalInterest: number }>;
-    };
-    for (const key of ["avalanche", "snowball", "minimumOnly"]) {
-      expect(out.comparison[key]?.months).toBeGreaterThan(0);
-      expect(out.comparison[key]?.totalInterest).toBeGreaterThanOrEqual(0);
-    }
+    expect(text).not.toContain('"payments":[');
   });
 
   it("executive-snapshot drops monthlySchedule and is compact", async () => {

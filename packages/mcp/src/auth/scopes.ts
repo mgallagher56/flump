@@ -34,20 +34,19 @@ const SIMULATE: ScopeRequirement = {
 };
 
 export const TOOL_SCOPES: Readonly<Record<string, ScopeRequirement>> = {
-  // Read tools v2 (E17-N9). Old names stay until E17-N11.
+  // Read tools v2 (E17-N9).
   get_financial_snapshot: READ,
   get_net_worth_history: READ,
   list_accounts: READ,
   get_budget_summary: READ,
   get_debt_overview: READ,
+  // Simulate tools v2 (E17-N11). Old tax tools stay until E17-N12.
+  compare_mortgage_overpay_vs_invest: SIMULATE,
   simulate_debt_payoff: SIMULATE,
+  project_net_worth: SIMULATE,
+  evaluate_student_loan_overpayment: SIMULATE,
   simulate_uk_tax_and_pension_sacrifice: SIMULATE,
-  compare_mortgage_overpay_vs_isa: SIMULATE,
   calculate_self_assessment_and_section24: SIMULATE,
-  project_wealth_scenario: SIMULATE,
-  evaluate_uk_student_loan: SIMULATE,
-  evaluate_cashflow_runway_and_health: READ,
-  query_transactions_and_spending: READ,
 };
 
 export const RESOURCE_SCOPES: Readonly<Record<string, ScopeRequirement>> = {

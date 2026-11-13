@@ -14,14 +14,12 @@ import {
 import { hashPatToken, TokenVerifier, type VerifiedToken } from "./token-verifier.js";
 
 const CALL_ARGS: Record<string, Record<string, unknown>> = {
-  simulate_debt_payoff: { strategy: "COMPARE_BOTH" },
   simulate_uk_tax_and_pension_sacrifice: { employeePensionPct: 5 },
-  compare_mortgage_overpay_vs_isa: {},
   calculate_self_assessment_and_section24: { taxYear: "2025/26" },
-  project_wealth_scenario: {},
-  evaluate_uk_student_loan: { plan: "PLAN_5", currentBalanceGbp: 30000 },
-  evaluate_cashflow_runway_and_health: {},
-  query_transactions_and_spending: {},
+  compare_mortgage_overpay_vs_invest: { monthlyAmountGbp: 300, expectedReturnPct: 5 },
+  simulate_debt_payoff: {},
+  project_net_worth: { expectedReturnPct: 5 },
+  evaluate_student_loan_overpayment: { plan: "plan5", balanceGbp: 30000, annualSalaryGbp: 40000 },
   get_financial_snapshot: {},
   get_net_worth_history: {},
   list_accounts: {},
@@ -177,7 +175,7 @@ describe("scope enforcement through the MCP server", () => {
   it("flags the call as an error and leaves tools/list unfiltered", async () => {
     await withToken(["mcp:simulate"], async (h) => {
       const res = await h.client.callTool({
-        name: "query_transactions_and_spending",
+        name: "get_debt_overview",
         arguments: {},
       });
       expect(res.isError).toBe(true);

@@ -15,7 +15,7 @@ const good = {
   notice: MCP_NOTICE,
   netWorthGbp: 12000,
   summary: ["Your debts total £2,400.", "At £100 a month the card clears in 26 months."],
-  recommendedMonthlyTaxSetAsideGbp: 410,
+  monthlySetAsideEstimateGbp: 410,
 };
 
 describe("assertToolOutputPolicy (unit)", () => {
@@ -65,10 +65,10 @@ describe("assertToolOutputPolicy (unit)", () => {
     }
   });
 
-  it("allows recommendedMonthlyTaxSetAsideGbp permanently (tax, not FCA)", () => {
+  it("has no allow-list: recommendedMonthlyTaxSetAsideGbp is banned like any other recommend key", () => {
     expect(() =>
       assertToolOutputPolicy({ ...good, deep: { recommendedMonthlyTaxSetAsideGbp: 99 } }),
-    ).not.toThrow();
+    ).toThrow(/banned-key/);
   });
 
   it("bans provider names but not lookalike words", () => {
@@ -131,38 +131,20 @@ interface AllowEntry {
 
 const EXPIRES = "2027-03-31";
 const ALLOW_LIST: AllowEntry[] = [
-  // Every tool result lacks `notice` until the N8 envelope lands.
-  { surface: "tool:*", kind: "notice", owner: "E17-N8", expires: EXPIRES },
-  // mortgage-isa.tool.ts: guaranteedInterestSavedGbp, favorsOption.
+  // Read tools v2 (E17-N9) carry their own notice text, not MCP_NOTICE, until E17-N14 aligns it.
+  { surface: "tool:get_*", kind: "notice", owner: "E17-N14", expires: EXPIRES },
+  { surface: "tool:list_accounts", kind: "notice", owner: "E17-N14", expires: EXPIRES },
+  // Tax tools v1 have no notice field until E17-N12 replaces them.
   {
-    surface: "tool:compare_mortgage_overpay_vs_isa",
-    kind: "banned-key",
-    detail: "guaranteedInterestSavedGbp",
-    owner: "E17-N11",
+    surface: "tool:simulate_uk_tax_and_pension_sacrifice",
+    kind: "notice",
+    owner: "E17-N12",
     expires: EXPIRES,
   },
   {
-    surface: "tool:compare_mortgage_overpay_vs_isa",
-    kind: "banned-key",
-    detail: "favorsOption",
-    owner: "E17-N11",
-    expires: EXPIRES,
-  },
-  // mortgage-isa.tool.ts early return when there is no mortgage balance.
-  {
-    surface: "tool:compare_mortgage_overpay_vs_isa",
-    kind: "banned-key",
-    detail: "recommendation",
-    owner: "E17-N11",
-    expires: EXPIRES,
-  },
-  // financial-audit.tool.ts student loan `recommendation`. (healthScore.recommendations was
-  // renamed to observations by E29-T5, #553, so its entry is gone.)
-  {
-    surface: "tool:evaluate_uk_student_loan",
-    kind: "banned-key",
-    detail: "recommendation",
-    owner: "E17-N11",
+    surface: "tool:calculate_self_assessment_and_section24",
+    kind: "notice",
+    owner: "E17-N12",
     expires: EXPIRES,
   },
   // uk-tax-trap.tool.ts description ("optimal pension salary sacrifice").
@@ -210,15 +192,21 @@ const matches = (e: AllowEntry, surface: string, v: PolicyViolation) =>
  * calls that reach early-return branches no persona hits (zero mortgage balance).
  */
 const TOOL_CALLS: Array<{ name: string; args: Record<string, unknown> }> = [
-  { name: "simulate_debt_payoff", args: { strategy: "COMPARE_BOTH" } },
   { name: "simulate_uk_tax_and_pension_sacrifice", args: { employeePensionPct: 5 } },
-  { name: "compare_mortgage_overpay_vs_isa", args: {} },
-  { name: "compare_mortgage_overpay_vs_isa", args: { hypotheticalMortgageBalanceGbp: 0 } },
+  {
+    name: "compare_mortgage_overpay_vs_invest",
+    args: { monthlyAmountGbp: 300, expectedReturnPct: 5 },
+  },
+  { name: "simulate_debt_payoff", args: { includeSchedule: "yearly", extraMonthlyGbp: 50 } },
+  {
+    name: "project_net_worth",
+    args: { expectedReturnPct: 5, events: [{ label: "Car", startYear: 2, lumpSumCostGbp: 15000 }] },
+  },
+  {
+    name: "evaluate_student_loan_overpayment",
+    args: { plan: "plan2", balanceGbp: 30000, annualSalaryGbp: 40000 },
+  },
   { name: "calculate_self_assessment_and_section24", args: { taxYear: "2025/26" } },
-  { name: "project_wealth_scenario", args: {} },
-  { name: "evaluate_cashflow_runway_and_health", args: {} },
-  { name: "evaluate_uk_student_loan", args: { plan: "PLAN_5", currentBalanceGbp: 30000 } },
-  { name: "query_transactions_and_spending", args: {} },
   { name: "get_financial_snapshot", args: {} },
   { name: "get_net_worth_history", args: {} },
   { name: "list_accounts", args: {} },

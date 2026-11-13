@@ -8,12 +8,9 @@ import { registerAccountsResources } from "./resources/accounts.resource.js";
 import { registerBaselineResources } from "./resources/baseline.resource.js";
 import { registerBudgetResources } from "./resources/budget.resource.js";
 import { registerTaxLedgerResources } from "./resources/tax-ledger.resource.js";
-import { registerDebtSimulatorTool } from "./tools/debt-simulator.tool.js";
-import { registerFinancialAuditTools } from "./tools/financial-audit.tool.js";
-import { registerLifeEventsTool } from "./tools/life-events.tool.js";
-import { registerMortgageIsaTool } from "./tools/mortgage-isa.tool.js";
 import { READ_TOOLS } from "./tools/read/index.js";
 import { registerSection24Tool } from "./tools/section24.tool.js";
+import { SIMULATE_TOOLS } from "./tools/simulate/index.js";
 import { registerUkTaxTrapTool } from "./tools/uk-tax-trap.tool.js";
 import type { McpServerContext, McpUserDataProvider } from "./types.js";
 
@@ -23,9 +20,9 @@ const { version: SERVER_VERSION } = createRequire(import.meta.url)("../package.j
 
 /**
  * Tools built with `defineFlumpTool` (envelope, error contract, own scope check). Registered in
- * array order on the raw server, so `tools/list` order is deterministic. E17-N9 onwards add here.
+ * array order on the raw server, so `tools/list` order is deterministic. E17-N9 and N11 add here.
  */
-export const FLUMP_TOOLS: readonly DefinedFlumpTool[] = [...READ_TOOLS];
+export const FLUMP_TOOLS: readonly DefinedFlumpTool[] = [...READ_TOOLS, ...SIMULATE_TOOLS];
 
 export interface CreateMcpServerOptions {
   token: VerifiedToken;
@@ -58,12 +55,8 @@ export function createFlumpMcpServer(options: CreateMcpServerOptions): McpServer
   registerTaxLedgerResources(scoped, getContext);
 
   // 2. Register Tools
-  registerDebtSimulatorTool(scoped, getContext);
   registerUkTaxTrapTool(scoped, getContext);
-  registerMortgageIsaTool(scoped, getContext);
   registerSection24Tool(scoped, getContext);
-  registerLifeEventsTool(scoped, getContext);
-  registerFinancialAuditTools(scoped, getContext);
   // Defined tools do their own scope check, so they take the raw server, not `scoped`.
   for (const tool of FLUMP_TOOLS) tool.register(server, getContext);
 

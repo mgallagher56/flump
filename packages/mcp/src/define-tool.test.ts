@@ -13,7 +13,7 @@ import { emptyUser } from "./testing/personas.js";
 import type { McpAuditEvent, McpServerContext } from "./types.js";
 
 // Reuses a real TOOL_SCOPES name (READ requirement) so the fail-closed lookup passes.
-const NAME = "evaluate_cashflow_runway_and_health";
+const NAME = "get_budget_summary";
 
 type Def = FlumpToolDefinition<{ n: z.ZodNumber }, z.ZodObject<{ items: z.ZodArray<z.ZodString> }>>;
 
