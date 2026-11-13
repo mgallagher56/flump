@@ -537,4 +537,10 @@ describe("HttpMcpHandler kill switch and Origin validation (E20-N18)", () => {
     expect([401, 403, 503]).not.toContain(res.status);
     expect(tokenStore.findTokenByHash).toHaveBeenCalled();
   });
+
+  it('Origin "null" stays 403 when the backend config contains null (entry is dropped)', async () => {
+    // Mirrors mcp.service.ts: allowedOrigins comes from readMcpAccessConfig, which drops null and *.
+    const h = new HttpMcpHandler({ dataProvider: dp, allowedOrigins: [] });
+    expect((await h.handleWebRequest(webReq("null"))).status).toBe(403);
+  });
 });

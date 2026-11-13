@@ -22,6 +22,17 @@ export function mcpOpenAccessBootWarning(env: Env): string | null {
   return null;
 }
 
+function parseOriginList(env: Env): string[] {
+  return (env.MCP_ALLOWED_ORIGINS ?? "")
+    .split(",")
+    .map((o) => o.trim().replace(/\/+$/, ""))
+    .filter(Boolean);
+}
+
+function isDroppedOrigin(o: string): boolean {
+  return o === "*" || o.toLowerCase() === "null";
+}
+
 export interface McpAccessConfig {
   /** Global kill switch (E20-N18). False only when `MCP_ENABLED=false`. */
   enabled: boolean;
@@ -51,10 +62,8 @@ export function readMcpAccessConfig(env: Env): McpAccessConfig {
   const enabled = env.MCP_ENABLED?.trim().toLowerCase() !== "false";
   const flag = env.MCP_OPEN_ACCESS?.trim().toLowerCase();
   const openAccess = flag === "true" ? true : flag === "false" ? false : !isProductionLike(env);
-  const allowedOrigins = (env.MCP_ALLOWED_ORIGINS ?? "")
-    .split(",")
-    .map((o) => o.trim().replace(/\/+$/, ""))
-    .filter(Boolean);
+  // `*` and `null` are never wildcards or allowed origins; they are dropped (see the boot warning).
+  const allowedOrigins = parseOriginList(env).filter((o) => !isDroppedOrigin(o));
   return { enabled, openAccess, allowedUserIds, allowedOrigins };
 }
 
@@ -91,13 +100,13 @@ export class McpAllowlistGuard implements CanActivate {
 }
 
 /**
- * Boot-time warning for `MCP_ALLOWED_ORIGINS` entries that cannot work or are too broad: `*`,
- * `null`, or anything without an http(s) scheme. Returns null when every entry looks sane.
+ * Boot-time warning for `MCP_ALLOWED_ORIGINS` entries that cannot work: `*` and `null` are
+ * ignored, and anything without an http(s) scheme can never match a browser Origin.
  */
 export function mcpAllowedOriginsBootWarning(env: Env): string | null {
-  const bad = readMcpAccessConfig(env).allowedOrigins.filter(
-    (o) => o === "*" || o.toLowerCase() === "null" || !/^https?:\/\/[^/\s]+$/i.test(o),
+  const bad = parseOriginList(env).filter(
+    (o) => isDroppedOrigin(o) || !/^https?:\/\/[^/\s]+$/i.test(o),
   );
   if (bad.length === 0) return null;
-  return `MCP_ALLOWED_ORIGINS has invalid entries (${bad.join(", ")}); use exact origins such as https://app.example.com. "*" and "null" are not wildcards and do not widen access safely.`;
+  return `MCP_ALLOWED_ORIGINS has invalid entries (${bad.join(", ")}); "*" and "null" are ignored and entries without an http(s) scheme never match. Use exact origins such as https://app.example.com.`;
 }
