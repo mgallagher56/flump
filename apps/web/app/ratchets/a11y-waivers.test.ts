@@ -14,7 +14,7 @@ import { describe, expect, test } from "vitest";
 //    lower BASELINE. Never raise it.
 // `tags: ["!test"]` (skip a story that only fails in a real browser) is treated as an unscoped
 // waiver too, with the same adjacent-comment requirement.
-const BASELINE = 29;
+const BASELINE = 24;
 const UNSCOPED_BASELINE = 0;
 
 const ROOTS = [
