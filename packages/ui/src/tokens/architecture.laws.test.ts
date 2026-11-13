@@ -122,12 +122,16 @@ describe("Architecture & Design System Laws", () => {
         "FormField",
         "Heading",
         "Illustration",
+        "InfoTip",
+        "Menu",
         "Money",
         "PercentInput",
         "Stepper",
+        "Popover",
         "Text",
         "Sheet",
         "TextInput",
+        "Tooltip",
       ]) {
         expect(primitives).toContain(expected);
       }

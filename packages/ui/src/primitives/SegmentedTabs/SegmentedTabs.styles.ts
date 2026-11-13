@@ -16,6 +16,26 @@ export const segmentedTabsList = cva({
   },
 });
 
+export const segmentedTabPanel = cva({
+  base: {
+    marginTop: "4",
+    borderRadius: "lg",
+    _focusVisible: {
+      outline: "2px solid",
+      outlineColor: "border.focusRing",
+      outlineOffset: "2px",
+    },
+  },
+  variants: {
+    // Radix keeps a force-mounted panel visible, so hide inactive ones here (out of the a11y tree).
+    keepMounted: {
+      true: { "&[data-state='inactive']": { display: "none" } },
+      false: {},
+    },
+  },
+  defaultVariants: { keepMounted: false },
+});
+
 export const segmentedTabTrigger = cva({
   base: {
     padding: "8px 16px",

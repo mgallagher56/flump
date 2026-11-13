@@ -47,6 +47,20 @@ Elevation keys `xs`, `card`, `raised`, `overlay`, `focus`, all with `_dark`. `ca
 
 Round 5 treatment: light shadows are warm-tinted with the warm charcoal ink (`rgba(43, 38, 32, a)`, also the primitive `cardLight`/`cardHoverLight`/`floatingLight`), never blue-grey slate; strength rises xs < raised < overlay. Dark elevates by lighter surface (the `surface.*` dark steps) plus a hairline: an inset top highlight and a 1px outer ring (`0 0 0 1px rgba(255,255,255,.05)`), with a modest black shadow (alpha at most 0.3, was 0.4). Parity is enforced by `tokens.foundations.test.ts` (every key has `_dark`, warm ink only, ring present).
 
+## Overlay stacking
+
+Numeric literals (not the z-index tokens above) until web adoption moves them. Higher sits on top.
+
+| Layer                         | z-index |
+| :---------------------------- | :------ |
+| Dialog, Sheet overlay         | 200     |
+| Dialog, Sheet content         | 201     |
+| Toast                         | 210     |
+| Popover, Menu, InfoTip        | 250     |
+| Tooltip                       | 260     |
+
+Popover, Menu and Tooltip sit above dialogs so they work inside a dialog.
+
 ## Radii (round 5, tied to density)
 
 Semantic `radii` (`densityRadii` in `layout.ts`, registered under `semanticTokens.radii`) reuse the primitive key names, so every existing `borderRadius: "xl"` / `rounded: "md"` picks up the new look with no component edit. `base` is comfortable, `_compact` is the `[data-density=compact] &` condition.

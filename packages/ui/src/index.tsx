@@ -43,10 +43,13 @@ export * from "./primitives/FormField";
 export * from "./primitives/Heading";
 export * from "./primitives/Icon";
 export * from "./primitives/Illustration";
+export * from "./primitives/InfoTip";
 export * from "./primitives/KpiCard";
 export { LiveRegion, type LiveRegionProps } from "./primitives/LiveRegion";
+export * from "./primitives/Menu";
 export * from "./primitives/Money";
 export * from "./primitives/PercentInput";
+export * from "./primitives/Popover";
 export * from "./primitives/ProgressBar";
 export * from "./primitives/SegmentedTabs";
 export * from "./primitives/Sheet";
@@ -56,6 +59,7 @@ export * from "./primitives/Stepper";
 export * from "./primitives/Table";
 export * from "./primitives/Text";
 export * from "./primitives/TextInput";
+export * from "./primitives/Tooltip";
 // Explicit names shadow Panda's generated visually-hidden JSX pattern (star-export ambiguity).
 export { VisuallyHidden, type VisuallyHiddenProps } from "./primitives/VisuallyHidden";
 
