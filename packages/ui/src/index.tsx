@@ -13,6 +13,7 @@ export * from "./foundations/TypographyScale";
 export * from "./hooks";
 export * from "./patterns/AllowanceProgressPill";
 export * from "./patterns/AppSectionDivider";
+export * from "./patterns/AppShell";
 export * from "./patterns/ChartFigure";
 export * from "./patterns/CoachCard";
 export * from "./patterns/ConfirmDialog";
@@ -21,12 +22,15 @@ export * from "./patterns/EmptyState";
 export * from "./patterns/GlobalBaselineBar";
 // Financial Patterns
 export * from "./patterns/KpiStrip";
+export * from "./patterns/MobileBottomBar";
 export * from "./patterns/PageHeader";
 export * from "./patterns/ProjectionNotice";
 export * from "./patterns/SectionBand";
+export * from "./patterns/SideNav";
 export * from "./patterns/SimulatorSplitLayout";
 export * from "./patterns/TaxRatesStatusBanner";
 export * from "./patterns/TaxTrapEscapeBanner";
+export * from "./patterns/TopBar";
 // Primitives
 export * from "./primitives/Button";
 export * from "./primitives/Card";
