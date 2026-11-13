@@ -443,12 +443,12 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
 
   const bankTokenPlaceholder =
     selectedBank === "monzo"
-      ? "Access token from developers.monzo.com..."
+      ? "Access token from developers.monzo.com…"
       : selectedBank === "starling"
-        ? "Bearer token starting with eyJ..."
+        ? "Bearer token starting with eyJ…"
         : selectedBank === "trading212"
-          ? "API key from Trading 212 app (Settings, then API)..."
-          : "Read-only access token...";
+          ? "API key from Trading 212 app (Settings, then API)…"
+          : "Read-only access token…";
 
   const bankTokenHint =
     selectedBank === "monzo"

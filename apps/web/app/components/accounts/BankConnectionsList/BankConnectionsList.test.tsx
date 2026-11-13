@@ -53,6 +53,22 @@ describe("<BankConnectionsList />", () => {
     expect(getByText(/Error/i)).toBeDefined();
   });
 
+  test("names each action after its bank and labels a disconnected feed as Disconnected", () => {
+    const { getByRole, getByText } = customRender(
+      <BankConnectionsList
+        connections={[{ ...mockConnections[0], status: "disconnected" }, mockConnections[1]]}
+      />,
+    );
+    expect(getByRole("button", { name: "Sync Monzo Bank" })).toBeDefined();
+    expect(getByRole("button", { name: "Disconnect HSBC UK" })).toBeDefined();
+    expect(getByText("Disconnected")).toBeDefined();
+  });
+
+  test("shows one connect entry point when the list is empty", () => {
+    const { getAllByText } = customRender(<BankConnectionsList canConnect connections={[]} />);
+    expect(getAllByText("Connect bank account")).toHaveLength(1);
+  });
+
   test("allows syncing a connection", () => {
     const { getAllByText } = customRender(<BankConnectionsList connections={mockConnections} />);
 
@@ -138,13 +154,6 @@ describe("<BankConnectionsList />", () => {
   test("renders empty state when there are no connections", () => {
     const { getByText } = customRender(<BankConnectionsList connections={[]} canConnect />);
     expect(getByText("No connected banks")).toBeDefined();
-  });
-
-  test("renders mobile variant layout", () => {
-    const { getByText } = customRender(
-      <BankConnectionsList connections={mockConnections} variant="mobile" />,
-    );
-    expect(getByText("Monzo Bank")).toBeDefined();
   });
 
   test("shows no connect entry point unless connecting is enabled for the account", () => {

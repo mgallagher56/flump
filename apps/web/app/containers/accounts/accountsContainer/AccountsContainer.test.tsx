@@ -68,7 +68,7 @@ describe("<AccountsContainer />", () => {
     expect(getByRole("heading", { level: 1, name: "Your accounts" })).toBeDefined();
     expect(getByRole("heading", { name: "Where you stand" })).toBeDefined();
     // Each type present in the data gets its own heading.
-    const groupHeadings = getAllByRole("heading", { level: 2 }).map((h) => h.textContent);
+    const groupHeadings = getAllByRole("heading", { level: 3 }).map((h) => h.textContent);
     expect(groupHeadings).toContain("Current");
   });
 

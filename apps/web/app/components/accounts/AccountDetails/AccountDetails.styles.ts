@@ -32,7 +32,7 @@ export const section = cva({
 });
 
 export const monthCell = cva({
-  base: { color: "text.primary", textStyle: "label.md" },
+  base: { color: "text.primary", textStyle: "label.md", fontVariantNumeric: "tabular-nums" },
 });
 
 export const mutedFigure = cva({

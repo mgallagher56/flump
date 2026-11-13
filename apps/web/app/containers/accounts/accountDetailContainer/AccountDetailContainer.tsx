@@ -50,7 +50,10 @@ const AccountDetailContainer: FC = () => {
       : {
           direction:
             change > 0 ? ("up" as const) : change < 0 ? ("down" as const) : ("flat" as const),
-          text: change === 0 ? "No change on last month" : `${Math.abs(change)}% on last month`,
+          text:
+            change === 0
+              ? "No change on last month"
+              : `${new Intl.NumberFormat("en-GB", { maximumFractionDigits: 0 }).format(Math.abs(change))}% on last month`,
           polarity: isLiability ? ("liability" as const) : ("asset" as const),
         };
 

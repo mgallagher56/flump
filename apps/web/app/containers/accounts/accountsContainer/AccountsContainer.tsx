@@ -110,7 +110,7 @@ const AccountsContainer: FC = () => {
 
           <section aria-labelledby="accounts-list-heading" className={section()}>
             <h2 className={sectionTitle()} id="accounts-list-heading">
-              Your accounts
+              By type
             </h2>
             <AccountsGroupList rows={rows} />
           </section>
