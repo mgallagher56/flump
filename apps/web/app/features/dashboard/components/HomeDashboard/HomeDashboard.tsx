@@ -2,6 +2,10 @@ import { evaluateFinancialStage } from "@flump/finance-engine";
 import { Button, Icon, PageHeader, ProjectionNotice, SectionBand } from "@repo/ui";
 import { SlidersHorizontal } from "lucide-react";
 import { type FC, useMemo, useRef, useState } from "react";
+import {
+  MonthlyCheckInCard,
+  type MonthlyCheckInCardProps,
+} from "~/features/snapshot/components/MonthlyCheckInCard";
 import { normalizeProfile, type UserProfile, useUserProfile } from "~/hooks/useUserProfile";
 import type { DebtSummary } from "~/utils/debtSummary";
 import {
@@ -28,6 +32,8 @@ import { dashboardPage, showHideButton, widgetGrid } from "./HomeDashboard.style
 export interface HomeDashboardProps {
   user: any;
   checklistProps: SetupChecklistProps;
+  /** E30 monthly check-in card; omitted in the signed-out sandbox. */
+  checkIn?: MonthlyCheckInCardProps | null;
   userProfile?: Partial<UserProfile> | UserProfile;
   accountsData: any;
   budgetData: any;
@@ -52,6 +58,7 @@ const finiteOrNull = (value: unknown): number | null =>
 export const HomeDashboard: FC<HomeDashboardProps> = ({
   user,
   checklistProps,
+  checkIn = null,
   userProfile,
   accountsData,
   budgetData,
@@ -264,6 +271,7 @@ export const HomeDashboard: FC<HomeDashboardProps> = ({
           safeToSpendShortfall={safeToSpendShortfall}
           weeklySafeToSpend={weeklySafeToSpend}
         />
+        {checkIn && hasAccounts ? <MonthlyCheckInCard {...checkIn} /> : null}
       </SectionBand>
 
       {/* Onboarding Checklist */}

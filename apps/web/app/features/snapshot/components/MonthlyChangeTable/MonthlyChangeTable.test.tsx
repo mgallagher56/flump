@@ -1,0 +1,73 @@
+import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { describe, expect, it } from "vitest";
+import type { MonthChangeRow } from "../../snapshotModel";
+import { MAX_OPEN_ROWS, MonthlyChangeTable } from "./MonthlyChangeTable";
+
+const monthRows = (n: number): MonthChangeRow[] =>
+  Array.from({ length: n }, (_, i) => ({
+    month: `2026-${String(12 - i).padStart(2, "0")}`,
+    previousMonth: `2026-${String(11 - i).padStart(2, "0")}`,
+    netWorth: 1000 + i,
+    change: i % 2 === 0 ? 100 : -100,
+    allCarried: i === 1,
+    someCarried: i === 1,
+    addedAccounts: i === 2 ? 1 : 0,
+  }));
+
+describe("MonthlyChangeTable", () => {
+  it("shows per-account changes with debts as the amount owed", () => {
+    render(
+      <MonthlyChangeTable
+        month="2026-10"
+        previousMonth="2026-09"
+        rows={[
+          {
+            accountId: "m",
+            name: "Mortgage",
+            isLiability: true,
+            previous: 150000,
+            current: 149500,
+            change: -500,
+            carried: false,
+          },
+          {
+            accountId: "c",
+            name: "Current account",
+            isLiability: false,
+            previous: 2000,
+            current: 2300,
+            change: 300,
+            carried: true,
+          },
+        ]}
+        variant="accounts"
+      />,
+    );
+    expect(
+      screen.getByText("September 2026 to October 2026. Debts show the amount owed."),
+    ).toBeDefined();
+    const mortgage = screen.getByRole("rowheader", { name: "Mortgage (owed)" }).closest("tr");
+    expect(mortgage?.textContent).toContain("−£500");
+    expect(mortgage?.textContent).toContain("down £500");
+    const current = screen.getByRole("rowheader", { name: "Current account" }).closest("tr");
+    expect(current?.textContent).toContain("+£300");
+    expect(current?.textContent).toContain("Carried forward");
+  });
+
+  it(`stays open up to ${MAX_OPEN_ROWS} rows`, () => {
+    render(<MonthlyChangeTable rows={monthRows(MAX_OPEN_ROWS)} variant="months" />);
+    expect(screen.getByRole("heading", { name: "Change by month" })).toBeDefined();
+    expect(screen.getAllByRole("row")).toHaveLength(MAX_OPEN_ROWS + 1);
+    expect(screen.getByText("Includes 1 new account")).toBeDefined();
+  });
+
+  it(`collapses beyond ${MAX_OPEN_ROWS} rows into a drawer`, async () => {
+    render(<MonthlyChangeTable rows={monthRows(MAX_OPEN_ROWS + 1)} variant="months" />);
+    const toggle = screen.getByRole("button", { name: /Change by month/ });
+    expect(toggle.getAttribute("aria-expanded")).toBe("false");
+    await userEvent.click(toggle);
+    expect(toggle.getAttribute("aria-expanded")).toBe("true");
+    expect(screen.getAllByRole("row")).toHaveLength(MAX_OPEN_ROWS + 2);
+  });
+});

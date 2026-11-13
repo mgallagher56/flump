@@ -62,6 +62,7 @@ describe("allow-list", () => {
         "POST /budget-entries/categories",
         "GET,POST /accounts",
         "PATCH /accounts/[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}",
+        "PUT /snapshots/\\d{4}-(0[1-9]|1[0-2])",
       ]
     `);
   });
@@ -81,6 +82,8 @@ describe("allow-list", () => {
     ["POST", "/accounts"],
     ["PATCH", `/accounts/${UUID}`],
     ["PATCH", `/accounts/${UUID.toUpperCase()}`],
+    ["PUT", "/snapshots/2026-11"],
+    ["PUT", "/snapshots/2000-01"],
   ])("passes %s %s through to the backend with the bearer token", async (method, path) => {
     const fetchImpl = vi.fn(async () => new Response('{"ok":1}', { status: 200 }));
     const body = method === "GET" || method === "DELETE" ? undefined : '{"a":1}';
@@ -108,6 +111,11 @@ describe("allow-list", () => {
     ["GET", "/api/ACCOUNTS"],
     ["PATCH", "/api/USER-PROFILE"],
     ["POST", "/api/Budget-Entries/Seed-Defaults"],
+    ["GET", "/api/snapshots/2026-11"],
+    ["PUT", "/api/snapshots/2026-13"],
+    ["PUT", "/api/snapshots/2026-1"],
+    ["PUT", "/api/snapshots"],
+    ["PUT", "/api/snapshots/2026-11/extra"],
     ["GET", "/api/accounts%252e"],
     ["GET", "/api/%252e%252e/accounts"],
   ])("returns 404 for %s %s", async (method, path) => {

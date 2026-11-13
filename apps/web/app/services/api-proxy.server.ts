@@ -32,6 +32,8 @@ export const API_ALLOW_LIST: readonly ProxyRule[] = [
   { methods: ["POST"], pattern: "/budget-entries/categories" },
   { methods: ["GET", "POST"], pattern: "/accounts" },
   { methods: ["PATCH"], pattern: `/accounts/${UUID}` },
+  // E30 monthly check-in and back-fill: one month (YYYY-MM) per request.
+  { methods: ["PUT"], pattern: "/snapshots/\\d{4}-(0[1-9]|1[0-2])" },
 ];
 
 const COMPILED = API_ALLOW_LIST.map((rule) => ({

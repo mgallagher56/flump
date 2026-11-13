@@ -1,15 +1,18 @@
 import { PortfolioSnapshot, type RawAccount, type RawAccountDetail } from "@flump/finance-engine";
-import { Card, EmptyState, Illustration, PageHeader } from "@repo/ui";
-import { type FC, useMemo } from "react";
-import { useLoaderData } from "react-router";
+import { Button, Card, EmptyState, Illustration, PageHeader } from "@repo/ui";
+import { type FC, useMemo, useState } from "react";
+import { Link, useLoaderData } from "react-router";
 import BankConnectionsList from "~/components/accounts/BankConnectionsList";
-import MonthlyBalanceCheckInDrawer from "~/components/accounts/MonthlyBalanceCheckInDrawer";
 import AddEditAccountsDialogBtn from "~/components/dialogs/addEditAccountsDialog/AddEditAccountsDialog";
 import { AccountTypeEnum } from "~/containers/accounts/utils";
 import { buildAccountRows } from "~/features/accounts/accountRows";
 import { AccountsGroupList } from "~/features/accounts/components/AccountsGroupList";
 import { AccountsSummary } from "~/features/accounts/components/AccountsSummary";
 import { AnnualAllowancePill } from "~/features/savings/components/AnnualAllowancePill";
+import { CheckInSheet } from "~/features/snapshot/components/CheckInSheet";
+import { HISTORY_ROUTE } from "~/features/snapshot/components/MonthlyCheckInCard";
+import { londonMonth } from "~/features/snapshot/snapshotModel";
+import { useSaveSnapshot } from "~/features/snapshot/useSaveSnapshot";
 import type { loader } from "~/routes/app.accounts._index";
 import { isFutureMonth } from "~/utils/accounts";
 import { headerActions, pageRoot, section, sectionTitle } from "./AccountsContainer.styles";
@@ -23,6 +26,8 @@ const AccountsContainer: FC = () => {
     bankConnections = [],
     bankConnectionsEnabled = false,
   } = useLoaderData<typeof loader>();
+  const [checkInOpen, setCheckInOpen] = useState(false);
+  const saveSnapshot = useSaveSnapshot();
 
   // Totals come from the finance engine so Property, Student Loan and Overdraft are classified
   // in one place (D-5-B: a student loan is never in net worth or liabilities).
@@ -93,9 +98,27 @@ const AccountsContainer: FC = () => {
       <PageHeader
         actions={
           <div className={headerActions()}>
-            <MonthlyBalanceCheckInDrawer
-              accounts={accounts}
+            {/* E30 monthly check-in: replaces the legacy MonthlyBalanceCheckInDrawer. */}
+            <Button asChild variant="ghost">
+              <Link to={HISTORY_ROUTE}>View history</Link>
+            </Button>
+            <Button
+              data-testid="accounts-open-check-in"
+              disabled={accounts.length === 0}
+              id="accounts-open-check-in"
+              onClick={() => setCheckInOpen(true)}
+              type="button"
+              variant="secondary"
+            >
+              Update balances
+            </Button>
+            <CheckInSheet
               accountDetails={accountDetails as RawAccountDetail[]}
+              accounts={accounts}
+              currentMonth={londonMonth()}
+              onOpenChange={setCheckInOpen}
+              onSave={saveSnapshot}
+              open={checkInOpen}
             />
             <AddEditAccountsDialogBtn />
           </div>

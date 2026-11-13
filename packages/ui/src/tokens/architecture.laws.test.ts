@@ -39,6 +39,10 @@ const CHARTS_FEATURES_DIR = path.resolve(
   __dirname,
   "../../../../apps/web/app/features/charts/components",
 );
+const SNAPSHOT_FEATURES_DIR = path.resolve(
+  __dirname,
+  "../../../../apps/web/app/features/snapshot/components",
+);
 const TEMPLATES_DIR = path.join(UI_SRC, "templates");
 const MARKETING_COMPONENTS_DIR = path.resolve(
   __dirname,
@@ -226,6 +230,14 @@ describe("Architecture & Design System Laws", () => {
       expect(chartComponents).toContain("ChartTooltip");
       for (const comp of chartComponents) {
         verifyColocatedStructure(CHARTS_FEATURES_DIR, comp);
+      }
+    });
+
+    it("enforces colocated structure for every features/snapshot component (E30)", () => {
+      const snapshotComponents = getSubdirectories(SNAPSHOT_FEATURES_DIR);
+      expect(snapshotComponents).toContain("CheckInSheet");
+      for (const comp of snapshotComponents) {
+        verifyColocatedStructure(SNAPSHOT_FEATURES_DIR, comp);
       }
     });
 
