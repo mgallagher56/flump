@@ -39,7 +39,10 @@ async function freePort(): Promise<number> {
 
 interface Reply {
   status: number;
+  body: string;
   headers: { get(name: string): string | null };
+  /** Header names and values exactly as sent, to count duplicates. */
+  rawHeaders: string[];
 }
 
 /** node:http rather than fetch: the unit project installs happy-dom, whose fetch drops Origin. */
@@ -49,10 +52,16 @@ function send(
 ): Promise<Reply> {
   return new Promise((resolve, reject) => {
     const req = request(url, { method: init.method ?? "GET", headers: init.headers }, (res) => {
-      res.resume();
+      let body = "";
+      res.setEncoding("utf8");
+      res.on("data", (chunk) => {
+        body += chunk;
+      });
       res.once("end", () => {
         resolve({
           status: res.statusCode ?? 0,
+          body,
+          rawHeaders: res.rawHeaders,
           headers: {
             get: (name) => {
               const value = res.headers[name.toLowerCase()];
@@ -152,6 +161,46 @@ describe.skipIf(!buildReady)("web express server (built)", () => {
     expect([200, 302]).toContain(res.status);
     assertSecurityHeaders(res);
     expect(res.headers.get("x-request-id")).toMatch(/^[0-9a-f-]{36}$/);
+  });
+
+  it("sends a nonce report-only CSP once on a document, matching its inline scripts (E20-N11)", async () => {
+    const res = await send(`${base}/sandbox`);
+    expect(res.status).toBe(200);
+    assertSecurityHeaders(res);
+    const count = (name: string) =>
+      res.rawHeaders.filter((h, i) => i % 2 === 0 && h.toLowerCase() === name).length;
+    expect(count("content-security-policy-report-only")).toBe(1);
+    expect(count("content-security-policy")).toBe(1);
+    expect(res.headers.get("content-security-policy")).toBe("frame-ancestors 'none'");
+    const policy = res.headers.get("content-security-policy-report-only") ?? "";
+    const nonce = /'nonce-([A-Za-z0-9_-]{22})'/.exec(policy)?.[1];
+    expect(nonce).toBeDefined();
+    expect(policy).toContain("report-uri /csp-report");
+    const scripts = res.body.match(/<script\b[^>]*>/gi) ?? [];
+    expect(scripts.length).toBeGreaterThan(0);
+    for (const tag of scripts) expect(tag).toContain(`nonce="${nonce}"`);
+    // A second request gets a different nonce.
+    const again = await send(`${base}/sandbox`);
+    expect(again.headers.get("content-security-policy-report-only")).not.toBe(policy);
+  });
+
+  it("accepts a same-origin CSP report with 204 and rejects a cross-origin one with 403", async () => {
+    const report = JSON.stringify({
+      "csp-report": { "effective-directive": "img-src", "blocked-uri": "inline" },
+    });
+    const ok = await send(`${base}/csp-report`, {
+      method: "POST",
+      headers: { Origin: base, "Content-Type": "application/csp-report" },
+      body: report,
+    });
+    expect(ok.status).toBe(204);
+    assertSecurityHeaders(ok);
+    const foreign = await send(`${base}/csp-report`, {
+      method: "POST",
+      headers: { Origin: "https://evil.example", "Content-Type": "application/csp-report" },
+      body: report,
+    });
+    expect(foreign.status).toBe(403);
   });
 
   it("stamps a .data response", async () => {

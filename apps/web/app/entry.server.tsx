@@ -7,13 +7,15 @@ import Backend from "i18next-fs-backend";
 import { isbot } from "isbot";
 import { renderToPipeableStream } from "react-dom/server";
 import { I18nextProvider, initReactI18next } from "react-i18next";
-import type { EntryContext } from "react-router";
+import type { EntryContext, RouterContextProvider } from "react-router";
 import { ServerRouter } from "react-router";
 
 import i18n from "./i18n";
 import i18next from "./i18n.server";
 import { reportServerError } from "./observability/sentry.server";
+import { nonceContext } from "./security/csp.server";
 import { applyCachePolicy, applySecurityHeaders } from "./security/headers.server";
+import { NonceProvider } from "./security/nonce";
 import { applyRobotsHeader } from "./utils/indexing.server";
 
 // Public launch (indexing allowed) must not boot with placeholder business details.
@@ -38,7 +40,10 @@ export default async function handleRequest(
   responseStatusCode: number,
   responseHeaders: Headers,
   reactRouterContext: EntryContext,
+  loadContext: RouterContextProvider,
 ): Promise<unknown> {
+  // Written by the root middleware (E20-N11); empty only if the middleware did not run.
+  const nonce = loadContext.get(nonceContext);
   const callbackName = isbot(request.headers.get("user-agent")) ? "onAllReady" : "onShellReady";
 
   const instance = createInstance();
@@ -59,10 +64,13 @@ export default async function handleRequest(
     let didError = false;
 
     const { pipe, abort } = renderToPipeableStream(
-      <I18nextProvider i18n={instance}>
-        <ServerRouter context={reactRouterContext} url={request.url} />
-      </I18nextProvider>,
+      <NonceProvider nonce={nonce}>
+        <I18nextProvider i18n={instance}>
+          <ServerRouter context={reactRouterContext} url={request.url} nonce={nonce} />
+        </I18nextProvider>
+      </NonceProvider>,
       {
+        nonce,
         [callbackName]: () => {
           const reactBody = new PassThrough();
 

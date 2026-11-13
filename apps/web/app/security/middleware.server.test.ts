@@ -1,12 +1,18 @@
 // @vitest-environment node
 // happy-dom's Request drops forbidden headers such as Sec-Fetch-Site; Node's keeps them.
+import { RouterContextProvider } from "react-router";
 import { describe, expect, it, vi } from "vitest";
+import { nonceContext } from "./csp.server";
 import { securityMiddleware } from "./middleware.server";
 import { recordRefreshedCookies } from "./session-cookies.server";
 
 type Args = Parameters<typeof securityMiddleware>[0];
 
-function run(request: Request, next: () => Promise<Response>, context: object = {}) {
+function run(
+  request: Request,
+  next: () => Promise<Response>,
+  context: object = new RouterContextProvider(),
+) {
   const args = { request, params: {}, context } as unknown as Args;
   return securityMiddleware(args, next) as Promise<Response>;
 }
@@ -66,7 +72,7 @@ describe("securityMiddleware", () => {
   });
 
   it("sends no-store on a response that sets a cookie, via refresh or the route itself", async () => {
-    const context = {};
+    const context = new RouterContextProvider();
     recordRefreshedCookies(context, { "Set-Cookie": "__Host-wos-session=n; Path=/; Secure" });
     const refreshed = await run(new Request(`${APP}/tools`), ok, context);
     expect(refreshed.headers.get("cache-control")).toBe("no-store");
@@ -143,7 +149,7 @@ describe("securityMiddleware session refresh cookies (E20-N2)", () => {
   const NEW = "__Host-wos-session=new; Path=/; Secure; HttpOnly";
 
   it("appends the refreshed Set-Cookie exactly once, with the security headers", async () => {
-    const context = {};
+    const context = new RouterContextProvider();
     recordRefreshedCookies(context, new Headers({ "Set-Cookie": NEW }));
     recordRefreshedCookies(context, new Headers({ "Set-Cookie": NEW }));
     const res = await run(new Request(`${APP}/app`), ok, context);
@@ -152,7 +158,7 @@ describe("securityMiddleware session refresh cookies (E20-N2)", () => {
   });
 
   it("forwards on redirects and resource-route responses", async () => {
-    const context = {};
+    const context = new RouterContextProvider();
     recordRefreshedCookies(context, { "Set-Cookie": NEW });
     const redirect = () =>
       Promise.resolve(new Response(null, { status: 302, headers: { Location: "/app" } }));
@@ -163,7 +169,7 @@ describe("securityMiddleware session refresh cookies (E20-N2)", () => {
   });
 
   it("does not overwrite a response that already sets the session cookie (logout, proxy)", async () => {
-    const context = {};
+    const context = new RouterContextProvider();
     recordRefreshedCookies(context, { "Set-Cookie": NEW });
     const destroyed = "__Host-wos-session=; Max-Age=0; Path=/";
     const logout = () =>
@@ -182,7 +188,7 @@ describe("securityMiddleware session refresh cookies (E20-N2)", () => {
   });
 
   it("keeps other cookies the response sets and adds only the session cookie", async () => {
-    const context = {};
+    const context = new RouterContextProvider();
     recordRefreshedCookies(context, { "Set-Cookie": NEW });
     const other = () =>
       Promise.resolve(new Response("ok", { headers: { "Set-Cookie": "flump_has_session=1" } }));
@@ -191,7 +197,7 @@ describe("securityMiddleware session refresh cookies (E20-N2)", () => {
   });
 
   it("keeps one cookie per name when several loaders refresh (last wins)", async () => {
-    const context = {};
+    const context = new RouterContextProvider();
     recordRefreshedCookies(context, { "Set-Cookie": "wos-session=a; Path=/" });
     recordRefreshedCookies(context, { "Set-Cookie": "wos-session=b; Path=/" });
     const res = await run(new Request(`${APP}/app`), ok, context);
@@ -200,12 +206,55 @@ describe("securityMiddleware session refresh cookies (E20-N2)", () => {
 
   it("does not leak cookies between requests", async () => {
     recordRefreshedCookies({}, { "Set-Cookie": NEW });
-    const res = await run(new Request(`${APP}/app`), ok, {});
+    const res = await run(new Request(`${APP}/app`), ok, new RouterContextProvider());
     expect(res.headers.getSetCookie()).toEqual([]);
   });
 
+  describe("report-only CSP (E20-N11)", () => {
+    const html = () =>
+      Promise.resolve(new Response("<html></html>", { headers: { "Content-Type": "text/html" } }));
+
+    it("sets one report-only CSP with the request nonce and keeps the enforced header", async () => {
+      const context = new RouterContextProvider();
+      const res = await run(new Request(`${APP}/app`), html, context);
+      const nonce = context.get(nonceContext);
+      expect(nonce).toMatch(/^[A-Za-z0-9_-]{22}$/);
+      const policy = res.headers.get("content-security-policy-report-only") ?? "";
+      expect(policy).toContain(`script-src 'self' 'nonce-${nonce}'`);
+      expect(policy).toContain("report-uri /csp-report");
+      expect(res.headers.get("content-security-policy")).toBe("frame-ancestors 'none'");
+    });
+
+    it("uses a different nonce on every request", async () => {
+      const a = new RouterContextProvider();
+      const b = new RouterContextProvider();
+      await run(new Request(`${APP}/app`), html, a);
+      await run(new Request(`${APP}/app`), html, b);
+      expect(a.get(nonceContext)).not.toBe(b.get(nonceContext));
+    });
+
+    it("allows the WorkOS and marketing origins in form-action", async () => {
+      const res = await run(new Request(`${APP}/app`), html);
+      const policy = res.headers.get("content-security-policy-report-only") ?? "";
+      expect(policy).toMatch(/form-action 'self' https:\/\/api\.workos\.com https?:\/\/[^;*]+;/);
+    });
+
+    it("skips non-document responses", async () => {
+      const data = () =>
+        Promise.resolve(new Response("[]", { headers: { "Content-Type": "text/x-script" } }));
+      const res = await run(new Request(`${APP}/app.data`), data);
+      expect(res.headers.has("content-security-policy-report-only")).toBe(false);
+    });
+
+    it("does not add it to the CSRF rejection", async () => {
+      const res = await run(new Request(`${APP}/logout`, { method: "POST" }), html);
+      expect(res.status).toBe(403);
+      expect(res.headers.has("content-security-policy-report-only")).toBe(false);
+    });
+  });
+
   it("preserves body and status", async () => {
-    const context = {};
+    const context = new RouterContextProvider();
     recordRefreshedCookies(context, { "Set-Cookie": NEW });
     const res = await run(
       new Request(`${APP}/app`),

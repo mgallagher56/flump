@@ -41,6 +41,27 @@ describe("securityHeaders", () => {
     );
   });
 
+  it("passes the app's report-only CSP through once next to the enforced default (E20-N11)", async () => {
+    const res = await get((_req, r) => {
+      // What @react-router/express does with the middleware's response headers.
+      r.append("Content-Security-Policy", "frame-ancestors 'none'");
+      r.append("Content-Security-Policy-Report-Only", "default-src 'self'; script-src 'nonce-abc'");
+      r.send("ok");
+    });
+    expect(res.headers.get("content-security-policy")).toBe("frame-ancestors 'none'");
+    expect(res.headers.get("content-security-policy-report-only")).toBe(
+      "default-src 'self'; script-src 'nonce-abc'",
+    );
+  });
+
+  it("keeps the enforced frame-ancestors default when the app sends only a report-only CSP", async () => {
+    const res = await get((_req, r) => {
+      r.append("Content-Security-Policy-Report-Only", "default-src 'self'");
+      r.send("ok");
+    });
+    expect(res.headers.get("content-security-policy")).toBe("frame-ancestors 'none'");
+  });
+
   it("does not double a header the app sets with the same value", async () => {
     const res = await get((_req, r) => {
       r.append("X-Frame-Options", "DENY");
