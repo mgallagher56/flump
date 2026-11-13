@@ -32,6 +32,41 @@ const createService = () => {
 };
 
 describe("FinanceService", () => {
+  describe("syncProviderAccounts fallback ids", () => {
+    it("gives repository-less accounts unpredictable, unique ids (not Math.random)", async () => {
+      const saved: any[] = [];
+      const accountRepo = {
+        findOne: vi.fn().mockResolvedValue(null),
+        save: vi.fn((a) => {
+          saved.push(a);
+          return Promise.resolve(a);
+        }),
+      };
+      const provider = {
+        fetchAccounts: vi.fn().mockResolvedValue([
+          { externalAccountId: "e1", name: "A", type: "current", balance: 1, currency: "GBP" },
+          { externalAccountId: "e2", name: "B", type: "current", balance: 2, currency: "GBP" },
+        ]),
+      };
+      const service = new FinanceService(
+        accountRepo as any,
+        {} as any,
+        {} as any,
+        {} as any,
+        {} as any,
+        { getProvider: vi.fn().mockReturnValue(provider) } as any,
+        { get: vi.fn() } as any,
+      );
+
+      await service.syncProviderAccounts({ id: "c1", institutionId: "monzo" } as any, "u1", "tok");
+
+      const uuid = /^acc-[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
+      expect(saved).toHaveLength(2);
+      for (const a of saved) expect(a.id).toMatch(uuid);
+      expect(saved[0].id).not.toBe(saved[1].id);
+    });
+  });
+
   describe("deleteAccount", () => {
     it("does not delete transactions for an account the caller does not own", async () => {
       const { service, accountRepo, transactionRepo } = createService();

@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { BankSyncOrchestrator } from "@flump/banking/server";
 import { BadRequestException, Injectable, NotFoundException, Optional } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
@@ -411,7 +412,7 @@ export class FinanceService {
               externalAccountId: pa.externalAccountId,
             })
           : ({
-              id: `acc-${Math.random().toString(36).slice(2)}`,
+              id: `acc-${randomUUID()}`,
               userId,
               name: pa.name,
               type: pa.type,
