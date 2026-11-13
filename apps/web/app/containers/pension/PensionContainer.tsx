@@ -18,8 +18,10 @@ import {
   PensionDetails,
   type PensionDetailsSaveValues,
 } from "~/features/pension/components/PensionDetails";
-import { PensionForecast } from "~/features/pension/components/PensionForecast";
-import { PENSION_SCENARIO_ZONE_ID } from "~/features/pension/components/PensionScenarioZone";
+import {
+  PENSION_SCENARIO_ZONE_ID,
+  PensionForecast,
+} from "~/features/pension/components/PensionForecast";
 import { PensionSummary } from "~/features/pension/components/PensionSummary";
 import { usePensionScenario } from "~/features/pension/usePensionScenario";
 import { AnnualAllowancePill } from "~/features/savings/components/AnnualAllowancePill";
