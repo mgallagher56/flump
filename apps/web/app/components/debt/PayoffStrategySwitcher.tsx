@@ -151,7 +151,7 @@ export const PayoffStrategySwitcher: FC<PayoffStrategySwitcherProps> = ({
       <div className={cardStyle}>
         <div className={headerRowStyle}>
           <div>
-            <FLPHeading as="h3" size="xl">
+            <FLPHeading as="h2" size="xl">
               Payoff Strategy: Avalanche vs. Snowball
             </FLPHeading>
             <FLPText color="text.muted" fontSize="sm">

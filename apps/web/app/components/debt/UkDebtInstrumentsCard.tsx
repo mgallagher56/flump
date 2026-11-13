@@ -177,7 +177,7 @@ export const UkDebtInstrumentsCard: FC = () => {
     <FLPCard>
       <div className={containerStyle}>
         <div>
-          <FLPHeading as="h3" size="xl">
+          <FLPHeading as="h2" size="xl">
             UK Debt Rules & Specialised Instruments
           </FLPHeading>
           <FLPText color="text.muted" fontSize="sm">
@@ -367,7 +367,7 @@ export const UkDebtInstrumentsCard: FC = () => {
                   Living continuously in a {formatCurrency(overdraftBalance)} overdraft costs:
                 </FLPText>
                 <FLPHeading
-                  as="h4"
+                  as="h3"
                   color="status.danger.text"
                   size="xl"
                   style={{ marginTop: "4px" }}

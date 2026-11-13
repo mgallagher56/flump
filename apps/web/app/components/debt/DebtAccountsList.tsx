@@ -65,7 +65,7 @@ export const DebtAccountsList: FC<DebtAccountsListProps> = ({
           }}
         >
           <div>
-            <FLPHeading as="h3" size="xl">
+            <FLPHeading as="h2" size="xl">
               Active liability accounts
             </FLPHeading>
             <FLPText color="text.muted" fontSize="sm">

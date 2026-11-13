@@ -93,7 +93,7 @@ export const DebtToWealthBridgeCard: FC<DebtToWealthBridgeCardProps> = ({
         >
           <div>
             <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-              <FLPHeading as="h3" size="xl">
+              <FLPHeading as="h2" size="xl">
                 The Debt-to-Wealth Crossover Bridge
               </FLPHeading>
             </div>
@@ -130,7 +130,7 @@ export const DebtToWealthBridgeCard: FC<DebtToWealthBridgeCardProps> = ({
             <FLPText color="text.muted" fontSize="xs">
               Current Monthly Debt Outflow
             </FLPText>
-            <FLPHeading as="h4" size="lg" className={css({ fontVariantNumeric: "tabular-nums" })}>
+            <FLPHeading as="h3" size="lg" className={css({ fontVariantNumeric: "tabular-nums" })}>
               {formatCurrency(totalMonthlyCommitment)}/mo
             </FLPHeading>
             <FLPText color="text.muted" fontSize="xs">
@@ -143,7 +143,7 @@ export const DebtToWealthBridgeCard: FC<DebtToWealthBridgeCardProps> = ({
               Projected Debt-Free Point
             </FLPText>
             <FLPHeading
-              as="h4"
+              as="h3"
               color="primary"
               size="lg"
               className={css({ fontVariantNumeric: "tabular-nums" })}
@@ -160,7 +160,7 @@ export const DebtToWealthBridgeCard: FC<DebtToWealthBridgeCardProps> = ({
               Accumulated Wealth (5 Yrs Post Debt-Free)
             </FLPText>
             <FLPHeading
-              as="h4"
+              as="h3"
               color="status.positive.text"
               size="lg"
               className={css({ fontVariantNumeric: "tabular-nums" })}
