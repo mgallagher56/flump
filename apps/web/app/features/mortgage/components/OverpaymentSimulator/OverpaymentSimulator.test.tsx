@@ -16,7 +16,7 @@ describe("<OverpaymentSimulator />", () => {
     const { getByText, getByLabelText } = customRender(<OverpaymentSimulator {...defaultProps} />);
 
     expect(getByText("Overpayment")).toBeDefined();
-    expect(getByText("Amortisation projection")).toBeDefined();
+    expect(getByText("How your balance falls")).toBeDefined();
     expect(getByText("Time shaved off")).toBeDefined();
     expect(getByText("Interest saved")).toBeDefined();
     expect(getByText(/Total monthly outflow:/i)).toBeDefined();
@@ -38,7 +38,7 @@ describe("<OverpaymentSimulator />", () => {
       <OverpaymentSimulator {...defaultProps} mortgageType="interest-only" overpayment={500} />,
     );
 
-    expect(getByText("Amortisation projection")).toBeDefined();
+    expect(getByText("How your balance falls")).toBeDefined();
     expect(getByText(/Scheduled Interest Payment:/i)).toBeDefined();
     expect(getByText("Bullet balance reduced")).toBeDefined();
   });
@@ -54,7 +54,7 @@ describe("<OverpaymentSimulator />", () => {
       />,
     );
 
-    expect(getByText("Amortisation projection")).toBeDefined();
+    expect(getByText("How your balance falls")).toBeDefined();
   });
 
   test("empty profile (all zeros) shows no NaN, Infinity or zero-month result", () => {
@@ -82,7 +82,7 @@ describe("<OverpaymentSimulator /> unknown inputs and copy", () => {
     expect(getByText("Mortgage details not set")).toBeDefined();
   });
 
-  test("shows the early repayment charge caveat beside the overpayment control", () => {
+  test("shows the early repayment charge caveat as a callout beside the results", () => {
     const { getByText } = customRender(
       <OverpaymentSimulator
         loanAmount={200000}
@@ -145,6 +145,28 @@ describe("<OverpaymentSimulator /> hero card", () => {
     expect(heroes).toHaveLength(1);
     expect(heroes[0]?.contains(getByText("Time shaved off"))).toBe(true);
     expect(heroes[0]?.contains(getByText("Interest saved"))).toBe(false);
+    expect(heroes[0]?.textContent).toMatch(/Mortgage-free \d+ years?( \d+ months?)? sooner/);
+    expect(heroes[0]?.textContent).toMatch(/instead of 25 years/);
+  });
+
+  test("shows at most four KPIs in the strip under the hero, in plain language", () => {
+    const { getByText } = customRender(<OverpaymentSimulator {...props} />);
+    for (const label of [
+      "Monthly payment",
+      "Total interest, no overpayment",
+      "Total interest with overpayment",
+      "Interest saved",
+    ]) {
+      expect(getByText(label)).toBeDefined();
+    }
+    expect(getByText(/Assumes the rate stays at 4% for the whole term/)).toBeDefined();
+  });
+
+  test("says no change yet when there is no overpayment, never a zero-month result", () => {
+    const { container } = customRender(<OverpaymentSimulator {...props} overpayment={0} />);
+    const hero = container.querySelector("[data-tone='hero']");
+    expect(hero?.textContent).toContain("No change yet");
+    expect(container.textContent).not.toMatch(/\b0 months?\b/i);
   });
 
   test("makes 'Bullet balance reduced' the single hero card for interest-only mortgages", () => {
