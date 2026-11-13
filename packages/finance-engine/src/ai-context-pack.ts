@@ -386,7 +386,7 @@ ${
     : ""
 }
 - **Remaining ISA Allowance:** £${tx.allowances.isaAllowanceRemainingGbp.toLocaleString("en-GB")} / £20,000
-- **Remaining Pension Allowance:** £${tx.allowances.pensionAllowanceRemainingGbp.toLocaleString("en-GB")} / £60,000
+- **Remaining Pension Allowance:** £${tx.allowances.pensionAllowanceRemainingGbp.toLocaleString("en-GB")} / £${tx.allowances.pensionAnnualAllowanceGbp.toLocaleString("en-GB")}
 - **Personal Savings Allowance:** £${tx.allowances.personalSavingsAllowanceGbp.toLocaleString("en-GB")} (${tx.allowances.marginalIncomeTaxBand} band)
 `;
 }
