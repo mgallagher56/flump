@@ -12,12 +12,10 @@ export function cookieName(setCookie: string): string {
   return setCookie.slice(0, Math.max(0, setCookie.indexOf("="))).trim();
 }
 
+/** Every Set-Cookie value in `headers` (a Headers, record or tuple list). */
 export function readSetCookies(headers: unknown): string[] {
   if (!headers) return [];
-  const h = new Headers(headers as HeadersInit);
-  if (typeof h.getSetCookie === "function") return h.getSetCookie();
-  const single = h.get("set-cookie");
-  return single ? [single] : [];
+  return new Headers(headers as HeadersInit).getSetCookie();
 }
 
 /**
