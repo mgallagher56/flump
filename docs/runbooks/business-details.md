@@ -2,18 +2,19 @@
 
 All business details live in ONE typed file: `packages/business-details/src/index.ts` (`BUSINESS_DETAILS`). The marketing site (footer, pricing page, security page, security.txt) and the web app (footer, feedback mailto) read from it. Nothing else holds a copy.
 
+Nothing in the site references an ICO number yet; add an `icoRegistrationNumber` field when one is shown.
+
 Each field is `{ value, isPlaceholder }`. For each real value: replace `value` and set `isPlaceholder: false`.
 
-| Field                   | What it is                                            | Placeholder today                                   |
-| ----------------------- | ----------------------------------------------------- | --------------------------------------------------- |
-| `legalName`             | Registered company name                               | `Flump Finance Ltd`                                 |
-| `tradingName`           | Name customers see                                    | `Flump` (already real)                              |
-| `companyNumber`         | Companies House number                                | `00000000`                                          |
-| `registeredOffice`      | Registered office address                             | `Registered office address to be confirmed`         |
-| `icoRegistrationNumber` | ICO data-protection registration                      | `ICO registration to be confirmed`                  |
-| `supportEmail`          | Support mailbox (footer, feedback links)              | `support@example.invalid`                           |
-| `securityContact`       | Vulnerability reports (security page, `security.txt`) | `security@example.invalid`                          |
-| `price`                 | `monthly` (pounds), `annual` (pounds) and `label`     | £4.99, £49, `Introductory price, subject to change` |
+| Field              | What it is                                            | Placeholder today                                   |
+| ------------------ | ----------------------------------------------------- | --------------------------------------------------- |
+| `legalName`        | Registered company name                               | `Flump Finance Ltd`                                 |
+| `tradingName`      | Name customers see                                    | `Flump` (already real)                              |
+| `companyNumber`    | Companies House number                                | `00000000`                                          |
+| `registeredOffice` | Registered office address                             | `Registered office address to be confirmed`         |
+| `supportEmail`     | Support mailbox (footer, feedback links)              | `support@example.invalid`                           |
+| `securityContact`  | Vulnerability reports (security page, `security.txt`) | `security@example.invalid`                          |
+| `price`            | `monthly` (pounds), `annual` (pounds) and `label`     | £4.99, £49, `Introductory price, subject to change` |
 
 Emails use the RFC 2606 `.invalid` domain, which can never resolve, so nothing is ever sent to an address we do not own.
 

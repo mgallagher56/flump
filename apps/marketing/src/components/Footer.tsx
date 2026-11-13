@@ -52,6 +52,7 @@ const legalStyle = css({
   fontSize: "12px",
   lineHeight: "1.7",
   color: "text.onContrast",
+  fontVariantNumeric: "tabular-nums",
 });
 
 const placeholderStyle = css({
