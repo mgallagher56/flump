@@ -1,6 +1,8 @@
 import { createHash } from "node:crypto";
 
-export type McpScope = "mcp:read:anonymized" | "mcp:read:full" | "mcp:simulate";
+import { effectiveAnonymize, filterKnownScopes, type McpScope } from "./scopes.js";
+
+export type { McpScope };
 
 export interface VerifiedToken {
   userId: string;
@@ -132,13 +134,13 @@ export class TokenVerifier {
         });
       }
 
-      const scopes = (record.scopes as McpScope[]) || ["mcp:read:anonymized", "mcp:simulate"];
+      const scopes = filterKnownScopes(record.scopes ?? ["mcp:read:anonymized", "mcp:simulate"]);
 
       return {
         userId: record.userId,
         tokenId: record.id,
         scopes,
-        anonymizeInstitutions: record.anonymizeInstitutions ?? true,
+        anonymizeInstitutions: effectiveAnonymize(record.anonymizeInstitutions, scopes),
         type: "pat",
       };
     }

@@ -1,4 +1,5 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { withScopeEnforcement } from "./auth/scopes.js";
 import type { VerifiedToken } from "./auth/token-verifier.js";
 import { registerUkAdvisorPrompts } from "./prompts/uk-advisor.prompts.js";
 import { registerAccountsResources } from "./resources/accounts.resource.js";
@@ -33,23 +34,25 @@ export function createFlumpMcpServer(options: CreateMcpServerOptions): McpServer
   };
 
   const getContext = async () => context;
+  // E20-N17: handlers registered through `scoped` check token scopes at call time.
+  const scoped = withScopeEnforcement(server, options.token.scopes);
 
   // 1. Register Resources
-  registerBaselineResources(server, getContext);
-  registerAccountsResources(server, getContext);
-  registerBudgetResources(server, getContext);
-  registerTaxLedgerResources(server, getContext);
+  registerBaselineResources(scoped, getContext);
+  registerAccountsResources(scoped, getContext);
+  registerBudgetResources(scoped, getContext);
+  registerTaxLedgerResources(scoped, getContext);
 
   // 2. Register Tools
-  registerDebtSimulatorTool(server, getContext);
-  registerUkTaxTrapTool(server, getContext);
-  registerMortgageIsaTool(server, getContext);
-  registerSection24Tool(server, getContext);
-  registerLifeEventsTool(server, getContext);
-  registerFinancialAuditTools(server, getContext);
+  registerDebtSimulatorTool(scoped, getContext);
+  registerUkTaxTrapTool(scoped, getContext);
+  registerMortgageIsaTool(scoped, getContext);
+  registerSection24Tool(scoped, getContext);
+  registerLifeEventsTool(scoped, getContext);
+  registerFinancialAuditTools(scoped, getContext);
 
   // 3. Register Prompts
-  registerUkAdvisorPrompts(server, getContext);
+  registerUkAdvisorPrompts(scoped, getContext);
 
   return server;
 }
