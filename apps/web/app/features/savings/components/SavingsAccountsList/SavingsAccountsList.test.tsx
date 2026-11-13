@@ -3,7 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import type { Account } from "~/containers/accounts/types";
 import customRender from "~/testUtils/customRender";
-import SavingsAccountsList, { calculateOneYearCompoundInterest } from "./SavingsAccountsList";
+import { SavingsAccountsList } from "./SavingsAccountsList";
 
 const mockSubmit = vi.fn();
 const fetcherData = { current: null as unknown };
@@ -34,24 +34,19 @@ describe("<SavingsAccountsList />", () => {
     },
   ];
 
-  test("calculateOneYearCompoundInterest calculates compound interest accurately", () => {
-    const interest = calculateOneYearCompoundInterest(10000, 5, 0);
-    expect(Math.round(interest)).toBe(512);
-
-    expect(calculateOneYearCompoundInterest(10000, 0, 0)).toBe(0);
-  });
-
   test("renders savings accounts table and data", () => {
-    const onOpenAddModal = vi.fn();
-    const { getByText } = customRender(
-      <SavingsAccountsList accounts={mockAccounts} onOpenAddModal={onOpenAddModal} />,
+    const { getByText, getAllByText } = customRender(
+      <SavingsAccountsList accounts={mockAccounts} onOpenAddModal={vi.fn()} />,
     );
 
-    expect(getByText("Savings and investment accounts")).toBeDefined();
-    expect(getByText("Marcus High Yield Saver")).toBeDefined();
+    expect(getByText("Your accounts")).toBeDefined();
+    expect(getAllByText("Marcus High Yield Saver").length).toBeGreaterThan(0);
+  });
 
-    const addBtn = getByText(/Add Account/);
-    fireEvent.click(addBtn);
+  test("offers to add a first account from the empty state", () => {
+    const onOpenAddModal = vi.fn();
+    customRender(<SavingsAccountsList accounts={[]} onOpenAddModal={onOpenAddModal} />);
+    fireEvent.click(screen.getByRole("button", { name: "Add your first account" }));
     expect(onOpenAddModal).toHaveBeenCalled();
   });
 
@@ -59,25 +54,52 @@ describe("<SavingsAccountsList />", () => {
     const user = userEvent.setup();
     customRender(<SavingsAccountsList accounts={mockAccounts} onOpenAddModal={vi.fn()} />);
     const btn = screen.getAllByRole("button", {
-      name: "Edit balance for Marcus High Yield Saver",
+      name: /Edit balance for Marcus High Yield Saver/,
     })[0];
     btn.focus();
     await user.keyboard("{Enter}");
     expect((screen.getAllByRole("spinbutton")[0] as HTMLInputElement).value).toBe("10000");
   });
 
+  test("commits an inline rate edit with the unchanged update payload", async () => {
+    const user = userEvent.setup();
+    mockSubmit.mockClear();
+    customRender(<SavingsAccountsList accounts={mockAccounts} onOpenAddModal={vi.fn()} />);
+    await user.click(
+      screen.getAllByRole("button", { name: /Edit interest rate for Marcus High Yield Saver/ })[0],
+    );
+    const input = screen.getAllByRole("spinbutton")[0] as HTMLInputElement;
+    await user.clear(input);
+    await user.type(input, "5.1{Enter}");
+    expect(mockSubmit).toHaveBeenCalledWith(
+      { intent: "updateSavingsAccount", accountId: "acc-1", interestRate: "5.1" },
+      { method: "POST", action: "/app/savings" },
+    );
+  });
+
+  test("keeps accounts past the eighth behind a drawer", () => {
+    const many = Array.from({ length: 10 }, (_, i) => ({
+      ...mockAccounts[0],
+      id: `acc-${i}`,
+      name: `Account ${i}`,
+    }));
+    customRender(<SavingsAccountsList accounts={many} onOpenAddModal={vi.fn()} />);
+    expect(screen.getByText("2 more accounts")).toBeDefined();
+  });
+
   test("renders empty state when no savings accounts exist", () => {
     const { getByText } = customRender(
       <SavingsAccountsList accounts={[]} onOpenAddModal={vi.fn()} />,
     );
-    expect(getByText("No savings accounts found")).toBeDefined();
+    expect(getByText("No savings accounts yet")).toBeDefined();
   });
 
   test("renders mobile variant layout", () => {
-    const { getByText } = customRender(
+    const { getByText, getByTestId } = customRender(
       <SavingsAccountsList accounts={mockAccounts} onOpenAddModal={vi.fn()} variant="mobile" />,
     );
     expect(getByText("Marcus High Yield Saver")).toBeDefined();
+    expect(getByTestId("savings-accounts-mobile-list")).toBeDefined();
   });
 
   describe("delete confirmation", () => {

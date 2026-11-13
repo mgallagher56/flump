@@ -79,9 +79,10 @@ describe("SavingsContainer", () => {
   it("renders page header and main savings sections", () => {
     render(<SavingsContainer />);
 
-    expect(screen.getByText("Savings and compound growth")).toBeDefined();
-    expect(screen.getByText("Total Savings Balance")).toBeDefined();
-    expect(screen.getByText("Savings and investment accounts")).toBeDefined();
+    expect(screen.getByRole("heading", { level: 1, name: "Your savings" })).toBeDefined();
+    expect(screen.getByText("Total savings")).toBeDefined();
+    expect(screen.getByRole("heading", { name: "Where you stand" })).toBeDefined();
+    expect(screen.getByText("Your accounts")).toBeDefined();
     expect(screen.getByText("Compound Interest Growth Forecaster")).toBeDefined();
   });
 
@@ -91,10 +92,13 @@ describe("SavingsContainer", () => {
     expect(screen.getAllByText("High Yield Saver").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Vanguard ISA").length).toBeGreaterThan(0);
 
-    fireEvent.click(screen.getByRole("button", { name: /Savings & Investment Accounts/i }));
-    fireEvent.click(screen.getByRole("button", { name: /Annual Allowances & Setup/i }));
-    expect(screen.queryByRole("button", { name: /Take-home & pay rise/i })).toBeNull();
-    fireEvent.click(screen.getByRole("button", { name: /Growth Forecaster & Simulator/i }));
+    fireEvent.mouseDown(screen.getByRole("tab", { name: /Accounts/ }));
+    expect(screen.getByRole("tab", { name: /Accounts/ }).getAttribute("aria-selected")).toBe(
+      "true",
+    );
+    fireEvent.mouseDown(screen.getByRole("tab", { name: "Allowances" }));
+    expect(screen.queryByRole("tab", { name: /Take-home/i })).toBeNull();
+    fireEvent.mouseDown(screen.getByRole("tab", { name: "Forecast" }));
 
     fireEvent.click(screen.getAllByRole("button", { name: /Add account/i })[0]);
   });

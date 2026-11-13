@@ -18,4 +18,20 @@ describe("SegmentedTabs Primitive", () => {
     fireEvent.keyDown(snowballBtn, { key: "Enter", code: "Enter" });
     expect(handleSelect).toHaveBeenCalledWith("snowball");
   });
+
+  it("keeps every panel mounted and hides the inactive ones", () => {
+    render(
+      <SegmentedTabs
+        items={items}
+        panels={{ avalanche: <p>First panel</p>, snowball: <p>Second panel</p> }}
+        value="snowball"
+        onValueChange={vi.fn()}
+      />,
+    );
+    expect(screen.getByText("Second panel")).toBeDefined();
+    expect(screen.queryByRole("tabpanel", { hidden: false })?.textContent).toBe("Second panel");
+    expect(screen.getByText("First panel", { ignore: "" }).closest("[hidden]")).not.toBeNull();
+    const tab = screen.getByRole("tab", { name: "Snowball (Lowest Balance)" });
+    expect(document.getElementById(tab.getAttribute("aria-controls") ?? "")).not.toBeNull();
+  });
 });

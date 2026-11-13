@@ -15,6 +15,14 @@ export interface SegmentedTabsProps {
   onValueChange: (value: string) => void;
   className?: string;
   "aria-label"?: string;
+  /**
+   * Optional panel content per tab value. Every panel stays mounted (so state such as slider
+   * values survives a tab change) and the inactive ones are hidden. Rendering the panels here
+   * also gives each tab a real `aria-controls` target.
+   */
+  panels?: Partial<Record<string, ReactNode>>;
+  /** Class for each panel wrapper. */
+  panelClassName?: string;
 }
 
 export const SegmentedTabs: FC<SegmentedTabsProps> = ({
@@ -23,6 +31,8 @@ export const SegmentedTabs: FC<SegmentedTabsProps> = ({
   onValueChange,
   className,
   "aria-label": ariaLabel = "Navigation tabs",
+  panels,
+  panelClassName,
 }) => {
   return (
     <Tabs.Root
@@ -43,6 +53,21 @@ export const SegmentedTabs: FC<SegmentedTabsProps> = ({
           </Tabs.Trigger>
         ))}
       </Tabs.List>
+      {panels
+        ? items.map((item) =>
+            panels[item.value] === undefined ? null : (
+              <Tabs.Content
+                key={item.value}
+                forceMount
+                className={panelClassName}
+                hidden={item.value !== value}
+                value={item.value}
+              >
+                {panels[item.value]}
+              </Tabs.Content>
+            ),
+          )
+        : null}
     </Tabs.Root>
   );
 };
