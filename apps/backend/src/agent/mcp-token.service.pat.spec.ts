@@ -1,31 +1,17 @@
 import { BadRequestException } from "@nestjs/common";
 import { describe, expect, it, vi } from "vitest";
-import { McpService } from "./mcp.service";
-
-const nothing = {} as never;
+import { McpTokenService } from "./mcp-token.service";
 
 function buildTokenService() {
   const repo = {
     create: (v: any) => ({ ...v }),
     save: vi.fn(async (v: any) => ({ id: "tok_new", createdAt: new Date(), ...v })),
   };
-  const service = new McpService(
-    repo as never,
-    nothing,
-    nothing,
-    nothing,
-    nothing,
-    nothing,
-    nothing,
-    nothing,
-    nothing,
-    { get: vi.fn() } as never,
-    "workos",
-  );
+  const service = new McpTokenService(repo as never);
   return { service, repo };
 }
 
-describe("McpService.createPatToken lifecycle rules (E20-N16)", () => {
+describe("McpTokenService.createPatToken lifecycle rules (E20-N16)", () => {
   it("defaults expiry to 90 days when none is given", async () => {
     const { service } = buildTokenService();
     const before = Date.now();
@@ -74,7 +60,7 @@ describe("McpService.createPatToken lifecycle rules (E20-N16)", () => {
   });
 });
 
-describe("McpService.createPatToken name hygiene (E20-N16)", () => {
+describe("McpTokenService.createPatToken name hygiene (E20-N16)", () => {
   it.each(["a\u0000b", "a\nb", "a\u200bb", "a\u202eb", "a\u2028b", "a\u2029b"])(
     "rejects control or invisible characters in %j",
     async (n) => {
@@ -90,7 +76,7 @@ describe("McpService.createPatToken name hygiene (E20-N16)", () => {
   });
 });
 
-describe("McpService.createPatToken type guards (E20-N16)", () => {
+describe("McpTokenService.createPatToken type guards (E20-N16)", () => {
   it.each([undefined, null, 5, {}, ["a"]])("rejects non-string name %s with 400", async (n) => {
     const { service } = buildTokenService();
     await expect(service.createPatToken("u1", n as never)).rejects.toBeInstanceOf(
@@ -114,44 +100,4 @@ describe("McpService.createPatToken type guards (E20-N16)", () => {
       ).rejects.toBeInstanceOf(BadRequestException);
     },
   );
-});
-
-describe("McpService.getUserFinancialData never exposes receipts (E20-N16)", () => {
-  it("strips receiptData, receiptFilename and receiptMimeType from tax records", async () => {
-    const record = {
-      id: "t1",
-      userId: "u1",
-      type: "expense",
-      source: "self-employed",
-      category: "travel",
-      name: "Train",
-      amount: 12,
-      frequency: "one-off",
-      date: "2026-01-01",
-      endDate: null,
-      notes: null,
-      receiptFilename: "r.pdf",
-      receiptMimeType: "application/pdf",
-      receiptData: "BASE64BLOB",
-    };
-    const service = new McpService(
-      nothing,
-      nothing,
-      nothing,
-      nothing,
-      { find: vi.fn(async () => []) } as never,
-      { find: vi.fn(async () => [record]) } as never,
-      nothing,
-      { getAccounts: async () => [], getAccountDetails: async () => [] } as never,
-      { getProfile: async () => ({}) } as never,
-      { get: vi.fn() } as never,
-      "workos",
-    );
-    const data = await service.getUserFinancialData("u1");
-    const json = JSON.stringify(data.taxRecords);
-    expect(json).not.toContain("BASE64BLOB");
-    expect(json).not.toContain("receipt");
-    expect(json).not.toContain("userId");
-    expect(data.taxRecords?.[0]).toMatchObject({ id: "t1", name: "Train", amount: 12 });
-  });
 });

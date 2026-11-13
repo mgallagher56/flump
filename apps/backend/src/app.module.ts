@@ -3,6 +3,8 @@ import { ConfigModule } from "@nestjs/config";
 import { APP_INTERCEPTOR } from "@nestjs/core";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { AccountIntakeService } from "./account-intake.service";
+import { AgentDataService } from "./agent/agent-data.service";
+import { McpTokenService } from "./agent/mcp-token.service";
 import { AppController } from "./app.controller";
 import { AppService } from "./app.service";
 import { AuthModule } from "./auth/auth.module";
@@ -54,6 +56,8 @@ import { UserProfileService } from "./user-profile.service";
     AccountIntakeService,
     FinanceService,
     UserProfileService,
+    McpTokenService,
+    AgentDataService,
     McpService,
     MonzoProvider,
     StarlingProvider,

@@ -11,6 +11,7 @@ import {
   Res,
   UseGuards,
 } from "@nestjs/common";
+import { McpTokenService } from "./agent/mcp-token.service";
 import { AuthGuard } from "./auth/auth.guard";
 import { McpService } from "./mcp.service";
 import { McpAllowlistGuard, McpKillSwitchGuard } from "./mcp-access";
@@ -18,7 +19,10 @@ import { RateLimit } from "./security/rate-limit.decorator";
 
 @Controller()
 export class McpController {
-  constructor(private readonly mcpService: McpService) {}
+  constructor(
+    private readonly mcpService: McpService,
+    private readonly tokenService: McpTokenService,
+  ) {}
 
   // .well-known/oauth-protected-resource route removed while OAuth is off; re-enable with OAuth ticket.
 
@@ -45,7 +49,7 @@ export class McpController {
   @UseGuards(AuthGuard)
   async listTokens(@Req() req: any) {
     const userId = req.user.id;
-    return this.mcpService.listTokens(userId);
+    return this.tokenService.listTokens(userId);
   }
 
   /**
@@ -64,7 +68,7 @@ export class McpController {
     },
   ) {
     const userId = req.user.id;
-    return this.mcpService.createPatToken(userId, body.name, {
+    return this.tokenService.createPatToken(userId, body.name, {
       expiryDays: body.expiryDays,
       anonymizeInstitutions: body.anonymizeInstitutions,
     });
@@ -78,7 +82,7 @@ export class McpController {
   @UseGuards(AuthGuard)
   async revokeToken(@Req() req: any, @Param("id", new ParseUUIDPipe()) id: string) {
     const userId = req.user.id;
-    return this.mcpService.revokeToken(userId, id);
+    return this.tokenService.revokeToken(userId, id);
   }
 
   /**
