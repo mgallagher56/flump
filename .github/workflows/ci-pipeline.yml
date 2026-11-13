@@ -98,7 +98,9 @@ jobs:
       - name: 🧪 Test repo scripts
         run: bun run test:scripts
 
+      # Runs even when an earlier step failed, so one run still reports type errors too.
       - name: 🔎 Type check all packages
+        if: ${{ !cancelled() }}
         run: bun run check-types
 
   # Vitest runs as two parallel shards (web, backend + packages) so neither is the critical path.
