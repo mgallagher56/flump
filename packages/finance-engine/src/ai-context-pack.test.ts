@@ -119,4 +119,25 @@ describe("budget notes anonymisation (E17-N4)", () => {
     );
     expect(pack.budgetSummary.entries[0]?.notes).toBe(entry.notes);
   });
+
+  it("replaces income names with a generic label when anonymised", () => {
+    const pack = buildFlumpAiContextPack(
+      {
+        baseline: DEFAULT_FINANCIAL_BASELINE,
+        budgetEntries: [{ ...entry, id: "i1", name: "Salary - Acme Ltd", isIncome: true }],
+      },
+      { anonymizeInstitutions: true },
+    );
+    expect(JSON.stringify(pack)).not.toContain("Acme");
+    expect(pack.budgetSummary.entries[0]?.name).toBe("Income #1");
+  });
+
+  it("omits the notes key entirely when notes are absent", () => {
+    const { notes: _notes, ...noNotes } = entry;
+    const pack = buildFlumpAiContextPack(
+      { baseline: DEFAULT_FINANCIAL_BASELINE, budgetEntries: [noNotes] },
+      { anonymizeInstitutions: false },
+    );
+    expect("notes" in (pack.budgetSummary.entries[0] ?? {})).toBe(false);
+  });
 });

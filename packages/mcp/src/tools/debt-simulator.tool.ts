@@ -4,6 +4,7 @@ import {
   compareAvalancheAndSnowball,
   type DebtItem,
   filterConsumerDebts,
+  genericAccountLabel,
 } from "@flump/finance-engine";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
@@ -88,6 +89,14 @@ export function registerDebtSimulatorTool(
           anonymizeInstitutions: ctx.token.anonymizeInstitutions,
         });
         const accounts = rawData.accounts ?? [];
+        // Same per-type numbering as the AI context pack, counted over all accounts.
+        const typeCounters: Record<string, number> = {};
+        const anonLabels = new Map<(typeof accounts)[number], string>();
+        for (const a of accounts) {
+          const key = genericAccountLabel(a.type, 0);
+          typeCounters[key] = (typeCounters[key] ?? 0) + 1;
+          anonLabels.set(a, genericAccountLabel(a.type, typeCounters[key]));
+        }
         debts = accounts
           .filter((a) => {
             const t = (a.type || "").toLowerCase();
@@ -105,7 +114,7 @@ export function registerDebtSimulatorTool(
             return {
               id: a.id || `debt_${i}`,
               name: ctx.token.anonymizeInstitutions
-                ? `Debt account #${i + 1}`
+                ? (anonLabels.get(a) ?? `Debt account #${i + 1}`)
                 : a.name || `Debt Account #${i + 1}`,
               balance: nominal,
               balanceGbp: nominal,
