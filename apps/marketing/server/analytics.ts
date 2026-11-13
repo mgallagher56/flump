@@ -43,12 +43,37 @@ export function referrerHost(referer: string | undefined, ownHost?: string): str
     if (url.protocol !== "https:" && url.protocol !== "http:") return null;
     const host = url.hostname.toLowerCase();
     if (!host) return null;
+    if (host.length > 253) return null;
+    // Drop IP literals (IPv4 dotted quads and bracketed IPv6): they can identify a person or device.
+    if (/^\d{1,3}(\.\d{1,3}){3}$/.test(host) || host.includes(":") || host.startsWith("[")) {
+      return null;
+    }
     if (ownHost && host === ownHost.split(":")[0]?.toLowerCase()) return null;
     return host;
   } catch {
     return null;
   }
 }
+
+/** Global token bucket (no per-client state): at most `perSecond` lines per second, burst `perSecond`. */
+export function createRateLimiter(perSecond: number, nowMs: () => number = Date.now) {
+  let tokens = perSecond;
+  let last = nowMs();
+  return (): boolean => {
+    const t = nowMs();
+    tokens = Math.min(perSecond, tokens + ((t - last) / 1000) * perSecond);
+    last = t;
+    if (tokens < 1) return false;
+    tokens -= 1;
+    return true;
+  };
+}
+
+export const MAX_LINES_PER_SECOND = 20;
+
+const isPrefetch = (h: Record<string, string | string[] | undefined>): boolean =>
+  /prefetch|prerender/i.test(String(h["sec-purpose"] ?? "")) ||
+  /prefetch/i.test(String(h.purpose ?? ""));
 
 const wantsHtml = (accept: string | undefined): boolean => !!accept && accept.includes("text/html");
 
@@ -60,11 +85,13 @@ export function analyticsMiddleware(
   env: Env = process.env,
   sink: (line: string) => void = (line) => console.log(line),
   now: () => Date = () => new Date(),
+  allow: () => boolean = createRateLimiter(MAX_LINES_PER_SECOND),
 ): RequestHandler {
   if (!isAnalyticsEnabled(env)) return (_req, _res, next) => next();
   return (req, res, next) => {
     if (
       req.method === "GET" &&
+      !isPrefetch(req.headers) &&
       wantsHtml(req.headers.accept) &&
       !isBot(req.headers["user-agent"])
     ) {
@@ -75,7 +102,10 @@ export function analyticsMiddleware(
         day: now().toISOString().slice(0, 10),
       };
       res.on("finish", () => {
-        if (res.statusCode < 400) sink(JSON.stringify(entry));
+        // 2xx only (no double-counted redirects). A 404 is a real unknown page: counted as `other`.
+        if (res.statusCode === 404) entry.key = "other";
+        else if (res.statusCode >= 300) return;
+        if (allow()) sink(JSON.stringify(entry));
       });
     }
     next();

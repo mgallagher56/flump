@@ -5,6 +5,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import {
   analyticsFlagWarning,
   analyticsMiddleware,
+  createRateLimiter,
   isAnalyticsEnabled,
   isBot,
   referrerHost,
@@ -16,31 +17,38 @@ const ON: Env = { ANALYTICS_MODE: "log", ANALYTICS_NOTICE_URL: "https://flump.ex
 const BROWSER = "Mozilla/5.0 (Macintosh) AppleWebKit/537.36 Chrome/120 Safari/537.36";
 const servers: { close: () => void }[] = [];
 
-async function start(env: Env) {
+async function start(env: Env, allow?: () => boolean, status = 200) {
   const lines: string[] = [];
+  let notify: () => void = () => {};
   const app = express();
   // A stand-in for sirv: serves assets before the middleware is reached.
   app.get("/assets/app.js", (_req, res) => res.type("js").send("x"));
   app.use(
     analyticsMiddleware(
       env,
-      (l) => lines.push(l),
+      (l) => {
+        lines.push(l);
+        notify();
+      },
       () => new Date("2026-11-13T23:59:59Z"),
+      allow,
     ),
   );
-  app.use((_req, res) => res.status(200).type("html").end("<html>spa</html>"));
+  app.use((_req, res) => res.status(status).type("html").end("<html>spa</html>"));
   const server = await new Promise<import("node:http").Server>((resolve) => {
     const s = app.listen(0, "127.0.0.1", () => resolve(s));
   });
   servers.push(server);
   const base = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
-  return { base, lines };
+  const nextLine = () => new Promise<void>((r) => (notify = r));
+  return { base, lines, nextLine };
 }
 
 const nav = (extra: Record<string, string> = {}) => ({
   headers: { accept: "text/html,application/xhtml+xml", "user-agent": BROWSER, ...extra },
 });
-const settle = () => new Promise((r) => setTimeout(r, 20));
+// Negative cases: nothing is emitted, so wait one macrotask after the response has been read.
+const settle = () => new Promise((r) => setImmediate(r));
 
 afterEach(() => {
   for (const s of servers.splice(0)) s.close();
@@ -92,13 +100,14 @@ describe("helpers", () => {
 
 describe("analyticsMiddleware", () => {
   it("logs one pageview line with no IP, user agent, query or cookie", async () => {
-    const { base, lines } = await start(ON);
+    const { base, lines, nextLine } = await start(ON);
+    const got = nextLine();
     const res = await fetch(
       `${base}/pricing?email=a@b.c`,
       nav({ referer: "https://news.example/x?y=1" }),
     );
     await res.text();
-    await settle();
+    await got;
     expect(res.headers.get("set-cookie")).toBeNull();
     expect(lines).toHaveLength(1);
     expect(JSON.parse(lines[0] as string)).toEqual({
@@ -111,9 +120,10 @@ describe("analyticsMiddleware", () => {
   });
 
   it("maps an unknown path to other", async () => {
-    const { base, lines } = await start(ON);
+    const { base, lines, nextLine } = await start(ON);
+    const got = nextLine();
     await (await fetch(`${base}/nope/123`, nav())).text();
-    await settle();
+    await got;
     expect(JSON.parse(lines[0] as string).key).toBe("other");
   });
 
@@ -141,5 +151,67 @@ describe("analyticsMiddleware", () => {
     await (await fetch(`${base}/`, nav({ "user-agent": "Googlebot/2.1" }))).text();
     await settle();
     expect(lines).toHaveLength(0);
+  });
+
+  it("skips HEAD and prefetch/prerender requests", async () => {
+    const { base, lines } = await start(ON);
+    await fetch(`${base}/`, { method: "HEAD", ...nav() });
+    await (await fetch(`${base}/`, nav({ "sec-purpose": "prefetch" }))).text();
+    await (await fetch(`${base}/`, nav({ "sec-purpose": "prefetch;prerender" }))).text();
+    await settle();
+    expect(lines).toHaveLength(0);
+  });
+
+  it("does not log redirects or 5xx, and logs a 404 as other", async () => {
+    for (const status of [301, 302, 400, 500]) {
+      const { base, lines } = await start(ON, undefined, status);
+      await (await fetch(`${base}/pricing`, { redirect: "manual", ...nav() })).text();
+      await settle();
+      expect(lines).toHaveLength(0);
+    }
+    const { base, lines, nextLine } = await start(ON, undefined, 404);
+    const got = nextLine();
+    await (await fetch(`${base}/pricing`, nav())).text();
+    await got;
+    expect(JSON.parse(lines[0] as string).key).toBe("other");
+  });
+
+  it("drops lines over the global rate cap", async () => {
+    const { base, lines } = await start(
+      ON,
+      createRateLimiter(2, () => 0),
+    );
+    for (let i = 0; i < 4; i++) await (await fetch(`${base}/`, nav())).text();
+    await settle();
+    expect(lines).toHaveLength(2);
+  });
+
+  it("neutralises CRLF in the referer", async () => {
+    const { base, lines, nextLine } = await start(ON);
+    const got = nextLine();
+    // fetch rejects raw CRLF headers, so exercise the parser directly as well.
+    await (
+      await fetch(`${base}/`, nav({ referer: "https://ok.example/%0d%0aSet-Cookie:x" }))
+    ).text();
+    await got;
+    expect(lines[0]).not.toMatch(/\\r|\\n.*Set-Cookie|Set-Cookie/);
+    expect(referrerHost("https://evil.example\r\nX: y/path")).toBeNull();
+    expect(referrerHost('https://a.example/\r\n{"type":"pageview"}')).toBe("a.example");
+  });
+});
+
+describe("rate limiter and referrer limits", () => {
+  it("refills over time", () => {
+    let t = 0;
+    const allow = createRateLimiter(2, () => t);
+    expect([allow(), allow(), allow()]).toEqual([true, true, false]);
+    t = 1000;
+    expect(allow()).toBe(true);
+  });
+
+  it("drops IP literals and overlong hosts", () => {
+    expect(referrerHost("http://192.168.1.1/x")).toBeNull();
+    expect(referrerHost("http://[2001:db8::1]/x")).toBeNull();
+    expect(referrerHost(`https://${"a".repeat(254)}.com/`)).toBeNull();
   });
 });
