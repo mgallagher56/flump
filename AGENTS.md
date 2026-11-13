@@ -49,14 +49,17 @@ A component or page task is NOT complete until:
 
 ## 5. MANDATORY CI PRE-FLIGHT LAW (BEFORE CREATING OR UPDATING A PR)
 
-Before creating or pushing to any Pull Request, agents MUST run and verify all four CI checks locally:
+Before creating or pushing to any Pull Request, agents MUST run and verify all five CI checks locally:
 
 1. `bun run lint` (zero Biome lint/format errors)
 2. `bun run check-types` (zero TypeScript errors across all monorepo packages)
 3. `bun run test` (100% passing tests across all packages)
 4. `bun run build` (successful compilation across all packages and apps)
+5. `bun run check:laws` (design tokens, tabular numbers, react icons and dependency versions; CI runs it, so run it locally too)
 
-Never open, push, or ask the user to merge a PR without executing this exact 4-step sequence and confirming all checks pass with zero errors.
+When a change removes violations, the baselines go stale and CI fails. Regenerate them with `bun scripts/check-design-tokens.ts --write-baseline`, `bun scripts/check-tabular-nums.ts --write-baseline` and `bun scripts/check-react-icons.ts --write-baseline`, then commit the updated baseline files.
+
+Never open, push, or ask the user to merge a PR without executing this exact 5-step sequence and confirming all checks pass with zero errors.
 
 ## 6. SUBAGENT MODEL LAW
 
