@@ -605,6 +605,81 @@ export const UK_STUDENT_LOANS: Record<string, UKStudentLoanYear> = {
 };
 
 // ---------------------------------------------------------------------------
+// UK — Child Benefit weekly rates and HICBC parameters (E25-T3)
+// ---------------------------------------------------------------------------
+
+export interface UKChildBenefitYear {
+  /** Weekly rate for the eldest or only child ("enhanced rate"), GBP. */
+  eldestWeekly: number;
+  /** Weekly rate for each other child ("other cases"), GBP. */
+  otherWeekly: number;
+  /** Weeks of Child Benefit assumed per year. 52 pending the owner ruling on 52 or 53 Mondays. */
+  weeksPerYear: number;
+  /** Adjusted net income above which the High Income Child Benefit Charge starts. */
+  hicbcThresholdStart: number;
+  /** The charge is 1% of Child Benefit per full step of adjusted net income over the start. */
+  hicbcStepWidth: number;
+}
+
+/**
+ * Child Benefit weekly rates per tax year and the High Income Child Benefit Charge
+ * thresholds (GOV.UK child-benefit-tax-charge: over 50,000 at 1% per 100 up to 2023/24,
+ * over 60,000 at 1% per 200 from 2024/25). 2020/21 and 2021/22 weekly rates are UNVERIFIED
+ * (see `docs/tax-sources/hicbc-child-benefit.md` and the `childBenefit` registry key).
+ */
+export const UK_CHILD_BENEFIT: Record<string, UKChildBenefitYear> = {
+  "2020/21": {
+    eldestWeekly: 21.05,
+    otherWeekly: 13.95,
+    weeksPerYear: 52,
+    hicbcThresholdStart: 50000,
+    hicbcStepWidth: 100,
+  },
+  "2021/22": {
+    eldestWeekly: 21.15,
+    otherWeekly: 14.0,
+    weeksPerYear: 52,
+    hicbcThresholdStart: 50000,
+    hicbcStepWidth: 100,
+  },
+  "2022/23": {
+    eldestWeekly: 21.8,
+    otherWeekly: 14.45,
+    weeksPerYear: 52,
+    hicbcThresholdStart: 50000,
+    hicbcStepWidth: 100,
+  },
+  "2023/24": {
+    eldestWeekly: 24.0,
+    otherWeekly: 15.9,
+    weeksPerYear: 52,
+    hicbcThresholdStart: 50000,
+    hicbcStepWidth: 100,
+  },
+  "2024/25": {
+    eldestWeekly: 25.6,
+    otherWeekly: 16.95,
+    weeksPerYear: 52,
+    hicbcThresholdStart: 60000,
+    hicbcStepWidth: 200,
+  },
+  "2025/26": {
+    eldestWeekly: 26.05,
+    otherWeekly: 17.25,
+    weeksPerYear: 52,
+    hicbcThresholdStart: 60000,
+    hicbcStepWidth: 200,
+  },
+  "2026/27": {
+    eldestWeekly: 27.05,
+    otherWeekly: 17.9,
+    weeksPerYear: 52,
+    hicbcThresholdStart: 60000,
+    hicbcStepWidth: 200,
+  },
+};
+
+// ---------------------------------------------------------------------------
 // UK — Combined per-year config used by legacy TaxCalculator.ts
 // Kept for backwards compatibility with existing calculateUKTax() calls.
 // ---------------------------------------------------------------------------
