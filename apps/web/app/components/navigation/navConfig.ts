@@ -22,6 +22,19 @@ export interface NavRouteItem {
   children?: NavRouteItem[];
 }
 
+/** The signed-out demo. It has no sub-pages, so every other destination is "Sign up to open". */
+export const SANDBOX_ROUTE = "/sandbox";
+
+export const isSandboxPath = (pathname: string): boolean =>
+  pathname === SANDBOX_ROUTE || pathname === `${SANDBOX_ROUTE}/`;
+
+/** Home as shown in the signed-out sandbox: the sandbox itself. */
+export const SANDBOX_HOME_NAV_ROUTE: NavRouteItem = {
+  key: "home",
+  route: SANDBOX_ROUTE,
+  icon: House,
+};
+
 export const HOME_NAV_ROUTE: NavRouteItem = { key: "home", route: "/", icon: House };
 
 /**
@@ -97,3 +110,21 @@ export function filterNavRoutes(
       item.children ? item.children.length > 0 : isEnabled(enabled, item.key as AppPageKey),
     );
 }
+
+export interface BottomBarTab {
+  key: string;
+  label: string;
+  to: string;
+  icon: LucideIcon;
+}
+
+/**
+ * Bottom bar tabs (IA review T-IA-4): Home, Accounts, Budget, Tax and pay, then a More button.
+ * All four are always-on pages. The signed-in bar and the signed-out sandbox bar share this list.
+ */
+export const BOTTOM_BAR_TABS: BottomBarTab[] = [
+  { key: "home", label: "Home", to: "/", icon: House },
+  { key: "accounts", label: "Accounts", to: "/app/accounts", icon: Scale },
+  { key: "budget", label: "Budget", to: "/app/budget", icon: Wallet },
+  { key: "taxAndPay", label: "Tax and pay", to: "/app/take-home", icon: Calculator },
+];

@@ -1,7 +1,7 @@
 import { Button, CoachCard, formatMoney, Icon } from "@repo/ui";
 import { Flame } from "lucide-react";
 import type { FC } from "react";
-import { Link } from "react-router";
+import { SampleAwareLink } from "~/components/navigation/SampleAwareLink";
 import { allowanceLink, allowanceNote } from "./StageCoachCard.styles";
 
 export interface StageCoachCardProps {
@@ -33,14 +33,14 @@ export const StageCoachCard: FC<StageCoachCardProps> = ({
       id="stage-coach-card"
       primaryAction={
         <Button asChild size="sm" variant="primary">
-          <Link to="/app/debt">Open debt payoff</Link>
+          <SampleAwareLink to="/app/debt">Open debt payoff</SampleAwareLink>
         </Button>
       }
       secondaryAction={
         weeklyAllowance === null ? (
-          <Link className={allowanceLink()} to="/app/budget">
+          <SampleAwareLink className={allowanceLink()} to="/app/budget">
             Add your budget to see your safe to spend allowance
-          </Link>
+          </SampleAwareLink>
         ) : (
           <span className={allowanceNote()}>
             Safe to spend: {formatMoney(weeklyAllowance).text} a week

@@ -2,8 +2,17 @@ import { VisuallyHidden } from "@repo/ui";
 import { css } from "@repo/ui/styled-system/css";
 import { useEffect } from "react";
 import type { LoaderFunctionArgs } from "react-router";
-import { Links, Meta, Outlet, Scripts, ScrollRestoration, useLoaderData } from "react-router";
+import {
+  Links,
+  Meta,
+  Outlet,
+  Scripts,
+  ScrollRestoration,
+  useLoaderData,
+  useLocation,
+} from "react-router";
 import MobileBottomBar from "./components/navigation/MobileBottomBar";
+import { isSandboxPath } from "./components/navigation/navConfig";
 import Header from "./components/structure/header/Header";
 import { apiConfig } from "./config.server";
 import { ResponsiveProvider } from "./context/ResponsiveContext";
@@ -75,6 +84,9 @@ export default function App() {
   const { locale, user, userProfile, ENV, isMobileClient } = useLoaderData<typeof loader>();
   const { theme, preference, setPreference, toggleTheme } = useTheme();
   const { setProfile } = useUserProfile();
+  const { pathname } = useLocation();
+  // The signed-out demo gets the same bottom bar and drawer as the app (IA review N-04).
+  const showBottomBar = Boolean(user) || isSandboxPath(pathname);
 
   // Sign-out wipes this browser's per-user storage (E19 A6); covers every form posting to /logout.
   useEffect(() => watchLogoutForms(), []);
@@ -128,14 +140,14 @@ export default function App() {
                 tabIndex={-1}
                 className={css({
                   paddingBottom: {
-                    base: user ? "calc(72px + env(safe-area-inset-bottom, 0px))" : "0",
+                    base: showBottomBar ? "calc(72px + env(safe-area-inset-bottom, 0px))" : "0",
                     md: "0",
                   },
                 })}
               >
                 <Outlet />
               </main>
-              {Boolean(user) && <MobileBottomBar user={user} />}
+              {showBottomBar && <MobileBottomBar sandbox={!user} user={user} />}
             </div>
           </ResponsiveProvider>
         </ThemeContext.Provider>

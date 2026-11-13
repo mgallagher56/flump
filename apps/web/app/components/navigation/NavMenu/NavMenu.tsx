@@ -9,6 +9,8 @@ import FLPBox from "~/components/core/structure/FLPBox";
 import type { NavRouteItem } from "../navConfig";
 import {
   activeChildDot,
+  disabledHint,
+  disabledMobileItem,
   dropdownContainer,
   flyoutDescription,
   flyoutIconBox,
@@ -30,6 +32,8 @@ interface NavMenuProps {
   isMobile?: boolean;
   variant?: "desktop" | "mobile";
   onNavigate?: () => void;
+  /** Mobile only: routes this returns true for render as disabled "Sign up to open" items (sandbox). */
+  isRouteDisabled?: (item: NavRouteItem) => boolean;
 }
 
 const DesktopDropdownGroup: FC<{
@@ -159,7 +163,31 @@ const DesktopDropdownGroup: FC<{
   );
 };
 
-const NavMenu: FC<NavMenuProps> = ({ routes, isMobile, variant = "desktop", onNavigate }) => {
+const DisabledMobileItem: FC<{ item: NavRouteItem }> = ({ item }) => {
+  const { t } = useTranslation();
+  return (
+    <button
+      aria-label={`${t(item.key)}, sign up to open`}
+      className={disabledMobileItem()}
+      data-testid={`nav-disabled-${item.key}`}
+      id={`nav-disabled-${item.key}`}
+      disabled
+      type="button"
+    >
+      {item.icon && <Icon icon={item.icon} size="sm" />}
+      <span>{t(item.key)}</span>
+      <span className={disabledHint()}>Sign up to open</span>
+    </button>
+  );
+};
+
+const NavMenu: FC<NavMenuProps> = ({
+  routes,
+  isMobile,
+  variant = "desktop",
+  onNavigate,
+  isRouteDisabled,
+}) => {
   const { t } = useTranslation();
   const isMobileVariant = isMobile || variant === "mobile";
   const [openGroupKey, setOpenGroupKey] = useState<string | null>(null);
@@ -173,7 +201,9 @@ const NavMenu: FC<NavMenuProps> = ({ routes, isMobile, variant = "desktop", onNa
               <div key={route.key} className={mobileSection()}>
                 <div className={mobileSectionHeading()}>{t(route.key)}</div>
                 {route.children.map((child) =>
-                  child.route ? (
+                  child.route && isRouteDisabled?.(child) ? (
+                    <DisabledMobileItem key={child.key} item={child} />
+                  ) : child.route ? (
                     <FLPLinkButton
                       key={child.key}
                       icon={child.icon && <Icon icon={child.icon} size="sm" />}
@@ -190,6 +220,8 @@ const NavMenu: FC<NavMenuProps> = ({ routes, isMobile, variant = "desktop", onNa
           }
 
           if (!route.route) return null;
+
+          if (isRouteDisabled?.(route)) return <DisabledMobileItem key={route.key} item={route} />;
 
           return (
             <FLPLinkButton

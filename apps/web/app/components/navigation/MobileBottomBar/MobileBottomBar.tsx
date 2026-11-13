@@ -1,38 +1,27 @@
 import { Icon } from "@repo/ui";
-import { Calculator, Ellipsis, House, Scale, Wallet } from "lucide-react";
+import { Ellipsis } from "lucide-react";
 import type { FC } from "react";
 import { useTranslation } from "react-i18next";
 import { NavLink } from "react-router";
 import { useResponsive } from "~/context/ResponsiveContext";
+import { BOTTOM_BAR_TABS, SANDBOX_ROUTE } from "../navConfig";
 import { bar, tab } from "./MobileBottomBar.styles";
 
 export interface MobileBottomBarProps {
   user?: unknown;
   isMobile?: boolean;
   onMoreClick?: () => void;
+  /** Signed-out sandbox: same tabs, but only Home (the sandbox) is live; the rest read "Sign up to open". */
+  sandbox?: boolean;
 }
 
-const MobileBottomBar: FC<MobileBottomBarProps> = ({ user, isMobile, onMoreClick }) => {
+const MobileBottomBar: FC<MobileBottomBarProps> = ({ user, isMobile, onMoreClick, sandbox }) => {
   const { t } = useTranslation();
   const { toggleMobileDrawer, isMobileDrawerOpen } = useResponsive();
 
-  if (!user) return null;
+  if (!user && !sandbox) return null;
 
   const handleMore = onMoreClick || toggleMobileDrawer;
-
-  // Home | Accounts | Budget | Tax and pay | More (IA review T-IA-4). All four are always-on pages,
-  // so the bar never reflows when modules switch off. Everything else lives in the More drawer.
-  const tabs = [
-    { key: "home", label: t("home", "Home"), to: "/", icon: House },
-    { key: "accounts", label: t("accounts", "Accounts"), to: "/app/accounts", icon: Scale },
-    { key: "budget", label: t("budget", "Budget"), to: "/app/budget", icon: Wallet },
-    {
-      key: "taxAndPay",
-      label: t("taxAndPay", "Tax and pay"),
-      to: "/app/take-home",
-      icon: Calculator,
-    },
-  ] as const;
 
   return (
     <nav
@@ -41,17 +30,37 @@ const MobileBottomBar: FC<MobileBottomBarProps> = ({ user, isMobile, onMoreClick
       data-testid="mobile-bottom-bar"
       id="mobile-bottom-bar"
     >
-      {tabs.map((item) => (
-        <NavLink
-          key={item.key}
-          className={({ isActive }) => tab({ active: isActive })}
-          end={item.to === "/app/accounts" || item.to === "/"}
-          to={item.to}
-        >
-          <Icon icon={item.icon} />
-          <span>{item.label}</span>
-        </NavLink>
-      ))}
+      {BOTTOM_BAR_TABS.map((item) => {
+        const label = t(item.key, item.label);
+        if (sandbox && item.key !== "home") {
+          return (
+            <button
+              key={item.key}
+              aria-label={`${label}, sign up to open`}
+              className={tab({ active: false })}
+              data-testid={`mobile-bottom-bar-${item.key}-disabled`}
+              disabled
+              title="Sign up to open"
+              type="button"
+            >
+              <Icon icon={item.icon} />
+              <span>{label}</span>
+            </button>
+          );
+        }
+        const to = sandbox ? SANDBOX_ROUTE : item.to;
+        return (
+          <NavLink
+            key={item.key}
+            className={({ isActive }) => tab({ active: isActive })}
+            end={to === "/app/accounts" || to === "/" || to === SANDBOX_ROUTE}
+            to={to}
+          >
+            <Icon icon={item.icon} />
+            <span>{label}</span>
+          </NavLink>
+        );
+      })}
       <button
         aria-expanded={isMobileDrawerOpen}
         aria-label="More navigation options"

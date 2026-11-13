@@ -99,3 +99,30 @@ describe("<MobileNavDrawer /> modal behaviour", () => {
     opener.remove();
   });
 });
+
+describe("<MobileNavDrawer /> sandbox", () => {
+  test("lists the same tabs for a signed-out visitor, all disabled except Home", () => {
+    customRender(<MobileNavDrawer sandbox isOpen={true} user={null} onClose={vi.fn()} />);
+    const home = screen.getByRole("link", { name: /home/i });
+    expect(home.getAttribute("href")).toBe("/sandbox");
+    for (const key of [
+      "debt",
+      "budget",
+      "accounts",
+      "savings",
+      "pension",
+      "mortgage",
+      "takeHome",
+      "tax",
+    ]) {
+      const item = screen.getByTestId(`nav-disabled-${key}`) as HTMLButtonElement;
+      expect(item.disabled).toBe(true);
+      expect(item.textContent).toMatch(/sign up to open/i);
+    }
+  });
+
+  test("shows only Home when signed out outside the sandbox", () => {
+    customRender(<MobileNavDrawer isOpen={true} user={null} onClose={vi.fn()} />);
+    expect(screen.queryByTestId("nav-disabled-debt")).toBeNull();
+  });
+});

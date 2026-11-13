@@ -1,6 +1,6 @@
 import { Button, KpiCard, KpiStrip, Money } from "@repo/ui";
 import type { FC } from "react";
-import { Link } from "react-router";
+import { SampleAwareLink } from "~/components/navigation/SampleAwareLink";
 import { kpiSeparator, kpiSubtext } from "./DashboardKpiStrip.styles";
 
 export interface DashboardKpiStripProps {
@@ -15,7 +15,7 @@ export interface DashboardKpiStripProps {
 
 const addLink = (to: string, label: string) => (
   <Button asChild size="sm" variant="ghost">
-    <Link to={to}>{label}</Link>
+    <SampleAwareLink to={to}>{label}</SampleAwareLink>
   </Button>
 );
 

@@ -9,6 +9,7 @@ import {
   AUTH_NAV_ROUTES,
   filterNavRoutes,
   HOME_NAV_ROUTE,
+  SANDBOX_HOME_NAV_ROUTE,
 } from "~/components/navigation/navConfig";
 import ThemeToggle from "~/components/navigation/ThemeToggle";
 import UserAvatar from "~/components/navigation/UserAvatar";
@@ -29,9 +30,11 @@ export interface MobileNavDrawerProps {
   isOpen: boolean;
   onClose: () => void;
   user?: unknown;
+  /** Signed-out sandbox: list the same tabs, with everything but Home disabled ("Sign up to open"). */
+  sandbox?: boolean;
 }
 
-const MobileNavDrawer: FC<MobileNavDrawerProps> = ({ isOpen, onClose, user }) => {
+const MobileNavDrawer: FC<MobileNavDrawerProps> = ({ isOpen, onClose, user, sandbox }) => {
   const [mounted, setMounted] = useState(false);
   const { profile } = useUserProfile();
 
@@ -92,7 +95,11 @@ const MobileNavDrawer: FC<MobileNavDrawerProps> = ({ isOpen, onClose, user }) =>
   if (!isOpen) return null;
 
   const enabled = profile.enabledPages || [];
-  const authRoutes = user ? filterNavRoutes(AUTH_NAV_ROUTES, enabled, isPageEnabled) : [];
+  const authRoutes = user
+    ? filterNavRoutes(AUTH_NAV_ROUTES, enabled, isPageEnabled)
+    : sandbox
+      ? AUTH_NAV_ROUTES
+      : [];
 
   const drawerContent = (
     <>
@@ -127,7 +134,8 @@ const MobileNavDrawer: FC<MobileNavDrawerProps> = ({ isOpen, onClose, user }) =>
           </div>
           <NavMenu
             isMobile
-            routes={[HOME_NAV_ROUTE, ...authRoutes]}
+            routes={[sandbox && !user ? SANDBOX_HOME_NAV_ROUTE : HOME_NAV_ROUTE, ...authRoutes]}
+            isRouteDisabled={sandbox && !user ? (item) => item.key !== "home" : undefined}
             variant="mobile"
             onNavigate={onClose}
           />
