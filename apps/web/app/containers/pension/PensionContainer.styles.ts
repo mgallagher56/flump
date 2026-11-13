@@ -1,5 +1,4 @@
 import { css, cva } from "@repo/ui/styled-system/css";
-import type { CSSProperties } from "react";
 
 export const pageRoot = css({
   display: "flex",
@@ -245,7 +244,7 @@ export const checkHint = css({
 });
 
 export const proportionBar = css({
-  display: "flex",
+  display: "block",
   height: "12px",
   width: "100%",
   borderRadius: "full",
@@ -254,17 +253,14 @@ export const proportionBar = css({
 });
 
 export const employeeSegment = css({
-  backgroundColor: "chart.primary",
-  transition: "width 0.4s ease",
+  fill: "chart.primary",
 });
 
 export const employerSegment = css({
-  backgroundColor: "chart.debt",
-  transition: "width 0.4s ease",
+  fill: "chart.debt",
 });
 
 /** Segment widths follow the entered percentages, so they cannot be static classes. */
-export const segmentWidth = (percent: number): CSSProperties => ({ width: `${percent}%` });
 
 export const legendRow = css({
   display: "flex",

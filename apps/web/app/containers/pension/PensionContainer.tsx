@@ -72,7 +72,6 @@ import {
   rulesCard,
   rulesHeader,
   rulesTitle,
-  segmentWidth,
   strong,
   tabButton,
   tabList,
@@ -87,6 +86,9 @@ type PensionTab = "forecaster" | "pots" | "rules";
 const ASSUMED_RATE_LABEL = "Default: auto-enrolment minimum. Change in Profile";
 const DEFAULT_GROWTH_NOTE =
   "No growth rate is set on your pots, so the forecast uses a 5% placeholder. Edit a pot to set its rate.";
+
+const percentFormat = new Intl.NumberFormat("en-GB", { maximumFractionDigits: 1 });
+const formatPercent = (value: number) => `${percentFormat.format(value)}%`;
 
 export const PensionContainer: FC = () => {
   const loaderData = useLoaderData<typeof loader>();
@@ -577,7 +579,7 @@ export const PensionContainer: FC = () => {
                     onClick={handleSaveInlineRates}
                   >
                     <Icon icon={Check} size="sm" />
-                    {isSavingRates ? "Saving..." : "Save to profile"}
+                    {isSavingRates ? "Saving…" : "Save to profile"}
                   </Button>
                 </div>
               )}
@@ -670,17 +672,23 @@ export const PensionContainer: FC = () => {
             </div>
           )}
 
-          <div aria-hidden="true" className={proportionBar}>
-            <div className={employeeSegment} style={segmentWidth(employeeShare)} />
-            <div className={employerSegment} style={segmentWidth(employerShare)} />
-          </div>
+          {/* SVG rect widths are attributes, so the split needs no inline style. */}
+          <svg
+            aria-hidden="true"
+            className={proportionBar}
+            preserveAspectRatio="none"
+            viewBox="0 0 100 12"
+          >
+            <rect className={employeeSegment} height="12" width={employeeShare} x="0" />
+            <rect className={employerSegment} height="12" width={employerShare} x={employeeShare} />
+          </svg>
 
           <div className={legendRow}>
             <div className={legendGroup}>
               <span className={legendItem}>
                 <span aria-hidden="true" className={dot({ series: "employee" })} />
                 <span>
-                  <strong>Employee:</strong> {employeePercent}% (
+                  <strong>Employee:</strong> {formatPercent(employeePercent)} (
                   {formatCurrency(monthlyEmployeeContrib)}
                   /mo)
                   {ratesAssumed && <span className={assumedLabel}>{ASSUMED_RATE_LABEL}</span>}
@@ -689,7 +697,7 @@ export const PensionContainer: FC = () => {
               <span className={legendItem}>
                 <span aria-hidden="true" className={dot({ series: "employer" })} />
                 <span>
-                  <strong>Employer:</strong> {employerPercent}% (
+                  <strong>Employer:</strong> {formatPercent(employerPercent)} (
                   {formatCurrency(standardMonthlyEmployerContrib)}/mo
                   {monthlyEmployerNiContrib > 0 && (
                     <span className={niNote}>

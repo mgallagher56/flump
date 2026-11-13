@@ -72,7 +72,7 @@ export const PensionSummary: FC<PensionSummaryProps> = ({
           monthlyTotal === null
             ? "Add your salary to include your own and your employer's contributions"
             : hasSalary
-              ? `You ${pct(employeePercent)} and your employer ${pct(employerPercent)} of salary${
+              ? `Your ${pct(employeePercent)} and your employer's ${pct(employerPercent)} of salary${
                   directMonthlyContrib > 0 ? ", plus payments into your pots" : ""
                 }`
               : "Payments into your pots only; salary not set"
