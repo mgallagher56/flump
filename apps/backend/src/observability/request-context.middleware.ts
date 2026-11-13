@@ -13,7 +13,7 @@ interface Req {
 interface Res {
   statusCode: number;
   setHeader(name: string, value: string): unknown;
-  once(event: "finish", cb: () => void): unknown;
+  once(event: "finish" | "close", cb: () => void): unknown;
 }
 
 /**
@@ -27,14 +27,25 @@ export function requestContextMiddleware(req: Req, res: Res, next: () => void): 
   req.requestId = requestId;
   res.setHeader("x-request-id", requestId);
   const start = process.hrtime.bigint();
-  res.once("finish", () => {
+  let logged = false;
+  const emit = (aborted: boolean) => {
+    if (logged) return;
+    logged = true;
+    const path = req.route?.path;
+    const route = typeof path === "string" ? path : "unmatched";
+    // Probes hit /health* constantly; only failed or aborted probes are worth a line.
+    if (route.startsWith("/health") && res.statusCode < 400 && !aborted) return;
     logger.log({
       requestId,
       method: req.method,
-      route: req.route?.path ?? "unmatched",
+      route,
       status: res.statusCode,
       durationMs: Math.round(Number(process.hrtime.bigint() - start) / 1e5) / 10,
+      ...(aborted ? { aborted: true } : {}),
     });
-  });
+  };
+  res.once("finish", () => emit(false));
+  // `close` without a prior `finish` means the client went away before the response completed.
+  res.once("close", () => emit(true));
   next();
 }

@@ -23,6 +23,17 @@ The backend reports 5xx responses and uncaught exceptions to Sentry (EU) only wh
 
 The backend logs one structured JSON line per request (`LOG_FORMAT=json`, or `NODE_ENV=production`): `requestId`, `method`, `route`, `status` and `durationMs`. `route` is the route template (`/accounts/:id`, or `unmatched` for 404s and middleware rejections), never the URL. The line never carries the path parameters, query string, headers (including `Authorization` and `Cookie`) or body. Every response carries an `x-request-id` header: a client-supplied value is kept only if it is a UUID, otherwise the server generates one, and the Sentry exception filter tags events with the same id. The code is `apps/backend/src/observability/request-context.middleware.ts`.
 
+In JSON mode Nest nests the logged object under `message`, so a line looks like `{"level":"log","pid":1,"timestamp":...,"message":{"requestId":"...","method":"GET","route":"/accounts/:id","status":200,"durationMs":3.2},"context":"HttpAccess"}`. In Railway, filter on `@message.requestId` or `@message.route`, not `@requestId`. A request whose client disconnected before the response finished is logged once with `"aborted":true`. Successful `/health*` probes are not logged (they would dominate the volume); failing probes are.
+
+Format selection: JSON when `NODE_ENV=production` or `LOG_FORMAT=json`; values are trimmed and case-insensitive. `LOG_FORMAT=text` forces Nest's text format even in production (for local debugging); any other `LOG_FORMAT` value falls back to the `NODE_ENV` rule.
+
+`x-request-id` is for correlation only. It is never used for authorisation, idempotency or deduplication, and a client can only choose a UUID.
+
+Known gaps:
+
+- Nest's default `ExceptionsHandler` logs `error.message` and the stack to stdout unscrubbed, and the raw `console.error` calls listed in E20 L2 stay as plain lines.
+- Free-text credential redaction (`password=...`, `token=...` inside message strings) is not applied to log output. Tracked follow-up: the `ConsoleLogger` `redactor` option with `redactString` from `@flump/observability`.
+
 The web app's access log is the morgan log that `react-router-serve` writes, which includes the request path and query string. For the beta this is accepted (decision OD-4), on the condition that no web route reads a secret from a query string. A custom `@react-router/express` server with a route-template access log replaces it at the domain cutover, or earlier if logs leave Railway or a query string starts carrying secrets.
 
 Planned guard (not built yet): a test that lists the `searchParams.get` keys allowed in web routes and fails when a route reads any other key, so a new query-string parameter has to be reviewed against this policy.

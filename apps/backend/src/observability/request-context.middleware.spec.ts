@@ -1,7 +1,15 @@
-import { Controller, Get, type INestApplication, type LoggerService, Param } from "@nestjs/common";
+import { EventEmitter } from "node:events";
+import {
+  Controller,
+  Get,
+  type INestApplication,
+  Logger,
+  type LoggerService,
+  Param,
+} from "@nestjs/common";
 import { Test } from "@nestjs/testing";
 import request from "supertest";
-import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { applySecurity } from "../config/security.config";
 import { requestContextMiddleware } from "./request-context.middleware";
 
@@ -85,5 +93,47 @@ describe("requestContextMiddleware", () => {
     const res = await request(app.getHttpServer()).get("/accounts/1").set("x-request-id", supplied);
     expect(res.headers["x-request-id"]).toBe(supplied);
     expect(lines[0]?.requestId).toBe(supplied);
+  });
+});
+
+describe("requestContextMiddleware lifecycle (fake req/res)", () => {
+  function run(route: unknown, events: ("finish" | "close")[], statusCode = 200) {
+    const spy = vi.spyOn(Logger.prototype, "log").mockImplementation(() => undefined);
+    const res = Object.assign(new EventEmitter(), {
+      statusCode,
+      setHeader: () => undefined,
+    });
+    const req = {
+      method: "GET",
+      headers: {},
+      route: route === undefined ? undefined : { path: route as string },
+    };
+    requestContextMiddleware(req, res, () => undefined);
+    for (const e of events) res.emit(e);
+    const calls = spy.mock.calls.map((c) => c[0] as Record<string, unknown>);
+    spy.mockRestore();
+    return calls;
+  }
+
+  it("logs one aborted line when the client closes before finish", () => {
+    const calls = run("/accounts/:id", ["close"]);
+    expect(calls).toHaveLength(1);
+    expect(calls[0]).toMatchObject({ route: "/accounts/:id", aborted: true });
+  });
+
+  it("logs exactly once when finish is followed by close", () => {
+    const calls = run("/accounts/:id", ["finish", "close"]);
+    expect(calls).toHaveLength(1);
+    expect(calls[0]?.aborted).toBeUndefined();
+  });
+
+  it("treats a non-string route path as unmatched", () => {
+    expect(run({ not: "a string" }, ["finish"])[0]).toMatchObject({ route: "unmatched" });
+  });
+
+  it("skips successful health probes but logs failing ones", () => {
+    expect(run("/health", ["finish"])).toHaveLength(0);
+    expect(run("/health/ready", ["finish"])).toHaveLength(0);
+    expect(run("/health/ready", ["finish"], 503)).toHaveLength(1);
   });
 });
