@@ -3,6 +3,7 @@ import { PortfolioSnapshot } from "../portfolio.js";
 import {
   calculateUKTax,
   getRecordAnnualTotalForTaxYear,
+  getTaxYearForRecordDate,
   type TaxRecord,
 } from "../tax-calculator.js";
 import { calculate100kTaxTrap } from "../uk-tax.js";
@@ -128,6 +129,17 @@ describe.each(NAMES)("persona %s: portfolio totals", (name) => {
     expect(budgetTotals(fixture)).toEqual(expected.budget);
   });
 });
+
+describe.each(NAMES.filter((n) => n !== "newUser" && PERSONAS[n].fixture.budget.length > 0))(
+  "persona %s: budget salary row",
+  (name) => {
+    it("equals the engine take-home monthly figure (2026/27)", () => {
+      const { fixture } = PERSONAS[name];
+      const row = fixture.budget.find((b) => b.isIncome && b.name === "Salary (net)");
+      expect(row?.amount).toBe(takeHomeValue(fixture).monthly);
+    });
+  },
+);
 
 describe("P1 Sam", () => {
   const { fixture } = PERSONAS.sam;
@@ -285,7 +297,7 @@ describe("P4 Dan: self assessment records over two tax years", () => {
     const annual = dan.taxRecords.filter((t) => t.frequency === "annual");
     expect(annual).toHaveLength(4);
     for (const rec of annual) {
-      const own = rec.date >= "2026-04-01" ? "2026/27" : "2025/26";
+      const own = getTaxYearForRecordDate(rec.date);
       const other = own === "2026/27" ? "2025/26" : "2026/27";
       expect(getRecordAnnualTotalForTaxYear(rec, own)).toBe(Number(rec.amount));
       expect(getRecordAnnualTotalForTaxYear(rec, other)).toBe(0);
@@ -296,7 +308,10 @@ describe("P4 Dan: self assessment records over two tax years", () => {
   it("applies the Section 24 credit at 20% of the finance cost, and owes extra tax on top of PAYE", () => {
     for (const year of ["2025/26", "2026/27"]) {
       const r = calculateUKTax(year, dan.taxRecords, 46000, 100);
-      expect(r.rentalPropertyTaxCredit).toBeCloseTo(r.rentalMortgageInterestShare * 0.2, 2);
+      expect(r.rentalPropertyTaxCredit).toBeCloseTo(
+        (danTaxYearsExpected[year]?.rentalMortgageInterest ?? 0) * 0.2,
+        2,
+      );
       expect(r.rentalPropertyTaxDueAfterCredit).toBeCloseTo(
         r.rentalPropertyTaxDueBeforeCredit - r.rentalPropertyTaxCredit,
         2,
@@ -395,6 +410,8 @@ describe("heavy persona", () => {
     expect(snap.toDebtItems().map((d) => d.id)).not.toContain("heavy-owed");
   });
 
+  // History only includes accounts that have detail rows (portfolio.ts filters on
+  // history.length > 0), so its end-state net worth differs from getTotalNetWorth() by design today.
   it("carries values forward month by month, with the later duplicate row winning", () => {
     const history = snap.getMonthlyHistory(12);
     expect(history).toHaveLength(heavyHistoryExpected.length);

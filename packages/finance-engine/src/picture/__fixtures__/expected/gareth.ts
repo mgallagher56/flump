@@ -23,11 +23,11 @@ export const garethExpected: PersonaExpected = {
     debtItemIds: [],
   },
   budget: {
-    income: 4950,
+    income: 4000, // net salary = engine take-home monthly for 72,000, 10% pension
     essentials: 2300, // 1,150 + 420 + 480 + 250
     savings: 1300, // 500 + 800
-    discretionary: 700, // 400 + 300
-    surplus: 650, // 4,950 - (2,300 + 1,300 + 700)
+    discretionary: 300, // 100 + 200
+    surplus: 100, // 4,000 - (2,300 + 1,300 + 300)
   },
 };
 

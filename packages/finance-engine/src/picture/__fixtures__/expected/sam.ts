@@ -23,10 +23,10 @@ export const samExpected: PersonaExpected = {
     debtItemIds: [], // student loan is not in the payoff set
   },
   budget: {
-    income: 2300, // net salary
+    income: 2382, // net salary = engine take-home monthly for 38,000 Plan 2, 2026/27
     essentials: 1280, // 850 + 120 + 220 + 90
     savings: 150,
     discretionary: 200,
-    surplus: 670, // 2,300 - (1,280 + 150 + 200)
+    surplus: 752, // 2,382 - (1,280 + 150 + 200)
   },
 };

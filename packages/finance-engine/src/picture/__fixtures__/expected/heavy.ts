@@ -29,11 +29,11 @@ export const heavyExpected: PersonaExpected = {
     debtItemIds: ["heavy-pcp", "heavy-card-a", "heavy-card-b", "heavy-overdraft"],
   },
   budget: {
-    income: 7950, // 6,350 + 400 + 1,200
+    income: 6990, // 5,390 net salary (engine take-home monthly) + 400 + 1,200
     essentials: 3245, // 1,150+560+190+140+45+35+30+520+265+70+120+120
     savings: 900, // 500 + 400
     discretionary: 650, // 250+220+55+45+80
-    surplus: 3155, // 7,950 - (3,245 + 900 + 650)
+    surplus: 2195, // 6,990 - (3,245 + 900 + 650)
   },
 };
 
@@ -92,6 +92,8 @@ export const heavyTaxYearsExpected: Record<string, TaxYearRecordExpectation> = {
  * June to November 2026, carrying each account's last known value forward. Accounts tracked:
  * main current, instant saver, SIPP, home mortgage, overdrawn joint current (student loan excluded).
  */
+// History only includes accounts that have detail rows (portfolio.ts filters on history.length > 0),
+// so the end-state net worth here differs from getTotalNetWorth() by design today.
 export const heavyHistoryExpected: MonthlyHistoryExpectation[] = [
   // Jun: 3,000 + 8,000 assets; mortgage 207,000 + joint 300 owed. SIPP has no row yet.
   { year: 2026, month: 6, totalAssets: 11000, totalLiabilities: 207300, netWorth: -196300 },

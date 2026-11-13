@@ -69,6 +69,6 @@ export const trapEdgeTrapExpected: Record<
     personalAllowanceTaper: 12570, // taper is capped at the allowance
     marginalRatePct: 45, // additional rate, no taper factor
     effectiveMarginalRatePct: 47, // + 2% NI
-    contributionRequiredToEscape: 25141,
+    contributionRequiredToEscape: 25141, // cements current engine behaviour (excess over 100k, though already outside the trap)
   },
 };

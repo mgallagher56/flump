@@ -13,7 +13,7 @@
     }
   },
   "scripts": {
-    "build": "tsc",
+    "build": "tsc -p tsconfig.build.json",
     "lint": "biome check .",
     "check-types": "tsc --noEmit",
     "test": "vitest run",

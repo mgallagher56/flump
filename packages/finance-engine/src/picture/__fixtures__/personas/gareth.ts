@@ -57,15 +57,15 @@ export const gareth: PersonaFixture = {
   ],
   details: [],
   budget: [
-    budgetEntry("gareth-b1", "income", "Salary (net)", 4950, { isIncome: true }),
+    budgetEntry("gareth-b1", "income", "Salary (net)", 4000, { isIncome: true }),
     budgetEntry("gareth-b2", "housing", "Mortgage", 1150, { isEssential: true }),
     budgetEntry("gareth-b3", "bills", "Household bills", 420, { isEssential: true }),
     budgetEntry("gareth-b4", "food", "Groceries", 480, { isEssential: true }),
     budgetEntry("gareth-b5", "transport", "Car and fuel", 250, { isEssential: true }),
     budgetEntry("gareth-b6", "savings", "ISA", 500),
     budgetEntry("gareth-b7", "savings", "SIPP", 800),
-    budgetEntry("gareth-b8", "leisure", "Holidays", 400),
-    budgetEntry("gareth-b9", "leisure", "Hobbies", 300),
+    budgetEntry("gareth-b8", "leisure", "Holidays", 100),
+    budgetEntry("gareth-b9", "leisure", "Hobbies", 200),
   ],
   taxRecords: [],
 };
