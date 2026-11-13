@@ -1,16 +1,6 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import RunwayCalculator from "./RunwayCalculator";
-
-vi.mock("~/hooks/useFormatCurrency", () => ({
-  useFormatCurrency: () => ({
-    formatCurrency: (val: number) => `£${Math.round(val).toLocaleString()}`,
-  }),
-}));
-
-vi.mock("~/context/ResponsiveContext", () => ({
-  useResponsive: () => ({ isMobile: false }),
-}));
+import { RunwayCalculator } from "./RunwayCalculator";
 
 describe("RunwayCalculator", () => {
   beforeEach(() => {
@@ -106,7 +96,7 @@ describe("RunwayCalculator", () => {
     expect(screen.getByText("6 months")).toBeDefined();
   });
 
-  it("renders non-primary income in Income I'd Keep with colored toggle states and updates on toggle", () => {
+  it("renders non-primary income in Income you would keep with colored toggle states and updates on toggle", () => {
     const onSaveSettings = vi.fn();
     const entriesWithIncome = [
       ...mockEntries,
