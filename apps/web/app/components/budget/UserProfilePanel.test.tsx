@@ -171,6 +171,22 @@ describe("<UserProfilePanel />", () => {
     );
   });
 
+  it("keeps several stored student loan plans unless the user picks one", async () => {
+    render(
+      <UserProfilePanel
+        initialProfile={{ ...DEFAULT_PROFILE, studentLoanPlans: ["PLAN_2", "POSTGRAD"] }}
+      />,
+    );
+    const loan = screen.getByLabelText(/student loan plan/i) as HTMLSelectElement;
+    expect(loan.selectedOptions[0]?.textContent).toBe("Plan 2 and Postgraduate loan");
+    fireEvent.click(screen.getByRole("button", { name: /Save Profile/i }));
+    await waitFor(() =>
+      expect(mockUpdateProfile).toHaveBeenCalledWith(
+        expect.objectContaining({ studentLoanPlans: ["PLAN_2", "POSTGRAD"] }),
+      ),
+    );
+  });
+
   it("shows a stored region and plan, and clearing them saves null", async () => {
     render(
       <UserProfilePanel

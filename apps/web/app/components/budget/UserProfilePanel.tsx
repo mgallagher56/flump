@@ -64,6 +64,10 @@ const selectStyle = css({
   },
 });
 
+const MULTIPLE_PLANS = "MULTIPLE";
+const formatPlan = (plan: string) =>
+  plan === "POSTGRAD" ? "Postgraduate loan" : plan.replace("PLAN_", "Plan ");
+
 const labelStyle = css({
   fontSize: "sm",
   fontWeight: "medium",
@@ -711,7 +715,7 @@ const UserProfilePanel: FC<UserProfilePanelProps> = ({ initialProfile, user }) =
                     Where do you pay tax?
                   </label>
                   <select
-                    className={inputStyle}
+                    className={selectStyle}
                     id="tax-region-select"
                     data-testid="tax-region-select"
                     aria-describedby="tax-region-help"
@@ -723,7 +727,9 @@ const UserProfilePanel: FC<UserProfilePanelProps> = ({ initialProfile, user }) =
                       }))
                     }
                   >
-                    <option value="">Not set (England, Wales and NI rates assumed)</option>
+                    <option value="">
+                      Not set (England, Wales and Northern Ireland rates assumed)
+                    </option>
                     <option value="ENGLAND">England</option>
                     <option value="WALES">Wales</option>
                     <option value="SCOTLAND">Scotland</option>
@@ -738,14 +744,20 @@ const UserProfilePanel: FC<UserProfilePanelProps> = ({ initialProfile, user }) =
                     Student loan plan
                   </label>
                   <select
-                    className={inputStyle}
+                    className={selectStyle}
                     id="student-loan-select"
                     data-testid="student-loan-select"
                     value={
-                      form.studentLoanPlans == null ? "" : (form.studentLoanPlans[0] ?? "NONE")
+                      form.studentLoanPlans == null
+                        ? ""
+                        : form.studentLoanPlans.length > 1
+                          ? MULTIPLE_PLANS
+                          : (form.studentLoanPlans[0] ?? "NONE")
                     }
                     onChange={(e) => {
                       const v = e.target.value;
+                      // Several stored plans are kept as they are unless the user picks one.
+                      if (v === MULTIPLE_PLANS) return;
                       setForm((p) => ({
                         ...p,
                         studentLoanPlans: v === "" ? null : v === "NONE" ? [] : [v],
@@ -753,6 +765,11 @@ const UserProfilePanel: FC<UserProfilePanelProps> = ({ initialProfile, user }) =
                     }}
                   >
                     <option value="">Not set (no loan assumed)</option>
+                    {(form.studentLoanPlans?.length ?? 0) > 1 && (
+                      <option value={MULTIPLE_PLANS}>
+                        {form.studentLoanPlans?.map(formatPlan).join(" and ")}
+                      </option>
+                    )}
                     <option value="NONE">None</option>
                     <option value="PLAN_1">Plan 1</option>
                     <option value="PLAN_2">Plan 2</option>

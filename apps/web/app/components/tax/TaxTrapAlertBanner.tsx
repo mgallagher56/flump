@@ -11,7 +11,12 @@ import { Link } from "react-router";
 import FLPButton from "~/components/core/buttons/FLPButton";
 import FLPHeading from "~/components/core/typography/FLPHeading";
 import FLPText from "~/components/core/typography/FLPText";
-import { getTaxTrapCopy, REGION_ASSUMPTION_LABEL, REGION_SETTINGS_PATH } from "~/utils/taxTrapCopy";
+import {
+  getTaxTrapCopy,
+  REGION_ASSUMPTION_LABEL,
+  REGION_SETTINGS_PATH,
+  regionLinkStyle,
+} from "~/utils/taxTrapCopy";
 
 export interface TaxTrapAlertBannerProps {
   grossIncome: number;
@@ -171,7 +176,7 @@ export const TaxTrapAlertBanner: FC<TaxTrapAlertBannerProps> = ({
             {!region && (
               <FLPText color="text.muted" fontSize="xs" className={css({ marginTop: "4px" })}>
                 {REGION_ASSUMPTION_LABEL}{" "}
-                <Link to={REGION_SETTINGS_PATH} className={css({ textDecoration: "underline" })}>
+                <Link to={REGION_SETTINGS_PATH} className={regionLinkStyle}>
                   Set your region
                 </Link>
               </FLPText>
