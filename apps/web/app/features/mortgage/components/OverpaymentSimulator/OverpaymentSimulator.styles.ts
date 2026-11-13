@@ -81,10 +81,6 @@ export const summaryRow = cva({
   },
 });
 
-export const durationValue = css({
-  fontVariantNumeric: "tabular-nums",
-});
-
 export const chartWrap = cva({
   base: {
     height: "300px",
@@ -215,6 +211,7 @@ export const projectionChip = cva({
 
 export const stateNote = css({
   margin: 0,
+  fontVariantNumeric: "tabular-nums",
   marginTop: "8px",
   fontSize: "xs",
   color: "text.muted",

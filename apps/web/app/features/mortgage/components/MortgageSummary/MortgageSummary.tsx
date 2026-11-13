@@ -100,7 +100,7 @@ export const MortgageSummary: FC<MortgageSummaryProps> = ({
           <div className={summaryTitleRow()}>
             <Icon icon={Home} size="md" />
             <h2 className={summaryTitle()} id="mortgage-summary-title">
-              My mortgage information
+              Where you stand
             </h2>
             <StatusBadge variant="brand">
               {propertyCategory === "residential" ? "Primary residence" : "Buy to let"}
