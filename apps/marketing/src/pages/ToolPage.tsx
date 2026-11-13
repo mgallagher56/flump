@@ -15,8 +15,8 @@ import { Link, useParams } from "react-router-dom";
 import { Footer } from "../components/Footer";
 import { Header } from "../components/Header";
 import { PageMeta } from "../components/PageMeta";
+import { signupCta } from "../utils/site";
 import { isKnownToolSlug, TOOL_SLUG_ALIASES } from "../utils/toolSlugs";
-import { getAppUrl } from "../utils/url";
 import { NotFoundPage } from "./NotFoundPage";
 import { TOOLS_CATALOG } from "./ToolsIndexPage";
 
@@ -29,7 +29,7 @@ const containerStyle = css({
 
 export const ToolPage: FC = () => {
   const { slug } = useParams<{ slug: string }>();
-  const appUrl = getAppUrl();
+  const cta = signupCta();
   const normalizedSlug = slug ? (TOOL_SLUG_ALIASES[slug] ?? slug) : slug;
 
   const toolMeta = TOOLS_CATALOG.find((t) => t.slug === normalizedSlug);
@@ -37,9 +37,14 @@ export const ToolPage: FC = () => {
     return <NotFoundPage />;
   }
 
+  // Invite-only: the button asks for an invite. Open: it hands the calculation to the web app.
+  const ctaText = cta.external
+    ? "Open this calculation in your Flump workspace →"
+    : `${cta.label} →`;
+
   const handleContinue = () => {
     if (typeof window !== "undefined") {
-      window.location.href = `${appUrl}/signup`;
+      window.location.href = cta.href;
     }
   };
 
@@ -116,56 +121,35 @@ export const ToolPage: FC = () => {
 
           {/* Render Active Modular Calculator */}
           {normalizedSlug === "uk-100k-tax-trap-calculator" && (
-            <TaxTrapCalculator
-              ctaText="Open this calculation in your Flump workspace →"
-              onSaveAndContinue={handleContinue}
-            />
+            <TaxTrapCalculator ctaText={ctaText} onSaveAndContinue={handleContinue} />
           )}
 
           {normalizedSlug === "uk-debt-snowball-vs-avalanche-calculator" && (
-            <DebtSnowballCalculator
-              ctaText="Open this calculation in your Flump workspace →"
-              onSaveAndContinue={handleContinue}
-            />
+            <DebtSnowballCalculator ctaText={ctaText} onSaveAndContinue={handleContinue} />
           )}
 
           {(normalizedSlug === "0-percent-balance-transfer-payoff-calculator" ||
             normalizedSlug === "zero-percent-balance-transfer-calculator") && (
-            <ZeroPercentCliffCalculator
-              ctaText="Open this calculation in your Flump workspace →"
-              onSaveAndContinue={handleContinue}
-            />
+            <ZeroPercentCliffCalculator ctaText={ctaText} onSaveAndContinue={handleContinue} />
           )}
 
           {(normalizedSlug === "section-24-landlord-tax-calculator" ||
             normalizedSlug === "landlord-section-24-tax-calculator") && (
-            <Section24Calculator
-              ctaText="Open this calculation in your Flump workspace →"
-              onSaveAndContinue={handleContinue}
-            />
+            <Section24Calculator ctaText={ctaText} onSaveAndContinue={handleContinue} />
           )}
 
           {normalizedSlug === "mortgage-overpayment-vs-isa-calculator" && (
-            <MortgageVsIsaCalculator
-              ctaText="Open this calculation in your Flump workspace →"
-              onSaveAndContinue={handleContinue}
-            />
+            <MortgageVsIsaCalculator ctaText={ctaText} onSaveAndContinue={handleContinue} />
           )}
 
           {(normalizedSlug === "overdraft-cost-and-payoff-calculator" ||
             normalizedSlug === "overdraft-interest-calculator") && (
-            <OverdraftCostCalculator
-              ctaText="Open this calculation in your Flump workspace →"
-              onSaveAndContinue={handleContinue}
-            />
+            <OverdraftCostCalculator ctaText={ctaText} onSaveAndContinue={handleContinue} />
           )}
 
           {(normalizedSlug === "uk-student-loan-overpay-or-invest-calculator" ||
             normalizedSlug === "student-loan-plan-2-calculator") && (
-            <StudentLoanCalculator
-              ctaText="Open this calculation in your Flump workspace →"
-              onSaveAndContinue={handleContinue}
-            />
+            <StudentLoanCalculator ctaText={ctaText} onSaveAndContinue={handleContinue} />
           )}
         </section>
       </main>

@@ -5,6 +5,20 @@ import { describe, expect, it } from "vitest";
 import { McpPage } from "./McpPage";
 
 describe("Marketing McpPage", () => {
+  it("uses the shared sign-up CTA and neutral sample prompts", () => {
+    const { container } = render(
+      <HelmetProvider>
+        <BrowserRouter>
+          <McpPage />
+        </BrowserRouter>
+      </HelmetProvider>,
+    );
+    expect(
+      screen.getAllByRole("link", { name: "Request an invite" })[0]?.getAttribute("href"),
+    ).toBe("/contact#beta");
+    expect(container.textContent).not.toMatch(/should I|reclaim|escape/i);
+  });
+
   it("renders the MCP hero, preview label, value pillars, preview setup, and all 8 tools", () => {
     render(
       <HelmetProvider>

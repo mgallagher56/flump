@@ -1,5 +1,6 @@
 import { Route, Routes } from "react-router-dom";
 import { ThemeProvider } from "./context/ThemeContext";
+import { ContactPage } from "./pages/ContactPage";
 import { HomePage } from "./pages/HomePage";
 import { McpPage } from "./pages/McpPage";
 import { NotFoundPage } from "./pages/NotFoundPage";
@@ -18,6 +19,7 @@ export default function App() {
         <Route path="/pricing" element={<PricingPage />} />
         <Route path="/security" element={<SecurityPage />} />
         <Route path="/mcp" element={<McpPage />} />
+        <Route path="/contact" element={<ContactPage />} />
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </ThemeProvider>

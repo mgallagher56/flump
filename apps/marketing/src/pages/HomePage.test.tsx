@@ -17,7 +17,7 @@ describe("Marketing HomePage (Simplified 6-Section Narrative)", () => {
   it("renders the benefit-focused hero without embedded calculator sliders", () => {
     renderHome();
     expect(screen.getByText(/Your complete UK financial picture in 60 seconds/i)).toBeDefined();
-    expect(screen.getByText(/Get your free baseline →/i)).toBeDefined();
+    expect(screen.getAllByText(/Request an invite →/i)[0]).toBeDefined();
 
     // Verify clean baseline preview card is present
     expect(screen.getByTestId("baseline-snapshot-preview")).toBeDefined();

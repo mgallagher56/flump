@@ -24,6 +24,12 @@ describe("ToolPage", () => {
     expect(screen.getByText("All UK calculators")).toBeTruthy();
   });
 
+  it("asks for a beta invite instead of linking a closed sign-up", () => {
+    renderAt("/tools/uk-100k-tax-trap-calculator");
+    expect(screen.getAllByText(/Request an invite/).length).toBeGreaterThan(0);
+    expect(screen.queryByText(/Open this calculation in your Flump workspace/)).toBeNull();
+  });
+
   it("renders the not-found page for an unknown slug", () => {
     renderAt("/tools/not-a-real-tool");
     expect(screen.getByRole("heading", { level: 1, name: "Page not found" })).toBeTruthy();
@@ -44,8 +50,6 @@ describe("ToolPage", () => {
     "student-loan-plan-2-calculator",
   ])("renders a calculator for %s", (slug) => {
     renderAt(`/tools/${slug}`);
-    expect(
-      screen.getAllByText(/Open this calculation in your Flump workspace/).length,
-    ).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Request an invite →/).length).toBeGreaterThan(0);
   });
 });

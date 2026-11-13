@@ -1,10 +1,11 @@
-import { BUSINESS_DETAILS, formatPrice } from "@flump/business-details";
+import { formatPrice } from "@flump/business-details";
 import { Button } from "@repo/ui";
 import { type FC, useState } from "react";
 import { Footer } from "../../components/Footer";
 import { Header } from "../../components/Header";
 import { PageMeta } from "../../components/PageMeta";
 import { PRICING } from "../../utils/pricing";
+import { signupCta } from "../../utils/site";
 import {
   cardGridStyle,
   cardStyle,
@@ -66,13 +67,14 @@ const FREE_FEATURES = [
   "Section 24 landlord tax calculator",
   "Mortgage overpayment vs Stocks and Shares ISA",
   "Arranged overdraft cost and payoff modeller",
-  "Student loan overpay or invest calculator",
+  "Student loan overpayment comparison",
 ];
 
 const BETA_STATEMENT =
   "Flump is a free, invite-only beta. Nothing is charged. A paid plan may come later and its price is not set.";
 
 export const PricingPage: FC = () => {
+  const cta = signupCta();
   const [isAnnual, setIsAnnual] = useState(false);
   // Build-time constant (vite.config.ts): false in a launch build with no price set, so the paid
   // card, toggle and placeholder price are dropped from the bundle.
@@ -133,12 +135,9 @@ export const PricingPage: FC = () => {
                 </ul>
               </div>
 
-              <a
-                href={`mailto:${BUSINESS_DETAILS.supportEmail.value}?subject=${encodeURIComponent("Flump beta invite request")}`}
-                className={linkResetStyle}
-              >
+              <a href={cta.href} className={linkResetStyle}>
                 <Button size="lg" variant="outline" className={fullWidthButtonStyle}>
-                  Request an invite
+                  {cta.label}
                 </Button>
               </a>
             </div>
