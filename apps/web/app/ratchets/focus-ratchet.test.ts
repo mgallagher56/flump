@@ -11,7 +11,7 @@ const ALLOWLIST: string[] = [
   "components/core/dialogs/FLPModal.tsx",
   "components/core/dialogs/TaxDisclaimerButton.tsx",
   "components/dialogs/connectBankWizard/ConnectBankWizard.tsx",
-  "components/tax/CopyTaxYearModal.tsx",
+  "features/tax/components/CopyTaxYearModal/CopyTaxYearModal.tsx",
   "features/feedback/components/ConfirmDialog/ConfirmDialog.styles.ts",
 ];
 

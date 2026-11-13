@@ -3,8 +3,6 @@ apps/web/app/components/accounts/BankConnectionsList.tsx
 apps/web/app/components/debt/UkDebtInstrumentsCard.tsx
 apps/web/app/components/pension/PensionAccountsList.tsx
 apps/web/app/components/pension/PensionQuickStartWizard.tsx
-apps/web/app/components/tax/PaymentsOnAccountCard.tsx
-apps/web/app/components/tax/TaxIncomeSectionCard.tsx
 apps/web/app/containers/accounts/accountDetailContainer/AccountDetailContainer.tsx
 apps/web/app/features/debt/components/PayoffStrategyControls/PayoffStrategyControls.tsx
 apps/web/app/routes/_index.tsx

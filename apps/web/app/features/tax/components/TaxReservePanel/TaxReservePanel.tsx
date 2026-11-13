@@ -1,12 +1,10 @@
 import type { TaxCalculationResult } from "@flump/finance-engine";
 import { Button, Card, CurrencyInput, controlProps, FormField, Money, TextInput } from "@repo/ui";
 import type { FC, ReactNode } from "react";
-import PaymentsOnAccountCard from "~/components/tax/PaymentsOnAccountCard";
 import TaxEstimateNote from "~/components/tax/TaxEstimateNote";
-import TaxTrapAlertBanner, {
-  type TaxTrapAlertBannerProps,
-} from "~/components/tax/TaxTrapAlertBanner";
 import { NotSet } from "~/features/feedback/components/NotSet";
+import { PaymentsOnAccountCard } from "../PaymentsOnAccountCard";
+import { TaxTrapAlertBanner, type TaxTrapAlertBannerProps } from "../TaxTrapAlertBanner";
 import {
   cardBody,
   cardIntro,

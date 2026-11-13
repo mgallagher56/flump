@@ -52,7 +52,7 @@ describe("<TaxIncomeSectionCard />", () => {
   test("allows opening add modal and edit modal", () => {
     const { getByText, getByTitle } = customRender(<TaxIncomeSectionCard {...defaultProps} />);
 
-    const addBtn = getByText(/Add Income/i);
+    const addBtn = getByText(/Add income/i);
     fireEvent.click(addBtn);
     expect(defaultProps.onOpenAddModal).toHaveBeenCalledWith("self-employed", "income");
 
@@ -114,7 +114,7 @@ describe("<TaxIncomeSectionCard />", () => {
     expect(defaultProps.onOpenAddModal).toHaveBeenCalledWith("self-employed", "expense");
 
     // Open Inline Quick-Add form and submit
-    fireEvent.click(getByText(/Inline Quick-Add/i));
+    fireEvent.click(getByText(/Quick add/i));
     const nameInput = getByPlaceholderText(/e\.g\. flat rent/i);
     fireEvent.change(nameInput, { target: { value: "Domain Renewal" } });
     const amountInput = getByPlaceholderText(/Amount/i);
