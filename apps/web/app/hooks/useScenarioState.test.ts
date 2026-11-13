@@ -68,6 +68,29 @@ describe("useScenarioState", () => {
     expect(result.current.isModified).toBe(false);
   });
 
+  test("NaN is a distinct edit and -0 equals 0", () => {
+    const { result } = renderHook(() => useScenarioState({ a: 0 as number | null, b: 5 }));
+    act(() => result.current.set("a", -0));
+    expect(result.current.isEdited("a")).toBe(false);
+    expect(Object.is(result.current.values.a, 0)).toBe(true);
+    act(() => result.current.set("b", Number.NaN));
+    expect(result.current.isEdited("b")).toBe(true);
+    act(() => result.current.set("b", 5));
+    expect(result.current.isModified).toBe(false);
+  });
+
+  test("a structurally equal new saved keeps set, values and isModified stable", () => {
+    const { result, rerender } = renderHook(({ s }) => useScenarioState(s), {
+      initialProps: { s: { balance: 180000, rate: 4.5 } },
+    });
+    act(() => result.current.set("rate", 5.2));
+    const { set, values } = result.current;
+    rerender({ s: { balance: 180000, rate: 4.5 } });
+    expect(result.current.set).toBe(set);
+    expect(result.current.values).toBe(values);
+    expect(result.current.isModified).toBe(true);
+  });
+
   describe("no side effects", () => {
     beforeEach(() => {
       vi.stubGlobal("fetch", vi.fn());

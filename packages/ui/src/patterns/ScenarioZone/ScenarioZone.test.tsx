@@ -63,6 +63,12 @@ describe("ScenarioZone", () => {
     expect(screen.queryByRole("button", { name: /apply/i })).toBeNull();
   });
 
+  it("exposes the title test id and an optional section id", () => {
+    render(<ScenarioZone id="scenario">x</ScenarioZone>);
+    expect(screen.getByTestId("scenario-zone-title").textContent).toBe("Model a change");
+    expect(screen.getByTestId("scenario-zone").id).toBe("scenario");
+  });
+
   describe("announcement", () => {
     beforeEach(() => vi.useFakeTimers());
     afterEach(() => vi.useRealTimers());
@@ -77,6 +83,14 @@ describe("ScenarioZone", () => {
       });
       const status = screen.getByRole("status");
       expect(status.textContent).toBe("Illustration: Interest saved £2,000");
+    });
+
+    it("speaks a non-empty announcement present at mount (pages keep it empty until edited)", () => {
+      render(<ScenarioZone announcement="Interest saved £1,000">x</ScenarioZone>);
+      act(() => {
+        vi.advanceTimersByTime(1000);
+      });
+      expect(screen.getByRole("status").textContent).toBe("Illustration: Interest saved £1,000");
     });
 
     it("speaks the first announcement that follows an empty one", () => {
