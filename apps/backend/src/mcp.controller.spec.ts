@@ -1,5 +1,6 @@
 import { BadRequestException, ParseUUIDPipe } from "@nestjs/common";
 import { describe, expect, it, vi } from "vitest";
+import type { McpTokenService } from "./agent/mcp-token.service";
 import { AuthGuard } from "./auth/auth.guard";
 import { McpController } from "./mcp.controller";
 import type { McpService } from "./mcp.service";
@@ -10,6 +11,13 @@ describe("McpController", () => {
     getHttpHandler: vi.fn().mockReturnValue({
       handleExpressRequest: vi.fn().mockResolvedValue(undefined),
     }),
+    getContextPack: vi.fn().mockResolvedValue({
+      pack: { metadata: { isAnonymized: true } },
+      markdown: "# Flump Context Pack",
+    }),
+  } as unknown as McpService;
+
+  const mockTokenService = {
     listTokens: vi.fn().mockResolvedValue([
       {
         id: "tok_1",
@@ -26,13 +34,9 @@ describe("McpController", () => {
       tokenPrefix: "flump_pat_abcd...7890",
     }),
     revokeToken: vi.fn().mockResolvedValue({ success: true }),
-    getContextPack: vi.fn().mockResolvedValue({
-      pack: { metadata: { isAnonymized: true } },
-      markdown: "# Flump Context Pack",
-    }),
-  } as unknown as McpService;
+  } as unknown as McpTokenService;
 
-  const controller = new McpController(mockMcpService);
+  const controller = new McpController(mockMcpService, mockTokenService);
 
   it("lists active AI connection tokens", async () => {
     const tokens = await controller.listTokens({ user: { id: "u_1" } });
@@ -50,7 +54,7 @@ describe("McpController", () => {
   });
 
   it("surfaces the service's BadRequestException as a 400", async () => {
-    vi.mocked(mockMcpService.createPatToken).mockRejectedValueOnce(
+    vi.mocked(mockTokenService.createPatToken).mockRejectedValueOnce(
       new BadRequestException("Token expiry must be one of 7, 30, 90, 365 days."),
     );
     const err = await controller
