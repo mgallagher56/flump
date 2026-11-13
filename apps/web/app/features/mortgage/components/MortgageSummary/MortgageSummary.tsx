@@ -258,9 +258,7 @@ export const MortgageSummary: FC<MortgageSummaryProps> = ({
             emptyAction={addAction("remaining balance", canSaveFigures)}
             label="Remaining balance"
             tone="hero"
-            value={
-              loanAmount > 0 ? <Money size="kpi" tone="onContrast" value={loanAmount} /> : null
-            }
+            value={loanAmount > 0 ? <Money size="lg" tone="onContrast" value={loanAmount} /> : null}
           />
           <KpiCard
             emptyAction={addAction("interest rate", canSaveFigures)}
