@@ -30,6 +30,49 @@ describe("parseEnGbNumber", () => {
   });
 });
 
+describe("parseEnGbNumber hardening", () => {
+  it("normalises negative zero and rejects unsafe or non-finite values", () => {
+    expect(Object.is(parseEnGbNumber("-0"), 0)).toBe(true);
+    expect(parseEnGbNumber("9007199254740993")).toBeNull();
+    expect(parseEnGbNumber(`1${"0".repeat(400)}`)).toBeNull();
+  });
+
+  it("treats a lone symbol as not a number", () => {
+    expect(parseEnGbNumber("£")).toBeNull();
+    expect(parseEnGbNumber("%")).toBeNull();
+  });
+});
+
+describe("per-field characters", () => {
+  it("PercentInput rejects £ and reports it through onInvalid", () => {
+    const onInvalid = vi.fn();
+    const onValueChange = vi.fn();
+    render(<PercentInput aria-label="Rate" onInvalid={onInvalid} onValueChange={onValueChange} />);
+    fireEvent.change(screen.getByLabelText("Rate"), { target: { value: "£4" } });
+    expect(onInvalid).toHaveBeenCalledWith("£4");
+    expect(onValueChange).not.toHaveBeenCalled();
+  });
+
+  it("CurrencyInput rejects % and a pasted word, reporting both", async () => {
+    const { CurrencyInput } = await import("../CurrencyInput/CurrencyInput");
+    const onInvalid = vi.fn();
+    render(<CurrencyInput aria-label="Balance" onInvalid={onInvalid} />);
+    const input = screen.getByLabelText("Balance");
+    fireEvent.change(input, { target: { value: "4%" } });
+    fireEvent.change(input, { target: { value: "abc" } });
+    expect(onInvalid).toHaveBeenCalledTimes(2);
+  });
+
+  it("a lone symbol calls onInvalid and emits null", () => {
+    const onInvalid = vi.fn();
+    const onValueChange = vi.fn();
+    render(<PercentInput aria-label="Rate" onInvalid={onInvalid} onValueChange={onValueChange} />);
+    fireEvent.change(screen.getByLabelText("Rate"), { target: { value: "%" } });
+    expect(onInvalid).toHaveBeenCalledWith("%");
+    expect(onValueChange).toHaveBeenLastCalledWith(null);
+  });
+});
+
 describe("formatEnGbNumber", () => {
   it.each([
     [1234567.891, 2, "1,234,567.89"],

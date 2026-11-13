@@ -2,7 +2,7 @@ import type { FC } from "react";
 import { cx } from "../../../styled-system/css";
 import { TextInput, type TextInputProps } from "../TextInput/TextInput";
 import { currencyInputRecipe } from "./CurrencyInput.styles";
-import { formatCurrencyInput, roundToPennies } from "./parseCurrency";
+import { formatCurrencyInput, MONEY_CHARS, roundToPennies } from "./parseCurrency";
 import { useNumericText } from "./useNumericText";
 
 export interface CurrencyInputProps
@@ -54,6 +54,8 @@ export const CurrencyInput: FC<CurrencyInputProps> = ({
     round: roundToPennies,
     min,
     max,
+    allowed: MONEY_CHARS,
+    symbol: "£",
   });
 
   return (

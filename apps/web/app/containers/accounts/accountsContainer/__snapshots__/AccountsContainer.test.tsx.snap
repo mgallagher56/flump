@@ -49,15 +49,11 @@ exports[`<AccountsContainer /> > should render as expected when accounts exist 1
       <button
         aria-expanded="false"
         aria-haspopup="dialog"
-        class="pos_relative d_inline-flex ai_center jc_center gap_2 bdr_xl bd-w_1.5px border-style_solid bd-c_border.strong fw_bold cursor_pointer lh_1.25 ta_center td_none py_2 [@media_(pointer:_coarse)]:min-h_touch motionSafe:trs-prop_background-color,_border-color,_box-shadow,_transform,_opacity motionSafe:trs-dur_fast motionSafe:trs-tmf_standard motionSafe:active:trf_scale(0.97) [&:is(:disabled,_[disabled])]:bg_surface.sunken [&:is(:disabled,_[disabled])]:c_text.muted [&:is(:disabled,_[disabled])]:bd-c_border.subtle [&:is(:disabled,_[disabled])]:cursor_not-allowed [&:is(:disabled,_[disabled])]:bx-sh_none [&[aria-busy=true]]:cursor_progress focusVisible:ring_2px_solid focusVisible:ring-c_border.focusRing focusVisible:ring-o_2px bg_transparent c_text.primary hover:bg_surface.subtle px_6 fs_md min-h_density.control.lg"
+        class="pos_relative d_inline-flex ai_center jc_center gap_2 bdr_xl bd-w_1.5px border-style_solid bd-c_border.strong fw_bold cursor_pointer lh_1.25 ta_center td_none py_2 [@media_(pointer:_coarse)]:min-h_touch motionSafe:trs-prop_background-color,_border-color,_box-shadow,_transform,_opacity motionSafe:trs-dur_fast motionSafe:trs-tmf_standard motionSafe:hover:trf_translateY(-2px) motionSafe:active:trf_scale(0.97) [&:is(:disabled,_[disabled])]:bg_surface.sunken [&:is(:disabled,_[disabled])]:c_text.muted [&:is(:disabled,_[disabled])]:bd-c_border.subtle [&:is(:disabled,_[disabled])]:cursor_not-allowed [&:is(:disabled,_[disabled])]:bx-sh_none [&[aria-busy=true]]:cursor_progress focusVisible:ring_2px_solid focusVisible:ring-c_border.focusRing focusVisible:ring-o_2px bg_transparent c_text.primary hover:bg_surface.subtle px_6 fs_md min-h_density.control.lg"
         data-state="closed"
         type="button"
       >
-        <span
-          class="d_inline-flex ai_center jc_center gap_2"
-        >
-          addAccount
-        </span>
+        addAccount
       </button>
     </div>
   </div>
@@ -378,15 +374,11 @@ exports[`<AccountsContainer /> > should render as expected when no accounts exis
       <button
         aria-expanded="false"
         aria-haspopup="dialog"
-        class="pos_relative d_inline-flex ai_center jc_center gap_2 bdr_xl bd-w_1.5px border-style_solid bd-c_border.strong fw_bold cursor_pointer lh_1.25 ta_center td_none py_2 [@media_(pointer:_coarse)]:min-h_touch motionSafe:trs-prop_background-color,_border-color,_box-shadow,_transform,_opacity motionSafe:trs-dur_fast motionSafe:trs-tmf_standard motionSafe:active:trf_scale(0.97) [&:is(:disabled,_[disabled])]:bg_surface.sunken [&:is(:disabled,_[disabled])]:c_text.muted [&:is(:disabled,_[disabled])]:bd-c_border.subtle [&:is(:disabled,_[disabled])]:cursor_not-allowed [&:is(:disabled,_[disabled])]:bx-sh_none [&[aria-busy=true]]:cursor_progress focusVisible:ring_2px_solid focusVisible:ring-c_border.focusRing focusVisible:ring-o_2px bg_transparent c_text.primary hover:bg_surface.subtle px_6 fs_md min-h_density.control.lg"
+        class="pos_relative d_inline-flex ai_center jc_center gap_2 bdr_xl bd-w_1.5px border-style_solid bd-c_border.strong fw_bold cursor_pointer lh_1.25 ta_center td_none py_2 [@media_(pointer:_coarse)]:min-h_touch motionSafe:trs-prop_background-color,_border-color,_box-shadow,_transform,_opacity motionSafe:trs-dur_fast motionSafe:trs-tmf_standard motionSafe:hover:trf_translateY(-2px) motionSafe:active:trf_scale(0.97) [&:is(:disabled,_[disabled])]:bg_surface.sunken [&:is(:disabled,_[disabled])]:c_text.muted [&:is(:disabled,_[disabled])]:bd-c_border.subtle [&:is(:disabled,_[disabled])]:cursor_not-allowed [&:is(:disabled,_[disabled])]:bx-sh_none [&[aria-busy=true]]:cursor_progress focusVisible:ring_2px_solid focusVisible:ring-c_border.focusRing focusVisible:ring-o_2px bg_transparent c_text.primary hover:bg_surface.subtle px_6 fs_md min-h_density.control.lg"
         data-state="closed"
         type="button"
       >
-        <span
-          class="d_inline-flex ai_center jc_center gap_2"
-        >
-          addAccount
-        </span>
+        addAccount
       </button>
     </div>
   </div>

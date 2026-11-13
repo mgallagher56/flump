@@ -18,6 +18,8 @@ export type ButtonProps = ComponentProps<"button"> &
     /**
      * Shows a spinner in place of the label without changing the button width. Sets
      * `aria-busy` and `aria-disabled`, stays focusable and ignores clicks until it clears.
+     * With `asChild` there is no visual spinner (the child owns its content); only the ARIA
+     * state and the click guard apply.
      */
     pending?: boolean;
   };
@@ -51,7 +53,7 @@ export const Button = ({
   }
   return (
     <button className={classes} {...busy} onClick={handleClick} {...props}>
-      <span className={buttonContentRecipe({ pending })}>{children}</span>
+      {pending ? <span className={buttonContentRecipe({ pending })}>{children}</span> : children}
       {pending ? <span aria-hidden="true" className={buttonSpinnerRecipe()} /> : null}
     </button>
   );
