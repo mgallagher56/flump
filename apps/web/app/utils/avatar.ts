@@ -29,10 +29,9 @@ export function getUserInitials(nameOrEmail?: string | null): string {
 }
 
 /**
- * Resolves user initials by checking display name, firstName/lastName, full name, and email in priority order.
+ * Resolves user initials by checking firstName/lastName, full name, and email in priority order.
  */
 export function resolveUserInitials(options: {
-  displayName?: string | null;
   firstName?: string | null;
   lastName?: string | null;
   user?: {
@@ -48,11 +47,7 @@ export function resolveUserInitials(options: {
     };
   } | null;
 }): string {
-  const { displayName, firstName: optFirst, lastName: optLast, user } = options;
-
-  if (displayName?.trim()) {
-    return getUserInitials(displayName);
-  }
+  const { firstName: optFirst, lastName: optLast, user } = options;
 
   const explicitFirst = optFirst?.trim();
   const explicitLast = optLast?.trim();

@@ -83,7 +83,7 @@ import {
 
 type PensionTab = "forecaster" | "pots" | "rules";
 
-const ASSUMED_RATE_LABEL = "Default: auto-enrolment minimum. Change in Profile";
+const ASSUMED_RATE_LABEL = "Default: auto-enrolment minimum. Change in your pension details";
 const DEFAULT_GROWTH_NOTE =
   "No growth rate is set on your pots, so the forecast uses a 5% placeholder. Edit a pot to set its rate.";
 
@@ -543,7 +543,13 @@ export const PensionContainer: FC = () => {
           }
         />
 
-        <section aria-labelledby="pension-rules-title" className={rulesCard}>
+        <section
+          aria-labelledby="pension-rules-title"
+          className={rulesCard}
+          data-testid="pension-details"
+          id="pension-details"
+          tabIndex={-1}
+        >
           <div className={rulesHeader}>
             <h2 className={rulesTitle} id="pension-rules-title">
               <Icon icon={ShieldCheck} size="sm" />

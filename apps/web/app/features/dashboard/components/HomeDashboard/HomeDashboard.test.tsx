@@ -28,7 +28,7 @@ vi.mock("~/hooks/useUserProfile", async (importOriginal) => {
         profile: {
           id: "1",
           userId: "u1",
-          displayName: "Alex",
+          firstName: "Alex",
           currency: "GBP",
           enabledPages: ["accounts", "budget", "savings", "pension", "mortgage", "tax", "debt"],
           dashboardWidgets: widgets,

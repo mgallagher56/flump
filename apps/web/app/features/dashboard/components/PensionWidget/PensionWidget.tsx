@@ -62,7 +62,7 @@ export const PensionWidget: FC<PensionWidgetProps> = ({
               ) : (
                 <Money
                   notSetAction={
-                    <SampleAwareLink className={actionLink()} to="/app/profile">
+                    <SampleAwareLink className={actionLink()} to="/app/pension#pension-details">
                       Add contribution rates
                     </SampleAwareLink>
                   }
@@ -73,8 +73,8 @@ export const PensionWidget: FC<PensionWidgetProps> = ({
             {ratesKnown && ratesAreDefault && (
               <dd className={detailNote()}>
                 Default: auto-enrolment minimum.{" "}
-                <SampleAwareLink className={actionLink()} to="/app/profile">
-                  Change in profile
+                <SampleAwareLink className={actionLink()} to="/app/pension#pension-details">
+                  Change in your pension details
                 </SampleAwareLink>
               </dd>
             )}

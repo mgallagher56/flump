@@ -25,7 +25,6 @@ export const UserAvatar: FC<UserAvatarProps> = ({
   const effectiveProfile = propProfile !== undefined ? propProfile : atomProfile;
 
   const initials = resolveUserInitials({
-    displayName: effectiveProfile?.displayName,
     firstName: effectiveProfile?.firstName,
     lastName: effectiveProfile?.lastName,
     user,
@@ -99,7 +98,13 @@ export const UserAvatar: FC<UserAvatarProps> = ({
     >
       {hasImage ? (
         <img
-          alt={alt || effectiveProfile?.displayName || user?.name || user?.email || "User Avatar"}
+          alt={
+            alt ||
+            [effectiveProfile?.firstName, effectiveProfile?.lastName].filter(Boolean).join(" ") ||
+            user?.name ||
+            user?.email ||
+            "User Avatar"
+          }
           className={imageStyle}
           data-testid="user-avatar-image"
           id="user-avatar-image"

@@ -50,7 +50,7 @@ const finiteOrNull = (value: unknown): number | null =>
   typeof value === "number" && Number.isFinite(value) ? value : null;
 
 export const HomeDashboard: FC<HomeDashboardProps> = ({
-  user: _user,
+  user,
   checklistProps,
   userProfile,
   accountsData,
@@ -211,6 +211,10 @@ export const HomeDashboard: FC<HomeDashboardProps> = ({
 
   const showCoachCard = financialStage?.stage === "stabilize" && (debtData?.totalDebt ?? 0) > 0;
 
+  // Greeting name comes from the WorkOS name (profile mirrors it); never a free-text display name.
+  const greetingName =
+    profile.firstName?.trim() || user?.firstName?.trim() || user?.user_metadata?.first_name || null;
+
   // Saved per-widget settings (read-only here) still apply; editing them is gone.
   const widgetConfig = (key: DashboardWidgetKey) => profile.dashboardWidgetConfig?.[key] ?? {};
 
@@ -237,9 +241,7 @@ export const HomeDashboard: FC<HomeDashboardProps> = ({
             : "Your live financial snapshot across your active modules."
         }
         title={
-          isSample
-            ? "Example snapshot"
-            : `Welcome back${profile.displayName ? `, ${profile.displayName}` : ""}`
+          isSample ? "Example snapshot" : `Welcome back${greetingName ? `, ${greetingName}` : ""}`
         }
       />
 

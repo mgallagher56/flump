@@ -28,10 +28,11 @@ describe("getUserInitials", () => {
 });
 
 describe("resolveUserInitials", () => {
-  it("prioritizes displayName when present", () => {
+  it("prioritizes the profile first and last name over the user object", () => {
     expect(
       resolveUserInitials({
-        displayName: "Jane Doe",
+        firstName: "Jane",
+        lastName: "Doe",
         user: { email: "other@example.com" },
       }),
     ).toBe("JD");
@@ -40,7 +41,6 @@ describe("resolveUserInitials", () => {
   it("falls back to user firstName and lastName", () => {
     expect(
       resolveUserInitials({
-        displayName: null,
         user: { firstName: "Jane", lastName: "Smith" },
       }),
     ).toBe("JS");
@@ -49,7 +49,6 @@ describe("resolveUserInitials", () => {
   it("falls back to user full name", () => {
     expect(
       resolveUserInitials({
-        displayName: null,
         user: { name: "Bob Martin" },
       }),
     ).toBe("BM");
@@ -58,7 +57,6 @@ describe("resolveUserInitials", () => {
   it("falls back to user email", () => {
     expect(
       resolveUserInitials({
-        displayName: null,
         user: { email: "alice.jones@test.com" },
       }),
     ).toBe("AJ");
@@ -94,7 +92,7 @@ describe("resolveUserInitials", () => {
   });
 
   it("falls back to U when no details exist", () => {
-    expect(resolveUserInitials({ displayName: null, user: null })).toBe("U");
+    expect(resolveUserInitials({ user: null })).toBe("U");
   });
 });
 
