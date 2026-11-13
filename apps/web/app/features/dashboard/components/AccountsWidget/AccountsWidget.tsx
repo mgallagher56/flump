@@ -38,7 +38,7 @@ export interface AccountsWidgetProps {
 }
 
 /** Only asset types are shown in the allocation bar, so the segments add up to 100%. */
-const ASSET_TYPES = ["Current", "Saving", "Investment", "Pension", "Owed"] as const;
+const ASSET_TYPES = ["Current", "Saving", "Investment", "Pension", "Property", "Owed"] as const;
 
 type Series = 1 | 2 | 3 | 4 | 5;
 const SERIES: readonly Series[] = [1, 2, 3, 4, 5];

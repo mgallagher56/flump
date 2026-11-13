@@ -17,14 +17,44 @@ import FLPInput from "~/components/core/inputs/input/FLPInput";
 import FLPSelect from "~/components/core/inputs/select/FLPSelect";
 import FLPBox from "~/components/core/structure/FLPBox";
 import FLPText from "~/components/core/typography/FLPText";
-import { type AccountType, AccountTypeEnum } from "~/containers/accounts/utils";
+import {
+  type AccountType,
+  AccountTypeEnum,
+  STUDENT_LOAN_PLAN_OPTIONS,
+} from "~/containers/accounts/utils";
 import { ConfirmDialog } from "~/features/feedback/components/ConfirmDialog";
 import { useFetcherOutcome } from "~/features/feedback/hooks/useFetcherOutcome";
 import type { loader } from "~/routes/app.accounts._index";
 import { isSafeRedirectUrl } from "~/utils/safeRedirectUrl";
 
-const { CURRENT, SAVING, MORTGAGE, CREDIT_CARD, LOAN, OWED, INVESTMENT, PENSION } = AccountTypeEnum;
-const accountTypeArray = [CURRENT, SAVING, INVESTMENT, PENSION, CREDIT_CARD, MORTGAGE, LOAN, OWED];
+const {
+  CURRENT,
+  SAVING,
+  MORTGAGE,
+  CREDIT_CARD,
+  LOAN,
+  OWED,
+  INVESTMENT,
+  PENSION,
+  PROPERTY,
+  STUDENT_LOAN,
+  OVERDRAFT,
+} = AccountTypeEnum;
+const accountTypeArray = [
+  CURRENT,
+  SAVING,
+  INVESTMENT,
+  PENSION,
+  PROPERTY,
+  CREDIT_CARD,
+  OVERDRAFT,
+  MORTGAGE,
+  LOAN,
+  STUDENT_LOAN,
+  OWED,
+];
+const studentLoanPlans = { items: STUDENT_LOAN_PLAN_OPTIONS.map((p) => ({ ...p })) };
+const DEFAULT_STUDENT_LOAN_PLAN = "PLAN_2";
 const accountTypes = {
   items: accountTypeArray.map((type) => ({ id: type, name: type })),
 };
@@ -132,7 +162,13 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
     accounts = [],
     bankConnectionsEnabled = false,
   }: {
-    accounts?: { id?: string; name?: string; type?: AccountType; balance?: number }[];
+    accounts?: {
+      id?: string;
+      name?: string;
+      type?: AccountType;
+      balance?: number;
+      studentLoanPlan?: string | null;
+    }[];
     bankConnectionsEnabled?: boolean;
   } = useLoaderData<typeof loader>();
   const { t } = useTranslation();
@@ -219,9 +255,14 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
     name: string;
     type: AccountType[];
     balance: string;
+    studentLoanPlan: string[];
   }>({
     name: selectedAccount.name || "",
     type: [selectedAccount.type || accountTypeArray[0]],
+    studentLoanPlan: [
+      (selectedAccount as { studentLoanPlan?: string | null }).studentLoanPlan ||
+        DEFAULT_STUDENT_LOAN_PLAN,
+    ],
     balance: selectedAccount.balance !== undefined ? String(selectedAccount.balance) : "",
   });
 
@@ -238,6 +279,11 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
       setFormInput({
         name: isEditAccount ? selectedAccount.name || "" : "",
         type: [isEditAccount ? selectedAccount.type || accountTypeArray[0] : accountTypeArray[0]],
+        studentLoanPlan: [
+          (isEditAccount &&
+            (selectedAccount as { studentLoanPlan?: string | null }).studentLoanPlan) ||
+            DEFAULT_STUDENT_LOAN_PLAN,
+        ],
         balance:
           isEditAccount && selectedAccount.balance !== undefined
             ? String(selectedAccount.balance)
@@ -245,14 +291,7 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
       });
       setModalOpen(true);
     },
-    [
-      isEditAccount,
-      selectedAccount.balance,
-      selectedAccount.name,
-      selectedAccount.type,
-      dismissSave,
-      dismissDelete,
-    ],
+    [isEditAccount, selectedAccount.balance, selectedAccount, dismissSave, dismissDelete],
   );
 
   const onChangeNameInput = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
@@ -269,8 +308,12 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
     setFormInput((prevState) => ({ ...prevState, type: e.value as AccountType[] }));
   }, []);
 
+  const onChangePlanInput = useCallback((e: { value: string[] }) => {
+    setFormInput((prevState) => ({ ...prevState, studentLoanPlan: e.value }));
+  }, []);
+
   const onAddAccount = useCallback(() => {
-    const { name, type, balance } = formInput;
+    const { name, type, balance, studentLoanPlan } = formInput;
     bankFlowRef.current = false;
     saveOutcome.begin();
     fetcher.submit(
@@ -278,6 +321,7 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
         intent: "create",
         name,
         type: type?.[0] || "",
+        ...(type?.[0] === STUDENT_LOAN ? { studentLoanPlan: studentLoanPlan[0] ?? "" } : {}),
         ...(balance !== "" ? { balance } : {}),
       },
       { method: "POST" },
@@ -314,7 +358,7 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
   }, [bankAuthType, bankToken, fetcher, selectedBank]);
 
   const onEditAccount = useCallback(() => {
-    const { name, type, balance } = formInput;
+    const { name, type, balance, studentLoanPlan } = formInput;
     bankFlowRef.current = false;
     saveOutcome.begin();
     fetcher.submit(
@@ -323,6 +367,7 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
         accountId: accountId || "",
         name,
         type: type?.[0] || "",
+        ...(type?.[0] === STUDENT_LOAN ? { studentLoanPlan: studentLoanPlan[0] ?? "" } : {}),
         ...(balance !== "" ? { balance } : {}),
       },
       { method: "POST" },
@@ -535,6 +580,15 @@ const AddEditAccountsDialogBtn: FC<AddEditAccountsDialogBtnProp> = ({
               value={formInput.type}
               onValueChange={onChangeTypeInput}
             />
+            {formInput.type?.[0] === STUDENT_LOAN ? (
+              <FLPSelect
+                collection={studentLoanPlans}
+                label="Repayment plan"
+                name="studentLoanPlan"
+                value={formInput.studentLoanPlan}
+                onValueChange={onChangePlanInput}
+              />
+            ) : null}
             <FLPInput
               label="Balance"
               name="balance"

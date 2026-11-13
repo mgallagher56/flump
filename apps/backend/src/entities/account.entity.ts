@@ -23,7 +23,10 @@ export class Account {
     | "Credit Card"
     | "Owed"
     | "Investment"
-    | "Pension";
+    | "Pension"
+    | "Property"
+    | "Student Loan"
+    | "Overdraft";
 
   @Column("decimal", { precision: 12, scale: 2, transformer: numericTransformer })
   balance: number;
@@ -55,8 +58,12 @@ export class Account {
   @Column({ name: "is_current", type: "boolean", default: true, nullable: true })
   isCurrent: boolean;
 
-  @Column()
+  @Column({ default: "GBP" })
   currency: string;
+
+  /** Student Loan accounts only: PLAN_1 | PLAN_2 | PLAN_4 | PLAN_5 | POSTGRAD. */
+  @Column({ name: "student_loan_plan", type: "varchar", nullable: true })
+  studentLoanPlan: string | null;
 
   @Column({ name: "connection_id", type: "uuid", nullable: true })
   connectionId: string | null;

@@ -220,11 +220,7 @@ export function userProfileToFinancialBaseline(
           ? 0
           : DEFAULT_FINANCIAL_BASELINE.monthlyHousingCost,
     propertyValue:
-      profile.homeValue !== null && profile.homeValue !== undefined
-        ? Number(profile.homeValue)
-        : mortgageBalance > 0
-          ? Math.round(mortgageBalance * 1.35)
-          : 0,
+      profile.homeValue !== null && profile.homeValue !== undefined ? Number(profile.homeValue) : 0,
     mortgageBalance,
     monthlyOtherOutgoings:
       profile.monthlyOtherOutgoings !== null && profile.monthlyOtherOutgoings !== undefined
@@ -322,8 +318,7 @@ export function hydrateBaselineFromSeed(seed: AnySeedPayload, userId = ""): Fina
     seedAny.totalUnsecuredDebt !== undefined ? seedAny.totalUnsecuredDebt : 0;
   const totalCashSavings = seedAny.totalCashSavings ?? seedAny.initialCashSavings ?? 5000;
   const mortgageBalance = seedAny.mortgageBalance ?? 0;
-  const propertyValue =
-    seedAny.propertyValue ?? (mortgageBalance > 0 ? Math.round(mortgageBalance * 1.35) : 0);
+  const propertyValue = seedAny.propertyValue ?? 0;
   const housingStatus = normalizeHousingStatus(seedAny.housingStatus, mortgageBalance);
   const monthlyHousingCost =
     seedAny.monthlyHousingCost ?? (housingStatus === "OWN_OUTRIGHT" ? 0 : 900);

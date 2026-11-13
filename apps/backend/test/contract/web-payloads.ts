@@ -104,6 +104,15 @@ export const ACCOUNT_CREATE_PAYLOADS = {
     interestRate: 22.9,
     monthlyContribution: 75,
   },
+  /** E23 D19: the accounts dialog's Property type. */
+  propertyAccount: { name: "Family Home", type: "Property", balance: 260000 },
+  /** E23 D18: the accounts dialog's Student Loan type, with its repayment plan. */
+  studentLoanAccount: {
+    name: "Student Loan",
+    type: "Student Loan",
+    balance: 45000,
+    studentLoanPlan: "PLAN_2",
+  },
 } as const;
 
 export const ACCOUNT_UPDATE_PAYLOADS = {
@@ -128,6 +137,13 @@ export const ACCOUNT_UPDATE_PAYLOADS = {
     balance: -1500,
     interestRate: 21.5,
     monthlyContribution: 100,
+  },
+  propertyAccount: { name: "Family Home", type: "Property", balance: 270000 },
+  studentLoanAccount: {
+    name: "Student Loan",
+    type: "Student Loan",
+    balance: 44000,
+    studentLoanPlan: "POSTGRAD",
   },
   /** MortgageContainer sends only the interest rate. */
   mortgagePage: { interestRate: 3.99 },

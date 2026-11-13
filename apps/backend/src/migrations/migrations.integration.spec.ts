@@ -5,6 +5,7 @@ import { typeOrmOptionsFromEnv } from "../config/typeorm.options";
 import { assertSafeTestDatabase } from "../testing/assertSafeTestDatabase";
 import { resolveDbTestMode } from "../testing/dbTestMode";
 import { discoverMigrations, type MigrationClass } from "../testing/discoverMigrations";
+import { AddAccountStudentLoanPlanAndCurrencyDefault1794355800000 } from "./AddAccountStudentLoanPlanAndCurrencyDefault1794355800000";
 import { AddMortgageTermColumns1794355600000 } from "./AddMortgageTermColumns1794355600000";
 import { AddProfileFacts1794355723000 } from "./AddProfileFacts1794355723000";
 import { Baseline1794355200000 } from "./Baseline1794355200000";
@@ -717,6 +718,84 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
         await runner.release();
       }
       expect(await factColumns()).toEqual([]);
+    });
+  });
+
+  describe("AddAccountStudentLoanPlanAndCurrencyDefault1794355800000", () => {
+    const MIGRATION = "AddAccountStudentLoanPlanAndCurrencyDefault1794355800000";
+
+    const planColumn = (): Promise<unknown[]> =>
+      ds.query(
+        `SELECT column_name, data_type, is_nullable, column_default FROM information_schema.columns
+         WHERE table_schema = 'public' AND table_name = 'accounts' AND column_name = 'student_loan_plan'`,
+      );
+    const currencyDefault = async (): Promise<string | null> =>
+      (
+        await ds.query(
+          `SELECT column_default FROM information_schema.columns
+           WHERE table_schema = 'public' AND table_name = 'accounts' AND column_name = 'currency'`,
+        )
+      )[0].column_default;
+
+    it("adds a nullable plan column, defaults currency to GBP and keeps existing rows", async () => {
+      await ds.runMigrations();
+      await ds.query(`DELETE FROM migrations WHERE name = '${MIGRATION}'`);
+      await ds.query(`ALTER TABLE "accounts" DROP CONSTRAINT "CHK_accounts_student_loan_plan"`);
+      await ds.query(`ALTER TABLE "accounts" DROP COLUMN "student_loan_plan"`);
+      await ds.query(`ALTER TABLE "accounts" ALTER COLUMN "currency" DROP DEFAULT`);
+      await ds.query(
+        `INSERT INTO accounts (user_id, name, type, balance, currency) VALUES ('u1', 'Cash', 'Current', 10, 'GBP')`,
+      );
+
+      await ds.runMigrations();
+
+      expect(await planColumn()).toEqual([
+        {
+          column_name: "student_loan_plan",
+          data_type: "character varying",
+          is_nullable: "YES",
+          column_default: null,
+        },
+      ]);
+      expect(await currencyDefault()).toContain("GBP");
+      expect(await ds.query("SELECT student_loan_plan FROM accounts")).toEqual([
+        { student_loan_plan: null },
+      ]);
+      expect(await applied()).toContain(MIGRATION);
+    });
+
+    it("rejects a plan outside the allowed values", async () => {
+      await ds.runMigrations();
+      await expect(
+        ds.query(
+          `INSERT INTO accounts (user_id, name, type, balance, student_loan_plan) VALUES ('u1', 'SL', 'Student Loan', 1, 'PLAN_9')`,
+        ),
+      ).rejects.toThrow(/CHK_accounts_student_loan_plan/);
+      await ds.query(
+        `INSERT INTO accounts (user_id, name, type, balance, student_loan_plan) VALUES ('u2', 'SL', 'Student Loan', 1, 'PLAN_2')`,
+      );
+    });
+
+    it("is idempotent when already applied (synchronize-built database)", async () => {
+      await ds.synchronize();
+      const m = () => new AddAccountStudentLoanPlanAndCurrencyDefault1794355800000();
+      await expect(runUpInTransaction(m())).resolves.toBe(undefined);
+      await expect(runUpInTransaction(m())).resolves.toBe(undefined);
+      expect(await planColumn()).toHaveLength(1);
+    });
+
+    it("down removes the column, constraint and currency default", async () => {
+      await ds.runMigrations();
+      const runner = ds.createQueryRunner();
+      try {
+        await runner.startTransaction();
+        await new AddAccountStudentLoanPlanAndCurrencyDefault1794355800000().down(runner);
+        await runner.commitTransaction();
+      } finally {
+        await runner.release();
+      }
+      expect(await planColumn()).toEqual([]);
+      expect(await currencyDefault()).toBeNull();
     });
   });
 });
