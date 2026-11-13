@@ -133,6 +133,25 @@ describe("AccountIntakeService (Deep Module)", () => {
     expect(mockAccountDetailRepo.delete).toHaveBeenCalledWith({ accountId: "acc-1" });
     expect(mockAccountRepo.remove).toHaveBeenCalled();
   });
+  describe("student loan plan", () => {
+    const loan = { name: "SL", type: "Student Loan", balance: 40000, currency: "GBP" };
+
+    it("persists a valid plan", async () => {
+      await service.createAccount("userA", { ...loan, studentLoanPlan: "PLAN_2" });
+      expect(mockAccountRepo.create.mock.calls[0][0]).toMatchObject({ studentLoanPlan: "PLAN_2" });
+    });
+
+    it("rejects an unknown plan with a 400 on create and update", async () => {
+      await expect(
+        service.createAccount("userA", { ...loan, studentLoanPlan: "PLAN_9" as never }),
+      ).rejects.toThrow(/studentLoanPlan/);
+      mockAccountRepo.findOne.mockResolvedValueOnce({ id: "a1", userId: "userA" });
+      await expect(
+        service.updateAccount("userA", "a1", { studentLoanPlan: "nope" as never }),
+      ).rejects.toThrow(/studentLoanPlan/);
+    });
+  });
+
   describe("mortgage term fields", () => {
     const mortgage = { name: "Home", type: "Mortgage", balance: 200000, currency: "GBP" };
 

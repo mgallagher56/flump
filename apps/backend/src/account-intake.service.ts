@@ -19,7 +19,12 @@ export type AccountType =
   | "Credit Card"
   | "Owed"
   | "Investment"
-  | "Pension";
+  | "Pension"
+  | "Property"
+  | "Student Loan"
+  | "Overdraft";
+
+export const STUDENT_LOAN_PLANS = ["PLAN_1", "PLAN_2", "PLAN_4", "PLAN_5", "POSTGRAD"] as const;
 
 export interface AccountWithDetails
   extends Omit<Account, "balance" | "interestRate" | "monthlyContribution"> {
@@ -41,6 +46,8 @@ export interface CreateAccountDto {
   termMonths?: number | null;
   /** End of the fixed-rate period, ISO date (YYYY-MM-DD). Meaningful for Mortgage accounts. */
   fixedRateEndDate?: string | null;
+  /** Student Loan accounts only. */
+  studentLoanPlan?: (typeof STUDENT_LOAN_PLANS)[number] | null;
   isCurrent?: boolean;
   connectionId?: string | null;
   externalAccountId?: string | null;
@@ -57,6 +64,9 @@ export interface PortfolioSnapshotResponse {
   totalPensions: number;
   totalConsumerDebt: number;
   totalMortgageBalance: number;
+  totalProperty: number;
+  /** Income-contingent: excluded from netWorth, totalLiabilities and debt totals (D-5-B). */
+  totalStudentLoans: number;
   resolvedAccounts: ResolvedAccount[];
   monthlyHistory: MonthlyPortfolioHistoryPoint[];
   currency: string;
@@ -91,6 +101,16 @@ function validateFixedRateEndDate(value: unknown): string | null | undefined {
     }
   }
   throw new BadRequestException("fixedRateEndDate must be an ISO date (YYYY-MM-DD) or null");
+}
+
+function validateStudentLoanPlan(value: unknown): string | null | undefined {
+  if (value === undefined || value === null) return value;
+  if (typeof value === "string" && (STUDENT_LOAN_PLANS as readonly string[]).includes(value)) {
+    return value;
+  }
+  throw new BadRequestException(
+    `studentLoanPlan must be one of ${STUDENT_LOAN_PLANS.join(", ")}, or null`,
+  );
 }
 
 export interface DeleteAccountResponse {
@@ -134,6 +154,7 @@ export class AccountIntakeService implements IAccountIntake {
       monthlyContribution: body.monthlyContribution,
       termMonths: validateTermMonths(body.termMonths),
       fixedRateEndDate: validateFixedRateEndDate(body.fixedRateEndDate),
+      studentLoanPlan: validateStudentLoanPlan(body.studentLoanPlan),
       isCurrent: body.isCurrent,
       externalAccountId: body.externalAccountId,
     };
@@ -304,6 +325,8 @@ export class AccountIntakeService implements IAccountIntake {
       totalPensions: snapshot.getTotalPensions(),
       totalConsumerDebt: snapshot.getTotalConsumerDebt(),
       totalMortgageBalance: snapshot.getTotalMortgageBalance(),
+      totalProperty: snapshot.getTotalProperty(),
+      totalStudentLoans: snapshot.getTotalStudentLoans(),
       resolvedAccounts: snapshot.getResolvedAccounts(),
       monthlyHistory: snapshot.getMonthlyHistory(),
       currency: accounts[0]?.currency || "GBP",

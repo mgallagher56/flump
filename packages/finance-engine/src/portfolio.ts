@@ -9,6 +9,9 @@ export type RawAccountType =
   | "Owed"
   | "Investment"
   | "Pension"
+  | "Property"
+  | "Student Loan"
+  | "Overdraft"
   | "checking"
   | "savings"
   | "credit_card"
@@ -23,6 +26,8 @@ export type AccountCategory =
   | "pensions"
   | "debt"
   | "mortgages"
+  | "property"
+  | "studentLoans"
   | "other";
 
 export interface RawAccount {
@@ -102,6 +107,8 @@ export function categorizeAccountType(rawType?: string | null): AccountCategory 
   ) {
     return "debt";
   }
+  if (t === "property") return "property";
+  if (t === "student loan" || t === "student_loan") return "studentLoans";
   if (t === "mortgage" || t === "mortgages") return "mortgages";
 
   return "other";
@@ -150,7 +157,8 @@ export class PortfolioSnapshot {
       const rawType = String(acc.type || "other");
       const category = categorizeAccountType(rawType);
       const isLiability = isLiabilityCategory(category);
-      const isAsset = !isLiability;
+      // Student loans (D-5-B) are income-contingent: neither an asset nor a liability here.
+      const isAsset = !isLiability && category !== "studentLoans";
 
       const history = detailsByAccount.get(accId) ?? [];
       let latestRawVal: number;
@@ -167,7 +175,8 @@ export class PortfolioSnapshot {
       }
 
       const nominalBalance = Math.abs(latestRawVal);
-      const netWorthBalance = isLiability ? -nominalBalance : nominalBalance;
+      const netWorthBalance =
+        category === "studentLoans" ? 0 : isLiability ? -nominalBalance : nominalBalance;
       const interestRate = Number(acc.interestRate) || 0;
       const interestRateKnown = hasStoredNumber(acc.interestRate);
       const monthlyContribution = Number(acc.monthlyContribution) || 0;
@@ -254,6 +263,20 @@ export class PortfolioSnapshot {
       .reduce((sum, a) => sum + a.nominalBalance, 0);
   }
 
+  /** Property value counts towards net worth but is not liquid. */
+  getTotalProperty(): number {
+    return this.resolvedAccounts
+      .filter((a) => a.category === "property")
+      .reduce((sum, a) => sum + a.nominalBalance, 0);
+  }
+
+  /** Income-contingent student loans: reported separately, never in net worth or debt totals. */
+  getTotalStudentLoans(): number {
+    return this.resolvedAccounts
+      .filter((a) => a.category === "studentLoans")
+      .reduce((sum, a) => sum + a.nominalBalance, 0);
+  }
+
   getTotalMortgageBalance(): number {
     return this.resolvedAccounts
       .filter((a) => a.category === "mortgages")
@@ -326,6 +349,7 @@ export class PortfolioSnapshot {
     >();
 
     for (const acc of this.resolvedAccounts) {
+      if (acc.category === "studentLoans") continue;
       for (const h of acc.history) {
         const key = `${h.year}-${String(h.month).padStart(2, "0")}`;
         const existing = monthMap.get(key) ?? {

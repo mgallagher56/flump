@@ -10,8 +10,14 @@ export const ACCOUNT_TYPES = [
   "Owed",
   "Investment",
   "Pension",
+  "Property",
+  "Student Loan",
+  "Overdraft",
 ] as const;
 export const AccountType = z.enum(ACCOUNT_TYPES);
+
+export const STUDENT_LOAN_PLANS = ["PLAN_1", "PLAN_2", "PLAN_4", "PLAN_5", "POSTGRAD"] as const;
+export const StudentLoanPlan = z.enum(STUDENT_LOAN_PLANS);
 
 /**
  * POST /accounts. Today's backend accepts any string for `type` and any JSON for `balance`;
@@ -25,6 +31,8 @@ export const CreateAccountRequest = z.object({
   currency: Currency.nullish(),
   interestRate: Percent.nullish(),
   monthlyContribution: MoneyNonNegative.nullish(),
+  /** Student Loan accounts only. */
+  studentLoanPlan: StudentLoanPlan.nullish(),
   isCurrent: z.boolean().optional(),
   connectionId: Uuid.nullish(),
   externalAccountId: z.string().max(255).nullish(),
@@ -42,6 +50,8 @@ export const UpdateAccountRequest = z.object({
   currency: Currency.nullish(),
   interestRate: Percent.nullish(),
   monthlyContribution: MoneyNonNegative.nullish(),
+  /** Student Loan accounts only. */
+  studentLoanPlan: StudentLoanPlan.nullish(),
   isCurrent: z.boolean().optional(),
   externalAccountId: z.string().max(255).nullish(),
 });

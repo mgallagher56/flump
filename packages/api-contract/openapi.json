@@ -68,7 +68,10 @@
                       "Credit Card",
                       "Owed",
                       "Investment",
-                      "Pension"
+                      "Pension",
+                      "Property",
+                      "Student Loan",
+                      "Overdraft"
                     ]
                   },
                   "balance": {
@@ -99,6 +102,17 @@
                   },
                   "monthlyContribution": {
                     "type": ["number", "null"]
+                  },
+                  "studentLoanPlan": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "enum": ["PLAN_1", "PLAN_2", "PLAN_4", "PLAN_5", "POSTGRAD"]
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
                   },
                   "isCurrent": {
                     "type": "boolean"
@@ -244,7 +258,10 @@
                       "Credit Card",
                       "Owed",
                       "Investment",
-                      "Pension"
+                      "Pension",
+                      "Property",
+                      "Student Loan",
+                      "Overdraft"
                     ]
                   },
                   "balance": {
@@ -275,6 +292,17 @@
                   },
                   "monthlyContribution": {
                     "type": ["number", "null"]
+                  },
+                  "studentLoanPlan": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "enum": ["PLAN_1", "PLAN_2", "PLAN_4", "PLAN_5", "POSTGRAD"]
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
                   },
                   "isCurrent": {
                     "type": "boolean"
@@ -349,7 +377,10 @@
                       "Credit Card",
                       "Owed",
                       "Investment",
-                      "Pension"
+                      "Pension",
+                      "Property",
+                      "Student Loan",
+                      "Overdraft"
                     ]
                   },
                   "balance": {
@@ -380,6 +411,17 @@
                   },
                   "monthlyContribution": {
                     "type": ["number", "null"]
+                  },
+                  "studentLoanPlan": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "enum": ["PLAN_1", "PLAN_2", "PLAN_4", "PLAN_5", "POSTGRAD"]
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
                   },
                   "isCurrent": {
                     "type": "boolean"

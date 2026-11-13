@@ -22,6 +22,8 @@ export const action = async (args: ActionFunctionArgs) => {
   const name = formData.get("name");
   const type = formData.get("type");
   const rawBalance = formData.get("balance");
+  const rawPlan = formData.get("studentLoanPlan");
+  const studentLoanPlan = typeof rawPlan === "string" && rawPlan !== "" ? rawPlan : undefined;
   const balance =
     rawBalance !== null && rawBalance !== "" && Number.isFinite(Number(rawBalance))
       ? roundTo2dp(Number(rawBalance))
@@ -35,12 +37,14 @@ export const action = async (args: ActionFunctionArgs) => {
       await send("/accounts", "POST", {
         name,
         type,
+        ...(studentLoanPlan !== undefined ? { studentLoanPlan } : {}),
         ...(balance !== undefined ? { balance } : {}),
       });
     } else if (intent === "update") {
       await send(`/accounts/${encodeURIComponent(String(accountId ?? ""))}`, "PATCH", {
         name,
         type,
+        ...(studentLoanPlan !== undefined ? { studentLoanPlan } : {}),
         ...(balance !== undefined ? { balance } : {}),
       });
     } else if (intent === "delete") {
