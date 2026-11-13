@@ -124,6 +124,7 @@ export interface PortfolioSnapshotData {
 
 export interface WorkspaceSnapshot {
   user: any;
+  /** Server-only. Must never be returned from a loader (it would be serialised into the page). */
   accessToken?: string;
   accounts: any[];
   accountDetails: any[];

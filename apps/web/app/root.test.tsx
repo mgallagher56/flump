@@ -7,7 +7,6 @@ vi.mock("react-router", async () => await vi.importActual("react-router"));
 vi.mock("./i18n.server", () => ({ default: { getLocale: vi.fn() } }));
 vi.mock("./utils/auth.server", () => ({ getAuthSession: vi.fn() }));
 
-import { apiConfig } from "./config.server";
 import i18next from "./i18n.server";
 import App, { ErrorBoundary, loader } from "./root";
 import { getAuthSession } from "./utils/auth.server";
@@ -71,8 +70,7 @@ describe("root App landmarks", () => {
           locale: "en",
           user: null,
           userProfile: null,
-          accessToken: undefined,
-          ENV: { VITE_API_URL: "http://localhost" },
+          ENV: { SENTRY_DSN: "", SENTRY_ENVIRONMENT: "", SENTRY_RELEASE: "" },
         }),
         Component: App as any,
         HydrateFallback: NullFallback,
@@ -106,7 +104,12 @@ describe("root loader", () => {
     globalThis.fetch = vi.fn().mockRejectedValue(new Error("down"));
     const result = await loader(args);
     expect(result.userProfile).toBeNull();
-    expect(result.ENV.VITE_API_URL).toBe(apiConfig.apiBaseUrl);
+    expect(Object.keys(result.ENV).sort()).toEqual([
+      "SENTRY_DSN",
+      "SENTRY_ENVIRONMENT",
+      "SENTRY_RELEASE",
+    ]);
+    expect(result).not.toHaveProperty("accessToken");
   });
 
   it("keeps the shell up with a null profile when the backend is 401", async () => {
