@@ -1,4 +1,4 @@
-import { SimulatorSplitLayout } from "@repo/ui";
+import { Button, ScenarioZone, SimulatorSplitLayout } from "@repo/ui";
 import { type FC, useMemo } from "react";
 import { Link } from "react-router";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
@@ -8,8 +8,16 @@ import { ForecastAssumptions } from "../ForecastAssumptions";
 import { ForecastChart } from "../ForecastChart";
 import { ForecasterControls } from "../ForecasterControls";
 import { ForecasterResults } from "../ForecasterResults";
-import { PensionScenarioZone } from "../PensionScenarioZone";
-import { forecastStack, growthNote, noSalaryLink, noSalaryNote } from "./PensionForecast.styles";
+import {
+  forecastStack,
+  growthNote,
+  noSalaryLink,
+  noSalaryNote,
+  zoneFooter,
+} from "./PensionForecast.styles";
+
+export const PENSION_SCENARIO_ZONE_ID = "pension-scenario-zone";
+const ZONE_TITLE = "Model a change to your pension";
 
 export interface PensionForecastProps {
   scenario: PensionScenario;
@@ -84,7 +92,7 @@ export const PensionForecast: FC<PensionForecastProps> = ({
 
   if (!hasSalary) {
     return (
-      <PensionScenarioZone isModified={false} onReset={scenario.reset}>
+      <ScenarioZone id={PENSION_SCENARIO_ZONE_ID} title={ZONE_TITLE}>
         <p className={noSalaryNote()}>
           Add your salary in{" "}
           <Link className={noSalaryLink()} to="/app/profile">
@@ -92,17 +100,32 @@ export const PensionForecast: FC<PensionForecastProps> = ({
           </Link>{" "}
           to project your pension.
         </p>
-      </PensionScenarioZone>
+      </ScenarioZone>
     );
   }
 
   const years = values.horizonYears === 1 ? "year" : "years";
   return (
-    <PensionScenarioZone
-      announcement={`projected pot ${formatCurrency(result.finalBalance)} in ${values.horizonYears} ${years}, about ${formatCurrency(result.monthlyRetirementIncome)} a month`}
-      basis={`${formatCurrency(salary)} salary, ${pct.format(employeePercent)}% you and ${pct.format(employerPercent)}% your employer`}
+    <ScenarioZone
+      announcement={
+        scenario.isModified
+          ? `projected pot ${formatCurrency(result.finalBalance)} in ${values.horizonYears} ${years}, about ${formatCurrency(result.monthlyRetirementIncome)} a month`
+          : ""
+      }
+      basis={`Starting from your figures: ${formatCurrency(salary)} salary, ${pct.format(employeePercent)}% you and ${pct.format(employerPercent)}% your employer`}
+      footer={
+        onEditDetails ? (
+          <div className={zoneFooter()}>
+            <span>Changes here are not saved.</span>
+            <Button size="sm" type="button" variant="link" onClick={onEditDetails}>
+              Update your details
+            </Button>
+          </div>
+        ) : null
+      }
+      id={PENSION_SCENARIO_ZONE_ID}
       isModified={scenario.isModified}
-      onEditDetails={onEditDetails}
+      title={ZONE_TITLE}
       onReset={scenario.reset}
     >
       {hasPots && growthRateIsPlaceholder && (
@@ -146,7 +169,7 @@ export const PensionForecast: FC<PensionForecastProps> = ({
         controlsLabel="What-if levers"
         controlsSpan={4}
       />
-    </PensionScenarioZone>
+    </ScenarioZone>
   );
 };
 

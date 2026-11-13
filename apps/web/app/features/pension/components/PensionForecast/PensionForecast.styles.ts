@@ -21,3 +21,15 @@ export const noSalaryLink = cva({
 export const growthNote = cva({
   base: { margin: 0, textStyle: "body.sm", color: "text.muted" },
 });
+
+export const zoneFooter = cva({
+  base: {
+    display: "flex",
+    flexWrap: "wrap",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: "8px",
+    textStyle: "body.sm",
+    color: "text.muted",
+  },
+});
