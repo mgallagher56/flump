@@ -5,7 +5,13 @@ import { DevBypassVerifier } from "./dev-bypass.verifier";
 import { TOKEN_VERIFIER } from "./token-verifier";
 import { WorkOsJwtVerifier } from "./workos-jwt.verifier";
 
-const KEYS = ["NODE_ENV", "AUTH_DEV_BYPASS", "WORKOS_CLIENT_ID", "WORKOS_API_KEY"] as const;
+const KEYS = [
+  "NODE_ENV",
+  "AUTH_DEV_BYPASS",
+  "WORKOS_CLIENT_ID",
+  "WORKOS_API_KEY",
+  "WORKOS_ISSUER",
+] as const;
 
 describe("AuthModule", () => {
   const saved: Record<string, string | undefined> = {};
@@ -40,6 +46,24 @@ describe("AuthModule", () => {
     const mod = await compile();
     expect(mod.get(TOKEN_VERIFIER)).toBeInstanceOf(WorkOsJwtVerifier);
     expect(mod.get(AUTH_MODE)).toBe("workos");
+  });
+
+  it("rejects boot in production with no client id and no issuer", async () => {
+    process.env.NODE_ENV = "production";
+    await expect(compile()).rejects.toThrow(/not configured/);
+  });
+
+  it("boots in production with only a client id (issuer derived)", async () => {
+    process.env.NODE_ENV = "production";
+    process.env.WORKOS_CLIENT_ID = "client_test";
+    const mod = await compile();
+    expect(mod.get(TOKEN_VERIFIER)).toBeInstanceOf(WorkOsJwtVerifier);
+  });
+
+  it("rejects boot when WORKOS_ISSUER is not an https URL", async () => {
+    process.env.WORKOS_CLIENT_ID = "client_test";
+    process.env.WORKOS_ISSUER = "http://auth.example.com";
+    await expect(compile()).rejects.toThrow(/WORKOS_ISSUER/);
   });
 
   it("provides the dev verifier in development with the flag", async () => {

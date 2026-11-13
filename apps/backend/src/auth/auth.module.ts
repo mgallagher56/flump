@@ -3,7 +3,7 @@ import { resolveAuthMode } from "./auth.config";
 import { AuthGuard } from "./auth.guard";
 import { DevBypassVerifier } from "./dev-bypass.verifier";
 import { TOKEN_VERIFIER, type TokenVerifier } from "./token-verifier";
-import { WorkOsJwtVerifier, workosIssuers, workosJwksFromUrl } from "./workos-jwt.verifier";
+import { resolveWorkosIssuer, WorkOsJwtVerifier, workosJwksFromUrl } from "./workos-jwt.verifier";
 
 export const AUTH_MODE = "AUTH_MODE";
 
@@ -28,7 +28,8 @@ export const AUTH_MODE = "AUTH_MODE";
         const clientId = process.env.WORKOS_CLIENT_ID as string;
         return new WorkOsJwtVerifier({
           jwks: workosJwksFromUrl(clientId),
-          issuer: workosIssuers(clientId, process.env),
+          issuer: resolveWorkosIssuer(clientId, process.env),
+          clientId,
         });
       },
     },
