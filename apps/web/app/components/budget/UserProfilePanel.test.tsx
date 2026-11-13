@@ -2,7 +2,7 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { DEFAULT_PROFILE } from "~/hooks/useUserProfile";
 import * as avatarUtils from "~/utils/avatar";
-import UserProfilePanel from "./UserProfilePanel";
+import UserProfilePanel, { parseProfileTab } from "./UserProfilePanel";
 
 const mockUpdateProfile = vi.fn().mockResolvedValue(undefined);
 const mockSetProfile = vi.fn();
@@ -346,5 +346,21 @@ describe("Self Assessment module toggle", () => {
         }),
       );
     });
+  });
+
+  it("parses the ?tab= deep link and ignores unknown values", () => {
+    expect(parseProfileTab("?tab=ai_connections")).toBe("ai_connections");
+    expect(parseProfileTab("?tab=profile_security")).toBe("profile_security");
+    expect(parseProfileTab("?tab=nope")).toBeNull();
+    expect(parseProfileTab("")).toBeNull();
+  });
+
+  it("opens the AI tab when the URL says ?tab=ai_connections", () => {
+    window.history.pushState({}, "", "/app/profile?tab=ai_connections");
+    render(<UserProfilePanel initialProfile={DEFAULT_PROFILE} />);
+    expect(screen.getByRole("tab", { name: "AI & MCP Access" }).getAttribute("aria-selected")).toBe(
+      "true",
+    );
+    window.history.pushState({}, "", "/");
   });
 });

@@ -58,6 +58,14 @@ describe("<MobileNavDrawer /> keyboard", () => {
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
+  test("links Settings, Connect AI and Free calculators for signed-in users", () => {
+    customRender(<MobileNavDrawer isOpen={true} user={{ id: "1" }} onClose={vi.fn()} />);
+    const hrefs = screen.getAllByRole("link").map((l) => l.getAttribute("href"));
+    expect(hrefs).toContain("/app/profile");
+    expect(hrefs).toContain("/app/profile?tab=ai_connections");
+    expect(hrefs).toContain("/tools");
+  });
+
   test("lists Debt for signed-in users", () => {
     customRender(<MobileNavDrawer isOpen={true} user={{ id: "1" }} onClose={vi.fn()} />);
     expect(screen.getAllByText("debt").length).toBeGreaterThan(0);

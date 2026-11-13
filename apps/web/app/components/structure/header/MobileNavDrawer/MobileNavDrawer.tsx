@@ -8,6 +8,7 @@ import HomeLogo from "~/components/navigation/HomeLogo";
 import NavMenu from "~/components/navigation/NavMenu";
 import {
   AUTH_NAV_ROUTES,
+  CONNECT_AI_ROUTE,
   filterNavRoutes,
   HOME_NAV_ROUTE,
   SANDBOX_HOME_NAV_ROUTE,
@@ -159,10 +160,18 @@ const MobileNavDrawer: FC<MobileNavDrawerProps> = ({ isOpen, onClose, user, sand
 
         <div className={footer()}>
           {!!user && (
-            <Link className={profileLink()} to="/app/profile" onClick={onClose}>
-              <UserAvatar bordered size={24} user={user} />
-              <span>Settings</span>
-            </Link>
+            <>
+              <Link className={profileLink()} to="/app/profile" onClick={onClose}>
+                <UserAvatar bordered size={24} user={user} />
+                <span>{t("settings", "Settings")}</span>
+              </Link>
+              <Link className={profileLink()} to={CONNECT_AI_ROUTE} onClick={onClose}>
+                <span>{t("connectAi", "Connect AI")}</span>
+              </Link>
+              <Link className={profileLink()} to="/tools" onClick={onClose}>
+                <span>{t("freeCalculators", "Free calculators")}</span>
+              </Link>
+            </>
           )}
           <div className={footerRow()}>
             <ThemeToggle />

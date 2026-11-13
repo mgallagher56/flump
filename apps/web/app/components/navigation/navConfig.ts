@@ -39,6 +39,9 @@ export const SANDBOX_HOME_NAV_ROUTE: NavRouteItem = {
   icon: House,
 };
 
+/** Where "Connect AI" lands: the AI tab of the settings page. */
+export const CONNECT_AI_ROUTE = "/app/profile?tab=ai_connections";
+
 export const HOME_NAV_ROUTE: NavRouteItem = { key: "home", route: "/", icon: House };
 
 /**

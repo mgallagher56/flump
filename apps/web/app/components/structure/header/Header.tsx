@@ -1,8 +1,9 @@
 import { Icon } from "@repo/ui";
 import { Menu } from "lucide-react";
 import { type FC, type ReactElement, useMemo, useState } from "react";
-import { Link, useLoaderData, useLocation } from "react-router";
+import { useLoaderData, useLocation } from "react-router";
 import FLPBox from "~/components/core/structure/FLPBox";
+import AvatarMenu from "~/components/navigation/AvatarMenu";
 import HomeLogo from "~/components/navigation/HomeLogo";
 import NavMenu from "~/components/navigation/NavMenu";
 import {
@@ -12,7 +13,6 @@ import {
   isSandboxPath,
 } from "~/components/navigation/navConfig";
 import ThemeToggle from "~/components/navigation/ThemeToggle";
-import UserAvatar from "~/components/navigation/UserAvatar";
 import UserLogin from "~/components/navigation/UserLogin";
 import { useResponsive } from "~/context/ResponsiveContext";
 import { useUserProfile } from "~/hooks/useUserProfile";
@@ -27,8 +27,6 @@ import {
   menuStyles,
   mobileMenuButtonStyles,
   navStyles,
-  profileLink,
-  srOnly,
 } from "./styles";
 
 export interface HeaderProps {
@@ -82,15 +80,8 @@ const Header: FC<HeaderProps> = ({ isMobile: propIsMobile, variant }): ReactElem
           </FLPBox>
           <FLPBox className={loginStyles}>
             <ThemeToggle />
-            {!!user && (
-              <Link className={profileLink} title="Settings" to="/app/profile">
-                <span aria-hidden="true">
-                  <UserAvatar bordered size={26} user={user} />
-                </span>
-                <span className={srOnly}>Settings</span>
-              </Link>
-            )}
-            <UserLogin />
+            {!!user && <AvatarMenu user={user} />}
+            {!user && <UserLogin />}
             <button
               aria-controls="mobile-nav-drawer"
               aria-expanded={drawerOpen}
