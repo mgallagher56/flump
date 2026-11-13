@@ -39,6 +39,7 @@ export const ROUTE_MATRIX: Readonly<Record<string, MatrixRow>> = {
   "GET /portfolio-snapshot": finance,
   "POST /accounts": finance,
   "PUT /accounts/:id": finance,
+  "PATCH /accounts/balances": finance,
   "PATCH /accounts/:id": finance,
   "DELETE /accounts/:id": finance,
   "GET /transactions": finance,
