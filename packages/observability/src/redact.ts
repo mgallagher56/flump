@@ -11,11 +11,73 @@ export function hasEmail(text: string): boolean {
   return new RegExp(EMAIL_SOURCE).test(text.slice(0, MAX_STRING_LENGTH));
 }
 
+// `auth` needs a non-letter after it so `author:` is left alone; `authorization` is its own entry.
+const CREDENTIAL_KEYS =
+  "password|passwd|pwd|secret|token|api[_-]?key|apikey|auth(?![a-z])|authorization|bearer|cookie|session|client_secret|access_token|refresh_token";
+const STRONG_KEYS = "password|passwd|passw0rd|pwd|pw|secret";
+// After a key: an optional `_x`/`-x` suffix or a known word (`sessionId`), but not `tokenizer`.
+const KEY_SUFFIX = "(?:s|[_-][\\w-]{0,31}|id|hash|key|value|phrase|token|secret)?";
+// Closing quote (plain, backslash-escaped or %22) then `=`/`:` (plain or URL-encoded), then spaces.
+// Fullwidth `＂`, `＝` and `：` are accepted too.
+const SEPARATOR = String.raw`(?:\\?["'\uFF02]|%22)?\s{0,4}(?:[=:\uFF1D\uFF1A]|%3[DdAa])\s{0,4}`;
+// Quoted values may contain escaped quotes (`\"`, `''`); every alternative starts with a different
+// character class, so there is no nested ambiguity.
+const QUOTED = String.raw`\\"[^"\\]{0,512}\\"|"(?:[^"\\]|\\.){0,512}"|'(?:[^'\\]|\\.|''){0,512}'`;
+
+/** Plain English words ("Basic Information") are not base64 credentials. */
+const WORD_LIKE = /^[A-Za-z][a-z]{3,}$/;
+
+/**
+ * Free-text credential shapes. Every quantifier is bounded (see the per-pattern limits) and the
+ * input is capped at MAX_STRING_LENGTH before matching, so no pattern backtracks catastrophically.
+ * Each match keeps the key (group 1 where present) and replaces only the secret part.
+ */
+const CREDENTIAL_PATTERNS: ReadonlyArray<readonly [RegExp, string | ((...m: string[]) => string)]> =
+  [
+    // scheme://user:pass@host (userinfo of any connection URL)
+    [/\b([a-z][a-z0-9+.-]{1,20}:\/\/)[^\s/@?#]{1,256}@/gi, `$1${REDACTED}@`],
+    // Cookie: / Set-Cookie: header text runs to the end of the line
+    [/(\b(?:set-)?cookie\s{0,4}[:=]\s{0,4})[^\r\n]{1,2048}/gi, `$1${REDACTED}`],
+    // The scheme word is dropped too, so a following key rule has nothing left to match.
+    [/\bBearer\s{1,8}\S{1,4096}/gi, REDACTED],
+    [
+      /\bBasic\s{1,8}([A-Za-z0-9+/_-]{8,2048}={0,2})/gi,
+      (match, value) => (WORD_LIKE.test(value) ? match : REDACTED),
+    ],
+    // JWTs. Anchored on the start of a word run (a captured delimiter instead of a lookbehind, which
+    // Safari < 16.4 cannot parse) so repeated `eyJ` prefixes cannot make matching quadratic; glued
+    // prefixes of up to 2048 characters are covered (one attempt per word run keeps this linear).
+    [/(^|[^\w-])[\w-]{0,2048}?eyJ[\w-]{1,2048}\.[\w-]{1,2048}\.[\w-]{0,2048}/g, `$1${REDACTED}`],
+    // password/secret values may contain spaces: an unquoted value runs to the end of the line or & , ;
+    [
+      new RegExp(
+        `((?:${STRONG_KEYS})${KEY_SUFFIX}${SEPARATOR})(?:${QUOTED}|["']?(?:[^\\r\\n&,;"'\\\\]|\\\\.){1,512})`,
+        "gi",
+      ),
+      `$1${REDACTED}`,
+    ],
+    // other keys: key=value / key: value / "key":"value"; an unquoted value stops at whitespace, & , ;
+    [
+      new RegExp(
+        `((?:${CREDENTIAL_KEYS})${KEY_SUFFIX}${SEPARATOR})(?:${QUOTED}|["']?(?:[^\\s&,;"'\\\\]|\\\\.){1,512})`,
+        "gi",
+      ),
+      `$1${REDACTED}`,
+    ],
+  ];
+
+function redactCredentialText(input: string): string {
+  let out = input;
+  for (const [pattern, replacement] of CREDENTIAL_PATTERNS) {
+    out = out.replace(pattern, replacement as string);
+  }
+  return out;
+}
+
 // Order matters: specific shapes first, broad catch-alls last.
 const STRING_PATTERNS: readonly RegExp[] = [
   new RegExp(EMAIL_SOURCE, "g"),
   /Bearer\s{1,8}\S+/gi,
-  /eyJ[\w-]{1,2048}\.[\w-]{1,2048}\.[\w-]{0,2048}/g,
   /sk_(?:test|live)_\w+/g,
   /\b[A-Za-z]{2}\d{2}(?: [A-Za-z0-9]{4}){4,7}(?: [A-Za-z0-9]{1,4})?\b/g,
   /\b[A-Za-z]{2}\d{2}[A-Za-z0-9]{11,30}\b/g,
@@ -40,10 +102,27 @@ export function isSensitiveKey(key: string): boolean {
   return SENSITIVE_KEY.test(key);
 }
 
-export function redactString(input: string): string {
+// Zero-width characters have no legitimate use in logs and would split a key (`pass\u200Bword`).
+const ZERO_WIDTH = /[\u200B-\u200D\u2060\uFEFF]/g;
+
+function capLength(input: string): string {
+  input = input.replace(ZERO_WIDTH, "");
   // Truncate before any regex runs so adversarial input cannot cause slow matching.
-  let out =
-    input.length > MAX_STRING_LENGTH ? `${input.slice(0, MAX_STRING_LENGTH)}${TRUNCATED}` : input;
+  return input.length > MAX_STRING_LENGTH
+    ? `${input.slice(0, MAX_STRING_LENGTH)}${TRUNCATED}`
+    : input;
+}
+
+/**
+ * Redacts only credential shapes (key=value pairs, Bearer/Basic, Cookie headers, URL userinfo). Unlike
+ * `redactString` it leaves long path-like tokens and digits alone, so it is safe for stack-frame lines.
+ */
+export function redactCredentials(input: string): string {
+  return redactCredentialText(capLength(input));
+}
+
+export function redactString(input: string): string {
+  let out = redactCredentialText(capLength(input));
   for (const pattern of STRING_PATTERNS) {
     out = out.replace(pattern, REDACTED);
   }
