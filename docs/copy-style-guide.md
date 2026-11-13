@@ -11,7 +11,7 @@ Flump's voice is **direct, grounded, and pragmatic** – inspired by the best of
 ### Principles
 
 1. **Clarity over cleverness**: Say exactly what something does. Never make users decode metaphors or marketing jargon.
-2. **Concrete numbers over hype**: State the maths, timelines, and UK statutory thresholds directly (£100k taper, 40% higher rate, 30 hours free childcare) rather than relying on superlative claims.
+2. **Concrete numbers over hype**: State the maths, timelines, and UK statutory thresholds directly (Personal Allowance, 40% higher rate, student loan thresholds) rather than relying on superlative claims.
 3. **Active, human voice**: Use clean, active sentences. Address the user directly as "you", and refer to Flump as "Flump" or "we".
 4. **No pseudo-engineering buzzwords**: Flump is a financial decision tool, not a defence contractor or high-frequency trading platform. Avoid terms like "zero-latency", "air-gapped", "cryptographic vault", "engineered for", "enterprise-grade", or "radar".
 5. **Accurate UI descriptions**: Always describe interactive controls accurately. If an interface uses compact numeric inputs, never refer to "sliders". If a feature is manual, explain it simply without claiming it is "air-gapped".
@@ -99,7 +99,7 @@ Saved facts and what-if tools are kept apart on every page (spec: `docs/design/e
 
 Flump uses **sentence case** across all user-facing copy:
 
-- **Page headings (H1, H2, H3)**: Sentence case (e.g. _Your complete UK financial picture in 60 seconds_, _How Flump works in 3 simple steps_).
+- **Page headings (H1, H2, H3)**: Sentence case (e.g. _See where you stand each month_, _What you keep from a pay rise_).
 - **Eyebrows and badges**: Sentence case (e.g. _How it works_, _Why Flump_, _Core tools_, _Security and privacy_, _Live calculator_).
 - **Buttons and interactive links**: Sentence case (e.g. _Get your free baseline_, _Start free baseline_, _Add account_, _Save this plan_).
 - **Navigation items**: Single words or sentence case (e.g. _Dashboard_, _Budget_, _Accounts_, _Debt_, _Savings_, _Pension_, _Mortgage_, _Forecast_, _Tax_, _Profile_).
@@ -138,7 +138,7 @@ The following words and phrases must be removed or rewritten:
 | _Unlock instant insights_                      | See your numbers immediately                            |
 | _Delve into / Tapestry / Beacon / Supercharge_ | Explain, show, calculate, review                        |
 | _Inquiry dispatched_                           | Enquiry sent                                            |
-| _Get out of the red. Build into the black._    | Your complete UK financial picture in 60 seconds.       |
+| _Get out of the red. Build into the black._    | See where you stand each month.                         |
 | _01 // HOW IT WORKS_                           | How it works                                            |
 | _02 // FOUR PILLARS_                           | Core tools                                              |
 | _03 // LIVE HMRC SIMULATOR_                    | Live calculator                                         |
@@ -151,6 +151,19 @@ The following words and phrases must be removed or rewritten:
 ## 7a. Claims
 
 No regulatory, security, pricing or feature claim may appear in copy without file:line or host evidence, and an approver listed in the E7 claim register ([docs/audit/plans/E7-claims-design.md](./audit/plans/E7-claims-design.md)). Regulatory statements (FCA, UK GDPR) are only added with the owner's explicit wording. Placeholder values come from `apps/marketing/src/utils/placeholders.ts`.
+
+---
+
+## 7b. No finance shaming
+
+Owner requirement (E31). Copy never judges someone's situation or ranks one situation above another.
+
+1. **No hierarchy.** Renting, paying a mortgage and living with family are all normal housing situations. Having debt or none, and small or large savings, are facts, not grades. Renters get the same quality of tooling and the same visual weight as mortgage holders.
+2. **Describe what the person is doing or deciding**: "renting", "paying a mortgage", "saving for a deposit", "paying off a card", "building a buffer", "checking a pension".
+3. **Banned framings**: "thin savings", "only" or "just" about someone's money, "still renting", "struggling", "bad with money", "should", and "get on the ladder" as a default aspiration.
+4. **No deprivation statistics at the reader** (for example "21% have under £1,000"). Prefer no statistics at all; illustrative figures carry an "Example" label.
+5. **People-first, second person, matter-of-fact.** Flump does not set targets for people. Where a figure has a target (months of cover), the person chooses it.
+6. **Internal persona names stay neutral too**: "renting", "mortgage coming up for renewal", "saving for a first home", "getting to grips with a pension".
 
 ---
 

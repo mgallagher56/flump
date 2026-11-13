@@ -116,7 +116,7 @@ export const BaselineSnapshotPreview: FC = () => {
               fontFamily: "var(--fonts-display)",
             }}
           >
-            Example 60-second UK financial baseline
+            Example monthly picture
           </strong>
         </div>
         <span className={pillBadgeStyle}>
@@ -226,21 +226,21 @@ export const BaselineSnapshotPreview: FC = () => {
               letterSpacing: "0.01em",
             }}
           >
-            Emergency runway
+            Months of cover
           </span>
           <div
             className="tabular-nums"
             style={{
               fontSize: "1.75rem",
               fontWeight: "800",
-              color: "var(--colors-warning-500)",
+              color: "var(--colors-text-primary)",
               lineHeight: 1.15,
             }}
           >
-            6.4 <span style={{ fontSize: "13px", fontWeight: "600" }}>Months</span>
+            6.4 <span style={{ fontSize: "13px", fontWeight: "600" }}>months</span>
           </div>
           <span style={{ fontSize: "12px", color: "var(--colors-text-muted)" }}>
-            Essential expenses covered
+            Essential costs your savings would cover
           </span>
         </div>
       </div>

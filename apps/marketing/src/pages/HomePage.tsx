@@ -3,15 +3,14 @@ import { flex, stack } from "@repo/ui/styled-system/patterns";
 import type { FC } from "react";
 import { Link } from "react-router-dom";
 import { BaselineSnapshotPreview } from "../components/BaselineSnapshotPreview";
-import { ComparisonMatrix } from "../components/ComparisonMatrix";
-import { FeaturePillars } from "../components/FeaturePillars";
+import { BigMovesSection } from "../components/BigMovesSection";
 import { Footer } from "../components/Footer";
 import { Header } from "../components/Header";
 import { HomeFAQ } from "../components/HomeFAQ";
-import { HowItWorksSection } from "../components/HowItWorksSection";
-import { InteractiveFinancialTeaser } from "../components/InteractiveFinancialTeaser";
 import { McpSpotlightSection } from "../components/McpSpotlightSection";
+import { MonthlyPictureSection } from "../components/MonthlyPictureSection";
 import { PageMeta } from "../components/PageMeta";
+import { PayRiseTeaser } from "../components/PayRiseTeaser";
 import { SecurityPrivacySection } from "../components/SecurityPrivacySection";
 import { signupCta } from "../utils/site";
 import { getAppUrl } from "../utils/url";
@@ -23,8 +22,8 @@ export const HomePage: FC = () => {
   return (
     <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
       <PageMeta
-        title="Flump | UK wealth, tax planning and net worth"
-        description="Get your complete UK financial picture in 60 seconds. Know your net worth, safe to spend, emergency runway, and tax – built specifically for UK rules."
+        title="Flump | See where you stand each month, under UK rules"
+        description="See where you stand each month, whether you rent or pay a mortgage: months of cover, safe to spend and what a change would do, under UK rules."
       />
 
       <Header />
@@ -89,7 +88,7 @@ export const HomePage: FC = () => {
                 maxWidth: "960px",
               }}
             >
-              Your complete UK financial picture in 60 seconds.
+              See where you stand each month.
             </h1>
 
             <p
@@ -101,9 +100,8 @@ export const HomePage: FC = () => {
                 margin: 0,
               }}
             >
-              Enter 6 rough numbers to calculate your net worth, weekly safe to spend, and emergency
-              runway – then drill down into tax, mortgage overpayments, or debt payoff when you need
-              to.
+              Enter about six rough numbers, no bank login needed. See your months of cover and
+              what's safe to spend, then model what a change would do under UK rules.
             </p>
 
             <div className={flex({ gap: "4", flexWrap: "wrap", justify: "center" })}>
@@ -149,25 +147,22 @@ export const HomePage: FC = () => {
           </div>
         </section>
 
-        {/* Section 01: How It Works (Subtle Surface Band + Step Schematics) */}
-        <HowItWorksSection />
+        {/* Section 01: The monthly picture (months of cover, safe to spend, check-in) */}
+        <MonthlyPictureSection />
 
-        {/* Section 02: Core Benefits (Canvas Surface Band + Bento Micro-Diagrams) */}
-        <FeaturePillars />
+        {/* Section 02: Three big moves (rent or mortgage, debts, pension) */}
+        <BigMovesSection />
 
-        {/* Section 03: Live HMRC Simulator Sandbox (Tinted Surface Band) */}
-        <InteractiveFinancialTeaser />
+        {/* Section 03: What you keep from a pay rise */}
+        <PayRiseTeaser />
 
-        {/* Section 04: Comparison Matrix (Canvas Surface Band + Column Contrast) */}
-        <ComparisonMatrix />
-
-        {/* Section 05: Security & Privacy (Full-Bleed Contrast Dark Band) */}
+        {/* Section 04: Security & Privacy (Full-Bleed Contrast Dark Band) */}
         <SecurityPrivacySection />
 
-        {/* Section 06: Official Model Context Protocol (MCP) Spotlight */}
+        {/* Section 05: Model Context Protocol (MCP) Spotlight */}
         <McpSpotlightSection />
 
-        {/* Section 07: FAQ Accordion (Subtle Surface Band) */}
+        {/* Section 06: FAQ Accordion (Subtle Surface Band) */}
         <HomeFAQ />
 
         {/* Final CTA Banner */}
@@ -190,7 +185,7 @@ export const HomePage: FC = () => {
                 margin: "0 0 14px 0",
               }}
             >
-              Ready to see your clear UK financial picture?
+              Ready to see where you stand?
             </h2>
             <p
               style={{

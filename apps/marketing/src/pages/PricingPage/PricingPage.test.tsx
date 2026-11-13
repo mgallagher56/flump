@@ -68,7 +68,7 @@ describe("PricingPage", () => {
     const { container } = renderPage();
     expect(container.textContent).not.toMatch(/CSV|auto-categorisation|FCA|real-time/i);
     expect(screen.getByText("Section 24 landlord tax calculator")).toBeDefined();
-    expect(screen.getByText("£100k–£125k tax trap and childcare calculator")).toBeDefined();
+    expect(screen.getByText("UK marginal rates, thresholds and the £100k taper")).toBeDefined();
     expect(container.textContent).not.toMatch(/30-year|£0|per month, free/i);
   });
 

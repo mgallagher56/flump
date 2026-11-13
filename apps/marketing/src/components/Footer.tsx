@@ -89,30 +89,34 @@ export const Footer: FC = () => {
               </span>
             </div>
             <p className={taglineStyle}>
-              A UK personal finance planner for tax thresholds, pensions and debt.
+              A UK personal finance planner for your monthly picture, housing costs, debts and
+              pension.
             </p>
           </div>
 
           {/* Calculators */}
           <div className={stack({ gap: "3" })}>
             <h2 className={sectionTitleStyle}>Calculators</h2>
-            <Link to="/tools/uk-100k-tax-trap-calculator" className={linkStyle}>
-              £100k tax trap calculator
-            </Link>
             <Link to="/tools/uk-debt-snowball-vs-avalanche-calculator" className={linkStyle}>
               Snowball vs avalanche
             </Link>
             <Link to="/tools/0-percent-balance-transfer-payoff-calculator" className={linkStyle}>
               0% balance transfer calculator
             </Link>
+            <Link to="/tools/overdraft-cost-and-payoff-calculator" className={linkStyle}>
+              Overdraft cost and payoff
+            </Link>
             <Link to="/tools/mortgage-overpayment-vs-isa-calculator" className={linkStyle}>
               Mortgage vs Stocks and Shares ISA
             </Link>
+            <Link to="/tools/uk-student-loan-overpay-or-invest-calculator" className={linkStyle}>
+              Student loan overpayments
+            </Link>
+            <Link to="/tools/uk-100k-tax-trap-calculator" className={linkStyle}>
+              £100k tax trap calculator
+            </Link>
             <Link to="/tools/section-24-landlord-tax-calculator" className={linkStyle}>
               Section 24 landlord tax
-            </Link>
-            <Link to="/tools/overdraft-cost-and-payoff-calculator" className={linkStyle}>
-              Overdraft cost and payoff
             </Link>
           </div>
 
