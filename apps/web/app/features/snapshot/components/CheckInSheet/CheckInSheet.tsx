@@ -203,6 +203,7 @@ export const CheckInSheet: FC<CheckInSheetProps> = ({
                 ) : (
                   <CurrencyInput
                     aria-label={label}
+                    data-testid={`snapshot-value-${row.accountId}`}
                     id={`snapshot-value-${row.accountId}`}
                     onValueChange={(v) => setValues((prev) => ({ ...prev, [row.accountId]: v }))}
                     value={values[row.accountId] ?? null}
@@ -215,7 +216,7 @@ export const CheckInSheet: FC<CheckInSheetProps> = ({
       )}
 
       {manualCount > 0 ? (
-        <p aria-live="polite" className={summaryLine()}>
+        <p className={summaryLine()}>
           {skipped === 0
             ? `${saved} of ${manualCount} balances ready to save.`
             : `${saved} of ${manualCount} balances ready to save. Empty ones keep their earlier values.`}
