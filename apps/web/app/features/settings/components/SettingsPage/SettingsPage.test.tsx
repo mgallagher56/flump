@@ -121,7 +121,37 @@ describe("<SettingsPage />", () => {
     );
   });
 
+  it("uses manual activation: arrow keys move focus without changing tab", () => {
+    render(<SettingsPage initialProfile={profile} />);
+    const profileTab = screen.getByRole("tab", { name: "Profile" });
+    profileTab.focus();
+    fireEvent.keyDown(profileTab, { key: "ArrowRight" });
+    expect(screen.getByRole("tab", { name: "Profile" }).getAttribute("aria-selected")).toBe("true");
+  });
+
   describe("unsaved changes guard", () => {
+    it("puts ?tab= back when Keep editing is chosen after a link asked for another tab", async () => {
+      const router = createMemoryRouter(
+        [
+          {
+            path: "/app/profile",
+            element: <SettingsPage initialProfile={profile} user={{ email: "j@example.com" }} />,
+          },
+        ],
+        { initialEntries: ["/app/profile"] },
+      );
+      render(<RouterProvider router={router} />);
+      edit();
+      await act(async () => {
+        await router.navigate("/app/profile?tab=security");
+      });
+      expect(await screen.findByRole("alertdialog")).toBeDefined();
+      fireEvent.click(screen.getByRole("button", { name: "Keep editing" }));
+      await waitFor(() => expect(router.state.location.search).toBe("?tab=profile"));
+      expect(screen.queryByRole("alertdialog")).toBeNull();
+      expect((screen.getByTestId("first-name-input") as HTMLInputElement).value).toBe("Janet");
+    });
+
     it("switches tabs without asking when nothing changed", () => {
       render(<SettingsPage initialProfile={profile} />);
       pressTab("Data");

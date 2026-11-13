@@ -35,6 +35,12 @@ export const UnsavedChangesPrompt: Story = {
     const canvas = within(canvasElement);
     await userEvent.type(canvas.getByLabelText("First name"), "t");
     await userEvent.click(canvas.getByRole("tab", { name: "Security" }));
-    await expect(await within(document.body).findByText("Discard unsaved changes?")).toBeDefined();
+    const body = within(document.body);
+    await expect(await body.findByText("Discard unsaved changes?")).toBeDefined();
+    await userEvent.click(body.getByRole("button", { name: "Discard changes" }));
+    await expect(await canvas.findByTestId("settings-security-tab")).toBeDefined();
+    await expect(canvas.getByRole("tab", { name: "Security" }).getAttribute("aria-selected")).toBe(
+      "true",
+    );
   },
 };

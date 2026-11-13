@@ -31,6 +31,7 @@ describe("<SecurityTab />", () => {
   it("says Not set rather than inventing an email", () => {
     render(<SecurityTab email={null} />);
     expect(screen.getByTestId("user-email-display").textContent).toContain("Not set");
+    expect(screen.queryByText("Verified")).toBeNull();
   });
 
   it("sends a password reset email directly", async () => {

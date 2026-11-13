@@ -167,18 +167,22 @@ export const ProfileTab: FC<ProfileTabProps> = ({ profile, user, onDirtyChange }
   // It saves as soon as it is switched, not with the form below.
   const selfAssessmentOn = (profile.enabledPages ?? []).includes("tax");
   const [moduleSaving, setModuleSaving] = useState(false);
+  const [moduleError, setModuleError] = useState<string | null>(null);
   const handleToggleSelfAssessment = async (on: boolean) => {
     const withTax = (list: string[] | undefined) => {
       const base = (list ?? []).filter((k) => k !== "tax");
       return on ? [...base, "tax"] : base;
     };
     setModuleSaving(true);
+    setModuleError(null);
     try {
       await updateProfile({
         enabledPages: withTax(profile.enabledPages),
         dashboardWidgets: withTax(profile.dashboardWidgets),
         dashboardWidgetOrder: withTax(profile.dashboardWidgetOrder),
       });
+    } catch {
+      setModuleError("We could not update the Self Assessment module. Try again.");
     } finally {
       setModuleSaving(false);
     }
@@ -454,6 +458,16 @@ export const ProfileTab: FC<ProfileTabProps> = ({ profile, user, onDirtyChange }
             </span>
           </span>
         </label>
+        {moduleError ? (
+          <p
+            className={statusText({ tone: "danger" })}
+            data-testid="module-save-error"
+            id="module-save-error"
+            role="alert"
+          >
+            {moduleError}
+          </p>
+        ) : null}
       </Card>
     </div>
   );

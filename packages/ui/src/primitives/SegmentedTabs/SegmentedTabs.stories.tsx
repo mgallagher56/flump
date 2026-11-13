@@ -96,3 +96,15 @@ export const WithPanelChildren: Story = {
     </SegmentedTabs>
   ),
 };
+
+/** Manual activation: arrows move focus, Enter selects. For tabs where switching has a cost. */
+export const ManualActivation: Story = {
+  args: { activationMode: "manual", "aria-label": "Manual activation" },
+  play: async ({ canvasElement, args }) => {
+    const canvas = within(canvasElement);
+    canvas.getByRole("tab", { name: "Avalanche (Highest APR)" }).focus();
+    await userEvent.keyboard("{ArrowRight}");
+    await expect(canvas.getByRole("tab", { name: "Snowball (Lowest Balance)" })).toHaveFocus();
+    await expect(args.onValueChange).not.toHaveBeenCalled();
+  },
+};

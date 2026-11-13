@@ -1,5 +1,5 @@
 import { Button, Card, ConfirmDialog } from "@repo/ui";
-import { type FC, useState } from "react";
+import { type FC, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router";
 import {
   sectionCard,
@@ -40,18 +40,33 @@ export const DataTab: FC = () => {
   const [resetError, setResetError] = useState<string | null>(null);
   const [resetSuccess, setResetSuccess] = useState(false);
 
+  // Keep the redirect timer so leaving the page cancels it, and block a second submit while the
+  // first reset is in flight (the dialog's pending state is a render behind a fast double click).
+  const redirectTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const resetInFlight = useRef(false);
+  useEffect(
+    () => () => {
+      if (redirectTimer.current) clearTimeout(redirectTimer.current);
+    },
+    [],
+  );
+
   const handleResetFinancialData = async () => {
+    if (resetInFlight.current) return;
+    resetInFlight.current = true;
     setResettingData(true);
     setResetError(null);
     try {
       await resetFinancialData();
       setResetSuccess(true);
-      setTimeout(() => {
+      redirectTimer.current = setTimeout(() => {
+        redirectTimer.current = null;
         setResetModalOpen(false);
         setResetSuccess(false);
         navigate("/app/onboarding");
       }, SUCCESS_REDIRECT_MS);
     } catch (err) {
+      resetInFlight.current = false;
       setResetError(
         err instanceof Error && err.message
           ? err.message

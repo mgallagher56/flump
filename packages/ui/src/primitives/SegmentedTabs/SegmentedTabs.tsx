@@ -25,6 +25,12 @@ export interface SegmentedTabsProps {
   /** Accessible name for the tab list. */
   "aria-label"?: string;
   /**
+   * `automatic` (default) selects a tab as soon as arrow keys focus it. Use `manual` when
+   * selecting has a cost (unsaved changes, a heavy panel), so arrows only move focus and
+   * Enter or Space selects.
+   */
+  activationMode?: "automatic" | "manual";
+  /**
    * Optional panel content per tab value. Every panel stays mounted (so state such as slider
    * values survives a tab change) and the inactive ones are hidden. Rendering the panels here
    * also gives each tab a real `aria-controls` target.
@@ -99,6 +105,7 @@ const SegmentedTabsRoot: FC<SegmentedTabsProps> = ({
   onValueChange,
   className,
   "aria-label": ariaLabel = "Navigation tabs",
+  activationMode = "automatic",
   panels,
   panelClassName,
   children,
@@ -119,7 +126,12 @@ const SegmentedTabsRoot: FC<SegmentedTabsProps> = ({
 
   return (
     <PanelRegistryContext.Provider value={registry}>
-      <Tabs.Root className={className} value={value} onValueChange={onValueChange}>
+      <Tabs.Root
+        activationMode={activationMode}
+        className={className}
+        value={value}
+        onValueChange={onValueChange}
+      >
         <Tabs.List aria-label={ariaLabel} className={cx(segmentedTabsList())}>
           {items.map((item) => (
             <Tabs.Trigger

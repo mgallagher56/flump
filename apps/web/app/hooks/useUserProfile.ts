@@ -250,8 +250,9 @@ export const userProfileAtom = atom<UserProfile>(DEFAULT_PROFILE);
  * Components can read and mutate profile data through this hook.
  */
 function messageFrom(err: unknown, fallback: string): Error {
+  // Only server-supplied detail or the fixed fallback reaches the UI, never a raw "Failed to fetch".
   if (err instanceof BackendError) return new Error(err.detail ?? fallback);
-  return err instanceof Error ? err : new Error(fallback);
+  return new Error(fallback);
 }
 
 /**

@@ -46,6 +46,22 @@ describe("<DataTab />", () => {
     await waitFor(() => expect(mockResetFinancialData).toHaveBeenCalledTimes(1));
   });
 
+  it("resets once even when confirm is clicked twice quickly", async () => {
+    let release: () => void = () => {};
+    mockResetFinancialData.mockImplementationOnce(
+      () => new Promise<void>((resolve) => (release = resolve)),
+    );
+    render(<DataTab />);
+    fireEvent.click(screen.getByTestId("reset-financial-data-trigger"));
+    fireEvent.change(screen.getByLabelText(/to confirm/i), { target: { value: "RESET" } });
+    const confirmBtn = screen.getByRole("button", { name: "Reset everything" });
+    fireEvent.click(confirmBtn);
+    fireEvent.click(confirmBtn);
+    expect(mockResetFinancialData).toHaveBeenCalledTimes(1);
+    release();
+    await waitFor(() => expect(screen.getByText(/clean slate/i)).toBeDefined());
+  });
+
   it("shows a failure inside the dialog and keeps it open", async () => {
     mockResetFinancialData.mockRejectedValueOnce(new Error("Reset failed on the server"));
     render(<DataTab />);
