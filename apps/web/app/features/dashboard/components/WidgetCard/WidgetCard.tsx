@@ -39,9 +39,9 @@ export const WidgetCard: FC<WidgetCardProps> = ({ title, icon, href, children, o
       <header className={widgetHeader()}>
         <div className={widgetTitleRow()}>
           <Icon icon={icon} size="md" />
-          <h2 className={widgetTitle()} data-testid={`${cardId}-title`} id={`${cardId}-title`}>
+          <h3 className={widgetTitle()} data-testid={`${cardId}-title`} id={`${cardId}-title`}>
             {title}
-          </h2>
+          </h3>
         </div>
         <div className={widgetActions()}>
           <Button asChild size="sm" variant="ghost">
