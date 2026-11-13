@@ -3,12 +3,12 @@ import { Button, EmptyState, Icon, Illustration, PageHeader, ProjectionNotice } 
 import { ListChecks } from "lucide-react";
 import { type FC, useEffect, useMemo, useState } from "react";
 import { useLoaderData, useNavigate } from "react-router";
-import BudgetSetupWizard from "~/components/budget/BudgetSetupWizard";
-import RunwayCalculator from "~/components/budget/RunwayCalculator";
 import { AddCategoryModal } from "~/features/budget/components/AddCategoryModal";
 import { BudgetCategoryTable } from "~/features/budget/components/BudgetCategoryTable";
 import { BudgetNav } from "~/features/budget/components/BudgetNav";
 import { BudgetOverview } from "~/features/budget/components/BudgetOverview";
+import { BudgetSetupWizard } from "~/features/budget/components/BudgetSetupWizard";
+import { RunwayCalculator } from "~/features/budget/components/RunwayCalculator";
 import { useUserProfile } from "~/hooks/useUserProfile";
 import type { loader } from "~/routes/app.budget";
 import { apiFetch } from "~/services/api-client";
