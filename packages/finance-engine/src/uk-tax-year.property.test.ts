@@ -193,13 +193,16 @@ for (let g = 0; g <= 300000; g += 250) GROSSES.push(g);
 interface SweepVariant {
   name: string;
   pensionPct: number;
-  plan: "NONE" | "PLAN_2";
+  plan: "NONE" | "PLAN_1" | "PLAN_2";
+  sacrifice?: boolean;
 }
 
 // Non-salary-sacrifice pension keeps net + deductions + pension = gross checkable.
 const VARIANTS: SweepVariant[] = [
   { name: "no pension, no loan", pensionPct: 0, plan: "NONE" },
   { name: "5% pension, plan 2 loan", pensionPct: 5, plan: "PLAN_2" },
+  // E23 D10: the sacrificed salary must leave take-home too (it used to stay in net pay).
+  { name: "8% salary sacrifice, plan 1 loan", pensionPct: 8, plan: "PLAN_1", sacrifice: true },
 ];
 
 describe("sweep 0..300000 step 250 per year, region and variant", () => {
@@ -217,7 +220,7 @@ describe("sweep 0..300000 step 250 per year, region and variant", () => {
         taxYear: year,
         region,
         pensionContributionPct: variant.pensionPct,
-        isSalarySacrifice: false,
+        isSalarySacrifice: variant.sacrifice ?? false,
         studentLoanPlan: variant.plan,
       });
       const pension = r.employeePensionDeductionGbp;
