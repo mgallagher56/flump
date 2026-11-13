@@ -9,8 +9,10 @@ const read = (rel: string) => fs.readFileSync(path.resolve(__dirname, rel), "utf
 describe("marketing copy (R-10)", () => {
   it.each([
     "pages/ToolsIndexPage.tsx",
-    "components/FeaturePillars.tsx",
     "components/BaselineSnapshotPreview.tsx",
+    "components/MonthlyPictureSection/MonthlyPictureSection.tsx",
+    "components/BigMovesSection/BigMovesSection.tsx",
+    "components/PayRiseTeaser/PayRiseTeaser.tsx",
   ])("%s does not over-claim", (file) => {
     expect(read(file)).not.toMatch(/\bexact\b|guaranteed|gross take-home/i);
   });

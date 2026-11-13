@@ -61,13 +61,13 @@ const featureIcon = (kind: "check" | "clock", className: string) => (
 );
 
 const FREE_FEATURES = [
-  "£100k–£125k tax trap and childcare calculator",
   "Debt snowball vs avalanche payoff",
   "0% balance transfer payoff calculator",
-  "Section 24 landlord tax calculator",
-  "Mortgage overpayment vs Stocks and Shares ISA",
   "Arranged overdraft cost and payoff modeller",
+  "Mortgage overpayment vs Stocks and Shares ISA",
   "Student loan overpayment comparison",
+  "UK marginal rates, thresholds and the £100k taper",
+  "Section 24 landlord tax calculator",
 ];
 
 const BETA_STATEMENT =

@@ -47,15 +47,15 @@ const FAQS = [
   },
   {
     q: "Do I have to connect my bank accounts?",
-    a: "No. Flump is manual-first. You can enter rough totals for income, expenses, and savings in 60 seconds and use the tax, debt, mortgage, and forecasting tools without connecting a bank account. Bank connection is coming soon.",
+    a: "No. Flump is manual-first. You can enter rough totals for income, expenses, and savings and use the tax, debt, mortgage, and forecasting tools without connecting a bank account. Bank connection is coming soon.",
   },
   {
     q: "What makes Flump different from generic budgeting apps?",
-    a: "Flump is built for UK personal finance: income tax bands, National Insurance, the £100k Personal Allowance taper, student loan plans (1, 2, 4, 5, Postgraduate), Section 24 buy-to-let calculations, and pension salary sacrifice.",
+    a: "Flump is built for UK personal finance: income tax bands and marginal rates, National Insurance, student loan plans (1, 2, 4, 5, Postgraduate), pension contributions and salary sacrifice, and the thresholds where take-home changes. It works the same whether you rent or pay a mortgage.",
   },
   {
-    q: "How does the 60-second baseline work?",
-    a: "Enter 6 rough numbers: your salary, housing, core bills, savings, pension balance, and debt. Flump calculates your net worth, weekly safe to spend, and emergency runway immediately. You can add detail whenever you want.",
+    q: "How does the starting baseline work?",
+    a: "Enter 6 rough numbers: your salary, rent or mortgage, core bills, savings, pension balance, and any debts. Flump estimates your net worth, weekly safe to spend, and months of cover straight away. You can add detail whenever you want.",
   },
   {
     q: "Is Flump free?",

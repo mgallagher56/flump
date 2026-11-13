@@ -73,8 +73,8 @@ export const McpSpotlightSection: FC = () => {
               <div className={bulletRow()}>
                 <FiCheckCircle className={bulletIcon({ tone: "positive" })} size={18} />
                 <span>
-                  <strong>Deterministic engine:</strong> UK tax bands, £100k taper, and Section 24
-                  relief.
+                  <strong>Deterministic engine:</strong> UK tax bands, National Insurance, pensions
+                  and student loans.
                 </span>
               </div>
               <div className={bulletRow()}>
@@ -118,8 +118,8 @@ export const McpSpotlightSection: FC = () => {
               </div>
 
               <div className={terminalPromptLine()}>
-                &gt; "What is my Personal Allowance with £14,200 of salary sacrifice into a pension
-                on a £114,200 salary?"
+                &gt; "What would my monthly take-home be on a £39,000 salary if I paid 5% into my
+                pension by salary sacrifice?"
               </div>
 
               <div className={terminalToolLine()}>
@@ -138,36 +138,33 @@ export const McpSpotlightSection: FC = () => {
                 <br />
                 <span className={payloadBracket()}>{"{"}</span>
                 <br />
-                &nbsp;&nbsp;<span className={payloadKey()}>"taperApplies":</span>{" "}
-                <span className={payloadBool()}>false</span>,
+                &nbsp;&nbsp;<span className={payloadKey()}>"grossIncomeGbp":</span>{" "}
+                <span className={payloadNum()}>39000</span>,
                 <br />
-                &nbsp;&nbsp;
-                <span className={payloadKey()}>"personalAllowanceTaperRemovedGbp":</span>{" "}
-                <span className={payloadNum()}>7100</span>,
+                &nbsp;&nbsp;<span className={payloadKey()}>"adjustedNetIncomeGbp":</span>{" "}
+                <span className={payloadNum()}>37050</span>,
                 <br />
-                &nbsp;&nbsp;
-                <span className={payloadKey()}>"effectivePersonalAllowanceGbp":</span>{" "}
-                <span className={payloadNum()}>12570</span>,
+                &nbsp;&nbsp;<span className={payloadKey()}>"incomeTaxGbp":</span>{" "}
+                <span className={payloadNum()}>4896</span>,
                 <br />
-                &nbsp;&nbsp;<span className={payloadKey()}>"taxAndNiDifferenceGbp":</span>{" "}
-                <span className={payloadNum()}>8804</span>,
+                &nbsp;&nbsp;<span className={payloadKey()}>"nationalInsuranceGbp":</span>{" "}
+                <span className={payloadNum()}>1958.4</span>,
                 <br />
-                &nbsp;&nbsp;<span className={payloadKey()}>"effectiveTaxReliefPct":</span>{" "}
-                <span className={payloadNum()}>62.0</span>,
+                &nbsp;&nbsp;<span className={payloadKey()}>"netTakeHomeMonthlyGbp":</span>{" "}
+                <span className={payloadNum()}>2516.3</span>,
                 <br />
-                &nbsp;&nbsp;<span className={payloadKey()}>"contributionToThresholdGbp":</span>{" "}
-                <span className={payloadNum()}>14200</span>
+                &nbsp;&nbsp;<span className={payloadKey()}>"effectiveTaxRatePct":</span>{" "}
+                <span className={payloadNum()}>17.6</span>
                 <br />
                 <span className={payloadBracket()}>{"}"}</span>
               </section>
 
               <div className={terminalSummary()}>
                 <strong className={terminalSummaryStrong()}>Example output:</strong> for an
-                illustrative £114,200 gross salary, £14,200 of salary sacrifice into a pension
-                brings adjusted net income to £100,000. The £7,100 Personal Allowance taper is then
-                removed, so the full £12,570 allowance applies, and Income Tax and NI are £8,804
-                lower at an effective 62% marginal rate. These figures are an unverified example,
-                not advice.
+                illustrative £39,000 salary in England with 5% paid into a pension by salary
+                sacrifice, £1,950 a year goes into the pension and monthly take-home is an estimated
+                £2,516, which is £117 a month less than with no contribution. These figures are an
+                unverified example for the 2026/27 tax year, not advice.
               </div>
             </div>
           </div>

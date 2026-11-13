@@ -21,8 +21,8 @@ describe("McpSpotlightSection", () => {
     expect(screen.getByText(/Setup guide coming soon/i)).toBeDefined();
     expect(document.body.textContent).not.toMatch(/PII-scrubbed|Strict PII/i);
     expect(screen.getByText(/simulate_uk_tax_and_pension_sacrifice/i)).toBeDefined();
-    expect(screen.getByText(/7100/)).toBeDefined();
-    expect(screen.getByText(/8804/)).toBeDefined();
+    expect(screen.getByText(/37050/)).toBeDefined();
+    expect(screen.getByText(/2516\.3/)).toBeDefined();
 
     expect(screen.getByText("Example output")).toBeDefined();
     expect(screen.getByText(/baseline sample data/i)).toBeDefined();

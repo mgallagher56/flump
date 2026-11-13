@@ -54,8 +54,8 @@ const MCP_TOOLS: ToolCatalogEntry[] = [
   {
     name: "simulate_uk_tax_and_pension_sacrifice",
     description:
-      "Calculates net take-home pay, the National Insurance effect of salary sacrifice, the £100k–£125k Personal Allowance taper, and Gift Aid tax relief.",
-    samplePrompt: "What is my adjusted net income at a £10,000 pension contribution?",
+      "Calculates take-home pay, Income Tax and National Insurance, and how a pension contribution or salary sacrifice changes them. It also covers Scottish bands, Gift Aid and the Personal Allowance taper.",
+    samplePrompt: "What would my monthly take-home be if I paid 5% into my pension?",
   },
   {
     name: "compare_mortgage_overpay_vs_isa",
@@ -125,7 +125,7 @@ export const McpPage: FC = () => {
 
             <p className={heroLead()}>
               Flump MCP is a preview for MCP clients such as Claude Desktop and Cursor. Its tools
-              run tax-trap, debt avalanche and wealth projection simulations from a deterministic
+              run take-home pay, debt payoff and wealth projection simulations from a deterministic
               calculation engine. In preview they use <strong>baseline sample data</strong>, not
               your own figures.
             </p>
