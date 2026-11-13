@@ -20,11 +20,13 @@
  */
 
 import {
+  UK_CHILD_BENEFIT,
   UK_EMPLOYER_NI_RATES,
   UK_EWNI_INCOME_TAX,
   UK_NATIONAL_INSURANCE,
   UK_SCOTLAND_INCOME_TAX,
   UK_STUDENT_LOANS,
+  type UKChildBenefitYear,
   type UKEmployerNIRate,
   type UKEWNIIncomeTaxYear,
   type UKNationalInsuranceYear,
@@ -374,6 +376,8 @@ export interface UkTaxYearRules {
   studentLoans: UKStudentLoanYear;
   savings: UkSavingsRules;
   dividends: UkDividendRules;
+  /** Child Benefit weekly rates and High Income Child Benefit Charge thresholds (E25-T3). */
+  hicbc: UKChildBenefitYear;
   giftAidGrossUp: 1.25;
   /** Unique source URLs, derived from `ruleSources`. */
   sources: string[];
@@ -403,12 +407,14 @@ export function getUkTaxYearRules(year: UkTaxYear): UkTaxYearRules {
   const ni = UK_NATIONAL_INSURANCE[year];
   const employerNi = UK_EMPLOYER_NI_RATES[year];
   const studentLoans = UK_STUDENT_LOANS[year];
+  const hicbc = UK_CHILD_BENEFIT[year];
   if (!ewni)
     throw new UnsupportedUkTaxYearError(year, "England, Wales and Northern Ireland income tax");
   if (!scotland) throw new UnsupportedUkTaxYearError(year, "Scottish income tax");
   if (!ni) throw new UnsupportedUkTaxYearError(year, "National Insurance");
   if (!employerNi) throw new UnsupportedUkTaxYearError(year, "employer National Insurance");
   if (!studentLoans) throw new UnsupportedUkTaxYearError(year, "student loan");
+  if (!hicbc) throw new UnsupportedUkTaxYearError(year, "Child Benefit and HICBC");
   const unverified = ruleUnverifiedNotes(year);
   return {
     year,
@@ -419,6 +425,7 @@ export function getUkTaxYearRules(year: UkTaxYear): UkTaxYearRules {
     studentLoans,
     savings: SAVINGS,
     dividends: DIVIDENDS[year],
+    hicbc,
     giftAidGrossUp: 1.25,
     sources: ruleSourceUrls(year),
     ruleSources: UK_RULE_SOURCES[year],

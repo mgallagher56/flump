@@ -15,6 +15,7 @@ export * from "./tax-calculator.js";
 export * from "./tax-rules.js";
 export * from "./tax-year-verification.js";
 export * from "./types.js";
+export * from "./uk-hicbc.js";
 export * from "./uk-rule-sources.js";
 export * from "./uk-tax.js";
 export * from "./uk-tax-year.js";
