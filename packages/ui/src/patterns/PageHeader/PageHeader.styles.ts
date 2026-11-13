@@ -6,31 +6,58 @@ export const pageHeaderContainer = cva({
     justifyContent: "space-between",
     alignItems: "flex-start",
     flexWrap: "wrap",
-    gap: "16px",
+    gap: "4",
     width: "100%",
-    mb: "20px",
+    mb: { base: "5", md: "6" },
   },
+});
+
+export const pageHeaderText = cva({
+  base: { flex: "1 1 280px", minWidth: 0 },
 });
 
 export const pageHeaderTitle = cva({
   base: {
-    fontFamily: "display",
-    fontSize: { base: "22px", md: "28px" },
-    fontWeight: "bold",
+    textStyle: "heading.xl",
     color: "text.primary",
-    letterSpacing: "-0.02em",
     margin: "0",
-    lineHeight: "1.2",
   },
 });
 
-export const pageHeaderSubtitle = cva({
+export const pageHeaderDescription = cva({
   base: {
-    fontSize: "sm",
-    color: "text.muted",
+    textStyle: "body.md",
+    color: "text.secondary",
     margin: "0",
-    mt: "4px",
+    mt: "1",
     maxWidth: "720px",
-    lineHeight: "1.5",
+  },
+});
+
+export const pageHeaderAside = cva({
+  base: {
+    display: "flex",
+    alignItems: "center",
+    flexWrap: "wrap",
+    justifyContent: "flex-end",
+    gap: "3",
+  },
+});
+
+/** Quiet outlined pill, for example "Sample data". */
+export const pageHeaderBadge = cva({
+  base: {
+    display: "inline-flex",
+    alignItems: "center",
+    textStyle: "label.sm",
+    color: "text.secondary",
+    backgroundColor: "surface.sunken",
+    borderWidth: "1px",
+    borderStyle: "solid",
+    borderColor: "border.DEFAULT",
+    borderRadius: "full",
+    px: "3",
+    py: "0.5",
+    whiteSpace: "nowrap",
   },
 });

@@ -9,10 +9,7 @@ export const emptyStateRecipe = sva({
       alignItems: "center",
       justifyContent: "center",
       textAlign: "center",
-      borderWidth: "1px",
-      borderStyle: "dashed",
-      borderColor: "border.subtle",
-      borderRadius: "xl",
+      borderRadius: "2xl",
     },
     illustration: {
       display: "inline-flex",
@@ -21,6 +18,7 @@ export const emptyStateRecipe = sva({
       maxWidth: "100%",
       color: "text.secondary",
       "& svg, & img": { maxWidth: "100%", height: "auto" },
+      mb: "2",
     },
     icon: {
       display: "inline-flex",
@@ -53,10 +51,16 @@ export const emptyStateRecipe = sva({
   variants: {
     tone: {
       default: {
-        root: { backgroundColor: "surface.subtle" },
+        // Direction C: a sunken sand panel with a large soft radius, no outline.
+        root: { backgroundColor: "surface.sunken" },
       },
       muted: {
-        root: { backgroundColor: "transparent" },
+        root: {
+          backgroundColor: "transparent",
+          borderWidth: "1px",
+          borderStyle: "dashed",
+          borderColor: "border.DEFAULT",
+        },
         title: { color: "text.secondary" },
         description: { color: "text.muted" },
         icon: { color: "text.muted" },
@@ -68,7 +72,7 @@ export const emptyStateRecipe = sva({
         root: { gap: "3", px: { base: "4", md: "8" }, py: { base: "10", md: "14" } },
         title: { textStyle: "heading.md" },
         description: { textStyle: "body.md" },
-        action: { gap: "2", mt: "2" },
+        action: { gap: "3", mt: "3" },
       },
       sm: {
         root: { gap: "2", px: "4", py: "6" },

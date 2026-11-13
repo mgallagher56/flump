@@ -3,30 +3,89 @@ import { cva } from "../../../styled-system/css";
 export const splitGrid = cva({
   base: {
     display: "grid",
-    gridTemplateColumns: { base: "1fr", lg: "repeat(12, 1fr)" },
-    gap: "24px",
+    gridTemplateColumns: { base: "minmax(0, 1fr)", lg: "repeat(12, minmax(0, 1fr))" },
+    gap: { base: "4", lg: "6" },
     alignItems: "start",
     width: "100%",
+  },
+});
+
+/** Under `lg`: the summary bar that keeps the headline outcome visible, plus the Adjust control. */
+export const splitSummaryBar = cva({
+  base: {
+    display: { base: "flex", lg: "none" },
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: "3",
+    position: "sticky",
+    top: "0",
+    zIndex: "sticky",
+    px: "4",
+    py: "3",
+    backgroundColor: "surface.card",
+    borderWidth: "1px",
+    borderStyle: "solid",
+    borderColor: "border.subtle",
+    borderRadius: "2xl",
+    boxShadow: "card",
+    fontVariantNumeric: "tabular-nums",
+  },
+});
+
+export const splitSummaryText = cva({
+  base: { flex: "1 1 auto", minWidth: 0, color: "text.primary", textStyle: "body.md" },
+});
+
+export const splitAdjustButton = cva({
+  base: {
+    display: "inline-flex",
+    alignItems: "center",
+    gap: "2",
+    flexShrink: 0,
+    minHeight: "touch",
+    px: "4",
+    textStyle: "label.md",
+    fontWeight: "semibold",
+    color: "primary.foreground",
+    backgroundColor: "primary.solid",
+    borderRadius: "full",
+    border: "none",
+    cursor: "pointer",
+    _hover: { backgroundColor: "primary.hover" },
+    _focusVisible: {
+      outline: "2px solid",
+      outlineColor: "border.focusRing",
+      outlineOffset: "2px",
+    },
   },
 });
 
 export const splitLeftControls = cva({
   base: {
     gridColumn: { base: "span 1", lg: "span 5" },
-    display: "flex",
     flexDirection: "column",
-    gap: "16px",
+    gap: "4",
     position: { lg: "sticky" },
-    top: { lg: "16px" },
+    top: { lg: "4" },
+    // Under lg the controls are revealed by the Adjust control; from lg they are always shown.
+    display: { base: "none", lg: "flex" },
+    // The page may be taller than the viewport: let the sticky column scroll on its own.
+    maxHeight: { lg: "calc(100vh - 32px)" },
+    overflowY: { lg: "auto" },
   },
   variants: {
     span: {
       4: { gridColumn: { base: "span 1", lg: "span 4" } },
       5: { gridColumn: { base: "span 1", lg: "span 5" } },
     },
+    open: {
+      true: { display: "flex" },
+      false: {},
+    },
   },
   defaultVariants: {
     span: 5,
+    open: false,
   },
 });
 
@@ -35,7 +94,8 @@ export const splitRightContent = cva({
     gridColumn: { base: "span 1", lg: "span 7" },
     display: "flex",
     flexDirection: "column",
-    gap: "20px",
+    gap: "5",
+    minWidth: 0,
   },
   variants: {
     span: {
