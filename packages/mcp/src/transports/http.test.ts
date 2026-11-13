@@ -1,8 +1,9 @@
+import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { describe, expect, it, vi } from "vitest";
 import { FailedAuthLimiter } from "../auth/failed-auth-limiter.js";
 import { hashPatToken } from "../auth/token-verifier.js";
 import type { McpUserDataProvider } from "../types.js";
-import { countToolCalls, HttpMcpHandler } from "./http.js";
+import { countToolCalls, HttpMcpHandler, MAX_BATCH_COUNTED, MAX_BODY_BYTES } from "./http.js";
 
 const newHandler = () => new HttpMcpHandler({ dataProvider: {} as McpUserDataProvider });
 const PAT = "flump_pat_0123456789abcdef0123456789abcdef";
@@ -184,11 +185,12 @@ describe("usage counted per tools/call", () => {
     expiresAt: null,
     revokedAt: null,
   });
-  const setup = () => {
+  const setup = (allowed: boolean) => {
     const calls: Array<[string, number]> = [];
     const keys: string[] = [];
     const handler = new HttpMcpHandler({
       dataProvider: {} as McpUserDataProvider,
+      devToken: "dev-secret",
       tokenStore: {
         findTokenByHash: async () => record("tok-1"),
         recordRequest: async (id, n) => {
@@ -198,18 +200,33 @@ describe("usage counted per tools/call", () => {
       rateLimiter: {
         checkLimit: (key: string) => {
           keys.push(key);
-          return { allowed: false, resetSeconds: 1, message: "x" };
+          return { allowed, resetSeconds: 1, message: "x" };
         },
       } as never,
     });
     return { handler, calls, keys };
   };
   const rpc = (method: string, id = 1) => ({ jsonrpc: "2.0", id, method, params: {} });
-  const webReq = (body: unknown) =>
+  const init = {
+    jsonrpc: "2.0",
+    id: 1,
+    method: "initialize",
+    params: {
+      protocolVersion: "2025-03-26",
+      capabilities: {},
+      clientInfo: { name: "t", version: "1" },
+    },
+  };
+  const webReq = (body: string | unknown, extra: Record<string, string> = {}, auth = PAT) =>
     new Request("http://localhost/mcp", {
       method: "POST",
-      headers: { authorization: `Bearer ${PAT}`, "content-type": "application/json" },
-      body: JSON.stringify(body),
+      headers: {
+        authorization: `Bearer ${auth}`,
+        "content-type": "application/json",
+        accept: "application/json, text/event-stream",
+        ...extra,
+      },
+      body: typeof body === "string" ? body : JSON.stringify(body),
     });
   const expressRes: any = {
     status: () => expressRes,
@@ -226,21 +243,75 @@ describe("usage counted per tools/call", () => {
     expect(countToolCalls("x")).toBe(0);
   });
 
-  // The rate limiter denies here, so only the counting before it is under test.
+  it("countToolCalls caps the counted batch length", () => {
+    const batch = Array.from({ length: 500 }, (_, i) => rpc("tools/call", i));
+    expect(countToolCalls(batch)).toBe(MAX_BATCH_COUNTED);
+  });
+
   it("web: initialize plus list counts 0 tool calls", async () => {
-    const { handler, calls } = setup();
+    const { handler, calls } = setup(true);
     await handler.handleWebRequest(webReq([rpc("initialize"), rpc("tools/list", 2)]));
     expect(calls).toEqual([["tok-1", 0]]);
   });
 
   it("web: a batch of 2 tool calls counts 2", async () => {
-    const { handler, calls } = setup();
+    const { handler, calls } = setup(true);
     await handler.handleWebRequest(webReq([rpc("tools/call"), rpc("tools/call", 2)]));
     expect(calls).toEqual([["tok-1", 2]]);
   });
 
+  it("web: the cloned body still reaches the transport", async () => {
+    const { handler, calls } = setup(true);
+    const res = await handler.handleWebRequest(webReq(init));
+    expect(res.status).toBe(200);
+    expect(await res.text()).toContain("serverInfo");
+    expect(calls).toEqual([["tok-1", 0]]);
+  });
+
+  it("web: a malformed body counts 0 and still updates lastUsedAt", async () => {
+    const { handler, calls } = setup(true);
+    await handler.handleWebRequest(webReq("{not json"));
+    expect(calls).toEqual([["tok-1", 0]]);
+  });
+
+  it("web: 413 when content-length exceeds 1 MB, with no usage write", async () => {
+    const { handler, calls } = setup(true);
+    const res = await handler.handleWebRequest(
+      webReq(init, { "content-length": String(MAX_BODY_BYTES + 1) }),
+    );
+    expect(res.status).toBe(413);
+    expect(calls).toEqual([]);
+  });
+
+  it("web: 413 for an oversized body of unknown length", async () => {
+    const { handler, calls } = setup(true);
+    const big = "x".repeat(MAX_BODY_BYTES + 10);
+    const stream = new ReadableStream({
+      start(c) {
+        c.enqueue(new TextEncoder().encode(big));
+        c.close();
+      },
+    });
+    const req = new Request("http://localhost/mcp", {
+      method: "POST",
+      headers: { authorization: `Bearer ${PAT}`, "content-type": "application/json" },
+      body: stream,
+      duplex: "half",
+    } as RequestInit);
+    const res = await handler.handleWebRequest(req);
+    expect(res.status).toBe(413);
+    expect(calls).toEqual([]);
+  });
+
+  it("web: a dev-token request (no tokenId) is not recorded", async () => {
+    const { handler, calls, keys } = setup(true);
+    await handler.handleWebRequest(webReq(init, {}, "dev-secret"));
+    expect(calls).toEqual([]);
+    expect(keys).toEqual(["usr:dev_user"]);
+  });
+
   it("express: initialize plus list counts 0, a batch of 2 counts 2", async () => {
-    const { handler, calls } = setup();
+    const { handler, calls } = setup(true);
     await handler.handleExpressRequest(
       expressReq([rpc("initialize"), rpc("tools/list", 2)]),
       expressRes,
@@ -255,26 +326,51 @@ describe("usage counted per tools/call", () => {
     ]);
   });
 
-  it("keys the rate limiter by tokenId", async () => {
-    const { handler, keys } = setup();
+  it("express: passes parsedBody ?? req.body through to the transport", async () => {
+    const spy = vi
+      .spyOn(StreamableHTTPServerTransport.prototype, "handleRequest")
+      .mockResolvedValue(undefined);
+    const { handler, calls } = setup(true);
+    const parsed = [rpc("tools/call")];
+    await handler.handleExpressRequest(expressReq({ ignored: true }), expressRes, parsed);
+    await handler.handleExpressRequest(expressReq(rpc("tools/list")), expressRes);
+    expect(spy.mock.calls[0]?.[2]).toBe(parsed);
+    expect(spy.mock.calls[1]?.[2]).toEqual(rpc("tools/list"));
+    expect(calls).toEqual([
+      ["tok-1", 1],
+      ["tok-1", 0],
+    ]);
+    spy.mockRestore();
+  });
+
+  it("keys the rate limiter by namespaced token id", async () => {
+    const { handler, keys } = setup(false);
     await handler.handleWebRequest(webReq(rpc("tools/call")));
-    expect(keys).toEqual(["tok-1"]);
+    expect(keys).toEqual(["tok:tok-1"]);
+  });
+
+  it("429s are not recorded (web and express)", async () => {
+    const { handler, calls } = setup(false);
+    const w = await handler.handleWebRequest(webReq([rpc("tools/call")]));
+    await handler.handleExpressRequest(expressReq([rpc("tools/call")]), expressRes);
+    expect(w.status).toBe(429);
+    expect(calls).toEqual([]);
   });
 
   it("a failing usage write is logged and does not fail the request", async () => {
     const errors = vi.spyOn(console, "error").mockImplementation(() => {});
-    const { handler } = setup();
+    const { handler } = setup(true);
     (handler as any).verifier.recordRequest = async () => {
       throw new Error("db down");
     };
-    const res = await handler.handleWebRequest(webReq(rpc("tools/call")));
-    expect(res.status).toBe(429);
+    const res = await handler.handleWebRequest(webReq(init));
+    expect(res.status).toBe(200);
     expect(errors).toHaveBeenCalled();
     errors.mockRestore();
   });
 
   it("does not record usage for failed authentication", async () => {
-    const { handler, calls } = setup();
+    const { handler, calls } = setup(true);
     await handler.handleWebRequest(
       new Request("http://localhost/mcp", {
         method: "POST",

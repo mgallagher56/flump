@@ -32,9 +32,45 @@ function clientIpFromHeaders(headers: Headers): string {
   return last || "unknown";
 }
 
+/** Largest request body the web path buffers for usage counting. */
+export const MAX_BODY_BYTES = 1_048_576;
+/** Batch messages beyond this many are not counted. */
+export const MAX_BATCH_COUNTED = 100;
+
+/** Reads a stream up to `max` bytes; returns null when the limit is exceeded. */
+async function readLimited(stream: ReadableStream<Uint8Array> | null, max: number) {
+  if (!stream) return "";
+  const reader = stream.getReader();
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    total += value.byteLength;
+    if (total > max) {
+      await reader.cancel().catch(() => undefined);
+      return null;
+    }
+    chunks.push(value);
+  }
+  return Buffer.concat(chunks).toString("utf8");
+}
+
+const limiterKey = (v: VerifiedToken) => (v.tokenId ? `tok:${v.tokenId}` : `usr:${v.userId}`);
+
+function payloadTooLarge() {
+  return new Response(
+    JSON.stringify({ error: "payload_too_large", message: "Request too large." }),
+    {
+      status: 413,
+      headers: { "Content-Type": "application/json" },
+    },
+  );
+}
+
 /** Counts `tools/call` messages in a JSON-RPC body (a single message or a batch). */
 export function countToolCalls(body: unknown): number {
-  const messages = Array.isArray(body) ? body : [body];
+  const messages = Array.isArray(body) ? body.slice(0, MAX_BATCH_COUNTED) : [body];
   return messages.filter(
     (m) =>
       typeof m === "object" && m !== null && (m as { method?: unknown }).method === "tools/call",
@@ -90,9 +126,8 @@ export class HttpMcpHandler {
       const verified = await this.verifier.verifyAuthorizationHeader(authHeader);
       this.failedAuthLimiter.recordSuccess(ip);
 
-      // 2. Record usage for every authenticated request, then check rate limits
-      await this.recordUsage(verified, parsedBody ?? req.body);
-      const limitResult = this.rateLimiter.checkLimit(verified.tokenId ?? verified.userId);
+      // 2. Check rate limits, then record usage for allowed requests only
+      const limitResult = this.rateLimiter.checkLimit(limiterKey(verified));
       if (!limitResult.allowed) {
         res.setHeader("Retry-After", String(limitResult.resetSeconds));
         res.status(429).json({
@@ -102,6 +137,8 @@ export class HttpMcpHandler {
         });
         return;
       }
+
+      await this.recordUsage(verified, parsedBody ?? req.body);
 
       // 3. Create server and transport instance for this request
       const mcpServer = createFlumpMcpServer({
@@ -153,16 +190,7 @@ export class HttpMcpHandler {
       const verified = await this.verifier.verifyAuthorizationHeader(authHeader);
       this.failedAuthLimiter.recordSuccess(ip);
 
-      let body: unknown;
-      if (verified.tokenId) {
-        body = await request
-          .clone()
-          .json()
-          .catch(() => undefined);
-      }
-      await this.recordUsage(verified, body);
-
-      const limitResult = this.rateLimiter.checkLimit(verified.tokenId ?? verified.userId);
+      const limitResult = this.rateLimiter.checkLimit(limiterKey(verified));
       if (!limitResult.allowed) {
         return new Response(
           JSON.stringify({
@@ -179,6 +207,20 @@ export class HttpMcpHandler {
           },
         );
       }
+
+      const declared = Number(request.headers.get("content-length"));
+      if (Number.isFinite(declared) && declared > MAX_BODY_BYTES) return payloadTooLarge();
+      let body: unknown;
+      if (verified.tokenId) {
+        const text = await readLimited(request.clone().body, MAX_BODY_BYTES);
+        if (text === null) return payloadTooLarge();
+        try {
+          body = JSON.parse(text);
+        } catch {
+          body = undefined;
+        }
+      }
+      await this.recordUsage(verified, body);
 
       const mcpServer = createFlumpMcpServer({
         token: verified,
