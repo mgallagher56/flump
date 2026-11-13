@@ -476,7 +476,7 @@ export const PensionForecasterCard: FC<PensionForecasterCardProps> = ({
       >
         <div>
           <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
-            <FLPHeading as="h3" size="md">
+            <FLPHeading as="h2" size="md">
               Pension Growth & Retirement Forecaster
             </FLPHeading>
             <span
@@ -888,9 +888,7 @@ export const PensionForecasterCard: FC<PensionForecasterCardProps> = ({
                 </span>
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                <span style={{ fontSize: "11px", textTransform: "none", opacity: 0.8 }}>
-                  Toggle rules
-                </span>
+                <span style={{ fontSize: "11px", textTransform: "none" }}>Toggle rules</span>
                 <FaChevronDown size={11} />
               </div>
             </summary>
