@@ -24,6 +24,7 @@ import "@repo/ui/fonts.css";
 import styles from "./index.css?url";
 import { sentryPublicEnv } from "./observability/env";
 import { securityMiddleware } from "./security/middleware.server";
+import { useNonce } from "./security/nonce";
 import { backendFetch } from "./services/backend-client.server";
 import { BackendError } from "./services/backend-error";
 import { ThemeContext } from "./ThemeContext";
@@ -80,6 +81,7 @@ export const loader = async (args: LoaderFunctionArgs) => {
 
 export default function App() {
   const { locale, user, userProfile, ENV, isMobileClient } = useLoaderData<typeof loader>();
+  const nonce = useNonce();
   const { theme, preference, setPreference, toggleTheme } = useTheme();
   const { setProfile } = useUserProfile();
 
@@ -101,11 +103,12 @@ export default function App() {
         <Meta />
         <Links />
         <script
+          nonce={nonce}
           dangerouslySetInnerHTML={{
             __html: `window.ENV = ${JSON.stringify(ENV).replace(/</g, "\\u003c")};`,
           }}
         />
-        <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
+        <script nonce={nonce} dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
       </head>
       <body
         style={{
@@ -147,14 +150,15 @@ export default function App() {
             </div>
           </ResponsiveProvider>
         </ThemeContext.Provider>
-        <ScrollRestoration />
-        <Scripts />
+        <ScrollRestoration nonce={nonce} />
+        <Scripts nonce={nonce} />
       </body>
     </html>
   );
 }
 
 export function ErrorBoundary() {
+  const nonce = useNonce();
   const { theme } = useTheme();
   const error = useRouteError();
   const title =
@@ -169,7 +173,7 @@ export function ErrorBoundary() {
         <title>{title}</title>
         <Meta />
         <Links />
-        <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
+        <script nonce={nonce} dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
       </head>
       <body
         className={css({
@@ -180,8 +184,8 @@ export function ErrorBoundary() {
         })}
       >
         <RouteErrorBoundary />
-        <ScrollRestoration />
-        <Scripts />
+        <ScrollRestoration nonce={nonce} />
+        <Scripts nonce={nonce} />
       </body>
     </html>
   );

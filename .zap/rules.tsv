@@ -5,3 +5,4 @@
 10027	IGNORE	(Information Disclosure - Suspicious Comments)
 # 90004 (Insufficient Site Isolation Against Spectre): ignored only for the missing Cross-Origin-Embedder-Policy, which would block third-party resources for no isolation benefit we use. The web app sends COOP same-origin and CORP same-origin. The marketing site does not send COOP or CORP yet, and this row hides that finding for it; revisit when marketing gets them. See docs/security/headers-and-csp.md.
 90004	IGNORE	(Insufficient Site Isolation Against Spectre Vulnerability)
+# 10055 (CSP) is deliberately NOT listed, so it stays at the default WARN. The web CSP is report-only until E20-N12, so the scan sees the enforced `frame-ancestors` header only; once enforced, `img-src https:` is the wildcard it will flag and `style-src 'unsafe-inline'` may be flagged too. See docs/security/headers-and-csp.md.
