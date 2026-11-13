@@ -1,4 +1,4 @@
-import { assertSafeOptions } from "@flump/observability";
+import { assertSafeOptions, PRIVATE_DATA_COLLECTION } from "@flump/observability";
 import * as Sentry from "@sentry/node";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { beforeSend, initSentry, WITHHELD, withholdMessages } from "./sentry";
@@ -35,10 +35,14 @@ describe("initSentry", () => {
       release: "0123456",
       serverName: "backend",
       environment: "unknown",
-      skipOpenTelemetrySetup: true,
+      enableOpenTelemetrySetup: false,
+      enableRuntimeChannelInjection: false,
       includeLocalVariables: false,
       tracesSampleRate: 0,
+      traceLifecycle: "static",
+      dataCollection: PRIVATE_DATA_COLLECTION,
     });
+    expect(opts).not.toHaveProperty("sendDefaultPii");
     expect((opts.beforeSendTransaction as () => unknown)()).toBeNull();
   });
 
@@ -50,14 +54,26 @@ describe("initSentry", () => {
     };
     const names = opts.integrations.map((i) => i.name);
     expect(opts.defaultIntegrations).toBe(false);
-    expect(names).toEqual(
-      expect.arrayContaining(["InboundFilters", "OnUncaughtException", "OnUnhandledRejection"]),
+    expect([...names].sort()).toEqual(
+      [
+        "ContextLines",
+        "Dedupe",
+        "EventFilters",
+        "FunctionToString",
+        "LinkedErrors",
+        "OnUncaughtException",
+        "OnUnhandledRejection",
+      ].sort(),
     );
     for (const banned of [
       "Http",
       "NodeFetch",
       "Console",
       "RequestData",
+      "NodeSystemError",
+      "ConversationId",
+      "Context",
+      "Modules",
       "LocalVariablesAsync",
       "Express",
     ]) {

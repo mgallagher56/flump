@@ -1,4 +1,4 @@
-import { scrubBreadcrumb } from "@flump/observability";
+import { PRIVATE_DATA_COLLECTION, scrubBreadcrumb } from "@flump/observability";
 import * as Sentry from "@sentry/react";
 import { beforeSend } from "./withhold";
 
@@ -9,7 +9,6 @@ import { beforeSend } from "./withhold";
  */
 const ALLOWED_INTEGRATIONS = new Set([
   "EventFilters",
-  "InboundFilters",
   "FunctionToString",
   "BrowserApiErrors",
   "GlobalHandlers",
@@ -40,8 +39,13 @@ export function init(env: ClientSentryEnv | undefined): boolean {
     dsn,
     environment: env?.SENTRY_ENVIRONMENT || "unknown",
     release: env?.SENTRY_RELEASE || undefined,
-    sendDefaultPii: false,
+    // v11 removed `sendDefaultPii`; `dataCollection` replaces it (Sentry v11 migration guide, "Data collection").
+    // Every v11 default is ON, so every category is switched off explicitly:
+    // user/IP, cookies, headers, bodies, query strings, local variables, DB and queue data, AI/GraphQL/MCP content.
+    dataCollection: PRIVATE_DATA_COLLECTION,
     tracesSampleRate: 0,
+    // v11 defaults to 'stream', which ignores beforeSendTransaction; 'static' keeps that backstop live.
+    traceLifecycle: "static",
     beforeSendTransaction: () => null,
     attachStacktrace: false,
     maxBreadcrumbs: 30,
@@ -49,8 +53,8 @@ export function init(env: ClientSentryEnv | undefined): boolean {
     defaultIntegrations: false,
     integrations: [
       ...Sentry.getDefaultIntegrations({}).filter((i) => ALLOWED_INTEGRATIONS.has(i.name)),
+      // v11 moved console breadcrumbs into the separate `Console` integration, which is not allow-listed.
       Sentry.breadcrumbsIntegration({
-        console: false,
         dom: false,
         sentry: false,
         fetch: true,

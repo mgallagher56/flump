@@ -122,8 +122,33 @@ export function assertEnvelopeClean(result: EnvelopeResult, expectedMessage = WI
     if (all.includes(leak)) throw new Error(`envelope leaked ${leak}`);
   }
   const keys = ['"request"', '"headers"', '"query_string"', '"data"', '"cookies"', '"user"'];
-  for (const key of [...keys, '"server_name"']) {
+  // v11 can add host, device, locale and IP-inference metadata that v10 did not send. None of it
+  // may appear: the event carries only the exception, the release, the runtime name and a request id.
+  const v11Keys = [
+    '"os"',
+    '"device"',
+    '"culture"',
+    '"cloud_resource"',
+    '"app"',
+    '"modules"',
+    '"ip_address"',
+    '"infer_ip"',
+    '"settings"',
+    '"vars"',
+    '"pre_context"',
+    '"post_context"',
+    '"dsc"',
+  ];
+  for (const key of [...keys, ...v11Keys, '"server_name"']) {
     if (all.includes(key)) throw new Error(`envelope contains ${key}`);
+  }
+  for (const envelope of result.envelopes) {
+    const header = JSON.parse(envelope.split("\n")[0] ?? "{}") as Record<string, unknown>;
+    if ("trace" in header) throw new Error("envelope header carries a dynamic sampling context");
+    const sdkKeys = Object.keys((header.sdk ?? {}) as Record<string, unknown>).sort();
+    if (sdkKeys.join() !== "name,version") {
+      throw new Error(`envelope sdk header has unexpected keys: ${sdkKeys.join()}`);
+    }
   }
   if (!all.includes(expectedMessage)) throw new Error(`envelope lacks ${expectedMessage}`);
   if (!all.includes("req-envelope-1")) throw new Error("request id tag missing");

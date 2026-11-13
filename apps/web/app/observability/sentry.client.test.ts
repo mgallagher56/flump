@@ -1,4 +1,4 @@
-import { assertSafeOptions, scrubBreadcrumb } from "@flump/observability";
+import { assertSafeOptions, PRIVATE_DATA_COLLECTION, scrubBreadcrumb } from "@flump/observability";
 import * as Sentry from "@sentry/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { DENY_URLS, init } from "./sentry.client";
@@ -42,8 +42,9 @@ describe("sentry.client init", () => {
       dsn: DSN,
       release: "abc1234",
       environment: "unknown",
-      sendDefaultPii: false,
+      dataCollection: PRIVATE_DATA_COLLECTION,
       tracesSampleRate: 0,
+      traceLifecycle: "static",
       defaultIntegrations: false,
       denyUrls: DENY_URLS,
     });
@@ -57,6 +58,8 @@ describe("sentry.client init", () => {
     );
     for (const banned of [
       "HttpContext",
+      "CultureContext",
+      "Console",
       "BrowserSession",
       "BrowserTracing",
       "Replay",
@@ -69,7 +72,6 @@ describe("sentry.client init", () => {
   it("collects only fetch, xhr and history breadcrumbs", () => {
     init({ SENTRY_DSN: DSN });
     expect(Sentry.breadcrumbsIntegration).toHaveBeenCalledExactlyOnceWith({
-      console: false,
       dom: false,
       sentry: false,
       fetch: true,

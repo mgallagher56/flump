@@ -1,4 +1,4 @@
-import { scrubBreadcrumb } from "@flump/observability";
+import { PRIVATE_DATA_COLLECTION, scrubBreadcrumb } from "@flump/observability";
 import * as Sentry from "@sentry/node";
 import { safeErrorSummary } from "../utils/safeErrorSummary";
 import { sentryPublicEnv } from "./env";
@@ -13,7 +13,6 @@ type Env = Record<string, string | undefined>;
  */
 const ALLOWED_INTEGRATIONS = new Set([
   "EventFilters",
-  "InboundFilters",
   "FunctionToString",
   "LinkedErrors",
   "Dedupe",
@@ -33,13 +32,22 @@ export function initSentry(env: Env): boolean {
     environment: SENTRY_ENVIRONMENT || "unknown",
     release: SENTRY_RELEASE || undefined,
     serverName: "web",
-    sendDefaultPii: false,
+    // v11 removed `sendDefaultPii`; `dataCollection` replaces it (Sentry v11 migration guide, "Data collection").
+    // Every v11 default is ON, so every category is switched off explicitly:
+    // user/IP, cookies, headers, bodies, query strings, local variables, DB and queue data, AI/GraphQL/MCP content.
+    dataCollection: PRIVATE_DATA_COLLECTION,
     tracesSampleRate: 0,
+    // v11 defaults to 'stream', which ignores beforeSendTransaction; 'static' keeps that backstop live.
+    traceLifecycle: "static",
     beforeSendTransaction: () => null,
     includeLocalVariables: false,
     attachStacktrace: false,
     maxBreadcrumbs: 30,
-    skipOpenTelemetrySetup: true,
+    // v11: `skipOpenTelemetrySetup` is gone; no tracer provider is the default, kept explicit.
+    enableOpenTelemetrySetup: false,
+    // v11 default is ON: it registers module-loader hooks that rewrite application modules so that
+    // instrumentation channels fire. Nothing here uses them, so no code transformation at load time.
+    enableRuntimeChannelInjection: false,
     defaultIntegrations: false,
     integrations: [
       ...Sentry.getDefaultIntegrations({}).filter((i) => ALLOWED_INTEGRATIONS.has(i.name)),
