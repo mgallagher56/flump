@@ -19,6 +19,29 @@ describe("createAppLogger", () => {
     expect(() => JSON.parse(String(spy.mock.calls[0]?.[0]))).not.toThrow();
   });
 
+  it("is case-insensitive and trimmed", () => {
+    const spy = vi.spyOn(process.stdout, "write").mockImplementation(() => true);
+    createAppLogger({ NODE_ENV: " Production " }).log("a");
+    createAppLogger({ LOG_FORMAT: " JSON" }).log("b");
+    expect(spy.mock.calls).toHaveLength(2);
+    for (const call of spy.mock.calls) expect(() => JSON.parse(String(call[0]))).not.toThrow();
+  });
+
+  it("LOG_FORMAT=text overrides production", () => {
+    const spy = vi.spyOn(process.stdout, "write").mockImplementation(() => true);
+    createAppLogger({ NODE_ENV: "production", LOG_FORMAT: "text" }).log("hi");
+    expect(() => JSON.parse(String(spy.mock.calls[0]?.[0]))).toThrow();
+  });
+
+  it("logs an object with its fields nested under message", () => {
+    const spy = vi.spyOn(process.stdout, "write").mockImplementation(() => true);
+    const entry = { requestId: "r1", route: "/a/:id", status: 200 };
+    createAppLogger({ NODE_ENV: "production" }).log(entry, "HttpAccess");
+    const parsed = JSON.parse(String(spy.mock.calls[0]?.[0]));
+    expect(parsed).toMatchObject({ level: "log", context: "HttpAccess", message: entry });
+    expect(parsed.requestId).toBeUndefined();
+  });
+
   it("uses Nest's text format otherwise", () => {
     const spy = vi.spyOn(process.stdout, "write").mockImplementation(() => true);
     const logger = createAppLogger({ NODE_ENV: "development" });
