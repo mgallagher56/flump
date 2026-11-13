@@ -304,14 +304,14 @@ describe("DebtContainer live region", () => {
     vi.useRealTimers();
   });
 
-  it("announces the debt-free headline 1000ms after the overpayment slider changes", () => {
+  it("announces the debt-free headline shortly after the overpayment slider changes", () => {
     render(<DebtContainer />);
     const region = screen.getByRole("status");
     expect(region.textContent).toBe("");
 
     fireEvent.change(screen.getAllByRole("slider")[0], { target: { value: "300" } });
     act(() => {
-      vi.advanceTimersByTime(999);
+      vi.advanceTimersByTime(499);
     });
     expect(region.textContent).toBe("");
     act(() => {

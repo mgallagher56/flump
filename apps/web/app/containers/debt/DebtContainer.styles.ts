@@ -127,3 +127,14 @@ export const promoAlertRow = cva({
     "& p": { margin: 0 },
   },
 });
+
+export const footerLink = css({
+  padding: 0,
+  background: "transparent",
+  border: "none",
+  color: "primary",
+  textDecoration: "underline",
+  cursor: "pointer",
+  minHeight: "touch",
+  _focusVisible: { outline: "2px solid", outlineColor: "border.focusRing", outlineOffset: "2px" },
+});

@@ -10,8 +10,8 @@ import {
   EmptyState,
   Icon,
   Illustration,
-  LiveRegion,
   PageHeader,
+  ScenarioZone,
   SimulatorSplitLayout,
 } from "@repo/ui";
 import { BookOpen, CreditCard, type LucideIcon, TriangleAlert } from "lucide-react";
@@ -19,7 +19,6 @@ import { type FC, useMemo, useState } from "react";
 import { Link, useFetcher, useLoaderData } from "react-router";
 import { AddDebtDialog } from "~/features/debt/components/AddDebtDialog";
 import { DebtAccountsList } from "~/features/debt/components/DebtAccountsList";
-import { DebtScenarioZone } from "~/features/debt/components/DebtScenarioZone";
 import { DebtSummary } from "~/features/debt/components/DebtSummary";
 import { DebtToWealthBridgeCard } from "~/features/debt/components/DebtToWealthBridgeCard";
 import { PayoffStrategySwitcher } from "~/features/debt/components/PayoffStrategySwitcher";
@@ -28,10 +27,12 @@ import { debtItemToAccountPayload } from "~/features/debt/utils/debtAccountMappi
 import { ConfirmDialog } from "~/features/feedback/components/ConfirmDialog";
 import { useFetcherOutcome } from "~/features/feedback/hooks/useFetcherOutcome";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
+import { useScenarioState } from "~/hooks/useScenarioState";
 import { useUserProfile } from "~/hooks/useUserProfile";
 import {
   controlsStack,
   errorBanner,
+  footerLink,
   mutedNote,
   noteLink,
   pageRoot,
@@ -44,6 +45,8 @@ import {
 } from "./DebtContainer.styles";
 
 type DebtTab = "accounts" | "instruments";
+
+const SAVED_SCENARIO = { extraPayment: 0, strategy: "avalanche" as "avalanche" | "snowball" };
 
 export const DebtContainer: FC = () => {
   const loaderData = useLoaderData<any>();
@@ -72,16 +75,14 @@ export const DebtContainer: FC = () => {
     [accounts, accountDetails],
   );
 
-  // Scenario state: container memory only. It never reaches the KPI strip, the saved list, the
-  // URL, storage or the network, and it starts at £0 (no invented or surplus-based default).
-  // TODO(E15 scenario zone): replace with `useScenarioState` and the shared `ScenarioZone`.
-  const [selectedStrategy, setSelectedStrategy] = useState<"avalanche" | "snowball">("avalanche");
-  const [extraPayment, setExtraPayment] = useState<number>(0);
-  const isScenarioModified = extraPayment !== 0 || selectedStrategy !== "avalanche";
-  const resetScenario = () => {
-    setExtraPayment(0);
-    setSelectedStrategy("avalanche");
-  };
+  // Scenario state: container memory only (shared hook). It never reaches the KPI strip, the saved
+  // list, the URL, storage or the network, and it starts at £0 (no invented or surplus default).
+  const scenario = useScenarioState(SAVED_SCENARIO);
+  const extraPayment = scenario.values.extraPayment;
+  const selectedStrategy = scenario.values.strategy;
+  const setExtraPayment = (amount: number) => scenario.set("extraPayment", amount);
+  const setSelectedStrategy = (strategy: "avalanche" | "snowball") =>
+    scenario.set("strategy", strategy);
   const [isAddModalOpen, setIsAddModalOpen] = useState<boolean>(false);
 
   // Financial stage evaluation
@@ -118,11 +119,12 @@ export const DebtContainer: FC = () => {
   // estimated or the payments never clear the debt.
   const debtHeadline =
     hasDebts &&
+    scenario.isModified &&
     extraPayment > 0 &&
     !aprUnknown &&
     !minimumEstimated &&
     activeResult.payoffAchievable
-      ? `Illustration: debt-free by ${activeResult.debtFreeDate}, total interest ${formatCurrency(activeResult.totalInterest)}`
+      ? `debt-free by ${activeResult.debtFreeDate}, total interest ${formatCurrency(activeResult.totalInterest)}`
       : "";
 
   const fetcher = useFetcher();
@@ -343,18 +345,27 @@ export const DebtContainer: FC = () => {
 
       {/* The scenario zone stays mounted so the illustration survives a tab switch. */}
       {hasDebts ? (
-        <DebtScenarioZone
+        <ScenarioZone
+          announcement={debtHeadline}
           basis={`Starting from your figures: ${formatCurrency(totalDebt)} owed across ${debts.length} ${
             debts.length === 1 ? "debt" : "debts"
           }, ${formatCurrency(totalMin)} a month in minimums`}
-          isModified={isScenarioModified}
-          onReset={resetScenario}
-          onUpdateDetails={() => {
-            setActiveTab("accounts");
-            document.getElementById("debt-tab-accounts")?.focus();
-          }}
+          footer={
+            <button
+              className={footerLink}
+              type="button"
+              onClick={() => {
+                setActiveTab("accounts");
+                document.getElementById("debt-tab-accounts")?.focus();
+              }}
+            >
+              Update your details
+            </button>
+          }
+          isModified={scenario.isModified}
+          title="Model a change to your debts"
+          onReset={scenario.reset}
         >
-          <LiveRegion announceInitial debounceMs={1000} message={debtHeadline} visuallyHidden />
           <SimulatorSplitLayout
             content={<DebtToWealthBridgeCard debts={debts} extraPayment={extraPayment} />}
             contentLabel="Debt payoff results"
@@ -362,7 +373,7 @@ export const DebtContainer: FC = () => {
             controlsLabel="Payoff settings"
             controlsSpan={5}
           />
-        </DebtScenarioZone>
+        </ScenarioZone>
       ) : null}
 
       <div {...panelProps("instruments")}>
