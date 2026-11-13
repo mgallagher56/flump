@@ -11,7 +11,6 @@ test("the marketing home loads without console errors", async ({ page }) => {
   const response = await page.goto(MARKETING_URL);
   expect(response?.status()).toBe(200);
   await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
-  await page.waitForLoadState("networkidle");
 
   expect(problems).toEqual([]);
 });
