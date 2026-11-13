@@ -14,7 +14,7 @@ async function setup() {
 
 const b64 = (o: object) => Buffer.from(JSON.stringify(o)).toString("base64url");
 
-describe("WorkOsJwtVerifier", () => {
+describe("WorkOsJwtVerifier", { timeout: 15_000 }, () => {
   beforeAll(() => {
     Logger.overrideLogger(false);
   });
@@ -104,7 +104,7 @@ describe("WorkOsJwtVerifier", () => {
   });
 });
 
-describe("WorkOsJwtVerifier issuer list", () => {
+describe("WorkOsJwtVerifier issuer list", { timeout: 15_000 }, () => {
   const CLIENT = "client_x";
   const BARE = "https://api.workos.com";
   const UM = `https://api.workos.com/user_management/${CLIENT}`;
@@ -167,7 +167,7 @@ describe("WorkOsJwtVerifier issuer list", () => {
   });
 });
 
-describe("WorkOsJwtVerifier diagnostics", () => {
+describe("WorkOsJwtVerifier diagnostics", { timeout: 15_000 }, () => {
   it("warns with the failing claim name and never the token", async () => {
     const { t, verifier } = await setup();
     const warn = vi.spyOn(Logger.prototype, "warn").mockImplementation(() => undefined);

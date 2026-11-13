@@ -9,6 +9,22 @@ export interface SignOptions {
   noExp?: boolean;
 }
 
+// RSA-2048 keygen costs ~300ms each, so generate the pair once per test file (module scope) rather
+// than per call. Within a pair the signing and foreign keys stay distinct.
+let keyPairs:
+  | Promise<{
+      real: Awaited<ReturnType<typeof generateKeyPair>>;
+      foreign: Awaited<ReturnType<typeof generateKeyPair>>;
+    }>
+  | undefined;
+
+function getKeyPairs() {
+  keyPairs ??= Promise.all([generateKeyPair("RS256"), generateKeyPair("RS256")]).then(
+    ([real, foreign]) => ({ real, foreign }),
+  );
+  return keyPairs;
+}
+
 export async function createTestJwks(): Promise<{
   jwks: JWTVerifyGetKey;
   issuer: string;
@@ -19,8 +35,9 @@ export async function createTestJwks(): Promise<{
 }> {
   const kid = "test-key-1";
   const issuer = "https://test.workos.example/user_management/client_test";
-  const { publicKey, privateKey } = await generateKeyPair("RS256");
-  const { privateKey: foreignKey } = await generateKeyPair("RS256");
+  const { real, foreign } = await getKeyPairs();
+  const { publicKey, privateKey } = real;
+  const { privateKey: foreignKey } = foreign;
   const publicJwk = { ...(await exportJWK(publicKey)), kid, alg: "RS256" };
 
   const jwks: JWTVerifyGetKey = async () => publicKey;
