@@ -15,7 +15,6 @@ vi.mock("react-router", () => ({
       enabledPages: ["accounts", "budget", "savings", "pension"],
     },
     user: { name: "Alex" },
-    accessToken: "mock-token",
   }),
   useNavigate: () => mockNavigate,
   Link: ({ children, to, className }: any) => (
