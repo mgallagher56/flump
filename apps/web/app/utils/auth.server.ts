@@ -1,6 +1,7 @@
 import { authkitLoader } from "@workos-inc/authkit-react-router";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 import { redirect } from "react-router";
+import { recordRefreshedCookies } from "~/security/session-cookies.server";
 import { safeErrorSummary } from "~/utils/safeErrorSummary";
 import { applySessionPolicy } from "~/utils/sessionPolicy.server";
 
@@ -63,10 +64,14 @@ export async function getAuthSession(
       data = response;
     }
 
+    const headers = (response as any)?.init?.headers || (response as any)?.headers;
+    // Forwarded by the root middleware (E20-N2); keyed on the context shared with it.
+    recordRefreshedCookies(args.context ?? args.request, headers);
+
     return {
       user: data?.user || null,
       accessToken: (data?.accessToken as string) || null,
-      headers: (response as any)?.init?.headers || (response as any)?.headers,
+      headers,
     };
   } catch (error) {
     if (error instanceof Response) {
@@ -81,4 +86,22 @@ export async function getAuthSession(
     }
     throw error;
   }
+}
+
+/**
+ * authkit only configures its session storage inside `authkitLoader`, so `signOut` as the first
+ * request after boot throws "SessionStorage was never configured". Run a no-op loader first,
+ * with the Cookie header stripped so it never verifies or refreshes a real session.
+ */
+export async function ensureSessionStorage(request: Request): Promise<void> {
+  const headers = new Headers(request.headers);
+  headers.delete("cookie");
+  await authkitLoader(
+    {
+      request: new Request(request.url, { headers }),
+      params: {},
+      context: {},
+    } as LoaderFunctionArgs,
+    { ensureSignedIn: false },
+  );
 }
