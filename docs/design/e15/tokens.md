@@ -51,13 +51,13 @@ Round 5 treatment: light shadows are warm-tinted with the warm charcoal ink (`rg
 
 Numeric literals (not the z-index tokens above) until web adoption moves them. Higher sits on top.
 
-| Layer                         | z-index |
-| :---------------------------- | :------ |
-| Dialog, Sheet overlay         | 200     |
-| Dialog, Sheet content         | 201     |
-| Toast                         | 210     |
-| Popover, Menu, InfoTip        | 250     |
-| Tooltip                       | 260     |
+| Layer                  | z-index |
+| :--------------------- | :------ |
+| Dialog, Sheet overlay  | 200     |
+| Dialog, Sheet content  | 201     |
+| Toast                  | 210     |
+| Popover, Menu, InfoTip | 250     |
+| Tooltip                | 260     |
 
 Popover, Menu and Tooltip sit above dialogs so they work inside a dialog.
 
