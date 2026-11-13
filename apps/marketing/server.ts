@@ -7,7 +7,7 @@ import express from "express";
 import { createServer as createViteServer, type ViteDevServer } from "vite";
 import { analyticsMiddleware } from "./server/analytics";
 import { applyServerHardening } from "./server/hardening";
-import { buildHeadMeta } from "./server/headMeta";
+import { buildHeadMeta, splitHoistables } from "./server/headMeta";
 import { registerOps } from "./server/ops";
 import { rateLimit } from "./server/rateLimit";
 import { buildCsp, genericServerError, injectThemeNonce, resolveAppUrl } from "./server/security";
@@ -91,12 +91,14 @@ async function createServer() {
         render = (await import("./dist/server/entry-server.js")).render;
       }
 
-      const { html: appHtml, helmet, status } = render(url);
+      const { html: renderedHtml, helmet, status } = render(url);
+      const { hoisted, rest: appHtml } = splitHoistables(renderedHtml);
 
       const nonceAttr = res.locals.nonce ? ` nonce="${res.locals.nonce}"` : "";
       const appUrlScript = `<script${nonceAttr}>window.__FLUMP_APP_URL__=${JSON.stringify(resolvedAppUrl)};</script>`;
 
       const helmetMeta = buildHeadMeta({
+        hoisted,
         helmet,
         appUrlScript,
         siteUrl: process.env.SITE_URL,
