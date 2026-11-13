@@ -104,7 +104,9 @@ export function registerDebtSimulatorTool(
             const min = Math.max(25, Math.round(nominal * 0.025));
             return {
               id: a.id || `debt_${i}`,
-              name: a.name || `Debt Account #${i + 1}`,
+              name: ctx.token.anonymizeInstitutions
+                ? `Debt account #${i + 1}`
+                : a.name || `Debt Account #${i + 1}`,
               balance: nominal,
               balanceGbp: nominal,
               apr,

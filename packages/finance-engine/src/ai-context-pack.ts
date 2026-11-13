@@ -1,3 +1,4 @@
+import { scrubInstitutionNames } from "./anonymise.js";
 import {
   calculateDebtSchedule,
   compareAvalancheAndSnowball,
@@ -169,10 +170,13 @@ export function buildFlumpAiContextPack(
     let name = entry.name;
     if (isAnonymized && !entry.isIncome) {
       // Keep category clean, scrub sensitive names if any
-      name = entry.name.replace(/monzo|starling|barclays|hsbc|santander|amex/gi, "Bank");
+      name = scrubInstitutionNames(entry.name);
     }
+    // Free-text notes can hold anything, so they are dropped when anonymised.
+    const { notes, ...rest } = entry;
     return {
-      ...entry,
+      ...rest,
+      ...(isAnonymized ? {} : { notes }),
       id: entry.id || `b_${idx}`,
       name,
     };

@@ -15,11 +15,6 @@ export function registerUkAdvisorPrompts(
         "Comprehensive UK personal financial health audit, evaluating net worth, emergency runway, high-APR debt burn, and tax efficiency.",
     },
     async () => {
-      const ctx = await getContext();
-      const rawData = await ctx.dataProvider.getUserFinancialData(ctx.token.userId, {
-        anonymizeInstitutions: ctx.token.anonymizeInstitutions,
-      });
-
       return {
         messages: [
           {
@@ -47,18 +42,13 @@ export function registerUkAdvisorPrompts(
         "Analyzes whether gross salary + bonuses enter the UK £100k-£125,140 60% (or 69.5% Scottish) tax trap and models optimal pension sacrifice.",
     },
     async () => {
-      const ctx = await getContext();
-      const rawData = await ctx.dataProvider.getUserFinancialData(ctx.token.userId);
-      const b = rawData.baseline;
-
       return {
         messages: [
           {
             role: "user",
             content: {
               type: "text",
-              text: `My current UK gross salary is £${b.annualGrossSalary.toLocaleString("en-GB")}.
-Please call the tool 'simulate_uk_tax_and_pension_sacrifice' to calculate whether I am in the £100k tax trap, how much Personal Allowance I have lost, and what exact pension contribution or Gift Aid donation is required to escape the 60% effective tax rate and maximize take-home wealth.`,
+              text: `Please call the tool 'simulate_uk_tax_and_pension_sacrifice' to calculate whether I am in the £100k tax trap, how much Personal Allowance I have lost, and what exact pension contribution or Gift Aid donation is required to escape the 60% effective tax rate and maximize take-home wealth.`,
             },
           },
         ],

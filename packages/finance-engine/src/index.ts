@@ -1,4 +1,5 @@
 export * from "./ai-context-pack.js";
+export * from "./anonymise.js";
 export * from "./compliance/advice-lexicon.js";
 export * from "./debt-payoff.js";
 export * from "./disclaimers.js";
