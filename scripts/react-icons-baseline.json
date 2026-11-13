@@ -14,9 +14,6 @@
   "apps/web/app/components/core/dialogs/TaxDisclaimerButton.tsx": 1,
   "apps/web/app/components/core/disclosure/CollapsibleSection.tsx": 1,
   "apps/web/app/features/ai-connections/components/McpConnectionCard/McpConnectionCard.tsx": 1,
-  "apps/web/app/routes/sandbox.tsx": 1,
-  "apps/web/app/routes/tools.$slug.tsx": 1,
-  "apps/web/app/routes/tools._index.tsx": 2,
   "packages/ui/src/calculators/MortgageVsIsaCalculator/MortgageVsIsaCalculator.tsx": 1,
   "packages/ui/src/calculators/Section24Calculator/Section24Calculator.tsx": 1,
   "packages/ui/src/calculators/ZeroPercentCliffCalculator/ZeroPercentCliffCalculator.tsx": 1

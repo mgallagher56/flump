@@ -40,7 +40,11 @@ export const errorStateHeading = cva({
     fontSize: "xl",
     fontWeight: "bold",
     color: "text.primary",
-    _focus: { outline: "none" },
+    _focusVisible: {
+      outline: "2px solid",
+      outlineColor: "border.focusRing",
+      outlineOffset: "2px",
+    },
   },
 });
 

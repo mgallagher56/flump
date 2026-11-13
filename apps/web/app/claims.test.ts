@@ -32,7 +32,7 @@ function files(dir: string): string[] {
 const read = (list: string[]) => list.map((f) => [f, readFileSync(f, "utf8")] as const);
 
 const COPY_DIRS = [
-  join(__dirname, "components", "home"),
+  join(__dirname, "features", "signed-out"),
   join(__dirname, "features", "dashboard", "components", "SetupChecklist"),
   join(__dirname, "features", "ai-connections"),
 ];
