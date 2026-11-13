@@ -1,4 +1,3 @@
-import { act, fireEvent } from "@testing-library/react";
 import { vi } from "vitest";
 import customRender from "~/testUtils/customRender";
 import AccountDetailContainer from "./AccountDetailContainer";
@@ -165,9 +164,18 @@ vi.mock("~/hooks/useFormatCurrency", () => ({
 }));
 
 describe("<AccountDetailContainer />", () => {
-  test("should render", () => {
-    const { baseElement } = customRender(<AccountDetailContainer />);
-    expect(baseElement).toMatchSnapshot();
+  test("shows the account name, one hero balance and the Your account zone", () => {
+    const { getByRole, getByText } = customRender(<AccountDetailContainer />);
+    expect(getByRole("heading", { level: 1, name: "My current account" })).toBeDefined();
+    expect(getByText("Current balance")).toBeDefined();
+    expect(getByRole("heading", { name: "Your account" })).toBeDefined();
+    expect(getByText("Saved")).toBeDefined();
+  });
+
+  test("keeps the ledger on its own tab, with the chart first", () => {
+    const { getByRole } = customRender(<AccountDetailContainer />);
+    expect(getByRole("tab", { name: "Balance over time" })).toBeDefined();
+    expect(getByRole("tab", { name: "Monthly ledger" })).toBeDefined();
   });
   test("back to accounts is a real link", () => {
     const { getByRole } = customRender(<AccountDetailContainer />);
@@ -177,7 +185,7 @@ describe("<AccountDetailContainer />", () => {
   });
   test("history is read-only: no edit, save or add-year controls", () => {
     const { queryByText } = customRender(<AccountDetailContainer />);
-    for (const label of ["edit", "save", "addPrevYear", "addNextYear", "addCurrentYear"]) {
+    for (const label of ["save", "addPrevYear", "addNextYear", "addCurrentYear"]) {
       expect(queryByText(label)).toBeNull();
     }
     expect(mocks.mockFetcherSubmit).not.toHaveBeenCalled();

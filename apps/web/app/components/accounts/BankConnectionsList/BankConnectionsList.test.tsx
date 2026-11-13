@@ -46,7 +46,7 @@ describe("<BankConnectionsList />", () => {
       <BankConnectionsList connections={mockConnections} />,
     );
 
-    expect(getByText("Synced Bank Connections")).toBeDefined();
+    expect(getByText("Synced bank connections")).toBeDefined();
     expect(getByText("Monzo Bank")).toBeDefined();
     expect(getByText("HSBC UK")).toBeDefined();
     expect(getAllByText(/Synced/i).length).toBeGreaterThan(0);
@@ -56,7 +56,7 @@ describe("<BankConnectionsList />", () => {
   test("allows syncing a connection", () => {
     const { getAllByText } = customRender(<BankConnectionsList connections={mockConnections} />);
 
-    const syncButtons = getAllByText("Sync Now");
+    const syncButtons = getAllByText("Sync now");
     fireEvent.click(syncButtons[0]);
     expect(mockSubmit).toHaveBeenCalledWith(
       { intent: "syncConnection", connectionId: "conn-1" },
@@ -137,7 +137,7 @@ describe("<BankConnectionsList />", () => {
 
   test("renders empty state when there are no connections", () => {
     const { getByText } = customRender(<BankConnectionsList connections={[]} canConnect />);
-    expect(getByText("No Connected Banks")).toBeDefined();
+    expect(getByText("No connected banks")).toBeDefined();
   });
 
   test("renders mobile variant layout", () => {
@@ -158,6 +158,6 @@ describe("<BankConnectionsList />", () => {
   test("renders nothing when there are no connections and connecting is not enabled", () => {
     const { container } = customRender(<BankConnectionsList connections={[]} />);
     expect(container.textContent).not.toContain("Bank Connections");
-    expect(container.textContent).not.toContain("No Connected Banks");
+    expect(container.textContent).not.toContain("No connected banks");
   });
 });

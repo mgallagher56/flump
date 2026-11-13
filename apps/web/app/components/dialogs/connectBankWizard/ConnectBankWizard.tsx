@@ -1,64 +1,51 @@
-import * as Dialog from "@radix-ui/react-dialog";
-import { css } from "@repo/ui/styled-system/css";
-import { type FC, useEffect, useMemo, useState } from "react";
+import { Button, controlProps, Dialog, FormField, Icon, StatusBadge, TextInput } from "@repo/ui";
 import {
-  FaArrowLeft,
-  FaCheckCircle,
-  FaChevronRight,
-  FaGlobe,
-  FaKey,
-  FaLock,
-  FaShieldAlt,
-  FaSpinner,
-  FaUniversity,
-} from "react-icons/fa";
+  ArrowLeft,
+  CheckCircle2,
+  ChevronRight,
+  Globe,
+  KeyRound,
+  Landmark,
+  Loader2,
+  Lock,
+  ShieldCheck,
+  TriangleAlert,
+} from "lucide-react";
+import { type FC, useEffect, useMemo, useState } from "react";
 import { useFetcher } from "react-router";
-import FLPButton from "~/components/core/buttons/FLPButton";
-import FLPInput from "~/components/core/inputs/input/FLPInput";
-import FLPHeading from "~/components/core/typography/FLPHeading";
-import FLPText from "~/components/core/typography/FLPText";
 import { isSafeRedirectUrl } from "~/utils/safeRedirectUrl";
-
-// Block-level text for use inside card buttons (a <p> or <div> is not valid button content).
-const cardTextStyles = {
-  title: css({
-    display: "block",
-    margin: 0,
-    lineHeight: 1.6,
-    fontSize: "md",
-    fontWeight: "semibold",
-    color: "text.secondary",
-  }),
-  method: css({
-    display: "block",
-    margin: 0,
-    lineHeight: 1.6,
-    fontSize: "sm",
-    fontWeight: "bold",
-    color: "text.secondary",
-  }),
-  muted: css({ display: "block", margin: 0, lineHeight: 1.6, fontSize: "xs", color: "text.muted" }),
-};
-
-const CardText: FC<{
-  fontWeight?: "semibold" | "bold";
-  fontSize?: "sm" | "xs";
-  color?: "text.muted";
-  style?: React.CSSProperties;
-  children: React.ReactNode;
-}> = ({ fontWeight, fontSize, color, style, children }) => {
-  const kind =
-    color === "text.muted"
-      ? "muted"
-      : fontSize === "sm" && fontWeight === "bold"
-        ? "method"
-        : "title";
-  return (
-    <span className={cardTextStyles[kind]} style={style}>
-      {children}
-    </span>
-  );
-};
+import {
+  bankAvatar,
+  bankCard,
+  bankCardBody,
+  bankCardTitleRow,
+  bankList,
+  bulletItem,
+  bulletList,
+  cardMeta,
+  cardTitle,
+  centred,
+  consentHeader,
+  errorBox,
+  errorLabel,
+  errorMessageText,
+  footerRow,
+  helperText,
+  importedItem,
+  importedList,
+  methodCard,
+  methodCardBody,
+  methodIcon,
+  noticeBox,
+  noticeRow,
+  spinner,
+  stack,
+  stateHeading,
+  stateIcon,
+  statusIconDanger,
+  statusIconSuccess,
+  tokenHint,
+} from "./ConnectBankWizard.styles";
 
 interface ConnectBankWizardProps {
   onSuccess?: () => void;
@@ -67,7 +54,6 @@ interface ConnectBankWizardProps {
 interface BankItem {
   id: string;
   name: string;
-  color: string;
   desc: string;
   accounts: string[];
   directSync?: boolean;
@@ -77,7 +63,6 @@ const BANKS: BankItem[] = [
   {
     id: "monzo",
     name: "Monzo Bank",
-    color: "#ff4f5e",
     desc: "Preview: connect via Developer Token or OAuth",
     accounts: ["Monzo Current Account", "Monzo Savings Pots"],
     directSync: true,
@@ -85,7 +70,6 @@ const BANKS: BankItem[] = [
   {
     id: "starling",
     name: "Starling Bank",
-    color: "#00aeef",
     desc: "Preview: connect via Personal Access Token or OAuth",
     accounts: ["Starling Current Account", "Starling Savings Spaces"],
     directSync: true,
@@ -93,7 +77,6 @@ const BANKS: BankItem[] = [
   {
     id: "trading212",
     name: "Trading 212",
-    color: "#00aaff",
     desc: "Preview: connect via API Key",
     accounts: ["Trading 212 Portfolio"],
     directSync: true,
@@ -101,7 +84,6 @@ const BANKS: BankItem[] = [
   {
     id: "hsbc",
     name: "HSBC Bank",
-    color: "#db0011",
     desc: "Preview: paste your own read-only access token",
     accounts: ["HSBC Current Account"],
     directSync: true,
@@ -109,7 +91,6 @@ const BANKS: BankItem[] = [
   {
     id: "barclays",
     name: "Barclays Bank",
-    color: "#00aeef",
     desc: "Preview: paste your own read-only access token",
     accounts: ["Barclays Everyday Account"],
     directSync: true,
@@ -117,7 +98,6 @@ const BANKS: BankItem[] = [
   {
     id: "revolut",
     name: "Revolut",
-    color: "#111118",
     desc: "Preview: paste your own read-only access token",
     accounts: ["Revolut Multi-Currency"],
     directSync: true,
@@ -125,7 +105,6 @@ const BANKS: BankItem[] = [
   {
     id: "santander",
     name: "Santander",
-    color: "#ec0000",
     desc: "Preview: paste your own read-only access token",
     accounts: ["Santander 123 Current"],
     directSync: true,
@@ -133,7 +112,6 @@ const BANKS: BankItem[] = [
   {
     id: "natwest",
     name: "NatWest",
-    color: "#4e195b",
     desc: "Preview: paste your own read-only access token",
     accounts: ["NatWest Select Current"],
     directSync: true,
@@ -141,7 +119,6 @@ const BANKS: BankItem[] = [
   {
     id: "lloyds",
     name: "Lloyds Bank",
-    color: "#006a4e",
     desc: "Preview: paste your own read-only access token",
     accounts: ["Lloyds Classic Account"],
     directSync: true,
@@ -149,7 +126,6 @@ const BANKS: BankItem[] = [
   {
     id: "chase",
     name: "Chase",
-    color: "#112e51",
     desc: "Preview: paste your own read-only access token",
     accounts: ["Chase Current Account"],
     directSync: true,
@@ -213,7 +189,7 @@ const ConnectBankWizard: FC<ConnectBankWizardProps> = ({ onSuccess }) => {
     if (authType === "oauth" && !res.redirectUrl) {
       setErrorMessage(
         res.message ||
-          "Could not initialize OAuth redirect for this institution. Please use Developer Token.",
+          "We couldn't start the bank sign-in for this bank. Please use a developer token.",
       );
       setStep("error");
       return;
@@ -285,723 +261,312 @@ const ConnectBankWizard: FC<ConnectBankWizardProps> = ({ onSuccess }) => {
     );
   };
 
-  // Styles
-  const overlayStyle = css({
-    position: "fixed",
-    inset: 0,
-    backgroundColor: "var(--colors-surface-scrim)",
-    backdropFilter: "blur(4px)",
-    zIndex: 50,
-  });
+  const close = () => setOpen(false);
 
-  const contentStyle = css({
-    position: "fixed",
-    top: "50%",
-    left: "50%",
-    transform: "translate(-50%, -50%)",
-    backgroundColor: "surface",
-    border: "1px solid",
-    borderColor: "border",
-    borderRadius: { base: "xl", md: "lg" },
-    boxShadow: "var(--shadows-floating)",
-    padding: { base: "18px 14px", md: "24px" },
-    width: { base: "calc(100vw - 20px)", sm: "90vw" },
-    maxWidth: { base: "calc(100vw - 20px)", md: "520px" },
-    zIndex: 50,
-    outline: "none",
-    color: "text.primary",
-    display: "flex",
-    flexDirection: "column",
-    maxHeight: { base: "94vh", md: "85vh" },
-    overflowX: "hidden",
-    boxSizing: "border-box",
-  });
+  const tokenLabel =
+    selectedBank?.id === "trading212" ? "Trading 212 API key" : "Developer access token";
+  const tokenPlaceholder =
+    selectedBank?.id === "monzo"
+      ? "Monzo access token (e.g. eyJ...)"
+      : selectedBank?.id === "starling"
+        ? "Starling Bearer token starting with eyJ..."
+        : selectedBank?.id === "trading212"
+          ? "Trading 212 API key..."
+          : "Read-only access token...";
+  const tokenHelp =
+    selectedBank?.id === "monzo"
+      ? "Sign in with your Monzo email at https://developers.monzo.com and copy your access token from the playground."
+      : selectedBank?.id === "starling"
+        ? "Make sure your token has permissions account:read and balance:read configured in the Starling Developer Portal."
+        : selectedBank?.id === "trading212"
+          ? "In the Trading 212 app, go to Settings, then API, then generate an API key and copy it here."
+          : `Paste a read-only access token from ${selectedBank?.name}, or go back and choose the OAuth flow.`;
 
-  const scrollContainerStyle = css({
-    overflowY: "auto",
-    paddingRight: "4px",
-    marginTop: "16px",
-    marginBottom: "16px",
-    flex: 1,
-  });
+  // One dialog, one title per step: the step decides the title, description, body and footer.
+  let title = "Connect Bank Account";
+  let description: string | undefined =
+    "Choose your bank or financial institution. Bank connection is a preview.";
+  let body: React.ReactNode = null;
+  let footer: React.ReactNode = null;
 
-  const bankCardStyle = css({
-    font: "inherit",
-    color: "inherit",
-    textAlign: "left",
-    width: "100%",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    padding: "16px",
-    borderRadius: "md",
-    border: "1px solid",
-    borderColor: "border",
-    backgroundColor: "surface",
-    cursor: "pointer",
-    marginBottom: "12px",
-    transition: "transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease",
-    _hover: {
-      transform: "translateY(-1px)",
-      borderColor: "primary",
-      boxShadow: "xs",
-    },
-  });
-
-  const methodCardStyle = css({
-    font: "inherit",
-    color: "inherit",
-    textAlign: "left",
-    width: "100%",
-    padding: "16px",
-    borderRadius: "lg",
-    border: "1px solid",
-    borderColor: "border",
-    backgroundColor: "surface",
-    cursor: "pointer",
-    marginBottom: "16px",
-    transition: "all 0.2s",
-    _hover: {
-      borderColor: "primary",
-      backgroundColor: "color-mix(in srgb, var(--colors-primary) 4%, transparent)",
-      transform: "translateY(-1px)",
-    },
-  });
-
-  const bankLogoCircleStyle = (color: string) =>
-    css({
-      width: "40px",
-      height: "40px",
-      borderRadius: "full",
-      backgroundColor: color,
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      color: "white",
-      fontWeight: "bold",
-      fontSize: "md",
-      flexShrink: 0,
-    });
-
-  const flexContainer = css({
-    display: "flex",
-    alignItems: "center",
-    gap: "16px",
-  });
-
-  const loadingContainer = css({
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    justifyContent: "center",
-    padding: "48px 0",
-    gap: "20px",
-  });
-
-  const successCheckStyle = css({
-    color: "status.positive.text",
-    fontSize: "48px",
-    animation: "pulse 2s infinite",
-  });
-
-  const bulletListStyle = css({
-    display: "flex",
-    flexDirection: "column",
-    gap: "12px",
-    marginTop: "20px",
-    backgroundColor: "background",
-    padding: "16px",
-    borderRadius: "md",
-    border: "1px solid",
-    borderColor: "border",
-  });
-
-  const bulletItemStyle = css({
-    display: "flex",
-    gap: "12px",
-    fontSize: "sm",
-    color: "text.primary",
-  });
+  if (step === "select") {
+    body = (
+      <div className={stack()}>
+        <FormField label="Search banks">
+          {(field) => (
+            <TextInput
+              {...controlProps(field)}
+              name="search"
+              placeholder="Search your bank..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          )}
+        </FormField>
+        <div className={bankList()}>
+          {filteredBanks.map((bank) => (
+            <button
+              key={bank.id}
+              className={bankCard()}
+              type="button"
+              onClick={() => handleSelectBank(bank)}
+            >
+              <span aria-hidden="true" className={bankAvatar()}>
+                {bank.name.charAt(0)}
+              </span>
+              <span className={bankCardBody()}>
+                <span className={bankCardTitleRow()}>
+                  <span className={cardTitle()}>{bank.name}</span>
+                  {bank.directSync ? (
+                    <StatusBadge size="sm" variant="positive">
+                      Live
+                    </StatusBadge>
+                  ) : (
+                    <StatusBadge size="sm" variant="neutral">
+                      Soon
+                    </StatusBadge>
+                  )}
+                </span>
+                <span className={cardMeta()}>{bank.desc}</span>
+              </span>
+              <Icon icon={ChevronRight} size="sm" />
+            </button>
+          ))}
+          {filteredBanks.length === 0 && (
+            <p className={helperText()}>No banks match your search.</p>
+          )}
+        </div>
+      </div>
+    );
+    footer = (
+      <Button variant="outline" onClick={close}>
+        Cancel
+      </Button>
+    );
+  } else if (step === "method" && selectedBank) {
+    title = "Choose Connection Mode";
+    description = `Select how you want to connect to ${selectedBank.name}.`;
+    body = (
+      <div className={stack()}>
+        <button className={methodCard()} type="button" onClick={() => handleSelectMethod("pat")}>
+          <span className={methodIcon()}>
+            <Icon icon={KeyRound} size="md" />
+          </span>
+          <span className={methodCardBody()}>
+            <span className={cardTitle()}>Personal Access Token (Recommended)</span>
+            <span className={cardMeta()}>
+              Preview: paste your own read-only access token from your provider.
+            </span>
+          </span>
+        </button>
+        <button className={methodCard()} type="button" onClick={() => handleSelectMethod("oauth")}>
+          <span className={methodIcon()}>
+            <Icon icon={Globe} size="md" />
+          </span>
+          <span className={methodCardBody()}>
+            <span className={cardTitle()}>OAuth 2.0 Auth Flow</span>
+            <span className={cardMeta()}>
+              Redirect to {selectedBank.name}&apos;s secure portal to authorise read-only access
+              (requires server OAuth keys).
+            </span>
+          </span>
+        </button>
+      </div>
+    );
+    footer = (
+      <Button variant="outline" onClick={() => setStep("select")}>
+        <Icon icon={ArrowLeft} size="sm" />
+        Back
+      </Button>
+    );
+  } else if (step === "tokenInput" && selectedBank) {
+    title = `${selectedBank.name} Developer Token`;
+    description = "Preview: paste your own read-only access token from your provider.";
+    body = (
+      <div className={stack()}>
+        <FormField hint={tokenHelp} label={tokenLabel}>
+          {(field) => (
+            <TextInput
+              {...controlProps(field)}
+              name="token"
+              placeholder={tokenPlaceholder}
+              value={tokenInput}
+              onChange={(e) => setTokenInput(e.target.value)}
+            />
+          )}
+        </FormField>
+      </div>
+    );
+    footer = (
+      <>
+        <Button variant="outline" onClick={() => setStep("method")}>
+          Back
+        </Button>
+        <Button disabled={!tokenInput.trim()} onClick={handleConnectWithToken}>
+          Connect & Sync
+        </Button>
+      </>
+    );
+  } else if (step === "consent" && selectedBank) {
+    title = `Link with ${selectedBank.name}`;
+    description = "Review the secure sync authorisations requested.";
+    body = (
+      <div className={stack()}>
+        <div className={consentHeader()}>
+          <span aria-hidden="true" className={bankAvatar()}>
+            {selectedBank.name.charAt(0)}
+          </span>
+          <span className={bankCardBody()}>
+            <span className={cardTitle()}>{selectedBank.name}</span>
+            <span className={cardMeta()}>Bank connection (preview)</span>
+          </span>
+        </div>
+        <p className={helperText()}>By continuing, you authorise Flump to retrieve:</p>
+        <div className={bulletList()}>
+          <div className={bulletItem()}>
+            <Icon icon={ShieldCheck} size="sm" />
+            <span className={bankCardBody()}>
+              <span className={cardTitle()}>Account overview</span>
+              <span className={cardMeta()}>
+                Retrieve account names, currencies, and sub-spaces.
+              </span>
+            </span>
+          </div>
+          <div className={bulletItem()}>
+            <Icon icon={Landmark} size="sm" />
+            <span className={bankCardBody()}>
+              <span className={cardTitle()}>Balances and transactions</span>
+              <span className={cardMeta()}>
+                Fetch current amounts and your transaction history.
+              </span>
+            </span>
+          </div>
+          <div className={bulletItem()}>
+            <Icon icon={Lock} size="sm" />
+            <span className={bankCardBody()}>
+              <span className={cardTitle()}>Read-only access</span>
+              <span className={cardMeta()}>
+                Flump cannot transfer funds or modify bank settings.
+              </span>
+            </span>
+          </div>
+        </div>
+      </div>
+    );
+    footer = (
+      <>
+        <Button variant="outline" onClick={() => setStep("method")}>
+          Back
+        </Button>
+        <Button onClick={handleAuthorize}>Redirect to authorise</Button>
+      </>
+    );
+  } else if (step === "syncing" && selectedBank) {
+    title = `Connecting to ${selectedBank.name}`;
+    description = "Establishing secure API link and parsing balances.";
+    body = (
+      <div className={centred()} role="status">
+        <span className={spinner()}>
+          <Icon icon={Loader2} size="lg" />
+        </span>
+      </div>
+    );
+  } else if (step === "success" && selectedBank) {
+    title = "Connected";
+    description = `Your accounts from ${selectedBank.name} are now synced.`;
+    body = (
+      <div className={stack()}>
+        <div className={centred()}>
+          <span className={statusIconSuccess()}>
+            <Icon icon={CheckCircle2} size="lg" />
+          </span>
+        </div>
+        <p className={stateHeading()}>Imported accounts</p>
+        <div className={importedList()}>
+          {selectedBank.accounts.slice(0, importedCount).map((accName) => (
+            <div key={accName} className={importedItem()}>
+              <span className={stateIcon()}>
+                <Icon icon={Landmark} size="sm" />
+              </span>
+              <span className={cardTitle()}>{accName}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+    footer = <Button onClick={close}>Done</Button>;
+  } else if (step === "error" && selectedBank) {
+    title = "Connection failed";
+    description = `We couldn't connect to ${selectedBank.name}.`;
+    body = (
+      <div className={stack()}>
+        <div className={centred()}>
+          <span className={statusIconDanger()}>
+            <Icon icon={TriangleAlert} size="lg" />
+          </span>
+        </div>
+        <div className={errorBox()} role="alert">
+          <p className={errorLabel()}>Error message</p>
+          <p className={errorMessageText()}>
+            {errorMessage || "Check your credentials or server environment configuration (.env)."}
+          </p>
+        </div>
+      </div>
+    );
+    footer = (
+      <Button variant="outline" onClick={() => setStep("method")}>
+        Try again
+      </Button>
+    );
+  } else if (step === "unsupported" && selectedBank) {
+    title = `${selectedBank.name}: bank connection`;
+    description = "Bank connection coming soon.";
+    body = (
+      <div className={noticeBox()}>
+        <div className={noticeRow()}>
+          <Icon icon={ShieldCheck} size="md" />
+          <p className={tokenHint()}>
+            Bank connection is in preview and does not create mock accounts. You can try it with{" "}
+            <strong>Monzo</strong> and <strong>Starling Bank</strong> using your own read-only
+            access token.
+          </p>
+        </div>
+        <p className={helperText()}>
+          To track your {selectedBank.name} accounts now, use the <strong>Manual entry</strong>{" "}
+          option in the Add account dialog.
+        </p>
+      </div>
+    );
+    footer = (
+      <>
+        <Button variant="outline" onClick={() => setStep("select")}>
+          <Icon icon={ArrowLeft} size="sm" />
+          Back to banks
+        </Button>
+        <Button onClick={close}>Close</Button>
+      </>
+    );
+  }
 
   return (
-    <Dialog.Root open={open} onOpenChange={(isOpen) => !isOpen && handleCloseModal()}>
-      <Dialog.Trigger asChild>
-        <FLPButton onClick={handleOpenModal} variant="primary">
-          <FaUniversity style={{ marginRight: "8px" }} />
-          Connect Bank Account
-        </FLPButton>
-      </Dialog.Trigger>
-      <Dialog.Portal>
-        <Dialog.Overlay className={overlayStyle} />
-        <Dialog.Content className={contentStyle}>
-          {/* Step 1: Select Bank */}
-          {step === "select" && (
-            <>
-              <div>
-                <Dialog.Title asChild>
-                  <FLPHeading as="h2" size="lg">
-                    Connect Bank Account
-                  </FLPHeading>
-                </Dialog.Title>
-                <Dialog.Description asChild>
-                  <FLPText color="text.muted" fontSize="sm" style={{ marginTop: "4px" }}>
-                    Choose your bank or financial institution. Bank connection is a preview.
-                  </FLPText>
-                </Dialog.Description>
-              </div>
-
-              <div style={{ marginTop: "16px" }}>
-                <FLPInput
-                  label=""
-                  name="search"
-                  placeholder="Search your bank..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-              </div>
-
-              <div className={scrollContainerStyle}>
-                {filteredBanks.map((bank) => (
-                  <button
-                    key={bank.id}
-                    className={bankCardStyle}
-                    type="button"
-                    onClick={() => handleSelectBank(bank)}
-                  >
-                    <span className={flexContainer} style={{ minWidth: 0, flex: 1 }}>
-                      <span className={bankLogoCircleStyle(bank.color)}>{bank.name.charAt(0)}</span>
-                      <span style={{ display: "block", minWidth: 0, flex: 1, paddingRight: "8px" }}>
-                        <span style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                          <CardText
-                            fontWeight="semibold"
-                            style={{
-                              whiteSpace: "nowrap",
-                              overflow: "hidden",
-                              textOverflow: "ellipsis",
-                            }}
-                          >
-                            {bank.name}
-                          </CardText>
-                          {bank.directSync ? (
-                            <span
-                              style={{
-                                fontSize: "9px",
-                                padding: "1px 5px",
-                                borderRadius: "4px",
-                                backgroundColor:
-                                  "color-mix(in srgb, var(--colors-chart-wealth) 15%, transparent)",
-                                color: "var(--colors-status-positive-text)",
-                                fontWeight: 700,
-                                textTransform: "uppercase",
-                                flexShrink: 0,
-                              }}
-                            >
-                              Live
-                            </span>
-                          ) : (
-                            <span
-                              style={{
-                                fontSize: "9px",
-                                padding: "1px 5px",
-                                borderRadius: "4px",
-                                backgroundColor:
-                                  "color-mix(in srgb, var(--colors-chart-baseline) 15%, transparent)",
-                                color: "var(--colors-text-muted)",
-                                fontWeight: 600,
-                                flexShrink: 0,
-                              }}
-                            >
-                              Soon
-                            </span>
-                          )}
-                        </span>
-                        <CardText
-                          color="text.muted"
-                          fontSize="xs"
-                          style={{
-                            whiteSpace: "nowrap",
-                            overflow: "hidden",
-                            textOverflow: "ellipsis",
-                          }}
-                        >
-                          {bank.desc}
-                        </CardText>
-                      </span>
-                    </span>
-                    <FaChevronRight
-                      style={{
-                        color: "var(--colors-text-muted)",
-                        fontSize: "14px",
-                        flexShrink: 0,
-                      }}
-                    />
-                  </button>
-                ))}
-                {filteredBanks.length === 0 && (
-                  <div style={{ textAlign: "center", padding: "32px 0" }}>
-                    <FLPText color="text.muted">No banks match your search.</FLPText>
-                  </div>
-                )}
-              </div>
-
-              <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "12px" }}>
-                <FLPButton variant="outline" onClick={handleCloseModal}>
-                  Cancel
-                </FLPButton>
-              </div>
-            </>
-          )}
-
-          {/* Step 2: Connection Method Selection */}
-          {step === "method" && selectedBank && (
-            <>
-              <div>
-                <Dialog.Title asChild>
-                  <FLPHeading as="h2" size="lg">
-                    Choose Connection Mode
-                  </FLPHeading>
-                </Dialog.Title>
-                <Dialog.Description asChild>
-                  <FLPText color="text.muted" fontSize="sm" style={{ marginTop: "4px" }}>
-                    Select how you want to connect to {selectedBank.name}.
-                  </FLPText>
-                </Dialog.Description>
-              </div>
-
-              <div className={scrollContainerStyle}>
-                <button
-                  className={methodCardStyle}
-                  type="button"
-                  onClick={() => handleSelectMethod("pat")}
-                >
-                  <span style={{ display: "flex", gap: "16px", alignItems: "flex-start" }}>
-                    <FaKey
-                      style={{ color: selectedBank.color, fontSize: "20px", marginTop: "4px" }}
-                    />
-                    <span style={{ display: "block" }}>
-                      <CardText fontWeight="bold" fontSize="sm">
-                        Personal Access Token (Recommended)
-                      </CardText>
-                      <CardText color="text.muted" fontSize="xs" style={{ marginTop: "2px" }}>
-                        Preview: paste your own read-only access token from your provider.
-                      </CardText>
-                    </span>
-                  </span>
-                </button>
-
-                <button
-                  className={methodCardStyle}
-                  type="button"
-                  onClick={() => handleSelectMethod("oauth")}
-                >
-                  <span style={{ display: "flex", gap: "16px", alignItems: "flex-start" }}>
-                    <FaGlobe
-                      style={{ color: selectedBank.color, fontSize: "20px", marginTop: "4px" }}
-                    />
-                    <span style={{ display: "block" }}>
-                      <CardText fontWeight="bold" fontSize="sm">
-                        OAuth 2.0 Auth Flow
-                      </CardText>
-                      <CardText color="text.muted" fontSize="xs" style={{ marginTop: "2px" }}>
-                        Redirect to {selectedBank.name}&apos;s secure portal to authorize read-only
-                        access (requires server OAuth keys).
-                      </CardText>
-                    </span>
-                  </span>
-                </button>
-              </div>
-
-              <div style={{ display: "flex", justifyContent: "flex-start", marginTop: "12px" }}>
-                <FLPButton variant="outline" onClick={() => setStep("select")}>
-                  <FaArrowLeft style={{ marginRight: "6px" }} />
-                  Back
-                </FLPButton>
-              </div>
-            </>
-          )}
-
-          {/* Step 3: Developer / Personal Token Input */}
-          {step === "tokenInput" && selectedBank && (
-            <>
-              <div>
-                <Dialog.Title asChild>
-                  <FLPHeading as="h2" size="lg">
-                    {selectedBank.name} Developer Token
-                  </FLPHeading>
-                </Dialog.Title>
-                <Dialog.Description asChild>
-                  <FLPText color="text.muted" fontSize="sm" style={{ marginTop: "4px" }}>
-                    Preview: paste your own read-only access token from your provider.
-                  </FLPText>
-                </Dialog.Description>
-              </div>
-
-              <div className={scrollContainerStyle}>
-                <FLPInput
-                  label={
-                    selectedBank.id === "trading212"
-                      ? "Trading 212 API Key"
-                      : "Developer Access Token"
-                  }
-                  name="token"
-                  placeholder={
-                    selectedBank.id === "monzo"
-                      ? "Monzo access token (e.g. eyJ...)"
-                      : selectedBank.id === "starling"
-                        ? "Starling Bearer token starting with eyJ..."
-                        : selectedBank.id === "trading212"
-                          ? "Trading 212 API key..."
-                          : "Read-only access token..."
-                  }
-                  value={tokenInput}
-                  onChange={(e) => setTokenInput(e.target.value)}
-                />
-                <div style={{ marginTop: "16px" }}>
-                  <FLPText color="text.muted" fontSize="xs">
-                    {selectedBank.id === "monzo"
-                      ? "* Sign in with your Monzo email at https://developers.monzo.com and copy your access token from the playground."
-                      : selectedBank.id === "starling"
-                        ? "* Make sure your token has permissions account:read and balance:read configured in the Starling Developer Portal."
-                        : selectedBank.id === "trading212"
-                          ? "* In the Trading 212 app, navigate to Settings -> API -> Generate API key and copy it here."
-                          : `* Paste a read-only access token from ${selectedBank.name}, or go back and choose the OAuth flow.`}
-                  </FLPText>
-                </div>
-              </div>
-
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  marginTop: "12px",
-                  gap: "16px",
-                }}
-              >
-                <FLPButton variant="outline" onClick={() => setStep("method")}>
-                  Back
-                </FLPButton>
-                <FLPButton
-                  disabled={!tokenInput.trim()}
-                  onClick={handleConnectWithToken}
-                  variant="primary"
-                >
-                  Connect & Sync
-                </FLPButton>
-              </div>
-            </>
-          )}
-
-          {/* Step 4: Consent Form */}
-          {step === "consent" && selectedBank && (
-            <>
-              <div>
-                <Dialog.Title asChild>
-                  <FLPHeading as="h2" size="lg">
-                    Link with {selectedBank.name}
-                  </FLPHeading>
-                </Dialog.Title>
-                <Dialog.Description asChild>
-                  <FLPText color="text.muted" fontSize="sm" style={{ marginTop: "4px" }}>
-                    Review the secure sync authorizations requested.
-                  </FLPText>
-                </Dialog.Description>
-              </div>
-
-              <div className={scrollContainerStyle}>
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "16px",
-                    marginBottom: "20px",
-                  }}
-                >
-                  <div className={bankLogoCircleStyle(selectedBank.color)}>
-                    {selectedBank.name.charAt(0)}
-                  </div>
-                  <div>
-                    <FLPText fontWeight="bold" fontSize="md">
-                      {selectedBank.name}
-                    </FLPText>
-                    <FLPText color="text.muted" fontSize="xs">
-                      Bank connection (preview)
-                    </FLPText>
-                  </div>
-                </div>
-
-                <FLPText fontSize="sm" fontWeight="medium">
-                  By continuing, you authorize Flump to retrieve:
-                </FLPText>
-
-                <div className={bulletListStyle}>
-                  <div className={bulletItemStyle}>
-                    <FaShieldAlt
-                      style={{ color: "var(--colors-primary)", marginTop: "3px", flexShrink: 0 }}
-                    />
-                    <div>
-                      <FLPText fontWeight="semibold" fontSize="sm">
-                        Account Overview
-                      </FLPText>
-                      <FLPText color="text.muted" fontSize="xs">
-                        Retrieve account names, currencies, and sub-spaces.
-                      </FLPText>
-                    </div>
-                  </div>
-                  <div className={bulletItemStyle}>
-                    <FaUniversity
-                      style={{ color: "var(--colors-primary)", marginTop: "3px", flexShrink: 0 }}
-                    />
-                    <div>
-                      <FLPText fontWeight="semibold" fontSize="sm">
-                        Balances & Transactions
-                      </FLPText>
-                      <FLPText color="text.muted" fontSize="xs">
-                        Fetch current amounts and your transaction history.
-                      </FLPText>
-                    </div>
-                  </div>
-                  <div className={bulletItemStyle}>
-                    <FaLock
-                      style={{ color: "var(--colors-primary)", marginTop: "3px", flexShrink: 0 }}
-                    />
-                    <div>
-                      <FLPText fontWeight="semibold" fontSize="sm">
-                        Read-Only Access
-                      </FLPText>
-                      <FLPText color="text.muted" fontSize="xs">
-                        Flump cannot transfer funds or modify bank settings.
-                      </FLPText>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  marginTop: "12px",
-                  gap: "16px",
-                }}
-              >
-                <FLPButton variant="outline" onClick={() => setStep("method")}>
-                  Back
-                </FLPButton>
-                <FLPButton onClick={handleAuthorize} variant="primary">
-                  Redirect to Authorize
-                </FLPButton>
-              </div>
-            </>
-          )}
-
-          {/* Step 5: Syncing Loading */}
-          {step === "syncing" && selectedBank && (
-            <div className={loadingContainer}>
-              <FaSpinner
-                className={css({
-                  animation: "spin 1s linear infinite",
-                  color: "primary",
-                  fontSize: "40px",
-                })}
-              />
-              <div style={{ textAlign: "center" }}>
-                <Dialog.Title asChild>
-                  <FLPHeading as="h3" size="md">
-                    Connecting to {selectedBank.name}
-                  </FLPHeading>
-                </Dialog.Title>
-                <Dialog.Description asChild>
-                  <FLPText color="text.muted" fontSize="sm" style={{ marginTop: "4px" }}>
-                    Establishing secure API link & parsing balances...
-                  </FLPText>
-                </Dialog.Description>
-              </div>
-            </div>
-          )}
-
-          {/* Step 6: Success */}
-          {step === "success" && selectedBank && (
-            <>
-              <div className={loadingContainer}>
-                <FaCheckCircle className={successCheckStyle} />
-                <div style={{ textAlign: "center" }}>
-                  <Dialog.Title asChild>
-                    <FLPHeading as="h3" size="md">
-                      Successfully Connected!
-                    </FLPHeading>
-                  </Dialog.Title>
-                  <Dialog.Description asChild>
-                    <FLPText color="text.muted" fontSize="sm" style={{ marginTop: "4px" }}>
-                      Your accounts from {selectedBank.name} are now synced.
-                    </FLPText>
-                  </Dialog.Description>
-                </div>
-              </div>
-
-              <div className={scrollContainerStyle}>
-                <FLPText
-                  fontSize="xs"
-                  fontWeight="semibold"
-                  textTransform="uppercase"
-                  color="text.muted"
-                  style={{ marginBottom: "8px" }}
-                >
-                  Imported Assets:
-                </FLPText>
-                <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                  {selectedBank.accounts.slice(0, importedCount).map((accName) => (
-                    <div
-                      key={accName}
-                      className={css({
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "12px",
-                        padding: "12px",
-                        borderRadius: "md",
-                        backgroundColor: "background",
-                        border: "1px solid",
-                        borderColor: "border",
-                      })}
-                    >
-                      <FaUniversity style={{ color: "var(--colors-primary)" }} />
-                      <FLPText fontSize="sm" fontWeight="medium">
-                        {accName}
-                      </FLPText>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div style={{ display: "flex", justifyContent: "center", marginTop: "12px" }}>
-                <FLPButton variant="primary" onClick={handleCloseModal}>
-                  Done
-                </FLPButton>
-              </div>
-            </>
-          )}
-
-          {/* Step 7: Error State */}
-          {step === "error" && selectedBank && (
-            <>
-              <div className={loadingContainer}>
-                <div style={{ fontSize: "48px", color: "var(--colors-status-danger-text)" }}>⚠️</div>
-                <div style={{ textAlign: "center" }}>
-                  <Dialog.Title asChild>
-                    <FLPHeading as="h3" size="md" color="status.danger.text">
-                      Connection Failed
-                    </FLPHeading>
-                  </Dialog.Title>
-                  <Dialog.Description asChild>
-                    <FLPText color="text.muted" fontSize="sm" style={{ marginTop: "4px" }}>
-                      We couldn't connect to {selectedBank.name} API.
-                    </FLPText>
-                  </Dialog.Description>
-                </div>
-              </div>
-
-              <div className={scrollContainerStyle}>
-                <div
-                  className={css({
-                    backgroundColor:
-                      "color-mix(in srgb, var(--colors-status-danger-text) 5%, transparent)",
-                    border: "1px solid",
-                    borderColor: "destructive",
-                    borderRadius: "md",
-                    padding: "16px",
-                  })}
-                >
-                  <FLPText
-                    fontSize="xs"
-                    fontWeight="bold"
-                    color="status.danger.text"
-                    textTransform="uppercase"
-                    style={{ marginBottom: "4px" }}
-                  >
-                    Error Message:
-                  </FLPText>
-                  <FLPText fontSize="sm" style={{ fontFamily: "monospace" }}>
-                    {errorMessage ||
-                      "Check your credentials or server environment configuration (.env)."}
-                  </FLPText>
-                </div>
-              </div>
-
-              <div style={{ display: "flex", justifyContent: "center", marginTop: "12px" }}>
-                <FLPButton variant="outline" onClick={() => setStep("method")}>
-                  Try Again
-                </FLPButton>
-              </div>
-            </>
-          )}
-
-          {/* Step 8: Unsupported Bank State */}
-          {step === "unsupported" && selectedBank && (
-            <>
-              <div>
-                <Dialog.Title asChild>
-                  <FLPHeading as="h2" size="lg">
-                    {selectedBank.name}: bank connection
-                  </FLPHeading>
-                </Dialog.Title>
-                <Dialog.Description asChild>
-                  <FLPText color="text.muted" fontSize="sm" style={{ marginTop: "4px" }}>
-                    Bank connection coming soon.
-                  </FLPText>
-                </Dialog.Description>
-              </div>
-
-              <div
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: "12px",
-                  padding: "16px",
-                  borderRadius: "8px",
-                  backgroundColor: "var(--colors-surface-sunken)",
-                  border: "1px solid var(--colors-border-subtle)",
-                  marginTop: "20px",
-                  marginBottom: "20px",
-                }}
-              >
-                <div style={{ display: "flex", alignItems: "flex-start", gap: "10px" }}>
-                  <FaShieldAlt
-                    color="var(--colors-chart-wealth)"
-                    size={18}
-                    style={{ flexShrink: 0, marginTop: "2px" }}
-                  />
-                  <FLPText fontSize="sm">
-                    Bank connection is in preview and does not create mock accounts. You can try it
-                    with <strong>Monzo</strong> and <strong>Starling Bank</strong> using your own
-                    read-only access token.
-                  </FLPText>
-                </div>
-                <FLPText color="text.muted" fontSize="xs">
-                  To track your {selectedBank.name} accounts now, use the{" "}
-                  <strong>Manual Entry</strong> option in the Add Account dialog.
-                </FLPText>
-              </div>
-
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  marginTop: "auto",
-                  gap: "12px",
-                }}
-              >
-                <FLPButton variant="outline" onClick={() => setStep("select")}>
-                  <FaArrowLeft style={{ marginRight: "8px" }} />
-                  Back to Banks
-                </FLPButton>
-                <FLPButton variant="primary" onClick={handleCloseModal}>
-                  Close
-                </FLPButton>
-              </div>
-            </>
-          )}
-        </Dialog.Content>
-      </Dialog.Portal>
-    </Dialog.Root>
+    <>
+      <Button onClick={handleOpenModal}>
+        <Icon icon={Landmark} size="sm" />
+        Connect Bank Account
+      </Button>
+      <Dialog
+        description={description}
+        footer={footer ? <div className={footerRow()}>{footer}</div> : undefined}
+        id="connect-bank-wizard"
+        open={open}
+        title={title}
+        onOpenChange={(isOpen) => {
+          if (!isOpen) close();
+        }}
+      >
+        {body}
+      </Dialog>
+    </>
   );
 };
 
