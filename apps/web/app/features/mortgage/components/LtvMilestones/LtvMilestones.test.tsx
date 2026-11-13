@@ -21,7 +21,7 @@ describe("<LtvMilestones />", () => {
         milestones={milestones}
         ownershipSharePct={100}
         propertyValue={200000}
-        onApplyOverpayment={vi.fn()}
+        onModelOverpayment={vi.fn()}
       />,
     );
     expect(screen.getByText("Unlocked")).toBeDefined();
@@ -38,10 +38,10 @@ describe("<LtvMilestones />", () => {
         milestones={milestones}
         ownershipSharePct={100}
         propertyValue={200000}
-        onApplyOverpayment={onApply}
+        onModelOverpayment={onApply}
       />,
     );
-    fireEvent.click(screen.getByRole("button", { name: /^Apply/ }));
+    fireEvent.click(screen.getByRole("button", { name: /^Model/ }));
     expect(onApply).toHaveBeenCalledWith(250);
   });
 });

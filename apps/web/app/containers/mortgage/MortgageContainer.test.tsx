@@ -23,12 +23,14 @@ const defaultLoaderData = () => ({
 // Per-test loader data; a plain variable keeps it stable across re-renders and is reset below.
 let loaderData: Record<string, unknown> = defaultLoaderData();
 const mockNavigate = vi.fn();
+let searchParams = new URLSearchParams();
 vi.mock("react-router", async () => {
   const actual: Record<string, unknown> = await vi.importActual("react-router");
   return {
     ...actual,
     useLoaderData: vi.fn(() => loaderData),
     useNavigate: () => mockNavigate,
+    useSearchParams: () => [searchParams, vi.fn()],
   };
 });
 
@@ -39,48 +41,58 @@ describe("<MortgageContainer />", () => {
     vi.restoreAllMocks();
     (window as unknown as { ENV?: unknown }).ENV = originalEnv;
     loaderData = defaultLoaderData();
+    searchParams = new URLSearchParams();
   });
 
-  test("renders correctly and allows tab switching", () => {
-    const { container, getByText } = customRender(<MortgageContainer />);
-    expect(container).toBeDefined();
+  test("shows saved sections always and switches between the what-if tools", () => {
+    const { container, getByText, getByRole } = customRender(<MortgageContainer />);
 
-    // Verify title and initial active tab (Mortgage tracker)
     expect(getByText("Your mortgage")).toBeDefined();
-    expect(container.querySelector("#mock-tracker")).toBeDefined();
-    expect(container.querySelector("#mock-simulator")).toBeNull();
+    // The tracker is a saved section, so it is outside the tool tabs.
+    expect(container.querySelector("#mock-tracker")).not.toBeNull();
+    expect(getByRole("region", { name: "Model a change to your mortgage" })).toBeDefined();
+    expect(getByText("Illustration, not saved")).toBeDefined();
+    expect(container.querySelector("#mock-simulator")).not.toBeNull();
     expect(container.querySelector("#mock-compare")).toBeNull();
 
-    // Switch to Overpayment simulator tab
-    const simulatorTabBtn = getByText("Overpayment simulator");
-    fireEvent.click(simulatorTabBtn);
-
-    // Verify view switch
-    expect(container.querySelector("#mock-simulator")).toBeDefined();
-    expect(container.querySelector("#mock-tracker")).toBeNull();
-
-    // Switch to Overpay vs save tab
-    const compareTabBtn = getByText("Overpay vs save");
-    fireEvent.click(compareTabBtn);
-
-    // Verify view switch
-    expect(container.querySelector("#mock-compare")).toBeDefined();
+    fireEvent.click(getByText("Overpay vs save"));
+    expect(container.querySelector("#mock-compare")).not.toBeNull();
     expect(container.querySelector("#mock-simulator")).toBeNull();
+    // Switching a tool never hides the saved tracker.
+    expect(container.querySelector("#mock-tracker")).not.toBeNull();
   });
 
-  test("tabs expose tab semantics and respond to arrow keys", () => {
+  test("?tool= selects a what-if tool and scrolls to the zone", () => {
+    const scrollIntoView = vi.fn();
+    Element.prototype.scrollIntoView = scrollIntoView;
+    searchParams = new URLSearchParams("tool=overpay-vs-save");
+    const { container, getByRole } = customRender(<MortgageContainer />);
+    expect(container.querySelector("#mock-compare")).not.toBeNull();
+    expect(getByRole("tab", { name: /Overpay vs save/ }).getAttribute("aria-selected")).toBe(
+      "true",
+    );
+    expect(scrollIntoView).toHaveBeenCalled();
+  });
+
+  test("an unknown ?tool= value is ignored", () => {
+    searchParams = new URLSearchParams("tool=nonsense");
+    const { container } = customRender(<MortgageContainer />);
+    expect(container.querySelector("#mock-simulator")).not.toBeNull();
+  });
+
+  test("tools expose tab semantics and respond to arrow keys", () => {
     const { getByRole } = customRender(<MortgageContainer />);
-    expect(getByRole("tablist", { name: "Mortgage tools" })).toBeDefined();
-    const tracker = getByRole("tab", { name: /Mortgage tracker/ });
-    expect(tracker.getAttribute("aria-selected")).toBe("true");
+    expect(getByRole("tablist", { name: "Mortgage what-if tools" })).toBeDefined();
+    const overpayment = getByRole("tab", { name: /Overpayment simulator/ });
+    expect(overpayment.getAttribute("aria-selected")).toBe("true");
     const panel = getByRole("tabpanel");
-    expect(panel.getAttribute("aria-labelledby")).toBe(tracker.id);
-    expect(tracker.getAttribute("aria-controls")).toBe(panel.id);
-    fireEvent.keyDown(tracker, { key: "ArrowRight" });
-    const milestones = getByRole("tab", { name: /LTV milestones/ });
-    expect(milestones.getAttribute("aria-selected")).toBe("true");
-    expect(tracker.getAttribute("tabindex")).toBe("-1");
-    fireEvent.keyDown(milestones, { key: "End" });
+    expect(panel.getAttribute("aria-labelledby")).toBe(overpayment.id);
+    expect(overpayment.getAttribute("aria-controls")).toBe(panel.id);
+    fireEvent.keyDown(overpayment, { key: "ArrowRight" });
+    const rate = getByRole("tab", { name: /Rate change/ });
+    expect(rate.getAttribute("aria-selected")).toBe("true");
+    expect(overpayment.getAttribute("tabindex")).toBe("-1");
+    fireEvent.keyDown(rate, { key: "End" });
     expect(getByRole("tab", { name: /Overpay vs save/ }).getAttribute("aria-selected")).toBe(
       "true",
     );
@@ -88,28 +100,28 @@ describe("<MortgageContainer />", () => {
 
   test("tab keys move focus and wrap, are ignored with modifiers, and the panel is focusable", () => {
     const { getByRole } = customRender(<MortgageContainer />);
-    const tracker = getByRole("tab", { name: /Mortgage tracker/ });
-    const milestones = getByRole("tab", { name: /LTV milestones/ });
-    const compare = getByRole("tab", { name: /Overpay vs save/ });
+    const first = getByRole("tab", { name: /Overpayment simulator/ });
+    const second = getByRole("tab", { name: /Rate change/ });
+    const last = getByRole("tab", { name: /Overpay vs save/ });
     expect(getByRole("tabpanel").getAttribute("tabindex")).toBe("0");
 
-    tracker.focus();
+    first.focus();
     for (const modifier of ["ctrlKey", "altKey", "metaKey", "shiftKey"] as const) {
-      fireEvent.keyDown(tracker, { key: "ArrowRight", [modifier]: true });
-      expect(tracker.getAttribute("aria-selected")).toBe("true");
-      expect(document.activeElement).toBe(tracker);
+      fireEvent.keyDown(first, { key: "ArrowRight", [modifier]: true });
+      expect(first.getAttribute("aria-selected")).toBe("true");
+      expect(document.activeElement).toBe(first);
     }
 
-    fireEvent.keyDown(tracker, { key: "ArrowRight" });
-    expect(document.activeElement).toBe(milestones);
-    fireEvent.keyDown(milestones, { key: "ArrowLeft" });
-    expect(document.activeElement).toBe(tracker);
-    fireEvent.keyDown(tracker, { key: "ArrowLeft" });
-    expect(document.activeElement).toBe(compare);
-    fireEvent.keyDown(compare, { key: "Home" });
-    expect(document.activeElement).toBe(tracker);
-    fireEvent.keyDown(tracker, { key: "End" });
-    expect(document.activeElement).toBe(compare);
+    fireEvent.keyDown(first, { key: "ArrowRight" });
+    expect(document.activeElement).toBe(second);
+    fireEvent.keyDown(second, { key: "ArrowLeft" });
+    expect(document.activeElement).toBe(first);
+    fireEvent.keyDown(first, { key: "ArrowLeft" });
+    expect(document.activeElement).toBe(last);
+    fireEvent.keyDown(last, { key: "Home" });
+    expect(document.activeElement).toBe(first);
+    fireEvent.keyDown(first, { key: "End" });
+    expect(document.activeElement).toBe(last);
   });
 
   test("allows switching to Buy to let category and displays BTL overview", () => {
@@ -127,7 +139,7 @@ describe("<MortgageContainer />", () => {
     expect(getByText("Estimated net cash flow")).toBeDefined();
   });
 
-  test("allows editing My Mortgage Information and switching to LTV milestones tab", async () => {
+  test("allows editing the saved mortgage details", async () => {
     vi.spyOn(globalThis, "fetch").mockImplementation(
       async () => new Response(JSON.stringify({}), { status: 200 }),
     );
@@ -151,9 +163,7 @@ describe("<MortgageContainer />", () => {
 
     // Save changes
     fireEvent.click(getByRole("button", { name: /^Save$/i }));
-
-    // Switch to LTV milestones tab
-    fireEvent.click(getByText("LTV milestones"));
+    expect(getByText("Your mortgage")).toBeDefined();
   });
 
   const setApiEnv = () => {
@@ -176,7 +186,7 @@ describe("<MortgageContainer />", () => {
     fireEvent.change(getByLabelText(/^Interest rate/), { target: { value: "4.5" } });
     fireEvent.change(getByLabelText(/^Remaining term/), { target: { value: "18" } });
     fireEvent.click(getByRole("button", { name: /^Save$/i }));
-    await findByText(/Saved/);
+    await findByText(/Saved repayment type/);
 
     const calls = patches(fetchSpy);
     const accountPatch = calls.find(([url]) => String(url).endsWith("/accounts/m1"));
@@ -205,7 +215,7 @@ describe("<MortgageContainer />", () => {
     fireEvent.click(getByRole("button", { name: /^Edit$/i }));
     fireEvent.change(getByLabelText(/^Remaining term/), { target: { value: "60" } });
     fireEvent.click(getByRole("button", { name: /^Save$/i }));
-    await findByText(/Saved/);
+    await findByText(/Saved repayment type/);
     const accountPatch = patches(fetchSpy).find(([url]) => String(url).endsWith("/accounts/m1"));
     if (!accountPatch) throw new Error("expected an account PATCH");
     expect(JSON.parse(String((accountPatch[1] as RequestInit).body))).toEqual({
@@ -230,11 +240,10 @@ describe("<MortgageContainer />", () => {
       ...defaultLoaderData(),
       userProfile: { homeValue: 350000, mortgageRenewalDate: "2099-10-01" },
     };
-    const { getByText, queryByText } = customRender(<MortgageContainer />);
-    fireEvent.click(getByText("Overpayment simulator"));
-    fireEvent.click(getByText("Remortgage rate shock simulator"));
+    const { getByText, getAllByText, queryByText } = customRender(<MortgageContainer />);
+    fireEvent.click(getByText("Rate change"));
     expect(queryByText("LTV not set")).toBeNull();
-    expect(getByText(/current LTV:/i)).toBeDefined();
+    expect(getAllByText(/current LTV:/i).length).toBeGreaterThan(1);
     expect(queryByText(/fix end date not set/i)).toBeNull();
   });
 
@@ -252,7 +261,7 @@ describe("<MortgageContainer />", () => {
     fireEvent.change(getByLabelText(/^Interest rate/), { target: { value: "4.5" } });
     fireEvent.click(getByRole("button", { name: /^Save$/i }));
     expect((await findByRole("alert")).textContent).toMatch(/could not save/i);
-    expect(queryByText(/Saved/)).toBeNull();
+    expect(queryByText(/Saved repayment type/)).toBeNull();
   });
 
   test("blanking the rate and term fields leaves them empty rather than 0 or 1", () => {
@@ -270,11 +279,21 @@ describe("<MortgageContainer />", () => {
     expect(rate.value).toBe("");
   });
 
-  test("empty prompt offers a call to action that opens the edit form", () => {
-    loaderData = { accounts: [], accountDetails: [] };
+  test("with a linked account, the empty prompt opens the edit form", () => {
     const { getByRole, getByLabelText } = customRender(<MortgageContainer />);
     fireEvent.click(getByRole("button", { name: "Add mortgage details" }));
     expect(getByLabelText(/^Interest rate/)).toBeDefined();
+  });
+
+  test("with no mortgage account, balance, rate and term are not offered because they cannot be saved", () => {
+    loaderData = { accounts: [], accountDetails: [] };
+    const { getByRole, queryByLabelText } = customRender(<MortgageContainer />);
+    fireEvent.click(getByRole("button", { name: /^Edit$/i }));
+    expect(queryByLabelText(/^Remaining balance/)).toBeNull();
+    expect(queryByLabelText(/^Interest rate/)).toBeNull();
+    expect(queryByLabelText(/^Remaining term/)).toBeNull();
+    fireEvent.click(getByRole("button", { name: "Add mortgage account" }));
+    expect(mockNavigate).toHaveBeenCalledWith("/app/accounts");
   });
 
   describe("with no stored rate or term", () => {
@@ -310,7 +329,6 @@ describe("<MortgageContainer />", () => {
     test("LTV milestones prompt instead of reading achieved when there is no property value", () => {
       loaderData = loaderWith({ interestRate: 3.9 });
       const { getByText, queryByText } = customRender(<MortgageContainer />);
-      fireEvent.click(getByText("LTV milestones"));
       expect(
         getByText("Add your mortgage balance and property value to see LTV milestones."),
       ).toBeDefined();
@@ -341,6 +359,161 @@ describe("<MortgageContainer />", () => {
     });
   });
 
+  describe("saved details and the scenario zone are separate", () => {
+    const loaded = () => ({
+      accounts: [
+        {
+          id: "m1",
+          name: "HSBC Fixed Mortgage",
+          type: "Mortgage",
+          balance: -135400,
+          interestRate: 4.5,
+          termMonths: 240,
+        },
+      ],
+      accountDetails: [{ account_id: "m1", month: 6, year: 2026, value: -135400 }],
+      userProfile: { homeValue: 350000 },
+    });
+    const savedText = (container: HTMLElement) =>
+      container.querySelector("#mortgage-summary")?.textContent ?? "";
+
+    test("saved details come from loader data and say when they were last updated", () => {
+      loaderData = loaded();
+      const { container, getByRole } = customRender(<MortgageContainer />);
+      expect(savedText(container)).toContain("£135,400");
+      expect(savedText(container)).toContain("4.50%");
+      expect(savedText(container)).toContain("Last updated June 2026");
+      expect(getByRole("button", { name: /^Edit$/i })).toBeDefined();
+    });
+
+    test("changing any scenario input leaves the saved details unchanged and makes no request", () => {
+      loaderData = loaded();
+      const fetchSpy = vi.spyOn(globalThis, "fetch");
+      const { container, getAllByRole, getByRole } = customRender(<MortgageContainer />);
+      const before = savedText(container);
+      const sliders = container
+        .querySelector("[aria-labelledby]")
+        ?.ownerDocument.querySelectorAll("input[type='range']");
+      expect(sliders?.length).toBeGreaterThanOrEqual(3);
+      for (const slider of Array.from(sliders ?? [])) {
+        const input = slider as HTMLInputElement;
+        const next = String(Number(input.max) / 2);
+        fireEvent.change(input, { target: { value: next } });
+      }
+      expect(getAllByRole("button", { name: "Reset to saved figures" })).toHaveLength(1);
+      expect(savedText(container)).toBe(before);
+      expect(fetchSpy).not.toHaveBeenCalled();
+
+      fireEvent.click(getByRole("button", { name: "Reset to saved figures" }));
+      expect(savedText(container)).toBe(before);
+    });
+
+    test("scenario state never reaches the URL or browser storage", () => {
+      loaderData = loaded();
+      const setItem = vi.spyOn(Storage.prototype, "setItem");
+      const { container } = customRender(<MortgageContainer />);
+      const slider = container.querySelector("input[type='range']") as HTMLInputElement;
+      fireEvent.change(slider, { target: { value: "500000" } });
+      expect(setItem).not.toHaveBeenCalled();
+      expect(window.location.search).toBe("");
+    });
+
+    test("the zone starts from the saved figures and offers reset only after a change", () => {
+      loaderData = loaded();
+      const { getByText, queryByRole } = customRender(<MortgageContainer />);
+      expect(
+        getByText(/Starting from your figures: £135,400 at 4.5%, 20 years left/),
+      ).toBeDefined();
+      expect(queryByRole("button", { name: "Reset to saved figures" })).toBeNull();
+    });
+
+    test("a balance typed in Edit is stored on the mortgage account as a liability", async () => {
+      setApiEnv();
+      loaderData = loaded();
+      const fetchSpy = vi
+        .spyOn(globalThis, "fetch")
+        .mockImplementation(async () => new Response(JSON.stringify({}), { status: 200 }));
+      const { getByLabelText, getByRole, findByText, container } = customRender(
+        <MortgageContainer />,
+      );
+      fireEvent.click(getByRole("button", { name: /^Edit$/i }));
+      fireEvent.change(getByLabelText(/^Remaining balance/), { target: { value: "130000" } });
+      fireEvent.click(getByRole("button", { name: /^Save$/i }));
+      await findByText(/Saved repayment type, balance/);
+      const accountPatch = patches(fetchSpy).find(([url]) => String(url).endsWith("/accounts/m1"));
+      if (!accountPatch) throw new Error("expected an account PATCH");
+      expect(JSON.parse(String((accountPatch[1] as RequestInit).body))).toEqual({
+        balance: -130000,
+        interestRate: 4.5,
+        termMonths: 240,
+      });
+      expect(savedText(container)).toContain("£130,000");
+    });
+
+    test("a failed save leaves the saved figures as they were", async () => {
+      setApiEnv();
+      loaderData = loaded();
+      vi.spyOn(globalThis, "fetch").mockImplementation(async (url) =>
+        String(url).includes("/accounts/")
+          ? new Response(JSON.stringify({ message: "nope" }), { status: 500 })
+          : new Response(JSON.stringify({}), { status: 200 }),
+      );
+      const { getByLabelText, getByRole, findByRole, container } = customRender(
+        <MortgageContainer />,
+      );
+      fireEvent.click(getByRole("button", { name: /^Edit$/i }));
+      fireEvent.change(getByLabelText(/^Remaining balance/), { target: { value: "90000" } });
+      fireEvent.click(getByRole("button", { name: /^Save$/i }));
+      await findByRole("alert");
+      fireEvent.click(getByRole("button", { name: "Cancel" }));
+      expect(savedText(container)).toContain("£135,400");
+      expect(savedText(container)).not.toContain("£90,000");
+    });
+
+    test("Update your details opens the edit form with the saved values, not the scenario", () => {
+      loaderData = loaded();
+      const { container, getByRole, getByLabelText } = customRender(<MortgageContainer />);
+      const slider = container.querySelector("input[type='range']") as HTMLInputElement;
+      fireEvent.change(slider, { target: { value: "500000" } });
+      fireEvent.click(getByRole("button", { name: "Update your details" }));
+      expect((getByLabelText(/^Interest rate/) as HTMLInputElement).value).toBe("4.5");
+      expect((getByLabelText(/^Remaining term/) as HTMLInputElement).value).toBe("20");
+    });
+
+    test("the hero surface sits on the saved balance only", () => {
+      loaderData = loaded();
+      const { container } = customRender(<MortgageContainer />);
+      const heroes = container.querySelectorAll("[data-tone='hero']");
+      expect(heroes).toHaveLength(1);
+      expect(heroes[0]?.closest("#mortgage-summary")).not.toBeNull();
+    });
+
+    test("buy to let saves balance and rate on the profile and offers no term", async () => {
+      setApiEnv();
+      loaderData = loaded();
+      const fetchSpy = vi
+        .spyOn(globalThis, "fetch")
+        .mockImplementation(async () => new Response(JSON.stringify({}), { status: 200 }));
+      const { getByText, getByLabelText, getByRole, queryByLabelText, findByText } = customRender(
+        <MortgageContainer />,
+      );
+      fireEvent.click(getByText("Buy to let (BTL)"));
+      fireEvent.click(getByRole("button", { name: /^Edit$/i }));
+      expect(queryByLabelText(/^Remaining term/)).toBeNull();
+      fireEvent.change(getByLabelText(/^Remaining balance/), { target: { value: "200000" } });
+      fireEvent.change(getByLabelText(/^Interest rate/), { target: { value: "5.1" } });
+      fireEvent.click(getByRole("button", { name: /^Save$/i }));
+      await findByText(/Saved repayment type, balance and interest rate/);
+      const profilePatch = patches(fetchSpy).find(([url]) => String(url).endsWith("/user-profile"));
+      if (!profilePatch) throw new Error("expected a profile PATCH");
+      expect(JSON.parse(String((profilePatch[1] as RequestInit).body))).toMatchObject({
+        buyToLetMortgageBalance: 200000,
+        buyToLetMortgageRate: 5.1,
+      });
+      expect(patches(fetchSpy).some(([url]) => String(url).includes("/accounts/"))).toBe(false);
+    });
+  });
+
   describe("live region", () => {
     afterEach(() => {
       vi.useRealTimers();
@@ -360,11 +533,13 @@ describe("<MortgageContainer />", () => {
         ],
         accountDetails: [{ account_id: "m1", month: 6, year: 2026, value: -135400 }],
       };
-      const { getByRole } = customRender(<MortgageContainer />);
+      const { getAllByRole } = customRender(<MortgageContainer />);
       act(() => {
         vi.advanceTimersByTime(5000);
       });
-      expect(getByRole("status", { hidden: true }).textContent).toBe("");
+      for (const region of getAllByRole("status", { hidden: true })) {
+        expect(region.textContent).toBe("");
+      }
     });
   });
 });

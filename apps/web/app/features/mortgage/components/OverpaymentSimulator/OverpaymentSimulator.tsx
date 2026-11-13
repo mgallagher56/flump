@@ -258,7 +258,6 @@ export const OverpaymentSimulator: FC<OverpaymentSimulatorProps> = ({
       className={heroCard}
       label="Bullet balance reduced"
       subtext={heroSubtext}
-      tone="hero"
       value={
         simulation === null ? null : (
           <span className={heroValue}>
@@ -272,7 +271,6 @@ export const OverpaymentSimulator: FC<OverpaymentSimulatorProps> = ({
       className={heroCard}
       label="Time shaved off"
       subtext={heroSubtext}
-      tone="hero"
       value={
         monthsSaved === null ? null : (
           <span className={heroValue}>

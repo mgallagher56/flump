@@ -16,6 +16,7 @@ import type { FC } from "react";
 import {
   editGrid,
   estimateRow,
+  savedLine,
   saveError,
   saveMessage,
   summaryActions,
@@ -28,6 +29,7 @@ import {
   typeButtons,
   typeFieldset,
   typeLegend,
+  unsavedNote,
 } from "./MortgageSummary.styles";
 
 export type MortgageKind = "repayment" | "interest-only";
@@ -49,8 +51,14 @@ export interface MortgageSummaryProps {
   editPayment: number | null;
   saveMessage: string | null;
   saveError: string | null;
-  /** True when the term is stored on a linked mortgage account, so it persists between visits. */
-  termSaved?: boolean;
+  /** True when balance and rate can be stored (a linked account, or buy to let on the profile). */
+  canSaveFigures: boolean;
+  /** True when the term can be stored too (a linked mortgage account). */
+  canSaveTerm: boolean;
+  /** "Last updated" wording for the Saved line, or `null` when no date is known. */
+  lastUpdated: string | null;
+  /** Opens the accounts page so a mortgage account can be added. */
+  onAddAccount: () => void;
   onStartEditing: () => void;
   onCancelEditing: () => void;
   onSave: () => void;
@@ -75,7 +83,10 @@ export const MortgageSummary: FC<MortgageSummaryProps> = ({
   editPayment,
   saveMessage: savedText,
   saveError: errorText,
-  termSaved = false,
+  canSaveFigures,
+  canSaveTerm,
+  lastUpdated,
+  onAddAccount,
   onStartEditing,
   onCancelEditing,
   onSave,
@@ -84,11 +95,21 @@ export const MortgageSummary: FC<MortgageSummaryProps> = ({
   onEditRemainingTermChange,
   onEditMortgageTypeChange,
 }) => {
-  const addAction = (label: string) => (
-    <Button aria-label={`Add ${label}`} size="sm" variant="ghost" onClick={onStartEditing}>
-      Add
-    </Button>
-  );
+  // Figures that cannot be stored here send the user to add an account instead of an edit form
+  // that would only hold them in memory.
+  const addAction = (label: string, canStore: boolean) => {
+    if (!canStore && canSaveFigures) return undefined;
+    return (
+      <Button
+        aria-label={`Add ${label}`}
+        size="sm"
+        variant="ghost"
+        onClick={canStore ? onStartEditing : onAddAccount}
+      >
+        Add
+      </Button>
+    );
+  };
   const typeLabel = mortgageType === "repayment" ? "Repayment" : "Interest-only";
 
   return (
@@ -110,8 +131,11 @@ export const MortgageSummary: FC<MortgageSummaryProps> = ({
             </StatusBadge>
           </div>
           <p className={summaryDescription()}>
-            The figures you entered. Saving updates your repayment type and, for a linked account,
-            its interest rate.
+            Your saved figures. Changing a slider or tool below never changes them.
+          </p>
+          <p className={savedLine()} id="mortgage-saved-line">
+            <Icon icon={Check} size="sm" />
+            Saved{lastUpdated ? `. ${lastUpdated}` : ""}
           </p>
         </div>
         <div className={summaryActions()}>
@@ -149,43 +173,56 @@ export const MortgageSummary: FC<MortgageSummaryProps> = ({
       {isEditing ? (
         <>
           <div className={editGrid()}>
-            <FormField label="Remaining balance (£)">
-              {(field) => (
-                <CurrencyInput
-                  {...controlProps(field)}
-                  value={editLoanAmount}
-                  onValueChange={(v) => onEditLoanAmountChange(v ?? 0)}
-                />
-              )}
-            </FormField>
-            <FormField label="Interest rate (%)">
-              {(field) => (
-                <TextInput
-                  {...controlProps(field)}
-                  inputMode="decimal"
-                  step="0.05"
-                  type="number"
-                  value={editInterestRate}
-                  onChange={(e) => onEditInterestRateChange(e.target.value)}
-                />
-              )}
-            </FormField>
-            <FormField
-              hint={termSaved ? "Stored on your mortgage account" : "Not saved – enter each visit"}
-              label="Remaining term (years)"
-            >
-              {(field) => (
-                <TextInput
-                  {...controlProps(field)}
-                  inputMode="numeric"
-                  max="40"
-                  min="1"
-                  type="number"
-                  value={editRemainingTerm}
-                  onChange={(e) => onEditRemainingTermChange(e.target.value)}
-                />
-              )}
-            </FormField>
+            {canSaveFigures ? (
+              <>
+                <FormField hint="Saved to your mortgage" label="Remaining balance (£)">
+                  {(field) => (
+                    <CurrencyInput
+                      {...controlProps(field)}
+                      value={editLoanAmount}
+                      onValueChange={(v) => onEditLoanAmountChange(v ?? 0)}
+                    />
+                  )}
+                </FormField>
+                <FormField label="Interest rate (%)">
+                  {(field) => (
+                    <TextInput
+                      {...controlProps(field)}
+                      inputMode="decimal"
+                      step="0.05"
+                      type="number"
+                      value={editInterestRate}
+                      onChange={(e) => onEditInterestRateChange(e.target.value)}
+                    />
+                  )}
+                </FormField>
+              </>
+            ) : (
+              <div className={unsavedNote()}>
+                <p>
+                  Your balance, rate and term are saved on a mortgage account. Add one to keep these
+                  figures between visits.
+                </p>
+                <Button size="sm" variant="outline" onClick={onAddAccount}>
+                  Add mortgage account
+                </Button>
+              </div>
+            )}
+            {canSaveTerm ? (
+              <FormField hint="Stored on your mortgage account" label="Remaining term (years)">
+                {(field) => (
+                  <TextInput
+                    {...controlProps(field)}
+                    inputMode="numeric"
+                    max="40"
+                    min="1"
+                    type="number"
+                    value={editRemainingTerm}
+                    onChange={(e) => onEditRemainingTermChange(e.target.value)}
+                  />
+                )}
+              </FormField>
+            ) : null}
             <fieldset className={typeFieldset()}>
               <legend className={typeLegend()}>Repayment type</legend>
               <div className={typeButtons()}>
@@ -208,20 +245,25 @@ export const MortgageSummary: FC<MortgageSummaryProps> = ({
               </div>
             </fieldset>
           </div>
-          <div className={estimateRow()}>
-            <span>Estimated monthly payment</span>
-            <Money fractionDigits={2} size="md" value={editPayment} />
-          </div>
+          {canSaveFigures && canSaveTerm ? (
+            <div className={estimateRow()}>
+              <span>Estimated monthly payment</span>
+              <Money fractionDigits={2} size="md" value={editPayment} />
+            </div>
+          ) : null}
         </>
       ) : (
         <KpiStrip columns={4}>
           <KpiCard
-            emptyAction={addAction("remaining balance")}
+            emptyAction={addAction("remaining balance", canSaveFigures)}
             label="Remaining balance"
-            value={loanAmount > 0 ? <Money size="lg" value={loanAmount} /> : null}
+            tone="hero"
+            value={
+              loanAmount > 0 ? <Money size="kpi" tone="onContrast" value={loanAmount} /> : null
+            }
           />
           <KpiCard
-            emptyAction={addAction("interest rate")}
+            emptyAction={addAction("interest rate", canSaveFigures)}
             label="Interest rate"
             value={
               interestRate > 0 ? (
@@ -230,7 +272,7 @@ export const MortgageSummary: FC<MortgageSummaryProps> = ({
             }
           />
           <KpiCard
-            emptyAction={addAction("remaining term")}
+            emptyAction={addAction("remaining term", canSaveTerm)}
             label="Remaining term"
             value={
               remainingTerm > 0 ? (

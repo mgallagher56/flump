@@ -20,7 +20,7 @@ const meta: Meta<typeof LtvMilestones> = {
         requiredMonthlyOverpaymentBeforeFixGbp: 250,
       },
     ],
-    onApplyOverpayment: fn(),
+    onModelOverpayment: fn(),
   },
 };
 
@@ -29,9 +29,9 @@ type Story = StoryObj<typeof LtvMilestones>;
 
 export const Default: Story = {
   play: async ({ canvasElement, args }) => {
-    const button = within(canvasElement).getAllByRole("button", { name: /^Apply/ })[0];
+    const button = within(canvasElement).getAllByRole("button", { name: /^Model/ })[0];
     if (!button) throw new Error("Apply button missing");
     await userEvent.click(button);
-    await expect(args.onApplyOverpayment).toHaveBeenCalledWith(250);
+    await expect(args.onModelOverpayment).toHaveBeenCalledWith(250);
   },
 };

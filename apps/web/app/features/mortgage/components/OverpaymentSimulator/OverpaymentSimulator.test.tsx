@@ -139,14 +139,12 @@ describe("<OverpaymentSimulator /> hero card", () => {
     onOverpaymentChange: vi.fn(),
   };
 
-  test("makes 'Time shaved off' the single hero card for repayment mortgages", () => {
+  test("shows 'Time shaved off' as a plain card, never the hero surface (it is a scenario outcome)", () => {
     const { getByText } = customRender(<OverpaymentSimulator {...props} />);
-    const heroes = document.querySelectorAll("[data-tone='hero']");
-    expect(heroes).toHaveLength(1);
-    expect(heroes[0]?.contains(getByText("Time shaved off"))).toBe(true);
-    expect(heroes[0]?.contains(getByText("Interest saved"))).toBe(false);
-    expect(heroes[0]?.textContent).toMatch(/Mortgage-free \d+ years?( \d+ months?)? sooner/);
-    expect(heroes[0]?.textContent).toMatch(/instead of 25 years/);
+    expect(document.querySelectorAll("[data-tone='hero']")).toHaveLength(0);
+    expect(getByText("Time shaved off")).toBeDefined();
+    expect(document.body.textContent).toMatch(/Mortgage-free \d+ years?( \d+ months?)? sooner/);
+    expect(document.body.textContent).toMatch(/instead of 25 years/);
   });
 
   test("shows at most four KPIs in the strip under the hero, in plain language", () => {
@@ -164,18 +162,16 @@ describe("<OverpaymentSimulator /> hero card", () => {
 
   test("says no change yet when there is no overpayment, never a zero-month result", () => {
     const { container } = customRender(<OverpaymentSimulator {...props} overpayment={0} />);
-    const hero = container.querySelector("[data-tone='hero']");
-    expect(hero?.textContent).toContain("No change yet");
+    expect(container.textContent).toContain("No change yet");
     expect(container.textContent).not.toMatch(/\b0 months?\b/i);
   });
 
-  test("makes 'Bullet balance reduced' the single hero card for interest-only mortgages", () => {
+  test("shows 'Bullet balance reduced' for interest-only mortgages, without the hero surface", () => {
     const { getByText } = customRender(
       <OverpaymentSimulator {...props} mortgageType="interest-only" overpayment={500} />,
     );
-    const heroes = document.querySelectorAll("[data-tone='hero']");
-    expect(heroes).toHaveLength(1);
-    expect(heroes[0]?.contains(getByText("Bullet balance reduced"))).toBe(true);
+    expect(document.querySelectorAll("[data-tone='hero']")).toHaveLength(0);
+    expect(getByText("Bullet balance reduced")).toBeDefined();
     // Interest-only balances never fall without overpaying, so the legend never claims an end date.
     expect(document.body.textContent).toMatch(/the full £200,000 is due at the end/);
     expect(document.body.textContent).not.toMatch(/No overpayment, ends after/);

@@ -21,6 +21,10 @@ const meta: Meta<typeof MortgageSummary> = {
     editPayment: 833.76,
     saveMessage: null,
     saveError: null,
+    canSaveFigures: true,
+    canSaveTerm: true,
+    lastUpdated: "Last updated 13 November 2026",
+    onAddAccount: fn(),
     onStartEditing: fn(),
     onCancelEditing: fn(),
     onSave: fn(),
@@ -58,5 +62,17 @@ export const Editing: Story = {
     if (!button) throw new Error("Interest-only button missing");
     await userEvent.click(button);
     await expect(args.onEditMortgageTypeChange).toHaveBeenCalledWith("interest-only");
+  },
+};
+
+export const EditingWithoutAccount: Story = {
+  args: { isEditing: true, canSaveFigures: false, canSaveTerm: false },
+  play: async ({ canvasElement, args }) => {
+    const button = within(canvasElement).getAllByRole("button", {
+      name: "Add mortgage account",
+    })[0];
+    if (!button) throw new Error("Add mortgage account button missing");
+    await userEvent.click(button);
+    await expect(args.onAddAccount).toHaveBeenCalled();
   },
 };
