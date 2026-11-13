@@ -36,13 +36,17 @@ describe("DataList", () => {
     expect(screen.getByRole("button", { name: "Show all 5 accounts" })).toBeDefined();
   });
 
-  it("expands, moves focus to the first revealed row and announces the change", () => {
+  it("expands and moves focus to the first revealed row, then clears its tabindex on blur", () => {
     render(<DataList items={makeItems(12)} label="Accounts" />);
     fireEvent.click(screen.getByRole("button", { name: "Show all 12 items" }));
     expect(screen.getAllByRole("listitem")).toHaveLength(12);
     expect(screen.queryByRole("button")).toBeNull();
     expect(document.activeElement).toBe(screen.getByText("Account 9").closest("li"));
-    expect(screen.getByRole("status").textContent).toBe("Showing all 12 items");
+    const row = screen.getByText("Account 9").closest("li") as HTMLElement;
+    expect(row.getAttribute("tabindex")).toBe("-1");
+    fireEvent.blur(row);
+    expect(row.hasAttribute("tabindex")).toBe(false);
+    expect(screen.queryByRole("status")).toBeNull();
   });
 
   it("formats values with Money and shows Not set for null", () => {
