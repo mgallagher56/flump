@@ -3,3 +3,7 @@
 # Add a row only with a written reason in the PR that adds it.
 # 10027 fires on every bundled JS comment in the production build and carries no signal here.
 10027	IGNORE	(Information Disclosure - Suspicious Comments)
+# 90004 (Insufficient Site Isolation Against Spectre Vulnerability, COEP): expected. Cross-Origin-Embedder-Policy would block third-party embeds (fonts, Sentry, WorkOS) and gives no benefit without SharedArrayBuffer use; COOP same-origin is already set. See docs/security/headers-and-csp.md.
+90004	IGNORE	(Cross-Origin-Embedder-Policy Header Missing or Invalid)
+# 10049 (Storable and Cacheable Content): expected. Public pages and hashed static assets are meant to be cacheable; personal-data routes send Cache-Control: no-store from the root middleware. See docs/security/headers-and-csp.md.
+10049	IGNORE	(Storable and Cacheable Content)

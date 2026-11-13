@@ -13,6 +13,7 @@ import { ServerRouter } from "react-router";
 import i18n from "./i18n";
 import i18next from "./i18n.server";
 import { reportServerError } from "./observability/sentry.server";
+import { applyCachePolicy, applySecurityHeaders } from "./security/headers.server";
 import { applyRobotsHeader } from "./utils/indexing.server";
 
 // Public launch (indexing allowed) must not boot with placeholder business details.
@@ -21,6 +22,12 @@ assertLaunchReady(process.env);
 // Loader, action and middleware errors (render errors go through onError below).
 export function handleError(error: unknown, { request }: { request: Request }): void {
   reportServerError(error, request);
+}
+
+// Runs on every `.data` response. Single-fetch builds some of them outside the middleware
+// pipeline (its own CSRF 400, last-resort 500), which would otherwise miss these headers.
+export function handleDataRequest(response: Response, { request }: { request: Request }): Response {
+  return applySecurityHeaders(applyCachePolicy(response, new URL(request.url).pathname));
 }
 
 // Reject/cancel all pending promises after 5 seconds
