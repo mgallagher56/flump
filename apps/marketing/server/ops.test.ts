@@ -155,8 +155,8 @@ describe("server.ts wiring", () => {
     }
   });
 
-  it("injects the canonical link from SITE_URL after the helmet output", () => {
-    expect(source).toContain("canonicalLinkTag(process.env.SITE_URL, url)");
+  it("builds head meta through buildHeadMeta", () => {
+    expect(source).toContain("buildHeadMeta({");
   });
 
   it("404s /sitemap.xml unless indexing is on and SITE_URL is https", async () => {

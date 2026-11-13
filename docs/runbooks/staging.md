@@ -127,19 +127,19 @@ Rows come from the code (`process.env.X`, `env.X` and `configService.get("X")` i
 
 ### 4.3 Marketing
 
-| Name                      | Production                                                           | Staging            | Source           | Secret? |
-| ------------------------- | -------------------------------------------------------------------- | ------------------ | ---------------- | ------- |
-| `NODE_ENV`                | `production`                                                         | `production`       | copy             | no      |
-| `PORT`                    | Railway-injected                                                     | Railway-injected   | unset (platform) | no      |
-| `VITE_APP_URL`            | production web URL                                                   | staging web URL    | generate fresh   | no      |
-| `SECURITY_CONTACT`        | security contact address                                             | same as production | copy             | no      |
-| `SITE_URL`                | public https origin, used for sitemap and robots when indexing is on | unset              | unset            | no      |
-| `VITE_SHOW_PLACEHOLDERS`  | unset (build-time; `true` previews placeholder copy)                 | unset              | unset            | no      |
-| `ALLOW_INDEXING`          | `true` only at public launch                                         | unset              | unset            | no      |
-| `FLUMP_LAUNCH`            | `true` only at public launch; indexing also needs `ALLOW_INDEXING`   | unset              | unset            | no      |
-| `APP_URL`                 | fallback when `VITE_APP_URL` is unset                                | unset              | unset            | no      |
-| `RAILWAY_PUBLIC_DOMAIN`   | Railway-injected                                                     | Railway-injected   | unset (platform) | no      |
-| `RAILWAY_SERVICE_WEB_URL` | Railway-injected                                                     | Railway-injected   | unset (platform) | no      |
+| Name                      | Production                                                                                                                 | Staging            | Source           | Secret? |
+| ------------------------- | -------------------------------------------------------------------------------------------------------------------------- | ------------------ | ---------------- | ------- |
+| `NODE_ENV`                | `production`                                                                                                               | `production`       | copy             | no      |
+| `PORT`                    | Railway-injected                                                                                                           | Railway-injected   | unset (platform) | no      |
+| `VITE_APP_URL`            | production web URL                                                                                                         | staging web URL    | generate fresh   | no      |
+| `SECURITY_CONTACT`        | security contact address                                                                                                   | same as production | copy             | no      |
+| `SITE_URL`                | public https origin: canonical link on real pages, sitemap and robots when indexing is on                                  | unset              | unset            | no      |
+| `VITE_SHOW_PLACEHOLDERS`  | unset (build-time; `true` previews placeholder copy)                                                                       | unset              | unset            | no      |
+| `ALLOW_INDEXING`          | `true` only at public launch                                                                                               | unset              | unset            | no      |
+| `FLUMP_LAUNCH`            | `true` only at public launch; also needs `ALLOW_INDEXING`. Runtime variable (a Docker ARG alone is not enough off Railway) | unset              | unset            | no      |
+| `APP_URL`                 | fallback when `VITE_APP_URL` is unset                                                                                      | unset              | unset            | no      |
+| `RAILWAY_PUBLIC_DOMAIN`   | Railway-injected                                                                                                           | Railway-injected   | unset (platform) | no      |
+| `RAILWAY_SERVICE_WEB_URL` | Railway-injected                                                                                                           | Railway-injected   | unset (platform) | no      |
 
 ## 5. WorkOS
 
@@ -178,3 +178,5 @@ Do this before any friend or tester signs in to staging. The restore drill (`res
 4. Delete any Railway volume backups or snapshots taken while staging held the restored production dump, and delete local copies of the dump you no longer need (`~/flump-backups`). The seed removes the rows but not the old backups.
 5. Confirm production holds nothing of the owner's that staging should not: run `scripts/ops/prod-counts.sql` against **staging** with the owner id and check it reports 0 rows for the owner id.
 6. From now on the drill is: dump, then local `restore-drill.sh`, then re-run the seed on staging. Do not restore production data into staging again.
+
+<!-- TODO(E24): add /contact to STATIC_PATHS (apps/marketing/src/utils/toolSlugs.ts), and so the sitemap, once that page exists. -->

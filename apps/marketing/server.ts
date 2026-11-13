@@ -4,9 +4,9 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import express from "express";
 import { createServer as createViteServer, type ViteDevServer } from "vite";
+import { buildHeadMeta } from "./server/headMeta";
 import { registerOps } from "./server/ops";
 import { buildCsp, genericServerError, injectThemeNonce, resolveAppUrl } from "./server/security";
-import { canonicalLinkTag } from "./server/sitemap";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -80,13 +80,13 @@ async function createServer() {
       const nonceAttr = res.locals.nonce ? ` nonce="${res.locals.nonce}"` : "";
       const appUrlScript = `<script${nonceAttr}>window.__FLUMP_APP_URL__=${JSON.stringify(resolvedAppUrl)};</script>`;
 
-      const helmetMeta = `
-        ${helmet?.title?.toString() || ""}
-        ${helmet?.meta?.toString() || ""}
-        ${helmet?.link?.toString() || ""}
-        ${canonicalLinkTag(process.env.SITE_URL, url)}
-        ${appUrlScript}
-      `;
+      const helmetMeta = buildHeadMeta({
+        helmet,
+        appUrlScript,
+        siteUrl: process.env.SITE_URL,
+        url,
+        status: status ?? 200,
+      });
 
       // The inline theme script needs the CSP nonce in production.
       const html = injectThemeNonce(

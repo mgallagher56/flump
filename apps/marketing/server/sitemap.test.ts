@@ -4,6 +4,7 @@ import { CANONICAL_TOOL_SLUGS, STATIC_PATHS } from "../src/utils/toolSlugs";
 import {
   buildSitemap,
   canonicalLinkTag,
+  canonicalPath,
   indexingFlagWarning,
   isIndexingAllowed,
   normaliseSiteUrl,
@@ -25,6 +26,13 @@ describe("indexingFlagWarning", () => {
     expect(indexingFlagWarning({ ALLOW_INDEXING: "true", FLUMP_LAUNCH: "true" })).toBeUndefined();
     expect(indexingFlagWarning({ ALLOW_INDEXING: "true" })).toContain("FLUMP_LAUNCH is not");
     expect(indexingFlagWarning({ FLUMP_LAUNCH: "true" })).toContain("ALLOW_INDEXING is not");
+  });
+
+  it("warns on set values that are not exactly true", () => {
+    expect(indexingFlagWarning({ ALLOW_INDEXING: "1" })).toContain('"1"');
+    expect(indexingFlagWarning({ ALLOW_INDEXING: "true", FLUMP_LAUNCH: "TRUE" })).toContain(
+      "FLUMP_LAUNCH must be exactly",
+    );
   });
 });
 
@@ -60,21 +68,41 @@ describe("buildSitemap", () => {
 });
 
 describe("canonicalLinkTag", () => {
+  const tag = (u: string) => canonicalLinkTag("https://flump.example", u);
+  const link = (p: string) => `<link rel="canonical" href="https://flump.example${p}" />`;
+
   it("is empty without a valid https SITE_URL", () => {
     expect(canonicalLinkTag(undefined, "/pricing")).toBe("");
     expect(canonicalLinkTag("http://flump.example", "/pricing")).toBe("");
   });
 
-  it("strips the query, hash and trailing slash", () => {
-    const tag = (u: string) => canonicalLinkTag("https://flump.example", u);
-    expect(tag("/pricing?utm=x#top")).toBe(
-      '<link rel="canonical" href="https://flump.example/pricing" />',
-    );
-    expect(tag("/pricing/")).toBe('<link rel="canonical" href="https://flump.example/pricing" />');
-    expect(tag("/?a=1")).toBe('<link rel="canonical" href="https://flump.example/" />');
+  it("strips the query, hash, repeated slashes and trailing slashes", () => {
+    expect(tag("/pricing?utm=x#top")).toBe(link("/pricing"));
+    expect(tag("/pricing/")).toBe(link("/pricing"));
+    expect(tag("/pricing//")).toBe(link("/pricing"));
+    expect(tag("//pricing")).toBe(link("/pricing"));
+    expect(tag("/?a=1")).toBe(link("/"));
   });
 
-  it("escapes attribute-breaking characters", () => {
-    expect(canonicalLinkTag("https://flump.example", '/a"b')).not.toContain('a"b');
+  it("normalises case and percent-encoding", () => {
+    expect(tag("/Pricing")).toBe(link("/pricing"));
+    expect(tag("/%70ricing")).toBe(link("/pricing"));
+  });
+
+  it("maps tool aliases to the canonical slug", () => {
+    expect(tag("/tools/overdraft-interest-calculator")).toBe(
+      link("/tools/overdraft-cost-and-payoff-calculator"),
+    );
+    expect(tag("/tools/uk-100k-tax-trap-calculator")).toBe(
+      link("/tools/uk-100k-tax-trap-calculator"),
+    );
+  });
+
+  it("emits nothing for unknown pages and cannot be broken out of the attribute", () => {
+    expect(tag("/nope")).toBe("");
+    expect(tag("/tools/nope")).toBe("");
+    expect(tag('/a"><script>')).toBe("");
+    expect(tag("/%E0%A4%A")).toBe("");
+    expect(canonicalPath("/tools")).toBe("/tools");
   });
 });
