@@ -23,7 +23,7 @@ const pluralMonths = (n: number) => `${n} month${n === 1 ? "" : "s"}`;
 
 /**
  * Debt page KPI strip (E15 T3.3). Four cards at most. "Debt-free by" is the page's single
- * `surface.hero` block; it falls back to a plain "Not calculated" card when an APR is missing,
+ * `surface.hero` block; it falls back to a plain "Not set" card when an APR is missing,
  * because a 0% stand-in would invent an optimistic date.
  */
 export const DebtSummary: FC<DebtSummaryProps> = ({
@@ -49,7 +49,6 @@ export const DebtSummary: FC<DebtSummaryProps> = ({
     <KpiStrip columns={4}>
       <KpiCard
         label="Debt-free by"
-        notSetLabel="Not calculated"
         subtext={
           canProject
             ? `${
@@ -90,7 +89,6 @@ export const DebtSummary: FC<DebtSummaryProps> = ({
       />
       <KpiCard
         label="Interest saved"
-        notSetLabel="Not calculated"
         subtext={canProject ? `Versus minimums, paying ${orderLabel}` : notCalculatedNote}
         value={canProject ? <Money size="lg" value={totalInterestSaved} /> : null}
       />

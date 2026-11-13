@@ -86,12 +86,12 @@ describe("DebtContainer", () => {
     expect(screen.queryByTestId("surplus-unknown-note")).toBeNull();
   });
 
-  it("shows Not calculated for date and interest saved when a debt has no APR", () => {
+  it("shows Not set for date and interest saved when a debt has no APR", () => {
     loaderState.accountsOverride = [
       { id: "acc-cc", name: "Barclaycard", type: "Credit Card", balance: 3000 },
     ];
     render(<DebtContainer />);
-    expect(screen.getAllByText("Not calculated").length).toBeGreaterThanOrEqual(2);
+    expect(screen.getAllByText("Not set").length).toBeGreaterThanOrEqual(2);
     expect(screen.getAllByText(/Add each debt's APR/).length).toBeGreaterThan(0);
   });
 
