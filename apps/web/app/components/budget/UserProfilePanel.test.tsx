@@ -155,6 +155,41 @@ describe("<UserProfilePanel />", () => {
     });
   });
 
+  it("lets a user who onboarded before region was asked set region and student loan (E23 D-4-C)", async () => {
+    render(<UserProfilePanel initialProfile={{ ...DEFAULT_PROFILE, taxRegion: null }} />);
+    const region = screen.getByLabelText(/where do you pay tax/i) as HTMLSelectElement;
+    const loan = screen.getByLabelText(/student loan plan/i) as HTMLSelectElement;
+    expect(region.value).toBe("");
+    expect(loan.value).toBe("");
+    fireEvent.change(region, { target: { value: "SCOTLAND" } });
+    fireEvent.change(loan, { target: { value: "NONE" } });
+    fireEvent.click(screen.getByRole("button", { name: /Save Profile/i }));
+    await waitFor(() =>
+      expect(mockUpdateProfile).toHaveBeenCalledWith(
+        expect.objectContaining({ taxRegion: "SCOTLAND", studentLoanPlans: [] }),
+      ),
+    );
+  });
+
+  it("shows a stored region and plan, and clearing them saves null", async () => {
+    render(
+      <UserProfilePanel
+        initialProfile={{ ...DEFAULT_PROFILE, taxRegion: "WALES", studentLoanPlans: ["PLAN_2"] }}
+      />,
+    );
+    expect((screen.getByLabelText(/where do you pay tax/i) as HTMLSelectElement).value).toBe(
+      "WALES",
+    );
+    expect((screen.getByLabelText(/student loan plan/i) as HTMLSelectElement).value).toBe("PLAN_2");
+    fireEvent.change(screen.getByLabelText(/where do you pay tax/i), { target: { value: "" } });
+    fireEvent.click(screen.getByRole("button", { name: /Save Profile/i }));
+    await waitFor(() =>
+      expect(mockUpdateProfile).toHaveBeenCalledWith(
+        expect.objectContaining({ taxRegion: null, studentLoanPlans: ["PLAN_2"] }),
+      ),
+    );
+  });
+
   it("displays the user email address with verified status", () => {
     render(
       <UserProfilePanel

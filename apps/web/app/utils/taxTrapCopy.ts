@@ -30,6 +30,9 @@ export function getTaxTrapCopy(analysis: TaxTrapAnalysis): TaxTrapCopy {
 
 export const REGION_ASSUMPTION_LABEL = "Assuming England, Wales and Northern Ireland rates.";
 
+/** Where a user sets their tax region after onboarding (profile settings, E23 D-4-C). */
+export const REGION_SETTINGS_PATH = "/app/profile";
+
 /**
  * The region the user told us, or null when England, Wales and NI is only the labelled
  * assumption (E23 D-4). Scotland is only ever stored from the user's own answer, so it is

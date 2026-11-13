@@ -237,7 +237,10 @@ describe("PensionContainer", () => {
       setProfile(profile);
       render(<PensionContainer />);
       expect(screen.getByText(/assuming England, Wales and Northern Ireland/i)).toBeDefined();
-      expect(screen.queryByRole("link", { name: /region/i })).toBeNull();
+      // Region can now be set in profile settings (E23 D-4-C), so the label links there.
+      expect(screen.getByRole("link", { name: /set your region/i }).getAttribute("href")).toBe(
+        "/app/profile",
+      );
     });
 
     it("backend default rates (5% + 3%) show the default label", () => {

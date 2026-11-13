@@ -7,10 +7,11 @@ import {
 import { css } from "@repo/ui/styled-system/css";
 import { type FC, useId, useMemo, useState } from "react";
 import { FiAlertTriangle, FiArrowRight, FiCheck } from "react-icons/fi";
+import { Link } from "react-router";
 import FLPButton from "~/components/core/buttons/FLPButton";
 import FLPHeading from "~/components/core/typography/FLPHeading";
 import FLPText from "~/components/core/typography/FLPText";
-import { getTaxTrapCopy, REGION_ASSUMPTION_LABEL } from "~/utils/taxTrapCopy";
+import { getTaxTrapCopy, REGION_ASSUMPTION_LABEL, REGION_SETTINGS_PATH } from "~/utils/taxTrapCopy";
 
 export interface TaxTrapAlertBannerProps {
   grossIncome: number;
@@ -169,7 +170,10 @@ export const TaxTrapAlertBanner: FC<TaxTrapAlertBannerProps> = ({
             </FLPText>
             {!region && (
               <FLPText color="text.muted" fontSize="xs" className={css({ marginTop: "4px" })}>
-                {REGION_ASSUMPTION_LABEL}
+                {REGION_ASSUMPTION_LABEL}{" "}
+                <Link to={REGION_SETTINGS_PATH} className={css({ textDecoration: "underline" })}>
+                  Set your region
+                </Link>
               </FLPText>
             )}
           </div>

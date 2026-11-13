@@ -30,7 +30,12 @@ import { useUserProfile } from "~/hooks/useUserProfile";
 import type { loader } from "~/routes/app.pension";
 import { useFinancialBaseline } from "~/state/baseline.store";
 import { roundTo2dp } from "~/utils/roundTo2dp";
-import { getKnownTrapRegion, getTaxTrapCopy, REGION_ASSUMPTION_LABEL } from "~/utils/taxTrapCopy";
+import {
+  getKnownTrapRegion,
+  getTaxTrapCopy,
+  REGION_ASSUMPTION_LABEL,
+  REGION_SETTINGS_PATH,
+} from "~/utils/taxTrapCopy";
 import { currentMonth, currentYear } from "~/utils/utils";
 
 const containerStyle = css({
@@ -441,7 +446,10 @@ export const PensionContainer: FC = () => {
           </FLPText>
           {!knownRegion && (
             <FLPText fontSize="xs" color="text.muted">
-              {REGION_ASSUMPTION_LABEL}
+              {REGION_ASSUMPTION_LABEL}{" "}
+              <Link to={REGION_SETTINGS_PATH} className={css({ textDecoration: "underline" })}>
+                Set your region
+              </Link>
             </FLPText>
           )}
           <div

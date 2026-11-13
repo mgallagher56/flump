@@ -146,6 +146,8 @@ const UserProfilePanel: FC<UserProfilePanelProps> = ({ initialProfile, user }) =
     avatarUrl: effectiveProfile.avatarUrl,
     country: "GB",
     currency: "GBP",
+    taxRegion: effectiveProfile.taxRegion ?? null,
+    studentLoanPlans: effectiveProfile.studentLoanPlans ?? null,
     employmentType: effectiveProfile.employmentType,
     annualSalary: effectiveProfile.annualSalary,
     monthlyTakeHome: effectiveProfile.monthlyTakeHome,
@@ -695,6 +697,70 @@ const UserProfilePanel: FC<UserProfilePanelProps> = ({ initialProfile, user }) =
                   and pension rates are configured in Tax & Pension, while your property values and
                   mortgage parameters live in Mortgage Tracker.
                 </FLPText>
+              </div>
+              {/* E23 D06/D-4-C: region and student loan for users who onboarded before they were asked */}
+              <div
+                className={css({
+                  display: "grid",
+                  gridTemplateColumns: { base: "1fr", md: "1fr 1fr" },
+                  gap: "16px",
+                })}
+              >
+                <div className={fieldGroupStyle}>
+                  <label className={labelStyle} htmlFor="tax-region-select">
+                    Where do you pay tax?
+                  </label>
+                  <select
+                    className={inputStyle}
+                    id="tax-region-select"
+                    data-testid="tax-region-select"
+                    aria-describedby="tax-region-help"
+                    value={form.taxRegion ?? ""}
+                    onChange={(e) =>
+                      setForm((p) => ({
+                        ...p,
+                        taxRegion: (e.target.value || null) as UserProfileUpdate["taxRegion"],
+                      }))
+                    }
+                  >
+                    <option value="">Not set (England, Wales and NI rates assumed)</option>
+                    <option value="ENGLAND">England</option>
+                    <option value="WALES">Wales</option>
+                    <option value="SCOTLAND">Scotland</option>
+                    <option value="NORTHERN_IRELAND">Northern Ireland</option>
+                  </select>
+                  <FLPText id="tax-region-help" fontSize="xs" color="text.muted">
+                    Scotland has its own income tax rates, so this changes your take-home pay.
+                  </FLPText>
+                </div>
+                <div className={fieldGroupStyle}>
+                  <label className={labelStyle} htmlFor="student-loan-select">
+                    Student loan plan
+                  </label>
+                  <select
+                    className={inputStyle}
+                    id="student-loan-select"
+                    data-testid="student-loan-select"
+                    value={
+                      form.studentLoanPlans == null ? "" : (form.studentLoanPlans[0] ?? "NONE")
+                    }
+                    onChange={(e) => {
+                      const v = e.target.value;
+                      setForm((p) => ({
+                        ...p,
+                        studentLoanPlans: v === "" ? null : v === "NONE" ? [] : [v],
+                      }));
+                    }}
+                  >
+                    <option value="">Not set (no loan assumed)</option>
+                    <option value="NONE">None</option>
+                    <option value="PLAN_1">Plan 1</option>
+                    <option value="PLAN_2">Plan 2</option>
+                    <option value="PLAN_4">Plan 4 (Scotland)</option>
+                    <option value="PLAN_5">Plan 5</option>
+                    <option value="POSTGRAD">Postgraduate loan</option>
+                  </select>
+                </div>
               </div>
               <div className={css({ display: "flex", gap: "12px", flexWrap: "wrap" })}>
                 <FLPButton
