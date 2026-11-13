@@ -1,6 +1,7 @@
 import { Info } from "lucide-react";
 import type { FC, ReactNode } from "react";
 import { cx } from "../../../styled-system/css";
+import { IconButton } from "../Button";
 import { Icon } from "../Icon";
 import { Popover, type PopoverProps } from "../Popover";
 import { infoTipDefinitionRecipe, infoTipTriggerRecipe } from "./InfoTip.styles";
@@ -50,13 +51,14 @@ export const InfoTip: FC<InfoTipProps> = ({
     onOpenChange={onOpenChange}
     id={id}
     trigger={
-      <button
-        type="button"
-        aria-label={label ?? `About ${term}`}
+      <IconButton
+        label={label ?? `About ${term}`}
+        size="sm"
+        variant="ghost"
         className={cx(infoTipTriggerRecipe(), className)}
       >
         <Icon icon={Info} size="sm" />
-      </button>
+      </IconButton>
     }
   >
     <p className={infoTipDefinitionRecipe()}>{children}</p>
