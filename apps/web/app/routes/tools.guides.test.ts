@@ -45,6 +45,7 @@ async function toolText(slug: string): Promise<string> {
     request: new Request(`http://localhost/tools/${slug}`),
   } as never);
   return [
+    tool.metaTitle,
     tool.metaDescription,
     tool.title,
     tool.subtitle,

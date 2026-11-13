@@ -35,10 +35,6 @@ export const summaryBody = cva({
   base: { display: "flex", flexDirection: "column", gap: "1", minWidth: 0 },
 });
 
-export const summaryEyebrow = cva({
-  base: { textStyle: "label.sm", color: "text.muted", margin: 0 },
-});
-
 export const summaryTitle = cva({
   base: { textStyle: "heading.sm", color: "text.primary", margin: 0 },
 });

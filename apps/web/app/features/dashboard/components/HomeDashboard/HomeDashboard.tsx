@@ -252,7 +252,7 @@ export const HomeDashboard: FC<HomeDashboardProps> = ({
       />
 
       {showCoachCard && (
-        <SectionBand id="dashboard-next" title="What to do next" variant="app">
+        <SectionBand id="dashboard-next" title="Unsecured debt" variant="app">
           <StageCoachCard
             debtFreeDate={debtData?.debtFreeDate ?? null}
             unsecuredDebt={financialStage?.totalUnsecuredDebt || debtData?.totalDebt || 0}
