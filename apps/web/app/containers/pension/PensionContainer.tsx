@@ -2,7 +2,7 @@ import {
   calculate100kTaxTrap,
   calculateEmployerNISavings,
   getCurrentUKTaxYear,
-  isKnown,
+  isFigureKnown,
   PortfolioSnapshot,
   profileFactsFromProfile,
   selectTakeHome,
@@ -273,7 +273,7 @@ export const PensionContainer: FC = () => {
     };
     const withoutPension = selectTakeHome(facts, { overrides: { pensionPercent: 0 } });
     const withPension = selectTakeHome(facts, { overrides: { pensionPercent: employeePercent } });
-    if (!isKnown(withoutPension) || !isKnown(withPension)) {
+    if (!isFigureKnown(withoutPension) || !isFigureKnown(withPension)) {
       return { netMonthlyCost: 0, taxReliefMonthly: 0 };
     }
     const netCost = Math.max(0, (withoutPension.value.annual - withPension.value.annual) / 12);
