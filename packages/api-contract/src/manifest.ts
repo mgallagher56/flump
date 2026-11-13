@@ -12,6 +12,7 @@ import {
 } from "./domains/budget.js";
 import { CreateMcpTokenRequest } from "./domains/mcp-tokens.js";
 import { UpdateChecklistRequest, UpdateProfileRequest } from "./domains/profile.js";
+import { SnapshotMonthParams, UpsertSnapshotRequest } from "./domains/snapshots.js";
 import {
   BulkCreateTaxRecordsRequest,
   CreateTaxRecordRequest,
@@ -48,6 +49,7 @@ export const CONTRACT_GROUPS = [
   "profile",
   "bank-connections",
   "transactions",
+  "snapshots",
   "mcp-tokens",
   "app",
 ] as const;
@@ -150,6 +152,18 @@ export const routes = {
       ownership: "user",
       params: IdParams,
       group: "accounts",
+    }),
+  },
+  snapshots: {
+    upsert: defineRoute({
+      id: "snapshots.upsert",
+      method: "PUT",
+      path: "snapshots/:month",
+      auth: "user",
+      ownership: "user",
+      params: SnapshotMonthParams,
+      body: UpsertSnapshotRequest,
+      group: "snapshots",
     }),
   },
   transactions: {

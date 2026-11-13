@@ -11,6 +11,7 @@ import { Account } from "./entities/account.entity";
 import { AccountDetail } from "./entities/account-detail.entity";
 import { BankConnection } from "./entities/bank-connection.entity";
 import { UserProfile } from "./entities/user-profile.entity";
+import { londonDate } from "./snapshots/london-date";
 
 export type AccountType =
   | "Current"
@@ -375,11 +376,16 @@ export class AccountIntakeService implements IAccountIntake {
   /** Month-end snapshot for the current UK month: one row per account per month (E23 D22). */
   private upsertCurrentMonthHistory(
     details: Repository<AccountDetail>,
+    userId: string,
     accountId: string,
     value: number,
   ): Promise<unknown> {
     const { year, month } = currentUkYearMonth();
-    return details.upsert({ accountId, year, month, value }, ["accountId", "year", "month"]);
+    // A balance edit or check-in is a manual snapshot value (E30): it also sticks against sync.
+    return details.upsert(
+      { accountId, userId, year, month, value, asOfDate: londonDate(), source: "manual" },
+      ["accountId", "year", "month"],
+    );
   }
 
   async updateAccount(userId: string, id: string, body: UpdateAccountDto): Promise<Account> {
@@ -392,7 +398,7 @@ export class AccountIntakeService implements IAccountIntake {
       Object.assign(account, this.pickAccountFields(body));
       const saved = await accounts.save(account);
       if (body.balance !== undefined && body.balance !== null) {
-        await this.upsertCurrentMonthHistory(details, id, Number(saved.balance));
+        await this.upsertCurrentMonthHistory(details, userId, id, Number(saved.balance));
       }
       return saved;
     });
@@ -418,7 +424,7 @@ export class AccountIntakeService implements IAccountIntake {
         const account = byId.get(id) as Account;
         account.balance = balance;
         const saved = await accounts.save(account);
-        await this.upsertCurrentMonthHistory(details, id, Number(saved.balance));
+        await this.upsertCurrentMonthHistory(details, userId, id, Number(saved.balance));
         result.push(saved);
       }
       return result;

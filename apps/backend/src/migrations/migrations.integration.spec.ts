@@ -40,6 +40,7 @@ const ENTITY_TABLES = [
   "bank_connections",
   "budget_entries",
   "mcp_tokens",
+  "snapshot_checkins",
   "tax_records",
   "transactions",
   "user_profiles",
@@ -138,7 +139,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
     }
   };
 
-  it("creates all eight tables on an empty database", async () => {
+  it("creates all nine tables on an empty database", async () => {
     await ds.runMigrations();
     expect(await tables()).toEqual(ENTITY_TABLES);
   });
@@ -357,7 +358,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
       });
       const withDetails = await insertAccount("u4", SEEDED_ACCOUNTS[1]);
       await ds.query(
-        "INSERT INTO account_details (account_id, month, year, value) VALUES ($1, 1, 2024, 5)",
+        "INSERT INTO account_details (account_id, user_id, month, year, value, as_of_date) VALUES ($1, 'u', 1, 2024, 5, '2024-01-31')",
         [withDetails],
       );
       const withTransactions = await insertAccount("u5", SEEDED_ACCOUNTS[2]);
@@ -431,7 +432,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
           name: `Custom ${user}`,
         });
         await ds.query(
-          "INSERT INTO account_details (account_id, month, year, value) VALUES ($1, 1, 2024, 5)",
+          "INSERT INTO account_details (account_id, user_id, month, year, value, as_of_date) VALUES ($1, 'u', 1, 2024, 5, '2024-01-31')",
           [account],
         );
         await ds.query(
@@ -495,6 +496,122 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
       await runUpInTransaction(new RemoveSeededExampleData1794355400000());
 
       expect(await ids("tax_records")).toEqual([kept]);
+    });
+  });
+
+  describe("EvolveAccountDetailsForSnapshots1794356100000 (E30)", () => {
+    const MIGRATION = "EvolveAccountDetailsForSnapshots1794356100000";
+
+    // Brings the schema to the state before this migration (full up, then its own down), so the
+    // legacy shape can be seeded and the real up() run on top of it.
+    const legacy = async (): Promise<{ a: string; b: string }> => {
+      await ds.runMigrations();
+      await ds.undoLastMigration();
+      const acc = async (user: string): Promise<string> => {
+        const rows: { id: string }[] = await ds.query(
+          `INSERT INTO accounts (user_id, name, type, balance, currency)
+           VALUES ($1, 'Acc', 'Current', 10, 'GBP') RETURNING id`,
+          [user],
+        );
+        return rows[0].id;
+      };
+      return { a: await acc("user-a"), b: await acc("user-b") };
+    };
+    const legacyRow = (account: string, year: number, month: number, value: number) =>
+      ds.query(
+        "INSERT INTO account_details (account_id, month, year, value) VALUES ($1, $2, $3, $4)",
+        [account, month, year, value],
+      );
+
+    it("down() removes the new columns, constraints and table", async () => {
+      await ds.runMigrations();
+      await ds.undoLastMigration();
+      expect(await tables()).not.toContain("snapshot_checkins");
+      const cols: { column_name: string }[] = await ds.query(
+        "SELECT column_name FROM information_schema.columns WHERE table_name = 'account_details'",
+      );
+      expect(cols.map((c) => c.column_name).sort()).toEqual([
+        "account_id",
+        "id",
+        "month",
+        "value",
+        "year",
+      ]);
+    });
+
+    it("keeps the latest write per account and month, drops orphans, backfills owner and date", async () => {
+      const { a, b } = await legacy();
+      await legacyRow(a, 2026, 1, 100); // older duplicate
+      await legacyRow(a, 2026, 1, 150); // latest write wins
+      await legacyRow(a, 2026, 2, 200);
+      await legacyRow(b, 2026, 2, 300);
+      await legacyRow("00000000-0000-0000-0000-000000000000", 2026, 2, 999); // orphan
+      await legacyRow(a, 2026, 14, 1); // impossible month
+
+      await ds.runMigrations();
+
+      const rows = await ds.query(
+        `SELECT account_id, user_id, year, month, value::float AS value, as_of_date::text AS as_of_date, source
+         FROM account_details ORDER BY user_id, year, month`,
+      );
+      expect(rows).toEqual([
+        {
+          account_id: a,
+          user_id: "user-a",
+          year: 2026,
+          month: 1,
+          value: 150,
+          as_of_date: "2026-01-31",
+          source: "backfill",
+        },
+        {
+          account_id: a,
+          user_id: "user-a",
+          year: 2026,
+          month: 2,
+          value: 200,
+          as_of_date: "2026-02-28",
+          source: "backfill",
+        },
+        {
+          account_id: b,
+          user_id: "user-b",
+          year: 2026,
+          month: 2,
+          value: 300,
+          as_of_date: "2026-02-28",
+          source: "backfill",
+        },
+      ]);
+      expect(await applied()).toContain(MIGRATION);
+    });
+
+    it("enforces the unique key, the month key against as_of_date, and the source list", async () => {
+      await ds.runMigrations();
+      const rows: { id: string }[] = await ds.query(
+        `INSERT INTO accounts (user_id, name, type, balance, currency)
+         VALUES ('user-a', 'Acc', 'Current', 10, 'GBP') RETURNING id`,
+      );
+      const id = rows[0].id;
+      const insert = (year: number, month: number, date: string, source = "manual") =>
+        ds.query(
+          `INSERT INTO account_details (account_id, user_id, year, month, value, as_of_date, source)
+           VALUES ($1, 'user-a', $2, $3, 1, $4, $5)`,
+          [id, year, month, date, source],
+        );
+      await insert(2026, 3, "2026-03-31");
+      await expect(insert(2026, 3, "2026-03-15")).rejects.toThrow(
+        /UQ_account_details_account_year_month/,
+      );
+      await expect(insert(2026, 4, "2026-05-01")).rejects.toThrow(
+        /CHK_account_details_as_of_month/,
+      );
+      await expect(insert(2026, 5, "2026-05-01", "guess")).rejects.toThrow(
+        /CHK_account_details_source/,
+      );
+      await expect(
+        ds.query(`INSERT INTO snapshot_checkins (user_id, month) VALUES ('user-a', '2026-13')`),
+      ).rejects.toThrow(/CHK_snapshot_checkins_month/);
     });
   });
 

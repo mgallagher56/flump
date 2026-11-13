@@ -3,6 +3,7 @@ export * from "./domains/bank-connections.js";
 export * from "./domains/budget.js";
 export * from "./domains/mcp-tokens.js";
 export * from "./domains/profile.js";
+export * from "./domains/snapshots.js";
 export * from "./domains/tax.js";
 export * from "./domains/transactions.js";
 export * from "./manifest.js";

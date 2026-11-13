@@ -5,6 +5,7 @@ import { AccountDetail } from "../entities/account-detail.entity";
 import { BankConnection } from "../entities/bank-connection.entity";
 import { BudgetEntry } from "../entities/budget-entry.entity";
 import { McpToken } from "../entities/mcp-token.entity";
+import { SnapshotCheckin } from "../entities/snapshot-checkin.entity";
 import { TaxRecord } from "../entities/tax-record.entity";
 import { Transaction } from "../entities/transaction.entity";
 import { UserProfile } from "../entities/user-profile.entity";
@@ -20,6 +21,7 @@ export const ENTITIES: Function[] = [
   BudgetEntry,
   TaxRecord,
   McpToken,
+  SnapshotCheckin,
 ];
 
 // Relative to this file so it resolves under both `bun src/...` (ts) and dist/ (js).

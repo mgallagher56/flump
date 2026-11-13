@@ -662,6 +662,14 @@ Source: [docs/research/market-research-2026-11.md](../research/market-research-2
   - E26 and E27 are blocked by E29a, and by E29b before non-friends.
 - **Labels:** needs-triage
 
+## E30. Monthly snapshots and the check-in habit
+
+- **Severity:** P2 (retention; the owner's own sheet is the model).
+- **Blocked by:** PR1 none (owner runs the E18 backup drill before staging); PR3 needs the owner's email provider choice and a PECR opinion.
+- **Done when:** the first onboarding data is the first monthly snapshot; the user can check in each month from a prefilled form (connected accounts auto-fill, manual edits stick); net worth over time shows month-on-month deltas with carry-forward marked; a user-chosen reminder day sends a figure-free, consent-gated email with one-click unsubscribe; v2 adds actual vs forecast, mortgage reconciliation, crossover, allocation, debt paydown, an MCP history tool and CSV export.
+- **Notes:** evolves `account_details` rather than adding a history table. No streaks or badges, deltas worded the same up or down, assumptions never auto-recalibrated, Europe/London only. Plan: [E30-monthly-snapshots-plan.md](plans/E30-monthly-snapshots-plan.md). PR1 (backend and engine) overlaps E23 section 6.
+- **Labels:** needs-triage
+
 ### Addendum to E19: portability
 
 Add to E19 (opus review: effort S, so fold in rather than a new epic): full JSON and CSV export of every user-owned dataset, CSV import for users arriving from other apps, and an honest statement of what happens to user data if the service closes. Do not publish a "shutdown-proof" claim without a run-off plan.

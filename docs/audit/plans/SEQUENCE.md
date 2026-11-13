@@ -150,3 +150,5 @@ E29 is split into two parts:
 
 - **E29a** is free agent work. It gates the friends beta, the E25 copy and E26.
 - **E29b** is the lawyer's perimeter view. It is part of the fixed-fee launch engagement and gates public launch.
+
+E30 (monthly snapshots and the check-in habit) has a plan, `E30-monthly-snapshots-plan.md`, in four PRs: PR1 backend and engine, PR2 web, PR3 mailer and reminders (blocked on the owner's email provider and a PECR opinion), PR4 v2 views. PR1 shares `account_details` and the `portfolio.ts` history code with E23 section 6 (see the plan, section 7).

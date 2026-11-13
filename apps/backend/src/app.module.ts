@@ -24,6 +24,8 @@ import { BankProviderRegistry } from "./providers/provider.registry";
 import { StarlingProvider } from "./providers/starling.provider";
 import { Trading212Provider } from "./providers/trading212.provider";
 import { SecurityModule } from "./security/security.module";
+import { SnapshotsController } from "./snapshots/snapshots.controller";
+import { SnapshotsService } from "./snapshots/snapshots.service";
 import { TaxController } from "./tax.controller";
 import { UserProfileController } from "./user-profile.controller";
 import { UserProfileService } from "./user-profile.service";
@@ -49,12 +51,14 @@ import { UserProfileService } from "./user-profile.service";
     UserProfileController,
     BudgetController,
     TaxController,
+    SnapshotsController,
     McpController,
   ],
   providers: [
     AppService,
     AccountIntakeService,
     FinanceService,
+    SnapshotsService,
     UserProfileService,
     McpTokenService,
     AgentDataService,
