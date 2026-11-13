@@ -28,7 +28,11 @@ export function rateLimit({
     const t = now();
     if (hits.size >= maxClients) {
       for (const [key, entry] of hits) if (entry.resetAt <= t) hits.delete(key);
-      if (hits.size >= maxClients) hits.clear();
+      // Evict the oldest entry (Map keeps insertion order) rather than wiping everyone's counters.
+      if (hits.size >= maxClients) {
+        const oldest = hits.keys().next().value;
+        if (oldest !== undefined) hits.delete(oldest);
+      }
     }
     const key = req.ip ?? "unknown";
     let entry = hits.get(key);

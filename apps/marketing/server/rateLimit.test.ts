@@ -45,8 +45,8 @@ describe("rateLimit", () => {
     const h = rateLimit({ windowMs: 60_000, max: 1, now: () => 0, maxClients: 2 });
     run(h, "a");
     run(h, "b");
-    expect(run(h, "c").next).toHaveBeenCalled();
-    // table was cleared to make room, so a is allowed again rather than memory growing
-    expect(run(h, "a").next).toHaveBeenCalled();
+    run(h, "b");
+    expect(run(h, "c").next).toHaveBeenCalled(); // evicts oldest (a) only
+    expect(run(h, "b").next).not.toHaveBeenCalled(); // b's counter survives
   });
 });
