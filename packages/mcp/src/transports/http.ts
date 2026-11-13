@@ -16,7 +16,31 @@ export interface HttpTransportOptions extends TokenVerifierOptions {
   rateLimiter?: McpRateLimiter;
   /** Pre-auth limiter for failed attempts per client IP (default 10 per minute). */
   failedAuthLimiter?: FailedAuthLimiter;
+  /**
+   * Global kill switch (E20-N18). When it returns false every request is answered 503 before
+   * Origin checks, rate limiting or auth. A function so the owner can flip it without a restart.
+   * Default: enabled.
+   */
+  isEnabled?: () => boolean;
+  /**
+   * Browser origins allowed to call /mcp (E20-N18, DNS-rebinding/CSRF defence). A request with an
+   * `Origin` header that is not listed gets 403; no `Origin` (non-browser clients) is allowed.
+   * Default: empty, so any browser origin is rejected.
+   */
+  allowedOrigins?: readonly string[];
 }
+
+/** Normalises an origin for comparison: trimmed, lower-cased, no trailing slash. */
+export function normalizeOrigin(origin: string): string {
+  return origin.trim().toLowerCase().replace(/\/+$/, "");
+}
+
+const JSON_HEADERS = { "Content-Type": "application/json" };
+const DISABLED_BODY = {
+  error: "mcp_disabled",
+  message: "AI connections are temporarily unavailable.",
+};
+const FORBIDDEN_ORIGIN_BODY = { error: "origin_not_allowed", message: "Origin not allowed." };
 
 const WWW_AUTHENTICATE = 'Bearer realm="flump-mcp"';
 const GENERIC_BAD_REQUEST = { error: "bad_request", message: "Bad request" };
@@ -82,8 +106,12 @@ export class HttpMcpHandler {
   private readonly rateLimiter: McpRateLimiter;
   private readonly failedAuthLimiter: FailedAuthLimiter;
   private readonly dataProvider: McpUserDataProvider;
+  private readonly isEnabled: () => boolean;
+  private readonly allowedOrigins: ReadonlySet<string>;
 
   constructor(options: HttpTransportOptions) {
+    this.isEnabled = options.isEnabled ?? (() => true);
+    this.allowedOrigins = new Set((options.allowedOrigins ?? []).map(normalizeOrigin));
     this.verifier = new TokenVerifier(options);
     this.rateLimiter = options.rateLimiter ?? new McpRateLimiter(60, 300);
     this.failedAuthLimiter = options.failedAuthLimiter ?? new FailedAuthLimiter(10, 60_000);
@@ -100,6 +128,19 @@ export class HttpMcpHandler {
     }
   }
 
+  /** 503 when the kill switch is on, 403 for a disallowed Origin, otherwise null. Runs before auth. */
+  private gate(origin: string | null | undefined): { status: number; body: object } | null {
+    if (!this.isEnabled()) return { status: 503, body: DISABLED_BODY };
+    if (
+      origin !== null &&
+      origin !== undefined &&
+      !this.allowedOrigins.has(normalizeOrigin(origin))
+    ) {
+      return { status: 403, body: FORBIDDEN_ORIGIN_BODY };
+    }
+    return null;
+  }
+
   getOAuthMetadata() {
     return this.verifier.getOAuthProtectedResourceMetadata();
   }
@@ -108,6 +149,11 @@ export class HttpMcpHandler {
    * Express / NestJS request handler
    */
   async handleExpressRequest(req: any, res: any, parsedBody?: any): Promise<void> {
+    const rejected = this.gate(req.headers?.origin);
+    if (rejected) {
+      res.status(rejected.status).json(rejected.body);
+      return;
+    }
     const ip: string = req.ip ?? req.socket?.remoteAddress ?? "unknown";
     const blocked = this.failedAuthLimiter.check(ip);
     if (blocked.blocked) {
@@ -166,6 +212,13 @@ export class HttpMcpHandler {
    * Web Standard Request / Response handler
    */
   async handleWebRequest(request: Request): Promise<Response> {
+    const rejected = this.gate(request.headers.get("origin"));
+    if (rejected) {
+      return new Response(JSON.stringify(rejected.body), {
+        status: rejected.status,
+        headers: JSON_HEADERS,
+      });
+    }
     const ip = clientIpFromHeaders(request.headers);
     const blocked = this.failedAuthLimiter.check(ip);
     if (blocked.blocked) {

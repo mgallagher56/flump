@@ -27,11 +27,13 @@ export class McpController {
    * Dispatches directly to the official MCP SDK StreamableHTTPServerTransport.
    */
   @Post("mcp")
+  @UseGuards(McpKillSwitchGuard)
   async handleMcpPost(@Req() req: any, @Res() res: any) {
     return this.mcpService.getHttpHandler().handleExpressRequest(req, res);
   }
 
   @Get("mcp")
+  @UseGuards(McpKillSwitchGuard)
   async handleMcpGet(@Req() req: any, @Res() res: any) {
     return this.mcpService.getHttpHandler().handleExpressRequest(req, res);
   }
