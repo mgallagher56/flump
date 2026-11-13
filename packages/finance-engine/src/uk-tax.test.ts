@@ -393,6 +393,17 @@ describe("uk-tax module", () => {
     });
   });
 
+  describe("calculateUkTax reports the pension annual allowance for the requested year", () => {
+    it("uses 40,000 for 2021/22 and 60,000 for 2024/25", () => {
+      const old = calculateUkTax({ grossSalary: 50000, taxYear: "2021/22" });
+      expect(old.allowances.pensionAnnualAllowanceGbp).toBe(40000);
+      expect(old.allowances.pensionAllowanceRemainingGbp).toBe(40000);
+      const recent = calculateUkTax({ grossSalary: 50000, taxYear: "2024/25" });
+      expect(recent.allowances.pensionAnnualAllowanceGbp).toBe(60000);
+      expect(recent.allowances.pensionAllowanceRemainingGbp).toBe(60000);
+    });
+  });
+
   describe("calculateUkTax full pipeline", () => {
     it("handles standard PAYE salary with pension and allowances", () => {
       const res = calculateUkTax({

@@ -281,10 +281,9 @@ const DIVIDENDS: Record<UkTaxYear, UkDividendRules> = {
   "2026/27": { allowance: 500, basicRate: 0.1075, higherRate: 0.3575, additionalRate: 0.3935 },
 };
 
-// Pension annual allowance (E25-T1). 60,000 is stated by
-// https://www.gov.uk/tax-on-your-private-pension/annual-allowance for the current year only
-// (2026/27 verified). 40,000 to 2022/23 and 60,000 for 2023/24 to 2025/26 are UNVERIFIED in
-// the registry (uk-rule-sources.ts) until read from a per-year GOV.UK page.
+// Pension annual allowance (E25-T1). Verified for every supported year against HMRC's per-year
+// table (https://www.gov.uk/government/publications/rates-and-allowances-pension-schemes/pension-schemes-rates):
+// 40,000 for 2020/21 to 2022/23, 60,000 from 2023/24.
 const PENSION_ANNUAL_ALLOWANCE: Record<UkTaxYear, number> = {
   "2020/21": 40000,
   "2021/22": 40000,
