@@ -1,7 +1,13 @@
 import { cva } from "@repo/ui/styled-system/css";
 
 export const form = cva({
-  base: { display: "flex", flexDirection: "column", gap: "4", marginTop: "4" },
+  base: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "4",
+    marginTop: "4",
+    fontVariantNumeric: "tabular-nums",
+  },
 });
 
 export const fieldRow = cva({

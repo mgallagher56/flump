@@ -17,7 +17,7 @@ import {
   THead,
   Th,
 } from "@repo/ui";
-import { Paperclip, Pencil, Trash2 } from "lucide-react";
+import { Paperclip, Trash2 } from "lucide-react";
 import { type FC, useMemo, useState } from "react";
 import { nativeSelect } from "../../select.styles";
 import { FREQUENCY_LABEL, recordAmount, SOURCE_LABEL, SOURCE_OPTIONS } from "../../tax-labels";
@@ -239,15 +239,6 @@ export const TaxRecordsTable: FC<TaxRecordsTableProps> = ({
                           <Icon icon={Paperclip} size="sm" />
                         </button>
                       ) : null}
-                      <button
-                        aria-label={`Edit ${record.name}`}
-                        className={iconButton()}
-                        title="Edit"
-                        type="button"
-                        onClick={() => onEdit(record)}
-                      >
-                        <Icon icon={Pencil} size="sm" />
-                      </button>
                       <button
                         aria-label={`Delete ${record.name}`}
                         className={iconButton({ tone: "danger" })}

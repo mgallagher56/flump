@@ -65,7 +65,7 @@ export const TaxTabs = <V extends string>({
               ref={(el) => {
                 refs.current[i] = el;
               }}
-              aria-controls={`${idBase}-panel`}
+              aria-controls={selected ? `${idBase}-panel` : undefined}
               aria-selected={selected}
               className={tab()}
               id={`${idBase}-tab-${item.value}`}
