@@ -4,7 +4,7 @@ export const chartFigureRoot = cva({
   base: {
     display: "flex",
     flexDirection: "column",
-    gap: "3",
+    gap: "12px",
     margin: "0",
     width: "100%",
   },
