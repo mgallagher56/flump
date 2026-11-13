@@ -77,6 +77,22 @@ Replace outdated or melodramatic names with clear, professional names:
 | **Cashflow allocation**      | Cashflow Waterfall / Dynamic Cash Engine   | Proportional breakdown of tax, fixed bills, flexible spending, and surplus |
 | **Promotional expiry alert** | Promotional Cliff / 0% Cliff Alert         | Clear notice when a 0% credit card or transfer rate is ending              |
 
+### Saved details and scenarios
+
+Saved facts and what-if tools are kept apart on every page (spec: `docs/design/e15/scenario-zone.md`).
+
+| Element               | Canonical copy                                                                                                    | Never                                      |
+| :-------------------- | :---------------------------------------------------------------------------------------------------------------- | :----------------------------------------- |
+| Saved zone heading    | _Your mortgage_, _Your pension_ (plain, domain named)                                                             | _Settings_, _Inputs_                       |
+| Saved zone state line | _Saved_ plus the last-updated date, then an _Edit_ button                                                         | _Synced_, _Applied_                        |
+| Scenario zone heading | _Model a change_; per page _Model a change to your mortgage_ / _debts_ / _pension_ / _savings_ / _budget_ / _pay_ | _Sandbox_ (belongs to the signed-out demo) |
+| Scenario badge        | _Illustration, not saved_ (icon plus text, never colour alone)                                                    | _Draft_, _Preview_                         |
+| Basis line            | _Starting from your figures: £182,400 at 4.5%, 22 years left_                                                     | A basis built from scenario values         |
+| Reset button          | _Reset to saved figures_                                                                                          | _Reset_, _Clear_                           |
+| Footer link           | _Update your details_ (opens the edit form with the saved values)                                                 | _Apply to my details_, _Save scenario_     |
+| Cross-tool buttons    | _Model this in Savings_, _Model this in the pension forecaster_                                                   | _Apply_, _Apply to ..._                    |
+| Announcements         | Prefix _Illustration:_ (for example _Illustration: interest saved £3,800_)                                        | Unprefixed outcome announcements           |
+
 ---
 
 ## 5. Capitalisation Rules
