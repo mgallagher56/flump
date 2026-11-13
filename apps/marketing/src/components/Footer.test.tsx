@@ -1,11 +1,7 @@
+import { BUSINESS_DETAILS } from "@flump/business-details";
 import { render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
-import { describe, expect, it, vi } from "vitest";
-import {
-  COMPANY_ADDRESS_PLACEHOLDER,
-  COMPANY_NAME_PLACEHOLDER,
-  COMPANY_NUMBER_PLACEHOLDER,
-} from "../utils/placeholders";
+import { describe, expect, it } from "vitest";
 import { Footer } from "./Footer";
 
 const renderFooter = () =>
@@ -36,24 +32,20 @@ describe("Footer", () => {
     expect(screen.queryAllByRole("heading", { level: 4 })).toHaveLength(0);
   });
 
-  it("hides the placeholder company line by default", () => {
-    const { container } = renderFooter();
-    expect(container.textContent ?? "").not.toMatch(/PLACEHOLDER/);
+  it("links to the security page", () => {
+    renderFooter();
     expect(screen.getByRole("link", { name: "Security and privacy" }).getAttribute("href")).toBe(
       "/security",
     );
   });
 
-  it("shows the placeholder company line only when VITE_SHOW_PLACEHOLDERS=true", () => {
-    vi.stubEnv("VITE_SHOW_PLACEHOLDERS", "true");
-    try {
-      const text = renderFooter().container.textContent ?? "";
-      expect(text).toContain(COMPANY_NAME_PLACEHOLDER);
-      expect(text).toContain(COMPANY_NUMBER_PLACEHOLDER);
-      expect(text).toContain(COMPANY_ADDRESS_PLACEHOLDER);
-      expect(text).not.toMatch(/Registered in England/i);
-    } finally {
-      vi.unstubAllEnvs();
-    }
+  it("shows the company line and support email from the business details config", () => {
+    const text = renderFooter().container.textContent ?? "";
+    expect(text).toContain(BUSINESS_DETAILS.legalName.value);
+    expect(text).toContain(`Company number ${BUSINESS_DETAILS.companyNumber.value}`);
+    expect(text).toContain(BUSINESS_DETAILS.registeredOffice.value);
+    expect(text).not.toMatch(/Registered in England/i);
+    const mail = screen.getByRole("link", { name: BUSINESS_DETAILS.supportEmail.value });
+    expect(mail.getAttribute("href")).toBe(`mailto:${BUSINESS_DETAILS.supportEmail.value}`);
   });
 });

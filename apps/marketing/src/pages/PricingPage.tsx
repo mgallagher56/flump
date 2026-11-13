@@ -1,3 +1,4 @@
+import { BUSINESS_DETAILS, formatPrice } from "@flump/business-details";
 import { Button } from "@repo/ui";
 import { css } from "@repo/ui/styled-system/css";
 import { flex, grid, stack } from "@repo/ui/styled-system/patterns";
@@ -6,8 +7,6 @@ import { Helmet } from "react-helmet-async";
 import { FiCheck, FiClock } from "react-icons/fi";
 import { Footer } from "../components/Footer";
 import { Header } from "../components/Header";
-import { showPlaceholders } from "../utils/flags";
-import { PRICE_PLACEHOLDER, PRICE_PLACEHOLDER_ANNUAL } from "../utils/placeholders";
 import { getAppUrl } from "../utils/url";
 
 const containerStyle = css({ maxWidth: "6xl", mx: "auto", py: "16", px: "4" });
@@ -118,7 +117,7 @@ const FREE_FEATURES = [
 export const PricingPage: FC = () => {
   const [isAnnual, setIsAnnual] = useState(false);
   const appUrl = getAppUrl();
-  const showPaidPlan = showPlaceholders();
+  const { monthly, annual, label } = BUSINESS_DETAILS.price.value;
 
   return (
     <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
@@ -126,7 +125,7 @@ export const PricingPage: FC = () => {
         <title>Pricing and plans | Flump</title>
         <meta
           name="description"
-          content="Flump's planning tools are free to use while pricing is being finalised."
+          content="Flump's planning tools are free to use. Indicative pricing for a future paid plan may change."
         />
       </Helmet>
 
@@ -138,52 +137,50 @@ export const PricingPage: FC = () => {
             <span className={eyebrowStyle}>Pricing</span>
             <h1 className={headingStyle}>Pricing</h1>
             <p className={introStyle}>
-              The calculators are free to use today. Pricing for a future paid plan has not been set
-              yet.
+              The calculators are free to use today. Indicative pricing for a future paid plan is
+              shown below and may change.
             </p>
 
-            {showPaidPlan && (
-              <div className={flex({ justify: "center", align: "center", gap: "3", mt: "8" })}>
+            <div className={flex({ justify: "center", align: "center", gap: "3", mt: "8" })}>
+              <span
+                className={css({
+                  fontSize: "14px",
+                  color: "text.primary",
+                  fontWeight: isAnnual ? "500" : "700",
+                })}
+              >
+                Monthly billing
+              </span>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={isAnnual}
+                aria-label="Annual billing"
+                className={toggleTrackStyle}
+                onClick={() => setIsAnnual((v) => !v)}
+              >
                 <span
-                  className={css({
-                    fontSize: "14px",
-                    color: "text.primary",
-                    fontWeight: isAnnual ? "500" : "700",
-                  })}
-                >
-                  Monthly billing
-                </span>
-                <button
-                  type="button"
-                  role="switch"
-                  aria-checked={isAnnual}
-                  aria-label="Annual billing"
-                  className={toggleTrackStyle}
-                  onClick={() => setIsAnnual((v) => !v)}
-                >
-                  <span
-                    className={toggleThumbStyle}
-                    style={{ transform: isAnnual ? "translateX(26px)" : "translateX(0)" }}
-                  />
-                </button>
-                <span
-                  className={css({
-                    fontSize: "14px",
-                    color: "text.primary",
-                    fontWeight: isAnnual ? "700" : "500",
-                  })}
-                >
-                  Annual billing
-                </span>
-              </div>
-            )}
+                  className={toggleThumbStyle}
+                  style={{ transform: isAnnual ? "translateX(26px)" : "translateX(0)" }}
+                />
+              </button>
+              <span
+                className={css({
+                  fontSize: "14px",
+                  color: "text.primary",
+                  fontWeight: isAnnual ? "700" : "500",
+                })}
+              >
+                Annual billing
+              </span>
+            </div>
           </div>
 
           <div
             className={grid({
-              columns: { base: 1, md: showPaidPlan ? 2 : 1 },
+              columns: { base: 1, md: 2 },
               gap: "8",
-              maxW: showPaidPlan ? "4xl" : "md",
+              maxW: "4xl",
               mx: "auto",
               mb: "16",
             })}
@@ -222,49 +219,45 @@ export const PricingPage: FC = () => {
               </a>
             </div>
 
-            {showPaidPlan && (
-              <div className={cardStyle} data-featured="true">
-                <div>
-                  <h2 className={planNameStyle}>Paid plan</h2>
-                  <p className={planDescStyle}>
-                    A future paid plan. Nothing is charged today and it cannot be purchased yet.
-                  </p>
+            <div className={cardStyle} data-featured="true">
+              <div>
+                <h2 className={planNameStyle}>Paid plan</h2>
+                <p className={planDescStyle}>
+                  A future paid plan. Nothing is charged today and it cannot be purchased yet.
+                </p>
 
-                  <div className={priceRowStyle}>
-                    <span className={priceStyle}>
-                      {isAnnual ? PRICE_PLACEHOLDER_ANNUAL : PRICE_PLACEHOLDER}
-                    </span>
-                    <span className={priceUnitStyle}>
-                      per month{isAnnual ? ", billed annually" : ""}
-                    </span>
-                  </div>
-                  <span className={placeholderNoteStyle}>Placeholder price: not final</span>
-
-                  <ul
-                    className={stack({ gap: "3", mb: "8" })}
-                    style={{ listStyle: "none", padding: 0 }}
-                  >
-                    <li className={flex({ align: "center", gap: "2" })}>
-                      <FiCheck size={18} className={checkStyle} aria-hidden="true" />
-                      <span className={featureStyle}>Everything in Free</span>
-                    </li>
-                    <li className={flex({ align: "center", gap: "2" })}>
-                      <FiClock size={18} className={pendingStyle} aria-hidden="true" />
-                      <span className={featureStyle}>Bank connection (coming soon)</span>
-                    </li>
-                  </ul>
+                <div className={priceRowStyle}>
+                  <span className={priceStyle}>{formatPrice(isAnnual ? annual : monthly)}</span>
+                  <span className={priceUnitStyle}>
+                    {isAnnual ? "per year, billed annually" : "per month"}
+                  </span>
                 </div>
+                <span className={placeholderNoteStyle}>{label}</span>
 
-                <Button
-                  size="lg"
-                  variant="primary"
-                  disabled
-                  style={{ width: "100%", justifyContent: "center" }}
+                <ul
+                  className={stack({ gap: "3", mb: "8" })}
+                  style={{ listStyle: "none", padding: 0 }}
                 >
-                  Pricing coming soon
-                </Button>
+                  <li className={flex({ align: "center", gap: "2" })}>
+                    <FiCheck size={18} className={checkStyle} aria-hidden="true" />
+                    <span className={featureStyle}>Everything in Free</span>
+                  </li>
+                  <li className={flex({ align: "center", gap: "2" })}>
+                    <FiClock size={18} className={pendingStyle} aria-hidden="true" />
+                    <span className={featureStyle}>Bank connection (coming soon)</span>
+                  </li>
+                </ul>
               </div>
-            )}
+
+              <Button
+                size="lg"
+                variant="primary"
+                disabled
+                style={{ width: "100%", justifyContent: "center" }}
+              >
+                Pricing coming soon
+              </Button>
+            </div>
           </div>
         </section>
       </main>

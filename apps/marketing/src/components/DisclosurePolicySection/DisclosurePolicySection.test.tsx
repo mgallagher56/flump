@@ -1,21 +1,17 @@
+import { BUSINESS_DETAILS } from "@flump/business-details";
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { DisclosurePolicySection } from "./DisclosurePolicySection";
 
 describe("DisclosurePolicySection", () => {
-  it("has a level-2 heading and says no security contact is available yet", () => {
+  it("has a level-2 heading and the configured security contact", () => {
     render(<DisclosurePolicySection />);
     expect(
       screen.getByRole("heading", { level: 2, name: "Reporting a security issue" }),
     ).toBeDefined();
-    expect(document.body.textContent).toMatch(/security contact is not available yet/i);
-    expect(document.body.textContent).toMatch(/published here at launch/i);
-  });
-
-  it("shows no dead contact: no mailto link, security.txt link or placeholder address", () => {
-    render(<DisclosurePolicySection />);
-    expect(screen.queryAllByRole("link")).toHaveLength(0);
-    expect(document.body.textContent).not.toMatch(/example\.invalid|security\.txt|PLACEHOLDER/i);
+    const value = BUSINESS_DETAILS.securityContact.value;
+    expect(screen.getByRole("link", { name: value }).getAttribute("href")).toBe(`mailto:${value}`);
+    expect(document.body.textContent).not.toMatch(/security contact is not available yet/i);
   });
 
   it("makes no response-time, legal-protection or bounty-payment promise", () => {

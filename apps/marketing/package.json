@@ -18,6 +18,7 @@
     "prepare": "panda codegen"
   },
   "dependencies": {
+    "@flump/business-details": "workspace:*",
     "@flump/finance-engine": "workspace:*",
     "@repo/ui": "workspace:*",
     "compression": "1.8.2",

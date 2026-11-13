@@ -15,7 +15,6 @@ const renderPage = () =>
 
 describe("PricingPage", () => {
   it("links the free plan to sign-up without a plan parameter", () => {
-    vi.stubEnv("VITE_SHOW_PLACEHOLDERS", "true");
     renderPage();
     const href = screen
       .getAllByText("Get started")
@@ -25,7 +24,6 @@ describe("PricingPage", () => {
     expect(href).not.toContain("plan=");
     expect(screen.getByText("Pricing coming soon").closest("a")).toBeNull();
     expect((screen.getByText("Pricing coming soon") as HTMLButtonElement).disabled).toBe(true);
-    vi.unstubAllEnvs();
   });
 
   it("uses a plain heading and an honest free card", () => {
@@ -35,25 +33,15 @@ describe("PricingPage", () => {
     expect(screen.queryByText(/financial journey/i)).toBeNull();
   });
 
-  it("hides the placeholder price card and billing toggle by default", () => {
-    const { container } = renderPage();
-    expect(container.textContent).not.toMatch(/£X|£Y|Placeholder price|Pricing coming soon/);
-    expect(screen.queryByRole("switch", { name: "Annual billing" })).toBeNull();
-    expect(screen.getByText("Free today")).toBeDefined();
-  });
-
-  it("shows only an obvious placeholder price when VITE_SHOW_PLACEHOLDERS=true", () => {
-    vi.stubEnv("VITE_SHOW_PLACEHOLDERS", "true");
-    try {
-      renderPage();
-      expect(screen.getByText("£X")).toBeDefined();
-      expect(screen.getByText("Placeholder price: not final")).toBeDefined();
-      fireEvent.click(screen.getByRole("switch", { name: "Annual billing" }));
-      expect(screen.getByText("£Y")).toBeDefined();
-      expect(screen.queryByText(/£7\.99|£9\.99|£95\.88|14-day|Save 20%/)).toBeNull();
-    } finally {
-      vi.unstubAllEnvs();
-    }
+  it("shows the introductory price from the business details config", () => {
+    renderPage();
+    expect(screen.getByText("£4.99")).toBeDefined();
+    expect(screen.getByText("per month")).toBeDefined();
+    expect(screen.getByText("Introductory price, subject to change")).toBeDefined();
+    fireEvent.click(screen.getByRole("switch", { name: "Annual billing" }));
+    expect(screen.getByText("£49")).toBeDefined();
+    expect(screen.getByText("per year, billed annually")).toBeDefined();
+    expect(screen.queryByText(/£X|£Y|Placeholder price/)).toBeNull();
   });
 
   it("claims only shipped features", () => {

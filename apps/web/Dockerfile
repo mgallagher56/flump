@@ -27,6 +27,7 @@ COPY . .
 ENV NODE_ENV=production
 # Launch guard (E24-T1): Railway passes the FLUMP_LAUNCH service variable only if declared here.
 ARG FLUMP_LAUNCH
+ARG ALLOW_INDEXING
 RUN bun run --cwd apps/web prepare && bun turbo run build --filter=@flump/web...
 
 # Stage 3: Create final production image

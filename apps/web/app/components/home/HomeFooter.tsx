@@ -1,3 +1,4 @@
+import { companyLine } from "@flump/business-details";
 import { css } from "@repo/ui/styled-system/css";
 import type { FC } from "react";
 import { Link as RouterLink } from "react-router";
@@ -180,7 +181,7 @@ export const HomeFooter: FC = () => {
       </div>
 
       <div className={bottomRowStyle}>
-        <div>© {new Date().getFullYear()} Flump. Open-source personal finance platform.</div>
+        <div>{companyLine(new Date().getFullYear())}</div>
         <div>Built with React 19, React Router 7, Panda CSS, and WorkOS AuthKit.</div>
       </div>
     </footer>

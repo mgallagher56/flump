@@ -1,3 +1,4 @@
+import { BUSINESS_DETAILS } from "@flump/business-details";
 import express, { type RequestHandler, type Router } from "express";
 import { analyticsFlagWarning } from "./analytics";
 import { buildSecurityTxt, normaliseSecurityContact } from "./security";
@@ -34,8 +35,14 @@ export function opsRouter(env: Env = process.env): Router {
   return router;
 }
 
+/** The config contact, once it is a real address. A placeholder never reaches security.txt. */
+function configuredSecurityContact(): string | undefined {
+  const { value, isPlaceholder } = BUSINESS_DETAILS.securityContact;
+  return isPlaceholder ? undefined : value;
+}
+
 /**
- * GET /.well-known/security.txt, only when SECURITY_CONTACT is a valid email or https URL.
+ * GET /.well-known/security.txt, only when SECURITY_CONTACT (or a non-placeholder business-details contact) is a valid email or https URL.
  * Otherwise it answers 404 itself: the SPA catch-all would serve HTML (200) for it.
  * Expiry is computed per request, so it never goes stale.
  */
@@ -46,7 +53,7 @@ export function securityTxtRouter(
   const router = express.Router();
 
   router.get("/.well-known/security.txt", (_req, res) => {
-    const contact = normaliseSecurityContact(env.SECURITY_CONTACT);
+    const contact = normaliseSecurityContact(env.SECURITY_CONTACT ?? configuredSecurityContact());
     if (!contact) {
       res.status(404).type("text/plain").send("Not Found");
       return;

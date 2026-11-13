@@ -9,6 +9,7 @@
   "version": "1.29.1",
   "dependencies": {
     "@flump/banking": "workspace:*",
+    "@flump/business-details": "workspace:*",
     "@flump/finance-engine": "workspace:*",
     "@flump/observability": "workspace:*",
     "@radix-ui/react-dialog": "1.3.1",
