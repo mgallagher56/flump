@@ -28,13 +28,16 @@ export const chartXAxisProps = {
   minTickGap: 24,
 } as const;
 
-/** Compact en-GB currency ticks. Pass `tickFormatter` to override (for example for percentages). */
+/**
+ * Compact en-GB currency ticks. Override `tickFormatter` (for example for percentages) or `width`
+ * (for very large figures such as "-£12.5m") after the spread: `<YAxis {...chartYAxisProps} width={80} />`.
+ */
 export const chartYAxisProps = {
   axisLine: false,
   tick: AXIS_TICK,
   tickLine: false,
   tickMargin: 8,
-  width: 56,
+  width: 64,
   tickFormatter: (value: number): string => formatAxisCurrency(value),
 } as const;
 

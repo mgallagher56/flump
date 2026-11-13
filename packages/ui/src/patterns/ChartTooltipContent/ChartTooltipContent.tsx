@@ -30,6 +30,8 @@ export interface ChartTooltipContentProps {
   rows: readonly ChartTooltipRow[];
   /** Two decimal places, for charts that plot small amounts. Default is whole pounds. */
   fractionDigits?: 0 | 2;
+  /** Sets the element `id` and `data-testid`. */
+  id?: string;
   className?: string;
 }
 
@@ -41,9 +43,10 @@ export const ChartTooltipContent: FC<ChartTooltipContentProps> = ({
   title,
   rows,
   fractionDigits = 0,
+  id,
   className,
 }) => (
-  <div className={cx(chartTooltip(), className)} data-testid="chart-tooltip">
+  <div className={cx(chartTooltip(), className)} data-testid={id ?? "chart-tooltip"} id={id}>
     {title ? <p className={chartTooltipTitle()}>{title}</p> : null}
     <ul className={chartTooltipRows()}>
       {rows.map((row) => (

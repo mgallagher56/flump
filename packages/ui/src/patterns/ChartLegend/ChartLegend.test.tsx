@@ -59,6 +59,14 @@ describe("ChartLegend", () => {
     expect(screen.getByText("Not set")).toBeDefined();
   });
 
+  it("derives id and test ids from the id prop", () => {
+    render(<ChartLegend id="net-worth-key" items={ITEMS} />);
+    const list = screen.getByRole("list", { name: "Chart key" });
+    expect(list.id).toBe("net-worth-key");
+    expect(list.getAttribute("data-testid")).toBe("net-worth-key");
+    expect(screen.getByTestId("net-worth-key-projection")).toBeDefined();
+  });
+
   it("hides swatches from assistive tech", () => {
     const { container } = render(<ChartSwatch color="debt" />);
     expect(container.querySelector("svg")?.getAttribute("aria-hidden")).toBe("true");

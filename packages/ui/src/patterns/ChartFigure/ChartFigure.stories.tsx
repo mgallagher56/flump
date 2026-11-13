@@ -146,3 +146,5 @@ export const HiddenTitle: Story = {
 export const NoLegendNoData: Story = {
   args: { legend: undefined, dataTable: undefined },
 };
+
+export const Dark: Story = { ...Default, globals: { theme: "dark" } };

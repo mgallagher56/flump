@@ -225,6 +225,32 @@ describe("Architecture & Design System Laws", () => {
       }
     });
 
+    it("allows var(--colors-*) only in src/charts (chartColor, chartInk) for the chart kit and templates", () => {
+      const chartsDir = path.join(UI_SRC, "charts");
+      const allowed = fs
+        .readdirSync(chartsDir)
+        .filter((f) => /\.tsx?$/.test(f) && !f.includes(".test."))
+        .filter((f) => fs.readFileSync(path.join(chartsDir, f), "utf-8").includes("var(--colors-"));
+      expect(allowed.sort()).toEqual(["chartColor.ts", "chartInk.ts"]);
+
+      const kitDirs = [
+        path.join(PATTERNS_DIR, "ChartFigure"),
+        path.join(PATTERNS_DIR, "ChartLegend"),
+        path.join(PATTERNS_DIR, "ChartTooltipContent"),
+        path.join(UI_SRC, "templates", "PageTemplates"),
+        path.join(CHARTS_FEATURES_DIR, "ChartTooltip"),
+      ];
+      for (const dir of kitDirs) {
+        for (const file of fs.readdirSync(dir)) {
+          if (!/\.tsx?$/.test(file) || file.includes(".test.")) continue;
+          expect(
+            fs.readFileSync(path.join(dir, file), "utf-8").includes("var(--colors-"),
+            `${file} must use chartColor or CHART_INK instead of var(--colors-*)`,
+          ).toBe(false);
+        }
+      }
+    });
+
     it("enforces colocated structure for all calculators", () => {
       const calculators = getSubdirectories(CALCULATORS_DIR);
       expect(calculators.length).toBeGreaterThanOrEqual(7);

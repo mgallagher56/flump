@@ -76,6 +76,8 @@ export interface ChartLegendProps {
   /** Names the list for assistive tech. */
   label?: string;
   direction?: "horizontal" | "vertical";
+  /** Sets the list `id` and `data-testid`; item test ids become `<id>-<item id>`. */
+  id?: string;
   className?: string;
 }
 
@@ -83,11 +85,21 @@ export const ChartLegend: FC<ChartLegendProps> = ({
   items,
   label = "Chart key",
   direction = "horizontal",
+  id,
   className,
 }) => (
-  <ul aria-label={label} className={cx(chartLegendList({ direction }), className)}>
+  <ul
+    aria-label={label}
+    className={cx(chartLegendList({ direction }), className)}
+    data-testid={id ?? "chart-legend"}
+    id={id}
+  >
     {items.map((item) => (
-      <li className={chartLegendItem()} data-testid={`legend-${item.id}`} key={item.id}>
+      <li
+        className={chartLegendItem()}
+        data-testid={`${id ?? "chart-legend"}-${item.id}`}
+        key={item.id}
+      >
         <ChartSwatch color={item.color} swatch={item.swatch} />
         <span className={chartLegendLabel()}>{item.label}</span>
         {item.value !== undefined ? (

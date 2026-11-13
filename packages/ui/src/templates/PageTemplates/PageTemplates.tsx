@@ -1,11 +1,21 @@
-import { type FC, useState } from "react";
+import {
+  calculateAvalanche,
+  calculateSnowball,
+  type DebtItem,
+  type PayoffResult,
+} from "@flump/finance-engine";
+import { type FC, useMemo, useState } from "react";
 import { cx } from "../../../styled-system/css";
+import { formatAxisCurrency } from "../../charts/formatAxisCurrency";
 import { ChartFigure } from "../../patterns/ChartFigure/ChartFigure";
-import { ChartLegend } from "../../patterns/ChartLegend/ChartLegend";
+import { ChartLegend, type ChartLegendItem } from "../../patterns/ChartLegend/ChartLegend";
 import { EmptyState } from "../../patterns/EmptyState/EmptyState";
 import { KpiStrip } from "../../patterns/KpiStrip/KpiStrip";
 import { PageHeader } from "../../patterns/PageHeader/PageHeader";
-import { ProjectionNotice } from "../../patterns/ProjectionNotice/ProjectionNotice";
+import {
+  PROJECTION_NOTICE_TEXT,
+  ProjectionNotice,
+} from "../../patterns/ProjectionNotice/ProjectionNotice";
 import { SimulatorSplitLayout } from "../../patterns/SimulatorSplitLayout/SimulatorSplitLayout";
 import { Button } from "../../primitives/Button/Button";
 import { Card } from "../../primitives/Card/Card";
@@ -14,7 +24,7 @@ import { CurrencyInput } from "../../primitives/CurrencyInput/CurrencyInput";
 import { controlProps, FormField } from "../../primitives/FormField/FormField";
 import { Illustration } from "../../primitives/Illustration/Illustration";
 import { KpiCard } from "../../primitives/KpiCard/KpiCard";
-import { Money } from "../../primitives/Money/Money";
+import { formatMoney, Money } from "../../primitives/Money/Money";
 import { RadioCardGroup } from "../../primitives/RadioCardGroup/RadioCardGroup";
 import { Select } from "../../primitives/Select/Select";
 import { SliderField } from "../../primitives/SliderField/SliderField";
@@ -32,7 +42,6 @@ import {
   chartLine,
   chartProjectionLine,
   chartSvg,
-  chartWealthLine,
   figureText,
   formFull,
   formGrid,
@@ -49,108 +58,217 @@ import {
 
 /**
  * Page templates: compositions of the Phase 2 kit that anchor visual regression and show how a
- * screen is put together. They hold no business logic; screens copy the shape, not the data.
+ * screen is put together. They hold no business logic of their own. Every figure is derived from
+ * the sample rows below (or from `@flump/finance-engine` for the simulator), never typed in twice,
+ * and every chart is labelled as sample data. Screens copy the shape, not the data.
+ *
+ * The templates share one directory (not one per template) because they share the sample data and
+ * the chart helper; this is an intentional exception to one-component-per-directory.
  */
 
 interface SampleAccount {
   id: string;
   name: string;
-  kind: string;
+  kind: "Current" | "Savings" | "Investment" | "Pension" | "Card";
+  /** Pounds. Negative for money owed. */
   balance: number;
-  change: number;
 }
 
 const ACCOUNTS: readonly SampleAccount[] = [
-  {
-    id: "current",
-    name: "Everyday current account",
-    kind: "Current",
-    balance: 3240.18,
-    change: 120,
-  },
-  { id: "saver", name: "Easy-access saver", kind: "Savings", balance: 14300, change: 250 },
-  { id: "isa", name: "Stocks and shares ISA", kind: "Investment", balance: 22150, change: 410 },
-  { id: "pension", name: "Workplace pension", kind: "Pension", balance: 61800, change: 690.25 },
-  { id: "card", name: "Everyday credit card", kind: "Card", balance: -1860.75, change: 95 },
+  { id: "current", name: "Everyday current account", kind: "Current", balance: 3240.18 },
+  { id: "saver", name: "Easy-access saver", kind: "Savings", balance: 14300 },
+  { id: "isa", name: "Stocks and shares ISA", kind: "Investment", balance: 22150 },
+  { id: "pension", name: "Workplace pension", kind: "Pension", balance: 61800 },
+  { id: "card", name: "Everyday credit card", kind: "Card", balance: -1860.75 },
 ];
 
-const MONTHS = ["Jan", "Mar", "May", "Jul", "Sep", "Nov"];
-const TICKS = [
-  { y: 20, label: "£50k" },
-  { y: 70, label: "£25k" },
-  { y: 120, label: "£0" },
-];
+const sumOf = (rows: readonly SampleAccount[]): number =>
+  Math.round(rows.reduce((total, row) => total + row.balance, 0) * 100) / 100;
 
-const LEGEND = [
-  { id: "networth", label: "Net worth", color: "primary", swatch: "line" },
-  { id: "projection", label: "Projection", color: "projection", swatch: "dashed" },
+const sumKind = (kind: SampleAccount["kind"]): number =>
+  sumOf(ACCOUNTS.filter((a) => a.kind === kind));
+
+const NET_WORTH = sumOf(ACCOUNTS);
+const DEBT_OWED = Math.abs(sumOf(ACCOUNTS.filter((a) => a.balance < 0)));
+
+const pounds = (value: number): string => formatMoney(value).text;
+
+const SAMPLE_NOTICE = (
+  <ProjectionNotice>{`Sample data. ${PROJECTION_NOTICE_TEXT}`}</ProjectionNotice>
+);
+
+// ---- Chart helper -------------------------------------------------------------------------
+
+interface ChartPoint {
+  label: string;
+  /** Short axis label. */
+  short: string;
+  value: number;
+  projected: boolean;
+}
+
+const MONTHS = [
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
 ] as const;
 
-/** Static stand-in for a real chart (templates never import recharts). */
-const TemplateChart: FC = () => (
-  <svg
-    aria-hidden="true"
-    className={chartSvg}
-    focusable="false"
-    role="presentation"
-    viewBox="0 0 600 160"
-  >
-    {TICKS.map((t) => (
-      <g key={t.y}>
-        <line className={chartGrid} x1="48" x2="592" y1={t.y} y2={t.y} />
-        <text className={chartAxisText} textAnchor="end" x="40" y={t.y + 4}>
-          {t.label}
-        </text>
-      </g>
-    ))}
-    <rect className={chartBand} height="100" width="170" x="422" y="20" />
-    <polyline className={chartLine} points="48,104 120,98 200,92 280,78 360,64 422,52" />
-    <polyline className={chartProjectionLine} points="422,52 480,44 540,36 592,30" />
-    <polyline className={chartWealthLine} points="48,116 200,110 360,100 422,96" />
-    {MONTHS.map((m, i) => (
-      <text className={chartAxisText} key={m} textAnchor="middle" x={60 + i * 100} y="150">
-        {m}
-      </text>
-    ))}
-  </svg>
-);
+/** Sample shape: nine months of history ending at today's figure, then three projected months. */
+const SAMPLE_SHAPE = [0.78, 0.8, 0.82, 0.85, 0.88, 0.91, 0.94, 0.97, 1, 1.03, 1.06, 1.09] as const;
+const CURRENT_INDEX = 8;
 
-const NetWorthFigure: FC<{ sample?: boolean; headingLevel?: "h2" | "h3"; title?: string }> = ({
-  sample = false,
-  title = "Your net worth over the past year",
+/** Sample monthly history that ends exactly at `current`, so the chart agrees with the figures. */
+const sampleHistory = (current: number): ChartPoint[] =>
+  SAMPLE_SHAPE.map((factor, i) => ({
+    label: MONTHS[i] ?? "",
+    short: (MONTHS[i] ?? "").slice(0, 3),
+    value: Math.round(current * factor),
+    projected: i > CURRENT_INDEX,
+  }));
+
+const W = 900;
+const H = 240;
+const PAD = { l: 64, r: 8, t: 12, b: 36 };
+
+const niceCeil = (max: number): number => {
+  if (max <= 0) return 1;
+  const step = 10 ** Math.floor(Math.log10(max)) / 2;
+  return Math.ceil(max / step) * step;
+};
+
+/** Static stand-in for a real chart (templates never import recharts). */
+const TemplateChart: FC<{ points: readonly ChartPoint[] }> = ({ points }) => {
+  const yMax = niceCeil(Math.max(...points.map((p) => p.value)));
+  const x = (i: number) => PAD.l + (i * (W - PAD.l - PAD.r)) / Math.max(points.length - 1, 1);
+  const y = (v: number) => PAD.t + (1 - v / yMax) * (H - PAD.t - PAD.b);
+  const coords = (list: readonly ChartPoint[], from = 0) =>
+    list.map((p, i) => `${x(i + from).toFixed(1)},${y(p.value).toFixed(1)}`).join(" ");
+  const firstProjected = points.findIndex((p) => p.projected);
+  const actual = firstProjected === -1 ? points : points.slice(0, firstProjected);
+  // The dashed line starts at the last real point so the two lines join.
+  const projectedStart = Math.max(firstProjected - 1, 0);
+  const projected = firstProjected === -1 ? [] : points.slice(projectedStart);
+  const labelEvery = Math.ceil(points.length / 6);
+  return (
+    <svg
+      aria-hidden="true"
+      className={chartSvg}
+      focusable="false"
+      role="presentation"
+      viewBox={`0 0 ${W} ${H}`}
+    >
+      {[0, yMax / 2, yMax].map((tick) => (
+        <g key={tick}>
+          <line className={chartGrid} x1={PAD.l} x2={W - PAD.r} y1={y(tick)} y2={y(tick)} />
+          <text className={chartAxisText} textAnchor="end" x={PAD.l - 8} y={y(tick) + 4}>
+            {formatAxisCurrency(tick)}
+          </text>
+        </g>
+      ))}
+      {firstProjected === -1 ? null : (
+        <rect
+          className={chartBand}
+          height={H - PAD.t - PAD.b}
+          width={x(points.length - 1) - x(projectedStart)}
+          x={x(projectedStart)}
+          y={PAD.t}
+        />
+      )}
+      {actual.length > 1 ? <polyline className={chartLine} points={coords(actual)} /> : null}
+      {projected.length > 1 ? (
+        <polyline className={chartProjectionLine} points={coords(projected, projectedStart)} />
+      ) : null}
+      {points.map((p, i) =>
+        i % labelEvery === 0 ? (
+          <text className={chartAxisText} key={p.label} textAnchor="middle" x={x(i)} y={H - 10}>
+            {p.short}
+          </text>
+        ) : null,
+      )}
+    </svg>
+  );
+};
+
+interface SeriesFigureProps {
+  title: string;
+  /** What the plotted figure is, for the legend and summary, e.g. "Net worth". */
+  measure: string;
+  points: readonly ChartPoint[];
+  /** Sentence after the derived figures, e.g. a note on how the series was built. */
+  note: string;
+  headingLevel?: "h2" | "h3";
+}
+
+/** A titled, summarised chart whose summary and data table come from the same points. */
+const SeriesFigure: FC<SeriesFigureProps> = ({
+  title,
+  measure,
+  points,
+  note,
   headingLevel = "h2",
-}) => (
-  <ChartFigure
-    headingLevel={headingLevel}
-    dataTable={
-      <Table caption="Net worth by month">
-        <THead>
-          <tr>
-            <Th>Month</Th>
-            <Th numeric>Net worth</Th>
-          </tr>
-        </THead>
-        <TBody>
-          <tr>
-            <Td>Jan 2026</Td>
-            <Td numeric>£21,400</Td>
-          </tr>
-          <tr>
-            <Td>Nov 2026</Td>
-            <Td numeric>£48,250</Td>
-          </tr>
-        </TBody>
-      </Table>
-    }
-    legend={<ChartLegend items={LEGEND} />}
-    notice={sample ? <ProjectionNotice /> : undefined}
-    showSummary
-    summary="Net worth rises from £21,400 in January to £48,250 in November. The last three months are a projection."
-    title={title}
-  >
-    <TemplateChart />
-  </ChartFigure>
-);
+}) => {
+  const first = points[0];
+  const last = points[points.length - 1];
+  const hasActual = points.some((p) => !p.projected);
+  const legend: ChartLegendItem[] = [
+    ...(hasActual
+      ? [{ id: "actual", label: measure, color: "primary", swatch: "line" } as const]
+      : []),
+    ...(points.some((p) => p.projected)
+      ? [
+          {
+            id: "projection",
+            label: hasActual ? "Projection" : `${measure} (projection)`,
+            color: "projection",
+            swatch: "dashed",
+          } as const,
+        ]
+      : []),
+  ];
+  return (
+    <ChartFigure
+      dataTable={
+        <Table caption={`${measure} by month`}>
+          <THead>
+            <tr>
+              <Th>Month</Th>
+              <Th numeric>{measure}</Th>
+            </tr>
+          </THead>
+          <TBody>
+            {points.map((p) => (
+              <tr key={p.label}>
+                <Td>{p.projected ? `${p.label} (projected)` : p.label}</Td>
+                <Td numeric>
+                  <Money size="sm" value={p.value} />
+                </Td>
+              </tr>
+            ))}
+          </TBody>
+        </Table>
+      }
+      headingLevel={headingLevel}
+      legend={<ChartLegend items={legend} />}
+      notice={SAMPLE_NOTICE}
+      showSummary
+      summary={`${measure} goes from ${pounds(first?.value ?? 0)} at the start (${first?.label ?? ""}) to ${pounds(last?.value ?? 0)} at the end (${last?.label ?? ""}). ${note}`}
+      title={title}
+    >
+      <TemplateChart points={points} />
+    </ChartFigure>
+  );
+};
+
+// ---- Shared pieces ------------------------------------------------------------------------
 
 const AccountsTable: FC = () => (
   <Table caption="Your accounts">
@@ -175,32 +293,49 @@ const AccountsTable: FC = () => (
   </Table>
 );
 
+// ---- Templates ----------------------------------------------------------------------------
+
 /** Home: header, one hero KPI plus up to three more in a single row, chart, accounts table. */
 export const DashboardTemplate: FC = () => (
   <main className={page}>
     <PageHeader
       actions={<Button>Add account</Button>}
-      description="Here is where your money stands today."
+      description="Sample figures, so you can see how the page fits together."
       title="Home"
     />
     <KpiStrip
       items={[
-        <KpiCard key="nw" label="Net worth" tone="hero" value={48250} />,
         <KpiCard
-          deltaText="+£250 this month"
-          deltaVariant="positive"
+          key="nw"
+          label="Net worth"
+          tone="hero"
+          value={NET_WORTH}
+          valueFormat={{ fractionDigits: 2 }}
+        />,
+        <KpiCard
           key="sav"
           label="Savings"
-          value={14300}
+          value={sumKind("Savings")}
+          valueFormat={{ fractionDigits: 2 }}
         />,
-        <KpiCard key="debt" label="Debt" value={1860.75} valueFormat={{ fractionDigits: 2 }} />,
-        <KpiCard key="pen" label="Pension" notSetLabel="Not set" value={undefined} />,
+        <KpiCard key="debt" label="Debt" value={DEBT_OWED} valueFormat={{ fractionDigits: 2 }} />,
+        <KpiCard
+          key="pen"
+          label="Pension"
+          value={sumKind("Pension")}
+          valueFormat={{ fractionDigits: 2 }}
+        />,
       ]}
     />
-    <Card as="section" aria-label="Net worth chart" elevation="resting" padding="lg">
-      <NetWorthFigure sample />
+    <Card aria-label="Net worth chart" as="section" elevation="resting" padding="lg">
+      <SeriesFigure
+        measure="Net worth"
+        note="The last three months are a projection."
+        points={sampleHistory(NET_WORTH)}
+        title="Your net worth over the past year (sample data)"
+      />
     </Card>
-    <Card as="section" aria-label="Accounts" padding="lg">
+    <Card aria-label="Accounts" as="section" padding="lg">
       <div className={cardHeader}>
         <h2 className={cardTitle}>Accounts</h2>
       </div>
@@ -214,17 +349,63 @@ const STRATEGIES = [
   { value: "snowball", label: "Snowball", description: "Pay the smallest balance first" },
 ] as const;
 
+const sampleDebts = (cardApr: number): DebtItem[] => [
+  {
+    id: "card",
+    name: "Everyday credit card",
+    balanceGbp: 1860.75,
+    interestRateApr: cardApr,
+    minimumPaymentGbp: 45,
+    debtType: "credit_card",
+  },
+  {
+    id: "car",
+    name: "Car finance",
+    balanceGbp: 4340,
+    interestRateApr: 7.9,
+    minimumPaymentGbp: 210,
+    debtType: "loan",
+  },
+  {
+    id: "store",
+    name: "Store card",
+    balanceGbp: 520,
+    interestRateApr: 29.9,
+    minimumPaymentGbp: 25,
+    debtType: "credit_card",
+  },
+];
+
+const debtPoints = (result: PayoffResult, start: number): ChartPoint[] => [
+  { label: "Now", short: "Now", value: Math.round(start), projected: true },
+  ...result.monthlySchedule.map((m) => ({
+    label: `Month ${m.month}`,
+    short: `M${m.month}`,
+    value: Math.round(m.totalBalance),
+    projected: true,
+  })),
+];
+
 /** Simulator: sticky parameter column on the left, outcome and chart on the right. */
 export const SimulatorTemplate: FC = () => {
   const [extra, setExtra] = useState(150);
-  const [rate, setRate] = useState(19.9);
-  const [balance, setBalance] = useState(8400);
+  const [cardApr, setCardApr] = useState(22.9);
   const [strategy, setStrategy] = useState("avalanche");
-  const months = Math.max(6, Math.round(balance / (210 + extra)));
+  const debts = useMemo(() => sampleDebts(cardApr), [cardApr]);
+  const startBalance = debts.reduce((t, d) => t + (d.balanceGbp ?? 0), 0);
+  const minimums = debts.reduce((t, d) => t + (d.minimumPaymentGbp ?? 0), 0);
+  // The real payoff engine, so the strategy control changes the result.
+  const result = useMemo(
+    () =>
+      strategy === "snowball" ? calculateSnowball(debts, extra) : calculateAvalanche(debts, extra),
+    [debts, extra, strategy],
+  );
+  const achievable = result.payoffAchievable !== false;
+  const points = useMemo(() => debtPoints(result, startBalance), [result, startBalance]);
   return (
     <main className={page}>
       <PageHeader
-        description="See how extra payments change your debt-free date."
+        description="Sample debts, calculated with the Flump payoff engine."
         title="Debt payoff"
       />
       <SimulatorSplitLayout
@@ -236,18 +417,27 @@ export const SimulatorTemplate: FC = () => {
                   key="free"
                   label="Debt-free in"
                   tone="hero"
-                  value={<span className={figureText}>{months} mo</span>}
+                  value={
+                    achievable ? (
+                      <span className={figureText}>{result.months} months</span>
+                    ) : undefined
+                  }
                 />,
                 <KpiCard
                   key="int"
                   label="Interest paid"
-                  value={Math.round(balance * (rate / 100) * (months / 24))}
+                  value={achievable ? Math.round(result.totalInterest) : undefined}
                 />,
-                <KpiCard key="pay" label="Monthly payment" value={210 + extra} />,
+                <KpiCard key="pay" label="Monthly payment" value={minimums + extra} />,
               ]}
             />
-            <Card as="section" aria-label="Balance over time" padding="lg">
-              <NetWorthFigure sample title="Your debt over time" />
+            <Card aria-label="Balance over time" as="section" padding="lg">
+              <SeriesFigure
+                measure="Debt remaining"
+                note={`Calculated with the ${strategy} strategy and ${pounds(extra)} extra a month, on sample debts.`}
+                points={points}
+                title="How your debt falls (sample debts)"
+              />
             </Card>
           </div>
         }
@@ -255,32 +445,23 @@ export const SimulatorTemplate: FC = () => {
           <div className={stack}>
             <SliderField
               format="currency"
-              label="Total debt"
-              max={30000}
-              min={500}
-              onChange={setBalance}
-              step={100}
-              value={balance}
-            />
-            <SliderField
-              format="percent"
-              fractionDigits={1}
-              label="Interest rate (APR)"
-              max={40}
-              min={0}
-              onChange={setRate}
-              step={0.1}
-              value={rate}
-            />
-            <SliderField
-              format="currency"
-              helperText="On top of your minimum payments."
+              helperText={`On top of ${pounds(minimums)} in minimum payments.`}
               label="Extra each month"
-              max={1000}
+              max={500}
               min={0}
               onChange={setExtra}
               step={10}
               value={extra}
+            />
+            <SliderField
+              format="percent"
+              fractionDigits={1}
+              label="Credit card interest rate (APR)"
+              max={40}
+              min={0}
+              onChange={setCardApr}
+              step={0.1}
+              value={cardApr}
             />
             <RadioCardGroup
               legend="Payoff strategy"
@@ -290,20 +471,30 @@ export const SimulatorTemplate: FC = () => {
             />
           </div>
         }
-        summary={<Money size="md" value={balance} />}
+        summary={<span>{achievable ? `Debt-free in ${result.months} months` : "Not set"}</span>}
       />
     </main>
   );
 };
 
-/** Form: grouped fields in a card, one field showing its error state, actions at the end. */
+/** Form: grouped fields in a card; the balance error appears only after Save is pressed. */
 export const FormTemplate: FC = () => {
   const [balance, setBalance] = useState<number | null>(null);
+  const [submitted, setSubmitted] = useState(false);
+  const balanceError =
+    submitted && balance === null ? "Enter a balance, or leave it for later." : undefined;
   return (
     <main className={page}>
       <PageHeader description="Tell us a little about the account." title="Add an account" />
-      <Card as="section" aria-label="Account details" padding="lg">
-        <form className={formGrid} onSubmit={(e) => e.preventDefault()}>
+      <Card aria-label="Account details" as="section" padding="lg">
+        <form
+          className={formGrid}
+          noValidate
+          onSubmit={(e) => {
+            e.preventDefault();
+            setSubmitted(true);
+          }}
+        >
           <FormField label="Account name" required>
             {(field) => <TextInput {...controlProps(field)} placeholder="Easy-access saver" />}
           </FormField>
@@ -321,30 +512,26 @@ export const FormTemplate: FC = () => {
               />
             )}
           </FormField>
-          <FormField
-            error={balance === null ? "Enter a balance, or leave it for later." : undefined}
-            hint="Today's balance in pounds."
-            label="Current balance"
-          >
+          <FormField error={balanceError} hint="Today's balance in pounds." label="Current balance">
             {(field) => (
               <CurrencyInput {...controlProps(field)} onValueChange={setBalance} value={balance} />
             )}
           </FormField>
           <div className={formFull}>
             <RadioCardGroup
+              defaultValue="monthly"
               legend="How often do you pay in?"
               options={[
                 { value: "monthly", label: "Monthly", description: "A regular amount each month" },
                 { value: "irregular", label: "When I can", description: "No set schedule" },
               ]}
-              defaultValue="monthly"
             />
           </div>
           <div className={formFull}>
             <Checkbox
+              defaultChecked
               hint="You can change this later."
               label="Include in my net worth"
-              defaultChecked
             />
           </div>
           <div className={formFull}>
@@ -362,7 +549,7 @@ export const FormTemplate: FC = () => {
   );
 };
 
-/** List and detail: choose an account on the left, see its figures on the right. */
+/** List and detail: choose an account on the left, see its figures and chart on the right. */
 export const ListDetailTemplate: FC = () => {
   const [selectedId, setSelectedId] = useState(ACCOUNTS[1]?.id ?? "");
   const selected = ACCOUNTS.find((a) => a.id === selectedId) ?? ACCOUNTS[0];
@@ -398,20 +585,26 @@ export const ListDetailTemplate: FC = () => {
                 items={[
                   <KpiCard
                     key="bal"
-                    label="Balance"
-                    value={selected.balance}
+                    label={selected.balance < 0 ? "Owed" : "Balance"}
+                    value={Math.abs(selected.balance)}
                     valueFormat={{ fractionDigits: 2 }}
                   />,
                   <KpiCard
-                    key="chg"
-                    label="Paid in this month"
-                    value={selected.change}
-                    valueFormat={{ fractionDigits: 2 }}
+                    key="kind"
+                    label="Account type"
+                    value={<span className={figureText}>{selected.kind}</span>}
                   />,
                 ]}
               />
               <Card padding="lg">
-                <NetWorthFigure headingLevel="h3" />
+                <SeriesFigure
+                  headingLevel="h3"
+                  key={selected.id}
+                  measure={selected.balance < 0 ? "Amount owed" : "Balance"}
+                  note="The last three months are a projection."
+                  points={sampleHistory(Math.abs(selected.balance))}
+                  title={`${selected.name} (sample data)`}
+                />
               </Card>
             </>
           ) : null}
