@@ -25,6 +25,7 @@ export * from "./patterns/KpiStrip";
 export * from "./patterns/MobileBottomBar";
 export * from "./patterns/PageHeader";
 export * from "./patterns/ProjectionNotice";
+export * from "./patterns/ScenarioZone";
 export * from "./patterns/SectionBand";
 export * from "./patterns/SideNav";
 export * from "./patterns/SimulatorSplitLayout";
