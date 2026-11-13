@@ -3,8 +3,11 @@ import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { describe, expect, it, vi } from "vitest";
 import { z } from "zod";
+import { requirementFor } from "./auth/scopes.js";
 import { defineFlumpTool, type FlumpToolDefinition } from "./define-tool.js";
 import { FlumpToolError } from "./errors.js";
+import { FLUMP_TOOLS } from "./server.js";
+import { connectTestClient } from "./testing/client.js";
 import { createFakeProvider } from "./testing/fake-provider.js";
 import { emptyUser } from "./testing/personas.js";
 import type { McpAuditEvent, McpServerContext } from "./types.js";
@@ -149,6 +152,75 @@ describe("defineFlumpTool size budget", () => {
   });
 });
 
+describe("defineFlumpTool truncation edge cases", () => {
+  it("clears nextCursor when the result is truncated", async () => {
+    const { call } = await connect(
+      def({
+        maxTokens: 100,
+        handler: () => ({
+          result: { items: Array.from({ length: 500 }, (_, i) => `item-${i}`) },
+          nextCursor: "abc",
+        }),
+      }),
+    );
+    const sc = (await call({ n: 0 })).structuredContent as {
+      truncated: boolean;
+      nextCursor: unknown;
+    };
+    expect(sc.truncated).toBe(true);
+    expect(sc.nextCursor).toBeNull();
+  });
+
+  it("keeps nextCursor when nothing is truncated", async () => {
+    const { call } = await connect(
+      def({ handler: () => ({ result: { items: ["a"] }, nextCursor: "abc" }) }),
+    );
+    const sc = (await call({ n: 0 })).structuredContent as { nextCursor: unknown };
+    expect(sc.nextCursor).toBe("abc");
+  });
+
+  it("returns an error, not an SDK output-validation failure, when truncation breaks a min length", async () => {
+    const { call } = await connect(
+      def({
+        result: z.object({ items: z.array(z.string()).min(40) }),
+        maxTokens: 100,
+        handler: () => ({ result: { items: Array.from({ length: 60 }, (_, i) => `item-${i}`) } }),
+      }),
+    );
+    const res = await call({ n: 0 });
+    expect(res.isError).toBe(true);
+    expect(JSON.parse(text(res)).error.code).toBe("INVALID_ARGUMENT");
+    expect(text(res)).not.toMatch(/output validation/i);
+  });
+
+  it("says the metadata is the problem when it alone exceeds the budget", async () => {
+    const { call } = await connect(
+      def({
+        maxTokens: 50,
+        handler: () => ({
+          result: { items: ["a", "b"] },
+          missing: [{ field: "f", why: "w".repeat(1000), askUser: "q" }],
+        }),
+      }),
+    );
+    const body = JSON.parse(text(await call({ n: 0 }))).error;
+    expect(body.code).toBe("INVALID_ARGUMENT");
+    expect(body.message).toMatch(/assumptions, missing-data and notice/);
+  });
+});
+
+describe("tool scope table", () => {
+  it("has a TOOL_SCOPES entry for every defined and legacy tool", async () => {
+    const h = await connectTestClient(emptyUser);
+    const legacy = (await h.client.listTools()).tools.map((t) => t.name);
+    await h.close();
+    expect(legacy.length).toBeGreaterThan(0);
+    for (const name of [...legacy, ...FLUMP_TOOLS.map((t) => t.name)]) {
+      expect(requirementFor("tool", name), name).toBeDefined();
+    }
+  });
+});
+
 describe("defineFlumpTool error contract", () => {
   it("maps FlumpToolError to an isError result with every field", async () => {
     const { call } = await connect(
@@ -228,7 +300,7 @@ describe("defineFlumpTool error contract", () => {
     expect(body.correlationId).toMatch(/^[0-9a-f-]{36}$/);
   });
 
-  it("returns INVALID_ARGUMENT naming the field when the SDK passes bad input through", async () => {
+  it("run() itself returns INVALID_ARGUMENT naming the field when invoked directly (not the client path)", async () => {
     const { registered } = await connect(def());
     const handler = (
       registered as unknown as {
@@ -238,6 +310,18 @@ describe("defineFlumpTool error contract", () => {
     const res = await handler({ n: -1 });
     const body = JSON.parse(res.content[0]?.text ?? "").error;
     expect(body).toMatchObject({ code: "INVALID_ARGUMENT", field: "n", retryable: false });
+  });
+
+  it("PINNED LIMIT: a client sending bad input gets the SDK's text, not the 6.6 JSON", async () => {
+    const { call } = await connect(def());
+    const res = await call({ n: -1 });
+    expect(res.isError).toBe(true);
+    const body = text(res);
+    expect(body).toBe(
+      `MCP error -32602: Input validation error: Invalid arguments for tool ${NAME}: Too small: expected number to be >=0 at n`,
+    );
+    expect(() => JSON.parse(body)).toThrow();
+    expect(res.structuredContent).toBeUndefined();
   });
 
   it("fails as INTERNAL when the handler breaks the result schema", async () => {
@@ -283,13 +367,43 @@ describe("defineFlumpTool scopes and hooks", () => {
     );
   });
 
-  it("audits ok and error calls without arguments or results", async () => {
+  it("audits ok calls and errors raised inside run(), without arguments or results", async () => {
+    const events: McpAuditEvent[] = [];
+    const { call } = await connect(
+      def({
+        handler: ({ n }) => {
+          if (n === 99) throw new FlumpToolError("NOT_FOUND", "secret-detail");
+          return { result: { items: [] } };
+        },
+      }),
+      { ctx: { audit: (e) => void events.push(e) } },
+    );
+    await call({ n: 1 });
+    await call({ n: 99 });
+    expect(events).toHaveLength(2);
+    expect(events[0]).toMatchObject({ tool: NAME, outcome: "ok" });
+    expect(events[1]).toMatchObject({ tool: NAME, outcome: "error", errorCode: "NOT_FOUND" });
+    expect(Object.keys(events[0] ?? {}).sort()).toEqual(["durationMs", "outcome", "tool"]);
+    expect(JSON.stringify(events)).not.toContain("secret-detail");
+  });
+
+  it("does not audit SDK-level schema rejections (no authenticated action ran)", async () => {
     const events: McpAuditEvent[] = [];
     const { call } = await connect(def(), { ctx: { audit: (e) => void events.push(e) } });
-    await call({ n: 1 });
     await call({ n: -1 }).catch(() => {});
-    expect(events[0]).toMatchObject({ tool: NAME, outcome: "ok" });
-    expect(Object.keys(events[0] ?? {}).sort()).toEqual(["durationMs", "outcome", "tool"]);
+    expect(events).toEqual([]);
+  });
+
+  it("does not wait for a hanging audit sink", async () => {
+    const { call } = await connect(def(), { ctx: { audit: () => new Promise<void>(() => {}) } });
+    const res = await call({ n: 1 });
+    expect(res.isError).toBeFalsy();
+  });
+
+  it("swallows a rejecting async audit sink", async () => {
+    const { call } = await connect(def(), { ctx: { audit: () => Promise.reject(new Error("x")) } });
+    const res = await call({ n: 1 });
+    expect(res.isError).toBeFalsy();
   });
 
   it("survives a throwing audit sink", async () => {

@@ -2,7 +2,12 @@ import { z } from "zod";
 
 export const ENVELOPE_SCHEMA_VERSION = "2.0";
 
-/** Default budget for one response, in estimated tokens (characters divided by 4). */
+/**
+ * Default budget for one response, in estimated tokens (characters divided by 4). It counts only
+ * the text copy; `structuredContent` carries the same envelope, so the real payload is roughly
+ * double. Truncation shortens only top-level arrays in `result` (not nested ones) and sets
+ * `nextCursor` to null, so a truncated list cannot be paged yet.
+ */
 export const DEFAULT_MAX_TOKENS = 4000;
 
 export const RESPONSE_FORMATS = ["concise", "detailed"] as const;
@@ -111,23 +116,33 @@ function shortenLargestArray(result: unknown): unknown | undefined {
   return { ...(result as Record<string, unknown>), [best[0]]: halve(best[1]) };
 }
 
-export type FitResult<R> = { ok: true; envelope: Envelope<R>; text: string } | { ok: false };
+export type FitResult<R> =
+  | { ok: true; envelope: Envelope<R>; text: string }
+  | { ok: false; reason: "overhead" | "unshortenable" };
 
 /**
  * Fits the envelope into `maxTokens` by halving the largest top-level array in `result` until it
  * fits. Sets `truncated` and adds a note to `notice`. Returns `{ ok: false }` when no array is left
- * to shorten and the response is still over budget.
+ * to shorten and the response is still over budget. A truncated envelope always has a null
+ * `nextCursor`. Cost is O(log n) re-serialisations of the envelope, fine at these sizes.
  */
 export function fitToBudget<R>(envelope: Envelope<R>, maxTokens: number): FitResult<R> {
   let current = envelope;
   let text = compactText(current);
+  if (estimateTokens(text) > maxTokens) {
+    // Even with an empty result, the metadata (assumptions, missing, verification, notice) is over budget.
+    const bare = compactText({ ...envelope, result: null });
+    if (estimateTokens(bare) > maxTokens) return { ok: false, reason: "overhead" };
+  }
   while (estimateTokens(text) > maxTokens) {
     const shorter = shortenLargestArray(current.result);
-    if (shorter === undefined) return { ok: false };
+    if (shorter === undefined) return { ok: false, reason: "unshortenable" };
     current = {
       ...current,
       result: shorter as R,
       truncated: true,
+      // A cursor from the full result would skip the dropped rows, so a truncated page has none.
+      nextCursor: null,
       notice: current.notice?.includes(TRUNCATION_NOTE)
         ? current.notice
         : [current.notice, TRUNCATION_NOTE].filter(Boolean).join(" "),
