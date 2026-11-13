@@ -25,6 +25,5 @@
   "apps/web/app/routes/tools._index.tsx": 2,
   "packages/ui/src/calculators/MortgageVsIsaCalculator/MortgageVsIsaCalculator.tsx": 1,
   "packages/ui/src/calculators/Section24Calculator/Section24Calculator.tsx": 1,
-  "packages/ui/src/calculators/TaxTrapCalculator/TaxTrapCalculator.tsx": 1,
   "packages/ui/src/calculators/ZeroPercentCliffCalculator/ZeroPercentCliffCalculator.tsx": 1
 }
