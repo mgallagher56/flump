@@ -1,5 +1,53 @@
 # Changelog
 
+## [1.26.0](https://github.com/mgallagher56/flump/compare/flump/backend-v1.25.0...flump/backend-v1.26.0) (2026-11-13)
+
+
+### Features ✨
+
+* **backend:** add nullable term_months and fixed_rate_end_date to accounts ([8606712](https://github.com/mgallagher56/flump/commit/8606712773eb3a9df17af5c68a742cf5f1b673e1))
+* **backend:** enforce contract validation behind CONTRACT_MODE=enforce (E21 phase 2) ([b594c35](https://github.com/mgallagher56/flump/commit/b594c3578645d66bdf5cde873405965482757ddd))
+* **backend:** in-memory rate limiting per user and per IP (E20-N13) ([2cd7b84](https://github.com/mgallagher56/flump/commit/2cd7b849f0558516da85aed8e5e352d834741d1d))
+* **backend:** log contract_rejected when enforce mode answers 400 (E21) ([0f4ae02](https://github.com/mgallagher56/flump/commit/0f4ae0267e919b56ac54e65d5ca5123c0ab19a10))
+* **backend:** owner-allowlist MCP and PAT creation (E29-T8) ([1dc4bc4](https://github.com/mgallagher56/flump/commit/1dc4bc401ece801961ea042cee46877a86c1c75c))
+* **backend:** readiness checks for pending migrations (E18-N5) ([dd5d99b](https://github.com/mgallagher56/flump/commit/dd5d99be636202d0f6a92afde1c9600cb92e1ea5))
+* **backend:** Sentry error reporting, inert without a DSN (E18-N2) ([7c876e5](https://github.com/mgallagher56/flump/commit/7c876e54e2901f8b4f7296a0620659672be9b82e))
+* **backend:** serve every route under /v1 as an alias (E21 phase 2) ([0cd1e13](https://github.com/mgallagher56/flump/commit/0cd1e138cdef81ee8bac60d7600a3c8f13ecb9ca))
+* **ops:** Railway config as code, inert until config paths are set (E18-N8) ([44ee0b1](https://github.com/mgallagher56/flump/commit/44ee0b114c2ecce10aa956d8959abb3463d50426))
+
+
+### Bug Fixes 🪲
+
+* **api-contract,backend:** tax cap shape, hold tax back from default enforcement ([7027b17](https://github.com/mgallagher56/flump/commit/7027b176b7ef655ae9354733c24c36c3f6f34ed1))
+* **backend:** bound rate-limit store, key IPv6 by /64, tighten classes (E20-N13) ([2259795](https://github.com/mgallagher56/flump/commit/2259795b3ddd311a44b02409bcb1f24ea6df1e94))
+* **backend:** fail-closed MCP access, kill switch on tokens, dev-bypass hardening (E29-T8 review) ([74cd1b0](https://github.com/mgallagher56/flump/commit/74cd1b09121bca6c148cff7862763a6e034381f8))
+* **backend:** import RateLimit decorator in controllers (E20-N13) ([ac58b41](https://github.com/mgallagher56/flump/commit/ac58b41d1993975e9c089c1aa469bd11850f7a58))
+* **backend:** match the /v1 prefix case-insensitively ([27e7354](https://github.com/mgallagher56/flump/commit/27e73547d3c3b2379317e2344950f06b03bd3390))
+* **backend:** never let the rejection log turn a 400 into a 500 ([e7f5265](https://github.com/mgallagher56/flump/commit/e7f52652d3927a79767fb6cf3ad48ff20307a4bf))
+* **backend:** treat a malformed migrations count as not ready (E18-N5) ([931a40a](https://github.com/mgallagher56/flump/commit/931a40a5c3c7154c29d7fb6c183317182f825626))
+* **backend:** withhold Sentry exception messages, keep crash-on-rejection, lazy SDK load (E18-N2) ([6caec03](https://github.com/mgallagher56/flump/commit/6caec03c79f6e664f69ea61c351784ea360cf7ff))
+* **ci:** read Nest's protected staticInstanceRef through a cast so the backend test project type-checks ([6c74204](https://github.com/mgallagher56/flump/commit/6c7420447853c26424083ecaf186d2cccc9c842f))
+* **ci:** restore Nest's static logger after the Sentry envelope scenario (E18-N2) ([606b3ba](https://github.com/mgallagher56/flump/commit/606b3ba1a524babd4e911e8a74898f1f71b4aac5))
+* remove all references to the flump.co.uk domain ([6a5d86a](https://github.com/mgallagher56/flump/commit/6a5d86a9912cf43847a17a717b17a6562e685618))
+* **web,finance-engine:** reconcile web payloads with the contract so tax and mcp-tokens enforce (E21) ([f7f1f8b](https://github.com/mgallagher56/flump/commit/f7f1f8b26710a3bf904e3127e8508537af485d1f))
+
+
+### Build 🛠️
+
+* **docker:** workspace-proof the three server Dockerfiles and add a CI image check (E12 T0.8, T2.23) ([e9455f8](https://github.com/mgallagher56/flump/commit/e9455f8b08fe6da287ac45866a61bc70adc04675))
+
+
+### Tests 🧪
+
+* **backend:** assert the route inventory still sees every call the browser makes through the /api proxy (E20-N5) ([49266fd](https://github.com/mgallagher56/flump/commit/49266fd04ed759b5503e81a05adeadbd26b377e7))
+* **backend:** lower the web call-site floor to 50 after E20-N5 removed the dead HttpProfileAdapter (E20-N5) ([519acdd](https://github.com/mgallagher56/flump/commit/519acdde2e0ae372b34e4e9ccc924e0bdee13734))
+* **backend:** MCP guard wiring tests and env docs (E29-T8 review) ([e7b871c](https://github.com/mgallagher56/flump/commit/e7b871c2544f760359054702abe1ca2cfc3913a9))
+
+
+### Miscellaneous 🙃
+
+* **docker:** harden images (non-root, healthcheck, exec-form CMD, dockerignore) and assert in CI (E18-N6) ([d5a63bc](https://github.com/mgallagher56/flump/commit/d5a63bceedda43730b1d6921c0b8a780865d8850))
+
 ## [1.25.0](https://github.com/mgallagher56/flump/compare/flump/backend-v1.24.0...flump/backend-v1.25.0) (2026-11-12)
 
 

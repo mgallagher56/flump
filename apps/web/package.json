@@ -6,7 +6,7 @@
     "node": ">=20",
     "pnpm": ">=9"
   },
-  "version": "1.27.0",
+  "version": "1.28.0",
   "dependencies": {
     "@flump/banking": "workspace:*",
     "@flump/finance-engine": "workspace:*",

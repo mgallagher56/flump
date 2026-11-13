@@ -1,5 +1,40 @@
 # Changelog
 
+## [1.26.0](https://github.com/mgallagher56/flump/compare/flump/marketing-v1.25.0...flump/marketing-v1.26.0) (2026-11-13)
+
+
+### Features ✨
+
+* advice-language guard with ratcheting allow-list (E29-T3) ([780f75e](https://github.com/mgallagher56/flump/commit/780f75e47d675f7820ff741d4e211cafe22fe153))
+* **ops:** Railway config as code, inert until config paths are set (E18-N8) ([44ee0b1](https://github.com/mgallagher56/flump/commit/44ee0b114c2ecce10aa956d8959abb3463d50426))
+* **ui:** illustrations, teal logo, housekeeping CoachCard copy (E15 round 5 PR 6) ([14f119b](https://github.com/mgallagher56/flump/commit/14f119be63a27e7b633f814e6ba5ca2203e7e7cf))
+
+
+### Bug Fixes 🪲
+
+* **marketing:** case-insensitive route status and Sitemap line in robots.txt ([9589cb9](https://github.com/mgallagher56/flump/commit/9589cb99c5e32e234bea68708386306221540117))
+* **marketing:** make MCP spotlight payload box keyboard-focusable ([070ac8d](https://github.com/mgallagher56/flump/commit/070ac8d3bf3892fe7f35beea177be4b561d4603a))
+* **marketing:** pre-beta quick wins (R-08 hydration, R-09 placeholders hidden, R-10 copy, R-12 badge contrast, R-13 404/title/sitemap/favicon) ([eb6cd85](https://github.com/mgallagher56/flump/commit/eb6cd852ee5592a8816b5ac07fc42d5c1043f49d))
+* remove all references to the flump.co.uk domain ([6a5d86a](https://github.com/mgallagher56/flump/commit/6a5d86a9912cf43847a17a717b17a6562e685618))
+* **web:** allow-list E17-N21 eval grader and fixture hits (E29-T3) ([d7d40be](https://github.com/mgallagher56/flump/commit/d7d40beeec0f332051395f2baf137b995ec370ec))
+
+
+### Build 🛠️
+
+* **docker:** workspace-proof the three server Dockerfiles and add a CI image check (E12 T0.8, T2.23) ([e9455f8](https://github.com/mgallagher56/flump/commit/e9455f8b08fe6da287ac45866a61bc70adc04675))
+
+
+### Tests 🧪
+
+* **marketing:** assert hidden-placeholder default in PricingPage stories ([2435441](https://github.com/mgallagher56/flump/commit/2435441458610e217c4c57534860c0dbb4060cd9))
+
+
+### Miscellaneous 🙃
+
+* **docker:** harden images (non-root, healthcheck, exec-form CMD, dockerignore) and assert in CI (E18-N6) ([d5a63bc](https://github.com/mgallagher56/flump/commit/d5a63bceedda43730b1d6921c0b8a780865d8850))
+* **launch:** FLUMP_LAUNCH placeholder build guard for web and marketing (E24-T1) ([f2d83eb](https://github.com/mgallagher56/flump/commit/f2d83eb4bf13e062809fea342bbc19a592117871))
+* remove JetBrains Mono (keep Inter + Plus Jakarta Sans only) ([15ad262](https://github.com/mgallagher56/flump/commit/15ad262bbdd40dc0012f746d3a74fadd43e1cc10))
+
 ## [1.25.0](https://github.com/mgallagher56/flump/compare/flump/marketing-v1.24.0...flump/marketing-v1.25.0) (2026-11-12)
 
 
