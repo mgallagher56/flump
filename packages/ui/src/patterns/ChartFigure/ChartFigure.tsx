@@ -45,6 +45,8 @@ export interface ChartFigureProps {
   hideTitle?: boolean;
   /** Text alternative for the chart. Callers format numbers with en-GB. */
   summary: string;
+  /** Heading element for the title, so it follows the page outline. Defaults to h3. */
+  headingLevel?: "h2" | "h3" | "h4";
   /** Show the summary visually. Defaults to screen-reader only. */
   showSummary?: boolean;
   /** Sample-data or projection notice (for example `<ProjectionNotice>`), shown above the chart. */
@@ -63,12 +65,14 @@ export const ChartFigure: FC<ChartFigureProps> = ({
   hideTitle = false,
   summary,
   showSummary = false,
+  headingLevel = "h3",
   notice,
   legend,
   dataTable,
   children,
   className,
 }) => {
+  const Heading = headingLevel;
   const titleId = useId();
   const summaryId = useId();
   const chartRef = useRef<HTMLDivElement>(null);
@@ -80,12 +84,12 @@ export const ChartFigure: FC<ChartFigureProps> = ({
       aria-labelledby={titleId}
       className={cx(chartFigureRoot(), className)}
     >
-      <h3
+      <Heading
         className={hideTitle ? visuallyHiddenRecipe({ focusable: false }) : chartFigureTitle()}
         id={titleId}
       >
         {title}
-      </h3>
+      </Heading>
       {notice ? <div className={chartFigureNotice()}>{notice}</div> : null}
       <div aria-hidden="true" ref={chartRef}>
         {children}

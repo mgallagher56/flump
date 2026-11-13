@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react";
 import { expect, userEvent, within } from "@storybook/test";
+import { css } from "../../../styled-system/css";
 import { Checkbox } from "./Checkbox";
 
 const meta: Meta<typeof Checkbox> = {
@@ -55,7 +56,7 @@ export const Indeterminate: Story = {
 
 export const Disabled: Story = {
   render: (args) => (
-    <div style={{ display: "grid", gap: 8 }}>
+    <div className={css({ display: "grid", gap: "2" })}>
       <Checkbox {...args} disabled label="Disabled, off" />
       <Checkbox {...args} defaultChecked disabled label="Disabled, on" />
     </div>
@@ -73,7 +74,7 @@ export const ErrorState: Story = {
 
 export const LongContent: Story = {
   render: (args) => (
-    <div style={{ maxWidth: 300 }}>
+    <div className={css({ maxWidth: "300px" })}>
       <Checkbox
         {...args}
         hint="Your £1,250.00 monthly overpayment would be applied to the highest rate card first, so the Barclaycard Platinum balance of £4,310.27 clears before the next one"

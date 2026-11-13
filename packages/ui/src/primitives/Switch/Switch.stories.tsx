@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react";
 import { expect, userEvent, within } from "@storybook/test";
+import { css } from "../../../styled-system/css";
 import { Switch } from "./Switch";
 
 const meta: Meta<typeof Switch> = {
@@ -8,7 +9,7 @@ const meta: Meta<typeof Switch> = {
   parameters: { layout: "padded" },
   decorators: [
     (Story) => (
-      <div style={{ maxWidth: 380 }}>
+      <div className={css({ maxWidth: "380px" })}>
         <Story />
       </div>
     ),
@@ -49,7 +50,7 @@ export const OnDark: Story = { args: { defaultChecked: true }, globals: { theme:
 
 export const Disabled: Story = {
   render: (args) => (
-    <div style={{ display: "grid", gap: 8 }}>
+    <div className={css({ display: "grid", gap: "2" })}>
       <Switch {...args} disabled label="Disabled, off" />
       <Switch {...args} defaultChecked disabled label="Disabled, on" />
     </div>

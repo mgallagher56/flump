@@ -120,6 +120,14 @@ describe("ChartFigure Pattern", () => {
     expect(legend.closest("[aria-hidden='true']")).toBeNull();
   });
 
+  it("headingLevel sets the title element, h3 by default", () => {
+    const { unmount } = renderFigure();
+    expect(screen.getByRole("heading", { level: 3 })).toBeDefined();
+    unmount();
+    renderFigure({ headingLevel: "h2" });
+    expect(screen.getByRole("heading", { level: 2, name: "Savings forecast" })).toBeDefined();
+  });
+
   it("omits the drawer without a dataTable", () => {
     renderFigure();
     expect(screen.queryByRole("button", { name: "Show data" })).toBeNull();
