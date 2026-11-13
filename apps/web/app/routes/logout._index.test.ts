@@ -6,11 +6,16 @@ const mocks = vi.hoisted(() => ({
   signOut: vi.fn(),
   order: [] as string[],
   ensureSessionStorage: vi.fn(),
+  getAuthSession: vi.fn(),
 }));
 
 vi.mock("@workos-inc/authkit-react-router", () => ({ signOut: mocks.signOut }));
-vi.mock("~/utils/auth.server", () => ({ ensureSessionStorage: mocks.ensureSessionStorage }));
+vi.mock("~/utils/auth.server", () => ({
+  ensureSessionStorage: mocks.ensureSessionStorage,
+  getAuthSession: mocks.getAuthSession,
+}));
 
+import { redirect } from "react-router";
 import { action, loader } from "./logout._index";
 
 // The global test setup stubs react-router; the loader needs the real `redirect`.
@@ -27,6 +32,8 @@ beforeEach(() => {
   mocks.ensureSessionStorage.mockImplementation(async () => {
     mocks.order.push("ensure");
   });
+  mocks.getAuthSession.mockReset();
+  mocks.getAuthSession.mockResolvedValue({ user: { id: "user_1" }, accessToken: "t", headers: {} });
   mocks.signOut.mockReset();
   mocks.signOut.mockImplementation(async () => {
     mocks.order.push("signOut");
@@ -139,6 +146,87 @@ describe("logout action", () => {
   });
 });
 
+describe("logout action without a usable session", () => {
+  const MARKETING = "https://marketing-production-d21f.up.railway.app";
+  const PROD_SESSION_CLEAR =
+    "__Host-wos-session=; Path=/; Max-Age=0; Secure; HttpOnly; SameSite=Lax";
+  const LEGACY_CLEAR = "wos-session=; Path=/; Max-Age=0; Secure; HttpOnly; SameSite=Lax";
+
+  const expectClearedRedirect = (res: Response) => {
+    expect(res.status).toBe(302);
+    expect(res.headers.get("Location")).toBe(MARKETING);
+    expect(mocks.signOut).not.toHaveBeenCalled();
+    expect(res.headers.getSetCookie()).toEqual([
+      PROD_SESSION_CLEAR,
+      `${CLEAR_COOKIE}; Secure`,
+      LEGACY_CLEAR,
+    ]);
+  };
+
+  beforeEach(() => {
+    vi.stubEnv("NODE_ENV", "production");
+    vi.stubEnv("WORKOS_COOKIE_NAME", "__Host-wos-session");
+  });
+
+  it("no session: 302 to marketing, no signOut, three cookie clears", async () => {
+    mocks.getAuthSession.mockResolvedValue({ user: null, accessToken: null, headers: undefined });
+    const res = (await action(makeArgs("https://web.example.test/logout", "POST"))) as Response;
+    expectClearedRedirect(res);
+    expect(mocks.getAuthSession).toHaveBeenCalledWith(expect.anything(), { ensureSignedIn: false });
+  });
+
+  it("expired session whose refresh fails (authkit throws a redirect) is treated as no session", async () => {
+    // authkitLoader throws redirect(authorizationUrl, Set-Cookie: destroy + PKCE verifier) on a
+    // terminal SessionRefreshError; that Response must not leak its cookies into the logout reply.
+    mocks.getAuthSession.mockRejectedValue(
+      redirect("https://auth.example.test/authorize", {
+        headers: [["Set-Cookie", "wos-auth-verifier-abc=x; Path=/"]],
+      }),
+    );
+    const res = (await action(makeArgs("https://web.example.test/logout", "POST"))) as Response;
+    expectClearedRedirect(res);
+  });
+
+  it("an unexpected error while reading the session is also treated as no session", async () => {
+    mocks.getAuthSession.mockRejectedValue(new TypeError("boom"));
+    const res = (await action(makeArgs("https://web.example.test/logout", "POST"))) as Response;
+    expectClearedRedirect(res);
+  });
+
+  it("uses wos-session without Secure or the legacy clear in development", async () => {
+    vi.stubEnv("NODE_ENV", "development");
+    vi.stubEnv("WORKOS_COOKIE_NAME", "");
+    mocks.getAuthSession.mockResolvedValue({ user: null, accessToken: null, headers: undefined });
+    const res = (await action(makeArgs("http://localhost:3000/logout", "POST"))) as Response;
+    expect(res.status).toBe(302);
+    expect(res.headers.get("Location")).toBe("http://localhost:3001");
+    expect(res.headers.getSetCookie()).toEqual([
+      "wos-session=; Path=/; Max-Age=0; HttpOnly; SameSite=Lax",
+      CLEAR_COOKIE,
+    ]);
+  });
+
+  it("signed in but signOut throws: still clears the cookies and redirects (never 500)", async () => {
+    // Chosen: logout is a "make the browser forget" action, so a failing WorkOS/cookie unseal
+    // falls back to the local clear rather than leaving the user signed in behind an error page.
+    mocks.signOut.mockRejectedValue(
+      new TypeError("Cannot destructure property 'accessToken' from null or undefined"),
+    );
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const res = (await action(makeArgs("https://web.example.test/logout", "POST"))) as Response;
+    expect(mocks.signOut).toHaveBeenCalledTimes(1);
+    expect(res.status).toBe(302);
+    expect(res.headers.get("Location")).toBe(MARKETING);
+    expect(res.headers.getSetCookie()).toEqual([
+      PROD_SESSION_CLEAR,
+      `${CLEAR_COOKIE}; Secure`,
+      LEGACY_CLEAR,
+    ]);
+    expect(warn.mock.calls.flat().join(" ")).toContain("TypeError");
+    warn.mockRestore();
+  });
+});
+
 describe("logout loader (GET)", () => {
   it("never signs out and sets no cookies", async () => {
     const res = (await loader()) as Response;
@@ -146,13 +234,5 @@ describe("logout loader (GET)", () => {
     expect(res.status).toBe(302);
     expect(res.headers.get("Location")).toBe("/");
     expect(res.headers.getSetCookie()).toEqual([]);
-  });
-});
-
-describe("logout failure", () => {
-  it("rejects when signOut rejects, so no clear-cookie response is fabricated", async () => {
-    const boom = new Error("signOut failed");
-    mocks.signOut.mockRejectedValue(boom);
-    await expect(action(makeArgs("http://localhost:3000/logout", "POST"))).rejects.toBe(boom);
   });
 });
