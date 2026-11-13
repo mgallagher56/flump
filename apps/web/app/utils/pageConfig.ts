@@ -5,7 +5,6 @@ export type AppPageKey =
   | "savings"
   | "pension"
   | "mortgage"
-  | "forecast"
   | "tax";
 
 export type DashboardWidgetKey = AppPageKey;
@@ -34,7 +33,6 @@ export const ALL_PAGE_KEYS: AppPageKey[] = [
   "savings",
   "pension",
   "mortgage",
-  "forecast",
   "tax",
 ];
 
@@ -88,14 +86,6 @@ export const APP_PAGES: Record<AppPageKey, AppPageConfig> = {
     category: "wealth",
     badgeColor: "var(--colors-chart-warning)",
   },
-  forecast: {
-    key: "forecast",
-    label: "Growth forecast",
-    route: "/app/savings#forecast",
-    description: "Multi-year growth projection for your savings and investments",
-    category: "planning",
-    badgeColor: "var(--colors-primary)",
-  },
   tax: {
     key: "tax",
     label: "Self Assessment",
@@ -113,7 +103,6 @@ export const DASHBOARD_WIDGET_METAS: Record<DashboardWidgetKey, DashboardWidgetM
   savings: APP_PAGES.savings,
   pension: APP_PAGES.pension,
   mortgage: APP_PAGES.mortgage,
-  forecast: APP_PAGES.forecast,
   tax: APP_PAGES.tax,
 };
 
@@ -135,7 +124,6 @@ export const DEFAULT_WIDGET_SIZES: Record<string, "normal" | "wide"> = {
   savings: "normal",
   pension: "normal",
   mortgage: "normal",
-  forecast: "normal",
   tax: "normal",
 };
 
@@ -144,4 +132,23 @@ export function isPageEnabled(enabledPages: string[] | null | undefined, key: Ap
     return DEFAULT_ENABLED_PAGES.includes(key); // Nothing stored: the default set, without opt-in modules
   }
   return enabledPages.includes(key);
+}
+
+/**
+ * Module keys that no longer exist. `forecast` was a dashboard module until the growth forecaster
+ * became a tab inside Savings (E16 D5-B); stored profiles may still carry it.
+ */
+export const RETIRED_PAGE_KEYS: readonly string[] = ["forecast"];
+
+/** Drops retired module keys from a stored key list. */
+export function stripRetiredKeys<T extends string>(keys: readonly T[]): T[] {
+  return keys.filter((k) => !RETIRED_PAGE_KEYS.includes(k));
+}
+
+/** Drops retired keys from a keyed record such as widget sizes or widget config. */
+export function stripRetiredRecordKeys<V>(
+  record: Record<string, V> | null | undefined,
+): Record<string, V> | undefined {
+  if (!record || typeof record !== "object") return undefined;
+  return Object.fromEntries(Object.entries(record).filter(([k]) => !RETIRED_PAGE_KEYS.includes(k)));
 }

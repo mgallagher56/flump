@@ -4,6 +4,7 @@ import { useCallback } from "react";
 import { apiFetch } from "~/services/api-client";
 import { BackendError } from "~/services/backend-error";
 import { financialBaselineAtom } from "~/state/baseline.store";
+import { stripRetiredKeys, stripRetiredRecordKeys } from "~/utils/pageConfig";
 
 export interface UserProfile {
   id: string;
@@ -102,17 +103,9 @@ export const DEFAULT_PROFILE: UserProfile = {
   savingsAllocationMode: "per_account",
   savingsDefaultInterestRate: 5.0,
   setupChecklistCompletedSteps: [],
-  enabledPages: ["accounts", "budget", "debt", "savings", "pension", "mortgage", "forecast"],
-  dashboardWidgets: ["accounts", "budget", "debt", "savings", "pension", "mortgage", "forecast"],
-  dashboardWidgetOrder: [
-    "accounts",
-    "budget",
-    "debt",
-    "savings",
-    "pension",
-    "mortgage",
-    "forecast",
-  ],
+  enabledPages: ["accounts", "budget", "debt", "savings", "pension", "mortgage"],
+  dashboardWidgets: ["accounts", "budget", "debt", "savings", "pension", "mortgage"],
+  dashboardWidgetOrder: ["accounts", "budget", "debt", "savings", "pension", "mortgage"],
   dashboardWidgetSizes: { accounts: "wide", debt: "wide" },
   dashboardWidgetConfig: {},
   customBudgetCategories: [],
@@ -215,15 +208,21 @@ export const normalizeProfile = (p: Partial<UserProfile>): UserProfile => ({
     p.savingsDefaultInterestRate !== null && p.savingsDefaultInterestRate !== undefined
       ? Number(p.savingsDefaultInterestRate)
       : 5.0,
-  enabledPages: Array.isArray(p.enabledPages) ? p.enabledPages : DEFAULT_PROFILE.enabledPages,
+  // Retired module keys (`forecast`) are dropped on every read; the stored value is rewritten the
+  // next time the user saves, so no destructive migration is needed.
+  enabledPages: Array.isArray(p.enabledPages)
+    ? stripRetiredKeys(p.enabledPages)
+    : DEFAULT_PROFILE.enabledPages,
   dashboardWidgets: Array.isArray(p.dashboardWidgets)
-    ? p.dashboardWidgets
+    ? stripRetiredKeys(p.dashboardWidgets)
     : DEFAULT_PROFILE.dashboardWidgets,
   dashboardWidgetOrder: Array.isArray(p.dashboardWidgetOrder)
-    ? p.dashboardWidgetOrder
+    ? stripRetiredKeys(p.dashboardWidgetOrder)
     : DEFAULT_PROFILE.dashboardWidgetOrder,
-  dashboardWidgetSizes: p.dashboardWidgetSizes || DEFAULT_PROFILE.dashboardWidgetSizes,
-  dashboardWidgetConfig: p.dashboardWidgetConfig || DEFAULT_PROFILE.dashboardWidgetConfig,
+  dashboardWidgetSizes:
+    stripRetiredRecordKeys(p.dashboardWidgetSizes) || DEFAULT_PROFILE.dashboardWidgetSizes,
+  dashboardWidgetConfig:
+    stripRetiredRecordKeys(p.dashboardWidgetConfig) || DEFAULT_PROFILE.dashboardWidgetConfig,
 });
 
 export const userProfileAtom = atom<UserProfile>(DEFAULT_PROFILE);

@@ -119,14 +119,14 @@ export default function SandboxRoute() {
         ...prev,
         annualGrossSalary: 45000,
         financialStage: "STAGE_2_BUFFER_BUILD",
-        enabledModules: ["accounts", "budget", "pension", "forecast"],
+        enabledModules: ["accounts", "budget", "pension"],
       }));
     } else {
       setBaseline((prev) => ({
         ...prev,
         annualGrossSalary: 115000,
         financialStage: "STAGE_3_WEALTH_OPTIMIZE",
-        enabledModules: ["accounts", "budget", "tax", "pension", "mortgage", "forecast"],
+        enabledModules: ["accounts", "budget", "tax", "pension", "mortgage"],
       }));
     }
   }, [activePersona, setBaseline]);
@@ -146,8 +146,8 @@ export default function SandboxRoute() {
         activePersona === "debt"
           ? ["debt", "budget", "accounts"]
           : activePersona === "medium"
-            ? ["accounts", "budget", "pension", "forecast"]
-            : ["accounts", "budget", "tax", "pension", "mortgage", "forecast"],
+            ? ["accounts", "budget", "pension"]
+            : ["accounts", "budget", "tax", "pension", "mortgage"],
       timestamp: Date.now(),
     };
 

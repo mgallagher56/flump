@@ -4,8 +4,8 @@ import { HomeDashboard } from "./HomeDashboard";
 
 const userProfile = {
   displayName: "Alex",
-  enabledPages: ["accounts", "budget", "debt", "savings", "pension", "mortgage", "forecast"],
-  dashboardWidgets: ["accounts", "budget", "savings", "pension", "mortgage", "forecast"],
+  enabledPages: ["accounts", "budget", "debt", "savings", "pension", "mortgage"],
+  dashboardWidgets: ["accounts", "budget", "savings", "pension", "mortgage"],
 };
 
 const populated = {
@@ -20,7 +20,7 @@ const populated = {
     hasPension: true,
     hasMortgageAccount: true,
     hasRunForecast: true,
-    completedSteps: ["accounts", "budget", "profile", "savings", "pension", "mortgage", "forecast"],
+    completedSteps: ["accounts", "budget", "profile", "savings", "pension", "mortgage"],
   },
   accountsData: {
     netWorth: 50000,

@@ -27,7 +27,7 @@ vi.mock("react-router", () => ({
 
 vi.mock("~/hooks/useUserProfile", () => ({
   DEFAULT_PROFILE: {
-    enabledPages: ["accounts", "budget", "savings", "pension", "mortgage", "forecast", "tax"],
+    enabledPages: ["accounts", "budget", "savings", "pension", "mortgage", "tax"],
   },
   useUserProfile: () => ({
     updateProfile: mockUpdateProfile,
@@ -144,7 +144,7 @@ describe("OnboardingRoute (3-Step Baseline Flow)", () => {
       pensionContributionPct: 7,
       initialCashSavings: 18000,
       initialInvestments: 25000,
-      inferredModules: ["accounts", "budget", "pension", "savings", "forecast"] as const,
+      inferredModules: ["accounts", "budget", "pension", "savings"] as const,
       timestamp: Date.now(),
     };
     persistOnboardingSeed(seed as any);
@@ -167,7 +167,7 @@ describe("OnboardingRoute (3-Step Baseline Flow)", () => {
     persistOnboardingSeed({
       mode: "WEALTH",
       inferredStage: "STAGE_2_BUFFER_BUILD",
-      inferredModules: ["accounts", "budget", "forecast"],
+      inferredModules: ["accounts", "budget"],
       timestamp: Date.now(),
     } as any);
     render(<OnboardingRoute />);
@@ -443,25 +443,9 @@ describe("OnboardingRoute (3-Step Baseline Flow)", () => {
       homeValue: 300000,
       mortgageBalance: 200000,
       pensionPercent: 5,
-      enabledPages: ["accounts", "budget", "savings", "forecast", "debt", "pension", "mortgage"],
-      dashboardWidgets: [
-        "accounts",
-        "budget",
-        "savings",
-        "forecast",
-        "debt",
-        "pension",
-        "mortgage",
-      ],
-      dashboardWidgetOrder: [
-        "accounts",
-        "budget",
-        "savings",
-        "forecast",
-        "debt",
-        "pension",
-        "mortgage",
-      ],
+      enabledPages: ["accounts", "budget", "savings", "debt", "pension", "mortgage"],
+      dashboardWidgets: ["accounts", "budget", "savings", "debt", "pension", "mortgage"],
+      dashboardWidgetOrder: ["accounts", "budget", "savings", "debt", "pension", "mortgage"],
     });
     expect(mockUpdateProfile).toHaveBeenLastCalledWith({ onboardingCompleted: true });
   });

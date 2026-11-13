@@ -14,15 +14,7 @@
  * - budget: components/budget/BudgetCategoryTable.tsx + BudgetSetupWizard.tsx
  */
 
-const ONBOARDING_PAGES = [
-  "accounts",
-  "budget",
-  "savings",
-  "forecast",
-  "debt",
-  "pension",
-  "mortgage",
-];
+const ONBOARDING_PAGES = ["accounts", "budget", "savings", "debt", "pension", "mortgage"];
 
 /** PATCH /user-profile sent first by onboarding handleFinish (after JSON serialisation). */
 export const ONBOARDING_PROFILE = {

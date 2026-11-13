@@ -25,6 +25,24 @@ function isUniqueViolation(err: unknown): boolean {
   return e?.code === PG_UNIQUE_VIOLATION || e?.driverError?.code === PG_UNIQUE_VIOLATION;
 }
 
+/**
+ * Module keys retired from the product. `forecast` was a dashboard module until the growth
+ * forecaster became a tab in Savings. Stored rows may still carry it; it is filtered out on read
+ * (non-destructive: the row is rewritten the next time the user saves).
+ */
+const RETIRED_MODULE_KEYS: readonly string[] = ["forecast"];
+
+export function withoutRetiredModules(keys: string[]): string[] {
+  return keys.filter((k) => !RETIRED_MODULE_KEYS.includes(k));
+}
+
+export function withoutRetiredModuleKeys<V>(record: Record<string, V> | null | undefined) {
+  if (!record) return record;
+  return Object.fromEntries(
+    Object.entries(record).filter(([k]) => !RETIRED_MODULE_KEYS.includes(k)),
+  ) as Record<string, V>;
+}
+
 export interface ProfileLifecycle {
   getProfile(userId: string, email?: string): Promise<any>;
   updateProfile(userId: string, body: any, email?: string): Promise<any>;
@@ -140,18 +158,18 @@ export class UserProfileService implements ProfileLifecycle {
         ? profile.setupChecklistCompletedSteps
         : [],
       enabledPages: Array.isArray(profile.enabledPages)
-        ? profile.enabledPages
-        : ["accounts", "budget", "savings", "pension", "mortgage", "forecast"],
+        ? withoutRetiredModules(profile.enabledPages)
+        : ["accounts", "budget", "savings", "pension", "mortgage"],
       dashboardWidgets: Array.isArray(profile.dashboardWidgets)
-        ? profile.dashboardWidgets
-        : ["accounts", "budget", "savings", "pension", "mortgage", "forecast"],
+        ? withoutRetiredModules(profile.dashboardWidgets)
+        : ["accounts", "budget", "savings", "pension", "mortgage"],
       dashboardWidgetOrder: Array.isArray(profile.dashboardWidgetOrder)
-        ? profile.dashboardWidgetOrder
-        : ["accounts", "budget", "savings", "pension", "mortgage", "forecast"],
-      dashboardWidgetSizes: profile.dashboardWidgetSizes || {
+        ? withoutRetiredModules(profile.dashboardWidgetOrder)
+        : ["accounts", "budget", "savings", "pension", "mortgage"],
+      dashboardWidgetSizes: withoutRetiredModuleKeys(profile.dashboardWidgetSizes) || {
         accounts: "wide",
       },
-      dashboardWidgetConfig: profile.dashboardWidgetConfig || {},
+      dashboardWidgetConfig: withoutRetiredModuleKeys(profile.dashboardWidgetConfig) || {},
       customBudgetCategories: Array.isArray(profile.customBudgetCategories)
         ? profile.customBudgetCategories
         : [],
@@ -217,9 +235,9 @@ export class UserProfileService implements ProfileLifecycle {
       savingsAllocationMode: "per_account",
       savingsDefaultInterestRate: 5.0,
       setupChecklistCompletedSteps: [],
-      enabledPages: ["accounts", "budget", "savings", "pension", "mortgage", "forecast"],
-      dashboardWidgets: ["accounts", "budget", "savings", "pension", "mortgage", "forecast"],
-      dashboardWidgetOrder: ["accounts", "budget", "savings", "pension", "mortgage", "forecast"],
+      enabledPages: ["accounts", "budget", "savings", "pension", "mortgage"],
+      dashboardWidgets: ["accounts", "budget", "savings", "pension", "mortgage"],
+      dashboardWidgetOrder: ["accounts", "budget", "savings", "pension", "mortgage"],
       dashboardWidgetSizes: { accounts: "wide" },
       dashboardWidgetConfig: {},
       onboardingCompleted: false,

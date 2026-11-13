@@ -16,6 +16,23 @@ describe("useUserProfile", () => {
     vi.restoreAllMocks();
   });
 
+  test("normalizeProfile drops the retired forecast module key everywhere", () => {
+    const profile = normalizeProfile({
+      enabledPages: ["accounts", "forecast", "tax"],
+      dashboardWidgets: ["accounts", "forecast"],
+      dashboardWidgetOrder: ["forecast", "accounts"],
+      dashboardWidgetSizes: { accounts: "wide", forecast: "normal" },
+      dashboardWidgetConfig: { forecast: { forecastYears: 20 }, accounts: {} },
+    });
+
+    expect(profile.enabledPages).toEqual(["accounts", "tax"]);
+    expect(profile.dashboardWidgets).toEqual(["accounts"]);
+    expect(profile.dashboardWidgetOrder).toEqual(["accounts"]);
+    expect(profile.dashboardWidgetSizes).toEqual({ accounts: "wide" });
+    expect(profile.dashboardWidgetConfig).toEqual({ accounts: {} });
+    expect(DEFAULT_PROFILE.enabledPages).not.toContain("forecast");
+  });
+
   test("normalizeProfile handles partial data correctly", () => {
     const profile = normalizeProfile({
       displayName: "Jane Doe",

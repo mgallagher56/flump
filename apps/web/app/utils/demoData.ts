@@ -272,16 +272,15 @@ export function getSandboxPersonaData(persona: "debt" | "medium" | "high" | "wea
       monthlyTakeHome: 2820,
       hasMortgage: false,
       hasBuyToLet: false,
-      enabledPages: ["accounts", "budget", "savings", "pension", "forecast"],
-      dashboardWidgets: ["accounts", "budget", "savings", "pension", "forecast"],
+      enabledPages: ["accounts", "budget", "savings", "pension"],
+      dashboardWidgets: ["accounts", "budget", "savings", "pension"],
       dashboardWidgetSizes: {
         accounts: "normal",
         budget: "normal",
         savings: "normal",
         pension: "normal",
-        forecast: "normal",
       },
-      dashboardWidgetOrder: ["accounts", "budget", "savings", "pension", "forecast"],
+      dashboardWidgetOrder: ["accounts", "budget", "savings", "pension"],
     };
 
     return {
@@ -301,7 +300,7 @@ export function getSandboxPersonaData(persona: "debt" | "medium" | "high" | "wea
       hasMortgageAccount: false,
       hasProfile: true,
       hasRunForecast: true,
-      completedSteps: ["accounts", "budget", "savings", "pension", "forecast"],
+      completedSteps: ["accounts", "budget", "savings", "pension"],
       accountsData: {
         netWorth: 43300,
         totalAssets: 43300,
@@ -505,17 +504,16 @@ export function getSandboxPersonaData(persona: "debt" | "medium" | "high" | "wea
     pensionPercent: 8.0,
     pensionEmployerPercent: 5.0,
     isSalarySacrifice: true,
-    enabledPages: ["accounts", "budget", "tax", "pension", "mortgage", "forecast"],
-    dashboardWidgets: ["accounts", "budget", "tax", "pension", "mortgage", "forecast"],
+    enabledPages: ["accounts", "budget", "tax", "pension", "mortgage"],
+    dashboardWidgets: ["accounts", "budget", "tax", "pension", "mortgage"],
     dashboardWidgetSizes: {
       accounts: "normal",
       budget: "normal",
       tax: "normal",
       pension: "normal",
       mortgage: "normal",
-      forecast: "normal",
     },
-    dashboardWidgetOrder: ["accounts", "budget", "tax", "pension", "mortgage", "forecast"],
+    dashboardWidgetOrder: ["accounts", "budget", "tax", "pension", "mortgage"],
   };
 
   return {
@@ -535,7 +533,7 @@ export function getSandboxPersonaData(persona: "debt" | "medium" | "high" | "wea
     hasMortgageAccount: true,
     hasProfile: true,
     hasRunForecast: true,
-    completedSteps: ["accounts", "budget", "tax", "pension", "mortgage", "forecast"],
+    completedSteps: ["accounts", "budget", "tax", "pension", "mortgage"],
     accountsData: {
       netWorth: 441500,
       totalAssets: 921500,

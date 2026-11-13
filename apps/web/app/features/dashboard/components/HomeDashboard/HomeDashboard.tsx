@@ -5,7 +5,6 @@ import { type FC, useMemo, useRef, useState } from "react";
 import { AccountsWidget } from "~/components/dashboard/widgets/AccountsWidget";
 import { BudgetWidget } from "~/components/dashboard/widgets/BudgetWidget";
 import { DebtWidget } from "~/components/dashboard/widgets/DebtWidget";
-import { ForecastWidget } from "~/components/dashboard/widgets/ForecastWidget";
 import { MortgageWidget } from "~/components/dashboard/widgets/MortgageWidget";
 import { PensionWidget } from "~/components/dashboard/widgets/PensionWidget";
 import { SavingsWidget } from "~/components/dashboard/widgets/SavingsWidget";
@@ -186,10 +185,6 @@ export const HomeDashboard: FC<HomeDashboardProps> = ({
             checklistProps.hasMortgageAccount ||
             checklistProps.completedSteps?.includes("mortgage"),
         );
-      case "forecast":
-        return Boolean(
-          checklistProps.hasRunForecast || checklistProps.completedSteps?.includes("forecast"),
-        );
       case "tax":
         return Boolean(checklistProps.hasTax || (taxData?.recordsCount ?? 0) > 0);
       case "debt":
@@ -342,15 +337,6 @@ export const HomeDashboard: FC<HomeDashboardProps> = ({
                     {...commonProps}
                     config={widgetConfig("mortgage")}
                     data={mortgageData}
-                  />
-                );
-              case "forecast":
-                return (
-                  <ForecastWidget
-                    key="forecast"
-                    {...commonProps}
-                    config={widgetConfig("forecast")}
-                    data={forecastData}
                   />
                 );
               case "tax":
