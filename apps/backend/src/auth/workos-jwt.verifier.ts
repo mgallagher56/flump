@@ -29,7 +29,7 @@ export function resolveWorkosIssuer(
     } catch {
       throw new Error("WORKOS_ISSUER must be a valid https URL");
     }
-    if (url.protocol !== "https:") {
+    if (url.protocol !== "https:" || url.username || url.password || url.search || url.hash) {
       throw new Error("WORKOS_ISSUER must be a valid https URL");
     }
     return override;

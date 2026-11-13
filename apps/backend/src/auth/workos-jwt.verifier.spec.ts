@@ -158,12 +158,16 @@ describe("WorkOsJwtVerifier pinned issuer", { timeout: 15_000 }, () => {
     expect(resolveWorkosIssuer(CLIENT, { WORKOS_ISSUER: "  " })).toBe(UM);
   });
 
-  it.each(["not a url", "http://auth.example.com", "https://a.example, https://b.example"])(
-    "an invalid WORKOS_ISSUER (%s) fails boot",
-    (bad) => {
-      expect(() => resolveWorkosIssuer(CLIENT, { WORKOS_ISSUER: bad })).toThrow(/WORKOS_ISSUER/);
-    },
-  );
+  it.each([
+    "not a url",
+    "http://auth.example.com",
+    "https://u:p@auth.example.com",
+    "https://auth.example.com/?x=1",
+    "https://auth.example.com/#f",
+    "https://a.example, https://b.example",
+  ])("an invalid WORKOS_ISSUER (%s) fails boot", (bad) => {
+    expect(() => resolveWorkosIssuer(CLIENT, { WORKOS_ISSUER: bad })).toThrow(/WORKOS_ISSUER/);
+  });
 
   it("fails with neither a client id nor an override, in production too", () => {
     expect(() => resolveWorkosIssuer(undefined, { NODE_ENV: "production" })).toThrow(
