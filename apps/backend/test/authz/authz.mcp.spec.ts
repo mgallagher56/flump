@@ -14,7 +14,7 @@ vi.mock("../../src/config/typeorm.options", async (importOriginal) =>
 /**
  * /mcp transport authentication (E20-N22). The route has no AuthGuard by design: it accepts only
  * a personal access token (flump_pat_...). Both verbs must refuse everything else with 401, and a
- * PAT must only ever read its own owner's data. The mcp-tokens management routes are N23.
+ * PAT must only ever read its own owner's data. The mcp-tokens management routes are authz.mcp-tokens.spec.ts (N23).
  */
 const dbMode = resolveDbTestMode(process.env);
 
@@ -142,5 +142,76 @@ describe.skipIf(dbMode === "skip")("authz: /mcp transport (real Postgres)", () =
     expect(asB.status).toBe(200);
     expect(asB.text).not.toContain("1204.5");
     expect(asB.text).not.toContain(created.body.id);
+  });
+
+  const readResource = (token: string, uri: string) =>
+    mcp("post", `Bearer ${token}`, {
+      jsonrpc: "2.0",
+      id: 3,
+      method: "resources/read",
+      params: { uri },
+    });
+
+  it("B's PAT never returns A's budget or tax data; A's PAT does", async () => {
+    const ledgerBefore = (await readResource(patB.rawToken, "flump://context/tax-ledger")).text;
+    const budget = await h.call("post", "/budget-entries", h.tokens.a, {
+      category: "housing",
+      name: "A secret rent",
+      amount: 913.37,
+    });
+    expect(budget.status).toBe(201);
+    const taxRecord = await h.call("post", "/tax-records", h.tokens.a, {
+      type: "income",
+      source: "rental",
+      category: "rent",
+      name: "A secret pay",
+      amount: 7777.77,
+      frequency: "one-off",
+      date: "2025-06-01",
+      receiptFilename: "a.pdf",
+      receiptData: `data:application/pdf;base64,${Buffer.from("%PDF-1.4\nsecret receipt").toString("base64")}`,
+    });
+    expect(taxRecord.status).toBe(201);
+
+    // Control: the data is reachable by its owner, so the absence below is meaningful. The tax
+    // ledger only exposes aggregates, so A's record must change A's ledger and not B's.
+    const budgetAsA = (await readResource(patA.rawToken, "flump://context/budget")).text;
+    expect(budgetAsA).toContain("913.37");
+    const ledgerAsA = (await readResource(patA.rawToken, "flump://context/tax-ledger")).text;
+    expect(ledgerAsA).not.toEqual(ledgerBefore);
+    expect((await readResource(patB.rawToken, "flump://context/tax-ledger")).text).toEqual(
+      ledgerBefore,
+    );
+
+    for (const uri of [
+      "flump://context/budget",
+      "flump://context/tax-ledger",
+      "flump://context/accounts",
+      "flump://context/baseline",
+      "flump://context/executive-snapshot",
+    ]) {
+      const res = await readResource(patB.rawToken, uri);
+      expect(res.status, uri).toBe(200);
+      for (const secret of ["913.37", "7777.77", "A secret", budget.body.id, taxRecord.body.id]) {
+        expect(res.text, `${uri} leaks ${secret}`).not.toContain(secret);
+      }
+      // Receipt bytes never travel over MCP, even for the owner.
+      expect((await readResource(patA.rawToken, uri)).text).not.toContain(
+        Buffer.from("%PDF-1.4\nsecret receipt").toString("base64"),
+      );
+    }
+  });
+
+  it("A's revoked PAT is refused on a data read, and B revoking A's token does not revoke it", async () => {
+    const read = (token: string) => readResource(token, "flump://context/accounts");
+
+    const hostile = await h.call("delete", `/mcp-tokens/${patA.id}`, h.tokens.b);
+    expect(hostile.status).toBe(404);
+    expect((await read(patA.rawToken)).status).toBe(200);
+
+    expect((await h.call("delete", `/mcp-tokens/${patA.id}`, h.tokens.a)).status).toBe(200);
+    expect((await read(patA.rawToken)).status).toBe(401);
+    // B's own PAT is unaffected by A's revocation.
+    expect((await read(patB.rawToken)).status).toBe(200);
   });
 });
