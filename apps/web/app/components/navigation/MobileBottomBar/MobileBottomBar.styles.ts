@@ -51,6 +51,7 @@ export const tab = cva({
       transitionTimingFunction: "standard",
     },
     _hover: { color: "primary" },
+    _disabled: { cursor: "not-allowed", opacity: 0.6, _hover: { color: "text.muted" } },
     _focusVisible: {
       outline: "2px solid",
       outlineColor: "border.focusRing",

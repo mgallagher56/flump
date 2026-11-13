@@ -81,3 +81,22 @@ describe("<MobileBottomBar /> active route", () => {
     expect(other.className).not.toBe(current.className);
   });
 });
+
+describe("<MobileBottomBar /> sandbox", () => {
+  test("renders for a signed-out visitor with only Home live", () => {
+    customRender(
+      <ResponsiveProvider initialIsMobile={true}>
+        <MobileBottomBar isMobile sandbox user={null} />
+      </ResponsiveProvider>,
+    );
+    expect(screen.getByTestId("mobile-bottom-bar")).not.toBeNull();
+    const links = screen.getAllByRole("link");
+    expect(links.map((l) => l.getAttribute("href"))).toEqual(["/sandbox"]);
+    for (const name of [/accounts/i, /budget/i, /tax/i]) {
+      const disabled = screen.getByRole("button", { name });
+      expect((disabled as HTMLButtonElement).disabled).toBe(true);
+      expect(disabled.getAttribute("aria-label")).toMatch(/sign up to open/i);
+    }
+    expect(screen.getByTestId("mobile-bottom-bar-more")).not.toBeNull();
+  });
+});

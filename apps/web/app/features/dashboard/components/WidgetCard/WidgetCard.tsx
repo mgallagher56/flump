@@ -1,7 +1,7 @@
 import { Button, Icon } from "@repo/ui";
 import { ArrowRight, EyeOff, type LucideIcon } from "lucide-react";
 import type { FC, ReactNode } from "react";
-import { Link } from "react-router";
+import { SampleAwareLink } from "~/components/navigation/SampleAwareLink";
 import {
   widgetActions,
   widgetBody,
@@ -43,10 +43,15 @@ export const WidgetCard: FC<WidgetCardProps> = ({ title, icon, href, children, o
         </div>
         <div className={widgetActions()}>
           <Button asChild size="sm" variant="ghost">
-            <Link aria-label={`Open ${title}`} to={href}>
+            <SampleAwareLink
+              aria-label={`Open ${title}`}
+              sampleAriaLabel={`Sign up to open ${title}`}
+              sampleLabel="Sign up to open"
+              to={href}
+            >
               Open
               <Icon icon={ArrowRight} size="sm" />
-            </Link>
+            </SampleAwareLink>
           </Button>
           {onHide ? (
             <Button

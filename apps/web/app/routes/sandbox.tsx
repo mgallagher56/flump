@@ -12,6 +12,7 @@ import {
   useNavigate,
   useSearchParams,
 } from "react-router";
+import { SampleModeProvider } from "~/context/SampleModeContext";
 import { HomeDashboard } from "~/features/dashboard/components/HomeDashboard";
 import { financialBaselineAtom, writeOnboardingSeedCookie } from "~/state/baseline.store";
 import { getAuthSession } from "~/utils/auth.server";
@@ -257,31 +258,33 @@ export default function SandboxRoute() {
       </p>
 
       {/* Actual SPA Dashboard View */}
-      <HomeDashboard
-        isSample
-        persistVisibility={false}
-        userProfile={dashboardData.userProfile}
-        accountsData={dashboardData.accountsData as any}
-        budgetData={dashboardData.budgetData as any}
-        checklistProps={{
-          hasAccounts: true,
-          hasBudget: true,
-          hasMortgageAccount: dashboardData.hasMortgageAccount,
-          hasPension: true,
-          hasProfile: true,
-          hasRunForecast: dashboardData.hasRunForecast,
-          hasSavings: dashboardData.hasSavings,
-          hasTax: true,
-          completedSteps: dashboardData.completedSteps,
-        }}
-        debtData={dashboardData.debtData as any}
-        forecastData={dashboardData.forecastData as any}
-        mortgageData={dashboardData.mortgageData as any}
-        pensionData={dashboardData.pensionData as any}
-        savingsData={dashboardData.savingsData as any}
-        taxData={dashboardData.taxData as any}
-        user={dashboardData.user as any}
-      />
+      <SampleModeProvider value>
+        <HomeDashboard
+          isSample
+          persistVisibility={false}
+          userProfile={dashboardData.userProfile}
+          accountsData={dashboardData.accountsData as any}
+          budgetData={dashboardData.budgetData as any}
+          checklistProps={{
+            hasAccounts: true,
+            hasBudget: true,
+            hasMortgageAccount: dashboardData.hasMortgageAccount,
+            hasPension: true,
+            hasProfile: true,
+            hasRunForecast: dashboardData.hasRunForecast,
+            hasSavings: dashboardData.hasSavings,
+            hasTax: true,
+            completedSteps: dashboardData.completedSteps,
+          }}
+          debtData={dashboardData.debtData as any}
+          forecastData={dashboardData.forecastData as any}
+          mortgageData={dashboardData.mortgageData as any}
+          pensionData={dashboardData.pensionData as any}
+          savingsData={dashboardData.savingsData as any}
+          taxData={dashboardData.taxData as any}
+          user={dashboardData.user as any}
+        />
+      </SampleModeProvider>
     </div>
   );
 }

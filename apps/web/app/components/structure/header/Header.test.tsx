@@ -15,6 +15,7 @@ vi.mock("react-router", async () => {
   return {
     ...actual,
     useLoaderData: mocks.mockUseLoaderData,
+    useLocation: () => ({ pathname: "/" }),
     Link: ({ children, to }: any) => <a href={to}>{children}</a>,
   };
 });

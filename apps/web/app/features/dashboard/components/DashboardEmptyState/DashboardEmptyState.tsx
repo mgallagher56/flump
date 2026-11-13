@@ -1,7 +1,7 @@
 import { Button, EmptyState, Icon } from "@repo/ui";
 import { LayoutDashboard } from "lucide-react";
 import type { FC } from "react";
-import { Link } from "react-router";
+import { SampleAwareLink } from "~/components/navigation/SampleAwareLink";
 import { emptyStateSlot } from "./DashboardEmptyState.styles";
 
 export interface DashboardEmptyStateProps {
@@ -30,7 +30,7 @@ export const DashboardEmptyState: FC<DashboardEmptyStateProps> = ({ reason, onCh
       <EmptyState
         action={
           <Button asChild size="sm">
-            <Link to="/app/accounts">Add an account</Link>
+            <SampleAwareLink to="/app/accounts">Add an account</SampleAwareLink>
           </Button>
         }
         description="Finish the steps in the checklist above. Each widget appears here as soon as its section has your figures."
@@ -38,7 +38,7 @@ export const DashboardEmptyState: FC<DashboardEmptyStateProps> = ({ reason, onCh
         id="dashboard-empty-state"
         secondaryAction={
           <Button asChild size="sm" variant="ghost">
-            <Link to="/app/budget">Add your budget</Link>
+            <SampleAwareLink to="/app/budget">Add your budget</SampleAwareLink>
           </Button>
         }
         title="Build your dashboard"

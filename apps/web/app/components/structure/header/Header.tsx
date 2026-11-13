@@ -1,7 +1,7 @@
 import { Icon } from "@repo/ui";
 import { Menu } from "lucide-react";
 import { type FC, type ReactElement, useMemo, useState } from "react";
-import { Link, useLoaderData } from "react-router";
+import { Link, useLoaderData, useLocation } from "react-router";
 import FLPBox from "~/components/core/structure/FLPBox";
 import HomeLogo from "~/components/navigation/HomeLogo";
 import NavMenu from "~/components/navigation/NavMenu";
@@ -9,6 +9,7 @@ import {
   AUTH_NAV_ROUTES,
   filterNavRoutes,
   HOME_NAV_ROUTE,
+  isSandboxPath,
 } from "~/components/navigation/navConfig";
 import ThemeToggle from "~/components/navigation/ThemeToggle";
 import UserAvatar from "~/components/navigation/UserAvatar";
@@ -38,6 +39,8 @@ export interface HeaderProps {
 const Header: FC<HeaderProps> = ({ isMobile: propIsMobile, variant }): ReactElement<FC> => {
   const { user } = useLoaderData<typeof loader>();
   const { profile } = useUserProfile();
+  const { pathname } = useLocation();
+  const sandbox = !user && isSandboxPath(pathname);
   const {
     isMobile: contextIsMobile,
     isMobileDrawerOpen,
@@ -105,7 +108,12 @@ const Header: FC<HeaderProps> = ({ isMobile: propIsMobile, variant }): ReactElem
           </FLPBox>
         </nav>
       </header>
-      <MobileNavDrawer isOpen={drawerOpen} user={user} onClose={handleCloseDrawer} />
+      <MobileNavDrawer
+        isOpen={drawerOpen}
+        sandbox={sandbox}
+        user={user}
+        onClose={handleCloseDrawer}
+      />
     </>
   );
 };
