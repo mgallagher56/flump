@@ -39,4 +39,18 @@ describe("resolveAppVersion", () => {
       resolveAppVersion({ packageVersion: "1.0.0", env: { VITE_APP_VERSION: "a b<script>" } }),
     ).toBe("1.0.0+dev");
   });
+
+  test("a secret-looking or non-release explicit value is ignored", () => {
+    for (const bad of [
+      ["sk", "live", "abcdefghijklmnop"].join("_"),
+      "abcdef1234567890abcdef",
+      "v2",
+      "2.0",
+      "latest",
+    ]) {
+      expect(resolveAppVersion({ packageVersion: "1.0.0", env: { VITE_APP_VERSION: bad } })).toBe(
+        "1.0.0+dev",
+      );
+    }
+  });
 });
