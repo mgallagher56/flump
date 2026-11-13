@@ -29,6 +29,13 @@ export interface McpAccessConfig {
   openAccess: boolean;
   /** `MCP_ALLOWED_USER_IDS`: comma-separated WorkOS user ids. */
   allowedUserIds: string[];
+  /**
+   * `MCP_ALLOWED_ORIGINS` (E20-N18): comma-separated browser origins that may call /mcp. Default
+   * empty in every environment, so any request carrying an `Origin` header is rejected with 403.
+   * Requests without an Origin (Claude/ChatGPT connectors, CLIs and other non-browser clients)
+   * are unaffected.
+   */
+  allowedOrigins: string[];
 }
 
 /**
@@ -44,7 +51,11 @@ export function readMcpAccessConfig(env: Env): McpAccessConfig {
   const enabled = env.MCP_ENABLED?.trim().toLowerCase() !== "false";
   const flag = env.MCP_OPEN_ACCESS?.trim().toLowerCase();
   const openAccess = flag === "true" ? true : flag === "false" ? false : !isProductionLike(env);
-  return { enabled, openAccess, allowedUserIds };
+  const allowedOrigins = (env.MCP_ALLOWED_ORIGINS ?? "")
+    .split(",")
+    .map((o) => o.trim().replace(/\/+$/, ""))
+    .filter(Boolean);
+  return { enabled, openAccess, allowedUserIds, allowedOrigins };
 }
 
 export function isMcpUserAllowed(config: McpAccessConfig, userId: string | undefined): boolean {

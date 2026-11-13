@@ -80,6 +80,12 @@ describe("McpController", () => {
       expect(guardsOf("getContextPack")).toEqual(expected);
     });
 
+    it("puts the kill switch on both /mcp handlers, with no allowlist guard (the handler owns auth)", () => {
+      for (const method of ["handleMcpPost", "handleMcpGet"] as const) {
+        expect(guardsOf(method)).toEqual([McpKillSwitchGuard]);
+      }
+    });
+
     it("leaves list and revoke without the allowlist so users can always revoke", () => {
       for (const method of ["listTokens", "revokeToken"] as const) {
         const guards = guardsOf(method);

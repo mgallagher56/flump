@@ -26,6 +26,15 @@ describe("readMcpAccessConfig", () => {
     expect(readMcpAccessConfig({ MCP_ENABLED: "FALSE" }).enabled).toBe(false);
   });
 
+  it("allowed origins default to empty and parse a trimmed list without trailing slashes", () => {
+    expect(readMcpAccessConfig({}).allowedOrigins).toEqual([]);
+    expect(readMcpAccessConfig({ NODE_ENV: "production" }).allowedOrigins).toEqual([]);
+    expect(
+      readMcpAccessConfig({ MCP_ALLOWED_ORIGINS: " https://a.example/ , ,https://b.example" })
+        .allowedOrigins,
+    ).toEqual(["https://a.example", "https://b.example"]);
+  });
+
   it("open access defaults off in production and on elsewhere", () => {
     expect(readMcpAccessConfig({ NODE_ENV: "production" }).openAccess).toBe(false);
     expect(readMcpAccessConfig({ NODE_ENV: "development" }).openAccess).toBe(true);

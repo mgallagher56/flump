@@ -66,6 +66,9 @@ export class McpService implements McpTokenStoreAdapter, McpUserDataProvider {
     if (warning) this.logger.warn(warning);
     this.httpHandler = new HttpMcpHandler({
       dataProvider: this,
+      // E20-N18: the kill switch is read per request; origins are read once at boot.
+      isEnabled: () => readMcpAccessConfig(process.env).enabled,
+      allowedOrigins: readMcpAccessConfig(process.env).allowedOrigins,
       tokenStore: this,
       // Defence in depth: the dev bypass token is never emitted in a production-like process,
       // even if authMode were somehow "dev" (resolveAuthMode already refuses that at boot).

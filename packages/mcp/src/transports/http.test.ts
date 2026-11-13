@@ -380,3 +380,89 @@ describe("usage counted per tools/call", () => {
     expect(calls).toEqual([]);
   });
 });
+
+describe("HttpMcpHandler kill switch and Origin validation (E20-N18)", () => {
+  const dp = {} as McpUserDataProvider;
+  const webReq = (origin?: string, auth?: string) =>
+    new Request("http://localhost/mcp", {
+      method: "POST",
+      headers: {
+        ...(origin ? { origin } : {}),
+        ...(auth ? { authorization: auth } : {}),
+      },
+    });
+  const expressRes = () => {
+    const out: { status: number; body: unknown } = { status: 0, body: undefined };
+    const res: any = {
+      status(code: number) {
+        out.status = code;
+        return this;
+      },
+      setHeader() {
+        return this;
+      },
+      json(b: unknown) {
+        out.body = b;
+        return this;
+      },
+    };
+    return { out, res };
+  };
+
+  it("web: 503 before auth when disabled, even with no credentials", async () => {
+    const h = new HttpMcpHandler({ dataProvider: dp, isEnabled: () => false });
+    expect((await h.handleWebRequest(webReq())).status).toBe(503);
+  });
+
+  it("express: 503 before auth when disabled", async () => {
+    const h = new HttpMcpHandler({ dataProvider: dp, isEnabled: () => false });
+    const { out, res } = expressRes();
+    await h.handleExpressRequest({ headers: {} }, res);
+    expect(out.status).toBe(503);
+  });
+
+  it("503 wins over a bad Origin", async () => {
+    const h = new HttpMcpHandler({ dataProvider: dp, isEnabled: () => false });
+    expect((await h.handleWebRequest(webReq("https://evil.example"))).status).toBe(503);
+  });
+
+  it("web: a disallowed Origin gets 403 before auth", async () => {
+    const h = new HttpMcpHandler({ dataProvider: dp });
+    const res = await h.handleWebRequest(webReq("https://evil.example", `Bearer ${PAT}`));
+    expect(res.status).toBe(403);
+  });
+
+  it("express: a disallowed Origin gets 403, and does not count as a failed auth", async () => {
+    const limiter = new FailedAuthLimiter(1, 60_000);
+    const h = new HttpMcpHandler({ dataProvider: dp, failedAuthLimiter: limiter });
+    for (let i = 0; i < 3; i++) {
+      const { out, res } = expressRes();
+      await h.handleExpressRequest(
+        { headers: { origin: "https://evil.example" }, ip: "1.1.1.1" },
+        res,
+      );
+      expect(out.status).toBe(403);
+    }
+    const { out, res } = expressRes();
+    await h.handleExpressRequest({ headers: {}, ip: "1.1.1.1" }, res);
+    expect(out.status).toBe(401);
+  });
+
+  it("the literal null Origin is rejected unless listed", async () => {
+    const h = new HttpMcpHandler({ dataProvider: dp });
+    expect((await h.handleWebRequest(webReq("null"))).status).toBe(403);
+  });
+
+  it("a listed Origin passes the gate (case and trailing slash insensitive) and reaches auth", async () => {
+    const h = new HttpMcpHandler({
+      dataProvider: dp,
+      allowedOrigins: ["https://App.Example.com/"],
+    });
+    expect((await h.handleWebRequest(webReq("https://app.example.com"))).status).toBe(401);
+  });
+
+  it("no Origin header is allowed through to auth", async () => {
+    const h = new HttpMcpHandler({ dataProvider: dp, allowedOrigins: [] });
+    expect((await h.handleWebRequest(webReq())).status).toBe(401);
+  });
+});
