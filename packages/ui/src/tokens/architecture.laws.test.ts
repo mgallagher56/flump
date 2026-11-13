@@ -35,6 +35,7 @@ const CHARTS_FEATURES_DIR = path.resolve(
   __dirname,
   "../../../../apps/web/app/features/charts/components",
 );
+const TEMPLATES_DIR = path.join(UI_SRC, "templates");
 const MARKETING_COMPONENTS_DIR = path.resolve(
   __dirname,
   "../../../../apps/marketing/src/components",
@@ -213,6 +214,14 @@ describe("Architecture & Design System Laws", () => {
       expect(chartComponents).toContain("ChartTooltip");
       for (const comp of chartComponents) {
         verifyColocatedStructure(CHARTS_FEATURES_DIR, comp);
+      }
+    });
+
+    it("enforces colocated structure for page templates (E15 T2.13)", () => {
+      const templates = getSubdirectories(TEMPLATES_DIR);
+      expect(templates).toContain("PageTemplates");
+      for (const comp of templates) {
+        verifyColocatedStructure(TEMPLATES_DIR, comp);
       }
     });
 

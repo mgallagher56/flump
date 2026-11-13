@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react";
 import { expect, userEvent, within } from "@storybook/test";
+import { css } from "../../../styled-system/css";
 import { controlProps, FormField } from "../FormField/FormField";
 import { Select, type SelectProps } from "./Select";
 
@@ -23,7 +24,7 @@ const Field = ({
   hint,
   ...selectProps
 }: Partial<SelectProps> & { error?: string; hint?: string }) => (
-  <div style={{ maxWidth: 360 }}>
+  <div className={css({ maxWidth: "360px" })}>
     <FormField error={error} hint={hint} label="How often are you paid?" required>
       {(field) => (
         <Select
@@ -85,7 +86,7 @@ export const ErrorDark: Story = {
 
 export const LongContent: Story = {
   render: () => (
-    <div style={{ maxWidth: 280 }}>
+    <div className={css({ maxWidth: "280px" })}>
       <FormField label="Account to overpay from">
         {(field) => (
           <Select
