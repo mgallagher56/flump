@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { IsoDate, Money, Notes } from "../primitives.js";
+import { IsoDate, IsoDateTime, Money, Notes, Uuid } from "../primitives.js";
 
 export const TAX_RECORD_TYPES = ["income", "expense"] as const;
 export const TAX_RECORD_SOURCES = ["paye", "self-employed", "rental", "savings"] as const;
@@ -41,11 +41,52 @@ export const CreateTaxRecordRequest = z.object({
 
 export const UpdateTaxRecordRequest = CreateTaxRecordRequest.partial();
 
+/** Most records (and most caps) one `POST tax-records/bulk` accepts; the backend handler enforces it too. */
+export const MAX_BULK_TAX_RECORDS = 500;
+
+/** One previous-year record to close: web sends `{id, endDate}` pairs (CopyTaxYearModal). */
+export const TaxRecordCap = z.object({ id: z.uuid(), endDate: IsoDate });
+export type TaxRecordCap = z.infer<typeof TaxRecordCap>;
+
 export const BulkCreateTaxRecordsRequest = z.object({
-  records: z.array(CreateTaxRecordRequest).max(500),
-  /** Web sends `{id, endDate}` pairs (CopyTaxYearModal), and the controller reads both fields. */
-  capPreviousRecordIds: z
-    .array(z.object({ id: z.uuid(), endDate: IsoDate }))
-    .max(500)
-    .optional(),
+  records: z.array(CreateTaxRecordRequest).max(MAX_BULK_TAX_RECORDS),
+  capPreviousRecordIds: z.array(TaxRecordCap).max(MAX_BULK_TAX_RECORDS).optional(),
 });
+export type BulkCreateTaxRecordsRequest = z.infer<typeof BulkCreateTaxRecordsRequest>;
+
+/**
+ * A tax record as the client receives it. Never carries `receiptData` (the bytes come only from
+ * `GET tax-records/:id/receipt`); `hasReceipt` says whether there are any. Nullable columns are
+ * always present (null when unset), on reads and writes alike. `userId` is the caller's own id.
+ */
+export const TaxRecordDto = z.strictObject({
+  id: Uuid,
+  userId: z.string(),
+  type: z.enum(TAX_RECORD_TYPES),
+  source: z.enum(TAX_RECORD_SOURCES),
+  category: z.string(),
+  name: z.string(),
+  amount: z.number().finite(),
+  frequency: z.enum(TAX_RECORD_FREQUENCIES),
+  date: IsoDate,
+  endDate: IsoDate.nullable(),
+  notes: z.string().nullable(),
+  receiptFilename: z.string().nullable(),
+  receiptMimeType: z.enum(RECEIPT_MIME_TYPES).nullable(),
+  hasReceipt: z.boolean(),
+  createdAt: IsoDateTime,
+  updatedAt: IsoDateTime,
+});
+export type TaxRecordDto = z.infer<typeof TaxRecordDto>;
+
+/** `GET tax-records` and `POST tax-records/bulk` (the created records; `[]` for a cap-only call). */
+export const TaxRecordListResponse = z.array(TaxRecordDto);
+export type TaxRecordListResponse = z.infer<typeof TaxRecordListResponse>;
+
+/** `GET tax-records/:id`, `POST tax-records` and `PATCH tax-records/:id`. */
+export const TaxRecordResponse = TaxRecordDto;
+export type TaxRecordResponse = z.infer<typeof TaxRecordResponse>;
+
+/** `DELETE tax-records/:id`. */
+export const DeleteTaxRecordResponse = z.strictObject({ success: z.literal(true) });
+export type DeleteTaxRecordResponse = z.infer<typeof DeleteTaxRecordResponse>;

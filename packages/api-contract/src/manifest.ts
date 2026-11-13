@@ -18,8 +18,44 @@ import {
   CreateTaxRecordRequest,
   UpdateTaxRecordRequest,
 } from "./domains/tax.js";
-import { CreateTransactionRequest } from "./domains/transactions.js";
+import { CreateTransactionRequest, TransactionListQuery } from "./domains/transactions.js";
 import { Uuid } from "./primitives.js";
+import {
+  AccountDetailListResponse,
+  AccountListResponse,
+  AccountResponse,
+  AddBudgetCategoryResponse,
+  BankConnectionCapabilityResponse,
+  BankConnectionListResponse,
+  BudgetEntryListResponse,
+  BudgetEntryResponse,
+  ConnectBankResponse,
+  ContextPackResponse,
+  CreateAccountResponse,
+  CreateMcpTokenResponse,
+  CreateTransactionResponse,
+  DeleteAccountResponse,
+  DeleteBankConnectionResponse,
+  DeleteBudgetEntryResponse,
+  DeleteTaxRecordResponse,
+  HealthResponse,
+  McpTokenListResponse,
+  PortfolioSnapshotResponse,
+  ReadinessResponse,
+  ResetFinancialDataResponse,
+  RevokeMcpTokenResponse,
+  SendPasswordResetResponse,
+  SyncBankConnectionResponse,
+  TaxRecordListResponse,
+  TaxRecordResponse,
+  TransactionListResponse,
+  UpdateAccountResponse,
+  UpdateBalancesResponse,
+  UpdateChecklistResponse,
+  UpdateProfileResponse,
+  UpsertSnapshotResponse,
+  UserProfileResponse,
+} from "./responses.js";
 
 export type HttpMethod = "GET" | "POST" | "PATCH" | "PUT" | "DELETE";
 
@@ -36,6 +72,12 @@ export interface RouteDefinition {
   readonly params?: z.ZodType;
   readonly query?: z.ZodType;
   readonly body?: z.ZodType;
+  /**
+   * The 2xx JSON body after serialisation (dates as ISO strings, decimals as numbers). Strict
+   * objects, so a field the backend starts returning is a violation until the contract lists it.
+   * Absent only for routes in NON_JSON_RESPONSE_ROUTES.
+   */
+  readonly response?: z.ZodType;
   /** Request-schema group, for promoting groups to enforcement one at a time later. */
   readonly group: ContractGroup;
   /** Deprecated alias of another route id (kept for old clients). */
@@ -69,6 +111,7 @@ export const routes = {
       auth: "user",
       ownership: "user",
       group: "accounts",
+      response: AccountListResponse,
     }),
     listDetails: defineRoute({
       id: "accounts.listDetails",
@@ -77,6 +120,7 @@ export const routes = {
       auth: "user",
       ownership: "user",
       group: "accounts",
+      response: AccountDetailListResponse,
     }),
     get: defineRoute({
       id: "accounts.get",
@@ -86,6 +130,7 @@ export const routes = {
       ownership: "user",
       params: IdParams,
       group: "accounts",
+      response: AccountResponse,
     }),
     getDetails: defineRoute({
       id: "accounts.getDetails",
@@ -95,6 +140,7 @@ export const routes = {
       ownership: "user",
       params: IdParams,
       group: "accounts",
+      response: AccountDetailListResponse,
     }),
     portfolioSnapshot: defineRoute({
       id: "accounts.portfolioSnapshot",
@@ -103,6 +149,7 @@ export const routes = {
       auth: "user",
       ownership: "user",
       group: "accounts",
+      response: PortfolioSnapshotResponse,
     }),
     create: defineRoute({
       id: "accounts.create",
@@ -112,6 +159,7 @@ export const routes = {
       ownership: "user",
       body: CreateAccountRequest,
       group: "accounts",
+      response: CreateAccountResponse,
     }),
     // Declared before accounts/:id so Nest matches "balances" literally.
     updateBalances: defineRoute({
@@ -122,6 +170,7 @@ export const routes = {
       ownership: "user",
       body: UpdateBalancesRequest,
       group: "accounts",
+      response: UpdateBalancesResponse,
     }),
     replace: defineRoute({
       id: "accounts.replace",
@@ -132,6 +181,7 @@ export const routes = {
       params: IdParams,
       body: UpdateAccountRequest,
       group: "accounts",
+      response: UpdateAccountResponse,
       aliasOf: "accounts.update",
     }),
     update: defineRoute({
@@ -143,6 +193,7 @@ export const routes = {
       params: IdParams,
       body: UpdateAccountRequest,
       group: "accounts",
+      response: UpdateAccountResponse,
     }),
     remove: defineRoute({
       id: "accounts.remove",
@@ -152,6 +203,7 @@ export const routes = {
       ownership: "user",
       params: IdParams,
       group: "accounts",
+      response: DeleteAccountResponse,
     }),
   },
   snapshots: {
@@ -164,6 +216,7 @@ export const routes = {
       params: SnapshotMonthParams,
       body: UpsertSnapshotRequest,
       group: "snapshots",
+      response: UpsertSnapshotResponse,
     }),
   },
   transactions: {
@@ -173,7 +226,9 @@ export const routes = {
       path: "transactions",
       auth: "user",
       ownership: "user",
+      query: TransactionListQuery,
       group: "transactions",
+      response: TransactionListResponse,
     }),
     create: defineRoute({
       id: "transactions.create",
@@ -183,6 +238,7 @@ export const routes = {
       ownership: "user",
       body: CreateTransactionRequest,
       group: "transactions",
+      response: CreateTransactionResponse,
     }),
   },
   bankConnections: {
@@ -193,6 +249,7 @@ export const routes = {
       auth: "user",
       ownership: "user",
       group: "bank-connections",
+      response: BankConnectionListResponse,
     }),
     capability: defineRoute({
       id: "bankConnections.capability",
@@ -201,6 +258,7 @@ export const routes = {
       auth: "user",
       ownership: "user",
       group: "bank-connections",
+      response: BankConnectionCapabilityResponse,
     }),
     connect: defineRoute({
       id: "bankConnections.connect",
@@ -210,6 +268,7 @@ export const routes = {
       ownership: "user",
       body: ConnectBankRequest,
       group: "bank-connections",
+      response: ConnectBankResponse,
     }),
     refresh: defineRoute({
       id: "bankConnections.refresh",
@@ -219,6 +278,7 @@ export const routes = {
       ownership: "user",
       params: IdParams,
       group: "bank-connections",
+      response: SyncBankConnectionResponse,
     }),
     sync: defineRoute({
       id: "bankConnections.sync",
@@ -228,6 +288,7 @@ export const routes = {
       ownership: "user",
       params: IdParams,
       group: "bank-connections",
+      response: SyncBankConnectionResponse,
       aliasOf: "bankConnections.refresh",
     }),
     remove: defineRoute({
@@ -238,6 +299,7 @@ export const routes = {
       ownership: "user",
       params: IdParams,
       group: "bank-connections",
+      response: DeleteBankConnectionResponse,
     }),
   },
   budget: {
@@ -248,6 +310,7 @@ export const routes = {
       auth: "user",
       ownership: "user",
       group: "budget",
+      response: BudgetEntryListResponse,
     }),
     seedDefaults: defineRoute({
       id: "budget.seedDefaults",
@@ -256,6 +319,7 @@ export const routes = {
       auth: "user",
       ownership: "user",
       group: "budget",
+      response: BudgetEntryListResponse,
     }),
     addCategory: defineRoute({
       id: "budget.addCategory",
@@ -265,6 +329,7 @@ export const routes = {
       ownership: "user",
       body: AddBudgetCategoryRequest,
       group: "budget",
+      response: AddBudgetCategoryResponse,
     }),
     create: defineRoute({
       id: "budget.create",
@@ -274,6 +339,7 @@ export const routes = {
       ownership: "user",
       body: CreateBudgetEntryRequest,
       group: "budget",
+      response: BudgetEntryResponse,
     }),
     update: defineRoute({
       id: "budget.update",
@@ -284,6 +350,7 @@ export const routes = {
       params: IdParams,
       body: UpdateBudgetEntryRequest,
       group: "budget",
+      response: BudgetEntryResponse,
     }),
     remove: defineRoute({
       id: "budget.remove",
@@ -293,6 +360,7 @@ export const routes = {
       ownership: "user",
       params: IdParams,
       group: "budget",
+      response: DeleteBudgetEntryResponse,
     }),
   },
   tax: {
@@ -303,6 +371,7 @@ export const routes = {
       auth: "user",
       ownership: "user",
       group: "tax",
+      response: TaxRecordListResponse,
     }),
     get: defineRoute({
       id: "tax.get",
@@ -312,6 +381,7 @@ export const routes = {
       ownership: "user",
       params: IdParams,
       group: "tax",
+      response: TaxRecordResponse,
     }),
     receipt: defineRoute({
       id: "tax.receipt",
@@ -330,6 +400,7 @@ export const routes = {
       ownership: "user",
       body: BulkCreateTaxRecordsRequest,
       group: "tax",
+      response: TaxRecordListResponse,
     }),
     create: defineRoute({
       id: "tax.create",
@@ -339,6 +410,7 @@ export const routes = {
       ownership: "user",
       body: CreateTaxRecordRequest,
       group: "tax",
+      response: TaxRecordResponse,
     }),
     update: defineRoute({
       id: "tax.update",
@@ -349,6 +421,7 @@ export const routes = {
       params: IdParams,
       body: UpdateTaxRecordRequest,
       group: "tax",
+      response: TaxRecordResponse,
     }),
     remove: defineRoute({
       id: "tax.remove",
@@ -358,6 +431,7 @@ export const routes = {
       ownership: "user",
       params: IdParams,
       group: "tax",
+      response: DeleteTaxRecordResponse,
     }),
   },
   profile: {
@@ -368,6 +442,7 @@ export const routes = {
       auth: "user",
       ownership: "user",
       group: "profile",
+      response: UserProfileResponse,
     }),
     update: defineRoute({
       id: "profile.update",
@@ -377,6 +452,7 @@ export const routes = {
       ownership: "user",
       body: UpdateProfileRequest,
       group: "profile",
+      response: UpdateProfileResponse,
     }),
     sendPasswordReset: defineRoute({
       id: "profile.sendPasswordReset",
@@ -385,6 +461,7 @@ export const routes = {
       auth: "user",
       ownership: "user",
       group: "profile",
+      response: SendPasswordResetResponse,
     }),
     resetFinancialData: defineRoute({
       id: "profile.resetFinancialData",
@@ -393,6 +470,7 @@ export const routes = {
       auth: "user",
       ownership: "user",
       group: "profile",
+      response: ResetFinancialDataResponse,
     }),
     updateChecklist: defineRoute({
       id: "profile.updateChecklist",
@@ -402,6 +480,7 @@ export const routes = {
       ownership: "user",
       body: UpdateChecklistRequest,
       group: "profile",
+      response: UpdateChecklistResponse,
     }),
   },
   mcpTokens: {
@@ -412,6 +491,7 @@ export const routes = {
       auth: "user",
       ownership: "user",
       group: "mcp-tokens",
+      response: McpTokenListResponse,
     }),
     create: defineRoute({
       id: "mcpTokens.create",
@@ -421,6 +501,7 @@ export const routes = {
       ownership: "user",
       body: CreateMcpTokenRequest,
       group: "mcp-tokens",
+      response: CreateMcpTokenResponse,
     }),
     revoke: defineRoute({
       id: "mcpTokens.revoke",
@@ -430,6 +511,7 @@ export const routes = {
       ownership: "user",
       params: IdParams,
       group: "mcp-tokens",
+      response: RevokeMcpTokenResponse,
     }),
     contextPack: defineRoute({
       id: "mcpTokens.contextPack",
@@ -439,6 +521,7 @@ export const routes = {
       ownership: "user",
       query: AnonymizeQuery,
       group: "mcp-tokens",
+      response: ContextPackResponse,
     }),
   },
   mcp: {
@@ -475,6 +558,7 @@ export const routes = {
       auth: "public",
       ownership: "none",
       group: "app",
+      response: HealthResponse,
     }),
     ready: defineRoute({
       id: "app.ready",
@@ -483,9 +567,23 @@ export const routes = {
       auth: "public",
       ownership: "none",
       group: "app",
+      response: ReadinessResponse,
     }),
   },
 } as const;
+
+/**
+ * Routes whose 2xx body is not JSON, so they carry no response schema. Shrink-only.
+ * - `tax.receipt`: the receipt file bytes.
+ * - `mcp.post`, `mcp.get`: JSON-RPC over the MCP streamable transport, written to the raw response.
+ * - `app.hello`: a plain-text banner.
+ */
+export const NON_JSON_RESPONSE_ROUTES = [
+  "app.hello",
+  "mcp.get",
+  "mcp.post",
+  "tax.receipt",
+] as const;
 
 export const allRoutes: readonly RouteDefinition[] = Object.values(routes).flatMap((group) =>
   Object.values(group),

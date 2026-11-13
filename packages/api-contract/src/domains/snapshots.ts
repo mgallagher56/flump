@@ -23,3 +23,19 @@ export const UpsertSnapshotRequest = z.object({
   values: z.array(SnapshotValue).max(200),
   complete: z.boolean().optional(),
 });
+
+/** PUT /snapshots/:month: the stored values (signed by account type) and the check-in flag. */
+export const UpsertSnapshotResponse = z.strictObject({
+  month: SnapshotMonth,
+  values: z.array(
+    z.strictObject({
+      accountId: Uuid,
+      /** As stored: liabilities negative whatever sign was sent. */
+      value: z.number().finite(),
+      asOfDate: IsoDate,
+      source: z.literal("manual"),
+    }),
+  ),
+  completed: z.boolean(),
+});
+export type UpsertSnapshotResponse = z.infer<typeof UpsertSnapshotResponse>;

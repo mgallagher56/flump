@@ -106,8 +106,13 @@ export async function bootAuthzHarness(): Promise<AuthzHarness> {
   await reset.query('CREATE EXTENSION IF NOT EXISTS "uuid-ossp"');
   await reset.destroy();
 
-  // The verifier logs every rejected token; keep the matrix output readable.
-  const warnSpy = vi.spyOn(Logger.prototype, "warn").mockImplementation(() => undefined);
+  // The verifier logs every rejected token; keep the matrix output readable. Contract response
+  // violations (E21) are collected instead: every 2xx body the matrix sees must match the contract.
+  const responseViolations = new Set<string>();
+  const warnSpy = vi.spyOn(Logger.prototype, "warn").mockImplementation((message) => {
+    const violation = parseResponseViolation(message);
+    for (const line of violation) responseViolations.add(line);
+  });
 
   const jwt = await createTestJwks();
   const verifier = new WorkOsJwtVerifier({ jwks: jwt.jwks, issuer: jwt.issuer });
@@ -158,8 +163,31 @@ export async function bootAuthzHarness(): Promise<AuthzHarness> {
         if (!(key in savedEnv)) delete process.env[key];
       }
       Object.assign(process.env, savedEnv);
+      if (responseViolations.size > 0) {
+        throw new Error(
+          `contract response violations (E21):\n${[...responseViolations].sort().join("\n")}`,
+        );
+      }
     },
   };
+}
+
+/**
+ * `routeId path code` lines from a `contract_response_violation` log line (E21), else none. Shared
+ * by the authz and contract suites so both fail on a 2xx body that breaks the contract.
+ */
+export function parseResponseViolation(message: unknown): string[] {
+  // A crash inside the checker means the body was never checked: fail on it too.
+  if (String(message).startsWith("contract response check failed")) return [String(message)];
+  try {
+    const entry = JSON.parse(String(message));
+    if (entry?.event !== "contract_response_violation") return [];
+    return (entry.issues as Array<{ path: string; code: string }>).map(
+      (issue) => `${entry.routeId} ${issue.path} ${issue.code}`,
+    );
+  } catch {
+    return [];
+  }
 }
 
 /** Empties every entity table (derived from the entity metadata, so a new entity is included). */

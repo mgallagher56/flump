@@ -1,3 +1,7 @@
+import {
+  MAX_BULK_TAX_RECORDS as CONTRACT_MAX_BULK_TAX_RECORDS,
+  type TaxRecordCap,
+} from "@flump/api-contract";
 import { getAnnualRecordEndDate } from "@flump/finance-engine";
 import {
   BadRequestException,
@@ -24,12 +28,12 @@ import { RateLimit } from "./security/rate-limit.decorator";
 import { sniffReceiptMime, validateReceipt } from "./security/receipt-validation";
 
 /**
- * Maximum tax records accepted by one `POST tax-records/bulk` request. A copied tax year or CSV
- * import is a few dozen rows; 500 leaves ample headroom (and matches the literal `.max(500)` on
- * `BulkCreateTaxRecordsRequest` in packages/api-contract, which is not exported) while
- * bounding the work done per request even though the route accepts an 8mb body.
+ * Maximum tax records (and capPreviousRecordIds items) accepted by one `POST tax-records/bulk`
+ * request. A copied tax year or CSV import is a few dozen rows; 500 leaves ample headroom while
+ * bounding the work done per request even though the route accepts an 8mb body. It is the
+ * contract's own cap, re-checked here so it holds with CONTRACT_MODE=off.
  */
-export const MAX_BULK_TAX_RECORDS = 500;
+export const MAX_BULK_TAX_RECORDS = CONTRACT_MAX_BULK_TAX_RECORDS;
 
 /**
  * Allow-list of client-writable tax record fields. `id`, `userId`,
@@ -114,7 +118,16 @@ const toResponse = (record: TaxRecord): TaxRecordResponse => {
   const hasReceipt =
     (receiptData !== undefined && receiptData !== null) ||
     Boolean(rest.receiptFilename && rest.receiptMimeType);
-  return { ...rest, hasReceipt };
+  // An insert leaves unset nullable columns undefined on the saved entity (JSON would drop the
+  // key), so they are normalised to null: create, bulk and reads all return the same shape.
+  return {
+    ...rest,
+    endDate: rest.endDate ?? null,
+    notes: rest.notes ?? null,
+    receiptFilename: rest.receiptFilename ?? null,
+    receiptMimeType: rest.receiptMimeType ?? null,
+    hasReceipt,
+  };
 };
 
 @Controller("tax-records")
@@ -204,7 +217,7 @@ export class TaxController {
     @Body()
     body: {
       records: Partial<TaxRecord>[];
-      capPreviousRecordIds?: { id: string; endDate: string }[];
+      capPreviousRecordIds?: TaxRecordCap[];
     },
   ): Promise<TaxRecordResponse[]> {
     const userId = req.user.id;
@@ -231,6 +244,11 @@ export class TaxController {
       }
       if (typeof item.id !== "string" || !item.id || typeof item.endDate !== "string") {
         throw new BadRequestException("Each capPreviousRecordIds item needs an id and an endDate");
+      }
+      if (!isIsoCalendarDate(item.endDate)) {
+        throw new BadRequestException(
+          "capPreviousRecordIds endDate must be a date in YYYY-MM-DD form",
+        );
       }
     }
     const picked = Array.isArray(body.records)

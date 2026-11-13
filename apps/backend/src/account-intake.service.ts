@@ -1,3 +1,4 @@
+import { ACCOUNT_TYPES } from "@flump/api-contract";
 import {
   getUkCalendarDate,
   type MonthlyPortfolioHistoryPoint,
@@ -14,27 +15,11 @@ import { UserProfile } from "./entities/user-profile.entity";
 import { londonDate } from "./snapshots/london-date";
 import { storedBalance } from "./snapshots/stored-balance";
 
-export type AccountType =
-  | "Current"
-  | "Saving"
-  | "Mortgage"
-  | "Loan"
-  | "Credit Card"
-  | "Owed"
-  | "Investment"
-  | "Pension"
-  | "Property"
-  | "Student Loan"
-  | "Overdraft";
+export type AccountType = (typeof ACCOUNT_TYPES)[number];
 
 export const STUDENT_LOAN_PLANS = ["PLAN_1", "PLAN_2", "PLAN_4", "PLAN_5", "POSTGRAD"] as const;
 
-export interface AccountWithDetails
-  extends Omit<Account, "balance" | "interestRate" | "monthlyContribution"> {
-  balance: number;
-  interestRate: number | null;
-  monthlyContribution: number | null;
-  isCurrent: boolean;
+export interface AccountWithDetails extends Account {
   details: AccountDetail[];
 }
 
@@ -104,6 +89,46 @@ function validateFixedRateEndDate(value: unknown): string | null | undefined {
     }
   }
   throw new BadRequestException("fixedRateEndDate must be an ISO date (YYYY-MM-DD) or null");
+}
+
+/**
+ * `accounts.type` is a varchar, so the database accepts any string. The contract checks it too,
+ * but the contract can be switched to shadow or off, so the service re-checks it here.
+ */
+function validateAccountType(value: unknown): AccountType | undefined {
+  if (value === undefined) return undefined;
+  if (typeof value === "string" && (ACCOUNT_TYPES as readonly string[]).includes(value)) {
+    return value as AccountType;
+  }
+  throw new BadRequestException(`type must be one of ${ACCOUNT_TYPES.join(", ")}`);
+}
+
+const nullableNumber = (value: number | string | null | undefined): number | null =>
+  value === null || value === undefined ? null : Number(value);
+
+/**
+ * The one wire shape of an account (E21 `AccountDto`): every key present, decimals as numbers,
+ * `isCurrent` a boolean. Create, update, check-in and the reads all return it, so a client sees
+ * the same object whichever route produced it.
+ */
+export function toAccountResponse(account: Account): Account {
+  return {
+    id: account.id,
+    userId: account.userId,
+    name: account.name,
+    type: account.type,
+    balance: Number(account.balance),
+    interestRate: nullableNumber(account.interestRate),
+    monthlyContribution: nullableNumber(account.monthlyContribution),
+    termMonths: account.termMonths ?? null,
+    fixedRateEndDate: account.fixedRateEndDate ?? null,
+    isCurrent: account.isCurrent !== false,
+    currency: account.currency,
+    studentLoanPlan: account.studentLoanPlan ?? null,
+    connectionId: account.connectionId ?? null,
+    externalAccountId: account.externalAccountId ?? null,
+    createdAt: account.createdAt,
+  };
 }
 
 function validateStudentLoanPlan(value: unknown): string | null | undefined {
@@ -216,7 +241,7 @@ export class AccountIntakeService implements IAccountIntake {
     }
     const fields = {
       name: body.name,
-      type: body.type,
+      type: validateAccountType(body.type),
       balance: validateBalance(body.balance),
       currency: body.currency,
       interestRate: body.interestRate,
@@ -261,17 +286,7 @@ export class AccountIntakeService implements IAccountIntake {
     );
 
     return accounts.map((acc) => ({
-      ...acc,
-      balance: Number(acc.balance),
-      interestRate:
-        acc.interestRate !== null && acc.interestRate !== undefined
-          ? Number(acc.interestRate)
-          : null,
-      monthlyContribution:
-        acc.monthlyContribution !== null && acc.monthlyContribution !== undefined
-          ? Number(acc.monthlyContribution)
-          : null,
-      isCurrent: acc.isCurrent !== false,
+      ...toAccountResponse(acc),
       details: detailsByAccount[acc.id] || [],
     }));
   }
@@ -289,20 +304,7 @@ export class AccountIntakeService implements IAccountIntake {
       order: { year: "ASC", month: "ASC" },
     });
 
-    return {
-      ...account,
-      balance: Number(account.balance),
-      interestRate:
-        account.interestRate !== null && account.interestRate !== undefined
-          ? Number(account.interestRate)
-          : null,
-      monthlyContribution:
-        account.monthlyContribution !== null && account.monthlyContribution !== undefined
-          ? Number(account.monthlyContribution)
-          : null,
-      isCurrent: account.isCurrent !== false,
-      details,
-    };
+    return { ...toAccountResponse(account), details };
   }
 
   async getAccountDetails(userId: string, accountId?: string): Promise<AccountDetail[]> {
@@ -352,7 +354,7 @@ export class AccountIntakeService implements IAccountIntake {
       currency: fields.currency || DEFAULT_ACCOUNT_CURRENCY,
       userId,
     });
-    return this.accountRepository.save(account);
+    return toAccountResponse(await this.accountRepository.save(account));
   }
 
   /**
@@ -408,7 +410,7 @@ export class AccountIntakeService implements IAccountIntake {
       if (body.balance !== undefined && body.balance !== null) {
         await this.upsertCurrentMonthHistory(details, userId, account.id, Number(saved.balance));
       }
-      return saved;
+      return toAccountResponse(saved);
     });
   }
 
@@ -433,7 +435,7 @@ export class AccountIntakeService implements IAccountIntake {
         account.balance = storedBalance(account.type, balance);
         const saved = await accounts.save(account);
         await this.upsertCurrentMonthHistory(details, userId, account.id, Number(saved.balance));
-        result.push(saved);
+        result.push(toAccountResponse(saved));
       }
       return result;
     });

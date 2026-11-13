@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { Money, Percent } from "../primitives.js";
+import { IsoDateTime, Money, Percent, Uuid } from "../primitives.js";
 
 const AvatarUrl = z
   .string()
@@ -72,3 +72,94 @@ export const UpdateChecklistRequest = z.object({
   step: z.string().min(1).max(64),
   completed: z.boolean(),
 });
+
+// --- Responses (E21) ---
+
+const RepaymentType = z.enum(["repayment", "interest-only"]);
+const NullableAmount = z.number().finite().nullable();
+
+/**
+ * The profile as `UserProfileService.formatProfile` puts it on the wire, plus `email` (the
+ * caller's own address from the auth token, or null). Every key is always present: nullable
+ * columns are null, never absent. Decimal columns arrive as numbers (B-05). `userId` is the
+ * caller's own id, so it is harmless.
+ */
+export const UserProfileDto = z.strictObject({
+  id: Uuid,
+  userId: z.string().min(1),
+  email: z.string().nullable(),
+  displayName: z.string().nullable(),
+  firstName: z.string().nullable(),
+  lastName: z.string().nullable(),
+  avatarUrl: z.string().nullable(),
+  currency: z.string(),
+  country: z.string(),
+  employmentType: z.enum(["employed", "self-employed", "other"]).nullable(),
+  annualSalary: NullableAmount,
+  monthlyTakeHome: NullableAmount,
+  hasSecondIncome: z.boolean(),
+  secondIncomeMonthly: NullableAmount,
+  hasRentalIncome: z.boolean(),
+  rentalIncomeMonthly: NullableAmount,
+  hasMortgage: z.boolean(),
+  mortgageType: RepaymentType,
+  propertyOwnershipShare: z.number().finite(),
+  hasBuyToLet: z.boolean(),
+  buyToLetCount: z.number().int(),
+  buyToLetPropertyValue: NullableAmount,
+  buyToLetMonthlyRental: NullableAmount,
+  buyToLetMortgageBalance: NullableAmount,
+  buyToLetMortgageRate: NullableAmount,
+  buyToLetMortgageType: RepaymentType,
+  pensionPercent: z.number().finite(),
+  pensionEmployerPercent: z.number().finite(),
+  isSalarySacrifice: z.boolean(),
+  isSalarySacrificeEmployerNi: z.boolean(),
+  monthlySavingsTarget: NullableAmount,
+  savingsAllocationMode: z.enum(["total", "per_account"]),
+  savingsDefaultInterestRate: z.number().finite(),
+  setupChecklistCompletedSteps: z.array(z.string()),
+  customBudgetCategories: z.array(z.string()),
+  enabledPages: z.array(z.string()),
+  dashboardWidgets: z.array(z.string()),
+  dashboardWidgetOrder: z.array(z.string()),
+  dashboardWidgetSizes: z.record(z.string(), z.enum(["normal", "wide"])),
+  dashboardWidgetConfig: z.record(z.string(), z.unknown()),
+  hasResetFinancialData: z.boolean(),
+  onboardingCompleted: z.boolean(),
+  taxRegion: z.enum(["ENGLAND", "WALES", "SCOTLAND", "NORTHERN_IRELAND"]).nullable(),
+  birthYear: z.number().int().nullable(),
+  studentLoanPlans: z
+    .array(z.enum(["PLAN_1", "PLAN_2", "PLAN_4", "PLAN_5", "POSTGRAD"]))
+    .nullable(),
+  housingStatus: z.enum(["renting", "mortgage", "own_outright"]).nullable(),
+  monthlyHousingCost: NullableAmount,
+  monthlyOtherOutgoings: NullableAmount,
+  createdAt: IsoDateTime,
+  updatedAt: IsoDateTime,
+});
+export type UserProfileDto = z.infer<typeof UserProfileDto>;
+
+/** GET /user-profile */
+export const UserProfileResponse = UserProfileDto;
+export type UserProfileResponse = z.infer<typeof UserProfileResponse>;
+
+/** PATCH /user-profile */
+export const UpdateProfileResponse = UserProfileDto;
+export type UpdateProfileResponse = z.infer<typeof UpdateProfileResponse>;
+
+/** PATCH /user-profile/checklist: the same profile shape as GET (email included). */
+export const UpdateChecklistResponse = UserProfileDto;
+export type UpdateChecklistResponse = z.infer<typeof UpdateChecklistResponse>;
+
+/** POST /user-profile/send-password-reset (failures are a 503 error, never `success: false`). */
+export const SendPasswordResetResponse = z.strictObject({ success: z.literal(true) });
+export type SendPasswordResetResponse = z.infer<typeof SendPasswordResetResponse>;
+
+/** POST /user-profile/reset-financial-data */
+export const ResetFinancialDataResponse = z.strictObject({
+  success: z.literal(true),
+  message: z.string(),
+  profile: UserProfileDto,
+});
+export type ResetFinancialDataResponse = z.infer<typeof ResetFinancialDataResponse>;

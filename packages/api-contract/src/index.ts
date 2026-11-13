@@ -1,4 +1,5 @@
 export * from "./domains/accounts.js";
+export * from "./domains/app.js";
 export * from "./domains/bank-connections.js";
 export * from "./domains/budget.js";
 export * from "./domains/mcp-tokens.js";

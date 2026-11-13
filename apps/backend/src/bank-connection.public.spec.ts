@@ -36,4 +36,19 @@ describe("toPublicConnection", () => {
       updatedAt: now,
     });
   });
+
+  it("always carries expiresAt, null when the saved entity never set it", () => {
+    const now = new Date("2026-01-01T00:00:00Z");
+    const result = toPublicConnection({
+      id: "c1",
+      institutionId: "monzo",
+      institutionName: "Monzo Bank",
+      status: "connected",
+      authType: "token",
+      lastSyncedAt: now,
+      createdAt: now,
+      updatedAt: now,
+    } as BankConnection);
+    expect(result).toHaveProperty("expiresAt", null);
+  });
 });
