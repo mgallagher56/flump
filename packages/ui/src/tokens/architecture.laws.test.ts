@@ -120,6 +120,7 @@ describe("Architecture & Design System Laws", () => {
     it("registers the E15 phase 2 primitives and patterns (deliberately listed)", () => {
       const primitives = getSubdirectories(PRIMITIVES_DIR);
       for (const expected of [
+        "Checkbox",
         "CurrencyInput",
         "DataList",
         "FlumpLogo",
@@ -132,6 +133,10 @@ describe("Architecture & Design System Laws", () => {
         "Money",
         "PercentInput",
         "Popover",
+        "RadioCardGroup",
+        "Select",
+        "Switch",
+        "Text",
         "Sheet",
         "Skeleton",
         "Spinner",
