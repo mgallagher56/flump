@@ -190,12 +190,12 @@ export const CopyTaxYearModal: FC<CopyTaxYearModalProps> = ({
       onOpenChange={(val) => {
         if (!val) onClose();
       }}
-      title="Copy Figures & Populate Tax Year"
+      title="Copy figures and populate tax year"
       description="Carry over recurring figures (rent, expenses, retainers) from a previous year. Adjust values inline or apply an inflation percentage before saving."
       size="lg"
       id="copy-tax-year-dialog"
     >
-      {/* Controls Bar: Source Year -> Target Year & Scope */}
+      {/* Controls Bar: Source year to target year and scope */}
       <div
         className={css({
           display: "grid",
@@ -206,7 +206,6 @@ export const CopyTaxYearModal: FC<CopyTaxYearModalProps> = ({
           border: "1px solid",
           borderColor: "border",
           borderRadius: "md",
-          marginBottom: "16px",
         })}
       >
         {/* Year Transfer */}
@@ -222,7 +221,7 @@ export const CopyTaxYearModal: FC<CopyTaxYearModalProps> = ({
                 marginBottom: "4px",
               }}
             >
-              Source Year
+              Source year
             </label>
             <select
               id="copy-source-year"
@@ -265,7 +264,7 @@ export const CopyTaxYearModal: FC<CopyTaxYearModalProps> = ({
                 marginBottom: "4px",
               }}
             >
-              Target Year
+              Target year
             </label>
             <select
               id="copy-target-year"
@@ -301,7 +300,7 @@ export const CopyTaxYearModal: FC<CopyTaxYearModalProps> = ({
               marginBottom: "4px",
             }}
           >
-            Section Scope
+            Section scope
           </label>
           <select
             id="copy-section-scope"
@@ -316,11 +315,11 @@ export const CopyTaxYearModal: FC<CopyTaxYearModalProps> = ({
               backgroundColor: "surface",
             })}
           >
-            <option value="all">All Income Sections</option>
-            <option value="rental">Rental Property Only</option>
-            <option value="self-employed">Self-Employed Only</option>
-            <option value="paye">PAYE Employment Only</option>
-            <option value="savings">Savings & Dividends Only</option>
+            <option value="all">All income sections</option>
+            <option value="rental">Rental property only</option>
+            <option value="self-employed">Self-employed only</option>
+            <option value="paye">PAYE employment only</option>
+            <option value="savings">Savings and dividends only</option>
           </select>
         </div>
 
@@ -335,7 +334,7 @@ export const CopyTaxYearModal: FC<CopyTaxYearModalProps> = ({
               marginBottom: "4px",
             }}
           >
-            Record Type
+            Record type
           </span>
           <button
             type="button"
@@ -357,7 +356,7 @@ export const CopyTaxYearModal: FC<CopyTaxYearModalProps> = ({
             })}
           >
             <FaFilter size={10} />
-            {recurringOnly ? "Recurring / Fixed Only" : "All Records (incl. One-offs)"}
+            {recurringOnly ? "Recurring or fixed only" : "All records (including one-offs)"}
           </button>
         </div>
       </div>
@@ -368,7 +367,6 @@ export const CopyTaxYearModal: FC<CopyTaxYearModalProps> = ({
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
-          marginBottom: "12px",
           flexWrap: "wrap",
           gap: "8px",
         }}
@@ -388,9 +386,10 @@ export const CopyTaxYearModal: FC<CopyTaxYearModalProps> = ({
               backgroundColor: "surface",
               cursor: "pointer",
               "&:hover": { backgroundColor: "var(--colors-surface-subtle)" },
+              fontVariantNumeric: "tabular-nums",
             })}
           >
-            0% (Keep Same)
+            0% (keep same)
           </button>
           <button
             type="button"
@@ -403,6 +402,7 @@ export const CopyTaxYearModal: FC<CopyTaxYearModalProps> = ({
               backgroundColor: "surface",
               cursor: "pointer",
               "&:hover": { backgroundColor: "var(--colors-surface-subtle)" },
+              fontVariantNumeric: "tabular-nums",
             })}
           >
             +2%
@@ -418,6 +418,7 @@ export const CopyTaxYearModal: FC<CopyTaxYearModalProps> = ({
               backgroundColor: "surface",
               cursor: "pointer",
               "&:hover": { backgroundColor: "var(--colors-surface-subtle)" },
+              fontVariantNumeric: "tabular-nums",
             })}
           >
             +5%
@@ -444,17 +445,18 @@ export const CopyTaxYearModal: FC<CopyTaxYearModalProps> = ({
       </div>
 
       {/* Records Table Scroll Area */}
-      <div
+      <section
+        aria-label="Records to copy"
+        // biome-ignore lint/a11y/noNoninteractiveTabindex: keyboard users must be able to scroll the wide table
+        tabIndex={0}
         className={css({
-          flex: 1,
-          overflowY: "auto",
+          minHeight: 0,
           overflowX: "auto",
           WebkitOverflowScrolling: "touch",
           maxWidth: "100%",
           border: "1px solid",
           borderColor: "border",
           borderRadius: "md",
-          marginBottom: "16px",
         })}
       >
         {candidateRecords.length === 0 ? (
@@ -496,12 +498,12 @@ export const CopyTaxYearModal: FC<CopyTaxYearModalProps> = ({
                     title="Select All"
                   />
                 </th>
-                <th style={{ padding: "10px 12px" }}>New Name ({targetYear})</th>
+                <th style={{ padding: "10px 12px" }}>New name ({targetYear})</th>
                 <th style={{ padding: "10px 12px" }}>Section</th>
                 <th style={{ padding: "10px 12px" }}>Frequency</th>
                 <th style={{ padding: "10px 12px", textAlign: "right" }}>Previous</th>
                 <th style={{ padding: "10px 12px", width: "130px", textAlign: "right" }}>
-                  New Amount (£)
+                  New amount (£)
                 </th>
               </tr>
             </thead>
@@ -644,7 +646,7 @@ export const CopyTaxYearModal: FC<CopyTaxYearModalProps> = ({
             </tbody>
           </table>
         )}
-      </div>
+      </section>
 
       {/* Footer */}
       <div
@@ -667,12 +669,13 @@ export const CopyTaxYearModal: FC<CopyTaxYearModalProps> = ({
             Cancel
           </FLPButton>
           <FLPButton
+            style={{ fontVariantNumeric: "tabular-nums" }}
             disabled={selectedCount === 0}
             loading={fetcher.state !== "idle"}
             onClick={handleSubmit}
           >
             <FaCopy size={12} style={{ marginRight: "6px" }} />
-            Copy {selectedCount} Records to {targetYear}
+            Copy {selectedCount} records to {targetYear}
           </FLPButton>
         </div>
       </div>

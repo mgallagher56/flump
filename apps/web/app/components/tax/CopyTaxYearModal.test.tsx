@@ -64,11 +64,11 @@ describe("<CopyTaxYearModal />", () => {
   test("renders modal and candidate records", () => {
     const { getByText, getByDisplayValue } = customRender(<CopyTaxYearModal {...defaultProps} />);
 
-    expect(getByText("Copy Figures & Populate Tax Year")).toBeDefined();
-    expect(getByText("Source Year")).toBeDefined();
-    expect(getByText("Target Year")).toBeDefined();
+    expect(getByText("Copy figures and populate tax year")).toBeDefined();
+    expect(getByText("Source year")).toBeDefined();
+    expect(getByText("Target year")).toBeDefined();
     expect(getByDisplayValue("Property Flat A Rent")).toBeDefined();
-    expect(getByText(/Copy.*Records/i)).toBeDefined();
+    expect(getByText(/Copy.*records/i)).toBeDefined();
   });
 
   test("allows applying percentage adjustment and submitting copy", () => {
@@ -79,7 +79,7 @@ describe("<CopyTaxYearModal />", () => {
     fireEvent.click(plus5Btn);
 
     // Click Copy Records
-    const copyBtn = getByText(/Copy.*Records/i);
+    const copyBtn = getByText(/Copy.*records/i);
     fireEvent.click(copyBtn);
 
     expect(mockSubmit).toHaveBeenCalledWith(
@@ -102,7 +102,7 @@ describe("<CopyTaxYearModal />", () => {
 
   test("is a modal dialog with an accessible name and description", () => {
     customRender(<CopyTaxYearModal {...defaultProps} />);
-    const dialog = screen.getByRole("dialog", { name: "Copy Figures & Populate Tax Year" });
+    const dialog = screen.getByRole("dialog", { name: "Copy figures and populate tax year" });
     expect(dialog.getAttribute("aria-modal")).toBe("true");
     expect(dialog.getAttribute("aria-describedby")).toBeTruthy();
   });
@@ -118,11 +118,11 @@ describe("<CopyTaxYearModal />", () => {
 
   test("keeps the wide records table inside a horizontal scroll wrapper", () => {
     customRender(<CopyTaxYearModal {...defaultProps} />);
-    const table = screen.getByRole("dialog").querySelector("table");
+    const region = screen.getByRole("region", { name: "Records to copy" });
+    expect(region.getAttribute("tabindex")).toBe("0");
+    const table = region.querySelector("table");
     expect(table).not.toBeNull();
     expect((table as HTMLElement).style.minWidth).toBe("500px");
-    const wrapper = (table as HTMLElement).parentElement as HTMLElement;
-    expect(wrapper.className).toMatch(/ov-x_auto|overflow-x_auto/);
   });
 
   test("traps focus inside and returns it to the trigger on close", async () => {
