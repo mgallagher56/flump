@@ -333,9 +333,7 @@ describe("debt-payoff module", () => {
       expect(written.reasoning).toContain("written off before it is repaid");
       expect(written.reasoning).not.toMatch(/gift|prioritise|should|consider/i);
       const repaid = evaluateUkStudentLoan("plan2", 80000, 5000, "2025/26");
-      expect(repaid.reasoning).toContain(
-        "projected to clear the balance before statutory write-off",
-      );
+      expect(repaid.reasoning).toContain("is projected to clear");
     });
 
     it("evaluateUkStudentLoan agrees for PLAN_2 and plan2 spellings", () => {

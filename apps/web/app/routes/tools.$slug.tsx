@@ -46,7 +46,7 @@ const TOOLS_DATA: Record<string, ToolContent> = {
       "Calculate your marginal tax rate between £100,000 and £125,140, personal allowance loss, and the pension contribution that would bring adjusted net income to £100,000, with the effect on allowance and free childcare.",
     title: "UK £100k–£125k Tax Trap & Childcare Threshold Calculator",
     subtitle:
-      "Model how HMRC's Personal Allowance taper creates an effective 60% marginal tax rate on income between £100,000 and £125,140, and model the pension contribution that would bring adjusted net income back to £100,000.",
+      "Model how HMRC's Personal Allowance taper creates an effective 60% marginal tax rate on income between £100,000 and £125,140, and the pension contribution that would bring adjusted net income back to £100,000. Unverified estimate.",
     category: "UK Tax & Salary Sacrifice",
     component: "tax-trap",
     guideSections: [
@@ -79,7 +79,7 @@ const TOOLS_DATA: Record<string, ToolContent> = {
       },
       {
         q: "How does salary sacrifice differ from a personal SIPP contribution for National Insurance?",
-        a: "Salary sacrifice also reduces employee National Insurance (2% above the upper earnings limit) and employer National Insurance (15% in 2026/27); a personal SIPP contribution does not.",
+        a: "Both reduce adjusted net income. Salary sacrifice also reduces employee National Insurance (2% above the upper earnings limit) and employer National Insurance (15% in 2026/27); a personal SIPP contribution does not.",
       },
       {
         q: "Can I contribute more than £60,000 into my pension?",
@@ -130,7 +130,7 @@ const TOOLS_DATA: Record<string, ToolContent> = {
       },
       {
         q: "Can I do both?",
-        a: "Yes. The calculator can model any split between overpayments and ISA contributions.",
+        a: "Yes. This calculator compares putting the full monthly amount into mortgage overpayments with putting the full amount into a Stocks & Shares ISA. It does not model a split between the two.",
       },
     ],
   },
@@ -212,7 +212,7 @@ const TOOLS_DATA: Record<string, ToolContent> = {
     faqs: [
       {
         q: "Is a mortgage included in the debt snowball?",
-        a: "The calculator covers unsecured consumer debts such as credit cards, personal loans and overdrafts. Mortgages are modelled separately, on the mortgage calculator.",
+        a: "No. This calculator models one credit card and one personal loan. Mortgage overpayments are modelled separately, in the mortgage overpayment calculator.",
       },
       {
         q: "What if I have a 0% balance transfer card?",
@@ -224,7 +224,7 @@ const TOOLS_DATA: Record<string, ToolContent> = {
     slug: "0-percent-balance-transfer-payoff-calculator",
     metaTitle: "0% Balance Transfer Card Payoff & Cliff Calculator | Flump",
     metaDescription:
-      "Model the monthly payment that would clear a 0% balance transfer before the promotional period ends and a revert rate of 24.9% or more applies.",
+      "Model the monthly payment that would clear a 0% balance transfer before the promotional period ends and the card's revert rate applies.",
     title: "0% Balance Transfer Payoff & Revert Cliff Calculator",
     subtitle:
       "Model the monthly repayment that clears a balance before a 0% promotional period expires and the revert rate applies.",
@@ -294,7 +294,7 @@ const TOOLS_DATA: Record<string, ToolContent> = {
     faqs: [
       {
         q: "When is a student loan repaid before write-off?",
-        a: "When projected repayments over the plan's term exceed the balance plus interest. The calculator shows this for the figures you enter.",
+        a: "When the repayments made before the write-off date add up to the balance plus the interest charged over that time. The calculator gives a simplified estimate for the figures you enter.",
       },
     ],
   },

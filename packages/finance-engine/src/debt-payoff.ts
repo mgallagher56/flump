@@ -741,8 +741,8 @@ export function evaluateUkStudentLoan(
 
   const recommendation = willLikelyRepayBeforeWriteOff ? "consider_overpaying" : "do_not_overpay";
   const reasoning = willLikelyRepayBeforeWriteOff
-    ? `Based on your salary of £${Math.round(annualSalary).toLocaleString("en-GB")}, you are projected to clear the balance before statutory write-off.`
-    : `Your annual repayment of £${Math.round(annualRepayment).toLocaleString("en-GB")} is not projected to clear the £${Math.round(currentBalance).toLocaleString("en-GB")} balance before the ${cfg.writeOffYears}-year statutory cancellation, so in this projection the balance is written off before it is repaid.`;
+    ? `Your annual repayment of £${Math.round(annualRepayment).toLocaleString("en-GB")} is projected to clear the £${Math.round(currentBalance).toLocaleString("en-GB")} balance before the ${cfg.writeOffYears}-year statutory write-off.`
+    : `Your annual repayment of £${Math.round(annualRepayment).toLocaleString("en-GB")} is not projected to clear the £${Math.round(currentBalance).toLocaleString("en-GB")} balance before the ${cfg.writeOffYears}-year statutory write-off, so in this projection the balance is written off before it is repaid.`;
 
   return {
     plan: key,

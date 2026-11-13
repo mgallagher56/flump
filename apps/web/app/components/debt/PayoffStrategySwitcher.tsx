@@ -426,14 +426,13 @@ export const PayoffStrategySwitcher: FC<PayoffStrategySwitcherProps> = ({
               }}
             >
               <FLPText color="text.muted" fontSize="md" fontWeight="bold">
-                🐌 Minimum Only
+                Minimum Only
               </FLPText>
               <span
                 style={{
                   fontSize: "11px",
-                  backgroundColor:
-                    "color-mix(in srgb, var(--colors-status-danger-text) 15%, transparent)",
-                  color: "var(--colors-status-danger-text)",
+                  backgroundColor: "var(--colors-surface-subtle)",
+                  color: "var(--colors-text-secondary)",
                   padding: "3px 8px",
                   borderRadius: "6px",
                   fontWeight: "bold",
@@ -453,7 +452,7 @@ export const PayoffStrategySwitcher: FC<PayoffStrategySwitcherProps> = ({
                   {comparison.minimumOnly.debtFreeDate} ({comparison.minimumOnly.months} mos)
                 </span>
               </FLPText>
-              <FLPText color="status.danger.text" fontSize="sm">
+              <FLPText fontSize="sm">
                 <strong>Total Interest:</strong>{" "}
                 <span className={css({ fontVariantNumeric: "tabular-nums" })}>
                   {formatCurrency(comparison.minimumOnly.totalInterest)}
