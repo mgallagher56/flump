@@ -57,3 +57,18 @@ export function legacySessionCookieClear(env: Record<string, string | undefined>
   if (name === LEGACY_SESSION_COOKIE_NAME) return null;
   return `${LEGACY_SESSION_COOKIE_NAME}=; Path=/; Max-Age=0; Secure; HttpOnly; SameSite=Lax`;
 }
+
+/**
+ * Set-Cookie value that expires the configured session cookie (`__Host-wos-session` in production,
+ * `wos-session` elsewhere), for logout when there is no session to hand to authkit's `signOut`.
+ * Same attributes authkit's destroySession emits: Path=/, HttpOnly, SameSite=Lax, no Domain, and
+ * Secure in production (or for any `__Host-` name, which browsers reject without it).
+ */
+export function sessionCookieClear(env: Record<string, string | undefined>): string {
+  const production = env.NODE_ENV === "production";
+  const name =
+    env.WORKOS_COOKIE_NAME?.trim() ||
+    (production ? PRODUCTION_SESSION_COOKIE_NAME : LEGACY_SESSION_COOKIE_NAME);
+  const secure = production || name.startsWith("__Host-") ? "; Secure" : "";
+  return `${name}=; Path=/; Max-Age=0${secure}; HttpOnly; SameSite=Lax`;
+}
