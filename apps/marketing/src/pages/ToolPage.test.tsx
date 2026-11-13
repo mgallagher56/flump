@@ -1,4 +1,5 @@
-import { render, screen } from "@testing-library/react";
+import { ONBOARDING_SEED_STORAGE_KEY } from "@flump/finance-engine";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { HelmetProvider } from "react-helmet-async";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { describe, expect, it } from "vitest";
@@ -28,6 +29,14 @@ describe("ToolPage", () => {
     renderAt("/tools/uk-100k-tax-trap-calculator");
     expect(screen.getAllByText(/Request an invite/).length).toBeGreaterThan(0);
     expect(screen.queryByText(/Open this calculation in your Flump workspace/)).toBeNull();
+  });
+
+  it("does not write the onboarding seed when the CTA requests an invite", () => {
+    localStorage.removeItem(ONBOARDING_SEED_STORAGE_KEY);
+    renderAt("/tools/uk-100k-tax-trap-calculator");
+    const calculator = within(screen.getByTestId("tax-trap-calculator-tool"));
+    fireEvent.click(calculator.getByRole("button", { name: /Request an invite/ }));
+    expect(localStorage.getItem(ONBOARDING_SEED_STORAGE_KEY)).toBeNull();
   });
 
   it("renders the not-found page for an unknown slug", () => {

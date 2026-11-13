@@ -40,11 +40,14 @@ import {
 export interface DebtSnowballCalculatorProps {
   onSaveAndContinue?: (payload: any) => void;
   ctaText?: string;
+  /** When false, entered figures are not written to the onboarding seed in local storage. Default true. */
+  persistSeed?: boolean;
 }
 
 export const DebtSnowballCalculator: FC<DebtSnowballCalculatorProps> = ({
   onSaveAndContinue,
   ctaText = "Track live in Flump free →",
+  persistSeed = true,
 }) => {
   const [cardBalance, setCardBalance] = useState<number>(3500);
   const [cardApr, setCardApr] = useState<number>(24.9);
@@ -95,7 +98,7 @@ export const DebtSnowballCalculator: FC<DebtSnowballCalculatorProps> = ({
       inferredModules: ["accounts", "debt", "budget"],
       timestamp: Date.now(),
     };
-    persistOnboardingSeed(payload as any);
+    if (persistSeed) persistOnboardingSeed(payload as any);
     if (onSaveAndContinue) {
       onSaveAndContinue(payload);
     } else if (typeof window !== "undefined") {

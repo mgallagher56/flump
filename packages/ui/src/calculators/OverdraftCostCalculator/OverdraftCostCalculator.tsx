@@ -30,11 +30,14 @@ const penceFormatter = new Intl.NumberFormat("en-GB", {
 export interface OverdraftCostCalculatorProps {
   onSaveAndContinue?: (payload: any) => void;
   ctaText?: string;
+  /** When false, entered figures are not written to the onboarding seed in local storage. Default true. */
+  persistSeed?: boolean;
 }
 
 export const OverdraftCostCalculator: FC<OverdraftCostCalculatorProps> = ({
   onSaveAndContinue,
   ctaText = "Eliminate your overdraft with Flump →",
+  persistSeed = true,
 }) => {
   const [balance, setBalance] = useState<number>(1200);
   const [earRate, setEarRate] = useState<number>(39.9);
@@ -54,7 +57,7 @@ export const OverdraftCostCalculator: FC<OverdraftCostCalculatorProps> = ({
       inferredModules: ["accounts", "debt", "budget"],
       timestamp: Date.now(),
     };
-    persistOnboardingSeed(payload as any);
+    if (persistSeed) persistOnboardingSeed(payload as any);
     if (onSaveAndContinue) {
       onSaveAndContinue(payload);
     } else if (typeof window !== "undefined") {

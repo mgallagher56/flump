@@ -1,5 +1,6 @@
+import { ONBOARDING_SEED_STORAGE_KEY } from "@flump/finance-engine";
 import { fireEvent, render, screen, within } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   DebtSnowballCalculator,
   MortgageVsIsaCalculator,
@@ -180,6 +181,44 @@ describe("UI Calculators", () => {
       const cta = screen.getByRole("button", { name: /Save and continue/i });
       fireEvent.click(cta);
       expect(onSave).toHaveBeenCalled();
+    });
+  });
+
+  describe("persistSeed", () => {
+    const calculators = [
+      ["DebtSnowballCalculator", DebtSnowballCalculator],
+      ["MortgageVsIsaCalculator", MortgageVsIsaCalculator],
+      ["OverdraftCostCalculator", OverdraftCostCalculator],
+      ["Section24Calculator", Section24Calculator],
+      ["StudentLoanCalculator", StudentLoanCalculator],
+      ["TaxTrapCalculator", TaxTrapCalculator],
+      ["ZeroPercentCliffCalculator", ZeroPercentCliffCalculator],
+    ] as const;
+
+    const clearSeed = () => {
+      localStorage.removeItem(ONBOARDING_SEED_STORAGE_KEY);
+    };
+
+    beforeEach(clearSeed);
+    afterEach(clearSeed);
+
+    it.each(calculators)(
+      "%s leaves the onboarding seed unset when persistSeed is false",
+      (_name, Calculator) => {
+        const onSave = vi.fn();
+        render(
+          <Calculator ctaText="Request an invite" onSaveAndContinue={onSave} persistSeed={false} />,
+        );
+        fireEvent.click(screen.getByRole("button", { name: /Request an invite/i }));
+        expect(onSave).toHaveBeenCalled();
+        expect(localStorage.getItem(ONBOARDING_SEED_STORAGE_KEY)).toBeNull();
+      },
+    );
+
+    it.each(calculators)("%s persists the onboarding seed by default", (_name, Calculator) => {
+      render(<Calculator ctaText="Save and continue" onSaveAndContinue={vi.fn()} />);
+      fireEvent.click(screen.getByRole("button", { name: /Save and continue/i }));
+      expect(localStorage.getItem(ONBOARDING_SEED_STORAGE_KEY)).not.toBeNull();
     });
   });
 });

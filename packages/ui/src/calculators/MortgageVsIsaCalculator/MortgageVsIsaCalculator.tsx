@@ -42,11 +42,14 @@ const oneDecimalFormatter = new Intl.NumberFormat("en-GB", {
 export interface MortgageVsIsaCalculatorProps {
   onSaveAndContinue?: (payload: any) => void;
   ctaText?: string;
+  /** When false, entered figures are not written to the onboarding seed in local storage. Default true. */
+  persistSeed?: boolean;
 }
 
 export const MortgageVsIsaCalculator: FC<MortgageVsIsaCalculatorProps> = ({
   onSaveAndContinue,
   ctaText = "Model your mortgage in Flump free →",
+  persistSeed = true,
 }) => {
   const [mortgageBalance, setMortgageBalance] = useState<number>(240000);
   const [interestRate, setInterestRate] = useState<number>(4.5);
@@ -127,7 +130,7 @@ export const MortgageVsIsaCalculator: FC<MortgageVsIsaCalculatorProps> = ({
       inferredModules: ["mortgage", "accounts", "forecast"],
       timestamp: Date.now(),
     };
-    persistOnboardingSeed(payload as any);
+    if (persistSeed) persistOnboardingSeed(payload as any);
     if (onSaveAndContinue) {
       onSaveAndContinue(payload);
     } else if (typeof window !== "undefined") {

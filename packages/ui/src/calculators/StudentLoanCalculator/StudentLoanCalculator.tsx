@@ -25,11 +25,14 @@ import {
 export interface StudentLoanCalculatorProps {
   onSaveAndContinue?: (payload: any) => void;
   ctaText?: string;
+  /** When false, entered figures are not written to the onboarding seed in local storage. Default true. */
+  persistSeed?: boolean;
 }
 
 export const StudentLoanCalculator: FC<StudentLoanCalculatorProps> = ({
   onSaveAndContinue,
   ctaText = "Model your full career trajectory in Flump →",
+  persistSeed = true,
 }) => {
   const [plan, setPlan] = useState<"plan1" | "plan2" | "plan4" | "plan5" | "postgrad">("plan2");
   const [salary, setSalary] = useState<number>(38000);
@@ -52,7 +55,7 @@ export const StudentLoanCalculator: FC<StudentLoanCalculatorProps> = ({
       inferredModules: ["accounts", "budget", "tax"],
       timestamp: Date.now(),
     };
-    persistOnboardingSeed(payload as any);
+    if (persistSeed) persistOnboardingSeed(payload as any);
     if (onSaveAndContinue) {
       onSaveAndContinue(payload);
     } else if (typeof window !== "undefined") {
