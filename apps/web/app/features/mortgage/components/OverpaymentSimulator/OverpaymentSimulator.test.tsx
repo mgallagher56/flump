@@ -133,3 +133,30 @@ describe("<OverpaymentSimulator /> chart accessibility", () => {
     expect(figure.textContent).toMatch(/Overpaying £200 a month saves £[\d,]+ in total interest/);
   });
 });
+
+describe("<OverpaymentSimulator /> hero card", () => {
+  const props = {
+    loanAmount: 200000,
+    interestRate: 4,
+    remainingTerm: 25,
+    overpayment: 200,
+    onOverpaymentChange: vi.fn(),
+  };
+
+  test("makes 'Time shaved off' the single hero card for repayment mortgages", () => {
+    const { getByText } = customRender(<OverpaymentSimulator {...props} />);
+    const heroes = document.querySelectorAll("[data-tone='hero']");
+    expect(heroes).toHaveLength(1);
+    expect(heroes[0]?.contains(getByText("Time shaved off"))).toBe(true);
+    expect(heroes[0]?.contains(getByText("Interest saved"))).toBe(false);
+  });
+
+  test("makes 'Bullet balance reduced' the single hero card for interest-only mortgages", () => {
+    const { getByText } = customRender(
+      <OverpaymentSimulator {...props} mortgageType="interest-only" overpayment={500} />,
+    );
+    const heroes = document.querySelectorAll("[data-tone='hero']");
+    expect(heroes).toHaveLength(1);
+    expect(heroes[0]?.contains(getByText("Bullet balance reduced"))).toBe(true);
+  });
+});

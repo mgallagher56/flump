@@ -8,7 +8,7 @@ export const disabledLink = cva({
     textDecoration: "none",
     borderWidth: "1px",
     borderStyle: "dashed",
-    borderColor: "border.strong",
+    borderColor: "border.input",
     borderRadius: "md",
     _focusVisible: {
       outline: "2px solid",
