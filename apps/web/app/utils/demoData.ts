@@ -11,7 +11,7 @@ export function isDemoMode(url: URL | string): boolean {
   }
 }
 
-export function getSandboxPersonaData(persona: "debt" | "medium" | "high" | "wealth" = "debt") {
+export function getSandboxPersonaData(persona: "debt" | "medium" | "high" | "wealth" = "medium") {
   if (persona === "debt") {
     const debtAccounts = [
       {
@@ -191,11 +191,14 @@ export function getSandboxPersonaData(persona: "debt" | "medium" | "high" | "wea
     };
   }
 
+  // Persona B, the default: renting on a £39,000 salary (close to the UK median full-time
+  // salary). 2025/26 England: income tax 5,286, employee NI 2,114.40, so 2,633/mo after tax;
+  // 5% relief-at-source pension (130/mo net) leaves 2,503/mo. Pension 5% + 3% = 260/mo.
   if (persona === "medium") {
     const mediumAccounts = [
       {
         id: "demo-med-acc-1",
-        name: "Monzo Current Account",
+        name: "Current account",
         type: "Current",
         balance: 2800,
         currency: "GBP",
@@ -205,22 +208,22 @@ export function getSandboxPersonaData(persona: "debt" | "medium" | "high" | "wea
       },
       {
         id: "demo-med-acc-2",
-        name: "Marcus High-Yield Cash ISA",
+        name: "Cash ISA",
         type: "Saving",
         balance: 12500,
         currency: "GBP",
         interestRate: 4.75,
-        monthlyContribution: 450,
+        monthlyContribution: 300,
         isCurrent: true,
       },
       {
         id: "demo-med-acc-3",
-        name: "Standard Life Workplace Pension",
+        name: "Workplace pension",
         type: "Pension",
         balance: 28000,
         currency: "GBP",
         interestRate: 6.5,
-        monthlyContribution: 300,
+        monthlyContribution: 260,
         isCurrent: true,
       },
     ];
@@ -229,15 +232,15 @@ export function getSandboxPersonaData(persona: "debt" | "medium" | "high" | "wea
       {
         id: "mb1",
         category: "Income",
-        name: "PAYE Take-Home Salary (£45k)",
-        amount: 2820,
+        name: "Take-home pay (£39k salary)",
+        amount: 2503,
         frequency: "monthly",
         isIncome: true,
       },
       {
         id: "mb2",
         category: "housing",
-        name: "Rent & Council Tax",
+        name: "Rent and council tax",
         amount: 1070,
         frequency: "monthly",
         isIncome: false,
@@ -245,7 +248,7 @@ export function getSandboxPersonaData(persona: "debt" | "medium" | "high" | "wea
       {
         id: "mb3",
         category: "living",
-        name: "Groceries & Utilities",
+        name: "Groceries and utilities",
         amount: 350,
         frequency: "monthly",
         isIncome: false,
@@ -253,7 +256,7 @@ export function getSandboxPersonaData(persona: "debt" | "medium" | "high" | "wea
       {
         id: "mb4",
         category: "lifestyle",
-        name: "Transport & Leisure",
+        name: "Transport and leisure",
         amount: 250,
         frequency: "monthly",
         isIncome: false,
@@ -261,8 +264,8 @@ export function getSandboxPersonaData(persona: "debt" | "medium" | "high" | "wea
       {
         id: "mb5",
         category: "savings",
-        name: "Cash ISA Deposit",
-        amount: 450,
+        name: "Cash ISA deposit",
+        amount: 300,
         frequency: "monthly",
         isIncome: false,
       },
@@ -272,8 +275,8 @@ export function getSandboxPersonaData(persona: "debt" | "medium" | "high" | "wea
       displayName: "Jordan Taylor",
       firstName: "Jordan",
       lastName: "Taylor",
-      annualSalary: 45000,
-      monthlyTakeHome: 2820,
+      annualSalary: 39000,
+      monthlyTakeHome: 2503,
       hasMortgage: false,
       hasBuyToLet: false,
       enabledPages: ["accounts", "budget", "savings", "pension"],
@@ -314,13 +317,13 @@ export function getSandboxPersonaData(persona: "debt" | "medium" | "high" | "wea
         liquidCash: 15300,
       },
       budgetData: {
-        monthlyIncome: 2820,
-        annualSalary: 45000,
-        monthlyExpenses: 2120,
-        monthlySurplus: 700,
-        budgetedSavings: 450,
+        monthlyIncome: 2503,
+        annualSalary: 39000,
+        monthlyExpenses: 1970,
+        monthlySurplus: 533,
+        budgetedSavings: 300,
         livingExpenses: 1670,
-        savingsRatePct: 41,
+        savingsRatePct: 33,
         runwayMonths: 7.5,
         runwayLabel: "7.5 mos",
         rawEntries: budgetEntries,
@@ -331,7 +334,7 @@ export function getSandboxPersonaData(persona: "debt" | "medium" | "high" | "wea
       },
       savingsData: {
         totalSavingsBalance: 12500,
-        totalMonthlyContributions: 450,
+        totalMonthlyContributions: 300,
         weightedInterestRate: 4.75,
         accountsCount: 1,
       },
@@ -341,7 +344,7 @@ export function getSandboxPersonaData(persona: "debt" | "medium" | "high" | "wea
         employeePercent: 5.0,
         employerPercent: 3.0,
         isSalarySacrifice: false,
-        monthlyContributionEst: 300,
+        monthlyContributionEst: 260,
       },
       mortgageData: {
         mortgageBalance: 0,
@@ -351,23 +354,23 @@ export function getSandboxPersonaData(persona: "debt" | "medium" | "high" | "wea
       },
       forecastData: {
         totalAssets: 43300,
-        monthlySavingRate: 750,
-        annualSalary: 45000,
-        estimatedTakeHome: 2820,
+        monthlySavingRate: 560,
+        annualSalary: 39000,
+        estimatedTakeHome: 2503,
       },
       taxData: {
         taxYear: getCurrentUKTaxYear(),
-        totalIncome: 45000,
+        totalIncome: 39000,
         totalExpenses: 0,
-        netProfit: 45000,
-        estimatedTaxDue: 6486,
+        netProfit: 39000,
+        estimatedTaxDue: 5286,
         recordsCount: 1,
       },
       debtData: null,
     };
   }
 
-  // Persona C: £100k High Earner (Tax Trap & BTL)
+  // Persona C: higher earner with a buy-to-let (shown last in the sandbox, E31)
   const highAccounts = [
     {
       id: "demo-high-acc-1",

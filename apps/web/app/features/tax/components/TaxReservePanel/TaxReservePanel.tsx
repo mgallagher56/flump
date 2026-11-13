@@ -20,8 +20,8 @@ import {
 export interface TaxReservePanelProps {
   taxYear: string;
   result: TaxCalculationResult;
-  /** Gross income the £100k band check uses. */
-  trapGrossIncome: number;
+  /** Income the Personal Allowance taper note uses as adjusted net income. */
+  trapAdjustedNetIncome: number;
   trapRegion: TaxTrapAlertBannerProps["region"];
   payeSalary: number;
   onPayeSalaryChange: (value: number) => void;
@@ -46,11 +46,11 @@ const gbp = (value: number, sign?: "always") => (
   <Money fractionDigits={2} signDisplay={sign} size="sm" value={value} />
 );
 
-/** "Payments and reserve" tab: £100k band, payments on account, inputs and the full workings. */
+/** "Payments and reserve" tab: Personal Allowance taper note, payments on account, inputs and the full workings. */
 export const TaxReservePanel: FC<TaxReservePanelProps> = ({
   taxYear,
   result,
-  trapGrossIncome,
+  trapAdjustedNetIncome,
   trapRegion,
   payeSalary,
   onPayeSalaryChange,
@@ -61,7 +61,7 @@ export const TaxReservePanel: FC<TaxReservePanelProps> = ({
 }) => (
   <div className={root()}>
     <div className={twoUp()}>
-      <TaxTrapAlertBanner grossIncome={trapGrossIncome} region={trapRegion} />
+      <TaxTrapAlertBanner adjustedNetIncome={trapAdjustedNetIncome} region={trapRegion} />
       <PaymentsOnAccountCard
         annualSelfAssessmentTax={
           result.netAdditionalTaxToPay ?? Math.max(0, result.totalTaxDue - result.payeTaxDue)

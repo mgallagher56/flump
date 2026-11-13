@@ -25,4 +25,16 @@ describe("ToolsGrid", () => {
       TOOL_TILES.findIndex((t) => t.slug === "uk-100k-tax-trap-calculator"),
     );
   });
+
+  it("follows marketing's CANONICAL_TOOL_SLUGS order (E31; web uses shorter slugs for three)", () => {
+    expect(TOOL_TILES.map((t) => t.slug)).toEqual([
+      "uk-debt-snowball-vs-avalanche-calculator",
+      "0-percent-balance-transfer-payoff-calculator",
+      "overdraft-cost-and-payoff-calculator",
+      "mortgage-overpay-vs-isa",
+      "uk-student-loan-overpay-or-invest-calculator",
+      "uk-100k-tax-trap-calculator",
+      "section-24-landlord-calculator",
+    ]);
+  });
 });

@@ -169,6 +169,23 @@ function defaultTrapTaxYear(): string {
   return resolveUkTaxYear();
 }
 
+/**
+ * Lower edge of the band in which the app shows the Personal Allowance taper alert (E31,
+ * owner decision 2026-11-13: lowered from £95,000). Inclusive.
+ */
+export const TAX_TRAP_ALERT_FLOOR_GBP = 90_000;
+
+/**
+ * True when adjusted net income is in the alert band, £90,000 to £125,140 inclusive. The
+ * income comes from saved details, or from a scenario value inside a ScenarioZone.
+ */
+export function isInTaxTrapAlertBand(adjustedNetIncome: number): boolean {
+  return (
+    adjustedNetIncome >= TAX_TRAP_ALERT_FLOOR_GBP &&
+    adjustedNetIncome <= UK_TAX_CONSTANTS.TAX_TRAP_UPPER_THRESHOLD
+  );
+}
+
 export interface TaxTrapOptions {
   /**
    * Pay liable to Class 1 NI (E25-T4). Defaults to `adjustedNetIncome`, the old behaviour. Callers that
@@ -188,7 +205,7 @@ export function analyzeTaxTrap(
   const taperStart = rules.ewni.personalAllowanceTaperStart;
   const taperEnd = rules.taperEnd;
   const isInTaxTrap = adjustedNetIncome > taperStart && adjustedNetIncome <= taperEnd;
-  const isNearTaxTrap = adjustedNetIncome >= 95000 && adjustedNetIncome <= taperStart;
+  const isNearTaxTrap = adjustedNetIncome >= TAX_TRAP_ALERT_FLOOR_GBP && adjustedNetIncome <= taperStart;
 
   const excessOver100k = Math.max(0, adjustedNetIncome - taperStart);
   const excessAbove100k = Math.min(excessOver100k, taperEnd - taperStart);

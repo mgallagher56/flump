@@ -6,7 +6,7 @@ import { useUserProfile } from "~/hooks/useUserProfile";
 import { useFinancialBaseline } from "~/state/baseline.store";
 import { pageRoot } from "./TakeHomeContainer.styles";
 
-/** Take-home pay, the £100k tax trap and pay-rise effect. Moved out of Savings (IA review T-IA-3). */
+/** Take-home pay, marginal rates and thresholds, and pay-rise effect. Moved out of Savings (IA review T-IA-3). */
 export const TakeHomeContainer: FC = () => {
   const loaderData = useLoaderData<any>();
   const navigate = useNavigate();
@@ -24,7 +24,7 @@ export const TakeHomeContainer: FC = () => {
   return (
     <div className={pageRoot()}>
       <PageHeader
-        subtitle="What you take home, what the £100k tax trap costs, and what a pay rise or salary sacrifice changes."
+        subtitle="What you keep from your pay, the tax rates and thresholds that apply, and what a pay rise or salary sacrifice would change."
         title="Your take-home pay"
       />
       <TakeHomeCalculator

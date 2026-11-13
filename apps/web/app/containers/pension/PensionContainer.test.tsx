@@ -268,6 +268,31 @@ describe("PensionContainer", () => {
       expect(container.textContent).not.toContain("effective 60% marginal tax rate");
     });
 
+    it("the taper note states facts only, with no apply button (E31, R5, R8)", () => {
+      setProfile({
+        annualSalary: 110000,
+        pensionPercent: 0,
+        pensionEmployerPercent: 0,
+        setupChecklistCompletedSteps: ["pension"],
+      });
+      const { container } = render(<PensionContainer />);
+      const note = container.querySelector('[aria-labelledby="pension-trap-title"]');
+      expect(note).not.toBeNull();
+      expect(note?.textContent).not.toMatch(/tax trap detected|restores your full|escape|reclaim/i);
+      expect(screen.queryByRole("button", { name: /^apply/i })).toBeNull();
+    });
+
+    it("shows no taper note below the band", () => {
+      setProfile({
+        annualSalary: 39000,
+        pensionPercent: 5,
+        pensionEmployerPercent: 3,
+        setupChecklistCompletedSteps: ["pension"],
+      });
+      const { container } = render(<PensionContainer />);
+      expect(container.querySelector('[aria-labelledby="pension-trap-title"]')).toBeNull();
+    });
+
     it("Model this contribution seeds the extra-contribution lever and makes no save call", () => {
       setProfile({
         annualSalary: 110000,

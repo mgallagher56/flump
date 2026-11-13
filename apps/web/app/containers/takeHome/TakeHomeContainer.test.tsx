@@ -37,6 +37,12 @@ describe("<TakeHomeContainer />", () => {
     expect(screen.getByText("calc 60000")).toBeDefined();
   });
 
+  it("describes the page for every earner, not only the £100k band (E31)", () => {
+    const { container } = render(<TakeHomeContainer />);
+    expect(screen.getByText(/what you keep from your pay/i)).toBeDefined();
+    expect(container.textContent).not.toMatch(/100k|tax trap/i);
+  });
+
   it("sends 'model this' to the Savings forecaster with the monthly rise", () => {
     render(<TakeHomeContainer />);
     fireEvent.click(screen.getByText("calc 60000"));

@@ -35,10 +35,11 @@ export const loader = async (args: LoaderFunctionArgs) => {
   return {};
 };
 
+/** Neutral names that describe what each sample household is doing (copy guide 7b, E31). */
 const PERSONAS = [
-  { key: "debt", label: "Clearing £8k debt" },
-  { key: "medium", label: "£45k earner, no debt" },
-  { key: "high", label: "£100k high earner" },
+  { key: "medium", label: "Renting" },
+  { key: "debt", label: "Paying off debts" },
+  { key: "high", label: "Higher earner" },
 ] as const;
 
 export default function SandboxRoute() {
@@ -49,9 +50,9 @@ export default function SandboxRoute() {
   const initialPersona: "debt" | "medium" | "high" =
     personaParam === "wealth" || personaParam === "high"
       ? "high"
-      : personaParam === "medium"
-        ? "medium"
-        : "debt";
+      : personaParam === "debt"
+        ? "debt"
+        : "medium";
 
   const [activePersona, setActivePersona] = useState<"debt" | "medium" | "high">(initialPersona);
   const setBaseline = useSetAtom(financialBaselineAtom);
@@ -67,7 +68,7 @@ export default function SandboxRoute() {
     } else if (activePersona === "medium") {
       setBaseline((prev) => ({
         ...prev,
-        annualGrossSalary: 45000,
+        annualGrossSalary: 39000,
         financialStage: "STAGE_2_BUFFER_BUILD",
         enabledModules: ["accounts", "budget", "pension"],
       }));

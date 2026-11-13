@@ -79,6 +79,24 @@ describe("DebtContainer", () => {
     loaderState.accountsOverride = null;
   });
 
+  it("shows the same MoneyHelper debt-help line to every user, whatever their figures (R3, R4)", () => {
+    const helpText = () =>
+      screen.getByRole("complementary", { name: "Debt advice" }).textContent ?? "";
+
+    const { unmount } = render(<DebtContainer />);
+    const withDebts = helpText();
+    unmount();
+
+    loaderState.empty = true;
+    try {
+      render(<DebtContainer />);
+      expect(helpText()).toBe(withDebts);
+    } finally {
+      loaderState.empty = false;
+    }
+    expect(withDebts).toContain("Free, impartial debt help is available from MoneyHelper");
+  });
+
   it("passes the loader surplus, not a hard-coded fallback", () => {
     render(<DebtContainer />);
     expect(screen.getByText(/Your budget surplus is £420 a month/)).toBeDefined();
