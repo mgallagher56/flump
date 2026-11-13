@@ -13,6 +13,7 @@ export * from "./profile.js";
 export * from "./section24.js";
 export * from "./tax-calculator.js";
 export * from "./tax-rules.js";
+export * from "./tax-year-verification.js";
 export * from "./types.js";
 export * from "./uk-rule-sources.js";
 export * from "./uk-tax.js";

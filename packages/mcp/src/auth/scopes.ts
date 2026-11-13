@@ -49,7 +49,6 @@ export const RESOURCE_SCOPES: Readonly<Record<string, ScopeRequirement>> = {
   accounts: READ,
   budget: READ,
   "tax-ledger": READ,
-  "uk-fiscal-guardrails": READ,
 };
 
 export const PROMPT_SCOPES: Readonly<Record<string, ScopeRequirement>> = {

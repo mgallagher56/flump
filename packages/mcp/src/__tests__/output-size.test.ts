@@ -11,7 +11,7 @@ const TOOL_ARGS: Record<string, Record<string, unknown>> = {
   calculate_self_assessment_and_section24: { taxYear: "2025/26" },
   project_wealth_scenario: {},
   evaluate_cashflow_runway_and_health: {},
-  evaluate_uk_student_loan: { currentBalanceGbp: 30000 },
+  evaluate_uk_student_loan: { plan: "PLAN_5", currentBalanceGbp: 30000 },
   query_transactions_and_spending: {},
 };
 
@@ -70,7 +70,6 @@ describe("MCP output size and registration (E17-N3)", () => {
         ["budget", "flump://context/budget"],
         ["executive-snapshot", "flump://context/executive-snapshot"],
         ["tax-ledger", "flump://context/tax-ledger"],
-        ["uk-fiscal-guardrails", "flump://rules/uk-fiscal-guardrails"],
       ].sort(),
     );
   });

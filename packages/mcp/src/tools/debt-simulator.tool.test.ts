@@ -1,5 +1,10 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { connectTestClient, TEST_TOKEN, type TestHarness } from "../testing/client.js";
+import {
+  connectTestClient,
+  omitAssumptions,
+  TEST_TOKEN,
+  type TestHarness,
+} from "../testing/client.js";
 import { emptyUser, renterWithUnknownAprCard } from "../testing/personas.js";
 
 describe("simulate_debt_payoff (E17-N1)", () => {
@@ -38,7 +43,7 @@ describe("simulate_debt_payoff (E17-N1)", () => {
       ),
     });
     const explicit = await h.callJson("simulate_debt_payoff", {});
-    expect(unknown).toEqual(explicit);
+    expect(omitAssumptions(unknown)).toEqual(omitAssumptions(explicit));
   });
 
   it("reports no debt for an empty user without leaking defaults", async () => {

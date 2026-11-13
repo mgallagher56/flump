@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { connectTestClient, type TestHarness } from "../testing/client.js";
+import { connectTestClient, omitAssumptions, type TestHarness } from "../testing/client.js";
 import { emptyUser, mortgageAndIsa } from "../testing/personas.js";
 
 describe("project_wealth_scenario (E17-N1)", () => {
@@ -27,7 +27,7 @@ describe("project_wealth_scenario (E17-N1)", () => {
       baseline: { ...emptyUser.baseline, totalCashSavings: 5000, totalPensionPot: 15000 },
     });
     const explicit = await h.callJson("project_wealth_scenario", { horizonYears: 10 });
-    expect(omitted).toEqual(explicit);
+    expect(omitAssumptions(omitted)).toEqual(omitAssumptions(explicit));
   });
 
   it("applies a preset life event and lowers the scenario net worth", async () => {

@@ -10,7 +10,7 @@ exports[`MCP surface snapshot (E17-N1) > pins prompts/list 1`] = `
   },
   {
     "arguments": [],
-    "description": "Analyzes whether gross salary + bonuses enter the UK £100k-£125,140 60% (or 69.5% Scottish) tax trap and models optimal pension sacrifice.",
+    "description": "Analyzes whether gross salary + bonuses enter the UK £100k-£125,140 tax trap and models optimal pension sacrifice.",
     "name": "escape-100k-tax-trap",
     "title": "Escape the 100k tax trap",
   },
@@ -36,12 +36,6 @@ exports[`MCP surface snapshot (E17-N1) > pins resources/list 1`] = `
     "name": "baseline",
     "title": "Financial baseline",
     "uri": "flump://context/baseline",
-  },
-  {
-    "mimeType": "application/json",
-    "name": "uk-fiscal-guardrails",
-    "title": "UK fiscal guardrails",
-    "uri": "flump://rules/uk-fiscal-guardrails",
   },
   {
     "mimeType": "application/json",
@@ -226,8 +220,13 @@ exports[`MCP surface snapshot (E17-N1) > pins tools/list > tools/list 1`] = `
           "type": "string",
         },
         "taxYear": {
-          "description": "UK tax year to evaluate (defaults to 2025/26)",
+          "description": "UK tax year to evaluate (defaults to the current UK tax year)",
           "enum": [
+            "2020/21",
+            "2021/22",
+            "2022/23",
+            "2023/24",
+            "2024/25",
             "2025/26",
             "2026/27",
           ],
@@ -345,8 +344,16 @@ exports[`MCP surface snapshot (E17-N1) > pins tools/list > tools/list 1`] = `
           "type": "number",
         },
         "taxYear": {
-          "default": "2024/25",
-          "description": "UK fiscal tax year for Self-Assessment (e.g. '2024/25', '2025/26')",
+          "description": "UK fiscal tax year for Self-Assessment (defaults to the current UK tax year)",
+          "enum": [
+            "2020/21",
+            "2021/22",
+            "2022/23",
+            "2023/24",
+            "2024/25",
+            "2025/26",
+            "2026/27",
+          ],
           "type": "string",
         },
       },
@@ -524,7 +531,6 @@ exports[`MCP surface snapshot (E17-N1) > pins tools/list > tools/list 1`] = `
           "type": "number",
         },
         "plan": {
-          "default": "PLAN_2",
           "description": "UK student loan repayment plan",
           "enum": [
             "PLAN_1",
@@ -537,6 +543,7 @@ exports[`MCP surface snapshot (E17-N1) > pins tools/list > tools/list 1`] = `
         },
       },
       "required": [
+        "plan",
         "currentBalanceGbp",
       ],
       "type": "object",
@@ -593,13 +600,13 @@ exports[`MCP surface snapshot (E17-N1) > pins tools/list > tools/list 1`] = `
 
 exports[`per-tool output size (E17-N1) > calls every registered tool and pins the output size in bytes 1`] = `
 {
-  "calculate_self_assessment_and_section24": 500,
-  "compare_mortgage_overpay_vs_isa": 1000,
-  "evaluate_cashflow_runway_and_health": 1500,
+  "calculate_self_assessment_and_section24": 1000,
+  "compare_mortgage_overpay_vs_isa": 1500,
+  "evaluate_cashflow_runway_and_health": 2000,
   "evaluate_uk_student_loan": 500,
   "project_wealth_scenario": 1500,
   "query_transactions_and_spending": 500,
-  "simulate_debt_payoff": 1000,
+  "simulate_debt_payoff": 1500,
   "simulate_uk_tax_and_pension_sacrifice": 1000,
 }
 `;

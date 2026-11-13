@@ -217,7 +217,7 @@ const TOOL_CALLS: Array<{ name: string; args: Record<string, unknown> }> = [
   { name: "calculate_self_assessment_and_section24", args: { taxYear: "2025/26" } },
   { name: "project_wealth_scenario", args: {} },
   { name: "evaluate_cashflow_runway_and_health", args: {} },
-  { name: "evaluate_uk_student_loan", args: { currentBalanceGbp: 30000 } },
+  { name: "evaluate_uk_student_loan", args: { plan: "PLAN_5", currentBalanceGbp: 30000 } },
   { name: "query_transactions_and_spending", args: {} },
 ];
 

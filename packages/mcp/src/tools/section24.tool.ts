@@ -1,18 +1,20 @@
 import {
   calculateSection24Tax,
   calculateUKTax,
+  getCurrentUkTaxYear,
   isSupportedUkTaxYear,
   SUPPORTED_UK_TAX_YEARS,
 } from "@flump/finance-engine";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
+import { taxVerificationFields } from "../assumptions.js";
 import type { McpServerContext } from "../types.js";
 
 export const section24Schema = {
   taxYear: z
-    .string()
-    .default("2024/25")
-    .describe("UK fiscal tax year for Self-Assessment (e.g. '2024/25', '2025/26')"),
+    .enum(SUPPORTED_UK_TAX_YEARS)
+    .optional()
+    .describe("UK fiscal tax year for Self-Assessment (defaults to the current UK tax year)"),
   hypotheticalFreelanceProfitGbp: z
     .number()
     .min(0)
@@ -62,7 +64,7 @@ export function registerSection24Tool(
       },
     },
     async (args) => {
-      const taxYear = args.taxYear;
+      const taxYear: string = args.taxYear ?? getCurrentUkTaxYear();
       if (!isSupportedUkTaxYear(taxYear)) {
         // calculateUKTax is strict (E22): reject an unsupported year as a tool error, never guess.
         return {
@@ -120,6 +122,7 @@ export function registerSection24Tool(
             type: "text",
             text: JSON.stringify({
               taxYear,
+              ...taxVerificationFields(taxYear),
               section24Analysis: {
                 grossRentalIncomeGbp: s24Result.shareRentalIncomeGbp,
                 allowableExpensesGbp: s24Result.shareAllowableExpensesGbp,
