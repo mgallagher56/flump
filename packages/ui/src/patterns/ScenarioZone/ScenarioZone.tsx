@@ -28,8 +28,14 @@ export interface ScenarioZoneProps {
   children?: ReactNode;
   /** The "Update your details" link. It opens the normal edit form with the SAVED values. */
   footer?: ReactNode;
-  /** Outcome text announced politely, prefixed with "Illustration:". */
+  /**
+   * Outcome text announced politely, prefixed with "Illustration:". Keep it empty until the user
+   * changes an input, and derive it only while `isModified`. A non-empty value present at mount
+   * is spoken once.
+   */
   announcement?: string;
+  /** Id for the section element. */
+  id?: string;
   className?: string;
 }
 
@@ -46,6 +52,7 @@ export const ScenarioZone: FC<ScenarioZoneProps> = ({
   children,
   footer,
   announcement,
+  id,
   className,
 }) => {
   const headingId = useId();
@@ -53,12 +60,13 @@ export const ScenarioZone: FC<ScenarioZoneProps> = ({
   return (
     <section
       aria-labelledby={headingId}
+      id={id}
       className={cx(slots.root, className)}
       data-testid="scenario-zone"
     >
       <div className={slots.header}>
         <div className={slots.titleRow}>
-          <Heading as="h2" id={headingId} size="md">
+          <Heading as="h2" data-testid="scenario-zone-title" id={headingId} size="md">
             {title}
           </Heading>
           <StatusBadge variant="neutral" icon={<Icon icon={CircleDashed} size="sm" />}>
