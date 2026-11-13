@@ -628,6 +628,8 @@ Source: [docs/research/market-research-2026-11.md](../research/market-research-2
 
 ## E26. Tax-aware agent tools (extension of E17)
 
+> **Folded into E17 on 2026-11-13** (DECISIONS.md round 9, [E17-mcp-replan-2026-11.md](plans/E17-mcp-replan-2026-11.md)). The tax part is the single `get_tax_year_position` read tool; no further calculators are planned. The text below is kept for history.
+
 - **Severity:** P2 (differentiator; depends on E25 and E29).
 - **Blocked by:** E17 design, E25 engine, E29 compliance gate.
 - **Done when:** MCP tools and prompts expose the E25 engine ("what if I sacrifice £X", "show my marginal rate", "explain my take-home") with read-only default scopes, explicit consent for any write, an audit log and per-tool descriptions worded as guidance; an eval harness proves models select tools correctly and do not output personal product recommendations; a DPIA covers disclosure to the model provider and transfers; marketing claims match what ships.

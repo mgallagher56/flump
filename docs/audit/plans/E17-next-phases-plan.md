@@ -1,5 +1,7 @@
 # E17 next phases: implementation plan (phases 0 to 2 and 7; 3 to 5 gated)
 
+> **2026-11-13 re-plan** ([E17-mcp-replan-2026-11.md](E17-mcp-replan-2026-11.md), DECISIONS.md round 9) wins over this file where they conflict: N12 is one tool (`get_tax_year_position`), N13 and N14 are cancelled, E26 is folded into E17, and Phases 3 to 5 follow the re-plan's PRs A to F.
+
 > **Round 4 overrides** (see [DECISIONS.md round 4](DECISIONS.md)). Where these conflict with the text below, these win:
 > - OD1 A (N10 adopts the E23 picture), OD3 `/mcp` canonical, OD4 yes (N9 now), OD5 A (no transaction search in v2).
 > - N16 loses the expiry and name rules to E20-N16; it keeps the checksum format, revoke-all and the manifest entry. Order: N6, E20-N16, N7, N16, N15.
@@ -258,7 +260,7 @@ Shared rules for every ticket:
 - **Verify:** personas and golden outputs; no default leak (the N1 table reaches zero for these tools); Section 5.
 - **Risk:** E16 MERGE-2 and E4 T15a may change the engine's mortgage maths. N11 only calls engine functions.
 
-**E17-N12. Tax tools v2 (T1.7, D4-B). M.**
+**E17-N12. Tax tools v2 (T1.7, D4-B). M.** **Superseded 2026-11-13** ([E17-mcp-replan-2026-11.md](E17-mcp-replan-2026-11.md)): one tool, `get_tax_year_position`, replaces both legacy tax tools; `simulate_salary_sacrifice_and_gift_aid` and `estimate_self_assessment` are not built.
 - **Goal:** add `get_tax_year_position`, `simulate_salary_sacrifice_and_gift_aid` and `estimate_self_assessment`.
   - All go through the E22 resolver, with `verification` from N5 and a notice in every response.
   - Region is a required argument unless stored. When it is not stored, use the labelled England, Wales or NI assumption (E23 D-4-C).
@@ -269,7 +271,7 @@ Shared rules for every ticket:
 - **Verify:** tests backed by vectors. Signed years assert values; unsigned years assert `unverified`. Then Section 5.
 - **Risk:** users trusting unverified figures. The D4-B notice is mandatory in the output schema.
 
-**E17-N13. `search_transactions` (T1.5). M. Deferred.**
+**E17-N13. `search_transactions` (T1.5). M. Cancelled 2026-11-13** ([E17-mcp-replan-2026-11.md](E17-mcp-replan-2026-11.md)).
 - **Gate:** E16 F41 (CSV import). Synced transactions are no longer stored (`DeleteSyncedTransactions1794355500000.ts`), so this tool has almost no data today.
 - **When built:**
   - Dates validated as `YYYY-MM-DD`, at most 366 days.
@@ -277,7 +279,7 @@ Shared rules for every ticket:
   - `untrusted` wrapper, at most 80 characters.
   - Cursor in `agent-data.service.ts`, following E21's pagination convention. Do not edit `finance.service.ts:82` (E21 T6.6).
 
-**E17-N14. Resources v2, prompts v2 and changelog (T1.8, T1.9, T1.10). M.**
+**E17-N14. Resources v2, prompts v2 and changelog (T1.8, T1.9, T1.10). M.** **Cancelled 2026-11-13** ([E17-mcp-replan-2026-11.md](E17-mcp-replan-2026-11.md)): the advisor prompts and four resources are deleted, `flump://schema` is the one resource, and two data-entry prompts come with the write tools (re-plan PR D).
 - **Goal:**
   - Delete `executive-snapshot` and `baseline` (`baseline.resource.ts:10-65`).
   - NEW resources:
