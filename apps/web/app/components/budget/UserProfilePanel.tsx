@@ -1,4 +1,3 @@
-import { calculateUKEWNITakeHome, getCurrentUKTaxYear } from "@flump/finance-engine";
 import { SegmentedTabs } from "@repo/ui";
 import { css } from "@repo/ui/styled-system/css";
 import { type FC, useRef, useState } from "react";
@@ -121,57 +120,6 @@ const toggleKnobStyle = (active: boolean) => ({
   backgroundColor: "white",
   transition: "left 0.2s ease",
 });
-
-export interface TaxBreakdown {
-  gross: number;
-  pension: number;
-  personalAllowance: number;
-  taxableIncome: number;
-  incomeTax: number;
-  ni: number;
-  netAnnual: number;
-  monthlyTakeHome: number;
-}
-
-/**
- * calculateNetTakeHome — delegates to the canonical taxRules.ts helpers.
- *
- * UK only (E16 D6-B): uses calculateUKEWNITakeHome (EWNI rates).
- * Returns null (unknown) when salary or employment type is missing;
- * it never returns gross pay as take-home.
- *
- * NOTE: These are estimates only. See TAX_DISCLAIMER in taxRules.ts.
- */
-export function calculateNetTakeHome(
-  annualSalary: number | null | undefined,
-  employmentType: string | null | undefined,
-  pensionPercent = 5,
-  isSalarySacrifice = true,
-): TaxBreakdown | null {
-  // Unknown inputs are unknown: never fall back to gross as take-home.
-  if (!annualSalary || annualSalary <= 0) return null;
-
-  if (employmentType !== "employed" && employmentType !== "self-employed") return null;
-  const empType = employmentType;
-
-  const result = calculateUKEWNITakeHome(
-    annualSalary,
-    empType,
-    pensionPercent,
-    isSalarySacrifice,
-    getCurrentUKTaxYear(),
-  );
-  return {
-    gross: result.gross,
-    pension: result.pension,
-    personalAllowance: result.personalAllowance,
-    taxableIncome: result.taxableIncome,
-    incomeTax: result.incomeTax,
-    ni: result.ni,
-    netAnnual: result.netAnnual,
-    monthlyTakeHome: result.monthlyTakeHome,
-  };
-}
 
 const UserProfilePanel: FC<UserProfilePanelProps> = ({ initialProfile, user }) => {
   const { profile, setProfile, updateProfile, sendPasswordResetEmail, resetFinancialData } =
