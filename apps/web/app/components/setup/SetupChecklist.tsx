@@ -138,6 +138,8 @@ const SetupChecklist: FC<SetupChecklistProps> = (props) => {
     ? allSteps.filter((s) => {
         if (s.key === "profile") return true;
         if (s.key === "runway") return props.enabledPages?.includes("budget");
+        // The growth forecaster is a tab in Savings, so its step follows the Savings module.
+        if (s.key === "forecast") return props.enabledPages?.includes("savings");
         return props.enabledPages?.includes(s.key);
       })
     : allSteps;

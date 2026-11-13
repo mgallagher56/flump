@@ -43,6 +43,7 @@ import {
   type AppPageKey,
   type DashboardWidgetKey,
   DEFAULT_ENABLED_PAGES,
+  stripRetiredKeys,
 } from "~/utils/pageConfig";
 
 export const loader = async (args: LoaderFunctionArgs) => {
@@ -65,7 +66,7 @@ export const action = async (args: ActionFunctionArgs) => {
   const formData = await args.request.formData();
   const rawEnabledPages = formData.get("enabledPages");
   const enabledPages: AppPageKey[] = rawEnabledPages
-    ? JSON.parse(rawEnabledPages as string)
+    ? stripRetiredKeys<AppPageKey>(JSON.parse(rawEnabledPages as string))
     : DEFAULT_ENABLED_PAGES;
 
   const dashboardWidgets: DashboardWidgetKey[] = [...enabledPages];
@@ -233,7 +234,7 @@ export default function OnboardingRoute() {
 
   // Auto-inferred modules
   const inferredModules = useMemo<AppPageKey[]>(() => {
-    const modules = new Set<AppPageKey>(["accounts", "budget", "savings", "forecast"]);
+    const modules = new Set<AppPageKey>(["accounts", "budget", "savings"]);
     if (unsecuredDebt > 0) modules.add("debt");
     if (pot > 0 || pensionPct > 0) modules.add("pension");
     if (housingStatus === "mortgage" || mortgageBalance > 0 || propertyValue > 0)

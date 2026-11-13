@@ -6,7 +6,6 @@ import {
   type LucideIcon,
   PiggyBank,
   Receipt,
-  TrendingUp,
   Wallet,
 } from "lucide-react";
 import type { DashboardWidgetKey } from "~/utils/pageConfig";
@@ -19,6 +18,5 @@ export const WIDGET_ICONS: Record<DashboardWidgetKey, LucideIcon> = {
   savings: PiggyBank,
   pension: Briefcase,
   mortgage: Home,
-  forecast: TrendingUp,
   tax: Receipt,
 };

@@ -93,6 +93,29 @@ describe("UserProfileService (Deep Module)", () => {
     expect(result.profile.annualSalary).toBeNull();
   });
 
+  it("filters the retired forecast module key on read without touching the stored row", async () => {
+    const stored = {
+      id: "profile-1",
+      userId: "user-123",
+      enabledPages: ["accounts", "forecast", "tax"],
+      dashboardWidgets: ["accounts", "forecast"],
+      dashboardWidgetOrder: ["forecast", "accounts"],
+      dashboardWidgetSizes: { accounts: "wide", forecast: "normal" },
+      dashboardWidgetConfig: { forecast: { forecastYears: 20 } },
+    };
+    mockUserProfileRepo.findOne.mockResolvedValue(stored);
+
+    const result = await service.getProfile("user-123");
+
+    expect(result.enabledPages).toEqual(["accounts", "tax"]);
+    expect(result.dashboardWidgets).toEqual(["accounts"]);
+    expect(result.dashboardWidgetOrder).toEqual(["accounts"]);
+    expect(result.dashboardWidgetSizes).toEqual({ accounts: "wide" });
+    expect(result.dashboardWidgetConfig).toEqual({});
+    expect(mockUserProfileRepo.save).not.toHaveBeenCalled();
+    expect(stored.enabledPages).toContain("forecast");
+  });
+
   describe("lazy profile creation", () => {
     const uniqueViolation = () => Object.assign(new Error("duplicate key"), { code: "23505" });
     const wrappedViolation = () => {

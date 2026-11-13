@@ -21,7 +21,6 @@ vi.mock("~/hooks/useUserProfile", async (importOriginal) => {
         "savings",
         "pension",
         "mortgage",
-        "forecast",
         "tax",
         ...profileOverrides.extraWidgets,
       ]);
@@ -31,22 +30,12 @@ vi.mock("~/hooks/useUserProfile", async (importOriginal) => {
           userId: "u1",
           displayName: "Alex",
           currency: "GBP",
-          enabledPages: [
-            "accounts",
-            "budget",
-            "savings",
-            "pension",
-            "mortgage",
-            "forecast",
-            "tax",
-            "debt",
-          ],
+          enabledPages: ["accounts", "budget", "savings", "pension", "mortgage", "tax", "debt"],
           dashboardWidgets: widgets,
           dashboardWidgetOrder: ["tax", "accounts"],
           dashboardWidgetSizes: { accounts: "wide" },
           dashboardWidgetConfig: {
             accounts: { showAllocationBar: false },
-            forecast: { forecastYears: 20 },
           },
         },
         updateProfile: async (updates: { dashboardWidgets?: string[] }) => {
@@ -78,7 +67,7 @@ const dummyProps = {
     hasPension: true,
     hasMortgageAccount: true,
     hasRunForecast: true,
-    completedSteps: ["accounts", "budget", "profile", "savings", "pension", "mortgage", "forecast"],
+    completedSteps: ["accounts", "budget", "profile", "savings", "pension", "mortgage"],
   },
   accountsData: {
     netWorth: 50000,
@@ -177,7 +166,7 @@ describe("HomeDashboard", () => {
     expect(screen.getByText("Savings")).toBeDefined();
     expect(screen.getByText("Pension")).toBeDefined();
     expect(screen.getByText("Mortgage")).toBeDefined();
-    expect(screen.getByText("Growth forecast")).toBeDefined();
+    expect(screen.queryByText("Growth forecast")).toBeNull();
     expect(screen.getByText("Self Assessment")).toBeDefined();
   });
 
@@ -221,9 +210,9 @@ describe("HomeDashboard", () => {
     await waitFor(() => expect(screen.queryByText("Budget")).toBeNull());
   });
 
-  it("still applies saved per-widget settings read-only", () => {
+  it("no longer renders a growth forecast widget for the retired forecast module", () => {
     renderDashboard();
-    expect(screen.getByText(/20yr Wealth Projection/)).toBeDefined();
+    expect(screen.queryByText(/20yr Wealth Projection/)).toBeNull();
   });
 
   it("reverts a failed save to the last confirmed list, not the original", async () => {
