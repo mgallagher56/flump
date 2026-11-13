@@ -38,8 +38,6 @@ const APP_DIR = path.resolve(__dirname, "..");
 
 /**
  * Browser-reachable files that may still mention `accessToken`. Every entry is debt with an owner.
- * - MortgageContainer.tsx reads `accessToken` from root loader data (now always undefined) and
- *   passes it on. E20-N9 removes it.
  * - api-client.ts keeps the deprecated, ignored optional `accessToken` option so that call site
  *   still compiles. E20-N9 removes it together with MortgageContainer.
  * - AddEditAccountsDialog.tsx and ConnectBankWizard.tsx only contain the placeholder text for the
@@ -49,7 +47,6 @@ const APP_DIR = path.resolve(__dirname, "..");
 const ACCESS_TOKEN_ALLOW_LIST = [
   "components/dialogs/addEditAccountsDialog/AddEditAccountsDialog.tsx",
   "components/dialogs/connectBankWizard/ConnectBankWizard.tsx",
-  "containers/mortgage/MortgageContainer.tsx",
   "services/api-client.ts",
 ];
 

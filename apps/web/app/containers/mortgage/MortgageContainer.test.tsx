@@ -29,7 +29,6 @@ vi.mock("react-router", async () => {
     ...actual,
     useLoaderData: vi.fn(() => loaderData),
     useNavigate: () => mockNavigate,
-    useRouteLoaderData: () => ({ accessToken: "test-token" }),
   };
 });
 
@@ -184,6 +183,7 @@ describe("<MortgageContainer />", () => {
     if (!accountPatch) throw new Error("expected an account PATCH");
     expect(JSON.parse(String((accountPatch[1] as RequestInit).body))).toEqual({
       interestRate: 4.5,
+      termMonths: 216,
     });
     const profilePatch = calls.find(([url]) => String(url).endsWith("/user-profile"));
     if (!profilePatch) throw new Error("expected a profile PATCH");
@@ -191,13 +191,31 @@ describe("<MortgageContainer />", () => {
     for (const key of ["mortgageRate", "mortgageTermYears", "mortgageBalance", "homeValue"]) {
       expect(profileBody).not.toHaveProperty(key);
     }
-    expect(queryByText(/term/i, { selector: "[role='status']" })).toBeNull();
   });
 
-  test("the term field is labelled as not saved", () => {
+  test("a term over the 50-year limit is clamped to what is stored", async () => {
+    setApiEnv();
+    const fetchSpy = vi
+      .spyOn(globalThis, "fetch")
+      .mockImplementation(async () => new Response(JSON.stringify({}), { status: 200 }));
+    const { getByLabelText, getByRole, findByText } = customRender(<MortgageContainer />);
+    fireEvent.click(getByRole("button", { name: /^Edit$/i }));
+    fireEvent.change(getByLabelText(/^Remaining term/), { target: { value: "60" } });
+    fireEvent.click(getByRole("button", { name: /^Save$/i }));
+    await findByText(/Saved/);
+    const accountPatch = patches(fetchSpy).find(([url]) => String(url).endsWith("/accounts/m1"));
+    if (!accountPatch) throw new Error("expected an account PATCH");
+    expect(JSON.parse(String((accountPatch[1] as RequestInit).body))).toEqual({
+      termMonths: 600,
+    });
+    fireEvent.click(getByRole("button", { name: /^Edit$/i }));
+    expect((getByLabelText(/^Remaining term/) as HTMLInputElement).value).toBe("50");
+  });
+
+  test("the term field says it is saved when a mortgage account is linked", () => {
     const { getByText, getByRole, getByLabelText } = customRender(<MortgageContainer />);
     fireEvent.click(getByRole("button", { name: /^Edit$/i }));
-    const hint = getByText(/Not saved – enter each visit/);
+    const hint = getByText(/Stored on your mortgage account/);
     expect(hint).toBeDefined();
     // The hint is tied to the term field, not just nearby text.
     const term = getByLabelText(/^Remaining term/);
@@ -303,6 +321,14 @@ describe("<MortgageContainer />", () => {
       fireEvent.click(getByText("Buy to let (BTL)"));
       expect(queryByText(/180,000/)).toBeNull();
       expect(queryByText(/250,000/)).toBeNull();
+    });
+
+    test("uses the stored account term (months) as years", () => {
+      loaderData = loaderWith({ interestRate: 3.9, termMonths: 240 });
+      const { queryByText, getByRole, getByLabelText } = customRender(<MortgageContainer />);
+      expect(queryByText(/to see your figures/)).toBeNull();
+      fireEvent.click(getByRole("button", { name: /^Edit$/i }));
+      expect((getByLabelText(/^Remaining term/) as HTMLInputElement).value).toBe("20");
     });
 
     test("uses the stored account rate and only asks for the term", () => {
