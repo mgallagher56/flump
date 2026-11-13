@@ -180,3 +180,33 @@ describe("<TakeHomeCalculator /> estimate labelling and tax year", () => {
     expect(getByText(/^Estimate for 2026\/27/)).toBeDefined();
   });
 });
+
+describe("<TakeHomeCalculator /> the next £1,000", () => {
+  const openTool = (getByRole: (role: string, opts: { name: string }) => HTMLElement) => {
+    const tab = getByRole("tab", { name: "The next £1,000" });
+    fireEvent.pointerDown(tab, { button: 0 });
+    fireEvent.mouseDown(tab, { button: 0 });
+    fireEvent.keyDown(tab, { key: "Enter", code: "Enter" });
+  };
+
+  test("switches to the explorer, seeded from the saved salary, and resets with the zone", () => {
+    const { container, getByRole, getByLabelText, queryByRole } = customRender(
+      <TakeHomeCalculator initialSalary={45000} onApplyIncrease={vi.fn()} />,
+    );
+    expect(container.querySelector('[data-testid="marginal-rate-explorer"]')).toBeNull();
+    openTool(getByRole);
+    expect(container.querySelector('[data-testid="marginal-rate-explorer"]')).not.toBeNull();
+    expect((getByLabelText("Gross pay a year input") as HTMLInputElement).value).toBe("£45,000");
+
+    fireEvent.click(getByRole("button", { name: "Model a pension contribution" }));
+    fireEvent.click(getByRole("button", { name: "Reset to saved figures" }));
+    expect(queryByRole("button", { name: "Reset to saved figures" })).toBeNull();
+    expect(getByRole("button", { name: "Model a pension contribution" })).toBeDefined();
+  });
+
+  test("with no saved salary the basis line says the example is used", () => {
+    const { getByRole, getByText } = customRender(<TakeHomeCalculator onApplyIncrease={vi.fn()} />);
+    openTool(getByRole);
+    expect(getByText(/uses an example gross pay of £39,000/)).toBeDefined();
+  });
+});
