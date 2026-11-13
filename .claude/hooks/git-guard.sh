@@ -17,10 +17,14 @@ block() {
   exit 2
 }
 
-# Force push that names main/master is blocked from any branch.
-if echo "$cmd" | grep -qE "$force_push" && echo "$cmd" | grep -qE "$targets_main"; then
-  block "any branch" "force push targeting main/master"
-fi
+# Force push that names main/master is blocked from any branch. Only the push
+# command itself is checked, so rebasing onto origin/main and then force-pushing
+# a feature branch in the same command line is allowed.
+while IFS= read -r segment; do
+  if echo "$segment" | grep -qE "$force_push" && echo "$segment" | grep -qE "$targets_main"; then
+    block "any branch" "force push targeting main/master"
+  fi
+done < <(printf '%s\n' "$cmd" | tr ';&|' '\n\n\n')
 
 case "$branch" in
   main|master) ;;
