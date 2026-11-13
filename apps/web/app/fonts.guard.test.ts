@@ -38,24 +38,18 @@ describe("fonts are self-hosted", () => {
     expect(has("marketing/src/entry-client.tsx")).toBe(true);
   });
 
-  it("names the self-hosted family before any bare Inter or Plus Jakarta Sans", () => {
+  it("names the self-hosted family first in every font-family list", () => {
     // A bare "Inter" resolves to a locally installed font before the @font-face, which can be an
     // italic or otherwise wrong face on the viewer's machine.
-    const hits = sources
-      .filter(([f]) => /\.(tsx?|css)$/.test(f))
-      .flatMap(([f, text]) =>
-        text
-          .split("\n")
-          .filter(
-            (l) =>
-              /font-?family/i.test(l) &&
-              /["'](Inter|Plus Jakarta Sans)["']/.test(l) &&
-              !/["'](Inter|Plus Jakarta Sans) Variable["']\s*,\s*["'](Inter|Plus Jakarta Sans)["']/.test(
-                l,
-              ),
-          )
-          .map((l) => `${f}: ${l.trim()}`),
-      );
+    const hits: string[] = [];
+    for (const [f, text] of sources) {
+      if (!/\.(tsx?|css)$/.test(f)) continue;
+      for (const m of text.matchAll(/font-?family["']?\s*:\s*([^;}]+)/gi)) {
+        const names = [...m[1].matchAll(/["'](Inter|Plus Jakarta Sans)( Variable)?["']/g)];
+        // The first self-hosted-family name in the list must be the "... Variable" face.
+        if (names.length > 0 && !names[0][2]) hits.push(`${f}: ${m[1].trim().slice(0, 80)}`);
+      }
+    }
     expect(hits).toEqual([]);
   });
 });

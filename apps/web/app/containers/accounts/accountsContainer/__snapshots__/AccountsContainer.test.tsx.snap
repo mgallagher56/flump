@@ -7,13 +7,13 @@ exports[`<AccountsContainer /> > should render as expected when accounts exist 1
   >
     <div>
       <h1
-        class="c_text.primary ff_var(--fonts-display,_'Plus_Jakarta_Sans',_sans-serif) ls_-0.025em fs_1.875rem fw_bold lh_tight m_0 "
+        class="c_text.primary ff_var(--fonts-display,_'Plus_Jakarta_Sans_Variable',_'Plus_Jakarta_Sans',_sans-serif) ls_-0.025em fs_1.875rem fw_bold lh_tight m_0 "
         style="font-size: 1.875rem;"
       >
         accounts
       </h1>
       <p
-        class="ff_var(--fonts-body,_'Inter',_sans-serif) fs_sm fw_normal lh_1.6 ls_normal c_text.muted m_0 "
+        class="ff_var(--fonts-body,_'Inter_Variable',_'Inter',_sans-serif) fs_sm fw_normal lh_1.6 ls_normal c_text.muted m_0 "
         style="margin-top: 4px;"
       >
         Unified net worth, savings yield and UK allowance hub
@@ -151,7 +151,7 @@ exports[`<AccountsContainer /> > should render as expected when accounts exist 1
                 </svg>
               </div>
               <h2
-                class="c_text.primary ff_var(--fonts-display,_'Plus_Jakarta_Sans',_sans-serif) ls_-0.025em fs_0.875rem fw_bold lh_tight m_0 "
+                class="c_text.primary ff_var(--fonts-display,_'Plus_Jakarta_Sans_Variable',_'Plus_Jakarta_Sans',_sans-serif) ls_-0.025em fs_0.875rem fw_bold lh_tight m_0 "
                 style="font-size: 0.875rem;"
               >
                 Current
@@ -190,7 +190,7 @@ exports[`<AccountsContainer /> > should render as expected when accounts exist 1
                 </svg>
               </div>
               <h2
-                class="c_text.primary ff_var(--fonts-display,_'Plus_Jakarta_Sans',_sans-serif) ls_-0.025em fs_0.875rem fw_bold lh_tight m_0 "
+                class="c_text.primary ff_var(--fonts-display,_'Plus_Jakarta_Sans_Variable',_'Plus_Jakarta_Sans',_sans-serif) ls_-0.025em fs_0.875rem fw_bold lh_tight m_0 "
                 style="font-size: 0.875rem;"
               >
                 Saving
@@ -230,7 +230,7 @@ exports[`<AccountsContainer /> > should render as expected when accounts exist 1
                 </svg>
               </div>
               <h2
-                class="c_text.primary ff_var(--fonts-display,_'Plus_Jakarta_Sans',_sans-serif) ls_-0.025em fs_0.875rem fw_bold lh_tight m_0 "
+                class="c_text.primary ff_var(--fonts-display,_'Plus_Jakarta_Sans_Variable',_'Plus_Jakarta_Sans',_sans-serif) ls_-0.025em fs_0.875rem fw_bold lh_tight m_0 "
                 style="font-size: 0.875rem;"
               >
                 Mortgage
@@ -268,7 +268,7 @@ exports[`<AccountsContainer /> > should render as expected when accounts exist 1
                 </svg>
               </div>
               <h2
-                class="c_text.primary ff_var(--fonts-display,_'Plus_Jakarta_Sans',_sans-serif) ls_-0.025em fs_0.875rem fw_bold lh_tight m_0 "
+                class="c_text.primary ff_var(--fonts-display,_'Plus_Jakarta_Sans_Variable',_'Plus_Jakarta_Sans',_sans-serif) ls_-0.025em fs_0.875rem fw_bold lh_tight m_0 "
                 style="font-size: 0.875rem;"
               >
                 Loan
@@ -306,7 +306,7 @@ exports[`<AccountsContainer /> > should render as expected when accounts exist 1
                 </svg>
               </div>
               <h2
-                class="c_text.primary ff_var(--fonts-display,_'Plus_Jakarta_Sans',_sans-serif) ls_-0.025em fs_0.875rem fw_bold lh_tight m_0 "
+                class="c_text.primary ff_var(--fonts-display,_'Plus_Jakarta_Sans_Variable',_'Plus_Jakarta_Sans',_sans-serif) ls_-0.025em fs_0.875rem fw_bold lh_tight m_0 "
                 style="font-size: 0.875rem;"
               >
                 Owed
@@ -332,13 +332,13 @@ exports[`<AccountsContainer /> > should render as expected when no accounts exis
   >
     <div>
       <h1
-        class="c_text.primary ff_var(--fonts-display,_'Plus_Jakarta_Sans',_sans-serif) ls_-0.025em fs_1.875rem fw_bold lh_tight m_0 "
+        class="c_text.primary ff_var(--fonts-display,_'Plus_Jakarta_Sans_Variable',_'Plus_Jakarta_Sans',_sans-serif) ls_-0.025em fs_1.875rem fw_bold lh_tight m_0 "
         style="font-size: 1.875rem;"
       >
         accounts
       </h1>
       <p
-        class="ff_var(--fonts-body,_'Inter',_sans-serif) fs_sm fw_normal lh_1.6 ls_normal c_text.muted m_0 "
+        class="ff_var(--fonts-body,_'Inter_Variable',_'Inter',_sans-serif) fs_sm fw_normal lh_1.6 ls_normal c_text.muted m_0 "
         style="margin-top: 4px;"
       >
         Unified net worth, savings yield and UK allowance hub

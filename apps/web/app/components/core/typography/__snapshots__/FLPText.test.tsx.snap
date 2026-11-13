@@ -3,7 +3,7 @@
 exports[`FLPText > renders as expected 1`] = `
 <div>
   <p
-    class="ff_var(--fonts-body,_'Inter',_sans-serif) fs_md fw_normal lh_1.6 ls_normal c_text.secondary m_0 "
+    class="ff_var(--fonts-body,_'Inter_Variable',_'Inter',_sans-serif) fs_md fw_normal lh_1.6 ls_normal c_text.secondary m_0 "
   >
     Lorem, ipsum dolor sit amet consectetur adipisicing elit. Nemo quaerat repellendus numquam et esse ut labore molestias nihil optio expedita atque, quas eligendi corrupti quasi impedit suscipit sunt.
   </p>
@@ -13,7 +13,7 @@ exports[`FLPText > renders as expected 1`] = `
 exports[`FLPText > renders as expected with a fontSiez 1`] = `
 <div>
   <p
-    class="ff_var(--fonts-body,_'Inter',_sans-serif) fs_20 fw_normal lh_1.6 ls_normal c_text.secondary m_0 "
+    class="ff_var(--fonts-body,_'Inter_Variable',_'Inter',_sans-serif) fs_20 fw_normal lh_1.6 ls_normal c_text.secondary m_0 "
   >
     Lorem, ipsum dolor sit amet consectetur adipisicing elit. Nemo quaerat repellendus numquam et esse ut labore molestias nihil optio expedita atque, quas eligendi corrupti quasi impedit suscipit sunt.
   </p>
@@ -23,7 +23,7 @@ exports[`FLPText > renders as expected with a fontSiez 1`] = `
 exports[`FLPText > renders as expected with a fontWeight 1`] = `
 <div>
   <p
-    class="ff_var(--fonts-body,_'Inter',_sans-serif) fs_md fw_bold lh_1.6 ls_normal c_text.secondary m_0 "
+    class="ff_var(--fonts-body,_'Inter_Variable',_'Inter',_sans-serif) fs_md fw_bold lh_1.6 ls_normal c_text.secondary m_0 "
   >
     Lorem, ipsum dolor sit amet consectetur adipisicing elit. Nemo quaerat repellendus numquam et esse ut labore molestias nihil optio expedita atque, quas eligendi corrupti quasi impedit suscipit sunt.
   </p>
@@ -33,7 +33,7 @@ exports[`FLPText > renders as expected with a fontWeight 1`] = `
 exports[`FLPText > renders as expected with a letterSpacing 1`] = `
 <div>
   <p
-    class="ff_var(--fonts-body,_'Inter',_sans-serif) fs_md fw_normal lh_1.6 ls_widest c_text.secondary m_0 "
+    class="ff_var(--fonts-body,_'Inter_Variable',_'Inter',_sans-serif) fs_md fw_normal lh_1.6 ls_widest c_text.secondary m_0 "
   >
     Lorem, ipsum dolor sit amet consectetur adipisicing elit. Nemo quaerat repellendus numquam et esse ut labore molestias nihil optio expedita atque, quas eligendi corrupti quasi impedit suscipit sunt.
   </p>
@@ -43,7 +43,7 @@ exports[`FLPText > renders as expected with a letterSpacing 1`] = `
 exports[`FLPText > renders as expected with a lineHeight 1`] = `
 <div>
   <p
-    class="ff_var(--fonts-body,_'Inter',_sans-serif) fs_md fw_normal lh_40px ls_normal c_text.secondary m_0 "
+    class="ff_var(--fonts-body,_'Inter_Variable',_'Inter',_sans-serif) fs_md fw_normal lh_40px ls_normal c_text.secondary m_0 "
   >
     Lorem, ipsum dolor sit amet consectetur adipisicing elit. Nemo quaerat repellendus numquam et esse ut labore molestias nihil optio expedita atque, quas eligendi corrupti quasi impedit suscipit sunt.
   </p>
