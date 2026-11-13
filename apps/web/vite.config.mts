@@ -1,6 +1,7 @@
 /// <reference types="vitest" />
 /// <reference types="vite/client" />
 
+import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import { dirname } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -14,11 +15,20 @@ import { visualizer } from "rollup-plugin-visualizer";
 import { defineConfig, loadEnv } from "vite";
 import checker from "vite-plugin-checker";
 import tsconfigPaths from "vite-tsconfig-paths";
+import { resolveAppVersion } from "../../scripts/lib/app-version";
 
 const marketingRequire = createRequire(
   `${dirname(fileURLToPath(import.meta.url))}/../marketing/package.json`,
 );
 const configDir = dirname(fileURLToPath(import.meta.url));
+
+// Release string for feedback mails, e.g. "1.29.1+a1b2c3d" (package version + Railway commit sha).
+const appVersion = resolveAppVersion({
+  packageVersion: (
+    JSON.parse(readFileSync(`${configDir}/package.json`, "utf8")) as { version?: string }
+  ).version,
+  env: process.env,
+});
 
 export default defineConfig(({ mode }) => ({
   server: {
@@ -33,6 +43,9 @@ export default defineConfig(({ mode }) => ({
       ],
     },
   },
+  define: process.env.VITEST
+    ? {}
+    : { "import.meta.env.VITE_APP_VERSION": JSON.stringify(appVersion) },
   css: {
     postcss: {
       plugins: [pandacss, autoprefixer],

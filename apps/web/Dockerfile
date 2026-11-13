@@ -28,6 +28,9 @@ ENV NODE_ENV=production
 # Launch guard (E24-T1): Railway passes the FLUMP_LAUNCH service variable only if declared here.
 ARG FLUMP_LAUNCH
 ARG ALLOW_INDEXING
+# Release string: Railway passes the commit sha only if declared here. vite.config.mts turns it into
+# VITE_APP_VERSION as "<apps/web version>+<7-char sha>". Public values only.
+ARG RAILWAY_GIT_COMMIT_SHA
 RUN bun run --cwd apps/web prepare && bun turbo run build --filter=@flump/web...
 
 # Stage 3: Create final production image
