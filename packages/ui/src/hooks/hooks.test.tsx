@@ -69,9 +69,19 @@ describe("useChartAnimation", () => {
     expect(renderHook(() => useChartAnimation({ isDragging: true })).result.current).toBe(false);
   });
 
-  it("is false under reduced motion, and reacts to changes", () => {
+  it("is false while dragging (K-09), and animates again once the drag ends", () => {
+    mockMatchMedia(false);
+    const { result, rerender } = renderHook(({ dragging }) => useChartAnimation({ dragging }), {
+      initialProps: { dragging: true },
+    });
+    expect(result.current).toBe(false);
+    rerender({ dragging: false });
+    expect(result.current).toBe(true);
+  });
+
+  it("is false under reduced motion even when not dragging, and reacts to changes", () => {
     const m = mockMatchMedia(true);
-    const { result } = renderHook(() => useChartAnimation());
+    const { result } = renderHook(() => useChartAnimation({ dragging: false }));
     expect(result.current).toBe(false);
     act(() => m.set(false));
     expect(result.current).toBe(true);

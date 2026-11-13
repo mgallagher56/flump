@@ -94,6 +94,32 @@ describe("ChartFigure Pattern", () => {
     expect(screen.queryByRole("table")).toBeNull();
   });
 
+  it("renders a notice slot above the chart and a legend slot below it", () => {
+    render(
+      <ChartFigure
+        legend={
+          <ul aria-label="Chart key">
+            <li>Net worth</li>
+          </ul>
+        }
+        notice={<p>Sample data</p>}
+        summary={SUMMARY}
+        title="Savings forecast"
+      >
+        <svg data-testid="chart">
+          <title>chart</title>
+        </svg>
+      </ChartFigure>,
+    );
+    const notice = screen.getByText("Sample data");
+    const chart = screen.getByTestId("chart");
+    const legend = screen.getByRole("list", { name: "Chart key" });
+    expect(notice.compareDocumentPosition(chart) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(chart.compareDocumentPosition(legend) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    // The legend sits outside the aria-hidden chart wrapper, so assistive tech can read it.
+    expect(legend.closest("[aria-hidden='true']")).toBeNull();
+  });
+
   it("omits the drawer without a dataTable", () => {
     renderFigure();
     expect(screen.queryByRole("button", { name: "Show data" })).toBeNull();

@@ -31,6 +31,10 @@ const DASHBOARD_FEATURES_DIR = path.resolve(
   __dirname,
   "../../../../apps/web/app/features/dashboard/components",
 );
+const CHARTS_FEATURES_DIR = path.resolve(
+  __dirname,
+  "../../../../apps/web/app/features/charts/components",
+);
 const MARKETING_COMPONENTS_DIR = path.resolve(
   __dirname,
   "../../../../apps/marketing/src/components",
@@ -141,6 +145,9 @@ describe("Architecture & Design System Laws", () => {
       }
       const patterns = getSubdirectories(PATTERNS_DIR);
       for (const expected of [
+        "ChartFigure",
+        "ChartLegend",
+        "ChartTooltipContent",
         "CoachCard",
         "ConfirmDialog",
         "EmptyState",
@@ -193,6 +200,14 @@ describe("Architecture & Design System Laws", () => {
       expect(dashboardComponents).toContain("HomeDashboard");
       for (const comp of dashboardComponents) {
         verifyColocatedStructure(DASHBOARD_FEATURES_DIR, comp);
+      }
+    });
+
+    it("enforces colocated structure for every features/charts component (E15 chart kit)", () => {
+      const chartComponents = getSubdirectories(CHARTS_FEATURES_DIR);
+      expect(chartComponents).toContain("ChartTooltip");
+      for (const comp of chartComponents) {
+        verifyColocatedStructure(CHARTS_FEATURES_DIR, comp);
       }
     });
 
