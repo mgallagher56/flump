@@ -1,76 +1,30 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`MCP surface snapshot (E17-N1) > pins prompts/list 1`] = `
-[
-  {
-    "arguments": [],
-    "description": "Comprehensive UK personal financial health audit, evaluating net worth, emergency runway, high-APR debt burn, and tax efficiency.",
-    "name": "uk-financial-health-audit",
-    "title": "UK financial health audit",
-  },
-  {
-    "arguments": [],
-    "description": "Analyzes whether gross salary + bonuses enter the UK £100k-£125,140 tax trap and models optimal pension sacrifice.",
-    "name": "escape-100k-tax-trap",
-    "title": "Escape the 100k tax trap",
-  },
-  {
-    "arguments": [],
-    "description": "Inspects all credit cards, 0% promotional balance transfers, and arranged overdrafts, generating an aggressive Avalanche vs Snowball payoff plan.",
-    "name": "crush-high-apr-debt",
-    "title": "Crush high APR debt",
-  },
-]
-`;
-
 exports[`MCP surface snapshot (E17-N1) > pins resources/list 1`] = `
 [
   {
+    "description": "What Flump's data means: account categories, the sign convention for liabilities, monthly history and carry-forward, and tax-record categories. Contains no user data.",
     "mimeType": "application/json",
-    "name": "executive-snapshot",
-    "title": "Executive financial snapshot",
-    "uri": "flump://context/executive-snapshot",
-  },
-  {
-    "mimeType": "application/json",
-    "name": "baseline",
-    "title": "Financial baseline",
-    "uri": "flump://context/baseline",
-  },
-  {
-    "mimeType": "application/json",
-    "name": "accounts",
-    "title": "Accounts and balances",
-    "uri": "flump://context/accounts",
-  },
-  {
-    "mimeType": "application/json",
-    "name": "budget",
-    "title": "Monthly budget",
-    "uri": "flump://context/budget",
-  },
-  {
-    "mimeType": "application/json",
-    "name": "tax-ledger",
-    "title": "Tax ledger",
-    "uri": "flump://context/tax-ledger",
+    "name": "schema",
+    "title": "Flump data dictionary",
+    "uri": "flump://schema",
   },
 ]
 `;
 
 exports[`MCP surface snapshot (E17-N1) > pins tools/list > tool names 1`] = `
 [
-  "calculate_self_assessment_and_section24",
   "compare_mortgage_overpay_vs_invest",
-  "evaluate_student_loan_overpayment",
+  "get_balance_history",
   "get_budget_summary",
+  "get_data_coverage",
   "get_debt_overview",
   "get_financial_snapshot",
-  "get_net_worth_history",
+  "get_tax_year_position",
   "list_accounts",
+  "list_tax_records",
   "project_net_worth",
   "simulate_debt_payoff",
-  "simulate_uk_tax_and_pension_sacrifice",
 ]
 `;
 
@@ -84,147 +38,18 @@ exports[`MCP surface snapshot (E17-N1) > pins tools/list > tools/list 1`] = `
       "openWorldHint": false,
       "readOnlyHint": true,
     },
-    "description": "Calculates UK income tax, National Insurance, Scottish bands, and the £100k-£125,140 60% tax trap. Simulates optimal pension salary sacrifice and Gift Aid contributions to reclaim the £12,570 Personal Allowance.",
+    "description": "One-call summary of the user's finances: net worth, assets, liabilities, cash, investments, pensions, debts and (when a budget exists) monthly surplus and emergency runway. Built only from recorded accounts and budget entries; anything not recorded is null and listed in missing[] with a question to ask the user. Pass asOfMonth (YYYY-MM) for balances as at the end of a past month, from recorded monthly history (budget figures are then null, as the budget is not kept by month). Start here before drilling into other tools.",
     "execution": {
       "taskSupport": "forbidden",
     },
     "inputSchema": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "properties": {
-        "bonusGbp": {
-          "default": 0,
-          "description": "One-off bonus or side income received in this tax year",
-          "minimum": 0,
-          "type": "number",
-        },
-        "employeePensionPct": {
-          "description": "Employee pension contribution percentage (e.g. 5, 10, 25)",
-          "maximum": 100,
-          "minimum": 0,
-          "type": "number",
-        },
-        "giftAidContributionsGbp": {
-          "default": 0,
-          "description": "Net annual Gift Aid charitable donations in GBP (grossed up by 1.25x to extend basic rate band and reclaim Personal Allowance)",
-          "minimum": 0,
-          "type": "number",
-        },
-        "hypotheticalGrossSalaryGbp": {
-          "description": "Gross annual PAYE salary in GBP (defaults to user baseline salary)",
-          "minimum": 0,
-          "type": "number",
-        },
-        "isSalarySacrifice": {
-          "default": true,
-          "description": "Whether pension contribution is via salary sacrifice (reduces National Insurance & Adjusted Net Income)",
-          "type": "boolean",
-        },
-        "region": {
-          "description": "UK tax region (Scotland applies distinct Scottish Income Tax bands)",
-          "enum": [
-            "ENGLAND_NI_WALES",
-            "SCOTLAND",
-          ],
+        "asOfMonth": {
+          "description": "Balances as at the end of this past month (YYYY-MM); omit for current balances",
+          "pattern": "^\\d{4}-(0[1-9]|1[0-2])$",
           "type": "string",
         },
-        "taxYear": {
-          "description": "UK tax year to evaluate (defaults to the current UK tax year)",
-          "enum": [
-            "2020/21",
-            "2021/22",
-            "2022/23",
-            "2023/24",
-            "2024/25",
-            "2025/26",
-            "2026/27",
-          ],
-          "type": "string",
-        },
-      },
-      "required": [
-        "employeePensionPct",
-      ],
-      "type": "object",
-    },
-    "name": "simulate_uk_tax_and_pension_sacrifice",
-    "title": "UK tax trap and pension sacrifice",
-  },
-  {
-    "_meta": undefined,
-    "annotations": {
-      "destructiveHint": false,
-      "idempotentHint": true,
-      "openWorldHint": false,
-      "readOnlyHint": true,
-    },
-    "description": "Computes HMRC Self-Assessment tax liability, Section 24 landlord finance cost restrictions (20% basic rate tax credit), 31 Jan and 31 Jul Payments on Account, and required monthly tax pot set-aside.",
-    "execution": {
-      "taskSupport": "forbidden",
-    },
-    "inputSchema": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "properties": {
-        "hypotheticalAllowableExpensesGbp": {
-          "description": "Annual allowable letting agent, maintenance, insurance and service charge expenses in GBP",
-          "minimum": 0,
-          "type": "number",
-        },
-        "hypotheticalBtlMortgageInterestGbp": {
-          "description": "Annual residential property finance/mortgage interest in GBP",
-          "minimum": 0,
-          "type": "number",
-        },
-        "hypotheticalBtlRentGbp": {
-          "description": "Annual gross Buy-to-Let rental income in GBP",
-          "minimum": 0,
-          "type": "number",
-        },
-        "hypotheticalFreelanceProfitGbp": {
-          "description": "Optional freelance/self-employed net profit in GBP",
-          "minimum": 0,
-          "type": "number",
-        },
-        "ownershipSharePct": {
-          "default": 100,
-          "description": "Percentage share of property ownership (e.g. 50% for joint ownership, 100% sole)",
-          "maximum": 100,
-          "minimum": 1,
-          "type": "number",
-        },
-        "taxYear": {
-          "description": "UK fiscal tax year for Self-Assessment (defaults to the current UK tax year)",
-          "enum": [
-            "2020/21",
-            "2021/22",
-            "2022/23",
-            "2023/24",
-            "2024/25",
-            "2025/26",
-            "2026/27",
-          ],
-          "type": "string",
-        },
-      },
-      "type": "object",
-    },
-    "name": "calculate_self_assessment_and_section24",
-    "title": "Self Assessment and Section 24 calculator",
-  },
-  {
-    "_meta": undefined,
-    "annotations": {
-      "destructiveHint": false,
-      "idempotentHint": true,
-      "openWorldHint": false,
-      "readOnlyHint": true,
-    },
-    "description": "One-call summary of the user's finances: net worth, assets, liabilities, cash, investments, pensions, debts and (when a budget exists) monthly surplus and emergency runway. Built only from recorded accounts and budget entries; anything not recorded is null and listed in missing[] with a question to ask the user. Start here before drilling into other tools.",
-    "execution": {
-      "taskSupport": "forbidden",
-    },
-    "inputSchema": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "properties": {
         "responseFormat": {
           "default": "concise",
           "description": "concise (default) keeps the answer short; detailed returns the full breakdown",
@@ -332,6 +157,12 @@ exports[`MCP surface snapshot (E17-N1) > pins tools/list > tools/list 1`] = `
             "accountCount": {
               "type": "number",
             },
+            "asOfMonth": {
+              "type": [
+                "string",
+                "null",
+              ],
+            },
             "assetsGbp": {
               "type": "number",
             },
@@ -380,6 +211,12 @@ exports[`MCP surface snapshot (E17-N1) > pins tools/list > tools/list 1`] = `
             "netWorthGbp": {
               "type": "number",
             },
+            "notes": {
+              "items": {
+                "type": "string",
+              },
+              "type": "array",
+            },
             "pensionsGbp": {
               "type": "number",
             },
@@ -387,7 +224,10 @@ exports[`MCP surface snapshot (E17-N1) > pins tools/list > tools/list 1`] = `
               "type": "number",
             },
             "studentLoanGbp": {
-              "type": "number",
+              "type": [
+                "number",
+                "null",
+              ],
             },
           },
           "required": [
@@ -407,6 +247,8 @@ exports[`MCP surface snapshot (E17-N1) > pins tools/list > tools/list 1`] = `
             "monthlyEssentialSpendGbp",
             "monthlySurplusAfterStoredMinimumsGbp",
             "emergencyRunwayMonths",
+            "asOfMonth",
+            "notes",
           ],
           "type": "object",
         },
@@ -464,17 +306,74 @@ exports[`MCP surface snapshot (E17-N1) > pins tools/list > tools/list 1`] = `
       "openWorldHint": false,
       "readOnlyHint": true,
     },
-    "description": "Month-by-month net worth from recorded account history, newest last. Use months to limit the range. Detailed format adds assets and liabilities per month. Returns no points, with a missing[] entry, when no history has been recorded.",
+    "description": "Month-end balances recorded in Flump between two months, per account, per category or as a net-worth total, at monthly, quarterly or yearly intervals. metric balance gives the value at the end of each period; delta gives the change from the end of the previous period (current minus previous, up or down); pctDelta gives that change as a percentage. Liabilities are the amount owed as a positive number. A month with no recorded value carries the last known value forward and is flagged carriedForward; source says how each value was recorded. Student loans are excluded. Results are paged: ask for the next page while page is below totalPages.",
     "execution": {
       "taskSupport": "forbidden",
     },
     "inputSchema": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "properties": {
-        "months": {
-          "default": 12,
-          "description": "How many recent months, 1 to 120",
-          "maximum": 120,
+        "accountIds": {
+          "description": "Only these accounts (short ids from list_accounts)",
+          "items": {
+            "maxLength": 40,
+            "type": "string",
+          },
+          "maxItems": 50,
+          "type": "array",
+        },
+        "category": {
+          "description": "Only accounts in this category",
+          "enum": [
+            "cash",
+            "savings",
+            "investments",
+            "pensions",
+            "debt",
+            "mortgages",
+            "property",
+            "studentLoans",
+            "other",
+          ],
+          "type": "string",
+        },
+        "from": {
+          "description": "First month, YYYY-MM",
+          "pattern": "^\\d{4}-(0[1-9]|1[0-2])$",
+          "type": "string",
+        },
+        "groupBy": {
+          "default": "total",
+          "description": "One series per account, per category, or one net-worth total (default)",
+          "enum": [
+            "account",
+            "category",
+            "total",
+          ],
+          "type": "string",
+        },
+        "interval": {
+          "default": "month",
+          "enum": [
+            "month",
+            "quarter",
+            "year",
+          ],
+          "type": "string",
+        },
+        "metric": {
+          "default": "balance",
+          "enum": [
+            "balance",
+            "delta",
+            "pctDelta",
+          ],
+          "type": "string",
+        },
+        "page": {
+          "default": 1,
+          "description": "Result page, from 1",
+          "maximum": 1000,
           "minimum": 1,
           "type": "integer",
         },
@@ -487,10 +386,19 @@ exports[`MCP surface snapshot (E17-N1) > pins tools/list > tools/list 1`] = `
           ],
           "type": "string",
         },
+        "to": {
+          "description": "Last month, YYYY-MM",
+          "pattern": "^\\d{4}-(0[1-9]|1[0-2])$",
+          "type": "string",
+        },
       },
+      "required": [
+        "from",
+        "to",
+      ],
       "type": "object",
     },
-    "name": "get_net_worth_history",
+    "name": "get_balance_history",
     "outputSchema": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "additionalProperties": false,
@@ -582,45 +490,134 @@ exports[`MCP surface snapshot (E17-N1) > pins tools/list > tools/list 1`] = `
         "result": {
           "additionalProperties": false,
           "properties": {
-            "changeGbp": {
-              "type": [
-                "number",
-                "null",
-              ],
+            "from": {
+              "type": "string",
             },
-            "monthsCovered": {
+            "groupBy": {
+              "enum": [
+                "account",
+                "category",
+                "total",
+              ],
+              "type": "string",
+            },
+            "interval": {
+              "enum": [
+                "month",
+                "quarter",
+                "year",
+              ],
+              "type": "string",
+            },
+            "metric": {
+              "enum": [
+                "balance",
+                "delta",
+                "pctDelta",
+              ],
+              "type": "string",
+            },
+            "notes": {
+              "items": {
+                "type": "string",
+              },
+              "type": "array",
+            },
+            "page": {
               "type": "number",
             },
-            "points": {
+            "series": {
               "items": {
                 "additionalProperties": false,
                 "properties": {
-                  "assetsGbp": {
-                    "type": "number",
-                  },
-                  "liabilitiesGbp": {
-                    "type": "number",
-                  },
-                  "month": {
+                  "category": {
+                    "enum": [
+                      "cash",
+                      "savings",
+                      "investments",
+                      "pensions",
+                      "debt",
+                      "mortgages",
+                      "property",
+                      "studentLoans",
+                      "other",
+                    ],
                     "type": "string",
                   },
-                  "netWorthGbp": {
-                    "type": "number",
+                  "isLiability": {
+                    "type": "boolean",
+                  },
+                  "key": {
+                    "type": "string",
+                  },
+                  "label": {
+                    "type": "string",
+                  },
+                  "points": {
+                    "items": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "balance": {
+                          "type": "number",
+                        },
+                        "carriedForward": {
+                          "type": "boolean",
+                        },
+                        "period": {
+                          "type": "string",
+                        },
+                        "source": {
+                          "type": "string",
+                        },
+                        "value": {
+                          "type": [
+                            "number",
+                            "null",
+                          ],
+                        },
+                      },
+                      "required": [
+                        "period",
+                        "value",
+                        "carriedForward",
+                        "source",
+                      ],
+                      "type": "object",
+                    },
+                    "type": "array",
                   },
                 },
                 "required": [
-                  "month",
-                  "netWorthGbp",
+                  "key",
+                  "label",
+                  "isLiability",
+                  "points",
                 ],
                 "type": "object",
               },
               "type": "array",
             },
+            "seriesCount": {
+              "type": "number",
+            },
+            "to": {
+              "type": "string",
+            },
+            "totalPages": {
+              "type": "number",
+            },
           },
           "required": [
-            "points",
-            "changeGbp",
-            "monthsCovered",
+            "from",
+            "to",
+            "groupBy",
+            "metric",
+            "interval",
+            "series",
+            "seriesCount",
+            "page",
+            "totalPages",
+            "notes",
           ],
           "type": "object",
         },
@@ -668,7 +665,7 @@ exports[`MCP surface snapshot (E17-N1) > pins tools/list > tools/list 1`] = `
       ],
       "type": "object",
     },
-    "title": "Net worth history",
+    "title": "Balance history",
   },
   {
     "_meta": undefined,
@@ -678,7 +675,283 @@ exports[`MCP surface snapshot (E17-N1) > pins tools/list > tools/list 1`] = `
       "openWorldHint": false,
       "readOnlyHint": true,
     },
-    "description": "Lists the user's accounts with a short opaque id, a label, category and balance. Liabilities show the amount owed as a positive number with isLiability true. Institution names are replaced with generic labels unless the token has full read access.",
+    "description": "For each account, which months have a recorded month-end balance: the first and last recorded month, how many months are recorded, the gaps in between, and how the values were recorded (onboarding, manual, connected or backfill). Use it to see which months are missing before reading or adding history.",
+    "execution": {
+      "taskSupport": "forbidden",
+    },
+    "inputSchema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "properties": {
+        "responseFormat": {
+          "default": "concise",
+          "description": "concise (default) keeps the answer short; detailed returns the full breakdown",
+          "enum": [
+            "concise",
+            "detailed",
+          ],
+          "type": "string",
+        },
+      },
+      "type": "object",
+    },
+    "name": "get_data_coverage",
+    "outputSchema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "additionalProperties": false,
+      "properties": {
+        "asOf": {
+          "format": "date-time",
+          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$",
+          "type": "string",
+        },
+        "assumptions": {
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "field": {
+                "type": "string",
+              },
+              "reason": {
+                "type": "string",
+              },
+              "source": {
+                "enum": [
+                  "agent_supplied",
+                  "default",
+                  "user_profile",
+                  "derived",
+                ],
+                "type": "string",
+              },
+              "value": {
+                "type": [
+                  "number",
+                  "string",
+                ],
+              },
+            },
+            "required": [
+              "field",
+              "source",
+            ],
+            "type": "object",
+          },
+          "type": "array",
+        },
+        "currency": {
+          "const": "GBP",
+          "type": "string",
+        },
+        "missing": {
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "askUser": {
+                "type": "string",
+              },
+              "field": {
+                "type": "string",
+              },
+              "why": {
+                "type": "string",
+              },
+            },
+            "required": [
+              "field",
+              "why",
+              "askUser",
+            ],
+            "type": "object",
+          },
+          "type": "array",
+        },
+        "nextCursor": {
+          "type": [
+            "string",
+            "null",
+          ],
+        },
+        "notice": {
+          "type": "string",
+        },
+        "provenance": {
+          "additionalProperties": {
+            "type": "string",
+          },
+          "propertyNames": {
+            "type": "string",
+          },
+          "type": "object",
+        },
+        "result": {
+          "additionalProperties": false,
+          "properties": {
+            "accounts": {
+              "items": {
+                "additionalProperties": false,
+                "properties": {
+                  "category": {
+                    "enum": [
+                      "cash",
+                      "savings",
+                      "investments",
+                      "pensions",
+                      "debt",
+                      "mortgages",
+                      "property",
+                      "studentLoans",
+                      "other",
+                    ],
+                    "type": "string",
+                  },
+                  "firstMonth": {
+                    "type": [
+                      "string",
+                      "null",
+                    ],
+                  },
+                  "gaps": {
+                    "items": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "from": {
+                          "type": "string",
+                        },
+                        "to": {
+                          "type": "string",
+                        },
+                      },
+                      "required": [
+                        "from",
+                        "to",
+                      ],
+                      "type": "object",
+                    },
+                    "type": "array",
+                  },
+                  "gapsTruncated": {
+                    "type": "boolean",
+                  },
+                  "id": {
+                    "type": "string",
+                  },
+                  "label": {
+                    "type": "string",
+                  },
+                  "lastMonth": {
+                    "type": [
+                      "string",
+                      "null",
+                    ],
+                  },
+                  "missingMonths": {
+                    "type": "number",
+                  },
+                  "recordedMonths": {
+                    "type": "number",
+                  },
+                  "sources": {
+                    "items": {
+                      "enum": [
+                        "onboarding",
+                        "manual",
+                        "connected",
+                        "backfill",
+                        "other",
+                      ],
+                      "type": "string",
+                    },
+                    "type": "array",
+                  },
+                },
+                "required": [
+                  "id",
+                  "label",
+                  "category",
+                  "firstMonth",
+                  "lastMonth",
+                  "recordedMonths",
+                  "missingMonths",
+                  "gaps",
+                  "gapsTruncated",
+                  "sources",
+                ],
+                "type": "object",
+              },
+              "type": "array",
+            },
+            "accountsWithHistory": {
+              "type": "number",
+            },
+            "notes": {
+              "items": {
+                "type": "string",
+              },
+              "type": "array",
+            },
+          },
+          "required": [
+            "accounts",
+            "accountsWithHistory",
+            "notes",
+          ],
+          "type": "object",
+        },
+        "schemaVersion": {
+          "const": "2.0",
+          "type": "string",
+        },
+        "taxYear": {
+          "type": "string",
+        },
+        "truncated": {
+          "type": "boolean",
+        },
+        "verification": {
+          "additionalProperties": false,
+          "properties": {
+            "detail": {
+              "type": "string",
+            },
+            "status": {
+              "enum": [
+                "verified",
+                "unverified",
+              ],
+              "type": "string",
+            },
+          },
+          "required": [
+            "status",
+            "detail",
+          ],
+          "type": "object",
+        },
+      },
+      "required": [
+        "schemaVersion",
+        "asOf",
+        "currency",
+        "result",
+        "provenance",
+        "assumptions",
+        "missing",
+        "truncated",
+        "nextCursor",
+      ],
+      "type": "object",
+    },
+    "title": "Data coverage",
+  },
+  {
+    "_meta": undefined,
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": true,
+    },
+    "description": "Lists the user's accounts with a short opaque id, a label, category and balance. Liabilities show the amount owed as a positive number with isLiability true. Mortgages add the remaining term and fixed-rate end date, and pensions the monthly contribution, when stored (null when not). Institution names are replaced with generic labels unless the token has full read access.",
     "execution": {
       "taskSupport": "forbidden",
     },
@@ -832,6 +1105,12 @@ exports[`MCP surface snapshot (E17-N1) > pins tools/list > tools/list 1`] = `
                     ],
                     "type": "string",
                   },
+                  "fixedRateEndDate": {
+                    "type": [
+                      "string",
+                      "null",
+                    ],
+                  },
                   "id": {
                     "type": "string",
                   },
@@ -846,6 +1125,18 @@ exports[`MCP surface snapshot (E17-N1) > pins tools/list > tools/list 1`] = `
                   },
                   "label": {
                     "type": "string",
+                  },
+                  "monthlyContributionGbp": {
+                    "type": [
+                      "number",
+                      "null",
+                    ],
+                  },
+                  "termMonths": {
+                    "type": [
+                      "number",
+                      "null",
+                    ],
                   },
                 },
                 "required": [
@@ -1110,6 +1401,12 @@ exports[`MCP surface snapshot (E17-N1) > pins tools/list > tools/list 1`] = `
                 "null",
               ],
             },
+            "notes": {
+              "items": {
+                "type": "string",
+              },
+              "type": "array",
+            },
           },
           "required": [
             "monthlyIncomeGbp",
@@ -1117,6 +1414,7 @@ exports[`MCP surface snapshot (E17-N1) > pins tools/list > tools/list 1`] = `
             "discretionaryMonthlyGbp",
             "monthlySurplusBeforeDebtGbp",
             "entryCount",
+            "notes",
             "categories",
           ],
           "type": "object",
@@ -1343,6 +1641,12 @@ exports[`MCP surface snapshot (E17-N1) > pins tools/list > tools/list 1`] = `
             "mortgageGbp": {
               "type": "number",
             },
+            "notes": {
+              "items": {
+                "type": "string",
+              },
+              "type": "array",
+            },
             "overdrawnGbp": {
               "type": "number",
             },
@@ -1370,6 +1674,7 @@ exports[`MCP surface snapshot (E17-N1) > pins tools/list > tools/list 1`] = `
             "weightedAprPct",
             "mortgageGbp",
             "studentLoanGbp",
+            "notes",
           ],
           "type": "object",
         },
@@ -1427,7 +1732,774 @@ exports[`MCP surface snapshot (E17-N1) > pins tools/list > tools/list 1`] = `
       "openWorldHint": false,
       "readOnlyHint": true,
     },
-    "description": "Sets the interest saved by overpaying a recorded mortgage by a fixed monthly amount beside the growth on the same amount invested at an expected annual return. Reads the mortgage balance, interest rate and remaining term from the mortgage account; anything not recorded is listed in missing[] and the comparison is left null rather than guessed. The expected return is required and is a single constant rate. The result states both outcomes and their difference; it does not choose between them.",
+    "description": "The income and expense records the user keeps for a UK tax year (PAYE, self-employment, rental and savings), with totals by source and either a month-by-month or a per-category breakdown, plus the records themselves (up to 25, or 100 in detailed format). Amounts are what each record adds up to inside the tax year. Record names appear only with full read access; notes and receipts never do.",
+    "execution": {
+      "taskSupport": "forbidden",
+    },
+    "inputSchema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "properties": {
+        "category": {
+          "description": "Only this category id, such as rental_income or mortgage_interest",
+          "maxLength": 40,
+          "type": "string",
+        },
+        "groupBy": {
+          "default": "category",
+          "enum": [
+            "month",
+            "category",
+          ],
+          "type": "string",
+        },
+        "responseFormat": {
+          "default": "concise",
+          "description": "concise (default) keeps the answer short; detailed returns the full breakdown",
+          "enum": [
+            "concise",
+            "detailed",
+          ],
+          "type": "string",
+        },
+        "taxYear": {
+          "description": "UK tax year, such as 2025/26 (defaults to the current tax year)",
+          "enum": [
+            "2020/21",
+            "2021/22",
+            "2022/23",
+            "2023/24",
+            "2024/25",
+            "2025/26",
+            "2026/27",
+          ],
+          "type": "string",
+        },
+      },
+      "type": "object",
+    },
+    "name": "list_tax_records",
+    "outputSchema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "additionalProperties": false,
+      "properties": {
+        "asOf": {
+          "format": "date-time",
+          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$",
+          "type": "string",
+        },
+        "assumptions": {
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "field": {
+                "type": "string",
+              },
+              "reason": {
+                "type": "string",
+              },
+              "source": {
+                "enum": [
+                  "agent_supplied",
+                  "default",
+                  "user_profile",
+                  "derived",
+                ],
+                "type": "string",
+              },
+              "value": {
+                "type": [
+                  "number",
+                  "string",
+                ],
+              },
+            },
+            "required": [
+              "field",
+              "source",
+            ],
+            "type": "object",
+          },
+          "type": "array",
+        },
+        "currency": {
+          "const": "GBP",
+          "type": "string",
+        },
+        "missing": {
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "askUser": {
+                "type": "string",
+              },
+              "field": {
+                "type": "string",
+              },
+              "why": {
+                "type": "string",
+              },
+            },
+            "required": [
+              "field",
+              "why",
+              "askUser",
+            ],
+            "type": "object",
+          },
+          "type": "array",
+        },
+        "nextCursor": {
+          "type": [
+            "string",
+            "null",
+          ],
+        },
+        "notice": {
+          "type": "string",
+        },
+        "provenance": {
+          "additionalProperties": {
+            "type": "string",
+          },
+          "propertyNames": {
+            "type": "string",
+          },
+          "type": "object",
+        },
+        "result": {
+          "additionalProperties": false,
+          "properties": {
+            "groupBy": {
+              "enum": [
+                "month",
+                "category",
+              ],
+              "type": "string",
+            },
+            "groups": {
+              "items": {
+                "additionalProperties": false,
+                "properties": {
+                  "expensesGbp": {
+                    "type": "number",
+                  },
+                  "incomeGbp": {
+                    "type": "number",
+                  },
+                  "key": {
+                    "type": "string",
+                  },
+                  "source": {
+                    "enum": [
+                      "paye",
+                      "self-employed",
+                      "rental",
+                      "savings",
+                      "other",
+                    ],
+                    "type": "string",
+                  },
+                },
+                "required": [
+                  "key",
+                  "incomeGbp",
+                  "expensesGbp",
+                ],
+                "type": "object",
+              },
+              "type": "array",
+            },
+            "notes": {
+              "items": {
+                "type": "string",
+              },
+              "type": "array",
+            },
+            "rowCount": {
+              "type": "number",
+            },
+            "rows": {
+              "items": {
+                "additionalProperties": false,
+                "properties": {
+                  "amountGbp": {
+                    "type": "number",
+                  },
+                  "category": {
+                    "type": "string",
+                  },
+                  "date": {
+                    "type": "string",
+                  },
+                  "endDate": {
+                    "type": [
+                      "string",
+                      "null",
+                    ],
+                  },
+                  "frequency": {
+                    "enum": [
+                      "one-off",
+                      "monthly",
+                      "annual",
+                    ],
+                    "type": "string",
+                  },
+                  "id": {
+                    "type": "string",
+                  },
+                  "inYearGbp": {
+                    "type": "number",
+                  },
+                  "name": {
+                    "type": "string",
+                  },
+                  "source": {
+                    "enum": [
+                      "paye",
+                      "self-employed",
+                      "rental",
+                      "savings",
+                      "other",
+                    ],
+                    "type": "string",
+                  },
+                  "type": {
+                    "enum": [
+                      "income",
+                      "expense",
+                    ],
+                    "type": "string",
+                  },
+                },
+                "required": [
+                  "id",
+                  "source",
+                  "type",
+                  "category",
+                  "frequency",
+                  "date",
+                  "endDate",
+                  "amountGbp",
+                  "inYearGbp",
+                ],
+                "type": "object",
+              },
+              "type": "array",
+            },
+            "rowsTruncated": {
+              "type": "boolean",
+            },
+            "totals": {
+              "additionalProperties": false,
+              "properties": {
+                "bySource": {
+                  "items": {
+                    "additionalProperties": false,
+                    "properties": {
+                      "expensesGbp": {
+                        "type": "number",
+                      },
+                      "incomeGbp": {
+                        "type": "number",
+                      },
+                      "source": {
+                        "enum": [
+                          "paye",
+                          "self-employed",
+                          "rental",
+                          "savings",
+                          "other",
+                        ],
+                        "type": "string",
+                      },
+                    },
+                    "required": [
+                      "source",
+                      "incomeGbp",
+                      "expensesGbp",
+                    ],
+                    "type": "object",
+                  },
+                  "type": "array",
+                },
+                "expensesGbp": {
+                  "type": "number",
+                },
+                "incomeGbp": {
+                  "type": "number",
+                },
+              },
+              "required": [
+                "incomeGbp",
+                "expensesGbp",
+                "bySource",
+              ],
+              "type": "object",
+            },
+          },
+          "required": [
+            "totals",
+            "groupBy",
+            "groups",
+            "rows",
+            "rowCount",
+            "rowsTruncated",
+            "notes",
+          ],
+          "type": "object",
+        },
+        "schemaVersion": {
+          "const": "2.0",
+          "type": "string",
+        },
+        "taxYear": {
+          "type": "string",
+        },
+        "truncated": {
+          "type": "boolean",
+        },
+        "verification": {
+          "additionalProperties": false,
+          "properties": {
+            "detail": {
+              "type": "string",
+            },
+            "status": {
+              "enum": [
+                "verified",
+                "unverified",
+              ],
+              "type": "string",
+            },
+          },
+          "required": [
+            "status",
+            "detail",
+          ],
+          "type": "object",
+        },
+      },
+      "required": [
+        "schemaVersion",
+        "asOf",
+        "currency",
+        "result",
+        "provenance",
+        "assumptions",
+        "missing",
+        "truncated",
+        "nextCursor",
+      ],
+      "type": "object",
+    },
+    "title": "Tax records",
+  },
+  {
+    "_meta": undefined,
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": true,
+    },
+    "description": "The user's UK tax position for a tax year, from their stored salary and tax records: income by source, where total income sits against the Personal Allowance taper (100,000 to 125,140 in recent years), the income tax bands for their region (including Scottish bands), the High Income Child Benefit Charge thresholds, the Section 24 finance-cost credit on rental income, and the estimated tax and Self Assessment figures shown on the Flump Tax page. Facts and estimates only.",
+    "execution": {
+      "taskSupport": "forbidden",
+    },
+    "inputSchema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "properties": {
+        "responseFormat": {
+          "default": "concise",
+          "description": "concise (default) keeps the answer short; detailed returns the full breakdown",
+          "enum": [
+            "concise",
+            "detailed",
+          ],
+          "type": "string",
+        },
+        "taxYear": {
+          "description": "UK tax year, such as 2025/26 (defaults to the current tax year)",
+          "enum": [
+            "2020/21",
+            "2021/22",
+            "2022/23",
+            "2023/24",
+            "2024/25",
+            "2025/26",
+            "2026/27",
+          ],
+          "type": "string",
+        },
+      },
+      "type": "object",
+    },
+    "name": "get_tax_year_position",
+    "outputSchema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "additionalProperties": false,
+      "properties": {
+        "asOf": {
+          "format": "date-time",
+          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$",
+          "type": "string",
+        },
+        "assumptions": {
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "field": {
+                "type": "string",
+              },
+              "reason": {
+                "type": "string",
+              },
+              "source": {
+                "enum": [
+                  "agent_supplied",
+                  "default",
+                  "user_profile",
+                  "derived",
+                ],
+                "type": "string",
+              },
+              "value": {
+                "type": [
+                  "number",
+                  "string",
+                ],
+              },
+            },
+            "required": [
+              "field",
+              "source",
+            ],
+            "type": "object",
+          },
+          "type": "array",
+        },
+        "currency": {
+          "const": "GBP",
+          "type": "string",
+        },
+        "missing": {
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "askUser": {
+                "type": "string",
+              },
+              "field": {
+                "type": "string",
+              },
+              "why": {
+                "type": "string",
+              },
+            },
+            "required": [
+              "field",
+              "why",
+              "askUser",
+            ],
+            "type": "object",
+          },
+          "type": "array",
+        },
+        "nextCursor": {
+          "type": [
+            "string",
+            "null",
+          ],
+        },
+        "notice": {
+          "type": "string",
+        },
+        "provenance": {
+          "additionalProperties": {
+            "type": "string",
+          },
+          "propertyNames": {
+            "type": "string",
+          },
+          "type": "object",
+        },
+        "result": {
+          "additionalProperties": false,
+          "properties": {
+            "childBenefitCharge": {
+              "additionalProperties": false,
+              "properties": {
+                "chargePctAtThisIncome": {
+                  "type": "number",
+                },
+                "fullChargeAtGbp": {
+                  "type": "number",
+                },
+                "thresholdGbp": {
+                  "type": "number",
+                },
+              },
+              "required": [
+                "thresholdGbp",
+                "fullChargeAtGbp",
+                "chargePctAtThisIncome",
+              ],
+              "type": "object",
+            },
+            "estimate": {
+              "additionalProperties": false,
+              "properties": {
+                "incomeTaxGbp": {
+                  "type": "number",
+                },
+                "nationalInsuranceGbp": {
+                  "type": "number",
+                },
+                "payeTaxGbp": {
+                  "type": "number",
+                },
+                "selfAssessmentGbp": {
+                  "type": "number",
+                },
+                "totalTaxGbp": {
+                  "type": "number",
+                },
+              },
+              "required": [
+                "incomeTaxGbp",
+                "nationalInsuranceGbp",
+                "totalTaxGbp",
+                "payeTaxGbp",
+                "selfAssessmentGbp",
+              ],
+              "type": "object",
+            },
+            "income": {
+              "additionalProperties": false,
+              "properties": {
+                "dividendsGbp": {
+                  "type": "number",
+                },
+                "payeSalaryGbp": {
+                  "type": "number",
+                },
+                "rentalProfitShareGbp": {
+                  "type": "number",
+                },
+                "savingsInterestGbp": {
+                  "type": "number",
+                },
+                "selfEmployedProfitGbp": {
+                  "type": "number",
+                },
+                "totalGbp": {
+                  "type": "number",
+                },
+              },
+              "required": [
+                "payeSalaryGbp",
+                "selfEmployedProfitGbp",
+                "rentalProfitShareGbp",
+                "savingsInterestGbp",
+                "dividendsGbp",
+                "totalGbp",
+              ],
+              "type": "object",
+            },
+            "incomeTaxBands": {
+              "additionalProperties": false,
+              "properties": {
+                "bands": {
+                  "items": {
+                    "additionalProperties": false,
+                    "properties": {
+                      "name": {
+                        "type": "string",
+                      },
+                      "ratePct": {
+                        "type": "number",
+                      },
+                      "taxGbp": {
+                        "type": "number",
+                      },
+                      "taxableGbp": {
+                        "type": "number",
+                      },
+                    },
+                    "required": [
+                      "name",
+                      "ratePct",
+                      "taxableGbp",
+                      "taxGbp",
+                    ],
+                    "type": "object",
+                  },
+                  "type": "array",
+                },
+                "taxableGbp": {
+                  "type": "number",
+                },
+                "topBand": {
+                  "type": [
+                    "string",
+                    "null",
+                  ],
+                },
+              },
+              "required": [
+                "taxableGbp",
+                "bands",
+                "topBand",
+              ],
+              "type": "object",
+            },
+            "notes": {
+              "items": {
+                "type": "string",
+              },
+              "type": "array",
+            },
+            "personalAllowance": {
+              "additionalProperties": false,
+              "properties": {
+                "effectiveGbp": {
+                  "type": "number",
+                },
+                "position": {
+                  "enum": [
+                    "below_taper",
+                    "in_taper",
+                    "above_taper",
+                  ],
+                  "type": "string",
+                },
+                "reducedByGbp": {
+                  "type": "number",
+                },
+                "standardGbp": {
+                  "type": "number",
+                },
+                "taperEndGbp": {
+                  "type": "number",
+                },
+                "taperStartGbp": {
+                  "type": "number",
+                },
+              },
+              "required": [
+                "standardGbp",
+                "effectiveGbp",
+                "reducedByGbp",
+                "taperStartGbp",
+                "taperEndGbp",
+                "position",
+              ],
+              "type": "object",
+            },
+            "region": {
+              "enum": [
+                "ENGLAND_NI_WALES",
+                "SCOTLAND",
+              ],
+              "type": "string",
+            },
+            "regionAssumed": {
+              "type": "boolean",
+            },
+            "section24": {
+              "additionalProperties": false,
+              "properties": {
+                "financeCostsShareGbp": {
+                  "type": "number",
+                },
+                "rentalTaxAfterCreditGbp": {
+                  "type": "number",
+                },
+                "rentalTaxBeforeCreditGbp": {
+                  "type": "number",
+                },
+                "taxCreditGbp": {
+                  "type": "number",
+                },
+              },
+              "required": [
+                "financeCostsShareGbp",
+                "taxCreditGbp",
+                "rentalTaxBeforeCreditGbp",
+                "rentalTaxAfterCreditGbp",
+              ],
+              "type": "object",
+            },
+          },
+          "required": [
+            "region",
+            "regionAssumed",
+            "income",
+            "personalAllowance",
+            "incomeTaxBands",
+            "childBenefitCharge",
+            "section24",
+            "estimate",
+            "notes",
+          ],
+          "type": "object",
+        },
+        "schemaVersion": {
+          "const": "2.0",
+          "type": "string",
+        },
+        "taxYear": {
+          "type": "string",
+        },
+        "truncated": {
+          "type": "boolean",
+        },
+        "verification": {
+          "additionalProperties": false,
+          "properties": {
+            "detail": {
+              "type": "string",
+            },
+            "status": {
+              "enum": [
+                "verified",
+                "unverified",
+              ],
+              "type": "string",
+            },
+          },
+          "required": [
+            "status",
+            "detail",
+          ],
+          "type": "object",
+        },
+      },
+      "required": [
+        "schemaVersion",
+        "asOf",
+        "currency",
+        "result",
+        "provenance",
+        "assumptions",
+        "missing",
+        "truncated",
+        "nextCursor",
+      ],
+      "type": "object",
+    },
+    "title": "Tax year position",
+  },
+  {
+    "_meta": undefined,
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": true,
+    },
+    "description": "Deprecated: first tool to be removed from this server. Sets the interest saved by overpaying a recorded mortgage by a fixed monthly amount beside the growth on the same amount invested at an expected annual return. Reads the mortgage balance, interest rate and remaining term from the mortgage account; anything not recorded is listed in missing[] and the comparison is left null rather than guessed. The expected return is required and is a single constant rate. The result states both outcomes and their difference; it does not choose between them.",
     "execution": {
       "taskSupport": "forbidden",
     },
@@ -2421,299 +3493,21 @@ exports[`MCP surface snapshot (E17-N1) > pins tools/list > tools/list 1`] = `
     },
     "title": "Project net worth",
   },
-  {
-    "_meta": undefined,
-    "annotations": {
-      "destructiveHint": false,
-      "idempotentHint": true,
-      "openWorldHint": false,
-      "readOnlyHint": true,
-    },
-    "description": "Shows what a UK student loan repays each year at a given salary under the stated plan, and whether the projection clears the balance before the statutory write-off or writes it off first. The plan is required because it is not stored; balance and salary default to recorded values and are listed in missing[] when neither recorded nor supplied. The result describes the projected outcome; it does not say whether to overpay.",
-    "execution": {
-      "taskSupport": "forbidden",
-    },
-    "inputSchema": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "properties": {
-        "annualSalaryGbp": {
-          "description": "Annual gross salary in GBP. Defaults to the salary on the profile.",
-          "maximum": 10000000,
-          "minimum": 0,
-          "type": "number",
-        },
-        "balanceGbp": {
-          "description": "Outstanding loan balance in GBP. Defaults to the recorded student loan balance.",
-          "maximum": 10000000,
-          "minimum": 0,
-          "type": "number",
-        },
-        "plan": {
-          "description": "Repayment plan: plan1, plan2, plan4 (Scotland), plan5 or postgrad",
-          "enum": [
-            "plan1",
-            "plan2",
-            "plan4",
-            "plan5",
-            "postgrad",
-          ],
-          "type": "string",
-        },
-        "responseFormat": {
-          "default": "concise",
-          "description": "concise (default) keeps the answer short; detailed returns the full breakdown",
-          "enum": [
-            "concise",
-            "detailed",
-          ],
-          "type": "string",
-        },
-      },
-      "required": [
-        "plan",
-      ],
-      "type": "object",
-    },
-    "name": "evaluate_student_loan_overpayment",
-    "outputSchema": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "additionalProperties": false,
-      "properties": {
-        "asOf": {
-          "format": "date-time",
-          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$",
-          "type": "string",
-        },
-        "assumptions": {
-          "items": {
-            "additionalProperties": false,
-            "properties": {
-              "field": {
-                "type": "string",
-              },
-              "reason": {
-                "type": "string",
-              },
-              "source": {
-                "enum": [
-                  "agent_supplied",
-                  "default",
-                  "user_profile",
-                  "derived",
-                ],
-                "type": "string",
-              },
-              "value": {
-                "type": [
-                  "number",
-                  "string",
-                ],
-              },
-            },
-            "required": [
-              "field",
-              "source",
-            ],
-            "type": "object",
-          },
-          "type": "array",
-        },
-        "currency": {
-          "const": "GBP",
-          "type": "string",
-        },
-        "missing": {
-          "items": {
-            "additionalProperties": false,
-            "properties": {
-              "askUser": {
-                "type": "string",
-              },
-              "field": {
-                "type": "string",
-              },
-              "why": {
-                "type": "string",
-              },
-            },
-            "required": [
-              "field",
-              "why",
-              "askUser",
-            ],
-            "type": "object",
-          },
-          "type": "array",
-        },
-        "nextCursor": {
-          "type": [
-            "string",
-            "null",
-          ],
-        },
-        "notice": {
-          "type": "string",
-        },
-        "provenance": {
-          "additionalProperties": {
-            "type": "string",
-          },
-          "propertyNames": {
-            "type": "string",
-          },
-          "type": "object",
-        },
-        "result": {
-          "additionalProperties": false,
-          "properties": {
-            "annualRepaymentGbp": {
-              "type": [
-                "number",
-                "null",
-              ],
-            },
-            "annualSalaryGbp": {
-              "type": [
-                "number",
-                "null",
-              ],
-            },
-            "balanceGbp": {
-              "type": [
-                "number",
-                "null",
-              ],
-            },
-            "monthlyRepaymentGbp": {
-              "type": [
-                "number",
-                "null",
-              ],
-            },
-            "notes": {
-              "items": {
-                "type": "string",
-              },
-              "type": "array",
-            },
-            "plan": {
-              "enum": [
-                "plan1",
-                "plan2",
-                "plan4",
-                "plan5",
-                "postgrad",
-              ],
-              "type": "string",
-            },
-            "projectedOutcome": {
-              "anyOf": [
-                {
-                  "enum": [
-                    "repaid_before_write_off",
-                    "written_off_first",
-                  ],
-                  "type": "string",
-                },
-                {
-                  "type": "null",
-                },
-              ],
-            },
-            "repaymentRatePct": {
-              "type": [
-                "number",
-                "null",
-              ],
-            },
-            "repaymentThresholdGbp": {
-              "type": [
-                "number",
-                "null",
-              ],
-            },
-            "writeOffYears": {
-              "type": [
-                "number",
-                "null",
-              ],
-            },
-          },
-          "required": [
-            "plan",
-            "balanceGbp",
-            "annualSalaryGbp",
-            "repaymentThresholdGbp",
-            "repaymentRatePct",
-            "annualRepaymentGbp",
-            "monthlyRepaymentGbp",
-            "writeOffYears",
-            "projectedOutcome",
-            "notes",
-          ],
-          "type": "object",
-        },
-        "schemaVersion": {
-          "const": "2.0",
-          "type": "string",
-        },
-        "taxYear": {
-          "type": "string",
-        },
-        "truncated": {
-          "type": "boolean",
-        },
-        "verification": {
-          "additionalProperties": false,
-          "properties": {
-            "detail": {
-              "type": "string",
-            },
-            "status": {
-              "enum": [
-                "verified",
-                "unverified",
-              ],
-              "type": "string",
-            },
-          },
-          "required": [
-            "status",
-            "detail",
-          ],
-          "type": "object",
-        },
-      },
-      "required": [
-        "schemaVersion",
-        "asOf",
-        "currency",
-        "result",
-        "provenance",
-        "assumptions",
-        "missing",
-        "truncated",
-        "nextCursor",
-      ],
-      "type": "object",
-    },
-    "title": "Student loan repayment outlook",
-  },
 ]
 `;
 
 exports[`per-tool output size (E17-N1) > calls every registered tool and pins the output size in bytes 1`] = `
 {
-  "calculate_self_assessment_and_section24": 1000,
   "compare_mortgage_overpay_vs_invest": 1500,
-  "evaluate_student_loan_overpayment": 1500,
+  "get_balance_history": 1500,
   "get_budget_summary": 1000,
-  "get_debt_overview": 1000,
+  "get_data_coverage": 1500,
+  "get_debt_overview": 1500,
   "get_financial_snapshot": 1500,
-  "get_net_worth_history": 1000,
+  "get_tax_year_position": 2500,
   "list_accounts": 1000,
+  "list_tax_records": 1000,
   "project_net_worth": 2000,
   "simulate_debt_payoff": 1000,
-  "simulate_uk_tax_and_pension_sacrifice": 1500,
 }
 `;

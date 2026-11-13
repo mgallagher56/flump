@@ -3,6 +3,7 @@ import { realpathSync } from "node:fs";
 import { pathToFileURL } from "node:url";
 import type { BuildContextPackInput } from "@flump/finance-engine";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import { inMemoryQueries } from "../provider/in-memory.js";
 import { createFlumpMcpServer } from "../server.js";
 import type { McpUserDataProvider } from "../types.js";
 
@@ -67,17 +68,20 @@ export async function runStdio(
   const userId = initial.baseline?.userId;
   if (!userId) throw new PatRejectedError();
 
+  const getUserFinancialData = async () => {
+    const data = await fetchPack();
+    if (!data.baseline) throw new PatRejectedError();
+    return {
+      baseline: data.baseline,
+      accounts: data.portfolio?.accounts,
+      budgetEntries: data.budgetSummary?.entries,
+      taxRecords: data.taxRecords,
+    };
+  };
+  // The context pack has no monthly rows, so history reads return empty with missing[] here.
   const dataProvider: McpUserDataProvider = {
-    async getUserFinancialData() {
-      const data = await fetchPack();
-      if (!data.baseline) throw new PatRejectedError();
-      return {
-        baseline: data.baseline,
-        accounts: data.portfolio?.accounts,
-        budgetEntries: data.budgetSummary?.entries,
-        taxRecords: data.taxRecords,
-      };
-    },
+    getUserFinancialData,
+    ...inMemoryQueries(getUserFinancialData),
   };
 
   const server = createFlumpMcpServer({

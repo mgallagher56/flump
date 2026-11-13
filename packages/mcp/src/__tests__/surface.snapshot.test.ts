@@ -1,6 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { connectTestClient, detectDefaultLeaks, type TestHarness } from "../testing/client.js";
 import { emptyUser, mortgageAndIsa, renterWithUnknownAprCard } from "../testing/personas.js";
+import { MINIMAL_TOOL_ARGS } from "../testing/tool-args.js";
 
 /**
  * Pins today's MCP surface (tools/list, resources/list, prompts/list) and each tool's
@@ -27,26 +28,12 @@ describe("MCP surface snapshot (E17-N1)", () => {
     expect(resources).toMatchSnapshot();
   });
 
-  it("pins prompts/list", async () => {
-    const { prompts } = await h.client.listPrompts();
-    expect(prompts).toMatchSnapshot();
+  it("registers no prompts (2026-11 re-plan PR A; PR D adds two)", () => {
+    expect(h.client.getServerCapabilities()?.prompts).toBeUndefined();
   });
 });
 
-/** Minimal valid arguments per tool, so each can be called through the SDK client. */
-const TOOL_CALLS: Record<string, Record<string, unknown>> = {
-  simulate_uk_tax_and_pension_sacrifice: { employeePensionPct: 5 },
-  calculate_self_assessment_and_section24: { taxYear: "2025/26" },
-  compare_mortgage_overpay_vs_invest: { monthlyAmountGbp: 300, expectedReturnPct: 5 },
-  simulate_debt_payoff: {},
-  project_net_worth: { expectedReturnPct: 5 },
-  evaluate_student_loan_overpayment: { plan: "plan5", balanceGbp: 30000, annualSalaryGbp: 40000 },
-  get_financial_snapshot: {},
-  get_net_worth_history: {},
-  list_accounts: {},
-  get_budget_summary: {},
-  get_debt_overview: {},
-};
+const TOOL_CALLS = MINIMAL_TOOL_ARGS;
 
 describe("per-tool output size (E17-N1)", () => {
   it("calls every registered tool and pins the output size in bytes", async () => {
@@ -81,19 +68,9 @@ describe("default-leak table (E17-N1)", () => {
    * This table covers ECHOED values only. E17-N11 removed the tools that substituted silent defaults, so every row
    * is now empty. 45000 belongs to N2.
    */
-  const EXPECTED_LEAKS_FOR_EMPTY_USER: Record<string, Array<number | string>> = {
-    calculate_self_assessment_and_section24: [],
-    compare_mortgage_overpay_vs_invest: [],
-    evaluate_student_loan_overpayment: [],
-    get_budget_summary: [],
-    get_debt_overview: [],
-    get_financial_snapshot: [],
-    get_net_worth_history: [],
-    list_accounts: [],
-    project_net_worth: [],
-    simulate_debt_payoff: [],
-    simulate_uk_tax_and_pension_sacrifice: [],
-  };
+  const EXPECTED_LEAKS_FOR_EMPTY_USER: Record<string, Array<number | string>> = Object.fromEntries(
+    Object.keys(MINIMAL_TOOL_ARGS).map((name) => [name, []]),
+  );
 
   it("detects defaults for an empty user", async () => {
     const h = await connectTestClient(emptyUser);

@@ -34,34 +34,28 @@ const SIMULATE: ScopeRequirement = {
 };
 
 export const TOOL_SCOPES: Readonly<Record<string, ScopeRequirement>> = {
-  // Read tools v2 (E17-N9).
+  // Read tools (E17-N9, plus the 2026-11 re-plan PR B query reads and the one tax tool).
   get_financial_snapshot: READ,
-  get_net_worth_history: READ,
+  get_balance_history: READ,
+  get_data_coverage: READ,
   list_accounts: READ,
   get_budget_summary: READ,
   get_debt_overview: READ,
-  // Simulate tools v2 (E17-N11). Old tax tools stay until E17-N12.
+  list_tax_records: READ,
+  get_tax_year_position: READ,
+  // Simulate tools v2 (E17-N11), frozen by the re-plan. compare_* is deprecated, first to cut.
   compare_mortgage_overpay_vs_invest: SIMULATE,
   simulate_debt_payoff: SIMULATE,
   project_net_worth: SIMULATE,
-  evaluate_student_loan_overpayment: SIMULATE,
-  simulate_uk_tax_and_pension_sacrifice: SIMULATE,
-  calculate_self_assessment_and_section24: SIMULATE,
 };
 
+/** `schema` is the data dictionary; it holds no user data but stays behind a read scope. */
 export const RESOURCE_SCOPES: Readonly<Record<string, ScopeRequirement>> = {
-  "executive-snapshot": READ,
-  baseline: READ,
-  accounts: READ,
-  budget: READ,
-  "tax-ledger": READ,
+  schema: READ,
 };
 
-export const PROMPT_SCOPES: Readonly<Record<string, ScopeRequirement>> = {
-  "uk-financial-health-audit": READ,
-  "escape-100k-tax-trap": READ,
-  "crush-high-apr-debt": READ,
-};
+/** No prompts until the re-plan's PR D adds `import-spreadsheet` and `monthly-check-in`. */
+export const PROMPT_SCOPES: Readonly<Record<string, ScopeRequirement>> = {};
 
 export type McpPrimitiveKind = "tool" | "resource" | "prompt";
 

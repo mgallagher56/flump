@@ -118,4 +118,4 @@ A spreadsheet migration is a one-off per user, and an in-app paste or CSV import
 
 - `get_net_worth_history` is **removed**, not aliased. The only MCP user is the owner (`MCP_ALLOWED_USER_IDS`), so a deprecated alias would protect no client; `get_balance_history` with `groupBy: "total"` returns the same series.
 - `compare_mortgage_overpay_vs_invest` says "Deprecated" in its description and is the first tool to cut.
-- The new reads use ranged provider methods (`getAccountSnapshots`, `getDataCoverage`, `getTaxRecordsForYear`) that filter in SQL by user, account and month; nothing loads the whole history to filter in memory.
+- The new reads use ranged provider methods (`getAccounts`, `getBaseline`, `getAccountSnapshots`, `getDataCoverage`, `getTaxRecords`) that filter in SQL by user, account and month or date; nothing loads the whole history to filter in memory.

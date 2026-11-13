@@ -2,21 +2,9 @@ import { readFileSync } from "node:fs";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { connectTestClient, type TestHarness } from "../testing/client.js";
 import { renterWithUnknownAprCard } from "../testing/personas.js";
+import { MINIMAL_TOOL_ARGS } from "../testing/tool-args.js";
 
-/** Minimal valid arguments per tool. Every registered tool must have an entry. */
-const TOOL_ARGS: Record<string, Record<string, unknown>> = {
-  simulate_uk_tax_and_pension_sacrifice: { employeePensionPct: 5 },
-  calculate_self_assessment_and_section24: { taxYear: "2025/26" },
-  compare_mortgage_overpay_vs_invest: { monthlyAmountGbp: 300, expectedReturnPct: 5 },
-  simulate_debt_payoff: {},
-  project_net_worth: { expectedReturnPct: 5 },
-  evaluate_student_loan_overpayment: { plan: "plan5", balanceGbp: 30000, annualSalaryGbp: 40000 },
-  get_financial_snapshot: {},
-  get_net_worth_history: {},
-  list_accounts: {},
-  get_budget_summary: {},
-  get_debt_overview: {},
-};
+const TOOL_ARGS = MINIMAL_TOOL_ARGS;
 
 /** E17-N3: summaries only, compact JSON, SDK registration, real version. */
 describe("MCP output size and registration (E17-N3)", () => {
@@ -37,16 +25,6 @@ describe("MCP output size and registration (E17-N3)", () => {
     expect(text).not.toContain('"payments":[');
   });
 
-  it("executive-snapshot drops monthlySchedule and is compact", async () => {
-    const res = await h.client.readResource({ uri: "flump://context/executive-snapshot" });
-    const text = (res.contents[0] as { text: string }).text;
-    expect(text).not.toContain("monthlySchedule");
-    expect(JSON.parse(text).debtSummary.avalancheVsSnowballComparison.avalanche.months).toBeTypeOf(
-      "number",
-    );
-    expect(text).not.toContain("\n");
-  });
-
   it("every resource and tool output is compact JSON", async () => {
     const { resources } = await h.client.listResources();
     for (const r of resources) {
@@ -63,15 +41,7 @@ describe("MCP output size and registration (E17-N3)", () => {
 
   it("registers exactly the expected resources", async () => {
     const { resources } = await h.client.listResources();
-    expect(resources.map((r) => [r.name, r.uri]).sort()).toEqual(
-      [
-        ["accounts", "flump://context/accounts"],
-        ["baseline", "flump://context/baseline"],
-        ["budget", "flump://context/budget"],
-        ["executive-snapshot", "flump://context/executive-snapshot"],
-        ["tax-ledger", "flump://context/tax-ledger"],
-      ].sort(),
-    );
+    expect(resources.map((r) => [r.name, r.uri])).toEqual([["schema", "flump://schema"]]);
   });
 
   it("gives tools distinct titles", async () => {
@@ -80,11 +50,10 @@ describe("MCP output size and registration (E17-N3)", () => {
     expect(new Set(titles).size).toBe(titles.length);
   });
 
-  it("gives every tool, resource and prompt a title", async () => {
+  it("gives every tool and resource a title", async () => {
     const { tools } = await h.client.listTools();
     const { resources } = await h.client.listResources();
-    const { prompts } = await h.client.listPrompts();
-    for (const item of [...tools, ...resources, ...prompts]) {
+    for (const item of [...tools, ...resources]) {
       expect(item.title, item.name).toBeTruthy();
     }
   });

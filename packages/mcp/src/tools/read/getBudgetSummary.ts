@@ -1,3 +1,4 @@
+import { MCP_NOTICE } from "@flump/finance-engine";
 import { z } from "zod";
 import { defineFlumpTool } from "../../define-tool.js";
 import {
@@ -17,6 +18,7 @@ const result = z.object({
   /** Income minus essential and discretionary spend, before any debt payments. */
   monthlySurplusBeforeDebtGbp: z.number().nullable(),
   entryCount: z.number(),
+  notes: z.array(z.string()),
   categories: z.array(
     z.object({ category: z.string(), monthlyGbp: z.number(), essential: z.boolean() }),
   ),
@@ -97,6 +99,9 @@ export const getBudgetSummary = defineFlumpTool({
         discretionaryMonthlyGbp: b.discretionaryMonthly,
         monthlySurplusBeforeDebtGbp: surplus,
         entryCount: entries.length,
+        notes: [
+          "Surplus here is before any debt payments (get_financial_snapshot gives the figure after stored minimums); see get_debt_overview for minimums.",
+        ],
         categories: mergeCategories(
           b.byCategory.map((c) => ({
             category: safeText(c.category, m.anonymise),
@@ -108,8 +113,7 @@ export const getBudgetSummary = defineFlumpTool({
       },
       provenance: { totals: "budget_entries" },
       missing,
-      notice:
-        "Surplus here is before any debt payments (get_financial_snapshot gives the figure after stored minimums); see get_debt_overview for minimums.",
+      notice: MCP_NOTICE,
     };
   },
 });

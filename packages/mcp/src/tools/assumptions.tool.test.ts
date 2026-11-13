@@ -5,10 +5,15 @@ import { emptyUser, mortgageAndIsa } from "../testing/personas.js";
 interface A {
   field: string;
   value?: number | string;
+  source: string;
   reason: string;
 }
 
-describe("interim assumptions, tax-year defaults and verification (E17-N5)", () => {
+type Env = { taxYear: string; assumptions: A[]; verification: { status: string; detail: string } };
+
+const TAX_YEAR_TOOLS = ["get_tax_year_position", "list_tax_records"] as const;
+
+describe("tax-year defaults and verification (E17-N5, re-plan PR A)", () => {
   let h: TestHarness | undefined;
   afterEach(async () => {
     vi.useRealTimers();
@@ -16,56 +21,48 @@ describe("interim assumptions, tax-year defaults and verification (E17-N5)", () 
     h = undefined;
   });
 
-  it("tax tools return verification and a notice", async () => {
+  it("get_tax_year_position returns verification and the standard notice", async () => {
     h = await connectTestClient(mortgageAndIsa);
-    const trap = (await h.callJson("simulate_uk_tax_and_pension_sacrifice", {
-      employeePensionPct: 5,
-    })) as { verification: { status: string; detail: string }; notice: string };
-    expect(["verified", "unverified"]).toContain(trap.verification.status);
-    expect(trap.verification.detail.length).toBeGreaterThan(0);
-    expect(trap.notice).toMatch(/not tax advice/i);
-    const s24 = (await h.callJson("calculate_self_assessment_and_section24", {
-      taxYear: "2025/26",
-    })) as { verification: { status: string }; notice: string };
-    expect(s24.verification.status).toBeDefined();
-    expect(s24.notice).toMatch(/not tax advice/i);
+    const e = (await h.callJson("get_tax_year_position", { taxYear: "2025/26" })) as Env & {
+      notice: string;
+    };
+    expect(["verified", "unverified"]).toContain(e.verification.status);
+    expect(e.verification.detail.length).toBeGreaterThan(0);
+    expect(e.notice).toMatch(/Guidance, not advice/);
   });
 
   it("an unsupported year is rejected by the schema enum", async () => {
     h = await connectTestClient(mortgageAndIsa);
-    const res = await h.client.callTool({
-      name: "calculate_self_assessment_and_section24",
-      arguments: { taxYear: "2019/20" },
-    });
-    expect(res.isError).toBe(true);
+    for (const name of TAX_YEAR_TOOLS) {
+      const res = await h.client.callTool({ name, arguments: { taxYear: "2019/20" } });
+      expect(res.isError, name).toBe(true);
+    }
   });
 
   it("the default tax year rolls over on 6 April", async () => {
     vi.useFakeTimers({ toFake: ["Date"] });
     h = await connectTestClient(emptyUser);
-    vi.setSystemTime(new Date("2026-04-05T12:00:00Z"));
-    const before = (await h.callJson("simulate_uk_tax_and_pension_sacrifice", {
-      employeePensionPct: 5,
-      hypotheticalGrossSalaryGbp: 40000,
-      region: "ENGLAND_NI_WALES",
-    })) as { taxYear: string };
-    vi.setSystemTime(new Date("2026-04-06T12:00:00Z"));
-    const after = (await h.callJson("simulate_uk_tax_and_pension_sacrifice", {
-      employeePensionPct: 5,
-      hypotheticalGrossSalaryGbp: 40000,
-      region: "ENGLAND_NI_WALES",
-    })) as { taxYear: string };
-    expect(before.taxYear).toBe("2025/26");
-    expect(after.taxYear).toBe("2026/27");
+    for (const name of TAX_YEAR_TOOLS) {
+      vi.setSystemTime(new Date("2026-04-05T12:00:00Z"));
+      const before = (await h.callJson(name, {})) as Env;
+      vi.setSystemTime(new Date("2026-04-06T12:00:00Z"));
+      const after = (await h.callJson(name, {})) as Env;
+      expect(before.taxYear, name).toBe("2025/26");
+      expect(after.taxYear, name).toBe("2026/27");
+    }
+  });
+
+  it("rolls over at UK midnight: 2026-04-05T23:30Z is 6 April in BST", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    h = await connectTestClient(emptyUser);
+    vi.setSystemTime(new Date("2026-04-05T23:30:00Z"));
+    expect(((await h.callJson("get_tax_year_position", {})) as Env).taxYear).toBe("2026/27");
   });
 
   it("schemas take their year enum from SUPPORTED_UK_TAX_YEARS", async () => {
     h = await connectTestClient(emptyUser);
     const { tools } = await h.client.listTools();
-    for (const name of [
-      "simulate_uk_tax_and_pension_sacrifice",
-      "calculate_self_assessment_and_section24",
-    ]) {
+    for (const name of TAX_YEAR_TOOLS) {
       const schema = tools.find((t) => t.name === name)?.inputSchema as {
         properties: { taxYear: { enum: string[] } };
       };
@@ -74,13 +71,7 @@ describe("interim assumptions, tax-year defaults and verification (E17-N5)", () 
     }
   });
 
-  it("the uk-fiscal-guardrails resource is gone", async () => {
-    h = await connectTestClient(emptyUser);
-    const { resources } = await h.client.listResources();
-    expect(resources.map((r) => r.uri)).not.toContain("flump://rules/uk-fiscal-guardrails");
-  });
-
-  it("every year that is not signed off is reported unverified by both tax tools", async () => {
+  it("every year that is not signed off is reported unverified", async () => {
     h = await connectTestClient(mortgageAndIsa);
     for (const year of [
       "2020/21",
@@ -91,44 +82,39 @@ describe("interim assumptions, tax-year defaults and verification (E17-N5)", () 
       "2025/26",
       "2026/27",
     ]) {
-      const trap = (await h.callJson("simulate_uk_tax_and_pension_sacrifice", {
-        employeePensionPct: 5,
-        taxYear: year,
-      })) as { verification: { status: string } };
-      const s24 = (await h.callJson("calculate_self_assessment_and_section24", {
-        taxYear: year,
-      })) as { verification: { status: string } };
+      const e = (await h.callJson("get_tax_year_position", { taxYear: year })) as Env;
       // No vector is signed off yet (the owner is the only signer), so no year may read verified.
-      expect(trap.verification.status, year).toBe("unverified");
-      expect(s24.verification.status, year).toBe("unverified");
+      expect(e.verification.status, year).toBe("unverified");
     }
-  });
-
-  it("rolls over at UK midnight: 2026-04-05T23:30Z is 6 April in BST", async () => {
-    vi.useFakeTimers({ toFake: ["Date"] });
-    h = await connectTestClient(emptyUser);
-    vi.setSystemTime(new Date("2026-04-05T23:30:00Z"));
-    const body = (await h.callJson("simulate_uk_tax_and_pension_sacrifice", {
-      employeePensionPct: 5,
-      hypotheticalGrossSalaryGbp: 40000,
-    })) as { taxYear: string };
-    expect(body.taxYear).toBe("2026/27");
   });
 
   it("falls back to the latest supported year, with an assumption, from 6 April 2027", async () => {
     vi.useFakeTimers({ toFake: ["Date"] });
     h = await connectTestClient(mortgageAndIsa);
     vi.setSystemTime(new Date("2027-04-06T12:00:00Z"));
-    const trap = (await h.callJson("simulate_uk_tax_and_pension_sacrifice", {
-      employeePensionPct: 5,
-    })) as { taxYear: string; assumptions: A[] };
-    expect(trap.taxYear).toBe("2026/27");
-    expect(trap.assumptions.map((a) => a.field)).toContain("taxYear");
-    const s24 = (await h.callJson("calculate_self_assessment_and_section24", {})) as {
-      taxYear: string;
-      assumptions: A[];
-    };
-    expect(s24.taxYear).toBe("2026/27");
-    expect(s24.assumptions.map((a) => a.field)).toContain("taxYear");
+    for (const name of TAX_YEAR_TOOLS) {
+      const e = (await h.callJson(name, {})) as Env;
+      expect(e.taxYear, name).toBe("2026/27");
+      expect(
+        e.assumptions.map((a) => a.field),
+        name,
+      ).toContain("taxYear");
+    }
+  });
+
+  it("the legacy tax tools, prompts and context resources are gone", async () => {
+    h = await connectTestClient(emptyUser);
+    const names = (await h.client.listTools()).tools.map((t) => t.name);
+    for (const gone of [
+      "simulate_uk_tax_and_pension_sacrifice",
+      "calculate_self_assessment_and_section24",
+      "evaluate_student_loan_overpayment",
+      "get_net_worth_history",
+    ]) {
+      expect(names).not.toContain(gone);
+    }
+    const uris = (await h.client.listResources()).resources.map((r) => r.uri);
+    expect(uris).toEqual(["flump://schema"]);
+    expect(h.client.getServerCapabilities()?.prompts).toBeUndefined();
   });
 });

@@ -9,7 +9,7 @@ import {
 } from "@flump/finance-engine";
 import { effectiveAnonymize } from "../../auth/scopes.js";
 import type { ToolOutput } from "../../envelope.js";
-import { shortId, shortIdKey } from "../../short-ids.js";
+import { resolveShortId, shortId, shortIdKey } from "../../short-ids.js";
 import type { McpServerContext } from "../../types.js";
 
 export type Missing = NonNullable<ToolOutput<unknown>["missing"]>[number];
@@ -57,9 +57,7 @@ export function sanitiseText(text: string, max: number = MAX_TEXT): string {
 
 export const round2 = (n: number): number => Math.round(n * 100) / 100;
 
-export interface ReadModel {
-  raw: BuildContextPackInput;
-  snapshot: PortfolioSnapshot;
+export interface AccountIndex {
   accounts: ResolvedAccount[];
   anonymise: boolean;
   /** Short id for a record, per kind, keyed on the token. */
@@ -71,18 +69,35 @@ export interface ReadModel {
    * contains user-controlled text, in either the anonymised or the full-read path.
    */
   refOf(account: ResolvedAccount): string;
+  /** The user's account a short `acc_` id names, or undefined (never another user's account). */
+  resolve(shortAccountId: string): ResolvedAccount | undefined;
 }
 
-/** Reads the user's data once and builds the shared view every read tool works from. */
-export async function loadReadModel(ctx: McpServerContext): Promise<ReadModel> {
-  const anonymise = effectiveAnonymize(ctx.token.anonymizeInstitutions, ctx.token.scopes);
-  const raw = await ctx.dataProvider.getUserFinancialData(ctx.token.userId, {
-    anonymizeInstitutions: anonymise,
-  });
-  const snapshot = new PortfolioSnapshot(raw.accounts ?? [], raw.accountDetails ?? []);
-  const accounts = snapshot.getResolvedAccounts();
-  const key = shortIdKey(ctx.token);
+export interface ReadModel extends AccountIndex {
+  raw: BuildContextPackInput;
+  snapshot: PortfolioSnapshot;
+}
 
+/** The engine's closed account category for a stored account type (never the free-text type). */
+export const ACCOUNT_CATEGORIES = [
+  "cash",
+  "savings",
+  "investments",
+  "pensions",
+  "debt",
+  "mortgages",
+  "property",
+  "studentLoans",
+  "other",
+] as const satisfies readonly AccountCategory[];
+
+/**
+ * Labels and short ids over the user's accounts in stored order. Every read tool goes through this,
+ * so a label ("Saving #2") and an id mean the same account in every tool.
+ */
+export function indexAccounts(ctx: McpServerContext, accounts: ResolvedAccount[]): AccountIndex {
+  const anonymise = effectiveAnonymize(ctx.token.anonymizeInstitutions, ctx.token.scopes);
+  const key = shortIdKey(ctx.token);
   // Per-category ordinals over all accounts in stored order, so a label is stable across tools.
   // The category comes from the engine's closed enum, not from the free-text stored `type`
   // (the backend `account.type` column is an unvalidated varchar), so nothing user-typed leaks.
@@ -96,16 +111,30 @@ export async function loadReadModel(ctx: McpServerContext): Promise<ReadModel> {
     refs.set(a.id, `${CATEGORY_NAMES[a.category]} account #${n}`);
     labels.set(a.id, anonymise ? generic : sanitiseText(a.name) || generic);
   }
-
   return {
-    raw,
-    snapshot,
     accounts,
     anonymise,
     idOf: (kind, uuid) => shortId(key, kind, uuid),
     labelOf: (a) => labels.get(a.id) ?? "Account",
     refOf: (a) => refs.get(a.id) ?? "Account",
+    resolve: (id) => resolveShortId(key, "acc", accounts, id),
   };
+}
+
+/** Accounts only (no history, budget or tax rows), for the ranged read tools. */
+export async function loadAccountIndex(ctx: McpServerContext): Promise<AccountIndex> {
+  const raw = await ctx.dataProvider.getAccounts(ctx.token.userId);
+  return indexAccounts(ctx, new PortfolioSnapshot(raw, []).getResolvedAccounts());
+}
+
+/** Reads the user's data once and builds the shared view every summary read tool works from. */
+export async function loadReadModel(ctx: McpServerContext): Promise<ReadModel> {
+  const anonymise = effectiveAnonymize(ctx.token.anonymizeInstitutions, ctx.token.scopes);
+  const raw = await ctx.dataProvider.getUserFinancialData(ctx.token.userId, {
+    anonymizeInstitutions: anonymise,
+  });
+  const snapshot = new PortfolioSnapshot(raw.accounts ?? [], raw.accountDetails ?? []);
+  return { raw, snapshot, ...indexAccounts(ctx, snapshot.getResolvedAccounts()) };
 }
 
 export const MAX_MISSING = 5;
