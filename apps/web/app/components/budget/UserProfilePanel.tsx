@@ -1,6 +1,6 @@
 import { SegmentedTabs } from "@repo/ui";
 import { css } from "@repo/ui/styled-system/css";
-import { type FC, useRef, useState } from "react";
+import { type FC, useEffect, useRef, useState } from "react";
 import {
   FaBriefcase,
   FaCamera,
@@ -125,6 +125,12 @@ const toggleKnobStyle = (active: boolean) => ({
   transition: "left 0.2s ease",
 });
 
+/** The settings tab named by `?tab=`, or null for anything unknown. */
+export const parseProfileTab = (search: string): "profile_security" | "ai_connections" | null => {
+  const tab = new URLSearchParams(search).get("tab");
+  return tab === "ai_connections" || tab === "profile_security" ? tab : null;
+};
+
 const UserProfilePanel: FC<UserProfilePanelProps> = ({ initialProfile, user }) => {
   const { profile, setProfile, updateProfile, sendPasswordResetEmail, resetFinancialData } =
     useUserProfile();
@@ -189,6 +195,12 @@ const UserProfilePanel: FC<UserProfilePanelProps> = ({ initialProfile, user }) =
   const [activeTab, setActiveTab] = useState<"profile_security" | "ai_connections">(
     "profile_security",
   );
+
+  // Deep link from the account menu (?tab=ai_connections). Read after mount so SSR markup matches.
+  useEffect(() => {
+    const tab = parseProfileTab(window.location.search);
+    if (tab) setActiveTab(tab);
+  }, []);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploadingImage, setUploadingImage] = useState(false);

@@ -24,6 +24,10 @@ vi.mock("app/components/ColorModeSwitch", () => ({
   default: () => <div>ColorModeSwitch</div>,
 }));
 
+vi.mock("app/components/navigation/AvatarMenu", () => ({
+  default: () => <div>AvatarMenu</div>,
+}));
+
 vi.mock("app/components/navigation/UserLogin", () => ({
   default: () => <div>UserLogin</div>,
 }));

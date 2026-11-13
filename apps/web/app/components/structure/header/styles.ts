@@ -51,18 +51,6 @@ export const loginStyles = css({
   justifyContent: "end",
 });
 
-export const profileLink = css({
-  display: "inline-flex",
-  alignItems: "center",
-  justifyContent: "center",
-  borderRadius: "full",
-  outline: "none",
-  _hover: { boxShadow: "xs" },
-  _focusVisible: { outline: "2px solid", outlineColor: "border.focusRing", outlineOffset: "2px" },
-});
-
-export const srOnly = css({ srOnly: true });
-
 export const mobileMenuButtonStyles = css({
   display: { base: "inline-flex", lg: "none" },
   alignItems: "center",

@@ -1,0 +1,35 @@
+import type { Meta, StoryObj } from "@storybook/react";
+import { expect, userEvent, within } from "storybook/test";
+import AvatarMenu from "./AvatarMenu";
+
+const meta: Meta<typeof AvatarMenu> = {
+  title: "Navigation/AvatarMenu",
+  component: AvatarMenu,
+  args: { user: { id: "1", firstName: "Sam", lastName: "Jordan" } },
+};
+export default meta;
+type Story = StoryObj<typeof AvatarMenu>;
+
+export const Closed: Story = {
+  play: async ({ canvasElement }) => {
+    const trigger = within(canvasElement).getByTestId("avatar-menu-trigger");
+    await expect(trigger).toHaveAttribute("aria-expanded", "false");
+  },
+};
+
+export const Open: Story = {
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const trigger = canvas.getByTestId("avatar-menu-trigger");
+    await userEvent.click(trigger);
+    await expect(trigger).toHaveAttribute("aria-expanded", "true");
+    await expect(canvas.getAllByRole("menuitem")).toHaveLength(4);
+    await userEvent.keyboard("{Escape}");
+    await expect(trigger).toHaveAttribute("aria-expanded", "false");
+  },
+};
+
+export const Dark: Story = {
+  globals: { theme: "dark" },
+  play: Open.play,
+};
