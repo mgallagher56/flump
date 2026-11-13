@@ -39,7 +39,7 @@ export const loader = async (args: LoaderFunctionArgs) => {
 const PERSONAS = [
   { key: "medium", label: "Renting" },
   { key: "debt", label: "Paying off debts" },
-  { key: "high", label: "Higher earner" },
+  { key: "high", label: "Paying a mortgage and letting a property" },
 ] as const;
 
 export default function SandboxRoute() {

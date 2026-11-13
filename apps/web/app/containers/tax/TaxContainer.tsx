@@ -354,7 +354,7 @@ const TaxContainer: FC = () => {
           <TaxReservePanel
             taxYear={selectedTaxYear}
             result={activeYearData}
-            trapAdjustedNetIncome={activeYearData?.totalGrossIncome || payeSalary}
+            trapIncome={activeYearData?.totalGrossIncome || payeSalary}
             trapRegion={getKnownTrapRegion(baseline)}
             payeSalary={payeSalary}
             onPayeSalaryChange={setPayeSalary}

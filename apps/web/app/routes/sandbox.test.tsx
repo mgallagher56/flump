@@ -67,7 +67,7 @@ describe("SandboxRoute", () => {
     ).toBe("false");
   });
 
-  it("defaults to the renting persona and lists personas in order, the higher earner last", () => {
+  it("defaults to the renting persona and lists personas in order, the higher-income household last", () => {
     mockSearchParams = new URLSearchParams();
     render(<SandboxRoute />);
 
@@ -75,7 +75,11 @@ describe("SandboxRoute", () => {
     const labels = Array.from(document.querySelectorAll("fieldset button")).map(
       (button) => button.textContent,
     );
-    expect(labels).toEqual(["Renting", "Paying off debts", "Higher earner"]);
+    expect(labels).toEqual([
+      "Renting",
+      "Paying off debts",
+      "Paying a mortgage and letting a property",
+    ]);
     expect(screen.getByText("Renting").getAttribute("aria-pressed")).toBe("true");
     expect(screen.getByTestId("total-debt").textContent).toBe("0");
     expect(screen.getByTestId("net-worth").textContent).toBe("43300");
@@ -83,7 +87,7 @@ describe("SandboxRoute", () => {
     fireEvent.click(screen.getByText("Paying off debts"));
     expect(screen.getByTestId("total-debt").textContent).toBe("8000");
 
-    fireEvent.click(screen.getByText("Higher earner"));
+    fireEvent.click(screen.getByText("Paying a mortgage and letting a property"));
     expect(screen.getByTestId("total-debt").textContent).toBe("0");
     expect(screen.getByTestId("net-worth").textContent).toBe("441500");
   });
@@ -92,7 +96,7 @@ describe("SandboxRoute", () => {
     mockSearchParams = new URLSearchParams();
     render(<SandboxRoute />);
     const text = document.querySelector("fieldset")?.textContent ?? "";
-    expect(text).not.toMatch(/£|100k|high earner|clearing|struggl|only|just|still/i);
+    expect(text).not.toMatch(/£|100k|high(er)? earner|clearing|struggl|only|just|still/i);
   });
 
   it("boots in the debt persona if ?persona=debt", () => {

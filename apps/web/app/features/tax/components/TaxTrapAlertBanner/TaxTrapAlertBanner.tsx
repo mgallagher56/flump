@@ -1,9 +1,5 @@
 import type { UkTaxRegion } from "@flump/finance-engine";
-import {
-  calculateTaxTrapRelief,
-  getDisplayMarginalRatePct,
-  isInTaxTrapAlertBand,
-} from "@flump/finance-engine";
+import { calculateTaxTrapRelief, isInTaxTrapAlertBand } from "@flump/finance-engine";
 import { Card, Icon, Money, StatusBadge } from "@repo/ui";
 import { Info } from "lucide-react";
 import { type FC, useMemo } from "react";
@@ -36,13 +32,22 @@ export interface TaxTrapAlertBannerProps {
   adjustedNetIncome: number;
   /** Known tax region; null or undefined means England, Wales and NI is assumed and labelled. */
   region?: UkTaxRegion | null;
+  /**
+   * "totalIncome" when the figure has no pension or Gift Aid deducted (the tax page), so the copy
+   * says so instead of calling it adjusted net income.
+   */
+  incomeBasis?: "adjustedNetIncome" | "totalIncome";
 }
 
 /**
  * Personal Allowance taper note. States facts only (advice boundary R2, R4, R5, R8): no
  * action, no button and no "save" framing. The same copy shows for every user in the band.
  */
-export const TaxTrapAlertBanner: FC<TaxTrapAlertBannerProps> = ({ adjustedNetIncome, region }) => {
+export const TaxTrapAlertBanner: FC<TaxTrapAlertBannerProps> = ({
+  adjustedNetIncome,
+  region,
+  incomeBasis = "adjustedNetIncome",
+}) => {
   const effectiveRegion: UkTaxRegion = region ?? "ENGLAND_NI_WALES";
   const { formatCurrency } = useFormatCurrency();
 
@@ -70,22 +75,25 @@ export const TaxTrapAlertBanner: FC<TaxTrapAlertBannerProps> = ({ adjustedNetInc
               <div className={titleRow()}>
                 <h3 className={titleStyle()}>
                   {inTaper
-                    ? "Personal Allowance taper, £100,000 to £125,140"
-                    : "Near the £100,000 Personal Allowance threshold"}
+                    ? "Personal Allowance taper, £100,000–£125,140"
+                    : "Near the £100,000 income limit for the full Personal Allowance"}
                 </h3>
                 <StatusBadge variant="info">
-                  {getDisplayMarginalRatePct(trapAnalysis)}% marginal rate (unverified estimate)
+                  {inTaper
+                    ? `${trapCopy.effectiveRate} marginal rate including NI (unverified estimate)`
+                    : `${trapCopy.incomeTaxRate} income tax marginal rate (unverified estimate)`}
                 </StatusBadge>
               </div>
               <p className={explainer()}>
-                Adjusted net income in this estimate is{" "}
-                <strong>{formatCurrency(adjustedNetIncome)}</strong>.{" "}
+                {incomeBasis === "totalIncome" ? "Total income" : "Adjusted net income"} in this
+                estimate is <strong>{formatCurrency(adjustedNetIncome)}</strong>.{" "}
                 {inTaper ? (
                   <>
                     Between £100,000 and £125,140, the Personal Allowance reduces by £1 for every £2
-                    of adjusted net income. In this band the marginal rate is{" "}
-                    <strong>{trapCopy.breakdown}</strong>. Some funded childcare schemes have a
-                    £100,000 income limit.
+                    of adjusted net income. In this band the effective marginal rate is{" "}
+                    <strong>{trapCopy.breakdown}</strong>. Tax-Free Childcare and the funded
+                    childcare hours for working parents in England have a £100,000 adjusted net
+                    income limit per parent.
                   </>
                 ) : (
                   <>
@@ -95,7 +103,12 @@ export const TaxTrapAlertBanner: FC<TaxTrapAlertBannerProps> = ({ adjustedNetInc
                 )}
               </p>
               <p className={assumption()}>
-                Adjusted net income is total taxable income less pension contributions and Gift Aid.
+                {incomeBasis === "totalIncome"
+                  ? "No pension contributions or Gift Aid are deducted, so adjusted net income may be lower. "
+                  : ""}
+                Adjusted net income is total taxable income before the Personal Allowance, less
+                certain reliefs, including the gross amount of personal pension contributions and
+                Gift Aid donations.
               </p>
               {!region && (
                 <p className={assumption()}>

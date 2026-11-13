@@ -15,7 +15,8 @@ type Story = StoryObj<typeof DebtHelpLink>;
 export const Default: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    const links = canvas.getAllByRole("link", { name: /MoneyHelper/ });
+    const links = canvas.getAllByRole("link", { name: /MoneyHelper.*opens in a new tab/ });
     await expect(links[0]?.getAttribute("target")).toBe("_blank");
+    await expect(links[0]?.getAttribute("rel")).toContain("noopener");
   },
 };

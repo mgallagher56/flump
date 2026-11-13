@@ -20,8 +20,8 @@ import {
 export interface TaxReservePanelProps {
   taxYear: string;
   result: TaxCalculationResult;
-  /** Income the Personal Allowance taper note uses as adjusted net income. */
-  trapAdjustedNetIncome: number;
+  /** Total income before pension contributions and Gift Aid; the taper note labels it as such. */
+  trapIncome: number;
   trapRegion: TaxTrapAlertBannerProps["region"];
   payeSalary: number;
   onPayeSalaryChange: (value: number) => void;
@@ -50,7 +50,7 @@ const gbp = (value: number, sign?: "always") => (
 export const TaxReservePanel: FC<TaxReservePanelProps> = ({
   taxYear,
   result,
-  trapAdjustedNetIncome,
+  trapIncome,
   trapRegion,
   payeSalary,
   onPayeSalaryChange,
@@ -61,7 +61,11 @@ export const TaxReservePanel: FC<TaxReservePanelProps> = ({
 }) => (
   <div className={root()}>
     <div className={twoUp()}>
-      <TaxTrapAlertBanner adjustedNetIncome={trapAdjustedNetIncome} region={trapRegion} />
+      <TaxTrapAlertBanner
+        adjustedNetIncome={trapIncome}
+        incomeBasis="totalIncome"
+        region={trapRegion}
+      />
       <PaymentsOnAccountCard
         annualSelfAssessmentTax={
           result.netAdditionalTaxToPay ?? Math.max(0, result.totalTaxDue - result.payeTaxDue)

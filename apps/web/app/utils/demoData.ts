@@ -16,7 +16,7 @@ export function getSandboxPersonaData(persona: "debt" | "medium" | "high" | "wea
     const debtAccounts = [
       {
         id: "demo-debt-acc-1",
-        name: "Monzo Current Account",
+        name: "Current account",
         type: "Current",
         balance: 950,
         currency: "GBP",
@@ -26,7 +26,7 @@ export function getSandboxPersonaData(persona: "debt" | "medium" | "high" | "wea
       },
       {
         id: "demo-debt-acc-2",
-        name: "Barclaycard Platinum",
+        name: "Credit card",
         type: "Credit Card",
         balance: -4500,
         currency: "GBP",
@@ -36,7 +36,7 @@ export function getSandboxPersonaData(persona: "debt" | "medium" | "high" | "wea
       },
       {
         id: "demo-debt-acc-3",
-        name: "Monzo Arranged Overdraft",
+        name: "Arranged overdraft",
         type: "Overdraft",
         balance: -1200,
         currency: "GBP",
@@ -46,7 +46,7 @@ export function getSandboxPersonaData(persona: "debt" | "medium" | "high" | "wea
       },
       {
         id: "demo-debt-acc-4",
-        name: "HSBC Personal Loan",
+        name: "Personal loan",
         type: "Loan",
         balance: -2300,
         currency: "GBP",
@@ -374,7 +374,7 @@ export function getSandboxPersonaData(persona: "debt" | "medium" | "high" | "wea
   const highAccounts = [
     {
       id: "demo-high-acc-1",
-      name: "Monzo Current Account",
+      name: "Current account",
       type: "Current",
       balance: 6500,
       currency: "GBP",
@@ -384,7 +384,7 @@ export function getSandboxPersonaData(persona: "debt" | "medium" | "high" | "wea
     },
     {
       id: "demo-high-acc-2",
-      name: "Vanguard LifeStrategy 80% Stocks & Shares ISA",
+      name: "Stocks and Shares ISA",
       type: "Investment",
       balance: 65000,
       currency: "GBP",
@@ -394,7 +394,7 @@ export function getSandboxPersonaData(persona: "debt" | "medium" | "high" | "wea
     },
     {
       id: "demo-high-acc-3",
-      name: "Marcus High-Yield Cash ISA",
+      name: "Cash ISA",
       type: "Saving",
       balance: 22000,
       currency: "GBP",
@@ -404,7 +404,7 @@ export function getSandboxPersonaData(persona: "debt" | "medium" | "high" | "wea
     },
     {
       id: "demo-high-acc-4",
-      name: "Standard Life SIPP / Workplace Pension",
+      name: "Workplace pension and SIPP",
       type: "Pension",
       balance: 110000,
       currency: "GBP",
@@ -414,7 +414,7 @@ export function getSandboxPersonaData(persona: "debt" | "medium" | "high" | "wea
     },
     {
       id: "demo-high-acc-5",
-      name: "Barclays Residential Mortgage",
+      name: "Residential mortgage",
       type: "Mortgage",
       balance: 310000,
       currency: "GBP",
@@ -424,7 +424,7 @@ export function getSandboxPersonaData(persona: "debt" | "medium" | "high" | "wea
     },
     {
       id: "demo-high-acc-6",
-      name: "NatWest Buy-to-Let Mortgage (Section 24)",
+      name: "Buy-to-let mortgage (Section 24)",
       type: "Mortgage",
       balance: 170000,
       currency: "GBP",
@@ -486,7 +486,7 @@ export function getSandboxPersonaData(persona: "debt" | "medium" | "high" | "wea
     {
       id: "hb7",
       category: "savings",
-      name: "Vanguard S&S ISA Investment",
+      name: "Stocks and Shares ISA contribution",
       amount: 1200,
       frequency: "monthly",
       isIncome: false,

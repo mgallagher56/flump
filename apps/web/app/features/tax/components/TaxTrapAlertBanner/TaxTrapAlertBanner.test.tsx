@@ -35,9 +35,9 @@ describe("TaxTrapAlertBanner", () => {
     const { container } = renderBanner({ adjustedNetIncome: 115_000 });
 
     expect(screen.getByRole("heading", { level: 3 }).textContent).toBe(
-      "Personal Allowance taper, £100,000 to £125,140",
+      "Personal Allowance taper, £100,000–£125,140",
     );
-    expect(screen.getByText("62% marginal rate (unverified estimate)")).toBeDefined();
+    expect(screen.getByText("62% marginal rate including NI (unverified estimate)")).toBeDefined();
     expect(container.textContent).toContain("60% income tax, 62% including NI");
     expect(container.textContent).toContain("£115,000");
     expect(screen.getByText("£7,500")).toBeDefined(); // Personal Allowance reduced by
@@ -46,9 +46,9 @@ describe("TaxTrapAlertBanner", () => {
   it("near the threshold states the 40% rate and does not claim 62%", () => {
     renderBanner({ adjustedNetIncome: 92_000 });
     expect(screen.getByRole("heading", { level: 3 }).textContent).toBe(
-      "Near the £100,000 Personal Allowance threshold",
+      "Near the £100,000 income limit for the full Personal Allowance",
     );
-    expect(screen.getByText("40% marginal rate (unverified estimate)")).toBeDefined();
+    expect(screen.getByText("40% income tax marginal rate (unverified estimate)")).toBeDefined();
     expect(screen.queryByText(/62%/)).toBeNull();
   });
 
@@ -73,6 +73,13 @@ describe("TaxTrapAlertBanner", () => {
     expect(screen.getByText(/assuming England, Wales and Northern Ireland/i).textContent).toContain(
       "Set your region",
     );
+  });
+
+  it("labels a total-income figure honestly, not as adjusted net income", () => {
+    const { container } = renderBanner({ adjustedNetIncome: 110_000, incomeBasis: "totalIncome" });
+    expect(container.textContent).toContain("Total income in this estimate is £110,000");
+    expect(container.textContent).toContain("adjusted net income may be lower");
+    expect(container.textContent).not.toContain("Adjusted net income in this estimate");
   });
 
   it("shows no assumption label when England, Wales and NI is the known region", () => {
