@@ -1,5 +1,5 @@
 import { type ChangeEvent, type FocusEvent, useEffect, useState } from "react";
-import { ALLOWED_CHARS, parseEnGbNumber } from "./parseCurrency";
+import { parseEnGbNumber } from "./parseCurrency";
 
 export interface NumericTextOptions {
   value: number | null | undefined;
@@ -11,6 +11,10 @@ export interface NumericTextOptions {
   round: (value: number) => number;
   min?: number;
   max?: number;
+  /** Characters the field accepts; anything else is rejected and reported through `onInvalid`. */
+  allowed: RegExp;
+  /** The one symbol this field accepts and strips when parsing ("£" or "%"). */
+  symbol: string;
 }
 
 const clamp = (value: number, min?: number, max?: number): number => {
@@ -32,6 +36,8 @@ export const useNumericText = ({
   round,
   min,
   max,
+  allowed,
+  symbol,
 }: NumericTextOptions) => {
   const toText = (v: number | null | undefined): string =>
     v === null || v === undefined ? "" : format(v);
@@ -42,7 +48,7 @@ export const useNumericText = ({
   useEffect(() => {
     if (value === undefined) return;
     setText((current) => {
-      const parsed = parseEnGbNumber(current);
+      const parsed = parseEnGbNumber(current, symbol);
       if (value === null || !Number.isFinite(value)) return parsed === null ? current : "";
       return parsed === value ? current : format(value);
     });
@@ -50,15 +56,18 @@ export const useNumericText = ({
 
   const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
     const raw = event.target.value;
-    if (!ALLOWED_CHARS.test(raw)) return;
+    if (!allowed.test(raw)) {
+      onInvalid?.(raw);
+      return;
+    }
     setText(raw);
-    const parsed = parseEnGbNumber(raw);
+    const parsed = parseEnGbNumber(raw, symbol);
     if (parsed === null && raw.trim() !== "") onInvalid?.(raw);
     onValueChange?.(parsed);
   };
 
   const handleBlur = (_event: FocusEvent<HTMLInputElement>) => {
-    const parsed = parseEnGbNumber(text);
+    const parsed = parseEnGbNumber(text, symbol);
     if (parsed === null) return;
     const settled = clamp(round(parsed), min, max);
     setText(format(settled));

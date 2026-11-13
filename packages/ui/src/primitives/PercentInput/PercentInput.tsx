@@ -1,6 +1,6 @@
 import type { FC } from "react";
 import { cx } from "../../../styled-system/css";
-import { formatEnGbNumber, roundToDecimals } from "../CurrencyInput/parseCurrency";
+import { formatEnGbNumber, PERCENT_CHARS, roundToDecimals } from "../CurrencyInput/parseCurrency";
 import { useNumericText } from "../CurrencyInput/useNumericText";
 import { TextInput, type TextInputProps } from "../TextInput/TextInput";
 import { percentInputRecipe } from "./PercentInput.styles";
@@ -47,6 +47,8 @@ export const PercentInput: FC<PercentInputProps> = ({
     round: (v) => roundToDecimals(v, decimals),
     min,
     max,
+    allowed: PERCENT_CHARS,
+    symbol: "%",
   });
 
   return (

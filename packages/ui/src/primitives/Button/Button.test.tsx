@@ -47,6 +47,42 @@ describe("Button Primitive", () => {
     expect(link.className).toContain("bg_primary.solid");
   });
 
+  it("link variant keeps no control height or padding at every size", () => {
+    for (const size of ["sm", "md", "lg"] as const) {
+      const { unmount } = render(
+        <Button size={size} variant="link">
+          Learn more
+        </Button>,
+      );
+      const cls = screen.getByRole("button", { name: "Learn more" }).className;
+      expect(cls).toContain("min-h_0");
+      expect(cls).toContain("px_1");
+      unmount();
+    }
+  });
+
+  it("renders no wrapper span unless pending", () => {
+    render(<Button>Save</Button>);
+    expect(screen.getByRole("button").querySelector("span")).toBeNull();
+  });
+
+  it("a pending asChild link ignores clicks and exposes busy state", () => {
+    const onClick = vi.fn();
+    render(
+      <Button asChild onClick={onClick} pending>
+        <a href="/goals">Add a goal</a>
+      </Button>,
+    );
+    const link = screen.getByRole("link", { name: "Add a goal" });
+    expect(link.getAttribute("aria-busy")).toBe("true");
+    expect(link.querySelector("[aria-hidden='true']")).toBeNull();
+    // Enter on a focused anchor is dispatched by the browser as a click, so a guarded click
+    // handler covers both.
+    const notPrevented = fireEvent.click(link);
+    expect(notPrevented).toBe(false);
+    expect(onClick).not.toHaveBeenCalled();
+  });
+
   describe("pending", () => {
     it("sets aria-busy and aria-disabled, keeps the label and stays focusable", () => {
       render(<Button pending>Save changes</Button>);

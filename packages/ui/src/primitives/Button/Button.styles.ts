@@ -31,6 +31,7 @@ export const buttonRecipe = cva({
       transitionProperty: "background-color, border-color, box-shadow, transform, opacity",
       transitionDuration: "fast",
       transitionTimingFunction: "standard",
+      _hover: { transform: "translateY(-2px)" },
       _active: { transform: "scale(0.97)" },
     },
     [DISABLED]: {
@@ -52,13 +53,14 @@ export const buttonRecipe = cva({
       primary: {
         bg: "primary.solid",
         color: "primary.foreground",
+        boxShadow: "raised",
         _hover: { bg: "primary.hover" },
       },
       secondary: {
-        bg: "surface.subtle",
+        bg: "surface.card",
         color: "text.primary",
         borderColor: "border.strong",
-        _hover: { bg: "surface.sunken" },
+        _hover: { bg: "surface.subtle" },
       },
       outline: {
         bg: "transparent",
@@ -95,6 +97,14 @@ export const buttonRecipe = cva({
       icon: { h: "10", w: "10", px: "0", "@media (pointer: coarse)": { minW: "touch" } },
     },
   },
+  compoundVariants: [
+    // The inline link never takes a control height or padding, whatever the size.
+    ...(["sm", "md", "lg", "icon"] as const).map((size) => ({
+      variant: "link" as const,
+      size,
+      css: { minH: "0", px: "1", h: "auto", w: "auto" },
+    })),
+  ],
   defaultVariants: {
     variant: "primary",
     size: "md",
