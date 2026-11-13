@@ -10,7 +10,7 @@ import {
   bootAuthzHarness,
   MISSING_ID,
   probeBody,
-  TRUNCATE_ALL,
+  truncateAll,
   USER_A,
   USER_B,
 } from "./support";
@@ -58,7 +58,8 @@ describe.skipIf(dbMode === "skip")("authz: finance controller (real Postgres)", 
   });
 
   beforeEach(async () => {
-    await h.dataSource.query(TRUNCATE_ALL);
+    await truncateAll(h.dataSource);
+    h.resetRateLimits();
     const created = await h.call("post", "/accounts", h.tokens.a, {
       name: "A Saver",
       type: "Saving",
@@ -187,11 +188,14 @@ describe.skipIf(dbMode === "skip")("authz: finance controller (real Postgres)", 
     ];
 
     it.each(routes.map((r) => [r.key, r] as const))(
-      "%s: no token and expired token get 401, data unchanged",
+      "%s: no, expired and dev-bypass tokens get 401, data unchanged",
       async (_key, route) => {
-        for (const token of [undefined, h.tokens.expired]) {
+        for (const token of [undefined, h.tokens.expired, h.tokens.dev]) {
           const res = await h.call(route.method, route.path(), token, route.body);
-          expect(res.status, `${route.key} with ${token ? "expired" : "no"} token`).toBe(401);
+          expect(
+            res.status,
+            `${route.key} with ${token === undefined ? "no" : token === h.tokens.dev ? "dev-bypass" : "expired"} token`,
+          ).toBe(401);
         }
         await expectAccountUntouched();
         await expectConnectionUntouched();
@@ -405,6 +409,59 @@ describe.skipIf(dbMode === "skip")("authz: finance controller (real Postgres)", 
       expect(await connections().findOneBy({ id: connectionId })).toBeNull();
       ran("DELETE /bank-connections/:id");
     });
+  });
+
+  describe("/v1 alias (any case) gets the same answers as the unversioned path", () => {
+    const prefixes = ["/v1", "/V1"];
+
+    it.each(prefixes)(
+      "%s: 401 without a valid token, A reaches own row, B gets the same 404",
+      async (prefix) => {
+        const paths: Array<["get" | "patch" | "delete", string, object | undefined]> = [
+          ["get", `${prefix}/accounts`, undefined],
+          ["get", `${prefix}/accounts/${accountId}`, undefined],
+          ["patch", `${prefix}/accounts/${accountId}`, { name: "pwned" }],
+          ["delete", `${prefix}/accounts/${accountId}`, undefined],
+          ["delete", `${prefix}/bank-connections/${connectionId}`, undefined],
+        ];
+        for (const [method, path, body] of paths) {
+          for (const token of [undefined, h.tokens.expired, h.tokens.dev]) {
+            const res = await h.call(method, path, token, body);
+            expect(res.status, `${method} ${path}`).toBe(401);
+          }
+        }
+        await expectAccountUntouched();
+        await expectConnectionUntouched();
+
+        const own = await h.call("get", `${prefix}/accounts/${accountId}`, h.tokens.a);
+        expect(own.status).toBe(200);
+        const list = await h.call("get", `${prefix}/accounts`, h.tokens.b);
+        expect(list.body).toEqual([]);
+        await expectSameAsNotFound(
+          "get",
+          `${prefix}/accounts/${accountId}`,
+          `${prefix}/accounts/${MISSING_ID}`,
+        );
+        await expectSameAsNotFound(
+          "patch",
+          `${prefix}/accounts/${accountId}`,
+          `${prefix}/accounts/${MISSING_ID}`,
+          { name: "pwned" },
+        );
+        await expectSameAsNotFound(
+          "delete",
+          `${prefix}/accounts/${accountId}`,
+          `${prefix}/accounts/${MISSING_ID}`,
+        );
+        await expectSameAsNotFound(
+          "delete",
+          `${prefix}/bank-connections/${connectionId}`,
+          `${prefix}/bank-connections/${MISSING_ID}`,
+        );
+        await expectAccountUntouched();
+        await expectConnectionUntouched();
+      },
+    );
   });
 
   it("uses distinct users (sanity)", () => {

@@ -12,14 +12,15 @@
 export type MatrixRow =
   | { status: "covered"; spec: "finance" | "budget" }
   | { status: "pending"; ticket: "N23"; note: string }
-  | { status: "public"; reason: string };
+  | { status: "public"; reason: string; spec?: "mcp" };
 
 const finance = { status: "covered", spec: "finance" } as const;
 const budget = { status: "covered", spec: "budget" } as const;
 const pending = (note: string) => ({ status: "pending", ticket: "N23", note }) as const;
 const mcpTransport = {
   status: "public",
-  reason: "MCP transport, authenticates with a PAT itself",
+  reason: "MCP transport, authenticates with a PAT itself (authz.mcp.spec.ts)",
+  spec: "mcp",
 } as const;
 
 export const ROUTE_MATRIX: Readonly<Record<string, MatrixRow>> = {

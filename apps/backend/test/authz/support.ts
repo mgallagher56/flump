@@ -5,9 +5,13 @@ import request from "supertest";
 import { DataSource } from "typeorm";
 import { vi } from "vitest";
 import { AppModule } from "../../src/app.module";
+import { DEV_BYPASS_TOKEN } from "../../src/auth/dev-bypass.verifier";
 import { createTestJwks } from "../../src/auth/testing/test-jwks";
 import { TOKEN_VERIFIER } from "../../src/auth/token-verifier";
 import { WorkOsJwtVerifier } from "../../src/auth/workos-jwt.verifier";
+import { applySecurity } from "../../src/config/security.config";
+import { McpService } from "../../src/mcp.service";
+import { RateLimitStore } from "../../src/security/rate-limit.store";
 import { assertSafeTestDatabase } from "../../src/testing/assertSafeTestDatabase";
 
 /**
@@ -57,8 +61,10 @@ export type HttpMethod = "get" | "post" | "put" | "patch" | "delete";
 export interface AuthzHarness {
   app: INestApplication;
   dataSource: DataSource;
-  tokens: { a: string; b: string; expired: string };
+  tokens: { a: string; b: string; expired: string; dev: string };
   call(method: HttpMethod, path: string, token?: string, body?: object): request.Test;
+  /** Per-user and per-IP limits (tokenMint 5/h, destructive 10/h) would otherwise 429 the matrix. */
+  resetRateLimits(): void;
   close(): Promise<void>;
 }
 
@@ -71,9 +77,13 @@ export async function bootAuthzHarness(): Promise<AuthzHarness> {
   assertSafeTestDatabase(databaseUrl, process.env);
 
   const savedEnv = { ...process.env };
-  process.env.NODE_ENV = "development";
-  process.env.AUTH_DEV_BYPASS = "true"; // lets AuthModule resolve; the verifier is overridden below
+  // Real "workos" auth mode (no dev bypass anywhere, including /mcp); the verifier is then
+  // replaced by one on a throwaway JWKS. The client id is a placeholder, never contacted.
+  process.env.NODE_ENV = "test";
+  delete process.env.AUTH_DEV_BYPASS;
+  delete process.env.RAILWAY_ENVIRONMENT;
   delete process.env.WORKOS_API_KEY;
+  process.env.WORKOS_CLIENT_ID = "client_test";
   // The closed-beta allowlist would 403 both users.
   delete process.env.BETA_ALLOWED_EMAILS;
   delete process.env.BETA_ALLOWED_USER_IDS;
@@ -97,7 +107,7 @@ export async function bootAuthzHarness(): Promise<AuthzHarness> {
   await reset.destroy();
 
   // The verifier logs every rejected token; keep the matrix output readable.
-  vi.spyOn(Logger.prototype, "warn").mockImplementation(() => undefined);
+  const warnSpy = vi.spyOn(Logger.prototype, "warn").mockImplementation(() => undefined);
 
   const jwt = await createTestJwks();
   const verifier = new WorkOsJwtVerifier({ jwks: jwt.jwks, issuer: jwt.issuer });
@@ -105,13 +115,25 @@ export async function bootAuthzHarness(): Promise<AuthzHarness> {
     .overrideProvider(TOKEN_VERIFIER)
     .useValue(verifier)
     .compile();
-  const app = moduleRef.createNestApplication({ rawBody: true });
+  // As main.ts: bodyParser off, then the real security setup (which mounts the /v1 alias).
+  const app = moduleRef.createNestApplication({ bodyParser: false });
+  applySecurity(app, { NODE_ENV: process.env.NODE_ENV });
   await app.init();
+  // The harness is only meaningful if the real verifier is in front of every route.
+  if (!(app.get(TOKEN_VERIFIER) instanceof WorkOsJwtVerifier)) {
+    throw new Error("authz harness: TOKEN_VERIFIER is not WorkOsJwtVerifier");
+  }
+
+  const rateLimitStore = app.get(RateLimitStore);
+  const mcpHandler = app.get(McpService).getHttpHandler() as unknown as {
+    failedAuthLimiter: { entries: Map<string, unknown> };
+  };
 
   const tokens = {
     a: await jwt.sign({ sub: USER_A }),
     b: await jwt.sign({ sub: USER_B }),
     expired: await jwt.sign({ sub: USER_A }, { expiresIn: "-1h" }),
+    dev: DEV_BYPASS_TOKEN,
   };
 
   return {
@@ -123,8 +145,15 @@ export async function bootAuthzHarness(): Promise<AuthzHarness> {
       if (token) req = req.set("Authorization", `Bearer ${token}`);
       return body ? req.send(body) : req;
     },
+    resetRateLimits() {
+      (rateLimitStore as unknown as { buckets: Map<string, unknown> }).buckets.clear();
+      // /mcp has its own failed-auth limiter (10 failures a minute per IP, cleared at most once
+      // per window), so a test that expects several 401s starts from an empty one.
+      mcpHandler.failedAuthLimiter.entries.clear();
+    },
     async close() {
       await app.close();
+      warnSpy.mockRestore();
       for (const key of Object.keys(process.env)) {
         if (!(key in savedEnv)) delete process.env[key];
       }
@@ -133,5 +162,8 @@ export async function bootAuthzHarness(): Promise<AuthzHarness> {
   };
 }
 
-export const TRUNCATE_ALL =
-  "TRUNCATE accounts, account_details, transactions, bank_connections, budget_entries, tax_records, user_profiles, mcp_tokens CASCADE";
+/** Empties every entity table (derived from the entity metadata, so a new entity is included). */
+export async function truncateAll(dataSource: DataSource): Promise<void> {
+  const tables = dataSource.entityMetadatas.map((m) => `"${m.tableName}"`).join(", ");
+  await dataSource.query(`TRUNCATE ${tables} CASCADE`);
+}

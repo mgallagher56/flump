@@ -24,6 +24,15 @@ const joinPath = (a: string, b: string) =>
     .filter(Boolean)
     .join("/")}`;
 
+/** Own and inherited method names, so a handler on a base controller class is not missed. */
+function handlerNames(proto: object): string[] {
+  const names = new Set<string>();
+  for (let p = proto; p && p !== Object.prototype; p = Object.getPrototypeOf(p)) {
+    for (const name of Object.getOwnPropertyNames(p)) names.add(name);
+  }
+  return [...names];
+}
+
 /**
  * Every route on AppModule's controllers, read from the Nest metadata the router uses (same as
  * test/contract/route-inventory.spec.ts), with whether AuthGuard is applied at class or method
@@ -36,11 +45,15 @@ export function registeredRoutes(): RegisteredRoute[] {
   for (const controller of controllers) {
     const prefix = (Reflect.getMetadata(PATH_METADATA, controller) as string | undefined) ?? "/";
     const classGuards: unknown[] = Reflect.getMetadata(GUARDS_METADATA, controller) ?? [];
-    for (const name of Object.getOwnPropertyNames(controller.prototype)) {
+    for (const name of handlerNames(controller.prototype)) {
       const handler = (controller.prototype as Record<string, unknown>)[name];
       if (typeof handler !== "function") continue;
       const verb = Reflect.getMetadata(METHOD_METADATA, handler) as number | undefined;
-      if (verb === undefined || VERBS[verb] === undefined) continue;
+      if (verb === undefined) continue;
+      if (VERBS[verb] === undefined) {
+        // ALL, OPTIONS, HEAD and SEARCH are not modelled; fail loudly rather than skip a route.
+        throw new Error(`routes.ts: unsupported request method ${verb} on ${name}`);
+      }
       const sub = (Reflect.getMetadata(PATH_METADATA, handler) as string | undefined) ?? "/";
       const methodGuards: unknown[] = Reflect.getMetadata(GUARDS_METADATA, handler) ?? [];
       routes.push({
