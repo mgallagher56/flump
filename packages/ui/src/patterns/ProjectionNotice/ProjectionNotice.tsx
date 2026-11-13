@@ -1,10 +1,17 @@
+import { Info } from "lucide-react";
 import type { FC, ReactNode } from "react";
 import { cx } from "../../../styled-system/css";
-import { projectionNotice } from "./ProjectionNotice.styles";
+import { Icon } from "../../primitives/Icon";
+import {
+  projectionNotice,
+  projectionNoticeIcon,
+  projectionNoticeText,
+} from "./ProjectionNotice.styles";
 
 /**
  * Interim wording (E19 L-01). It frames every projection as guidance, not advice. The owner and
  * a solicitor own the final text, so this is a placeholder and not a claim of legal review.
+ * The wording is unchanged by the Direction C restyle (E15 T2.6).
  */
 export const PROJECTION_NOTICE_TEXT =
   "Guidance, not advice. Flump works from the figures you enter and shows estimates, which can differ from what happens in practice. It is not financial, tax, investment or debt advice.";
@@ -21,7 +28,10 @@ export const ProjectionNotice: FC<ProjectionNoticeProps> = ({ children, classNam
     className={cx(projectionNotice(), className)}
     data-testid="projection-notice"
   >
-    {children ?? PROJECTION_NOTICE_TEXT}
+    <span className={projectionNoticeIcon()}>
+      <Icon icon={Info} size="md" />
+    </span>
+    <div className={projectionNoticeText()}>{children ?? PROJECTION_NOTICE_TEXT}</div>
   </aside>
 );
 
