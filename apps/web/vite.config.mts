@@ -71,7 +71,14 @@ export default defineConfig(({ mode }) => ({
       : []),
     tsconfigPaths(),
   ],
-  build: { target: "esnext" },
+  build: {
+    target: "esnext",
+    // Fonts are always emitted as hashed files under /assets (immutable for a year), never inlined
+    // as `data:` URIs: the CSP is `font-src 'self'` and must not need `data:` (E20-N11 follow-up).
+    // Returning undefined keeps Vite's default 4 kB inline limit for everything else.
+    assetsInlineLimit: (filePath: string) =>
+      /\.(woff2?|ttf|otf|eot)$/i.test(filePath) ? false : undefined,
+  },
   optimizeDeps: {
     esbuildOptions: {
       target: "esnext",
