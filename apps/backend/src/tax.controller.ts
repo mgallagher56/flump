@@ -73,15 +73,33 @@ const pickTaxRecordFields = (body: Partial<TaxRecord> | undefined): Partial<TaxR
 /**
  * E23 D16 / D-7-A: an annual record belongs to the tax year containing its `date`, and its stored
  * `end_date` says so (5 April closing that year, the same value the backfill migration writes).
- * An explicit end date from the client is kept; only a missing or null one is filled.
+ * The end date of an annual record is always derived from its date; a client value is replaced.
  */
+const ISO_DATE = /^(\d{4})-(\d{2})-(\d{2})$/;
+
+/** A real calendar date in YYYY-MM-DD form (rejects 2024-13-45 before Postgres 500s on it). */
+const isIsoCalendarDate = (value: string): boolean => {
+  const m = ISO_DATE.exec(value);
+  if (!m) return false;
+  const [y, mo, d] = [Number(m[1]), Number(m[2]), Number(m[3])];
+  const dt = new Date(Date.UTC(y, mo - 1, d));
+  return dt.getUTCFullYear() === y && dt.getUTCMonth() === mo - 1 && dt.getUTCDate() === d;
+};
+
 const withAnnualEndDate = <T extends Partial<TaxRecord>>(record: T): T => {
-  if (
-    record.frequency === "annual" &&
-    !record.endDate &&
-    typeof record.date === "string" &&
-    /^\d{4}-\d{2}/.test(record.date)
-  ) {
+  for (const field of ["date", "endDate"] as const) {
+    const value = record[field];
+    if (
+      value !== undefined &&
+      value !== null &&
+      !(typeof value === "string" && isIsoCalendarDate(value))
+    ) {
+      throw new BadRequestException(`${field} must be a date in YYYY-MM-DD form`);
+    }
+  }
+  // For an annual record the end date is derived from its date (D-7-A), so editing the date
+  // can never leave a stale end date behind.
+  if (record.frequency === "annual" && typeof record.date === "string") {
     record.endDate = getAnnualRecordEndDate(record.date);
   }
   return record;
