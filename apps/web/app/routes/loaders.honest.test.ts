@@ -122,10 +122,12 @@ describe("app.onboarding loader", () => {
     expect(err.init.status).toBe(503);
   });
 
-  it("returns profile and access token on success", async () => {
+  it("returns the profile and never the access token on success (E20-N7)", async () => {
     globalThis.fetch = respond(200, { enabledPages: [] });
     const res: any = await onboardingLoader(args());
-    expect(res.data.accessToken).toBe("tok");
+    expect(res.data.userProfile).toBeDefined();
+    expect(res.data).not.toHaveProperty("accessToken");
+    expect(JSON.stringify(res.data)).not.toContain("tok");
   });
 });
 
