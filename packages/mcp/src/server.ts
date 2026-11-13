@@ -1,7 +1,8 @@
 import { createRequire } from "node:module";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { withScopeEnforcement } from "./auth/scopes.js";
+import { hasScopes, withScopeEnforcement } from "./auth/scopes.js";
 import type { VerifiedToken } from "./auth/token-verifier.js";
+import type { DefinedFlumpTool } from "./define-tool.js";
 import { registerUkAdvisorPrompts } from "./prompts/uk-advisor.prompts.js";
 import { registerAccountsResources } from "./resources/accounts.resource.js";
 import { registerBaselineResources } from "./resources/baseline.resource.js";
@@ -18,6 +19,12 @@ import type { McpServerContext, McpUserDataProvider } from "./types.js";
 const { version: SERVER_VERSION } = createRequire(import.meta.url)("../package.json") as {
   version: string;
 };
+
+/**
+ * Tools built with `defineFlumpTool` (envelope, error contract, own scope check). Registered in
+ * array order on the raw server, so `tools/list` order is deterministic. E17-N9 onwards add here.
+ */
+export const FLUMP_TOOLS: readonly DefinedFlumpTool[] = [];
 
 export interface CreateMcpServerOptions {
   token: VerifiedToken;
@@ -36,6 +43,7 @@ export function createFlumpMcpServer(options: CreateMcpServerOptions): McpServer
   const context: McpServerContext = {
     token: options.token,
     dataProvider: options.dataProvider,
+    authorize: (requirement) => hasScopes(options.token.scopes, requirement),
   };
 
   const getContext = async () => context;
@@ -55,6 +63,8 @@ export function createFlumpMcpServer(options: CreateMcpServerOptions): McpServer
   registerSection24Tool(scoped, getContext);
   registerLifeEventsTool(scoped, getContext);
   registerFinancialAuditTools(scoped, getContext);
+  // Defined tools do their own scope check, so they take the raw server, not `scoped`.
+  for (const tool of FLUMP_TOOLS) tool.register(server, getContext);
 
   // 3. Register Prompts
   registerUkAdvisorPrompts(scoped, getContext);
