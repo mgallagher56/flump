@@ -1,4 +1,5 @@
 import express, { type RequestHandler, type Router } from "express";
+import { analyticsFlagWarning } from "./analytics";
 import { buildSecurityTxt, normaliseSecurityContact } from "./security";
 import { indexingFlagWarning, isIndexingAllowed, normaliseSiteUrl, sitemapRouter } from "./sitemap";
 
@@ -60,6 +61,8 @@ export function securityTxtRouter(
 export function registerOps(app: express.Express, env: Env = process.env): void {
   const warning = indexingFlagWarning(env);
   if (warning) console.warn(warning);
+  const analyticsWarning = analyticsFlagWarning(env);
+  if (analyticsWarning) console.warn(analyticsWarning);
   app.use(noindexMiddleware(env));
   app.use(opsRouter(env));
   app.use(sitemapRouter(env));
