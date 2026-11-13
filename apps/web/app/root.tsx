@@ -2,7 +2,16 @@ import { VisuallyHidden } from "@repo/ui";
 import { css } from "@repo/ui/styled-system/css";
 import { useEffect } from "react";
 import type { LoaderFunctionArgs } from "react-router";
-import { Links, Meta, Outlet, Scripts, ScrollRestoration, useLoaderData } from "react-router";
+import {
+  isRouteErrorResponse,
+  Links,
+  Meta,
+  Outlet,
+  Scripts,
+  ScrollRestoration,
+  useLoaderData,
+  useRouteError,
+} from "react-router";
 import { AppBottomBar } from "./components/navigation/AppBottomBar";
 import Header from "./components/structure/header/Header";
 import { apiConfig } from "./config.server";
@@ -148,6 +157,9 @@ export default function App() {
 
 export function ErrorBoundary() {
   const { theme } = useTheme();
+  const error = useRouteError();
+  const title =
+    isRouteErrorResponse(error) && error.status === 404 ? "Page not found" : "Something went wrong";
   // The root boundary replaces the whole document, so it must render html and body itself.
   return (
     <html className={theme === "dark" ? "dark" : ""} data-theme={theme} lang="en">
@@ -155,7 +167,7 @@ export function ErrorBoundary() {
         <meta charSet="utf-8" />
         <meta content="width=device-width,initial-scale=1,viewport-fit=cover" name="viewport" />
         <meta name="color-scheme" content="light dark" />
-        <title>Something went wrong</title>
+        <title>{title}</title>
         <Meta />
         <Links />
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />

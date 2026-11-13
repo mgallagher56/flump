@@ -5,7 +5,7 @@ Not legal advice. This is the engineering control plus the owner steps.
 ## Two layers
 
 1. **WorkOS (owner step, preferred).** Public sign-up is exposed by the WorkOS-hosted AuthKit
-   page behind `/signUp` (`getSignUpUrl`). Code cannot close it. In the WorkOS dashboard, for
+   page behind `/signup` (`getSignUpUrl`). Code cannot close it. In the WorkOS dashboard, for
    the production environment, turn off public sign-up / switch to invitation-only (AuthKit
    settings; the exact label may differ, check the live dashboard) and invite friends from
    Users. Also consider removing the "Sign up" link on the marketing site while closed.

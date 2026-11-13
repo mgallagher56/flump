@@ -15,7 +15,8 @@ const LEGACY_REDIRECTS: Record<string, string> = {
 };
 
 export const loader = async ({ params }: LoaderFunctionArgs) => {
-  const target = params.feature ? LEGACY_REDIRECTS[params.feature] : undefined;
+  const key = params.feature?.toLowerCase();
+  const target = key && Object.hasOwn(LEGACY_REDIRECTS, key) ? LEGACY_REDIRECTS[key] : undefined;
   if (target) {
     return redirect(target);
   }

@@ -1,5 +1,11 @@
 import type { ReactElement } from "react";
-import { isRouteErrorResponse, useLocation, useRevalidator, useRouteError } from "react-router";
+import {
+  isRouteErrorResponse,
+  useLocation,
+  useRevalidator,
+  useRouteError,
+  useRouteLoaderData,
+} from "react-router";
 import { BACKEND_ERROR_KINDS, type BackendErrorKind } from "../../../../services/backend-error";
 import { RouteErrorState, type RouteErrorStateProps } from "../RouteErrorState";
 import { boundaryRoot } from "./RouteErrorBoundary.styles";
@@ -30,6 +36,9 @@ export function RouteErrorBoundary(): ReactElement {
   const error = useRouteError();
   const revalidator = useRevalidator();
   const { pathname } = useLocation();
+  // Signed-out visitors have no dashboard, so the home link gets a neutral label for them.
+  const rootData = useRouteLoaderData("root") as { user?: unknown } | undefined;
+  const signedIn = Boolean(rootData?.user);
   const kind = kindFromError(error);
   const onAccountDetail = ACCOUNT_DETAIL.test(pathname);
 
@@ -41,7 +50,9 @@ export function RouteErrorBoundary(): ReactElement {
         retrying={revalidator.state === "loading"}
         routeKey={routeKeyFor(pathname)}
         primaryHref={onAccountDetail ? "/app/accounts" : "/"}
-        primaryLabel={onAccountDetail ? "Back to accounts" : "Go to dashboard"}
+        primaryLabel={
+          onAccountDetail ? "Back to accounts" : signedIn ? "Go to dashboard" : "Go to Flump"
+        }
       />
     </div>
   );

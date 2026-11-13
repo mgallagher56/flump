@@ -27,7 +27,7 @@ How to read the references: `path:line` was checked on 2026-11-12. **[V-code]** 
 
 - Bank connection is owner-allowlisted. `isBankConnectionAllowed` (`apps/backend/src/bank-connections.access.ts:16-31`) allows ids in `BANK_CONNECTIONS_ALLOWED_USER_IDS`, or everyone when `BANK_CONNECTIONS_ENABLED=true`, and defaults to off in production. `BankConnectionsEnabledGuard` (`:33-44`) returns a 404 `feature_disabled`. It guards `POST bank-connections` and the neighbouring routes (`apps/backend/src/finance.controller.ts:178,184,190`), and the capability endpoint reports it (`:172-175`). Reading and disconnecting existing connections is not gated.
 - **Production environment values are not visible from the repo.** The owner must confirm the Railway values before this brief is sent.
-- Sign-up goes through WorkOS AuthKit (`apps/web/app/routes/signUp._index.tsx:18`, `getSignUpUrl`). The route contains no allowlist. Whether sign-up is invite-only is a WorkOS configuration, not evidenced in code [owner to confirm].
+- Sign-up goes through WorkOS AuthKit (`apps/web/app/routes/signup._index.tsx:23`, `getSignUpUrl`). The route contains no allowlist. Whether sign-up is invite-only is a WorkOS configuration, not evidenced in code [owner to confirm].
 - Marketing says bank connection is coming soon (`apps/marketing/src/pages/SecurityPage.tsx:83`).
 
 ### Fact 4. Calculators and user-specific outputs [V-code]
