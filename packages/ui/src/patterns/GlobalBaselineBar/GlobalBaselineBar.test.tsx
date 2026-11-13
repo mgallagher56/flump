@@ -7,7 +7,7 @@ describe("GlobalBaselineBar Pattern", () => {
     render(<GlobalBaselineBar pensionPct={8} salary={55000} />);
     expect(screen.getByText("£55,000")).toBeDefined();
     expect(screen.getByText("8%")).toBeDefined();
-    expect(screen.getByText("Stage 2: Buffer & Protect")).toBeDefined();
+    expect(screen.getByText("Your baseline")).toBeDefined();
   });
 
   it("toggles inline parameter adjustment drawer", () => {

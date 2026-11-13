@@ -164,7 +164,7 @@ Status: every row above is resolved. `mortgage-isa.tool.ts` and `financial-audit
 Allowed:
 
 - **"optimise" as a neutral technical verb about the user's own settings**, for example a heading "Optimise display settings", where R2 is otherwise met. It is never used about pensions, ISAs, savings, wealth or tax.
-- **"Recommended" for a product or technical setting that is not a financial action**, for example `McpConnectionCard.tsx:581` "90 Days (Recommended)" for token expiry and `ConnectBankWizard.tsx:575` "Personal Access Token (Recommended)". These stay on the permanent allow-list with a reason. Where an alternative is simple, prefer it.
+- **"Recommended" for a product or technical setting that is not a financial action**, for example `McpConnectionCard.tsx:581` "90 Days (Recommended)" for token expiry and `ConnectBankWizard.tsx:575` "Personal Access Token (Recommended)". These stay on the permanent allow-list with a reason. Where an alternative is simple, prefer it. Status (2026-11-13): both examples were reworded ("90 days (default)", "Personal Access Token") and their allow-list entries removed, so no "Recommended" label remains in the app.
 - **A disclaimer that tells the reader to consult a professional**, for example `packages/finance-engine/src/tax-rules.ts:52`. This is not a recommendation by Flump about a product.
 - Code identifiers, comments and the word "optimistic" in an interest-rate scenario (`debtSummary.ts`, `DebtContainer.tsx`).
 
@@ -181,12 +181,23 @@ Preferred:
 - **Adding an allow-list entry.** The `reason` must name the sub-bullet in R8 that applies. A temporary entry names the owning ticket.
 - **A new surface.** Run through R1 to R8 before the first merge. If a rule does not fit, raise it with the owner. Do not stretch a rule to make copy pass.
 
+## Exceptions and rulings log
+
+Cases the rules do not settle on their own. Each was ruled on by a fable decider subagent during the E29 copy sweep (2026-11-13). The rulings are **pending owner approval** as a v1.0 amendment. Until then they are the working reading for agents.
+
+| Date       | Rule | Ruling                                                                                                                                                                                                                                                                                                                                                                             | Status                                    |
+| ---------- | ---- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------- |
+| 2026-11-13 | R2   | A neutral list of tax rules on a public guide is allowed where each item states the rule and its costs or conditions, with no "mitigation", "strategy" or "save tax" framing. Applied to the Section 24 guide (`apps/web/app/routes/tools.$slug.tsx`, "Other rules that affect the figures"). If a list sits directly under the user's own computed tax figure, remove it instead. | Pending owner; on the E29b solicitor list |
+| 2026-11-13 | R5   | Copying a figure from the user's own profile into an unsaved edit form is a pre-fill, not an apply. The button says "Use", never "Apply". Applied to the budget setup wizard's take-home callout.                                                                                                                                                                                  | Pending owner                             |
+| 2026-11-13 | R4   | A card shown only for a computed segment is allowed when its content is the same factual summary for everyone, with plain navigation links and no action button. It is not a CoachCard, because R4 keeps CoachCard to app housekeeping. Applied to the dashboard's unsecured debt card (`StageCoachCard`). No exception to R4 is created.                                          | Working reading (no amendment needed)     |
+
 ## Open points for the owner and solicitor
 
 1. Whether the targeted-support regime applies to segment-driven layout defaults at all (R4 assumes the strict reading).
 2. Whether "guidance" framing plus a notice is enough where R1 to R5 are all met (the solicitor view, E29b).
 3. The final wording of `ProjectionNotice` and `BETA_NOTICE` (owner and solicitor).
 4. Whether "Recommended" on a purely technical setting is acceptable long term, or should be removed everywhere to make the guard simpler.
+5. Whether the public calculator guides may list tax rules that reduce tax at all (the Section 24 ruling in the log above), or whether the solicitor prefers those lists removed.
 
 ## Sign-off
 

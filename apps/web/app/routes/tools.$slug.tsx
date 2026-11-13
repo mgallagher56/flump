@@ -52,17 +52,17 @@ const TOOLS_DATA: Record<string, ToolContent> = {
         ],
       },
       {
-        heading: "The 15–30 hours free childcare threshold",
+        heading: "Funded childcare and the £100,000 limit",
         body: [
-          "For families with young children in the UK, adjusted net income of £100,001 sits just above the childcare eligibility limit. If either parent has an adjusted net income of even £1 over £100,000, eligibility for 15 to 30 hours of government-funded childcare and Tax-Free Childcare (£2,000 per child/year) is abruptly eliminated.",
-          "A parent receiving an annual bonus taking them from £99,000 to £102,000 can lose £5,000 to £8,000 in childcare subsidies, resulting in a net negative income from working harder.",
+          "In England, working parents of children aged 9 months to 4 years can get up to 30 hours of funded childcare a week. A family is not eligible if either parent expects adjusted net income over £100,000 for the tax year. The same limit applies to Tax-Free Childcare, which tops up childcare costs by up to £2,000 per child a year (£4,000 for a disabled child). The 15 hours a week available for all 3 and 4 year olds does not depend on income. Rules differ in Scotland, Wales and Northern Ireland; check GOV.UK for current eligibility.",
+          "Because the limit is a single figure, a small change in income near £100,000, such as a bonus, can change eligibility for both schemes. The value of that support depends on the number of children, their ages and childcare costs.",
         ],
       },
       {
         heading: "How pension contributions affect the Personal Allowance",
         body: [
           "HMRC calculates the Personal Allowance taper based on 'Adjusted Net Income'. Gross pension contributions (via workplace salary sacrifice or personal SIPP contributions grossed up by 20% basic rate relief) directly reduce your adjusted net income pound-for-pound.",
-          "For example, if you earn £110,000 gross and contribute £10,000 into a qualifying pension, your adjusted net income drops to exactly £100,000. You restore 100% of your £12,570 personal allowance, save £4,000 in higher-rate income tax and £2,000 in reclaimed allowance tax, plus you preserve full entitlement to funded childcare.",
+          "Example: on £110,000 of income, a £10,000 gross pension contribution brings adjusted net income to £100,000. The full £12,570 personal allowance applies, and income tax is about £6,000 lower than without the contribution (£4,000 of higher-rate tax and £2,000 from the restored allowance). Adjusted net income is then within the childcare limit.",
         ],
       },
     ],
@@ -88,28 +88,28 @@ const TOOLS_DATA: Record<string, ToolContent> = {
       "Compare interest saved by overpaying a UK mortgage with a projected Stocks & Shares ISA balance over 5 to 25 years.",
     title: "Mortgage overpayment vs stocks and shares ISA calculator",
     subtitle:
-      "A mathematical and psychological comparison: compare the interest saved by overpaying a mortgage with the possible tax-free growth of global equities inside a UK ISA.",
+      "Compare the interest saved by overpaying a mortgage with a projected Stocks & Shares ISA balance, using your own figures.",
     category: "Mortgages and investing",
     component: "mortgage-isa",
     guideSections: [
       {
-        heading: "The great debate: paying down debt vs compounding in an ISA",
+        heading: "Overpaying a mortgage vs investing in an ISA",
         body: [
-          "Deciding whether to overpay a mortgage or invest spare monthly cash into a Stocks & Shares ISA is one of the most significant wealth decisions a UK homeowner faces.",
+          "Spare monthly money can go towards mortgage overpayments, into a Stocks & Shares ISA, or elsewhere. This calculator puts the two side by side for the figures you enter.",
           "Overpaying a mortgage reduces the interest you pay, which works out like a return equal to your mortgage rate (check for early repayment charges first). For example, overpaying on a 4.5% mortgage avoids interest at 4.5%. Investing in a global index fund inside an ISA may grow by more or less than that, and gains and income inside an ISA are free of UK tax. Past performance is not a guide to the future and your capital is at risk.",
         ],
       },
       {
-        heading: "Liquidity vs illiquid brick-and-mortar equity",
+        heading: "Access to the money",
         body: [
-          "Money paid into your mortgage disappears into home equity. Unless you sell the property or remortgage, accessing that capital during an emergency or job loss can be difficult or impossible.",
-          "Funds held in an ISA remain 100% liquid. Flexible ISAs also allow you to withdraw and replace cash within the same tax year without consuming your annual £20,000 ISA allowance.",
+          "Money paid off a mortgage becomes home equity. It can usually only be accessed by selling, remortgaging or borrowing against the property, and some mortgages allow overpayments to be drawn back.",
+          "Money in a Stocks & Shares ISA can usually be withdrawn, although its value may be lower than was paid in. A flexible ISA lets you withdraw and replace money in the same tax year without using more of the £20,000 annual allowance.",
         ],
       },
       {
         heading: "LTV milestones and remortgage protection",
         body: [
-          "Overpaying can be exceptionally powerful if it moves you across key Loan-to-Value (LTV) boundaries (such as 80%, 75%, or 60% LTV) right before a fixed deal expires, qualifying you for significantly lower lender rates across your entire remaining loan balance.",
+          "Lenders price mortgages in Loan-to-Value (LTV) bands, such as 80%, 75% or 60%. A lower balance when a fixed rate ends can move a mortgage into a lower band, where rates offered are often lower. Rates depend on the lender and your circumstances.",
         ],
       },
     ],
@@ -132,10 +132,10 @@ const TOOLS_DATA: Record<string, ToolContent> = {
     slug: "section-24-landlord-calculator",
     metaTitle: "UK Section 24 Landlord Tax Calculator (Mortgage Interest Relief) | Flump",
     metaDescription:
-      "Model the exact impact of HMRC Section 24 mortgage interest relief restriction on your buy-to-let properties. Calculate phantom taxable profit, 20% basic rate credit, and effective tax liability.",
+      "Estimate how the Section 24 restriction on mortgage interest relief affects tax on buy-to-let income: taxable profit, the 20% basic rate credit and the tax due.",
     title: "Section 24 landlord mortgage relief and tax calculator",
     subtitle:
-      "See how the Section 24 finance restriction taxes landlords on rental turnover rather than true profit, and calculate your effective tax burden under current HMRC rules.",
+      "See how the Section 24 finance cost restriction changes the tax on rental income, using current HMRC rules. Unverified estimate.",
     category: "Property and buy-to-let tax",
     component: "section-24",
     guideSections: [
@@ -147,25 +147,27 @@ const TOOLS_DATA: Record<string, ToolContent> = {
         ],
       },
       {
-        heading: "The danger of 'phantom profits' for higher-rate taxpayers",
+        heading: "Taxable profit and higher-rate taxpayers",
         body: [
-          "Because mortgage interest is excluded from initial expenses, your declared taxable income increases dramatically. This frequently pushes basic-rate earners into the 40% higher-rate bracket or triggers the £100,000 Personal Allowance trap.",
-          "In extreme cases where mortgage rates rise to 5% or 6%, higher-rate landlords find that tax owed to HMRC exceeds their entire net cash flow, resulting in an effective tax rate over 100% of real profits.",
+          "Because mortgage interest is not deducted as an expense, taxable rental profit is higher than the cash left after interest. That higher figure can take total income into the 40% higher-rate band, or above £100,000 where the Personal Allowance tapers.",
+          "Where interest costs are high relative to rent, the tax due can be more than the cash left after interest, which is an effective rate above 100% of that cash.",
         ],
       },
       {
-        heading: "Mitigation strategies for UK property investors",
+        heading: "Other rules that affect the figures",
         body: [
-          "1. **Pension Contributions / SIPP:** Making gross pension contributions expands your basic-rate tax band, offsetting higher-rate property tax and preserving your personal allowance.",
-          "2. **Spousal Beneficial Interest (Form 17):** If your spouse or civil partner pays a lower marginal tax rate, transferring beneficial ownership of the property can shift income into a 20% basic-rate tier.",
-          "3. **Limited Company (SPV) Structures:** Limited company property purchases are exempt from Section 24, allowing 100% of mortgage interest to be deducted against Corporation Tax.",
+          "This calculator models property held by an individual. Some other rules change the tax on rental income, and each has its own costs and conditions:",
+          "1. **Pension contributions:** personal pension contributions extend the basic-rate band and reduce adjusted net income. The money is normally not accessible until minimum pension age, and the annual allowance limits tax relief.",
+          "2. **Joint ownership (Form 17):** married couples and civil partners who own a property jointly are taxed 50:50 on the income by default. Form 17 lets them be taxed on their actual shares of beneficial ownership. It applies only where the beneficial shares are actually unequal.",
+          "3. **Limited companies:** Section 24 does not apply to companies, which deduct finance costs for Corporation Tax. Companies have different tax on profits taken out, and moving a property into one can trigger Capital Gains Tax and Stamp Duty Land Tax.",
+          "A qualified tax adviser can explain how any of these apply to a particular case.",
         ],
       },
     ],
     faqs: [
       {
         q: "Does Section 24 apply to commercial property or furnished holiday lets?",
-        a: "Section 24 strictly targets residential buy-to-let property held by individuals, partnerships, and trusts. Commercial properties and limited company special purpose vehicles (SPVs) are exempt.",
+        a: "Section 24 applies to residential lettings held by individuals, partnerships and trusts. It does not apply to commercial property or to companies.",
       },
       {
         q: "What expenses can I still deduct against rental income?",
@@ -184,22 +186,22 @@ const TOOLS_DATA: Record<string, ToolContent> = {
       "Compare Debt Avalanche and Debt Snowball payoff orders for UK credit cards, personal loans, and overdrafts.",
     title: "UK debt snowball vs avalanche payoff calculator",
     subtitle:
-      "Model how allocating spare cash into high-APR debts (Avalanche) vs smallest balances (Snowball) changes your debt-free date and total interest paid.",
+      "Compare how paying extra towards the highest APR first (avalanche) or the smallest balance first (snowball) changes the debt-free date and total interest.",
     category: "UK debt management",
     component: "debt-snowball",
     guideSections: [
       {
         heading: "Avalanche vs snowball: how do the UK payoff methods compare?",
         body: [
-          "The Debt Avalanche strategy targets the account with the highest APR first while paying minimums on the rest. On the figures you enter, it results in the least total interest paid and the shortest time to clear the debts, if you keep to the plan.",
-          "The Debt Snowball strategy targets the smallest balance first regardless of interest rate. While it costs slightly more in overall interest, it delivers quick psychological wins that keep borrowers committed to their repayment plans.",
+          "The avalanche method pays extra towards the debt with the highest APR first and the minimum on the rest. With the same payments each month, it usually charges the least total interest.",
+          "The snowball method pays extra towards the smallest balance first, whatever its rate. It can cost more interest overall, and it clears individual debts sooner, which some people find easier to keep going with. The calculator shows both for your figures.",
         ],
       },
       {
-        heading: "The power of the 'extra £50' surplus",
+        heading: "Paying more than the minimum",
         body: [
-          "UK credit card minimum repayments are typically calculated as 1% to 2.5% of the outstanding balance plus interest. Paying only minimums keeps borrowers in compounding debt for 15 to 25 years.",
-          "Adding even a fixed £50 to £100 per month above minimums collapses repayment timelines by years and saves thousands of pounds in compounding bank interest.",
+          "UK credit card minimum repayments are often 1% to 2.5% of the balance plus interest. At the minimum, a large balance can take many years to clear.",
+          "The calculator shows how a fixed extra amount each month, such as £50, changes the payoff date and the total interest for the balances you enter.",
         ],
       },
     ],
@@ -228,15 +230,15 @@ const TOOLS_DATA: Record<string, ToolContent> = {
       {
         heading: "Understanding the UK 0% balance transfer cliff",
         body: [
-          "A 0% balance transfer credit card is one of the most effective UK borrowing tools, but banks rely on consumers failing to clear the balance before the promotional term ends.",
-          "When the promotional window closes, remaining balances immediately jump to standard revert APRs, often 24.9% to 29.9% EAR, wiping out previous interest savings within months.",
+          "A 0% balance transfer card charges no interest on the transferred balance for a set period. A transfer fee is often charged at the start.",
+          "When the period ends, any balance left is charged the card's standard rate, often 24.9% to 29.9% APR. The calculator shows the monthly payment that clears the balance before then.",
         ],
       },
     ],
     faqs: [
       {
         q: "Can I transfer the remaining balance to another 0% card when it expires?",
-        a: "Yes, provided your credit score remains intact and a suitable deal is available. However, transfer fees (typically 2% to 3.5%) apply each time.",
+        a: "It may be possible, depending on the lender's checks and the cards available at the time. A transfer fee, often 2% to 3.5%, is usually charged each time.",
       },
     ],
   },
@@ -244,7 +246,7 @@ const TOOLS_DATA: Record<string, ToolContent> = {
     slug: "overdraft-cost-and-payoff-calculator",
     metaTitle: "UK Arranged Overdraft Cost & EAR Calculator (~39.9% Rate) | Flump",
     metaDescription:
-      "Living in your bank overdraft? Calculate the true annual pound cost of ~39.9% EAR interest and find out how much you save by clearing it.",
+      "Estimate the yearly interest on an arranged overdraft at around 39.9% EAR, and how it changes as the balance falls.",
     title: "UK arranged overdraft cost and payoff calculator",
     subtitle:
       "Calculate the annual pound cost of staying in an arranged overdraft charged at UK banks' standard 35%–39.9% EAR.",
@@ -252,17 +254,17 @@ const TOOLS_DATA: Record<string, ToolContent> = {
     component: "overdraft-cost",
     guideSections: [
       {
-        heading: "The true cost of a 39.9% EAR bank overdraft",
+        heading: "What a 39.9% EAR overdraft costs",
         body: [
           "Most major UK banks now charge a single interest rate on arranged overdrafts, commonly around 39.9% EAR. Check your own bank's rate.",
-          "Living continuously in a £1,000 overdraft costs approximately £399 per year in interest.",
+          "A £1,000 overdraft balance held all year at 39.9% EAR costs about £399 in interest.",
         ],
       },
     ],
     faqs: [
       {
         q: "Is an arranged overdraft considered high-priority debt?",
-        a: "It is often one of the most expensive debts people hold. At an EAR of around 40%, paying off an overdraft avoids interest at that rate, which is usually higher than savings rates.",
+        a: "At an EAR of around 40%, an arranged overdraft costs more than most other borrowing. Each pound repaid avoids interest at that rate, which is usually higher than savings rates.",
       },
     ],
   },
@@ -280,8 +282,8 @@ const TOOLS_DATA: Record<string, ToolContent> = {
       {
         heading: "Why UK student loans function like a graduate tax",
         body: [
-          "UK student loans do not behave like commercial loans. Repayments are strictly linked to income (9% above statutory thresholds) regardless of your balance, and uncollected debt is completely wiped after 25 to 40 years.",
-          "For the vast majority of Plan 2 and Plan 5 graduates, the interest rate does not determine total lifetime repayments – only your career salary trajectory does.",
+          "UK student loans work differently from commercial loans. Repayments are 9% of income above a threshold, whatever the balance, and any balance left is written off after 25 to 40 years, depending on the plan.",
+          "For many Plan 2 and Plan 5 borrowers whose balance is projected to be written off, total repayments depend on income over time more than on the interest rate.",
         ],
       },
     ],

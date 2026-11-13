@@ -91,7 +91,7 @@ describe("<ConnectBankWizard />", () => {
     expect(getByText("Choose how to connect")).toBeDefined();
 
     // Select Personal Access Token
-    fireEvent.click(getByText("Personal access token (recommended)"));
+    fireEvent.click(getByText("Personal access token"));
     expect(getByText("Starling Bank developer token")).toBeDefined();
     expect(
       getByText("Preview: paste your own read-only access token from your provider."),
@@ -109,7 +109,7 @@ describe("<ConnectBankWizard />", () => {
 
     fireEvent.click(getByText("Connect bank account"));
     fireEvent.click(getByText("Monzo Bank"));
-    fireEvent.click(getByText("Personal access token (recommended)"));
+    fireEvent.click(getByText("Personal access token"));
     expect(getByText("Monzo Bank developer token")).toBeDefined();
     expect(getByPlaceholderText(/Monzo access token/i)).toBeDefined();
 
@@ -124,7 +124,7 @@ describe("<ConnectBankWizard />", () => {
 
     fireEvent.click(getByText("Connect bank account"));
     fireEvent.click(getByText("Trading 212"));
-    fireEvent.click(getByText("Personal access token (recommended)"));
+    fireEvent.click(getByText("Personal access token"));
     expect(getByText("Trading 212 developer token")).toBeDefined();
     expect(getByPlaceholderText(/Trading 212 API key/i)).toBeDefined();
 

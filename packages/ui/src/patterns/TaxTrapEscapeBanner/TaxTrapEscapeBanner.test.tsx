@@ -3,10 +3,15 @@ import { describe, expect, it } from "vitest";
 import { TaxTrapEscapeBanner } from "./TaxTrapEscapeBanner";
 
 describe("TaxTrapEscapeBanner Pattern", () => {
-  it("renders 60% tax trap active warning and relief metrics for £115k earner", () => {
+  it("describes the £100,000 to £125,140 band and the modelled figures for a £115k income", () => {
     render(<TaxTrapEscapeBanner grossIncome={115000} />);
-    expect(screen.getByText("UK £100k–£125k 60% Tax Trap Active")).toBeDefined();
-    expect(screen.getByText("62% Marginal Tax")).toBeDefined();
-    expect(screen.getByText("Annual Tax & NI Saved")).toBeDefined();
+    expect(screen.getByText("Income in the £100,000 to £125,140 band")).toBeDefined();
+    expect(screen.getByText("62% marginal rate in the band")).toBeDefined();
+    expect(screen.getByText("Tax and NI difference a year")).toBeDefined();
+  });
+
+  it("offers no button that applies the modelled contribution (R5)", () => {
+    render(<TaxTrapEscapeBanner grossIncome={115000} />);
+    expect(screen.queryByRole("button")).toBeNull();
   });
 });

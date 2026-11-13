@@ -368,15 +368,15 @@ ${p.accounts
 
 ## 3. Debt Architecture & Payoff
 - **Consumer Debt Balance:** £${d.totalStartingDebtGbp.toLocaleString("en-GB")}
-- **Avalanche Freedom Date:** ${d.avalancheVsSnowballComparison.avalanche.debtFreeDate} (Interest: £${d.avalancheVsSnowballComparison.avalanche.totalInterest.toLocaleString("en-GB")})
-- **Snowball Momentum First Win:** ${d.avalancheVsSnowballComparison.snowballFirstWinDescription}
-- **Interest Saved (Avalanche vs Min):** £${d.avalancheVsSnowballComparison.interestSavedAvalancheVsMin.toLocaleString("en-GB")}
+- **Avalanche debt-free date:** ${d.avalancheVsSnowballComparison.avalanche.debtFreeDate} (Interest: £${d.avalancheVsSnowballComparison.avalanche.totalInterest.toLocaleString("en-GB")})
+- **Snowball first debt cleared:** ${d.avalancheVsSnowballComparison.snowballFirstWinDescription}
+- **Interest difference (avalanche vs minimum payments only):** £${d.avalancheVsSnowballComparison.interestSavedAvalancheVsMin.toLocaleString("en-GB")}
 ${
   d.promoCliffAlerts.length > 0
     ? `\n### 0% Promotional Cliffs:\n${d.promoCliffAlerts
         .map(
           (c) =>
-            `- ${c.debtName}: Expires ${c.promoExpiryDate}, Revert APR ${c.revertApr}%. Required: £${c.requiredMonthlyToClearBeforeCliff}/mo`,
+            `- ${c.debtName}: Expires ${c.promoExpiryDate}, Revert APR ${c.revertApr}%. Monthly amount that clears it before expiry: £${c.requiredMonthlyToClearBeforeCliff}`,
         )
         .join("\n")}`
     : ""
@@ -401,7 +401,7 @@ ${
 - **In £100k Tax Trap:** ${tx.taxTrap.isInTaxTrap ? "YES (60%+ Marginal Rate)" : "NO"}
 ${
   tx.taxTrap.isInTaxTrap
-    ? `- **Sacrifice to Escape Trap:** £${tx.taxTrap.contributionRequiredToEscapeGbp.toLocaleString("en-GB")}\n- **Estimated Tax Saved:** £${tx.taxTrap.estimatedTaxSavedByEscapingGbp.toLocaleString("en-GB")}`
+    ? `- **Contribution that brings adjusted net income to £100,000:** £${tx.taxTrap.contributionRequiredToEscapeGbp.toLocaleString("en-GB")}\n- **Estimated tax difference at that contribution:** £${tx.taxTrap.estimatedTaxSavedByEscapingGbp.toLocaleString("en-GB")}`
     : ""
 }
 - **Remaining ISA Allowance:** £${tx.allowances.isaAllowanceRemainingGbp.toLocaleString("en-GB")} / £20,000
