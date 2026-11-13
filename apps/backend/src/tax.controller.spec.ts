@@ -208,6 +208,62 @@ describe("TaxController", () => {
   });
 });
 
+describe("TaxController annual record end date (E23 D16)", () => {
+  const req = { user: { id: "u1" } };
+  const setup = () => {
+    const repo = createInMemoryRepository();
+    return new TaxController(repo as any, { findOne: vi.fn() } as any);
+  };
+  const base = { type: "income", source: "paye", category: "salary", name: "Pay", amount: 1000 };
+
+  it("fills end_date with 5 April closing the tax year containing the date", async () => {
+    const controller = setup();
+    const a = await controller.createTaxRecord(req, {
+      ...base,
+      frequency: "annual",
+      date: "2024-06-01",
+    });
+    expect(a.endDate).toBe("2025-04-05");
+    const b = await controller.createTaxRecord(req, {
+      ...base,
+      frequency: "annual",
+      date: "2025-02-10",
+    });
+    expect(b.endDate).toBe("2025-04-05");
+    const c = await controller.createTaxRecord(req, {
+      ...base,
+      frequency: "annual",
+      date: "2025-04-05",
+    });
+    expect(c.endDate).toBe("2026-04-05");
+  });
+
+  it("keeps an explicit end date and leaves other frequencies alone", async () => {
+    const controller = setup();
+    const explicit = await controller.createTaxRecord(req, {
+      ...base,
+      frequency: "annual",
+      date: "2024-06-01",
+      endDate: "2030-04-05",
+    });
+    expect(explicit.endDate).toBe("2030-04-05");
+    const monthly = await controller.createTaxRecord(req, {
+      ...base,
+      frequency: "monthly",
+      date: "2024-06-01",
+    });
+    expect(monthly.endDate ?? null).toBeNull();
+  });
+
+  it("fills end_date on bulk create", async () => {
+    const controller = setup();
+    const [r] = await controller.createBulkTaxRecords(req, {
+      records: [{ ...base, frequency: "annual", date: "2023-09-01" } as any],
+    });
+    expect(r.endDate).toBe("2024-04-05");
+  });
+});
+
 describe("TaxController receipt validation (E20-N14)", () => {
   const makeController = () => {
     const repo = {

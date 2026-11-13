@@ -8,6 +8,7 @@ import { discoverMigrations, type MigrationClass } from "../testing/discoverMigr
 import { AddAccountStudentLoanPlanAndCurrencyDefault1794355800000 } from "./AddAccountStudentLoanPlanAndCurrencyDefault1794355800000";
 import { AddMortgageTermColumns1794355600000 } from "./AddMortgageTermColumns1794355600000";
 import { AddProfileFacts1794355723000 } from "./AddProfileFacts1794355723000";
+import { BackfillAnnualTaxRecordEndDate1794355900000 } from "./BackfillAnnualTaxRecordEndDate1794355900000";
 import { Baseline1794355200000 } from "./Baseline1794355200000";
 import { ClearBankTokens1794355300000 } from "./ClearBankTokens1794355300000";
 import { DeleteSyncedTransactions1794355500000 } from "./DeleteSyncedTransactions1794355500000";
@@ -796,6 +797,81 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
       }
       expect(await planColumn()).toEqual([]);
       expect(await currencyDefault()).toBeNull();
+    });
+  });
+
+  describe("BackfillAnnualTaxRecordEndDate1794355900000", () => {
+    const MIGRATION = "BackfillAnnualTaxRecordEndDate1794355900000";
+    const insert = async (frequency: string, date: string, endDate: string | null) =>
+      (
+        await ds.query(
+          `INSERT INTO tax_records (user_id, type, source, category, name, amount, frequency, date, end_date)
+           VALUES ('u1', 'income', 'paye', 'paye_salary', 'Pay', 1000, $1, $2, $3) RETURNING id`,
+          [frequency, date, endDate],
+        )
+      )[0].id as string;
+    const endDateOf = async (id: string): Promise<string | null> =>
+      (
+        await ds.query(
+          `SELECT to_char(end_date, 'YYYY-MM-DD') AS e FROM tax_records WHERE id = $1`,
+          [id],
+        )
+      )[0].e;
+    const rerun = async () => {
+      await ds.query(`DELETE FROM migrations WHERE name = '${MIGRATION}'`);
+      await ds.runMigrations();
+    };
+
+    it("backfills only annual rows with NULL end_date, by the record rule", async () => {
+      await ds.runMigrations();
+      const aug = await insert("annual", "2024-08-15", null);
+      const mar = await insert("annual", "2025-03-31", null);
+      const apr1 = await insert("annual", "2024-04-01", null);
+      const apr5 = await insert("annual", "2024-04-05", null);
+      const apr6 = await insert("annual", "2024-04-06", null);
+      const explicit = await insert("annual", "2024-08-15", "2030-04-05");
+      const monthly = await insert("monthly", "2024-08-15", null);
+      const oneOff = await insert("one-off", "2024-08-15", null);
+
+      await rerun();
+
+      expect(await endDateOf(aug)).toBe("2025-04-05");
+      expect(await endDateOf(mar)).toBe("2025-04-05");
+      expect(await endDateOf(apr1)).toBe("2025-04-05");
+      expect(await endDateOf(apr5)).toBe("2025-04-05");
+      expect(await endDateOf(apr6)).toBe("2025-04-05");
+      expect(await endDateOf(explicit)).toBe("2030-04-05");
+      expect(await endDateOf(monthly)).toBeNull();
+      expect(await endDateOf(oneOff)).toBeNull();
+      expect(await applied()).toContain(MIGRATION);
+    });
+
+    it("is idempotent", async () => {
+      await ds.runMigrations();
+      const id = await insert("annual", "2023-06-01", null);
+      await rerun();
+      await ds.query(`UPDATE tax_records SET end_date = '2031-04-05' WHERE id = $1`, [id]);
+      await expect(
+        runUpInTransaction(new BackfillAnnualTaxRecordEndDate1794355900000()),
+      ).resolves.toBe(undefined);
+      expect(await endDateOf(id)).toBe("2031-04-05");
+    });
+
+    it("is safe on an empty database and down is a no-op", async () => {
+      await ds.runMigrations();
+      await rerun();
+      expect(await ds.query("SELECT count(*)::int AS n FROM tax_records")).toEqual([{ n: 0 }]);
+      const id = await insert("annual", "2023-06-01", null);
+      await rerun();
+      const runner = ds.createQueryRunner();
+      try {
+        await runner.startTransaction();
+        await new BackfillAnnualTaxRecordEndDate1794355900000().down(runner);
+        await runner.commitTransaction();
+      } finally {
+        await runner.release();
+      }
+      expect(await endDateOf(id)).toBe("2024-04-05");
     });
   });
 });

@@ -194,6 +194,17 @@ export function getTaxYearForRecordDate(dateStr: string): string {
   return `${startYear}/${String(startYear + 1).slice(-2)}`;
 }
 
+/**
+ * End date (YYYY-MM-DD) stored for an annual record: 5 April closing the tax year that
+ * getTaxYearForRecordDate files `dateStr` under (month April or later ends 5 April of the
+ * following year, January to March ends 5 April of the same year). The backend sets this on
+ * create and the BackfillAnnualTaxRecordEndDate migration mirrors it in SQL.
+ */
+export function getAnnualRecordEndDate(dateStr: string): string {
+  const startYear = Number.parseInt(getTaxYearForRecordDate(dateStr).split("/")[0] || "0", 10);
+  return `${startYear + 1}-04-05`;
+}
+
 export function getPreviousTaxYear(taxYear: string): string {
   const parts = taxYear.split("/");
   const startYear = Number.parseInt(parts[0] || "0", 10);
@@ -252,15 +263,11 @@ export function getRecordValueForMonth(record: TaxRecord, monthYYYYMM: string): 
   }
 
   if (record.frequency === "annual") {
-    // Annual occurs on the anniversary month of the start date
-    const startM = record.date.substring(5, 7);
-    const currM = monthYYYYMM.substring(5, 7);
-    if (startM === currM && recordMonth <= monthYYYYMM) {
-      if (!record.endDate || record.endDate.substring(0, 7) >= monthYYYYMM) {
-        return amount;
-      }
-    }
-    return 0;
+    // E23 D16 / D-7-A: an annual record is a once-a-year figure filed under the tax year that
+    // contains its `date` (record rule, getTaxYearForRecordDate). It contributes exactly once,
+    // in the month of its date, and never repeats on later anniversaries, whatever `endDate`
+    // says (a later endDate does not make it recur). Distinct years need distinct records.
+    return recordMonth === monthYYYYMM ? amount : 0;
   }
 
   return 0;
