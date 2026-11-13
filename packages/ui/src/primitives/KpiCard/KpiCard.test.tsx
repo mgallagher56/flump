@@ -103,4 +103,14 @@ describe("KpiCard Primitive", () => {
     );
     expect(container.querySelector("[style]")).toBeNull();
   });
+  it("paints the hero tone only when the value is known", () => {
+    const { container, rerender } = render(<KpiCard label="Net worth" tone="hero" value="£1" />);
+    expect(container.querySelector('[data-tone="hero"]')).not.toBeNull();
+    expect(container.innerHTML).toContain("surface.hero");
+    expect(container.innerHTML).toContain("text.onContrast");
+    rerender(<KpiCard label="Net worth" tone="hero" value={null} />);
+    expect(container.querySelector('[data-tone="hero"]')).toBeNull();
+    rerender(<KpiCard label="Net worth" loading tone="hero" value="£1" />);
+    expect(container.querySelector('[data-tone="hero"]')).toBeNull();
+  });
 });

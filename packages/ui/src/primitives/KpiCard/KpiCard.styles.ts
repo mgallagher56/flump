@@ -16,6 +16,18 @@ export const kpiCardContainer = cva({
     minWidth: 0,
     boxShadow: "card",
   },
+  variants: {
+    /** `hero`: the single deep-teal headline block per page (`surface.hero`). */
+    tone: {
+      default: {},
+      hero: {
+        backgroundColor: "surface.hero",
+        borderColor: "surface.hero",
+        color: "text.onContrast",
+      },
+    },
+  },
+  defaultVariants: { tone: "default" },
 });
 
 export const kpiEyebrow = cva({
@@ -34,6 +46,13 @@ export const kpiLabel = cva({
     minWidth: 0,
     overflowWrap: "anywhere",
   },
+  variants: {
+    tone: {
+      default: {},
+      hero: { color: "text.onContrast" },
+    },
+  },
+  defaultVariants: { tone: "default" },
 });
 
 export const kpiValueRow = cva({
@@ -54,6 +73,13 @@ export const kpiHeroValue = cva({
     minWidth: 0,
     overflowWrap: "anywhere",
   },
+  variants: {
+    tone: {
+      default: {},
+      hero: { color: "text.onContrast" },
+    },
+  },
+  defaultVariants: { tone: "default" },
 });
 
 export const kpiSubtext = cva({
@@ -63,6 +89,13 @@ export const kpiSubtext = cva({
     margin: "0",
     pt: "1",
   },
+  variants: {
+    tone: {
+      default: {},
+      hero: { color: "text.onContrast" },
+    },
+  },
+  defaultVariants: { tone: "default" },
 });
 
 export const kpiLoadingBar = cva({

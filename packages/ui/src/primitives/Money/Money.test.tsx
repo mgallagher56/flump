@@ -135,4 +135,9 @@ describe("Num", () => {
     expect(text(render(<Num value={null} />).container)).toBe("Not set");
     expect(text(render(<Num value={undefined} />).container)).toBe("Not set");
   });
+
+  it("supports the onContrast tone for figures on surface.hero", () => {
+    const { container } = render(<Money tone="onContrast" value={1234} />);
+    expect(container.innerHTML).toContain("text.onContrast");
+  });
 });

@@ -26,8 +26,16 @@ export interface KpiDelta {
   polarity?: KpiDeltaPolarity;
 }
 
+export type KpiCardTone = "default" | "hero";
+
 export interface KpiCardProps {
   label: string;
+  /**
+   * `hero` paints the card as the page's one deep-teal headline block (`surface.hero`). Use it at
+   * most once per page. Figures inside should use `tone="onContrast"`. Falls back to the default
+   * card while loading or when the value is unknown, so "Not set" keeps its muted contrast.
+   */
+  tone?: KpiCardTone;
   /** `null` or `undefined` renders "Not set" (never a zero). */
   value?: ReactNode;
   /** Legacy delta badge. Prefer `delta`, which adds an arrow so meaning never rests on colour. */
@@ -77,15 +85,21 @@ export const KpiCard: FC<KpiCardProps> = ({
   loading = false,
   notSetLabel = "Not set",
   emptyAction,
+  tone = "default",
   className,
 }) => {
   const isEmpty =
     value === null || value === undefined || (typeof value === "number" && !Number.isFinite(value));
+  const cardTone = tone === "hero" && !isEmpty && !loading ? "hero" : "default";
 
   return (
-    <div aria-busy={loading || undefined} className={cx(kpiCardContainer(), className)}>
+    <div
+      aria-busy={loading || undefined}
+      className={cx(kpiCardContainer({ tone: cardTone }), className)}
+      data-tone={cardTone === "hero" ? "hero" : undefined}
+    >
       <div className={kpiEyebrow()}>
-        <span className={kpiLabel()}>{label}</span>
+        <span className={kpiLabel({ tone: cardTone })}>{label}</span>
         {action && <div>{action}</div>}
       </div>
 
@@ -98,7 +112,7 @@ export const KpiCard: FC<KpiCardProps> = ({
         ) : isEmpty ? (
           <Money notSetAction={emptyAction} notSetLabel={notSetLabel} size="kpi" value={null} />
         ) : (
-          <div className={kpiHeroValue()}>{value}</div>
+          <div className={kpiHeroValue({ tone: cardTone })}>{value}</div>
         )}
         {!loading && delta ? (
           <StatusBadge size="sm" variant={deltaTone(delta.direction, delta.polarity)}>
@@ -116,7 +130,7 @@ export const KpiCard: FC<KpiCardProps> = ({
         ) : null}
       </div>
 
-      {subtext && <div className={kpiSubtext()}>{subtext}</div>}
+      {subtext && <div className={kpiSubtext({ tone: cardTone })}>{subtext}</div>}
     </div>
   );
 };

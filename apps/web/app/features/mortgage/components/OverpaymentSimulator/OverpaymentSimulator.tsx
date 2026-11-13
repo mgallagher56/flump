@@ -360,7 +360,12 @@ export const OverpaymentSimulator: FC<OverpaymentSimulatorProps> = ({
         <KpiCard
           label="Interest saved"
           subtext="Estimate"
-          value={interestSaved === null ? null : <Money size="lg" value={interestSaved} />}
+          tone="hero"
+          value={
+            interestSaved === null ? null : (
+              <Money size="lg" tone="onContrast" value={interestSaved} />
+            )
+          }
         />
         <KpiCard
           label="Time shaved off"
