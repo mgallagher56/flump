@@ -57,15 +57,12 @@ export const PROVIDER_NAMES: readonly string[] = [
   "Trading 212",
   "Fidelity",
   "Monzo",
-  "Starling",
   "Barclays",
   "Lloyds",
   "Halifax",
-  "Nationwide",
   "Santander",
   "HSBC",
   "NatWest",
-  "Marcus",
 ];
 
 const PROVIDER_PATTERNS = PROVIDER_NAMES.map((name) => ({
