@@ -8,6 +8,7 @@ import {
   isMcpUserAllowed,
   McpAllowlistGuard,
   McpKillSwitchGuard,
+  mcpAllowedOriginsBootWarning,
   mcpOpenAccessBootWarning,
   readMcpAccessConfig,
 } from "./mcp-access";
@@ -113,5 +114,26 @@ describe("guards", () => {
     } finally {
       process.env = original;
     }
+  });
+});
+
+describe("mcpAllowedOriginsBootWarning", () => {
+  it("is silent for unset and for well-formed origins", () => {
+    expect(mcpAllowedOriginsBootWarning({})).toBeNull();
+    expect(
+      mcpAllowedOriginsBootWarning({
+        MCP_ALLOWED_ORIGINS: "https://a.example,http://localhost:3000",
+      }),
+    ).toBeNull();
+  });
+
+  it("warns about *, null and entries without a scheme", () => {
+    const w = mcpAllowedOriginsBootWarning({
+      MCP_ALLOWED_ORIGINS: "*,null,app.example.com,https://ok.example",
+    });
+    expect(w).toContain("*");
+    expect(w).toContain("null");
+    expect(w).toContain("app.example.com");
+    expect(w).not.toContain("ok.example,");
   });
 });

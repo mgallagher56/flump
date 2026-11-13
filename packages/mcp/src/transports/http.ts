@@ -129,13 +129,11 @@ export class HttpMcpHandler {
   }
 
   /** 503 when the kill switch is on, 403 for a disallowed Origin, otherwise null. Runs before auth. */
-  private gate(origin: string | null | undefined): { status: number; body: object } | null {
+  private gate(origin: unknown): { status: number; body: object } | null {
     if (!this.isEnabled()) return { status: 503, body: DISABLED_BODY };
-    if (
-      origin !== null &&
-      origin !== undefined &&
-      !this.allowedOrigins.has(normalizeOrigin(origin))
-    ) {
+    if (origin === null || origin === undefined) return null;
+    // A non-string Origin (a repeated header arrives as an array) is never allowed.
+    if (typeof origin !== "string" || !this.allowedOrigins.has(normalizeOrigin(origin))) {
       return { status: 403, body: FORBIDDEN_ORIGIN_BODY };
     }
     return null;
