@@ -62,7 +62,15 @@ export const DashboardKpiStrip: FC<DashboardKpiStripProps> = ({
       <KpiStrip columns={4}>
         <KpiCard
           label="Net worth"
-          value={netWorth === null ? notSet("/app/accounts", "Add an account") : netWorth}
+          value={
+            netWorth === null ? (
+              notSet("/app/accounts", "Add an account")
+            ) : (
+              <span data-figure="netWorth">
+                <Money size="lg" value={netWorth} />
+              </span>
+            )
+          }
         />
         <KpiCard
           label="Monthly surplus"
@@ -71,7 +79,9 @@ export const DashboardKpiStrip: FC<DashboardKpiStripProps> = ({
             monthlySurplus === null ? (
               notSet("/app/budget", "Add your budget")
             ) : (
-              <Money size="lg" tone={surplusTone(monthlySurplus)} value={monthlySurplus} />
+              <span data-figure="budget.surplus">
+                <Money size="lg" tone={surplusTone(monthlySurplus)} value={monthlySurplus} />
+              </span>
             )
           }
         />
@@ -82,18 +92,22 @@ export const DashboardKpiStrip: FC<DashboardKpiStripProps> = ({
             weeklySafeToSpend === null ? (
               notSet("/app/budget", "Add your budget")
             ) : (
-              <Money size="lg" value={weeklySafeToSpend} />
+              <span data-figure="safeToSpend.weekly">
+                <Money size="lg" value={weeklySafeToSpend} />
+              </span>
             )
           }
         />
         <KpiCard
           label="Liquid cash"
-          subtext={liquidCash === null ? undefined : "Savings accounts only"}
+          subtext={liquidCash === null ? undefined : "Current and savings accounts"}
           value={
             liquidCash === null ? (
               notSet("/app/savings", "Add a savings account")
             ) : (
-              <Money size="lg" value={liquidCash} />
+              <span data-figure="liquidCash">
+                <Money size="lg" value={liquidCash} />
+              </span>
             )
           }
         />

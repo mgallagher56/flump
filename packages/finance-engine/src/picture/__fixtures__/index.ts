@@ -1,7 +1,7 @@
 /**
  * Persona fixtures for the financial picture (E23 section 9.1). Data only. Reused by the engine
- * persona test now and by the backend contract, web consistency and MCP tests later. Deliberately
- * not exported from the package's public src/index.ts.
+ * persona test, the web consistency harness and the MCP consistency test, through the
+ * "@flump/finance-engine/testing" subpath. Deliberately not exported from src/index.ts.
  */
 import { danExpected, danTaxYearsExpected } from "./expected/dan.js";
 import { debtStressedExpected, debtStressedItemsExpected } from "./expected/debt-stressed.js";

@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 import { describe, expect, it, vi } from "vitest";
-import { BudgetWidget, type BudgetWidgetData, formatRunway } from "./BudgetWidget";
+import { BudgetWidget, type BudgetWidgetData, formatMonthsOfCover } from "./BudgetWidget";
 
 // The global test setup stubs Link to its children; these tests need real anchors.
 vi.mock("react-router", async () => await vi.importActual("react-router"));
@@ -14,7 +14,7 @@ const baseData: BudgetWidgetData = {
   budgetedSavings: 1200,
   livingExpenses: 3750,
   savingsRatePct: 44,
-  runwayMonths: 12,
+  monthsOfCover: 12,
 };
 
 const renderWidget = (data: BudgetWidgetData | null) =>
@@ -33,8 +33,7 @@ describe("BudgetWidget", () => {
       budgetedSavings: 0,
       livingExpenses: 0,
       savingsRatePct: 0,
-      runwayMonths: 0,
-      runwayLabel: "0 mo",
+      monthsOfCover: null,
     });
     expect(screen.getByText("Not set")).toBeDefined();
     expect(screen.queryByText("0 mos")).toBeNull();
@@ -50,11 +49,11 @@ describe("BudgetWidget", () => {
     expect(screen.getByText("Not set")).toBeDefined();
   });
 
-  it("shows surplus, take-home and savings rate in en-GB; no headline is a heading", () => {
+  it("shows surplus, budgeted income and savings rate in en-GB; no headline is a heading", () => {
     renderWidget(baseData);
     expect(screen.getByText("Monthly surplus")).toBeDefined();
     expect(screen.getByText("+£1,730")).toBeDefined();
-    // Take-home in the tile and the "in" figure under the spending bar.
+    // Budgeted income in the tile and the "in" figure under the spending bar.
     expect(screen.getAllByText("£6,680")).toHaveLength(2);
     expect(screen.getByText("44%")).toBeDefined();
     expect(screen.getByRole("status").textContent).toContain("+£1,730");
@@ -81,17 +80,27 @@ describe("BudgetWidget", () => {
     expect(screen.getAllByRole("link", { name: "Add income" }).length).toBe(3);
   });
 
-  it("shows years and months instead of descriptive labels like 'Ironclad Runway'", () => {
-    renderWidget({ ...baseData, runwayMonths: 12, runwayLabel: "Ironclad Runway" });
-    expect(screen.queryByText("Ironclad Runway")).toBeNull();
-    expect(screen.getByText("1 yr")).toBeDefined();
-    expect(screen.getByText("Emergency runway")).toBeDefined();
+  it("shows months of cover from the loader, with no target colour", () => {
+    renderWidget({ ...baseData, monthsOfCover: 4.7 });
+    expect(screen.getByText("Months of cover")).toBeDefined();
+    const figure = document.querySelector('[data-figure="monthsOfCover"]');
+    expect(figure?.textContent).toBe("4.7 months");
+    expect(screen.queryByText(/runway/i)).toBeNull();
   });
 
-  it("rejects purely descriptive runway labels when runwayMonths is not provided", () => {
-    renderWidget({ ...baseData, runwayMonths: null, runwayLabel: "Ironclad Runway" });
-    expect(screen.queryByText("Ironclad Runway")).toBeNull();
-    expect(screen.getByRole("link", { name: "Add runway details" })).toBeDefined();
+  it("shows Not set when months of cover cannot be worked out", () => {
+    renderWidget({ ...baseData, monthsOfCover: null });
+    expect(screen.getByRole("link", { name: "Add essential spending" })).toBeDefined();
+  });
+
+  it("never reads a saved runway preference from the browser", () => {
+    window.localStorage.setItem(
+      "flump_runway_calculator_settings",
+      JSON.stringify({ includedAccounts: { a: false } }),
+    );
+    renderWidget({ ...baseData, monthsOfCover: 3 });
+    expect(document.querySelector('[data-figure="monthsOfCover"]')?.textContent).toBe("3 months");
+    window.localStorage.removeItem("flump_runway_calculator_settings");
   });
 
   it("exposes spending against income as a labelled progress bar", () => {
@@ -108,16 +117,15 @@ describe("BudgetWidget", () => {
   });
 });
 
-describe("formatRunway", () => {
+describe("formatMonthsOfCover", () => {
   it.each([
-    [0, "0 mos"],
-    [0.7, "0.7 mos"],
-    [7.5, "7.5 mos"],
-    [12, "1 yr"],
-    [18, "1 yr 6 mos"],
-    [24, "2 yrs"],
-    [130, "10+ yrs"],
+    [0, "0 months"],
+    [0.7, "0.7 months"],
+    [1, "1 month"],
+    [7.5, "7.5 months"],
+    [18, "18 months"],
+    [130, "10+ years"],
   ])("formats %s months as %s", (months, expected) => {
-    expect(formatRunway(months)).toBe(expected);
+    expect(formatMonthsOfCover(months)).toBe(expected);
   });
 });

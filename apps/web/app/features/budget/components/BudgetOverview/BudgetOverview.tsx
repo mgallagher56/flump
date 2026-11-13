@@ -1,4 +1,4 @@
-import { calculateSafeToSpend } from "@flump/finance-engine";
+import { type FinancialPicture, isFigureKnown } from "@flump/finance-engine";
 import {
   Button,
   Card,
@@ -11,6 +11,7 @@ import {
 } from "@repo/ui";
 import { AlertTriangle, CalendarClock } from "lucide-react";
 import { type FC, useMemo } from "react";
+import { SampleAwareLink } from "~/components/navigation/SampleAwareLink";
 import type { BudgetCategory, BudgetEntry } from "~/types/budget";
 import {
   CATEGORY_LABELS,
@@ -18,6 +19,7 @@ import {
   isPriorityBill,
   toMonthly,
 } from "~/types/budget";
+import { buildWorkspacePicture } from "~/utils/financialPicture";
 import { ExpenseBreakdown } from "../ExpenseBreakdown";
 import {
   dangerIcon,
@@ -45,6 +47,11 @@ import {
 
 export interface BudgetOverviewProps {
   entries: BudgetEntry[];
+  /**
+   * The engine's figures for these entries (built by the container with the same function the
+   * loaders use). The overview never adds rows up itself (E23 section 2).
+   */
+  picture?: Pick<FinancialPicture, "budget" | "safeToSpend" | "monthsOfCover">;
   customCategories?: string[];
   onNavigateToCategory: (cat: BudgetCategory) => void;
   onNavigateToRunway: () => void;
@@ -56,20 +63,28 @@ const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one :
 
 export const BudgetOverview: FC<BudgetOverviewProps> = ({
   entries,
+  picture: pictureProp,
   customCategories = [],
   onNavigateToCategory,
   onNavigateToRunway,
 }) => {
-  const totals = useMemo(() => {
-    const income = entries.filter((e) => e.isIncome).reduce((s, e) => s + toMonthly(e), 0);
-    const expenses = entries
-      .filter((e) => !e.isIncome && e.category !== "savings")
-      .reduce((s, e) => s + toMonthly(e), 0);
-    const budgetedSavings = entries
-      .filter((e) => !e.isIncome && e.category === "savings")
-      .reduce((s, e) => s + toMonthly(e), 0);
-    return { income, expenses, budgetedSavings, surplus: income - expenses - budgetedSavings };
-  }, [entries]);
+  // Without a picture from the container, the same engine builder runs on the entries alone
+  // (no profile, so safe to spend shows Not set rather than a guess).
+  const picture = useMemo(
+    () => pictureProp ?? buildWorkspacePicture({ budgetEntries: entries }),
+    [pictureProp, entries],
+  );
+  const budget = isFigureKnown(picture.budget) ? picture.budget.value : null;
+  const totals = {
+    income: budget?.income ?? 0,
+    expenses: budget?.outgoings ?? 0,
+    budgetedSavings: budget?.savings ?? 0,
+    surplus: budget?.surplus ?? 0,
+  };
+  const safeToSpend = isFigureKnown(picture.safeToSpend) ? picture.safeToSpend.value : null;
+  const salaryMissing =
+    !isFigureKnown(picture.safeToSpend) &&
+    picture.safeToSpend.missing.some((key) => !key.startsWith("budget"));
 
   const expenseCategories = useMemo(() => {
     const set = new Set<string>(EXPENSE_CATEGORIES);
@@ -99,35 +114,6 @@ export const BudgetOverview: FC<BudgetOverviewProps> = ({
     [expenseCategories, entries],
   );
 
-  const safeToSpend = useMemo(() => {
-    const fixedBills = entries
-      .filter((e) => !e.isIncome && (e.category === "housing" || e.category === "bills"))
-      .reduce((s, e) => s + toMonthly(e), 0);
-    const groceries = entries
-      .filter(
-        (e) =>
-          !e.isIncome &&
-          e.category === "expenses" &&
-          (e.name.toLowerCase().includes("food") || e.name.toLowerCase().includes("grocer")),
-      )
-      .reduce((s, e) => s + toMonthly(e), 0);
-    const minDebt = entries
-      .filter(
-        (e) =>
-          !e.isIncome &&
-          (e.name.toLowerCase().includes("card") ||
-            e.name.toLowerCase().includes("loan") ||
-            e.name.toLowerCase().includes("debt")),
-      )
-      .reduce((s, e) => s + toMonthly(e), 0);
-    return calculateSafeToSpend(
-      totals.income,
-      fixedBills,
-      minDebt,
-      groceries || Math.round(totals.expenses * 0.2),
-    );
-  }, [entries, totals]);
-
   const split = useMemo(() => {
     const priorityItems = entries.filter((e) => !e.isIncome && isPriorityBill(e));
     const flexibleItems = entries.filter(
@@ -151,16 +137,35 @@ export const BudgetOverview: FC<BudgetOverviewProps> = ({
   return (
     <div className={overviewRoot()}>
       <KpiCard
+        emptyAction={
+          salaryMissing ? (
+            <Button asChild size="sm" variant="ghost">
+              <SampleAwareLink to="/app/profile">Add your pay details</SampleAwareLink>
+            </Button>
+          ) : undefined
+        }
         label="Safe to spend each week"
         subtext={
-          <span className={heroSubtext()}>
-            <span>About</span>
-            <Money size="sm" tone="onContrast" value={safeToSpend.dailyAllowance} />
-            <span>a day after fixed bills, debt and groceries</span>
-          </span>
+          safeToSpend ? (
+            <span className={heroSubtext()}>
+              <span>About</span>
+              <Money size="sm" tone="onContrast" value={safeToSpend.daily} />
+              <span>a day after essentials, debt payments and planned savings</span>
+            </span>
+          ) : salaryMissing ? (
+            "Worked out from your take-home pay, which needs your salary details."
+          ) : (
+            "Worked out once your budget has essential spending."
+          )
         }
         tone="hero"
-        value={<Money size="kpi" tone="onContrast" value={safeToSpend.weeklyAllowance} />}
+        value={
+          safeToSpend ? (
+            <span data-figure="safeToSpend.weekly">
+              <Money size="kpi" tone="onContrast" value={safeToSpend.weekly} />
+            </span>
+          ) : null
+        }
       />
 
       <section aria-labelledby="budget-stand-heading" className={section()}>
@@ -169,24 +174,36 @@ export const BudgetOverview: FC<BudgetOverviewProps> = ({
             Where you stand
           </h2>
           <Button size="sm" variant="outline" onClick={onNavigateToRunway}>
-            See your runway
+            See your months of cover
           </Button>
         </div>
         <KpiStrip columns={4}>
           <KpiCard
-            label="Monthly income"
+            label="Budgeted income"
             subtext={plural(incomeSources, "source", "sources")}
-            value={<Money size="lg" value={totals.income} />}
+            value={
+              <span data-figure="budget.income">
+                <Money size="lg" value={totals.income} />
+              </span>
+            }
           />
           <KpiCard
             label="Monthly spending"
             subtext={`Across ${plural(expenseCategories.length, "category", "categories")}`}
-            value={<Money size="lg" value={totals.expenses} />}
+            value={
+              <span data-figure="budget.outgoings">
+                <Money size="lg" value={totals.expenses} />
+              </span>
+            }
           />
           <KpiCard
             label="Planned savings"
             subtext="Set aside each month"
-            value={<Money size="lg" value={totals.budgetedSavings} />}
+            value={
+              <span data-figure="budget.savings">
+                <Money size="lg" value={totals.budgetedSavings} />
+              </span>
+            }
           />
           <KpiCard
             delta={
@@ -195,7 +212,11 @@ export const BudgetOverview: FC<BudgetOverviewProps> = ({
                 : { direction: "up", text: "Left over" }
             }
             label={inDeficit ? "Monthly shortfall" : "Left over each month"}
-            value={<Money size="lg" value={Math.abs(totals.surplus)} />}
+            value={
+              <span data-figure="budget.surplus" data-figure-sign={inDeficit ? "-1" : "1"}>
+                <Money size="lg" value={Math.abs(totals.surplus)} />
+              </span>
+            }
           />
         </KpiStrip>
       </section>

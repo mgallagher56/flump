@@ -37,7 +37,8 @@ describe("buildDebtInputs", () => {
     ];
     const result = buildDebtInputs([], [], entries);
     // income 3100, expenses 1000 + 100 * 52 / 12 + 50
-    expect(result.monthlySurplus).toBeCloseTo(3100 - (1000 + (100 * 52) / 12 + 50), 5);
+    // Rounded to the penny by the engine's budget totals.
+    expect(result.monthlySurplus).toBeCloseTo(3100 - (1000 + (100 * 52) / 12 + 50), 2);
   });
 
   it("sums only essential non-income entries for essential expenses", () => {

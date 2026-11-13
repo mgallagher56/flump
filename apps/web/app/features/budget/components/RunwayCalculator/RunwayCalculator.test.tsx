@@ -3,7 +3,8 @@ import { describe, expect, it, vi } from "vitest";
 import { RunwayCalculator } from "./RunwayCalculator";
 
 const outcome = () => within(screen.getByRole("region", { name: "Illustration results" }));
-const headline = () => screen.getByText("Your runway").closest("[data-tone]") as HTMLElement;
+const headline = () =>
+  screen.getByText("Your months of cover").closest("[data-tone]") as HTMLElement;
 
 describe("RunwayCalculator", () => {
   beforeEach(() => {
@@ -50,7 +51,7 @@ describe("RunwayCalculator", () => {
     },
   ];
 
-  it("includes Investment accounts in the savings pool alongside Current and Saving accounts", () => {
+  it("headlines the engine's saved figure: current and savings cash over essentials", () => {
     render(
       <RunwayCalculator
         accountDetails={[]}
@@ -59,50 +60,87 @@ describe("RunwayCalculator", () => {
         onNavigateToForecast={vi.fn()}
       />,
     );
-
-    // Current, Saving, and Investment accounts should appear in the savings pool
-    expect(screen.getByText("Main Current")).toBeDefined();
-    expect(screen.getByText("Emergency Fund")).toBeDefined();
-    expect(screen.getByText("Vanguard S&S ISA")).toBeDefined();
-    expect(screen.getByText("Investment")).toBeDefined();
-
-    // Pension and Mortgage accounts should NOT appear in the savings pool
+    // £2,000 + £8,000 cash over £1,500 essentials = 6.7 months. Investments are not cash.
+    expect(headline().querySelector('[data-figure="monthsOfCover"]')?.textContent).toBe(
+      "6.7 months",
+    );
+    // An untouched illustration starts from the same figure.
+    expect(outcome().getByText("6.7 months")).toBeDefined();
+    // Pension and mortgage accounts are never offered.
     expect(screen.queryByText("Workplace Pension")).toBeNull();
     expect(screen.queryByText("Home Mortgage")).toBeNull();
-
-    // Total savings pool should sum 2,000 + 8,000 + 15,000 = £25,000
-    expect(screen.getAllByText("£25,000").length).toBeGreaterThanOrEqual(1);
   });
 
-  it("updates runway when toggling investment account in and out of the pool", () => {
+  it("uses the baseline the container passes, not a recomputation", () => {
+    render(
+      <RunwayCalculator
+        accountDetails={[]}
+        accounts={mockAccounts}
+        baseline={{
+          status: "known",
+          provenance: "derived",
+          value: {
+            months: 9.9,
+            liquidCash: 1,
+            monthlyEssentials: 1,
+            commitments: {
+              essentialsExcludingDebt: 1,
+              accountMinimums: 0,
+              minimumsEstimated: false,
+              budgetDebtPayments: 0,
+              debtCommitment: 0,
+              total: 1,
+            },
+          },
+        }}
+        entries={mockEntries}
+        onNavigateToForecast={vi.fn()}
+      />,
+    );
+    expect(headline().textContent).toContain("9.9 months");
+  });
+
+  it("shows Not set when there is no essential spending", () => {
+    render(
+      <RunwayCalculator
+        accountDetails={[]}
+        accounts={mockAccounts}
+        entries={[]}
+        onNavigateToForecast={vi.fn()}
+      />,
+    );
+    // An unknown figure falls back from the hero card; it shows Not set, never 0 or infinity.
+    expect(screen.getAllByText("Not set").length).toBeGreaterThan(0);
+    expect(document.querySelector('[data-figure="monthsOfCover"]')).toBeNull();
+  });
+
+  it("switching investments on is an illustration: the headline does not move", () => {
+    const onScenarioChange = vi.fn();
     render(
       <RunwayCalculator
         accountDetails={[]}
         accounts={mockAccounts}
         entries={mockEntries}
         onNavigateToForecast={vi.fn()}
+        onScenarioChange={onScenarioChange}
       />,
     );
-
-    const toggleInvestmentBtn = screen.getByRole("switch", {
-      name: /Include Vanguard S&S ISA in savings pool/i,
+    const savedHeadline = headline().textContent;
+    const isa = screen.getByRole("switch", {
+      name: /Include Vanguard S&S ISA in this illustration/i,
     });
-    expect(toggleInvestmentBtn).toBeDefined();
-
-    // Initially includes investment account (£25,000 / £1,500 monthly burn = 16.6 months -> 1 yr 4 mos)
-    expect(outcome().getByText("1 yr 4 mos")).toBeDefined();
-    expect(headline().textContent).toContain("1 yr 4 mos");
-
-    // Toggle investment account OFF: a saved preference, so the headline moves too
-    fireEvent.click(toggleInvestmentBtn);
-
-    // Now pool is £10,000 / £1,500 monthly burn = 6.66 months -> 6 months
-    expect(outcome().getByText("6 months")).toBeDefined();
-    expect(headline().textContent).toContain("6 months");
+    expect(isa.getAttribute("aria-checked")).toBe("false");
+    fireEvent.click(isa);
+    // £25,000 over £1,500 = 16.7 months.
+    expect(outcome().getByText("16.7 months")).toBeDefined();
+    expect(headline().textContent).toBe(savedHeadline);
+    expect(onScenarioChange).toHaveBeenCalledWith(
+      expect.objectContaining({ includedAccounts: expect.objectContaining({ "acc-3": true }) }),
+    );
+    expect(localStorage.getItem("flump_runway_calculator_settings")).toBeNull();
   });
 
-  it("renders non-primary income in Income you would keep and treats toggling it as a scenario", () => {
-    const onSaveSettings = vi.fn();
+  it("starts other income excluded, and keeping it is an illustration", () => {
     const onScenarioChange = vi.fn();
     const entriesWithIncome = [
       ...mockEntries,
@@ -122,46 +160,25 @@ describe("RunwayCalculator", () => {
         updatedAt: "2026-01-01T00:00:00Z",
       },
     ];
-
     render(
       <RunwayCalculator
         accountDetails={[]}
         accounts={mockAccounts}
         entries={entriesWithIncome}
         onNavigateToForecast={vi.fn()}
-        onSaveSettings={onSaveSettings}
         onScenarioChange={onScenarioChange}
       />,
     );
-
-    expect(screen.getByText("Freelance Writing")).toBeDefined();
-    expect(screen.getByText("kept")).toBeDefined();
-
-    const incomeToggleBtn = screen.getByRole("switch", {
-      name: /Keep Freelance Writing income/i,
-    });
-    expect(incomeToggleBtn.getAttribute("aria-checked")).toBe("true");
-
-    // With £300 kept income: burn £1,200, pool £25,000 -> 20.8 months -> 1 yr 8 mos
-    expect(outcome().getByText("1 yr 8 mos")).toBeDefined();
+    const toggle = screen.getByRole("switch", { name: /Keep Freelance Writing income/i });
+    expect(toggle.getAttribute("aria-checked")).toBe("false");
     const savedHeadline = headline().textContent;
-    expect(savedHeadline).toContain("1 yr 8 mos");
-
-    // Toggle income OFF: the illustration moves, the headline does not
-    fireEvent.click(incomeToggleBtn);
-
-    expect(incomeToggleBtn.getAttribute("aria-checked")).toBe("false");
-    expect(screen.getByText("excluded")).toBeDefined();
-    expect(outcome().getByText("1 yr 4 mos")).toBeDefined();
+    fireEvent.click(toggle);
+    // £10,000 over £1,200 = 8.3 months.
+    expect(outcome().getByText("8.3 months")).toBeDefined();
     expect(headline().textContent).toBe(savedHeadline);
-    expect(onScenarioChange).toHaveBeenCalledWith(
-      expect.objectContaining({ keptIncome: expect.objectContaining({ "inc-1": false }) }),
-    );
-    expect(onSaveSettings).not.toHaveBeenCalled();
-    expect(localStorage.getItem("flump_runway_calculator_settings")).toBeNull();
   });
 
-  it("labels the account choice as a saved preference and the rest as an illustration", () => {
+  it("labels the calculator as an illustration that is not saved", () => {
     render(
       <RunwayCalculator
         accountDetails={[]}
@@ -170,14 +187,13 @@ describe("RunwayCalculator", () => {
         onNavigateToForecast={vi.fn()}
       />,
     );
-    expect(screen.getByText("Saved preference")).toBeDefined();
     expect(screen.getByRole("region", { name: "Model a change to your budget" })).toBeDefined();
     expect(screen.getByText("Illustration, not saved")).toBeDefined();
+    expect(screen.queryByText(/Critical|Healthy|Caution/)).toBeNull();
   });
 
-  it("saves only the account preference; scenario changes save nothing and send no request", () => {
+  it("scenario changes save nothing and send no request", () => {
     const fetchSpy = vi.spyOn(globalThis, "fetch");
-    const onSaveSettings = vi.fn();
     const onScenarioChange = vi.fn();
     render(
       <RunwayCalculator
@@ -185,12 +201,10 @@ describe("RunwayCalculator", () => {
         accounts={mockAccounts}
         entries={mockEntries}
         onNavigateToForecast={vi.fn()}
-        onSaveSettings={onSaveSettings}
         onScenarioChange={onScenarioChange}
       />,
     );
     const savedHeadline = headline().textContent;
-
     fireEvent.change(screen.getByLabelText(/Severance or lump sum/i), {
       target: { value: "5000" },
     });
@@ -201,21 +215,12 @@ describe("RunwayCalculator", () => {
       expect.objectContaining({ severanceLump: 5000, extraMonthlyCut: 250 }),
     );
     expect(headline().textContent).toBe(savedHeadline);
-    expect(onSaveSettings).not.toHaveBeenCalled();
     expect(localStorage.getItem("flump_runway_calculator_settings")).toBeNull();
     expect(fetchSpy).not.toHaveBeenCalled();
-
-    // Switching an account off is the saved preference.
-    fireEvent.click(screen.getByRole("switch", { name: /Include Vanguard S&S ISA/i }));
-    expect(onSaveSettings).toHaveBeenCalledWith({
-      includedAccounts: expect.objectContaining({ "acc-3": false }),
-    });
-    const stored = JSON.parse(localStorage.getItem("flump_runway_calculator_settings") ?? "{}");
-    expect(Object.keys(stored)).toEqual(["includedAccounts"]);
     fetchSpy.mockRestore();
   });
 
-  it("starts from the scenario held by the container and resets it without touching saved choices", () => {
+  it("starts from the scenario held by the container and resets it", () => {
     const onScenarioChange = vi.fn();
     render(
       <RunwayCalculator
@@ -227,14 +232,39 @@ describe("RunwayCalculator", () => {
         onScenarioChange={onScenarioChange}
       />,
     );
-    // Pool £25,000 + £6,000 severance over £1,500 burn is 20.6 months.
-    expect(outcome().getByText("1 yr 8 mos")).toBeDefined();
-    expect(headline().textContent).toContain("1 yr 4 mos");
+    // £10,000 + £6,000 severance over £1,500 = 10.7 months.
+    expect(outcome().getByText("10.7 months")).toBeDefined();
+    expect(headline().textContent).toContain("6.7 months");
 
     fireEvent.click(screen.getByRole("button", { name: "Reset to saved figures" }));
     expect(onScenarioChange).toHaveBeenLastCalledWith(
       expect.objectContaining({ severanceLump: 0, extraMonthlyCut: 0 }),
     );
-    expect(outcome().getByText("1 yr 4 mos")).toBeDefined();
+    expect(outcome().getByText("6.7 months")).toBeDefined();
+  });
+
+  it("adds debt minimums that are not budget lines, as the saved figure does", () => {
+    render(
+      <RunwayCalculator
+        accountDetails={[]}
+        accounts={[
+          ...mockAccounts,
+          {
+            id: "card",
+            name: "Card",
+            type: "Credit Card",
+            balance: 2000,
+            currency: "GBP",
+            interestRate: 20,
+            monthlyContribution: 100,
+          } as never,
+        ]}
+        entries={mockEntries}
+        onNavigateToForecast={vi.fn()}
+      />,
+    );
+    // £10,000 over £1,500 + £100 = 6.3 months, in both the headline and the illustration.
+    expect(headline().textContent).toContain("6.3 months");
+    expect(outcome().getByText("6.3 months")).toBeDefined();
   });
 });

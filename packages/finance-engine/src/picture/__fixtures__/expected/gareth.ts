@@ -29,6 +29,11 @@ export const garethExpected: PersonaExpected = {
     discretionary: 300, // 100 + 200
     surplus: 100, // 4,000 - (2,300 + 1,300 + 300)
   },
+  cover: {
+    monthsOfCover: 7.9, // 18,100 / 2,300
+    essentialCommitments: 2300,
+    safeToSpendMonthly: 400, // 4,000 - 2,300 - 1,300
+  },
 };
 
 /** Per-pot monthly contributions (D21): the pot value is stored on each account. */

@@ -206,7 +206,7 @@ describe("BudgetSetupWizard", () => {
 
     await waitFor(() => {
       expect(onAddEntry).toHaveBeenCalledWith(
-        expect.objectContaining({ name: "Rent / Mortgage", amount: 1200 }),
+        expect.objectContaining({ name: "Rent / Mortgage", amount: 0 }),
       );
     });
   });

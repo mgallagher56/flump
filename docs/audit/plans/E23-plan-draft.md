@@ -561,3 +561,32 @@ DB tests run with `TEST_DATABASE_URL=postgres://postgres:postgres@localhost:5543
 - `/Users/marcgallagher/personal/flump/docs/audit/plans/DECISIONS.md`
 - `/Users/marcgallagher/personal/flump/docs/audit/plans/SEQUENCE.md`
 - `/Users/marcgallagher/personal/flump/docs/audit/C-correctness.md`
+
+---
+
+## Status at 2026-11-13 (single-source PR)
+
+| ID | Status |
+|---|---|
+| P0-1 to P0-5 | Merged (#391, #392 and reviews). |
+| P1-1 numeric transformer | Already on main: every `decimal` column has `numericTransformer` (budget entries keep their own null-to-0 transformer). The remaining `Number(x) \|\| 0` wrappers in `budget.controller.ts` and `agent-data.service.ts` are redundant but harmless; left for E21's typed client. |
+| P1-2 profile facts | Merged (#556, #564). |
+| P1-3 account types | Merged (#570). |
+| P1-4 picture core | Done for take-home (#562) and, in this PR, budget totals, safe to spend, months of cover, net worth and debt totals plus `buildFinancialPicture` and the shared row mapper. Not built yet: `selectTrap`, `selectTaxDue`, `selectPensionContributions`, `selectActiveTaxYear`, `selectNetWorthHistory` (their pages are P1-10/P1-17). |
+| P1-5 portfolio fixes | Merged (C-15 overdraft as liability, carry-forward, fast-check properties). |
+| P1-6 persona fixtures | Merged (#599); this PR adds hand-derived months of cover, commitments and safe to spend per persona. |
+| P1-7 `GET /financial-picture` | Deferred: staged behind the engine builder (DECISIONS E23 staging note). The builder takes plain rows, so the endpoint is a thin service. |
+| P1-8 onboarding capture | Merged (#556). |
+| P1-9 Home and Budget | Done in this PR (dashboard loader, KPI strip, Budget widget, Budget overview, months-of-cover calculator baseline), with `data-figure` hooks. |
+| P1-10 Pension, Tax, Debt, Mortgage | Debt total and debt-page budget inputs done in this PR. Pension, Tax and Mortgage figures are not among the figures this PR unifies; deferred to follow the remaining selectors and E15 phase 3. |
+| P1-11 tax-year semantics | Merged (annual records counted once in the year of their date). |
+| P1-12 check-in and history | Merged (#608). |
+| P1-13 C-17 partial sync | Deferred: provider and banking work, not a cross-page figure. |
+| P1-14 consistency harness | Done in this PR: engine (`picture/personas.test.ts`), web (`apps/web/app/test/consistency/consistency.test.tsx`: loaders plus every rendered `data-figure`) and MCP (`packages/mcp/src/__tests__/consistency.test.ts`), 9 personas each. |
+| P1-15 Playwright smoke | Merged. |
+| P1-16 property tests | Portfolio and history properties merged; picture-selector properties not written yet. |
+| P1-17 C-11 tax due | Deferred: needs E4 owner sign-off of tax vectors. |
+| P2-1, P2-2 | Deferred (after E16 cuts; the ratchet needs P2-1 first). |
+| P2-3 | Closed by reference to E17-N10 (DECISIONS round 3). MCP read tools still compute their own budget summary and runway; E17-N10 swaps them to the picture. |
+| P2-4 context pack | Budget summary now comes from the picture. The 0.72 and £900/£1,100 fallbacks remain only for the stage and health-score inputs (E17 owns those). |
+| P2-5 to P2-7 | Open, unchanged. |

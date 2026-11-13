@@ -100,7 +100,7 @@ const buildSteps = (
     key: "budget",
     label: "Break down monthly outgoings",
     description:
-      "Split your monthly outgoings into housing, bills, living and wants to see your emergency runway.",
+      "Split your monthly outgoings into housing, bills, living and wants to see your months of cover.",
     icon: Wallet,
     tone: "warning",
     isComplete: props.hasBudget || props.completedSteps.includes("budget"),

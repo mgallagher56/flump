@@ -58,6 +58,7 @@ export const DebtContainer: FC = () => {
         monthlySurplus: number | null;
         liquidSavings: number;
         monthlyEssentialExpenses: number | null;
+        totalDebt?: number;
       }
     | undefined;
   const monthlySurplus = debtInputs?.monthlySurplus ?? null;
@@ -107,7 +108,9 @@ export const DebtContainer: FC = () => {
 
   const activeResult =
     selectedStrategy === "avalanche" ? comparison.avalanche : comparison.snowball;
-  const totalDebt = debts.reduce((sum, d) => sum + d.balance, 0);
+  // Total debt is the picture's figure, so an overdrawn current account counts here as it does
+  // on the dashboard (it is never a payoff item, so the schedules below leave it out).
+  const totalDebt = debtInputs?.totalDebt ?? debts.reduce((sum, d) => sum + d.balance, 0);
   const totalMin = debts.reduce((sum, d) => sum + d.minimumPayment, 0);
   const hasDebts = debts.length > 0;
   // An unset APR is modelled as 0%, which would invent optimistic dates and savings.

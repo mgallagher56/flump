@@ -1,7 +1,6 @@
-import { Icon, Money, Num, ProgressBar, StatusBadge } from "@repo/ui";
+import { Icon, Money, Num, ProgressBar } from "@repo/ui";
 import { Hourglass } from "lucide-react";
-import { type FC, useMemo } from "react";
-import { calculateRunwayStats, loadRunwaySettings } from "~/utils/runwayStorage";
+import type { FC } from "react";
 import {
   content,
   headline,
@@ -20,55 +19,37 @@ import { NotSetValue } from "../NotSetValue";
 import { WidgetCard } from "../WidgetCard";
 import { runwayRow, spendingBlock } from "./BudgetWidget.styles";
 
+/** Figures from the loader's financial picture (E23): the widget never recomputes them. */
 export interface BudgetWidgetData {
+  /** Budgeted income rows, monthly. */
   monthlyIncome: number;
   annualSalary?: number | null;
+  /** Essentials plus discretionary (savings is its own line). */
   monthlyExpenses: number;
   monthlySurplus: number;
   savingsRatePct: number;
-  runwayMonths: number | null;
-  runwayLabel?: string;
+  /** Months of cover from saved data only, or null when it cannot be worked out. */
+  monthsOfCover: number | null;
   budgetedSavings?: number;
   livingExpenses?: number;
-  rawEntries?: any[];
-  rawAccounts?: any[];
-  rawAccountDetails?: any[];
 }
 
 export interface BudgetWidgetProps {
   data?: BudgetWidgetData | null;
 }
 
-interface Runway {
-  /** Text to show, or null when the runway cannot be worked out. */
-  text: string | null;
-  months: number | null;
-}
-
 const finite = (value: unknown): value is number =>
   typeof value === "number" && Number.isFinite(value);
 
-export const formatRunway = (months: number): string => {
-  if (months <= 0) return "0 mos";
-  if (months > 120) return `${Math.floor(months / 12)}+ yrs`;
-  const years = Math.floor(months / 12);
-  const rest = Math.round((months % 12) * 10) / 10;
-  if (years > 0) {
-    return rest > 0
-      ? `${years} yr${years !== 1 ? "s" : ""} ${rest} mo${rest !== 1 ? "s" : ""}`
-      : `${years} yr${years !== 1 ? "s" : ""}`;
-  }
-  return `${Math.round(months * 10) / 10} mos`;
+/** "4.7 months", "1 month", "10+ years". Plain wording: no target is implied. */
+export const formatMonthsOfCover = (months: number): string => {
+  if (months > 120) return `${Math.floor(months / 12)}+ years`;
+  const value = Math.max(0, months);
+  const text = new Intl.NumberFormat("en-GB", { maximumFractionDigits: 1 }).format(value);
+  return `${text} ${value === 1 ? "month" : "months"}`;
 };
 
-const runwayVariant = (months: number | null) => {
-  if (months === null) return "neutral" as const;
-  if (months < 1) return "danger" as const;
-  if (months < 3) return "warning" as const;
-  return "positive" as const;
-};
-
-/** Monthly take-home, surplus, savings rate, runway and spending against income. */
+/** Budgeted income, surplus, savings rate, months of cover and spending against income. */
 export const BudgetWidget: FC<BudgetWidgetProps> = ({ data }) => {
   const income = data && finite(data.monthlyIncome) ? data.monthlyIncome : 0;
   const expenses = data && finite(data.monthlyExpenses) ? data.monthlyExpenses : 0;
@@ -76,32 +57,7 @@ export const BudgetWidget: FC<BudgetWidgetProps> = ({ data }) => {
   const budgetKnown = income > 0 || expenses > 0;
   const incomeKnown = income > 0;
 
-  const runway = useMemo<Runway>(() => {
-    if (!data || !budgetKnown) return { text: null, months: null };
-    if (typeof window !== "undefined" && data.rawEntries && data.rawAccounts) {
-      const activeSettings = loadRunwaySettings();
-      if (activeSettings) {
-        const stats = calculateRunwayStats({
-          entries: data.rawEntries,
-          accounts: data.rawAccounts,
-          accountDetails: data.rawAccountDetails,
-          savedSettings: activeSettings,
-        });
-        return {
-          text: stats.shortLabel,
-          months: finite(stats.runwayMonths) ? stats.runwayMonths : null,
-        };
-      }
-    }
-    if (data.runwayMonths !== null && data.runwayMonths !== undefined) {
-      if (!Number.isFinite(data.runwayMonths)) return { text: "No burn", months: null };
-      return { text: formatRunway(data.runwayMonths), months: data.runwayMonths };
-    }
-    if (data.runwayLabel && !data.runwayLabel.toLowerCase().includes("runway")) {
-      return { text: data.runwayLabel, months: null };
-    }
-    return { text: null, months: null };
-  }, [data, budgetKnown]);
+  const monthsOfCover = data && finite(data.monthsOfCover) ? data.monthsOfCover : null;
 
   if (!data || !budgetKnown) {
     return (
@@ -135,12 +91,14 @@ export const BudgetWidget: FC<BudgetWidgetProps> = ({ data }) => {
             <>
               <p className={label()}>{surplus >= 0 ? "Monthly surplus" : "Monthly deficit"}</p>
               <span className={statValue()}>
-                <Money
-                  signDisplay="always"
-                  size="lg"
-                  tone={surplus < 0 ? "danger" : surplus > 0 ? "positive" : "default"}
-                  value={surplus}
-                />
+                <span data-figure="budget.surplus">
+                  <Money
+                    signDisplay="always"
+                    size="lg"
+                    tone={surplus < 0 ? "danger" : surplus > 0 ? "positive" : "default"}
+                    value={surplus}
+                  />
+                </span>
                 <span className={unit()}>a month</span>
               </span>
             </>
@@ -162,10 +120,12 @@ export const BudgetWidget: FC<BudgetWidgetProps> = ({ data }) => {
 
         <dl className={statRow()}>
           <div className={statTile()}>
-            <dt className={statLabel()}>Monthly take-home</dt>
+            <dt className={statLabel()}>Budgeted income</dt>
             <dd className={statValue()}>
               {incomeKnown ? (
-                <Money value={income} />
+                <span data-figure="budget.income">
+                  <Money value={income} />
+                </span>
               ) : (
                 <NotSetValue
                   actionLabel="Add"
@@ -210,18 +170,18 @@ export const BudgetWidget: FC<BudgetWidgetProps> = ({ data }) => {
 
         <div className={runwayRow()}>
           <span className={statLabel()}>
-            <Icon icon={Hourglass} size="sm" /> Emergency runway
+            <Icon icon={Hourglass} size="sm" /> Months of cover
           </span>
-          {runway.text ? (
-            <StatusBadge size="sm" variant={runwayVariant(runway.months)}>
-              {runway.text}
-            </StatusBadge>
+          {monthsOfCover !== null ? (
+            <span className={statValue()} data-figure="monthsOfCover">
+              {formatMonthsOfCover(monthsOfCover)}
+            </span>
           ) : (
             <NotSetValue
               actionLabel="Add"
               href="/app/budget"
               id="budget-widget-add-runway"
-              subject="runway details"
+              subject="essential spending"
             />
           )}
         </div>

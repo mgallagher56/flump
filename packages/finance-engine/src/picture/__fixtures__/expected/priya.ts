@@ -29,6 +29,11 @@ export const priyaExpected: PersonaExpected = {
     discretionary: 550, // 300 + 250
     surplus: 1109, // 5,809 - (3,350 + 800 + 550)
   },
+  cover: {
+    monthsOfCover: 8.5, // 28,400 / 3,350
+    essentialCommitments: 3350,
+    safeToSpendMonthly: 1659, // 5,809 - 3,350 - 800
+  },
 };
 
 /** 8% sacrifice leaves adjusted net income 112,000 x 0.92 = 103,040, inside the trap. */

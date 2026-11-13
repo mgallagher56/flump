@@ -3,7 +3,7 @@ import type { RawAccount, RawAccountDetail } from "../../portfolio.js";
 import type { TaxRecord } from "../../tax-calculator.js";
 import type { UkTaxRegion } from "../../types.js";
 import type { FigureProvenance } from "../figure.js";
-import type { FactKey, ProfileFacts } from "../input.js";
+import type { MissingKey, ProfileFacts } from "../input.js";
 
 /** The rows one persona feeds into the financial picture (E23 section 9.1). Data only. */
 export interface PersonaFixture {
@@ -30,7 +30,7 @@ export type TakeHomeExpectation =
       /** Employee pension deduction in pounds (plain salary x percent arithmetic). */
       pensionDeduction: number;
     }
-  | { status: "unknown"; missing: FactKey[]; reason: "not-set" };
+  | { status: "unknown"; missing: MissingKey[]; reason: "not-set" };
 
 export interface PortfolioExpectation {
   netWorth: number;
@@ -87,8 +87,18 @@ export interface MonthlyHistoryExpectation {
   netWorth: number;
 }
 
+/** Months of cover and safe to spend. null means the engine must report the figure unknown. */
+export interface CoverExpectation {
+  monthsOfCover: number | null;
+  /** Essentials (savings and debt rows out) plus the larger of debt minimums and debt rows. */
+  essentialCommitments: number | null;
+  /** Take-home less commitments and planned savings, monthly, before the weekly split. */
+  safeToSpendMonthly: number | null;
+}
+
 export interface PersonaExpected {
   takeHome: TakeHomeExpectation;
   portfolio: PortfolioExpectation;
   budget: BudgetExpectation;
+  cover: CoverExpectation;
 }

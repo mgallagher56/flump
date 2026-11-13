@@ -1,3 +1,5 @@
+import type { BudgetEntryItem } from "../ai-context-pack.js";
+import type { RawAccount, RawAccountDetail } from "../portfolio.js";
 import type { UserProfileData } from "../profile.js";
 
 export interface ProfileFacts {
@@ -11,6 +13,23 @@ export interface ProfileFacts {
 }
 
 export type FactKey = keyof ProfileFacts;
+
+/**
+ * Everything a figure can be missing: a profile fact, or a kind of saved row. "budget" means no
+ * budget rows at all; "budgetIncome" and "budgetEssentials" mean no row of that kind.
+ */
+export type MissingKey = FactKey | "budget" | "budgetIncome" | "budgetEssentials";
+
+/**
+ * The saved rows one user's financial picture is built from (E23 section 2.1). Saved data only:
+ * scenario inputs never go in here.
+ */
+export interface FinancialPictureInput {
+  profile: ProfileFacts;
+  accounts: RawAccount[];
+  details: RawAccountDetail[];
+  budget: BudgetEntryItem[];
+}
 
 function toNumber(value: unknown): number | null {
   if (value === null || value === undefined) return null;

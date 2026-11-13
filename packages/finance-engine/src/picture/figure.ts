@@ -1,4 +1,4 @@
-import type { FactKey } from "./input.js";
+import type { MissingKey } from "./input.js";
 
 export type FigureProvenance = "user" | "derived" | "assumption";
 export type FigureUnknownReason = "not-set" | "source-failed" | "unsupported-year";
@@ -9,7 +9,7 @@ export type FigureUnknownReason = "not-set" | "source-failed" | "unsupported-yea
  */
 export type Figure<T> =
   | { status: "known"; value: T; provenance: FigureProvenance; assumptions?: string[] }
-  | { status: "unknown"; missing: FactKey[]; reason?: FigureUnknownReason };
+  | { status: "unknown"; missing: MissingKey[]; reason?: FigureUnknownReason };
 
 export function figureKnown<T>(
   value: T,
@@ -22,7 +22,7 @@ export function figureKnown<T>(
 }
 
 export function figureUnknown<T = never>(
-  missing: FactKey[],
+  missing: MissingKey[],
   reason?: FigureUnknownReason,
 ): Figure<T> {
   return reason ? { status: "unknown", missing, reason } : { status: "unknown", missing };

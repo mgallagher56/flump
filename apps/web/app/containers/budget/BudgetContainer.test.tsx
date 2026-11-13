@@ -162,7 +162,7 @@ describe("BudgetContainer", () => {
 
     render(<BudgetContainer />);
 
-    // Switch to Runway tab
+    // Switch to the Months of cover tab
     fireEvent.click(screen.getByTestId("budget-tab-runway"));
     expect(mockMarkChecklistStep).toHaveBeenCalledWith("runway", true);
 
@@ -203,7 +203,8 @@ describe("BudgetContainer", () => {
     localStorage.clear();
     const { unmount } = render(<BudgetContainer />);
     fireEvent.click(screen.getByTestId("budget-tab-runway"));
-    const headline = () => screen.getByText("Your runway").closest("[data-tone]")?.textContent;
+    const headline = () =>
+      screen.getByText("Your months of cover").closest("[data-tone]")?.textContent;
     const savedHeadline = headline();
     const requestsBefore = (global.fetch as ReturnType<typeof vi.fn>).mock.calls.length;
 

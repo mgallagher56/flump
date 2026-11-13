@@ -36,7 +36,9 @@ export const DebtWidget: FC<DebtWidgetProps> = ({ data = null }) => {
             <div className={headlineRow()}>
               <div className={headline()} role="status">
                 <p className={label()}>Total unsecured debt</p>
-                <Money size="lg" value={data.totalDebt} />
+                <span data-figure="debt.total">
+                  <Money size="lg" value={data.totalDebt} />
+                </span>
               </div>
               {highApr > 0 ? (
                 <StatusBadge icon={<Icon icon={Flame} size="sm" />} size="sm" variant="danger">

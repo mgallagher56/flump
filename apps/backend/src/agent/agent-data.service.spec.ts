@@ -53,3 +53,44 @@ describe("AgentDataService.getUserFinancialData never exposes receipts (E20-N16,
     expect(Object.keys(opts.select).filter((c) => c.startsWith("receipt"))).toEqual([]);
   });
 });
+
+describe("AgentDataService.getUserFinancialData profile facts (E23)", () => {
+  function serviceWith(profile: Record<string, unknown>) {
+    return new AgentDataService(
+      { find: vi.fn(async () => []) } as never,
+      { find: vi.fn(async () => []) } as never,
+      {} as never,
+      { getAccounts: async () => [], getAccountDetails: async () => [] } as never,
+      { getProfile: async () => profile } as never,
+    );
+  }
+
+  it("passes saved facts through without the baseline's defaults", async () => {
+    const data = await serviceWith({}).getUserFinancialData("u1");
+    expect(data.profileFacts).toEqual({
+      annualSalary: null,
+      employmentType: null,
+      taxRegion: null,
+      studentLoanPlans: null,
+      pensionPercent: null,
+      isSalarySacrifice: null,
+    });
+  });
+
+  it("maps a saved salary, region and pension", async () => {
+    const data = await serviceWith({
+      annualSalary: "38000",
+      employmentType: "employed",
+      taxRegion: "SCOTLAND",
+      studentLoanPlans: ["PLAN_2"],
+      pensionPercent: 5,
+      isSalarySacrifice: false,
+    }).getUserFinancialData("u1");
+    expect(data.profileFacts).toMatchObject({
+      annualSalary: 38000,
+      taxRegion: "SCOTLAND",
+      studentLoanPlans: ["PLAN_2"],
+      pensionPercent: 5,
+    });
+  });
+});

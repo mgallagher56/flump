@@ -6,11 +6,10 @@ import {
   filterConsumerDebts,
   normalizeDebtItem,
 } from "./debt-payoff.js";
-import {
-  calculateFinancialHealthScore,
-  calculateSafeToSpend,
-  evaluateFinancialStage,
-} from "./health-score.js";
+import { calculateFinancialHealthScore, evaluateFinancialStage } from "./health-score.js";
+import { buildFinancialPicture } from "./picture/build.js";
+import { isFigureKnown } from "./picture/figure.js";
+import { type ProfileFacts, profileFactsFromProfile } from "./picture/input.js";
 import {
   type MonthlyPortfolioHistoryPoint,
   PortfolioSnapshot,
@@ -54,6 +53,11 @@ export interface BuildContextPackInput {
   accountDetails?: RawAccountDetail[];
   budgetEntries?: BudgetEntryItem[];
   taxRecords?: TaxRecord[];
+  /**
+   * The saved profile facts (no defaults). The budget summary's safe to spend needs them for
+   * take-home; without them it is null rather than a guess from the defaulted baseline.
+   */
+  profileFacts?: ProfileFacts;
 }
 
 export interface FlumpAiContextPack {
@@ -86,13 +90,20 @@ export interface FlumpAiContextPack {
     promoCliffAlerts: PromoCliffAlert[];
     studentLoanEvaluation?: StudentLoanEvaluationResult;
   };
+  /**
+   * From the financial picture (E23): the same figures the web pages show. null means not
+   * known (no budget rows, no essentials, or no take-home), never a guessed amount.
+   */
   budgetSummary: {
-    monthlyIncome: number;
-    essentialBillsMonthly: number;
-    discretionarySpendMonthly: number;
-    monthlySurplus: number;
-    safeToSpend: SafeToSpendResult;
-    emergencyRunwayMonths: number;
+    /** Budgeted income rows, monthly. */
+    monthlyIncome: number | null;
+    essentialBillsMonthly: number | null;
+    discretionarySpendMonthly: number | null;
+    plannedSavingsMonthly: number | null;
+    monthlySurplus: number | null;
+    safeToSpend: SafeToSpendResult | null;
+    /** Months of cover: liquid cash over essential commitments. */
+    emergencyRunwayMonths: number | null;
     entries: BudgetEntryItem[];
   };
   taxSummary: {
@@ -182,53 +193,37 @@ export function buildFlumpAiContextPack(
     };
   });
 
-  const monthlyIncomeFromBudget = budgetEntries
-    .filter((e) => e.isIncome)
-    .reduce((sum, e) => {
-      if (e.frequency === "weekly") return sum + (e.amount * 52) / 12;
-      if (e.frequency === "annual") return sum + e.amount / 12;
-      return sum + e.amount;
-    }, 0);
-
-  const monthlyEssentialBills = budgetEntries
-    .filter((e) => !e.isIncome && e.isEssential)
-    .reduce((sum, e) => {
-      if (e.frequency === "weekly") return sum + (e.amount * 52) / 12;
-      if (e.frequency === "annual") return sum + e.amount / 12;
-      return sum + e.amount;
-    }, 0);
-
-  const monthlyDiscretionary = budgetEntries
-    .filter((e) => !e.isIncome && !e.isEssential)
-    .reduce((sum, e) => {
-      if (e.frequency === "weekly") return sum + (e.amount * 52) / 12;
-      if (e.frequency === "annual") return sum + e.amount / 12;
-      return sum + e.amount;
-    }, 0);
-
-  const effectiveMonthlyIncome =
-    monthlyIncomeFromBudget > 0
-      ? monthlyIncomeFromBudget
-      : (safeBaseline.monthlyTakeHomeOverride ?? (safeBaseline.annualGrossSalary / 12) * 0.72);
-
-  const effectiveEssentialBills =
-    monthlyEssentialBills > 0
-      ? monthlyEssentialBills
-      : (safeBaseline.monthlyHousingCost ?? 900) + (safeBaseline.monthlyOtherOutgoings ?? 1100);
-
-  const minDebtMonthly = consumerDebts.reduce((sum, d) => sum + d.minimumPaymentGbp, 0);
-  const safeToSpend = calculateSafeToSpend(
-    effectiveMonthlyIncome,
-    effectiveEssentialBills,
-    minDebtMonthly,
-    0,
+  // The budget summary comes from the one financial picture, so MCP and web agree (E23).
+  const picture = buildFinancialPicture(
+    {
+      profile: input.profileFacts ?? profileFactsFromProfile(null),
+      accounts: sanitizedRawAccounts,
+      details: rawDetails,
+      budget: budgetEntries,
+    },
+    { snapshot },
   );
+  const pictureBudget = isFigureKnown(picture.budget) ? picture.budget.value : null;
+  const pictureSafeToSpend = isFigureKnown(picture.safeToSpend) ? picture.safeToSpend.value : null;
+  const pictureCover = isFigureKnown(picture.monthsOfCover) ? picture.monthsOfCover.value : null;
 
+  // Stage and health score only (E17 owns them): they still fall back to the baseline when the
+  // budget is empty. Every budget figure the pack reports comes from the picture above.
+  const effectiveMonthlyIncome =
+    pictureBudget && pictureBudget.income > 0
+      ? pictureBudget.income
+      : (safeBaseline.monthlyTakeHomeOverride ?? (safeBaseline.annualGrossSalary / 12) * 0.72);
+  const effectiveEssentialBills =
+    pictureBudget && pictureBudget.essentials > 0
+      ? pictureBudget.essentials
+      : (safeBaseline.monthlyHousingCost ?? 900) + (safeBaseline.monthlyOtherOutgoings ?? 1100);
+  const minDebtMonthly = consumerDebts.reduce((sum, d) => sum + d.minimumPaymentGbp, 0);
   const totalLiquid = snapshot.getTotalLiquidCash();
-  const emergencyRunwayMonths =
-    effectiveEssentialBills > 0 ? Math.round((totalLiquid / effectiveEssentialBills) * 10) / 10 : 0;
   const monthlySurplus = Math.round(
-    effectiveMonthlyIncome - effectiveEssentialBills - monthlyDiscretionary - minDebtMonthly,
+    effectiveMonthlyIncome -
+      effectiveEssentialBills -
+      (pictureBudget?.discretionary ?? 0) -
+      minDebtMonthly,
   );
 
   // 6. Stage Evaluation & Health Score
@@ -299,12 +294,20 @@ export function buildFlumpAiContextPack(
       studentLoanEvaluation,
     },
     budgetSummary: {
-      monthlyIncome: Math.round(effectiveMonthlyIncome),
-      essentialBillsMonthly: Math.round(effectiveEssentialBills),
-      discretionarySpendMonthly: Math.round(monthlyDiscretionary),
-      monthlySurplus,
-      safeToSpend,
-      emergencyRunwayMonths,
+      monthlyIncome: pictureBudget?.hasIncome ? pictureBudget.income : null,
+      essentialBillsMonthly: pictureBudget?.essentials ?? null,
+      discretionarySpendMonthly: pictureBudget?.discretionary ?? null,
+      plannedSavingsMonthly: pictureBudget?.savings ?? null,
+      monthlySurplus: pictureBudget?.hasIncome ? pictureBudget.surplus : null,
+      safeToSpend: pictureSafeToSpend
+        ? {
+            weeklyAllowance: pictureSafeToSpend.weekly,
+            dailyAllowance: pictureSafeToSpend.daily,
+            monthlyDiscretionary: pictureSafeToSpend.monthly,
+            fixedCommitments: pictureSafeToSpend.commitments.total,
+          }
+        : null,
+      emergencyRunwayMonths: pictureCover?.months ?? null,
       entries: budgetEntries,
     },
     taxSummary: {
@@ -318,6 +321,10 @@ export function buildFlumpAiContextPack(
 /**
  * Formats a FlumpAiContextPack into human-readable Markdown suitable for clipboard export.
  */
+function gbpOrNotSet(value: number | null): string {
+  return value === null ? "Not set" : formatSignedGbp(value);
+}
+
 /** en-GB currency with the sign before the symbol: -£120, never £-120. */
 function formatSignedGbp(value: number): string {
   const abs = Math.abs(value).toLocaleString("en-GB");
@@ -379,11 +386,11 @@ ${
 }
 
 ## 4. Cash Flow & Budget Runway
-- **Estimated Net Take-Home:** £${bg.monthlyIncome.toLocaleString("en-GB")}/mo
-- **Priority Essential Bills:** £${bg.essentialBillsMonthly.toLocaleString("en-GB")}/mo
-- **Emergency Runway:** ${bg.emergencyRunwayMonths.toFixed(1)} Months
-- **Weekly Safe-to-Spend:** £${bg.safeToSpend.weeklyAllowance.toLocaleString("en-GB")}/wk (£${bg.safeToSpend.dailyAllowance.toLocaleString("en-GB")}/day)
-- **Monthly Net Surplus:** £${bg.monthlySurplus.toLocaleString("en-GB")}/mo
+- **Budgeted Income:** ${gbpOrNotSet(bg.monthlyIncome)}/mo
+- **Priority Essential Bills:** ${gbpOrNotSet(bg.essentialBillsMonthly)}/mo
+- **Months of Cover:** ${bg.emergencyRunwayMonths === null ? "Not set" : `${bg.emergencyRunwayMonths.toFixed(1)} Months`}
+- **Weekly Safe-to-Spend:** ${bg.safeToSpend ? `${formatSignedGbp(bg.safeToSpend.weeklyAllowance)}/wk (${formatSignedGbp(bg.safeToSpend.dailyAllowance)}/day)` : "Not set"}
+- **Monthly Net Surplus:** ${gbpOrNotSet(bg.monthlySurplus)}/mo
 
 ## 5. UK Tax & Fiscal Guardrails (${pack.taxSummary.currentTaxYear})
 - **Gross Salary:** £${b.annualGrossSalary.toLocaleString("en-GB")}

@@ -47,7 +47,7 @@ export const BudgetNav: FC<BudgetNavProps> = ({
         onClick={onOpenRunway}
       >
         <Icon icon={Scale} size="sm" />
-        Runway
+        Months of cover
       </button>
     </div>
     <span aria-hidden="true" className={navDivider()} />

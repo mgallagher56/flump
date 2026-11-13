@@ -23,6 +23,7 @@ import {
   trapEdgeTrapExpected,
   trapEdgeVariants,
 } from "./__fixtures__/index.js";
+import { buildFinancialPicture } from "./build.js";
 import { isFigureKnown } from "./figure.js";
 import { profileFactsFromProfile } from "./input.js";
 import { selectTakeHome, type TakeHome } from "./selectors/take-home.js";
@@ -61,8 +62,9 @@ function budgetTotals(fixture: PersonaFixture) {
   const sum = (rows: PersonaFixture["budget"]) => rows.reduce((s, r) => s + r.amount, 0);
   const income = sum(fixture.budget.filter((r) => r.isIncome));
   const spend = fixture.budget.filter((r) => !r.isIncome);
-  const essentials = sum(spend.filter((r) => r.isEssential));
-  const savings = sum(spend.filter((r) => !r.isEssential && r.category === "savings"));
+  // Savings rows are their own line whatever their essential flag (selectBudgetTotals agrees).
+  const savings = sum(spend.filter((r) => r.category === "savings"));
+  const essentials = sum(spend.filter((r) => r.isEssential && r.category !== "savings"));
   const discretionary = sum(spend.filter((r) => !r.isEssential && r.category !== "savings"));
   return {
     income,
@@ -477,5 +479,51 @@ describe("heavy persona", () => {
     expect(trap.isInTaxTrap).toBe(true);
     expect(trap.marginalRatePct).toBe(60);
     expect(trap.effectiveMarginalRatePct).toBe(62);
+  });
+});
+
+describe.each(NAMES)("persona %s: financial picture (E23 section 2)", (name) => {
+  const { fixture, expected } = PERSONAS[name];
+  const picture = buildFinancialPicture(fixture, OPTS);
+
+  it("budget totals match the hand-derived sums, or are unknown with no rows", () => {
+    if (fixture.budget.length === 0) {
+      expect(picture.budget).toEqual({ status: "unknown", missing: ["budget"], reason: "not-set" });
+      return;
+    }
+    if (!isFigureKnown(picture.budget)) throw new Error("expected known budget");
+    const { income, essentials, savings, discretionary, surplus, outgoings } = picture.budget.value;
+    expect({ income, essentials, savings, discretionary, surplus }).toEqual(expected.budget);
+    expect(outgoings).toBe(essentials + discretionary);
+  });
+
+  it("months of cover and safe to spend match the hand-derived values", () => {
+    const c = expected.cover;
+    const cover = picture.monthsOfCover;
+    const sts = picture.safeToSpend;
+    if (c.monthsOfCover === null) {
+      expect(cover.status).toBe("unknown");
+    } else {
+      if (!isFigureKnown(cover)) throw new Error("expected known months of cover");
+      expect(cover.value.months).toBe(c.monthsOfCover);
+      expect(cover.value.monthlyEssentials).toBe(c.essentialCommitments);
+      expect(cover.value.liquidCash).toBe(expected.portfolio.liquidCash);
+    }
+    if (c.safeToSpendMonthly === null) {
+      expect(sts.status).toBe("unknown");
+    } else {
+      if (!isFigureKnown(sts)) throw new Error("expected known safe to spend");
+      expect(sts.value.monthly).toBe(c.safeToSpendMonthly);
+      expect(sts.value.commitments.total).toBe(c.essentialCommitments);
+      // Safe to spend and months of cover divide the same commitments.
+      if (isFigureKnown(cover)) expect(cover.value.commitments).toEqual(sts.value.commitments);
+    }
+  });
+
+  it("net worth and debt come from the same snapshot the portfolio test checks", () => {
+    expect(picture.netWorth.netWorth).toBe(expected.portfolio.netWorth);
+    expect(picture.netWorth.liquidCash).toBe(expected.portfolio.liquidCash);
+    expect(picture.debt.consumerDebt).toBe(expected.portfolio.consumerDebt);
+    expect(picture.debt.debtCount).toBe(expected.portfolio.debtItemIds.length);
   });
 });

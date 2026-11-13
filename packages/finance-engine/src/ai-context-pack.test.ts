@@ -157,3 +157,55 @@ describe("overdrawn accounts in the markdown (E23 C-15)", () => {
     expect(md).not.toContain("£-120");
   });
 });
+
+describe("buildFlumpAiContextPack budget summary comes from the financial picture (E23)", () => {
+  const baseline = { ...DEFAULT_FINANCIAL_BASELINE, annualGrossSalary: 60000, userId: "u" };
+
+  it("is null, never a 0.72 or £900/£1,100 guess, with no budget rows", () => {
+    const pack = buildFlumpAiContextPack({ baseline, budgetEntries: [] });
+    expect(pack.budgetSummary.monthlyIncome).toBeNull();
+    expect(pack.budgetSummary.essentialBillsMonthly).toBeNull();
+    expect(pack.budgetSummary.safeToSpend).toBeNull();
+    expect(pack.budgetSummary.emergencyRunwayMonths).toBeNull();
+    expect(formatAiContextPackMarkdown(pack)).toContain("**Months of Cover:** Not set");
+  });
+
+  it("uses saved profile facts for safe to spend, and budget rows for totals", () => {
+    const pack = buildFlumpAiContextPack({
+      baseline,
+      profileFacts: {
+        annualSalary: 38000,
+        employmentType: "employed",
+        taxRegion: "ENGLAND",
+        studentLoanPlans: [],
+        pensionPercent: 5,
+        isSalarySacrifice: false,
+      },
+      accounts: [{ id: "s", name: "Saver", type: "Saving", balance: 3000 }],
+      budgetEntries: [
+        {
+          id: "i",
+          category: "income",
+          name: "Pay",
+          amount: 2400,
+          frequency: "monthly",
+          isIncome: true,
+          isEssential: false,
+        },
+        {
+          id: "r",
+          category: "housing",
+          name: "Rent",
+          amount: 1000,
+          frequency: "monthly",
+          isIncome: false,
+          isEssential: true,
+        },
+      ],
+    });
+    expect(pack.budgetSummary.monthlyIncome).toBe(2400);
+    expect(pack.budgetSummary.essentialBillsMonthly).toBe(1000);
+    expect(pack.budgetSummary.emergencyRunwayMonths).toBe(3);
+    expect(pack.budgetSummary.safeToSpend?.weeklyAllowance).toBeGreaterThan(0);
+  });
+});
