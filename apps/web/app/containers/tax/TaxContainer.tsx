@@ -290,7 +290,7 @@ const TaxContainer: FC = () => {
       <ProjectionNotice />
 
       <PageHeader
-        title="Your tax"
+        title="Self Assessment"
         subtitle="Income, allowable costs and an estimated Self Assessment bill for each tax year."
         actions={
           <div className={headerActions()}>
