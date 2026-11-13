@@ -1,6 +1,7 @@
 export * from "./auth/rate-limiter.js";
 export * from "./auth/scopes.js";
 export * from "./auth/token-verifier.js";
+export * from "./policy/index.js";
 export * from "./prompts/uk-advisor.prompts.js";
 export * from "./resources/accounts.resource.js";
 export * from "./resources/baseline.resource.js";
