@@ -1,6 +1,7 @@
+import { BankSyncOrchestrator } from "@flump/banking/server";
 import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
-import { InjectDataSource, InjectRepository } from "@nestjs/typeorm";
-import { DataSource, In, Repository } from "typeorm";
+import { InjectDataSource } from "@nestjs/typeorm";
+import { DataSource, In } from "typeorm";
 import { Account } from "../entities/account.entity";
 import { AccountDetail } from "../entities/account-detail.entity";
 import {
@@ -47,10 +48,7 @@ const hasAtMostTwoDecimals = (v: number): boolean => {
  */
 @Injectable()
 export class SnapshotsService {
-  constructor(
-    @InjectRepository(Account) private readonly accountRepository: Repository<Account>,
-    @InjectDataSource() private readonly dataSource: DataSource,
-  ) {}
+  constructor(@InjectDataSource() private readonly dataSource: DataSource) {}
 
   /**
    * `PUT /snapshots/:month`: batch upsert of account values for one Europe/London month. Partial
@@ -86,10 +84,11 @@ export class SnapshotsService {
       if (!entry || typeof entry.accountId !== "string" || entry.accountId.length === 0) {
         throw new BadRequestException("each value needs an accountId");
       }
-      if (seen.has(entry.accountId)) {
+      const accountId = entry.accountId.toLowerCase();
+      if (seen.has(accountId)) {
         throw new BadRequestException("an account can appear only once per request");
       }
-      seen.add(entry.accountId);
+      seen.add(accountId);
       const value = entry.value;
       if (
         typeof value !== "number" ||
@@ -112,24 +111,34 @@ export class SnapshotsService {
         }
         asOfDate = entry.asOfDate;
       }
-      return { accountId: entry.accountId, value, asOfDate };
+      return { accountId, value, asOfDate };
     });
-
-    if (rows.length > 0) {
-      // Authorisation: UUID-shaped ids only (a non-UUID can never match, and must not reach a uuid
-      // comparison as a 500), and every one must be the caller's.
-      const ids = rows.map((r) => r.accountId);
-      const owned = ids.every((id) => UUID.test(id))
-        ? await this.accountRepository.find({
-            where: { id: In(ids), userId },
-            select: { id: true },
-          })
-        : [];
-      if (owned.length !== ids.length) throw new NotFoundException("Account not found");
-    }
+    // Stable lock order for concurrent batches.
+    rows.sort((x, y) => (x.accountId < y.accountId ? -1 : x.accountId > y.accountId ? 1 : 0));
 
     const now2 = new Date();
     await this.dataSource.transaction(async (manager) => {
+      // Authorisation inside the transaction (no gap in which an account can be deleted). Only
+      // UUID-shaped ids can match; every id must be the caller's, else the same 404 as unknown.
+      const types = new Map<string, string>();
+      if (rows.length > 0) {
+        const ids = rows.map((r) => r.accountId);
+        const owned = ids.every((id) => UUID.test(id))
+          ? await manager.find(Account, {
+              where: { id: In(ids), userId },
+              select: { id: true, type: true },
+            })
+          : [];
+        if (owned.length !== ids.length) throw new NotFoundException("Account not found");
+        for (const a of owned) types.set(a.id, a.type);
+        // Liabilities are stored negative, as connected sync does, whatever sign was typed.
+        for (const r of rows) {
+          r.value = BankSyncOrchestrator.normalizeAccountBalance(
+            types.get(r.accountId) ?? "",
+            r.value,
+          );
+        }
+      }
       if (rows.length > 0) {
         await manager
           .createQueryBuilder()

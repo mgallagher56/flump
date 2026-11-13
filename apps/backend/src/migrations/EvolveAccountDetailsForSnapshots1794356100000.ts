@@ -6,9 +6,9 @@ import { MIGRATION_LOCK_KEY } from "../config/migration-lock";
 // DELETE rows (rows with no owning account, and all but the latest write per account and month).
 //
 //   1. Delete rows that cannot be placed: no matching account (they could never be exported or
-//      erased by user id) or an impossible year/month.
+//      erased by user id), an impossible year/month, or a month in the future.
 //   2. Collapse duplicates per (account_id, year, month), keeping the highest id (latest write).
-//   3. Add user_id (backfilled from accounts), as_of_date (last day of the row's month),
+//   3. Add user_id (backfilled from accounts), as_of_date (last day of the row's month, capped at today in London so no row is dated in the future),
 //      source ('backfill': the provenance of old rows is unknown) and updated_at.
 //   4. Add the month and source CHECKs, and the CHECK that year/month equal the
 //      parts of as_of_date, so the Europe/London month key cannot drift from the date.
@@ -34,7 +34,10 @@ export class EvolveAccountDetailsForSnapshots1794356100000 implements MigrationI
       `DELETE FROM "account_details" d
        WHERE NOT EXISTS (SELECT 1 FROM "accounts" a WHERE a."id"::text = d."account_id")
           OR d."month" NOT BETWEEN 1 AND 12
-          OR d."year" NOT BETWEEN 1900 AND 2200`,
+          OR d."year" NOT BETWEEN 1900 AND 2200
+          OR d."year" * 12 + d."month" >
+             EXTRACT(YEAR FROM (now() AT TIME ZONE 'Europe/London')) * 12
+             + EXTRACT(MONTH FROM (now() AT TIME ZONE 'Europe/London'))`,
     );
     await queryRunner.query(
       `DELETE FROM "account_details" d USING "account_details" k
@@ -55,7 +58,10 @@ export class EvolveAccountDetailsForSnapshots1794356100000 implements MigrationI
     );
     await queryRunner.query(
       `UPDATE "account_details"
-       SET "as_of_date" = (make_date("year", "month", 1) + INTERVAL '1 month' - INTERVAL '1 day')::date,
+       SET "as_of_date" = LEAST(
+             (make_date("year", "month", 1) + INTERVAL '1 month' - INTERVAL '1 day')::date,
+             (now() AT TIME ZONE 'Europe/London')::date
+           ),
            "source" = 'backfill'
        WHERE "as_of_date" IS NULL`,
     );
@@ -80,9 +86,8 @@ export class EvolveAccountDetailsForSnapshots1794356100000 implements MigrationI
       `CREATE INDEX IF NOT EXISTS "IDX_account_details_user" ON "account_details" ("user_id")`,
     );
 
-    await queryRunner.query(`DROP TABLE IF EXISTS "snapshot_checkins"`);
     await queryRunner.query(
-      `CREATE TABLE "snapshot_checkins" (
+      `CREATE TABLE IF NOT EXISTS "snapshot_checkins" (
          "user_id" character varying NOT NULL,
          "month" character varying NOT NULL,
          "completed_at" TIMESTAMP NOT NULL DEFAULT now(),

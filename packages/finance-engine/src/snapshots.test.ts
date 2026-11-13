@@ -57,6 +57,14 @@ describe("selectNetWorthSeries (E30)", () => {
     expect(series.map((p) => p.accounts[0]?.carried)).toEqual([false, true, true]);
   });
 
+  it("marks accounts first appearing after the first month", () => {
+    const series = selectNetWorthSeries(accounts, [
+      row("cash", 2026, 1, 100),
+      row("debt", 2026, 2, 50),
+    ]);
+    expect(series.map((p) => p.addedAccountIds)).toEqual([[], ["debt"]]);
+  });
+
   it("keeps the real sign of an overdrawn asset and never uses abs on assets", () => {
     const series = selectNetWorthSeries(accounts, [row("cash", 2026, 1, -250)]);
     expect(series[0]).toMatchObject({ netWorth: -250, totalAssets: 0, totalLiabilities: 250 });
