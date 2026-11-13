@@ -35,7 +35,7 @@ export const HomePage: FC = () => {
             padding: "80px 16px 72px",
             textAlign: "center",
             overflow: "hidden",
-            backgroundColor: "var(--colors-background)",
+            backgroundColor: "var(--colors-surface-canvas)",
           }}
         >
           {/* Subtle radial ambient spotlight backdrop */}
@@ -173,7 +173,7 @@ export const HomePage: FC = () => {
           style={{
             padding: "80px 16px",
             textAlign: "center",
-            backgroundColor: "var(--colors-background)",
+            backgroundColor: "var(--colors-surface-canvas)",
             borderTop: "1px solid var(--colors-border)",
           }}
         >

@@ -13,7 +13,21 @@ describe("page canvas", () => {
   it("the root body uses the surface.canvas variable", () => {
     const root = read("root.tsx");
     expect(root).toContain('backgroundColor: "var(--colors-surface-canvas)"');
-    expect(root).not.toContain("--colors-background");
+  });
+
+  it("no web source uses the undefined --colors-background variable", () => {
+    const hits: string[] = [];
+    const walk = (dir: string) => {
+      for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+        const full = path.join(dir, e.name);
+        if (e.isDirectory()) walk(full);
+        else if (/\.(tsx?|css)$/.test(e.name) && e.name !== "page-canvas.test.ts") {
+          if (fs.readFileSync(full, "utf8").includes("--colors-background")) hits.push(full);
+        }
+      }
+    };
+    walk(APP_DIR);
+    expect(hits).toEqual([]);
   });
 
   it("html paints the canvas and pins color-scheme to the active theme", () => {
