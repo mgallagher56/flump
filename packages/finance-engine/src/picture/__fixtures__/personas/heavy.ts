@@ -7,7 +7,7 @@ import type { PersonaFixture } from "../types.js";
  * Heavy: the E16 journeys dataset (docs/audit/plans/E16-journeys.md). GBP 118,000 employee with
  * salary sacrifice and Plan 2 loan, GBP 400 a month side income, a home and a buy-to-let
  * (GBP 260,000, GBP 150,000 interest-only mortgage, GBP 1,200 a month rent). 17 accounts, 22
- * budget entries (GBP 7,950 income) and 28 tax records over four tax years.
+ * budget entries (GBP 6,990 income) and 28 tax records over four tax years.
  */
 
 /** Tax years of the heavy records, with the once-a-year amounts filed in each. */
@@ -184,7 +184,7 @@ export const heavy: PersonaFixture = {
     { accountId: "heavy-student-loan", year: 2026, month: 6, value: 39000 },
   ] satisfies RawAccountDetail[],
   budget: [
-    budgetEntry("heavy-b01", "income", "Salary (net)", 6350, { isIncome: true }),
+    budgetEntry("heavy-b01", "income", "Salary (net)", 5390, { isIncome: true }),
     budgetEntry("heavy-b02", "income", "Side income", 400, { isIncome: true }),
     budgetEntry("heavy-b03", "income", "Rent received", 1200, { isIncome: true }),
     budgetEntry("heavy-b04", "housing", "Home mortgage", 1150, { isEssential: true }),

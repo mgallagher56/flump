@@ -23,11 +23,11 @@ export const priyaExpected: PersonaExpected = {
     debtItemIds: [], // a mortgage is not in the consumer payoff set
   },
   budget: {
-    income: 6100,
+    income: 5809, // net salary = engine take-home monthly (8% sacrifice, 2026/27)
     essentials: 3350, // 1,420 + 900 + 380 + 650
     savings: 800,
     discretionary: 550, // 300 + 250
-    surplus: 1400, // 6,100 - (3,350 + 800 + 550)
+    surplus: 1109, // 5,809 - (3,350 + 800 + 550)
   },
 };
 

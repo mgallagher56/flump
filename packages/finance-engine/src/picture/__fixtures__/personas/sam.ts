@@ -18,7 +18,7 @@ export const sam: PersonaFixture = {
   ],
   details: [],
   budget: [
-    budgetEntry("sam-b1", "income", "Salary (net)", 2300, { isIncome: true }),
+    budgetEntry("sam-b1", "income", "Salary (net)", 2382, { isIncome: true }),
     budgetEntry("sam-b2", "housing", "Rent", 850, { isEssential: true }),
     budgetEntry("sam-b3", "bills", "Energy, water, broadband", 120, { isEssential: true }),
     budgetEntry("sam-b4", "food", "Groceries", 220, { isEssential: true }),

@@ -24,11 +24,11 @@ export const debtStressedExpected: PersonaExpected = {
     debtItemIds: ["debt-card-a", "debt-card-b", "debt-loan"],
   },
   budget: {
-    income: 1780,
-    essentials: 1708, // 700 + 210 + 260 + 120 + 418
+    income: 1888, // net salary = engine take-home monthly for 27,500, 3% pension
+    essentials: 1878, // 800 + 240 + 300 + 120 + 418
     savings: 0,
     discretionary: 90,
-    surplus: -18, // 1,780 - (1,708 + 0 + 90): spending exceeds income
+    surplus: -80, // 1,888 - (1,878 + 0 + 90): spending exceeds income
   },
 };
 

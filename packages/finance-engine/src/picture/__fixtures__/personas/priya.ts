@@ -35,7 +35,7 @@ export const priya: PersonaFixture = {
   ],
   details: [],
   budget: [
-    budgetEntry("priya-b1", "income", "Salary (net)", 6100, { isIncome: true }),
+    budgetEntry("priya-b1", "income", "Salary (net)", 5809, { isIncome: true }),
     budgetEntry("priya-b2", "housing", "Mortgage", 1420, { isEssential: true }),
     budgetEntry("priya-b3", "childcare", "Childcare", 900, { isEssential: true }),
     budgetEntry("priya-b4", "bills", "Household bills", 380, { isEssential: true }),
