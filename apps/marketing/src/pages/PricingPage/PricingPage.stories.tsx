@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/react";
 import { HelmetProvider } from "react-helmet-async";
 import { MemoryRouter } from "react-router-dom";
-import { expect, within } from "storybook/test";
+import { expect, userEvent, within } from "storybook/test";
 import { PricingPage } from "./PricingPage";
 
 const meta: Meta<typeof PricingPage> = {
@@ -28,7 +28,14 @@ const assertPricing: Story["play"] = async ({ canvasElement }) => {
   await expect(canvas.getByText("Free today")).toBeInTheDocument();
   await expect(canvas.getByText("£4.99")).toBeInTheDocument();
   await expect(canvas.getByText("Introductory price, subject to change")).toBeInTheDocument();
-  await expect(canvas.getByRole("switch", { name: "Annual billing" })).toBeInTheDocument();
+  await expect(canvas.getByText(/free, invite-only beta/i)).toBeInTheDocument();
+  const toggle = canvas.getByRole("switch", { name: "Annual billing" });
+  await expect(toggle).toHaveAttribute("aria-checked", "false");
+  await userEvent.click(toggle);
+  await expect(toggle).toHaveAttribute("aria-checked", "true");
+  await expect(canvas.getByText("£49")).toBeInTheDocument();
+  await userEvent.click(toggle);
+  await expect(canvas.getByText("£4.99")).toBeInTheDocument();
 };
 
 export const Light: Story = { globals: { theme: "light" }, play: assertPricing };
