@@ -48,6 +48,8 @@ const linkStyle = css({
   },
 });
 
+const companyLineStyle = css({ fontVariantNumeric: "tabular-nums" });
+
 const bottomRowStyle = css({
   display: "flex",
   flexDirection: { base: "column", sm: "row" },
@@ -181,7 +183,9 @@ export const HomeFooter: FC = () => {
       </div>
 
       <div className={bottomRowStyle}>
-        <div>{companyLine(new Date().getFullYear())}</div>
+        <div className={companyLineStyle}>
+          {companyLine(new Date().getFullYear())} Open-source personal finance platform.
+        </div>
         <div>Built with React 19, React Router 7, Panda CSS, and WorkOS AuthKit.</div>
       </div>
     </footer>

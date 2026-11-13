@@ -7,9 +7,9 @@ import {
   disclosureTitle,
 } from "./DisclosurePolicySection.styles";
 
-/** Short vulnerability-disclosure policy. Makes no response-time or legal-safe-harbour promise. */
 const contact = BUSINESS_DETAILS.securityContact.value;
 
+/** Short vulnerability-disclosure policy. Makes no response-time or legal-safe-harbour promise. */
 export const DisclosurePolicySection: FC = () => (
   <section className={disclosureCard()} aria-labelledby="disclosure-policy-heading">
     <h2 id="disclosure-policy-heading" className={disclosureTitle()}>

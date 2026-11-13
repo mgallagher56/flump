@@ -31,8 +31,6 @@ export interface BusinessDetails {
   tradingName: BusinessField<string>;
   companyNumber: BusinessField<string>;
   registeredOffice: BusinessField<string>;
-  /** ICO data-protection registration number. */
-  icoRegistrationNumber: BusinessField<string>;
   supportEmail: BusinessField<string>;
   securityContact: BusinessField<string>;
   price: BusinessField<BusinessPrice>;
@@ -47,7 +45,6 @@ export const BUSINESS_DETAILS: BusinessDetails = {
   tradingName: { value: "Flump", isPlaceholder: false },
   companyNumber: { value: "00000000", isPlaceholder: true },
   registeredOffice: { value: "Registered office address to be confirmed", isPlaceholder: true },
-  icoRegistrationNumber: { value: "ICO registration to be confirmed", isPlaceholder: true },
   supportEmail: { value: "support@example.invalid", isPlaceholder: true },
   securityContact: { value: "security@example.invalid", isPlaceholder: true },
   price: {
