@@ -33,6 +33,11 @@ describe("useUserProfile", () => {
     expect(DEFAULT_PROFILE.enabledPages).not.toContain("forecast");
   });
 
+  test("normalizeProfile falls back to default sizes when only forecast was stored", () => {
+    const profile = normalizeProfile({ dashboardWidgetSizes: { forecast: "normal" } });
+    expect(profile.dashboardWidgetSizes).toEqual(DEFAULT_PROFILE.dashboardWidgetSizes);
+  });
+
   test("normalizeProfile handles partial data correctly", () => {
     const profile = normalizeProfile({
       displayName: "Jane Doe",

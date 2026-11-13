@@ -115,6 +115,11 @@ export const DEFAULT_PROFILE: UserProfile = {
   updatedAt: "",
 };
 
+/** Falls back when stripping retired keys left a record empty (or it was never set). */
+function nonEmptyOr<V>(record: Record<string, V> | undefined, fallback: Record<string, V>) {
+  return record && Object.keys(record).length > 0 ? record : fallback;
+}
+
 export const normalizeProfile = (p: Partial<UserProfile>): UserProfile => ({
   ...DEFAULT_PROFILE,
   ...p,
@@ -219,8 +224,10 @@ export const normalizeProfile = (p: Partial<UserProfile>): UserProfile => ({
   dashboardWidgetOrder: Array.isArray(p.dashboardWidgetOrder)
     ? stripRetiredKeys(p.dashboardWidgetOrder)
     : DEFAULT_PROFILE.dashboardWidgetOrder,
-  dashboardWidgetSizes:
-    stripRetiredRecordKeys(p.dashboardWidgetSizes) || DEFAULT_PROFILE.dashboardWidgetSizes,
+  dashboardWidgetSizes: nonEmptyOr(
+    stripRetiredRecordKeys(p.dashboardWidgetSizes),
+    DEFAULT_PROFILE.dashboardWidgetSizes,
+  ),
   dashboardWidgetConfig:
     stripRetiredRecordKeys(p.dashboardWidgetConfig) || DEFAULT_PROFILE.dashboardWidgetConfig,
 });

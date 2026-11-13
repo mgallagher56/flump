@@ -116,6 +116,16 @@ describe("UserProfileService (Deep Module)", () => {
     expect(stored.enabledPages).toContain("forecast");
   });
 
+  it("falls back to default widget sizes when only the retired forecast size was stored", async () => {
+    mockUserProfileRepo.findOne.mockResolvedValue({
+      id: "profile-1",
+      userId: "user-123",
+      dashboardWidgetSizes: { forecast: "normal" },
+    });
+    const result = await service.getProfile("user-123");
+    expect(result.dashboardWidgetSizes).toEqual({ accounts: "wide" });
+  });
+
   describe("lazy profile creation", () => {
     const uniqueViolation = () => Object.assign(new Error("duplicate key"), { code: "23505" });
     const wrappedViolation = () => {
