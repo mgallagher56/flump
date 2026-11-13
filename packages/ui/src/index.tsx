@@ -24,6 +24,7 @@ export * from "./patterns/EmptyState";
 export * from "./patterns/GlobalBaselineBar";
 // Financial Patterns
 export * from "./patterns/KpiStrip";
+export * from "./patterns/MarginalRateChart";
 export * from "./patterns/MobileBottomBar";
 export * from "./patterns/PageHeader";
 export * from "./patterns/ProjectionNotice";
@@ -31,6 +32,7 @@ export * from "./patterns/ScenarioZone";
 export * from "./patterns/SectionBand";
 export * from "./patterns/SideNav";
 export * from "./patterns/SimulatorSplitLayout";
+export * from "./patterns/TakeHomeDeltaPanel";
 export * from "./patterns/TaxRatesStatusBanner";
 export * from "./patterns/TaxTrapEscapeBanner";
 export * from "./patterns/TopBar";

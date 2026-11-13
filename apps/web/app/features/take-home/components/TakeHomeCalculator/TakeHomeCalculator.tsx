@@ -1,11 +1,13 @@
 import { getUkTaxYearContext, UK_STUDENT_LOANS } from "@flump/finance-engine";
 import {
   Card,
+  EXPLORER_COPY,
   KpiCard,
   KpiStrip,
   Money,
   Num,
   ScenarioZone,
+  SegmentedTabs,
   SimulatorSplitLayout,
   TaxRatesStatusBanner,
 } from "@repo/ui";
@@ -17,6 +19,7 @@ import { NotSet } from "~/features/feedback/components/NotSet";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
 import { useUserProfile } from "~/hooks/useUserProfile";
 import { calculateUKTax } from "../../calculateUKTax";
+import { NextPoundExplorer, useNextPoundScenario } from "../NextPoundExplorer";
 import { PayRiseCard } from "../PayRiseCard";
 import { TakeHomeBreakdown } from "../TakeHomeBreakdown";
 import { TakeHomeInputs } from "../TakeHomeInputs";
@@ -34,6 +37,10 @@ import {
 
 const DEFAULT_PENSION_PERCENT = 5;
 const DEFAULT_RAISE = 5000;
+const TOOLS = [
+  { value: "take-home", label: EXPLORER_COPY.tabYourTakeHome },
+  { value: "next-pound", label: EXPLORER_COPY.tabNextThousand },
+];
 
 export interface TakeHomeCalculatorProps {
   initialSalary?: number | null;
@@ -160,7 +167,19 @@ export const TakeHomeCalculator: FC<TakeHomeCalculatorProps> = ({
     isSalarySacrificeEmployerNi !== savedEmployerNi ||
     studentLoanPlan !== "none" ||
     salaryIncrease !== DEFAULT_RAISE;
+  const [tool, setTool] = useState("take-home");
+  // "The next £1,000" starts from the same saved figures and resets with the zone.
+  const nextPound = useNextPoundScenario({
+    salary: savedSalary,
+    taxRegion: profile?.taxRegion,
+    studentLoanPlans: profile?.studentLoanPlans,
+    studentLoanPlan: profile?.studentLoanPlan,
+    isSalarySacrifice: savedSacrifice,
+    pensionPercent: DEFAULT_PENSION_PERCENT,
+    taxYear,
+  });
   const resetScenario = () => {
+    nextPound.reset();
     setGrossSalary(savedSalary);
     setPensionPercent(DEFAULT_PENSION_PERCENT);
     setIsSalarySacrifice(savedSacrifice);
@@ -270,9 +289,11 @@ export const TakeHomeCalculator: FC<TakeHomeCalculatorProps> = ({
             : undefined
         }
         basis={
-          savedKnown
-            ? `Starting from your figures: ${formatCurrency(savedSalary)} gross salary, ${DEFAULT_PENSION_PERCENT}% pension`
-            : "Starting from your figures: no saved salary yet"
+          tool === "next-pound" && !savedKnown
+            ? EXPLORER_COPY.defaultBasis
+            : savedKnown
+              ? `Starting from your figures: ${formatCurrency(savedSalary)} gross salary, ${DEFAULT_PENSION_PERCENT}% pension`
+              : "Starting from your figures: no saved salary yet"
         }
         footer={
           inRouter ? (
@@ -285,16 +306,28 @@ export const TakeHomeCalculator: FC<TakeHomeCalculatorProps> = ({
             </a>
           )
         }
-        isModified={isModified}
+        isModified={isModified || nextPound.isModified}
         title="Model a change to your pay"
+        tools={
+          <SegmentedTabs
+            aria-label={EXPLORER_COPY.tabsLabel}
+            items={TOOLS}
+            value={tool}
+            onValueChange={setTool}
+          />
+        }
         onReset={resetScenario}
       >
-        <SimulatorSplitLayout
-          content={content}
-          contentLabel="Illustration results"
-          controls={controls}
-          controlsLabel="Illustration inputs"
-        />
+        {tool === "next-pound" ? (
+          <NextPoundExplorer scenario={nextPound} />
+        ) : (
+          <SimulatorSplitLayout
+            content={content}
+            contentLabel="Illustration results"
+            controls={controls}
+            controlsLabel="Illustration inputs"
+          />
+        )}
       </ScenarioZone>
 
       <div className={footer()}>
