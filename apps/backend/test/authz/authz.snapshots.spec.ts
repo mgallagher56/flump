@@ -3,6 +3,7 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vites
 import { Account } from "../../src/entities/account.entity";
 import { AccountDetail } from "../../src/entities/account-detail.entity";
 import { SnapshotCheckin } from "../../src/entities/snapshot-checkin.entity";
+import { writeConnectedSnapshot } from "../../src/snapshots/connected-write";
 import { londonDate, londonYearMonth, monthKey } from "../../src/snapshots/london-date";
 import { resolveDbTestMode } from "../../src/testing/dbTestMode";
 import { ROUTE_MATRIX } from "./matrix";
@@ -156,6 +157,60 @@ describe.skipIf(dbMode === "skip")("authz: snapshots controller (real Postgres)"
     await put(THIS_MONTH, h.tokens.a, { values: [{ accountId: id, value: 450 }] });
     expect(Number((await rowsFor(id))[0]?.value)).toBe(-450);
     expect(Number((await accounts().findOneBy({ id }))?.balance)).toBe(-450);
+  });
+
+  it("every write path stores a liability negative and keys history by the lower-case id", async () => {
+    const card = await h.call("post", "/accounts", h.tokens.a, {
+      name: "Card",
+      type: "Credit Card",
+      balance: -10,
+    });
+    const id = card.body.id as string;
+    const batch = await h.call("patch", "/accounts/balances", h.tokens.a, {
+      balances: [{ id: id.toUpperCase(), balance: 700 }],
+    });
+    expect(batch.status).toBe(200);
+    expect(Number((await accounts().findOneBy({ id }))?.balance)).toBe(-700);
+    let rows = await rowsFor(id);
+    expect(rows).toHaveLength(1);
+    expect(Number(rows[0]?.value)).toBe(-700);
+
+    const edit = await h.call("patch", `/accounts/${id.toUpperCase()}`, h.tokens.a, {
+      balance: 800,
+    });
+    expect(edit.status).toBe(200);
+    rows = await rowsFor(id);
+    expect(rows).toHaveLength(1);
+    expect(rows[0]?.accountId).toBe(id);
+    expect(Number(rows[0]?.value)).toBe(-800);
+    expect(Number((await accounts().findOneBy({ id }))?.balance)).toBe(-800);
+  });
+
+  it("connected write is atomic against manual: SQL leaves a manual month and its balance alone", async () => {
+    const { year, month } = londonYearMonth();
+    const write = (value: number) =>
+      writeConnectedSnapshot(details(), accounts(), {
+        accountId: accountA,
+        userId: USER_A,
+        year,
+        month,
+        value,
+        asOfDate: londonDate(),
+      });
+    expect(await write(111)).toBe(true);
+    expect((await rowsFor(accountA))[0]).toMatchObject({ source: "connected" });
+    expect(Number((await accounts().findOneBy({ id: accountA }))?.balance)).toBe(111);
+    expect(await write(222)).toBe(true);
+    expect(Number((await rowsFor(accountA))[0]?.value)).toBe(222);
+
+    await put(THIS_MONTH, h.tokens.a, { values: [{ accountId: accountA, value: 333 }] });
+    expect(await write(444)).toBe(false);
+    const [row] = await rowsFor(accountA);
+    expect(row).toMatchObject({ source: "manual" });
+    expect(Number(row?.value)).toBe(333);
+    expect(Number((await accounts().findOneBy({ id: accountA }))?.balance)).toBe(333);
+    // Another user's account id never matches the balance update.
+    expect(await rowsFor(accountB)).toHaveLength(0);
   });
 
   it("partial batch leaves unlisted accounts alone", async () => {

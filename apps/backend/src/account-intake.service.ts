@@ -12,6 +12,7 @@ import { AccountDetail } from "./entities/account-detail.entity";
 import { BankConnection } from "./entities/bank-connection.entity";
 import { UserProfile } from "./entities/user-profile.entity";
 import { londonDate } from "./snapshots/london-date";
+import { storedBalance } from "./snapshots/stored-balance";
 
 export type AccountType =
   | "Current"
@@ -380,12 +381,15 @@ export class AccountIntakeService implements IAccountIntake {
     accountId: string,
     value: number,
   ): Promise<unknown> {
-    const { year, month } = currentUkYearMonth();
+    // One clock reading for year, month and date, so the row always satisfies the month CHECK.
+    const asOfDate = londonDate();
+    const [year, month] = asOfDate.split("-").map(Number) as [number, number];
     // A balance edit or check-in is a manual snapshot value (E30): it also sticks against sync.
-    return details.upsert(
-      { accountId, userId, year, month, value, asOfDate: londonDate(), source: "manual" },
-      ["accountId", "year", "month"],
-    );
+    return details.upsert({ accountId, userId, year, month, value, asOfDate, source: "manual" }, [
+      "accountId",
+      "year",
+      "month",
+    ]);
   }
 
   async updateAccount(userId: string, id: string, body: UpdateAccountDto): Promise<Account> {
@@ -396,9 +400,13 @@ export class AccountIntakeService implements IAccountIntake {
       }
 
       Object.assign(account, this.pickAccountFields(body));
+      if (body.balance !== undefined && body.balance !== null) {
+        // Same sign rule as every other write path (liabilities negative).
+        account.balance = storedBalance(account.type, Number(body.balance));
+      }
       const saved = await accounts.save(account);
       if (body.balance !== undefined && body.balance !== null) {
-        await this.upsertCurrentMonthHistory(details, userId, id, Number(saved.balance));
+        await this.upsertCurrentMonthHistory(details, userId, account.id, Number(saved.balance));
       }
       return saved;
     });
@@ -422,9 +430,9 @@ export class AccountIntakeService implements IAccountIntake {
       const result: Account[] = [];
       for (const { id, balance } of updates) {
         const account = byId.get(id) as Account;
-        account.balance = balance;
+        account.balance = storedBalance(account.type, balance);
         const saved = await accounts.save(account);
-        await this.upsertCurrentMonthHistory(details, userId, id, Number(saved.balance));
+        await this.upsertCurrentMonthHistory(details, userId, account.id, Number(saved.balance));
         result.push(saved);
       }
       return result;

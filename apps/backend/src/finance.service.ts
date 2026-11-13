@@ -26,7 +26,8 @@ import { UserProfile } from "./entities/user-profile.entity";
 import type { CreateTransactionDto } from "./finance.controller";
 import { safeErrorSummary } from "./log-safe";
 import { BankProviderRegistry } from "./providers/provider.registry";
-import { londonDate, londonYearMonth } from "./snapshots/london-date";
+import { writeConnectedSnapshot } from "./snapshots/connected-write";
+import { londonDate } from "./snapshots/london-date";
 
 @Injectable()
 export class FinanceService {
@@ -399,9 +400,10 @@ export class FinanceService {
     if (!provider) return 0;
 
     const providerAccounts = await provider.fetchAccounts(accessToken);
-    // The snapshot month is the Europe/London calendar month (E30 D3), not the server's.
+    // One clock reading for year, month and date (E30 D3): a sync at month-end midnight can never
+    // pair next month's date with this month's key (the table CHECK would reject it).
     const today = londonDate();
-    const { year: currentYear, month: currentMonth } = londonYearMonth();
+    const [currentYear, currentMonth] = today.split("-").map(Number) as [number, number];
 
     for (const pa of providerAccounts) {
       const normalizedBalance = BankSyncOrchestrator.normalizeAccountBalance(pa.type, pa.balance);
@@ -413,16 +415,6 @@ export class FinanceService {
           userId,
         },
       });
-
-      // E30 D7: a balance the user entered by hand for this month sticks (the account's current
-      // figure and the month's snapshot stay in step); sync still refreshes name and type.
-      const existingDetail =
-        existingAccount && this.accountDetailRepository.findOne
-          ? await this.accountDetailRepository.findOne({
-              where: { accountId: existingAccount.id, month: currentMonth, year: currentYear },
-            })
-          : null;
-      const manualSticks = existingDetail?.source === "manual";
 
       let targetAccount: Account;
       if (!existingAccount) {
@@ -449,27 +441,21 @@ export class FinanceService {
       } else {
         existingAccount.name = pa.name;
         existingAccount.type = pa.type;
-        if (!manualSticks) existingAccount.balance = normalizedBalance;
+        // The balance is not touched here: writeConnectedSnapshot moves it atomically, and not at
+        // all when this month's value was entered by hand (E30 D7).
         targetAccount = existingAccount;
       }
       const savedAcc = (await this.accountRepository.save(targetAccount)) || targetAccount;
 
-      // Sync only refreshes rows it wrote itself (or old rows of unknown origin) and creates
-      // missing ones; a manual value for the month sticks (E30 D7).
-      if (manualSticks) continue;
       // One row per account per London month, shared with the check-in (unique index, E23 D22).
-      await this.accountDetailRepository.upsert(
-        {
-          accountId: savedAcc.id,
-          userId,
-          month: currentMonth,
-          year: currentYear,
-          value: Number(savedAcc.balance),
-          asOfDate: today,
-          source: "connected",
-        },
-        ["accountId", "year", "month"],
-      );
+      await writeConnectedSnapshot(this.accountDetailRepository, this.accountRepository, {
+        accountId: savedAcc.id,
+        userId,
+        year: currentYear,
+        month: currentMonth,
+        value: normalizedBalance,
+        asOfDate: today,
+      });
 
       // E19 D8-A: synced transactions are deliberately not stored. Balances are enough for
       // net worth and debt, and merchant descriptions are high-risk personal data.
