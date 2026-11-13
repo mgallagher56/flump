@@ -145,13 +145,6 @@ export const ADVICE_ALLOWLIST: AdviceAllowEntry[] = [
     owner: "E17-N11",
   },
   {
-    file: "packages/mcp/src/tools/financial-audit.tool.ts",
-    patternId: "recommend",
-    kind: "temporary",
-    reason: "Surfaces `topRecommendations` (line 113); N11 deletes the tool.",
-    owner: "E17-N11",
-  },
-  {
     file: "packages/mcp/src/tools/uk-tax-trap.tool.ts",
     patternId: "optimal",
     kind: "temporary",
