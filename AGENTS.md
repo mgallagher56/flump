@@ -62,22 +62,22 @@ Never open, push, or ask the user to merge a PR without executing this exact 4-s
 
 When spawning any subagent (Agent/Task tool, workflows, parallel agents, or session forks that accept a model override), agents MUST set the model explicitly and never leave it to inherit from the parent session. Pick by the job:
 
-- `haiku`: simple tasks and simple investigations (find a file or symbol, list usages, read-only lookups, mechanical edits, formatting, quick fact checks).
-- `sonnet`: writing code, tests and docs, code review, and more complicated investigation or exploration (multi-file tracing, root-cause analysis, comparing approaches in the code).
-- `opus`: writing plans and specs (implementation plans, design specs, architectural trade-offs), and making straightforward decisions (a clear best option, low stakes, easily reversed). Opus subagents stay read-only; they return the document or recommendation and the parent writes any file.
-- `fable`: making complicated decisions (several competing options, high stakes or hard to reverse, legal/financial/security implications, conflicting evidence, as in the owner-decision rounds in `docs/audit/plans/DECISIONS.md`). Decision subagents stay read-only, are given the options and the relevant evidence, and return a recommendation with reasons. They never write code or files.
+- `sonnet`: simple tasks and simple investigations (find a file or symbol, list usages, read-only lookups, mechanical edits, formatting, quick fact checks).
+- `opus`: writing code, tests and docs, code review, and more complicated investigation or exploration (multi-file tracing, root-cause analysis, comparing approaches in the code).
+- `fable`: writing plans and specs (implementation plans, design specs, architectural trade-offs), and making decisions, both straightforward ones (a clear best option, low stakes, easily reversed) and complicated ones (several competing options, high stakes or hard to reverse, legal/financial/security implications, conflicting evidence, as in the owner-decision rounds in `docs/audit/plans/DECISIONS.md`). Plan and decision subagents stay read-only; they are given the options and the relevant evidence, return the document or a recommendation with reasons, and the parent writes any file. They never write code or files.
 
-Never use `opus` or `fable` for anything outside the jobs above. When in doubt between two tiers, use the cheaper one.
+`haiku` is no longer used for subagents. Never use `fable` for anything outside the jobs above. When in doubt between two tiers, use the cheaper one.
 
 Enforcement lives in `.claude/`:
 
-- `.claude/agents/explorer.md` (`model: haiku`, read-only tools): simple search and investigation.
-- `.claude/agents/implementer.md` (`model: sonnet`): writing code, review and complex investigation.
-- `.claude/agents/planner.md` (`model: opus`, read-only tools): plans, specs and straightforward decisions; prefer this over the built-in `Plan` agent.
+- `.claude/agents/explorer.md` (`model: sonnet`, read-only tools): simple search and investigation.
+- `.claude/agents/implementer.md` (`model: opus`): writing code, review and complex investigation.
+- `.claude/agents/planner.md` (`model: fable`, read-only tools): plans, specs and straightforward decisions; prefer this over the built-in `Plan` agent.
 - `.claude/agents/decider.md` (`model: fable`, read-only tools): complicated decisions.
-- `.claude/settings.json` sets `CLAUDE_CODE_SUBAGENT_MODEL=sonnet` as the default for any subagent (including built-ins such as `Explore`, `Plan`, `general-purpose`) that has no model of its own.
+- `.claude/agents/security-reviewer.md` and `.claude/agents/ui-compliance-reviewer.md` (`model: opus`, read-only tools): code review.
+- `.claude/settings.json` sets `CLAUDE_CODE_SUBAGENT_MODEL=opus` as the default for any subagent (including built-ins such as `Explore`, `Plan`, `general-purpose`) that has no model of its own.
 
-A per-spawn `model` parameter overrides both frontmatter and the default. In workflow scripts, every `agent()` call must pass `model` (`'haiku'`, `'sonnet'`, `'opus'` for a plan/spec or straightforward-decision stage, `'fable'` for a complicated-decision stage) or use `agentType: 'explorer' | 'implementer' | 'planner' | 'decider'`; never omit both.
+A per-spawn `model` parameter overrides both frontmatter and the default. In workflow scripts, every `agent()` call must pass `model` (`'sonnet'`, `'opus'`, or `'fable'` for a plan/spec or decision stage) or use `agentType: 'explorer' | 'implementer' | 'planner' | 'decider'`; never omit both.
 
 ## 7. RTK TOKEN-SAVING LAW (RUST TOKEN KILLER)
 

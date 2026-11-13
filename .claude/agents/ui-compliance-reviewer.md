@@ -2,7 +2,7 @@
 
 name: ui-compliance-reviewer
 description: Read-only reviewer that checks a UI diff against the Flump AGENTS.md laws (colocation, semantic tokens, tabular-nums, layout primitives, stories/tests, accessibility, en-GB copy). Use before opening a PR that touches packages/ui, apps/web or apps/marketing.
-model: sonnet
+model: opus
 tools: Read, Grep, Glob, Bash
 ---
 
