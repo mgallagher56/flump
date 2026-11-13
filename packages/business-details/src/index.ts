@@ -48,7 +48,7 @@ export const BUSINESS_DETAILS: BusinessDetails = {
   supportEmail: { value: "support@example.invalid", isPlaceholder: true },
   securityContact: { value: "security@example.invalid", isPlaceholder: true },
   price: {
-    value: { monthly: 4.99, annual: 49, label: "Introductory price, subject to change" },
+    value: { monthly: 4.99, annual: 49, label: "Example figure only. No price is set." },
     isPlaceholder: true,
   },
 };

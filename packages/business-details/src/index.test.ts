@@ -26,7 +26,7 @@ describe("BUSINESS_DETAILS", () => {
     expect(BUSINESS_DETAILS.price.value).toEqual({
       monthly: 4.99,
       annual: 49,
-      label: "Introductory price, subject to change",
+      label: "Example figure only. No price is set.",
     });
   });
 
@@ -55,7 +55,7 @@ describe("placeholderFields", () => {
     expect(keys).toContain("price");
     expect(keys).not.toContain("tradingName");
     expect(placeholderFields().find((f) => f.key === "price")?.strings).toEqual([
-      "Introductory price, subject to change",
+      "Example figure only. No price is set.",
     ]);
   });
   it("is empty once every field is real", () => {
