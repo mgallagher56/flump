@@ -5,52 +5,44 @@ import {
   evaluateFinancialStage,
   PortfolioSnapshot,
 } from "@flump/finance-engine";
-import { Button, EmptyState, LiveRegion, ProjectionNotice } from "@repo/ui";
-import { css } from "@repo/ui/styled-system/css";
+import {
+  Button,
+  EmptyState,
+  Icon,
+  LiveRegion,
+  PageHeader,
+  ProjectionNotice,
+  SimulatorSplitLayout,
+} from "@repo/ui";
+import { BookOpen, Calculator, CreditCard, TriangleAlert } from "lucide-react";
 import { type FC, useMemo, useState } from "react";
-import { FaBookOpen, FaCalculator, FaCreditCard, FaExclamationTriangle } from "react-icons/fa";
 import { Link, useFetcher, useLoaderData } from "react-router";
-import FLPButton from "~/components/core/buttons/FLPButton";
-import FLPHeading from "~/components/core/typography/FLPHeading";
-import FLPText from "~/components/core/typography/FLPText";
 import AddDebtDialog from "~/components/debt/AddDebtDialog";
 import DebtAccountsList from "~/components/debt/DebtAccountsList";
-import DebtSummaryCards from "~/components/debt/DebtSummaryCards";
 import DebtToWealthBridgeCard from "~/components/debt/DebtToWealthBridgeCard";
 import PayoffStrategySwitcher from "~/components/debt/PayoffStrategySwitcher";
 import UkDebtInstrumentsCard from "~/components/debt/UkDebtInstrumentsCard";
+import { DebtSummary } from "~/features/debt/components/DebtSummary";
 import { debtItemToAccountPayload } from "~/features/debt/utils/debtAccountMapping";
 import { ConfirmDialog } from "~/features/feedback/components/ConfirmDialog";
 import { useFetcherOutcome } from "~/features/feedback/hooks/useFetcherOutcome";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
 import { useUserProfile } from "~/hooks/useUserProfile";
+import {
+  controlsStack,
+  errorBanner,
+  mutedNote,
+  noteLink,
+  pageRoot,
+  promoAlert,
+  promoAlertHeading,
+  promoAlertRow,
+  strong,
+  tabButton,
+  tabList,
+} from "./DebtContainer.styles";
 
-const containerStyle = css({
-  display: "flex",
-  flexDirection: "column",
-  gap: "20px",
-  paddingBottom: "64px",
-});
-
-const tabStyle = (active: boolean) =>
-  css({
-    display: "flex",
-    alignItems: "center",
-    gap: "6px",
-    padding: "8px 16px",
-    borderRadius: "md",
-    fontSize: "13px",
-    fontWeight: "semibold",
-    cursor: "pointer",
-    backgroundColor: active ? "card" : "transparent",
-    color: active ? "text.primary" : "text.muted",
-    boxShadow: active ? "var(--shadows-card)" : "none",
-    border: "1px solid",
-    borderColor: active ? "border.subtle" : "transparent",
-    transition: "all 0.15s ease",
-    whiteSpace: "nowrap",
-    _hover: active ? {} : { color: "text.primary" },
-  });
+type DebtTab = "simulator" | "accounts" | "instruments";
 
 export const DebtContainer: FC = () => {
   const loaderData = useLoaderData<any>();
@@ -68,7 +60,7 @@ export const DebtContainer: FC = () => {
   const budgetSurplus = monthlySurplus ?? 0;
 
   // Tab state
-  const [activeTab, setActiveTab] = useState<"simulator" | "accounts" | "instruments">("simulator");
+  const [activeTab, setActiveTab] = useState<DebtTab>("simulator");
 
   // Debts come straight from the user's liability accounts. Add, edit and delete persist through
   // the route action, and the loader revalidation refreshes this list.
@@ -179,117 +171,112 @@ export const DebtContainer: FC = () => {
     fetcher.submit(fields, { method: "POST", action: "/app/debt" });
   };
 
+  const tabItems: { id: DebtTab; label: string; icon: typeof Calculator }[] = [
+    ...(hasDebts
+      ? [
+          { id: "simulator" as const, label: "Payoff plan", icon: Calculator },
+          { id: "accounts" as const, label: `Your debts (${debts.length})`, icon: CreditCard },
+        ]
+      : [{ id: "simulator" as const, label: "Your debts", icon: CreditCard }]),
+    { id: "instruments", label: "UK debt rules and help", icon: BookOpen },
+  ];
+  const selectedTab: DebtTab = !hasDebts && activeTab === "accounts" ? "simulator" : activeTab;
+  const panelProps = (id: DebtTab) => ({
+    "aria-labelledby": `debt-tab-${id}`,
+    hidden: selectedTab !== id,
+    id: `debt-panel-${id}`,
+    role: "tabpanel" as const,
+  });
+
+  const controls = (
+    <div className={controlsStack}>
+      {monthlySurplus === null ? (
+        <p className={mutedNote}>
+          <Link className={noteLink} to="/app/budget">
+            Set up your budget to see your monthly surplus
+          </Link>
+        </p>
+      ) : null}
+      {aprUnknown ? (
+        <p className={mutedNote} data-testid="apr-unknown-note">
+          Some debts have no APR set, so the payoff figures below treat them as 0% and are
+          optimistic. Add each APR for accurate dates and interest.
+        </p>
+      ) : null}
+      <PayoffStrategySwitcher
+        budgetSurplus={Math.max(0, budgetSurplus)}
+        comparison={comparison}
+        extraPayment={extraPayment}
+        selectedStrategy={selectedStrategy}
+        onChangeExtraPayment={setExtraPayment}
+        onSelectStrategy={setSelectedStrategy}
+      />
+      {monthlySurplus === null ? (
+        <p className={mutedNote} id="surplus-unknown-note">
+          Illustrative only: we do not know your monthly surplus, so these payoff results assume the
+          overpayment you choose is affordable.
+        </p>
+      ) : null}
+    </div>
+  );
+
   return (
-    <div className={containerStyle}>
+    <div className={pageRoot}>
       <LiveRegion debounceMs={1000} message={debtHeadline} visuallyHidden />
       <ProjectionNotice />
-      {/* 0% Promotional Cliff & Overdraft Warning Alerts */}
+
       {promoAlerts.length > 0 && (
-        <div
-          className={css({
-            padding: "16px 20px",
-            borderRadius: "xl",
-            backgroundColor: "color-mix(in srgb, var(--colors-status-danger-text) 8%, transparent)",
-            border: "1px solid",
-            borderColor: "color-mix(in srgb, var(--colors-status-danger-text) 30%, transparent)",
-            display: "flex",
-            flexDirection: "column",
-            gap: "10px",
-          })}
-        >
-          <div className={css({ display: "flex", alignItems: "center", gap: "8px" })}>
-            <FaExclamationTriangle
-              className={css({ color: "destructive.500", fontSize: "18px" })}
-            />
-            <FLPHeading as="h4" size="sm" color="destructive.500">
-              0% balance transfer promotional expiry alert
-            </FLPHeading>
-          </div>
+        <section aria-labelledby="debt-promo-alert-title" className={promoAlert()}>
+          <h2 className={promoAlertHeading} id="debt-promo-alert-title">
+            <Icon icon={TriangleAlert} size="sm" />
+            0% balance transfer ending soon
+          </h2>
           {promoAlerts.map((alert) => (
-            <div
-              key={alert.debtId}
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                flexWrap: "wrap",
-                gap: "10px",
-              }}
-            >
-              <FLPText fontSize="xs" color="text.primary">
-                <strong>{alert.debtName}</strong> promotional 0% APR expires on{" "}
-                <strong>{alert.promoExpiryDate}</strong>. At current repayment rates,{" "}
-                <span className={css({ fontVariantNumeric: "tabular-nums" })}>
-                  {formatCurrency(alert.projectedBalanceAtExpiryGbp)}
-                </span>{" "}
-                will revert to <strong>{alert.revertApr}% APR</strong>.
-              </FLPText>
-              <FLPButton
+            <div className={promoAlertRow()} key={alert.debtId}>
+              <p>
+                <strong className={strong}>{alert.debtName}</strong>: the 0% rate ends on{" "}
+                <strong className={strong}>{alert.promoExpiryDate}</strong>. At your current
+                payments,{" "}
+                <span className={strong}>{formatCurrency(alert.projectedBalanceAtExpiryGbp)}</span>{" "}
+                would then be charged at <strong className={strong}>{alert.revertApr}% APR</strong>.
+              </p>
+              <Button
                 size="sm"
                 variant="outline"
                 onClick={() => setExtraPayment(alert.requiredMonthlyToClearBeforeCliff)}
               >
-                Allocate £{alert.requiredMonthlyToClearBeforeCliff}/mo to clear
-              </FLPButton>
+                Model {formatCurrency(alert.requiredMonthlyToClearBeforeCliff)} a month
+              </Button>
             </div>
           ))}
-        </div>
+        </section>
       )}
 
       {saveError ? (
-        <p
-          role="alert"
-          className={css({
-            padding: "12px 16px",
-            borderRadius: "md",
-            border: "1px solid",
-            borderColor: "status.danger.border",
-            backgroundColor: "status.danger.bg",
-            color: "status.danger.text",
-            fontSize: "sm",
-          })}
-        >
+        <p className={errorBanner} role="alert">
           {saveError}
         </p>
       ) : null}
 
-      {/* 1. Header & Stage Notification */}
-      <div
-        className={css({
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          flexWrap: "wrap",
-          gap: "16px",
-          marginTop: "16px",
-          marginBottom: "8px",
-        })}
-      >
-        <div>
-          <FLPHeading as="h1" color="text.primary" size="2xl">
-            Debt payoff and recovery
-          </FLPHeading>
-          <FLPText color="text.muted" fontSize="sm" style={{ marginTop: "4px" }}>
-            Model debt clearance under different payoff orders, track promotional 0% offers, and
-            compare uses for any surplus.
-          </FLPText>
-        </div>
-      </div>
+      <PageHeader
+        subtitle="See how long your debts could take to clear, compare payoff orders and keep track of 0% offers."
+        title="Your debts"
+      />
 
-      {/* 2. Summary Metric Cards (Single compact 4-card row) */}
       {hasDebts ? (
-        <DebtSummaryCards
+        <DebtSummary
           aprUnknown={aprUnknown}
-          minimumEstimated={minimumEstimated}
           debtFreeDate={activeResult.debtFreeDate}
           extraPayment={extraPayment}
           highInterestDebt={stageEval.highInterestDebt}
+          minimumEstimated={minimumEstimated}
           monthlyMinimumTotal={totalMin}
           monthsShaved={
             selectedStrategy === "avalanche"
               ? comparison.monthsShavedAvalancheVsMin
               : Math.max(0, comparison.minimumOnly.months - comparison.snowball.months)
           }
+          payoffAchievable={activeResult.payoffAchievable}
           strategy={selectedStrategy}
           totalDebt={totalDebt}
           totalInterestSaved={
@@ -303,150 +290,73 @@ export const DebtContainer: FC = () => {
         />
       ) : null}
 
-      {/* Tab Bar: Segmented Navigation */}
-      <div
-        className={css({
-          display: "flex",
-          backgroundColor: "surface.sunken",
-          border: "1px solid",
-          borderColor: "border.subtle",
-          padding: "4px",
-          borderRadius: "lg",
-          gap: "4px",
-          overflowX: "auto",
-          maxWidth: "100%",
-          WebkitOverflowScrolling: "touch",
-        })}
-      >
-        {hasDebts ? null : (
+      {/* Roving-tabindex tabs on plain buttons, as on the mortgage page.
+          TODO(E15 Phase 2): adopt @repo/ui SegmentedTabs once it renders its panels; today its
+          aria-controls point at panels that do not exist, which axe flags. */}
+      <div aria-label="Debt tools" className={tabList()} role="tablist">
+        {tabItems.map((tab, index) => (
           <button
+            aria-controls={`debt-panel-${tab.id}`}
+            aria-selected={selectedTab === tab.id}
+            className={tabButton({ active: selectedTab === tab.id })}
+            id={`debt-tab-${tab.id}`}
+            key={tab.id}
+            role="tab"
+            tabIndex={selectedTab === tab.id ? 0 : -1}
             type="button"
-            className={tabStyle(activeTab !== "instruments")}
-            onClick={() => setActiveTab("simulator")}
+            onClick={() => setActiveTab(tab.id)}
+            onKeyDown={(event) => {
+              if (event.ctrlKey || event.altKey || event.metaKey || event.shiftKey) return;
+              const last = tabItems.length - 1;
+              const next =
+                event.key === "ArrowRight"
+                  ? (index + 1) % tabItems.length
+                  : event.key === "ArrowLeft"
+                    ? (index + last) % tabItems.length
+                    : event.key === "Home"
+                      ? 0
+                      : event.key === "End"
+                        ? last
+                        : null;
+              if (next === null) return;
+              event.preventDefault();
+              setActiveTab(tabItems[next].id);
+              document.getElementById(`debt-tab-${tabItems[next].id}`)?.focus();
+            }}
           >
-            <FaCreditCard size={13} style={{ marginRight: "6px" }} /> Your debts
+            <Icon icon={tab.icon} size="sm" />
+            {tab.label}
           </button>
-        )}
-        {hasDebts ? (
-          <>
-            <button
-              type="button"
-              className={tabStyle(activeTab === "simulator")}
-              onClick={() => setActiveTab("simulator")}
-            >
-              <FaCalculator size={13} style={{ marginRight: "6px" }} /> Strategy & Payoff Simulator
-            </button>
-            <button
-              type="button"
-              className={tabStyle(activeTab === "accounts")}
-              onClick={() => setActiveTab("accounts")}
-            >
-              <FaCreditCard size={13} style={{ marginRight: "6px" }} /> Liability Accounts & Cards (
-              {debts.length})
-            </button>
-          </>
-        ) : null}
-        <button
-          type="button"
-          className={tabStyle(activeTab === "instruments")}
-          onClick={() => setActiveTab("instruments")}
-        >
-          <FaBookOpen size={13} style={{ marginRight: "6px" }} /> UK Debt Rules & Helplines
-        </button>
+        ))}
       </div>
 
-      {!hasDebts && activeTab !== "instruments" ? (
-        <EmptyState
-          title="No debts yet"
-          description="Add your credit cards, loans and overdrafts to compare payoff plans."
-          action={
-            <Button type="button" onClick={() => setIsAddModalOpen(true)}>
-              Add debt
-            </Button>
-          }
-        />
+      {!hasDebts ? (
+        <div {...panelProps("simulator")}>
+          <EmptyState
+            action={
+              <Button type="button" onClick={() => setIsAddModalOpen(true)}>
+                Add debt
+              </Button>
+            }
+            description="Add your credit cards, loans and overdrafts to compare payoff plans."
+            title="No debts yet"
+          />
+        </div>
       ) : null}
 
-      {/* Tab 1: Strategy & Payoff Simulator */}
+      {/* Panels stay mounted (hidden) so in-progress edits survive a tab switch. */}
       {hasDebts ? (
         <>
-          <div
-            style={
-              activeTab === "simulator"
-                ? { display: "block" }
-                : {
-                    height: 0,
-                    overflow: "hidden",
-                    opacity: 0,
-                    position: "absolute",
-                    pointerEvents: "none",
-                  }
-            }
-          >
-            <div
-              className={css({
-                display: "grid",
-                gridTemplateColumns: { base: "1fr", lg: "repeat(12, 1fr)" },
-                gap: "24px",
-                alignItems: "start",
-              })}
-            >
-              <div className={css({ gridColumn: { base: "span 1", lg: "span 5" } })}>
-                {monthlySurplus === null ? (
-                  <FLPText color="text.muted" fontSize="sm">
-                    <Link
-                      to="/app/budget"
-                      className={css({
-                        color: "primary",
-                        textDecoration: "underline",
-                        fontVariantNumeric: "tabular-nums",
-                      })}
-                    >
-                      Set up your budget to see your monthly surplus
-                    </Link>
-                  </FLPText>
-                ) : null}
-                {aprUnknown ? (
-                  <FLPText color="text.muted" fontSize="sm" data-testid="apr-unknown-note">
-                    Some debts have no APR set, so the payoff figures below treat them as 0% and are
-                    optimistic. Add each APR for accurate dates and interest.
-                  </FLPText>
-                ) : null}
-                <PayoffStrategySwitcher
-                  budgetSurplus={Math.max(0, budgetSurplus)}
-                  comparison={comparison}
-                  extraPayment={extraPayment}
-                  selectedStrategy={selectedStrategy}
-                  onChangeExtraPayment={setExtraPayment}
-                  onSelectStrategy={setSelectedStrategy}
-                />
-                {monthlySurplus === null ? (
-                  <FLPText color="text.muted" fontSize="xs" id="surplus-unknown-note">
-                    Illustrative only: we do not know your monthly surplus, so these payoff results
-                    assume the overpayment you choose is affordable.
-                  </FLPText>
-                ) : null}
-              </div>
-              <div className={css({ gridColumn: { base: "span 1", lg: "span 7" } })}>
-                <DebtToWealthBridgeCard debts={debts} extraPayment={extraPayment} />
-              </div>
-            </div>
+          <div {...panelProps("simulator")}>
+            <SimulatorSplitLayout
+              content={<DebtToWealthBridgeCard debts={debts} extraPayment={extraPayment} />}
+              contentLabel="Debt payoff results"
+              controls={controls}
+              controlsLabel="Payoff settings"
+              controlsSpan={5}
+            />
           </div>
-
-          {/* Tab 2: Liability Accounts & Cards */}
-          <div
-            style={
-              activeTab === "accounts"
-                ? { display: "block" }
-                : {
-                    height: 0,
-                    overflow: "hidden",
-                    opacity: 0,
-                    position: "absolute",
-                    pointerEvents: "none",
-                  }
-            }
-          >
+          <div {...panelProps("accounts")}>
             <DebtAccountsList
               debts={debts}
               onAddDebt={() => setIsAddModalOpen(true)}
@@ -457,43 +367,29 @@ export const DebtContainer: FC = () => {
         </>
       ) : null}
 
-      {/* Tab 3: UK Specific Debt Instruments & Rules */}
-      <div
-        style={
-          activeTab === "instruments"
-            ? { display: "block" }
-            : {
-                height: 0,
-                overflow: "hidden",
-                opacity: 0,
-                position: "absolute",
-                pointerEvents: "none",
-              }
-        }
-      >
+      <div {...panelProps("instruments")}>
         <UkDebtInstrumentsCard />
       </div>
 
       <ConfirmDialog
+        confirmLabel="Delete debt"
+        description="This deletes the account and its history. This can't be undone."
+        error={deleteOutcome.error}
         open={debtToDelete !== undefined}
+        pending={deleteOutcome.pending}
+        title={`Delete ${debtToDelete?.name ?? "debt"}?`}
+        tone="danger"
+        onConfirm={() => {
+          if (confirmDeleteId) handleConfirmDelete(confirmDeleteId);
+        }}
         onOpenChange={(open) => {
           if (!open) {
             setConfirmDeleteId(null);
             deleteOutcome.dismiss();
           }
         }}
-        pending={deleteOutcome.pending}
-        error={deleteOutcome.error}
-        title={`Delete ${debtToDelete?.name ?? "debt"}?`}
-        description="This deletes the account and its history. This can't be undone."
-        confirmLabel="Delete debt"
-        tone="danger"
-        onConfirm={() => {
-          if (confirmDeleteId) handleConfirmDelete(confirmDeleteId);
-        }}
       />
 
-      {/* Add Debt Modal */}
       <AddDebtDialog
         isOpen={isAddModalOpen}
         onAddDebt={handleAddDebt}

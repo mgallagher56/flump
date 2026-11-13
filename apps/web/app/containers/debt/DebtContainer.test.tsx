@@ -70,6 +70,8 @@ vi.mock("~/hooks/useUserProfile", async (importOriginal) => {
   };
 });
 
+const openTab = (name: RegExp) => fireEvent.click(screen.getByRole("tab", { name }));
+
 describe("DebtContainer", () => {
   beforeEach(() => {
     fetcherState.submit.mockReset();
@@ -129,7 +131,7 @@ describe("DebtContainer", () => {
       expect(screen.queryByText("Barclaycard Platinum")).toBeNull();
       expect(screen.queryByText("Klarna Pay in 3")).toBeNull();
       expect(screen.getByText("No debts yet")).toBeDefined();
-      expect(screen.queryByText(/Total Unsecured Debt/i)).toBeNull();
+      expect(screen.queryByText("Total you owe")).toBeNull();
       fireEvent.click(screen.getByRole("button", { name: "Add debt" }));
       expect(screen.getByText(/Add Liability Account/i)).toBeDefined();
     } finally {
@@ -141,7 +143,7 @@ describe("DebtContainer", () => {
     loaderState.empty = true;
     try {
       render(<DebtContainer />);
-      fireEvent.click(screen.getByRole("button", { name: /UK Debt Rules & Helplines/i }));
+      openTab(/UK debt rules and help/i);
       expect(screen.getByText(/UK Debt Rules & Specialised Instruments/i)).toBeDefined();
     } finally {
       loaderState.empty = false;
@@ -151,8 +153,8 @@ describe("DebtContainer", () => {
   it("renders debt payoff overview and active liabilities", () => {
     render(<DebtContainer />);
 
-    expect(screen.getByText(/Debt payoff and recovery/i)).toBeDefined();
-    expect(screen.getByText(/Total Unsecured Debt/i)).toBeDefined();
+    expect(screen.getByText("Your debts")).toBeDefined();
+    expect(screen.getByText("Total you owe")).toBeDefined();
     expect(screen.getByText(/Payoff Strategy: Avalanche vs. Snowball/i)).toBeDefined();
     expect(screen.getByText(/The Debt-to-Wealth Crossover Bridge/i)).toBeDefined();
     expect(screen.getByText(/UK Debt Rules & Specialised Instruments/i)).toBeDefined();
@@ -161,6 +163,7 @@ describe("DebtContainer", () => {
   it("allows switching UK instruments tabs and managing liability accounts", () => {
     render(<DebtContainer />);
 
+    openTab(/UK debt rules and help/i);
     const overdraftTab = screen.getByRole("button", { name: /Arranged Overdraft EAR Cost/i });
     fireEvent.click(overdraftTab);
 
@@ -168,11 +171,12 @@ describe("DebtContainer", () => {
     expect(screen.getByText(/Average Arranged Overdraft Balance/i)).toBeDefined();
 
     // Switch top-level container tabs
-    fireEvent.click(screen.getByRole("button", { name: /Liability Accounts & Cards/i }));
-    fireEvent.click(screen.getByRole("button", { name: /UK Debt Rules & Helplines/i }));
-    fireEvent.click(screen.getByRole("button", { name: /Strategy & Payoff Simulator/i }));
+    openTab(/Your debts \(/i);
+    openTab(/UK debt rules and help/i);
+    openTab(/Payoff plan/i);
 
     // Open Add Debt Modal and submit a new debt: it persists through the route action
+    openTab(/Your debts \(/i);
     fireEvent.click(screen.getByRole("button", { name: /Add Debt/i }));
     const nameInput = screen.getByPlaceholderText(/Barclaycard Platinum/i);
     fireEvent.change(nameInput, { target: { value: "New Store Card" } });
@@ -199,7 +203,7 @@ describe("DebtContainer", () => {
 
   it("asks for confirmation before deleting and only submits after confirming", () => {
     render(<DebtContainer />);
-    fireEvent.click(screen.getByRole("button", { name: /Liability Accounts & Cards/i }));
+    openTab(/Your debts \(/i);
     fireEvent.click(screen.getByRole("button", { name: /Delete Tesco Loan/i }));
 
     const dialog = screen.getByRole("alertdialog");
@@ -215,7 +219,7 @@ describe("DebtContainer", () => {
 
   it("edits a debt, sending only the changed APR and never the balance", () => {
     render(<DebtContainer />);
-    fireEvent.click(screen.getByRole("button", { name: /Liability Accounts & Cards/i }));
+    openTab(/Your debts \(/i);
     fireEvent.click(screen.getByRole("button", { name: "Edit Barclaycard Platinum" }));
     fireEvent.change(screen.getByLabelText("APR (%)"), { target: { value: "" } });
     fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
@@ -225,8 +229,32 @@ describe("DebtContainer", () => {
     );
   });
 
+  it("keeps inactive panels out of the accessibility tree", () => {
+    render(<DebtContainer />);
+    expect(screen.queryByRole("button", { name: /Delete Tesco Loan/i })).toBeNull();
+    openTab(/Your debts \(/i);
+    expect(screen.getByRole("button", { name: /Delete Tesco Loan/i })).toBeDefined();
+    expect(screen.getByRole("tab", { name: /Your debts \(/i }).getAttribute("aria-selected")).toBe(
+      "true",
+    );
+  });
+
+  it("moves between tabs with the arrow keys", () => {
+    render(<DebtContainer />);
+    const first = screen.getByRole("tab", { name: /Payoff plan/i });
+    fireEvent.keyDown(first, { key: "ArrowRight" });
+    expect(screen.getByRole("tab", { name: /Your debts \(/i }).getAttribute("aria-selected")).toBe(
+      "true",
+    );
+    fireEvent.keyDown(first, { key: "End" });
+    expect(
+      screen.getByRole("tab", { name: /UK debt rules and help/i }).getAttribute("aria-selected"),
+    ).toBe("true");
+  });
+
   it("does not submit when the delete confirmation is cancelled", () => {
     render(<DebtContainer />);
+    openTab(/Your debts \(/i);
     fireEvent.click(screen.getByRole("button", { name: /Delete Tesco Loan/i }));
     fireEvent.click(
       within(screen.getByRole("alertdialog")).getByRole("button", { name: "Cancel" }),
@@ -245,6 +273,7 @@ describe("DebtContainer", () => {
 
   it("surfaces a failed delete inline and keeps the dialog open", () => {
     const { rerender } = render(<DebtContainer />);
+    openTab(/Your debts \(/i);
     fireEvent.click(screen.getByRole("button", { name: /Delete Tesco Loan/i }));
     fireEvent.click(
       within(screen.getByRole("alertdialog")).getByRole("button", { name: "Delete debt" }),
