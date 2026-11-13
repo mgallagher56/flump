@@ -270,8 +270,8 @@ export const DebtContainer: FC = () => {
             Debt payoff and recovery
           </FLPHeading>
           <FLPText color="text.muted" fontSize="sm" style={{ marginTop: "4px" }}>
-            Model debt clearance under different payoff orders, manage promotional 0% offers, and
-            compare surplus uses.
+            Model debt clearance under different payoff orders, track promotional 0% offers, and
+            compare uses for any surplus.
           </FLPText>
         </div>
       </div>

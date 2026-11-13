@@ -118,6 +118,18 @@ const safeBannerStyle = css({
   fontSize: "13px",
 });
 
+const neutralBannerStyle = css({
+  padding: "12px 16px",
+  borderRadius: "md",
+  backgroundColor: "var(--colors-status-info-bg)",
+  border: "1px solid var(--colors-status-info-border)",
+  color: "var(--colors-status-info-text)",
+  display: "flex",
+  alignItems: "flex-start",
+  gap: "10px",
+  fontSize: "13px",
+});
+
 export const UkDebtInstrumentsCard: FC = () => {
   const { formatCurrency } = useFormatCurrency();
   const [activeTab, setActiveTab] = useState<"cliff" | "overdraft" | "balloon" | "student">(
@@ -503,27 +515,17 @@ export const UkDebtInstrumentsCard: FC = () => {
                 Graduate Tax Guardrail
               </FLPText>
 
-              {studentResult.projectedOutcome === "written_off_first" ? (
-                <div className={safeBannerStyle}>
-                  <FaInfoCircle size={18} style={{ flexShrink: 0, marginTop: "2px" }} />
-                  <div>
-                    <strong>Projected outcome:</strong> UK student loans are written off after{" "}
-                    {studentResult.writeOffYears} years. Repayments are capped at{" "}
-                    {studentResult.rate}% above {formatCurrency(studentResult.threshold)}, and in
-                    this projection the balance is written off before it is repaid.
-                  </div>
+              <div className={neutralBannerStyle}>
+                <FaInfoCircle size={18} style={{ flexShrink: 0, marginTop: "2px" }} />
+                <div>
+                  <strong>Projected outcome:</strong> Repayments are {studentResult.rate}% of income
+                  above {formatCurrency(studentResult.threshold)}. This plan is written off after{" "}
+                  {studentResult.writeOffYears} years, and in this projection the balance is{" "}
+                  {studentResult.projectedOutcome === "written_off_first"
+                    ? "written off before it is repaid."
+                    : "repaid before then."}
                 </div>
-              ) : (
-                <div className={alertBannerStyle}>
-                  <FaInfoCircle size={18} style={{ flexShrink: 0, marginTop: "2px" }} />
-                  <div>
-                    <strong>Projected outcome:</strong> Repayments are capped at{" "}
-                    {studentResult.rate}% above {formatCurrency(studentResult.threshold)}, and in
-                    this projection the balance is repaid before the write-off date after{" "}
-                    {studentResult.writeOffYears} years.
-                  </div>
-                </div>
-              )}
+              </div>
 
               <div
                 style={{
@@ -539,10 +541,6 @@ export const UkDebtInstrumentsCard: FC = () => {
                   {formatCurrency(studentResult.annualRepayment)}/yr)
                 </FLPText>
               </div>
-
-              <FLPText color="text.muted" fontSize="xs">
-                {studentResult.reasoning}
-              </FLPText>
             </div>
           </div>
         )}
