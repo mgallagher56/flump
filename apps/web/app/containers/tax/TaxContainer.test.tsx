@@ -204,9 +204,9 @@ describe("TaxContainer & Calculation Tools", () => {
     const copyBtn = screen.getAllByText(/Copy from/i)[0];
     fireEvent.click(copyBtn);
 
-    expect(screen.getByText("Copy Figures & Populate Tax Year")).toBeDefined();
-    expect(screen.getByText("Source Year")).toBeDefined();
-    expect(screen.getByText("Target Year")).toBeDefined();
+    expect(screen.getByText("Copy figures and populate tax year")).toBeDefined();
+    expect(screen.getByText("Source year")).toBeDefined();
+    expect(screen.getByText("Target year")).toBeDefined();
   });
 
   it("renders 'Not set' for the profile salary baseline when no salary is stored, never 45,000", () => {
