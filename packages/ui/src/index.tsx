@@ -63,8 +63,8 @@ export * from "./primitives/Stepper";
 export * from "./primitives/Table";
 export * from "./primitives/Text";
 export * from "./primitives/TextInput";
-export * from "./primitives/Tooltip";
 export * from "./primitives/Toast";
+export * from "./primitives/Tooltip";
 // Explicit names shadow Panda's generated visually-hidden JSX pattern (star-export ambiguity).
 export { VisuallyHidden, type VisuallyHiddenProps } from "./primitives/VisuallyHidden";
 
