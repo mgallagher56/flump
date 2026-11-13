@@ -181,6 +181,9 @@ describe("<MortgageContainer />", () => {
     const calls = patches(fetchSpy);
     const accountPatch = calls.find(([url]) => String(url).endsWith("/accounts/m1"));
     if (!accountPatch) throw new Error("expected an account PATCH");
+    // E20-N9: the browser calls the same-origin proxy and never sends a bearer token.
+    expect(String(accountPatch[0])).toBe("/api/accounts/m1");
+    expect(JSON.stringify(accountPatch[1])).not.toMatch(/authorization|bearer/i);
     expect(JSON.parse(String((accountPatch[1] as RequestInit).body))).toEqual({
       interestRate: 4.5,
       termMonths: 216,

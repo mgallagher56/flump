@@ -3,8 +3,6 @@ import { BackendError, kindFromStatus } from "./backend-error";
 export type HttpMethod = "GET" | "POST" | "PATCH" | "PUT" | "DELETE";
 
 export interface ApiFetchOptions {
-  /** Deprecated and ignored: the session cookie authenticates `/api`. Kept so call sites compile. */
-  accessToken?: string | null;
   method?: HttpMethod;
   body?: unknown;
   /** Caller cancellation. A caller abort is rethrown as is, never reported as a backend failure. */

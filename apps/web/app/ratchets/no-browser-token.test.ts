@@ -38,8 +38,6 @@ const APP_DIR = path.resolve(__dirname, "..");
 
 /**
  * Browser-reachable files that may still mention `accessToken`. Every entry is debt with an owner.
- * - api-client.ts keeps the deprecated, ignored optional `accessToken` option so that call site
- *   still compiles. E20-N9 removes it together with MortgageContainer.
  * - AddEditAccountsDialog.tsx and ConnectBankWizard.tsx only contain the placeholder text for the
  *   bank provider token a user pastes in themselves ("Bearer token starting with eyJ...").
  *   It is not the Flump session token and no code reads it from the session.
@@ -47,7 +45,6 @@ const APP_DIR = path.resolve(__dirname, "..");
 const ACCESS_TOKEN_ALLOW_LIST = [
   "components/dialogs/addEditAccountsDialog/AddEditAccountsDialog.tsx",
   "components/dialogs/connectBankWizard/ConnectBankWizard.tsx",
-  "services/api-client.ts",
 ];
 
 const walk = (dir: string, files: string[] = []): string[] => {
