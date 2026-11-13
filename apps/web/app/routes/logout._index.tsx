@@ -1,6 +1,7 @@
 import { signOut } from "@workos-inc/authkit-react-router";
 import type { ActionFunctionArgs } from "react-router";
 import { redirect } from "react-router";
+import { ensureSessionStorage } from "~/utils/auth.server";
 import { getMarketingUrl } from "~/utils/marketingUrl";
 import { legacySessionCookieClear } from "~/utils/sessionPolicy.server";
 
@@ -8,6 +9,7 @@ const handleSignOut = async (request: Request) => {
   const url = new URL(request.url);
   const marketingUrl = getMarketingUrl(request.url);
 
+  await ensureSessionStorage(request);
   const response = await signOut(request, { returnTo: marketingUrl });
   const behindHttpsProxy =
     request.headers.get("x-forwarded-proto")?.split(",")[0]?.trim().toLowerCase() === "https";

@@ -3,6 +3,7 @@ import {
   authHeader,
   DEV_ACCESS_TOKEN,
   DEV_SESSION_USER,
+  ensureSessionStorage,
   getAuthSession,
   isDevBypass,
   requireAccessToken,
@@ -142,5 +143,20 @@ describe("getAuthSession", () => {
 
       await expect(getAuthSession({} as any)).rejects.toThrow(/production/i);
     });
+  });
+});
+
+describe("ensureSessionStorage", () => {
+  test("runs a no-op authkitLoader without the Cookie header", async () => {
+    mockAuthkitLoader.mockResolvedValueOnce({});
+    await ensureSessionStorage(
+      new Request("https://app.flump.test/logout", {
+        method: "POST",
+        headers: { cookie: "wos-session=sealed" },
+      }),
+    );
+    const [args, options] = mockAuthkitLoader.mock.calls.at(-1) as any[];
+    expect(args.request.headers.get("cookie")).toBeNull();
+    expect(options).toEqual({ ensureSignedIn: false });
   });
 });

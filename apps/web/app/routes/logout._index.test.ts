@@ -2,9 +2,14 @@
 // happy-dom drops Set-Cookie on Response, so use the native Node fetch classes.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-const mocks = vi.hoisted(() => ({ signOut: vi.fn() }));
+const mocks = vi.hoisted(() => ({
+  signOut: vi.fn(),
+  order: [] as string[],
+  ensureSessionStorage: vi.fn(),
+}));
 
 vi.mock("@workos-inc/authkit-react-router", () => ({ signOut: mocks.signOut }));
+vi.mock("~/utils/auth.server", () => ({ ensureSessionStorage: mocks.ensureSessionStorage }));
 
 import { action, loader } from "./logout._index";
 
@@ -17,8 +22,16 @@ const makeArgs = (url: string, method = "GET", headers?: Record<string, string>)
 const CLEAR_COOKIE = "flump_has_session=; Path=/; SameSite=Lax; Max-Age=0";
 
 beforeEach(() => {
+  mocks.order.length = 0;
+  mocks.ensureSessionStorage.mockReset();
+  mocks.ensureSessionStorage.mockImplementation(async () => {
+    mocks.order.push("ensure");
+  });
   mocks.signOut.mockReset();
-  mocks.signOut.mockResolvedValue(new Response(null, { status: 302 }));
+  mocks.signOut.mockImplementation(async () => {
+    mocks.order.push("signOut");
+    return new Response(null, { status: 302 });
+  });
   vi.stubEnv("VITE_MARKETING_URL", "");
 });
 
@@ -27,6 +40,11 @@ afterEach(() => {
 });
 
 describe("logout action", () => {
+  it("configures the session storage before signing out (first request after boot)", async () => {
+    await action(makeArgs("http://localhost:3000/logout", "POST"));
+    expect(mocks.order).toEqual(["ensure", "signOut"]);
+  });
+
   it("uses VITE_MARKETING_URL as returnTo when set", async () => {
     vi.stubEnv("VITE_MARKETING_URL", "https://marketing.example.test");
     await action(makeArgs("http://localhost:3000/logout", "POST"));

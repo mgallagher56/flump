@@ -2,11 +2,12 @@
 // happy-dom's Request drops forbidden headers such as Sec-Fetch-Site; Node's keeps them.
 import { describe, expect, it, vi } from "vitest";
 import { securityMiddleware } from "./middleware.server";
+import { recordRefreshedCookies } from "./session-cookies.server";
 
 type Args = Parameters<typeof securityMiddleware>[0];
 
-function run(request: Request, next: () => Promise<Response>) {
-  const args = { request, params: {}, context: {} } as unknown as Args;
+function run(request: Request, next: () => Promise<Response>, context: object = {}) {
+  const args = { request, params: {}, context } as unknown as Args;
   return securityMiddleware(args, next) as Promise<Response>;
 }
 
@@ -74,5 +75,83 @@ describe("securityMiddleware", () => {
   it("rejects a POST with neither Origin nor Sec-Fetch-Site", async () => {
     const res = await run(new Request(`${APP}/logout`, { method: "POST" }), ok);
     expect(res.status).toBe(403);
+  });
+});
+
+describe("securityMiddleware session refresh cookies (E20-N2)", () => {
+  const NEW = "__Host-wos-session=new; Path=/; Secure; HttpOnly";
+
+  it("appends the refreshed Set-Cookie exactly once, with the security headers", async () => {
+    const context = {};
+    recordRefreshedCookies(context, new Headers({ "Set-Cookie": NEW }));
+    recordRefreshedCookies(context, new Headers({ "Set-Cookie": NEW }));
+    const res = await run(new Request(`${APP}/app`), ok, context);
+    expect(res.headers.getSetCookie()).toEqual([NEW]);
+    expect(res.headers.get("x-frame-options")).toBe("DENY");
+  });
+
+  it("forwards on redirects and resource-route responses", async () => {
+    const context = {};
+    recordRefreshedCookies(context, { "Set-Cookie": NEW });
+    const redirect = () =>
+      Promise.resolve(new Response(null, { status: 302, headers: { Location: "/app" } }));
+    const res = await run(new Request(`${APP}/api/accounts`), redirect, context);
+    expect(res.status).toBe(302);
+    expect(res.headers.get("location")).toBe("/app");
+    expect(res.headers.getSetCookie()).toEqual([NEW]);
+  });
+
+  it("does not overwrite a response that already sets the session cookie (logout, proxy)", async () => {
+    const context = {};
+    recordRefreshedCookies(context, { "Set-Cookie": NEW });
+    const destroyed = "__Host-wos-session=; Max-Age=0; Path=/";
+    const logout = () =>
+      Promise.resolve(
+        new Response(null, {
+          status: 302,
+          headers: [["Set-Cookie", destroyed]] as [string, string][],
+        }),
+      );
+    const res = await run(
+      new Request(`${APP}/logout`, { method: "POST", headers: { origin: APP } }),
+      logout,
+      context,
+    );
+    expect(res.headers.getSetCookie()).toEqual([destroyed]);
+  });
+
+  it("keeps other cookies the response sets and adds only the session cookie", async () => {
+    const context = {};
+    recordRefreshedCookies(context, { "Set-Cookie": NEW });
+    const other = () =>
+      Promise.resolve(new Response("ok", { headers: { "Set-Cookie": "flump_has_session=1" } }));
+    const res = await run(new Request(`${APP}/app`), other, context);
+    expect(res.headers.getSetCookie()).toEqual(["flump_has_session=1", NEW]);
+  });
+
+  it("keeps one cookie per name when several loaders refresh (last wins)", async () => {
+    const context = {};
+    recordRefreshedCookies(context, { "Set-Cookie": "wos-session=a; Path=/" });
+    recordRefreshedCookies(context, { "Set-Cookie": "wos-session=b; Path=/" });
+    const res = await run(new Request(`${APP}/app`), ok, context);
+    expect(res.headers.getSetCookie()).toEqual(["wos-session=b; Path=/"]);
+  });
+
+  it("does not leak cookies between requests", async () => {
+    recordRefreshedCookies({}, { "Set-Cookie": NEW });
+    const res = await run(new Request(`${APP}/app`), ok, {});
+    expect(res.headers.getSetCookie()).toEqual([]);
+  });
+
+  it("preserves body and status", async () => {
+    const context = {};
+    recordRefreshedCookies(context, { "Set-Cookie": NEW });
+    const res = await run(
+      new Request(`${APP}/app`),
+      () => Promise.resolve(new Response("body", { status: 201 })),
+      context,
+    );
+    expect(res.status).toBe(201);
+    expect(await res.text()).toBe("body");
   });
 });
