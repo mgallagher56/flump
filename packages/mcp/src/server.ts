@@ -12,6 +12,7 @@ import { registerDebtSimulatorTool } from "./tools/debt-simulator.tool.js";
 import { registerFinancialAuditTools } from "./tools/financial-audit.tool.js";
 import { registerLifeEventsTool } from "./tools/life-events.tool.js";
 import { registerMortgageIsaTool } from "./tools/mortgage-isa.tool.js";
+import { READ_TOOLS } from "./tools/read/index.js";
 import { registerSection24Tool } from "./tools/section24.tool.js";
 import { registerUkTaxTrapTool } from "./tools/uk-tax-trap.tool.js";
 import type { McpServerContext, McpUserDataProvider } from "./types.js";
@@ -24,7 +25,7 @@ const { version: SERVER_VERSION } = createRequire(import.meta.url)("../package.j
  * Tools built with `defineFlumpTool` (envelope, error contract, own scope check). Registered in
  * array order on the raw server, so `tools/list` order is deterministic. E17-N9 onwards add here.
  */
-export const FLUMP_TOOLS: readonly DefinedFlumpTool[] = [];
+export const FLUMP_TOOLS: readonly DefinedFlumpTool[] = [...READ_TOOLS];
 
 export interface CreateMcpServerOptions {
   token: VerifiedToken;

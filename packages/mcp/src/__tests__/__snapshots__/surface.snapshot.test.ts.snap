@@ -64,6 +64,11 @@ exports[`MCP surface snapshot (E17-N1) > pins tools/list > tool names 1`] = `
   "compare_mortgage_overpay_vs_isa",
   "evaluate_cashflow_runway_and_health",
   "evaluate_uk_student_loan",
+  "get_budget_summary",
+  "get_debt_overview",
+  "get_financial_snapshot",
+  "get_net_worth_history",
+  "list_accounts",
   "project_wealth_scenario",
   "query_transactions_and_spending",
   "simulate_debt_payoff",
@@ -595,6 +600,1216 @@ exports[`MCP surface snapshot (E17-N1) > pins tools/list > tools/list 1`] = `
     "name": "query_transactions_and_spending",
     "title": "Transactions and spending query",
   },
+  {
+    "_meta": undefined,
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": true,
+    },
+    "description": "One-call summary of the user's finances: net worth, assets, liabilities, cash, investments, pensions, debts and (when a budget exists) monthly surplus and emergency runway. Built only from recorded accounts and budget entries; anything not recorded is null and listed in missing[] with a question to ask the user. Start here before drilling into other tools.",
+    "execution": {
+      "taskSupport": "forbidden",
+    },
+    "inputSchema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "properties": {
+        "responseFormat": {
+          "default": "concise",
+          "description": "concise (default) keeps the answer short; detailed returns the full breakdown",
+          "enum": [
+            "concise",
+            "detailed",
+          ],
+          "type": "string",
+        },
+      },
+      "type": "object",
+    },
+    "name": "get_financial_snapshot",
+    "outputSchema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "additionalProperties": false,
+      "properties": {
+        "asOf": {
+          "format": "date-time",
+          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$",
+          "type": "string",
+        },
+        "assumptions": {
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "field": {
+                "type": "string",
+              },
+              "reason": {
+                "type": "string",
+              },
+              "source": {
+                "enum": [
+                  "agent_supplied",
+                  "default",
+                  "user_profile",
+                  "derived",
+                ],
+                "type": "string",
+              },
+              "value": {
+                "type": [
+                  "number",
+                  "string",
+                ],
+              },
+            },
+            "required": [
+              "field",
+              "source",
+            ],
+            "type": "object",
+          },
+          "type": "array",
+        },
+        "currency": {
+          "const": "GBP",
+          "type": "string",
+        },
+        "missing": {
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "askUser": {
+                "type": "string",
+              },
+              "field": {
+                "type": "string",
+              },
+              "why": {
+                "type": "string",
+              },
+            },
+            "required": [
+              "field",
+              "why",
+              "askUser",
+            ],
+            "type": "object",
+          },
+          "type": "array",
+        },
+        "nextCursor": {
+          "type": [
+            "string",
+            "null",
+          ],
+        },
+        "notice": {
+          "type": "string",
+        },
+        "provenance": {
+          "additionalProperties": {
+            "type": "string",
+          },
+          "propertyNames": {
+            "type": "string",
+          },
+          "type": "object",
+        },
+        "result": {
+          "additionalProperties": false,
+          "properties": {
+            "accountCount": {
+              "type": "number",
+            },
+            "assetsGbp": {
+              "type": "number",
+            },
+            "consumerDebtGbp": {
+              "type": "number",
+            },
+            "debtCount": {
+              "type": "number",
+            },
+            "emergencyRunwayMonths": {
+              "type": [
+                "number",
+                "null",
+              ],
+            },
+            "investmentsGbp": {
+              "type": "number",
+            },
+            "liabilitiesGbp": {
+              "type": "number",
+            },
+            "liquidCashGbp": {
+              "type": "number",
+            },
+            "monthlyEssentialSpendGbp": {
+              "type": [
+                "number",
+                "null",
+              ],
+            },
+            "monthlyIncomeGbp": {
+              "type": [
+                "number",
+                "null",
+              ],
+            },
+            "monthlySurplusGbp": {
+              "type": [
+                "number",
+                "null",
+              ],
+            },
+            "mortgageGbp": {
+              "type": "number",
+            },
+            "netWorthGbp": {
+              "type": "number",
+            },
+            "pensionsGbp": {
+              "type": "number",
+            },
+            "propertyGbp": {
+              "type": "number",
+            },
+            "studentLoanGbp": {
+              "type": "number",
+            },
+          },
+          "required": [
+            "netWorthGbp",
+            "assetsGbp",
+            "liabilitiesGbp",
+            "liquidCashGbp",
+            "investmentsGbp",
+            "pensionsGbp",
+            "propertyGbp",
+            "consumerDebtGbp",
+            "mortgageGbp",
+            "studentLoanGbp",
+            "accountCount",
+            "debtCount",
+            "monthlyIncomeGbp",
+            "monthlyEssentialSpendGbp",
+            "monthlySurplusGbp",
+            "emergencyRunwayMonths",
+          ],
+          "type": "object",
+        },
+        "schemaVersion": {
+          "const": "2.0",
+          "type": "string",
+        },
+        "taxYear": {
+          "type": "string",
+        },
+        "truncated": {
+          "type": "boolean",
+        },
+        "verification": {
+          "additionalProperties": false,
+          "properties": {
+            "detail": {
+              "type": "string",
+            },
+            "status": {
+              "enum": [
+                "verified",
+                "unverified",
+              ],
+              "type": "string",
+            },
+          },
+          "required": [
+            "status",
+            "detail",
+          ],
+          "type": "object",
+        },
+      },
+      "required": [
+        "schemaVersion",
+        "asOf",
+        "currency",
+        "result",
+        "provenance",
+        "assumptions",
+        "missing",
+        "truncated",
+        "nextCursor",
+      ],
+      "type": "object",
+    },
+    "title": "Financial snapshot",
+  },
+  {
+    "_meta": undefined,
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": true,
+    },
+    "description": "Month-by-month net worth from recorded account history, newest last. Use months to limit the range. Detailed format adds assets and liabilities per month. Returns no points, with a missing[] entry, when no history has been recorded.",
+    "execution": {
+      "taskSupport": "forbidden",
+    },
+    "inputSchema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "properties": {
+        "months": {
+          "default": 12,
+          "description": "How many recent months, 1 to 120",
+          "maximum": 120,
+          "minimum": 1,
+          "type": "integer",
+        },
+        "responseFormat": {
+          "default": "concise",
+          "description": "concise (default) keeps the answer short; detailed returns the full breakdown",
+          "enum": [
+            "concise",
+            "detailed",
+          ],
+          "type": "string",
+        },
+      },
+      "type": "object",
+    },
+    "name": "get_net_worth_history",
+    "outputSchema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "additionalProperties": false,
+      "properties": {
+        "asOf": {
+          "format": "date-time",
+          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$",
+          "type": "string",
+        },
+        "assumptions": {
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "field": {
+                "type": "string",
+              },
+              "reason": {
+                "type": "string",
+              },
+              "source": {
+                "enum": [
+                  "agent_supplied",
+                  "default",
+                  "user_profile",
+                  "derived",
+                ],
+                "type": "string",
+              },
+              "value": {
+                "type": [
+                  "number",
+                  "string",
+                ],
+              },
+            },
+            "required": [
+              "field",
+              "source",
+            ],
+            "type": "object",
+          },
+          "type": "array",
+        },
+        "currency": {
+          "const": "GBP",
+          "type": "string",
+        },
+        "missing": {
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "askUser": {
+                "type": "string",
+              },
+              "field": {
+                "type": "string",
+              },
+              "why": {
+                "type": "string",
+              },
+            },
+            "required": [
+              "field",
+              "why",
+              "askUser",
+            ],
+            "type": "object",
+          },
+          "type": "array",
+        },
+        "nextCursor": {
+          "type": [
+            "string",
+            "null",
+          ],
+        },
+        "notice": {
+          "type": "string",
+        },
+        "provenance": {
+          "additionalProperties": {
+            "type": "string",
+          },
+          "propertyNames": {
+            "type": "string",
+          },
+          "type": "object",
+        },
+        "result": {
+          "additionalProperties": false,
+          "properties": {
+            "changeGbp": {
+              "type": [
+                "number",
+                "null",
+              ],
+            },
+            "monthsCovered": {
+              "type": "number",
+            },
+            "points": {
+              "items": {
+                "additionalProperties": false,
+                "properties": {
+                  "assetsGbp": {
+                    "type": "number",
+                  },
+                  "liabilitiesGbp": {
+                    "type": "number",
+                  },
+                  "month": {
+                    "type": "string",
+                  },
+                  "netWorthGbp": {
+                    "type": "number",
+                  },
+                },
+                "required": [
+                  "month",
+                  "netWorthGbp",
+                ],
+                "type": "object",
+              },
+              "type": "array",
+            },
+          },
+          "required": [
+            "points",
+            "changeGbp",
+            "monthsCovered",
+          ],
+          "type": "object",
+        },
+        "schemaVersion": {
+          "const": "2.0",
+          "type": "string",
+        },
+        "taxYear": {
+          "type": "string",
+        },
+        "truncated": {
+          "type": "boolean",
+        },
+        "verification": {
+          "additionalProperties": false,
+          "properties": {
+            "detail": {
+              "type": "string",
+            },
+            "status": {
+              "enum": [
+                "verified",
+                "unverified",
+              ],
+              "type": "string",
+            },
+          },
+          "required": [
+            "status",
+            "detail",
+          ],
+          "type": "object",
+        },
+      },
+      "required": [
+        "schemaVersion",
+        "asOf",
+        "currency",
+        "result",
+        "provenance",
+        "assumptions",
+        "missing",
+        "truncated",
+        "nextCursor",
+      ],
+      "type": "object",
+    },
+    "title": "Net worth history",
+  },
+  {
+    "_meta": undefined,
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": true,
+    },
+    "description": "Lists the user's accounts with a short opaque id, a label, category and balance. Liabilities show the amount owed as a positive number with isLiability true. Institution names are replaced with generic labels unless the token has full read access.",
+    "execution": {
+      "taskSupport": "forbidden",
+    },
+    "inputSchema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "properties": {
+        "category": {
+          "description": "Only accounts in this category, such as debt or savings",
+          "enum": [
+            "cash",
+            "savings",
+            "investments",
+            "pensions",
+            "debt",
+            "mortgages",
+            "property",
+            "studentLoans",
+            "other",
+          ],
+          "type": "string",
+        },
+        "responseFormat": {
+          "default": "concise",
+          "description": "concise (default) keeps the answer short; detailed returns the full breakdown",
+          "enum": [
+            "concise",
+            "detailed",
+          ],
+          "type": "string",
+        },
+      },
+      "type": "object",
+    },
+    "name": "list_accounts",
+    "outputSchema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "additionalProperties": false,
+      "properties": {
+        "asOf": {
+          "format": "date-time",
+          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$",
+          "type": "string",
+        },
+        "assumptions": {
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "field": {
+                "type": "string",
+              },
+              "reason": {
+                "type": "string",
+              },
+              "source": {
+                "enum": [
+                  "agent_supplied",
+                  "default",
+                  "user_profile",
+                  "derived",
+                ],
+                "type": "string",
+              },
+              "value": {
+                "type": [
+                  "number",
+                  "string",
+                ],
+              },
+            },
+            "required": [
+              "field",
+              "source",
+            ],
+            "type": "object",
+          },
+          "type": "array",
+        },
+        "currency": {
+          "const": "GBP",
+          "type": "string",
+        },
+        "missing": {
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "askUser": {
+                "type": "string",
+              },
+              "field": {
+                "type": "string",
+              },
+              "why": {
+                "type": "string",
+              },
+            },
+            "required": [
+              "field",
+              "why",
+              "askUser",
+            ],
+            "type": "object",
+          },
+          "type": "array",
+        },
+        "nextCursor": {
+          "type": [
+            "string",
+            "null",
+          ],
+        },
+        "notice": {
+          "type": "string",
+        },
+        "provenance": {
+          "additionalProperties": {
+            "type": "string",
+          },
+          "propertyNames": {
+            "type": "string",
+          },
+          "type": "object",
+        },
+        "result": {
+          "additionalProperties": false,
+          "properties": {
+            "accounts": {
+              "items": {
+                "additionalProperties": false,
+                "properties": {
+                  "aprStatus": {
+                    "enum": [
+                      "known",
+                      "unknown",
+                    ],
+                    "type": "string",
+                  },
+                  "balanceGbp": {
+                    "type": "number",
+                  },
+                  "category": {
+                    "enum": [
+                      "cash",
+                      "savings",
+                      "investments",
+                      "pensions",
+                      "debt",
+                      "mortgages",
+                      "property",
+                      "studentLoans",
+                      "other",
+                    ],
+                    "type": "string",
+                  },
+                  "id": {
+                    "type": "string",
+                  },
+                  "interestRatePct": {
+                    "type": [
+                      "number",
+                      "null",
+                    ],
+                  },
+                  "isLiability": {
+                    "type": "boolean",
+                  },
+                  "label": {
+                    "type": "string",
+                  },
+                },
+                "required": [
+                  "id",
+                  "label",
+                  "category",
+                  "balanceGbp",
+                  "isLiability",
+                  "interestRatePct",
+                  "aprStatus",
+                ],
+                "type": "object",
+              },
+              "type": "array",
+            },
+            "total": {
+              "type": "number",
+            },
+          },
+          "required": [
+            "accounts",
+            "total",
+          ],
+          "type": "object",
+        },
+        "schemaVersion": {
+          "const": "2.0",
+          "type": "string",
+        },
+        "taxYear": {
+          "type": "string",
+        },
+        "truncated": {
+          "type": "boolean",
+        },
+        "verification": {
+          "additionalProperties": false,
+          "properties": {
+            "detail": {
+              "type": "string",
+            },
+            "status": {
+              "enum": [
+                "verified",
+                "unverified",
+              ],
+              "type": "string",
+            },
+          },
+          "required": [
+            "status",
+            "detail",
+          ],
+          "type": "object",
+        },
+      },
+      "required": [
+        "schemaVersion",
+        "asOf",
+        "currency",
+        "result",
+        "provenance",
+        "assumptions",
+        "missing",
+        "truncated",
+        "nextCursor",
+      ],
+      "type": "object",
+    },
+    "title": "List accounts",
+  },
+  {
+    "_meta": undefined,
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": true,
+    },
+    "description": "Monthly budget totals from the user's budget entries: income, essential and discretionary spending, surplus, and spending by category. Weekly and annual entries are converted to monthly. Income and surplus are null (with a question in missing[]) when no income entry exists; salary-based guesses are never used. Detailed format lists each entry.",
+    "execution": {
+      "taskSupport": "forbidden",
+    },
+    "inputSchema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "properties": {
+        "responseFormat": {
+          "default": "concise",
+          "description": "concise (default) keeps the answer short; detailed returns the full breakdown",
+          "enum": [
+            "concise",
+            "detailed",
+          ],
+          "type": "string",
+        },
+      },
+      "type": "object",
+    },
+    "name": "get_budget_summary",
+    "outputSchema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "additionalProperties": false,
+      "properties": {
+        "asOf": {
+          "format": "date-time",
+          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$",
+          "type": "string",
+        },
+        "assumptions": {
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "field": {
+                "type": "string",
+              },
+              "reason": {
+                "type": "string",
+              },
+              "source": {
+                "enum": [
+                  "agent_supplied",
+                  "default",
+                  "user_profile",
+                  "derived",
+                ],
+                "type": "string",
+              },
+              "value": {
+                "type": [
+                  "number",
+                  "string",
+                ],
+              },
+            },
+            "required": [
+              "field",
+              "source",
+            ],
+            "type": "object",
+          },
+          "type": "array",
+        },
+        "currency": {
+          "const": "GBP",
+          "type": "string",
+        },
+        "missing": {
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "askUser": {
+                "type": "string",
+              },
+              "field": {
+                "type": "string",
+              },
+              "why": {
+                "type": "string",
+              },
+            },
+            "required": [
+              "field",
+              "why",
+              "askUser",
+            ],
+            "type": "object",
+          },
+          "type": "array",
+        },
+        "nextCursor": {
+          "type": [
+            "string",
+            "null",
+          ],
+        },
+        "notice": {
+          "type": "string",
+        },
+        "provenance": {
+          "additionalProperties": {
+            "type": "string",
+          },
+          "propertyNames": {
+            "type": "string",
+          },
+          "type": "object",
+        },
+        "result": {
+          "additionalProperties": false,
+          "properties": {
+            "categories": {
+              "items": {
+                "additionalProperties": false,
+                "properties": {
+                  "category": {
+                    "type": "string",
+                  },
+                  "essential": {
+                    "type": "boolean",
+                  },
+                  "monthlyGbp": {
+                    "type": "number",
+                  },
+                },
+                "required": [
+                  "category",
+                  "monthlyGbp",
+                  "essential",
+                ],
+                "type": "object",
+              },
+              "type": "array",
+            },
+            "discretionaryMonthlyGbp": {
+              "type": "number",
+            },
+            "entries": {
+              "items": {
+                "additionalProperties": false,
+                "properties": {
+                  "category": {
+                    "type": "string",
+                  },
+                  "isEssential": {
+                    "type": "boolean",
+                  },
+                  "isIncome": {
+                    "type": "boolean",
+                  },
+                  "monthlyGbp": {
+                    "type": "number",
+                  },
+                  "name": {
+                    "type": "string",
+                  },
+                },
+                "required": [
+                  "name",
+                  "category",
+                  "monthlyGbp",
+                  "isIncome",
+                  "isEssential",
+                ],
+                "type": "object",
+              },
+              "type": "array",
+            },
+            "entryCount": {
+              "type": "number",
+            },
+            "essentialMonthlyGbp": {
+              "type": "number",
+            },
+            "monthlyIncomeGbp": {
+              "type": [
+                "number",
+                "null",
+              ],
+            },
+            "monthlySurplusGbp": {
+              "type": [
+                "number",
+                "null",
+              ],
+            },
+          },
+          "required": [
+            "monthlyIncomeGbp",
+            "essentialMonthlyGbp",
+            "discretionaryMonthlyGbp",
+            "monthlySurplusGbp",
+            "entryCount",
+            "categories",
+          ],
+          "type": "object",
+        },
+        "schemaVersion": {
+          "const": "2.0",
+          "type": "string",
+        },
+        "taxYear": {
+          "type": "string",
+        },
+        "truncated": {
+          "type": "boolean",
+        },
+        "verification": {
+          "additionalProperties": false,
+          "properties": {
+            "detail": {
+              "type": "string",
+            },
+            "status": {
+              "enum": [
+                "verified",
+                "unverified",
+              ],
+              "type": "string",
+            },
+          },
+          "required": [
+            "status",
+            "detail",
+          ],
+          "type": "object",
+        },
+      },
+      "required": [
+        "schemaVersion",
+        "asOf",
+        "currency",
+        "result",
+        "provenance",
+        "assumptions",
+        "missing",
+        "truncated",
+        "nextCursor",
+      ],
+      "type": "object",
+    },
+    "title": "Budget summary",
+  },
+  {
+    "_meta": undefined,
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": true,
+    },
+    "description": "The user's debts: each consumer debt with balance, APR and minimum payment, plus totals for overdrafts, mortgage and student loans. An unrecorded APR is reported as null with aprStatus unknown and a question in missing[]; it is never guessed. Minimum payments that are not recorded are estimated and flagged. No payoff schedules; use a simulation tool for those.",
+    "execution": {
+      "taskSupport": "forbidden",
+    },
+    "inputSchema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "properties": {
+        "responseFormat": {
+          "default": "concise",
+          "description": "concise (default) keeps the answer short; detailed returns the full breakdown",
+          "enum": [
+            "concise",
+            "detailed",
+          ],
+          "type": "string",
+        },
+      },
+      "type": "object",
+    },
+    "name": "get_debt_overview",
+    "outputSchema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "additionalProperties": false,
+      "properties": {
+        "asOf": {
+          "format": "date-time",
+          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$",
+          "type": "string",
+        },
+        "assumptions": {
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "field": {
+                "type": "string",
+              },
+              "reason": {
+                "type": "string",
+              },
+              "source": {
+                "enum": [
+                  "agent_supplied",
+                  "default",
+                  "user_profile",
+                  "derived",
+                ],
+                "type": "string",
+              },
+              "value": {
+                "type": [
+                  "number",
+                  "string",
+                ],
+              },
+            },
+            "required": [
+              "field",
+              "source",
+            ],
+            "type": "object",
+          },
+          "type": "array",
+        },
+        "currency": {
+          "const": "GBP",
+          "type": "string",
+        },
+        "missing": {
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "askUser": {
+                "type": "string",
+              },
+              "field": {
+                "type": "string",
+              },
+              "why": {
+                "type": "string",
+              },
+            },
+            "required": [
+              "field",
+              "why",
+              "askUser",
+            ],
+            "type": "object",
+          },
+          "type": "array",
+        },
+        "nextCursor": {
+          "type": [
+            "string",
+            "null",
+          ],
+        },
+        "notice": {
+          "type": "string",
+        },
+        "provenance": {
+          "additionalProperties": {
+            "type": "string",
+          },
+          "propertyNames": {
+            "type": "string",
+          },
+          "type": "object",
+        },
+        "result": {
+          "additionalProperties": false,
+          "properties": {
+            "debts": {
+              "items": {
+                "additionalProperties": false,
+                "properties": {
+                  "aprPct": {
+                    "type": [
+                      "number",
+                      "null",
+                    ],
+                  },
+                  "aprStatus": {
+                    "enum": [
+                      "known",
+                      "unknown",
+                    ],
+                    "type": "string",
+                  },
+                  "balanceGbp": {
+                    "type": "number",
+                  },
+                  "id": {
+                    "type": "string",
+                  },
+                  "label": {
+                    "type": "string",
+                  },
+                  "minimumPaymentGbp": {
+                    "type": "number",
+                  },
+                  "minimumPaymentStatus": {
+                    "enum": [
+                      "stored",
+                      "estimated",
+                    ],
+                    "type": "string",
+                  },
+                  "type": {
+                    "type": "string",
+                  },
+                },
+                "required": [
+                  "id",
+                  "label",
+                  "type",
+                  "balanceGbp",
+                  "aprPct",
+                  "aprStatus",
+                  "minimumPaymentGbp",
+                  "minimumPaymentStatus",
+                ],
+                "type": "object",
+              },
+              "type": "array",
+            },
+            "mortgageGbp": {
+              "type": "number",
+            },
+            "overdrawnGbp": {
+              "type": "number",
+            },
+            "studentLoanGbp": {
+              "type": "number",
+            },
+            "totalConsumerDebtGbp": {
+              "type": "number",
+            },
+            "totalMinimumPaymentsGbp": {
+              "type": "number",
+            },
+            "weightedAprPct": {
+              "type": [
+                "number",
+                "null",
+              ],
+            },
+          },
+          "required": [
+            "debts",
+            "totalConsumerDebtGbp",
+            "overdrawnGbp",
+            "totalMinimumPaymentsGbp",
+            "weightedAprPct",
+            "mortgageGbp",
+            "studentLoanGbp",
+          ],
+          "type": "object",
+        },
+        "schemaVersion": {
+          "const": "2.0",
+          "type": "string",
+        },
+        "taxYear": {
+          "type": "string",
+        },
+        "truncated": {
+          "type": "boolean",
+        },
+        "verification": {
+          "additionalProperties": false,
+          "properties": {
+            "detail": {
+              "type": "string",
+            },
+            "status": {
+              "enum": [
+                "verified",
+                "unverified",
+              ],
+              "type": "string",
+            },
+          },
+          "required": [
+            "status",
+            "detail",
+          ],
+          "type": "object",
+        },
+      },
+      "required": [
+        "schemaVersion",
+        "asOf",
+        "currency",
+        "result",
+        "provenance",
+        "assumptions",
+        "missing",
+        "truncated",
+        "nextCursor",
+      ],
+      "type": "object",
+    },
+    "title": "Debt overview",
+  },
 ]
 `;
 
@@ -604,6 +1819,11 @@ exports[`per-tool output size (E17-N1) > calls every registered tool and pins th
   "compare_mortgage_overpay_vs_isa": 1500,
   "evaluate_cashflow_runway_and_health": 2000,
   "evaluate_uk_student_loan": 500,
+  "get_budget_summary": 1000,
+  "get_debt_overview": 1000,
+  "get_financial_snapshot": 1500,
+  "get_net_worth_history": 1000,
+  "list_accounts": 1000,
   "project_wealth_scenario": 1500,
   "query_transactions_and_spending": 500,
   "simulate_debt_payoff": 1500,

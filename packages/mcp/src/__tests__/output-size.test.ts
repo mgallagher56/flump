@@ -13,6 +13,11 @@ const TOOL_ARGS: Record<string, Record<string, unknown>> = {
   evaluate_cashflow_runway_and_health: {},
   evaluate_uk_student_loan: { plan: "PLAN_5", currentBalanceGbp: 30000 },
   query_transactions_and_spending: {},
+  get_financial_snapshot: {},
+  get_net_worth_history: {},
+  list_accounts: {},
+  get_budget_summary: {},
+  get_debt_overview: {},
 };
 
 /** E17-N3: summaries only, compact JSON, SDK registration, real version. */
