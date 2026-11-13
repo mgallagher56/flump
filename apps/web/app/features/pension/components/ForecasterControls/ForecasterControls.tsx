@@ -57,7 +57,7 @@ export const ForecasterControls: FC<ForecasterControlsProps> = ({
         format="currency"
         helperText={
           isEdited("extraMonthly")
-            ? `Edited. Nothing extra is saved (${formatCurrency(saved.extraMonthly)}).`
+            ? "Edited. Not saved."
             : "Paid in on top of everything you already put in."
         }
         label="Extra each month"
