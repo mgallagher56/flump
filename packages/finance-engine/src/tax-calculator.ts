@@ -30,7 +30,9 @@ export interface TaxRecord {
   notes: string | null;
   receiptFilename: string | null;
   receiptMimeType: string | null;
-  receiptData: string | null;
+  /** Never returned by the API (E20-N15): receipts are fetched from the receipt route. */
+  receiptData?: string | null;
+  hasReceipt?: boolean;
   createdAt: string;
   updatedAt: string;
 }

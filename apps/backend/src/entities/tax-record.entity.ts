@@ -48,7 +48,11 @@ export class TaxRecord {
   @Column({ name: "receipt_mime_type", type: "varchar", nullable: true })
   receiptMimeType: string | null;
 
-  @Column({ name: "receipt_data", type: "text", nullable: true })
+  /**
+   * Base64 data URL. `select: false` keeps it out of every default read (lists, detail, the MCP
+   * provider); read it only through the receipt route, which asks for it explicitly (E20-N15).
+   */
+  @Column({ name: "receipt_data", type: "text", nullable: true, select: false })
   receiptData: string | null;
 
   @CreateDateColumn({ name: "created_at" })

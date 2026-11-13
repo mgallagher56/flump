@@ -3,11 +3,13 @@ import {
   Controller,
   Delete,
   Get,
+  Header,
   NotFoundException,
   Param,
   Patch,
   Post,
   Req,
+  StreamableFile,
   UseGuards,
 } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
@@ -16,7 +18,7 @@ import { AuthGuard } from "./auth/auth.guard";
 import { TaxRecord } from "./entities/tax-record.entity";
 import { UserProfile } from "./entities/user-profile.entity";
 import { RateLimit } from "./security/rate-limit.decorator";
-import { validateReceipt } from "./security/receipt-validation";
+import { sniffReceiptMime, validateReceipt } from "./security/receipt-validation";
 
 /**
  * Allow-list of client-writable tax record fields. `id`, `userId`,
@@ -51,6 +53,18 @@ const pickTaxRecordFields = (body: Partial<TaxRecord> | undefined): Partial<TaxR
   return picked as Partial<TaxRecord>;
 };
 
+/** Tax record as returned to clients: never carries the receipt bytes. */
+export type TaxRecordResponse = Omit<TaxRecord, "receiptData"> & { hasReceipt: boolean };
+
+const toResponse = (record: TaxRecord): TaxRecordResponse => {
+  const { receiptData, ...rest } = record;
+  // receiptData is `select: false`, so reads carry the metadata only; writes carry the data.
+  const hasReceipt =
+    (receiptData !== undefined && receiptData !== null) ||
+    Boolean(rest.receiptFilename && rest.receiptMimeType);
+  return { ...rest, hasReceipt };
+};
+
 @Controller("tax-records")
 @UseGuards(AuthGuard)
 export class TaxController {
@@ -62,22 +76,65 @@ export class TaxController {
   ) {}
 
   @Get()
-  async getTaxRecords(@Req() req: any): Promise<TaxRecord[]> {
+  async getTaxRecords(@Req() req: any): Promise<TaxRecordResponse[]> {
     const userId = req.user.id;
-    return this.taxRecordRepository.find({
+    const records = await this.taxRecordRepository.find({
       where: { userId },
       order: { date: "DESC" },
     });
+    return records.map(toResponse);
   }
 
   @Get(":id")
-  async getTaxRecord(@Req() req: any, @Param("id") id: string): Promise<TaxRecord> {
+  async getTaxRecord(@Req() req: any, @Param("id") id: string): Promise<TaxRecordResponse> {
     const userId = req.user.id;
     const record = await this.taxRecordRepository.findOne({ where: { id, userId } });
     if (!record) {
       throw new NotFoundException("Tax record not found");
     }
-    return record;
+    return toResponse(record);
+  }
+
+  /**
+   * Streams the receipt bytes. Scoped by `{ id, userId }`; re-validates the stored data, so a
+   * legacy row that fails the N14 rules is a 404 rather than served content.
+   */
+  @Get(":id/receipt")
+  @Header("Cache-Control", "private, no-store")
+  @Header("X-Content-Type-Options", "nosniff")
+  async getReceipt(@Req() req: any, @Param("id") id: string): Promise<StreamableFile> {
+    const userId = req.user.id;
+    const record = await this.taxRecordRepository.findOne({
+      where: { id, userId },
+      select: { id: true, receiptFilename: true, receiptMimeType: true, receiptData: true },
+    });
+    const notFound = new NotFoundException("Receipt not found");
+    if (!record?.receiptData) throw notFound;
+    let mime: ReturnType<typeof validateReceipt>;
+    try {
+      mime = validateReceipt({
+        receiptFilename: record.receiptFilename,
+        receiptMimeType: record.receiptMimeType,
+        receiptData: record.receiptData,
+      });
+    } catch {
+      throw notFound;
+    }
+    const bytes = Buffer.from(
+      record.receiptData.slice(record.receiptData.indexOf(",") + 1),
+      "base64",
+    );
+    const type = mime ?? sniffReceiptMime(bytes);
+    if (!type) throw notFound;
+    const encodedName = encodeURIComponent(record.receiptFilename ?? "receipt").replace(
+      /['()*]/g,
+      (c) => `%${c.charCodeAt(0).toString(16).toUpperCase()}`,
+    );
+    return new StreamableFile(bytes, {
+      type,
+      length: bytes.length,
+      disposition: `attachment; filename*=UTF-8''${encodedName}`,
+    });
   }
 
   @Post("bulk")
@@ -89,7 +146,7 @@ export class TaxController {
       records: Partial<TaxRecord>[];
       capPreviousRecordIds?: { id: string; endDate: string }[];
     },
-  ): Promise<TaxRecord[]> {
+  ): Promise<TaxRecordResponse[]> {
     const userId = req.user.id;
 
     if (body.capPreviousRecordIds && Array.isArray(body.capPreviousRecordIds)) {
@@ -110,17 +167,18 @@ export class TaxController {
         userId,
       })),
     );
-    return this.taxRecordRepository.save(created);
+    const saved = await this.taxRecordRepository.save(created);
+    return saved.map(toResponse);
   }
 
   @Post()
-  async createTaxRecord(@Req() req: any, @Body() body: any): Promise<TaxRecord> {
+  async createTaxRecord(@Req() req: any, @Body() body: any): Promise<TaxRecordResponse> {
     const userId = req.user.id;
     const record = this.taxRecordRepository.create({
       ...pickTaxRecordFields(body),
       userId,
     });
-    return this.taxRecordRepository.save(record);
+    return toResponse(await this.taxRecordRepository.save(record));
   }
 
   @Patch(":id")
@@ -128,14 +186,15 @@ export class TaxController {
     @Req() req: any,
     @Param("id") id: string,
     @Body() body: any,
-  ): Promise<TaxRecord> {
+  ): Promise<TaxRecordResponse> {
     const userId = req.user.id;
     const record = await this.taxRecordRepository.findOne({ where: { id, userId } });
     if (!record) {
       throw new NotFoundException("Tax record not found");
     }
+    // receiptData is not loaded (select: false), so an omitted field keeps the stored bytes.
     Object.assign(record, pickTaxRecordFields(body));
-    return this.taxRecordRepository.save(record);
+    return toResponse(await this.taxRecordRepository.save(record));
   }
 
   @Delete(":id")

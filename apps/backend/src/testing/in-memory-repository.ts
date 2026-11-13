@@ -35,7 +35,9 @@ export const createInMemoryRepository = (seed: Row[] = []) => {
       const found = rows.find((row) => matches(row, options?.where));
       return found ? { ...found } : null;
     }),
-    create: vi.fn((data: Row) => ({ ...data })),
+    create: vi.fn((data: Row | Row[]) =>
+      Array.isArray(data) ? data.map((row) => ({ ...row })) : { ...data },
+    ),
     save: vi.fn(async (data: Row | Row[]) =>
       Array.isArray(data) ? data.map(saveOne) : saveOne(data),
     ),

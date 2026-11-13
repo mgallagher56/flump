@@ -443,6 +443,59 @@ describe("TaxContainer & Calculation Tools", () => {
     expect(mockSubmit).toHaveBeenCalled();
   });
 
+  describe("stored receipts (E20-N15)", () => {
+    const withReceipt: TaxRecord = {
+      ...mockRecords[0],
+      id: "rec-receipt",
+      name: "Flat repairs (2024/25)",
+      receiptFilename: "repairs.png",
+      receiptMimeType: "image/png",
+      hasReceipt: true,
+    };
+    const lastPayload = () => mockSubmit.mock.calls.at(-1)?.[0] as Record<string, unknown>;
+
+    const openEdit = () => {
+      mockLoaderRecords = [withReceipt];
+      mockSubmit.mockClear();
+      render(<TaxContainer />);
+      fireEvent.click(screen.getByText("Detailed Transaction Log"));
+      fireEvent.click(screen.getByText("Flat repairs (2024/25)"));
+    };
+
+    it("saves an edit without sending receipt bytes or a clear flag", () => {
+      openEdit();
+      fireEvent.click(screen.getByRole("button", { name: /Save Record/i, hidden: true }));
+      const payload = lastPayload();
+      expect(payload.intent).toBe("update-transaction");
+      expect(payload.receiptData).toBeUndefined();
+      expect(payload.receiptClear).toBeUndefined();
+      expect(payload.receiptFilename).toBe("repairs.png");
+      mockLoaderRecords = mockRecords;
+    });
+
+    it("says so explicitly when the receipt is removed", () => {
+      openEdit();
+      fireEvent.click(screen.getByRole("button", { name: "Remove", hidden: true }));
+      fireEvent.click(screen.getByRole("button", { name: /Save Record/i, hidden: true }));
+      const payload = lastPayload();
+      expect(payload.receiptClear).toBe("1");
+      expect(payload.receiptData).toBeUndefined();
+      expect(payload.receiptFilename).toBeUndefined();
+      mockLoaderRecords = mockRecords;
+    });
+
+    it("views the receipt through the receipt route, never an inline data URL", () => {
+      mockLoaderRecords = [withReceipt];
+      const { container } = render(<TaxContainer />);
+      fireEvent.click(screen.getByText("Detailed Transaction Log"));
+      fireEvent.click(screen.getByRole("button", { name: "View" }));
+      const img = document.body.querySelector('img[src="/app/tax/receipts/rec-receipt"]');
+      expect(img).not.toBeNull();
+      expect(container.innerHTML + document.body.innerHTML).not.toContain("data:");
+      mockLoaderRecords = mockRecords;
+    });
+  });
+
   it("executes Copy Tax Year modal action", () => {
     render(<TaxContainer />);
 

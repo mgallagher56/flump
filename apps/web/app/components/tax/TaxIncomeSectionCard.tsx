@@ -657,7 +657,7 @@ export const TaxIncomeSectionCard: FC<TaxIncomeSectionCardProps> = ({
                         {formatCurrencyDecimal(annualVal)}
                       </td>
                       <td style={{ padding: "10px 14px", textAlign: "center" }}>
-                        {record.receiptFilename ? (
+                        {record.hasReceipt ? (
                           <button
                             type="button"
                             onClick={() => onViewReceipt(record)}
