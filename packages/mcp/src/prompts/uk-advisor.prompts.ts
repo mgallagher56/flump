@@ -6,10 +6,13 @@ export function registerUkAdvisorPrompts(
   getContext: () => Promise<McpServerContext>,
 ) {
   // 1. uk-financial-health-audit
-  server.prompt(
+  server.registerPrompt(
     "uk-financial-health-audit",
-    "Comprehensive UK personal financial health audit, evaluating net worth, emergency runway, high-APR debt burn, and tax efficiency.",
-    {},
+    {
+      title: "UK financial health audit",
+      description:
+        "Comprehensive UK personal financial health audit, evaluating net worth, emergency runway, high-APR debt burn, and tax efficiency.",
+    },
     async () => {
       const ctx = await getContext();
       const rawData = await ctx.dataProvider.getUserFinancialData(ctx.token.userId, {
@@ -34,10 +37,13 @@ export function registerUkAdvisorPrompts(
   );
 
   // 2. escape-100k-tax-trap
-  server.prompt(
+  server.registerPrompt(
     "escape-100k-tax-trap",
-    "Analyzes whether gross salary + bonuses enter the UK £100k-£125,140 60% (or 69.5% Scottish) tax trap and models optimal pension sacrifice.",
-    {},
+    {
+      title: "Escape the 100k tax trap",
+      description:
+        "Analyzes whether gross salary + bonuses enter the UK £100k-£125,140 60% (or 69.5% Scottish) tax trap and models optimal pension sacrifice.",
+    },
     async () => {
       const ctx = await getContext();
       const rawData = await ctx.dataProvider.getUserFinancialData(ctx.token.userId);
@@ -59,10 +65,13 @@ Please call the tool 'simulate_uk_tax_and_pension_sacrifice' to calculate whethe
   );
 
   // 3. crush-high-apr-debt
-  server.prompt(
+  server.registerPrompt(
     "crush-high-apr-debt",
-    "Inspects all credit cards, 0% promotional balance transfers, and arranged overdrafts, generating an aggressive Avalanche vs Snowball payoff plan.",
-    {},
+    {
+      title: "Crush high APR debt",
+      description:
+        "Inspects all credit cards, 0% promotional balance transfers, and arranged overdrafts, generating an aggressive Avalanche vs Snowball payoff plan.",
+    },
     async () => {
       return {
         messages: [

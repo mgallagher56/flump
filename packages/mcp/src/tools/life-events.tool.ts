@@ -61,6 +61,7 @@ export function registerLifeEventsTool(
   server.registerTool(
     "project_wealth_scenario",
     {
+      title: "Project wealth scenario",
       description:
         "Projects long-term (1-30+ year) UK net worth trajectories, compound ISA & pension growth, and models life event impacts (Home Purchase deposit, Nursery/Childcare costs, Remortgage rate shocks, Early retirement bridges).",
       inputSchema: lifeEventsSchema,
@@ -176,30 +177,26 @@ export function registerLifeEventsTool(
         content: [
           {
             type: "text",
-            text: JSON.stringify(
-              {
-                startingNetWorthGbp: forecast.startingNetWorthGbp,
-                tenYearBaselineGbp: forecast.tenYearNetWorthBaselineGbp,
-                tenYearScenarioGbp: forecast.tenYearNetWorthScenarioGbp,
-                thirtyYearBaselineGbp: forecast.thirtyYearNetWorthBaselineGbp,
-                thirtyYearScenarioGbp: forecast.thirtyYearNetWorthScenarioGbp,
-                milestones,
-                appliedScenariosCount: scenarios.length,
-                trajectorySummary: forecast.trajectory
-                  .filter((t) => t.year === 0 || t.year % 5 === 0 || t.year === args.horizonYears)
-                  .map((t) => ({
-                    year: t.year,
-                    age: t.age,
-                    netWorthGbp: t.scenarioNetWorthGbp,
-                    isaBalanceGbp: t.isaBalanceGbp,
-                    pensionBalanceGbp: t.pensionBalanceGbp,
-                    debtBalanceGbp: t.debtBalanceGbp,
-                    propertyEquityGbp: t.propertyEquityGbp,
-                  })),
-              },
-              null,
-              2,
-            ),
+            text: JSON.stringify({
+              startingNetWorthGbp: forecast.startingNetWorthGbp,
+              tenYearBaselineGbp: forecast.tenYearNetWorthBaselineGbp,
+              tenYearScenarioGbp: forecast.tenYearNetWorthScenarioGbp,
+              thirtyYearBaselineGbp: forecast.thirtyYearNetWorthBaselineGbp,
+              thirtyYearScenarioGbp: forecast.thirtyYearNetWorthScenarioGbp,
+              milestones,
+              appliedScenariosCount: scenarios.length,
+              trajectorySummary: forecast.trajectory
+                .filter((t) => t.year === 0 || t.year % 5 === 0 || t.year === args.horizonYears)
+                .map((t) => ({
+                  year: t.year,
+                  age: t.age,
+                  netWorthGbp: t.scenarioNetWorthGbp,
+                  isaBalanceGbp: t.isaBalanceGbp,
+                  pensionBalanceGbp: t.pensionBalanceGbp,
+                  debtBalanceGbp: t.debtBalanceGbp,
+                  propertyEquityGbp: t.propertyEquityGbp,
+                })),
+            }),
           },
         ],
       };

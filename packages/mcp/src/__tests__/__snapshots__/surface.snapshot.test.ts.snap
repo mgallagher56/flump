@@ -3,22 +3,22 @@
 exports[`MCP surface snapshot (E17-N1) > pins prompts/list 1`] = `
 [
   {
-    "arguments": [],
+    "arguments": undefined,
     "description": "Comprehensive UK personal financial health audit, evaluating net worth, emergency runway, high-APR debt burn, and tax efficiency.",
     "name": "uk-financial-health-audit",
-    "title": undefined,
+    "title": "UK financial health audit",
   },
   {
-    "arguments": [],
+    "arguments": undefined,
     "description": "Analyzes whether gross salary + bonuses enter the UK £100k-£125,140 60% (or 69.5% Scottish) tax trap and models optimal pension sacrifice.",
     "name": "escape-100k-tax-trap",
-    "title": undefined,
+    "title": "Escape the 100k tax trap",
   },
   {
-    "arguments": [],
+    "arguments": undefined,
     "description": "Inspects all credit cards, 0% promotional balance transfers, and arranged overdrafts, generating an aggressive Avalanche vs Snowball payoff plan.",
     "name": "crush-high-apr-debt",
-    "title": undefined,
+    "title": "Crush high APR debt",
   },
 ]
 `;
@@ -26,27 +26,39 @@ exports[`MCP surface snapshot (E17-N1) > pins prompts/list 1`] = `
 exports[`MCP surface snapshot (E17-N1) > pins resources/list 1`] = `
 [
   {
+    "mimeType": "application/json",
     "name": "executive-snapshot",
+    "title": "Executive financial snapshot",
     "uri": "flump://context/executive-snapshot",
   },
   {
+    "mimeType": "application/json",
     "name": "baseline",
+    "title": "Financial baseline",
     "uri": "flump://context/baseline",
   },
   {
+    "mimeType": "application/json",
     "name": "uk-fiscal-guardrails",
+    "title": "UK fiscal guardrails",
     "uri": "flump://rules/uk-fiscal-guardrails",
   },
   {
+    "mimeType": "application/json",
     "name": "accounts",
+    "title": "Accounts and balances",
     "uri": "flump://context/accounts",
   },
   {
+    "mimeType": "application/json",
     "name": "budget",
+    "title": "Monthly budget",
     "uri": "flump://context/budget",
   },
   {
+    "mimeType": "application/json",
     "name": "tax-ledger",
+    "title": "Tax ledger",
     "uri": "flump://context/tax-ledger",
   },
 ]
@@ -160,7 +172,7 @@ exports[`MCP surface snapshot (E17-N1) > pins tools/list > tools/list 1`] = `
       "type": "object",
     },
     "name": "simulate_debt_payoff",
-    "title": undefined,
+    "title": "Simulate UK debt payoff",
   },
   {
     "_meta": undefined,
@@ -228,7 +240,7 @@ exports[`MCP surface snapshot (E17-N1) > pins tools/list > tools/list 1`] = `
       "type": "object",
     },
     "name": "simulate_uk_tax_and_pension_sacrifice",
-    "title": undefined,
+    "title": "UK tax trap and pension sacrifice",
   },
   {
     "_meta": undefined,
@@ -288,7 +300,7 @@ exports[`MCP surface snapshot (E17-N1) > pins tools/list > tools/list 1`] = `
       "type": "object",
     },
     "name": "compare_mortgage_overpay_vs_isa",
-    "title": undefined,
+    "title": "Compare mortgage overpayment with ISA",
   },
   {
     "_meta": undefined,
@@ -341,7 +353,7 @@ exports[`MCP surface snapshot (E17-N1) > pins tools/list > tools/list 1`] = `
       "type": "object",
     },
     "name": "calculate_self_assessment_and_section24",
-    "title": undefined,
+    "title": "Self Assessment and Section 24 calculator",
   },
   {
     "_meta": undefined,
@@ -448,7 +460,7 @@ exports[`MCP surface snapshot (E17-N1) > pins tools/list > tools/list 1`] = `
       "type": "object",
     },
     "name": "project_wealth_scenario",
-    "title": undefined,
+    "title": "Project wealth scenario",
   },
   {
     "_meta": undefined,
@@ -484,7 +496,7 @@ exports[`MCP surface snapshot (E17-N1) > pins tools/list > tools/list 1`] = `
       "type": "object",
     },
     "name": "evaluate_cashflow_runway_and_health",
-    "title": undefined,
+    "title": "Cashflow runway and financial health",
   },
   {
     "_meta": undefined,
@@ -530,7 +542,7 @@ exports[`MCP surface snapshot (E17-N1) > pins tools/list > tools/list 1`] = `
       "type": "object",
     },
     "name": "evaluate_uk_student_loan",
-    "title": undefined,
+    "title": "UK student loan evaluation",
   },
   {
     "_meta": undefined,
@@ -574,20 +586,20 @@ exports[`MCP surface snapshot (E17-N1) > pins tools/list > tools/list 1`] = `
       "type": "object",
     },
     "name": "query_transactions_and_spending",
-    "title": undefined,
+    "title": "Transactions and spending query",
   },
 ]
 `;
 
 exports[`per-tool output size (E17-N1) > calls every registered tool and pins the output size in bytes 1`] = `
 {
-  "calculate_self_assessment_and_section24": 1000,
-  "compare_mortgage_overpay_vs_isa": 1500,
+  "calculate_self_assessment_and_section24": 500,
+  "compare_mortgage_overpay_vs_isa": 1000,
   "evaluate_cashflow_runway_and_health": 1500,
-  "evaluate_uk_student_loan": 1000,
-  "project_wealth_scenario": 2000,
+  "evaluate_uk_student_loan": 500,
+  "project_wealth_scenario": 1500,
   "query_transactions_and_spending": 500,
-  "simulate_debt_payoff": 37500,
+  "simulate_debt_payoff": 1000,
   "simulate_uk_tax_and_pension_sacrifice": 1000,
 }
 `;

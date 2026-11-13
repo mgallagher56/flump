@@ -1,3 +1,4 @@
+import { createRequire } from "node:module";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { withScopeEnforcement } from "./auth/scopes.js";
 import type { VerifiedToken } from "./auth/token-verifier.js";
@@ -14,6 +15,10 @@ import { registerSection24Tool } from "./tools/section24.tool.js";
 import { registerUkTaxTrapTool } from "./tools/uk-tax-trap.tool.js";
 import type { McpServerContext, McpUserDataProvider } from "./types.js";
 
+const { version: SERVER_VERSION } = createRequire(import.meta.url)("../package.json") as {
+  version: string;
+};
+
 export interface CreateMcpServerOptions {
   token: VerifiedToken;
   dataProvider: McpUserDataProvider;
@@ -25,7 +30,7 @@ export interface CreateMcpServerOptions {
 export function createFlumpMcpServer(options: CreateMcpServerOptions): McpServer {
   const server = new McpServer({
     name: "flump-finance-mcp",
-    version: "1.0.0",
+    version: SERVER_VERSION,
   });
 
   const context: McpServerContext = {

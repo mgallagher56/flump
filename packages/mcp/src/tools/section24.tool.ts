@@ -50,6 +50,7 @@ export function registerSection24Tool(
   server.registerTool(
     "calculate_self_assessment_and_section24",
     {
+      title: "Self Assessment and Section 24 calculator",
       description:
         "Computes HMRC Self-Assessment tax liability, Section 24 landlord finance cost restrictions (20% basic rate tax credit), 31 Jan and 31 Jul Payments on Account, and required monthly tax pot set-aside.",
       inputSchema: section24Schema,
@@ -117,44 +118,40 @@ export function registerSection24Tool(
         content: [
           {
             type: "text",
-            text: JSON.stringify(
-              {
-                taxYear,
-                section24Analysis: {
-                  grossRentalIncomeGbp: s24Result.shareRentalIncomeGbp,
-                  allowableExpensesGbp: s24Result.shareAllowableExpensesGbp,
-                  mortgageInterestGbp: s24Result.shareMortgageInterestGbp,
-                  taxableRentalProfitGbp: s24Result.taxableRentalProfitGbp,
-                  section24TaxCreditGbp: s24Result.section24TaxCreditGbp,
-                  netRentalTaxLiabilityGbp: s24Result.netRentalTaxLiabilityGbp,
-                  effectiveRentalTaxRatePct: s24Result.effectiveRentalTaxRatePct,
-                  actualCashProfitGbp: s24Result.actualCashProfit,
-                  section24PenaltyVsOldRulesGbp: s24Result.section24Penalty,
-                  isHigherRateTaxpayer: s24Result.isHigherRate,
-                },
-                hmrcPaymentSchedule: {
-                  balancingPayment31JanGbp: s24Result.balancingPayment31JanGbp,
-                  firstPaymentOnAccount31JanGbp: s24Result.firstPaymentOnAccount31JanGbp,
-                  totalDue31JanGbp: s24Result.totalDue31JanGbp,
-                  secondPaymentOnAccount31JulyGbp: s24Result.secondPaymentOnAccount31JulyGbp,
-                  recommendedMonthlyTaxSetAsideGbp: s24Result.recommendedMonthlyTaxSetAsideGbp,
-                },
-                storedLedgerSummary: saLedger
-                  ? {
-                      totalGrossIncomeGbp: saLedger.totalGrossIncome,
-                      totalTaxDueGbp: saLedger.totalTaxDue,
-                      netAdditionalTaxToPayGbp: saLedger.netAdditionalTaxToPay,
-                      seProfitGbp: saLedger.seProfit,
-                      seTaxDueGbp: saLedger.seTaxDue,
-                      seClass4NIDueGbp: saLedger.seClass4NIDue,
-                      savingsTaxDueGbp: saLedger.savingsTaxDue,
-                      dividendTaxDueGbp: saLedger.dividendTaxDue,
-                    }
-                  : undefined,
+            text: JSON.stringify({
+              taxYear,
+              section24Analysis: {
+                grossRentalIncomeGbp: s24Result.shareRentalIncomeGbp,
+                allowableExpensesGbp: s24Result.shareAllowableExpensesGbp,
+                mortgageInterestGbp: s24Result.shareMortgageInterestGbp,
+                taxableRentalProfitGbp: s24Result.taxableRentalProfitGbp,
+                section24TaxCreditGbp: s24Result.section24TaxCreditGbp,
+                netRentalTaxLiabilityGbp: s24Result.netRentalTaxLiabilityGbp,
+                effectiveRentalTaxRatePct: s24Result.effectiveRentalTaxRatePct,
+                actualCashProfitGbp: s24Result.actualCashProfit,
+                section24PenaltyVsOldRulesGbp: s24Result.section24Penalty,
+                isHigherRateTaxpayer: s24Result.isHigherRate,
               },
-              null,
-              2,
-            ),
+              hmrcPaymentSchedule: {
+                balancingPayment31JanGbp: s24Result.balancingPayment31JanGbp,
+                firstPaymentOnAccount31JanGbp: s24Result.firstPaymentOnAccount31JanGbp,
+                totalDue31JanGbp: s24Result.totalDue31JanGbp,
+                secondPaymentOnAccount31JulyGbp: s24Result.secondPaymentOnAccount31JulyGbp,
+                recommendedMonthlyTaxSetAsideGbp: s24Result.recommendedMonthlyTaxSetAsideGbp,
+              },
+              storedLedgerSummary: saLedger
+                ? {
+                    totalGrossIncomeGbp: saLedger.totalGrossIncome,
+                    totalTaxDueGbp: saLedger.totalTaxDue,
+                    netAdditionalTaxToPayGbp: saLedger.netAdditionalTaxToPay,
+                    seProfitGbp: saLedger.seProfit,
+                    seTaxDueGbp: saLedger.seTaxDue,
+                    seClass4NIDueGbp: saLedger.seClass4NIDue,
+                    savingsTaxDueGbp: saLedger.savingsTaxDue,
+                    dividendTaxDueGbp: saLedger.dividendTaxDue,
+                  }
+                : undefined,
+            }),
           },
         ],
       };
