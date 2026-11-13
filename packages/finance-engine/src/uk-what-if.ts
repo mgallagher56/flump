@@ -96,12 +96,20 @@ export function whatIfSacrificeChange(
 ): UkWhatIfResult {
   const before = computeUkTakeHome(s, opts);
   const method = s.pension?.method ?? "salary-sacrifice";
+  const assumedMethod = s.pension === undefined;
   const amount = Math.max(0, before.pensionEmployee + deltaContribution);
   const after = computeUkTakeHome(
     { ...s, pension: { method, amount }, taxYear: before.ratesYear },
     opts,
   );
-  return diff(before, { ...after, taxYear: before.taxYear, isFallback: before.isFallback });
+  const r = diff(before, { ...after, taxYear: before.taxYear, isFallback: before.isFallback });
+  if (assumedMethod) {
+    r.after.assumptions = [
+      ...r.after.assumptions,
+      { code: "pensionMethodAssumed", unverified: false },
+    ];
+  }
+  return r;
 }
 
 export interface UkMarginalRatePoint {
@@ -193,6 +201,23 @@ export function marginalRateCurve(
   }
 
   const thresholds = getUkIncomeThresholds(getUkTaxYearRules(year.ratesYear), fixed);
+  // The curve crosses rules your own pay may not touch (the taper, say), so its labels cover the whole
+  // range: your pay, the top of the range and every threshold drawn on it.
+  const top = at(to);
+  const inRange = thresholds.filter(
+    (t) => t.grossAt !== null && t.grossAt >= from && t.grossAt <= to,
+  );
+  const unverifiedRuleKeys = [
+    ...new Set([
+      ...year.unverifiedRuleKeys,
+      ...top.unverifiedRuleKeys,
+      ...inRange.filter((t) => t.status === "unverified").map((t) => t.ruleKey),
+    ]),
+  ];
+  const assumptions = [...year.assumptions];
+  for (const a of top.assumptions) {
+    if (!assumptions.some((b) => b.code === a.code)) assumptions.push(a);
+  }
   const start = thresholds.find((t) => t.kind === "hicbcStart")?.grossAt;
   const end = thresholds.find((t) => t.kind === "hicbcEnd")?.grossAt;
   const steppedZones: UkSteppedZone[] =
@@ -208,9 +233,13 @@ export function marginalRateCurve(
     asAtTaxYear: year.ratesYear,
     taxYear: year.taxYear,
     isFallback: year.isFallback,
-    assumptions: year.assumptions,
-    unverifiedRuleKeys: year.unverifiedRuleKeys,
+    assumptions,
+    unverifiedRuleKeys,
     verification: year.verification,
-    isUnverifiedEstimate: year.isUnverifiedEstimate,
+    isUnverifiedEstimate:
+      year.isUnverifiedEstimate ||
+      top.isUnverifiedEstimate ||
+      unverifiedRuleKeys.length > 0 ||
+      assumptions.some((a) => a.unverified),
   };
 }

@@ -208,4 +208,10 @@ describe("marginalRateCurve", () => {
   it("refuses an absurd number of points", () => {
     expect(() => marginalRateCurve(s, { step: 1, to: 1_000_000 })).toThrow(RangeError);
   });
+
+  it("labels the whole range, not only your own pay: the taper is flagged for a 30,000 earner in 2021/22", () => {
+    // 2021/22's taper rate is UNVERIFIED in the registry; 30,000 never reaches it, the curve does.
+    const c = marginalRateCurve({ taxYear: "2021/22", region: "ENGLAND_NI_WALES", salary: 30000 });
+    expect(c.unverifiedRuleKeys).toContain("personalAllowanceTaper");
+  });
 });

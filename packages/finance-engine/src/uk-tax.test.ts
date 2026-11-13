@@ -731,4 +731,14 @@ describe("E25-T4 tax trap fixes", () => {
       calculate100kTaxTrap(60000, 20, true, "ENGLAND_NI_WALES", "2026/27").effectiveMarginalRatePct,
     ).toBe(28);
   });
+
+  it("calculateUkTax reads the trap's NI rate from payroll pay", () => {
+    // 60,000 with a 20% net-pay pension: ANI 48,000 but NI pay 60,000 (above the UEL, 2%).
+    const r = calculateUkTax({
+      grossSalary: 60000,
+      pensionContributionPct: 20,
+      taxYear: "2026/27",
+    });
+    expect(r.taxTrap.effectiveMarginalRatePct).toBe(22);
+  });
 });
