@@ -1,5 +1,5 @@
 import { calculateSafeToSpend, evaluateFinancialStage } from "@flump/finance-engine";
-import { Button, Icon, PageHeader, ProjectionNotice, VisuallyHidden } from "@repo/ui";
+import { Button, Icon, PageHeader, ProjectionNotice, SectionBand } from "@repo/ui";
 import { SlidersHorizontal } from "lucide-react";
 import { type FC, useMemo, useRef, useState } from "react";
 import { normalizeProfile, type UserProfile, useUserProfile } from "~/hooks/useUserProfile";
@@ -209,6 +209,8 @@ export const HomeDashboard: FC<HomeDashboardProps> = ({
       ? finiteOrNull(savingsData?.totalSavingsBalance)
       : finiteOrNull(accountsData?.typeTotals?.Saving);
 
+  const showCoachCard = financialStage?.stage === "stabilize" && (debtData?.totalDebt ?? 0) > 0;
+
   // Saved per-widget settings (read-only here) still apply; editing them is gone.
   const widgetConfig = (key: DashboardWidgetKey) => profile.dashboardWidgetConfig?.[key] ?? {};
 
@@ -241,77 +243,86 @@ export const HomeDashboard: FC<HomeDashboardProps> = ({
         }
       />
 
-      <DashboardKpiStrip
-        liquidCash={savingsTotal}
-        monthlySurplus={budgetKnown ? finiteOrNull(budgetData?.monthlySurplus) : null}
-        netWorth={hasAccounts ? finiteOrNull(accountsData?.netWorth) : null}
-        totalAssets={hasAccounts ? finiteOrNull(accountsData?.totalAssets) : null}
-        totalLiabilities={hasAccounts ? finiteOrNull(accountsData?.totalLiabilities) : null}
-        weeklySafeToSpend={safeToSpend ? finiteOrNull(safeToSpend.weeklyAllowance) : null}
-      />
+      {showCoachCard && (
+        <SectionBand id="dashboard-next" title="What to do next" variant="app">
+          <StageCoachCard
+            debtFreeDate={debtData?.debtFreeDate ?? null}
+            unsecuredDebt={financialStage?.totalUnsecuredDebt || debtData?.totalDebt || 0}
+            weeklyAllowance={safeToSpend ? finiteOrNull(safeToSpend.weeklyAllowance) : null}
+          />
+        </SectionBand>
+      )}
+
+      <SectionBand id="dashboard-stand" title="Where you stand" variant="app">
+        <DashboardKpiStrip
+          liquidCash={savingsTotal}
+          monthlySurplus={budgetKnown ? finiteOrNull(budgetData?.monthlySurplus) : null}
+          netWorth={hasAccounts ? finiteOrNull(accountsData?.netWorth) : null}
+          totalAssets={hasAccounts ? finiteOrNull(accountsData?.totalAssets) : null}
+          totalLiabilities={hasAccounts ? finiteOrNull(accountsData?.totalLiabilities) : null}
+          weeklySafeToSpend={safeToSpend ? finiteOrNull(safeToSpend.weeklyAllowance) : null}
+        />
+      </SectionBand>
 
       {/* Onboarding Checklist */}
       <SetupChecklist {...checklistProps} enabledPages={enabledPages} />
 
-      {financialStage?.stage === "stabilize" && (debtData?.totalDebt ?? 0) > 0 && (
-        <StageCoachCard
-          debtFreeDate={debtData?.debtFreeDate ?? null}
-          unsecuredDebt={financialStage.totalUnsecuredDebt || debtData?.totalDebt || 0}
-          weeklyAllowance={safeToSpend ? finiteOrNull(safeToSpend.weeklyAllowance) : null}
-        />
-      )}
-
-      {visibleWidgets.length === 0 ? (
-        <DashboardEmptyState
-          reason={anyShown ? "setup" : "hidden"}
-          onChooseWidgets={() => setPanelOpen(true)}
-        />
-      ) : (
-        <div className={widgetGrid()}>
-          <VisuallyHidden as="h2">Your widgets</VisuallyHidden>
-          {visibleWidgets.map((key) => {
-            switch (key) {
-              case "accounts":
-                return <AccountsWidget key="accounts" data={accountsData} />;
-              case "budget":
-                return (
-                  <BudgetWidget
-                    key="budget"
-                    data={{
-                      ...budgetData,
-                      annualSalary:
-                        profile.annualSalary ?? forecastData?.annualSalary ?? taxData?.totalIncome,
-                    }}
-                  />
-                );
-              case "debt":
-                return <DebtWidget key="debt" data={debtData} />;
-              case "savings":
-                return (
-                  <SavingsWidget
-                    key="savings"
-                    config={widgetConfig("savings")}
-                    data={savingsData}
-                  />
-                );
-              case "pension":
-                return (
-                  <PensionWidget
-                    key="pension"
-                    data={pensionData}
-                    targetRetirementAge={finiteOrNull(widgetConfig("pension").targetRetirementAge)}
-                  />
-                );
-              case "mortgage":
-                return <MortgageWidget key="mortgage" data={mortgageData} />;
-              case "tax":
-                return <TaxWidget key="tax" data={taxData} />;
-              default:
-                return null;
-            }
-          })}
-        </div>
-      )}
+      <SectionBand id="dashboard-plans" title="Your plans at a glance" variant="app">
+        {visibleWidgets.length === 0 ? (
+          <DashboardEmptyState
+            reason={anyShown ? "setup" : "hidden"}
+            onChooseWidgets={() => setPanelOpen(true)}
+          />
+        ) : (
+          <div className={widgetGrid()}>
+            {visibleWidgets.map((key) => {
+              switch (key) {
+                case "accounts":
+                  return <AccountsWidget key="accounts" data={accountsData} />;
+                case "budget":
+                  return (
+                    <BudgetWidget
+                      key="budget"
+                      data={{
+                        ...budgetData,
+                        annualSalary:
+                          profile.annualSalary ??
+                          forecastData?.annualSalary ??
+                          taxData?.totalIncome,
+                      }}
+                    />
+                  );
+                case "debt":
+                  return <DebtWidget key="debt" data={debtData} />;
+                case "savings":
+                  return (
+                    <SavingsWidget
+                      key="savings"
+                      config={widgetConfig("savings")}
+                      data={savingsData}
+                    />
+                  );
+                case "pension":
+                  return (
+                    <PensionWidget
+                      key="pension"
+                      data={pensionData}
+                      targetRetirementAge={finiteOrNull(
+                        widgetConfig("pension").targetRetirementAge,
+                      )}
+                    />
+                  );
+                case "mortgage":
+                  return <MortgageWidget key="mortgage" data={mortgageData} />;
+                case "tax":
+                  return <TaxWidget key="tax" data={taxData} />;
+                default:
+                  return null;
+              }
+            })}
+          </div>
+        )}
+      </SectionBand>
 
       <WidgetVisibilityPanel
         error={visibilityError}

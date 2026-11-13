@@ -1,7 +1,6 @@
 import { Icon, Money, Num, ProgressBar, StatusBadge } from "@repo/ui";
 import { Hourglass } from "lucide-react";
 import { type FC, useMemo } from "react";
-import { NotSet } from "~/features/feedback/components/NotSet";
 import { calculateRunwayStats, loadRunwaySettings } from "~/utils/runwayStorage";
 import {
   content,
@@ -17,6 +16,7 @@ import {
   unit,
 } from "../../widgetBody.styles";
 import { WIDGET_ICONS } from "../../widgetIcons";
+import { NotSetValue } from "../NotSetValue";
 import { WidgetCard } from "../WidgetCard";
 import { runwayRow, spendingBlock } from "./BudgetWidget.styles";
 
@@ -110,7 +110,7 @@ export const BudgetWidget: FC<BudgetWidgetProps> = ({ data }) => {
           <div className={headline()} role="status">
             <p className={label()}>Monthly surplus</p>
             <p className={notSetWrap()}>
-              <NotSet href="/app/budget" subject="your budget" />
+              <NotSetValue href="/app/budget" subject="your budget" />
             </p>
           </div>
         </div>
@@ -149,7 +149,7 @@ export const BudgetWidget: FC<BudgetWidgetProps> = ({ data }) => {
             <>
               <p className={label()}>Monthly surplus</p>
               <p className={notSetWrap()}>
-                <NotSet
+                <NotSetValue
                   actionLabel="Add"
                   href="/app/budget"
                   id="budget-widget-add-income-for-surplus"
@@ -167,7 +167,7 @@ export const BudgetWidget: FC<BudgetWidgetProps> = ({ data }) => {
               {incomeKnown ? (
                 <Money value={income} />
               ) : (
-                <NotSet
+                <NotSetValue
                   actionLabel="Add"
                   href="/app/budget"
                   id="budget-widget-add-income"
@@ -182,7 +182,7 @@ export const BudgetWidget: FC<BudgetWidgetProps> = ({ data }) => {
               {incomeKnown && finite(data.savingsRatePct) ? (
                 <Num fractionDigits={0} kind="percent" value={data.savingsRatePct} />
               ) : (
-                <NotSet
+                <NotSetValue
                   actionLabel="Add"
                   href="/app/budget"
                   id="budget-widget-add-income-for-rate"
@@ -217,7 +217,7 @@ export const BudgetWidget: FC<BudgetWidgetProps> = ({ data }) => {
               {runway.text}
             </StatusBadge>
           ) : (
-            <NotSet
+            <NotSetValue
               actionLabel="Add"
               href="/app/budget"
               id="budget-widget-add-runway"

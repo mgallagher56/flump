@@ -23,10 +23,10 @@ export const meta = cva({
   },
 });
 
-/** Wraps a `NotSet` that stands in for a headline figure. */
+/** Wraps a `NotSetValue` that stands in for a headline figure. Compact, never a huge grey figure. */
 export const notSetWrap = cva({
   base: {
-    textStyle: "numeric.md",
+    textStyle: "body.md",
     color: "text.muted",
     fontVariantNumeric: "tabular-nums",
     margin: 0,

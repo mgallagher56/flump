@@ -68,17 +68,24 @@ describe("<Header />", () => {
     mocks.mockUseLoaderData.mockReturnValue({ user: undefined });
     const { container } = customRender(<Header />);
     const header = container.querySelector("header");
-    const nav = container.querySelector("nav");
-    expect(header).not.toBeNull();
-    expect(nav).not.toBeNull();
+    expect(container.querySelector("nav")).not.toBeNull();
     expect(header?.className).toContain("pos_sticky");
     expect(header?.className).toContain("top_0");
+  });
+
+  test("signed-in header lists the primary destinations as links", () => {
+    mocks.mockUseLoaderData.mockReturnValue({ user: mockUser });
+    customRender(<Header />);
+    const nav = screen.getByRole("navigation", { name: "Primary" });
+    const hrefs = Array.from(nav.querySelectorAll("a")).map((a) => a.getAttribute("href"));
+    expect(hrefs).toContain("/app/accounts");
+    expect(hrefs).toContain("/app/budget");
   });
 
   test("renders mobile variant and opens/closes mobile navigation drawer", () => {
     mocks.mockUseLoaderData.mockReturnValue({ user: mockUser });
     customRender(<Header isMobile variant="mobile" />);
-    const toggleBtn = screen.getByTestId("mobile-menu-toggle");
+    const toggleBtn = screen.getByLabelText("Open navigation menu");
     expect(toggleBtn).not.toBeNull();
 
     fireEvent.click(toggleBtn);

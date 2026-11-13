@@ -1,17 +1,12 @@
-import { Icon } from "@repo/ui";
-import { Menu } from "lucide-react";
+import { TopBar } from "@repo/ui";
 import { type FC, type ReactElement, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useLoaderData, useLocation } from "react-router";
-import FLPBox from "~/components/core/structure/FLPBox";
 import AvatarMenu from "~/components/navigation/AvatarMenu";
+import { buildNavManifest, findActiveNavKey } from "~/components/navigation/buildNavManifest";
 import HomeLogo from "~/components/navigation/HomeLogo";
-import NavMenu from "~/components/navigation/NavMenu";
-import {
-  AUTH_NAV_ROUTES,
-  filterNavRoutes,
-  HOME_NAV_ROUTE,
-  isSandboxPath,
-} from "~/components/navigation/navConfig";
+import { isSandboxPath } from "~/components/navigation/navConfig";
+import { createRenderNavLink } from "~/components/navigation/renderNavLink";
 import ThemeToggle from "~/components/navigation/ThemeToggle";
 import UserLogin from "~/components/navigation/UserLogin";
 import { useResponsive } from "~/context/ResponsiveContext";
@@ -20,14 +15,6 @@ import type { loader } from "~/root";
 import { isPageEnabled } from "~/utils/pageConfig";
 
 import MobileNavDrawer from "./MobileNavDrawer";
-import {
-  desktopMenuLinksStyles,
-  headerStyles,
-  loginStyles,
-  menuStyles,
-  mobileMenuButtonStyles,
-  navStyles,
-} from "./styles";
 
 export interface HeaderProps {
   isMobile?: boolean;
@@ -50,10 +37,19 @@ const Header: FC<HeaderProps> = ({ isMobile: propIsMobile, variant }): ReactElem
   const isMobileVariant = propIsMobile ?? (variant === "mobile" ? true : contextIsMobile);
   const drawerOpen = isMobileDrawerOpen || localDrawerOpen;
 
-  const filteredAuthRoutes = useMemo(
-    () => filterNavRoutes(AUTH_NAV_ROUTES, profile.enabledPages || [], isPageEnabled),
-    [profile.enabledPages],
+  const { t } = useTranslation();
+  const items = useMemo(
+    () =>
+      buildNavManifest({
+        signedIn: !!user,
+        sandbox,
+        enabledPages: profile.enabledPages || [],
+        isPageEnabled,
+        t,
+      }),
+    [user, sandbox, profile.enabledPages, t],
   );
+  const renderLink = useMemo(() => createRenderNavLink(), []);
 
   const handleToggleDrawer = () => {
     toggleMobileDrawer();
@@ -67,38 +63,22 @@ const Header: FC<HeaderProps> = ({ isMobile: propIsMobile, variant }): ReactElem
 
   return (
     <>
-      <header className={headerStyles}>
-        <nav aria-label="Primary" className={navStyles}>
-          <FLPBox className={menuStyles}>
-            <HomeLogo decorative={!isMobileVariant} />
-            {!isMobileVariant && (
-              <div className={desktopMenuLinksStyles}>
-                <NavMenu routes={[HOME_NAV_ROUTE]} />
-                {!!user && <NavMenu routes={filteredAuthRoutes} />}
-              </div>
-            )}
-          </FLPBox>
-          <FLPBox className={loginStyles}>
+      <TopBar
+        actions={
+          <>
             <ThemeToggle />
             {!!user && <AvatarMenu user={user} />}
             {!user && <UserLogin />}
-            <button
-              aria-controls="mobile-nav-drawer"
-              aria-expanded={drawerOpen}
-              aria-haspopup="dialog"
-              aria-label="Open navigation menu"
-              className={mobileMenuButtonStyles}
-              data-testid="mobile-menu-toggle"
-              id="mobile-menu-toggle"
-              data-mobile={isMobileVariant ? "true" : undefined}
-              type="button"
-              onClick={handleToggleDrawer}
-            >
-              <Icon icon={Menu} />
-            </button>
-          </FLPBox>
-        </nav>
-      </header>
+          </>
+        }
+        activeKey={findActiveNavKey(items, pathname)}
+        items={items}
+        logo={<HomeLogo decorative={!isMobileVariant} />}
+        menuLabel="Open navigation menu"
+        navLabel="Primary"
+        renderLink={renderLink}
+        onMenuClick={handleToggleDrawer}
+      />
       <MobileNavDrawer
         isOpen={drawerOpen}
         sandbox={sandbox}

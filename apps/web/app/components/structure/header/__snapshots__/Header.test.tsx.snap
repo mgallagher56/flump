@@ -4,28 +4,91 @@ exports[`<Header /> > renders as expected by default 1`] = `
 <body>
   <div>
     <header
-      class="pos_sticky top_0 z_50 w_100% bg-c_surface.overlay bkdp_blur(12px) bd-b-w_1px bd-b-c_border.subtle border-bottom-style_solid motionSafe:trs-prop_background-color,_border-color motionSafe:trs-dur_base motionSafe:trs-tmf_standard"
+      class="pos_sticky top_0 z_header w_100% bg-c_color-mix(in_srgb,_token(colors.surface.canvas)_88%,_transparent) bkdp_blur(14px) bd-b-w_1px border-bottom-style_solid bd-b-c_border.subtle"
     >
-      <nav
-        aria-label="Primary"
-        class="d_flex ai_center jc_space-between w_100% max-w_1536px m_0_auto py_3 md:py_3 px_12px md:px_24px"
+      <div
+        class="d_flex ai_center gap_3 lg:gap_5 min-h_14 lg:min-h_18 px_4 lg:px_10 py_2 max-w_1536px mx_auto"
       >
+        <button
+          aria-label="Open navigation menu"
+          class="pos_relative d_inline-flex ai_center jc_center gap_2 bdr_xl bd-w_1.5px border-style_solid bd-c_transparent fw_bold cursor_pointer lh_1.25 ta_center td_none py_2 [@media_(pointer:_coarse)]:min-h_touch [@media_(pointer:_coarse)]:min-w_touch motionSafe:trs-prop_background-color,_border-color,_box-shadow,_transform,_opacity motionSafe:trs-dur_fast motionSafe:trs-tmf_standard motionSafe:hover:trf_translateY(-2px) motionSafe:active:trf_scale(0.97) [&:is(:disabled,_[disabled])]:bg_transparent [&:is(:disabled,_[disabled])]:c_text.muted [&:is(:disabled,_[disabled])]:bd-c_transparent [&:is(:disabled,_[disabled])]:cursor_not-allowed [&:is(:disabled,_[disabled])]:bx-sh_none [&[aria-busy=true]]:cursor_progress focusVisible:ring_2px_solid focusVisible:ring-c_border.focusRing focusVisible:ring-o_2px bg_transparent c_text.primary hover:bg_surface.subtle h_10 w_10 px_0 d_inline-flex lg:d_none"
+          type="button"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-menu d_inline-block flex-sh_0 c_currentColor va_middle w_20px h_20px"
+            fill="none"
+            focusable="false"
+            height="20"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.75"
+            viewBox="0 0 24 24"
+            width="20"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M4 5h16"
+            />
+            <path
+              d="M4 12h16"
+            />
+            <path
+              d="M4 19h16"
+            />
+          </svg>
+        </button>
         <div
-          class=" d_flex gap_4 ai_center jc_start"
+          class="d_inline-flex ai_center flex-sh_0"
         >
           <div>
             HomeLogo
           </div>
-          <div
-            class="d_none lg:d_flex lg:gap_1 xl:gap_3 ai_center white-space_nowrap min-w_0"
-          >
-            <div>
-              home
-            </div>
-          </div>
         </div>
+        <nav
+          aria-label="Primary"
+          class="d_none lg:d_block flex_1 min-w_0 ml_3"
+        >
+          <ul
+            class="d_flex ai_center gap_1 flex-wrap_nowrap li-s_none p_0 m_0"
+          >
+            <li
+              class="pos_relative flex-sh_0"
+            >
+              <a
+                href="/"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-house lucide-home d_inline-block flex-sh_0 c_currentColor va_middle w_16px h_16px"
+                  fill="none"
+                  focusable="false"
+                  height="16"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="1.75"
+                  viewBox="0 0 24 24"
+                  width="16"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"
+                  />
+                  <path
+                    d="M3 10a2 2 0 0 1 .709-1.528l7-6a2 2 0 0 1 2.582 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"
+                  />
+                </svg>
+                <span>
+                  home
+                </span>
+              </a>
+            </li>
+          </ul>
+        </nav>
         <div
-          class=" d_flex gap_2 ai_center jc_end"
+          class="d_flex ai_center gap_3 ml_auto flex-sh_0"
         >
           <fieldset
             aria-label="Colour theme"
@@ -153,43 +216,8 @@ exports[`<Header /> > renders as expected by default 1`] = `
           <div>
             UserLogin
           </div>
-          <button
-            aria-controls="mobile-nav-drawer"
-            aria-expanded="false"
-            aria-haspopup="dialog"
-            aria-label="Open navigation menu"
-            class="d_inline-flex lg:d_none ai_center jc_center w_44px h_44px bdr_lg bd-w_1px border-style_solid bd-c_border.subtle bg-c_surface.card c_text.primary cursor_pointer motionSafe:trs-prop_border-color,_color motionSafe:trs-dur_fast motionSafe:trs-tmf_standard hover:bd-c_primary.border hover:c_primary focusVisible:ring_2px_solid focusVisible:ring-c_border.focusRing focusVisible:ring-o_2px [&[data-mobile='true']]:d_inline-flex"
-            data-testid="mobile-menu-toggle"
-            id="mobile-menu-toggle"
-            type="button"
-          >
-            <svg
-              aria-hidden="true"
-              class="lucide lucide-menu d_inline-block flex-sh_0 c_currentColor va_middle w_20px h_20px"
-              fill="none"
-              focusable="false"
-              height="20"
-              stroke="currentColor"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="1.75"
-              viewBox="0 0 24 24"
-              width="20"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M4 5h16"
-              />
-              <path
-                d="M4 12h16"
-              />
-              <path
-                d="M4 19h16"
-              />
-            </svg>
-          </button>
         </div>
-      </nav>
+      </div>
     </header>
   </div>
 </body>
@@ -199,43 +227,301 @@ exports[`<Header /> > renders correctly when user logged in 1`] = `
 <body>
   <div>
     <header
-      class="pos_sticky top_0 z_50 w_100% bg-c_surface.overlay bkdp_blur(12px) bd-b-w_1px bd-b-c_border.subtle border-bottom-style_solid motionSafe:trs-prop_background-color,_border-color motionSafe:trs-dur_base motionSafe:trs-tmf_standard"
+      class="pos_sticky top_0 z_header w_100% bg-c_color-mix(in_srgb,_token(colors.surface.canvas)_88%,_transparent) bkdp_blur(14px) bd-b-w_1px border-bottom-style_solid bd-b-c_border.subtle"
     >
-      <nav
-        aria-label="Primary"
-        class="d_flex ai_center jc_space-between w_100% max-w_1536px m_0_auto py_3 md:py_3 px_12px md:px_24px"
+      <div
+        class="d_flex ai_center gap_3 lg:gap_5 min-h_14 lg:min-h_18 px_4 lg:px_10 py_2 max-w_1536px mx_auto"
       >
+        <button
+          aria-label="Open navigation menu"
+          class="pos_relative d_inline-flex ai_center jc_center gap_2 bdr_xl bd-w_1.5px border-style_solid bd-c_transparent fw_bold cursor_pointer lh_1.25 ta_center td_none py_2 [@media_(pointer:_coarse)]:min-h_touch [@media_(pointer:_coarse)]:min-w_touch motionSafe:trs-prop_background-color,_border-color,_box-shadow,_transform,_opacity motionSafe:trs-dur_fast motionSafe:trs-tmf_standard motionSafe:hover:trf_translateY(-2px) motionSafe:active:trf_scale(0.97) [&:is(:disabled,_[disabled])]:bg_transparent [&:is(:disabled,_[disabled])]:c_text.muted [&:is(:disabled,_[disabled])]:bd-c_transparent [&:is(:disabled,_[disabled])]:cursor_not-allowed [&:is(:disabled,_[disabled])]:bx-sh_none [&[aria-busy=true]]:cursor_progress focusVisible:ring_2px_solid focusVisible:ring-c_border.focusRing focusVisible:ring-o_2px bg_transparent c_text.primary hover:bg_surface.subtle h_10 w_10 px_0 d_inline-flex lg:d_none"
+          type="button"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-menu d_inline-block flex-sh_0 c_currentColor va_middle w_20px h_20px"
+            fill="none"
+            focusable="false"
+            height="20"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.75"
+            viewBox="0 0 24 24"
+            width="20"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M4 5h16"
+            />
+            <path
+              d="M4 12h16"
+            />
+            <path
+              d="M4 19h16"
+            />
+          </svg>
+        </button>
         <div
-          class=" d_flex gap_4 ai_center jc_start"
+          class="d_inline-flex ai_center flex-sh_0"
         >
           <div>
             HomeLogo
           </div>
-          <div
-            class="d_none lg:d_flex lg:gap_1 xl:gap_3 ai_center white-space_nowrap min-w_0"
-          >
-            <div>
-              home
-            </div>
-            <div>
-              accounts
-            </div>
-            <div>
-              budget
-            </div>
-            <div>
-              taxAndPay
-            </div>
-            <div>
-              savingsAndPension
-            </div>
-            <div>
-              borrowing
-            </div>
-          </div>
         </div>
+        <nav
+          aria-label="Primary"
+          class="d_none lg:d_block flex_1 min-w_0 ml_3"
+        >
+          <ul
+            class="d_flex ai_center gap_1 flex-wrap_nowrap li-s_none p_0 m_0"
+          >
+            <li
+              class="pos_relative flex-sh_0"
+            >
+              <a
+                href="/"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-house lucide-home d_inline-block flex-sh_0 c_currentColor va_middle w_16px h_16px"
+                  fill="none"
+                  focusable="false"
+                  height="16"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="1.75"
+                  viewBox="0 0 24 24"
+                  width="16"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"
+                  />
+                  <path
+                    d="M3 10a2 2 0 0 1 .709-1.528l7-6a2 2 0 0 1 2.582 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"
+                  />
+                </svg>
+                <span>
+                  home
+                </span>
+              </a>
+            </li>
+            <li
+              class="pos_relative flex-sh_0"
+            >
+              <a
+                href="/app/accounts"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-scale d_inline-block flex-sh_0 c_currentColor va_middle w_16px h_16px"
+                  fill="none"
+                  focusable="false"
+                  height="16"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="1.75"
+                  viewBox="0 0 24 24"
+                  width="16"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M12 3v18"
+                  />
+                  <path
+                    d="m19 8 3 8a5 5 0 0 1-6 0zV7"
+                  />
+                  <path
+                    d="M3 7h1a17 17 0 0 0 8-2 17 17 0 0 0 8 2h1"
+                  />
+                  <path
+                    d="m5 8 3 8a5 5 0 0 1-6 0zV7"
+                  />
+                  <path
+                    d="M7 21h10"
+                  />
+                </svg>
+                <span>
+                  accounts
+                </span>
+              </a>
+            </li>
+            <li
+              class="pos_relative flex-sh_0"
+            >
+              <a
+                href="/app/budget"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-wallet d_inline-block flex-sh_0 c_currentColor va_middle w_16px h_16px"
+                  fill="none"
+                  focusable="false"
+                  height="16"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="1.75"
+                  viewBox="0 0 24 24"
+                  width="16"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1"
+                  />
+                  <path
+                    d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4"
+                  />
+                </svg>
+                <span>
+                  budget
+                </span>
+              </a>
+            </li>
+            <li
+              class="pos_relative flex-sh_0"
+            >
+              <a
+                href="/app/take-home"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-calculator d_inline-block flex-sh_0 c_currentColor va_middle w_16px h_16px"
+                  fill="none"
+                  focusable="false"
+                  height="16"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="1.75"
+                  viewBox="0 0 24 24"
+                  width="16"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <rect
+                    height="20"
+                    rx="2"
+                    width="16"
+                    x="4"
+                    y="2"
+                  />
+                  <line
+                    x1="8"
+                    x2="16"
+                    y1="6"
+                    y2="6"
+                  />
+                  <line
+                    x1="16"
+                    x2="16"
+                    y1="14"
+                    y2="18"
+                  />
+                  <path
+                    d="M16 10h.01"
+                  />
+                  <path
+                    d="M12 10h.01"
+                  />
+                  <path
+                    d="M8 10h.01"
+                  />
+                  <path
+                    d="M12 14h.01"
+                  />
+                  <path
+                    d="M8 14h.01"
+                  />
+                  <path
+                    d="M12 18h.01"
+                  />
+                  <path
+                    d="M8 18h.01"
+                  />
+                </svg>
+                <span>
+                  taxAndPay
+                </span>
+              </a>
+            </li>
+            <li
+              class="pos_relative flex-sh_0"
+            >
+              <button
+                aria-expanded="false"
+                class="d_inline-flex ai_center gap_2 min-h_8 px_3 bdr_full bg-c_transparent bd-w_0 c_text.secondary textStyle_label.md fw_semibold white-space_nowrap td_none cursor_pointer motionSafe:trs-prop_background-color,_color motionSafe:trs-dur_fast motionSafe:trs-tmf_standard hover:bg-c_surface.sunken hover:c_text.primary focusVisible:ring_2px_solid focusVisible:ring-c_border.focusRing focusVisible:ring-o_2px [&[aria-current="page"]]:bg-c_primary.subtle [&[aria-current="page"]]:c_primary"
+                type="button"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-piggy-bank d_inline-block flex-sh_0 c_currentColor va_middle w_16px h_16px"
+                  fill="none"
+                  focusable="false"
+                  height="16"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="1.75"
+                  viewBox="0 0 24 24"
+                  width="16"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M11 17h3v2a1 1 0 0 0 1 1h2a1 1 0 0 0 1-1v-3a3.16 3.16 0 0 0 2-2h1a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1h-1a5 5 0 0 0-2-4V3a4 4 0 0 0-3.2 1.6l-.3.4H11a6 6 0 0 0-6 6v1a5 5 0 0 0 2 4v3a1 1 0 0 0 1 1h2a1 1 0 0 0 1-1z"
+                  />
+                  <path
+                    d="M16 10h.01"
+                  />
+                  <path
+                    d="M2 8v1a2 2 0 0 0 2 2h1"
+                  />
+                </svg>
+                <span>
+                  savingsAndPension
+                </span>
+              </button>
+            </li>
+            <li
+              class="pos_relative flex-sh_0"
+            >
+              <button
+                aria-expanded="false"
+                class="d_inline-flex ai_center gap_2 min-h_8 px_3 bdr_full bg-c_transparent bd-w_0 c_text.secondary textStyle_label.md fw_semibold white-space_nowrap td_none cursor_pointer motionSafe:trs-prop_background-color,_color motionSafe:trs-dur_fast motionSafe:trs-tmf_standard hover:bg-c_surface.sunken hover:c_text.primary focusVisible:ring_2px_solid focusVisible:ring-c_border.focusRing focusVisible:ring-o_2px [&[aria-current="page"]]:bg-c_primary.subtle [&[aria-current="page"]]:c_primary"
+                type="button"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-trending-down d_inline-block flex-sh_0 c_currentColor va_middle w_16px h_16px"
+                  fill="none"
+                  focusable="false"
+                  height="16"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="1.75"
+                  viewBox="0 0 24 24"
+                  width="16"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M16 17h6v-6"
+                  />
+                  <path
+                    d="m22 17-8.5-8.5-5 5L2 7"
+                  />
+                </svg>
+                <span>
+                  borrowing
+                </span>
+              </button>
+            </li>
+          </ul>
+        </nav>
         <div
-          class=" d_flex gap_2 ai_center jc_end"
+          class="d_flex ai_center gap_3 ml_auto flex-sh_0"
         >
           <fieldset
             aria-label="Colour theme"
@@ -363,43 +649,8 @@ exports[`<Header /> > renders correctly when user logged in 1`] = `
           <div>
             AvatarMenu
           </div>
-          <button
-            aria-controls="mobile-nav-drawer"
-            aria-expanded="false"
-            aria-haspopup="dialog"
-            aria-label="Open navigation menu"
-            class="d_inline-flex lg:d_none ai_center jc_center w_44px h_44px bdr_lg bd-w_1px border-style_solid bd-c_border.subtle bg-c_surface.card c_text.primary cursor_pointer motionSafe:trs-prop_border-color,_color motionSafe:trs-dur_fast motionSafe:trs-tmf_standard hover:bd-c_primary.border hover:c_primary focusVisible:ring_2px_solid focusVisible:ring-c_border.focusRing focusVisible:ring-o_2px [&[data-mobile='true']]:d_inline-flex"
-            data-testid="mobile-menu-toggle"
-            id="mobile-menu-toggle"
-            type="button"
-          >
-            <svg
-              aria-hidden="true"
-              class="lucide lucide-menu d_inline-block flex-sh_0 c_currentColor va_middle w_20px h_20px"
-              fill="none"
-              focusable="false"
-              height="20"
-              stroke="currentColor"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="1.75"
-              viewBox="0 0 24 24"
-              width="20"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M4 5h16"
-              />
-              <path
-                d="M4 12h16"
-              />
-              <path
-                d="M4 19h16"
-              />
-            </svg>
-          </button>
         </div>
-      </nav>
+      </div>
     </header>
   </div>
 </body>
@@ -409,28 +660,91 @@ exports[`<Header /> > renders without ColorModeSwitch 1`] = `
 <body>
   <div>
     <header
-      class="pos_sticky top_0 z_50 w_100% bg-c_surface.overlay bkdp_blur(12px) bd-b-w_1px bd-b-c_border.subtle border-bottom-style_solid motionSafe:trs-prop_background-color,_border-color motionSafe:trs-dur_base motionSafe:trs-tmf_standard"
+      class="pos_sticky top_0 z_header w_100% bg-c_color-mix(in_srgb,_token(colors.surface.canvas)_88%,_transparent) bkdp_blur(14px) bd-b-w_1px border-bottom-style_solid bd-b-c_border.subtle"
     >
-      <nav
-        aria-label="Primary"
-        class="d_flex ai_center jc_space-between w_100% max-w_1536px m_0_auto py_3 md:py_3 px_12px md:px_24px"
+      <div
+        class="d_flex ai_center gap_3 lg:gap_5 min-h_14 lg:min-h_18 px_4 lg:px_10 py_2 max-w_1536px mx_auto"
       >
+        <button
+          aria-label="Open navigation menu"
+          class="pos_relative d_inline-flex ai_center jc_center gap_2 bdr_xl bd-w_1.5px border-style_solid bd-c_transparent fw_bold cursor_pointer lh_1.25 ta_center td_none py_2 [@media_(pointer:_coarse)]:min-h_touch [@media_(pointer:_coarse)]:min-w_touch motionSafe:trs-prop_background-color,_border-color,_box-shadow,_transform,_opacity motionSafe:trs-dur_fast motionSafe:trs-tmf_standard motionSafe:hover:trf_translateY(-2px) motionSafe:active:trf_scale(0.97) [&:is(:disabled,_[disabled])]:bg_transparent [&:is(:disabled,_[disabled])]:c_text.muted [&:is(:disabled,_[disabled])]:bd-c_transparent [&:is(:disabled,_[disabled])]:cursor_not-allowed [&:is(:disabled,_[disabled])]:bx-sh_none [&[aria-busy=true]]:cursor_progress focusVisible:ring_2px_solid focusVisible:ring-c_border.focusRing focusVisible:ring-o_2px bg_transparent c_text.primary hover:bg_surface.subtle h_10 w_10 px_0 d_inline-flex lg:d_none"
+          type="button"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-menu d_inline-block flex-sh_0 c_currentColor va_middle w_20px h_20px"
+            fill="none"
+            focusable="false"
+            height="20"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.75"
+            viewBox="0 0 24 24"
+            width="20"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M4 5h16"
+            />
+            <path
+              d="M4 12h16"
+            />
+            <path
+              d="M4 19h16"
+            />
+          </svg>
+        </button>
         <div
-          class=" d_flex gap_4 ai_center jc_start"
+          class="d_inline-flex ai_center flex-sh_0"
         >
           <div>
             HomeLogo
           </div>
-          <div
-            class="d_none lg:d_flex lg:gap_1 xl:gap_3 ai_center white-space_nowrap min-w_0"
-          >
-            <div>
-              home
-            </div>
-          </div>
         </div>
+        <nav
+          aria-label="Primary"
+          class="d_none lg:d_block flex_1 min-w_0 ml_3"
+        >
+          <ul
+            class="d_flex ai_center gap_1 flex-wrap_nowrap li-s_none p_0 m_0"
+          >
+            <li
+              class="pos_relative flex-sh_0"
+            >
+              <a
+                href="/"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-house lucide-home d_inline-block flex-sh_0 c_currentColor va_middle w_16px h_16px"
+                  fill="none"
+                  focusable="false"
+                  height="16"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="1.75"
+                  viewBox="0 0 24 24"
+                  width="16"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"
+                  />
+                  <path
+                    d="M3 10a2 2 0 0 1 .709-1.528l7-6a2 2 0 0 1 2.582 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"
+                  />
+                </svg>
+                <span>
+                  home
+                </span>
+              </a>
+            </li>
+          </ul>
+        </nav>
         <div
-          class=" d_flex gap_2 ai_center jc_end"
+          class="d_flex ai_center gap_3 ml_auto flex-sh_0"
         >
           <fieldset
             aria-label="Colour theme"
@@ -558,43 +872,8 @@ exports[`<Header /> > renders without ColorModeSwitch 1`] = `
           <div>
             UserLogin
           </div>
-          <button
-            aria-controls="mobile-nav-drawer"
-            aria-expanded="false"
-            aria-haspopup="dialog"
-            aria-label="Open navigation menu"
-            class="d_inline-flex lg:d_none ai_center jc_center w_44px h_44px bdr_lg bd-w_1px border-style_solid bd-c_border.subtle bg-c_surface.card c_text.primary cursor_pointer motionSafe:trs-prop_border-color,_color motionSafe:trs-dur_fast motionSafe:trs-tmf_standard hover:bd-c_primary.border hover:c_primary focusVisible:ring_2px_solid focusVisible:ring-c_border.focusRing focusVisible:ring-o_2px [&[data-mobile='true']]:d_inline-flex"
-            data-testid="mobile-menu-toggle"
-            id="mobile-menu-toggle"
-            type="button"
-          >
-            <svg
-              aria-hidden="true"
-              class="lucide lucide-menu d_inline-block flex-sh_0 c_currentColor va_middle w_20px h_20px"
-              fill="none"
-              focusable="false"
-              height="20"
-              stroke="currentColor"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="1.75"
-              viewBox="0 0 24 24"
-              width="20"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M4 5h16"
-              />
-              <path
-                d="M4 12h16"
-              />
-              <path
-                d="M4 19h16"
-              />
-            </svg>
-          </button>
         </div>
-      </nav>
+      </div>
     </header>
   </div>
 </body>

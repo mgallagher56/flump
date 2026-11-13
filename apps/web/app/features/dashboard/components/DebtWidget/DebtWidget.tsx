@@ -1,7 +1,6 @@
 import { Icon, Money, StatusBadge } from "@repo/ui";
 import { CalendarCheck, Flame } from "lucide-react";
 import type { FC } from "react";
-import { NotSet } from "~/features/feedback/components/NotSet";
 import type { DebtSummary } from "~/utils/debtSummary";
 import {
   content,
@@ -15,6 +14,7 @@ import {
   statValue,
 } from "../../widgetBody.styles";
 import { WIDGET_ICONS } from "../../widgetIcons";
+import { NotSetValue } from "../NotSetValue";
 import { WidgetCard } from "../WidgetCard";
 import { headlineRow, statTextValue } from "./DebtWidget.styles";
 
@@ -53,7 +53,7 @@ export const DebtWidget: FC<DebtWidgetProps> = ({ data = null }) => {
                 <dd className={statValue()}>
                   {aprUnknown ? (
                     <span className={statTextValue()}>
-                      <NotSet
+                      <NotSetValue
                         actionLabel="Add"
                         href="/app/accounts"
                         id="debt-widget-add-apr"
@@ -88,7 +88,7 @@ export const DebtWidget: FC<DebtWidgetProps> = ({ data = null }) => {
           <div className={headline()}>
             <p className={label()}>Total unsecured debt</p>
             <p className={notSetWrap()}>
-              <NotSet
+              <NotSetValue
                 actionLabel="Add"
                 href="/app/accounts"
                 id="debt-widget-empty"

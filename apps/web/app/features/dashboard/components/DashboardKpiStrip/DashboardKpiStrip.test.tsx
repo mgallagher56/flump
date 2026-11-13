@@ -34,10 +34,12 @@ const renderStrip = (props: DashboardKpiStripProps) =>
 describe("<DashboardKpiStrip />", () => {
   it("shows exactly the four KPIs with en-GB formatted figures", () => {
     renderStrip(known);
-    for (const label of ["Net worth", "Monthly surplus", "Weekly safe to spend", "Liquid cash"]) {
+    for (const label of ["Monthly surplus", "Weekly safe to spend", "Liquid cash"]) {
       expect(screen.getByText(label)).toBeDefined();
     }
-    expect(screen.getByText("£50,000")).toBeDefined();
+    // Net worth is both the hero headline and the first figure in the row.
+    expect(screen.getAllByText("Net worth")).toHaveLength(2);
+    expect(screen.getAllByText("£50,000")).toHaveLength(2);
     expect(screen.getByText("£1,500")).toBeDefined();
     expect(screen.getByText("£12,500")).toBeDefined();
     expect(screen.queryByText("Not set")).toBeNull();

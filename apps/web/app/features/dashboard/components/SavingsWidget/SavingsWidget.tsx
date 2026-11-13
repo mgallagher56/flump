@@ -1,6 +1,5 @@
 import { Money, Num } from "@repo/ui";
 import type { FC } from "react";
-import { NotSet } from "~/features/feedback/components/NotSet";
 import {
   content,
   headline,
@@ -14,6 +13,7 @@ import {
   unit,
 } from "../../widgetBody.styles";
 import { WIDGET_ICONS } from "../../widgetIcons";
+import { NotSetValue } from "../NotSetValue";
 import { WidgetCard } from "../WidgetCard";
 import { futureValue } from "./futureValue";
 import { forecastBox, forecastTitle } from "./SavingsWidget.styles";
@@ -72,7 +72,7 @@ export const SavingsWidget: FC<SavingsWidgetProps> = ({ data, config = {} }) => 
             <Money size="lg" value={data.totalSavingsBalance} />
           ) : (
             <p className={notSetWrap()}>
-              <NotSet href="/app/savings" subject="a savings account" />
+              <NotSetValue href="/app/savings" subject="a savings account" />
             </p>
           )}
         </div>
@@ -85,7 +85,7 @@ export const SavingsWidget: FC<SavingsWidgetProps> = ({ data, config = {} }) => 
                 {rate !== null ? (
                   <Num fractionDigits={2} kind="percent" value={rate} />
                 ) : (
-                  <NotSet
+                  <NotSetValue
                     actionLabel="Add"
                     href="/app/savings"
                     id="savings-widget-add-rate"
@@ -103,7 +103,7 @@ export const SavingsWidget: FC<SavingsWidgetProps> = ({ data, config = {} }) => 
                     <span className={unit()}>a month</span>
                   </>
                 ) : (
-                  <NotSet
+                  <NotSetValue
                     actionLabel="Add"
                     href="/app/savings"
                     id="savings-widget-add-contribution"
@@ -130,7 +130,7 @@ export const SavingsWidget: FC<SavingsWidgetProps> = ({ data, config = {} }) => 
               </>
             ) : (
               <p className={notSetWrap()}>
-                <NotSet
+                <NotSetValue
                   actionLabel="Add"
                   href="/app/savings"
                   id="savings-widget-forecast-add-rate"

@@ -170,6 +170,13 @@ describe("HomeDashboard", () => {
     expect(screen.getByText("Self Assessment")).toBeDefined();
   });
 
+  it("groups the page into plain-language bands", () => {
+    renderDashboard();
+    for (const name of ["Where you stand", "Your plans at a glance"]) {
+      expect(screen.getByRole("heading", { level: 2, name })).toBeDefined();
+    }
+  });
+
   it("labels sandbox data as an example instead of welcoming the user back", () => {
     renderDashboard({ isSample: true });
     expect(screen.getByRole("heading", { level: 1, name: "Example snapshot" })).toBeDefined();
