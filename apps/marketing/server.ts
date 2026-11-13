@@ -4,6 +4,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import express from "express";
 import { createServer as createViteServer, type ViteDevServer } from "vite";
+import { analyticsMiddleware } from "./server/analytics";
 import { buildHeadMeta } from "./server/headMeta";
 import { registerOps } from "./server/ops";
 import { buildCsp, genericServerError, injectThemeNonce, resolveAppUrl } from "./server/security";
@@ -58,6 +59,10 @@ async function createServer() {
       }) as any,
     );
   }
+
+  // Cookieless page counts (E24-T9): off unless ANALYTICS_MODE=log and ANALYTICS_NOTICE_URL are
+  // set. After sirv so assets never reach it, before the SSR catch-all.
+  app.use(analyticsMiddleware());
 
   app.use(async (req, res) => {
     const url = req.originalUrl;
