@@ -82,6 +82,17 @@ describe("McpService dev token wiring", () => {
     }
   });
 
+  it('does not pass "null" or "*" through as allowed origins', () => {
+    const original = process.env;
+    try {
+      process.env = { ...original, MCP_ALLOWED_ORIGINS: "null,*" };
+      build("workos");
+    } finally {
+      process.env = original;
+    }
+    expect(handlerOptions[0].allowedOrigins).toEqual([]);
+  });
+
   it("passes an empty origin list by default", () => {
     const original = process.env;
     try {

@@ -36,6 +36,12 @@ describe("readMcpAccessConfig", () => {
     ).toEqual(["https://a.example", "https://b.example"]);
   });
 
+  it("drops * and null entries from the allowlist", () => {
+    expect(
+      readMcpAccessConfig({ MCP_ALLOWED_ORIGINS: "*, null,NULL,https://a.example" }).allowedOrigins,
+    ).toEqual(["https://a.example"]);
+  });
+
   it("open access defaults off in production and on elsewhere", () => {
     expect(readMcpAccessConfig({ NODE_ENV: "production" }).openAccess).toBe(false);
     expect(readMcpAccessConfig({ NODE_ENV: "development" }).openAccess).toBe(true);
@@ -134,6 +140,6 @@ describe("mcpAllowedOriginsBootWarning", () => {
     expect(w).toContain("*");
     expect(w).toContain("null");
     expect(w).toContain("app.example.com");
-    expect(w).not.toContain("ok.example,");
+    expect(w).not.toContain("https://ok.example");
   });
 });
