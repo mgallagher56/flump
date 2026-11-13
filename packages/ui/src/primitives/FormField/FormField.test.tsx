@@ -52,7 +52,7 @@ describe("FormField", () => {
 
   it("shows a required marker that is not read twice", () => {
     const { container } = renderField({ required: true });
-    expect(container.querySelector("[aria-hidden='true']")?.textContent).toBe("*");
+    expect(container.querySelector("[aria-hidden='true']")?.textContent).toBe("Required");
     const input = screen.getByRole("textbox", { name: "Monthly overpayment" });
     expect(input.hasAttribute("required")).toBe(true);
     expect(screen.queryByText(/\(required\)/)).toBeNull();

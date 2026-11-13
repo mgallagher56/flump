@@ -12,10 +12,13 @@ export const formFieldRecipe = sva({
     label: {
       textStyle: "label.md",
       color: "text.primary",
+      fontWeight: "semibold",
     },
     required: {
-      color: "status.danger.text",
-      marginLeft: "1",
+      textStyle: "body.sm",
+      fontWeight: "normal",
+      color: "text.secondary",
+      marginLeft: "2",
     },
     hint: {
       textStyle: "body.sm",

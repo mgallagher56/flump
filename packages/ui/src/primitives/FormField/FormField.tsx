@@ -18,6 +18,8 @@ export interface FormFieldProps {
   hint?: string;
   error?: string;
   required?: boolean;
+  /** Visible marker shown beside the label when `required` (default "Required"). */
+  requiredText?: string;
   /** Render prop: wire `field` onto the control, e.g. `<TextInput {...controlProps(field)} />`. */
   children: (field: FormFieldControlState) => ReactNode;
   /** Base id; defaults to a generated one. */
@@ -38,6 +40,7 @@ export const FormField: FC<FormFieldProps> = ({
   hint,
   error,
   required = false,
+  requiredText = "Required",
   children,
   id,
   className,
@@ -58,10 +61,11 @@ export const FormField: FC<FormFieldProps> = ({
       <label className={classes.label} htmlFor={controlId}>
         {label}
         {required ? (
-          // Visual marker only: the control keeps the native `required` attribute, which assistive
-          // technology announces, so the marker is hidden to avoid a double announcement.
+          // Visible text so the state is not colour-only. The control keeps the native `required`
+          // attribute, which assistive technology announces, so the marker is hidden from it to
+          // avoid a double announcement.
           <span aria-hidden="true" className={classes.required}>
-            *
+            {requiredText}
           </span>
         ) : null}
       </label>

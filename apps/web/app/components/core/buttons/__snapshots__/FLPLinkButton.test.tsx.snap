@@ -3,7 +3,7 @@
 exports[`FLPLinkButton > renders as expected 1`] = `
 <div>
   <a
-    class="d_inline-flex ai_center jc_center bdr_md fw_semibold trs_all_0.15s_ease cursor_pointer lh_1 td_none disabled:op_0.5 disabled:cursor_not-allowed focusVisible:ring_2px_solid focusVisible:ring-c_border.focusRing focusVisible:ring-o_2px bg_transparent c_text.primary hover:bg_surface.subtle px_4 py_2.5 fs_sm min-h_10"
+    class="pos_relative d_inline-flex ai_center jc_center gap_2 bdr_xl bd-w_1.5px border-style_solid bd-c_transparent fw_bold cursor_pointer lh_1.25 ta_center td_none py_2 [@media_(pointer:_coarse)]:min-h_touch motionSafe:trs-prop_background-color,_border-color,_box-shadow,_transform,_opacity motionSafe:trs-dur_fast motionSafe:trs-tmf_standard motionSafe:active:trf_scale(0.97) [&:is(:disabled,_[disabled])]:bg_transparent [&:is(:disabled,_[disabled])]:c_text.muted [&:is(:disabled,_[disabled])]:bd-c_transparent [&:is(:disabled,_[disabled])]:cursor_not-allowed [&:is(:disabled,_[disabled])]:bx-sh_none [&[aria-busy=true]]:cursor_progress focusVisible:ring_2px_solid focusVisible:ring-c_border.focusRing focusVisible:ring-o_2px bg_transparent c_text.primary hover:bg_surface.subtle px_6 fs_md min-h_density.control.lg"
     href="/test"
   >
     Button
@@ -14,7 +14,7 @@ exports[`FLPLinkButton > renders as expected 1`] = `
 exports[`FLPLinkButton > renders as expected with a custom class 1`] = `
 <div>
   <a
-    class="d_inline-flex ai_center jc_center bdr_md fw_semibold trs_all_0.15s_ease cursor_pointer lh_1 td_none disabled:op_0.5 disabled:cursor_not-allowed focusVisible:ring_2px_solid focusVisible:ring-c_border.focusRing focusVisible:ring-o_2px bg_transparent c_text.primary hover:bg_surface.subtle px_4 py_2.5 fs_sm min-h_10  test-class"
+    class="pos_relative d_inline-flex ai_center jc_center gap_2 bdr_xl bd-w_1.5px border-style_solid bd-c_transparent fw_bold cursor_pointer lh_1.25 ta_center td_none py_2 [@media_(pointer:_coarse)]:min-h_touch motionSafe:trs-prop_background-color,_border-color,_box-shadow,_transform,_opacity motionSafe:trs-dur_fast motionSafe:trs-tmf_standard motionSafe:active:trf_scale(0.97) [&:is(:disabled,_[disabled])]:bg_transparent [&:is(:disabled,_[disabled])]:c_text.muted [&:is(:disabled,_[disabled])]:bd-c_transparent [&:is(:disabled,_[disabled])]:cursor_not-allowed [&:is(:disabled,_[disabled])]:bx-sh_none [&[aria-busy=true]]:cursor_progress focusVisible:ring_2px_solid focusVisible:ring-c_border.focusRing focusVisible:ring-o_2px bg_transparent c_text.primary hover:bg_surface.subtle px_6 fs_md min-h_density.control.lg  test-class"
     href="/test"
   >
     Button

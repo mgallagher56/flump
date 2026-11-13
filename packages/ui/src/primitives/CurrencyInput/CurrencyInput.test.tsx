@@ -98,6 +98,19 @@ describe("CurrencyInput", () => {
   });
 });
 
+describe("CurrencyInput min and max", () => {
+  it("clamps on blur and emits the settled value", () => {
+    const onValueChange = vi.fn();
+    render(<CurrencyInput aria-label="Balance" max={1000} min={0} onValueChange={onValueChange} />);
+    const input = screen.getByLabelText("Balance") as HTMLInputElement;
+    fireEvent.change(input, { target: { value: "£1,250" } });
+    expect(onValueChange).toHaveBeenLastCalledWith(1250);
+    fireEvent.blur(input);
+    expect(input.value).toBe("1,000");
+    expect(onValueChange).toHaveBeenLastCalledWith(1000);
+  });
+});
+
 describe("formatCurrencyInput", () => {
   it.each([
     [Number.NaN, ""],
