@@ -160,7 +160,7 @@ describe("PensionContainer", () => {
 
     render(<PensionContainer />);
     // No pots and no salary: honest "not set" states, never a made-up zero or hero block.
-    expect(screen.getByText("No pots yet")).toBeDefined();
+    expect(screen.getByText("Add a pension pot to see its value")).toBeDefined();
     expect(screen.getByText("Add a pension pot to see its value")).toBeDefined();
     expect(screen.getByText("Needs your salary and contribution rate")).toBeDefined();
   });

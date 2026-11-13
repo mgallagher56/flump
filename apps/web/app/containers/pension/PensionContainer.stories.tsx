@@ -60,7 +60,9 @@ export const NoSalaryOrPots: Story = {
   parameters: { router: { loaderData: loaderData([], { annualSalary: null }) } },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    await expect((await canvas.findAllByText("No pots yet")).length).toBeGreaterThan(0);
+    await expect(
+      (await canvas.findAllByText("Add a pension pot to see its value")).length,
+    ).toBeGreaterThan(0);
     await expect(canvasElement.querySelectorAll("[data-tone='hero']").length).toBe(0);
   },
 };

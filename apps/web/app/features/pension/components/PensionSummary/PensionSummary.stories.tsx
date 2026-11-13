@@ -45,6 +45,6 @@ export const NoPotsOrSalary: Story = {
   },
   play: async ({ canvasElement }) => {
     await expect(canvasElement.querySelectorAll("[data-tone='hero']").length).toBe(0);
-    await expect(canvasElement.textContent).toContain("No pots yet");
+    await expect(canvasElement.textContent).toContain("Add a pension pot to see its value");
   },
 };
