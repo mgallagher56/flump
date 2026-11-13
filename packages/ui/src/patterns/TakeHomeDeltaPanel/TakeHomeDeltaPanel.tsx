@@ -71,10 +71,10 @@ export const TakeHomeDeltaPanel: FC<TakeHomeDeltaPanelProps> = ({
   const fractionDigits = figures.some(hasPence) ? 2 : 0;
   const money = (n: number) => formatMoney(n, { fractionDigits }).text;
 
-  const parts = DELTA_SENTENCE_PARTS.filter(({ key }) => components[key] !== 0).map(
+  const parts = DELTA_SENTENCE_PARTS.filter(({ key }) => components[key] > 0).map(
     ({ key, label }) => `${money(components[key])} ${label}`,
   );
-  const rows = DELTA_TABLE_ROWS.filter(({ key }) => components[key] !== 0);
+  const rows = DELTA_TABLE_ROWS.filter(({ key }) => components[key] > 0);
   const known = assumptions.filter((a): a is { code: AssumptionCode; unverified: boolean } =>
     Object.hasOwn(ASSUMPTION_COPY, a.code),
   );

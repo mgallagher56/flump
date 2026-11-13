@@ -308,26 +308,27 @@ export const TakeHomeCalculator: FC<TakeHomeCalculatorProps> = ({
         }
         isModified={isModified || nextPound.isModified}
         title="Model a change to your pay"
-        tools={
-          <SegmentedTabs
-            aria-label={EXPLORER_COPY.tabsLabel}
-            items={TOOLS}
-            value={tool}
-            onValueChange={setTool}
-          />
-        }
         onReset={resetScenario}
       >
-        {tool === "next-pound" ? (
-          <NextPoundExplorer scenario={nextPound} />
-        ) : (
-          <SimulatorSplitLayout
-            content={content}
-            contentLabel="Illustration results"
-            controls={controls}
-            controlsLabel="Illustration inputs"
-          />
-        )}
+        {/* Real tab panels; only the active one is mounted, so the explorer's curve is not worked out until opened. */}
+        <SegmentedTabs
+          aria-label={EXPLORER_COPY.tabsLabel}
+          items={TOOLS}
+          value={tool}
+          onValueChange={setTool}
+        >
+          <SegmentedTabs.Panel value="take-home">
+            <SimulatorSplitLayout
+              content={content}
+              contentLabel="Illustration results"
+              controls={controls}
+              controlsLabel="Illustration inputs"
+            />
+          </SegmentedTabs.Panel>
+          <SegmentedTabs.Panel value="next-pound">
+            <NextPoundExplorer scenario={nextPound} />
+          </SegmentedTabs.Panel>
+        </SegmentedTabs>
       </ScenarioZone>
 
       <div className={footer()}>

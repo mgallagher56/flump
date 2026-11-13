@@ -37,4 +37,4 @@ export const SAMPLE_ZONES: MarginalRateSteppedZone[] = [
 ];
 
 export const SAMPLE_SUMMARY =
-  "How much of the next £1 of pay is deducted at each gross pay from £0 to £150,000. At your pay of £39,000, an estimated 28% of the next £1 is deducted.";
+  "The estimated share of the next £1,000 of pay that is deducted, at each gross pay from £0 to £150,000. At your pay of £39,000, it is an estimated 28%.";

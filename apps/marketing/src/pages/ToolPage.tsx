@@ -175,7 +175,7 @@ export const ToolPage: FC = () => {
           )}
 
           {normalizedSlug === "uk-pay-rise-take-home-calculator" && (
-            <MarginalRateExplorerStandalone />
+            <MarginalRateExplorerStandalone headingLevel="h2" />
           )}
 
           {(normalizedSlug === "uk-student-loan-overpay-or-invest-calculator" ||

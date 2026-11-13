@@ -44,6 +44,16 @@ describe("TakeHomeDeltaPanel", () => {
     );
   });
 
+  it("leaves out negative parts as well as zero ones", () => {
+    renderPanel({
+      takeHome: 805,
+      components: { incomeTax: -5, nationalInsurance: 80, studentLoan: 0, hicbc: 0, pension: 120 },
+    });
+    const sentence = screen.getByTestId("take-home-delta-sentence").textContent ?? "";
+    expect(sentence).not.toContain("Income Tax");
+    expect(sentence).toContain("£80 National Insurance and £120 pension");
+  });
+
   it("shows pence only when they matter", () => {
     renderPanel({
       takeHome: 719.5,

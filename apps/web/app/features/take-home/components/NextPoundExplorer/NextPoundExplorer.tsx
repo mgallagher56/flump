@@ -1,6 +1,6 @@
 import { toStudentLoanPlanKey } from "@flump/finance-engine";
 import {
-  MARGINAL_RATE_EXPLORER_DEFAULTS,
+  getMarginalRateExplorerDefaults,
   MarginalRateExplorer,
   type MarginalRateExplorerValues,
 } from "@repo/ui";
@@ -36,10 +36,11 @@ const planString = (saved: NextPoundSaved): string => {
 
 /** Explorer values seeded from saved details. With no saved salary the example defaults stand. */
 export function nextPoundSavedValues(saved: NextPoundSaved): MarginalRateExplorerValues {
+  const defaults = getMarginalRateExplorerDefaults();
   const hasSalary = saved.salary > 0;
   return {
-    ...MARGINAL_RATE_EXPLORER_DEFAULTS,
-    grossPay: hasSalary ? saved.salary : MARGINAL_RATE_EXPLORER_DEFAULTS.grossPay,
+    ...defaults,
+    grossPay: hasSalary ? saved.salary : defaults.grossPay,
     region: saved.taxRegion === "SCOTLAND" ? "SCOTLAND" : "ENGLAND_NI_WALES",
     studentLoans: planString(saved),
     pensionMethod: hasSalary ? (saved.isSalarySacrifice ? "salary-sacrifice" : "net-pay") : "none",

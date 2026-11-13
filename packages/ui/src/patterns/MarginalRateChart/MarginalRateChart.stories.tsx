@@ -14,7 +14,7 @@ const meta: Meta<typeof MarginalRateChart> = {
   component: MarginalRateChart,
   parameters: { layout: "padded" },
   args: {
-    title: "Deducted from the next £1, by gross pay",
+    title: "Estimated share deducted from the next £1,000, by gross pay",
     summary: SAMPLE_SUMMARY,
     points: SAMPLE_POINTS,
     thresholds: SAMPLE_THRESHOLDS,
@@ -31,7 +31,9 @@ export const Default: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
     await expect(
-      canvas.getByRole("figure", { name: "Deducted from the next £1, by gross pay" }),
+      canvas.getByRole("figure", {
+        name: "Estimated share deducted from the next £1,000, by gross pay",
+      }),
     ).toBeInTheDocument();
     // The threshold tooltip appears on hover and goes on leave.
     const hit = canvas.getAllByTestId("marginal-rate-threshold-hit")[1] as Element;
