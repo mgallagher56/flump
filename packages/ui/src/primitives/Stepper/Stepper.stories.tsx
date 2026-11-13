@@ -77,3 +77,23 @@ export const LongLabels: Story = {
     current: 2,
   },
 };
+
+/** Out-of-order flow: a skipped earlier step reads "Skipped", never "Complete". */
+export const WithOverrides: Story = {
+  args: {
+    steps: FIVE,
+    current: 4,
+    states: { you: "complete", home: "skipped", save: "complete" },
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const list = canvas.getByRole("list", { name: "Setup progress" });
+    const items = within(list).getAllByRole("listitem");
+    await expect(items[1]).toHaveAttribute("data-state", "skipped");
+    await expect(within(list).getByText("Skipped")).toBeInTheDocument();
+    await expect(within(list).getAllByText("Complete")).toHaveLength(2);
+    await expect(items[3]).toHaveAttribute("aria-current", "step");
+  },
+};
+
+export const WithOverridesDark: Story = { ...WithOverrides, globals: { theme: "dark" } };

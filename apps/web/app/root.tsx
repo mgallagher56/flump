@@ -1,4 +1,4 @@
-import { VisuallyHidden } from "@repo/ui";
+import { ToastProvider, VisuallyHidden } from "@repo/ui";
 import { css } from "@repo/ui/styled-system/css";
 import { useEffect } from "react";
 import type { LoaderFunctionArgs } from "react-router";
@@ -128,27 +128,46 @@ export default function App() {
               Skip to content
             </VisuallyHidden>
             <NavigationProgress />
-            <Header />
+            {/* Layout offsets other components read: the mobile bottom bar height (the toast viewport
+                adds the safe-area inset itself) and the sticky header height (SimulatorSplitLayout's
+                sticky parts sit below it). */}
             <div
               className={css({
-                maxWidth: "1536px",
-                margin: "0 auto",
-                paddingX: { base: "12px", md: "24px" },
+                // Mirrors the TopBar min-height (spacing tokens 14 and 18); keep the two in step.
+                "--app-header-offset": { base: "3.5rem", lg: "4.5rem" },
+                "--app-bottom-bar-offset": {
+                  base: user ? "72px" : "0px",
+                  lg: "0px",
+                },
               })}
             >
-              <main
-                id="main-content"
-                tabIndex={-1}
-                className={css({
-                  paddingBottom: {
-                    base: user ? "calc(72px + env(safe-area-inset-bottom, 0px))" : "0",
-                    lg: "0",
-                  },
-                })}
-              >
-                <Outlet />
-              </main>
-              <AppBottomBar user={user} />
+              <ToastProvider>
+                <Header />
+                <div
+                  className={css({
+                    maxWidth: "1536px",
+                    margin: "0 auto",
+                    paddingX: { base: "12px", md: "24px" },
+                  })}
+                >
+                  <main
+                    id="main-content"
+                    tabIndex={-1}
+                    className={css({
+                      paddingBottom: {
+                        // Reads the wrapper's bottom-bar offset so the two never drift apart.
+                        base: user
+                          ? "calc(var(--app-bottom-bar-offset) + env(safe-area-inset-bottom, 0px))"
+                          : "0",
+                        lg: "0",
+                      },
+                    })}
+                  >
+                    <Outlet />
+                  </main>
+                  <AppBottomBar user={user} />
+                </div>
+              </ToastProvider>
             </div>
           </ResponsiveProvider>
         </ThemeContext.Provider>

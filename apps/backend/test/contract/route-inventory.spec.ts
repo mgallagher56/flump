@@ -48,12 +48,12 @@ const KNOWN_MISSING: ReadonlyArray<{
  */
 const KNOWN_DYNAMIC: ReadonlyArray<{ file: string; token: string; reason: string }> = [
   {
-    file: "routes/app.onboarding.tsx",
+    file: "features/onboarding/useFinishOnboarding.ts",
     token: "job.endpoint",
     reason: "POST /accounts and /budget-entries, covered by onboarding-seed and the contract test",
   },
   {
-    file: "routes/app.onboarding.tsx",
+    file: "features/onboarding/useFinishOnboarding.ts",
     token: "endpoint",
     reason: "existingNames helper, called with the literals /accounts and /budget-entries (GET)",
   },

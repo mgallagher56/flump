@@ -1,6 +1,13 @@
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { TOAST_ANNOUNCE_SLOT_MS, type ToastOptions, ToastProvider, useToast } from "./Toast";
+import {
+  TOAST_ANNOUNCE_SLOT_MS,
+  type ToastApi,
+  type ToastOptions,
+  ToastProvider,
+  useOptionalToast,
+  useToast,
+} from "./Toast";
 
 const Trigger = ({
   options,
@@ -283,5 +290,46 @@ describe("Toast", () => {
     show();
     show();
     expect(screen.getAllByRole("listitem")).toHaveLength(2);
+  });
+});
+
+const OptionalProbe = ({ onApi }: { onApi: (api: ToastApi | null) => void }) => {
+  onApi(useOptionalToast());
+  return null;
+};
+
+describe("useOptionalToast", () => {
+  afterEach(cleanup);
+
+  it("returns null outside the provider instead of throwing", () => {
+    let api: ToastApi | null | undefined;
+    expect(() =>
+      render(
+        <OptionalProbe
+          onApi={(value) => {
+            api = value;
+          }}
+        />,
+      ),
+    ).not.toThrow();
+    expect(api).toBeNull();
+  });
+
+  it("returns the toast API inside the provider", () => {
+    let api: ToastApi | null = null;
+    render(
+      <ToastProvider>
+        <OptionalProbe
+          onApi={(value) => {
+            api = value;
+          }}
+        />
+      </ToastProvider>,
+    );
+    expect(api).not.toBeNull();
+    act(() => {
+      (api as ToastApi | null)?.toast("Saved");
+    });
+    expect(screen.getByRole("list", { name: "Notifications" }).textContent).toContain("Saved");
   });
 });
