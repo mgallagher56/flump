@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Inject,
   Injectable,
+  Logger,
   Optional,
   ServiceUnavailableException,
 } from "@nestjs/common";
@@ -57,6 +58,8 @@ export interface ProfileLifecycle {
 
 @Injectable()
 export class UserProfileService implements ProfileLifecycle {
+  private readonly logger = new Logger(UserProfileService.name);
+
   constructor(
     @InjectRepository(UserProfile)
     private readonly userProfileRepository: Repository<UserProfile>,
@@ -353,7 +356,7 @@ export class UserProfileService implements ProfileLifecycle {
           body.lastName !== undefined ? body.lastName : profile.lastName || undefined,
         );
       } catch (err: any) {
-        console.warn("Identity name sync warning:", safeErrorSummary(err));
+        this.logger.warn(`Identity name sync warning: ${safeErrorSummary(err)}`);
       }
     }
 
@@ -516,14 +519,16 @@ export class UserProfileService implements ProfileLifecycle {
     try {
       const email = await this.identityAdapter.getUserEmail(userId);
       if (!email) {
-        console.warn("Password reset failed: email not resolved");
+        this.logger.warn("Password reset failed: email not resolved");
         return fail();
       }
       await this.identityAdapter.sendPasswordReset(email);
     } catch (err: unknown) {
       if (err instanceof ServiceUnavailableException) throw err;
       const e = err as { name?: string; code?: string } | null;
-      console.warn(`Password reset failed: ${e?.name ?? "Error"}${e?.code ? ` (${e.code})` : ""}`);
+      this.logger.warn(
+        `Password reset failed: ${e?.name ?? "Error"}${e?.code ? ` (${e.code})` : ""}`,
+      );
       return fail();
     }
     return { success: true };

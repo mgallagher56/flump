@@ -1,4 +1,4 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { WorkOS } from "@workos-inc/node";
 import { safeErrorSummary } from "../log-safe";
@@ -20,6 +20,7 @@ export const USER_IDENTITY_ADAPTER = "USER_IDENTITY_ADAPTER";
  */
 @Injectable()
 export class WorkOSIdentityAdapter implements UserIdentityAdapter {
+  private readonly logger = new Logger(WorkOSIdentityAdapter.name);
   private client: WorkOS | null = null;
 
   constructor(private readonly configService: ConfigService) {
@@ -38,7 +39,7 @@ export class WorkOSIdentityAdapter implements UserIdentityAdapter {
         lastName: lastName || undefined,
       });
     } catch (err: any) {
-      console.warn("WorkOS name sync warning:", safeErrorSummary(err));
+      this.logger.warn(`WorkOS name sync warning: ${safeErrorSummary(err)}`);
     }
   }
 
