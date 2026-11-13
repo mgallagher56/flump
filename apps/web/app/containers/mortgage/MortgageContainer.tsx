@@ -1,5 +1,5 @@
 import { calculateLtvMilestones, PortfolioSnapshot } from "@flump/finance-engine";
-import { Button, EmptyState, Icon, LiveRegion, PageHeader } from "@repo/ui";
+import { Button, EmptyState, Icon, LiveRegion, PageHeader, ScenarioZone } from "@repo/ui";
 import { Building2, Coins, Home, LineChart, Percent } from "lucide-react";
 import { type FC, useEffect, useMemo, useRef, useState } from "react";
 import { useLoaderData, useNavigate, useSearchParams } from "react-router";
@@ -7,14 +7,13 @@ import { BtlOverview } from "~/features/mortgage/components/BtlOverview";
 import { LtvMilestones } from "~/features/mortgage/components/LtvMilestones";
 import { MortgageAlerts } from "~/features/mortgage/components/MortgageAlerts";
 import { MortgageScenarioInputs } from "~/features/mortgage/components/MortgageScenarioInputs";
-import { MortgageScenarioZone } from "~/features/mortgage/components/MortgageScenarioZone";
 import { MortgageSummary } from "~/features/mortgage/components/MortgageSummary";
 import { MortgageTracker } from "~/features/mortgage/components/MortgageTracker";
 import { OverpaymentSimulator } from "~/features/mortgage/components/OverpaymentSimulator";
 import { OverpayVsSaveCompare } from "~/features/mortgage/components/OverpayVsSaveCompare";
 import { RemortgageShockSim } from "~/features/mortgage/components/RemortgageShockSim";
-import { useScenarioState } from "~/features/mortgage/hooks/useScenarioState";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
+import { useScenarioState } from "~/hooks/useScenarioState";
 import { useUserProfile } from "~/hooks/useUserProfile";
 import type { loader } from "~/routes/app.mortgage";
 import { apiFetch } from "~/services/api-client";
@@ -511,7 +510,7 @@ const MortgageContainer: FC = () => {
         />
       )}
 
-      <MortgageScenarioZone
+      <ScenarioZone
         announcement={scenarioAnnouncement}
         basis={savedBasis}
         footer={
@@ -520,6 +519,7 @@ const MortgageContainer: FC = () => {
           </Button>
         }
         id={SCENARIO_ZONE_ID}
+        title="Model a change to your mortgage"
         isModified={scenario.isModified}
         tools={
           // Roving-tabindex tabs on plain buttons (Radix Tabs ignore click in jsdom).
@@ -608,7 +608,7 @@ const MortgageContainer: FC = () => {
             />
           )}
         </div>
-      </MortgageScenarioZone>
+      </ScenarioZone>
     </div>
   );
 };
