@@ -116,3 +116,32 @@ export const LongLabels: Story = {
   ),
   globals: { theme: "dark" },
 };
+
+export const ItemsTuple: Story = {
+  render: () => (
+    <KpiStrip
+      items={[
+        <KpiCard key="nw" label="Net worth" tone="hero" value={184250} />,
+        <KpiCard
+          delta={{ direction: "down", text: "-£1,240 this month", polarity: "liability" }}
+          key="mortgage"
+          label="Mortgage balance"
+          value={182450}
+        />,
+        <KpiCard key="cash" label="Cash" value={12400} valueFormat={{ compact: true }} />,
+        <KpiCard
+          emptyAction={<Button size="sm">Add</Button>}
+          key="pension"
+          label="Pension"
+          value={null}
+        />,
+      ]}
+    />
+  ),
+  globals: { theme: "dark" },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await expect(canvas.getByText("£184,250")).toBeInTheDocument();
+    await expect(canvas.getByText("Not set")).toBeInTheDocument();
+  },
+};

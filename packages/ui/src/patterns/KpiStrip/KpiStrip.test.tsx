@@ -42,4 +42,33 @@ describe("KpiStrip Pattern", () => {
     );
     expect(screen.getAllByText(/Metric [A-E]/)).toHaveLength(5);
   });
+
+  it("renders an items tuple and sizes columns from its length", () => {
+    const { container } = render(
+      <KpiStrip items={[<div key="a">One</div>, <div key="b">Two</div>]} />,
+    );
+    expect(screen.getByText("One")).toBeDefined();
+    expect(screen.getByText("Two")).toBeDefined();
+    const twoCol = container.firstElementChild?.className;
+    const { container: four } = render(
+      <KpiStrip items={[<i key="1">1</i>, <i key="2">2</i>, <i key="3">3</i>, <i key="4">4</i>]} />,
+    );
+    expect(four.firstElementChild?.className).not.toBe(twoCol);
+  });
+
+  it("rejects a fifth item at compile time", () => {
+    render(
+      <KpiStrip
+        // @ts-expect-error a strip holds at most four items
+        items={[
+          <i key="1">1</i>,
+          <i key="2">2</i>,
+          <i key="3">3</i>,
+          <i key="4">4</i>,
+          <i key="5">5</i>,
+        ]}
+      />,
+    );
+    expect(screen.getByText("5")).toBeDefined();
+  });
 });

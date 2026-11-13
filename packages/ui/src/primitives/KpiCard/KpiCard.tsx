@@ -2,7 +2,7 @@ import { ArrowDown, ArrowUp, type LucideIcon, Minus } from "lucide-react";
 import type { FC, ReactNode } from "react";
 import { cx } from "../../../styled-system/css";
 import { Icon } from "../Icon/Icon";
-import { Money } from "../Money/Money";
+import { Money, type MoneyProps } from "../Money/Money";
 import { StatusBadge, type StatusBadgeVariants } from "../StatusBadge/StatusBadge";
 import { VisuallyHidden } from "../VisuallyHidden/VisuallyHidden";
 import {
@@ -12,6 +12,7 @@ import {
   kpiHeroValue,
   kpiLabel,
   kpiLoadingBar,
+  kpiMoney,
   kpiSubtext,
   kpiValueRow,
 } from "./KpiCard.styles";
@@ -38,8 +39,14 @@ export interface KpiCardProps {
    * interactive children until they are.
    */
   tone?: KpiCardTone;
-  /** `null` or `undefined` renders "Not set" (never a zero). */
-  value?: ReactNode;
+  /**
+   * A number renders through `Money` (en-GB, minus sign read as "minus", tabular-nums). `null`,
+   * `undefined` or a non-finite number renders "Not set" (never a zero). Any other node is
+   * rendered as given, as before.
+   */
+  value?: number | ReactNode;
+  /** Formatting for a numeric `value` (ignored for other nodes). */
+  valueFormat?: Pick<MoneyProps, "compact" | "currency" | "fractionDigits" | "signDisplay">;
   /** Legacy delta badge. Prefer `delta`, which adds an arrow so meaning never rests on colour. */
   deltaText?: string;
   deltaVariant?: StatusBadgeVariants["variant"];
@@ -76,9 +83,27 @@ export const deltaTone = (
   return good ? "positive" : "danger";
 };
 
+const renderValue = (
+  value: ReactNode,
+  valueFormat: KpiCardProps["valueFormat"],
+  cardTone: KpiCardTone,
+) =>
+  typeof value === "number" ? (
+    <Money
+      {...valueFormat}
+      className={kpiMoney()}
+      size="kpi"
+      tone={cardTone === "hero" ? "onContrast" : "default"}
+      value={value}
+    />
+  ) : (
+    <div className={kpiHeroValue({ tone: cardTone })}>{value}</div>
+  );
+
 export const KpiCard: FC<KpiCardProps> = ({
   label,
   value,
+  valueFormat,
   deltaText,
   deltaVariant = "neutral",
   delta,
@@ -114,7 +139,7 @@ export const KpiCard: FC<KpiCardProps> = ({
         ) : isEmpty ? (
           <Money notSetAction={emptyAction} notSetLabel={notSetLabel} size="kpi" value={null} />
         ) : (
-          <div className={kpiHeroValue({ tone: cardTone })}>{value}</div>
+          renderValue(value, valueFormat, cardTone)
         )}
         {!loading && delta ? (
           <StatusBadge size="sm" variant={deltaTone(delta.direction, delta.polarity)}>

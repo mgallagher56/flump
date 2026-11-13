@@ -40,12 +40,32 @@ const Gallery = () => (
     <Money value={null} />
     <span className={caption}>unknown with action</span>
     <Money notSetAction={<Button size="sm">Add balance</Button>} value={undefined} />
+    <span className={caption}>compact</span>
+    <Money compact value={97800} />
+    <span className={caption}>long value</span>
+    <Money fractionDigits={2} size="lg" value={123456789012.34} />
     <span className={caption}>percent</span>
     <Num fractionDigits={1} kind="percent" value={4.5} />
     <span className={caption}>number</span>
     <Num value={1250000} />
     <span className={caption}>unknown number</span>
     <Num value={Number.NaN} />
+  </div>
+);
+
+const heroFrame = css({
+  backgroundColor: "surface.hero",
+  borderRadius: "2xl",
+  padding: "6",
+  display: "flex",
+  flexDirection: "column",
+  gap: "2",
+});
+
+const OnHero = () => (
+  <div className={heroFrame}>
+    <Money size="kpi" tone="onContrast" value={184250} />
+    <Money size="lg" tone="onContrast" value={-4200} />
   </div>
 );
 
@@ -71,3 +91,17 @@ const play: Story["play"] = async ({ canvasElement }) => {
 export const Light: Story = { globals: { theme: "light" }, play };
 
 export const Dark: Story = { globals: { theme: "dark" }, play };
+
+export const OnHeroSurface: Story = {
+  globals: { theme: "light" },
+  render: () => <OnHero />,
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await expect(canvas.getByText("£184,250")).toBeInTheDocument();
+  },
+};
+
+export const OnHeroSurfaceDark: Story = {
+  globals: { theme: "dark" },
+  render: () => <OnHero />,
+};

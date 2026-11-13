@@ -79,20 +79,52 @@ const formatWith = (
   return { text: magnitude };
 };
 
+/** Compact notation (£97.8k, £1.2m). One decimal at most; en-GB prints "K" and "M", we use "k" and "m". */
+const formatCompact = (
+  value: number,
+  options: Intl.NumberFormatOptions,
+  signDisplay: SignDisplay,
+): Formatted => {
+  const formatter = getFormatter({
+    ...options,
+    notation: "compact",
+    compactDisplay: "short",
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 1,
+  });
+  const lower = (text: string) => text.replace(/[KM]\b/, (unit) => unit.toLowerCase());
+  const magnitude = lower(formatter.format(Math.abs(value)));
+  // Anything that rounds to zero must not read as a signed figure.
+  const isZero = Number(formatter.format(Math.abs(value)).replace(/[^0-9.]/g, "")) === 0;
+  if (signDisplay === "never") return { text: magnitude };
+  if (value < 0 && !isZero) return { text: `-${magnitude}`, spoken: `minus ${magnitude}` };
+  if (value > 0 && !isZero && signDisplay === "always") {
+    return { text: `+${magnitude}`, spoken: `plus ${magnitude}` };
+  }
+  return { text: magnitude };
+};
+
 export const formatMoney = (
   value: number,
   {
     currency = "GBP",
     signDisplay = "auto",
     fractionDigits = 0,
-  }: { currency?: string; signDisplay?: SignDisplay; fractionDigits?: 0 | 2 } = {},
-): Formatted =>
-  formatWith(
-    value,
-    { style: "currency", currency: safeCurrency(currency) },
-    fractionDigits,
-    signDisplay,
-  );
+    compact = false,
+  }: {
+    currency?: string;
+    signDisplay?: SignDisplay;
+    fractionDigits?: 0 | 2;
+    compact?: boolean;
+  } = {},
+): Formatted => {
+  const options: Intl.NumberFormatOptions = {
+    style: "currency",
+    currency: safeCurrency(currency),
+  };
+  if (compact) return formatCompact(value, options, signDisplay);
+  return formatWith(value, options, fractionDigits, signDisplay);
+};
 
 export const formatNumber = (
   value: number,
@@ -161,6 +193,8 @@ export interface MoneyProps {
   currency?: string;
   signDisplay?: SignDisplay;
   fractionDigits?: 0 | 2;
+  /** Short form for tight spaces such as chart labels: £97.8k, £1.2m. Ignores `fractionDigits`. */
+  compact?: boolean;
   size?: MoneySize;
   tone?: MoneyTone;
   /** Shown instead of a figure when the value is unknown (never £0). */
@@ -177,6 +211,7 @@ export const Money: FC<MoneyProps> = ({
   currency = "GBP",
   signDisplay = "auto",
   fractionDigits = 0,
+  compact = false,
   size = "md",
   tone = "default",
   notSetLabel = "Not set",
@@ -200,7 +235,7 @@ export const Money: FC<MoneyProps> = ({
   return (
     <Known
       className={className}
-      formatted={formatMoney(value, { currency, signDisplay, fractionDigits })}
+      formatted={formatMoney(value, { currency, signDisplay, fractionDigits, compact })}
       id={id}
       size={size}
       testId={testId}
