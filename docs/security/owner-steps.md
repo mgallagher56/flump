@@ -36,8 +36,8 @@ No security contact is published yet. When a monitored mailbox exists, set `SECU
 
 1. Obtain one real access token from staging or production and decode it locally (for example `jwt.io` is not acceptable for production tokens; decode offline). Never paste the token anywhere.
 2. Record the `iss` value and the claim names.
-3. Set `WORKOS_ISSUER` on the backend and the web app, staging first. A wrong value makes every login return 401.
-4. The implementer then makes backend boot require `WORKOS_ISSUER` in production.
+3. Done (2026-11-13): the token `iss` is the user_management form and there is no `aud`. The backend now derives that issuer from `WORKOS_CLIENT_ID`; `WORKOS_ISSUER` is only an optional exact override (custom auth domain).
+4. Done (E20-N24): backend boot fails in production without `WORKOS_CLIENT_ID` (or `WORKOS_ISSUER`); no new variable is required.
 
 ## Backend proxy trust
 

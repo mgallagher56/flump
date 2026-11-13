@@ -2,7 +2,7 @@ import { Logger } from "@nestjs/common";
 import { SignJWT } from "jose";
 import { beforeAll, describe, expect, it, vi } from "vitest";
 import { createTestJwks } from "./testing/test-jwks";
-import { WorkOsJwtVerifier, workosIssuers } from "./workos-jwt.verifier";
+import { resolveWorkosIssuer, WorkOsJwtVerifier } from "./workos-jwt.verifier";
 
 async function setup() {
   const t = await createTestJwks();
@@ -104,66 +104,112 @@ describe("WorkOsJwtVerifier", { timeout: 15_000 }, () => {
   });
 });
 
-describe("WorkOsJwtVerifier issuer list", { timeout: 15_000 }, () => {
+describe("WorkOsJwtVerifier pinned issuer", { timeout: 15_000 }, () => {
   const CLIENT = "client_x";
   const BARE = "https://api.workos.com";
   const UM = `https://api.workos.com/user_management/${CLIENT}`;
 
-  async function withIssuers(env: Record<string, string | undefined>) {
+  async function withEnv(env: Record<string, string | undefined>) {
     const t = await createTestJwks();
-    const verifier = new WorkOsJwtVerifier({ jwks: t.jwks, issuer: workosIssuers(CLIENT, env) });
+    const verifier = new WorkOsJwtVerifier({
+      jwks: t.jwks,
+      issuer: resolveWorkosIssuer(CLIENT, env),
+    });
     return { t, verifier };
   }
 
-  it("default list accepts the bare issuer", async () => {
-    const { t, verifier } = await withIssuers({});
-    await expect(verifier.verify(await t.sign({ sub: "u" }, { issuer: BARE }))).resolves.toEqual({
-      id: "u",
-      email: undefined,
-    });
+  it("derives the single user_management issuer from the client id", () => {
+    expect(resolveWorkosIssuer(CLIENT, {})).toBe(UM);
   });
 
-  it("default list accepts the user_management issuer", async () => {
-    const { t, verifier } = await withIssuers({});
+  it("accepts the user_management issuer", async () => {
+    const { t, verifier } = await withEnv({});
     await expect(
       verifier.verify(await t.sign({ sub: "u" }, { issuer: UM })),
     ).resolves.toBeDefined();
   });
 
-  it("default list rejects any other issuer", async () => {
-    const { t, verifier } = await withIssuers({});
-    await expect(
-      verifier.verify(await t.sign({ sub: "u" }, { issuer: "https://evil.example" })),
-    ).rejects.toThrow("invalid token");
-  });
-
-  it("WORKOS_ISSUER replaces the defaults", async () => {
-    const { t, verifier } = await withIssuers({ WORKOS_ISSUER: "https://auth.example.com" });
-    await expect(
-      verifier.verify(await t.sign({ sub: "u" }, { issuer: "https://auth.example.com" })),
-    ).resolves.toBeDefined();
+  it("rejects the bare host issuer", async () => {
+    const { t, verifier } = await withEnv({});
     await expect(verifier.verify(await t.sign({ sub: "u" }, { issuer: BARE }))).rejects.toThrow(
       "invalid token",
     );
+  });
+
+  it("rejects an issuer with a wrong client id", async () => {
+    const { t, verifier } = await withEnv({});
+    const wrong = "https://api.workos.com/user_management/client_other";
+    await expect(verifier.verify(await t.sign({ sub: "u" }, { issuer: wrong }))).rejects.toThrow(
+      "invalid token",
+    );
+  });
+
+  it("WORKOS_ISSUER overrides the derived issuer exactly", async () => {
+    const { t, verifier } = await withEnv({ WORKOS_ISSUER: " https://auth.example.com " });
+    await expect(
+      verifier.verify(await t.sign({ sub: "u" }, { issuer: "https://auth.example.com" })),
+    ).resolves.toBeDefined();
     await expect(verifier.verify(await t.sign({ sub: "u" }, { issuer: UM }))).rejects.toThrow(
       "invalid token",
     );
   });
 
-  it("WORKOS_ISSUER is comma-separated, trimmed, empty entries dropped", async () => {
-    expect(
-      workosIssuers(CLIENT, { WORKOS_ISSUER: " https://a.example , ,https://b.example," }),
-    ).toEqual(["https://a.example", "https://b.example"]);
-    const { t, verifier } = await withIssuers({
-      WORKOS_ISSUER: "https://a.example, https://b.example",
-    });
-    await expect(
-      verifier.verify(await t.sign({ sub: "u" }, { issuer: "https://b.example" })),
-    ).resolves.toBeDefined();
+  it("an empty WORKOS_ISSUER falls back to the derived issuer", () => {
+    expect(resolveWorkosIssuer(CLIENT, { WORKOS_ISSUER: "  " })).toBe(UM);
   });
 
-  it("an empty WORKOS_ISSUER falls back to the defaults", () => {
-    expect(workosIssuers(CLIENT, { WORKOS_ISSUER: " , " })).toEqual([BARE, UM]);
+  it.each(["not a url", "http://auth.example.com", "https://a.example, https://b.example"])(
+    "an invalid WORKOS_ISSUER (%s) fails boot",
+    (bad) => {
+      expect(() => resolveWorkosIssuer(CLIENT, { WORKOS_ISSUER: bad })).toThrow(/WORKOS_ISSUER/);
+    },
+  );
+
+  it("fails with neither a client id nor an override, in production too", () => {
+    expect(() => resolveWorkosIssuer(undefined, { NODE_ENV: "production" })).toThrow(
+      /not configured/,
+    );
+  });
+
+  it("accepts an override without a client id", () => {
+    expect(resolveWorkosIssuer(undefined, { WORKOS_ISSUER: "https://auth.example.com" })).toBe(
+      "https://auth.example.com",
+    );
+  });
+});
+
+describe("WorkOsJwtVerifier client_id check", { timeout: 15_000 }, () => {
+  async function make() {
+    const t = await createTestJwks();
+    return {
+      t,
+      verifier: new WorkOsJwtVerifier({ jwks: t.jwks, issuer: t.issuer, clientId: "client_x" }),
+    };
+  }
+
+  it("accepts a matching client_id", async () => {
+    const { t, verifier } = await make();
+    await expect(
+      verifier.verify(await t.sign({ sub: "u", client_id: "client_x" })),
+    ).resolves.toEqual({ id: "u", email: undefined });
+  });
+
+  it("rejects a different client_id", async () => {
+    const { t, verifier } = await make();
+    await expect(
+      verifier.verify(await t.sign({ sub: "u", client_id: "client_other" })),
+    ).rejects.toThrow("invalid token");
+  });
+
+  it("rejects a missing client_id", async () => {
+    const { t, verifier } = await make();
+    await expect(verifier.verify(await t.sign({ sub: "u" }))).rejects.toThrow("invalid token");
+  });
+
+  it("does not check client_id when none is configured", async () => {
+    const t = await createTestJwks();
+    const verifier = new WorkOsJwtVerifier({ jwks: t.jwks, issuer: t.issuer });
+    await expect(verifier.verify(await t.sign({ sub: "u" }))).resolves.toBeDefined();
   });
 });
 
@@ -181,14 +227,12 @@ describe("WorkOsJwtVerifier diagnostics", { timeout: 15_000 }, () => {
     expect(lines.some((l) => l.includes(token) || l.includes("evil.example"))).toBe(false);
   });
 
-  it("logs the expected issuer list once at init", async () => {
+  it("logs the expected issuer once at init", async () => {
     const t = await createTestJwks();
     const log = vi.spyOn(Logger.prototype, "log").mockImplementation(() => undefined);
-    new WorkOsJwtVerifier({ jwks: t.jwks, issuer: ["https://a.example", "https://b.example"] });
+    new WorkOsJwtVerifier({ jwks: t.jwks, issuer: "https://a.example" });
     const lines = log.mock.calls.map((c) => String(c[0]));
     log.mockRestore();
-    expect(
-      lines.some((l) => l.includes("https://a.example") && l.includes("https://b.example")),
-    ).toBe(true);
+    expect(lines.some((l) => l.includes("https://a.example"))).toBe(true);
   });
 });

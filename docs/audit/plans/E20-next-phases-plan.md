@@ -28,7 +28,7 @@
 ## Remaining
 
 - **Tier B:** Q6 throttling, Q7 web headers and CSRF, Q9 receipt validation, Q11 PAT defaults, Q15 forward refreshed cookies, Q16 remove Emotion.
-- **Q12** issuer pin: waits for the owner to decode a token.
+- **Q12** issuer pin: answered (owner decoded a staging token: user_management `iss`, no `aud`). N24 done.
 - **Phase 1** token out of the browser (D1-C), **Phase 2** CSP, **Phase 3** rate limits, **Phase 4** session policy and step-up (D3-B), **Phase 5** receipts (D6-A), **Phase 6** IDOR suite, **Phase 7** MCP (D7-A), **Phase 8** logging fixes, **Phase 9** tooling (D10-A), and the finalised threat model.
 
 ## Current browser-token inventory (verified)
@@ -474,7 +474,8 @@ Every ticket finishes with `rtk bun run lint`, `rtk bun run check-types`, `rtk b
 
 ### Lane O: remaining small items, tooling and docs
 
-**E20-N24. Pin the WorkOS issuer (Q12, gated on the owner)**
+**E20-N24. Pin the WorkOS issuer (Q12 answered; DONE)**
+- **Outcome:** a single issuer derived from `WORKOS_CLIENT_ID`; optional exact `WORKOS_ISSUER` override validated as https; `client_id` claim asserted; no new required variable (avoids R4); no `aud` check (MCP PAT audience `flump-mcp` untouched). The text below is the original plan.
 - **Files:** `apps/backend/src/auth/workos-jwt.verifier.ts:19-28` (a single issuer from `WORKOS_ISSUER`), `auth/auth.module.ts` (production boot requires it), specs, and `WORKOS_ISSUER` documented for web.
 - **Depends on:** owner step 2, and N20 (same file).
 - **Verify:** a boot spec fails without the variable in production; staging deploys first.
