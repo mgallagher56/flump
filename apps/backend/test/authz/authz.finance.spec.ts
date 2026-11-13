@@ -145,6 +145,12 @@ describe.skipIf(dbMode === "skip")("authz: finance controller (real Postgres)", 
         body: { name: "pwned" },
       },
       {
+        key: "PATCH /accounts/balances",
+        method: "patch",
+        path: () => "/accounts/balances",
+        body: { balances: [{ id: MISSING_ID, balance: 1 }] },
+      },
+      {
         key: "PATCH /accounts/:id",
         method: "patch",
         path: () => `/accounts/${accountId}`,
@@ -317,6 +323,40 @@ describe.skipIf(dbMode === "skip")("authz: finance controller (real Postgres)", 
         ran(key);
       },
     );
+
+    it("PATCH /accounts/balances: A 200; B 404 identical to not-found, nothing written, even mixed with B's own account", async () => {
+      const own = await h.call("patch", "/accounts/balances", h.tokens.a, {
+        balances: [{ id: accountId, balance: 99 }],
+      });
+      expect(own.status).toBe(200);
+      await accounts().update({ id: accountId }, { balance: 1204.5 });
+
+      const bOwn = await h.call("post", "/accounts", h.tokens.b, {
+        name: "B Saver",
+        type: "Saving",
+        balance: 10,
+      });
+      expect(bOwn.status).toBe(201);
+      const asB = await h.call("patch", "/accounts/balances", h.tokens.b, {
+        balances: [
+          { id: bOwn.body.id, balance: 55 },
+          { id: accountId, balance: 1 },
+        ],
+      });
+      const missing = await h.call("patch", "/accounts/balances", h.tokens.b, {
+        balances: [
+          { id: bOwn.body.id, balance: 55 },
+          { id: MISSING_ID, balance: 1 },
+        ],
+      });
+      expect(asB.status).toBe(404);
+      expect(missing.status).toBe(404);
+      expect(asB.body).toEqual(missing.body);
+      await expectAccountUntouched();
+      const bRow = await accounts().findOneBy({ id: bOwn.body.id });
+      expect(Number(bRow?.balance)).toBe(10);
+      ran("PATCH /accounts/balances");
+    });
 
     it("DELETE /accounts/:id: B 404 identical to not-found, row kept; A 200 removes it", async () => {
       await expectSameAsNotFound("delete", `/accounts/${accountId}`, `/accounts/${MISSING_ID}`);
