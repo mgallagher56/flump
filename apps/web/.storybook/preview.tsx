@@ -89,7 +89,7 @@ const preview: Preview = {
                 gridTemplateColumns: "1fr 1fr",
                 minHeight: "100vh",
                 width: "100%",
-                fontFamily: "var(--fonts-sans, 'Inter', sans-serif)",
+                fontFamily: "var(--fonts-sans, 'Inter Variable', 'Inter', sans-serif)",
               }}
             >
               {/* Light Mode Pane */}
@@ -156,7 +156,7 @@ const preview: Preview = {
             className={isDark ? "dark" : ""}
             data-theme={isDark ? "dark" : "light"}
             style={{
-              fontFamily: "var(--fonts-sans, 'Inter', sans-serif)",
+              fontFamily: "var(--fonts-sans, 'Inter Variable', 'Inter', sans-serif)",
               backgroundColor: "var(--colors-surface-canvas)",
               color: "var(--colors-text-primary)",
               padding: "24px",

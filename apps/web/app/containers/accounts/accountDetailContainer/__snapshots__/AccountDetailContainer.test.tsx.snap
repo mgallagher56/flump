@@ -39,7 +39,7 @@ exports[`<AccountDetailContainer /> > should render 1`] = `
             </span>
           </div>
           <h1
-            class="c_text.primary ff_var(--fonts-display,_'Plus_Jakarta_Sans',_sans-serif) ls_-0.025em fs_1.5rem fw_bold mt_1 lh_tight m_0 "
+            class="c_text.primary ff_var(--fonts-display,_'Plus_Jakarta_Sans_Variable',_'Plus_Jakarta_Sans',_sans-serif) ls_-0.025em fs_1.5rem fw_bold mt_1 lh_tight m_0 "
             style="font-size: 1.5rem; margin-top: 4px;"
           >
             My current account
@@ -48,7 +48,7 @@ exports[`<AccountDetailContainer /> > should render 1`] = `
             class="d_flex ai_baseline gap_12px mt_8px"
           >
             <h2
-              class="c_text.primary ff_var(--fonts-display,_'Plus_Jakarta_Sans',_sans-serif) ls_-0.025em fs_1.875rem fw_bold lh_tight m_0 "
+              class="c_text.primary ff_var(--fonts-display,_'Plus_Jakarta_Sans_Variable',_'Plus_Jakarta_Sans',_sans-serif) ls_-0.025em fs_1.875rem fw_bold lh_tight m_0 "
               style="font-size: 1.875rem;"
             >
               £1,000

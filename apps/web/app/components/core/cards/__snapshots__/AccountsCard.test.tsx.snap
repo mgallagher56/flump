@@ -57,7 +57,7 @@ exports[`<AccountsCard /> > it renders an AccountsCard component with title as e
           class="d_flex ai_baseline flex-wrap_wrap gap_8px mt_8px"
         >
           <span
-            class="ff_var(--fonts-display,_'Plus_Jakarta_Sans',_sans-serif) fs_20px md:fs_24px fw_bold ls_-0.02em fv-num_tabular-nums c_text.primary lh_1.2"
+            class="ff_var(--fonts-display,_'Plus_Jakarta_Sans_Variable',_'Plus_Jakarta_Sans',_sans-serif) fs_20px md:fs_24px fw_bold ls_-0.02em fv-num_tabular-nums c_text.primary lh_1.2"
           >
             £12,000
           </span>
@@ -166,7 +166,7 @@ exports[`<AccountsCard with increasing values > should match snapshot for accoun
           class="d_flex ai_baseline flex-wrap_wrap gap_8px mt_8px"
         >
           <span
-            class="ff_var(--fonts-display,_'Plus_Jakarta_Sans',_sans-serif) fs_20px md:fs_24px fw_bold ls_-0.02em fv-num_tabular-nums c_text.primary lh_1.2"
+            class="ff_var(--fonts-display,_'Plus_Jakarta_Sans_Variable',_'Plus_Jakarta_Sans',_sans-serif) fs_20px md:fs_24px fw_bold ls_-0.02em fv-num_tabular-nums c_text.primary lh_1.2"
           >
             £9,000
           </span>
