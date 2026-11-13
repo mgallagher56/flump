@@ -3,8 +3,9 @@ import path from "node:path";
 import { describe, expect, it } from "vitest";
 
 // R-11: UI copy uses UK spellings (-ise/-ising), never US -ize/-izing. Scans the dashboard widget
-// layer and the features/dashboard components, the sandbox route and the debt dialog. Only whole lowercase or Capitalised words match, so
-// camelCase identifiers such as `fontSize` or `onToggleSize` are ignored.
+// layer and the features/dashboard components, the sandbox route and the debt dialog. Only whole
+// lowercase or Capitalised words match, so camelCase identifiers such as `fontSize` or
+// `onToggleSize` are ignored.
 const APP_DIR = path.resolve(__dirname, "../..");
 const DASHBOARD_DIR = path.join(APP_DIR, "components/dashboard");
 const DASHBOARD_FEATURE_DIR = path.join(APP_DIR, "features/dashboard");

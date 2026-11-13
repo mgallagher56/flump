@@ -131,16 +131,33 @@ export const BudgetWidget: FC<BudgetWidgetProps> = ({ data }) => {
     <WidgetCard href="/app/budget" icon={WIDGET_ICONS.budget} id="budget" title="Budget">
       <div className={content()}>
         <div className={headline()} role="status">
-          <p className={label()}>{surplus >= 0 ? "Monthly surplus" : "Monthly deficit"}</p>
-          <span className={statValue()}>
-            <Money
-              signDisplay="always"
-              size="lg"
-              tone={surplus < 0 ? "danger" : surplus > 0 ? "positive" : "default"}
-              value={surplus}
-            />
-            <span className={unit()}>a month</span>
-          </span>
+          {incomeKnown ? (
+            <>
+              <p className={label()}>{surplus >= 0 ? "Monthly surplus" : "Monthly deficit"}</p>
+              <span className={statValue()}>
+                <Money
+                  signDisplay="always"
+                  size="lg"
+                  tone={surplus < 0 ? "danger" : surplus > 0 ? "positive" : "default"}
+                  value={surplus}
+                />
+                <span className={unit()}>a month</span>
+              </span>
+            </>
+          ) : (
+            // Without income a surplus or deficit would only be minus the expenses: unknown.
+            <>
+              <p className={label()}>Monthly surplus</p>
+              <p className={notSetWrap()}>
+                <NotSet
+                  actionLabel="Add"
+                  href="/app/budget"
+                  id="budget-widget-add-income-for-surplus"
+                  subject="income"
+                />
+              </p>
+            </>
+          )}
         </div>
 
         <dl className={statRow()}>

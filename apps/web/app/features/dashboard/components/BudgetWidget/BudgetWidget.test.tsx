@@ -75,8 +75,10 @@ describe("BudgetWidget", () => {
       savingsRatePct: 0,
     });
     expect(screen.queryByText("0%")).toBeNull();
-    expect(screen.getAllByText("Not set").length).toBeGreaterThanOrEqual(2);
-    expect(screen.getAllByRole("link", { name: "Add income" }).length).toBe(2);
+    expect(screen.queryByText("Monthly deficit")).toBeNull();
+    expect(screen.queryByText(/4,950/)).toBeNull();
+    expect(screen.getAllByText("Not set").length).toBeGreaterThanOrEqual(3);
+    expect(screen.getAllByRole("link", { name: "Add income" }).length).toBe(3);
   });
 
   it("shows years and months instead of descriptive labels like 'Ironclad Runway'", () => {
