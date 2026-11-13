@@ -33,7 +33,6 @@
   "apps/web/app/components/debt/UkDebtInstrumentsCard.tsx": 1,
   "apps/web/app/components/dialogs/addEditAccountsDialog/AddEditAccountsDialog.tsx": 1,
   "apps/web/app/components/dialogs/connectBankWizard/ConnectBankWizard.tsx": 1,
-  "apps/web/app/components/home/HomeFooter.tsx": 1,
   "apps/web/app/components/pension/AddPensionAccountDialog.tsx": 1,
   "apps/web/app/components/pension/PensionAccountsList.tsx": 1,
   "apps/web/app/components/pension/PensionForecasterCard.tsx": 1,
