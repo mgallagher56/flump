@@ -3,6 +3,18 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { connectTestClient, type TestHarness } from "../testing/client.js";
 import { renterWithUnknownAprCard } from "../testing/personas.js";
 
+/** Minimal valid arguments per tool. Every registered tool must have an entry. */
+const TOOL_ARGS: Record<string, Record<string, unknown>> = {
+  simulate_debt_payoff: { strategy: "COMPARE_BOTH" },
+  simulate_uk_tax_and_pension_sacrifice: { employeePensionPct: 5 },
+  compare_mortgage_overpay_vs_isa: {},
+  calculate_self_assessment_and_section24: { taxYear: "2025/26" },
+  project_wealth_scenario: {},
+  evaluate_cashflow_runway_and_health: {},
+  evaluate_uk_student_loan: { currentBalanceGbp: 30000 },
+  query_transactions_and_spending: {},
+};
+
 /** E17-N3: summaries only, compact JSON, SDK registration, real version. */
 describe("MCP output size and registration (E17-N3)", () => {
   let h: TestHarness;
@@ -41,12 +53,32 @@ describe("MCP output size and registration (E17-N3)", () => {
       const res = await h.client.readResource({ uri: r.uri });
       expect((res.contents[0] as { text: string }).text, r.uri).not.toContain("\n");
     }
-    for (const [name, args] of [
-      ["simulate_debt_payoff", { strategy: "AVALANCHE" }],
-      ["evaluate_cashflow_runway_and_health", {}],
-    ] as const) {
-      expect(await h.callText(name, args), name).not.toContain("\n");
+    const { tools } = await h.client.listTools();
+    for (const tool of tools) {
+      const args = TOOL_ARGS[tool.name];
+      expect(args, `no minimal args for tool ${tool.name}; add it to TOOL_ARGS`).toBeDefined();
+      expect(await h.callText(tool.name, args), tool.name).not.toContain("\n");
     }
+  });
+
+  it("registers exactly the expected resources", async () => {
+    const { resources } = await h.client.listResources();
+    expect(resources.map((r) => [r.name, r.uri]).sort()).toEqual(
+      [
+        ["accounts", "flump://context/accounts"],
+        ["baseline", "flump://context/baseline"],
+        ["budget", "flump://context/budget"],
+        ["executive-snapshot", "flump://context/executive-snapshot"],
+        ["tax-ledger", "flump://context/tax-ledger"],
+        ["uk-fiscal-guardrails", "flump://rules/uk-fiscal-guardrails"],
+      ].sort(),
+    );
+  });
+
+  it("gives tools distinct titles", async () => {
+    const { tools } = await h.client.listTools();
+    const titles = tools.map((t) => t.title);
+    expect(new Set(titles).size).toBe(titles.length);
   });
 
   it("gives every tool, resource and prompt a title", async () => {

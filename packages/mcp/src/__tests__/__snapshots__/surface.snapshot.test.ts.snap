@@ -3,19 +3,19 @@
 exports[`MCP surface snapshot (E17-N1) > pins prompts/list 1`] = `
 [
   {
-    "arguments": undefined,
+    "arguments": [],
     "description": "Comprehensive UK personal financial health audit, evaluating net worth, emergency runway, high-APR debt burn, and tax efficiency.",
     "name": "uk-financial-health-audit",
     "title": "UK financial health audit",
   },
   {
-    "arguments": undefined,
+    "arguments": [],
     "description": "Analyzes whether gross salary + bonuses enter the UK £100k-£125,140 60% (or 69.5% Scottish) tax trap and models optimal pension sacrifice.",
     "name": "escape-100k-tax-trap",
     "title": "Escape the 100k tax trap",
   },
   {
-    "arguments": undefined,
+    "arguments": [],
     "description": "Inspects all credit cards, 0% promotional balance transfers, and arranged overdrafts, generating an aggressive Avalanche vs Snowball payoff plan.",
     "name": "crush-high-apr-debt",
     "title": "Crush high APR debt",
