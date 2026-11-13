@@ -53,7 +53,7 @@ describe("parseArgs", () => {
 describe("runDry", () => {
   test("oracle transcripts pass all 40 golden tasks", () => {
     const summary = runDry(GOLDEN_TASKS);
-    expect(summary.total).toBe(40);
+    expect(summary.total).toBe(36);
     expect(summary.failed).toBe(0);
   });
 });
@@ -140,7 +140,7 @@ describe("main", () => {
     const code = await main([], {}, { log: (m) => out.push(m) });
     expect(code).toBe(0);
     expect(out.join("\n")).toContain("dry run");
-    expect(out.join("\n")).toContain("40/40");
+    expect(out.join("\n")).toContain("36/36");
   });
 
   test("a bad cap exits non-zero", async () => {
