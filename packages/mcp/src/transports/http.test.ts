@@ -1,7 +1,8 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { FailedAuthLimiter } from "../auth/failed-auth-limiter.js";
+import { hashPatToken } from "../auth/token-verifier.js";
 import type { McpUserDataProvider } from "../types.js";
-import { HttpMcpHandler } from "./http.js";
+import { countToolCalls, HttpMcpHandler } from "./http.js";
 
 const newHandler = () => new HttpMcpHandler({ dataProvider: {} as McpUserDataProvider });
 const PAT = "flump_pat_0123456789abcdef0123456789abcdef";
@@ -170,5 +171,116 @@ describe("HttpMcpHandler hardening", () => {
     );
     limiter.recordFailure("7.7.7.8");
     expect(limiter.check("7.7.7.8").blocked).toBe(false);
+  });
+});
+
+describe("usage counted per tools/call", () => {
+  const record = (id: string) => ({
+    id,
+    userId: "user-1",
+    tokenHash: hashPatToken(PAT),
+    scopes: ["mcp:read:anonymized"],
+    anonymizeInstitutions: true,
+    expiresAt: null,
+    revokedAt: null,
+  });
+  const setup = () => {
+    const calls: Array<[string, number]> = [];
+    const keys: string[] = [];
+    const handler = new HttpMcpHandler({
+      dataProvider: {} as McpUserDataProvider,
+      tokenStore: {
+        findTokenByHash: async () => record("tok-1"),
+        recordRequest: async (id, n) => {
+          calls.push([id, n]);
+        },
+      },
+      rateLimiter: {
+        checkLimit: (key: string) => {
+          keys.push(key);
+          return { allowed: false, resetSeconds: 1, message: "x" };
+        },
+      } as never,
+    });
+    return { handler, calls, keys };
+  };
+  const rpc = (method: string, id = 1) => ({ jsonrpc: "2.0", id, method, params: {} });
+  const webReq = (body: unknown) =>
+    new Request("http://localhost/mcp", {
+      method: "POST",
+      headers: { authorization: `Bearer ${PAT}`, "content-type": "application/json" },
+      body: JSON.stringify(body),
+    });
+  const expressRes: any = {
+    status: () => expressRes,
+    setHeader: () => expressRes,
+    json: () => expressRes,
+  };
+  const expressReq = (body: unknown) => ({ headers: { authorization: `Bearer ${PAT}` }, body });
+
+  it("countToolCalls handles single, batch and junk bodies", () => {
+    expect(countToolCalls(rpc("tools/call"))).toBe(1);
+    expect(countToolCalls([rpc("tools/call"), rpc("tools/list", 2), rpc("tools/call", 3)])).toBe(2);
+    expect(countToolCalls(undefined)).toBe(0);
+    expect(countToolCalls(null)).toBe(0);
+    expect(countToolCalls("x")).toBe(0);
+  });
+
+  // The rate limiter denies here, so only the counting before it is under test.
+  it("web: initialize plus list counts 0 tool calls", async () => {
+    const { handler, calls } = setup();
+    await handler.handleWebRequest(webReq([rpc("initialize"), rpc("tools/list", 2)]));
+    expect(calls).toEqual([["tok-1", 0]]);
+  });
+
+  it("web: a batch of 2 tool calls counts 2", async () => {
+    const { handler, calls } = setup();
+    await handler.handleWebRequest(webReq([rpc("tools/call"), rpc("tools/call", 2)]));
+    expect(calls).toEqual([["tok-1", 2]]);
+  });
+
+  it("express: initialize plus list counts 0, a batch of 2 counts 2", async () => {
+    const { handler, calls } = setup();
+    await handler.handleExpressRequest(
+      expressReq([rpc("initialize"), rpc("tools/list", 2)]),
+      expressRes,
+    );
+    await handler.handleExpressRequest(
+      expressReq([rpc("tools/call"), rpc("tools/call", 2)]),
+      expressRes,
+    );
+    expect(calls).toEqual([
+      ["tok-1", 0],
+      ["tok-1", 2],
+    ]);
+  });
+
+  it("keys the rate limiter by tokenId", async () => {
+    const { handler, keys } = setup();
+    await handler.handleWebRequest(webReq(rpc("tools/call")));
+    expect(keys).toEqual(["tok-1"]);
+  });
+
+  it("a failing usage write is logged and does not fail the request", async () => {
+    const errors = vi.spyOn(console, "error").mockImplementation(() => {});
+    const { handler } = setup();
+    (handler as any).verifier.recordRequest = async () => {
+      throw new Error("db down");
+    };
+    const res = await handler.handleWebRequest(webReq(rpc("tools/call")));
+    expect(res.status).toBe(429);
+    expect(errors).toHaveBeenCalled();
+    errors.mockRestore();
+  });
+
+  it("does not record usage for failed authentication", async () => {
+    const { handler, calls } = setup();
+    await handler.handleWebRequest(
+      new Request("http://localhost/mcp", {
+        method: "POST",
+        headers: { authorization: "Bearer nope" },
+      }),
+    );
+    expect(calls).toEqual([]);
   });
 });

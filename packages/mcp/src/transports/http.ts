@@ -32,6 +32,15 @@ function clientIpFromHeaders(headers: Headers): string {
   return last || "unknown";
 }
 
+/** Counts `tools/call` messages in a JSON-RPC body (a single message or a batch). */
+export function countToolCalls(body: unknown): number {
+  const messages = Array.isArray(body) ? body : [body];
+  return messages.filter(
+    (m) =>
+      typeof m === "object" && m !== null && (m as { method?: unknown }).method === "tools/call",
+  ).length;
+}
+
 export class HttpMcpHandler {
   private readonly verifier: TokenVerifier;
   private readonly rateLimiter: McpRateLimiter;
@@ -43,6 +52,16 @@ export class HttpMcpHandler {
     this.rateLimiter = options.rateLimiter ?? new McpRateLimiter(60, 300);
     this.failedAuthLimiter = options.failedAuthLimiter ?? new FailedAuthLimiter(10, 60_000);
     this.dataProvider = options.dataProvider;
+  }
+
+  /** Awaits the usage write; a failure is logged and never fails the request. */
+  private async recordUsage(verified: VerifiedToken, body: unknown): Promise<void> {
+    if (!verified.tokenId) return;
+    try {
+      await this.verifier.recordRequest(verified.tokenId, countToolCalls(body));
+    } catch (err) {
+      console.error("Failed to record MCP token usage:", err);
+    }
   }
 
   getOAuthMetadata() {
@@ -71,8 +90,9 @@ export class HttpMcpHandler {
       const verified = await this.verifier.verifyAuthorizationHeader(authHeader);
       this.failedAuthLimiter.recordSuccess(ip);
 
-      // 2. Check rate limits
-      const limitResult = this.rateLimiter.checkLimit(verified.userId);
+      // 2. Record usage for every authenticated request, then check rate limits
+      await this.recordUsage(verified, parsedBody ?? req.body);
+      const limitResult = this.rateLimiter.checkLimit(verified.tokenId ?? verified.userId);
       if (!limitResult.allowed) {
         res.setHeader("Retry-After", String(limitResult.resetSeconds));
         res.status(429).json({
@@ -133,7 +153,16 @@ export class HttpMcpHandler {
       const verified = await this.verifier.verifyAuthorizationHeader(authHeader);
       this.failedAuthLimiter.recordSuccess(ip);
 
-      const limitResult = this.rateLimiter.checkLimit(verified.userId);
+      let body: unknown;
+      if (verified.tokenId) {
+        body = await request
+          .clone()
+          .json()
+          .catch(() => undefined);
+      }
+      await this.recordUsage(verified, body);
+
+      const limitResult = this.rateLimiter.checkLimit(verified.tokenId ?? verified.userId);
       if (!limitResult.allowed) {
         return new Response(
           JSON.stringify({

@@ -24,7 +24,8 @@ export interface McpTokenRecord {
 
 export interface McpTokenStoreAdapter {
   findTokenByHash(hash: string): Promise<McpTokenRecord | null>;
-  recordUsage?(tokenId: string): Promise<void>;
+  /** Called by the transport once per authenticated request with the number of `tools/call` messages. */
+  recordRequest?(tokenId: string, toolCalls: number): Promise<void>;
 }
 
 export interface TokenVerifierOptions {
@@ -60,6 +61,11 @@ export class TokenVerifier {
     this.authServerUrl = options.authServerUrl ?? "https://api.workos.com";
     this.devToken = options.devToken || undefined;
     this.devUserId = options.devUserId ?? "dev_user";
+  }
+
+  /** Records one authenticated request (and its `tools/call` count) against a PAT. */
+  async recordRequest(tokenId: string, toolCalls: number): Promise<void> {
+    await this.tokenStore?.recordRequest?.(tokenId, toolCalls);
   }
 
   /**
@@ -125,13 +131,6 @@ export class TokenVerifier {
 
       if (record.expiresAt && new Date(record.expiresAt).getTime() < Date.now()) {
         throw new AuthenticationError("This AI Connection token has expired.");
-      }
-
-      // Record async telemetry if supported
-      if (this.tokenStore.recordUsage) {
-        this.tokenStore.recordUsage(record.id).catch((err) => {
-          console.error("Failed to record MCP token usage telemetry:", err);
-        });
       }
 
       const scopes = filterKnownScopes(record.scopes ?? ["mcp:read:anonymized", "mcp:simulate"]);
