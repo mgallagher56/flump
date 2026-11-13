@@ -507,6 +507,9 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
     const legacy = async (): Promise<{ a: string; b: string }> => {
       await ds.runMigrations();
       await ds.undoLastMigration();
+      // Back to before E23's unique index too, so legacy duplicate rows can be seeded.
+      await ds.query('DROP INDEX IF EXISTS "UQ_account_details_account_year_month"');
+      await ds.query("DELETE FROM migrations WHERE name = 'UniqueAccountDetailMonth1794356000000'");
       const acc = async (user: string): Promise<string> => {
         const rows: { id: string }[] = await ds.query(
           `INSERT INTO accounts (user_id, name, type, balance, currency)
@@ -1007,7 +1010,7 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")("migrations (real Pos
 
     const insertDetail = (account: string, year: number, month: number, value: number) =>
       ds.query(
-        "INSERT INTO account_details (account_id, year, month, value) VALUES ($1, $2, $3, $4)",
+        "INSERT INTO account_details (account_id, user_id, year, month, value, as_of_date) VALUES ($1, 'u', $2, $3, $4, make_date($2, $3, 1))",
         [account, year, month, value],
       );
 
