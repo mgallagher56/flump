@@ -55,6 +55,7 @@ export interface SnapshotHistoryPageProps {
 }
 
 const PROJECTION_MONTHS = 6;
+const COVER_FORMAT = new Intl.NumberFormat("en-GB", { maximumFractionDigits: 1 });
 
 /**
  * Net worth history (E30). Saved data only: every figure comes from recorded monthly balances,
@@ -94,10 +95,10 @@ export const SnapshotHistoryPage: FC<SnapshotHistoryPageProps> = ({
       ? toChartPoints(series.filter((p) => p.month === recordedPoint.month))
       : [];
 
-  const coverText =
-    monthsOfCover === null || !Number.isFinite(monthsOfCover)
-      ? "Not set"
-      : `${monthsOfCover.toFixed(1)} months`;
+  const coverKnown = monthsOfCover !== null && Number.isFinite(monthsOfCover);
+  const coverText = coverKnown
+    ? `${COVER_FORMAT.format(monthsOfCover)} ${COVER_FORMAT.format(monthsOfCover) === "1" ? "month" : "months"}`
+    : "Not set";
 
   const actions = (
     <div className={actionsRow()}>
@@ -123,42 +124,27 @@ export const SnapshotHistoryPage: FC<SnapshotHistoryPageProps> = ({
     </div>
   );
 
+  // Figures only: dates and counts sit in the saved-state line and the description, so the
+  // strip never wraps a long text value at phone width.
+  const netWorthKpi = latest ? (
+    <KpiCard
+      key="nw"
+      label={`Net worth, ${formatMonth(latest.month)}`}
+      tone="hero"
+      value={latest.netWorth}
+    />
+  ) : null;
   const kpis =
-    stage === "none" || !latest
+    !latest || !netWorthKpi
       ? null
-      : stage === "single"
-        ? ([
-            <KpiCard
-              key="nw"
-              label={`Net worth, ${formatMonth(latest.month)}`}
-              tone="hero"
-              value={latest.netWorth}
-            />,
-            <KpiCard key="next" label="Next check-in" value={nextCheckInDate(currentMonth)} />,
-            <KpiCard key="cover" label="Months of cover" value={coverText} />,
-            <KpiCard
-              key="history"
-              label="History"
-              value={historyCountLabel(history.recordedMonths)}
-            />,
-          ] as const)
+      : stage === "single" || !previous || latestChange === null
+        ? ([netWorthKpi] as const)
         : ([
-            <KpiCard
-              key="nw"
-              label={`Net worth, ${formatMonth(latest.month)}`}
-              tone="hero"
-              value={latest.netWorth}
-            />,
+            netWorthKpi,
             <KpiCard
               key="change"
-              label={previous ? `Change since ${formatMonth(previous.month)}` : "Change"}
-              value={latestChange === null ? "Not set" : formatSignedChange(latestChange)}
-            />,
-            <KpiCard key="next" label="Next check-in" value={nextCheckInDate(currentMonth)} />,
-            <KpiCard
-              key="history"
-              label="History"
-              value={historyCountLabel(history.recordedMonths)}
+              label={`Change since ${formatMonth(previous.month)}`}
+              value={formatSignedChange(latestChange)}
             />,
           ] as const);
 
@@ -178,6 +164,8 @@ export const SnapshotHistoryPage: FC<SnapshotHistoryPageProps> = ({
         <p className={savedLine()}>
           <StatusBadge variant="neutral">Saved</StatusBadge>
           <span>Last recorded month: {formatMonth(lastRecorded)}</span>
+          <span aria-hidden="true">·</span>
+          <span>Next check-in: {nextCheckInDate(currentMonth)}</span>
         </p>
       ) : null}
 
@@ -244,7 +232,7 @@ export const SnapshotHistoryPage: FC<SnapshotHistoryPageProps> = ({
                 <dt className={factLabel()}>Months of cover</dt>
                 <dd className={factValue()}>
                   {coverText}
-                  {monthsOfCover !== null ? (
+                  {coverKnown ? (
                     <span className={factLabel()}>
                       {" "}
                       (cash accounts ÷ essential spending in Budget)

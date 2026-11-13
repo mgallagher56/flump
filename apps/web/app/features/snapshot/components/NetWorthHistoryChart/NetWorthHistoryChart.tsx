@@ -149,7 +149,11 @@ export const NetWorthHistoryChart: FC<NetWorthHistoryChartProps> = ({
       summary={summary}
       title="Net worth over time"
     >
-      <div className={chartWrap()}>
+      <div
+        className={chartWrap()}
+        data-testid="net-worth-history-chart"
+        id="net-worth-history-chart"
+      >
         <ResponsiveContainer height="100%" width="100%">
           <LineChart data={rows} margin={{ top: 12, right: 16, left: 0, bottom: 0 }}>
             <CartesianGrid {...chartGridProps} />
@@ -163,6 +167,7 @@ export const NetWorthHistoryChart: FC<NetWorthHistoryChartProps> = ({
               <Line
                 {...chartLineProps("primary", { projection: true })}
                 connectNulls={false}
+                type="linear"
                 dataKey="carried"
                 name="Carried forward"
                 strokeOpacity={0.7}
@@ -171,6 +176,7 @@ export const NetWorthHistoryChart: FC<NetWorthHistoryChartProps> = ({
             <Line
               {...chartLineProps("primary")}
               connectNulls={false}
+              type="linear"
               dataKey="recorded"
               dot={
                 recordedCount <= 1

@@ -1,4 +1,4 @@
-import { Card, CollapsibleDrawer, Table, TBody, Td, THead, Th, VisuallyHidden } from "@repo/ui";
+import { Card, CollapsibleDrawer, Table, TBody, Td, THead, Th, Tr, VisuallyHidden } from "@repo/ui";
 import { type FC, type ReactNode, useId } from "react";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
 import { formatSignedChange, spokenChange } from "../../snapshotCopy";
@@ -46,31 +46,38 @@ export const MonthlyChangeTable: FC<MonthlyChangeTableProps> = (props) => {
     note = `${formatMonth(props.previousMonth)} to ${formatMonth(props.month)}. Debts show the amount owed.`;
     table = (
       <Table
+        stacked
         caption={`Change by account, ${formatMonth(props.previousMonth)} to ${formatMonth(props.month)}`}
       >
         <THead>
-          <tr>
+          <Tr>
             <Th>Account</Th>
             <Th numeric>{formatMonth(props.previousMonth)}</Th>
             <Th numeric>{formatMonth(props.month)}</Th>
             <Th numeric>Change</Th>
-          </tr>
+          </Tr>
         </THead>
         <TBody>
           {props.rows.map((r) => (
-            <tr key={r.accountId}>
+            <Tr key={r.accountId}>
               <Th scope="row">
                 {r.name}
                 {r.isLiability ? " (owed)" : ""}
               </Th>
-              <Td numeric>{formatCurrency(r.previous)}</Td>
-              <Td numeric secondary={r.carried ? "Carried forward" : undefined}>
+              <Td label={formatMonth(props.previousMonth)} numeric>
+                {formatCurrency(r.previous)}
+              </Td>
+              <Td
+                label={formatMonth(props.month)}
+                numeric
+                secondary={r.carried ? "Carried forward" : undefined}
+              >
                 {formatCurrency(r.current)}
               </Td>
-              <Td numeric>
+              <Td label="Change" numeric>
                 <Change value={r.change} />
               </Td>
-            </tr>
+            </Tr>
           ))}
         </TBody>
       </Table>
@@ -79,19 +86,20 @@ export const MonthlyChangeTable: FC<MonthlyChangeTableProps> = (props) => {
     title = "Change by month";
     note = "Net worth at each month, and the change from the month before.";
     table = (
-      <Table caption="Net worth change by month">
+      <Table caption="Net worth change by month" stacked>
         <THead>
-          <tr>
+          <Tr>
             <Th>Month</Th>
             <Th numeric>Net worth</Th>
             <Th numeric>Change</Th>
-          </tr>
+          </Tr>
         </THead>
         <TBody>
           {props.rows.map((r) => (
-            <tr key={r.month}>
+            <Tr key={r.month}>
               <Th scope="row">{formatMonth(r.month)}</Th>
               <Td
+                label="Net worth"
                 numeric
                 secondary={
                   r.allCarried
@@ -103,10 +111,10 @@ export const MonthlyChangeTable: FC<MonthlyChangeTableProps> = (props) => {
               >
                 {formatCurrency(r.netWorth)}
               </Td>
-              <Td numeric>
+              <Td label="Change" numeric>
                 <Change value={r.change} />
               </Td>
-            </tr>
+            </Tr>
           ))}
         </TBody>
       </Table>
@@ -116,6 +124,7 @@ export const MonthlyChangeTable: FC<MonthlyChangeTableProps> = (props) => {
   if (props.rows.length > MAX_OPEN_ROWS) {
     return (
       <CollapsibleDrawer
+        className={tableCard()}
         closedLabel="Show table"
         itemCount={props.rows.length}
         itemNoun={
@@ -133,7 +142,14 @@ export const MonthlyChangeTable: FC<MonthlyChangeTableProps> = (props) => {
   }
 
   return (
-    <Card aria-labelledby={headingId} as="section" className={tableCard()} padding="md">
+    <Card
+      aria-labelledby={headingId}
+      as="section"
+      className={tableCard()}
+      data-testid={`snapshot-change-${props.variant}`}
+      id={`snapshot-change-${props.variant}`}
+      padding="md"
+    >
       <h3 className={tableHeading()} id={headingId}>
         {title}
       </h3>
