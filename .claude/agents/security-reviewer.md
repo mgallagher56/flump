@@ -2,7 +2,7 @@
 
 name: security-reviewer
 description: Read-only security reviewer for the NestJS backend and banking integration code (auth, injection, secrets, PII handling). Use when changes touch apps/backend or packages/banking.
-model: sonnet
+model: opus
 tools: Read, Grep, Glob, Bash
 ---
 

@@ -1,7 +1,7 @@
 ---
 
 name: decider
-description: Read-only decision agent for COMPLICATED decisions (competing options, high stakes, hard to reverse, legal/financial/security implications, conflicting evidence). Straightforward decisions go to planner (opus). Not for code, plans or research.
+description: Read-only decision agent for COMPLICATED decisions (competing options, high stakes, hard to reverse, legal/financial/security implications, conflicting evidence). Straightforward decisions go to planner (fable). Not for code, plans or research.
 tools: Read, Grep, Glob, Bash
 model: fable
 ---

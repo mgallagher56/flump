@@ -3,7 +3,7 @@
 name: explorer
 description: Read-only codebase search and simple investigation. Use for finding files, symbols, usages and conventions across the Flump monorepo when only the conclusion is needed. Complicated investigation goes to implementer.
 tools: Read, Grep, Glob, Bash
-model: haiku
+model: sonnet
 ---
 
 You are a read-only search agent for the Flump monorepo (Bun + Turbo; `apps/web`, `apps/marketing`, `apps/backend`, `packages/ui`).
