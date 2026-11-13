@@ -1,5 +1,6 @@
 import {
   type BuildContextPackInput,
+  budgetEntryFromRow,
   profileFactsFromProfile,
   userProfileToFinancialBaseline,
 } from "@flump/finance-engine";
@@ -77,16 +78,8 @@ export class AgentDataService implements McpUserDataProvider {
       profileFacts: profileFactsFromProfile(profile),
       accounts,
       accountDetails,
-      budgetEntries: budgetEntries.map((b) => ({
-        id: b.id,
-        category: b.category,
-        name: b.name,
-        amount: Number(b.amount) || 0,
-        frequency: b.frequency,
-        isIncome: b.isIncome,
-        isEssential: b.isEssential,
-        notes: b.notes,
-      })),
+      // The engine's one row mapper, as the web loaders use; notes stay for non-anonymised packs.
+      budgetEntries: budgetEntries.map((b, i) => ({ ...budgetEntryFromRow(b, i), notes: b.notes })),
       // Receipts (base64 blobs) are never sent to MCP clients (E20-N15/N16).
       taxRecords: taxRecords.map((t) => ({
         id: t.id,

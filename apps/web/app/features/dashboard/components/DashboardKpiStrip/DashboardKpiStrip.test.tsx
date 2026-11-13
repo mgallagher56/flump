@@ -73,4 +73,10 @@ describe("<DashboardKpiStrip />", () => {
     const { container } = renderStrip(unknown);
     expect(container.querySelector('[data-tone="hero"]')).toBeNull();
   });
+
+  it("names a shortfall in plain words instead of a bare £0 safe to spend", () => {
+    renderStrip({ ...known, weeklySafeToSpend: 0, safeToSpendShortfall: 120 });
+    expect(screen.getByText(/a month more than take-home/)).toBeDefined();
+    expect(screen.queryByText("Discretionary allowance")).toBeNull();
+  });
 });

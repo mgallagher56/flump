@@ -126,6 +126,16 @@ describe("<BudgetOverview /> figures come from the financial picture (E23)", () 
   });
 });
 
+describe("<BudgetOverview /> with no income rows", () => {
+  it("shows income and left over as Not set, not £0 and a shortfall", () => {
+    const { container } = customRender(<BudgetOverview {...baseProps} entries={[entry({})]} />);
+    expect(container.querySelector('[data-figure="budget.income"]')).toBeNull();
+    expect(container.querySelector('[data-figure="budget.surplus"]')).toBeNull();
+    expect(screen.queryByText("Monthly shortfall")).toBeNull();
+    expect(screen.queryByText("Your budget spends more than you bring in")).toBeNull();
+  });
+});
+
 describe("<BudgetOverview /> deficit", () => {
   it("names the shortfall and offers debt support without telling the user what to do", () => {
     customRender(

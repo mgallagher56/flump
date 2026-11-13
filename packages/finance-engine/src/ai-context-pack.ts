@@ -219,11 +219,13 @@ export function buildFlumpAiContextPack(
       : (safeBaseline.monthlyHousingCost ?? 900) + (safeBaseline.monthlyOtherOutgoings ?? 1100);
   const minDebtMonthly = consumerDebts.reduce((sum, d) => sum + d.minimumPaymentGbp, 0);
   const totalLiquid = snapshot.getTotalLiquidCash();
+  // Budget essentials already include "debt" rows; only minimums beyond them come off again.
+  const debtBeyondBudget = Math.max(0, minDebtMonthly - (pictureBudget?.debtPayments ?? 0));
   const monthlySurplus = Math.round(
     effectiveMonthlyIncome -
       effectiveEssentialBills -
       (pictureBudget?.discretionary ?? 0) -
-      minDebtMonthly,
+      debtBeyondBudget,
   );
 
   // 6. Stage Evaluation & Health Score

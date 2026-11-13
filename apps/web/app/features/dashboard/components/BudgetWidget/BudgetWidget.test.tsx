@@ -88,6 +88,20 @@ describe("BudgetWidget", () => {
     expect(screen.queryByText(/runway/i)).toBeNull();
   });
 
+  it("shows a budget with only savings rows, using the loader's budgetKnown", () => {
+    renderWidget({
+      budgetKnown: true,
+      monthlyIncome: 0,
+      monthlyExpenses: 0,
+      monthlySurplus: null,
+      budgetedSavings: 200,
+      savingsRatePct: 0,
+      monthsOfCover: null,
+    });
+    expect(screen.queryByRole("link", { name: "Add your budget" })).toBeNull();
+    expect(screen.getAllByRole("link", { name: "Add income" }).length).toBeGreaterThan(0);
+  });
+
   it("shows Not set when months of cover cannot be worked out", () => {
     renderWidget({ ...baseData, monthsOfCover: null });
     expect(screen.getByRole("link", { name: "Add essential spending" })).toBeDefined();

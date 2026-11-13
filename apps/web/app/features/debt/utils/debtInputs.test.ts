@@ -61,3 +61,15 @@ describe("buildDebtInputs", () => {
     expect(buildDebtInputs(accounts, [], []).liquidSavings).toBe(2000);
   });
 });
+
+describe("buildDebtInputs without income rows", () => {
+  it("gives no surplus rather than minus the spending", () => {
+    const result = buildDebtInputs(
+      [],
+      [],
+      [entry({ name: "Rent", isEssential: true, amount: 900 })],
+    );
+    expect(result.monthlySurplus).toBeNull();
+    expect(result.monthlyEssentialExpenses).toBe(900);
+  });
+});

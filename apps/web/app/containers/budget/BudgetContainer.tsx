@@ -267,7 +267,9 @@ const BudgetContainer: FC = () => {
       {activeTab === "wizard" && (
         <BudgetSetupWizard
           entries={entries}
-          monthlyTakeHome={userProfile?.monthlyTakeHome ?? null}
+          monthlyTakeHome={
+            picture.takeHome.status === "known" ? picture.takeHome.value.monthly : null
+          }
           onAddEntry={addEntry}
           onDeleteEntry={deleteEntry}
           onCancel={() => setActiveTab("dashboard")}

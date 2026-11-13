@@ -76,3 +76,13 @@ describe("selectBudgetTotals", () => {
     expect(fig.value.income).toBe(0);
   });
 });
+
+describe("selectBudgetTotals essentials flag", () => {
+  it("does not count £0 suggested essential rows as essentials entered", () => {
+    const fig = selectBudgetTotals([
+      row({ category: "housing", name: "Rent / Mortgage", amount: 0, isEssential: true }),
+    ]);
+    if (!isFigureKnown(fig)) throw new Error("expected known");
+    expect(fig.value.hasEssentials).toBe(false);
+  });
+});

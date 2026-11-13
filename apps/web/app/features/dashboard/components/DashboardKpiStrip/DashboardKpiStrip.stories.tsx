@@ -41,3 +41,13 @@ export const NotSet: Story = {
     await expect(canvas.getAllByRole("link", { name: "Add an account" })[0]).toBeDefined();
   },
 };
+
+/** Commitments go past take-home: the shortfall is named, not shown as a bare £0. */
+export const Shortfall: Story = {
+  args: { weeklySafeToSpend: 0, safeToSpendShortfall: 120, monthlySurplus: -120 },
+  play: async ({ canvasElement }) => {
+    await expect(
+      within(canvasElement).getAllByText(/a month more than take-home/)[0],
+    ).toBeDefined();
+  },
+};

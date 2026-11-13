@@ -10,6 +10,8 @@ export interface DashboardKpiStripProps {
   totalLiabilities: number | null;
   monthlySurplus: number | null;
   weeklySafeToSpend: number | null;
+  /** How far commitments and planned savings go past take-home each month; 0 or null if none. */
+  safeToSpendShortfall?: number | null;
   liquidCash: number | null;
 }
 
@@ -25,8 +27,10 @@ export const DashboardKpiStrip: FC<DashboardKpiStripProps> = ({
   totalLiabilities,
   monthlySurplus,
   weeklySafeToSpend,
+  safeToSpendShortfall = null,
   liquidCash,
 }) => {
+  const shortfall = safeToSpendShortfall !== null && safeToSpendShortfall > 0;
   const notSet = (href: string, subject: string) => (
     <Money
       notSetAction={
@@ -87,7 +91,16 @@ export const DashboardKpiStrip: FC<DashboardKpiStripProps> = ({
         />
         <KpiCard
           label="Weekly safe to spend"
-          subtext={weeklySafeToSpend === null ? undefined : "Discretionary allowance"}
+          subtext={
+            weeklySafeToSpend === null ? undefined : shortfall ? (
+              <span>
+                Commitments and planned savings are <Money size="sm" value={safeToSpendShortfall} />{" "}
+                a month more than take-home
+              </span>
+            ) : (
+              "Discretionary allowance"
+            )
+          }
           value={
             weeklySafeToSpend === null ? (
               notSet("/app/budget", "Add your budget")

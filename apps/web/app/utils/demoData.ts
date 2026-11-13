@@ -133,6 +133,7 @@ export function getSandboxPersonaData(persona: "debt" | "medium" | "high" | "wea
         totalLiabilities: 8000,
         accountsCount: 4,
         typeTotals: { Current: 950, "Credit Card": 4500, Overdraft: 1200, Loan: 2300 },
+        liquidCash: 950,
       },
       budgetData: {
         monthlyIncome: 2450,
@@ -147,6 +148,9 @@ export function getSandboxPersonaData(persona: "debt" | "medium" | "high" | "wea
         rawEntries: budgetEntries,
         rawAccounts: debtAccounts,
         rawAccountDetails: [],
+        // Illustrative sample figures in the picture's shape (E23).
+        safeToSpendWeekly: 138,
+        monthsOfCover: 0.7,
       },
       savingsData: {
         totalSavingsBalance: 0,
@@ -307,6 +311,7 @@ export function getSandboxPersonaData(persona: "debt" | "medium" | "high" | "wea
         totalLiabilities: 0,
         accountsCount: 3,
         typeTotals: { Current: 2800, Saving: 12500, Pension: 28000 },
+        liquidCash: 15300,
       },
       budgetData: {
         monthlyIncome: 2820,
@@ -321,6 +326,8 @@ export function getSandboxPersonaData(persona: "debt" | "medium" | "high" | "wea
         rawEntries: budgetEntries,
         rawAccounts: mediumAccounts,
         rawAccountDetails: [],
+        safeToSpendWeekly: 162,
+        monthsOfCover: 7.5,
       },
       savingsData: {
         totalSavingsBalance: 12500,
@@ -546,6 +553,7 @@ export function getSandboxPersonaData(persona: "debt" | "medium" | "high" | "wea
         Pension: 110000,
         Mortgage: 480000,
       },
+      liquidCash: 28500,
     },
     budgetData: {
       monthlyIncome: 6680,
@@ -560,6 +568,8 @@ export function getSandboxPersonaData(persona: "debt" | "medium" | "high" | "wea
       rawEntries: highBudgetEntries,
       rawAccounts: highAccounts,
       rawAccountDetails: [],
+      safeToSpendWeekly: 399,
+      monthsOfCover: 12,
     },
     savingsData: {
       totalSavingsBalance: 87000,

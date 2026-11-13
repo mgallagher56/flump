@@ -132,7 +132,9 @@ export const BudgetOverview: FC<BudgetOverviewProps> = ({
   }, [entries]);
 
   const incomeSources = entries.filter((e) => e.isIncome).length;
-  const inDeficit = totals.surplus < 0;
+  // Without an income row, income and what is left over are unknown (as on the dashboard and MCP).
+  const hasIncome = budget?.hasIncome === true;
+  const inDeficit = hasIncome && totals.surplus < 0;
 
   return (
     <div className={overviewRoot()}>
@@ -182,9 +184,11 @@ export const BudgetOverview: FC<BudgetOverviewProps> = ({
             label="Budgeted income"
             subtext={plural(incomeSources, "source", "sources")}
             value={
-              <span data-figure="budget.income">
-                <Money size="lg" value={totals.income} />
-              </span>
+              hasIncome ? (
+                <span data-figure="budget.income">
+                  <Money size="lg" value={totals.income} />
+                </span>
+              ) : null
             }
           />
           <KpiCard
@@ -207,15 +211,19 @@ export const BudgetOverview: FC<BudgetOverviewProps> = ({
           />
           <KpiCard
             delta={
-              inDeficit
-                ? { direction: "down", text: "Spending exceeds income" }
-                : { direction: "up", text: "Left over" }
+              !hasIncome
+                ? undefined
+                : inDeficit
+                  ? { direction: "down", text: "Spending exceeds income" }
+                  : { direction: "up", text: "Left over" }
             }
             label={inDeficit ? "Monthly shortfall" : "Left over each month"}
             value={
-              <span data-figure="budget.surplus" data-figure-sign={inDeficit ? "-1" : "1"}>
-                <Money size="lg" value={Math.abs(totals.surplus)} />
-              </span>
+              hasIncome ? (
+                <span data-figure="budget.surplus" data-figure-sign={inDeficit ? "-1" : "1"}>
+                  <Money size="lg" value={Math.abs(totals.surplus)} />
+                </span>
+              ) : null
             }
           />
         </KpiStrip>
