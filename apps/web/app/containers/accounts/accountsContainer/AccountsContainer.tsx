@@ -314,7 +314,10 @@ const AccountsContainer: FC = () => {
         <div
           className={css({ display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap" })}
         >
-          <MonthlyBalanceCheckInDrawer accounts={accounts} />
+          <MonthlyBalanceCheckInDrawer
+            accounts={accounts}
+            accountDetails={accountDetails as RawAccountDetail[]}
+          />
           <AddEditAccountsDialogBtn />
         </div>
       </div>
