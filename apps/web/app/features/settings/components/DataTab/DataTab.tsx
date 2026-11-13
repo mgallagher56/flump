@@ -1,0 +1,137 @@
+import { Button, Card, ConfirmDialog } from "@repo/ui";
+import { type FC, useState } from "react";
+import { useNavigate } from "react-router";
+import {
+  sectionCard,
+  sectionHeading,
+  sectionLead,
+  statusText,
+  tabStack,
+} from "~/features/settings/settings.styles";
+import { useUserProfile } from "~/hooks/useUserProfile";
+import {
+  dangerCopy,
+  dangerRow,
+  dangerText,
+  dangerTitle,
+  dialogBody,
+  wipeList,
+} from "./DataTab.styles";
+
+/** How long the success message shows before sending the person back to onboarding. */
+const SUCCESS_REDIRECT_MS = 1500;
+
+/** Your data: reset all financial data, behind a type-to-confirm dialog. */
+export const DataTab: FC = () => {
+  const { resetFinancialData } = useUserProfile();
+
+  let navigate: (to: string) => void;
+  try {
+    // biome-ignore lint/correctness/useHookAtTopLevel: fallback when rendered outside Router in unit tests
+    navigate = useNavigate();
+  } catch {
+    navigate = (to: string) => {
+      if (typeof window !== "undefined") window.location.href = to;
+    };
+  }
+
+  const [resetModalOpen, setResetModalOpen] = useState(false);
+  const [resettingData, setResettingData] = useState(false);
+  const [resetError, setResetError] = useState<string | null>(null);
+  const [resetSuccess, setResetSuccess] = useState(false);
+
+  const handleResetFinancialData = async () => {
+    setResettingData(true);
+    setResetError(null);
+    try {
+      await resetFinancialData();
+      setResetSuccess(true);
+      setTimeout(() => {
+        setResetModalOpen(false);
+        setResetSuccess(false);
+        navigate("/app/onboarding");
+      }, SUCCESS_REDIRECT_MS);
+    } catch (err) {
+      setResetError(
+        err instanceof Error && err.message
+          ? err.message
+          : "We could not reset your financial data. Try again.",
+      );
+    } finally {
+      setResettingData(false);
+    }
+  };
+
+  return (
+    <div className={tabStack()} id="settings-data-tab" data-testid="settings-data-tab">
+      <Card as="section" aria-labelledby="reset-data-heading" className={sectionCard()}>
+        <h2 className={sectionHeading()} id="reset-data-heading">
+          Reset your financial data
+        </h2>
+        <p className={sectionLead()}>
+          Start again from scratch. This removes everything you have added about your money.
+        </p>
+        <div className={dangerRow()}>
+          <div className={dangerText()}>
+            <p className={dangerTitle()}>This cannot be undone</p>
+            <p className={dangerCopy()}>
+              Deletes all your accounts, transactions, bank connections, budget entries and tax
+              records.
+            </p>
+          </div>
+          <Button
+            data-testid="reset-financial-data-trigger"
+            id="reset-financial-data-trigger"
+            size="sm"
+            type="button"
+            variant="destructive"
+            onClick={() => {
+              setResetError(null);
+              setResetSuccess(false);
+              setResetModalOpen(true);
+            }}
+          >
+            Reset all financial data
+          </Button>
+        </div>
+      </Card>
+
+      <ConfirmDialog
+        id="reset-financial-data-dialog"
+        open={resetModalOpen}
+        onOpenChange={(open) => {
+          setResetModalOpen(open);
+          if (!open) setResetError(null);
+        }}
+        title="Reset all financial data"
+        description={
+          <div className={dialogBody()}>
+            <span>
+              This is <strong>permanent</strong> and immediately wipes:
+            </span>
+            <ul className={wipeList()}>
+              <li>All connected and manual accounts</li>
+              <li>All transaction history and balances</li>
+              <li>All budget entries and recurring rules</li>
+              <li>All income and expense tax records</li>
+              <li>All property, salary and savings settings</li>
+            </ul>
+            <span>You will start again from scratch.</span>
+            {resetSuccess ? (
+              <p className={statusText({ tone: "positive" })} role="status">
+                All financial data wiped. You have a clean slate.
+              </p>
+            ) : null}
+          </div>
+        }
+        confirmLabel="Reset everything"
+        pendingLabel="Resetting"
+        tone="danger"
+        requireText="RESET"
+        pending={resettingData || resetSuccess}
+        error={resetError}
+        onConfirm={handleResetFinancialData}
+      />
+    </div>
+  );
+};

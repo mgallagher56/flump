@@ -468,10 +468,6 @@ describe("Architecture & Design System Laws", () => {
           count: 1,
           reason: "active child dot (graphic)",
         },
-        "apps/web/app/components/budget/UserProfilePanel.tsx": {
-          count: 1,
-          reason: "toggle switch track (graphic)",
-        },
         // Pending: another task owns this file. Remove the entry once it is settled.
         "apps/web/app/features/ai-connections/components/McpConnectionCard/McpConnectionCard.styles.ts":
           { count: 1, reason: "toggle track (graphic, no label text)" },

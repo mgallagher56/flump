@@ -7,7 +7,6 @@ import { describe, expect, test } from "vitest";
 // containers that take programmatic focus are allowlisted by file; they opt out of the safety net
 // with `data-focus-managed`.
 const ALLOWLIST: string[] = [
-  "components/budget/UserProfilePanel.tsx",
   "components/core/dialogs/FLPModal.tsx",
   "components/core/dialogs/TaxDisclaimerButton.tsx",
   "components/dialogs/connectBankWizard/ConnectBankWizard.tsx",
