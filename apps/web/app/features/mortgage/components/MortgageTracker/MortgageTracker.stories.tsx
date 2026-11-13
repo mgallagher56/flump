@@ -12,10 +12,6 @@ const meta: Meta<typeof MortgageTracker> = {
     loanAmount: 150000,
     interestRate: 4.5,
     remainingTerm: 25,
-    onLoanAmountChange: fn(),
-    onInterestRateChange: fn(),
-    onRemainingTermChange: fn(),
-    onMortgageTypeChange: fn(),
     mortgageAccounts: [
       { id: "m1", name: "Example fixed mortgage", type: "Mortgage", balance: -135400 },
     ],
@@ -32,11 +28,10 @@ export const Populated: Story = {
   play: async ({ canvasElement, args }) => {
     const canvas = within(canvasElement);
     await expect(canvas.getAllByText("Mortgage cost breakdown").length).toBeGreaterThan(0);
-    await expect(canvas.getAllByLabelText("Interest rate range slider").length).toBeGreaterThan(0);
-    const button = canvas.getAllByRole("button", { name: "Interest only" })[0];
-    if (!button) throw new Error("Interest only button missing");
-    await userEvent.click(button);
-    await expect(args.onMortgageTypeChange).toHaveBeenCalledWith("interest-only");
+    const select = canvas.getAllByTestId("tracker-account-select")[0];
+    if (!select) throw new Error("account select missing");
+    await userEvent.selectOptions(select, "m1");
+    await expect(args.onSelectAccount).toHaveBeenCalledWith("m1");
   },
 };
 

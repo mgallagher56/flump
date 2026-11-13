@@ -1,20 +1,5 @@
 import { css, cva } from "@repo/ui/styled-system/css";
 
-export const controlsCard = cva({
-  base: {
-    minWidth: 0,
-    padding: { base: "16px", md: "24px" },
-    backgroundColor: "surface.card",
-    borderRadius: "xl",
-    borderWidth: "1px",
-    borderStyle: "solid",
-    borderColor: "border.subtle",
-    display: "flex",
-    flexDirection: "column",
-    gap: "20px",
-  },
-});
-
 export const resultsCard = cva({
   base: {
     minWidth: 0,
@@ -59,21 +44,6 @@ export const fieldLabel = cva({
     fontSize: "xs",
     fontWeight: "semibold",
     color: "text.secondary",
-  },
-});
-
-export const typeRow = cva({
-  base: {
-    display: "flex",
-    flexWrap: "wrap",
-    gap: "8px",
-  },
-});
-
-export const typeButton = cva({
-  base: {
-    flex: "1 1 120px",
-    minWidth: 0,
   },
 });
 

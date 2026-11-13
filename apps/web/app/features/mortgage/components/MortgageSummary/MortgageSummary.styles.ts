@@ -106,3 +106,29 @@ export const estimateRow = cva({
     fontVariantNumeric: "tabular-nums",
   },
 });
+
+export const savedLine = cva({
+  base: {
+    textStyle: "label.sm",
+    color: "text.secondary",
+    fontVariantNumeric: "tabular-nums",
+    display: "inline-flex",
+    alignItems: "center",
+    gap: "4px",
+    margin: 0,
+    marginTop: "8px",
+  },
+});
+
+export const unsavedNote = cva({
+  base: {
+    gridColumn: "1 / -1",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "flex-start",
+    gap: "8px",
+    textStyle: "body.sm",
+    color: "text.secondary",
+    "& p": { margin: 0 },
+  },
+});

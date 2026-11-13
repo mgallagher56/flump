@@ -26,7 +26,7 @@ export interface LtvMilestonesProps {
   propertyValue: number;
   ownershipSharePct: number;
   milestones: LtvMilestone[];
-  onApplyOverpayment: (monthlyAmount: number) => void;
+  onModelOverpayment: (monthlyAmount: number) => void;
 }
 
 export const LtvMilestones: FC<LtvMilestonesProps> = ({
@@ -35,7 +35,7 @@ export const LtvMilestones: FC<LtvMilestonesProps> = ({
   propertyValue,
   ownershipSharePct,
   milestones,
-  onApplyOverpayment,
+  onModelOverpayment,
 }) => (
   <div
     className={ltvCard()}
@@ -87,9 +87,9 @@ export const LtvMilestones: FC<LtvMilestonesProps> = ({
                         <Button
                           size="sm"
                           variant="outline"
-                          onClick={() => onApplyOverpayment(monthly)}
+                          onClick={() => onModelOverpayment(monthly)}
                         >
-                          Apply <Money size="sm" value={monthly} />
+                          Model <Money size="sm" value={monthly} />
                           /mo
                         </Button>
                       </div>

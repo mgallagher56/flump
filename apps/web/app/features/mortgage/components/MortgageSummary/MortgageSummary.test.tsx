@@ -17,6 +17,10 @@ const base = (over: Partial<MortgageSummaryProps> = {}): MortgageSummaryProps =>
   editPayment: 833.76,
   saveMessage: null,
   saveError: null,
+  canSaveFigures: true,
+  canSaveTerm: true,
+  lastUpdated: "Last updated June 2026",
+  onAddAccount: vi.fn(),
   onStartEditing: vi.fn(),
   onCancelEditing: vi.fn(),
   onSave: vi.fn(),
@@ -59,5 +63,35 @@ describe("<MortgageSummary />", () => {
     render(<MortgageSummary {...base({ isEditing: true, onEditMortgageTypeChange })} />);
     fireEvent.click(screen.getByRole("button", { name: "Interest-only" }));
     expect(onEditMortgageTypeChange).toHaveBeenCalledWith("interest-only");
+  });
+
+  it("shows a Saved line with the last-updated date and an Edit button", () => {
+    render(<MortgageSummary {...base()} />);
+    expect(screen.getByTestId("mortgage-saved-line").textContent).toContain(
+      "Saved. Last updated June 2026",
+    );
+    expect(screen.getByRole("button", { name: "Edit" })).toBeDefined();
+  });
+
+  it("puts the hero surface on the saved balance", () => {
+    const { container } = render(<MortgageSummary {...base()} />);
+    const hero = container.querySelectorAll("[data-tone='hero']");
+    expect(hero).toHaveLength(1);
+    expect(hero[0]?.textContent).toContain("Remaining balance");
+  });
+
+  it("offers the balance and rate fields only when they can be saved", () => {
+    const { rerender } = render(<MortgageSummary {...base({ isEditing: true })} />);
+    expect(screen.getByLabelText(/^Remaining balance/)).toBeDefined();
+    const onAddAccount = vi.fn();
+    rerender(
+      <MortgageSummary
+        {...base({ isEditing: true, canSaveFigures: false, canSaveTerm: false, onAddAccount })}
+      />,
+    );
+    expect(screen.queryByLabelText(/^Remaining balance/)).toBeNull();
+    expect(screen.queryByLabelText(/^Interest rate/)).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Add mortgage account" }));
+    expect(onAddAccount).toHaveBeenCalled();
   });
 });

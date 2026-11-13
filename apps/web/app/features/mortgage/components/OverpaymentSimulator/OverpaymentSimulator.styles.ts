@@ -179,7 +179,7 @@ export const heroEyebrow = cva({
   },
 });
 
-/** The page's single `surface.hero` block: larger padding and headline than a strip card. */
+/** Larger padding and headline than a strip card. Never `surface.hero`: this is a scenario outcome. */
 export const heroCard = css({
   padding: { base: "20px", md: "28px" },
   borderRadius: "2xl",
