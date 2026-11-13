@@ -3,11 +3,12 @@ import { Button, Icon, PageHeader, ProjectionNotice, SegmentedTabs } from "@repo
 import { Plus } from "lucide-react";
 import { type FC, useEffect, useMemo, useState } from "react";
 import { useLoaderData, useNavigate } from "react-router";
-import SavingsForecasterCard from "~/components/savings/SavingsForecasterCard";
+
 import type { Account } from "~/containers/accounts/types";
 import { AddSavingsAccountDialog } from "~/features/savings/components/AddSavingsAccountDialog";
 import { AnnualAllowancePill } from "~/features/savings/components/AnnualAllowancePill";
 import { SavingsAccountsList } from "~/features/savings/components/SavingsAccountsList";
+import { SavingsForecasterCard } from "~/features/savings/components/SavingsForecasterCard";
 import { SavingsSummaryCards } from "~/features/savings/components/SavingsSummaryCards";
 import { calculateOneYearCompoundInterest } from "~/features/savings/interest";
 import { useUserProfile } from "~/hooks/useUserProfile";
