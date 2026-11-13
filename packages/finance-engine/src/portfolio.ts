@@ -301,10 +301,11 @@ export class PortfolioSnapshot {
     );
   }
 
+  /** Positive liquid balances only: an overdrawn current account is counted as debt, not netted here. */
   getTotalLiquidCash(): number {
     return this.resolvedAccounts
       .filter((a) => a.category === "cash" || a.category === "savings")
-      .reduce((sum, a) => sum + a.nominalBalance, 0);
+      .reduce((sum, a) => sum + Math.max(0, a.nominalBalance), 0);
   }
 
   getTotalInvestments(): number {
@@ -365,21 +366,19 @@ export class PortfolioSnapshot {
 
   /**
    * Translates consumer debt accounts directly into DebtItem[] for consumption by the debt engine.
+   *
+   * Overdrawn cash accounts are deliberately NOT emitted: a DebtItem carries the real account id,
+   * and the Debt page edits and deletes by that id, so it would delete the current account.
+   * Their overdrawn amount is in getTotalConsumerDebt()/getTotalLiabilities(). Follow-up: an
+   * overdraft line on the Debt page needs a read-only derived item (no account id actions).
    */
   toDebtItems(): DebtItem[] {
     return this.resolvedAccounts
-      .filter((a) => a.category === "debt" || (a.category === "cash" && a.overdrawnAmount > 0))
-      .map((rawAccount) => {
-        // An overdrawn current account is an overdraft debt for the overdrawn amount.
-        const isOverdrawnCash = rawAccount.category === "cash";
-        const a = isOverdrawnCash
-          ? { ...rawAccount, nominalBalance: rawAccount.overdrawnAmount }
-          : rawAccount;
+      .filter((a) => a.category === "debt")
+      .map((a) => {
         const rawLower = a.rawType.toLowerCase();
         let type: DebtType = "loan";
-        if (isOverdrawnCash) {
-          type = "overdraft";
-        } else if (rawLower.includes("card")) {
+        if (rawLower.includes("card")) {
           type = "credit_card";
         } else if (rawLower.includes("overdraft")) {
           type = "overdraft";

@@ -167,4 +167,32 @@ describe("runwayStorage utilities", () => {
     expect(resZero.runwayLabel).toBe("Infinite (No burn)");
     expect(resZero.shortLabel).toBe("No burn");
   });
+
+  it("clamps the pool at 0 so an overdrawn account never gives a negative runway", () => {
+    const res = calculateRunwayStats({
+      accounts: [{ id: "a1", type: "Current", balance: -800 }],
+      entries: [
+        { id: "i1", isIncome: true, isPrimaryIncome: true, amount: 3000, frequency: "monthly" },
+        {
+          id: "e1",
+          isIncome: false,
+          isEssential: true,
+          category: "housing",
+          amount: 1000,
+          frequency: "monthly",
+        },
+      ],
+    });
+    expect(res.pool).toBe(0);
+    expect(res.runwayMonths).toBe(0);
+  });
+
+  it("resolves an account without balance to 0: history is no longer a fallback", () => {
+    const res = calculateRunwayStats({
+      accounts: [{ id: "a1", type: "Current" }],
+      accountDetails: [{ accountId: "a1", year: 2026, month: 1, value: 4000 }] as never,
+      entries: [],
+    });
+    expect(res.pool).toBe(0);
+  });
 });

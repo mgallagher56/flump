@@ -60,7 +60,8 @@ export function toNormalizedAccount(
     name: account.name,
     category: categoryMap[account.type] || "CURRENT",
     currency: account.currency,
-    netWorthImpactGbp: isDebt ? -balanceMag : balanceMag,
+    // Assets keep their real sign (an overdrawn current account is negative); debts are -owed.
+    netWorthImpactGbp: isDebt ? -balanceMag : account.balance,
     principalOwedGbp: isDebt ? balanceMag : 0,
     isTaxFreeIsaWrapper: false,
     lastSyncedAt: new Date().toISOString(),

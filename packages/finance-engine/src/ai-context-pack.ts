@@ -318,6 +318,12 @@ export function buildFlumpAiContextPack(
 /**
  * Formats a FlumpAiContextPack into human-readable Markdown suitable for clipboard export.
  */
+/** en-GB currency with the sign before the symbol: -£120, never £-120. */
+function formatSignedGbp(value: number): string {
+  const abs = Math.abs(value).toLocaleString("en-GB");
+  return value < 0 ? `-£${abs}` : `£${abs}`;
+}
+
 export function formatAiContextPackMarkdown(pack: FlumpAiContextPack): string {
   const p = pack.portfolio;
   const b = pack.baseline;
@@ -336,7 +342,7 @@ Generated: ${pack.metadata.generatedAt} | Anonymized: ${pack.metadata.isAnonymiz
 ${pack.healthScore.observations.map((o) => `  * ${o}`).join("\n") || "  * None."}
 
 ## 2. Net Worth & Assets
-- **Total Net Worth:** £${p.netWorth.toLocaleString("en-GB")}
+- **Total Net Worth:** ${formatSignedGbp(p.netWorth)}
 - **Total Assets:** £${p.totalAssets.toLocaleString("en-GB")} (Liquid: £${p.totalLiquidCash.toLocaleString("en-GB")}, Investments: £${p.totalInvestments.toLocaleString("en-GB")}, Pensions: £${p.totalPensions.toLocaleString("en-GB")})
 - **Total Liabilities:** £${p.totalLiabilities.toLocaleString("en-GB")} (Consumer Debt: £${p.totalConsumerDebt.toLocaleString("en-GB")}, Mortgages: £${p.totalMortgageBalance.toLocaleString("en-GB")})
 - **Weighted Cash Yield:** ${p.weightedSavingsRate}% AER
@@ -345,9 +351,9 @@ ${pack.healthScore.observations.map((o) => `  * ${o}`).join("\n") || "  * None."
 ${p.accounts
   .map(
     (a) =>
-      `- ${a.name} (${a.category.toUpperCase()}): £${a.nominalBalance.toLocaleString("en-GB")}${
-        a.interestRate ? ` @ ${a.interestRate}%` : ""
-      }`,
+      `- ${a.name} (${a.category.toUpperCase()}): ${formatSignedGbp(a.nominalBalance)}${
+        a.nominalBalance < 0 && a.category === "cash" ? " (overdrawn)" : ""
+      }${a.interestRate ? ` @ ${a.interestRate}%` : ""}`,
   )
   .join("\n")}
 
