@@ -1,5 +1,37 @@
 # Changelog
 
+## [1.29.0](https://github.com/mgallagher56/flump/compare/flump/web-v1.28.0...flump/web-v1.29.0) (2026-11-13)
+
+
+### Features ✨
+
+* **backend:** validate tax receipts (MIME, magic bytes, size, filename) (E20-N14) ([f545735](https://github.com/mgallagher56/flump/commit/f5457352ab89861154e99f7b276be8007e44e6bd))
+* **ui:** hero surface on dashboard net worth and mortgage interest saved (E15 round 5 PR 5) ([55f8ecb](https://github.com/mgallagher56/flump/commit/55f8ecb401b1faaf57f8470b739bf8ac0463c5e2))
+* **web:** forward refreshed-session Set-Cookie once via root middleware (E20-N2) ([41c0e20](https://github.com/mgallagher56/flump/commit/41c0e20237680dd79abe59d2574c078881d1b9db))
+* **web:** replace fake feedback form with mailto support link (E24-T5) ([0533d6a](https://github.com/mgallagher56/flump/commit/0533d6a4a2e86a6cec8ae16cec61923a424195ec))
+* **web:** sandbox bottom bar, drawer and Sign up to open links (T-IA-1, N-04) ([c4b0de1](https://github.com/mgallagher56/flump/commit/c4b0de10de464c71b8469e73d59b83bf0a04e53e))
+* **web:** Sentry error reporting for server and client, inert without a DSN (E18-N3) ([665316b](https://github.com/mgallagher56/flump/commit/665316ba7c3b6a66790066898427591791b85db3))
+
+
+### Bug Fixes 🪲
+
+* **ui:** hero focus ring, inherit hero subtext colour (review fixes) ([a37388c](https://github.com/mgallagher56/flump/commit/a37388c9dcbd3822eec984b620d58eb3d89b97f9))
+* **web:** accessible sandbox disabled nav, AppBottomBar wrapper, i18n key (T-IA-1 review) ([f137bb1](https://github.com/mgallagher56/flump/commit/f137bb1977319d3f649f8aa3eaf803fa6d2516b0))
+* **web:** address E18-N3 review (non-blocking hydration, dedupe, Bun check, ENV escaping) ([b666c3e](https://github.com/mgallagher56/flump/commit/b666c3e657050fdb6bc4bc9f6b783de711944f2e))
+* **web:** address E24-T5 review findings ([e0ae394](https://github.com/mgallagher56/flump/commit/e0ae39492327f4021ea0266700f7221ba86098d4))
+* **web:** AppBottomBar story sets the mocked router location (storybook a11y CI) ([17892c9](https://github.com/mgallagher56/flump/commit/17892c92fbae4f950f4a47755dad3e8d7e220be4))
+* **web:** single-flight session refresh per request and share Set-Cookie helper (E20-N2) ([486f4a2](https://github.com/mgallagher56/flump/commit/486f4a219b81688313d7b320be6ba3fa7509234c))
+
+
+### Refactor 🔥
+
+* **web:** remove dead forecast module key and normalise stored enabledPages (T-IA-8) ([df5a54e](https://github.com/mgallagher56/flump/commit/df5a54ea7a5d3dc1da4aa0d2d79f0f8ddb96c3d8))
+
+
+### Tests 🧪
+
+* **web:** cover forecast checklist step and fall back to default widget sizes (T-IA-8) ([8f067bd](https://github.com/mgallagher56/flump/commit/8f067bd78cd474bde033ba8aa91c04fcd60f8b7b))
+
 ## [1.28.0](https://github.com/mgallagher56/flump/compare/flump/web-v1.27.0...flump/web-v1.28.0) (2026-11-13)
 
 
