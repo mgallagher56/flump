@@ -21,6 +21,8 @@ function routeKeyFor(pathname: string): string {
 }
 
 function kindFromError(error: unknown): RouteErrorStateProps["kind"] {
+  // A failed fetch in the browser has no status; show the connection copy, never the message.
+  if (error instanceof TypeError && /fetch|network/i.test(error.message)) return "unavailable";
   if (!isRouteErrorResponse(error)) return "unknown";
   const kind = (error.data as { kind?: unknown } | null)?.kind;
   if (typeof kind === "string" && (BACKEND_ERROR_KINDS as readonly string[]).includes(kind)) {
@@ -31,8 +33,13 @@ function kindFromError(error: unknown): RouteErrorStateProps["kind"] {
   return error.status === 404 ? "not-found" : "unknown";
 }
 
+export interface RouteErrorBoundaryProps {
+  /** The root boundary has no page heading above it, so it asks for an h1. */
+  headingLevel?: "h1" | "h2";
+}
+
 /** Shared route ErrorBoundary: reads the thrown payload and never renders raw error messages. */
-export function RouteErrorBoundary(): ReactElement {
+export function RouteErrorBoundary({ headingLevel }: RouteErrorBoundaryProps = {}): ReactElement {
   const error = useRouteError();
   const revalidator = useRevalidator();
   const { pathname } = useLocation();
@@ -46,6 +53,8 @@ export function RouteErrorBoundary(): ReactElement {
     <div className={boundaryRoot()}>
       <RouteErrorState
         kind={kind}
+        status={isRouteErrorResponse(error) ? error.status : undefined}
+        headingLevel={headingLevel}
         onRetry={revalidator.revalidate}
         retrying={revalidator.state === "loading"}
         routeKey={routeKeyFor(pathname)}

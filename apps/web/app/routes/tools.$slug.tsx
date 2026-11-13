@@ -1,16 +1,6 @@
-import { ProjectionNotice } from "@repo/ui";
-import { css } from "@repo/ui/styled-system/css";
+import { PageHeader, ProjectionNotice, StatusBadge } from "@repo/ui";
 import type { FC } from "react";
-import { FiArrowLeft, FiChevronRight } from "react-icons/fi";
-import {
-  type LoaderFunctionArgs,
-  type MetaFunction,
-  Link as RouterLink,
-  useLoaderData,
-} from "react-router";
-import FLPHeading from "~/components/core/typography/FLPHeading";
-import FLPText from "~/components/core/typography/FLPText";
-import HomeFooter from "~/components/home/HomeFooter";
+import { type LoaderFunctionArgs, type MetaFunction, useLoaderData } from "react-router";
 import DebtSnowballVsAvalancheTool from "~/components/tools/DebtSnowballVsAvalancheTool";
 import MortgageVsIsaTool from "~/components/tools/MortgageVsIsaTool";
 import OverdraftCostTool from "~/components/tools/OverdraftCostTool";
@@ -18,6 +8,10 @@ import Section24Tool from "~/components/tools/Section24Tool";
 import StudentLoanOverpayTool from "~/components/tools/StudentLoanOverpayTool";
 import TaxTrapCalculatorTool from "~/components/tools/TaxTrapCalculatorTool";
 import ZeroPercentCliffTool from "~/components/tools/ZeroPercentCliffTool";
+import { SampleDataNote } from "~/features/signed-out/components/SampleDataNote";
+import { SignedOutPage } from "~/features/signed-out/components/SignedOutPage";
+import { ToolBreadcrumbs } from "~/features/signed-out/components/ToolBreadcrumbs";
+import { ToolGuide } from "~/features/signed-out/components/ToolGuide";
 
 interface ToolContent {
   slug: string;
@@ -321,157 +315,36 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
   return { tool };
 };
 
-const pageContainerStyle = css({
-  maxWidth: "5xl",
-  margin: "0 auto",
-  padding: { base: "24px 16px", md: "48px 24px" },
-});
-
-const breadcrumbsStyle = css({
-  display: "flex",
-  alignItems: "center",
-  gap: "6px",
-  fontSize: "13px",
-  color: "text.muted",
-  marginBottom: "24px",
-});
-
-const guideContainerStyle = css({
-  marginTop: "48px",
-  marginBottom: "48px",
-  paddingTop: "36px",
-  borderTop: "1px solid",
-  borderColor: "border",
-});
-
-const faqContainerStyle = css({
-  marginTop: "36px",
-  marginBottom: "48px",
-});
-
-const faqCardStyle = css({
-  backgroundColor: "surface",
-  border: "1px solid",
-  borderColor: "border",
-  borderRadius: "xl",
-  padding: "20px",
-  marginBottom: "16px",
-});
-
 export const ToolDetailPage: FC = () => {
   const { tool } = useLoaderData<typeof loader>();
 
   if (!tool) return null;
 
   return (
-    <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
-      <div className={pageContainerStyle} style={{ flex: 1 }}>
-        {/* Breadcrumbs */}
-        <div className={breadcrumbsStyle}>
-          <RouterLink
-            style={{
-              color: "inherit",
-              textDecoration: "none",
-              display: "flex",
-              alignItems: "center",
-              gap: "4px",
-            }}
-            to="/tools"
-          >
-            <FiArrowLeft size={13} /> All Calculators
-          </RouterLink>
-          <FiChevronRight size={13} />
-          <span>{tool.category}</span>
-          <FiChevronRight size={13} />
-          <span style={{ color: "var(--colors-text-primary)", fontWeight: 500 }}>{tool.title}</span>
-        </div>
+    <SignedOutPage>
+      <ToolBreadcrumbs category={tool.category} title={tool.title} />
+      <ProjectionNotice />
+      <PageHeader
+        badge={<StatusBadge variant="neutral">{tool.category}</StatusBadge>}
+        description={tool.subtitle}
+        title={tool.title}
+      />
+      <SampleDataNote id="tool-sample-data-label">
+        Illustration only: the calculator starts with example figures, not yours, and nothing you
+        enter is saved.
+      </SampleDataNote>
 
-        {/* Page Header */}
-        <div style={{ marginBottom: "24px", maxWidth: "800px" }}>
-          <ProjectionNotice />
-        </div>
-        <div style={{ marginBottom: "32px", maxWidth: "800px" }}>
-          <span
-            style={{
-              padding: "4px 10px",
-              borderRadius: "full",
-              backgroundColor: "color-mix(in srgb, var(--colors-primary) 12%, transparent)",
-              color: "var(--colors-primary)",
-              fontSize: "12px",
-              fontWeight: 700,
-              textTransform: "uppercase",
-              letterSpacing: "0.06em",
-              display: "inline-block",
-              marginBottom: "10px",
-            }}
-          >
-            {tool.category}
-          </span>
-          <FLPHeading as="h1" color="text.primary" mb={3} size="3xl">
-            {tool.title}
-          </FLPHeading>
-          <FLPText color="text.muted" fontSize="md" lineHeight="1.6">
-            {tool.subtitle}
-          </FLPText>
-        </div>
+      {/* Interactive Tool Widget */}
+      {tool.component === "tax-trap" && <TaxTrapCalculatorTool />}
+      {tool.component === "mortgage-isa" && <MortgageVsIsaTool />}
+      {tool.component === "section-24" && <Section24Tool />}
+      {tool.component === "debt-snowball" && <DebtSnowballVsAvalancheTool />}
+      {tool.component === "zero-percent-cliff" && <ZeroPercentCliffTool />}
+      {tool.component === "overdraft-cost" && <OverdraftCostTool />}
+      {tool.component === "student-loan" && <StudentLoanOverpayTool />}
 
-        {/* Interactive Tool Widget */}
-        {tool.component === "tax-trap" && <TaxTrapCalculatorTool />}
-        {tool.component === "mortgage-isa" && <MortgageVsIsaTool />}
-        {tool.component === "section-24" && <Section24Tool />}
-        {tool.component === "debt-snowball" && <DebtSnowballVsAvalancheTool />}
-        {tool.component === "zero-percent-cliff" && <ZeroPercentCliffTool />}
-        {tool.component === "overdraft-cost" && <OverdraftCostTool />}
-        {tool.component === "student-loan" && <StudentLoanOverpayTool />}
-
-        {/* SEO In-Depth Guide */}
-        <div className={guideContainerStyle}>
-          <FLPHeading as="h2" color="text.primary" mb={4} size="2xl">
-            Expert Analysis & UK Tax Rules Guide
-          </FLPHeading>
-
-          <div style={{ display: "flex", flexDirection: "column", gap: "28px" }}>
-            {tool.guideSections.map((section, idx) => (
-              <div key={idx}>
-                <FLPHeading as="h3" color="text.primary" mb={2} size="lg">
-                  {section.heading}
-                </FLPHeading>
-                {section.body.map((paragraph, pIdx) => (
-                  <FLPText
-                    color="text.muted"
-                    fontSize="sm"
-                    key={pIdx}
-                    lineHeight="1.7"
-                    style={{ marginBottom: "12px" }}
-                  >
-                    {paragraph}
-                  </FLPText>
-                ))}
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Frequently Asked Questions */}
-        <div className={faqContainerStyle}>
-          <FLPHeading as="h2" color="text.primary" mb={4} size="xl">
-            Frequently Asked Questions
-          </FLPHeading>
-          {tool.faqs.map((faq, idx) => (
-            <div className={faqCardStyle} key={idx}>
-              <FLPHeading as="h4" color="text.primary" mb={2} size="md">
-                {faq.q}
-              </FLPHeading>
-              <FLPText color="text.muted" fontSize="sm" lineHeight="1.6">
-                {faq.a}
-              </FLPText>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <HomeFooter />
-    </div>
+      <ToolGuide faqs={tool.faqs} guideSections={tool.guideSections} />
+    </SignedOutPage>
   );
 };
 

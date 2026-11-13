@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
 import ToolsIndex from "./tools._index";
@@ -27,13 +27,31 @@ vi.mock("react-router", () => ({
 import { useLoaderData } from "react-router";
 
 describe("Tools Routes", () => {
-  it("renders ToolsIndex with all 3 calculators listed", () => {
+  it("renders ToolsIndex with every calculator listed", () => {
     render(<ToolsIndex />);
 
-    expect(screen.getByText(/free uk wealth, tax, and mortgage calculators/i)).toBeDefined();
+    expect(
+      screen.getByRole("heading", { level: 1, name: /free uk money calculators/i }),
+    ).toBeDefined();
+    expect(
+      within(screen.getByRole("list", { name: "Calculators" })).getAllByRole("heading", {
+        level: 2,
+      }),
+    ).toHaveLength(7);
     expect(screen.getByText(/£100k–£125k tax trap calculator/i)).toBeDefined();
     expect(screen.getByText(/mortgage overpay vs isa calculator/i)).toBeDefined();
     expect(screen.getByText(/section 24 landlord tax calculator/i)).toBeDefined();
+    expect(screen.getByText(/debt payoff: snowball vs avalanche calculator/i)).toBeDefined();
+  });
+
+  it("leads the index with debt and does not feature the £100k tool first", () => {
+    render(<ToolsIndex />);
+    const hrefs = screen
+      .getAllByRole("link")
+      .map((a) => a.getAttribute("href"))
+      .filter((h) => h?.startsWith("/tools/"));
+    expect(hrefs[0]).toBe("/tools/uk-debt-snowball-vs-avalanche-calculator");
+    expect(hrefs[0]).not.toBe("/tools/uk-100k-tax-trap-calculator");
   });
 
   it("slug loader returns the requested tool or throws 404", async () => {
@@ -69,6 +87,7 @@ describe("Tools Routes", () => {
       }),
     ).toBeDefined();
     expect(screen.getByText(/what is the uk £100,000 tax trap\?/i)).toBeDefined();
+    expect(screen.getByText(/illustration only/i)).toBeDefined();
     expect(screen.getAllByText(/frequently asked questions/i).length).toBeGreaterThan(0);
   });
 

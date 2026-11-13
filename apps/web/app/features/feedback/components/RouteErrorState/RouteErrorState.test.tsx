@@ -5,7 +5,7 @@ import { RouteErrorState } from "./RouteErrorState";
 describe("RouteErrorState", () => {
   it("renders the unavailable heading and calls onRetry from 'Try again'", () => {
     const onRetry = vi.fn();
-    render(<RouteErrorState kind="unavailable" onRetry={onRetry} />);
+    render(<RouteErrorState kind="server" onRetry={onRetry} />);
 
     expect(screen.getByRole("heading", { name: "We couldn't load your data" })).toBeDefined();
     fireEvent.click(screen.getByRole("button", { name: "Try again" }));
@@ -113,5 +113,53 @@ describe("RouteErrorState", () => {
 
     render(<RouteErrorState kind="not-found" />);
     expect(screen.queryByRole("link", { name: "Report this problem by email" })).toBeNull();
+  });
+
+  it("gives a connection failure its own copy and a retry", () => {
+    render(<RouteErrorState kind="unavailable" onRetry={() => {}} />);
+    expect(screen.getByRole("heading", { name: "We couldn't reach Flump" })).toBeDefined();
+    expect(screen.getByRole("button", { name: "Try again" })).toBeDefined();
+  });
+
+  it("not-found has no retry, links home and uses the signpost scene", () => {
+    const { container } = render(
+      <RouteErrorState
+        kind="not-found"
+        onRetry={() => {}}
+        primaryHref="/"
+        primaryLabel="Go to Flump"
+      />,
+    );
+    expect(screen.queryByRole("button", { name: "Try again" })).toBeNull();
+    expect(screen.getByRole("link", { name: "Go to Flump" }).getAttribute("href")).toBe("/");
+    expect(container.querySelector("svg")?.getAttribute("data-scene")).toBe("not-found");
+  });
+
+  it("hides the illustration from assistive technology", () => {
+    const { container } = render(<RouteErrorState kind="server" />);
+    expect(container.querySelector("svg")?.getAttribute("aria-hidden")).toBe("true");
+  });
+
+  it("shows the status code subtly only when given", () => {
+    const { unmount } = render(<RouteErrorState kind="server" status={503} />);
+    expect(screen.getByText("Error 503")).toBeDefined();
+    unmount();
+    render(<RouteErrorState kind="server" />);
+    expect(screen.queryByText(/^Error \d+/)).toBeNull();
+  });
+
+  it("moves focus to the heading on mount", () => {
+    render(<RouteErrorState kind="server" />);
+    expect(document.activeElement).toBe(
+      screen.getByRole("heading", { name: "We couldn't load your data" }),
+    );
+  });
+
+  it("renders an h1 when asked and an h2 by default", () => {
+    const { unmount } = render(<RouteErrorState kind="server" headingLevel="h1" />);
+    expect(screen.getByRole("heading", { level: 1 })).toBeDefined();
+    unmount();
+    render(<RouteErrorState kind="server" />);
+    expect(screen.getByRole("heading", { level: 2 })).toBeDefined();
   });
 });

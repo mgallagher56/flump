@@ -51,3 +51,17 @@ export const Unauthorised: Story = {
 export const Unknown: Story = {
   args: { kind: "unknown" },
 };
+
+export const Server: Story = {
+  args: { kind: "server", status: 503 },
+};
+
+export const RootDocumentHeading: Story = {
+  args: {
+    kind: "not-found",
+    headingLevel: "h1",
+    status: 404,
+    primaryHref: "/",
+    primaryLabel: "Go to Flump",
+  },
+};
