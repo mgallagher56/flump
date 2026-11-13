@@ -83,6 +83,7 @@ export const badgeRecipe = cva({
     tone: {
       danger: { backgroundColor: "status.danger.bg", color: "status.danger.text" },
       positive: { backgroundColor: "status.positive.bg", color: "status.positive.text" },
+      neutral: { backgroundColor: "status.neutral.bg", color: "status.neutral.text" },
     },
   },
   defaultVariants: { tone: "danger" },

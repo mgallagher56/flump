@@ -42,7 +42,7 @@ export const StudentLoanCalculator: FC<StudentLoanCalculatorProps> = ({
     return evaluateUkStudentLoan(plan, salary, balance);
   }, [plan, salary, balance]);
 
-  const tone = evaluation.recommendation === "do_not_overpay" ? "danger" : "positive";
+  const tone = "neutral" as const;
 
   const headline = `Repayment £${Math.round(evaluation.monthlyRepayment).toLocaleString(
     "en-GB",
@@ -67,12 +67,10 @@ export const StudentLoanCalculator: FC<StudentLoanCalculatorProps> = ({
     <div className={cardStyle} data-testid="student-loan-tool">
       <div className={headerStyle}>
         <div>
-          <h2 className={titleStyle}>
-            UK student loan: overpay or invest? (graduate tax calculator)
-          </h2>
+          <h2 className={titleStyle}>UK student loan repayment calculator</h2>
           <p className={introStyle}>
-            UK student loans are wiped after 25–40 years. Find out whether voluntary overpayments
-            save you interest or act as a donation to HM Treasury.
+            Any balance left on a UK student loan is written off after 25 to 40 years, depending on
+            the plan. See whether the projected repayments clear the balance before then.
           </p>
         </div>
       </div>
@@ -132,9 +130,9 @@ export const StudentLoanCalculator: FC<StudentLoanCalculatorProps> = ({
           <LiveRegion debounceMs={1000} message={headline} visuallyHidden />
           <div>
             <span className={badgeRecipe({ tone })}>
-              {evaluation.recommendation === "do_not_overpay"
-                ? "Verdict: do not overpay"
-                : "Verdict: consider overpaying"}
+              {evaluation.projectedOutcome === "written_off_first"
+                ? "Projected outcome: written off first"
+                : "Projected outcome: repaid before write-off"}
             </span>
             <div className={figureRecipe({ tone: "neutral" })}>
               £{Math.round(evaluation.monthlyRepayment).toLocaleString("en-GB")}/mo (£
@@ -147,7 +145,7 @@ export const StudentLoanCalculator: FC<StudentLoanCalculatorProps> = ({
           </div>
 
           <div className={calloutRecipe({ tone })}>
-            <div className={calloutTitleRecipe({ tone })}>Graduate tax reality check</div>
+            <div className={calloutTitleRecipe({ tone })}>How the projection works out</div>
             <p className={calloutBodyRecipe({ tone })}>{evaluation.reasoning}</p>
           </div>
 

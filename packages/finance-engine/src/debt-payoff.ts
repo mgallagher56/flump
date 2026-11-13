@@ -739,7 +739,6 @@ export function evaluateUkStudentLoan(
     annualRepayment > interestAccumulation * 1.5 &&
     currentBalance < annualRepayment * (cfg.writeOffYears / 2);
 
-  const recommendation = willLikelyRepayBeforeWriteOff ? "consider_overpaying" : "do_not_overpay";
   const reasoning = willLikelyRepayBeforeWriteOff
     ? `Your annual repayment of £${Math.round(annualRepayment).toLocaleString("en-GB")} is projected to clear the £${Math.round(currentBalance).toLocaleString("en-GB")} balance before the ${cfg.writeOffYears}-year statutory write-off.`
     : `Your annual repayment of £${Math.round(annualRepayment).toLocaleString("en-GB")} is not projected to clear the £${Math.round(currentBalance).toLocaleString("en-GB")} balance before the ${cfg.writeOffYears}-year statutory write-off, so in this projection the balance is written off before it is repaid.`;
@@ -752,7 +751,6 @@ export function evaluateUkStudentLoan(
     rate: cfg.rate * 100,
     writeOffYears: cfg.writeOffYears,
     willLikelyRepayBeforeWriteOff,
-    recommendation,
     projectedOutcome: willLikelyRepayBeforeWriteOff
       ? "repaid_before_write_off"
       : "written_off_first",

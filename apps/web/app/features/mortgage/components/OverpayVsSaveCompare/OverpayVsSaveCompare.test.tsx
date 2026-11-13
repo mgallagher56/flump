@@ -15,7 +15,10 @@ describe("<OverpayVsSaveCompare />", () => {
     const { getByText } = customRender(<OverpayVsSaveCompare {...defaultProps} />);
 
     expect(getByText("Savings parameters")).toBeDefined();
-    expect(getByText(/Verdict: Overpay Mortgage/i)).toBeDefined();
+    expect(document.body.textContent).toMatch(
+      /overpaying the mortgage gives a total £[\d,.]+ higher/i,
+    );
+    expect(document.body.textContent).not.toMatch(/verdict/i);
     expect(getByText("Mortgage overpay vs. savings comparison")).toBeDefined();
     expect(getByText(/Savings Interest Rate/i)).toBeDefined();
     expect(getByText(/Savings Tax Bracket/i)).toBeDefined();
@@ -49,7 +52,7 @@ describe("<OverpayVsSaveCompare />", () => {
       />,
     );
 
-    expect(getByText(/Verdict: Save in Account \/ ISA/i)).toBeDefined();
+    expect(document.body.textContent).toMatch(/saving the money gives a total £[\d,.]+ higher/i);
     expect(getByText("Mortgage overpay vs. savings comparison")).toBeDefined();
   });
 
@@ -122,7 +125,7 @@ describe("<OverpayVsSaveCompare /> chart accessibility", () => {
     );
 
     const figure = getByRole("figure", { name: "Overpay or save comparison" });
-    expect(figure.textContent).toMatch(/comes out ahead by £[\d,]+/);
+    expect(figure.textContent).toMatch(/gives a total £[\d,]+ higher in this estimate/);
   });
 });
 

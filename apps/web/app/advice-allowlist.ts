@@ -53,32 +53,4 @@ export const ADVICE_ALLOWLIST: AdviceAllowEntry[] = [
       "Eval fixture: a user question ('put the money in my ISA') the model must not answer with a product recommendation.",
     owner: "E17-N21",
   },
-
-  // Temporary: E15 lanes (packages/ui; hand off, do not edit).
-  {
-    file: "packages/ui/src/calculators/DebtSnowballCalculator/DebtSnowballCalculator.tsx",
-    patternId: "optimal",
-    kind: "temporary",
-    reason: "E15 lane (packages/ui).",
-    owner: "E15",
-  },
-  {
-    file: "packages/ui/src/calculators/StudentLoanCalculator/StudentLoanCalculator.tsx",
-    patternId: "recommend",
-    kind: "temporary",
-    reason: "Reads the deprecated student-loan `recommendation` field (E15 migrates it after T5).",
-    owner: "E15",
-  },
-
-  // Temporary: deprecated student-loan `recommendation` field (kept until E15 migrates
-  // StudentLoanCalculator to `projectedOutcome`, then delete the field and these entries).
-  ...["packages/finance-engine/src/types.ts", "packages/finance-engine/src/debt-payoff.ts"].map(
-    (file): AdviceAllowEntry => ({
-      file,
-      patternId: "recommend",
-      kind: "temporary",
-      reason: "Deprecated `recommendation` field, superseded by `projectedOutcome` (E29-T5).",
-      owner: "E15",
-    }),
-  ),
 ];

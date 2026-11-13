@@ -131,7 +131,7 @@ describe("UI Calculators", () => {
       const onSave = vi.fn();
       render(<StudentLoanCalculator ctaText="Save and continue" onSaveAndContinue={onSave} />);
 
-      expect(screen.getByText(/UK Student Loan: Overpay or Invest\?/i)).toBeDefined();
+      expect(screen.getByText(/UK student loan repayment calculator/i)).toBeDefined();
 
       const input = screen.getByLabelText("Gross annual salary (£)");
       fireEvent.change(input, { target: { value: "52000" } });
