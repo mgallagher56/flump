@@ -54,6 +54,7 @@ export const evaluateStudentLoanOverpayment = defineFlumpTool({
   annotations: SIMULATE_ANNOTATIONS,
   async handler(input, ctx) {
     const m = await loadReadModel(ctx);
+    const notes: string[] = [];
     const assumptions = [agentSupplied("plan", input.plan, "Repayment plan used.")];
     const missing: Missing[] = [];
 
@@ -93,11 +94,19 @@ export const evaluateStudentLoanOverpayment = defineFlumpTool({
       });
     }
 
+    if (
+      m.accounts.filter((a) => a.category === "studentLoans").length > 1 &&
+      input.balanceGbp === undefined
+    ) {
+      notes.push(
+        "More than one student loan is recorded; the balance used is their sum, treated as one loan on the plan given.",
+      );
+    }
     const taxYear = resolveUkTaxYear();
     const verification = getTaxYearVerification(taxYear);
-    const notes = [
-      "The projection holds salary and the repayment threshold fixed and charges 6.5% interest on the balance.",
-    ];
+    notes.unshift(
+      "The outcome is a rule-of-thumb on one year of repayments: it compares annual repayment with 6.5% interest on the balance and with half the write-off period. It is not a year-by-year projection, and salary and threshold are held fixed.",
+    );
     const base = {
       result: {
         plan: input.plan,

@@ -143,18 +143,6 @@ describe("Flump McpServer Tools & Resources", () => {
         ],
       };
     },
-    async queryTransactions() {
-      return [
-        {
-          id: "tx_1",
-          accountId: "acc_1",
-          amount: -45.5,
-          description: "Supermarket Groceries at Monzo",
-          category: "groceries",
-          timestamp: new Date().toISOString(),
-        },
-      ];
-    },
   };
 
   it("initializes McpServer and registers all tools and resources without collision", () => {

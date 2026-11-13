@@ -78,9 +78,6 @@ export async function runStdio(
         taxRecords: data.taxRecords,
       };
     },
-    async queryTransactions() {
-      return [];
-    },
   };
 
   const server = createFlumpMcpServer({

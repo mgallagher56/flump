@@ -1,4 +1,4 @@
-import { calculateMortgageAmortization, calculateMortgageVsIsa } from "@flump/finance-engine";
+import { calculateMortgageVsIsa } from "@flump/finance-engine";
 import { z } from "zod";
 import { defineFlumpTool } from "../../define-tool.js";
 import { FlumpToolError } from "../../errors.js";
@@ -14,6 +14,9 @@ import {
   SIMULATION_NOTICE,
 } from "./common.js";
 
+/** Longest term the account intake accepts; anything else is treated as not recorded. */
+const MAX_TERM_MONTHS = 600;
+
 const comparison = z.object({
   mortgageBalanceGbp: z.number(),
   mortgageRatePct: z.number(),
@@ -22,7 +25,7 @@ const comparison = z.object({
   overpay: z.object({
     interestSavedGbp: z.number(),
     monthsSaved: z.number(),
-    newPayoffDate: z.string(),
+    newTermMonths: z.number(),
     totalPaidInOverpaymentsGbp: z.number(),
   }),
   invest: z.object({
@@ -75,6 +78,8 @@ export const compareMortgageOverpayVsInvest = defineFlumpTool({
     const notes: string[] = [
       "Investment growth uses one constant return, with no charges, tax or market fall modelled.",
       "The mortgage rate is held at its recorded value for the whole term.",
+      "Returns are nominal and compounded monthly at the annual rate divided by 12.",
+      "If overpaying clears the mortgage early, the overpaying side stops paying then; the invested side keeps adding the same amount to the end of the term.",
     ];
     const empty = (missing: Missing[], accountId: string | null = null) => ({
       result: {
@@ -142,25 +147,17 @@ export const compareMortgageOverpayVsInvest = defineFlumpTool({
         askUser: `What interest rate are you paying on your ${ref}?`,
       });
     }
-    if (!(Number.isFinite(termMonths) && termMonths > 0)) {
+    if (!(Number.isFinite(termMonths) && termMonths > 0 && termMonths <= MAX_TERM_MONTHS)) {
       missing.push({
         field: `accounts.${id}.termMonths`,
-        why: `The remaining term on ${ref} (${id}) is not recorded.`,
-        askUser: `How many months are left on your ${ref}?`,
+        why: `The remaining term on ${ref} (${id}) is not recorded or is outside 1 to ${MAX_TERM_MONTHS} months.`,
+        askUser: `How many months are left on your ${ref} (1 to ${MAX_TERM_MONTHS})?`,
       });
     }
     if (missing.length > 0) return empty(missing, id);
 
     const balance = account.nominalBalance;
     const rate = account.interestRate;
-    const amort = calculateMortgageAmortization({
-      propertyValueGbp: 0,
-      currentBalanceGbp: balance,
-      interestRateApr: rate,
-      remainingTermMonths: termMonths,
-      monthlyOverpaymentGbp: input.monthlyAmountGbp,
-      afterTaxIsaExpectedReturnApr: input.expectedReturnPct,
-    });
     const vs = calculateMortgageVsIsa(
       balance,
       rate,
@@ -184,12 +181,14 @@ export const compareMortgageOverpayVsInvest = defineFlumpTool({
           mortgageBalanceGbp: round2(balance),
           mortgageRatePct: rate,
           termMonths,
-          standardMonthlyPaymentGbp: round2(amort.monthlyPaymentGbp),
+          standardMonthlyPaymentGbp: round2(vs.standardPayment),
           overpay: {
             interestSavedGbp: round2(vs.interestSaved),
             monthsSaved: vs.monthsShaved,
-            newPayoffDate: amort.payoffDate,
-            totalPaidInOverpaymentsGbp: round2(vs.totalIsaContributed),
+            newTermMonths: termMonths - vs.monthsShaved,
+            totalPaidInOverpaymentsGbp: round2(
+              input.monthlyAmountGbp * (termMonths - vs.monthsShaved),
+            ),
           },
           invest: {
             potAtEndOfTermGbp: round2(vs.isaAccumulatedValue),

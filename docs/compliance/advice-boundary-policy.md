@@ -147,6 +147,8 @@ A notice never excuses a rule break. Copy that breaks R2 stays broken beside a n
 | `packages/mcp/src/tools/uk-tax-trap.tool.ts:53` "Simulates optimal pension salary sacrifice ..."                                      | "Calculates income tax and National Insurance at a given pension contribution."                            |
 | `packages/mcp/src/tools/financial-audit.tool.ts:113` `recommendations: healthScore.topRecommendations`                                | `observations: healthScore.observations`                                                                   |
 
+Status: every row above is resolved. `mortgage-isa.tool.ts` and `financial-audit.tool.ts` were deleted by E17-N11, whose replacement tools use neutral keys (`interestSavedGbp`, `projectedOutcome`) and no `favorsOption`. `recommendedMonthlyTaxSetAsideGbp` is now `monthlySetAsideEstimateGbp` in the section 24 tool and the permanent allow-list is gone.
+
 ## R8. Allowed vocabulary
 
 **Rule.** The guard bans advice **contexts**, not words, because the house spelling is "optimise" (`docs/copy-style-guide.md`). The exceptions are narrow and need a reason in the allow-list.
