@@ -50,7 +50,9 @@ let testProfileData: any = {
 const defaultLoaderData = testLoaderData;
 const defaultProfileData = testProfileData;
 
+let mockHash = "";
 vi.mock("react-router", () => ({
+  useLocation: () => ({ hash: mockHash, pathname: "/app/pension", search: "" }),
   Link: ({ children, to }: any) => <a href={to}>{children}</a>,
   useLoaderData: () => testLoaderData,
   useFetcher: () => ({
@@ -89,6 +91,19 @@ import PensionContainer from "./PensionContainer";
 const openTab = (name: RegExp) => fireEvent.click(screen.getByRole("tab", { name }));
 
 describe("PensionContainer", () => {
+  it("opens the details card and scrolls to it for the #pension-details deep link", async () => {
+    mockHash = "#pension-details";
+    const scroll = vi.fn();
+    Element.prototype.scrollIntoView = scroll;
+    try {
+      render(<PensionContainer />);
+      await vi.waitFor(() => expect(scroll).toHaveBeenCalled());
+      expect(document.getElementById("pension-details")).not.toBeNull();
+    } finally {
+      mockHash = "";
+    }
+  });
+
   it("renders contributions breakdown and toggles inline editing for employer NI", async () => {
     render(<PensionContainer />);
 

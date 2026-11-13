@@ -213,7 +213,10 @@ export const HomeDashboard: FC<HomeDashboardProps> = ({
 
   // Greeting name comes from the WorkOS name (profile mirrors it); never a free-text display name.
   const greetingName =
-    profile.firstName?.trim() || user?.firstName?.trim() || user?.user_metadata?.first_name || null;
+    profile.firstName?.trim() ||
+    user?.firstName?.trim() ||
+    user?.user_metadata?.first_name?.trim() ||
+    null;
 
   // Saved per-widget settings (read-only here) still apply; editing them is gone.
   const widgetConfig = (key: DashboardWidgetKey) => profile.dashboardWidgetConfig?.[key] ?? {};
