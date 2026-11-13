@@ -85,20 +85,22 @@ export function defineFlumpTool<I extends z.ZodRawShape, R extends z.ZodType>(
       const run = async (rawArgs: unknown): Promise<ErrorResult | Record<string, unknown>> => {
         const started = Date.now();
         const ctx = await getContext();
-        const report = async (outcome: "ok" | "error", errorCode?: FlumpErrorBody["code"]) => {
+        // Fire and forget: a slow or failing sink must never delay or break a tool call.
+        const report = (outcome: "ok" | "error", errorCode?: FlumpErrorBody["code"]) => {
           try {
-            await ctx.audit?.({
+            const pending = ctx.audit?.({
               tool: definition.name,
               outcome,
               ...(errorCode ? { errorCode } : {}),
               durationMs: Date.now() - started,
             });
+            if (pending) pending.catch(() => {});
           } catch {
-            // Audit must never break a tool call.
+            // Swallowed.
           }
         };
-        const fail = async (body: FlumpErrorBody) => {
-          await report("error", body.code);
+        const fail = (body: FlumpErrorBody) => {
+          report("error", body.code);
           return errorResult(body);
         };
 
@@ -133,15 +135,19 @@ export function defineFlumpTool<I extends z.ZodRawShape, R extends z.ZodType>(
             throw new Error("output failed schema validation");
           }
           const fitted = fitToBudget(envelope, definition.maxTokens ?? DEFAULT_MAX_TOKENS);
-          if (!fitted.ok) {
+          // Halving arrays can break constraints such as min length, so re-validate what we send.
+          if (!fitted.ok || !outputSchema.safeParse(fitted.envelope).success) {
             return fail({
               code: "INVALID_ARGUMENT",
-              message: "The result is too large for the response size budget.",
+              message:
+                !fitted.ok && fitted.reason === "overhead"
+                  ? "The assumptions, missing-data and notice fields alone exceed the response size budget."
+                  : "The result is too large for the response size budget.",
               hint: "Narrow the request (a shorter range or a single item) or use concise format.",
               retryable: false,
             });
           }
-          await report("ok");
+          report("ok");
           return {
             content: [{ type: "text", text: fitted.text }],
             structuredContent: fitted.envelope,
@@ -164,7 +170,12 @@ export function defineFlumpTool<I extends z.ZodRawShape, R extends z.ZodType>(
           outputSchema,
           annotations: { ...DEFAULT_ANNOTATIONS, ...definition.annotations },
         },
-        // `run` validates input itself so the contract holds whatever the SDK passes.
+        // The SDK validates input against `inputSchema` BEFORE this callback runs, so a client sending
+        // schema-invalid input gets the SDK's plain-text "Input validation error" (which may echo
+        // unrecognised keys), not our INVALID_ARGUMENT JSON, and the call is not audited. The strict
+        // schema stays registered so tools/list advertises it; that list is not scope-filtered, so
+        // validating before the scope check reveals nothing new. `run` re-validates for direct
+        // invocation and semantic checks.
         ((args: unknown) => run(args)) as never,
       );
 
