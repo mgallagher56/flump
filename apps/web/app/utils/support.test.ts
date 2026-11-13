@@ -1,3 +1,4 @@
+import { BUSINESS_DETAILS } from "@flump/business-details";
 import { describe, expect, it } from "vitest";
 import { feedbackMailto, SUPPORT_EMAIL } from "./support";
 
@@ -17,7 +18,9 @@ describe("feedbackMailto", () => {
     expect(href).not.toContain("&b");
   });
 
-  it("uses an unroutable placeholder mailbox until the real one is set", () => {
-    expect(SUPPORT_EMAIL.endsWith(".invalid")).toBe(true);
+  it("reads the mailbox from the business details config", () => {
+    expect(SUPPORT_EMAIL).toBe(BUSINESS_DETAILS.supportEmail.value);
+    if (BUSINESS_DETAILS.supportEmail.isPlaceholder)
+      expect(SUPPORT_EMAIL.endsWith(".invalid")).toBe(true);
   });
 });

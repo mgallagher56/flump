@@ -256,6 +256,13 @@
           "flags": ""
         },
         {
+          "kind": "absent",
+          "pattern": "isPlaceholder: true",
+          "paths": ["packages/business-details/src/index.ts"],
+          "exclude": "\\.test\\.",
+          "flags": ""
+        },
+        {
           "kind": "owner",
           "label": "Security contact (SECURITY_CONTACT) set in production",
           "attestation": {}

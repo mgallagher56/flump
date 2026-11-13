@@ -2,6 +2,7 @@ import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { assertLaunchReady } from "@flump/business-details";
 import express from "express";
 import { createServer as createViteServer, type ViteDevServer } from "vite";
 import { analyticsMiddleware } from "./server/analytics";
@@ -12,6 +13,8 @@ import { buildCsp, genericServerError, injectThemeNonce, resolveAppUrl } from ".
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 async function createServer() {
+  // Public launch (indexing allowed) must not boot with placeholder business details.
+  assertLaunchReady(process.env);
   const app = express();
   const isProd = process.env.NODE_ENV === "production";
   // Resolved once at boot. SSR reads it through getAppUrl() (process.env.VITE_APP_URL).

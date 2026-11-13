@@ -2,7 +2,14 @@ import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { scanDirectories, scanText } from "./lib/launch-placeholders";
+import { BUSINESS_DETAILS, type BusinessDetails } from "../packages/business-details/src/index";
+import {
+  businessDetailPatterns,
+  isLaunchGuardActive,
+  placeholderConfigFields,
+  scanDirectories,
+  scanText,
+} from "./lib/launch-placeholders";
 
 const script = join(import.meta.dir, "check-launch-placeholders.ts");
 let root: string;
@@ -16,7 +23,7 @@ function dirWith(name: string, files: Record<string, string>): string {
 function run(args: string[], env: Record<string, string> = {}) {
   const base: Record<string, string> = {};
   for (const [k, v] of Object.entries(process.env)) {
-    if (v !== undefined && k !== "FLUMP_LAUNCH") base[k] = v;
+    if (v !== undefined && k !== "FLUMP_LAUNCH" && k !== "ALLOW_INDEXING") base[k] = v;
   }
   const r = Bun.spawnSync(["bun", script, ...args], { env: { ...base, ...env } });
   return { code: r.exitCode, out: r.stdout.toString() + r.stderr.toString() };
@@ -83,9 +90,25 @@ describe("CLI", () => {
     expect(run([dir]).code).toBe(0);
     expect(run([join(root, "nope")]).code).toBe(0);
   });
-  test("flag on: clean dir passes", () => {
+  test("flag on: a clean build still fails while business details are placeholders", () => {
     const dir = dirWith("clean", { "a.js": "nothing here" });
-    expect(run([dir], { FLUMP_LAUNCH: "true" }).code).toBe(0);
+    const r = run([dir], { FLUMP_LAUNCH: "true" });
+    expect(r.code).toBe(1);
+    expect(r.out).toContain("business detail(s) are still placeholders");
+    expect(r.out).not.toContain("hit(s) in the build output");
+  });
+  test("ALLOW_INDEXING=true alone activates the guard and fails on placeholders", () => {
+    const dir = dirWith("indexing", { "a.js": "nothing here" });
+    const r = run([dir], { ALLOW_INDEXING: "true" });
+    expect(r.code).toBe(1);
+    expect(r.out).toContain("legalName");
+    expect(run([dir], { ALLOW_INDEXING: "1" }).code).toBe(0);
+  });
+  test("a build that contains a placeholder business detail fails with its hit", () => {
+    const dir = dirWith("leak", { "a.js": `© 2026 ${BUSINESS_DETAILS.legalName.value}` });
+    const r = run([dir], { ALLOW_INDEXING: "true" });
+    expect(r.code).toBe(1);
+    expect(r.out).toContain("business detail: legalName");
   });
   test("flag on: hits exit 1 and list file and pattern", () => {
     const dir = dirWith("dirty", { "a.js": "price £X" });
@@ -109,5 +132,33 @@ describe("CLI", () => {
   test("missing dir exits 3 when active; no dir exits 2", () => {
     expect(run([join(root, "nope")], { FLUMP_LAUNCH: "true" }).code).toBe(3);
     expect(run([], { FLUMP_LAUNCH: "true" }).code).toBe(2);
+  });
+});
+
+const realDetails = (): BusinessDetails => {
+  const clone = structuredClone(BUSINESS_DETAILS);
+  for (const key of Object.keys(clone) as (keyof BusinessDetails)[])
+    clone[key].isPlaceholder = false;
+  return clone;
+};
+
+describe("business details guard", () => {
+  test("reports every placeholder field and none once all are real", () => {
+    expect(placeholderConfigFields().map((f) => f.key)).toEqual(
+      expect.arrayContaining(["legalName", "companyNumber", "registeredOffice", "price"]),
+    );
+    expect(placeholderConfigFields(realDetails())).toEqual([]);
+  });
+  test("scans distinctive placeholder text, not the bare company number", () => {
+    const ids = businessDetailPatterns().map((p) => p.id);
+    expect(ids).toContain("business detail: registeredOffice");
+    expect(ids).toContain("business detail: price");
+    expect(ids).not.toContain("business detail: companyNumber");
+    expect(businessDetailPatterns(realDetails())).toEqual([]);
+  });
+  test("a launch environment is ALLOW_INDEXING or FLUMP_LAUNCH exactly true", () => {
+    expect(isLaunchGuardActive({ ALLOW_INDEXING: "true" })).toBe(true);
+    expect(isLaunchGuardActive({ FLUMP_LAUNCH: "true" })).toBe(true);
+    expect(isLaunchGuardActive({})).toBe(false);
   });
 });

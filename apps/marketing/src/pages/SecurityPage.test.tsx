@@ -1,3 +1,4 @@
+import { BUSINESS_DETAILS } from "@flump/business-details";
 import { render, screen, waitFor, within } from "@testing-library/react";
 import { HelmetProvider } from "react-helmet-async";
 import { MemoryRouter } from "react-router-dom";
@@ -58,12 +59,12 @@ describe("SecurityPage", () => {
     );
   });
 
-  it("does not present a dead security address as real", () => {
+  it("shows the security contact from the business details config, flagged while a placeholder", () => {
     renderPage();
-    expect(screen.queryByRole("link", { name: "Email security" })).toBeNull();
-    expect(document.body.textContent).not.toMatch(/example\.invalid|Placeholder address/i);
-    const hrefs = screen.queryAllByRole("link").map((l) => l.getAttribute("href") ?? "");
-    expect(hrefs.some((h) => h.startsWith("mailto:"))).toBe(false);
+    const { value, isPlaceholder } = BUSINESS_DETAILS.securityContact;
+    const link = screen.getByRole("link", { name: value });
+    expect(link.getAttribute("href")).toBe(`mailto:${value}`);
+    expect(/not monitored yet/i.test(document.body.textContent ?? "")).toBe(isPlaceholder);
   });
 
   it("makes no response-time promise", () => {
@@ -71,11 +72,11 @@ describe("SecurityPage", () => {
     expect(screen.queryByText(/1 business day/i)).toBeNull();
   });
 
-  it("includes a disclosure policy saying a contact is not yet available", () => {
+  it("includes a disclosure policy with a security contact", () => {
     renderPage();
     expect(
       screen.getByRole("heading", { level: 2, name: "Reporting a security issue" }),
     ).toBeDefined();
-    expect(screen.getByText(/security contact is not available yet/i)).toBeDefined();
+    expect(screen.queryByText(/security contact is not available yet/i)).toBeNull();
   });
 });

@@ -1,9 +1,7 @@
-/**
- * Placeholder support mailbox. The `.invalid` TLD can never resolve, so nothing can be sent to an
- * address we do not own. E24-T8 swaps in the real mailbox once the domain and routing are live;
- * the E24-T1 launch guard blocks a launch build until then.
- */
-export const SUPPORT_EMAIL = "support@example.invalid";
+import { BUSINESS_DETAILS } from "@flump/business-details";
+
+/** Support mailbox. Read from the central business details config (a placeholder until the owner edits it). */
+export const SUPPORT_EMAIL: string = BUSINESS_DETAILS.supportEmail.value;
 
 /** Build identifier for feedback emails. Falls back to "dev" when no version is injected. */
 export const APP_VERSION: string = import.meta.env?.VITE_APP_VERSION || "dev";

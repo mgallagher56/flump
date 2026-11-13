@@ -1,5 +1,6 @@
 import { resolve } from "node:path";
 import { PassThrough } from "node:stream";
+import { assertLaunchReady } from "@flump/business-details";
 import { createReadableStreamFromReadable } from "@react-router/node";
 import { createInstance } from "i18next";
 import Backend from "i18next-fs-backend";
@@ -13,6 +14,9 @@ import i18n from "./i18n";
 import i18next from "./i18n.server";
 import { reportServerError } from "./observability/sentry.server";
 import { applyRobotsHeader } from "./utils/indexing.server";
+
+// Public launch (indexing allowed) must not boot with placeholder business details.
+assertLaunchReady(process.env);
 
 // Loader, action and middleware errors (render errors go through onError below).
 export function handleError(error: unknown, { request }: { request: Request }): void {

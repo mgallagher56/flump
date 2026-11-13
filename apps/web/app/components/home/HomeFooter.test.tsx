@@ -1,3 +1,4 @@
+import { companyLine } from "@flump/business-details";
 import { render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
@@ -21,6 +22,11 @@ describe("HomeFooter", () => {
     expect(screen.getByRole("link", { name: "Mortgage vs ISA" })).toBeDefined();
     expect(screen.getByRole("link", { name: "Section 24 landlord" })).toBeDefined();
     expect(screen.getByRole("link", { name: "Snowball vs avalanche" })).toBeDefined();
+  });
+
+  it("shows the company line from the business details config", () => {
+    const { container } = render(<HomeFooter />);
+    expect(container.textContent).toContain(companyLine(new Date().getFullYear()));
   });
 
   it("has no fake form and links feedback to a mailto", () => {

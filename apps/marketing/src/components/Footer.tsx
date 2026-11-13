@@ -1,14 +1,9 @@
+import { BUSINESS_DETAILS, companyLine } from "@flump/business-details";
 import { css } from "@repo/ui/styled-system/css";
 import { flex, grid, stack } from "@repo/ui/styled-system/patterns";
 import type { FC } from "react";
 import { FiExternalLink } from "react-icons/fi";
 import { Link } from "react-router-dom";
-import { showPlaceholders } from "../utils/flags";
-import {
-  COMPANY_ADDRESS_PLACEHOLDER,
-  COMPANY_NAME_PLACEHOLDER,
-  COMPANY_NUMBER_PLACEHOLDER,
-} from "../utils/placeholders";
 import { getAppUrl } from "../utils/url";
 
 const footerStyle = css({
@@ -148,17 +143,19 @@ export const Footer: FC = () => {
           </div>
         </div>
 
-        {/* Company details: hidden until the owner supplies real values (R-09). */}
-        {showPlaceholders() && (
-          <div className={legalStyle}>
-            <div className={flex({ justify: "space-between", flexWrap: "wrap", gap: "4" })}>
-              <span className={placeholderStyle}>
-                © {currentYear} {COMPANY_NAME_PLACEHOLDER}. {COMPANY_NUMBER_PLACEHOLDER}.{" "}
-                {COMPANY_ADDRESS_PLACEHOLDER}.
-              </span>
-            </div>
+        {/* Company details: read from @flump/business-details (placeholders until the owner edits it). */}
+        <div className={legalStyle}>
+          <div className={flex({ justify: "space-between", flexWrap: "wrap", gap: "4" })}>
+            <span
+              className={BUSINESS_DETAILS.legalName.isPlaceholder ? placeholderStyle : undefined}
+            >
+              {companyLine(currentYear)}
+            </span>
+            <a href={`mailto:${BUSINESS_DETAILS.supportEmail.value}`} className={linkStyle}>
+              {BUSINESS_DETAILS.supportEmail.value}
+            </a>
           </div>
-        )}
+        </div>
       </div>
     </footer>
   );
