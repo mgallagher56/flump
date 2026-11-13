@@ -82,10 +82,21 @@ export async function buildSyntheticDatabase(client: Client): Promise<void> {
     interestRate: null,
     monthlyContribution: null,
   });
-  await client.query(
-    "INSERT INTO account_details (account_id, user_id, month, value, year, as_of_date) VALUES ($1, 'user_mock', 1, 5.00, 2025, '2025-01-31'), ($1, 'user_mock', 2, 6.00, 2025, '2025-02-28')",
-    [mockWithDetails],
+  // The fixtures run both before and after the E30 migration, which adds NOT NULL columns.
+  const evolved = await client.query(
+    "SELECT 1 FROM information_schema.columns WHERE table_name = 'account_details' AND column_name = 'user_id'",
   );
+  if (evolved.rows.length > 0) {
+    await client.query(
+      "INSERT INTO account_details (account_id, user_id, month, value, year, as_of_date) VALUES ($1, 'user_mock', 1, 5.00, 2025, '2025-01-31'), ($1, 'user_mock', 2, 6.00, 2025, '2025-02-28')",
+      [mockWithDetails],
+    );
+  } else {
+    await client.query(
+      "INSERT INTO account_details (account_id, month, value, year) VALUES ($1, 1, 5.00, 2025), ($1, 2, 6.00, 2025)",
+      [mockWithDetails],
+    );
+  }
   await client.query(
     "INSERT INTO transactions (account_id, user_id, amount, description, category) VALUES ($1, 'user_mock', 1.00, 'mock tx', 'misc'), ($1, $2, 2.00, $3, 'misc')",
     [mockWithDetails, OWNER, SENTINEL_NAME],
