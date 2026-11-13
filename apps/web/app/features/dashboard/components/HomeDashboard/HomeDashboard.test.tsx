@@ -183,7 +183,10 @@ describe("HomeDashboard", () => {
     for (const label of ["Net worth", "Monthly surplus", "Weekly safe to spend", "Liquid cash"]) {
       expect(screen.getAllByText(label).length).toBeGreaterThan(0);
     }
-    expect(screen.queryByText("Not set")).toBeNull();
+    // Widgets may still say "Not set" (for example the mortgage term); the KPI figures never do.
+    const hero = document.querySelector('[data-tone="hero"]');
+    expect(hero?.textContent).toContain("£50,000");
+    expect(hero?.textContent).not.toContain("Not set");
   });
 
   it("has no drag, resize, move or per-widget settings controls", () => {
