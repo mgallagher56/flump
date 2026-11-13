@@ -11,6 +11,10 @@ const DEBT_FEATURES_DIR = path.resolve(
   __dirname,
   "../../../../apps/web/app/features/debt/components",
 );
+const SETTINGS_FEATURES_DIR = path.resolve(
+  __dirname,
+  "../../../../apps/web/app/features/settings/components",
+);
 const SANDBOX_FEATURES_DIR = path.resolve(
   __dirname,
   "../../../../apps/web/app/features/sandbox/components",
@@ -179,6 +183,14 @@ describe("Architecture & Design System Laws", () => {
         for (const comp of debtComponents) {
           verifyColocatedStructure(DEBT_FEATURES_DIR, comp);
         }
+      }
+    });
+
+    it("enforces colocated structure for features/settings components (E15 T3.10)", () => {
+      const settingsComponents = getSubdirectories(SETTINGS_FEATURES_DIR);
+      expect(settingsComponents.length).toBeGreaterThanOrEqual(1);
+      for (const comp of settingsComponents) {
+        verifyColocatedStructure(SETTINGS_FEATURES_DIR, comp);
       }
     });
 

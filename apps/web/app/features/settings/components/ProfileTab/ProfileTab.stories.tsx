@@ -29,4 +29,9 @@ export const Default: Story = {
 
 export const NoPicture: Story = {
   args: { profile: { ...DEFAULT_PROFILE, firstName: "Jane", avatarUrl: null } },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await expect(canvas.getByRole("button", { name: "Upload picture" })).toBeDefined();
+    await expect(canvas.queryByRole("button", { name: "Remove" })).toBeNull();
+  },
 };

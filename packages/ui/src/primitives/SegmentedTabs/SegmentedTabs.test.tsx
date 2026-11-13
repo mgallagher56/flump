@@ -90,4 +90,29 @@ describe("SegmentedTabs Primitive", () => {
       screen.getByRole("tab", { name: "Snowball (Lowest Balance)" }).getAttribute("aria-controls"),
     ).toBe(hidden.id);
   });
+
+  it("selects on arrow focus by default (automatic activation)", () => {
+    const onValueChange = vi.fn();
+    render(<SegmentedTabs items={items} value="avalanche" onValueChange={onValueChange} />);
+    const first = screen.getByRole("tab", { name: "Avalanche (Highest APR)" });
+    first.focus();
+    fireEvent.keyDown(first, { key: "ArrowRight" });
+    expect(onValueChange).toHaveBeenCalledWith("snowball");
+  });
+
+  it("only moves focus on arrow keys with activationMode manual", () => {
+    const onValueChange = vi.fn();
+    render(
+      <SegmentedTabs
+        activationMode="manual"
+        items={items}
+        value="avalanche"
+        onValueChange={onValueChange}
+      />,
+    );
+    const first = screen.getByRole("tab", { name: "Avalanche (Highest APR)" });
+    first.focus();
+    fireEvent.keyDown(first, { key: "ArrowRight" });
+    expect(onValueChange).not.toHaveBeenCalled();
+  });
 });

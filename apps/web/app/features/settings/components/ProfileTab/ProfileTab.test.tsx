@@ -188,4 +188,13 @@ describe("<ProfileTab />", () => {
     );
     expect(saveButton().disabled).toBe(true);
   });
+
+  it("tells the user when the Self Assessment module could not be updated", async () => {
+    mockUpdateProfile.mockRejectedValueOnce(new Error("boom"));
+    render(<ProfileTab profile={DEFAULT_PROFILE} />);
+    fireEvent.click(screen.getByTestId("self-assessment-module-toggle"));
+    const alert = await screen.findByTestId("module-save-error");
+    expect(alert.getAttribute("role")).toBe("alert");
+    expect(alert.textContent).toContain("could not update");
+  });
 });

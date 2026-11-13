@@ -11,7 +11,14 @@ const meta: Meta<typeof DataTab> = {
 export default meta;
 type Story = StoryObj<typeof DataTab>;
 
-export const Default: Story = {};
+export const Default: Story = {
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await expect(canvas.getByRole("heading", { name: "Reset your financial data" })).toBeDefined();
+    await expect(canvas.getByRole("button", { name: "Reset all financial data" })).toBeDefined();
+    await expect(canvas.queryByRole("alertdialog")).toBeNull();
+  },
+};
 
 export const ResetDialogOpen: Story = {
   play: async ({ canvasElement }) => {

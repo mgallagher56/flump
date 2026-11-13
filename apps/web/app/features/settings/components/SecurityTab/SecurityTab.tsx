@@ -67,9 +67,11 @@ export const SecurityTab: FC<SecurityTabProps> = ({ email }) => {
                 id="user-email-display"
               >
                 <span>{email || "Not set"}</span>
-                <StatusBadge showIcon size="sm" variant="positive">
-                  Verified
-                </StatusBadge>
+                {email ? (
+                  <StatusBadge showIcon size="sm" variant="positive">
+                    Verified
+                  </StatusBadge>
+                ) : null}
               </div>
             </div>
           </div>
