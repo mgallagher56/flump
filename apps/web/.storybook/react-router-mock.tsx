@@ -18,6 +18,8 @@ export interface MockRouterContextType {
     Form: (props: { children: ReactNode; [key: string]: any }) => ReactElement;
   };
   navigate: (to: string, options?: any) => void;
+  /** What `useNavigation` reports; defaults to idle. */
+  navigationState?: "idle" | "loading" | "submitting";
   location?: { pathname: string; search: string; hash: string; state: any; key: string };
 }
 
@@ -79,7 +81,8 @@ export const useRevalidator = () => {
 };
 
 export const useNavigation = () => {
-  return { state: "idle" as const, location: undefined };
+  const { navigationState } = useContext(StorybookRouterContext);
+  return { state: navigationState ?? ("idle" as const), location: undefined };
 };
 
 export const useSubmit = () => {
