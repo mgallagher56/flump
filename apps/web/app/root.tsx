@@ -14,7 +14,6 @@ import {
 } from "react-router";
 import { AppBottomBar } from "./components/navigation/AppBottomBar";
 import Header from "./components/structure/header/Header";
-import { apiConfig } from "./config.server";
 import { ResponsiveProvider } from "./context/ResponsiveContext";
 import { RouteErrorBoundary } from "./features/feedback/components/RouteErrorBoundary";
 import { useTheme } from "./hooks/useTheme";
@@ -41,6 +40,7 @@ export const loader = async (args: LoaderFunctionArgs) => {
   const session = await getAuthSession(args, { ensureSignedIn: false });
   // A user without an access token is treated as signed out; never invent a token.
   const user = session.accessToken ? session.user : null;
+  // Server-only: used below to fetch the profile and never returned from this loader (E20-N8).
   const { accessToken } = session;
   let userProfile: UserProfile | null = null;
 
@@ -72,11 +72,9 @@ export const loader = async (args: LoaderFunctionArgs) => {
     locale,
     user,
     userProfile,
-    accessToken,
-    ENV: {
-      VITE_API_URL: apiConfig.apiBaseUrl,
-      ...sentryPublicEnv(process.env),
-    },
+    // The browser's only public config channel (E20-N8): the three non-secret Sentry keys that
+    // entry.client.tsx reads from `window.ENV`. Never add a token, API URL or other secret here.
+    ENV: sentryPublicEnv(process.env),
   };
 };
 

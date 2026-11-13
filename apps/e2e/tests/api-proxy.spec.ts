@@ -45,15 +45,27 @@ test.describe("/api proxy", () => {
       expect(result.domHasTokenLike).toBe(false);
     });
 
-    // TODO(E20-N8): the root loader still returns `accessToken`, so React Router serialises it
-    // into the server-rendered HTML (and so into page JavaScript). The `test.fail` below keeps
-    // the suite green today and turns it red when N8 lands, which is the cue to remove
-    // `test.fail` and keep the assertion as a permanent guard.
+    // Permanent guard (E20-N8): the root loader keeps the access token server-side, so neither
+    // the server-rendered HTML nor the single-fetch data payload may carry it.
+    const jwtShaped = /eyJ[\w-]{8,}\.[\w-]{8,}\.[\w-]*/;
+    const devSessionToken = ["mock", "session", "token"].join("-");
+
     test("does not serialise an access token into the document", async ({ request }) => {
-      test.fail(true, "E20-N8: the root loader still serialises accessToken into the page");
       const response = await request.get("/");
       expect(response.status()).toBe(200);
-      expect(await response.text()).not.toContain("accessToken");
+      const html = await response.text();
+      expect(html).not.toContain("accessToken");
+      expect(html).not.toContain(devSessionToken);
+      expect(html).not.toMatch(jwtShaped);
+    });
+
+    test("does not serialise an access token into the root loader data", async ({ request }) => {
+      const response = await request.get("/_root.data");
+      expect(response.status()).toBe(200);
+      const payload = await response.text();
+      expect(payload).not.toContain("accessToken");
+      expect(payload).not.toContain(devSessionToken);
+      expect(payload).not.toMatch(jwtShaped);
     });
   });
 });
