@@ -116,7 +116,6 @@ export const PensionForecast: FC<PensionForecastProps> = ({
       footer={
         onEditDetails ? (
           <div className={zoneFooter()}>
-            <span>Changes here are not saved.</span>
             <Button size="sm" type="button" variant="link" onClick={onEditDetails}>
               Update your details
             </Button>

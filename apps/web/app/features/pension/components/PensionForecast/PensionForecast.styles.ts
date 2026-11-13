@@ -27,9 +27,8 @@ export const zoneFooter = cva({
     display: "flex",
     flexWrap: "wrap",
     alignItems: "center",
-    justifyContent: "space-between",
     gap: "8px",
     textStyle: "body.sm",
-    color: "text.muted",
+    minHeight: "touch",
   },
 });
