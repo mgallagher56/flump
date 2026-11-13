@@ -270,17 +270,17 @@ export const UkDebtInstrumentsCard: FC = () => {
                   <FaExclamationTriangle size={20} style={{ flexShrink: 0, marginTop: "2px" }} />
                   <div>
                     <strong>Promotional window alert:</strong> You have approximately{" "}
-                    {cliffResult.daysRemaining} days remaining. Pay down{" "}
-                    {formatCurrency(cliffResult.requiredMonthlyPayment)}/mo or prepare to refinance
-                    to avoid the {btRevertApr}% revert APR.
+                    {cliffResult.daysRemaining} days remaining. A payment of{" "}
+                    {formatCurrency(cliffResult.requiredMonthlyPayment)}/mo would clear the balance
+                    before the {btRevertApr}% revert APR applies.
                   </div>
                 </div>
               ) : (
                 <div className={safeBannerStyle}>
                   <FaShieldAlt size={18} style={{ flexShrink: 0, marginTop: "2px" }} />
                   <div>
-                    Window active ({cliffResult.daysRemaining} days left). Maintain target payments
-                    to clear without penalty.
+                    Window active ({cliffResult.daysRemaining} days left). At the target payment the
+                    balance is projected to clear before the revert APR applies.
                   </div>
                 </div>
               )}
@@ -350,7 +350,7 @@ export const UkDebtInstrumentsCard: FC = () => {
 
             <div className={resultBoxStyle}>
               <FLPText fontSize="md" fontWeight="bold">
-                True Annual Overdraft Drain
+                Annual overdraft interest cost
               </FLPText>
 
               <div
@@ -362,7 +362,7 @@ export const UkDebtInstrumentsCard: FC = () => {
                 }}
               >
                 <FLPText color="status.danger.text" fontSize="xs">
-                  Living continuously in a {formatCurrency(overdraftBalance)} overdraft costs you:
+                  Living continuously in a {formatCurrency(overdraftBalance)} overdraft costs:
                 </FLPText>
                 <FLPHeading
                   as="h4"
@@ -373,14 +373,13 @@ export const UkDebtInstrumentsCard: FC = () => {
                   {formatCurrency(overdraftResult.annualPoundCost)} / year
                 </FLPHeading>
                 <FLPText color="status.danger.text" fontSize="xs">
-                  (~{formatCurrency(overdraftResult.monthlyPoundCost)}/month in stealth interest
-                  charges)
+                  (~{formatCurrency(overdraftResult.monthlyPoundCost)}/month in interest charges)
                 </FLPText>
               </div>
 
               <FLPText color="text.muted" fontSize="xs">
-                Unlike a fixed loan payment, overdraft fees feel invisible because they are deducted
-                directly from your account balance.
+                Unlike a fixed loan payment, overdraft interest is deducted directly from the
+                account balance.
               </FLPText>
             </div>
           </div>
@@ -458,10 +457,9 @@ export const UkDebtInstrumentsCard: FC = () => {
               </div>
 
               <FLPText color="text.muted" fontSize="xs">
-                Setting aside {formatCurrency(balloonResult.monthlySinkingFundNeeded)}/month in an
-                easy-access savings account ensures you have the full{" "}
-                {formatCurrency(balloonAmount)} ready when the contract expires if you choose to
-                purchase the car.
+                Saving {formatCurrency(balloonResult.monthlySinkingFundNeeded)}/month would build up
+                the full {formatCurrency(balloonAmount)} by the time the contract expires, for
+                comparison with the cost of a final payment if the car is purchased.
               </FLPText>
             </div>
           </div>
@@ -512,7 +510,7 @@ export const UkDebtInstrumentsCard: FC = () => {
 
             <div className={resultBoxStyle}>
               <FLPText fontSize="md" fontWeight="bold">
-                Graduate Tax Guardrail
+                Student loan repayment outlook
               </FLPText>
 
               <div className={neutralBannerStyle}>

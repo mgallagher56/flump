@@ -164,7 +164,7 @@ describe("DebtContainer", () => {
     const overdraftTab = screen.getByRole("button", { name: /Arranged Overdraft EAR Cost/i });
     fireEvent.click(overdraftTab);
 
-    expect(screen.getByText(/True Annual Overdraft Drain/i)).toBeDefined();
+    expect(screen.getByText(/Annual overdraft interest cost/i)).toBeDefined();
     expect(screen.getByText(/Average Arranged Overdraft Balance/i)).toBeDefined();
 
     // Switch top-level container tabs

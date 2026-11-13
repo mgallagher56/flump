@@ -322,12 +322,11 @@ export const PayoffStrategySwitcher: FC<PayoffStrategySwitcherProps> = ({
                   {formatCurrency(comparison.avalanche.totalInterest)}
                 </span>
               </FLPText>
-              <FLPText color="status.positive.text" fontSize="xs" fontWeight="semibold">
-                Saves{" "}
+              <FLPText fontSize="sm">
+                <strong>Interest vs minimum only:</strong>{" "}
                 <span className={css({ fontVariantNumeric: "tabular-nums" })}>
-                  {formatCurrency(comparison.interestSavedAvalancheVsMin)}
-                </span>{" "}
-                vs minimum payments
+                  {formatCurrency(comparison.interestSavedAvalancheVsMin)} lower
+                </span>
               </FLPText>
             </div>
           </label>
@@ -391,8 +390,17 @@ export const PayoffStrategySwitcher: FC<PayoffStrategySwitcherProps> = ({
                   {formatCurrency(comparison.snowball.totalInterest)}
                 </span>
               </FLPText>
-              <FLPText color="text.primary" fontSize="xs" fontWeight="semibold">
-                🏆 Quick Win: {comparison.snowballFirstWinDescription}
+              <FLPText fontSize="sm">
+                <strong>Interest vs minimum only:</strong>{" "}
+                <span className={css({ fontVariantNumeric: "tabular-nums" })}>
+                  {formatCurrency(
+                    Math.max(
+                      0,
+                      comparison.minimumOnly.totalInterest - comparison.snowball.totalInterest,
+                    ),
+                  )}{" "}
+                  lower
+                </span>
               </FLPText>
             </div>
           </label>
@@ -432,12 +440,11 @@ export const PayoffStrategySwitcher: FC<PayoffStrategySwitcherProps> = ({
                   whiteSpace: "nowrap",
                 }}
               >
-                High cost baseline
+                Baseline
               </span>
             </div>
             <FLPText color="text.muted" fontSize="xs">
-              Making only mandatory minimums causes compounding interest to drag out your
-              liabilities for years.
+              Pays only the required minimum on each debt, so interest compounds for longer.
             </FLPText>
             <div style={{ marginTop: "6px", display: "flex", flexDirection: "column", gap: "4px" }}>
               <FLPText fontSize="sm">
@@ -451,9 +458,6 @@ export const PayoffStrategySwitcher: FC<PayoffStrategySwitcherProps> = ({
                 <span className={css({ fontVariantNumeric: "tabular-nums" })}>
                   {formatCurrency(comparison.minimumOnly.totalInterest)}
                 </span>
-              </FLPText>
-              <FLPText color="text.muted" fontSize="xs">
-                Costly baseline to avoid
               </FLPText>
             </div>
           </label>

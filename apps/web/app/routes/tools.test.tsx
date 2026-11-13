@@ -65,7 +65,7 @@ describe("Tools Routes", () => {
     expect(
       screen.getByRole("heading", {
         level: 1,
-        name: /uk £100k–£125k tax trap & childcare escape calculator/i,
+        name: /uk £100k–£125k tax trap & childcare threshold calculator/i,
       }),
     ).toBeDefined();
     expect(screen.getByText(/what is the uk £100,000 tax trap\?/i)).toBeDefined();

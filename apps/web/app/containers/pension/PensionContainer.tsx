@@ -417,7 +417,8 @@ export const PensionContainer: FC = () => {
           <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
             <span style={{ fontSize: "20px" }}>⚠️</span>
             <FLPHeading as="h3" size="sm" style={{ color: "var(--colors-status-warning-text)" }}>
-              £100k–£125,140 {trapCopy.incomeTaxRate} marginal tax trap active
+              Personal Allowance taper, £100k–£125,140: {trapCopy.incomeTaxRate} marginal rate
+              (unverified estimate)
             </FLPHeading>
             <span
               style={{
