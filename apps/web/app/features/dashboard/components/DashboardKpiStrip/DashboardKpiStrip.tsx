@@ -41,20 +41,21 @@ export const DashboardKpiStrip: FC<DashboardKpiStripProps> = ({
       <KpiCard
         emptyAction={addAccount}
         label="Net worth"
+        tone="hero"
         subtext={
           netWorth === null ? undefined : (
             <span className={kpiSubtext()}>
               <span>Assets</span>
-              <Money size="sm" value={totalAssets} />
+              <Money size="sm" tone="onContrast" value={totalAssets} />
               <span aria-hidden="true" className={kpiSeparator()}>
                 •
               </span>
               <span>Liabilities</span>
-              <Money size="sm" value={totalLiabilities} />
+              <Money size="sm" tone="onContrast" value={totalLiabilities} />
             </span>
           )
         }
-        value={netWorth === null ? null : <Money size="lg" value={netWorth} />}
+        value={netWorth === null ? null : <Money size="lg" tone="onContrast" value={netWorth} />}
       />
       <KpiCard
         emptyAction={addBudget}

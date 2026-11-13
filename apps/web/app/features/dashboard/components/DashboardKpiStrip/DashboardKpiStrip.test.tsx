@@ -59,4 +59,16 @@ describe("<DashboardKpiStrip />", () => {
     expect(screen.getAllByText("£0")).toHaveLength(2);
     expect(screen.queryByText("Not set")).toBeNull();
   });
+  it("makes net worth the single hero block and leaves the other cards plain", () => {
+    const { container } = renderStrip(known);
+    const heroes = container.querySelectorAll('[data-tone="hero"]');
+    expect(heroes).toHaveLength(1);
+    expect(heroes[0]?.textContent).toContain("Net worth");
+    expect(heroes[0]?.textContent).toContain("£50,000");
+  });
+
+  it("does not paint the hero block when net worth is unknown", () => {
+    const { container } = renderStrip(unknown);
+    expect(container.querySelector('[data-tone="hero"]')).toBeNull();
+  });
 });

@@ -2,6 +2,7 @@ import type { Meta, StoryObj } from "@storybook/react";
 import { expect, within } from "@storybook/test";
 import { css } from "../../../styled-system/css";
 import { Button } from "../Button/Button";
+import { Money } from "../Money/Money";
 import { KpiCard } from "./KpiCard";
 
 const frame = css({ width: "20rem", maxWidth: "100%" });
@@ -113,3 +114,21 @@ export const LongBritishLabel: Story = {
   },
   globals: { theme: "light" },
 };
+
+const heroArgs = {
+  label: "Net worth",
+  value: <Money size="lg" tone="onContrast" value={184250} />,
+  deltaText: undefined,
+  subtext: "Assets £214,000 • Liabilities £29,750",
+  tone: "hero" as const,
+};
+
+const heroPlay: Story["play"] = async ({ canvasElement }) => {
+  const canvas = within(canvasElement);
+  await expect(canvas.getByText("£184,250")).toBeInTheDocument();
+  await expect(canvasElement.querySelector('[data-tone="hero"]')).not.toBeNull();
+};
+
+export const Hero: Story = { args: heroArgs, globals: { theme: "light" }, play: heroPlay };
+
+export const HeroDark: Story = { args: heroArgs, globals: { theme: "dark" }, play: heroPlay };

@@ -4,7 +4,7 @@ import { VisuallyHidden } from "../VisuallyHidden/VisuallyHidden";
 import { moneyRecipe, notSetActionRecipe, notSetRecipe } from "./Money.styles";
 
 export type MoneySize = "kpi" | "lg" | "md" | "sm";
-export type MoneyTone = "default" | "positive" | "danger" | "muted";
+export type MoneyTone = "default" | "positive" | "danger" | "muted" | "onContrast";
 export type SignDisplay = "auto" | "always" | "never";
 
 /** Unknown means null, undefined, NaN or +/-Infinity. Real 0 is known. */
