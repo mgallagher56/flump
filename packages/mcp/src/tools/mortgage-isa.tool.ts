@@ -1,6 +1,7 @@
 import { calculateMortgageAmortization, calculateMortgageVsIsa } from "@flump/finance-engine";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
+import { type Assumption, assumption } from "../assumptions.js";
 import type { McpServerContext } from "../types.js";
 
 export const mortgageIsaSchema = {
@@ -72,10 +73,43 @@ export function registerMortgageIsaTool(
       const rawData = await ctx.dataProvider.getUserFinancialData(ctx.token.userId);
       const b = rawData.baseline;
 
+      const assumptions: Assumption[] = [];
       const propertyValue = args.hypotheticalPropertyValueGbp ?? b.propertyValue ?? 350000;
+      if (args.hypotheticalPropertyValueGbp === undefined && b.propertyValue === undefined) {
+        assumptions.push(
+          assumption(
+            "propertyValueGbp",
+            350000,
+            "No property value on file, so 350,000 was assumed.",
+          ),
+        );
+      }
       const mortgageBalance = args.hypotheticalMortgageBalanceGbp ?? b.mortgageBalance ?? 220000;
+      if (args.hypotheticalMortgageBalanceGbp === undefined && b.mortgageBalance === undefined) {
+        assumptions.push(
+          assumption(
+            "mortgageBalanceGbp",
+            220000,
+            "No mortgage balance on file, so 220,000 was assumed.",
+          ),
+        );
+      }
       const rateApr = args.hypotheticalMortgageRateApr ?? 4.5;
+      if (args.hypotheticalMortgageRateApr === undefined) {
+        assumptions.push(
+          assumption("mortgageRateApr", 4.5, "No mortgage rate given, so 4.5% was assumed."),
+        );
+      }
       const termMonths = args.remainingTermMonths ?? 240;
+      if (args.remainingTermMonths === undefined) {
+        assumptions.push(
+          assumption(
+            "remainingTermMonths",
+            240,
+            "No remaining term given, so 240 months was assumed.",
+          ),
+        );
+      }
 
       if (mortgageBalance <= 0) {
         return {
@@ -83,6 +117,7 @@ export function registerMortgageIsaTool(
             {
               type: "text",
               text: JSON.stringify({
+                assumptions,
                 message: "No active mortgage balance found, so there is no overpayment to compare.",
                 recommendation:
                   "Not applicable: with no mortgage there is nothing to compare. This is a calculation, not advice.",
@@ -115,6 +150,7 @@ export function registerMortgageIsaTool(
           {
             type: "text",
             text: JSON.stringify({
+              assumptions,
               currentMortgage: {
                 propertyValueGbp: propertyValue,
                 balanceGbp: mortgageBalance,

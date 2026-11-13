@@ -19,7 +19,7 @@ const CALL_ARGS: Record<string, Record<string, unknown>> = {
   compare_mortgage_overpay_vs_isa: {},
   calculate_self_assessment_and_section24: { taxYear: "2025/26" },
   project_wealth_scenario: {},
-  evaluate_uk_student_loan: { currentBalanceGbp: 30000 },
+  evaluate_uk_student_loan: { plan: "PLAN_5", currentBalanceGbp: 30000 },
   evaluate_cashflow_runway_and_health: {},
   query_transactions_and_spending: {},
 };
@@ -119,7 +119,6 @@ const RESOURCE_URIS: Record<string, string> = {
   accounts: "flump://context/accounts",
   budget: "flump://context/budget",
   "tax-ledger": "flump://context/tax-ledger",
-  "uk-fiscal-guardrails": "flump://rules/uk-fiscal-guardrails",
 };
 const ALL: VerifiedToken["scopes"] = ["mcp:read:anonymized", "mcp:read:full", "mcp:simulate"];
 

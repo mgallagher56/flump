@@ -39,7 +39,7 @@ export function registerUkAdvisorPrompts(
       title: "Escape the 100k tax trap",
       argsSchema: {},
       description:
-        "Analyzes whether gross salary + bonuses enter the UK £100k-£125,140 60% (or 69.5% Scottish) tax trap and models optimal pension sacrifice.",
+        "Analyzes whether gross salary + bonuses enter the UK £100k-£125,140 tax trap and models optimal pension sacrifice.",
     },
     async () => {
       return {

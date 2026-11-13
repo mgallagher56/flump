@@ -8,6 +8,7 @@ import {
 } from "@flump/finance-engine";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
+import { type Assumption, assumption } from "../assumptions.js";
 import type { McpServerContext } from "../types.js";
 import { summariseComparison } from "./payoff-summary.js";
 
@@ -69,6 +70,7 @@ export function registerDebtSimulatorTool(
     async (args) => {
       const ctx = await getContext();
       let debts: DebtItem[] = [];
+      const assumptions: Assumption[] = [];
 
       if (args.customDebtsOverride && args.customDebtsOverride.length > 0) {
         debts = args.customDebtsOverride.map((d, i) => ({
@@ -111,11 +113,28 @@ export function registerDebtSimulatorTool(
             const nominal = Math.abs(Number(a.balance) || 0);
             const apr = Number(a.interestRate) || 19.9;
             const min = Math.max(25, Math.round(nominal * 0.025));
+            const label = ctx.token.anonymizeInstitutions
+              ? (anonLabels.get(a) ?? `Debt account #${i + 1}`)
+              : a.name || `Debt Account #${i + 1}`;
+            if (!Number(a.interestRate)) {
+              assumptions.push(
+                assumption(
+                  `${label} interestRateApr`,
+                  19.9,
+                  "No interest rate on file, so 19.9% APR was assumed.",
+                ),
+              );
+            }
+            assumptions.push(
+              assumption(
+                `${label} minimumPaymentGbp`,
+                min,
+                "Minimum payment estimated as 2.5% of the balance, at least 25.",
+              ),
+            );
             return {
               id: a.id || `debt_${i}`,
-              name: ctx.token.anonymizeInstitutions
-                ? (anonLabels.get(a) ?? `Debt account #${i + 1}`)
-                : a.name || `Debt Account #${i + 1}`,
+              name: label,
               balance: nominal,
               balanceGbp: nominal,
               apr,
@@ -138,6 +157,7 @@ export function registerDebtSimulatorTool(
             {
               type: "text",
               text: JSON.stringify({
+                assumptions,
                 comparison: summariseComparison(comparison),
                 excludedStudentLoansCount: excludedStudentLoans.length,
                 studentLoansNotice:
@@ -162,12 +182,26 @@ export function registerDebtSimulatorTool(
           debtName: d.name,
           ...calculateOverdraftCost(d.balanceGbp, d.interestRateApr || 39.9),
         }));
+      for (const d of consumerDebts) {
+        const isOverdraft =
+          d.debtType === "overdraft" || d.name.toLowerCase().includes("overdraft");
+        if (isOverdraft && !d.interestRateApr) {
+          assumptions.push(
+            assumption(
+              `${d.name} overdraftApr`,
+              39.9,
+              "No overdraft rate known, so 39.9% was assumed.",
+            ),
+          );
+        }
+      }
 
       return {
         content: [
           {
             type: "text",
             text: JSON.stringify({
+              assumptions,
               strategy: result.strategy,
               totalStartingDebtGbp: result.totalStartingDebtGbp,
               debtFreeDate: result.debtFreeDate,

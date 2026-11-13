@@ -1,6 +1,7 @@
-import { calculateUkTax } from "@flump/finance-engine";
+import { calculateUkTax, getCurrentUkTaxYear, SUPPORTED_UK_TAX_YEARS } from "@flump/finance-engine";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
+import { taxVerificationFields } from "../assumptions.js";
 import type { McpServerContext } from "../types.js";
 
 export const ukTaxTrapSchema = {
@@ -37,9 +38,9 @@ export const ukTaxTrapSchema = {
     .optional()
     .describe("UK tax region (Scotland applies distinct Scottish Income Tax bands)"),
   taxYear: z
-    .enum(["2025/26", "2026/27"])
+    .enum(SUPPORTED_UK_TAX_YEARS)
     .optional()
-    .describe("UK tax year to evaluate (defaults to 2025/26)"),
+    .describe("UK tax year to evaluate (defaults to the current UK tax year)"),
 };
 
 export function registerUkTaxTrapTool(
@@ -67,7 +68,7 @@ export function registerUkTaxTrapTool(
 
       const grossSalary = args.hypotheticalGrossSalaryGbp ?? b.annualGrossSalary;
       const region = args.region ?? b.ukRegion ?? "ENGLAND_NI_WALES";
-      const taxYear = args.taxYear ?? b.taxYear ?? "2025/26";
+      const taxYear = args.taxYear ?? getCurrentUkTaxYear();
 
       // 1. Calculate Baseline result (before hypothetical sacrifice/bonus)
       const baselineResult = calculateUkTax({
@@ -113,6 +114,7 @@ export function registerUkTaxTrapTool(
             type: "text",
             text: JSON.stringify({
               taxYear: simulatedResult.taxYear,
+              ...taxVerificationFields(simulatedResult.taxYear),
               region,
               grossIncomeGbp: simulatedResult.grossIncomeGbp,
               adjustedNetIncomeGbp: simulatedResult.adjustedNetIncomeGbp,

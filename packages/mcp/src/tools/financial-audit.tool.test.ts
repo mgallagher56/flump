@@ -1,5 +1,10 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { connectTestClient, TEST_TOKEN, type TestHarness } from "../testing/client.js";
+import {
+  connectTestClient,
+  omitAssumptions,
+  TEST_TOKEN,
+  type TestHarness,
+} from "../testing/client.js";
 import { emptyUser, renterWithUnknownAprCard } from "../testing/personas.js";
 
 describe("financial audit tools (E17-N1)", () => {
@@ -26,7 +31,7 @@ describe("financial audit tools (E17-N1)", () => {
     const explicit = await h.callJson("evaluate_cashflow_runway_and_health", {
       hypotheticalMonthlyIncomeGbp: (38000 / 12) * 0.72,
     });
-    expect(omitted).toEqual(explicit);
+    expect(omitAssumptions(omitted)).toEqual(omitAssumptions(explicit));
   });
 
   it("KNOWN LEAK: with no savings figure, the emergency fund is assumed to be 5,000", async () => {
@@ -35,7 +40,7 @@ describe("financial audit tools (E17-N1)", () => {
     const explicit = await h.callJson("evaluate_cashflow_runway_and_health", {
       hypotheticalLiquidEmergencyFundGbp: 5000,
     });
-    expect(omitted).toEqual(explicit);
+    expect(omitAssumptions(omitted)).toEqual(omitAssumptions(explicit));
   });
 
   it("evaluate_uk_student_loan evaluates the given plan and balance", async () => {
@@ -45,12 +50,6 @@ describe("financial audit tools (E17-N1)", () => {
       currentBalanceGbp: 40000,
     });
     expect(body).toMatchObject({ plan: "plan5", threshold: 25000 });
-  });
-
-  it("KNOWN LEAK: an omitted plan is evaluated as Plan 2 (removed by a later ticket)", async () => {
-    h = await connectTestClient(renterWithUnknownAprCard);
-    const body = await h.callJson("evaluate_uk_student_loan", { currentBalanceGbp: 40000 });
-    expect(body).toMatchObject({ plan: "plan2" });
   });
 
   describe("query_transactions_and_spending", () => {

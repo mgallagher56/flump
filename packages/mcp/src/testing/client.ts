@@ -94,3 +94,12 @@ export function detectDefaultLeaks(output: unknown): Array<number | string> {
   const seen = values.map(norm);
   return KNOWN_DEFAULTS.filter((d) => seen.includes(norm(d)));
 }
+
+/** Drops the interim `assumptions[]` (E17-N5) so omitted-input and explicit-input outputs compare. */
+export function omitAssumptions(output: unknown): unknown {
+  if (output && typeof output === "object" && !Array.isArray(output)) {
+    const { assumptions: _assumptions, ...rest } = output as Record<string, unknown>;
+    return rest;
+  }
+  return output;
+}

@@ -1,3 +1,4 @@
+import { getCurrentUkTaxYear } from "@flump/finance-engine";
 import { afterEach, describe, expect, it } from "vitest";
 import { connectTestClient, type TestHarness } from "../testing/client.js";
 import { mortgageAndIsa } from "../testing/personas.js";
@@ -14,7 +15,7 @@ describe("simulate_uk_tax_and_pension_sacrifice (E17-N1)", () => {
     const body = (await h.callJson("simulate_uk_tax_and_pension_sacrifice", {
       employeePensionPct: 8,
     })) as Record<string, number | string>;
-    expect(body.taxYear).toBe("2025/26");
+    expect(body.taxYear).toBe(getCurrentUkTaxYear());
     expect(body.grossIncomeGbp).toBeGreaterThan(0);
     expect(body.incomeTaxGbp).toBeGreaterThan(0);
   });

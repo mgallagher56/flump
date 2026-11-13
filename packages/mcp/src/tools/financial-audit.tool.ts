@@ -9,6 +9,7 @@ import {
 } from "@flump/finance-engine";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
+import { type Assumption, assumption } from "../assumptions.js";
 import type { McpServerContext } from "../types.js";
 
 export function registerFinancialAuditTools(
@@ -52,16 +53,71 @@ export function registerFinancialAuditTools(
       const b = rawData.baseline;
       const budget = rawData.budgetEntries ?? [];
 
-      const essentialBills =
-        args.hypotheticalMonthlyEssentialExpensesGbp ??
-        (budget.filter((e) => !e.isIncome && e.isEssential).reduce((sum, e) => sum + e.amount, 0) ||
-          (b.monthlyHousingCost ?? 900) + (b.monthlyOtherOutgoings ?? 1100));
+      const assumptions: Assumption[] = [];
 
-      const netIncome =
-        args.hypotheticalMonthlyIncomeGbp ??
-        (b.monthlyTakeHomeOverride || (b.annualGrossSalary / 12) * 0.72);
+      let essentialBills = args.hypotheticalMonthlyEssentialExpensesGbp;
+      if (essentialBills === undefined) {
+        const budgeted = budget
+          .filter((e) => !e.isIncome && e.isEssential)
+          .reduce((sum, e) => sum + e.amount, 0);
+        if (budgeted) {
+          essentialBills = budgeted;
+        } else {
+          const housing = b.monthlyHousingCost ?? 900;
+          const other = b.monthlyOtherOutgoings ?? 1100;
+          essentialBills = housing + other;
+          if (b.monthlyHousingCost === undefined) {
+            assumptions.push(
+              assumption(
+                "monthlyHousingCostGbp",
+                900,
+                "No housing cost on file, so 900 was assumed.",
+              ),
+            );
+          }
+          if (b.monthlyOtherOutgoings === undefined) {
+            assumptions.push(
+              assumption(
+                "monthlyOtherOutgoingsGbp",
+                1100,
+                "No other outgoings on file, so 1,100 was assumed.",
+              ),
+            );
+          }
+        }
+      }
 
-      const liquidSavings = args.hypotheticalLiquidEmergencyFundGbp ?? b.totalCashSavings ?? 5000;
+      let netIncome = args.hypotheticalMonthlyIncomeGbp;
+      if (netIncome === undefined) {
+        if (b.monthlyTakeHomeOverride) {
+          netIncome = b.monthlyTakeHomeOverride;
+        } else {
+          netIncome = (b.annualGrossSalary / 12) * 0.72;
+          assumptions.push(
+            assumption(
+              "monthlyIncomeGbp",
+              Math.round(netIncome),
+              "No take-home pay on file, so it was estimated as 72% of gross salary divided by 12.",
+            ),
+          );
+        }
+      }
+
+      let liquidSavings = args.hypotheticalLiquidEmergencyFundGbp;
+      if (liquidSavings === undefined) {
+        if (b.totalCashSavings === undefined) {
+          liquidSavings = 5000;
+          assumptions.push(
+            assumption(
+              "liquidEmergencyFundGbp",
+              5000,
+              "No cash savings on file, so 5,000 was assumed.",
+            ),
+          );
+        } else {
+          liquidSavings = b.totalCashSavings;
+        }
+      }
 
       const debts = (rawData.accounts ?? [])
         .filter((a) => {
@@ -70,9 +126,26 @@ export function registerFinancialAuditTools(
         })
         .map((a, i) => {
           const nom = Math.abs(Number(a.balance) || 0);
+          const name = a.name || `Debt #${i + 1}`;
+          if (!Number(a.interestRate)) {
+            assumptions.push(
+              assumption(
+                `${name} interestRateApr`,
+                19.9,
+                "No interest rate on file, so 19.9% APR was assumed.",
+              ),
+            );
+          }
+          assumptions.push(
+            assumption(
+              `${name} minimumPaymentGbp`,
+              Math.max(25, Math.round(nom * 0.025)),
+              "Minimum payment estimated as 2.5% of the balance, at least 25.",
+            ),
+          );
           return {
             id: a.id || `debt_${i}`,
-            name: a.name || `Debt #${i + 1}`,
+            name,
             balanceGbp: nom,
             interestRateApr: Number(a.interestRate) || 19.9,
             minimumPaymentGbp: Math.max(25, Math.round(nom * 0.025)),
@@ -107,6 +180,7 @@ export function registerFinancialAuditTools(
           {
             type: "text",
             text: JSON.stringify({
+              assumptions,
               healthScore: {
                 score: healthScore.overallScore,
                 grade: healthScore.grade,
@@ -146,7 +220,6 @@ export function registerFinancialAuditTools(
       inputSchema: {
         plan: z
           .enum(["PLAN_1", "PLAN_2", "PLAN_4", "PLAN_5", "POSTGRAD"])
-          .default("PLAN_2")
           .describe("UK student loan repayment plan"),
         currentBalanceGbp: z.number().min(0).describe("Current outstanding loan balance in GBP"),
         annualSalaryGbp: z

@@ -41,7 +41,7 @@ const TOOL_CALLS: Record<string, Record<string, unknown>> = {
   calculate_self_assessment_and_section24: { taxYear: "2025/26" },
   project_wealth_scenario: {},
   evaluate_cashflow_runway_and_health: {},
-  evaluate_uk_student_loan: { currentBalanceGbp: 30000 },
+  evaluate_uk_student_loan: { plan: "PLAN_5", currentBalanceGbp: 30000 },
   query_transactions_and_spending: {},
 };
 
@@ -72,6 +72,9 @@ describe("default-leak table (E17-N1)", () => {
    * Which silent defaults leak into each tool's output for a user with no data. This table
    * shrinks as later tickets land; delete a value from a row when its default is removed.
    *
+   * E17-N5: every default is now also disclosed in the response `assumptions[]`, which is why the
+   * values below appear as echoed JSON values. They disappear when later tickets remove the defaults.
+   *
    * This table covers ECHOED values only. Defaults that are applied internally and never
    * appear in the output (5000 cash, 0.72 take-home ratio, 19.9 APR, 4.5 rate, 240 months)
    * are pinned by the "KNOWN LEAK" tests in `tools/*.tool.test.ts`, which show that omitting
@@ -79,10 +82,10 @@ describe("default-leak table (E17-N1)", () => {
    */
   const EXPECTED_LEAKS_FOR_EMPTY_USER: Record<string, Array<number | string>> = {
     calculate_self_assessment_and_section24: [],
-    compare_mortgage_overpay_vs_isa: [350000, 220000],
-    evaluate_cashflow_runway_and_health: [],
-    evaluate_uk_student_loan: ["PLAN_2"],
-    project_wealth_scenario: [15000],
+    compare_mortgage_overpay_vs_isa: [350000, 220000, 4.5, 240],
+    evaluate_cashflow_runway_and_health: [5000],
+    evaluate_uk_student_loan: [],
+    project_wealth_scenario: [5000, 15000],
     query_transactions_and_spending: [],
     simulate_debt_payoff: [],
     simulate_uk_tax_and_pension_sacrifice: [],

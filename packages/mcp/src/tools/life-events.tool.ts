@@ -5,6 +5,7 @@ import {
 } from "@flump/finance-engine";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
+import { type Assumption, assumption } from "../assumptions.js";
 import type { McpServerContext } from "../types.js";
 
 const lifeEventEnum = z.enum([
@@ -79,9 +80,19 @@ export function registerLifeEventsTool(
 
       // Map life event presets
       const scenarios: LifeEventScenario[] = [];
+      const assumptions: Assumption[] = [];
+      const presetNote = (name: string) =>
+        assumptions.push(
+          assumption(
+            `${name} preset`,
+            "built-in",
+            "This life event uses Flump's built-in cost, timing and duration figures, not yours.",
+          ),
+        );
 
       for (const event of args.lifeEvents) {
         if (event === "BUY_HOME") {
+          presetNote("BUY_HOME");
           scenarios.push({
             id: "buy_home_preset",
             type: "BUY_HOME",
@@ -92,6 +103,7 @@ export function registerLifeEventsTool(
             ongoingMonthlyDeltaGbp: 300,
           });
         } else if (event === "HAVE_CHILD") {
+          presetNote("HAVE_CHILD");
           scenarios.push({
             id: "have_child_preset",
             type: "HAVE_CHILD",
@@ -102,6 +114,7 @@ export function registerLifeEventsTool(
             ongoingMonthlyDeltaGbp: 850,
           });
         } else if (event === "REMORTGAGE_SHOCK" || event === "REMORTGAGE_RATE_SHOCK") {
+          presetNote("REMORTGAGE_RATE_SHOCK");
           scenarios.push({
             id: "remortgage_shock_preset",
             type: "REMORTGAGE_RATE_SHOCK",
@@ -111,6 +124,7 @@ export function registerLifeEventsTool(
             ongoingMonthlyDeltaGbp: 350,
           });
         } else if (event === "EARLY_RETIRE_57" || event === "RETIRE_EARLY_BRIDGE") {
+          presetNote("RETIRE_EARLY_BRIDGE");
           scenarios.push({
             id: "retire_early_preset",
             type: "RETIRE_EARLY_BRIDGE",
@@ -145,6 +159,26 @@ export function registerLifeEventsTool(
 
       const totalCash = b.totalCashSavings ?? 5000;
       const totalPension = b.totalPensionPot ?? 15000;
+      if (b.totalCashSavings === undefined) {
+        assumptions.push(
+          assumption("totalCashSavingsGbp", 5000, "No cash savings on file, so 5,000 was assumed."),
+        );
+      }
+      if (b.totalPensionPot === undefined) {
+        assumptions.push(
+          assumption("totalPensionPotGbp", 15000, "No pension pot on file, so 15,000 was assumed."),
+        );
+      }
+      if (b.age === undefined) {
+        assumptions.push(assumption("age", 32, "No age on file, so 32 was assumed."));
+      }
+      assumptions.push(
+        assumption(
+          "initialIsaGbp",
+          Math.max(0, totalCash - 5000),
+          "Starting ISA balance assumed to be cash savings above a 5,000 buffer.",
+        ),
+      );
       const totalDebt = b.totalUnsecuredDebt ?? 0;
       const propertyEquity = Math.max(0, (b.propertyValue ?? 0) - (b.mortgageBalance ?? 0));
 
@@ -178,6 +212,7 @@ export function registerLifeEventsTool(
           {
             type: "text",
             text: JSON.stringify({
+              assumptions,
               startingNetWorthGbp: forecast.startingNetWorthGbp,
               tenYearBaselineGbp: forecast.tenYearNetWorthBaselineGbp,
               tenYearScenarioGbp: forecast.tenYearNetWorthScenarioGbp,

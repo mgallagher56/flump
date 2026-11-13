@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { connectTestClient, type TestHarness } from "../testing/client.js";
+import { connectTestClient, omitAssumptions, type TestHarness } from "../testing/client.js";
 import { emptyUser, mortgageAndIsa } from "../testing/personas.js";
 
 describe("compare_mortgage_overpay_vs_isa (E17-N1)", () => {
@@ -33,7 +33,7 @@ describe("compare_mortgage_overpay_vs_isa (E17-N1)", () => {
       hypotheticalMortgageRateApr: 4.5,
       remainingTermMonths: 240,
     });
-    expect(omitted).toEqual(explicit);
+    expect(omitAssumptions(omitted)).toEqual(omitAssumptions(explicit));
   });
 
   it("explicit zero balance returns the not-applicable message", async () => {
