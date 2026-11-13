@@ -111,7 +111,8 @@ export default function App() {
         style={{
           backgroundColor: "var(--colors-surface-canvas)",
           color: "var(--colors-text-primary)",
-          fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+          fontFamily:
+            "'Inter Variable', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
           margin: 0,
           minHeight: "100vh",
           transition: "background-color 0.2s ease, color 0.2s ease",

@@ -31,7 +31,7 @@ const FLPText: FC<FLPTextProps> = ({
   const isMobileVariant = propIsMobile ?? (variant === "mobile" ? true : contextIsMobile);
 
   const textStyle = css({
-    fontFamily: "var(--fonts-body, 'Inter', sans-serif)",
+    fontFamily: "var(--fonts-body, 'Inter Variable', 'Inter', sans-serif)",
     fontSize: isMobileVariant && fontSize === "lg" ? "md" : fontSize,
     fontWeight,
     lineHeight: lineHeight === "normal" ? 1.6 : lineHeight,

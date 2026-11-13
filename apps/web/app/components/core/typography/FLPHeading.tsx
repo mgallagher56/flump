@@ -43,7 +43,8 @@ const FLPHeading: FC<FLPHeadingProps> = ({
 
   const headingStyle = css({
     color: resolvedColor,
-    fontFamily: "var(--fonts-display, 'Plus Jakarta Sans', sans-serif)",
+    fontFamily:
+      "var(--fonts-display, 'Plus Jakarta Sans Variable', 'Plus Jakarta Sans', sans-serif)",
     letterSpacing: "-0.025em",
     fontSize: sizeMap[size],
     fontWeight: "bold",
