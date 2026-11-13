@@ -465,4 +465,76 @@ describe("HttpMcpHandler kill switch and Origin validation (E20-N18)", () => {
     const h = new HttpMcpHandler({ dataProvider: dp, allowedOrigins: [] });
     expect((await h.handleWebRequest(webReq())).status).toBe(401);
   });
+
+  it("web: an empty Origin header is 403", async () => {
+    const h = new HttpMcpHandler({ dataProvider: dp, allowedOrigins: ["https://app.example.com"] });
+    const req = new Request("http://localhost/mcp", { method: "POST", headers: { origin: "" } });
+    expect((await h.handleWebRequest(req)).status).toBe(403);
+  });
+
+  it("scheme or port mismatch is 403", async () => {
+    const h = new HttpMcpHandler({ dataProvider: dp, allowedOrigins: ["https://app.example.com"] });
+    for (const o of ["http://app.example.com", "https://app.example.com:8443"]) {
+      expect((await h.handleWebRequest(webReq(o))).status).toBe(403);
+    }
+  });
+
+  it("express: a non-string Origin (repeated header) is 403, not a throw", async () => {
+    const h = new HttpMcpHandler({ dataProvider: dp, allowedOrigins: ["https://app.example.com"] });
+    const { out, res } = expressRes();
+    await h.handleExpressRequest(
+      { headers: { origin: ["https://app.example.com", "https://evil.example"] } },
+      res,
+    );
+    expect(out.status).toBe(403);
+  });
+
+  it("express: a listed Origin reaches auth (401 without a token)", async () => {
+    const h = new HttpMcpHandler({ dataProvider: dp, allowedOrigins: ["https://app.example.com"] });
+    const { out, res } = expressRes();
+    await h.handleExpressRequest({ headers: { origin: "https://app.example.com" } }, res);
+    expect(out.status).toBe(401);
+  });
+
+  it("web: a listed Origin with a valid token is not rejected by the gate or auth", async () => {
+    const tokenStore = {
+      findTokenByHash: vi.fn().mockResolvedValue({
+        id: "t1",
+        userId: "u1",
+        tokenHash: hashPatToken(PAT),
+        scopes: ["mcp:read:anonymized"],
+        anonymizeInstitutions: true,
+        expiresAt: new Date(Date.now() + 86_400_000),
+        revokedAt: null,
+      }),
+      recordRequest: vi.fn().mockResolvedValue(undefined),
+    };
+    const h = new HttpMcpHandler({
+      dataProvider: dp,
+      tokenStore,
+      allowedOrigins: ["https://app.example.com"],
+    });
+    const req = new Request("http://localhost/mcp", {
+      method: "POST",
+      headers: {
+        origin: "https://app.example.com",
+        authorization: `Bearer ${PAT}`,
+        "content-type": "application/json",
+        accept: "application/json, text/event-stream",
+      },
+      body: JSON.stringify({
+        jsonrpc: "2.0",
+        id: 1,
+        method: "initialize",
+        params: {
+          protocolVersion: "2025-03-26",
+          capabilities: {},
+          clientInfo: { name: "t", version: "1" },
+        },
+      }),
+    });
+    const res = await h.handleWebRequest(req);
+    expect([401, 403, 503]).not.toContain(res.status);
+    expect(tokenStore.findTokenByHash).toHaveBeenCalled();
+  });
 });

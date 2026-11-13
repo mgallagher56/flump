@@ -29,6 +29,7 @@ import { FinanceService } from "./finance.service";
 import {
   isMcpUserAllowed,
   isProductionLike,
+  mcpAllowedOriginsBootWarning,
   mcpOpenAccessBootWarning,
   readMcpAccessConfig,
 } from "./mcp-access";
@@ -64,6 +65,8 @@ export class McpService implements McpTokenStoreAdapter, McpUserDataProvider {
   ) {
     const warning = mcpOpenAccessBootWarning(process.env);
     if (warning) this.logger.warn(warning);
+    const originWarning = mcpAllowedOriginsBootWarning(process.env);
+    if (originWarning) this.logger.warn(originWarning);
     this.httpHandler = new HttpMcpHandler({
       dataProvider: this,
       // E20-N18: the kill switch is read per request; origins are read once at boot.

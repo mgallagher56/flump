@@ -63,6 +63,37 @@ describe("McpService dev token wiring", () => {
     expect(handlerOptions[1].devToken).toBeUndefined();
   });
 
+  it("wires isEnabled and allowedOrigins from the environment into the handler (E20-N18)", () => {
+    const original = process.env;
+    try {
+      process.env = {
+        ...original,
+        MCP_ENABLED: "true",
+        MCP_ALLOWED_ORIGINS: "https://a.example/, https://b.example",
+      };
+      build("workos");
+      const opts = handlerOptions[0];
+      expect(opts.allowedOrigins).toEqual(["https://a.example", "https://b.example"]);
+      expect(opts.isEnabled()).toBe(true);
+      process.env = { ...process.env, MCP_ENABLED: "false" };
+      expect(opts.isEnabled()).toBe(false);
+    } finally {
+      process.env = original;
+    }
+  });
+
+  it("passes an empty origin list by default", () => {
+    const original = process.env;
+    try {
+      const { MCP_ALLOWED_ORIGINS: _drop, ...rest } = original;
+      process.env = rest;
+      build("workos");
+    } finally {
+      process.env = original;
+    }
+    expect(handlerOptions[0].allowedOrigins).toEqual([]);
+  });
+
   it("passes no dev options in workos mode", () => {
     build("workos");
     expect(handlerOptions[0].devToken).toBeUndefined();
