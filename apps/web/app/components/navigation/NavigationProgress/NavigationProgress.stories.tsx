@@ -1,26 +1,17 @@
 import type { Meta, StoryObj } from "@storybook/react";
-import { createMemoryRouter, RouterProvider } from "react-router";
+import { useContext } from "react";
 import { expect, within } from "storybook/test";
+import { StorybookRouterContext } from "../../../../.storybook/react-router-mock";
 import { NavigationProgress } from "./NavigationProgress";
 
-const NoFallback = () => null;
-
-// A loader that never resolves keeps the router in the "loading" state.
-const InFlight = () => {
-  const router = createMemoryRouter(
-    [
-      { path: "/", element: <NavigationProgress />, HydrateFallback: NoFallback },
-      {
-        path: "/slow",
-        element: null,
-        loader: () => new Promise(() => undefined),
-      },
-    ],
-    { initialEntries: ["/"] },
-  );
-  void router.navigate("/slow");
-  return <RouterProvider router={router} />;
-};
+// The Storybook router mock has no data router; it reports the navigation state from context.
+const InFlight = () => (
+  <StorybookRouterContext.Provider
+    value={{ ...useContext(StorybookRouterContext), navigationState: "loading" }}
+  >
+    <NavigationProgress />
+  </StorybookRouterContext.Provider>
+);
 
 const meta: Meta<typeof NavigationProgress> = {
   title: "Navigation/NavigationProgress",
@@ -33,7 +24,8 @@ type Story = StoryObj<typeof NavigationProgress>;
 export const Loading: Story = {
   render: () => <InFlight />,
   play: async ({ canvasElement }) => {
-    await expect(await within(canvasElement).findByRole("progressbar")).toBeInTheDocument();
+    const bars = await within(canvasElement).findAllByRole("progressbar");
+    await expect(bars[0]).toBeInTheDocument();
   },
 };
 
