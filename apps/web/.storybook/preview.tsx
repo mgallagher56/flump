@@ -77,6 +77,7 @@ const preview: Preview = {
           Form: ({ children, ...props }: any) => <form {...props}>{children}</form>,
         },
         navigate: () => {},
+        location: routerParams.location,
       };
 
       if (selectedTheme === "side-by-side") {
