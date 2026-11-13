@@ -1,7 +1,6 @@
 import { Button } from "@repo/ui";
 import { flex, stack } from "@repo/ui/styled-system/patterns";
 import type { FC } from "react";
-import { Helmet } from "react-helmet-async";
 import { Link } from "react-router-dom";
 import { BaselineSnapshotPreview } from "../components/BaselineSnapshotPreview";
 import { ComparisonMatrix } from "../components/ComparisonMatrix";
@@ -12,6 +11,7 @@ import { HomeFAQ } from "../components/HomeFAQ";
 import { HowItWorksSection } from "../components/HowItWorksSection";
 import { InteractiveFinancialTeaser } from "../components/InteractiveFinancialTeaser";
 import { McpSpotlightSection } from "../components/McpSpotlightSection";
+import { PageMeta } from "../components/PageMeta";
 import { SecurityPrivacySection } from "../components/SecurityPrivacySection";
 import { getAppUrl } from "../utils/url";
 
@@ -20,13 +20,10 @@ export const HomePage: FC = () => {
 
   return (
     <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
-      <Helmet>
-        <title>Flump | UK wealth, tax planning and net worth</title>
-        <meta
-          name="description"
-          content="Get your complete UK financial picture in 60 seconds. Know your net worth, safe to spend, emergency runway, and tax savings – built specifically for UK rules."
-        />
-      </Helmet>
+      <PageMeta
+        title="Flump | UK wealth, tax planning and net worth"
+        description="Get your complete UK financial picture in 60 seconds. Know your net worth, safe to spend, emergency runway, and tax savings – built specifically for UK rules."
+      />
 
       <Header />
 

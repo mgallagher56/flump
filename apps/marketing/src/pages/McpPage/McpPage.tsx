@@ -1,10 +1,10 @@
 import { Button } from "@repo/ui";
 import { flex, grid, stack } from "@repo/ui/styled-system/patterns";
 import type { FC } from "react";
-import { Helmet } from "react-helmet-async";
 import { FiCpu, FiEyeOff, FiLock, FiRefreshCw, FiShield, FiTerminal } from "react-icons/fi";
 import { Footer } from "../../components/Footer";
 import { Header } from "../../components/Header";
+import { PageMeta } from "../../components/PageMeta";
 import { getAppUrl } from "../../utils/url";
 import {
   cardBody,
@@ -99,13 +99,10 @@ export const McpPage: FC = () => {
 
   return (
     <div className={pageShell()} id="mcp-marketing-page" data-testid="mcp-marketing-page">
-      <Helmet>
-        <title>Flump for AI | Model Context Protocol (MCP) Server (Preview)</title>
-        <meta
-          name="description"
-          content="Preview: run the Flump Model Context Protocol (MCP) server from source and give AI agents deterministic UK financial calculations. Tools currently run against baseline sample data."
-        />
-      </Helmet>
+      <PageMeta
+        title="Flump for AI | Model Context Protocol (MCP) Server (Preview)"
+        description="Preview: run the Flump Model Context Protocol (MCP) server from source and give AI agents deterministic UK financial calculations. Tools currently run against baseline sample data."
+      />
 
       <Header />
 

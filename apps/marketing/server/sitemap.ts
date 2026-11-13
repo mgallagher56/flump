@@ -82,6 +82,14 @@ export function canonicalLinkTag(siteUrl: string | undefined, requestUrl: string
   return `<link rel="canonical" href="${escapeAttr(origin + path)}" />`;
 }
 
+/** `<meta property="og:url">` for a request URL; same rules as the canonical (needs SITE_URL, real page). */
+export function ogUrlTag(siteUrl: string | undefined, requestUrl: string): string {
+  const origin = normaliseSiteUrl(siteUrl);
+  const path = canonicalPath(requestUrl);
+  if (!origin || !path) return "";
+  return `<meta property="og:url" content="${escapeAttr(origin + path)}" />`;
+}
+
 /** GET /sitemap.xml: real 404 unless indexing is allowed and SITE_URL is a valid https origin. */
 export function sitemapRouter(env: Env = process.env): Router {
   const router = express.Router();

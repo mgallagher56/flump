@@ -3,10 +3,10 @@ import { Button } from "@repo/ui";
 import { css } from "@repo/ui/styled-system/css";
 import { flex, grid, stack } from "@repo/ui/styled-system/patterns";
 import { type FC, useState } from "react";
-import { Helmet } from "react-helmet-async";
 import { FiCheck, FiClock } from "react-icons/fi";
 import { Footer } from "../components/Footer";
 import { Header } from "../components/Header";
+import { PageMeta } from "../components/PageMeta";
 import { getAppUrl } from "../utils/url";
 
 const containerStyle = css({ maxWidth: "6xl", mx: "auto", py: "16", px: "4" });
@@ -121,13 +121,10 @@ export const PricingPage: FC = () => {
 
   return (
     <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
-      <Helmet>
-        <title>Pricing and plans | Flump</title>
-        <meta
-          name="description"
-          content="Flump's planning tools are free to use. Indicative pricing for a future paid plan may change."
-        />
-      </Helmet>
+      <PageMeta
+        title="Pricing and plans | Flump"
+        description="Flump's planning tools are free to use. Indicative pricing for a future paid plan may change."
+      />
 
       <Header />
 

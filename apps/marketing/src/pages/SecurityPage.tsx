@@ -1,11 +1,11 @@
 import { css } from "@repo/ui/styled-system/css";
 import { grid } from "@repo/ui/styled-system/patterns";
 import type { FC } from "react";
-import { Helmet } from "react-helmet-async";
 import { FiClock, FiShield } from "react-icons/fi";
 import { DisclosurePolicySection } from "../components/DisclosurePolicySection";
 import { Footer } from "../components/Footer";
 import { Header } from "../components/Header";
+import { PageMeta } from "../components/PageMeta";
 
 const containerStyle = css({
   maxWidth: "5xl",
@@ -76,13 +76,10 @@ const heroBodyStyle = css({
 export const SecurityPage: FC = () => {
   return (
     <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
-      <Helmet>
-        <title>Security and privacy | Flump</title>
-        <meta
-          name="description"
-          content="Flump has no feature to make payments or move money. Bank connection is coming soon."
-        />
-      </Helmet>
+      <PageMeta
+        title="Security and privacy | Flump"
+        description="Flump has no feature to make payments or move money. Bank connection is coming soon."
+      />
 
       <Header />
 
