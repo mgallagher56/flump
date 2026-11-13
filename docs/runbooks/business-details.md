@@ -14,7 +14,7 @@ Each field is `{ value, isPlaceholder }`. For each real value: replace `value` a
 | `registeredOffice` | Registered office address                             | `Registered office address to be confirmed`         |
 | `supportEmail`     | Support mailbox (footer, feedback links)              | `support@example.invalid`                           |
 | `securityContact`  | Vulnerability reports (security page, `security.txt`) | `security@example.invalid`                          |
-| `price`            | `monthly` (pounds), `annual` (pounds) and `label`     | £4.99, £49, `Introductory price, subject to change` |
+| `price`            | `monthly` (pounds), `annual` (pounds) and `label`     | £4.99, £49, `Example figure only. No price is set.` |
 
 Emails use the RFC 2606 `.invalid` domain, which can never resolve, so nothing is ever sent to an address we do not own.
 

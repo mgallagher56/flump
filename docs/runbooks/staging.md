@@ -138,21 +138,22 @@ Rows come from the code (`process.env.X`, `env.X` and `configService.get("X")` i
 
 ### 4.3 Marketing
 
-| Name                      | Production                                                                                                                 | Staging            | Source           | Secret? |
-| ------------------------- | -------------------------------------------------------------------------------------------------------------------------- | ------------------ | ---------------- | ------- |
-| `NODE_ENV`                | `production`                                                                                                               | `production`       | copy             | no      |
-| `PORT`                    | Railway-injected                                                                                                           | Railway-injected   | unset (platform) | no      |
-| `VITE_APP_URL`            | production web URL                                                                                                         | staging web URL    | generate fresh   | no      |
-| `SECURITY_CONTACT`        | security contact address                                                                                                   | same as production | copy             | no      |
-| `SITE_URL`                | public https origin: canonical link on real pages, sitemap and robots when indexing is on                                  | unset              | unset            | no      |
-| `ANALYTICS_MODE`          | unset; `log` enables cookieless page-count logging, only together with `ANALYTICS_NOTICE_URL` (E24-T9)                     | unset              | unset            | no      |
-| `ANALYTICS_NOTICE_URL`    | unset; the published https cookie and storage statement, the second half of the analytics gate (E24-T9)                    | unset              | unset            | no      |
-| `VITE_SHOW_PLACEHOLDERS`  | unset (build-time; `true` previews placeholder copy)                                                                       | unset              | unset            | no      |
-| `ALLOW_INDEXING`          | `true` only at public launch                                                                                               | unset              | unset            | no      |
-| `FLUMP_LAUNCH`            | `true` only at public launch; also needs `ALLOW_INDEXING`. Runtime variable (a Docker ARG alone is not enough off Railway) | unset              | unset            | no      |
-| `APP_URL`                 | fallback when `VITE_APP_URL` is unset                                                                                      | unset              | unset            | no      |
-| `RAILWAY_PUBLIC_DOMAIN`   | Railway-injected                                                                                                           | Railway-injected   | unset (platform) | no      |
-| `RAILWAY_SERVICE_WEB_URL` | Railway-injected                                                                                                           | Railway-injected   | unset (platform) | no      |
+| Name                      | Production                                                                                                                                            | Staging            | Source           | Secret? |
+| ------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------ | ---------------- | ------- |
+| `NODE_ENV`                | `production`                                                                                                                                          | `production`       | copy             | no      |
+| `PORT`                    | Railway-injected                                                                                                                                      | Railway-injected   | unset (platform) | no      |
+| `VITE_APP_URL`            | production web URL                                                                                                                                    | staging web URL    | generate fresh   | no      |
+| `SECURITY_CONTACT`        | security contact address                                                                                                                              | same as production | copy             | no      |
+| `SITE_URL`                | public https origin: canonical link on real pages, sitemap and robots when indexing is on                                                             | unset              | unset            | no      |
+| `ANALYTICS_MODE`          | unset; `log` enables cookieless page-count logging, only together with `ANALYTICS_NOTICE_URL` (E24-T9)                                                | unset              | unset            | no      |
+| `ANALYTICS_NOTICE_URL`    | unset; the published https cookie and storage statement, the second half of the analytics gate (E24-T9)                                               | unset              | unset            | no      |
+| `VITE_SHOW_PLACEHOLDERS`  | unset (build-time; `true` previews placeholder copy)                                                                                                  | unset              | unset            | no      |
+| `VITE_SHOW_PAID_PLAN`     | unset (build-time; set by the marketing build, `false` in a launch build while no price is set, so the paid plan card is dropped; do not set by hand) | unset              | unset            | no      |
+| `ALLOW_INDEXING`          | `true` only at public launch                                                                                                                          | unset              | unset            | no      |
+| `FLUMP_LAUNCH`            | `true` only at public launch; also needs `ALLOW_INDEXING`. Runtime variable (a Docker ARG alone is not enough off Railway)                            | unset              | unset            | no      |
+| `APP_URL`                 | fallback when `VITE_APP_URL` is unset                                                                                                                 | unset              | unset            | no      |
+| `RAILWAY_PUBLIC_DOMAIN`   | Railway-injected                                                                                                                                      | Railway-injected   | unset (platform) | no      |
+| `RAILWAY_SERVICE_WEB_URL` | Railway-injected                                                                                                                                      | Railway-injected   | unset (platform) | no      |
 
 ## 5. WorkOS
 

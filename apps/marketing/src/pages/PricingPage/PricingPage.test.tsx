@@ -31,6 +31,7 @@ describe("PricingPage", () => {
   it("does not claim a trial, Pro tier or no-card promise", () => {
     const { container } = renderPage();
     expect(container.textContent).not.toMatch(/trial|Pro\b|No credit card/i);
+    expect(container.textContent).not.toMatch(/coming soon|Introductory/i);
   });
 
   it("asks for an invite by email, not a closed sign-up link", () => {
@@ -44,7 +45,7 @@ describe("PricingPage", () => {
 
   it("keeps the paid CTA disabled and not a link", () => {
     renderPage();
-    const cta = screen.getByText("Pricing coming soon") as HTMLButtonElement;
+    const cta = screen.getByText("Not available") as HTMLButtonElement;
     expect(cta.closest("a")).toBeNull();
     expect(cta.disabled).toBe(true);
   });
@@ -55,7 +56,7 @@ describe("PricingPage", () => {
     expect(toggle.getAttribute("aria-checked")).toBe("false");
     expect(screen.getByText("£4.99")).toBeDefined();
     expect(screen.getByText("per month")).toBeDefined();
-    expect(screen.getByText("Introductory price, subject to change")).toBeDefined();
+    expect(screen.getByText("Example figure only. No price is set.")).toBeDefined();
     fireEvent.click(toggle);
     expect(toggle.getAttribute("aria-checked")).toBe("true");
     expect(screen.getByText("£49")).toBeDefined();
@@ -85,11 +86,11 @@ describe("PricingPage", () => {
       const { container } = renderPage();
       expect(screen.queryByRole("switch")).toBeNull();
       expect(screen.queryByText("Paid plan")).toBeNull();
-      expect(screen.queryByText("Pricing coming soon")).toBeNull();
+      expect(screen.queryByText("Not available")).toBeNull();
       const text = container.textContent ?? "";
       expect(text).not.toContain(formatPrice(BUSINESS_DETAILS.price.value.monthly));
       expect(text).not.toContain(formatPrice(BUSINESS_DETAILS.price.value.annual));
-      expect(text).not.toMatch(/£X|£Y|Introductory price/);
+      expect(text).not.toMatch(/£X|£Y|Example figure only/);
       expect(screen.getByText("Free today")).toBeDefined();
       expect(screen.getByText("Request an invite")).toBeDefined();
     });

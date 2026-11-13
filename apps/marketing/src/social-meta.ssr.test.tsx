@@ -66,8 +66,8 @@ describe("SSR social meta per page", () => {
 
   it("og:title matches the page title", () => {
     const out = head("/pricing", undefined);
-    expect(out).toContain("<title>Pricing and plans | Flump</title>");
-    expect(out).toContain('property="og:title" content="Pricing and plans | Flump"');
+    expect(out).toContain("<title>Pricing | Flump</title>");
+    expect(out).toContain('property="og:title" content="Pricing | Flump"');
   });
 
   it("keeps the NotFoundPage title in head with noindex", () => {
