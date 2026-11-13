@@ -70,6 +70,7 @@
         "@repo/ui": "workspace:*",
         "compression": "1.8.2",
         "express": "5.3.0",
+        "lucide-react": "1.72.0",
         "react": "19.3.1",
         "react-dom": "19.3.1",
         "react-helmet-async": "3.0.0",
