@@ -15,15 +15,24 @@ const Harness = () => {
   );
 };
 
-const ReturnHarness = () => {
+const ReturnHarness = ({ removable = false }: { removable?: boolean }) => {
   const [open, setOpen] = useState(false);
+  const [hasOpener, setHasOpener] = useState(true);
   return (
     <>
-      <button type="button" onClick={() => setOpen(true)}>
-        open
-      </button>
+      {hasOpener ? (
+        <button type="button" onClick={() => setOpen(true)}>
+          open
+        </button>
+      ) : null}
+      <button type="button">other</button>
       <Dialog open={open} onOpenChange={setOpen} title="T">
         <button type="button">inside</button>
+        {removable ? (
+          <button type="button" onClick={() => setHasOpener(false)}>
+            remove opener
+          </button>
+        ) : null}
       </Dialog>
     </>
   );
@@ -88,5 +97,63 @@ describe("Dialog primitive", () => {
     fireEvent.keyDown(screen.getByRole("dialog"), { key: "Escape", code: "Escape" });
     expect(screen.queryByRole("dialog")).toBeNull();
     await waitFor(() => expect(document.activeElement).toBe(opener));
+  });
+
+  it("restores focus after the close button and after an overlay click", async () => {
+    render(<ReturnHarness />);
+    const opener = screen.getByRole("button", { name: "open" });
+    opener.focus();
+    fireEvent.click(opener);
+    fireEvent.click(screen.getByRole("button", { name: "Close" }));
+    await waitFor(() => expect(document.activeElement).toBe(opener));
+
+    opener.focus();
+    fireEvent.click(opener);
+    const overlay = screen.getByRole("dialog").parentElement as HTMLElement;
+    // Radix registers its outside-pointer listener on the next tick.
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    fireEvent.pointerDown(overlay);
+    fireEvent.click(overlay);
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    await waitFor(() => expect(document.activeElement).toBe(opener));
+  });
+
+  it("does not steal focus that has moved elsewhere", async () => {
+    render(<ReturnHarness />);
+    const opener = screen.getByRole("button", { name: "open" });
+    const other = screen.getByRole("button", { name: "other" });
+    opener.focus();
+    fireEvent.click(opener);
+    fireEvent.keyDown(screen.getByRole("dialog"), { key: "Escape", code: "Escape" });
+    other.focus();
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(document.activeElement).toBe(other);
+  });
+
+  it("falls back to the last pointer target when the opener never took focus", async () => {
+    render(<ReturnHarness />);
+    const opener = screen.getByRole("button", { name: "open" });
+    (document.activeElement as HTMLElement | null)?.blur();
+    fireEvent.pointerDown(opener);
+    fireEvent.click(opener);
+    expect(document.activeElement).not.toBe(opener);
+    fireEvent.keyDown(screen.getByRole("dialog"), { key: "Escape", code: "Escape" });
+    await waitFor(() => expect(document.activeElement).toBe(opener));
+  });
+
+  it("does not throw when the opener is gone and lands on the main landmark", async () => {
+    render(
+      <main>
+        <ReturnHarness removable />
+      </main>,
+    );
+    const opener = screen.getByRole("button", { name: "open" });
+    opener.focus();
+    fireEvent.click(opener);
+    fireEvent.click(screen.getByRole("button", { name: "remove opener" }));
+    fireEvent.keyDown(screen.getByRole("dialog"), { key: "Escape", code: "Escape" });
+    const main = document.querySelector("main") as HTMLElement;
+    await waitFor(() => expect(document.activeElement).toBe(main));
+    expect(main.hasAttribute("tabindex")).toBe(false);
   });
 });

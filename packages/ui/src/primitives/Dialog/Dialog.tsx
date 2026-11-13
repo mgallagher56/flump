@@ -1,6 +1,6 @@
 import * as RadixDialog from "@radix-ui/react-dialog";
 import { X } from "lucide-react";
-import { type FC, type ReactNode, useRef } from "react";
+import { type FC, type ReactNode, useEffect, useRef } from "react";
 import { cx } from "../../../styled-system/css";
 import { Icon } from "../Icon";
 import {
@@ -11,6 +11,45 @@ import {
   dialogOverlayRecipe,
   dialogTitleRecipe,
 } from "./Dialog.styles";
+
+const FOCUSABLE = "button, a[href], input, select, textarea, summary, [tabindex]";
+let lastPointerTarget: EventTarget | null = null;
+let trackingPointer = false;
+
+/**
+ * Safari and Firefox on macOS do not focus a button on click, so the opener can be `body` when a
+ * dialog opens. Track the last pointer target (registered lazily, once, to stay tree-shake safe)
+ * so focus can still be returned to it.
+ */
+const trackPointerTarget = () => {
+  if (trackingPointer || typeof document === "undefined") return;
+  trackingPointer = true;
+  const record = (event: Event) => {
+    lastPointerTarget = event.target;
+  };
+  document.addEventListener("pointerdown", record, true);
+  document.addEventListener("click", record, true);
+};
+
+const resolveOpener = (): HTMLElement | null => {
+  const active = document.activeElement;
+  if (active instanceof HTMLElement && active !== document.body) return active;
+  if (lastPointerTarget instanceof Element) {
+    const el = lastPointerTarget.closest<HTMLElement>(FOCUSABLE);
+    if (el?.isConnected) return el;
+  }
+  return null;
+};
+
+/** Opener is gone (for example it unmounted): land on the main landmark rather than `body`. */
+const focusMainLandmark = () => {
+  const main = document.querySelector<HTMLElement>("main");
+  if (!main) return;
+  const hadTabIndex = main.hasAttribute("tabindex");
+  if (!hadTabIndex) main.setAttribute("tabindex", "-1");
+  main.focus({ preventScroll: true });
+  if (!hadTabIndex) main.removeAttribute("tabindex");
+};
 
 export interface DialogProps {
   open: boolean;
@@ -44,6 +83,7 @@ export const Dialog: FC<DialogProps> = ({
 }) => {
   // Controlled dialogs have no Radix Trigger, so remember what had focus and restore it on close.
   const returnFocusRef = useRef<HTMLElement | null>(null);
+  useEffect(trackPointerTarget, []);
   return (
     <RadixDialog.Root open={open} onOpenChange={onOpenChange}>
       <RadixDialog.Portal>
@@ -53,8 +93,7 @@ export const Dialog: FC<DialogProps> = ({
             data-testid={id}
             aria-modal="true"
             onOpenAutoFocus={() => {
-              returnFocusRef.current =
-                document.activeElement instanceof HTMLElement ? document.activeElement : null;
+              returnFocusRef.current = resolveOpener();
             }}
             onCloseAutoFocus={(event) => {
               const target = returnFocusRef.current;
@@ -62,10 +101,10 @@ export const Dialog: FC<DialogProps> = ({
               // Only restore when focus has nowhere better to be (body), so a late close can never
               // steal focus from something the user has already moved to.
               const active = document.activeElement;
-              if (target?.isConnected && (!active || active === document.body)) {
-                event.preventDefault();
-                target.focus();
-              }
+              if (active && active !== document.body) return;
+              event.preventDefault();
+              if (target?.isConnected) target.focus();
+              else if (target) focusMainLandmark();
             }}
             {...(description ? {} : { "aria-describedby": undefined })}
             className={cx(dialogContentRecipe({ size }), className)}
