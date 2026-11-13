@@ -218,19 +218,19 @@ exports[`<Header /> > renders correctly when user logged in 1`] = `
               home
             </div>
             <div>
-              debt
+              accounts
             </div>
             <div>
               budget
             </div>
             <div>
-              accounts
+              taxAndPay
             </div>
             <div>
-              wealth
+              savingsAndPension
             </div>
             <div>
-              planning
+              borrowing
             </div>
           </div>
         </div>

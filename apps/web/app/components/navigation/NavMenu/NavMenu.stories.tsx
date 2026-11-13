@@ -33,7 +33,7 @@ export const OpenFlyout: Story = {
   args: { routes: [HOME, ...AUTH_NAV_ROUTES] },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    const trigger = canvas.getByTestId("nav-dropdown-trigger-wealth");
+    const trigger = canvas.getByTestId("nav-dropdown-trigger-savingsAndPension");
     trigger.focus();
     await userEvent.keyboard("{Enter}");
     await expect(trigger).toHaveAttribute("aria-expanded", "true");

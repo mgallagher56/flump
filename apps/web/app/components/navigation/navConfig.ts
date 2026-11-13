@@ -19,6 +19,10 @@ export interface NavRouteItem {
   description?: string;
   /** Not a switchable module: always shown (e.g. Take-home pay). */
   alwaysOn?: boolean;
+  /** Translation key for the visible label when it differs from `key` (which stays the module key). */
+  label?: string;
+  /** When a group collapses to one link: keep the group's label ("group") or the page's ("child"). */
+  collapseTo?: "group" | "child";
   children?: NavRouteItem[];
 }
 
@@ -38,16 +42,38 @@ export const SANDBOX_HOME_NAV_ROUTE: NavRouteItem = {
 export const HOME_NAV_ROUTE: NavRouteItem = { key: "home", route: "/", icon: House };
 
 /**
- * Signed-in navigation: the single source for the desktop header and the mobile drawer.
- * Forecast is not listed (it redirects to Savings) and Tax is an opt-in module, so it only
- * appears when enabled (see `filterNavRoutes`).
+ * Signed-in navigation: the single source for the desktop header and the mobile drawer (IA review
+ * T-IA-5). Order: Accounts, Budget, Tax and pay, Savings and pension, Borrowing. Forecast is not
+ * listed (it redirects to Savings) and Self Assessment is opt-in, so it only appears when enabled.
+ * A group left with one visible page collapses to a direct link (see `filterNavRoutes`).
  */
 export const AUTH_NAV_ROUTES: NavRouteItem[] = [
-  { key: "debt", route: "/app/debt", icon: TrendingDown },
-  { key: "budget", route: "/app/budget", icon: Wallet },
   { key: "accounts", route: "/app/accounts", icon: Scale },
+  { key: "budget", route: "/app/budget", icon: Wallet },
   {
-    key: "wealth",
+    key: "taxAndPay",
+    icon: Calculator,
+    collapseTo: "group",
+    children: [
+      {
+        key: "takeHome",
+        route: "/app/take-home",
+        description: "navTakeHomeDesc",
+        icon: Calculator,
+        alwaysOn: true,
+      },
+      {
+        key: "tax",
+        label: "selfAssessment",
+        route: "/app/tax",
+        description: "navTaxDesc",
+        icon: FileText,
+      },
+    ],
+  },
+  {
+    key: "savingsAndPension",
+    icon: PiggyBank,
     children: [
       {
         key: "savings",
@@ -61,6 +87,18 @@ export const AUTH_NAV_ROUTES: NavRouteItem[] = [
         description: "navPensionDesc",
         icon: Coins,
       },
+    ],
+  },
+  {
+    key: "borrowing",
+    icon: TrendingDown,
+    children: [
+      {
+        key: "debt",
+        route: "/app/debt",
+        description: "navDebtDesc",
+        icon: TrendingDown,
+      },
       {
         key: "mortgage",
         route: "/app/mortgage",
@@ -69,27 +107,12 @@ export const AUTH_NAV_ROUTES: NavRouteItem[] = [
       },
     ],
   },
-  {
-    key: "planning",
-    children: [
-      {
-        key: "takeHome",
-        route: "/app/take-home",
-        description: "navTakeHomeDesc",
-        icon: Calculator,
-        alwaysOn: true,
-      },
-      {
-        key: "tax",
-        route: "/app/tax",
-        description: "navTaxDesc",
-        icon: FileText,
-      },
-    ],
-  },
 ];
 
-/** Drops pages the person has switched off, and groups left with no pages. */
+/**
+ * Drops pages the person has switched off and groups left with no pages. A group with exactly one
+ * visible page becomes a direct link to it (labelled by the group when `collapseTo` is "group").
+ */
 export function filterNavRoutes(
   routes: NavRouteItem[],
   enabled: string[],
@@ -108,7 +131,14 @@ export function filterNavRoutes(
     )
     .filter((item) =>
       item.children ? item.children.length > 0 : isEnabled(enabled, item.key as AppPageKey),
-    );
+    )
+    .map((item) => {
+      if (!item.children || item.children.length !== 1) return item;
+      const [only] = item.children;
+      return item.collapseTo === "group"
+        ? { ...only, key: item.key, icon: item.icon ?? only.icon }
+        : { ...only, icon: only.icon ?? item.icon };
+    });
 }
 
 export interface BottomBarTab {

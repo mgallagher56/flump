@@ -122,7 +122,7 @@ const DesktopDropdownGroup: FC<{
             <Icon icon={item.icon} size="sm" />
           </span>
         )}
-        <span>{t(item.key)}</span>
+        <span>{t(item.label ?? item.key)}</span>
         {hasActiveChild && <span aria-hidden="true" className={activeChildDot()} />}
         <Icon className={triggerChevron({ open: isOpen })} icon={ChevronDown} size="sm" />
       </button>
@@ -146,7 +146,7 @@ const DesktopDropdownGroup: FC<{
                   </div>
                 )}
                 <div className={flyoutText()}>
-                  <span className={flyoutLabel()}>{t(child.key)}</span>
+                  <span className={flyoutLabel()}>{t(child.label ?? child.key)}</span>
                   {child.description && (
                     <span className={flyoutDescription()}>
                       {t(child.description, child.description)}
@@ -168,7 +168,7 @@ const DisabledMobileItem: FC<{ item: NavRouteItem }> = ({ item }) => {
     <DisabledNavItem
       icon={item.icon && <Icon icon={item.icon} size="sm" />}
       id={`nav-disabled-${item.key}`}
-      label={t(item.key)}
+      label={t(item.label ?? item.key)}
     />
   );
 };
@@ -191,7 +191,7 @@ const NavMenu: FC<NavMenuProps> = ({
           if (route.children && route.children.length > 0) {
             return (
               <div key={route.key} className={mobileSection()}>
-                <div className={mobileSectionHeading()}>{t(route.key)}</div>
+                <div className={mobileSectionHeading()}>{t(route.label ?? route.key)}</div>
                 {route.children.map((child) =>
                   child.route && isRouteDisabled?.(child) ? (
                     <DisabledMobileItem key={child.key} item={child} />
@@ -200,7 +200,7 @@ const NavMenu: FC<NavMenuProps> = ({
                       key={child.key}
                       icon={child.icon && <Icon icon={child.icon} size="sm" />}
                       isMobile
-                      text={t(child.key)}
+                      text={t(child.label ?? child.key)}
                       to={child.route}
                       variant="mobile"
                       onClick={onNavigate}
@@ -220,7 +220,7 @@ const NavMenu: FC<NavMenuProps> = ({
               key={route.key}
               icon={route.icon && <Icon icon={route.icon} size="sm" />}
               isMobile
-              text={t(route.key)}
+              text={t(route.label ?? route.key)}
               to={route.route}
               variant="mobile"
               onClick={onNavigate}
@@ -250,7 +250,9 @@ const NavMenu: FC<NavMenuProps> = ({
 
           if (!route.route) return null;
 
-          return <FLPLinkButton key={route.key} text={t(route.key)} to={route.route} />;
+          return (
+            <FLPLinkButton key={route.key} text={t(route.label ?? route.key)} to={route.route} />
+          );
         })}
       </FLPButtonGroup>
     </FLPBox>
