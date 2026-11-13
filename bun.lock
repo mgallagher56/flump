@@ -19,7 +19,7 @@
     },
     "apps/backend": {
       "name": "backend",
-      "version": "1.25.0",
+      "version": "1.27.0",
       "dependencies": {
         "@flump/api-contract": "workspace:*",
         "@flump/banking": "workspace:*",
@@ -53,9 +53,18 @@
         "vitest": "5.1.0",
       },
     },
+    "apps/e2e": {
+      "name": "@flump/e2e",
+      "version": "0.0.0",
+      "devDependencies": {
+        "@playwright/test": "1.65.0",
+        "@types/node": "26.6.6",
+        "typescript": "7.0.2",
+      },
+    },
     "apps/marketing": {
       "name": "marketing",
-      "version": "1.25.0",
+      "version": "1.27.0",
       "dependencies": {
         "@flump/finance-engine": "workspace:*",
         "@repo/ui": "workspace:*",
@@ -112,7 +121,7 @@
     },
     "apps/web": {
       "name": "@flump/web",
-      "version": "1.27.0",
+      "version": "1.29.0",
       "dependencies": {
         "@flump/banking": "workspace:*",
         "@flump/finance-engine": "workspace:*",
@@ -614,6 +623,8 @@
 
     "@flump/banking": ["@flump/banking@workspace:packages/banking"],
 
+    "@flump/e2e": ["@flump/e2e@workspace:apps/e2e"],
+
     "@flump/finance-engine": ["@flump/finance-engine@workspace:packages/finance-engine"],
 
     "@flump/format": ["@flump/format@workspace:packages/format"],
@@ -851,6 +862,8 @@
     "@parcel/watcher-win32-ia32": ["@parcel/watcher-win32-ia32@2.5.6", "", { "os": "win32", "cpu": "ia32" }, "sha512-k35yLp1ZMwwee3Ez/pxBi5cf4AoBKYXj00CZ80jUz5h8prpiaQsiRPKQMxoLstNuqe2vR4RNPEAEcjEFzhEz/g=="],
 
     "@parcel/watcher-win32-x64": ["@parcel/watcher-win32-x64@2.5.6", "", { "os": "win32", "cpu": "x64" }, "sha512-hbQlYcCq5dlAX9Qx+kFb0FHue6vbjlf0FrNzSKdYK2APUf7tGfGxQCk2ihEREmbR6ZMc0MVAD5RIX/41gpUzTw=="],
+
+    "@playwright/test": ["@playwright/test@1.65.0", "", { "dependencies": { "playwright": "1.65.0" }, "bin": { "playwright": "cli.js" } }, "sha512-iGURLGuKDLakSEl7Pgfv8h7f+XLT+V861Wfhz0zlEl5nyFuKUopdkFBPKqTllTUp06aOwPuH8iuUEb3yp3MpbQ=="],
 
     "@polka/url": ["@polka/url@1.0.0-next.29", "", {}, "sha512-wwQAWhWSuHaag8c4q/KN/vCoeOJYshAIvMQwD4GpSb3OiZklFfvAgmj0VCBBImRpuF/aFgIRzllXlVX93Jevww=="],
 

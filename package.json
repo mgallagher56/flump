@@ -19,6 +19,7 @@
     "lint:fix": "biome check --write .",
     "format": "biome check --write .",
     "test": "turbo run test && bun test ./scripts",
+    "test:e2e": "bun run --cwd apps/e2e e2e",
     "test:scripts": "bun test ./scripts",
     "test:coverage": "turbo run test:coverage",
     "test:storybook": "bun run --cwd apps/web test:storybook",

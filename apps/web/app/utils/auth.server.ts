@@ -2,6 +2,7 @@ import { authkitLoader } from "@workos-inc/authkit-react-router";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 import { redirect } from "react-router";
 import { recordRefreshedCookies } from "~/security/session-cookies.server";
+import { hasDevSessionCookie, isDevSessionEnabled } from "~/utils/devSession.server";
 import { safeErrorSummary } from "~/utils/safeErrorSummary";
 import { applySessionPolicy } from "~/utils/sessionPolicy.server";
 
@@ -29,6 +30,7 @@ export {
 
 // Fail at server start (this module is loaded by root.tsx and every loader), not on first auth failure.
 isDevBypass(process.env);
+isDevSessionEnabled(process.env);
 applySessionPolicy(process.env);
 
 export function requireAccessToken(session: { accessToken: string | null }): string {
@@ -108,6 +110,14 @@ export async function getAuthSession(
   args: LoaderFunctionArgs | ActionFunctionArgs,
   options: { ensureSignedIn: boolean } = { ensureSignedIn: true },
 ) {
+  // Test-only cookie session (apps/e2e). Off unless E2E_DEV_SESSION=true on a dev-bypass server.
+  if (isDevSessionEnabled(process.env)) {
+    if (hasDevSessionCookie(args.request)) {
+      return { user: DEV_SESSION_USER, accessToken: DEV_ACCESS_TOKEN, headers: undefined };
+    }
+    if (options.ensureSignedIn) throw redirect("/login");
+    return { user: null, accessToken: null, headers: undefined };
+  }
   try {
     const session = await loadSessionOnce(args);
     if (session.user || !options.ensureSignedIn) return { ...session };
