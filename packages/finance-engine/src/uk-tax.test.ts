@@ -705,3 +705,30 @@ describe("Scottish Gift Aid band extension vectors (s.414(2)(b))", () => {
     expect(res.failures).toEqual([]);
   });
 });
+
+describe("E25-T4 tax trap fixes", () => {
+  it("uses the year's taper zone: 2020/21 ends at 125,000", () => {
+    expect(analyzeTaxTrap(125000, "ENGLAND_NI_WALES", "2020/21").isInTaxTrap).toBe(true);
+    expect(analyzeTaxTrap(125100, "ENGLAND_NI_WALES", "2020/21").isInTaxTrap).toBe(false);
+    expect(analyzeTaxTrap(125100, "ENGLAND_NI_WALES", "2020/21").excessAbove100k).toBe(25000);
+    expect(analyzeTaxTrap(125100, "ENGLAND_NI_WALES", "2026/27").isInTaxTrap).toBe(true);
+  });
+
+  it("reads the NI rate from NI pay when given", () => {
+    // ANI 40,000 after a net-pay pension, but NI pay 60,000 is above the UEL (2%, not 8%).
+    const t = analyzeTaxTrap(40000, "ENGLAND_NI_WALES", "2026/27", { niPay: 60000 });
+    expect(t.effectiveMarginalRatePct).toBe(22);
+    expect(analyzeTaxTrap(40000, "ENGLAND_NI_WALES", "2026/27").effectiveMarginalRatePct).toBe(28);
+  });
+
+  it("honours the salary sacrifice flag in calculate100kTaxTrap", () => {
+    // 60,000 with 20% net pay: ANI 48,000, NI still on 60,000 (2%); sacrifice: NI on 48,000 (8%).
+    expect(
+      calculate100kTaxTrap(60000, 20, false, "ENGLAND_NI_WALES", "2026/27")
+        .effectiveMarginalRatePct,
+    ).toBe(22);
+    expect(
+      calculate100kTaxTrap(60000, 20, true, "ENGLAND_NI_WALES", "2026/27").effectiveMarginalRatePct,
+    ).toBe(28);
+  });
+});

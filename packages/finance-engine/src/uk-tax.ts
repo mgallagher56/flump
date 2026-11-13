@@ -169,21 +169,32 @@ function defaultTrapTaxYear(): string {
   return resolveUkTaxYear();
 }
 
+export interface TaxTrapOptions {
+  /**
+   * Pay liable to Class 1 NI (E25-T4). Defaults to `adjustedNetIncome`, the old behaviour. Callers that
+   * know the payroll pay (for example net-pay pension, where NI is on the full salary) pass it.
+   */
+  niPay?: number;
+}
+
 export function analyzeTaxTrap(
   adjustedNetIncome: number,
   region: UkTaxRegion = "ENGLAND_NI_WALES",
   taxYear: string = defaultTrapTaxYear(),
+  opts: TaxTrapOptions = {},
 ): TaxTrapAnalysis {
   const rules = getUkTaxYearRules(resolveUkTaxYear(taxYear));
-  const isInTaxTrap =
-    adjustedNetIncome > UK_TAX_CONSTANTS.TAX_TRAP_LOWER_THRESHOLD &&
-    adjustedNetIncome <= UK_TAX_CONSTANTS.TAX_TRAP_UPPER_THRESHOLD;
-  const isNearTaxTrap =
-    adjustedNetIncome >= 95000 && adjustedNetIncome <= UK_TAX_CONSTANTS.TAX_TRAP_LOWER_THRESHOLD;
+  // E25-T4: the taper zone comes from the year's rules (2020/21 ends at 125,000, not 125,140).
+  const taperStart = rules.ewni.personalAllowanceTaperStart;
+  const taperEnd = rules.taperEnd;
+  const isInTaxTrap = adjustedNetIncome > taperStart && adjustedNetIncome <= taperEnd;
+  const isNearTaxTrap = adjustedNetIncome >= 95000 && adjustedNetIncome <= taperStart;
 
-  const excessOver100k = Math.max(0, adjustedNetIncome - UK_TAX_CONSTANTS.TAX_TRAP_LOWER_THRESHOLD);
-  const excessAbove100k = Math.min(excessOver100k, 25140);
-  const { effectiveAllowance, taperAmount } = calculatePersonalAllowance(adjustedNetIncome);
+  const excessOver100k = Math.max(0, adjustedNetIncome - taperStart);
+  const excessAbove100k = Math.min(excessOver100k, taperEnd - taperStart);
+  const effectiveAllowance = calculatePersonalAllowanceForYear(adjustedNetIncome, rules);
+  const taperAmount = rules.ewni.personalAllowance - effectiveAllowance;
+  const niPay = opts.niPay ?? adjustedNetIncome;
 
   const taxable = Math.max(
     0,
@@ -195,15 +206,11 @@ export function analyzeTaxTrap(
   const marginalRatePct = roundPence(bandRate * (isInTaxTrap ? 1.5 : 1) * 100);
 
   const { primaryThreshold, upperEarningsLimit, mainRate, upperRate } = rules.ni.class1;
-  const niRate =
-    adjustedNetIncome <= primaryThreshold
-      ? 0
-      : adjustedNetIncome <= upperEarningsLimit
-        ? mainRate
-        : upperRate;
+  // E25-T4: the NI rate is read from NI pay, not adjusted net income.
+  const niRate = niPay <= primaryThreshold ? 0 : niPay <= upperEarningsLimit ? mainRate : upperRate;
   const effectiveMarginalRatePct = roundPence(marginalRatePct + niRate * 100);
 
-  const escapeLevel = UK_TAX_CONSTANTS.TAX_TRAP_LOWER_THRESHOLD;
+  const escapeLevel = taperStart;
   const contributionRequiredToEscapeGbp = excessOver100k;
   const incomeTaxSaved =
     excessOver100k > 0
@@ -214,7 +221,8 @@ export function analyzeTaxTrap(
       : 0;
   const niSaved =
     excessOver100k > 0
-      ? calculateEmployeeNi(adjustedNetIncome, rules) - calculateEmployeeNi(escapeLevel, rules)
+      ? calculateEmployeeNi(niPay, rules) -
+        calculateEmployeeNi(Math.max(0, niPay - excessOver100k), rules)
       : 0;
   const estimatedTaxSavedByEscapingGbp = incomeTaxSaved;
   const estimatedTaxSaved = roundPence(incomeTaxSaved + niSaved);
@@ -244,13 +252,16 @@ export function analyzeTaxTrap(
 export function calculate100kTaxTrap(
   grossIncome: number,
   pensionContributionPct = 0,
-  _isSalarySacrifice = true,
+  isSalarySacrifice = true,
   region: UkTaxRegion = "ENGLAND_NI_WALES",
   taxYear: string = defaultTrapTaxYear(),
 ): TaxTrapAnalysis {
   const pensionDeduction = grossIncome * (pensionContributionPct / 100);
   const adjustedNetIncome = Math.max(0, grossIncome - pensionDeduction);
-  return analyzeTaxTrap(adjustedNetIncome, region, taxYear);
+  // E25-T4: honour the flag (it describes the existing contribution). Salary sacrifice lowers NI pay
+  // too; a net-pay pension does not. The NI part of the estimate is still for reducing pay by sacrifice.
+  const niPay = isSalarySacrifice ? adjustedNetIncome : Math.max(0, grossIncome);
+  return analyzeTaxTrap(adjustedNetIncome, region, taxYear, { niPay });
 }
 
 /**
@@ -473,6 +484,9 @@ export function calculateUkTax(input: UkTaxCalculationInput): UkTaxCalculationRe
     region === "SCOTLAND"
       ? incomeBeforeAllowance > UK_TAX_CONSTANTS.TAX_TRAP_UPPER_THRESHOLD
       : taxableIncome > additionalFrom;
+  // UNVERIFIED (E25-T4): the Scottish personal savings allowance band edge is pinned at 50,270 of income
+  // before the allowance, as before. Which band edge applies to Scottish taxpayers is an accountant ruling
+  // (E25 plan, OWNER STEPS 2); the value is kept, not guessed.
   const isHigher = region === "SCOTLAND" ? incomeBeforeAllowance > 50270 : taxableIncome > basicTop;
   if (isAdditional) {
     marginalBand = "ADDITIONAL";
