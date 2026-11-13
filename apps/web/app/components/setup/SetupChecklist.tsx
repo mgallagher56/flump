@@ -1,6 +1,7 @@
 import { chartColor } from "@repo/ui";
 import { css } from "@repo/ui/styled-system/css";
 import { type FC, useId, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   FaBalanceScale,
   FaChartLine,
@@ -20,6 +21,7 @@ import {
 import { useNavigate } from "react-router";
 import FLPText from "~/components/core/typography/FLPText";
 import { useResponsive } from "~/context/ResponsiveContext";
+import { useSampleMode } from "~/context/SampleModeContext";
 
 export interface ChecklistStep {
   key: string;
@@ -121,7 +123,11 @@ const STEP_DEFINITIONS = (props: SetupChecklistProps, navigate: ReturnType<typeo
 ];
 
 const SetupChecklist: FC<SetupChecklistProps> = (props) => {
-  const navigate = useNavigate();
+  const routerNavigate = useNavigate();
+  const sample = useSampleMode();
+  const { t } = useTranslation();
+  // In the signed-out sandbox these pages need an account, so the actions do nothing.
+  const navigate = (sample ? () => {} : routerNavigate) as typeof routerNavigate;
   const { isMobile: contextIsMobile } = useResponsive();
   const isMobileVariant = props.isMobile ?? (props.variant === "mobile" ? true : contextIsMobile);
   const panelId = useId();
@@ -381,9 +387,10 @@ const SetupChecklist: FC<SetupChecklistProps> = (props) => {
                     },
                   })}
                   type="button"
-                  onClick={step.onAction}
+                  aria-disabled={sample ? "true" : undefined}
+                  onClick={sample ? (event) => event.preventDefault() : step.onAction}
                 >
-                  {step.actionLabel} →
+                  {sample ? t("signUpToOpen", "Sign up to open") : `${step.actionLabel} →`}
                 </button>
               )}
             </div>

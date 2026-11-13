@@ -116,9 +116,26 @@ describe("<MobileNavDrawer /> sandbox", () => {
       "tax",
     ]) {
       const item = screen.getByTestId(`nav-disabled-${key}`) as HTMLButtonElement;
-      expect(item.disabled).toBe(true);
-      expect(item.textContent).toMatch(/sign up to open/i);
+      expect(item.getAttribute("aria-disabled")).toBe("true");
+      expect(item.disabled).toBe(false);
+      expect(item.textContent).toMatch(/signUpToOpen/);
     }
+  });
+
+  test("puts a Sign up link first and keeps disabled items inside the focus trap", () => {
+    customRender(<MobileNavDrawer sandbox isOpen={true} user={null} onClose={vi.fn()} />);
+    const signUp = screen.getByRole("link", { name: /signUp/ });
+    expect(signUp.getAttribute("href")).toBe("/signup");
+    const dialog = screen.getByTestId("mobile-nav-drawer");
+    const focusable = Array.from(
+      dialog.querySelectorAll<HTMLElement>("a[href], button:not([disabled])"),
+    );
+    expect(focusable).toContain(screen.getByTestId("nav-disabled-debt"));
+    // Wrapping Tab from the last focusable element returns to the first (the close button).
+    const last = focusable[focusable.length - 1];
+    last.focus();
+    fireEvent.keyDown(document, { key: "Tab" });
+    expect(document.activeElement).toBe(focusable[0]);
   });
 
   test("shows only Home when signed out outside the sandbox", () => {
