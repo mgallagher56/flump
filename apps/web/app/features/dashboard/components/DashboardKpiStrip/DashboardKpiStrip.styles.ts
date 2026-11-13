@@ -3,7 +3,6 @@ import { cva } from "@repo/ui/styled-system/css";
 export const kpiSubtext = cva({
   base: {
     textStyle: "body.sm",
-    color: "text.onContrast",
     fontVariantNumeric: "tabular-nums",
     display: "inline-flex",
     flexWrap: "wrap",
@@ -13,5 +12,5 @@ export const kpiSubtext = cva({
 });
 
 export const kpiSeparator = cva({
-  base: { color: "text.onContrast", fontVariantNumeric: "tabular-nums" },
+  base: { fontVariantNumeric: "tabular-nums" },
 });
