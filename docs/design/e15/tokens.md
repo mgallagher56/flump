@@ -103,7 +103,7 @@ Chart series, accents, projection and baseline are at least 3:1 on card, canvas,
 - **Palette:** warm sand (light) and warm charcoal (dark) neutrals replace the cool ink-blue; the accent and focus ring are teal; links, selected states and primary buttons are teal.
 - **Status colours:** positive is a leaf green clearly apart from the teal accent; info stays indigo; liabilities and debt are apricot.
 - **Charts:** eight series tuned for colour-blind readers (see below); forecasts use a dashed brown (light) or pale apricot (dark) projection line and a teal band.
-- **Hero:** the dashboard net-worth card and the mortgage overpayment "Interest saved" card are now the page's single deep-teal headline block (`KpiCard tone="hero"`, figures use `Money tone="onContrast"`). A hero card falls back to the plain card while loading or when the value is unknown, so "Not set" keeps its muted contrast. The dashboard widgets are a follow-up.
+- **Hero:** the dashboard net-worth card and the mortgage overpayment "Time shaved off" card (or "Bullet balance reduced" for interest-only, which saves no time) are now the page's single deep-teal headline block (`KpiCard tone="hero"`, figures use `Money tone="onContrast"`). A hero card falls back to the plain card while loading or when the value is unknown, so "Not set" keeps its muted contrast. The dashboard widgets are a follow-up.
 - **Unchanged here:** radii, shadows, fonts and every component.
 
 ## Font weights

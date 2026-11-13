@@ -64,6 +64,9 @@ export const tab = cva({
       true: {
         position: "relative",
         cursor: "not-allowed",
+        borderWidth: "1px",
+        borderStyle: "dashed",
+        borderColor: "border.input",
         color: "text.secondary",
         _hover: { color: "text.secondary" },
       },

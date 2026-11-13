@@ -11,7 +11,7 @@ export const item = cva({
     paddingX: "3",
     borderWidth: "1px",
     borderStyle: "dashed",
-    borderColor: "border.strong",
+    borderColor: "border.input",
     borderRadius: "md",
     background: "transparent",
     textAlign: "left",
