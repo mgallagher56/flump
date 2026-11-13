@@ -25,9 +25,22 @@ export function getTaxYearVerification(year: string): TaxVerification {
 }
 
 /** Vectors that decide a feature's status: `core` is the original catalogue, the rest are E25's. */
-function vectorsForFeature(feature: UkTaxFeature): readonly SignableVector[] {
-  return feature === "core" ? UK_TAX_VECTORS : selectUkWhatIfVectors({ feature });
+function vectorsForFeature(
+  feature: UkTaxFeature,
+  catalogues: TaxVectorCatalogues,
+): readonly SignableVector[] {
+  return feature === "core"
+    ? catalogues.core
+    : selectUkWhatIfVectors({ feature }, catalogues.whatIf);
 }
+
+/** The vector catalogues a status is read from. Tests pass fixtures; callers use the defaults. */
+export interface TaxVectorCatalogues {
+  core: readonly SignableVector[];
+  whatIf: Parameters<typeof selectUkWhatIfVectors>[1];
+}
+
+const DEFAULT_CATALOGUES: TaxVectorCatalogues = { core: UK_TAX_VECTORS, whatIf: undefined };
 
 /**
  * Sign-off status of one feature in one tax year (E25-T8, DECISIONS round 4 addendum D1 (b)).
@@ -37,6 +50,7 @@ function vectorsForFeature(feature: UkTaxFeature): readonly SignableVector[] {
 export function getTaxFeatureVerification(
   year: string,
   feature: UkTaxFeature,
+  catalogues: TaxVectorCatalogues = DEFAULT_CATALOGUES,
 ): TaxVerification["status"] {
-  return yearVerification(year, vectorsForFeature(feature));
+  return yearVerification(year, vectorsForFeature(feature, catalogues));
 }

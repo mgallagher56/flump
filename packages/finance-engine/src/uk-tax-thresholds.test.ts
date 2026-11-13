@@ -94,4 +94,24 @@ describe("getUkIncomeThresholds", () => {
     expect(byKind(ts, "hicbcStart")).toEqual([]);
     expect(byKind(ts, "higherRate")).toEqual([]);
   });
+
+  it("marks only the charged undergraduate plan (the lowest threshold) plus postgrad", () => {
+    const rules = getUkTaxYearRules("2026/27");
+    const ts = getUkIncomeThresholds(rules, {
+      salary: 0,
+      studentLoans: ["plan2", "plan1", "postgrad"],
+    });
+    const plans = byKind(ts, "studentLoan").map((t) => t.plan);
+    expect(plans).toContain("postgrad");
+    expect(plans).toContain("plan1");
+    expect(plans).not.toContain("plan2");
+  });
+
+  it("returns null rather than nonsense for a non-finite Gift Aid input", () => {
+    const ts = getUkIncomeThresholds(getUkTaxYearRules("2026/27"), {
+      salary: 0,
+      giftAidNet: Number.NaN,
+    });
+    expect(byKind(ts, "higherRate")[0]?.grossAt).toBe(50270);
+  });
 });

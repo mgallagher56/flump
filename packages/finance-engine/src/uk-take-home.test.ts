@@ -277,4 +277,16 @@ describe("computeUkTakeHome: behaviour", () => {
     expect(b.hicbc).toBe(0);
     expect(b.assumptions.map((a) => a.code)).toContain("hicbcPartnerNotModelled");
   });
+
+  it("caps a relief-at-source payment at gross pay, so take-home never goes negative", () => {
+    const b = computeUkTakeHome({
+      ...base,
+      salary: 20000,
+      pension: { method: "relief-at-source", amount: 30000 },
+    });
+    expect(b.pensionGross).toBe(20000);
+    expect(b.pensionEmployee).toBe(16000);
+    expect(b.takeHome).toBeGreaterThanOrEqual(0);
+    expect(b.assumptions.map((a) => a.code)).toContain("pensionCappedAtEarnings");
+  });
 });

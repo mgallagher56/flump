@@ -76,13 +76,8 @@ export function scenarioAtGross(s: UkIncomeScenario, g: number): UkIncomeScenari
 }
 
 /** Band extension in a breakdown: grossed-up relief at source plus grossed-up Gift Aid. */
-function bandExtensionOf(
-  s: UkIncomeScenario,
-  b: UkTakeHomeBreakdown,
-  rules: UkTaxYearRules,
-): number {
-  const ras = b.pensionMethod === "relief-at-source" ? b.pensionGross : 0;
-  return ras + Math.max(0, s.giftAidNet ?? 0) * rules.giftAidGrossUp;
+function bandExtensionOf(b: UkTakeHomeBreakdown): number {
+  return b.bandExtension;
 }
 
 /**
@@ -99,7 +94,7 @@ function solveGross(
 ): number | null {
   const m = (g: number) => {
     const b = computeUkTakeHome(scenarioAtGross(s, g));
-    return MEASURES[measure](b) - (extended ? bandExtensionOf(s, b, rules) : 0);
+    return MEASURES[measure](b) - (extended ? bandExtensionOf(b) : 0);
   };
   if (m(SEARCH_CAP) <= at) return null;
   if (m(0) > at) return 0;
@@ -110,8 +105,8 @@ function solveGross(
     if (m(mid) > at) hi = mid;
     else lo = mid;
   }
-  // The boundary itself (the last pay still at or below the figure), to the penny.
-  return roundPence(lo);
+  // The boundary itself (the last pay still at or below the figure), floored to the penny.
+  return Math.floor(lo * 100 + 1e-6) / 100;
 }
 
 export function getUkIncomeThresholds(
@@ -194,7 +189,20 @@ export function getUkIncomeThresholds(
       ruleKey: "niClass1",
     },
   );
-  for (const plan of new Set(s.studentLoans ?? [])) {
+  // Same rule as the core: several undergraduate plans are charged once over the lowest threshold, so
+  // only that plan's threshold is a real change in the rate. Postgraduate is separate.
+  const ugPlans = [...new Set(s.studentLoans ?? [])].filter(
+    (p) => p !== "postgrad" && rules.studentLoans.plans[p],
+  );
+  const lowestUg = ugPlans.sort(
+    (a, b) =>
+      (rules.studentLoans.plans[a]?.threshold ?? 0) - (rules.studentLoans.plans[b]?.threshold ?? 0),
+  )[0];
+  const chargedPlans = [
+    ...(lowestUg ? [lowestUg] : []),
+    ...((s.studentLoans ?? []).includes("postgrad") ? (["postgrad"] as const) : []),
+  ];
+  for (const plan of chargedPlans) {
     const entry = rules.studentLoans.plans[plan];
     if (!entry) continue;
     out.push({
@@ -205,7 +213,8 @@ export function getUkIncomeThresholds(
       plan,
     });
   }
-  if ((s.childBenefit?.children ?? 0) > 0 && s.childBenefit?.claimantIsHigherEarner !== false) {
+  const children = Math.floor(Math.max(0, s.childBenefit?.children ?? 0) || 0);
+  if (children > 0 && s.childBenefit?.claimantIsHigherEarner !== false) {
     const { hicbcThresholdStart, hicbcStepWidth } = rules.hicbc;
     out.push(
       {
@@ -232,7 +241,7 @@ export function getUkIncomeThresholds(
         ...t,
         grossAt,
         aniAt: at?.adjustedNetIncome ?? null,
-        bandExtension: extended && at ? roundPence(bandExtensionOf(s, at, rules)) : 0,
+        bandExtension: extended && at ? roundPence(bandExtensionOf(at)) : 0,
         status: src.status,
         source: src.url,
       };

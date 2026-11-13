@@ -87,6 +87,8 @@ export type UkTakeHomeAssumptionCode =
   | "hicbcPartnerNotModelled"
   | "childBenefitWeeks"
   | "pensionPctOfSalary"
+  | "pensionCappedAtEarnings"
+  | "pensionMethodAssumed"
   | "reliefAtSourceBandExtension"
   | "reliefAtSourceScotland"
   | "multipleUndergraduatePlans"
@@ -134,6 +136,8 @@ export interface UkTakeHomeBreakdown {
   /** grossPay - pensionEmployee - incomeTax - nationalInsurance - studentLoan - hicbc. */
   takeHome: number;
   assumptions: UkTakeHomeAssumption[];
+  /** Grossed-up relief at source plus grossed-up Gift Aid: how far band edges above the basic rate move. */
+  bandExtension: number;
   /** Rule groups this result rests on whose registry status is "unverified". */
   unverifiedRuleKeys: UkRuleKey[];
   /** Owner sign-off status of each feature this result uses. */
@@ -241,16 +245,20 @@ export function computeUkTakeHome(
   if (s.pension && s.pension.amount === undefined && nonNeg(s.pension.pct) > 0) {
     assume("pensionPctOfSalary");
   }
-  // Salary sacrifice and net pay cannot exceed the pay they come out of.
+  // Basic-rate relief added at source: net x 1 / (1 - basic rate), i.e. x 1.25 at 20%.
+  const rasGrossUp = 1 / (1 - rules.ewni.basicRate);
+  // A contribution cannot exceed the pay it comes out of. For relief at source, tax relief is limited to
+  // relevant earnings, so the grossed-up figure is capped at gross pay. The GBP3,600 minimum for people
+  // with low earnings is not in the sourced registry and is not modelled.
   const rawContribution = pensionContribution(salary, s.pension);
-  const contribution =
-    method === "salary-sacrifice" || method === "net-pay"
-      ? Math.min(rawContribution, grossPay)
-      : rawContribution;
+  const cap =
+    method === "relief-at-source" ? grossPay / rasGrossUp : method === null ? 0 : grossPay;
+  const contribution = Math.min(rawContribution, cap);
+  if (rawContribution > cap + 1e-9) assume("pensionCappedAtEarnings");
   const sacrifice = method === "salary-sacrifice" ? contribution : 0;
   const netPay = method === "net-pay" ? contribution : 0;
   const rasNet = method === "relief-at-source" ? contribution : 0;
-  const rasGross = rasNet * rules.giftAidGrossUp;
+  const rasGross = rasNet * rasGrossUp;
   if (rasNet > 0) {
     assume("reliefAtSourceBandExtension", true);
     if (region === "SCOTLAND") assume("reliefAtSourceScotland", true);
@@ -333,6 +341,7 @@ export function computeUkTakeHome(
     pensionEmployee,
     pensionGross: roundPence(method === "relief-at-source" ? rasGross : contribution),
     pensionMethod: method,
+    bandExtension: roundPence(rasGross + giftAidGross),
     adjustedNetIncome: roundPence(adjustedNetIncome),
     personalAllowance,
     taxableIncome: roundPence(taxableIncome),

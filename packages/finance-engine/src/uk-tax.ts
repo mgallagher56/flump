@@ -518,7 +518,7 @@ export function calculateUkTax(input: UkTaxCalculationInput): UkTaxCalculationRe
     daysRemainingInTaxYear: daysRemaining,
   };
 
-  const taxTrap = analyzeTaxTrap(adjustedNetIncome, region, taxYear);
+  const taxTrap = analyzeTaxTrap(adjustedNetIncome, region, taxYear, { niPay: grossPayForNi });
 
   return {
     taxYear,

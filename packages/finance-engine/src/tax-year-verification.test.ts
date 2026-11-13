@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { getTaxFeatureVerification, getTaxYearVerification } from "./tax-year-verification.js";
-import { yearVerification } from "./test-vectors/signoff.js";
+import { SIGNOFF_OWNER, vectorSignoffHash, yearVerification } from "./test-vectors/signoff.js";
 import { UK_TAX_VECTORS } from "./test-vectors/uk-tax.vectors.js";
+import { selectUkWhatIfVectors, UK_WHATIF_VECTORS } from "./test-vectors/uk-whatif.vectors.js";
 import { SUPPORTED_UK_TAX_YEARS } from "./types.js";
 
 describe("getTaxYearVerification", () => {
@@ -42,5 +43,24 @@ describe("getTaxFeatureVerification (E25-T8)", () => {
   it("a year with no vectors for a feature is unverified", () => {
     // The 2029 cap vectors are illustrations at 2026/27 rates only.
     expect(getTaxFeatureVerification("2020/21", "scheduled")).toBe("unverified");
+  });
+});
+
+describe("getTaxFeatureVerification isolation (E25-T8)", () => {
+  it("a fixture-signed feature flips only that feature", () => {
+    const year = "2026/27";
+    const whatIf = selectUkWhatIfVectors({ taxYear: year, feature: "whatIf" }).map((v) => ({
+      ...v,
+      signedOffBy: SIGNOFF_OWNER,
+      signedOffAt: "2026-12-01",
+      signedOffHash: vectorSignoffHash(v),
+      ...(v.status === "UNVERIFIED" ? { rulingRef: "fixture-ruling" } : {}),
+    }));
+    const others = UK_WHATIF_VECTORS.filter((v) => !(v.taxYear === year && v.feature === "whatIf"));
+    const catalogues = { core: UK_TAX_VECTORS, whatIf: [...whatIf, ...others] };
+    expect(getTaxFeatureVerification(year, "whatIf", catalogues)).toBe("verified");
+    expect(getTaxFeatureVerification(year, "hicbc", catalogues)).toBe("unverified");
+    expect(getTaxFeatureVerification(year, "core", catalogues)).toBe("unverified");
+    expect(getTaxFeatureVerification("2025/26", "whatIf", catalogues)).toBe("unverified");
   });
 });
