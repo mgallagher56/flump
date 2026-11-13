@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import TaxTrapAlertBanner from "./TaxTrapAlertBanner";
+import { TaxTrapAlertBanner } from "./TaxTrapAlertBanner";
 
 describe("TaxTrapAlertBanner", () => {
   it("does not render when gross income is below £95,000", () => {
@@ -12,11 +12,11 @@ describe("TaxTrapAlertBanner", () => {
     const mockApply = vi.fn();
     render(<TaxTrapAlertBanner grossIncome={115000} onApplySacrifice={mockApply} />);
 
-    expect(screen.getByText("UK £100k–£125k 60% Tax Trap Active")).toBeDefined();
-    expect(screen.getByText("62% Marginal Tax")).toBeDefined();
+    expect(screen.getByText("UK £100k–£125k 60% tax trap active")).toBeDefined();
+    expect(screen.getByText("62% marginal tax")).toBeDefined();
     expect(screen.getByText("£7,500")).toBeDefined(); // Personal Allowance Lost
 
-    const applyBtn = screen.getByRole("button", { name: /apply/i });
+    const applyBtn = screen.getByRole("button", { name: /model this in the pension forecaster/i });
     fireEvent.click(applyBtn);
     expect(mockApply).toHaveBeenCalled();
   });
@@ -53,7 +53,7 @@ describe("TaxTrapAlertBanner", () => {
 
   it("near the trap shows the 40% income tax rate and does not claim 62%", () => {
     render(<TaxTrapAlertBanner grossIncome={97000} />);
-    expect(screen.getByText("40% Marginal Tax")).toBeDefined();
+    expect(screen.getByText("40% marginal tax")).toBeDefined();
     expect(screen.queryByText(/62%/)).toBeNull();
   });
 
@@ -65,8 +65,8 @@ describe("TaxTrapAlertBanner", () => {
     // diff 1,200; NI 3,000*.02 = 60; total 1,260.
     render(<TaxTrapAlertBanner grossIncome={97000} />);
     fireEvent.change(screen.getByRole("slider"), { target: { value: "3000" } });
-    expect(screen.getByText("£1,260 / yr")).toBeDefined();
-    expect(screen.queryByText("£1,860 / yr")).toBeNull();
+    expect(screen.getByText("£1,260")).toBeDefined();
+    expect(screen.queryByText("£1,860")).toBeNull();
   });
 
   it("130k income, 25,140 sacrifice: saves 14,858 (not the flat 62% 15,587)", () => {
@@ -74,7 +74,7 @@ describe("TaxTrapAlertBanner", () => {
     // Tax(104,860): PA 12,570 - 2,430 = 10,140, taxable 94,720 => 7,540 + 22,808 = 30,348;
     // diff 14,355; NI 25,140*.02 = 502.80; total 14,857.80 => rounds to 14,858.
     render(<TaxTrapAlertBanner grossIncome={130000} />);
-    expect(screen.getByText("£14,858 / yr")).toBeDefined();
-    expect(screen.queryByText("£15,587 / yr")).toBeNull();
+    expect(screen.getByText("£14,858")).toBeDefined();
+    expect(screen.queryByText("£15,587")).toBeNull();
   });
 });

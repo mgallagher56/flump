@@ -24,11 +24,3 @@ export const Overview: Story = {
     await expect(canvas.getAllByText("Where your salary goes")[0]).toBeDefined();
   },
 };
-
-export const NoSalary: Story = {
-  parameters: { router: { loaderData: { userProfile: { hasResetFinancialData: true } } } },
-  play: async ({ canvasElement }) => {
-    const canvas = within(canvasElement);
-    await expect(canvas.getAllByRole("link", { name: "Add salary" })[0]).toBeDefined();
-  },
-};

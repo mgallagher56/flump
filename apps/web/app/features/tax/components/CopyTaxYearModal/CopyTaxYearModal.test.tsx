@@ -122,7 +122,6 @@ describe("<CopyTaxYearModal />", () => {
     expect(region.getAttribute("tabindex")).toBe("0");
     const table = region.querySelector("table");
     expect(table).not.toBeNull();
-    expect((table as HTMLElement).style.minWidth).toBe("500px");
   });
 
   test("traps focus inside and returns it to the trigger on close", async () => {

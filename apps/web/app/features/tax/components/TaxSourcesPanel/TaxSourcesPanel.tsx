@@ -2,11 +2,9 @@ import type { TaxCalculationResult, TaxRecord, TaxSource } from "@flump/finance-
 import { Button, Icon } from "@repo/ui";
 import { Briefcase, Home, Laptop, PiggyBank } from "lucide-react";
 import type { FC, MouseEvent } from "react";
-import TaxIncomeSectionCard, {
-  type TaxIncomeSectionCardProps,
-} from "~/components/tax/TaxIncomeSectionCard";
 import { NotSet } from "~/features/feedback/components/NotSet";
 import { useFormatCurrency } from "~/hooks/useFormatCurrency";
+import TaxIncomeSectionCard, { type TaxIncomeSectionCardProps } from "../TaxIncomeSectionCard";
 import { intro, note, root } from "./TaxSourcesPanel.styles";
 
 type SectionHandlers = Pick<
