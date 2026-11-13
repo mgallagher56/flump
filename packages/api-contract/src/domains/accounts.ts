@@ -55,3 +55,14 @@ export const UpdateAccountRequest = z.object({
   isCurrent: z.boolean().optional(),
   externalAccountId: z.string().max(255).nullish(),
 });
+
+/**
+ * PATCH /accounts/balances (monthly check-in). One transaction sets every balance and upserts the
+ * current UK month's history row for each. An unknown or foreign id fails the whole batch (404).
+ */
+export const UpdateBalancesRequest = z.object({
+  balances: z
+    .array(z.object({ id: Uuid, balance: Money }))
+    .min(1)
+    .max(100),
+});

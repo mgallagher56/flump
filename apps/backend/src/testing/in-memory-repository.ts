@@ -1,9 +1,15 @@
+import { FindOperator } from "typeorm";
 import { vi } from "vitest";
 
 type Row = Record<string, any>;
 
+const matchesValue = (actual: unknown, expected: unknown): boolean =>
+  expected instanceof FindOperator && expected.type === "in"
+    ? (expected.value as unknown[]).includes(actual)
+    : actual === expected;
+
 const matches = (row: Row, where: Row | undefined) =>
-  !where || Object.entries(where).every(([key, value]) => row[key] === value);
+  !where || Object.entries(where).every(([key, value]) => matchesValue(row[key], value));
 
 /**
  * Minimal in-memory stand-in for a TypeORM repository, used by cross-user
@@ -41,6 +47,12 @@ export const createInMemoryRepository = (seed: Row[] = []) => {
     save: vi.fn(async (data: Row | Row[]) =>
       Array.isArray(data) ? data.map(saveOne) : saveOne(data),
     ),
+    // ON CONFLICT (conflictColumns) DO UPDATE: insert, or overwrite the row with the same key.
+    upsert: vi.fn(async (data: Row, conflictColumns: string[]) => {
+      const existing = rows.find((row) => conflictColumns.every((c) => row[c] === data[c]));
+      if (existing) Object.assign(existing, data);
+      else rows.push({ id: nextId++, ...data });
+    }),
     update: vi.fn(async (where: Row, patch: Row) => {
       for (const row of rows) {
         if (matches(row, where)) Object.assign(row, patch);

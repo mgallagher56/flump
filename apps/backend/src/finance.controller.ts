@@ -19,7 +19,11 @@ import {
 import { ConfigService } from "@nestjs/config";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
-import { type CreateAccountDto, type UpdateAccountDto } from "./account-intake.service";
+import {
+  type CreateAccountDto,
+  type UpdateAccountDto,
+  type UpdateBalancesDto,
+} from "./account-intake.service";
 import { AuthGuard } from "./auth/auth.guard";
 import { BankConnectionsEnabledGuard, isBankConnectionAllowed } from "./bank-connections.access";
 import { Account } from "./entities/account.entity";
@@ -127,6 +131,12 @@ export class FinanceController {
   @Post("accounts")
   async createAccount(@Req() req: AuthenticatedRequest, @Body() body: CreateAccountDto) {
     return this.financeService.createAccount(req.user.id, body);
+  }
+
+  // Registered before "accounts/:id" so "balances" is never read as an account id.
+  @Patch("accounts/balances")
+  async updateBalances(@Req() req: AuthenticatedRequest, @Body() body: UpdateBalancesDto) {
+    return this.financeService.updateBalances(req.user.id, body);
   }
 
   // Stacking @Put and @Patch on one handler registers only the top decorator's verb, so each

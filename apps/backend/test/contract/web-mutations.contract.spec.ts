@@ -15,6 +15,8 @@ import {
   BUDGET_CREATE_PAYLOAD,
   BUDGET_FIELDS_NOT_PERSISTED,
   BUDGET_UPDATE_PAYLOAD,
+  CHECK_IN_ACCOUNTS,
+  CHECK_IN_BALANCES,
   ONBOARDING_ACCOUNTS,
   ONBOARDING_BUDGET_ENTRIES,
   ONBOARDING_COMPLETE,
@@ -335,6 +337,108 @@ describe.skipIf(resolveDbTestMode(process.env) === "skip")(
         );
         const stored = (await get(`/accounts/${id}`)).body;
         expect(stored).toMatchObject({ ...ONBOARDING_ACCOUNTS[2], interestRate: 3.99 });
+      });
+    });
+
+    describe("monthly check-in (E23 D22, D23)", () => {
+      const createCheckInAccounts = async () => {
+        const ids: string[] = [];
+        for (const account of CHECK_IN_ACCOUNTS) {
+          const created = await send("post", "/accounts", account);
+          expect2xx(created, "POST /accounts (check-in)");
+          ids.push(created.body.id as string);
+        }
+        return ids;
+      };
+      const history = () =>
+        dataSource.query(
+          "SELECT account_id, year, month, value::float AS value FROM account_details ORDER BY account_id",
+        );
+      const batch = (ids: string[], balances: readonly number[]) => ({
+        balances: ids.map((id, i) => ({ id, balance: balances[i] })),
+      });
+
+      it("one request updates N balances and writes N history rows; a re-run updates in place", async () => {
+        const ids = await createCheckInAccounts();
+
+        const first = await send("patch", "/accounts/balances", batch(ids, CHECK_IN_BALANCES));
+        expect2xx(first, "PATCH /accounts/balances");
+        expect(first.body.map((a: { id: string; balance: number }) => [a.id, a.balance])).toEqual(
+          ids.map((id, i) => [id, CHECK_IN_BALANCES[i]]),
+        );
+        for (const [i, id] of ids.entries()) {
+          expect((await get(`/accounts/${id}`)).body.balance).toBe(CHECK_IN_BALANCES[i]);
+        }
+        const rows = await history();
+        expect(rows).toHaveLength(ids.length);
+        expect(
+          new Set(rows.map((r: { month: number; year: number }) => `${r.year}-${r.month}`)).size,
+        ).toBe(1);
+        expect(rows.map((r: { value: number }) => r.value).sort()).toEqual(
+          [...CHECK_IN_BALANCES].sort(),
+        );
+
+        const second = await send(
+          "patch",
+          "/accounts/balances",
+          batch(
+            ids,
+            CHECK_IN_BALANCES.map((b) => b + 100),
+          ),
+        );
+        expect2xx(second, "PATCH /accounts/balances (re-run)");
+        const after = await history();
+        expect(after).toHaveLength(ids.length);
+        expect(after.map((r: { value: number }) => r.value).sort()).toEqual(
+          CHECK_IN_BALANCES.map((b) => b + 100).sort(),
+        );
+      });
+
+      it("PATCH /accounts/:id with a balance upserts the current month instead of duplicating it", async () => {
+        const [id] = await createCheckInAccounts();
+        expect2xx(await send("patch", `/accounts/${id}`, { balance: 10 }), "first");
+        expect2xx(await send("patch", `/accounts/${id}`, { balance: 20 }), "second");
+        expect(await history()).toEqual([expect.objectContaining({ account_id: id, value: 20 })]);
+      });
+
+      it("a foreign id fails the whole batch with 404 and writes nothing", async () => {
+        const ids = await createCheckInAccounts();
+        const other = await dataSource.query(
+          "INSERT INTO accounts (user_id, name, type, balance, currency) VALUES ('someone-else', 'Theirs', 'Current', 7, 'GBP') RETURNING id",
+        );
+        const foreignId = other[0].id as string;
+
+        const res = await send("patch", "/accounts/balances", {
+          balances: [
+            { id: ids[0], balance: 1 },
+            { id: foreignId, balance: 2 },
+          ],
+        });
+
+        expect(res.status).toBe(404);
+        expect(await history()).toEqual([]);
+        expect((await get(`/accounts/${ids[0]}`)).body.balance).toBe(CHECK_IN_ACCOUNTS[0].balance);
+        const foreign = await dataSource.query(
+          "SELECT balance::float AS balance FROM accounts WHERE id = $1",
+          [foreignId],
+        );
+        expect(foreign[0].balance).toBe(7);
+      });
+
+      it("rejects a malformed batch with 400, never a 500", async () => {
+        const [id] = await createCheckInAccounts();
+        // These bodies violate the contract on purpose; keep them out of the shadow-violation check.
+        const seenBefore = new Set(shadowViolations);
+        for (const body of [
+          {},
+          { balances: [] },
+          { balances: [{ id: "not-a-uuid", balance: 1 }] },
+          { balances: [{ id, balance: "5" }] },
+        ]) {
+          expect((await send("patch", "/accounts/balances", body)).status).toBe(400);
+        }
+        for (const v of [...shadowViolations]) if (!seenBefore.has(v)) shadowViolations.delete(v);
+        expect(await history()).toEqual([]);
       });
     });
 
