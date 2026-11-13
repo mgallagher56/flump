@@ -9,6 +9,7 @@ import {
   Button,
   EmptyState,
   Icon,
+  Illustration,
   LiveRegion,
   PageHeader,
   ProjectionNotice,
@@ -186,6 +187,7 @@ export const DebtContainer: FC = () => {
     hidden: selectedTab !== id,
     id: `debt-panel-${id}`,
     role: "tabpanel" as const,
+    tabIndex: 0,
   });
 
   const controls = (
@@ -199,8 +201,8 @@ export const DebtContainer: FC = () => {
       ) : null}
       {aprUnknown ? (
         <p className={mutedNote} data-testid="apr-unknown-note">
-          Some debts have no APR set, so the payoff figures below treat them as 0% and are
-          optimistic. Add each APR for accurate dates and interest.
+          Some debts have no APR set. The payoff plan assumes 0% for them, so its dates and interest
+          may be too optimistic.
         </p>
       ) : null}
       <PayoffStrategySwitcher
@@ -223,6 +225,10 @@ export const DebtContainer: FC = () => {
   return (
     <div className={pageRoot}>
       <LiveRegion debounceMs={1000} message={debtHeadline} visuallyHidden />
+      <PageHeader
+        subtitle="See how long your debts could take to clear, compare payoff orders and keep track of 0% offers."
+        title="Your debts"
+      />
       <ProjectionNotice />
 
       {promoAlerts.length > 0 && (
@@ -257,11 +263,6 @@ export const DebtContainer: FC = () => {
           {saveError}
         </p>
       ) : null}
-
-      <PageHeader
-        subtitle="See how long your debts could take to clear, compare payoff orders and keep track of 0% offers."
-        title="Your debts"
-      />
 
       {hasDebts ? (
         <DebtSummary
@@ -339,6 +340,7 @@ export const DebtContainer: FC = () => {
               </Button>
             }
             description="Add your credit cards, loans and overdrafts to compare payoff plans."
+            illustration={<Illustration scene="empty-accounts" />}
             title="No debts yet"
           />
         </div>

@@ -47,6 +47,7 @@ describe("<DebtSummary />", () => {
       <DebtSummary {...props} minimumEstimated strategy="snowball" />,
     );
     expect(container.textContent).toContain("(minimums estimated)");
+    expect(container.querySelector("[data-tone='hero']")?.textContent).toContain("estimated");
     expect(container.textContent).toContain("paying smallest balance first");
   });
 });

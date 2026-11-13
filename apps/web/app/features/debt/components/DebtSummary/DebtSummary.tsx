@@ -52,9 +52,11 @@ export const DebtSummary: FC<DebtSummaryProps> = ({
         notSetLabel="Not calculated"
         subtext={
           canProject
-            ? monthsShaved > 0
-              ? `${pluralMonths(monthsShaved)} sooner than minimum payments`
-              : "Paying the minimums only"
+            ? `${
+                monthsShaved > 0
+                  ? `${pluralMonths(monthsShaved)} sooner than minimum payments`
+                  : "Paying the minimums only"
+              }${minimumEstimated ? " (estimated: some minimums are estimates)" : ""}`
             : notCalculatedNote
         }
         tone="hero"
@@ -65,10 +67,11 @@ export const DebtSummary: FC<DebtSummaryProps> = ({
         subtext={
           highInterestDebt > 0 ? (
             <>
-              <Money size="sm" value={highInterestDebt} /> at over 6.5% APR or on an overdraft
+              <Money size="sm" value={highInterestDebt} /> on cards, overdrafts or at 6.5% APR or
+              more
             </>
           ) : (
-            "No debt above 6.5% APR"
+            "No card, overdraft or 6.5%+ APR debt"
           )
         }
         value={<Money size="lg" value={totalDebt} />}

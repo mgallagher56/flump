@@ -37,3 +37,19 @@ export const AprNotSet: Story = {
     await expect(canvasElement.textContent).toContain("Not calculated");
   },
 };
+
+export const PaymentsNeverClear: Story = {
+  args: { payoffAchievable: false },
+  play: async ({ canvasElement }) => {
+    await expect(canvasElement.querySelectorAll("[data-tone='hero']").length).toBe(0);
+    await expect(canvasElement.textContent).toContain("Your payments do not clear the debt yet");
+  },
+};
+
+export const EstimatedMinimums: Story = {
+  args: { minimumEstimated: true },
+  play: async ({ canvasElement }) => {
+    const hero = canvasElement.querySelectorAll("[data-tone='hero']");
+    await expect(hero[0]?.textContent).toContain("estimated");
+  },
+};
